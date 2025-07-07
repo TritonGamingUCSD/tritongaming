@@ -3,13 +3,13 @@
   top: 0;
   left: 0;
   width: 100%;
-  background-color: #333;
+  background: linear-gradient(to right, #14477C, #011941);
   color: white;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  padding: 1rem 2rem;
+  padding: 1.5rem 2rem;
   transition: transform 0.3s ease-in-out;
   z-index: 1000;
 }
@@ -24,6 +24,19 @@
   text-decoration: none;
   font-weight: bold;
 }
+
+.logo-img {
+  height: 100px;
+  width: auto;
+}
+
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
 
 .nav-links {
   list-style: none;
@@ -65,5 +78,6 @@
   .nav-links li {
     margin: 0.5rem 0;
   }
+
 }
 
