@@ -1,0 +1,24 @@
+@font-face {
+    font-family: 'Brick';
+    src: url('../assets/fonts/Brick.otf') format('opentype');
+}
+
+@font-face {
+    font-family: 'Made-Soulmaze';
+    src: url('../assets/fonts/MADE-Soulmaze.otf') format('opentype');
+}
+
+@font-face {
+    font-family: 'RenogareSoft-Regular';
+    src: url('../assets/fonts/RenogareSoft-Regular.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'Futura-Bold';
+    src: url('../assets/fonts/futur.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'Futura-Medium';
+    src: url('../assets/fonts/futura-medium-bt.ttf') format('truetype');
+}
