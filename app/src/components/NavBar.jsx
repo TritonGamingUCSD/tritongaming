@@ -21,6 +21,8 @@ const NavBar = () => {
 
   return (
     <nav className={`navbar ${visible ? '' : 'hidden'}`}>
+      <div className="background-text" style={typography.accent}>TRITON</div>
+      <div className="background-text1" style={typography.accent}>GAMING</div>
       <div className="logo">
         <Link to="/">
           <img src={logo} alt="Triton Gaming" className="logo-img" />

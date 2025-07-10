@@ -12,6 +12,7 @@
   padding: 1.5rem 2rem;
   transition: transform 0.3s ease-in-out;
   z-index: 1000;
+  overflow: hidden;
 }
 
 .navbar.hidden {
@@ -60,6 +61,36 @@
 
 .nav-links a:hover {
   text-decoration: underline;
+}
+
+.background-text {
+  position: absolute;
+  top: 50%;
+  left: 10%;
+  transform: translate(-50%, -80%) rotate(-20deg);
+  font-size: 8rem;
+  color: rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 0;
+  user-select: none;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+}
+
+.background-text1 {
+  position: absolute;
+  top: 50%;
+  left: 10%;
+  transform: translate(0%, -40%) rotate(-20deg);
+  font-size: 8rem;
+  color: rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 0;
+  user-select: none;
+  font-weight: 900;
+  letter-spacing: 0.03em;
 }
 
 @media (max-width: 600px) {
