@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import logo from '../../assets/logos/tg_logo_multi.png';
 import './NavBar.css';
 import { typography } from '../../styles/typography';
+import { colors } from '../../styles/colors';
 
 const NavBar = () => {
   const [prevScrollPos, setPrevScrollPos] = useState(window.scrollY);
@@ -21,18 +22,22 @@ const NavBar = () => {
 
   return (
     <nav className={`navbar ${visible ? '' : 'hidden'}`}>
-      <div className="background-text" style={typography.accent}>TRITON</div>
-      <div className="background-text1" style={typography.accent}>GAMING</div>
+      
+      <div className="background-text-wrapper">
+        <div className="background-text" style={typography.accent}>TRITON</div>
+        <div className="background-text2" style={typography.accent}>GAMING</div>
+      </div>
+
       <div className="logo">
         <Link to="/">
           <img src={logo} alt="Triton Gaming" className="logo-img" />
         </Link>
       </div>
       <ul className="nav-links">
-        <li style={typography.h3}><Link to="/about">ABOUT</Link></li>
-        <li style={typography.h3}><Link to="/events">EVENTS</Link></li>
-        <li style={typography.h3}><Link to="/sponsors">SPONSORS</Link></li>
-        <li style={typography.h3}><Link to="/team">GET INVOLVED</Link></li>
+        <li style={{...typography.h3, color: colors.white}}><Link to="/about">ABOUT</Link></li>
+        <li style={{...typography.h3, color: colors.white}}><Link to="/events">EVENTS</Link></li>
+        <li style={{...typography.h3, color: colors.white}}><Link to="/sponsors">SPONSORS</Link></li>
+        <li style={{...typography.h3, color: colors.white}}><Link to="/team">GET INVOLVED</Link></li>
       </ul>
     </nav>
   );

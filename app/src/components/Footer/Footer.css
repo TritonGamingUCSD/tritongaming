@@ -1,0 +1,128 @@
+/* ---------- FOOTER ---------- */
+
+.footer {
+  position: relative;
+  width: 100%;
+  background: linear-gradient(to right, #14477C, #011941);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 1.5rem 2rem;
+  overflow: hidden;
+  z-index: 10;
+}
+
+/* Background TRITON GAMING text (same as navbar style) */
+.footer-background-text-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.footer-background-text,
+.footer-background-text2 {
+  position: absolute;
+  color: rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+  user-select: none;
+  transform: rotate(-20deg);
+  letter-spacing: 0.03em;
+}
+
+.footer-background-text {
+  top: 10%;
+  left: 10%;
+  transform: translate(-50%, -50%) rotate(-20deg);
+}
+
+.footer-background-text2 {
+  top: 40%;
+  left: 10%;
+  transform: translate(0%, -40%) rotate(-20deg);
+}
+
+/* Left side: logo + copyright */
+.footer-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  z-index: 1;
+}
+
+.footer-logo {
+  height: 100px;
+  width: auto;
+  margin-bottom: 0.5rem;
+}
+
+.footer-copy {
+  font-weight: 700;
+  font-size: 1.125rem; /* 18px */
+  color: white;
+}
+
+/* Right side: social links */
+.footer-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  z-index: 1;
+}
+
+.footer-heading {
+  font-size: 1.25rem; /* 20px */
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  color: white;
+}
+
+.footer-icons {
+  display: flex;
+  gap: 1rem;
+}
+
+/* Style SVG icons */
+.footer-icons svg {
+  width: 32px;
+  height: 32px;
+  fill: white !important;
+  transition: transform 0.2s ease, fill 0.2s ease;
+  vertical-align: middle;
+}
+
+.footer-icons a:hover svg {
+  transform: scale(1.15);
+  fill: #f8d347; /* Hover accent color */
+}
+
+/* ---------- Responsive Styles ---------- */
+
+@media (max-width: 768px) {
+  .footer {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 2rem 1rem;
+  }
+
+  .footer-left,
+  .footer-right {
+    align-items: center;
+    margin-top: 1.5rem;
+  }
+
+  .footer-background-text,
+  .footer-background-text1 {
+    font-size: 5rem;
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%) rotate(-20deg);
+  }
+}
