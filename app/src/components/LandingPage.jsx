@@ -1,25 +1,24 @@
 import React from 'react';
 import '../styles/LandingPage.css';
-import { typography } from '../styles/typography';
+import { typography } from '../styles/typography'; // Import the typography object from typograph
+import { colors } from '../styles/colors';
 
 const LandingPage = () => {
   return (
     <div className="landing-page">
       <section className="hero">
-      <div className="hero-video-container">
-            <div className="video-zoom-wrapper">
-                <iframe
-                className="hero-video"
-                src="https://www.youtube.com/embed/Z9yFVDTcpJU?autoplay=1&mute=1&loop=1&playlist=Z9yFVDTcpJU&controls=0&modestbranding=1&showinfo=0&rel=0"
-                title="TGEX Highlights"
-                frameBorder="0"
-                allow="autoplay; fullscreen"
-                allowFullScreen
-                ></iframe>
-            </div>
-        </div>
+        <video autoPlay loop muted className="hero-video">
+          <source src="/tgexhighlight.mp4" type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
         <div className="hero-content">
-          <h1 style={typography.accent}>We are Triton Gaming</h1>
+          <h1 style={{ ...typography.accent, color: colors.yellow }}>We are Triton Gaming</h1>
+        </div>
+        <div className="hero-bottom-text">
+          <span style={{ ...typography.h1, color: colors.yellow }}>EVENTS</span>
+          <span style={{ ...typography.h1, color: colors.yellow }}>CREATIVITY</span>
+          <span style={{ ...typography.h1, color: colors.yellow }}>COMMUNITY</span>
+          <span style={{ ...typography.h1, color: colors.yellow }}>INDUSTRY</span>
         </div>
       </section>
     </div>

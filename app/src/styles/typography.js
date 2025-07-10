@@ -1,17 +1,17 @@
 import {fontSizes, fontFamilies } from './variables';
 
 export const typography = {
-    heading1: {
+    h1: {
         fontSize: fontSizes.h1,
         fontFamily: fontFamilies.heading1,
         lineHeight: '56px',
     },
-    heading2: {
+    h2: {
         fontSize: fontSizes.h2,
         fontFamily: fontFamilies.heading2,
         lineHeight: '44px',
     },
-    heading3: {
+    h3: {
         fontSize: fontSizes.h3,
         fontFamily: fontFamilies.heading3,
         lineHeight: '32px',
