@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import logo from '../assets/MULTI COLOR LOGO.png';
-import '../styles/NavBar.css';
-import { typography } from '../styles/typography';
+import logo from '../../assets/tg_logo_multi.png';
+import './NavBar.css';
+import { typography } from '../../styles/typography';
 
 const NavBar = () => {
   const [prevScrollPos, setPrevScrollPos] = useState(window.scrollY);

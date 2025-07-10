@@ -1,14 +1,14 @@
 import React from 'react';
-import '../styles/LandingPage.css';
-import { typography } from '../styles/typography'; // Import the typography object from typograph
-import { colors } from '../styles/colors';
+import './Hero.css';
+import { typography } from '../../styles/typography'; // Import the typography object from typograph
+import { colors } from '../../styles/colors';
 
-const LandingPage = () => {
+const Hero = () => {
   return (
     <div className="landing-page">
       <section className="hero">
         <video autoPlay loop muted className="hero-video">
-          <source src="/tgexhighlight.mp4" type="video/mp4" />
+          <source src="/videos/tgexhighlight.mp4" type="video/mp4" />
           Your browser does not support the video tag.
         </video>
         <div className="hero-content">
@@ -25,4 +25,4 @@ const LandingPage = () => {
   );
 };
 
-export default LandingPage;
+export default Hero;

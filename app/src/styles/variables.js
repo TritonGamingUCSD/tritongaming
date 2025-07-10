@@ -9,7 +9,7 @@ export const fontSizes = {
 export const fontFamilies = {
     heading1: 'Made-Soulmaze',
     heading2: 'RenogareSoft-Regular',
-    heading3: 'Futura-Bold',
+    heading3: 'Futura-Heavy',
     body: 'Futura-Medium',
     accent: 'Brick',
 };

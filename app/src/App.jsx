@@ -1,18 +1,16 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import NavBar from './components/NavBar';
-import LandingPage from './components/LandingPage';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import NavBar from './components/Navbar/NavBar';
+import LandingPage from './pages/LandingPage';
 
 function App() {
-
   return (
     <>
       <NavBar />
-      <LandingPage />
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+      </Routes>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
