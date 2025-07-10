@@ -29,10 +29,10 @@ const NavBar = () => {
         </Link>
       </div>
       <ul className="nav-links">
-        <li style={typography.heading3}><Link to="/about">ABOUT</Link></li>
-        <li style={typography.heading3}><Link to="/events">EVENTS</Link></li>
-        <li style={typography.heading3}><Link to="/sponsors">SPONSORS</Link></li>
-        <li style={typography.heading3}><Link to="/team">GET INVOLVED</Link></li>
+        <li style={typography.h3}><Link to="/about">ABOUT</Link></li>
+        <li style={typography.h3}><Link to="/events">EVENTS</Link></li>
+        <li style={typography.h3}><Link to="/sponsors">SPONSORS</Link></li>
+        <li style={typography.h3}><Link to="/team">GET INVOLVED</Link></li>
       </ul>
     </nav>
   );
