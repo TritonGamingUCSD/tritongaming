@@ -63,34 +63,37 @@
   text-decoration: underline;
 }
 
-.background-text {
+.background-text-wrapper {
   position: absolute;
-  top: 50%;
-  left: 10%;
-  transform: translate(-50%, -80%) rotate(-20deg);
-  font-size: 8rem;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.background-text,
+.background-text2 {
+  position: absolute;
   color: rgba(255, 255, 255, 0.1);
   white-space: nowrap;
-  pointer-events: none;
-  z-index: 0;
   user-select: none;
-  font-weight: 900;
+  transform: rotate(-20deg);
   letter-spacing: 0.03em;
 }
 
-.background-text1 {
-  position: absolute;
-  top: 50%;
+.background-text {
+  top: 10%;
+  left: 10%;
+  transform: translate(-50%, -50%) rotate(-20deg);
+}
+
+.background-text2 {
+  top: 40%;
   left: 10%;
   transform: translate(0%, -40%) rotate(-20deg);
-  font-size: 8rem;
-  color: rgba(255, 255, 255, 0.1);
-  white-space: nowrap;
-  pointer-events: none;
-  z-index: 0;
-  user-select: none;
-  font-weight: 900;
-  letter-spacing: 0.03em;
 }
 
 @media (max-width: 600px) {
