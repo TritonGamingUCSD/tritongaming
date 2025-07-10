@@ -4,6 +4,7 @@ export const fontSizes = {
     h3: '24px',
     body: '18px',
     big: '144px',
+    caption: '14px',
 };
 
 export const fontFamilies = {

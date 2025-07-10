@@ -1,0 +1,45 @@
+@import '../../styles/colors.css';
+
+.landing-about {
+  padding: 12rem 8rem;
+  background-color: var(--white);
+  }
+  
+  .about-container {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+    justify-content: center;
+    margin: 0 auto;
+    flex-wrap: wrap;
+  }
+  
+  .about-image-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    min-width: 280px;
+  }
+  
+  .about-image {
+    width: 100%;
+    max-width: 400px;
+    object-fit: cover;
+  }
+  
+  .photo-credit {
+    margin-top: 0.5rem;
+    font-style: italic;
+    text-align: center;
+  }
+  
+  .about-text {
+    flex: 2;
+    min-width: 300px;
+  }
+
+  .about-text h1 {
+    margin-bottom: 1rem;
+  }
+  

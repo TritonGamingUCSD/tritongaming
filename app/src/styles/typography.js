@@ -26,4 +26,8 @@ export const typography = {
         fontFamily: fontFamilies.accent,
         lineHeight: '152px',
     },
+    caption: {
+        fontSize: fontSizes.caption,
+        fontFamily: fontFamilies.body,
+    }
 };
