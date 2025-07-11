@@ -13,16 +13,17 @@ const LandingEvents = () => {
   };
 
   return (
-    <div className="landing-wrapper">
-      <h2 className="landing-heading">Upcoming Events</h2>
-      <div className="landing-controls">
-        <button className="nav-button" onClick={() => scroll('left')}>‹</button>
-        <button className="nav-button" onClick={() => scroll('right')}>›</button>
-      </div>
-      <div className="event-carousel" ref={scrollRef}>
-        {events.map((event, index) => (
-          <EventCard key={index} event={event} />
-        ))}
+    <div className="landing-events">
+      <div className="landing-wrapper">
+        <div className="landing-controls">
+          <button className="nav-button" onClick={() => scroll('left')}>‹</button>
+          <button className="nav-button" onClick={() => scroll('right')}>›</button>
+        </div>
+        <div className="event-carousel" ref={scrollRef}>
+          {events.map((event, index) => (
+            <EventCard key={index} event={event} />
+          ))}
+        </div>
       </div>
     </div>
   );

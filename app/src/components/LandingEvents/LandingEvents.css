@@ -1,14 +1,11 @@
 @import '../../styles/colors.css';
 
 .landing-events {
-  padding: 12rem 8rem;
   background-color: var(--white);
 }
 
 .landing-wrapper {
   max-width: 1200px;
-  margin: 2rem auto;
-  padding: 0 1rem;
   position: relative;
 }
 
