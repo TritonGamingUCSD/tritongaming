@@ -3,6 +3,11 @@
 .landing-about {
   padding: 12rem 8rem;
   background-color: var(--white);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  text-align: center;
   }
   
   .about-container {
@@ -20,26 +25,65 @@
     align-items: center;
     flex: 1;
     min-width: 280px;
+    position: relative;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .scribble-bg {
+    position: absolute;
+    top: -30%;
+    width: 120%;
+    max-width: 500px;
+    z-index: 0;
+    pointer-events: none;
   }
   
   .about-image {
-    width: 100%;
+    width: 80%;
     max-width: 400px;
     object-fit: cover;
+    display: block;
+    z-index: 1;
   }
   
   .photo-credit {
     margin-top: 0.5rem;
     font-style: italic;
     text-align: center;
+    z-index: 1;
   }
   
   .about-text {
     flex: 2;
     min-width: 300px;
+    z-index: 1;
+    text-align: left;
   }
 
   .about-text h1 {
     margin-bottom: 1rem;
   }
   
+  .title-upcoming-events {
+    position: relative;
+    display: inline-block;
+    text-align: center;
+    margin: 0 auto;
+  }
+
+  .upcoming-events-bg {
+    z-index: 0;
+    pointer-events: none;
+    white-space: nowrap;
+    position: absolute;
+    text-align: center;
+    transform: translate(-12.5%, -25%);
+  }
+
+  .upcoming-events-fg {
+    position: relative;
+    z-index: 1;
+    white-space: nowrap;
+    text-align: center;
+  }
