@@ -1,0 +1,54 @@
+@import '../../styles/colors.css';
+
+.landing-events {
+  padding: 12rem 8rem;
+  background-color: var(--white);
+}
+
+.landing-wrapper {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  position: relative;
+}
+
+.landing-heading {
+  margin-bottom: 1rem;
+  font-size: 2rem;
+}
+
+.landing-controls {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.nav-button {
+  pointer-events: all;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  border: none;
+  font-size: 2rem;
+  padding: 0.5rem 1rem;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.event-carousel {
+  display: flex;
+  overflow-x: auto;
+  gap: 1rem;
+  scroll-behavior: smooth;
+  padding-bottom: 1rem;
+  scrollbar-width: none; /* Firefox */
+}
+
+.event-carousel::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+

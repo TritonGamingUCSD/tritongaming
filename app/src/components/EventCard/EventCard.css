@@ -1,0 +1,7 @@
+.event-card {
+  width: 80%; /* Adjust based on your container */
+  max-width: 400px;
+  flex: 0 0 auto;
+  margin: 0 1rem;
+  box-sizing: border-box;
+}
