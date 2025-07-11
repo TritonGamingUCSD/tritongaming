@@ -12,7 +12,7 @@ const Hero = () => {
         </video>
         <div className="video-gradient"></div>
         <div className="hero-content">
-          <h1 style={{ ...typography.accent, color: colors.yellow, textShadow: '4px 4px 10px rgba(0, 0, 0, 0.8)' }}>We are Triton Gaming</h1>
+          <h1 style={{ ...typography.accent, color: colors.yellow, textShadow: '4px 4px 10px rgba(0, 0, 0, 0.8)', fontWeight: '500' }}>We are Triton Gaming</h1>
         </div>
         <div className="hero-bottom-text">
           <span style={{ ...typography.h1, fontSize: '36px', color: colors.yellow, textShadow: '2px 2px 6px rgba(0, 0, 0, 0.6)' }}>EVENTS</span>
