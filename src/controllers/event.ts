@@ -46,7 +46,7 @@ export const getEvents = async (
         });
     } catch (error) {
         console.error("Failed to fetch events:", error);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ status: 500, message: "Internal server error" });
     }
 };
 
@@ -61,14 +61,14 @@ export const getEvent = async (
 
         const id = req.params.id;
         if (!ObjectId.isValid(id)) {
-            res.status(400).json({ message: "Invalid event ID" });
+            res.status(400).json({ status: 400, message: "Invalid event ID" });
             return;
         }
 
         const doc = await collection.findOne({ _id: new ObjectId(id) });
 
         if (!doc) {
-            res.status(404).json({ message: "Event not found" });
+            res.status(404).json({ status: 404, message: "Event not found" });
             return;
         }
 
@@ -90,6 +90,6 @@ export const getEvent = async (
         });
     } catch (error) {
         console.error("Failed to fetch event:", error);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ status: 500, message: "Internal server error" });
     }
 };
