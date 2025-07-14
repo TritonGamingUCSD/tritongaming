@@ -4,6 +4,7 @@
   "description": "Triton Gaming",
   "main": "dist/app.js",
   "scripts": {
+    "postinstall": "cd app && npm install",
     "start": "node dist/app.js",
     "server": "nodemon src/app.ts",
     "client": "npm start --prefix app",
