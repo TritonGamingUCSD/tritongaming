@@ -2,7 +2,7 @@
   "name": "tritongaming-website",
   "version": "1.0.0",
   "description": "",
-  "main": "app.js",
+  "main": "app.ts",
   "scripts": {
     "start": "node app",
     "server": "nodemon",
@@ -18,9 +18,14 @@
     "dotenv": "^17.2.0",
     "express": "^5.1.0",
     "express-validator": "^7.2.1",
-    "nodemon": "^3.1.10"
+    "mongodb": "^6.17.0"
   },
   "devDependencies": {
-    "concurrently": "^9.2.0"
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "concurrently": "^9.2.0",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
   }
 }
