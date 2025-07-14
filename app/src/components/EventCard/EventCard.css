@@ -1,0 +1,72 @@
+@import '../../styles/colors.css';
+
+.event-card {
+  width: 594px;  
+  flex: 0 0 auto;
+  margin: 0;
+  overflow: hidden;
+  background-color: white;
+  scroll-snap-align: center;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+
+.event-image-wrapper {
+  height: 396px;
+  overflow: hidden;
+}
+
+.event-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.info-box {
+  position: relative;
+  height: 176px;
+  padding: 0.75rem 1rem 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  background: linear-gradient(to right, #14477C, #011941);
+  color: var(--white);
+}
+
+
+.event-title {
+  font-size: 1.25rem; /* 20px */
+  font-weight: 700;
+  margin: 0 0 0.25rem 0;
+  line-height: 1.3;
+}
+
+.event-subtitle {
+  font-size: 0.75rem; /* 12px */
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+  line-height: 1.4;
+}
+
+.event-description {
+  max-height: 3.2em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.event-link {
+  position: absolute;
+  bottom: 0rem;
+  left: 1rem;
+  font-size: 0.875rem; /* 14px */
+  font-weight: 700;
+  color: var(--white);
+  text-transform: uppercase;
+  text-decoration: none;
+}

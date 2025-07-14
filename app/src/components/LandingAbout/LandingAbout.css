@@ -65,25 +65,3 @@
     margin-bottom: 1rem;
   }
   
-  .title-upcoming-events {
-    position: relative;
-    display: inline-block;
-    text-align: center;
-    margin: 0 auto;
-  }
-
-  .upcoming-events-bg {
-    z-index: 0;
-    pointer-events: none;
-    white-space: nowrap;
-    position: absolute;
-    text-align: center;
-    transform: translate(-12.5%, -25%);
-  }
-
-  .upcoming-events-fg {
-    position: relative;
-    z-index: 1;
-    white-space: nowrap;
-    text-align: center;
-  }
