@@ -41,10 +41,6 @@ const LandingAbout = () => {
           </p>
         </div>
       </div>
-      <div className="title-upcoming-events">
-        <h1 style={{ ...typography.accent, color: colors.yellow }} className="upcoming-events-bg">Upcoming Events</h1>
-        <h1 style={{ ...typography.h1, color: colors.darkblue }} className="upcoming-events-fg">Upcoming Events</h1>
-      </div>
     </section>
   );
 };
