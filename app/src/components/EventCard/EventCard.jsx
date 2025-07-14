@@ -1,7 +1,7 @@
 import React from 'react';
 import { typography } from '../../styles/typography';
 import './EventCard.css';
-import image from '../../assets/images/what_is_triton_gaming_justinlu.jpg';
+import image from '../../assets/images/what_is_triton_gaming_justinlu.jpg'; // HARD CODED IMAGE PLEASE REPLACE LATER
 
 const EventCard = ({ event }) => {
   return (
@@ -14,25 +14,26 @@ const EventCard = ({ event }) => {
           {event.title}
         </h2>
         <p style={{ ...typography.h1, lineHeight: '16px', fontSize: '12px' }}>
-          {event.date} # {event.location}
-        </p>
-        <p
+          {event.date}{' '}
+          <span style={{ ...typography.accent, lineHeight: '18px', fontSize: '18px', position: 'relative', top: '2px' }}>#</span>{' '}
+          <span style={{ ...typography.h1, lineHeight: '16px', fontSize: '12px' }}>{event.location}</span>
+        </p>        <p
           style={{
             ...typography.body,
-            padding: '1rem 0',
             lineHeight: '16px',
             fontSize: '12px',
+            paddingTop: '1rem',
           }}
         >
-          {event.description}
+          {event.description.length > 280 ? `${event.description.slice(0, 280)}...` : event.description}
         </p>
-        <a
+        <a className="event-link"
           href={event.link}
           target="_blank"
           rel="noopener noreferrer"
           style={{
             ...typography.h1,
-            fontSize: '22px', // override if needed
+            fontSize: '22px', 
             fontHeight: '16px',
             color: 'var(--white)',
           }}

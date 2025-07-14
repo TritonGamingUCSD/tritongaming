@@ -3,7 +3,7 @@
 .event-card {
   width: 594px;  
   flex: 0 0 auto;
-  margin: 0 1rem;
+  margin: 0;
   overflow: hidden;
   background-color: white;
   scroll-snap-align: center;
@@ -26,6 +26,7 @@
 }
 
 .info-box {
+  position: relative;
   height: 176px;
   padding: 0.75rem 1rem 0.75rem 1rem;
   display: flex;
@@ -34,6 +35,7 @@
   background: linear-gradient(to right, #14477C, #011941);
   color: var(--white);
 }
+
 
 .event-title {
   font-size: 1.25rem; /* 20px */
@@ -59,6 +61,9 @@
 }
 
 .event-link {
+  position: absolute;
+  bottom: 0rem;
+  left: 1rem;
   font-size: 0.875rem; /* 14px */
   font-weight: 700;
   color: var(--white);
