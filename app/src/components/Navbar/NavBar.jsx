@@ -4,44 +4,58 @@ import logo from '../../assets/logos/tg_logo_multi.png';
 import './NavBar.css';
 import { typography } from '../../styles/typography';
 import { colors } from '../../styles/colors';
-import navbarByte from '../../assets/easter_eggs/dez_ezain_byte_full.png'
-import byteCursor from '../../assets/easter_eggs/byte_cursor_prototype.png'
+import navbarByte from '../../assets/easter_eggs/dez_ezain_byte_full.png';
+import byteCursor from '../../assets/easter_eggs/byte_cursor_prototype.png';
 
 const NavBar = () => {
-  const [prevScrollPos, setPrevScrollPos] = useState(window.scrollY);
-  const [visible, setVisible] = useState(true);
+  const [prevScrollY, setPrevScrollY] = useState(window.scrollY);
+  const [offset, setOffset] = useState(0);
   const [cursorActive, setCursorActive] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      const currentScrollPos = window.scrollY;
-      setVisible(prevScrollPos > currentScrollPos || currentScrollPos < 10);
-      setPrevScrollPos(currentScrollPos);
+      const currentY = window.scrollY;
+      const delta = currentY - prevScrollY;
+
+      if (delta > 0) {
+        // Scrolling down → hide gradually
+        setOffset((prev) => Math.min(prev + delta, 200));
+      } else if (delta < 0) {
+        // Scrolling up → reveal faster
+        setOffset((prev) => Math.max(prev + delta * 2, 0));
+      }
+
+      setPrevScrollY(currentY);
     };
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [prevScrollPos]);
+  }, [prevScrollY]);
 
   useEffect(() => {
     if (cursorActive) {
       document.body.style.cursor = `url(${byteCursor}), auto`;
-    }
-    else {
+    } else {
       document.body.style.cursor = 'auto';
     }
+
     return () => {
       document.body.style.cursor = 'auto';
     };
   }, [cursorActive]);
 
   const toggleCursor = () => {
-    setCursorActive(prev => !prev);
-  }
+    setCursorActive((prev) => !prev);
+  };
 
   return (
-    <nav className={`navbar ${visible ? '' : 'hidden'}`}>
-      
+    <nav
+      className="navbar"
+      style={{
+        transform: `translateY(-${offset}px)`,
+        transition: 'transform 0.2s ease',
+      }}
+    >
       <div className="background-text-wrapper">
         <div className="background-text" style={typography.accent}>TRITON</div>
         <div className="background-text2" style={typography.accent}>GAMING</div>
@@ -54,7 +68,7 @@ const NavBar = () => {
       </div>
 
       <ul className="nav-links">
-        {/* byte cursor swap button */}
+        {/* Byte cursor toggle */}
         <div className="byte-icon" onClick={toggleCursor}>
           <img
             src={navbarByte}
@@ -62,10 +76,10 @@ const NavBar = () => {
             className={`navbarbyte ${cursorActive ? 'active' : ''}`}
           />
         </div>
-        <li style={{...typography.h3, color: colors.white}}><Link to="/about">ABOUT</Link></li>
-        <li style={{...typography.h3, color: colors.white}}><Link to="/events">EVENTS</Link></li>
-        <li style={{...typography.h3, color: colors.white}}><Link to="/sponsors">SPONSORS</Link></li>
-        <li style={{...typography.h3, color: colors.white}}><Link to="/team">GET INVOLVED</Link></li>
+        <li style={{ ...typography.h3, color: colors.white }}><Link to="/about">ABOUT</Link></li>
+        <li style={{ ...typography.h3, color: colors.white }}><Link to="/events">EVENTS</Link></li>
+        <li style={{ ...typography.h3, color: colors.white }}><Link to="/sponsors">SPONSORS</Link></li>
+        <li style={{ ...typography.h3, color: colors.white }}><Link to="/team">GET INVOLVED</Link></li>
       </ul>
     </nav>
   );
