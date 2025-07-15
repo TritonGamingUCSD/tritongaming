@@ -1,0 +1,10 @@
+@import '../styles/colors.css';
+
+.about-page {
+    padding: 16rem 8rem;
+    background-color: var(--white);
+  }
+
+.about-page .info-section {
+    margin-bottom: 8rem; /* or 3rem, adjust as needed */
+}
