@@ -3,6 +3,7 @@ import NavBar from './components/Navbar/NavBar';
 import LandingPage from './pages/LandingPage';
 import AboutPage from './pages/AboutPage';
 import Layout from './components/Layout/Layout';
+import EventsPage from './pages/EventsPage';
 
 function App() {
   return (
@@ -11,6 +12,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Layout><LandingPage /></Layout>} />
         <Route path="/about" element={<Layout><AboutPage /></Layout>} />
+        <Route path="/events" element={<Layout><EventsPage /></Layout>} />
       </Routes>
     </>
   );
