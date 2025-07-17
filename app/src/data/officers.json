@@ -1,0 +1,42 @@
+[
+  {
+    "title": "President",
+    "order": 0,
+    "officer": {
+      "full_name": "Chris Kreins",
+      "gamer_tag": "CJ",
+      "bio": "Chris is the GOAT AND THE GOATED PRESIDENT AND REALLY LIKES PORKCHOPS AND ALSO A FUN FACT ABOUT CHRIS IS HE IS THE GOAT AND ALSO DOES SUPER GOATED STUFF.",
+      "year": "4th Year",
+      "major": "Business Psych",
+      "committee": [],
+      "picture_url": ""
+    }
+  },
+  {
+    "title": "Vice President External",
+    "order": 1,
+    "officer": {
+      "full_name": "Jewelle Tatad",
+      "gamer_tag": "Kit",
+      "bio": "Kit is awesome and passionate about community building. She’s also into studio art and has helped plan some of our biggest events.",
+      "year": "4th Year",
+      "major": "ICAM: Studio Art",
+      "committee": [],
+      "picture_url": ""
+    }
+  },
+  {
+    "title": "Vice President Internal",
+    "order": 2,
+    "officer": {
+      "full_name": "Serena Chen",
+      "gamer_tag": "LunaNoctis",
+      "bio": "Serena is a coding wizard who organizes internal affairs and keeps things running smoothly. She's also great at workshops and tech setups.",
+      "year": "4th Year",
+      "major": "Computer Science",
+      "committee": [],
+      "picture_url": "/images/lunanoctis.png"
+    }
+  }
+]
+

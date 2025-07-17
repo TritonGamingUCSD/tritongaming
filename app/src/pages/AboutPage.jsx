@@ -4,6 +4,9 @@ import InfoSection from '../components/InfoSection/InfoSection';
 import insideTG from '../assets/images/inside_tg.jpg';
 import communityTG from '../assets/images/community_tg.jpg';
 import eventsTG from '../assets/images/events_tg.JPG';
+import { typography } from '../styles/typography';
+import { colors } from '../styles/colors';
+import ExecList from '../components/ExecList/ExecList';
 
 const AboutPage = () => {
   return (
@@ -36,6 +39,11 @@ const AboutPage = () => {
             photoCredit="Mina Yang"
             photoCreditLink="https://www.instagram.com/tritongamingsd"
         />
+        <div className="title-upcoming-events">
+            <h1 style={{ ...typography.accent, color: colors.yellow }} className="upcoming-events-bg">Executives</h1>
+            <h1 style={{ ...typography.h1, color: colors.darkblue }} className="upcoming-events-fg">Executives</h1>
+        </div>
+        <ExecList/>
     </div>
   );
 };

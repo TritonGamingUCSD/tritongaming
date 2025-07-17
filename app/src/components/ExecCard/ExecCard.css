@@ -1,0 +1,64 @@
+.exec-card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 2rem;
+  margin: 3rem 0;
+  padding: 2rem;
+  background: linear-gradient(
+    to right,
+    #14477C 0%,
+    #4C7299 28%,
+    #839CB6 57%,
+    #F2F1F0 100%
+  );
+  border-radius: 1rem;
+  color: white;
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+  overflow: visible;
+  flex: 1;
+  z-index: 2;
+  padding-left: 160px; /* pushes text away from left-side image */
+}
+
+.exec-card.reverse {
+  flex-direction: row-reverse;
+  background: linear-gradient(
+    to left,
+    #14477C 0%,
+    #4C7299 28%,
+    #839CB6 57%,
+    #F2F1F0 100%
+  );
+  text-align: right;
+  flex: 1;
+  z-index: 2;
+  padding-right: 160px; /* pushes text away from image */
+}
+
+.exec-image-wrapper {
+  position: absolute;
+  bottom: -100px;
+  left: -250px;
+  scale: 0.8;
+}
+
+.exec-card.reverse .exec-image-wrapper {
+  left: auto;
+  bottom: -100px;
+  right: -250px;
+  scale: 0.8;
+}
+
+.exec-image {
+  height: auto;
+  width: auto;
+  max-height: none;
+}
+
+.exec-info {
+  flex: 1;
+  z-index: 2; /* ensure it stacks above the image if needed */
+}
