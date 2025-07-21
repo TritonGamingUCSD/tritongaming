@@ -18,7 +18,7 @@
     "officer": {
       "full_name": "Jewelle Tatad",
       "gamer_tag": "Kit",
-      "bio": "Kit is awesome and passionate about community building. She’s also into studio art and has helped plan some of our biggest events.",
+      "bio": "Chris is the GOAT AND THE GOATED PRESIDENT AND REALLY LIKES PORKCHOPS AND ALSO A FUN FACT ABOUT CHRIS IS HE IS THE GOAT AND ALSO DOES SUPER GOATED STUFF.",
       "year": "4th Year",
       "major": "ICAM: Studio Art",
       "committee": [],
@@ -35,7 +35,85 @@
       "year": "4th Year",
       "major": "Computer Science",
       "committee": [],
-      "picture_url": "/images/lunanoctis.png"
+      "picture_url": ""
+    }
+  },
+  {
+    "title": "Live Events Director",
+    "order": 3,
+    "officer": {
+      "full_name": "Serena Chuang",
+      "gamer_tag": "miatz",
+      "bio": "Serena is a coding wizard who organizes internal affairs and keeps things running smoothly. She's also great at workshops and tech setups.",
+      "year": "4th Year",
+      "major": "Computer Science",
+      "committee": [],
+      "picture_url": ""
+    }
+  },
+  {
+    "title": "Live Events Director",
+    "order": 4,
+    "officer": {
+      "full_name": "Owen Lam",
+      "gamer_tag": "froguro",
+      "bio": "Serena is a coding wizard who organizes internal affairs and keeps things running smoothly. She's also great at workshops and tech setups.",
+      "year": "4th Year",
+      "major": "Computer Science",
+      "committee": [],
+      "picture_url": ""
+    }
+  },
+  {
+    "title": "Marketing Director",
+    "order": 5,
+    "officer": {
+      "full_name": "Rae Jackson",
+      "gamer_tag": "LunaNoctis",
+      "bio": "Serena is a coding wizard who organizes internal affairs and keeps things running smoothly. She's also great at workshops and tech setups.",
+      "year": "4th Year",
+      "major": "Computer Science",
+      "committee": [],
+      "picture_url": ""
+    }
+  },
+  {
+    "title": "Creative Director",
+    "order": 6,
+    "officer": {
+      "full_name": "Esme Kasavin",
+      "gamer_tag": "LunaNoctis",
+      "bio": "Serena is a coding wizard who organizes internal affairs and keeps things running smoothly. She's also great at workshops and tech setups.",
+      "year": "4th Year",
+      "major": "Computer Science",
+      "committee": [],
+      "picture_url": ""
+    }
+  },
+  {
+    "title": "Social Director",
+    "order": 7,
+    "officer": {
+      "full_name": "Jacob Zhang",
+      "gamer_tag": "bleachy",
+      "bio": "Serena is a coding wizard who organizes internal affairs and keeps things running smoothly. She's also great at workshops and tech setups.",
+      "year": "4th Year",
+      "major": "Computer Science",
+      "committee": [],
+      "picture_url": ""
+    }
+  },
+  {
+    "title": "HR Director",
+    "order": 8,
+    "officer": {
+      "full_name": "Philip Tsai",
+      "gamer_tag": "LunaNoctis",
+      "bio": "Serena is a coding wizard who organizes internal affairs and keeps things running smoothly. She's also great at workshops and tech setups.",
+      "year": "4th Year",
+      "major": "Computer Science",
+      "committee": [],
+      "picture_url": ""
     }
   }
 ]

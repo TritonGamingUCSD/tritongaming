@@ -27,7 +27,7 @@ const ExecCard= ({ exec, reverse }) => {
       </div>      
       <div className="exec-info">
         {/*<h3 className="exec-title" >{exec.title.toUpperCase()}</h3>*/}
-        <h2 className="exec-name" style={{...typography.h1}}>
+        <h2 className="exec-name" style={{...typography.h1, fontSize: '1.5rem', lineHeight: '2rem'}}>
           {formatNameWithGamerTag(full_name, gamer_tag)}
         </h2>
         <div className="exec-subinfo" style={{...typography.h1, fontSize: '1rem', lineHeight: '1.75rem'}}>
@@ -35,7 +35,7 @@ const ExecCard= ({ exec, reverse }) => {
           <p>{year}</p>
           <p>{major}</p>
         </div>
-        <p className="exec-bio" style={{...typography.body, fontSize: '1rem', lineHeight: '1.5rem'}}>{bio}</p>
+        <p className="exec-bio" style={{...typography.body, fontSize: '0.75rem', lineHeight: '1rem'}}>{bio}</p>
       </div>
     </div>
   );

@@ -1,13 +1,63 @@
 import React from 'react';
 import ExecCard from '../ExecCard/ExecCard';
 import officers from '../../data/officers.json'; // your JSON
+import { typography } from '../../styles/typography';
+import { colors } from '../../styles/colors';
+import './ExecList.css';
 
 const ExecList = () => {
   return (
     <div>
-      {officers.map((exec, index) => (
-        <ExecCard key={exec.officer.full_name} exec={exec} reverse={index % 2 !== 0} />
-      ))}
+      <div className="exec">
+        <div className="title-exec">
+          <h1 style={{ ...typography.h1, color: colors.darkblue }}>MR. PRESIDENT</h1>
+        </div>
+        <ExecCard exec={officers.find(exec => exec.title === 'President')} reverse={false} />
+      </div>
+
+      <div className="exec">
+        <div className="title-exec">
+          <h1 style={{ ...typography.h1, color: colors.darkblue }}>Vice Presidents</h1>
+        </div>
+        <ExecCard exec={officers.find(exec => exec.title === 'Vice President External')} reverse={true} />
+        <ExecCard exec={officers.find(exec => exec.title === 'Vice President Internal')} reverse={false} />
+      </div>
+
+      <div className="exec">
+        <div className="title-exec">
+          <h1 style={{ ...typography.h1, color: colors.darkblue }}>Live Events</h1>
+        </div>
+        {officers
+          .filter(exec => exec.title === 'Live Events Director')
+          .map((exec, index) => (
+            <div key={`${exec.officer.full_name}-${index}`}>
+              <ExecCard exec={exec} reverse={index % 2 !== 1} />
+              {/* add content between the two */}
+              {index === 0 && <div className="divider" />}
+            </div>
+          ))}
+      </div>
+
+      <div className="exec">
+        <div className="title-exec">
+          <h1 style={{ ...typography.h1, color: colors.darkblue }}>Creative</h1>
+        </div>
+        <ExecCard exec={officers.find(exec => exec.title === 'Creative Director')} reverse={true} />
+      </div>
+      
+      <div className="exec">
+        <div className="title-exec">
+          <h1 style={{ ...typography.h1, color: colors.darkblue }}>Social</h1>
+        </div>
+        <ExecCard exec={officers.find(exec => exec.title === 'Social Director')} reverse={false} />
+      </div>
+
+      <div className="exec">
+        <div className="title-exec">
+          <h1 style={{ ...typography.h1, color: colors.darkblue }}>Human Resources</h1>
+        </div>
+        <ExecCard exec={officers.find(exec => exec.title === 'HR Director')} reverse={true} />
+      </div>
     </div>
   );
 };
