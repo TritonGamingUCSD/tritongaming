@@ -16,13 +16,16 @@ const EventCard = ({ event }) => {
         <p style={{ ...typography.h1, lineHeight: '16px', fontSize: '12px' }}>
           {event.date}{' '}
           <span style={{ ...typography.accent, lineHeight: '18px', fontSize: '18px', position: 'relative', top: '2px' }}>#</span>{' '}
-          <span style={{ ...typography.h1, lineHeight: '16px', fontSize: '12px' }}>{event.location}</span>
-        </p>        <p
+          <span style={{ ...typography.h1, lineHeight: '16px', fontSize: '12px' }}>{event.time}</span>
+        </p>        
+        <p style={{ ...typography.h1, lineHeight: '16px', fontSize: '12px' }}>
+          {event.location}
+        </p>
+        <p
           style={{
             ...typography.body,
             lineHeight: '16px',
             fontSize: '12px',
-            paddingTop: '1rem',
           }}
         >
           {event.description.length > 280 ? `${event.description.slice(0, 280)}...` : event.description}

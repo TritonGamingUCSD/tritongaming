@@ -2,13 +2,15 @@
   {
     "title": "Triton Gaming Expo",
     "date": "June 1-2, 2024",
+    "time": "12PM-7PM",
     "location": "Price Center",
-    "description": "Come out and join us for a two-day celebration of UC San Diego’s diverse and vibrant gaming community!",
+    "description": "1. Come out and join us for a two-day celebration of UC San Diego’s diverse and vibrant gaming community!",
     "link": "https://example.com/tgex"
   },
   {
     "title": "Triton Gaming Expo",
     "date": "June 1-2, 2024",
+    "time": "12PM-7PM",
     "location": "Price Center",
     "description": "Come out and join us for a two-day celebration of UC San Diego’s diverse and vibrant gaming community! HEYHEYHEHYEHYHEYEHEYHEHYHEHYEHYHEHYHEHYHEYHEHYEHYHEHYEHYHEHYH lskdjflksdjf sldkfjsdklfjskdlfjsdlkfj jjsldkjfskldfjsldkfjs jsldkjfskldfjsldkfjsjsl ssldkjfskldfjsldkfjs sdfsdfsdfdsfsdfsfdsfsdf",
     "link": "https://example.com/tgex"
@@ -16,6 +18,7 @@
   {
     "title": "Triton Gaming Expo",
     "date": "June 1-2, 2024",
+    "time": "12PM-7PM",
     "location": "Price Center",
     "description": "Come out and join us for a two-day celebration of UC San Diego’s diverse and vibrant gaming community!",
     "link": "https://example.com/tgex"
@@ -23,65 +26,9 @@
   {
     "title": "Triton Gaming Expo",
     "date": "June 1-2, 2024",
-    "location": "Price Center",
-    "description": "Come out and join us for a two-day celebration of UC San Diego’s diverse and vibrant gaming community!",
-    "link": "https://example.com/tgex"
-  },
-  {
-    "title": "Triton Gaming Expo",
-    "date": "June 1-2, 2024",
-    "location": "Price Center",
-    "description": "Come out and join us for a two-day celebration of UC San Diego’s diverse and vibrant gaming community!",
-    "link": "https://example.com/tgex"
-  },
-  {
-    "title": "Triton Gaming Expo",
-    "date": "June 1-2, 2024",
-    "location": "Price Center",
-    "description": "Come out and join us for a two-day celebration of UC San Diego’s diverse and vibrant gaming community!",
-    "link": "https://example.com/tgex"
-  },
-  {
-    "title": "Triton Gaming Expo",
-    "date": "June 1-2, 2024",
-    "location": "Price Center",
-    "description": "Come out and join us for a two-day celebration of UC San Diego’s diverse and vibrant gaming community!",
-    "link": "https://example.com/tgex"
-  },
-  {
-    "title": "Triton Gaming Expo",
-    "date": "June 1-2, 2024",
-    "location": "Price Center",
-    "description": "Come out and join us for a two-day celebration of UC San Diego’s diverse and vibrant gaming community!",
-    "link": "https://example.com/tgex"
-  },
-  {
-    "title": "Triton Gaming Expo",
-    "date": "June 1-2, 2024",
-    "location": "Price Center",
-    "description": "Come out and join us for a two-day celebration of UC San Diego’s diverse and vibrant gaming community!",
-    "link": "https://example.com/tgex"
-  },
-  {
-    "title": "Triton Gaming Expo",
-    "date": "June 1-2, 2024",
-    "location": "Price Center",
-    "description": "Come out and join us for a two-day celebration of UC San Diego’s diverse and vibrant gaming community!",
-    "link": "https://example.com/tgex"
-  },
-  {
-    "title": "Triton Gaming Expo",
-    "date": "June 1-2, 2024",
-    "location": "Price Center",
-    "description": "Come out and join us for a two-day celebration of UC San Diego’s diverse and vibrant gaming community!",
-    "link": "https://example.com/tgex"
-  },
-  {
-    "title": "Triton Gaming Expo",
-    "date": "June 1-2, 2024",
+    "time": "12PM-7PM",
     "location": "Price Center",
     "description": "Come out and join us for a two-day celebration of UC San Diego’s diverse and vibrant gaming community!",
     "link": "https://example.com/tgex"
   }
-
 ]
