@@ -64,10 +64,10 @@ const EventCard = ({ event }) => {
           {event.date}{' '}
           {dateString}{' '}
           <span style={{ ...typography.accent, lineHeight: '18px', fontSize: '18px', position: 'relative', top: '2px' }}>#</span>{' '}
-          <span style={{ ...typography.h1, lineHeight: '16px', fontSize: '12px' }}>{event.location}</span>
+          <span style={{ ...typography.h1, lineHeight: '16px', fontSize: '12px' }}>{timeString}</span>
         </p>        
         <p>
-          <span style={{ ...typography.h1, lineHeight: '16px', fontSize: '12px' }}>{timeString}</span>
+          <span style={{ ...typography.h1, lineHeight: '16px', fontSize: '12px' }}>{event.location}</span>
         </p>        
         <p
           style={{
