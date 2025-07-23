@@ -1,50 +1,35 @@
-import express, { Application, Request, Response } from "express";
+import express from "express";
 import cors from "cors";
 import path from "path";
-import event from "./routes/event";
-
-interface Paths {
-    event: string;
-}
+import eventRoutes from "./routes/events.router";
 
 class Server {
-    private app: Application;
-    private port: string | number;
-    private paths: Paths;
+    private app = express();
+    private port = process.env.PORT || 80;
 
     constructor() {
-        this.app = express();
-        this.port = process.env.PORT || 3000;
-        this.paths = {
-            event: "/api/event",
-        };
-
-        this.middlewares();
-        this.routes();
+        this.setupMiddleware();
+        this.setupRoutes();
     }
 
-    private middlewares(): void {
+    private setupMiddleware() {
         this.app.use(cors());
         this.app.use(express.json());
-
-        // Serve static files from the frontend
         this.app.use(express.static(path.join(__dirname, "../app/dist")));
     }
 
-    private routes(): void {
-        this.app.use(this.paths.event, event);
+    private setupRoutes() {
+        this.app.use("/api/events", eventRoutes);
 
-        // Catch-all handler to serve React's index.html
-        this.app.get("", (_req: Request, res: Response) => {
-            res.sendFile(
-                path.join(__dirname, "../app/dist/index.html")
-            );
+        // Serve React index.html for all other routes
+        this.app.get("", (_req, res) => {
+            res.sendFile(path.join(__dirname, "../app/dist/index.html"));
         });
     }
 
-    public listen(): void {
+    public listen() {
         this.app.listen(this.port, () => {
-            console.log("Server running on port:", this.port);
+            console.log(`Server running on port ${this.port}`);
         });
     }
 }

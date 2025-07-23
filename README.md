@@ -78,3 +78,7 @@ npm install
    👉 [http://localhost](http://localhost)
 
 ---
+
+## Common Q&A
+1. MongoDB connection failed:
+> Check network access, see if the IP address is added
