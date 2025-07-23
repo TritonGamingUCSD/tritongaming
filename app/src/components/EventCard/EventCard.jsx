@@ -54,7 +54,6 @@ const EventCard = ({ event }) => {
   return (
     <div className="event-card">
       <div className="event-image-wrapper">
-        <img src={image} alt={event.title} className="event-image" />
         <img src={event.flyer_url || image} alt={event.full_name} className="event-image" />
       </div>
       <div className="info-box">
@@ -66,12 +65,10 @@ const EventCard = ({ event }) => {
           {dateString}{' '}
           <span style={{ ...typography.accent, lineHeight: '18px', fontSize: '18px', position: 'relative', top: '2px' }}>#</span>{' '}
           <span style={{ ...typography.h1, lineHeight: '16px', fontSize: '12px' }}>{event.location}</span>
-        </p>        <p
+        </p>        
+        <p>
           <span style={{ ...typography.h1, lineHeight: '16px', fontSize: '12px' }}>{timeString}</span>
         </p>        
-        <p style={{ ...typography.h1, lineHeight: '16px', fontSize: '12px' }}>
-          {event.location}
-        </p>
         <p
           style={{
             ...typography.body,
