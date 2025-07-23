@@ -27,6 +27,26 @@ class EventsController {
             res.status(500).json({ status: 500, message: "Internal server error" });
         }
     }
+
+    public async getPreviousEvents(req: Request, res: Response): Promise<void> {
+        try {
+            const events = await EventsRepository.findPrevious();
+            res.status(200).json({ status: 200, message: "Success", events });
+        } catch (error) {
+            console.error("Failed to fetch previous events:", error);
+            res.status(500).json({ status: 500, message: "Internal server error" });
+        }
+    }
+
+    public async getUpcomingEvents(req: Request, res: Response): Promise<void> {
+        try {
+            const events = await EventsRepository.findUpcoming();
+            res.status(200).json({ status: 200, message: "Success", events });
+        } catch (error) {
+            console.error("Failed to fetch upcoming events:", error);
+            res.status(500).json({ status: 500, message: "Internal server error" });
+        }
+    }
 }
 
 export default new EventsController();

@@ -7,4 +7,5 @@ export type Event = {
     flyer_url: string;
     location: string;
     content: string;
+    url: string;
 };

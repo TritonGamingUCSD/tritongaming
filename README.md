@@ -34,9 +34,9 @@ cd tritongaming-website
 Create a `.env` file in the root directory using `.env.example` as a template:
 
 ```env
-PORT=80                 # Backend server port
-ATLAS_URI=                # MongoDB connection string
-DB_NAME=tg_database       # Database name
+PORT=80                    # Website port
+ATLAS_URI=                 # MongoDB connection string
+DB_NAME=website_db         # Database name
 ```
 
 ### 3️⃣ Install Dependencies
@@ -82,3 +82,5 @@ npm install
 ## Common Q&A
 1. MongoDB connection failed:
 > Check network access, see if the IP address is added
+
+2. 
