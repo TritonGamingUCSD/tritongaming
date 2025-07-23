@@ -1,2 +1,25 @@
 [
 ]
+    {
+      "_id": "6875864e0f0318de719684f1",
+      "full_name": "Triton Gaming Expo 2025",
+      "name": "TGEX 2025",
+      "start_date": "2025-05-31T19:00:00.000Z",
+      "end_date": "2025-05-31T19:00:00.000Z",
+      "flyer_url": "",
+      "location": "Price Center",
+      "content": "TGEX is Super Cool and Everyone should come for the cool prizes.",
+      "url": "https://eventbrite.com/tgex"
+    },
+    {
+      "_id": "687588ba40b8f18eaf7a4869",
+      "full_name": "Spring Games Expo",
+      "name": "Spring Games Expo",
+      "start_date": "2025-04-04T21:00:00.000Z",
+      "end_date": "2025-04-04T21:00:00.000Z",
+      "flyer_url": "",
+      "location": "Sixth College Lodge & Dogg House",
+      "content": "TGEX is Super Cool and Everyone should come for the cool prizes.",
+      "url": ""
+    }
+  ]
