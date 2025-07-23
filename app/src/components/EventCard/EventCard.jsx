@@ -74,7 +74,6 @@ const EventCard = ({ event }) => {
             ...typography.body,
             lineHeight: '16px',
             fontSize: '12px',
-            paddingTop: '1rem',
           }}
         >
           {event.content.length > 280 ? `${event.content.slice(0, 280)}...` : event.content}

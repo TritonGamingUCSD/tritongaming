@@ -5,6 +5,8 @@ import './LandingEvents.css';
 import { typography } from '../../styles/typography';
 import { colors } from '../../styles/colors';
 
+const ITEMS_TO_CLONE = 2;
+
 const LandingEvents = () => {
   const scrollRef = useRef(null);
   const cardRefs = useRef([]);
@@ -14,6 +16,7 @@ const LandingEvents = () => {
   const extendedEvents = [...events, ...events, ...events];
 
   const scrollToCard = (index, smooth = true) => {
+
     const container = scrollRef.current;
     const card = cardRefs.current[index];
     if (container && card) {
@@ -37,11 +40,13 @@ const LandingEvents = () => {
     } else if (focusedIndex === 2 * events.length) {
       setFocusedIndex(events.length);
       setTimeout(() => scrollToCard(events.length, false), 150);
+
     }
   };
 
   useEffect(() => {
     scrollToCard(focusedIndex, false);
+
   }, []);
 
   useEffect(() => {
@@ -77,6 +82,7 @@ const LandingEvents = () => {
 
       <div className="landing-wrapper">
         <div className="event-carousel" ref={scrollRef}>
+
           {extendedEvents.map((event, index) => (
             <div
               key={index}

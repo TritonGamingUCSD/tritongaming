@@ -1,0 +1,34 @@
+@import '../../styles/colors.css';
+
+.upcoming-events {
+    background-color: var(--white);
+    padding: 12rem 8rem;
+  }
+
+  .title-upcoming-events {
+    position: relative;
+    display: inline-block;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0 auto;
+    padding: 5rem 0;
+  }
+  
+  .upcoming-events-bg {
+    z-index: 0;
+    font-weight: 500;
+    pointer-events: none;
+    white-space: nowrap;
+    position: absolute;
+    text-align: center;
+    transform: translate(0%, -30%);
+  }
+  
+  .upcoming-events-fg {
+    position: relative;
+    z-index: 1;
+    white-space: nowrap;
+    text-align: center;
+  }

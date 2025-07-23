@@ -1,14 +1,17 @@
 {
   "name": "tritongaming-website",
   "version": "1.0.0",
-  "description": "",
-  "main": "app.ts",
+  "description": "Triton Gaming",
+  "main": "dist/app.js",
   "scripts": {
-    "start": "node app",
-    "server": "nodemon",
+    "postinstall": "cd app && npm install",
+    "start": "node dist/app.js",
+    "server": "nodemon src/app.ts",
     "client": "npm start --prefix app",
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "build": "npm run build --prefix app"
+    "build:client": "npm run build --prefix app",
+    "build:server": "tsc",
+    "build": "npm run build:server && npm run build:client",
+    "dev": "concurrently \"npm run server\" \"npm run client\""
   },
   "author": "",
   "license": "ISC",

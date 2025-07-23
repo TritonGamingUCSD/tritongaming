@@ -7,8 +7,8 @@ const LandingPage = () => (
   <>
     <Hero />
     <LandingAbout />
-    <LandingEvents />
     <LandingStatistics />
+    <LandingEvents />
   </>
 );
 
