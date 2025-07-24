@@ -11,7 +11,9 @@ class EventsRouter {
 
     private initializeRoutes() {
         this.router.get("/", EventsController.getEvents);
-        this.router.get("/:id", EventsController.getEvent);
+        this.router.get("/upcoming", EventsController.getUpcomingEvents);
+        this.router.get("/previous", EventsController.getPreviousEvents);
+        this.router.get("/id/:id", EventsController.getEvent);
     }
 }
 
