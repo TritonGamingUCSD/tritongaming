@@ -6,6 +6,7 @@
   align-items: stretch;
   width: 100%;
   margin-bottom: 40px;
+  max-height: 350px;
 }
 
 .long-event-card-image {
@@ -27,7 +28,6 @@
   flex: 2;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
   /*background: linear-gradient(
     to right,
     rgba(20, 71, 124, 1) 0%,
