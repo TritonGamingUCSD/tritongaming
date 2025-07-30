@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import EventCard from '../EventCard/EventCard';
-import events from '../../data/events';
+// import events from '../../data/events';
 import './LandingEvents.css';
 import { typography } from '../../styles/typography';
 import { colors } from '../../styles/colors';
@@ -10,9 +10,26 @@ const ITEMS_TO_CLONE = 2;
 const LandingEvents = () => {
   const scrollRef = useRef(null);
   const cardRefs = useRef([]);
-  const [focusedIndex, setFocusedIndex] = useState(events.length); // Start from 1 (first real item)
+  const [events, setEvents] = useState([]);
+  const [focusedIndex, setFocusedIndex] = useState(events.length); 
 
-  //const extendedEvents = [events[events.length - 1], ...events, events[0]]; // Add duplicate head and tail
+  //fetch events
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const res = await fetch('https://tritongaming.onrender.com/api/events/previous');
+        const data = await res.json();
+        setEvents(data.events); 
+        setFocusedIndex(2 * data.events.length - 1);
+        scrollToCard(2 * data.events.length - 1);
+      } catch (err) {
+        console.error('Failed to load events:', err);
+      }
+    };
+
+    fetchEvents();
+  }, []);
+
   const extendedEvents = [...events, ...events, ...events];
 
   const scrollToCard = (index, smooth = true) => {
