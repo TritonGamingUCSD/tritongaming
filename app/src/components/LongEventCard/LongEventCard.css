@@ -1,0 +1,43 @@
+@import '../../styles/colors.css';
+
+.long-event-card {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  width: 100%;
+  margin-bottom: 40px;
+}
+
+.long-event-card-image {
+  flex: 1;
+  min-width: 300px;
+  max-width: 400px;
+  overflow: hidden;
+}
+
+.long-event-card-image img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+.long-event-card-content {
+  color: var(--white);
+  padding: 20px;
+  padding-bottom: 0px;
+  gap: 5px;
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  /*background: linear-gradient(
+    to right,
+    rgba(20, 71, 124, 1) 0%,
+    rgba(1, 25, 65, 0.5) 100%
+  );*/
+  background: linear-gradient(to right, #14477C, #011941);
+
+}
+
+.event-description {
+  min-height: 3rem;
+}
