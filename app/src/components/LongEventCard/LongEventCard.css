@@ -10,14 +10,12 @@
 
 .long-event-card-image {
   flex: 1;
-  min-width: 300px;
-  max-width: 400px;
   overflow: hidden;
 }
 
 .long-event-card-image img {
   width: 100%;
-  height: auto;
+  height: 100%;
   object-fit: cover;
 }
 
@@ -29,6 +27,7 @@
   flex: 2;
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   /*background: linear-gradient(
     to right,
     rgba(20, 71, 124, 1) 0%,
@@ -40,4 +39,6 @@
 
 .event-description {
   min-height: 3rem;
+  overflow: hidden;
+
 }
