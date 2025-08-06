@@ -13,6 +13,10 @@
   max-width: 800px;
 }
 
+.event-card:hover {
+  cursor: default;
+}
+
 
 .event-image-wrapper {
   height: auto;
@@ -52,22 +56,22 @@
   line-height: 1.4;
 }
 
-.event-description {
-  max-height: 3.2em;
+.event-short-description {
+  min-height: 1.5rem;
   overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
 }
 
 .event-link {
-  position: absolute;
-  bottom: 0rem;
-  left: 1rem;
   font-size: 0.875rem; /* 14px */
   font-weight: 700;
   color: var(--white);
   text-transform: uppercase;
   text-decoration: none;
+  background: linear-gradient(to right, #011941 25%, #14477C 86%);
+  border-radius: 4px;
+  padding: 0 1rem;
+  display: inline-block;
+  text-decoration: none;
+  box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+  text-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
 }

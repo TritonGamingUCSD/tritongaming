@@ -1,0 +1,7 @@
+@import '../styles/colors.css';
+
+.events {
+    background-color: var(--white);
+    padding: 12rem 8rem;
+  }
+

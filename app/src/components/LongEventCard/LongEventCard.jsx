@@ -8,10 +8,8 @@ const LongEventCard = ({ event }) => {
   const startDate = new Date(event.start_date);
   const endDate = new Date(event.end_date);
 
-  // Helper: zero out time to compare just the date
   const isSameDay = startDate.toDateString() === endDate.toDateString();
 
-  // CASE 1: Single-day event
   if (isSameDay) {
     var dateString = startDate.toLocaleDateString("en-US", {
       month: "long",
@@ -19,7 +17,6 @@ const LongEventCard = ({ event }) => {
       year: "numeric"
     });
   } else {
-    // CASE 2: Multi-day event — check for year and month differences
     const sameMonth = startDate.getMonth() === endDate.getMonth();
     const sameYear = startDate.getFullYear() === endDate.getFullYear();
 
@@ -41,7 +38,6 @@ const LongEventCard = ({ event }) => {
     var dateString = `${startPart} – ${endPart}`;
   }
 
-  // Format the time frame (e.g., "12:00 PM - 3:00 PM")
   const timeString = `${startDate.toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",
@@ -65,7 +61,7 @@ const LongEventCard = ({ event }) => {
         </p>        
         <p style={{...typography.h1, lineHeight: '16px', fontSize: '16px'}}>{event.location}</p>
         <p className="event-description" style={{...typography.body, fontSize: '16px'}}>{event.content}</p>
-        <a
+        <a className="long-event-link"
           href={event.url}
           target="_blank"
           rel="noopener noreferrer"
@@ -73,6 +69,7 @@ const LongEventCard = ({ event }) => {
             ...typography.h1,
             fontSize: '23px',
             color: 'var(--white)',
+            maxWidth: 'max-content',
           }}
         >
           LEARN MORE &gt;

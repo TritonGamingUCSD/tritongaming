@@ -23,7 +23,7 @@
 .long-event-card-content {
   color: var(--white);
   padding: 20px;
-  padding-bottom: 0px;
+  padding-bottom: 1rem;
   gap: 5px;
   flex: 2;
   display: flex;
@@ -33,7 +33,7 @@
     rgba(20, 71, 124, 1) 0%,
     rgba(1, 25, 65, 0.5) 100%
   );*/
-  background: linear-gradient(to right, #14477C, #011941);
+  background: linear-gradient(to right, #14477C 0%, #011941 100%);
 
 }
 
@@ -42,3 +42,16 @@
   overflow: hidden;
 
 }
+
+.long-event-link{
+  background: linear-gradient(to right, #011941 25%, #14477C 86%);
+  border-radius: 4px;
+  padding: 0 1rem;
+  font-weight: bold;
+  display: inline-block;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+  text-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+}
+

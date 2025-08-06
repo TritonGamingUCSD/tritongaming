@@ -8,10 +8,8 @@ const EventCard = ({ event }) => {
   const startDate = new Date(event.start_date);
   const endDate = new Date(event.end_date);
 
-  // Helper: zero out time to compare just the date
   const isSameDay = startDate.toDateString() === endDate.toDateString();
 
-  // CASE 1: Single-day event
   if (isSameDay) {
     var dateString = startDate.toLocaleDateString("en-US", {
       month: "long",
@@ -19,7 +17,6 @@ const EventCard = ({ event }) => {
       year: "numeric"
     });
   } else {
-    // CASE 2: Multi-day event — check for year and month differences
     const sameMonth = startDate.getMonth() === endDate.getMonth();
     const sameYear = startDate.getFullYear() === endDate.getFullYear();
 
@@ -41,7 +38,6 @@ const EventCard = ({ event }) => {
     var dateString = `${startPart} – ${endPart}`;
   }
 
-  // Format the time frame (e.g., "12:00 PM - 3:00 PM")
   const timeString = `${startDate.toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",
@@ -69,7 +65,7 @@ const EventCard = ({ event }) => {
         <p>
           <span style={{ ...typography.h1, lineHeight: '16px', fontSize: '12px' }}>{event.location}</span>
         </p>        
-        <p
+        <p className="event-short-description"
           style={{
             ...typography.body,
             lineHeight: '16px',
@@ -85,8 +81,8 @@ const EventCard = ({ event }) => {
           style={{
             ...typography.h1,
             fontSize: '22px', 
-            fontHeight: '16px',
             color: 'var(--white)',
+            maxWidth: 'max-content'
           }}
         >
           LEARN MORE &gt;
