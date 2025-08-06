@@ -58,7 +58,7 @@ const EventCard = ({ event }) => {
       </div>
       <div className="info-box">
         <h2 style={{ ...typography.h1, lineHeight: '32px', fontSize: '24px' }}>
-          {event.title}
+          {event.full_name}
         </h2>
         <p style={{ ...typography.h1, lineHeight: '16px', fontSize: '12px' }}>
           {event.date}{' '}
