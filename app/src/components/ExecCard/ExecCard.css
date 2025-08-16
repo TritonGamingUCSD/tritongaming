@@ -1,55 +1,112 @@
+@import '../../styles/colors.css';
+
 .exec-card {
-  position: relative;
   display: flex;
-  margin: 6rem;
-  padding: 2rem;
-  background: linear-gradient(
-    to right,
-    #14477C 0%,
-    #4C7299 28%,
-    #839CB6 57%,
-    #F2F1F0 100%
-  );
-  color: white;
-  z-index: 2;
-  padding-left: 160px; 
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  margin: 2rem 0;
+  height: 250px;
+  position: relative;
+  background: linear-gradient(120deg, #14477C 0%, #4C7299 28%, #839CB6 57%, #F2F1F0 100%); 
+  margin-bottom: 6rem;
 }
 
 .exec-card.reverse {
   flex-direction: row-reverse;
-  background: linear-gradient(
-    to left,
-    #14477C 0%,
-    #4C7299 28%,
-    #839CB6 57%,
-    #F2F1F0 100%
-  );
-  text-align: right;
-  z-index: 2;
-  padding-right: 160px; 
-}
-
-.exec-image-wrapper {
-  position: absolute;
-  bottom: -150px;
-  left: -220px;
-  scale: 0.8;
-}
-
-.exec-card.reverse .exec-image-wrapper {
-  left: auto;
-  bottom: -150px;
-  right: -220px;
-  scale: 0.8;
+  background: linear-gradient(60deg, #F2F1F0 0%, #839CB6 28%, #4C7299 57%, #14477C 100%);
 }
 
 .exec-image {
-  height: auto;
-  width: auto;
+  height: 400px;
+  object-fit: cover;
+  z-index: 3;
+  position: relative;
+  bottom: 20%;
+  right: 5%;
 }
 
+.exec-image.reverse {
+  left: 5%;
+  right: unset;
+}
+
+
+/* Right info panel with gradient overlay */
 .exec-info {
   flex: 1;
-  z-index: 2; 
-  max-width: 20rem;
+  padding: 48px 48px 48px 0;
+  color: var(--white);
+  min-height: 340px;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
+
+.exec-info.reverse {
+  padding: 48px 0 48px 48px;
+  text-align: right;
+  align-items: flex-end;
+}
+
+.exec-bio {
+  width: 50%;
+}
+
+.exec-background-wrapper {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+
+/* The accent background text itself */
+.exec-background-text {
+  position: absolute;
+  top: 20%;
+  left: 30%;
+  rotate: -30deg;
+  z-index: 1;           /* behind .exec-info and .exec-image, must be less than their z-index */
+  pointer-events: none; /* so it doesn't block text/image interactions */
+  width: 100%;
+  text-align: center;
+}
+
+.exec-background-text.reverse {
+  left: unset;
+  right: 30%;
+}
+
+@media screen and (max-width: 900px) {
+  .exec-card, .exec-card.reverse {
+    flex-direction: column;
+    min-height: unset;
+  }
+  .exec-image-wrapper {
+    min-width: 100%;
+    min-height: 250px;
+    width: 100%;
+    justify-content: center;
+  }
+  .exec-image {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+  }
+  .exec-info {
+    padding: 32px 16px;
+    min-height: unset;
+  }
+  .exec-image-wrapper::before {
+    width: 100%;
+    left: 0;
+  }
+}
+

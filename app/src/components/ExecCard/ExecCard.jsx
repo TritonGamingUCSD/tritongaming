@@ -2,7 +2,7 @@ import React from 'react';
 import './ExecCard.css';
 import { typography } from '../../styles/typography';
 import { colors } from '../../styles/colors';
-import defaultpng from '../../assets/images/default.png';
+import defaultpng from '../../assets/images/Owen.png';
 
 const ExecCard= ({ exec, reverse }) => {
   const { full_name, gamer_tag, bio, year, major, picture_url } = exec.officer;
@@ -18,15 +18,12 @@ const ExecCard= ({ exec, reverse }) => {
 
   return (
     <div className={`exec-card ${reverse ? 'reverse' : ''}`}>
-      <div className="exec-image-wrapper">
-        <img
-          src={picture_url || defaultpng}
-          alt={full_name}
-          className="exec-image"
-        />
-      </div>      
-      <div className="exec-info">
-        {/*<h3 className="exec-title" >{exec.title.toUpperCase()}</h3>*/}
+      <img
+        src={picture_url || defaultpng}
+        alt={full_name}
+        className={`exec-image ${reverse ? 'reverse' : ''}`}
+      />
+      <div className={`exec-info ${reverse ? 'reverse' : ''}`}>
         <h2 className="exec-name" style={{...typography.h1, fontSize: '1.5rem', lineHeight: '2rem'}}>
           {formatNameWithGamerTag(full_name, gamer_tag)}
         </h2>
@@ -36,6 +33,11 @@ const ExecCard= ({ exec, reverse }) => {
           <p>{major}</p>
         </div>
         <p className="exec-bio" style={{...typography.body, fontSize: '0.75rem', lineHeight: '1rem'}}>{bio}</p>
+      </div>
+      <div className={`exec-background-wrapper ${reverse ? 'reverse' : ''}`}>
+        <div className={`exec-background-text ${reverse ? 'reverse' : ''}`}>
+          <h2 style={{...typography.accent, color: colors.white, opacity: 0.24, fontSize: '200px', fontWeight: '400'}}>{gamer_tag}</h2>
+        </div>
       </div>
     </div>
   );

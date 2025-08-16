@@ -40,23 +40,31 @@ const ExecList = () => {
 
       <div className="exec">
         <div className="title-exec">
+          <h1 style={{ ...typography.h1, color: colors.darkblue }}>Marketing</h1>
+        </div>
+        <ExecCard exec={officers.find(exec => exec.title === 'Marketing Director')} reverse={true} />
+      </div>
+
+      <div className="exec">
+        <div className="title-exec">
           <h1 style={{ ...typography.h1, color: colors.darkblue }}>Creative</h1>
         </div>
-        <ExecCard exec={officers.find(exec => exec.title === 'Creative Director')} reverse={true} />
+        <ExecCard exec={officers.find(exec => exec.title === 'Creative Director')} reverse={false} />
       </div>
+
       
       <div className="exec">
         <div className="title-exec">
           <h1 style={{ ...typography.h1, color: colors.darkblue }}>Social</h1>
         </div>
-        <ExecCard exec={officers.find(exec => exec.title === 'Social Director')} reverse={false} />
+        <ExecCard exec={officers.find(exec => exec.title === 'Social Director')} reverse={true} />
       </div>
 
       <div className="exec">
         <div className="title-exec">
           <h1 style={{ ...typography.h1, color: colors.darkblue }}>Human Resources</h1>
         </div>
-        <ExecCard exec={officers.find(exec => exec.title === 'HR Director')} reverse={true} />
+        <ExecCard exec={officers.find(exec => exec.title === 'HR Director')} reverse={false} />
       </div>
     </div>
   );
