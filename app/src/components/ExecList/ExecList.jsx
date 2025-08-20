@@ -1,11 +1,31 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import ExecCard from '../ExecCard/ExecCard';
-import officers from '../../data/officers.json'; // your JSON
+import localOfficers from '../../data/officers.json'; 
 import { typography } from '../../styles/typography';
 import { colors } from '../../styles/colors';
 import './ExecList.css';
 
 const ExecList = () => {
+
+	const [officers, setOfficers] = useState(localOfficers); 
+  useEffect(() => {
+    const fetchOfficers = async () => {
+      try {
+        const res = await fetch('/api/users/officers');
+        if (!res.ok) {
+          throw new Error(`API error: ${res.status}`);
+        }
+        const data = await res.json();
+        setOfficers(data);
+      } catch (err) {
+        console.error('Falling back to local officers.json:', err);
+        setOfficers(localOfficers);
+      }
+    };
+
+    fetchOfficers();
+  }, []);
+
   return (
     <div>
       <div className="exec">
@@ -32,7 +52,6 @@ const ExecList = () => {
           .map((exec, index) => (
             <div key={`${exec.officer.full_name}-${index}`}>
               <ExecCard exec={exec} reverse={index % 2 !== 1} />
-              {/* add content between the two */}
               {index === 0 && <div className="divider" />}
             </div>
           ))}

@@ -5,7 +5,7 @@
     "officer": {
       "full_name": "Chris Kreins",
       "gamer_tag": "CJ",
-      "bio": "Chris is the GOAT AND THE GOATED PRESIDENT AND REALLY LIKES PORKCHOPS AND ALSO A FUN FACT ABOUT CHRIS IS HE IS THE GOAT AND ALSO DOES SUPER GOATED STUFF.",
+      "bio": "",
       "year": "4th Year",
       "major": "Business Psych",
       "committee": [],
@@ -18,7 +18,7 @@
     "officer": {
       "full_name": "Jewelle Tatad",
       "gamer_tag": "Kit",
-      "bio": "Chris is the GOAT AND THE GOATED PRESIDENT AND REALLY LIKES PORKCHOPS AND ALSO A FUN FACT ABOUT CHRIS IS HE IS THE GOAT AND ALSO DOES SUPER GOATED STUFF.",
+      "bio": "",
       "year": "4th Year",
       "major": "ICAM: Studio Art",
       "committee": [],
@@ -31,7 +31,7 @@
     "officer": {
       "full_name": "Serena Chen",
       "gamer_tag": "LunaNoctis",
-      "bio": "Serena is a coding wizard who organizes internal affairs and keeps things running smoothly. She's also great at workshops and tech setups.",
+      "bio": "",
       "year": "4th Year",
       "major": "Computer Science",
       "committee": [],
@@ -44,7 +44,7 @@
     "officer": {
       "full_name": "Serena Chuang",
       "gamer_tag": "miatz",
-      "bio": "Serena is a coding wizard who organizes internal affairs and keeps things running smoothly. She's also great at workshops and tech setups.",
+      "bio": "",
       "year": "4th Year",
       "major": "Computer Science",
       "committee": [],
@@ -57,9 +57,9 @@
     "officer": {
       "full_name": "Owen Lam",
       "gamer_tag": "froguro",
-      "bio": "Serena is a coding wizard who organizes internal affairs and keeps things running smoothly. She's also great at workshops and tech setups.",
+      "bio": "",
       "year": "4th Year",
-      "major": "Computer Science",
+      "major": "Computer Engineering",
       "committee": [],
       "picture_url": ""
     }
@@ -69,10 +69,10 @@
     "order": 5,
     "officer": {
       "full_name": "Rae Jackson",
-      "gamer_tag": "LunaNoctis",
-      "bio": "Serena is a coding wizard who organizes internal affairs and keeps things running smoothly. She's also great at workshops and tech setups.",
+      "gamer_tag": "miyurei",
+      "bio": "",
       "year": "4th Year",
-      "major": "Computer Science",
+      "major": "International Business",
       "committee": [],
       "picture_url": ""
     }
@@ -82,10 +82,10 @@
     "order": 6,
     "officer": {
       "full_name": "Esme Kasavin",
-      "gamer_tag": "LunaNoctis",
-      "bio": "Serena is a coding wizard who organizes internal affairs and keeps things running smoothly. She's also great at workshops and tech setups.",
-      "year": "4th Year",
-      "major": "Computer Science",
+      "gamer_tag": "Lapinka",
+      "bio": "",
+      "year": "3rd Year",
+      "major": "",
       "committee": [],
       "picture_url": ""
     }
@@ -96,9 +96,9 @@
     "officer": {
       "full_name": "Jacob Zhang",
       "gamer_tag": "bleachy",
-      "bio": "Serena is a coding wizard who organizes internal affairs and keeps things running smoothly. She's also great at workshops and tech setups.",
-      "year": "4th Year",
-      "major": "Computer Science",
+      "bio": "",
+      "year": "3rd Year",
+      "major": "Math + Computer Science",
       "committee": [],
       "picture_url": ""
     }
@@ -108,10 +108,10 @@
     "order": 8,
     "officer": {
       "full_name": "Philip Tsai",
-      "gamer_tag": "LunaNoctis",
-      "bio": "Serena is a coding wizard who organizes internal affairs and keeps things running smoothly. She's also great at workshops and tech setups.",
+      "gamer_tag": "Auraelion",
+      "bio": "",
       "year": "4th Year",
-      "major": "Computer Science",
+      "major": "",
       "committee": [],
       "picture_url": ""
     }

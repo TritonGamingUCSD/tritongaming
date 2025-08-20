@@ -2,7 +2,6 @@ import React from 'react';
 import './ExecCard.css';
 import { typography } from '../../styles/typography';
 import { colors } from '../../styles/colors';
-import defaultpng from '../../assets/images/Owen.png';
 
 const ExecCard= ({ exec, reverse }) => {
   const { full_name, gamer_tag, bio, year, major, picture_url } = exec.officer;
@@ -18,11 +17,13 @@ const ExecCard= ({ exec, reverse }) => {
 
   return (
     <div className={`exec-card ${reverse ? 'reverse' : ''}`}>
-      <img
-        src={picture_url || defaultpng}
-        alt={full_name}
-        className={`exec-image ${reverse ? 'reverse' : ''}`}
-      />
+			<img
+				src={picture_url || "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="}
+				alt={picture_url ? full_name : ""}
+				aria-hidden={!picture_url}
+				className={`exec-image ${reverse ? 'reverse' : ''}`}
+			/>
+
       <div className={`exec-info ${reverse ? 'reverse' : ''}`}>
         <h2 className="exec-name" style={{...typography.h1, fontSize: '1.5rem', lineHeight: '2rem'}}>
           {formatNameWithGamerTag(full_name, gamer_tag)}
