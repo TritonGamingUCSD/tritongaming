@@ -3,52 +3,56 @@
     "title": "President",
     "order": 0,
     "officer": {
-      "full_name": "Chris Kreins",
+			"first_name": "Chris",
+			"last_name": "Kreins",
       "gamer_tag": "CJ",
       "bio": "",
       "year": "4th Year",
       "major": "Business Psych",
       "committee": [],
-      "picture_url": ""
+      "profile_picture": ""
     }
   },
   {
     "title": "Vice President External",
     "order": 1,
     "officer": {
-      "full_name": "Jewelle Tatad",
+			"first_name": "Jewelle",
+			"last_name": "Tatad",
       "gamer_tag": "Kit",
       "bio": "",
       "year": "4th Year",
       "major": "ICAM: Studio Art",
       "committee": [],
-      "picture_url": ""
+      "profile_picture": ""
     }
   },
   {
     "title": "Vice President Internal",
     "order": 2,
     "officer": {
-      "full_name": "Serena Chen",
+			"first_name": "Serena",
+			"last_name": "Chen",
       "gamer_tag": "LunaNoctis",
       "bio": "",
       "year": "4th Year",
       "major": "Computer Science",
       "committee": [],
-      "picture_url": ""
+      "profile_picture": ""
     }
   },
   {
     "title": "Live Events Director",
     "order": 3,
     "officer": {
-      "full_name": "Serena Chuang",
+			"first_name": "Serena",
+			"last_name": "Chuang",
       "gamer_tag": "miatz",
       "bio": "",
       "year": "4th Year",
       "major": "Computer Science",
       "committee": [],
-      "picture_url": ""
+      "profile_picture": ""
     }
   },
   {
@@ -56,64 +60,70 @@
     "order": 4,
     "officer": {
       "full_name": "Owen Lam",
+			"first_name": "Owen",
+			"last_name": "Lam",
       "gamer_tag": "froguro",
       "bio": "",
       "year": "4th Year",
       "major": "Computer Engineering",
       "committee": [],
-      "picture_url": ""
+      "profile_picture": ""
     }
   },
   {
     "title": "Marketing Director",
     "order": 5,
     "officer": {
-      "full_name": "Rae Jackson",
+			"first_name": "Rae",
+			"last_name": "Jackson",
       "gamer_tag": "miyurei",
       "bio": "",
       "year": "4th Year",
       "major": "International Business",
       "committee": [],
-      "picture_url": ""
+      "profile_picture": ""
     }
   },
   {
     "title": "Creative Director",
     "order": 6,
     "officer": {
-      "full_name": "Esme Kasavin",
+			"first_name": "Esme",
+			"last_name": "Kasavin",
       "gamer_tag": "Lapinka",
       "bio": "",
       "year": "3rd Year",
       "major": "",
       "committee": [],
-      "picture_url": ""
+      "profile_picture": ""
     }
   },
   {
     "title": "Social Director",
     "order": 7,
     "officer": {
-      "full_name": "Jacob Zhang",
+			"first_name": "Jacob",
+			"last_name": "Zhang",
       "gamer_tag": "bleachy",
       "bio": "",
       "year": "3rd Year",
       "major": "Math + Computer Science",
       "committee": [],
-      "picture_url": ""
+      "profile_picture": ""
     }
   },
   {
     "title": "HR Director",
     "order": 8,
     "officer": {
-      "full_name": "Philip Tsai",
+			"first_name": "Philip",
+			"last_name": "Tsai",
       "gamer_tag": "Auraelion",
       "bio": "",
       "year": "4th Year",
       "major": "",
       "committee": [],
-      "picture_url": ""
+      "profile_picture": ""
     }
   }
 ]

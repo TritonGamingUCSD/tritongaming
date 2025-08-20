@@ -4,29 +4,25 @@ import { typography } from '../../styles/typography';
 import { colors } from '../../styles/colors';
 
 const ExecCard= ({ exec, reverse }) => {
-  const { full_name, gamer_tag, bio, year, major, picture_url } = exec.officer;
+  const { first_name, gamer_tag, last_name, bio, year, major, profile_picture } = exec.officer;
 
-  function formatNameWithGamerTag(fullName, gamerTag) {
-    if (!gamerTag) return fullName;
-    const names = fullName.trim().split(' ');
-    if (names.length < 2) return fullName; // fallback
-    const firstName = names[0];
-    const lastName = names.slice(1).join(' ');
+  function formatNameWithGamerTag(firstName, lastName, gamerTag) {
+    if (!gamerTag) return `${firstName} ${lastName}`;
     return `${firstName} "${gamerTag}" ${lastName}`;
   }
 
   return (
     <div className={`exec-card ${reverse ? 'reverse' : ''}`}>
 			<img
-				src={picture_url || "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="}
-				alt={picture_url ? full_name : ""}
-				aria-hidden={!picture_url}
+				src={profile_picture || "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="}
+				alt={profile_picture ? `${first_name} ${last_name}` : ""}
+				aria-hidden={!profile_picture}
 				className={`exec-image ${reverse ? 'reverse' : ''}`}
 			/>
 
       <div className={`exec-info ${reverse ? 'reverse' : ''}`}>
         <h2 className="exec-name" style={{...typography.h1, fontSize: '1.5rem', lineHeight: '2rem'}}>
-          {formatNameWithGamerTag(full_name, gamer_tag)}
+          {formatNameWithGamerTag(first_name, last_name, gamer_tag)}
         </h2>
         <div className="exec-subinfo" style={{...typography.h1, fontSize: '1rem', lineHeight: '1.75rem'}}>
           <p>{exec.title}</p>
