@@ -17,7 +17,7 @@ const LandingEvents = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const res = await fetch('https://tritongaming.onrender.com/api/events/upcoming');
+        const res = await fetch('/api/events/upcoming');
         const data = await res.json();
         setEvents(data.events); 
         setFocusedIndex(2 * data.events.length - 1);

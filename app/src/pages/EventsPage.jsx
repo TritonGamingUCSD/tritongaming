@@ -10,8 +10,8 @@ const EventsPage = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const upcoming = await fetch('https://tritongaming.onrender.com/api/events/upcoming');
-        const previous = await fetch('https://tritongaming.onrender.com/api/events/previous');
+        const upcoming = await fetch('/api/events/upcoming');
+        const previous = await fetch('/api/events/previous');
         const data1 = await upcoming.json();
         const data2 = await previous.json();
         if (Array.isArray(data1.events)) {
