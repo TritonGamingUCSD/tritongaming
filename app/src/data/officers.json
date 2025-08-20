@@ -1,0 +1,120 @@
+[
+  {
+    "title": "President",
+    "order": 0,
+    "officer": {
+      "full_name": "Chris Kreins",
+      "gamer_tag": "CJ",
+      "bio": "",
+      "year": "4th Year",
+      "major": "Business Psych",
+      "committee": [],
+      "picture_url": ""
+    }
+  },
+  {
+    "title": "Vice President External",
+    "order": 1,
+    "officer": {
+      "full_name": "Jewelle Tatad",
+      "gamer_tag": "Kit",
+      "bio": "",
+      "year": "4th Year",
+      "major": "ICAM: Studio Art",
+      "committee": [],
+      "picture_url": ""
+    }
+  },
+  {
+    "title": "Vice President Internal",
+    "order": 2,
+    "officer": {
+      "full_name": "Serena Chen",
+      "gamer_tag": "LunaNoctis",
+      "bio": "",
+      "year": "4th Year",
+      "major": "Computer Science",
+      "committee": [],
+      "picture_url": ""
+    }
+  },
+  {
+    "title": "Live Events Director",
+    "order": 3,
+    "officer": {
+      "full_name": "Serena Chuang",
+      "gamer_tag": "miatz",
+      "bio": "",
+      "year": "4th Year",
+      "major": "Computer Science",
+      "committee": [],
+      "picture_url": ""
+    }
+  },
+  {
+    "title": "Live Events Director",
+    "order": 4,
+    "officer": {
+      "full_name": "Owen Lam",
+      "gamer_tag": "froguro",
+      "bio": "",
+      "year": "4th Year",
+      "major": "Computer Engineering",
+      "committee": [],
+      "picture_url": ""
+    }
+  },
+  {
+    "title": "Marketing Director",
+    "order": 5,
+    "officer": {
+      "full_name": "Rae Jackson",
+      "gamer_tag": "miyurei",
+      "bio": "",
+      "year": "4th Year",
+      "major": "International Business",
+      "committee": [],
+      "picture_url": ""
+    }
+  },
+  {
+    "title": "Creative Director",
+    "order": 6,
+    "officer": {
+      "full_name": "Esme Kasavin",
+      "gamer_tag": "Lapinka",
+      "bio": "",
+      "year": "3rd Year",
+      "major": "",
+      "committee": [],
+      "picture_url": ""
+    }
+  },
+  {
+    "title": "Social Director",
+    "order": 7,
+    "officer": {
+      "full_name": "Jacob Zhang",
+      "gamer_tag": "bleachy",
+      "bio": "",
+      "year": "3rd Year",
+      "major": "Math + Computer Science",
+      "committee": [],
+      "picture_url": ""
+    }
+  },
+  {
+    "title": "HR Director",
+    "order": 8,
+    "officer": {
+      "full_name": "Philip Tsai",
+      "gamer_tag": "Auraelion",
+      "bio": "",
+      "year": "4th Year",
+      "major": "",
+      "committee": [],
+      "picture_url": ""
+    }
+  }
+]
+

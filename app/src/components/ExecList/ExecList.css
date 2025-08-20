@@ -1,0 +1,11 @@
+.title-exec {
+  text-align: center;
+  margin: 2rem 0;
+}
+
+.exec {
+  padding-bottom: 2rem;
+  margin-left: auto;
+  margin-right: auto;
+  width: 90%;
+}
