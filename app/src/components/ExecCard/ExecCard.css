@@ -19,7 +19,6 @@
 
 .exec-image {
   height: 400px;
-	width: 200px;
   object-fit: cover;
   z-index: 3;
   position: relative;
