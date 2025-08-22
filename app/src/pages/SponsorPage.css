@@ -1,0 +1,51 @@
+@import '../styles/colors.css';
+
+.sponsor-page {
+    padding: 16rem 8rem 10rem;
+    background-color: var(--white);
+    text-align: center;
+    display: flex;
+    flex-direction: column; /* stack items vertically */
+    align-items: center;    /* horizontally center all children */
+
+  }
+
+.sponsor-page > * {
+  margin-bottom: 24px; /* adjust spacing as needed */
+  width: 60%;
+}
+
+.sponsor-page > *:last-child {
+  margin-bottom: 0; /* remove extra space at the end */
+}
+
+.sponsor-page p {
+  margin-bottom: 16px;
+}
+
+.sponsor-page p:last-child {
+  margin-bottom: 0;
+}
+
+
+.bar {
+  background: linear-gradient(to right, #14477C, #011941);
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.bar h1 {
+  font-size: 1.5rem;
+  width: 50%;
+  font-weight: 500;
+}
+
+.email-link {
+  color: var(--white);
+  text-decoration: none;  /* remove underline */
+}
+
