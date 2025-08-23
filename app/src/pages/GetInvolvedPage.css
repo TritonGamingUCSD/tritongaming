@@ -1,0 +1,28 @@
+@import '../styles/colors.css';
+
+.get-involved{
+    padding: 12rem 8rem 10rem;
+    background-color: var(--white);
+    text-align: center;
+    display: flex;
+    flex-direction: column; /* stack items vertically */
+    align-items: center;    /* horizontally center all children */
+
+  }
+
+.get-involved > * {
+  margin-bottom: 24px; /* adjust spacing as needed */
+  width: 80%;
+}
+
+.get-involved > *:last-child {
+  margin-bottom: 0; /* remove extra space at the end */
+}
+
+.get-involved p {
+  margin-bottom: 16px;
+}
+
+.get-involved p:last-child {
+  margin-bottom: 0;
+}

@@ -5,6 +5,7 @@ import AboutPage from './pages/AboutPage';
 import Layout from './components/Layout/Layout';
 import EventsPage from './pages/EventsPage';
 import SponsorPage from './pages/SponsorPage';
+import GetInvolvedPage from './pages/GetInvolvedPage';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="/about" element={<Layout><AboutPage /></Layout>} />
         <Route path="/events" element={<Layout><EventsPage /></Layout>} />
 				<Route path="/sponsors" element={<Layout><SponsorPage /></Layout>} />
+        <Route path="/team" element={<Layout><GetInvolvedPage/></Layout>} />
       </Routes>
     </>
   );
