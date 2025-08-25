@@ -1,0 +1,5 @@
+@import '../styles/colors';
+
+.landing-page {
+  background-color: var(--white);
+} 
