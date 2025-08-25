@@ -5,7 +5,6 @@ import LandingStatistics from '../components/LandingStatistics/LandingStatistics
 import LandingDivisions from '../components/LandingDivisions/LandingDivisions';
 import LandingSponsors from '../components/LandingSponsors/LandingSponsors';
 import LandingRecruitment from '../components/LandingRecruitment/LandingRecruitment';
-import './LandingPage.css';
 
 const LandingPage = () => (
   <div className='landing-page'>
