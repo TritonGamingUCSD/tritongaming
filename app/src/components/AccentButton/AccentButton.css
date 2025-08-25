@@ -1,0 +1,17 @@
+@import '../../styles/colors.css';
+
+.accent-button {
+  background: linear-gradient(135deg, #14477C 0%, #011941 100%);
+  border: none;
+  border-radius: 5px;
+  padding: 16px 36px;
+  color: var(--white);
+  letter-spacing: 1px;
+  cursor: pointer;
+  min-width: 100px;
+  max-width: 250px;
+  position: relative;
+  overflow: hidden;
+  margin: 10px;
+
+}
