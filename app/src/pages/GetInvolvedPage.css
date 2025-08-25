@@ -1,0 +1,138 @@
+@import '../styles/colors.css';
+
+.get-involved {
+    padding: 12rem 8rem 10rem;
+    background-color: var(--white);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.get-involved > * {
+    margin-bottom: 24px;
+    width: 70%;
+}
+
+.get-involved > *:last-child {
+    margin-bottom: 0;
+}
+
+.get-involved p {
+    margin-bottom: 16px;
+}
+
+.get-involved p:last-child {
+    margin-bottom: 0;
+}
+
+/* Button container - responsive layout */
+.button-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* Large screens: horizontal layout */
+@media (min-width: 769px) {
+    .button-container {
+        flex-direction: row;
+        max-width: 600px;
+    }
+}
+
+/* Medium screens: still horizontal if they fit */
+@media (min-width: 600px) and (max-width: 768px) {
+    .button-container {
+        flex-direction: row;
+        max-width: 100%;
+    }
+    
+    .get-involved {
+        padding: 8rem 3rem 6rem;
+    }
+}
+
+/* Small screens: stack vertically */
+@media (max-width: 599px) {
+    .button-container {
+        flex-direction: column;
+        gap: 12px;
+        max-width: 300px;
+    }
+    
+    .get-involved {
+        padding: 6rem 2rem 4rem;
+    }
+    
+    .get-involved > * {
+        width: 90%;
+    }
+}
+
+/* Tablet styles */
+@media (max-width: 1024px) {
+    .get-involved {
+        padding: 8rem 4rem 6rem;
+    }
+    
+    .get-involved > * {
+        width: 80%;
+    }
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+    .get-involved {
+        padding: 6rem 2rem 4rem;
+    }
+    
+    .get-involved > * {
+        width: 90%;
+        margin-bottom: 20px;
+    }
+    
+    .get-involved p {
+        margin-bottom: 14px;
+        font-size: 16px;
+        line-height: 1.6;
+    }
+}
+
+/* Small mobile styles */
+@media (max-width: 480px) {
+    .get-involved {
+        padding: 4rem 1.5rem 3rem;
+    }
+    
+    .get-involved > * {
+        width: 95%;
+        margin-bottom: 16px;
+    }
+    
+    .get-involved p {
+        font-size: 15px;
+        line-height: 1.5;
+    }
+    
+    .button-container {
+        gap: 10px;
+        max-width: 100%;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 320px) {
+    .get-involved {
+        padding: 3rem 1rem 2rem;
+    }
+    
+    .get-involved > * {
+        width: 100%;
+    }
+}
+
