@@ -1,7 +1,7 @@
 @import '../styles/colors.css';
 
 .sponsor-page {
-    padding: 16rem 8rem 10rem;
+    padding: 12rem 8rem 10rem;
     background-color: var(--white);
     text-align: center;
     display: flex;
@@ -15,10 +15,6 @@
   width: 60%;
 }
 
-.sponsor-page > *:last-child {
-  margin-bottom: 0; /* remove extra space at the end */
-}
-
 .sponsor-page p {
   margin-bottom: 16px;
 }
@@ -27,6 +23,9 @@
   margin-bottom: 0;
 }
 
+.current-sponsors {
+  width: 100%;
+}
 
 .bar {
   background: linear-gradient(to right, #14477C, #011941);

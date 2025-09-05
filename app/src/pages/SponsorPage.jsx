@@ -3,6 +3,8 @@ import AlternateTitle from '../components/AlternateTitle/AlternateTitle';
 import './SponsorPage.css'
 import { typography } from '../styles/typography';
 import { colors } from '../styles/colors';
+import SponsorGrid from '../components/SponsorGrid/SponsorGrid';
+import sponsors from '../data/sponsors.json';
 
 const SponsorPage = () => {
   return (
@@ -17,6 +19,9 @@ const SponsorPage = () => {
         </p>
       </div>
       <AlternateTitle fgTitle="Current Sponsors" bgTitle="Current Sponsors" />
+      <div className='current-sponsors'>
+        <SponsorGrid sponsors={sponsors}/>
+      </div>
       <AlternateTitle fgTitle="What we offer" bgTitle="What we offer" />
       <div style={{...typography.body}}>
         <p>We strive to provide the best experience for both our partners and community through innovative opportunities and activations.</p>

@@ -1,4 +1,7 @@
 @import '../../styles/colors';
 .landing-recruitment{
   background-color: var(--white);
+  margin-bottom: 100px;
+  text-align: center;
 }
+
