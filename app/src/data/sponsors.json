@@ -1,42 +1,42 @@
 [      
       {
         "name": "Turtle Beach",
-        "logo": "../../../public/logos/turtlebeach.png",
+        "logo": "logos/turtlebeach.png",
         "size": "medium",
         "link": "https://www.turtlebeach.com/",
         "order": 3
       },
       {
         "name": "MSI",
-        "logo": "../../../public/logos/msi.png",
+        "logo": "logos/msi.png",
         "size": "medium",
         "link": "",
         "order": 1
       },
       {
         "name": "Rallycry",
-        "logo": "../../../public/logos/rallycry.png",
+        "logo": "logos/rallycry.png",
         "size": "medium",
         "link": "",
         "order": 2
       },
       {
         "name": "Shure",
-        "logo": "../../../public/logos/shure.png",
+        "logo": "logos/shure.png",
         "size": "medium",
         "link": "",
         "order": 4
       },
       {
         "name": "Gamdias",
-        "logo": "../../../public/logos/gamdias.png",
+        "logo": "logos/gamdias.png",
         "size": "medium",
         "link": "",
         "order": 5
       },
       {
         "name": "Zotac",
-        "logo": "../../../public/logos/zotac.png",
+        "logo": "logos/zotac.png",
         "size": "medium",
         "link": "",
         "order": 6
