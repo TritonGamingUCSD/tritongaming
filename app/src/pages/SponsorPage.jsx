@@ -3,7 +3,7 @@ import AlternateTitle from '../components/AlternateTitle/AlternateTitle';
 import './SponsorPage.css'
 import { typography } from '../styles/typography';
 import { colors } from '../styles/colors';
-import SponsorGrid from '../components/SponsorGrid/SponsorGrid';
+import LogoGrid from '../components/LogoGrid/LogoGrid';
 import sponsors from '../data/sponsors.json';
 
 const SponsorPage = () => {
@@ -20,7 +20,7 @@ const SponsorPage = () => {
       </div>
       <AlternateTitle fgTitle="Current Sponsors" bgTitle="Current Sponsors" />
       <div className='current-sponsors'>
-        <SponsorGrid sponsors={sponsors}/>
+        <LogoGrid logos={sponsors}/>
       </div>
       <AlternateTitle fgTitle="What we offer" bgTitle="What we offer" />
       <div style={{...typography.body}}>

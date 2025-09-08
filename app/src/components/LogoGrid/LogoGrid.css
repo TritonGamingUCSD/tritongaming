@@ -1,6 +1,6 @@
 @import '../../styles/colors.css';
 
-.sponsor-grid {
+.logo-grid {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -11,13 +11,13 @@
   gap: 3rem;
 }
 
-.sponsor-item {
+.logo-item {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.sponsor-logo {
+.logo-logo {
   width: 100%;
   max-height: 180px;
   object-fit: contain;
@@ -25,17 +25,17 @@
 }
 
 /* Size variations */
-.sponsor-size-large {
+.logo-size-large {
   flex: 1 1 450px;
 }
 
 
-.sponsor-size-medium {
+.logo-size-medium {
   flex: 1 1 350px;
 }
 
 
-.sponsor-size-small {
+.logo-size-small {
   flex: 1 1 250px;
 }
 
@@ -43,20 +43,20 @@
 
 /* Responsive design */
 @media (max-width: 768px) {
-  .sponsor-grid {
+  .logo-grid {
     gap: 1rem;
     padding: 1rem;
   }
   
-  .sponsor-size-large {
+  .logo-size-large {
     flex: 0 1 250px;
   }
   
-  .sponsor-size-medium {
+  .logo-size-medium {
     flex: 0 1 180px;
   }
   
-  .sponsor-size-small {
+  .logo-size-small {
     flex: 0 1 140px;
   }
 }
