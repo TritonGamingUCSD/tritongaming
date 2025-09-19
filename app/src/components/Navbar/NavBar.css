@@ -165,24 +165,26 @@
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100vh;
-  background: linear-gradient(to bottom, #14477C, #011941);
-  z-index: 9999;
+  height: 50vh;
+  background: linear-gradient(to right, #14477C, #011941);
+  z-index: 999;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  animation: slideIn 0.3s ease-in-out;
+  animation: slideDown 0.5s ease-in-out;
+  transform-origin: top;
 }
 
-@keyframes slideIn {
+@keyframes slideDown {
   from {
-    transform: translateX(100%);
+    transform: translateY(-100%);
+    opacity: 0;
   }
   to {
-    transform: translateX(0);
+    transform: translateY(0);
+    opacity: 1;
   }
 }
-
 .mobile-menu-content {
   position: relative;
   width: 100%;
@@ -254,6 +256,9 @@
   .byte-icon img {
     width: 30px;
     height: 30px;
+  }
+  .background-text-wrapper {
+    display: none;
   }
 }
 

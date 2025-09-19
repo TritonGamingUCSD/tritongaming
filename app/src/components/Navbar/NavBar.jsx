@@ -41,16 +41,16 @@ const NavBar = () => {
   }, [cursorActive]);
 
   // Prevent body scroll when mobile menu is open
-  useEffect(() => {
-    if (mobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [mobileMenuOpen]);
+//  useEffect(() => {
+//    if (mobileMenuOpen) {
+//      document.body.style.overflow = 'hidden';
+//    } else {
+//      document.body.style.overflow = 'unset';
+//    }
+//    return () => {
+//      document.body.style.overflow = 'unset';
+//    };
+//  }, [mobileMenuOpen]);
 
   const toggleCursor = () => {
     setCursorActive((prev) => !prev);
