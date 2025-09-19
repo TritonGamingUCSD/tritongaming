@@ -2,7 +2,7 @@
 
 .accent-button {
   background: linear-gradient(135deg, #14477C 0%, #011941 100%);
-  border: none;
+  border: 2px solid var(--white);
   border-radius: 5px;
   padding: 16px 36px;
   color: var(--white);
