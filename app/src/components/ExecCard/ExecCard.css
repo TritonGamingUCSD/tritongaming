@@ -10,6 +10,8 @@
   position: relative;
   background: linear-gradient(120deg, #14477C 0%, #4C7299 28%, #839CB6 57%, #F2F1F0 100%); 
   margin-bottom: 6rem;
+  /* Prevent flex items from shrinking too much */
+  min-width: 0;
 }
 
 .exec-card.reverse {
@@ -24,13 +26,14 @@
   position: relative;
   bottom: 20%;
   right: 5%;
+  /* Prevent image from shrinking on mobile */
+  flex-shrink: 0;
 }
 
 .exec-image.reverse {
   left: 5%;
   right: unset;
 }
-
 
 /* Right info panel with gradient overlay */
 .exec-info {
@@ -43,6 +46,8 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  /* Allow text to wrap properly on mobile */
+  min-width: 0;
 }
 
 .exec-info.reverse {
@@ -66,7 +71,6 @@
   z-index: 1;
 }
 
-
 /* The accent background text itself */
 .exec-background-text {
   position: absolute;
@@ -84,29 +88,47 @@
   right: 30%;
 }
 
+/* Responsive font scaling */
+.exec-name {
+  font-size: clamp(1rem, 4vw, 1.5rem) !important;
+}
+
+.exec-subinfo {
+  font-size: clamp(0.75rem, 3vw, 1rem) !important;
+}
+
+.exec-bio {
+  font-size: clamp(0.6rem, 2.5vw, 0.75rem) !important;
+  line-height: clamp(0.9rem, 3.5vw, 1rem) !important;
+}
+
+.exec-background-text h2 {
+  font-size: clamp(3rem, 20vw, 200px) !important;
+}
+
+/* Mobile adjustments - keep row layout but make it more mobile-friendly */
 @media screen and (max-width: 900px) {
   .exec-card, .exec-card.reverse {
-    flex-direction: column;
-    min-height: unset;
+    /* Keep flex-direction: row for desktop layout */
+    height: auto;
+    min-height: 200px;
+    /* Add horizontal padding to prevent content from touching edges */
+    padding: 0 1rem;
   }
-  .exec-image-wrapper {
-    min-width: 100%;
-    min-height: 250px;
-    width: 100%;
-    justify-content: center;
-  }
+  
   .exec-image {
-    width: 100%;
-    height: 250px;
-    object-fit: cover;
+    /* Scale image down on mobile but keep it proportional */
+    height: clamp(200px, 30vw, 400px);
   }
+  
   .exec-info {
-    padding: 32px 16px;
-    min-height: unset;
+    /* Reduce padding on mobile */
+    padding: 2rem 1rem 2rem 0;
+    min-height: auto;
   }
-  .exec-image-wrapper::before {
-    width: 100%;
-    left: 0;
+  
+  .exec-info.reverse {
+    padding: 2rem 0 2rem 1rem;
   }
 }
 
