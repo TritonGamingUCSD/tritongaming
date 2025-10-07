@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import path from "path";
-import eventRoutes from "./routes/events.router";
+import eventsRouter from "./routes/events.router";
 
 class Server {
     private app = express();
@@ -19,10 +19,10 @@ class Server {
     }
 
     private setupRoutes() {
-        this.app.use("/api/events", eventRoutes);
+        this.app.use("/api/events", eventsRouter);
 
         // Serve React index.html for all other routes
-        this.app.get("", (_req, res) => {
+        this.app.get("/*splat", (_req, res) => {
             res.sendFile(path.join(__dirname, "../app/dist/index.html"));
         });
     }
