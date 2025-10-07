@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import EventCard from '../EventCard/EventCard';
-// import events from '../../data/events';
+//import events from '../../data/events';
 import './LandingEvents.css';
 import { typography } from '../../styles/typography';
 import { colors } from '../../styles/colors';

@@ -171,3 +171,20 @@
   }
 }
 
+
+html, body {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+#root {
+  flex: 1; /* ensures content expands to push footer down */
+  display: flex;
+  flex-direction: column;
+}
+
