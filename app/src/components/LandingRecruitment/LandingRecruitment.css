@@ -5,3 +5,30 @@
   text-align: center;
 }
 
+
+@media (max-width: 768px) {
+  .landing-recruitment {
+    margin-bottom: 60px;
+    padding: 0 1rem;
+  }
+
+  .statistics-container {
+    padding: 3rem 1.5rem;
+  }
+
+  /* Hide background text on mobile */
+  .background-text-wrapper {
+    display: none;
+  }
+
+  .statistics-container h1 {
+    font-size: 1.8rem !important;
+    line-height: 2.2rem;
+    padding: 0 1rem;
+  }
+
+  .statistics-container a {
+    margin-top: 1.5rem;
+    width: 80%;
+  }
+}
