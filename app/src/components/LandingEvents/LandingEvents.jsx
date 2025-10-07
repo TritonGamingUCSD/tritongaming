@@ -1,9 +1,10 @@
 import React, { useRef, useState, useEffect } from 'react';
 import EventCard from '../EventCard/EventCard';
-// import events from '../../data/events';
+//import events from '../../data/events';
 import './LandingEvents.css';
 import { typography } from '../../styles/typography';
 import { colors } from '../../styles/colors';
+import AlternateTitle from '../AlternateTitle/AlternateTitle';
 
 const ITEMS_TO_CLONE = 2;
 
@@ -82,20 +83,7 @@ const LandingEvents = () => {
 
   return (
     <div className="landing-events">
-      <div className="title-upcoming-events">
-        <h1
-          style={{ ...typography.accent, color: colors.yellow }}
-          className="upcoming-events-bg"
-        >
-          Upcoming Events
-        </h1>
-        <h1
-          style={{ ...typography.h1, color: colors.darkblue }}
-          className="upcoming-events-fg"
-        >
-          Upcoming Events
-        </h1>
-      </div>
+      <AlternateTitle bgTitle={"Upcoming Events"} fgTitle={"Upcoming Events"}/>
 
       <div className="landing-wrapper">
         <div className="event-carousel" ref={scrollRef}>

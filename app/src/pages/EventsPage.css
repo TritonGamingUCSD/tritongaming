@@ -1,7 +1,28 @@
 @import '../styles/colors.css';
 
 .events {
-    padding: 16rem 8rem;
-    background-color: var(--white);
+  padding: 16rem 8rem;
+  background-color: var(--white);
+}
+
+/* Tablet and smaller screens */
+@media (max-width: 1024px) {
+  .events {
+    padding: 12rem 4rem;
   }
+}
+
+/* Mobile screens */
+@media (max-width: 768px) {
+  .events {
+    padding: 8rem 2rem;
+  }
+}
+
+/* Small mobile screens */
+@media (max-width: 480px) {
+  .events {
+    padding: 6rem 1.5rem;
+  }
+}
 

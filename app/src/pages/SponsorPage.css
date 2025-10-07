@@ -1,17 +1,16 @@
 @import '../styles/colors.css';
 
 .sponsor-page {
-    padding: 12rem 8rem 10rem;
-    background-color: var(--white);
-    text-align: center;
-    display: flex;
-    flex-direction: column; /* stack items vertically */
-    align-items: center;    /* horizontally center all children */
-
-  }
+  padding: 12rem 8rem 10rem;
+  background-color: var(--white);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
 .sponsor-page > * {
-  margin-bottom: 24px; /* adjust spacing as needed */
+  margin-bottom: 24px;
   width: 60%;
 }
 
@@ -35,6 +34,7 @@
   align-items: center;
   justify-content: center;
   padding: 1rem;
+  box-sizing: border-box;
 }
 
 .bar h1 {
@@ -45,6 +45,79 @@
 
 .email-link {
   color: var(--white);
-  text-decoration: none;  /* remove underline */
+  text-decoration: none;
+  word-break: break-word;
+}
+
+/* ----------------------------- */
+/* 📱 Responsive adjustments */
+/* ----------------------------- */
+@media (max-width: 1024px) {
+  .sponsor-page {
+    padding: 8rem 4rem 6rem;
+  }
+
+  .sponsor-page > * {
+    width: 80%;
+  }
+
+  .bar h1 {
+    width: 80%;
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .sponsor-page {
+    padding: 6rem 2rem 4rem;
+  }
+
+  .sponsor-page > * {
+    width: 100%;
+  }
+
+  .bar {
+    padding: 1.5rem 1rem;
+  }
+
+  .bar h1 {
+    font-size: 1.1rem;
+    width: 90%;
+  }
+
+  .sponsor-page p {
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .email-link {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .sponsor-page {
+    padding: 4rem 1.5rem 3rem;
+  }
+
+  .bar {
+    width: 100%;
+    padding: 1rem;
+  }
+
+  .bar h1 {
+    width: 100%;
+    font-size: 1rem;
+    text-align: center;
+  }
+
+  .sponsor-page > * {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+
+  .sponsor-page p {
+    font-size: 0.9rem;
+  }
 }
 

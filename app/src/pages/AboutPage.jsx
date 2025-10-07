@@ -7,6 +7,7 @@ import eventsTG from '../assets/images/events_tg.JPG';
 import { typography } from '../styles/typography';
 import { colors } from '../styles/colors';
 import ExecList from '../components/ExecList/ExecList';
+import AlternateTitle from '../components/AlternateTitle/AlternateTitle';
 
 const AboutPage = () => {
   return (
@@ -39,10 +40,7 @@ const AboutPage = () => {
             photoCredit="Mina Yang"
             photoCreditLink="https://www.instagram.com/tritongamingsd"
         />
-        <div className="title-upcoming-events">
-            <h1 style={{ ...typography.accent, color: colors.yellow }} className="upcoming-events-bg">Executive Board</h1>
-            <h1 style={{ ...typography.h1, color: colors.darkblue }} className="upcoming-events-fg">Executive Board</h1>
-        </div>
+        <AlternateTitle bgTitle={"Executive Board"} fgTitle={"Executive Board"}/>
         <ExecList/>
     </div>
   );
