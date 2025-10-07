@@ -7,6 +7,10 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  justify-content: center; /* centers main content vertically */
+  align-items: center;     /* centers everything horizontally */
+  text-align: center;
+
 }
 
 .hero-video {
