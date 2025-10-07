@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import path from "path";
-import usersRouter from "./routes/users.router";
 import eventsRouter from "./routes/events.router";
 
 class Server {
@@ -21,7 +20,6 @@ class Server {
 
     private setupRoutes() {
         this.app.use("/api/events", eventsRouter);
-        this.app.use("/api/users", usersRouter);
 
         // Serve React index.html for all other routes
         this.app.get("/*splat", (_req, res) => {
