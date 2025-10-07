@@ -14,7 +14,7 @@
   z-index: 10;
 }
 
-/* Background TRITON GAMING text (same as navbar style) */
+/* ---------- Background TRITON GAMING text ---------- */
 .footer-background-text-wrapper {
   position: absolute;
   top: 0;
@@ -29,11 +29,12 @@
 .footer-background-text,
 .footer-background-text2 {
   position: absolute;
-  color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.08);
   white-space: nowrap;
   user-select: none;
   transform: rotate(-20deg);
   letter-spacing: 0.03em;
+  font-size: 8rem;
 }
 
 .footer-background-text {
@@ -48,7 +49,7 @@
   transform: translate(0%, -40%) rotate(-20deg);
 }
 
-/* Left side: logo + copyright */
+/* ---------- Left side: logo + copyright ---------- */
 .footer-left {
   display: flex;
   flex-direction: column;
@@ -68,7 +69,7 @@
   color: white;
 }
 
-/* Right side: social links */
+/* ---------- Right side: social links ---------- */
 .footer-right {
   display: flex;
   flex-direction: column;
@@ -85,10 +86,12 @@
 
 .footer-icons {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 1rem;
 }
 
-/* Style SVG icons */
+/* ---------- Style SVG icons ---------- */
 .footer-icons svg {
   width: 32px;
   height: 32px;
@@ -99,17 +102,18 @@
 
 .footer-icons a:hover svg {
   transform: scale(1.15);
-  fill: #f8d347; /* Hover accent color */
+  fill: #f8d347;
 }
 
 /* ---------- Responsive Styles ---------- */
 
-@media (max-width: 768px) {
+/* Tablets and smaller */
+@media (max-width: 1024px) {
   .footer {
     flex-direction: column;
     align-items: center;
     text-align: center;
-    padding: 2rem 1rem;
+    padding: 2rem 1.5rem;
   }
 
   .footer-left,
@@ -118,11 +122,52 @@
     margin-top: 1.5rem;
   }
 
-  .footer-background-text,
-  .footer-background-text1 {
-    font-size: 5rem;
-    top: 10%;
-    left: 50%;
-    transform: translateX(-50%) rotate(-20deg);
+  .footer-icons {
+    justify-content: center;
+  }
+
+  .footer-logo {
+    height: 80px;
+  }
+
+  .footer-copy,
+  .footer-heading {
+    font-size: 1.1rem;
+  }
+
+  /* Hide background text for better readability */
+  .footer-background-text-wrapper {
+    display: none;
   }
 }
+
+/* Mobile phones */
+@media (max-width: 600px) {
+  .footer {
+    padding: 2rem 1rem;
+  }
+
+  .footer-logo {
+    height: 70px;
+  }
+
+  .footer-copy,
+  .footer-heading {
+    font-size: 1rem;
+  }
+
+  .footer-icons svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .footer-icons {
+    gap: 0.75rem;
+  }
+
+  /* Keep background text hidden */
+  .footer-background-text-wrapper {
+    display: none;
+  }
+}
+
