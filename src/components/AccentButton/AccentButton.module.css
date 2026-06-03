@@ -1,0 +1,57 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.75rem;
+  min-height: 48px; /* WCAG touch target */
+  font-family: var(--font-soulmaze);
+  font-size: clamp(0.85rem, 1.5vw, 1rem);
+  color: var(--white);
+  background: linear-gradient(135deg, #14477c, #011941);
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+  transition:
+    filter 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+  text-decoration: none;
+}
+
+/* Shimmer sheen */
+.button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.18) 50%,
+    transparent 80%
+  );
+  transform: translateX(-200%) skewX(-8deg);
+  transition: none;
+  pointer-events: none;
+}
+
+.button:hover {
+  filter: brightness(1.25);
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 24px rgba(1, 25, 65, 0.5),
+    0 0 0 1px rgba(255, 199, 44, 0.3),
+    0 0 20px rgba(255, 199, 44, 0.15);
+  border-color: var(--yellow);
+}
+
+.button:hover::before {
+  animation: main-card-shimmer 0.6s ease forwards;
+}
+
+.button:active {
+  transform: translateY(0);
+}

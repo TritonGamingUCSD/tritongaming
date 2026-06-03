@@ -1,0 +1,269 @@
+/*!*********************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[5].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[5].use[3]!./src/components/InfoSection/InfoSection.module.css ***!
+  \*********************************************************************************************************************************************************************************************************************************************************************************************/
+.InfoSection_section__vPS0r {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(2rem, 5vw, 4rem);
+  align-items: center;
+  padding: var(--section-pad) clamp(1rem, 5vw, 4rem);
+  max-width: var(--max-width);
+  margin-inline: auto;
+}
+
+.InfoSection_reverse__zzFJy {
+  direction: rtl;
+}
+
+.InfoSection_reverse__zzFJy > * {
+  direction: ltr;
+}
+
+.InfoSection_imageWrapper__Ox8K7 {
+  position: relative;
+  aspect-ratio: 4 / 3;
+}
+
+.InfoSection_scribbleWrapper__zv5YV {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.InfoSection_photo__kwB9O {
+  position: absolute;
+  inset: 6% 0 0 6%;
+  border-radius: 6px;
+  overflow: hidden;
+  z-index: 1;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+.InfoSection_credit__jf8YI {
+  position: absolute;
+  bottom: 0.4rem;
+  left: 6%;
+  z-index: 2;
+  font-family: var(--font-futura-medium);
+  font-size: var(--fs-caption);
+  color: var(--black);
+  transition: color 0.2s ease;
+}
+
+.InfoSection_credit__jf8YI:hover {
+  color: var(--blue);
+}
+
+.InfoSection_content__ZXUPp {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-md);
+}
+
+.InfoSection_title__gKD9s {
+  font-family: var(--font-soulmaze);
+  font-size: var(--fs-h1);
+  color: var(--darkblue);
+  line-height: 1.2;
+}
+
+.InfoSection_text__JKMHC {
+  font-family: var(--font-futura-medium);
+  font-size: var(--fs-body);
+  color: var(--black);
+  line-height: 1.7;
+}
+
+@media (max-width: 900px) {
+  .InfoSection_section__vPS0r {
+    grid-template-columns: 1fr;
+    direction: ltr;
+  }
+
+  .InfoSection_imageWrapper__Ox8K7 {
+    max-width: 560px;
+    margin-inline: auto;
+    width: 100%;
+  }
+}
+
+/*!***************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[5].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[5].use[3]!./src/components/AlternateTitle/AlternateTitle.module.css ***!
+  \***************************************************************************************************************************************************************************************************************************************************************************************************/
+.AlternateTitle_root__mogzj {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-block: var(--sp-md);
+  overflow: hidden;
+}
+
+.AlternateTitle_bg__8N3y1 {
+  font-family: var(--font-brick);
+  font-size: var(--fs-accent);
+  color: var(--yellow);
+  white-space: nowrap;
+  line-height: 1;
+  user-select: none;
+  pointer-events: none;
+}
+
+.AlternateTitle_fg__rwLPl {
+  position: absolute;
+  font-family: var(--font-soulmaze);
+  font-size: var(--fs-h1);
+  color: var(--darkblue);
+  text-align: center;
+  line-height: 1.2;
+}
+
+/*!***************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[5].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[5].use[3]!./src/components/ExecCard/ExecCard.module.css ***!
+  \***************************************************************************************************************************************************************************************************************************************************************************************/
+.ExecCard_card__hqdpV {
+  position: relative;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: clamp(1.5rem, 4vw, 3rem);
+  align-items: start;
+  padding: clamp(2rem, 5vw, 3rem) clamp(1.5rem, 5vw, 4rem);
+  background: var(--gradient-stats);
+  overflow: hidden;
+  border-radius: 8px;
+  margin-block: 1.5rem;
+}
+
+.ExecCard_reverse__Nu4BL {
+  direction: rtl;
+}
+
+.ExecCard_reverse__Nu4BL > * {
+  direction: ltr;
+}
+
+/* Profile image */
+.ExecCard_imgWrapper__PAhbV {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  z-index: 1;
+}
+
+.ExecCard_imgPlaceholder__IsSVI {
+  width: 100%;
+  height: 100%;
+  background: var(--blue);
+}
+
+/* Text content */
+.ExecCard_info__PksBH {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  z-index: 1;
+  padding-top: 0.5rem;
+}
+
+.ExecCard_name__L4xkR {
+  font-family: var(--font-soulmaze);
+  font-size: clamp(1.2rem, 3vw, 1.75rem);
+  color: var(--white);
+  line-height: 1.25;
+}
+
+.ExecCard_subinfo__BAzGc {
+  font-family: var(--font-soulmaze);
+  font-size: clamp(0.8rem, 1.5vw, 1rem);
+  color: var(--lightblue);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.ExecCard_bio__OK7aK {
+  font-family: var(--font-futura-medium);
+  font-size: clamp(0.75rem, 1.3vw, 0.9rem);
+  color: rgba(242, 241, 240, 0.8);
+  line-height: 1.6;
+}
+
+/* Gamer-tag watermark */
+.ExecCard_bgWrapper__Dr_aI {
+  position: absolute;
+  right: -2%;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.ExecCard_bgReverse__nNR1J {
+  right: auto;
+  left: -2%;
+}
+
+.ExecCard_bgTag__fgJka {
+  font-family: var(--font-brick);
+  font-size: clamp(6rem, 15vw, 14rem);
+  color: rgba(255, 255, 255, 0.08);
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .ExecCard_card__hqdpV {
+    grid-template-columns: 1fr;
+    direction: ltr;
+  }
+
+  .ExecCard_imgWrapper__PAhbV {
+    max-width: 240px;
+    margin-inline: auto;
+    width: 100%;
+  }
+
+  .ExecCard_bgWrapper__Dr_aI {
+    display: none;
+  }
+}
+
+/*!***************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[5].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[5].use[3]!./src/components/ExecList/ExecList.module.css ***!
+  \***************************************************************************************************************************************************************************************************************************************************************************************/
+.ExecList_root__DMA__ {
+  padding-inline: clamp(1rem, 4vw, 2.5rem);
+  padding-bottom: var(--sp-xl);
+  max-width: var(--max-width);
+  margin-inline: auto;
+}
+
+.ExecList_section__8cbDw {
+  margin-top: var(--sp-lg);
+}
+
+.ExecList_titleRow__oCQdO {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--sp-md);
+}
+
+.ExecList_sectionTitle__16JdR {
+  font-family: var(--font-soulmaze);
+  font-size: var(--fs-h1);
+  color: var(--darkblue);
+  text-align: center;
+}
+
+/*!*********************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[5].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[5].use[3]!./src/app/(main)/about/about.module.css ***!
+  \*********************************************************************************************************************************************************************************************************************************************************************************/
+.about_page__d9eW3 {
+  padding-top: 80px; /* offset fixed navbar */
+  background: var(--white);
+}
+

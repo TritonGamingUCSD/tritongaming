@@ -1,0 +1,27 @@
+.root {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-block: var(--sp-md);
+  overflow: hidden;
+}
+
+.bg {
+  font-family: var(--font-brick);
+  font-size: var(--fs-accent);
+  color: var(--yellow);
+  white-space: nowrap;
+  line-height: 1;
+  user-select: none;
+  pointer-events: none;
+}
+
+.fg {
+  position: absolute;
+  font-family: var(--font-soulmaze);
+  font-size: var(--fs-h1);
+  color: var(--darkblue);
+  text-align: center;
+  line-height: 1.2;
+}

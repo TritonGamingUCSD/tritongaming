@@ -1,0 +1,238 @@
+.page {
+  padding-top: 80px;
+  background: var(--white);
+}
+
+/* ── Hero ── */
+.heroBanner {
+  position: relative;
+  padding: clamp(3rem, 7vw, 6rem) clamp(1.5rem, 5vw, 4rem);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.heroBg {
+  position: absolute;
+  inset: 0;
+  background: var(--gradient-stats);
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  max-width: 700px;
+}
+
+.heroLabel {
+  font-family: var(--font-futura-heavy);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  color: var(--yellow);
+  margin: 0 0 0.5rem;
+}
+
+.heroTitle {
+  font-family: var(--font-brick);
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  color: var(--yellow);
+  margin: 0 0 1rem;
+  line-height: 1;
+  text-shadow: 2px 4px 12px rgba(0,0,0,0.4);
+}
+
+.heroSub {
+  font-family: var(--font-futura-medium);
+  font-size: clamp(0.95rem, 1.8vw, 1.15rem);
+  color: var(--lightblue);
+  margin: 0;
+  line-height: 1.65;
+}
+
+/* ── Mission bar ── */
+.missionBar {
+  background: var(--yellow);
+  padding: 0.85rem clamp(1.5rem, 5vw, 4rem);
+  text-align: center;
+}
+
+.missionBar p {
+  font-family: var(--font-soulmaze);
+  font-size: clamp(0.9rem, 2vw, 1.15rem);
+  color: var(--darkblue);
+  margin: 0;
+}
+
+/* ── Shared headers ── */
+.sectionHeader {
+  text-align: center;
+  margin-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.sectionLabel {
+  font-family: var(--font-futura-heavy);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--yellow);
+  margin: 0 0 0.5rem;
+}
+
+.sectionLabelLight {
+  font-family: var(--font-futura-heavy);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--yellow);
+  margin: 0 0 0.5rem;
+}
+
+.sectionTitle {
+  font-family: var(--font-soulmaze);
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  color: var(--darkblue);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.sectionTitleLight {
+  font-family: var(--font-soulmaze);
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  color: var(--white);
+  margin: 0 0 0.75rem;
+  line-height: 1.2;
+}
+
+.sectionSub {
+  font-family: var(--font-futura-medium);
+  font-size: var(--fs-body);
+  color: var(--lightblue);
+  margin: 0;
+  max-width: 560px;
+  margin-inline: auto;
+  line-height: 1.7;
+}
+
+/* ── Current sponsors ── */
+.sponsorSection {
+  padding: var(--section-pad) clamp(1.5rem, 5vw, 4rem);
+  max-width: calc(var(--max-width) + 4rem);
+  margin-inline: auto;
+}
+
+.grid {
+  max-width: 900px;
+  margin-inline: auto;
+}
+
+/* ── What We Offer ── */
+.offerSection {
+  position: relative;
+  padding: var(--section-pad) clamp(1.5rem, 5vw, 4rem);
+  overflow: hidden;
+}
+
+.offerBg {
+  position: absolute;
+  inset: 0;
+  background: var(--gradient-stats);
+}
+
+.offerInner {
+  position: relative;
+  z-index: 1;
+  max-width: var(--max-width);
+  margin-inline: auto;
+}
+
+.offerGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+}
+
+.offerCard {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(159,196,232,0.2);
+  border-radius: 8px;
+  padding: 1.5rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  transition: background 0.2s ease;
+}
+
+.offerCard:hover { background: rgba(255,255,255,0.1); }
+
+.offerIcon { font-size: 1.8rem; line-height: 1; }
+
+.offerTitle {
+  font-family: var(--font-soulmaze);
+  font-size: 1.05rem;
+  color: var(--white);
+  margin: 0;
+}
+
+.offerBody {
+  font-family: var(--font-futura-medium);
+  font-size: 0.875rem;
+  color: rgba(255,255,255,0.75);
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* ── Contact CTA ── */
+.ctaSection {
+  padding: var(--section-pad) clamp(1.5rem, 5vw, 4rem);
+  text-align: center;
+  max-width: 700px;
+  margin-inline: auto;
+}
+
+.ctaHeading {
+  font-family: var(--font-soulmaze);
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  color: var(--darkblue);
+  margin: 0 0 0.5rem;
+}
+
+.ctaSub {
+  font-family: var(--font-futura-medium);
+  font-size: var(--fs-body);
+  color: var(--black);
+  margin: 0 0 1.25rem;
+  line-height: 1.6;
+}
+
+.ctaEmail {
+  display: inline-block;
+  font-family: var(--font-futura-heavy);
+  font-size: clamp(0.9rem, 2vw, 1.1rem);
+  color: var(--blue);
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  border-bottom: 2px solid var(--yellow);
+  padding-bottom: 3px;
+  transition: color 0.2s ease;
+}
+
+.ctaEmail:hover { color: var(--darkblue); }
+
+@media (max-width: 900px) {
+  .offerGrid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 520px) {
+  .offerGrid { grid-template-columns: 1fr; }
+}
+
+  color: var(--darkblue);
+  line-height: 1.7;
+  text-align: center;
+}
+
+.grid {
+  padding: var(--sp-md) clamp(1rem, 4vw, 3rem);
+}

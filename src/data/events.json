@@ -1,0 +1,90 @@
+[
+  {
+    "_id": "tg-2025-fall-gbm",
+    "full_name": "Triton Gaming Fall General Body Meeting",
+    "name": "Fall GBM",
+    "start_date": "2025-09-26T19:00:00.000Z",
+    "end_date": "2025-09-26T21:00:00.000Z",
+    "flyer_url": "",
+    "location": "PC East Ballroom, Price Center",
+    "content": "Kick off the fall quarter with Triton Gaming! Learn about our divisions, meet the exec board, and find out how you can get involved. Free giveaways and fun activities for all attendees.",
+    "url": "https://discord.gg/tritongaming"
+  },
+  {
+    "_id": "tg-2025-halloween",
+    "full_name": "Triton Gaming Halloween Gaming Night",
+    "name": "Halloween Gaming Night",
+    "start_date": "2025-10-31T18:00:00.000Z",
+    "end_date": "2025-10-31T22:00:00.000Z",
+    "flyer_url": "",
+    "location": "UCSD Price Center Ballroom",
+    "content": "Dress up and game out! Join us for a spooky Halloween gaming night featuring costume contests, horror-themed games, free food, and prizes. Come as you are — no costume required!",
+    "url": "https://discord.gg/tritongaming"
+  },
+  {
+    "_id": "tg-2025-fall-tournament",
+    "full_name": "Triton Gaming Fall Tournament 2025",
+    "name": "Fall Tournament",
+    "start_date": "2025-11-22T14:00:00.000Z",
+    "end_date": "2025-11-22T21:00:00.000Z",
+    "flyer_url": "",
+    "location": "Qualcomm Institute, UCSD",
+    "content": "Compete in our biggest fall tournament featuring Valorant, League of Legends, Smash Bros, and more. Cash prizes and sponsor giveaways for top finishers. Register through Discord.",
+    "url": "https://discord.gg/tritongaming"
+  },
+  {
+    "_id": "tg-2026-lucky-draw",
+    "full_name": "Triton Gaming Winter Lucky Draw 2026",
+    "name": "Winter Lucky Draw",
+    "start_date": "2026-02-14T19:00:00.000Z",
+    "end_date": "2026-02-14T22:30:00.000Z",
+    "flyer_url": "",
+    "location": "Price Center East Ballroom",
+    "content": "Our fan-favorite annual lucky draw is back! Win gaming peripherals, gift cards, Steam codes, and exclusive Triton Gaming merch. Free entry with valid UCSD student ID.",
+    "url": "https://discord.gg/tritongaming"
+  },
+  {
+    "_id": "tg-2026-spring-lan",
+    "full_name": "Triton Gaming Spring LAN 2026",
+    "name": "Spring LAN 2026",
+    "start_date": "2026-04-25T16:00:00.000Z",
+    "end_date": "2026-04-26T01:00:00.000Z",
+    "flyer_url": "",
+    "location": "Price Center East Ballroom & Ballroom East",
+    "content": "Our premier spring LAN event returns! Featuring PC gaming stations, console setups, artist alley, industry panels, sponsor booths, tournaments, and incredible giveaways. RSVP required.",
+    "url": "https://discord.gg/tritongaming"
+  },
+  {
+    "_id": "tg-2026-tgex",
+    "full_name": "Triton Gaming Expo 2026",
+    "name": "TGEX 2026",
+    "start_date": "2026-06-06T16:00:00.000Z",
+    "end_date": "2026-06-06T22:00:00.000Z",
+    "flyer_url": "",
+    "location": "Price Center Ballrooms, UCSD",
+    "content": "The ultimate gaming expo at UC San Diego. TGEX features tournaments with cash prizes, celebrity streamers and esports pros, sponsor activations, artist alley, live music, and more. Don't miss it.",
+    "url": "/tgex"
+  },
+  {
+    "_id": "6875864e0f0318de719684f1",
+    "full_name": "Triton Gaming Expo 2025",
+    "name": "TGEX 2025",
+    "start_date": "2025-05-31T19:00:00.000Z",
+    "end_date": "2025-05-31T23:00:00.000Z",
+    "flyer_url": "",
+    "location": "Price Center, UCSD",
+    "content": "The Triton Gaming Expo brought together hundreds of UCSD students for a day of competitive gaming, sponsor activations, panels with industry professionals, and incredible giveaways.",
+    "url": "https://discord.gg/tritongaming"
+  },
+  {
+    "_id": "687588ba40b8f18eaf7a4869",
+    "full_name": "Spring Games Expo 2025",
+    "name": "Spring Games Expo",
+    "start_date": "2025-04-04T21:00:00.000Z",
+    "end_date": "2025-04-04T23:00:00.000Z",
+    "flyer_url": "",
+    "location": "Sixth College Lodge & Dogg House",
+    "content": "A chill spring gaming showcase with free-to-play setups, casual tournaments, food, and a great opportunity to connect with fellow gamers at UCSD.",
+    "url": ""
+  }
+]

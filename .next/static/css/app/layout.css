@@ -1,0 +1,222 @@
+/*!*****************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[10].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[10].use[3]!./src/app/globals.css ***!
+  \*****************************************************************************************************************************************************************************************************************************************************************/
+/* ============================================================
+   FONTS
+   ============================================================ */
+@font-face {
+  font-family: 'Brick';
+  src: url('/fonts/Brick.otf') format('opentype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Made-Soulmaze';
+  src: url('/fonts/MADE-Soulmaze.otf') format('opentype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'RenogareSoft-Regular';
+  src: url('/fonts/RenogareSoft-Regular.ttf') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Futura-Heavy';
+  src: url('/fonts/futura-heavy-font.ttf') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Futura-Medium';
+  src: url('/fonts/futura-medium-bt.ttf') format('truetype');
+  font-display: swap;
+}
+
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+:root {
+  /* Brand Colors */
+  --white: #f2f1f0;
+  --black: #000000;
+  --yellow: #ffc72c;
+  --lightblue: #9fc4e8;
+  --blue: #275a8f;
+  --darkblue: #011941;
+
+  /* Gradient */
+  --gradient-nav: linear-gradient(to right, #14477c, #011941);
+  --gradient-stats: linear-gradient(135deg, #14477c 0%, #011941 100%);
+
+  /* Font Families */
+  --font-brick: 'Brick', serif;
+  --font-soulmaze: 'Made-Soulmaze', serif;
+  --font-renegare: 'RenogareSoft-Regular', sans-serif;
+  --font-futura-heavy: 'Futura-Heavy', sans-serif;
+  --font-futura-medium: 'Futura-Medium', sans-serif;
+
+  /* Fluid Font Sizes — scale gracefully across all viewports */
+  --fs-h1: clamp(1.6rem, 3.5vw, 3rem);
+  --fs-h2: clamp(1.3rem, 2.5vw, 2.25rem);
+  --fs-h3: clamp(1rem, 2vw, 1.5rem);
+  --fs-body: clamp(0.9rem, 1.5vw, 1.125rem);
+  --fs-accent: clamp(4rem, 9vw, 9rem);
+  --fs-caption: 0.875rem;
+
+  /* Spacing scale */
+  --sp-xs: 0.5rem;
+  --sp-sm: 1rem;
+  --sp-md: 2rem;
+  --sp-lg: 3.5rem;
+  --sp-xl: 6rem;
+
+  /* Layout */
+  --max-width: 1400px;
+  --navbar-height: 80px;
+  --section-pad: clamp(3rem, 6vw, 6rem);
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Support iOS safe areas for notched devices */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+body {
+  font-family: var(--font-futura-medium);
+  font-size: var(--fs-body);
+  color: var(--black);
+  background-color: var(--white);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+}
+
+/* Focus ring for accessibility */
+:focus-visible {
+  outline: 2px solid var(--yellow);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* ============================================================
+   UTILITY CLASSES
+   ============================================================ */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.container {
+  width: 100%;
+  max-width: var(--max-width);
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 4vw, 2.5rem);
+}
+
+/* ============================================================
+   ANIMATION KEYFRAMES (main site palette — navy / yellow / blue)
+   ============================================================ */
+
+/* Hero title entrance */
+@keyframes hero-title-enter {
+  from { opacity: 0; transform: scale(0.88) translateY(16px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Tagline word slide-up */
+@keyframes tag-slide-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Yellow glow pulse (for hero title, accent elements) */
+@keyframes yellow-glow-pulse {
+  0%, 100% {
+    text-shadow:
+      4px 4px 12px rgba(0, 0, 0, 0.75),
+      0 0 6px rgba(255, 199, 44, 0.15);
+  }
+  50% {
+    text-shadow:
+      4px 4px 12px rgba(0, 0, 0, 0.75),
+      0 0 28px rgba(255, 199, 44, 0.65),
+      0 0 64px rgba(255, 199, 44, 0.2);
+  }
+}
+
+/* Card shimmer sweep (holographic sheen on hover) */
+@keyframes main-card-shimmer {
+  0%   { transform: translateX(-140%) skewX(-8deg); }
+  100% { transform: translateX(260%) skewX(-8deg); }
+}
+
+/* Blue aurora shift for dark sections */
+@keyframes blue-aurora {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%       { transform: translate3d(2%, -2.5%, 0) scale(1.07); }
+}
+
+/* AccentButton shimmer sweep */
+@keyframes btn-shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+/* Generic float for decorative elements */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+
+/* Logo item entrance */
+@keyframes logo-pop {
+  from { opacity: 0; transform: scale(0.82) translateY(12px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+

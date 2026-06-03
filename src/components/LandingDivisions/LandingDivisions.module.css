@@ -1,0 +1,100 @@
+.section {
+  padding: var(--section-pad) clamp(1rem, 4vw, 2.5rem);
+  background: var(--darkblue);
+}
+
+.header {
+  text-align: center;
+  max-width: 640px;
+  margin-inline: auto;
+  margin-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.sectionLabel {
+  font-family: var(--font-futura-heavy);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--yellow);
+  margin: 0 0 0.5rem;
+}
+
+.sectionTitle {
+  font-family: var(--font-soulmaze);
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  color: var(--white);
+  margin: 0 0 0.75rem;
+  line-height: 1.2;
+}
+
+.sectionSub {
+  font-family: var(--font-futura-medium);
+  font-size: var(--fs-body);
+  color: var(--lightblue);
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* ── Division grid ── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  max-width: var(--max-width);
+  margin-inline: auto;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem 1rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(159, 196, 232, 0.15);
+  border-radius: 8px;
+  text-decoration: none;
+  text-align: center;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: default;
+}
+
+a.card {
+  cursor: pointer;
+}
+
+a.card:hover {
+  background: rgba(255, 199, 44, 0.06);
+  border-color: rgba(255, 199, 44, 0.35);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.logoWrap {
+  position: relative;
+  width: 70px;
+  height: 70px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+}
+
+.divName {
+  font-family: var(--font-futura-heavy);
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  color: var(--white);
+  text-transform: uppercase;
+}
+
+.divDesc {
+  font-family: var(--font-futura-medium);
+  font-size: 0.75rem;
+  color: var(--lightblue);
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+}

@@ -1,26 +1,41 @@
 {
-    "compilerOptions": {
-        "target": "ES2020", // Good balance of modern features and Node.js compatibility
-        "module": "CommonJS", // Use "ESNext" if you're using native ESM with `"type": "module"`
-        "lib": [
-            "ES2020",
-            "DOM"
-        ], // DOM is needed if you're working with React on frontend
-        "rootDir": "./src", // Assumes your source TypeScript is in a `src` folder
-        "outDir": "./dist", // Output compiled files to `dist`
-        "strict": true, // Enables all strict type-checking options
-        "esModuleInterop": true, // Allows default imports from CommonJS modules
-        "moduleResolution": "node", // Helps Node.js-style module resolution
-        "resolveJsonModule": true, // Allows importing JSON files as modules
-        "forceConsistentCasingInFileNames": true,
-        "skipLibCheck": true, // Faster builds by skipping type checks in `node_modules`
+  "compilerOptions": {
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
     },
-    "include": [
-        "src"
-    ], // Include all TS files in the `src` directory
-    "exclude": [
-        "node_modules",
-        "dist",
-        "app"
-    ] // Exclude build and static folders
+    "target": "ES2017"
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "app"
+  ]
 }

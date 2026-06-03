@@ -1,0 +1,154 @@
+/*!***************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[5].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[5].use[3]!./src/components/AlternateTitle/AlternateTitle.module.css ***!
+  \***************************************************************************************************************************************************************************************************************************************************************************************************/
+.AlternateTitle_root__mogzj {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-block: var(--sp-md);
+  overflow: hidden;
+}
+
+.AlternateTitle_bg__8N3y1 {
+  font-family: var(--font-brick);
+  font-size: var(--fs-accent);
+  color: var(--yellow);
+  white-space: nowrap;
+  line-height: 1;
+  user-select: none;
+  pointer-events: none;
+}
+
+.AlternateTitle_fg__rwLPl {
+  position: absolute;
+  font-family: var(--font-soulmaze);
+  font-size: var(--fs-h1);
+  color: var(--darkblue);
+  text-align: center;
+  line-height: 1.2;
+}
+
+/*!*************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[5].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[5].use[3]!./src/components/LongEventCard/LongEventCard.module.css ***!
+  \*************************************************************************************************************************************************************************************************************************************************************************************************/
+.LongEventCard_card__cuS3T {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: clamp(1.5rem, 4vw, 3rem);
+  align-items: start;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  margin-inline: clamp(1rem, 5vw, 4rem);
+  margin-block: 1.5rem;
+  background: var(--darkblue);
+  border-radius: 10px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+.LongEventCard_imgWrapper__XIEa6 {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--blue);
+}
+
+.LongEventCard_img__FBMAl {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.LongEventCard_content__cT9JK {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+}
+
+.LongEventCard_title__E5D65 {
+  font-family: var(--font-soulmaze);
+  font-size: clamp(1.3rem, 3vw, 2rem);
+  color: var(--white);
+  line-height: 1.25;
+}
+
+.LongEventCard_meta__hWOs1,
+.LongEventCard_location__cGBQf {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  font-family: var(--font-soulmaze);
+  font-size: clamp(0.8rem, 1.5vw, 1rem);
+  color: var(--lightblue);
+}
+
+.LongEventCard_hash__f8wDF {
+  font-family: var(--font-brick);
+  font-size: 1.5rem;
+  color: var(--yellow);
+  line-height: 1;
+  position: relative;
+  top: 1px;
+}
+
+.LongEventCard_desc__7ZeeU {
+  font-family: var(--font-futura-medium);
+  font-size: var(--fs-body);
+  color: rgba(242, 241, 240, 0.85);
+  line-height: 1.7;
+}
+
+.LongEventCard_link__wjF3i {
+  font-family: var(--font-soulmaze);
+  font-size: clamp(1rem, 2vw, 1.375rem);
+  color: var(--white);
+  align-self: flex-start;
+  transition: color 0.2s ease;
+  padding-block: 0.25rem;
+}
+
+.LongEventCard_link__wjF3i:hover {
+  color: var(--yellow);
+}
+
+/* Tablet */
+@media (max-width: 768px) {
+  .LongEventCard_card__cuS3T {
+    grid-template-columns: 1fr;
+    margin-inline: 1rem;
+  }
+
+  .LongEventCard_imgWrapper__XIEa6 {
+    aspect-ratio: 16 / 9;
+    max-height: 300px;
+  }
+}
+
+/*!***********************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[5].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[5].use[3]!./src/app/(main)/events/events.module.css ***!
+  \***********************************************************************************************************************************************************************************************************************************************************************************/
+.events_page__7fCPR {
+  padding-top: 80px;
+  background: var(--white);
+  min-height: 100svh;
+}
+
+.events_section__W0duk {
+  padding-bottom: var(--sp-xl);
+}
+
+.events_empty__YKxtZ {
+  text-align: center;
+  padding: var(--sp-xl);
+}
+
+.events_emptyMsg__gqufq {
+  font-family: var(--font-futura-medium);
+  font-size: var(--fs-body);
+  color: var(--darkblue);
+  margin-top: var(--sp-md);
+}
+

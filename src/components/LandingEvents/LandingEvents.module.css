@@ -1,0 +1,61 @@
+.section {
+  padding-block: var(--sp-md);
+  background: var(--white);
+  overflow: hidden;
+}
+
+.wrapper {
+  position: relative;
+  /* Fade edges on desktop */
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 12%,
+    black 88%,
+    transparent 100%
+  );
+}
+
+.carousel {
+  display: flex;
+  gap: clamp(1rem, 2.5vw, 2rem);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  padding: 2rem clamp(1rem, 5vw, 6rem);
+  cursor: grab;
+
+  /* Hide scrollbar */
+  scrollbar-width: none;
+}
+
+.carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel:active {
+  cursor: grabbing;
+}
+
+.cardWrapper {
+  scroll-snap-align: center;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  flex-shrink: 0;
+}
+
+.faded {
+  opacity: 0.4;
+  transform: scale(0.92);
+}
+
+/* On mobile, remove edge fade and show full cards */
+@media (max-width: 640px) {
+  .wrapper {
+    mask-image: none;
+  }
+
+  .carousel {
+    padding-inline: 1rem;
+    gap: 1rem;
+  }
+}
