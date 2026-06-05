@@ -21,13 +21,14 @@ interface NavItem {
 }
 
 const NAV: NavItem[] = [
-  { href: '/portal',         label: 'Dashboard',       icon: '⚡' },
-  { href: '/portal/profile', label: 'My Profile',      icon: '👤' },
-  { href: '/portal/tickets', label: 'My Tickets',      icon: '🎟️' },
-  { href: '/portal/events',  label: 'Events',          icon: '🗓️',  minRole: 'officer' },
-  { href: '/portal/checkin', label: 'Check-In Scanner',icon: '📷',  minRole: 'officer' },
-  { href: '/portal/division',label: 'My Division',     icon: '🎮',  minRole: 'lead' },
-  { href: '/portal/members', label: 'Members',         icon: '👥',  minRole: 'exec' },
+  { href: '/portal',                label: 'Dashboard',       icon: '⚡' },
+  { href: '/portal/profile',        label: 'My Profile',      icon: '👤' },
+  { href: '/portal/tickets',        label: 'My Tickets',      icon: '🎟️' },
+  { href: '/portal/events',         label: 'Events',          icon: '🗓️',  minRole: 'officer' },
+  { href: '/portal/checkin',        label: 'Check-In Scanner',icon: '📷',  minRole: 'officer' },
+  { href: '/portal/admin/content',  label: 'Edit Site Content',icon: '✏️', minRole: 'officer' },
+  { href: '/portal/division',       label: 'My Division',     icon: '🎮',  minRole: 'lead' },
+  { href: '/portal/members',        label: 'Members',         icon: '👥',  minRole: 'exec' },
   { href: '/portal/admin',   label: 'Admin',           icon: '🛡️',  minRole: 'admin' },
 ];
 
