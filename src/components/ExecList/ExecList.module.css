@@ -18,6 +18,7 @@
 .sectionTitle {
   font-family: var(--font-soulmaze);
   font-size: var(--fs-h1);
-  color: var(--darkblue);
+  color: var(--white);
   text-align: center;
+  letter-spacing: 0.02em;
 }

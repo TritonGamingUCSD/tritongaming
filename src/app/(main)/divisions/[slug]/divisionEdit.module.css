@@ -3,8 +3,8 @@
   flex-direction: column;
   gap: 1.25rem;
   padding: 1.5rem;
-  background: rgba(1,25,65,0.03);
-  border: 1px solid rgba(1,25,65,0.08);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
   border-radius: 1rem;
 }
 
@@ -19,12 +19,12 @@
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(0,0,0,0.4);
+  color: rgba(242,241,240,0.4);
 }
 
 .input {
   background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(0,0,0,0.1);
+  border: 1px solid rgba(255,255,255,0.1);
   border-radius: 0.5rem;
   padding: 0.625rem 0.875rem;
   color: var(--white);
@@ -75,12 +75,12 @@
 }
 
 .addBtn:hover {
-  background: rgba(39,90,143,0.08);
+  background: rgba(255,255,255,0.06);
 }
 
 .removeBtn {
   font-size: 0.8rem;
-  color: rgba(0,0,0,0.3);
+  color: rgba(242,241,240,0.35);
   cursor: pointer;
   padding: 0.3rem 0.5rem;
   transition: color 0.15s;

@@ -1,23 +1,23 @@
 .card {
   display: flex;
-  gap: 0;
-  background: var(--white);
-  border: 1px solid rgba(0,0,0,0.07);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
   border-radius: 0.875rem;
   overflow: hidden;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  box-shadow: 0 1px 4px rgba(1,25,65,0.04);
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
 }
 
 .card:hover {
-  border-color: rgba(1,25,65,0.15);
-  box-shadow: 0 4px 16px rgba(1,25,65,0.08);
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,199,44,0.15);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
 }
 
 .pinned {
-  border-color: rgba(255,199,44,0.4);
+  border-color: rgba(255,199,44,0.35) !important;
 }
 
+/* Vote column */
 .votes {
   display: flex;
   flex-direction: column;
@@ -25,14 +25,14 @@
   justify-content: flex-start;
   gap: 0.25rem;
   padding: 1rem 0.625rem;
-  background: rgba(1,25,65,0.02);
+  background: rgba(0,0,0,0.15);
   width: 52px;
   flex-shrink: 0;
 }
 
 .voteBtn {
   font-size: 0.7rem;
-  color: rgba(0,0,0,0.25);
+  color: rgba(242,241,240,0.3);
   cursor: pointer;
   padding: 0.2rem 0.4rem;
   border-radius: 0.25rem;
@@ -41,29 +41,25 @@
 }
 
 .voteBtn:hover {
-  color: var(--darkblue);
-  background: rgba(1,25,65,0.06);
+  color: var(--white);
+  background: rgba(255,255,255,0.08);
 }
 
-.upActive {
-  color: #f59e0b !important;
-}
-
-.downActive {
-  color: #6366f1 !important;
-}
+.upActive   { color: #f59e0b !important; }
+.downActive { color: #6366f1 !important; }
 
 .score {
   font-family: var(--font-futura-heavy);
   font-size: 0.85rem;
-  color: rgba(0,0,0,0.6);
+  color: rgba(242,241,240,0.65);
   min-width: 1.5rem;
   text-align: center;
 }
 
-.scoreUp  { color: #f59e0b; }
+.scoreUp   { color: #f59e0b; }
 .scoreDown { color: #6366f1; }
 
+/* Body */
 .body {
   flex: 1;
   padding: 0.875rem 1rem;
@@ -83,63 +79,41 @@
   font-family: var(--font-renegare);
   letter-spacing: 0.07em;
   padding: 0.1rem 0.4rem;
-  background: rgba(255,199,44,0.15);
+  background: rgba(255,199,44,0.12);
   color: #b45309;
   border-radius: 0.25rem;
 }
 
 .authorAvatar {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  object-fit: cover;
+  width: 18px; height: 18px; border-radius: 50%; object-fit: cover;
 }
 
 .authorAvatarFallback {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.6rem;
-  font-family: var(--font-futura-heavy);
-  color: white;
+  width: 18px; height: 18px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.6rem; font-family: var(--font-futura-heavy); color: white;
 }
 
-.authorName {
-  font-size: 0.78rem;
-  color: rgba(0,0,0,0.55);
-}
-
-.dot {
-  color: rgba(0,0,0,0.2);
-  font-size: 0.8rem;
-}
-
-.time {
-  font-size: 0.72rem;
-  color: rgba(0,0,0,0.35);
-}
+.authorName { font-size: 0.78rem; color: rgba(242,241,240,0.5); }
+.dot        { color: rgba(242,241,240,0.2); font-size: 0.8rem; }
+.time       { font-size: 0.72rem; color: rgba(242,241,240,0.32); }
 
 .titleLink {}
 
 .title {
   font-family: var(--font-futura-medium);
   font-size: 0.975rem;
-  color: var(--darkblue);
+  color: var(--white);
   line-height: 1.4;
   margin-bottom: 0.4rem;
   transition: color 0.15s;
 }
 
-.titleLink:hover .title {
-  color: var(--blue);
-}
+.titleLink:hover .title { color: var(--yellow); }
 
 .excerpt {
   font-size: 0.83rem;
-  color: rgba(0,0,0,0.5);
+  color: rgba(242,241,240,0.48);
   line-height: 1.5;
   margin-bottom: 0.625rem;
 }
@@ -149,30 +123,22 @@
   align-items: center;
   gap: 0.3rem;
   font-size: 0.78rem;
-  color: var(--blue);
+  color: var(--lightblue);
   margin-bottom: 0.5rem;
   transition: opacity 0.15s;
 }
+.linkPreview:hover { opacity: 0.75; }
 
-.linkPreview:hover {
-  opacity: 0.75;
-}
-
-.actions {
-  display: flex;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
-}
+.actions { display: flex; gap: 0.75rem; margin-top: 0.5rem; }
 
 .actionBtn {
   font-size: 0.78rem;
-  color: rgba(0,0,0,0.4);
+  color: rgba(242,241,240,0.38);
   padding: 0.2rem 0.5rem;
   border-radius: 0.25rem;
   transition: background 0.15s, color 0.15s;
 }
-
 .actionBtn:hover {
-  background: rgba(1,25,65,0.05);
-  color: var(--darkblue);
+  background: rgba(255,255,255,0.06);
+  color: rgba(242,241,240,0.75);
 }

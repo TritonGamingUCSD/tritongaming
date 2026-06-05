@@ -25,7 +25,7 @@ export default function InfoSection({
     <div className={`${styles.section} ${reverse ? styles.reverse : ''}`}>
       <div className={styles.imageWrapper}>
         <div className={styles.scribbleWrapper} aria-hidden="true">
-          <Image src="/images/scribble.png" alt="" fill unoptimized style={{ objectFit: 'contain', opacity: 0.35 }} />
+          <Image src="/images/scribble.png" alt="" fill unoptimized style={{ objectFit: 'contain', opacity: 0.06, filter: 'invert(1)' }} />
         </div>
         <div className={styles.photo}>
           <Image src={image} alt={imageAlt} fill sizes="(max-width: 768px) 100vw, 50vw" style={{ objectFit: 'cover' }} />

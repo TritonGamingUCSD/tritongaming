@@ -33,7 +33,9 @@
   border-radius: 6px;
   overflow: hidden;
   z-index: 1;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  box-shadow:
+    0 12px 48px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 199, 44, 0.08);
 }
 
 .credit {
@@ -43,12 +45,15 @@
   z-index: 2;
   font-family: var(--font-futura-medium);
   font-size: var(--fs-caption);
-  color: var(--black);
+  color: rgba(242, 241, 240, 0.45);
+  background: rgba(6, 12, 26, 0.7);
+  padding: 0.15rem 0.4rem;
+  border-radius: 2px;
   transition: color 0.2s ease;
 }
 
 .credit:hover {
-  color: var(--blue);
+  color: var(--yellow);
 }
 
 .content {
@@ -60,15 +65,15 @@
 .title {
   font-family: var(--font-soulmaze);
   font-size: var(--fs-h1);
-  color: var(--darkblue);
+  color: var(--white);
   line-height: 1.2;
 }
 
 .text {
   font-family: var(--font-futura-medium);
   font-size: var(--fs-body);
-  color: var(--black);
-  line-height: 1.7;
+  color: rgba(242, 241, 240, 0.68);
+  line-height: 1.75;
 }
 
 @media (max-width: 900px) {
