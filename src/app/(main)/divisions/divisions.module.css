@@ -36,7 +36,7 @@
 }
 
 .card {
-  background: var(--white);
+  background: #060c1a;
   border-radius: 1.125rem;
   overflow: hidden;
   box-shadow: 0 2px 16px rgba(1,25,65,0.08);
@@ -86,7 +86,7 @@
 .divName {
   font-family: var(--font-futura-heavy);
   font-size: 1rem;
-  color: var(--darkblue);
+  color: var(--white);
   margin-bottom: 0.5rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -94,7 +94,7 @@
 
 .divDesc {
   font-size: 0.85rem;
-  color: rgba(0,0,0,0.55);
+  color: rgba(242,241,240,0.55);
   line-height: 1.55;
 }
 
@@ -103,7 +103,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-top: 1px solid rgba(0,0,0,0.06);
+  border-top: 1px solid rgba(255,255,255,0.06);
   margin-top: 0.75rem;
 }
 

@@ -470,6 +470,121 @@
 
 .kvAdd:hover { color: var(--yellow); }
 
+/* ── Person list ─────────────────────────────────── */
+.personList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.personCard {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.personCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.875rem;
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.personAvatar {
+  width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.personAvatarFallback {
+  width: 40px; height: 40px; border-radius: 50%; background: rgba(255,199,44,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-futura-heavy); font-size: 1rem; color: var(--yellow); flex-shrink: 0;
+}
+
+.personCardTitle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  font-family: var(--font-futura-medium);
+  font-size: 0.875rem;
+  color: var(--white);
+}
+
+.personCardRole {
+  font-size: 0.72rem;
+  color: rgba(242,241,240,0.4);
+}
+
+.personFields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.625rem;
+  padding: 0.875rem;
+}
+
+.personField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.personFieldLabel {
+  font-size: 0.62rem;
+  font-family: var(--font-renegare);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(242,241,240,0.3);
+}
+
+/* ── Image list (sponsors) ────────────────────────── */
+.imageList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.imageCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  padding: 0.875rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 0.75rem;
+}
+
+.imageCardLeft { flex-shrink: 0; }
+
+.imageLogo {
+  width: 48px; height: 48px; object-fit: contain; border-radius: 0.375rem;
+  background: rgba(255,255,255,0.06);
+}
+
+.imageLogoFallback {
+  width: 48px; height: 48px; border-radius: 0.375rem; background: rgba(255,255,255,0.08);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-futura-heavy); font-size: 1.1rem; color: rgba(242,241,240,0.5);
+}
+
+.imageCardFields {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+/* Empty panel hint */
+.editPanelEmptyHint {
+  font-size: 0.78rem;
+  color: rgba(242,241,240,0.15);
+  margin-top: 0.25rem;
+}
+
 /* Responsive */
 @media (max-width: 900px) {
   .layout {

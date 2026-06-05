@@ -1,17 +1,29 @@
 .section {
-  padding-block: var(--sp-md);
-  background: var(--white);
+  padding-block: var(--sp-md) var(--sp-lg);
+  background: #08101e;
   overflow: hidden;
+  position: relative;
+}
+
+/* Top accent line */
+.section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 5%;
+  right: 5%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,199,44,0.25), transparent);
 }
 
 .wrapper {
   position: relative;
-  /* Fade edges on desktop */
+  /* Fade edges to match section bg */
   mask-image: linear-gradient(
     to right,
     transparent 0%,
-    black 12%,
-    black 88%,
+    black 10%,
+    black 90%,
     transparent 100%
   );
 }
@@ -22,20 +34,13 @@
   overflow-x: auto;
   overflow-y: hidden;
   scroll-snap-type: x mandatory;
-  padding: 2rem clamp(1rem, 5vw, 6rem);
+  padding: 1.5rem clamp(1rem, 5vw, 6rem) 2.5rem;
   cursor: grab;
-
-  /* Hide scrollbar */
   scrollbar-width: none;
 }
 
-.carousel::-webkit-scrollbar {
-  display: none;
-}
-
-.carousel:active {
-  cursor: grabbing;
-}
+.carousel::-webkit-scrollbar { display: none; }
+.carousel:active { cursor: grabbing; }
 
 .cardWrapper {
   scroll-snap-align: center;
@@ -44,18 +49,11 @@
 }
 
 .faded {
-  opacity: 0.4;
-  transform: scale(0.92);
+  opacity: 0.35;
+  transform: scale(0.9);
 }
 
-/* On mobile, remove edge fade and show full cards */
 @media (max-width: 640px) {
-  .wrapper {
-    mask-image: none;
-  }
-
-  .carousel {
-    padding-inline: 1rem;
-    gap: 1rem;
-  }
+  .wrapper { mask-image: none; }
+  .carousel { padding-inline: 1rem; gap: 1rem; }
 }

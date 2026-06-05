@@ -253,3 +253,9 @@ export const ROLE_COLORS: Record<UserRole, string> = {
 export function hasRole(userRole: UserRole, minRole: UserRole): boolean {
   return ROLE_HIERARCHY[userRole] >= ROLE_HIERARCHY[minRole];
 }
+
+// Roles that can edit site content (not officers — they manage events, not the website)
+export const CONTENT_EDITOR_ROLES: UserRole[] = ['lead', 'exec', 'admin'];
+export function canEditContent(role: UserRole): boolean {
+  return CONTENT_EDITOR_ROLES.includes(role);
+}

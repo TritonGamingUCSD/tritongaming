@@ -88,15 +88,15 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.15em;
-  color: rgba(0,0,0,0.4);
+  color: rgba(242,241,240,0.4);
   margin-bottom: 1rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(0,0,0,0.08);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
 .prose {
   font-size: 0.95rem;
-  color: rgba(0,0,0,0.7);
+  color: rgba(242,241,240,0.75);
   line-height: 1.7;
   white-space: pre-wrap;
 }
@@ -134,7 +134,7 @@
 .rosterName {
   font-family: var(--font-futura-medium);
   font-size: 0.875rem;
-  color: var(--darkblue);
+  color: var(--white);
 }
 
 .rosterTag {
@@ -144,15 +144,15 @@
 
 .rosterRole {
   font-size: 0.72rem;
-  color: rgba(0,0,0,0.4);
+  color: rgba(242,241,240,0.4);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-family: var(--font-renegare);
 }
 
 .eventList {
-  background: var(--white);
-  border: 1px solid rgba(0,0,0,0.08);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
   border-radius: 0.875rem;
   overflow: hidden;
   box-shadow: 0 2px 12px rgba(1,25,65,0.06);
@@ -164,7 +164,7 @@
   align-items: center;
   gap: 1rem;
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid rgba(0,0,0,0.05);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
 .eventRow:last-child {
@@ -180,10 +180,10 @@
 .eventName {
   font-family: var(--font-futura-medium);
   font-size: 0.9rem;
-  color: var(--darkblue);
+  color: var(--white);
 }
 
 .eventLoc {
   font-size: 0.75rem;
-  color: rgba(0,0,0,0.4);
+  color: rgba(242,241,240,0.4);
 }

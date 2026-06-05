@@ -1,9 +1,37 @@
 .section {
   padding: var(--section-pad) clamp(1rem, 4vw, 2.5rem);
-  background: var(--darkblue);
+  background: linear-gradient(180deg, #0b1526 0%, #011941 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Ambient top glow */
+.section::before {
+  content: '';
+  position: absolute;
+  top: -30%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 60%;
+  background: radial-gradient(ellipse, rgba(39, 90, 143, 0.2) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Bottom transition */
+.section::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,199,44,0.15), transparent);
 }
 
 .header {
+  position: relative;
+  z-index: 1;
   text-align: center;
   max-width: 640px;
   margin-inline: auto;
@@ -12,11 +40,25 @@
 
 .sectionLabel {
   font-family: var(--font-futura-heavy);
-  font-size: 0.75rem;
-  letter-spacing: 0.18em;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--yellow);
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.sectionLabel::before,
+.sectionLabel::after {
+  content: '';
+  display: inline-block;
+  width: 20px;
+  height: 2px;
+  background: var(--yellow);
+  flex-shrink: 0;
 }
 
 .sectionTitle {
@@ -33,13 +75,16 @@
   color: var(--lightblue);
   margin: 0;
   line-height: 1.6;
+  opacity: 0.8;
 }
 
-/* ── Division grid ── */
+/* ── Division grid ──────────────────────────────── */
 .grid {
+  position: relative;
+  z-index: 1;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 0.875rem;
   max-width: var(--max-width);
   margin-inline: auto;
 }
@@ -48,53 +93,86 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
-  padding: 1.5rem 1rem;
+  gap: 0.875rem;
+  padding: 1.75rem 1.25rem 1.25rem;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(159, 196, 232, 0.15);
-  border-radius: 8px;
+  border: 1px solid rgba(159, 196, 232, 0.1);
+  border-radius: 10px;
   text-decoration: none;
   text-align: center;
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   cursor: default;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.25s, border-color 0.25s, transform 0.25s, box-shadow 0.25s;
 }
 
-a.card {
-  cursor: pointer;
+/* Scan-line highlight on hover */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.04) 50%,
+    transparent 70%
+  );
+  opacity: 0;
+  transform: translateX(-100%);
+  transition: none;
 }
+
+a.card { cursor: pointer; }
 
 a.card:hover {
-  background: rgba(255, 199, 44, 0.06);
-  border-color: rgba(255, 199, 44, 0.35);
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  background: rgba(255, 199, 44, 0.05);
+  border-color: rgba(255, 199, 44, 0.3);
+  transform: translateY(-5px);
+  box-shadow:
+    0 12px 36px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 199, 44, 0.12),
+    0 0 20px rgba(255, 199, 44, 0.06);
+}
+
+a.card:hover::before {
+  opacity: 1;
+  animation: divScanLine 0.55s ease forwards;
+}
+
+@keyframes divScanLine {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(200%); }
 }
 
 .logoWrap {
   position: relative;
-  width: 70px;
-  height: 70px;
+  width: 72px;
+  height: 72px;
   flex-shrink: 0;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
+  transition: filter 0.25s;
+}
+
+a.card:hover .logoWrap {
+  filter: drop-shadow(0 4px 16px rgba(255, 199, 44, 0.25));
 }
 
 .divName {
   font-family: var(--font-futura-heavy);
-  font-size: 0.85rem;
-  letter-spacing: 0.04em;
+  font-size: 0.82rem;
+  letter-spacing: 0.05em;
   color: var(--white);
   text-transform: uppercase;
+  line-height: 1.3;
 }
 
 .divDesc {
   font-family: var(--font-futura-medium);
-  font-size: 0.75rem;
-  color: var(--lightblue);
-  line-height: 1.5;
+  font-size: 0.73rem;
+  color: rgba(159, 196, 232, 0.7);
+  line-height: 1.55;
 }
 
 @media (max-width: 640px) {
-  .grid {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 }

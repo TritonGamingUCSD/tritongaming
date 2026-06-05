@@ -96,8 +96,8 @@ html {
 body {
   font-family: var(--font-futura-medium);
   font-size: var(--fs-body);
-  color: var(--black);
-  background-color: var(--white);
+  color: var(--white);
+  background-color: #060c1a;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;

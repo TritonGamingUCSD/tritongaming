@@ -27,18 +27,18 @@
   z-index: 1;
 }
 
-/* Fades to white at the bottom */
+/* Fades to dark — seamless transition into next section */
 .gradient {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 40%;
+  height: 45%;
   background: linear-gradient(
     to bottom,
     transparent 0%,
-    rgba(242, 241, 240, 0.6) 65%,
-    var(--white) 100%
+    rgba(6, 12, 26, 0.55) 50%,
+    #060c1a 100%
   );
   z-index: 2;
 }

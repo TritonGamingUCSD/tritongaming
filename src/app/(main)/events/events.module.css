@@ -1,6 +1,6 @@
 .page {
   padding-top: 80px;
-  background: var(--white);
+  background: #060c1a;
   min-height: 100svh;
 }
 
@@ -16,6 +16,6 @@
 .emptyMsg {
   font-family: var(--font-futura-medium);
   font-size: var(--fs-body);
-  color: var(--darkblue);
+  color: var(--white);
   margin-top: var(--sp-md);
 }

@@ -1,6 +1,6 @@
 .page {
   padding-top: 80px;
-  background: var(--white);
+  background: #060c1a;
   min-height: 100svh;
 }
 
@@ -76,7 +76,7 @@
 .sectionTitle {
   font-family: var(--font-soulmaze);
   font-size: clamp(1.8rem, 4vw, 2.8rem);
-  color: var(--darkblue);
+  color: var(--white);
   margin: 0;
   line-height: 1.2;
 }
@@ -94,8 +94,8 @@
   padding: 1.75rem 1.5rem;
   border-radius: 8px;
   border: 1px solid rgba(1, 25, 65, 0.1);
-  background: var(--white);
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  background: rgba(255,255,255,0.04);
+  box-shadow: 0 2px 12px rgba(255,255,255,0.06);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -112,14 +112,14 @@
 .wayTitle {
   font-family: var(--font-soulmaze);
   font-size: clamp(1.1rem, 2vw, 1.35rem);
-  color: var(--darkblue);
+  color: var(--white);
   margin: 0;
 }
 
 .wayBody {
   font-family: var(--font-futura-medium);
   font-size: var(--fs-body);
-  color: var(--black);
+  color: rgba(242,241,240,0.7);
   line-height: 1.7;
   margin: 0;
   flex: 1;
@@ -130,7 +130,7 @@
   font-size: 0.8rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--blue);
+  color: var(--lightblue);
   text-decoration: none;
   border-bottom: 2px solid var(--yellow);
   padding-bottom: 2px;
@@ -138,7 +138,7 @@
   transition: color 0.2s ease;
 }
 
-.wayCta:hover { color: var(--darkblue); }
+.wayCta:hover { color: var(--white); }
 
 /* ── Officer Section ── */
 .officerSection {
@@ -205,7 +205,7 @@
   display: inline-block;
   padding: 0.7rem 2rem;
   background: var(--yellow);
-  color: var(--darkblue);
+  color: var(--white);
   font-family: var(--font-futura-heavy);
   font-size: 0.9rem;
   letter-spacing: 0.06em;

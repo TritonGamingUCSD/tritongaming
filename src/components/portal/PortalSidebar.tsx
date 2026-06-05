@@ -5,8 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import type { Profile } from '@/types/database';
-import { hasRole, ROLE_LABELS, ROLE_COLORS } from '@/types/database';
+import type { Profile, UserRole } from '@/types/database';
+import { hasRole, canEditContent, ROLE_LABELS, ROLE_COLORS } from '@/types/database';
 import styles from './PortalSidebar.module.css';
 
 interface Props {
@@ -17,19 +17,23 @@ interface NavItem {
   href: string;
   label: string;
   icon: string;
-  minRole?: Profile['role'];
+  minRole?: UserRole;
+  allowedRoles?: UserRole[];
+  dividerBefore?: boolean;
 }
 
 const NAV: NavItem[] = [
-  { href: '/portal',                label: 'Dashboard',       icon: '⚡' },
-  { href: '/portal/profile',        label: 'My Profile',      icon: '👤' },
-  { href: '/portal/tickets',        label: 'My Tickets',      icon: '🎟️' },
-  { href: '/portal/events',         label: 'Events',          icon: '🗓️',  minRole: 'officer' },
-  { href: '/portal/checkin',        label: 'Check-In Scanner',icon: '📷',  minRole: 'lead' },
-  { href: '/portal/admin/content',  label: 'Edit Site Content',icon: '✏️', minRole: 'officer' },
-  { href: '/portal/division',       label: 'My Division',     icon: '🎮',  minRole: 'lead' },
-  { href: '/portal/members',  label: 'Members',  icon: '👥',  minRole: 'officer' },
-  { href: '/portal/admin',   label: 'Admin',    icon: '🛡️',  minRole: 'exec' },
+  { href: '/portal',               label: 'Dashboard',        icon: '⚡' },
+  { href: '/portal/profile',       label: 'My Profile',       icon: '👤' },
+  { href: '/portal/tickets',       label: 'My Tickets',       icon: '🎟️' },
+  { dividerBefore: true,
+    href: '/portal/division',      label: 'My Division',      icon: '🎮',  minRole: 'lead' },
+  { href: '/portal/checkin',       label: 'Check-In Scanner', icon: '📷',  minRole: 'lead' },
+  { href: '/portal/events',        label: 'Events',           icon: '🗓️',  minRole: 'officer' },
+  { href: '/portal/members',       label: 'Members',          icon: '👥',  minRole: 'officer' },
+  { dividerBefore: true,
+    href: '/portal/admin/content', label: 'Edit Site Content',icon: '✏️',  allowedRoles: ['lead','exec','admin'] },
+  { href: '/portal/admin',         label: 'Admin',            icon: '🛡️',  minRole: 'exec' },
 ];
 
 export default function PortalSidebar({ profile }: Props) {
@@ -48,9 +52,11 @@ export default function PortalSidebar({ profile }: Props) {
     router.refresh();
   }
 
-  const visibleNav = NAV.filter(
-    (item) => !item.minRole || hasRole(profile.role, item.minRole)
-  );
+  const visibleNav = NAV.filter((item) => {
+    if (item.allowedRoles) return item.allowedRoles.includes(profile.role);
+    if (item.minRole) return hasRole(profile.role, item.minRole);
+    return true;
+  });
 
   const sidebarContent = (
     <div className={styles.inner}>
@@ -88,17 +94,19 @@ export default function PortalSidebar({ profile }: Props) {
       </div>
 
       <nav className={styles.nav} aria-label="Portal navigation">
-        {visibleNav.map(({ href, label, icon }) => {
-          const active = pathname === href || (href !== '/portal' && pathname.startsWith(href));
+        {visibleNav.map((item) => {
+          const active = pathname === item.href || (item.href !== '/portal' && pathname.startsWith(item.href));
           return (
-            <Link
-              key={href}
-              href={href}
-              className={`${styles.navItem} ${active ? styles.navActive : ''}`}
-            >
-              <span className={styles.navIcon} aria-hidden="true">{icon}</span>
-              {label}
-            </Link>
+            <span key={item.href}>
+              {item.dividerBefore && <div className={styles.navDivider} />}
+              <Link
+                href={item.href}
+                className={`${styles.navItem} ${active ? styles.navActive : ''}`}
+              >
+                <span className={styles.navIcon} aria-hidden="true">{item.icon}</span>
+                {item.label}
+              </Link>
+            </span>
           );
         })}
       </nav>

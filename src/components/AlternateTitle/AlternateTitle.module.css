@@ -10,7 +10,7 @@
 .bg {
   font-family: var(--font-brick);
   font-size: var(--fs-accent);
-  color: var(--yellow);
+  color: rgba(255, 199, 44, 0.07);
   white-space: nowrap;
   line-height: 1;
   user-select: none;
@@ -21,7 +21,8 @@
   position: absolute;
   font-family: var(--font-soulmaze);
   font-size: var(--fs-h1);
-  color: var(--darkblue);
+  color: var(--white);
   text-align: center;
   line-height: 1.2;
+  text-shadow: 0 2px 20px rgba(39, 90, 143, 0.5);
 }

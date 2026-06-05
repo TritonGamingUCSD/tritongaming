@@ -3,16 +3,28 @@
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: clamp(1rem, 3vw, 2rem);
-  padding: var(--sp-md);
+  gap: clamp(0.75rem, 2.5vw, 1.5rem);
+  padding: var(--sp-md) var(--sp-sm);
+  max-width: var(--max-width);
+  margin-inline: auto;
 }
 
 .logoItem {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0.875rem 1.25rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
   opacity: 0;
   animation: logo-pop 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.logoItem:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 199, 44, 0.2);
 }
 
 /* Stagger up to 12 items */
@@ -32,28 +44,27 @@
 
 .logoWrap {
   position: relative;
-  transition:
-    transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
-    filter 0.25s ease;
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), filter 0.2s;
+  filter: brightness(0.9);
 }
 
 .logoItem:hover .logoWrap {
-  transform: scale(1.1) translateY(-3px);
-  filter: drop-shadow(0 4px 16px rgba(39, 90, 143, 0.5)) brightness(1.1);
+  transform: scale(1.08) translateY(-2px);
+  filter: brightness(1.1) drop-shadow(0 4px 12px rgba(39, 90, 143, 0.4));
 }
 
 /* Size variants */
 .size-small {
-  width: clamp(60px, 10vw, 80px);
-  height: clamp(40px, 6vw, 60px);
+  width: clamp(55px, 9vw, 75px);
+  height: clamp(35px, 5vw, 55px);
 }
 
 .size-medium {
-  width: clamp(100px, 15vw, 150px);
-  height: clamp(60px, 8vw, 80px);
+  width: clamp(90px, 14vw, 140px);
+  height: clamp(55px, 7vw, 75px);
 }
 
 .size-large {
-  width: clamp(140px, 20vw, 220px);
-  height: clamp(80px, 10vw, 110px);
+  width: clamp(130px, 18vw, 210px);
+  height: clamp(70px, 9vw, 100px);
 }

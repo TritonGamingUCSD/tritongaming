@@ -1,6 +1,6 @@
 .page {
   padding-top: 80px;
-  background: var(--white);
+  background: #060c1a;
 }
 
 /* ── Hero ── */
@@ -61,7 +61,7 @@
 .missionBar p {
   font-family: var(--font-soulmaze);
   font-size: clamp(0.9rem, 2vw, 1.15rem);
-  color: var(--darkblue);
+  color: var(--white);
   margin: 0;
 }
 
@@ -92,7 +92,7 @@
 .sectionTitle {
   font-family: var(--font-soulmaze);
   font-size: clamp(1.8rem, 4vw, 2.8rem);
-  color: var(--darkblue);
+  color: var(--white);
   margin: 0;
   line-height: 1.2;
 }
@@ -194,14 +194,14 @@
 .ctaHeading {
   font-family: var(--font-soulmaze);
   font-size: clamp(1.4rem, 3vw, 2rem);
-  color: var(--darkblue);
+  color: var(--white);
   margin: 0 0 0.5rem;
 }
 
 .ctaSub {
   font-family: var(--font-futura-medium);
   font-size: var(--fs-body);
-  color: var(--black);
+  color: rgba(242,241,240,0.7);
   margin: 0 0 1.25rem;
   line-height: 1.6;
 }
@@ -210,7 +210,7 @@
   display: inline-block;
   font-family: var(--font-futura-heavy);
   font-size: clamp(0.9rem, 2vw, 1.1rem);
-  color: var(--blue);
+  color: var(--lightblue);
   letter-spacing: 0.04em;
   text-decoration: none;
   border-bottom: 2px solid var(--yellow);
@@ -218,7 +218,7 @@
   transition: color 0.2s ease;
 }
 
-.ctaEmail:hover { color: var(--darkblue); }
+.ctaEmail:hover { color: var(--white); }
 
 @media (max-width: 900px) {
   .offerGrid { grid-template-columns: repeat(2, 1fr); }
