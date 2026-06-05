@@ -228,11 +228,6 @@
   .offerGrid { grid-template-columns: 1fr; }
 }
 
-  color: var(--darkblue);
-  line-height: 1.7;
-  text-align: center;
-}
-
 .grid {
   padding: var(--sp-md) clamp(1rem, 4vw, 3rem);
 }
