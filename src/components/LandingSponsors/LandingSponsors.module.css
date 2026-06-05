@@ -1,0 +1,67 @@
+.section {
+  padding: var(--section-pad) clamp(1rem, 4vw, 2.5rem);
+  background: var(--white);
+}
+
+.header {
+  text-align: center;
+  max-width: 600px;
+  margin-inline: auto;
+  margin-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.sectionLabel {
+  font-family: var(--font-futura-heavy);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--yellow);
+  margin: 0 0 0.5rem;
+}
+
+.sectionTitle {
+  font-family: var(--font-soulmaze);
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  color: var(--darkblue);
+  margin: 0 0 0.75rem;
+  line-height: 1.2;
+}
+
+.sectionSub {
+  font-family: var(--font-futura-medium);
+  font-size: var(--fs-body);
+  color: var(--black);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.cta {
+  text-align: center;
+  margin-top: clamp(2rem, 4vw, 2.5rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ctaText {
+  font-family: var(--font-futura-medium);
+  font-size: var(--fs-body);
+  color: var(--darkblue);
+  margin: 0;
+}
+
+.ctaLink {
+  font-family: var(--font-futura-heavy);
+  font-size: 0.9rem;
+  letter-spacing: 0.06em;
+  color: var(--blue);
+  text-decoration: none;
+  border-bottom: 2px solid var(--yellow);
+  padding-bottom: 2px;
+  transition: color 0.2s ease;
+}
+
+.ctaLink:hover {
+  color: var(--darkblue);
+}

@@ -1,0 +1,169 @@
+.section {
+  position: relative;
+  padding: var(--section-pad) clamp(1rem, 4vw, 2.5rem);
+  background: var(--gradient-stats);
+  overflow: hidden;
+}
+
+/* Faint background text */
+.bgWrapper {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.bgText,
+.bgText2 {
+  position: absolute;
+  font-family: var(--font-brick);
+  font-size: clamp(6rem, 14vw, 14rem);
+  color: rgba(255, 255, 255, 0.04);
+  white-space: nowrap;
+  user-select: none;
+  transform: rotate(-10deg);
+}
+
+.bgText  { top: -20%; left: -5%; }
+.bgText2 { bottom: -20%; right: -5%; }
+
+/* Aurora blobs */
+.aurora {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.auroraBlob1 {
+  position: absolute;
+  width: 40vw;
+  height: 40vw;
+  top: -20%;
+  left: -10%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 199, 44, 0.07), transparent 65%);
+  animation: blue-aurora 10s ease-in-out infinite;
+}
+
+.auroraBlob2 {
+  position: absolute;
+  width: 35vw;
+  height: 35vw;
+  bottom: -20%;
+  right: -8%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(39, 90, 143, 0.35), transparent 65%);
+  animation: blue-aurora 10s ease-in-out -5s infinite;
+}
+
+/* ── Header ── */
+.header {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  max-width: 600px;
+  margin-inline: auto;
+  margin-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.sectionLabel {
+  font-family: var(--font-futura-heavy);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--yellow);
+  margin: 0 0 0.5rem;
+}
+
+.sectionTitle {
+  font-family: var(--font-soulmaze);
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  color: var(--white);
+  margin: 0 0 0.75rem;
+  line-height: 1.2;
+}
+
+.sectionSub {
+  font-family: var(--font-futura-medium);
+  font-size: var(--fs-body);
+  color: var(--lightblue);
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* ── Pathway cards ── */
+.pathways {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  max-width: var(--max-width);
+  margin-inline: auto;
+}
+
+.pathway {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1.75rem 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(159, 196, 232, 0.2);
+  border-radius: 8px;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.pathway:hover {
+  background: rgba(255, 199, 44, 0.05);
+  border-color: rgba(255, 199, 44, 0.3);
+  transform: translateY(-4px);
+}
+
+.pathIcon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.pathTitle {
+  font-family: var(--font-soulmaze);
+  font-size: clamp(1.1rem, 2vw, 1.4rem);
+  color: var(--white);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.pathBody {
+  font-family: var(--font-futura-medium);
+  font-size: 0.875rem;
+  color: var(--lightblue);
+  line-height: 1.65;
+  margin: 0;
+  flex: 1;
+}
+
+.pathCta {
+  font-family: var(--font-futura-heavy);
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  color: var(--yellow);
+  text-decoration: none;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(255, 199, 44, 0.4);
+  padding-bottom: 2px;
+  transition: border-color 0.2s ease;
+  margin-top: auto;
+}
+
+.pathCta:hover {
+  border-color: var(--yellow);
+}
+
+@media (max-width: 768px) {
+  .pathways {
+    grid-template-columns: 1fr;
+    max-width: 440px;
+  }
+}
+

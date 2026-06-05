@@ -1,38 +1,43 @@
 {
   "name": "tritongaming-website",
-  "version": "1.0.0",
-  "description": "Triton Gaming",
-  "main": "dist/app.js",
+  "version": "2.0.0",
+  "private": true,
   "scripts": {
-    "postinstall": "cd app && npm install",
-    "start": "node dist/app.js",
-    "server": "nodemon src/app.ts",
-    "client": "npm start --prefix app",
-    "build:client": "npm run build --prefix app",
-    "build:server": "tsc",
-    "build": "npm run build:server && npm run build:client",
-    "dev": "concurrently \"npm run server\" \"npm run client\""
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit"
   },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "cors": "^2.8.5",
-    "cross-fetch": "^4.1.0",
-    "dotenv": "^17.2.0",
-    "express": "^5.1.0",
-    "express-validator": "^7.2.1",
-    "mongodb": "^6.17.0"
+    "@supabase/ssr": "^0.10.3",
+    "@supabase/supabase-js": "^2.107.0",
+    "@types/qrcode": "^1.5.6",
+    "@vercel/analytics": "^2.0.1",
+    "jsqr": "^1.4.0",
+    "lucide-react": "^1.14.0",
+    "mongodb": "^6.15.0",
+    "motion": "^12.38.0",
+    "next": "^15.3.3",
+    "pdf-parse": "^2.4.5",
+    "pdfjs-dist": "^6.0.227",
+    "qrcode": "^1.5.4",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.3",
-    "concurrently": "^9.2.0",
-    "nodemon": "^3.1.10",
-    "ts-node": "^10.9.2",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^22.15.21",
+    "@types/react": "^19.1.5",
+    "@types/react-dom": "^19.1.5",
+    "eslint": "^9.27.0",
+    "eslint-config-next": "^15.3.3",
+    "tailwindcss": "^4",
     "typescript": "^5.8.3"
   },
   "engines": {
-    "npm": ">=10.0.0",
-    "node": ">=22.0.0"
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
   }
 }

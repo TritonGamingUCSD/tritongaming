@@ -1,0 +1,70 @@
+.page {
+  max-width: 600px;
+}
+
+.title {
+  font-family: var(--font-futura-heavy);
+  font-size: 1.6rem;
+  color: var(--white);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.subtitle {
+  font-size: 0.9rem;
+  color: rgba(242,241,240,0.5);
+  margin-bottom: 2rem;
+}
+
+.noEvents {
+  padding: 2rem;
+  background: rgba(255,255,255,0.02);
+  border: 1px dashed rgba(255,255,255,0.1);
+  border-radius: 0.875rem;
+  color: rgba(242,241,240,0.4);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.eventSelector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.label {
+  font-size: 0.75rem;
+  font-family: var(--font-renegare);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(242,241,240,0.5);
+}
+
+.select {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  color: var(--white);
+  font-family: var(--font-futura-medium);
+  font-size: 0.9rem;
+  appearance: none;
+  width: 100%;
+}
+
+.select:focus {
+  outline: none;
+  border-color: rgba(255,199,44,0.4);
+}
+
+.select option {
+  background: #0a0f1e;
+  color: var(--white);
+}
