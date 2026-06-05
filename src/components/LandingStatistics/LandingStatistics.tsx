@@ -4,13 +4,57 @@ import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import styles from './LandingStatistics.module.css';
 
-const STATS = [
-  { value: '1.5M+', label: 'Social Media Reach', icon: '📡', isFloat: true, target: 1.5 },
-  { value: '15,700+', label: 'Community Members', icon: '👾', isFloat: false, target: 15700 },
-  { value: '3,000+', label: 'Annual Attendees', icon: '🏟️', isFloat: false, target: 3000 },
+export interface StatInput {
+  value: string;
+  label: string;
+}
+
+const DEFAULT_STATS: StatInput[] = [
+  { value: '1.5M+', label: 'Social Media Reach' },
+  { value: '15,700+', label: 'Community Members' },
+  { value: '3,000+', label: 'Annual Attendees' },
 ];
 
-function StatItem({ value, label, icon, isFloat, target }: { value: string; label: string; icon: string; isFloat: boolean; target: number }) {
+function parseStat(value: string): { display: string; target: number; isFloat: boolean; icon: string } {
+  const clean = value.replace(/,/g, '').replace(/\+$/, '').trim();
+  let target: number;
+  let isFloat = false;
+
+  if (clean.endsWith('M')) {
+    target = parseFloat(clean);
+    isFloat = true;
+  } else if (clean.endsWith('K') || clean.endsWith('k')) {
+    target = parseFloat(clean) * 1000;
+  } else {
+    target = parseFloat(clean);
+  }
+
+  if (isNaN(target)) target = 0;
+
+  // Pick an icon based on keywords in the label (fallback to generic)
+  return { display: value, target, isFloat, icon: '📊' };
+}
+
+const ICON_MAP: Record<string, string> = {
+  'Social Media': '📡',
+  'Community': '👾',
+  'Attendees': '🏟️',
+  'Members': '👾',
+  'Event': '🎮',
+  'Sponsor': '🤝',
+  'Officer': '🎖️',
+};
+
+function getIcon(label: string): string {
+  for (const [key, icon] of Object.entries(ICON_MAP)) {
+    if (label.toLowerCase().includes(key.toLowerCase())) return icon;
+  }
+  return '📊';
+}
+
+function StatItem({ stat }: { stat: StatInput }) {
+  const { target, isFloat } = parseStat(stat.value);
+  const icon = getIcon(stat.label);
   const [count, setCount] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
   const started = useRef(false);
@@ -44,18 +88,20 @@ function StatItem({ value, label, icon, isFloat, target }: { value: string; labe
     return () => observer.disconnect();
   }, [isFloat, target]);
 
-  const display = isFloat ? `${count}M+` : `${Number(count).toLocaleString()}+`;
+  const display = isFloat ? `${count}M+` : target >= 1000 ? `${Number(count).toLocaleString()}+` : `${count}+`;
 
   return (
     <div className={styles.stat} ref={ref}>
       <span className={styles.statIcon}>{icon}</span>
       <span className={styles.statValue}>{display}</span>
-      <span className={styles.statLabel}>{label}</span>
+      <span className={styles.statLabel}>{stat.label}</span>
     </div>
   );
 }
 
-export default function LandingStatistics() {
+export default function LandingStatistics({ stats }: { stats?: StatInput[] }) {
+  const displayStats = stats?.length ? stats : DEFAULT_STATS;
+
   return (
     <section className={styles.section} aria-label="Statistics">
       <div className={styles.bgWrapper} aria-hidden="true">
@@ -85,7 +131,7 @@ export default function LandingStatistics() {
           visible: { transition: { staggerChildren: 0.15, delayChildren: 0.1 } },
         }}
       >
-        {STATS.map((s) => (
+        {displayStats.map((s) => (
           <motion.div
             key={s.label}
             variants={{
@@ -94,7 +140,7 @@ export default function LandingStatistics() {
             }}
             transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
           >
-            <StatItem {...s} />
+            <StatItem stat={s} />
           </motion.div>
         ))}
       </motion.div>

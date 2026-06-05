@@ -1,7 +1,26 @@
 import Link from 'next/link';
 import styles from './Hero.module.css';
 
-export default function Hero() {
+interface HeroContent {
+  badge?: string;
+  title?: string;
+  subtitle?: string;
+  cta_primary_text?: string;
+  cta_primary_href?: string;
+  cta_secondary_text?: string;
+  cta_secondary_href?: string;
+}
+
+export default function Hero({ content = {} }: { content?: HeroContent }) {
+  const badge            = content.badge              || "UC San Diego's Premier Gaming Org";
+  const title            = content.title              || 'We are Triton Gaming';
+  const subtitle         = content.subtitle           || 'Esports · Events · Community';
+  const ctaPrimaryText   = content.cta_primary_text   || 'Explore Events';
+  const ctaPrimaryHref   = content.cta_primary_href   || '/events';
+  const ctaSecondaryText = content.cta_secondary_text || 'Join Discord';
+  const ctaSecondaryHref = content.cta_secondary_href || 'https://discord.gg/tritongaming';
+  const isSecondaryExternal = ctaSecondaryHref.startsWith('http');
+
   return (
     <section className={styles.hero} aria-label="Hero">
       <video
@@ -15,26 +34,28 @@ export default function Hero() {
         <source src="/videos/tgexhighlight.mp4" type="video/mp4" />
       </video>
 
-      {/* Dark overlay for text legibility */}
       <div className={styles.darkOverlay} aria-hidden="true" />
-
-      {/* Bottom gradient fade */}
       <div className={styles.gradient} aria-hidden="true" />
 
       <div className={styles.content}>
-        <div className={styles.badge}>UC San Diego&apos;s Premier Gaming Org</div>
-        <h1 className={styles.title}>We are Triton Gaming</h1>
-        <p className={styles.subtitle}>Esports &nbsp;·&nbsp; Events &nbsp;·&nbsp; Community</p>
+        <div className={styles.badge}>{badge}</div>
+        <h1 className={styles.title}>{title}</h1>
+        <p className={styles.subtitle}>{subtitle}</p>
         <div className={styles.ctaRow}>
-          <Link href="/events" className={styles.ctaPrimary}>Explore Events</Link>
-          <a
-            href="https://discord.gg/tritongaming"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.ctaSecondary}
-          >
-            Join Discord
-          </a>
+          {ctaPrimaryHref.startsWith('http') ? (
+            <a href={ctaPrimaryHref} target="_blank" rel="noopener noreferrer" className={styles.ctaPrimary}>
+              {ctaPrimaryText}
+            </a>
+          ) : (
+            <Link href={ctaPrimaryHref} className={styles.ctaPrimary}>{ctaPrimaryText}</Link>
+          )}
+          {isSecondaryExternal ? (
+            <a href={ctaSecondaryHref} target="_blank" rel="noopener noreferrer" className={styles.ctaSecondary}>
+              {ctaSecondaryText}
+            </a>
+          ) : (
+            <Link href={ctaSecondaryHref} className={styles.ctaSecondary}>{ctaSecondaryText}</Link>
+          )}
         </div>
       </div>
 

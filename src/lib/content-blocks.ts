@@ -17,15 +17,17 @@ export const CONTENT_BLOCKS = [
   {
     key: 'site.settings',
     title: 'Social Links & Contact',
-    description: 'Discord, Instagram, Twitch, email — used across the site and footer.',
+    description: 'Discord, Instagram, Twitch, TikTok, LinkedIn, email — used across the site and footer.',
     icon: '⚙️',
     category: 'Global',
     fields: [
       { name: 'discord',   label: 'Discord Invite URL',  type: 'url'  as const, optional: true },
       { name: 'instagram', label: 'Instagram URL',       type: 'url'  as const, optional: true },
       { name: 'twitter',   label: 'Twitter / X URL',     type: 'url'  as const, optional: true },
+      { name: 'tiktok',    label: 'TikTok URL',          type: 'url'  as const, optional: true },
       { name: 'twitch',    label: 'Twitch URL',          type: 'url'  as const, optional: true },
       { name: 'youtube',   label: 'YouTube URL',         type: 'url'  as const, optional: true },
+      { name: 'linkedin',  label: 'LinkedIn URL',        type: 'url'  as const, optional: true },
       { name: 'email',     label: 'Contact Email',       type: 'text' as const, optional: true },
     ],
   },
@@ -45,13 +47,17 @@ export const CONTENT_BLOCKS = [
   {
     key: 'homepage.hero',
     title: 'Homepage Hero',
-    description: 'The main headline and tagline at the very top of the homepage.',
+    description: 'Badge, headline, subtitle, and call-to-action buttons at the top of the homepage.',
     icon: '🏠',
     category: 'Homepage',
     fields: [
-      { name: 'title',   label: 'Main Title',                    type: 'text'  as const, placeholder: 'TRITON GAMING' },
-      { name: 'tagline', label: 'Tagline (one line per row)',    type: 'lines' as const,
-        placeholder: 'The largest collegiate\ngaming organization\nat UC San Diego.' },
+      { name: 'badge',              label: 'Badge Text',          type: 'text' as const, placeholder: "UC San Diego's Premier Gaming Org" },
+      { name: 'title',              label: 'Main Title (h1)',     type: 'text' as const, placeholder: 'We are Triton Gaming' },
+      { name: 'subtitle',           label: 'Subtitle',            type: 'text' as const, placeholder: 'Esports · Events · Community' },
+      { name: 'cta_primary_text',   label: 'Primary CTA Text',   type: 'text' as const, placeholder: 'Explore Events',                  optional: true },
+      { name: 'cta_primary_href',   label: 'Primary CTA URL',    type: 'url'  as const, placeholder: '/events',                          optional: true },
+      { name: 'cta_secondary_text', label: 'Secondary CTA Text', type: 'text' as const, placeholder: 'Join Discord',                     optional: true },
+      { name: 'cta_secondary_href', label: 'Secondary CTA URL',  type: 'url'  as const, placeholder: 'https://discord.gg/tritongaming',  optional: true },
     ],
   },
   {
@@ -151,6 +157,6 @@ export const CONTENT_BLOCKS = [
 ];
 
 export type ContentBlock = (typeof CONTENT_BLOCKS)[number];
-export type FieldDef = ContentBlock['fields'][number];
+export type FieldDef = ContentBlock['fields'][number] | { name: string; label: string; type: 'lines'; placeholder?: string; optional?: boolean };
 
 export const CATEGORY_ORDER = ['Global', 'Homepage', 'Pages', 'People'];

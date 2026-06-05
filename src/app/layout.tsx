@@ -9,10 +9,19 @@ export const metadata: Metadata = {
   description:
     'Triton Gaming of UC San Diego is one of the largest student-run collegiate gaming organizations in the country. Fostering community, creativity, and industry connections.',
   keywords: ['Triton Gaming', 'UCSD', 'UC San Diego', 'gaming', 'esports', 'collegiate gaming'],
+  icons: {
+    icon: [
+      { url: '/icon.png', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-icon.png', type: 'image/png' },
+    ],
+  },
   openGraph: {
     title: 'Triton Gaming | UC San Diego',
     description: 'One of the largest student-run collegiate gaming organizations in the country.',
     type: 'website',
+    images: [{ url: '/icon.png' }],
   },
 };
 

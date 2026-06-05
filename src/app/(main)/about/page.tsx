@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import InfoSection from '@/components/InfoSection/InfoSection';
 import AlternateTitle from '@/components/AlternateTitle/AlternateTitle';
 import ExecList from '@/components/ExecList/ExecList';
-import officers from '@/data/officers.json';
+import { getContentBlock } from '@/lib/content';
+import defaultOfficers from '@/data/officers.json';
 import type { OfficerEntry } from '@/types';
 import styles from './about.module.css';
 
@@ -11,7 +12,46 @@ export const metadata: Metadata = {
   description: 'Learn about Triton Gaming — our community, events, and executive board.',
 };
 
-export default function AboutPage() {
+type DbPerson = {
+  display_name?: string;
+  title?: string;
+  gamer_tag?: string;
+  photo_url?: string;
+  major?: string;
+  year?: string;
+};
+
+function dbOfficersToEntries(items: DbPerson[]): OfficerEntry[] {
+  return items
+    .filter((p) => p.display_name || p.title)
+    .map((p, i) => {
+      const parts = (p.display_name || '').trim().split(' ');
+      const first_name = parts[0] || '';
+      const last_name = parts.slice(1).join(' ');
+      return {
+        title: p.title || '',
+        order: i,
+        officer: {
+          first_name,
+          last_name,
+          gamer_tag: p.gamer_tag || '',
+          bio: '',
+          year: p.year || '',
+          major: p.major || '',
+          committee: [],
+          profile_picture: p.photo_url || '',
+        },
+      };
+    });
+}
+
+export default async function AboutPage() {
+  const officersContent = await getContentBlock('officers');
+  const dbPeople = officersContent.items as DbPerson[] | undefined;
+  const officers: OfficerEntry[] = dbPeople?.length
+    ? dbOfficersToEntries(dbPeople)
+    : (defaultOfficers as OfficerEntry[]);
+
   return (
     <div className={styles.page}>
       <InfoSection
@@ -44,7 +84,7 @@ export default function AboutPage() {
       />
 
       <AlternateTitle bgTitle="Executive Board" fgTitle="Executive Board" />
-      <ExecList officers={officers as OfficerEntry[]} />
+      <ExecList officers={officers} />
     </div>
   );
 }

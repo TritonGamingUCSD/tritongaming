@@ -9,7 +9,19 @@ const VALUES = [
   { icon: '💡', label: 'Industry Exposure' },
 ];
 
-export default function LandingAbout() {
+interface AboutContent {
+  title?: string;
+  body?: string;
+  cta_text?: string;
+  cta_link?: string;
+}
+
+export default function LandingAbout({ content = {} }: { content?: AboutContent }) {
+  const heading  = content.title    || 'Elevating Gaming at UC San Diego';
+  const body     = content.body     || 'Triton Gaming is one of the largest student-run collegiate gaming organizations in the country. We\'re committed to building unforgettable community experiences, championing diversity in gaming, and connecting students with the esports industry. Whether you\'re a casual player or an aspiring developer — you belong here.';
+  const ctaText  = content.cta_text || 'Learn More →';
+  const ctaLink  = content.cta_link || '/about';
+
   return (
     <section className={styles.section}>
       <div className={styles.container}>
@@ -46,13 +58,8 @@ export default function LandingAbout() {
         <Reveal delay={0.15}>
           <div className={styles.text}>
             <p className={styles.sectionLabel}>WHO WE ARE</p>
-            <h2 className={styles.heading}>Elevating Gaming at UC San Diego</h2>
-            <p className={styles.body}>
-              Triton Gaming is one of the largest student-run collegiate gaming organizations in
-              the country. We&apos;re committed to building unforgettable community experiences,
-              championing diversity in gaming, and connecting students with the esports industry.
-              Whether you&apos;re a casual player or an aspiring developer — you belong here.
-            </p>
+            <h2 className={styles.heading}>{heading}</h2>
+            <p className={styles.body}>{body}</p>
             <div className={styles.values}>
               {VALUES.map(({ icon, label }) => (
                 <span key={label} className={styles.valueBadge}>
@@ -60,9 +67,13 @@ export default function LandingAbout() {
                 </span>
               ))}
             </div>
-            <Link href="/about" className={styles.learnMore}>
-              Learn More →
-            </Link>
+            {ctaLink.startsWith('http') ? (
+              <a href={ctaLink} target="_blank" rel="noopener noreferrer" className={styles.learnMore}>
+                {ctaText}
+              </a>
+            ) : (
+              <Link href={ctaLink} className={styles.learnMore}>{ctaText}</Link>
+            )}
           </div>
         </Reveal>
       </div>
