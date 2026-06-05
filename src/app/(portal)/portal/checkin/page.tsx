@@ -9,7 +9,8 @@ export const dynamic = 'force-dynamic';
 
 export default async function CheckInPage() {
   const profile = await getProfile();
-  if (!profile || !hasRole(profile.role, 'officer')) redirect('/portal');
+  // lead and above can run check-in (division leads run their own events)
+  if (!profile || !hasRole(profile.role, 'lead')) redirect('/portal');
 
   const supabase = await createClient();
   const { data: events } = await supabase

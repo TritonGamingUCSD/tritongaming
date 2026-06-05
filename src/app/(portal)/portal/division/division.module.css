@@ -2,10 +2,10 @@
 
 .title {
   font-family: var(--font-futura-heavy);
-  font-size: 1.6rem;
+  font-size: clamp(1.25rem, 2.5vw, 1.6rem);
   color: var(--white);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   margin-bottom: 0.75rem;
 }
 
@@ -33,7 +33,7 @@
   align-items: center;
   gap: 1rem;
   padding: 1.125rem 1.25rem;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.07);
   border-radius: 0.875rem;
   transition: border-color 0.2s, background 0.2s;

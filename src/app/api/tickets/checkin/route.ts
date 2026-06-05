@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     .eq('id', user.id)
     .single();
 
-  if (!profile || !hasRole(profile.role, 'officer')) {
+  if (!profile || !hasRole(profile.role, 'lead')) {
     return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
   }
 

@@ -2,8 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
-import { createClient } from '@/lib/supabase/client';
-import { ROLE_LABELS, ROLE_COLORS, ROLE_HIERARCHY } from '@/types/database';
+import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
 import type { UserRole } from '@/types/database';
 import styles from './RoleManager.module.css';
 
@@ -39,21 +38,23 @@ export default function RoleManager({ users: initialUsers }: { users: User[] }) 
   async function updateRole(userId: string, newRole: UserRole) {
     if (updating) return;
     setUpdating(userId);
-    const supabase = createClient();
-    const { error } = await supabase
-      .from('profiles')
-      .update({ role: newRole })
-      .eq('id', userId);
-
-    if (!error) {
-      const user = users.find((u) => u.id === userId);
-      setUsers((prev) =>
-        prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
-      );
-      setToast({ name: user?.display_name || 'User', role: newRole });
-      setTimeout(() => setToast(null), 3000);
+    try {
+      const res = await fetch('/api/admin/roles', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, role: newRole }),
+      });
+      if (res.ok) {
+        const user = users.find((u) => u.id === userId);
+        setUsers((prev) =>
+          prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
+        );
+        setToast({ name: user?.display_name || 'User', role: newRole });
+        setTimeout(() => setToast(null), 3000);
+      }
+    } finally {
+      setUpdating(null);
     }
-    setUpdating(null);
   }
 
   const roleCounts = useMemo(() => {

@@ -11,10 +11,10 @@
 
 .title {
   font-family: var(--font-futura-heavy);
-  font-size: 1.6rem;
+  font-size: clamp(1.25rem, 2.5vw, 1.6rem);
   color: var(--white);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
 }
 
 .newBtn {
@@ -62,7 +62,7 @@
   grid-template-columns: 2fr 1fr 1fr 100px;
   gap: 1rem;
   padding: 0.75rem 1.25rem;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.05);
   font-size: 0.72rem;
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;
@@ -75,7 +75,7 @@
   grid-template-columns: 2fr 1fr 1fr 100px;
   gap: 1rem;
   padding: 1rem 1.25rem;
-  border-top: 1px solid rgba(255,255,255,0.04);
+  border-top: 1px solid rgba(255,255,255,0.05);
   align-items: center;
   transition: background 0.15s;
 }

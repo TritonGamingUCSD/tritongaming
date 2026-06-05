@@ -4,15 +4,17 @@ import { getProfile } from '@/lib/auth';
 import { hasRole } from '@/types/database';
 import { createClient } from '@/lib/supabase/server';
 import RoleManager from './RoleManager';
+import PendingRequests from './PendingRequests';
 import styles from './admin.module.css';
 
-export const metadata = { title: 'Admin Panel' };
+export const metadata = { title: 'Admin' };
 export const dynamic = 'force-dynamic';
 
 export default async function AdminPage() {
   const profile = await getProfile();
-  if (!profile || !hasRole(profile.role, 'admin')) redirect('/portal');
+  if (!profile || !hasRole(profile.role, 'exec')) redirect('/portal');
 
+  const isAdmin = hasRole(profile.role, 'admin');
   const supabase = await createClient();
 
   const [usersRes, eventsRes, postsRes, ticketsRes, pendingRes] = await Promise.all([
@@ -24,61 +26,66 @@ export default async function AdminPage() {
   ]);
 
   const stats = [
-    { label: 'Total Users',   value: usersRes.count ?? 0,   icon: '👥', href: '/portal/members' },
-    { label: 'Events',        value: eventsRes.count ?? 0,  icon: '🗓️', href: '/portal/events' },
-    { label: 'Board Posts',   value: postsRes.count ?? 0,   icon: '💬', href: '/board' },
-    { label: 'Tickets Issued',value: ticketsRes.count ?? 0, icon: '🎟️', href: null },
-    { label: 'Pending Requests', value: pendingRes.count ?? 0, icon: '⏳', href: '/portal/members' },
+    { label: 'Members',  value: usersRes.count   ?? 0, icon: '👥' },
+    { label: 'Events',   value: eventsRes.count  ?? 0, icon: '🗓️' },
+    { label: 'Posts',    value: postsRes.count   ?? 0, icon: '💬' },
+    { label: 'Tickets',  value: ticketsRes.count ?? 0, icon: '🎟️' },
+    { label: 'Pending',  value: pendingRes.count ?? 0, icon: '⏳', highlight: (pendingRes.count ?? 0) > 0 },
   ];
 
-  const { data: allUsers } = await supabase
-    .from('profiles')
-    .select('id, display_name, avatar_url, role, gamer_tag, created_at')
-    .order('created_at', { ascending: false })
-    .limit(200);
+  // Pending requests (for exec+)
+  const { data: requestsRaw } = await supabase
+    .from('member_requests')
+    .select(`id, requested_role, message, status, created_at, user:profiles(id, display_name, avatar_url)`)
+    .eq('status', 'pending')
+    .order('created_at', { ascending: true });
+  const requests = (requestsRaw ?? []) as unknown as Parameters<typeof PendingRequests>[0]['requests'];
+
+  // All users — only load for admin (full role manager)
+  let allUsers: Parameters<typeof RoleManager>[0]['users'] = [];
+  if (isAdmin) {
+    const { data: usersData } = await supabase
+      .from('profiles')
+      .select('id, display_name, avatar_url, role, gamer_tag, created_at')
+      .order('created_at', { ascending: false })
+      .limit(300);
+    allUsers = (usersData ?? []) as unknown as typeof allUsers;
+  }
 
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <div>
-          <h1 className={styles.title}>Admin Panel</h1>
-          <p className={styles.titleSub}>Platform management and configuration</p>
+          <h1 className={styles.title}>Admin</h1>
+          <p className={styles.titleSub}>Platform management</p>
         </div>
         <Link href="/portal/admin/content" className={styles.cmsBtn}>
-          ✏️ Edit Website Content
+          ✏️ Edit Site Content
         </Link>
       </div>
 
       {/* Stats */}
       <div className={styles.statsGrid}>
-        {stats.map(({ label, value, icon, href }) => {
-          const el = (
-            <div className={`${styles.statCard} ${href ? styles.statCardLink : ''}`}>
-              <span className={styles.statIcon}>{icon}</span>
-              <div>
-                <div className={styles.statValue}>{value.toLocaleString()}</div>
-                <div className={styles.statLabel}>{label}</div>
-              </div>
-              {href && <span className={styles.statArrow}>→</span>}
+        {stats.map(({ label, value, icon, highlight }) => (
+          <div key={label} className={`${styles.statCard} ${highlight ? styles.statHighlight : ''}`}>
+            <span className={styles.statIcon}>{icon}</span>
+            <div>
+              <div className={styles.statValue}>{value.toLocaleString()}</div>
+              <div className={styles.statLabel}>{label}</div>
             </div>
-          );
-          return href ? (
-            <Link key={label} href={href}>{el}</Link>
-          ) : (
-            <div key={label}>{el}</div>
-          );
-        })}
+          </div>
+        ))}
       </div>
 
-      {/* Quick Actions */}
+      {/* Quick actions */}
       <section className={styles.section}>
         <h2 className={styles.sectionLabel}>Quick Actions</h2>
         <div className={styles.actions}>
           {[
             { href: '/portal/admin/content', icon: '✏️', label: 'Edit Site Content', desc: 'Banners, stats, text' },
-            { href: '/portal/members',       icon: '👥', label: 'Manage Members',    desc: 'Approve requests' },
             { href: '/portal/events',        icon: '🗓️', label: 'Manage Events',    desc: 'Create & edit' },
             { href: '/portal/checkin',       icon: '📷', label: 'Check-In Scanner', desc: 'Scan QR codes' },
+            { href: '/board',                icon: '💬', label: 'Discussion Board',  desc: 'Community posts' },
           ].map(({ href, icon, label, desc }) => (
             <Link key={href} href={href} className={styles.actionCard}>
               <span className={styles.actionIcon}>{icon}</span>
@@ -91,14 +98,27 @@ export default async function AdminPage() {
         </div>
       </section>
 
-      {/* Role Manager — interactive, client component */}
+      {/* Pending member requests (exec+) */}
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionLabel}>Role Manager</h2>
-          <span className={styles.sectionHint}>Search and update any user's role instantly</span>
+          <h2 className={styles.sectionLabel}>Member Requests</h2>
+          {requests.length > 0 && (
+            <span className={styles.badge}>{requests.length} pending</span>
+          )}
         </div>
-        <RoleManager users={(allUsers ?? []) as unknown as Parameters<typeof RoleManager>[0]['users']} />
+        <PendingRequests requests={requests} />
       </section>
+
+      {/* Full role manager (admin only) */}
+      {isAdmin && (
+        <section className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionLabel}>Role Manager</h2>
+            <span className={styles.sectionHint}>Search any user and change their role instantly</span>
+          </div>
+          <RoleManager users={allUsers} />
+        </section>
+      )}
     </div>
   );
 }

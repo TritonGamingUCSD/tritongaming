@@ -4,11 +4,11 @@
 
 .title {
   font-family: var(--font-futura-heavy);
-  font-size: 1.6rem;
+  font-size: clamp(1.25rem, 2.5vw, 1.6rem);
   color: var(--white);
   margin-bottom: 2rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
 }
 
 .layout {
@@ -90,7 +90,7 @@
 }
 
 .input {
-  background: rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 0.5rem;
   padding: 0.625rem 0.875rem;

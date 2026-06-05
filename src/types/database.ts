@@ -218,34 +218,36 @@ export type TicketWithEvent = Ticket & {
   event: Pick<Event, 'id' | 'title' | 'start_date' | 'end_date' | 'location' | 'flyer_url'>;
 };
 
+// Ranks: division/lead are division-track roles (below officer privilege level)
+// officer and above are org-level staff with event/check-in powers
 export const ROLE_HIERARCHY: Record<UserRole, number> = {
-  guest: 0,
-  member: 1,
-  officer: 2,
-  division: 3,
-  lead: 4,
-  exec: 5,
-  admin: 6,
+  guest:    0,
+  member:   1,
+  division: 2, // game division member — no org-staff privileges
+  lead:     3, // game division lead   — can edit their division page + check-in
+  officer:  4, // org officer          — events, check-in, content editing
+  exec:     5, // executive board
+  admin:    6, // full platform access
 };
 
 export const ROLE_LABELS: Record<UserRole, string> = {
-  guest: 'Guest',
-  member: 'Member',
-  officer: 'Officer',
+  guest:    'Guest',
+  member:   'Member',
   division: 'Division Member',
-  lead: 'Division Lead',
-  exec: 'Executive',
-  admin: 'Admin',
+  lead:     'Division Lead',
+  officer:  'Officer',
+  exec:     'Executive',
+  admin:    'Admin',
 };
 
 export const ROLE_COLORS: Record<UserRole, string> = {
-  guest: '#6b7280',
-  member: '#059669',
-  officer: '#2563eb',
+  guest:    '#6b7280',
+  member:   '#059669',
   division: '#7c3aed',
-  lead: '#d97706',
-  exec: '#dc2626',
-  admin: '#ffc72c',
+  lead:     '#0ea5e9',
+  officer:  '#2563eb',
+  exec:     '#dc2626',
+  admin:    '#ffc72c',
 };
 
 export function hasRole(userRole: UserRole, minRole: UserRole): boolean {
