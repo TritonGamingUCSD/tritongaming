@@ -1,84 +1,95 @@
-import { connectToDatabase } from './db';
+import { createClient } from '@/lib/supabase/server';
 import type { Event } from '@/types';
 import eventsJson from '@/data/events.json';
 
 const DEFAULT_LIMIT = 50;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapEvent(doc: any): Event {
+function mapSupabaseEvent(row: Record<string, unknown>): Event {
   return {
-    _id: doc._id?.toString() ?? '',
-    full_name: doc.full_name ?? '',
-    name: doc.name ?? '',
-    start_date: new Date(doc.start_date).toISOString(),
-    end_date: new Date(doc.end_date).toISOString(),
-    flyer_url: doc.flyer_url ?? '',
-    location: doc.location ?? '',
-    content: doc.content ?? '',
-    url: doc.url ?? '',
+    _id: (row.id as string) ?? '',
+    full_name: (row.title as string) ?? '',
+    name: (row.name as string) ?? (row.title as string) ?? '',
+    start_date: new Date(row.start_date as string).toISOString(),
+    end_date: row.end_date ? new Date(row.end_date as string).toISOString() : '',
+    flyer_url: (row.flyer_url as string) ?? '',
+    location: (row.location as string) ?? '',
+    content: (row.content as string) ?? '',
+    url: (row.url as string) ?? '',
   };
 }
 
 export async function getUpcomingEvents(limit = DEFAULT_LIMIT): Promise<Event[]> {
   try {
-    const db = await connectToDatabase();
-    const now = new Date();
-    const docs = await db
-      .collection('events')
-      .find({ start_date: { $gte: now } })
-      .sort({ start_date: 1 })
-      .limit(limit)
-      .toArray();
-    return docs.map(mapEvent);
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .eq('is_published', true)
+      .gte('start_date', new Date().toISOString())
+      .order('start_date', { ascending: true })
+      .limit(limit);
+
+    if (error) throw error;
+    return (data ?? []).map(mapSupabaseEvent);
   } catch {
     const all = eventsJson as Event[];
     return all
       .filter((e) => new Date(e.start_date) >= new Date())
-      .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
+      .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
+      .slice(0, limit);
   }
 }
 
 export async function getPreviousEvents(limit = DEFAULT_LIMIT): Promise<Event[]> {
   try {
-    const db = await connectToDatabase();
-    const now = new Date();
-    const docs = await db
-      .collection('events')
-      .find({ start_date: { $lt: now } })
-      .sort({ start_date: -1 })
-      .limit(limit)
-      .toArray();
-    return docs.map(mapEvent);
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .eq('is_published', true)
+      .lt('start_date', new Date().toISOString())
+      .order('start_date', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return (data ?? []).map(mapSupabaseEvent);
   } catch {
     const all = eventsJson as Event[];
     return all
       .filter((e) => new Date(e.start_date) < new Date())
-      .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime());
+      .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())
+      .slice(0, limit);
   }
 }
 
 export async function getAllEvents(limit = DEFAULT_LIMIT): Promise<Event[]> {
   try {
-    const db = await connectToDatabase();
-    const docs = await db
-      .collection('events')
-      .find({})
-      .sort({ start_date: -1 })
-      .limit(limit)
-      .toArray();
-    return docs.map(mapEvent);
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .eq('is_published', true)
+      .order('start_date', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return (data ?? []).map(mapSupabaseEvent);
   } catch {
-    return eventsJson as Event[];
+    return (eventsJson as Event[]).slice(0, limit);
   }
 }
 
 export async function getEventById(id: string): Promise<Event | null> {
   try {
-    const { ObjectId } = await import('mongodb');
-    if (!ObjectId.isValid(id)) return null;
-    const db = await connectToDatabase();
-    const doc = await db.collection('events').findOne({ _id: new ObjectId(id) });
-    return doc ? mapEvent(doc) : null;
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    return data ? mapSupabaseEvent(data as Record<string, unknown>) : null;
   } catch {
     return null;
   }

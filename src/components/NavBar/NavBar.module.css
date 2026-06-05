@@ -233,6 +233,106 @@
   color: var(--yellow);
 }
 
+/* Active nav link */
+.navLinkActive {
+  color: var(--yellow);
+}
+
+.navLinkActive::after {
+  width: 100%;
+}
+
+/* Auth button — portal link */
+.authBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.75rem 0.3rem 0.3rem;
+  background: rgba(255,255,255,0.08);
+  border-radius: 9999px;
+  border: 1px solid rgba(255,255,255,0.15);
+  transition: background 0.2s, border-color 0.2s;
+  color: var(--white);
+  font-family: var(--font-futura-heavy);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.authBtn:hover {
+  background: rgba(255,199,44,0.15);
+  border-color: rgba(255,199,44,0.3);
+  color: var(--yellow);
+}
+
+.authAvatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(255,199,44,0.3);
+}
+
+.authAvatarFallback {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--yellow);
+  color: var(--darkblue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-family: var(--font-futura-heavy);
+  flex-shrink: 0;
+}
+
+.authLabel {
+  font-size: 0.7rem;
+}
+
+/* Login button */
+.loginBtn {
+  padding: 0.45rem 1rem;
+  background: var(--yellow);
+  color: var(--darkblue);
+  border-radius: 0.375rem;
+  font-family: var(--font-futura-heavy);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  transition: opacity 0.2s, transform 0.15s;
+}
+
+.loginBtn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* Mobile auth */
+.mobileAuthItem {
+  margin-top: 0.5rem;
+}
+
+.mobilePortalBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-futura-heavy);
+  font-size: clamp(1.3rem, 4vw, 1.75rem);
+  color: var(--yellow);
+  letter-spacing: 0.06em;
+  padding: 0.5rem 1rem;
+}
+
+.mobileLoginBtn {
+  display: inline-block;
+  font-family: var(--font-futura-heavy);
+  font-size: clamp(1.3rem, 4vw, 1.75rem);
+  color: var(--yellow);
+  letter-spacing: 0.06em;
+  padding: 0.5rem 1rem;
+}
+
 /* ── Breakpoints ── */
 @media (max-width: 768px) {
   .desktopNav {

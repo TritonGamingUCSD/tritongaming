@@ -1,0 +1,180 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.greeting {
+  font-family: var(--font-futura-heavy);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  color: var(--white);
+  margin-bottom: 0.35rem;
+}
+
+.sub {
+  color: rgba(242,241,240,0.5);
+  font-size: 0.9rem;
+}
+
+.roleChip {
+  font-size: 0.72rem;
+  font-family: var(--font-renegare);
+  letter-spacing: 0.1em;
+  padding: 0.3rem 0.75rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+}
+
+.sectionTitle {
+  font-family: var(--font-futura-heavy);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(242,241,240,0.4);
+  margin-bottom: 1rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.875rem;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 1rem 1.125rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 0.875rem;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.card:hover {
+  background: rgba(255,199,44,0.07);
+  border-color: rgba(255,199,44,0.2);
+  transform: translateY(-1px);
+}
+
+.cardIcon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  width: 2rem;
+  text-align: center;
+}
+
+.cardLabel {
+  font-family: var(--font-futura-medium);
+  font-size: 0.875rem;
+  color: var(--white);
+  margin-bottom: 0.2rem;
+}
+
+.cardDesc {
+  font-size: 0.75rem;
+  color: rgba(242,241,240,0.45);
+}
+
+/* Upcoming events */
+.upcoming {
+  display: flex;
+  flex-direction: column;
+}
+
+.eventList {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 0.875rem;
+  overflow: hidden;
+  margin-bottom: 0.875rem;
+}
+
+.eventRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.15s;
+}
+
+.eventRow:last-child {
+  border-bottom: none;
+}
+
+.eventRow:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+.eventDate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 64px;
+  flex-shrink: 0;
+}
+
+.eventDay {
+  font-family: var(--font-futura-heavy);
+  font-size: 0.85rem;
+  color: var(--yellow);
+}
+
+.eventTime {
+  font-size: 0.72rem;
+  color: rgba(242,241,240,0.4);
+}
+
+.eventInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.eventTitle {
+  font-family: var(--font-futura-medium);
+  font-size: 0.9rem;
+  color: var(--white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.eventLocation {
+  font-size: 0.75rem;
+  color: rgba(242,241,240,0.4);
+  margin-top: 0.15rem;
+}
+
+.eventLink {
+  font-size: 0.8rem;
+  color: var(--yellow);
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+
+.eventLink:hover {
+  opacity: 0.75;
+}
+
+.viewAll {
+  font-size: 0.85rem;
+  color: rgba(255,199,44,0.7);
+  align-self: flex-end;
+  transition: color 0.15s;
+}
+
+.viewAll:hover {
+  color: var(--yellow);
+}
