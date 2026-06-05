@@ -1,0 +1,265 @@
+.page {
+  padding-top: 80px;
+  background: var(--white);
+  min-height: 100svh;
+}
+
+/* ── Hero Banner ── */
+.heroBanner {
+  position: relative;
+  padding: clamp(3rem, 7vw, 6rem) clamp(1.5rem, 5vw, 4rem);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.heroBg {
+  position: absolute;
+  inset: 0;
+  background: var(--gradient-stats);
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  max-width: 700px;
+}
+
+.heroLabel {
+  font-family: var(--font-futura-heavy);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  color: var(--yellow);
+  margin: 0 0 0.5rem;
+}
+
+.heroTitle {
+  font-family: var(--font-brick);
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  color: var(--yellow);
+  margin: 0 0 1rem;
+  line-height: 1;
+  text-shadow: 2px 4px 12px rgba(0,0,0,0.4);
+}
+
+.heroSub {
+  font-family: var(--font-futura-medium);
+  font-size: clamp(0.95rem, 1.8vw, 1.15rem);
+  color: var(--lightblue);
+  margin: 0;
+  line-height: 1.65;
+}
+
+/* ── Ways Section ── */
+.waysSection {
+  padding: var(--section-pad) clamp(1.5rem, 5vw, 4rem);
+  max-width: calc(var(--max-width) + 4rem);
+  margin-inline: auto;
+}
+
+.sectionHeader {
+  text-align: center;
+  margin-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.sectionLabel {
+  font-family: var(--font-futura-heavy);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--yellow);
+  margin: 0 0 0.5rem;
+}
+
+.sectionTitle {
+  font-family: var(--font-soulmaze);
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  color: var(--darkblue);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.waysGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+
+.wayCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.75rem 1.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(1, 25, 65, 0.1);
+  background: var(--white);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.wayCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.1);
+}
+
+.accent_blue { border-top: 3px solid var(--blue); }
+.accent_yellow { border-top: 3px solid var(--yellow); }
+
+.wayEmoji { font-size: 2rem; line-height: 1; }
+
+.wayTitle {
+  font-family: var(--font-soulmaze);
+  font-size: clamp(1.1rem, 2vw, 1.35rem);
+  color: var(--darkblue);
+  margin: 0;
+}
+
+.wayBody {
+  font-family: var(--font-futura-medium);
+  font-size: var(--fs-body);
+  color: var(--black);
+  line-height: 1.7;
+  margin: 0;
+  flex: 1;
+}
+
+.wayCta {
+  font-family: var(--font-futura-heavy);
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--blue);
+  text-decoration: none;
+  border-bottom: 2px solid var(--yellow);
+  padding-bottom: 2px;
+  width: fit-content;
+  transition: color 0.2s ease;
+}
+
+.wayCta:hover { color: var(--darkblue); }
+
+/* ── Officer Section ── */
+.officerSection {
+  position: relative;
+  padding: var(--section-pad) clamp(1.5rem, 5vw, 4rem);
+  overflow: hidden;
+}
+
+.officerBg {
+  position: absolute;
+  inset: 0;
+  background: var(--gradient-stats);
+}
+
+.officerContent {
+  position: relative;
+  z-index: 1;
+  max-width: var(--max-width);
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: clamp(2rem, 5vw, 4rem);
+  align-items: start;
+}
+
+.officerTitle {
+  font-family: var(--font-soulmaze);
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  color: var(--white);
+  margin: 0 0 0.75rem;
+  line-height: 1.2;
+}
+
+.officerBody {
+  font-family: var(--font-futura-medium);
+  font-size: var(--fs-body);
+  color: var(--lightblue);
+  line-height: 1.7;
+  margin: 0 0 1.25rem;
+}
+
+.perkList {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.perkItem {
+  font-family: var(--font-futura-medium);
+  font-size: 0.875rem;
+  color: rgba(255,255,255,0.85);
+  line-height: 1.5;
+}
+
+.perkDot {
+  color: var(--yellow);
+  margin-right: 0.4rem;
+}
+
+.applyBtn {
+  display: inline-block;
+  padding: 0.7rem 2rem;
+  background: var(--yellow);
+  color: var(--darkblue);
+  font-family: var(--font-futura-heavy);
+  font-size: 0.9rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-radius: 4px;
+  border: 2px solid var(--yellow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.applyBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255,199,44,0.4);
+}
+
+/* Meta cards */
+.officerMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 220px;
+}
+
+.metaCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem 1.25rem;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(159,196,232,0.2);
+  border-radius: 8px;
+}
+
+.metaEmoji { font-size: 1.4rem; line-height: 1; }
+
+.metaLabel {
+  font-family: var(--font-futura-heavy);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--lightblue);
+}
+
+.metaValue {
+  font-family: var(--font-futura-medium);
+  font-size: 0.875rem;
+  color: var(--white);
+  line-height: 1.4;
+}
+
+@media (max-width: 900px) {
+  .waysGrid { grid-template-columns: 1fr; max-width: 480px; margin-inline: auto; }
+  .officerContent { grid-template-columns: 1fr; }
+  .officerMeta { flex-direction: row; flex-wrap: wrap; }
+  .metaCard { flex: 1; min-width: 160px; }
+}
+

@@ -1,0 +1,57 @@
+.banner {
+  position: relative;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.875rem;
+  padding: 0.6rem clamp(2.5rem, 6vw, 4rem);
+  font-size: clamp(0.78rem, 1.2vw, 0.875rem);
+  font-family: var(--font-futura-medium);
+  text-align: center;
+  flex-wrap: wrap;
+  min-height: 42px;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-100%); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  border: 1px solid;
+  font-size: 0.75rem;
+  font-family: var(--font-futura-heavy);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.cta:hover { opacity: 0.8; }
+
+.dismiss {
+  position: absolute;
+  right: clamp(0.75rem, 2vw, 1.25rem);
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.75rem;
+  cursor: pointer;
+  opacity: 0.5;
+  padding: 0.25rem 0.4rem;
+  border-radius: 0.25rem;
+  transition: opacity 0.15s;
+}
+
+.dismiss:hover { opacity: 1; }

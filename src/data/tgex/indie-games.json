@@ -1,0 +1,51 @@
+[
+  {
+    "name": "Supergiant Games",
+    "logo": "/indie/supergiant.png",
+    "games": ["Hades", "Hades II", "Transistor", "Pyre", "Bastion"],
+    "description": "Founded in 2009, Supergiant Games is an independent studio based in San Francisco that's committed to making meaningful, memorable video games built on time-honored traditions and new ideas. Best known for its Greek mythology-inspired dungeon crawler Hades, Supergiant recently launched its first-ever sequel in Hades II.",
+    "link": "https://www.supergiantgames.com"
+  },
+  {
+    "name": "The Behemoth",
+    "logo": "/indie/the-behemoth.png",
+    "games": ["Castle Crashers", "Battleblock Theater", "Pit People"],
+    "description": "San Diego local indie developer The Behemoth will once again be attending the Triton Gaming Expo! We're so excited to show you what we've been working on, and we hope you'll stop by and say BAAAAWK!",
+    "link": "https://www.thebehemoth.com"
+  },
+  {
+    "name": "Brace Yourself Games",
+    "logo": "/indie/brace-yourself.png",
+    "games": ["Crypt of the NecroDancer", "Cadence of Hyrule"],
+    "description": "Award-winning indie developer creating innovative rhythm-based games.",
+    "link": "https://braceyourself.com"
+  },
+  {
+    "name": "Giant Squid",
+    "logo": "/indie/giant-squid.png",
+    "games": ["ABZÛ", "The Pathless", "Sword of the Sea"],
+    "description": "Known for crafting breathtaking, emotional journeys like ABZÛ and The Pathless, Giant Squid returns with Sword of the Sea! Surf across magnificent waves of sand and glistening waters on an epic quest to restore a lost ocean.",
+    "link": "https://www.giantsquidstudios.com"
+  },
+  {
+    "name": "ShrimpFriedRice Games",
+    "logo": "/indie/shrimp-fried-rice.png",
+    "games": ["Sashimi Slayer"],
+    "description": "Sashimi Slayer is an alternative controller rhythm arcade game developed by 4 UC Davis students and alumni. Use a martial arts sword as a controller to parry the kraken's tentacles, then tilt the sword and withdraw the blade from the sheath on the beat to slice your enemies into sushi! Previously exhibited at alt.ctrl.GDC 2025, GDC 2026, PAX West.",
+    "link": null
+  },
+  {
+    "name": "DiveWhaleCo",
+    "logo": "/indie/dive-whale.png",
+    "games": ["The Lampkeeper"],
+    "description": "The Lampkeeper is a cozy adventure game developed at DiveWhale Co. by Jared Nussbaum, with music by Justin Carothers, Mieke, and Jacob Kinsworthy. You play as a Lampkeeper, a construct of pure luminescence, created to push back the steadfast dark of the afterlife.",
+    "link": null
+  },
+  {
+    "name": "Cody Childress",
+    "logo": "/indie/the-worst-studio.png",
+    "games": ["Project Beast"],
+    "description": "From animator and developer on Uncharted 4, Horizon: Zero Dawn, Death Stranding, The Last of Us Part II, and Ratchet & Clank: Rift Apart — comes Project Beast, a creature-collecting RPG for PC currently in early development. Imagine the heart of Pokemon meets the visual polish of Sony's finest.",
+    "link": null
+  }
+]

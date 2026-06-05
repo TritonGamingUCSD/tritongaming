@@ -1,0 +1,21 @@
+.page {
+  padding-top: 80px;
+  background: var(--white);
+  min-height: 100svh;
+}
+
+.section {
+  padding-bottom: var(--sp-xl);
+}
+
+.empty {
+  text-align: center;
+  padding: var(--sp-xl);
+}
+
+.emptyMsg {
+  font-family: var(--font-futura-medium);
+  font-size: var(--fs-body);
+  color: var(--darkblue);
+  margin-top: var(--sp-md);
+}

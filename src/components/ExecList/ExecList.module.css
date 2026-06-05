@@ -1,0 +1,23 @@
+.root {
+  padding-inline: clamp(1rem, 4vw, 2.5rem);
+  padding-bottom: var(--sp-xl);
+  max-width: var(--max-width);
+  margin-inline: auto;
+}
+
+.section {
+  margin-top: var(--sp-lg);
+}
+
+.titleRow {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--sp-md);
+}
+
+.sectionTitle {
+  font-family: var(--font-soulmaze);
+  font-size: var(--fs-h1);
+  color: var(--darkblue);
+  text-align: center;
+}

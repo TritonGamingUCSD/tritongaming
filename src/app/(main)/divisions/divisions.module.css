@@ -1,0 +1,127 @@
+.page {
+  min-height: 100vh;
+  padding-bottom: var(--sp-xl);
+}
+
+.hero {
+  background: var(--gradient-stats);
+  padding: clamp(4rem, 8vw, 7rem) var(--sp-md);
+  text-align: center;
+}
+
+.heroTitle {
+  font-family: var(--font-futura-heavy);
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  color: var(--white);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+}
+
+.heroSub {
+  max-width: 580px;
+  margin: 0 auto;
+  color: rgba(242,241,240,0.65);
+  font-size: clamp(0.9rem, 1.5vw, 1.1rem);
+  line-height: 1.6;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  max-width: var(--max-width);
+  margin: 3rem auto 0;
+  padding: 0 clamp(1rem, 4vw, 2.5rem);
+}
+
+.card {
+  background: var(--white);
+  border-radius: 1.125rem;
+  overflow: hidden;
+  box-shadow: 0 2px 16px rgba(1,25,65,0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(1,25,65,0.15);
+}
+
+.cardHeader {
+  background: linear-gradient(135deg, #011941 0%, #14477c 100%);
+  padding: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+}
+
+.logo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
+}
+
+.logoFallback {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-futura-heavy);
+  font-size: 2rem;
+}
+
+.cardBody {
+  padding: 1.25rem 1.25rem 0.75rem;
+  flex: 1;
+}
+
+.divName {
+  font-family: var(--font-futura-heavy);
+  font-size: 1rem;
+  color: var(--darkblue);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.divDesc {
+  font-size: 0.85rem;
+  color: rgba(0,0,0,0.55);
+  line-height: 1.55;
+}
+
+.cardFooter {
+  padding: 0.875rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid rgba(0,0,0,0.06);
+  margin-top: 0.75rem;
+}
+
+.learnMore {
+  font-family: var(--font-futura-heavy);
+  font-size: 0.8rem;
+  color: var(--blue);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.discordBadge {
+  font-size: 0.7rem;
+  font-family: var(--font-renegare);
+  letter-spacing: 0.08em;
+  padding: 0.2rem 0.5rem;
+  background: rgba(88, 101, 242, 0.1);
+  color: #5865f2;
+  border-radius: 9999px;
+  border: 1px solid rgba(88, 101, 242, 0.25);
+}
