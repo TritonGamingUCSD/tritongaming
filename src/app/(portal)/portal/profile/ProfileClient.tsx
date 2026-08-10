@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types/database';
 import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
@@ -18,6 +19,14 @@ export default function ProfileClient({ profile }: { profile: Profile }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const router = useRouter();
+
+  async function handleSignOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/');
+    router.refresh();
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -146,6 +155,12 @@ export default function ProfileClient({ profile }: { profile: Profile }) {
             {saving ? 'Saving…' : saved ? '✓ Saved!' : 'Save Changes'}
           </button>
         </form>
+      </div>
+
+      <div className={styles.signOutSection}>
+        <button className={styles.signOutBtn} onClick={handleSignOut}>
+          Sign Out
+        </button>
       </div>
     </div>
   );

@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import AlternateTitle from '@/components/AlternateTitle/AlternateTitle';
 import LongEventCard from '@/components/LongEventCard/LongEventCard';
-import eventsData from '@/data/events.json';
-import type { Event } from '@/types';
+import { getUpcomingEvents, getPreviousEvents } from '@/lib/events';
 import styles from './events.module.css';
 
 export const metadata: Metadata = {
@@ -10,15 +9,13 @@ export const metadata: Metadata = {
   description: 'Check out upcoming and past Triton Gaming events at UC San Diego.',
 };
 
-export default function EventsPage() {
-  const events = eventsData as Event[];
-  const now = new Date();
-  const upcoming = events
-    .filter((e) => new Date(e.start_date) >= now)
-    .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
-  const previous = events
-    .filter((e) => new Date(e.start_date) < now)
-    .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime());
+export const dynamic = 'force-dynamic';
+
+export default async function EventsPage() {
+  const [upcoming, previous] = await Promise.all([
+    getUpcomingEvents(),
+    getPreviousEvents(),
+  ]);
 
   return (
     <div className={styles.page}>

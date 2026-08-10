@@ -6,22 +6,21 @@ import LandingSponsors from '@/components/LandingSponsors/LandingSponsors';
 import LandingDivisions from '@/components/LandingDivisions/LandingDivisions';
 import LandingRecruitment from '@/components/LandingRecruitment/LandingRecruitment';
 import { getContentBlocks } from '@/lib/content';
-import eventsData from '@/data/events.json';
-import type { Event } from '@/types';
+import { getUpcomingEvents } from '@/lib/events';
 import type { StatInput } from '@/components/LandingStatistics/LandingStatistics';
 
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
-  const now = new Date();
-  const upcomingEvents = (eventsData as Event[])
-    .filter((e) => new Date(e.start_date) >= now)
-    .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
+  const [upcomingEvents, content] = await Promise.all([
+    getUpcomingEvents(6),
+    getContentBlocks(['homepage.hero', 'homepage.about', 'homepage.stats']),
+  ]);
 
-  const content = await getContentBlocks(['homepage.hero', 'homepage.about', 'homepage.stats']);
-
-  const heroContent = content['homepage.hero'] ?? {};
+  const heroContent  = content['homepage.hero']  ?? {};
   const aboutContent = content['homepage.about'] ?? {};
   const statsContent = content['homepage.stats'] ?? {};
-  const statsItems = (statsContent.items as StatInput[] | undefined) ?? undefined;
+  const statsItems   = (statsContent.items as StatInput[] | undefined) ?? undefined;
 
   return (
     <>
