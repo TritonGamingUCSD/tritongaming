@@ -68,7 +68,7 @@ export default async function Footer() {
           height={100}
           className={styles.logo}
         />
-        <p className={styles.tagline}>UC San Diego&apos;s Premier Gaming Org</p>
+        <p className={styles.tagline}>UC San Diego&apos;s Gaming Org</p>
         <p className={styles.copy}>{copyright}</p>
       </div>
 

@@ -1,7 +1,6 @@
 import { getProfile } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
-import TicketCard from '@/components/tickets/TicketCard';
-import styles from './tickets.module.css';
+import TicketsClient from './TicketsClient';
 
 export const metadata = { title: 'My Tickets' };
 export const dynamic = 'force-dynamic';
@@ -20,26 +19,19 @@ export default async function TicketsPage() {
     .eq('user_id', profile.id)
     .order('created_at', { ascending: false });
 
-  return (
-    <div className={styles.page}>
-      <h1 className={styles.title}>My Tickets</h1>
+  // Fetch upcoming events that don't require tickets for "browse events" section
+  const { data: upcomingEvents } = await supabase
+    .from('events')
+    .select('id, title, start_date, location, requires_ticket')
+    .eq('is_published', true)
+    .gte('start_date', new Date().toISOString())
+    .order('start_date', { ascending: true })
+    .limit(6);
 
-      {!tickets || tickets.length === 0 ? (
-        <div className={styles.empty}>
-          <span className={styles.emptyIcon}>🎟️</span>
-          <p>No tickets yet. Register for events to get tickets.</p>
-          <a href="/events" className={styles.browseLink}>Browse Events →</a>
-        </div>
-      ) : (
-        <div className={styles.grid}>
-          {tickets.map((ticket) => (
-            <TicketCard
-              key={ticket.id}
-              ticket={ticket as unknown as Parameters<typeof TicketCard>[0]['ticket']}
-            />
-          ))}
-        </div>
-      )}
-    </div>
+  return (
+    <TicketsClient
+      tickets={(tickets ?? []) as unknown as Parameters<typeof TicketsClient>[0]['tickets']}
+      upcomingEvents={(upcomingEvents ?? []) as unknown as Parameters<typeof TicketsClient>[0]['upcomingEvents']}
+    />
   );
 }

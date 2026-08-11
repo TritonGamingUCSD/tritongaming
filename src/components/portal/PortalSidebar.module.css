@@ -1,3 +1,4 @@
+/* ── Desktop sidebar ──────────────────────────────── */
 .sidebar {
   position: fixed;
   top: 0;
@@ -166,6 +167,10 @@
   color: rgba(242,241,240,0.4);
   transition: background 0.15s, color 0.15s;
   cursor: pointer;
+  background: transparent;
+  border: none;
+  width: calc(100% - 1.5rem);
+  text-align: left;
 }
 
 .signOutBtn:hover {
@@ -173,7 +178,7 @@
   color: #fca5a5;
 }
 
-/* ── Bottom tab bar (mobile only) ── */
+/* ── iOS-style bottom tab bar (mobile only) ──────── */
 .bottomNav {
   display: none;
 }
@@ -182,30 +187,46 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   gap: 0.2rem;
   flex: 1;
-  padding: 0.5rem 0.25rem;
+  padding: 0.5rem 0.25rem 0.6rem;
   color: rgba(242,241,240,0.38);
-  transition: color 0.15s;
+  transition: color 0.18s;
   -webkit-tap-highlight-color: transparent;
+  text-decoration: none;
 }
+
+.bottomTab:active { opacity: 0.7; }
 
 .bottomTabActive {
   color: var(--yellow);
 }
 
-.bottomTabIcon {
-  font-size: 1.35rem;
-  line-height: 1;
+.bottomTabIconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+}
+
+.bottomTabIconWrap svg {
+  width: 24px;
+  height: 24px;
+  transition: transform 0.15s;
+}
+
+.bottomTabActive .bottomTabIconWrap svg {
+  transform: scale(1.05);
 }
 
 .bottomTabLabel {
-  font-size: 0.58rem;
-  font-family: var(--font-renegare);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  font-size: 0.6rem;
+  font-family: var(--font-futura-medium);
+  letter-spacing: 0.02em;
   line-height: 1;
+  white-space: nowrap;
 }
 
 @media (max-width: 768px) {
@@ -217,18 +238,16 @@
     bottom: 0;
     left: 0;
     right: 0;
-    /* safe-area for iPhone home indicator */
     padding-bottom: env(safe-area-inset-bottom, 0px);
-    background: rgba(6, 12, 26, 0.97);
-    border-top: 1px solid rgba(255,255,255,0.09);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: rgba(6, 12, 26, 0.96);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     z-index: 200;
     align-items: stretch;
   }
 
   .bottomTab {
-    min-height: 56px;
-    padding-bottom: 0.5rem;
+    min-height: 54px;
   }
 }

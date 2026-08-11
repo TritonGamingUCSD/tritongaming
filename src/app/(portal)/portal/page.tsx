@@ -1,7 +1,9 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { getProfile } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import { hasRole, canEditContent, ROLE_LABELS, ROLE_COLORS } from '@/types/database';
+import DashboardClient from './DashboardClient';
 import styles from './dashboard.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -14,7 +16,6 @@ export default async function PortalDashboard() {
   const now = new Date().toISOString();
   const weekAhead = new Date(Date.now() + 7 * 86400_000).toISOString();
 
-  // Fetch data in parallel, scoped to the user's role
   const [
     ticketsRes,
     myPostsRes,
@@ -23,38 +24,68 @@ export default async function PortalDashboard() {
     eventsThisWeekRes,
     divisionRes,
     recentPostsRes,
+    checkinStatsRes,
   ] = await Promise.all([
-    supabase.from('tickets').select('id, status, event:events(title, start_date)')
-      .eq('user_id', profile.id).order('created_at', { ascending: false }).limit(3),
+    supabase.from('tickets')
+      .select('id, ticket_code, status, event:events(id, title, start_date, location)')
+      .eq('user_id', profile.id)
+      .order('created_at', { ascending: false })
+      .limit(5),
 
-    supabase.from('board_posts').select('id', { count: 'exact', head: true })
+    supabase.from('board_posts')
+      .select('id', { count: 'exact', head: true })
       .eq('author_id', profile.id),
 
-    supabase.from('events').select('id, title, start_date, location, requires_ticket')
-      .eq('is_published', true).gte('start_date', now).lte('start_date', weekAhead)
-      .order('start_date', { ascending: true }).limit(5),
+    supabase.from('events')
+      .select('id, title, start_date, location, requires_ticket')
+      .eq('is_published', true)
+      .gte('start_date', now)
+      .lte('start_date', weekAhead)
+      .order('start_date', { ascending: true })
+      .limit(5),
 
     hasRole(profile.role, 'exec')
-      ? supabase.from('member_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending')
+      ? supabase.from('member_requests')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'pending')
       : Promise.resolve({ count: 0 }),
 
     hasRole(profile.role, 'officer')
-      ? supabase.from('events').select('id, title, start_date').eq('is_published', true)
-          .gte('start_date', now).lte('start_date', weekAhead).limit(10)
+      ? supabase.from('events')
+          .select('id, title, start_date')
+          .eq('is_published', true)
+          .gte('start_date', now)
+          .lte('start_date', weekAhead)
+          .limit(10)
       : Promise.resolve({ data: [] }),
 
     profile.division_id
-      ? supabase.from('divisions').select('name, slug, color').eq('id', profile.division_id).single()
+      ? supabase.from('divisions')
+          .select('name, slug, color')
+          .eq('id', profile.division_id)
+          .single()
       : Promise.resolve({ data: null }),
 
     supabase.from('board_posts')
       .select('id, title, score, comment_count, created_at, category:board_categories(slug, name, color, icon)')
-      .order('created_at', { ascending: false }).limit(4),
+      .order('created_at', { ascending: false })
+      .limit(4),
+
+    // For officers: get checkin stats for active events
+    hasRole(profile.role, 'officer')
+      ? supabase.from('events')
+          .select('id, title, start_date')
+          .eq('is_published', true)
+          .gte('start_date', new Date(Date.now() - 24 * 3600_000).toISOString())
+          .lte('start_date', new Date(Date.now() + 24 * 3600_000).toISOString())
+          .order('start_date', { ascending: true })
+          .limit(3)
+      : Promise.resolve({ data: [] }),
   ]);
 
-  const myTickets = (ticketsRes.data ?? []) as Array<{
-    id: string; status: string;
-    event: { title: string; start_date: string } | Array<{ title: string; start_date: string }> | null;
+  const myTickets = (ticketsRes.data ?? []) as unknown as Array<{
+    id: string; ticket_code: string; status: string;
+    event: { id: string; title: string; start_date: string; location: string | null } | null;
   }>;
   const myPostCount = myPostsRes.count ?? 0;
   const upcomingEvents = (upcomingRes.data ?? []) as Array<{ id: string; title: string; start_date: string; location: string | null; requires_ticket: boolean }>;
@@ -65,11 +96,16 @@ export default async function PortalDashboard() {
     id: string; title: string; score: number; comment_count: number; created_at: string;
     category: { slug: string; name: string; color: string; icon: string } | Array<{ slug: string; name: string; color: string; icon: string }> | null;
   }>;
+  const todayEvents = (checkinStatsRes as { data: Array<{ id: string; title: string; start_date: string }> | null }).data ?? [];
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
-  // Role-aware stat cards
+  // Find next active ticket for upcoming event
+  const nextTicket = myTickets.find((t) =>
+    t.status === 'active' && t.event && new Date(t.event.start_date) >= new Date()
+  );
+
   const statCards = [
     {
       icon: '🎟️', label: 'Active Tickets',
@@ -90,32 +126,78 @@ export default async function PortalDashboard() {
     }] : []),
   ];
 
+  const quickActions = [
+    { href: '/portal/profile',  icon: '👤', label: 'Profile' },
+    { href: '/board',           icon: '💬', label: 'Board' },
+    { href: '/events',          icon: '🗓️', label: 'Events' },
+    { href: '/divisions',       icon: '🎮', label: 'Divisions' },
+    ...(hasRole(profile.role, 'officer') ? [
+      { href: '/portal/events', icon: '➕', label: 'Add Event' },
+      { href: '/portal/checkin',icon: '📷', label: 'Check-In' },
+    ] : []),
+    ...(canEditContent(profile.role) ? [
+      { href: '/portal/admin/content', icon: '✏️', label: 'Edit Site' },
+    ] : []),
+    ...(hasRole(profile.role, 'exec') ? [
+      { href: '/portal/admin',  icon: '🛡️', label: 'Admin' },
+    ] : []),
+  ];
+
   return (
     <div className={styles.page}>
 
       {/* ── Header ─────────────────────────────────── */}
       <header className={styles.header}>
-        <div>
-          <h1 className={styles.greeting}>
-            {greeting}, {profile.display_name?.split(' ')[0] || 'Triton'}
-          </h1>
-          <p className={styles.sub}>
-            {ROLE_LABELS[profile.role]} · Triton Gaming Member Portal
-          </p>
+        <div className={styles.headerLeft}>
+          {profile.avatar_url ? (
+            <Image
+              src={profile.avatar_url}
+              alt={profile.display_name || 'User'}
+              width={48}
+              height={48}
+              className={styles.headerAvatar}
+            />
+          ) : (
+            <div className={styles.headerAvatarFallback}>
+              {(profile.display_name || 'U')[0].toUpperCase()}
+            </div>
+          )}
+          <div>
+            <p className={styles.greeting}>{greeting}, {profile.display_name?.split(' ')[0] || 'Triton'}</p>
+            <span
+              className={styles.roleChip}
+              style={{ background: ROLE_COLORS[profile.role] + '18', color: ROLE_COLORS[profile.role], borderColor: ROLE_COLORS[profile.role] + '44' }}
+            >
+              {ROLE_LABELS[profile.role]}
+            </span>
+          </div>
         </div>
-        <span className={styles.roleChip}
-          style={{ background: ROLE_COLORS[profile.role] + '18', color: ROLE_COLORS[profile.role], borderColor: ROLE_COLORS[profile.role] + '44' }}>
-          {ROLE_LABELS[profile.role]}
-        </span>
       </header>
 
-      {/* ── Attention banner (exec+) ────────────────── */}
+      {/* ── Officer: Today's check-in shortcut ─────── */}
+      {hasRole(profile.role, 'officer') && todayEvents.length > 0 && (
+        <Link href="/portal/checkin" className={styles.checkinBanner}>
+          <div className={styles.checkinBannerDot} />
+          <div>
+            <div className={styles.checkinBannerTitle}>Event today — {todayEvents[0].title}</div>
+            <div className={styles.checkinBannerSub}>Tap to open check-in scanner</div>
+          </div>
+          <span className={styles.checkinBannerIcon}>📷</span>
+        </Link>
+      )}
+
+      {/* ── Exec: Pending requests alert ───────────── */}
       {pendingCount > 0 && hasRole(profile.role, 'exec') && (
         <Link href="/portal/admin" className={styles.alertBanner}>
           <span className={styles.alertDot} />
-          <strong>{pendingCount}</strong> pending membership request{pendingCount !== 1 ? 's' : ''} waiting for review
+          <strong>{pendingCount}</strong> pending membership request{pendingCount !== 1 ? 's' : ''}
           <span className={styles.alertArrow}>Review →</span>
         </Link>
+      )}
+
+      {/* ── Member: Next ticket hero ────────────────── */}
+      {nextTicket && !hasRole(profile.role, 'officer') && (
+        <DashboardClient ticket={nextTicket as Parameters<typeof DashboardClient>[0]['ticket']} />
       )}
 
       {/* ── Stat cards ─────────────────────────────── */}
@@ -161,10 +243,7 @@ export default async function PortalDashboard() {
               <div className={styles.eventList}>
                 {upcomingEvents.map((event) => {
                   const d = new Date(event.start_date);
-                  const hasTicket = myTickets.some((t) => {
-                    const ev = Array.isArray(t.event) ? t.event[0] : t.event;
-                    return ev?.title === event.title;
-                  });
+                  const hasTicket = myTickets.some((t) => t.event?.id === event.id);
                   return (
                     <div key={event.id} className={styles.eventRow}>
                       <div className={styles.eventDateBlock}>
@@ -180,7 +259,7 @@ export default async function PortalDashboard() {
                       </div>
                       <div className={styles.eventActions}>
                         {hasTicket ? (
-                          <span className={styles.ticketBadge}>✓ Registered</span>
+                          <Link href="/portal/tickets" className={styles.ticketBadge}>✓ Registered</Link>
                         ) : event.requires_ticket ? (
                           <Link href="/portal/tickets" className={styles.getTicket}>Get Ticket</Link>
                         ) : null}
@@ -200,27 +279,24 @@ export default async function PortalDashboard() {
                 <Link href="/portal/tickets" className={styles.seeAll}>View all →</Link>
               </div>
               <div className={styles.ticketList}>
-                {myTickets.map((ticket) => {
-                  const ev = Array.isArray(ticket.event) ? ticket.event[0] : ticket.event;
-                  return (
-                    <div key={ticket.id} className={styles.ticketRow}>
-                      <span className={`${styles.ticketStatus} ${ticket.status === 'used' ? styles.ticketUsed : ''}`}>
-                        {ticket.status === 'used' ? '✓' : '🎟️'}
-                      </span>
-                      <div className={styles.ticketInfo}>
-                        <div className={styles.ticketEvent}>{ev?.title || 'Unknown event'}</div>
-                        {ev?.start_date && (
-                          <div className={styles.ticketDate}>
-                            {new Date(ev.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                          </div>
-                        )}
-                      </div>
-                      <span className={`${styles.ticketBadgeSmall} ${ticket.status === 'used' ? styles.ticketBadgeUsed : styles.ticketBadgeActive}`}>
-                        {ticket.status}
-                      </span>
+                {myTickets.slice(0, 3).map((ticket) => (
+                  <div key={ticket.id} className={styles.ticketRow}>
+                    <span className={`${styles.ticketStatus} ${ticket.status === 'used' ? styles.ticketUsed : ''}`}>
+                      {ticket.status === 'used' ? '✓' : '🎟️'}
+                    </span>
+                    <div className={styles.ticketInfo}>
+                      <div className={styles.ticketEvent}>{ticket.event?.title || 'Unknown event'}</div>
+                      {ticket.event?.start_date && (
+                        <div className={styles.ticketDate}>
+                          {new Date(ticket.event.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </div>
+                      )}
                     </div>
-                  );
-                })}
+                    <span className={`${styles.ticketBadgeSmall} ${ticket.status === 'used' ? styles.ticketBadgeUsed : styles.ticketBadgeActive}`}>
+                      {ticket.status}
+                    </span>
+                  </div>
+                ))}
               </div>
             </section>
           )}
@@ -231,22 +307,7 @@ export default async function PortalDashboard() {
           <section className={styles.section}>
             <h2 className={styles.sectionLabel}>Quick Access</h2>
             <div className={styles.quickGrid}>
-              {[
-                { href: '/portal/profile',  icon: '👤', label: 'Profile' },
-                { href: '/board',           icon: '💬', label: 'Board' },
-                { href: '/events',          icon: '🗓️', label: 'Events' },
-                { href: '/divisions',       icon: '🎮', label: 'Divisions' },
-                ...(hasRole(profile.role, 'officer') ? [
-                  { href: '/portal/events', icon: '➕', label: 'Add Event' },
-                  { href: '/portal/checkin',icon: '📷', label: 'Check-In' },
-                ] : []),
-                ...(canEditContent(profile.role) ? [
-                  { href: '/portal/admin/content', icon: '✏️', label: 'Edit Site' },
-                ] : []),
-                ...(hasRole(profile.role, 'exec') ? [
-                  { href: '/portal/admin',  icon: '🛡️', label: 'Admin' },
-                ] : []),
-              ].map(({ href, icon, label }) => (
+              {quickActions.map(({ href, icon, label }) => (
                 <Link key={href} href={href} className={styles.quickCard}>
                   <span className={styles.quickIcon}>{icon}</span>
                   <span className={styles.quickLabel}>{label}</span>

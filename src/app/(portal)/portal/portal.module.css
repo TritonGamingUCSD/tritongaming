@@ -45,8 +45,16 @@
 }
 
 @media (max-width: 768px) {
-  .main  { margin-left: 0; }
-  .topbar { padding: 0.75rem 1.25rem; }
-  /* extra clearance for bottom tab bar + iPhone safe area */
-  .content { padding: 1.25rem 1.125rem calc(72px + env(safe-area-inset-bottom, 0px)); }
+  .main { margin-left: 0; }
+  .topbar { padding: 0.625rem 1.125rem; }
+  /* Bottom tab bar is 54px + safe area; add extra 8px breathing room */
+  .content {
+    padding: 1.125rem 1rem calc(62px + env(safe-area-inset-bottom, 0px) + 8px);
+  }
+}
+
+@media (max-width: 480px) {
+  .content {
+    padding: 0.875rem 0.875rem calc(62px + env(safe-area-inset-bottom, 0px) + 8px);
+  }
 }

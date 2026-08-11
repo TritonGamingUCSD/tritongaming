@@ -6,10 +6,173 @@
   width: 100%;
 }
 
+/* ── Header ─────────────────────────────────────── */
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.headerAvatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255,199,44,0.3);
+  flex-shrink: 0;
+}
+
+.headerAvatarFallback {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--gradient-nav);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-futura-heavy);
+  font-size: 1.2rem;
+  color: var(--white);
+  border: 2px solid rgba(255,199,44,0.3);
+  flex-shrink: 0;
+}
+
+/* ── Check-in banner (officers w/ today event) ─── */
+.checkinBanner {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.875rem 1.25rem;
+  background: rgba(14,165,233,0.08);
+  border: 1px solid rgba(14,165,233,0.25);
+  border-radius: 0.875rem;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.checkinBanner:hover { background: rgba(14,165,233,0.13); }
+
+.checkinBannerDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #0ea5e9;
+  flex-shrink: 0;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.checkinBannerTitle {
+  font-family: var(--font-futura-medium);
+  font-size: 0.88rem;
+  color: var(--white);
+}
+
+.checkinBannerSub {
+  font-size: 0.72rem;
+  color: rgba(242,241,240,0.45);
+  margin-top: 0.1rem;
+}
+
+.checkinBannerIcon {
+  font-size: 1.5rem;
+  margin-left: auto;
+}
+
+/* ── Member next-ticket hero card ─────────────── */
+.ticketHeroCard {
+  position: relative;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0a1628 0%, #011941 50%, #0d2a50 100%);
+  border: 1px solid rgba(255, 199, 44, 0.3);
+  padding: 1.5rem;
+}
+
+.ticketHeroInner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.ticketHeroMeta { display: flex; flex-direction: column; gap: 0.35rem; }
+
+.ticketHeroLabel {
+  font-size: 0.62rem;
+  font-family: var(--font-renegare);
+  letter-spacing: 0.15em;
+  color: var(--yellow);
+  text-transform: uppercase;
+}
+
+.ticketHeroTitle {
+  font-family: var(--font-futura-heavy);
+  font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+  color: var(--white);
+  line-height: 1.2;
+}
+
+.ticketHeroDate {
+  font-size: 0.82rem;
+  color: rgba(242,241,240,0.6);
+}
+
+.ticketHeroLoc {
+  font-size: 0.78rem;
+  color: rgba(242,241,240,0.45);
+}
+
+.ticketHeroActions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.showQrHeroBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--yellow);
+  color: #011941;
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  font-family: var(--font-futura-heavy);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.showQrHeroBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(255,199,44,0.3);
+}
+
+.viewAllTickets {
+  font-size: 0.8rem;
+  color: rgba(242,241,240,0.5);
+  transition: color 0.15s;
+}
+
+.viewAllTickets:hover { color: var(--yellow); }
+
+.ticketHeroGlow {
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: rgba(255,199,44,0.06);
+  pointer-events: none;
+}
+
 /* Header */
 .header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
@@ -17,24 +180,24 @@
 
 .greeting {
   font-family: var(--font-futura-heavy);
-  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
   color: var(--white);
-  margin-bottom: 0.3rem;
   letter-spacing: 0.02em;
 }
 
 .sub { font-size: 0.82rem; color: rgba(242,241,240,0.38); }
 
 .roleChip {
-  font-size: 0.7rem;
+  display: inline-block;
+  font-size: 0.62rem;
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;
-  padding: 0.25rem 0.75rem;
+  padding: 0.2rem 0.6rem;
   border-radius: 9999px;
   text-transform: uppercase;
   border: 1px solid;
+  margin-top: 0.3rem;
   white-space: nowrap;
-  flex-shrink: 0;
 }
 
 /* Alert banner */

@@ -1,30 +1,14 @@
 import type { Metadata } from 'next';
 import LogoGrid from '@/components/LogoGrid/LogoGrid';
-import { getContentBlock } from '@/lib/content';
+import { createClient } from '@/lib/supabase/server';
 import defaultSponsors from '@/data/sponsors.json';
 import type { LogoItem } from '@/types';
 import styles from './sponsors.module.css';
 
-type DbSponsor = { name?: string; logo_url?: string; website_url?: string; tier?: string };
+export const dynamic = 'force-dynamic';
 
-function dbSponsorsToLogoItems(items: DbSponsor[]): LogoItem[] {
-  const tierSize: Record<string, 'small' | 'medium' | 'large'> = {
-    gold: 'large', silver: 'medium', bronze: 'small', platinum: 'large',
-  };
-  return items
-    .filter((s) => s.name && s.logo_url)
-    .map((s, i) => ({
-      name: s.name!,
-      logo: s.logo_url!,
-      size: tierSize[(s.tier ?? '').toLowerCase()] ?? 'medium',
-      link: s.website_url,
-      order: i,
-    }));
-}
-
-export const metadata: Metadata = {
-  title: 'Sponsors | Triton Gaming',
-  description: 'Meet the sponsors that make Triton Gaming events possible.',
+const TIER_SIZE: Record<string, 'small' | 'medium' | 'large'> = {
+  platinum: 'large', gold: 'large', silver: 'medium', bronze: 'small',
 };
 
 const OFFERINGS = [
@@ -34,12 +18,35 @@ const OFFERINGS = [
   { icon: '🎤', title: 'Panels & Talks', body: 'Engage our community with an industry panel, career talk, or fireside chat connecting your team to future professionals.' },
 ];
 
+export const metadata: Metadata = {
+  title: 'Sponsors | Triton Gaming',
+  description: 'Meet the sponsors that make Triton Gaming events possible.',
+};
+
 export default async function SponsorsPage() {
-  const content = await getContentBlock('sponsors');
-  const dbItems = content.items as DbSponsor[] | undefined;
-  const sponsors: LogoItem[] = dbItems?.length
-    ? dbSponsorsToLogoItems(dbItems)
-    : (defaultSponsors as LogoItem[]);
+  let sponsors: LogoItem[] = defaultSponsors as LogoItem[];
+
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from('sponsors')
+      .select('name, logo_url, website_url, tier, order_index')
+      .eq('is_active', true)
+      .order('order_index', { ascending: true });
+
+    if (data && data.length > 0) {
+      sponsors = data
+        .filter((s) => s.name && s.logo_url)
+        .map((s, i) => ({
+          name: s.name,
+          logo: s.logo_url,
+          size: TIER_SIZE[s.tier?.toLowerCase() ?? ''] ?? 'medium',
+          link: s.website_url ?? undefined,
+          order: s.order_index ?? i,
+        }));
+    }
+  } catch { /* fall through to default */ }
+
   return (
     <div className={styles.page}>
 
