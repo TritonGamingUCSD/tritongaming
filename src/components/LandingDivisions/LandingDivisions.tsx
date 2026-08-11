@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { Reveal, RevealGroup, RevealItem } from '@/components/Reveal/Reveal';
-import divisions from '@/data/divisions.json';
+import { createClient } from '@/lib/supabase/server';
+import divisionsJson from '@/data/divisions.json';
 import styles from './LandingDivisions.module.css';
 
 interface DivisionEntry {
@@ -8,14 +9,44 @@ interface DivisionEntry {
   logo: string;
   link?: string;
   description?: string;
+  order?: number;
 }
 
-export default function LandingDivisions() {
-  const sorted = [...(divisions as DivisionEntry[])].sort((a, b) => {
-    const oa = (a as { order?: number }).order ?? 99;
-    const ob = (b as { order?: number }).order ?? 99;
-    return oa - ob;
-  });
+interface DbDivision {
+  id: string;
+  slug: string;
+  name: string;
+  logo_url: string | null;
+  description: string | null;
+  order_index: number;
+}
+
+export default async function LandingDivisions() {
+  let sorted: DivisionEntry[] = [];
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from('divisions')
+      .select('id, slug, name, logo_url, description, order_index')
+      .eq('is_active', true)
+      .order('order_index');
+    if (data?.length) {
+      sorted = (data as DbDivision[]).map((d) => {
+        const local = (divisionsJson as DivisionEntry[]).find((j) => j.name === d.name);
+        return {
+          name: d.name,
+          logo: d.logo_url ?? (local?.logo ? (local.logo.startsWith('/') ? local.logo : `/${local.logo}`) : ''),
+          link: `/divisions/${d.slug}`,
+          description: d.description ?? local?.description,
+          order: d.order_index,
+        };
+      });
+    }
+  } catch { /* fallback below */ }
+
+  if (!sorted.length) {
+    sorted = [...(divisionsJson as DivisionEntry[])].sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+  }
 
   return (
     <section className={styles.section} aria-label="Divisions">
