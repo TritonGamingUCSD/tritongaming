@@ -43,10 +43,11 @@ yarn-error.log*
 next-env.d.ts
 
 # Custom AI models and related files
-.ai/
+.agents/
 
 # Creative assets such as images, videos, and audio files
 .assets/
 
 # Windows alternate data streams
 :Zone.Identifier 
+
