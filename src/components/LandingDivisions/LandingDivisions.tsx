@@ -1,7 +1,6 @@
 import Image from 'next/image';
 import { Reveal, RevealGroup, RevealItem } from '@/components/Reveal/Reveal';
-import { createClient } from '@/lib/supabase/server';
-import divisionsJson from '@/data/divisions.json';
+import { getContentBlock } from '@/lib/content';
 import styles from './LandingDivisions.module.css';
 
 interface DivisionEntry {
@@ -10,42 +9,22 @@ interface DivisionEntry {
   link?: string;
   description?: string;
   order?: number;
-}
-
-interface DbDivision {
-  id: string;
-  slug: string;
-  name: string;
-  logo_url: string | null;
-  description: string | null;
-  order_index: number;
+  size?: string;
 }
 
 export default async function LandingDivisions() {
   let sorted: DivisionEntry[] = [];
+  
   try {
-    const supabase = await createClient();
-    const { data } = await supabase
-      .from('divisions')
-      .select('id, slug, name, logo_url, description, order_index')
-      .eq('is_active', true)
-      .order('order_index');
-    if (data?.length) {
-      sorted = (data as DbDivision[]).map((d) => {
-        const local = (divisionsJson as DivisionEntry[]).find((j) => j.name === d.name);
-        return {
-          name: d.name,
-          logo: d.logo_url ?? (local?.logo ? (local.logo.startsWith('/') ? local.logo : `/${local.logo}`) : ''),
-          link: `/divisions/${d.slug}`,
-          description: d.description ?? local?.description,
-          order: d.order_index,
-        };
-      });
+    const content = await getContentBlock('divisions');
+    const items = content.items as DivisionEntry[] | undefined;
+    if (items?.length) {
+      sorted = [...items].sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
     }
-  } catch { /* fallback below */ }
+  } catch { /* fallback to empty */ }
 
   if (!sorted.length) {
-    sorted = [...(divisionsJson as DivisionEntry[])].sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+    sorted = [];
   }
 
   return (

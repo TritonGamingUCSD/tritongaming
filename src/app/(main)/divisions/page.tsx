@@ -1,41 +1,28 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
-import divisionsJson from '@/data/divisions.json';
+import { getContentBlock } from '@/lib/content';
 import styles from './divisions.module.css';
 
 export const metadata = { title: 'Divisions' };
 
-interface DivisionRow {
-  id: string;
-  slug: string;
+interface DivisionEntry {
   name: string;
-  description: string | null;
-  logo_url: string | null;
-  color: string;
-  discord_link: string | null;
-  order_index: number;
-}
-
-function getLocalLogo(name: string): string | null {
-  const entry = (divisionsJson as Array<{ name: string; logo: string }>).find(
-    (d) => d.name === name
-  );
-  return entry?.logo ? `/${entry.logo}` : null;
+  logo: string;
+  description?: string;
+  order?: number;
 }
 
 export default async function DivisionsPage() {
-  let divisions: DivisionRow[] = [];
+  let divisions: DivisionEntry[] = [];
+  
   try {
-    const supabase = await createClient();
-    const { data } = await supabase
-      .from('divisions')
-      .select('*')
-      .eq('is_active', true)
-      .order('order_index');
-    divisions = (data ?? []) as DivisionRow[];
+    const content = await getContentBlock('divisions');
+    const items = content.items as DivisionEntry[] | undefined;
+    if (items?.length) {
+      divisions = [...items].sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+    }
   } catch {
-    // Supabase unavailable — render static placeholder
+    // Content unavailable
   }
 
   return (
@@ -49,64 +36,40 @@ export default async function DivisionsPage() {
       </section>
 
       <section className={styles.grid}>
-        {divisions.length > 0
-          ? divisions.map((div) => {
-              const logoSrc = div.logo_url || getLocalLogo(div.name);
-              return (
-                <Link key={div.id} href={`/divisions/${div.slug}`} className={styles.card}>
-                  <div
-                    className={styles.cardHeader}
-                    style={{ background: `linear-gradient(135deg, ${div.color}33, ${div.color}11)` }}
-                  >
-                    {logoSrc ? (
-                      <Image
-                        src={logoSrc}
-                        alt={div.name}
-                        width={80}
-                        height={80}
-                        className={styles.logo}
-                      />
-                    ) : (
-                      <div className={styles.logoFallback} style={{ background: div.color + '33', color: div.color }}>
-                        {div.name[0]}
-                      </div>
-                    )}
-                  </div>
-                  <div className={styles.cardBody}>
-                    <h3 className={styles.divName}>{div.name}</h3>
-                    <p className={styles.divDesc}>{div.description}</p>
-                  </div>
-                  <div className={styles.cardFooter}>
-                    <span className={styles.learnMore}>Learn More →</span>
-                    {div.discord_link && (
-                      <span className={styles.discordBadge}>Discord</span>
-                    )}
-                  </div>
-                </Link>
-              );
-            })
-          : (divisionsJson as Array<{ name: string; logo: string; description: string; order: number }>)
-              .sort((a, b) => a.order - b.order)
-              .map((div) => (
-                <div key={div.name} className={styles.card}>
-                  <div className={styles.cardHeader}>
+        {divisions.length > 0 ? (
+          divisions.map((div) => {
+            const logoSrc = div.logo ? (div.logo.startsWith('/') ? div.logo : `/${div.logo}`) : null;
+            const href = div.name.toLowerCase().replace(/\s+/g, '-');
+            return (
+              <Link key={div.name} href={`/divisions/${href}`} className={styles.card}>
+                <div className={styles.cardHeader}>
+                  {logoSrc ? (
                     <Image
-                      src={`/${div.logo}`}
+                      src={logoSrc}
                       alt={div.name}
                       width={80}
                       height={80}
                       className={styles.logo}
                     />
-                  </div>
-                  <div className={styles.cardBody}>
-                    <h3 className={styles.divName}>{div.name}</h3>
-                    <p className={styles.divDesc}>{div.description}</p>
-                  </div>
-                  <div className={styles.cardFooter}>
-                    <span className={styles.learnMore}>Coming Soon</span>
-                  </div>
+                  ) : (
+                    <div className={styles.logoFallback}>
+                      {div.name[0]}
+                    </div>
+                  )}
                 </div>
-              ))}
+                <div className={styles.cardBody}>
+                  <h3 className={styles.divName}>{div.name}</h3>
+                  <p className={styles.divDesc}>{div.description || ''}</p>
+                </div>
+                <div className={styles.cardFooter}>
+                  <span className={styles.learnMore}>Learn More →</span>
+                </div>
+              </Link>
+            );
+          })
+        ) : (
+          <p className={styles.noContent}>No divisions available</p>
+        )}
       </section>
     </div>
   );

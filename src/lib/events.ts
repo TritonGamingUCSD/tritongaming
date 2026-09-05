@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
 import type { Event } from '@/types';
-import eventsJson from '@/data/events.json';
 
 const DEFAULT_LIMIT = 50;
 
@@ -32,11 +31,7 @@ export async function getUpcomingEvents(limit = DEFAULT_LIMIT): Promise<Event[]>
     if (error) throw error;
     return (data ?? []).map(mapSupabaseEvent);
   } catch {
-    const all = eventsJson as Event[];
-    return all
-      .filter((e) => new Date(e.start_date) >= new Date())
-      .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
-      .slice(0, limit);
+    return [];
   }
 }
 
@@ -54,11 +49,7 @@ export async function getPreviousEvents(limit = DEFAULT_LIMIT): Promise<Event[]>
     if (error) throw error;
     return (data ?? []).map(mapSupabaseEvent);
   } catch {
-    const all = eventsJson as Event[];
-    return all
-      .filter((e) => new Date(e.start_date) < new Date())
-      .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())
-      .slice(0, limit);
+    return [];
   }
 }
 
@@ -75,7 +66,7 @@ export async function getAllEvents(limit = DEFAULT_LIMIT): Promise<Event[]> {
     if (error) throw error;
     return (data ?? []).map(mapSupabaseEvent);
   } catch {
-    return (eventsJson as Event[]).slice(0, limit);
+    return [];
   }
 }
 

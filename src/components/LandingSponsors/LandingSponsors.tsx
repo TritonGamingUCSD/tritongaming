@@ -2,7 +2,6 @@ import Link from 'next/link';
 import LogoGrid from '@/components/LogoGrid/LogoGrid';
 import { Reveal } from '@/components/Reveal/Reveal';
 import { getContentBlock } from '@/lib/content';
-import defaultSponsors from '@/data/sponsors.json';
 import styles from './LandingSponsors.module.css';
 import type { LogoItem } from '@/types';
 
@@ -28,7 +27,7 @@ export default async function LandingSponsors() {
   const dbItems = content.items as DbSponsor[] | undefined;
   const logos: LogoItem[] = dbItems?.length
     ? dbSponsorsToLogoItems(dbItems)
-    : (defaultSponsors as LogoItem[]);
+    : [];
 
   return (
     <section className={styles.section} aria-label="Sponsors">

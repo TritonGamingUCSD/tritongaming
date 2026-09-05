@@ -3,7 +3,6 @@ import InfoSection from '@/components/InfoSection/InfoSection';
 import AlternateTitle from '@/components/AlternateTitle/AlternateTitle';
 import ExecList from '@/components/ExecList/ExecList';
 import { getContentBlock } from '@/lib/content';
-import defaultOfficers from '@/data/officers.json';
 import type { OfficerEntry } from '@/types';
 import styles from './about.module.css';
 
@@ -50,7 +49,7 @@ export default async function AboutPage() {
   const dbPeople = officersContent.items as DbPerson[] | undefined;
   const officers: OfficerEntry[] = dbPeople?.length
     ? dbOfficersToEntries(dbPeople)
-    : (defaultOfficers as OfficerEntry[]);
+    : [];
 
   return (
     <div className={styles.page}>

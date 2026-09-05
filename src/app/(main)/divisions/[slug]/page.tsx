@@ -1,8 +1,7 @@
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
-import divisionsJson from '@/data/divisions.json';
+import { getContentBlock } from '@/lib/content';
 import { getProfile } from '@/lib/auth';
 import { hasRole } from '@/types/database';
 import DivisionEditClient from './DivisionEditClient';
@@ -12,91 +11,64 @@ interface Params {
   params: Promise<{ slug: string }>;
 }
 
-function getLocalDivision(slug: string) {
-  const nameFromSlug = slug
+interface DivisionEntry {
+  name: string;
+  logo: string;
+  description?: string;
+  order?: number;
+}
+
+function slugToName(slug: string): string {
+  return slug
     .split('-')
     .map((w) => w[0].toUpperCase() + w.slice(1))
     .join(' ');
-  return (divisionsJson as Array<{ name: string; logo: string; description: string; order: number }>).find(
-    (d) => d.name === nameFromSlug || d.name.toLowerCase().replace(/\s+/g, '-') === slug
-  );
+}
+
+function nameToSlug(name: string): string {
+  return name.toLowerCase().replace(/\s+/g, '-');
 }
 
 export async function generateMetadata({ params }: Params) {
   const { slug } = await params;
-  return { title: slug.split('-').map((w) => w[0].toUpperCase() + w.slice(1)).join(' ') };
+  return { title: slugToName(slug) };
 }
 
 export default async function DivisionPage({ params }: Params) {
   const { slug } = await params;
-  const supabase = await createClient();
+  const divisionName = slugToName(slug);
+  
+  // Get division data from content
+  const content = await getContentBlock('divisions');
+  const items = content.items as DivisionEntry[] | undefined;
+  const division = items?.find(d => nameToSlug(d.name) === slug);
+  
+  if (!division) notFound();
 
-  const { data: division } = await supabase
-    .from('divisions')
-    .select('*')
-    .eq('slug', slug)
-    .single();
-
-  const localDiv = getLocalDivision(slug);
-  if (!division && !localDiv) notFound();
-
-  const name = division?.name || localDiv?.name || '';
-  const description = division?.description || localDiv?.description || '';
-  const logoUrl = division?.logo_url || (localDiv?.logo ? `/${localDiv.logo}` : null);
-  const color = division?.color || '#011941';
-  const discordLink = division?.discord_link;
-
-  let content = null;
-  let events: Array<{ id: string; title: string; start_date: string; location: string | null }> = [];
-  let rosterMembers: Array<{ name: string; gamer_tag?: string; role?: string }> = [];
-
-  if (division) {
-    const [contentRes, eventsRes] = await Promise.all([
-      supabase
-        .from('division_content')
-        .select('*')
-        .eq('division_id', division.id)
-        .single(),
-      supabase
-        .from('events')
-        .select('id, title, start_date, location')
-        .eq('division_id', division.id)
-        .eq('is_published', true)
-        .gte('start_date', new Date().toISOString())
-        .order('start_date', { ascending: true })
-        .limit(5),
-    ]);
-    content = contentRes.data;
-    events = eventsRes.data || [];
-    rosterMembers = Array.isArray(content?.roster) ? content.roster : [];
-  }
+  const name = division.name || '';
+  const description = division.description || '';
+  const logoUrl = division.logo ? (division.logo.startsWith('/') ? division.logo : `/${division.logo}`) : null;
 
   const profile = await getProfile();
   const canEdit =
     profile &&
-    (hasRole(profile.role, 'admin') ||
-      (hasRole(profile.role, 'lead') && profile.division_id === division?.id));
+    (hasRole(profile.role, 'admin'));
 
   return (
     <div className={styles.page}>
       {/* Hero */}
-      <div className={styles.hero} style={{ background: `linear-gradient(135deg, ${color}22, ${color}08), var(--gradient-stats)` }}>
+      <div className={styles.hero} style={{ background: 'linear-gradient(135deg, #011941aa, #01194411), var(--gradient-stats)' }}>
         <div className={styles.heroInner}>
           {logoUrl ? (
             <Image src={logoUrl} alt={name} width={120} height={120} className={styles.logo} />
           ) : (
-            <div className={styles.logoFallback} style={{ background: color + '44' }}>
+            <div className={styles.logoFallback}>
               {name[0]}
             </div>
           )}
           <div>
             <h1 className={styles.name}>{name}</h1>
             <p className={styles.desc}>{description}</p>
-            {discordLink && (
-              <a href={discordLink} target="_blank" rel="noopener noreferrer" className={styles.discordBtn}>
-                Join Discord
-              </a>
-            )}
           </div>
         </div>
       </div>

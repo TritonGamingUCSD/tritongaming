@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
-import officers from '@/data/officers.json';
+import { getContentBlock } from '@/lib/content';
 
 export async function GET() {
-  return NextResponse.json({ officers });
+  const content = await getContentBlock('officers');
+  const items = content.items || [];
+  return NextResponse.json({ officers: items });
 }
