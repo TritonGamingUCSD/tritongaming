@@ -20,8 +20,8 @@ export default function NewEventClient() {
       end_date: form.end_date ? new Date(form.end_date).toISOString() : null,
       flyer_url: form.flyer_url.trim() || null,
       max_capacity: form.max_capacity ? parseInt(form.max_capacity) : null,
-      requires_ticket: form.requires_ticket,
-      ticket_price: form.requires_ticket ? parseFloat(form.ticket_price) : 0,
+      requires_ticket: true, // every published event is ticketable
+      ticket_price: form.audience === 'public' ? parseFloat(form.ticket_price) : 0,
       audience: form.audience,
       is_published: form.is_published,
       created_by: user.id,

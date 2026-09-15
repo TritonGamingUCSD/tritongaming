@@ -2,11 +2,12 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types/database';
 import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
 import type { RoleGrant } from '@/lib/capabilities';
+import { hasBasicProfileInfo } from '@/lib/profile';
 import styles from './profile.module.css';
 
 export default function ProfileClient({ profile, roles }: { profile: Profile; roles: RoleGrant[] }) {
@@ -21,6 +22,9 @@ export default function ProfileClient({ profile, roles }: { profile: Profile; ro
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get('next');
+  const promptedForTicket = !!next && !hasBasicProfileInfo(profile);
 
   async function handleSignOut() {
     const supabase = createClient();
@@ -44,15 +48,27 @@ export default function ProfileClient({ profile, roles }: { profile: Profile; ro
     setSaving(false);
     if (err) {
       setError('Failed to save. Please try again.');
-    } else {
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
+      return;
+    }
+
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+
+    if (next && hasBasicProfileInfo({ ...profile, ...form })) {
+      router.push(next);
     }
   }
 
   return (
     <div className={styles.page}>
       <h1 className={styles.title}>My Profile</h1>
+
+      {promptedForTicket && (
+        <div className={styles.ticketPrompt}>
+          Almost there — fill in your name, major, and year to get your ticket.
+          You&apos;ll only need to do this once.
+        </div>
+      )}
 
       <div className={styles.layout}>
         <div className={styles.avatarSection}>

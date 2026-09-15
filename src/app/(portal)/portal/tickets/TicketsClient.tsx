@@ -7,7 +7,6 @@ import styles from './tickets.module.css';
 
 interface TicketData {
   id: string;
-  ticket_code: string;
   status: 'active' | 'used' | 'cancelled' | 'expired';
   checked_in_at: string | null;
   created_at: string;
@@ -26,7 +25,6 @@ interface UpcomingEvent {
   title: string;
   start_date: string;
   location: string | null;
-  requires_ticket: boolean;
   ticket_price: number;
   audience: 'public' | 'ucsd_only';
 }
@@ -74,6 +72,10 @@ export default function TicketsClient({ tickets, upcomingEvents, isUcsd }: Props
       });
       const data = await res.json();
       if (!res.ok) {
+        if (data.needsProfile) {
+          router.push('/portal/profile?next=/portal/tickets');
+          return;
+        }
         setError(data.error || 'Something went wrong. Please try again.');
         setPurchasing(null);
         return;
@@ -94,10 +96,12 @@ export default function TicketsClient({ tickets, upcomingEvents, isUcsd }: Props
   const pastTickets   = tickets.filter((t) => t.status !== 'active');
 
   const now = new Date();
-  const nextActiveTicket = activeTickets.find((t) => {
-    const ev = t.event;
-    return ev && new Date(ev.start_date) >= now;
-  });
+  // Tickets come back sorted by when they were registered, not by event date —
+  // pick whichever active ticket's event starts soonest, not just the first
+  // one in that list.
+  const nextActiveTicket = activeTickets
+    .filter((t) => t.event && new Date(t.event.start_date) >= now)
+    .sort((a, b) => new Date(a.event!.start_date).getTime() - new Date(b.event!.start_date).getTime())[0];
 
   // Events the user hasn't registered for yet
   const registeredEventIds = new Set(tickets.map((t) => t.event?.id).filter(Boolean));
@@ -194,22 +198,20 @@ export default function TicketsClient({ tickets, upcomingEvents, isUcsd }: Props
                     <div className={styles.eventLoc}>📍 {event.location}</div>
                   )}
                 </div>
-                {event.requires_ticket && (
-                  event.audience === 'ucsd_only' && !isUcsd ? (
-                    <span className={styles.registerBtnDisabled}>UCSD students only</span>
-                  ) : (
-                    <button
-                      className={styles.registerBtn}
-                      disabled={purchasing === event.id}
-                      onClick={() => handleGetTicket(event.id)}
-                    >
-                      {purchasing === event.id
-                        ? 'Please wait…'
-                        : isUcsd || event.ticket_price <= 0
-                        ? 'Get Ticket — Free'
-                        : `Buy Ticket — $${event.ticket_price}`}
-                    </button>
-                  )
+                {event.audience === 'ucsd_only' && !isUcsd ? (
+                  <span className={styles.registerBtnDisabled}>UCSD students only</span>
+                ) : (
+                  <button
+                    className={styles.registerBtn}
+                    disabled={purchasing === event.id}
+                    onClick={() => handleGetTicket(event.id)}
+                  >
+                    {purchasing === event.id
+                      ? 'Please wait…'
+                      : isUcsd || event.ticket_price <= 0
+                      ? 'Get Ticket — Free'
+                      : `Buy Ticket — $${event.ticket_price}`}
+                  </button>
                 )}
               </div>
             ))}
@@ -242,8 +244,10 @@ export default function TicketsClient({ tickets, upcomingEvents, isUcsd }: Props
       {/* Fullscreen QR overlay */}
       {qrTicket && (
         <FullscreenQR
-          ticketCode={qrTicket.ticket_code}
+          ticketId={qrTicket.id}
           eventTitle={qrTicket.event?.title ?? 'Event'}
+          eventDate={qrTicket.event?.start_date}
+          eventLocation={qrTicket.event?.location}
           onClose={() => setQrTicket(null)}
         />
       )}

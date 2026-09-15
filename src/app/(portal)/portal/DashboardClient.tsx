@@ -7,7 +7,6 @@ import styles from './dashboard.module.css';
 
 interface Ticket {
   id: string;
-  ticket_code: string;
   status: string;
   event: { id: string; title: string; start_date: string; location: string | null } | null;
 }
@@ -50,8 +49,10 @@ export default function DashboardClient({ ticket }: { ticket: Ticket }) {
 
       {showQR && (
         <FullscreenQR
-          ticketCode={ticket.ticket_code}
+          ticketId={ticket.id}
           eventTitle={ev.title}
+          eventDate={ev.start_date}
+          eventLocation={ev.location}
           onClose={() => setShowQR(false)}
         />
       )}

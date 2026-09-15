@@ -55,7 +55,35 @@
 
 .closeBtn:hover { background: rgba(0,0,0,0.15); }
 
+.eventBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 1px dashed rgba(1, 25, 65, 0.15);
+  width: 100%;
+}
+
+.eventEyebrow {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #9ca3af;
+  text-transform: uppercase;
+}
+
+.eventMeta {
+  font-size: 0.8rem;
+  color: #6b7280;
+  text-align: center;
+}
+
 .label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.15em;
@@ -64,12 +92,47 @@
   margin-bottom: 0.5rem;
 }
 
+.liveBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+}
+
+.liveDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #dc2626;
+  animation: liveDotPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes liveDotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.75); }
+}
+
 .qrWrapper {
+  position: relative;
   background: #fff;
   border-radius: 1rem;
   padding: 1rem;
-  box-shadow: 0 4px 32px rgba(1, 25, 65, 0.15);
   border: 3px solid #011941;
+  animation: qrGlow 2.2s ease-in-out infinite;
+}
+
+@keyframes qrGlow {
+  0%, 100% {
+    box-shadow: 0 4px 32px rgba(1, 25, 65, 0.15), 0 0 0 0 rgba(255, 199, 44, 0.5);
+  }
+  50% {
+    box-shadow: 0 4px 32px rgba(1, 25, 65, 0.15), 0 0 0 14px rgba(255, 199, 44, 0);
+  }
 }
 
 .qrCanvas {
@@ -78,11 +141,35 @@
 }
 
 .eventName {
-  font-size: 1.05rem;
-  font-weight: 700;
+  font-size: 1.15rem;
+  font-weight: 800;
   color: #011941;
   text-align: center;
-  margin-top: 0.25rem;
+}
+
+.progressTrack {
+  width: 100%;
+  max-width: 200px;
+  height: 4px;
+  background: rgba(1, 25, 65, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  width: 100%;
+  background: #ffc72c;
+  border-radius: 999px;
+  transform-origin: left;
+  animation-name: shrinkBar;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes shrinkBar {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
 }
 
 .codeText {

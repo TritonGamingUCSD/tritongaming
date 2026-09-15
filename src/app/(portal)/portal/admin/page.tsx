@@ -16,10 +16,12 @@ export default async function AdminPage() {
   const isAdmin = hasCapability(roles, 'manage_roles');
   const supabase = await createClient();
 
-  const [usersRes, eventsRes, ticketsRes] = await Promise.all([
+  const [usersRes, eventsRes, ticketsRes, eventStatsRes, ticketStatsRes] = await Promise.all([
     supabase.from('profiles').select('id', { count: 'exact', head: true }),
     supabase.from('events').select('id', { count: 'exact', head: true }),
     supabase.from('tickets').select('id', { count: 'exact', head: true }),
+    supabase.from('events').select('id, title, start_date').order('start_date', { ascending: false }).limit(20),
+    supabase.from('tickets').select('event_id, status'),
   ]);
 
   const stats = [
@@ -27,6 +29,17 @@ export default async function AdminPage() {
     { label: 'Events',   value: eventsRes.count  ?? 0, icon: '🗓️' },
     { label: 'Tickets',  value: ticketsRes.count ?? 0, icon: '🎟️' },
   ];
+
+  // Per-event ticket/check-in breakdown, for admins and execs.
+  const ticketCountsByEvent: Record<string, { issued: number; checkedIn: number }> = {};
+  (ticketStatsRes.data ?? []).forEach((t) => {
+    const bucket = ticketCountsByEvent[t.event_id] ??= { issued: 0, checkedIn: 0 };
+    if (t.status === 'active' || t.status === 'used') bucket.issued++;
+    if (t.status === 'used') bucket.checkedIn++;
+  });
+  const eventTicketStats = (eventStatsRes.data ?? [])
+    .map((e) => ({ ...e, ...(ticketCountsByEvent[e.id] ?? { issued: 0, checkedIn: 0 }) }))
+    .filter((e) => e.issued > 0);
 
   // All users + their role grants, and the division picker list — only
   // loaded for admins (full role manager).
@@ -89,6 +102,27 @@ export default async function AdminPage() {
           ))}
         </div>
       </section>
+
+      {/* Ticket & check-in stats (exec+) */}
+      {eventTicketStats.length > 0 && (
+        <section className={styles.section}>
+          <h2 className={styles.sectionLabel}>Ticket & Check-In Stats</h2>
+          <div className={styles.table}>
+            <div className={styles.tableHeader}>
+              <span>Event</span>
+              <span>Tickets Issued</span>
+              <span>Checked In</span>
+            </div>
+            {eventTicketStats.map((e) => (
+              <div key={e.id} className={styles.tableRow}>
+                <span>{e.title}</span>
+                <span>{e.issued}</span>
+                <span>{e.checkedIn} <span className={styles.sectionHint}>({e.issued > 0 ? Math.round((e.checkedIn / e.issued) * 100) : 0}%)</span></span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Full role manager (admin only) */}
       {isAdmin && (

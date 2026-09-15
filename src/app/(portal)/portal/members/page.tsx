@@ -10,16 +10,16 @@ import styles from './members.module.css';
 export const metadata = { title: 'Members' };
 export const dynamic = 'force-dynamic';
 
-interface MemberRow {
-  role: AppRole;
-  division: { name: string } | { name: string }[] | null;
-  profile: {
-    id: string; display_name: string | null; avatar_url: string | null;
-    gamer_tag: string | null; major: string | null; year: string | null;
-  } | null;
+interface ProfileRow {
+  id: string; display_name: string | null; avatar_url: string | null;
+  gamer_tag: string | null; major: string | null; year: string | null;
+  user_roles: Array<{
+    role: AppRole;
+    division: { name: string } | { name: string }[] | null;
+  }>;
 }
 
-const ORDER: AppRole[] = ['admin', 'exec', 'lead', 'officer', 'division', 'ucsd'];
+const ORDER: (AppRole | 'guest')[] = ['admin', 'exec', 'lead', 'officer', 'division', 'ucsd', 'guest'];
 
 export default async function MembersPage() {
   const roles = await getUserRoles();
@@ -27,23 +27,30 @@ export default async function MembersPage() {
 
   const supabase = await createClient();
 
+  // Start from profiles, not user_roles — otherwise anyone with zero role
+  // grants (e.g. everyone who signed up before the multi-role migration, or
+  // any plain guest) is invisible rather than just unlabeled.
   const { data: rows } = await supabase
-    .from('user_roles')
+    .from('profiles')
     .select(`
-      role, division_id,
-      division:divisions(name),
-      profile:profiles(id, display_name, avatar_url, gamer_tag, major, year)
+      id, display_name, avatar_url, gamer_tag, major, year,
+      user_roles(role, division:divisions(name))
     `)
     .order('created_at', { ascending: true });
 
-  const grouped: Record<string, Array<MemberRow['profile'] & { divisionName?: string }>> = {};
+  const grouped: Record<string, Array<Omit<ProfileRow, 'user_roles'> & { divisionName?: string }>> = {};
   let memberCount = 0;
-  (rows as unknown as MemberRow[] ?? []).forEach((row) => {
-    if (!row.profile) return;
-    const division = Array.isArray(row.division) ? row.division[0] : row.division;
-    if (!grouped[row.role]) grouped[row.role] = [];
-    grouped[row.role]!.push({ ...row.profile, divisionName: division?.name });
+  (rows as unknown as ProfileRow[] ?? []).forEach((row) => {
+    const { user_roles, ...profile } = row;
     memberCount++;
+    if (!user_roles || user_roles.length === 0) {
+      (grouped.guest ??= []).push(profile);
+      return;
+    }
+    user_roles.forEach((ur) => {
+      const division = Array.isArray(ur.division) ? ur.division[0] : ur.division;
+      (grouped[ur.role] ??= []).push({ ...profile, divisionName: division?.name });
+    });
   });
 
   return (
@@ -51,7 +58,7 @@ export default async function MembersPage() {
       <div className={styles.header}>
         <div>
           <h1 className={styles.title}>Members</h1>
-          <p className={styles.sub}>{memberCount} role grants across the org</p>
+          <p className={styles.sub}>{memberCount} members across the org</p>
         </div>
         {hasCapability(roles, 'manage_roles') && (
           <a href="/portal/admin" className={styles.adminLink}>
@@ -75,20 +82,20 @@ export default async function MembersPage() {
               <span className={styles.groupCount}>{group.length}</span>
             </div>
             <div className={styles.grid}>
-              {group.map((m, i) => (
-                <div key={`${m!.id}-${i}`} className={styles.card}>
-                  {m!.avatar_url ? (
-                    <Image src={m!.avatar_url} alt="" width={44} height={44} className={styles.avatar} />
+              {group.map((m) => (
+                <div key={m.id} className={styles.card}>
+                  {m.avatar_url ? (
+                    <Image src={m.avatar_url} alt="" width={44} height={44} className={styles.avatar} />
                   ) : (
                     <div className={styles.avatarFallback} style={{ background: ROLE_COLORS[role] }}>
-                      {(m!.display_name || '?')[0].toUpperCase()}
+                      {(m.display_name || '?')[0].toUpperCase()}
                     </div>
                   )}
                   <div className={styles.info}>
-                    <div className={styles.name}>{m!.display_name || 'Anonymous'}</div>
-                    {m!.gamer_tag && <div className={styles.tag}>🎮 {m!.gamer_tag}</div>}
-                    {m!.divisionName && <div className={styles.detail}>{m!.divisionName}</div>}
-                    {m!.major && <div className={styles.detail}>{m!.major}{m!.year ? ` · ${m!.year}` : ''}</div>}
+                    <div className={styles.name}>{m.display_name || 'Anonymous'}</div>
+                    {m.gamer_tag && <div className={styles.tag}>🎮 {m.gamer_tag}</div>}
+                    {m.divisionName && <div className={styles.detail}>{m.divisionName}</div>}
+                    {m.major && <div className={styles.detail}>{m.major}{m.year ? ` · ${m.year}` : ''}</div>}
                   </div>
                 </div>
               ))}

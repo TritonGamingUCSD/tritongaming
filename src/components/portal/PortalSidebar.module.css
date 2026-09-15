@@ -28,12 +28,19 @@
   margin-bottom: 1.25rem;
 }
 
+.brandText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
 .brandName {
   font-family: var(--font-futura-heavy);
   font-size: 0.95rem;
   color: var(--white);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  line-height: 1.2;
 }
 
 .brandSub {
@@ -42,6 +49,7 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   font-family: var(--font-renegare);
+  line-height: 1.2;
 }
 
 .userCard {

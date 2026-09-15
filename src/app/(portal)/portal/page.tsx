@@ -27,13 +27,13 @@ export default async function PortalDashboard() {
     checkinStatsRes,
   ] = await Promise.all([
     supabase.from('tickets')
-      .select('id, ticket_code, status, event:events(id, title, start_date, location)')
+      .select('id, status, event:events(id, title, start_date, location)')
       .eq('user_id', profile.id)
       .order('created_at', { ascending: false })
       .limit(5),
 
     supabase.from('events')
-      .select('id, title, start_date, location, requires_ticket')
+      .select('id, title, start_date, location')
       .eq('is_published', true)
       .gte('start_date', now)
       .lte('start_date', weekAhead)
@@ -62,20 +62,22 @@ export default async function PortalDashboard() {
   ]);
 
   const myTickets = (ticketsRes.data ?? []) as unknown as Array<{
-    id: string; ticket_code: string; status: string;
+    id: string; status: string;
     event: { id: string; title: string; start_date: string; location: string | null } | null;
   }>;
-  const upcomingEvents = (upcomingRes.data ?? []) as Array<{ id: string; title: string; start_date: string; location: string | null; requires_ticket: boolean }>;
+  const upcomingEvents = (upcomingRes.data ?? []) as Array<{ id: string; title: string; start_date: string; location: string | null }>;
   const eventsThisWeek = (eventsThisWeekRes as { data: Array<{ id: string; title: string; start_date: string }> | null }).data ?? [];
   const todayEvents = (checkinStatsRes as { data: Array<{ id: string; title: string; start_date: string }> | null }).data ?? [];
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
-  // Find next active ticket for upcoming event
-  const nextTicket = myTickets.find((t) =>
-    t.status === 'active' && t.event && new Date(t.event.start_date) >= new Date()
-  );
+  // Find next active ticket for upcoming event — tickets are sorted by when
+  // they were registered, not by event date, so pick the soonest-starting one.
+  const nowDate = new Date();
+  const nextTicket = myTickets
+    .filter((t) => t.status === 'active' && t.event && new Date(t.event.start_date) >= nowDate)
+    .sort((a, b) => new Date(a.event!.start_date).getTime() - new Date(b.event!.start_date).getTime())[0];
 
   const statCards = [
     {
@@ -213,9 +215,9 @@ export default async function PortalDashboard() {
                       <div className={styles.eventActions}>
                         {hasTicket ? (
                           <Link href="/portal/tickets" className={styles.ticketBadge}>✓ Registered</Link>
-                        ) : event.requires_ticket ? (
+                        ) : (
                           <Link href="/portal/tickets" className={styles.getTicket}>Get Ticket</Link>
-                        ) : null}
+                        )}
                       </div>
                     </div>
                   );

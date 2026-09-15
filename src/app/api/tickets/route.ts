@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { stripe, stripeEnabled } from '@/lib/stripe';
 import { isUcsdEmail } from '@/lib/ucsd';
+import { hasBasicProfileInfo } from '@/lib/profile';
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -12,15 +13,30 @@ export async function POST(request: Request) {
   const { event_id } = await request.json();
   if (!event_id) return NextResponse.json({ error: 'Missing event_id' }, { status: 400 });
 
-  // Verify event exists and accepts tickets
+  // Require basic profile info before anyone can claim a ticket — checked
+  // against their account, so once it's filled in they never see this again.
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('display_name, major, year')
+    .eq('id', user.id)
+    .single();
+
+  if (!profile || !hasBasicProfileInfo(profile)) {
+    return NextResponse.json(
+      { error: 'Please complete your profile before getting a ticket.', needsProfile: true },
+      { status: 400 }
+    );
+  }
+
+  // Any published event can be ticketed — verify it exists and is published
   const { data: event } = await supabase
     .from('events')
-    .select('id, title, max_capacity, requires_ticket, ticket_price, audience')
+    .select('id, title, max_capacity, ticket_price, audience')
     .eq('id', event_id)
     .eq('is_published', true)
     .single();
 
-  if (!event || !event.requires_ticket) {
+  if (!event) {
     return NextResponse.json({ error: 'Event not found' }, { status: 404 });
   }
 
@@ -110,7 +126,7 @@ export async function GET() {
   const { data: tickets } = await supabase
     .from('tickets')
     .select(`
-      id, ticket_code, status, checked_in_at, created_at,
+      id, status, checked_in_at, created_at,
       event:events(id, title, start_date, end_date, location, flyer_url)
     `)
     .eq('user_id', user.id)

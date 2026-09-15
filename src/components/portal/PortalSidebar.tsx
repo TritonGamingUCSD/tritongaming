@@ -54,7 +54,6 @@ function getBottomTabs(roles: RoleGrant[]) {
   if (hasCapability(roles, 'checkin') || hasCapability(roles, 'manage_division')) return [
     { href: '/portal',          icon: HomeIcon,    label: 'Home' },
     { href: '/portal/checkin',  icon: ScanIcon,    label: 'Scan' },
-    { href: '/events',          icon: CalendarIcon, label: 'Events' },
     { href: '/portal/tickets',  icon: TicketIcon,  label: 'Tickets' },
     { href: '/portal/profile',  icon: PersonIcon,  label: 'Me' },
   ];
@@ -62,7 +61,6 @@ function getBottomTabs(roles: RoleGrant[]) {
   return [
     { href: '/portal',         icon: HomeIcon,   label: 'Home' },
     { href: '/portal/tickets', icon: TicketIcon, label: 'Tickets' },
-    { href: '/events',         icon: CalendarIcon, label: 'Events' },
     { href: '/portal/profile', icon: PersonIcon, label: 'Me' },
   ];
 }
@@ -94,7 +92,7 @@ export default function PortalSidebar({ profile, roles }: Props) {
         <div className={styles.inner}>
           <div className={styles.brand}>
             <Image src="/logos/tg_logo_multi.png" alt="TG" width={40} height={40} />
-            <div>
+            <div className={styles.brandText}>
               <div className={styles.brandName}>Triton Gaming</div>
               <div className={styles.brandSub}>Member Portal</div>
             </div>

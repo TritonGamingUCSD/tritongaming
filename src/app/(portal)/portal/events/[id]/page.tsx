@@ -27,7 +27,7 @@ export default async function EditEventPage({ params }: Params) {
   const supabase = await createClient();
   const { data: event } = await supabase
     .from('events')
-    .select('id, title, content, location, start_date, end_date, flyer_url, max_capacity, requires_ticket, ticket_price, audience, is_published')
+    .select('id, title, content, location, start_date, end_date, flyer_url, max_capacity, ticket_price, audience, is_published')
     .eq('id', id)
     .single();
 
@@ -41,7 +41,6 @@ export default async function EditEventPage({ params }: Params) {
     end_date: toDatetimeLocal(event.end_date),
     flyer_url: event.flyer_url ?? '',
     max_capacity: event.max_capacity ? String(event.max_capacity) : '',
-    requires_ticket: event.requires_ticket,
     ticket_price: String(event.ticket_price ?? 0),
     audience: event.audience,
     is_published: event.is_published,

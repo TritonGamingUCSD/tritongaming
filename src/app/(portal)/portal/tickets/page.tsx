@@ -15,7 +15,7 @@ export default async function TicketsPage() {
   const { data: tickets } = await supabase
     .from('tickets')
     .select(`
-      id, ticket_code, status, checked_in_at, created_at,
+      id, status, checked_in_at, created_at,
       event:events(id, title, start_date, end_date, location, flyer_url)
     `)
     .eq('user_id', profile.id)
@@ -24,7 +24,7 @@ export default async function TicketsPage() {
   // Fetch upcoming events for the "register" section
   const { data: upcomingEvents } = await supabase
     .from('events')
-    .select('id, title, start_date, location, requires_ticket, ticket_price, audience')
+    .select('id, title, start_date, location, ticket_price, audience')
     .eq('is_published', true)
     .gte('start_date', new Date().toISOString())
     .order('start_date', { ascending: true })

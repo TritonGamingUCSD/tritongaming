@@ -12,7 +12,6 @@ export interface EventFormValues {
   end_date: string;
   flyer_url: string;
   max_capacity: string;
-  requires_ticket: boolean;
   ticket_price: string;
   audience: 'public' | 'ucsd_only';
   is_published: boolean;
@@ -26,7 +25,6 @@ export const EMPTY_EVENT_FORM: EventFormValues = {
   end_date: '',
   flyer_url: '',
   max_capacity: '',
-  requires_ticket: false,
   ticket_price: '0',
   audience: 'public',
   is_published: false,
@@ -117,19 +115,13 @@ export default function EventForm({
           </select>
         </label>
 
-        <div className={styles.checkboxGroup}>
-          <label className={styles.checkbox}>
-            <input type="checkbox" checked={form.requires_ticket} onChange={(e) => set('requires_ticket', e.target.checked)} />
-            <span>Requires ticket / registration</span>
+        {form.audience === 'public' && (
+          <label className={styles.field}>
+            <span className={styles.label}>Ticket Price for non-UCSD attendees ($)</span>
+            <input className={styles.input} type="number" min="0" step="0.01" value={form.ticket_price} onChange={(e) => set('ticket_price', e.target.value)} />
+            <span className={styles.hint}>Every published event gets a ticket automatically. UCSD-affiliated attendees (@ucsd.edu) always get a free ticket.</span>
           </label>
-          {form.requires_ticket && form.audience === 'public' && (
-            <label className={styles.field}>
-              <span className={styles.label}>Ticket Price for non-UCSD attendees ($)</span>
-              <input className={styles.input} type="number" min="0" step="0.01" value={form.ticket_price} onChange={(e) => set('ticket_price', e.target.value)} />
-              <span className={styles.hint}>UCSD-affiliated attendees (@ucsd.edu) always get a free ticket.</span>
-            </label>
-          )}
-        </div>
+        )}
 
         <label className={styles.checkbox}>
           <input type="checkbox" checked={form.is_published} onChange={(e) => set('is_published', e.target.checked)} />

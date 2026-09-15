@@ -11,7 +11,6 @@ interface Event {
 }
 
 interface ScanResult {
-  ticket_code: string;
   status: 'active' | 'used' | 'cancelled' | 'expired';
   event_title: string;
   user_name: string;
@@ -116,7 +115,7 @@ export default function CheckInClient({ events }: { events: Event[] }) {
       const response = await fetch('/api/tickets/checkin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticket_code: ticketCode, event_id: selectedEventId }),
+        body: JSON.stringify({ code: ticketCode, event_id: selectedEventId }),
       });
       const data = await response.json();
       if (response.ok) {
@@ -296,7 +295,7 @@ export default function CheckInClient({ events }: { events: Event[] }) {
             className={styles.manualInput}
             value={manualCode}
             onChange={(e) => setManualCode(e.target.value)}
-            placeholder="Enter ticket code…"
+            placeholder="Enter the code shown in their app…"
             autoComplete="off"
             spellCheck={false}
           />

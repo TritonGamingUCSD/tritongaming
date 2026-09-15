@@ -61,16 +61,14 @@ export default function LongEventCard({ event }: { event: Event }) {
           >
             LEARN MORE &gt;
           </a>
-          {event.requires_ticket && (
-            <a href="/portal/tickets" className={styles.ticketBtn}>
-              🎟️{' '}
-              {event.audience === 'ucsd_only'
-                ? 'UCSD Students — Get Ticket'
-                : event.ticket_price > 0
-                ? `Get Ticket — $${event.ticket_price} (free for UCSD)`
-                : 'Get Ticket — Free'}
-            </a>
-          )}
+          <a href="/portal/tickets" className={styles.ticketBtn}>
+            🎟️{' '}
+            {event.audience === 'ucsd_only'
+              ? 'UCSD Students — Get Ticket'
+              : event.ticket_price > 0
+              ? `Get Ticket — $${event.ticket_price} (free for UCSD)`
+              : 'Get Ticket — Free'}
+          </a>
         </div>
       </div>
     </article>
