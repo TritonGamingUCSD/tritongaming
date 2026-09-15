@@ -7,7 +7,7 @@ import type { UserRole } from '@/types/database';
 export async function GET() {
   // Public read — anyone can fetch content for rendering
   const supabase = await createClient();
-  const { data } = await supabase.from('site_content').select('key, content, updated_at');
+  const { data } = await supabase.from('site_contents').select('key, content, updated_at');
   return NextResponse.json({ content: data ?? [] });
 }
 
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
   // 2. Upsert via service client — bypasses RLS; auth is already verified above
   const adminClient = createServiceClient();
   const { error } = await adminClient
-    .from('site_content')
+    .from('site_contents')
     .upsert(
       {
         key,

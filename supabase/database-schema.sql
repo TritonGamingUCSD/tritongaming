@@ -1,4 +1,4 @@
--- Schema for the public tables: profiles, events, tickets, site_content, sponsors.
+-- Schema for the public tables: profiles, events, tickets, site_contents, sponsors.
 -- Verified 2026-09-15 against the linked project (`supabase db query --linked`
 -- against information_schema) — these 5 tables are the *only* ones in the
 -- public schema; there is no divisions/division_content/member_requests table
@@ -64,15 +64,15 @@ CREATE TABLE public.tickets (
   CONSTRAINT tickets_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.events(id),
   CONSTRAINT tickets_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );
-CREATE TABLE public.site_content (
+CREATE TABLE public.site_contents (
   key text NOT NULL,
   title text NOT NULL,
   description text,
   content jsonb NOT NULL DEFAULT '{}'::jsonb,
   updated_by uuid,
   updated_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT site_content_pkey PRIMARY KEY (key),
-  CONSTRAINT site_content_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id)
+  CONSTRAINT site_contents_pkey PRIMARY KEY (key),
+  CONSTRAINT site_contents_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id)
 );
 CREATE TABLE public.sponsors (
   id uuid NOT NULL DEFAULT gen_random_uuid(),

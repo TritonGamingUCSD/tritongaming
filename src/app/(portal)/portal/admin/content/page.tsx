@@ -15,7 +15,7 @@ export default async function ContentPage() {
 
   const supabase = await createClient();
   const { data: rows } = await supabase
-    .from('site_content')
+    .from('site_contents')
     .select('key, content, updated_by, updated_at');
 
   const contentMap: Record<string, Record<string, unknown>> = {};

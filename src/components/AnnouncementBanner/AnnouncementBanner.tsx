@@ -12,7 +12,7 @@ export default async function AnnouncementBanner() {
   try {
     const supabase = await createClient();
     const { data } = await supabase
-      .from('site_content')
+      .from('site_contents')
       .select('content')
       .eq('key', 'announcement')
       .single();

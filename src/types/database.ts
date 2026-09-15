@@ -60,7 +60,7 @@ export interface Database {
         Insert: Omit<Database['public']['Tables']['tickets']['Row'], 'id' | 'ticket_code' | 'created_at'>;
         Update: Partial<Database['public']['Tables']['tickets']['Insert']>;
       };
-      site_content: {
+      site_contents: {
         Row: {
           key: string;
           title: string;
@@ -69,8 +69,8 @@ export interface Database {
           updated_by: string | null;
           updated_at: string;
         };
-        Insert: Database['public']['Tables']['site_content']['Row'];
-        Update: Partial<Database['public']['Tables']['site_content']['Insert']>;
+        Insert: Database['public']['Tables']['site_contents']['Row'];
+        Update: Partial<Database['public']['Tables']['site_contents']['Insert']>;
       };
       sponsors: {
         Row: {
@@ -100,7 +100,7 @@ export interface Database {
 export type Profile = Database['public']['Tables']['profiles']['Row'];
 export type Event = Database['public']['Tables']['events']['Row'];
 export type Ticket = Database['public']['Tables']['tickets']['Row'];
-export type SiteContent = Database['public']['Tables']['site_content']['Row'];
+export type SiteContent = Database['public']['Tables']['site_contents']['Row'];
 export type Sponsor = Database['public']['Tables']['sponsors']['Row'];
 
 export type TicketWithEvent = Ticket & {

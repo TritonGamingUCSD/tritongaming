@@ -4,7 +4,7 @@ export async function getContentBlock(key: string): Promise<Record<string, unkno
   try {
     const supabase = await createClient();
     const { data } = await supabase
-      .from('site_content')
+      .from('site_contents')
       .select('content')
       .eq('key', key)
       .single();
@@ -18,7 +18,7 @@ export async function getContentBlocks(keys: string[]): Promise<Record<string, R
   try {
     const supabase = await createClient();
     const { data } = await supabase
-      .from('site_content')
+      .from('site_contents')
       .select('key, content')
       .in('key', keys);
     const result: Record<string, Record<string, unknown>> = {};
