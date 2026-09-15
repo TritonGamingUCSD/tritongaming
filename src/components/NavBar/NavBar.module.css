@@ -75,31 +75,6 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
-/* Byte easter-egg button */
-.byteBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
-.byteIcon {
-  transition: transform 0.2s ease, filter 0.2s ease;
-  border-radius: 50%;
-}
-
-.byteBtn:hover .byteIcon {
-  transform: scale(1.15);
-  filter: brightness(1.3);
-}
-
-.byteActive {
-  filter: drop-shadow(0 0 6px var(--yellow)) !important;
-}
-
 /* Mobile controls (hidden on desktop) */
 .mobileControls {
   display: none;

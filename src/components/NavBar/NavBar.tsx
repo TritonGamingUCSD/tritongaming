@@ -20,7 +20,6 @@ const NAV_LINKS = [
 export default function NavBar() {
   const [offset, setOffset] = useState(0);
   const [scrolled, setScrolled] = useState(false);
-  const [cursorActive, setCursorActive] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -91,13 +90,6 @@ export default function NavBar() {
   }, []);
 
   useEffect(() => {
-    document.body.style.cursor = cursorActive
-      ? `url('/easter-eggs/byte-cursor.png'), auto`
-      : '';
-    return () => { document.body.style.cursor = ''; };
-  }, [cursorActive]);
-
-  useEffect(() => {
     document.body.style.overflow = mobileOpen ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [mobileOpen]);
@@ -148,22 +140,6 @@ export default function NavBar() {
 
         {/* Desktop nav */}
         <ul className={styles.desktopNav} role="list">
-          <li>
-            <button
-              className={styles.byteBtn}
-              onClick={() => setCursorActive((v) => !v)}
-              aria-label="Toggle Byte cursor easter egg"
-              aria-pressed={cursorActive}
-            >
-              <Image
-                src="/easter-eggs/dez_ezain_byte_full.png"
-                alt=""
-                width={36}
-                height={36}
-                className={`${styles.byteIcon} ${cursorActive ? styles.byteActive : ''}`}
-              />
-            </button>
-          </li>
           {NAV_LINKS.map(({ href, label }) => (
             <li key={href}>
               <Link
@@ -179,20 +155,6 @@ export default function NavBar() {
 
         {/* Mobile controls */}
         <div className={styles.mobileControls}>
-          <button
-            className={styles.byteBtn}
-            onClick={() => setCursorActive((v) => !v)}
-            aria-label="Toggle Byte cursor easter egg"
-            aria-pressed={cursorActive}
-          >
-            <Image
-              src="/easter-eggs/dez_ezain_byte_full.png"
-              alt=""
-              width={30}
-              height={30}
-              className={`${styles.byteIcon} ${cursorActive ? styles.byteActive : ''}`}
-            />
-          </button>
           <button
             className={`${styles.hamburger} ${mobileOpen ? styles.hamburgerOpen : ''}`}
             onClick={() => setMobileOpen((v) => !v)}
