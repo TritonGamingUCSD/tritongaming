@@ -103,7 +103,7 @@ export default function GetInvolvedPage() {
               ))}
             </ul>
             <a
-              href="https://docs.google.com/forms/d/e/1FAIpQLScn8tyWhpp8EKcAE2z4Nn_BFaj6k2u4qjSBu5rW0xxatVWqWQ/viewform?usp=dialog"
+              href="https://docs.google.com/forms/d/e/1FAIpQLSdkV0gskfRw0H7Z7AvOLQtQPHVZAmVFN5ienxeeUxTFc9H8iA/viewform?usp=header"
               target="_blank"
               rel="noopener noreferrer"
               className={styles.applyBtn}
