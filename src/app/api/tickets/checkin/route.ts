@@ -55,7 +55,23 @@ export async function POST(request: Request) {
         { status: 409 }
       );
     }
-    return NextResponse.json({ error: 'Code not recognized — ask them to reopen their ticket and try again' }, { status: 404 });
+    // Temporary diagnostics for the "code not recognized" reports — shows
+    // exactly what the server currently expects for each active ticket at
+    // this event, so a real mismatch (vs. a stale display) is visible on the
+    // next failed scan instead of guessed at. Safe to show only to staff,
+    // who already have checkin access to this data.
+    const debugCandidates = candidates
+      .filter((t) => t.event_id === event_id)
+      .map((t) => ({
+        status: t.status,
+        expected_now: rotatingCode(t.ticket_code, windowIndex),
+        expected_prev: rotatingCode(t.ticket_code, windowIndex - 1),
+      }));
+
+    return NextResponse.json({
+      error: 'Code not recognized — ask them to reopen their ticket and try again',
+      debug: { received: normalizedCode, windowIndex, candidates: debugCandidates },
+    }, { status: 404 });
   }
 
   const userData = Array.isArray(ticket.user) ? ticket.user[0] : ticket.user;

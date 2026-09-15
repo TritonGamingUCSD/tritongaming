@@ -22,11 +22,18 @@ interface CheckinStats {
   checked_in: number;
 }
 
+interface DebugInfo {
+  received: string;
+  windowIndex: number;
+  candidates: Array<{ status: string; expected_now: string; expected_prev: string }>;
+}
+
 export default function CheckInClient({ events }: { events: Event[] }) {
   const [selectedEventId, setSelectedEventId] = useState(events[0]?.id || '');
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState('');
+  const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
   const [processing, setProcessing] = useState(false);
   const [stats, setStats] = useState<CheckinStats | null>(null);
   const [manualCode, setManualCode] = useState('');
@@ -119,6 +126,7 @@ export default function CheckInClient({ events }: { events: Event[] }) {
     setProcessing(true);
     setResult(null);
     setError('');
+    setDebugInfo(null);
     if (resultTimeout.current) clearTimeout(resultTimeout.current);
 
     try {
@@ -136,16 +144,27 @@ export default function CheckInClient({ events }: { events: Event[] }) {
         }
       } else {
         setError(data.error || 'Check-in failed.');
+        // Temporary: surfaces exactly what the server expected vs. what was
+        // scanned, so a "not recognized" report can be diagnosed for real
+        // instead of guessed at.
+        if (data.debug) console.log('[checkin debug]', data.debug);
+        setDebugInfo(data.debug ?? null);
       }
     } catch {
       setError('Network error. Please try again.');
     } finally {
       processingRef.current = false;
       setProcessing(false);
+      // Leave debug info on screen until the next scan — 4s isn't enough
+      // time to actually read and compare hex codes.
       resultTimeout.current = setTimeout(() => {
         setResult(null);
-        setError('');
         lastCodeRef.current = '';
+        setDebugInfo((current) => {
+          if (current) return current;
+          setError('');
+          return null;
+        });
       }, 4000);
     }
   }
@@ -186,7 +205,7 @@ export default function CheckInClient({ events }: { events: Event[] }) {
         <select
           className={styles.select}
           value={selectedEventId}
-          onChange={(e) => { setSelectedEventId(e.target.value); stopCamera(); setResult(null); setError(''); }}
+          onChange={(e) => { setSelectedEventId(e.target.value); stopCamera(); setResult(null); setError(''); setDebugInfo(null); }}
         >
           {events.map((event) => (
             <option key={event.id} value={event.id}>
@@ -276,7 +295,23 @@ export default function CheckInClient({ events }: { events: Event[] }) {
         )}
 
         {error && (
-          <div className={styles.errorOverlay}>{error}</div>
+          <div className={styles.errorOverlay}>
+            <div>{error}</div>
+            {debugInfo && (
+              <div className={styles.debugBox}>
+                <div>scanned: {debugInfo.received}</div>
+                {debugInfo.candidates.length === 0 ? (
+                  <div>no tickets exist for this event at all</div>
+                ) : (
+                  debugInfo.candidates.map((c, i) => (
+                    <div key={i}>
+                      {c.status}: expects {c.expected_now} (or {c.expected_prev})
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
         )}
       </div>
 
