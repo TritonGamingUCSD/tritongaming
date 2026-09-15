@@ -1,6 +1,5 @@
 export type UserRole = 'guest' | 'member' | 'officer' | 'division' | 'lead' | 'exec' | 'admin';
 export type TicketStatus = 'active' | 'used' | 'cancelled' | 'expired';
-export type PostType = 'text' | 'link' | 'image';
 export type MemberRequestStatus = 'pending' | 'approved' | 'rejected';
 
 export interface Database {
@@ -83,65 +82,6 @@ export interface Database {
         Insert: Omit<Database['public']['Tables']['tickets']['Row'], 'id' | 'ticket_code' | 'created_at'>;
         Update: Partial<Database['public']['Tables']['tickets']['Insert']>;
       };
-      board_categories: {
-        Row: {
-          id: string;
-          slug: string;
-          name: string;
-          description: string | null;
-          icon: string;
-          color: string;
-          order_index: number;
-          is_active: boolean;
-        };
-        Insert: Omit<Database['public']['Tables']['board_categories']['Row'], 'id'>;
-        Update: Partial<Database['public']['Tables']['board_categories']['Insert']>;
-      };
-      board_posts: {
-        Row: {
-          id: string;
-          category_id: string;
-          author_id: string;
-          title: string;
-          content: string;
-          type: PostType;
-          url: string | null;
-          score: number;
-          comment_count: number;
-          is_pinned: boolean;
-          is_locked: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: Omit<Database['public']['Tables']['board_posts']['Row'], 'id' | 'score' | 'comment_count' | 'created_at' | 'updated_at'>;
-        Update: Partial<Database['public']['Tables']['board_posts']['Insert']>;
-      };
-      board_comments: {
-        Row: {
-          id: string;
-          post_id: string;
-          author_id: string;
-          parent_id: string | null;
-          content: string;
-          score: number;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: Omit<Database['public']['Tables']['board_comments']['Row'], 'id' | 'score' | 'created_at' | 'updated_at'>;
-        Update: Partial<Database['public']['Tables']['board_comments']['Insert']>;
-      };
-      board_votes: {
-        Row: {
-          id: string;
-          user_id: string;
-          post_id: string | null;
-          comment_id: string | null;
-          value: 1 | -1;
-          created_at: string;
-        };
-        Insert: Omit<Database['public']['Tables']['board_votes']['Row'], 'id' | 'created_at'>;
-        Update: Partial<Database['public']['Tables']['board_votes']['Insert']>;
-      };
       division_content: {
         Row: {
           id: string;
@@ -179,7 +119,6 @@ export interface Database {
     Enums: {
       user_role: UserRole;
       ticket_status: TicketStatus;
-      post_type: PostType;
       member_request_status: MemberRequestStatus;
     };
   };
@@ -197,22 +136,7 @@ export type Profile = Database['public']['Tables']['profiles']['Row'];
 export type Division = Database['public']['Tables']['divisions']['Row'];
 export type Event = Database['public']['Tables']['events']['Row'];
 export type Ticket = Database['public']['Tables']['tickets']['Row'];
-export type BoardCategory = Database['public']['Tables']['board_categories']['Row'];
-export type BoardPost = Database['public']['Tables']['board_posts']['Row'];
-export type BoardComment = Database['public']['Tables']['board_comments']['Row'];
 export type DivisionContent = Database['public']['Tables']['division_content']['Row'];
-
-export type BoardPostWithAuthor = BoardPost & {
-  author: Pick<Profile, 'id' | 'display_name' | 'avatar_url' | 'gamer_tag' | 'role'>;
-  category: Pick<BoardCategory, 'slug' | 'name' | 'color' | 'icon'>;
-  user_vote?: 1 | -1 | null;
-};
-
-export type BoardCommentWithAuthor = BoardComment & {
-  author: Pick<Profile, 'id' | 'display_name' | 'avatar_url' | 'role'>;
-  replies?: BoardCommentWithAuthor[];
-  user_vote?: 1 | -1 | null;
-};
 
 export type TicketWithEvent = Ticket & {
   event: Pick<Event, 'id' | 'title' | 'start_date' | 'end_date' | 'location' | 'flyer_url'>;

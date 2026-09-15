@@ -17,10 +17,9 @@ export default async function AdminPage() {
   const isAdmin = hasRole(profile.role, 'admin');
   const supabase = await createClient();
 
-  const [usersRes, eventsRes, postsRes, ticketsRes, pendingRes] = await Promise.all([
+  const [usersRes, eventsRes, ticketsRes, pendingRes] = await Promise.all([
     supabase.from('profiles').select('id', { count: 'exact', head: true }),
     supabase.from('events').select('id', { count: 'exact', head: true }),
-    supabase.from('board_posts').select('id', { count: 'exact', head: true }),
     supabase.from('tickets').select('id', { count: 'exact', head: true }),
     supabase.from('member_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
   ]);
@@ -28,7 +27,6 @@ export default async function AdminPage() {
   const stats = [
     { label: 'Members',  value: usersRes.count   ?? 0, icon: '👥' },
     { label: 'Events',   value: eventsRes.count  ?? 0, icon: '🗓️' },
-    { label: 'Posts',    value: postsRes.count   ?? 0, icon: '💬' },
     { label: 'Tickets',  value: ticketsRes.count ?? 0, icon: '🎟️' },
     { label: 'Pending',  value: pendingRes.count ?? 0, icon: '⏳', highlight: (pendingRes.count ?? 0) > 0 },
   ];

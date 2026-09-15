@@ -8,7 +8,6 @@ const NAV_LINKS = [
   { href: '/about', label: 'About' },
   { href: '/events', label: 'Events' },
   { href: '/divisions', label: 'Divisions' },
-  { href: '/board', label: 'Board' },
   { href: '/sponsors', label: 'Sponsors' },
   { href: '/get-involved', label: 'Get Involved' },
   { href: '/tgex', label: 'TGEX' },

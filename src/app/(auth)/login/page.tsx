@@ -40,7 +40,7 @@ export default async function LoginPage({
           </div>
         )}
 
-        <p className={styles.prompt}>Sign in to access events, tickets, and the community board.</p>
+        <p className={styles.prompt}>Sign in to access events and tickets.</p>
 
         <LoginClient next={params.next} />
 

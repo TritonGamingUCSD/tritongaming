@@ -12,7 +12,6 @@ const NAV_LINKS = [
   { href: '/about',         label: 'ABOUT' },
   { href: '/events',        label: 'EVENTS' },
   { href: '/divisions',     label: 'DIVISIONS' },
-  { href: '/board',         label: 'BOARD' },
   { href: '/sponsors',      label: 'SPONSORS' },
   { href: '/get-involved',  label: 'JOIN' },
 ];

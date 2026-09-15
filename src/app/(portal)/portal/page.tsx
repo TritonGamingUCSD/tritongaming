@@ -18,12 +18,10 @@ export default async function PortalDashboard() {
 
   const [
     ticketsRes,
-    myPostsRes,
     upcomingRes,
     pendingRes,
     eventsThisWeekRes,
     divisionRes,
-    recentPostsRes,
     checkinStatsRes,
   ] = await Promise.all([
     supabase.from('tickets')
@@ -31,10 +29,6 @@ export default async function PortalDashboard() {
       .eq('user_id', profile.id)
       .order('created_at', { ascending: false })
       .limit(5),
-
-    supabase.from('board_posts')
-      .select('id', { count: 'exact', head: true })
-      .eq('author_id', profile.id),
 
     supabase.from('events')
       .select('id, title, start_date, location, requires_ticket')
@@ -66,11 +60,6 @@ export default async function PortalDashboard() {
           .single()
       : Promise.resolve({ data: null }),
 
-    supabase.from('board_posts')
-      .select('id, title, score, comment_count, created_at, category:board_categories(slug, name, color, icon)')
-      .order('created_at', { ascending: false })
-      .limit(4),
-
     // For officers: get checkin stats for active events
     hasRole(profile.role, 'officer')
       ? supabase.from('events')
@@ -87,15 +76,10 @@ export default async function PortalDashboard() {
     id: string; ticket_code: string; status: string;
     event: { id: string; title: string; start_date: string; location: string | null } | null;
   }>;
-  const myPostCount = myPostsRes.count ?? 0;
   const upcomingEvents = (upcomingRes.data ?? []) as Array<{ id: string; title: string; start_date: string; location: string | null; requires_ticket: boolean }>;
   const pendingCount = (pendingRes as { count: number }).count ?? 0;
   const eventsThisWeek = (eventsThisWeekRes as { data: Array<{ id: string; title: string; start_date: string }> | null }).data ?? [];
   const myDivision = (divisionRes as { data: { name: string; slug: string; color: string } | null }).data;
-  const recentPosts = (recentPostsRes.data ?? []) as Array<{
-    id: string; title: string; score: number; comment_count: number; created_at: string;
-    category: { slug: string; name: string; color: string; icon: string } | Array<{ slug: string; name: string; color: string; icon: string }> | null;
-  }>;
   const todayEvents = (checkinStatsRes as { data: Array<{ id: string; title: string; start_date: string }> | null }).data ?? [];
 
   const hour = new Date().getHours();
@@ -112,10 +96,6 @@ export default async function PortalDashboard() {
       value: myTickets.filter((t) => t.status === 'active').length,
       href: '/portal/tickets', color: '#0ea5e9',
     },
-    {
-      icon: '💬', label: 'My Posts',
-      value: myPostCount, href: '/board', color: '#7c3aed',
-    },
     ...(hasRole(profile.role, 'officer') ? [{
       icon: '🗓️', label: 'Events This Week',
       value: eventsThisWeek.length, href: '/portal/events', color: '#059669',
@@ -128,7 +108,6 @@ export default async function PortalDashboard() {
 
   const quickActions = [
     { href: '/portal/profile',  icon: '👤', label: 'Profile' },
-    { href: '/board',           icon: '💬', label: 'Board' },
     { href: '/events',          icon: '🗓️', label: 'Events' },
     { href: '/divisions',       icon: '🎮', label: 'Divisions' },
     ...(hasRole(profile.role, 'officer') ? [
@@ -315,37 +294,6 @@ export default async function PortalDashboard() {
               ))}
             </div>
           </section>
-
-          {/* ── Recent board posts ───────────────────── */}
-          {recentPosts.length > 0 && (
-            <section className={styles.section}>
-              <div className={styles.sectionRow}>
-                <h2 className={styles.sectionLabel}>Recent Posts</h2>
-                <Link href="/board" className={styles.seeAll}>Board →</Link>
-              </div>
-              <div className={styles.postList}>
-                {recentPosts.map((post) => {
-                  const cat = Array.isArray(post.category) ? post.category[0] : post.category;
-                  return (
-                    <Link
-                      key={post.id}
-                      href={`/board/${cat?.slug}/${post.id}`}
-                      className={styles.postRow}
-                    >
-                      <span className={styles.postCatIcon}>{cat?.icon}</span>
-                      <div className={styles.postInfo}>
-                        <div className={styles.postTitle}>{post.title}</div>
-                        <div className={styles.postMeta}>
-                          ▲ {post.score} · 💬 {post.comment_count} ·{' '}
-                          {new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </section>
-          )}
         </div>
       </div>
     </div>
