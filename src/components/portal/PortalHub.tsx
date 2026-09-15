@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import styles from './PortalHub.module.css';
@@ -15,7 +15,7 @@ export interface HubSection {
   content: ReactNode;
 }
 
-const SPRING = { type: 'spring' as const, stiffness: 300, damping: 34 };
+const SPRING = { type: 'spring' as const, stiffness: 420, damping: 38 };
 
 // Replaces the old sidebar as the portal's primary navigation: a grid of
 // section cards that zoom into a full panel on click (Framer Motion's
@@ -31,23 +31,36 @@ const SPRING = { type: 'spring' as const, stiffness: 300, damping: 34 };
 // grid actually unmounts. popLayout pulls the exiting element out of flow
 // immediately so there's only ever one real layout to animate towards.
 //
-// Which section is open is derived from the URL, not local state — /portal
-// and /portal?open=x are the same route, so navigating between them (e.g.
-// a plain <Link> elsewhere in the app) never remounts this component; a
-// useState initializer would only read the param once and then ignore every
-// later change. Reading searchParams directly on every render (it's a
-// reactive hook) keeps the two in sync regardless of how "open" changed.
+// openId is local state, not derived straight from the URL — every section's
+// content is already sitting in `sections` (fetched once, up front), so
+// opening a card is a pure UI change and should be instant. Deriving from
+// useSearchParams() directly made every click wait on a router.replace()
+// round trip (this page is force-dynamic) before the animation could even
+// start, which is what made it feel laggy. The URL is still kept in sync —
+// via router.replace after the fact, and via the effect below picking up
+// changes that arrive from *outside* this component (e.g. a <Link> to
+// /portal?open=x elsewhere on the same route) — just without the UI waiting
+// on it.
 export default function PortalHub({ sections }: { sections: HubSection[] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedOpen = searchParams.get('open');
-  const openId = sections.some((s) => s.id === requestedOpen) ? requestedOpen : null;
+  const validRequested = sections.some((s) => s.id === requestedOpen) ? requestedOpen : null;
+
+  const [openId, setOpenId] = useState<string | null>(validRequested);
+
+  useEffect(() => {
+    setOpenId(validRequested);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [validRequested]);
 
   const open = useCallback((id: string) => {
+    setOpenId(id);
     router.replace(`/portal?open=${id}`, { scroll: false });
   }, [router]);
 
   const close = useCallback(() => {
+    setOpenId(null);
     router.replace('/portal', { scroll: false });
   }, [router]);
 
@@ -75,8 +88,8 @@ export default function PortalHub({ sections }: { sections: HubSection[] }) {
             <motion.div
               className={styles.panelBody}
               initial={{ opacity: 0 }}
-              animate={{ opacity: 1, transition: { delay: 0.12, duration: 0.25 } }}
-              exit={{ opacity: 0, transition: { duration: 0.1 } }}
+              animate={{ opacity: 1, transition: { delay: 0.06, duration: 0.18 } }}
+              exit={{ opacity: 0, transition: { duration: 0.08 } }}
             >
               {openSection.content}
             </motion.div>
