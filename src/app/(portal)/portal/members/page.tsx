@@ -30,13 +30,19 @@ export default async function MembersPage() {
   // Start from profiles, not user_roles — otherwise anyone with zero role
   // grants (e.g. everyone who signed up before the multi-role migration, or
   // any plain guest) is invisible rather than just unlabeled.
-  const { data: rows } = await supabase
+  //
+  // user_roles has TWO foreign keys into profiles (user_id and granted_by),
+  // so embedding it here without a hint is ambiguous to PostgREST — it
+  // errors, and unchecked that silently becomes an empty page.
+  const { data: rows, error: rowsError } = await supabase
     .from('profiles')
     .select(`
       id, display_name, avatar_url, gamer_tag, major, year,
-      user_roles(role, division:divisions(name))
+      user_roles!user_roles_user_id_fkey(role, division:divisions(name))
     `)
     .order('created_at', { ascending: true });
+
+  if (rowsError) console.error('[members] failed to load members:', rowsError);
 
   const grouped: Record<string, Array<Omit<ProfileRow, 'user_roles'> & { divisionName?: string }>> = {};
   let memberCount = 0;

@@ -46,14 +46,19 @@ export default async function AdminPage() {
   let allUsers: Parameters<typeof RoleManager>[0]['users'] = [];
   let divisions: Parameters<typeof RoleManager>[0]['divisions'] = [];
   if (isAdmin) {
-    const [{ data: usersData }, { data: divisionsData }] = await Promise.all([
+    // user_roles has TWO foreign keys into profiles (user_id and
+    // granted_by), so embedding it from profiles without a hint is
+    // ambiguous to PostgREST — it errors, and unchecked that silently
+    // becomes an empty result (same bug as the checkin ticket lookup).
+    const [{ data: usersData, error: usersError }, { data: divisionsData }] = await Promise.all([
       supabase
         .from('profiles')
-        .select('id, display_name, avatar_url, gamer_tag, created_at, user_roles(role, division_id)')
+        .select('id, display_name, avatar_url, gamer_tag, created_at, user_roles!user_roles_user_id_fkey(role, division_id)')
         .order('created_at', { ascending: false })
         .limit(300),
       supabase.from('divisions').select('id, name').order('name'),
     ]);
+    if (usersError) console.error('[admin] failed to load users:', usersError);
     allUsers = (usersData ?? []) as unknown as typeof allUsers;
     divisions = divisionsData ?? [];
   }

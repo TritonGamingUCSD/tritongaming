@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { stripe, stripeEnabled } from '@/lib/stripe';
-import { isUcsdEmail } from '@/lib/ucsd';
+import { isVerifiedMember } from '@/lib/capabilities';
 import { hasBasicProfileInfo } from '@/lib/profile';
 
 export async function POST(request: Request) {
@@ -13,15 +13,20 @@ export async function POST(request: Request) {
   const { event_id } = await request.json();
   if (!event_id) return NextResponse.json({ error: 'Missing event_id' }, { status: 400 });
 
+  // Verified membership (any role held, including the auto-granted 'ucsd'
+  // badge) gates UCSD-only events, free pricing, and how much profile info
+  // is required — checked against actual role grants, not a live email
+  // re-check. See isVerifiedMember for why.
+  const [{ data: profile }, { data: roles }] = await Promise.all([
+    supabase.from('profiles').select('display_name, major, year, college').eq('id', user.id).single(),
+    supabase.from('user_roles').select('role, division_id').eq('user_id', user.id),
+  ]);
+  const isUcsd = isVerifiedMember(roles ?? []);
+
   // Require basic profile info before anyone can claim a ticket — checked
   // against their account, so once it's filled in they never see this again.
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('display_name, major, year')
-    .eq('id', user.id)
-    .single();
-
-  if (!profile || !hasBasicProfileInfo(profile)) {
+  // Non-UCSD guests only need a name; year/college/major are UCSD-only.
+  if (!profile || !hasBasicProfileInfo(profile, isUcsd)) {
     return NextResponse.json(
       { error: 'Please complete your profile before getting a ticket.', needsProfile: true },
       { status: 400 }
@@ -39,8 +44,6 @@ export async function POST(request: Request) {
   if (!event) {
     return NextResponse.json({ error: 'Event not found' }, { status: 404 });
   }
-
-  const isUcsd = isUcsdEmail(user.email);
 
   if (event.audience === 'ucsd_only' && !isUcsd) {
     return NextResponse.json({ error: 'This event is open to UCSD-affiliated members only.' }, { status: 403 });

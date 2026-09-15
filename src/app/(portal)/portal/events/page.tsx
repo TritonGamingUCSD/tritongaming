@@ -53,7 +53,7 @@ export default async function EventsManagementPage() {
               </div>
               <div className={styles.ticketInfo}>
                 {event.requires_ticket ? (
-                  <Link href={`/portal/checkin?event=${event.id}`} className={styles.checkinLink}>
+                  <Link href={`/portal/events/${event.id}/checkins`} className={styles.checkinLink}>
                     View Check-ins
                   </Link>
                 ) : (

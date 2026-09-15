@@ -10,13 +10,16 @@ import type { RoleGrant } from '@/lib/capabilities';
 import { hasBasicProfileInfo } from '@/lib/profile';
 import styles from './profile.module.css';
 
-export default function ProfileClient({ profile, roles }: { profile: Profile; roles: RoleGrant[] }) {
+export default function ProfileClient({ profile, roles, isUcsd }: { profile: Profile; roles: RoleGrant[]; isUcsd: boolean }) {
   const [form, setForm] = useState({
     display_name: profile.display_name || '',
-    gamer_tag: profile.gamer_tag || '',
-    bio: profile.bio || '',
-    major: profile.major || '',
     year: profile.year || '',
+    college: profile.college || '',
+    major: profile.major || '',
+    gamer_tag: profile.gamer_tag || '',
+    pronouns: profile.pronouns || '',
+    bio: profile.bio || '',
+    birthday: profile.birthday || '',
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -24,7 +27,7 @@ export default function ProfileClient({ profile, roles }: { profile: Profile; ro
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get('next');
-  const promptedForTicket = !!next && !hasBasicProfileInfo(profile);
+  const promptedForTicket = !!next && !hasBasicProfileInfo(profile, isUcsd);
 
   async function handleSignOut() {
     const supabase = createClient();
@@ -42,7 +45,7 @@ export default function ProfileClient({ profile, roles }: { profile: Profile; ro
     const supabase = createClient();
     const { error: err } = await supabase
       .from('profiles')
-      .update({ ...form, updated_at: new Date().toISOString() })
+      .update({ ...form, birthday: form.birthday || null, updated_at: new Date().toISOString() })
       .eq('id', profile.id);
 
     setSaving(false);
@@ -54,7 +57,7 @@ export default function ProfileClient({ profile, roles }: { profile: Profile; ro
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
 
-    if (next && hasBasicProfileInfo({ ...profile, ...form })) {
+    if (next && hasBasicProfileInfo({ ...profile, ...form }, isUcsd)) {
       router.push(next);
     }
   }
@@ -65,8 +68,10 @@ export default function ProfileClient({ profile, roles }: { profile: Profile; ro
 
       {promptedForTicket && (
         <div className={styles.ticketPrompt}>
-          Almost there — fill in your name, major, and year to get your ticket.
-          You&apos;ll only need to do this once.
+          {isUcsd
+            ? 'Almost there — fill in your name, year, college, and major to get your ticket.'
+            : 'Almost there — fill in your name to get your ticket.'}
+          {' '}You&apos;ll only need to do this once.
         </div>
       )}
 
@@ -106,43 +111,22 @@ export default function ProfileClient({ profile, roles }: { profile: Profile; ro
         <form className={styles.form} onSubmit={handleSave}>
           <div className={styles.fieldRow}>
             <label className={styles.fieldGroup}>
-              <span className={styles.label}>Display Name</span>
+              <span className={styles.label}>Name <span className={styles.required}>*</span></span>
               <input
                 className={styles.input}
                 value={form.display_name}
                 onChange={(e) => setForm((f) => ({ ...f, display_name: e.target.value }))}
                 maxLength={60}
+                required
               />
             </label>
             <label className={styles.fieldGroup}>
-              <span className={styles.label}>Gamer Tag</span>
-              <input
-                className={styles.input}
-                value={form.gamer_tag}
-                onChange={(e) => setForm((f) => ({ ...f, gamer_tag: e.target.value }))}
-                maxLength={40}
-                placeholder="Your in-game name"
-              />
-            </label>
-          </div>
-
-          <div className={styles.fieldRow}>
-            <label className={styles.fieldGroup}>
-              <span className={styles.label}>Major</span>
-              <input
-                className={styles.input}
-                value={form.major}
-                onChange={(e) => setForm((f) => ({ ...f, major: e.target.value }))}
-                maxLength={80}
-                placeholder="e.g. Computer Science"
-              />
-            </label>
-            <label className={styles.fieldGroup}>
-              <span className={styles.label}>Year</span>
+              <span className={styles.label}>Year {isUcsd && <span className={styles.required}>*</span>}</span>
               <select
                 className={styles.input}
                 value={form.year}
                 onChange={(e) => setForm((f) => ({ ...f, year: e.target.value }))}
+                required={isUcsd}
               >
                 <option value="">Select year</option>
                 <option>1st Year</option>
@@ -155,6 +139,73 @@ export default function ProfileClient({ profile, roles }: { profile: Profile; ro
               </select>
             </label>
           </div>
+
+          <div className={styles.fieldRow}>
+            <label className={styles.fieldGroup}>
+              <span className={styles.label}>College {isUcsd && <span className={styles.required}>*</span>}</span>
+              <select
+                className={styles.input}
+                value={form.college}
+                onChange={(e) => setForm((f) => ({ ...f, college: e.target.value }))}
+                required={isUcsd}
+              >
+                <option value="">Select college</option>
+                <option>Revelle</option>
+                <option>John Muir</option>
+                <option>Thurgood Marshall</option>
+                <option>Earl Warren</option>
+                <option>Eleanor Roosevelt</option>
+                <option>Sixth</option>
+                <option>Seventh</option>
+                <option>Eighth</option>
+                <option>N/A</option>
+              </select>
+            </label>
+            <label className={styles.fieldGroup}>
+              <span className={styles.label}>Major {isUcsd && <span className={styles.required}>*</span>}</span>
+              <input
+                className={styles.input}
+                value={form.major}
+                onChange={(e) => setForm((f) => ({ ...f, major: e.target.value }))}
+                maxLength={80}
+                placeholder="e.g. Computer Science"
+                required={isUcsd}
+              />
+            </label>
+          </div>
+
+          <div className={styles.fieldRow}>
+            <label className={styles.fieldGroup}>
+              <span className={styles.label}>Gamer Tag</span>
+              <input
+                className={styles.input}
+                value={form.gamer_tag}
+                onChange={(e) => setForm((f) => ({ ...f, gamer_tag: e.target.value }))}
+                maxLength={40}
+                placeholder="Your in-game name"
+              />
+            </label>
+            <label className={styles.fieldGroup}>
+              <span className={styles.label}>Pronouns</span>
+              <input
+                className={styles.input}
+                value={form.pronouns}
+                onChange={(e) => setForm((f) => ({ ...f, pronouns: e.target.value }))}
+                maxLength={30}
+                placeholder="e.g. she/her, he/him, they/them"
+              />
+            </label>
+          </div>
+
+          <label className={styles.fieldGroup}>
+            <span className={styles.label}>Birthday</span>
+            <input
+              className={styles.input}
+              type="date"
+              value={form.birthday}
+              onChange={(e) => setForm((f) => ({ ...f, birthday: e.target.value }))}
+            />
+          </label>
 
           <label className={styles.fieldGroup}>
             <span className={styles.label}>Bio</span>

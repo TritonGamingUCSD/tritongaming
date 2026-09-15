@@ -33,6 +33,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
   const [draft, setDraft] = useState<RoleGrant[]>([]);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     return users.filter((u) => {
@@ -56,6 +57,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
   function startEditing(user: User) {
     setEditingId(user.id);
     setDraft(user.user_roles.map((r) => ({ ...r })));
+    setSaveError(null);
   }
 
   function toggleDraftRole(role: AppRole, checked: boolean) {
@@ -71,19 +73,25 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
 
   async function saveDraft(userId: string) {
     setSaving(true);
+    setSaveError(null);
     try {
       const res = await fetch('/api/admin/roles', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, roles: draft }),
       });
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
         const user = users.find((u) => u.id === userId);
         setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, user_roles: draft } : u)));
         setEditingId(null);
         setToast(`Updated ${user?.display_name || 'user'}'s roles`);
         setTimeout(() => setToast(null), 3000);
+      } else {
+        setSaveError(data.error || `Failed to save (${res.status}).`);
       }
+    } catch {
+      setSaveError('Network error. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -137,7 +145,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
           filtered.map((user) => {
             const isEditing = editingId === user.id;
             return (
-              <div key={user.id} className={`${styles.row} ${isEditing ? styles.rowUpdating : ''}`}>
+              <div key={user.id} className={`${styles.row} ${saving && isEditing ? styles.rowUpdating : ''}`}>
                 <div className={styles.userInfo}>
                   {user.avatar_url ? (
                     <Image src={user.avatar_url} alt="" width={38} height={38} className={styles.avatar} />
@@ -203,8 +211,9 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
                         ))}
                       </select>
                     )}
+                    {saveError && <div className={styles.saveError}>{saveError}</div>}
                     <div className={styles.editActions}>
-                      <button className={styles.roleBtn} onClick={() => setEditingId(null)} disabled={saving}>Cancel</button>
+                      <button className={styles.roleBtn} onClick={() => { setEditingId(null); setSaveError(null); }} disabled={saving}>Cancel</button>
                       <button className={styles.roleBtn} onClick={() => saveDraft(user.id)} disabled={saving}>
                         {saving ? 'Saving…' : 'Save'}
                       </button>

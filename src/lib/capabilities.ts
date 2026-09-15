@@ -37,3 +37,15 @@ export function hasCapability(roles: RoleGrant[], capability: Capability, divisi
     return true;
   });
 }
+
+/**
+ * Counts as a verified member for UCSD-only event access and free ticket
+ * pricing — anyone holding at least one role, including the 'ucsd' badge
+ * auto-granted at signup for a @ucsd.edu email. Checked against their actual
+ * role grants rather than re-deriving from their live session email, so a
+ * role granted manually later (e.g. for someone signed in with a personal
+ * email) is honored, and isn't silently overridden by an email check.
+ */
+export function isVerifiedMember(roles: RoleGrant[]): boolean {
+  return roles.length > 0;
+}

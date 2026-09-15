@@ -1,14 +1,14 @@
 import { Suspense } from 'react';
-import { getProfile, getUser } from '@/lib/auth';
+import { getProfile, getUserRoles } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
-import { isUcsdEmail } from '@/lib/ucsd';
+import { isVerifiedMember } from '@/lib/capabilities';
 import TicketsClient from './TicketsClient';
 
 export const metadata = { title: 'My Tickets' };
 export const dynamic = 'force-dynamic';
 
 export default async function TicketsPage() {
-  const [profile, user] = await Promise.all([getProfile(), getUser()]);
+  const [profile, roles] = await Promise.all([getProfile(), getUserRoles()]);
   if (!profile) return null;
 
   const supabase = await createClient();
@@ -35,7 +35,7 @@ export default async function TicketsPage() {
       <TicketsClient
         tickets={(tickets ?? []) as unknown as Parameters<typeof TicketsClient>[0]['tickets']}
         upcomingEvents={(upcomingEvents ?? []) as unknown as Parameters<typeof TicketsClient>[0]['upcomingEvents']}
-        isUcsd={isUcsdEmail(user?.email)}
+        isUcsd={isVerifiedMember(roles)}
       />
     </Suspense>
   );

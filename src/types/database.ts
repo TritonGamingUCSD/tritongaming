@@ -29,6 +29,9 @@ export interface Database {
           gamer_tag: string | null;
           major: string | null;
           year: string | null;
+          college: string | null;
+          pronouns: string | null;
+          birthday: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -166,7 +169,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   ucsd: 'UCSD Student',
   division: 'Division Lead',
   officer: 'Officer',
-  lead: 'Senior Lead',
+  lead: 'Lead',
   exec: 'Executive',
   admin: 'Admin',
 };
