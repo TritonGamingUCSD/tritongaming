@@ -22,25 +22,11 @@ interface CheckinStats {
   checked_in: number;
 }
 
-interface DebugInfo {
-  received: string;
-  windowIndex: number;
-  requestedEventId: string;
-  totalVisibleTickets: number;
-  otherEventIds: string[];
-  candidates: Array<{ status: string; expected_now: string; expected_prev: string }>;
-  callerId: string;
-  callerEmail?: string;
-  callerRoles: Array<{ role: string; division_id: string | null }>;
-  callerOwnTicketCount: number;
-}
-
 export default function CheckInClient({ events }: { events: Event[] }) {
   const [selectedEventId, setSelectedEventId] = useState(events[0]?.id || '');
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState('');
-  const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
   const [processing, setProcessing] = useState(false);
   const [stats, setStats] = useState<CheckinStats | null>(null);
   const [manualCode, setManualCode] = useState('');
@@ -133,7 +119,6 @@ export default function CheckInClient({ events }: { events: Event[] }) {
     setProcessing(true);
     setResult(null);
     setError('');
-    setDebugInfo(null);
     if (resultTimeout.current) clearTimeout(resultTimeout.current);
 
     try {
@@ -151,27 +136,16 @@ export default function CheckInClient({ events }: { events: Event[] }) {
         }
       } else {
         setError(data.error || 'Check-in failed.');
-        // Temporary: surfaces exactly what the server expected vs. what was
-        // scanned, so a "not recognized" report can be diagnosed for real
-        // instead of guessed at.
-        if (data.debug) console.log('[checkin debug]', data.debug);
-        setDebugInfo(data.debug ?? null);
       }
     } catch {
       setError('Network error. Please try again.');
     } finally {
       processingRef.current = false;
       setProcessing(false);
-      // Leave debug info on screen until the next scan — 4s isn't enough
-      // time to actually read and compare hex codes.
       resultTimeout.current = setTimeout(() => {
         setResult(null);
+        setError('');
         lastCodeRef.current = '';
-        setDebugInfo((current) => {
-          if (current) return current;
-          setError('');
-          return null;
-        });
       }, 4000);
     }
   }
@@ -212,7 +186,7 @@ export default function CheckInClient({ events }: { events: Event[] }) {
         <select
           className={styles.select}
           value={selectedEventId}
-          onChange={(e) => { setSelectedEventId(e.target.value); stopCamera(); setResult(null); setError(''); setDebugInfo(null); }}
+          onChange={(e) => { setSelectedEventId(e.target.value); stopCamera(); setResult(null); setError(''); }}
         >
           {events.map((event) => (
             <option key={event.id} value={event.id}>
@@ -302,33 +276,7 @@ export default function CheckInClient({ events }: { events: Event[] }) {
         )}
 
         {error && (
-          <div className={styles.errorOverlay}>
-            <div>{error}</div>
-            {debugInfo && (
-              <div className={styles.debugBox}>
-                <div>scanned: {debugInfo.received}</div>
-                <div>selected event id: {debugInfo.requestedEventId}</div>
-                <div>tickets server can see (any event): {debugInfo.totalVisibleTickets}</div>
-                <div>you are: {debugInfo.callerEmail || debugInfo.callerId}</div>
-                <div>your roles: {debugInfo.callerRoles.length === 0 ? '(none)' : debugInfo.callerRoles.map((r) => r.role).join(', ')}</div>
-                <div>your own tickets (any event): {debugInfo.callerOwnTicketCount}</div>
-                {debugInfo.totalVisibleTickets === 0 ? (
-                  <div>⚠ server sees ZERO tickets at all — permissions issue, not a code issue</div>
-                ) : debugInfo.candidates.length === 0 ? (
-                  <div>
-                    ⚠ none of those tickets belong to the selected event.
-                    event ids server does see: {debugInfo.otherEventIds.join(', ')}
-                  </div>
-                ) : (
-                  debugInfo.candidates.map((c, i) => (
-                    <div key={i}>
-                      {c.status}: expects {c.expected_now} (or {c.expected_prev})
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
+          <div className={styles.errorOverlay}>{error}</div>
         )}
       </div>
 

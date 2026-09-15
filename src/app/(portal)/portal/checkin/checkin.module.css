@@ -224,17 +224,6 @@
   animation: flashIn 0.25s ease;
 }
 
-.debugBox {
-  font-family: monospace;
-  font-size: 0.7rem;
-  line-height: 1.5;
-  background: rgba(0,0,0,0.25);
-  border-radius: 0.5rem;
-  padding: 0.75rem 1rem;
-  max-width: 100%;
-  word-break: break-all;
-}
-
 /* ── Controls ──────────────────────────────────── */
 .controls {
   display: flex;

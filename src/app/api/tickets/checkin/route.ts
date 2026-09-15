@@ -27,13 +27,24 @@ export async function POST(request: Request) {
   // not the ticket's permanent secret — that never leaves the server. Fetch
   // every ticket (not just this event's) so a mismatch can be reported as
   // "wrong event" rather than a generic, unhelpful "not recognized".
-  const { data: allCandidates } = await supabase
+  //
+  // `tickets` has TWO foreign keys into `profiles` (user_id and
+  // checked_in_by), so `user:profiles(display_name)` is genuinely ambiguous
+  // to PostgREST — it errors, and with no error-check that silently became
+  // an empty candidate list, which looked exactly like a permissions bug.
+  // The `!tickets_user_id_fkey` hint picks the right relationship.
+  const { data: allCandidates, error: candidatesError } = await supabase
     .from('tickets')
     .select(`
       id, ticket_code, status, checked_in_at, event_id,
-      user:profiles(display_name),
+      user:profiles!tickets_user_id_fkey(display_name),
       event:events(title)
     `);
+
+  if (candidatesError) {
+    console.error('[checkin] failed to load candidate tickets:', candidatesError);
+    return NextResponse.json({ error: 'Failed to look up tickets. Please try again.' }, { status: 500 });
+  }
 
   // Manual entry displays the code uppercase for readability, but the
   // generated code is lowercase hex — normalize before comparing.
@@ -55,43 +66,7 @@ export async function POST(request: Request) {
         { status: 409 }
       );
     }
-    // Temporary diagnostics for the "code not recognized" reports — shows
-    // exactly what the server currently expects for each active ticket at
-    // this event, so a real mismatch (vs. a stale display) is visible on the
-    // next failed scan instead of guessed at. Safe to show only to staff,
-    // who already have checkin access to this data.
-    const debugCandidates = candidates
-      .filter((t) => t.event_id === event_id)
-      .map((t) => ({
-        status: t.status,
-        expected_now: rotatingCode(t.ticket_code, windowIndex),
-        expected_prev: rotatingCode(t.ticket_code, windowIndex - 1),
-      }));
-
-    // Look up this exact caller's own tickets directly (bypassing the
-    // unfiltered query above) — if this also comes back empty for someone
-    // who should own tickets, RLS itself is misbehaving for this session,
-    // not just the checkin-capability OR-clause.
-    const { data: ownTickets } = await supabase
-      .from('tickets')
-      .select('id, event_id')
-      .eq('user_id', user.id);
-
-    return NextResponse.json({
-      error: 'Code not recognized — ask them to reopen their ticket and try again',
-      debug: {
-        received: normalizedCode,
-        windowIndex,
-        requestedEventId: event_id,
-        totalVisibleTickets: candidates.length,
-        otherEventIds: [...new Set(candidates.map((t) => t.event_id))],
-        candidates: debugCandidates,
-        callerId: user.id,
-        callerEmail: user.email,
-        callerRoles: roles,
-        callerOwnTicketCount: (ownTickets ?? []).length,
-      },
-    }, { status: 404 });
+    return NextResponse.json({ error: 'Code not recognized — ask them to reopen their ticket and try again' }, { status: 404 });
   }
 
   const userData = Array.isArray(ticket.user) ? ticket.user[0] : ticket.user;
