@@ -15,6 +15,7 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   checkin: ['officer', 'lead', 'exec', 'admin'],
   manage_site_content: ['lead', 'exec', 'admin'],
   manage_division: ['division', 'lead', 'exec', 'admin'],
+  manage_divisions_directory: ['exec', 'admin'],
   manage_sponsors: ['exec', 'admin'],
   delete_sponsors: ['admin'],
   view_members: ['officer', 'lead', 'exec', 'admin'],

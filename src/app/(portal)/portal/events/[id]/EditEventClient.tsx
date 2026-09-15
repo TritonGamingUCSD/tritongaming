@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { slugify } from '@/lib/slug';
 import EventForm, { type EventFormValues } from '../EventForm';
 
 export default function EditEventClient({
@@ -16,10 +17,13 @@ export default function EditEventClient({
   async function handleUpdate(form: EventFormValues): Promise<string | void> {
     const supabase = createClient();
 
+    const finalSlug = slugify(form.slug.trim() || form.title);
+
     const { error } = await supabase
       .from('events')
       .update({
         title: form.title.trim(),
+        slug: finalSlug || null,
         content: form.content.trim() || null,
         location: form.location.trim() || null,
         start_date: new Date(form.start_date).toISOString(),
@@ -33,7 +37,10 @@ export default function EditEventClient({
       })
       .eq('id', eventId);
 
-    if (error) return 'Failed to save changes. Please try again.';
+    if (error) {
+      if (error.code === '23505') return 'That URL slug is already taken by another event.';
+      return 'Failed to save changes. Please try again.';
+    }
     router.push('/portal/events');
   }
 

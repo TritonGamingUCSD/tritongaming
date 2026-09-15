@@ -1,29 +1,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { getContentBlock } from '@/lib/content';
+import { getDivisions, divisionLogoSrc } from '@/lib/divisions';
 import styles from './divisions.module.css';
 
 export const metadata = { title: 'Divisions' };
 
-interface DivisionEntry {
-  name: string;
-  logo: string;
-  description?: string;
-  order?: number;
-}
-
 export default async function DivisionsPage() {
-  let divisions: DivisionEntry[] = [];
-  
-  try {
-    const content = await getContentBlock('divisions');
-    const items = content.items as DivisionEntry[] | undefined;
-    if (items?.length) {
-      divisions = [...items].sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
-    }
-  } catch {
-    // Content unavailable
-  }
+  const divisions = await getDivisions();
 
   return (
     <div className={styles.page}>
@@ -38,10 +21,9 @@ export default async function DivisionsPage() {
       <section className={styles.grid}>
         {divisions.length > 0 ? (
           divisions.map((div) => {
-            const logoSrc = div.logo ? (div.logo.startsWith('/') ? div.logo : `/${div.logo}`) : null;
-            const href = div.name.toLowerCase().replace(/\s+/g, '-');
+            const logoSrc = divisionLogoSrc(div.logo_url);
             return (
-              <Link key={div.name} href={`/divisions/${href}`} className={styles.card}>
+              <Link key={div.id} href={`/divisions/${div.slug}`} className={styles.card}>
                 <div className={styles.cardHeader}>
                   {logoSrc ? (
                     <Image

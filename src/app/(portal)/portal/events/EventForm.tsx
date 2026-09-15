@@ -6,6 +6,7 @@ import styles from './new/newevent.module.css';
 
 export interface EventFormValues {
   title: string;
+  slug: string;
   content: string;
   location: string;
   start_date: string;
@@ -19,6 +20,7 @@ export interface EventFormValues {
 
 export const EMPTY_EVENT_FORM: EventFormValues = {
   title: '',
+  slug: '',
   content: '',
   location: '',
   start_date: '',
@@ -69,6 +71,11 @@ export default function EventForm({
         <label className={styles.field}>
           <span className={styles.label}>Event Title *</span>
           <input className={styles.input} value={form.title} onChange={(e) => set('title', e.target.value)} required maxLength={120} />
+        </label>
+
+        <label className={styles.field}>
+          <span className={styles.label}>URL Slug</span>
+          <input className={styles.input} value={form.slug} onChange={(e) => set('slug', e.target.value)} placeholder="Auto-generated from title if left blank" maxLength={120} />
         </label>
 
         <div className={styles.row}>

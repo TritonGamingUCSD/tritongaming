@@ -27,7 +27,7 @@ export default async function EditEventPage({ params }: Params) {
   const supabase = await createClient();
   const { data: event } = await supabase
     .from('events')
-    .select('id, title, content, location, start_date, end_date, flyer_url, max_capacity, ticket_price, audience, is_published')
+    .select('id, title, slug, content, location, start_date, end_date, flyer_url, max_capacity, ticket_price, audience, is_published')
     .eq('id', id)
     .single();
 
@@ -35,6 +35,7 @@ export default async function EditEventPage({ params }: Params) {
 
   const initial: EventFormValues = {
     title: event.title ?? '',
+    slug: event.slug ?? '',
     content: event.content ?? '',
     location: event.location ?? '',
     start_date: toDatetimeLocal(event.start_date),

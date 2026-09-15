@@ -30,6 +30,7 @@ const NAV: NavItem[] = [
     href: '/portal/checkin',       label: 'Check-In Scanner', icon: '📷', capability: 'checkin' },
   { href: '/portal/events',        label: 'Events',           icon: '🗓️', capability: 'manage_events' },
   { href: '/portal/members',       label: 'Members',          icon: '👥', capability: 'view_members' },
+  { href: '/portal/divisions',     label: 'Divisions',        icon: '🎮', capability: 'manage_divisions_directory' },
   { dividerBefore: true,
     href: '/portal/admin/content', label: 'Edit Site Content', icon: '✏️', capability: 'manage_site_content' },
   { href: '/portal/admin',         label: 'Admin',            icon: '🛡️', capability: 'view_admin_dashboard' },

@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { slugify } from '@/lib/slug';
 import EventForm, { EMPTY_EVENT_FORM, type EventFormValues } from '../EventForm';
 
 export default function NewEventClient() {
@@ -12,8 +13,11 @@ export default function NewEventClient() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.push('/login'); return; }
 
+    const finalSlug = slugify(form.slug.trim() || form.title);
+
     const { error } = await supabase.from('events').insert({
       title: form.title.trim(),
+      slug: finalSlug || null,
       content: form.content.trim() || null,
       location: form.location.trim() || null,
       start_date: new Date(form.start_date).toISOString(),
@@ -27,7 +31,10 @@ export default function NewEventClient() {
       created_by: user.id,
     });
 
-    if (error) return 'Failed to create event. Please try again.';
+    if (error) {
+      if (error.code === '23505') return 'That URL slug is already taken by another event.';
+      return 'Failed to create event. Please try again.';
+    }
     router.push('/portal/events');
   }
 

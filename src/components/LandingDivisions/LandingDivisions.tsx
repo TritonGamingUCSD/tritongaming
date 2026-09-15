@@ -1,31 +1,10 @@
 import Image from 'next/image';
 import { Reveal, RevealGroup, RevealItem } from '@/components/Reveal/Reveal';
-import { getContentBlock } from '@/lib/content';
+import { getDivisions, divisionLogoSrc } from '@/lib/divisions';
 import styles from './LandingDivisions.module.css';
 
-interface DivisionEntry {
-  name: string;
-  logo: string;
-  link?: string;
-  description?: string;
-  order?: number;
-  size?: string;
-}
-
 export default async function LandingDivisions() {
-  let sorted: DivisionEntry[] = [];
-  
-  try {
-    const content = await getContentBlock('divisions');
-    const items = content.items as DivisionEntry[] | undefined;
-    if (items?.length) {
-      sorted = [...items].sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
-    }
-  } catch { /* fallback to empty */ }
-
-  if (!sorted.length) {
-    sorted = [];
-  }
+  const divisions = await getDivisions();
 
   return (
     <section className={styles.section} aria-label="Divisions">
@@ -41,15 +20,11 @@ export default async function LandingDivisions() {
 
       <RevealGroup>
         <div className={styles.grid}>
-          {sorted.map((div) => {
-            const logoSrc = div.logo ? (div.logo.startsWith('/') ? div.logo : `/${div.logo}`) : null;
-            const Tag = div.link ? 'a' : 'div';
-            const linkProps = div.link
-              ? { href: div.link, target: '_blank' as const, rel: 'noopener noreferrer' }
-              : {};
+          {divisions.map((div) => {
+            const logoSrc = divisionLogoSrc(div.logo_url);
             return (
-              <RevealItem key={div.name}>
-                <Tag className={styles.card} {...linkProps}>
+              <RevealItem key={div.id}>
+                <div className={styles.card}>
                   {logoSrc && (
                     <div className={styles.logoWrap}>
                       <Image
@@ -66,7 +41,7 @@ export default async function LandingDivisions() {
                   {div.description && (
                     <span className={styles.divDesc}>{div.description}</span>
                   )}
-                </Tag>
+                </div>
               </RevealItem>
             );
           })}

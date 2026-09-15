@@ -10,6 +10,7 @@ export type Capability =
   | 'checkin'
   | 'manage_site_content'
   | 'manage_division'
+  | 'manage_divisions_directory'
   | 'manage_sponsors'
   | 'delete_sponsors'
   | 'view_members'
@@ -55,6 +56,8 @@ export interface Database {
           id: string;
           slug: string;
           name: string;
+          logo_url: string | null;
+          description: string | null;
           created_at: string;
         };
         Insert: Omit<Database['public']['Tables']['divisions']['Row'], 'id' | 'created_at'>;

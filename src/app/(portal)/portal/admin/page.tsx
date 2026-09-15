@@ -56,7 +56,7 @@ export default async function AdminPage() {
         .select('id, display_name, avatar_url, gamer_tag, created_at, user_roles!user_roles_user_id_fkey(role, division_id)')
         .order('created_at', { ascending: false })
         .limit(300),
-      supabase.from('divisions').select('id, name').order('name'),
+      supabase.from('divisions').select('id, name, slug').order('name'),
     ]);
     if (usersError) console.error('[admin] failed to load users:', usersError);
     allUsers = (usersData ?? []) as unknown as typeof allUsers;
@@ -96,6 +96,7 @@ export default async function AdminPage() {
             { href: '/portal/admin/content', icon: '✏️', label: 'Edit Site Content', desc: 'Banners, stats, text' },
             { href: '/portal/events',        icon: '🗓️', label: 'Manage Events',    desc: 'Create & edit' },
             { href: '/portal/checkin',       icon: '📷', label: 'Check-In Scanner', desc: 'Scan QR codes' },
+            { href: '/portal/divisions',     icon: '🎮', label: 'Divisions',        desc: 'Manage the directory' },
           ].map(({ href, icon, label, desc }) => (
             <Link key={href} href={href} className={styles.actionCard}>
               <span className={styles.actionIcon}>{icon}</span>
