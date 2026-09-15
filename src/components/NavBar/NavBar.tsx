@@ -64,6 +64,19 @@ export default function NavBar() {
   useEffect(() => {
     const handleScroll = () => {
       const currentY = window.scrollY;
+
+      // iOS Safari's elastic overscroll can report scrollY bouncing back
+      // from a negative value toward 0 right as you land at the top — a
+      // *positive* delta that the logic below would misread as "scrolling
+      // down" and hide the nav at exactly the moment it should be most
+      // visible. Always force it fully visible at/above the top instead.
+      if (currentY <= 0) {
+        setOffset(0);
+        setScrolled(false);
+        prevScrollY.current = currentY;
+        return;
+      }
+
       const delta = currentY - prevScrollY.current;
       if (delta > 0) {
         setOffset((prev) => Math.min(prev + delta, 200));
