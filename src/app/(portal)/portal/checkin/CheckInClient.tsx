@@ -28,7 +28,6 @@ export default function CheckInClient({ events }: { events: Event[] }) {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState('');
   const [processing, setProcessing] = useState(false);
-  const [lastCode, setLastCode] = useState('');
   const [stats, setStats] = useState<CheckinStats | null>(null);
   const [manualCode, setManualCode] = useState('');
   const [showManual, setShowManual] = useState(false);
@@ -37,6 +36,16 @@ export default function CheckInClient({ events }: { events: Event[] }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
   const resultTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // scanFrame recurses via requestAnimationFrame(scanFrame) referencing itself,
+  // so it never picks up fresh state from re-renders — reading `processing`/
+  // `lastCode` as plain state here always saw their values from the moment
+  // startCamera() first scheduled it, permanently stuck at `false`/`''`. That
+  // meant every frame that saw a QR (~60/sec) fired a brand new check-in
+  // request, forever — the flashing and the flood of duplicate requests
+  // reported. Refs are mutable and read fresh every frame regardless of
+  // which closure is doing the reading, so they're the actual fix.
+  const processingRef = useRef(false);
+  const lastCodeRef = useRef('');
 
   const fetchStats = useCallback(async (eventId: string) => {
     if (!eventId) return;
@@ -94,8 +103,8 @@ export default function CheckInClient({ events }: { events: Event[] }) {
     const code = jsQR(imageData.data, imageData.width, imageData.height, {
       inversionAttempts: 'dontInvert',
     });
-    if (code?.data && code.data !== lastCode && !processing) {
-      setLastCode(code.data);
+    if (code?.data && code.data !== lastCodeRef.current && !processingRef.current) {
+      lastCodeRef.current = code.data;
       handleCheckIn(code.data);
     }
     animRef.current = requestAnimationFrame(scanFrame);
@@ -106,6 +115,7 @@ export default function CheckInClient({ events }: { events: Event[] }) {
       setError('Please select an event first.');
       return;
     }
+    processingRef.current = true;
     setProcessing(true);
     setResult(null);
     setError('');
@@ -130,11 +140,12 @@ export default function CheckInClient({ events }: { events: Event[] }) {
     } catch {
       setError('Network error. Please try again.');
     } finally {
+      processingRef.current = false;
       setProcessing(false);
       resultTimeout.current = setTimeout(() => {
         setResult(null);
         setError('');
-        setLastCode('');
+        lastCodeRef.current = '';
       }, 4000);
     }
   }

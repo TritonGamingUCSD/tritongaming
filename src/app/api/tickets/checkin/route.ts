@@ -24,28 +24,37 @@ export async function POST(request: Request) {
   }
 
   // What's scanned/typed is a short-lived rotating code (see src/lib/rotatingCode.ts),
-  // not the ticket's permanent secret — that never leaves the server. Find which
-  // of this event's tickets currently produces it (checking this window and the
-  // previous one, for clock skew / display lag).
-  const { data: candidates } = await supabase
+  // not the ticket's permanent secret — that never leaves the server. Fetch
+  // every ticket (not just this event's) so a mismatch can be reported as
+  // "wrong event" rather than a generic, unhelpful "not recognized".
+  const { data: allCandidates } = await supabase
     .from('tickets')
     .select(`
       id, ticket_code, status, checked_in_at, event_id,
       user:profiles(display_name),
       event:events(title)
-    `)
-    .eq('event_id', event_id);
+    `);
 
   // Manual entry displays the code uppercase for readability, but the
   // generated code is lowercase hex — normalize before comparing.
   const normalizedCode = String(code).trim().replace(/^#\s*/, '').toLowerCase();
   const windowIndex = currentWindow();
-  const ticket = (candidates ?? []).find((t) =>
+  const matches = (t: { ticket_code: string }) =>
     rotatingCode(t.ticket_code, windowIndex) === normalizedCode ||
-    rotatingCode(t.ticket_code, windowIndex - 1) === normalizedCode
-  );
+    rotatingCode(t.ticket_code, windowIndex - 1) === normalizedCode;
+
+  const candidates = allCandidates ?? [];
+  const ticket = candidates.filter((t) => t.event_id === event_id).find(matches);
 
   if (!ticket) {
+    const wrongEventTicket = candidates.find(matches);
+    if (wrongEventTicket) {
+      const wrongEventData = Array.isArray(wrongEventTicket.event) ? wrongEventTicket.event[0] : wrongEventTicket.event;
+      return NextResponse.json(
+        { error: `This ticket is for a different event — ${wrongEventData?.title || 'another event'}. Switch events above to check them in.` },
+        { status: 409 }
+      );
+    }
     return NextResponse.json({ error: 'Code not recognized — ask them to reopen their ticket and try again' }, { status: 404 });
   }
 

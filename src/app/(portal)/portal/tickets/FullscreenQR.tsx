@@ -20,6 +20,13 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   const refreshTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchCode = useCallback(async () => {
+    // Always cancel any pending scheduled refresh before fetching — otherwise
+    // a visibility/focus-triggered call (below) races the normal timer chain
+    // and both keep independently rescheduling themselves forever.
+    if (refreshTimeout.current) {
+      clearTimeout(refreshTimeout.current);
+      refreshTimeout.current = null;
+    }
     try {
       const res = await fetch(`/api/tickets/${ticketId}/qr`);
       const data = await res.json();
@@ -42,6 +49,23 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   useEffect(() => {
     fetchCode();
     return () => { if (refreshTimeout.current) clearTimeout(refreshTimeout.current); };
+  }, [fetchCode]);
+
+  // Mobile browsers throttle or fully pause setTimeout while a tab is
+  // backgrounded (screen lock, switching apps) — exactly what happens while
+  // someone waits in line. The scheduled refresh above may never have fired,
+  // leaving a stale, now-rejected code on screen. Force a fresh one the
+  // instant the page is visible again instead of waiting on that timer.
+  useEffect(() => {
+    function onVisible() {
+      if (document.visibilityState === 'visible') fetchCode();
+    }
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
   }, [fetchCode]);
 
   useEffect(() => {
