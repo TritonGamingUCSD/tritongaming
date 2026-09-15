@@ -1,10 +1,29 @@
+import { Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getProfile, getUserRoles } from '@/lib/auth';
-import { createClient } from '@/lib/supabase/server';
-import { hasCapability } from '@/lib/capabilities';
+import { hasCapability, isVerifiedMember } from '@/lib/capabilities';
 import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
+import { CONTENT_BLOCKS } from '@/lib/content-blocks';
+import PortalHub, { type HubSection } from '@/components/portal/PortalHub';
+import SignOutButton from '@/components/portal/SignOutButton';
 import DashboardClient from './DashboardClient';
+import TicketsClient from './tickets/TicketsClient';
+import { getTicketsData } from './tickets/getTicketsData';
+import ProfileClient from './profile/ProfileClient';
+import CheckInClient from './checkin/CheckInClient';
+import { getCheckinData } from './checkin/getCheckinData';
+import EventsSectionContent from './events/EventsSectionContent';
+import { getEventsData } from './events/getEventsData';
+import MembersSectionContent from './members/MembersSectionContent';
+import { getMembersData } from './members/getMembersData';
+import DivisionsManager from './divisions/DivisionsManager';
+import { getDivisionsData } from './divisions/getDivisionsData';
+import QRStudioClient from './qrcode/QRStudioClient';
+import ContentEditor from './admin/content/ContentEditor';
+import { getContentData } from './admin/content/getContentData';
+import AdminSectionContent from './admin/AdminSectionContent';
+import { getAdminData } from './admin/getAdminData';
 import styles from './dashboard.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -15,104 +34,95 @@ export default async function PortalDashboard() {
 
   const canManageEvents = hasCapability(roles, 'manage_events');
   const canCheckin = hasCapability(roles, 'checkin');
+  const canViewMembers = hasCapability(roles, 'view_members');
+  const canManageDivisions = hasCapability(roles, 'manage_divisions_directory');
+  const canGenerateQr = hasCapability(roles, 'generate_qr_codes');
+  const canEditContent = hasCapability(roles, 'manage_site_content');
+  const canViewAdmin = hasCapability(roles, 'view_admin_dashboard');
 
-  const supabase = await createClient();
-  const now = new Date().toISOString();
-  const weekAhead = new Date(Date.now() + 7 * 86400_000).toISOString();
-
-  const [
-    ticketsRes,
-    upcomingRes,
-    eventsThisWeekRes,
-    checkinStatsRes,
-  ] = await Promise.all([
-    supabase.from('tickets')
-      .select('id, status, event:events(id, title, start_date, location)')
-      .eq('user_id', profile.id)
-      .order('created_at', { ascending: false })
-      .limit(5),
-
-    supabase.from('events')
-      .select('id, title, start_date, location')
-      .eq('is_published', true)
-      .gte('start_date', now)
-      .lte('start_date', weekAhead)
-      .order('start_date', { ascending: true })
-      .limit(5),
-
-    canManageEvents
-      ? supabase.from('events')
-          .select('id, title, start_date')
-          .eq('is_published', true)
-          .gte('start_date', now)
-          .lte('start_date', weekAhead)
-          .limit(10)
-      : Promise.resolve({ data: [] }),
-
-    // For check-in staff: get checkin stats for active events
-    canCheckin
-      ? supabase.from('events')
-          .select('id, title, start_date')
-          .eq('is_published', true)
-          .gte('start_date', new Date(Date.now() - 24 * 3600_000).toISOString())
-          .lte('start_date', new Date(Date.now() + 24 * 3600_000).toISOString())
-          .order('start_date', { ascending: true })
-          .limit(3)
-      : Promise.resolve({ data: [] }),
-  ]);
-
-  const myTickets = (ticketsRes.data ?? []) as unknown as Array<{
-    id: string; status: string;
-    event: { id: string; title: string; start_date: string; location: string | null } | null;
-  }>;
-  const upcomingEvents = (upcomingRes.data ?? []) as Array<{ id: string; title: string; start_date: string; location: string | null }>;
-  const eventsThisWeek = (eventsThisWeekRes as { data: Array<{ id: string; title: string; start_date: string }> | null }).data ?? [];
-  const todayEvents = (checkinStatsRes as { data: Array<{ id: string; title: string; start_date: string }> | null }).data ?? [];
+  // Every section a user can reach is fetched here, in parallel, capability
+  // by capability — a plain member only ever triggers the tickets query. The
+  // hub then just renders whichever of these were fetched; nothing is
+  // re-fetched client-side when a card opens.
+  const [ticketsData, checkinData, eventsData, membersData, divisionsData, contentData, adminData] =
+    await Promise.all([
+      getTicketsData(profile.id, roles),
+      canCheckin ? getCheckinData() : Promise.resolve(null),
+      canManageEvents ? getEventsData() : Promise.resolve(null),
+      canViewMembers ? getMembersData() : Promise.resolve(null),
+      canManageDivisions ? getDivisionsData() : Promise.resolve(null),
+      canEditContent ? getContentData() : Promise.resolve(null),
+      canViewAdmin ? getAdminData(roles) : Promise.resolve(null),
+    ]);
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
-  // Find next active ticket for upcoming event — tickets are sorted by when
-  // they were registered, not by event date, so pick the soonest-starting one.
   const nowDate = new Date();
-  const nextTicket = myTickets
+  const nextTicket = ticketsData.tickets
     .filter((t) => t.status === 'active' && t.event && new Date(t.event.start_date) >= nowDate)
     .sort((a, b) => new Date(a.event!.start_date).getTime() - new Date(b.event!.start_date).getTime())[0];
+  const activeTicketCount = ticketsData.tickets.filter((t) => t.status === 'active').length;
 
-  const statCards = [
+  // Events starting within the next/last 24h, for the check-in shortcut
+  // banner — derived from checkinData (already scoped to "recent or soon")
+  // instead of a second query.
+  const todayEvents = (checkinData?.events ?? []).filter(
+    (e) => new Date(e.start_date).getTime() <= Date.now() + 24 * 3600_000
+  );
+
+  const sections: HubSection[] = [
     {
-      icon: '🎟️', label: 'Active Tickets',
-      value: myTickets.filter((t) => t.status === 'active').length,
-      href: '/portal/tickets', color: '#0ea5e9',
+      id: 'tickets', icon: '🎟️', label: 'My Tickets',
+      description: 'View and show your event tickets',
+      badge: activeTicketCount || undefined,
+      content: <TicketsClient tickets={ticketsData.tickets} upcomingEvents={ticketsData.upcomingEvents} isUcsd={ticketsData.isUcsd} />,
     },
-    ...(canManageEvents ? [{
-      icon: '🗓️', label: 'Events This Week',
-      value: eventsThisWeek.length, href: '/portal/events', color: '#059669',
+    {
+      id: 'profile', icon: '👤', label: 'Profile',
+      description: 'Update your info and preferences',
+      content: <ProfileClient profile={profile} roles={roles} isUcsd={isVerifiedMember(roles)} />,
+    },
+    ...(canCheckin && checkinData ? [{
+      id: 'checkin', icon: '📷', label: 'Check-In Scanner',
+      description: 'Scan tickets to check people in',
+      content: <CheckInClient events={checkinData.events} />,
     }] : []),
-  ];
-
-  const quickActions = [
-    { href: '/portal/profile',  icon: '👤', label: 'Profile' },
-    { href: '/events',          icon: '🗓️', label: 'Events' },
-    { href: '/divisions',       icon: '🎮', label: 'Divisions' },
-    ...(canManageEvents ? [
-      { href: '/portal/events', icon: '➕', label: 'Add Event' },
-    ] : []),
-    ...(canCheckin ? [
-      { href: '/portal/checkin',icon: '📷', label: 'Check-In' },
-    ] : []),
-    ...(hasCapability(roles, 'manage_site_content') ? [
-      { href: '/portal/admin/content', icon: '✏️', label: 'Edit Site' },
-    ] : []),
-    ...(hasCapability(roles, 'view_admin_dashboard') ? [
-      { href: '/portal/admin',  icon: '🛡️', label: 'Admin' },
-    ] : []),
+    ...(canManageEvents && eventsData ? [{
+      id: 'events', icon: '🗓️', label: 'Events',
+      description: 'Create and manage events',
+      content: <EventsSectionContent events={eventsData.events} />,
+    }] : []),
+    ...(canViewMembers && membersData ? [{
+      id: 'members', icon: '👥', label: 'Members',
+      description: 'Browse everyone in the org',
+      badge: membersData.rows.length || undefined,
+      content: <MembersSectionContent rows={membersData.rows} roles={roles} />,
+    }] : []),
+    ...(canManageDivisions && divisionsData ? [{
+      id: 'divisions', icon: '🎮', label: 'Divisions',
+      description: 'Manage the division directory',
+      content: <DivisionsManager divisions={divisionsData.divisions} />,
+    }] : []),
+    ...(canGenerateQr ? [{
+      id: 'qrcode', icon: '🔳', label: 'QR Studio',
+      description: 'Design branded QR codes',
+      content: <QRStudioClient />,
+    }] : []),
+    ...(canEditContent && contentData ? [{
+      id: 'content', icon: '✏️', label: 'Edit Site Content',
+      description: 'Banners, stats, and text on the public site',
+      content: <ContentEditor blocks={CONTENT_BLOCKS} contentMap={contentData.contentMap} lastEdited={contentData.lastEdited} />,
+    }] : []),
+    ...(canViewAdmin && adminData ? [{
+      id: 'admin', icon: '🛡️', label: 'Admin',
+      description: 'Platform stats and role management',
+      content: <AdminSectionContent {...adminData} />,
+    }] : []),
   ];
 
   return (
     <div className={styles.page}>
-
-      {/* ── Header ─────────────────────────────────── */}
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           {profile.avatar_url ? (
@@ -147,13 +157,17 @@ export default async function PortalDashboard() {
                 ))
               )}
             </div>
+            <div className={styles.headerActions}>
+              <Link href="/" className={styles.headerActionLink}>Back to Site</Link>
+              <span className={styles.headerActionDivider} aria-hidden="true">·</span>
+              <SignOutButton />
+            </div>
           </div>
         </div>
       </header>
 
-      {/* ── Check-in staff: Today's check-in shortcut ─ */}
       {canCheckin && todayEvents.length > 0 && (
-        <Link href="/portal/checkin" className={styles.checkinBanner}>
+        <Link href="/portal?open=checkin" className={styles.checkinBanner}>
           <div className={styles.checkinBannerDot} />
           <div>
             <div className={styles.checkinBannerTitle}>Event today — {todayEvents[0].title}</div>
@@ -163,115 +177,13 @@ export default async function PortalDashboard() {
         </Link>
       )}
 
-      {/* ── Member: Next ticket hero ────────────────── */}
       {nextTicket && !canManageEvents && (
         <DashboardClient ticket={nextTicket as Parameters<typeof DashboardClient>[0]['ticket']} />
       )}
 
-      {/* ── Stat cards ─────────────────────────────── */}
-      {statCards.length > 0 && (
-        <div className={styles.statRow}>
-          {statCards.map((s) => (
-            <Link key={s.label} href={s.href}
-              className={styles.statCard}
-              style={{ '--stat-color': s.color } as React.CSSProperties}>
-              <span className={styles.statIcon}>{s.icon}</span>
-              <div>
-                <div className={styles.statValue} style={{ color: s.color }}>{s.value}</div>
-                <div className={styles.statLabel}>{s.label}</div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
-
-      <div className={styles.twoCol}>
-        <div className={styles.mainCol}>
-
-          {/* ── Upcoming events ─────────────────────── */}
-          {upcomingEvents.length > 0 && (
-            <section className={styles.section}>
-              <div className={styles.sectionRow}>
-                <h2 className={styles.sectionLabel}>Upcoming Events</h2>
-                <Link href="/events" className={styles.seeAll}>See all →</Link>
-              </div>
-              <div className={styles.eventList}>
-                {upcomingEvents.map((event) => {
-                  const d = new Date(event.start_date);
-                  const hasTicket = myTickets.some((t) => t.event?.id === event.id);
-                  return (
-                    <div key={event.id} className={styles.eventRow}>
-                      <div className={styles.eventDateBlock}>
-                        <span className={styles.eventMon}>{d.toLocaleDateString('en-US', { month: 'short' })}</span>
-                        <span className={styles.eventDay}>{d.getDate()}</span>
-                      </div>
-                      <div className={styles.eventBody}>
-                        <div className={styles.eventTitle}>{event.title}</div>
-                        <div className={styles.eventMeta}>
-                          {d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-                          {event.location && ` · ${event.location}`}
-                        </div>
-                      </div>
-                      <div className={styles.eventActions}>
-                        {hasTicket ? (
-                          <Link href="/portal/tickets" className={styles.ticketBadge}>✓ Registered</Link>
-                        ) : (
-                          <Link href="/portal/tickets" className={styles.getTicket}>Get Ticket</Link>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          )}
-
-          {/* ── My recent tickets ────────────────────── */}
-          {myTickets.length > 0 && (
-            <section className={styles.section}>
-              <div className={styles.sectionRow}>
-                <h2 className={styles.sectionLabel}>My Tickets</h2>
-                <Link href="/portal/tickets" className={styles.seeAll}>View all →</Link>
-              </div>
-              <div className={styles.ticketList}>
-                {myTickets.slice(0, 3).map((ticket) => (
-                  <div key={ticket.id} className={styles.ticketRow}>
-                    <span className={`${styles.ticketStatus} ${ticket.status === 'used' ? styles.ticketUsed : ''}`}>
-                      {ticket.status === 'used' ? '✓' : '🎟️'}
-                    </span>
-                    <div className={styles.ticketInfo}>
-                      <div className={styles.ticketEvent}>{ticket.event?.title || 'Unknown event'}</div>
-                      {ticket.event?.start_date && (
-                        <div className={styles.ticketDate}>
-                          {new Date(ticket.event.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        </div>
-                      )}
-                    </div>
-                    <span className={`${styles.ticketBadgeSmall} ${ticket.status === 'used' ? styles.ticketBadgeUsed : styles.ticketBadgeActive}`}>
-                      {ticket.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-        </div>
-
-        <div className={styles.sideCol}>
-          {/* ── Quick actions ────────────────────────── */}
-          <section className={styles.section}>
-            <h2 className={styles.sectionLabel}>Quick Access</h2>
-            <div className={styles.quickGrid}>
-              {quickActions.map(({ href, icon, label }) => (
-                <Link key={href} href={href} className={styles.quickCard}>
-                  <span className={styles.quickIcon}>{icon}</span>
-                  <span className={styles.quickLabel}>{label}</span>
-                </Link>
-              ))}
-            </div>
-          </section>
-        </div>
-      </div>
+      <Suspense>
+        <PortalHub sections={sections} />
+      </Suspense>
     </div>
   );
 }

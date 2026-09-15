@@ -17,7 +17,7 @@ export async function GET(request: Request, { params }: Params) {
 
   const { data: ticket } = await supabase
     .from('tickets')
-    .select('id, user_id, ticket_code, status')
+    .select('id, user_id, ticket_code, status, event:events(slug)')
     .eq('id', id)
     .single();
 
@@ -30,6 +30,13 @@ export async function GET(request: Request, { params }: Params) {
     return NextResponse.json({ error: 'Ticket is not active' }, { status: 400 });
   }
 
+  const event = Array.isArray(ticket.event) ? ticket.event[0] : ticket.event;
   const code = rotatingCode(ticket.ticket_code, currentWindow());
-  return NextResponse.json({ code, expires_in: secondsUntilNextWindow() });
+  // The QR payload is prefixed with the event's slug so scanning it (with any
+  // scanner, not just this app's) makes it unmistakable which event it's
+  // for — see src/app/api/tickets/checkin/route.ts, which strips this prefix
+  // before verifying the actual rotating code. `code` alone (no prefix) is
+  // still returned for the manual-entry fallback text on screen.
+  const qrData = event?.slug ? `${event.slug}:${code}` : code;
+  return NextResponse.json({ code, qr_data: qrData, expires_in: secondsUntilNextWindow() });
 }

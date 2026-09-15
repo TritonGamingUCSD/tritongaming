@@ -47,8 +47,13 @@ export async function POST(request: Request) {
   }
 
   // Manual entry displays the code uppercase for readability, but the
-  // generated code is lowercase hex — normalize before comparing.
-  const normalizedCode = String(code).trim().replace(/^#\s*/, '').toLowerCase();
+  // generated code is lowercase hex — normalize before comparing. Scanned QR
+  // data is prefixed with the event's slug (`slug:code`, see
+  // src/app/api/tickets/[id]/qr/route.ts) purely as a human/scanner-visible
+  // hint of which event it's for — it isn't part of the HMAC and carries no
+  // authority, so it's simply dropped here before the real check.
+  const raw = String(code).trim().replace(/^#\s*/, '');
+  const normalizedCode = (raw.includes(':') ? raw.slice(raw.lastIndexOf(':') + 1) : raw).toLowerCase();
   const windowIndex = currentWindow();
   const matches = (t: { ticket_code: string }) =>
     rotatingCode(t.ticket_code, windowIndex) === normalizedCode ||

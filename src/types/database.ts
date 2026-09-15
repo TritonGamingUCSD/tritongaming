@@ -15,7 +15,8 @@ export type Capability =
   | 'delete_sponsors'
   | 'view_members'
   | 'view_admin_dashboard'
-  | 'manage_roles';
+  | 'manage_roles'
+  | 'generate_qr_codes';
 
 export interface Database {
   public: {

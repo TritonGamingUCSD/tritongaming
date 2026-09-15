@@ -103,6 +103,9 @@ export default function TicketsClient({ tickets, upcomingEvents, isUcsd }: Props
     .filter((t) => t.event && new Date(t.event.start_date) >= now)
     .sort((a, b) => new Date(a.event!.start_date).getTime() - new Date(b.event!.start_date).getTime())[0];
 
+  // Don't repeat the ticket already featured in the hero card above.
+  const otherActiveTickets = activeTickets.filter((t) => t.id !== nextActiveTicket?.id);
+
   // Events the user hasn't registered for yet
   const registeredEventIds = new Set(tickets.map((t) => t.event?.id).filter(Boolean));
   const unregisteredEvents = upcomingEvents.filter((e) => !registeredEventIds.has(e.id));
@@ -159,14 +162,15 @@ export default function TicketsClient({ tickets, upcomingEvents, isUcsd }: Props
         </section>
       )}
 
-      {/* All active tickets */}
-      {activeTickets.length > 0 && (
+      {/* Other active tickets — excludes whichever one is already shown in
+          the hero above, so the same ticket never appears twice on screen. */}
+      {otherActiveTickets.length > 0 && (
         <section>
-          {activeTickets.length > 1 && (
-            <h2 className={styles.sectionTitle}>Active Tickets</h2>
-          )}
+          <h2 className={styles.sectionTitle}>
+            {nextActiveTicket ? 'Other Active Tickets' : 'Active Tickets'}
+          </h2>
           <div className={styles.ticketList}>
-            {activeTickets.map((ticket) => (
+            {otherActiveTickets.map((ticket) => (
               <TicketRow
                 key={ticket.id}
                 ticket={ticket}
@@ -284,13 +288,14 @@ function TicketRow({
         )}
       </div>
       <div className={styles.ticketRight}>
-        <span className={`${styles.statusBadge} ${styles[`status_${ticket.status}`]}`}>
-          {STATUS_LABEL[ticket.status]}
-        </span>
-        {ticket.status === 'active' && onShowQR && (
-          <button className={styles.qrMiniBtn} onClick={onShowQR} aria-label="Show QR code">
-            QR
+        {ticket.status === 'active' && onShowQR ? (
+          <button className={styles.qrMiniBtn} onClick={onShowQR}>
+            <span aria-hidden="true">▦</span> View QR
           </button>
+        ) : (
+          <span className={`${styles.statusBadge} ${styles[`status_${ticket.status}`]}`}>
+            {STATUS_LABEL[ticket.status]}
+          </span>
         )}
       </div>
     </div>

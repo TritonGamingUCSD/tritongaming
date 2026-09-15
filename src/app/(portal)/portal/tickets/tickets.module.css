@@ -3,6 +3,7 @@
   flex-direction: column;
   gap: 1.75rem;
   max-width: 640px;
+  margin-inline: auto;
 }
 
 .title {
@@ -182,19 +183,27 @@
 .status_expired  { background: rgba(217,119,6,0.1); color: #fbbf24; border-color: rgba(251,191,36,0.15); }
 
 .qrMiniBtn {
-  font-size: 0.65rem;
-  font-family: var(--font-renegare);
-  letter-spacing: 0.07em;
-  padding: 0.2rem 0.5rem;
-  border: 1px solid rgba(255, 199, 44, 0.3);
-  border-radius: 0.3rem;
-  background: rgba(255, 199, 44, 0.1);
-  color: var(--yellow);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-family: var(--font-futura-medium);
+  letter-spacing: 0.02em;
+  padding: 0.45rem 0.75rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: var(--yellow);
+  color: #011941;
   cursor: pointer;
-  transition: background 0.15s;
+  white-space: nowrap;
+  transition: transform 0.15s, box-shadow 0.15s;
 }
 
-.qrMiniBtn:hover { background: rgba(255, 199, 44, 0.2); }
+.qrMiniBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 12px rgba(255, 199, 44, 0.3);
+}
+.qrMiniBtn:active { transform: translateY(0); }
 
 /* ── Upcoming events ─────────────────────────────── */
 .eventList {

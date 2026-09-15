@@ -21,6 +21,10 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   view_members: ['officer', 'lead', 'exec', 'admin'],
   view_admin_dashboard: ['exec', 'admin'],
   manage_roles: ['admin'],
+  // UI-gating only — the QR Studio doesn't write to the database, so unlike
+  // every other row here it has no RLS-backed counterpart in the DB's
+  // role_capabilities table.
+  generate_qr_codes: ['officer', 'division', 'lead', 'exec', 'admin'],
 };
 
 /**

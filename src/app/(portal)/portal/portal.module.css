@@ -10,51 +10,20 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  margin-left: 260px;
 }
-
-.topbar {
-  display: flex;
-  align-items: center;
-  padding: 0.75rem 2rem;
-  border-bottom: 1px solid rgba(255,255,255,0.055);
-  background: rgba(0,0,0,0.2);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-.homeLink {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: rgba(242,241,240,0.5);
-  font-size: 0.82rem;
-  font-family: var(--font-futura-medium);
-  letter-spacing: 0.03em;
-  transition: color 0.2s;
-}
-.homeLink:hover { color: var(--yellow); }
 
 .content {
   flex: 1;
   width: 100%;
+  max-width: 1280px;
+  margin-inline: auto;
   padding: 2.25rem 2.5rem 4rem;
 }
 
 @media (max-width: 768px) {
-  .main { margin-left: 0; }
-  .topbar { padding: 0.625rem 1.125rem; }
-  /* Bottom tab bar is 54px + safe area; add extra 8px breathing room */
-  .content {
-    padding: 1.125rem 1rem calc(62px + env(safe-area-inset-bottom, 0px) + 8px);
-  }
+  .content { padding: 1.5rem 1.125rem 3rem; }
 }
 
 @media (max-width: 480px) {
-  .content {
-    padding: 0.875rem 0.875rem calc(62px + env(safe-area-inset-bottom, 0px) + 8px);
-  }
+  .content { padding: 1.125rem 0.875rem 2.5rem; }
 }

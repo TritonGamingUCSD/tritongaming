@@ -1,8 +1,21 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
-import QRCodeLib from 'qrcode';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import StyledQRCode from '@/components/StyledQRCode/StyledQRCode';
+import { DEFAULT_QR_OPTIONS, eventLabelIcon, type QRCodeOptions } from '@/lib/qrCodeStyling';
 import styles from './fullscreenqr.module.css';
+
+// Same TG-branded look as the portal's QR Studio "default" preset (see
+// src/lib/qrCodeStyling.ts), but the center icon is swapped for the event's
+// own text (see eventLabelIcon) instead of the TG logo — so it's obvious at
+// a glance which event this ticket is for, not just encoded in the data.
+const TICKET_QR_BASE: Omit<QRCodeOptions, 'data' | 'icon' | 'customIcon'> = {
+  ...DEFAULT_QR_OPTIONS,
+  size: 260,
+  margin: 6,
+  iconPadding: 10,
+  iconSizeOverride: 0.42,
+};
 
 interface Props {
   ticketId: string;
@@ -13,8 +26,8 @@ interface Props {
 }
 
 export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLocation, onClose }: Props) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [code, setCode] = useState<string | null>(null);
+  const [qrData, setQrData] = useState<string | null>(null);
   const [expiresIn, setExpiresIn] = useState(60);
   const [error, setError] = useState('');
   const refreshTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -36,6 +49,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
       }
       setError('');
       setCode(data.code);
+      setQrData(data.qr_data);
       setExpiresIn(data.expires_in);
       // Refresh a couple seconds before it actually expires, so there's never
       // a moment where a stale/rejected code is on screen.
@@ -68,16 +82,6 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
     };
   }, [fetchCode]);
 
-  useEffect(() => {
-    if (!canvasRef.current || !code) return;
-    QRCodeLib.toCanvas(canvasRef.current, code, {
-      width: 260,
-      margin: 2,
-      color: { dark: '#011941', light: '#ffffff' },
-      errorCorrectionLevel: 'H',
-    });
-  }, [code]);
-
   // Close on backdrop tap
   function onBackdrop(e: React.MouseEvent) {
     if (e.target === e.currentTarget) onClose();
@@ -92,6 +96,13 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   const dateLabel = eventDate
     ? new Date(eventDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
     : null;
+
+  // qr_data is `${eventSlug}:${rotatingCode}` (see /api/tickets/[id]/qr) —
+  // reuse that same slug for the icon text so it can never drift out of sync
+  // with what the code actually encodes. Falls back to the title for events
+  // with no slug set.
+  const eventLabel = (qrData?.includes(':') ? qrData.split(':')[0] : '') || eventTitle;
+  const qrIcon = useMemo(() => eventLabelIcon(eventLabel), [eventLabel]);
 
   return (
     <div className={styles.backdrop} onClick={onBackdrop}>
@@ -118,8 +129,11 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
         </div>
 
         <div className={styles.qrWrapper}>
-          {code ? (
-            <canvas ref={canvasRef} className={styles.qrCanvas} />
+          {qrData ? (
+            <StyledQRCode
+              options={{ ...TICKET_QR_BASE, data: qrData, icon: 'custom', customIcon: qrIcon }}
+              className={styles.qrCanvas}
+            />
           ) : (
             <div className={styles.qrCanvas} style={{ width: 260, height: 260 }} aria-hidden="true" />
           )}

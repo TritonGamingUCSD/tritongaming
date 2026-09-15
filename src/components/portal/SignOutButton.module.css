@@ -1,0 +1,16 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: rgba(242, 241, 240, 0.45);
+  font-size: 0.82rem;
+  font-family: var(--font-futura-medium);
+  letter-spacing: 0.03em;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem 0;
+  transition: color 0.2s;
+}
+
+.btn:hover { color: #fca5a5; }

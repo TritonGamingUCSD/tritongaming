@@ -1,0 +1,21 @@
+.topbar {
+  display: flex;
+  align-items: center;
+  padding: 0.875rem 1.5rem 0;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: rgba(242, 241, 240, 0.45);
+  font-size: 0.82rem;
+  font-family: var(--font-futura-medium);
+  letter-spacing: 0.02em;
+  transition: color 0.2s;
+}
+.backLink:hover { color: var(--yellow); }
+
+@media (max-width: 768px) {
+  .topbar { padding: 0.625rem 1.125rem 0; }
+}

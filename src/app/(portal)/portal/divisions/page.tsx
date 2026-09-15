@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation';
 import { getUserRoles } from '@/lib/auth';
 import { hasCapability } from '@/lib/capabilities';
-import { createClient } from '@/lib/supabase/server';
 import DivisionsManager from './DivisionsManager';
+import { getDivisionsData } from './getDivisionsData';
 import styles from './divisions.module.css';
 
 export const metadata = { title: 'Divisions' };
@@ -12,11 +12,7 @@ export default async function DivisionsPage() {
   const roles = await getUserRoles();
   if (!hasCapability(roles, 'manage_divisions_directory')) redirect('/portal');
 
-  const supabase = await createClient();
-  const { data: divisions } = await supabase
-    .from('divisions')
-    .select('id, name, slug, description, logo_url')
-    .order('name', { ascending: true });
+  const { divisions } = await getDivisionsData();
 
   return (
     <div className={styles.page}>
@@ -30,7 +26,7 @@ export default async function DivisionsPage() {
         </div>
       </div>
 
-      <DivisionsManager divisions={divisions ?? []} />
+      <DivisionsManager divisions={divisions} />
     </div>
   );
 }

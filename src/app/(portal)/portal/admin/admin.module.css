@@ -1,4 +1,4 @@
-.page  { max-width: 1000px; width: 100%; }
+.page  { max-width: 1100px; width: 100%; margin-inline: auto; }
 
 /* ── Header ── */
 .pageHeader {
@@ -69,13 +69,17 @@
 .statLabel { font-size: 0.72rem; color: rgba(242,241,240,0.38); margin-top: 0.2rem; }
 
 /* ── Sections ── */
-.section { margin-bottom: 2.5rem; }
+.section {
+  margin-bottom: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
 
 .sectionHeader {
   display: flex;
   align-items: baseline;
   gap: 0.75rem;
-  margin-bottom: 0.875rem;
   flex-wrap: wrap;
 }
 
@@ -132,30 +136,3 @@
   border: 1px solid rgba(255,199,44,0.25);
   border-radius: 9999px;
 }
-
-/* ── Quick actions ── */
-.actions {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: 0.75rem;
-}
-
-.actionCard {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.875rem 1rem;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 0.875rem;
-  transition: background 0.15s, border-color 0.15s, transform 0.15s;
-}
-.actionCard:hover {
-  background: rgba(255,199,44,0.06);
-  border-color: rgba(255,199,44,0.18);
-  transform: translateY(-1px);
-}
-
-.actionIcon  { font-size: 1.4rem; flex-shrink: 0; }
-.actionLabel { font-family: var(--font-futura-medium); font-size: 0.85rem; color: var(--white); }
-.actionDesc  { font-size: 0.7rem; color: rgba(242,241,240,0.32); margin-top: 0.1rem; }

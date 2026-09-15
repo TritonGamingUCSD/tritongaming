@@ -2,9 +2,9 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getUserRoles } from '@/lib/auth';
 import { hasCapability } from '@/lib/capabilities';
-import { createClient } from '@/lib/supabase/server';
 import { CONTENT_BLOCKS } from '@/lib/content-blocks';
 import ContentEditor from './ContentEditor';
+import { getContentData } from './getContentData';
 
 export const metadata = { title: 'Edit Site Content' };
 export const dynamic = 'force-dynamic';
@@ -15,42 +15,14 @@ export default async function ContentPage() {
   // (lead/exec/admin) — officers could open this page and have every save 403.
   if (!hasCapability(roles, 'manage_site_content')) redirect('/portal');
 
-  const supabase = await createClient();
-  const { data: rows } = await supabase
-    .from('site_contents')
-    .select('key, content, updated_by, updated_at');
-
-  const contentMap: Record<string, Record<string, unknown>> = {};
-  rows?.forEach((row) => {
-    contentMap[row.key] = row.content as Record<string, unknown>;
-  });
-
-  const updaterIds = [...new Set((rows ?? []).map((r) => r.updated_by).filter(Boolean))];
-  let updaterNames: Record<string, string> = {};
-  if (updaterIds.length > 0) {
-    const { data: updaters } = await supabase
-      .from('profiles')
-      .select('id, display_name')
-      .in('id', updaterIds as string[]);
-    updaters?.forEach((u) => { updaterNames[u.id] = u.display_name || 'Unknown'; });
-  }
-
-  const lastEdited: Record<string, { by: string; at: string }> = {};
-  rows?.forEach((row) => {
-    if (row.updated_at) {
-      lastEdited[row.key] = {
-        by: row.updated_by ? (updaterNames[row.updated_by] || 'Admin') : 'Admin',
-        at: row.updated_at,
-      };
-    }
-  });
+  const { contentMap, lastEdited } = await getContentData();
 
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
         <div style={{ flex: 1 }}>
           <Link
-            href="/portal/admin"
+            href="/portal?open=admin"
             style={{ fontSize: '0.85rem', color: 'rgba(255,199,44,0.7)', display: 'inline-block', marginBottom: '0.5rem' }}
           >
             ← Back to Admin

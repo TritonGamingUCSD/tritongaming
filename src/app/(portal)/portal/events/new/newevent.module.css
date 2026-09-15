@@ -1,4 +1,4 @@
-.page { max-width: 700px; }
+.page { max-width: 700px; margin-inline: auto; }
 
 .header { margin-bottom: 1.75rem; }
 

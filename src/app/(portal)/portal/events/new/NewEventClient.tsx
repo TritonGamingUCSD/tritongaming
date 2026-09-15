@@ -38,7 +38,7 @@ export default function NewEventClient() {
       if (error.code === '23505') return 'That URL slug is already taken by another event.';
       return 'Failed to create event. Please try again.';
     }
-    router.push('/portal/events');
+    router.push('/portal?open=events');
   }
 
   return <EventForm heading="Create Event" initial={EMPTY_EVENT_FORM} submitLabel="Create Event" onSubmit={handleCreate} />;

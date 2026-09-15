@@ -1,0 +1,124 @@
+.wrap {
+  position: relative;
+}
+
+/* ── Card grid ────────────────────────────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-align: center;
+  padding: 1.75rem 1.375rem;
+  min-height: 150px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 1.125rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.card:hover {
+  background: rgba(255, 199, 44, 0.05);
+  border-color: rgba(255, 199, 44, 0.2);
+}
+
+.cardBadge {
+  position: absolute;
+  top: 0.875rem;
+  right: 0.875rem;
+  font-size: 0.68rem;
+  font-family: var(--font-renegare);
+  color: var(--yellow);
+}
+
+.cardIcon { font-size: 1.75rem; line-height: 1; }
+
+.cardLabel {
+  font-family: var(--font-futura-heavy);
+  font-size: 0.95rem;
+  color: var(--white);
+  letter-spacing: 0.01em;
+}
+
+.cardDesc {
+  font-size: 0.76rem;
+  color: rgba(242, 241, 240, 0.38);
+  line-height: 1.5;
+  max-width: 22ch;
+}
+
+/* ── Expanded panel ───────────────────────────────── */
+.panel {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 1.25rem;
+  padding: 1.5rem clamp(1rem, 3vw, 2rem) 2.5rem;
+  min-height: 60vh;
+}
+
+.panelHeader {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.6rem;
+  padding-bottom: 1.5rem;
+  margin-bottom: 1.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-futura-medium);
+  font-size: 0.8rem;
+  color: rgba(242, 241, 240, 0.4);
+  padding: 0.25rem 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.backBtn:hover { color: var(--yellow); }
+
+@media (min-width: 601px) {
+  .backBtn { position: absolute; left: 0; top: 0.25rem; }
+}
+
+.panelTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.panelIcon { font-size: 1.4rem; }
+
+.panelTitle {
+  font-family: var(--font-futura-heavy);
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--white);
+}
+
+.panelBody {
+  min-width: 0;
+}
+
+@media (max-width: 600px) {
+  .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.75rem; }
+  .card { padding: 1.125rem 1rem; min-height: 125px; }
+  .panel { padding: 1.125rem 1rem 2rem; }
+}

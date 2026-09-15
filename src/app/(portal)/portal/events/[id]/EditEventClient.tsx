@@ -44,7 +44,7 @@ export default function EditEventClient({
       if (error.code === '23505') return 'That URL slug is already taken by another event.';
       return 'Failed to save changes. Please try again.';
     }
-    router.push('/portal/events');
+    router.push('/portal?open=events');
   }
 
   return <EventForm heading="Edit Event" initial={initial} submitLabel="Save Changes" onSubmit={handleUpdate} />;
