@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { hasRole } from '@/types/database';
+import { hasCapability } from '@/lib/capabilities';
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -8,13 +8,12 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
+  const { data: roles } = await supabase
+    .from('user_roles')
+    .select('role, division_id')
+    .eq('user_id', user.id);
 
-  if (!profile || !hasRole(profile.role, 'lead')) {
+  if (!hasCapability(roles ?? [], 'checkin')) {
     return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
   }
 

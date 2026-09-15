@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { canEditContent } from '@/types/database';
-import type { UserRole } from '@/types/database';
+import { hasCapability } from '@/lib/capabilities';
 
 export async function GET() {
   // Public read — anyone can fetch content for rendering
@@ -17,10 +16,10 @@ export async function POST(request: Request) {
   const { data: { user } } = await userClient.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { data: profile } = await userClient
-    .from('profiles').select('role').eq('id', user.id).single();
+  const { data: roles } = await userClient
+    .from('user_roles').select('role, division_id').eq('user_id', user.id);
 
-  if (!profile || !canEditContent(profile.role as UserRole)) {
+  if (!hasCapability(roles ?? [], 'manage_site_content')) {
     return NextResponse.json({ error: 'Content editor access required (lead, exec, or admin)' }, { status: 403 });
   }
 

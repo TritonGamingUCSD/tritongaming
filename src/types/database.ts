@@ -1,5 +1,20 @@
-export type UserRole = 'guest' | 'member' | 'officer' | 'division' | 'lead' | 'exec' | 'admin';
+export type AppRole = 'ucsd' | 'division' | 'officer' | 'lead' | 'exec' | 'admin';
+// 'guest' is never stored — it just means zero rows in user_roles.
+export type UserRole = 'guest' | AppRole;
 export type TicketStatus = 'active' | 'used' | 'cancelled' | 'expired';
+export type EventAudience = 'public' | 'ucsd_only';
+
+export type Capability =
+  | 'manage_events'
+  | 'delete_events'
+  | 'checkin'
+  | 'manage_site_content'
+  | 'manage_division'
+  | 'manage_sponsors'
+  | 'delete_sponsors'
+  | 'view_members'
+  | 'view_admin_dashboard'
+  | 'manage_roles';
 
 export interface Database {
   public: {
@@ -14,12 +29,33 @@ export interface Database {
           gamer_tag: string | null;
           major: string | null;
           year: string | null;
-          role: UserRole;
           created_at: string;
           updated_at: string;
         };
         Insert: Omit<Database['public']['Tables']['profiles']['Row'], 'created_at' | 'updated_at'>;
         Update: Partial<Database['public']['Tables']['profiles']['Insert']>;
+      };
+      user_roles: {
+        Row: {
+          id: string;
+          user_id: string;
+          role: AppRole;
+          division_id: string | null;
+          granted_by: string | null;
+          created_at: string;
+        };
+        Insert: Omit<Database['public']['Tables']['user_roles']['Row'], 'id' | 'created_at'>;
+        Update: Partial<Database['public']['Tables']['user_roles']['Insert']>;
+      };
+      divisions: {
+        Row: {
+          id: string;
+          slug: string;
+          name: string;
+          created_at: string;
+        };
+        Insert: Omit<Database['public']['Tables']['divisions']['Row'], 'id' | 'created_at'>;
+        Update: Partial<Database['public']['Tables']['divisions']['Insert']>;
       };
       events: {
         Row: {
@@ -39,6 +75,7 @@ export interface Database {
           is_published: boolean;
           requires_ticket: boolean;
           ticket_price: number;
+          audience: EventAudience;
           created_by: string | null;
           created_at: string;
           updated_at: string;
@@ -55,6 +92,7 @@ export interface Database {
           status: TicketStatus;
           checked_in_at: string | null;
           checked_in_by: string | null;
+          stripe_session_id: string | null;
           created_at: string;
         };
         Insert: Omit<Database['public']['Tables']['tickets']['Row'], 'id' | 'ticket_code' | 'created_at'>;
@@ -90,7 +128,7 @@ export interface Database {
     Views: Record<string, never>;
     Functions: Record<string, never>;
     Enums: {
-      user_role: UserRole;
+      app_role: AppRole;
       ticket_status: TicketStatus;
     };
   };
@@ -98,6 +136,8 @@ export interface Database {
 
 // Convenience types with joined data
 export type Profile = Database['public']['Tables']['profiles']['Row'];
+export type UserRoleGrant = Database['public']['Tables']['user_roles']['Row'];
+export type Division = Database['public']['Tables']['divisions']['Row'];
 export type Event = Database['public']['Tables']['events']['Row'];
 export type Ticket = Database['public']['Tables']['tickets']['Row'];
 export type SiteContent = Database['public']['Tables']['site_contents']['Row'];
@@ -107,43 +147,40 @@ export type TicketWithEvent = Ticket & {
   event: Pick<Event, 'id' | 'title' | 'start_date' | 'end_date' | 'location' | 'flyer_url'>;
 };
 
-// Ranks: division/lead sit below officer privilege level (org-staff)
-export const ROLE_HIERARCHY: Record<UserRole, number> = {
-  guest:    0,
-  member:   1,
-  division: 2, // division-track member — no org-staff privileges
-  lead:     3, // division-track lead   — check-in + content editing
-  officer:  4, // org officer          — events, check-in, content editing
-  exec:     5, // executive board
-  admin:    6, // full platform access
+// Display-only ordering for badges/sorting — NOT used for authorization.
+// officer and division intentionally tie: they're peers with different
+// capabilities, neither implies the other. See src/lib/capabilities.ts for
+// the actual permission model.
+export const ROLE_DISPLAY_RANK: Record<UserRole, number> = {
+  guest: 0,
+  ucsd: 1,
+  officer: 2,
+  division: 2,
+  lead: 3,
+  exec: 4,
+  admin: 5,
 };
 
 export const ROLE_LABELS: Record<UserRole, string> = {
-  guest:    'Guest',
-  member:   'Member',
-  division: 'Division Member',
-  lead:     'Division Lead',
-  officer:  'Officer',
-  exec:     'Executive',
-  admin:    'Admin',
+  guest: 'Guest',
+  ucsd: 'UCSD Student',
+  division: 'Division Lead',
+  officer: 'Officer',
+  lead: 'Senior Lead',
+  exec: 'Executive',
+  admin: 'Admin',
 };
 
 export const ROLE_COLORS: Record<UserRole, string> = {
-  guest:    '#6b7280',
-  member:   '#059669',
+  guest: '#6b7280',
+  ucsd: '#0ea5e9',
   division: '#7c3aed',
-  lead:     '#0ea5e9',
-  officer:  '#2563eb',
-  exec:     '#dc2626',
-  admin:    '#ffc72c',
+  officer: '#2563eb',
+  lead: '#059669',
+  exec: '#dc2626',
+  admin: '#ffc72c',
 };
 
-export function hasRole(userRole: UserRole, minRole: UserRole): boolean {
-  return ROLE_HIERARCHY[userRole] >= ROLE_HIERARCHY[minRole];
-}
-
-// Roles that can edit site content (not officers — they manage events, not the website)
-export const CONTENT_EDITOR_ROLES: UserRole[] = ['lead', 'exec', 'admin'];
-export function canEditContent(role: UserRole): boolean {
-  return CONTENT_EDITOR_ROLES.includes(role);
-}
+// Roles assignable via the Role Manager UI (excludes 'guest', which is the
+// implicit zero-roles state, not something you grant).
+export const ASSIGNABLE_ROLES: AppRole[] = ['ucsd', 'division', 'officer', 'lead', 'exec', 'admin'];

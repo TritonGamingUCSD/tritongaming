@@ -1,8 +1,9 @@
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { getContentBlock } from '@/lib/content';
-import { getProfile } from '@/lib/auth';
-import { hasRole } from '@/types/database';
+import { getUserRoles } from '@/lib/auth';
+import { hasCapability } from '@/lib/capabilities';
+import { createClient } from '@/lib/supabase/server';
 import styles from './division.module.css';
 
 interface Params {
@@ -46,8 +47,14 @@ export default async function DivisionPage({ params }: Params) {
   const description = division.description || '';
   const logoUrl = division.logo ? (division.logo.startsWith('/') ? division.logo : `/${division.logo}`) : null;
 
-  const profile = await getProfile();
-  const canEdit = profile && hasRole(profile.role, 'admin');
+  const roles = await getUserRoles();
+  const supabase = await createClient();
+  const { data: divisionRow } = await supabase
+    .from('divisions')
+    .select('id')
+    .eq('slug', slug)
+    .maybeSingle();
+  const canEdit = divisionRow ? hasCapability(roles, 'manage_division', divisionRow.id) : false;
 
   return (
     <div className={styles.page}>

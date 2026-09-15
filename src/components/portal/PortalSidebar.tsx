@@ -4,20 +4,21 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import type { Profile, UserRole } from '@/types/database';
-import { hasRole, ROLE_LABELS, ROLE_COLORS } from '@/types/database';
+import type { Profile, Capability } from '@/types/database';
+import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
+import { hasCapability, type RoleGrant } from '@/lib/capabilities';
 import styles from './PortalSidebar.module.css';
 
 interface Props {
   profile: Profile;
+  roles: RoleGrant[];
 }
 
 interface NavItem {
   href: string;
   label: string;
   icon: string;
-  minRole?: UserRole;
-  allowedRoles?: UserRole[];
+  capability?: Capability;
   dividerBefore?: boolean;
 }
 
@@ -26,38 +27,38 @@ const NAV: NavItem[] = [
   { href: '/portal/profile',       label: 'My Profile',       icon: '👤' },
   { href: '/portal/tickets',       label: 'My Tickets',       icon: '🎟️' },
   { dividerBefore: true,
-    href: '/portal/checkin',       label: 'Check-In Scanner', icon: '📷', minRole: 'lead' },
-  { href: '/portal/events',        label: 'Events',           icon: '🗓️', minRole: 'officer' },
-  { href: '/portal/members',       label: 'Members',          icon: '👥', minRole: 'officer' },
+    href: '/portal/checkin',       label: 'Check-In Scanner', icon: '📷', capability: 'checkin' },
+  { href: '/portal/events',        label: 'Events',           icon: '🗓️', capability: 'manage_events' },
+  { href: '/portal/members',       label: 'Members',          icon: '👥', capability: 'view_members' },
   { dividerBefore: true,
-    href: '/portal/admin/content', label: 'Edit Site Content', icon: '✏️', allowedRoles: ['lead', 'exec', 'admin'] },
-  { href: '/portal/admin',         label: 'Admin',            icon: '🛡️', minRole: 'exec' },
+    href: '/portal/admin/content', label: 'Edit Site Content', icon: '✏️', capability: 'manage_site_content' },
+  { href: '/portal/admin',         label: 'Admin',            icon: '🛡️', capability: 'view_admin_dashboard' },
 ];
 
 // Role-specific bottom tab bars — iOS-style
-function getBottomTabs(role: UserRole) {
-  if (hasRole(role, 'exec')) return [
+function getBottomTabs(roles: RoleGrant[]) {
+  if (hasCapability(roles, 'view_admin_dashboard')) return [
     { href: '/portal',         icon: HomeIcon,    label: 'Home' },
     { href: '/portal/events',  icon: CalendarIcon, label: 'Events' },
     { href: '/portal/checkin', icon: ScanIcon,    label: 'Scan' },
     { href: '/portal/members', icon: PeopleIcon,  label: 'Members' },
     { href: '/portal/admin',   icon: ShieldIcon,  label: 'Admin' },
   ];
-  if (hasRole(role, 'officer')) return [
+  if (hasCapability(roles, 'manage_events')) return [
     { href: '/portal',         icon: HomeIcon,    label: 'Home' },
     { href: '/portal/checkin', icon: ScanIcon,    label: 'Scan' },
     { href: '/portal/events',  icon: CalendarIcon, label: 'Events' },
     { href: '/portal/members', icon: PeopleIcon,  label: 'Members' },
     { href: '/portal/profile', icon: PersonIcon,  label: 'Me' },
   ];
-  if (hasRole(role, 'lead')) return [
+  if (hasCapability(roles, 'checkin') || hasCapability(roles, 'manage_division')) return [
     { href: '/portal',          icon: HomeIcon,    label: 'Home' },
     { href: '/portal/checkin',  icon: ScanIcon,    label: 'Scan' },
     { href: '/events',          icon: CalendarIcon, label: 'Events' },
     { href: '/portal/tickets',  icon: TicketIcon,  label: 'Tickets' },
     { href: '/portal/profile',  icon: PersonIcon,  label: 'Me' },
   ];
-  // member / guest
+  // guest / ucsd with no staff capabilities
   return [
     { href: '/portal',         icon: HomeIcon,   label: 'Home' },
     { href: '/portal/tickets', icon: TicketIcon, label: 'Tickets' },
@@ -66,7 +67,7 @@ function getBottomTabs(role: UserRole) {
   ];
 }
 
-export default function PortalSidebar({ profile }: Props) {
+export default function PortalSidebar({ profile, roles }: Props) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -77,13 +78,9 @@ export default function PortalSidebar({ profile }: Props) {
     router.refresh();
   }
 
-  const visibleNav = NAV.filter((item) => {
-    if (item.allowedRoles) return item.allowedRoles.includes(profile.role);
-    if (item.minRole) return hasRole(profile.role, item.minRole);
-    return true;
-  });
+  const visibleNav = NAV.filter((item) => !item.capability || hasCapability(roles, item.capability));
 
-  const bottomTabs = getBottomTabs(profile.role);
+  const bottomTabs = getBottomTabs(roles);
 
   function isActive(href: string) {
     if (href === '/portal') return pathname === href;
@@ -119,12 +116,19 @@ export default function PortalSidebar({ profile }: Props) {
             )}
             <div className={styles.userInfo}>
               <div className={styles.userName}>{profile.display_name || 'Member'}</div>
-              <span
-                className={styles.roleTag}
-                style={{ background: ROLE_COLORS[profile.role] + '22', color: ROLE_COLORS[profile.role] }}
-              >
-                {ROLE_LABELS[profile.role]}
-              </span>
+              <div className={styles.roleTagRow}>
+                {roles.length === 0 ? (
+                  <span className={styles.roleTag} style={{ background: ROLE_COLORS.guest + '22', color: ROLE_COLORS.guest }}>
+                    {ROLE_LABELS.guest}
+                  </span>
+                ) : (
+                  roles.map((r) => (
+                    <span key={r.role} className={styles.roleTag} style={{ background: ROLE_COLORS[r.role] + '22', color: ROLE_COLORS[r.role] }}>
+                      {ROLE_LABELS[r.role]}
+                    </span>
+                  ))
+                )}
+              </div>
             </div>
           </div>
 

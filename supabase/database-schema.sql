@@ -1,13 +1,17 @@
--- Schema for the public tables: profiles, events, tickets, site_contents, sponsors.
--- Verified 2026-09-15 against the linked project (`supabase db query --linked`
--- against information_schema) — these 5 tables are the *only* ones in the
--- public schema; there is no divisions/division_content/member_requests table
--- and no division_id column on profiles or events. No migration was needed to
--- narrow the DB — it was already at this shape. (This file itself was fixed up
--- from a truncated dump that cut off mid-statement after `sponsors`; column
--- defaults/constraints below are hand-transcribed from that dump, not a fresh
--- pg_dump — regenerate with `supabase db dump --linked --schema public` once
--- `pg_dump` or Docker is available locally if you want a byte-exact copy.)
+-- Schema for the public tables, as of the multi-role capabilities migration
+-- (supabase/migrations/20260915033819_multi_role_capabilities.sql). Hand
+-- maintained, not a fresh pg_dump — regenerate with
+-- `supabase db dump --linked --schema public` once `pg_dump` or Docker is
+-- available locally if you want a byte-exact copy.
+--
+-- Permissions are no longer a single `profiles.role` enum — see
+-- `user_roles` (a user can hold several roles at once, e.g. both 'officer'
+-- and 'division'), `divisions` (scopes the 'division' role to a specific
+-- division), and `role_capabilities` (maps each role to what it can do;
+-- mirrored in src/lib/capabilities.ts). `profiles.role`/`division_id` and the
+-- old `user_role` enum were dropped — this file used to carry a stale
+-- `division_id uuid` line on `profiles` left over from an old truncated dump;
+-- confirmed not real via live introspection and removed for good here.
 
 CREATE TABLE public.profiles (
   id uuid NOT NULL,
@@ -18,12 +22,40 @@ CREATE TABLE public.profiles (
   gamer_tag text,
   major text,
   year text,
-  role USER-DEFINED NOT NULL DEFAULT 'guest'::user_role,
-  division_id uuid,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT profiles_pkey PRIMARY KEY (id),
   CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
+);
+
+CREATE TABLE public.divisions (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  slug text NOT NULL UNIQUE,
+  name text NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT divisions_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.user_roles (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  role USER-DEFINED NOT NULL, -- app_role: ucsd | division | officer | lead | exec | admin
+  division_id uuid,           -- required iff role = 'division', forbidden otherwise
+  granted_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT user_roles_pkey PRIMARY KEY (id),
+  CONSTRAINT user_roles_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT user_roles_division_id_fkey FOREIGN KEY (division_id) REFERENCES public.divisions(id),
+  CONSTRAINT user_roles_granted_by_fkey FOREIGN KEY (granted_by) REFERENCES public.profiles(id),
+  CONSTRAINT user_roles_division_scope_ck CHECK ((role = 'division') = (division_id IS NOT NULL))
+);
+-- UNIQUE INDEX user_roles_user_id_role_key ON (user_id, role) — one row per
+-- (user, role); a user holds at most one division at a time.
+
+CREATE TABLE public.role_capabilities (
+  role USER-DEFINED NOT NULL,
+  capability text NOT NULL,
+  CONSTRAINT role_capabilities_pkey PRIMARY KEY (role, capability)
 );
 
 CREATE TABLE public.events (
@@ -43,6 +75,7 @@ CREATE TABLE public.events (
   is_published boolean DEFAULT true,
   requires_ticket boolean DEFAULT false,
   ticket_price numeric DEFAULT 0,
+  audience text NOT NULL DEFAULT 'public'::text CHECK (audience = ANY (ARRAY['public'::text, 'ucsd_only'::text])),
   created_by uuid,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
@@ -58,11 +91,13 @@ CREATE TABLE public.tickets (
   status USER-DEFINED NOT NULL DEFAULT 'active'::ticket_status,
   checked_in_at timestamp with time zone,
   checked_in_by uuid,
+  stripe_session_id text UNIQUE,
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT tickets_pkey PRIMARY KEY (id),
   CONSTRAINT tickets_checked_in_by_fkey FOREIGN KEY (checked_in_by) REFERENCES public.profiles(id),
   CONSTRAINT tickets_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.events(id),
-  CONSTRAINT tickets_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+  CONSTRAINT tickets_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT tickets_event_id_user_id_key UNIQUE (event_id, user_id)
 );
 CREATE TABLE public.site_contents (
   key text NOT NULL,

@@ -6,9 +6,10 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types/database';
 import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
+import type { RoleGrant } from '@/lib/capabilities';
 import styles from './profile.module.css';
 
-export default function ProfileClient({ profile }: { profile: Profile }) {
+export default function ProfileClient({ profile, roles }: { profile: Profile; roles: RoleGrant[] }) {
   const [form, setForm] = useState({
     display_name: profile.display_name || '',
     gamer_tag: profile.gamer_tag || '',
@@ -68,12 +69,19 @@ export default function ProfileClient({ profile }: { profile: Profile }) {
               {(profile.display_name || 'U')[0].toUpperCase()}
             </div>
           )}
-          <span
-            className={styles.roleTag}
-            style={{ background: ROLE_COLORS[profile.role] + '22', color: ROLE_COLORS[profile.role] }}
-          >
-            {ROLE_LABELS[profile.role]}
-          </span>
+          <div className={styles.roleTagRow}>
+            {roles.length === 0 ? (
+              <span className={styles.roleTag} style={{ background: ROLE_COLORS.guest + '22', color: ROLE_COLORS.guest }}>
+                {ROLE_LABELS.guest}
+              </span>
+            ) : (
+              roles.map((r) => (
+                <span key={r.role} className={styles.roleTag} style={{ background: ROLE_COLORS[r.role] + '22', color: ROLE_COLORS[r.role] }}>
+                  {ROLE_LABELS[r.role]}
+                </span>
+              ))
+            )}
+          </div>
           <p className={styles.avatarNote}>
             Profile picture synced from Google account
           </p>

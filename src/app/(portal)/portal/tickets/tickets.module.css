@@ -262,9 +262,39 @@
   background: rgba(255, 199, 44, 0.1);
   white-space: nowrap;
   transition: background 0.15s;
+  border: none;
+  cursor: pointer;
 }
 
 .registerBtn:hover { background: rgba(255, 199, 44, 0.2); }
+.registerBtn:disabled { opacity: 0.6; cursor: default; }
+
+.registerBtnDisabled {
+  font-size: 0.75rem;
+  font-family: var(--font-futura-medium);
+  color: rgba(242, 241, 240, 0.4);
+  padding: 0.3rem 0.625rem;
+  white-space: nowrap;
+}
+
+.checkoutBanner,
+.checkoutBannerWarn {
+  font-size: 0.85rem;
+  font-family: var(--font-futura-medium);
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.checkoutBanner {
+  color: #059669;
+  background: rgba(5, 150, 105, 0.12);
+}
+
+.checkoutBannerWarn {
+  color: var(--yellow);
+  background: rgba(255, 199, 44, 0.1);
+}
 
 /* ── Empty state ─────────────────────────────────── */
 .empty {

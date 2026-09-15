@@ -66,6 +66,12 @@
 .input:focus { outline: none; border-color: rgba(255,199,44,0.4); }
 .input option { background: #0a0f1e; color: var(--white); }
 
+.hint {
+  font-size: 0.72rem;
+  font-family: var(--font-futura-medium);
+  color: rgba(242,241,240,0.4);
+}
+
 .textarea { resize: vertical; min-height: 120px; }
 
 .checkboxGroup {

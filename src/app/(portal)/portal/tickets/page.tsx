@@ -1,12 +1,14 @@
-import { getProfile } from '@/lib/auth';
+import { Suspense } from 'react';
+import { getProfile, getUser } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
+import { isUcsdEmail } from '@/lib/ucsd';
 import TicketsClient from './TicketsClient';
 
 export const metadata = { title: 'My Tickets' };
 export const dynamic = 'force-dynamic';
 
 export default async function TicketsPage() {
-  const profile = await getProfile();
+  const [profile, user] = await Promise.all([getProfile(), getUser()]);
   if (!profile) return null;
 
   const supabase = await createClient();
@@ -19,19 +21,22 @@ export default async function TicketsPage() {
     .eq('user_id', profile.id)
     .order('created_at', { ascending: false });
 
-  // Fetch upcoming events that don't require tickets for "browse events" section
+  // Fetch upcoming events for the "register" section
   const { data: upcomingEvents } = await supabase
     .from('events')
-    .select('id, title, start_date, location, requires_ticket')
+    .select('id, title, start_date, location, requires_ticket, ticket_price, audience')
     .eq('is_published', true)
     .gte('start_date', new Date().toISOString())
     .order('start_date', { ascending: true })
     .limit(6);
 
   return (
-    <TicketsClient
-      tickets={(tickets ?? []) as unknown as Parameters<typeof TicketsClient>[0]['tickets']}
-      upcomingEvents={(upcomingEvents ?? []) as unknown as Parameters<typeof TicketsClient>[0]['upcomingEvents']}
-    />
+    <Suspense>
+      <TicketsClient
+        tickets={(tickets ?? []) as unknown as Parameters<typeof TicketsClient>[0]['tickets']}
+        upcomingEvents={(upcomingEvents ?? []) as unknown as Parameters<typeof TicketsClient>[0]['upcomingEvents']}
+        isUcsd={isUcsdEmail(user?.email)}
+      />
+    </Suspense>
   );
 }

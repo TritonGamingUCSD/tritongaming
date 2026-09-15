@@ -14,6 +14,9 @@ function mapSupabaseEvent(row: Record<string, unknown>): Event {
     location: (row.location as string) ?? '',
     content: (row.content as string) ?? '',
     url: (row.url as string) ?? '',
+    requires_ticket: (row.requires_ticket as boolean) ?? false,
+    ticket_price: (row.ticket_price as number) ?? 0,
+    audience: (row.audience as 'public' | 'ucsd_only') ?? 'public',
   };
 }
 

@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { getProfile } from '@/lib/auth';
-import { hasRole } from '@/types/database';
+import { getUserRoles } from '@/lib/auth';
+import { hasCapability } from '@/lib/capabilities';
 import { createClient } from '@/lib/supabase/server';
 import styles from './events.module.css';
 
@@ -9,8 +9,8 @@ export const metadata = { title: 'Event Management' };
 export const dynamic = 'force-dynamic';
 
 export default async function EventsManagementPage() {
-  const profile = await getProfile();
-  if (!profile || !hasRole(profile.role, 'officer')) redirect('/portal');
+  const roles = await getUserRoles();
+  if (!hasCapability(roles, 'manage_events')) redirect('/portal');
 
   const supabase = await createClient();
   const { data: events } = await supabase
@@ -38,6 +38,7 @@ export default async function EventsManagementPage() {
             <span>Date</span>
             <span>Tickets</span>
             <span>Status</span>
+            <span></span>
           </div>
           {events.map((event) => (
             <div key={event.id} className={styles.tableRow}>
@@ -63,6 +64,9 @@ export default async function EventsManagementPage() {
                 <span className={`${styles.badge} ${event.is_published ? styles.published : styles.draft}`}>
                   {event.is_published ? 'Published' : 'Draft'}
                 </span>
+              </div>
+              <div>
+                <Link href={`/portal/events/${event.id}`} className={styles.checkinLink}>Edit</Link>
               </div>
             </div>
           ))}

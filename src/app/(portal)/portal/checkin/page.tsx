@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
-import { getProfile } from '@/lib/auth';
-import { hasRole } from '@/types/database';
+import { getUserRoles } from '@/lib/auth';
+import { hasCapability } from '@/lib/capabilities';
 import { createClient } from '@/lib/supabase/server';
 import CheckInClient from './CheckInClient';
 
@@ -8,9 +8,8 @@ export const metadata = { title: 'Check-In Scanner' };
 export const dynamic = 'force-dynamic';
 
 export default async function CheckInPage() {
-  const profile = await getProfile();
-  // lead and above can run check-in (division leads run their own events)
-  if (!profile || !hasRole(profile.role, 'lead')) redirect('/portal');
+  const roles = await getUserRoles();
+  if (!hasCapability(roles, 'checkin')) redirect('/portal');
 
   const supabase = await createClient();
   const { data: events } = await supabase

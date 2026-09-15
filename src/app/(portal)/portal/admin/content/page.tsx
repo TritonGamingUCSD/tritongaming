@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { getProfile } from '@/lib/auth';
-import { hasRole } from '@/types/database';
+import { getUserRoles } from '@/lib/auth';
+import { hasCapability } from '@/lib/capabilities';
 import { createClient } from '@/lib/supabase/server';
 import { CONTENT_BLOCKS } from '@/lib/content-blocks';
 import ContentEditor from './ContentEditor';
@@ -10,8 +10,10 @@ export const metadata = { title: 'Edit Site Content' };
 export const dynamic = 'force-dynamic';
 
 export default async function ContentPage() {
-  const profile = await getProfile();
-  if (!profile || !hasRole(profile.role, 'officer')) redirect('/portal');
+  const roles = await getUserRoles();
+  // Previously gated at 'officer'+, but the save API requires manage_site_content
+  // (lead/exec/admin) — officers could open this page and have every save 403.
+  if (!hasCapability(roles, 'manage_site_content')) redirect('/portal');
 
   const supabase = await createClient();
   const { data: rows } = await supabase

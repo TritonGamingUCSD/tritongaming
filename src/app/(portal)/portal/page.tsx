@@ -1,16 +1,20 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { getProfile } from '@/lib/auth';
+import { getProfile, getUserRoles } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
-import { hasRole, canEditContent, ROLE_LABELS, ROLE_COLORS } from '@/types/database';
+import { hasCapability } from '@/lib/capabilities';
+import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
 import DashboardClient from './DashboardClient';
 import styles from './dashboard.module.css';
 
 export const dynamic = 'force-dynamic';
 
 export default async function PortalDashboard() {
-  const profile = await getProfile();
+  const [profile, roles] = await Promise.all([getProfile(), getUserRoles()]);
   if (!profile) return null;
+
+  const canManageEvents = hasCapability(roles, 'manage_events');
+  const canCheckin = hasCapability(roles, 'checkin');
 
   const supabase = await createClient();
   const now = new Date().toISOString();
@@ -36,7 +40,7 @@ export default async function PortalDashboard() {
       .order('start_date', { ascending: true })
       .limit(5),
 
-    hasRole(profile.role, 'officer')
+    canManageEvents
       ? supabase.from('events')
           .select('id, title, start_date')
           .eq('is_published', true)
@@ -45,8 +49,8 @@ export default async function PortalDashboard() {
           .limit(10)
       : Promise.resolve({ data: [] }),
 
-    // For officers: get checkin stats for active events
-    hasRole(profile.role, 'officer')
+    // For check-in staff: get checkin stats for active events
+    canCheckin
       ? supabase.from('events')
           .select('id, title, start_date')
           .eq('is_published', true)
@@ -79,7 +83,7 @@ export default async function PortalDashboard() {
       value: myTickets.filter((t) => t.status === 'active').length,
       href: '/portal/tickets', color: '#0ea5e9',
     },
-    ...(hasRole(profile.role, 'officer') ? [{
+    ...(canManageEvents ? [{
       icon: '🗓️', label: 'Events This Week',
       value: eventsThisWeek.length, href: '/portal/events', color: '#059669',
     }] : []),
@@ -89,14 +93,16 @@ export default async function PortalDashboard() {
     { href: '/portal/profile',  icon: '👤', label: 'Profile' },
     { href: '/events',          icon: '🗓️', label: 'Events' },
     { href: '/divisions',       icon: '🎮', label: 'Divisions' },
-    ...(hasRole(profile.role, 'officer') ? [
+    ...(canManageEvents ? [
       { href: '/portal/events', icon: '➕', label: 'Add Event' },
+    ] : []),
+    ...(canCheckin ? [
       { href: '/portal/checkin',icon: '📷', label: 'Check-In' },
     ] : []),
-    ...(canEditContent(profile.role) ? [
+    ...(hasCapability(roles, 'manage_site_content') ? [
       { href: '/portal/admin/content', icon: '✏️', label: 'Edit Site' },
     ] : []),
-    ...(hasRole(profile.role, 'exec') ? [
+    ...(hasCapability(roles, 'view_admin_dashboard') ? [
       { href: '/portal/admin',  icon: '🛡️', label: 'Admin' },
     ] : []),
   ];
@@ -122,18 +128,29 @@ export default async function PortalDashboard() {
           )}
           <div>
             <p className={styles.greeting}>{greeting}, {profile.display_name?.split(' ')[0] || 'Triton'}</p>
-            <span
-              className={styles.roleChip}
-              style={{ background: ROLE_COLORS[profile.role] + '18', color: ROLE_COLORS[profile.role], borderColor: ROLE_COLORS[profile.role] + '44' }}
-            >
-              {ROLE_LABELS[profile.role]}
-            </span>
+            <div className={styles.roleChips}>
+              {roles.length === 0 ? (
+                <span className={styles.roleChip} style={{ background: ROLE_COLORS.guest + '18', color: ROLE_COLORS.guest, borderColor: ROLE_COLORS.guest + '44' }}>
+                  {ROLE_LABELS.guest}
+                </span>
+              ) : (
+                roles.map((r) => (
+                  <span
+                    key={r.role}
+                    className={styles.roleChip}
+                    style={{ background: ROLE_COLORS[r.role] + '18', color: ROLE_COLORS[r.role], borderColor: ROLE_COLORS[r.role] + '44' }}
+                  >
+                    {ROLE_LABELS[r.role]}
+                  </span>
+                ))
+              )}
+            </div>
           </div>
         </div>
       </header>
 
-      {/* ── Officer: Today's check-in shortcut ─────── */}
-      {hasRole(profile.role, 'officer') && todayEvents.length > 0 && (
+      {/* ── Check-in staff: Today's check-in shortcut ─ */}
+      {canCheckin && todayEvents.length > 0 && (
         <Link href="/portal/checkin" className={styles.checkinBanner}>
           <div className={styles.checkinBannerDot} />
           <div>
@@ -145,7 +162,7 @@ export default async function PortalDashboard() {
       )}
 
       {/* ── Member: Next ticket hero ────────────────── */}
-      {nextTicket && !hasRole(profile.role, 'officer') && (
+      {nextTicket && !canManageEvents && (
         <DashboardClient ticket={nextTicket as Parameters<typeof DashboardClient>[0]['ticket']} />
       )}
 

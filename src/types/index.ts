@@ -8,6 +8,9 @@ export type Event = {
   location: string;
   content: string;
   url: string;
+  requires_ticket: boolean;
+  ticket_price: number;
+  audience: 'public' | 'ucsd_only';
 };
 
 export type OfficerEntry = {

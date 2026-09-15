@@ -1,20 +1,19 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getProfile } from '@/lib/auth';
-import { hasRole } from '@/types/database';
+import { getProfile, getUserRoles } from '@/lib/auth';
 import PortalSidebar from '@/components/portal/PortalSidebar';
 import styles from './portal.module.css';
 
 export const metadata = { title: 'Member Portal' };
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
-  const profile = await getProfile();
+  const [profile, roles] = await Promise.all([getProfile(), getUserRoles()]);
   if (!profile) redirect('/login?next=/portal');
 
   return (
     <div className={styles.layout}>
-      <PortalSidebar profile={profile} />
+      <PortalSidebar profile={profile} roles={roles} />
       <main className={styles.main}>
         <div className={styles.topbar}>
           <Link href="/" className={styles.homeLink}>

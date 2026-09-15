@@ -2,27 +2,37 @@
 
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
-import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
-import type { UserRole } from '@/types/database';
+import { ROLE_LABELS, ROLE_COLORS, ASSIGNABLE_ROLES } from '@/types/database';
+import type { AppRole } from '@/types/database';
 import styles from './RoleManager.module.css';
+
+interface RoleGrant {
+  role: AppRole;
+  division_id: string | null;
+}
 
 interface User {
   id: string;
   display_name: string | null;
   avatar_url: string | null;
-  role: UserRole;
   gamer_tag: string | null;
   created_at: string;
+  user_roles: RoleGrant[];
 }
 
-const ALL_ROLES: UserRole[] = ['guest', 'member', 'officer', 'division', 'lead', 'exec', 'admin'];
+interface DivisionOption {
+  id: string;
+  name: string;
+}
 
-export default function RoleManager({ users: initialUsers }: { users: User[] }) {
+export default function RoleManager({ users: initialUsers, divisions }: { users: User[]; divisions: DivisionOption[] }) {
   const [users, setUsers] = useState(initialUsers);
   const [query, setQuery] = useState('');
-  const [filterRole, setFilterRole] = useState<UserRole | 'all'>('all');
-  const [updating, setUpdating] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ name: string; role: UserRole } | null>(null);
+  const [filterRole, setFilterRole] = useState<AppRole | 'all'>('all');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<RoleGrant[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     return users.filter((u) => {
@@ -30,49 +40,58 @@ export default function RoleManager({ users: initialUsers }: { users: User[] }) 
         !query ||
         (u.display_name || '').toLowerCase().includes(query.toLowerCase()) ||
         (u.gamer_tag || '').toLowerCase().includes(query.toLowerCase());
-      const matchR = filterRole === 'all' || u.role === filterRole;
+      const matchR = filterRole === 'all' || u.user_roles.some((r) => r.role === filterRole);
       return matchQ && matchR;
     });
   }, [users, query, filterRole]);
 
-  async function updateRole(userId: string, newRole: UserRole) {
-    if (updating) return;
-    setUpdating(userId);
-    try {
-      const res = await fetch('/api/admin/roles', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, role: newRole }),
-      });
-      if (res.ok) {
-        const user = users.find((u) => u.id === userId);
-        setUsers((prev) =>
-          prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
-        );
-        setToast({ name: user?.display_name || 'User', role: newRole });
-        setTimeout(() => setToast(null), 3000);
-      }
-    } finally {
-      setUpdating(null);
-    }
-  }
-
   const roleCounts = useMemo(() => {
     const counts: Record<string, number> = { all: users.length };
-    ALL_ROLES.forEach((r) => {
-      counts[r] = users.filter((u) => u.role === r).length;
+    ASSIGNABLE_ROLES.forEach((r) => {
+      counts[r] = users.filter((u) => u.user_roles.some((ur) => ur.role === r)).length;
     });
     return counts;
   }, [users]);
 
+  function startEditing(user: User) {
+    setEditingId(user.id);
+    setDraft(user.user_roles.map((r) => ({ ...r })));
+  }
+
+  function toggleDraftRole(role: AppRole, checked: boolean) {
+    setDraft((prev) => {
+      if (checked) return [...prev, { role, division_id: role === 'division' ? (divisions[0]?.id ?? null) : null }];
+      return prev.filter((r) => r.role !== role);
+    });
+  }
+
+  function setDraftDivision(divisionId: string) {
+    setDraft((prev) => prev.map((r) => (r.role === 'division' ? { ...r, division_id: divisionId } : r)));
+  }
+
+  async function saveDraft(userId: string) {
+    setSaving(true);
+    try {
+      const res = await fetch('/api/admin/roles', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, roles: draft }),
+      });
+      if (res.ok) {
+        const user = users.find((u) => u.id === userId);
+        setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, user_roles: draft } : u)));
+        setEditingId(null);
+        setToast(`Updated ${user?.display_name || 'user'}'s roles`);
+        setTimeout(() => setToast(null), 3000);
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div className={styles.wrap}>
-      {/* Toast notification */}
-      {toast && (
-        <div className={styles.toast}>
-          ✓ {toast.name} → <span style={{ color: ROLE_COLORS[toast.role] }}>{ROLE_LABELS[toast.role]}</span>
-        </div>
-      )}
+      {toast && <div className={styles.toast}>✓ {toast}</div>}
 
       {/* Controls */}
       <div className={styles.controls}>
@@ -97,7 +116,7 @@ export default function RoleManager({ users: initialUsers }: { users: User[] }) 
           >
             All <span className={styles.count}>{roleCounts.all}</span>
           </button>
-          {ALL_ROLES.filter((r) => roleCounts[r] > 0).map((r) => (
+          {ASSIGNABLE_ROLES.filter((r) => roleCounts[r] > 0).map((r) => (
             <button
               key={r}
               className={`${styles.roleFilter} ${filterRole === r ? styles.roleFilterActive : ''}`}
@@ -115,64 +134,86 @@ export default function RoleManager({ users: initialUsers }: { users: User[] }) 
         {filtered.length === 0 ? (
           <div className={styles.empty}>No users found matching "{query}"</div>
         ) : (
-          filtered.map((user) => (
-            <div
-              key={user.id}
-              className={`${styles.row} ${updating === user.id ? styles.rowUpdating : ''}`}
-            >
-              <div className={styles.userInfo}>
-                {user.avatar_url ? (
-                  <Image src={user.avatar_url} alt="" width={38} height={38} className={styles.avatar} />
+          filtered.map((user) => {
+            const isEditing = editingId === user.id;
+            return (
+              <div key={user.id} className={`${styles.row} ${isEditing ? styles.rowUpdating : ''}`}>
+                <div className={styles.userInfo}>
+                  {user.avatar_url ? (
+                    <Image src={user.avatar_url} alt="" width={38} height={38} className={styles.avatar} />
+                  ) : (
+                    <div className={styles.avatarFallback} style={{ background: user.user_roles[0] ? ROLE_COLORS[user.user_roles[0].role] : ROLE_COLORS.guest }}>
+                      {(user.display_name || '?')[0].toUpperCase()}
+                    </div>
+                  )}
+                  <div>
+                    <div className={styles.userName}>{user.display_name || 'Anonymous'}</div>
+                    <div className={styles.userSub}>
+                      {user.gamer_tag ? (
+                        <span className={styles.gamerTag}>🎮 {user.gamer_tag}</span>
+                      ) : null}
+                      <span className={styles.joinDate}>
+                        Joined {new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {!isEditing ? (
+                  <div className={styles.roleSection}>
+                    {user.user_roles.length === 0 ? (
+                      <span className={styles.currentRole} style={{ background: ROLE_COLORS.guest + '18', color: ROLE_COLORS.guest, borderColor: ROLE_COLORS.guest + '44' }}>
+                        {ROLE_LABELS.guest}
+                      </span>
+                    ) : (
+                      user.user_roles.map((r) => (
+                        <span
+                          key={r.role}
+                          className={styles.currentRole}
+                          style={{ background: ROLE_COLORS[r.role] + '18', color: ROLE_COLORS[r.role], borderColor: ROLE_COLORS[r.role] + '44' }}
+                        >
+                          {ROLE_LABELS[r.role]}
+                        </span>
+                      ))
+                    )}
+                    <button className={styles.roleBtn} onClick={() => startEditing(user)}>Edit Roles</button>
+                  </div>
                 ) : (
-                  <div className={styles.avatarFallback} style={{ background: ROLE_COLORS[user.role] }}>
-                    {(user.display_name || '?')[0].toUpperCase()}
+                  <div className={styles.editPanel}>
+                    <div className={styles.checkboxGrid}>
+                      {ASSIGNABLE_ROLES.map((r) => (
+                        <label key={r} className={styles.checkboxLabel}>
+                          <input
+                            type="checkbox"
+                            checked={draft.some((d) => d.role === r)}
+                            onChange={(e) => toggleDraftRole(r, e.target.checked)}
+                          />
+                          <span style={{ color: ROLE_COLORS[r] }}>{ROLE_LABELS[r]}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {draft.some((d) => d.role === 'division') && (
+                      <select
+                        className={styles.divisionSelect}
+                        value={draft.find((d) => d.role === 'division')?.division_id ?? ''}
+                        onChange={(e) => setDraftDivision(e.target.value)}
+                      >
+                        {divisions.map((d) => (
+                          <option key={d.id} value={d.id}>{d.name}</option>
+                        ))}
+                      </select>
+                    )}
+                    <div className={styles.editActions}>
+                      <button className={styles.roleBtn} onClick={() => setEditingId(null)} disabled={saving}>Cancel</button>
+                      <button className={styles.roleBtn} onClick={() => saveDraft(user.id)} disabled={saving}>
+                        {saving ? 'Saving…' : 'Save'}
+                      </button>
+                    </div>
                   </div>
                 )}
-                <div>
-                  <div className={styles.userName}>{user.display_name || 'Anonymous'}</div>
-                  <div className={styles.userSub}>
-                    {user.gamer_tag ? (
-                      <span className={styles.gamerTag}>🎮 {user.gamer_tag}</span>
-                    ) : null}
-                    <span className={styles.joinDate}>
-                      Joined {new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                    </span>
-                  </div>
-                </div>
               </div>
-
-              <div className={styles.roleSection}>
-                <span
-                  className={styles.currentRole}
-                  style={{ background: ROLE_COLORS[user.role] + '18', color: ROLE_COLORS[user.role], borderColor: ROLE_COLORS[user.role] + '44' }}
-                >
-                  {ROLE_LABELS[user.role]}
-                </span>
-
-                <div className={styles.roleButtons}>
-                  {ALL_ROLES.map((r) => (
-                    r !== user.role ? (
-                      <button
-                        key={r}
-                        className={styles.roleBtn}
-                        style={{ '--role-color': ROLE_COLORS[r] } as React.CSSProperties}
-                        onClick={() => updateRole(user.id, r)}
-                        disabled={!!updating}
-                        title={`Set to ${ROLE_LABELS[r]}`}
-                        aria-label={`Set ${user.display_name} to ${ROLE_LABELS[r]}`}
-                      >
-                        {ROLE_LABELS[r]}
-                      </button>
-                    ) : null
-                  ))}
-                </div>
-              </div>
-
-              {updating === user.id && (
-                <div className={styles.updateSpinner} aria-label="Updating…" />
-              )}
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 

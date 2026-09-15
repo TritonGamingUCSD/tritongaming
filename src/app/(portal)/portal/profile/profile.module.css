@@ -46,6 +46,13 @@
   border: 3px solid rgba(255,199,44,0.3);
 }
 
+.roleTagRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: center;
+}
+
 .roleTag {
   font-size: 0.7rem;
   font-family: var(--font-renegare);

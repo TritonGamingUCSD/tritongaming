@@ -187,6 +187,13 @@
 
 .sub { font-size: 0.82rem; color: rgba(242,241,240,0.38); }
 
+.roleChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.3rem;
+}
+
 .roleChip {
   display: inline-block;
   font-size: 0.62rem;
@@ -196,7 +203,6 @@
   border-radius: 9999px;
   text-transform: uppercase;
   border: 1px solid;
-  margin-top: 0.3rem;
   white-space: nowrap;
 }
 

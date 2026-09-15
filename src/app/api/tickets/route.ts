@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { stripe, stripeEnabled } from '@/lib/stripe';
+import { isUcsdEmail } from '@/lib/ucsd';
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -13,12 +15,31 @@ export async function POST(request: Request) {
   // Verify event exists and accepts tickets
   const { data: event } = await supabase
     .from('events')
-    .select('id, title, max_capacity, requires_ticket')
+    .select('id, title, max_capacity, requires_ticket, ticket_price, audience')
     .eq('id', event_id)
     .eq('is_published', true)
     .single();
 
-  if (!event) return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+  if (!event || !event.requires_ticket) {
+    return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+  }
+
+  const isUcsd = isUcsdEmail(user.email);
+
+  if (event.audience === 'ucsd_only' && !isUcsd) {
+    return NextResponse.json({ error: 'This event is open to UCSD-affiliated members only.' }, { status: 403 });
+  }
+
+  // Already registered?
+  const { data: existing } = await supabase
+    .from('tickets')
+    .select('id')
+    .eq('event_id', event_id)
+    .eq('user_id', user.id)
+    .maybeSingle();
+  if (existing) {
+    return NextResponse.json({ error: 'Already registered for this event' }, { status: 409 });
+  }
 
   // Check capacity
   if (event.max_capacity) {
@@ -33,20 +54,52 @@ export async function POST(request: Request) {
     }
   }
 
-  const { data: ticket, error } = await supabase
-    .from('tickets')
-    .insert({ event_id, user_id: user.id })
-    .select()
-    .single();
+  const price = isUcsd ? 0 : (event.ticket_price ?? 0);
 
-  if (error) {
-    if (error.code === '23505') {
-      return NextResponse.json({ error: 'Already registered for this event' }, { status: 409 });
+  // Free ticket (UCSD-affiliated, or a public event with no charge) — issue immediately.
+  if (price <= 0) {
+    const { data: ticket, error } = await supabase
+      .from('tickets')
+      .insert({ event_id, user_id: user.id })
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === '23505') {
+        return NextResponse.json({ error: 'Already registered for this event' }, { status: 409 });
+      }
+      return NextResponse.json({ error: 'Failed to create ticket' }, { status: 500 });
     }
-    return NextResponse.json({ error: 'Failed to create ticket' }, { status: 500 });
+
+    return NextResponse.json({ free: true, ticket }, { status: 201 });
   }
 
-  return NextResponse.json({ ticket }, { status: 201 });
+  // Paid ticket (non-UCSD attendee on a priced public event) — send them to Stripe.
+  // The ticket row itself is only created once the webhook confirms payment.
+  if (!stripeEnabled || !stripe) {
+    return NextResponse.json(
+      { error: 'Ticket purchases for this event aren’t available yet. Please check back soon.' },
+      { status: 503 }
+    );
+  }
+
+  const origin = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const session = await stripe.checkout.sessions.create({
+    mode: 'payment',
+    line_items: [{
+      quantity: 1,
+      price_data: {
+        currency: 'usd',
+        unit_amount: Math.round(price * 100),
+        product_data: { name: event.title },
+      },
+    }],
+    metadata: { event_id, user_id: user.id },
+    success_url: `${origin}/portal/tickets?checkout=success`,
+    cancel_url: `${origin}/portal/tickets?checkout=cancelled`,
+  });
+
+  return NextResponse.json({ url: session.url });
 }
 
 export async function GET() {

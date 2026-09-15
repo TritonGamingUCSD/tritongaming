@@ -95,6 +95,12 @@
   text-overflow: ellipsis;
 }
 
+.roleTagRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
 .roleTag {
   display: inline-block;
   font-size: 0.68rem;

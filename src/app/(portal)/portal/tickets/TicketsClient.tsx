@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import FullscreenQR from './FullscreenQR';
 import styles from './tickets.module.css';
 
@@ -26,11 +27,14 @@ interface UpcomingEvent {
   start_date: string;
   location: string | null;
   requires_ticket: boolean;
+  ticket_price: number;
+  audience: 'public' | 'ucsd_only';
 }
 
 interface Props {
   tickets: TicketData[];
   upcomingEvents: UpcomingEvent[];
+  isUcsd: boolean;
 }
 
 const STATUS_ICON: Record<string, string> = {
@@ -41,8 +45,50 @@ const STATUS_LABEL: Record<string, string> = {
   active: 'Active', used: 'Checked In', cancelled: 'Cancelled', expired: 'Expired',
 };
 
-export default function TicketsClient({ tickets, upcomingEvents }: Props) {
+export default function TicketsClient({ tickets, upcomingEvents, isUcsd }: Props) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [qrTicket, setQrTicket] = useState<TicketData | null>(null);
+  const [purchasing, setPurchasing] = useState<string | null>(null);
+  const [error, setError] = useState('');
+  const checkoutResult = searchParams.get('checkout');
+
+  // The Stripe webhook that creates the paid ticket runs async, so it may not
+  // have landed yet when Stripe redirects back here. Give it a couple of
+  // chances to show up.
+  useEffect(() => {
+    if (checkoutResult !== 'success') return;
+    const t1 = setTimeout(() => router.refresh(), 2000);
+    const t2 = setTimeout(() => router.refresh(), 6000);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [checkoutResult, router]);
+
+  async function handleGetTicket(eventId: string) {
+    setError('');
+    setPurchasing(eventId);
+    try {
+      const res = await fetch('/api/tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_id: eventId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Something went wrong. Please try again.');
+        setPurchasing(null);
+        return;
+      }
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      }
+      router.refresh();
+    } catch {
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setPurchasing(null);
+    }
+  }
 
   const activeTickets = tickets.filter((t) => t.status === 'active');
   const pastTickets   = tickets.filter((t) => t.status !== 'active');
@@ -60,6 +106,18 @@ export default function TicketsClient({ tickets, upcomingEvents }: Props) {
   return (
     <div className={styles.page}>
       <h1 className={styles.title}>My Tickets</h1>
+
+      {checkoutResult === 'success' && (
+        <div className={styles.checkoutBanner}>
+          ✓ Payment received — your ticket will appear here in a few seconds.
+        </div>
+      )}
+      {checkoutResult === 'cancelled' && (
+        <div className={styles.checkoutBannerWarn}>
+          Checkout was cancelled — no charge was made.
+        </div>
+      )}
+      {error && <div className={styles.checkoutBannerWarn}>{error}</div>}
 
       {/* Hero: next active ticket */}
       {nextActiveTicket && (
@@ -137,7 +195,21 @@ export default function TicketsClient({ tickets, upcomingEvents }: Props) {
                   )}
                 </div>
                 {event.requires_ticket && (
-                  <a href="/events" className={styles.registerBtn}>Register →</a>
+                  event.audience === 'ucsd_only' && !isUcsd ? (
+                    <span className={styles.registerBtnDisabled}>UCSD students only</span>
+                  ) : (
+                    <button
+                      className={styles.registerBtn}
+                      disabled={purchasing === event.id}
+                      onClick={() => handleGetTicket(event.id)}
+                    >
+                      {purchasing === event.id
+                        ? 'Please wait…'
+                        : isUcsd || event.ticket_price <= 0
+                        ? 'Get Ticket — Free'
+                        : `Buy Ticket — $${event.ticket_price}`}
+                    </button>
+                  )
                 )}
               </div>
             ))}

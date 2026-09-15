@@ -38,7 +38,7 @@ export default function NavBar() {
       if (user) {
         const { data } = await supabase
           .from('profiles')
-          .select('id, display_name, avatar_url, role')
+          .select('id, display_name, avatar_url')
           .eq('id', user.id)
           .single();
         setProfile(data as Profile | null);
