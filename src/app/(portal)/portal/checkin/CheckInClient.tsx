@@ -25,6 +25,9 @@ interface CheckinStats {
 interface DebugInfo {
   received: string;
   windowIndex: number;
+  requestedEventId: string;
+  totalVisibleTickets: number;
+  otherEventIds: string[];
   candidates: Array<{ status: string; expected_now: string; expected_prev: string }>;
 }
 
@@ -300,8 +303,15 @@ export default function CheckInClient({ events }: { events: Event[] }) {
             {debugInfo && (
               <div className={styles.debugBox}>
                 <div>scanned: {debugInfo.received}</div>
-                {debugInfo.candidates.length === 0 ? (
-                  <div>no tickets exist for this event at all</div>
+                <div>selected event id: {debugInfo.requestedEventId}</div>
+                <div>tickets server can see (any event): {debugInfo.totalVisibleTickets}</div>
+                {debugInfo.totalVisibleTickets === 0 ? (
+                  <div>⚠ server sees ZERO tickets at all — permissions issue, not a code issue</div>
+                ) : debugInfo.candidates.length === 0 ? (
+                  <div>
+                    ⚠ none of those tickets belong to the selected event.
+                    event ids server does see: {debugInfo.otherEventIds.join(', ')}
+                  </div>
                 ) : (
                   debugInfo.candidates.map((c, i) => (
                     <div key={i}>

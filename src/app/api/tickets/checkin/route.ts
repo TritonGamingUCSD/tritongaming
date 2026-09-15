@@ -70,7 +70,14 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       error: 'Code not recognized — ask them to reopen their ticket and try again',
-      debug: { received: normalizedCode, windowIndex, candidates: debugCandidates },
+      debug: {
+        received: normalizedCode,
+        windowIndex,
+        requestedEventId: event_id,
+        totalVisibleTickets: candidates.length,
+        otherEventIds: [...new Set(candidates.map((t) => t.event_id))],
+        candidates: debugCandidates,
+      },
     }, { status: 404 });
   }
 
