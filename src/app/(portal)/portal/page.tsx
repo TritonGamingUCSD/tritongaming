@@ -19,9 +19,7 @@ export default async function PortalDashboard() {
   const [
     ticketsRes,
     upcomingRes,
-    pendingRes,
     eventsThisWeekRes,
-    divisionRes,
     checkinStatsRes,
   ] = await Promise.all([
     supabase.from('tickets')
@@ -38,12 +36,6 @@ export default async function PortalDashboard() {
       .order('start_date', { ascending: true })
       .limit(5),
 
-    hasRole(profile.role, 'exec')
-      ? supabase.from('member_requests')
-          .select('id', { count: 'exact', head: true })
-          .eq('status', 'pending')
-      : Promise.resolve({ count: 0 }),
-
     hasRole(profile.role, 'officer')
       ? supabase.from('events')
           .select('id, title, start_date')
@@ -52,13 +44,6 @@ export default async function PortalDashboard() {
           .lte('start_date', weekAhead)
           .limit(10)
       : Promise.resolve({ data: [] }),
-
-    profile.division_id
-      ? supabase.from('divisions')
-          .select('name, slug, color')
-          .eq('id', profile.division_id)
-          .single()
-      : Promise.resolve({ data: null }),
 
     // For officers: get checkin stats for active events
     hasRole(profile.role, 'officer')
@@ -77,9 +62,7 @@ export default async function PortalDashboard() {
     event: { id: string; title: string; start_date: string; location: string | null } | null;
   }>;
   const upcomingEvents = (upcomingRes.data ?? []) as Array<{ id: string; title: string; start_date: string; location: string | null; requires_ticket: boolean }>;
-  const pendingCount = (pendingRes as { count: number }).count ?? 0;
   const eventsThisWeek = (eventsThisWeekRes as { data: Array<{ id: string; title: string; start_date: string }> | null }).data ?? [];
-  const myDivision = (divisionRes as { data: { name: string; slug: string; color: string } | null }).data;
   const todayEvents = (checkinStatsRes as { data: Array<{ id: string; title: string; start_date: string }> | null }).data ?? [];
 
   const hour = new Date().getHours();
@@ -99,10 +82,6 @@ export default async function PortalDashboard() {
     ...(hasRole(profile.role, 'officer') ? [{
       icon: '🗓️', label: 'Events This Week',
       value: eventsThisWeek.length, href: '/portal/events', color: '#059669',
-    }] : []),
-    ...(hasRole(profile.role, 'exec') && pendingCount > 0 ? [{
-      icon: '⏳', label: 'Pending Requests',
-      value: pendingCount, href: '/portal/admin', color: '#ffc72c', highlight: true,
     }] : []),
   ];
 
@@ -165,15 +144,6 @@ export default async function PortalDashboard() {
         </Link>
       )}
 
-      {/* ── Exec: Pending requests alert ───────────── */}
-      {pendingCount > 0 && hasRole(profile.role, 'exec') && (
-        <Link href="/portal/admin" className={styles.alertBanner}>
-          <span className={styles.alertDot} />
-          <strong>{pendingCount}</strong> pending membership request{pendingCount !== 1 ? 's' : ''}
-          <span className={styles.alertArrow}>Review →</span>
-        </Link>
-      )}
-
       {/* ── Member: Next ticket hero ────────────────── */}
       {nextTicket && !hasRole(profile.role, 'officer') && (
         <DashboardClient ticket={nextTicket as Parameters<typeof DashboardClient>[0]['ticket']} />
@@ -184,7 +154,7 @@ export default async function PortalDashboard() {
         <div className={styles.statRow}>
           {statCards.map((s) => (
             <Link key={s.label} href={s.href}
-              className={`${styles.statCard} ${s.highlight ? styles.statHighlight : ''}`}
+              className={styles.statCard}
               style={{ '--stat-color': s.color } as React.CSSProperties}>
               <span className={styles.statIcon}>{s.icon}</span>
               <div>
@@ -198,19 +168,6 @@ export default async function PortalDashboard() {
 
       <div className={styles.twoCol}>
         <div className={styles.mainCol}>
-
-          {/* ── My division ─────────────────────────── */}
-          {myDivision && (
-            <section className={styles.section}>
-              <h2 className={styles.sectionLabel}>My Division</h2>
-              <Link href={`/divisions/${myDivision.slug}`} className={styles.divisionCard}
-                style={{ borderColor: myDivision.color + '44' }}>
-                <div className={styles.divisionDot} style={{ background: myDivision.color }} />
-                <span className={styles.divisionName}>{myDivision.name}</span>
-                <span className={styles.divisionLink}>View page →</span>
-              </Link>
-            </section>
-          )}
 
           {/* ── Upcoming events ─────────────────────── */}
           {upcomingEvents.length > 0 && (

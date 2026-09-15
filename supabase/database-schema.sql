@@ -1,3 +1,14 @@
+-- Schema for the public tables: profiles, events, tickets, site_content, sponsors.
+-- Verified 2026-09-15 against the linked project (`supabase db query --linked`
+-- against information_schema) — these 5 tables are the *only* ones in the
+-- public schema; there is no divisions/division_content/member_requests table
+-- and no division_id column on profiles or events. No migration was needed to
+-- narrow the DB — it was already at this shape. (This file itself was fixed up
+-- from a truncated dump that cut off mid-statement after `sponsors`; column
+-- defaults/constraints below are hand-transcribed from that dump, not a fresh
+-- pg_dump — regenerate with `supabase db dump --linked --schema public` once
+-- `pg_dump` or Docker is available locally if you want a byte-exact copy.)
+
 CREATE TABLE public.profiles (
   id uuid NOT NULL,
   username text UNIQUE,
@@ -74,5 +85,3 @@ CREATE TABLE public.sponsors (
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT sponsors_pkey PRIMARY KEY (id)
 );
-
-CREATE TABLE public.

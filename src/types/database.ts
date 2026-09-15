@@ -1,6 +1,5 @@
 export type UserRole = 'guest' | 'member' | 'officer' | 'division' | 'lead' | 'exec' | 'admin';
 export type TicketStatus = 'active' | 'used' | 'cancelled' | 'expired';
-export type MemberRequestStatus = 'pending' | 'approved' | 'rejected';
 
 export interface Database {
   public: {
@@ -16,31 +15,11 @@ export interface Database {
           major: string | null;
           year: string | null;
           role: UserRole;
-          division_id: string | null;
           created_at: string;
           updated_at: string;
         };
         Insert: Omit<Database['public']['Tables']['profiles']['Row'], 'created_at' | 'updated_at'>;
         Update: Partial<Database['public']['Tables']['profiles']['Insert']>;
-      };
-      divisions: {
-        Row: {
-          id: string;
-          slug: string;
-          name: string;
-          logo_url: string | null;
-          description: string | null;
-          long_description: string | null;
-          color: string;
-          discord_link: string | null;
-          website_url: string | null;
-          game: string | null;
-          order_index: number;
-          is_active: boolean;
-          created_at: string;
-        };
-        Insert: Omit<Database['public']['Tables']['divisions']['Row'], 'id' | 'created_at'>;
-        Update: Partial<Database['public']['Tables']['divisions']['Insert']>;
       };
       events: {
         Row: {
@@ -60,7 +39,6 @@ export interface Database {
           is_published: boolean;
           requires_ticket: boolean;
           ticket_price: number;
-          division_id: string | null;
           created_by: string | null;
           created_at: string;
           updated_at: string;
@@ -82,36 +60,31 @@ export interface Database {
         Insert: Omit<Database['public']['Tables']['tickets']['Row'], 'id' | 'ticket_code' | 'created_at'>;
         Update: Partial<Database['public']['Tables']['tickets']['Insert']>;
       };
-      division_content: {
+      site_content: {
         Row: {
-          id: string;
-          division_id: string;
-          about_text: string | null;
-          schedule_text: string | null;
-          achievements: string | null;
-          roster: RosterMember[];
-          social_links: Record<string, string>;
-          gallery_urls: string[];
+          key: string;
+          title: string;
+          description: string | null;
+          content: Record<string, unknown>;
           updated_by: string | null;
           updated_at: string;
         };
-        Insert: Omit<Database['public']['Tables']['division_content']['Row'], 'id'>;
-        Update: Partial<Database['public']['Tables']['division_content']['Insert']>;
+        Insert: Database['public']['Tables']['site_content']['Row'];
+        Update: Partial<Database['public']['Tables']['site_content']['Insert']>;
       };
-      member_requests: {
+      sponsors: {
         Row: {
           id: string;
-          user_id: string;
-          requested_role: UserRole;
-          division_id: string | null;
-          message: string | null;
-          status: MemberRequestStatus;
-          reviewed_by: string | null;
+          name: string;
+          logo_url: string;
+          website_url: string | null;
+          tier: 'platinum' | 'gold' | 'silver' | 'bronze';
+          is_active: boolean;
+          order_index: number;
           created_at: string;
-          updated_at: string;
         };
-        Insert: Omit<Database['public']['Tables']['member_requests']['Row'], 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Database['public']['Tables']['member_requests']['Insert']>;
+        Insert: Omit<Database['public']['Tables']['sponsors']['Row'], 'id' | 'created_at'>;
+        Update: Partial<Database['public']['Tables']['sponsors']['Insert']>;
       };
     };
     Views: Record<string, never>;
@@ -119,36 +92,27 @@ export interface Database {
     Enums: {
       user_role: UserRole;
       ticket_status: TicketStatus;
-      member_request_status: MemberRequestStatus;
     };
   };
 }
 
-export interface RosterMember {
-  name: string;
-  gamer_tag?: string;
-  role?: string;
-  avatar_url?: string;
-}
-
 // Convenience types with joined data
 export type Profile = Database['public']['Tables']['profiles']['Row'];
-export type Division = Database['public']['Tables']['divisions']['Row'];
 export type Event = Database['public']['Tables']['events']['Row'];
 export type Ticket = Database['public']['Tables']['tickets']['Row'];
-export type DivisionContent = Database['public']['Tables']['division_content']['Row'];
+export type SiteContent = Database['public']['Tables']['site_content']['Row'];
+export type Sponsor = Database['public']['Tables']['sponsors']['Row'];
 
 export type TicketWithEvent = Ticket & {
   event: Pick<Event, 'id' | 'title' | 'start_date' | 'end_date' | 'location' | 'flyer_url'>;
 };
 
-// Ranks: division/lead are division-track roles (below officer privilege level)
-// officer and above are org-level staff with event/check-in powers
+// Ranks: division/lead sit below officer privilege level (org-staff)
 export const ROLE_HIERARCHY: Record<UserRole, number> = {
   guest:    0,
   member:   1,
-  division: 2, // game division member — no org-staff privileges
-  lead:     3, // game division lead   — can edit their division page + check-in
+  division: 2, // division-track member — no org-staff privileges
+  lead:     3, // division-track lead   — check-in + content editing
   officer:  4, // org officer          — events, check-in, content editing
   exec:     5, // executive board
   admin:    6, // full platform access

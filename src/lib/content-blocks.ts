@@ -8,7 +8,7 @@ export const CONTENT_BLOCKS = [
     category: 'Global',
     fields: [
       { name: 'enabled',   label: 'Show Banner',    type: 'toggle'  as const },
-      { name: 'text',      label: 'Message',        type: 'text'    as const, placeholder: 'e.g. TGEX 2025 tickets are now on sale!' },
+      { name: 'text',      label: 'Message',        type: 'text'    as const, placeholder: 'e.g. Tickets for our next event are now on sale!' },
       { name: 'link',      label: 'Button URL',     type: 'url'     as const, placeholder: 'https://…',  optional: true },
       { name: 'link_text', label: 'Button Text',    type: 'text'    as const, placeholder: 'Learn More', optional: true },
       { name: 'color',     label: 'Color Style',    type: 'select'  as const, options: ['yellow', 'blue', 'green', 'red'] },

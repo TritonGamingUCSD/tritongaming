@@ -6,9 +6,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import styles from './newevent.module.css';
 
-interface Division { id: string; name: string; }
-
-export default function NewEventClient({ divisions }: { divisions: Division[] }) {
+export default function NewEventClient() {
   const router = useRouter();
   const [form, setForm] = useState({
     title: '',
@@ -20,7 +18,6 @@ export default function NewEventClient({ divisions }: { divisions: Division[] })
     max_capacity: '',
     requires_ticket: false,
     ticket_price: '0',
-    division_id: '',
     is_published: false,
   });
   const [saving, setSaving] = useState(false);
@@ -49,7 +46,6 @@ export default function NewEventClient({ divisions }: { divisions: Division[] })
       max_capacity: form.max_capacity ? parseInt(form.max_capacity) : null,
       requires_ticket: form.requires_ticket,
       ticket_price: form.requires_ticket ? parseFloat(form.ticket_price) : 0,
-      division_id: form.division_id || null,
       is_published: form.is_published,
       created_by: user.id,
     });
@@ -104,16 +100,6 @@ export default function NewEventClient({ divisions }: { divisions: Division[] })
           <label className={styles.field}>
             <span className={styles.label}>Max Capacity</span>
             <input className={styles.input} type="number" min="1" value={form.max_capacity} onChange={(e) => set('max_capacity', e.target.value)} placeholder="Unlimited" />
-          </label>
-        </div>
-
-        <div className={styles.row}>
-          <label className={styles.field}>
-            <span className={styles.label}>Division</span>
-            <select className={styles.input} value={form.division_id} onChange={(e) => set('division_id', e.target.value)}>
-              <option value="">General (no division)</option>
-              {divisions.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-            </select>
           </label>
         </div>
 

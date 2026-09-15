@@ -26,8 +26,7 @@ const NAV: NavItem[] = [
   { href: '/portal/profile',       label: 'My Profile',       icon: '👤' },
   { href: '/portal/tickets',       label: 'My Tickets',       icon: '🎟️' },
   { dividerBefore: true,
-    href: '/portal/division',      label: 'My Division',      icon: '🎮', minRole: 'lead' },
-  { href: '/portal/checkin',       label: 'Check-In Scanner', icon: '📷', minRole: 'lead' },
+    href: '/portal/checkin',       label: 'Check-In Scanner', icon: '📷', minRole: 'lead' },
   { href: '/portal/events',        label: 'Events',           icon: '🗓️', minRole: 'officer' },
   { href: '/portal/members',       label: 'Members',          icon: '👥', minRole: 'officer' },
   { dividerBefore: true,
@@ -54,7 +53,7 @@ function getBottomTabs(role: UserRole) {
   if (hasRole(role, 'lead')) return [
     { href: '/portal',          icon: HomeIcon,    label: 'Home' },
     { href: '/portal/checkin',  icon: ScanIcon,    label: 'Scan' },
-    { href: '/portal/division', icon: DivisionIcon, label: 'Division' },
+    { href: '/events',          icon: CalendarIcon, label: 'Events' },
     { href: '/portal/tickets',  icon: TicketIcon,  label: 'Tickets' },
     { href: '/portal/profile',  icon: PersonIcon,  label: 'Me' },
   ];
@@ -63,7 +62,6 @@ function getBottomTabs(role: UserRole) {
     { href: '/portal',         icon: HomeIcon,   label: 'Home' },
     { href: '/portal/tickets', icon: TicketIcon, label: 'Tickets' },
     { href: '/events',         icon: CalendarIcon, label: 'Events' },
-    { href: '/board',          icon: BoardIcon,  label: 'Board' },
     { href: '/portal/profile', icon: PersonIcon, label: 'Me' },
   ];
 }
@@ -270,31 +268,6 @@ function ShieldIcon({ active }: { active: boolean }) {
   ) : (
     <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-    </svg>
-  );
-}
-
-function DivisionIcon({ active }: { active: boolean }) {
-  return active ? (
-    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-      <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
-    </svg>
-  ) : (
-    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="1" y="6" width="22" height="12" rx="2"/>
-      <path d="M8 11v2M6 9v6M12 9v6M16 11a1.5 1.5 0 000 3M20 11a1.5 1.5 0 000 3"/>
-    </svg>
-  );
-}
-
-function BoardIcon({ active }: { active: boolean }) {
-  return active ? (
-    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-      <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
-    </svg>
-  ) : (
-    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
     </svg>
   );
 }

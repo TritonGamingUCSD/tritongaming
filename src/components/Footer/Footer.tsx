@@ -10,7 +10,6 @@ const NAV_LINKS = [
   { href: '/divisions', label: 'Divisions' },
   { href: '/sponsors', label: 'Sponsors' },
   { href: '/get-involved', label: 'Get Involved' },
-  { href: '/tgex', label: 'TGEX' },
   { href: '/portal', label: 'Member Portal' },
 ];
 
