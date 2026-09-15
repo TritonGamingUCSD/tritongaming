@@ -27,12 +27,14 @@ export interface Database {
           username: string | null;
           display_name: string | null;
           avatar_url: string | null;
+          custom_avatar_url: string | null;
           bio: string | null;
           gamer_tag: string | null;
           major: string | null;
           year: string | null;
           college: string | null;
           pronouns: string | null;
+          discord: string | null;
           birthday: string | null;
           created_at: string;
           updated_at: string;

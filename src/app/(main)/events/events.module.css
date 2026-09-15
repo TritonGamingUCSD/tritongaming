@@ -1,5 +1,5 @@
 .page {
-  padding-top: 80px;
+  padding-top: var(--navbar-height);
   background: #060c1a;
   min-height: 100svh;
 }

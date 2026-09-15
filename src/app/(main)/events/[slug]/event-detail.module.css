@@ -1,5 +1,5 @@
 .page {
-  padding-top: 80px;
+  padding-top: var(--navbar-height);
   background: #060c1a;
   min-height: 100svh;
 }
@@ -124,16 +124,6 @@
   color: var(--yellow);
 }
 
-.details {
-  display: flex;
-  flex-direction: column;
-  gap: 0.9rem;
-  font-family: var(--font-futura-medium);
-  font-size: var(--fs-body);
-  color: rgba(242, 241, 240, 0.8);
-  line-height: 1.75;
-  white-space: pre-line;
-}
 
 .photoLink {
   align-self: flex-start;

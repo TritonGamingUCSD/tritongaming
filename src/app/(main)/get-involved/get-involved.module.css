@@ -1,13 +1,12 @@
 .page {
-  padding-top: 80px;
   background: #060c1a;
   min-height: 100svh;
 }
 
-/* ── Hero Banner ── */
+/* ── Hero Banner — same recipe as every other main-site page hero, see globals.css ── */
 .heroBanner {
   position: relative;
-  padding: clamp(3rem, 7vw, 6rem) clamp(1.5rem, 5vw, 4rem);
+  padding: var(--hero-padding-top) clamp(1.5rem, 5vw, 4rem) var(--hero-padding-bottom);
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -17,7 +16,17 @@
 .heroBg {
   position: absolute;
   inset: 0;
-  background: var(--gradient-stats);
+  background: var(--hero-bg);
+}
+
+.heroBg::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--hero-fade-height);
+  background: var(--hero-fade);
 }
 
 .heroContent {
@@ -75,10 +84,10 @@
 
 .sectionTitle {
   font-family: var(--font-soulmaze);
-  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-size: var(--fs-section-title);
   color: var(--white);
   margin: 0;
-  line-height: 1.2;
+  line-height: 1.15;
 }
 
 .waysGrid {
@@ -92,20 +101,24 @@
   flex-direction: column;
   gap: 0.75rem;
   padding: 1.75rem 1.5rem;
-  border-radius: 8px;
-  border: 1px solid rgba(1, 25, 65, 0.1);
-  background: rgba(255,255,255,0.04);
-  box-shadow: 0 2px 12px rgba(255,255,255,0.06);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 18px;
+  border: 1px solid var(--glass-border);
+  border-top: 3px solid var(--accent-color, var(--yellow));
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
 }
 
 .wayCard:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 28px rgba(0,0,0,0.1);
+  transform: translateY(-6px);
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
 }
 
-.accent_blue { border-top: 3px solid var(--blue); }
-.accent_yellow { border-top: 3px solid var(--yellow); }
+.accent_blue { --accent-color: var(--lightblue); }
+.accent_yellow { --accent-color: var(--yellow); }
 
 .wayEmoji { font-size: 2rem; line-height: 1; }
 
@@ -150,7 +163,17 @@
 .officerBg {
   position: absolute;
   inset: 0;
-  background: var(--gradient-stats);
+  background: var(--hero-bg);
+}
+
+.officerBg::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--hero-fade-height);
+  background: var(--hero-fade);
 }
 
 .officerContent {
@@ -166,10 +189,10 @@
 
 .officerTitle {
   font-family: var(--font-soulmaze);
-  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-size: var(--fs-section-title);
   color: var(--white);
   margin: 0 0 0.75rem;
-  line-height: 1.2;
+  line-height: 1.1;
 }
 
 .officerBody {
@@ -233,10 +256,12 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  padding: 1rem 1.25rem;
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(159,196,232,0.2);
-  border-radius: 8px;
+  padding: 1.1rem 1.25rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
 }
 
 .metaEmoji { font-size: 1.4rem; line-height: 1; }

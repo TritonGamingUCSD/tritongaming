@@ -4,6 +4,7 @@ import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
 import type { AppRole } from '@/types/database';
 import type { RoleGrant } from '@/lib/capabilities';
 import { hasCapability } from '@/lib/capabilities';
+import { resolveAvatarUrl } from '@/lib/profile';
 import type { MemberProfileRow } from './getMembersData';
 import styles from './members.module.css';
 
@@ -58,8 +59,8 @@ export default function MembersSectionContent({ rows, roles }: { rows: MemberPro
             <div className={styles.grid}>
               {group.map((m) => (
                 <div key={m.id} className={styles.card}>
-                  {m.avatar_url ? (
-                    <Image src={m.avatar_url} alt="" width={44} height={44} className={styles.avatar} />
+                  {resolveAvatarUrl(m) ? (
+                    <Image src={resolveAvatarUrl(m)!} alt="" width={44} height={44} className={styles.avatar} unoptimized />
                   ) : (
                     <div className={styles.avatarFallback} style={{ background: ROLE_COLORS[role] }}>
                       {(m.display_name || '?')[0].toUpperCase()}

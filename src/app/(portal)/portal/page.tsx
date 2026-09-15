@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getProfile, getUserRoles } from '@/lib/auth';
 import { hasCapability, isVerifiedMember } from '@/lib/capabilities';
+import { resolveAvatarUrl } from '@/lib/profile';
 import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
 import { CONTENT_BLOCKS } from '@/lib/content-blocks';
 import PortalHub, { type HubSection } from '@/components/portal/PortalHub';
@@ -121,17 +122,20 @@ export default async function PortalDashboard() {
     }] : []),
   ];
 
+  const avatarUrl = resolveAvatarUrl(profile);
+
   return (
     <div className={styles.page}>
       <header className={styles.header}>
         <div className={styles.headerLeft}>
-          {profile.avatar_url ? (
+          {avatarUrl ? (
             <Image
-              src={profile.avatar_url}
+              src={avatarUrl}
               alt={profile.display_name || 'User'}
               width={48}
               height={48}
               className={styles.headerAvatar}
+              unoptimized
             />
           ) : (
             <div className={styles.headerAvatarFallback}>

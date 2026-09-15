@@ -202,6 +202,12 @@
   color: rgba(242,241,240,0.25);
 }
 
+.userEmail {
+  font-size: 0.68rem;
+  color: rgba(242,241,240,0.3);
+  margin-top: 0.15rem;
+}
+
 .roleSection {
   display: flex;
   align-items: center;

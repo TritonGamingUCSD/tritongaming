@@ -25,11 +25,11 @@ export default async function HomePage() {
   return (
     <>
       <Hero content={heroContent as Parameters<typeof Hero>[0]['content']} />
-      <LandingAbout content={aboutContent as Parameters<typeof LandingAbout>[0]['content']} />
       <LandingStatistics stats={statsItems} />
+      <LandingAbout content={aboutContent as Parameters<typeof LandingAbout>[0]['content']} />
       <LandingEvents initialEvents={upcomingEvents} />
-      <LandingSponsors />
       <LandingDivisions />
+      <LandingSponsors />
       <LandingRecruitment />
     </>
   );

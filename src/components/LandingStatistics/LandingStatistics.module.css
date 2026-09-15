@@ -1,187 +1,73 @@
+/* Pulled up over the hero's fade-out zone so the two read as one connected
+   moment — see Hero.module.css .gradient, which is timed to meet this. */
 .section {
   position: relative;
-  padding: var(--section-pad) clamp(1rem, 4vw, 2.5rem);
-  background: var(--gradient-stats);
-  overflow: hidden;
+  z-index: 5;
+  margin-top: -64px;
+  padding: 0 clamp(1rem, 4vw, 2.5rem) clamp(3rem, 6vw, 5rem);
 }
 
-/* Aurora glow layer */
-.aurora {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.auroraBlob1,
-.auroraBlob2,
-.auroraBlob3 {
-  position: absolute;
-  border-radius: 50%;
-  animation: blue-aurora 9s ease-in-out infinite;
-}
-
-.auroraBlob1 {
-  width: 40vw;
-  height: 40vw;
-  top: -20%;
-  left: -10%;
-  background: radial-gradient(circle, rgba(39, 90, 143, 0.35), transparent 70%);
-  animation-delay: 0s;
-}
-
-.auroraBlob2 {
-  width: 50vw;
-  height: 50vw;
-  top: -10%;
-  right: -15%;
-  background: radial-gradient(circle, rgba(255, 199, 44, 0.08), transparent 70%);
-  animation-delay: -3s;
-}
-
-.auroraBlob3 {
-  width: 35vw;
-  height: 35vw;
-  bottom: -15%;
-  left: 40%;
-  background: radial-gradient(circle, rgba(20, 71, 124, 0.3), transparent 70%);
-  animation-delay: -6s;
-}
-
-.bgWrapper {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.bgText,
-.bgText2,
-.bgText3,
-.bgText4 {
-  position: absolute;
-  font-family: var(--font-brick);
-  font-size: clamp(5rem, 12vw, 12rem);
-  color: rgba(255, 255, 255, 0.05);
-  white-space: nowrap;
-  user-select: none;
-  transform: rotate(-10deg);
-}
-
-.bgText  { top: -10%; left: -5%; }
-.bgText2 { top: -10%; left: 40%; }
-.bgText3 { bottom: -10%; left: -5%; }
-.bgText4 { bottom: -10%; left: 40%; }
-
-.stats {
+.panel {
   position: relative;
   z-index: 1;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: clamp(1.5rem, 4vw, 3rem);
-  max-width: var(--max-width);
+  display: flex;
+  flex-wrap: wrap;
+  max-width: 1040px;
   margin-inline: auto;
-  text-align: center;
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: clamp(20px, 3vw, 30px);
+  backdrop-filter: blur(28px) saturate(170%);
+  -webkit-backdrop-filter: blur(28px) saturate(170%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.16) inset,
+    0 50px 90px -32px rgba(0, 0, 0, 0.75);
+  overflow: hidden;
 }
 
-.stat {
+.statCell {
+  flex: 1 1 220px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-}
-
-.statValue {
-  font-family: var(--font-soulmaze);
-  font-size: clamp(2rem, 5vw, 3.5rem);
-  color: var(--white);
-  line-height: 1;
-  text-shadow: 0 0 32px rgba(255, 199, 44, 0.25);
-}
-
-.header {
-  position: relative;
-  z-index: 1;
+  padding: clamp(1.75rem, 4vw, 2.75rem) 1.5rem;
   text-align: center;
-  margin-bottom: var(--sp-lg);
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.sectionLabel {
-  font-family: var(--font-futura-heavy);
-  font-size: 0.7rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--yellow);
-  margin: 0 0 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-}
-
-.sectionLabel::before,
-.sectionLabel::after {
-  content: '';
-  display: inline-block;
-  width: 20px;
-  height: 2px;
-  background: var(--yellow);
-  flex-shrink: 0;
-}
-
-.sectionTitle {
-  font-family: var(--font-soulmaze);
-  font-size: clamp(1.8rem, 4vw, 2.8rem);
-  color: var(--white);
-  margin: 0;
-  line-height: 1.2;
-}
-
-.stats {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: clamp(1.5rem, 4vw, 3rem);
-  max-width: var(--max-width);
-  margin-inline: auto;
-  text-align: center;
-}
-
-.stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
+.statCell:last-child {
+  border-right: none;
 }
 
 .statIcon {
-  font-size: 2rem;
+  font-size: 1.75rem;
   line-height: 1;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.15rem;
 }
 
 .statValue {
   font-family: var(--font-soulmaze);
-  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-size: clamp(2rem, 5vw, 3.25rem);
   color: var(--white);
   line-height: 1;
-  text-shadow: 0 0 32px rgba(255, 199, 44, 0.25);
+  text-shadow: 0 0 32px rgba(255, 199, 44, 0.3);
 }
 
 .statLabel {
   font-family: var(--font-futura-heavy);
-  font-size: clamp(0.7rem, 1.2vw, 0.875rem);
+  font-size: clamp(0.68rem, 1.1vw, 0.82rem);
   color: var(--lightblue);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  text-align: center;
 }
 
 @media (max-width: 640px) {
-  .stats {
-    grid-template-columns: 1fr;
-    gap: 2rem;
+  .section { margin-top: -40px; }
+  .panel { flex-direction: column; }
+  .statCell {
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   }
+  .statCell:last-child { border-bottom: none; }
 }
-

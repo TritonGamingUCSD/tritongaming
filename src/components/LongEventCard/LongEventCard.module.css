@@ -6,9 +6,18 @@
   padding: clamp(1.5rem, 4vw, 2.5rem);
   margin-inline: clamp(1rem, 5vw, 4rem);
   margin-block: 1.5rem;
-  background: var(--darkblue);
-  border-radius: 10px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 22px;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
+  transition: border-color 0.25s ease, background 0.25s ease;
+}
+
+.card:hover {
+  border-color: var(--glass-border-hover);
+  background: var(--glass-bg-hover);
 }
 
 .imgWrapper {

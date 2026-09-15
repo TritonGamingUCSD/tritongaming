@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getEventBySlugOrId } from '@/lib/events';
+import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import styles from './event-detail.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -96,11 +97,7 @@ export default async function EventDetailPage({ params }: Params) {
         {event.details && (
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Event Details</h2>
-            <div className={styles.details}>
-              {event.details.split(/\n{2,}/).map((para, i) => (
-                <p key={i}>{para}</p>
-              ))}
-            </div>
+            <MarkdownContent>{event.details}</MarkdownContent>
           </section>
         )}
 
@@ -112,13 +109,7 @@ export default async function EventDetailPage({ params }: Params) {
                 📸 View Event Photos
               </a>
             )}
-            {event.post_event_info && (
-              <div className={styles.details}>
-                {event.post_event_info.split(/\n{2,}/).map((para, i) => (
-                  <p key={i}>{para}</p>
-                ))}
-              </div>
-            )}
+            {event.post_event_info && <MarkdownContent>{event.post_event_info}</MarkdownContent>}
           </section>
         )}
       </div>

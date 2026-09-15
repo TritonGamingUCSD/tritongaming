@@ -22,6 +22,9 @@ function dbSponsorsToLogoItems(items: DbSponsor[]): LogoItem[] {
     }));
 }
 
+// A compact strip, not a full section — the dedicated /sponsors page is
+// where this content gets room to breathe; here it's just a "trusted by"
+// beat between Divisions and the closing recruitment section.
 export default async function LandingSponsors() {
   const content = await getContentBlock('sponsors');
   const dbItems = content.items as DbSponsor[] | undefined;
@@ -29,24 +32,17 @@ export default async function LandingSponsors() {
     ? dbSponsorsToLogoItems(dbItems)
     : [];
 
+  if (logos.length === 0) return null;
+
   return (
     <section className={styles.section} aria-label="Sponsors">
       <Reveal variant="fadeUp">
-        <div className={styles.header}>
-          <p className={styles.sectionLabel}>OUR PARTNERS</p>
-          <h2 className={styles.sectionTitle}>Backed by the Best</h2>
-          <p className={styles.sectionSub}>
-            Partnering with leading gaming brands to bring unforgettable experiences to UCSD students.
-          </p>
-        </div>
-      </Reveal>
-
-      <LogoGrid logos={logos} />
-
-      <Reveal delay={0.2}>
-        <div className={styles.cta}>
-          <p className={styles.ctaText}>Interested in sponsoring Triton Gaming?</p>
-          <Link href="/sponsors" className={styles.ctaLink}>Learn More →</Link>
+        <div className={styles.strip}>
+          <div className={styles.stripHeader}>
+            <p className={styles.sectionLabel}>OUR PARTNERS</p>
+            <Link href="/sponsors" className={styles.ctaLink}>Become a Sponsor →</Link>
+          </div>
+          <LogoGrid logos={logos} />
         </div>
       </Reveal>
     </section>

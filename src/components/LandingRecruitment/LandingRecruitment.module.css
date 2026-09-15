@@ -5,6 +5,20 @@
   overflow: hidden;
 }
 
+/* Fades to the page's own near-black before the floating footer island —
+   without this the section's blue cuts straight to the body background
+   showing through the footer's outer margin, a hard seam. */
+.section::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  background: linear-gradient(to bottom, transparent, #060c1a);
+  pointer-events: none;
+}
+
 /* Faint background text */
 .bgWrapper {
   position: absolute;
@@ -92,7 +106,7 @@
 
 .sectionTitle {
   font-family: var(--font-soulmaze);
-  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-size: var(--fs-section-title);
   color: var(--white);
   margin: 0 0 0.75rem;
   line-height: 1.2;
@@ -123,21 +137,33 @@
   align-items: flex-start;
   gap: 0.75rem;
   padding: 1.75rem 1.5rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(159, 196, 232, 0.2);
-  border-radius: 8px;
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .pathway:hover {
-  background: rgba(255, 199, 44, 0.05);
-  border-color: rgba(255, 199, 44, 0.3);
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
   transform: translateY(-4px);
+  box-shadow: var(--glass-shadow);
 }
 
 .pathIcon {
-  font-size: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  font-size: 1.7rem;
   line-height: 1;
+  background: linear-gradient(155deg, rgba(255, 199, 44, 0.22), rgba(255, 199, 44, 0.04));
+  border: 1px solid rgba(255, 199, 44, 0.22);
+  box-shadow: 0 12px 24px -12px rgba(0, 0, 0, 0.5);
 }
 
 .pathTitle {

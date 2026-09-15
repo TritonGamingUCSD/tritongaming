@@ -1,4 +1,4 @@
 .page {
-  padding-top: 80px; /* offset fixed navbar */
+  padding-top: var(--navbar-height); /* clears the floating nav pill */
   background: #060c1a;
 }

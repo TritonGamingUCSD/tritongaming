@@ -63,7 +63,7 @@
 
 .sectionTitle {
   font-family: var(--font-soulmaze);
-  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-size: var(--fs-section-title);
   color: var(--white);
   margin: 0 0 0.75rem;
   line-height: 1.2;
@@ -83,8 +83,8 @@
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: 0.875rem;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 1rem;
   max-width: var(--max-width);
   margin-inline: auto;
 }
@@ -95,9 +95,11 @@
   align-items: center;
   gap: 0.875rem;
   padding: 1.75rem 1.25rem 1.25rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(159, 196, 232, 0.1);
-  border-radius: 10px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   text-decoration: none;
   text-align: center;
   cursor: default;
@@ -125,13 +127,24 @@
 a.card { cursor: pointer; }
 
 a.card:hover {
-  background: rgba(255, 199, 44, 0.05);
-  border-color: rgba(255, 199, 44, 0.3);
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
   transform: translateY(-5px);
   box-shadow:
-    0 12px 36px rgba(0, 0, 0, 0.4),
+    var(--glass-shadow),
     0 0 0 1px rgba(255, 199, 44, 0.12),
     0 0 20px rgba(255, 199, 44, 0.06);
+}
+
+/* Every third card leans cool instead of gold on hover — quiet rhythm
+   across the grid rather than one flat repeated glow. */
+a.card:nth-child(3n):hover {
+  background: linear-gradient(165deg, rgba(159, 196, 232, 0.12), rgba(159, 196, 232, 0.03));
+  border-color: rgba(159, 196, 232, 0.4);
+  box-shadow:
+    var(--glass-shadow),
+    0 0 0 1px rgba(159, 196, 232, 0.15),
+    0 0 20px rgba(159, 196, 232, 0.08);
 }
 
 a.card:hover::before {

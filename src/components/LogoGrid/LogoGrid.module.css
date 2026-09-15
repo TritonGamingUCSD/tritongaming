@@ -9,22 +9,24 @@
   margin-inline: auto;
 }
 
+/* Nested inside LandingSponsors' .showcase glass panel — kept flat here
+   (no second backdrop-filter) so the glass reads once, not muddily twice. */
 .logoItem {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0.875rem 1.25rem;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
+  border-radius: 10px;
   opacity: 0;
   animation: logo-pop 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   transition: background 0.2s, border-color 0.2s, transform 0.2s;
 }
 
 .logoItem:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 199, 44, 0.2);
+  background: rgba(255, 199, 44, 0.08);
+  border-color: rgba(255, 199, 44, 0.28);
 }
 
 /* Stagger up to 12 items */

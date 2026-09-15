@@ -5,8 +5,28 @@
   align-items: start;
   gap: clamp(2rem, 4vw, 4rem);
   padding: clamp(2.5rem, 5vw, 4rem) clamp(1.5rem, 5vw, 4rem);
-  background: var(--gradient-nav);
+  margin: 0 clamp(1rem, 3.5vw, 2.5rem) clamp(1rem, 3.5vw, 2.5rem);
+  border-radius: clamp(24px, 3.5vw, 36px);
+  background: linear-gradient(165deg, rgba(39, 90, 143, 0.5), rgba(1, 25, 65, 0.85) 55%, rgba(1, 15, 40, 0.92));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.14) inset,
+    0 0 0 1px rgba(255, 199, 44, 0.05) inset,
+    0 40px 80px -32px rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
   overflow: hidden;
+}
+
+/* Soft gold seam along the top edge, echoing the nav pill's glass rim */
+.footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 199, 44, 0.4), transparent);
 }
 
 .bgTextWrapper {
@@ -131,19 +151,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
+  width: 40px;
+  height: 40px; /* WCAG touch target */
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.07);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
   opacity: 0.85;
 }
 
 .iconLink:hover {
   background: rgba(255, 199, 44, 0.12);
   border-color: rgba(255, 199, 44, 0.35);
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.08);
   opacity: 1;
 }
 
@@ -168,38 +188,3 @@
   }
 }
 
-.iconLink {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px; /* WCAG touch target */
-  transition: transform 0.2s ease, opacity 0.2s ease;
-  border-radius: 6px;
-}
-
-.iconLink:hover {
-  transform: scale(1.2);
-  opacity: 0.85;
-}
-
-/* Mobile: center everything */
-@media (max-width: 640px) {
-  .footer {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-
-  .left {
-    align-items: center;
-  }
-
-  .right {
-    align-items: center;
-  }
-
-  .icons {
-    justify-content: center;
-  }
-}

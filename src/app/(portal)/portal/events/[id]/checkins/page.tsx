@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { getUserRoles } from '@/lib/auth';
 import { hasCapability } from '@/lib/capabilities';
 import { createClient } from '@/lib/supabase/server';
+import { resolveAvatarUrl } from '@/lib/profile';
 import styles from './checkins.module.css';
 
 export const metadata = { title: 'Check-Ins' };
@@ -16,6 +17,7 @@ interface Params {
 interface TicketUser {
   display_name: string | null;
   avatar_url: string | null;
+  custom_avatar_url: string | null;
   gamer_tag: string | null;
 }
 
@@ -44,7 +46,7 @@ export default async function EventCheckinsPage({ params }: Params) {
     // the !tickets_user_id_fkey hint is required, see checkin/route.ts.
     supabase
       .from('tickets')
-      .select('id, status, created_at, checked_in_at, user:profiles!tickets_user_id_fkey(display_name, avatar_url, gamer_tag)')
+      .select('id, status, created_at, checked_in_at, user:profiles!tickets_user_id_fkey(display_name, avatar_url, custom_avatar_url, gamer_tag)')
       .eq('event_id', id)
       .order('created_at', { ascending: true }),
   ]);
@@ -98,11 +100,12 @@ export default async function EventCheckinsPage({ params }: Params) {
           </div>
           {tickets.map((t) => {
             const user = Array.isArray(t.user) ? t.user[0] : t.user;
+            const avatarUrl = user ? resolveAvatarUrl(user) : null;
             return (
               <div key={t.id} className={styles.tableRow}>
                 <div className={styles.attendee}>
-                  {user?.avatar_url ? (
-                    <Image src={user.avatar_url} alt="" width={32} height={32} className={styles.avatar} />
+                  {avatarUrl ? (
+                    <Image src={avatarUrl} alt="" width={32} height={32} className={styles.avatar} unoptimized />
                   ) : (
                     <div className={styles.avatarFallback}>{(user?.display_name || '?')[0].toUpperCase()}</div>
                   )}

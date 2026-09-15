@@ -74,6 +74,52 @@
 
 .textarea { resize: vertical; min-height: 120px; }
 
+.mdFieldHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.mdTabs {
+  display: flex;
+  gap: 0.25rem;
+  background: rgba(255,255,255,0.04);
+  border-radius: 0.4rem;
+  padding: 0.15rem;
+}
+
+.mdTab {
+  font-size: 0.7rem;
+  font-family: var(--font-futura-medium);
+  letter-spacing: 0.04em;
+  color: rgba(242,241,240,0.4);
+  padding: 0.25rem 0.7rem;
+  border-radius: 0.3rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.mdTab:hover { color: rgba(242,241,240,0.7); }
+
+.mdTabActive {
+  background: rgba(255,199,44,0.14);
+  color: var(--yellow);
+}
+.mdTabActive:hover { color: var(--yellow); }
+
+.mdPreview {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 0.5rem;
+  padding: 0.75rem 0.875rem;
+}
+
+.mdPreviewEmpty {
+  font-size: 0.85rem;
+  color: rgba(242,241,240,0.3);
+  font-style: italic;
+}
+
 .checkboxGroup {
   display: flex;
   flex-direction: column;

@@ -1,12 +1,11 @@
 .page {
-  padding-top: 80px;
   background: #060c1a;
 }
 
-/* ── Hero ── */
+/* ── Hero — same recipe as every other main-site page hero, see globals.css ── */
 .heroBanner {
   position: relative;
-  padding: clamp(3rem, 7vw, 6rem) clamp(1.5rem, 5vw, 4rem);
+  padding: var(--hero-padding-top) clamp(1.5rem, 5vw, 4rem) var(--hero-padding-bottom);
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -16,7 +15,17 @@
 .heroBg {
   position: absolute;
   inset: 0;
-  background: var(--gradient-stats);
+  background: var(--hero-bg);
+}
+
+.heroBg::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--hero-fade-height);
+  background: var(--hero-fade);
 }
 
 .heroContent {
@@ -91,18 +100,18 @@
 
 .sectionTitle {
   font-family: var(--font-soulmaze);
-  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-size: var(--fs-section-title);
   color: var(--white);
   margin: 0;
-  line-height: 1.2;
+  line-height: 1.15;
 }
 
 .sectionTitleLight {
   font-family: var(--font-soulmaze);
-  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-size: var(--fs-section-title);
   color: var(--white);
   margin: 0 0 0.75rem;
-  line-height: 1.2;
+  line-height: 1.15;
 }
 
 .sectionSub {
@@ -125,6 +134,13 @@
 .grid {
   max-width: 900px;
   margin-inline: auto;
+  padding: clamp(1.5rem, 3vw, 2.5rem);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: clamp(20px, 3vw, 28px);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
 }
 
 /* ── What We Offer ── */
@@ -137,7 +153,17 @@
 .offerBg {
   position: absolute;
   inset: 0;
-  background: var(--gradient-stats);
+  background: var(--hero-bg);
+}
+
+.offerBg::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--hero-fade-height);
+  background: var(--hero-fade);
 }
 
 .offerInner {
@@ -154,17 +180,23 @@
 }
 
 .offerCard {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(159,196,232,0.2);
-  border-radius: 8px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
   padding: 1.5rem 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-  transition: background 0.2s ease;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
-.offerCard:hover { background: rgba(255,255,255,0.1); }
+.offerCard:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-4px);
+}
 
 .offerIcon { font-size: 1.8rem; line-height: 1; }
 
@@ -226,8 +258,4 @@
 
 @media (max-width: 520px) {
   .offerGrid { grid-template-columns: 1fr; }
-}
-
-.grid {
-  padding: var(--sp-md) clamp(1rem, 4vw, 3rem);
 }

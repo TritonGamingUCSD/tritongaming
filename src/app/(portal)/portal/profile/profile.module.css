@@ -81,6 +81,16 @@
   color: rgba(242,241,240,0.3);
   text-align: center;
   line-height: 1.4;
+  max-width: 220px;
+}
+
+.avatarUrlField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 100%;
+  max-width: 220px;
+  text-align: left;
 }
 
 .form {

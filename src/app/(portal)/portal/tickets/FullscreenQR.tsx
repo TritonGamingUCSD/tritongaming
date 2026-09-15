@@ -13,8 +13,8 @@ const TICKET_QR_BASE: Omit<QRCodeOptions, 'data' | 'icon' | 'customIcon'> = {
   ...DEFAULT_QR_OPTIONS,
   size: 260,
   margin: 6,
-  iconPadding: 10,
-  iconSizeOverride: 0.42,
+  iconPadding: 6,
+  iconSizeOverride: 0.48,
 };
 
 interface Props {

@@ -189,9 +189,9 @@ function wrapLabelLines(label: string, maxLines = 3): string[] {
 export function eventLabelIcon(label: string): string {
   const lines = wrapLabelLines(label);
   const longest = Math.max(...lines.map((l) => l.length), 1);
-  const contentWidth = 148; // 200 box minus ~26px padding each side
-  const contentHeight = 150;
-  const fontSize = Math.max(14, Math.min(28, contentWidth / (longest * 0.62), contentHeight / (lines.length * 1.35)));
+  const contentWidth = 168; // 200 box minus ~16px padding each side
+  const contentHeight = 170;
+  const fontSize = Math.max(16, Math.min(38, contentWidth / (longest * 0.6), contentHeight / (lines.length * 1.3)));
   const lineHeight = fontSize * 1.2;
   const totalHeight = lineHeight * lines.length;
   const startY = 100 - totalHeight / 2 + fontSize * 0.76;

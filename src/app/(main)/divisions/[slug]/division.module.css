@@ -1,10 +1,11 @@
 .page {
   min-height: 100vh;
   padding-bottom: var(--sp-xl);
+  background: #060c1a;
 }
 
 .hero {
-  padding: clamp(3.5rem, 7vw, 6rem) var(--sp-md);
+  padding: var(--hero-padding-top) var(--sp-md) clamp(2rem, 5vw, 3rem);
 }
 
 .heroInner {

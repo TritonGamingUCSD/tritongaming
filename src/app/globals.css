@@ -47,6 +47,28 @@
   --gradient-nav: linear-gradient(to right, #14477c, #011941);
   --gradient-stats: linear-gradient(135deg, #14477c 0%, #011941 100%);
 
+  /* Glass surface — the shared recipe behind every card/tile/pill site-wide
+     (nav, banner, footer, division/sponsor/pathway cards, stat tiles). Keep
+     new surfaces on these tokens rather than one-off rgba values so the
+     glass language stays consistent as pages get redone. */
+  --glass-bg: linear-gradient(165deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03));
+  --glass-bg-hover: linear-gradient(165deg, rgba(255, 199, 44, 0.09), rgba(255, 199, 44, 0.03));
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-border-hover: rgba(255, 199, 44, 0.32);
+  --glass-blur: blur(18px) saturate(160%);
+  --glass-shadow: 0 20px 44px -24px rgba(0, 0, 0, 0.6);
+
+  /* Normalized "page hero" recipe — every main-site subpage's top banner
+     (Divisions, Sponsors, Get Involved, ...) shares these exact values so
+     the gradient, fade-to-body, and clearance under the floating nav pill
+     read as one consistent system instead of each page inventing its own
+     slightly-different numbers. */
+  --hero-bg: var(--gradient-stats);
+  --hero-padding-top: max(var(--navbar-height), 6.5rem);
+  --hero-padding-bottom: clamp(4rem, 8vw, 7rem);
+  --hero-fade-height: 55%;
+  --hero-fade: linear-gradient(to bottom, transparent, #060c1a);
+
   /* Font Families */
   --font-brick: 'Brick', serif;
   --font-soulmaze: 'Made-Soulmaze', serif;
@@ -56,6 +78,10 @@
 
   /* Fluid Font Sizes — scale gracefully across all viewports */
   --fs-h1: clamp(1.6rem, 3.5vw, 3rem);
+  /* Bigger, bolder section-heading scale used across the homepage's
+     landing sections — distinct from --fs-h1, which still backs smaller
+     page headers (admin, forms, etc). */
+  --fs-section-title: clamp(2.2rem, 5vw, 3.8rem);
   --fs-h2: clamp(1.3rem, 2.5vw, 2.25rem);
   --fs-h3: clamp(1rem, 2vw, 1.5rem);
   --fs-body: clamp(0.9rem, 1.5vw, 1.125rem);
@@ -71,7 +97,9 @@
 
   /* Layout */
   --max-width: 1400px;
-  --navbar-height: 80px;
+  /* Clears the floating nav pill (not a full-width bar anymore) plus its
+     top gap — see HeaderStack/NavBar. */
+  --navbar-height: 96px;
   --section-pad: clamp(3rem, 6vw, 6rem);
 }
 

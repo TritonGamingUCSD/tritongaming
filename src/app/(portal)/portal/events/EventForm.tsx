@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import styles from './new/newevent.module.css';
 
 export interface EventFormValues {
@@ -37,6 +38,57 @@ export const EMPTY_EVENT_FORM: EventFormValues = {
   photo_album_url: '',
   post_event_info: '',
 };
+
+// Markdown, not raw HTML — see MarkdownContent for why. "Write"/"Preview"
+// tabs so an admin can check formatting without saving and reloading the
+// public page in another tab.
+function MarkdownField({
+  label,
+  hint,
+  value,
+  onChange,
+  rows,
+  placeholder,
+}: {
+  label: string;
+  hint?: React.ReactNode;
+  value: string;
+  onChange: (value: string) => void;
+  rows: number;
+  placeholder?: string;
+}) {
+  const [tab, setTab] = useState<'write' | 'preview'>('write');
+
+  return (
+    <div className={styles.field}>
+      <div className={styles.mdFieldHeader}>
+        <span className={styles.label}>{label}</span>
+        <div className={styles.mdTabs}>
+          <button type="button" className={`${styles.mdTab} ${tab === 'write' ? styles.mdTabActive : ''}`} onClick={() => setTab('write')}>
+            Write
+          </button>
+          <button type="button" className={`${styles.mdTab} ${tab === 'preview' ? styles.mdTabActive : ''}`} onClick={() => setTab('preview')}>
+            Preview
+          </button>
+        </div>
+      </div>
+      {tab === 'write' ? (
+        <textarea
+          className={`${styles.input} ${styles.textarea}`}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          rows={rows}
+          placeholder={placeholder}
+        />
+      ) : (
+        <div className={styles.mdPreview} style={{ minHeight: `${rows * 1.6}em` }}>
+          {value.trim() ? <MarkdownContent>{value}</MarkdownContent> : <span className={styles.mdPreviewEmpty}>Nothing to preview yet.</span>}
+        </div>
+      )}
+      {hint && <span className={styles.hint}>{hint}</span>}
+    </div>
+  );
+}
 
 export default function EventForm({
   heading,
@@ -106,11 +158,13 @@ export default function EventForm({
           <span className={styles.hint}>Shown on event cards on the homepage and /events list.</span>
         </label>
 
-        <label className={styles.field}>
-          <span className={styles.label}>Event Details / Instructions</span>
-          <textarea className={`${styles.input} ${styles.textarea}`} value={form.details} onChange={(e) => set('details', e.target.value)} rows={8} />
-          <span className={styles.hint}>The full write-up shown on this event&apos;s own page (what &quot;Learn More&quot; links to). Separate paragraphs with a blank line.</span>
-        </label>
+        <MarkdownField
+          label="Event Details / Instructions"
+          value={form.details}
+          onChange={(v) => set('details', v)}
+          rows={8}
+          hint={<>The full write-up shown on this event&apos;s own page (what &quot;Learn More&quot; links to). Markdown supported — **bold**, _italic_, [links](https://…), lists, headings.</>}
+        />
 
         <div className={styles.row}>
           <label className={styles.field}>
@@ -158,10 +212,14 @@ export default function EventForm({
           <input className={styles.input} type="url" value={form.photo_album_url} onChange={(e) => set('photo_album_url', e.target.value)} placeholder="https://photos.google.com/…" />
         </label>
 
-        <label className={styles.field}>
-          <span className={styles.label}>Post-Event Notes</span>
-          <textarea className={`${styles.input} ${styles.textarea}`} value={form.post_event_info} onChange={(e) => set('post_event_info', e.target.value)} rows={4} placeholder="Recap, results, thank-yous, etc." />
-        </label>
+        <MarkdownField
+          label="Post-Event Notes"
+          value={form.post_event_info}
+          onChange={(v) => set('post_event_info', v)}
+          rows={4}
+          placeholder="Recap, results, thank-yous, etc."
+          hint="Markdown supported, same as Event Details above."
+        />
 
         {error && <p className={styles.error}>{error}</p>}
 

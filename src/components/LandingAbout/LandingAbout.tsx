@@ -52,6 +52,16 @@ export default function LandingAbout({ content = {} }: { content?: AboutContent 
             >
               Photo credit: Justin Lu
             </a>
+
+            {/* Floating glass cluster, layered over the photo's corner
+                instead of sitting flat in the text column below. */}
+            <div className={styles.valuesFloat}>
+              {VALUES.map(({ icon, label }) => (
+                <span key={label} className={styles.valueBadge}>
+                  {icon} {label}
+                </span>
+              ))}
+            </div>
           </div>
         </Reveal>
 
@@ -60,13 +70,6 @@ export default function LandingAbout({ content = {} }: { content?: AboutContent 
             <p className={styles.sectionLabel}>WHO WE ARE</p>
             <h2 className={styles.heading}>{heading}</h2>
             <p className={styles.body}>{body}</p>
-            <div className={styles.values}>
-              {VALUES.map(({ icon, label }) => (
-                <span key={label} className={styles.valueBadge}>
-                  {icon} {label}
-                </span>
-              ))}
-            </div>
             {ctaLink.startsWith('http') ? (
               <a href={ctaLink} target="_blank" rel="noopener noreferrer" className={styles.learnMore}>
                 {ctaText}

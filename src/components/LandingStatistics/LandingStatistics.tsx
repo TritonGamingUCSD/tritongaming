@@ -91,7 +91,7 @@ function StatItem({ stat }: { stat: StatInput }) {
   const display = isFloat ? `${count}M+` : target >= 1000 ? `${Number(count).toLocaleString()}+` : `${count}+`;
 
   return (
-    <div className={styles.stat} ref={ref}>
+    <div className={styles.statCell} ref={ref}>
       <span className={styles.statIcon}>{icon}</span>
       <span className={styles.statValue}>{display}</span>
       <span className={styles.statLabel}>{stat.label}</span>
@@ -99,49 +99,23 @@ function StatItem({ stat }: { stat: StatInput }) {
   );
 }
 
+// A single floating glass bar, pulled up to overlap the hero's bottom edge
+// (see .section's negative margin-top) instead of a separate flat section —
+// the hero and this "proof bar" read as one connected moment, not two
+// stacked blocks with a hard seam between them.
 export default function LandingStatistics({ stats }: { stats?: StatInput[] }) {
   const displayStats = stats?.length ? stats : DEFAULT_STATS;
 
   return (
     <section className={styles.section} aria-label="Statistics">
-      <div className={styles.bgWrapper} aria-hidden="true">
-        <span className={styles.bgText}>TRITON</span>
-        <span className={styles.bgText2}>GAMING</span>
-        <span className={styles.bgText3}>TRITON</span>
-        <span className={styles.bgText4}>GAMING</span>
-      </div>
-      <div className={styles.aurora} aria-hidden="true">
-        <div className={styles.auroraBlob1} />
-        <div className={styles.auroraBlob2} />
-        <div className={styles.auroraBlob3} />
-      </div>
-
-      <div className={styles.header}>
-        <p className={styles.sectionLabel}>OUR IMPACT</p>
-        <h2 className={styles.sectionTitle}>By the Numbers</h2>
-      </div>
-
       <motion.div
-        className={styles.stats}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: '-60px' }}
-        variants={{
-          hidden: {},
-          visible: { transition: { staggerChildren: 0.15, delayChildren: 0.1 } },
-        }}
+        className={styles.panel}
+        initial={{ opacity: 0, y: 32 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
       >
         {displayStats.map((s) => (
-          <motion.div
-            key={s.label}
-            variants={{
-              hidden: { opacity: 0, y: 24, scale: 0.92 },
-              visible: { opacity: 1, y: 0, scale: 1 },
-            }}
-            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <StatItem stat={s} />
-          </motion.div>
+          <StatItem key={s.label} stat={s} />
         ))}
       </motion.div>
     </section>

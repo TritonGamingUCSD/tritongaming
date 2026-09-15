@@ -183,17 +183,21 @@ export default function CheckInClient({ events }: { events: Event[] }) {
     <div className={styles.page}>
       {/* ── Event selector ────────────────────────── */}
       <div className={styles.eventSelect}>
-        <select
-          className={styles.select}
-          value={selectedEventId}
-          onChange={(e) => { setSelectedEventId(e.target.value); stopCamera(); setResult(null); setError(''); }}
-        >
-          {events.map((event) => (
-            <option key={event.id} value={event.id}>
-              {event.title} — {new Date(event.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-            </option>
-          ))}
-        </select>
+        <span className={styles.eventSelectLabel}>Checking in for</span>
+        <div className={styles.selectWrap}>
+          <select
+            className={styles.select}
+            value={selectedEventId}
+            onChange={(e) => { setSelectedEventId(e.target.value); stopCamera(); setResult(null); setError(''); }}
+          >
+            {events.map((event) => (
+              <option key={event.id} value={event.id}>
+                {event.title} — {new Date(event.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+              </option>
+            ))}
+          </select>
+          <span className={styles.selectChevron} aria-hidden="true">▾</span>
+        </div>
       </div>
 
       {/* ── Stats strip ───────────────────────────── */}

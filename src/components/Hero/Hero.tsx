@@ -68,12 +68,6 @@ export default function Hero({ content = {} }: { content?: HeroContent }) {
         <span className={styles.tagHash}>#</span>
         <span className={styles.tagWord}>INDUSTRY</span>
       </div>
-
-      <div className={styles.scrollCue} aria-hidden="true">
-        <div className={styles.scrollMouse}>
-          <div className={styles.scrollWheel} />
-        </div>
-      </div>
     </section>
   );
 }

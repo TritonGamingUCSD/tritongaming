@@ -11,3 +11,11 @@ export function hasBasicProfileInfo(profile: Pick<Profile, 'display_name' | 'maj
   if (!isUcsd) return true;
   return !!profile.major?.trim() && !!profile.year?.trim() && !!profile.college?.trim();
 }
+
+// avatar_url is never touched by the custom-picture feature — it stays
+// exactly what Google sync last set it to. custom_avatar_url, when set,
+// wins everywhere a profile picture is displayed; an empty/unset value
+// falls back to avatar_url automatically.
+export function resolveAvatarUrl(profile: { avatar_url: string | null; custom_avatar_url?: string | null }): string | null {
+  return profile.custom_avatar_url?.trim() || profile.avatar_url;
+}

@@ -1,17 +1,35 @@
 .page {
   min-height: 100vh;
   padding-bottom: var(--sp-xl);
+  background: #060c1a;
 }
 
 .hero {
-  background: var(--gradient-stats);
-  padding: clamp(4rem, 8vw, 7rem) var(--sp-md);
+  position: relative;
+  background: var(--hero-bg);
+  padding: var(--hero-padding-top) var(--sp-md) var(--hero-padding-bottom);
   text-align: center;
+  overflow: hidden;
+}
+
+/* Fades the hero into the flat page background instead of a hard cut —
+   same recipe as every other main-site page hero, see globals.css. */
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--hero-fade-height);
+  background: var(--hero-fade);
+  pointer-events: none;
 }
 
 .heroTitle {
+  position: relative;
+  z-index: 1;
   font-family: var(--font-futura-heavy);
-  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-size: var(--fs-section-title);
   color: var(--white);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -19,6 +37,8 @@
 }
 
 .heroSub {
+  position: relative;
+  z-index: 1;
   max-width: 580px;
   margin: 0 auto;
   color: rgba(242,241,240,0.65);
@@ -29,42 +49,48 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
+  gap: 1.25rem;
   max-width: var(--max-width);
-  margin: 3rem auto 0;
+  margin: -3.5rem auto 0;
   padding: 0 clamp(1rem, 4vw, 2.5rem);
+  position: relative;
+  z-index: 1;
 }
 
 .card {
-  background: #060c1a;
-  border-radius: 1.125rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   overflow: hidden;
-  box-shadow: 0 2px 16px rgba(1,25,65,0.08);
-  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: var(--glass-shadow);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
   display: flex;
   flex-direction: column;
   cursor: pointer;
 }
 
 .card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 32px rgba(1,25,65,0.15);
+  transform: translateY(-6px);
+  border-color: var(--glass-border-hover);
+  background: var(--glass-bg-hover);
 }
 
 .cardHeader {
-  background: linear-gradient(135deg, #011941 0%, #14477c 100%);
   padding: 2rem;
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 140px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .logo {
   width: 80px;
   height: 80px;
   object-fit: contain;
-  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.4));
 }
 
 .logoFallback {
@@ -76,6 +102,8 @@
   justify-content: center;
   font-family: var(--font-futura-heavy);
   font-size: 2rem;
+  background: linear-gradient(135deg, rgba(255, 199, 44, 0.25), rgba(255, 199, 44, 0.05));
+  color: var(--yellow);
 }
 
 .cardBody {
@@ -110,9 +138,14 @@
 .learnMore {
   font-family: var(--font-futura-heavy);
   font-size: 0.8rem;
-  color: var(--blue);
+  color: var(--yellow);
   text-transform: uppercase;
   letter-spacing: 0.06em;
+  transition: color 0.2s ease;
+}
+
+.card:hover .learnMore {
+  color: var(--white);
 }
 
 .discordBadge {
@@ -124,4 +157,11 @@
   color: #5865f2;
   border-radius: 9999px;
   border: 1px solid rgba(88, 101, 242, 0.25);
+}
+
+.noContent {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: rgba(242,241,240,0.4);
+  padding: 3rem;
 }

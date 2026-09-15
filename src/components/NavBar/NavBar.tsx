@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types/database';
+import { resolveAvatarUrl } from '@/lib/profile';
 import styles from './NavBar.module.css';
 
 const NAV_LINKS = [
@@ -38,7 +39,7 @@ export default function NavBar() {
       if (user) {
         const { data } = await supabase
           .from('profiles')
-          .select('id, display_name, avatar_url')
+          .select('id, display_name, avatar_url, custom_avatar_url')
           .eq('id', user.id)
           .single();
         setProfile(data as Profile | null);
@@ -88,15 +89,18 @@ export default function NavBar() {
     return () => { document.body.style.overflow = ''; };
   }, [mobileOpen]);
 
+  const navAvatarUrl = profile ? resolveAvatarUrl(profile) : null;
+
   const authButton = authLoading ? null : profile ? (
     <Link href="/portal" className={styles.authBtn} aria-label="Member portal">
-      {profile.avatar_url ? (
+      {navAvatarUrl ? (
         <Image
-          src={profile.avatar_url}
+          src={navAvatarUrl}
           alt={profile.display_name || 'Profile'}
           width={28}
           height={28}
           className={styles.authAvatar}
+          unoptimized
         />
       ) : (
         <div className={styles.authAvatarFallback}>
@@ -118,11 +122,6 @@ export default function NavBar() {
         style={{ transform: `translateY(-${offset}px)` }}
         aria-label="Main navigation"
       >
-        <div className={styles.bgWrapper} aria-hidden="true">
-          <span className={styles.bgText}>TRITON</span>
-          <span className={styles.bgText2}>GAMING</span>
-        </div>
-
         <Link href="/" className={styles.logo} aria-label="Triton Gaming Home">
           <Image
             src="/logos/tg_logo_multi.png"
@@ -223,8 +222,8 @@ export default function NavBar() {
           <li className={styles.mobileAuthItem}>
             {profile ? (
               <Link href="/portal" className={styles.mobilePortalBtn} onClick={() => setMobileOpen(false)}>
-                {profile.avatar_url && (
-                  <Image src={profile.avatar_url} alt="" width={24} height={24} className={styles.authAvatar} />
+                {navAvatarUrl && (
+                  <Image src={navAvatarUrl} alt="" width={24} height={24} className={styles.authAvatar} unoptimized />
                 )}
                 Member Portal
               </Link>

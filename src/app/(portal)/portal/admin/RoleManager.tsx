@@ -2,8 +2,9 @@
 
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
-import { ROLE_LABELS, ROLE_COLORS, ASSIGNABLE_ROLES } from '@/types/database';
+import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK, ASSIGNABLE_ROLES } from '@/types/database';
 import type { AppRole } from '@/types/database';
+import { resolveAvatarUrl } from '@/lib/profile';
 import styles from './RoleManager.module.css';
 
 interface RoleGrant {
@@ -15,9 +16,17 @@ interface User {
   id: string;
   display_name: string | null;
   avatar_url: string | null;
+  custom_avatar_url?: string | null;
   gamer_tag: string | null;
   created_at: string;
   user_roles: RoleGrant[];
+  email?: string | null;
+}
+
+// Highest-privilege role first, so a user's badge row always reads
+// admin → exec → lead → officer/division → ucsd regardless of grant order.
+function byPrivilegeDesc(a: RoleGrant, b: RoleGrant) {
+  return ROLE_DISPLAY_RANK[b.role] - ROLE_DISPLAY_RANK[a.role];
 }
 
 interface DivisionOption {
@@ -144,13 +153,15 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
         ) : (
           filtered.map((user) => {
             const isEditing = editingId === user.id;
+            const sortedRoles = [...user.user_roles].sort(byPrivilegeDesc);
+            const avatarUrl = resolveAvatarUrl(user);
             return (
               <div key={user.id} className={`${styles.row} ${saving && isEditing ? styles.rowUpdating : ''}`}>
                 <div className={styles.userInfo}>
-                  {user.avatar_url ? (
-                    <Image src={user.avatar_url} alt="" width={38} height={38} className={styles.avatar} />
+                  {avatarUrl ? (
+                    <Image src={avatarUrl} alt="" width={38} height={38} className={styles.avatar} unoptimized />
                   ) : (
-                    <div className={styles.avatarFallback} style={{ background: user.user_roles[0] ? ROLE_COLORS[user.user_roles[0].role] : ROLE_COLORS.guest }}>
+                    <div className={styles.avatarFallback} style={{ background: sortedRoles[0] ? ROLE_COLORS[sortedRoles[0].role] : ROLE_COLORS.guest }}>
                       {(user.display_name || '?')[0].toUpperCase()}
                     </div>
                   )}
@@ -164,17 +175,18 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
                         Joined {new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                       </span>
                     </div>
+                    {user.email && <div className={styles.userEmail}>{user.email}</div>}
                   </div>
                 </div>
 
                 {!isEditing ? (
                   <div className={styles.roleSection}>
-                    {user.user_roles.length === 0 ? (
+                    {sortedRoles.length === 0 ? (
                       <span className={styles.currentRole} style={{ background: ROLE_COLORS.guest + '18', color: ROLE_COLORS.guest, borderColor: ROLE_COLORS.guest + '44' }}>
                         {ROLE_LABELS.guest}
                       </span>
                     ) : (
-                      user.user_roles.map((r) => (
+                      sortedRoles.map((r) => (
                         <span
                           key={r.role}
                           className={styles.currentRole}

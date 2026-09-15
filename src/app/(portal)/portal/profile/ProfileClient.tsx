@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types/database';
 import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
 import type { RoleGrant } from '@/lib/capabilities';
-import { hasBasicProfileInfo } from '@/lib/profile';
+import { hasBasicProfileInfo, resolveAvatarUrl } from '@/lib/profile';
 import styles from './profile.module.css';
 
 export default function ProfileClient({ profile, roles, isUcsd }: { profile: Profile; roles: RoleGrant[]; isUcsd: boolean }) {
@@ -18,6 +18,8 @@ export default function ProfileClient({ profile, roles, isUcsd }: { profile: Pro
     major: profile.major || '',
     gamer_tag: profile.gamer_tag || '',
     pronouns: profile.pronouns || '',
+    discord: profile.discord || '',
+    custom_avatar_url: profile.custom_avatar_url || '',
     bio: profile.bio || '',
     birthday: profile.birthday || '',
   });
@@ -45,7 +47,12 @@ export default function ProfileClient({ profile, roles, isUcsd }: { profile: Pro
     const supabase = createClient();
     const { error: err } = await supabase
       .from('profiles')
-      .update({ ...form, birthday: form.birthday || null, updated_at: new Date().toISOString() })
+      .update({
+        ...form,
+        birthday: form.birthday || null,
+        custom_avatar_url: form.custom_avatar_url.trim() || null,
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', profile.id);
 
     setSaving(false);
@@ -77,19 +84,23 @@ export default function ProfileClient({ profile, roles, isUcsd }: { profile: Pro
 
       <div className={styles.layout}>
         <div className={styles.avatarSection}>
-          {profile.avatar_url ? (
-            <Image
-              src={profile.avatar_url}
-              alt={profile.display_name || 'User'}
-              width={100}
-              height={100}
-              className={styles.avatar}
-            />
-          ) : (
-            <div className={styles.avatarFallback}>
-              {(profile.display_name || 'U')[0].toUpperCase()}
-            </div>
-          )}
+          {(() => {
+            const previewUrl = resolveAvatarUrl({ avatar_url: profile.avatar_url, custom_avatar_url: form.custom_avatar_url });
+            return previewUrl ? (
+              <Image
+                src={previewUrl}
+                alt={profile.display_name || 'User'}
+                width={100}
+                height={100}
+                className={styles.avatar}
+                unoptimized
+              />
+            ) : (
+              <div className={styles.avatarFallback}>
+                {(profile.display_name || 'U')[0].toUpperCase()}
+              </div>
+            );
+          })()}
           <div className={styles.roleTagRow}>
             {roles.length === 0 ? (
               <span className={styles.roleTag} style={{ background: ROLE_COLORS.guest + '22', color: ROLE_COLORS.guest }}>
@@ -103,8 +114,21 @@ export default function ProfileClient({ profile, roles, isUcsd }: { profile: Pro
               ))
             )}
           </div>
+
+          <label className={styles.avatarUrlField}>
+            <span className={styles.label}>Profile Picture URL</span>
+            <input
+              className={styles.input}
+              type="url"
+              value={form.custom_avatar_url}
+              onChange={(e) => setForm((f) => ({ ...f, custom_avatar_url: e.target.value }))}
+              placeholder="https://…"
+            />
+          </label>
           <p className={styles.avatarNote}>
-            Profile picture synced from Google account
+            {form.custom_avatar_url.trim()
+              ? 'Overrides your Google picture — clear this to go back to it.'
+              : 'Leave blank to use the picture from your Google account.'}
           </p>
         </div>
 
@@ -196,6 +220,17 @@ export default function ProfileClient({ profile, roles, isUcsd }: { profile: Pro
               />
             </label>
           </div>
+
+          <label className={styles.fieldGroup}>
+            <span className={styles.label}>Discord</span>
+            <input
+              className={styles.input}
+              value={form.discord}
+              onChange={(e) => setForm((f) => ({ ...f, discord: e.target.value }))}
+              maxLength={40}
+              placeholder="e.g. username or name#1234"
+            />
+          </label>
 
           <label className={styles.fieldGroup}>
             <span className={styles.label}>Birthday</span>

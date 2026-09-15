@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/capabilities';
 import type { RoleGrant } from '@/lib/capabilities';
 import type RoleManager from './RoleManager';
@@ -45,7 +46,7 @@ export async function getAdminData(roles: RoleGrant[]) {
     const [{ data: usersData, error: usersError }, { data: divisionsData }] = await Promise.all([
       supabase
         .from('profiles')
-        .select('id, display_name, avatar_url, gamer_tag, created_at, user_roles!user_roles_user_id_fkey(role, division_id)')
+        .select('id, display_name, avatar_url, custom_avatar_url, gamer_tag, created_at, user_roles!user_roles_user_id_fkey(role, division_id)')
         .order('created_at', { ascending: false })
         .limit(300),
       supabase.from('divisions').select('id, name, slug').order('name'),
@@ -53,6 +54,19 @@ export async function getAdminData(roles: RoleGrant[]) {
     if (usersError) console.error('[admin] failed to load users:', usersError);
     allUsers = (usersData ?? []) as unknown as typeof allUsers;
     divisions = divisionsData ?? [];
+
+    // Emails live in auth.users, not public.profiles — only reachable via
+    // the Admin API on a service-role client. Best-effort: if this fails
+    // (e.g. the service key isn't configured), the Role Manager just shows
+    // rows without email rather than breaking the whole page.
+    try {
+      const { data: authData, error: authError } = await createServiceClient().auth.admin.listUsers({ perPage: 1000 });
+      if (authError) throw authError;
+      const emailById = new Map(authData.users.map((u) => [u.id, u.email ?? null]));
+      allUsers = allUsers.map((u) => ({ ...u, email: emailById.get(u.id) ?? null }));
+    } catch (err) {
+      console.error('[admin] failed to load user emails:', err);
+    }
   }
 
   return { isAdmin, stats, eventTicketStats, allUsers, divisions };
