@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import Link from 'next/link';
 import styles from './EventCard.module.css';
 import type { Event } from '@/types';
 
@@ -73,15 +74,13 @@ export default function EventCard({ event }: { event: Event }) {
         <p className={styles.desc}>
           {event.content.length > 280 ? `${event.content.slice(0, 280)}…` : event.content}
         </p>
-        <a
-          href={event.url}
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link
+          href={`/events/${event.slug || event._id}`}
           className={styles.link}
           aria-label={`Learn more about ${event.full_name}`}
         >
           LEARN MORE &gt;
-        </a>
+        </Link>
       </div>
     </article>
   );

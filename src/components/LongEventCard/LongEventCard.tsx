@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import Link from 'next/link';
 import styles from './LongEventCard.module.css';
 import type { Event } from '@/types';
 
@@ -24,6 +25,7 @@ export default function LongEventCard({ event }: { event: Event }) {
   const dateStr = formatDateRange(event.start_date, event.end_date);
   const timeStr = formatTime(event.start_date, event.end_date);
   const isExternal = event.flyer_url?.startsWith('http');
+  const isPast = new Date(event.end_date || event.start_date) < new Date();
 
   return (
     <article className={styles.card}>
@@ -52,23 +54,23 @@ export default function LongEventCard({ event }: { event: Event }) {
         <p className={styles.location}>{event.location}</p>
         <p className={styles.desc}>{event.content}</p>
         <div className={styles.actions}>
-          <a
-            href={event.url}
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href={`/events/${event.slug || event._id}`}
             className={styles.link}
             aria-label={`Learn more about ${event.full_name}`}
           >
             LEARN MORE &gt;
-          </a>
-          <a href="/portal/tickets" className={styles.ticketBtn}>
-            🎟️{' '}
-            {event.audience === 'ucsd_only'
-              ? 'UCSD Students — Get Ticket'
-              : event.ticket_price > 0
-              ? `Get Ticket — $${event.ticket_price} (free for UCSD)`
-              : 'Get Ticket — Free'}
-          </a>
+          </Link>
+          {!isPast && (
+            <a href="/portal/tickets" className={styles.ticketBtn}>
+              🎟️{' '}
+              {event.audience === 'ucsd_only'
+                ? 'UCSD Students — Get Ticket'
+                : event.ticket_price > 0
+                ? `Get Ticket — $${event.ticket_price} (free for UCSD)`
+                : 'Get Ticket — Free'}
+            </a>
+          )}
         </div>
       </div>
     </article>

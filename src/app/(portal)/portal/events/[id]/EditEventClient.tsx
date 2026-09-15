@@ -25,6 +25,7 @@ export default function EditEventClient({
         title: form.title.trim(),
         slug: finalSlug || null,
         content: form.content.trim() || null,
+        description: form.details.trim() || null,
         location: form.location.trim() || null,
         start_date: new Date(form.start_date).toISOString(),
         end_date: form.end_date ? new Date(form.end_date).toISOString() : null,
@@ -34,6 +35,8 @@ export default function EditEventClient({
         ticket_price: form.audience === 'public' ? parseFloat(form.ticket_price) : 0,
         audience: form.audience,
         is_published: form.is_published,
+        photo_album_url: form.photo_album_url.trim() || null,
+        post_event_info: form.post_event_info.trim() || null,
       })
       .eq('id', eventId);
 

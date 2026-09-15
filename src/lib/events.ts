@@ -6,6 +6,7 @@ const DEFAULT_LIMIT = 50;
 function mapSupabaseEvent(row: Record<string, unknown>): Event {
   return {
     _id: (row.id as string) ?? '',
+    slug: (row.slug as string) ?? '',
     full_name: (row.title as string) ?? '',
     name: (row.name as string) ?? (row.title as string) ?? '',
     start_date: new Date(row.start_date as string).toISOString(),
@@ -13,12 +14,17 @@ function mapSupabaseEvent(row: Record<string, unknown>): Event {
     flyer_url: (row.flyer_url as string) ?? '',
     location: (row.location as string) ?? '',
     content: (row.content as string) ?? '',
+    details: (row.description as string) ?? '',
     url: (row.url as string) ?? '',
     requires_ticket: (row.requires_ticket as boolean) ?? false,
     ticket_price: (row.ticket_price as number) ?? 0,
     audience: (row.audience as 'public' | 'ucsd_only') ?? 'public',
+    photo_album_url: (row.photo_album_url as string) ?? '',
+    post_event_info: (row.post_event_info as string) ?? '',
   };
 }
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function getUpcomingEvents(limit = DEFAULT_LIMIT): Promise<Event[]> {
   try {
@@ -81,6 +87,27 @@ export async function getEventById(id: string): Promise<Event | null> {
       .select('*')
       .eq('id', id)
       .single();
+
+    if (error) throw error;
+    return data ? mapSupabaseEvent(data as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}
+
+// Public event detail pages route on the (possibly null) editable slug, so
+// this looks the param up as a slug first and falls back to id — a plain
+// uuid param skips straight to the id lookup since it can never be a slug.
+export async function getEventBySlugOrId(slugOrId: string): Promise<Event | null> {
+  try {
+    const supabase = await createClient();
+    const column = UUID_RE.test(slugOrId) ? 'id' : 'slug';
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .eq(column, slugOrId)
+      .eq('is_published', true)
+      .maybeSingle();
 
     if (error) throw error;
     return data ? mapSupabaseEvent(data as Record<string, unknown>) : null;

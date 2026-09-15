@@ -91,6 +91,22 @@
 
 .checkbox input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--yellow); }
 
+.sectionDivider {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.sectionLabel {
+  font-size: 0.72rem;
+  font-family: var(--font-renegare);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--yellow);
+}
+
 .error {
   font-size: 0.85rem;
   color: #fca5a5;

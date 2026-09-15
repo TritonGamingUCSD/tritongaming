@@ -42,6 +42,16 @@
 .carousel::-webkit-scrollbar { display: none; }
 .carousel:active { cursor: grabbing; }
 
+/* Few enough events that looping would just repeat the same cards —
+   center them as a plain static row instead. */
+.noLoop { mask-image: none; }
+.carousel.centered {
+  cursor: default;
+  justify-content: center;
+  flex-wrap: wrap;
+  scroll-snap-type: none;
+}
+
 .cardWrapper {
   scroll-snap-align: center;
   transition: opacity 0.35s ease, transform 0.35s ease;

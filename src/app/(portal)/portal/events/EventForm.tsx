@@ -8,6 +8,7 @@ export interface EventFormValues {
   title: string;
   slug: string;
   content: string;
+  details: string;
   location: string;
   start_date: string;
   end_date: string;
@@ -16,12 +17,15 @@ export interface EventFormValues {
   ticket_price: string;
   audience: 'public' | 'ucsd_only';
   is_published: boolean;
+  photo_album_url: string;
+  post_event_info: string;
 }
 
 export const EMPTY_EVENT_FORM: EventFormValues = {
   title: '',
   slug: '',
   content: '',
+  details: '',
   location: '',
   start_date: '',
   end_date: '',
@@ -30,6 +34,8 @@ export const EMPTY_EVENT_FORM: EventFormValues = {
   ticket_price: '0',
   audience: 'public',
   is_published: false,
+  photo_album_url: '',
+  post_event_info: '',
 };
 
 export default function EventForm({
@@ -95,8 +101,15 @@ export default function EventForm({
         </label>
 
         <label className={styles.field}>
-          <span className={styles.label}>Description</span>
-          <textarea className={`${styles.input} ${styles.textarea}`} value={form.content} onChange={(e) => set('content', e.target.value)} rows={5} />
+          <span className={styles.label}>Short Summary</span>
+          <textarea className={`${styles.input} ${styles.textarea}`} value={form.content} onChange={(e) => set('content', e.target.value)} rows={3} />
+          <span className={styles.hint}>Shown on event cards on the homepage and /events list.</span>
+        </label>
+
+        <label className={styles.field}>
+          <span className={styles.label}>Event Details / Instructions</span>
+          <textarea className={`${styles.input} ${styles.textarea}`} value={form.details} onChange={(e) => set('details', e.target.value)} rows={8} />
+          <span className={styles.hint}>The full write-up shown on this event&apos;s own page (what &quot;Learn More&quot; links to). Separate paragraphs with a blank line.</span>
         </label>
 
         <div className={styles.row}>
@@ -133,6 +146,21 @@ export default function EventForm({
         <label className={styles.checkbox}>
           <input type="checkbox" checked={form.is_published} onChange={(e) => set('is_published', e.target.checked)} />
           <span>Publish immediately (visible to all)</span>
+        </label>
+
+        <div className={styles.sectionDivider}>
+          <span className={styles.sectionLabel}>After the Event</span>
+          <span className={styles.hint}>Fill these in once the event has happened — they appear on the event&apos;s page in place of the ticket button.</span>
+        </div>
+
+        <label className={styles.field}>
+          <span className={styles.label}>Photo Album Link</span>
+          <input className={styles.input} type="url" value={form.photo_album_url} onChange={(e) => set('photo_album_url', e.target.value)} placeholder="https://photos.google.com/…" />
+        </label>
+
+        <label className={styles.field}>
+          <span className={styles.label}>Post-Event Notes</span>
+          <textarea className={`${styles.input} ${styles.textarea}`} value={form.post_event_info} onChange={(e) => set('post_event_info', e.target.value)} rows={4} placeholder="Recap, results, thank-yous, etc." />
         </label>
 
         {error && <p className={styles.error}>{error}</p>}

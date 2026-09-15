@@ -1,5 +1,6 @@
 export type Event = {
   _id: string;
+  slug: string;
   full_name: string;
   name: string;
   start_date: string;
@@ -7,10 +8,15 @@ export type Event = {
   flyer_url: string;
   location: string;
   content: string;
+  // Comprehensive "learn more" instructions shown on the event's own detail
+  // page (sourced from the events.description column).
+  details: string;
   url: string;
   requires_ticket: boolean;
   ticket_price: number;
   audience: 'public' | 'ucsd_only';
+  photo_album_url: string;
+  post_event_info: string;
 };
 
 export type OfficerEntry = {

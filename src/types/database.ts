@@ -82,6 +82,8 @@ export interface Database {
           requires_ticket: boolean;
           ticket_price: number;
           audience: EventAudience;
+          photo_album_url: string | null;
+          post_event_info: string | null;
           created_by: string | null;
           created_at: string;
           updated_at: string;

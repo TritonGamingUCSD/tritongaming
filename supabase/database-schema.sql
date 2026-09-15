@@ -79,6 +79,8 @@ CREATE TABLE public.events (
   requires_ticket boolean DEFAULT false,
   ticket_price numeric DEFAULT 0,
   audience text NOT NULL DEFAULT 'public'::text CHECK (audience = ANY (ARRAY['public'::text, 'ucsd_only'::text])),
+  photo_album_url text,
+  post_event_info text,
   created_by uuid,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),

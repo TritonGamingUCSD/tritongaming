@@ -11,13 +11,18 @@ interface LandingEventsProps {
   initialEvents: Event[];
 }
 
+// Below this many events, the infinite-scroll illusion (tripling the list)
+// just reads as the same 1-2 cards repeated back to back — looping only
+// pays off once there's enough real content to make the seam invisible.
+const MIN_EVENTS_TO_LOOP = 5;
+
 export default function LandingEvents({ initialEvents }: LandingEventsProps) {
-  const [focusedIndex, setFocusedIndex] = useState(initialEvents.length);
+  const shouldLoop = initialEvents.length >= MIN_EVENTS_TO_LOOP;
+  const [focusedIndex, setFocusedIndex] = useState(shouldLoop ? initialEvents.length : 0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  // Triple the events for infinite-scroll illusion
-  const extended = [...initialEvents, ...initialEvents, ...initialEvents];
+  const extended = shouldLoop ? [...initialEvents, ...initialEvents, ...initialEvents] : initialEvents;
 
   const scrollToCard = (index: number, smooth = true) => {
     const container = scrollRef.current;
@@ -32,12 +37,14 @@ export default function LandingEvents({ initialEvents }: LandingEventsProps) {
 
   // Seed initial position (middle copy)
   useEffect(() => {
+    if (!shouldLoop) return;
     scrollToCard(initialEvents.length, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialEvents.length]);
+  }, [initialEvents.length, shouldLoop]);
 
   // Infinite-scroll jump when reaching edges
   useEffect(() => {
+    if (!shouldLoop) return;
     const container = scrollRef.current;
     if (!container) return;
     let timeout: ReturnType<typeof setTimeout>;
@@ -63,7 +70,7 @@ export default function LandingEvents({ initialEvents }: LandingEventsProps) {
       clearTimeout(timeout);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusedIndex, initialEvents.length]);
+  }, [focusedIndex, initialEvents.length, shouldLoop]);
 
   if (initialEvents.length === 0) return null;
 
@@ -77,17 +84,17 @@ export default function LandingEvents({ initialEvents }: LandingEventsProps) {
       >
         <AlternateTitle bgTitle="Upcoming Events" fgTitle="Upcoming Events" />
       </motion.div>
-      <div className={styles.wrapper}>
-        <div className={styles.carousel} ref={scrollRef} role="list">
+      <div className={`${styles.wrapper} ${shouldLoop ? '' : styles.noLoop}`}>
+        <div className={`${styles.carousel} ${shouldLoop ? '' : styles.centered}`} ref={scrollRef} role="list">
           {extended.map((event, index) => (
             <div
               key={`${event._id}-${index}`}
               ref={(el) => { cardRefs.current[index] = el; }}
-              onClick={() => {
+              onClick={shouldLoop ? () => {
                 setFocusedIndex(index);
                 scrollToCard(index);
-              }}
-              className={`${styles.cardWrapper} ${focusedIndex !== index ? styles.faded : ''}`}
+              } : undefined}
+              className={`${styles.cardWrapper} ${shouldLoop && focusedIndex !== index ? styles.faded : ''}`}
               role="listitem"
             >
               <EventCard event={event} />
