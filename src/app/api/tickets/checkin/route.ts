@@ -68,6 +68,15 @@ export async function POST(request: Request) {
         expected_prev: rotatingCode(t.ticket_code, windowIndex - 1),
       }));
 
+    // Look up this exact caller's own tickets directly (bypassing the
+    // unfiltered query above) — if this also comes back empty for someone
+    // who should own tickets, RLS itself is misbehaving for this session,
+    // not just the checkin-capability OR-clause.
+    const { data: ownTickets } = await supabase
+      .from('tickets')
+      .select('id, event_id')
+      .eq('user_id', user.id);
+
     return NextResponse.json({
       error: 'Code not recognized — ask them to reopen their ticket and try again',
       debug: {
@@ -77,6 +86,10 @@ export async function POST(request: Request) {
         totalVisibleTickets: candidates.length,
         otherEventIds: [...new Set(candidates.map((t) => t.event_id))],
         candidates: debugCandidates,
+        callerId: user.id,
+        callerEmail: user.email,
+        callerRoles: roles,
+        callerOwnTicketCount: (ownTickets ?? []).length,
       },
     }, { status: 404 });
   }

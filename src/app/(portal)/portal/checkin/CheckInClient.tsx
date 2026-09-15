@@ -29,6 +29,10 @@ interface DebugInfo {
   totalVisibleTickets: number;
   otherEventIds: string[];
   candidates: Array<{ status: string; expected_now: string; expected_prev: string }>;
+  callerId: string;
+  callerEmail?: string;
+  callerRoles: Array<{ role: string; division_id: string | null }>;
+  callerOwnTicketCount: number;
 }
 
 export default function CheckInClient({ events }: { events: Event[] }) {
@@ -305,6 +309,9 @@ export default function CheckInClient({ events }: { events: Event[] }) {
                 <div>scanned: {debugInfo.received}</div>
                 <div>selected event id: {debugInfo.requestedEventId}</div>
                 <div>tickets server can see (any event): {debugInfo.totalVisibleTickets}</div>
+                <div>you are: {debugInfo.callerEmail || debugInfo.callerId}</div>
+                <div>your roles: {debugInfo.callerRoles.length === 0 ? '(none)' : debugInfo.callerRoles.map((r) => r.role).join(', ')}</div>
+                <div>your own tickets (any event): {debugInfo.callerOwnTicketCount}</div>
                 {debugInfo.totalVisibleTickets === 0 ? (
                   <div>⚠ server sees ZERO tickets at all — permissions issue, not a code issue</div>
                 ) : debugInfo.candidates.length === 0 ? (
