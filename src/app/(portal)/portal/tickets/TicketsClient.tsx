@@ -43,9 +43,10 @@ const STATUS_LABEL: Record<string, string> = {
   active: 'Active', used: 'Checked In', cancelled: 'Cancelled', expired: 'Expired',
 };
 
-export default function TicketsClient({ tickets, upcomingEvents, isUcsd }: Props) {
+export default function TicketsClient({ tickets: initialTickets, upcomingEvents, isUcsd }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [tickets, setTickets] = useState(initialTickets);
   const [qrTicket, setQrTicket] = useState<TicketData | null>(null);
   const [purchasing, setPurchasing] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -90,6 +91,13 @@ export default function TicketsClient({ tickets, upcomingEvents, isUcsd }: Props
     } finally {
       setPurchasing(null);
     }
+  }
+
+  // Reflects a live check-in (see FullscreenQR's Realtime subscription) into
+  // the ticket list immediately, so closing the QR modal doesn't show a now-
+  // stale "Active"/"Show QR" row until the next full page load.
+  function handleCheckedIn(ticketId: string, checkedInAt: string) {
+    setTickets((prev) => prev.map((t) => (t.id === ticketId ? { ...t, status: 'used', checked_in_at: checkedInAt } : t)));
   }
 
   const activeTickets = tickets.filter((t) => t.status === 'active');
@@ -253,6 +261,7 @@ export default function TicketsClient({ tickets, upcomingEvents, isUcsd }: Props
           eventDate={qrTicket.event?.start_date}
           eventLocation={qrTicket.event?.location}
           onClose={() => setQrTicket(null)}
+          onCheckedIn={(checkedInAt) => handleCheckedIn(qrTicket.id, checkedInAt)}
         />
       )}
     </div>

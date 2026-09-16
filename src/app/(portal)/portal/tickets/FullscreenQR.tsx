@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { createClient } from '@/lib/supabase/client';
 import StyledQRCode from '@/components/StyledQRCode/StyledQRCode';
 import { DEFAULT_QR_OPTIONS, eventLabelIcon, type QRCodeOptions } from '@/lib/qrCodeStyling';
 import styles from './fullscreenqr.module.css';
@@ -23,16 +24,22 @@ interface Props {
   eventDate?: string | null;
   eventLocation?: string | null;
   onClose: () => void;
+  onCheckedIn?: (checkedInAt: string) => void;
 }
 
-export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLocation, onClose }: Props) {
+export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLocation, onClose, onCheckedIn }: Props) {
   const [code, setCode] = useState<string | null>(null);
   const [qrData, setQrData] = useState<string | null>(null);
   const [expiresIn, setExpiresIn] = useState(60);
   const [error, setError] = useState('');
+  const [checkedIn, setCheckedIn] = useState(false);
   const refreshTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchCode = useCallback(async () => {
+    // Once checked in there's nothing left to show a code for, and the /qr
+    // endpoint would just reject with "not active" anyway.
+    if (checkedIn) return;
+
     // Always cancel any pending scheduled refresh before fetching — otherwise
     // a visibility/focus-triggered call (below) races the normal timer chain
     // and both keep independently rescheduling themselves forever.
@@ -58,7 +65,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
     } catch {
       setError('Network error');
     }
-  }, [ticketId]);
+  }, [ticketId, checkedIn]);
 
   useEffect(() => {
     fetchCode();
@@ -81,6 +88,35 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
       window.removeEventListener('focus', onVisible);
     };
   }, [fetchCode]);
+
+  // Live push from the checkin scanner's DB write (see the
+  // enable_tickets_realtime migration) — this is what lets this screen show
+  // "Checked In" the instant staff scan it, instead of only finding out
+  // once the next rotating-code fetch gets rejected as "not active" (up to
+  // ~60s later). Stored in a ref so the subscription doesn't need to be torn
+  // down and rebuilt whenever the parent passes a new onCheckedIn closure.
+  const onCheckedInRef = useRef(onCheckedIn);
+  useEffect(() => { onCheckedInRef.current = onCheckedIn; }, [onCheckedIn]);
+
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`ticket-checkin-${ticketId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'tickets', filter: `id=eq.${ticketId}` },
+        (payload) => {
+          const newRow = payload.new as { status?: string; checked_in_at?: string | null };
+          if (newRow.status === 'used') {
+            setCheckedIn(true);
+            if (newRow.checked_in_at) onCheckedInRef.current?.(newRow.checked_in_at);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [ticketId]);
 
   // Close on backdrop tap
   function onBackdrop(e: React.MouseEvent) {
@@ -123,39 +159,49 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
           )}
         </div>
 
-        <div className={styles.label}>
-          SHOW THIS AT CHECK-IN
-          <span className={styles.liveBadge}><span className={styles.liveDot} />LIVE</span>
-        </div>
-
-        <div className={styles.qrWrapper}>
-          {qrData ? (
-            <StyledQRCode
-              options={{ ...TICKET_QR_BASE, data: qrData, icon: 'custom', customIcon: qrIcon }}
-              className={styles.qrCanvas}
-            />
-          ) : (
-            <div className={styles.qrCanvas} style={{ width: 260, height: 260 }} aria-hidden="true" />
-          )}
-        </div>
-
-        {code && (
+        {checkedIn ? (
+          <div className={styles.checkedInState}>
+            <div className={styles.checkedInIcon} aria-hidden="true">✓</div>
+            <div className={styles.checkedInTitle}>You&apos;re Checked In!</div>
+            <p className={styles.hint}>Have a great time — see you inside.</p>
+          </div>
+        ) : (
           <>
-            <div className={styles.progressTrack}>
-              <div key={code} className={styles.progressBar} style={{ animationDuration: `${expiresIn}s` }} />
+            <div className={styles.label}>
+              SHOW THIS AT CHECK-IN
+              <span className={styles.liveBadge}><span className={styles.liveDot} />LIVE</span>
             </div>
-            <div className={styles.codeText}>
-              Scanner not working? Ask staff to type: <strong># {code.toUpperCase()}</strong>
+
+            <div className={styles.qrWrapper}>
+              {qrData ? (
+                <StyledQRCode
+                  options={{ ...TICKET_QR_BASE, data: qrData, icon: 'custom', customIcon: qrIcon }}
+                  className={styles.qrCanvas}
+                />
+              ) : (
+                <div className={styles.qrCanvas} style={{ width: 260, height: 260 }} aria-hidden="true" />
+              )}
             </div>
+
+            {code && (
+              <>
+                <div className={styles.progressTrack}>
+                  <div key={code} className={styles.progressBar} style={{ animationDuration: `${expiresIn}s` }} />
+                </div>
+                <div className={styles.codeText}>
+                  Scanner not working? Ask staff to type: <strong># {code.toUpperCase()}</strong>
+                </div>
+              </>
+            )}
+            {error && <div className={styles.codeText}>{error}</div>}
+
+            <p className={styles.hint}>
+              This code refreshes automatically, so a screenshot from earlier
+              won&apos;t scan. Just keep this screen open when it&apos;s your turn —
+              check-in reads whatever code is showing at that moment.
+            </p>
           </>
         )}
-        {error && <div className={styles.codeText}>{error}</div>}
-
-        <p className={styles.hint}>
-          This code refreshes automatically, so a screenshot from earlier
-          won&apos;t scan. Just keep this screen open when it&apos;s your turn —
-          check-in reads whatever code is showing at that moment.
-        </p>
       </div>
     </div>
   );
