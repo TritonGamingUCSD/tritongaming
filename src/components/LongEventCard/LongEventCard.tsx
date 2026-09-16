@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { Ticket } from 'lucide-react';
 import styles from './LongEventCard.module.css';
 import type { Event } from '@/types';
 
@@ -61,7 +62,7 @@ export default function LongEventCard({ event }: { event: Event }) {
           <span className={styles.link} aria-hidden="true">LEARN MORE &gt;</span>
           {!isPast && (
             <a href="/portal/tickets" className={styles.ticketBtn}>
-              🎟️{' '}
+              <Ticket size={16} strokeWidth={1.5} aria-hidden="true" />
               {event.audience === 'ucsd_only'
                 ? 'UCSD Students — Get Ticket'
                 : event.ticket_price > 0

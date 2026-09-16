@@ -74,7 +74,8 @@
 }
 
 .checkinBannerIcon {
-  font-size: 1.5rem;
+  display: inline-flex;
+  color: #0ea5e9;
   margin-left: auto;
 }
 
@@ -99,11 +100,23 @@
 .ticketHeroMeta { display: flex; flex-direction: column; gap: 0.35rem; }
 
 .ticketHeroLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
   font-size: 0.62rem;
   font-family: var(--font-renegare);
   letter-spacing: 0.15em;
   color: var(--yellow);
   text-transform: uppercase;
+}
+
+.liveDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ef4444;
+  flex-shrink: 0;
+  animation: pulse 2s ease-in-out infinite;
 }
 
 .ticketHeroTitle {
@@ -119,6 +132,9 @@
 }
 
 .ticketHeroLoc {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
   font-size: 0.78rem;
   color: rgba(242,241,240,0.45);
 }

@@ -61,8 +61,14 @@
 }
 
 /* ── Mission bar ── */
+/* Used to be a solid var(--yellow) band across the full width — read as
+   way too bright/high-saturation next to everything else on the page.
+   Same dark-glass-with-a-gold-accent language as the rest of the site
+   instead of a flat color blast. */
 .missionBar {
-  background: var(--yellow);
+  background: rgba(255, 199, 44, 0.06);
+  border-top: 1px solid rgba(255, 199, 44, 0.18);
+  border-bottom: 1px solid rgba(255, 199, 44, 0.18);
   padding: 0.85rem clamp(1.5rem, 5vw, 4rem);
   text-align: center;
 }
@@ -70,7 +76,7 @@
 .missionBar p {
   font-family: var(--font-soulmaze);
   font-size: clamp(0.9rem, 2vw, 1.15rem);
-  color: var(--white);
+  color: rgba(242, 241, 240, 0.85);
   margin: 0;
 }
 
@@ -198,7 +204,7 @@
   transform: translateY(-4px);
 }
 
-.offerIcon { font-size: 1.8rem; line-height: 1; }
+.offerIcon { display: inline-flex; color: var(--yellow); }
 
 .offerTitle {
   font-family: var(--font-soulmaze);

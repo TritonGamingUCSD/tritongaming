@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Building2, Trophy, RadioTower, Handshake } from 'lucide-react';
 import LogoGrid from '@/components/LogoGrid/LogoGrid';
 import { getContentBlock } from '@/lib/content';
 import type { LogoItem } from '@/types';
@@ -11,10 +12,10 @@ const TIER_SIZE: Record<string, 'small' | 'medium' | 'large'> = {
 };
 
 const OFFERINGS = [
-  { icon: '🏟️', title: 'Event Activation', body: 'Set up booths, demos, and hands-on activations at our LANs, expos, and gaming events with thousands of student attendees.' },
-  { icon: '🏆', title: 'Tournament Sponsorship', body: 'Co-host tournaments or provide prize pools — get your brand in front of competitive UCSD gamers and beyond.' },
-  { icon: '📡', title: 'Social Media Reach', body: 'Reach 1.5M+ across our social channels with dedicated posts, stories, and reels featuring your brand and products.' },
-  { icon: '🤝', title: 'Panels & Talks', body: 'Engage our community with an industry panel, career talk, or fireside chat connecting your team to future professionals.' },
+  { icon: <Building2 size={28} strokeWidth={1.5} aria-hidden="true" />, title: 'Event Activation', body: 'Set up booths, demos, and hands-on activations at our LANs, expos, and gaming events with thousands of student attendees.' },
+  { icon: <Trophy size={28} strokeWidth={1.5} aria-hidden="true" />, title: 'Tournament Sponsorship', body: 'Co-host tournaments or provide prize pools — get your brand in front of competitive UCSD gamers and beyond.' },
+  { icon: <RadioTower size={28} strokeWidth={1.5} aria-hidden="true" />, title: 'Social Media Reach', body: 'Reach 1.5M+ across our social channels with dedicated posts, stories, and reels featuring your brand and products.' },
+  { icon: <Handshake size={28} strokeWidth={1.5} aria-hidden="true" />, title: 'Panels & Talks', body: 'Engage our community with an industry panel, career talk, or fireside chat connecting your team to future professionals.' },
 ];
 
 export const metadata: Metadata = {

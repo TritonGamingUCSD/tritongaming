@@ -58,6 +58,7 @@
 }
 
 .card {
+  position: relative;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   border-radius: 20px;
@@ -69,6 +70,12 @@
   display: flex;
   flex-direction: column;
   cursor: pointer;
+}
+
+.cardLink {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
 }
 
 .card:hover {
@@ -148,15 +155,25 @@
   color: var(--white);
 }
 
-.discordBadge {
+.cardDiscordBtn {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   font-size: 0.7rem;
-  font-family: var(--font-renegare);
-  letter-spacing: 0.08em;
-  padding: 0.2rem 0.5rem;
-  background: rgba(88, 101, 242, 0.1);
-  color: #5865f2;
+  font-family: var(--font-futura-heavy);
+  letter-spacing: 0.03em;
+  padding: 0.35rem 0.7rem;
+  background: rgba(88, 101, 242, 0.15);
+  color: #c7cbfb;
   border-radius: 9999px;
-  border: 1px solid rgba(88, 101, 242, 0.25);
+  border: 1px solid rgba(88, 101, 242, 0.35);
+  transition: background 0.15s, transform 0.15s;
+}
+.cardDiscordBtn:hover {
+  background: rgba(88, 101, 242, 0.28);
+  transform: translateY(-1px);
 }
 
 .noContent {

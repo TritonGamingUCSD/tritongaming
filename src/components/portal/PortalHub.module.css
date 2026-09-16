@@ -48,7 +48,7 @@
   color: var(--yellow);
 }
 
-.cardIcon { font-size: 1.75rem; line-height: 1; }
+.cardIcon { display: inline-flex; color: var(--yellow); }
 
 .cardLabel {
   font-family: var(--font-futura-heavy);
@@ -111,7 +111,7 @@
   gap: 0.6rem;
 }
 
-.panelIcon { font-size: 1.4rem; }
+.panelIcon { display: inline-flex; color: var(--yellow); }
 
 .panelTitle {
   font-family: var(--font-futura-heavy);

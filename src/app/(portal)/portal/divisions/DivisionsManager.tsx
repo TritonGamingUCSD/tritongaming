@@ -263,7 +263,7 @@ export default function DivisionsManager({ divisions: initial }: { divisions: Di
               {d.description && <p className={styles.desc}>{d.description}</p>}
               {d.discord_url && (
                 <a href={d.discord_url} target="_blank" rel="noopener noreferrer" className={styles.discordLink}>
-                  💬 Discord →
+                  <Image src="/logos/discord.svg" alt="" width={14} height={14} unoptimized /> Discord →
                 </a>
               )}
               <div className={styles.actions}>

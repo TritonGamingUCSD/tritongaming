@@ -1,0 +1,77 @@
+.page { max-width: 1000px; margin-inline: auto; }
+
+.title {
+  font-family: var(--font-futura-heavy);
+  font-size: clamp(1.25rem, 2.5vw, 1.6rem);
+  color: var(--white);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.2rem;
+}
+
+.sub { font-size: 0.85rem; color: rgba(242,241,240,0.4); margin-bottom: 1.5rem; }
+
+.totalsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.totalCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 1.25rem 1rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 0.75rem;
+  color: var(--yellow);
+  text-align: center;
+}
+
+.totalValue {
+  font-family: var(--font-futura-heavy);
+  font-size: 1.6rem;
+  color: var(--white);
+}
+
+.totalLabel {
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(242,241,240,0.4);
+}
+
+.chartRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.chartCard {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 0.75rem;
+  padding: 1.25rem 1rem 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.chartRow .chartCard { margin-bottom: 0; }
+
+.chartTitle {
+  font-family: var(--font-futura-heavy);
+  font-size: 0.85rem;
+  letter-spacing: 0.03em;
+  color: rgba(242,241,240,0.7);
+  margin-bottom: 0.5rem;
+}
+
+.empty {
+  text-align: center;
+  color: rgba(242,241,240,0.35);
+  padding: 3rem 1rem;
+  font-size: 0.9rem;
+}

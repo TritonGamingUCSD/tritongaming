@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Ticket, MapPin, Smartphone, Check, X, Timer } from 'lucide-react';
 import FullscreenQR from './FullscreenQR';
 import styles from './tickets.module.css';
 
@@ -35,8 +36,11 @@ interface Props {
   isUcsd: boolean;
 }
 
-const STATUS_ICON: Record<string, string> = {
-  active: '🎟️', used: '✓', cancelled: '✗', expired: '⏱',
+const STATUS_ICON: Record<string, ReactNode> = {
+  active: <Ticket size={18} strokeWidth={1.5} aria-hidden="true" />,
+  used: <Check size={18} strokeWidth={1.75} aria-hidden="true" />,
+  cancelled: <X size={18} strokeWidth={1.75} aria-hidden="true" />,
+  expired: <Timer size={18} strokeWidth={1.5} aria-hidden="true" />,
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -124,7 +128,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
 
       {checkoutResult === 'success' && (
         <div className={styles.checkoutBanner}>
-          ✓ Payment received — your ticket will appear here in a few seconds.
+          <Check size={16} strokeWidth={1.75} aria-hidden="true" /> Payment received — your ticket will appear here in a few seconds.
         </div>
       )}
       {checkoutResult === 'cancelled' && (
@@ -154,14 +158,14 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
                   </p>
                 )}
                 {nextActiveTicket.event?.location && (
-                  <p className={styles.heroLocation}>📍 {nextActiveTicket.event.location}</p>
+                  <p className={styles.heroLocation}><MapPin size={13} strokeWidth={1.5} aria-hidden="true" /> {nextActiveTicket.event.location}</p>
                 )}
               </div>
               <button
                 className={styles.showQrBtn}
                 onClick={() => setQrTicket(nextActiveTicket)}
               >
-                <span className={styles.showQrIcon}>📱</span>
+                <span className={styles.showQrIcon}><Smartphone size={18} strokeWidth={1.5} aria-hidden="true" /></span>
                 Show QR Code
               </button>
             </div>
@@ -207,7 +211,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
                 <div className={styles.eventBody}>
                   <div className={styles.eventTitle}>{event.title}</div>
                   {event.location && (
-                    <div className={styles.eventLoc}>📍 {event.location}</div>
+                    <div className={styles.eventLoc}><MapPin size={12} strokeWidth={1.5} aria-hidden="true" /> {event.location}</div>
                   )}
                 </div>
                 {event.audience === 'ucsd_only' && !isUcsd ? (
@@ -234,7 +238,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
       {/* Empty state */}
       {tickets.length === 0 && unregisteredEvents.length === 0 && (
         <div className={styles.empty}>
-          <span className={styles.emptyIcon}>🎟️</span>
+          <span className={styles.emptyIcon}><Ticket size={40} strokeWidth={1.25} aria-hidden="true" /></span>
           <p className={styles.emptyText}>No tickets yet</p>
           <p className={styles.emptyHint}>Register for events to get your tickets here.</p>
           <a href="/events" className={styles.browseLink}>Browse Events →</a>
@@ -292,7 +296,7 @@ function TicketRow({
         )}
         {ticket.checked_in_at && (
           <div className={styles.checkedInLine}>
-            ✓ Checked in {new Date(ticket.checked_in_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+            <Check size={13} strokeWidth={1.75} aria-hidden="true" /> Checked in {new Date(ticket.checked_in_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
           </div>
         )}
       </div>

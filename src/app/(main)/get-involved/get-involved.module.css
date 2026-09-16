@@ -120,7 +120,7 @@
 .accent_blue { --accent-color: var(--lightblue); }
 .accent_yellow { --accent-color: var(--yellow); }
 
-.wayEmoji { font-size: 2rem; line-height: 1; }
+.wayEmoji { display: inline-flex; color: var(--yellow); }
 
 .wayTitle {
   font-family: var(--font-soulmaze);
@@ -231,19 +231,20 @@
   padding: 0.7rem 2rem;
   background: var(--btn-primary-bg);
   box-shadow: var(--btn-primary-shadow);
-  color: var(--darkblue);
+  color: var(--btn-primary-text);
   font-family: var(--font-futura-heavy);
   font-size: 0.9rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   text-decoration: none;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid var(--btn-primary-border);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .applyBtn:hover {
   transform: translateY(-2px);
+  border-color: var(--btn-primary-border-hover);
   box-shadow: var(--btn-primary-shadow-hover);
 }
 
@@ -255,8 +256,15 @@
   min-width: 220px;
 }
 
+/* Flyers are usually tall (portrait) — width:100% with no height cap let
+   one stretch to fill the narrow meta column's height unconstrained,
+   dwarfing the stat cards below it. Capped + contain so it always shows in
+   full at a sane size instead of dictating the column's height. */
 .recruitmentFlyer {
+  display: block;
   width: 100%;
+  max-height: 320px;
+  object-fit: contain;
   border-radius: 14px;
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
@@ -274,7 +282,7 @@
   -webkit-backdrop-filter: var(--glass-blur);
 }
 
-.metaEmoji { font-size: 1.4rem; line-height: 1; }
+.metaEmoji { display: inline-flex; color: var(--yellow); }
 
 .metaLabel {
   font-family: var(--font-futura-heavy);

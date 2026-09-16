@@ -26,7 +26,19 @@ export default async function LandingDivisions() {
             const logoSrc = divisionLogoSrc(div.logo_url);
             return (
               <RevealItem key={div.id}>
-                <Link href={`/divisions/${div.slug}`} className={styles.card}>
+                <div className={styles.card}>
+                  {div.discord_url && (
+                    <a
+                      href={div.discord_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.cardDiscordBtn}
+                      aria-label={`Join ${div.name}'s Discord`}
+                      title="Join Discord"
+                    >
+                      <Image src="/logos/discord.svg" alt="" width={16} height={16} unoptimized />
+                    </a>
+                  )}
                   {logoSrc && (
                     <div className={styles.logoWrap}>
                       <Image
@@ -43,7 +55,8 @@ export default async function LandingDivisions() {
                   {div.description && (
                     <span className={styles.divDesc}>{div.description}</span>
                   )}
-                </Link>
+                  <Link href={`/divisions/${div.slug}`} className={styles.cardLink} aria-label={`View ${div.name}`} />
+                </div>
               </RevealItem>
             );
           })}

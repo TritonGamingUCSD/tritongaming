@@ -11,6 +11,9 @@
   position: absolute;
   top: 0.875rem;
   right: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
   background: rgba(5, 150, 105, 0.15);
   border: 1px solid rgba(52, 211, 153, 0.3);
   color: #6ee7b7;
@@ -45,7 +48,8 @@
 .searchIcon {
   position: absolute;
   left: 0.875rem;
-  font-size: 0.9rem;
+  display: inline-flex;
+  color: rgba(242,241,240,0.4);
   pointer-events: none;
 }
 
@@ -69,7 +73,9 @@
 .clearSearch {
   position: absolute;
   right: 0.875rem;
-  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: rgba(255,255,255,0.35);
   cursor: pointer;
   padding: 0.25rem;
@@ -193,6 +199,9 @@
 }
 
 .gamerTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
   font-size: 0.72rem;
   color: rgba(242,241,240,0.4);
 }

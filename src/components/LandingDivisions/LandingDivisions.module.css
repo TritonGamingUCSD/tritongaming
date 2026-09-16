@@ -143,9 +143,36 @@
   transition: none;
 }
 
-a.card { cursor: pointer; }
+.card { cursor: pointer; }
 
-a.card:hover {
+.cardLink {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.cardDiscordBtn {
+  position: absolute;
+  top: 0.625rem;
+  right: 0.625rem;
+  z-index: 2;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  border-radius: 50%;
+  background: rgba(88, 101, 242, 0.18);
+  border: 1px solid rgba(88, 101, 242, 0.35);
+  transition: background 0.15s, transform 0.15s;
+}
+.cardDiscordBtn:hover {
+  background: rgba(88, 101, 242, 0.32);
+  transform: scale(1.1);
+}
+
+.card:hover {
   background: var(--glass-bg-hover);
   border-color: var(--glass-border-hover);
   transform: translateY(-5px);
@@ -157,7 +184,7 @@ a.card:hover {
 
 /* Every third card leans cool instead of gold on hover — quiet rhythm
    across the grid rather than one flat repeated glow. */
-a.card:nth-child(3n):hover {
+.card:nth-child(3n):hover {
   background: linear-gradient(165deg, rgba(159, 196, 232, 0.12), rgba(159, 196, 232, 0.03));
   border-color: rgba(159, 196, 232, 0.4);
   box-shadow:
@@ -166,7 +193,7 @@ a.card:nth-child(3n):hover {
     0 0 20px rgba(159, 196, 232, 0.08);
 }
 
-a.card:hover::before {
+.card:hover::before {
   opacity: 1;
   animation: divScanLine 0.55s ease forwards;
 }
@@ -185,7 +212,7 @@ a.card:hover::before {
   transition: filter 0.25s;
 }
 
-a.card:hover .logoWrap {
+.card:hover .logoWrap {
   filter: drop-shadow(0 4px 16px rgba(255, 199, 44, 0.25));
 }
 

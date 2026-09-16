@@ -125,13 +125,16 @@
 
 .ctaPrimary {
   background: var(--btn-primary-bg);
-  color: var(--darkblue);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: var(--btn-primary-text);
+  border: 1px solid var(--btn-primary-border);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
   box-shadow: var(--btn-primary-shadow);
 }
 
 .ctaPrimary:hover {
   transform: translateY(-2px);
+  border-color: var(--btn-primary-border-hover);
   box-shadow: var(--btn-primary-shadow-hover);
 }
 

@@ -138,6 +138,9 @@
 }
 
 .embedType {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   font-size: 0.78rem;
   color: rgba(242,241,240,0.7);
   white-space: nowrap;

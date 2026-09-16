@@ -11,10 +11,10 @@ interface AboutContent {
 }
 
 export default function LandingAbout({ content = {} }: { content?: AboutContent }) {
-  const heading  = content.title    || 'Elevating Gaming at UC San Diego';
-  const body     = content.body     || 'Triton Gaming is one of the largest student-run collegiate gaming organizations in the country. We\'re committed to building unforgettable community experiences, championing diversity in gaming, and connecting students with the esports industry. Whether you\'re a casual player or an aspiring developer — you belong here.';
-  const ctaText  = content.cta_text || 'Learn More →';
-  const ctaLink  = content.cta_link || '/about';
+  const heading  = content.title;
+  const body     = content.body;
+  const ctaText  = content.cta_text;
+  const ctaLink  = content.cta_link;
 
   return (
     <section className={styles.section}>
@@ -52,15 +52,15 @@ export default function LandingAbout({ content = {} }: { content?: AboutContent 
         <Reveal delay={0.15}>
           <div className={styles.text}>
             <p className={styles.sectionLabel}>WHO WE ARE</p>
-            <h2 className={styles.heading}>{heading}</h2>
-            <p className={styles.body}>{body}</p>
-            {ctaLink.startsWith('http') ? (
+            <h2 className={styles.heading}>{heading || ' '}</h2>
+            {body && <p className={styles.body}>{body}</p>}
+            {ctaText && (ctaLink?.startsWith('http') ? (
               <a href={ctaLink} target="_blank" rel="noopener noreferrer" className={styles.learnMore}>
                 {ctaText}
               </a>
             ) : (
-              <Link href={ctaLink} className={styles.learnMore}>{ctaText}</Link>
-            )}
+              <Link href={ctaLink || '#'} className={styles.learnMore}>{ctaText}</Link>
+            ))}
           </div>
         </Reveal>
       </div>

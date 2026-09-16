@@ -62,8 +62,25 @@
 
 /* ── Sections ── */
 .section {
-  padding-bottom: var(--sp-xl);
+  padding: 0 clamp(1rem, 4vw, 2.5rem) var(--sp-xl);
 }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  justify-items: center;
+  gap: 1.5rem;
+  max-width: var(--max-width);
+  margin-inline: auto;
+}
+
+/* Past events read as history, not something to act on — quieter until
+   you're actually looking at one. */
+.gridPast {
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+.gridPast:hover { opacity: 1; }
 
 .sectionHeader {
   text-align: center;

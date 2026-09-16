@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { MapPin, Ticket, Camera } from 'lucide-react';
 import { getEventBySlugOrId } from '@/lib/events';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import EventSocialEmbeds from '@/components/EventSocialEmbeds/EventSocialEmbeds';
@@ -55,13 +56,17 @@ export default async function EventDetailPage({ params }: Params) {
   return (
     <div className={styles.page}>
       <div className={styles.hero}>
-        {event.flyer_url ? (
-          isExternalFlyer ? (
-            // eslint-disable-next-line @next/next/no-img-element
+        {event.flyer_url && isExternalFlyer ? (
+          <>
+            {/* Blurred, cropped copy fills the hero band behind the real
+                flyer — same treatment as the event cards, so the flyer
+                shows in full (uncropped) instead of getting hard-cut to
+                fill a fixed-aspect box. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={event.flyer_url} alt="" aria-hidden="true" className={styles.heroBackdrop} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={event.flyer_url} alt={event.full_name} className={styles.heroImg} />
-          ) : (
-            <Image src="/images/what_is_triton_gaming_justinlu.jpg" alt={event.full_name} fill sizes="100vw" style={{ objectFit: 'cover' }} />
-          )
+          </>
         ) : (
           <Image src="/images/what_is_triton_gaming_justinlu.jpg" alt={event.full_name} fill sizes="100vw" style={{ objectFit: 'cover' }} />
         )}
@@ -80,13 +85,13 @@ export default async function EventDetailPage({ params }: Params) {
           <span className={styles.hash}>#</span>
           {formatTime(event.start_date, event.end_date)}
         </p>
-        {event.location && <p className={styles.location}>📍 {event.location}</p>}
+        {event.location && <p className={styles.location}><MapPin size={15} strokeWidth={1.5} aria-hidden="true" /> {event.location}</p>}
 
         {event.content && <p className={styles.summary}>{event.content}</p>}
 
         {!isPast && (
           <a href="/portal/tickets" className={styles.ticketBtn}>
-            🎟️{' '}
+            <Ticket size={18} strokeWidth={1.5} aria-hidden="true" />
             {event.audience === 'ucsd_only'
               ? 'UCSD Students — Get Ticket'
               : event.ticket_price > 0
@@ -114,7 +119,7 @@ export default async function EventDetailPage({ params }: Params) {
             <h2 className={styles.sectionTitle}>After the Event</h2>
             {event.photo_album_url && (
               <a href={event.photo_album_url} target="_blank" rel="noopener noreferrer" className={styles.photoLink}>
-                📸 View Event Photos
+                <Camera size={15} strokeWidth={1.5} aria-hidden="true" /> View Event Photos
               </a>
             )}
             {event.post_event_info && <MarkdownContent>{event.post_event_info}</MarkdownContent>}

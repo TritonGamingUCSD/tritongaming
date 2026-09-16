@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import FullscreenQR from './tickets/FullscreenQR';
 import { useState } from 'react';
+import { Clock, MapPin, Smartphone } from 'lucide-react';
 import styles from './dashboard.module.css';
 
 interface Ticket {
@@ -25,7 +26,13 @@ export default function DashboardClient({ ticket }: { ticket: Ticket }) {
         <div className={styles.ticketHeroInner}>
           <div className={styles.ticketHeroMeta}>
             <span className={styles.ticketHeroLabel}>
-              {daysUntil === 0 ? '🔴 TODAY' : daysUntil === 1 ? '⏰ TOMORROW' : `IN ${daysUntil} DAYS`}
+              {daysUntil === 0 ? (
+                <><span className={styles.liveDot} aria-hidden="true" /> TODAY</>
+              ) : daysUntil === 1 ? (
+                <><Clock size={11} strokeWidth={1.5} aria-hidden="true" /> TOMORROW</>
+              ) : (
+                `IN ${daysUntil} DAYS`
+              )}
             </span>
             <h2 className={styles.ticketHeroTitle}>{ev.title}</h2>
             <p className={styles.ticketHeroDate}>
@@ -34,12 +41,12 @@ export default function DashboardClient({ ticket }: { ticket: Ticket }) {
               {d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
             </p>
             {ev.location && (
-              <p className={styles.ticketHeroLoc}>📍 {ev.location}</p>
+              <p className={styles.ticketHeroLoc}><MapPin size={12} strokeWidth={1.5} aria-hidden="true" /> {ev.location}</p>
             )}
           </div>
           <div className={styles.ticketHeroActions}>
             <button className={styles.showQrHeroBtn} onClick={() => setShowQR(true)}>
-              <span>📱</span> Show QR Code
+              <Smartphone size={16} strokeWidth={1.5} aria-hidden="true" /> Show QR Code
             </button>
             <Link href="/portal?open=tickets" className={styles.viewAllTickets}>All tickets →</Link>
           </div>

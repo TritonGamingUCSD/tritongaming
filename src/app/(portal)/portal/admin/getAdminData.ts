@@ -1,8 +1,13 @@
+import { createElement } from 'react';
+import { Users, Calendar, Ticket } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/capabilities';
 import type { RoleGrant } from '@/lib/capabilities';
 import type RoleManager from './RoleManager';
+
+// createElement instead of JSX since this is a plain .ts module, not .tsx.
+const STAT_ICON_PROPS = { size: 22, strokeWidth: 1.5, 'aria-hidden': true } as const;
 
 // Shared by the standalone /portal/admin route and the portal hub.
 export async function getAdminData(roles: RoleGrant[]) {
@@ -18,9 +23,9 @@ export async function getAdminData(roles: RoleGrant[]) {
   ]);
 
   const stats = [
-    { label: 'Members',  value: usersRes.count   ?? 0, icon: '👥' },
-    { label: 'Events',   value: eventsRes.count  ?? 0, icon: '🗓️' },
-    { label: 'Tickets',  value: ticketsRes.count ?? 0, icon: '🎟️' },
+    { label: 'Members',  value: usersRes.count   ?? 0, icon: createElement(Users, STAT_ICON_PROPS) },
+    { label: 'Events',   value: eventsRes.count  ?? 0, icon: createElement(Calendar, STAT_ICON_PROPS) },
+    { label: 'Tickets',  value: ticketsRes.count ?? 0, icon: createElement(Ticket, STAT_ICON_PROPS) },
   ];
 
   // Per-event ticket/check-in breakdown, for admins and execs.
@@ -47,7 +52,7 @@ export async function getAdminData(roles: RoleGrant[]) {
       supabase
         .from('profiles')
         .select('id, display_name, avatar_url, custom_avatar_url, gamer_tag, created_at, user_roles!user_roles_user_id_fkey(role, division_id)')
-        .order('created_at', { ascending: false })
+        .order('display_name', { ascending: true })
         .limit(300),
       supabase.from('divisions').select('id, name, slug').order('name'),
     ]);

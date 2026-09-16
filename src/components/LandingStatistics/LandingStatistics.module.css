@@ -44,8 +44,8 @@
 }
 
 .statIcon {
-  font-size: 1.75rem;
-  line-height: 1;
+  display: inline-flex;
+  color: var(--yellow);
   margin-bottom: 0.15rem;
 }
 

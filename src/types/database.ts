@@ -9,6 +9,12 @@ export interface SocialEmbed {
   url: string;
 }
 
+export interface DocAttachment {
+  name: string;
+  url: string;
+  kind: 'file' | 'google_album';
+}
+
 export type Capability =
   | 'manage_events'
   | 'delete_events'
@@ -44,6 +50,8 @@ export interface Database {
           birthday: string | null;
           org_title: string | null;
           show_on_board: boolean;
+          social_links: Record<string, string>;
+          board_visibility: Record<string, boolean>;
           created_at: string;
           updated_at: string;
         };
@@ -150,8 +158,11 @@ export interface Database {
           id: string;
           slug: string;
           title: string;
-          category: string | null;
+          category_id: string | null;
+          parent_id: string | null;
+          order_index: number;
           content: string;
+          attachments: DocAttachment[];
           created_by: string | null;
           updated_by: string | null;
           created_at: string;
@@ -159,6 +170,16 @@ export interface Database {
         };
         Insert: Omit<Database['public']['Tables']['docs']['Row'], 'id' | 'created_at' | 'updated_at'>;
         Update: Partial<Database['public']['Tables']['docs']['Insert']>;
+      };
+      doc_categories: {
+        Row: {
+          id: string;
+          name: string;
+          order_index: number;
+          created_at: string;
+        };
+        Insert: Omit<Database['public']['Tables']['doc_categories']['Row'], 'id' | 'created_at'>;
+        Update: Partial<Database['public']['Tables']['doc_categories']['Insert']>;
       };
     };
     Views: Record<string, never>;
@@ -179,6 +200,7 @@ export type Ticket = Database['public']['Tables']['tickets']['Row'];
 export type SiteContent = Database['public']['Tables']['site_contents']['Row'];
 export type Sponsor = Database['public']['Tables']['sponsors']['Row'];
 export type Doc = Database['public']['Tables']['docs']['Row'];
+export type DocCategory = Database['public']['Tables']['doc_categories']['Row'];
 
 export type TicketWithEvent = Ticket & {
   event: Pick<Event, 'id' | 'title' | 'start_date' | 'end_date' | 'location' | 'flyer_url'>;

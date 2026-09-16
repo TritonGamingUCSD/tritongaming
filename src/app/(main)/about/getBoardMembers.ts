@@ -13,6 +13,8 @@ export interface BoardMember {
   major: string | null;
   year: string | null;
   gamer_tag: string | null;
+  social_links: Record<string, string>;
+  board_visibility: Record<string, boolean>;
   tier: BoardTier;
 }
 
@@ -29,6 +31,8 @@ interface BoardProfileRow {
   year: string | null;
   gamer_tag: string | null;
   show_on_board: boolean;
+  social_links: Record<string, string> | null;
+  board_visibility: Record<string, boolean> | null;
   user_roles: Array<{ role: AppRole }>;
 }
 
@@ -46,7 +50,7 @@ export async function getBoardMembers(): Promise<BoardMember[]> {
   const { data, error } = await supabase
     .from('profiles')
     .select(`
-      id, display_name, avatar_url, custom_avatar_url, org_title, bio, major, year, gamer_tag, show_on_board,
+      id, display_name, avatar_url, custom_avatar_url, org_title, bio, major, year, gamer_tag, show_on_board, social_links, board_visibility,
       user_roles!user_roles_user_id_fkey(role)
     `);
 
@@ -71,6 +75,8 @@ export async function getBoardMembers(): Promise<BoardMember[]> {
       major: row.major,
       year: row.year,
       gamer_tag: row.gamer_tag,
+      social_links: row.social_links ?? {},
+      board_visibility: row.board_visibility ?? {},
       tier,
     });
   }

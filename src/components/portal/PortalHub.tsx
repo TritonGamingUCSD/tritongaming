@@ -8,7 +8,7 @@ import styles from './PortalHub.module.css';
 
 export interface HubSection {
   id: string;
-  icon: string;
+  icon: ReactNode;
   label: string;
   description: string;
   badge?: string | number;

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
+import { RadioTower, Users, Building2, Gamepad2, Handshake, Award, BarChart3, type LucideIcon } from 'lucide-react';
 import styles from './LandingStatistics.module.css';
 
 export interface StatInput {
@@ -9,13 +10,7 @@ export interface StatInput {
   label: string;
 }
 
-const DEFAULT_STATS: StatInput[] = [
-  { value: '1.5M+', label: 'Social Media Reach' },
-  { value: '15,700+', label: 'Community Members' },
-  { value: '3,000+', label: 'Annual Attendees' },
-];
-
-function parseStat(value: string): { display: string; target: number; isFloat: boolean; icon: string } {
+function parseStat(value: string): { display: string; target: number; isFloat: boolean } {
   const clean = value.replace(/,/g, '').replace(/\+$/, '').trim();
   let target: number;
   let isFloat = false;
@@ -31,30 +26,30 @@ function parseStat(value: string): { display: string; target: number; isFloat: b
 
   if (isNaN(target)) target = 0;
 
-  // Pick an icon based on keywords in the label (fallback to generic)
-  return { display: value, target, isFloat, icon: '📊' };
+  return { display: value, target, isFloat };
 }
 
-const ICON_MAP: Record<string, string> = {
-  'Social Media': '📡',
-  'Community': '👾',
-  'Attendees': '🏟️',
-  'Members': '👾',
-  'Event': '🎮',
-  'Sponsor': '🤝',
-  'Officer': '🎖️',
+const ICON_MAP: Record<string, LucideIcon> = {
+  'Social Media': RadioTower,
+  'Community': Users,
+  'Attendees': Building2,
+  'Members': Users,
+  'Event': Gamepad2,
+  'Sponsor': Handshake,
+  'Officer': Award,
 };
 
-function getIcon(label: string): string {
+// Pick an icon based on keywords in the label (fallback to generic)
+function getIcon(label: string): LucideIcon {
   for (const [key, icon] of Object.entries(ICON_MAP)) {
     if (label.toLowerCase().includes(key.toLowerCase())) return icon;
   }
-  return '📊';
+  return BarChart3;
 }
 
 function StatItem({ stat }: { stat: StatInput }) {
   const { target, isFloat } = parseStat(stat.value);
-  const icon = getIcon(stat.label);
+  const Icon = getIcon(stat.label);
   const [count, setCount] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
   const started = useRef(false);
@@ -92,7 +87,7 @@ function StatItem({ stat }: { stat: StatInput }) {
 
   return (
     <div className={styles.statCell} ref={ref}>
-      <span className={styles.statIcon}>{icon}</span>
+      <span className={styles.statIcon}><Icon size={26} strokeWidth={1.5} aria-hidden="true" /></span>
       <span className={styles.statValue}>{display}</span>
       <span className={styles.statLabel}>{stat.label}</span>
     </div>
@@ -104,7 +99,7 @@ function StatItem({ stat }: { stat: StatInput }) {
 // the hero and this "proof bar" read as one connected moment, not two
 // stacked blocks with a hard seam between them.
 export default function LandingStatistics({ stats }: { stats?: StatInput[] }) {
-  const displayStats = stats?.length ? stats : DEFAULT_STATS;
+  if (!stats?.length) return null;
 
   return (
     <section className={styles.section} aria-label="Statistics">
@@ -114,7 +109,7 @@ export default function LandingStatistics({ stats }: { stats?: StatInput[] }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
       >
-        {displayStats.map((s) => (
+        {stats.map((s) => (
           <StatItem key={s.label} stat={s} />
         ))}
       </motion.div>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { X } from 'lucide-react';
 import styles from './AnnouncementBanner.module.css';
 
 interface Props {
@@ -47,7 +48,7 @@ export default function AnnouncementClient({ text, link, linkText, colors }: Pro
         onClick={() => setDismissed(true)}
         aria-label="Dismiss announcement"
       >
-        ✕
+        <X size={14} strokeWidth={2} />
       </button>
     </div>
   );

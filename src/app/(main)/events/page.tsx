@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import LongEventCard from '@/components/LongEventCard/LongEventCard';
+import EventCard from '@/components/EventCard/EventCard';
 import { getUpcomingEvents, getPreviousEvents } from '@/lib/events';
 import styles from './events.module.css';
 
@@ -16,6 +17,13 @@ export default async function EventsPage() {
     getPreviousEvents(),
   ]);
 
+  // The soonest upcoming event gets the full featured treatment (big flyer,
+  // ticket CTA); everything else — the rest of upcoming, and all of past —
+  // reads as a scannable grid instead of another wide row identical to it.
+  // A page-long stack of uniform full-width rows was the "feels weird" of
+  // it; one clear focal point plus a grid reads like an actual events page.
+  const [featured, ...restUpcoming] = upcoming;
+
   return (
     <div className={styles.page}>
       <div className={styles.heroBanner}>
@@ -29,15 +37,29 @@ export default async function EventsPage() {
         </div>
       </div>
 
-      {upcoming.length > 0 && (
+      {featured && (
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
             <p className={styles.sectionLabel}>DON'T MISS OUT</p>
-            <h2 className={styles.sectionTitle}>Upcoming Events</h2>
+            <h2 className={styles.sectionTitle}>Next Up</h2>
           </div>
-          {upcoming.map((event) => (
-            <LongEventCard key={event._id} event={event} />
-          ))}
+          <LongEventCard event={featured} />
+        </section>
+      )}
+
+      {restUpcoming.length > 0 && (
+        <section className={styles.section}>
+          {!featured && (
+            <div className={styles.sectionHeader}>
+              <p className={styles.sectionLabel}>DON'T MISS OUT</p>
+              <h2 className={styles.sectionTitle}>Upcoming Events</h2>
+            </div>
+          )}
+          <div className={styles.grid}>
+            {restUpcoming.map((event) => (
+              <EventCard key={event._id} event={event} />
+            ))}
+          </div>
         </section>
       )}
 
@@ -47,9 +69,11 @@ export default async function EventsPage() {
             <p className={styles.sectionLabel}>THE ARCHIVE</p>
             <h2 className={styles.sectionTitle}>Past Events</h2>
           </div>
-          {previous.map((event) => (
-            <LongEventCard key={event._id} event={event} />
-          ))}
+          <div className={`${styles.grid} ${styles.gridPast}`}>
+            {previous.map((event) => (
+              <EventCard key={event._id} event={event} />
+            ))}
+          </div>
         </section>
       )}
 

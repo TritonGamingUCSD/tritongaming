@@ -19,7 +19,7 @@
   border-radius: 1rem;
 }
 
-.noEventsIcon  { font-size: 3rem; }
+.noEventsIcon  { display: inline-flex; color: rgba(242,241,240,0.3); }
 .noEventsTitle { font-family: var(--font-futura-heavy); font-size: 1.1rem; color: var(--white); }
 .noEventsSub   { font-size: 0.85rem; color: rgba(242,241,240,0.4); }
 
@@ -151,7 +151,7 @@
 
 .placeholder:hover { background: rgba(255,255,255,0.02); }
 
-.placeholderIcon  { font-size: 3rem; }
+.placeholderIcon  { display: inline-flex; color: rgba(255,255,255,0.5); }
 .placeholderText  { font-family: var(--font-futura-medium); font-size: 1rem; color: var(--white); }
 .placeholderEvent { font-size: 0.78rem; color: rgba(242,241,240,0.35); text-align: center; padding: 0 1rem; }
 
@@ -233,7 +233,7 @@
 .resultSuccess { background: rgba(5, 150, 105, 0.92); }
 .resultWarn    { background: rgba(217, 119, 6, 0.92); }
 
-.resultIcon   { font-size: 3.5rem; }
+.resultIcon   { display: inline-flex; }
 .resultName   { font-family: var(--font-futura-heavy); font-size: 1.25rem; color: #fff; text-align: center; }
 .resultDetail { font-size: 0.85rem; color: rgba(255,255,255,0.8); text-align: center; }
 

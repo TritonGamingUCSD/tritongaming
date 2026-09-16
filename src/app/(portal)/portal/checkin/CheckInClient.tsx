@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import jsQR from 'jsqr';
+import { Calendar, Camera, CircleCheck, TriangleAlert } from 'lucide-react';
 import styles from './checkin.module.css';
 
 interface Event {
@@ -171,7 +172,7 @@ export default function CheckInClient({ events }: { events: Event[] }) {
     return (
       <div className={styles.page}>
         <div className={styles.noEvents}>
-          <span className={styles.noEventsIcon}>📅</span>
+          <span className={styles.noEventsIcon}><Calendar size={40} strokeWidth={1.25} aria-hidden="true" /></span>
           <h2 className={styles.noEventsTitle}>No active events</h2>
           <p className={styles.noEventsSub}>Events appear here within 24 hours of their start time.</p>
         </div>
@@ -246,7 +247,7 @@ export default function CheckInClient({ events }: { events: Event[] }) {
 
         {!scanning && (
           <div className={styles.placeholder} onClick={startCamera} role="button" tabIndex={0}>
-            <span className={styles.placeholderIcon}>📷</span>
+            <span className={styles.placeholderIcon}><Camera size={40} strokeWidth={1.25} aria-hidden="true" /></span>
             <p className={styles.placeholderText}>Tap to Start Scanner</p>
             {selectedEvent && (
               <p className={styles.placeholderEvent}>{selectedEvent.title}</p>
@@ -259,13 +260,13 @@ export default function CheckInClient({ events }: { events: Event[] }) {
           <div className={`${styles.resultOverlay} ${result.status === 'active' ? styles.resultSuccess : styles.resultWarn}`}>
             {result.status === 'active' ? (
               <>
-                <span className={styles.resultIcon}>✓</span>
+                <span className={styles.resultIcon}><CircleCheck size={40} strokeWidth={1.5} aria-hidden="true" /></span>
                 <div className={styles.resultName}>{result.user_name}</div>
                 <div className={styles.resultDetail}>Checked in!</div>
               </>
             ) : (
               <>
-                <span className={styles.resultIcon}>⚠</span>
+                <span className={styles.resultIcon}><TriangleAlert size={40} strokeWidth={1.5} aria-hidden="true" /></span>
                 <div className={styles.resultName}>
                   {result.status === 'used' ? 'Already checked in' : `Ticket ${result.status}`}
                 </div>

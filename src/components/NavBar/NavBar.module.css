@@ -251,31 +251,37 @@
 }
 
 /* Login button */
+/* Sits inside the already-dark nav pill, so it borrows .authBtn's light
+   glass tint (not --btn-primary-bg, which is that same dark charcoal —
+   using it here would make the button nearly disappear into its own
+   container instead of reading as a distinct thing to click). */
 .loginBtn {
   display: flex;
   align-items: center;
   gap: 0.35rem;
   padding: 0.45rem 1rem;
-  background: var(--btn-primary-bg);
-  box-shadow: var(--btn-primary-shadow);
-  color: var(--darkblue);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--white);
   border-radius: 999px;
   font-family: var(--font-futura-heavy);
   font-size: 0.68rem;
   letter-spacing: 0.06em;
   white-space: nowrap;
-  transition: box-shadow 0.2s ease, transform 0.15s;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s;
   flex-shrink: 0;
 }
 
 .loginBtn:hover {
-  box-shadow: var(--btn-primary-shadow-hover);
+  background: rgba(255, 199, 44, 0.15);
+  border-color: rgba(255, 199, 44, 0.3);
+  color: var(--yellow);
   transform: translateY(-1px);
 }
 
 .loginBtnIcon {
-  font-size: 0.85rem;
-  line-height: 1;
+  display: inline-flex;
+  color: currentColor;
 }
 
 /* Mobile auth */

@@ -40,7 +40,7 @@ export default async function Footer() {
   const settings = content['site.settings'] ?? {};
   const footerContent = content['footer'] ?? {};
 
-  const copyright = (footerContent.copyright as string) || 'TRITON GAMING © 2026';
+  const copyright = footerContent.copyright as string | undefined;
 
   // Build social href: use DB value, fall back to default; email values get mailto: prefix if needed
   function socialHref(key: keyof typeof SOCIAL_DEFAULTS): string {
@@ -67,7 +67,7 @@ export default async function Footer() {
           className={styles.logo}
         />
         <p className={styles.tagline}>UC San Diego&apos;s Gaming Org</p>
-        <p className={styles.copy}>{copyright}</p>
+        {copyright && <p className={styles.copy}>{copyright}</p>}
       </div>
 
       {/* Quick links */}

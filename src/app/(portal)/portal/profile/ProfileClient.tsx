@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types/database';
-import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
+import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK } from '@/types/database';
+import { Check } from 'lucide-react';
 import { canSetOrgTitle, type RoleGrant } from '@/lib/capabilities';
-import { hasBasicProfileInfo, resolveAvatarUrl } from '@/lib/profile';
+import { hasBasicProfileInfo, resolveAvatarUrl, SOCIAL_PLATFORMS } from '@/lib/profile';
 import { deleteIfReplaced } from '@/lib/imageUpload';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
 import styles from './profile.module.css';
@@ -17,6 +19,10 @@ export default function ProfileClient({ profile, roles, isUcsd }: { profile: Pro
   // officer is the only role that needs to opt in themselves (division never
   // appears at all) — see getBoardMembers.
   const canOptIntoBoard = roles.some((r) => r.role === 'officer');
+  // Anyone who can actually appear on the board (exec/lead automatically,
+  // officer once opted in) gets to control what shows beyond the always-on
+  // name/picture/title — see BoardSection for how these are read.
+  const isBoardEligible = roles.some((r) => r.role === 'exec' || r.role === 'lead' || r.role === 'officer');
   const [form, setForm] = useState({
     display_name: profile.display_name || '',
     year: profile.year || '',
@@ -24,12 +30,16 @@ export default function ProfileClient({ profile, roles, isUcsd }: { profile: Pro
     major: profile.major || '',
     gamer_tag: profile.gamer_tag || '',
     pronouns: profile.pronouns || '',
-    discord: profile.discord || '',
     custom_avatar_url: profile.custom_avatar_url || '',
     bio: profile.bio || '',
     birthday: profile.birthday || '',
     org_title: profile.org_title || '',
     show_on_board: profile.show_on_board,
+    social_links: { ...profile.social_links },
+    board_visibility: {
+      bio: true, year_major: true, socials: true,
+      ...profile.board_visibility,
+    },
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -52,6 +62,12 @@ export default function ProfileClient({ profile, roles, isUcsd }: { profile: Pro
     setError('');
     setSaved(false);
 
+    const cleanedSocialLinks = Object.fromEntries(
+      Object.entries(form.social_links)
+        .map(([key, url]) => [key, url.trim()])
+        .filter(([, url]) => url)
+    );
+
     const supabase = createClient();
     const { error: err } = await supabase
       .from('profiles')
@@ -60,6 +76,7 @@ export default function ProfileClient({ profile, roles, isUcsd }: { profile: Pro
         birthday: form.birthday || null,
         custom_avatar_url: form.custom_avatar_url.trim() || null,
         org_title: canEditOrgTitle ? form.org_title.trim() || null : profile.org_title,
+        social_links: cleanedSocialLinks,
         updated_at: new Date().toISOString(),
       })
       .eq('id', profile.id);
@@ -101,7 +118,7 @@ export default function ProfileClient({ profile, roles, isUcsd }: { profile: Pro
                 {ROLE_LABELS.guest}
               </span>
             ) : (
-              roles.map((r) => (
+              [...roles].sort((a, b) => ROLE_DISPLAY_RANK[b.role] - ROLE_DISPLAY_RANK[a.role]).map((r) => (
                 <span key={r.role} className={styles.roleTag} style={{ background: ROLE_COLORS[r.role] + '22', color: ROLE_COLORS[r.role] }}>
                   {ROLE_LABELS[r.role]}
                 </span>
@@ -214,16 +231,27 @@ export default function ProfileClient({ profile, roles, isUcsd }: { profile: Pro
             </label>
           </div>
 
-          <label className={styles.fieldGroup}>
-            <span className={styles.label}>Discord</span>
-            <input
-              className={styles.input}
-              value={form.discord}
-              onChange={(e) => setForm((f) => ({ ...f, discord: e.target.value }))}
-              maxLength={40}
-              placeholder="e.g. username or name#1234"
-            />
-          </label>
+          <div className={styles.fieldGroup}>
+            <span className={styles.label}>Social Links</span>
+            <p className={styles.socialHint}>Just your handle, not the full link — optional, shown on your public board bio if you&apos;re on it.</p>
+            <div className={styles.socialGrid}>
+              {SOCIAL_PLATFORMS.map((p) => (
+                <label key={p.key} className={styles.socialField}>
+                  <Image src={p.logo} alt="" width={18} height={18} unoptimized className={styles.socialIcon} />
+                  <input
+                    className={styles.input}
+                    value={form.social_links[p.key] ?? ''}
+                    onChange={(e) => setForm((f) => ({
+                      ...f,
+                      social_links: { ...f.social_links, [p.key]: e.target.value },
+                    }))}
+                    placeholder={p.placeholder}
+                    aria-label={p.label}
+                  />
+                </label>
+              ))}
+            </div>
+          </div>
 
           {canEditOrgTitle && (
             <label className={styles.fieldGroup}>
@@ -259,6 +287,32 @@ export default function ProfileClient({ profile, roles, isUcsd }: { profile: Pro
             </label>
           )}
 
+          {isBoardEligible && (
+            <div className={styles.fieldGroup}>
+              <span className={styles.label}>What Shows on Your Board Card</span>
+              <p className={styles.socialHint}>Your name, picture, and title are always shown — everything else is up to you.</p>
+              <div className={styles.visibilityGrid}>
+                {([
+                  ['bio', 'Bio'],
+                  ['year_major', 'Year & major'],
+                  ['socials', 'Discord & social links'],
+                ] as const).map(([key, label]) => (
+                  <label key={key} className={styles.checkboxField}>
+                    <input
+                      type="checkbox"
+                      checked={form.board_visibility[key]}
+                      onChange={(e) => setForm((f) => ({
+                        ...f,
+                        board_visibility: { ...f.board_visibility, [key]: e.target.checked },
+                      }))}
+                    />
+                    <span>{label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
           <label className={styles.fieldGroup}>
             <span className={styles.label}>Bio</span>
             <textarea
@@ -279,7 +333,7 @@ export default function ProfileClient({ profile, roles, isUcsd }: { profile: Pro
             className={styles.saveBtn}
             disabled={saving}
           >
-            {saving ? 'Saving…' : saved ? '✓ Saved!' : 'Save Changes'}
+            {saving ? 'Saving…' : saved ? <><Check size={15} strokeWidth={1.75} aria-hidden="true" /> Saved!</> : 'Save Changes'}
           </button>
         </form>
       </div>

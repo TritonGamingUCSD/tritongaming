@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { Ticket, X, Check } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import StyledQRCode from '@/components/StyledQRCode/StyledQRCode';
 import { DEFAULT_QR_OPTIONS, eventLabelIcon, type QRCodeOptions } from '@/lib/qrCodeStyling';
@@ -182,12 +183,12 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   return (
     <div className={styles.backdrop} onClick={onBackdrop}>
       <div className={styles.sheet}>
-        <button className={styles.closeBtn} onClick={onClose} aria-label="Close">✕</button>
+        <button className={styles.closeBtn} onClick={onClose} aria-label="Close"><X size={18} strokeWidth={1.75} /></button>
 
         {/* Which event this ticket is for — shown first and prominently so it
             can't be confused with a different event's ticket. */}
         <div className={styles.eventBlock}>
-          <span className={styles.eventEyebrow}>🎟️ TICKET FOR</span>
+          <span className={styles.eventEyebrow}><Ticket size={13} strokeWidth={1.5} aria-hidden="true" /> TICKET FOR</span>
           <div className={styles.eventName}>{eventTitle}</div>
           {(dateLabel || eventLocation) && (
             <div className={styles.eventMeta}>
@@ -200,7 +201,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
 
         {checkedIn ? (
           <div className={styles.checkedInState}>
-            <div className={styles.checkedInIcon} aria-hidden="true">✓</div>
+            <div className={styles.checkedInIcon} aria-hidden="true"><Check size={32} strokeWidth={2} /></div>
             <div className={styles.checkedInTitle}>You&apos;re Checked In!</div>
             <p className={styles.hint}>Have a great time — see you inside.</p>
           </div>

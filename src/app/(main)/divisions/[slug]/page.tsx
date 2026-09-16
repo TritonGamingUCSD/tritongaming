@@ -50,7 +50,7 @@ export default async function DivisionPage({ params }: Params) {
             <p className={styles.desc}>{division.description}</p>
             {division.discord_url && (
               <a href={division.discord_url} target="_blank" rel="noopener noreferrer" className={styles.discordBtn}>
-                💬 Join our Discord
+                <Image src="/logos/discord.svg" alt="" width={16} height={16} unoptimized /> Join our Discord
               </a>
             )}
           </div>

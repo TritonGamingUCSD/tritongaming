@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
+import { Search, Gamepad2, Check, X } from 'lucide-react';
 import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK, ASSIGNABLE_ROLES } from '@/types/database';
 import type { AppRole } from '@/types/database';
 import { resolveAvatarUrl } from '@/lib/profile';
@@ -108,12 +109,12 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
 
   return (
     <div className={styles.wrap}>
-      {toast && <div className={styles.toast}>✓ {toast}</div>}
+      {toast && <div className={styles.toast}><Check size={15} strokeWidth={1.75} aria-hidden="true" /> {toast}</div>}
 
       {/* Controls */}
       <div className={styles.controls}>
         <div className={styles.searchWrap}>
-          <span className={styles.searchIcon}>🔍</span>
+          <span className={styles.searchIcon}><Search size={15} strokeWidth={1.5} aria-hidden="true" /></span>
           <input
             className={styles.search}
             value={query}
@@ -122,7 +123,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
             autoComplete="off"
           />
           {query && (
-            <button className={styles.clearSearch} onClick={() => setQuery('')} aria-label="Clear">✕</button>
+            <button className={styles.clearSearch} onClick={() => setQuery('')} aria-label="Clear"><X size={14} strokeWidth={1.75} /></button>
           )}
         </div>
 
@@ -169,7 +170,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
                     <div className={styles.userName}>{user.display_name || 'Anonymous'}</div>
                     <div className={styles.userSub}>
                       {user.gamer_tag ? (
-                        <span className={styles.gamerTag}>🎮 {user.gamer_tag}</span>
+                        <span className={styles.gamerTag}><Gamepad2 size={12} strokeWidth={1.5} aria-hidden="true" /> {user.gamer_tag}</span>
                       ) : null}
                       <span className={styles.joinDate}>
                         Joined {new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}

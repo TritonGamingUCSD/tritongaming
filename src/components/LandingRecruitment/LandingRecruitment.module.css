@@ -159,8 +159,7 @@
   width: 56px;
   height: 56px;
   border-radius: 16px;
-  font-size: 1.7rem;
-  line-height: 1;
+  color: var(--yellow);
   background: linear-gradient(155deg, rgba(255, 199, 44, 0.22), rgba(255, 199, 44, 0.04));
   border: 1px solid rgba(255, 199, 44, 0.22);
   box-shadow: 0 12px 24px -12px rgba(0, 0, 0, 0.5);

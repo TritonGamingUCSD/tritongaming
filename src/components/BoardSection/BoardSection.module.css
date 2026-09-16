@@ -11,6 +11,14 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  /* AnimatePresence mode="popLayout" makes the *exiting* element
+     position:absolute so the entering one can take its place immediately.
+     Without a positioned ancestor here, that absolute panel anchors to
+     whatever positioned element is further up the tree instead of this
+     section — which is exactly what made "zoom back out" jump/glitch while
+     "zoom in" looked fine (the panel is never the exiting element on the
+     way in, only on the way out). Matches PortalHub's .wrap. */
+  position: relative;
 }
 
 .tierLabel {
@@ -35,13 +43,21 @@
   text-align: center;
   gap: 0.4rem;
   padding: 1.75rem 1.25rem;
-  background: var(--glass-bg);
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--glass-border);
   border-radius: 1.25rem;
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  /* No backdrop-filter here on purpose — every card in the grid animates
+     together during the shared-layout transition, and blurring N elements
+     at once (this section can easily have a dozen+) every frame is exactly
+     what caused the reported lag. Matches PortalHub's own cards, which
+     never used backdrop-filter for the same reason. */
   box-shadow: var(--glass-shadow);
   transition: border-color 0.2s, background 0.2s, transform 0.2s;
+  /* .card is a <button> now (opens the zoom panel) — reset button defaults
+     so it still reads as a card, not a form control. */
+  cursor: pointer;
+  font: inherit;
+  width: 100%;
 }
 
 .card:hover {
@@ -101,4 +117,124 @@
   color: rgba(242, 241, 240, 0.65);
   line-height: 1.5;
   margin-top: 0.4rem;
+  /* Grid card keeps bios short so the grid stays even; the zoom panel
+     shows the full thing. */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Zoom panel ──
+   Swaps in for the grid in place (see AnimatePresence mode="popLayout" in
+   BoardSection.tsx) — no fixed-position backdrop, matching PortalHub's own
+   panel exactly. A full-viewport backdrop-filter blur fading in/out on top
+   of the layout transition was the main cost behind the reported lag. */
+.panel {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
+  padding: 2.5rem 2rem 2rem;
+  background: linear-gradient(165deg, rgba(22, 27, 40, 0.97), rgba(8, 11, 20, 0.99));
+  border: 1px solid rgba(255, 199, 44, 0.2);
+  border-radius: 1.5rem;
+  box-shadow: 0 24px 56px -20px rgba(0, 0, 0, 0.7);
+}
+
+.closeBtn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--white);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, transform 0.2s;
+}
+.closeBtn:hover {
+  background: rgba(255, 199, 44, 0.15);
+  transform: rotate(90deg);
+}
+
+.panelAvatar {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(255, 199, 44, 0.35);
+  margin-bottom: 0.5rem;
+}
+
+.panelAvatarFallback {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: var(--gradient-nav);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-futura-heavy);
+  font-size: 2.75rem;
+  color: var(--white);
+  border: 3px solid rgba(255, 199, 44, 0.35);
+  margin-bottom: 0.5rem;
+}
+
+.panelName {
+  font-family: var(--font-futura-heavy);
+  font-size: 1.3rem;
+  color: var(--white);
+}
+
+.panelTitle {
+  font-size: 0.9rem;
+  color: var(--yellow);
+  letter-spacing: 0.02em;
+}
+
+.panelBio {
+  font-size: 0.9rem;
+  color: rgba(242, 241, 240, 0.75);
+  line-height: 1.65;
+  margin-top: 0.75rem;
+}
+
+.socialRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.socialBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+.socialBtn:hover {
+  background: rgba(255, 199, 44, 0.15);
+  border-color: rgba(255, 199, 44, 0.3);
+  transform: translateY(-2px);
 }

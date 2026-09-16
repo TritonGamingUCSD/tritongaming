@@ -18,6 +18,9 @@
 }
 
 .newBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   padding: 0.625rem 1.25rem;
   background: var(--yellow);
   color: var(--darkblue);
@@ -29,6 +32,73 @@
   transition: opacity 0.2s;
 }
 .newBtn:hover { opacity: 0.9; }
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.searchWrap {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+  max-width: 320px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(242,241,240,0.35);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 0.5rem;
+  padding: 0.55rem 0.75rem 0.55rem 2.1rem;
+  color: var(--white);
+  font-family: var(--font-futura-medium);
+  font-size: 0.85rem;
+}
+.searchInput:focus { outline: none; border-color: rgba(255,199,44,0.4); }
+
+.filterTabs {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.filterTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 0.4rem;
+  font-size: 0.78rem;
+  font-family: var(--font-futura-medium);
+  color: rgba(242,241,240,0.5);
+  border: 1px solid transparent;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.filterTab:hover { background: rgba(255,255,255,0.05); }
+.filterTabActive {
+  background: rgba(255,199,44,0.1);
+  border-color: rgba(255,199,44,0.25);
+  color: var(--yellow);
+}
+
+.filterCount {
+  font-size: 0.7rem;
+  opacity: 0.6;
+}
 
 .empty {
   padding: 3rem;
@@ -80,18 +150,28 @@
   transition: background 0.15s;
 }
 .tableRow:hover { background: rgba(255,255,255,0.02); }
+.tableRowPast { opacity: 0.55; }
+.tableRowPast:hover { opacity: 0.8; }
 
 .eventTitle {
   font-family: var(--font-futura-medium);
   font-size: 0.9rem;
   color: var(--white);
 }
-.eventLocation { font-size: 0.75rem; color: rgba(242,241,240,0.4); margin-top: 0.2rem; }
+.eventLocation {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: rgba(242,241,240,0.4);
+  margin-top: 0.2rem;
+}
 
 .eventDate { font-size: 0.82rem; color: rgba(242,241,240,0.6); }
 
-.checkinLink { font-size: 0.8rem; color: var(--yellow); transition: opacity 0.15s; }
+.checkinLink { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.8rem; color: var(--yellow); transition: opacity 0.15s; }
 .checkinLink:hover { opacity: 0.75; }
+.checkinSub { color: rgba(242,241,240,0.4); }
 
 .noTicket { font-size: 0.78rem; color: rgba(242,241,240,0.3); }
 

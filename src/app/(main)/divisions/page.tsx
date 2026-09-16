@@ -23,7 +23,7 @@ export default async function DivisionsPage() {
           divisions.map((div) => {
             const logoSrc = divisionLogoSrc(div.logo_url);
             return (
-              <Link key={div.id} href={`/divisions/${div.slug}`} className={styles.card}>
+              <div key={div.id} className={styles.card}>
                 <div className={styles.cardHeader}>
                   {logoSrc ? (
                     <Image
@@ -45,8 +45,23 @@ export default async function DivisionsPage() {
                 </div>
                 <div className={styles.cardFooter}>
                   <span className={styles.learnMore}>Learn More →</span>
+                  {div.discord_url && (
+                    <a
+                      href={div.discord_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.cardDiscordBtn}
+                      aria-label={`Join ${div.name}'s Discord`}
+                    >
+                      <Image src="/logos/discord.svg" alt="" width={14} height={14} unoptimized /> Discord
+                    </a>
+                  )}
                 </div>
-              </Link>
+                {/* Stretched link — whole card is clickable through to the
+                    division page; the Discord button above sits on top of
+                    it (higher z-index) so it stays independently clickable. */}
+                <Link href={`/divisions/${div.slug}`} className={styles.cardLink} aria-label={`View ${div.name}`} />
+              </div>
             );
           })
         ) : (

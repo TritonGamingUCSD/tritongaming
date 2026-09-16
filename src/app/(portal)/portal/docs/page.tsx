@@ -12,7 +12,7 @@ export default async function DocsPage() {
   const [profile, roles] = await Promise.all([getProfile(), getUserRoles()]);
   if (!profile || !hasCapability(roles, 'manage_docs')) redirect('/portal');
 
-  const { docs } = await getDocsData();
+  const { docs, categories } = await getDocsData();
 
   return (
     <div className={styles.page}>
@@ -25,7 +25,7 @@ export default async function DocsPage() {
         </div>
       </div>
 
-      <DocsClient initialDocs={docs} userId={profile.id} />
+      <DocsClient initialDocs={docs} initialCategories={categories} userId={profile.id} />
     </div>
   );
 }

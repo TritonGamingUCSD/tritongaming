@@ -1,10 +1,18 @@
+import { createElement } from 'react';
+import { Megaphone, Settings, Link as LinkIcon, Home, BarChart3, Hand, Handshake } from 'lucide-react';
+
+// Icons render as small (16px) monochrome glyphs in the admin content-block
+// list/edit-panel headers (see ContentEditor.tsx) — createElement instead of
+// JSX since this is a plain .ts module, not .tsx.
+const ICON_PROPS = { size: 16, strokeWidth: 1.5, 'aria-hidden': true } as const;
+
 export const CONTENT_BLOCKS = [
   // ── Global ────────────────────────────────────────────────
   {
     key: 'announcement',
     title: 'Announcement Banner',
     description: 'A dismissible banner shown at the top of every page.',
-    icon: '📢',
+    icon: createElement(Megaphone, ICON_PROPS),
     category: 'Global',
     fields: [
       { name: 'enabled',   label: 'Show Banner',    type: 'toggle'  as const },
@@ -18,7 +26,7 @@ export const CONTENT_BLOCKS = [
     key: 'site.settings',
     title: 'Social Links & Contact',
     description: 'Discord, Instagram, Twitch, TikTok, LinkedIn, email — used across the site and footer.',
-    icon: '⚙️',
+    icon: createElement(Settings, ICON_PROPS),
     category: 'Global',
     fields: [
       { name: 'discord',   label: 'Discord Invite URL',  type: 'url'  as const, optional: true },
@@ -35,7 +43,7 @@ export const CONTENT_BLOCKS = [
     key: 'footer',
     title: 'Footer',
     description: 'Copyright text and any extra footer links.',
-    icon: '🔗',
+    icon: createElement(LinkIcon, ICON_PROPS),
     category: 'Global',
     fields: [
       { name: 'copyright', label: 'Copyright Text', type: 'text' as const, placeholder: '© 2025 Triton Gaming at UC San Diego' },
@@ -48,7 +56,7 @@ export const CONTENT_BLOCKS = [
     key: 'homepage.hero',
     title: 'Homepage Hero',
     description: 'Badge, headline, subtitle, and call-to-action buttons at the top of the homepage.',
-    icon: '🏠',
+    icon: createElement(Home, ICON_PROPS),
     category: 'Homepage',
     fields: [
       { name: 'badge',              label: 'Badge Text',          type: 'text' as const, placeholder: "UC San Diego's Gaming Org" },
@@ -77,7 +85,7 @@ export const CONTENT_BLOCKS = [
     key: 'homepage.stats',
     title: 'Homepage Statistics',
     description: 'The big numbers shown in the stats strip.',
-    icon: '📊',
+    icon: createElement(BarChart3, ICON_PROPS),
     category: 'Homepage',
     fields: [
       { name: 'items', label: 'Stats (value + label)', type: 'kvlist' as const,
@@ -89,7 +97,7 @@ export const CONTENT_BLOCKS = [
     key: 'page.get-involved',
     title: 'Get Involved Page',
     description: 'Content for the /get-involved page.',
-    icon: '✋',
+    icon: createElement(Hand, ICON_PROPS),
     category: 'Pages',
     fields: [
       { name: 'title',       label: 'Page Title',       type: 'text'     as const },
@@ -106,7 +114,7 @@ export const CONTENT_BLOCKS = [
     key: 'sponsors',
     title: 'Sponsors & Partners',
     description: 'Sponsor logos and links shown in the sponsors section.',
-    icon: '🤝',
+    icon: createElement(Handshake, ICON_PROPS),
     category: 'People',
     fields: [
       {

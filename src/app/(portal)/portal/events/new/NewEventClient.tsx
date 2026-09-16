@@ -11,7 +11,7 @@ export default function NewEventClient() {
   async function handleCreate(form: EventFormValues): Promise<string | void> {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { router.push('/login'); return; }
+    if (!user) { router.push('/login?next=/portal/events/new'); return; }
 
     const finalSlug = slugify(form.slug.trim() || form.title);
 

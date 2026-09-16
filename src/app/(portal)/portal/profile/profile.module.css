@@ -107,6 +107,43 @@
   border-color: rgba(255,199,44,0.4);
 }
 
+.socialHint {
+  font-size: 0.78rem;
+  color: rgba(242,241,240,0.4);
+  margin: -0.15rem 0 0.15rem;
+}
+
+.socialGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.6rem;
+}
+
+.socialField {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 0.5rem;
+  padding: 0 0.75rem;
+}
+
+.socialField:focus-within {
+  border-color: rgba(255,199,44,0.4);
+}
+
+.socialField .input {
+  background: none;
+  border: none;
+  padding: 0.625rem 0;
+}
+
+.socialIcon {
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
 .input option {
   background: #0a0f1e;
   color: var(--white);
@@ -143,7 +180,17 @@
 
 .checkboxField input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--yellow); }
 
+.visibilityGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.5rem 1rem;
+}
+
 .saveBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
   padding: 0.75rem 2rem;
   background: var(--yellow);
   color: var(--darkblue);

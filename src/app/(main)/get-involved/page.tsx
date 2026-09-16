@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
+import { Gamepad2, Calendar, Users, Building2 } from 'lucide-react';
 import { getContentBlock } from '@/lib/content';
 import styles from './get-involved.module.css';
 
@@ -9,7 +11,7 @@ export const metadata: Metadata = {
 
 const WAYS = [
   {
-    emoji: '💬',
+    icon: <Image src="/logos/discord.svg" alt="" width={28} height={28} unoptimized />,
     title: 'Join Our Discord',
     body: 'Our Discord is the heartbeat of Triton Gaming — 5,000+ members, active game channels, event announcements, LFG posts, and a welcoming community.',
     cta: 'Join Discord Server',
@@ -17,7 +19,7 @@ const WAYS = [
     accent: 'blue',
   },
   {
-    emoji: '📱',
+    icon: <Image src="/logos/instagram.svg" alt="" width={28} height={28} unoptimized />,
     title: 'Follow on Instagram',
     body: 'Stay updated with our latest events, photography, event recaps, officer spotlights, and more. Over 15,000 followers strong.',
     cta: 'Follow @tritongamingsd',
@@ -25,7 +27,7 @@ const WAYS = [
     accent: 'yellow',
   },
   {
-    emoji: '🎮',
+    icon: <Gamepad2 size={28} strokeWidth={1.5} aria-hidden="true" />,
     title: 'Attend an Event',
     body: 'No application required — just show up! Check our events page for upcoming LANs, tournaments, GBMs, and social events open to all UCSD students.',
     cta: 'View Upcoming Events',
@@ -71,7 +73,7 @@ export default async function GetInvolvedPage() {
         <div className={styles.waysGrid}>
           {WAYS.map((w) => (
             <div key={w.title} className={`${styles.wayCard} ${styles[`accent_${w.accent}`]}`}>
-              <div className={styles.wayEmoji}>{w.emoji}</div>
+              <div className={styles.wayEmoji}>{w.icon}</div>
               <h3 className={styles.wayTitle}>{w.title}</h3>
               <p className={styles.wayBody}>{w.body}</p>
               <a
@@ -121,17 +123,17 @@ export default async function GetInvolvedPage() {
               <img src={flyerUrl} alt="Officer recruitment flyer" className={styles.recruitmentFlyer} />
             )}
             <div className={styles.metaCard}>
-              <span className={styles.metaEmoji}>📅</span>
+              <span className={styles.metaEmoji}><Calendar size={22} strokeWidth={1.5} aria-hidden="true" /></span>
               <span className={styles.metaLabel}>Applications Open</span>
               <span className={styles.metaValue}>Fall & Winter Quarter</span>
             </div>
             <div className={styles.metaCard}>
-              <span className={styles.metaEmoji}>👥</span>
+              <span className={styles.metaEmoji}><Users size={22} strokeWidth={1.5} aria-hidden="true" /></span>
               <span className={styles.metaLabel}>Active Officers</span>
               <span className={styles.metaValue}>100+ Members</span>
             </div>
             <div className={styles.metaCard}>
-              <span className={styles.metaEmoji}>🏛️</span>
+              <span className={styles.metaEmoji}><Building2 size={22} strokeWidth={1.5} aria-hidden="true" /></span>
               <span className={styles.metaLabel}>Committees</span>
               <span className={styles.metaValue}>Live Events, Marketing, Creative, Social, HR</span>
             </div>

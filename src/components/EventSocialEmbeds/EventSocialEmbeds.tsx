@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import Image from 'next/image';
 import type { SocialEmbed } from '@/types/database';
 import styles from './EventSocialEmbeds.module.css';
 
@@ -42,7 +43,9 @@ function loadInstagramEmbedScript(): Promise<void> {
 function DiscordCard({ url }: { url: string }) {
   return (
     <a href={url} target="_blank" rel="noopener noreferrer" className={styles.discordCard}>
-      <span className={styles.discordIcon} aria-hidden="true">💬</span>
+      <span className={styles.discordIcon} aria-hidden="true">
+        <Image src="/logos/discord.svg" alt="" width={22} height={22} unoptimized />
+      </span>
       <div>
         <div className={styles.discordTitle}>Discord Post</div>
         <div className={styles.discordSub}>View in Discord →</div>

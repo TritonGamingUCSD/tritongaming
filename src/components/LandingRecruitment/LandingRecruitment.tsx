@@ -1,9 +1,11 @@
+import Image from 'next/image';
+import { ClipboardList } from 'lucide-react';
 import { Reveal, RevealGroup, RevealItem } from '@/components/Reveal/Reveal';
 import styles from './LandingRecruitment.module.css';
 
 const PATHWAYS = [
   {
-    icon: '📋',
+    icon: <ClipboardList size={28} strokeWidth={1.5} aria-hidden="true" />,
     title: 'Become an Officer',
     body: 'Shape UCSD gaming. Join our exec board or a division committee — applications open each fall and winter quarter.',
     cta: 'Apply Now',
@@ -11,7 +13,7 @@ const PATHWAYS = [
     external: true,
   },
   {
-    icon: '💬',
+    icon: <Image src="/logos/discord.svg" alt="" width={28} height={28} unoptimized />,
     title: 'Join Our Discord',
     body: 'Connect with 5,000+ gamers at UCSD. Find teammates, join tournaments, and stay up to date on all things Triton Gaming.',
     cta: 'Join Server',
@@ -19,7 +21,7 @@ const PATHWAYS = [
     external: true,
   },
   {
-    icon: '📱',
+    icon: <Image src="/logos/instagram.svg" alt="" width={28} height={28} unoptimized />,
     title: 'Follow Our Socials',
     body: 'Stay in the loop with event announcements, highlights, giveaways, and more across Instagram, TikTok, and YouTube.',
     cta: 'Follow Us',

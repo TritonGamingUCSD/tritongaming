@@ -22,6 +22,13 @@
 
 .titleSub { font-size: 0.82rem; color: rgba(242,241,240,0.35); }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
 .cmsBtn {
   display: inline-flex;
   align-items: center;
@@ -64,7 +71,7 @@
   border-color: rgba(255,199,44,0.2);
 }
 
-.statIcon  { font-size: 1.5rem; flex-shrink: 0; }
+.statIcon  { display: inline-flex; color: var(--yellow); flex-shrink: 0; }
 .statValue { font-family: var(--font-futura-heavy); font-size: 1.3rem; color: var(--yellow); line-height: 1; }
 .statLabel { font-size: 0.72rem; color: rgba(242,241,240,0.38); margin-top: 0.2rem; }
 

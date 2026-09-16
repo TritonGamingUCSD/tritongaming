@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
 import type { SocialEmbed } from '@/types/database';
@@ -127,7 +128,13 @@ function SocialEmbedsField({
         <ul className={styles.embedList}>
           {value.map((embed, i) => (
             <li key={`${embed.url}-${i}`} className={styles.embedRow}>
-              <span className={styles.embedType}>{embed.type === 'instagram' ? '📸 Instagram' : '💬 Discord'}</span>
+              <span className={styles.embedType}>
+                {embed.type === 'instagram' ? (
+                  <><Image src="/logos/instagram.svg" alt="" width={14} height={14} unoptimized /> Instagram</>
+                ) : (
+                  <><Image src="/logos/discord.svg" alt="" width={14} height={14} unoptimized /> Discord</>
+                )}
+              </span>
               <span className={styles.embedUrl}>{embed.url}</span>
               <button type="button" className={styles.embedRemoveBtn} onClick={() => handleRemove(i)}>Remove</button>
             </li>

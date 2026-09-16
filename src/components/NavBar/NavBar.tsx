@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import { User } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types/database';
 import { resolveAvatarUrl } from '@/lib/profile';
@@ -26,6 +27,14 @@ export default function NavBar() {
   const [authLoading, setAuthLoading] = useState(true);
   const prevScrollY = useRef(0);
   const pathname = usePathname();
+  // Deliberately NOT next=<current page> — clicking the nav's own login
+  // link is "take me into the portal," not a deep link back to whatever
+  // public page you happened to be on, so it lands on /portal (the
+  // callback route's default when no `next` is given) same as any other
+  // direct visit to /login. The middleware's own /portal/* -> /login?next=
+  // redirect (when a protected page bounces you here) is untouched — that
+  // one *should* return you to the specific page you were trying to reach.
+  const loginHref = '/login';
 
   useEffect(() => {
     setMobileOpen(false);
@@ -117,8 +126,8 @@ export default function NavBar() {
       <span className={styles.authLabel}>PORTAL</span>
     </Link>
   ) : (
-    <Link href="/login" className={styles.loginBtn} aria-label="Sign in to the member portal">
-      <span className={styles.loginBtnIcon} aria-hidden="true">👤</span>
+    <Link href={loginHref} className={styles.loginBtn} aria-label="Sign in to the member portal">
+      <span className={styles.loginBtnIcon} aria-hidden="true"><User size={16} strokeWidth={1.5} /></span>
       Member Portal
     </Link>
   );
@@ -206,7 +215,7 @@ export default function NavBar() {
                 Member Portal
               </Link>
             ) : (
-              <Link href="/login" className={styles.mobileLoginBtn} onClick={() => setMobileOpen(false)}>
+              <Link href={loginHref} className={styles.mobileLoginBtn} onClick={() => setMobileOpen(false)}>
                 Member Portal Sign In
               </Link>
             )}

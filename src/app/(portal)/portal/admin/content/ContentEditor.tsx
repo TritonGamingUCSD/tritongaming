@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { Pencil, X, Check } from 'lucide-react';
 import type { ContentBlock, FieldDef } from '@/lib/content-blocks';
 import { CATEGORY_ORDER } from '@/lib/content-blocks';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
@@ -124,12 +125,12 @@ export default function ContentEditor({ blocks, contentMap, lastEdited }: Props)
                         <div className={styles.blockDesc}>{block.description}</div>
                       </div>
                       <span className={`${styles.editIndicator} ${isActive ? styles.editIndicatorActive : ''}`}>
-                        {isActive ? '✕' : '✏️'}
+                        {isActive ? <X size={16} strokeWidth={1.75} aria-hidden="true" /> : <Pencil size={16} strokeWidth={1.5} aria-hidden="true" />}
                       </span>
                     </div>
                     {preview && <div className={styles.blockPreview}>{preview}</div>}
                     {le && <div className={styles.lastEdited}>Edited by {le.by} · {timeAgo(le.at)}</div>}
-                    {saved === block.key && <div className={styles.savedBadge}>✓ Saved</div>}
+                    {saved === block.key && <div className={styles.savedBadge}><Check size={13} strokeWidth={1.75} aria-hidden="true" /> Saved</div>}
                   </button>
                 );
               })}
@@ -158,7 +159,7 @@ export default function ContentEditor({ blocks, contentMap, lastEdited }: Props)
                   </a>
                 )}
               </div>
-              <button className={styles.closePanel} onClick={() => setActiveKey(null)}>✕</button>
+              <button className={styles.closePanel} onClick={() => setActiveKey(null)}><X size={18} strokeWidth={1.75} /></button>
             </div>
 
             <div className={styles.fields}>
@@ -184,14 +185,14 @@ export default function ContentEditor({ blocks, contentMap, lastEdited }: Props)
                 {saving === activeBlock.key
                   ? <><span className={styles.savingSpinner} /> Saving…</>
                   : saved === activeBlock.key
-                  ? '✓ Saved!'
+                  ? <><Check size={15} strokeWidth={1.75} aria-hidden="true" /> Saved!</>
                   : 'Save Changes'}
               </button>
             </div>
           </div>
         ) : (
           <div className={styles.editPanelEmpty}>
-            <span className={styles.editPanelEmptyIcon}>✏️</span>
+            <span className={styles.editPanelEmptyIcon}><Pencil size={40} strokeWidth={1.25} aria-hidden="true" /></span>
             <p>Select a content block on the left to edit it.</p>
             <p className={styles.editPanelEmptyHint}>Changes go live immediately — no code needed.</p>
           </div>
@@ -318,7 +319,7 @@ function FieldEditor({ field, value, onChange }: {
               <input className={styles.fieldInput} value={item.label ?? ''} placeholder={valLbl}
                 onChange={(e) => { const n=[...items]; n[i]={...n[i],label:e.target.value}; onChange(n); }} />
               <button type="button" className={styles.kvRemove}
-                onClick={() => onChange(items.filter((_,j)=>j!==i))}>✕</button>
+                onClick={() => onChange(items.filter((_,j)=>j!==i))}><X size={14} strokeWidth={1.75} /></button>
             </div>
           ))}
           <button type="button" className={styles.kvAdd}
@@ -387,7 +388,7 @@ function FieldEditor({ field, value, onChange }: {
                 ))}
               </div>
               <button type="button" className={styles.kvRemove}
-                onClick={() => onChange(items.filter((_,j)=>j!==i))}>✕</button>
+                onClick={() => onChange(items.filter((_,j)=>j!==i))}><X size={14} strokeWidth={1.75} /></button>
             </div>
           ))}
           <button type="button" className={styles.kvAdd}

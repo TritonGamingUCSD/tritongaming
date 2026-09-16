@@ -148,7 +148,7 @@
   color: var(--white);
 }
 
-.gamerTag { font-size: 0.72rem; color: rgba(242,241,240,0.4); margin-top: 0.1rem; }
+.gamerTag { display: inline-flex; align-items: center; gap: 0.2rem; font-size: 0.72rem; color: rgba(242,241,240,0.4); margin-top: 0.1rem; }
 
 .date { font-size: 0.8rem; color: rgba(242,241,240,0.6); }
 

@@ -67,6 +67,10 @@
 }
 
 .eventEyebrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.12em;

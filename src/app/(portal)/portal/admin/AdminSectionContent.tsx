@@ -1,11 +1,13 @@
 import Link from 'next/link';
+import { ReactNode } from 'react';
+import { Pencil, BarChart3 } from 'lucide-react';
 import RoleManager from './RoleManager';
 import StorageCleanup from './StorageCleanup';
 import styles from './admin.module.css';
 
 interface Props {
   isAdmin: boolean;
-  stats: { label: string; value: number; icon: string }[];
+  stats: { label: string; value: number; icon: ReactNode }[];
   eventTicketStats: { id: string; title: string; issued: number; checkedIn: number }[];
   allUsers: Parameters<typeof RoleManager>[0]['users'];
   divisions: Parameters<typeof RoleManager>[0]['divisions'];
@@ -23,9 +25,14 @@ export default function AdminSectionContent({ isAdmin, stats, eventTicketStats, 
           <h1 className={styles.title}>Admin</h1>
           <p className={styles.titleSub}>Platform management</p>
         </div>
-        <Link href="/portal?open=content" className={styles.cmsBtn}>
-          ✏️ Edit Site Content
-        </Link>
+        <div className={styles.headerActions}>
+          <Link href="/portal?open=stats" className={styles.cmsBtn}>
+            <BarChart3 size={14} strokeWidth={1.5} aria-hidden="true" /> Analytics
+          </Link>
+          <Link href="/portal?open=content" className={styles.cmsBtn}>
+            <Pencil size={14} strokeWidth={1.5} aria-hidden="true" /> Edit Site Content
+          </Link>
+        </div>
       </div>
 
       {/* Stats */}

@@ -1,10 +1,11 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, BarChart3 } from 'lucide-react';
 import { getProfile, getUserRoles } from '@/lib/auth';
 import { hasCapability, isVerifiedMember } from '@/lib/capabilities';
 import { resolveAvatarUrl } from '@/lib/profile';
-import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
+import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK } from '@/types/database';
 import { CONTENT_BLOCKS } from '@/lib/content-blocks';
 import PortalHub, { type HubSection } from '@/components/portal/PortalHub';
 import SignOutButton from '@/components/portal/SignOutButton';
@@ -25,6 +26,8 @@ import ContentEditor from './admin/content/ContentEditor';
 import { getContentData } from './admin/content/getContentData';
 import AdminSectionContent from './admin/AdminSectionContent';
 import { getAdminData } from './admin/getAdminData';
+import StatsClient from './admin/stats/StatsClient';
+import { getStatsData } from './admin/stats/getStatsData';
 import DocsClient from './docs/DocsClient';
 import { getDocsData } from './docs/getDocsData';
 import styles from './dashboard.module.css';
@@ -48,7 +51,7 @@ export default async function PortalDashboard() {
   // by capability — a plain member only ever triggers the tickets query. The
   // hub then just renders whichever of these were fetched; nothing is
   // re-fetched client-side when a card opens.
-  const [ticketsData, checkinData, eventsData, membersData, divisionsData, contentData, adminData, docsData] =
+  const [ticketsData, checkinData, eventsData, membersData, divisionsData, contentData, adminData, statsData, docsData] =
     await Promise.all([
       getTicketsData(profile.id, roles),
       canCheckin ? getCheckinData() : Promise.resolve(null),
@@ -57,6 +60,7 @@ export default async function PortalDashboard() {
       canManageDivisions ? getDivisionsData() : Promise.resolve(null),
       canEditContent ? getContentData() : Promise.resolve(null),
       canViewAdmin ? getAdminData(roles) : Promise.resolve(null),
+      canViewAdmin ? getStatsData() : Promise.resolve(null),
       canManageDocs ? getDocsData() : Promise.resolve(null),
     ]);
 
@@ -78,57 +82,62 @@ export default async function PortalDashboard() {
 
   const sections: HubSection[] = [
     {
-      id: 'tickets', icon: '🎟️', label: 'My Tickets',
+      id: 'tickets', icon: <Ticket size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'My Tickets',
       description: 'View and show your event tickets',
       badge: activeTicketCount || undefined,
       content: <TicketsClient tickets={ticketsData.tickets} upcomingEvents={ticketsData.upcomingEvents} isUcsd={ticketsData.isUcsd} />,
     },
     {
-      id: 'profile', icon: '👤', label: 'Profile',
+      id: 'profile', icon: <User size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Profile',
       description: 'Update your info and preferences',
       content: <ProfileClient profile={profile} roles={roles} isUcsd={isVerifiedMember(roles)} />,
     },
     ...(canCheckin && checkinData ? [{
-      id: 'checkin', icon: '📷', label: 'Check-In Scanner',
+      id: 'checkin', icon: <Camera size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Check-In Scanner',
       description: 'Scan tickets to check people in',
       content: <CheckInClient events={checkinData.events} />,
     }] : []),
     ...(canManageEvents && eventsData ? [{
-      id: 'events', icon: '🗓️', label: 'Events',
+      id: 'events', icon: <Calendar size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Events',
       description: 'Create and manage events',
       content: <EventsSectionContent events={eventsData.events} />,
     }] : []),
     ...(canViewMembers && membersData ? [{
-      id: 'members', icon: '👥', label: 'Members',
+      id: 'members', icon: <Users size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Members',
       description: 'Browse everyone in the org',
       badge: membersData.rows.length || undefined,
       content: <MembersSectionContent rows={membersData.rows} roles={roles} />,
     }] : []),
     ...(canManageDivisions && divisionsData ? [{
-      id: 'divisions', icon: '🎮', label: 'Divisions',
+      id: 'divisions', icon: <Gamepad2 size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Divisions',
       description: 'Manage the division directory',
       content: <DivisionsManager divisions={divisionsData.divisions} />,
     }] : []),
     ...(canGenerateQr ? [{
-      id: 'qrcode', icon: '🔳', label: 'QR Studio',
+      id: 'qrcode', icon: <QrCode size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'QR Studio',
       description: 'Design branded QR codes',
       content: <QRStudioClient />,
     }] : []),
     ...(canEditContent && contentData ? [{
-      id: 'content', icon: '✏️', label: 'Edit Site Content',
+      id: 'content', icon: <Pencil size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Edit Site Content',
       description: 'Banners, stats, and text on the public site',
       content: <ContentEditor blocks={CONTENT_BLOCKS} contentMap={contentData.contentMap} lastEdited={contentData.lastEdited} />,
     }] : []),
     ...(canViewAdmin && adminData ? [{
-      id: 'admin', icon: '🛡️', label: 'Admin',
+      id: 'admin', icon: <Shield size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Admin',
       description: 'Platform stats and role management',
       content: <AdminSectionContent {...adminData} />,
     }] : []),
+    ...(canViewAdmin && statsData ? [{
+      id: 'stats', icon: <BarChart3 size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Analytics',
+      description: 'Events, tickets, check-ins, and growth over time',
+      content: <StatsClient data={statsData} />,
+    }] : []),
     ...(canManageDocs && docsData ? [{
-      id: 'docs', icon: '📚', label: 'Documentation',
+      id: 'docs', icon: <BookOpen size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Documentation',
       description: 'How-to guides for officers, leads, and execs',
       badge: docsData.docs.length || undefined,
-      content: <DocsClient initialDocs={docsData.docs} userId={profile.id} />,
+      content: <DocsClient initialDocs={docsData.docs} initialCategories={docsData.categories} userId={profile.id} />,
     }] : []),
   ];
 
@@ -161,7 +170,7 @@ export default async function PortalDashboard() {
                   {ROLE_LABELS.guest}
                 </span>
               ) : (
-                roles.map((r) => (
+                [...roles].sort((a, b) => ROLE_DISPLAY_RANK[b.role] - ROLE_DISPLAY_RANK[a.role]).map((r) => (
                   <span
                     key={r.role}
                     className={styles.roleChip}
@@ -188,7 +197,7 @@ export default async function PortalDashboard() {
             <div className={styles.checkinBannerTitle}>Event today — {todayEvents[0].title}</div>
             <div className={styles.checkinBannerSub}>Tap to open check-in scanner</div>
           </div>
-          <span className={styles.checkinBannerIcon}>📷</span>
+          <span className={styles.checkinBannerIcon}><Camera size={24} strokeWidth={1.5} aria-hidden="true" /></span>
         </Link>
       )}
 

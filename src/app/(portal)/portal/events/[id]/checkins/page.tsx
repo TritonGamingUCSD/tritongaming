@@ -1,6 +1,7 @@
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Camera, Gamepad2 } from 'lucide-react';
 import { getUserRoles } from '@/lib/auth';
 import { hasCapability } from '@/lib/capabilities';
 import { createClient } from '@/lib/supabase/server';
@@ -85,7 +86,7 @@ export default async function EventCheckinsPage({ params }: Params) {
           <div className={styles.statValue}>{attendanceRate}%</div>
           <div className={styles.statLabel}>Attendance</div>
         </div>
-        <Link href="/portal?open=checkin" className={styles.scanBtn}>📷 Open Scanner</Link>
+        <Link href="/portal?open=checkin" className={styles.scanBtn}><Camera size={16} strokeWidth={1.5} aria-hidden="true" /> Open Scanner</Link>
       </div>
 
       {tickets.length === 0 ? (
@@ -111,7 +112,7 @@ export default async function EventCheckinsPage({ params }: Params) {
                   )}
                   <div>
                     <div className={styles.name}>{user?.display_name || 'Anonymous'}</div>
-                    {user?.gamer_tag && <div className={styles.gamerTag}>🎮 {user.gamer_tag}</div>}
+                    {user?.gamer_tag && <div className={styles.gamerTag}><Gamepad2 size={12} strokeWidth={1.5} aria-hidden="true" /> {user.gamer_tag}</div>}
                   </div>
                 </div>
                 <span className={styles.date}>
