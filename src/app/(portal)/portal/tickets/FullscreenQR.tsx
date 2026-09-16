@@ -89,12 +89,21 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
     };
   }, [fetchCode]);
 
+  // Fires exactly once — from whichever of Realtime (fast path) or the
+  // polling backstop below (guaranteed path) notices the check-in first.
+  const handledCheckIn = useRef(false);
+  function handleCheckedIn(checkedInAt: string) {
+    if (handledCheckIn.current) return;
+    handledCheckIn.current = true;
+    setCheckedIn(true);
+    onCheckedInRef.current?.(checkedInAt);
+  }
+
   // Live push from the checkin scanner's DB write (see the
-  // enable_tickets_realtime migration) — this is what lets this screen show
-  // "Checked In" the instant staff scan it, instead of only finding out
-  // once the next rotating-code fetch gets rejected as "not active" (up to
-  // ~60s later). Stored in a ref so the subscription doesn't need to be torn
-  // down and rebuilt whenever the parent passes a new onCheckedIn closure.
+  // enable_tickets_realtime migration) — lets this screen show "Checked In"
+  // the instant staff scan it. Stored in a ref so the subscription doesn't
+  // need to be torn down and rebuilt whenever the parent passes a new
+  // onCheckedIn closure.
   const onCheckedInRef = useRef(onCheckedIn);
   useEffect(() => { onCheckedInRef.current = onCheckedIn; }, [onCheckedIn]);
 
@@ -107,16 +116,46 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
         { event: 'UPDATE', schema: 'public', table: 'tickets', filter: `id=eq.${ticketId}` },
         (payload) => {
           const newRow = payload.new as { status?: string; checked_in_at?: string | null };
-          if (newRow.status === 'used') {
-            setCheckedIn(true);
-            if (newRow.checked_in_at) onCheckedInRef.current?.(newRow.checked_in_at);
-          }
+          if (newRow.status === 'used') handleCheckedIn(newRow.checked_in_at ?? new Date().toISOString());
         }
       )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticketId]);
+
+  // Backstop for the Realtime subscription above — a websocket can fail to
+  // connect for reasons that have nothing to do with this app (a campus
+  // wifi proxy blocking upgrades, a misconfigured project, etc.), and
+  // "check-in doesn't show up" is bad enough that this shouldn't depend on
+  // Realtime alone. Polls a tiny status endpoint every few seconds; stops
+  // once checked in.
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (handledCheckIn.current) return;
+      try {
+        const res = await fetch(`/api/tickets/${ticketId}/status`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.status === 'used') handleCheckedIn(data.checked_in_at ?? new Date().toISOString());
+      } catch {
+        // ignore — next tick tries again
+      }
+    }, 4000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticketId]);
+
+  // Give the "You're Checked In!" confirmation a moment on screen, then
+  // return to the ticket list — which, thanks to onCheckedIn above, already
+  // shows this ticket's status as checked in by the time this lands.
+  useEffect(() => {
+    if (!checkedIn) return;
+    const timeout = setTimeout(onClose, 2500);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checkedIn]);
 
   // Close on backdrop tap
   function onBackdrop(e: React.MouseEvent) {
