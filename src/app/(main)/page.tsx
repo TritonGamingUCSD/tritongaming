@@ -14,13 +14,14 @@ export const dynamic = 'force-dynamic';
 export default async function HomePage() {
   const [upcomingEvents, content] = await Promise.all([
     getUpcomingEvents(6),
-    getContentBlocks(['homepage.hero', 'homepage.about', 'homepage.stats']),
+    getContentBlocks(['homepage.hero', 'homepage.about', 'homepage.stats', 'homepage.recruitment']),
   ]);
 
-  const heroContent  = content['homepage.hero']  ?? {};
-  const aboutContent = content['homepage.about'] ?? {};
-  const statsContent = content['homepage.stats'] ?? {};
-  const statsItems   = (statsContent.items as StatInput[] | undefined) ?? undefined;
+  const heroContent        = content['homepage.hero']        ?? {};
+  const aboutContent       = content['homepage.about']       ?? {};
+  const statsContent       = content['homepage.stats']       ?? {};
+  const recruitmentContent = content['homepage.recruitment'] ?? {};
+  const statsItems         = (statsContent.items as StatInput[] | undefined) ?? undefined;
 
   return (
     <>
@@ -30,7 +31,7 @@ export default async function HomePage() {
       <LandingEvents initialEvents={upcomingEvents} />
       <LandingDivisions />
       <LandingSponsors />
-      <LandingRecruitment />
+      <LandingRecruitment content={recruitmentContent as Parameters<typeof LandingRecruitment>[0]['content']} />
     </>
   );
 }

@@ -41,13 +41,33 @@ const SPRING = { type: 'spring' as const, stiffness: 420, damping: 38 };
 // changes that arrive from *outside* this component (e.g. a <Link> to
 // /portal?open=x elsewhere on the same route) — just without the UI waiting
 // on it.
-export default function PortalHub({ sections }: { sections: HubSection[] }) {
+// onGridWidth, when passed, reports the card grid's actual rendered width
+// (in px) — lets a sibling like the portal's "next ticket" banner match it
+// exactly instead of guessing at a shared width in pure CSS, which broke
+// down once real content was involved (see DashboardClient/dashboard.module
+// .css for why). Only fires while the grid itself is on screen — while a
+// panel is open there's no grid to measure, so the parent just keeps
+// whatever width it last heard, which is the right behavior since the
+// grid's width only changes with how many cards this user has, not
+// anything transient.
+export default function PortalHub({ sections, onGridWidth }: { sections: HubSection[]; onGridWidth?: (width: number) => void }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedOpen = searchParams.get('open');
   const validRequested = sections.some((s) => s.id === requestedOpen) ? requestedOpen : null;
 
   const [openId, setOpenId] = useState<string | null>(validRequested);
+
+  const gridRef = useCallback((node: HTMLDivElement | null) => {
+    if (!node || !onGridWidth) return;
+    const ro = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect.width;
+      if (width) onGridWidth(Math.round(width));
+    });
+    ro.observe(node);
+    return () => ro.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     setOpenId(validRequested);
@@ -97,6 +117,7 @@ export default function PortalHub({ sections }: { sections: HubSection[] }) {
         ) : (
           <motion.div
             key="grid"
+            ref={gridRef}
             className={styles.grid}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

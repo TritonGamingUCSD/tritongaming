@@ -1,5 +1,5 @@
 import { createElement } from 'react';
-import { Megaphone, Settings, Link as LinkIcon, Home, BarChart3, Hand, Handshake } from 'lucide-react';
+import { Megaphone, Settings, Link as LinkIcon, Home, Info, BarChart3, Hand, Handshake, UserPlus } from 'lucide-react';
 
 // Icons render as small (16px) monochrome glyphs in the admin content-block
 // list/edit-panel headers (see ContentEditor.tsx) — createElement instead of
@@ -72,7 +72,7 @@ export const CONTENT_BLOCKS = [
     key: 'homepage.about',
     title: 'Homepage About Section',
     description: 'The "About Us" blurb shown below the hero.',
-    icon: 'ℹ️',
+    icon: createElement(Info, ICON_PROPS),
     category: 'Homepage',
     fields: [
       { name: 'title',    label: 'Section Title',  type: 'text'     as const },
@@ -90,6 +90,32 @@ export const CONTENT_BLOCKS = [
     fields: [
       { name: 'items', label: 'Stats (value + label)', type: 'kvlist' as const,
         kvKeyLabel: 'Value (e.g. 500+)', kvValueLabel: 'Label (e.g. Active Members)' },
+    ],
+  },
+  {
+    key: 'homepage.recruitment',
+    title: 'Homepage Recruitment Section',
+    description: 'The three "Join the Team" pathway cards below the divisions section.',
+    icon: createElement(UserPlus, ICON_PROPS),
+    category: 'Homepage',
+    // Fixed three cards (officer application, Discord, socials) rather than
+    // a repeatable list — each one's icon (a specific brand logo or lucide
+    // glyph) is tied to what it *is*, not something an admin picks per row,
+    // so a kvlist/imagelist wouldn't fit; this mirrors homepage.hero's flat
+    // per-field layout instead.
+    fields: [
+      { name: 'officer_title', label: 'Officer Card — Title',  type: 'text'     as const, placeholder: 'Become an Officer' },
+      { name: 'officer_body',  label: 'Officer Card — Body',   type: 'textarea' as const },
+      { name: 'officer_cta',   label: 'Officer Card — Button Text', type: 'text' as const, placeholder: 'Apply Now' },
+      { name: 'officer_href',  label: 'Officer Card — Button URL',  type: 'url'  as const },
+      { name: 'discord_title', label: 'Discord Card — Title',  type: 'text'     as const, placeholder: 'Join Our Discord' },
+      { name: 'discord_body',  label: 'Discord Card — Body',   type: 'textarea' as const },
+      { name: 'discord_cta',   label: 'Discord Card — Button Text', type: 'text' as const, placeholder: 'Join Server' },
+      { name: 'discord_href',  label: 'Discord Card — Button URL',  type: 'url'  as const },
+      { name: 'social_title',  label: 'Socials Card — Title',  type: 'text'     as const, placeholder: 'Follow Our Socials' },
+      { name: 'social_body',   label: 'Socials Card — Body',   type: 'textarea' as const },
+      { name: 'social_cta',    label: 'Socials Card — Button Text', type: 'text' as const, placeholder: 'Follow Us' },
+      { name: 'social_href',   label: 'Socials Card — Button URL',  type: 'url'  as const },
     ],
   },
   // ── Pages ─────────────────────────────────────────────────

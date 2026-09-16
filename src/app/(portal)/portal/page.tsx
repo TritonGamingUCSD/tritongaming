@@ -1,4 +1,3 @@
-import { Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, BarChart3 } from 'lucide-react';
@@ -7,9 +6,10 @@ import { hasCapability, isVerifiedMember } from '@/lib/capabilities';
 import { resolveAvatarUrl } from '@/lib/profile';
 import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK } from '@/types/database';
 import { CONTENT_BLOCKS } from '@/lib/content-blocks';
-import PortalHub, { type HubSection } from '@/components/portal/PortalHub';
+import type { HubSection } from '@/components/portal/PortalHub';
 import SignOutButton from '@/components/portal/SignOutButton';
 import DashboardClient from './DashboardClient';
+import PortalTopSection from './PortalTopSection';
 import TicketsClient from './tickets/TicketsClient';
 import { getTicketsData } from './tickets/getTicketsData';
 import ProfileClient from './profile/ProfileClient';
@@ -203,17 +203,16 @@ export default async function PortalDashboard() {
         </Link>
       )}
 
-      {/* Shown to anyone with an upcoming ticket, regardless of role — an
-          exec/lead/officer who also has their own ticket to an event is
-          still an attendee of it, so hiding this from them (the previous
-          `!canManageEvents` gate) just meant they never got the reminder. */}
-      {nextTicket && (
-        <DashboardClient ticket={nextTicket as Parameters<typeof DashboardClient>[0]['ticket']} />
-      )}
-
-      <Suspense>
-        <PortalHub sections={sections} />
-      </Suspense>
+      {/* The "next ticket" banner is shown to anyone with an upcoming
+          ticket, regardless of role — an exec/lead/officer who also has
+          their own ticket to an event is still an attendee of it, so
+          hiding this from them (the previous `!canManageEvents` gate) just
+          meant they never got the reminder. PortalTopSection owns matching
+          its width to the hub grid below it. */}
+      <PortalTopSection
+        ticket={nextTicket ? (nextTicket as Parameters<typeof DashboardClient>[0]['ticket']) : null}
+        sections={sections}
+      />
     </div>
   );
 }

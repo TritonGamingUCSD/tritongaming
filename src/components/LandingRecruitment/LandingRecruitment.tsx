@@ -3,34 +3,56 @@ import { ClipboardList } from 'lucide-react';
 import { Reveal, RevealGroup, RevealItem } from '@/components/Reveal/Reveal';
 import styles from './LandingRecruitment.module.css';
 
-const PATHWAYS = [
-  {
-    icon: <ClipboardList size={28} strokeWidth={1.5} aria-hidden="true" />,
-    title: 'Become an Officer',
-    body: 'Shape UCSD gaming. Join our exec board or a division committee — applications open each fall and winter quarter.',
-    cta: 'Apply Now',
-    href: 'https://docs.google.com/forms/d/e/1FAIpQLScn8tyWhpp8EKcAE2z4Nn_BFaj6k2u4qjSBu5rW0xxatVWqWQ/viewform?usp=dialog',
-    external: true,
-  },
-  {
-    icon: <Image src="/logos/discord.svg" alt="" width={28} height={28} unoptimized />,
-    title: 'Join Our Discord',
-    body: 'Connect with 5,000+ gamers at UCSD. Find teammates, join tournaments, and stay up to date on all things Triton Gaming.',
-    cta: 'Join Server',
-    href: 'https://discord.gg/tritongaming',
-    external: true,
-  },
-  {
-    icon: <Image src="/logos/instagram.svg" alt="" width={28} height={28} unoptimized />,
-    title: 'Follow Our Socials',
-    body: 'Stay in the loop with event announcements, highlights, giveaways, and more across Instagram, TikTok, and YouTube.',
-    cta: 'Follow Us',
-    href: 'https://www.instagram.com/tritongamingsd/',
-    external: true,
-  },
-];
+interface RecruitmentContent {
+  officer_title?: string;
+  officer_body?: string;
+  officer_cta?: string;
+  officer_href?: string;
+  discord_title?: string;
+  discord_body?: string;
+  discord_cta?: string;
+  discord_href?: string;
+  social_title?: string;
+  social_body?: string;
+  social_cta?: string;
+  social_href?: string;
+}
 
-export default function LandingRecruitment() {
+export default function LandingRecruitment({ content = {} }: { content?: RecruitmentContent }) {
+  // Each card's icon is fixed to what it *is* (the officer application, the
+  // Discord server, the social accounts) — only the copy/links come from
+  // the database. A card is skipped entirely if its title was never set,
+  // same "don't fake it" rule as the rest of the homepage's DB-driven
+  // sections — no hardcoded English fallback standing in for real content.
+  const pathways = [
+    {
+      key: 'officer',
+      icon: <ClipboardList size={28} strokeWidth={1.5} aria-hidden="true" />,
+      title: content.officer_title,
+      body: content.officer_body,
+      cta: content.officer_cta,
+      href: content.officer_href,
+    },
+    {
+      key: 'discord',
+      icon: <Image src="/logos/discord.svg" alt="" width={28} height={28} unoptimized />,
+      title: content.discord_title,
+      body: content.discord_body,
+      cta: content.discord_cta,
+      href: content.discord_href,
+    },
+    {
+      key: 'social',
+      icon: <Image src="/logos/instagram.svg" alt="" width={28} height={28} unoptimized />,
+      title: content.social_title,
+      body: content.social_body,
+      cta: content.social_cta,
+      href: content.social_href,
+    },
+  ].filter((p) => p.title);
+
+  if (pathways.length === 0) return null;
+
   return (
     <section className={styles.section} aria-label="Join Triton Gaming">
       <div className={styles.bgWrapper} aria-hidden="true">
@@ -54,20 +76,22 @@ export default function LandingRecruitment() {
 
       <RevealGroup>
         <div className={styles.pathways}>
-          {PATHWAYS.map((p) => (
-            <RevealItem key={p.title}>
+          {pathways.map((p) => (
+            <RevealItem key={p.key}>
               <div className={styles.pathway}>
                 <div className={styles.pathIcon}>{p.icon}</div>
                 <h3 className={styles.pathTitle}>{p.title}</h3>
-                <p className={styles.pathBody}>{p.body}</p>
-                <a
-                  href={p.href}
-                  className={styles.pathCta}
-                  target={p.external ? '_blank' : undefined}
-                  rel={p.external ? 'noopener noreferrer' : undefined}
-                >
-                  {p.cta} →
-                </a>
+                {p.body && <p className={styles.pathBody}>{p.body}</p>}
+                {p.cta && p.href && (
+                  <a
+                    href={p.href}
+                    className={styles.pathCta}
+                    target={p.href.startsWith('http') ? '_blank' : undefined}
+                    rel={p.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                  >
+                    {p.cta} →
+                  </a>
+                )}
               </div>
             </RevealItem>
           ))}

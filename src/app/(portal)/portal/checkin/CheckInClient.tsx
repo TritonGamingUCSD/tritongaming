@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import jsQR from 'jsqr';
 import { Calendar, Camera, CircleCheck, TriangleAlert } from 'lucide-react';
 import styles from './checkin.module.css';
@@ -18,18 +18,12 @@ interface ScanResult {
   checked_in_at?: string;
 }
 
-interface CheckinStats {
-  total: number;
-  checked_in: number;
-}
-
 export default function CheckInClient({ events }: { events: Event[] }) {
   const [selectedEventId, setSelectedEventId] = useState(events[0]?.id || '');
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState('');
   const [processing, setProcessing] = useState(false);
-  const [stats, setStats] = useState<CheckinStats | null>(null);
   const [manualCode, setManualCode] = useState('');
   const [showManual, setShowManual] = useState(false);
 
@@ -47,21 +41,6 @@ export default function CheckInClient({ events }: { events: Event[] }) {
   // which closure is doing the reading, so they're the actual fix.
   const processingRef = useRef(false);
   const lastCodeRef = useRef('');
-
-  const fetchStats = useCallback(async (eventId: string) => {
-    if (!eventId) return;
-    try {
-      const res = await fetch(`/api/events/${eventId}?stats=1`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.stats) setStats(data.stats);
-      }
-    } catch { /* non-critical */ }
-  }, []);
-
-  useEffect(() => {
-    if (selectedEventId) fetchStats(selectedEventId);
-  }, [selectedEventId, fetchStats]);
 
   async function startCamera() {
     setError('');
@@ -131,10 +110,6 @@ export default function CheckInClient({ events }: { events: Event[] }) {
       const data = await response.json();
       if (response.ok) {
         setResult(data);
-        if (data.status === 'active') {
-          // Successful check-in: update stats
-          setStats((prev) => prev ? { ...prev, checked_in: prev.checked_in + 1 } : null);
-        }
       } else {
         setError(data.error || 'Check-in failed.');
       }
@@ -200,26 +175,6 @@ export default function CheckInClient({ events }: { events: Event[] }) {
           <span className={styles.selectChevron} aria-hidden="true">▾</span>
         </div>
       </div>
-
-      {/* ── Stats strip ───────────────────────────── */}
-      {stats && (
-        <div className={styles.statsStrip}>
-          <div className={styles.statItem}>
-            <span className={styles.statNum}>{stats.checked_in}</span>
-            <span className={styles.statLab}>Checked In</span>
-          </div>
-          <div className={styles.statDivider} />
-          <div className={styles.statItem}>
-            <span className={styles.statNum}>{stats.total}</span>
-            <span className={styles.statLab}>Registered</span>
-          </div>
-          <div className={styles.statDivider} />
-          <div className={styles.statItem}>
-            <span className={styles.statNum}>{stats.total > 0 ? Math.round(stats.checked_in / stats.total * 100) : 0}%</span>
-            <span className={styles.statLab}>Attendance</span>
-          </div>
-        </div>
-      )}
 
       {/* ── Camera viewport ───────────────────────── */}
       <div className={styles.viewport}>
