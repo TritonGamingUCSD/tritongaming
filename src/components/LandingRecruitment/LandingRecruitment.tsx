@@ -78,19 +78,25 @@ export default function LandingRecruitment({ content = {} }: { content?: Recruit
         <div className={styles.pathways}>
           {pathways.map((p) => (
             <RevealItem key={p.key}>
+              {/* Whole-card stretched link — the visible "cta →" below is
+                  just styling now, not a second nested anchor (which isn't
+                  valid HTML anyway); this invisible link covers the card
+                  and points to the same href. */}
               <div className={styles.pathway}>
                 <div className={styles.pathIcon}>{p.icon}</div>
                 <h3 className={styles.pathTitle}>{p.title}</h3>
                 {p.body && <p className={styles.pathBody}>{p.body}</p>}
                 {p.cta && p.href && (
+                  <span className={styles.pathCta}>{p.cta} →</span>
+                )}
+                {p.href && (
                   <a
                     href={p.href}
-                    className={styles.pathCta}
+                    className={styles.cardLink}
                     target={p.href.startsWith('http') ? '_blank' : undefined}
                     rel={p.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                  >
-                    {p.cta} →
-                  </a>
+                    aria-label={p.title}
+                  />
                 )}
               </div>
             </RevealItem>

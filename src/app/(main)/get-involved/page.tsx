@@ -98,8 +98,8 @@ export default async function GetInvolvedPage() {
             <h2 className={styles.officerTitle}>Shape UCSD Gaming</h2>
             <p className={styles.officerBody}>
               Triton Gaming officers are the engine behind every event. We open applications
-              twice a year — fall and winter quarter — for roles across our five committees:
-              Live Events, Marketing, Creative, Social, and HR.
+              twice a year — fall and winter quarter — for roles across our seven committees:
+              Live Events, Marketing, Creative, Community, Infrastructure, Operations, HR.
             </p>
             <ul className={styles.perkList}>
               {OFFICER_PERKS.map((perk) => (
@@ -135,7 +135,7 @@ export default async function GetInvolvedPage() {
             <div className={styles.metaCard}>
               <span className={styles.metaEmoji}><Building2 size={22} strokeWidth={1.5} aria-hidden="true" /></span>
               <span className={styles.metaLabel}>Committees</span>
-              <span className={styles.metaValue}>Live Events, Marketing, Creative, Social, HR</span>
+              <span className={styles.metaValue}>Live Events, Marketing, Creative, Community, Infrastructure, Operations, HR</span>
             </div>
           </div>
         </div>

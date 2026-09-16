@@ -19,7 +19,14 @@ export default function PortalTopSection({ ticket, sections }: { ticket: Ticket 
   return (
     <>
       {ticket && (
-        <div style={gridWidth ? { maxWidth: gridWidth, marginInline: 'auto' } : undefined}>
+        // `.page` (this div's parent) is a column flex container — a flex
+        // item with an auto cross-axis margin (marginInline: 'auto', needed
+        // to center it) stops stretching to fill the container by default,
+        // and instead shrinks to fit its own content. width:100% overrides
+        // that explicitly, so max-width actually gets a chance to matter
+        // instead of the banner just sitting at its own natural (much
+        // narrower) content width regardless of what max-width said.
+        <div style={gridWidth ? { width: '100%', maxWidth: gridWidth, marginInline: 'auto' } : undefined}>
           <DashboardClient ticket={ticket} />
         </div>
       )}

@@ -60,12 +60,69 @@ export default function PortalHub({ sections, onGridWidth }: { sections: HubSect
 
   const gridRef = useCallback((node: HTMLDivElement | null) => {
     if (!node || !onGridWidth) return;
-    const ro = new ResizeObserver((entries) => {
-      const width = entries[0]?.contentRect.width;
-      if (width) onGridWidth(Math.round(width));
+
+    // .grid itself is a block box that always stretches to fill .wrap's
+    // full width — justify-content:center only repositions the *tracks*
+    // (cards) inside that box, it doesn't shrink the box to fit them. So
+    // measuring the grid element's own rect reports the full container
+    // width, not the card cluster's actual span. Measure the real
+    // leftmost/rightmost card edges instead.
+    const measure = () => {
+      const cards = node.querySelectorAll<HTMLElement>(`.${styles.card}`);
+      if (cards.length === 0) return null;
+      let minLeft = Infinity;
+      let maxRight = -Infinity;
+      cards.forEach((card) => {
+        const rect = card.getBoundingClientRect();
+        minLeft = Math.min(minLeft, rect.left);
+        maxRight = Math.max(maxRight, rect.right);
+      });
+      return maxRight > minLeft ? Math.round(maxRight - minLeft) : null;
+    };
+
+    // Cards carry layoutId and animate (the shared-element transition back
+    // from a just-closed panel, or the initial mount) — measuring mid-
+    // animation can catch a card at a transformed/inflated rect, and since
+    // nothing re-triggers a measurement afterward (ResizeObserver only
+    // fires on *this container's own* box size changing, not on a child's
+    // transform), a bad one-off reading stuck permanently — the banner
+    // rendering wider than the actual settled card cluster was this: not a
+    // math error, a timing one. Settle-detect instead of trusting a single
+    // read: keep sampling on animation frames until two consecutive
+    // samples agree (or we give up after ~1s and take the last one).
+    let attempts = 0;
+    let lastWidth: number | null = null;
+    let rafId = 0;
+    const settle = () => {
+      const width = measure();
+      if (width !== null) {
+        if (width === lastWidth) {
+          onGridWidth(width);
+          return;
+        }
+        lastWidth = width;
+      }
+      attempts++;
+      if (attempts < 60) {
+        rafId = requestAnimationFrame(settle);
+      } else if (lastWidth !== null) {
+        onGridWidth(lastWidth);
+      }
+    };
+    rafId = requestAnimationFrame(settle);
+
+    const ro = new ResizeObserver(() => {
+      attempts = 0;
+      lastWidth = null;
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(settle);
     });
     ro.observe(node);
-    return () => ro.disconnect();
+
+    return () => {
+      ro.disconnect();
+      cancelAnimationFrame(rafId);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
