@@ -45,12 +45,14 @@ const SPRING = { type: 'spring' as const, stiffness: 420, damping: 38 };
 // (in px) — lets a sibling like the portal's "next ticket" banner match it
 // exactly instead of guessing at a shared width in pure CSS, which broke
 // down once real content was involved (see DashboardClient/dashboard.module
-// .css for why). Only fires while the grid itself is on screen — while a
-// panel is open there's no grid to measure, so the parent just keeps
-// whatever width it last heard, which is the right behavior since the
-// grid's width only changes with how many cards this user has, not
-// anything transient.
-export default function PortalHub({ sections, onGridWidth }: { sections: HubSection[]; onGridWidth?: (width: number) => void }) {
+// .css for why). It only fires while the grid itself is on screen — while a
+// panel is open there's nothing to measure, so the width stays at whatever
+// it last was, which no longer corresponds to anything actually visible
+// (the panel has its own, different, width). onOpenChange reports whether
+// a panel is open so a sibling can react to that directly — e.g. hide
+// itself — rather than a stale grid-width value quietly meaning something
+// different once a panel opens.
+export default function PortalHub({ sections, onGridWidth, onOpenChange }: { sections: HubSection[]; onGridWidth?: (width: number) => void; onOpenChange?: (open: boolean) => void }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedOpen = searchParams.get('open');
@@ -130,6 +132,11 @@ export default function PortalHub({ sections, onGridWidth }: { sections: HubSect
     setOpenId(validRequested);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [validRequested]);
+
+  useEffect(() => {
+    onOpenChange?.(openId !== null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openId]);
 
   const open = useCallback((id: string) => {
     setOpenId(id);

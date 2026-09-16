@@ -15,10 +15,15 @@ type Ticket = Parameters<typeof DashboardClient>[0]['ticket'];
 // PortalHub's onGridWidth for how that measurement gets here.
 export default function PortalTopSection({ ticket, sections }: { ticket: Ticket | null; sections: HubSection[] }) {
   const [gridWidth, setGridWidth] = useState<number | null>(null);
+  const [panelOpen, setPanelOpen] = useState(false);
 
   return (
     <>
-      {ticket && (
+      {/* Hidden while a panel is expanded — its width is matched to the
+          card grid specifically (see onGridWidth below), which isn't on
+          screen once a panel opens, so the banner would just be sized to
+          a number that no longer corresponds to anything visible. */}
+      {ticket && !panelOpen && (
         // `.page` (this div's parent) is a column flex container — a flex
         // item with an auto cross-axis margin (marginInline: 'auto', needed
         // to center it) stops stretching to fill the container by default,
@@ -31,7 +36,7 @@ export default function PortalTopSection({ ticket, sections }: { ticket: Ticket 
         </div>
       )}
       <Suspense>
-        <PortalHub sections={sections} onGridWidth={setGridWidth} />
+        <PortalHub sections={sections} onGridWidth={setGridWidth} onOpenChange={setPanelOpen} />
       </Suspense>
     </>
   );
