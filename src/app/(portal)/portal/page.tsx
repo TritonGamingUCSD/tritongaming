@@ -203,7 +203,11 @@ export default async function PortalDashboard() {
         </Link>
       )}
 
-      {nextTicket && !canManageEvents && (
+      {/* Shown to anyone with an upcoming ticket, regardless of role — an
+          exec/lead/officer who also has their own ticket to an event is
+          still an attendee of it, so hiding this from them (the previous
+          `!canManageEvents` gate) just meant they never got the reminder. */}
+      {nextTicket && (
         <DashboardClient ticket={nextTicket as Parameters<typeof DashboardClient>[0]['ticket']} />
       )}
 

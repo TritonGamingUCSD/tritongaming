@@ -4,16 +4,17 @@
 
 /* ── Card grid ────────────────────────────────────── */
 /* auto-fit (not auto-fill) collapses empty tracks instead of reserving
-   them, and justify-content centers the resulting column set — so a plain
-   member with only 2-3 cards gets a centered cluster instead of a
-   left-aligned row with a wide empty gap on the right. */
+   them. justify-content is deliberately `start`, not `center` — this grid
+   sits directly under DashboardClient's full-width "next ticket" banner
+   (when one is showing), and a centered cluster of 2-3 cards floats in the
+   middle under that full-width banner instead of sharing its left edge,
+   which read as misaligned. A left-aligned cluster with empty space on the
+   right (when there are few cards) matches the banner's left edge instead,
+   which is the more important alignment cue. */
 .grid {
   display: grid;
-  /* A bounded max (not 1fr) so there's leftover space for justify-content
-     to center against — 1fr tracks would consume all container width
-     first, defeating the centering. */
   grid-template-columns: repeat(auto-fit, minmax(220px, 260px));
-  justify-content: center;
+  justify-content: start;
   gap: 1rem;
 }
 
