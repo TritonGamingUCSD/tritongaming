@@ -56,6 +56,17 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
   const [error, setError] = useState('');
   const checkoutResult = searchParams.get('checkout');
 
+  // `tickets` is seeded from `initialTickets` only once (useState's
+  // initializer runs on mount, not on every render) — router.refresh() below
+  // re-fetches this page's server data and hands down a new `initialTickets`
+  // array, but without this sync the local `tickets` state never picks it
+  // up. That's what made a freshly-claimed free ticket (no Stripe redirect,
+  // just router.refresh()) invisible: the fetch succeeded and the ticket
+  // existed in the DB, but the UI kept rendering the pre-claim list.
+  useEffect(() => {
+    setTickets(initialTickets);
+  }, [initialTickets]);
+
   // The Stripe webhook that creates the paid ticket runs async, so it may not
   // have landed yet when Stripe redirects back here. Give it a couple of
   // chances to show up.
@@ -88,6 +99,23 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
       if (data.url) {
         window.location.href = data.url;
         return;
+      }
+      if (data.free && data.ticket) {
+        // Show the QR immediately instead of making the user notice a new
+        // "Show QR Code" button appeared after a background refresh — this
+        // is the ticket they just claimed, they want it now. The API only
+        // returns the bare tickets-table row (no event join), so stitch in
+        // the event details we already have client-side from upcomingEvents.
+        const event = upcomingEvents.find((e) => e.id === eventId);
+        const newTicket: TicketData = {
+          id: data.ticket.id,
+          status: data.ticket.status,
+          checked_in_at: data.ticket.checked_in_at,
+          created_at: data.ticket.created_at,
+          event: event ? { id: event.id, title: event.title, start_date: event.start_date, end_date: null, location: event.location, flyer_url: null } : null,
+        };
+        setTickets((prev) => [newTicket, ...prev]);
+        setQrTicket(newTicket);
       }
       router.refresh();
     } catch {
