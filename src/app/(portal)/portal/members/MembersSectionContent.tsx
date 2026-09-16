@@ -68,6 +68,7 @@ export default function MembersSectionContent({ rows, roles }: { rows: MemberPro
                   )}
                   <div className={styles.info}>
                     <div className={styles.name}>{m.display_name || 'Anonymous'}</div>
+                    {m.org_title && <div className={styles.orgTitle}>{m.org_title}</div>}
                     {m.gamer_tag && <div className={styles.tag}>🎮 {m.gamer_tag}</div>}
                     {m.divisionName && <div className={styles.detail}>{m.divisionName}</div>}
                     {m.major && <div className={styles.detail}>{m.major}{m.year ? ` · ${m.year}` : ''}</div>}

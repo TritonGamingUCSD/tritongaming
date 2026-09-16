@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
+import { deleteIfReplaced, deleteStorageUrl } from '@/lib/imageUpload';
 import styles from './divisions.module.css';
 
 interface Division {
@@ -81,6 +83,7 @@ export default function DivisionsManager({ divisions: initial }: { divisions: Di
 
   async function handleSave(id: string) {
     if (!editDraft.name.trim() || !editDraft.slug.trim()) return;
+    const before = divisions.find((d) => d.id === id);
     setBusyId(id);
     setError('');
     try {
@@ -102,6 +105,7 @@ export default function DivisionsManager({ divisions: initial }: { divisions: Di
       }
       setDivisions((prev) => prev.map((d) => (d.id === id ? data.division : d)).sort(byName));
       setEditingId(null);
+      deleteIfReplaced(before?.logo_url, data.division.logo_url);
     } catch {
       setError('Network error. Please try again.');
     } finally {
@@ -125,6 +129,7 @@ export default function DivisionsManager({ divisions: initial }: { divisions: Di
         return;
       }
       setDivisions((prev) => prev.filter((x) => x.id !== d.id));
+      deleteStorageUrl(d.logo_url);
     } catch {
       setError('Network error. Please try again.');
     } finally {
@@ -154,11 +159,13 @@ export default function DivisionsManager({ divisions: initial }: { divisions: Di
             maxLength={80}
           />
         </div>
-        <input
-          className={styles.input}
-          value={newDraft.logo_url}
-          onChange={(e) => setNewDraft((f) => ({ ...f, logo_url: e.target.value }))}
-          placeholder="Logo path or URL (e.g. logos/divisions/triton-chess.png)"
+        <ImageUploadField
+          label="Logo"
+          value={logoSrc(newDraft.logo_url) ?? ''}
+          onChange={(url) => setNewDraft((f) => ({ ...f, logo_url: url }))}
+          bucket="division-logos"
+          shape="square"
+          maxDimension={512}
         />
         <textarea
           className={`${styles.input} ${styles.textarea}`}
@@ -198,11 +205,13 @@ export default function DivisionsManager({ divisions: initial }: { divisions: Di
                     maxLength={80}
                   />
                 </label>
-                <input
-                  className={styles.input}
-                  value={editDraft.logo_url}
-                  onChange={(e) => setEditDraft((f) => ({ ...f, logo_url: e.target.value }))}
-                  placeholder="Logo path or URL"
+                <ImageUploadField
+                  label="Logo"
+                  value={logoSrc(editDraft.logo_url) ?? ''}
+                  onChange={(url) => setEditDraft((f) => ({ ...f, logo_url: url }))}
+                  bucket="division-logos"
+                  shape="square"
+                  maxDimension={512}
                 />
                 <textarea
                   className={`${styles.input} ${styles.textarea}`}

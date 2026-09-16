@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { slugify } from '@/lib/slug';
+import { deleteIfReplaced } from '@/lib/imageUpload';
 import EventForm, { type EventFormValues } from '../EventForm';
 
 export default function EditEventClient({
@@ -44,6 +45,8 @@ export default function EditEventClient({
       if (error.code === '23505') return 'That URL slug is already taken by another event.';
       return 'Failed to save changes. Please try again.';
     }
+
+    deleteIfReplaced(initial.flyer_url, form.flyer_url.trim() || null);
     router.push('/portal?open=events');
   }
 

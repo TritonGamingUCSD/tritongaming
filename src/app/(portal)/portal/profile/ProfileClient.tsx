@@ -1,16 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types/database';
 import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
-import type { RoleGrant } from '@/lib/capabilities';
+import { canSetOrgTitle, type RoleGrant } from '@/lib/capabilities';
 import { hasBasicProfileInfo, resolveAvatarUrl } from '@/lib/profile';
+import { deleteIfReplaced } from '@/lib/imageUpload';
+import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
 import styles from './profile.module.css';
 
 export default function ProfileClient({ profile, roles, isUcsd }: { profile: Profile; roles: RoleGrant[]; isUcsd: boolean }) {
+  const canEditOrgTitle = canSetOrgTitle(roles);
   const [form, setForm] = useState({
     display_name: profile.display_name || '',
     year: profile.year || '',
@@ -22,6 +24,7 @@ export default function ProfileClient({ profile, roles, isUcsd }: { profile: Pro
     custom_avatar_url: profile.custom_avatar_url || '',
     bio: profile.bio || '',
     birthday: profile.birthday || '',
+    org_title: profile.org_title || '',
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -51,6 +54,7 @@ export default function ProfileClient({ profile, roles, isUcsd }: { profile: Pro
         ...form,
         birthday: form.birthday || null,
         custom_avatar_url: form.custom_avatar_url.trim() || null,
+        org_title: canEditOrgTitle ? form.org_title.trim() || null : profile.org_title,
         updated_at: new Date().toISOString(),
       })
       .eq('id', profile.id);
@@ -60,6 +64,8 @@ export default function ProfileClient({ profile, roles, isUcsd }: { profile: Pro
       setError('Failed to save. Please try again.');
       return;
     }
+
+    deleteIfReplaced(profile.custom_avatar_url, form.custom_avatar_url.trim() || null);
 
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
@@ -84,23 +90,6 @@ export default function ProfileClient({ profile, roles, isUcsd }: { profile: Pro
 
       <div className={styles.layout}>
         <div className={styles.avatarSection}>
-          {(() => {
-            const previewUrl = resolveAvatarUrl({ avatar_url: profile.avatar_url, custom_avatar_url: form.custom_avatar_url });
-            return previewUrl ? (
-              <Image
-                src={previewUrl}
-                alt={profile.display_name || 'User'}
-                width={100}
-                height={100}
-                className={styles.avatar}
-                unoptimized
-              />
-            ) : (
-              <div className={styles.avatarFallback}>
-                {(profile.display_name || 'U')[0].toUpperCase()}
-              </div>
-            );
-          })()}
           <div className={styles.roleTagRow}>
             {roles.length === 0 ? (
               <span className={styles.roleTag} style={{ background: ROLE_COLORS.guest + '22', color: ROLE_COLORS.guest }}>
@@ -115,21 +104,20 @@ export default function ProfileClient({ profile, roles, isUcsd }: { profile: Pro
             )}
           </div>
 
-          <label className={styles.avatarUrlField}>
-            <span className={styles.label}>Profile Picture URL</span>
-            <input
-              className={styles.input}
-              type="url"
+          <div className={styles.avatarUpload}>
+            <ImageUploadField
+              label="Profile Picture"
               value={form.custom_avatar_url}
-              onChange={(e) => setForm((f) => ({ ...f, custom_avatar_url: e.target.value }))}
-              placeholder="https://…"
+              onChange={(url) => setForm((f) => ({ ...f, custom_avatar_url: url }))}
+              bucket="avatars"
+              pathPrefix={profile.id}
+              shape="circle"
+              maxDimension={512}
+              interactiveCrop
+              fallbackPreview={resolveAvatarUrl({ avatar_url: profile.avatar_url, custom_avatar_url: null }) ?? undefined}
+              hint={form.custom_avatar_url.trim() ? 'Overrides your Google picture — remove it to go back to it.' : 'Defaults to the picture from your Google account.'}
             />
-          </label>
-          <p className={styles.avatarNote}>
-            {form.custom_avatar_url.trim()
-              ? 'Overrides your Google picture — clear this to go back to it.'
-              : 'Leave blank to use the picture from your Google account.'}
-          </p>
+          </div>
         </div>
 
         <form className={styles.form} onSubmit={handleSave}>
@@ -231,6 +219,19 @@ export default function ProfileClient({ profile, roles, isUcsd }: { profile: Pro
               placeholder="e.g. username or name#1234"
             />
           </label>
+
+          {canEditOrgTitle && (
+            <label className={styles.fieldGroup}>
+              <span className={styles.label}>Title in the Org</span>
+              <input
+                className={styles.input}
+                value={form.org_title}
+                onChange={(e) => setForm((f) => ({ ...f, org_title: e.target.value }))}
+                maxLength={60}
+                placeholder="e.g. Marketing Lead"
+              />
+            </label>
+          )}
 
           <label className={styles.fieldGroup}>
             <span className={styles.label}>Birthday</span>

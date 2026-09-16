@@ -36,6 +36,7 @@ export interface Database {
           pronouns: string | null;
           discord: string | null;
           birthday: string | null;
+          org_title: string | null;
           created_at: string;
           updated_at: string;
         };

@@ -1,0 +1,93 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.label {
+  font-size: 0.72rem;
+  font-family: var(--font-renegare);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(242, 241, 240, 0.4);
+}
+
+.hint {
+  font-size: 0.72rem;
+  font-family: var(--font-futura-medium);
+  color: rgba(242, 241, 240, 0.4);
+}
+
+.dropzone {
+  width: 100%;
+  padding: 1.5rem 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  border-radius: 0.6rem;
+  color: rgba(242, 241, 240, 0.5);
+  font-family: var(--font-futura-medium);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.dropzone:hover:not(:disabled) {
+  border-color: rgba(255, 199, 44, 0.4);
+  color: rgba(242, 241, 240, 0.8);
+  background: rgba(255, 255, 255, 0.05);
+}
+.dropzone:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.wrap {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.previewSquare,
+.previewWide {
+  object-fit: cover;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.previewCircle {
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 199, 44, 0.3);
+  flex-shrink: 0;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.replaceBtn,
+.removeBtn {
+  font-size: 0.8rem;
+  font-family: var(--font-futura-medium);
+  padding: 0.4rem 0.875rem;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.replaceBtn {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(242, 241, 240, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.replaceBtn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); }
+
+.removeBtn {
+  background: transparent;
+  color: #fca5a5;
+  border: 1px solid rgba(220, 38, 38, 0.25);
+}
+.removeBtn:hover:not(:disabled) { background: rgba(220, 38, 38, 0.1); }
+
+.replaceBtn:disabled,
+.removeBtn:disabled { opacity: 0.5; cursor: not-allowed; }

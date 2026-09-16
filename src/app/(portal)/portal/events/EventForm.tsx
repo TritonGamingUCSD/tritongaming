@@ -1,14 +1,10 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
-import { createClient } from '@/lib/supabase/client';
+import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
 import styles from './new/newevent.module.css';
-
-const MAX_FLYER_BYTES = 8 * 1024 * 1024; // 8MB
-const ALLOWED_FLYER_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
 
 export interface EventFormValues {
   title: string;
@@ -95,93 +91,6 @@ function MarkdownField({
   );
 }
 
-// Uploads directly to the public `event-flyers` Supabase Storage bucket
-// (see the storage migration + RLS policies) instead of asking for a URL —
-// admins just pick an image. flyer_url still ends up a plain https:// string,
-// so nothing downstream (EventCard, LongEventCard, the event page) changes.
-function FlyerField({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  async function handleFile(file: File) {
-    setError('');
-
-    if (!ALLOWED_FLYER_TYPES.includes(file.type)) {
-      setError('Please choose a PNG, JPEG, WEBP, or GIF image.');
-      return;
-    }
-    if (file.size > MAX_FLYER_BYTES) {
-      setError('Image must be under 8MB.');
-      return;
-    }
-
-    setUploading(true);
-    const supabase = createClient();
-    const ext = file.name.split('.').pop() || 'jpg';
-    const path = `${crypto.randomUUID()}.${ext}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('event-flyers')
-      .upload(path, file, { cacheControl: '3600' });
-
-    if (uploadError) {
-      setError('Upload failed. Please try again.');
-      setUploading(false);
-      return;
-    }
-
-    const { data } = supabase.storage.from('event-flyers').getPublicUrl(path);
-    onChange(data.publicUrl);
-    setUploading(false);
-  }
-
-  return (
-    <div className={styles.field}>
-      <span className={styles.label}>Flyer Image</span>
-
-      {value ? (
-        <div className={styles.flyerPreviewWrap}>
-          <Image src={value} alt="Event flyer" width={160} height={160} unoptimized className={styles.flyerPreview} />
-          <div className={styles.flyerPreviewActions}>
-            <button type="button" className={styles.flyerReplaceBtn} onClick={() => inputRef.current?.click()} disabled={uploading}>
-              {uploading ? 'Uploading…' : 'Replace'}
-            </button>
-            <button type="button" className={styles.flyerRemoveBtn} onClick={() => onChange('')} disabled={uploading}>
-              Remove
-            </button>
-          </div>
-        </div>
-      ) : (
-        <button type="button" className={styles.flyerDropzone} onClick={() => inputRef.current?.click()} disabled={uploading}>
-          {uploading ? 'Uploading…' : 'Click to upload a flyer image'}
-        </button>
-      )}
-
-      <input
-        ref={inputRef}
-        type="file"
-        accept={ALLOWED_FLYER_TYPES.join(',')}
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) handleFile(file);
-          e.target.value = '';
-        }}
-        hidden
-      />
-
-      {error && <span className={styles.hint} style={{ color: '#fca5a5' }}>{error}</span>}
-      <span className={styles.hint}>PNG, JPEG, WEBP, or GIF. Max 8MB.</span>
-    </div>
-  );
-}
-
 export default function EventForm({
   heading,
   initial,
@@ -258,7 +167,14 @@ export default function EventForm({
           hint={<>The full write-up shown on this event&apos;s own page (what &quot;Learn More&quot; links to). Markdown supported — **bold**, _italic_, [links](https://…), lists, headings.</>}
         />
 
-        <FlyerField value={form.flyer_url} onChange={(v) => set('flyer_url', v)} />
+        <ImageUploadField
+          label="Flyer Image"
+          value={form.flyer_url}
+          onChange={(v) => set('flyer_url', v)}
+          bucket="event-flyers"
+          shape="wide"
+          hint="PNG, JPEG, WEBP, or GIF. Max 8MB."
+        />
 
         <label className={styles.field}>
           <span className={styles.label}>Max Capacity</span>

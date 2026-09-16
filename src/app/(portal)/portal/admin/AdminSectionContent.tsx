@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import RoleManager from './RoleManager';
+import StorageCleanup from './StorageCleanup';
 import styles from './admin.module.css';
 
 interface Props {
@@ -71,6 +72,8 @@ export default function AdminSectionContent({ isAdmin, stats, eventTicketStats, 
           <RoleManager users={allUsers} divisions={divisions} />
         </section>
       )}
+
+      {isAdmin && <StorageCleanup />}
     </div>
   );
 }

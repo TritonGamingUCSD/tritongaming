@@ -54,3 +54,13 @@ export function hasCapability(roles: RoleGrant[], capability: Capability, divisi
 export function isVerifiedMember(roles: RoleGrant[]): boolean {
   return roles.length > 0;
 }
+
+// Gates the profile's self-set "org title" field (e.g. "Marketing Lead"),
+// shown on the Members list. Deliberately excludes 'ucsd' and guest (zero
+// roles) — mirrored by a DB trigger (enforce_org_title_permission) that's
+// the actual security boundary, since this is UI-only.
+const ORG_TITLE_ROLES: AppRole[] = ['officer', 'lead', 'division', 'exec', 'admin'];
+
+export function canSetOrgTitle(roles: RoleGrant[]): boolean {
+  return roles.some((r) => ORG_TITLE_ROLES.includes(r.role));
+}

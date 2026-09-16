@@ -97,6 +97,15 @@
   margin-bottom: 0.15rem;
 }
 
+.orgTitle {
+  font-size: 0.7rem;
+  font-family: var(--font-renegare);
+  letter-spacing: 0.04em;
+  color: var(--yellow);
+  margin-bottom: 0.15rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
 .tag { font-size: 0.72rem; color: rgba(242,241,240,0.45); }
 
 .detail { font-size: 0.7rem; color: rgba(242,241,240,0.28); margin-top: 0.1rem; }

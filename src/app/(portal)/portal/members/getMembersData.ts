@@ -3,7 +3,7 @@ import type { AppRole } from '@/types/database';
 
 export interface MemberProfileRow {
   id: string; display_name: string | null; avatar_url: string | null; custom_avatar_url: string | null;
-  gamer_tag: string | null; major: string | null; year: string | null;
+  gamer_tag: string | null; major: string | null; year: string | null; org_title: string | null;
   user_roles: Array<{
     role: AppRole;
     division: { name: string } | { name: string }[] | null;
@@ -24,7 +24,7 @@ export async function getMembersData() {
   const { data: rows, error } = await supabase
     .from('profiles')
     .select(`
-      id, display_name, avatar_url, custom_avatar_url, gamer_tag, major, year,
+      id, display_name, avatar_url, custom_avatar_url, gamer_tag, major, year, org_title,
       user_roles!user_roles_user_id_fkey(role, division:divisions(name))
     `)
     .order('created_at', { ascending: true });
