@@ -31,8 +31,12 @@ export default function LongEventCard({ event }: { event: Event }) {
     <article className={styles.card}>
       <div className={styles.imgWrapper}>
         {isExternal ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={event.flyer_url} alt={event.full_name} className={styles.img} loading="lazy" />
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={event.flyer_url} alt="" aria-hidden="true" className={styles.imgBackdrop} loading="lazy" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={event.flyer_url} alt={event.full_name} className={styles.img} loading="lazy" />
+          </>
         ) : (
           <Image
             src="/images/what_is_triton_gaming_justinlu.jpg"
@@ -54,13 +58,7 @@ export default function LongEventCard({ event }: { event: Event }) {
         <p className={styles.location}>{event.location}</p>
         <p className={styles.desc}>{event.content}</p>
         <div className={styles.actions}>
-          <Link
-            href={`/events/${event.slug || event._id}`}
-            className={styles.link}
-            aria-label={`Learn more about ${event.full_name}`}
-          >
-            LEARN MORE &gt;
-          </Link>
+          <span className={styles.link} aria-hidden="true">LEARN MORE &gt;</span>
           {!isPast && (
             <a href="/portal/tickets" className={styles.ticketBtn}>
               🎟️{' '}
@@ -73,6 +71,15 @@ export default function LongEventCard({ event }: { event: Event }) {
           )}
         </div>
       </div>
+
+      {/* Stretched link over the whole card — the "Get Ticket" button stays
+          independently clickable on top via its own stacking context (see
+          .ticketBtn's z-index), everything else falls through to this. */}
+      <Link
+        href={`/events/${event.slug || event._id}`}
+        className={styles.cardLink}
+        aria-label={`Learn more about ${event.full_name}`}
+      />
     </article>
   );
 }

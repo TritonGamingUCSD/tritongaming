@@ -78,6 +78,25 @@
   opacity: 0.8;
 }
 
+.ctaLink {
+  display: inline-block;
+  margin-top: 1rem;
+  font-family: var(--font-futura-heavy);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--white);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 199, 44, 0.4);
+  padding-bottom: 2px;
+  transition: color 0.2s ease, border-color 0.2s;
+}
+
+.ctaLink:hover {
+  color: var(--yellow);
+  border-color: var(--yellow);
+}
+
 /* ── Division grid ──────────────────────────────── */
 .grid {
   position: relative;

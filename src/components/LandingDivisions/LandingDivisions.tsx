@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import Link from 'next/link';
 import { Reveal, RevealGroup, RevealItem } from '@/components/Reveal/Reveal';
 import { getDivisions, divisionLogoSrc } from '@/lib/divisions';
 import styles from './LandingDivisions.module.css';
@@ -15,6 +16,7 @@ export default async function LandingDivisions() {
           <p className={styles.sectionSub}>
             Ten active divisions spanning competitive esports, casual gaming, and creative arts.
           </p>
+          <Link href="/divisions" className={styles.ctaLink}>View All Divisions →</Link>
         </div>
       </Reveal>
 
@@ -24,7 +26,7 @@ export default async function LandingDivisions() {
             const logoSrc = divisionLogoSrc(div.logo_url);
             return (
               <RevealItem key={div.id}>
-                <div className={styles.card}>
+                <Link href={`/divisions/${div.slug}`} className={styles.card}>
                   {logoSrc && (
                     <div className={styles.logoWrap}>
                       <Image
@@ -41,7 +43,7 @@ export default async function LandingDivisions() {
                   {div.description && (
                     <span className={styles.divDesc}>{div.description}</span>
                   )}
-                </div>
+                </Link>
               </RevealItem>
             );
           })}

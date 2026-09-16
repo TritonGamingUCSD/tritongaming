@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
+import type { SocialEmbed } from '@/types/database';
 import styles from './new/newevent.module.css';
 
 export interface EventFormValues {
@@ -21,6 +22,7 @@ export interface EventFormValues {
   is_published: boolean;
   photo_album_url: string;
   post_event_info: string;
+  social_embeds: SocialEmbed[];
 }
 
 export const EMPTY_EVENT_FORM: EventFormValues = {
@@ -38,6 +40,7 @@ export const EMPTY_EVENT_FORM: EventFormValues = {
   is_published: false,
   photo_album_url: '',
   post_event_info: '',
+  social_embeds: [],
 };
 
 // Markdown, not raw HTML — see MarkdownContent for why. "Write"/"Preview"
@@ -87,6 +90,66 @@ function MarkdownField({
         </div>
       )}
       {hint && <span className={styles.hint}>{hint}</span>}
+    </div>
+  );
+}
+
+// Instagram posts get a real oEmbed on the event page (see
+// EventSocialEmbeds.tsx); Discord has no equivalent API for an individual
+// message, so those just render as a styled link-out card there instead —
+// this field doesn't need to know the difference, just collect type + URL.
+function SocialEmbedsField({
+  value,
+  onChange,
+}: {
+  value: SocialEmbed[];
+  onChange: (value: SocialEmbed[]) => void;
+}) {
+  const [draftType, setDraftType] = useState<SocialEmbed['type']>('instagram');
+  const [draftUrl, setDraftUrl] = useState('');
+
+  function handleAdd() {
+    const url = draftUrl.trim();
+    if (!url) return;
+    onChange([...value, { type: draftType, url }]);
+    setDraftUrl('');
+  }
+
+  function handleRemove(index: number) {
+    onChange(value.filter((_, i) => i !== index));
+  }
+
+  return (
+    <div className={styles.field}>
+      <span className={styles.label}>Related Instagram / Discord Posts</span>
+
+      {value.length > 0 && (
+        <ul className={styles.embedList}>
+          {value.map((embed, i) => (
+            <li key={`${embed.url}-${i}`} className={styles.embedRow}>
+              <span className={styles.embedType}>{embed.type === 'instagram' ? '📸 Instagram' : '💬 Discord'}</span>
+              <span className={styles.embedUrl}>{embed.url}</span>
+              <button type="button" className={styles.embedRemoveBtn} onClick={() => handleRemove(i)}>Remove</button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className={styles.embedAddRow}>
+        <select className={styles.input} value={draftType} onChange={(e) => setDraftType(e.target.value as SocialEmbed['type'])}>
+          <option value="instagram">Instagram</option>
+          <option value="discord">Discord</option>
+        </select>
+        <input
+          className={styles.input}
+          type="url"
+          value={draftUrl}
+          onChange={(e) => setDraftUrl(e.target.value)}
+          placeholder={draftType === 'instagram' ? 'https://www.instagram.com/p/…' : 'https://discord.com/channels/…'}
+        />
+        <button type="button" className={styles.embedAddBtn} onClick={handleAdd} disabled={!draftUrl.trim()}>Add</button>
+      </div>
+      <span className={styles.hint}>Shown on this event&apos;s own page. Instagram posts embed live; Discord links show as a card.</span>
     </div>
   );
 }
@@ -175,6 +238,8 @@ export default function EventForm({
           shape="wide"
           hint="PNG, JPEG, WEBP, or GIF. Max 8MB."
         />
+
+        <SocialEmbedsField value={form.social_embeds} onChange={(v) => setForm((f) => ({ ...f, social_embeds: v }))} />
 
         <label className={styles.field}>
           <span className={styles.label}>Max Capacity</span>

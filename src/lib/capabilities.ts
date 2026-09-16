@@ -25,6 +25,7 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // every other row here it has no RLS-backed counterpart in the DB's
   // role_capabilities table.
   generate_qr_codes: ['officer', 'division', 'lead', 'exec', 'admin'],
+  manage_docs: ['officer', 'lead', 'exec', 'admin'],
 };
 
 /**
@@ -58,8 +59,11 @@ export function isVerifiedMember(roles: RoleGrant[]): boolean {
 // Gates the profile's self-set "org title" field (e.g. "Marketing Lead"),
 // shown on the Members list. Deliberately excludes 'ucsd' and guest (zero
 // roles) — mirrored by a DB trigger (enforce_org_title_permission) that's
-// the actual security boundary, since this is UI-only.
-const ORG_TITLE_ROLES: AppRole[] = ['officer', 'lead', 'division', 'exec', 'admin'];
+// the actual security boundary, since this is UI-only. 'admin' is also
+// deliberately excluded — it's a platform-permissions role, not an org
+// position, so it doesn't imply any of these on its own (someone can hold
+// both, but admin alone doesn't qualify).
+const ORG_TITLE_ROLES: AppRole[] = ['officer', 'lead', 'division', 'exec'];
 
 export function canSetOrgTitle(roles: RoleGrant[]): boolean {
   return roles.some((r) => ORG_TITLE_ROLES.includes(r.role));

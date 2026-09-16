@@ -23,7 +23,7 @@ export default async function DivisionPage({ params }: Params) {
   const supabase = await createClient();
   const { data: division } = await supabase
     .from('divisions')
-    .select('id, name, description, logo_url')
+    .select('id, name, description, logo_url, discord_url')
     .eq('slug', slug)
     .maybeSingle();
 
@@ -48,6 +48,11 @@ export default async function DivisionPage({ params }: Params) {
           <div>
             <h1 className={styles.name}>{division.name}</h1>
             <p className={styles.desc}>{division.description}</p>
+            {division.discord_url && (
+              <a href={division.discord_url} target="_blank" rel="noopener noreferrer" className={styles.discordBtn}>
+                💬 Join our Discord
+              </a>
+            )}
           </div>
         </div>
       </div>

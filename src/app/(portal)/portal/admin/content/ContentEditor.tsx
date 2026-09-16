@@ -4,6 +4,8 @@ import { useState } from 'react';
 import Image from 'next/image';
 import type { ContentBlock, FieldDef } from '@/lib/content-blocks';
 import { CATEGORY_ORDER } from '@/lib/content-blocks';
+import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
+import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import styles from './ContentEditor.module.css';
 
 type BlockDef = ContentBlock;
@@ -18,8 +20,21 @@ const COLOR_PREVIEW: Record<string, string> = {
   yellow: '#ffc72c', blue: '#275a8f', green: '#059669', red: '#dc2626',
 };
 
+// Where a block's own content actually shows up, for the "View Live Page"
+// link — omitted for blocks that only affect a fragment of a page (e.g.
+// site.settings feeds icons in the footer, not a page of its own).
+const BLOCK_LIVE_URL: Record<string, string> = {
+  'homepage.hero': '/',
+  'homepage.about': '/',
+  'homepage.stats': '/',
+  'page.get-involved': '/get-involved',
+  'sponsors': '/sponsors',
+  'footer': '/',
+};
+
 export default function ContentEditor({ blocks, contentMap, lastEdited }: Props) {
   const [activeKey, setActiveKey] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
   const [forms, setForms] = useState<Record<string, Record<string, unknown>>>(() => {
     const init: Record<string, Record<string, unknown>> = {};
     blocks.forEach((b) => { init[b.key] = { ...(contentMap[b.key] || {}) }; });
@@ -28,6 +43,11 @@ export default function ContentEditor({ blocks, contentMap, lastEdited }: Props)
   const [saving, setSaving] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const q = query.trim().toLowerCase();
+  const visibleBlocks = q
+    ? blocks.filter((b) => b.title.toLowerCase().includes(q) || b.description.toLowerCase().includes(q))
+    : blocks;
 
   const activeBlock = blocks.find((b) => b.key === activeKey);
 
@@ -69,8 +89,19 @@ export default function ContentEditor({ blocks, contentMap, lastEdited }: Props)
     <div className={styles.layout}>
       {/* Block list */}
       <div className={styles.blockList}>
+        <input
+          className={styles.searchInput}
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search content blocks…"
+          aria-label="Search content blocks"
+        />
+        {q && visibleBlocks.length === 0 && (
+          <div className={styles.noResults}>No blocks match &quot;{query}&quot;.</div>
+        )}
         {CATEGORY_ORDER.map((cat) => {
-          const catBlocks = blocks.filter((b) => b.category === cat);
+          const catBlocks = visibleBlocks.filter((b) => b.category === cat);
           if (!catBlocks.length) return null;
           return (
             <div key={cat} className={styles.catGroup}>
@@ -116,6 +147,16 @@ export default function ContentEditor({ blocks, contentMap, lastEdited }: Props)
                 <span className={styles.editPanelIcon}>{activeBlock.icon}</span>
                 <h2 className={styles.editPanelTitle}>{activeBlock.title}</h2>
                 <p className={styles.editPanelDesc}>{activeBlock.description}</p>
+                {BLOCK_LIVE_URL[activeBlock.key] && (
+                  <a
+                    href={BLOCK_LIVE_URL[activeBlock.key]}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.viewLiveLink}
+                  >
+                    View Live Page ↗
+                  </a>
+                )}
               </div>
               <button className={styles.closePanel} onClick={() => setActiveKey(null)}>✕</button>
             </div>
@@ -210,6 +251,11 @@ function FieldEditor({ field, value, onChange }: {
     );
   }
 
+  // ── Markdown (Write/Preview tabs) ─────────────────────
+  if (field.type === 'markdown') {
+    return <MarkdownField label={field.label} value={(value as string) ?? ''} onChange={onChange} optional={isOptional} placeholder={fieldAny.placeholder as string} />;
+  }
+
   // ── Lines (array stored as newline-separated text) ───
   if (field.type === 'lines') {
     const lines = Array.isArray(value) ? (value as string[]).join('\n') : (value as string) ?? '';
@@ -282,61 +328,18 @@ function FieldEditor({ field, value, onChange }: {
     );
   }
 
-  // ── Person list (officers) ────────────────────────────
-  if (field.type === 'personlist') {
-    type Person = { display_name?: string; title?: string; gamer_tag?: string; photo_url?: string; major?: string; year?: string };
-    const items = (Array.isArray(value) ? value : []) as Person[];
+  // ── Single image (direct upload) ──────────────────────
+  if (field.type === 'image') {
     return (
       <div className={styles.fieldGroup}>
         {labelEl}
-        <div className={styles.personList}>
-          {items.map((person, i) => (
-            <div key={i} className={styles.personCard}>
-              <div className={styles.personCardHeader}>
-                {person.photo_url ? (
-                  <Image src={person.photo_url} alt="" width={40} height={40} className={styles.personAvatar}
-                    onError={() => {}} />
-                ) : (
-                  <div className={styles.personAvatarFallback}>
-                    {(person.display_name || '?')[0].toUpperCase()}
-                  </div>
-                )}
-                <div className={styles.personCardTitle}>
-                  <span>{person.display_name || 'New Person'}</span>
-                  <span className={styles.personCardRole}>{person.title || 'No title'}</span>
-                </div>
-                <button type="button" className={styles.kvRemove}
-                  onClick={() => onChange(items.filter((_,j)=>j!==i))}>✕</button>
-              </div>
-              <div className={styles.personFields}>
-                {[
-                  { key: 'display_name', label: 'Full Name', type: 'text' },
-                  { key: 'title',        label: 'Title / Role', type: 'text' },
-                  { key: 'gamer_tag',    label: 'Gamer Tag', type: 'text' },
-                  { key: 'photo_url',    label: 'Photo URL', type: 'url' },
-                  { key: 'major',        label: 'Major', type: 'text' },
-                  { key: 'year',         label: 'Year', type: 'text' },
-                ].map(({ key: k, label: lbl, type: t }) => (
-                  <label key={k} className={styles.personField}>
-                    <span className={styles.personFieldLabel}>{lbl}</span>
-                    <input
-                      type={t}
-                      className={styles.fieldInput}
-                      value={(person[k as keyof Person] as string) ?? ''}
-                      onChange={(e) => {
-                        const n = [...items];
-                        n[i] = { ...n[i], [k]: e.target.value };
-                        onChange(n);
-                      }}
-                    />
-                  </label>
-                ))}
-              </div>
-            </div>
-          ))}
-          <button type="button" className={styles.kvAdd}
-            onClick={() => onChange([...items, {}])}>+ Add Person</button>
-        </div>
+        <ImageUploadField
+          label={field.label}
+          value={(value as string) ?? ''}
+          onChange={onChange}
+          bucket="site-content"
+          shape="wide"
+        />
       </div>
     );
   }
@@ -409,6 +412,43 @@ function FieldEditor({ field, value, onChange }: {
   );
 }
 
+// Same Write/Preview pattern as EventForm's MarkdownField — a plain
+// textarea gives no way to check formatting without saving and reloading
+// the live page in another tab.
+function MarkdownField({ label, value, onChange, optional, placeholder }: {
+  label: string; value: string; onChange: (val: string) => void; optional?: boolean; placeholder?: string;
+}) {
+  const [tab, setTab] = useState<'write' | 'preview'>('write');
+
+  return (
+    <div className={styles.fieldGroup}>
+      <div className={styles.mdFieldHeader}>
+        <div className={styles.fieldLabel}>
+          {label}
+          {optional && <span className={styles.optionalTag}>optional</span>}
+        </div>
+        <div className={styles.mdTabs}>
+          <button type="button" className={`${styles.mdTab} ${tab === 'write' ? styles.mdTabActive : ''}`} onClick={() => setTab('write')}>Write</button>
+          <button type="button" className={`${styles.mdTab} ${tab === 'preview' ? styles.mdTabActive : ''}`} onClick={() => setTab('preview')}>Preview</button>
+        </div>
+      </div>
+      {tab === 'write' ? (
+        <textarea
+          className={`${styles.fieldInput} ${styles.fieldTextarea}`}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          rows={6}
+          placeholder={placeholder}
+        />
+      ) : (
+        <div className={styles.mdPreview}>
+          {value.trim() ? <MarkdownContent>{value}</MarkdownContent> : <span className={styles.mdPreviewEmpty}>Nothing to preview yet.</span>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ──────────────────────────────────────────────────────────────────
 // Preview helper
 // ──────────────────────────────────────────────────────────────────
@@ -419,24 +459,17 @@ function getPreview(block: BlockDef, data: Record<string, unknown>): string {
       return (data.text as string) || '';
     case 'homepage.hero':
     case 'homepage.about':
-    case 'page.about':
     case 'page.get-involved':
       return (data.title as string) || '';
     case 'homepage.stats': {
       const items = data.items as Array<{ value: string; label: string }> | undefined;
       return items?.slice(0,2).map((i) => `${i.value} ${i.label}`).join(' · ') || '';
     }
-    case 'homepage.recruitment':
-      return (data.title as string) || '';
     case 'site.settings':
       return [data.discord && 'Discord', data.instagram && 'Instagram', data.email && 'Email']
         .filter(Boolean).join(' · ') || 'No links set';
     case 'footer':
       return (data.copyright as string) || '';
-    case 'officers': {
-      const items = data.items as Array<{ display_name?: string; title?: string }> | undefined;
-      return items?.length ? `${items.length} officer${items.length !== 1 ? 's' : ''}` : '';
-    }
     case 'sponsors': {
       const items = data.items as unknown[] | undefined;
       return items?.length ? `${items.length} sponsor${items.length !== 1 ? 's' : ''}` : '';

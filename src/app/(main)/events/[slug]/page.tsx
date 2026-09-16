@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getEventBySlugOrId } from '@/lib/events';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
+import EventSocialEmbeds from '@/components/EventSocialEmbeds/EventSocialEmbeds';
 import styles from './event-detail.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -98,6 +99,13 @@ export default async function EventDetailPage({ params }: Params) {
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Event Details</h2>
             <MarkdownContent>{event.details}</MarkdownContent>
+          </section>
+        )}
+
+        {event.social_embeds.length > 0 && (
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Related Posts</h2>
+            <EventSocialEmbeds embeds={event.social_embeds} />
           </section>
         )}
 

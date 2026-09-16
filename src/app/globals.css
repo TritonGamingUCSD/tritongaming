@@ -58,6 +58,22 @@
   --glass-blur: blur(18px) saturate(160%);
   --glass-shadow: 0 20px 44px -24px rgba(0, 0, 0, 0.6);
 
+  /* Primary CTA button — the shared recipe for every "do the main thing"
+     button site-wide (Get Ticket, Apply Now, Join Discord, ...). A raised
+     gold gradient with real depth instead of a flat single-tone fill,
+     matching the same "crafted, not flat" direction as the nav/footer's
+     glass material — a flat var(--yellow) fill was the same "reads as
+     cheap" complaint that drove the nav/footer redesign. */
+  --btn-primary-bg: linear-gradient(180deg, #ffe08a, var(--yellow) 55%, #f0b400);
+  --btn-primary-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.5) inset,
+    0 -2px 0 rgba(0, 0, 0, 0.12) inset,
+    0 14px 28px -12px rgba(255, 199, 44, 0.5);
+  --btn-primary-shadow-hover:
+    0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 -2px 0 rgba(0, 0, 0, 0.12) inset,
+    0 18px 36px -12px rgba(255, 199, 44, 0.65);
+
   /* Normalized "page hero" recipe — every main-site subpage's top banner
      (Divisions, Sponsors, Get Involved, ...) shares these exact values so
      the gradient, fade-to-body, and clearance under the floating nav pill
@@ -98,7 +114,9 @@
   /* Layout */
   --max-width: 1400px;
   /* Clears the floating nav pill (not a full-width bar anymore) plus its
-     top gap — see HeaderStack/NavBar. */
+     top gap — see NavBar.module.css. Reliable now that the announcement
+     banner is its own independent floating toast instead of sharing a
+     stack above the nav and pushing it down by a variable amount. */
   --navbar-height: 96px;
   --section-pad: clamp(3rem, 6vw, 6rem);
 }

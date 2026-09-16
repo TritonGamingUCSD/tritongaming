@@ -120,6 +120,74 @@
   font-style: italic;
 }
 
+.embedList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  list-style: none;
+}
+
+.embedRow {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.embedType {
+  font-size: 0.78rem;
+  color: rgba(242,241,240,0.7);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.embedUrl {
+  font-size: 0.78rem;
+  color: rgba(242,241,240,0.4);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.embedRemoveBtn {
+  font-size: 0.75rem;
+  color: #fca5a5;
+  padding: 0.3rem 0.6rem;
+  border-radius: 0.35rem;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.embedRemoveBtn:hover { background: rgba(220,38,38,0.1); }
+
+.embedAddRow {
+  display: grid;
+  grid-template-columns: 130px 1fr auto;
+  gap: 0.5rem;
+}
+
+.embedAddBtn {
+  padding: 0 1rem;
+  background: rgba(255,255,255,0.06);
+  color: rgba(242,241,240,0.85);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 0.5rem;
+  font-family: var(--font-futura-medium);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.embedAddBtn:hover:not(:disabled) { background: rgba(255,255,255,0.1); }
+.embedAddBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+@media (max-width: 600px) {
+  .embedAddRow { grid-template-columns: 1fr; }
+}
+
 .checkboxGroup {
   display: flex;
   flex-direction: column;

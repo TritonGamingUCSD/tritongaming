@@ -132,6 +132,17 @@
   border: 1px solid rgba(220,38,38,0.2);
 }
 
+.checkboxField {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 0.85rem;
+  color: rgba(242,241,240,0.7);
+  cursor: pointer;
+}
+
+.checkboxField input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--yellow); }
+
 .saveBtn {
   padding: 0.75rem 2rem;
   background: var(--yellow);

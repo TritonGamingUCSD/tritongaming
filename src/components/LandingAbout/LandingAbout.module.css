@@ -108,22 +108,6 @@
   color: var(--yellow);
 }
 
-/* Floating glass cluster, layered over the photo's bottom-right corner —
-   inset within the photo's own bounds (not hanging off its edge) so it
-   can never spill into the text column next to it, regardless of viewport
-   width or how wide the badge text runs. */
-.valuesFloat {
-  position: absolute;
-  z-index: 3;
-  right: clamp(0.75rem, 2vw, 1.25rem);
-  bottom: clamp(0.75rem, 2vw, 1.25rem);
-  left: clamp(0.75rem, 2vw, 1.25rem);
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.5rem;
-}
-
 /* ── Text side ────────────────────────────────────── */
 .text {
   display: flex;
@@ -170,30 +154,6 @@
   margin: 0;
 }
 
-.valueBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.55rem 1.1rem;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  font-family: var(--font-futura-medium);
-  font-size: 0.78rem;
-  color: var(--white);
-  background: linear-gradient(165deg, rgba(20, 71, 124, 0.65), rgba(1, 25, 65, 0.8));
-  backdrop-filter: blur(16px) saturate(160%);
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
-  box-shadow: 0 14px 30px -12px rgba(0, 0, 0, 0.6);
-  text-align: right;
-  transition: border-color 0.2s, background 0.2s, color 0.2s, transform 0.2s;
-}
-
-.valueBadge:hover {
-  transform: translateX(-3px);
-  border-color: rgba(255, 199, 44, 0.4);
-  color: var(--yellow);
-}
-
 .learnMore {
   display: inline-flex;
   align-items: center;
@@ -230,9 +190,4 @@
 
 @media (max-width: 640px) {
   .section { padding-block: var(--sp-lg); }
-
-  .valueBadge {
-    font-size: 0.68rem;
-    padding: 0.4rem 0.75rem;
-  }
 }

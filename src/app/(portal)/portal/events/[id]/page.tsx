@@ -4,6 +4,7 @@ import { hasCapability } from '@/lib/capabilities';
 import { createClient } from '@/lib/supabase/server';
 import EditEventClient from './EditEventClient';
 import type { EventFormValues } from '../EventForm';
+import type { SocialEmbed } from '@/types/database';
 
 export const metadata = { title: 'Edit Event' };
 export const dynamic = 'force-dynamic';
@@ -27,7 +28,7 @@ export default async function EditEventPage({ params }: Params) {
   const supabase = await createClient();
   const { data: event } = await supabase
     .from('events')
-    .select('id, title, slug, content, description, location, start_date, end_date, flyer_url, max_capacity, ticket_price, audience, is_published, photo_album_url, post_event_info')
+    .select('id, title, slug, content, description, location, start_date, end_date, flyer_url, max_capacity, ticket_price, audience, is_published, photo_album_url, post_event_info, social_embeds')
     .eq('id', id)
     .single();
 
@@ -48,6 +49,7 @@ export default async function EditEventPage({ params }: Params) {
     is_published: event.is_published,
     photo_album_url: event.photo_album_url ?? '',
     post_event_info: event.post_event_info ?? '',
+    social_embeds: (event.social_embeds as SocialEmbed[]) ?? [],
   };
 
   return <EditEventClient eventId={event.id} initial={initial} />;

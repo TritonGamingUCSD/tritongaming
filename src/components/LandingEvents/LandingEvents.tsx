@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { motion } from 'motion/react';
 import EventCard from '@/components/EventCard/EventCard';
-import AlternateTitle from '@/components/AlternateTitle/AlternateTitle';
 import type { Event } from '@/types';
 import styles from './LandingEvents.module.css';
 
@@ -82,7 +82,13 @@ export default function LandingEvents({ initialEvents }: LandingEventsProps) {
         viewport={{ once: true, margin: '-60px' }}
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
       >
-        <AlternateTitle bgTitle="Upcoming Events" fgTitle="Upcoming Events" />
+        <div className={styles.header}>
+          <p className={styles.sectionLabel}>DON&apos;T MISS OUT</p>
+          <h2 className={styles.sectionTitle}>Upcoming Events</h2>
+        </div>
+        <div className={styles.titleActions}>
+          <Link href="/events" className={styles.ctaLink}>View All Events →</Link>
+        </div>
       </motion.div>
       <div className={`${styles.wrapper} ${shouldLoop ? '' : styles.noLoop}`}>
         <div className={`${styles.carousel} ${shouldLoop ? '' : styles.centered}`} ref={scrollRef} role="list">

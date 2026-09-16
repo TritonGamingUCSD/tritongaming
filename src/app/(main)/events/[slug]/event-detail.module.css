@@ -95,17 +95,21 @@
 }
 
 .ticketBtn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
   font-family: var(--font-soulmaze);
   font-size: clamp(0.9rem, 1.8vw, 1.05rem);
   color: var(--darkblue);
-  background: var(--yellow);
+  background: var(--btn-primary-bg);
+  box-shadow: var(--btn-primary-shadow);
   border-radius: 999px;
-  padding: 0.65rem 1.4rem;
+  padding: 0.75rem 1.6rem;
   align-self: flex-start;
   margin-top: 0.5rem;
-  transition: filter 0.2s ease;
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
 }
-.ticketBtn:hover { filter: brightness(1.08); }
+.ticketBtn:hover { box-shadow: var(--btn-primary-shadow-hover); transform: translateY(-2px); }
 
 .section {
   margin-top: 1.25rem;

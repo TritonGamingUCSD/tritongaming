@@ -1,14 +1,15 @@
 .card {
+  position: relative;
   display: grid;
-  grid-template-columns: 300px 1fr;
-  gap: clamp(1.5rem, 4vw, 3rem);
+  grid-template-columns: 210px 1fr;
+  gap: clamp(1.25rem, 3vw, 2rem);
   align-items: start;
-  padding: clamp(1.5rem, 4vw, 2.5rem);
+  padding: clamp(1.125rem, 2.5vw, 1.75rem);
   margin-inline: clamp(1rem, 5vw, 4rem);
-  margin-block: 1.5rem;
+  margin-block: 1rem;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
-  border-radius: 22px;
+  border-radius: 18px;
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   box-shadow: var(--glass-shadow);
@@ -28,23 +29,34 @@
   background: var(--blue);
 }
 
-.img {
+.imgBackdrop {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  filter: blur(24px) saturate(130%) brightness(0.6);
+  transform: scale(1.15);
+}
+
+.img {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
   display: block;
 }
 
 .content {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding-top: 0.5rem;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
 }
 
 .title {
   font-family: var(--font-soulmaze);
-  font-size: clamp(1.3rem, 3vw, 2rem);
+  font-size: clamp(1.1rem, 2.2vw, 1.5rem);
   color: var(--white);
   line-height: 1.25;
 }
@@ -56,7 +68,7 @@
   gap: 0.4rem;
   flex-wrap: wrap;
   font-family: var(--font-soulmaze);
-  font-size: clamp(0.8rem, 1.5vw, 1rem);
+  font-size: clamp(0.75rem, 1.3vw, 0.875rem);
   color: var(--lightblue);
 }
 
@@ -71,21 +83,25 @@
 
 .desc {
   font-family: var(--font-futura-medium);
-  font-size: var(--fs-body);
+  font-size: 0.875rem;
   color: rgba(242, 241, 240, 0.85);
-  line-height: 1.7;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .link {
   font-family: var(--font-soulmaze);
-  font-size: clamp(1rem, 2vw, 1.375rem);
+  font-size: clamp(0.85rem, 1.6vw, 1.1rem);
   color: var(--white);
   align-self: flex-start;
   transition: color 0.2s ease;
   padding-block: 0.25rem;
 }
 
-.link:hover {
+.card:hover .link {
   color: var(--yellow);
 }
 
@@ -96,19 +112,36 @@
   flex-wrap: wrap;
 }
 
+/* Sits above .cardLink's stacking context (z-index 1) so it stays its own
+   independently clickable target instead of being swallowed by the
+   whole-card "Learn More" link. Min-height/padding gives it a proper >=44px
+   touch target, deliberately larger than the rest of the shrunk card. */
 .ticketBtn {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   font-family: var(--font-soulmaze);
-  font-size: clamp(0.85rem, 1.8vw, 1rem);
+  font-size: clamp(0.8rem, 1.5vw, 0.95rem);
   color: var(--darkblue);
-  background: var(--yellow);
+  background: var(--btn-primary-bg);
+  box-shadow: var(--btn-primary-shadow);
   border-radius: 999px;
-  padding: 0.5rem 1.1rem;
+  padding: 0.6rem 1.25rem;
   align-self: flex-start;
-  transition: filter 0.2s ease;
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
 }
 
 .ticketBtn:hover {
-  filter: brightness(1.08);
+  box-shadow: var(--btn-primary-shadow-hover);
+  transform: translateY(-2px);
+}
+
+.cardLink {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
 }
 
 /* Tablet */
@@ -120,6 +153,6 @@
 
   .imgWrapper {
     aspect-ratio: 16 / 9;
-    max-height: 300px;
+    max-height: 220px;
   }
 }

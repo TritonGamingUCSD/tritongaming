@@ -28,8 +28,8 @@ export async function POST(request: Request) {
   const authError = await requireDivisionsManager(supabase);
   if (authError) return authError;
 
-  const { name, slug, description, logo_url } = await request.json() as {
-    name?: string; slug?: string; description?: string; logo_url?: string;
+  const { name, slug, description, logo_url, discord_url } = await request.json() as {
+    name?: string; slug?: string; description?: string; logo_url?: string; discord_url?: string;
   };
   if (!name?.trim()) return NextResponse.json({ error: 'Name is required' }, { status: 400 });
 
@@ -43,8 +43,9 @@ export async function POST(request: Request) {
       slug: finalSlug,
       description: description?.trim() || null,
       logo_url: logo_url?.trim() || null,
+      discord_url: discord_url?.trim() || null,
     })
-    .select('id, name, slug, description, logo_url')
+    .select('id, name, slug, description, logo_url, discord_url')
     .single();
 
   if (error) {
@@ -62,8 +63,8 @@ export async function PATCH(request: Request) {
   const authError = await requireDivisionsManager(supabase);
   if (authError) return authError;
 
-  const { id, name, slug, description, logo_url } = await request.json() as {
-    id?: string; name?: string; slug?: string; description?: string; logo_url?: string;
+  const { id, name, slug, description, logo_url, discord_url } = await request.json() as {
+    id?: string; name?: string; slug?: string; description?: string; logo_url?: string; discord_url?: string;
   };
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
 
@@ -71,6 +72,7 @@ export async function PATCH(request: Request) {
   if (name !== undefined) update.name = name.trim();
   if (description !== undefined) update.description = description.trim() || null;
   if (logo_url !== undefined) update.logo_url = logo_url.trim() || null;
+  if (discord_url !== undefined) update.discord_url = discord_url.trim() || null;
   if (slug !== undefined) {
     const finalSlug = slugify(slug);
     if (!finalSlug) return NextResponse.json({ error: 'Slug cannot be empty' }, { status: 400 });
@@ -81,7 +83,7 @@ export async function PATCH(request: Request) {
     .from('divisions')
     .update(update)
     .eq('id', id)
-    .select('id, name, slug, description, logo_url')
+    .select('id, name, slug, description, logo_url, discord_url')
     .single();
 
   if (error) {

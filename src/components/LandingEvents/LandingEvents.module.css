@@ -16,6 +16,67 @@
   background: linear-gradient(90deg, transparent, rgba(255,199,44,0.25), transparent);
 }
 
+.header {
+  text-align: center;
+  padding: 0 clamp(1rem, 4vw, 2.5rem);
+  margin-bottom: 0.5rem;
+}
+
+.sectionLabel {
+  font-family: var(--font-futura-heavy);
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--yellow);
+  margin: 0 0 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.sectionLabel::before,
+.sectionLabel::after {
+  content: '';
+  display: inline-block;
+  width: 20px;
+  height: 2px;
+  background: var(--yellow);
+  flex-shrink: 0;
+}
+
+.sectionTitle {
+  font-family: var(--font-soulmaze);
+  font-size: var(--fs-section-title);
+  color: var(--white);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.titleActions {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.ctaLink {
+  font-family: var(--font-futura-heavy);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--white);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 199, 44, 0.4);
+  padding-bottom: 2px;
+  transition: color 0.2s ease, border-color 0.2s;
+}
+
+.ctaLink:hover {
+  color: var(--yellow);
+  border-color: var(--yellow);
+}
+
 .wrapper {
   position: relative;
   /* Fade edges to match section bg */

@@ -1,5 +1,8 @@
 .banner {
-  position: relative;
+  position: fixed;
+  right: clamp(0.75rem, 3vw, 2rem);
+  bottom: max(clamp(0.75rem, 3vw, 2rem), env(safe-area-inset-bottom));
+  z-index: 900;
   display: inline-flex;
   align-items: center;
   gap: 0.7rem;
@@ -13,17 +16,10 @@
   font-size: clamp(0.72rem, 1.1vw, 0.8rem);
   font-family: var(--font-futura-medium);
   animation: rise 0.35s ease;
-  transition: transform 0.3s ease, opacity 0.3s ease;
-}
-
-.hidden {
-  transform: translateY(-140%);
-  opacity: 0;
-  pointer-events: none;
 }
 
 @keyframes rise {
-  from { opacity: 0; transform: translateY(-8px); }
+  from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 

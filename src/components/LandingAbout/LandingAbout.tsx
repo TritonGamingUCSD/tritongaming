@@ -3,12 +3,6 @@ import Link from 'next/link';
 import { Reveal } from '@/components/Reveal/Reveal';
 import styles from './LandingAbout.module.css';
 
-const VALUES = [
-  { icon: '🎮', label: 'Community First' },
-  { icon: '🏆', label: 'Competitive Spirit' },
-  { icon: '💡', label: 'Industry Exposure' },
-];
-
 interface AboutContent {
   title?: string;
   body?: string;
@@ -52,16 +46,6 @@ export default function LandingAbout({ content = {} }: { content?: AboutContent 
             >
               Photo credit: Justin Lu
             </a>
-
-            {/* Floating glass cluster, layered over the photo's corner
-                instead of sitting flat in the text column below. */}
-            <div className={styles.valuesFloat}>
-              {VALUES.map(({ icon, label }) => (
-                <span key={label} className={styles.valueBadge}>
-                  {icon} {label}
-                </span>
-              ))}
-            </div>
           </div>
         </Reveal>
 

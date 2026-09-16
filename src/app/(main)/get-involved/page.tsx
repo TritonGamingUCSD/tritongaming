@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { getContentBlock } from '@/lib/content';
 import styles from './get-involved.module.css';
 
 export const metadata: Metadata = {
@@ -12,7 +13,7 @@ const WAYS = [
     title: 'Join Our Discord',
     body: 'Our Discord is the heartbeat of Triton Gaming — 5,000+ members, active game channels, event announcements, LFG posts, and a welcoming community.',
     cta: 'Join Discord Server',
-    href: 'https://discord.gg/a8H9z5VeFb',
+    href: 'https://discord.gg/tritongaming',
     accent: 'blue',
   },
   {
@@ -42,7 +43,10 @@ const OFFICER_PERKS = [
   'Access to exclusive officer retreats, outings, and game sessions',
 ];
 
-export default function GetInvolvedPage() {
+export default async function GetInvolvedPage() {
+  const content = await getContentBlock('page.get-involved');
+  const flyerUrl = content.recruitment_flyer_url as string | undefined;
+
   return (
     <div className={styles.page}>
 
@@ -112,6 +116,10 @@ export default function GetInvolvedPage() {
             </a>
           </div>
           <div className={styles.officerMeta}>
+            {flyerUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={flyerUrl} alt="Officer recruitment flyer" className={styles.recruitmentFlyer} />
+            )}
             <div className={styles.metaCard}>
               <span className={styles.metaEmoji}>📅</span>
               <span className={styles.metaLabel}>Applications Open</span>

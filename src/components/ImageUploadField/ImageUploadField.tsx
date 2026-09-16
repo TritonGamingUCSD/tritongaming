@@ -99,7 +99,7 @@ export default function ImageUploadField({
 
       {displaySrc ? (
         <div className={styles.wrap}>
-          <Image src={displaySrc} alt="" width={width} height={height} unoptimized className={previewClass} />
+          <Image src={displaySrc} alt="" width={width} height={height} unoptimized referrerPolicy="no-referrer" className={previewClass} />
           <div className={styles.actions}>
             <button type="button" className={styles.replaceBtn} onClick={() => inputRef.current?.click()} disabled={uploading}>
               {uploading ? 'Uploading…' : 'Replace'}

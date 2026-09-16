@@ -4,6 +4,11 @@ export type UserRole = 'guest' | AppRole;
 export type TicketStatus = 'active' | 'used' | 'cancelled' | 'expired';
 export type EventAudience = 'public' | 'ucsd_only';
 
+export interface SocialEmbed {
+  type: 'instagram' | 'discord';
+  url: string;
+}
+
 export type Capability =
   | 'manage_events'
   | 'delete_events'
@@ -16,7 +21,8 @@ export type Capability =
   | 'view_members'
   | 'view_admin_dashboard'
   | 'manage_roles'
-  | 'generate_qr_codes';
+  | 'generate_qr_codes'
+  | 'manage_docs';
 
 export interface Database {
   public: {
@@ -37,6 +43,7 @@ export interface Database {
           discord: string | null;
           birthday: string | null;
           org_title: string | null;
+          show_on_board: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -61,6 +68,7 @@ export interface Database {
           slug: string;
           name: string;
           logo_url: string | null;
+          discord_url: string | null;
           description: string | null;
           created_at: string;
         };
@@ -88,6 +96,7 @@ export interface Database {
           audience: EventAudience;
           photo_album_url: string | null;
           post_event_info: string | null;
+          social_embeds: SocialEmbed[];
           created_by: string | null;
           created_at: string;
           updated_at: string;
@@ -136,6 +145,21 @@ export interface Database {
         Insert: Omit<Database['public']['Tables']['sponsors']['Row'], 'id' | 'created_at'>;
         Update: Partial<Database['public']['Tables']['sponsors']['Insert']>;
       };
+      docs: {
+        Row: {
+          id: string;
+          slug: string;
+          title: string;
+          category: string | null;
+          content: string;
+          created_by: string | null;
+          updated_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<Database['public']['Tables']['docs']['Row'], 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Database['public']['Tables']['docs']['Insert']>;
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -154,6 +178,7 @@ export type Event = Database['public']['Tables']['events']['Row'];
 export type Ticket = Database['public']['Tables']['tickets']['Row'];
 export type SiteContent = Database['public']['Tables']['site_contents']['Row'];
 export type Sponsor = Database['public']['Tables']['sponsors']['Row'];
+export type Doc = Database['public']['Tables']['docs']['Row'];
 
 export type TicketWithEvent = Ticket & {
   event: Pick<Event, 'id' | 'title' | 'start_date' | 'end_date' | 'location' | 'flyer_url'>;

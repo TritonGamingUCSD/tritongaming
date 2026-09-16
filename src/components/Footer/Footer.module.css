@@ -1,3 +1,8 @@
+/* Deliberately near-opaque dark charcoal with a warm gold hairline instead
+   of the lighter blue-tinted "frosted glass" this used to be — matches the
+   nav pill's material (see NavBar.module.css) so the two ends of the page
+   chrome read as one consistent, solid design language rather than a
+   generic translucent effect. */
 .footer {
   position: relative;
   display: grid;
@@ -7,18 +12,18 @@
   padding: clamp(2.5rem, 5vw, 4rem) clamp(1.5rem, 5vw, 4rem);
   margin: 0 clamp(1rem, 3.5vw, 2.5rem) clamp(1rem, 3.5vw, 2.5rem);
   border-radius: clamp(24px, 3.5vw, 36px);
-  background: linear-gradient(165deg, rgba(39, 90, 143, 0.5), rgba(1, 25, 65, 0.85) 55%, rgba(1, 15, 40, 0.92));
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: linear-gradient(165deg, rgba(20, 26, 42, 0.95), rgba(8, 11, 20, 0.97) 55%, rgba(5, 7, 14, 0.99));
+  border: 1px solid rgba(255, 199, 44, 0.18);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.14) inset,
-    0 0 0 1px rgba(255, 199, 44, 0.05) inset,
-    0 40px 80px -32px rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
+    0 1px 0 rgba(255, 199, 44, 0.16) inset,
+    0 0 0 1px rgba(0, 0, 0, 0.35) inset,
+    0 40px 80px -32px rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(24px) saturate(130%);
+  -webkit-backdrop-filter: blur(24px) saturate(130%);
   overflow: hidden;
 }
 
-/* Soft gold seam along the top edge, echoing the nav pill's glass rim */
+/* Soft gold seam along the top edge, echoing the nav pill's rim */
 .footer::before {
   content: '';
   position: absolute;
@@ -26,7 +31,7 @@
   left: 8%;
   right: 8%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 199, 44, 0.4), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 199, 44, 0.5), transparent);
 }
 
 .bgTextWrapper {

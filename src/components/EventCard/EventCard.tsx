@@ -45,13 +45,21 @@ export default function EventCard({ event }: { event: Event }) {
     <article className={styles.card}>
       <div className={styles.imgWrapper}>
         {isExternal ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={event.flyer_url}
-            alt={event.full_name}
-            className={styles.img}
-            loading="lazy"
-          />
+          <>
+            {/* Blurred, cropped copy of the same flyer fills the card behind
+                the real one — lets the actual flyer show uncropped (flyers
+                are full of text/details that `cover` used to cut off)
+                without leaving dead space around it. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={event.flyer_url} alt="" aria-hidden="true" className={styles.imgBackdrop} loading="lazy" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={event.flyer_url}
+              alt={event.full_name}
+              className={styles.img}
+              loading="lazy"
+            />
+          </>
         ) : (
           <Image
             src="/images/what_is_triton_gaming_justinlu.jpg"
@@ -74,14 +82,17 @@ export default function EventCard({ event }: { event: Event }) {
         <p className={styles.desc}>
           {event.content.length > 280 ? `${event.content.slice(0, 280)}…` : event.content}
         </p>
-        <Link
-          href={`/events/${event.slug || event._id}`}
-          className={styles.link}
-          aria-label={`Learn more about ${event.full_name}`}
-        >
-          LEARN MORE &gt;
-        </Link>
+        <span className={styles.link} aria-hidden="true">LEARN MORE &gt;</span>
       </div>
+
+      {/* Stretched link — makes the entire card clickable instead of just
+          the "Learn More" text, matching the hover lift/shimmer that
+          already reacts to the whole card. */}
+      <Link
+        href={`/events/${event.slug || event._id}`}
+        className={styles.cardLink}
+        aria-label={`Learn more about ${event.full_name}`}
+      />
     </article>
   );
 }

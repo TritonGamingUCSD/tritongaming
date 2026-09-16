@@ -105,7 +105,7 @@ export default async function EventCheckinsPage({ params }: Params) {
               <div key={t.id} className={styles.tableRow}>
                 <div className={styles.attendee}>
                   {avatarUrl ? (
-                    <Image src={avatarUrl} alt="" width={32} height={32} className={styles.avatar} unoptimized />
+                    <Image src={avatarUrl} alt="" width={32} height={32} className={styles.avatar} unoptimized referrerPolicy="no-referrer" />
                   ) : (
                     <div className={styles.avatarFallback}>{(user?.display_name || '?')[0].toUpperCase()}</div>
                   )}

@@ -5,7 +5,7 @@ export async function getDivisionsData() {
   const supabase = await createClient();
   const { data: divisions } = await supabase
     .from('divisions')
-    .select('id, name, slug, description, logo_url')
+    .select('id, name, slug, description, logo_url, discord_url')
     .order('name', { ascending: true });
 
   return { divisions: divisions ?? [] };

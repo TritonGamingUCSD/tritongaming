@@ -3,9 +3,17 @@
 }
 
 /* ── Card grid ────────────────────────────────────── */
+/* auto-fit (not auto-fill) collapses empty tracks instead of reserving
+   them, and justify-content centers the resulting column set — so a plain
+   member with only 2-3 cards gets a centered cluster instead of a
+   left-aligned row with a wide empty gap on the right. */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  /* A bounded max (not 1fr) so there's leftover space for justify-content
+     to center against — 1fr tracks would consume all container width
+     first, defeating the centering. */
+  grid-template-columns: repeat(auto-fit, minmax(220px, 260px));
+  justify-content: center;
   gap: 1rem;
 }
 
@@ -118,7 +126,7 @@
 }
 
 @media (max-width: 600px) {
-  .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.75rem; }
+  .grid { grid-template-columns: repeat(auto-fit, minmax(140px, 160px)); gap: 0.75rem; }
   .card { padding: 1.125rem 1rem; min-height: 125px; }
   .panel { padding: 1.125rem 1rem 2rem; }
 }

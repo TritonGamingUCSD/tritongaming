@@ -8,6 +8,21 @@
   padding: 1.5rem;
 }
 
+.backLink {
+  position: absolute;
+  top: clamp(1rem, 3vw, 2rem);
+  left: clamp(1rem, 3vw, 2rem);
+  z-index: 2;
+  font-family: var(--font-futura-medium);
+  font-size: 0.85rem;
+  color: rgba(242, 241, 240, 0.6);
+  transition: color 0.2s ease;
+}
+
+.backLink:hover {
+  color: var(--yellow);
+}
+
 .card {
   position: relative;
   z-index: 1;

@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import { getUser } from '@/lib/auth';
 import LoginClient from './LoginClient';
 import styles from './login.module.css';
@@ -18,6 +19,8 @@ export default async function LoginPage({
 
   return (
     <div className={styles.page}>
+      <Link href="/" className={styles.backLink}>← Back to Site</Link>
+
       <div className={styles.card}>
         <div className={styles.logoSection}>
           <Image

@@ -1,10 +1,13 @@
-/* Pulled up over the hero's fade-out zone so the two read as one connected
-   moment — see Hero.module.css .gradient, which is timed to meet this. */
+/* Used to pull up over the hero's fade-out zone with a large negative
+   margin so the two read as one connected moment, but the hero's tagline
+   ("EVENTS # CREATIVITY # ...") and video sit lower than that assumed —
+   the panel was overlapping both. A small overlap still connects the
+   sections visually via the fade without colliding with hero content. */
 .section {
   position: relative;
   z-index: 5;
-  margin-top: -64px;
-  padding: 0 clamp(1rem, 4vw, 2.5rem) clamp(3rem, 6vw, 5rem);
+  margin-top: -16px;
+  padding: clamp(2rem, 5vw, 3rem) clamp(1rem, 4vw, 2.5rem) clamp(3rem, 6vw, 5rem);
 }
 
 .panel {
@@ -63,7 +66,7 @@
 }
 
 @media (max-width: 640px) {
-  .section { margin-top: -40px; }
+  .section { margin-top: -8px; }
   .panel { flex-direction: column; }
   .statCell {
     border-right: none;

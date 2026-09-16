@@ -1,0 +1,45 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.instagramEmbed {
+  margin: 0 !important;
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+.discordCard {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 1.25rem;
+  background: rgba(88, 101, 242, 0.08);
+  border: 1px solid rgba(88, 101, 242, 0.25);
+  border-radius: 0.875rem;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+.discordCard:hover {
+  background: rgba(88, 101, 242, 0.14);
+  border-color: rgba(88, 101, 242, 0.4);
+  transform: translateY(-2px);
+}
+
+.discordIcon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.discordTitle {
+  font-family: var(--font-futura-heavy);
+  font-size: 0.95rem;
+  color: var(--white);
+}
+
+.discordSub {
+  font-size: 0.8rem;
+  color: #a5b4fc;
+  margin-top: 0.15rem;
+}

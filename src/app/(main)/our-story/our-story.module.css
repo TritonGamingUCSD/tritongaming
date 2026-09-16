@@ -1,0 +1,4 @@
+.page {
+  padding-top: var(--navbar-height); /* clears the floating nav pill */
+  background: #060c1a;
+}

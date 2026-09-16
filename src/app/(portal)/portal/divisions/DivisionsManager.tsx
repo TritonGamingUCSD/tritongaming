@@ -12,9 +12,10 @@ interface Division {
   slug: string;
   description: string | null;
   logo_url: string | null;
+  discord_url: string | null;
 }
 
-type DraftFields = { name: string; slug: string; description: string; logo_url: string };
+type DraftFields = { name: string; slug: string; description: string; logo_url: string; discord_url: string };
 
 function toDraft(d: Division): DraftFields {
   return {
@@ -22,10 +23,11 @@ function toDraft(d: Division): DraftFields {
     slug: d.slug,
     description: d.description ?? '',
     logo_url: d.logo_url ?? '',
+    discord_url: d.discord_url ?? '',
   };
 }
 
-const EMPTY_DRAFT: DraftFields = { name: '', slug: '', description: '', logo_url: '' };
+const EMPTY_DRAFT: DraftFields = { name: '', slug: '', description: '', logo_url: '', discord_url: '' };
 
 function logoSrc(url: string): string | null {
   if (!url) return null;
@@ -65,6 +67,7 @@ export default function DivisionsManager({ divisions: initial }: { divisions: Di
           slug: newDraft.slug,
           description: newDraft.description,
           logo_url: newDraft.logo_url,
+          discord_url: newDraft.discord_url,
         }),
       });
       const data = await res.json();
@@ -96,6 +99,7 @@ export default function DivisionsManager({ divisions: initial }: { divisions: Di
           slug: editDraft.slug,
           description: editDraft.description,
           logo_url: editDraft.logo_url,
+          discord_url: editDraft.discord_url,
         }),
       });
       const data = await res.json();
@@ -174,6 +178,13 @@ export default function DivisionsManager({ divisions: initial }: { divisions: Di
           placeholder="Short description shown on the public divisions page"
           rows={2}
         />
+        <input
+          className={styles.input}
+          type="url"
+          value={newDraft.discord_url}
+          onChange={(e) => setNewDraft((f) => ({ ...f, discord_url: e.target.value }))}
+          placeholder="Discord server invite (optional) — https://discord.gg/…"
+        />
         <button className={styles.saveBtn} type="submit" disabled={adding || !newDraft.name.trim()}>
           {adding ? 'Adding…' : 'Add Division'}
         </button>
@@ -219,6 +230,13 @@ export default function DivisionsManager({ divisions: initial }: { divisions: Di
                   onChange={(e) => setEditDraft((f) => ({ ...f, description: e.target.value }))}
                   rows={2}
                 />
+                <input
+                  className={styles.input}
+                  type="url"
+                  value={editDraft.discord_url}
+                  onChange={(e) => setEditDraft((f) => ({ ...f, discord_url: e.target.value }))}
+                  placeholder="Discord server invite (optional) — https://discord.gg/…"
+                />
                 <div className={styles.actions}>
                   <button className={styles.btn} onClick={() => setEditingId(null)} disabled={isBusy}>Cancel</button>
                   <button className={styles.saveBtn} onClick={() => handleSave(d.id)} disabled={isBusy || !editDraft.slug.trim()}>
@@ -243,6 +261,11 @@ export default function DivisionsManager({ divisions: initial }: { divisions: Di
                 </div>
               </div>
               {d.description && <p className={styles.desc}>{d.description}</p>}
+              {d.discord_url && (
+                <a href={d.discord_url} target="_blank" rel="noopener noreferrer" className={styles.discordLink}>
+                  💬 Discord →
+                </a>
+              )}
               <div className={styles.actions}>
                 <button className={styles.btn} onClick={() => startEdit(d)}>Edit</button>
                 <button className={styles.btnDanger} onClick={() => handleDelete(d)} disabled={isBusy}>

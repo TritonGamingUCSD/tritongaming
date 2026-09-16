@@ -60,7 +60,7 @@ export default function MembersSectionContent({ rows, roles }: { rows: MemberPro
               {group.map((m) => (
                 <div key={m.id} className={styles.card}>
                   {resolveAvatarUrl(m) ? (
-                    <Image src={resolveAvatarUrl(m)!} alt="" width={44} height={44} className={styles.avatar} unoptimized />
+                    <Image src={resolveAvatarUrl(m)!} alt="" width={44} height={44} className={styles.avatar} unoptimized referrerPolicy="no-referrer" />
                   ) : (
                     <div className={styles.avatarFallback} style={{ background: ROLE_COLORS[role] }}>
                       {(m.display_name || '?')[0].toUpperCase()}

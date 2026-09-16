@@ -128,6 +128,13 @@
   line-height: 1.5;
 }
 
+.discordLink {
+  font-size: 0.78rem;
+  color: #a5b4fc;
+  align-self: flex-start;
+}
+.discordLink:hover { color: #c7d2fe; }
+
 .fieldRow {
   display: grid;
   grid-template-columns: 1fr 1fr;

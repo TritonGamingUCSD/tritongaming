@@ -159,7 +159,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
               <div key={user.id} className={`${styles.row} ${saving && isEditing ? styles.rowUpdating : ''}`}>
                 <div className={styles.userInfo}>
                   {avatarUrl ? (
-                    <Image src={avatarUrl} alt="" width={38} height={38} className={styles.avatar} unoptimized />
+                    <Image src={avatarUrl} alt="" width={38} height={38} className={styles.avatar} unoptimized referrerPolicy="no-referrer" />
                   ) : (
                     <div className={styles.avatarFallback} style={{ background: sortedRoles[0] ? ROLE_COLORS[sortedRoles[0].role] : ROLE_COLORS.guest }}>
                       {(user.display_name || '?')[0].toUpperCase()}

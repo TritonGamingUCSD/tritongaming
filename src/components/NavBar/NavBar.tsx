@@ -10,6 +10,7 @@ import { resolveAvatarUrl } from '@/lib/profile';
 import styles from './NavBar.module.css';
 
 const NAV_LINKS = [
+  { href: '/our-story',     label: 'OUR STORY' },
   { href: '/about',         label: 'ABOUT' },
   { href: '/events',        label: 'EVENTS' },
   { href: '/divisions',     label: 'DIVISIONS' },
@@ -106,6 +107,7 @@ export default function NavBar() {
           height={28}
           className={styles.authAvatar}
           unoptimized
+          referrerPolicy="no-referrer"
         />
       ) : (
         <div className={styles.authAvatarFallback}>
@@ -115,8 +117,9 @@ export default function NavBar() {
       <span className={styles.authLabel}>PORTAL</span>
     </Link>
   ) : (
-    <Link href="/login" className={styles.loginBtn}>
-      LOGIN
+    <Link href="/login" className={styles.loginBtn} aria-label="Sign in to the member portal">
+      <span className={styles.loginBtnIcon} aria-hidden="true">👤</span>
+      Member Portal
     </Link>
   );
 
@@ -198,13 +201,13 @@ export default function NavBar() {
             {profile ? (
               <Link href="/portal" className={styles.mobilePortalBtn} onClick={() => setMobileOpen(false)}>
                 {navAvatarUrl && (
-                  <Image src={navAvatarUrl} alt="" width={24} height={24} className={styles.authAvatar} unoptimized />
+                  <Image src={navAvatarUrl} alt="" width={24} height={24} className={styles.authAvatar} unoptimized referrerPolicy="no-referrer" />
                 )}
                 Member Portal
               </Link>
             ) : (
               <Link href="/login" className={styles.mobileLoginBtn} onClick={() => setMobileOpen(false)}>
-                Sign In
+                Member Portal Sign In
               </Link>
             )}
           </li>

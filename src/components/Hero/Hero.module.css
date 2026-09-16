@@ -69,7 +69,8 @@
   background: rgba(255, 199, 44, 0.1);
   backdrop-filter: blur(12px) saturate(160%);
   -webkit-backdrop-filter: blur(12px) saturate(160%);
-  opacity: 0;
+  /* No static opacity:0 — see .tagWord's note below on why visibility
+     can't depend on a delayed animation actually firing. */
   animation: tag-slide-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.3s forwards;
 }
 
@@ -90,7 +91,6 @@
   font-size: clamp(1rem, 2vw, 1.5rem);
   color: rgba(255, 255, 255, 0.9);
   letter-spacing: 0.12em;
-  opacity: 0;
   animation: tag-slide-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.55s forwards;
 }
 
@@ -100,48 +100,61 @@
   gap: 1rem;
   flex-wrap: wrap;
   justify-content: center;
-  opacity: 0;
   animation: tag-slide-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.75s forwards;
 }
 
+/* Pill-shaped like every other CTA site-wide (Get Ticket, Apply Now, ...)
+   — the previous sharp 4px radius was the one place breaking that
+   consistency, which read as slapped-together next to the rest of the
+   "crafted pill" language established in the nav/footer/button redesign. */
 .ctaPrimary,
 .ctaSecondary {
-  display: inline-block;
-  padding: 0.7rem 1.8rem;
-  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0.75rem 2rem;
+  border-radius: 999px;
   font-family: var(--font-futura-heavy);
   font-size: clamp(0.8rem, 1.2vw, 0.95rem);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   text-decoration: none;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
   cursor: pointer;
 }
 
 .ctaPrimary {
-  background: var(--yellow);
+  background: var(--btn-primary-bg);
   color: var(--darkblue);
-  border: 2px solid var(--yellow);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: var(--btn-primary-shadow);
 }
 
 .ctaPrimary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(255, 199, 44, 0.4);
+  box-shadow: var(--btn-primary-shadow-hover);
 }
 
+/* Same raised-material technique as the primary button, in a dark glass
+   tone with a gold hairline instead of gold fill — reads as this site's
+   "secondary" pill rather than a generic translucent chip. */
 .ctaSecondary {
-  background: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(40, 46, 62, 0.9), rgba(16, 20, 32, 0.94));
   color: var(--white);
-  border: 2px solid rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(255, 199, 44, 0.35);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    0 14px 28px -14px rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(12px) saturate(160%);
   -webkit-backdrop-filter: blur(12px) saturate(160%);
 }
 
 .ctaSecondary:hover {
-  border-color: var(--white);
-  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 199, 44, 0.6);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.16) inset,
+    0 18px 36px -14px rgba(0, 0, 0, 0.8);
 }
 
 /* ── Bottom tagline ── */
@@ -166,7 +179,13 @@
   color: var(--yellow);
   text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.5);
   letter-spacing: 0.05em;
-  opacity: 0;
+  /* No static opacity:0 here — visible by default, same as .tagHash. The
+     keyframes' own "from { opacity: 0 }" still gives the slide-up fade its
+     entrance, but visibility no longer depends on the animation actually
+     firing (a custom-font swap or anything else delaying/skipping it used
+     to leave these words permanently invisible next to an always-visible
+     "#", which is exactly what got reported as "random hashtags with no
+     text"). */
   animation: tag-slide-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 

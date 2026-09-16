@@ -1,3 +1,5 @@
+import type { SocialEmbed } from '@/types/database';
+
 export type Event = {
   _id: string;
   slug: string;
@@ -17,21 +19,7 @@ export type Event = {
   audience: 'public' | 'ucsd_only';
   photo_album_url: string;
   post_event_info: string;
-};
-
-export type OfficerEntry = {
-  title: string;
-  order: number;
-  officer: {
-    first_name: string;
-    last_name: string;
-    gamer_tag: string;
-    bio: string;
-    year: string;
-    major: string;
-    committee: string[];
-    profile_picture: string;
-  };
+  social_embeds: SocialEmbed[];
 };
 
 export type LogoItem = {

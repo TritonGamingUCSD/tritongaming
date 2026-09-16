@@ -25,6 +25,8 @@ import ContentEditor from './admin/content/ContentEditor';
 import { getContentData } from './admin/content/getContentData';
 import AdminSectionContent from './admin/AdminSectionContent';
 import { getAdminData } from './admin/getAdminData';
+import DocsClient from './docs/DocsClient';
+import { getDocsData } from './docs/getDocsData';
 import styles from './dashboard.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -40,12 +42,13 @@ export default async function PortalDashboard() {
   const canGenerateQr = hasCapability(roles, 'generate_qr_codes');
   const canEditContent = hasCapability(roles, 'manage_site_content');
   const canViewAdmin = hasCapability(roles, 'view_admin_dashboard');
+  const canManageDocs = hasCapability(roles, 'manage_docs');
 
   // Every section a user can reach is fetched here, in parallel, capability
   // by capability — a plain member only ever triggers the tickets query. The
   // hub then just renders whichever of these were fetched; nothing is
   // re-fetched client-side when a card opens.
-  const [ticketsData, checkinData, eventsData, membersData, divisionsData, contentData, adminData] =
+  const [ticketsData, checkinData, eventsData, membersData, divisionsData, contentData, adminData, docsData] =
     await Promise.all([
       getTicketsData(profile.id, roles),
       canCheckin ? getCheckinData() : Promise.resolve(null),
@@ -54,6 +57,7 @@ export default async function PortalDashboard() {
       canManageDivisions ? getDivisionsData() : Promise.resolve(null),
       canEditContent ? getContentData() : Promise.resolve(null),
       canViewAdmin ? getAdminData(roles) : Promise.resolve(null),
+      canManageDocs ? getDocsData() : Promise.resolve(null),
     ]);
 
   const hour = new Date().getHours();
@@ -120,6 +124,12 @@ export default async function PortalDashboard() {
       description: 'Platform stats and role management',
       content: <AdminSectionContent {...adminData} />,
     }] : []),
+    ...(canManageDocs && docsData ? [{
+      id: 'docs', icon: '📚', label: 'Documentation',
+      description: 'How-to guides for officers, leads, and execs',
+      badge: docsData.docs.length || undefined,
+      content: <DocsClient initialDocs={docsData.docs} userId={profile.id} />,
+    }] : []),
   ];
 
   const avatarUrl = resolveAvatarUrl(profile);
@@ -136,6 +146,7 @@ export default async function PortalDashboard() {
               height={48}
               className={styles.headerAvatar}
               unoptimized
+              referrerPolicy="no-referrer"
             />
           ) : (
             <div className={styles.headerAvatarFallback}>

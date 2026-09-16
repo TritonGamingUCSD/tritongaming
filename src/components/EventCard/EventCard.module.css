@@ -53,10 +53,21 @@
   background: var(--blue);
 }
 
-.img {
+.imgBackdrop {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  filter: blur(24px) saturate(130%) brightness(0.6);
+  transform: scale(1.15);
+}
+
+.img {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
   display: block;
 }
 
@@ -117,6 +128,12 @@
   align-self: flex-start;
 }
 
-.link:hover {
+.card:hover .link {
   color: var(--yellow);
+}
+
+.cardLink {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
 }
