@@ -9,9 +9,9 @@ export const dynamic = 'force-dynamic';
 
 export default async function EventsManagementPage() {
   const roles = await getUserRoles();
-  if (!hasCapability(roles, 'manage_events')) redirect('/portal');
+  if (!hasCapability(roles, 'view_events')) redirect('/portal');
 
   const { events } = await getEventsData();
 
-  return <EventsSectionContent events={events} />;
+  return <EventsSectionContent events={events} canEdit={hasCapability(roles, 'manage_events')} />;
 }

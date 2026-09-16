@@ -10,7 +10,11 @@ export interface RoleGrant {
 // these in sync — this map drives app-level UI/page gating, the DB table
 // drives RLS (the real security boundary).
 export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
-  manage_events: ['officer', 'lead', 'exec', 'admin'],
+  // Officer is deliberately excluded from manage_events — they can view the
+  // events list (and, via `checkin`, scan tickets) but not create or edit
+  // events; that's lead+ only. view_events is the broader read-only gate.
+  manage_events: ['lead', 'exec', 'admin'],
+  view_events: ['officer', 'lead', 'exec', 'admin'],
   delete_events: ['admin'],
   checkin: ['officer', 'lead', 'exec', 'admin'],
   manage_site_content: ['lead', 'exec', 'admin'],
@@ -25,7 +29,10 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // every other row here it has no RLS-backed counterpart in the DB's
   // role_capabilities table.
   generate_qr_codes: ['officer', 'division', 'lead', 'exec', 'admin'],
-  manage_docs: ['officer', 'lead', 'exec', 'admin'],
+  // Same officer-is-view-only split as events: manage_docs (create/edit/
+  // delete) is lead+, view_docs (read) keeps officer in.
+  manage_docs: ['lead', 'exec', 'admin'],
+  view_docs: ['officer', 'lead', 'exec', 'admin'],
 };
 
 /**

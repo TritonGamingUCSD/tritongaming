@@ -161,3 +161,47 @@
   border-color: rgba(255,199,44,0.3);
   color: var(--yellow);
 }
+
+/* Google Photos blocks iframing its own share pages (X-Frame-Options:
+   SAMEORIGIN) — there's no way to embed the actual album in the page. This
+   is the closest practical substitute: the album's own cover photo (pulled
+   from its Open Graph tags, see getAlbumPreview) as a big clickable card
+   instead of a plain text link — the real album is still just a tap away. */
+.albumCard {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 8;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.albumCardImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+.albumCard:hover .albumCardImg { transform: scale(1.04); }
+
+.albumCardOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(6,12,26,0.85) 0%, rgba(6,12,26,0.1) 55%);
+}
+
+.albumCardLabel {
+  position: absolute;
+  left: 1rem;
+  bottom: 0.875rem;
+  right: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-futura-heavy);
+  font-size: 0.95rem;
+  color: var(--white);
+}

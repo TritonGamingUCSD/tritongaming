@@ -10,10 +10,15 @@ function formatDateRange(startISO: string, endISO: string) {
   if (start.toDateString() === end.toDateString()) {
     return start.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   }
-  const sameMonth = start.getMonth() === end.getMonth();
   const sameYear = start.getFullYear() === end.getFullYear();
+  const sameMonth = start.getMonth() === end.getMonth() && sameYear;
   const s = start.toLocaleDateString('en-US', { month: 'long', day: 'numeric', ...(sameYear ? {} : { year: 'numeric' }) });
-  const e = end.toLocaleDateString('en-US', { month: sameMonth ? undefined : 'long', day: 'numeric', year: 'numeric' });
+  // Intl.DateTimeFormat has no clean way to render "day + year" without a
+  // month — passing month: undefined doesn't just omit it, it falls back to
+  // an awkward "2026 (day: 31)" format. Build the same-month case by hand.
+  const e = sameMonth
+    ? `${end.getDate()}, ${end.getFullYear()}`
+    : end.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   return `${s} – ${e}`;
 }
 

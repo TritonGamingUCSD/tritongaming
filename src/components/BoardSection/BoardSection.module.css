@@ -204,6 +204,21 @@
   letter-spacing: 0.02em;
 }
 
+.pronouns {
+  font-size: 0.78rem;
+  color: rgba(242, 241, 240, 0.45);
+}
+
+.emailLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  color: rgba(242, 241, 240, 0.55);
+  transition: color 0.15s;
+}
+.emailLink:hover { color: var(--yellow); }
+
 .panelBio {
   font-size: 0.9rem;
   color: rgba(242, 241, 240, 0.75);
@@ -237,4 +252,26 @@
   background: rgba(255, 199, 44, 0.15);
   border-color: rgba(255, 199, 44, 0.3);
   transform: translateY(-2px);
+}
+
+.socialBtnWrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.copiedBadge {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  background: rgba(255, 199, 44, 0.95);
+  color: var(--darkblue);
+  font-family: var(--font-futura-heavy);
+  font-size: 0.65rem;
+  letter-spacing: 0.03em;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
 }

@@ -38,6 +38,7 @@ export default async function PortalDashboard() {
   const [profile, roles] = await Promise.all([getProfile(), getUserRoles()]);
   if (!profile) return null;
 
+  const canViewEvents = hasCapability(roles, 'view_events');
   const canManageEvents = hasCapability(roles, 'manage_events');
   const canCheckin = hasCapability(roles, 'checkin');
   const canViewMembers = hasCapability(roles, 'view_members');
@@ -45,6 +46,7 @@ export default async function PortalDashboard() {
   const canGenerateQr = hasCapability(roles, 'generate_qr_codes');
   const canEditContent = hasCapability(roles, 'manage_site_content');
   const canViewAdmin = hasCapability(roles, 'view_admin_dashboard');
+  const canViewDocs = hasCapability(roles, 'view_docs');
   const canManageDocs = hasCapability(roles, 'manage_docs');
 
   // Every section a user can reach is fetched here, in parallel, capability
@@ -55,13 +57,13 @@ export default async function PortalDashboard() {
     await Promise.all([
       getTicketsData(profile.id, roles),
       canCheckin ? getCheckinData() : Promise.resolve(null),
-      canManageEvents ? getEventsData() : Promise.resolve(null),
+      canViewEvents ? getEventsData() : Promise.resolve(null),
       canViewMembers ? getMembersData() : Promise.resolve(null),
       canManageDivisions ? getDivisionsData() : Promise.resolve(null),
       canEditContent ? getContentData() : Promise.resolve(null),
       canViewAdmin ? getAdminData(roles) : Promise.resolve(null),
       canViewAdmin ? getStatsData() : Promise.resolve(null),
-      canManageDocs ? getDocsData() : Promise.resolve(null),
+      canViewDocs ? getDocsData() : Promise.resolve(null),
     ]);
 
   const hour = new Date().getHours();
@@ -97,10 +99,10 @@ export default async function PortalDashboard() {
       description: 'Scan tickets to check people in',
       content: <CheckInClient events={checkinData.events} />,
     }] : []),
-    ...(canManageEvents && eventsData ? [{
+    ...(canViewEvents && eventsData ? [{
       id: 'events', icon: <Calendar size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Events',
-      description: 'Create and manage events',
-      content: <EventsSectionContent events={eventsData.events} />,
+      description: canManageEvents ? 'Create and manage events' : 'Browse upcoming and past events',
+      content: <EventsSectionContent events={eventsData.events} canEdit={canManageEvents} />,
     }] : []),
     ...(canViewMembers && membersData ? [{
       id: 'members', icon: <Users size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Members',
@@ -133,11 +135,11 @@ export default async function PortalDashboard() {
       description: 'Events, tickets, check-ins, and growth over time',
       content: <StatsClient data={statsData} />,
     }] : []),
-    ...(canManageDocs && docsData ? [{
+    ...(canViewDocs && docsData ? [{
       id: 'docs', icon: <BookOpen size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Documentation',
       description: 'How-to guides for officers, leads, and execs',
       badge: docsData.docs.length || undefined,
-      content: <DocsClient initialDocs={docsData.docs} initialCategories={docsData.categories} userId={profile.id} />,
+      content: <DocsClient initialDocs={docsData.docs} initialCategories={docsData.categories} userId={profile.id} canEdit={canManageDocs} />,
     }] : []),
   ];
 

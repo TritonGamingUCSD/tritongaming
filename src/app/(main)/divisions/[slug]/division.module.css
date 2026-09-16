@@ -1,5 +1,9 @@
+/* No min-height:100vh here on purpose — this page's content is often just
+   a single placeholder line (division detail content is minimal today),
+   and forcing a full-viewport floor turned that into a huge, obviously
+   empty gap before the footer instead of the footer just sitting
+   naturally below the (short) content, which reads fine. */
 .page {
-  min-height: 100vh;
   padding-bottom: var(--sp-xl);
   background: #060c1a;
 }

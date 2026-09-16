@@ -37,7 +37,7 @@ const STATUS_LABEL: Record<string, string> = {
 export default async function EventCheckinsPage({ params }: Params) {
   const { id } = await params;
   const roles = await getUserRoles();
-  if (!hasCapability(roles, 'manage_events')) redirect('/portal');
+  if (!hasCapability(roles, 'view_events')) redirect('/portal');
 
   const supabase = await createClient();
 

@@ -31,7 +31,7 @@ const FILTERS: { key: StatusFilter; label: string }[] = [
 // component — search + status filter are pure UI state over data that's
 // already fully fetched (all events + their ticket counts come in as
 // props), so filtering is instant with no round trip.
-export default function EventsSectionContent({ events }: { events: EventRow[] }) {
+export default function EventsSectionContent({ events, canEdit }: { events: EventRow[]; canEdit: boolean }) {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<StatusFilter>('all');
 
@@ -59,16 +59,18 @@ export default function EventsSectionContent({ events }: { events: EventRow[] })
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <h1 className={styles.title}>Event Management</h1>
-        <Link href="/portal/events/new" className={styles.newBtn}>
-          <Plus size={15} strokeWidth={2} aria-hidden="true" /> Create Event
-        </Link>
+        <h1 className={styles.title}>{canEdit ? 'Event Management' : 'Events'}</h1>
+        {canEdit && (
+          <Link href="/portal/events/new" className={styles.newBtn}>
+            <Plus size={15} strokeWidth={2} aria-hidden="true" /> Create Event
+          </Link>
+        )}
       </div>
 
       {events.length === 0 ? (
         <div className={styles.empty}>
           <p>No events yet.</p>
-          <Link href="/portal/events/new" className={styles.createLink}>Create your first event →</Link>
+          {canEdit && <Link href="/portal/events/new" className={styles.createLink}>Create your first event →</Link>}
         </div>
       ) : (
         <>
@@ -106,7 +108,7 @@ export default function EventsSectionContent({ events }: { events: EventRow[] })
                 <span>Date</span>
                 <span>Tickets</span>
                 <span>Status</span>
-                <span></span>
+                {canEdit && <span></span>}
               </div>
               {filtered.map((event) => {
                 const isPast = new Date(event.start_date).getTime() < now;
@@ -139,9 +141,11 @@ export default function EventsSectionContent({ events }: { events: EventRow[] })
                         {event.is_published ? 'Published' : 'Draft'}
                       </span>
                     </div>
-                    <div>
-                      <Link href={`/portal/events/${event.id}`} className={styles.checkinLink}>Edit</Link>
-                    </div>
+                    {canEdit && (
+                      <div>
+                        <Link href={`/portal/events/${event.id}`} className={styles.checkinLink}>Edit</Link>
+                      </div>
+                    )}
                   </div>
                 );
               })}

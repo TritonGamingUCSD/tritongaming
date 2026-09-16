@@ -324,7 +324,14 @@
     left: auto;
     right: 12px;
     margin-inline: 0;
-    padding: 0.45rem 0.5rem 0.45rem 0.85rem;
+    /* Symmetric, and more generous than the desktop pill's own padding —
+       .hamburger has zero padding of its own (unlike .authBtn/.loginBtn on
+       desktop, which carry their own inset), so this outer padding is the
+       *only* buffer around it. Too little of it here meant the hamburger
+       (and especially its rotated-to-X open state, whose diagonal lines
+       reach further than the icon's own 22px box) crowded right up against
+       the pill's curved edge. */
+    padding: 0.5rem 0.85rem;
     gap: 0.6rem;
   }
 }

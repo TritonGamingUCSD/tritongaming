@@ -55,11 +55,18 @@ export type BoardVisibility = {
   bio?: boolean;
   year_major?: boolean;
   socials?: boolean;
+  pronouns?: boolean;
+  email?: boolean;
 };
 
 // Every key defaults to visible (true) when absent — so a profile that
 // predates this feature, or never touched these toggles, behaves exactly
-// like before.
+// like before. `email` is the one exception: it defaults to hidden, since
+// unlike the others (which were already collected for a purpose the member
+// knew was semi-public) publishing an email address is a bigger, more
+// spammable step that should be an explicit opt-IN, not opt-out.
 export function isVisible(visibility: BoardVisibility | null | undefined, key: keyof BoardVisibility): boolean {
-  return visibility?.[key] !== false;
+  const fallback = key !== 'email';
+  const v = visibility?.[key];
+  return v === undefined ? fallback : v;
 }

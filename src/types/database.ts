@@ -17,6 +17,7 @@ export interface DocAttachment {
 
 export type Capability =
   | 'manage_events'
+  | 'view_events'
   | 'delete_events'
   | 'checkin'
   | 'manage_site_content'
@@ -28,6 +29,7 @@ export type Capability =
   | 'view_admin_dashboard'
   | 'manage_roles'
   | 'generate_qr_codes'
+  | 'view_docs'
   | 'manage_docs';
 
 export interface Database {

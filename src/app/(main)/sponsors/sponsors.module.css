@@ -149,6 +149,13 @@
   box-shadow: var(--glass-shadow);
 }
 
+.noSponsors {
+  text-align: center;
+  color: rgba(242, 241, 240, 0.4);
+  font-size: 0.9rem;
+  padding: 2rem 1rem;
+}
+
 /* ── What We Offer ── */
 .offerSection {
   position: relative;

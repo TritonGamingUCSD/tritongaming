@@ -149,7 +149,7 @@ function AttachmentsView({ attachments }: { attachments: DocAttachment[] }) {
   );
 }
 
-export default function DocsClient({ initialDocs, initialCategories, userId }: { initialDocs: Doc[]; initialCategories: DocCategory[]; userId: string }) {
+export default function DocsClient({ initialDocs, initialCategories, userId, canEdit }: { initialDocs: Doc[]; initialCategories: DocCategory[]; userId: string; canEdit: boolean }) {
   const [docs, setDocs] = useState(initialDocs);
   const [categories, setCategories] = useState(initialCategories);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -334,31 +334,33 @@ export default function DocsClient({ initialDocs, initialCategories, userId }: {
           placeholder="Search docs…"
           aria-label="Search documentation"
         />
-        <button type="button" className={styles.newBtn} onClick={() => startNew(null)}>+ New Doc</button>
+        {canEdit && <button type="button" className={styles.newBtn} onClick={() => startNew(null)}>+ New Doc</button>}
 
-        <div className={styles.categoryManager}>
-          <div className={styles.categoryManagerLabel}>Categories</div>
-          {categories.length > 0 && (
-            <div className={styles.categoryChips}>
-              {categories.map((c) => (
-                <span key={c.id} className={styles.categoryChip}>
-                  {c.name}
-                  <button type="button" className={styles.categoryChipRemove} onClick={() => handleDeleteCategory(c)} aria-label={`Delete category ${c.name}`}><X size={12} strokeWidth={2} /></button>
-                </span>
-              ))}
+        {canEdit && (
+          <div className={styles.categoryManager}>
+            <div className={styles.categoryManagerLabel}>Categories</div>
+            {categories.length > 0 && (
+              <div className={styles.categoryChips}>
+                {categories.map((c) => (
+                  <span key={c.id} className={styles.categoryChip}>
+                    {c.name}
+                    <button type="button" className={styles.categoryChipRemove} onClick={() => handleDeleteCategory(c)} aria-label={`Delete category ${c.name}`}><X size={12} strokeWidth={2} /></button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <div className={styles.categoryAddRow}>
+              <input
+                className={styles.categoryAddInput}
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                placeholder="New category…"
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCategory(); } }}
+              />
+              <button type="button" className={styles.categoryAddBtn} onClick={handleAddCategory} disabled={!newCategory.trim()}>+</button>
             </div>
-          )}
-          <div className={styles.categoryAddRow}>
-            <input
-              className={styles.categoryAddInput}
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value)}
-              placeholder="New category…"
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCategory(); } }}
-            />
-            <button type="button" className={styles.categoryAddBtn} onClick={handleAddCategory} disabled={!newCategory.trim()}>+</button>
           </div>
-        </div>
+        )}
 
         {docs.length === 0 && <p className={styles.emptyNote}>No docs yet — create the first one.</p>}
 
@@ -456,13 +458,15 @@ export default function DocsClient({ initialDocs, initialCategories, userId }: {
                   Updated {new Date(selected.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </p>
               </div>
-              <div className={styles.viewActions}>
-                {!selected.parent_id && (
-                  <button type="button" className={styles.editBtn} onClick={() => startNew(selected.id)}>+ Sub-Post</button>
-                )}
-                <button type="button" className={styles.editBtn} onClick={() => startEdit(selected)}>Edit</button>
-                <button type="button" className={styles.deleteBtn} onClick={handleDelete} disabled={saving}>Delete</button>
-              </div>
+              {canEdit && (
+                <div className={styles.viewActions}>
+                  {!selected.parent_id && (
+                    <button type="button" className={styles.editBtn} onClick={() => startNew(selected.id)}>+ Sub-Post</button>
+                  )}
+                  <button type="button" className={styles.editBtn} onClick={() => startEdit(selected)}>Edit</button>
+                  <button type="button" className={styles.deleteBtn} onClick={handleDelete} disabled={saving}>Delete</button>
+                </div>
+              )}
             </div>
             {error && <p className={styles.error}>{error}</p>}
             <div className={styles.viewBody}>
@@ -473,7 +477,7 @@ export default function DocsClient({ initialDocs, initialCategories, userId }: {
         ) : (
           <div className={styles.empty}>
             <span className={styles.emptyIcon}><BookOpen size={32} strokeWidth={1.25} aria-hidden="true" /></span>
-            <p>Select a doc from the left, or create a new one.</p>
+            <p>{canEdit ? 'Select a doc from the left, or create a new one.' : 'Select a doc from the left to read it.'}</p>
           </div>
         )}
       </div>

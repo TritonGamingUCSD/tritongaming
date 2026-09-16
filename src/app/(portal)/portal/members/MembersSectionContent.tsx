@@ -41,19 +41,24 @@ export default function MembersSectionContent({ rows, roles }: { rows: MemberPro
     }
   }
 
+  // Each member is shown once, under their single highest-ranked role (per
+  // ORDER, admin first) — not once per role they hold. Guest (zero role
+  // grants) and ucsd-only (the auto-granted verified-student badge, never
+  // actually joined anything) are excluded entirely: they're not members of
+  // the org in the sense this roster is for, just verified/logged-in
+  // visitors.
   const grouped: Record<string, MemberEntry[]> = {};
   let memberCount = 0;
   rows.forEach((row) => {
     const { user_roles, ...profile } = row;
+    const roleSet = new Set((user_roles ?? []).map((ur) => ur.role));
+    const primaryRole = ORDER.find((r) => (r === 'guest' ? roleSet.size === 0 : roleSet.has(r as AppRole))) ?? 'guest';
+    if (primaryRole === 'guest' || primaryRole === 'ucsd') return;
+
     memberCount++;
-    if (!user_roles || user_roles.length === 0) {
-      (grouped.guest ??= []).push(profile);
-      return;
-    }
-    user_roles.forEach((ur) => {
-      const division = Array.isArray(ur.division) ? ur.division[0] : ur.division;
-      (grouped[ur.role] ??= []).push({ ...profile, divisionName: division?.name });
-    });
+    const divisionGrant = (user_roles ?? []).find((ur) => ur.role === 'division');
+    const division = divisionGrant ? (Array.isArray(divisionGrant.division) ? divisionGrant.division[0] : divisionGrant.division) : null;
+    (grouped[primaryRole] ??= []).push({ ...profile, divisionName: division?.name });
   });
 
   return (
@@ -184,16 +189,18 @@ export default function MembersSectionContent({ rows, roles }: { rows: MemberPro
                       <Image src={p.logo} alt="" width={16} height={16} unoptimized />
                     </a>
                   ) : (
-                    <button
-                      key={p.key}
-                      type="button"
-                      className={styles.detailSocialBtn}
-                      aria-label={`Copy ${p.label}`}
-                      title={copiedKey === p.key ? 'Copied!' : value}
-                      onClick={() => copyHandle(p.key, value)}
-                    >
-                      <Image src={p.logo} alt="" width={16} height={16} unoptimized />
-                    </button>
+                    <span key={p.key} className={styles.socialBtnWrap}>
+                      {copiedKey === p.key && <span className={styles.copiedBadge}>Copied!</span>}
+                      <button
+                        type="button"
+                        className={styles.detailSocialBtn}
+                        aria-label={`Copy ${p.label}`}
+                        title={value}
+                        onClick={() => copyHandle(p.key, value)}
+                      >
+                        <Image src={p.logo} alt="" width={16} height={16} unoptimized />
+                      </button>
+                    </span>
                   );
                 })}
               </div>

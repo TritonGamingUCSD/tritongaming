@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { MapPin, Ticket, Camera } from 'lucide-react';
 import { getEventBySlugOrId } from '@/lib/events';
+import { getAlbumPreview } from '@/lib/googlePhotosAlbum';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import EventSocialEmbeds from '@/components/EventSocialEmbeds/EventSocialEmbeds';
 import styles from './event-detail.module.css';
@@ -30,10 +31,15 @@ function formatDateRange(startISO: string, endISO: string) {
   if (!end || start.toDateString() === end.toDateString()) {
     return start.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
   }
-  const sameMonth = start.getMonth() === end.getMonth();
   const sameYear = start.getFullYear() === end.getFullYear();
+  const sameMonth = start.getMonth() === end.getMonth() && sameYear;
   const s = start.toLocaleDateString('en-US', { month: 'long', day: 'numeric', ...(sameYear ? {} : { year: 'numeric' }) });
-  const e = end.toLocaleDateString('en-US', { month: sameMonth ? undefined : 'long', day: 'numeric', year: 'numeric' });
+  // Intl.DateTimeFormat has no clean way to render "day + year" without a
+  // month — passing month: undefined doesn't just omit it, it falls back to
+  // an awkward "2026 (day: 31)" format. Build the same-month case by hand.
+  const e = sameMonth
+    ? `${end.getDate()}, ${end.getFullYear()}`
+    : end.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   return `${s} – ${e}`;
 }
 
@@ -52,6 +58,7 @@ export default async function EventDetailPage({ params }: Params) {
   const isPast = new Date(event.end_date || event.start_date) < new Date();
   const isExternalFlyer = event.flyer_url?.startsWith('http');
   const hasPostEventContent = isPast && (event.photo_album_url || event.post_event_info);
+  const albumPreview = isPast && event.photo_album_url ? await getAlbumPreview(event.photo_album_url) : null;
 
   return (
     <div className={styles.page}>
@@ -118,9 +125,24 @@ export default async function EventDetailPage({ params }: Params) {
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>After the Event</h2>
             {event.photo_album_url && (
-              <a href={event.photo_album_url} target="_blank" rel="noopener noreferrer" className={styles.photoLink}>
-                <Camera size={15} strokeWidth={1.5} aria-hidden="true" /> View Event Photos
-              </a>
+              albumPreview?.image ? (
+                <a href={event.photo_album_url} target="_blank" rel="noopener noreferrer" className={styles.albumCard}>
+                  {/* Google's own cover collage for the album — not
+                      hosted by us, so a plain <img>, same as the flyer
+                      treatment elsewhere on this page. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={albumPreview.image} alt="" className={styles.albumCardImg} />
+                  <div className={styles.albumCardOverlay} />
+                  <span className={styles.albumCardLabel}>
+                    <Camera size={15} strokeWidth={1.5} aria-hidden="true" />
+                    {albumPreview.title || 'View Event Photos'}
+                  </span>
+                </a>
+              ) : (
+                <a href={event.photo_album_url} target="_blank" rel="noopener noreferrer" className={styles.photoLink}>
+                  <Camera size={15} strokeWidth={1.5} aria-hidden="true" /> View Event Photos
+                </a>
+              )
             )}
             {event.post_event_info && <MarkdownContent>{event.post_event_info}</MarkdownContent>}
           </section>

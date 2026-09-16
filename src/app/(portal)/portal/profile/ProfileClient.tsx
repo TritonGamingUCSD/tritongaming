@@ -37,7 +37,9 @@ export default function ProfileClient({ profile, roles, isUcsd }: { profile: Pro
     show_on_board: profile.show_on_board,
     social_links: { ...profile.social_links },
     board_visibility: {
-      bio: true, year_major: true, socials: true,
+      // email defaults off — publishing an address is a bigger step than
+      // the rest, so it's opt-in rather than opt-out. See isVisible().
+      bio: true, year_major: true, socials: true, pronouns: true, email: false,
       ...profile.board_visibility,
     },
   });
@@ -294,8 +296,10 @@ export default function ProfileClient({ profile, roles, isUcsd }: { profile: Pro
               <div className={styles.visibilityGrid}>
                 {([
                   ['bio', 'Bio'],
+                  ['pronouns', 'Pronouns'],
                   ['year_major', 'Year & major'],
                   ['socials', 'Discord & social links'],
+                  ['email', 'Email address'],
                 ] as const).map(([key, label]) => (
                   <label key={key} className={styles.checkboxField}>
                     <input

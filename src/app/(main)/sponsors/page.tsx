@@ -77,9 +77,13 @@ export default async function SponsorsPage() {
           <p className={styles.sectionLabel}>CURRENT PARTNERS</p>
           <h2 className={styles.sectionTitle}>Our Sponsors</h2>
         </div>
-        <div className={styles.grid}>
-          <LogoGrid logos={logos} />
-        </div>
+        {logos.length > 0 ? (
+          <div className={styles.grid}>
+            <LogoGrid logos={logos} />
+          </div>
+        ) : (
+          <p className={styles.noSponsors}>Sponsor announcements coming soon.</p>
+        )}
       </section>
 
       {/* What we offer */}

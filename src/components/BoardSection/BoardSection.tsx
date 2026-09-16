@@ -3,14 +3,14 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'motion/react';
-import { X } from 'lucide-react';
+import { X, Mail } from 'lucide-react';
 import { resolveAvatarUrl, socialHref, isVisible, SOCIAL_PLATFORMS } from '@/lib/profile';
 import type { BoardMember, BoardTier } from '@/app/(main)/about/getBoardMembers';
 import styles from './BoardSection.module.css';
 
 const TIER_LABELS: Record<BoardTier, string> = {
   exec: 'Executive Board',
-  lead: 'Division & Committee Leads',
+  lead: 'Committee Leads',
   officer: 'Officers',
 };
 
@@ -102,8 +102,16 @@ export default function BoardSection({ members }: { members: BoardMember[] }) {
                     )}
                   </div>
                   {tierOpenMember.org_title && <div className={styles.panelTitle}>{tierOpenMember.org_title}</div>}
+                  {isVisible(tierOpenMember.board_visibility, 'pronouns') && tierOpenMember.pronouns && (
+                    <div className={styles.pronouns}>{tierOpenMember.pronouns}</div>
+                  )}
                   {isVisible(tierOpenMember.board_visibility, 'year_major') && (tierOpenMember.year || tierOpenMember.major) && (
                     <div className={styles.meta}>{[tierOpenMember.year, tierOpenMember.major].filter(Boolean).join(' · ')}</div>
+                  )}
+                  {isVisible(tierOpenMember.board_visibility, 'email') && tierOpenMember.email && (
+                    <a href={`mailto:${tierOpenMember.email}`} className={styles.emailLink}>
+                      <Mail size={13} strokeWidth={1.75} aria-hidden="true" /> {tierOpenMember.email}
+                    </a>
                   )}
                   {isVisible(tierOpenMember.board_visibility, 'bio') && (
                     <motion.p
@@ -131,16 +139,30 @@ export default function BoardSection({ members }: { members: BoardMember[] }) {
                             <Image src={p.logo} alt="" width={16} height={16} unoptimized />
                           </a>
                         ) : (
-                          <button
-                            key={p.key}
-                            type="button"
-                            className={styles.socialBtn}
-                            aria-label={`Copy ${label}`}
-                            title={copiedKey === p.key ? 'Copied!' : value}
-                            onClick={() => copyHandle(p.key, value)}
-                          >
-                            <Image src={p.logo} alt="" width={16} height={16} unoptimized />
-                          </button>
+                          <span key={p.key} className={styles.socialBtnWrap}>
+                            <AnimatePresence>
+                              {copiedKey === p.key && (
+                                <motion.span
+                                  className={styles.copiedBadge}
+                                  initial={{ opacity: 0, y: 4, scale: 0.9 }}
+                                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                                  exit={{ opacity: 0, y: 4, scale: 0.9 }}
+                                  transition={{ duration: 0.15 }}
+                                >
+                                  Copied!
+                                </motion.span>
+                              )}
+                            </AnimatePresence>
+                            <button
+                              type="button"
+                              className={styles.socialBtn}
+                              aria-label={`Copy ${label}`}
+                              title={value}
+                              onClick={() => copyHandle(p.key, value)}
+                            >
+                              <Image src={p.logo} alt="" width={16} height={16} unoptimized />
+                            </button>
+                          </span>
                         );
                       })}
                     </motion.div>

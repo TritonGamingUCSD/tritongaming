@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function DocsPage() {
   const [profile, roles] = await Promise.all([getProfile(), getUserRoles()]);
-  if (!profile || !hasCapability(roles, 'manage_docs')) redirect('/portal');
+  if (!profile || !hasCapability(roles, 'view_docs')) redirect('/portal');
 
   const { docs, categories } = await getDocsData();
 
@@ -25,7 +25,7 @@ export default async function DocsPage() {
         </div>
       </div>
 
-      <DocsClient initialDocs={docs} initialCategories={categories} userId={profile.id} />
+      <DocsClient initialDocs={docs} initialCategories={categories} userId={profile.id} canEdit={hasCapability(roles, 'manage_docs')} />
     </div>
   );
 }
