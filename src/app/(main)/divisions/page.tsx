@@ -13,8 +13,8 @@ export default async function DivisionsPage() {
       <section className={styles.hero}>
         <h1 className={styles.heroTitle}>Our Divisions</h1>
         <p className={styles.heroSub}>
-          Triton Gaming hosts {divisions.length || 10}+ dedicated game divisions — from competitive
-          esports to casual communities. Find your squad.
+          Triton Gaming hosts dedicated game divisions — from competitive
+          gaming to casual communities. Find your squad.
         </p>
       </section>
 
