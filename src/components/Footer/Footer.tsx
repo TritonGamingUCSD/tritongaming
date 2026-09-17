@@ -60,7 +60,7 @@ export default async function Footer() {
       {/* Brand */}
       <div className={styles.brand}>
         <Image
-          src="/logos/tg_logo_multi.png"
+          src="/logos/tg_logo.png"
           alt="Triton Gaming Logo"
           width={100}
           height={100}

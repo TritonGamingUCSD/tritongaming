@@ -44,7 +44,7 @@ export interface QRCodeOptions {
 }
 
 // The Triton Gaming brand logo, already published for the site's other pages.
-const TG_LOGO = '/logos/tg_logo_multicolor.png';
+const TG_LOGO = '/logos/tg_logo.png';
 
 const iconMap: Record<Exclude<QRIconPreset, 'custom'>, string | undefined> = {
   'tg-color': TG_LOGO,

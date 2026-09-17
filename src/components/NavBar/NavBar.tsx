@@ -141,7 +141,7 @@ export default function NavBar() {
       >
         <Link href="/" className={styles.logo} aria-label="Triton Gaming Home">
           <Image
-            src="/logos/tg_logo_multi.png"
+            src="/logos/tg_logo.png"
             alt="Triton Gaming"
             width={80}
             height={80}

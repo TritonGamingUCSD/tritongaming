@@ -24,7 +24,7 @@ export default async function LoginPage({
       <div className={styles.card}>
         <div className={styles.logoSection}>
           <Image
-            src="/logos/tg_logo_multi.png"
+            src="/logos/tg_logo.png"
             alt="Triton Gaming"
             width={80}
             height={80}
