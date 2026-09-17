@@ -121,21 +121,54 @@
   50% { opacity: 0.4; transform: scale(0.75); }
 }
 
+/* The badge (TicketQRBadge) is a self-contained circular graphic now — it
+   draws its own white backdrop and dot-ring "frame" on the canvas itself
+   (see qrBadge.ts), so this wrapper no longer needs to be a square white
+   card around it. border-radius:50% keeps the pulsing glow below circular
+   too, matching the badge's own shape instead of boxing it. */
 .qrWrapper {
   position: relative;
-  background: #fff;
-  border-radius: 1rem;
-  padding: 1rem;
-  border: 3px solid #011941;
-  animation: qrGlow 2.2s ease-in-out infinite;
+  display: inline-flex;
+  /* align-items defaults to stretch — without this, the badge's height
+     gets stretched to whatever this flex line's cross-size resolves to
+     instead of respecting its own aspect-ratio, squashing the circle into
+     an oval. center leaves the badge to size itself. */
+  align-items: center;
+  border-radius: 50%;
+  animation: qrGlow 3.6s ease-in-out infinite;
 }
 
+/* Cycles through the badge's own palette (gold, orange, navy — the same
+   colors used by the finder rings and dot gradient) instead of pulsing a
+   single gold ring, so the glow reads as coming from the badge itself
+   rather than a generic notification-style highlight. */
+/* Each color's fade-out and the next color's fade-in share a full segment
+   (16.5% of the duration, ~600ms) rather than being crammed into a ~1%
+   window — that near-instant reset (spread snapping 14px→0 and opacity
+   0→0.5 in ~36ms) was the "glitch": too fast to read as a transition, only
+   as a jump cut. Spacing it out lets the browser's own interpolation
+   actually be visible as a smooth crossfade. */
 @keyframes qrGlow {
-  0%, 100% {
-    box-shadow: 0 4px 32px rgba(1, 25, 65, 0.15), 0 0 0 0 rgba(255, 199, 44, 0.5);
+  0% {
+    box-shadow: 0 4px 32px rgba(1, 25, 65, 0.15), 0 0 0 0 rgba(255, 199, 44, 0.55);
   }
-  50% {
+  16.5% {
     box-shadow: 0 4px 32px rgba(1, 25, 65, 0.15), 0 0 0 14px rgba(255, 199, 44, 0);
+  }
+  33% {
+    box-shadow: 0 4px 32px rgba(1, 25, 65, 0.15), 0 0 0 0 rgba(245, 158, 11, 0.5);
+  }
+  49.5% {
+    box-shadow: 0 4px 32px rgba(1, 25, 65, 0.15), 0 0 0 14px rgba(245, 158, 11, 0);
+  }
+  66% {
+    box-shadow: 0 4px 32px rgba(1, 25, 65, 0.15), 0 0 0 0 rgba(30, 58, 138, 0.4);
+  }
+  82.5% {
+    box-shadow: 0 4px 32px rgba(1, 25, 65, 0.15), 0 0 0 14px rgba(30, 58, 138, 0);
+  }
+  100% {
+    box-shadow: 0 4px 32px rgba(1, 25, 65, 0.15), 0 0 0 0 rgba(255, 199, 44, 0.55);
   }
 }
 
@@ -181,6 +214,14 @@
   letter-spacing: 0.1em;
   color: #6b7280;
   font-family: monospace;
+  text-align: center;
+}
+
+/* Keeps "# CODE" together as one unit — without this, a normal space there
+   lets the line wrap between the # and the code itself, splitting the one
+   thing staff actually need to read off in one glance. */
+.codeValue {
+  white-space: nowrap;
 }
 
 .hint {

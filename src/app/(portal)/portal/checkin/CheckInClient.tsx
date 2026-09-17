@@ -189,13 +189,7 @@ export default function CheckInClient({ events }: { events: Event[] }) {
 
         {scanning && (
           <div className={styles.overlay}>
-            <div className={styles.scanBox}>
-              <div className={styles.corner} data-pos="tl" />
-              <div className={styles.corner} data-pos="tr" />
-              <div className={styles.corner} data-pos="bl" />
-              <div className={styles.corner} data-pos="br" />
-              <div className={styles.scanLine} />
-            </div>
+            <div className={styles.scanBox} />
             {processing && <div className={styles.processingBadge}>Processing…</div>}
           </div>
         )}
@@ -269,6 +263,7 @@ export default function CheckInClient({ events }: { events: Event[] }) {
             placeholder="Enter the code shown in their app…"
             autoComplete="off"
             spellCheck={false}
+            inputMode="numeric"
           />
           <button type="submit" className={styles.manualBtn} disabled={processing}>
             Check In

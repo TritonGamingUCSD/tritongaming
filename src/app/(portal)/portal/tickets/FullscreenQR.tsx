@@ -1,22 +1,40 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Ticket, X, Check } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import StyledQRCode from '@/components/StyledQRCode/StyledQRCode';
-import { DEFAULT_QR_OPTIONS, eventLabelIcon, type QRCodeOptions } from '@/lib/qrCodeStyling';
+import TicketQRBadge from '@/components/TicketQRBadge/TicketQRBadge';
+import { DEFAULT_QR_OPTIONS, type QRCodeOptions } from '@/lib/qrCodeStyling';
 import styles from './fullscreenqr.module.css';
 
 // Same TG-branded look as the portal's QR Studio "default" preset (see
-// src/lib/qrCodeStyling.ts), but the center icon is swapped for the event's
-// own text (see eventLabelIcon) instead of the TG logo — so it's obvious at
-// a glance which event this ticket is for, not just encoded in the data.
+// src/lib/qrCodeStyling.ts) — TG logo stays centered in the QR itself; the
+// event name used to sit there instead (see git history / eventLabelIcon),
+// but now arcs around the outside as part of the circular badge (see
+// TicketQRBadge + qrBadge.ts) so it doesn't compete with the logo.
+//
+// margin is deliberately the normal/small value, NOT inflated to make room
+// for a tight circular crop — an earlier attempt at that (large margin +
+// crop into it) turned out to break decoding in this library at high margin
+// values, confirmed by actually decoding the result with jsQR (the same
+// decoder the check-in scanner uses), not just by the geometry. The badge's
+// circle instead circumscribes the whole (fully intact) QR square — see
+// qrBadge.ts.
 const TICKET_QR_BASE: Omit<QRCodeOptions, 'data' | 'icon' | 'customIcon'> = {
   ...DEFAULT_QR_OPTIONS,
   size: 260,
-  margin: 6,
   iconPadding: 6,
-  iconSizeOverride: 0.48,
+  // Plain circular modules (not the Studio default's "extra-rounded" blobs)
+  // so the real QR's own dots match the decorative ring's dots exactly —
+  // same shape, same size logic — instead of two subtly different rounded
+  // styles sitting next to each other.
+  dotsType: 'dots',
+  // The finder-pattern frame ("corner") is otherwise the one hard-edged,
+  // squared-off shape left in an all-circular badge — a rounded square still
+  // reads as "a square sitting inside a circle." Rendering it as a ring/dot
+  // shape instead keeps every element of the badge, real and decorative,
+  // built from the same circular vocabulary.
+  cornersSquareType: 'dot',
 };
 
 interface Props {
@@ -174,11 +192,10 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
     : null;
 
   // qr_data is `${eventSlug}:${rotatingCode}` (see /api/tickets/[id]/qr) —
-  // reuse that same slug for the icon text so it can never drift out of sync
-  // with what the code actually encodes. Falls back to the title for events
-  // with no slug set.
+  // reuse that same slug for the arced label so it can never drift out of
+  // sync with what the code actually encodes. Falls back to the title for
+  // events with no slug set.
   const eventLabel = (qrData?.includes(':') ? qrData.split(':')[0] : '') || eventTitle;
-  const qrIcon = useMemo(() => eventLabelIcon(eventLabel), [eventLabel]);
 
   return (
     <div className={styles.backdrop} onClick={onBackdrop}>
@@ -214,8 +231,9 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
 
             <div className={styles.qrWrapper}>
               {qrData ? (
-                <StyledQRCode
-                  options={{ ...TICKET_QR_BASE, data: qrData, icon: 'custom', customIcon: qrIcon }}
+                <TicketQRBadge
+                  options={{ ...TICKET_QR_BASE, data: qrData, icon: 'tg-color', customIcon: null }}
+                  eventLabel={eventLabel}
                   className={styles.qrCanvas}
                 />
               ) : (
@@ -229,7 +247,8 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
                   <div key={code} className={styles.progressBar} style={{ animationDuration: `${expiresIn}s` }} />
                 </div>
                 <div className={styles.codeText}>
-                  Scanner not working? Ask staff to type: <strong># {code.toUpperCase()}</strong>
+                  Scanner not working? Ask staff to type:{' '}
+                  <strong className={styles.codeValue}>#{code}</strong>
                 </div>
               </>
             )}

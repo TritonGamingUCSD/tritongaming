@@ -33,10 +33,6 @@ export interface QRCodeOptions {
   cornersDotType: QRCornersDotType;
   icon: QRIconPreset;
   customIcon: string | null;
-  // Overrides getImageSize(icon) when set. Only the ticket QR's generated
-  // event-label icon (see eventLabelIcon below) needs this — arbitrary
-  // custom-upload icons in the Studio keep the normal 'custom' sizing.
-  iconSizeOverride?: number;
   margin: number;
   iconPadding: number;
   transparentBg: boolean;
@@ -125,7 +121,7 @@ export function buildQRCodeStylingOptions(options: QRCodeOptions) {
     imageOptions: {
       crossOrigin: 'anonymous' as const,
       hideBackgroundDots: true,
-      imageSize: options.iconSizeOverride ?? getImageSize(options.icon),
+      imageSize: getImageSize(options.icon),
       margin: options.iconPadding,
     },
     dotsOptions: {
@@ -147,60 +143,3 @@ export function buildQRCodeStylingOptions(options: QRCodeOptions) {
   };
 }
 
-function escapeXml(value: string): string {
-  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-// Greedily wraps `label` onto as few lines as possible (trying progressively
-// wider per-line budgets) so short slugs render as big single-line text and
-// long ones shrink onto more lines instead of overflowing the icon box.
-function wrapLabelLines(label: string, maxLines = 3): string[] {
-  const words = label.replace(/[-_]+/g, ' ').trim().toUpperCase().split(/\s+/).filter(Boolean);
-  if (words.length === 0) return [''];
-
-  for (const maxChars of [8, 10, 13, 17, 22]) {
-    const lines: string[] = [];
-    let current = '';
-    for (const word of words) {
-      const candidate = current ? `${current} ${word}` : word;
-      if (candidate.length > maxChars && current) {
-        lines.push(current);
-        current = word;
-      } else {
-        current = candidate;
-      }
-    }
-    if (current) lines.push(current);
-    if (lines.length <= maxLines) return lines;
-  }
-  // Extreme edge case (one very long unbroken word) — just render it as-is.
-  return [words.join(' ')];
-}
-
-// Renders event text (its slug, typically) as the QR's center "icon" instead
-// of a logo, so which event a ticket belongs to is obvious at a glance —
-// without even scanning — not just encoded in the data. See FullscreenQR.tsx.
-//
-// Sizing is deliberately conservative: the box has no visible border (a
-// border makes any near-miss in the width estimate below obvious as text
-// crossing a hard edge), and the per-character width budget assumes wide
-// bold glyphs so text stays clear of the padded box on real fonts, not just
-// the fallback sans-serif this was tuned against.
-export function eventLabelIcon(label: string): string {
-  const lines = wrapLabelLines(label);
-  const longest = Math.max(...lines.map((l) => l.length), 1);
-  const contentWidth = 168; // 200 box minus ~16px padding each side
-  const contentHeight = 170;
-  const fontSize = Math.max(16, Math.min(38, contentWidth / (longest * 0.6), contentHeight / (lines.length * 1.3)));
-  const lineHeight = fontSize * 1.2;
-  const totalHeight = lineHeight * lines.length;
-  const startY = 100 - totalHeight / 2 + fontSize * 0.76;
-
-  const textEls = lines
-    .map((line, i) => `<text x="100" y="${(startY + i * lineHeight).toFixed(1)}" text-anchor="middle" font-family="'Futura-Heavy','Arial Black',sans-serif" font-weight="800" font-size="${fontSize.toFixed(1)}" fill="#011941">${escapeXml(line)}</text>`)
-    .join('');
-
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" rx="26" fill="#ffffff"/>${textEls}</svg>`;
-
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
-}

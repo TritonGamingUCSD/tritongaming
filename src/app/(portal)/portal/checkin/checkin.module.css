@@ -164,38 +164,34 @@
   justify-content: center;
 }
 
+/* Circular viewfinder — matches the circular ticket QR badge attendees show
+   at check-in, rather than the generic square-with-corner-brackets scan box.
+   The ring itself breathes gently (a soft scale + glow pulse) to read as
+   "actively scanning" — no rotating sweep or separate expanding rings,
+   kept to one calm, simple effect. */
 .scanBox {
   position: relative;
   width: min(60%, 220px);
   aspect-ratio: 1;
+  border-radius: 50%;
+  border: 3px solid var(--yellow);
+  /* The oversized spread (far bigger than the viewport can ever be) paints
+     everything outside the circle, vignetting the camera feed's actual
+     square/rect frame down to a circular window with no extra overlay
+     element needed. */
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
+  animation: scanBreathe 1.8s ease-in-out infinite;
 }
 
-.corner {
-  position: absolute;
-  width: 24px;
-  height: 24px;
-  border-color: var(--yellow);
-  border-style: solid;
-}
-
-.corner[data-pos="tl"] { top: 0; left: 0; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
-.corner[data-pos="tr"] { top: 0; right: 0; border-width: 3px 3px 0 0; border-radius: 0 4px 0 0; }
-.corner[data-pos="bl"] { bottom: 0; left: 0; border-width: 0 0 3px 3px; border-radius: 0 0 0 4px; }
-.corner[data-pos="br"] { bottom: 0; right: 0; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
-
-.scanLine {
-  position: absolute;
-  left: 4px;
-  right: 4px;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--yellow), transparent);
-  border-radius: 9999px;
-  animation: scanMove 2s ease-in-out infinite;
-}
-
-@keyframes scanMove {
-  0%, 100% { top: 4px; opacity: 1; }
-  50%       { top: calc(100% - 6px); opacity: 0.8; }
+@keyframes scanBreathe {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4), 0 0 0 0 rgba(255, 199, 44, 0.45);
+  }
+  50% {
+    transform: scale(1.035);
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4), 0 0 20px 6px rgba(255, 199, 44, 0.45);
+  }
 }
 
 .processingBadge {

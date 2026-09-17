@@ -1,0 +1,19 @@
+.hidden {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  /* aspect-ratio guarantees a square box regardless of what the flex
+     parent (.qrWrapper in fullscreenqr.module.css, align-items:stretch by
+     default) tries to do to it — relying on height:auto alone let a
+     flex-stretched parent squash this into an oval instead of a circle. */
+  aspect-ratio: 1 / 1;
+  height: auto;
+  margin-inline: auto;
+}
