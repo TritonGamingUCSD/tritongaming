@@ -14,7 +14,7 @@ export default async function LandingDivisions() {
           <p className={styles.sectionLabel}>OUR DIVISIONS</p>
           <h2 className={styles.sectionTitle}>Compete. Connect. Create.</h2>
           <p className={styles.sectionSub}>
-            Ten active divisions spanning competitive esports, casual gaming, and creative arts.
+            Ten active divisions spanning competitive play, casual gaming, and creative arts.
           </p>
           <Link href="/divisions" className={styles.ctaLink}>View All Divisions →</Link>
         </div>
