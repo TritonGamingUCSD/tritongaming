@@ -14,7 +14,7 @@ interface HeroContent {
 export default function Hero({ content = {} }: { content?: HeroContent }) {
   const badge            = content.badge              || "UC San Diego's Gaming Org";
   const title            = content.title              || 'We are Triton Gaming';
-  const subtitle         = content.subtitle           || 'Esports · Events · Community';
+  const subtitle         = content.subtitle           || 'Game · Events · Community';
   const ctaPrimaryText   = content.cta_primary_text   || 'Explore Events';
   const ctaPrimaryHref   = content.cta_primary_href   || '/events';
   const ctaSecondaryText = content.cta_secondary_text || 'Join Discord';
