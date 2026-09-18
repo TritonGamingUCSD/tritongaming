@@ -7,8 +7,14 @@
 
 .canvas {
   display: block;
+  /* 100% of the outer wrapping div (.qrCanvas in fullscreenqr.module.css),
+     which itself is 100% of .qrWrapper — the one definite size in the whole
+     chain. Used to be its own min(260px, 100%), which only "worked" because
+     a <canvas> falls back to its intrinsic pixel size when a percentage
+     can't resolve against an indefinite container; the loading placeholder
+     it swaps in for had no such fallback and collapsed to spinner-size,
+     causing a visible jump when the real badge replaced it. */
   width: 100%;
-  max-width: 280px;
   /* aspect-ratio guarantees a square box regardless of what the flex
      parent (.qrWrapper in fullscreenqr.module.css, align-items:stretch by
      default) tries to do to it — relying on height:auto alone let a

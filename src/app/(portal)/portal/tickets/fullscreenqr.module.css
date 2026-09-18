@@ -139,10 +139,26 @@
      an oval. center leaves the badge to size itself. */
   align-items: center;
   border-radius: 50%;
+  /* The one definite size in this whole chain — everything below (the real
+     badge's canvas, and the loading placeholder standing in for it) just
+     fills 100% of this. An inline-flex box with no explicit size here
+     shrink-wraps its content instead, which is fine for the real badge
+     (a <canvas> falls back to its own intrinsic pixel size when its
+     percentage width can't resolve against an indefinite container) but not
+     for the plain placeholder <div> (no intrinsic size to fall back on, so
+     it collapsed to the spinner's tiny footprint) — the mismatch made the
+     whole badge+ring visibly jump into place the instant the real QR
+     replaced the placeholder. min() keeps it responsive on narrow screens.
+  */
+  width: min(260px, 100%);
+  aspect-ratio: 1 / 1;
 }
 
 .qrCanvas {
   display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
   border-radius: 0.5rem;
 }
 

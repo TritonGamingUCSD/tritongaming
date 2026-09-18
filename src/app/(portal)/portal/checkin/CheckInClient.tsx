@@ -59,6 +59,19 @@ export default function CheckInClient({ events }: { events: Event[] }) {
   // the only thing that lets startCamera tell "still here" apart from
   // "gone before the promise even settled."
   const mountedRef = useRef(true);
+  // stopCamera() used to reach the running stream only via
+  // videoRef.current.srcObject — fine when it runs from the "Stop Camera"
+  // button (component still fully mounted, ref still attached), but the
+  // unmount cleanup below can run *after* React has already detached
+  // videoRef (e.g. closing the portal hub panel this sits in defers the
+  // actual unmount slightly for its exit animation, and the <video> element
+  // is gone from the DOM by the time cleanup runs). At that point
+  // videoRef.current is null, the old guard silently no-opped, and the
+  // stream's tracks were never told to stop — the exact "camera still
+  // accessing after clicking Dashboard without hitting Stop Camera first"
+  // leak. Holding the stream here too means stopCamera() can always reach
+  // it directly, independent of whether the video element still exists.
+  const streamRef = useRef<MediaStream | null>(null);
 
   async function startCamera() {
     setError('');
@@ -71,6 +84,7 @@ export default function CheckInClient({ events }: { events: Event[] }) {
         return;
       }
       if (videoRef.current) {
+        streamRef.current = stream;
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
         setScanning(true);
@@ -87,8 +101,11 @@ export default function CheckInClient({ events }: { events: Event[] }) {
 
   function stopCamera() {
     cancelAnimationFrame(animRef.current);
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
     if (videoRef.current?.srcObject) {
-      (videoRef.current.srcObject as MediaStream).getTracks().forEach((t) => t.stop());
       videoRef.current.srcObject = null;
     }
     setScanning(false);
@@ -263,6 +280,14 @@ export default function CheckInClient({ events }: { events: Event[] }) {
   }
 
   useEffect(() => {
+    // React Strict Mode (dev only) double-invokes this effect on initial
+    // mount — mount, cleanup, mount again — specifically to surface effects
+    // that don't clean up properly. Without resetting it back to true here,
+    // that phantom first cleanup permanently left mountedRef.current false,
+    // so every real startCamera() afterward saw "already unmounted" and
+    // stopped its own stream the instant it got one — the camera would
+    // never actually turn on in dev.
+    mountedRef.current = true;
     return () => {
       mountedRef.current = false;
       cancelAnimationFrame(animRef.current);

@@ -311,7 +311,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
                 // as broken far more easily than a plain loading spinner
                 // does, especially for the one screen someone opens
                 // specifically to look at right now.
-                <div className={`${styles.qrCanvas} ${styles.qrLoading}`} style={{ width: 260, height: 260 }}>
+                <div className={`${styles.qrCanvas} ${styles.qrLoading}`}>
                   <LoadingSpinner size={32} theme="light" />
                 </div>
               )}
