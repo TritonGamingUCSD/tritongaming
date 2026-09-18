@@ -146,6 +146,23 @@
   border-radius: 0.5rem;
 }
 
+/* A fresh code landing used to just pop into place instantly (the badge's
+   canvas repaints and the ring resets in the same frame) — a brief fade+
+   settle here softens that into a visible "this just refreshed" moment
+   instead of an abrupt jump cut. */
+.qrSwap {
+  animation: qrSwapIn 0.45s ease-out;
+}
+
+@keyframes qrSwapIn {
+  from { opacity: 0.25; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qrSwap { animation: none; }
+}
+
 .qrLoading {
   display: flex;
   align-items: center;

@@ -64,6 +64,35 @@
 
 .dismiss:hover { opacity: 1; background: rgba(255, 255, 255, 0.18); }
 
+/* Below this width, a fixed-height single-line pill with an ellipsis cut
+   most real announcement text down to just a few words — "readable" and
+   "compact floating pill" stop being compatible once the text is longer
+   than a phone can show on one line. Trading the pill shape for a
+   full-width wrapped card fixes that; nowrap/ellipsis only ever worked
+   because desktop had the horizontal room to not need them. */
 @media (max-width: 480px) {
-  .text { max-width: 48vw; }
+  .banner {
+    left: 0.75rem;
+    right: 0.75rem;
+    max-width: none;
+    flex-wrap: wrap;
+    row-gap: 0.5rem;
+    border-radius: 1.25rem;
+  }
+
+  .text {
+    max-width: none;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    flex: 1 1 100%;
+    line-height: 1.45;
+  }
+
+  .cta { order: 2; }
+
+  .dismiss {
+    order: 3;
+    margin-left: auto;
+  }
 }

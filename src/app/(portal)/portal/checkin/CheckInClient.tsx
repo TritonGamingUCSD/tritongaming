@@ -47,6 +47,18 @@ export default function CheckInClient({ events }: { events: Event[] }) {
   // which closure is doing the reading, so they're the actual fix.
   const processingRef = useRef(false);
   const lastCodeRef = useRef('');
+  // getUserMedia() is async and can take a real moment — a permission
+  // prompt the person doesn't answer right away, or just a slow camera to
+  // initialize. If they navigate away *during* that wait, this component
+  // unmounts before the promise resolves, and videoRef.current goes back to
+  // null. The old code only checked that ref before attaching the stream —
+  // true, so it never attached — but it never stopped the stream either,
+  // just silently dropped the reference to it. Whatever tracks the browser
+  // had already granted stayed live forever, which is exactly "the site
+  // still thinks it's using the camera" after leaving the page. This ref is
+  // the only thing that lets startCamera tell "still here" apart from
+  // "gone before the promise even settled."
+  const mountedRef = useRef(true);
 
   async function startCamera() {
     setError('');
@@ -54,11 +66,19 @@ export default function CheckInClient({ events }: { events: Event[] }) {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
       });
+      if (!mountedRef.current) {
+        stream.getTracks().forEach((t) => t.stop());
+        return;
+      }
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
         setScanning(true);
         requestAnimationFrame(scanFrame);
+      } else {
+        // No video element to attach to for some other reason — don't leave
+        // the camera held open for nothing.
+        stream.getTracks().forEach((t) => t.stop());
       }
     } catch {
       setError('Camera access denied. Please allow camera permissions and try again.');
@@ -244,6 +264,7 @@ export default function CheckInClient({ events }: { events: Event[] }) {
 
   useEffect(() => {
     return () => {
+      mountedRef.current = false;
       cancelAnimationFrame(animRef.current);
       stopCamera();
       if (resultTimeout.current) clearTimeout(resultTimeout.current);

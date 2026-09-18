@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { rotatingCode, currentWindow, secondsUntilNextWindow } from '@/lib/rotatingCode';
+import { rotatingCode, currentWindow, secondsUntilNextWindow, ROTATION_SECONDS } from '@/lib/rotatingCode';
 
 export const runtime = 'nodejs';
 
@@ -38,5 +38,13 @@ export async function GET(request: Request, { params }: Params) {
   // before verifying the actual rotating code. `code` alone (no prefix) is
   // still returned for the manual-entry fallback text on screen.
   const qrData = event?.slug ? `${event.slug}:${code}` : code;
-  return NextResponse.json({ code, qr_data: qrData, expires_in: secondsUntilNextWindow() });
+  // rotation_seconds lets the client pace the countdown ring correctly —
+  // opening the ticket mid-window means expires_in is only whatever's left
+  // of the *current* global window (could be anywhere from 1s to the full
+  // length), not always a fresh full cycle. Without knowing the full cycle
+  // length too, the client can't tell "3 seconds left of a 30s window" apart
+  // from "a 3-second window," and would replay its entire visual countdown
+  // compressed into just those 3 seconds — which is exactly the "suddenly
+  // accelerates" glitch reported, especially right after first opening.
+  return NextResponse.json({ code, qr_data: qrData, expires_in: secondsUntilNextWindow(), rotation_seconds: ROTATION_SECONDS });
 }

@@ -51,10 +51,17 @@ interface Props {
 export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLocation, onClose, onCheckedIn }: Props) {
   const [code, setCode] = useState<string | null>(null);
   const [qrData, setQrData] = useState<string | null>(null);
-  const [expiresIn, setExpiresIn] = useState(60);
+  const [expiresIn, setExpiresIn] = useState(30);
+  const [rotationSeconds, setRotationSeconds] = useState(30);
   const [error, setError] = useState('');
   const [checkedIn, setCheckedIn] = useState(false);
   const refreshTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Tracks the code across renders without needing it in fetchCode's own
+  // dependency list (that would redefine fetchCode every refresh and
+  // re-trigger the mount effect that calls it — a fetch loop). Only reason
+  // this exists: telling "the window actually rolled over" apart from "we
+  // re-checked but nothing's new yet."
+  const lastCodeRef = useRef<string | null>(null);
 
   const fetchCode = useCallback(async () => {
     // Once checked in there's nothing left to show a code for, and the /qr
@@ -76,12 +83,29 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
         return;
       }
       setError('');
-      setCode(data.code);
       setQrData(data.qr_data);
-      setExpiresIn(data.expires_in);
-      // Refresh a couple seconds before it actually expires, so there's never
-      // a moment where a stale/rejected code is on screen.
-      const delayMs = Math.max((data.expires_in - 2) * 1000, 1000);
+      // The visibility/focus listener below re-runs this on every tab
+      // refocus, even mid-window when the code hasn't actually changed —
+      // reassigning expiresIn/rotationSeconds in that case fed a *new*
+      // animation-delay to the ring's still-running, non-remounted CSS
+      // animation (same code -> same key -> no remount), which browsers
+      // handle by re-seeking its current position — the "sudden jump."
+      // Only touch the ring's timing when the code genuinely rotated.
+      if (data.code !== lastCodeRef.current) {
+        lastCodeRef.current = data.code;
+        setCode(data.code);
+        setExpiresIn(data.expires_in);
+        setRotationSeconds(data.rotation_seconds || 30);
+      }
+      // Refresh shortly *after* it actually expires (not a couple seconds
+      // before) — currentWindow() on the server hasn't rolled over yet at
+      // "2s early," so that old timing just re-fetched the *same* code and
+      // relied on a second, tighter follow-up poll to finally land past the
+      // boundary, adding up to another full second of visible delay between
+      // the ring finishing and the next code actually showing. Landing
+      // just after the boundary the first time means one round trip, not
+      // two, for the swap.
+      const delayMs = data.expires_in * 1000 + 350;
       refreshTimeout.current = setTimeout(fetchCode, delayMs);
     } catch {
       // A genuine network failure (as opposed to the server responding with
@@ -249,16 +273,38 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
                     key={code}
                     className={styles.countdownFill}
                     cx="50" cy="50" r="48"
-                    style={{ animationDuration: `${expiresIn}s` }}
+                    // Always paced to a full rotation cycle (animation-duration),
+                    // then seeked forward with a *negative* delay to however much
+                    // of that cycle has already elapsed — the standard CSS trick
+                    // for resuming an animation partway through instead of
+                    // replaying it from the start. Opening the ticket mid-window
+                    // (expiresIn < rotationSeconds, e.g. 4s left of a 30s cycle)
+                    // now shows the ring already mostly drained/red, exactly
+                    // matching reality, instead of restarting from full green and
+                    // rushing through the *entire* gold-to-red journey in just
+                    // those 4 seconds — which is what "accelerates and suddenly
+                    // ends" actually was: not a bug in the timer itself, but the
+                    // ring always replaying its whole visual arc regardless of
+                    // how much of the real cycle was left to show it in.
+                    style={{
+                      animationDuration: `${rotationSeconds}s`,
+                      animationDelay: `-${Math.max(0, rotationSeconds - expiresIn)}s`,
+                    }}
                   />
                 </svg>
               )}
               {qrData ? (
-                <TicketQRBadge
-                  options={{ ...TICKET_QR_BASE, data: qrData, icon: 'tg-color', customIcon: null }}
-                  eventLabel={eventLabel}
-                  className={styles.qrCanvas}
-                />
+                // Keyed by qrData (not a stable key) specifically so React
+                // remounts this on every refresh — that's what restarts the
+                // fade-in below each time, turning what used to be an
+                // instant, jarring swap into a brief soft crossfade instead.
+                <div key={qrData} className={styles.qrSwap}>
+                  <TicketQRBadge
+                    options={{ ...TICKET_QR_BASE, data: qrData, icon: 'tg-color', customIcon: null }}
+                    eventLabel={eventLabel}
+                    className={styles.qrCanvas}
+                  />
+                </div>
               ) : (
                 // On a slow connection this can sit for a couple seconds
                 // waiting on the /qr fetch — a blank white circle here reads
@@ -274,7 +320,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
             {code && (
               <div className={styles.fallbackCard}>
                 <div className={styles.fallbackHint}>Scanner not working? Staff can type this code:</div>
-                <div className={styles.fallbackCode}>
+                <div key={code} className={`${styles.fallbackCode} ${styles.qrSwap}`}>
                   <span className={styles.fallbackHash}>#</span>
                   <span className={styles.fallbackValue}>{code}</span>
                 </div>
