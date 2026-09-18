@@ -2,20 +2,25 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Reveal, RevealGroup, RevealItem } from '@/components/Reveal/Reveal';
 import { getDivisions, divisionLogoSrc } from '@/lib/divisions';
+import { getContentBlock } from '@/lib/content';
 import styles from './LandingDivisions.module.css';
 
 export default async function LandingDivisions() {
-  const divisions = await getDivisions();
+  const [divisions, content] = await Promise.all([
+    getDivisions(),
+    getContentBlock('homepage.divisions'),
+  ]);
+  const label = content.label as string;
+  const title = content.title as string;
+  const subtitle = content.subtitle as string;
 
   return (
     <section className={styles.section} aria-label="Divisions">
       <Reveal variant="fadeUp">
         <div className={styles.header}>
-          <p className={styles.sectionLabel}>OUR DIVISIONS</p>
-          <h2 className={styles.sectionTitle}>Compete. Connect. Create.</h2>
-          <p className={styles.sectionSub}>
-            Ten active divisions spanning competitive play, casual gaming, and creative arts.
-          </p>
+          <p className={styles.sectionLabel}>{label}</p>
+          <h2 className={styles.sectionTitle}>{title}</h2>
+          <p className={styles.sectionSub}>{subtitle}</p>
           <Link href="/divisions" className={styles.ctaLink}>View All Divisions →</Link>
         </div>
       </Reveal>

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Building2, Trophy, RadioTower, Handshake } from 'lucide-react';
 import LogoGrid from '@/components/LogoGrid/LogoGrid';
-import { getContentBlock } from '@/lib/content';
+import { getContentBlocks } from '@/lib/content';
 import type { LogoItem } from '@/types';
 import styles from './sponsors.module.css';
 
@@ -11,11 +11,13 @@ const TIER_SIZE: Record<string, 'small' | 'medium' | 'large'> = {
   platinum: 'large', gold: 'large', silver: 'medium', bronze: 'small',
 };
 
-const OFFERINGS = [
-  { icon: <Building2 size={28} strokeWidth={1.5} aria-hidden="true" />, title: 'Event Activation', body: 'Set up booths, demos, and hands-on activations at our LANs, expos, and gaming events with thousands of student attendees.' },
-  { icon: <Trophy size={28} strokeWidth={1.5} aria-hidden="true" />, title: 'Tournament Sponsorship', body: 'Co-host tournaments or provide prize pools — get your brand in front of competitive UCSD gamers and beyond.' },
-  { icon: <RadioTower size={28} strokeWidth={1.5} aria-hidden="true" />, title: 'Social Media Reach', body: 'Reach 1.5M+ across our social channels with dedicated posts, stories, and reels featuring your brand and products.' },
-  { icon: <Handshake size={28} strokeWidth={1.5} aria-hidden="true" />, title: 'Panels & Talks', body: 'Engage our community with an industry panel, career talk, or fireside chat connecting your team to future professionals.' },
+// Icons are a design choice tied to what each offering *is*, not copy — the
+// title/body text next to them comes from the page.sponsors content block.
+const OFFERING_ICONS = [
+  <Building2 key="1" size={28} strokeWidth={1.5} aria-hidden="true" />,
+  <Trophy key="2" size={28} strokeWidth={1.5} aria-hidden="true" />,
+  <RadioTower key="3" size={28} strokeWidth={1.5} aria-hidden="true" />,
+  <Handshake key="4" size={28} strokeWidth={1.5} aria-hidden="true" />,
 ];
 
 export const metadata: Metadata = {
@@ -41,15 +43,23 @@ function dbSponsorsToLogoItems(items: DbSponsor[]): LogoItem[] {
 }
 
 export default async function SponsorsPage() {
-  let logos: LogoItem[] = [];
+  const blocks = await getContentBlocks(['sponsors', 'page.sponsors', 'site.settings']);
+  const sponsorsContent = blocks['sponsors'] ?? {};
+  const content = blocks['page.sponsors'] ?? {};
+  const settings = blocks['site.settings'] ?? {};
 
-  try {
-    const content = await getContentBlock('sponsors');
-    const items = content.items as DbSponsor[] | undefined;
-    if (items?.length) {
-      logos = dbSponsorsToLogoItems(items);
-    }
-  } catch { /* fall through to empty */ }
+  const items = sponsorsContent.items as DbSponsor[] | undefined;
+  const logos: LogoItem[] = items?.length ? dbSponsorsToLogoItems(items) : [];
+
+  // site.settings.email is genuinely optional (see content-blocks.ts) — this
+  // one stays as a real fallback, not stand-in copy, since a club contact
+  // email not being configured yet is a legitimate state, unlike page copy.
+  const email = (settings.email as string) || 'tritongamingofficial@gmail.com';
+  const offerings = OFFERING_ICONS.map((icon, i) => ({
+    title: content[`offer${i + 1}_title`] as string,
+    body: content[`offer${i + 1}_body`] as string,
+    icon,
+  }));
 
   return (
     <div className={styles.page}>
@@ -58,17 +68,15 @@ export default async function SponsorsPage() {
       <div className={styles.heroBanner}>
         <div className={styles.heroBg} aria-hidden="true" />
         <div className={styles.heroContent}>
-          <p className={styles.heroLabel}>PARTNERSHIPS</p>
-          <h1 className={styles.heroTitle}>Backed by the Best</h1>
-          <p className={styles.heroSub}>
-            Triton Gaming partners with leading gaming brands to bring world-class experiences to UC San Diego students.
-          </p>
+          <p className={styles.heroLabel}>{content.hero_label as string}</p>
+          <h1 className={styles.heroTitle}>{content.hero_title as string}</h1>
+          <p className={styles.heroSub}>{content.hero_subtitle as string}</p>
         </div>
       </div>
 
       {/* Mission bar */}
       <div className={styles.missionBar}>
-        <p>At Triton Gaming, community always comes first. Our sponsors make that possible.</p>
+        <p>{content.mission_text as string}</p>
       </div>
 
       {/* Current sponsors */}
@@ -91,14 +99,12 @@ export default async function SponsorsPage() {
         <div className={styles.offerBg} aria-hidden="true" />
         <div className={styles.offerInner}>
           <div className={styles.sectionHeader}>
-            <p className={styles.sectionLabelLight}>SPONSORSHIP BENEFITS</p>
-            <h2 className={styles.sectionTitleLight}>What We Offer</h2>
-            <p className={styles.sectionSub}>
-              Innovative activations designed to connect your brand with UCSD&apos;s thriving gaming community.
-            </p>
+            <p className={styles.sectionLabelLight}>{content.offer_label as string}</p>
+            <h2 className={styles.sectionTitleLight}>{content.offer_title as string}</h2>
+            <p className={styles.sectionSub}>{content.offer_subtitle as string}</p>
           </div>
           <div className={styles.offerGrid}>
-            {OFFERINGS.map((o) => (
+            {offerings.map((o) => (
               <div key={o.title} className={styles.offerCard}>
                 <span className={styles.offerIcon}>{o.icon}</span>
                 <h3 className={styles.offerTitle}>{o.title}</h3>
@@ -111,13 +117,13 @@ export default async function SponsorsPage() {
 
       {/* Contact CTA */}
       <section className={styles.ctaSection}>
-        <p className={styles.ctaHeading}>Interested in Sponsoring Triton Gaming?</p>
-        <p className={styles.ctaSub}>Whatever you&apos;re envisioning — we&apos;ll make it happen.</p>
+        <p className={styles.ctaHeading}>{content.cta_heading as string}</p>
+        <p className={styles.ctaSub}>{content.cta_sub as string}</p>
         <a
-          href="mailto:tritongamingofficial@gmail.com"
+          href={`mailto:${email}`}
           className={styles.ctaEmail}
         >
-          tritongamingofficial@gmail.com
+          {email}
         </a>
       </section>
 

@@ -26,11 +26,15 @@ function dbSponsorsToLogoItems(items: DbSponsor[]): LogoItem[] {
 // where this content gets room to breathe; here it's just a "trusted by"
 // beat between Divisions and the closing recruitment section.
 export default async function LandingSponsors() {
-  const content = await getContentBlock('sponsors');
-  const dbItems = content.items as DbSponsor[] | undefined;
+  const [sponsorsContent, sectionContent] = await Promise.all([
+    getContentBlock('sponsors'),
+    getContentBlock('homepage.sponsors'),
+  ]);
+  const dbItems = sponsorsContent.items as DbSponsor[] | undefined;
   const logos: LogoItem[] = dbItems?.length
     ? dbSponsorsToLogoItems(dbItems)
     : [];
+  const label = sectionContent.label as string;
 
   if (logos.length === 0) return null;
 
@@ -39,7 +43,7 @@ export default async function LandingSponsors() {
       <Reveal variant="fadeUp">
         <div className={styles.strip}>
           <div className={styles.stripHeader}>
-            <p className={styles.sectionLabel}>OUR PARTNERS</p>
+            <p className={styles.sectionLabel}>{label}</p>
             <Link href="/sponsors" className={styles.ctaLink}>Become a Sponsor →</Link>
           </div>
           <LogoGrid logos={logos} />

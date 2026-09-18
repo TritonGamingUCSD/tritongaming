@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import LongEventCard from '@/components/LongEventCard/LongEventCard';
 import EventCard from '@/components/EventCard/EventCard';
 import { getUpcomingEvents, getPreviousEvents } from '@/lib/events';
+import { getContentBlock } from '@/lib/content';
 import styles from './events.module.css';
 
 export const metadata: Metadata = {
@@ -12,10 +13,14 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function EventsPage() {
-  const [upcoming, previous] = await Promise.all([
+  const [upcoming, previous, content] = await Promise.all([
     getUpcomingEvents(),
     getPreviousEvents(),
+    getContentBlock('page.events'),
   ]);
+  const heroLabel = content.label as string;
+  const heroTitle = content.title as string;
+  const heroSub = content.subtitle as string;
 
   // The soonest upcoming event gets the full featured treatment (big flyer,
   // ticket CTA); everything else — the rest of upcoming, and all of past —
@@ -29,11 +34,9 @@ export default async function EventsPage() {
       <div className={styles.heroBanner}>
         <div className={styles.heroBg} aria-hidden="true" />
         <div className={styles.heroContent}>
-          <p className={styles.heroLabel}>WHAT'S HAPPENING</p>
-          <h1 className={styles.heroTitle}>Events</h1>
-          <p className={styles.heroSub}>
-            LANs, tournaments, GBMs, and socials — everything Triton Gaming has run or has coming up.
-          </p>
+          <p className={styles.heroLabel}>{heroLabel}</p>
+          <h1 className={styles.heroTitle}>{heroTitle}</h1>
+          <p className={styles.heroSub}>{heroSub}</p>
         </div>
       </div>
 

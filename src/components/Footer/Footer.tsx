@@ -41,6 +41,7 @@ export default async function Footer() {
   const footerContent = content['footer'] ?? {};
 
   const copyright = footerContent.copyright as string | undefined;
+  const tagline = footerContent.tagline as string | undefined;
 
   // Build social href: use DB value, fall back to default; email values get mailto: prefix if needed
   function socialHref(key: keyof typeof SOCIAL_DEFAULTS): string {
@@ -66,7 +67,7 @@ export default async function Footer() {
           height={100}
           className={styles.logo}
         />
-        <p className={styles.tagline}>UC San Diego&apos;s Gaming Org</p>
+        {tagline && <p className={styles.tagline}>{tagline}</p>}
         {copyright && <p className={styles.copy}>{copyright}</p>}
       </div>
 

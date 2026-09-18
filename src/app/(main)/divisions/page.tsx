@@ -1,21 +1,25 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { getDivisions, divisionLogoSrc } from '@/lib/divisions';
+import { getContentBlock } from '@/lib/content';
 import styles from './divisions.module.css';
 
 export const metadata = { title: 'Divisions' };
+export const dynamic = 'force-dynamic';
 
 export default async function DivisionsPage() {
-  const divisions = await getDivisions();
+  const [divisions, content] = await Promise.all([
+    getDivisions(),
+    getContentBlock('page.divisions'),
+  ]);
+  const title = content.title as string;
+  const subtitle = content.subtitle as string;
 
   return (
     <div className={styles.page}>
       <section className={styles.hero}>
-        <h1 className={styles.heroTitle}>Our Divisions</h1>
-        <p className={styles.heroSub}>
-          Triton Gaming hosts dedicated game divisions — from competitive
-          gaming to casual communities. Find your squad.
-        </p>
+        <h1 className={styles.heroTitle}>{title}</h1>
+        <p className={styles.heroSub}>{subtitle}</p>
       </section>
 
       <section className={styles.grid}>

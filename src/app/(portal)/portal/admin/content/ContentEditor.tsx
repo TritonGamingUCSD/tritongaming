@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Pencil, X, Check } from 'lucide-react';
+import { Pencil, X, Check, MapPin } from 'lucide-react';
 import type { ContentBlock, FieldDef } from '@/lib/content-blocks';
 import { CATEGORY_ORDER } from '@/lib/content-blocks';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
@@ -21,17 +21,15 @@ const COLOR_PREVIEW: Record<string, string> = {
   yellow: '#ffc72c', blue: '#275a8f', green: '#059669', red: '#dc2626',
 };
 
-// Where a block's own content actually shows up, for the "View Live Page"
-// link — omitted for blocks that only affect a fragment of a page (e.g.
-// site.settings feeds icons in the footer, not a page of its own).
-const BLOCK_LIVE_URL: Record<string, string> = {
-  'homepage.hero': '/',
-  'homepage.about': '/',
-  'homepage.stats': '/',
-  'page.get-involved': '/get-involved',
-  'sponsors': '/sponsors',
-  'footer': '/',
-};
+// A block's own `pages` array is the single source of truth for "where does
+// this text actually show up" — this just turns it into the label/links
+// used in the UI ('*' means every public page, rather than one specific
+// route to link to).
+function pagesLabel(pages: string[]): string {
+  if (pages.includes('*')) return 'Every page';
+  if (pages.length === 1) return pages[0] === '/' ? 'Homepage' : pages[0];
+  return pages.map((p) => (p === '/' ? 'Homepage' : p)).join(', ');
+}
 
 export default function ContentEditor({ blocks, contentMap, lastEdited }: Props) {
   const [activeKey, setActiveKey] = useState<string | null>(null);
@@ -128,6 +126,9 @@ export default function ContentEditor({ blocks, contentMap, lastEdited }: Props)
                         {isActive ? <X size={16} strokeWidth={1.75} aria-hidden="true" /> : <Pencil size={16} strokeWidth={1.5} aria-hidden="true" />}
                       </span>
                     </div>
+                    <div className={styles.blockLocation}>
+                      <MapPin size={11} strokeWidth={1.75} aria-hidden="true" /> {pagesLabel(block.pages)}
+                    </div>
                     {preview && <div className={styles.blockPreview}>{preview}</div>}
                     {le && <div className={styles.lastEdited}>Edited by {le.by} · {timeAgo(le.at)}</div>}
                     {saved === block.key && <div className={styles.savedBadge}><Check size={13} strokeWidth={1.75} aria-hidden="true" /> Saved</div>}
@@ -148,16 +149,19 @@ export default function ContentEditor({ blocks, contentMap, lastEdited }: Props)
                 <span className={styles.editPanelIcon}>{activeBlock.icon}</span>
                 <h2 className={styles.editPanelTitle}>{activeBlock.title}</h2>
                 <p className={styles.editPanelDesc}>{activeBlock.description}</p>
-                {BLOCK_LIVE_URL[activeBlock.key] && (
-                  <a
-                    href={BLOCK_LIVE_URL[activeBlock.key]}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.viewLiveLink}
-                  >
-                    View Live Page ↗
-                  </a>
-                )}
+                <div className={styles.viewLiveRow}>
+                  {activeBlock.pages.includes('*') ? (
+                    <a href="/" target="_blank" rel="noopener noreferrer" className={styles.viewLiveLink}>
+                      View Live Site ↗
+                    </a>
+                  ) : (
+                    activeBlock.pages.map((page) => (
+                      <a key={page} href={page} target="_blank" rel="noopener noreferrer" className={styles.viewLiveLink}>
+                        View {page === '/' ? 'Homepage' : page} ↗
+                      </a>
+                    ))
+                  )}
+                </div>
               </div>
               <button className={styles.closePanel} onClick={() => setActiveKey(null)}><X size={18} strokeWidth={1.75} /></button>
             </div>
@@ -460,8 +464,27 @@ function getPreview(block: BlockDef, data: Record<string, unknown>): string {
       return (data.text as string) || '';
     case 'homepage.hero':
     case 'homepage.about':
-    case 'page.get-involved':
+    case 'page.about':
+    case 'page.divisions':
       return (data.title as string) || '';
+    case 'page.get-involved':
+      return (data.hero_title as string) || '';
+    case 'page.get-involved.officer':
+      return (data.title as string) || '';
+    case 'page.events':
+      return (data.title as string) || (data.label as string) || '';
+    case 'page.sponsors':
+      return (data.hero_title as string) || '';
+    case 'homepage.divisions':
+    case 'homepage.events':
+    case 'homepage.sponsors':
+      return (data.title as string) || (data.label as string) || '';
+    case 'page.our-story':
+      return [data.section1_title, data.section2_title, data.section3_title]
+        .filter(Boolean).join(' · ');
+    case 'homepage.recruitment':
+      return [data.officer_title, data.discord_title, data.social_title]
+        .filter(Boolean).join(' · ');
     case 'homepage.stats': {
       const items = data.items as Array<{ value: string; label: string }> | undefined;
       return items?.slice(0,2).map((i) => `${i.value} ${i.label}`).join(' · ') || '';
@@ -470,7 +493,7 @@ function getPreview(block: BlockDef, data: Record<string, unknown>): string {
       return [data.discord && 'Discord', data.instagram && 'Instagram', data.email && 'Email']
         .filter(Boolean).join(' · ') || 'No links set';
     case 'footer':
-      return (data.copyright as string) || '';
+      return (data.tagline as string) || (data.copyright as string) || '';
     case 'sponsors': {
       const items = data.items as unknown[] | undefined;
       return items?.length ? `${items.length} sponsor${items.length !== 1 ? 's' : ''}` : '';

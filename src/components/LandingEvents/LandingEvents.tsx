@@ -9,6 +9,7 @@ import styles from './LandingEvents.module.css';
 
 interface LandingEventsProps {
   initialEvents: Event[];
+  content?: { label?: string; title?: string };
 }
 
 // Below this many events, the infinite-scroll illusion (tripling the list)
@@ -16,7 +17,8 @@ interface LandingEventsProps {
 // pays off once there's enough real content to make the seam invisible.
 const MIN_EVENTS_TO_LOOP = 5;
 
-export default function LandingEvents({ initialEvents }: LandingEventsProps) {
+export default function LandingEvents({ initialEvents, content = {} }: LandingEventsProps) {
+  const { label, title } = content;
   const shouldLoop = initialEvents.length >= MIN_EVENTS_TO_LOOP;
   const [focusedIndex, setFocusedIndex] = useState(shouldLoop ? initialEvents.length : 0);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -83,8 +85,8 @@ export default function LandingEvents({ initialEvents }: LandingEventsProps) {
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
       >
         <div className={styles.header}>
-          <p className={styles.sectionLabel}>DON&apos;T MISS OUT</p>
-          <h2 className={styles.sectionTitle}>Upcoming Events</h2>
+          <p className={styles.sectionLabel}>{label}</p>
+          <h2 className={styles.sectionTitle}>{title}</h2>
         </div>
         <div className={styles.titleActions}>
           <Link href="/events" className={styles.ctaLink}>View All Events →</Link>

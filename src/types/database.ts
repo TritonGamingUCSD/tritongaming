@@ -23,8 +23,6 @@ export type Capability =
   | 'manage_site_content'
   | 'manage_division'
   | 'manage_divisions_directory'
-  | 'manage_sponsors'
-  | 'delete_sponsors'
   | 'view_members'
   | 'view_admin_dashboard'
   | 'manage_roles'
