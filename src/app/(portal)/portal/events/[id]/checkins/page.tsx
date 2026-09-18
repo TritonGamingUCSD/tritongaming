@@ -6,6 +6,7 @@ import { getUserRoles } from '@/lib/auth';
 import { hasCapability } from '@/lib/capabilities';
 import { createClient } from '@/lib/supabase/server';
 import { resolveAvatarUrl } from '@/lib/profile';
+import { PACIFIC_TZ } from '@/lib/timezone';
 import styles from './checkins.module.css';
 
 export const metadata = { title: 'Check-Ins' };
@@ -67,7 +68,7 @@ export default async function EventCheckinsPage({ params }: Params) {
         <h1 className={styles.title}>{event.title}</h1>
         <p className={styles.sub}>
           {new Date(event.start_date).toLocaleDateString('en-US', {
-            weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit',
+            timeZone: PACIFIC_TZ, weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit',
           })}
           {event.location && ` · ${event.location}`}
         </p>
@@ -116,14 +117,14 @@ export default async function EventCheckinsPage({ params }: Params) {
                   </div>
                 </div>
                 <span className={styles.date}>
-                  {new Date(t.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  {new Date(t.created_at).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', day: 'numeric' })}
                 </span>
                 <span className={`${styles.badge} ${styles[`status_${t.status}`]}`}>
                   {STATUS_LABEL[t.status]}
                 </span>
                 <span className={styles.date}>
                   {t.checked_in_at
-                    ? new Date(t.checked_in_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+                    ? new Date(t.checked_in_at).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' })
                     : '—'}
                 </span>
               </div>

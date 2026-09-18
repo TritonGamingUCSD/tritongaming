@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { slugify } from '@/lib/slug';
+import { pacificDatetimeLocalToUTC } from '@/lib/timezone';
 import EventForm, { EMPTY_EVENT_FORM, type EventFormValues } from '../EventForm';
 
 export default function NewEventClient() {
@@ -21,8 +22,8 @@ export default function NewEventClient() {
       content: form.content.trim() || null,
       description: form.details.trim() || null,
       location: form.location.trim() || null,
-      start_date: new Date(form.start_date).toISOString(),
-      end_date: form.end_date ? new Date(form.end_date).toISOString() : null,
+      start_date: pacificDatetimeLocalToUTC(form.start_date).toISOString(),
+      end_date: form.end_date ? pacificDatetimeLocalToUTC(form.end_date).toISOString() : null,
       flyer_url: form.flyer_url.trim() || null,
       max_capacity: form.max_capacity ? parseInt(form.max_capacity) : null,
       requires_ticket: true, // every published event is ticketable

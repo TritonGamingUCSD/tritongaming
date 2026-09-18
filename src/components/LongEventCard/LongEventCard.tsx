@@ -3,33 +3,11 @@ import Link from 'next/link';
 import { Ticket } from 'lucide-react';
 import styles from './LongEventCard.module.css';
 import type { Event } from '@/types';
-
-function formatDateRange(startISO: string, endISO: string) {
-  const start = new Date(startISO);
-  const end = new Date(endISO);
-  if (start.toDateString() === end.toDateString()) {
-    return start.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  }
-  const sameYear = start.getFullYear() === end.getFullYear();
-  const sameMonth = start.getMonth() === end.getMonth() && sameYear;
-  const s = start.toLocaleDateString('en-US', { month: 'long', day: 'numeric', ...(sameYear ? {} : { year: 'numeric' }) });
-  // Intl.DateTimeFormat has no clean way to render "day + year" without a
-  // month — passing month: undefined doesn't just omit it, it falls back to
-  // an awkward "2026 (day: 31)" format. Build the same-month case by hand.
-  const e = sameMonth
-    ? `${end.getDate()}, ${end.getFullYear()}`
-    : end.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  return `${s} – ${e}`;
-}
-
-function formatTime(startISO: string, endISO: string) {
-  const fmt = (d: Date) => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  return `${fmt(new Date(startISO))} – ${fmt(new Date(endISO))}`;
-}
+import { formatEventDateRange, formatEventTimeRange } from '@/lib/timezone';
 
 export default function LongEventCard({ event }: { event: Event }) {
-  const dateStr = formatDateRange(event.start_date, event.end_date);
-  const timeStr = formatTime(event.start_date, event.end_date);
+  const dateStr = formatEventDateRange(event.start_date, event.end_date);
+  const timeStr = formatEventTimeRange(event.start_date, event.end_date);
   const isExternal = event.flyer_url?.startsWith('http');
   const isPast = new Date(event.end_date || event.start_date) < new Date();
 

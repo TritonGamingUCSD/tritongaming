@@ -7,6 +7,7 @@ import { getEventBySlugOrId } from '@/lib/events';
 import { getAlbumPreview } from '@/lib/googlePhotosAlbum';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import EventSocialEmbeds from '@/components/EventSocialEmbeds/EventSocialEmbeds';
+import { formatEventDateRange, formatEventTimeRange } from '@/lib/timezone';
 import styles from './event-detail.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -26,28 +27,11 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 }
 
 function formatDateRange(startISO: string, endISO: string) {
-  const start = new Date(startISO);
-  const end = endISO ? new Date(endISO) : null;
-  if (!end || start.toDateString() === end.toDateString()) {
-    return start.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-  }
-  const sameYear = start.getFullYear() === end.getFullYear();
-  const sameMonth = start.getMonth() === end.getMonth() && sameYear;
-  const s = start.toLocaleDateString('en-US', { month: 'long', day: 'numeric', ...(sameYear ? {} : { year: 'numeric' }) });
-  // Intl.DateTimeFormat has no clean way to render "day + year" without a
-  // month — passing month: undefined doesn't just omit it, it falls back to
-  // an awkward "2026 (day: 31)" format. Build the same-month case by hand.
-  const e = sameMonth
-    ? `${end.getDate()}, ${end.getFullYear()}`
-    : end.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  return `${s} – ${e}`;
+  return formatEventDateRange(startISO, endISO, { weekday: true });
 }
 
 function formatTime(startISO: string, endISO: string) {
-  const fmt = (d: Date) => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  const start = fmt(new Date(startISO));
-  if (!endISO) return start;
-  return `${start} – ${fmt(new Date(endISO))}`;
+  return formatEventTimeRange(startISO, endISO);
 }
 
 export default async function EventDetailPage({ params }: Params) {

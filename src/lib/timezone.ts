@@ -1,0 +1,134 @@
+// Triton Gaming is a UC San Diego club — every event happens in Pacific
+// Time, so that's what should show up everywhere a date/time is displayed,
+// regardless of where the person viewing the page actually is. Without an
+// explicit `timeZone`, `toLocaleDateString`/`toLocaleTimeString` fall back
+// to the *viewer's* browser timezone, which is how someone opening the site
+// from Taiwan ends up seeing a San Diego event's time silently shifted by
+// 15-16 hours — technically "correct" as a conversion, but meaningless (and
+// misleading) for a time that's inherently tied to a physical place.
+//
+// A named IANA zone (not a fixed "PST"/"PDT" offset) so daylight saving is
+// handled automatically — the same code shows PST in January and PDT in
+// July without needing to know which one applies.
+export const PACIFIC_TZ = 'America/Los_Angeles';
+
+// Date.prototype's own getters (getFullYear, getMonth, getDate, toDateString)
+// always read in the *runtime's* local timezone — there's no way to ask a
+// plain Date object "what day is this in Pacific time" directly. Pulling the
+// individual fields back out of an Intl.DateTimeFormat that's already been
+// told to render in Pacific is the only built-in way to get a same-day/
+// same-month comparison that's actually correct in Pacific terms, instead of
+// whatever timezone the browser (or server process) happens to be running in.
+function pacificDateParts(date: Date): { year: number; month: number; day: number } {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: PACIFIC_TZ,
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+  }).formatToParts(date);
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value);
+  return { year: get('year'), month: get('month'), day: get('day') };
+}
+
+// Shared by every event card/detail view (EventCard, LongEventCard, the
+// public event detail page) — was previously copy-pasted three times with
+// no explicit timeZone, so the same-day/same-month comparisons it makes were
+// each done in whichever timezone the viewer's browser (or the server
+// process, for the server-rendered detail page) happened to be in.
+export function formatEventDateRange(startISO: string, endISO?: string | null, opts?: { weekday?: boolean }): string {
+  const start = new Date(startISO);
+  const end = endISO ? new Date(endISO) : null;
+  const weekday = opts?.weekday ? ({ weekday: 'long' as const }) : {};
+
+  if (!end) {
+    return start.toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, ...weekday, month: 'long', day: 'numeric', year: 'numeric' });
+  }
+
+  const sp = pacificDateParts(start);
+  const ep = pacificDateParts(end);
+  const isSameDay = sp.year === ep.year && sp.month === ep.month && sp.day === ep.day;
+
+  if (isSameDay) {
+    return start.toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, ...weekday, month: 'long', day: 'numeric', year: 'numeric' });
+  }
+
+  const sameYear = sp.year === ep.year;
+  const sameMonth = sp.month === ep.month && sameYear;
+
+  const s = start.toLocaleDateString('en-US', {
+    timeZone: PACIFIC_TZ,
+    month: 'long',
+    day: 'numeric',
+    ...(sameYear ? {} : { year: 'numeric' as const }),
+  });
+  // Intl.DateTimeFormat has no clean way to render "day + year" without a
+  // month — passing month: undefined doesn't just omit it, it falls back to
+  // an awkward "2026 (day: 31)" format. Build the same-month case by hand,
+  // from the already-Pacific-derived day/year rather than end.getDate() /
+  // end.getFullYear() (which would reread it in the local runtime zone).
+  const e = sameMonth
+    ? `${ep.day}, ${ep.year}`
+    : end.toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'long', day: 'numeric', year: 'numeric' });
+
+  return `${s} – ${e}`;
+}
+
+export function formatEventTimeRange(startISO: string, endISO?: string | null): string {
+  const fmt = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' });
+  const start = fmt(startISO);
+  if (!endISO) return start;
+  return `${start} – ${fmt(endISO)}`;
+}
+
+// ── Event form <input type="datetime-local"> <-> Pacific time ──────────────
+//
+// This pair matters more than the display helpers above: it's not just
+// showing the wrong thing, it's what the event-create/edit forms use to
+// decide what UTC instant to actually *store*. `new Date(datetimeLocalStr)`
+// on a string with no timezone offset (exactly what a datetime-local input
+// gives you) parses it in the browser's own local timezone — so a club
+// officer creating or editing an event while traveling outside Pacific time
+// would have the "9:00 AM" they typed silently saved as 9:00 AM in whatever
+// timezone their laptop happened to be set to, corrupting the event's real
+// start time for every attendee, not just how it displays to them.
+
+function pacificPartsOf(date: Date) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: PACIFIC_TZ,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false,
+  }).formatToParts(date);
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value);
+  // Some engines render midnight as "24:00" when hour12 is false.
+  const hour = get('hour');
+  return { year: get('year'), month: get('month'), day: get('day'), hour: hour === 24 ? 0 : hour, minute: get('minute'), second: get('second') };
+}
+
+// Reads a datetime-local value ("YYYY-MM-DDTHH:mm") as Pacific wall-clock
+// time and returns the UTC instant it corresponds to — regardless of the
+// browser's own timezone. Standard "guess as UTC, measure the Pacific
+// offset that guess actually has, correct by the difference" technique;
+// converges in one pass for any date that isn't inside the literal
+// DST-transition hour itself, which is more than precise enough for
+// scheduling a club event.
+export function pacificDatetimeLocalToUTC(datetimeLocal: string): Date {
+  const guess = new Date(`${datetimeLocal}:00Z`);
+  const asIfUTCFromPacificReading = (() => {
+    const p = pacificPartsOf(guess);
+    return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second);
+  })();
+  const correction = guess.getTime() - asIfUTCFromPacificReading;
+  return new Date(guess.getTime() + correction);
+}
+
+// The reverse, for populating the edit form: given a stored UTC ISO
+// timestamp, produce the "YYYY-MM-DDTHH:mm" string that shows the
+// corresponding Pacific wall-clock time in a datetime-local input (instead
+// of whatever the server process's own runtime timezone happens to be).
+export function utcToPacificDatetimeLocal(iso: string | null): string {
+  if (!iso) return '';
+  const p = pacificPartsOf(new Date(iso));
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${p.year}-${pad(p.month)}-${pad(p.day)}T${pad(p.hour)}:${pad(p.minute)}`;
+}

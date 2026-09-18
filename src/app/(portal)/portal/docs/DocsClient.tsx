@@ -5,6 +5,7 @@ import { Image as ImageIcon, Paperclip, BookOpen, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { slugify } from '@/lib/slug';
 import { uploadFileToStorage, MAX_FILE_BYTES } from '@/lib/fileUpload';
+import { PACIFIC_TZ } from '@/lib/timezone';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import type { Doc, DocCategory, DocAttachment } from '@/types/database';
 import styles from './docs.module.css';
@@ -455,7 +456,7 @@ export default function DocsClient({ initialDocs, initialCategories, userId, can
                 </span>
                 <h1 className={styles.viewTitle}>{selected.title}</h1>
                 <p className={styles.viewMeta}>
-                  Updated {new Date(selected.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  Updated {new Date(selected.updated_at).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', day: 'numeric', year: 'numeric' })}
                 </p>
               </div>
               {canEdit && (

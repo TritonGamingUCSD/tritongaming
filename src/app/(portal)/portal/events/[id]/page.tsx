@@ -2,6 +2,7 @@ import { redirect, notFound } from 'next/navigation';
 import { getUserRoles } from '@/lib/auth';
 import { hasCapability } from '@/lib/capabilities';
 import { createClient } from '@/lib/supabase/server';
+import { utcToPacificDatetimeLocal } from '@/lib/timezone';
 import EditEventClient from './EditEventClient';
 import type { EventFormValues } from '../EventForm';
 import type { SocialEmbed } from '@/types/database';
@@ -11,13 +12,6 @@ export const dynamic = 'force-dynamic';
 
 interface Params {
   params: Promise<{ id: string }>;
-}
-
-function toDatetimeLocal(iso: string | null): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 export default async function EditEventPage({ params }: Params) {
@@ -40,8 +34,8 @@ export default async function EditEventPage({ params }: Params) {
     content: event.content ?? '',
     details: event.description ?? '',
     location: event.location ?? '',
-    start_date: toDatetimeLocal(event.start_date),
-    end_date: toDatetimeLocal(event.end_date),
+    start_date: utcToPacificDatetimeLocal(event.start_date),
+    end_date: utcToPacificDatetimeLocal(event.end_date),
     flyer_url: event.flyer_url ?? '',
     max_capacity: event.max_capacity ? String(event.max_capacity) : '',
     ticket_price: String(event.ticket_price ?? 0),

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import FullscreenQR from './tickets/FullscreenQR';
 import { useState } from 'react';
 import { Clock, MapPin, Smartphone } from 'lucide-react';
+import { PACIFIC_TZ } from '@/lib/timezone';
 import styles from './dashboard.module.css';
 
 interface Ticket {
@@ -36,9 +37,9 @@ export default function DashboardClient({ ticket }: { ticket: Ticket }) {
             </span>
             <h2 className={styles.ticketHeroTitle}>{ev.title}</h2>
             <p className={styles.ticketHeroDate}>
-              {d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+              {d.toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, weekday: 'long', month: 'long', day: 'numeric' })}
               {' · '}
-              {d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+              {d.toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' })}
             </p>
             {ev.location && (
               <p className={styles.ticketHeroLoc}><MapPin size={12} strokeWidth={1.5} aria-hidden="true" /> {ev.location}</p>

@@ -6,6 +6,7 @@ import { hasCapability, isVerifiedMember } from '@/lib/capabilities';
 import { resolveAvatarUrl } from '@/lib/profile';
 import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK } from '@/types/database';
 import { CONTENT_BLOCKS } from '@/lib/content-blocks';
+import { PACIFIC_TZ } from '@/lib/timezone';
 import type { HubSection } from '@/components/portal/PortalHub';
 import SignOutButton from '@/components/portal/SignOutButton';
 import DashboardClient from './DashboardClient';
@@ -66,7 +67,12 @@ export default async function PortalDashboard() {
       canViewDocs ? getDocsData() : Promise.resolve(null),
     ]);
 
-  const hour = new Date().getHours();
+  // getHours() reads the server process's own runtime clock, which on most
+  // hosts isn't Pacific (often UTC) — this is the club's own dashboard, so
+  // "morning"/"evening" should track San Diego's clock, not whatever region
+  // the server happens to be deployed in.
+  const rawHour = Number(new Intl.DateTimeFormat('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', hour12: false }).format(new Date()));
+  const hour = rawHour === 24 ? 0 : rawHour; // some engines render midnight as "24" with hour12:false
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
   const nowDate = new Date();

@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Search, Plus, Ticket, MapPin } from 'lucide-react';
+import { PACIFIC_TZ } from '@/lib/timezone';
 import styles from './events.module.css';
 
 interface EventRow {
@@ -122,7 +123,7 @@ export default function EventsSectionContent({ events, canEdit }: { events: Even
                     </div>
                     <div className={styles.eventDate}>
                       {new Date(event.start_date).toLocaleDateString('en-US', {
-                        month: 'short', day: 'numeric', year: 'numeric',
+                        timeZone: PACIFIC_TZ, month: 'short', day: 'numeric', year: 'numeric',
                       })}
                     </div>
                     <div className={styles.ticketInfo}>

@@ -682,3 +682,18 @@
     position: static;
   }
 }
+
+/* These sub-grids (key/value pairs, a person's name+title fields, a
+   sponsor's name+url fields) stay 2-column through tablet widths — there's
+   still enough room there — but on an actual phone that leaves each input
+   too narrow to comfortably see what's being typed into it. */
+@media (max-width: 600px) {
+  /* Key and value each get their own full-width row; the remove button
+     stays put on the right of the second row instead of also dropping to
+     a lonely full-width row of its own. */
+  .kvRow { grid-template-columns: 1fr auto; }
+  .kvRow > *:first-child { grid-column: 1 / -1; }
+
+  .personFields { grid-template-columns: 1fr; }
+  .imageCardFields { grid-template-columns: 1fr; }
+}

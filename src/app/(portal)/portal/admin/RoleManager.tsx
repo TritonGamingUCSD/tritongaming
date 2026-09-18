@@ -6,6 +6,7 @@ import { Search, Gamepad2, Check, X } from 'lucide-react';
 import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK, ASSIGNABLE_ROLES } from '@/types/database';
 import type { AppRole } from '@/types/database';
 import { resolveAvatarUrl } from '@/lib/profile';
+import { PACIFIC_TZ } from '@/lib/timezone';
 import styles from './RoleManager.module.css';
 
 interface RoleGrant {
@@ -173,7 +174,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
                         <span className={styles.gamerTag}><Gamepad2 size={12} strokeWidth={1.5} aria-hidden="true" /> {user.gamer_tag}</span>
                       ) : null}
                       <span className={styles.joinDate}>
-                        Joined {new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                        Joined {new Date(user.created_at).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', year: 'numeric' })}
                       </span>
                     </div>
                     {user.email && <div className={styles.userEmail}>{user.email}</div>}

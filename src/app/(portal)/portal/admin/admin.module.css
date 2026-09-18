@@ -143,3 +143,20 @@
   border: 1px solid rgba(255,199,44,0.25);
   border-radius: 9999px;
 }
+
+/* Same problem as events.module.css's table: a 3-column grid still leaves
+   each event's title squeezed into less than half the screen on a phone,
+   ellipsis-free, right next to two number columns. Stack the title on its
+   own line and let ticket counts wrap onto a second line beneath it. */
+@media (max-width: 480px) {
+  .tableHeader { display: none; }
+
+  .tableRow {
+    display: flex;
+    flex-wrap: wrap;
+    row-gap: 0.3rem;
+    column-gap: 1rem;
+  }
+
+  .tableRow > span:first-child { flex: 1 1 100%; }
+}

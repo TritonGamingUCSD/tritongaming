@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import jsQR from 'jsqr';
 import { Calendar, Camera, CircleCheck, TriangleAlert } from 'lucide-react';
+import { PACIFIC_TZ } from '@/lib/timezone';
 import styles from './checkin.module.css';
 
 interface Event {
@@ -294,7 +295,7 @@ export default function CheckInClient({ events }: { events: Event[] }) {
           >
             {events.map((event) => (
               <option key={event.id} value={event.id}>
-                {event.title} — {new Date(event.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                {event.title} — {new Date(event.start_date).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
               </option>
             ))}
           </select>
@@ -378,7 +379,7 @@ export default function CheckInClient({ events }: { events: Event[] }) {
                 </div>
                 {result.status === 'used' && result.checked_in_at && (
                   <div className={styles.resultDetail}>
-                    at {new Date(result.checked_in_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                    at {new Date(result.checked_in_at).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' })}
                   </div>
                 )}
               </>

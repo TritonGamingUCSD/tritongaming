@@ -310,3 +310,12 @@
 }
 .downloadBtn:hover:not(:disabled) { opacity: 0.9; }
 .downloadBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* .layout and .grid above already collapse to one column before this width,
+   so by the time a phone hits this breakpoint the form is a single column —
+   but .fieldRow's own paired inputs (color pickers, size/margin, etc.) are a
+   separate nested grid that doesn't inherit that and were still squeezing
+   two inputs into one narrow column. */
+@media (max-width: 480px) {
+  .fieldRow { grid-template-columns: 1fr; }
+}

@@ -187,3 +187,28 @@
 
 .published { background: rgba(5,150,105,0.15); color: #34d399; border: 1px solid rgba(52,211,153,0.25); }
 .draft     { background: rgba(107,114,128,0.12); color: #9ca3af; border: 1px solid rgba(156,163,175,0.2); }
+
+/* The 5-column grid (2fr 1fr 1fr 100px 60px) works as a real table on
+   desktop but has no room to do that on a phone — the two fixed columns
+   alone (160px) leave barely 200px for Event/Date/Tickets combined,
+   crushing everything into illegible fragments. Below 640px this drops the
+   grid/header entirely and lets each row become a wrapping card instead:
+   the event title+location gets a forced line break to itself (nth-child
+   targets the bare <div> cells directly, since they don't have their own
+   classNames), then date/tickets/status/edit flow as a wrapped row underneath
+   — the same "list of cards" pattern already used for tickets/upcoming
+   events elsewhere in the portal, just reached via CSS instead of a second
+   JSX layout. */
+@media (max-width: 640px) {
+  .tableHeader { display: none; }
+
+  .tableRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    row-gap: 0.5rem;
+    column-gap: 0.75rem;
+  }
+
+  .tableRow > div:first-child { flex: 1 1 100%; }
+}

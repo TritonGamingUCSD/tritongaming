@@ -5,6 +5,7 @@ import { Ticket, X, Check } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import TicketQRBadge from '@/components/TicketQRBadge/TicketQRBadge';
 import { DEFAULT_QR_OPTIONS, type QRCodeOptions } from '@/lib/qrCodeStyling';
+import { PACIFIC_TZ } from '@/lib/timezone';
 import styles from './fullscreenqr.module.css';
 
 // Same TG-branded look as the portal's QR Studio "default" preset (see
@@ -188,7 +189,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   }, []);
 
   const dateLabel = eventDate
-    ? new Date(eventDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+    ? new Date(eventDate).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
     : null;
 
   // qr_data is `${eventSlug}:${rotatingCode}` (see /api/tickets/[id]/qr) —

@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Ticket, MapPin, Smartphone, Check, X, Timer } from 'lucide-react';
 import FullscreenQR from './FullscreenQR';
+import { PACIFIC_TZ } from '@/lib/timezone';
 import styles from './tickets.module.css';
 
 interface TicketData {
@@ -177,11 +178,11 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
                 {nextActiveTicket.event?.start_date && (
                   <p className={styles.heroDate}>
                     {new Date(nextActiveTicket.event.start_date).toLocaleDateString('en-US', {
-                      weekday: 'short', month: 'long', day: 'numeric',
+                      timeZone: PACIFIC_TZ, weekday: 'short', month: 'long', day: 'numeric',
                     })}
                     {' · '}
                     {new Date(nextActiveTicket.event.start_date).toLocaleTimeString('en-US', {
-                      hour: 'numeric', minute: '2-digit',
+                      timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit',
                     })}
                   </p>
                 )}
@@ -230,10 +231,15 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
               <div key={event.id} className={styles.eventRow}>
                 <div className={styles.eventDateBlock}>
                   <span className={styles.eventMon}>
-                    {new Date(event.start_date).toLocaleDateString('en-US', { month: 'short' })}
+                    {new Date(event.start_date).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short' })}
                   </span>
                   <span className={styles.eventDay}>
-                    {new Date(event.start_date).getDate()}
+                    {/* Date.getDate() reads the day-of-month in the runtime's
+                        local timezone — for a viewer far from Pacific time,
+                        near a midnight boundary this can be a different day
+                        than what the month label above (correctly Pacific)
+                        shows. Format it instead of reading it raw. */}
+                    {new Date(event.start_date).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, day: 'numeric' })}
                   </span>
                 </div>
                 <div className={styles.eventBody}>
@@ -318,13 +324,13 @@ function TicketRow({
         {ev?.start_date && (
           <div className={styles.ticketDate}>
             {new Date(ev.start_date).toLocaleDateString('en-US', {
-              weekday: 'short', month: 'short', day: 'numeric',
+              timeZone: PACIFIC_TZ, weekday: 'short', month: 'short', day: 'numeric',
             })}
           </div>
         )}
         {ticket.checked_in_at && (
           <div className={styles.checkedInLine}>
-            <Check size={13} strokeWidth={1.75} aria-hidden="true" /> Checked in {new Date(ticket.checked_in_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+            <Check size={13} strokeWidth={1.75} aria-hidden="true" /> Checked in {new Date(ticket.checked_in_at).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' })}
           </div>
         )}
       </div>
