@@ -18,19 +18,24 @@ interface ScanResult {
   checked_in_at?: string;
 }
 
+const CODE_LENGTH = 6;
+const EMPTY_DIGITS = Array<string>(CODE_LENGTH).fill('');
+
 export default function CheckInClient({ events }: { events: Event[] }) {
   const [selectedEventId, setSelectedEventId] = useState(events[0]?.id || '');
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState('');
   const [processing, setProcessing] = useState(false);
-  const [manualCode, setManualCode] = useState('');
-  const [showManual, setShowManual] = useState(false);
+  const [digits, setDigits] = useState<string[]>(EMPTY_DIGITS);
+  const [shake, setShake] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
   const resultTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const shakeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const codeRefs = useRef<(HTMLInputElement | null)[]>([]);
   // scanFrame recurses via requestAnimationFrame(scanFrame) referencing itself,
   // so it never picks up fresh state from re-renders — reading `processing`/
   // `lastCode` as plain state here always saw their values from the moment
@@ -90,6 +95,16 @@ export default function CheckInClient({ events }: { events: Event[] }) {
     animRef.current = requestAnimationFrame(scanFrame);
   }
 
+  // Brief red pulse on the code boxes for a wrong/unrecognized code — the
+  // manual-entry equivalent of the camera flow's error overlay, but fast
+  // enough that staff sees it as feedback on what they just typed rather
+  // than a modal they have to wait out.
+  function triggerShake() {
+    setShake(true);
+    if (shakeTimeout.current) clearTimeout(shakeTimeout.current);
+    shakeTimeout.current = setTimeout(() => setShake(false), 500);
+  }
+
   async function handleCheckIn(ticketCode: string) {
     if (!selectedEventId) {
       setError('Please select an event first.');
@@ -112,9 +127,11 @@ export default function CheckInClient({ events }: { events: Event[] }) {
         setResult(data);
       } else {
         setError(data.error || 'Check-in failed.');
+        triggerShake();
       }
     } catch {
       setError('Network error. Please try again.');
+      triggerShake();
     } finally {
       processingRef.current = false;
       setProcessing(false);
@@ -122,15 +139,106 @@ export default function CheckInClient({ events }: { events: Event[] }) {
         setResult(null);
         setError('');
         lastCodeRef.current = '';
+        setDigits(EMPTY_DIGITS);
+        codeRefs.current[0]?.focus();
       }, 4000);
     }
   }
 
-  async function handleManualSubmit(e: React.FormEvent) {
+  // Fires the instant all six boxes are filled — no separate submit button,
+  // matching an authenticator app's code entry.
+  useEffect(() => {
+    const joined = digits.join('');
+    if (joined.length === CODE_LENGTH && !processingRef.current) {
+      handleCheckIn(joined);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [digits]);
+
+  function handleDigitChange(index: number, rawValue: string) {
+    // A leftover result/error from the previous code shouldn't block or
+    // confuse entry of the next one — clear it the moment new input starts
+    // instead of making staff wait out the auto-clear timer.
+    if (result) setResult(null);
+    if (error) setError('');
+
+    const value = rawValue.replace(/\D/g, '');
+    if (!value) {
+      setDigits((prev) => {
+        const next = [...prev];
+        next[index] = '';
+        return next;
+      });
+      return;
+    }
+    // Typing fast (or a browser that hands onChange more than one new
+    // character at once) can land several digits in a single box — spill
+    // the extra ones into the following boxes instead of dropping them.
+    const chars = value.split('');
+    setDigits((prev) => {
+      const next = [...prev];
+      let i = index;
+      for (const ch of chars) {
+        if (i > CODE_LENGTH - 1) break;
+        next[i] = ch;
+        i++;
+      }
+      return next;
+    });
+    const nextIndex = Math.min(index + chars.length, CODE_LENGTH - 1);
+    requestAnimationFrame(() => codeRefs.current[nextIndex]?.focus());
+  }
+
+  function handleDigitKeyDown(index: number, e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Backspace' && !digits[index] && index > 0) {
+      codeRefs.current[index - 1]?.focus();
+      setDigits((prev) => {
+        const next = [...prev];
+        next[index - 1] = '';
+        return next;
+      });
+    }
+  }
+
+  // The boxes are a display, not six independently-addressable fields —
+  // entry always continues from the leftmost empty one and Backspace always
+  // removes the rightmost filled one, no matter which box is actually
+  // clicked. Intercepted on mousedown (not focus) specifically so this only
+  // reacts to real clicks — auto-advance and the backspace handler above
+  // already call .focus() on the exact box they mean, and re-running this
+  // check from an onFocus handler would immediately re-redirect those away
+  // from where they just intentionally moved.
+  function activeIndex(): number {
+    const empty = digits.findIndex((d) => d === '');
+    return empty === -1 ? CODE_LENGTH - 1 : empty;
+  }
+
+  function handleDigitMouseDown(index: number, e: React.MouseEvent<HTMLInputElement>) {
+    const idx = activeIndex();
+    if (idx !== index) {
+      e.preventDefault();
+      codeRefs.current[idx]?.focus();
+    }
+  }
+
+  function handleDigitPaste(startIndex: number, e: React.ClipboardEvent<HTMLInputElement>) {
+    const text = e.clipboardData.getData('text').replace(/\D/g, '');
+    if (!text) return;
     e.preventDefault();
-    if (!manualCode.trim()) return;
-    await handleCheckIn(manualCode.trim());
-    setManualCode('');
+    if (result) setResult(null);
+    if (error) setError('');
+    setDigits((prev) => {
+      const next = [...prev];
+      let i = startIndex;
+      for (const ch of text) {
+        if (i > CODE_LENGTH - 1) break;
+        next[i] = ch;
+        i++;
+      }
+      return next;
+    });
+    const focusIndex = Math.min(startIndex + text.length, CODE_LENGTH - 1);
+    requestAnimationFrame(() => codeRefs.current[focusIndex]?.focus());
   }
 
   useEffect(() => {
@@ -138,7 +246,25 @@ export default function CheckInClient({ events }: { events: Event[] }) {
       cancelAnimationFrame(animRef.current);
       stopCamera();
       if (resultTimeout.current) clearTimeout(resultTimeout.current);
+      if (shakeTimeout.current) clearTimeout(shakeTimeout.current);
     };
+  }, []);
+
+  // Unmounting isn't the only way this camera should let go of the
+  // hardware — backgrounding the tab (locking the phone, switching apps
+  // mid-shift) leaves the page mounted and the MediaStream tracks "live"
+  // indefinitely, so the OS/browser's camera-in-use indicator stays lit
+  // even though nothing is actually reading frames anymore. Releasing on
+  // visibilitychange means it's only ever holding the camera while the
+  // scanner is actually the thing on screen; coming back just needs one more
+  // tap on "Start Camera", the same as a fresh page load.
+  useEffect(() => {
+    function handleVisibility() {
+      if (document.visibilityState === 'hidden') stopCamera();
+    }
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const selectedEvent = events.find((e) => e.id === selectedEventId);
@@ -176,35 +302,66 @@ export default function CheckInClient({ events }: { events: Event[] }) {
         </div>
       </div>
 
-      {/* ── Camera viewport ───────────────────────── */}
-      <div className={styles.viewport}>
-        <video
-          ref={videoRef}
-          className={`${styles.video} ${!scanning ? styles.hidden : ''}`}
-          playsInline
-          muted
-          autoPlay
-        />
-        <canvas ref={canvasRef} className={styles.canvas} />
+      {/* ── Combined scanner card: camera + always-on code entry ───── */}
+      <div className={styles.scannerCard}>
+        <div className={styles.viewport}>
+          <video
+            ref={videoRef}
+            className={`${styles.video} ${!scanning ? styles.hidden : ''}`}
+            playsInline
+            muted
+            autoPlay
+          />
+          <canvas ref={canvasRef} className={styles.canvas} />
 
-        {scanning && (
-          <div className={styles.overlay}>
-            <div className={styles.scanBox} />
-            {processing && <div className={styles.processingBadge}>Processing…</div>}
+          {scanning && (
+            <div className={styles.overlay}>
+              <div className={styles.scanBox} />
+            </div>
+          )}
+
+          {!scanning && (
+            <div className={styles.placeholder} onClick={startCamera} role="button" tabIndex={0}>
+              <span className={styles.placeholderIcon}><Camera size={40} strokeWidth={1.25} aria-hidden="true" /></span>
+              <p className={styles.placeholderText}>Tap to Start Scanner</p>
+              {selectedEvent && (
+                <p className={styles.placeholderEvent}>{selectedEvent.title}</p>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className={styles.divider}>
+          <span className={styles.dividerLine} />
+          <span>or type the code</span>
+          <span className={styles.dividerLine} />
+        </div>
+
+        <div className={styles.codeSection}>
+          <div className={styles.codeEntry}>
+            {digits.map((digit, i) => (
+              <input
+                key={i}
+                ref={(el) => { codeRefs.current[i] = el; }}
+                className={`${styles.codeBox} ${digit ? styles.codeBoxFilled : ''} ${shake ? styles.codeBoxShake : ''}`}
+                value={digit}
+                onChange={(e) => handleDigitChange(i, e.target.value)}
+                onKeyDown={(e) => handleDigitKeyDown(i, e)}
+                onMouseDown={(e) => handleDigitMouseDown(i, e)}
+                onPaste={(e) => handleDigitPaste(i, e)}
+                inputMode="numeric"
+                maxLength={1}
+                autoComplete="off"
+                disabled={processing}
+                aria-label={`Code digit ${i + 1} of ${CODE_LENGTH}`}
+              />
+            ))}
           </div>
-        )}
+          {processing && <div className={styles.checkingText}>Checking…</div>}
+        </div>
 
-        {!scanning && (
-          <div className={styles.placeholder} onClick={startCamera} role="button" tabIndex={0}>
-            <span className={styles.placeholderIcon}><Camera size={40} strokeWidth={1.25} aria-hidden="true" /></span>
-            <p className={styles.placeholderText}>Tap to Start Scanner</p>
-            {selectedEvent && (
-              <p className={styles.placeholderEvent}>{selectedEvent.title}</p>
-            )}
-          </div>
-        )}
-
-        {/* Result overlay on viewport */}
+        {/* Result/error overlay covers the whole card — camera and manual
+            entry feed the same shared outcome, not two separate flows. */}
         {result && (
           <div className={`${styles.resultOverlay} ${result.status === 'active' ? styles.resultSuccess : styles.resultWarn}`}>
             {result.status === 'active' ? (
@@ -245,31 +402,7 @@ export default function CheckInClient({ events }: { events: Event[] }) {
             Stop Camera
           </button>
         )}
-        <button
-          className={styles.manualToggle}
-          onClick={() => setShowManual((v) => !v)}
-        >
-          {showManual ? 'Hide' : 'Manual Entry'}
-        </button>
       </div>
-
-      {/* ── Manual entry ─────────────────────────── */}
-      {showManual && (
-        <form className={styles.manualForm} onSubmit={handleManualSubmit}>
-          <input
-            className={styles.manualInput}
-            value={manualCode}
-            onChange={(e) => setManualCode(e.target.value)}
-            placeholder="Enter the code shown in their app…"
-            autoComplete="off"
-            spellCheck={false}
-            inputMode="numeric"
-          />
-          <button type="submit" className={styles.manualBtn} disabled={processing}>
-            Check In
-          </button>
-        </form>
-      )}
     </div>
   );
 }

@@ -110,6 +110,24 @@
   background: rgba(255,255,255,0.08);
 }
 
+/* ── Combined scanner card ─────────────────────── */
+/* Camera and manual entry used to be two separate flows (a viewport, plus a
+   hidden form toggled by a button). Now they're two ways into the same
+   card, sharing one border/background and one result/error overlay — a
+   match from either the camera or the six-digit boxes below resolves the
+   whole card, not just whichever half triggered it. */
+.scannerCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.25rem;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 1.5rem;
+  overflow: hidden;
+}
+
 /* ── Camera viewport ───────────────────────────── */
 .viewport {
   position: relative;
@@ -118,7 +136,6 @@
   border-radius: 1.25rem;
   overflow: hidden;
   background: #050810;
-  border: 1px solid rgba(255,255,255,0.07);
 }
 
 .video {
@@ -194,19 +211,85 @@
   }
 }
 
-.processingBadge {
-  position: absolute;
-  bottom: 1rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0,0,0,0.7);
-  color: var(--yellow);
+/* ── Divider between camera and manual entry ───── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: rgba(242,241,240,0.35);
+  font-size: 0.68rem;
+  font-family: var(--font-renegare);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.dividerLine {
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+}
+
+/* ── Always-on 6-digit code entry ──────────────── */
+.codeSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.codeEntry {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.codeBox {
+  width: 44px;
+  height: 54px;
+  text-align: center;
+  font-size: 1.4rem;
+  font-family: var(--font-futura-heavy);
+  color: var(--white);
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid rgba(255,255,255,0.12);
+  border-radius: 0.75rem;
+  caret-color: var(--yellow);
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.codeBox:focus {
+  outline: none;
+  border-color: var(--yellow);
+  background: rgba(255,199,44,0.08);
+  box-shadow: 0 0 0 3px rgba(255,199,44,0.15);
+}
+
+.codeBox:disabled { opacity: 0.5; }
+
+.codeBoxFilled {
+  border-color: rgba(255,199,44,0.55);
+  background: rgba(255,199,44,0.07);
+}
+
+.codeBoxShake {
+  border-color: rgba(220,38,38,0.65) !important;
+  background: rgba(220,38,38,0.08) !important;
+  animation: codeShake 0.4s ease;
+}
+
+@keyframes codeShake {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-6px); }
+  40%      { transform: translateX(6px); }
+  60%      { transform: translateX(-4px); }
+  80%      { transform: translateX(4px); }
+}
+
+.checkingText {
   font-size: 0.78rem;
   font-family: var(--font-futura-medium);
-  padding: 0.35rem 0.875rem;
-  border-radius: 9999px;
-  white-space: nowrap;
-  backdrop-filter: blur(4px);
+  color: rgba(255,199,44,0.8);
+  letter-spacing: 0.05em;
 }
 
 /* Result overlays */
@@ -289,58 +372,6 @@
 
 .stopBtn:hover { background: rgba(220,38,38,0.18); }
 
-.manualToggle {
-  padding: 0.9rem 1.25rem;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 0.875rem;
-  background: rgba(255,255,255,0.04);
-  color: rgba(242,241,240,0.6);
-  font-family: var(--font-futura-medium);
-  font-size: 0.82rem;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.15s;
-}
-
-.manualToggle:hover { background: rgba(255,255,255,0.07); }
-
-/* ── Manual entry form ─────────────────────────── */
-.manualForm {
-  display: flex;
-  gap: 0.625rem;
-}
-
-.manualInput {
-  flex: 1;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 0.75rem;
-  padding: 0.75rem 1rem;
-  color: var(--white);
-  font-size: 0.9rem;
-  font-family: monospace;
-  transition: border-color 0.15s;
-}
-
-.manualInput:focus { outline: none; border-color: rgba(255,199,44,0.4); }
-.manualInput::placeholder { color: rgba(242,241,240,0.25); }
-
-.manualBtn {
-  padding: 0.75rem 1.25rem;
-  border: none;
-  border-radius: 0.75rem;
-  background: rgba(255,199,44,0.15);
-  color: var(--yellow);
-  font-family: var(--font-futura-medium);
-  font-size: 0.88rem;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.15s;
-}
-
-.manualBtn:hover { background: rgba(255,199,44,0.25); }
-.manualBtn:disabled { opacity: 0.5; cursor: not-allowed; }
-
 /* ── Mobile full-screen scanner ───────────────── */
 @media (max-width: 600px) {
   .page { gap: 0.75rem; }
@@ -350,4 +381,12 @@
     height: 50vh;
     min-height: 280px;
   }
+
+  .codeBox {
+    width: 38px;
+    height: 48px;
+    font-size: 1.2rem;
+  }
+
+  .codeEntry { gap: 0.4rem; }
 }
