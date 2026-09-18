@@ -24,7 +24,8 @@ export function qrBadgeOptionsFromQR(qr: QRCodeOptions, eventLabel: string): QRB
   return {
     qrSize: qr.size,
     qrMargin: qr.margin,
-    // The ticket's real QR data rotates roughly every minute — reseeding the
+    // The ticket's real QR data rotates on a short timer (see ROTATION_SECONDS
+    // in rotatingCode.ts) — reseeding the
     // decorative pattern from it means the ring visibly reshuffles in lockstep
     // with each refresh, reading as "part of the same live code" rather than
     // a static frame sitting behind an animated one.

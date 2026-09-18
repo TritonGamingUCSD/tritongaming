@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { Ticket, X, Check } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import TicketQRBadge from '@/components/TicketQRBadge/TicketQRBadge';
+import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import { DEFAULT_QR_OPTIONS, type QRCodeOptions } from '@/lib/qrCodeStyling';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import styles from './fullscreenqr.module.css';
@@ -83,7 +84,13 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
       const delayMs = Math.max((data.expires_in - 2) * 1000, 1000);
       refreshTimeout.current = setTimeout(fetchCode, delayMs);
     } catch {
-      setError('Network error');
+      // A genuine network failure (as opposed to the server responding with
+      // a real rejection like "not active", handled above) is exactly the
+      // "spotty connection" case — nothing about it is permanent, so retry
+      // on its own instead of leaving this screen stuck on an error forever
+      // until someone thinks to close and reopen it.
+      setError('Network error — retrying…');
+      refreshTimeout.current = setTimeout(fetchCode, 4000);
     }
   }, [ticketId, checkedIn]);
 
@@ -231,6 +238,21 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
             </div>
 
             <div className={styles.qrWrapper}>
+              {code && (
+                // Circumscribes the badge's own circle rather than sitting as
+                // a separate bar underneath — the ring itself *is* the "time
+                // left" readout, draining smoothly around the thing it's
+                // timing instead of a detached indicator elsewhere on screen.
+                <svg className={styles.countdownRing} viewBox="0 0 100 100" aria-hidden="true">
+                  <circle className={styles.countdownTrack} cx="50" cy="50" r="48" />
+                  <circle
+                    key={code}
+                    className={styles.countdownFill}
+                    cx="50" cy="50" r="48"
+                    style={{ animationDuration: `${expiresIn}s` }}
+                  />
+                </svg>
+              )}
               {qrData ? (
                 <TicketQRBadge
                   options={{ ...TICKET_QR_BASE, data: qrData, icon: 'tg-color', customIcon: null }}
@@ -238,20 +260,25 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
                   className={styles.qrCanvas}
                 />
               ) : (
-                <div className={styles.qrCanvas} style={{ width: 260, height: 260 }} aria-hidden="true" />
+                // On a slow connection this can sit for a couple seconds
+                // waiting on the /qr fetch — a blank white circle here reads
+                // as broken far more easily than a plain loading spinner
+                // does, especially for the one screen someone opens
+                // specifically to look at right now.
+                <div className={`${styles.qrCanvas} ${styles.qrLoading}`} style={{ width: 260, height: 260 }}>
+                  <LoadingSpinner size={32} theme="light" />
+                </div>
               )}
             </div>
 
             {code && (
-              <>
-                <div className={styles.progressTrack}>
-                  <div key={code} className={styles.progressBar} style={{ animationDuration: `${expiresIn}s` }} />
+              <div className={styles.fallbackCard}>
+                <div className={styles.fallbackHint}>Scanner not working? Staff can type this code:</div>
+                <div className={styles.fallbackCode}>
+                  <span className={styles.fallbackHash}>#</span>
+                  <span className={styles.fallbackValue}>{code}</span>
                 </div>
-                <div className={styles.codeText}>
-                  Scanner not working? Ask staff to type:{' '}
-                  <strong className={styles.codeValue}>#{code}</strong>
-                </div>
-              </>
+              </div>
             )}
             {error && <div className={styles.codeText}>{error}</div>}
 

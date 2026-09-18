@@ -106,7 +106,9 @@ export default function NavBar() {
 
   const navAvatarUrl = profile ? resolveAvatarUrl(profile) : null;
 
-  const authButton = authLoading ? null : profile ? (
+  const authButton = authLoading ? (
+    <span className={styles.authSkeleton} aria-hidden="true" />
+  ) : profile ? (
     <Link href="/portal" className={styles.authBtn} aria-label="Member portal">
       {navAvatarUrl ? (
         <Image

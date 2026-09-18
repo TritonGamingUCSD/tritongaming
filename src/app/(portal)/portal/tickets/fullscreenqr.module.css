@@ -124,8 +124,12 @@
 /* The badge (TicketQRBadge) is a self-contained circular graphic now — it
    draws its own white backdrop and dot-ring "frame" on the canvas itself
    (see qrBadge.ts), so this wrapper no longer needs to be a square white
-   card around it. border-radius:50% keeps the pulsing glow below circular
-   too, matching the badge's own shape instead of boxing it. */
+   card around it. border-radius:50% keeps its children (the countdown ring)
+   below circular too, matching the badge's own shape instead of boxing it.
+   Used to also pulse a multi-color glow here, but that and the countdown
+   ring both drawing attention to the same circle at once read as competing
+   animations — the ring is the more useful of the two (it's actually
+   information, not just decoration), so it's the only one left. */
 .qrWrapper {
   position: relative;
   display: inline-flex;
@@ -135,46 +139,20 @@
      an oval. center leaves the badge to size itself. */
   align-items: center;
   border-radius: 50%;
-  animation: qrGlow 3.6s ease-in-out infinite;
-}
-
-/* Cycles through the badge's own palette (gold, orange, navy — the same
-   colors used by the finder rings and dot gradient) instead of pulsing a
-   single gold ring, so the glow reads as coming from the badge itself
-   rather than a generic notification-style highlight. */
-/* Each color's fade-out and the next color's fade-in share a full segment
-   (16.5% of the duration, ~600ms) rather than being crammed into a ~1%
-   window — that near-instant reset (spread snapping 14px→0 and opacity
-   0→0.5 in ~36ms) was the "glitch": too fast to read as a transition, only
-   as a jump cut. Spacing it out lets the browser's own interpolation
-   actually be visible as a smooth crossfade. */
-@keyframes qrGlow {
-  0% {
-    box-shadow: 0 4px 32px rgba(1, 25, 65, 0.15), 0 0 0 0 rgba(255, 199, 44, 0.55);
-  }
-  16.5% {
-    box-shadow: 0 4px 32px rgba(1, 25, 65, 0.15), 0 0 0 14px rgba(255, 199, 44, 0);
-  }
-  33% {
-    box-shadow: 0 4px 32px rgba(1, 25, 65, 0.15), 0 0 0 0 rgba(245, 158, 11, 0.5);
-  }
-  49.5% {
-    box-shadow: 0 4px 32px rgba(1, 25, 65, 0.15), 0 0 0 14px rgba(245, 158, 11, 0);
-  }
-  66% {
-    box-shadow: 0 4px 32px rgba(1, 25, 65, 0.15), 0 0 0 0 rgba(30, 58, 138, 0.4);
-  }
-  82.5% {
-    box-shadow: 0 4px 32px rgba(1, 25, 65, 0.15), 0 0 0 14px rgba(30, 58, 138, 0);
-  }
-  100% {
-    box-shadow: 0 4px 32px rgba(1, 25, 65, 0.15), 0 0 0 0 rgba(255, 199, 44, 0.55);
-  }
 }
 
 .qrCanvas {
   display: block;
   border-radius: 0.5rem;
+}
+
+.qrLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(1, 25, 65, 0.03);
+  border: 1px solid rgba(1, 25, 65, 0.06);
 }
 
 .eventName {
@@ -184,29 +162,55 @@
   text-align: center;
 }
 
-.progressTrack {
-  width: 100%;
-  max-width: 200px;
-  height: 4px;
-  background: rgba(1, 25, 65, 0.08);
-  border-radius: 999px;
-  overflow: hidden;
+/* Wraps the badge's own circle at a fixed radius (48 of 100 viewBox units)
+   — a percentage-based viewBox instead of a pixel radius means this scales
+   perfectly with however big the badge actually renders (up to its own
+   280px cap) without needing to read the badge's real pixel size in JS.
+   Sits just outside qrWrapper's own box (which already tightly wraps the
+   visible circle), rotated so the stroke starts at 12 o'clock like a clock
+   face instead of the SVG default of 3 o'clock. */
+.countdownRing {
+  position: absolute;
+  inset: -10px;
+  width: calc(100% + 20px);
+  height: calc(100% + 20px);
+  transform: rotate(-90deg);
+  pointer-events: none;
 }
 
-.progressBar {
-  height: 100%;
-  width: 100%;
-  background: #ffc72c;
-  border-radius: 999px;
-  transform-origin: left;
-  animation-name: shrinkBar;
+.countdownTrack {
+  fill: none;
+  stroke: rgba(1, 25, 65, 0.1);
+  stroke-width: 2.5;
+}
+
+.countdownFill {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  /* circumference of r=48 in the 0-100 viewBox: 2 * PI * 48 */
+  stroke-dasharray: 301.6;
+  stroke-dashoffset: 0;
+  animation-name: ringDrain;
   animation-timing-function: linear;
   animation-fill-mode: forwards;
 }
 
-@keyframes shrinkBar {
-  from { transform: scaleX(1); }
-  to   { transform: scaleX(0); }
+/* Color rides the same timeline as the drain itself (one animation, two
+   properties) so "how urgent" is readable at a glance without doing the
+   math on the ring's own fill fraction — starts on the badge's own brand
+   gold (plenty of time), through the same amber used in the QR's corner
+   squares, to red only right at the end. Green was the obvious "safe"
+   choice but doesn't appear anywhere else in the site's palette; this way
+   the ring reads as "the same badge" for most of its life and only breaks
+   from it when it actually needs to grab attention. Percentages are
+   fractions of whatever expiresIn actually is, not fixed seconds, so this
+   holds up correctly regardless of the rotation window's actual length. */
+@keyframes ringDrain {
+  0%   { stroke-dashoffset: 0;      stroke: #ffc72c; }
+  55%  { stroke-dashoffset: 165.9;  stroke: #f59e0b; }
+  80%  { stroke-dashoffset: 241.28; stroke: #f97316; }
+  100% { stroke-dashoffset: 301.6;  stroke: #dc2626; }
 }
 
 .codeText {
@@ -217,11 +221,50 @@
   text-align: center;
 }
 
-/* Keeps "# CODE" together as one unit — without this, a normal space there
-   lets the line wrap between the # and the code itself, splitting the one
-   thing staff actually need to read off in one glance. */
-.codeValue {
-  white-space: nowrap;
+/* One cohesive card instead of two separate floating pieces (a loose line
+   of hint text, then a dashed-border pill below it) — the dashed border in
+   particular read as "cut here"/placeholder rather than a real UI element.
+   margin-top gives it clear breathing room off the badge above, since the
+   countdown ring already eats into part of the sheet's normal gap by
+   extending past qrWrapper's own box. */
+.fallbackCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.875rem 1.25rem;
+  background: rgba(1, 25, 65, 0.035);
+  border: 1px solid rgba(1, 25, 65, 0.08);
+  border-radius: 1rem;
+}
+
+.fallbackHint {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.fallbackCode {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.2rem;
+}
+
+.fallbackHash {
+  font-family: monospace;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: rgba(1, 25, 65, 0.3);
+}
+
+.fallbackValue {
+  font-family: monospace;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: #011941;
 }
 
 .hint {

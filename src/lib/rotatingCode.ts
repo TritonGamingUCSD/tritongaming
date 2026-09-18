@@ -5,7 +5,7 @@ import { createHmac } from 'crypto';
 // has to have the live, logged-in app open to be checked in. The permanent
 // ticket_code (a random 128-bit secret, unique per ticket) is only ever used
 // server-side as the HMAC key — it never reaches the client.
-export const ROTATION_SECONDS = 60;
+export const ROTATION_SECONDS = 30;
 
 export function currentWindow(): number {
   return Math.floor(Date.now() / 1000 / ROTATION_SECONDS);
@@ -15,8 +15,8 @@ export function currentWindow(): number {
 // etc.) use for exactly this reason — numbers-only means no ambiguous
 // characters (hex's letters can be misheard/mistyped), no case-sensitivity
 // to worry about, and staff can enter it with a numeric keypad. A collision
-// would only ever match one *other* currently-active ticket in the same 60s
-// window, and the check-in screen shows staff the matched attendee's name
+// would only ever match one *other* currently-active ticket in the same
+// rotation window, and the check-in screen shows staff the matched attendee's name
 // before confirming, so a collision would be caught by a human glancing at
 // it rather than silently checking in the wrong person — an acceptable
 // trade for a club-sized event, not a venue processing thousands of

@@ -255,6 +255,30 @@
    glass tint (not --btn-primary-bg, which is that same dark charcoal —
    using it here would make the button nearly disappear into its own
    container instead of reading as a distinct thing to click). */
+/* Stand-in for the login/portal pill while the auth check is still in
+   flight — an empty gap there read as a missing button rather than "still
+   loading," especially on a slow connection where that check can take a
+   moment. Same footprint as the real buttons so nothing shifts once it
+   resolves. */
+.authSkeleton {
+  width: 96px;
+  height: 30px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.14) 50%, rgba(255,255,255,0.06) 75%);
+  background-size: 200% 100%;
+  animation: authSkeletonShimmer 1.4s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes authSkeletonShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .authSkeleton { animation-duration: 3s; }
+}
+
 .loginBtn {
   display: flex;
   align-items: center;
