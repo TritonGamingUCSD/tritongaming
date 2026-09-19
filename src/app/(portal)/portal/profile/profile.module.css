@@ -229,6 +229,44 @@
   }
 }
 
+.backupLoginSection {
+  max-width: 640px;
+  margin: 2rem auto 0;
+  padding: 1.25rem 1.5rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 0.875rem;
+}
+
+.backupLoginTitle {
+  font-family: var(--font-futura-heavy);
+  font-size: 1rem;
+  color: var(--white);
+  margin-bottom: 0.5rem;
+}
+
+.backupLoginHint {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: rgba(242, 241, 240, 0.55);
+  margin-bottom: 1rem;
+}
+
+.backupLoginForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.backupLoginSuccess {
+  font-size: 0.85rem;
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.08);
+  border: 1px solid rgba(74, 222, 128, 0.2);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+}
+
 .signOutSection {
   margin-top: 2.5rem;
   padding-top: 1.5rem;

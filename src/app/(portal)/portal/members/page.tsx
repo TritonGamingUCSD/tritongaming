@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { getUserRoles } from '@/lib/auth';
 import { hasCapability } from '@/lib/capabilities';
@@ -13,5 +14,9 @@ export default async function MembersPage() {
 
   const { rows } = await getMembersData();
 
-  return <MembersSectionContent rows={rows} roles={roles} />;
+  return (
+    <Suspense>
+      <MembersSectionContent rows={rows} roles={roles} />
+    </Suspense>
+  );
 }

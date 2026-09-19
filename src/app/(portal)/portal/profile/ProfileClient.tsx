@@ -11,18 +11,20 @@ import { canSetOrgTitle, type RoleGrant } from '@/lib/capabilities';
 import { hasBasicProfileInfo, resolveAvatarUrl, SOCIAL_PLATFORMS } from '@/lib/profile';
 import { deleteIfReplaced } from '@/lib/imageUpload';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
+import BackupLoginSection from './BackupLoginSection';
 import styles from './profile.module.css';
 
-export default function ProfileClient({ profile, roles, isUcsd }: { profile: Profile; roles: RoleGrant[]; isUcsd: boolean }) {
+export default function ProfileClient({ profile, roles, isUcsd, divisions }: { profile: Profile; roles: RoleGrant[]; isUcsd: boolean; divisions: { id: string; name: string }[] }) {
+  const divisionNameById = new Map(divisions.map((d) => [d.id, d.name]));
   const canEditOrgTitle = canSetOrgTitle(roles);
-  // exec/lead/admin appear on the public About page board automatically;
-  // officer is the only role that needs to opt in themselves (division never
-  // appears at all) — see getBoardMembers.
-  const canOptIntoBoard = roles.some((r) => r.role === 'officer');
+  // exec/lead appear on the public About page board automatically;
+  // officer and alumni are the roles that need to opt in themselves
+  // (division and recruit never appear at all) — see getBoardMembers.
+  const canOptIntoBoard = roles.some((r) => r.role === 'officer' || r.role === 'alumni');
   // Anyone who can actually appear on the board (exec/lead automatically,
-  // officer once opted in) gets to control what shows beyond the always-on
-  // name/picture/title — see BoardSection for how these are read.
-  const isBoardEligible = roles.some((r) => r.role === 'exec' || r.role === 'lead' || r.role === 'officer');
+  // officer/alumni once opted in) gets to control what shows beyond the
+  // always-on name/picture/title — see BoardSection for how these are read.
+  const isBoardEligible = roles.some((r) => r.role === 'exec' || r.role === 'lead' || r.role === 'officer' || r.role === 'alumni');
   const [form, setForm] = useState({
     display_name: profile.display_name || '',
     year: profile.year || '',
@@ -121,8 +123,10 @@ export default function ProfileClient({ profile, roles, isUcsd }: { profile: Pro
               </span>
             ) : (
               [...roles].sort((a, b) => ROLE_DISPLAY_RANK[b.role] - ROLE_DISPLAY_RANK[a.role]).map((r) => (
-                <span key={r.role} className={styles.roleTag} style={{ background: ROLE_COLORS[r.role] + '22', color: ROLE_COLORS[r.role] }}>
-                  {ROLE_LABELS[r.role]}
+                <span key={`${r.role}-${r.division_id ?? ''}`} className={styles.roleTag} style={{ background: ROLE_COLORS[r.role] + '22', color: ROLE_COLORS[r.role] }}>
+                  {r.role === 'division' && r.division_id
+                    ? `${ROLE_LABELS.division} — ${divisionNameById.get(r.division_id) ?? 'Unknown'}`
+                    : ROLE_LABELS[r.role]}
                 </span>
               ))
             )}
@@ -341,6 +345,8 @@ export default function ProfileClient({ profile, roles, isUcsd }: { profile: Pro
           </button>
         </form>
       </div>
+
+      <BackupLoginSection />
 
       <div className={styles.signOutSection}>
         <button className={styles.signOutBtn} onClick={handleSignOut}>

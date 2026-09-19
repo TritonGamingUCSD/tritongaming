@@ -20,11 +20,14 @@ export default async function EditEventPage({ params }: Params) {
   if (!hasCapability(roles, 'manage_events')) redirect('/portal');
 
   const supabase = await createClient();
-  const { data: event } = await supabase
-    .from('events')
-    .select('id, title, slug, content, description, location, start_date, end_date, flyer_url, max_capacity, ticket_price, audience, is_published, photo_album_url, post_event_info, social_embeds')
-    .eq('id', id)
-    .single();
+  const [{ data: event }, { data: divisions }] = await Promise.all([
+    supabase
+      .from('events')
+      .select('id, title, slug, content, description, location, start_date, end_date, flyer_url, max_capacity, ticket_price, audience, is_published, photo_album_url, post_event_info, social_embeds, division_id')
+      .eq('id', id)
+      .single(),
+    supabase.from('divisions').select('id, name').order('name'),
+  ]);
 
   if (!event) notFound();
 
@@ -44,7 +47,8 @@ export default async function EditEventPage({ params }: Params) {
     photo_album_url: event.photo_album_url ?? '',
     post_event_info: event.post_event_info ?? '',
     social_embeds: (event.social_embeds as SocialEmbed[]) ?? [],
+    division_id: event.division_id ?? '',
   };
 
-  return <EditEventClient eventId={event.id} initial={initial} />;
+  return <EditEventClient eventId={event.id} initial={initial} divisions={divisions ?? []} />;
 }

@@ -75,6 +75,14 @@
   color: rgba(242, 241, 240, 0.5);
 }
 
+.heroCalendarBtn {
+  margin-top: 0.6rem;
+  min-height: 34px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.72rem;
+  align-self: flex-start;
+}
+
 .showQrBtn {
   display: flex;
   align-items: center;

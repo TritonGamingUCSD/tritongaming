@@ -48,7 +48,7 @@ export default async function LoginPage({
         <LoginClient next={params.next} />
 
         <p className={styles.footnote}>
-          Password login coming soon. Currently accepting Google accounts.
+          Google is the primary way in. Set up a backup email login from your Profile page.
         </p>
       </div>
 

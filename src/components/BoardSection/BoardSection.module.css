@@ -52,7 +52,17 @@
      what caused the reported lag. Matches PortalHub's own cards, which
      never used backdrop-filter for the same reason. */
   box-shadow: var(--glass-shadow);
-  transition: border-color 0.2s, background 0.2s, transform 0.2s;
+  /* transform deliberately NOT in this list (or animated via CSS :hover at
+     all anymore) — this card is also a motion.button with layoutId, and
+     Framer Motion drives `transform` directly (via JS/WAAPI) for the
+     shared-layout zoom transition. A CSS transition on the same property
+     fights it every frame — each time Framer Motion sets a new transform,
+     the browser's own transition tries to *also* ease toward it from the
+     previous value, which is exactly the jump/stutter reported opening and
+     closing a card. The hover lift now comes from whileHover in
+     BoardSection.tsx instead, so it's animated by Framer Motion too rather
+     than a second, competing system. */
+  transition: border-color 0.2s, background 0.2s;
   /* .card is a <button> now (opens the zoom panel) — reset button defaults
      so it still reads as a card, not a form control. */
   cursor: pointer;
@@ -63,7 +73,6 @@
 .card:hover {
   border-color: var(--glass-border-hover);
   background: var(--glass-bg-hover);
-  transform: translateY(-3px);
 }
 
 .avatar {

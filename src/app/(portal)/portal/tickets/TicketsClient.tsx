@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Ticket, MapPin, Smartphone, Check, X, Timer } from 'lucide-react';
 import FullscreenQR from './FullscreenQR';
+import AddToCalendarButton from '@/components/AddToCalendarButton/AddToCalendarButton';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import styles from './tickets.module.css';
 
@@ -188,6 +189,9 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
                 )}
                 {nextActiveTicket.event?.location && (
                   <p className={styles.heroLocation}><MapPin size={13} strokeWidth={1.5} aria-hidden="true" /> {nextActiveTicket.event.location}</p>
+                )}
+                {nextActiveTicket.event?.id && (
+                  <AddToCalendarButton eventId={nextActiveTicket.event.id} className={styles.heroCalendarBtn} />
                 )}
               </div>
               <button

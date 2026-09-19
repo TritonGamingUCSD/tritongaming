@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import jsQR from 'jsqr';
-import { Calendar, Camera, CircleCheck, TriangleAlert } from 'lucide-react';
+import { Calendar, Camera, CircleCheck, TriangleAlert, Download } from 'lucide-react';
 import { PACIFIC_TZ } from '@/lib/timezone';
+import { fetchWithRetry } from '@/lib/fetchWithRetry';
 import styles from './checkin.module.css';
 
 interface Event {
@@ -155,7 +156,7 @@ export default function CheckInClient({ events }: { events: Event[] }) {
     if (resultTimeout.current) clearTimeout(resultTimeout.current);
 
     try {
-      const response = await fetch('/api/tickets/checkin', {
+      const response = await fetchWithRetry('/api/tickets/checkin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: ticketCode, event_id: selectedEventId }),
@@ -347,6 +348,9 @@ export default function CheckInClient({ events }: { events: Event[] }) {
           </select>
           <span className={styles.selectChevron} aria-hidden="true">▾</span>
         </div>
+        <a href={`/api/events/${selectedEventId}/export`} download className={styles.exportBtn}>
+          <Download size={13} strokeWidth={1.75} aria-hidden="true" /> Export CSV
+        </a>
       </div>
 
       {/* ── Combined scanner card: camera + always-on code entry ───── */}

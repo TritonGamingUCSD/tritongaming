@@ -7,6 +7,7 @@ import TicketQRBadge from '@/components/TicketQRBadge/TicketQRBadge';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import { DEFAULT_QR_OPTIONS, type QRCodeOptions } from '@/lib/qrCodeStyling';
 import { PACIFIC_TZ } from '@/lib/timezone';
+import { fetchWithRetry } from '@/lib/fetchWithRetry';
 import styles from './fullscreenqr.module.css';
 
 // Same TG-branded look as the portal's QR Studio "default" preset (see
@@ -76,7 +77,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
       refreshTimeout.current = null;
     }
     try {
-      const res = await fetch(`/api/tickets/${ticketId}/qr`);
+      const res = await fetchWithRetry(`/api/tickets/${ticketId}/qr`);
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || 'Failed to load code');
@@ -132,11 +133,16 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
     function onVisible() {
       if (document.visibilityState === 'visible') fetchCode();
     }
+    // Regaining connectivity mid-window shouldn't wait for the next
+    // scheduled poll — the code may already be stale by then, especially
+    // right after a longer drop.
     document.addEventListener('visibilitychange', onVisible);
     window.addEventListener('focus', onVisible);
+    window.addEventListener('online', fetchCode);
     return () => {
       document.removeEventListener('visibilitychange', onVisible);
       window.removeEventListener('focus', onVisible);
+      window.removeEventListener('online', fetchCode);
     };
   }, [fetchCode]);
 

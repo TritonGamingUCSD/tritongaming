@@ -29,6 +29,36 @@
   flex-wrap: wrap;
 }
 
+/* ── Overview / Analytics / Role History tab bar ── */
+.tabBar {
+  display: flex;
+  gap: 0.3rem;
+  margin-bottom: 1.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-family: var(--font-futura-medium);
+  color: rgba(242,241,240,0.45);
+  padding: 0.6rem 0.25rem;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.tab + .tab { margin-left: 1.25rem; }
+.tab:hover { color: rgba(242,241,240,0.75); }
+
+.tabActive {
+  color: var(--yellow);
+  border-bottom-color: var(--yellow);
+}
+.tabActive:hover { color: var(--yellow); }
+
 .cmsBtn {
   display: inline-flex;
   align-items: center;

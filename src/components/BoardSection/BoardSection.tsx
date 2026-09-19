@@ -12,9 +12,10 @@ const TIER_LABELS: Record<BoardTier, string> = {
   exec: 'Executive Board',
   lead: 'Committee Leads',
   officer: 'Officers',
+  alumni: 'Alumni',
 };
 
-const TIER_ORDER: BoardTier[] = ['exec', 'lead', 'officer'];
+const TIER_ORDER: BoardTier[] = ['exec', 'lead', 'officer', 'alumni'];
 
 const SPRING = { type: 'spring' as const, stiffness: 420, damping: 38 };
 
@@ -186,6 +187,7 @@ export default function BoardSection({ members }: { members: BoardMember[] }) {
                         className={styles.card}
                         onClick={() => setOpenId(m.id)}
                         transition={SPRING}
+                        whileHover={{ y: -3, transition: { duration: 0.15 } }}
                       >
                         {avatarUrl ? (
                           <Image src={avatarUrl} alt="" width={120} height={120} className={styles.avatar} unoptimized referrerPolicy="no-referrer" />

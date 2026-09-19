@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { getProfile, getUserRoles } from '@/lib/auth';
 import { hasCapability } from '@/lib/capabilities';
@@ -25,7 +26,9 @@ export default async function DocsPage() {
         </div>
       </div>
 
-      <DocsClient initialDocs={docs} initialCategories={categories} userId={profile.id} canEdit={hasCapability(roles, 'manage_docs')} />
+      <Suspense>
+        <DocsClient initialDocs={docs} initialCategories={categories} userId={profile.id} canEdit={hasCapability(roles, 'manage_docs')} />
+      </Suspense>
     </div>
   );
 }

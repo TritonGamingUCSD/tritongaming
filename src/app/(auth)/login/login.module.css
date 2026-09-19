@@ -136,6 +136,64 @@
   to { transform: rotate(360deg); }
 }
 
+.emailToggleLink {
+  background: none;
+  border: none;
+  color: rgba(242, 241, 240, 0.5);
+  font-size: 0.8rem;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-top: 0.25rem;
+}
+
+.emailToggleLink:hover {
+  color: var(--yellow);
+}
+
+.emailForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.emailInput {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.5rem;
+  color: var(--white);
+  font-family: var(--font-futura-medium);
+  font-size: 0.85rem;
+}
+
+.emailInput:focus {
+  outline: none;
+  border-color: rgba(255, 199, 44, 0.4);
+}
+
+.emailError {
+  font-size: 0.78rem;
+  color: #fca5a5;
+}
+
+.emailSubmitBtn {
+  padding: 0.7rem 1rem;
+  background: var(--btn-primary-bg);
+  border: 1px solid var(--btn-primary-border);
+  border-radius: 0.5rem;
+  color: var(--btn-primary-text);
+  font-family: var(--font-futura-medium);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.emailSubmitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .errorBanner {
   background: rgba(220, 38, 38, 0.15);
   border: 1px solid rgba(220, 38, 38, 0.3);

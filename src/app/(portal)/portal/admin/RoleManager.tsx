@@ -45,6 +45,13 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkRole, setBulkRole] = useState<AppRole>('officer');
+  const [bulkDivisionId, setBulkDivisionId] = useState('');
+  const [bulkApplying, setBulkApplying] = useState(false);
+  const [bulkError, setBulkError] = useState<string | null>(null);
+
+  const divisionNameById = useMemo(() => new Map(divisions.map((d) => [d.id, d.name])), [divisions]);
 
   const filtered = useMemo(() => {
     return users.filter((u) => {
@@ -73,13 +80,20 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
 
   function toggleDraftRole(role: AppRole, checked: boolean) {
     setDraft((prev) => {
-      if (checked) return [...prev, { role, division_id: role === 'division' ? (divisions[0]?.id ?? null) : null }];
+      if (checked) return [...prev, { role, division_id: null }];
       return prev.filter((r) => r.role !== role);
     });
   }
 
-  function setDraftDivision(divisionId: string) {
-    setDraft((prev) => prev.map((r) => (r.role === 'division' ? { ...r, division_id: divisionId } : r)));
+  // 'division' is the one role someone can hold more than once (leading
+  // several divisions at once) — each division is its own draft entry rather
+  // than a single {role, division_id} pair, so it gets its own add/remove
+  // instead of toggleDraftRole's "at most one of this role" logic above.
+  function toggleDraftDivision(divisionId: string, checked: boolean) {
+    setDraft((prev) => {
+      if (checked) return [...prev, { role: 'division', division_id: divisionId }];
+      return prev.filter((r) => !(r.role === 'division' && r.division_id === divisionId));
+    });
   }
 
   async function saveDraft(userId: string) {
@@ -105,6 +119,62 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
       setSaveError('Network error. Please try again.');
     } finally {
       setSaving(false);
+    }
+  }
+
+  function toggleSelected(userId: string, checked: boolean) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(userId); else next.delete(userId);
+      return next;
+    });
+  }
+
+  function toggleSelectAllFiltered(checked: boolean) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      filtered.forEach((u) => (checked ? next.add(u.id) : next.delete(u.id)));
+      return next;
+    });
+  }
+
+  const allFilteredSelected = filtered.length > 0 && filtered.every((u) => selectedIds.has(u.id));
+
+  async function applyBulkRole() {
+    if (selectedIds.size === 0) return;
+    if (bulkRole === 'division' && !bulkDivisionId) {
+      setBulkError('Pick a division first.');
+      return;
+    }
+    setBulkApplying(true);
+    setBulkError(null);
+    try {
+      const res = await fetch('/api/admin/roles/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userIds: [...selectedIds],
+          role: bulkRole,
+          divisionId: bulkRole === 'division' ? bulkDivisionId : null,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        const resultsByUserId = new Map((data.results ?? []).map((r: { userId: string; roles?: RoleGrant[] }) => [r.userId, r.roles]));
+        setUsers((prev) => prev.map((u) => {
+          const roles = resultsByUserId.get(u.id);
+          return roles ? { ...u, user_roles: roles as RoleGrant[] } : u;
+        }));
+        setToast(`Added ${ROLE_LABELS[bulkRole]} to ${selectedIds.size} user${selectedIds.size === 1 ? '' : 's'}`);
+        setTimeout(() => setToast(null), 3000);
+        setSelectedIds(new Set());
+      } else {
+        setBulkError(data.error || `Failed to apply (${res.status}).`);
+      }
+    } catch {
+      setBulkError('Network error. Please try again.');
+    } finally {
+      setBulkApplying(false);
     }
   }
 
@@ -148,8 +218,38 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
         </div>
       </div>
 
+      {selectedIds.size > 0 && (
+        <div className={styles.bulkBar}>
+          <span className={styles.bulkCount}>{selectedIds.size} selected</span>
+          <select className={styles.bulkSelect} value={bulkRole} onChange={(e) => { setBulkRole(e.target.value as AppRole); setBulkError(null); }}>
+            {ASSIGNABLE_ROLES.map((r) => (
+              <option key={r} value={r}>Add {ROLE_LABELS[r]}</option>
+            ))}
+          </select>
+          {bulkRole === 'division' && (
+            <select className={styles.bulkSelect} value={bulkDivisionId} onChange={(e) => setBulkDivisionId(e.target.value)}>
+              <option value="">Choose division…</option>
+              {divisions.map((d) => (
+                <option key={d.id} value={d.id}>{d.name}</option>
+              ))}
+            </select>
+          )}
+          <button className={styles.roleBtn} onClick={applyBulkRole} disabled={bulkApplying}>
+            {bulkApplying ? 'Applying…' : `Apply to ${selectedIds.size}`}
+          </button>
+          <button className={styles.roleBtn} onClick={() => { setSelectedIds(new Set()); setBulkError(null); }} disabled={bulkApplying}>Clear</button>
+          {bulkError && <span className={styles.saveError}>{bulkError}</span>}
+        </div>
+      )}
+
       {/* User list */}
       <div className={styles.list}>
+        {filtered.length > 0 && (
+          <label className={styles.selectAllRow}>
+            <input type="checkbox" checked={allFilteredSelected} onChange={(e) => toggleSelectAllFiltered(e.target.checked)} />
+            <span>Select all {filtered.length} shown</span>
+          </label>
+        )}
         {filtered.length === 0 ? (
           <div className={styles.empty}>No users found matching "{query}"</div>
         ) : (
@@ -160,6 +260,13 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
             return (
               <div key={user.id} className={`${styles.row} ${saving && isEditing ? styles.rowUpdating : ''}`}>
                 <div className={styles.userInfo}>
+                  <input
+                    type="checkbox"
+                    className={styles.rowCheckbox}
+                    checked={selectedIds.has(user.id)}
+                    onChange={(e) => toggleSelected(user.id, e.target.checked)}
+                    aria-label={`Select ${user.display_name || 'user'}`}
+                  />
                   {avatarUrl ? (
                     <Image src={avatarUrl} alt="" width={38} height={38} className={styles.avatar} unoptimized referrerPolicy="no-referrer" />
                   ) : (
@@ -171,7 +278,10 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
                     <div className={styles.userName}>{user.display_name || 'Anonymous'}</div>
                     <div className={styles.userSub}>
                       {user.gamer_tag ? (
-                        <span className={styles.gamerTag}><Gamepad2 size={12} strokeWidth={1.5} aria-hidden="true" /> {user.gamer_tag}</span>
+                        <span className={styles.gamerTag}>
+                          <Gamepad2 size={12} strokeWidth={1.5} aria-hidden="true" />
+                          <span className={styles.gamerTagText}>{user.gamer_tag}</span>
+                        </span>
                       ) : null}
                       <span className={styles.joinDate}>
                         Joined {new Date(user.created_at).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', year: 'numeric' })}
@@ -190,11 +300,16 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
                     ) : (
                       sortedRoles.map((r) => (
                         <span
-                          key={r.role}
+                          key={`${r.role}-${r.division_id ?? ''}`}
                           className={styles.currentRole}
                           style={{ background: ROLE_COLORS[r.role] + '18', color: ROLE_COLORS[r.role], borderColor: ROLE_COLORS[r.role] + '44' }}
                         >
-                          {ROLE_LABELS[r.role]}
+                          {/* A user can lead more than one division at once now — name it
+                              on the badge itself, otherwise two "Division Lead" badges in a
+                              row look like a duplicate/bug rather than two real grants. */}
+                          {r.role === 'division' && r.division_id
+                            ? `${ROLE_LABELS.division} — ${divisionNameById.get(r.division_id) ?? 'Unknown'}`
+                            : ROLE_LABELS[r.role]}
                         </span>
                       ))
                     )}
@@ -203,7 +318,10 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
                 ) : (
                   <div className={styles.editPanel}>
                     <div className={styles.checkboxGrid}>
-                      {ASSIGNABLE_ROLES.map((r) => (
+                      {/* 'division' is excluded here — it gets its own multi-select
+                          list below instead of a plain on/off toggle, since someone
+                          can lead more than one division at once. */}
+                      {ASSIGNABLE_ROLES.filter((r) => r !== 'division').map((r) => (
                         <label key={r} className={styles.checkboxLabel}>
                           <input
                             type="checkbox"
@@ -214,17 +332,23 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
                         </label>
                       ))}
                     </div>
-                    {draft.some((d) => d.role === 'division') && (
-                      <select
-                        className={styles.divisionSelect}
-                        value={draft.find((d) => d.role === 'division')?.division_id ?? ''}
-                        onChange={(e) => setDraftDivision(e.target.value)}
-                      >
+                    <div className={styles.divisionPicker}>
+                      <span className={styles.divisionPickerLabel} style={{ color: ROLE_COLORS.division }}>
+                        {ROLE_LABELS.division} (any number)
+                      </span>
+                      <div className={styles.checkboxGrid}>
                         {divisions.map((d) => (
-                          <option key={d.id} value={d.id}>{d.name}</option>
+                          <label key={d.id} className={styles.checkboxLabel}>
+                            <input
+                              type="checkbox"
+                              checked={draft.some((r) => r.role === 'division' && r.division_id === d.id)}
+                              onChange={(e) => toggleDraftDivision(d.id, e.target.checked)}
+                            />
+                            <span>{d.name}</span>
+                          </label>
                         ))}
-                      </select>
-                    )}
+                      </div>
+                    </div>
                     {saveError && <div className={styles.saveError}>{saveError}</div>}
                     <div className={styles.editActions}>
                       <button className={styles.roleBtn} onClick={() => { setEditingId(null); setSaveError(null); }} disabled={saving}>Cancel</button>

@@ -1,29 +1,31 @@
-/* Deliberately near-opaque dark charcoal with a warm gold hairline instead
-   of the lighter blue-tinted "frosted glass" this used to be — matches the
-   nav pill's material (see NavBar.module.css) so the two ends of the page
-   chrome read as one consistent, solid design language rather than a
-   generic translucent effect. */
+/* Flush with the page edges and its own bottom — a page footer, not a
+   floating panel like the nav pill above it. Used to be inset with rounded
+   corners and a big soft drop shadow (the same "floating card" treatment as
+   .navbar), which makes sense for something anchored mid-page but not for
+   the thing sitting at the actual bottom of the page — there's nothing
+   "floating" about it, it's the floor. Kept the same dark charcoal material
+   and gold top seam so it still reads as part of the same chrome language
+   as the nav, just grounded instead of lifted. */
 .footer {
+  position: relative;
+  padding: clamp(2.5rem, 5vw, 4rem) clamp(1.5rem, 5vw, 4rem);
+  padding-bottom: max(clamp(2.5rem, 5vw, 4rem), env(safe-area-inset-bottom));
+  background: linear-gradient(165deg, rgba(20, 26, 42, 0.95), rgba(8, 11, 20, 0.97) 55%, rgba(5, 7, 14, 0.99));
+  border-top: 1px solid rgba(255, 199, 44, 0.18);
+  overflow: hidden;
+}
+
+.inner {
   position: relative;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: start;
   gap: clamp(2rem, 4vw, 4rem);
-  padding: clamp(2.5rem, 5vw, 4rem) clamp(1.5rem, 5vw, 4rem);
-  margin: 0 clamp(1rem, 3.5vw, 2.5rem) clamp(1rem, 3.5vw, 2.5rem);
-  border-radius: clamp(24px, 3.5vw, 36px);
-  background: linear-gradient(165deg, rgba(20, 26, 42, 0.95), rgba(8, 11, 20, 0.97) 55%, rgba(5, 7, 14, 0.99));
-  border: 1px solid rgba(255, 199, 44, 0.18);
-  box-shadow:
-    0 1px 0 rgba(255, 199, 44, 0.16) inset,
-    0 0 0 1px rgba(0, 0, 0, 0.35) inset,
-    0 40px 80px -32px rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(24px) saturate(130%);
-  -webkit-backdrop-filter: blur(24px) saturate(130%);
-  overflow: hidden;
+  max-width: var(--max-width);
+  margin-inline: auto;
 }
 
-/* Soft gold seam along the top edge, echoing the nav pill's rim */
+/* Soft gold seam right at the top edge, echoing the nav pill's rim */
 .footer::before {
   content: '';
   position: absolute;

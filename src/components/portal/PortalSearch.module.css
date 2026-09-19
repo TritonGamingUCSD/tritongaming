@@ -1,0 +1,110 @@
+.wrap {
+  position: relative;
+  max-width: 420px;
+  margin: 0 auto 1.25rem;
+}
+
+.inputWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.icon {
+  position: absolute;
+  left: 0.9rem;
+  color: rgba(242, 241, 240, 0.35);
+  pointer-events: none;
+}
+
+.input {
+  width: 100%;
+  padding: 0.65rem 2.25rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  color: var(--white);
+  font-family: var(--font-futura-medium);
+  font-size: 0.85rem;
+}
+
+.input:focus {
+  outline: none;
+  border-color: rgba(255, 199, 44, 0.4);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.clearBtn {
+  position: absolute;
+  right: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(242, 241, 240, 0.6);
+  cursor: pointer;
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  max-height: 360px;
+  overflow-y: auto;
+  background: #0d1a33;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.875rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  padding: 0.5rem;
+}
+
+.status {
+  padding: 0.75rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: rgba(242, 241, 240, 0.4);
+}
+
+.group + .group {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.groupLabel {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.65rem;
+  font-family: var(--font-futura-heavy);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(242, 241, 240, 0.35);
+}
+
+.result {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0.6rem;
+  border-radius: 0.5rem;
+  transition: background 0.1s;
+}
+
+.result:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.resultTitle {
+  font-size: 0.85rem;
+  font-family: var(--font-futura-medium);
+  color: var(--white);
+}
+
+.resultSubtitle {
+  font-size: 0.72rem;
+  color: rgba(242, 241, 240, 0.45);
+}

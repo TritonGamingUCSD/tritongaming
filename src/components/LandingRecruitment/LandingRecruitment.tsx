@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { ClipboardList } from 'lucide-react';
+import { ClipboardList, Ticket } from 'lucide-react';
 import { Reveal, RevealGroup, RevealItem } from '@/components/Reveal/Reveal';
 import styles from './LandingRecruitment.module.css';
 
@@ -16,6 +16,10 @@ interface RecruitmentContent {
   social_body?: string;
   social_cta?: string;
   social_href?: string;
+  portal_title?: string;
+  portal_body?: string;
+  portal_cta?: string;
+  portal_href?: string;
 }
 
 export default function LandingRecruitment({ content = {} }: { content?: RecruitmentContent }) {
@@ -49,9 +53,24 @@ export default function LandingRecruitment({ content = {} }: { content?: Recruit
       cta: content.social_cta,
       href: content.social_href,
     },
+    {
+      key: 'portal',
+      icon: <Ticket size={28} strokeWidth={1.5} aria-hidden="true" />,
+      title: content.portal_title,
+      body: content.portal_body,
+      cta: content.portal_cta,
+      href: content.portal_href,
+    },
   ].filter((p) => p.title);
 
   if (pathways.length === 0) return null;
+
+  // "Three ways" used to be a fixed number matching the fixed three cards —
+  // now that a card can be skipped (no title set) or a fourth one (the
+  // portal card) can appear, the count has to actually track how many
+  // pathways are showing rather than staying hardcoded at "Three".
+  const NUMBER_WORDS = ['', 'One', 'Two', 'Three', 'Four', 'Five'];
+  const countWord = NUMBER_WORDS[pathways.length] ?? String(pathways.length);
 
   return (
     <section className={styles.section} aria-label="Join Triton Gaming">
@@ -69,7 +88,7 @@ export default function LandingRecruitment({ content = {} }: { content?: Recruit
           <p className={styles.sectionLabel}>JOIN THE TEAM</p>
           <h2 className={styles.sectionTitle}>Be Part of Something Bigger</h2>
           <p className={styles.sectionSub}>
-            Three ways to get involved with Triton Gaming — find the one that fits you.
+            {countWord} way{pathways.length === 1 ? '' : 's'} to get involved with Triton Gaming — find the one that fits you.
           </p>
         </div>
       </Reveal>

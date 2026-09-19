@@ -45,8 +45,19 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Custom AI models and related files
-.agents/
+# Next.js auto-regenerates these at the repo root on every `next dev` run
+# (see node_modules/next/dist/server/lib/generate-agent-files.js) — always
+# disposable, never worth committing.
+/AGENTS.md
+/CLAUDE.md
+
+# .agents/AGENTS.md and .agents/CLAUDE.md are copies of that same
+# auto-generated content, not hand-authored project docs — ignored for the
+# same reason. .agents/skills/ is NOT ignored (see below) — that's real,
+# non-generated reference material (Supabase skill packages) that should
+# stay in version control.
+.agents/AGENTS.md
+.agents/CLAUDE.md
 
 # Creative assets such as images, videos, and audio files
 .assets/

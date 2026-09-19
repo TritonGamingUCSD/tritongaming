@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, BarChart3 } from 'lucide-react';
+import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, History } from 'lucide-react';
 import { getProfile, getUserRoles } from '@/lib/auth';
 import { hasCapability, isVerifiedMember } from '@/lib/capabilities';
 import { resolveAvatarUrl } from '@/lib/profile';
 import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK } from '@/types/database';
 import { CONTENT_BLOCKS } from '@/lib/content-blocks';
 import { PACIFIC_TZ } from '@/lib/timezone';
+import { getDivisions } from '@/lib/divisions';
 import type { HubSection } from '@/components/portal/PortalHub';
 import SignOutButton from '@/components/portal/SignOutButton';
 import DashboardClient from './DashboardClient';
@@ -22,22 +23,29 @@ import MembersSectionContent from './members/MembersSectionContent';
 import { getMembersData } from './members/getMembersData';
 import DivisionsManager from './divisions/DivisionsManager';
 import { getDivisionsData } from './divisions/getDivisionsData';
+import MyDivisionsEditor from './divisions/MyDivisionsEditor';
+import { getMyDivisionsData } from './divisions/getMyDivisionsData';
 import QRStudioClient from './qrcode/QRStudioClient';
 import ContentEditor from './admin/content/ContentEditor';
 import { getContentData } from './admin/content/getContentData';
 import AdminSectionContent from './admin/AdminSectionContent';
 import { getAdminData } from './admin/getAdminData';
-import StatsClient from './admin/stats/StatsClient';
 import { getStatsData } from './admin/stats/getStatsData';
 import DocsClient from './docs/DocsClient';
 import { getDocsData } from './docs/getDocsData';
+import ActivitySectionContent from './activity/ActivitySectionContent';
+import { getRoleHistoryData } from './admin/history/getRoleHistoryData';
 import styles from './dashboard.module.css';
 
 export const dynamic = 'force-dynamic';
 
 export default async function PortalDashboard() {
-  const [profile, roles] = await Promise.all([getProfile(), getUserRoles()]);
+  // divisions is fetched unconditionally (cheap, publicly-readable table) —
+  // needed to label a division-lead role chip with *which* division below,
+  // regardless of whether this user themselves can manage the directory.
+  const [profile, roles, divisions] = await Promise.all([getProfile(), getUserRoles(), getDivisions()]);
   if (!profile) return null;
+  const divisionNameById = new Map(divisions.map((d) => [d.id, d.name]));
 
   const canViewEvents = hasCapability(roles, 'view_events');
   const canManageEvents = hasCapability(roles, 'manage_events');
@@ -49,22 +57,31 @@ export default async function PortalDashboard() {
   const canViewAdmin = hasCapability(roles, 'view_admin_dashboard');
   const canViewDocs = hasCapability(roles, 'view_docs');
   const canManageDocs = hasCapability(roles, 'manage_docs');
+  const canManageRoles = hasCapability(roles, 'manage_roles');
+  // A separate, lighter tool from the full exec/admin directory manager
+  // below — gated on actually holding the 'division' role itself (not the
+  // broader manage_division capability, which lead/exec/admin also hold),
+  // so it only shows up for the people the full directory tool doesn't
+  // already cover, instead of duplicating that entry point for everyone.
+  const isDivisionLead = roles.some((r) => r.role === 'division');
 
   // Every section a user can reach is fetched here, in parallel, capability
   // by capability — a plain member only ever triggers the tickets query. The
   // hub then just renders whichever of these were fetched; nothing is
   // re-fetched client-side when a card opens.
-  const [ticketsData, checkinData, eventsData, membersData, divisionsData, contentData, adminData, statsData, docsData] =
+  const [ticketsData, checkinData, eventsData, membersData, divisionsData, myDivisions, contentData, adminData, statsData, docsData, roleHistoryData] =
     await Promise.all([
       getTicketsData(profile.id, roles),
       canCheckin ? getCheckinData() : Promise.resolve(null),
       canViewEvents ? getEventsData() : Promise.resolve(null),
       canViewMembers ? getMembersData() : Promise.resolve(null),
       canManageDivisions ? getDivisionsData() : Promise.resolve(null),
+      isDivisionLead ? getMyDivisionsData(roles) : Promise.resolve(null),
       canEditContent ? getContentData() : Promise.resolve(null),
       canViewAdmin ? getAdminData(roles) : Promise.resolve(null),
       canViewAdmin ? getStatsData() : Promise.resolve(null),
       canViewDocs ? getDocsData() : Promise.resolve(null),
+      canManageRoles ? getRoleHistoryData() : Promise.resolve(null),
     ]);
 
   // getHours() reads the server process's own runtime clock, which on most
@@ -93,59 +110,82 @@ export default async function PortalDashboard() {
       id: 'tickets', icon: <Ticket size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'My Tickets',
       description: 'View and show your event tickets',
       badge: activeTicketCount || undefined,
+      group: 'Yours',
       content: <TicketsClient tickets={ticketsData.tickets} upcomingEvents={ticketsData.upcomingEvents} isUcsd={ticketsData.isUcsd} />,
     },
     {
       id: 'profile', icon: <User size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Profile',
       description: 'Update your info and preferences',
-      content: <ProfileClient profile={profile} roles={roles} isUcsd={isVerifiedMember(roles)} />,
+      group: 'Yours',
+      content: <ProfileClient profile={profile} roles={roles} isUcsd={isVerifiedMember(roles)} divisions={divisions} />,
     },
-    ...(canCheckin && checkinData ? [{
-      id: 'checkin', icon: <Camera size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Check-In Scanner',
-      description: 'Scan tickets to check people in',
-      content: <CheckInClient events={checkinData.events} />,
-    }] : []),
+    {
+      id: 'activity', icon: <History size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Activity',
+      description: 'Your registrations and check-ins',
+      group: 'Yours',
+      content: <ActivitySectionContent tickets={ticketsData.tickets} />,
+    },
     ...(canViewEvents && eventsData ? [{
       id: 'events', icon: <Calendar size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Events',
       description: canManageEvents ? 'Create and manage events' : 'Browse upcoming and past events',
+      group: 'Events' as const,
       content: <EventsSectionContent events={eventsData.events} canEdit={canManageEvents} />,
+    }] : []),
+    ...(canCheckin && checkinData ? [{
+      id: 'checkin', icon: <Camera size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Check-In Scanner',
+      description: 'Scan tickets to check people in',
+      group: 'Events' as const,
+      content: <CheckInClient events={checkinData.events} />,
     }] : []),
     ...(canViewMembers && membersData ? [{
       id: 'members', icon: <Users size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Members',
       description: 'Browse everyone in the org',
       badge: membersData.rows.length || undefined,
+      group: 'Resources' as const,
       content: <MembersSectionContent rows={membersData.rows} roles={roles} />,
     }] : []),
-    ...(canManageDivisions && divisionsData ? [{
-      id: 'divisions', icon: <Gamepad2 size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Divisions',
-      description: 'Manage the division directory',
-      content: <DivisionsManager divisions={divisionsData.divisions} />,
+    ...(canViewDocs && docsData ? [{
+      id: 'docs', icon: <BookOpen size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Documentation',
+      group: 'Resources' as const,
+      description: 'How-to guides for officers, leads, and execs',
+      badge: docsData.docs.length || undefined,
+      content: <DocsClient initialDocs={docsData.docs} initialCategories={docsData.categories} userId={profile.id} canEdit={canManageDocs} />,
     }] : []),
     ...(canGenerateQr ? [{
       id: 'qrcode', icon: <QrCode size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'QR Studio',
       description: 'Design branded QR codes',
+      group: 'Tools' as const,
       content: <QRStudioClient />,
+    }] : []),
+    ...(canManageDivisions && divisionsData ? [{
+      id: 'divisions', icon: <Gamepad2 size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Divisions',
+      description: 'Manage the division directory',
+      group: 'Admin' as const,
+      content: <DivisionsManager divisions={divisionsData.divisions} />,
+    }] : []),
+    ...(isDivisionLead && myDivisions ? [{
+      id: 'my-division', icon: <Gamepad2 size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'My Division',
+      description: 'Edit your division’s page content',
+      group: 'Admin' as const,
+      content: <MyDivisionsEditor divisions={myDivisions} />,
     }] : []),
     ...(canEditContent && contentData ? [{
       id: 'content', icon: <Pencil size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Edit Site Content',
       description: 'Banners, stats, and text on the public site',
+      group: 'Admin' as const,
       content: <ContentEditor blocks={CONTENT_BLOCKS} contentMap={contentData.contentMap} lastEdited={contentData.lastEdited} />,
     }] : []),
-    ...(canViewAdmin && adminData ? [{
+    ...(canViewAdmin && adminData && statsData ? [{
       id: 'admin', icon: <Shield size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Admin',
-      description: 'Platform stats and role management',
-      content: <AdminSectionContent {...adminData} />,
-    }] : []),
-    ...(canViewAdmin && statsData ? [{
-      id: 'stats', icon: <BarChart3 size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Analytics',
-      description: 'Events, tickets, check-ins, and growth over time',
-      content: <StatsClient data={statsData} />,
-    }] : []),
-    ...(canViewDocs && docsData ? [{
-      id: 'docs', icon: <BookOpen size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Documentation',
-      description: 'How-to guides for officers, leads, and execs',
-      badge: docsData.docs.length || undefined,
-      content: <DocsClient initialDocs={docsData.docs} initialCategories={docsData.categories} userId={profile.id} canEdit={canManageDocs} />,
+      description: 'Stats, roles, analytics, and audit history',
+      group: 'Admin' as const,
+      content: (
+        <AdminSectionContent
+          {...adminData}
+          statsData={statsData}
+          roleHistoryEntries={canManageRoles ? roleHistoryData?.entries : undefined}
+        />
+      ),
     }] : []),
   ];
 
@@ -180,11 +220,16 @@ export default async function PortalDashboard() {
               ) : (
                 [...roles].sort((a, b) => ROLE_DISPLAY_RANK[b.role] - ROLE_DISPLAY_RANK[a.role]).map((r) => (
                   <span
-                    key={r.role}
+                    key={`${r.role}-${r.division_id ?? ''}`}
                     className={styles.roleChip}
                     style={{ background: ROLE_COLORS[r.role] + '18', color: ROLE_COLORS[r.role], borderColor: ROLE_COLORS[r.role] + '44' }}
                   >
-                    {ROLE_LABELS[r.role]}
+                    {/* A person can lead more than one division now — name it on
+                        the chip, otherwise two "Division Lead" chips in a row
+                        look like a duplicate/bug rather than two real grants. */}
+                    {r.role === 'division' && r.division_id
+                      ? `${ROLE_LABELS.division} — ${divisionNameById.get(r.division_id) ?? 'Unknown'}`
+                      : ROLE_LABELS[r.role]}
                   </span>
                 ))
               )}

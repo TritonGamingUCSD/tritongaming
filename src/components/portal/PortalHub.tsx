@@ -4,7 +4,15 @@ import type { ReactNode } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
+import PortalSearch from './PortalSearch';
 import styles from './PortalHub.module.css';
+
+// Fixed display order — a section's own `group` string just needs to match
+// one of these keys. Anything with a group not listed here (shouldn't
+// happen, but not worth a hard crash over) falls into its own "More"
+// bucket at the end rather than silently vanishing.
+const GROUP_ORDER = ['Yours', 'Events', 'Resources', 'Tools', 'Admin'] as const;
+type HubGroup = (typeof GROUP_ORDER)[number];
 
 export interface HubSection {
   id: string;
@@ -13,6 +21,7 @@ export interface HubSection {
   description: string;
   badge?: string | number;
   content: ReactNode;
+  group: HubGroup;
 }
 
 const SPRING = { type: 'spring' as const, stiffness: 420, damping: 38 };
@@ -150,8 +159,18 @@ export default function PortalHub({ sections, onGridWidth, onOpenChange }: { sec
 
   const openSection = sections.find((s) => s.id === openId) ?? null;
 
+  // Groups a plain member actually qualifies for (just Tickets/Profile/
+  // Activity) only render that one section, no empty "Community"/"Staff &
+  // Admin" headers with nothing under them — capability gating already
+  // decides which sections exist at all (see portal/page.tsx), this just
+  // decides how the ones that do exist are clustered.
+  const groupedSections = GROUP_ORDER
+    .map((group) => ({ group, items: sections.filter((s) => s.group === group) }))
+    .filter((g) => g.items.length > 0);
+
   return (
     <div className={styles.wrap}>
+      {!openSection && <PortalSearch />}
       <AnimatePresence initial={false} mode="popLayout">
         {openSection ? (
           <motion.div
@@ -160,49 +179,112 @@ export default function PortalHub({ sections, onGridWidth, onOpenChange }: { sec
             className={styles.panel}
             transition={SPRING}
           >
-            <div className={styles.panelHeader}>
-              <button className={styles.backBtn} onClick={close}>
+            {/* Desktop only (see the min-width media query in the CSS) — a
+                persistent rail so switching sections is a click, not a trip
+                back to the grid first. Hidden on mobile, where the grid +
+                full-panel zoom (unchanged below) already fits a small
+                screen correctly; this was the part that read as "a phone
+                app stretched wide" on desktop — opening anything took over
+                the *entire* window with no persistent nav, same as a phone,
+                regardless of how much width was actually available. */}
+            <nav className={styles.rail} aria-label="Portal sections">
+              <button className={styles.railBack} onClick={close}>
                 <span aria-hidden="true">←</span> Dashboard
               </button>
-              <div className={styles.panelTitleRow}>
-                <span className={styles.panelIcon} aria-hidden="true">{openSection.icon}</span>
-                <span className={styles.panelTitle}>{openSection.label}</span>
+              {groupedSections.map(({ group, items }) => (
+                <div key={group} className={styles.railGroup}>
+                  {groupedSections.length > 1 && <div className={styles.railGroupLabel}>{group}</div>}
+                  {items.map((s) => (
+                    <button
+                      key={s.id}
+                      className={`${styles.railItem} ${s.id === openId ? styles.railItemActive : ''}`}
+                      onClick={() => open(s.id)}
+                    >
+                      <span className={styles.railIcon} aria-hidden="true">{s.icon}</span>
+                      <span className={styles.railLabel}>{s.label}</span>
+                      {s.badge !== undefined && s.badge !== 0 && (
+                        <span className={styles.railBadge}>{s.badge}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </nav>
+
+            <div className={styles.panelMain}>
+              <div className={styles.panelHeader}>
+                <button className={styles.backBtn} onClick={close}>
+                  <span aria-hidden="true">←</span> Dashboard
+                </button>
+                <div className={styles.panelTitleRow}>
+                  <span className={styles.panelIcon} aria-hidden="true">{openSection.icon}</span>
+                  <span className={styles.panelTitle}>{openSection.label}</span>
+                </div>
               </div>
+              {/* Keyed by section id, separate from the outer AnimatePresence
+                  above — that one owns the big grid<->panel shared-layout
+                  zoom (only relevant for the *first* open from a grid card).
+                  This inner one just crossfades the content when the rail
+                  switches sections without ever leaving panel view, which
+                  has no grid card to zoom from/to in the first place. */}
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={openSection.id}
+                  className={styles.panelBody}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1, transition: { delay: 0.06, duration: 0.18 } }}
+                  exit={{ opacity: 0, transition: { duration: 0.08 } }}
+                >
+                  {openSection.content}
+                </motion.div>
+              </AnimatePresence>
             </div>
-            <motion.div
-              className={styles.panelBody}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1, transition: { delay: 0.06, duration: 0.18 } }}
-              exit={{ opacity: 0, transition: { duration: 0.08 } }}
-            >
-              {openSection.content}
-            </motion.div>
           </motion.div>
         ) : (
           <motion.div
             key="grid"
             ref={gridRef}
-            className={styles.grid}
+            className={styles.gridWrap}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
           >
-            {sections.map((s) => (
-              <motion.button
-                key={s.id}
-                layoutId={`hub-card-${s.id}`}
-                className={styles.card}
-                onClick={() => open(s.id)}
-                transition={SPRING}
-              >
-                {s.badge !== undefined && s.badge !== 0 && (
-                  <span className={styles.cardBadge}>{s.badge}</span>
-                )}
-                <span className={styles.cardIcon} aria-hidden="true">{s.icon}</span>
-                <span className={styles.cardLabel}>{s.label}</span>
-                <span className={styles.cardDesc}>{s.description}</span>
-              </motion.button>
+            {groupedSections.map(({ group, items }) => (
+              <section key={group} className={styles.group}>
+                {/* Skip the label entirely when it's the only group showing
+                    (e.g. a brand-new member with just Yours) — a lone
+                    heading above the whole hub reads as clutter, not
+                    structure, when there's nothing else to distinguish it
+                    from. */}
+                {groupedSections.length > 1 && <h2 className={styles.groupLabel}>{group}</h2>}
+                <div className={styles.grid}>
+                  {items.map((s) => (
+                    <motion.button
+                      key={s.id}
+                      layoutId={`hub-card-${s.id}`}
+                      className={styles.card}
+                      onClick={() => open(s.id)}
+                      transition={SPRING}
+                      aria-label={`${s.label} — ${s.description}`}
+                    >
+                      {s.badge !== undefined && s.badge !== 0 && (
+                        <span className={styles.cardBadge}>{s.badge}</span>
+                      )}
+                      <span className={styles.cardIcon} aria-hidden="true">{s.icon}</span>
+                      <span className={styles.cardLabel}>{s.label}</span>
+                      {/* Hover/focus-only — the compact card lost its always-on
+                          description line (hard to read, ate space), but a
+                          first-time visitor still needs a way to tell what a
+                          card actually does before committing to opening it.
+                          Pure CSS reveal, no JS state; doesn't help touch
+                          devices, but tapping to open *is* the discovery
+                          mechanism there, so nothing is actually lost. */}
+                      <span className={styles.cardTooltip} role="tooltip">{s.description}</span>
+                    </motion.button>
+                  ))}
+                </div>
+              </section>
             ))}
           </motion.div>
         )}

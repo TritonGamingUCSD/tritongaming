@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import type { AppRole } from '@/types/database';
 
-export type BoardTier = 'exec' | 'lead' | 'officer';
+export type BoardTier = 'exec' | 'lead' | 'officer' | 'alumni';
 
 export interface BoardMember {
   id: string;
@@ -21,7 +21,7 @@ export interface BoardMember {
   tier: BoardTier;
 }
 
-const TIER_RANK: Record<BoardTier, number> = { exec: 0, lead: 1, officer: 2 };
+const TIER_RANK: Record<BoardTier, number> = { exec: 0, lead: 1, officer: 2, alumni: 3 };
 
 interface BoardProfileRow {
   id: string;
@@ -43,11 +43,13 @@ interface BoardProfileRow {
 // Public About page board — pulls live from profiles instead of the old
 // admin-managed "officers" content block, so each person's own title/bio/
 // picture (set on their own profile) is always current. exec/lead appear
-// automatically; officer only appears if they've opted in (show_on_board);
-// division never appears (they have their own division pages) — see the
-// profile_show_on_board migration. 'admin' alone does NOT qualify — it's a
-// platform-permissions role, not an org position (an admin who's also exec/
-// lead/officer still appears, same as anyone else).
+// automatically; officer and alumni only appear if they've opted in
+// (show_on_board) — see the profile_show_on_board migration. division and
+// recruit never appear (division has its own division pages; recruit is
+// explicitly pre-officer, not yet an org position worth showing publicly).
+// 'admin' alone does NOT qualify — it's a platform-permissions role, not an
+// org position (an admin who's also exec/lead/officer still appears, same
+// as anyone else).
 export async function getBoardMembers(): Promise<BoardMember[]> {
   const supabase = await createClient();
 
@@ -62,7 +64,8 @@ export async function getBoardMembers(): Promise<BoardMember[]> {
 
   const rows = (data as unknown as BoardProfileRow[]).filter((row) => {
     const roles = (row.user_roles ?? []).map((r) => r.role);
-    return roles.includes('exec') || roles.includes('lead') || (roles.includes('officer') && row.show_on_board);
+    return roles.includes('exec') || roles.includes('lead')
+      || ((roles.includes('officer') || roles.includes('alumni')) && row.show_on_board);
   });
 
   // Emails live in auth.users, not public.profiles — only reachable via the
@@ -89,7 +92,7 @@ export async function getBoardMembers(): Promise<BoardMember[]> {
 
   const members: BoardMember[] = rows.map((row) => {
     const roles = (row.user_roles ?? []).map((r) => r.role);
-    const tier: BoardTier = roles.includes('exec') ? 'exec' : roles.includes('lead') ? 'lead' : 'officer';
+    const tier: BoardTier = roles.includes('exec') ? 'exec' : roles.includes('lead') ? 'lead' : roles.includes('officer') ? 'officer' : 'alumni';
     return {
       id: row.id,
       display_name: row.display_name,

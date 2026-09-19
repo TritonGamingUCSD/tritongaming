@@ -14,10 +14,14 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // events list (and, via `checkin`, scan tickets) but not create or edit
   // events; that's lead+ only. view_events is the broader read-only gate.
   manage_events: ['lead', 'exec', 'admin'],
-  view_events: ['officer', 'lead', 'exec', 'admin'],
+  // 'recruit' is mid-onboarding, pre-Officer — read-only access to the
+  // calendar and docs makes sense before they hold any real position.
+  view_events: ['officer', 'lead', 'exec', 'admin', 'recruit'],
   delete_events: ['admin'],
   checkin: ['officer', 'lead', 'exec', 'admin'],
-  manage_site_content: ['lead', 'exec', 'admin'],
+  // Public marketing copy is an org-wide, exec-tier call — not tied to any
+  // one committee a Lead runs, unlike manage_events/manage_docs above.
+  manage_site_content: ['exec', 'admin'],
   manage_division: ['division', 'lead', 'exec', 'admin'],
   manage_divisions_directory: ['exec', 'admin'],
   view_members: ['officer', 'lead', 'exec', 'admin'],
@@ -28,9 +32,9 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // role_capabilities table.
   generate_qr_codes: ['officer', 'division', 'lead', 'exec', 'admin'],
   // Same officer-is-view-only split as events: manage_docs (create/edit/
-  // delete) is lead+, view_docs (read) keeps officer in.
+  // delete) is lead+, view_docs (read) keeps officer (and recruit) in.
   manage_docs: ['lead', 'exec', 'admin'],
-  view_docs: ['officer', 'lead', 'exec', 'admin'],
+  view_docs: ['officer', 'lead', 'exec', 'admin', 'recruit'],
 };
 
 /**

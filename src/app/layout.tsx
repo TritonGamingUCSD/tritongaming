@@ -24,6 +24,14 @@ export const metadata: Metadata = {
     type: 'website',
     images: [{ url: '/icon.png' }],
   },
+  // iOS Safari's "Add to Home Screen" doesn't fully honor the web manifest
+  // (see manifest.ts) — these are what actually make an installed icon open
+  // full-screen (no browser chrome) with the right title, on iOS specifically.
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Triton Gaming',
+  },
 };
 
 export const viewport: Viewport = {

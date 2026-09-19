@@ -10,9 +10,11 @@ import EventForm, { type EventFormValues } from '../EventForm';
 export default function EditEventClient({
   eventId,
   initial,
+  divisions,
 }: {
   eventId: string;
   initial: EventFormValues;
+  divisions: { id: string; name: string }[];
 }) {
   const router = useRouter();
 
@@ -40,6 +42,7 @@ export default function EditEventClient({
         photo_album_url: form.photo_album_url.trim() || null,
         post_event_info: form.post_event_info.trim() || null,
         social_embeds: form.social_embeds,
+        division_id: form.division_id || null,
       })
       .eq('id', eventId);
 
@@ -52,5 +55,5 @@ export default function EditEventClient({
     router.push('/portal?open=events');
   }
 
-  return <EventForm heading="Edit Event" initial={initial} submitLabel="Save Changes" onSubmit={handleUpdate} />;
+  return <EventForm heading="Edit Event" initial={initial} submitLabel="Save Changes" onSubmit={handleUpdate} divisions={divisions} />;
 }

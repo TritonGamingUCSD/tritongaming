@@ -171,6 +171,8 @@
 
 .checkinLink { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.8rem; color: var(--yellow); transition: opacity 0.15s; }
 .checkinLink:hover { opacity: 0.75; }
+
+.rowActions { display: flex; flex-direction: column; gap: 0.3rem; align-items: flex-start; }
 .checkinSub { color: rgba(242,241,240,0.4); }
 
 .noTicket { font-size: 0.78rem; color: rgba(242,241,240,0.3); }

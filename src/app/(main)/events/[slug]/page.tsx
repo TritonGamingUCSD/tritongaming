@@ -7,6 +7,7 @@ import { getEventBySlugOrId } from '@/lib/events';
 import { getAlbumPreview } from '@/lib/googlePhotosAlbum';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import EventSocialEmbeds from '@/components/EventSocialEmbeds/EventSocialEmbeds';
+import AddToCalendarButton from '@/components/AddToCalendarButton/AddToCalendarButton';
 import { formatEventDateRange, formatEventTimeRange } from '@/lib/timezone';
 import styles from './event-detail.module.css';
 
@@ -81,14 +82,17 @@ export default async function EventDetailPage({ params }: Params) {
         {event.content && <p className={styles.summary}>{event.content}</p>}
 
         {!isPast && (
-          <a href="/portal/tickets" className={styles.ticketBtn}>
-            <Ticket size={18} strokeWidth={1.5} aria-hidden="true" />
-            {event.audience === 'ucsd_only'
-              ? 'UCSD Students — Get Ticket'
-              : event.ticket_price > 0
-              ? `Get Ticket — $${event.ticket_price} (free for UCSD)`
-              : 'Get Ticket — Free'}
-          </a>
+          <div className={styles.ctaRow}>
+            <a href="/portal/tickets" className={styles.ticketBtn}>
+              <Ticket size={18} strokeWidth={1.5} aria-hidden="true" />
+              {event.audience === 'ucsd_only'
+                ? 'UCSD Students — Get Ticket'
+                : event.ticket_price > 0
+                ? `Get Ticket — $${event.ticket_price} (free for UCSD)`
+                : 'Get Ticket — Free'}
+            </a>
+            <AddToCalendarButton eventId={event._id} />
+          </div>
         )}
 
         {event.details && (

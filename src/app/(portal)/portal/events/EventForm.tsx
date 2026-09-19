@@ -24,6 +24,7 @@ export interface EventFormValues {
   photo_album_url: string;
   post_event_info: string;
   social_embeds: SocialEmbed[];
+  division_id: string;
 }
 
 export const EMPTY_EVENT_FORM: EventFormValues = {
@@ -42,6 +43,7 @@ export const EMPTY_EVENT_FORM: EventFormValues = {
   photo_album_url: '',
   post_event_info: '',
   social_embeds: [],
+  division_id: '',
 };
 
 // Markdown, not raw HTML — see MarkdownContent for why. "Write"/"Preview"
@@ -166,11 +168,13 @@ export default function EventForm({
   initial,
   submitLabel,
   onSubmit,
+  divisions,
 }: {
   heading: string;
   initial: EventFormValues;
   submitLabel: string;
   onSubmit: (values: EventFormValues) => Promise<string | void>;
+  divisions: { id: string; name: string }[];
 }) {
   const [form, setForm] = useState<EventFormValues>(initial);
   const [saving, setSaving] = useState(false);
@@ -221,6 +225,17 @@ export default function EventForm({
         <label className={styles.field}>
           <span className={styles.label}>Location</span>
           <input className={styles.input} value={form.location} onChange={(e) => set('location', e.target.value)} placeholder="e.g. Price Center Ballroom" />
+        </label>
+
+        <label className={styles.field}>
+          <span className={styles.label}>Division</span>
+          <select className={styles.input} value={form.division_id} onChange={(e) => set('division_id', e.target.value)}>
+            <option value="">None — general club event</option>
+            {divisions.map((d) => (
+              <option key={d.id} value={d.id}>{d.name}</option>
+            ))}
+          </select>
+          <span className={styles.hint}>Tags this event on that division&apos;s public page under &quot;Upcoming Events&quot;.</span>
         </label>
 
         <label className={styles.field}>

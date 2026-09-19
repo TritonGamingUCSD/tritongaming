@@ -125,7 +125,9 @@
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* Was a fixed 3 columns — now auto-fit so this still looks right whether
+     the portal card is set (4 total) or not (3, the previous default). */
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 1.25rem;
   max-width: var(--max-width);
   margin-inline: auto;

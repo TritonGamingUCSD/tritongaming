@@ -44,6 +44,22 @@
   position: relative;
 }
 
+.exportBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  align-self: flex-end;
+  font-size: 0.72rem;
+  font-family: var(--font-futura-medium);
+  color: rgba(242,241,240,0.5);
+  padding: 0.3rem 0.1rem;
+  transition: color 0.15s;
+}
+
+.exportBtn:hover {
+  color: var(--yellow);
+}
+
 .select {
   width: 100%;
   background: rgba(255,199,44,0.07);

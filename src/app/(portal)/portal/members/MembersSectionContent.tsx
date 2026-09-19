@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { LayoutGrid, List, X, Gamepad2, Mail } from 'lucide-react';
 import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
 import type { AppRole } from '@/types/database';
@@ -12,7 +13,7 @@ import { resolveAvatarUrl, socialHref, isVisible, SOCIAL_PLATFORMS } from '@/lib
 import type { MemberProfileRow } from './getMembersData';
 import styles from './members.module.css';
 
-const ORDER: (AppRole | 'guest')[] = ['admin', 'exec', 'lead', 'officer', 'division', 'ucsd', 'guest'];
+const ORDER: (AppRole | 'guest')[] = ['admin', 'exec', 'lead', 'officer', 'division', 'recruit', 'ucsd', 'alumni', 'guest'];
 
 type MemberEntry = Omit<MemberProfileRow, 'user_roles'> & { divisionName?: string };
 
@@ -56,10 +57,30 @@ export default function MembersSectionContent({ rows, roles }: { rows: MemberPro
     if (primaryRole === 'guest' || primaryRole === 'ucsd') return;
 
     memberCount++;
-    const divisionGrant = (user_roles ?? []).find((ur) => ur.role === 'division');
-    const division = divisionGrant ? (Array.isArray(divisionGrant.division) ? divisionGrant.division[0] : divisionGrant.division) : null;
-    (grouped[primaryRole] ??= []).push({ ...profile, divisionName: division?.name });
+    // Someone can lead more than one division at once — join every division
+    // grant's name rather than just the first, so a co-lead of two divisions
+    // shows both instead of only whichever one happened to come back first.
+    const divisionNames = (user_roles ?? [])
+      .filter((ur) => ur.role === 'division')
+      .map((ur) => (Array.isArray(ur.division) ? ur.division[0] : ur.division)?.name)
+      .filter((name): name is string => Boolean(name));
+    (grouped[primaryRole] ??= []).push({ ...profile, divisionName: divisionNames.join(', ') || undefined });
   });
+
+  // Deep-linked in from portal search (?id=<userId>) — auto-opens that
+  // member's detail panel instead of just landing on the general list.
+  // Silently does nothing if the id isn't in this roster (e.g. search
+  // matched a plain UCSD-verified visitor, who never actually shows up
+  // here — an edge case, not worth also excluding from search results
+  // over).
+  const searchParams = useSearchParams();
+  const requestedId = searchParams.get('id');
+  useEffect(() => {
+    if (!requestedId) return;
+    const match = Object.values(grouped).flat().find((m) => m.id === requestedId);
+    if (match) setSelected(match);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requestedId]);
 
   return (
     <div className={styles.page}>

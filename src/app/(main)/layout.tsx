@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import NavBar from '@/components/NavBar/NavBar';
 import Footer from '@/components/Footer/Footer';
 import AnnouncementBanner from '@/components/AnnouncementBanner/AnnouncementBanner';
+import ConnectivityBanner from '@/components/ConnectivityBanner/ConnectivityBanner';
 
 // NavBar and AnnouncementBanner are independent fixed elements now, not
 // stacked together — the banner lives as its own floating toast in the
@@ -32,6 +33,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       <Suspense fallback={null}>
         <AnnouncementBanner />
       </Suspense>
+      <ConnectivityBanner />
     </>
   );
 }

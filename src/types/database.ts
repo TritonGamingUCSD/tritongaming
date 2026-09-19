@@ -1,4 +1,4 @@
-export type AppRole = 'ucsd' | 'division' | 'officer' | 'lead' | 'exec' | 'admin';
+export type AppRole = 'ucsd' | 'division' | 'officer' | 'lead' | 'exec' | 'admin' | 'alumni' | 'recruit';
 // 'guest' is never stored — it just means zero rows in user_roles.
 export type UserRole = 'guest' | AppRole;
 export type TicketStatus = 'active' | 'used' | 'cancelled' | 'expired';
@@ -83,6 +83,18 @@ export interface Database {
         Insert: Omit<Database['public']['Tables']['divisions']['Row'], 'id' | 'created_at'>;
         Update: Partial<Database['public']['Tables']['divisions']['Insert']>;
       };
+      role_change_log: {
+        Row: {
+          id: string;
+          user_id: string;
+          changed_by: string | null;
+          before: { role: AppRole; division_id: string | null }[];
+          after: { role: AppRole; division_id: string | null }[];
+          created_at: string;
+        };
+        Insert: Omit<Database['public']['Tables']['role_change_log']['Row'], 'id' | 'created_at'>;
+        Update: Partial<Database['public']['Tables']['role_change_log']['Insert']>;
+      };
       events: {
         Row: {
           id: string;
@@ -102,6 +114,7 @@ export interface Database {
           requires_ticket: boolean;
           ticket_price: number;
           audience: EventAudience;
+          division_id: string | null;
           photo_album_url: string | null;
           post_event_info: string | null;
           social_embeds: SocialEmbed[];
@@ -212,7 +225,9 @@ export type TicketWithEvent = Ticket & {
 // the actual permission model.
 export const ROLE_DISPLAY_RANK: Record<UserRole, number> = {
   guest: 0,
+  alumni: 1,
   ucsd: 1,
+  recruit: 1.5,
   officer: 2,
   division: 2,
   lead: 3,
@@ -228,6 +243,8 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   lead: 'Lead',
   exec: 'Executive',
   admin: 'Admin',
+  alumni: 'Alumni',
+  recruit: 'Recruit',
 };
 
 export const ROLE_COLORS: Record<UserRole, string> = {
@@ -238,8 +255,10 @@ export const ROLE_COLORS: Record<UserRole, string> = {
   lead: '#059669',
   exec: '#dc2626',
   admin: '#ffc72c',
+  alumni: '#b45309',
+  recruit: '#f97316',
 };
 
 // Roles assignable via the Role Manager UI (excludes 'guest', which is the
 // implicit zero-roles state, not something you grant).
-export const ASSIGNABLE_ROLES: AppRole[] = ['ucsd', 'division', 'officer', 'lead', 'exec', 'admin'];
+export const ASSIGNABLE_ROLES: AppRole[] = ['ucsd', 'division', 'officer', 'lead', 'exec', 'admin', 'alumni', 'recruit'];

@@ -1,13 +1,59 @@
 import { redirect } from 'next/navigation';
 import { getUserRoles } from '@/lib/auth';
 import { hasCapability } from '@/lib/capabilities';
+import { createClient } from '@/lib/supabase/server';
+import { utcToPacificDatetimeLocal } from '@/lib/timezone';
 import NewEventClient from './NewEventClient';
+import { EMPTY_EVENT_FORM, type EventFormValues } from '../EventForm';
+import type { SocialEmbed } from '@/types/database';
 
 export const metadata = { title: 'Create Event' };
 
-export default async function NewEventPage() {
+interface Props {
+  searchParams: Promise<{ from?: string }>;
+}
+
+// ?from=<eventId> — "Duplicate" on an existing event (see
+// EventsSectionContent.tsx) lands here instead of a separate endpoint,
+// reusing the exact same create form/flow rather than a parallel copy path.
+export default async function NewEventPage({ searchParams }: Props) {
   const roles = await getUserRoles();
   if (!hasCapability(roles, 'manage_events')) redirect('/portal');
 
-  return <NewEventClient />;
+  const { from } = await searchParams;
+  const supabase = await createClient();
+  const { data: divisions } = await supabase.from('divisions').select('id, name').order('name');
+
+  let initial = EMPTY_EVENT_FORM;
+  if (from) {
+    const { data: source } = await supabase
+      .from('events')
+      .select('title, content, description, location, start_date, end_date, flyer_url, max_capacity, ticket_price, audience, social_embeds, division_id')
+      .eq('id', from)
+      .maybeSingle();
+    if (source) {
+      initial = {
+        ...EMPTY_EVENT_FORM,
+        title: `${source.title} (Copy)`,
+        content: source.content ?? '',
+        details: source.description ?? '',
+        location: source.location ?? '',
+        start_date: utcToPacificDatetimeLocal(source.start_date),
+        end_date: utcToPacificDatetimeLocal(source.end_date),
+        flyer_url: source.flyer_url ?? '',
+        max_capacity: source.max_capacity ? String(source.max_capacity) : '',
+        ticket_price: String(source.ticket_price ?? 0),
+        audience: source.audience,
+        social_embeds: (source.social_embeds as SocialEmbed[]) ?? [],
+        division_id: source.division_id ?? '',
+        // Deliberately NOT copied: slug (would collide), is_published (a
+        // duplicate starts as an unpublished draft to review first),
+        // photo_album_url/post_event_info (post-event recap fields — the
+        // new event hasn't happened yet, so the old event's recap has
+        // nothing to do with it).
+      };
+    }
+  }
+
+  return <NewEventClient divisions={divisions ?? []} initial={initial} />;
 }

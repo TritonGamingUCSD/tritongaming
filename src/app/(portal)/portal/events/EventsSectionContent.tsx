@@ -143,8 +143,9 @@ export default function EventsSectionContent({ events, canEdit }: { events: Even
                       </span>
                     </div>
                     {canEdit && (
-                      <div>
+                      <div className={styles.rowActions}>
                         <Link href={`/portal/events/${event.id}`} className={styles.checkinLink}>Edit</Link>
+                        <Link href={`/portal/events/new?from=${event.id}`} className={styles.checkinLink}>Duplicate</Link>
                       </div>
                     )}
                   </div>

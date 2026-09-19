@@ -6,7 +6,7 @@ import { slugify } from '@/lib/slug';
 import { pacificDatetimeLocalToUTC } from '@/lib/timezone';
 import EventForm, { EMPTY_EVENT_FORM, type EventFormValues } from '../EventForm';
 
-export default function NewEventClient() {
+export default function NewEventClient({ divisions, initial = EMPTY_EVENT_FORM }: { divisions: { id: string; name: string }[]; initial?: EventFormValues }) {
   const router = useRouter();
 
   async function handleCreate(form: EventFormValues): Promise<string | void> {
@@ -33,6 +33,7 @@ export default function NewEventClient() {
       photo_album_url: form.photo_album_url.trim() || null,
       post_event_info: form.post_event_info.trim() || null,
       social_embeds: form.social_embeds,
+      division_id: form.division_id || null,
       created_by: user.id,
     });
 
@@ -43,5 +44,5 @@ export default function NewEventClient() {
     router.push('/portal?open=events');
   }
 
-  return <EventForm heading="Create Event" initial={EMPTY_EVENT_FORM} submitLabel="Create Event" onSubmit={handleCreate} />;
+  return <EventForm heading="Create Event" initial={initial} submitLabel="Create Event" onSubmit={handleCreate} divisions={divisions} />;
 }

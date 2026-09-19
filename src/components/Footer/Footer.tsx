@@ -58,50 +58,52 @@ export default async function Footer() {
         <span className={styles.bgText2}>GAMING</span>
       </div>
 
-      {/* Brand */}
-      <div className={styles.brand}>
-        <Image
-          src="/logos/tg_logo.png"
-          alt="Triton Gaming Logo"
-          width={100}
-          height={100}
-          className={styles.logo}
-        />
-        {tagline && <p className={styles.tagline}>{tagline}</p>}
-        {copyright && <p className={styles.copy}>{copyright}</p>}
-      </div>
+      <div className={styles.inner}>
+        {/* Brand */}
+        <div className={styles.brand}>
+          <Image
+            src="/logos/tg_logo.png"
+            alt="Triton Gaming Logo"
+            width={100}
+            height={100}
+            className={styles.logo}
+          />
+          {tagline && <p className={styles.tagline}>{tagline}</p>}
+          {copyright && <p className={styles.copy}>{copyright}</p>}
+        </div>
 
-      {/* Quick links */}
-      <nav className={styles.nav} aria-label="Footer navigation">
-        <h3 className={styles.navHeading}>Quick Links</h3>
-        <ul className={styles.navList}>
-          {NAV_LINKS.map(({ href, label }) => (
-            <li key={href}>
-              <Link href={href} className={styles.navLink}>{label}</Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
+        {/* Quick links */}
+        <nav className={styles.nav} aria-label="Footer navigation">
+          <h3 className={styles.navHeading}>Quick Links</h3>
+          <ul className={styles.navList}>
+            {NAV_LINKS.map(({ href, label }) => (
+              <li key={href}>
+                <Link href={href} className={styles.navLink}>{label}</Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
-      {/* Social links */}
-      <div className={styles.social}>
-        <h3 className={styles.heading}>Connect With Us</h3>
-        <div className={styles.icons}>
-          {SOCIAL_ICONS.map(({ key, src, label }) => {
-            const href = socialHref(key);
-            return (
-              <a
-                key={label}
-                href={href}
-                target={href.startsWith('mailto') ? undefined : '_blank'}
-                rel="noopener noreferrer"
-                aria-label={label}
-                className={styles.iconLink}
-              >
-                <Image src={src} alt={label} width={26} height={26} unoptimized />
-              </a>
-            );
-          })}
+        {/* Social links */}
+        <div className={styles.social}>
+          <h3 className={styles.heading}>Connect With Us</h3>
+          <div className={styles.icons}>
+            {SOCIAL_ICONS.map(({ key, src, label }) => {
+              const href = socialHref(key);
+              return (
+                <a
+                  key={label}
+                  href={href}
+                  target={href.startsWith('mailto') ? undefined : '_blank'}
+                  rel="noopener noreferrer"
+                  aria-label={label}
+                  className={styles.iconLink}
+                >
+                  <Image src={src} alt={label} width={26} height={26} unoptimized />
+                </a>
+              );
+            })}
+          </div>
         </div>
       </div>
     </footer>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Image as ImageIcon, Paperclip, BookOpen, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { slugify } from '@/lib/slug';
@@ -153,7 +154,10 @@ function AttachmentsView({ attachments }: { attachments: DocAttachment[] }) {
 export default function DocsClient({ initialDocs, initialCategories, userId, canEdit }: { initialDocs: Doc[]; initialCategories: DocCategory[]; userId: string; canEdit: boolean }) {
   const [docs, setDocs] = useState(initialDocs);
   const [categories, setCategories] = useState(initialCategories);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Deep-linked in from portal search (?id=<docId>) — opens straight to
+  // that doc's content instead of just landing on the general list.
+  const searchParams = useSearchParams();
+  const [selectedId, setSelectedId] = useState<string | null>(() => searchParams.get('id'));
   const [editing, setEditing] = useState(false);
   const [isNew, setIsNew] = useState(false);
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);

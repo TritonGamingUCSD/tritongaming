@@ -6,6 +6,16 @@ import styles from './login.module.css';
 
 export default function LoginClient({ next }: { next?: string }) {
   const [loading, setLoading] = useState(false);
+  // Google is everyone's primary sign-in — this stays collapsed behind a
+  // link rather than sitting as a second prominent form, since it only
+  // matters to the small set of people (mainly alumni — see
+  // BackupLoginSection.tsx on the Profile page, which is where this
+  // credential actually gets set) who've set up a backup email+password.
+  const [showEmailForm, setShowEmailForm] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [emailLoading, setEmailLoading] = useState(false);
 
   async function handleGoogleSignIn() {
     setLoading(true);
@@ -19,7 +29,22 @@ export default function LoginClient({ next }: { next?: string }) {
     });
   }
 
+  async function handleEmailSignIn(e: React.FormEvent) {
+    e.preventDefault();
+    setEmailError('');
+    setEmailLoading(true);
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    setEmailLoading(false);
+    if (error) {
+      setEmailError('Incorrect email or password.');
+      return;
+    }
+    window.location.href = next || '/portal';
+  }
+
   return (
+    <>
     <button
       className={styles.googleBtn}
       onClick={handleGoogleSignIn}
@@ -54,5 +79,37 @@ export default function LoginClient({ next }: { next?: string }) {
       )}
       {loading ? 'Redirecting…' : 'Continue with Google'}
     </button>
+
+    {showEmailForm ? (
+      <form className={styles.emailForm} onSubmit={handleEmailSignIn}>
+        <input
+          className={styles.emailInput}
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email"
+          autoComplete="email"
+          required
+        />
+        <input
+          className={styles.emailInput}
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Password"
+          autoComplete="current-password"
+          required
+        />
+        {emailError && <p className={styles.emailError}>{emailError}</p>}
+        <button type="submit" className={styles.emailSubmitBtn} disabled={emailLoading}>
+          {emailLoading ? 'Signing in…' : 'Sign In'}
+        </button>
+      </form>
+    ) : (
+      <button type="button" className={styles.emailToggleLink} onClick={() => setShowEmailForm(true)}>
+        Have a backup email login? Sign in with email instead
+      </button>
+    )}
+    </>
   );
 }

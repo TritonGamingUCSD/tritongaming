@@ -148,15 +148,15 @@ export const CONTENT_BLOCKS = [
   {
     key: 'homepage.recruitment',
     title: 'Recruitment Section',
-    description: 'The three "Join the Team" pathway cards at the bottom of the homepage.',
+    description: 'The "Join the Team" pathway cards at the bottom of the homepage.',
     icon: createElement(UserPlus, ICON_PROPS),
     category: 'Homepage',
     pages: ['/'],
-    // Fixed three cards (officer application, Discord, socials) rather than
-    // a repeatable list — each one's icon (a specific brand logo or lucide
-    // glyph) is tied to what it *is*, not something an admin picks per row,
-    // so a kvlist/imagelist wouldn't fit; this mirrors homepage.hero's flat
-    // per-field layout instead.
+    // Fixed cards (officer application, Discord, socials, member portal)
+    // rather than a repeatable list — each one's icon (a specific brand logo
+    // or lucide glyph) is tied to what it *is*, not something an admin picks
+    // per row, so a kvlist/imagelist wouldn't fit; this mirrors
+    // homepage.hero's flat per-field layout instead.
     fields: [
       { name: 'officer_title', label: 'Officer Card — Title',  type: 'text'     as const, placeholder: 'Become an Officer' },
       { name: 'officer_body',  label: 'Officer Card — Body',   type: 'textarea' as const },
@@ -170,6 +170,10 @@ export const CONTENT_BLOCKS = [
       { name: 'social_body',   label: 'Socials Card — Body',   type: 'textarea' as const },
       { name: 'social_cta',    label: 'Socials Card — Button Text', type: 'text' as const, placeholder: 'Follow Us' },
       { name: 'social_href',   label: 'Socials Card — Button URL',  type: 'url'  as const },
+      { name: 'portal_title',  label: 'Member Portal Card — Title', type: 'text'     as const, placeholder: 'Already a Member?' },
+      { name: 'portal_body',   label: 'Member Portal Card — Body',  type: 'textarea' as const },
+      { name: 'portal_cta',    label: 'Member Portal Card — Button Text', type: 'text' as const, placeholder: 'Open Portal' },
+      { name: 'portal_href',   label: 'Member Portal Card — Button URL',  type: 'url'  as const, placeholder: '/portal' },
     ],
   },
 
