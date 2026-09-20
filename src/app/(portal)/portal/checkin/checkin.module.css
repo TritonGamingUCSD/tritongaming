@@ -32,7 +32,7 @@
 }
 
 .eventSelectLabel {
-  font-size: 0.7rem;
+  font-size: var(--fs-label);
   font-family: var(--font-renegare);
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -47,7 +47,7 @@
 .exportBtn {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
   align-self: flex-end;
   font-size: 0.72rem;
   font-family: var(--font-futura-medium);
@@ -186,7 +186,7 @@
 
 .placeholderIcon  { display: inline-flex; color: rgba(255,255,255,0.5); }
 .placeholderText  { font-family: var(--font-futura-medium); font-size: 1rem; color: var(--white); }
-.placeholderEvent { font-size: 0.78rem; color: rgba(242,241,240,0.35); text-align: center; padding: 0 1rem; }
+.placeholderEvent { font-size: var(--fs-meta); color: rgba(242,241,240,0.35); text-align: center; padding: 0 1rem; }
 
 /* Scanner overlay */
 .overlay {
@@ -233,7 +233,7 @@
   align-items: center;
   gap: 0.75rem;
   color: rgba(242,241,240,0.35);
-  font-size: 0.68rem;
+  font-size: var(--fs-label);
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -358,19 +358,21 @@
 .startBtn {
   flex: 1;
   padding: 0.9rem;
-  border: none;
-  border-radius: 0.875rem;
-  background: var(--yellow);
-  color: #011941;
+  border: 1px solid var(--btn-primary-border);
+  border-radius: var(--radius-md);
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  box-shadow: var(--btn-primary-shadow);
   font-family: var(--font-futura-heavy);
   font-size: 0.95rem;
   cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
 }
 
 .startBtn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(255,199,44,0.3);
+  transform: translateY(-2px);
+  border-color: var(--btn-primary-border-hover);
+  box-shadow: var(--btn-primary-shadow-hover);
 }
 
 .stopBtn {

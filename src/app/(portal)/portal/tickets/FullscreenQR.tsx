@@ -323,15 +323,28 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
               )}
             </div>
 
-            {code && (
-              <div className={styles.fallbackCard}>
-                <div className={styles.fallbackHint}>Scanner not working? Staff can type this code:</div>
+            {/* Always rendered, even before the first code arrives — this
+                used to only mount once `code` was set, which meant the
+                sheet's total height (it's bottom-anchored — see .sheet's
+                align-items:flex-end on .backdrop) grew the instant the code
+                first loaded, shoving everything above it, including the QR
+                itself, upward. Reserving the space with a placeholder from
+                the start keeps the sheet's height — and the QR's position —
+                constant through that transition. */}
+            <div className={styles.fallbackCard}>
+              <div className={styles.fallbackHint}>Scanner not working? Staff can type this code:</div>
+              {code ? (
                 <div key={code} className={`${styles.fallbackCode} ${styles.qrSwap}`}>
                   <span className={styles.fallbackHash}>#</span>
                   <span className={styles.fallbackValue}>{code}</span>
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className={styles.fallbackCode} aria-hidden="true">
+                  <span className={styles.fallbackHash}>#</span>
+                  <span className={`${styles.fallbackValue} ${styles.fallbackValuePlaceholder}`}>······</span>
+                </div>
+              )}
+            </div>
             {error && <div className={styles.codeText}>{error}</div>}
 
             <p className={styles.hint}>

@@ -9,7 +9,7 @@
   margin-bottom: 0.2rem;
 }
 
-.sub { font-size: 0.85rem; color: rgba(242,241,240,0.4); margin-bottom: 1.5rem; }
+.sub { font-size: var(--fs-meta); color: rgba(242,241,240,0.4); margin-bottom: 1.5rem; }
 
 .totalsGrid {
   display: grid;

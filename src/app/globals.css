@@ -113,6 +113,16 @@
   --fs-body: clamp(0.9rem, 1.5vw, 1.125rem);
   --fs-accent: clamp(4rem, 9vw, 9rem);
   --fs-caption: 0.875rem;
+  /* Two small-text roles that component files had each independently
+     reinvented a dozen-plus near-duplicate sizes for (0.62-0.85rem):
+     --fs-label is the renegare/uppercase/letter-spaced "eyebrow" style
+     (section labels, badges, chips, table headers) — 0.68rem was already
+     the majority convention, so this just anchors it instead of leaving
+     every file free to pick 0.62/0.65/0.7/0.72/0.75 for the identical
+     role. --fs-meta is the plain (non-uppercase, futura-medium) secondary
+     text role — timestamps, subtitles, helper copy. */
+  --fs-label: 0.68rem;
+  --fs-meta: 0.75rem;
 
   /* Spacing scale */
   --sp-xs: 0.5rem;
@@ -120,6 +130,23 @@
   --sp-md: 2rem;
   --sp-lg: 3.5rem;
   --sp-xl: 6rem;
+
+  /* Radius scale — anchors the "what role does this rounded corner play"
+     question that component files had previously answered with 13+
+     one-off values (0.3rem-1.5rem) for what were really only ever a
+     handful of distinct roles. Small (inputs/chips/mini-buttons), medium
+     (buttons/mid-size tiles), large (cards/panels) — kept as three
+     instead of collapsing to one "card" radius, since a bigger container
+     reading as *more* rounded than a small tile is a real, intentional
+     proportion relationship, not drift. Pills are their own token since
+     999px vs 9999px was pure copy-paste variance with zero visual
+     difference.
+     Note: not yet adopted everywhere — retrofitting rushed, unrelated
+     files can silently soften/sharpen a corner touch. */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1.25rem;
+  --radius-pill: 9999px;
 
   /* Layout */
   --max-width: 1400px;

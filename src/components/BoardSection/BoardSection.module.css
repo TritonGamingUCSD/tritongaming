@@ -22,7 +22,7 @@
 }
 
 .tierLabel {
-  font-size: 0.75rem;
+  font-size: var(--fs-label);
   font-family: var(--font-renegare);
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -280,7 +280,7 @@
   font-size: 0.65rem;
   letter-spacing: 0.03em;
   padding: 0.25rem 0.55rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.5);
   pointer-events: none;
 }

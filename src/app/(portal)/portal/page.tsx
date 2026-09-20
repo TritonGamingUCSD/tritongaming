@@ -193,77 +193,85 @@ export default async function PortalDashboard() {
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerLeft}>
-          {avatarUrl ? (
-            <Image
-              src={avatarUrl}
-              alt={profile.display_name || 'User'}
-              width={48}
-              height={48}
-              className={styles.headerAvatar}
-              unoptimized
-              referrerPolicy="no-referrer"
-            />
-          ) : (
-            <div className={styles.headerAvatarFallback}>
-              {(profile.display_name || 'U')[0].toUpperCase()}
-            </div>
-          )}
-          <div>
-            <p className={styles.greeting}>{greeting}, {profile.display_name?.split(' ')[0] || 'Triton'}</p>
-            <div className={styles.roleChips}>
-              {roles.length === 0 ? (
-                <span className={styles.roleChip} style={{ background: ROLE_COLORS.guest + '18', color: ROLE_COLORS.guest, borderColor: ROLE_COLORS.guest + '44' }}>
-                  {ROLE_LABELS.guest}
-                </span>
-              ) : (
-                [...roles].sort((a, b) => ROLE_DISPLAY_RANK[b.role] - ROLE_DISPLAY_RANK[a.role]).map((r) => (
-                  <span
-                    key={`${r.role}-${r.division_id ?? ''}`}
-                    className={styles.roleChip}
-                    style={{ background: ROLE_COLORS[r.role] + '18', color: ROLE_COLORS[r.role], borderColor: ROLE_COLORS[r.role] + '44' }}
-                  >
-                    {/* A person can lead more than one division now — name it on
-                        the chip, otherwise two "Division Lead" chips in a row
-                        look like a duplicate/bug rather than two real grants. */}
-                    {r.role === 'division' && r.division_id
-                      ? `${ROLE_LABELS.division} — ${divisionNameById.get(r.division_id) ?? 'Unknown'}`
-                      : ROLE_LABELS[r.role]}
+      {/* Shares one gap between the greeting, the checkin/next-ticket
+          banners, and the hub below — previously the hub alone got a
+          bordered "shell" (see PortalHub.module.css's .desktopShell) while
+          everything above it stayed borderless, which read as two
+          disconnected pieces of UI. See dashboard.module.css's
+          .dashboardCard for why plain spacing won out over a boxed card. */}
+      <div className={styles.dashboardCard}>
+        <header className={styles.header}>
+          <div className={styles.headerLeft}>
+            {avatarUrl ? (
+              <Image
+                src={avatarUrl}
+                alt={profile.display_name || 'User'}
+                width={48}
+                height={48}
+                className={styles.headerAvatar}
+                unoptimized
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className={styles.headerAvatarFallback}>
+                {(profile.display_name || 'U')[0].toUpperCase()}
+              </div>
+            )}
+            <div>
+              <p className={styles.greeting}>{greeting}, {profile.display_name?.split(' ')[0] || 'Triton'}</p>
+              <div className={styles.roleChips}>
+                {roles.length === 0 ? (
+                  <span className={styles.roleChip} style={{ background: ROLE_COLORS.guest + '18', color: ROLE_COLORS.guest, borderColor: ROLE_COLORS.guest + '44' }}>
+                    {ROLE_LABELS.guest}
                   </span>
-                ))
-              )}
-            </div>
-            <div className={styles.headerActions}>
-              <Link href="/" className={styles.headerActionLink}>Back to Site</Link>
-              <span className={styles.headerActionDivider} aria-hidden="true">·</span>
-              <SignOutButton />
+                ) : (
+                  [...roles].sort((a, b) => ROLE_DISPLAY_RANK[b.role] - ROLE_DISPLAY_RANK[a.role]).map((r) => (
+                    <span
+                      key={`${r.role}-${r.division_id ?? ''}`}
+                      className={styles.roleChip}
+                      style={{ background: ROLE_COLORS[r.role] + '18', color: ROLE_COLORS[r.role], borderColor: ROLE_COLORS[r.role] + '44' }}
+                    >
+                      {/* A person can lead more than one division now — name it on
+                          the chip, otherwise two "Division Lead" chips in a row
+                          look like a duplicate/bug rather than two real grants. */}
+                      {r.role === 'division' && r.division_id
+                        ? `${ROLE_LABELS.division} — ${divisionNameById.get(r.division_id) ?? 'Unknown'}`
+                        : ROLE_LABELS[r.role]}
+                    </span>
+                  ))
+                )}
+              </div>
+              <div className={styles.headerActions}>
+                <Link href="/" className={styles.headerActionLink}>Back to Site</Link>
+                <span className={styles.headerActionDivider} aria-hidden="true">·</span>
+                <SignOutButton />
+              </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {canCheckin && todayEvents.length > 0 && (
-        <Link href="/portal?open=checkin" className={styles.checkinBanner}>
-          <div className={styles.checkinBannerDot} />
-          <div>
-            <div className={styles.checkinBannerTitle}>Event today — {todayEvents[0].title}</div>
-            <div className={styles.checkinBannerSub}>Tap to open check-in scanner</div>
-          </div>
-          <span className={styles.checkinBannerIcon}><Camera size={24} strokeWidth={1.5} aria-hidden="true" /></span>
-        </Link>
-      )}
+        {canCheckin && todayEvents.length > 0 && (
+          <Link href="/portal?open=checkin" className={styles.checkinBanner}>
+            <div className={styles.checkinBannerDot} />
+            <div>
+              <div className={styles.checkinBannerTitle}>Event today — {todayEvents[0].title}</div>
+              <div className={styles.checkinBannerSub}>Tap to open check-in scanner</div>
+            </div>
+            <span className={styles.checkinBannerIcon}><Camera size={24} strokeWidth={1.5} aria-hidden="true" /></span>
+          </Link>
+        )}
 
-      {/* The "next ticket" banner is shown to anyone with an upcoming
-          ticket, regardless of role — an exec/lead/officer who also has
-          their own ticket to an event is still an attendee of it, so
-          hiding this from them (the previous `!canManageEvents` gate) just
-          meant they never got the reminder. PortalTopSection owns matching
-          its width to the hub grid below it. */}
-      <PortalTopSection
-        ticket={nextTicket ? (nextTicket as Parameters<typeof DashboardClient>[0]['ticket']) : null}
-        sections={sections}
-      />
+        {/* The "next ticket" banner is shown to anyone with an upcoming
+            ticket, regardless of role — an exec/lead/officer who also has
+            their own ticket to an event is still an attendee of it, so
+            hiding this from them (the previous `!canManageEvents` gate) just
+            meant they never got the reminder. PortalTopSection owns matching
+            its width to the hub grid below it. */}
+        <PortalTopSection
+          ticket={nextTicket ? (nextTicket as Parameters<typeof DashboardClient>[0]['ticket']) : null}
+          sections={sections}
+        />
+      </div>
     </div>
   );
 }

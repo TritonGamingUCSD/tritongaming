@@ -45,10 +45,10 @@
   gap: 1.25rem;
 }
 
-.heroMeta { display: flex; flex-direction: column; gap: 0.35rem; }
+.heroMeta { display: flex; flex-direction: column; gap: 0.4rem; }
 
 .heroLabel {
-  font-size: 0.62rem;
+  font-size: var(--fs-label);
   font-family: var(--font-renegare);
   letter-spacing: 0.15em;
   color: var(--yellow);
@@ -88,22 +88,24 @@
   align-items: center;
   justify-content: center;
   gap: 0.6rem;
-  background: var(--yellow);
-  color: #011941;
-  border: none;
-  border-radius: 0.875rem;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  border: 1px solid var(--btn-primary-border);
+  box-shadow: var(--btn-primary-shadow);
+  border-radius: var(--radius-md);
   padding: 0.9rem 1.5rem;
   font-family: var(--font-futura-heavy);
   font-size: 0.95rem;
   letter-spacing: 0.04em;
   cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
   width: 100%;
 }
 
 .showQrBtn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 20px rgba(255, 199, 44, 0.3);
+  transform: translateY(-2px);
+  border-color: var(--btn-primary-border-hover);
+  box-shadow: var(--btn-primary-shadow-hover);
 }
 
 .showQrBtn:active { transform: translateY(0); }
@@ -181,12 +183,12 @@
 }
 
 .statusBadge {
-  font-size: 0.62rem;
+  font-size: var(--fs-label);
   font-family: var(--font-renegare);
   letter-spacing: 0.07em;
   text-transform: uppercase;
   padding: 0.2rem 0.5rem;
-  border-radius: 9999px;
+  border-radius: var(--radius-pill);
   border: 1px solid;
   white-space: nowrap;
 }
@@ -204,18 +206,20 @@
   font-family: var(--font-futura-medium);
   letter-spacing: 0.02em;
   padding: 0.45rem 0.75rem;
-  border: none;
-  border-radius: 0.5rem;
-  background: var(--yellow);
-  color: #011941;
+  border: 1px solid var(--btn-primary-border);
+  border-radius: var(--radius-md);
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  box-shadow: var(--btn-primary-shadow);
   cursor: pointer;
   white-space: nowrap;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
 }
 
 .qrMiniBtn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 3px 12px rgba(255, 199, 44, 0.3);
+  transform: translateY(-2px);
+  border-color: var(--btn-primary-border-hover);
+  box-shadow: var(--btn-primary-shadow-hover);
 }
 .qrMiniBtn:active { transform: translateY(0); }
 
@@ -340,7 +344,7 @@
 
 .emptyIcon { display: inline-flex; color: rgba(242, 241, 240, 0.3); }
 .emptyText { font-family: var(--font-futura-medium); font-size: 1rem; color: var(--white); }
-.emptyHint { font-size: 0.85rem; color: rgba(242, 241, 240, 0.4); }
+.emptyHint { font-size: var(--fs-meta); color: rgba(242, 241, 240, 0.4); }
 
 .browseLink {
   margin-top: 0.5rem;

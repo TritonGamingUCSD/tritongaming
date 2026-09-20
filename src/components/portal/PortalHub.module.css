@@ -81,7 +81,7 @@
   position: absolute;
   top: 0.875rem;
   right: 0.875rem;
-  font-size: 0.68rem;
+  font-size: var(--fs-label);
   font-family: var(--font-renegare);
   color: var(--yellow);
 }
@@ -153,7 +153,7 @@
 .backBtn {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
   font-family: var(--font-futura-medium);
   font-size: 0.8rem;
   color: rgba(242, 241, 240, 0.4);
@@ -190,133 +190,141 @@
   min-width: 0;
 }
 
-.panelMain {
-  min-width: 0;
-}
-
-/* ── Desktop rail ─────────────────────────────────────
-   Hidden below the breakpoint — mobile keeps exactly the single-column
-   header+body panel above, which already fits a small screen correctly.
-   Above it, opening a section stops being a full takeover with no way back
-   except one button; the rail stays on screen the whole time, so switching
-   sections is a click away instead of a trip back to the grid first. */
-.rail { display: none; }
-
-@media (min-width: 900px) {
-  .panel {
-    display: flex;
-    align-items: stretch;
-    padding: 0;
-    min-height: 70vh;
-    overflow: hidden;
-  }
-
-  .rail {
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-    width: 220px;
-    flex-shrink: 0;
-    padding: 1.5rem 0.75rem;
-    border-right: 1px solid rgba(255, 255, 255, 0.06);
-    background: rgba(255, 255, 255, 0.015);
-    overflow-y: auto;
-  }
-
-  .railBack {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-family: var(--font-futura-medium);
-    font-size: 0.8rem;
-    color: rgba(242, 241, 240, 0.4);
-    padding: 0.4rem 0.5rem;
-    background: none;
-    border: none;
-    cursor: pointer;
-    text-align: left;
-    transition: color 0.15s;
-  }
-  .railBack:hover { color: var(--yellow); }
-
-  .railGroup {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-  }
-
-  .railGroupLabel {
-    font-family: var(--font-futura-heavy);
-    font-size: 0.65rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: rgba(242, 241, 240, 0.3);
-    padding: 0.5rem 0.5rem 0.25rem;
-  }
-
-  .railItem {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    padding: 0.5rem 0.6rem;
-    border-radius: 0.6rem;
-    background: none;
-    border: none;
-    cursor: pointer;
-    text-align: left;
-    transition: background 0.15s, color 0.15s;
-  }
-  .railItem:hover { background: rgba(255, 255, 255, 0.04); }
-
-  .railItemActive {
-    background: rgba(255, 199, 44, 0.1);
-  }
-  .railItemActive .railLabel { color: var(--white); }
-
-  .railIcon {
-    display: inline-flex;
-    flex-shrink: 0;
-    color: var(--yellow);
-  }
-  .railIcon :global(svg) { width: 16px; height: 16px; }
-
-  .railLabel {
-    flex: 1;
-    min-width: 0;
-    font-family: var(--font-futura-medium);
-    font-size: 0.82rem;
-    color: rgba(242, 241, 240, 0.65);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .railBadge {
-    font-size: 0.65rem;
-    font-family: var(--font-renegare);
-    color: var(--yellow);
-    flex-shrink: 0;
-  }
-
-  .panelMain {
-    flex: 1;
-    min-width: 0;
-    padding: 1.75rem clamp(1.25rem, 3vw, 2.5rem) 2.5rem;
-    overflow-y: auto;
-  }
-
-  /* The rail's own "← Dashboard" replaces this — keeping both would just be
-     two identical controls stacked on top of each other. */
-  .backBtn { display: none; }
-
-  .panelHeader {
-    align-items: flex-start;
-    text-align: left;
-  }
-}
-
 @media (max-width: 600px) {
   .grid { grid-template-columns: repeat(auto-fit, minmax(140px, 160px)); gap: 0.75rem; }
   .card { padding: 1.125rem 1rem; min-height: 125px; }
   .panel { padding: 1.125rem 1rem 2rem; }
+}
+
+/* ── Desktop shell ─────────────────────────────────────
+   Only ever rendered above the DESKTOP_BREAKPOINT (see PortalHub.tsx's
+   useIsDesktop — a JS branch, not a CSS media query, so this and the mobile
+   grid/panel above are never both in the DOM at once). A persistent
+   sidebar for the home grid *and* whatever section is open, replacing the
+   mobile pattern of a full-page card takeover with no persistent nav —
+   that combination (a sidebar appearing only sometimes, next to a
+   completely different full-takeover card interaction the rest of the
+   time) was what actually read as inconsistent on a wide screen, not the
+   sidebar or the cards on their own.
+   Deliberately no border/background/card treatment at all — see
+   dashboard.module.css's .dashboardCard for why a boxed panel here read as
+   an extra layer of chrome rather than a connected page. The rail's own
+   border-right below is the only dividing line, there to separate nav
+   from content, not to box the whole shell in. */
+.desktopShell {
+  display: flex;
+  align-items: stretch;
+  min-height: 60vh;
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 220px;
+  flex-shrink: 0;
+  padding: 1.5rem 0.75rem 1.5rem 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  overflow-y: auto;
+}
+
+.railHome {
+  font-family: var(--font-futura-heavy);
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  color: rgba(242, 241, 240, 0.65);
+  padding: 0.5rem 0.6rem;
+  border-radius: 0.6rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, color 0.15s;
+}
+.railHome:hover { background: rgba(255, 255, 255, 0.04); }
+
+.railGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.railGroupLabel {
+  font-family: var(--font-futura-heavy);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(242, 241, 240, 0.3);
+  padding: 0.5rem 0.5rem 0.25rem;
+}
+
+.railItem {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 0.6rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, color 0.15s;
+}
+.railItem:hover { background: rgba(255, 255, 255, 0.04); }
+
+.railItemActive {
+  background: rgba(255, 199, 44, 0.1);
+  color: var(--yellow);
+}
+.railItemActive .railLabel { color: var(--white); }
+
+.railIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--yellow);
+}
+.railIcon :global(svg) { width: 16px; height: 16px; }
+
+.railLabel {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-futura-medium);
+  font-size: 0.82rem;
+  color: rgba(242, 241, 240, 0.65);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.railBadge {
+  font-size: var(--fs-label);
+  font-family: var(--font-renegare);
+  color: var(--yellow);
+  flex-shrink: 0;
+}
+
+.desktopContent {
+  flex: 1;
+  min-width: 0;
+  padding: 1.75rem clamp(1.25rem, 3vw, 2.5rem) 2.5rem;
+  overflow-y: auto;
+}
+
+.desktopContent .gridWrap {
+  /* Sits inside a padded content pane now, not the full-bleed .wrap — the
+     grid's own gap/columns already adapt fine, nothing else to override. */
+  max-width: 1000px;
+}
+
+.desktopPanel {
+  max-width: 1000px;
+}
+
+.desktopPanelHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }

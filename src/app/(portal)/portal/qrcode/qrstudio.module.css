@@ -24,7 +24,7 @@
 .formHeader { display: flex; flex-direction: column; gap: 0.4rem; }
 
 .eyebrow {
-  font-size: 0.72rem;
+  font-size: var(--fs-label);
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -52,7 +52,11 @@
   gap: 1.75rem;
 }
 
-@media (max-width: 700px) {
+/* Matches portal.module.css's own 768px tablet cutoff (see RoleManager.
+   module.css for the same reasoning) instead of an unrelated one-off
+   value, so this collapses in step with the page container's own padding
+   change rather than ~70px earlier. */
+@media (max-width: 768px) {
   .grid { grid-template-columns: 1fr; }
 }
 
@@ -75,7 +79,7 @@
 }
 
 .label {
-  font-size: 0.72rem;
+  font-size: var(--fs-label);
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -298,17 +302,19 @@
 
 .downloadBtn {
   padding: 0.75rem 1.25rem;
-  background: var(--yellow);
-  color: var(--darkblue);
-  border-radius: 0.6rem;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  border: 1px solid var(--btn-primary-border);
+  box-shadow: var(--btn-primary-shadow);
+  border-radius: var(--radius-md);
   font-family: var(--font-futura-heavy);
   font-size: 0.85rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
-.downloadBtn:hover:not(:disabled) { opacity: 0.9; }
+.downloadBtn:hover:not(:disabled) { border-color: var(--btn-primary-border-hover); box-shadow: var(--btn-primary-shadow-hover); }
 .downloadBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* .layout and .grid above already collapse to one column before this width,

@@ -13,7 +13,7 @@
   right: 0.875rem;
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
   background: rgba(5, 150, 105, 0.15);
   border: 1px solid rgba(52, 211, 153, 0.3);
   color: #6ee7b7;
@@ -96,7 +96,7 @@
 
 .roleFilter {
   padding: 0.3rem 0.75rem;
-  border-radius: 9999px;
+  border-radius: var(--radius-pill);
   font-size: 0.75rem;
   font-family: var(--font-futura-medium);
   color: rgba(242,241,240,0.5);
@@ -106,7 +106,7 @@
   transition: all 0.15s;
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
 }
 
 .roleFilter:hover {
@@ -125,7 +125,7 @@
   opacity: 0.6;
   background: rgba(255,255,255,0.08);
   padding: 0.05rem 0.35rem;
-  border-radius: 9999px;
+  border-radius: var(--radius-pill);
 }
 
 .bulkBar {
@@ -293,11 +293,11 @@
 }
 
 .currentRole {
-  font-size: 0.68rem;
+  font-size: var(--fs-label);
   font-family: var(--font-renegare);
   letter-spacing: 0.08em;
   padding: 0.2rem 0.6rem;
-  border-radius: 9999px;
+  border-radius: var(--radius-pill);
   text-transform: uppercase;
   border: 1px solid;
   white-space: nowrap;
@@ -351,7 +351,7 @@
 .checkboxLabel {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
   font-size: 0.75rem;
   font-family: var(--font-futura-medium);
   cursor: pointer;
@@ -419,7 +419,13 @@
   background: rgba(0,0,0,0.1);
 }
 
-@media (max-width: 700px) {
+/* Matches portal.module.css's own 768px tablet cutoff (where the page
+   container's padding also tightens) rather than an unrelated one-off
+   value — otherwise this row collapses to a stacked layout ~70px before
+   its own container stops giving it desktop-width padding, which briefly
+   looks like an under-filled stacked column with too much breathing room
+   around it. */
+@media (max-width: 768px) {
   .row { flex-direction: column; align-items: flex-start; }
   .roleSection { justify-content: flex-start; width: 100%; }
   .roleButtons { max-width: 100%; }

@@ -5,6 +5,20 @@
   width: 100%;
 }
 
+/* Groups the greeting header, the checkin/next-ticket banners, and
+   PortalHub's rail+content shell under one shared gap — previously only
+   the hub had its own bordered "shell" while the header/banners above it
+   were borderless, which read as two disconnected pieces of UI stacked on
+   top of each other. Tried wrapping it all in a visible bordered card
+   first; a boxed panel on top of the page's own dark background just read
+   as a second layer of chrome rather than "connected" — plain consistent
+   spacing (no border, no fill) reads as one flow. */
+.dashboardCard {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
 /* ── Header ─────────────────────────────────────── */
 .headerLeft {
   display: flex;
@@ -97,13 +111,13 @@
   gap: 1.25rem;
 }
 
-.ticketHeroMeta { display: flex; flex-direction: column; gap: 0.35rem; }
+.ticketHeroMeta { display: flex; flex-direction: column; gap: 0.4rem; }
 
 .ticketHeroLabel {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  font-size: 0.62rem;
+  gap: 0.4rem;
+  font-size: var(--fs-label);
   font-family: var(--font-renegare);
   letter-spacing: 0.15em;
   color: var(--yellow);
@@ -150,20 +164,22 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: var(--yellow);
-  color: #011941;
-  border: none;
-  border-radius: 0.75rem;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  border: 1px solid var(--btn-primary-border);
+  box-shadow: var(--btn-primary-shadow);
+  border-radius: var(--radius-md);
   padding: 0.75rem 1.25rem;
   font-family: var(--font-futura-heavy);
   font-size: 0.9rem;
   cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
 }
 
 .showQrHeroBtn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(255,199,44,0.3);
+  transform: translateY(-2px);
+  border-color: var(--btn-primary-border-hover);
+  box-shadow: var(--btn-primary-shadow-hover);
 }
 
 .viewAllTickets {
@@ -202,7 +218,7 @@
   letter-spacing: 0.02em;
 }
 
-.sub { font-size: 0.82rem; color: rgba(242,241,240,0.38); }
+.sub { font-size: var(--fs-meta); color: rgba(242,241,240,0.38); }
 
 .roleChips {
   display: flex;
@@ -236,11 +252,11 @@
 
 .roleChip {
   display: inline-block;
-  font-size: 0.62rem;
+  font-size: var(--fs-label);
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;
   padding: 0.2rem 0.6rem;
-  border-radius: 9999px;
+  border-radius: var(--radius-pill);
   text-transform: uppercase;
   border: 1px solid;
   white-space: nowrap;

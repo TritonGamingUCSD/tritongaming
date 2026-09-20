@@ -5,7 +5,7 @@
 }
 
 .label {
-  font-size: 0.72rem;
+  font-size: var(--fs-label);
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;
   text-transform: uppercase;

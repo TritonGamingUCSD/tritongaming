@@ -18,7 +18,7 @@
   margin-bottom: 0.2rem;
 }
 
-.sub { font-size: 0.85rem; color: rgba(242,241,240,0.4); }
+.sub { font-size: var(--fs-meta); color: rgba(242,241,240,0.4); }
 
 .adminLink {
   font-size: 0.82rem;
@@ -72,12 +72,12 @@
 }
 
 .groupLabel {
-  font-size: 0.7rem;
+  font-size: var(--fs-label);
   font-family: var(--font-renegare);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   padding: 0.2rem 0.625rem;
-  border-radius: 9999px;
+  border-radius: var(--radius-pill);
   border: 1px solid;
 }
 
@@ -86,7 +86,7 @@
   color: rgba(242,241,240,0.25);
   background: rgba(255,255,255,0.05);
   padding: 0.1rem 0.4rem;
-  border-radius: 9999px;
+  border-radius: var(--radius-pill);
 }
 
 .grid {
@@ -162,7 +162,7 @@
 }
 
 .orgTitle {
-  font-size: 0.7rem;
+  font-size: var(--fs-label);
   font-family: var(--font-renegare);
   letter-spacing: 0.04em;
   color: var(--yellow);
@@ -249,7 +249,7 @@
 }
 
 .detailName { font-family: var(--font-futura-heavy); font-size: 1.15rem; color: var(--white); }
-.detailPronouns { font-size: 0.75rem; color: rgba(242,241,240,0.4); }
+.detailPronouns { font-size: var(--fs-meta); color: rgba(242,241,240,0.4); }
 .detailOrgTitle { font-size: 0.85rem; color: var(--yellow); }
 .detailMeta {
   display: flex; align-items: center; justify-content: center; gap: 0.3rem;
@@ -257,7 +257,7 @@
 }
 .detailBio { font-size: 0.85rem; color: rgba(242,241,240,0.75); line-height: 1.6; margin-top: 0.6rem; }
 
-.detailSocialRow { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.45rem; margin-top: 0.75rem; }
+.detailSocialRow { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.4rem; margin-top: 0.75rem; }
 .detailSocialBtn {
   display: flex; align-items: center; justify-content: center;
   width: 32px; height: 32px; padding: 0; border-radius: 50%;
@@ -282,7 +282,7 @@
   font-size: 0.65rem;
   letter-spacing: 0.03em;
   padding: 0.25rem 0.55rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.5);
   pointer-events: none;
   animation: copiedPop 0.15s ease;

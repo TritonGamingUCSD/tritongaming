@@ -48,7 +48,7 @@
 }
 
 .zoomLabel {
-  font-size: 0.72rem;
+  font-size: var(--fs-label);
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -81,15 +81,17 @@
 
 .confirmBtn {
   padding: 0.625rem 1.4rem;
-  background: var(--yellow);
-  color: var(--darkblue);
-  border-radius: 0.5rem;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  border: 1px solid var(--btn-primary-border);
+  box-shadow: var(--btn-primary-shadow);
+  border-radius: var(--radius-md);
   font-family: var(--font-futura-heavy);
   font-size: 0.8rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
-.confirmBtn:hover:not(:disabled) { opacity: 0.9; }
+.confirmBtn:hover:not(:disabled) { border-color: var(--btn-primary-border-hover); box-shadow: var(--btn-primary-shadow-hover); }
 .confirmBtn:disabled { opacity: 0.5; cursor: not-allowed; }

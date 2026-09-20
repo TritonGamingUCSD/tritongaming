@@ -60,7 +60,7 @@
   display: inline-block;
   padding: 0.4rem 1.1rem;
   border: 1px solid rgba(255, 199, 44, 0.4);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-family: var(--font-futura-medium);
   font-size: clamp(0.7rem, 1.3vw, 0.9rem);
   letter-spacing: 0.08em;
@@ -113,7 +113,7 @@
   align-items: center;
   min-height: 48px;
   padding: 0.75rem 2rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-family: var(--font-futura-heavy);
   font-size: clamp(0.8rem, 1.2vw, 0.95rem);
   letter-spacing: 0.06em;

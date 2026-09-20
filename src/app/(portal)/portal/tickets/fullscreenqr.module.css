@@ -103,7 +103,7 @@
   background: rgba(220, 38, 38, 0.1);
   color: #dc2626;
   padding: 0.15rem 0.5rem;
-  border-radius: 9999px;
+  border-radius: var(--radius-pill);
   font-size: 0.6rem;
   letter-spacing: 0.08em;
 }
@@ -298,6 +298,10 @@
   font-weight: 800;
   letter-spacing: 0.2em;
   color: #011941;
+}
+
+.fallbackValuePlaceholder {
+  color: rgba(1, 25, 65, 0.15);
 }
 
 .hint {

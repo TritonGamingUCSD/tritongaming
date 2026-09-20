@@ -95,14 +95,14 @@
 .chipRow {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem;
+  gap: 0.4rem;
 }
 
 .chip {
   font-size: 0.68rem;
   font-family: var(--font-futura-medium);
   padding: 0.2rem 0.55rem;
-  border-radius: 9999px;
+  border-radius: var(--radius-pill);
   border: 1px solid;
 }
 

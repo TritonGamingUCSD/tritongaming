@@ -51,12 +51,18 @@
   flex-wrap: wrap;
 }
 
+/* Yellow, not dim white — matches the site-wide convention that an
+   "eyebrow"/section-label is always the accent color (see main-site
+   .sectionLabel in LandingDivisions/LandingEvents/etc.). Kept at this
+   compact renegare size rather than that hero treatment's larger
+   flanking-line style, since this labels a subsection inline within a
+   dense app screen, not a full-bleed marketing section. */
 .sectionLabel {
-  font-size: 0.68rem;
+  font-size: var(--fs-label);
   font-family: var(--font-renegare);
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: rgba(242,241,240,0.35);
+  color: var(--yellow);
 }
 
 .sectionHint {
@@ -66,7 +72,7 @@
 
 /* Badge */
 .badge {
-  font-size: 0.65rem;
+  font-size: var(--fs-label);
   font-family: var(--font-renegare);
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -74,7 +80,7 @@
   background: rgba(255,199,44,0.12);
   color: var(--yellow);
   border: 1px solid rgba(255,199,44,0.25);
-  border-radius: 9999px;
+  border-radius: var(--radius-pill);
 }
 
 /* Card */
@@ -114,18 +120,20 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.65rem 1.5rem;
-  background: var(--yellow);
-  color: var(--darkblue);
-  border-radius: 0.5rem;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  border: 1px solid var(--btn-primary-border);
+  box-shadow: var(--btn-primary-shadow);
+  border-radius: var(--radius-md);
   font-family: var(--font-futura-heavy);
   font-size: 0.82rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: opacity 0.15s, transform 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
   white-space: nowrap;
 }
-.btnPrimary:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+.btnPrimary:hover:not(:disabled) { border-color: var(--btn-primary-border-hover); box-shadow: var(--btn-primary-shadow-hover); transform: translateY(-2px); }
 .btnPrimary:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Ghost button */
@@ -166,7 +174,7 @@
 }
 
 .fieldLabel {
-  font-size: 0.68rem;
+  font-size: var(--fs-label);
   font-family: var(--font-renegare);
   letter-spacing: 0.12em;
   text-transform: uppercase;
