@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ReactNode } from 'react';
-import { Pencil, BarChart3, History } from 'lucide-react';
+import { Pencil, BarChart3, History, X, Server, Users as UsersIcon } from 'lucide-react';
 import RoleManager from './RoleManager';
-import StorageCleanup from './StorageCleanup';
+import SystemStats from './SystemStats';
 import StatsClient from './stats/StatsClient';
 import type { StatsData } from './stats/getStatsData';
 import RoleHistoryClient from './history/RoleHistoryClient';
@@ -15,23 +15,28 @@ import styles from './admin.module.css';
 interface Props {
   isAdmin: boolean;
   stats: { label: string; value: number; icon: ReactNode }[];
-  eventTicketStats: { id: string; title: string; issued: number; checkedIn: number }[];
   allUsers: Parameters<typeof RoleManager>[0]['users'];
   divisions: Parameters<typeof RoleManager>[0]['divisions'];
   statsData: StatsData;
   roleHistoryEntries?: RoleChangeEntry[];
 }
 
-type Tab = 'overview' | 'analytics' | 'role-history';
+type Tab = 'overview' | 'roles' | 'analytics' | 'system';
 
-// Analytics and Role History used to be their own top-level hub cards
-// alongside this one — all three are the same "admin" audience and none of
-// them stand alone the way, say, Events or Members do, so three separate
-// cards just added to the pile without actually helping anyone find
-// anything. Tabs within one Admin card instead: same destinations, one
-// entry point.
-export default function AdminSectionContent({ isAdmin, stats, eventTicketStats, allUsers, divisions, statsData, roleHistoryEntries }: Props) {
+// Each tab is a real destination now instead of Overview being a junk
+// drawer for Role Manager + Storage Cleanup stacked underneath the stats —
+// those two are genuinely separate tasks an admin comes here to do, not
+// something to scroll past on the way to them. Role History used to be a
+// fourth tab of its own, but it's not a destination anyone visits on its
+// own — it's a "how did we get here" lookup you reach for *from* Role
+// Manager, so it's a small icon button there instead (see HistoryModal).
+// The per-event ticket/check-in breakdown that used to live in Overview
+// moved to the Events card's own Analytics tab — it's event data, not a
+// platform-admin metric, and Events is where someone actually managing
+// tickets for a specific event already is.
+export default function AdminSectionContent({ isAdmin, stats, allUsers, divisions, statsData, roleHistoryEntries }: Props) {
   const [tab, setTab] = useState<Tab>('overview');
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   return (
     <div className={styles.page}>
@@ -51,71 +56,63 @@ export default function AdminSectionContent({ isAdmin, stats, eventTicketStats, 
         <button type="button" role="tab" aria-selected={tab === 'overview'} className={`${styles.tab} ${tab === 'overview' ? styles.tabActive : ''}`} onClick={() => setTab('overview')}>
           Overview
         </button>
+        {isAdmin && (
+          <button type="button" role="tab" aria-selected={tab === 'roles'} className={`${styles.tab} ${tab === 'roles' ? styles.tabActive : ''}`} onClick={() => setTab('roles')}>
+            <UsersIcon size={13} strokeWidth={1.5} aria-hidden="true" /> Member Management
+          </button>
+        )}
         <button type="button" role="tab" aria-selected={tab === 'analytics'} className={`${styles.tab} ${tab === 'analytics' ? styles.tabActive : ''}`} onClick={() => setTab('analytics')}>
           <BarChart3 size={13} strokeWidth={1.5} aria-hidden="true" /> Analytics
         </button>
-        {isAdmin && roleHistoryEntries && (
-          <button type="button" role="tab" aria-selected={tab === 'role-history'} className={`${styles.tab} ${tab === 'role-history' ? styles.tabActive : ''}`} onClick={() => setTab('role-history')}>
-            <History size={13} strokeWidth={1.5} aria-hidden="true" /> Role History
+        {isAdmin && (
+          <button type="button" role="tab" aria-selected={tab === 'system'} className={`${styles.tab} ${tab === 'system' ? styles.tabActive : ''}`} onClick={() => setTab('system')}>
+            <Server size={13} strokeWidth={1.5} aria-hidden="true" /> System
           </button>
         )}
       </div>
 
       {tab === 'overview' && (
-        <>
-          {/* Stats */}
-          <div className={styles.statsGrid}>
-            {stats.map(({ label, value, icon }) => (
-              <div key={label} className={styles.statCard}>
-                <span className={styles.statIcon}>{icon}</span>
-                <div>
-                  <div className={styles.statValue}>{value.toLocaleString()}</div>
-                  <div className={styles.statLabel}>{label}</div>
-                </div>
+        <div className={styles.statsGrid}>
+          {stats.map(({ label, value, icon }) => (
+            <div key={label} className={styles.statCard}>
+              <span className={styles.statIcon}>{icon}</span>
+              <div>
+                <div className={styles.statValue}>{value.toLocaleString()}</div>
+                <div className={styles.statLabel}>{label}</div>
               </div>
-            ))}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab === 'roles' && isAdmin && (
+        <section className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionLabel}>Member Management</h2>
+            <span className={styles.sectionHint}>Search any user and change their role instantly</span>
+            {roleHistoryEntries && (
+              <button type="button" className={styles.historyIconBtn} onClick={() => setHistoryOpen(true)} aria-label="View role change history">
+                <History size={15} strokeWidth={1.5} aria-hidden="true" />
+              </button>
+            )}
           </div>
-
-          {/* Ticket & check-in stats (exec+) */}
-          {eventTicketStats.length > 0 && (
-            <section className={styles.section}>
-              <h2 className={styles.sectionLabel}>Ticket & Check-In Stats</h2>
-              <div className={styles.table}>
-                <div className={styles.tableHeader}>
-                  <span>Event</span>
-                  <span>Tickets Issued</span>
-                  <span>Checked In</span>
-                </div>
-                {eventTicketStats.map((e) => (
-                  <div key={e.id} className={styles.tableRow}>
-                    <span>{e.title}</span>
-                    <span>{e.issued}</span>
-                    <span>{e.checkedIn} <span className={styles.sectionHint}>({e.issued > 0 ? Math.round((e.checkedIn / e.issued) * 100) : 0}%)</span></span>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Full role manager (admin only) */}
-          {isAdmin && (
-            <section className={styles.section}>
-              <div className={styles.sectionHeader}>
-                <h2 className={styles.sectionLabel}>Role Manager</h2>
-                <span className={styles.sectionHint}>Search any user and change their role instantly</span>
-              </div>
-              <RoleManager users={allUsers} divisions={divisions} />
-            </section>
-          )}
-
-          {isAdmin && <StorageCleanup />}
-        </>
+          <RoleManager users={allUsers} divisions={divisions} />
+        </section>
       )}
 
       {tab === 'analytics' && <StatsClient data={statsData} />}
 
-      {tab === 'role-history' && roleHistoryEntries && (
-        <RoleHistoryClient entries={roleHistoryEntries} divisions={divisions} />
+      {tab === 'system' && isAdmin && <SystemStats />}
+
+      {historyOpen && roleHistoryEntries && (
+        <div className={styles.historyOverlay} onClick={() => setHistoryOpen(false)}>
+          <div className={styles.historyModal} onClick={(e) => e.stopPropagation()}>
+            <button type="button" className={styles.historyClose} onClick={() => setHistoryOpen(false)} aria-label="Close role history">
+              <X size={18} strokeWidth={1.75} aria-hidden="true" />
+            </button>
+            <RoleHistoryClient entries={roleHistoryEntries} divisions={divisions} />
+          </div>
+        </div>
       )}
     </div>
   );

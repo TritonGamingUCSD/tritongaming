@@ -3,6 +3,15 @@
   margin-inline: auto;
 }
 
+/* Matches the ~1100px width most other portal pages settled on for the
+   desktop rail+panel shell (see admin.module.css, sitecontent.module.css)
+   — this page kept its pre-desktop-shell 700px cap, which meant almost all
+   of the panel's actual width sat empty on a wide screen while the form
+   below still had to stack every field vertically regardless. */
+@media (min-width: 900px) {
+  .page { max-width: 1100px; }
+}
+
 .title {
   font-family: var(--font-futura-heavy);
   font-size: clamp(1.25rem, 2.5vw, 1.6rem);
@@ -30,11 +39,26 @@
   gap: 2rem;
 }
 
+@media (min-width: 900px) {
+  .layout { grid-template-columns: 240px 1fr; gap: 2.5rem; }
+}
+
 .avatarSection {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.75rem;
+}
+
+/* Sticky so it actually reads as a sidebar next to the (much taller) form,
+   instead of just being the first thing above it that scrolls away
+   immediately — the literal "move it to the side" ask. */
+@media (min-width: 900px) {
+  .avatarSection {
+    position: sticky;
+    top: 1.5rem;
+    align-self: start;
+  }
 }
 
 .roleTagRow {
@@ -69,6 +93,33 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
+}
+
+/* Pairs Social Links with the Org Title/Birthday/Show-on-board column at
+   desktop width, where .page's wider cap (see above) leaves enough room
+   for two real columns instead of one more full-width block stacked
+   underneath everything else. Single column below that — these fields
+   have no natural side-by-side relationship, it's purely a space-saving
+   pairing once there's space to spare. */
+.formSplit {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+@media (min-width: 900px) {
+  .formSplit {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+}
+
+.formSplitCol {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
 .fieldGroup {

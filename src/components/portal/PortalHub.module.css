@@ -316,8 +316,17 @@
   max-width: 1000px;
 }
 
+/* Wider than the home grid's own 1000px cap — a data-dense section's real
+   content (QR Studio's 2-column builder+preview, RoleManager's rows) was
+   getting squeezed into that same measure meant for a centered card grid,
+   truncating select options ("extra-roun…") and wrapping labels that had
+   plenty of room before the desktop shell existed. A reading-focused panel
+   like Docs isn't hurt by the extra width — it already caps its own prose
+   at 70ch internally (see docs.module.css's .viewBody), so this just gives
+   width-hungry panels the room they actually need instead of every panel
+   sharing one number regardless of what it renders. */
 .desktopPanel {
-  max-width: 1000px;
+  max-width: 1300px;
 }
 
 .desktopPanelHeader {

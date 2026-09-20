@@ -28,7 +28,9 @@ export type Capability =
   | 'manage_roles'
   | 'generate_qr_codes'
   | 'view_docs'
-  | 'manage_docs';
+  | 'manage_docs'
+  | 'view_photo_albums'
+  | 'manage_photo_albums';
 
 export interface Database {
   public: {
@@ -194,6 +196,32 @@ export interface Database {
         Insert: Omit<Database['public']['Tables']['doc_categories']['Row'], 'id' | 'created_at'>;
         Update: Partial<Database['public']['Tables']['doc_categories']['Insert']>;
       };
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          type: string;
+          title: string;
+          body: string | null;
+          href: string | null;
+          read_at: string | null;
+          created_at: string;
+        };
+        Insert: Omit<Database['public']['Tables']['notifications']['Row'], 'id' | 'created_at'>;
+        Update: Partial<Database['public']['Tables']['notifications']['Insert']>;
+      };
+      photo_albums: {
+        Row: {
+          id: string;
+          title: string;
+          url: string;
+          event_id: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: Omit<Database['public']['Tables']['photo_albums']['Row'], 'id' | 'created_at'>;
+        Update: Partial<Database['public']['Tables']['photo_albums']['Insert']>;
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -214,6 +242,8 @@ export type SiteContent = Database['public']['Tables']['site_contents']['Row'];
 export type Sponsor = Database['public']['Tables']['sponsors']['Row'];
 export type Doc = Database['public']['Tables']['docs']['Row'];
 export type DocCategory = Database['public']['Tables']['doc_categories']['Row'];
+export type Notification = Database['public']['Tables']['notifications']['Row'];
+export type PhotoAlbum = Database['public']['Tables']['photo_albums']['Row'];
 
 export type TicketWithEvent = Ticket & {
   event: Pick<Event, 'id' | 'title' | 'start_date' | 'end_date' | 'location' | 'flyer_url'>;
@@ -223,11 +253,17 @@ export type TicketWithEvent = Ticket & {
 // officer and division intentionally tie: they're peers with different
 // capabilities, neither implies the other. See src/lib/capabilities.ts for
 // the actual permission model.
+// alumni ranks above ucsd/recruit (a former member outranks an unaffiliated
+// verified student or a prospect) but below officer (an alumnus isn't
+// automatically staff). This ordering is also what MembersSectionContent's
+// ORDER array keys off of — keep the two in sync, since a mismatch there
+// previously caused an alumni-who-is-also-ucsd to be misclassified as
+// ucsd-only and dropped from the member directory entirely.
 export const ROLE_DISPLAY_RANK: Record<UserRole, number> = {
   guest: 0,
-  alumni: 1,
   ucsd: 1,
   recruit: 1.5,
+  alumni: 1.8,
   officer: 2,
   division: 2,
   lead: 3,

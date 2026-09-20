@@ -35,6 +35,12 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // delete) is lead+, view_docs (read) keeps officer (and recruit) in.
   manage_docs: ['lead', 'exec', 'admin'],
   view_docs: ['officer', 'lead', 'exec', 'admin', 'recruit'],
+  // Alumni and recruit are explicitly included here (unlike view_docs/
+  // view_events, which exclude alumni) — browsing old event photos is
+  // exactly the kind of thing a former member or a not-yet-onboarded
+  // prospect would want, unlike day-to-day ops docs or the events calendar.
+  view_photo_albums: ['officer', 'division', 'lead', 'exec', 'admin', 'recruit', 'alumni'],
+  manage_photo_albums: ['lead', 'exec', 'admin'],
 };
 
 /**

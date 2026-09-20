@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/capabilities';
 import { rotatingCode, currentWindow } from '@/lib/rotatingCode';
 
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
   const { data: allCandidates, error: candidatesError } = await supabase
     .from('tickets')
     .select(`
-      id, ticket_code, status, checked_in_at, event_id,
+      id, ticket_code, status, checked_in_at, event_id, user_id,
       user:profiles!tickets_user_id_fkey(display_name),
       event:events(title)
     `);
@@ -96,6 +97,20 @@ export async function POST(request: Request) {
   if (updateError) {
     return NextResponse.json({ error: 'Failed to update ticket' }, { status: 500 });
   }
+
+  // Notifying the ticket holder, not the officer running this scanner —
+  // RLS only lets someone insert a notification for themselves (see
+  // 20260920022210_allow_self_insert_notifications.sql), so this one
+  // genuinely needs the service-role client. Best-effort: a failed
+  // notification insert shouldn't undo a check-in that already succeeded.
+  const serviceClient = createServiceClient();
+  await serviceClient.from('notifications').insert({
+    user_id: ticket.user_id,
+    type: 'ticket_checked_in',
+    title: "You're checked in!",
+    body: eventData?.title ? `Enjoy ${eventData.title}.` : 'Enjoy the event.',
+    href: '/portal/tickets',
+  });
 
   return NextResponse.json({
     status: 'active',

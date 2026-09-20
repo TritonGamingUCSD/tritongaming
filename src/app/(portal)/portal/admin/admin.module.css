@@ -132,6 +132,70 @@
 
 .sectionHint { font-size: var(--fs-meta); color: rgba(242,241,240,0.2); }
 
+/* Role History used to be its own tab — now a small lookup reachable from
+   Role Manager's own header instead, since it's not a place anyone starts
+   their visit. margin-left:auto pushes it to the row's far end regardless
+   of how long .sectionHint runs. */
+.historyIconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(242,241,240,0.6);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.historyIconBtn:hover { background: rgba(255,199,44,0.1); border-color: rgba(255,199,44,0.3); color: var(--yellow); }
+
+.historyOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 6, 14, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 4rem 1.25rem 2rem;
+  overflow-y: auto;
+  z-index: 500;
+}
+
+.historyModal {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: #0a0f1e;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 1.125rem;
+  padding: 1.75rem clamp(1rem, 3vw, 2rem);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+}
+
+.historyClose {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(242,241,240,0.6);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.historyClose:hover { background: rgba(255,255,255,0.1); color: var(--white); }
+
 .table {
   background: rgba(255,255,255,0.02);
   border: 1px solid rgba(255,255,255,0.07);

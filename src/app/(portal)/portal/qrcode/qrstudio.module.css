@@ -19,6 +19,9 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  /* .grid below queries THIS box's own width, not the viewport — see the
+     comment on .grid for why that distinction actually matters here. */
+  container-type: inline-size;
 }
 
 .formHeader { display: flex; flex-direction: column; gap: 0.4rem; }
@@ -52,11 +55,18 @@
   gap: 1.75rem;
 }
 
-/* Matches portal.module.css's own 768px tablet cutoff (see RoleManager.
-   module.css for the same reasoning) instead of an unrelated one-off
-   value, so this collapses in step with the page container's own padding
-   change rather than ~70px earlier. */
-@media (max-width: 768px) {
+/* A viewport media query was the wrong tool here: this form sits inside
+   the desktop rail+panel shell (see PortalHub.module.css), so its actual
+   rendered width has nothing to do with the viewport width — a 1280px-wide
+   *viewport* still leaves .formPanel only ~450px wide once the rail and
+   panel padding are subtracted, which was cramming two columns of already-
+   labeled fields into unreadable ~200px slivers (select text truncating to
+   "extra-roun…") despite the viewport comfortably clearing any reasonable
+   max-width media query. A container query asks the right question —
+   "how much room does .formPanel actually have" — so it collapses
+   correctly whether the squeeze comes from a narrow phone or from a wide
+   desktop's rail eating into the available width. */
+@container (max-width: 560px) {
   .grid { grid-template-columns: 1fr; }
 }
 

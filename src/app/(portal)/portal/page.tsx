@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, History } from 'lucide-react';
+import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, History, Image as ImageIcon } from 'lucide-react';
 import { getProfile, getUserRoles } from '@/lib/auth';
 import { hasCapability, isVerifiedMember } from '@/lib/capabilities';
 import { resolveAvatarUrl } from '@/lib/profile';
@@ -21,12 +21,10 @@ import EventsSectionContent from './events/EventsSectionContent';
 import { getEventsData } from './events/getEventsData';
 import MembersSectionContent from './members/MembersSectionContent';
 import { getMembersData } from './members/getMembersData';
-import DivisionsManager from './divisions/DivisionsManager';
 import { getDivisionsData } from './divisions/getDivisionsData';
-import MyDivisionsEditor from './divisions/MyDivisionsEditor';
 import { getMyDivisionsData } from './divisions/getMyDivisionsData';
 import QRStudioClient from './qrcode/QRStudioClient';
-import ContentEditor from './admin/content/ContentEditor';
+import SiteContentSectionContent from './content/SiteContentSectionContent';
 import { getContentData } from './admin/content/getContentData';
 import AdminSectionContent from './admin/AdminSectionContent';
 import { getAdminData } from './admin/getAdminData';
@@ -35,6 +33,8 @@ import DocsClient from './docs/DocsClient';
 import { getDocsData } from './docs/getDocsData';
 import ActivitySectionContent from './activity/ActivitySectionContent';
 import { getRoleHistoryData } from './admin/history/getRoleHistoryData';
+import PhotoAlbumsSectionContent from './albums/PhotoAlbumsSectionContent';
+import { getPhotoAlbumsData } from './albums/getPhotoAlbumsData';
 import styles from './dashboard.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -58,6 +58,8 @@ export default async function PortalDashboard() {
   const canViewDocs = hasCapability(roles, 'view_docs');
   const canManageDocs = hasCapability(roles, 'manage_docs');
   const canManageRoles = hasCapability(roles, 'manage_roles');
+  const canViewPhotoAlbums = hasCapability(roles, 'view_photo_albums');
+  const canManagePhotoAlbums = hasCapability(roles, 'manage_photo_albums');
   // A separate, lighter tool from the full exec/admin directory manager
   // below — gated on actually holding the 'division' role itself (not the
   // broader manage_division capability, which lead/exec/admin also hold),
@@ -69,7 +71,7 @@ export default async function PortalDashboard() {
   // by capability — a plain member only ever triggers the tickets query. The
   // hub then just renders whichever of these were fetched; nothing is
   // re-fetched client-side when a card opens.
-  const [ticketsData, checkinData, eventsData, membersData, divisionsData, myDivisions, contentData, adminData, statsData, docsData, roleHistoryData] =
+  const [ticketsData, checkinData, eventsData, membersData, divisionsData, myDivisions, contentData, adminData, statsData, docsData, roleHistoryData, photoAlbumsData] =
     await Promise.all([
       getTicketsData(profile.id, roles),
       canCheckin ? getCheckinData() : Promise.resolve(null),
@@ -82,6 +84,7 @@ export default async function PortalDashboard() {
       canViewAdmin ? getStatsData() : Promise.resolve(null),
       canViewDocs ? getDocsData() : Promise.resolve(null),
       canManageRoles ? getRoleHistoryData() : Promise.resolve(null),
+      canViewPhotoAlbums ? getPhotoAlbumsData() : Promise.resolve(null),
     ]);
 
   // getHours() reads the server process's own runtime clock, which on most
@@ -129,7 +132,15 @@ export default async function PortalDashboard() {
       id: 'events', icon: <Calendar size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Events',
       description: canManageEvents ? 'Create and manage events' : 'Browse upcoming and past events',
       group: 'Events' as const,
-      content: <EventsSectionContent events={eventsData.events} canEdit={canManageEvents} />,
+      content: (
+        <EventsSectionContent
+          events={eventsData.events}
+          eventsPerMonth={eventsData.eventsPerMonth}
+          ticketsPerMonth={eventsData.ticketsPerMonth}
+          eventStats={eventsData.eventStats}
+          canEdit={canManageEvents}
+        />
+      ),
     }] : []),
     ...(canCheckin && checkinData ? [{
       id: 'checkin', icon: <Camera size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Check-In Scanner',
@@ -151,29 +162,52 @@ export default async function PortalDashboard() {
       badge: docsData.docs.length || undefined,
       content: <DocsClient initialDocs={docsData.docs} initialCategories={docsData.categories} userId={profile.id} canEdit={canManageDocs} />,
     }] : []),
+    // In Resources, not Admin — generate_qr_codes is granted to every
+    // officer-tier role (officer/division/lead/exec/admin, see
+    // capabilities.ts), the same "any actual TG member" audience as
+    // Members/Docs below, not an admin-only power. Admin is for the
+    // genuinely admin-restricted stuff (role grants, site content, system
+    // stats) — grouping a widely-usable tool in with that mislabeled who
+    // it's actually for.
     ...(canGenerateQr ? [{
       id: 'qrcode', icon: <QrCode size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'QR Studio',
       description: 'Design branded QR codes',
-      group: 'Tools' as const,
+      group: 'Resources' as const,
       content: <QRStudioClient />,
     }] : []),
-    ...(canManageDivisions && divisionsData ? [{
-      id: 'divisions', icon: <Gamepad2 size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Divisions',
-      description: 'Manage the division directory',
-      group: 'Admin' as const,
-      content: <DivisionsManager divisions={divisionsData.divisions} />,
+    // Same Resources audience as Members/Docs/QR Studio (officer-tier and
+    // up), but also explicitly opened to recruit/alumni — browsing old
+    // event photos is exactly what a prospect or a former member would
+    // want, unlike the more ops-focused cards next to it.
+    ...(canViewPhotoAlbums && photoAlbumsData ? [{
+      id: 'albums', icon: <ImageIcon size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Photo Albums',
+      description: 'Google Photos albums from past events',
+      badge: photoAlbumsData.albums.length || undefined,
+      group: 'Resources' as const,
+      content: <PhotoAlbumsSectionContent albums={photoAlbumsData.albums} canManage={canManagePhotoAlbums} />,
     }] : []),
-    ...(isDivisionLead && myDivisions ? [{
-      id: 'my-division', icon: <Gamepad2 size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'My Division',
-      description: 'Edit your division’s page content',
+    // One card for everything that boils down to "edit what shows on the
+    // public site" — used to be three separate Admin-group cards (Divisions
+    // directory, My Division, Edit Site Content), which buried each behind
+    // its own click and made "Admin" a mix of unrelated concerns (roles,
+    // stats, AND content editing). See SiteContentSectionContent for the
+    // tabbed layout, matching AdminSectionContent's own tab bar.
+    ...(canManageDivisions || isDivisionLead || canEditContent ? [{
+      id: 'site-content', icon: <Pencil size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Site Content',
+      description: 'Divisions, page banners, and text on the public site',
       group: 'Admin' as const,
-      content: <MyDivisionsEditor divisions={myDivisions} />,
-    }] : []),
-    ...(canEditContent && contentData ? [{
-      id: 'content', icon: <Pencil size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Edit Site Content',
-      description: 'Banners, stats, and text on the public site',
-      group: 'Admin' as const,
-      content: <ContentEditor blocks={CONTENT_BLOCKS} contentMap={contentData.contentMap} lastEdited={contentData.lastEdited} />,
+      content: (
+        <SiteContentSectionContent
+          canEditContent={canEditContent}
+          contentBlocks={CONTENT_BLOCKS}
+          contentMap={contentData?.contentMap}
+          lastEdited={contentData?.lastEdited}
+          canManageDivisions={canManageDivisions}
+          allDivisions={divisionsData?.divisions}
+          isDivisionLead={isDivisionLead}
+          myDivisions={myDivisions ?? undefined}
+        />
+      ),
     }] : []),
     ...(canViewAdmin && adminData && statsData ? [{
       id: 'admin', icon: <Shield size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Admin',
@@ -201,6 +235,14 @@ export default async function PortalDashboard() {
           .dashboardCard for why plain spacing won out over a boxed card. */}
       <div className={styles.dashboardCard}>
         <header className={styles.header}>
+          <Image
+            src="/bytes/byte_tgex25.png"
+            alt=""
+            width={723}
+            height={723}
+            aria-hidden="true"
+            className={styles.mascotAccent}
+          />
           <div className={styles.headerLeft}>
             {avatarUrl ? (
               <Image

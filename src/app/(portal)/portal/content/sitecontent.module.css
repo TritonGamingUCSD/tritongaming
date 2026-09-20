@@ -1,0 +1,56 @@
+/* Deliberately mirrors admin.module.css's page header + tab bar exactly —
+   the whole point of tabbing this section was to make "there's more than
+   one thing under this card" read the same way it does on the Admin card,
+   not invent a second tab visual language. */
+
+.page { max-width: 1100px; width: 100%; margin-inline: auto; }
+
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2.25rem;
+  flex-wrap: wrap;
+}
+
+.title {
+  font-family: var(--font-futura-heavy);
+  font-size: clamp(1.25rem, 2.5vw, 1.6rem);
+  color: var(--white);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1.3;
+  margin-bottom: 0.5rem;
+}
+
+.titleSub { font-size: var(--fs-meta); color: rgba(242,241,240,0.35); }
+
+.tabBar {
+  display: flex;
+  gap: 0.3rem;
+  margin-bottom: 1.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-family: var(--font-futura-medium);
+  color: rgba(242,241,240,0.45);
+  padding: 0.6rem 0.25rem;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.tab + .tab { margin-left: 1.25rem; }
+.tab:hover { color: rgba(242,241,240,0.75); }
+
+.tabActive {
+  color: var(--yellow);
+  border-bottom-color: var(--yellow);
+}
+.tabActive:hover { color: var(--yellow); }

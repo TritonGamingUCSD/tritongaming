@@ -11,7 +11,13 @@ import styles from './PortalHub.module.css';
 // one of these keys. Anything with a group not listed here (shouldn't
 // happen, but not worth a hard crash over) falls into its own "More"
 // bucket at the end rather than silently vanishing.
-const GROUP_ORDER = ['Yours', 'Events', 'Resources', 'Tools', 'Admin'] as const;
+// 'Tools' used to be its own group with exactly one card (QR Studio) in
+// it — a group that never clusters more than a single item isn't helping
+// anyone scan faster, it's just an extra label to read past. QR Studio
+// moved into Resources instead (see portal/page.tsx) — it's usable by any
+// officer-tier member, the same audience as Members/Docs, not Admin's
+// actually-restricted stuff.
+const GROUP_ORDER = ['Yours', 'Events', 'Resources', 'Admin'] as const;
 type HubGroup = (typeof GROUP_ORDER)[number];
 
 export interface HubSection {
@@ -96,7 +102,19 @@ export default function PortalHub({ sections, onGridWidth, onOpenChange }: { sec
   const isDesktop = useIsDesktop();
 
   const gridRef = useCallback((node: HTMLDivElement | null) => {
-    if (!node || !onGridWidth) return;
+    // Matching the hero banner's width to the card cluster's own measured
+    // width is a mobile-specific visual idea (centering a banner above a
+    // centered, variable-count card grid). Desktop's rail+content shell has
+    // no equivalent "cluster to align with" — the home grid there is just
+    // left-aligned content in a wide pane, not a floating centered cluster
+    // — so measuring it and applying that number as the banner's max-width
+    // was capping the banner to whatever the (much narrower) home-grid
+    // measurement happened to be, then leaving it stuck at that stale
+    // number once you navigated into a section and the grid unmounted,
+    // which is what read as the banner's width randomly "jumping" between
+    // tabs. Skipping this on desktop entirely lets the banner just stretch
+    // to its flex parent's full width instead (see PortalTopSection).
+    if (!node || !onGridWidth || isDesktop) return;
 
     // .grid itself is a block box that always stretches to fill its
     // container's full width — justify-content:center only repositions the
@@ -161,7 +179,7 @@ export default function PortalHub({ sections, onGridWidth, onOpenChange }: { sec
       cancelAnimationFrame(rafId);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isDesktop]);
 
   useEffect(() => {
     setOpenId(validRequested);

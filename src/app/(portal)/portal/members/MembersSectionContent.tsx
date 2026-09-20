@@ -13,7 +13,13 @@ import { resolveAvatarUrl, socialHref, isVisible, SOCIAL_PLATFORMS } from '@/lib
 import type { MemberProfileRow } from './getMembersData';
 import styles from './members.module.css';
 
-const ORDER: (AppRole | 'guest')[] = ['admin', 'exec', 'lead', 'officer', 'division', 'recruit', 'ucsd', 'alumni', 'guest'];
+// alumni ranks above recruit/ucsd (see ROLE_DISPLAY_RANK) — this order used
+// to put 'ucsd' ahead of 'alumni', so an alumni who also held the
+// auto-granted ucsd badge matched 'ucsd' first via .find() below and got
+// silently excluded by the ucsd-only filter, even though they're a real
+// member. Matching rank order here so the same person can't be "ucsd" for
+// this list's purposes but "alumni" everywhere else.
+const ORDER: (AppRole | 'guest')[] = ['admin', 'exec', 'lead', 'officer', 'division', 'alumni', 'recruit', 'ucsd', 'guest'];
 
 type MemberEntry = Omit<MemberProfileRow, 'user_roles'> & { divisionName?: string };
 

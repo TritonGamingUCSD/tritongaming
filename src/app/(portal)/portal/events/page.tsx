@@ -11,7 +11,15 @@ export default async function EventsManagementPage() {
   const roles = await getUserRoles();
   if (!hasCapability(roles, 'view_events')) redirect('/portal');
 
-  const { events } = await getEventsData();
+  const { events, eventsPerMonth, ticketsPerMonth, eventStats } = await getEventsData();
 
-  return <EventsSectionContent events={events} canEdit={hasCapability(roles, 'manage_events')} />;
+  return (
+    <EventsSectionContent
+      events={events}
+      eventsPerMonth={eventsPerMonth}
+      ticketsPerMonth={ticketsPerMonth}
+      eventStats={eventStats}
+      canEdit={hasCapability(roles, 'manage_events')}
+    />
+  );
 }

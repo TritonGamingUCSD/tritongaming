@@ -171,7 +171,23 @@
 
 .eventDate { font-size: var(--fs-meta); color: rgba(242,241,240,0.6); }
 
-.checkinLink { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.8rem; color: var(--yellow); transition: opacity 0.15s; }
+/* Also used as a <button> (the ticket-count trigger for the check-ins
+   modal) alongside its original <a> uses (Edit/Duplicate) — background/
+   border/font/cursor resets only matter for that button case, but are
+   harmless no-ops on the anchor uses. */
+.checkinLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  font-family: inherit;
+  color: var(--yellow);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
 .checkinLink:hover { opacity: 0.75; }
 
 .rowActions { display: flex; flex-direction: column; gap: 0.3rem; align-items: flex-start; }
@@ -191,6 +207,44 @@
 
 .published { background: rgba(5,150,105,0.15); color: #34d399; border: 1px solid rgba(52,211,153,0.25); }
 .draft     { background: rgba(107,114,128,0.12); color: #9ca3af; border: 1px solid rgba(156,163,175,0.2); }
+.ucsdBadge { background: rgba(14,165,233,0.12); color: #38bdf8; border: 1px solid rgba(56,189,248,0.25); }
+
+.statusCol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+}
+
+/* ── Manage / Analytics tab bar ── */
+.tabBar {
+  display: flex;
+  gap: 0.3rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-family: var(--font-futura-medium);
+  color: rgba(242,241,240,0.45);
+  padding: 0.6rem 0.25rem;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.tab + .tab { margin-left: 1.25rem; }
+.tab:hover { color: rgba(242,241,240,0.75); }
+
+.tabActive {
+  color: var(--yellow);
+  border-bottom-color: var(--yellow);
+}
+.tabActive:hover { color: var(--yellow); }
 
 /* The 5-column grid (2fr 1fr 1fr 100px 60px) works as a real table on
    desktop but has no room to do that on a phone — the two fixed columns

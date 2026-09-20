@@ -237,61 +237,65 @@ export default function ProfileClient({ profile, roles, isUcsd, divisions }: { p
             </label>
           </div>
 
-          <div className={styles.fieldGroup}>
-            <span className={styles.label}>Social Links</span>
-            <p className={styles.socialHint}>Just your handle, not the full link — optional, shown on your public board bio if you&apos;re on it.</p>
-            <div className={styles.socialGrid}>
-              {SOCIAL_PLATFORMS.map((p) => (
-                <label key={p.key} className={styles.socialField}>
-                  <Image src={p.logo} alt="" width={18} height={18} unoptimized className={styles.socialIcon} />
+          <div className={styles.formSplit}>
+            <div className={styles.fieldGroup}>
+              <span className={styles.label}>Social Links</span>
+              <p className={styles.socialHint}>Just your handle, not the full link — optional, shown on your public board bio if you&apos;re on it.</p>
+              <div className={styles.socialGrid}>
+                {SOCIAL_PLATFORMS.map((p) => (
+                  <label key={p.key} className={styles.socialField}>
+                    <Image src={p.logo} alt="" width={18} height={18} unoptimized className={styles.socialIcon} />
+                    <input
+                      className={styles.input}
+                      value={form.social_links[p.key] ?? ''}
+                      onChange={(e) => setForm((f) => ({
+                        ...f,
+                        social_links: { ...f.social_links, [p.key]: e.target.value },
+                      }))}
+                      placeholder={p.placeholder}
+                      aria-label={p.label}
+                    />
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className={styles.formSplitCol}>
+              {canEditOrgTitle && (
+                <label className={styles.fieldGroup}>
+                  <span className={styles.label}>Title in the Org</span>
                   <input
                     className={styles.input}
-                    value={form.social_links[p.key] ?? ''}
-                    onChange={(e) => setForm((f) => ({
-                      ...f,
-                      social_links: { ...f.social_links, [p.key]: e.target.value },
-                    }))}
-                    placeholder={p.placeholder}
-                    aria-label={p.label}
+                    value={form.org_title}
+                    onChange={(e) => setForm((f) => ({ ...f, org_title: e.target.value }))}
+                    maxLength={60}
+                    placeholder="e.g. Marketing Lead"
                   />
                 </label>
-              ))}
+              )}
+
+              <label className={styles.fieldGroup}>
+                <span className={styles.label}>Birthday</span>
+                <input
+                  className={styles.input}
+                  type="date"
+                  value={form.birthday}
+                  onChange={(e) => setForm((f) => ({ ...f, birthday: e.target.value }))}
+                />
+              </label>
+
+              {canOptIntoBoard && (
+                <label className={styles.checkboxField}>
+                  <input
+                    type="checkbox"
+                    checked={form.show_on_board}
+                    onChange={(e) => setForm((f) => ({ ...f, show_on_board: e.target.checked }))}
+                  />
+                  <span>Show me on the public About page&apos;s board section</span>
+                </label>
+              )}
             </div>
           </div>
-
-          {canEditOrgTitle && (
-            <label className={styles.fieldGroup}>
-              <span className={styles.label}>Title in the Org</span>
-              <input
-                className={styles.input}
-                value={form.org_title}
-                onChange={(e) => setForm((f) => ({ ...f, org_title: e.target.value }))}
-                maxLength={60}
-                placeholder="e.g. Marketing Lead"
-              />
-            </label>
-          )}
-
-          <label className={styles.fieldGroup}>
-            <span className={styles.label}>Birthday</span>
-            <input
-              className={styles.input}
-              type="date"
-              value={form.birthday}
-              onChange={(e) => setForm((f) => ({ ...f, birthday: e.target.value }))}
-            />
-          </label>
-
-          {canOptIntoBoard && (
-            <label className={styles.checkboxField}>
-              <input
-                type="checkbox"
-                checked={form.show_on_board}
-                onChange={(e) => setForm((f) => ({ ...f, show_on_board: e.target.checked }))}
-              />
-              <span>Show me on the public About page&apos;s board section</span>
-            </label>
-          )}
 
           {isBoardEligible && (
             <div className={styles.fieldGroup}>

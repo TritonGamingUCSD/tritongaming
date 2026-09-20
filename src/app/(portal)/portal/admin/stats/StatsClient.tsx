@@ -2,7 +2,7 @@
 
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts';
 import { Users, Calendar, Ticket, CircleCheck } from 'lucide-react';
 import type { StatsData } from './getStatsData';
@@ -17,13 +17,18 @@ const TOOLTIP_STYLE = {
 };
 const AXIS_STYLE = { fontSize: 11, fill: 'rgba(242,241,240,0.5)' };
 
+// Event-specific breakdowns (per-event ticket sales/attendance,
+// events/tickets-per-month trends) live in the Events card's own
+// Analytics tab now — this stays scoped to org-wide platform metrics that
+// aren't about any one event: total membership/event/ticket counts,
+// member growth over time, and division sizes.
 export default function StatsClient({ data }: { data: StatsData }) {
-  const { totals, eventsPerMonth, ticketsPerMonth, memberGrowth, eventStats, divisionSizes } = data;
+  const { totals, memberGrowth, divisionSizes } = data;
 
   return (
     <div className={styles.page}>
       <h1 className={styles.title}>Analytics</h1>
-      <p className={styles.sub}>Org-wide trends across events, tickets, check-ins, and membership.</p>
+      <p className={styles.sub}>Org-wide trends across membership and divisions.</p>
 
       <div className={styles.totalsGrid}>
         <div className={styles.totalCard}>
@@ -63,70 +68,6 @@ export default function StatsClient({ data }: { data: StatsData }) {
         </section>
       )}
 
-      <div className={styles.chartRow}>
-        {eventsPerMonth.length > 0 && (
-          <section className={styles.chartCard}>
-            <h2 className={styles.chartTitle}>Events Created / Month</h2>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={eventsPerMonth}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                <XAxis dataKey="month" tick={AXIS_STYLE} />
-                <YAxis tick={AXIS_STYLE} allowDecimals={false} />
-                <Tooltip contentStyle={TOOLTIP_STYLE} />
-                <Bar dataKey="count" name="Events" fill="#4f8ef7" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </section>
-        )}
-
-        {ticketsPerMonth.length > 0 && (
-          <section className={styles.chartCard}>
-            <h2 className={styles.chartTitle}>Tickets Issued / Month</h2>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={ticketsPerMonth}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                <XAxis dataKey="month" tick={AXIS_STYLE} />
-                <YAxis tick={AXIS_STYLE} allowDecimals={false} />
-                <Tooltip contentStyle={TOOLTIP_STYLE} />
-                <Bar dataKey="count" name="Tickets" fill="#34d399" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </section>
-        )}
-      </div>
-
-      {eventStats.length > 0 && (
-        <>
-          <section className={styles.chartCard}>
-            <h2 className={styles.chartTitle}>Ticket Sales & Attendance by Event (most recent)</h2>
-            <ResponsiveContainer width="100%" height={Math.max(240, eventStats.length * 34)}>
-              <BarChart data={eventStats} layout="vertical" margin={{ left: 24 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                <XAxis type="number" tick={AXIS_STYLE} allowDecimals={false} />
-                <YAxis type="category" dataKey="title" tick={{ ...AXIS_STYLE, fontSize: 10 }} width={150} />
-                <Tooltip contentStyle={TOOLTIP_STYLE} />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="issued" name="Tickets sold" fill="#4f8ef7" radius={[0, 4, 4, 0]} />
-                <Bar dataKey="checkedIn" name="Checked in" fill="#ffc72c" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </section>
-
-          <section className={styles.chartCard}>
-            <h2 className={styles.chartTitle}>Attendance Rate by Event (most recent)</h2>
-            <ResponsiveContainer width="100%" height={Math.max(220, eventStats.length * 32)}>
-              <BarChart data={eventStats} layout="vertical" margin={{ left: 24 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                <XAxis type="number" tick={AXIS_STYLE} unit="%" domain={[0, 100]} />
-                <YAxis type="category" dataKey="title" tick={{ ...AXIS_STYLE, fontSize: 10 }} width={150} />
-                <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v, _n, p) => [`${v}% (${p.payload.checkedIn}/${p.payload.issued})`, 'Attendance rate']} />
-                <Bar dataKey="rate" name="Attendance rate" fill="#34d399" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </section>
-        </>
-      )}
-
       {divisionSizes.length > 0 && (
         <section className={styles.chartCard}>
           <h2 className={styles.chartTitle}>Division Sizes</h2>
@@ -142,7 +83,7 @@ export default function StatsClient({ data }: { data: StatsData }) {
         </section>
       )}
 
-      {memberGrowth.length <= 1 && eventsPerMonth.length === 0 && (
+      {memberGrowth.length <= 1 && divisionSizes.length === 0 && (
         <p className={styles.empty}>Not enough data yet to chart trends.</p>
       )}
     </div>

@@ -20,6 +20,17 @@
   padding: 2.25rem 2.5rem 4rem;
 }
 
+/* The desktop shell's 220px rail (see PortalHub.module.css) is fixed
+   overhead that didn't exist when 1280px was picked — a data-dense panel
+   (QR Studio's 2-column builder, RoleManager's rows) used to get the full
+   1280px, but after the rail + its own padding ate into that same budget,
+   text started truncating and labels started wrapping that had room
+   before. Matches PortalHub's own desktop breakpoint so the two only ever
+   change together. */
+@media (min-width: 900px) {
+  .content { max-width: 1600px; }
+}
+
 @media (max-width: 768px) {
   .content { padding: 1.5rem 1.125rem 3rem; }
 }

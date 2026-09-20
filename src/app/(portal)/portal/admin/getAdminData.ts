@@ -14,12 +14,10 @@ export async function getAdminData(roles: RoleGrant[]) {
   const isAdmin = hasCapability(roles, 'manage_roles');
   const supabase = await createClient();
 
-  const [usersRes, eventsRes, ticketsRes, eventStatsRes, ticketStatsRes] = await Promise.all([
+  const [usersRes, eventsRes, ticketsRes] = await Promise.all([
     supabase.from('profiles').select('id', { count: 'exact', head: true }),
     supabase.from('events').select('id', { count: 'exact', head: true }),
     supabase.from('tickets').select('id', { count: 'exact', head: true }),
-    supabase.from('events').select('id, title, start_date').order('start_date', { ascending: false }).limit(20),
-    supabase.from('tickets').select('event_id, status'),
   ]);
 
   const stats = [
@@ -28,16 +26,11 @@ export async function getAdminData(roles: RoleGrant[]) {
     { label: 'Tickets',  value: ticketsRes.count ?? 0, icon: createElement(Ticket, STAT_ICON_PROPS) },
   ];
 
-  // Per-event ticket/check-in breakdown, for admins and execs.
-  const ticketCountsByEvent: Record<string, { issued: number; checkedIn: number }> = {};
-  (ticketStatsRes.data ?? []).forEach((t) => {
-    const bucket = ticketCountsByEvent[t.event_id] ??= { issued: 0, checkedIn: 0 };
-    if (t.status === 'active' || t.status === 'used') bucket.issued++;
-    if (t.status === 'used') bucket.checkedIn++;
-  });
-  const eventTicketStats = (eventStatsRes.data ?? [])
-    .map((e) => ({ ...e, ...(ticketCountsByEvent[e.id] ?? { issued: 0, checkedIn: 0 }) }))
-    .filter((e) => e.issued > 0);
+  // Per-event ticket/check-in breakdown used to live here too — moved to
+  // the Events card's own Analytics tab (see EventsSectionContent.tsx),
+  // since it's event data an events audience wants, not an admin-platform
+  // metric. getEventsData already computes the same issued/checkedIn
+  // numbers per event, so nothing here needs to duplicate that query.
 
   // All users + their role grants, and the division picker list — only
   // loaded for admins (full role manager).
@@ -74,5 +67,5 @@ export async function getAdminData(roles: RoleGrant[]) {
     }
   }
 
-  return { isAdmin, stats, eventTicketStats, allUsers, divisions };
+  return { isAdmin, stats, allUsers, divisions };
 }

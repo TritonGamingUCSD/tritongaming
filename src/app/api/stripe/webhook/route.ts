@@ -37,6 +37,17 @@ export async function POST(request: Request) {
       if (error && error.code !== '23505') {
         return NextResponse.json({ error: 'Failed to create ticket' }, { status: 500 });
       }
+
+      if (!error) {
+        const { data: eventRow } = await supabase.from('events').select('title').eq('id', eventId).single();
+        await supabase.from('notifications').insert({
+          user_id: userId,
+          type: 'ticket_confirmed',
+          title: 'Ticket confirmed',
+          body: eventRow ? `You're registered for ${eventRow.title}.` : 'Your ticket purchase is confirmed.',
+          href: '/portal/tickets',
+        });
+      }
     }
   }
 

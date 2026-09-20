@@ -90,6 +90,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to create ticket' }, { status: 500 });
     }
 
+    // Best-effort — a notification that fails to write shouldn't fail the
+    // ticket purchase that already succeeded.
+    await supabase.from('notifications').insert({
+      user_id: user.id,
+      type: 'ticket_confirmed',
+      title: 'Ticket confirmed',
+      body: `You're registered for ${event.title}.`,
+      href: '/portal/tickets',
+    });
+
     return NextResponse.json({ free: true, ticket }, { status: 201 });
   }
 

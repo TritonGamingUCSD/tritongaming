@@ -4,22 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/capabilities';
 import { parseStorageUrl } from '@/lib/imageUpload';
-
-// The three buckets the direct-upload system writes to (event flyers,
-// division logos, profile pictures — see the storage migrations). Anything
-// in here not referenced by the matching DB column is an orphan: left behind
-// by a Replace/Remove that happened before this sweep existed, or by an
-// edit that uploaded a new image and was then abandoned without saving.
-const MANAGED_BUCKETS: { bucket: string; table: string; column: string }[] = [
-  { bucket: 'event-flyers', table: 'events', column: 'flyer_url' },
-  { bucket: 'division-logos', table: 'divisions', column: 'logo_url' },
-  { bucket: 'avatars', table: 'profiles', column: 'custom_avatar_url' },
-];
-
-interface UnusedObject {
-  path: string;
-  size: number;
-}
+import { MANAGED_BUCKETS, listAllObjects } from '@/lib/storageBuckets';
 
 async function requireAdmin() {
   const userClient = await createClient();
@@ -35,38 +20,6 @@ async function requireAdmin() {
     return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
   }
   return null;
-}
-
-// Recurses into subfolders (avatars are stored as "<user_id>/<file>") —
-// Supabase Storage's list() only returns one level at a time, and a folder
-// entry comes back with id: null instead of file metadata.
-async function listAllObjects(
-  supabase: SupabaseClient,
-  bucket: string,
-  prefix = ''
-): Promise<UnusedObject[]> {
-  const results: UnusedObject[] = [];
-  const limit = 1000;
-  let offset = 0;
-
-  for (;;) {
-    const { data, error } = await supabase.storage.from(bucket).list(prefix, { limit, offset });
-    if (error || !data) break;
-
-    for (const entry of data) {
-      const fullPath = prefix ? `${prefix}/${entry.name}` : entry.name;
-      if (entry.id === null) {
-        results.push(...await listAllObjects(supabase, bucket, fullPath));
-      } else {
-        results.push({ path: fullPath, size: entry.metadata?.size ?? 0 });
-      }
-    }
-
-    if (data.length < limit) break;
-    offset += limit;
-  }
-
-  return results;
 }
 
 async function findUnusedObjects(supabase: SupabaseClient) {

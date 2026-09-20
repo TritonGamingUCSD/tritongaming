@@ -203,12 +203,34 @@
 
 /* Header */
 .header {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   gap: 1rem;
   padding-top: 0.5rem;
+}
+
+/* The mascot (see public/bytes/ — TGEX's character art) peeking from the
+   header corner — the portal's dark, data-dense screens didn't carry any
+   of the brand personality the main site's hero/about pages do. Purely
+   decorative (aria-hidden, no alt text) and hidden at phone width, where
+   the header is already tight against the viewport edge and has no spare
+   corner to spare without crowding the greeting. */
+.mascotAccent {
+  position: absolute;
+  top: -0.75rem;
+  right: -0.5rem;
+  width: 64px;
+  height: 64px;
+  transform: rotate(8deg);
+  pointer-events: none;
+  opacity: 0.92;
+}
+
+@media (max-width: 480px) {
+  .mascotAccent { display: none; }
 }
 
 .greeting {

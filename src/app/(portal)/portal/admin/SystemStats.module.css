@@ -1,0 +1,259 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.empty {
+  font-size: 0.85rem;
+  color: rgba(242,241,240,0.4);
+  padding: 0.5rem 0;
+}
+
+.error {
+  font-size: 0.85rem;
+  color: #fca5a5;
+  padding: 0.625rem 0.875rem;
+  background: rgba(220,38,38,0.1);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(220,38,38,0.2);
+}
+
+.code {
+  font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 0.78rem;
+  background: rgba(255,255,255,0.06);
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.3rem;
+  color: rgba(242,241,240,0.85);
+}
+
+/* ── Database table list ── */
+.tableList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tableRow {
+  display: grid;
+  grid-template-columns: 140px 1fr 90px 80px;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.5rem 0;
+}
+
+@media (max-width: 640px) {
+  .tableRow { grid-template-columns: 100px 1fr 70px; }
+  .tableMeta { display: none; }
+}
+
+.tableName {
+  font-family: var(--font-futura-medium);
+  font-size: 0.82rem;
+  color: var(--white);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tableBar {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+}
+
+.tableBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(255,199,44,0.5), var(--yellow));
+  border-radius: var(--radius-pill);
+}
+
+.tableMeta {
+  font-size: var(--fs-meta);
+  color: rgba(242,241,240,0.35);
+  text-align: right;
+}
+
+.tableSize {
+  font-family: var(--font-futura-medium);
+  font-size: 0.8rem;
+  color: rgba(242,241,240,0.7);
+  text-align: right;
+}
+
+/* ── Storage buckets ── */
+.bucketGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+
+.bucketCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem 1.125rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: var(--radius-md);
+}
+
+.bucketName {
+  font-size: var(--fs-label);
+  font-family: var(--font-renegare);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(242,241,240,0.4);
+}
+
+.bucketSize {
+  font-family: var(--font-futura-heavy);
+  font-size: 1.15rem;
+  color: var(--yellow);
+}
+
+.bucketCount {
+  font-size: 0.78rem;
+  color: rgba(242,241,240,0.4);
+}
+
+.bucketUnused { font-size: 0.75rem; color: var(--yellow); margin-top: 0.15rem; }
+.bucketClean { font-size: 0.75rem; color: rgba(242,241,240,0.3); margin-top: 0.15rem; }
+
+/* ── Storage cleanup controls (merged in from the old standalone
+   StorageCleanup card — see SystemStats.tsx) ── */
+.cleanupControls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.scanBtn {
+  padding: 0.6rem 1.25rem;
+  background: rgba(255,255,255,0.06);
+  color: rgba(242,241,240,0.85);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-futura-heavy);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.scanBtn:hover:not(:disabled) { background: rgba(255,255,255,0.1); }
+.scanBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.deleteBtn {
+  padding: 0.6rem 1.25rem;
+  background: rgba(220,38,38,0.12);
+  color: #fca5a5;
+  border: 1px solid rgba(220,38,38,0.3);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-futura-heavy);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.deleteBtn:hover:not(:disabled) { background: rgba(220,38,38,0.2); }
+.deleteBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.successNote {
+  font-size: 0.85rem;
+  color: #86efac;
+  padding: 0.625rem 0.875rem;
+  background: rgba(34,197,94,0.08);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(34,197,94,0.2);
+  margin-top: 0.75rem;
+}
+
+/* ── Vercel ── */
+.vercelCard {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.125rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.vercelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.vercelName {
+  font-family: var(--font-futura-heavy);
+  font-size: 0.95rem;
+  color: var(--white);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.vercelFramework {
+  font-size: var(--fs-meta);
+  color: rgba(242,241,240,0.4);
+  margin-left: 0.6rem;
+}
+
+.vercelLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  color: var(--yellow);
+  transition: opacity 0.15s;
+}
+.vercelLink:hover { opacity: 0.75; }
+
+.deployList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.deployRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.4rem 0;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  font-size: 0.8rem;
+}
+
+.deployState {
+  font-family: var(--font-renegare);
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-pill);
+  background: rgba(255,255,255,0.06);
+  color: rgba(242,241,240,0.6);
+}
+
+.stateReady { background: rgba(5,150,105,0.15); color: #34d399; }
+.stateError { background: rgba(220,38,38,0.12); color: #f87171; }
+.stateBuilding { background: rgba(14,165,233,0.12); color: #38bdf8; }
+.stateCanceled { background: rgba(107,114,128,0.12); color: #9ca3af; }
+
+.deployTarget {
+  color: rgba(242,241,240,0.5);
+  text-transform: capitalize;
+}
+
+.deployTime {
+  margin-left: auto;
+  color: rgba(242,241,240,0.3);
+  font-size: var(--fs-meta);
+}
