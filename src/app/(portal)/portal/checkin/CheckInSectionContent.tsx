@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Camera, Gift, Wifi, Undo2 } from 'lucide-react';
+import { usePortalTabSync } from '@/lib/usePortalTabSync';
 import CheckInClient from './CheckInClient';
 import RedemptionScanner from './RedemptionScanner';
 import OnlineCheckinPanel from './OnlineCheckinPanel';
@@ -23,6 +24,11 @@ interface RecentCheckin { ticketId: string; userName: string; }
 // component.
 export default function CheckInSectionContent({ events, canScanRedemptions, canManagePoints, initialTab }: { events: Event[]; canScanRedemptions: boolean; canManagePoints: boolean; initialTab?: string }) {
   const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'tickets');
+  const syncUrl = usePortalTabSync('checkin');
+  function selectTab(t: Tab) {
+    setTab(t);
+    syncUrl(t);
+  }
   const [recentCheckins, setRecentCheckins] = useState<RecentCheckin[]>([]);
   const [undoingId, setUndoingId] = useState<string | null>(null);
   // Only events actually marked online get the code-reveal panel — an
@@ -53,16 +59,16 @@ export default function CheckInSectionContent({ events, canScanRedemptions, canM
   return (
     <div className={styles.page}>
       <div className={styles.tabBar} role="tablist">
-        <button type="button" role="tab" aria-selected={tab === 'tickets'} className={`${styles.tab} ${tab === 'tickets' ? styles.tabActive : ''}`} onClick={() => setTab('tickets')}>
+        <button type="button" role="tab" aria-selected={tab === 'tickets'} className={`${styles.tab} ${tab === 'tickets' ? styles.tabActive : ''}`} onClick={() => selectTab('tickets')}>
           <Camera size={13} strokeWidth={1.5} aria-hidden="true" /> Tickets
         </button>
         {canScanRedemptions && (
-          <button type="button" role="tab" aria-selected={tab === 'redemptions'} className={`${styles.tab} ${tab === 'redemptions' ? styles.tabActive : ''}`} onClick={() => setTab('redemptions')}>
+          <button type="button" role="tab" aria-selected={tab === 'redemptions'} className={`${styles.tab} ${tab === 'redemptions' ? styles.tabActive : ''}`} onClick={() => selectTab('redemptions')}>
             <Gift size={13} strokeWidth={1.5} aria-hidden="true" /> Redemptions
           </button>
         )}
         {onlineEvents.length > 0 && (
-          <button type="button" role="tab" aria-selected={tab === 'online'} className={`${styles.tab} ${tab === 'online' ? styles.tabActive : ''}`} onClick={() => setTab('online')}>
+          <button type="button" role="tab" aria-selected={tab === 'online'} className={`${styles.tab} ${tab === 'online' ? styles.tabActive : ''}`} onClick={() => selectTab('online')}>
             <Wifi size={13} strokeWidth={1.5} aria-hidden="true" /> Online Check-In
           </button>
         )}

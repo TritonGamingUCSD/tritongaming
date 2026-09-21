@@ -321,13 +321,30 @@
   border-top: none;
 }
 
+/* Flex-wrap, not a fixed grid — a grid-template-columns here used to assume
+   a fixed 6-column layout, but the real children are only 4 (search wrap,
+   amount, reason, submit; the target-chips row is conditional and forced
+   onto its own line anyway), so auto-placement filled columns 1-4 of that
+   6-wide template and left the last two tracks as permanent dead space:
+   Amount landed in the wide 2fr track meant for a second name-length field
+   and Reason/the button were squeezed into 1fr tracks, instead of Amount
+   being the narrow one and Reason the wide one. flex-basis per field
+   expresses the actual intended proportions directly. */
 .awardForm {
-  display: grid;
-  grid-template-columns: 2fr 2fr 1fr 1fr 1.2fr auto;
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.625rem;
   align-items: center;
   margin-top: 0.75rem;
 }
+/* margin-top: 0 overrides .adjustSearchWrap's own top margin (meant for its
+   other, standalone usages sitting right under a paragraph) — inside this
+   flex row it was stacking on top of .awardForm's own margin-top, pushing
+   just the search field down out of line with its siblings. */
+.awardForm .adjustSearchWrap { flex: 2 1 220px; margin-top: 0; }
+.awardForm > input[type="number"] { flex: 0 1 110px; }
+.awardForm > input:not([type="number"]) { flex: 2 1 220px; }
+.awardForm .saveBtn { flex-shrink: 0; }
 
 /* Flex-wrap, not a fixed grid — see points.module.css's identical
    .newRewardForm comment for why (grew past what a single-row grid can
@@ -353,13 +370,12 @@
 .newRewardForm .checkboxField { flex-basis: 100%; }
 .newRewardForm .error { flex-basis: 100%; margin: 0; }
 .newRewardForm .saveBtn { flex-shrink: 0; }
-@media (max-width: 900px) { .newRewardForm, .awardForm { grid-template-columns: 1fr 1fr; } }
 
 .awardTargets {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
-  grid-column: 1 / -1;
+  flex-basis: 100%;
 }
 
 .awardChip {

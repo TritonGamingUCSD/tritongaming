@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ReactNode } from 'react';
 import { Pencil, BarChart3, History, X, Server, Users as UsersIcon } from 'lucide-react';
+import { usePortalTabSync } from '@/lib/usePortalTabSync';
 import RoleManager from './RoleManager';
 import SystemStats from './SystemStats';
 import StatsClient from './stats/StatsClient';
@@ -38,6 +39,11 @@ const VALID_TABS: Tab[] = ['overview', 'roles', 'analytics', 'system'];
 // tickets for a specific event already is.
 export default function AdminSectionContent({ isAdmin, stats, allUsers, divisions, statsData, roleHistoryEntries, initialTab }: Props) {
   const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'overview');
+  const syncUrl = usePortalTabSync('admin');
+  function selectTab(t: Tab) {
+    setTab(t);
+    syncUrl(t);
+  }
   const [historyOpen, setHistoryOpen] = useState(false);
 
   return (
@@ -55,19 +61,19 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
       </div>
 
       <div className={styles.tabBar} role="tablist">
-        <button type="button" role="tab" aria-selected={tab === 'overview'} className={`${styles.tab} ${tab === 'overview' ? styles.tabActive : ''}`} onClick={() => setTab('overview')}>
+        <button type="button" role="tab" aria-selected={tab === 'overview'} className={`${styles.tab} ${tab === 'overview' ? styles.tabActive : ''}`} onClick={() => selectTab('overview')}>
           Overview
         </button>
         {isAdmin && (
-          <button type="button" role="tab" aria-selected={tab === 'roles'} className={`${styles.tab} ${tab === 'roles' ? styles.tabActive : ''}`} onClick={() => setTab('roles')}>
+          <button type="button" role="tab" aria-selected={tab === 'roles'} className={`${styles.tab} ${tab === 'roles' ? styles.tabActive : ''}`} onClick={() => selectTab('roles')}>
             <UsersIcon size={13} strokeWidth={1.5} aria-hidden="true" /> Member Management
           </button>
         )}
-        <button type="button" role="tab" aria-selected={tab === 'analytics'} className={`${styles.tab} ${tab === 'analytics' ? styles.tabActive : ''}`} onClick={() => setTab('analytics')}>
+        <button type="button" role="tab" aria-selected={tab === 'analytics'} className={`${styles.tab} ${tab === 'analytics' ? styles.tabActive : ''}`} onClick={() => selectTab('analytics')}>
           <BarChart3 size={13} strokeWidth={1.5} aria-hidden="true" /> Analytics
         </button>
         {isAdmin && (
-          <button type="button" role="tab" aria-selected={tab === 'system'} className={`${styles.tab} ${tab === 'system' ? styles.tabActive : ''}`} onClick={() => setTab('system')}>
+          <button type="button" role="tab" aria-selected={tab === 'system'} className={`${styles.tab} ${tab === 'system' ? styles.tabActive : ''}`} onClick={() => selectTab('system')}>
             <Server size={13} strokeWidth={1.5} aria-hidden="true" /> System
           </button>
         )}

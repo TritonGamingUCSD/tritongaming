@@ -8,6 +8,7 @@ import StyledQRCode from '@/components/StyledQRCode/StyledQRCode';
 import { DEFAULT_QR_OPTIONS } from '@/lib/qrCodeStyling';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import { useQRScanner } from '@/lib/useQRScanner';
+import { usePortalTabSync } from '@/lib/usePortalTabSync';
 import checkinStyles from '../checkin/checkin.module.css';
 import type { BattlepassTransactionRow } from './getMyBattlepassData';
 import styles from './battlepass.module.css';
@@ -109,6 +110,17 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
   const [manageSubTab, setManageSubTab] = useState<ManageSubTab>(
     VALID_MANAGE_SUB_TABS.includes(initialSubTab as ManageSubTab) ? (initialSubTab as ManageSubTab) : 'award'
   );
+
+  const syncUrl = usePortalTabSync('battlepass');
+  function selectTab(t: Tab) {
+    setTab(t);
+    syncUrl(t, t === 'manage' ? manageSubTab : undefined);
+  }
+  function selectManageSubTab(st: ManageSubTab) {
+    setManageSubTab(st);
+    syncUrl('manage', st);
+  }
+
   const tier = getOfficerTier(lifetimeEarned);
   const next = nextOfficerTier(lifetimeEarned);
   const progressPct = next ? Math.min(100, Math.round(((lifetimeEarned - tier.min) / (next.min - tier.min)) * 100)) : 100;
@@ -259,6 +271,7 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
       const json = await res.json();
       if (!res.ok) { setAwardResult(json.error || 'Failed to award points.'); return; }
       setAwardResult(`Done — awarded ${awardTargets.length} officer${awardTargets.length === 1 ? '' : 's'}.`);
+      setBoard(null); // leaderboard's cached fetch is now stale — force a refetch next time it's opened
       setAwardTargets([]);
       setAwardAmount('');
       setAwardNote('');
@@ -425,6 +438,7 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
       const json = await res.json();
       if (!res.ok) { setCorrectError(json.error || 'Failed to reverse.'); return; }
       setCorrectHistory((prev) => prev?.map((t) => (t.id === txn.id ? { ...t, reversed_at: new Date().toISOString() } : t)) ?? null);
+      setBoard(null); // leaderboard's cached fetch is now stale — force a refetch next time it's opened
     } catch {
       setCorrectError('Network error. Please try again.');
     } finally {
@@ -442,21 +456,21 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
       </div>
 
       <div className={styles.tabBar} role="tablist">
-        <button type="button" role="tab" aria-selected={tab === 'mine'} className={`${styles.tab} ${tab === 'mine' ? styles.tabActive : ''}`} onClick={() => setTab('mine')}>
+        <button type="button" role="tab" aria-selected={tab === 'mine'} className={`${styles.tab} ${tab === 'mine' ? styles.tabActive : ''}`} onClick={() => selectTab('mine')}>
           <Shield size={13} strokeWidth={1.5} aria-hidden="true" /> My Battlepass
         </button>
-        <button type="button" role="tab" aria-selected={tab === 'toclaim'} className={`${styles.tab} ${tab === 'toclaim' ? styles.tabActive : ''}`} onClick={() => setTab('toclaim')}>
+        <button type="button" role="tab" aria-selected={tab === 'toclaim'} className={`${styles.tab} ${tab === 'toclaim' ? styles.tabActive : ''}`} onClick={() => selectTab('toclaim')}>
           <Gift size={13} strokeWidth={1.5} aria-hidden="true" /> To Claim
           {unclaimedUnlockCount > 0 && <span className={styles.tabBadge}>{unclaimedUnlockCount}</span>}
         </button>
-        <button type="button" role="tab" aria-selected={tab === 'shop'} className={`${styles.tab} ${tab === 'shop' ? styles.tabActive : ''}`} onClick={() => setTab('shop')}>
+        <button type="button" role="tab" aria-selected={tab === 'shop'} className={`${styles.tab} ${tab === 'shop' ? styles.tabActive : ''}`} onClick={() => selectTab('shop')}>
           <ShoppingBag size={13} strokeWidth={1.5} aria-hidden="true" /> Shop
         </button>
-        <button type="button" role="tab" aria-selected={tab === 'leaderboard'} className={`${styles.tab} ${tab === 'leaderboard' ? styles.tabActive : ''}`} onClick={() => setTab('leaderboard')}>
+        <button type="button" role="tab" aria-selected={tab === 'leaderboard'} className={`${styles.tab} ${tab === 'leaderboard' ? styles.tabActive : ''}`} onClick={() => selectTab('leaderboard')}>
           <Trophy size={13} strokeWidth={1.5} aria-hidden="true" /> Leaderboard
         </button>
         {canManagePoints && (
-          <button type="button" role="tab" aria-selected={tab === 'manage'} className={`${styles.tab} ${tab === 'manage' ? styles.tabActive : ''}`} onClick={() => setTab('manage')}>
+          <button type="button" role="tab" aria-selected={tab === 'manage'} className={`${styles.tab} ${tab === 'manage' ? styles.tabActive : ''}`} onClick={() => selectTab('manage')}>
             <Settings size={13} strokeWidth={1.5} aria-hidden="true" /> Manage
           </button>
         )}
@@ -646,10 +660,10 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
       {tab === 'manage' && canManagePoints && (
         <div className={styles.manageTab}>
           <div className={styles.subTabBar} role="tablist">
-            <button type="button" role="tab" aria-selected={manageSubTab === 'award'} className={`${styles.subTab} ${manageSubTab === 'award' ? styles.subTabActive : ''}`} onClick={() => setManageSubTab('award')}>Award Points</button>
-            <button type="button" role="tab" aria-selected={manageSubTab === 'redeem'} className={`${styles.subTab} ${manageSubTab === 'redeem' ? styles.subTabActive : ''}`} onClick={() => setManageSubTab('redeem')}>Redemptions</button>
-            <button type="button" role="tab" aria-selected={manageSubTab === 'shop'} className={`${styles.subTab} ${manageSubTab === 'shop' ? styles.subTabActive : ''}`} onClick={() => setManageSubTab('shop')}>Shop Items</button>
-            <button type="button" role="tab" aria-selected={manageSubTab === 'correct'} className={`${styles.subTab} ${manageSubTab === 'correct' ? styles.subTabActive : ''}`} onClick={() => setManageSubTab('correct')}>Corrections</button>
+            <button type="button" role="tab" aria-selected={manageSubTab === 'award'} className={`${styles.subTab} ${manageSubTab === 'award' ? styles.subTabActive : ''}`} onClick={() => selectManageSubTab('award')}>Award Points</button>
+            <button type="button" role="tab" aria-selected={manageSubTab === 'redeem'} className={`${styles.subTab} ${manageSubTab === 'redeem' ? styles.subTabActive : ''}`} onClick={() => selectManageSubTab('redeem')}>Redemptions</button>
+            <button type="button" role="tab" aria-selected={manageSubTab === 'shop'} className={`${styles.subTab} ${manageSubTab === 'shop' ? styles.subTabActive : ''}`} onClick={() => selectManageSubTab('shop')}>Shop Items</button>
+            <button type="button" role="tab" aria-selected={manageSubTab === 'correct'} className={`${styles.subTab} ${manageSubTab === 'correct' ? styles.subTabActive : ''}`} onClick={() => selectManageSubTab('correct')}>Corrections</button>
           </div>
 
           {manageSubTab === 'award' && (

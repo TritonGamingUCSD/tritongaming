@@ -10,6 +10,7 @@ import { Search, Plus, Ticket, MapPin, BarChart3, ListChecks, Award } from 'luci
 import { PACIFIC_TZ } from '@/lib/timezone';
 import type { MonthPoint } from '@/lib/monthBuckets';
 import type { EventTicketStat } from './getEventsData';
+import { usePortalTabSync } from '@/lib/usePortalTabSync';
 import EventCheckinsModal from './EventCheckinsModal';
 import styles from './events.module.css';
 import chartStyles from '../admin/stats/stats.module.css';
@@ -65,6 +66,11 @@ interface Props {
 // props), so filtering is instant with no round trip.
 export default function EventsSectionContent({ events, eventsPerMonth, ticketsPerMonth, eventStats, canEdit, canManagePoints, initialTab }: Props) {
   const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'manage');
+  const syncUrl = usePortalTabSync('events');
+  function selectTab(t: Tab) {
+    setTab(t);
+    syncUrl(t);
+  }
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<StatusFilter>('all');
   const [checkinsEventId, setCheckinsEventId] = useState<string | null>(null);
@@ -103,10 +109,10 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
 
       {canEdit && (
         <div className={styles.tabBar} role="tablist">
-          <button type="button" role="tab" aria-selected={tab === 'manage'} className={`${styles.tab} ${tab === 'manage' ? styles.tabActive : ''}`} onClick={() => setTab('manage')}>
+          <button type="button" role="tab" aria-selected={tab === 'manage'} className={`${styles.tab} ${tab === 'manage' ? styles.tabActive : ''}`} onClick={() => selectTab('manage')}>
             <ListChecks size={13} strokeWidth={1.5} aria-hidden="true" /> Manage
           </button>
-          <button type="button" role="tab" aria-selected={tab === 'analytics'} className={`${styles.tab} ${tab === 'analytics' ? styles.tabActive : ''}`} onClick={() => setTab('analytics')}>
+          <button type="button" role="tab" aria-selected={tab === 'analytics'} className={`${styles.tab} ${tab === 'analytics' ? styles.tabActive : ''}`} onClick={() => selectTab('analytics')}>
             <BarChart3 size={13} strokeWidth={1.5} aria-hidden="true" /> Analytics
           </button>
         </div>

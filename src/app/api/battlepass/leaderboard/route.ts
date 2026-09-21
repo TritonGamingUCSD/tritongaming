@@ -19,10 +19,22 @@ export async function GET() {
   }
 
   const serviceClient = createServiceClient();
-  const [{ data: officerProfiles }, { data: allTransactions }] = await Promise.all([
-    serviceClient.from('user_roles').select('user_id, profiles(display_name)').in('role', BATTLEPASS_ROLES),
+  // !user_roles_user_id_fkey disambiguates the embed — user_roles has two
+  // FKs into profiles (user_id and granted_by), so a bare `profiles(...)`
+  // is an ambiguous-relationship error from PostgREST (PGRST201), not a
+  // real "column doesn't exist" error. That error was silently swallowed
+  // here (only `data` was destructured, never `error`), so this always
+  // failed and always returned an empty leaderboard — see every other
+  // user_roles->profiles embed in the codebase (getAdminData.ts,
+  // getMembersData.ts, getBoardMembers.ts), all of which already use this
+  // same hint.
+  const [{ data: officerProfiles, error: profilesError }, { data: allTransactions, error: txError }] = await Promise.all([
+    serviceClient.from('user_roles').select('user_id, profiles!user_roles_user_id_fkey(display_name)').in('role', BATTLEPASS_ROLES),
     serviceClient.from('officer_point_transactions').select('user_id, amount, reversed_at'),
   ]);
+  if (profilesError || txError) {
+    return NextResponse.json({ error: (profilesError ?? txError)?.message ?? 'Failed to load leaderboard.' }, { status: 500 });
+  }
 
   const lifetimeByUser = new Map<string, number>();
   (allTransactions ?? []).forEach((t) => {

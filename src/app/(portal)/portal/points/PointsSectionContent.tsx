@@ -8,6 +8,7 @@ import { PACIFIC_TZ } from '@/lib/timezone';
 import StyledQRCode from '@/components/StyledQRCode/StyledQRCode';
 import { DEFAULT_QR_OPTIONS } from '@/lib/qrCodeStyling';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
+import { usePortalTabSync } from '@/lib/usePortalTabSync';
 import type { TransactionRow } from './getMyPointsData';
 import styles from './points.module.css';
 
@@ -94,6 +95,11 @@ export default function PointsSectionContent({
   transactions, canManageShop, canManagePoints, initialTab,
 }: Props) {
   const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'points');
+  const syncUrl = usePortalTabSync('points');
+  function selectTab(t: Tab) {
+    setTab(t);
+    syncUrl(t);
+  }
   const tier = getTier(lifetimeEarned);
   const next = nextTier(lifetimeEarned);
   const progressPct = next ? Math.min(100, Math.round(((lifetimeEarned - tier.min) / (next.min - tier.min)) * 100)) : 100;
@@ -290,6 +296,7 @@ export default function PointsSectionContent({
       const json = await res.json();
       if (!res.ok) { setHistoryError(json.error || 'Failed to reverse.'); return; }
       setTargetHistory((prev) => prev?.map((t) => (t.id === txn.id ? { ...t, reversed_at: new Date().toISOString() } : t)) ?? null);
+      setBoard(null); // leaderboard's cached fetch is now stale — force a refetch next time it's opened
     } catch {
       setHistoryError('Network error. Please try again.');
     } finally {
@@ -325,6 +332,7 @@ export default function PointsSectionContent({
       const json = await res.json();
       if (!res.ok) { setAdjustResult(json.error || 'Failed to adjust points.'); return; }
       setAdjustResult(`Done — ${adjustTarget.title}'s balance updated.`);
+      setBoard(null); // leaderboard's cached fetch is now stale — force a refetch next time it's opened
       setAdjustTarget(null);
       setAdjustQuery('');
       setAdjustAmount('');
@@ -465,21 +473,21 @@ export default function PointsSectionContent({
       </div>
 
       <div className={styles.tabBar} role="tablist">
-        <button type="button" role="tab" aria-selected={tab === 'points'} className={`${styles.tab} ${tab === 'points' ? styles.tabActive : ''}`} onClick={() => setTab('points')}>
+        <button type="button" role="tab" aria-selected={tab === 'points'} className={`${styles.tab} ${tab === 'points' ? styles.tabActive : ''}`} onClick={() => selectTab('points')}>
           <Award size={13} strokeWidth={1.5} aria-hidden="true" /> My Points
         </button>
-        <button type="button" role="tab" aria-selected={tab === 'toclaim'} className={`${styles.tab} ${tab === 'toclaim' ? styles.tabActive : ''}`} onClick={() => setTab('toclaim')}>
+        <button type="button" role="tab" aria-selected={tab === 'toclaim'} className={`${styles.tab} ${tab === 'toclaim' ? styles.tabActive : ''}`} onClick={() => selectTab('toclaim')}>
           <Gift size={13} strokeWidth={1.5} aria-hidden="true" /> To Claim
           {unclaimedUnlockCount > 0 && <span className={styles.tabBadge}>{unclaimedUnlockCount}</span>}
         </button>
-        <button type="button" role="tab" aria-selected={tab === 'shop'} className={`${styles.tab} ${tab === 'shop' ? styles.tabActive : ''}`} onClick={() => setTab('shop')}>
+        <button type="button" role="tab" aria-selected={tab === 'shop'} className={`${styles.tab} ${tab === 'shop' ? styles.tabActive : ''}`} onClick={() => selectTab('shop')}>
           <ShoppingBag size={13} strokeWidth={1.5} aria-hidden="true" /> Shop
         </button>
-        <button type="button" role="tab" aria-selected={tab === 'leaderboard'} className={`${styles.tab} ${tab === 'leaderboard' ? styles.tabActive : ''}`} onClick={() => setTab('leaderboard')}>
+        <button type="button" role="tab" aria-selected={tab === 'leaderboard'} className={`${styles.tab} ${tab === 'leaderboard' ? styles.tabActive : ''}`} onClick={() => selectTab('leaderboard')}>
           <Trophy size={13} strokeWidth={1.5} aria-hidden="true" /> Leaderboard
         </button>
         {canManageShop && (
-          <button type="button" role="tab" aria-selected={tab === 'manage'} className={`${styles.tab} ${tab === 'manage' ? styles.tabActive : ''}`} onClick={() => setTab('manage')}>
+          <button type="button" role="tab" aria-selected={tab === 'manage'} className={`${styles.tab} ${tab === 'manage' ? styles.tabActive : ''}`} onClick={() => selectTab('manage')}>
             <Settings size={13} strokeWidth={1.5} aria-hidden="true" /> Manage Shop
           </button>
         )}
