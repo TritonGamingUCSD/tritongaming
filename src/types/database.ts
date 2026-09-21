@@ -260,6 +260,9 @@ export interface Database {
           stock: number | null;
           min_tier: string | null;
           active: boolean;
+          max_per_user: number | null;
+          reward_type: 'physical' | 'digital';
+          grants_fast_pass: boolean;
           created_by: string | null;
           created_at: string;
         };
@@ -307,6 +310,9 @@ export interface Database {
           stock: number | null;
           min_tier: string | null;
           active: boolean;
+          max_per_user: number | null;
+          reward_type: 'physical' | 'digital';
+          grants_fast_pass: boolean;
           created_by: string | null;
           created_at: string;
         };

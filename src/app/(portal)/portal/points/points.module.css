@@ -41,6 +41,52 @@
   transition: color 0.15s, border-color 0.15s;
 }
 .tab + .tab { margin-left: 1.25rem; }
+
+.tabBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 0.3rem;
+  background: var(--yellow);
+  color: #1a1300;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-futura-heavy);
+  font-size: 0.65rem;
+}
+
+.claimedNote {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: #34d399;
+  background: rgba(52,211,153,0.08);
+  border: 1px solid rgba(52,211,153,0.2);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.85rem;
+  margin-bottom: 0.5rem;
+}
+
+.unlockCardReady { border-color: rgba(255,199,44,0.35); background: rgba(255,199,44,0.04); }
+.unlockCardLocked { opacity: 0.6; }
+
+.unlockClaimedLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  color: #34d399;
+}
+
+.unlockLockedLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  color: rgba(242,241,240,0.45);
+}
 .tab:hover { color: rgba(242,241,240,0.75); }
 .tabActive { color: var(--yellow); border-bottom-color: var(--yellow); }
 .tabActive:hover { color: var(--yellow); }
@@ -194,6 +240,23 @@
 }
 .pendingCard:hover { background: rgba(255,199,44,0.14); }
 
+.tierGroup { display: flex; flex-direction: column; gap: 0.75rem; }
+.tierGroup + .tierGroup { margin-top: 1.5rem; }
+
+.tierGroupHeader { display: flex; align-items: center; gap: 0.75rem; }
+
+.tierGroupBadge {
+  font-family: var(--font-renegare);
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.875rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid;
+}
+
+.tierGroupThreshold { font-size: 0.78rem; color: rgba(242,241,240,0.4); }
+
 .shopGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
 
 .shopCard {
@@ -284,13 +347,24 @@
 /* ── Manage shop ── */
 .manageTab { display: flex; flex-direction: column; gap: 1.5rem; }
 
+/* Grew from a strict single-row grid (title/desc/cost/stock/tier/submit)
+   once max_per_user, reward_type, grants_fast_pass, and the tier-unlock
+   convenience checkbox joined the form — a fixed 6-column grid has no
+   sensible way to fit ~10 fields without either cramming them or leaving
+   half the row empty depending on which optional fields are visible.
+   Flex-wrap lets each field claim a sensible width and wrap to a new line
+   on its own, same "reads as one form, not one row" outcome without
+   hand-tuning column counts for every combination of visible fields. */
 .newRewardForm {
-  display: grid;
-  grid-template-columns: 2fr 2fr 1fr 1fr 1.2fr auto;
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.625rem;
   align-items: center;
 }
-@media (max-width: 900px) { .newRewardForm { grid-template-columns: 1fr 1fr; } }
+.newRewardForm .input { width: auto; flex: 1 1 180px; }
+.newRewardForm .checkboxField { flex-basis: 100%; }
+.newRewardForm .error { flex-basis: 100%; margin: 0; }
+.newRewardForm .saveBtn { flex-shrink: 0; }
 
 .input {
   background: rgba(255,255,255,0.05);
@@ -335,6 +409,21 @@
   border-radius: var(--radius-md);
 }
 .manageRowInactive { opacity: 0.5; }
+
+.tierUnlockTag, .digitalTag {
+  display: inline-block;
+  margin-left: 0.5rem;
+  font-family: var(--font-renegare);
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid;
+  vertical-align: middle;
+}
+.tierUnlockTag { color: var(--yellow); border-color: rgba(255,199,44,0.35); background: rgba(255,199,44,0.08); }
+.digitalTag { color: #60a5fa; border-color: rgba(96,165,250,0.35); background: rgba(96,165,250,0.08); }
 
 .toggleBtn {
   padding: 0.4rem 0.875rem;

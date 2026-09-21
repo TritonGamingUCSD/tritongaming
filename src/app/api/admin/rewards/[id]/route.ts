@@ -28,16 +28,22 @@ export async function PATCH(request: Request, { params }: Params) {
   const update: Record<string, unknown> = {};
   if (body.title !== undefined) update.title = String(body.title).trim();
   if (body.description !== undefined) update.description = body.description ? String(body.description).trim() : null;
-  if (body.point_cost !== undefined) update.point_cost = Math.max(1, Math.round(Number(body.point_cost)));
+  if (body.point_cost !== undefined) update.point_cost = Math.max(0, Math.round(Number(body.point_cost)));
   if (body.stock !== undefined) update.stock = body.stock === null || body.stock === '' ? null : Math.max(0, Math.round(Number(body.stock)));
   if (body.min_tier !== undefined) update.min_tier = body.min_tier || null;
   if (body.active !== undefined) update.active = Boolean(body.active);
+  if (body.max_per_user !== undefined) update.max_per_user = body.max_per_user === null || body.max_per_user === '' ? null : Math.max(1, Math.round(Number(body.max_per_user)));
+  if (body.reward_type !== undefined) update.reward_type = body.reward_type === 'digital' ? 'digital' : 'physical';
+  // The manage form always sends reward_type alongside grants_fast_pass,
+  // so body.reward_type (not the DB's prior value) is the right thing to
+  // gate on here.
+  if (body.grants_fast_pass !== undefined) update.grants_fast_pass = body.reward_type === 'digital' && Boolean(body.grants_fast_pass);
 
   const { data, error } = await ctx.supabase
     .from('reward_items')
     .update(update)
     .eq('id', id)
-    .select('id, title, description, point_cost, stock, min_tier, active, created_at')
+    .select('id, title, description, point_cost, stock, min_tier, active, max_per_user, reward_type, grants_fast_pass, created_at')
     .single();
 
   if (error) return NextResponse.json({ error: 'Failed to update reward' }, { status: 500 });

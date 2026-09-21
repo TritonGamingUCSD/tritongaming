@@ -10,11 +10,21 @@ export interface Tier {
   color: string;
 }
 
+// 'Member' is a real floor tier (min: 0), not just cosmetic — Bronze no
+// longer starts at 0 (it's 300), and getTier()/nextTier() both assume
+// TIERS[0].min is 0 (getTier falls back to TIERS[0] when no real
+// threshold is met; nextTier finds the first tier whose min exceeds the
+// caller's points). Without a real 0-point floor, someone with 0 points
+// got `tier` AND `next` both resolving to Bronze — a zero-width band that
+// broke the progress bar's math (division by zero) and, more seriously,
+// made every Bronze-gated reward look "unlocked" for people who hadn't
+// earned a single point.
 export const TIERS: Tier[] = [
-  { name: 'Bronze', min: 0, color: '#c17a4d' },
-  { name: 'Silver', min: 100, color: '#a8adb8' },
-  { name: 'Gold', min: 300, color: '#ffc72c' },
-  { name: 'Platinum', min: 750, color: '#7dd3fc' },
+  { name: 'Member', min: 0, color: '#6b7280' },
+  { name: 'Bronze', min: 300, color: '#c17a4d' },
+  { name: 'Silver', min: 500, color: '#a8adb8' },
+  { name: 'Gold', min: 750, color: '#ffc72c' },
+  { name: 'Platinum', min: 1000, color: '#7dd3fc' },
 ];
 
 export function getTier(lifetimePoints: number): Tier {

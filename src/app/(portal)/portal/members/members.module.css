@@ -136,9 +136,19 @@
 .listRow .avatar,
 .listRow .avatarFallback { width: 32px; height: 32px; font-size: 0.8rem; }
 .listRow .info { display: flex; align-items: baseline; gap: 0.5rem; min-width: 0; flex: 1; }
-.listRow .name { margin-bottom: 0; flex-shrink: 0; }
-.listRow .orgTitle { margin-bottom: 0; flex-shrink: 0; }
-.listRow .detail { margin-top: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* flex-shrink: 0 here used to mean neither the name nor the org title
+   could ever shrink below their full content width — on a long name (or
+   name + title together) that's wider than the viewport, with nothing
+   able to give, the row (and with it the whole page) overflowed
+   horizontally instead of the text actually ellipsizing the way the base
+   .name/.orgTitle rules already intend. min-width: 0 is what lets a flex
+   item shrink past its content size at all; flex-shrink: 1 is the
+   default, restored here explicitly since the .listRow-scoped override
+   had turned it off. The name keeps more of the available space (2 vs 1)
+   since it's the more important of the two when both are competing. */
+.listRow .name { margin-bottom: 0; flex-shrink: 2; min-width: 0; }
+.listRow .orgTitle { margin-bottom: 0; flex-shrink: 1; min-width: 0; }
+.listRow .detail { margin-top: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 3; min-width: 0; }
 
 .avatar {
   width: 44px; height: 44px; border-radius: 50%;

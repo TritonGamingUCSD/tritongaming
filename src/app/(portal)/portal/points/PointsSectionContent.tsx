@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Award, ShoppingBag, Trophy, Settings, Copy, Check, QrCode } from 'lucide-react';
+import { Award, ShoppingBag, Trophy, Settings, Copy, Check, QrCode, Gift, Lock } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { getTier, nextTier, TIERS } from '@/lib/tiers';
 import { PACIFIC_TZ } from '@/lib/timezone';
@@ -11,8 +11,8 @@ import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import type { TransactionRow } from './getMyPointsData';
 import styles from './points.module.css';
 
-type Tab = 'points' | 'shop' | 'leaderboard' | 'manage';
-const VALID_TABS: Tab[] = ['points', 'shop', 'leaderboard', 'manage'];
+type Tab = 'points' | 'toclaim' | 'shop' | 'leaderboard' | 'manage';
+const VALID_TABS: Tab[] = ['points', 'toclaim', 'shop', 'leaderboard', 'manage'];
 
 interface RewardItem {
   id: string;
@@ -22,7 +22,19 @@ interface RewardItem {
   stock: number | null;
   min_tier: string | null;
   active: boolean;
+  max_per_user?: number | null;
+  reward_type?: 'physical' | 'digital';
+  grants_fast_pass?: boolean;
   created_at?: string;
+}
+
+interface UnlockReward {
+  id: string;
+  title: string;
+  description: string | null;
+  min_tier: string | null;
+  unlocked: boolean;
+  claimed: boolean;
 }
 
 interface PendingRedemption {
@@ -99,22 +111,25 @@ export default function PointsSectionContent({
     }
   }
 
-  // ── Shop ──────────────────────────────────────────────────────────────
+  // ── Shop / To Claim (same endpoint — one fetch backs both tabs) ───────
   const [shopItems, setShopItems] = useState<RewardItem[] | null>(null);
+  const [unlocks, setUnlocks] = useState<UnlockReward[]>([]);
   const [pending, setPending] = useState<PendingRedemption[]>([]);
   const [shopBalance, setShopBalance] = useState(balance);
   const [claimingId, setClaimingId] = useState<string | null>(null);
   const [shopError, setShopError] = useState('');
   const [qrFor, setQrFor] = useState<string | null>(null);
+  const [claimedNote, setClaimedNote] = useState('');
 
   useEffect(() => {
-    if (tab !== 'shop' || shopItems !== null) return;
+    if ((tab !== 'shop' && tab !== 'toclaim') || shopItems !== null) return;
     (async () => {
       try {
         const res = await fetch('/api/rewards');
         const json = await res.json();
         if (!res.ok) { setShopError(json.error || 'Failed to load shop.'); return; }
         setShopItems(json.items ?? []);
+        setUnlocks(json.unlocks ?? []);
         setPending(json.pending ?? []);
         setShopBalance(json.balance ?? balance);
       } catch {
@@ -122,6 +137,8 @@ export default function PointsSectionContent({
       }
     })();
   }, [tab, shopItems, balance]);
+
+  const unclaimedUnlockCount = unlocks.filter((u) => u.unlocked && !u.claimed).length;
 
   async function handleClaim(item: RewardItem) {
     if (!window.confirm(`Redeem "${item.title}" for ${item.point_cost} points?`)) return;
@@ -136,11 +153,40 @@ export default function PointsSectionContent({
       const json = await res.json();
       if (!res.ok) { setShopError(json.error || 'Failed to claim reward.'); return; }
       setShopBalance((b) => b - item.point_cost);
-      setPending((prev) => [{ id: json.redemptionId, reward_id: item.id, status: 'pending', point_cost: item.point_cost, claimed_at: new Date().toISOString(), reward: { title: item.title } }, ...prev]);
       if (item.stock !== null) {
         setShopItems((prev) => prev?.map((i) => (i.id === item.id ? { ...i, stock: (i.stock ?? 1) - 1 } : i)) ?? null);
       }
-      setQrFor(json.redemptionId);
+      // A digital reward is auto-fulfilled the moment it's claimed — there's
+      // nothing for an officer to hand over, so no QR to show and nothing
+      // lands in "Ready to Claim" either.
+      if (item.reward_type === 'digital') {
+        setClaimedNote(`You now have "${item.title}"!`);
+        setTimeout(() => setClaimedNote(''), 4000);
+      } else {
+        setPending((prev) => [{ id: json.redemptionId, reward_id: item.id, status: 'pending', point_cost: item.point_cost, claimed_at: new Date().toISOString(), reward: { title: item.title } }, ...prev]);
+        setQrFor(json.redemptionId);
+      }
+    } catch {
+      setShopError('Network error. Please try again.');
+    } finally {
+      setClaimingId(null);
+    }
+  }
+
+  async function handleClaimUnlock(unlock: UnlockReward) {
+    setClaimingId(unlock.id);
+    setShopError('');
+    try {
+      const res = await fetch('/api/rewards/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reward_id: unlock.id }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setShopError(json.error || 'Failed to claim reward.'); return; }
+      setUnlocks((prev) => prev.map((u) => (u.id === unlock.id ? { ...u, claimed: true } : u)));
+      setClaimedNote(`You claimed "${unlock.title}"!`);
+      setTimeout(() => setClaimedNote(''), 4000);
     } catch {
       setShopError('Network error. Please try again.');
     } finally {
@@ -190,7 +236,10 @@ export default function PointsSectionContent({
   // ── Manage shop ──────────────────────────────────────────────────────
   const [manageItems, setManageItems] = useState<RewardItem[] | null>(null);
   const [manageError, setManageError] = useState('');
-  const [newReward, setNewReward] = useState({ title: '', description: '', point_cost: '', stock: '', min_tier: '' });
+  const [newReward, setNewReward] = useState({
+    title: '', description: '', point_cost: '', stock: '', min_tier: '',
+    max_per_user: '', reward_type: 'physical' as 'physical' | 'digital', grants_fast_pass: false, isTierUnlock: false,
+  });
   const [creating, setCreating] = useState(false);
 
   // Manual point adjustment — the catch-all correction tool for anything
@@ -303,7 +352,8 @@ export default function PointsSectionContent({
 
   async function handleCreateReward(e: React.FormEvent) {
     e.preventDefault();
-    if (!newReward.title.trim() || !newReward.point_cost) return;
+    if (!newReward.title.trim()) return;
+    if (newReward.isTierUnlock && !newReward.min_tier) return;
     setCreating(true);
     setManageError('');
     try {
@@ -313,15 +363,21 @@ export default function PointsSectionContent({
         body: JSON.stringify({
           title: newReward.title.trim(),
           description: newReward.description.trim() || undefined,
-          point_cost: Number(newReward.point_cost),
+          // Tier Unlock is a convenience checkbox, not a separate concept —
+          // it's exactly point_cost 0 + max_per_user 1, gated by min_tier
+          // like any other reward (see 20260921110000_allow_free_tier_unlock_rewards.sql).
+          point_cost: newReward.isTierUnlock ? 0 : Number(newReward.point_cost),
           stock: newReward.stock ? Number(newReward.stock) : null,
           min_tier: newReward.min_tier || null,
+          max_per_user: newReward.isTierUnlock ? 1 : (newReward.max_per_user ? Number(newReward.max_per_user) : null),
+          reward_type: newReward.reward_type,
+          grants_fast_pass: newReward.grants_fast_pass,
         }),
       });
       const json = await res.json();
       if (!res.ok) { setManageError(json.error || 'Failed to create reward.'); return; }
       setManageItems((prev) => [json.item, ...(prev ?? [])]);
-      setNewReward({ title: '', description: '', point_cost: '', stock: '', min_tier: '' });
+      setNewReward({ title: '', description: '', point_cost: '', stock: '', min_tier: '', max_per_user: '', reward_type: 'physical', grants_fast_pass: false, isTierUnlock: false });
     } catch {
       setManageError('Network error. Please try again.');
     } finally {
@@ -346,7 +402,10 @@ export default function PointsSectionContent({
   // which only ever flips availability. One item editable at a time,
   // inline in its row rather than a modal.
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ title: '', description: '', point_cost: '', stock: '', min_tier: '' });
+  const [editForm, setEditForm] = useState({
+    title: '', description: '', point_cost: '', stock: '', min_tier: '',
+    max_per_user: '', reward_type: 'physical' as 'physical' | 'digital', grants_fast_pass: false,
+  });
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState('');
 
@@ -358,13 +417,16 @@ export default function PointsSectionContent({
       point_cost: String(item.point_cost),
       stock: item.stock === null ? '' : String(item.stock),
       min_tier: item.min_tier ?? '',
+      max_per_user: item.max_per_user === null || item.max_per_user === undefined ? '' : String(item.max_per_user),
+      reward_type: item.reward_type ?? 'physical',
+      grants_fast_pass: item.grants_fast_pass ?? false,
     });
     setEditError('');
   }
 
   async function handleSaveEdit(e: React.FormEvent) {
     e.preventDefault();
-    if (!editingId || !editForm.title.trim() || !editForm.point_cost) return;
+    if (!editingId || !editForm.title.trim()) return;
     setSavingEdit(true);
     setEditError('');
     try {
@@ -377,6 +439,9 @@ export default function PointsSectionContent({
           point_cost: Number(editForm.point_cost),
           stock: editForm.stock ? Number(editForm.stock) : null,
           min_tier: editForm.min_tier || null,
+          max_per_user: editForm.max_per_user ? Number(editForm.max_per_user) : null,
+          reward_type: editForm.reward_type,
+          grants_fast_pass: editForm.grants_fast_pass,
         }),
       });
       const json = await res.json();
@@ -402,6 +467,10 @@ export default function PointsSectionContent({
       <div className={styles.tabBar} role="tablist">
         <button type="button" role="tab" aria-selected={tab === 'points'} className={`${styles.tab} ${tab === 'points' ? styles.tabActive : ''}`} onClick={() => setTab('points')}>
           <Award size={13} strokeWidth={1.5} aria-hidden="true" /> My Points
+        </button>
+        <button type="button" role="tab" aria-selected={tab === 'toclaim'} className={`${styles.tab} ${tab === 'toclaim' ? styles.tabActive : ''}`} onClick={() => setTab('toclaim')}>
+          <Gift size={13} strokeWidth={1.5} aria-hidden="true" /> To Claim
+          {unclaimedUnlockCount > 0 && <span className={styles.tabBadge}>{unclaimedUnlockCount}</span>}
         </button>
         <button type="button" role="tab" aria-selected={tab === 'shop'} className={`${styles.tab} ${tab === 'shop' ? styles.tabActive : ''}`} onClick={() => setTab('shop')}>
           <ShoppingBag size={13} strokeWidth={1.5} aria-hidden="true" /> Shop
@@ -478,6 +547,55 @@ export default function PointsSectionContent({
               </ul>
             )}
           </div>
+        </div>
+      )}
+
+      {tab === 'toclaim' && (
+        <div className={styles.shopTab}>
+          <p className={styles.referralHint}>Perks you unlock automatically by reaching a tier — free, no points spent, one per person.</p>
+          {shopError && <p className={styles.error}>{shopError}</p>}
+          {claimedNote && <p className={styles.claimedNote}><Check size={14} strokeWidth={2} aria-hidden="true" /> {claimedNote}</p>}
+          {shopItems === null ? (
+            <LoadingSpinner size={28} label="Loading…" theme="dark" />
+          ) : unlocks.length === 0 ? (
+            <p className={styles.empty}>No tier unlocks set up yet.</p>
+          ) : (
+            // Grouped by tier (in tier order) rather than one flat grid —
+            // which tier unlocks which reward was otherwise only visible
+            // as small print on a locked card's button, easy to miss
+            // entirely on an unlocked/claimed one.
+            TIERS.map((t) => {
+              const rewardsForTier = unlocks.filter((u) => (u.min_tier ?? TIERS[0].name) === t.name);
+              if (rewardsForTier.length === 0) return null;
+              return (
+                <div key={t.name} className={styles.tierGroup}>
+                  <div className={styles.tierGroupHeader}>
+                    <span className={styles.tierGroupBadge} style={{ background: `${t.color}22`, color: t.color, borderColor: `${t.color}55` }}>{t.name}</span>
+                    <span className={styles.tierGroupThreshold}>{t.min.toLocaleString()} lifetime pts</span>
+                  </div>
+                  <div className={styles.shopGrid}>
+                    {rewardsForTier.map((u) => (
+                      <div key={u.id} className={`${styles.shopCard} ${u.unlocked ? styles.unlockCardReady : styles.unlockCardLocked}`} style={u.unlocked ? { borderColor: `${t.color}55` } : undefined}>
+                        <h3 className={styles.shopCardTitle}>{u.title}</h3>
+                        {u.description && <p className={styles.shopCardDesc}>{u.description}</p>}
+                        <div className={styles.shopCardFooter}>
+                          {u.claimed ? (
+                            <span className={styles.unlockClaimedLabel}><Check size={13} strokeWidth={2} aria-hidden="true" /> Claimed</span>
+                          ) : u.unlocked ? (
+                            <button type="button" className={styles.claimBtn} onClick={() => handleClaimUnlock(u)} disabled={claimingId === u.id}>
+                              {claimingId === u.id ? 'Claiming…' : 'Claim'}
+                            </button>
+                          ) : (
+                            <span className={styles.unlockLockedLabel}><Lock size={12} strokeWidth={1.75} aria-hidden="true" /> Reach {t.name} to unlock</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       )}
 
@@ -590,13 +708,45 @@ export default function PointsSectionContent({
           <form className={styles.newRewardForm} onSubmit={handleCreateReward}>
             <input className={styles.input} placeholder="Reward title" value={newReward.title} onChange={(e) => setNewReward((f) => ({ ...f, title: e.target.value }))} maxLength={80} />
             <input className={styles.input} placeholder="Description (optional)" value={newReward.description} onChange={(e) => setNewReward((f) => ({ ...f, description: e.target.value }))} maxLength={200} />
-            <input className={styles.input} type="number" min={1} placeholder="Point cost" value={newReward.point_cost} onChange={(e) => setNewReward((f) => ({ ...f, point_cost: e.target.value }))} />
+            <input
+              className={styles.input} type="number" min={0} placeholder="Point cost"
+              value={newReward.isTierUnlock ? '0' : newReward.point_cost}
+              onChange={(e) => setNewReward((f) => ({ ...f, point_cost: e.target.value }))}
+              disabled={newReward.isTierUnlock}
+            />
             <input className={styles.input} type="number" min={0} placeholder="Stock (blank = unlimited)" value={newReward.stock} onChange={(e) => setNewReward((f) => ({ ...f, stock: e.target.value }))} />
             <select className={styles.input} value={newReward.min_tier} onChange={(e) => setNewReward((f) => ({ ...f, min_tier: e.target.value }))}>
               <option value="">No tier requirement</option>
               {TIERS.map((t) => <option key={t.name} value={t.name}>{t.name}+ only</option>)}
             </select>
-            <button type="submit" className={styles.saveBtn} disabled={creating || !newReward.title.trim() || !newReward.point_cost}>
+            <input
+              className={styles.input} type="number" min={1} placeholder="Max per person (blank = unlimited)"
+              value={newReward.isTierUnlock ? '1' : newReward.max_per_user}
+              onChange={(e) => setNewReward((f) => ({ ...f, max_per_user: e.target.value }))}
+              disabled={newReward.isTierUnlock}
+            />
+            <select className={styles.input} value={newReward.reward_type} onChange={(e) => setNewReward((f) => ({ ...f, reward_type: e.target.value as 'physical' | 'digital', grants_fast_pass: e.target.value === 'digital' ? f.grants_fast_pass : false }))}>
+              <option value="physical">Physical — officer confirms hand-over</option>
+              <option value="digital">Digital — auto-granted on claim</option>
+            </select>
+            {newReward.reward_type === 'digital' && (
+              <label className={styles.checkboxField}>
+                <input type="checkbox" checked={newReward.grants_fast_pass} onChange={(e) => setNewReward((f) => ({ ...f, grants_fast_pass: e.target.checked }))} />
+                <span>Marks a Fast Pass badge on the member&apos;s ticket QR</span>
+              </label>
+            )}
+            <label className={styles.checkboxField}>
+              <input
+                type="checkbox"
+                checked={newReward.isTierUnlock}
+                onChange={(e) => setNewReward((f) => ({ ...f, isTierUnlock: e.target.checked }))}
+              />
+              <span>Tier auto-unlock (free, one per person — appears in members&apos; &quot;To Claim&quot; tab once they reach the tier)</span>
+            </label>
+            {newReward.isTierUnlock && !newReward.min_tier && (
+              <p className={styles.error}>A tier auto-unlock needs a tier requirement above.</p>
+            )}
+            <button type="submit" className={styles.saveBtn} disabled={creating || !newReward.title.trim() || (newReward.isTierUnlock && !newReward.min_tier)}>
               {creating ? 'Adding…' : '+ Add Reward'}
             </button>
           </form>
@@ -612,16 +762,27 @@ export default function PointsSectionContent({
                   <form key={item.id} className={styles.editForm} onSubmit={handleSaveEdit}>
                     <input className={styles.input} placeholder="Reward title" value={editForm.title} onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))} maxLength={80} />
                     <input className={styles.input} placeholder="Description (optional)" value={editForm.description} onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))} maxLength={200} />
-                    <input className={styles.input} type="number" min={1} placeholder="Point cost" value={editForm.point_cost} onChange={(e) => setEditForm((f) => ({ ...f, point_cost: e.target.value }))} />
+                    <input className={styles.input} type="number" min={0} placeholder="Point cost" value={editForm.point_cost} onChange={(e) => setEditForm((f) => ({ ...f, point_cost: e.target.value }))} />
                     <input className={styles.input} type="number" min={0} placeholder="Stock (blank = unlimited)" value={editForm.stock} onChange={(e) => setEditForm((f) => ({ ...f, stock: e.target.value }))} />
                     <select className={styles.input} value={editForm.min_tier} onChange={(e) => setEditForm((f) => ({ ...f, min_tier: e.target.value }))}>
                       <option value="">No tier requirement</option>
                       {TIERS.map((t) => <option key={t.name} value={t.name}>{t.name}+ only</option>)}
                     </select>
+                    <input className={styles.input} type="number" min={1} placeholder="Max per person (blank = unlimited)" value={editForm.max_per_user} onChange={(e) => setEditForm((f) => ({ ...f, max_per_user: e.target.value }))} />
+                    <select className={styles.input} value={editForm.reward_type} onChange={(e) => setEditForm((f) => ({ ...f, reward_type: e.target.value as 'physical' | 'digital', grants_fast_pass: e.target.value === 'digital' ? f.grants_fast_pass : false }))}>
+                      <option value="physical">Physical — officer confirms hand-over</option>
+                      <option value="digital">Digital — auto-granted on claim</option>
+                    </select>
+                    {editForm.reward_type === 'digital' && (
+                      <label className={styles.checkboxField}>
+                        <input type="checkbox" checked={editForm.grants_fast_pass} onChange={(e) => setEditForm((f) => ({ ...f, grants_fast_pass: e.target.checked }))} />
+                        <span>Marks a Fast Pass badge on the member&apos;s ticket QR</span>
+                      </label>
+                    )}
                     {editError && <p className={styles.error}>{editError}</p>}
                     <div className={styles.editActions}>
                       <button type="button" className={styles.toggleBtn} onClick={() => setEditingId(null)}>Cancel</button>
-                      <button type="submit" className={styles.saveBtn} disabled={savingEdit || !editForm.title.trim() || !editForm.point_cost}>
+                      <button type="submit" className={styles.saveBtn} disabled={savingEdit || !editForm.title.trim()}>
                         {savingEdit ? 'Saving…' : 'Save'}
                       </button>
                     </div>
@@ -629,9 +790,13 @@ export default function PointsSectionContent({
                 ) : (
                   <div key={item.id} className={`${styles.manageRow} ${!item.active ? styles.manageRowInactive : ''}`}>
                     <div>
-                      <div className={styles.shopCardTitle}>{item.title}</div>
+                      <div className={styles.shopCardTitle}>
+                        {item.title}
+                        {item.point_cost === 0 && <span className={styles.tierUnlockTag}>Tier Unlock</span>}
+                        {item.reward_type === 'digital' && <span className={styles.digitalTag}>Digital</span>}
+                      </div>
                       <div className={styles.stockNote}>
-                        {item.point_cost} pts{item.stock !== null ? ` · ${item.stock} left` : ''}{item.min_tier ? ` · ${item.min_tier}+ only` : ''}
+                        {item.point_cost} pts{item.stock !== null ? ` · ${item.stock} left` : ''}{item.min_tier ? ` · ${item.min_tier}+ only` : ''}{item.max_per_user ? ` · max ${item.max_per_user}/person` : ''}
                       </div>
                     </div>
                     <div className={styles.manageRowActions}>

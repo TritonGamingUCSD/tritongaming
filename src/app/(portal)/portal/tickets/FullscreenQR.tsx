@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Ticket, X, Check } from 'lucide-react';
+import { Ticket, X, Check, Zap } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import TicketQRBadge from '@/components/TicketQRBadge/TicketQRBadge';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
@@ -56,6 +56,11 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   const [rotationSeconds, setRotationSeconds] = useState(30);
   const [error, setError] = useState('');
   const [checkedIn, setCheckedIn] = useState(false);
+  // Whether this member currently holds a fulfilled Fast Pass reward (from
+  // either shop — see grants_fast_pass in api/tickets/[id]/qr) — a
+  // standing perk, not something specific to this one ticket, so it's just
+  // surfaced here rather than re-fetched every rotation.
+  const [hasFastPass, setHasFastPass] = useState(false);
   const refreshTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Tracks the code across renders without needing it in fetchCode's own
   // dependency list (that would redefine fetchCode every refresh and
@@ -85,6 +90,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
       }
       setError('');
       setQrData(data.qr_data);
+      setHasFastPass(Boolean(data.has_fast_pass));
       // The visibility/focus listener below re-runs this on every tab
       // refocus, even mid-window when the code hasn't actually changed —
       // reassigning expiresIn/rotationSeconds in that case fed a *new*
@@ -251,6 +257,9 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
               {dateLabel && eventLocation && ' · '}
               {eventLocation}
             </div>
+          )}
+          {hasFastPass && !checkedIn && (
+            <span className={styles.fastPassBadge}><Zap size={13} strokeWidth={2} aria-hidden="true" /> Fast Pass — skip the line</span>
           )}
         </div>
 

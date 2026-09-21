@@ -84,6 +84,21 @@
   text-align: center;
 }
 
+.fastPassBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+  padding: 0.3rem 0.75rem;
+  background: rgba(255, 199, 44, 0.12);
+  color: #ffc72c;
+  border: 1px solid rgba(255, 199, 44, 0.35);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
 .label {
   display: flex;
   align-items: center;

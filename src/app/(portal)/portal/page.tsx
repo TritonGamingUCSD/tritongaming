@@ -53,11 +53,11 @@ interface Props {
   // each one only honors it if it's actually one of its own tab ids and
   // ignores it otherwise, so there's no coordination needed between
   // sections about which tab names are whose.
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; subtab?: string }>;
 }
 
 export default async function PortalDashboard({ searchParams }: Props) {
-  const { tab: requestedTab } = await searchParams;
+  const { tab: requestedTab, subtab: requestedSubTab } = await searchParams;
   // divisions is fetched unconditionally (cheap, publicly-readable table) —
   // needed to label a division-lead role chip with *which* division below,
   // regardless of whether this user themselves can manage the directory.
@@ -189,6 +189,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
           transactions={battlepassData.transactions}
           canManagePoints={canManagePoints}
           initialTab={requestedTab}
+          initialSubTab={requestedSubTab}
         />
       ),
     }] : []),

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Shield, ShoppingBag, Trophy, Settings, Gift, Check, X, Camera, Undo2 } from 'lucide-react';
+import { Shield, ShoppingBag, Trophy, Settings, Gift, Check, X, Camera, Undo2, Lock } from 'lucide-react';
 import { getOfficerTier, nextOfficerTier, OFFICER_TIERS } from '@/lib/officerTiers';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import StyledQRCode from '@/components/StyledQRCode/StyledQRCode';
@@ -12,8 +12,8 @@ import checkinStyles from '../checkin/checkin.module.css';
 import type { BattlepassTransactionRow } from './getMyBattlepassData';
 import styles from './battlepass.module.css';
 
-type Tab = 'mine' | 'shop' | 'leaderboard' | 'manage';
-const VALID_TABS: Tab[] = ['mine', 'shop', 'leaderboard', 'manage'];
+type Tab = 'mine' | 'toclaim' | 'shop' | 'leaderboard' | 'manage';
+const VALID_TABS: Tab[] = ['mine', 'toclaim', 'shop', 'leaderboard', 'manage'];
 
 interface RewardItem {
   id: string;
@@ -23,6 +23,18 @@ interface RewardItem {
   stock: number | null;
   min_tier: string | null;
   active: boolean;
+  max_per_user?: number | null;
+  reward_type?: 'physical' | 'digital';
+  grants_fast_pass?: boolean;
+}
+
+interface UnlockReward {
+  id: string;
+  title: string;
+  description: string | null;
+  min_tier: string | null;
+  unlocked: boolean;
+  claimed: boolean;
 }
 
 interface PendingRedemption {
@@ -65,6 +77,9 @@ interface Props {
   transactions: BattlepassTransactionRow[];
   canManagePoints: boolean;
   initialTab?: string;
+  // /portal?open=battlepass&tab=manage&subtab=shop — reaches all the way
+  // into the Manage tab's own sub-tab bar, not just its top-level tab.
+  initialSubTab?: string;
 }
 
 // A completely separate points/rewards system for officer-specific
@@ -75,35 +90,48 @@ interface Props {
 // officer-tier role can view their own Battlepass, browse the shop, and
 // see the leaderboard.
 type ManageSubTab = 'award' | 'redeem' | 'shop' | 'correct';
+const VALID_MANAGE_SUB_TABS: ManageSubTab[] = ['award', 'redeem', 'shop', 'correct'];
 
-export default function BattlepassSectionContent({ balance, lifetimeEarned, transactions, canManagePoints, initialTab }: Props) {
-  const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'mine');
+export default function BattlepassSectionContent({ balance, lifetimeEarned, transactions, canManagePoints, initialTab, initialSubTab }: Props) {
+  // A subtab link implies its parent tab — /portal?open=battlepass&subtab=shop
+  // with no explicit tab= should still land on Manage, not silently drop
+  // the subtab because the top-level tab defaulted elsewhere.
+  const [tab, setTab] = useState<Tab>(
+    VALID_TABS.includes(initialTab as Tab)
+      ? (initialTab as Tab)
+      : VALID_MANAGE_SUB_TABS.includes(initialSubTab as ManageSubTab) ? 'manage' : 'mine'
+  );
   // The Manage tab does four genuinely separate jobs (award, confirm a
   // redemption, edit the catalog, reverse a mistake) — stacking all four
   // as one long scroll made it hard to find any one of them. A sub-tab
   // bar keeps each job on its own screen, same pattern as the top-level
   // tab bar above it.
-  const [manageSubTab, setManageSubTab] = useState<ManageSubTab>('award');
+  const [manageSubTab, setManageSubTab] = useState<ManageSubTab>(
+    VALID_MANAGE_SUB_TABS.includes(initialSubTab as ManageSubTab) ? (initialSubTab as ManageSubTab) : 'award'
+  );
   const tier = getOfficerTier(lifetimeEarned);
   const next = nextOfficerTier(lifetimeEarned);
   const progressPct = next ? Math.min(100, Math.round(((lifetimeEarned - tier.min) / (next.min - tier.min)) * 100)) : 100;
 
-  // ── Shop ──────────────────────────────────────────────────────────────
+  // ── Shop / To Claim (same endpoint — one fetch backs both tabs) ───────
   const [shopItems, setShopItems] = useState<RewardItem[] | null>(null);
+  const [unlocks, setUnlocks] = useState<UnlockReward[]>([]);
   const [pending, setPending] = useState<PendingRedemption[]>([]);
   const [shopBalance, setShopBalance] = useState(balance);
   const [claimingId, setClaimingId] = useState<string | null>(null);
   const [shopError, setShopError] = useState('');
   const [qrFor, setQrFor] = useState<string | null>(null);
+  const [claimedNote, setClaimedNote] = useState('');
 
   useEffect(() => {
-    if (tab !== 'shop' || shopItems !== null) return;
+    if ((tab !== 'shop' && tab !== 'toclaim') || shopItems !== null) return;
     (async () => {
       try {
         const res = await fetch('/api/battlepass');
         const json = await res.json();
         if (!res.ok) { setShopError(json.error || 'Failed to load shop.'); return; }
         setShopItems(json.items ?? []);
+        setUnlocks(json.unlocks ?? []);
         setPending(json.pending ?? []);
         setShopBalance(json.balance ?? balance);
       } catch {
@@ -111,6 +139,8 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
       }
     })();
   }, [tab, shopItems, balance]);
+
+  const unclaimedUnlockCount = unlocks.filter((u) => u.unlocked && !u.claimed).length;
 
   async function handleClaim(item: RewardItem) {
     if (!window.confirm(`Redeem "${item.title}" for ${item.point_cost} points?`)) return;
@@ -125,11 +155,37 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
       const json = await res.json();
       if (!res.ok) { setShopError(json.error || 'Failed to claim reward.'); return; }
       setShopBalance((b) => b - item.point_cost);
-      setPending((prev) => [{ id: json.redemptionId, reward_id: item.id, status: 'pending', point_cost: item.point_cost, claimed_at: new Date().toISOString(), reward: { title: item.title } }, ...prev]);
       if (item.stock !== null) {
         setShopItems((prev) => prev?.map((i) => (i.id === item.id ? { ...i, stock: (i.stock ?? 1) - 1 } : i)) ?? null);
       }
-      setQrFor(json.redemptionId);
+      if (item.reward_type === 'digital') {
+        setClaimedNote(`You now have "${item.title}"!`);
+        setTimeout(() => setClaimedNote(''), 4000);
+      } else {
+        setPending((prev) => [{ id: json.redemptionId, reward_id: item.id, status: 'pending', point_cost: item.point_cost, claimed_at: new Date().toISOString(), reward: { title: item.title } }, ...prev]);
+        setQrFor(json.redemptionId);
+      }
+    } catch {
+      setShopError('Network error. Please try again.');
+    } finally {
+      setClaimingId(null);
+    }
+  }
+
+  async function handleClaimUnlock(unlock: UnlockReward) {
+    setClaimingId(unlock.id);
+    setShopError('');
+    try {
+      const res = await fetch('/api/battlepass/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reward_id: unlock.id }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setShopError(json.error || 'Failed to claim reward.'); return; }
+      setUnlocks((prev) => prev.map((u) => (u.id === unlock.id ? { ...u, claimed: true } : u)));
+      setClaimedNote(`You claimed "${unlock.title}"!`);
+      setTimeout(() => setClaimedNote(''), 4000);
     } catch {
       setShopError('Network error. Please try again.');
     } finally {
@@ -255,7 +311,10 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
   // ── Manage: shop catalog ─────────────────────────────────────────────
   const [manageItems, setManageItems] = useState<RewardItem[] | null>(null);
   const [manageError, setManageError] = useState('');
-  const [newReward, setNewReward] = useState({ title: '', description: '', point_cost: '', stock: '', min_tier: '' });
+  const [newReward, setNewReward] = useState({
+    title: '', description: '', point_cost: '', stock: '', min_tier: '',
+    max_per_user: '', reward_type: 'physical' as 'physical' | 'digital', grants_fast_pass: false, isTierUnlock: false,
+  });
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
@@ -274,7 +333,8 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
 
   async function handleCreateReward(e: React.FormEvent) {
     e.preventDefault();
-    if (!newReward.title.trim() || !newReward.point_cost) return;
+    if (!newReward.title.trim()) return;
+    if (newReward.isTierUnlock && !newReward.min_tier) return;
     setCreating(true);
     setManageError('');
     try {
@@ -284,15 +344,18 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
         body: JSON.stringify({
           title: newReward.title.trim(),
           description: newReward.description.trim() || undefined,
-          point_cost: Number(newReward.point_cost),
+          point_cost: newReward.isTierUnlock ? 0 : Number(newReward.point_cost),
           stock: newReward.stock ? Number(newReward.stock) : null,
           min_tier: newReward.min_tier || null,
+          max_per_user: newReward.isTierUnlock ? 1 : (newReward.max_per_user ? Number(newReward.max_per_user) : null),
+          reward_type: newReward.reward_type,
+          grants_fast_pass: newReward.grants_fast_pass,
         }),
       });
       const json = await res.json();
       if (!res.ok) { setManageError(json.error || 'Failed to create reward.'); return; }
       setManageItems((prev) => [json.item, ...(prev ?? [])]);
-      setNewReward({ title: '', description: '', point_cost: '', stock: '', min_tier: '' });
+      setNewReward({ title: '', description: '', point_cost: '', stock: '', min_tier: '', max_per_user: '', reward_type: 'physical', grants_fast_pass: false, isTierUnlock: false });
     } catch {
       setManageError('Network error. Please try again.');
     } finally {
@@ -382,6 +445,10 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
         <button type="button" role="tab" aria-selected={tab === 'mine'} className={`${styles.tab} ${tab === 'mine' ? styles.tabActive : ''}`} onClick={() => setTab('mine')}>
           <Shield size={13} strokeWidth={1.5} aria-hidden="true" /> My Battlepass
         </button>
+        <button type="button" role="tab" aria-selected={tab === 'toclaim'} className={`${styles.tab} ${tab === 'toclaim' ? styles.tabActive : ''}`} onClick={() => setTab('toclaim')}>
+          <Gift size={13} strokeWidth={1.5} aria-hidden="true" /> To Claim
+          {unclaimedUnlockCount > 0 && <span className={styles.tabBadge}>{unclaimedUnlockCount}</span>}
+        </button>
         <button type="button" role="tab" aria-selected={tab === 'shop'} className={`${styles.tab} ${tab === 'shop' ? styles.tabActive : ''}`} onClick={() => setTab('shop')}>
           <ShoppingBag size={13} strokeWidth={1.5} aria-hidden="true" /> Shop
         </button>
@@ -443,6 +510,51 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
               </ul>
             )}
           </div>
+        </div>
+      )}
+
+      {tab === 'toclaim' && (
+        <div className={styles.shopTab}>
+          <p className={styles.referralHint}>Perks you unlock automatically by reaching a Battlepass tier — free, no points spent, one per person.</p>
+          {shopError && <p className={styles.error}>{shopError}</p>}
+          {claimedNote && <p className={styles.claimedNote}><Check size={14} strokeWidth={2} aria-hidden="true" /> {claimedNote}</p>}
+          {shopItems === null ? (
+            <LoadingSpinner size={28} label="Loading…" theme="dark" />
+          ) : unlocks.length === 0 ? (
+            <p className={styles.empty}>No tier unlocks set up yet.</p>
+          ) : (
+            OFFICER_TIERS.map((t) => {
+              const rewardsForTier = unlocks.filter((u) => (u.min_tier ?? OFFICER_TIERS[0].name) === t.name);
+              if (rewardsForTier.length === 0) return null;
+              return (
+                <div key={t.name} className={styles.tierGroup}>
+                  <div className={styles.tierGroupHeader}>
+                    <span className={styles.tierGroupBadge} style={{ background: `${t.color}22`, color: t.color, borderColor: `${t.color}55` }}>{t.name}</span>
+                    <span className={styles.tierGroupThreshold}>{t.min.toLocaleString()} lifetime pts</span>
+                  </div>
+                  <div className={styles.shopGrid}>
+                    {rewardsForTier.map((u) => (
+                      <div key={u.id} className={`${styles.shopCard} ${u.unlocked ? styles.unlockCardReady : styles.unlockCardLocked}`} style={u.unlocked ? { borderColor: `${t.color}55` } : undefined}>
+                        <h3 className={styles.shopCardTitle}>{u.title}</h3>
+                        {u.description && <p className={styles.shopCardDesc}>{u.description}</p>}
+                        <div className={styles.shopCardFooter}>
+                          {u.claimed ? (
+                            <span className={styles.unlockClaimedLabel}><Check size={13} strokeWidth={2} aria-hidden="true" /> Claimed</span>
+                          ) : u.unlocked ? (
+                            <button type="button" className={styles.claimBtn} onClick={() => handleClaimUnlock(u)} disabled={claimingId === u.id}>
+                              {claimingId === u.id ? 'Claiming…' : 'Claim'}
+                            </button>
+                          ) : (
+                            <span className={styles.unlockLockedLabel}><Lock size={12} strokeWidth={1.75} aria-hidden="true" /> Reach {t.name} to unlock</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       )}
 
@@ -649,13 +761,41 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
             <form className={styles.newRewardForm} onSubmit={handleCreateReward}>
               <input className={styles.input} placeholder="Reward title" value={newReward.title} onChange={(e) => setNewReward((f) => ({ ...f, title: e.target.value }))} maxLength={80} />
               <input className={styles.input} placeholder="Description (optional)" value={newReward.description} onChange={(e) => setNewReward((f) => ({ ...f, description: e.target.value }))} maxLength={200} />
-              <input className={styles.input} type="number" min={1} placeholder="Point cost" value={newReward.point_cost} onChange={(e) => setNewReward((f) => ({ ...f, point_cost: e.target.value }))} />
+              <input
+                className={styles.input} type="number" min={0} placeholder="Point cost"
+                value={newReward.isTierUnlock ? '0' : newReward.point_cost}
+                onChange={(e) => setNewReward((f) => ({ ...f, point_cost: e.target.value }))}
+                disabled={newReward.isTierUnlock}
+              />
               <input className={styles.input} type="number" min={0} placeholder="Stock (blank = unlimited)" value={newReward.stock} onChange={(e) => setNewReward((f) => ({ ...f, stock: e.target.value }))} />
               <select className={styles.input} value={newReward.min_tier} onChange={(e) => setNewReward((f) => ({ ...f, min_tier: e.target.value }))}>
                 <option value="">No tier requirement</option>
                 {OFFICER_TIERS.map((t) => <option key={t.name} value={t.name}>{t.name}+ only</option>)}
               </select>
-              <button type="submit" className={styles.saveBtn} disabled={creating || !newReward.title.trim() || !newReward.point_cost}>
+              <input
+                className={styles.input} type="number" min={1} placeholder="Max per person (blank = unlimited)"
+                value={newReward.isTierUnlock ? '1' : newReward.max_per_user}
+                onChange={(e) => setNewReward((f) => ({ ...f, max_per_user: e.target.value }))}
+                disabled={newReward.isTierUnlock}
+              />
+              <select className={styles.input} value={newReward.reward_type} onChange={(e) => setNewReward((f) => ({ ...f, reward_type: e.target.value as 'physical' | 'digital', grants_fast_pass: e.target.value === 'digital' ? f.grants_fast_pass : false }))}>
+                <option value="physical">Physical — exec/admin confirms hand-over</option>
+                <option value="digital">Digital — auto-granted on claim</option>
+              </select>
+              {newReward.reward_type === 'digital' && (
+                <label className={styles.checkboxField}>
+                  <input type="checkbox" checked={newReward.grants_fast_pass} onChange={(e) => setNewReward((f) => ({ ...f, grants_fast_pass: e.target.checked }))} />
+                  <span>Marks a Fast Pass badge on the officer&apos;s ticket QR</span>
+                </label>
+              )}
+              <label className={styles.checkboxField}>
+                <input type="checkbox" checked={newReward.isTierUnlock} onChange={(e) => setNewReward((f) => ({ ...f, isTierUnlock: e.target.checked }))} />
+                <span>Tier auto-unlock (free, one per person — appears in officers&apos; &quot;To Claim&quot; tab once they reach the tier)</span>
+              </label>
+              {newReward.isTierUnlock && !newReward.min_tier && (
+                <p className={styles.error}>A tier auto-unlock needs a tier requirement above.</p>
+              )}
+              <button type="submit" className={styles.saveBtn} disabled={creating || !newReward.title.trim() || (newReward.isTierUnlock && !newReward.min_tier)}>
                 {creating ? 'Adding…' : '+ Add Reward'}
               </button>
             </form>
@@ -669,9 +809,13 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
                 {manageItems.map((item) => (
                   <div key={item.id} className={`${styles.manageRow} ${!item.active ? styles.manageRowInactive : ''}`}>
                     <div>
-                      <div className={styles.shopCardTitle}>{item.title}</div>
+                      <div className={styles.shopCardTitle}>
+                        {item.title}
+                        {item.point_cost === 0 && <span className={styles.tierUnlockTag}>Tier Unlock</span>}
+                        {item.reward_type === 'digital' && <span className={styles.digitalTag}>Digital</span>}
+                      </div>
                       <div className={styles.stockNote}>
-                        {item.point_cost} pts{item.stock !== null ? ` · ${item.stock} left` : ''}{item.min_tier ? ` · ${item.min_tier}+ only` : ''}
+                        {item.point_cost} pts{item.stock !== null ? ` · ${item.stock} left` : ''}{item.min_tier ? ` · ${item.min_tier}+ only` : ''}{item.max_per_user ? ` · max ${item.max_per_user}/person` : ''}
                       </div>
                     </div>
                     <button type="button" className={styles.toggleBtn} onClick={() => toggleActive(item)}>

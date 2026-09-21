@@ -30,6 +30,30 @@ export async function GET(request: Request, { params }: Params) {
     return NextResponse.json({ error: 'Ticket is not active' }, { status: 400 });
   }
 
+  // Does this member currently hold a fulfilled reward that grants a Fast
+  // Pass? Checked across both the member Rewards shop and the Battlepass
+  // shop (an officer's Fast Pass, if they have one, should show here too)
+  // — see 20260921105000_add_digital_rewards.sql's grants_fast_pass flag.
+  // Not scoped to this specific event; it's a standing perk, not a
+  // per-event consumable.
+  const [{ data: memberFastPass }, { data: officerFastPass }] = await Promise.all([
+    supabase
+      .from('reward_redemptions')
+      .select('id, reward:reward_items!inner(grants_fast_pass)')
+      .eq('user_id', user.id)
+      .eq('status', 'fulfilled')
+      .eq('reward.grants_fast_pass', true)
+      .limit(1),
+    supabase
+      .from('officer_reward_redemptions')
+      .select('id, reward:officer_reward_items!inner(grants_fast_pass)')
+      .eq('user_id', user.id)
+      .eq('status', 'fulfilled')
+      .eq('reward.grants_fast_pass', true)
+      .limit(1),
+  ]);
+  const hasFastPass = (memberFastPass?.length ?? 0) > 0 || (officerFastPass?.length ?? 0) > 0;
+
   const event = Array.isArray(ticket.event) ? ticket.event[0] : ticket.event;
   const code = rotatingCode(ticket.ticket_code, currentWindow());
   // The QR payload is prefixed with the event's slug so scanning it (with any
@@ -46,5 +70,5 @@ export async function GET(request: Request, { params }: Params) {
   // from "a 3-second window," and would replay its entire visual countdown
   // compressed into just those 3 seconds — which is exactly the "suddenly
   // accelerates" glitch reported, especially right after first opening.
-  return NextResponse.json({ code, qr_data: qrData, expires_in: secondsUntilNextWindow(), rotation_seconds: ROTATION_SECONDS });
+  return NextResponse.json({ code, qr_data: qrData, expires_in: secondsUntilNextWindow(), rotation_seconds: ROTATION_SECONDS, has_fast_pass: hasFastPass });
 }
