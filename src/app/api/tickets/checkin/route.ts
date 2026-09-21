@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/capabilities';
 import { rotatingCode, currentWindow } from '@/lib/rotatingCode';
+import { performCheckin } from '@/lib/performCheckin';
+import { getTier } from '@/lib/tiers';
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -39,7 +41,7 @@ export async function POST(request: Request) {
     .select(`
       id, ticket_code, status, checked_in_at, event_id, user_id,
       user:profiles!tickets_user_id_fkey(display_name),
-      event:events(title)
+      event:events(title, points_value)
     `);
 
   if (candidatesError) {
@@ -85,36 +87,32 @@ export async function POST(request: Request) {
     });
   }
 
-  const { error: updateError } = await supabase
-    .from('tickets')
-    .update({
-      status: 'used',
-      checked_in_at: new Date().toISOString(),
-      checked_in_by: user.id,
-    })
-    .eq('id', ticket.id);
-
-  if (updateError) {
-    return NextResponse.json({ error: 'Failed to update ticket' }, { status: 500 });
+  // RLS only lets someone insert a notification for themselves (see
+  // 20260920022210_allow_self_insert_notifications.sql) and
+  // award_checkin_points is a security-definer RPC — both genuinely need
+  // the service-role client, not the officer's own.
+  const serviceClient = createServiceClient();
+  const { error: checkinError } = await performCheckin(
+    serviceClient, ticket, eventData?.title ?? null, eventData?.points_value ?? 0, user.id
+  );
+  if (checkinError) {
+    return NextResponse.json({ error: checkinError }, { status: 500 });
   }
 
-  // Notifying the ticket holder, not the officer running this scanner —
-  // RLS only lets someone insert a notification for themselves (see
-  // 20260920022210_allow_self_insert_notifications.sql), so this one
-  // genuinely needs the service-role client. Best-effort: a failed
-  // notification insert shouldn't undo a check-in that already succeeded.
-  const serviceClient = createServiceClient();
-  await serviceClient.from('notifications').insert({
-    user_id: ticket.user_id,
-    type: 'ticket_checked_in',
-    title: "You're checked in!",
-    body: eventData?.title ? `Enjoy ${eventData.title}.` : 'Enjoy the event.',
-    href: '/portal/tickets',
-  });
+  // Best-effort — the check-in itself already succeeded above, so a
+  // failure to read back the new total shouldn't turn into a 500 for
+  // something that already worked. The scanner UI just won't show the
+  // points animation for this scan if these come back empty.
+  const { data: allAmounts } = await serviceClient.from('point_transactions').select('amount, reversed_at').eq('user_id', ticket.user_id);
+  const lifetimeEarned = (allAmounts ?? []).filter((t) => t.amount > 0 && !t.reversed_at).reduce((sum, t) => sum + t.amount, 0);
 
   return NextResponse.json({
     status: 'active',
     event_title: eventData?.title || '',
     user_name: userData?.display_name || 'Unknown',
+    ticket_id: ticket.id,
+    points_awarded: eventData?.points_value ?? 0,
+    lifetime_points: lifetimeEarned,
+    tier: getTier(lifetimeEarned).name,
   });
 }

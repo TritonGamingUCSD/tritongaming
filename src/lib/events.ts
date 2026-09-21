@@ -23,6 +23,7 @@ function mapSupabaseEvent(row: Record<string, unknown>): Event {
     photo_album_url: (row.photo_album_url as string) ?? '',
     post_event_info: (row.post_event_info as string) ?? '',
     social_embeds: (row.social_embeds as SocialEmbed[]) ?? [],
+    points_value: (row.points_value as number) ?? 0,
   };
 }
 

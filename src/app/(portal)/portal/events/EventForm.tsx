@@ -19,6 +19,8 @@ export interface EventFormValues {
   flyer_url: string;
   max_capacity: string;
   ticket_price: string;
+  points_value: string;
+  is_online: boolean;
   audience: 'public' | 'ucsd_only';
   is_published: boolean;
   photo_album_url: string;
@@ -38,6 +40,8 @@ export const EMPTY_EVENT_FORM: EventFormValues = {
   flyer_url: '',
   max_capacity: '',
   ticket_price: '0',
+  points_value: '10',
+  is_online: false,
   audience: 'public',
   is_published: false,
   photo_album_url: '',
@@ -224,8 +228,16 @@ export default function EventForm({
 
         <label className={styles.field}>
           <span className={styles.label}>Location</span>
-          <input className={styles.input} value={form.location} onChange={(e) => set('location', e.target.value)} placeholder="e.g. Price Center Ballroom" />
+          <input className={styles.input} value={form.location} onChange={(e) => set('location', e.target.value)} placeholder={form.is_online ? 'e.g. Discord — #main-stage' : 'e.g. Price Center Ballroom'} />
         </label>
+
+        <label className={styles.checkbox}>
+          <input type="checkbox" checked={form.is_online} onChange={(e) => set('is_online', e.target.checked)} />
+          <span>This event is online</span>
+        </label>
+        <span className={styles.hint} style={{ marginTop: '-0.75rem' }}>
+          Changes how attendees check in: in-person events get the QR scanner, online events get a check-in code they type in themselves.
+        </span>
 
         <label className={styles.field}>
           <span className={styles.label}>Division</span>
@@ -266,6 +278,12 @@ export default function EventForm({
         <label className={styles.field}>
           <span className={styles.label}>Max Capacity</span>
           <input className={styles.input} type="number" min="1" value={form.max_capacity} onChange={(e) => set('max_capacity', e.target.value)} placeholder="Unlimited" />
+        </label>
+
+        <label className={styles.field}>
+          <span className={styles.label}>Points for Checking In</span>
+          <input className={styles.input} type="number" min="0" value={form.points_value} onChange={(e) => set('points_value', e.target.value)} />
+          <span className={styles.hint}>How many reward points an attendee earns the moment they're checked in at this event.</span>
         </label>
 
         <label className={styles.field}>

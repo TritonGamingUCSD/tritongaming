@@ -2,8 +2,9 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Ticket, MapPin, Smartphone, Check, X, Timer } from 'lucide-react';
+import { Ticket, MapPin, Smartphone, Check, X, Timer, Award } from 'lucide-react';
 import FullscreenQR from './FullscreenQR';
+import OnlineCheckinEntry from './OnlineCheckinEntry';
 import AddToCalendarButton from '@/components/AddToCalendarButton/AddToCalendarButton';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import styles from './tickets.module.css';
@@ -20,6 +21,8 @@ interface TicketData {
     end_date: string | null;
     location: string | null;
     flyer_url: string | null;
+    points_value?: number;
+    is_online: boolean;
   } | null;
 }
 
@@ -30,6 +33,8 @@ interface UpcomingEvent {
   location: string | null;
   ticket_price: number;
   audience: 'public' | 'ucsd_only';
+  points_value?: number;
+  is_online?: boolean;
 }
 
 interface Props {
@@ -114,7 +119,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
           status: data.ticket.status,
           checked_in_at: data.ticket.checked_in_at,
           created_at: data.ticket.created_at,
-          event: event ? { id: event.id, title: event.title, start_date: event.start_date, end_date: null, location: event.location, flyer_url: null } : null,
+          event: event ? { id: event.id, title: event.title, start_date: event.start_date, end_date: null, location: event.location, flyer_url: null, points_value: event.points_value, is_online: event.is_online ?? false } : null,
         };
         setTickets((prev) => [newTicket, ...prev]);
         setQrTicket(newTicket);
@@ -172,6 +177,9 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
       {nextActiveTicket && (
         <section className={styles.heroSection}>
           <div className={styles.heroCard}>
+            {nextActiveTicket.event?.id && (
+              <AddToCalendarButton eventId={nextActiveTicket.event.id} className={styles.heroCalendarCorner} iconOnly />
+            )}
             <div className={styles.heroCardInner}>
               <div className={styles.heroMeta}>
                 <span className={styles.heroLabel}>NEXT EVENT</span>
@@ -190,17 +198,25 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
                 {nextActiveTicket.event?.location && (
                   <p className={styles.heroLocation}><MapPin size={13} strokeWidth={1.5} aria-hidden="true" /> {nextActiveTicket.event.location}</p>
                 )}
-                {nextActiveTicket.event?.id && (
-                  <AddToCalendarButton eventId={nextActiveTicket.event.id} className={styles.heroCalendarBtn} />
+                {!!nextActiveTicket.event?.points_value && (
+                  <span className={styles.heroPointsBadge}><Award size={12} strokeWidth={1.75} aria-hidden="true" /> +{nextActiveTicket.event.points_value} pts on check-in</span>
                 )}
               </div>
-              <button
-                className={styles.showQrBtn}
-                onClick={() => setQrTicket(nextActiveTicket)}
-              >
-                <span className={styles.showQrIcon}><Smartphone size={18} strokeWidth={1.5} aria-hidden="true" /></span>
-                Show QR Code
-              </button>
+              {nextActiveTicket.event?.is_online ? (
+                <OnlineCheckinEntry
+                  ticketId={nextActiveTicket.id}
+                  eventId={nextActiveTicket.event.id}
+                  onCheckedIn={handleCheckedIn}
+                />
+              ) : (
+                <button
+                  className={styles.showQrBtn}
+                  onClick={() => setQrTicket(nextActiveTicket)}
+                >
+                  <span className={styles.showQrIcon}><Smartphone size={18} strokeWidth={1.5} aria-hidden="true" /></span>
+                  Show QR Code
+                </button>
+              )}
             </div>
             <div className={styles.heroGlow} aria-hidden="true" />
           </div>
@@ -220,6 +236,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
                 key={ticket.id}
                 ticket={ticket}
                 onShowQR={() => setQrTicket(ticket)}
+                onCheckedIn={handleCheckedIn}
               />
             ))}
           </div>
@@ -250,6 +267,9 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
                   <div className={styles.eventTitle}>{event.title}</div>
                   {event.location && (
                     <div className={styles.eventLoc}><MapPin size={12} strokeWidth={1.5} aria-hidden="true" /> {event.location}</div>
+                  )}
+                  {!!event.points_value && (
+                    <div className={styles.eventPointsBadge}><Award size={11} strokeWidth={1.75} aria-hidden="true" /> +{event.points_value} pts on check-in</div>
                   )}
                 </div>
                 {event.audience === 'ucsd_only' && !isUcsd ? (
@@ -313,13 +333,16 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
 function TicketRow({
   ticket,
   onShowQR,
+  onCheckedIn,
 }: {
   ticket: TicketData;
   onShowQR?: () => void;
+  onCheckedIn?: (ticketId: string, checkedInAt: string) => void;
 }) {
   const ev = ticket.event;
+  const isActive = ticket.status === 'active';
   return (
-    <div className={`${styles.ticketRow} ${ticket.status !== 'active' ? styles.ticketDim : ''}`}>
+    <div className={`${styles.ticketRow} ${!isActive ? styles.ticketDim : ''}`}>
       <div className={styles.ticketLeft}>
         <span className={styles.ticketStatusIcon}>{STATUS_ICON[ticket.status]}</span>
       </div>
@@ -337,17 +360,25 @@ function TicketRow({
             <Check size={13} strokeWidth={1.75} aria-hidden="true" /> Checked in {new Date(ticket.checked_in_at).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' })}
           </div>
         )}
+        {isActive && !!ev?.points_value && (
+          <div className={styles.ticketPointsBadge}><Award size={11} strokeWidth={1.75} aria-hidden="true" /> +{ev.points_value} pts on check-in</div>
+        )}
       </div>
       <div className={styles.ticketRight}>
-        {ticket.status === 'active' && onShowQR ? (
-          <button className={styles.qrMiniBtn} onClick={onShowQR}>
-            <span aria-hidden="true">▦</span> View QR
-          </button>
-        ) : (
-          <span className={`${styles.statusBadge} ${styles[`status_${ticket.status}`]}`}>
-            {STATUS_LABEL[ticket.status]}
-          </span>
-        )}
+        <div className={styles.ticketRightRow}>
+          {isActive && ev?.id && <AddToCalendarButton eventId={ev.id} iconOnly />}
+          {isActive && ev?.is_online && onCheckedIn ? (
+            <OnlineCheckinEntry ticketId={ticket.id} eventId={ev.id} onCheckedIn={onCheckedIn} compact />
+          ) : isActive && onShowQR ? (
+            <button className={styles.qrMiniBtn} onClick={onShowQR}>
+              <span aria-hidden="true">▦</span> View QR
+            </button>
+          ) : (
+            <span className={`${styles.statusBadge} ${styles[`status_${ticket.status}`]}`}>
+              {STATUS_LABEL[ticket.status]}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );

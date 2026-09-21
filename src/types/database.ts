@@ -30,7 +30,10 @@ export type Capability =
   | 'view_docs'
   | 'manage_docs'
   | 'view_photo_albums'
-  | 'manage_photo_albums';
+  | 'manage_photo_albums'
+  | 'manage_rewards_shop'
+  | 'scan_redemptions'
+  | 'manage_points';
 
 export interface Database {
   public: {
@@ -54,6 +57,11 @@ export interface Database {
           show_on_board: boolean;
           social_links: Record<string, string>;
           board_visibility: Record<string, boolean>;
+          referral_code: string;
+          referred_by: string | null;
+          leaderboard_opt_in: boolean;
+          leaderboard_show_name: boolean;
+          leaderboard_show_points: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -120,6 +128,8 @@ export interface Database {
           photo_album_url: string | null;
           post_event_info: string | null;
           social_embeds: SocialEmbed[];
+          points_value: number;
+          is_online: boolean;
           created_by: string | null;
           created_at: string;
           updated_at: string;
@@ -222,6 +232,103 @@ export interface Database {
         Insert: Omit<Database['public']['Tables']['photo_albums']['Row'], 'id' | 'created_at'>;
         Update: Partial<Database['public']['Tables']['photo_albums']['Insert']>;
       };
+      point_transactions: {
+        Row: {
+          id: string;
+          user_id: string;
+          amount: number;
+          type: 'event_checkin' | 'referral_bonus' | 'redemption' | 'admin_adjustment';
+          event_id: string | null;
+          ticket_id: string | null;
+          related_user_id: string | null;
+          redemption_id: string | null;
+          note: string | null;
+          created_by: string | null;
+          created_at: string;
+          reversed_at: string | null;
+          reverses_transaction_id: string | null;
+        };
+        Insert: Omit<Database['public']['Tables']['point_transactions']['Row'], 'id' | 'created_at'>;
+        Update: Partial<Database['public']['Tables']['point_transactions']['Insert']>;
+      };
+      reward_items: {
+        Row: {
+          id: string;
+          title: string;
+          description: string | null;
+          point_cost: number;
+          stock: number | null;
+          min_tier: string | null;
+          active: boolean;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: Omit<Database['public']['Tables']['reward_items']['Row'], 'id' | 'created_at'>;
+        Update: Partial<Database['public']['Tables']['reward_items']['Insert']>;
+      };
+      reward_redemptions: {
+        Row: {
+          id: string;
+          user_id: string;
+          reward_id: string;
+          status: 'pending' | 'fulfilled' | 'cancelled';
+          point_cost: number;
+          claimed_at: string;
+          fulfilled_at: string | null;
+          fulfilled_by: string | null;
+          cancelled_at: string | null;
+          cancelled_by: string | null;
+        };
+        Insert: Omit<Database['public']['Tables']['reward_redemptions']['Row'], 'id' | 'claimed_at'>;
+        Update: Partial<Database['public']['Tables']['reward_redemptions']['Insert']>;
+      };
+      officer_point_transactions: {
+        Row: {
+          id: string;
+          user_id: string;
+          amount: number;
+          type: 'manual_award' | 'redemption';
+          redemption_id: string | null;
+          note: string | null;
+          created_by: string | null;
+          created_at: string;
+          reversed_at: string | null;
+          reverses_transaction_id: string | null;
+        };
+        Insert: Omit<Database['public']['Tables']['officer_point_transactions']['Row'], 'id' | 'created_at'>;
+        Update: Partial<Database['public']['Tables']['officer_point_transactions']['Insert']>;
+      };
+      officer_reward_items: {
+        Row: {
+          id: string;
+          title: string;
+          description: string | null;
+          point_cost: number;
+          stock: number | null;
+          min_tier: string | null;
+          active: boolean;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: Omit<Database['public']['Tables']['officer_reward_items']['Row'], 'id' | 'created_at'>;
+        Update: Partial<Database['public']['Tables']['officer_reward_items']['Insert']>;
+      };
+      officer_reward_redemptions: {
+        Row: {
+          id: string;
+          user_id: string;
+          reward_id: string;
+          status: 'pending' | 'fulfilled' | 'cancelled';
+          point_cost: number;
+          claimed_at: string;
+          fulfilled_at: string | null;
+          fulfilled_by: string | null;
+          cancelled_at: string | null;
+          cancelled_by: string | null;
+        };
+        Insert: Omit<Database['public']['Tables']['officer_reward_redemptions']['Row'], 'id' | 'claimed_at'>;
+        Update: Partial<Database['public']['Tables']['officer_reward_redemptions']['Insert']>;
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -244,6 +351,9 @@ export type Doc = Database['public']['Tables']['docs']['Row'];
 export type DocCategory = Database['public']['Tables']['doc_categories']['Row'];
 export type Notification = Database['public']['Tables']['notifications']['Row'];
 export type PhotoAlbum = Database['public']['Tables']['photo_albums']['Row'];
+export type PointTransaction = Database['public']['Tables']['point_transactions']['Row'];
+export type RewardItem = Database['public']['Tables']['reward_items']['Row'];
+export type RewardRedemption = Database['public']['Tables']['reward_redemptions']['Row'];
 
 export type TicketWithEvent = Ticket & {
   event: Pick<Event, 'id' | 'title' | 'start_date' | 'end_date' | 'location' | 'flyer_url'>;

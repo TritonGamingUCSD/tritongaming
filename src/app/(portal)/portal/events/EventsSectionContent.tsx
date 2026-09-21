@@ -6,7 +6,7 @@ import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from 'recharts';
-import { Search, Plus, Ticket, MapPin, BarChart3, ListChecks } from 'lucide-react';
+import { Search, Plus, Ticket, MapPin, BarChart3, ListChecks, Award } from 'lucide-react';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import type { MonthPoint } from '@/lib/monthBuckets';
 import type { EventTicketStat } from './getEventsData';
@@ -25,10 +25,12 @@ interface EventRow {
   audience: 'public' | 'ucsd_only';
   ticketsIssued: number;
   ticketsCheckedIn: number;
+  points_value: number;
 }
 
 type StatusFilter = 'all' | 'upcoming' | 'past' | 'draft';
 type Tab = 'manage' | 'analytics';
+const VALID_TABS: Tab[] = ['manage', 'analytics'];
 
 const FILTERS: { key: StatusFilter; label: string }[] = [
   { key: 'all', label: 'All' },
@@ -52,6 +54,8 @@ interface Props {
   ticketsPerMonth: MonthPoint[];
   eventStats: EventTicketStat[];
   canEdit: boolean;
+  canManagePoints: boolean;
+  initialTab?: string;
 }
 
 // Shared between the standalone /portal/events page and the portal hub's
@@ -59,8 +63,8 @@ interface Props {
 // component — search + status filter are pure UI state over data that's
 // already fully fetched (all events + their ticket counts come in as
 // props), so filtering is instant with no round trip.
-export default function EventsSectionContent({ events, eventsPerMonth, ticketsPerMonth, eventStats, canEdit }: Props) {
-  const [tab, setTab] = useState<Tab>('manage');
+export default function EventsSectionContent({ events, eventsPerMonth, ticketsPerMonth, eventStats, canEdit, canManagePoints, initialTab }: Props) {
+  const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'manage');
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<StatusFilter>('all');
   const [checkinsEventId, setCheckinsEventId] = useState<string | null>(null);
@@ -232,6 +236,9 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
                       {event.location && (
                         <div className={styles.eventLocation}><MapPin size={11} strokeWidth={1.75} aria-hidden="true" /> {event.location}</div>
                       )}
+                      {event.points_value > 0 && (
+                        <div className={styles.eventPointsBadge}><Award size={11} strokeWidth={1.75} aria-hidden="true" /> {event.points_value} pts</div>
+                      )}
                     </div>
                     <div className={styles.eventDate}>
                       {new Date(event.start_date).toLocaleDateString('en-US', {
@@ -275,7 +282,7 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
       ))}
 
       {checkinsEventId && (
-        <EventCheckinsModal eventId={checkinsEventId} onClose={() => setCheckinsEventId(null)} />
+        <EventCheckinsModal eventId={checkinsEventId} onClose={() => setCheckinsEventId(null)} canManagePoints={canManagePoints} />
       )}
     </div>
   );

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { MapPin, Ticket, Camera } from 'lucide-react';
+import { MapPin, Ticket, Camera, Award } from 'lucide-react';
 import { getEventBySlugOrId } from '@/lib/events';
 import { getAlbumPreview } from '@/lib/googlePhotosAlbum';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
@@ -93,6 +93,10 @@ export default async function EventDetailPage({ params }: Params) {
             </a>
             <AddToCalendarButton eventId={event._id} />
           </div>
+        )}
+
+        {!isPast && event.points_value > 0 && (
+          <p className={styles.pointsNote}><Award size={15} strokeWidth={1.75} aria-hidden="true" /> Check in at this event to earn {event.points_value} reward points</p>
         )}
 
         {event.details && (

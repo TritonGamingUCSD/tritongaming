@@ -10,7 +10,7 @@ export const metadata = { title: 'Sign In' };
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; error?: string }>;
+  searchParams: Promise<{ next?: string; error?: string; ref?: string }>;
 }) {
   const user = await getUser();
   const params = await searchParams;
@@ -44,8 +44,9 @@ export default async function LoginPage({
         )}
 
         <p className={styles.prompt}>Sign in to access events and tickets.</p>
+        <p className={styles.ucsdHint}>UCSD student? Sign in with your @ucsd.edu Google account to get verified access.</p>
 
-        <LoginClient next={params.next} />
+        <LoginClient next={params.next} ref={params.ref} />
 
         <p className={styles.footnote}>
           Google is the primary way in. Set up a backup email login from your Profile page.

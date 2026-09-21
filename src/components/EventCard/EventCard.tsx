@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { Award } from 'lucide-react';
 import styles from './EventCard.module.css';
 import type { Event } from '@/types';
 import { formatEventDateRange, formatEventTimeRange } from '@/lib/timezone';
@@ -47,6 +48,9 @@ export default function EventCard({ event }: { event: Event }) {
           {timeStr}
         </p>
         <p className={styles.location}>{event.location}</p>
+        {event.points_value > 0 && (
+          <span className={styles.pointsBadge}><Award size={11} strokeWidth={1.75} aria-hidden="true" /> Earn {event.points_value} pts</span>
+        )}
         <p className={styles.desc}>
           {event.content.length > 280 ? `${event.content.slice(0, 280)}…` : event.content}
         </p>

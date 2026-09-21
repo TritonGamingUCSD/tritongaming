@@ -82,6 +82,14 @@
   margin-bottom: 1.5rem;
 }
 
+.ucsdHint {
+  color: var(--yellow);
+  font-size: 0.78rem;
+  text-align: center;
+  line-height: 1.4;
+  margin: -1rem 0 1.5rem;
+}
+
 .googleBtn {
   display: flex;
   align-items: center;

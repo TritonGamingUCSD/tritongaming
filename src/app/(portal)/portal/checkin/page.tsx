@@ -1,10 +1,10 @@
 import { redirect } from 'next/navigation';
 import { getUserRoles } from '@/lib/auth';
 import { hasCapability } from '@/lib/capabilities';
-import CheckInClient from './CheckInClient';
+import CheckInSectionContent from './CheckInSectionContent';
 import { getCheckinData } from './getCheckinData';
 
-export const metadata = { title: 'Check-In Scanner' };
+export const metadata = { title: 'Check-In' };
 export const dynamic = 'force-dynamic';
 
 export default async function CheckInPage() {
@@ -13,5 +13,11 @@ export default async function CheckInPage() {
 
   const { events } = await getCheckinData();
 
-  return <CheckInClient events={events} />;
+  return (
+    <CheckInSectionContent
+      events={events}
+      canScanRedemptions={hasCapability(roles, 'scan_redemptions')}
+      canManagePoints={hasCapability(roles, 'manage_points')}
+    />
+  );
 }

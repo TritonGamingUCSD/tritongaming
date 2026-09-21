@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import styles from './login.module.css';
 
-export default function LoginClient({ next }: { next?: string }) {
+export default function LoginClient({ next, ref }: { next?: string; ref?: string }) {
   const [loading, setLoading] = useState(false);
   // Google is everyone's primary sign-in — this stays collapsed behind a
   // link rather than sitting as a second prominent form, since it only
@@ -21,10 +21,18 @@ export default function LoginClient({ next }: { next?: string }) {
     setLoading(true);
     const supabase = createClient();
     const origin = window.location.origin;
+    // The referral code has to ride along in this URL specifically — it's
+    // the one thing that survives the round trip out to Google and back
+    // (see auth/callback/route.ts, which reads it back off these same
+    // params once the session exists).
+    const callbackParams = new URLSearchParams();
+    if (next) callbackParams.set('next', next);
+    if (ref) callbackParams.set('ref', ref);
+    const query = callbackParams.toString();
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${origin}/auth/callback${next ? `?next=${encodeURIComponent(next)}` : ''}`,
+        redirectTo: `${origin}/auth/callback${query ? `?${query}` : ''}`,
       },
     });
   }

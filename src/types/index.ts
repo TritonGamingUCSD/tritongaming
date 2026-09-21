@@ -20,6 +20,7 @@ export type Event = {
   photo_album_url: string;
   post_event_info: string;
   social_embeds: SocialEmbed[];
+  points_value: number;
 };
 
 export type LogoItem = {

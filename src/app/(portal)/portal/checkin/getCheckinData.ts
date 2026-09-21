@@ -5,7 +5,7 @@ export async function getCheckinData() {
   const supabase = await createClient();
   const { data: events } = await supabase
     .from('events')
-    .select('id, title, start_date')
+    .select('id, title, start_date, is_online')
     .eq('is_published', true)
     .gte('start_date', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
     .order('start_date', { ascending: true })

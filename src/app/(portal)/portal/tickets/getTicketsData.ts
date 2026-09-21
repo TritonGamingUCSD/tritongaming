@@ -12,14 +12,14 @@ export async function getTicketsData(profileId: string, roles: RoleGrant[]) {
     .from('tickets')
     .select(`
       id, status, checked_in_at, created_at,
-      event:events(id, title, start_date, end_date, location, flyer_url)
+      event:events(id, title, start_date, end_date, location, flyer_url, points_value, is_online)
     `)
     .eq('user_id', profileId)
     .order('created_at', { ascending: false });
 
   const { data: upcomingEvents } = await supabase
     .from('events')
-    .select('id, title, start_date, location, ticket_price, audience')
+    .select('id, title, start_date, location, ticket_price, audience, points_value, is_online')
     .eq('is_published', true)
     .gte('start_date', new Date().toISOString())
     .order('start_date', { ascending: true })

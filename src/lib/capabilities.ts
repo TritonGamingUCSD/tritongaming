@@ -41,6 +41,24 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // prospect would want, unlike day-to-day ops docs or the events calendar.
   view_photo_albums: ['officer', 'division', 'lead', 'exec', 'admin', 'recruit', 'alumni'],
   manage_photo_albums: ['lead', 'exec', 'admin'],
+  // Creating/editing/retiring shop items — same tier as manage_events/
+  // manage_docs, a lead-level ops decision, not something an officer signs
+  // off on alone.
+  manage_rewards_shop: ['lead', 'exec', 'admin'],
+  // Scanning a member's redemption QR and confirming a reward was handed
+  // over — same audience as checkin, since it happens at the same events
+  // check-in already staffs.
+  scan_redemptions: ['officer', 'lead', 'exec', 'admin'],
+  // Anything that moves points around after the fact — reversing a
+  // check-in/redemption, undoing someone's attendance at an event, or a
+  // free-form manual adjustment. Deliberately tighter than checkin/
+  // scan_redemptions/manage_rewards_shop (which include officer/lead):
+  // those cover the routine, in-the-moment actions; this covers correcting
+  // them later, which the club wants reserved for exec+. UI-gating only,
+  // same as generate_qr_codes — every route it protects goes through a
+  // service-role RPC, so the API route's own check is the real boundary,
+  // not an RLS policy keyed to this capability.
+  manage_points: ['exec', 'admin'],
 };
 
 /**

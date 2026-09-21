@@ -75,12 +75,38 @@
   color: rgba(242, 241, 240, 0.5);
 }
 
-.heroCalendarBtn {
-  margin-top: 0.6rem;
-  min-height: 34px;
-  padding: 0.4rem 0.85rem;
-  font-size: 0.72rem;
-  align-self: flex-start;
+.heroPointsBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  width: fit-content;
+  font-family: var(--font-futura-heavy);
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  color: var(--yellow);
+  background: rgba(255, 199, 44, 0.1);
+  border: 1px solid rgba(255, 199, 44, 0.3);
+  border-radius: var(--radius-pill);
+  padding: 0.25rem 0.65rem;
+  margin-top: 0.15rem;
+}
+
+.eventPointsBadge, .ticketPointsBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: var(--font-futura-heavy);
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
+  color: var(--yellow);
+  margin-top: 0.2rem;
+}
+
+.heroCalendarCorner {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 2;
 }
 
 .showQrBtn {
@@ -133,10 +159,20 @@
 .ticketRow {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  row-gap: 0.6rem;
   gap: 0.875rem;
   padding: 0.9rem 1.125rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   transition: background 0.15s;
+}
+
+/* Below this width there just isn't room for the online check-in code
+   form (icon + input + button) or the QR/calendar pair to sit inline next
+   to the title without crushing both — same "let it wrap to its own row"
+   treatment as the Event Management table's mobile layout. */
+@media (max-width: 480px) {
+  .ticketRight { width: 100%; justify-content: flex-end; }
 }
 
 .ticketRow:last-child { border-bottom: none; }
@@ -180,6 +216,12 @@
   align-items: flex-end;
   gap: 0.4rem;
   flex-shrink: 0;
+}
+
+.ticketRightRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .statusBadge {
@@ -354,3 +396,71 @@
 }
 
 .browseLink:hover { opacity: 0.8; }
+
+/* ── Online check-in entry (inline, per-ticket) ── */
+.onlineCheckinForm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.875rem 1rem;
+  background: rgba(255,199,44,0.05);
+  border: 1px solid rgba(255,199,44,0.18);
+  border-radius: var(--radius-md);
+}
+
+.onlineCheckinFormCompact {
+  padding: 0.5rem 0.6rem;
+  gap: 0.4rem;
+}
+
+.onlineCheckinInput {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.75rem;
+  color: var(--white);
+  font-family: var(--font-futura-medium);
+  font-size: 0.85rem;
+  width: 120px;
+  text-transform: uppercase;
+}
+
+.onlineCheckinFormCompact .onlineCheckinInput {
+  width: 110px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.78rem;
+}
+@media (max-width: 480px) {
+  .onlineCheckinFormCompact .onlineCheckinInput { width: 130px; }
+}
+
+.onlineCheckinSubmit {
+  padding: 0.5rem 1rem;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  border: 1px solid var(--btn-primary-border);
+  box-shadow: var(--btn-primary-shadow);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-futura-heavy);
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+}
+.onlineCheckinSubmit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.onlineCheckinFormCompact .onlineCheckinSubmit {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.72rem;
+}
+
+.onlineCheckinError { flex-basis: 100%; font-size: 0.78rem; color: #fca5a5; }
+
+.onlineCheckinSuccess {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: #34d399;
+  padding: 0.5rem 0;
+}

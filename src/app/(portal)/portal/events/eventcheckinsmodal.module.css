@@ -51,3 +51,37 @@
   border-radius: var(--radius-sm);
   border: 1px solid rgba(220,38,38,0.2);
 }
+
+.uncheckBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: rgba(220,38,38,0.07);
+  color: rgba(252,165,165,0.8);
+  border: 1px solid rgba(220,38,38,0.16);
+  border-radius: var(--radius-sm);
+  padding: 0.3rem 0.55rem;
+  font-size: 0.68rem;
+  font-family: var(--font-futura-medium);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.uncheckBtn:hover:not(:disabled) { background: rgba(220,38,38,0.14); }
+.uncheckBtn:disabled { opacity: 0.5; cursor: default; }
+
+.checkInBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: rgba(52,211,153,0.08);
+  color: #34d399;
+  border: 1px solid rgba(52,211,153,0.22);
+  border-radius: var(--radius-sm);
+  padding: 0.3rem 0.55rem;
+  font-size: 0.68rem;
+  font-family: var(--font-futura-medium);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.checkInBtn:hover:not(:disabled) { background: rgba(52,211,153,0.16); }
+.checkInBtn:disabled { opacity: 0.5; cursor: default; }

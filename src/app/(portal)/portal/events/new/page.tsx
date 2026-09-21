@@ -28,7 +28,7 @@ export default async function NewEventPage({ searchParams }: Props) {
   if (from) {
     const { data: source } = await supabase
       .from('events')
-      .select('title, content, description, location, start_date, end_date, flyer_url, max_capacity, ticket_price, audience, social_embeds, division_id')
+      .select('title, content, description, location, start_date, end_date, flyer_url, max_capacity, ticket_price, points_value, is_online, audience, social_embeds, division_id')
       .eq('id', from)
       .maybeSingle();
     if (source) {
@@ -43,6 +43,8 @@ export default async function NewEventPage({ searchParams }: Props) {
         flyer_url: source.flyer_url ?? '',
         max_capacity: source.max_capacity ? String(source.max_capacity) : '',
         ticket_price: String(source.ticket_price ?? 0),
+        points_value: String(source.points_value ?? 10),
+        is_online: source.is_online ?? false,
         audience: source.audience,
         social_embeds: (source.social_embeds as SocialEmbed[]) ?? [],
         division_id: source.division_id ?? '',

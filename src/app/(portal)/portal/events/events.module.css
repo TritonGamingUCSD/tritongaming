@@ -169,6 +169,17 @@
   margin-top: 0.2rem;
 }
 
+.eventPointsBadge {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: var(--font-futura-heavy);
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+  color: var(--yellow);
+  margin-top: 0.25rem;
+}
+
 .eventDate { font-size: var(--fs-meta); color: rgba(242,241,240,0.6); }
 
 /* Also used as a <button> (the ticket-count trigger for the check-ins

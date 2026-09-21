@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { X, Camera, Gamepad2 } from 'lucide-react';
+import { X, Camera, Gamepad2, Undo2, Download, Check } from 'lucide-react';
 import { resolveAvatarUrl } from '@/lib/profile';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
@@ -43,10 +43,50 @@ const STATUS_LABEL: Record<string, string> = {
 // position you were at in the hub. The standalone page still exists as a
 // direct-link fallback, same pattern as /portal/admin/content next to the
 // hub's own Site Content card.
-export default function EventCheckinsModal({ eventId, onClose }: { eventId: string; onClose: () => void }) {
+export default function EventCheckinsModal({ eventId, onClose, canManagePoints }: { eventId: string; onClose: () => void; canManagePoints: boolean }) {
   const [event, setEvent] = useState<EventInfo | null>(null);
   const [tickets, setTickets] = useState<TicketRow[] | null>(null);
   const [error, setError] = useState('');
+  const [uncheckingId, setUncheckingId] = useState<string | null>(null);
+  const [checkingInId, setCheckingInId] = useState<string | null>(null);
+
+  async function handleManualCheckIn(ticketId: string) {
+    setCheckingInId(ticketId);
+    setError('');
+    try {
+      const res = await fetch('/api/checkin/manual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticket_id: ticketId }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setError(json.error || 'Failed to check in.'); return; }
+      setTickets((prev) => prev?.map((t) => (t.id === ticketId ? { ...t, status: 'used', checked_in_at: new Date().toISOString() } : t)) ?? null);
+    } catch {
+      setError('Network error. Please try again.');
+    } finally {
+      setCheckingInId(null);
+    }
+  }
+
+  async function handleUncheckIn(ticketId: string) {
+    if (!window.confirm('Undo this check-in and reverse the points awarded for it?')) return;
+    setUncheckingId(ticketId);
+    try {
+      const res = await fetch('/api/checkin/reverse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticket_id: ticketId }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setError(json.error || 'Failed to undo check-in.'); return; }
+      setTickets((prev) => prev?.map((t) => (t.id === ticketId ? { ...t, status: 'active', checked_in_at: null } : t)) ?? null);
+    } catch {
+      setError('Network error. Please try again.');
+    } finally {
+      setUncheckingId(null);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -117,23 +157,27 @@ export default function EventCheckinsModal({ eventId, onClose }: { eventId: stri
               <Link href="/portal?open=checkin" className={checkinStyles.scanBtn}>
                 <Camera size={16} strokeWidth={1.5} aria-hidden="true" /> Open Scanner
               </Link>
+              <a href={`/api/events/${eventId}/export`} download className={checkinStyles.exportBtn}>
+                <Download size={15} strokeWidth={1.5} aria-hidden="true" /> Export CSV
+              </a>
             </div>
 
             {tickets.length === 0 ? (
               <div className={checkinStyles.empty}>No one has registered for this event yet.</div>
             ) : (
               <div className={checkinStyles.table}>
-                <div className={checkinStyles.tableHeader}>
+                <div className={checkinStyles.tableHeader} style={canManagePoints ? { gridTemplateColumns: '2fr 1fr 1fr 1fr 90px' } : undefined}>
                   <span>Attendee</span>
                   <span>Registered</span>
                   <span>Status</span>
                   <span>Checked In</span>
+                  {canManagePoints && <span></span>}
                 </div>
                 {tickets.map((t) => {
                   const user = Array.isArray(t.user) ? t.user[0] : t.user;
                   const avatarUrl = user ? resolveAvatarUrl(user) : null;
                   return (
-                    <div key={t.id} className={checkinStyles.tableRow}>
+                    <div key={t.id} className={checkinStyles.tableRow} style={canManagePoints ? { gridTemplateColumns: '2fr 1fr 1fr 1fr 90px' } : undefined}>
                       <div className={checkinStyles.attendee}>
                         {avatarUrl ? (
                           <Image src={avatarUrl} alt="" width={32} height={32} className={checkinStyles.avatar} unoptimized referrerPolicy="no-referrer" />
@@ -156,6 +200,30 @@ export default function EventCheckinsModal({ eventId, onClose }: { eventId: stri
                           ? new Date(t.checked_in_at).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' })
                           : '—'}
                       </span>
+                      {canManagePoints && (
+                        <span>
+                          {t.status === 'used' ? (
+                            <button
+                              type="button"
+                              className={styles.uncheckBtn}
+                              onClick={() => handleUncheckIn(t.id)}
+                              disabled={uncheckingId === t.id}
+                            >
+                              <Undo2 size={12} strokeWidth={1.75} aria-hidden="true" /> {uncheckingId === t.id ? '…' : 'Undo'}
+                            </button>
+                          ) : t.status === 'active' ? (
+                            <button
+                              type="button"
+                              className={styles.checkInBtn}
+                              onClick={() => handleManualCheckIn(t.id)}
+                              disabled={checkingInId === t.id}
+                              title="Check in without scanning a QR code or online code"
+                            >
+                              <Check size={12} strokeWidth={2} aria-hidden="true" /> {checkingInId === t.id ? '…' : 'Check In'}
+                            </button>
+                          ) : null}
+                        </span>
+                      )}
                     </div>
                   );
                 })}

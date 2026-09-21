@@ -34,3 +34,22 @@ export function rotatingCode(secret: string, windowIndex: number): string {
 export function secondsUntilNextWindow(): number {
   return ROTATION_SECONDS - (Math.floor(Date.now() / 1000) % ROTATION_SECONDS);
 }
+
+// The online-event self-check-in code (see api/checkin/online) reuses this
+// exact HMAC mechanism, keyed by the event's id instead of a ticket's
+// secret — but with a much slower rotation. A ticket's QR is read by a
+// camera in under a second, so 30s is plenty; this code gets read by a
+// person off a chat message and typed in by hand, so it needs to survive
+// that round trip without going stale mid-read. Rotation here is
+// defense-in-depth against a screenshotted code circulating after the
+// event, not the actual anti-sharing mechanism — that's the ticket-
+// ownership check the API route itself enforces.
+export const EVENT_CODE_ROTATION_SECONDS = 300;
+
+export function currentEventCodeWindow(): number {
+  return Math.floor(Date.now() / 1000 / EVENT_CODE_ROTATION_SECONDS);
+}
+
+export function secondsUntilNextEventCodeWindow(): number {
+  return EVENT_CODE_ROTATION_SECONDS - (Math.floor(Date.now() / 1000) % EVENT_CODE_ROTATION_SECONDS);
+}

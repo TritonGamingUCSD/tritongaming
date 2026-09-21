@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, History, Image as ImageIcon } from 'lucide-react';
+import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, History, Image as ImageIcon, Award, Medal } from 'lucide-react';
 import { getProfile, getUserRoles } from '@/lib/auth';
 import { hasCapability, isVerifiedMember } from '@/lib/capabilities';
 import { resolveAvatarUrl } from '@/lib/profile';
@@ -15,8 +15,14 @@ import PortalTopSection from './PortalTopSection';
 import TicketsClient from './tickets/TicketsClient';
 import { getTicketsData } from './tickets/getTicketsData';
 import ProfileClient from './profile/ProfileClient';
-import CheckInClient from './checkin/CheckInClient';
+import CheckInSectionContent from './checkin/CheckInSectionContent';
 import { getCheckinData } from './checkin/getCheckinData';
+import PointsSectionContent from './points/PointsSectionContent';
+import { getMyPointsData } from './points/getMyPointsData';
+import BattlepassSectionContent from './battlepass/BattlepassSectionContent';
+import { getMyBattlepassData } from './battlepass/getMyBattlepassData';
+import { BATTLEPASS_ROLES, getOfficerTier } from '@/lib/officerTiers';
+import { getTier } from '@/lib/tiers';
 import EventsSectionContent from './events/EventsSectionContent';
 import { getEventsData } from './events/getEventsData';
 import MembersSectionContent from './members/MembersSectionContent';
@@ -39,7 +45,19 @@ import styles from './dashboard.module.css';
 
 export const dynamic = 'force-dynamic';
 
-export default async function PortalDashboard() {
+interface Props {
+  // Next's async searchParams (App Router convention) — lets a link like
+  // /portal?open=points&tab=shop both open a hub section AND land on one
+  // of its internal tabs, instead of only ever opening to that section's
+  // first tab. `tab` is handed to every multi-tab section unconditionally;
+  // each one only honors it if it's actually one of its own tab ids and
+  // ignores it otherwise, so there's no coordination needed between
+  // sections about which tab names are whose.
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function PortalDashboard({ searchParams }: Props) {
+  const { tab: requestedTab } = await searchParams;
   // divisions is fetched unconditionally (cheap, publicly-readable table) —
   // needed to label a division-lead role chip with *which* division below,
   // regardless of whether this user themselves can manage the directory.
@@ -60,18 +78,25 @@ export default async function PortalDashboard() {
   const canManageRoles = hasCapability(roles, 'manage_roles');
   const canViewPhotoAlbums = hasCapability(roles, 'view_photo_albums');
   const canManagePhotoAlbums = hasCapability(roles, 'manage_photo_albums');
+  const canManageRewardsShop = hasCapability(roles, 'manage_rewards_shop');
+  const canScanRedemptions = hasCapability(roles, 'scan_redemptions');
+  const canManagePoints = hasCapability(roles, 'manage_points');
   // A separate, lighter tool from the full exec/admin directory manager
   // below — gated on actually holding the 'division' role itself (not the
   // broader manage_division capability, which lead/exec/admin also hold),
   // so it only shows up for the people the full directory tool doesn't
   // already cover, instead of duplicating that entry point for everyone.
   const isDivisionLead = roles.some((r) => r.role === 'division');
+  // The Battlepass is a fully separate system from member Rewards (see
+  // 20260921100000_add_officer_points_system.sql) — only officer-tier
+  // role holders have one at all.
+  const isOfficerTier = roles.some((r) => BATTLEPASS_ROLES.includes(r.role));
 
   // Every section a user can reach is fetched here, in parallel, capability
   // by capability — a plain member only ever triggers the tickets query. The
   // hub then just renders whichever of these were fetched; nothing is
   // re-fetched client-side when a card opens.
-  const [ticketsData, checkinData, eventsData, membersData, divisionsData, myDivisions, contentData, adminData, statsData, docsData, roleHistoryData, photoAlbumsData] =
+  const [ticketsData, checkinData, eventsData, membersData, divisionsData, myDivisions, contentData, adminData, statsData, docsData, roleHistoryData, photoAlbumsData, pointsData, battlepassData] =
     await Promise.all([
       getTicketsData(profile.id, roles),
       canCheckin ? getCheckinData() : Promise.resolve(null),
@@ -85,6 +110,8 @@ export default async function PortalDashboard() {
       canViewDocs ? getDocsData() : Promise.resolve(null),
       canManageRoles ? getRoleHistoryData() : Promise.resolve(null),
       canViewPhotoAlbums ? getPhotoAlbumsData() : Promise.resolve(null),
+      getMyPointsData(profile.id),
+      isOfficerTier ? getMyBattlepassData(profile.id) : Promise.resolve(null),
     ]);
 
   // getHours() reads the server process's own runtime clock, which on most
@@ -100,6 +127,8 @@ export default async function PortalDashboard() {
     .filter((t) => t.status === 'active' && t.event && new Date(t.event.start_date) >= nowDate)
     .sort((a, b) => new Date(a.event!.start_date).getTime() - new Date(b.event!.start_date).getTime())[0];
   const activeTicketCount = ticketsData.tickets.filter((t) => t.status === 'active').length;
+  const memberTier = getTier(pointsData.lifetimeEarned);
+  const officerTier = battlepassData ? getOfficerTier(battlepassData.lifetimeEarned) : null;
 
   // Events starting within the next/last 24h, for the check-in shortcut
   // banner — derived from checkinData (already scoped to "recent or soon")
@@ -128,6 +157,41 @@ export default async function PortalDashboard() {
       group: 'Yours',
       content: <ActivitySectionContent tickets={ticketsData.tickets} />,
     },
+    {
+      id: 'points', icon: <Award size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Rewards',
+      description: 'Earn points for showing up, spend them on perks',
+      badge: pointsData.balance || undefined,
+      group: 'Yours',
+      content: (
+        <PointsSectionContent
+          balance={pointsData.balance}
+          lifetimeEarned={pointsData.lifetimeEarned}
+          referralCode={pointsData.referralCode ?? ''}
+          leaderboardOptIn={pointsData.leaderboardOptIn}
+          leaderboardShowName={pointsData.leaderboardShowName}
+          leaderboardShowPoints={pointsData.leaderboardShowPoints}
+          transactions={pointsData.transactions}
+          canManageShop={canManageRewardsShop}
+          canManagePoints={canManagePoints}
+          initialTab={requestedTab}
+        />
+      ),
+    },
+    ...(isOfficerTier && battlepassData ? [{
+      id: 'battlepass', icon: <Medal size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Battlepass',
+      description: 'Recognition for officer-specific contributions',
+      badge: battlepassData.balance || undefined,
+      group: 'Yours' as const,
+      content: (
+        <BattlepassSectionContent
+          balance={battlepassData.balance}
+          lifetimeEarned={battlepassData.lifetimeEarned}
+          transactions={battlepassData.transactions}
+          canManagePoints={canManagePoints}
+          initialTab={requestedTab}
+        />
+      ),
+    }] : []),
     ...(canViewEvents && eventsData ? [{
       id: 'events', icon: <Calendar size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Events',
       description: canManageEvents ? 'Create and manage events' : 'Browse upcoming and past events',
@@ -139,14 +203,16 @@ export default async function PortalDashboard() {
           ticketsPerMonth={eventsData.ticketsPerMonth}
           eventStats={eventsData.eventStats}
           canEdit={canManageEvents}
+          canManagePoints={canManagePoints}
+          initialTab={requestedTab}
         />
       ),
     }] : []),
     ...(canCheckin && checkinData ? [{
-      id: 'checkin', icon: <Camera size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Check-In Scanner',
-      description: 'Scan tickets to check people in',
+      id: 'checkin', icon: <Camera size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Check-In',
+      description: 'Scan tickets, confirm redemptions, or reveal the online check-in code',
       group: 'Events' as const,
-      content: <CheckInClient events={checkinData.events} />,
+      content: <CheckInSectionContent events={checkinData.events} canScanRedemptions={canScanRedemptions} canManagePoints={canManagePoints} initialTab={requestedTab} />,
     }] : []),
     ...(canViewMembers && membersData ? [{
       id: 'members', icon: <Users size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Members',
@@ -218,6 +284,7 @@ export default async function PortalDashboard() {
           {...adminData}
           statsData={statsData}
           roleHistoryEntries={canManageRoles ? roleHistoryData?.entries : undefined}
+          initialTab={requestedTab}
         />
       ),
     }] : []),
@@ -283,6 +350,34 @@ export default async function PortalDashboard() {
                   ))
                 )}
               </div>
+
+              {/* At-a-glance stats — added once there was actually enough
+                  going on (points/tier, Battlepass, tickets) that landing on
+                  the dashboard and seeing only a name + role chips undersold
+                  it. Each badge deep-links straight to that section's own
+                  tab (see the initialTab wiring below) rather than just the
+                  section's default view. */}
+              <div className={styles.statBadges}>
+                <Link href="/portal?open=points&tab=points" className={styles.statBadge} style={{ borderColor: `${memberTier.color}55` }}>
+                  <Award size={13} strokeWidth={1.75} aria-hidden="true" style={{ color: memberTier.color }} />
+                  <span>{pointsData.balance.toLocaleString()} pts</span>
+                  <span className={styles.statBadgeTier} style={{ color: memberTier.color }}>{memberTier.name}</span>
+                </Link>
+                {battlepassData && (
+                  <Link href="/portal?open=battlepass&tab=mine" className={styles.statBadge} style={{ borderColor: `${officerTier?.color}55` }}>
+                    <Medal size={13} strokeWidth={1.75} aria-hidden="true" style={{ color: officerTier?.color }} />
+                    <span>{battlepassData.balance.toLocaleString()} pts</span>
+                    <span className={styles.statBadgeTier} style={{ color: officerTier?.color }}>{officerTier?.name}</span>
+                  </Link>
+                )}
+                {activeTicketCount > 0 && (
+                  <Link href="/portal?open=tickets" className={styles.statBadge}>
+                    <Ticket size={13} strokeWidth={1.75} aria-hidden="true" />
+                    <span>{activeTicketCount} active ticket{activeTicketCount === 1 ? '' : 's'}</span>
+                  </Link>
+                )}
+              </div>
+
               <div className={styles.headerActions}>
                 <Link href="/" className={styles.headerActionLink}>Back to Site</Link>
                 <span className={styles.headerActionDivider} aria-hidden="true">·</span>

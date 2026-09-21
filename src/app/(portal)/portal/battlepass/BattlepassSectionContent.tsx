@@ -1,0 +1,759 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { Shield, ShoppingBag, Trophy, Settings, Gift, Check, X, Camera, Undo2 } from 'lucide-react';
+import { getOfficerTier, nextOfficerTier, OFFICER_TIERS } from '@/lib/officerTiers';
+import { PACIFIC_TZ } from '@/lib/timezone';
+import StyledQRCode from '@/components/StyledQRCode/StyledQRCode';
+import { DEFAULT_QR_OPTIONS } from '@/lib/qrCodeStyling';
+import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
+import { useQRScanner } from '@/lib/useQRScanner';
+import checkinStyles from '../checkin/checkin.module.css';
+import type { BattlepassTransactionRow } from './getMyBattlepassData';
+import styles from './battlepass.module.css';
+
+type Tab = 'mine' | 'shop' | 'leaderboard' | 'manage';
+const VALID_TABS: Tab[] = ['mine', 'shop', 'leaderboard', 'manage'];
+
+interface RewardItem {
+  id: string;
+  title: string;
+  description: string | null;
+  point_cost: number;
+  stock: number | null;
+  min_tier: string | null;
+  active: boolean;
+}
+
+interface PendingRedemption {
+  id: string;
+  reward_id: string;
+  status: string;
+  point_cost: number;
+  claimed_at: string;
+  reward: { title: string } | { title: string }[] | null;
+}
+
+interface LeaderboardRow {
+  rank: number;
+  isSelf: boolean;
+  name: string;
+  tier: string;
+  points: number;
+}
+
+interface RedemptionDetail {
+  id: string;
+  status: string;
+  point_cost: number;
+  reward: { title: string; description: string | null } | { title: string; description: string | null }[] | null;
+  member: { display_name: string | null } | { display_name: string | null }[] | null;
+}
+
+const TYPE_LABELS: Record<string, string> = {
+  manual_award: 'Awarded',
+  redemption: 'Reward redeemed',
+};
+
+function oneOf<T>(v: T | T[] | null): T | null {
+  return Array.isArray(v) ? v[0] ?? null : v;
+}
+
+interface Props {
+  balance: number;
+  lifetimeEarned: number;
+  transactions: BattlepassTransactionRow[];
+  canManagePoints: boolean;
+  initialTab?: string;
+}
+
+// A completely separate points/rewards system for officer-specific
+// contributions (staffing, running events, etc.) — deliberately not
+// sharing a ledger, tier set, or shop with the member Rewards card. See
+// 20260921100000_add_officer_points_system.sql for why. Award and
+// redemption-approval are both exec/admin only (manage_points); every
+// officer-tier role can view their own Battlepass, browse the shop, and
+// see the leaderboard.
+type ManageSubTab = 'award' | 'redeem' | 'shop' | 'correct';
+
+export default function BattlepassSectionContent({ balance, lifetimeEarned, transactions, canManagePoints, initialTab }: Props) {
+  const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'mine');
+  // The Manage tab does four genuinely separate jobs (award, confirm a
+  // redemption, edit the catalog, reverse a mistake) — stacking all four
+  // as one long scroll made it hard to find any one of them. A sub-tab
+  // bar keeps each job on its own screen, same pattern as the top-level
+  // tab bar above it.
+  const [manageSubTab, setManageSubTab] = useState<ManageSubTab>('award');
+  const tier = getOfficerTier(lifetimeEarned);
+  const next = nextOfficerTier(lifetimeEarned);
+  const progressPct = next ? Math.min(100, Math.round(((lifetimeEarned - tier.min) / (next.min - tier.min)) * 100)) : 100;
+
+  // ── Shop ──────────────────────────────────────────────────────────────
+  const [shopItems, setShopItems] = useState<RewardItem[] | null>(null);
+  const [pending, setPending] = useState<PendingRedemption[]>([]);
+  const [shopBalance, setShopBalance] = useState(balance);
+  const [claimingId, setClaimingId] = useState<string | null>(null);
+  const [shopError, setShopError] = useState('');
+  const [qrFor, setQrFor] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (tab !== 'shop' || shopItems !== null) return;
+    (async () => {
+      try {
+        const res = await fetch('/api/battlepass');
+        const json = await res.json();
+        if (!res.ok) { setShopError(json.error || 'Failed to load shop.'); return; }
+        setShopItems(json.items ?? []);
+        setPending(json.pending ?? []);
+        setShopBalance(json.balance ?? balance);
+      } catch {
+        setShopError('Network error loading shop.');
+      }
+    })();
+  }, [tab, shopItems, balance]);
+
+  async function handleClaim(item: RewardItem) {
+    if (!window.confirm(`Redeem "${item.title}" for ${item.point_cost} points?`)) return;
+    setClaimingId(item.id);
+    setShopError('');
+    try {
+      const res = await fetch('/api/battlepass/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reward_id: item.id }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setShopError(json.error || 'Failed to claim reward.'); return; }
+      setShopBalance((b) => b - item.point_cost);
+      setPending((prev) => [{ id: json.redemptionId, reward_id: item.id, status: 'pending', point_cost: item.point_cost, claimed_at: new Date().toISOString(), reward: { title: item.title } }, ...prev]);
+      if (item.stock !== null) {
+        setShopItems((prev) => prev?.map((i) => (i.id === item.id ? { ...i, stock: (i.stock ?? 1) - 1 } : i)) ?? null);
+      }
+      setQrFor(json.redemptionId);
+    } catch {
+      setShopError('Network error. Please try again.');
+    } finally {
+      setClaimingId(null);
+    }
+  }
+
+  // ── Leaderboard ──────────────────────────────────────────────────────
+  const [board, setBoard] = useState<LeaderboardRow[] | null>(null);
+  const [boardError, setBoardError] = useState('');
+
+  useEffect(() => {
+    if (tab !== 'leaderboard' || board !== null) return;
+    (async () => {
+      try {
+        const res = await fetch('/api/battlepass/leaderboard');
+        const json = await res.json();
+        if (!res.ok) { setBoardError(json.error || 'Failed to load leaderboard.'); return; }
+        setBoard(json.leaderboard ?? []);
+      } catch {
+        setBoardError('Network error loading leaderboard.');
+      }
+    })();
+  }, [tab, board]);
+
+  // ── Manage: batch award ─────────────────────────────────────────────
+  const [awardQuery, setAwardQuery] = useState('');
+  const [awardResults, setAwardResults] = useState<{ id: string; title: string }[]>([]);
+  const [awardTargets, setAwardTargets] = useState<{ id: string; title: string }[]>([]);
+  const [awardAmount, setAwardAmount] = useState('');
+  const [awardNote, setAwardNote] = useState('');
+  const [awarding, setAwarding] = useState(false);
+  const [awardResult, setAwardResult] = useState('');
+
+  useEffect(() => {
+    if (awardQuery.trim().length < 2) { setAwardResults([]); return; }
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/admin/battlepass/officers?q=${encodeURIComponent(awardQuery.trim())}`);
+        const json = await res.json();
+        setAwardResults((json.officers ?? []).filter((o: { id: string }) => !awardTargets.some((t2) => t2.id === o.id)));
+      } catch {
+        setAwardResults([]);
+      }
+    }, 250);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [awardQuery]);
+
+  function addAwardTarget(o: { id: string; title: string }) {
+    setAwardTargets((prev) => [...prev, o]);
+    setAwardQuery('');
+    setAwardResults([]);
+  }
+
+  function removeAwardTarget(id: string) {
+    setAwardTargets((prev) => prev.filter((t) => t.id !== id));
+  }
+
+  async function handleAward(e: React.FormEvent) {
+    e.preventDefault();
+    if (awardTargets.length === 0 || !awardAmount || !awardNote.trim()) return;
+    setAwarding(true);
+    setAwardResult('');
+    try {
+      const res = await fetch('/api/admin/battlepass/award', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_ids: awardTargets.map((t) => t.id), amount: Number(awardAmount), note: awardNote.trim() }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setAwardResult(json.error || 'Failed to award points.'); return; }
+      setAwardResult(`Done — awarded ${awardTargets.length} officer${awardTargets.length === 1 ? '' : 's'}.`);
+      setAwardTargets([]);
+      setAwardAmount('');
+      setAwardNote('');
+    } catch {
+      setAwardResult('Network error. Please try again.');
+    } finally {
+      setAwarding(false);
+    }
+  }
+
+  // ── Manage: redemption scanner ───────────────────────────────────────
+  const [redemption, setRedemption] = useState<RedemptionDetail | null>(null);
+  const [scanError, setScanError] = useState('');
+  const [confirming, setConfirming] = useState(false);
+  const [confirmedRecent, setConfirmedRecent] = useState<{ id: string; title: string; memberName: string }[]>([]);
+
+  async function handleScan(redemptionId: string) {
+    setScanError('');
+    try {
+      const res = await fetch(`/api/battlepass/redemptions/${redemptionId}/confirm`);
+      const json = await res.json();
+      if (!res.ok) { setScanError(json.error || 'Redemption not found.'); return; }
+      setRedemption(json.redemption);
+    } catch {
+      setScanError('Network error looking up that code.');
+    }
+  }
+
+  const scanner = useQRScanner(handleScan);
+
+  async function handleConfirmRedemption() {
+    if (!redemption) return;
+    setConfirming(true);
+    setScanError('');
+    try {
+      const res = await fetch(`/api/battlepass/redemptions/${redemption.id}/confirm`, { method: 'POST' });
+      const json = await res.json();
+      if (!res.ok) { setScanError(json.error || 'Failed to confirm.'); return; }
+      const reward = oneOf(redemption.reward);
+      const member = oneOf(redemption.member);
+      setConfirmedRecent((prev) => [{ id: redemption.id, title: reward?.title ?? 'Reward', memberName: member?.display_name ?? 'Officer' }, ...prev].slice(0, 5));
+      setRedemption(null);
+    } catch {
+      setScanError('Network error. Please try again.');
+    } finally {
+      setConfirming(false);
+    }
+  }
+
+  // ── Manage: shop catalog ─────────────────────────────────────────────
+  const [manageItems, setManageItems] = useState<RewardItem[] | null>(null);
+  const [manageError, setManageError] = useState('');
+  const [newReward, setNewReward] = useState({ title: '', description: '', point_cost: '', stock: '', min_tier: '' });
+  const [creating, setCreating] = useState(false);
+
+  useEffect(() => {
+    if (tab !== 'manage' || !canManagePoints || manageItems !== null) return;
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/battlepass/shop');
+        const json = await res.json();
+        if (!res.ok) { setManageError(json.error || 'Failed to load rewards.'); return; }
+        setManageItems(json.items ?? []);
+      } catch {
+        setManageError('Network error loading rewards.');
+      }
+    })();
+  }, [tab, canManagePoints, manageItems]);
+
+  async function handleCreateReward(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newReward.title.trim() || !newReward.point_cost) return;
+    setCreating(true);
+    setManageError('');
+    try {
+      const res = await fetch('/api/admin/battlepass/shop', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newReward.title.trim(),
+          description: newReward.description.trim() || undefined,
+          point_cost: Number(newReward.point_cost),
+          stock: newReward.stock ? Number(newReward.stock) : null,
+          min_tier: newReward.min_tier || null,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setManageError(json.error || 'Failed to create reward.'); return; }
+      setManageItems((prev) => [json.item, ...(prev ?? [])]);
+      setNewReward({ title: '', description: '', point_cost: '', stock: '', min_tier: '' });
+    } catch {
+      setManageError('Network error. Please try again.');
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  async function toggleActive(item: RewardItem) {
+    const res = await fetch(`/api/admin/battlepass/shop/${item.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ active: !item.active }),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      setManageItems((prev) => prev?.map((i) => (i.id === item.id ? json.item : i)) ?? null);
+    }
+  }
+
+  // ── Manage: reverse a specific transaction ──────────────────────────
+  const [correctQuery, setCorrectQuery] = useState('');
+  const [correctResults, setCorrectResults] = useState<{ id: string; title: string }[]>([]);
+  const [correctTarget, setCorrectTarget] = useState<{ id: string; title: string } | null>(null);
+  const [correctHistory, setCorrectHistory] = useState<BattlepassTransactionRow[] | null>(null);
+  const [correctError, setCorrectError] = useState('');
+  const [reversingId, setReversingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (correctTarget || correctQuery.trim().length < 2) { setCorrectResults([]); return; }
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/admin/battlepass/officers?q=${encodeURIComponent(correctQuery.trim())}`);
+        const json = await res.json();
+        setCorrectResults(json.officers ?? []);
+      } catch {
+        setCorrectResults([]);
+      }
+    }, 250);
+    return () => clearTimeout(t);
+  }, [correctQuery, correctTarget]);
+
+  useEffect(() => {
+    if (!correctTarget) { setCorrectHistory(null); return; }
+    setCorrectHistory(null);
+    setCorrectError('');
+    (async () => {
+      try {
+        const res = await fetch(`/api/admin/battlepass/history?user_id=${correctTarget.id}`);
+        const json = await res.json();
+        if (!res.ok) { setCorrectError(json.error || 'Failed to load history.'); return; }
+        setCorrectHistory(json.transactions ?? []);
+      } catch {
+        setCorrectError('Network error loading history.');
+      }
+    })();
+  }, [correctTarget]);
+
+  async function handleReverse(txn: BattlepassTransactionRow) {
+    if (!window.confirm(`Reverse this entry (${txn.amount >= 0 ? '+' : ''}${txn.amount} pts)?`)) return;
+    setReversingId(txn.id);
+    try {
+      const res = await fetch('/api/admin/battlepass/reverse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transaction_id: txn.id }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setCorrectError(json.error || 'Failed to reverse.'); return; }
+      setCorrectHistory((prev) => prev?.map((t) => (t.id === txn.id ? { ...t, reversed_at: new Date().toISOString() } : t)) ?? null);
+    } catch {
+      setCorrectError('Network error. Please try again.');
+    } finally {
+      setReversingId(null);
+    }
+  }
+
+  return (
+    <div className={styles.page}>
+      <div className={styles.header}>
+        <div>
+          <h1 className={styles.title}>Battlepass</h1>
+          <p className={styles.sub}>Recognition for officer-specific contributions — separate from member Rewards</p>
+        </div>
+      </div>
+
+      <div className={styles.tabBar} role="tablist">
+        <button type="button" role="tab" aria-selected={tab === 'mine'} className={`${styles.tab} ${tab === 'mine' ? styles.tabActive : ''}`} onClick={() => setTab('mine')}>
+          <Shield size={13} strokeWidth={1.5} aria-hidden="true" /> My Battlepass
+        </button>
+        <button type="button" role="tab" aria-selected={tab === 'shop'} className={`${styles.tab} ${tab === 'shop' ? styles.tabActive : ''}`} onClick={() => setTab('shop')}>
+          <ShoppingBag size={13} strokeWidth={1.5} aria-hidden="true" /> Shop
+        </button>
+        <button type="button" role="tab" aria-selected={tab === 'leaderboard'} className={`${styles.tab} ${tab === 'leaderboard' ? styles.tabActive : ''}`} onClick={() => setTab('leaderboard')}>
+          <Trophy size={13} strokeWidth={1.5} aria-hidden="true" /> Leaderboard
+        </button>
+        {canManagePoints && (
+          <button type="button" role="tab" aria-selected={tab === 'manage'} className={`${styles.tab} ${tab === 'manage' ? styles.tabActive : ''}`} onClick={() => setTab('manage')}>
+            <Settings size={13} strokeWidth={1.5} aria-hidden="true" /> Manage
+          </button>
+        )}
+      </div>
+
+      {tab === 'mine' && (
+        <div className={styles.pointsTab}>
+          <div className={styles.tierCard} style={{ borderColor: `${tier.color}44` }}>
+            <div className={styles.tierBadge} style={{ background: `${tier.color}22`, color: tier.color, borderColor: `${tier.color}55` }}>{tier.name}</div>
+            <div className={styles.balanceRow}>
+              <div>
+                <div className={styles.balanceValue}>{balance.toLocaleString()}</div>
+                <div className={styles.balanceLabel}>Spendable points</div>
+              </div>
+              <div>
+                <div className={styles.balanceValue}>{lifetimeEarned.toLocaleString()}</div>
+                <div className={styles.balanceLabel}>Lifetime earned</div>
+              </div>
+            </div>
+            {next && (
+              <div className={styles.progressWrap}>
+                <div className={styles.progressBar}><div className={styles.progressFill} style={{ width: `${progressPct}%`, background: tier.color }} /></div>
+                <span className={styles.progressLabel}>{next.min - lifetimeEarned} pts to {next.name}</span>
+              </div>
+            )}
+          </div>
+
+          <div className={styles.historySection}>
+            <h2 className={styles.sectionLabel}>Recent Activity</h2>
+            {transactions.length === 0 ? (
+              <p className={styles.empty}>No Battlepass activity yet.</p>
+            ) : (
+              <ul className={styles.historyList}>
+                {transactions.map((t) => (
+                  <li key={t.id} className={styles.historyRow}>
+                    <div>
+                      <div className={styles.historyType}>
+                        {TYPE_LABELS[t.type] ?? t.type}
+                        {t.reversed_at && <span className={styles.reversedTag}> · reversed</span>}
+                      </div>
+                      <div className={styles.historyMeta}>
+                        {t.note || TYPE_LABELS[t.type] || t.type}
+                        {' · '}{new Date(t.created_at).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', day: 'numeric' })}
+                      </div>
+                    </div>
+                    <span className={t.amount >= 0 ? styles.amountPositive : styles.amountNegative}>
+                      {t.amount >= 0 ? '+' : ''}{t.amount}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
+
+      {tab === 'shop' && (
+        <div className={styles.shopTab}>
+          <div className={styles.shopBalance}>Spendable balance: <strong>{shopBalance.toLocaleString()} pts</strong></div>
+          {shopError && <p className={styles.error}>{shopError}</p>}
+
+          {pending.length > 0 && (
+            <div className={styles.pendingSection}>
+              <h2 className={styles.sectionLabel}>Ready to Claim</h2>
+              <p className={styles.referralHint}>Show one of these to an exec/admin to receive it.</p>
+              <div className={styles.pendingGrid}>
+                {pending.map((r) => {
+                  const reward = oneOf(r.reward);
+                  return (
+                    <button key={r.id} type="button" className={styles.pendingCard} onClick={() => setQrFor(r.id)}>
+                      <Gift size={20} strokeWidth={1.5} aria-hidden="true" />
+                      <span>{reward?.title ?? 'Reward'}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {shopItems === null ? (
+            <LoadingSpinner size={28} label="Loading shop…" theme="dark" />
+          ) : shopItems.length === 0 ? (
+            <p className={styles.empty}>Nothing in the Battlepass shop yet — check back soon.</p>
+          ) : (
+            <div className={styles.shopGrid}>
+              {shopItems.map((item) => {
+                const outOfStock = item.stock !== null && item.stock <= 0;
+                const canAfford = shopBalance >= item.point_cost;
+                const requiredTierIdx = item.min_tier ? OFFICER_TIERS.findIndex((t) => t.name === item.min_tier) : -1;
+                const currentTierIdx = OFFICER_TIERS.findIndex((t) => t.name === tier.name);
+                const tierLocked = requiredTierIdx !== -1 && currentTierIdx < requiredTierIdx;
+                return (
+                  <div key={item.id} className={styles.shopCard}>
+                    <h3 className={styles.shopCardTitle}>{item.title}</h3>
+                    {item.description && <p className={styles.shopCardDesc}>{item.description}</p>}
+                    {item.min_tier && <p className={styles.stockNote}>Requires {item.min_tier} tier</p>}
+                    {item.stock !== null && <p className={styles.stockNote}>{outOfStock ? 'Out of stock' : `${item.stock} left`}</p>}
+                    <div className={styles.shopCardFooter}>
+                      <span className={styles.shopCardCost}>{item.point_cost} pts</span>
+                      <button
+                        type="button"
+                        className={styles.claimBtn}
+                        onClick={() => handleClaim(item)}
+                        disabled={!canAfford || outOfStock || tierLocked || claimingId === item.id}
+                      >
+                        {claimingId === item.id ? 'Claiming…' : outOfStock ? 'Sold Out' : tierLocked ? `${item.min_tier}+ Only` : !canAfford ? 'Not Enough' : 'Redeem'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab === 'leaderboard' && (
+        <div className={styles.leaderboardTab}>
+          {boardError && <p className={styles.error}>{boardError}</p>}
+          {board === null ? (
+            <LoadingSpinner size={28} label="Loading leaderboard…" theme="dark" />
+          ) : board.length === 0 ? (
+            <p className={styles.empty}>No Battlepass activity yet — be the first.</p>
+          ) : (
+            <ol className={styles.boardList}>
+              {board.map((row) => {
+                const rowTier = OFFICER_TIERS.find((t) => t.name === row.tier) ?? OFFICER_TIERS[0];
+                return (
+                  <li key={row.rank} className={`${styles.boardRow} ${row.isSelf ? styles.boardRowSelf : ''}`}>
+                    <span className={styles.boardRank}>#{row.rank}</span>
+                    <span className={styles.boardName}>{row.name}{row.isSelf ? ' (you)' : ''}</span>
+                    <span className={styles.boardTier} style={{ color: rowTier.color, borderColor: `${rowTier.color}55` }}>{row.tier}</span>
+                    <span className={styles.boardPoints}>{row.points.toLocaleString()} pts</span>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </div>
+      )}
+
+      {tab === 'manage' && canManagePoints && (
+        <div className={styles.manageTab}>
+          <div className={styles.subTabBar} role="tablist">
+            <button type="button" role="tab" aria-selected={manageSubTab === 'award'} className={`${styles.subTab} ${manageSubTab === 'award' ? styles.subTabActive : ''}`} onClick={() => setManageSubTab('award')}>Award Points</button>
+            <button type="button" role="tab" aria-selected={manageSubTab === 'redeem'} className={`${styles.subTab} ${manageSubTab === 'redeem' ? styles.subTabActive : ''}`} onClick={() => setManageSubTab('redeem')}>Redemptions</button>
+            <button type="button" role="tab" aria-selected={manageSubTab === 'shop'} className={`${styles.subTab} ${manageSubTab === 'shop' ? styles.subTabActive : ''}`} onClick={() => setManageSubTab('shop')}>Shop Items</button>
+            <button type="button" role="tab" aria-selected={manageSubTab === 'correct'} className={`${styles.subTab} ${manageSubTab === 'correct' ? styles.subTabActive : ''}`} onClick={() => setManageSubTab('correct')}>Corrections</button>
+          </div>
+
+          {manageSubTab === 'award' && (
+          <section className={styles.manageSection}>
+            <h2 className={styles.sectionLabel}>Award Points</h2>
+            <p className={styles.referralHint}>Award the same amount to one or more officers at once — for staffing an event, running a shift, or any other contribution.</p>
+            <form className={styles.awardForm} onSubmit={handleAward}>
+              <div className={styles.adjustSearchWrap}>
+                <input
+                  className={styles.input}
+                  placeholder="Search officers by name…"
+                  value={awardQuery}
+                  onChange={(e) => setAwardQuery(e.target.value)}
+                />
+                {awardResults.length > 0 && (
+                  <div className={styles.adjustDropdown}>
+                    {awardResults.map((o) => (
+                      <button key={o.id} type="button" className={styles.adjustResult} onClick={() => addAwardTarget(o)}>
+                        {o.title}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {awardTargets.length > 0 && (
+                <div className={styles.awardTargets}>
+                  {awardTargets.map((t) => (
+                    <span key={t.id} className={styles.awardChip}>
+                      {t.title}
+                      <button type="button" onClick={() => removeAwardTarget(t.id)} aria-label={`Remove ${t.title}`}><X size={12} strokeWidth={2} aria-hidden="true" /></button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <input className={styles.input} type="number" placeholder="Amount" value={awardAmount} onChange={(e) => setAwardAmount(e.target.value)} />
+              <input className={styles.input} placeholder="Reason (required)" value={awardNote} onChange={(e) => setAwardNote(e.target.value)} maxLength={200} />
+              <button type="submit" className={styles.saveBtn} disabled={awarding || awardTargets.length === 0 || !awardAmount || !awardNote.trim()}>
+                {awarding ? 'Awarding…' : `Award ${awardTargets.length || ''}`.trim()}
+              </button>
+            </form>
+            {awardResult && <p className={styles.referralHint}>{awardResult}</p>}
+          </section>
+          )}
+
+          {manageSubTab === 'redeem' && (
+          <section className={styles.manageSection}>
+            <h2 className={styles.sectionLabel}>Confirm a Redemption</h2>
+            <p className={styles.referralHint}>Scan an officer&apos;s Battlepass redemption code to see what to hand over.</p>
+            <div className={checkinStyles.scannerCard}>
+              <div className={checkinStyles.viewport}>
+                <video ref={scanner.videoRef} className={`${checkinStyles.video} ${!scanner.scanning ? checkinStyles.hidden : ''}`} playsInline muted autoPlay />
+                <canvas ref={scanner.canvasRef} className={checkinStyles.canvas} />
+                {scanner.scanning && (
+                  <div className={checkinStyles.overlay}><div className={checkinStyles.scanBox} /></div>
+                )}
+                {!scanner.scanning && (
+                  <div className={checkinStyles.placeholder} onClick={scanner.startCamera} role="button" tabIndex={0}>
+                    <span className={checkinStyles.placeholderIcon}><Camera size={40} strokeWidth={1.25} aria-hidden="true" /></span>
+                    <p className={checkinStyles.placeholderText}>Tap to Start Scanner</p>
+                    <p className={checkinStyles.placeholderEvent}>Scan a Battlepass redemption code</p>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className={checkinStyles.controls}>
+              {!scanner.scanning ? (
+                <button type="button" className={checkinStyles.startBtn} onClick={scanner.startCamera}>Start Camera</button>
+              ) : (
+                <button type="button" className={checkinStyles.stopBtn} onClick={scanner.stopCamera}>Stop Camera</button>
+              )}
+            </div>
+            {scanner.error && <p className={styles.error}>{scanner.error}</p>}
+            {scanError && <p className={styles.error}>{scanError}</p>}
+
+            {redemption && (
+              <div className={styles.confirmCard}>
+                <Gift size={24} strokeWidth={1.5} aria-hidden="true" />
+                <h3 className={styles.confirmTitle}>{oneOf(redemption.reward)?.title ?? 'Reward'}</h3>
+                <p className={styles.confirmMeta}>For {oneOf(redemption.member)?.display_name ?? 'Officer'} · {redemption.point_cost} pts</p>
+                {redemption.status !== 'pending' ? (
+                  <p className={styles.error}>Already {redemption.status}.</p>
+                ) : (
+                  <div className={styles.confirmActions}>
+                    <button type="button" className={styles.rejectBtn} onClick={() => setRedemption(null)}><X size={15} strokeWidth={2} aria-hidden="true" /> Cancel</button>
+                    <button type="button" className={styles.confirmBtn} onClick={handleConfirmRedemption} disabled={confirming}>
+                      <Check size={15} strokeWidth={2} aria-hidden="true" /> {confirming ? 'Confirming…' : 'Confirm Given'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {confirmedRecent.length > 0 && (
+              <div className={styles.recentSection}>
+                <h2 className={styles.recentLabel}>Just Confirmed</h2>
+                {confirmedRecent.map((r) => (
+                  <div key={r.id} className={styles.recentRow}>
+                    <span>{r.title} — {r.memberName}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+          )}
+
+          {manageSubTab === 'shop' && (
+          <section className={styles.manageSection}>
+            <h2 className={styles.sectionLabel}>Battlepass Shop Items</h2>
+            <form className={styles.newRewardForm} onSubmit={handleCreateReward}>
+              <input className={styles.input} placeholder="Reward title" value={newReward.title} onChange={(e) => setNewReward((f) => ({ ...f, title: e.target.value }))} maxLength={80} />
+              <input className={styles.input} placeholder="Description (optional)" value={newReward.description} onChange={(e) => setNewReward((f) => ({ ...f, description: e.target.value }))} maxLength={200} />
+              <input className={styles.input} type="number" min={1} placeholder="Point cost" value={newReward.point_cost} onChange={(e) => setNewReward((f) => ({ ...f, point_cost: e.target.value }))} />
+              <input className={styles.input} type="number" min={0} placeholder="Stock (blank = unlimited)" value={newReward.stock} onChange={(e) => setNewReward((f) => ({ ...f, stock: e.target.value }))} />
+              <select className={styles.input} value={newReward.min_tier} onChange={(e) => setNewReward((f) => ({ ...f, min_tier: e.target.value }))}>
+                <option value="">No tier requirement</option>
+                {OFFICER_TIERS.map((t) => <option key={t.name} value={t.name}>{t.name}+ only</option>)}
+              </select>
+              <button type="submit" className={styles.saveBtn} disabled={creating || !newReward.title.trim() || !newReward.point_cost}>
+                {creating ? 'Adding…' : '+ Add Reward'}
+              </button>
+            </form>
+
+            {manageError && <p className={styles.error}>{manageError}</p>}
+
+            {manageItems === null ? (
+              <LoadingSpinner size={28} label="Loading rewards…" theme="dark" />
+            ) : (
+              <div className={styles.manageList}>
+                {manageItems.map((item) => (
+                  <div key={item.id} className={`${styles.manageRow} ${!item.active ? styles.manageRowInactive : ''}`}>
+                    <div>
+                      <div className={styles.shopCardTitle}>{item.title}</div>
+                      <div className={styles.stockNote}>
+                        {item.point_cost} pts{item.stock !== null ? ` · ${item.stock} left` : ''}{item.min_tier ? ` · ${item.min_tier}+ only` : ''}
+                      </div>
+                    </div>
+                    <button type="button" className={styles.toggleBtn} onClick={() => toggleActive(item)}>
+                      {item.active ? 'Retire' : 'Reactivate'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+          )}
+
+          {manageSubTab === 'correct' && (
+          <section className={styles.manageSection}>
+            <h2 className={styles.sectionLabel}>Correct an Officer&apos;s Points</h2>
+            <p className={styles.referralHint}>Find an officer to see their Battlepass history and reverse a specific entry.</p>
+            <div className={styles.adjustSearchWrap}>
+              <input
+                className={styles.input}
+                placeholder="Search officer by name…"
+                value={correctTarget ? correctTarget.title : correctQuery}
+                onChange={(e) => { setCorrectTarget(null); setCorrectQuery(e.target.value); }}
+              />
+              {correctResults.length > 0 && !correctTarget && (
+                <div className={styles.adjustDropdown}>
+                  {correctResults.map((o) => (
+                    <button key={o.id} type="button" className={styles.adjustResult} onClick={() => { setCorrectTarget(o); setCorrectResults([]); }}>
+                      {o.title}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {correctTarget && (
+              <>
+                {correctError && <p className={styles.error}>{correctError}</p>}
+                {correctHistory === null ? (
+                  <LoadingSpinner size={20} label="Loading history…" theme="dark" />
+                ) : correctHistory.length === 0 ? (
+                  <p className={styles.empty}>No Battlepass activity for {correctTarget.title} yet.</p>
+                ) : (
+                  <div className={styles.targetHistory}>
+                    {correctHistory.map((t) => (
+                      <div key={t.id} className={`${styles.targetHistoryRow} ${t.reversed_at ? styles.targetHistoryReversed : ''}`}>
+                        <div>
+                          <div className={styles.historyType}>{TYPE_LABELS[t.type] ?? t.type}</div>
+                          <div className={styles.historyMeta}>
+                            {t.note || TYPE_LABELS[t.type] || t.type}
+                            {' · '}{new Date(t.created_at).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', day: 'numeric' })}
+                          </div>
+                        </div>
+                        <span className={`${styles.targetHistoryAmount} ${t.amount >= 0 ? styles.amountPositive : styles.amountNegative}`}>
+                          {t.amount >= 0 ? '+' : ''}{t.amount}
+                        </span>
+                        {t.reversed_at ? (
+                          <span className={styles.reversedLabel}>Reversed</span>
+                        ) : (
+                          <button type="button" className={styles.reverseBtn} onClick={() => handleReverse(t)} disabled={reversingId === t.id}>
+                            {reversingId === t.id ? 'Reversing…' : 'Reverse'}
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </section>
+          )}
+        </div>
+      )}
+
+      {qrFor && (
+        <div className={styles.qrOverlay} onClick={() => setQrFor(null)}>
+          <div className={styles.qrModal} onClick={(e) => e.stopPropagation()}>
+            <p className={styles.qrHint}>Show this to an exec/admin</p>
+            <StyledQRCode options={{ ...DEFAULT_QR_OPTIONS, data: qrFor, size: 280 }} className={styles.qrCanvas} />
+            <button type="button" className={styles.saveBtn} onClick={() => setQrFor(null)}>Done</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

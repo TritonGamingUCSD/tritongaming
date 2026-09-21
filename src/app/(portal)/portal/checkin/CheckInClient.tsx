@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useRef } from 'react';
 import jsQR from 'jsqr';
-import { Calendar, Camera, CircleCheck, TriangleAlert, Download } from 'lucide-react';
+import { Calendar, Camera, CircleCheck, TriangleAlert } from 'lucide-react';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import { fetchWithRetry } from '@/lib/fetchWithRetry';
+import { TIERS } from '@/lib/tiers';
 import styles from './checkin.module.css';
 
 interface Event {
@@ -18,12 +19,21 @@ interface ScanResult {
   event_title: string;
   user_name: string;
   checked_in_at?: string;
+  ticket_id?: string;
+  points_awarded?: number;
+  lifetime_points?: number;
+  tier?: string;
 }
 
 const CODE_LENGTH = 6;
 const EMPTY_DIGITS = Array<string>(CODE_LENGTH).fill('');
 
-export default function CheckInClient({ events }: { events: Event[] }) {
+interface CheckInClientProps {
+  events: Event[];
+  onCheckedIn?: (entry: { ticketId: string; userName: string }) => void;
+}
+
+export default function CheckInClient({ events, onCheckedIn }: CheckInClientProps) {
   const [selectedEventId, setSelectedEventId] = useState(events[0]?.id || '');
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
@@ -164,6 +174,9 @@ export default function CheckInClient({ events }: { events: Event[] }) {
       const data = await response.json();
       if (response.ok) {
         setResult(data);
+        if (data.status === 'active' && data.ticket_id) {
+          onCheckedIn?.({ ticketId: data.ticket_id, userName: data.user_name });
+        }
       } else {
         setError(data.error || 'Check-in failed.');
         triggerShake();
@@ -348,9 +361,6 @@ export default function CheckInClient({ events }: { events: Event[] }) {
           </select>
           <span className={styles.selectChevron} aria-hidden="true">▾</span>
         </div>
-        <a href={`/api/events/${selectedEventId}/export`} download className={styles.exportBtn}>
-          <Download size={13} strokeWidth={1.75} aria-hidden="true" /> Export CSV
-        </a>
       </div>
 
       {/* ── Combined scanner card: camera + always-on code entry ───── */}
@@ -420,6 +430,19 @@ export default function CheckInClient({ events }: { events: Event[] }) {
                 <span className={styles.resultIcon}><CircleCheck size={40} strokeWidth={1.5} aria-hidden="true" /></span>
                 <div className={styles.resultName}>{result.user_name}</div>
                 <div className={styles.resultDetail}>Checked in!</div>
+                {!!result.points_awarded && (
+                  <div className={styles.resultPoints}>
+                    <span className={styles.resultPointsGain}>+{result.points_awarded} pts</span>
+                    {result.lifetime_points !== undefined && result.tier && (
+                      <span
+                        className={styles.resultTierBadge}
+                        style={{ color: TIERS.find((t) => t.name === result.tier)?.color, borderColor: `${TIERS.find((t) => t.name === result.tier)?.color}55` }}
+                      >
+                        {result.lifetime_points.toLocaleString()} pts · {result.tier}
+                      </span>
+                    )}
+                  </div>
+                )}
               </>
             ) : (
               <>

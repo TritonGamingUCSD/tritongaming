@@ -37,6 +37,8 @@ export default function EditEventClient({
         max_capacity: form.max_capacity ? parseInt(form.max_capacity) : null,
         requires_ticket: true, // every published event is ticketable
         ticket_price: form.audience === 'public' ? parseFloat(form.ticket_price) : 0,
+        points_value: form.points_value ? Math.max(0, parseInt(form.points_value)) : 0,
+        is_online: form.is_online,
         audience: form.audience,
         is_published: form.is_published,
         photo_album_url: form.photo_album_url.trim() || null,

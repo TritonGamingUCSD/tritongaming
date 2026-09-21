@@ -20,6 +20,7 @@ export default async function EventsManagementPage() {
       ticketsPerMonth={ticketsPerMonth}
       eventStats={eventStats}
       canEdit={hasCapability(roles, 'manage_events')}
+      canManagePoints={hasCapability(roles, 'manage_points')}
     />
   );
 }

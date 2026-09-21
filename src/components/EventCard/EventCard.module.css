@@ -107,6 +107,22 @@
   top: 1px;
 }
 
+.pointsBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-soulmaze);
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
+  color: var(--yellow);
+  background: rgba(255, 199, 44, 0.1);
+  border: 1px solid rgba(255, 199, 44, 0.3);
+  border-radius: var(--radius-pill, 999px);
+  padding: 0.2rem 0.55rem;
+  width: fit-content;
+  margin-top: 0.15rem;
+}
+
 .desc {
   font-family: var(--font-futura-medium);
   font-size: 0.72rem;

@@ -19,9 +19,11 @@ interface Props {
   divisions: Parameters<typeof RoleManager>[0]['divisions'];
   statsData: StatsData;
   roleHistoryEntries?: RoleChangeEntry[];
+  initialTab?: string;
 }
 
 type Tab = 'overview' | 'roles' | 'analytics' | 'system';
+const VALID_TABS: Tab[] = ['overview', 'roles', 'analytics', 'system'];
 
 // Each tab is a real destination now instead of Overview being a junk
 // drawer for Role Manager + Storage Cleanup stacked underneath the stats —
@@ -34,8 +36,8 @@ type Tab = 'overview' | 'roles' | 'analytics' | 'system';
 // moved to the Events card's own Analytics tab — it's event data, not a
 // platform-admin metric, and Events is where someone actually managing
 // tickets for a specific event already is.
-export default function AdminSectionContent({ isAdmin, stats, allUsers, divisions, statsData, roleHistoryEntries }: Props) {
-  const [tab, setTab] = useState<Tab>('overview');
+export default function AdminSectionContent({ isAdmin, stats, allUsers, divisions, statsData, roleHistoryEntries, initialTab }: Props) {
+  const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'overview');
   const [historyOpen, setHistoryOpen] = useState(false);
 
   return (

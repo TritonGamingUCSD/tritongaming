@@ -23,7 +23,7 @@ export default async function EditEventPage({ params }: Params) {
   const [{ data: event }, { data: divisions }] = await Promise.all([
     supabase
       .from('events')
-      .select('id, title, slug, content, description, location, start_date, end_date, flyer_url, max_capacity, ticket_price, audience, is_published, photo_album_url, post_event_info, social_embeds, division_id')
+      .select('id, title, slug, content, description, location, start_date, end_date, flyer_url, max_capacity, ticket_price, points_value, is_online, audience, is_published, photo_album_url, post_event_info, social_embeds, division_id')
       .eq('id', id)
       .single(),
     supabase.from('divisions').select('id, name').order('name'),
@@ -42,6 +42,8 @@ export default async function EditEventPage({ params }: Params) {
     flyer_url: event.flyer_url ?? '',
     max_capacity: event.max_capacity ? String(event.max_capacity) : '',
     ticket_price: String(event.ticket_price ?? 0),
+    points_value: String(event.points_value ?? 10),
+    is_online: event.is_online ?? false,
     audience: event.audience,
     is_published: event.is_published,
     photo_album_url: event.photo_album_url ?? '',
