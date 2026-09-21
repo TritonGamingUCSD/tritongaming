@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { getOfficerTier, BATTLEPASS_ROLES } from '@/lib/officerTiers';
+import { getOfficerTier, BATTLEPASS_ROLES, fetchOfficerTiers } from '@/lib/officerTiers';
 
 // Unlike the member leaderboard (opt-in, per-field redaction — see
 // /api/points/leaderboard), this one has no privacy toggles: it's a
@@ -28,9 +28,10 @@ export async function GET() {
   // user_roles->profiles embed in the codebase (getAdminData.ts,
   // getMembersData.ts, getBoardMembers.ts), all of which already use this
   // same hint.
-  const [{ data: officerProfiles, error: profilesError }, { data: allTransactions, error: txError }] = await Promise.all([
+  const [{ data: officerProfiles, error: profilesError }, { data: allTransactions, error: txError }, tiers] = await Promise.all([
     serviceClient.from('user_roles').select('user_id, profiles!user_roles_user_id_fkey(display_name)').in('role', BATTLEPASS_ROLES),
     serviceClient.from('officer_point_transactions').select('user_id, amount, reversed_at'),
+    fetchOfficerTiers(supabase),
   ]);
   if (profilesError || txError) {
     return NextResponse.json({ error: (profilesError ?? txError)?.message ?? 'Failed to load leaderboard.' }, { status: 500 });
@@ -59,7 +60,7 @@ export async function GET() {
       rank: i + 1,
       isSelf: p.userId === user.id,
       name: p.name,
-      tier: getOfficerTier(p.lifetime).name,
+      tier: getOfficerTier(p.lifetime, tiers).name,
       points: p.lifetime,
     }));
 

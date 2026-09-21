@@ -200,7 +200,7 @@ export default function EventForm({
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <Link href="/portal?open=events" className={styles.back}>← Back to Events</Link>
+        <Link href="/portal?section=events" className={styles.back}>← Back to Events</Link>
         <h1 className={styles.title}>{heading}</h1>
       </div>
 
@@ -333,7 +333,7 @@ export default function EventForm({
         {error && <p className={styles.error}>{error}</p>}
 
         <div className={styles.actions}>
-          <Link href="/portal?open=events" className={styles.cancelBtn}>Cancel</Link>
+          <Link href="/portal?section=events" className={styles.cancelBtn}>Cancel</Link>
           <button type="submit" className={styles.submitBtn} disabled={saving}>
             {saving ? 'Saving…' : submitLabel}
           </button>

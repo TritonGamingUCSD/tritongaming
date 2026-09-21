@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Camera, Gift, Wifi, Undo2 } from 'lucide-react';
 import { usePortalTabSync } from '@/lib/usePortalTabSync';
+import type { Tier } from '@/lib/tiers';
 import CheckInClient from './CheckInClient';
 import RedemptionScanner from './RedemptionScanner';
 import OnlineCheckinPanel from './OnlineCheckinPanel';
@@ -22,7 +23,7 @@ interface RecentCheckin { ticketId: string; userName: string; }
 // online check-in code), so a tab bar keeps them from competing for the
 // same screen instead of merging into one increasingly-overloaded
 // component.
-export default function CheckInSectionContent({ events, canScanRedemptions, canManagePoints, initialTab }: { events: Event[]; canScanRedemptions: boolean; canManagePoints: boolean; initialTab?: string }) {
+export default function CheckInSectionContent({ events, canScanRedemptions, canManagePoints, initialTab, tiers }: { events: Event[]; canScanRedemptions: boolean; canManagePoints: boolean; initialTab?: string; tiers: Tier[] }) {
   const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'tickets');
   const syncUrl = usePortalTabSync('checkin');
   function selectTab(t: Tab) {
@@ -76,7 +77,7 @@ export default function CheckInSectionContent({ events, canScanRedemptions, canM
 
       {tab === 'tickets' && (
         <>
-          <CheckInClient events={events} onCheckedIn={handleCheckedIn} />
+          <CheckInClient events={events} onCheckedIn={handleCheckedIn} tiers={tiers} />
           {canManagePoints && recentCheckins.length > 0 && (
             <div className={styles.recentSection}>
               <h2 className={styles.recentLabel}>Just Checked In</h2>

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, History, Image as ImageIcon, Award, Medal } from 'lucide-react';
 import { getProfile, getUserRoles } from '@/lib/auth';
+import { createClient } from '@/lib/supabase/server';
 import { hasCapability, isVerifiedMember } from '@/lib/capabilities';
 import { resolveAvatarUrl } from '@/lib/profile';
 import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK } from '@/types/database';
@@ -21,8 +22,8 @@ import PointsSectionContent from './points/PointsSectionContent';
 import { getMyPointsData } from './points/getMyPointsData';
 import BattlepassSectionContent from './battlepass/BattlepassSectionContent';
 import { getMyBattlepassData } from './battlepass/getMyBattlepassData';
-import { BATTLEPASS_ROLES, getOfficerTier } from '@/lib/officerTiers';
-import { getTier } from '@/lib/tiers';
+import { BATTLEPASS_ROLES, getOfficerTier, fetchOfficerTiers } from '@/lib/officerTiers';
+import { getTier, fetchTiers } from '@/lib/tiers';
 import EventsSectionContent from './events/EventsSectionContent';
 import { getEventsData } from './events/getEventsData';
 import MembersSectionContent from './members/MembersSectionContent';
@@ -47,7 +48,7 @@ export const dynamic = 'force-dynamic';
 
 interface Props {
   // Next's async searchParams (App Router convention) — lets a link like
-  // /portal?open=points&tab=shop both open a hub section AND land on one
+  // /portal?section=points&tab=shop both open a hub section AND land on one
   // of its internal tabs, instead of only ever opening to that section's
   // first tab. `tab` is handed to every multi-tab section unconditionally;
   // each one only honors it if it's actually one of its own tab ids and
@@ -96,7 +97,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
   // by capability — a plain member only ever triggers the tickets query. The
   // hub then just renders whichever of these were fetched; nothing is
   // re-fetched client-side when a card opens.
-  const [ticketsData, checkinData, eventsData, membersData, divisionsData, myDivisions, contentData, adminData, statsData, docsData, roleHistoryData, photoAlbumsData, pointsData, battlepassData] =
+  const supabase = await createClient();
+  const [ticketsData, checkinData, eventsData, membersData, divisionsData, myDivisions, contentData, adminData, statsData, docsData, roleHistoryData, photoAlbumsData, pointsData, battlepassData, memberTiers, officerTiers] =
     await Promise.all([
       getTicketsData(profile.id, roles),
       canCheckin ? getCheckinData() : Promise.resolve(null),
@@ -112,6 +114,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
       canViewPhotoAlbums ? getPhotoAlbumsData() : Promise.resolve(null),
       getMyPointsData(profile.id),
       isOfficerTier ? getMyBattlepassData(profile.id) : Promise.resolve(null),
+      fetchTiers(supabase),
+      isOfficerTier ? fetchOfficerTiers(supabase) : Promise.resolve([]),
     ]);
 
   // getHours() reads the server process's own runtime clock, which on most
@@ -127,8 +131,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
     .filter((t) => t.status === 'active' && t.event && new Date(t.event.start_date) >= nowDate)
     .sort((a, b) => new Date(a.event!.start_date).getTime() - new Date(b.event!.start_date).getTime())[0];
   const activeTicketCount = ticketsData.tickets.filter((t) => t.status === 'active').length;
-  const memberTier = getTier(pointsData.lifetimeEarned);
-  const officerTier = battlepassData ? getOfficerTier(battlepassData.lifetimeEarned) : null;
+  const memberTier = getTier(pointsData.lifetimeEarned, memberTiers);
+  const officerTier = battlepassData ? getOfficerTier(battlepassData.lifetimeEarned, officerTiers) : null;
 
   // Events starting within the next/last 24h, for the check-in shortcut
   // banner — derived from checkinData (already scoped to "recent or soon")
@@ -174,6 +178,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
           canManageShop={canManageRewardsShop}
           canManagePoints={canManagePoints}
           initialTab={requestedTab}
+          initialSubTab={requestedSubTab}
+          tiers={memberTiers}
         />
       ),
     },
@@ -190,6 +196,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
           canManagePoints={canManagePoints}
           initialTab={requestedTab}
           initialSubTab={requestedSubTab}
+          tiers={officerTiers}
         />
       ),
     }] : []),
@@ -213,7 +220,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       id: 'checkin', icon: <Camera size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Check-In',
       description: 'Scan tickets, confirm redemptions, or reveal the online check-in code',
       group: 'Events' as const,
-      content: <CheckInSectionContent events={checkinData.events} canScanRedemptions={canScanRedemptions} canManagePoints={canManagePoints} initialTab={requestedTab} />,
+      content: <CheckInSectionContent events={checkinData.events} canScanRedemptions={canScanRedemptions} canManagePoints={canManagePoints} initialTab={requestedTab} tiers={memberTiers} />,
     }] : []),
     ...(canViewMembers && membersData ? [{
       id: 'members', icon: <Users size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Members',
@@ -359,20 +366,20 @@ export default async function PortalDashboard({ searchParams }: Props) {
                   tab (see the initialTab wiring below) rather than just the
                   section's default view. */}
               <div className={styles.statBadges}>
-                <Link href="/portal?open=points&tab=points" className={styles.statBadge} style={{ borderColor: `${memberTier.color}55` }}>
+                <Link href="/portal?section=points&tab=points" className={styles.statBadge} style={{ borderColor: `${memberTier.color}55` }}>
                   <Award size={13} strokeWidth={1.75} aria-hidden="true" style={{ color: memberTier.color }} />
                   <span>{pointsData.balance.toLocaleString()} pts</span>
                   <span className={styles.statBadgeTier} style={{ color: memberTier.color }}>{memberTier.name}</span>
                 </Link>
                 {battlepassData && (
-                  <Link href="/portal?open=battlepass&tab=mine" className={styles.statBadge} style={{ borderColor: `${officerTier?.color}55` }}>
+                  <Link href="/portal?section=battlepass&tab=mine" className={styles.statBadge} style={{ borderColor: `${officerTier?.color}55` }}>
                     <Medal size={13} strokeWidth={1.75} aria-hidden="true" style={{ color: officerTier?.color }} />
                     <span>{battlepassData.balance.toLocaleString()} pts</span>
                     <span className={styles.statBadgeTier} style={{ color: officerTier?.color }}>{officerTier?.name}</span>
                   </Link>
                 )}
                 {activeTicketCount > 0 && (
-                  <Link href="/portal?open=tickets" className={styles.statBadge}>
+                  <Link href="/portal?section=tickets" className={styles.statBadge}>
                     <Ticket size={13} strokeWidth={1.75} aria-hidden="true" />
                     <span>{activeTicketCount} active ticket{activeTicketCount === 1 ? '' : 's'}</span>
                   </Link>
@@ -389,7 +396,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
         </header>
 
         {canCheckin && todayEvents.length > 0 && (
-          <Link href="/portal?open=checkin" className={styles.checkinBanner}>
+          <Link href="/portal?section=checkin" className={styles.checkinBanner}>
             <div className={styles.checkinBannerDot} />
             <div>
               <div className={styles.checkinBannerTitle}>Event today — {todayEvents[0].title}</div>

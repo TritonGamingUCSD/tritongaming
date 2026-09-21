@@ -49,7 +49,7 @@ export default function DashboardClient({ ticket }: { ticket: Ticket }) {
             <button className={styles.showQrHeroBtn} onClick={() => setShowQR(true)}>
               <Smartphone size={16} strokeWidth={1.5} aria-hidden="true" /> Show QR Code
             </button>
-            <Link href="/portal?open=tickets" className={styles.viewAllTickets}>All tickets →</Link>
+            <Link href="/portal?section=tickets" className={styles.viewAllTickets}>All tickets →</Link>
           </div>
         </div>
         <div className={styles.ticketHeroGlow} aria-hidden="true" />

@@ -4,6 +4,14 @@
   margin: 0 auto 1.25rem;
 }
 
+/* Used inside the desktop rail (a fixed 220px column) — fills its
+   container instead of centering a fixed-width box that has nothing to
+   center against in a narrow sidebar. */
+.compact {
+  max-width: none;
+  margin: 0;
+}
+
 .inputWrap {
   position: relative;
   display: flex;

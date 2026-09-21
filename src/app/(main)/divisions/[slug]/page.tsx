@@ -42,7 +42,7 @@ export default async function DivisionPage({ params }: Params) {
   // the full directory manager instead — see MyDivisionsEditor.tsx /
   // DivisionsManager.tsx in the portal hub.
   const isOwnDivisionLead = roles.some((r) => r.role === 'division' && r.division_id === division.id);
-  const editHref = isOwnDivisionLead ? '/portal?open=my-division' : '/portal?open=divisions';
+  const editHref = isOwnDivisionLead ? '/portal?section=my-division' : '/portal?section=divisions';
 
   return (
     <div className={styles.page}>

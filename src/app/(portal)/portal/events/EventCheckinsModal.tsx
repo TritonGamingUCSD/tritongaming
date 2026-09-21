@@ -154,7 +154,7 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
                 <div className={checkinStyles.statValue}>{attendanceRate}%</div>
                 <div className={checkinStyles.statLabel}>Attendance</div>
               </div>
-              <Link href="/portal?open=checkin" className={checkinStyles.scanBtn}>
+              <Link href="/portal?section=checkin" className={checkinStyles.scanBtn}>
                 <Camera size={16} strokeWidth={1.5} aria-hidden="true" /> Open Scanner
               </Link>
               <a href={`/api/events/${eventId}/export`} download className={checkinStyles.exportBtn}>

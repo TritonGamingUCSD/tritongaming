@@ -64,7 +64,7 @@ export default async function EventCheckinsPage({ params }: Params) {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <Link href="/portal?open=events" className={styles.back}>← Back to Events</Link>
+        <Link href="/portal?section=events" className={styles.back}>← Back to Events</Link>
         <h1 className={styles.title}>{event.title}</h1>
         <p className={styles.sub}>
           {new Date(event.start_date).toLocaleDateString('en-US', {
@@ -87,7 +87,7 @@ export default async function EventCheckinsPage({ params }: Params) {
           <div className={styles.statValue}>{attendanceRate}%</div>
           <div className={styles.statLabel}>Attendance</div>
         </div>
-        <Link href="/portal?open=checkin" className={styles.scanBtn}><Camera size={16} strokeWidth={1.5} aria-hidden="true" /> Open Scanner</Link>
+        <Link href="/portal?section=checkin" className={styles.scanBtn}><Camera size={16} strokeWidth={1.5} aria-hidden="true" /> Open Scanner</Link>
         <a href={`/api/events/${id}/export`} download className={styles.exportBtn}>
           <Download size={15} strokeWidth={1.5} aria-hidden="true" /> Export CSV
         </a>

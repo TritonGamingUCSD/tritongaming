@@ -54,7 +54,7 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
           <p className={styles.titleSub}>Platform management</p>
         </div>
         <div className={styles.headerActions}>
-          <Link href="/portal?open=content" className={styles.cmsBtn}>
+          <Link href="/portal?section=content" className={styles.cmsBtn}>
             <Pencil size={14} strokeWidth={1.5} aria-hidden="true" /> Edit Site Content
           </Link>
         </div>

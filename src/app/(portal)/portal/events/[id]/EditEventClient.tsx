@@ -54,7 +54,7 @@ export default function EditEventClient({
     }
 
     deleteIfReplaced(initial.flyer_url, form.flyer_url.trim() || null);
-    router.push('/portal?open=events');
+    router.push('/portal?section=events');
   }
 
   return <EventForm heading="Edit Event" initial={initial} submitLabel="Save Changes" onSubmit={handleUpdate} divisions={divisions} />;

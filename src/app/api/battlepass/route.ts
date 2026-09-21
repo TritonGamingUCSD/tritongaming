@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { getOfficerTier, BATTLEPASS_ROLES, OFFICER_TIERS } from '@/lib/officerTiers';
+import { getOfficerTier, BATTLEPASS_ROLES, fetchOfficerTiers } from '@/lib/officerTiers';
 
 // Powers the officer-facing "Battlepass" hub card — same shape as
 // /api/rewards, but entirely against the officer_* tables (see
@@ -18,7 +18,7 @@ export async function GET() {
     return NextResponse.json({ error: 'The Battlepass is only for officer-tier roles.' }, { status: 403 });
   }
 
-  const [{ data: allActive }, { data: transactions }, { data: pending }, { data: myRedemptions }] = await Promise.all([
+  const [{ data: allActive }, { data: transactions }, { data: pending }, { data: myRedemptions }, tiers] = await Promise.all([
     supabase.from('officer_reward_items').select('id, title, description, point_cost, stock, min_tier, active, reward_type').eq('active', true).order('point_cost'),
     supabase.from('officer_point_transactions').select('amount, reversed_at').eq('user_id', user.id),
     supabase
@@ -28,15 +28,16 @@ export async function GET() {
       .eq('status', 'pending')
       .order('claimed_at', { ascending: false }),
     supabase.from('officer_reward_redemptions').select('reward_id').eq('user_id', user.id).in('status', ['pending', 'fulfilled']),
+    fetchOfficerTiers(supabase),
   ]);
 
   const balance = (transactions ?? []).reduce((sum, t) => sum + t.amount, 0);
   const lifetimeEarned = (transactions ?? []).filter((t) => t.amount > 0 && !t.reversed_at).reduce((sum, t) => sum + t.amount, 0);
-  const tier = getOfficerTier(lifetimeEarned);
-  const tierIdx = OFFICER_TIERS.findIndex((t) => t.name === tier.name);
+  const tier = getOfficerTier(lifetimeEarned, tiers);
+  const tierIdx = tiers.findIndex((t) => t.name === tier.name);
 
   const claimedIds = new Set((myRedemptions ?? []).map((r) => r.reward_id));
-  const tierRankOf = (name: string | null) => (name ? OFFICER_TIERS.findIndex((t) => t.name === name) : 0);
+  const tierRankOf = (name: string | null) => (name ? tiers.findIndex((t) => t.name === name) : 0);
   const items = (allActive ?? [])
     .filter((r) => r.point_cost > 0)
     .sort((a, b) => tierRankOf(a.min_tier) - tierRankOf(b.min_tier) || a.point_cost - b.point_cost);

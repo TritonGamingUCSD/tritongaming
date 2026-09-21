@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { getTier, TIERS } from '@/lib/tiers';
+import { getTier, fetchTiers } from '@/lib/tiers';
 
 // Powers the "Shop" and "To Claim" tabs of the Rewards card — active
 // items, the caller's own spendable balance + tier (so the UI can show a
@@ -14,7 +14,7 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const [{ data: allActive }, { data: transactions }, { data: pending }, { data: myRedemptions }] = await Promise.all([
+  const [{ data: allActive }, { data: transactions }, { data: pending }, { data: myRedemptions }, tiers] = await Promise.all([
     supabase.from('reward_items').select('id, title, description, point_cost, stock, min_tier, active, reward_type').eq('active', true).order('point_cost'),
     supabase.from('point_transactions').select('amount, reversed_at').eq('user_id', user.id),
     supabase
@@ -24,16 +24,17 @@ export async function GET() {
       .eq('status', 'pending')
       .order('claimed_at', { ascending: false }),
     supabase.from('reward_redemptions').select('reward_id').eq('user_id', user.id).in('status', ['pending', 'fulfilled']),
+    fetchTiers(supabase),
   ]);
 
   const balance = (transactions ?? []).reduce((sum, t) => sum + t.amount, 0);
   // A reversed award doesn't count toward tier — see getMyPointsData.ts.
   const lifetimeEarned = (transactions ?? []).filter((t) => t.amount > 0 && !t.reversed_at).reduce((sum, t) => sum + t.amount, 0);
-  const tier = getTier(lifetimeEarned);
-  const tierIdx = TIERS.findIndex((t) => t.name === tier.name);
+  const tier = getTier(lifetimeEarned, tiers);
+  const tierIdx = tiers.findIndex((t) => t.name === tier.name);
 
   const claimedIds = new Set((myRedemptions ?? []).map((r) => r.reward_id));
-  const tierRankOf = (name: string | null) => (name ? TIERS.findIndex((t) => t.name === name) : 0);
+  const tierRankOf = (name: string | null) => (name ? tiers.findIndex((t) => t.name === name) : 0);
   // Ordered by tier requirement first (what you need to even see it as
   // reachable), then by cost within that tier — a flat cost-only order put
   // a cheap Platinum-gated item ahead of an expensive one anyone can

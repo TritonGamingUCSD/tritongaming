@@ -22,7 +22,7 @@ export default async function ContentPage() {
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
         <div style={{ flex: 1 }}>
           <Link
-            href="/portal?open=admin"
+            href="/portal?section=admin"
             style={{ fontSize: '0.85rem', color: 'rgba(255,199,44,0.7)', display: 'inline-block', marginBottom: '0.5rem' }}
           >
             ← Back to Admin

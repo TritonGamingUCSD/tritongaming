@@ -23,8 +23,11 @@ const CATEGORY_LABELS: Record<keyof SearchResponse, string> = { members: 'Member
 
 // A persistent bar rather than its own hub card — search needs to be
 // reachable in one step from wherever you already are in the grid, not a
-// click away like every other section.
-export default function PortalSearch() {
+// click away like every other section. `compact`, used when this sits
+// inside the desktop rail (a fixed 220px column) rather than centered
+// above the wide content pane, drops the centered max-width box in favor
+// of filling its container.
+export default function PortalSearch({ compact }: { compact?: boolean } = {}) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResponse>(EMPTY);
   const [open, setOpen] = useState(false);
@@ -62,7 +65,7 @@ export default function PortalSearch() {
   const showDropdown = open && query.trim().length >= 2;
 
   return (
-    <div className={styles.wrap}>
+    <div className={`${styles.wrap} ${compact ? styles.compact : ''}`}>
       <div className={styles.inputWrap}>
         <Search size={15} strokeWidth={1.5} className={styles.icon} aria-hidden="true" />
         <input
@@ -71,7 +74,7 @@ export default function PortalSearch() {
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
-          placeholder="Search members, events, docs…"
+          placeholder="Search"
           autoComplete="off"
         />
         {query && (

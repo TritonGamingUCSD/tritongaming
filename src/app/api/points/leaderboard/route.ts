@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { getTier } from '@/lib/tiers';
+import { getTier, fetchTiers } from '@/lib/tiers';
 
 // Ranked by lifetime points earned (status tier's own basis — see
 // src/lib/tiers.ts), scoped to members who've opted in. Each opted-in
@@ -17,12 +17,13 @@ export async function GET() {
 
   const serviceClient = createServiceClient();
 
-  const [{ data: optedIn }, { data: allTransactions }] = await Promise.all([
+  const [{ data: optedIn }, { data: allTransactions }, tiers] = await Promise.all([
     serviceClient
       .from('profiles')
       .select('id, display_name, leaderboard_show_name, leaderboard_show_points')
       .eq('leaderboard_opt_in', true),
     serviceClient.from('point_transactions').select('user_id, amount, reversed_at'),
+    fetchTiers(supabase),
   ]);
 
   const lifetimeByUser = new Map<string, number>();
@@ -42,7 +43,7 @@ export async function GET() {
       rank: i + 1,
       isSelf: p.id === user.id,
       name: p.leaderboard_show_name ? (p.display_name || 'A member') : 'Anonymous',
-      tier: getTier(p.lifetime).name,
+      tier: getTier(p.lifetime, tiers).name,
       points: p.leaderboard_show_points ? p.lifetime : undefined,
     }));
 

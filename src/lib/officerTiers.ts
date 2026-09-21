@@ -1,3 +1,4 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { AppRole } from '@/types/database';
 
 // "TG member" — who has a Battlepass at all. Deliberately NOT the same
@@ -13,30 +14,35 @@ import type { AppRole } from '@/types/database';
 export const BATTLEPASS_ROLES: AppRole[] = ['officer', 'lead', 'exec', 'recruit', 'alumni'];
 
 // Status tiers for the officer points system — a completely separate set
-// from src/lib/tiers.ts (the member one). Different names on purpose, to
-// reinforce that these are two unrelated currencies or someone will
-// naturally assume "Silver" means the same thing in both places.
+// from src/lib/tiers.ts (the member one), backed by the same
+// tier_definitions table under system='officer'. Different names on
+// purpose, to reinforce that these are two unrelated currencies or someone
+// will naturally assume "Silver" means the same thing in both places.
 export interface OfficerTier {
   name: string;
   min: number;
   color: string;
 }
 
-export const OFFICER_TIERS: OfficerTier[] = [
-  { name: 'Contributor', min: 0, color: '#a3a3a3' },
-  { name: 'Dedicated', min: 100, color: '#60a5fa' },
-  { name: 'Veteran', min: 300, color: '#c084fc' },
-  { name: 'Legend', min: 800, color: '#ffc72c' },
-];
-
-export function getOfficerTier(lifetimePoints: number): OfficerTier {
-  let current = OFFICER_TIERS[0];
-  for (const tier of OFFICER_TIERS) {
+export function getOfficerTier(lifetimePoints: number, tiers: OfficerTier[]): OfficerTier {
+  let current = tiers[0];
+  for (const tier of tiers) {
     if (lifetimePoints >= tier.min) current = tier;
   }
   return current;
 }
 
-export function nextOfficerTier(lifetimePoints: number): OfficerTier | null {
-  return OFFICER_TIERS.find((t) => t.min > lifetimePoints) ?? null;
+export function nextOfficerTier(lifetimePoints: number, tiers: OfficerTier[]): OfficerTier | null {
+  return tiers.find((t) => t.min > lifetimePoints) ?? null;
+}
+
+// See fetchTiers in src/lib/tiers.ts for why this hits the DB every call
+// rather than falling back to a hardcoded default.
+export async function fetchOfficerTiers(supabase: SupabaseClient): Promise<OfficerTier[]> {
+  const { data } = await supabase
+    .from('tier_definitions')
+    .select('name, min_points, color')
+    .eq('system', 'officer')
+    .order('min_points');
+  return (data ?? []).map((t) => ({ name: t.name, min: t.min_points, color: t.color }));
 }

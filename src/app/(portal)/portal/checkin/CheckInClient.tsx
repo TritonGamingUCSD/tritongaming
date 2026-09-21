@@ -5,7 +5,7 @@ import jsQR from 'jsqr';
 import { Calendar, Camera, CircleCheck, TriangleAlert } from 'lucide-react';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import { fetchWithRetry } from '@/lib/fetchWithRetry';
-import { TIERS } from '@/lib/tiers';
+import type { Tier } from '@/lib/tiers';
 import styles from './checkin.module.css';
 
 interface Event {
@@ -31,9 +31,10 @@ const EMPTY_DIGITS = Array<string>(CODE_LENGTH).fill('');
 interface CheckInClientProps {
   events: Event[];
   onCheckedIn?: (entry: { ticketId: string; userName: string }) => void;
+  tiers: Tier[];
 }
 
-export default function CheckInClient({ events, onCheckedIn }: CheckInClientProps) {
+export default function CheckInClient({ events, onCheckedIn, tiers }: CheckInClientProps) {
   const [selectedEventId, setSelectedEventId] = useState(events[0]?.id || '');
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
@@ -436,7 +437,7 @@ export default function CheckInClient({ events, onCheckedIn }: CheckInClientProp
                     {result.lifetime_points !== undefined && result.tier && (
                       <span
                         className={styles.resultTierBadge}
-                        style={{ color: TIERS.find((t) => t.name === result.tier)?.color, borderColor: `${TIERS.find((t) => t.name === result.tier)?.color}55` }}
+                        style={{ color: tiers.find((t) => t.name === result.tier)?.color, borderColor: `${tiers.find((t) => t.name === result.tier)?.color}55` }}
                       >
                         {result.lifetime_points.toLocaleString()} pts · {result.tier}
                       </span>

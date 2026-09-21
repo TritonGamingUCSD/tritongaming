@@ -19,7 +19,15 @@ import styles from './members.module.css';
 // silently excluded by the ucsd-only filter, even though they're a real
 // member. Matching rank order here so the same person can't be "ucsd" for
 // this list's purposes but "alumni" everywhere else.
-const ORDER: (AppRole | 'guest')[] = ['admin', 'exec', 'lead', 'officer', 'division', 'alumni', 'recruit', 'ucsd', 'guest'];
+//
+// 'admin' sits near the back, not the front — it's a platform-permissions
+// role, not an org position (same reasoning as BATTLEPASS_ROLES excluding
+// it in officerTiers.ts), so an admin who's also e.g. an exec should show
+// up under Exec, not get bucketed into a generic Admin section that says
+// nothing about what they actually do. It's still checked before
+// ucsd/guest, though, so a bare admin account with no other real role
+// isn't silently dropped from the roster.
+const ORDER: (AppRole | 'guest')[] = ['exec', 'lead', 'officer', 'division', 'alumni', 'recruit', 'admin', 'ucsd', 'guest'];
 
 type MemberEntry = Omit<MemberProfileRow, 'user_roles'> & { divisionName?: string };
 
@@ -117,7 +125,7 @@ export default function MembersSectionContent({ rows, roles }: { rows: MemberPro
             </button>
           </div>
           {hasCapability(roles, 'manage_roles') && (
-            <Link href="/portal?open=admin" className={styles.adminLink}>
+            <Link href="/portal?section=admin" className={styles.adminLink}>
               Role Manager →
             </Link>
           )}

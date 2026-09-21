@@ -7,6 +7,7 @@ export interface BattlepassTransactionRow {
   note: string | null;
   created_at: string;
   reversed_at: string | null;
+  reverses_transaction_id: string | null;
 }
 
 // Mirrors getMyPointsData.ts exactly, against the officer_* tables instead —
@@ -20,7 +21,7 @@ export async function getMyBattlepassData(userId: string) {
   const [{ data: transactions }, { data: allAmounts }] = await Promise.all([
     supabase
       .from('officer_point_transactions')
-      .select('id, amount, type, note, created_at, reversed_at')
+      .select('id, amount, type, note, created_at, reversed_at, reverses_transaction_id')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(50),

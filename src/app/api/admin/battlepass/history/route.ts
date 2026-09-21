@@ -21,7 +21,7 @@ export async function GET(request: Request) {
   const serviceClient = createServiceClient();
   const { data, error } = await serviceClient
     .from('officer_point_transactions')
-    .select('id, amount, type, note, created_at, reversed_at')
+    .select('id, amount, type, note, created_at, reversed_at, reverses_transaction_id')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(30);

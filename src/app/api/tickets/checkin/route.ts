@@ -4,7 +4,7 @@ import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/capabilities';
 import { rotatingCode, currentWindow } from '@/lib/rotatingCode';
 import { performCheckin } from '@/lib/performCheckin';
-import { getTier } from '@/lib/tiers';
+import { getTier, fetchTiers } from '@/lib/tiers';
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -105,6 +105,7 @@ export async function POST(request: Request) {
   // points animation for this scan if these come back empty.
   const { data: allAmounts } = await serviceClient.from('point_transactions').select('amount, reversed_at').eq('user_id', ticket.user_id);
   const lifetimeEarned = (allAmounts ?? []).filter((t) => t.amount > 0 && !t.reversed_at).reduce((sum, t) => sum + t.amount, 0);
+  const tiers = await fetchTiers(supabase);
 
   return NextResponse.json({
     status: 'active',
@@ -113,6 +114,6 @@ export async function POST(request: Request) {
     ticket_id: ticket.id,
     points_awarded: eventData?.points_value ?? 0,
     lifetime_points: lifetimeEarned,
-    tier: getTier(lifetimeEarned).name,
+    tier: getTier(lifetimeEarned, tiers).name,
   });
 }

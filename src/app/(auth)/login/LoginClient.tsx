@@ -4,6 +4,13 @@ import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import styles from './login.module.css';
 
+// Backup email+password sign-in — temporarily disabled (see the
+// commented-out toggle link/form below, and ProfileClient.tsx's matching
+// <BackupLoginSection /> render). The handlers/state here are left intact
+// so re-enabling later is just uncommenting the JSX back in, not
+// rebuilding the flow.
+const BACKUP_LOGIN_ENABLED = false;
+
 export default function LoginClient({ next, ref }: { next?: string; ref?: string }) {
   const [loading, setLoading] = useState(false);
   // Google is everyone's primary sign-in — this stays collapsed behind a
@@ -88,35 +95,37 @@ export default function LoginClient({ next, ref }: { next?: string; ref?: string
       {loading ? 'Redirecting…' : 'Continue with Google'}
     </button>
 
-    {showEmailForm ? (
-      <form className={styles.emailForm} onSubmit={handleEmailSignIn}>
-        <input
-          className={styles.emailInput}
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Email"
-          autoComplete="email"
-          required
-        />
-        <input
-          className={styles.emailInput}
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-          autoComplete="current-password"
-          required
-        />
-        {emailError && <p className={styles.emailError}>{emailError}</p>}
-        <button type="submit" className={styles.emailSubmitBtn} disabled={emailLoading}>
-          {emailLoading ? 'Signing in…' : 'Sign In'}
+    {BACKUP_LOGIN_ENABLED && (
+      showEmailForm ? (
+        <form className={styles.emailForm} onSubmit={handleEmailSignIn}>
+          <input
+            className={styles.emailInput}
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email"
+            autoComplete="email"
+            required
+          />
+          <input
+            className={styles.emailInput}
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+            autoComplete="current-password"
+            required
+          />
+          {emailError && <p className={styles.emailError}>{emailError}</p>}
+          <button type="submit" className={styles.emailSubmitBtn} disabled={emailLoading}>
+            {emailLoading ? 'Signing in…' : 'Sign In'}
+          </button>
+        </form>
+      ) : (
+        <button type="button" className={styles.emailToggleLink} onClick={() => setShowEmailForm(true)}>
+          Have a backup email login? Sign in with email instead
         </button>
-      </form>
-    ) : (
-      <button type="button" className={styles.emailToggleLink} onClick={() => setShowEmailForm(true)}>
-        Have a backup email login? Sign in with email instead
-      </button>
+      )
     )}
     </>
   );

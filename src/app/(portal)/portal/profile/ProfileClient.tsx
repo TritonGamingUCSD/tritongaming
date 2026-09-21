@@ -11,7 +11,7 @@ import { canSetOrgTitle, type RoleGrant } from '@/lib/capabilities';
 import { hasBasicProfileInfo, resolveAvatarUrl, SOCIAL_PLATFORMS } from '@/lib/profile';
 import { deleteIfReplaced } from '@/lib/imageUpload';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
-import BackupLoginSection from './BackupLoginSection';
+// import BackupLoginSection from './BackupLoginSection'; — temporarily disabled, see its render below
 import styles from './profile.module.css';
 
 export default function ProfileClient({ profile, roles, isUcsd, divisions }: { profile: Profile; roles: RoleGrant[]; isUcsd: boolean; divisions: { id: string; name: string }[] }) {
@@ -350,7 +350,10 @@ export default function ProfileClient({ profile, roles, isUcsd, divisions }: { p
         </form>
       </div>
 
-      <BackupLoginSection />
+      {/* Temporarily disabled — see BACKUP_LOGIN_ENABLED in
+          login/LoginClient.tsx, its matching toggle. Re-enable by
+          uncommenting this render. */}
+      {/* <BackupLoginSection /> */}
 
       <div className={styles.signOutSection}>
         <button className={styles.signOutBtn} onClick={handleSignOut}>

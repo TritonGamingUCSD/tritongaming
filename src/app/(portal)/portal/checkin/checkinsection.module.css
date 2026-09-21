@@ -2,7 +2,8 @@
 
 .tabBar {
   display: flex;
-  gap: 0.3rem;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.4rem;
   border-bottom: 1px solid rgba(255,255,255,0.07);
 }
 
@@ -19,7 +20,6 @@
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s;
 }
-.tab + .tab { margin-left: 1.25rem; }
 .tab:hover { color: rgba(242,241,240,0.75); }
 .tabActive { color: var(--yellow); border-bottom-color: var(--yellow); }
 .tabActive:hover { color: var(--yellow); }

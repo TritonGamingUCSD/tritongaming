@@ -130,8 +130,22 @@
 }
 
 /* ── Expanded panel ───────────────────────────────── */
+/* AnimatePresence mode="popLayout" (below) keeps the exiting .gridWrap
+   mounted and visible for its own fade-out while this panel is
+   simultaneously morphing/fading in — the two genuinely overlap in the DOM
+   for that transition's duration, by design (that's what makes the card
+   -> panel morph read as one continuous shape instead of a cut). A background
+   that's still 98% transparent white only ever worked because nothing used
+   to be rendered behind it — with the old grid now visible through that
+   same window, its cards (and this panel's own content, e.g. a loading
+   spinner while data is still in flight) visibly overlapped. Solid navy
+   behind the same subtle tint keeps the frosted look but actually occludes
+   whatever's still fading out underneath; explicit stacking makes sure
+   it's this panel painting on top, not the exiting grid. */
 .panel {
-  background: rgba(255, 255, 255, 0.02);
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.02)), #060c1a;
   border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 1.25rem;
   padding: 1.5rem clamp(1rem, 3vw, 2rem) 2.5rem;

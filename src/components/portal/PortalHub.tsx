@@ -81,8 +81,8 @@ interface GroupedSection {
 // start, which is what made it feel laggy. The URL is still kept in sync —
 // via router.replace after the fact, and via the effect below picking up
 // changes that arrive from *outside* this component (e.g. a <Link> to
-// /portal?open=x elsewhere on the same route) — just without the UI waiting
-// on it.
+// /portal?section=x elsewhere on the same route) — just without the UI
+// waiting on it.
 // onGridWidth, when passed, reports the card grid's actual rendered width
 // (in px) — lets a sibling like the portal's "next ticket" banner match it
 // exactly instead of guessing at a shared width in pure CSS, which broke
@@ -95,8 +95,8 @@ interface GroupedSection {
 export default function PortalHub({ sections, onGridWidth, onOpenChange }: { sections: HubSection[]; onGridWidth?: (width: number) => void; onOpenChange?: (open: boolean) => void }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const requestedOpen = searchParams.get('open');
-  const validRequested = sections.some((s) => s.id === requestedOpen) ? requestedOpen : null;
+  const requestedSection = searchParams.get('section');
+  const validRequested = sections.some((s) => s.id === requestedSection) ? requestedSection : null;
 
   const [openId, setOpenId] = useState<string | null>(validRequested);
   const isDesktop = useIsDesktop();
@@ -198,7 +198,7 @@ export default function PortalHub({ sections, onGridWidth, onOpenChange }: { sec
 
   const open = useCallback((id: string) => {
     setOpenId(id);
-    router.replace(`/portal?open=${id}`, { scroll: false });
+    router.replace(`/portal?section=${id}`, { scroll: false });
   }, [router]);
 
   const close = useCallback(() => {
@@ -326,6 +326,13 @@ function DesktopShell({
   return (
     <div className={styles.desktopShell}>
       <nav className={styles.rail} aria-label="Portal sections">
+        {/* Lives in the rail, not centered above the content pane — a
+            centered 420px search bar sitting over a left-aligned card grid
+            never actually lined up with anything below it. Always visible
+            here (not just on the home view) since it's now part of the
+            rail's own nav, not a second competing "get me somewhere"
+            control floating in the content pane. */}
+        <PortalSearch compact />
         <button
           className={`${styles.railHome} ${!openSection ? styles.railItemActive : ''}`}
           onClick={close}
@@ -353,11 +360,6 @@ function DesktopShell({
       </nav>
 
       <div className={styles.desktopContent}>
-        {/* Only on the home view — once you're inside a section, the rail
-            (always visible now) is already the fastest way to go anywhere
-            else, so search staying pinned here too would just be a second,
-            redundant "get me somewhere" control on screen at once. */}
-        {!openSection && <PortalSearch />}
         <AnimatePresence mode="wait" initial={false}>
           {openSection ? (
             <motion.div

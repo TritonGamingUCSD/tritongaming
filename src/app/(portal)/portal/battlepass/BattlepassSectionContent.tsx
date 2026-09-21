@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Shield, ShoppingBag, Trophy, Settings, Gift, Check, X, Camera, Undo2, Lock } from 'lucide-react';
-import { getOfficerTier, nextOfficerTier, OFFICER_TIERS } from '@/lib/officerTiers';
+import { getOfficerTier, nextOfficerTier, type OfficerTier } from '@/lib/officerTiers';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import StyledQRCode from '@/components/StyledQRCode/StyledQRCode';
 import { DEFAULT_QR_OPTIONS } from '@/lib/qrCodeStyling';
@@ -13,8 +13,8 @@ import checkinStyles from '../checkin/checkin.module.css';
 import type { BattlepassTransactionRow } from './getMyBattlepassData';
 import styles from './battlepass.module.css';
 
-type Tab = 'mine' | 'toclaim' | 'shop' | 'leaderboard' | 'manage';
-const VALID_TABS: Tab[] = ['mine', 'toclaim', 'shop', 'leaderboard', 'manage'];
+type Tab = 'mine' | 'shop' | 'leaderboard' | 'manage';
+const VALID_TABS: Tab[] = ['mine', 'shop', 'leaderboard', 'manage'];
 
 interface RewardItem {
   id: string;
@@ -78,9 +78,10 @@ interface Props {
   transactions: BattlepassTransactionRow[];
   canManagePoints: boolean;
   initialTab?: string;
-  // /portal?open=battlepass&tab=manage&subtab=shop — reaches all the way
+  // /portal?section=battlepass&tab=manage&subtab=shop — reaches all the way
   // into the Manage tab's own sub-tab bar, not just its top-level tab.
   initialSubTab?: string;
+  tiers: OfficerTier[];
 }
 
 // A completely separate points/rewards system for officer-specific
@@ -90,11 +91,16 @@ interface Props {
 // redemption-approval are both exec/admin only (manage_points); every
 // officer-tier role can view their own Battlepass, browse the shop, and
 // see the leaderboard.
-type ManageSubTab = 'award' | 'redeem' | 'shop' | 'correct';
-const VALID_MANAGE_SUB_TABS: ManageSubTab[] = ['award', 'redeem', 'shop', 'correct'];
+type ManageSubTab = 'award' | 'redeem' | 'shop' | 'correct' | 'tiers';
+const VALID_MANAGE_SUB_TABS: ManageSubTab[] = ['award', 'redeem', 'shop', 'correct', 'tiers'];
 
-export default function BattlepassSectionContent({ balance, lifetimeEarned, transactions, canManagePoints, initialTab, initialSubTab }: Props) {
-  // A subtab link implies its parent tab — /portal?open=battlepass&subtab=shop
+export default function BattlepassSectionContent({ balance, lifetimeEarned, transactions, canManagePoints, initialTab, initialSubTab, tiers: initialTiers }: Props) {
+  // Local state, not just the prop directly — editing a tier in the Tiers
+  // sub-tab below needs the rest of this component (progress bar, shop
+  // gating, dropdowns) to reflect the change immediately, without a full
+  // page reload.
+  const [tiers, setTiers] = useState<OfficerTier[]>(initialTiers);
+  // A subtab link implies its parent tab — /portal?section=battlepass&subtab=shop
   // with no explicit tab= should still land on Manage, not silently drop
   // the subtab because the top-level tab defaulted elsewhere.
   const [tab, setTab] = useState<Tab>(
@@ -121,11 +127,13 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
     syncUrl('manage', st);
   }
 
-  const tier = getOfficerTier(lifetimeEarned);
-  const next = nextOfficerTier(lifetimeEarned);
+  const tier = getOfficerTier(lifetimeEarned, tiers);
+  const next = nextOfficerTier(lifetimeEarned, tiers);
   const progressPct = next ? Math.min(100, Math.round(((lifetimeEarned - tier.min) / (next.min - tier.min)) * 100)) : 100;
 
-  // ── Shop / To Claim (same endpoint — one fetch backs both tabs) ───────
+  // ── Shop / To Claim (same endpoint — one fetch backs both) ────────────
+  // "To Claim" used to be its own tab; folded into Mine since tier unlocks
+  // are about what you've personally earned, not browsing a shop.
   const [shopItems, setShopItems] = useState<RewardItem[] | null>(null);
   const [unlocks, setUnlocks] = useState<UnlockReward[]>([]);
   const [pending, setPending] = useState<PendingRedemption[]>([]);
@@ -136,7 +144,7 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
   const [claimedNote, setClaimedNote] = useState('');
 
   useEffect(() => {
-    if ((tab !== 'shop' && tab !== 'toclaim') || shopItems !== null) return;
+    if ((tab !== 'shop' && tab !== 'mine') || shopItems !== null) return;
     (async () => {
       try {
         const res = await fetch('/api/battlepass');
@@ -446,6 +454,111 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
     }
   }
 
+  // ── Manage: tier ladder ──────────────────────────────────────────────
+  interface TierRow { id: string; name: string; min_points: number; color: string; }
+  const [manageTiers, setManageTiers] = useState<TierRow[] | null>(null);
+  const [tierError, setTierError] = useState('');
+  const [newTier, setNewTier] = useState({ name: '', min_points: '', color: '#60a5fa' });
+  const [creatingTier, setCreatingTier] = useState(false);
+  const [editingTierId, setEditingTierId] = useState<string | null>(null);
+  const [tierEditForm, setTierEditForm] = useState({ name: '', min_points: '', color: '#60a5fa' });
+  const [savingTierEdit, setSavingTierEdit] = useState(false);
+  const [deletingTierId, setDeletingTierId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (manageSubTab !== 'tiers' || !canManagePoints || manageTiers !== null) return;
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/tiers?system=officer');
+        const json = await res.json();
+        if (!res.ok) { setTierError(json.error || 'Failed to load tiers.'); return; }
+        setManageTiers(json.tiers ?? []);
+      } catch {
+        setTierError('Network error loading tiers.');
+      }
+    })();
+  }, [manageSubTab, canManagePoints, manageTiers]);
+
+  // Keeps the rest of the component (progress bar, shop gating, dropdowns)
+  // in sync with a tier change without a full reload — mirrors the shape
+  // fetchOfficerTiers returns server-side ({name, min, color}), just
+  // re-sorted by threshold since a rename/edit can reorder the list.
+  function syncTiersState(rows: TierRow[]) {
+    setTiers([...rows].sort((a, b) => a.min_points - b.min_points).map((r) => ({ name: r.name, min: r.min_points, color: r.color })));
+  }
+
+  async function handleCreateTier(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newTier.name.trim() || newTier.min_points === '') return;
+    setCreatingTier(true);
+    setTierError('');
+    try {
+      const res = await fetch('/api/admin/tiers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ system: 'officer', name: newTier.name.trim(), min_points: Number(newTier.min_points), color: newTier.color }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setTierError(json.error || 'Failed to create tier.'); return; }
+      const updated = [...(manageTiers ?? []), json.tier];
+      setManageTiers(updated);
+      syncTiersState(updated);
+      setNewTier({ name: '', min_points: '', color: '#60a5fa' });
+    } catch {
+      setTierError('Network error. Please try again.');
+    } finally {
+      setCreatingTier(false);
+    }
+  }
+
+  function startEditTier(t: TierRow) {
+    setEditingTierId(t.id);
+    setTierEditForm({ name: t.name, min_points: String(t.min_points), color: t.color });
+    setTierError('');
+  }
+
+  async function handleSaveTierEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingTierId || !tierEditForm.name.trim() || tierEditForm.min_points === '') return;
+    setSavingTierEdit(true);
+    setTierError('');
+    try {
+      const res = await fetch(`/api/admin/tiers/${editingTierId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ system: 'officer', name: tierEditForm.name.trim(), min_points: Number(tierEditForm.min_points), color: tierEditForm.color }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setTierError(json.error || 'Failed to save tier.'); return; }
+      const updated = (manageTiers ?? []).map((t) => (t.id === editingTierId ? json.tier : t));
+      setManageTiers(updated);
+      syncTiersState(updated);
+      setEditingTierId(null);
+    } catch {
+      setTierError('Network error. Please try again.');
+    } finally {
+      setSavingTierEdit(false);
+    }
+  }
+
+  async function handleDeleteTier(t: TierRow) {
+    if (!window.confirm(`Delete the "${t.name}" tier?`)) return;
+    setDeletingTierId(t.id);
+    setTierError('');
+    try {
+      const res = await fetch(`/api/admin/tiers/${t.id}?system=officer`, { method: 'DELETE' });
+      const json = await res.json();
+      if (!res.ok) { setTierError(json.error || 'Failed to delete tier.'); return; }
+      const updated = (manageTiers ?? []).filter((x) => x.id !== t.id);
+      setManageTiers(updated);
+      syncTiersState(updated);
+    } catch {
+      setTierError('Network error. Please try again.');
+    } finally {
+      setDeletingTierId(null);
+    }
+  }
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -458,9 +571,6 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
       <div className={styles.tabBar} role="tablist">
         <button type="button" role="tab" aria-selected={tab === 'mine'} className={`${styles.tab} ${tab === 'mine' ? styles.tabActive : ''}`} onClick={() => selectTab('mine')}>
           <Shield size={13} strokeWidth={1.5} aria-hidden="true" /> My Battlepass
-        </button>
-        <button type="button" role="tab" aria-selected={tab === 'toclaim'} className={`${styles.tab} ${tab === 'toclaim' ? styles.tabActive : ''}`} onClick={() => selectTab('toclaim')}>
-          <Gift size={13} strokeWidth={1.5} aria-hidden="true" /> To Claim
           {unclaimedUnlockCount > 0 && <span className={styles.tabBadge}>{unclaimedUnlockCount}</span>}
         </button>
         <button type="button" role="tab" aria-selected={tab === 'shop'} className={`${styles.tab} ${tab === 'shop' ? styles.tabActive : ''}`} onClick={() => selectTab('shop')}>
@@ -498,6 +608,47 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
             )}
           </div>
 
+          {shopError && <p className={styles.error}>{shopError}</p>}
+
+          {shopItems !== null && unlocks.length > 0 && (
+            <div className={styles.historySection}>
+              <h2 className={styles.sectionLabel}><Gift size={14} strokeWidth={1.75} aria-hidden="true" /> Tier Unlocks</h2>
+              <p className={styles.referralHint}>Perks you unlock automatically by reaching a Battlepass tier — free, no points spent, one per person.</p>
+              {claimedNote && <p className={styles.claimedNote}><Check size={14} strokeWidth={2} aria-hidden="true" /> {claimedNote}</p>}
+              {tiers.map((t) => {
+                const rewardsForTier = unlocks.filter((u) => (u.min_tier ?? tiers[0].name) === t.name);
+                if (rewardsForTier.length === 0) return null;
+                return (
+                  <div key={t.name} className={styles.tierGroup}>
+                    <div className={styles.tierGroupHeader}>
+                      <span className={styles.tierGroupBadge} style={{ background: `${t.color}22`, color: t.color, borderColor: `${t.color}55` }}>{t.name}</span>
+                      <span className={styles.tierGroupThreshold}>{t.min.toLocaleString()} lifetime pts</span>
+                    </div>
+                    <div className={styles.shopGrid}>
+                      {rewardsForTier.map((u) => (
+                        <div key={u.id} className={`${styles.shopCard} ${u.unlocked ? styles.unlockCardReady : styles.unlockCardLocked}`} style={u.unlocked ? { borderColor: `${t.color}55` } : undefined}>
+                          <h3 className={styles.shopCardTitle}>{u.title}</h3>
+                          {u.description && <p className={styles.shopCardDesc}>{u.description}</p>}
+                          <div className={styles.shopCardFooter}>
+                            {u.claimed ? (
+                              <span className={styles.unlockClaimedLabel}><Check size={13} strokeWidth={2} aria-hidden="true" /> Claimed</span>
+                            ) : u.unlocked ? (
+                              <button type="button" className={styles.claimBtn} onClick={() => handleClaimUnlock(u)} disabled={claimingId === u.id}>
+                                {claimingId === u.id ? 'Claiming…' : 'Claim'}
+                              </button>
+                            ) : (
+                              <span className={styles.unlockLockedLabel}><Lock size={12} strokeWidth={1.75} aria-hidden="true" /> Reach {t.name} to unlock</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           <div className={styles.historySection}>
             <h2 className={styles.sectionLabel}>Recent Activity</h2>
             {transactions.length === 0 ? (
@@ -524,51 +675,6 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
               </ul>
             )}
           </div>
-        </div>
-      )}
-
-      {tab === 'toclaim' && (
-        <div className={styles.shopTab}>
-          <p className={styles.referralHint}>Perks you unlock automatically by reaching a Battlepass tier — free, no points spent, one per person.</p>
-          {shopError && <p className={styles.error}>{shopError}</p>}
-          {claimedNote && <p className={styles.claimedNote}><Check size={14} strokeWidth={2} aria-hidden="true" /> {claimedNote}</p>}
-          {shopItems === null ? (
-            <LoadingSpinner size={28} label="Loading…" theme="dark" />
-          ) : unlocks.length === 0 ? (
-            <p className={styles.empty}>No tier unlocks set up yet.</p>
-          ) : (
-            OFFICER_TIERS.map((t) => {
-              const rewardsForTier = unlocks.filter((u) => (u.min_tier ?? OFFICER_TIERS[0].name) === t.name);
-              if (rewardsForTier.length === 0) return null;
-              return (
-                <div key={t.name} className={styles.tierGroup}>
-                  <div className={styles.tierGroupHeader}>
-                    <span className={styles.tierGroupBadge} style={{ background: `${t.color}22`, color: t.color, borderColor: `${t.color}55` }}>{t.name}</span>
-                    <span className={styles.tierGroupThreshold}>{t.min.toLocaleString()} lifetime pts</span>
-                  </div>
-                  <div className={styles.shopGrid}>
-                    {rewardsForTier.map((u) => (
-                      <div key={u.id} className={`${styles.shopCard} ${u.unlocked ? styles.unlockCardReady : styles.unlockCardLocked}`} style={u.unlocked ? { borderColor: `${t.color}55` } : undefined}>
-                        <h3 className={styles.shopCardTitle}>{u.title}</h3>
-                        {u.description && <p className={styles.shopCardDesc}>{u.description}</p>}
-                        <div className={styles.shopCardFooter}>
-                          {u.claimed ? (
-                            <span className={styles.unlockClaimedLabel}><Check size={13} strokeWidth={2} aria-hidden="true" /> Claimed</span>
-                          ) : u.unlocked ? (
-                            <button type="button" className={styles.claimBtn} onClick={() => handleClaimUnlock(u)} disabled={claimingId === u.id}>
-                              {claimingId === u.id ? 'Claiming…' : 'Claim'}
-                            </button>
-                          ) : (
-                            <span className={styles.unlockLockedLabel}><Lock size={12} strokeWidth={1.75} aria-hidden="true" /> Reach {t.name} to unlock</span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })
-          )}
         </div>
       )}
 
@@ -604,8 +710,8 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
               {shopItems.map((item) => {
                 const outOfStock = item.stock !== null && item.stock <= 0;
                 const canAfford = shopBalance >= item.point_cost;
-                const requiredTierIdx = item.min_tier ? OFFICER_TIERS.findIndex((t) => t.name === item.min_tier) : -1;
-                const currentTierIdx = OFFICER_TIERS.findIndex((t) => t.name === tier.name);
+                const requiredTierIdx = item.min_tier ? tiers.findIndex((t) => t.name === item.min_tier) : -1;
+                const currentTierIdx = tiers.findIndex((t) => t.name === tier.name);
                 const tierLocked = requiredTierIdx !== -1 && currentTierIdx < requiredTierIdx;
                 return (
                   <div key={item.id} className={styles.shopCard}>
@@ -642,7 +748,7 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
           ) : (
             <ol className={styles.boardList}>
               {board.map((row) => {
-                const rowTier = OFFICER_TIERS.find((t) => t.name === row.tier) ?? OFFICER_TIERS[0];
+                const rowTier = tiers.find((t) => t.name === row.tier) ?? tiers[0];
                 return (
                   <li key={row.rank} className={`${styles.boardRow} ${row.isSelf ? styles.boardRowSelf : ''}`}>
                     <span className={styles.boardRank}>#{row.rank}</span>
@@ -664,6 +770,7 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
             <button type="button" role="tab" aria-selected={manageSubTab === 'redeem'} className={`${styles.subTab} ${manageSubTab === 'redeem' ? styles.subTabActive : ''}`} onClick={() => selectManageSubTab('redeem')}>Redemptions</button>
             <button type="button" role="tab" aria-selected={manageSubTab === 'shop'} className={`${styles.subTab} ${manageSubTab === 'shop' ? styles.subTabActive : ''}`} onClick={() => selectManageSubTab('shop')}>Shop Items</button>
             <button type="button" role="tab" aria-selected={manageSubTab === 'correct'} className={`${styles.subTab} ${manageSubTab === 'correct' ? styles.subTabActive : ''}`} onClick={() => selectManageSubTab('correct')}>Corrections</button>
+            <button type="button" role="tab" aria-selected={manageSubTab === 'tiers'} className={`${styles.subTab} ${manageSubTab === 'tiers' ? styles.subTabActive : ''}`} onClick={() => selectManageSubTab('tiers')}>Tiers</button>
           </div>
 
           {manageSubTab === 'award' && (
@@ -784,7 +891,7 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
               <input className={styles.input} type="number" min={0} placeholder="Stock (blank = unlimited)" value={newReward.stock} onChange={(e) => setNewReward((f) => ({ ...f, stock: e.target.value }))} />
               <select className={styles.input} value={newReward.min_tier} onChange={(e) => setNewReward((f) => ({ ...f, min_tier: e.target.value }))}>
                 <option value="">No tier requirement</option>
-                {OFFICER_TIERS.map((t) => <option key={t.name} value={t.name}>{t.name}+ only</option>)}
+                {tiers.map((t) => <option key={t.name} value={t.name}>{t.name}+ only</option>)}
               </select>
               <input
                 className={styles.input} type="number" min={1} placeholder="Max per person (blank = unlimited)"
@@ -887,6 +994,10 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
                         </span>
                         {t.reversed_at ? (
                           <span className={styles.reversedLabel}>Reversed</span>
+                        ) : t.reverses_transaction_id ? (
+                          // A reversal itself — can't be reversed again (server enforces this
+                          // too); a mistaken reversal gets corrected with a new adjustment.
+                          <span className={styles.reversedLabel}>Reversal</span>
                         ) : (
                           <button type="button" className={styles.reverseBtn} onClick={() => handleReverse(t)} disabled={reversingId === t.id}>
                             {reversingId === t.id ? 'Reversing…' : 'Reverse'}
@@ -897,6 +1008,76 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
                   </div>
                 )}
               </>
+            )}
+          </section>
+          )}
+
+          {manageSubTab === 'tiers' && (
+          <section className={styles.manageSection}>
+            <h2 className={styles.sectionLabel}>Battlepass Tier Ladder</h2>
+            <p className={styles.referralHint}>
+              The starting tier always stays at 0 points and can&apos;t be renamed away or deleted — every other tier can be added, retitled, recolored, or removed (as long as no shop item still requires it).
+            </p>
+
+            <form className={styles.newRewardForm} onSubmit={handleCreateTier}>
+              <input className={styles.input} placeholder="Tier name" value={newTier.name} onChange={(e) => setNewTier((f) => ({ ...f, name: e.target.value }))} maxLength={40} />
+              <input className={styles.input} type="number" min={1} placeholder="Points threshold" value={newTier.min_points} onChange={(e) => setNewTier((f) => ({ ...f, min_points: e.target.value }))} />
+              <label className={styles.colorField}>
+                Color
+                <input type="color" value={newTier.color} onChange={(e) => setNewTier((f) => ({ ...f, color: e.target.value }))} />
+              </label>
+              <button type="submit" className={styles.saveBtn} disabled={creatingTier || !newTier.name.trim() || newTier.min_points === ''}>
+                {creatingTier ? 'Adding…' : '+ Add Tier'}
+              </button>
+            </form>
+
+            {tierError && <p className={styles.error}>{tierError}</p>}
+
+            {manageTiers === null ? (
+              <LoadingSpinner size={28} label="Loading tiers…" theme="dark" />
+            ) : (
+              <div className={styles.manageList}>
+                {[...manageTiers].sort((a, b) => a.min_points - b.min_points).map((t) => (
+                  editingTierId === t.id ? (
+                    <form key={t.id} className={styles.editForm} onSubmit={handleSaveTierEdit}>
+                      <input className={styles.input} placeholder="Tier name" value={tierEditForm.name} onChange={(e) => setTierEditForm((f) => ({ ...f, name: e.target.value }))} maxLength={40} />
+                      <input
+                        className={styles.input} type="number" min={t.min_points === 0 ? 0 : 1} placeholder="Points threshold"
+                        value={tierEditForm.min_points} onChange={(e) => setTierEditForm((f) => ({ ...f, min_points: e.target.value }))}
+                        disabled={t.min_points === 0}
+                      />
+                      <label className={styles.colorField}>
+                Color
+                <input type="color" value={tierEditForm.color} onChange={(e) => setTierEditForm((f) => ({ ...f, color: e.target.value }))} />
+              </label>
+                      <div className={styles.editActions}>
+                        <button type="button" className={styles.toggleBtn} onClick={() => setEditingTierId(null)}>Cancel</button>
+                        <button type="submit" className={styles.saveBtn} disabled={savingTierEdit || !tierEditForm.name.trim() || tierEditForm.min_points === ''}>
+                          {savingTierEdit ? 'Saving…' : 'Save'}
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div key={t.id} className={styles.manageRow}>
+                      <div>
+                        <div className={styles.shopCardTitle}>
+                          <span className={styles.tierGroupBadge} style={{ background: `${t.color}22`, color: t.color, borderColor: `${t.color}55` }}>{t.name}</span>
+                          {t.min_points === 0 && <span className={styles.tierUnlockTag}>Starting tier</span>}
+                        </div>
+                        <div className={styles.stockNote}>{t.min_points.toLocaleString()} lifetime pts</div>
+                      </div>
+                      <div className={styles.manageRowActions}>
+                        <button type="button" className={styles.toggleBtn} onClick={() => startEditTier(t)}>Edit</button>
+                        {t.min_points !== 0 && (
+                          <button type="button" className={styles.toggleBtn} onClick={() => handleDeleteTier(t)} disabled={deletingTierId === t.id}>
+                            {deletingTierId === t.id ? 'Deleting…' : 'Delete'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )
+                ))}
+              </div>
             )}
           </section>
           )}
