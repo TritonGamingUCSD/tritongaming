@@ -32,8 +32,11 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, 260px);
+  justify-content: center;
   gap: 1.25rem;
+  max-width: calc(260px * 3 + 1.25rem * 2);
+  margin: 0 auto;
 }
 
 .card {

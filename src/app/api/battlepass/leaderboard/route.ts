@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { getOfficerTier, BATTLEPASS_ROLES, fetchOfficerTiers } from '@/lib/officerTiers';
+import { maskDisplayName } from '@/lib/profile';
 
 // Every officer-tier role holder is on this leaderboard, no opt-in —
 // same as the member Rewards leaderboard. Exact points are always shown;
@@ -51,7 +52,7 @@ export async function GET() {
     .map((p) => {
       const profile = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles;
       const lifetime = lifetimeByUser.get(p.user_id) ?? 0;
-      const name = profile?.leaderboard_anonymous ? 'Anonymous' : (profile?.display_name || 'A member');
+      const name = profile?.leaderboard_anonymous ? maskDisplayName(profile.display_name) : (profile?.display_name || 'A member');
       return { userId: p.user_id, name, lifetime };
     })
     .sort((a, b) => b.lifetime - a.lifetime)

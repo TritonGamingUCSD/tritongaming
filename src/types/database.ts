@@ -63,6 +63,8 @@ export interface Database {
           preferred_email: string | null;
           board_order: number | null;
           onboarded_at: string | null;
+          google_first_name: string | null;
+          google_last_name: string | null;
           created_at: string;
           updated_at: string;
         };

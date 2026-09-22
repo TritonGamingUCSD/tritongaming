@@ -791,7 +791,7 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, lead
               <input type="checkbox" checked={anonymous} disabled={savingPrefs} onChange={(e) => setAnonymousPref(e.target.checked)} />
               <span>Stay anonymous on the leaderboard (otherwise shown under your name)</span>
             </label>
-            <p className={styles.referralHint}>Every officer is on the leaderboard — this only controls whether your name or "Anonymous" shows next to your rank. Exact points are always shown either way.</p>
+            <p className={styles.referralHint}>Every officer is on the leaderboard — this only controls whether your full name or a masked version (like "Jas***") shows next to your rank. Exact points are always shown either way.</p>
           </div>
 
           {boardError && <p className={styles.error}>{boardError}</p>}

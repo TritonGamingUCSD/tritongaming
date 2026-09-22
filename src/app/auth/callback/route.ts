@@ -69,6 +69,16 @@ export async function GET(request: Request) {
         if (hasUcsdIdentity) {
           await createServiceClient().rpc('grant_ucsd_role', { _user_id: data.user.id });
         }
+
+        // Admin-only verification name, kept in sync with whatever Google
+        // reports for the identity used this session — separate from the
+        // user-editable display_name (see sync_google_name for why this is
+        // split server-side rather than duplicating the name-splitting
+        // logic here).
+        const googleFullName = (freshUser?.user_metadata?.full_name as string | undefined) ?? (freshUser?.user_metadata?.name as string | undefined);
+        if (googleFullName) {
+          await createServiceClient().rpc('sync_google_name', { _user_id: data.user.id, _full_name: googleFullName });
+        }
       }
 
       const redirectUrl = new URL(next, origin);

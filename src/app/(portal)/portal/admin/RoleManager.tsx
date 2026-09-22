@@ -27,6 +27,20 @@ interface User {
   linkedEmails?: LinkedEmail[];
   preferred_email?: string | null;
   board_order?: number | null;
+  google_first_name?: string | null;
+  google_last_name?: string | null;
+}
+
+// Google's verified name (synced on every sign-in, never user-editable —
+// see sync_google_name) vs. this profile's own display_name, which anyone
+// can change to a nickname/alias. Only worth showing when they actually
+// differ — that's the one case an admin verifying someone's identity
+// actually needs to see.
+function googleNameIfDifferent(user: User): string | null {
+  const googleName = [user.google_first_name, user.google_last_name].filter(Boolean).join(' ').trim();
+  if (!googleName) return null;
+  if (googleName.toLowerCase() === (user.display_name || '').trim().toLowerCase()) return null;
+  return googleName;
 }
 
 // Highest-privilege role first, so a user's badge row always reads
@@ -344,6 +358,11 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
                   )}
                   <div>
                     <div className={styles.userName}>{user.display_name || 'Anonymous'}</div>
+                    {googleNameIfDifferent(user) && (
+                      <div className={styles.userEmail} title="Name on file with Google — not editable by the member">
+                        Google: {googleNameIfDifferent(user)}
+                      </div>
+                    )}
                     <div className={styles.userSub}>
                       {user.gamer_tag ? (
                         <span className={styles.gamerTag}>

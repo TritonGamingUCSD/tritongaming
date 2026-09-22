@@ -12,6 +12,17 @@ export function hasBasicProfileInfo(profile: Pick<Profile, 'display_name' | 'maj
   return !!profile.major?.trim() && !!profile.year?.trim() && !!profile.college?.trim();
 }
 
+// Leaderboard "anonymous" display — masks the first name instead of a
+// generic "Anonymous" placeholder, so the board still reads as a list of
+// people rather than a wall of identical labels. Shows up to the first 3
+// characters of the first name (fewer if it's shorter) followed by '***';
+// falls back to a fixed placeholder when there's no name to mask at all.
+export function maskDisplayName(displayName: string | null): string {
+  const firstName = displayName?.trim().split(/\s+/)[0];
+  if (!firstName) return 'A member';
+  return `${firstName.slice(0, 3)}***`;
+}
+
 // avatar_url is never touched by the custom-picture feature — it stays
 // exactly what Google sync last set it to. custom_avatar_url, when set,
 // wins everywhere a profile picture is displayed; an empty/unset value

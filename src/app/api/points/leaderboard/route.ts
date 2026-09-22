@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { getTier, fetchTiers } from '@/lib/tiers';
 import { isRewardsEligible, type RoleGrant } from '@/lib/capabilities';
+import { maskDisplayName } from '@/lib/profile';
 
 // Every rewards-eligible member (see is_rewards_eligible — the same
 // group that can actually earn points at all) is on this leaderboard,
@@ -44,7 +45,7 @@ export async function GET() {
     .map((p, i) => ({
       rank: i + 1,
       isSelf: p.id === user.id,
-      name: p.leaderboard_anonymous ? 'Anonymous' : (p.display_name || 'A member'),
+      name: p.leaderboard_anonymous ? maskDisplayName(p.display_name) : (p.display_name || 'A member'),
       tier: getTier(p.lifetime, tiers).name,
       points: p.lifetime,
     }));
