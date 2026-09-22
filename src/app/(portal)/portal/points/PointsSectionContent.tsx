@@ -1075,7 +1075,7 @@ export default function PointsSectionContent({
                       const label = oneOf(t.event)?.title ?? TYPE_LABELS[t.type] ?? t.type;
                       return (
                         <div key={t.id} className={`${styles.targetHistoryRow} ${t.reversed_at ? styles.targetHistoryReversed : ''}`}>
-                          <div>
+                          <div className={styles.targetHistoryInfo}>
                             <div className={styles.historyType}>{label}</div>
                             <div className={styles.historyMeta}>
                               {t.note && t.type !== 'event_checkin' ? t.note : TYPE_LABELS[t.type] ?? t.type}

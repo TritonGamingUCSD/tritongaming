@@ -430,3 +430,127 @@
   .roleSection { justify-content: flex-start; width: 100%; }
   .roleButtons { max-width: 100%; }
 }
+
+/* ── Delete / merge account ──────────────────────────────────────────── */
+
+.deleteAccountBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(220,38,38,0.08);
+  border: 1px solid rgba(220,38,38,0.2);
+  color: rgba(252,165,165,0.7);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.deleteAccountBtn:hover { background: rgba(220,38,38,0.18); color: #fca5a5; }
+
+.deleteOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 6, 14, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 4rem 1.25rem 2rem;
+  overflow-y: auto;
+  z-index: 500;
+}
+
+.deleteModal {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  background: #0a0f1e;
+  border: 1px solid rgba(220,38,38,0.25);
+  border-radius: 1.125rem;
+  padding: 1.5rem;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+}
+
+.deleteModalHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: #f87171;
+}
+.deleteModalHeader h2 {
+  font-family: var(--font-futura-heavy);
+  font-size: 1rem;
+  color: var(--white);
+}
+
+.deleteWarning {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: rgba(242,241,240,0.6);
+}
+.deleteWarning strong { color: #fca5a5; }
+
+.modalInput {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  color: var(--white);
+  font-family: var(--font-futura-medium);
+  font-size: 0.85rem;
+}
+.modalInput:focus { outline: none; border-color: rgba(255,199,44,0.4); }
+
+.mergeSearchWrap { position: relative; }
+
+.mergeDropdown {
+  position: absolute;
+  top: calc(100% + 0.3rem);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: #0d1a33;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.mergeResult {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.82rem;
+  color: rgba(242,241,240,0.8);
+  transition: background 0.12s;
+}
+.mergeResult:hover { background: rgba(255,255,255,0.06); }
+
+.deleteConfirmLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: rgba(242,241,240,0.7);
+}
+
+.deleteConfirmBtn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.4rem;
+  font-size: 0.8rem;
+  font-family: var(--font-futura-medium);
+  background: rgba(220,38,38,0.15);
+  border: 1px solid rgba(220,38,38,0.35);
+  color: #fca5a5;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.deleteConfirmBtn:hover:not(:disabled) { background: rgba(220,38,38,0.3); color: #fff; }
+.deleteConfirmBtn:disabled { opacity: 0.35; cursor: not-allowed; }

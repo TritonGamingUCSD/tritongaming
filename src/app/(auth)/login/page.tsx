@@ -49,7 +49,8 @@ export default async function LoginPage({
         <LoginClient next={params.next} ref={params.ref} />
 
         <p className={styles.footnote}>
-          Google is the primary way in. Set up a backup email login from your Profile page.
+          Losing access to this Google account someday? Link another one from your Profile page
+          so you can still sign in with it.
         </p>
       </div>
 

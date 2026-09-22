@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { User, Users, Lock } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types/database';
 import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK } from '@/types/database';
@@ -10,11 +11,14 @@ import { Check } from 'lucide-react';
 import { canSetOrgTitle, type RoleGrant } from '@/lib/capabilities';
 import { hasBasicProfileInfo, resolveAvatarUrl, SOCIAL_PLATFORMS } from '@/lib/profile';
 import { deleteIfReplaced } from '@/lib/imageUpload';
+import { usePortalTabSync } from '@/lib/usePortalTabSync';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
-// import BackupLoginSection from './BackupLoginSection'; — temporarily disabled, see its render below
+import LinkGoogleSection from './LinkGoogleSection';
 import styles from './profile.module.css';
 
-export default function ProfileClient({ profile, roles, isUcsd, divisions }: { profile: Profile; roles: RoleGrant[]; isUcsd: boolean; divisions: { id: string; name: string }[] }) {
+type Tab = 'basic' | 'board' | 'security';
+
+export default function ProfileClient({ profile, roles, isUcsd, divisions, initialTab }: { profile: Profile; roles: RoleGrant[]; isUcsd: boolean; divisions: { id: string; name: string }[]; initialTab?: string }) {
   const divisionNameById = new Map(divisions.map((d) => [d.id, d.name]));
   const canEditOrgTitle = canSetOrgTitle(roles);
   // exec/lead appear on the public About page board automatically;
@@ -25,6 +29,18 @@ export default function ProfileClient({ profile, roles, isUcsd, divisions }: { p
   // officer/alumni once opted in) gets to control what shows beyond the
   // always-on name/picture/title — see BoardSection for how these are read.
   const isBoardEligible = roles.some((r) => r.role === 'exec' || r.role === 'lead' || r.role === 'officer' || r.role === 'alumni');
+  // A division lead can set an org title (ORG_TITLE_ROLES includes
+  // 'division') without being board-eligible (isBoardEligible doesn't) —
+  // the tab still needs to exist for them even though none of its other
+  // fields (board opt-in, socials, visibility) apply.
+  const showBoardTab = isBoardEligible || canEditOrgTitle;
+  const VALID_TABS: Tab[] = showBoardTab ? ['basic', 'board', 'security'] : ['basic', 'security'];
+  const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'basic');
+  const syncUrl = usePortalTabSync('profile');
+  function selectTab(t: Tab) {
+    setTab(t);
+    syncUrl(t);
+  }
   const [form, setForm] = useState({
     display_name: profile.display_name || '',
     year: profile.year || '',
@@ -148,7 +164,25 @@ export default function ProfileClient({ profile, roles, isUcsd, divisions }: { p
           </div>
         </div>
 
+        <div className={styles.formCol}>
+          <div className={styles.tabBar} role="tablist">
+            <button type="button" role="tab" aria-selected={tab === 'basic'} className={`${styles.tab} ${tab === 'basic' ? styles.tabActive : ''}`} onClick={() => selectTab('basic')}>
+              <User size={13} strokeWidth={1.5} aria-hidden="true" /> Basic Info
+            </button>
+            {showBoardTab && (
+              <button type="button" role="tab" aria-selected={tab === 'board'} className={`${styles.tab} ${tab === 'board' ? styles.tabActive : ''}`} onClick={() => selectTab('board')}>
+                <Users size={13} strokeWidth={1.5} aria-hidden="true" /> Public Board Card
+              </button>
+            )}
+            <button type="button" role="tab" aria-selected={tab === 'security'} className={`${styles.tab} ${tab === 'security' ? styles.tabActive : ''}`} onClick={() => selectTab('security')}>
+              <Lock size={13} strokeWidth={1.5} aria-hidden="true" /> Login &amp; Security
+            </button>
+          </div>
+
+        {(tab === 'basic' || tab === 'board') && (
         <form className={styles.form} onSubmit={handleSave}>
+          {tab === 'basic' && (
+          <>
           <div className={styles.fieldRow}>
             <label className={styles.fieldGroup}>
               <span className={styles.label}>Name <span className={styles.required}>*</span></span>
@@ -237,6 +271,33 @@ export default function ProfileClient({ profile, roles, isUcsd, divisions }: { p
             </label>
           </div>
 
+          <label className={styles.fieldGroup}>
+            <span className={styles.label}>Birthday</span>
+            <input
+              className={styles.input}
+              type="date"
+              value={form.birthday}
+              onChange={(e) => setForm((f) => ({ ...f, birthday: e.target.value }))}
+            />
+          </label>
+
+          <label className={styles.fieldGroup}>
+            <span className={styles.label}>Bio</span>
+            <textarea
+              className={`${styles.input} ${styles.textarea}`}
+              value={form.bio}
+              onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
+              maxLength={280}
+              rows={3}
+              placeholder="Tell the community a bit about yourself..."
+            />
+            <span className={styles.charCount}>{form.bio.length}/280</span>
+          </label>
+          </>
+          )}
+
+          {tab === 'board' && showBoardTab && (
+          <>
           <div className={styles.formSplit}>
             <div className={styles.fieldGroup}>
               <span className={styles.label}>Social Links</span>
@@ -273,16 +334,6 @@ export default function ProfileClient({ profile, roles, isUcsd, divisions }: { p
                   />
                 </label>
               )}
-
-              <label className={styles.fieldGroup}>
-                <span className={styles.label}>Birthday</span>
-                <input
-                  className={styles.input}
-                  type="date"
-                  value={form.birthday}
-                  onChange={(e) => setForm((f) => ({ ...f, birthday: e.target.value }))}
-                />
-              </label>
 
               {canOptIntoBoard && (
                 <label className={styles.checkboxField}>
@@ -324,19 +375,8 @@ export default function ProfileClient({ profile, roles, isUcsd, divisions }: { p
               </div>
             </div>
           )}
-
-          <label className={styles.fieldGroup}>
-            <span className={styles.label}>Bio</span>
-            <textarea
-              className={`${styles.input} ${styles.textarea}`}
-              value={form.bio}
-              onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
-              maxLength={280}
-              rows={3}
-              placeholder="Tell the community a bit about yourself..."
-            />
-            <span className={styles.charCount}>{form.bio.length}/280</span>
-          </label>
+          </>
+          )}
 
           {error && <p className={styles.error}>{error}</p>}
 
@@ -348,17 +388,19 @@ export default function ProfileClient({ profile, roles, isUcsd, divisions }: { p
             {saving ? 'Saving…' : saved ? <><Check size={15} strokeWidth={1.75} aria-hidden="true" /> Saved!</> : 'Save Changes'}
           </button>
         </form>
-      </div>
+        )}
 
-      {/* Temporarily disabled — see BACKUP_LOGIN_ENABLED in
-          login/LoginClient.tsx, its matching toggle. Re-enable by
-          uncommenting this render. */}
-      {/* <BackupLoginSection /> */}
-
-      <div className={styles.signOutSection}>
-        <button className={styles.signOutBtn} onClick={handleSignOut}>
-          Sign Out
-        </button>
+        {tab === 'security' && (
+          <div className={styles.securityTab}>
+            <LinkGoogleSection />
+            <div className={styles.signOutSection}>
+              <button className={styles.signOutBtn} onClick={handleSignOut}>
+                Sign Out
+              </button>
+            </div>
+          </div>
+        )}
+        </div>
       </div>
     </div>
   );

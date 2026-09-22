@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/capabilities';
 import type { RoleGrant } from '@/lib/capabilities';
+import { fetchLinkedEmails, pickDisplayEmails } from '@/lib/linkedEmails';
 import type RoleManager from './RoleManager';
 
 // createElement instead of JSX since this is a plain .ts module, not .tsx.
@@ -44,7 +45,7 @@ export async function getAdminData(roles: RoleGrant[]) {
     const [{ data: usersData, error: usersError }, { data: divisionsData }] = await Promise.all([
       supabase
         .from('profiles')
-        .select('id, display_name, avatar_url, custom_avatar_url, gamer_tag, created_at, user_roles!user_roles_user_id_fkey(role, division_id)')
+        .select('id, display_name, avatar_url, custom_avatar_url, gamer_tag, created_at, preferred_email, user_roles!user_roles_user_id_fkey(role, division_id)')
         .order('display_name', { ascending: true })
         .limit(300),
       supabase.from('divisions').select('id, name, slug').order('name'),
@@ -64,6 +65,18 @@ export async function getAdminData(roles: RoleGrant[]) {
       allUsers = allUsers.map((u) => ({ ...u, email: emailById.get(u.id) ?? null }));
     } catch (err) {
       console.error('[admin] failed to load user emails:', err);
+    }
+
+    // A user can have more than one linked sign-in email (a second Google
+    // account — see LinkGoogleSection.tsx) — auth.users.email above is
+    // only ever the most-recently-set one, so
+    // this fills in every linked email for the Role Manager and Admin
+    // overview's roster to show instead of just that single value.
+    try {
+      const emailsByUserId = await fetchLinkedEmails(createServiceClient(), allUsers.map((u) => u.id));
+      allUsers = allUsers.map((u) => ({ ...u, linkedEmails: pickDisplayEmails(emailsByUserId.get(u.id) ?? [], u.preferred_email) }));
+    } catch (err) {
+      console.error('[admin] failed to load linked emails:', err);
     }
   }
 

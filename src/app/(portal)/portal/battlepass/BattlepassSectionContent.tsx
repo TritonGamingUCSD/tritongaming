@@ -982,7 +982,7 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
                   <div className={styles.targetHistory}>
                     {correctHistory.map((t) => (
                       <div key={t.id} className={`${styles.targetHistoryRow} ${t.reversed_at ? styles.targetHistoryReversed : ''}`}>
-                        <div>
+                        <div className={styles.targetHistoryInfo}>
                           <div className={styles.historyType}>{TYPE_LABELS[t.type] ?? t.type}</div>
                           <div className={styles.historyMeta}>
                             {t.note || TYPE_LABELS[t.type] || t.type}

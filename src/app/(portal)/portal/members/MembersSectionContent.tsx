@@ -203,8 +203,11 @@ export default function MembersSectionContent({ rows, roles }: { rows: MemberPro
                 the public sees) don't apply to email, and gamer tag is
                 always-visible everywhere per how board_visibility is
                 defined. */}
-            {selected.email && (
-              <div className={styles.detailMeta}><Mail size={14} strokeWidth={1.75} aria-hidden="true" /> {selected.email}</div>
+            {selected.emails && selected.emails.length > 0 && (
+              <div className={styles.detailMeta}>
+                <Mail size={14} strokeWidth={1.75} aria-hidden="true" />
+                {selected.emails.map((e) => e.email).join(' · ')}
+              </div>
             )}
             {selected.divisionName && <div className={styles.detailMeta}>{selected.divisionName}</div>}
             {isVisible(selected.board_visibility, 'year_major') && (selected.major || selected.year) && (

@@ -2,10 +2,11 @@
 
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
-import { Search, Gamepad2, Check, X } from 'lucide-react';
+import { Search, Gamepad2, Check, X, Trash2, AlertTriangle } from 'lucide-react';
 import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK, ASSIGNABLE_ROLES } from '@/types/database';
 import type { AppRole } from '@/types/database';
 import { resolveAvatarUrl } from '@/lib/profile';
+import type { LinkedEmail } from '@/lib/linkedEmails';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import styles from './RoleManager.module.css';
 
@@ -23,6 +24,8 @@ interface User {
   created_at: string;
   user_roles: RoleGrant[];
   email?: string | null;
+  linkedEmails?: LinkedEmail[];
+  preferred_email?: string | null;
 }
 
 // Highest-privilege role first, so a user's badge row always reads
@@ -50,6 +53,70 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
   const [bulkDivisionId, setBulkDivisionId] = useState('');
   const [bulkApplying, setBulkApplying] = useState(false);
   const [bulkError, setBulkError] = useState<string | null>(null);
+
+  // Delete / merge account — see admin_delete_account's own comment for
+  // exactly what happens to a deleted or merged-away account's data.
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
+  const [mergeMode, setMergeMode] = useState(false);
+  const [mergeQuery, setMergeQuery] = useState('');
+  const [mergeTarget, setMergeTarget] = useState<User | null>(null);
+  const [confirmName, setConfirmName] = useState('');
+  const [confirmChecked, setConfirmChecked] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
+  function openDeleteModal(user: User) {
+    setDeleteTarget(user);
+    setMergeMode(false);
+    setMergeQuery('');
+    setMergeTarget(null);
+    setConfirmName('');
+    setConfirmChecked(false);
+    setDeleteError('');
+  }
+
+  function closeDeleteModal() {
+    if (deleting) return;
+    setDeleteTarget(null);
+  }
+
+  const mergeResults = useMemo(() => {
+    if (!deleteTarget || mergeQuery.trim().length < 2) return [];
+    const q = mergeQuery.trim().toLowerCase();
+    return users
+      .filter((u) => u.id !== deleteTarget.id && (u.display_name || '').toLowerCase().includes(q))
+      .slice(0, 8);
+  }, [users, mergeQuery, deleteTarget]);
+
+  const targetNameMatches = !!deleteTarget && confirmName.trim().toLowerCase() === (deleteTarget.display_name || '').trim().toLowerCase() && confirmName.trim().length > 0;
+  const canConfirmDelete = targetNameMatches && confirmChecked && (!mergeMode || !!mergeTarget) && !deleting;
+
+  async function handleConfirmDelete() {
+    if (!deleteTarget || !canConfirmDelete) return;
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      const res = await fetch(`/api/admin/users/${deleteTarget.id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reassign_to: mergeMode ? mergeTarget?.id : undefined }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setDeleteError(data.error || `Failed (${res.status}).`);
+        return;
+      }
+      setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id));
+      setSelectedIds((prev) => { const next = new Set(prev); next.delete(deleteTarget.id); return next; });
+      setToast(mergeMode ? `Merged ${deleteTarget.display_name || 'account'} into ${mergeTarget?.display_name || 'the other account'}` : `Deleted ${deleteTarget.display_name || 'account'}`);
+      setTimeout(() => setToast(null), 3000);
+      setDeleteTarget(null);
+    } catch {
+      setDeleteError('Network error. Please try again.');
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   const divisionNameById = useMemo(() => new Map(divisions.map((d) => [d.id, d.name])), [divisions]);
 
@@ -287,7 +354,13 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
                         Joined {new Date(user.created_at).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', year: 'numeric' })}
                       </span>
                     </div>
-                    {user.email && <div className={styles.userEmail}>{user.email}</div>}
+                    {user.linkedEmails && user.linkedEmails.length > 0 ? (
+                      <div className={styles.userEmail}>
+                        {user.linkedEmails.map((e) => e.email).join(' · ')}
+                      </div>
+                    ) : (
+                      user.email && <div className={styles.userEmail}>{user.email}</div>
+                    )}
                   </div>
                 </div>
 
@@ -314,6 +387,9 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
                       ))
                     )}
                     <button className={styles.roleBtn} onClick={() => startEditing(user)}>Edit Roles</button>
+                    <button className={styles.deleteAccountBtn} onClick={() => openDeleteModal(user)} aria-label={`Delete ${user.display_name || 'user'}'s account`}>
+                      <Trash2 size={13} strokeWidth={1.75} aria-hidden="true" />
+                    </button>
                   </div>
                 ) : (
                   <div className={styles.editPanel}>
@@ -367,6 +443,71 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
       <div className={styles.footer}>
         Showing {filtered.length} of {users.length} users
       </div>
+
+      {deleteTarget && (
+        <div className={styles.deleteOverlay} onClick={closeDeleteModal}>
+          <div className={styles.deleteModal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.deleteModalHeader}>
+              <AlertTriangle size={20} strokeWidth={1.75} aria-hidden="true" />
+              <h2>{mergeMode ? `Merge ${deleteTarget.display_name || 'this account'}` : `Delete ${deleteTarget.display_name || 'this account'}`}</h2>
+            </div>
+
+            <p className={styles.deleteWarning}>
+              This permanently removes their profile, tickets, points, redemptions, and role
+              history. <strong>This cannot be undone.</strong>
+            </p>
+
+            <label className={styles.checkboxLabel}>
+              <input type="checkbox" checked={mergeMode} onChange={(e) => { setMergeMode(e.target.checked); setMergeTarget(null); setMergeQuery(''); }} />
+              <span>Merge their data into another account instead of deleting it</span>
+            </label>
+
+            {mergeMode && (
+              <div className={styles.mergeSearchWrap}>
+                <input
+                  className={styles.modalInput}
+                  placeholder="Search the account to merge into…"
+                  value={mergeTarget ? mergeTarget.display_name || 'Unnamed' : mergeQuery}
+                  onChange={(e) => { setMergeTarget(null); setMergeQuery(e.target.value); }}
+                />
+                {mergeResults.length > 0 && !mergeTarget && (
+                  <div className={styles.mergeDropdown}>
+                    {mergeResults.map((u) => (
+                      <button key={u.id} type="button" className={styles.mergeResult} onClick={() => { setMergeTarget(u); setMergeQuery(''); }}>
+                        {u.display_name || 'Unnamed'}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <label className={styles.deleteConfirmLabel}>
+              Type <strong>{deleteTarget.display_name || 'Unnamed'}</strong> to confirm
+              <input
+                className={styles.modalInput}
+                value={confirmName}
+                onChange={(e) => setConfirmName(e.target.value)}
+                autoComplete="off"
+              />
+            </label>
+
+            <label className={styles.checkboxLabel}>
+              <input type="checkbox" checked={confirmChecked} onChange={(e) => setConfirmChecked(e.target.checked)} />
+              <span>I understand this cannot be undone</span>
+            </label>
+
+            {deleteError && <div className={styles.saveError}>{deleteError}</div>}
+
+            <div className={styles.editActions}>
+              <button className={styles.roleBtn} onClick={closeDeleteModal} disabled={deleting}>Cancel</button>
+              <button className={styles.deleteConfirmBtn} onClick={handleConfirmDelete} disabled={!canConfirmDelete}>
+                {deleting ? 'Working…' : mergeMode ? 'Merge & Delete' : 'Delete Account'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

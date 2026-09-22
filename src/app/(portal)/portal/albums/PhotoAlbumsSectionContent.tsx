@@ -19,13 +19,13 @@ interface AlbumRow {
 
 const EMPTY_DRAFT = { title: '', url: '' };
 
-// Google Photos share links generally allow being framed (unlike most
-// Google properties) — embedded directly rather than just linked out, so
-// browsing old event photos doesn't mean leaving the portal. The "Open in
-// Google Photos" link next to every embed is the fallback for the cases
-// where a specific album's sharing settings (or a future Google policy
-// change) block framing — the iframe alone would just be a silent blank
-// box with no explanation otherwise.
+// Used to embed this via <iframe> — Google Photos sends
+// X-Frame-Options: SAMEORIGIN on every share-album page, so that always
+// failed ("refused to connect"), not just for some albums. Tried an Open
+// Graph cover-photo preview card next (the same fix used on the public
+// event page — see src/lib/googlePhotosAlbum.ts), but a card full of
+// someone else's cropped photo read as visually noisy sitting in a list
+// of plain rows — a plain link out is what's left.
 export default function PhotoAlbumsSectionContent({ albums: initial, canManage }: { albums: AlbumRow[]; canManage: boolean }) {
   const [albums, setAlbums] = useState(initial);
   const [adding, setAdding] = useState(false);
@@ -143,15 +143,6 @@ export default function PhotoAlbumsSectionContent({ albums: initial, canManage }
                       </button>
                     )}
                   </div>
-                </div>
-                <div className={styles.embedWrap}>
-                  <iframe
-                    src={a.url}
-                    title={a.title}
-                    loading="lazy"
-                    className={styles.embed}
-                    referrerPolicy="no-referrer-when-downgrade"
-                  />
                 </div>
               </div>
             );

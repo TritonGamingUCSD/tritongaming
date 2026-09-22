@@ -564,10 +564,20 @@
 
 .targetHistoryReversed { opacity: 0.5; }
 
+/* flex:1 (not the amount/button's auto content width) is what pins this
+   row's own varying title length so it never shifts what comes after it —
+   without it, .targetHistoryAmount's box shifted left/right per row
+   depending on how wide the title text next to it happened to be, on top
+   of not being a fixed width itself (see below), which together produced
+   a ragged, uncentered amount column down the whole list. */
+.targetHistoryInfo { flex: 1; min-width: 0; }
+
 .targetHistoryAmount {
   font-family: var(--font-futura-medium);
   font-size: 0.8rem;
-  min-width: 3.5rem;
+  width: 5.5rem;
+  flex-shrink: 0;
+  text-align: right;
 }
 
 .reverseBtn {

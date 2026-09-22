@@ -50,6 +50,37 @@
   gap: 0.75rem;
 }
 
+.formCol {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.tabBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.4rem;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-family: var(--font-futura-medium);
+  color: rgba(242,241,240,0.45);
+  padding: 0.6rem 0.25rem;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.tab:hover { color: rgba(242,241,240,0.7); }
+.tabActive { color: var(--yellow); border-bottom-color: var(--yellow); }
+.tabActive:hover { color: var(--yellow); }
+
 /* Sticky so it actually reads as a sidebar next to the (much taller) form,
    instead of just being the first thing above it that scrolls away
    immediately — the literal "move it to the side" ask. */
@@ -229,7 +260,24 @@
   cursor: pointer;
 }
 
-.checkboxField input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--yellow); }
+.checkboxField input[type="checkbox"],
+.checkboxField input[type="radio"] { width: 16px; height: 16px; accent-color: var(--yellow); }
+
+.preferredEmailBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.875rem 1rem;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 0.625rem;
+}
+
+.preferredEmailLabel {
+  font-size: 0.78rem;
+  color: rgba(242,241,240,0.5);
+}
 
 .visibilityGrid {
   display: grid;
@@ -285,7 +333,6 @@
 
 .backupLoginSection {
   max-width: 640px;
-  margin: 2rem auto 0;
   padding: 1.25rem 1.5rem;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.07);
@@ -299,6 +346,43 @@
   margin-bottom: 0.5rem;
 }
 
+.identityList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.identityRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 0.5rem;
+  font-size: 0.82rem;
+  color: rgba(242,241,240,0.85);
+}
+
+.unlinkBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(242,241,240,0.5);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.unlinkBtn:hover:not(:disabled) { background: rgba(220,38,38,0.15); color: #fca5a5; }
+.unlinkBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
 .backupLoginHint {
   font-size: 0.8rem;
   line-height: 1.5;
@@ -306,23 +390,15 @@
   margin-bottom: 1rem;
 }
 
-.backupLoginForm {
+.securityTab {
   display: flex;
   flex-direction: column;
-  gap: 0.875rem;
-}
-
-.backupLoginSuccess {
-  font-size: 0.85rem;
-  color: #4ade80;
-  background: rgba(74, 222, 128, 0.08);
-  border: 1px solid rgba(74, 222, 128, 0.2);
-  border-radius: 0.5rem;
-  padding: 0.75rem 1rem;
+  gap: 1.25rem;
+  padding-top: 1.5rem;
 }
 
 .signOutSection {
-  margin-top: 2.5rem;
+  margin-top: 1rem;
   padding-top: 1.5rem;
   border-top: 1px solid rgba(255,255,255,0.06);
 }

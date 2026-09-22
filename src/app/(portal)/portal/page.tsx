@@ -153,7 +153,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       id: 'profile', icon: <User size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Profile',
       description: 'Update your info and preferences',
       group: 'Yours',
-      content: <ProfileClient profile={profile} roles={roles} isUcsd={isVerifiedMember(roles)} divisions={divisions} />,
+      content: <ProfileClient profile={profile} roles={roles} isUcsd={isVerifiedMember(roles)} divisions={divisions} initialTab={requestedTab} />,
     },
     {
       id: 'activity', icon: <History size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Activity',

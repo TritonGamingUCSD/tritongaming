@@ -152,7 +152,13 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
                         )}
                         <span>
                           {admin.display_name || 'Unnamed'}
-                          {admin.email && <span className={styles.sectionHint}> · {admin.email}</span>}
+                          {admin.linkedEmails && admin.linkedEmails.length > 0 ? (
+                            <span className={styles.sectionHint}>
+                              {' · '}{admin.linkedEmails.map((e) => e.email).join(' · ')}
+                            </span>
+                          ) : (
+                            admin.email && <span className={styles.sectionHint}> · {admin.email}</span>
+                          )}
                         </span>
                       </span>
                       <span>{new Date(admin.created_at).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', year: 'numeric' })}</span>

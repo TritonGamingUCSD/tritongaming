@@ -36,6 +36,29 @@ export async function GET(request: Request) {
         }
       }
 
+      // handle_new_user's 'ucsd' auto-grant only fires on the auth.users
+      // INSERT that happens at original signup — linking a ucsd.edu Google
+      // account later (LinkGoogleSection.tsx) adds an auth.identities row
+      // to the *existing* user, no new auth.users row, so that trigger
+      // never runs for it. This re-checks on every callback (sign-in or
+      // link) against the user's current full identity list, so the role
+      // shows up the moment a ucsd.edu identity actually exists on the
+      // account, whichever one that was.
+      if (data.user) {
+        // Not data.user straight off the exchange — that payload isn't
+        // guaranteed to carry the full identities array. A fresh
+        // getUser() call is the same authoritative source every other
+        // route in this codebase uses for "who is this, completely".
+        const { data: { user: freshUser } } = await supabase.auth.getUser();
+        const hasUcsdIdentity = (freshUser?.identities ?? []).some((identity) => {
+          const email = (identity.identity_data?.email as string | undefined) ?? '';
+          return email.toLowerCase().endsWith('@ucsd.edu');
+        });
+        if (hasUcsdIdentity) {
+          await createServiceClient().rpc('grant_ucsd_role', { _user_id: data.user.id });
+        }
+      }
+
       const redirectUrl = new URL(next, origin);
       return NextResponse.redirect(redirectUrl);
     }
