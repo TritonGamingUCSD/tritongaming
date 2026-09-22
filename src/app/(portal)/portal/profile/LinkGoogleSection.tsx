@@ -1,10 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import type { UserIdentity } from '@supabase/supabase-js';
 import { X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import styles from './profile.module.css';
+
+// Error codes auth/callback/route.ts can hand back after a failed
+// linkIdentity() redirect round-trip — see that route's own comment for
+// why this can't just be a rejected promise like a normal API call.
+const LINK_ERROR_MESSAGES: Record<string, string> = {
+  identity_already_exists: 'That Google account is already linked to a different profile. Sign out and use "Continue with Google" with it directly if that’s the account you meant to sign into.',
+  manual_linking_disabled: 'Account linking isn’t turned on for this site yet — an admin needs to enable "Manual linking" in Supabase’s Auth settings.',
+};
 
 // Sign-in here is Google OAuth only (see login/page.tsx) — for most members
 // that's fine indefinitely, but UC San Diego deletes @ucsd.edu Google
@@ -28,6 +37,8 @@ import styles from './profile.module.css';
 // — surfaced as a normal error here, not a silent failure. Same
 // requirement for unlinkIdentity() below.
 export default function LinkGoogleSection() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [userId, setUserId] = useState<string | null>(null);
   const [identities, setIdentities] = useState<UserIdentity[] | null>(null);
   const [preferred, setPreferred] = useState<string | null>(null);
@@ -35,6 +46,23 @@ export default function LinkGoogleSection() {
   const [linking, setLinking] = useState(false);
   const [unlinkingId, setUnlinkingId] = useState<string | null>(null);
   const [error, setError] = useState('');
+
+  // A failed link attempt lands back here (still on this tab — see
+  // auth/callback/route.ts) as ?error=&error_description= rather than a
+  // promise rejection, since the browser fully navigated away to Google
+  // and back in between. Read once, then strip it from the URL so a
+  // refresh doesn't keep re-showing a stale error.
+  useEffect(() => {
+    const code = searchParams.get('error');
+    if (!code) return;
+    const description = searchParams.get('error_description');
+    setError(LINK_ERROR_MESSAGES[code] || description || 'Failed to link that account. Please try again.');
+    const cleaned = new URLSearchParams(searchParams.toString());
+    cleaned.delete('error');
+    cleaned.delete('error_description');
+    router.replace(`/portal?${cleaned.toString()}`, { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function loadIdentities() {
     const supabase = createClient();

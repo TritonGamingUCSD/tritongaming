@@ -8,8 +8,20 @@ export async function GET(request: Request) {
   const next = searchParams.get('next') ?? '/portal';
   const ref = searchParams.get('ref');
 
+  // A failed linkIdentity() (e.g. that Google account is already linked
+  // to someone else's profile) comes back here the same way any OAuth
+  // failure does — a redirect carrying error/error_code instead of a
+  // usable code, never a rejected promise back in LinkGoogleSection.tsx
+  // (that call already returned once the browser navigated to Google).
+  const urlErrorCode = searchParams.get('error_code');
+  const urlErrorDescription = searchParams.get('error_description') || searchParams.get('error');
+
+  const supabase = await createClient();
+
+  let exchangeErrorCode: string | undefined;
+  let exchangeErrorDescription: string | undefined;
+
   if (code) {
-    const supabase = await createClient();
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
       // Only ever sets referred_by, never overwrites it — a returning
@@ -62,7 +74,22 @@ export async function GET(request: Request) {
       const redirectUrl = new URL(next, origin);
       return NextResponse.redirect(redirectUrl);
     }
+    exchangeErrorCode = error.code;
+    exchangeErrorDescription = error.message;
   }
 
-  return NextResponse.redirect(new URL('/login?error=auth_failed', origin));
+  const errorCode = urlErrorCode || exchangeErrorCode || 'auth_failed';
+  const errorDescription = urlErrorDescription || exchangeErrorDescription;
+
+  // A link attempt (LinkGoogleSection.tsx) fails without ever touching the
+  // caller's existing session — if they're still signed in, this wasn't a
+  // sign-in attempt at all, so bouncing them to the logged-out /login page
+  // would be both wrong and confusing. Send them back to wherever they
+  // were (next) with the error attached instead; a genuine failed sign-in
+  // (no session either way) keeps going to /login as before.
+  const { data: { user: currentUser } } = await supabase.auth.getUser();
+  const failureTarget = currentUser ? new URL(next, origin) : new URL('/login', origin);
+  failureTarget.searchParams.set('error', errorCode);
+  if (errorDescription) failureTarget.searchParams.set('error_description', errorDescription);
+  return NextResponse.redirect(failureTarget);
 }
