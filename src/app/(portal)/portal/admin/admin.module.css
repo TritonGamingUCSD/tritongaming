@@ -240,6 +240,69 @@
   border-radius: var(--radius-pill);
 }
 
+.adminCell {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+}
+
+.adminAvatar { border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+
+.adminAvatarFallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(255,199,44,0.15);
+  color: var(--yellow);
+  font-family: var(--font-futura-heavy);
+  font-size: 0.8rem;
+}
+
+.activityBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: fit-content;
+  padding: 0.35rem 0.7rem;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-pill);
+  color: rgba(242,241,240,0.7);
+  font-family: var(--font-futura-medium);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.activityBtn:hover { background: rgba(255,199,44,0.1); border-color: rgba(255,199,44,0.3); color: var(--yellow); }
+
+.activityList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.activityRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  font-size: 0.85rem;
+}
+
+.activityAction {
+  font-family: var(--font-futura-heavy);
+  color: var(--white);
+}
+
 /* Same problem as events.module.css's table: a 3-column grid still leaves
    each event's title squeezed into less than half the screen on a phone,
    ellipsis-free, right next to two number columns. Stack the title on its

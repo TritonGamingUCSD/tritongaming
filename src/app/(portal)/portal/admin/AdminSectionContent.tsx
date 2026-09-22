@@ -1,10 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { ReactNode } from 'react';
-import { Pencil, BarChart3, History, X, Server, Users as UsersIcon } from 'lucide-react';
+import { Pencil, BarChart3, History, Activity, X, Server, Users as UsersIcon } from 'lucide-react';
 import { usePortalTabSync } from '@/lib/usePortalTabSync';
+import { resolveAvatarUrl } from '@/lib/profile';
+import { PACIFIC_TZ } from '@/lib/timezone';
 import RoleManager from './RoleManager';
 import SystemStats from './SystemStats';
 import StatsClient from './stats/StatsClient';
@@ -46,6 +49,35 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
   }
   const [historyOpen, setHistoryOpen] = useState(false);
 
+  // Who holds the admin role — filtered client-side from allUsers rather
+  // than a separate query, since getAdminData.ts already loads every
+  // user's role grants for Role Manager (isAdmin-gated the same way).
+  const admins = allUsers.filter((u) => u.user_roles.some((r) => r.role === 'admin'));
+
+  // Per-admin "what have they done lately" — see get_admin_activity in
+  // 20260921150000_add_admin_activity_feed.sql for what it aggregates and
+  // what it deliberately leaves out (tier edits aren't attributable to an
+  // admin at the DB level yet).
+  const [activityFor, setActivityFor] = useState<{ id: string; title: string } | null>(null);
+  const [activityEntries, setActivityEntries] = useState<{ action: string; detail: string; occurred_at: string }[] | null>(null);
+  const [activityError, setActivityError] = useState('');
+
+  useEffect(() => {
+    if (!activityFor) return;
+    setActivityEntries(null);
+    setActivityError('');
+    (async () => {
+      try {
+        const res = await fetch(`/api/admin/activity?user_id=${activityFor.id}`);
+        const json = await res.json();
+        if (!res.ok) { setActivityError(json.error || 'Failed to load activity.'); return; }
+        setActivityEntries(json.entries ?? []);
+      } catch {
+        setActivityError('Network error loading activity.');
+      }
+    })();
+  }, [activityFor]);
+
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
@@ -80,6 +112,7 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
       </div>
 
       {tab === 'overview' && (
+        <>
         <div className={styles.statsGrid}>
           {stats.map(({ label, value, icon }) => (
             <div key={label} className={styles.statCard}>
@@ -91,6 +124,53 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
             </div>
           ))}
         </div>
+
+        {isAdmin && (
+          <section className={styles.section}>
+            <div className={styles.sectionHeader}>
+              <h2 className={styles.sectionLabel}>Admins</h2>
+              <span className={styles.sectionHint}>Everyone with the admin role — click a name to see what they&apos;ve done lately</span>
+            </div>
+            {admins.length === 0 ? (
+              <p className={styles.sectionHint}>No one currently holds the admin role.</p>
+            ) : (
+              <div className={styles.table}>
+                <div className={styles.tableHeader}>
+                  <span>Admin</span>
+                  <span>Joined</span>
+                  <span>Activity</span>
+                </div>
+                {admins.map((admin) => {
+                  const avatarUrl = resolveAvatarUrl(admin);
+                  return (
+                    <div key={admin.id} className={styles.tableRow}>
+                      <span className={styles.adminCell}>
+                        {avatarUrl ? (
+                          <Image src={avatarUrl} alt="" width={28} height={28} className={styles.adminAvatar} unoptimized referrerPolicy="no-referrer" />
+                        ) : (
+                          <span className={styles.adminAvatarFallback}>{(admin.display_name || '?')[0].toUpperCase()}</span>
+                        )}
+                        <span>
+                          {admin.display_name || 'Unnamed'}
+                          {admin.email && <span className={styles.sectionHint}> · {admin.email}</span>}
+                        </span>
+                      </span>
+                      <span>{new Date(admin.created_at).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', year: 'numeric' })}</span>
+                      <button
+                        type="button"
+                        className={styles.activityBtn}
+                        onClick={() => setActivityFor({ id: admin.id, title: admin.display_name || 'Unnamed' })}
+                      >
+                        <Activity size={13} strokeWidth={1.5} aria-hidden="true" /> View
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        )}
+        </>
       )}
 
       {tab === 'roles' && isAdmin && (
@@ -119,6 +199,37 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
               <X size={18} strokeWidth={1.75} aria-hidden="true" />
             </button>
             <RoleHistoryClient entries={roleHistoryEntries} divisions={divisions} />
+          </div>
+        </div>
+      )}
+
+      {activityFor && (
+        <div className={styles.historyOverlay} onClick={() => setActivityFor(null)}>
+          <div className={styles.historyModal} onClick={(e) => e.stopPropagation()}>
+            <button type="button" className={styles.historyClose} onClick={() => setActivityFor(null)} aria-label="Close activity">
+              <X size={18} strokeWidth={1.75} aria-hidden="true" />
+            </button>
+            <h1 className={styles.title}>{activityFor.title}&apos;s Activity</h1>
+            {activityError && <p className={styles.sectionHint}>{activityError}</p>}
+            {activityEntries === null ? (
+              <p className={styles.sectionHint}>Loading…</p>
+            ) : activityEntries.length === 0 ? (
+              <p className={styles.sectionHint}>Nothing tracked yet — see the activity feed&apos;s own note on what it does and doesn&apos;t cover.</p>
+            ) : (
+              <ul className={styles.activityList}>
+                {activityEntries.map((entry, i) => (
+                  <li key={i} className={styles.activityRow}>
+                    <div>
+                      <span className={styles.activityAction}>{entry.action}</span>
+                      <span className={styles.sectionHint}> {entry.detail}</span>
+                    </div>
+                    <span className={styles.sectionHint}>
+                      {new Date(entry.occurred_at).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
       )}
