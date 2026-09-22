@@ -21,7 +21,7 @@ export async function performCheckin(
 
   if (updateError) return { error: 'Failed to update ticket' };
 
-  const { error: pointsError } = await serviceClient.rpc('award_checkin_points', {
+  const { data: pointsAwarded, error: pointsError } = await serviceClient.rpc('award_checkin_points', {
     _ticket_id: ticket.id,
     _checked_in_by: checkedInBy,
   });
@@ -33,7 +33,7 @@ export async function performCheckin(
     title: "You're checked in!",
     body: [
       eventTitle ? `Enjoy ${eventTitle}.` : 'Enjoy the event.',
-      !pointsError && pointsValue > 0 ? `+${pointsValue} points earned.` : null,
+      pointsAwarded && pointsValue > 0 ? `+${pointsValue} points earned.` : null,
     ].filter(Boolean).join(' '),
     href: '/portal/tickets',
   });

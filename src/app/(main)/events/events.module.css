@@ -65,9 +65,16 @@
   padding: 0 clamp(1rem, 4vw, 2.5rem) var(--sp-xl);
 }
 
+/* auto-fit, not auto-fill — auto-fill reserves a track for every column
+   that *could* fit even when there's no card to put in it, so with fewer
+   cards than columns the real ones got pushed into the left-most tracks
+   with empty phantom ones eating the rest of the row's width, instead of
+   the cards themselves centering/filling it. auto-fit collapses those
+   phantom tracks, so the 1fr max lets the real cards expand to fill the
+   row evenly regardless of count. */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   justify-items: center;
   gap: 1.5rem;
   max-width: var(--max-width);

@@ -18,14 +18,19 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // calendar and docs makes sense before they hold any real position.
   view_events: ['officer', 'lead', 'exec', 'admin', 'recruit'],
   delete_events: ['admin'],
-  checkin: ['officer', 'lead', 'exec', 'admin'],
+  // recruit can staff check-in before formally becoming Officer.
+  checkin: ['officer', 'lead', 'exec', 'admin', 'recruit'],
   // Public marketing copy is an org-wide, exec-tier call — not tied to any
   // one committee a Lead runs, unlike manage_events/manage_docs above.
   manage_site_content: ['exec', 'admin'],
   manage_division: ['division', 'lead', 'exec', 'admin'],
   manage_divisions_directory: ['exec', 'admin'],
-  view_members: ['officer', 'lead', 'exec', 'admin'],
-  view_admin_dashboard: ['exec', 'admin'],
+  // alumni stay read-only-visible here, same as view_photo_albums/view_docs.
+  view_members: ['officer', 'lead', 'exec', 'admin', 'alumni'],
+  // exec deliberately excluded — they get manage_site_content (Edit Site
+  // Content) as its own separate section instead of the full Admin
+  // Overview/Roles/Analytics/System dashboard.
+  view_admin_dashboard: ['admin'],
   manage_roles: ['admin'],
   // UI-gating only — the QR Studio doesn't write to the database, so unlike
   // every other row here it has no RLS-backed counterpart in the DB's
@@ -41,10 +46,10 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // prospect would want, unlike day-to-day ops docs or the events calendar.
   view_photo_albums: ['officer', 'division', 'lead', 'exec', 'admin', 'recruit', 'alumni'],
   manage_photo_albums: ['lead', 'exec', 'admin'],
-  // Creating/editing/retiring shop items — same tier as manage_events/
-  // manage_docs, a lead-level ops decision, not something an officer signs
-  // off on alone.
-  manage_rewards_shop: ['lead', 'exec', 'admin'],
+  // Creating/editing/retiring shop items (member Rewards and Battlepass) —
+  // tightened to exec+ only, same bar as manage_points' "correction-level
+  // ops decisions are exec+" reasoning below.
+  manage_rewards_shop: ['exec', 'admin'],
   // Scanning a member's redemption QR and confirming a reward was handed
   // over — same audience as checkin, since it happens at the same events
   // check-in already staffs.
@@ -87,6 +92,22 @@ export function hasCapability(roles: RoleGrant[], capability: Capability, divisi
  */
 export function isVerifiedMember(roles: RoleGrant[]): boolean {
   return roles.length > 0;
+}
+
+// Rewards (points earned at check-in, referral bonuses, the shop) is
+// restricted to current UCSD students and club staff — mirrors
+// is_rewards_eligible() in 20260922110000_restrict_rewards_to_ucsd.sql,
+// the actual enforcement boundary (award_checkin_points/claim_reward);
+// this is UI-gating only. 'ucsd' covers verified students; the org
+// position roles are included since holding one for a UCSD club implies
+// current UCSD affiliation even without an auto-verified @ucsd.edu email.
+// Deliberately excludes 'alumni' (no longer a current student) and
+// 'recruit' (not yet a verified member) — both keep every other tier of
+// access (docs, events, photo albums), just not this one.
+const REWARDS_ELIGIBLE_ROLES: AppRole[] = ['ucsd', 'officer', 'lead', 'exec', 'division', 'admin'];
+
+export function isRewardsEligible(roles: RoleGrant[]): boolean {
+  return roles.some((r) => REWARDS_ELIGIBLE_ROLES.includes(r.role));
 }
 
 // Gates the profile's self-set "org title" field (e.g. "Marketing Lead"),

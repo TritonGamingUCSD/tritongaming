@@ -18,7 +18,7 @@ export interface BattlepassTransactionRow {
 export async function getMyBattlepassData(userId: string) {
   const supabase = await createClient();
 
-  const [{ data: transactions }, { data: allAmounts }] = await Promise.all([
+  const [{ data: transactions }, { data: allAmounts }, { data: profile }] = await Promise.all([
     supabase
       .from('officer_point_transactions')
       .select('id, amount, type, note, created_at, reversed_at, reverses_transaction_id')
@@ -26,6 +26,10 @@ export async function getMyBattlepassData(userId: string) {
       .order('created_at', { ascending: false })
       .limit(50),
     supabase.from('officer_point_transactions').select('amount, reversed_at').eq('user_id', userId),
+    // Same single leaderboard_anonymous preference the member Rewards
+    // leaderboard uses — one "am I anonymous on leaderboards" setting,
+    // not a separate one per system.
+    supabase.from('profiles').select('leaderboard_anonymous').eq('id', userId).single(),
   ]);
 
   const rows = transactions ?? [];
@@ -39,5 +43,6 @@ export async function getMyBattlepassData(userId: string) {
     transactions: rows as BattlepassTransactionRow[],
     balance,
     lifetimeEarned,
+    leaderboardAnonymous: profile?.leaderboard_anonymous ?? true,
   };
 }

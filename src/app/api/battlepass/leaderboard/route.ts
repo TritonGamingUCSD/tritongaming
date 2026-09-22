@@ -3,11 +3,10 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { getOfficerTier, BATTLEPASS_ROLES, fetchOfficerTiers } from '@/lib/officerTiers';
 
-// Unlike the member leaderboard (opt-in, per-field redaction — see
-// /api/points/leaderboard), this one has no privacy toggles: it's a
-// smaller, already-trusted internal group (officer-tier roles only, and
-// only visible to other officer-tier roles), not the general membership,
-// so full names/points are shown outright.
+// Every officer-tier role holder is on this leaderboard, no opt-in —
+// same as the member Rewards leaderboard. Exact points are always shown;
+// the only choice is anonymous vs. named (profiles.leaderboard_anonymous,
+// shared with the Rewards leaderboard — one preference for both).
 export async function GET() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -29,7 +28,7 @@ export async function GET() {
   // getMembersData.ts, getBoardMembers.ts), all of which already use this
   // same hint.
   const [{ data: officerProfiles, error: profilesError }, { data: allTransactions, error: txError }, tiers] = await Promise.all([
-    serviceClient.from('user_roles').select('user_id, profiles!user_roles_user_id_fkey(display_name)').in('role', BATTLEPASS_ROLES),
+    serviceClient.from('user_roles').select('user_id, profiles!user_roles_user_id_fkey(display_name, leaderboard_anonymous)').in('role', BATTLEPASS_ROLES),
     serviceClient.from('officer_point_transactions').select('user_id, amount, reversed_at'),
     fetchOfficerTiers(supabase),
   ]);
@@ -52,9 +51,9 @@ export async function GET() {
     .map((p) => {
       const profile = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles;
       const lifetime = lifetimeByUser.get(p.user_id) ?? 0;
-      return { userId: p.user_id, name: profile?.display_name || 'A member', lifetime };
+      const name = profile?.leaderboard_anonymous ? 'Anonymous' : (profile?.display_name || 'A member');
+      return { userId: p.user_id, name, lifetime };
     })
-    .filter((p) => p.lifetime > 0)
     .sort((a, b) => b.lifetime - a.lifetime)
     .map((p, i) => ({
       rank: i + 1,

@@ -45,7 +45,7 @@ export async function getAdminData(roles: RoleGrant[]) {
     const [{ data: usersData, error: usersError }, { data: divisionsData }] = await Promise.all([
       supabase
         .from('profiles')
-        .select('id, display_name, avatar_url, custom_avatar_url, gamer_tag, created_at, preferred_email, user_roles!user_roles_user_id_fkey(role, division_id)')
+        .select('id, display_name, avatar_url, custom_avatar_url, gamer_tag, created_at, preferred_email, board_order, user_roles!user_roles_user_id_fkey(role, division_id)')
         .order('display_name', { ascending: true })
         .limit(300),
       supabase.from('divisions').select('id, name, slug').order('name'),

@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ReactNode } from 'react';
-import { Pencil, BarChart3, History, Activity, X, Server, Users as UsersIcon } from 'lucide-react';
+import { Pencil, BarChart3, History, Activity, X, Server, Users as UsersIcon, ListOrdered } from 'lucide-react';
 import { usePortalTabSync } from '@/lib/usePortalTabSync';
 import { resolveAvatarUrl } from '@/lib/profile';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import RoleManager from './RoleManager';
+import BoardOrderManager from './BoardOrderManager';
 import SystemStats from './SystemStats';
 import StatsClient from './stats/StatsClient';
 import type { StatsData } from './stats/getStatsData';
@@ -26,8 +27,8 @@ interface Props {
   initialTab?: string;
 }
 
-type Tab = 'overview' | 'roles' | 'analytics' | 'system';
-const VALID_TABS: Tab[] = ['overview', 'roles', 'analytics', 'system'];
+type Tab = 'overview' | 'roles' | 'order' | 'analytics' | 'system';
+const VALID_TABS: Tab[] = ['overview', 'roles', 'order', 'analytics', 'system'];
 
 // Each tab is a real destination now instead of Overview being a junk
 // drawer for Role Manager + Storage Cleanup stacked underneath the stats —
@@ -99,6 +100,11 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
         {isAdmin && (
           <button type="button" role="tab" aria-selected={tab === 'roles'} className={`${styles.tab} ${tab === 'roles' ? styles.tabActive : ''}`} onClick={() => selectTab('roles')}>
             <UsersIcon size={13} strokeWidth={1.5} aria-hidden="true" /> Member Management
+          </button>
+        )}
+        {isAdmin && (
+          <button type="button" role="tab" aria-selected={tab === 'order'} className={`${styles.tab} ${tab === 'order' ? styles.tabActive : ''}`} onClick={() => selectTab('order')}>
+            <ListOrdered size={13} strokeWidth={1.5} aria-hidden="true" /> Display Order
           </button>
         )}
         <button type="button" role="tab" aria-selected={tab === 'analytics'} className={`${styles.tab} ${tab === 'analytics' ? styles.tabActive : ''}`} onClick={() => selectTab('analytics')}>
@@ -193,6 +199,8 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
           <RoleManager users={allUsers} divisions={divisions} />
         </section>
       )}
+
+      {tab === 'order' && isAdmin && <BoardOrderManager users={allUsers} />}
 
       {tab === 'analytics' && <StatsClient data={statsData} />}
 

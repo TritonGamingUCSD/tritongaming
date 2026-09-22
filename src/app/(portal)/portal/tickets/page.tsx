@@ -10,11 +10,11 @@ export default async function TicketsPage() {
   const [profile, roles] = await Promise.all([getProfile(), getUserRoles()]);
   if (!profile) return null;
 
-  const { tickets, upcomingEvents, isUcsd } = await getTicketsData(profile.id, roles);
+  const { tickets, upcomingEvents, isUcsd, canEarnPoints } = await getTicketsData(profile.id, roles);
 
   return (
     <Suspense>
-      <TicketsClient tickets={tickets} upcomingEvents={upcomingEvents} isUcsd={isUcsd} />
+      <TicketsClient tickets={tickets} upcomingEvents={upcomingEvents} isUcsd={isUcsd} canEarnPoints={canEarnPoints} />
     </Suspense>
   );
 }

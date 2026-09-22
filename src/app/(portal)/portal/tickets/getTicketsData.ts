@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import type { RoleGrant } from '@/lib/capabilities';
-import { isVerifiedMember } from '@/lib/capabilities';
+import { isVerifiedMember, isRewardsEligible } from '@/lib/capabilities';
 import type TicketsClient from './TicketsClient';
 
 // Shared by the standalone /portal/tickets route and the portal hub so both
@@ -29,5 +29,6 @@ export async function getTicketsData(profileId: string, roles: RoleGrant[]) {
     tickets: (tickets ?? []) as unknown as Parameters<typeof TicketsClient>[0]['tickets'],
     upcomingEvents: (upcomingEvents ?? []) as unknown as Parameters<typeof TicketsClient>[0]['upcomingEvents'],
     isUcsd: isVerifiedMember(roles),
+    canEarnPoints: isRewardsEligible(roles),
   };
 }

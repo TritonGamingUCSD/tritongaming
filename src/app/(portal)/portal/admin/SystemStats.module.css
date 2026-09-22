@@ -3,6 +3,19 @@
   flex-direction: column;
 }
 
+/* Same slot as admin.module.css's .statValue, but for a value that's a
+   short code/version string (a git SHA, "production", "v22.4.0") rather
+   than a big round number — .statValue's 1.3rem reads fine for "247", but
+   a 7-char commit hash at that size crowds the card and doesn't need the
+   same visual weight a headline count does. */
+.envValue {
+  font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 0.95rem;
+  color: var(--yellow);
+  line-height: 1.2;
+  word-break: break-all;
+}
+
 .empty {
   font-size: 0.85rem;
   color: rgba(242,241,240,0.4);

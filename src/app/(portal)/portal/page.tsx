@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, History, Image as ImageIcon, Award, Medal } from 'lucide-react';
 import { getProfile, getUserRoles } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
-import { hasCapability, isVerifiedMember } from '@/lib/capabilities';
+import { hasCapability, isVerifiedMember, isRewardsEligible } from '@/lib/capabilities';
 import { resolveAvatarUrl } from '@/lib/profile';
 import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK } from '@/types/database';
 import { CONTENT_BLOCKS } from '@/lib/content-blocks';
@@ -11,6 +11,7 @@ import { PACIFIC_TZ } from '@/lib/timezone';
 import { getDivisions } from '@/lib/divisions';
 import type { HubSection } from '@/components/portal/PortalHub';
 import SignOutButton from '@/components/portal/SignOutButton';
+import OnboardingGuide from '@/components/portal/OnboardingGuide';
 import DashboardClient from './DashboardClient';
 import PortalTopSection from './PortalTopSection';
 import TicketsClient from './tickets/TicketsClient';
@@ -82,6 +83,12 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const canManageRewardsShop = hasCapability(roles, 'manage_rewards_shop');
   const canScanRedemptions = hasCapability(roles, 'scan_redemptions');
   const canManagePoints = hasCapability(roles, 'manage_points');
+  // Rewards (earning points at check-in, referral bonuses, the shop) is
+  // UCSD-students-and-staff only — see is_rewards_eligible() in
+  // 20260922110000_restrict_rewards_to_ucsd.sql, the actual enforcement
+  // boundary; this just keeps the section/badge from showing at all to
+  // someone who'd hit a permission error the moment they tried to use it.
+  const canUseRewards = isRewardsEligible(roles);
   // A separate, lighter tool from the full exec/admin directory manager
   // below — gated on actually holding the 'division' role itself (not the
   // broader manage_division capability, which lead/exec/admin also hold),
@@ -112,7 +119,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       canViewDocs ? getDocsData() : Promise.resolve(null),
       canManageRoles ? getRoleHistoryData() : Promise.resolve(null),
       canViewPhotoAlbums ? getPhotoAlbumsData() : Promise.resolve(null),
-      getMyPointsData(profile.id),
+      canUseRewards ? getMyPointsData(profile.id) : Promise.resolve(null),
       isOfficerTier ? getMyBattlepassData(profile.id) : Promise.resolve(null),
       fetchTiers(supabase),
       isOfficerTier ? fetchOfficerTiers(supabase) : Promise.resolve([]),
@@ -131,7 +138,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
     .filter((t) => t.status === 'active' && t.event && new Date(t.event.start_date) >= nowDate)
     .sort((a, b) => new Date(a.event!.start_date).getTime() - new Date(b.event!.start_date).getTime())[0];
   const activeTicketCount = ticketsData.tickets.filter((t) => t.status === 'active').length;
-  const memberTier = getTier(pointsData.lifetimeEarned, memberTiers);
+  const memberTier = pointsData ? getTier(pointsData.lifetimeEarned, memberTiers) : null;
   const officerTier = battlepassData ? getOfficerTier(battlepassData.lifetimeEarned, officerTiers) : null;
 
   // Events starting within the next/last 24h, for the check-in shortcut
@@ -147,7 +154,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       description: 'View and show your event tickets',
       badge: activeTicketCount || undefined,
       group: 'Yours',
-      content: <TicketsClient tickets={ticketsData.tickets} upcomingEvents={ticketsData.upcomingEvents} isUcsd={ticketsData.isUcsd} />,
+      content: <TicketsClient tickets={ticketsData.tickets} upcomingEvents={ticketsData.upcomingEvents} isUcsd={ticketsData.isUcsd} canEarnPoints={ticketsData.canEarnPoints} />,
     },
     {
       id: 'profile', icon: <User size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Profile',
@@ -161,19 +168,17 @@ export default async function PortalDashboard({ searchParams }: Props) {
       group: 'Yours',
       content: <ActivitySectionContent tickets={ticketsData.tickets} />,
     },
-    {
+    ...(canUseRewards && pointsData ? [{
       id: 'points', icon: <Award size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Rewards',
       description: 'Earn points for showing up, spend them on perks',
       badge: pointsData.balance || undefined,
-      group: 'Yours',
+      group: 'Yours' as const,
       content: (
         <PointsSectionContent
           balance={pointsData.balance}
           lifetimeEarned={pointsData.lifetimeEarned}
           referralCode={pointsData.referralCode ?? ''}
-          leaderboardOptIn={pointsData.leaderboardOptIn}
-          leaderboardShowName={pointsData.leaderboardShowName}
-          leaderboardShowPoints={pointsData.leaderboardShowPoints}
+          leaderboardAnonymous={pointsData.leaderboardAnonymous}
           transactions={pointsData.transactions}
           canManageShop={canManageRewardsShop}
           canManagePoints={canManagePoints}
@@ -182,7 +187,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
           tiers={memberTiers}
         />
       ),
-    },
+    }] : []),
     ...(isOfficerTier && battlepassData ? [{
       id: 'battlepass', icon: <Medal size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Battlepass',
       description: 'Recognition for officer-specific contributions',
@@ -192,6 +197,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
         <BattlepassSectionContent
           balance={battlepassData.balance}
           lifetimeEarned={battlepassData.lifetimeEarned}
+          leaderboardAnonymous={battlepassData.leaderboardAnonymous}
           transactions={battlepassData.transactions}
           canManagePoints={canManagePoints}
           initialTab={requestedTab}
@@ -302,6 +308,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
 
   return (
     <div className={styles.page}>
+      {!profile.onboarded_at && <OnboardingGuide userId={profile.id} />}
+
       {/* Shares one gap between the greeting, the checkin/next-ticket
           banners, and the hub below — previously the hub alone got a
           bordered "shell" (see PortalHub.module.css's .desktopShell) while
@@ -366,11 +374,13 @@ export default async function PortalDashboard({ searchParams }: Props) {
                   tab (see the initialTab wiring below) rather than just the
                   section's default view. */}
               <div className={styles.statBadges}>
-                <Link href="/portal?section=points&tab=points" className={styles.statBadge} style={{ borderColor: `${memberTier.color}55` }}>
-                  <Award size={13} strokeWidth={1.75} aria-hidden="true" style={{ color: memberTier.color }} />
-                  <span>{pointsData.balance.toLocaleString()} pts</span>
-                  <span className={styles.statBadgeTier} style={{ color: memberTier.color }}>{memberTier.name}</span>
-                </Link>
+                {pointsData && memberTier && (
+                  <Link href="/portal?section=points&tab=points" className={styles.statBadge} style={{ borderColor: `${memberTier.color}55` }}>
+                    <Award size={13} strokeWidth={1.75} aria-hidden="true" style={{ color: memberTier.color }} />
+                    <span>{pointsData.balance.toLocaleString()} pts</span>
+                    <span className={styles.statBadgeTier} style={{ color: memberTier.color }}>{memberTier.name}</span>
+                  </Link>
+                )}
                 {battlepassData && (
                   <Link href="/portal?section=battlepass&tab=mine" className={styles.statBadge} style={{ borderColor: `${officerTier?.color}55` }}>
                     <Medal size={13} strokeWidth={1.75} aria-hidden="true" style={{ color: officerTier?.color }} />

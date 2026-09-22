@@ -127,7 +127,8 @@ export default function ContentEditor({ blocks, contentMap, lastEdited }: Props)
                       </span>
                     </div>
                     <div className={styles.blockLocation}>
-                      <MapPin size={11} strokeWidth={1.75} aria-hidden="true" /> {pagesLabel(block.pages)}
+                      <MapPin size={11} strokeWidth={1.75} aria-hidden="true" />
+                      <span className={styles.blockLocationText}>{pagesLabel(block.pages)}</span>
                     </div>
                     {preview && <div className={styles.blockPreview}>{preview}</div>}
                     {le && <div className={styles.lastEdited}>Edited by {le.by} · {timeAgo(le.at)}</div>}

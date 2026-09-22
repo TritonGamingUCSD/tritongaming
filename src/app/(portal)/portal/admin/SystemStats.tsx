@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Database, HardDrive, Triangle, ExternalLink } from 'lucide-react';
+import { Database, HardDrive, Triangle, ExternalLink, Users, Server, ShieldCheck } from 'lucide-react';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import adminStyles from './admin.module.css';
 import styles from './SystemStats.module.css';
@@ -36,10 +36,29 @@ interface VercelStats {
   deployments?: VercelDeployment[];
 }
 
+interface AccountStats {
+  total_accounts: number;
+  multi_identity_accounts: number;
+  no_role_accounts: number;
+  signups_last_30d: number;
+}
+
+interface EnvironmentInfo {
+  nodeVersion: string;
+  gitCommitSha?: string;
+  gitCommitRef?: string;
+  vercelEnv?: string;
+}
+
 interface SystemStatsResponse {
-  database: { totalBytes: number; tables: TableStat[] } | null;
+  database: {
+    totalBytes: number; tables: TableStat[]; postgresVersion?: string;
+    activeConnections?: number; rlsEnabledTables?: number; totalTables?: number;
+  } | null;
+  accounts: AccountStats | null;
   storage: BucketStat[];
   vercel: VercelStats;
+  environment: EnvironmentInfo;
 }
 
 interface BucketPreview {
@@ -184,8 +203,91 @@ export default function SystemStats() {
     <div className={styles.wrap}>
       <section className={adminStyles.section}>
         <div className={adminStyles.sectionHeader}>
+          <h2 className={adminStyles.sectionLabel}><Server size={13} strokeWidth={1.75} aria-hidden="true" /> Environment</h2>
+        </div>
+        <div className={adminStyles.statsGrid}>
+          <div className={adminStyles.statCard}>
+            <span className={adminStyles.statIcon}><Server size={22} strokeWidth={1.5} aria-hidden="true" /></span>
+            <div>
+              <div className={styles.envValue}>{data.environment.vercelEnv ?? 'local'}</div>
+              <div className={adminStyles.statLabel}>Environment</div>
+            </div>
+          </div>
+          <div className={adminStyles.statCard}>
+            <span className={adminStyles.statIcon}><Server size={22} strokeWidth={1.5} aria-hidden="true" /></span>
+            <div>
+              <div className={styles.envValue}>{data.environment.gitCommitSha ?? '—'}</div>
+              <div className={adminStyles.statLabel}>{data.environment.gitCommitRef ?? 'Commit'}</div>
+            </div>
+          </div>
+          <div className={adminStyles.statCard}>
+            <span className={adminStyles.statIcon}><Server size={22} strokeWidth={1.5} aria-hidden="true" /></span>
+            <div>
+              <div className={styles.envValue}>{data.environment.nodeVersion}</div>
+              <div className={adminStyles.statLabel}>Node</div>
+            </div>
+          </div>
+          {data.database?.postgresVersion && (
+            <div className={adminStyles.statCard}>
+              <span className={adminStyles.statIcon}><Database size={22} strokeWidth={1.5} aria-hidden="true" /></span>
+              <div>
+                <div className={styles.envValue}>{data.database.postgresVersion.replace('PostgreSQL ', '')}</div>
+                <div className={adminStyles.statLabel}>Postgres</div>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {data.accounts && (
+        <section className={adminStyles.section}>
+          <div className={adminStyles.sectionHeader}>
+            <h2 className={adminStyles.sectionLabel}><Users size={13} strokeWidth={1.75} aria-hidden="true" /> Accounts</h2>
+          </div>
+          <div className={adminStyles.statsGrid}>
+            <div className={adminStyles.statCard}>
+              <span className={adminStyles.statIcon}><Users size={22} strokeWidth={1.5} aria-hidden="true" /></span>
+              <div>
+                <div className={adminStyles.statValue}>{data.accounts.total_accounts.toLocaleString()}</div>
+                <div className={adminStyles.statLabel}>Total Accounts</div>
+              </div>
+            </div>
+            <div className={adminStyles.statCard}>
+              <span className={adminStyles.statIcon}><Users size={22} strokeWidth={1.5} aria-hidden="true" /></span>
+              <div>
+                <div className={adminStyles.statValue}>{data.accounts.signups_last_30d.toLocaleString()}</div>
+                <div className={adminStyles.statLabel}>Signups (30d)</div>
+              </div>
+            </div>
+            <div className={adminStyles.statCard}>
+              <span className={adminStyles.statIcon}><ShieldCheck size={22} strokeWidth={1.5} aria-hidden="true" /></span>
+              <div>
+                <div className={adminStyles.statValue}>{data.accounts.multi_identity_accounts.toLocaleString()}</div>
+                <div className={adminStyles.statLabel}>Have a Backup Google Linked</div>
+              </div>
+            </div>
+            <div className={adminStyles.statCard}>
+              <span className={adminStyles.statIcon}><Users size={22} strokeWidth={1.5} aria-hidden="true" /></span>
+              <div>
+                <div className={adminStyles.statValue}>{data.accounts.no_role_accounts.toLocaleString()}</div>
+                <div className={adminStyles.statLabel}>No Role Assigned</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      <section className={adminStyles.section}>
+        <div className={adminStyles.sectionHeader}>
           <h2 className={adminStyles.sectionLabel}><Database size={13} strokeWidth={1.75} aria-hidden="true" /> Database</h2>
-          {data.database && <span className={adminStyles.sectionHint}>{formatBytes(data.database.totalBytes)} total</span>}
+          {data.database && (
+            <span className={adminStyles.sectionHint}>
+              {formatBytes(data.database.totalBytes)} total
+              {data.database.activeConnections !== undefined && ` · ${data.database.activeConnections} active connections`}
+              {data.database.rlsEnabledTables !== undefined && data.database.totalTables !== undefined &&
+                ` · RLS on ${data.database.rlsEnabledTables}/${data.database.totalTables} tables`}
+            </span>
+          )}
         </div>
         {!data.database ? (
           <p className={styles.empty}>Database stats unavailable.</p>

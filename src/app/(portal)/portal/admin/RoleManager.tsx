@@ -26,6 +26,7 @@ interface User {
   email?: string | null;
   linkedEmails?: LinkedEmail[];
   preferred_email?: string | null;
+  board_order?: number | null;
 }
 
 // Highest-privilege role first, so a user's badge row always reads

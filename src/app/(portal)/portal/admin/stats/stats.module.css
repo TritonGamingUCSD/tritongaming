@@ -72,6 +72,34 @@
   letter-spacing: 0.03em;
   color: rgba(242,241,240,0.7);
   margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.economyStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-bottom: 0.75rem;
+}
+
+.economyStats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.economyValue {
+  font-family: var(--font-futura-heavy);
+  font-size: 1.3rem;
+  color: var(--yellow);
+}
+
+.economyLabel {
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+  color: rgba(242,241,240,0.4);
 }
 
 .empty {

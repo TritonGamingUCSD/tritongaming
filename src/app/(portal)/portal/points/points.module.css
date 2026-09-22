@@ -240,7 +240,39 @@
 }
 .pendingCard:hover { background: rgba(255,199,44,0.14); }
 
-.tierGroup { display: flex; flex-direction: column; gap: 0.75rem; }
+.tierUnlocksHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.readyToClaimList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.readyToClaimRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 0.875rem;
+  background: rgba(255,199,44,0.06);
+  border: 1px solid rgba(255,199,44,0.2);
+  border-radius: var(--radius-sm);
+}
+
+.readyToClaimTitle {
+  font-family: var(--font-futura-medium);
+  font-size: 0.85rem;
+  color: var(--white);
+}
+
+.tierGroup { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.25rem; }
 .tierGroup + .tierGroup { margin-top: 1.5rem; }
 
 .tierGroupHeader { display: flex; align-items: center; gap: 0.75rem; }

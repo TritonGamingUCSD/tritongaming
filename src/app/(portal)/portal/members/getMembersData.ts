@@ -8,6 +8,7 @@ export interface MemberProfileRow {
   gamer_tag: string | null; major: string | null; year: string | null; org_title: string | null;
   bio: string | null; pronouns: string | null; social_links: Record<string, string> | null;
   board_visibility: Record<string, boolean> | null; preferred_email?: string | null; emails?: LinkedEmail[];
+  board_order: number | null;
   user_roles: Array<{
     role: AppRole;
     division: { name: string } | { name: string }[] | null;
@@ -28,9 +29,13 @@ export async function getMembersData() {
   const { data: rows, error } = await supabase
     .from('profiles')
     .select(`
-      id, display_name, avatar_url, custom_avatar_url, gamer_tag, major, year, org_title, bio, pronouns, social_links, board_visibility, preferred_email,
+      id, display_name, avatar_url, custom_avatar_url, gamer_tag, major, year, org_title, bio, pronouns, social_links, board_visibility, preferred_email, board_order,
       user_roles!user_roles_user_id_fkey(role, division:divisions(name))
     `)
+    // Custom-ordered members (Board Order admin tool, exec/lead mainly)
+    // sort first in that order; everyone else falls back to alphabetical,
+    // same as before board_order existed.
+    .order('board_order', { ascending: true, nullsFirst: false })
     .order('display_name', { ascending: true });
 
   if (error) console.error('[members] failed to load members:', error);

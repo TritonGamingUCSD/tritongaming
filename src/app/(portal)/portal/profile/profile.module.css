@@ -33,10 +33,21 @@
   margin-bottom: 1.5rem;
 }
 
+/* Single column by default — the 180px sidebar was previously fixed at
+   every viewport width, including phones, where 180px left almost nothing
+   for the form column; .avatarUpload's own 220px max-width then didn't
+   fit in that squeezed leftover space either, pushing the whole "Profile
+   Picture" box past the sidebar's own column and off the right edge of
+   the screen. Stacked (avatar full-width, form below) until there's
+   comfortably enough room for a real sidebar. */
 .layout {
   display: grid;
-  grid-template-columns: 180px 1fr;
-  gap: 2rem;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .layout { grid-template-columns: 180px 1fr; gap: 2rem; }
 }
 
 @media (min-width: 900px) {
@@ -317,15 +328,6 @@
 }
 
 @media (max-width: 600px) {
-  .layout {
-    grid-template-columns: 1fr;
-  }
-
-  .avatarSection {
-    flex-direction: row;
-    align-items: flex-start;
-  }
-
   .fieldRow {
     grid-template-columns: 1fr;
   }

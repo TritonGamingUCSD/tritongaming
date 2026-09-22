@@ -283,11 +283,18 @@
   margin-top: 0.15rem;
 }
 
+/* flex-shrink: 0 here used to mean this never yielded width to .userInfo —
+   with .userInfo's own min-width: 0 letting it shrink arbitrarily far to
+   compensate, the row's own flex-wrap never triggered even when this had
+   far more badges (someone with several roles/divisions) than fit on one
+   line, so they just ran past the row's right edge instead of wrapping.
+   min-width: 0 (not 0 flex-shrink) is what actually lets this drop to its
+   own line and wrap its badges across the row's full width once needed. */
 .roleSection {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  flex-shrink: 0;
+  min-width: 0;
   flex-wrap: wrap;
   justify-content: flex-end;
 }

@@ -52,7 +52,7 @@ interface LeaderboardRow {
   isSelf: boolean;
   name: string;
   tier: string;
-  points?: number;
+  points: number;
 }
 
 interface HistoryTxn {
@@ -81,9 +81,7 @@ interface Props {
   balance: number;
   lifetimeEarned: number;
   referralCode: string;
-  leaderboardOptIn: boolean;
-  leaderboardShowName: boolean;
-  leaderboardShowPoints: boolean;
+  leaderboardAnonymous: boolean;
   transactions: TransactionRow[];
   canManageShop: boolean;
   canManagePoints: boolean;
@@ -105,7 +103,7 @@ const VALID_MANAGE_SUB_TABS: ManageSubTab[] = ['award', 'shop', 'correct', 'tier
 
 export default function PointsSectionContent({
   balance, lifetimeEarned, referralCode,
-  leaderboardOptIn: initialOptIn, leaderboardShowName: initialShowName, leaderboardShowPoints: initialShowPoints,
+  leaderboardAnonymous: initialAnonymous,
   transactions, canManageShop, canManagePoints, initialTab, initialSubTab, tiers: initialTiers,
 }: Props) {
   // Local state, not just the prop directly — editing a tier in the Tiers
@@ -176,7 +174,16 @@ export default function PointsSectionContent({
     })();
   }, [tab, shopItems, balance]);
 
-  const unclaimedUnlockCount = unlocks.filter((u) => u.unlocked && !u.claimed).length;
+  const readyToClaimUnlocks = unlocks.filter((u) => u.unlocked && !u.claimed);
+  const unclaimedUnlockCount = readyToClaimUnlocks.length;
+  // The full tier ladder (every tier, including ones you're nowhere near
+  // and ones you've already claimed) was always expanded here — on an
+  // account with several tiers each holding a couple of perks, that's a
+  // lot of vertical space on the tab someone lands on by default, for
+  // content that's mostly either "already done" or "not yet relevant".
+  // Collapsed by default; what's actually actionable (ready to claim
+  // right now) stays visible either way.
+  const [showTierLadder, setShowTierLadder] = useState(false);
 
   async function handleClaim(item: RewardItem) {
     if (!window.confirm(`Redeem "${item.title}" for ${item.point_cost} points?`)) return;
@@ -233,11 +240,11 @@ export default function PointsSectionContent({
   }
 
   // ── Leaderboard ──────────────────────────────────────────────────────
+  // Everyone rewards-eligible is on it, no opt-in — the only choice left
+  // is anonymous vs. named (defaults to anonymous).
   const [board, setBoard] = useState<LeaderboardRow[] | null>(null);
   const [boardError, setBoardError] = useState('');
-  const [optIn, setOptIn] = useState(initialOptIn);
-  const [showName, setShowName] = useState(initialShowName);
-  const [showPoints, setShowPoints] = useState(initialShowPoints);
+  const [anonymous, setAnonymous] = useState(initialAnonymous);
   const [savingPrefs, setSavingPrefs] = useState(false);
 
   useEffect(() => {
@@ -254,20 +261,13 @@ export default function PointsSectionContent({
     })();
   }, [tab, board]);
 
-  async function savePrefs(next: { optIn?: boolean; showName?: boolean; showPoints?: boolean }) {
-    const updated = {
-      leaderboard_opt_in: next.optIn ?? optIn,
-      leaderboard_show_name: next.showName ?? showName,
-      leaderboard_show_points: next.showPoints ?? showPoints,
-    };
+  async function setAnonymousPref(value: boolean) {
     setSavingPrefs(true);
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (user) await supabase.from('profiles').update(updated).eq('id', user.id);
+    if (user) await supabase.from('profiles').update({ leaderboard_anonymous: value }).eq('id', user.id);
     setSavingPrefs(false);
-    if (next.optIn !== undefined) setOptIn(next.optIn);
-    if (next.showName !== undefined) setShowName(next.showName);
-    if (next.showPoints !== undefined) setShowPoints(next.showPoints);
+    setAnonymous(value);
     setBoard(null); // force a refetch so the list reflects the new setting
   }
 
@@ -656,7 +656,7 @@ export default function PointsSectionContent({
         </button>
         {canManageShop && (
           <button type="button" role="tab" aria-selected={tab === 'manage'} className={`${styles.tab} ${tab === 'manage' ? styles.tabActive : ''}`} onClick={() => selectTab('manage')}>
-            <Settings size={13} strokeWidth={1.5} aria-hidden="true" /> Manage Shop
+            <Settings size={13} strokeWidth={1.5} aria-hidden="true" /> Manage
           </button>
         )}
       </div>
@@ -687,13 +687,42 @@ export default function PointsSectionContent({
 
           {shopItems !== null && unlocks.length > 0 && (
             <div className={styles.historySection}>
-              <h2 className={styles.sectionLabel}><Gift size={14} strokeWidth={1.75} aria-hidden="true" /> Tier Unlocks</h2>
-              <p className={styles.referralHint}>Perks you unlock automatically by reaching a tier — free, no points spent, one per person.</p>
+              <div className={styles.tierUnlocksHeader}>
+                <h2 className={styles.sectionLabel}><Gift size={14} strokeWidth={1.75} aria-hidden="true" /> Tier Unlocks</h2>
+                <button type="button" className={styles.toggleBtn} onClick={() => setShowTierLadder((v) => !v)}>
+                  {showTierLadder ? 'Hide Full Ladder' : 'View Full Ladder'}
+                </button>
+              </div>
               {claimedNote && <p className={styles.claimedNote}><Check size={14} strokeWidth={2} aria-hidden="true" /> {claimedNote}</p>}
+
+              {/* What's actually actionable stays visible regardless of the
+                  toggle below — the full ladder (every tier, including ones
+                  you're nowhere near or already claimed) is the part that
+                  was eating vertical space for content that's rarely the
+                  reason you're on this tab. */}
+              {readyToClaimUnlocks.length > 0 ? (
+                <ul className={styles.readyToClaimList}>
+                  {readyToClaimUnlocks.map((u) => (
+                    <li key={u.id} className={styles.readyToClaimRow}>
+                      <span className={styles.readyToClaimTitle}>{u.title}</span>
+                      <button type="button" className={styles.claimBtn} onClick={() => handleClaimUnlock(u)} disabled={claimingId === u.id}>
+                        {claimingId === u.id ? 'Claiming…' : 'Claim'}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                !showTierLadder && (
+                  <p className={styles.referralHint}>
+                    Free perks you unlock automatically by reaching a tier — nothing ready to claim right now.
+                  </p>
+                )
+              )}
+
               {/* Grouped by tier (in tier order) rather than one flat grid — which
                   tier unlocks which reward was otherwise only visible as small print
                   on a locked card's button, easy to miss entirely on an unlocked/claimed one. */}
-              {tiers.map((t) => {
+              {showTierLadder && tiers.map((t) => {
                 const rewardsForTier = unlocks.filter((u) => (u.min_tier ?? tiers[0].name) === t.name);
                 if (rewardsForTier.length === 0) return null;
                 return (
@@ -834,28 +863,17 @@ export default function PointsSectionContent({
         <div className={styles.leaderboardTab}>
           <div className={styles.prefsCard}>
             <label className={styles.checkboxField}>
-              <input type="checkbox" checked={optIn} disabled={savingPrefs} onChange={(e) => savePrefs({ optIn: e.target.checked })} />
-              <span>Show me on the leaderboard</span>
+              <input type="checkbox" checked={anonymous} disabled={savingPrefs} onChange={(e) => setAnonymousPref(e.target.checked)} />
+              <span>Stay anonymous on the leaderboard (otherwise shown under your name)</span>
             </label>
-            {optIn && (
-              <>
-                <label className={styles.checkboxField}>
-                  <input type="checkbox" checked={showName} disabled={savingPrefs} onChange={(e) => savePrefs({ showName: e.target.checked })} />
-                  <span>Show my name (otherwise listed as "Anonymous")</span>
-                </label>
-                <label className={styles.checkboxField}>
-                  <input type="checkbox" checked={showPoints} disabled={savingPrefs} onChange={(e) => savePrefs({ showPoints: e.target.checked })} />
-                  <span>Show my exact point total (otherwise just my tier badge)</span>
-                </label>
-              </>
-            )}
+            <p className={styles.referralHint}>Everyone&apos;s on the leaderboard — this only controls whether your name or "Anonymous" shows next to your rank. Your exact points are always shown either way.</p>
           </div>
 
           {boardError && <p className={styles.error}>{boardError}</p>}
           {board === null ? (
             <LoadingSpinner size={28} label="Loading leaderboard…" theme="dark" />
           ) : board.length === 0 ? (
-            <p className={styles.empty}>Nobody's opted in yet — be the first.</p>
+            <p className={styles.empty}>No one&apos;s ranked yet.</p>
           ) : (
             <ol className={styles.boardList}>
               {board.map((row) => {
@@ -865,7 +883,7 @@ export default function PointsSectionContent({
                     <span className={styles.boardRank}>#{row.rank}</span>
                     <span className={styles.boardName}>{row.name}{row.isSelf ? ' (you)' : ''}</span>
                     <span className={styles.boardTier} style={{ color: rowTier.color, borderColor: `${rowTier.color}55` }}>{row.tier}</span>
-                    {row.points !== undefined && <span className={styles.boardPoints}>{row.points.toLocaleString()} pts</span>}
+                    <span className={styles.boardPoints}>{row.points.toLocaleString()} pts</span>
                   </li>
                 );
               })}

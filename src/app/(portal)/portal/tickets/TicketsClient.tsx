@@ -41,6 +41,11 @@ interface Props {
   tickets: TicketData[];
   upcomingEvents: UpcomingEvent[];
   isUcsd: boolean;
+  // Rewards (points at check-in) is UCSD-students-and-staff only now —
+  // see is_rewards_eligible() — so a guest/recruit/alumni holding a
+  // ticket to a public event shouldn't see "+N pts on check-in" badges
+  // promising points their check-in will never actually award.
+  canEarnPoints: boolean;
 }
 
 const STATUS_ICON: Record<string, ReactNode> = {
@@ -54,7 +59,7 @@ const STATUS_LABEL: Record<string, string> = {
   active: 'Active', used: 'Checked In', cancelled: 'Cancelled', expired: 'Expired',
 };
 
-export default function TicketsClient({ tickets: initialTickets, upcomingEvents, isUcsd }: Props) {
+export default function TicketsClient({ tickets: initialTickets, upcomingEvents, isUcsd, canEarnPoints }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [tickets, setTickets] = useState(initialTickets);
@@ -198,7 +203,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
                 {nextActiveTicket.event?.location && (
                   <p className={styles.heroLocation}><MapPin size={13} strokeWidth={1.5} aria-hidden="true" /> {nextActiveTicket.event.location}</p>
                 )}
-                {!!nextActiveTicket.event?.points_value && (
+                {canEarnPoints && !!nextActiveTicket.event?.points_value && (
                   <span className={styles.heroPointsBadge}><Award size={12} strokeWidth={1.75} aria-hidden="true" /> +{nextActiveTicket.event.points_value} pts on check-in</span>
                 )}
               </div>
@@ -237,6 +242,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
                 ticket={ticket}
                 onShowQR={() => setQrTicket(ticket)}
                 onCheckedIn={handleCheckedIn}
+                canEarnPoints={canEarnPoints}
               />
             ))}
           </div>
@@ -268,7 +274,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
                   {event.location && (
                     <div className={styles.eventLoc}><MapPin size={12} strokeWidth={1.5} aria-hidden="true" /> {event.location}</div>
                   )}
-                  {!!event.points_value && (
+                  {canEarnPoints && !!event.points_value && (
                     <div className={styles.eventPointsBadge}><Award size={11} strokeWidth={1.75} aria-hidden="true" /> +{event.points_value} pts on check-in</div>
                   )}
                 </div>
@@ -309,7 +315,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
           <h2 className={styles.sectionTitle}>Past Tickets</h2>
           <div className={styles.ticketList}>
             {pastTickets.map((ticket) => (
-              <TicketRow key={ticket.id} ticket={ticket} />
+              <TicketRow key={ticket.id} ticket={ticket} canEarnPoints={canEarnPoints} />
             ))}
           </div>
         </section>
@@ -334,10 +340,12 @@ function TicketRow({
   ticket,
   onShowQR,
   onCheckedIn,
+  canEarnPoints,
 }: {
   ticket: TicketData;
   onShowQR?: () => void;
   onCheckedIn?: (ticketId: string, checkedInAt: string) => void;
+  canEarnPoints: boolean;
 }) {
   const ev = ticket.event;
   const isActive = ticket.status === 'active';
@@ -360,7 +368,7 @@ function TicketRow({
             <Check size={13} strokeWidth={1.75} aria-hidden="true" /> Checked in {new Date(ticket.checked_in_at).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' })}
           </div>
         )}
-        {isActive && !!ev?.points_value && (
+        {canEarnPoints && isActive && !!ev?.points_value && (
           <div className={styles.ticketPointsBadge}><Award size={11} strokeWidth={1.75} aria-hidden="true" /> +{ev.points_value} pts on check-in</div>
         )}
       </div>

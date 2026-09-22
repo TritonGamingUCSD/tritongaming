@@ -32,7 +32,7 @@ export async function getMyPointsData(userId: string) {
     supabase.from('point_transactions').select('amount, reversed_at').eq('user_id', userId),
     supabase
       .from('profiles')
-      .select('referral_code, leaderboard_opt_in, leaderboard_show_name, leaderboard_show_points')
+      .select('referral_code, leaderboard_anonymous')
       .eq('id', userId)
       .single(),
   ]);
@@ -52,8 +52,6 @@ export async function getMyPointsData(userId: string) {
     balance,
     lifetimeEarned,
     referralCode: profile?.referral_code ?? null,
-    leaderboardOptIn: profile?.leaderboard_opt_in ?? false,
-    leaderboardShowName: profile?.leaderboard_show_name ?? true,
-    leaderboardShowPoints: profile?.leaderboard_show_points ?? true,
+    leaderboardAnonymous: profile?.leaderboard_anonymous ?? true,
   };
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Shield, ShoppingBag, Trophy, Settings, Gift, Check, X, Camera, Undo2, Lock } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 import { getOfficerTier, nextOfficerTier, type OfficerTier } from '@/lib/officerTiers';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import StyledQRCode from '@/components/StyledQRCode/StyledQRCode';
@@ -75,6 +76,7 @@ function oneOf<T>(v: T | T[] | null): T | null {
 interface Props {
   balance: number;
   lifetimeEarned: number;
+  leaderboardAnonymous: boolean;
   transactions: BattlepassTransactionRow[];
   canManagePoints: boolean;
   initialTab?: string;
@@ -94,7 +96,7 @@ interface Props {
 type ManageSubTab = 'award' | 'redeem' | 'shop' | 'correct' | 'tiers';
 const VALID_MANAGE_SUB_TABS: ManageSubTab[] = ['award', 'redeem', 'shop', 'correct', 'tiers'];
 
-export default function BattlepassSectionContent({ balance, lifetimeEarned, transactions, canManagePoints, initialTab, initialSubTab, tiers: initialTiers }: Props) {
+export default function BattlepassSectionContent({ balance, lifetimeEarned, leaderboardAnonymous: initialAnonymous, transactions, canManagePoints, initialTab, initialSubTab, tiers: initialTiers }: Props) {
   // Local state, not just the prop directly — editing a tier in the Tiers
   // sub-tab below needs the rest of this component (progress bar, shop
   // gating, dropdowns) to reflect the change immediately, without a full
@@ -160,7 +162,12 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
     })();
   }, [tab, shopItems, balance]);
 
-  const unclaimedUnlockCount = unlocks.filter((u) => u.unlocked && !u.claimed).length;
+  const readyToClaimUnlocks = unlocks.filter((u) => u.unlocked && !u.claimed);
+  const unclaimedUnlockCount = readyToClaimUnlocks.length;
+  // Same reasoning as PointsSectionContent's identical toggle — the full
+  // tier ladder ate a lot of space on the default-landing tab for content
+  // that's mostly either already done or not yet relevant.
+  const [showTierLadder, setShowTierLadder] = useState(false);
 
   async function handleClaim(item: RewardItem) {
     if (!window.confirm(`Redeem "${item.title}" for ${item.point_cost} points?`)) return;
@@ -214,8 +221,23 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
   }
 
   // ── Leaderboard ──────────────────────────────────────────────────────
+  // Every officer-tier role holder is on it, no opt-in — the same single
+  // "anonymous or named" preference as the member Rewards leaderboard
+  // (one profiles.leaderboard_anonymous column covers both).
   const [board, setBoard] = useState<LeaderboardRow[] | null>(null);
   const [boardError, setBoardError] = useState('');
+  const [anonymous, setAnonymous] = useState(initialAnonymous);
+  const [savingPrefs, setSavingPrefs] = useState(false);
+
+  async function setAnonymousPref(value: boolean) {
+    setSavingPrefs(true);
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) await supabase.from('profiles').update({ leaderboard_anonymous: value }).eq('id', user.id);
+    setSavingPrefs(false);
+    setAnonymous(value);
+    setBoard(null); // force a refetch so the list reflects the new setting
+  }
 
   useEffect(() => {
     if (tab !== 'leaderboard' || board !== null) return;
@@ -612,10 +634,34 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
 
           {shopItems !== null && unlocks.length > 0 && (
             <div className={styles.historySection}>
-              <h2 className={styles.sectionLabel}><Gift size={14} strokeWidth={1.75} aria-hidden="true" /> Tier Unlocks</h2>
-              <p className={styles.referralHint}>Perks you unlock automatically by reaching a Battlepass tier — free, no points spent, one per person.</p>
+              <div className={styles.tierUnlocksHeader}>
+                <h2 className={styles.sectionLabel}><Gift size={14} strokeWidth={1.75} aria-hidden="true" /> Tier Unlocks</h2>
+                <button type="button" className={styles.toggleBtn} onClick={() => setShowTierLadder((v) => !v)}>
+                  {showTierLadder ? 'Hide Full Ladder' : 'View Full Ladder'}
+                </button>
+              </div>
               {claimedNote && <p className={styles.claimedNote}><Check size={14} strokeWidth={2} aria-hidden="true" /> {claimedNote}</p>}
-              {tiers.map((t) => {
+
+              {readyToClaimUnlocks.length > 0 ? (
+                <ul className={styles.readyToClaimList}>
+                  {readyToClaimUnlocks.map((u) => (
+                    <li key={u.id} className={styles.readyToClaimRow}>
+                      <span className={styles.readyToClaimTitle}>{u.title}</span>
+                      <button type="button" className={styles.claimBtn} onClick={() => handleClaimUnlock(u)} disabled={claimingId === u.id}>
+                        {claimingId === u.id ? 'Claiming…' : 'Claim'}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                !showTierLadder && (
+                  <p className={styles.referralHint}>
+                    Free perks you unlock automatically by reaching a Battlepass tier — nothing ready to claim right now.
+                  </p>
+                )
+              )}
+
+              {showTierLadder && tiers.map((t) => {
                 const rewardsForTier = unlocks.filter((u) => (u.min_tier ?? tiers[0].name) === t.name);
                 if (rewardsForTier.length === 0) return null;
                 return (
@@ -740,6 +786,14 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, tran
 
       {tab === 'leaderboard' && (
         <div className={styles.leaderboardTab}>
+          <div className={styles.prefsCard}>
+            <label className={styles.checkboxField}>
+              <input type="checkbox" checked={anonymous} disabled={savingPrefs} onChange={(e) => setAnonymousPref(e.target.checked)} />
+              <span>Stay anonymous on the leaderboard (otherwise shown under your name)</span>
+            </label>
+            <p className={styles.referralHint}>Every officer is on the leaderboard — this only controls whether your name or "Anonymous" shows next to your rank. Exact points are always shown either way.</p>
+          </div>
+
           {boardError && <p className={styles.error}>{boardError}</p>}
           {board === null ? (
             <LoadingSpinner size={28} label="Loading leaderboard…" theme="dark" />

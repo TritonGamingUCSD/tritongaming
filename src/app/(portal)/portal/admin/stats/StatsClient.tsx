@@ -4,7 +4,7 @@ import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts';
-import { Users, Calendar, Ticket, CircleCheck } from 'lucide-react';
+import { Users, Calendar, Ticket, CircleCheck, Coins, Shield, Gift } from 'lucide-react';
 import type { StatsData } from './getStatsData';
 import styles from './stats.module.css';
 
@@ -23,7 +23,7 @@ const AXIS_STYLE = { fontSize: 11, fill: 'rgba(242,241,240,0.5)' };
 // aren't about any one event: total membership/event/ticket counts,
 // member growth over time, and division sizes.
 export default function StatsClient({ data }: { data: StatsData }) {
-  const { totals, memberGrowth, divisionSizes } = data;
+  const { totals, memberGrowth, divisionSizes, pointsEconomy, battlepassEconomy, topRewards } = data;
 
   return (
     <div className={styles.page}>
@@ -52,6 +52,40 @@ export default function StatsClient({ data }: { data: StatsData }) {
           <div className={styles.totalLabel}>Check-Ins</div>
         </div>
       </div>
+
+      <div className={styles.chartRow}>
+        <section className={styles.chartCard}>
+          <h2 className={styles.chartTitle}><Coins size={15} strokeWidth={1.75} aria-hidden="true" /> Rewards Economy</h2>
+          <div className={styles.economyStats}>
+            <div><span className={styles.economyValue}>{pointsEconomy.inCirculation.toLocaleString()}</span><span className={styles.economyLabel}>Points in circulation</span></div>
+            <div><span className={styles.economyValue}>{pointsEconomy.totalRedeemed.toLocaleString()}</span><span className={styles.economyLabel}>Points redeemed</span></div>
+            <div><span className={styles.economyValue}>{pointsEconomy.pendingRedemptions.toLocaleString()}</span><span className={styles.economyLabel}>Awaiting fulfillment</span></div>
+          </div>
+        </section>
+        <section className={styles.chartCard}>
+          <h2 className={styles.chartTitle}><Shield size={15} strokeWidth={1.75} aria-hidden="true" /> Battlepass Economy</h2>
+          <div className={styles.economyStats}>
+            <div><span className={styles.economyValue}>{battlepassEconomy.inCirculation.toLocaleString()}</span><span className={styles.economyLabel}>Points in circulation</span></div>
+            <div><span className={styles.economyValue}>{battlepassEconomy.totalRedeemed.toLocaleString()}</span><span className={styles.economyLabel}>Points redeemed</span></div>
+            <div><span className={styles.economyValue}>{battlepassEconomy.pendingRedemptions.toLocaleString()}</span><span className={styles.economyLabel}>Awaiting fulfillment</span></div>
+          </div>
+        </section>
+      </div>
+
+      {topRewards.length > 0 && (
+        <section className={styles.chartCard}>
+          <h2 className={styles.chartTitle}><Gift size={15} strokeWidth={1.75} aria-hidden="true" /> Most Redeemed Rewards</h2>
+          <ResponsiveContainer width="100%" height={Math.max(180, topRewards.length * 42)}>
+            <BarChart data={topRewards} layout="vertical" margin={{ left: 8 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" horizontal={false} />
+              <XAxis type="number" tick={AXIS_STYLE} allowDecimals={false} />
+              <YAxis type="category" dataKey="title" tick={{ ...AXIS_STYLE, fontSize: 10 }} width={140} />
+              <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value, _name, item) => [`${value} claimed`, item.payload.system]} />
+              <Bar dataKey="count" name="Claimed" fill="#4ade80" radius={[0, 4, 4, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </section>
+      )}
 
       {memberGrowth.length > 1 && (
         <section className={styles.chartCard}>

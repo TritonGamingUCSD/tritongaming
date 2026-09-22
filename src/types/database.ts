@@ -59,9 +59,10 @@ export interface Database {
           board_visibility: Record<string, boolean>;
           referral_code: string;
           referred_by: string | null;
-          leaderboard_opt_in: boolean;
-          leaderboard_show_name: boolean;
-          leaderboard_show_points: boolean;
+          leaderboard_anonymous: boolean;
+          preferred_email: string | null;
+          board_order: number | null;
+          onboarded_at: string | null;
           created_at: string;
           updated_at: string;
         };

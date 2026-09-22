@@ -75,8 +75,9 @@ export async function GET() {
 
   const supabase = createServiceClient();
 
-  const [dbStatsRes, storageResults, vercel] = await Promise.all([
+  const [dbStatsRes, accountStatsRes, storageResults, vercel] = await Promise.all([
     supabase.rpc('admin_db_stats'),
+    supabase.rpc('admin_account_stats'),
     Promise.all(MANAGED_BUCKETS.map(async ({ bucket }) => {
       const objects = await listAllObjects(supabase, bucket);
       return { bucket, objectCount: objects.length, totalBytes: objects.reduce((sum, o) => sum + o.size, 0) };
@@ -84,17 +85,37 @@ export async function GET() {
     fetchVercelStats(),
   ]);
 
-  const dbStats = dbStatsRes.data as { database_bytes: number; tables: TableStat[] } | null;
+  const dbStats = dbStatsRes.data as {
+    database_bytes: number; tables: TableStat[]; postgres_version: string;
+    active_connections: number; rls_enabled_tables: number; total_tables: number;
+  } | null;
+  const accountStats = accountStatsRes.data as {
+    total_accounts: number; multi_identity_accounts: number; no_role_accounts: number; signups_last_30d: number;
+  } | null;
 
   return NextResponse.json({
     database: dbStats ? {
       totalBytes: dbStats.database_bytes,
+      postgresVersion: dbStats.postgres_version,
+      activeConnections: dbStats.active_connections,
+      rlsEnabledTables: dbStats.rls_enabled_tables,
+      totalTables: dbStats.total_tables,
       // Top 8 by size — a leaderboard of "what's actually taking up room",
       // not every table (a schema-only table like doc_categories at 8KB
       // isn't worth a row here).
       tables: (dbStats.tables ?? []).slice(0, 8),
     } : null,
+    accounts: accountStats,
     storage: storageResults,
     vercel,
+    // Node's own runtime version and (on Vercel) the exact commit/branch
+    // this response was served from — env vars Vercel sets automatically
+    // on every deployment, no API call needed.
+    environment: {
+      nodeVersion: process.version,
+      gitCommitSha: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7),
+      gitCommitRef: process.env.VERCEL_GIT_COMMIT_REF,
+      vercelEnv: process.env.VERCEL_ENV,
+    },
   });
 }

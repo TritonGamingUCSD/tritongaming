@@ -19,6 +19,7 @@ export interface BoardMember {
   social_links: Record<string, string>;
   board_visibility: Record<string, boolean>;
   tier: BoardTier;
+  board_order: number | null;
 }
 
 const TIER_RANK: Record<BoardTier, number> = { exec: 0, lead: 1, officer: 2, alumni: 3 };
@@ -37,6 +38,7 @@ interface BoardProfileRow {
   show_on_board: boolean;
   social_links: Record<string, string> | null;
   board_visibility: Record<string, boolean> | null;
+  board_order: number | null;
   user_roles: Array<{ role: AppRole }>;
 }
 
@@ -56,7 +58,7 @@ export async function getBoardMembers(): Promise<BoardMember[]> {
   const { data, error } = await supabase
     .from('profiles')
     .select(`
-      id, display_name, avatar_url, custom_avatar_url, org_title, bio, major, year, gamer_tag, pronouns, show_on_board, social_links, board_visibility,
+      id, display_name, avatar_url, custom_avatar_url, org_title, bio, major, year, gamer_tag, pronouns, show_on_board, social_links, board_visibility, board_order,
       user_roles!user_roles_user_id_fkey(role)
     `);
 
@@ -108,12 +110,19 @@ export async function getBoardMembers(): Promise<BoardMember[]> {
       social_links: row.social_links ?? {},
       board_visibility: row.board_visibility ?? {},
       tier,
+      board_order: row.board_order,
     };
   });
 
   return members.sort((a, b) => {
     const rankDiff = TIER_RANK[a.tier] - TIER_RANK[b.tier];
     if (rankDiff !== 0) return rankDiff;
+    // Custom-ordered members (set via the admin Board Order tool) come
+    // first, in that order; anyone without an order falls back to
+    // alphabetical, same as before this existed.
+    if (a.board_order !== null && b.board_order !== null) return a.board_order - b.board_order;
+    if (a.board_order !== null) return -1;
+    if (b.board_order !== null) return 1;
     return (a.display_name ?? '').localeCompare(b.display_name ?? '');
   });
 }
