@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Award, ShoppingBag, Trophy, Settings, Copy, Check, QrCode, Gift, Lock } from 'lucide-react';
+import { Award, ShoppingBag, Trophy, Settings, Copy, Check, QrCode, Gift, Lock, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { getTier, nextTier, type Tier } from '@/lib/tiers';
 import { PACIFIC_TZ } from '@/lib/timezone';
@@ -95,11 +95,13 @@ interface Props {
   tiers: Tier[];
 }
 
-// The Manage tab does three genuinely separate jobs (edit the catalog,
-// correct a member's points, edit the tier ladder) — same reasoning as
-// Battlepass's own Manage sub-tab split.
-type ManageSubTab = 'shop' | 'correct' | 'tiers';
-const VALID_MANAGE_SUB_TABS: ManageSubTab[] = ['shop', 'correct', 'tiers'];
+// The Manage tab does four genuinely separate jobs (award points, edit the
+// catalog, correct a member's points, edit the tier ladder) — mirrors
+// Battlepass's own Manage sub-tab split exactly, minus Redemptions (member
+// reward redemptions are confirmed from Check-in's own Redemptions tab,
+// not from here — see CheckInSectionContent.tsx).
+type ManageSubTab = 'award' | 'shop' | 'correct' | 'tiers';
+const VALID_MANAGE_SUB_TABS: ManageSubTab[] = ['award', 'shop', 'correct', 'tiers'];
 
 export default function PointsSectionContent({
   balance, lifetimeEarned, referralCode,
@@ -117,7 +119,7 @@ export default function PointsSectionContent({
       : VALID_MANAGE_SUB_TABS.includes(initialSubTab as ManageSubTab) ? 'manage' : 'points'
   );
   const [manageSubTab, setManageSubTab] = useState<ManageSubTab>(
-    VALID_MANAGE_SUB_TABS.includes(initialSubTab as ManageSubTab) ? (initialSubTab as ManageSubTab) : 'shop'
+    VALID_MANAGE_SUB_TABS.includes(initialSubTab as ManageSubTab) ? (initialSubTab as ManageSubTab) : 'award'
   );
   const syncUrl = usePortalTabSync('points');
   function selectTab(t: Tab) {
@@ -278,17 +280,15 @@ export default function PointsSectionContent({
   });
   const [creating, setCreating] = useState(false);
 
-  // Manual point adjustment — the catch-all correction tool for anything
-  // the check-in/redemption "undo" buttons elsewhere don't cover. Reuses
-  // the existing portal member search rather than building a second
-  // member-lookup endpoint just for this.
+  // Correct a member's points — browse their ledger and reverse the exact
+  // entry that was wrong. Reuses the existing portal member search rather
+  // than building a second member-lookup endpoint just for this. Mirrors
+  // Battlepass's Corrections sub-tab exactly (no manual amount/note form
+  // here anymore — that's the Award Points sub-tab's job now, same as
+  // Battlepass).
   const [adjustQuery, setAdjustQuery] = useState('');
   const [adjustResults, setAdjustResults] = useState<{ id: string; title: string }[]>([]);
   const [adjustTarget, setAdjustTarget] = useState<{ id: string; title: string } | null>(null);
-  const [adjustAmount, setAdjustAmount] = useState('');
-  const [adjustNote, setAdjustNote] = useState('');
-  const [adjusting, setAdjusting] = useState(false);
-  const [adjustResult, setAdjustResult] = useState('');
 
   // Reverse a specific transaction — the precise alternative to typing a
   // free-form amount below: browse the selected member's own ledger and
@@ -348,29 +348,65 @@ export default function PointsSectionContent({
     return () => clearTimeout(t);
   }, [adjustQuery, adjustTarget]);
 
-  async function handleAdjust(e: React.FormEvent) {
+  // ── Manage: batch award — mirrors Battlepass's Award Points sub-tab
+  // exactly, just backed by /api/admin/points/award and the shared portal
+  // member search instead of the officer-scoped one. ─────────────────────
+  const [awardQuery, setAwardQuery] = useState('');
+  const [awardResults, setAwardResults] = useState<{ id: string; title: string }[]>([]);
+  const [awardTargets, setAwardTargets] = useState<{ id: string; title: string }[]>([]);
+  const [awardAmount, setAwardAmount] = useState('');
+  const [awardNote, setAwardNote] = useState('');
+  const [awarding, setAwarding] = useState(false);
+  const [awardResult, setAwardResult] = useState('');
+
+  useEffect(() => {
+    if (awardQuery.trim().length < 2) { setAwardResults([]); return; }
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/portal/search?q=${encodeURIComponent(awardQuery.trim())}`);
+        const json = await res.json();
+        const members = (json.members ?? []) as { id: string; title: string }[];
+        setAwardResults(members.filter((m) => !awardTargets.some((t2) => t2.id === m.id)));
+      } catch {
+        setAwardResults([]);
+      }
+    }, 250);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [awardQuery]);
+
+  function addAwardTarget(m: { id: string; title: string }) {
+    setAwardTargets((prev) => [...prev, m]);
+    setAwardQuery('');
+    setAwardResults([]);
+  }
+
+  function removeAwardTarget(id: string) {
+    setAwardTargets((prev) => prev.filter((t) => t.id !== id));
+  }
+
+  async function handleAward(e: React.FormEvent) {
     e.preventDefault();
-    if (!adjustTarget || !adjustAmount || !adjustNote.trim()) return;
-    setAdjusting(true);
-    setAdjustResult('');
+    if (awardTargets.length === 0 || !awardAmount || !awardNote.trim()) return;
+    setAwarding(true);
+    setAwardResult('');
     try {
-      const res = await fetch('/api/admin/points/adjust', {
+      const res = await fetch('/api/admin/points/award', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: adjustTarget.id, amount: Number(adjustAmount), note: adjustNote.trim() }),
+        body: JSON.stringify({ user_ids: awardTargets.map((t) => t.id), amount: Number(awardAmount), note: awardNote.trim() }),
       });
       const json = await res.json();
-      if (!res.ok) { setAdjustResult(json.error || 'Failed to adjust points.'); return; }
-      setAdjustResult(`Done — ${adjustTarget.title}'s balance updated.`);
+      if (!res.ok) { setAwardResult(json.error || 'Failed to award points.'); return; }
+      setAwardResult(`Done — awarded ${awardTargets.length} member${awardTargets.length === 1 ? '' : 's'}.`);
       setBoard(null); // leaderboard's cached fetch is now stale — force a refetch next time it's opened
-      setAdjustTarget(null);
-      setAdjustQuery('');
-      setAdjustAmount('');
-      setAdjustNote('');
+      setAwardTargets([]);
+      setAwardAmount('');
+      setAwardNote('');
     } catch {
-      setAdjustResult('Network error. Please try again.');
+      setAwardResult('Network error. Please try again.');
     } finally {
-      setAdjusting(false);
+      setAwarding(false);
     }
   }
 
@@ -841,12 +877,57 @@ export default function PointsSectionContent({
       {tab === 'manage' && canManageShop && (
         <div className={styles.manageTab}>
           <div className={styles.subTabBar} role="tablist">
+            {canManagePoints && (
+              <button type="button" role="tab" aria-selected={manageSubTab === 'award'} className={`${styles.subTab} ${manageSubTab === 'award' ? styles.subTabActive : ''}`} onClick={() => selectManageSubTab('award')}>Award Points</button>
+            )}
             <button type="button" role="tab" aria-selected={manageSubTab === 'shop'} className={`${styles.subTab} ${manageSubTab === 'shop' ? styles.subTabActive : ''}`} onClick={() => selectManageSubTab('shop')}>Shop Items</button>
             {canManagePoints && (
-              <button type="button" role="tab" aria-selected={manageSubTab === 'correct'} className={`${styles.subTab} ${manageSubTab === 'correct' ? styles.subTabActive : ''}`} onClick={() => selectManageSubTab('correct')}>Correct Points</button>
+              <button type="button" role="tab" aria-selected={manageSubTab === 'correct'} className={`${styles.subTab} ${manageSubTab === 'correct' ? styles.subTabActive : ''}`} onClick={() => selectManageSubTab('correct')}>Corrections</button>
             )}
             <button type="button" role="tab" aria-selected={manageSubTab === 'tiers'} className={`${styles.subTab} ${manageSubTab === 'tiers' ? styles.subTabActive : ''}`} onClick={() => selectManageSubTab('tiers')}>Tiers</button>
           </div>
+
+          {manageSubTab === 'award' && canManagePoints && (
+          <section className={styles.manageSection}>
+            <h2 className={styles.sectionLabel}>Award Points</h2>
+            <p className={styles.referralHint}>Award the same amount to one or more members at once — for a goodwill bonus, a correction, or any other contribution.</p>
+            <form className={styles.awardForm} onSubmit={handleAward}>
+              <div className={styles.adjustSearchWrap}>
+                <input
+                  className={styles.input}
+                  placeholder="Search members by name…"
+                  value={awardQuery}
+                  onChange={(e) => setAwardQuery(e.target.value)}
+                />
+                {awardResults.length > 0 && (
+                  <div className={styles.adjustDropdown}>
+                    {awardResults.map((m) => (
+                      <button key={m.id} type="button" className={styles.adjustResult} onClick={() => addAwardTarget(m)}>
+                        {m.title}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {awardTargets.length > 0 && (
+                <div className={styles.awardTargets}>
+                  {awardTargets.map((t) => (
+                    <span key={t.id} className={styles.awardChip}>
+                      {t.title}
+                      <button type="button" onClick={() => removeAwardTarget(t.id)} aria-label={`Remove ${t.title}`}><X size={12} strokeWidth={2} aria-hidden="true" /></button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <input className={styles.input} type="number" placeholder="Amount (+/-)" value={awardAmount} onChange={(e) => setAwardAmount(e.target.value)} />
+              <input className={styles.input} placeholder="Reason (required)" value={awardNote} onChange={(e) => setAwardNote(e.target.value)} maxLength={200} />
+              <button type="submit" className={styles.saveBtn} disabled={awarding || awardTargets.length === 0 || !awardAmount || !awardNote.trim()}>
+                {awarding ? 'Awarding…' : `Award ${awardTargets.length || ''}`.trim()}
+              </button>
+            </form>
+            {awardResult && <p className={styles.referralHint}>{awardResult}</p>}
+          </section>
+          )}
 
           {manageSubTab === 'shop' && (
           <>
@@ -961,7 +1042,7 @@ export default function PointsSectionContent({
           {manageSubTab === 'correct' && canManagePoints && (
           <div className={styles.adjustSection}>
             <h2 className={styles.sectionLabel}>Correct a Member&apos;s Points</h2>
-            <p className={styles.referralHint}>Find a member to see their points history and reverse a specific entry, or apply a manual adjustment below for anything that isn&apos;t tied to a past transaction.</p>
+            <p className={styles.referralHint}>Find a member to see their points history and reverse a specific entry.</p>
 
             <div className={styles.adjustSearchWrap}>
               <input
@@ -1022,15 +1103,6 @@ export default function PointsSectionContent({
                 )}
               </>
             )}
-
-            <form className={`${styles.adjustForm} ${styles.adjustFormFallback}`} onSubmit={handleAdjust}>
-              <input className={styles.input} type="number" placeholder="Amount (+/-)" value={adjustAmount} onChange={(e) => setAdjustAmount(e.target.value)} />
-              <input className={styles.input} placeholder="Reason (required)" value={adjustNote} onChange={(e) => setAdjustNote(e.target.value)} maxLength={200} />
-              <button type="submit" className={styles.saveBtn} disabled={adjusting || !adjustTarget || !adjustAmount || !adjustNote.trim()}>
-                {adjusting ? 'Applying…' : 'Apply'}
-              </button>
-            </form>
-            {adjustResult && <p className={styles.referralHint}>{adjustResult}</p>}
           </div>
           )}
 

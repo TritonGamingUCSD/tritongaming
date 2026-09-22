@@ -525,17 +525,47 @@
   border-top: 1px solid rgba(255,255,255,0.07);
 }
 
-.adjustForm {
-  display: grid;
-  grid-template-columns: 2fr 1fr 2fr auto;
+.manageSection {
+  padding-top: 0;
+  border-top: none;
+}
+
+/* Flex-wrap, not a fixed grid — mirrors Battlepass's identical .awardForm:
+   flex-basis per field expresses the actual intended proportions (search
+   wide, amount narrow, reason wide, button auto) directly, instead of a
+   fixed-column grid whose track count has to match the real children. */
+.awardForm {
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.625rem;
-  align-items: start;
+  align-items: center;
   margin-top: 0.75rem;
 }
-@media (max-width: 720px) { .adjustForm { grid-template-columns: 1fr 1fr; } }
+.awardForm .adjustSearchWrap { flex: 2 1 220px; margin-top: 0; }
+.awardForm > input[type="number"] { flex: 0 1 110px; }
+.awardForm > input:not([type="number"]) { flex: 2 1 220px; }
+.awardForm .saveBtn { flex-shrink: 0; }
 
-.adjustFormFallback { grid-template-columns: 1fr 2fr auto; margin-top: 1.25rem; }
-@media (max-width: 720px) { .adjustFormFallback { grid-template-columns: 1fr 1fr; } }
+.awardTargets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  flex-basis: 100%;
+}
+
+.awardChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.5rem 0.3rem 0.7rem;
+  background: rgba(255,199,44,0.1);
+  color: var(--yellow);
+  border: 1px solid rgba(255,199,44,0.25);
+  border-radius: var(--radius-pill);
+  font-size: 0.78rem;
+  font-family: var(--font-futura-medium);
+}
+.awardChip button { display: inline-flex; color: inherit; background: none; border: none; cursor: pointer; padding: 0; }
 
 .adjustSearchWrap { position: relative; }
 
