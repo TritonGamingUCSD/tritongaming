@@ -85,12 +85,12 @@ interface GroupedSection {
 }
 
 // Replaces the old sidebar as the portal's primary navigation on mobile: a
-// grid of section cards that zoom into a full panel on click (Framer
-// Motion's shared layoutId morphs the clicked card's box into the panel,
-// and back again on close). On desktop, DesktopShell below takes over
-// instead — see its own comment for why. Each section's real content is
-// pre-rendered server-side and just handed in — this component only owns
-// which one is currently open.
+// bottom tab bar (+ "More" sheet) that swaps in a section's full-screen
+// panel on tap, with a plain fade/slide (see the panel's motion.div below —
+// no shared-layout zoom anymore now that there's no card grid left to zoom
+// from). On desktop, DesktopShell below takes over instead — see its own
+// comment for why. Each section's real content is pre-rendered server-side
+// and just handed in — this component only owns which one is currently open.
 //
 // openId is local state, not derived straight from the URL — every section's
 // content is already sitting in `sections` (fetched once, up front), so
@@ -172,13 +172,25 @@ export default function PortalHub({ sections, onOpenChange }: { sections: HubSec
 
   return (
     <div className={styles.wrap}>
-      <AnimatePresence initial={false} mode="popLayout">
+      <AnimatePresence initial={false}>
         {openSection ? (
+          // layoutId (the shared "zoom from the tapped grid card" morph)
+          // used to make sense here — it doesn't anymore. That grid is
+          // gone from mobile (see the bottom tab bar / "More" sheet
+          // instead), so opening a section from a bar tap has no matching
+          // source element left anywhere on the page. Framer Motion still
+          // set up its full shared-layout projection machinery for a
+          // layoutId with no partner (per-frame layout measurement on
+          // this panel's entire subtree, tables/charts and all) — that's
+          // what was actually causing the reported lag opening tabs/
+          // sections, not the fade itself. A plain opacity+slide instead
+          // costs nothing close to that.
           <motion.div
             key="panel"
-            layoutId={`hub-card-${openSection.id}`}
             className={styles.panel}
-            transition={SPRING}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0, transition: { duration: 0.18 } }}
+            exit={{ opacity: 0, transition: { duration: 0.1 } }}
           >
             <div className={styles.panelHeader}>
               <button className={styles.backBtn} onClick={close}>
@@ -189,14 +201,9 @@ export default function PortalHub({ sections, onOpenChange }: { sections: HubSec
                 <span className={styles.panelTitle}>{openSection.label}</span>
               </div>
             </div>
-            <motion.div
-              className={styles.panelBody}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1, transition: { delay: 0.06, duration: 0.18 } }}
-              exit={{ opacity: 0, transition: { duration: 0.08 } }}
-            >
+            <div className={styles.panelBody}>
               {openSection.content}
-            </motion.div>
+            </div>
           </motion.div>
         ) : null}
       </AnimatePresence>
