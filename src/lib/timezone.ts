@@ -30,6 +30,24 @@ function pacificDateParts(date: Date): { year: number; month: number; day: numbe
   return { year: get('year'), month: get('month'), day: get('day') };
 }
 
+// "Today"/"Tomorrow"/"in N days" labels need a Pacific *calendar-day*
+// difference, not a raw elapsed-time one. A plain
+// `Math.ceil((eventMs - Date.now()) / 86400000)` rounds any positive
+// fractional day up — an event later THIS SAME Pacific day (say, 6 hours
+// from now) comes out to `Math.ceil(0.25) === 1` and gets mislabeled
+// "tomorrow" even though it's today. Comparing Pacific calendar dates
+// (via Date.UTC on the Pacific-read date parts, so only whole days are
+// ever counted) is the only way to get 0/1/2... to actually mean
+// today/tomorrow/day-after in San Diego terms, regardless of what time of
+// day it is right now or what timezone the server process itself runs in.
+export function pacificDaysUntil(iso: string, from: Date = new Date()): number {
+  const target = pacificDateParts(new Date(iso));
+  const now = pacificDateParts(from);
+  const targetUTC = Date.UTC(target.year, target.month - 1, target.day);
+  const nowUTC = Date.UTC(now.year, now.month - 1, now.day);
+  return Math.round((targetUTC - nowUTC) / 86400_000);
+}
+
 // Shared by every event card/detail view (EventCard, LongEventCard, the
 // public event detail page) — was previously copy-pasted three times with
 // no explicit timeZone, so the same-day/same-month comparisons it makes were

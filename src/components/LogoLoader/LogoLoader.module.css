@@ -1,0 +1,88 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.fullHeight {
+  min-height: 60vh;
+  width: 100%;
+}
+
+.logoBox {
+  position: relative;
+}
+
+/* Dim "ghost" of the logo, always visible — without this, the shape would
+   only ever show wherever the sweep currently is, reading as a broken/
+   half-loaded image rather than a loading animation. */
+.logoBase {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0.7;
+  filter: drop-shadow(0 0 14px rgba(255, 199, 44, 0.25));
+}
+
+/* Same logo shape used as a mask (PNG's own alpha channel — transparent
+   pixels stay hidden, opaque ones let the gradient underneath show through)
+   so the gold sweep is clipped exactly to the diamond, not a rectangle
+   passing over it. The mask-image doesn't need its own transparency work —
+   it just reuses the source art. */
+.logoShine {
+  position: absolute;
+  inset: 0;
+  -webkit-mask-image: url('/logos/tg_logo.png');
+  mask-image: url('/logos/tg_logo.png');
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  background: linear-gradient(
+    100deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.9) 48%,
+    rgba(255, 199, 44, 1) 52%,
+    transparent 65%
+  );
+  background-size: 300% 100%;
+  animation: sweep 1.8s ease-in-out infinite;
+}
+
+/* Left -> center -> right, then loops — a highlight traveling the full
+   width of the logo rather than a symmetric back-and-forth shimmer. */
+@keyframes sweep {
+  0% { background-position: 150% 0; }
+  100% { background-position: -150% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logoShine { animation-duration: 3.2s; }
+}
+
+.label {
+  font-family: var(--font-futura-medium);
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+.labelDark { color: rgba(242, 241, 240, 0.85); }
+.labelLight { color: rgba(1, 25, 65, 0.75); }
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

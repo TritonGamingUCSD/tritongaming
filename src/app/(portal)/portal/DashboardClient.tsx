@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import FullscreenQR from './tickets/FullscreenQR';
 import { useState } from 'react';
-import { Clock, MapPin, Smartphone } from 'lucide-react';
-import { PACIFIC_TZ } from '@/lib/timezone';
+import { Clock, MapPin, QrCode } from 'lucide-react';
+import { PACIFIC_TZ, pacificDaysUntil } from '@/lib/timezone';
 import styles from './dashboard.module.css';
 
 interface Ticket {
@@ -19,7 +19,7 @@ export default function DashboardClient({ ticket }: { ticket: Ticket }) {
   if (!ev) return null;
 
   const d = new Date(ev.start_date);
-  const daysUntil = Math.ceil((d.getTime() - Date.now()) / 86400_000);
+  const daysUntil = pacificDaysUntil(ev.start_date);
 
   return (
     <>
@@ -47,7 +47,7 @@ export default function DashboardClient({ ticket }: { ticket: Ticket }) {
           </div>
           <div className={styles.ticketHeroActions}>
             <button className={styles.showQrHeroBtn} onClick={() => setShowQR(true)}>
-              <Smartphone size={16} strokeWidth={1.5} aria-hidden="true" /> Show QR Code
+              <QrCode size={16} strokeWidth={1.5} aria-hidden="true" /> Show QR Code
             </button>
             <Link href="/portal?section=tickets" className={styles.viewAllTickets}>All tickets →</Link>
           </div>

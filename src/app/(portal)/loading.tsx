@@ -1,4 +1,4 @@
-import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
+import LogoLoader from '@/components/LogoLoader/LogoLoader';
 
 // Placed at the outer (portal) route group, not the inner portal/ one —
 // portal/layout.tsx itself does an `await getProfile()` auth check before
@@ -11,7 +11,7 @@ import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 export default function PortalLoading() {
   return (
     <div style={{ minHeight: '100vh', background: '#080d1a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <LoadingSpinner size={40} label="Loading your portal…" theme="dark" />
+      <LogoLoader size={96} label="Loading your portal…" theme="dark" />
     </div>
   );
 }

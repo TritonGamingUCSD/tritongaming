@@ -1,4 +1,4 @@
-import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
+import LogoLoader from '@/components/LogoLoader/LogoLoader';
 
 // The outermost Suspense fallback Next.js has — only ever shown for the
 // brief moment before routing even resolves which route group (main site,
@@ -18,7 +18,7 @@ export default function RootLoading() {
         justifyContent: 'center',
       }}
     >
-      <LoadingSpinner size={40} label="Loading Triton Gaming…" theme="dark" />
+      <LogoLoader size={96} label="Loading Triton Gaming…" theme="dark" />
     </div>
   );
 }

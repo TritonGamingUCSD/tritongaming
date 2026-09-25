@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Ticket, MapPin, Smartphone, Check, X, Timer, Award } from 'lucide-react';
+import { Ticket, MapPin, QrCode, Check, X, Timer, Award } from 'lucide-react';
 import FullscreenQR from './FullscreenQR';
 import OnlineCheckinEntry from './OnlineCheckinEntry';
 import AddToCalendarButton from '@/components/AddToCalendarButton/AddToCalendarButton';
@@ -218,7 +218,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
                   className={styles.showQrBtn}
                   onClick={() => setQrTicket(nextActiveTicket)}
                 >
-                  <span className={styles.showQrIcon}><Smartphone size={18} strokeWidth={1.5} aria-hidden="true" /></span>
+                  <span className={styles.showQrIcon}><QrCode size={18} strokeWidth={1.5} aria-hidden="true" /></span>
                   Show QR Code
                 </button>
               )}

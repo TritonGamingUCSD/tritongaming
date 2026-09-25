@@ -1,11 +1,30 @@
 'use client';
 
-import type { ReactNode } from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import type { ReactElement, ReactNode } from 'react';
+import { cloneElement, isValidElement, useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
+import { Home, MoreHorizontal } from 'lucide-react';
 import PortalSearch from './PortalSearch';
 import styles from './PortalHub.module.css';
+
+// The bottom tab bar's fixed slots — Hub + these (whichever a person
+// actually has) + More is 5 tabs, max. Battlepass deliberately isn't one
+// of these: an officer who's also a UCSD member gets BOTH the 'points' and
+// 'battlepass' sections at once (isRewardsEligible and the officer-tier
+// check are independent, not mutually exclusive), so giving Battlepass its
+// own primary slot too would make the bar 6 items for exactly that
+// audience. It's one tap under "More" for everyone instead, same as
+// Activity/Members/Admin/etc.
+const PRIMARY_TAB_ORDER = ['tickets', 'points', 'profile'];
+
+// Section icons are already sized for the big grid cards (28px) — shrink
+// to something that reads as a tab-bar glyph instead of cloning a whole
+// second icon set just for this.
+function smallIcon(icon: ReactNode, size = 21) {
+  if (!isValidElement(icon)) return icon;
+  return cloneElement(icon as ReactElement<{ size?: number; strokeWidth?: number }>, { size, strokeWidth: 1.75 });
+}
 
 // Fixed display order — a section's own `group` string just needs to match
 // one of these keys. Anything with a group not listed here (shouldn't
@@ -43,7 +62,7 @@ const SPRING = { type: 'spring' as const, stiffness: 420, damping: 38 };
 // which mode is active.
 const DESKTOP_BREAKPOINT = '(min-width: 900px)';
 
-function useIsDesktop(): boolean {
+export function useIsDesktop(): boolean {
   // Starts false (the SSR-safe default — the server has no window to check)
   // and corrects on mount. A real desktop visitor sees one frame of the
   // mobile layout before this flips, which is the standard, accepted
@@ -83,103 +102,18 @@ interface GroupedSection {
 // changes that arrive from *outside* this component (e.g. a <Link> to
 // /portal?section=x elsewhere on the same route) — just without the UI
 // waiting on it.
-// onGridWidth, when passed, reports the card grid's actual rendered width
-// (in px) — lets a sibling like the portal's "next ticket" banner match it
-// exactly instead of guessing at a shared width in pure CSS, which broke
-// down once real content was involved (see DashboardClient/dashboard.module
-// .css for why). It only fires while the grid itself is on screen — while a
-// panel is open (mobile) there's nothing to measure, so the width stays at
-// whatever it last was, which no longer corresponds to anything actually
-// visible. onOpenChange reports whether a panel is open so a sibling can
-// react to that directly — e.g. hide itself.
-export default function PortalHub({ sections, onGridWidth, onOpenChange }: { sections: HubSection[]; onGridWidth?: (width: number) => void; onOpenChange?: (open: boolean) => void }) {
+// onOpenChange reports whether a panel is open so a sibling (the portal's
+// "next ticket" banner) can react to that directly — e.g. hide itself while
+// a section takes over the screen on mobile.
+export default function PortalHub({ sections, onOpenChange }: { sections: HubSection[]; onOpenChange?: (open: boolean) => void }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedSection = searchParams.get('section');
   const validRequested = sections.some((s) => s.id === requestedSection) ? requestedSection : null;
 
   const [openId, setOpenId] = useState<string | null>(validRequested);
+  const [moreOpen, setMoreOpen] = useState(false);
   const isDesktop = useIsDesktop();
-
-  const gridRef = useCallback((node: HTMLDivElement | null) => {
-    // Matching the hero banner's width to the card cluster's own measured
-    // width is a mobile-specific visual idea (centering a banner above a
-    // centered, variable-count card grid). Desktop's rail+content shell has
-    // no equivalent "cluster to align with" — the home grid there is just
-    // left-aligned content in a wide pane, not a floating centered cluster
-    // — so measuring it and applying that number as the banner's max-width
-    // was capping the banner to whatever the (much narrower) home-grid
-    // measurement happened to be, then leaving it stuck at that stale
-    // number once you navigated into a section and the grid unmounted,
-    // which is what read as the banner's width randomly "jumping" between
-    // tabs. Skipping this on desktop entirely lets the banner just stretch
-    // to its flex parent's full width instead (see PortalTopSection).
-    if (!node || !onGridWidth || isDesktop) return;
-
-    // .grid itself is a block box that always stretches to fill its
-    // container's full width — justify-content:center only repositions the
-    // *tracks* (cards) inside that box, it doesn't shrink the box to fit
-    // them. So measuring the grid element's own rect reports the full
-    // container width, not the card cluster's actual span. Measure the real
-    // leftmost/rightmost card edges instead.
-    const measure = () => {
-      const cards = node.querySelectorAll<HTMLElement>(`.${styles.card}`);
-      if (cards.length === 0) return null;
-      let minLeft = Infinity;
-      let maxRight = -Infinity;
-      cards.forEach((card) => {
-        const rect = card.getBoundingClientRect();
-        minLeft = Math.min(minLeft, rect.left);
-        maxRight = Math.max(maxRight, rect.right);
-      });
-      return maxRight > minLeft ? Math.round(maxRight - minLeft) : null;
-    };
-
-    // Cards carry layoutId and animate (the shared-element transition back
-    // from a just-closed panel, or the initial mount) — measuring mid-
-    // animation can catch a card at a transformed/inflated rect, and since
-    // nothing re-triggers a measurement afterward (ResizeObserver only
-    // fires on *this container's own* box size changing, not on a child's
-    // transform), a bad one-off reading stuck permanently — the banner
-    // rendering wider than the actual settled card cluster was this: not a
-    // math error, a timing one. Settle-detect instead of trusting a single
-    // read: keep sampling on animation frames until two consecutive
-    // samples agree (or we give up after ~1s and take the last one).
-    let attempts = 0;
-    let lastWidth: number | null = null;
-    let rafId = 0;
-    const settle = () => {
-      const width = measure();
-      if (width !== null) {
-        if (width === lastWidth) {
-          onGridWidth(width);
-          return;
-        }
-        lastWidth = width;
-      }
-      attempts++;
-      if (attempts < 60) {
-        rafId = requestAnimationFrame(settle);
-      } else if (lastWidth !== null) {
-        onGridWidth(lastWidth);
-      }
-    };
-    rafId = requestAnimationFrame(settle);
-
-    const ro = new ResizeObserver(() => {
-      attempts = 0;
-      lastWidth = null;
-      cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(settle);
-    });
-    ro.observe(node);
-
-    return () => {
-      ro.disconnect();
-      cancelAnimationFrame(rafId);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDesktop]);
 
   useEffect(() => {
     setOpenId(validRequested);
@@ -217,6 +151,13 @@ export default function PortalHub({ sections, onGridWidth, onOpenChange }: { sec
     .map((group) => ({ group, items: sections.filter((s) => s.group === group) }))
     .filter((g) => g.items.length > 0);
 
+  const primaryTabs = PRIMARY_TAB_ORDER
+    .map((id) => sections.find((s) => s.id === id))
+    .filter((s): s is HubSection => !!s);
+  const primaryTabIds = new Set(primaryTabs.map((s) => s.id));
+  const moreSections = sections.filter((s) => !primaryTabIds.has(s.id));
+  const isMoreActive = openId !== null && !primaryTabIds.has(openId);
+
   if (isDesktop) {
     return (
       <DesktopShell
@@ -225,14 +166,12 @@ export default function PortalHub({ sections, onGridWidth, onOpenChange }: { sec
         openId={openId}
         open={open}
         close={close}
-        gridRef={gridRef}
       />
     );
   }
 
   return (
     <div className={styles.wrap}>
-      {!openSection && <PortalSearch />}
       <AnimatePresence initial={false} mode="popLayout">
         {openSection ? (
           <motion.div
@@ -259,41 +198,79 @@ export default function PortalHub({ sections, onGridWidth, onOpenChange }: { sec
               {openSection.content}
             </motion.div>
           </motion.div>
-        ) : (
-          <motion.div
-            key="grid"
-            ref={gridRef}
-            className={styles.gridWrap}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
+        ) : null}
+      </AnimatePresence>
+
+      <nav className={styles.bottomBar} aria-label="Portal quick navigation">
+        <button
+          type="button"
+          className={`${styles.bottomBarItem} ${openId === null ? styles.bottomBarItemActive : ''}`}
+          onClick={close}
+        >
+          <Home size={25} strokeWidth={1.75} aria-hidden="true" />
+          <span>Hub</span>
+        </button>
+        {primaryTabs.map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            className={`${styles.bottomBarItem} ${openId === s.id ? styles.bottomBarItemActive : ''}`}
+            onClick={() => { setMoreOpen(false); open(s.id); }}
           >
-            {groupedSections.map(({ group, items }) => (
-              <section key={group} className={styles.group}>
-                {groupedSections.length > 1 && <h2 className={styles.groupLabel}>{group}</h2>}
-                <div className={styles.grid}>
-                  {items.map((s) => (
-                    <motion.button
-                      key={s.id}
-                      layoutId={`hub-card-${s.id}`}
-                      className={styles.card}
-                      onClick={() => open(s.id)}
-                      transition={SPRING}
-                      aria-label={`${s.label} — ${s.description}`}
-                    >
-                      {s.badge !== undefined && s.badge !== 0 && (
-                        <span className={styles.cardBadge}>{s.badge}</span>
-                      )}
-                      <span className={styles.cardIcon} aria-hidden="true">{s.icon}</span>
-                      <span className={styles.cardLabel}>{s.label}</span>
-                      <span className={styles.cardTooltip} role="tooltip">{s.description}</span>
-                    </motion.button>
-                  ))}
-                </div>
-              </section>
-            ))}
-          </motion.div>
+            {s.badge !== undefined && s.badge !== 0 && (
+              <span className={styles.bottomBarBadge}>{s.badge}</span>
+            )}
+            {smallIcon(s.icon, 25)}
+            <span>{s.label}</span>
+          </button>
+        ))}
+        <button
+          type="button"
+          className={`${styles.bottomBarItem} ${isMoreActive || moreOpen ? styles.bottomBarItemActive : ''}`}
+          onClick={() => setMoreOpen((v) => !v)}
+        >
+          <MoreHorizontal size={25} strokeWidth={1.75} aria-hidden="true" />
+          <span>More</span>
+        </button>
+      </nav>
+
+      <AnimatePresence>
+        {moreOpen && (
+          <>
+            <motion.div
+              key="more-backdrop"
+              className={styles.moreSheetBackdrop}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              onClick={() => setMoreOpen(false)}
+            />
+            <motion.div
+              key="more-sheet"
+              className={styles.moreSheet}
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={SPRING}
+            >
+              <div className={styles.moreSheetHandle} aria-hidden="true" />
+              {moreSections.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  className={`${styles.moreSheetItem} ${openId === s.id ? styles.bottomBarItemActive : ''}`}
+                  onClick={() => { setMoreOpen(false); open(s.id); }}
+                >
+                  <span className={styles.moreSheetIcon} aria-hidden="true">{smallIcon(s.icon)}</span>
+                  <span>{s.label}</span>
+                  {s.badge !== undefined && s.badge !== 0 && (
+                    <span className={styles.moreSheetBadge}>{s.badge}</span>
+                  )}
+                </button>
+              ))}
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>
@@ -314,14 +291,12 @@ function DesktopShell({
   openId,
   open,
   close,
-  gridRef,
 }: {
   groupedSections: GroupedSection[];
   openSection: HubSection | null;
   openId: string | null;
   open: (id: string) => void;
   close: () => void;
-  gridRef: (node: HTMLDivElement | null) => void;
 }) {
   return (
     <div className={styles.desktopShell}>
@@ -378,7 +353,6 @@ function DesktopShell({
           ) : (
             <motion.div
               key="home"
-              ref={gridRef}
               className={styles.gridWrap}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1, transition: { duration: 0.15 } }}

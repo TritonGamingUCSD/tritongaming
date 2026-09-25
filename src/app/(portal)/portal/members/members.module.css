@@ -94,6 +94,7 @@
   grid-template-columns: repeat(auto-fit, 260px);
   justify-content: center;
   gap: 0.625rem;
+  width: 100%;
   max-width: calc(260px * 3 + 0.625rem * 2);
   margin: 0 auto;
 }

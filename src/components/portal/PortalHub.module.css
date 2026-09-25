@@ -1,5 +1,136 @@
 .wrap {
   position: relative;
+  /* Reserves room at the bottom of whatever's scrolling (grid or open-panel
+     content) so the fixed bottomBar never sits on top of the last bit of
+     it — same value as the bar's own height + safe-area inset below. */
+  padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+}
+
+/* ── Bottom tab bar ───────────────────────────────────
+   Mobile-only persistent nav — the card grid alone means every section is
+   at least one tap-then-scroll away with nothing on screen indicating
+   where the frequently-used stuff lives. Pins the handful of destinations
+   an attendee actually opens over and over (Tickets, Rewards/Battlepass,
+   Profile) one thumb-reach away, with everything else (Activity, Members,
+   Divisions, Admin, etc.) a single tap under "More" instead of disappearing
+   from quick reach entirely. */
+.bottomBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  align-items: stretch;
+  background: rgba(10, 14, 26, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.bottomBarItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.65rem 0.25rem;
+  min-height: 68px;
+  color: rgba(242, 241, 240, 0.5);
+  font-family: var(--font-futura-medium);
+  font-size: 0.7rem;
+  letter-spacing: 0.01em;
+  position: relative;
+}
+
+.bottomBarItemActive {
+  color: var(--yellow);
+}
+
+.bottomBarBadge {
+  position: absolute;
+  top: 0.3rem;
+  right: calc(50% - 1.2rem);
+  min-width: 15px;
+  height: 15px;
+  padding: 0 0.25rem;
+  border-radius: var(--radius-pill);
+  background: var(--yellow);
+  color: var(--darkblue);
+  font-family: var(--font-futura-heavy);
+  font-size: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.moreSheetBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 21;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.moreSheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 22;
+  max-height: 70vh;
+  overflow-y: auto;
+  background: #0c1120;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: none;
+  border-radius: 1.25rem 1.25rem 0 0;
+  padding: 0.75rem 0.5rem calc(1rem + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -16px 40px -20px rgba(0, 0, 0, 0.7);
+}
+
+.moreSheetHandle {
+  width: 36px;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.18);
+  margin: 0.25rem auto 0.75rem;
+}
+
+.moreSheetItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 0.75rem;
+  border-radius: 0.75rem;
+  color: var(--white);
+  font-family: var(--font-futura-medium);
+  font-size: 0.9rem;
+}
+
+.moreSheetItem:active {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.moreSheetIcon {
+  display: flex;
+  color: var(--yellow);
+}
+
+.moreSheetBadge {
+  margin-left: auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 0.4rem;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 199, 44, 0.15);
+  color: var(--yellow);
+  font-family: var(--font-futura-heavy);
+  font-size: 0.72rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ── Groups ───────────────────────────────────────── */

@@ -1,9 +1,9 @@
-import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
+import LogoLoader from '@/components/LogoLoader/LogoLoader';
 
 export default function AuthLoading() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <LoadingSpinner size={36} theme="dark" />
+      <LogoLoader size={80} theme="dark" />
     </div>
   );
 }

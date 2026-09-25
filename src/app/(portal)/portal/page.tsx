@@ -7,13 +7,14 @@ import { hasCapability, isVerifiedMember, isRewardsEligible } from '@/lib/capabi
 import { resolveAvatarUrl } from '@/lib/profile';
 import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK } from '@/types/database';
 import { CONTENT_BLOCKS } from '@/lib/content-blocks';
-import { PACIFIC_TZ } from '@/lib/timezone';
+import { PACIFIC_TZ, pacificDaysUntil } from '@/lib/timezone';
 import { getDivisions } from '@/lib/divisions';
 import type { HubSection } from '@/components/portal/PortalHub';
 import SignOutButton from '@/components/portal/SignOutButton';
 import OnboardingGuide from '@/components/portal/OnboardingGuide';
 import DashboardClient from './DashboardClient';
 import PortalTopSection from './PortalTopSection';
+import PortalSearch from '@/components/portal/PortalSearch';
 import TicketsClient from './tickets/TicketsClient';
 import { getTicketsData } from './tickets/getTicketsData';
 import ProfileClient from './profile/ProfileClient';
@@ -138,15 +139,23 @@ export default async function PortalDashboard({ searchParams }: Props) {
     .filter((t) => t.status === 'active' && t.event && new Date(t.event.start_date) >= nowDate)
     .sort((a, b) => new Date(a.event!.start_date).getTime() - new Date(b.event!.start_date).getTime())[0];
   const activeTicketCount = ticketsData.tickets.filter((t) => t.status === 'active').length;
+  // Same "already have a ticket to this one" exclusion TicketsClient itself
+  // uses (registeredEventIds there) — the Hub preview shouldn't invite
+  // someone to an event they're already registered for.
+  const registeredEventIds = new Set(ticketsData.tickets.map((t) => t.event?.id).filter(Boolean));
+  const unregisteredUpcomingEvents = ticketsData.upcomingEvents.filter((e) => !registeredEventIds.has(e.id));
   const memberTier = pointsData ? getTier(pointsData.lifetimeEarned, memberTiers) : null;
   const officerTier = battlepassData ? getOfficerTier(battlepassData.lifetimeEarned, officerTiers) : null;
 
-  // Events starting within the next/last 24h, for the check-in shortcut
+  // Events on today's Pacific calendar date, for the check-in shortcut
   // banner — derived from checkinData (already scoped to "recent or soon")
-  // instead of a second query.
-  const todayEvents = (checkinData?.events ?? []).filter(
-    (e) => new Date(e.start_date).getTime() <= Date.now() + 24 * 3600_000
-  );
+  // instead of a second query. A raw `<= now + 24h` window (the previous
+  // check) mislabels an event happening tomorrow morning as "today"
+  // whenever it's less than 24h away by the clock — e.g. checking at
+  // 11pm for an event at 6am the next day. pacificDaysUntil compares
+  // actual Pacific calendar dates instead, so this only ever matches
+  // events that fall on San Diego's "today", no matter what time it is now.
+  const todayEvents = (checkinData?.events ?? []).filter((e) => pacificDaysUntil(e.start_date) === 0);
 
   const sections: HubSection[] = [
     {
@@ -405,6 +414,14 @@ export default async function PortalDashboard({ searchParams }: Props) {
           </div>
         </header>
 
+        {/* Mobile-only (desktop already has its own persistent search in
+            DesktopShell's rail — see PortalHub.tsx — showing both would be
+            a duplicate). Sits above the checkin banner and ticket/events
+            content, right below the greeting header. */}
+        <div className={styles.mobileSearchWrap}>
+          <PortalSearch />
+        </div>
+
         {canCheckin && todayEvents.length > 0 && (
           <Link href="/portal?section=checkin" className={styles.checkinBanner}>
             <div className={styles.checkinBannerDot} />
@@ -424,6 +441,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             its width to the hub grid below it. */}
         <PortalTopSection
           ticket={nextTicket ? (nextTicket as Parameters<typeof DashboardClient>[0]['ticket']) : null}
+          upcomingEvents={unregisteredUpcomingEvents}
           sections={sections}
         />
       </div>
