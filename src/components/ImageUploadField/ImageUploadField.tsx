@@ -9,10 +9,16 @@ import styles from './ImageUploadField.module.css';
 const PREVIEW_SIZE: Record<Shape, { width: number; height: number }> = {
   circle: { width: 96, height: 96 },
   square: { width: 80, height: 80 },
+  logo: { width: 80, height: 80 },
   wide: { width: 160, height: 100 },
 };
 
-type Shape = 'circle' | 'square' | 'wide';
+// 'logo' previews the same square box as 'square' but pads onto a
+// transparent square canvas instead of center-cropping (see
+// lib/imageUpload's 'pad' crop mode) — for logos/marks that need to keep
+// their full content, unlike a face photo where cropping to the subject is
+// actually what you want.
+type Shape = 'circle' | 'square' | 'logo' | 'wide';
 
 export default function ImageUploadField({
   label,
@@ -65,7 +71,7 @@ export default function ImageUploadField({
     try {
       const url = await uploadImageToStorage(bucket, file, {
         maxDimension,
-        crop: shape === 'wide' ? 'none' : 'square',
+        crop: shape === 'wide' ? 'none' : shape === 'logo' ? 'pad' : 'square',
         pathPrefix,
       });
       onChange(url);

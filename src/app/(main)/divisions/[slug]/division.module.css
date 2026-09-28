@@ -24,6 +24,9 @@
 .logo {
   width: 120px;
   height: 120px;
+  /* See divisions.module.css's .logo for why — same fix, larger box. */
+  padding: 8px;
+  box-sizing: border-box;
   object-fit: contain;
   filter: drop-shadow(0 4px 16px rgba(0,0,0,0.4));
   flex-shrink: 0;

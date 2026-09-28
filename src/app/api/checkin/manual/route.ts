@@ -26,7 +26,7 @@ export async function POST(request: Request) {
   const serviceClient = createServiceClient();
   const { data: ticket } = await serviceClient
     .from('tickets')
-    .select('id, user_id, status, event:events(title, points_value)')
+    .select('id, user_id, status, event:events(title, points_value, start_date, end_date)')
     .eq('id', ticket_id)
     .single();
 
@@ -36,8 +36,21 @@ export async function POST(request: Request) {
   }
 
   const eventData = Array.isArray(ticket.event) ? ticket.event[0] : ticket.event;
-  const { error } = await performCheckin(serviceClient, ticket, eventData?.title ?? null, eventData?.points_value ?? 0, user.id);
-  if (error) return NextResponse.json({ error }, { status: 500 });
+  const { error } = await performCheckin(
+    serviceClient,
+    ticket,
+    {
+      title: eventData?.title ?? null,
+      points_value: eventData?.points_value ?? 0,
+      start_date: eventData?.start_date ?? new Date().toISOString(),
+      end_date: eventData?.end_date ?? null,
+    },
+    user.id
+  );
+  if (error) {
+    const status = error.includes('already ended') ? 409 : 500;
+    return NextResponse.json({ error }, { status });
+  }
 
   return NextResponse.json({ ok: true });
 }

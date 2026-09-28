@@ -6,15 +6,26 @@ export const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8MB, pre-compression
 export interface UploadImageOptions {
   /** Longest edge to downscale to before upload. */
   maxDimension?: number;
-  /** 'square' center-crops to a 1:1 ratio (avatars/logos); 'none' keeps the original aspect ratio (flyers). */
-  crop?: 'square' | 'none';
+  /**
+   * 'square' center-crops to a 1:1 ratio, discarding whatever falls
+   * outside it — only ever safe for content that's meant to fill a circle/
+   * square with no meaningful margin (this codebase doesn't currently use
+   * it for anything; avatars go through the manual interactiveCrop path
+   * instead, which skips processImage entirely). 'pad' also produces a 1:1
+   * ratio but by extending onto a transparent square canvas instead —
+   * nothing from the original image is lost, which is what division logos
+   * need (a logo exported without its own internal padding was getting
+   * center-cropped right up to its own edge, reading as "cut off"). 'none'
+   * keeps the original aspect ratio (flyers).
+   */
+  crop?: 'square' | 'pad' | 'none';
   /** WebP encode quality, 0-1. */
   quality?: number;
   /** Stored as "<pathPrefix>/<uuid>.<ext>" instead of "<uuid>.<ext>" — used to scope a bucket's RLS to per-user folders (e.g. avatars). */
   pathPrefix?: string;
 }
 
-// Downscales (and optionally center-crops to square) via canvas, then
+// Downscales (and optionally crops or pads to square) via canvas, then
 // re-encodes as WebP so uploads use meaningfully less storage than the
 // original photo straight off a phone. GIFs are passed through untouched —
 // redrawing one onto a canvas would flatten it to its first frame and kill
@@ -23,24 +34,33 @@ async function processImage(file: File, { maxDimension = 1600, crop = 'none', qu
   if (file.type === 'image/gif') return { blob: file, ext: 'gif' };
 
   const bitmap = await createImageBitmap(file);
-  let sx = 0, sy = 0, sw = bitmap.width, sh = bitmap.height;
-  if (crop === 'square') {
-    sw = sh = Math.min(bitmap.width, bitmap.height);
-    sx = (bitmap.width - sw) / 2;
-    sy = (bitmap.height - sh) / 2;
-  }
-
-  const scale = Math.min(1, maxDimension / Math.max(sw, sh));
-  const width = Math.max(1, Math.round(sw * scale));
-  const height = Math.max(1, Math.round(sh * scale));
-
   const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
   const ctx = canvas.getContext('2d');
   if (!ctx) return { blob: file, ext: file.name.split('.').pop() || 'jpg' };
 
-  ctx.drawImage(bitmap, sx, sy, sw, sh, 0, 0, width, height);
+  if (crop === 'pad') {
+    // Canvas is a square sized to the LONGER edge — nothing gets cropped,
+    // the shorter edge just gets transparent margin on both sides instead.
+    const side = Math.max(bitmap.width, bitmap.height);
+    const scale = Math.min(1, maxDimension / side);
+    canvas.width = canvas.height = Math.max(1, Math.round(side * scale));
+    const dw = Math.round(bitmap.width * scale);
+    const dh = Math.round(bitmap.height * scale);
+    ctx.drawImage(bitmap, 0, 0, bitmap.width, bitmap.height, Math.round((canvas.width - dw) / 2), Math.round((canvas.height - dh) / 2), dw, dh);
+  } else {
+    // 'square': crop rect is centered on the SHORTER edge (discards the
+    // excess). 'none': crop rect is the whole image (no crop at all).
+    let sx = 0, sy = 0, sw = bitmap.width, sh = bitmap.height;
+    if (crop === 'square') {
+      sw = sh = Math.min(bitmap.width, bitmap.height);
+      sx = (bitmap.width - sw) / 2;
+      sy = (bitmap.height - sh) / 2;
+    }
+    const scale = Math.min(1, maxDimension / Math.max(sw, sh));
+    canvas.width = Math.max(1, Math.round(sw * scale));
+    canvas.height = Math.max(1, Math.round(sh * scale));
+    ctx.drawImage(bitmap, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+  }
 
   const blob = await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Image compression failed'))), 'image/webp', quality);

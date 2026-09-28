@@ -96,7 +96,7 @@ export default function MyDivisionsEditor({ divisions: initial }: { divisions: M
                 value={src ?? ''}
                 onChange={(url) => setDraft(d.id, { logo_url: url })}
                 bucket="division-logos"
-                shape="square"
+                shape="logo"
                 maxDimension={512}
               />
               <textarea

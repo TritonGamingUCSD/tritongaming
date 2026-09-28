@@ -7,6 +7,7 @@ import FullscreenQR from './FullscreenQR';
 import OnlineCheckinEntry from './OnlineCheckinEntry';
 import AddToCalendarButton from '@/components/AddToCalendarButton/AddToCalendarButton';
 import { PACIFIC_TZ } from '@/lib/timezone';
+import { isCheckinWindowOpen } from '@/lib/checkinWindow';
 import styles from './tickets.module.css';
 
 interface TicketData {
@@ -348,11 +349,19 @@ function TicketRow({
   canEarnPoints: boolean;
 }) {
   const ev = ticket.event;
-  const isActive = ticket.status === 'active';
+  // A ticket's DB status never actually flips to 'expired' on its own (see
+  // isCheckinWindowOpen/performCheckin) — it just stays 'active' forever,
+  // which read as "still valid" here even for an event from months ago.
+  // Derive the display status instead of trusting the raw one: still
+  // 'active' looks and behaves like 'active' right up until the event's
+  // checkin window actually closes.
+  const isExpired = ticket.status === 'active' && !!ev && !isCheckinWindowOpen(ev);
+  const displayStatus = isExpired ? 'expired' : ticket.status;
+  const isActionable = ticket.status === 'active' && !isExpired;
   return (
-    <div className={`${styles.ticketRow} ${!isActive ? styles.ticketDim : ''}`}>
+    <div className={`${styles.ticketRow} ${!isActionable ? styles.ticketDim : ''}`}>
       <div className={styles.ticketLeft}>
-        <span className={styles.ticketStatusIcon}>{STATUS_ICON[ticket.status]}</span>
+        <span className={styles.ticketStatusIcon}>{STATUS_ICON[displayStatus]}</span>
       </div>
       <div className={styles.ticketInfo}>
         <div className={styles.ticketEventName}>{ev?.title ?? 'Unknown Event'}</div>
@@ -368,22 +377,22 @@ function TicketRow({
             <Check size={13} strokeWidth={1.75} aria-hidden="true" /> Checked in {new Date(ticket.checked_in_at).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' })}
           </div>
         )}
-        {canEarnPoints && isActive && !!ev?.points_value && (
+        {canEarnPoints && isActionable && !!ev?.points_value && (
           <div className={styles.ticketPointsBadge}><Award size={11} strokeWidth={1.75} aria-hidden="true" /> +{ev.points_value} pts on check-in</div>
         )}
       </div>
       <div className={styles.ticketRight}>
         <div className={styles.ticketRightRow}>
-          {isActive && ev?.id && <AddToCalendarButton eventId={ev.id} iconOnly />}
-          {isActive && ev?.is_online && onCheckedIn ? (
+          {isActionable && ev?.id && <AddToCalendarButton eventId={ev.id} iconOnly />}
+          {isActionable && ev?.is_online && onCheckedIn ? (
             <OnlineCheckinEntry ticketId={ticket.id} eventId={ev.id} onCheckedIn={onCheckedIn} compact />
-          ) : isActive && onShowQR ? (
+          ) : isActionable && onShowQR ? (
             <button className={styles.qrMiniBtn} onClick={onShowQR}>
               <span aria-hidden="true">▦</span> View QR
             </button>
           ) : (
-            <span className={`${styles.statusBadge} ${styles[`status_${ticket.status}`]}`}>
-              {STATUS_LABEL[ticket.status]}
+            <span className={`${styles.statusBadge} ${styles[`status_${displayStatus}`]}`}>
+              {STATUS_LABEL[displayStatus]}
             </span>
           )}
         </div>

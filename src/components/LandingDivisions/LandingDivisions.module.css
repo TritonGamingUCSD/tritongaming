@@ -207,6 +207,13 @@
   position: relative;
   width: 72px;
   height: 72px;
+  /* The child Image uses `fill`, which absolutely-positions it to inset:0
+     of this box — padding here (this is its positioned ancestor) insets
+     that fill area the same way it would a normal img, giving a logo
+     asset with little/no internal transparent margin some breathing room
+     instead of sitting flush against the box edge. */
+  padding: 5px;
+  box-sizing: border-box;
   flex-shrink: 0;
   filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
   transition: filter 0.25s;

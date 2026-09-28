@@ -168,7 +168,7 @@ export default function DivisionsManager({ divisions: initial }: { divisions: Di
           value={logoSrc(newDraft.logo_url) ?? ''}
           onChange={(url) => setNewDraft((f) => ({ ...f, logo_url: url }))}
           bucket="division-logos"
-          shape="square"
+          shape="logo"
           maxDimension={512}
         />
         <textarea
@@ -221,7 +221,7 @@ export default function DivisionsManager({ divisions: initial }: { divisions: Di
                   value={logoSrc(editDraft.logo_url) ?? ''}
                   onChange={(url) => setEditDraft((f) => ({ ...f, logo_url: url }))}
                   bucket="division-logos"
-                  shape="square"
+                  shape="logo"
                   maxDimension={512}
                 />
                 <textarea

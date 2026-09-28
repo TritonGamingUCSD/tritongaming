@@ -88,6 +88,9 @@
   width: 44px;
   height: 44px;
   border-radius: 0.5rem;
+  /* See the public divisions.module.css's .logo for why. */
+  padding: 3px;
+  box-sizing: border-box;
   object-fit: contain;
   background: rgba(255,255,255,0.05);
   flex-shrink: 0;

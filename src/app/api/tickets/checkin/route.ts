@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     .select(`
       id, ticket_code, status, checked_in_at, event_id, user_id,
       user:profiles!tickets_user_id_fkey(display_name),
-      event:events(title, points_value)
+      event:events(title, points_value, start_date, end_date)
     `);
 
   if (candidatesError) {
@@ -93,10 +93,22 @@ export async function POST(request: Request) {
   // the service-role client, not the officer's own.
   const serviceClient = createServiceClient();
   const { error: checkinError } = await performCheckin(
-    serviceClient, ticket, eventData?.title ?? null, eventData?.points_value ?? 0, user.id
+    serviceClient,
+    ticket,
+    {
+      title: eventData?.title ?? null,
+      points_value: eventData?.points_value ?? 0,
+      start_date: eventData?.start_date ?? new Date().toISOString(),
+      end_date: eventData?.end_date ?? null,
+    },
+    user.id
   );
   if (checkinError) {
-    return NextResponse.json({ error: checkinError }, { status: 500 });
+    // "Event ended" is a deterministic rejection, not a transient server
+    // failure — 409 (not 500) so fetchWithRetry's retry-on-5xx logic
+    // doesn't waste 3 attempts retrying something that'll never succeed.
+    const status = checkinError.includes('already ended') ? 409 : 500;
+    return NextResponse.json({ error: checkinError }, { status });
   }
 
   // Best-effort — the check-in itself already succeeded above, so a

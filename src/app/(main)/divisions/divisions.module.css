@@ -96,6 +96,13 @@
 .logo {
   width: 80px;
   height: 80px;
+  /* box-sizing: border-box + padding shrinks the content box object-fit
+     scales into, so a logo asset exported with little/no internal
+     transparent margin (unlike most of ours) still gets breathing room
+     here instead of sitting flush against — and looking cropped at — the
+     box edge. */
+  padding: 6px;
+  box-sizing: border-box;
   object-fit: contain;
   filter: drop-shadow(0 4px 10px rgba(0,0,0,0.4));
 }
