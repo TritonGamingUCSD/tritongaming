@@ -242,7 +242,7 @@
   gap: 0.4rem;
   font-size: 0.8rem;
   font-family: var(--font-futura-medium);
-  color: rgba(242,241,240,0.45);
+  color: rgba(242,241,240,0.65);
   padding: 0.6rem 0.25rem;
   margin-bottom: -1px;
   border-bottom: 2px solid transparent;
@@ -256,6 +256,20 @@
   border-bottom-color: var(--yellow);
 }
 .tabActive:hover { color: var(--yellow); }
+
+/* Below this width, wrapping tabs onto multiple rows breaks the "row of
+   tabs" affordance entirely — a single horizontally-scrolling row keeps it
+   intact instead. */
+@media (max-width: 640px) {
+  .tabBar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .tabBar::-webkit-scrollbar { display: none; }
+  .tab { flex-shrink: 0; }
+}
 
 /* The 5-column grid (2fr 1fr 1fr 100px 60px) works as a real table on
    desktop but has no room to do that on a phone — the two fixed columns

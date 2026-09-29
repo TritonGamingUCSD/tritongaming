@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Ticket, X, Check, Zap } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import TicketQRBadge from '@/components/TicketQRBadge/TicketQRBadge';
@@ -248,7 +249,17 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   // events with no slug set.
   const eventLabel = (qrData?.includes(':') ? qrData.split(':')[0] : '') || eventTitle;
 
-  return (
+  // Portaled straight to <body> instead of rendering in place — this opens
+  // from inside PortalHub's section panel, which Framer Motion animates
+  // with an inline `transform` (see PortalHub.tsx). A `transform` on an
+  // ancestor makes it the containing block for any `position: fixed`
+  // descendant (this modal's .backdrop) instead of the viewport, and also
+  // starts a new stacking context — so despite its own z-index:1000, the
+  // whole modal was rendering *inside* that ancestor's stacking context,
+  // unable to appear above a sibling like the bottom tab bar. A portal
+  // sidesteps both problems by not being a descendant of that transformed
+  // panel in the DOM at all.
+  return createPortal(
     <div className={styles.backdrop} onClick={onBackdrop}>
       <div className={styles.sheet}>
         <button className={styles.closeBtn} onClick={onClose} aria-label="Close"><X size={18} strokeWidth={1.75} /></button>
@@ -380,6 +391,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

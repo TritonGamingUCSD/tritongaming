@@ -8,6 +8,7 @@ import { resolveAvatarUrl } from '@/lib/profile';
 import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK } from '@/types/database';
 import { CONTENT_BLOCKS } from '@/lib/content-blocks';
 import { PACIFIC_TZ, pacificDaysUntil } from '@/lib/timezone';
+import { isCheckinWindowOpen } from '@/lib/checkinWindow';
 import { getDivisions } from '@/lib/divisions';
 import type { HubSection } from '@/components/portal/PortalHub';
 import SignOutButton from '@/components/portal/SignOutButton';
@@ -138,7 +139,12 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const nextTicket = ticketsData.tickets
     .filter((t) => t.status === 'active' && t.event && new Date(t.event.start_date) >= nowDate)
     .sort((a, b) => new Date(a.event!.start_date).getTime() - new Date(b.event!.start_date).getTime())[0];
-  const activeTicketCount = ticketsData.tickets.filter((t) => t.status === 'active').length;
+  // A ticket's status never actually flips away from 'active' once its
+  // event ends (see isCheckinWindowOpen/performCheckin) — counting bare
+  // status alone here made the "My Tickets" badge and this header stat
+  // keep counting tickets to events from weeks ago as if they still needed
+  // attention.
+  const activeTicketCount = ticketsData.tickets.filter((t) => t.status === 'active' && t.event && isCheckinWindowOpen(t.event)).length;
   // Same "already have a ticket to this one" exclusion TicketsClient itself
   // uses (registeredEventIds there) — the Hub preview shouldn't invite
   // someone to an event they're already registered for.
