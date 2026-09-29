@@ -87,7 +87,7 @@
   font-size: var(--fs-section-title);
   color: var(--white);
   margin: 0;
-  line-height: 1.15;
+  line-height: 1.3;
 }
 
 .waysGrid {
@@ -192,7 +192,7 @@
   font-size: var(--fs-section-title);
   color: var(--white);
   margin: 0 0 0.75rem;
-  line-height: 1.1;
+  line-height: 1.3;
 }
 
 .officerBody {

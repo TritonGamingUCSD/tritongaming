@@ -347,13 +347,15 @@ function FieldEditor({ field, value, onChange }: {
     );
   }
 
-  // ── Image list (sponsors) ─────────────────────────────
+  // ── Image list (sponsors, membership partners, …) ─────
   if (field.type === 'imagelist') {
     return (
       <ImageListField
-        value={value as Array<{ name?: string; logo_url?: string; website_url?: string; tier?: string }> | undefined}
+        value={value as ImgItem[] | undefined}
         onChange={onChange}
         labelEl={labelEl}
+        fields={(fieldAny.imageFields as ImgFieldDef[]) ?? DEFAULT_IMAGE_FIELDS}
+        addLabel={fieldAny.addLabel as string | undefined}
       />
     );
   }
@@ -430,12 +432,26 @@ function KvListField({ value, onChange, labelEl, keyLbl, valLbl }: {
   );
 }
 
-type ImgItem = { name?: string; logo_url?: string; website_url?: string; tier?: string };
+type ImgItem = Record<string, string | undefined>;
+type ImgFieldDef = { key: string; label: string; type?: string; optional?: boolean };
 
-function ImageListField({ value, onChange, labelEl }: {
+// Sponsors' own shape — the long-standing default so a block that doesn't
+// declare `imageFields` (there shouldn't be one left, but this keeps an old
+// saved row from rendering blank inputs instead of a clear label) still
+// gets sensible labels rather than raw keys.
+const DEFAULT_IMAGE_FIELDS: ImgFieldDef[] = [
+  { key: 'name', label: 'Name', type: 'text' },
+  { key: 'logo_url', label: 'Logo URL', type: 'url' },
+  { key: 'website_url', label: 'Website URL', type: 'url' },
+  { key: 'tier', label: 'Tier (e.g. Gold)', type: 'text' },
+];
+
+function ImageListField({ value, onChange, labelEl, fields, addLabel = '+ Add Item' }: {
   value: ImgItem[] | undefined;
   onChange: (val: ImgItem[]) => void;
   labelEl: React.ReactNode;
+  fields: ImgFieldDef[];
+  addLabel?: string;
 }) {
   const items = Array.isArray(value) ? value : [];
   const { dragIndex, overIndex, dragHandleProps, dropTargetProps } = useDragReorder(items, onChange);
@@ -464,18 +480,13 @@ function ImageListField({ value, onChange, labelEl }: {
               )}
             </div>
             <div className={styles.imageCardFields}>
-              {[
-                { key: 'name',        label: 'Name',        type: 'text' },
-                { key: 'logo_url',    label: 'Logo URL',    type: 'url'  },
-                { key: 'website_url', label: 'Website URL', type: 'url'  },
-                { key: 'tier',        label: 'Tier (e.g. Gold)', type: 'text' },
-              ].map(({ key: k, label: lbl, type: t }) => (
+              {fields.map(({ key: k, label: lbl, type: t, optional }) => (
                 <label key={k} className={styles.personField}>
-                  <span className={styles.personFieldLabel}>{lbl}</span>
+                  <span className={styles.personFieldLabel}>{lbl}{optional && <span className={styles.optionalTag}>optional</span>}</span>
                   <input
-                    type={t}
+                    type={t === 'url' ? 'url' : 'text'}
                     className={styles.fieldInput}
-                    value={(item[k as keyof ImgItem] as string) ?? ''}
+                    value={item[k] ?? ''}
                     onChange={(e) => {
                       const n = [...items];
                       n[i] = { ...n[i], [k]: e.target.value };
@@ -500,7 +511,7 @@ function ImageListField({ value, onChange, labelEl }: {
           </div>
         ))}
         <button type="button" className={styles.kvAdd}
-          onClick={() => onChange([...items, {}])}>+ Add Sponsor</button>
+          onClick={() => onChange([...items, {}])}>{addLabel}</button>
       </div>
     </div>
   );

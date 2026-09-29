@@ -8,17 +8,17 @@ import styles from './divisions.module.css';
 const DESCRIPTION = 'Triton Gaming hosts dedicated game divisions — from competitive gaming to casual communities. Find your squad.';
 
 export const metadata: Metadata = {
-  title: 'Divisions | Triton Gaming',
+  title: 'Divisions',
   description: DESCRIPTION,
   alternates: { canonical: '/divisions' },
   openGraph: {
-    title: 'Divisions | Triton Gaming',
+    title: 'Divisions',
     description: DESCRIPTION,
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Divisions | Triton Gaming',
+    title: 'Divisions',
     description: DESCRIPTION,
   },
 };

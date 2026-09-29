@@ -224,7 +224,7 @@ export default function MembersSectionContent({ rows, roles }: { rows: MemberPro
                   const href = socialHref(p, value);
                   return href ? (
                     <a key={p.key} href={href} target="_blank" rel="noopener noreferrer" className={styles.detailSocialBtn} aria-label={p.label}>
-                      <Image src={p.logo} alt="" width={16} height={16} unoptimized />
+                      <Image src={p.logo} alt="" width={20} height={20} unoptimized />
                     </a>
                   ) : (
                     <span key={p.key} className={styles.socialBtnWrap}>
@@ -236,7 +236,7 @@ export default function MembersSectionContent({ rows, roles }: { rows: MemberPro
                         title={value}
                         onClick={() => copyHandle(p.key, value)}
                       >
-                        <Image src={p.logo} alt="" width={16} height={16} unoptimized />
+                        <Image src={p.logo} alt="" width={20} height={20} unoptimized />
                       </button>
                     </span>
                   );

@@ -281,7 +281,13 @@ export const CONTENT_BLOCKS = [
     fields: [
       {
         name: 'items', label: 'Sponsors', type: 'imagelist' as const,
-        imageFields: ['name', 'logo_url', 'website_url', 'tier'],
+        addLabel: '+ Add Sponsor',
+        imageFields: [
+          { key: 'name', label: 'Name', type: 'text' as const },
+          { key: 'logo_url', label: 'Logo URL', type: 'url' as const },
+          { key: 'website_url', label: 'Website URL', type: 'url' as const },
+          { key: 'tier', label: 'Tier (e.g. Gold)', type: 'text' as const },
+        ],
       },
     ],
   },
@@ -359,12 +365,20 @@ export const CONTENT_BLOCKS = [
   {
     key: 'membership.partners',
     title: 'Partner Discounts',
-    description: 'The local partners and the discount cardholders get at each one.',
+    description: 'The local partners, their discount, and (optionally) their logo.',
     icon: createElement(Handshake, ICON_PROPS),
     category: 'Membership',
     pages: ['/membership'],
     fields: [
-      { name: 'items', label: 'Partners', type: 'kvlist' as const, kvKeyLabel: 'Partner Name', kvValueLabel: 'Discount (e.g. 10% off)' },
+      {
+        name: 'items', label: 'Partners', type: 'imagelist' as const,
+        addLabel: '+ Add Partner',
+        imageFields: [
+          { key: 'name', label: 'Partner Name', type: 'text' as const },
+          { key: 'discount', label: 'Discount (e.g. 10% off)', type: 'text' as const },
+          { key: 'logo_url', label: 'Logo URL', type: 'url' as const, optional: true },
+        ],
+      },
     ],
   },
 

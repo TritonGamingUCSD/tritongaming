@@ -22,9 +22,9 @@ export async function generateMetadata({ params }: Params) {
   const { slug } = await params;
   const supabase = await createClient();
   const { data } = await supabase.from('divisions').select('name, description, logo_url').eq('slug', slug).maybeSingle();
-  if (!data) return { title: 'Division | Triton Gaming' };
+  if (!data) return { title: 'Division' };
 
-  const title = `${data.name} | Triton Gaming`;
+  const title = data.name;
   const description = data.description?.trim()
     ? markdownToDescription(data.description)
     : `${data.name} — one of Triton Gaming's divisions at UC San Diego.`;
@@ -103,7 +103,7 @@ export default async function DivisionPage({ params }: Params) {
                   if (!href) return null;
                   return (
                     <a key={p.key} href={href} target="_blank" rel="noopener noreferrer" className={styles.socialBtn} aria-label={`${division.name}'s ${p.label}`}>
-                      <Image src={p.logo} alt="" width={16} height={16} unoptimized />
+                      <Image src={p.logo} alt="" width={22} height={22} unoptimized />
                     </a>
                   );
                 })}

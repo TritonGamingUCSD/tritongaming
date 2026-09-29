@@ -6,7 +6,7 @@ import './globals.css';
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
   title: {
-    default: 'Triton Gaming | UC San Diego',
+    default: 'Triton Gaming',
     template: '%s | Triton Gaming',
   },
   description:
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     siteName: 'Triton Gaming',
-    title: 'Triton Gaming | UC San Diego',
+    title: 'Triton Gaming',
     description: 'One of the largest student-run collegiate gaming organizations in the country.',
     type: 'website',
     locale: 'en_US',
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Triton Gaming | UC San Diego',
+    title: 'Triton Gaming',
     description: 'One of the largest student-run collegiate gaming organizations in the country.',
   },
   // iOS Safari's "Add to Home Screen" doesn't fully honor the web manifest

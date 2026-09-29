@@ -137,7 +137,7 @@ export default function BoardSection({ members }: { members: BoardMember[] }) {
                         const label = `${tierOpenMember.display_name || 'Member'}'s ${p.label}`;
                         return href ? (
                           <a key={p.key} href={href} target="_blank" rel="noopener noreferrer" className={styles.socialBtn} aria-label={label}>
-                            <Image src={p.logo} alt="" width={16} height={16} unoptimized />
+                            <Image src={p.logo} alt="" width={20} height={20} unoptimized />
                           </a>
                         ) : (
                           <span key={p.key} className={styles.socialBtnWrap}>
@@ -161,7 +161,7 @@ export default function BoardSection({ members }: { members: BoardMember[] }) {
                               title={value}
                               onClick={() => copyHandle(p.key, value)}
                             >
-                              <Image src={p.logo} alt="" width={16} height={16} unoptimized />
+                              <Image src={p.logo} alt="" width={20} height={20} unoptimized />
                             </button>
                           </span>
                         );

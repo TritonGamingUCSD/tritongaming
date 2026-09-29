@@ -274,7 +274,7 @@
 .detailSocialRow { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.4rem; margin-top: 0.75rem; }
 .detailSocialBtn {
   display: flex; align-items: center; justify-content: center;
-  width: 32px; height: 32px; padding: 0; border-radius: 50%;
+  width: 42px; height: 42px; padding: 0; border-radius: 50%;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.14);
   cursor: pointer;

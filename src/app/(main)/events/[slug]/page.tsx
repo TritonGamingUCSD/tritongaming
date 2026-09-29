@@ -21,9 +21,9 @@ interface Params {
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
   const event = await getEventBySlugOrId(slug);
-  if (!event) return { title: 'Event | Triton Gaming' };
+  if (!event) return { title: 'Event' };
 
-  const title = `${event.full_name} | Triton Gaming`;
+  const title = event.full_name;
   // `content` (Short Summary) is already plain text; `details` (Event
   // Details) is Markdown, so it needs stripping before it's safe in a meta
   // description — same reasoning as the division page's own fallback.

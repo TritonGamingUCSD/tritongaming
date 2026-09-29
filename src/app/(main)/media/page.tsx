@@ -7,17 +7,17 @@ import styles from './media.module.css';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Media | Triton Gaming',
+  title: 'Media',
   description: 'Long-form videos and photo albums from Triton Gaming events.',
   alternates: { canonical: '/media' },
   openGraph: {
-    title: 'Media | Triton Gaming',
+    title: 'Media',
     description: 'Long-form videos and photo albums from Triton Gaming events.',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Media | Triton Gaming',
+    title: 'Media',
     description: 'Long-form videos and photo albums from Triton Gaming events.',
   },
 };
