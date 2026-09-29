@@ -10,6 +10,10 @@ interface Props {
   options: QRCodeOptions;
   eventLabel: string;
   className?: string;
+  /** Called once if the poll below times out without ever finding a painted
+   * canvas — lets the caller (FullscreenQR) show an explicit "use the code
+   * instead" message rather than leaving a silently blank box on screen. */
+  onFail?: () => void;
 }
 
 // Renders the real (untouched, square) QR into a hidden container via the
@@ -17,7 +21,7 @@ interface Props {
 // draws the circular badge around/through it — see qrBadge.ts for how the
 // crop stays scan-safe. Kept separate from StyledQRCode itself rather than
 // baking this in there, since QR Studio still wants the bare square output.
-export default function TicketQRBadge({ options, eventLabel, className }: Props) {
+export default function TicketQRBadge({ options, eventLabel, className, onFail }: Props) {
   const hiddenRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -62,7 +66,11 @@ export default function TicketQRBadge({ options, eventLabel, className }: Props)
         }
       }
       attempts++;
-      if (attempts < 90) rafId = requestAnimationFrame(tick); // ~1.5s at 60fps
+      if (attempts < 90) {
+        rafId = requestAnimationFrame(tick); // ~1.5s at 60fps
+      } else {
+        onFail?.();
+      }
     };
     rafId = requestAnimationFrame(tick);
 
@@ -70,6 +78,7 @@ export default function TicketQRBadge({ options, eventLabel, className }: Props)
       cancelled = true;
       cancelAnimationFrame(rafId);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, eventLabel]);
 
   return (

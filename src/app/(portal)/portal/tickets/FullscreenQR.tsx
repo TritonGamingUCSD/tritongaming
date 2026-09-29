@@ -61,6 +61,12 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   // standing perk, not something specific to this one ticket, so it's just
   // surfaced here rather than re-fetched every rotation.
   const [hasFastPass, setHasFastPass] = useState(false);
+  // TicketQRBadge's own canvas-render poll timed out — the code/data loaded
+  // fine, but drawing the QR itself (a device/browser-side thing, not a
+  // network one) never produced a paintable canvas. Reset on every new
+  // qrData so a fresh code gets its own full chance to render rather than
+  // staying permanently flagged failed from one bad attempt.
+  const [qrRenderFailed, setQrRenderFailed] = useState(false);
   const refreshTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Tracks the code across renders without needing it in fetchCode's own
   // dependency list (that would redefine fetchCode every refresh and
@@ -90,6 +96,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
       }
       setError('');
       setQrData(data.qr_data);
+      setQrRenderFailed(false); // new qrData remounts TicketQRBadge — give it a fresh attempt
       setHasFastPass(Boolean(data.has_fast_pass));
       // The visibility/focus listener below re-runs this on every tab
       // refocus, even mid-window when the code hasn't actually changed —
@@ -308,7 +315,15 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
                   />
                 </svg>
               )}
-              {qrData ? (
+              {qrData && qrRenderFailed ? (
+                // The code/data itself loaded fine — this is specifically
+                // "the canvas never finished painting on this device," not
+                // a network problem, so the code fallback below is the
+                // actual way through, not just a backup for while this loads.
+                <div className={`${styles.qrCanvas} ${styles.qrLoading}`}>
+                  <span className={styles.qrFailedText}>QR unavailable on this device — use the code below</span>
+                </div>
+              ) : qrData ? (
                 // Keyed by qrData (not a stable key) specifically so React
                 // remounts this on every refresh — that's what restarts the
                 // fade-in below each time, turning what used to be an
@@ -318,6 +333,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
                     options={{ ...TICKET_QR_BASE, data: qrData, icon: 'tg-color', customIcon: null }}
                     eventLabel={eventLabel}
                     className={styles.qrCanvas}
+                    onFail={() => setQrRenderFailed(true)}
                   />
                 </div>
               ) : (

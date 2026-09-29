@@ -138,6 +138,14 @@
   font-size: 0.85rem;
   color: rgba(242,241,240,0.55);
   line-height: 1.55;
+  /* Long descriptions used to grow the card and throw off the grid's row
+     heights — clipped to 3 lines here, with the full text one tap away on
+     the division's own detail page (.desc in [slug]/division.module.css,
+     which this card already links to). */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .cardFooter {

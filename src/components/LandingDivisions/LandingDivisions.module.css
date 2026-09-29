@@ -237,6 +237,13 @@
   font-size: 0.73rem;
   color: rgba(159, 196, 232, 0.7);
   line-height: 1.55;
+  /* Long descriptions used to grow the card and throw off the grid's row
+     heights — clipped here, with the full text one tap away on the
+     division's own detail page (this card already links to it). */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 @media (max-width: 640px) {
