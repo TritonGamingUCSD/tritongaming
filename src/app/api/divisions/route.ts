@@ -17,10 +17,12 @@ function cleanSocialLinks(value: unknown): Record<string, string> {
   return cleaned;
 }
 
+const EMBED_TYPES: SocialEmbed['type'][] = ['instagram', 'twitter', 'tiktok', 'youtube', 'discord'];
+
 function cleanSocialEmbeds(value: unknown): SocialEmbed[] {
   if (!Array.isArray(value)) return [];
   return value.filter(
-    (e): e is SocialEmbed => !!e && typeof e === 'object' && (e.type === 'instagram' || e.type === 'discord') && typeof e.url === 'string' && !!e.url.trim()
+    (e): e is SocialEmbed => !!e && typeof e === 'object' && EMBED_TYPES.includes(e.type) && typeof e.url === 'string' && !!e.url.trim()
   );
 }
 

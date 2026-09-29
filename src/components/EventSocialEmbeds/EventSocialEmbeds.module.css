@@ -4,10 +4,36 @@
   gap: 1rem;
 }
 
+/* Both Instagram's and Twitter's widgets scale their whole card (text size,
+   padding, everything) to match whatever width their container gives them
+   — on a wide grid cell (e.g. the only embed in the row, so its 1fr track
+   stretches to fill the whole grid), that made the embed balloon to a
+   much larger, out-of-place size instead of reading as a normal-sized
+   post. Capping max-width to each platform's own comfortable reading width
+   (rather than letting them stretch to 100% of an arbitrarily wide column)
+   and centering fixes that regardless of how many siblings are in the grid. */
 .instagramEmbed {
-  margin: 0 !important;
+  margin: 0 auto !important;
   min-width: 0 !important;
   width: 100% !important;
+  max-width: 400px !important;
+}
+
+.twitterEmbed {
+  margin: 0 auto !important;
+  max-width: 400px;
+}
+
+.tiktokEmbed {
+  margin: 0 auto !important;
+  max-width: 325px;
+}
+
+.youtubeEmbed {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: none;
+  border-radius: 0.75rem;
 }
 
 .discordCard {

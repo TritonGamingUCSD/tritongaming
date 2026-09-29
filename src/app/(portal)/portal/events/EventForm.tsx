@@ -211,7 +211,7 @@ export default function EventForm({
         <SocialEmbedsField
           value={form.social_embeds}
           onChange={(v) => setForm((f) => ({ ...f, social_embeds: v }))}
-          hint="Shown on this event's own page. Instagram posts embed live; Discord links show as a card."
+          hint="Shown on this event's own page. Instagram, X, TikTok, and YouTube embed live; Discord links show as a card."
         />
 
         <label className={styles.field}>

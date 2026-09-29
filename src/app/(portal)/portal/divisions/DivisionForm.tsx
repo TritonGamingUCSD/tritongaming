@@ -190,7 +190,7 @@ export default function DivisionForm({
         <SocialEmbedsField
           value={form.social_embeds}
           onChange={(v) => set('social_embeds', v)}
-          hint="Shown on this division's own page. Instagram posts embed live; Discord links show as a card."
+          hint="Shown on this division's own page. Instagram, X, TikTok, and YouTube embed live; Discord links show as a card."
         />
 
         {error && <p className={styles.error}>{error}</p>}

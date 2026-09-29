@@ -4,8 +4,14 @@ export type UserRole = 'guest' | AppRole;
 export type TicketStatus = 'active' | 'used' | 'cancelled' | 'expired';
 export type EventAudience = 'public' | 'ucsd_only';
 
+// 'instagram', 'twitter' (X), and 'tiktok' all get a real inline embed via
+// that platform's own oEmbed widget script; 'youtube' embeds via a plain
+// iframe (no script needed — YouTube's iframe embed is directly
+// addressable by video id); 'discord' has no individual-message embed API
+// at all, so it renders as a styled link-out card instead. See
+// EventSocialEmbeds.tsx for the actual rendering of each.
 export interface SocialEmbed {
-  type: 'instagram' | 'discord';
+  type: 'instagram' | 'twitter' | 'tiktok' | 'youtube' | 'discord';
   url: string;
 }
 
