@@ -2,11 +2,12 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Pencil, X, Check, MapPin, ChevronUp, ChevronDown } from 'lucide-react';
+import { Pencil, X, Check, MapPin, ChevronUp, ChevronDown, GripVertical } from 'lucide-react';
 import type { ContentBlock, FieldDef } from '@/lib/content-blocks';
 import { CATEGORY_ORDER } from '@/lib/content-blocks';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
+import { useDragReorder } from '@/lib/useDragReorder';
 import styles from './ContentEditor.module.css';
 
 type BlockDef = ContentBlock;
@@ -319,37 +320,14 @@ function FieldEditor({ field, value, onChange }: {
 
   // ── KV list ───────────────────────────────────────────
   if (field.type === 'kvlist') {
-    const items = (Array.isArray(value) ? value : []) as Array<{ label?: string; value?: string }>;
-    const keyLbl = (fieldAny.kvKeyLabel as string) ?? 'Key';
-    const valLbl = (fieldAny.kvValueLabel as string) ?? 'Value';
     return (
-      <div className={styles.fieldGroup}>
-        {labelEl}
-        <div className={styles.kvList}>
-          {items.map((item, i) => (
-            <div key={i} className={styles.kvRow}>
-              <input className={styles.fieldInput} value={item.value ?? ''} placeholder={keyLbl}
-                onChange={(e) => { const n=[...items]; n[i]={...n[i],value:e.target.value}; onChange(n); }} />
-              <input className={styles.fieldInput} value={item.label ?? ''} placeholder={valLbl}
-                onChange={(e) => { const n=[...items]; n[i]={...n[i],label:e.target.value}; onChange(n); }} />
-              <div className={styles.rowActions}>
-                <button type="button" className={styles.moveBtn} disabled={i === 0}
-                  onClick={() => onChange(swapItems(items, i, i - 1))} aria-label="Move up">
-                  <ChevronUp size={14} strokeWidth={2} />
-                </button>
-                <button type="button" className={styles.moveBtn} disabled={i === items.length - 1}
-                  onClick={() => onChange(swapItems(items, i, i + 1))} aria-label="Move down">
-                  <ChevronDown size={14} strokeWidth={2} />
-                </button>
-                <button type="button" className={styles.kvRemove}
-                  onClick={() => onChange(items.filter((_,j)=>j!==i))} aria-label="Remove"><X size={14} strokeWidth={1.75} /></button>
-              </div>
-            </div>
-          ))}
-          <button type="button" className={styles.kvAdd}
-            onClick={() => onChange([...items,{value:'',label:''}])}>+ Add Item</button>
-        </div>
-      </div>
+      <KvListField
+        value={value as Array<{ label?: string; value?: string }> | undefined}
+        onChange={onChange}
+        labelEl={labelEl}
+        keyLbl={(fieldAny.kvKeyLabel as string) ?? 'Key'}
+        valLbl={(fieldAny.kvValueLabel as string) ?? 'Value'}
+      />
     );
   }
 
@@ -371,64 +349,12 @@ function FieldEditor({ field, value, onChange }: {
 
   // ── Image list (sponsors) ─────────────────────────────
   if (field.type === 'imagelist') {
-    type ImgItem = { name?: string; logo_url?: string; website_url?: string; tier?: string };
-    const items = (Array.isArray(value) ? value : []) as ImgItem[];
     return (
-      <div className={styles.fieldGroup}>
-        {labelEl}
-        <div className={styles.imageList}>
-          {items.map((item, i) => (
-            <div key={i} className={styles.imageCard}>
-              <div className={styles.imageCardLeft}>
-                {item.logo_url ? (
-                  <Image src={item.logo_url} alt={item.name||''} width={48} height={48}
-                    className={styles.imageLogo} unoptimized />
-                ) : (
-                  <div className={styles.imageLogoFallback}>
-                    {(item.name || '?')[0].toUpperCase()}
-                  </div>
-                )}
-              </div>
-              <div className={styles.imageCardFields}>
-                {[
-                  { key: 'name',        label: 'Name',        type: 'text' },
-                  { key: 'logo_url',    label: 'Logo URL',    type: 'url'  },
-                  { key: 'website_url', label: 'Website URL', type: 'url'  },
-                  { key: 'tier',        label: 'Tier (e.g. Gold)', type: 'text' },
-                ].map(({ key: k, label: lbl, type: t }) => (
-                  <label key={k} className={styles.personField}>
-                    <span className={styles.personFieldLabel}>{lbl}</span>
-                    <input
-                      type={t}
-                      className={styles.fieldInput}
-                      value={(item[k as keyof ImgItem] as string) ?? ''}
-                      onChange={(e) => {
-                        const n = [...items];
-                        n[i] = { ...n[i], [k]: e.target.value };
-                        onChange(n);
-                      }}
-                    />
-                  </label>
-                ))}
-              </div>
-              <div className={styles.rowActions}>
-                <button type="button" className={styles.moveBtn} disabled={i === 0}
-                  onClick={() => onChange(swapItems(items, i, i - 1))} aria-label="Move up">
-                  <ChevronUp size={14} strokeWidth={2} />
-                </button>
-                <button type="button" className={styles.moveBtn} disabled={i === items.length - 1}
-                  onClick={() => onChange(swapItems(items, i, i + 1))} aria-label="Move down">
-                  <ChevronDown size={14} strokeWidth={2} />
-                </button>
-                <button type="button" className={styles.kvRemove}
-                  onClick={() => onChange(items.filter((_,j)=>j!==i))} aria-label="Remove"><X size={14} strokeWidth={1.75} /></button>
-              </div>
-            </div>
-          ))}
-          <button type="button" className={styles.kvAdd}
-            onClick={() => onChange([...items, {}])}>+ Add Sponsor</button>
-        </div>
-      </div>
+      <ImageListField
+        value={value as Array<{ name?: string; logo_url?: string; website_url?: string; tier?: string }> | undefined}
+        onChange={onChange}
+        labelEl={labelEl}
+      />
     );
   }
 
@@ -444,6 +370,139 @@ function FieldEditor({ field, value, onChange }: {
         placeholder={fieldAny.placeholder as string}
       />
     </label>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
+// KvListField / ImageListField — broken out (rather than left inline in
+// FieldEditor) because reordering needs its own hook call, and hooks can
+// only sit at a component's top level, not inside an `if (field.type ===
+// …)` branch of a bigger component that also handles every other field
+// type.
+// ──────────────────────────────────────────────────────────────────
+function KvListField({ value, onChange, labelEl, keyLbl, valLbl }: {
+  value: Array<{ label?: string; value?: string }> | undefined;
+  onChange: (val: Array<{ label?: string; value?: string }>) => void;
+  labelEl: React.ReactNode;
+  keyLbl: string;
+  valLbl: string;
+}) {
+  const items = Array.isArray(value) ? value : [];
+  const { dragIndex, overIndex, dragHandleProps, dropTargetProps } = useDragReorder(items, onChange);
+
+  return (
+    <div className={styles.fieldGroup}>
+      {labelEl}
+      <div className={styles.kvList}>
+        {items.map((item, i) => (
+          <div
+            key={i}
+            className={`${styles.kvRowWrap} ${dragIndex === i ? styles.rowDragging : ''} ${overIndex === i && dragIndex !== i ? styles.rowDragOver : ''}`}
+            {...dropTargetProps(i)}
+          >
+            <span className={styles.dragHandle} {...dragHandleProps(i)} aria-label="Drag to reorder">
+              <GripVertical size={14} strokeWidth={1.75} aria-hidden="true" />
+            </span>
+            <div className={styles.kvRow}>
+              <input className={styles.fieldInput} value={item.value ?? ''} placeholder={keyLbl}
+                onChange={(e) => { const n=[...items]; n[i]={...n[i],value:e.target.value}; onChange(n); }} />
+              <input className={styles.fieldInput} value={item.label ?? ''} placeholder={valLbl}
+                onChange={(e) => { const n=[...items]; n[i]={...n[i],label:e.target.value}; onChange(n); }} />
+              <div className={styles.rowActions}>
+                <button type="button" className={styles.moveBtn} disabled={i === 0}
+                  onClick={() => onChange(swapItems(items, i, i - 1))} aria-label="Move up">
+                  <ChevronUp size={14} strokeWidth={2} />
+                </button>
+                <button type="button" className={styles.moveBtn} disabled={i === items.length - 1}
+                  onClick={() => onChange(swapItems(items, i, i + 1))} aria-label="Move down">
+                  <ChevronDown size={14} strokeWidth={2} />
+                </button>
+                <button type="button" className={styles.kvRemove}
+                  onClick={() => onChange(items.filter((_,j)=>j!==i))} aria-label="Remove"><X size={14} strokeWidth={1.75} /></button>
+              </div>
+            </div>
+          </div>
+        ))}
+        <button type="button" className={styles.kvAdd}
+          onClick={() => onChange([...items,{value:'',label:''}])}>+ Add Item</button>
+      </div>
+    </div>
+  );
+}
+
+type ImgItem = { name?: string; logo_url?: string; website_url?: string; tier?: string };
+
+function ImageListField({ value, onChange, labelEl }: {
+  value: ImgItem[] | undefined;
+  onChange: (val: ImgItem[]) => void;
+  labelEl: React.ReactNode;
+}) {
+  const items = Array.isArray(value) ? value : [];
+  const { dragIndex, overIndex, dragHandleProps, dropTargetProps } = useDragReorder(items, onChange);
+
+  return (
+    <div className={styles.fieldGroup}>
+      {labelEl}
+      <div className={styles.imageList}>
+        {items.map((item, i) => (
+          <div
+            key={i}
+            className={`${styles.imageCard} ${dragIndex === i ? styles.rowDragging : ''} ${overIndex === i && dragIndex !== i ? styles.rowDragOver : ''}`}
+            {...dropTargetProps(i)}
+          >
+            <span className={styles.dragHandle} {...dragHandleProps(i)} aria-label="Drag to reorder">
+              <GripVertical size={14} strokeWidth={1.75} aria-hidden="true" />
+            </span>
+            <div className={styles.imageCardLeft}>
+              {item.logo_url ? (
+                <Image src={item.logo_url} alt={item.name||''} width={48} height={48}
+                  className={styles.imageLogo} unoptimized />
+              ) : (
+                <div className={styles.imageLogoFallback}>
+                  {(item.name || '?')[0].toUpperCase()}
+                </div>
+              )}
+            </div>
+            <div className={styles.imageCardFields}>
+              {[
+                { key: 'name',        label: 'Name',        type: 'text' },
+                { key: 'logo_url',    label: 'Logo URL',    type: 'url'  },
+                { key: 'website_url', label: 'Website URL', type: 'url'  },
+                { key: 'tier',        label: 'Tier (e.g. Gold)', type: 'text' },
+              ].map(({ key: k, label: lbl, type: t }) => (
+                <label key={k} className={styles.personField}>
+                  <span className={styles.personFieldLabel}>{lbl}</span>
+                  <input
+                    type={t}
+                    className={styles.fieldInput}
+                    value={(item[k as keyof ImgItem] as string) ?? ''}
+                    onChange={(e) => {
+                      const n = [...items];
+                      n[i] = { ...n[i], [k]: e.target.value };
+                      onChange(n);
+                    }}
+                  />
+                </label>
+              ))}
+            </div>
+            <div className={styles.rowActions}>
+              <button type="button" className={styles.moveBtn} disabled={i === 0}
+                onClick={() => onChange(swapItems(items, i, i - 1))} aria-label="Move up">
+                <ChevronUp size={14} strokeWidth={2} />
+              </button>
+              <button type="button" className={styles.moveBtn} disabled={i === items.length - 1}
+                onClick={() => onChange(swapItems(items, i, i + 1))} aria-label="Move down">
+                <ChevronDown size={14} strokeWidth={2} />
+              </button>
+              <button type="button" className={styles.kvRemove}
+                onClick={() => onChange(items.filter((_,j)=>j!==i))} aria-label="Remove"><X size={14} strokeWidth={1.75} /></button>
+            </div>
+          </div>
+        ))}
+        <button type="button" className={styles.kvAdd}
+          onClick={() => onChange([...items, {}])}>+ Add Sponsor</button>
+      </div>
+    </div>
   );
 }
 

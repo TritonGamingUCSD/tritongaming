@@ -67,8 +67,13 @@ export default async function EventDetailPage({ params }: Params) {
 
   const isPast = new Date(event.end_date || event.start_date) < new Date();
   const isExternalFlyer = event.flyer_url?.startsWith('http');
-  const hasPostEventContent = isPast && (event.photo_album_url || event.post_event_info);
-  const albumPreview = isPast && event.photo_album_url ? await getAlbumPreview(event.photo_album_url) : null;
+  const hasPostEventContent = isPast && (event.photo_albums.length > 0 || event.post_event_info);
+  // Fetched in display order, in parallel — each is an independent network
+  // call to a different Google Photos page, so awaiting them one at a time
+  // would serialize what's otherwise an embarrassingly parallel fetch.
+  const albumPreviews = isPast
+    ? await Promise.all(event.photo_albums.map((a) => getAlbumPreview(a.url)))
+    : [];
 
   const eventJsonLd = {
     '@context': 'https://schema.org',
@@ -159,25 +164,30 @@ export default async function EventDetailPage({ params }: Params) {
         {hasPostEventContent && (
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>After the Event</h2>
-            {event.photo_album_url && (
-              albumPreview?.image ? (
-                <a href={event.photo_album_url} target="_blank" rel="noopener noreferrer" className={styles.albumCard}>
-                  {/* Google's own cover collage for the album — not
-                      hosted by us, so a plain <img>, same as the flyer
-                      treatment elsewhere on this page. */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={albumPreview.image} alt={`Photo album cover for ${event.full_name}`} className={styles.albumCardImg} />
-                  <div className={styles.albumCardOverlay} />
-                  <span className={styles.albumCardLabel}>
-                    <Camera size={15} strokeWidth={1.5} aria-hidden="true" />
-                    {albumPreview.title || 'View Event Photos'}
-                  </span>
-                </a>
-              ) : (
-                <a href={event.photo_album_url} target="_blank" rel="noopener noreferrer" className={styles.photoLink}>
-                  <Camera size={15} strokeWidth={1.5} aria-hidden="true" /> View Event Photos
-                </a>
-              )
+            {event.photo_albums.length > 0 && (
+              <div className={styles.albumGrid}>
+                {event.photo_albums.map((album, i) => {
+                  const preview = albumPreviews[i];
+                  return preview?.image ? (
+                    <a key={`${album.url}-${i}`} href={album.url} target="_blank" rel="noopener noreferrer" className={styles.albumCard}>
+                      {/* Google's own cover collage for the album — not
+                          hosted by us, so a plain <img>, same as the flyer
+                          treatment elsewhere on this page. */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={preview.image} alt={`Cover photo for ${album.title}`} className={styles.albumCardImg} />
+                      <div className={styles.albumCardOverlay} />
+                      <span className={styles.albumCardLabel}>
+                        <Camera size={15} strokeWidth={1.5} aria-hidden="true" />
+                        {album.title}
+                      </span>
+                    </a>
+                  ) : (
+                    <a key={`${album.url}-${i}`} href={album.url} target="_blank" rel="noopener noreferrer" className={styles.photoLink}>
+                      <Camera size={15} strokeWidth={1.5} aria-hidden="true" /> {album.title}
+                    </a>
+                  );
+                })}
+              </div>
             )}
             {event.post_event_info && <MarkdownContent>{event.post_event_info}</MarkdownContent>}
           </section>

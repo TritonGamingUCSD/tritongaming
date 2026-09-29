@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from 'react';
 import Image from 'next/image';
-import { ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowUp, ArrowDown, GripVertical } from 'lucide-react';
 import { resolveAvatarUrl } from '@/lib/profile';
+import { useDragReorder } from '@/lib/useDragReorder';
 import type { AppRole } from '@/types/database';
 import styles from './admin.module.css';
 
@@ -70,6 +71,11 @@ export default function BoardOrderManager({ users }: { users: User[] }) {
     persist(next);
   }
 
+  const { dragIndex, overIndex, dragHandleProps, dropTargetProps } = useDragReorder(order, (next) => {
+    setOrder(next);
+    persist(next);
+  });
+
   if (order.length === 0) return null;
 
   return (
@@ -85,7 +91,14 @@ export default function BoardOrderManager({ users }: { users: User[] }) {
         {order.map((u, i) => {
           const avatarUrl = resolveAvatarUrl(u);
           return (
-            <div key={u.id} className={styles.boardOrderRow}>
+            <div
+              key={u.id}
+              className={`${styles.boardOrderRow} ${dragIndex === i ? styles.boardOrderRowDragging : ''} ${overIndex === i && dragIndex !== i ? styles.boardOrderRowDragOver : ''}`}
+              {...dropTargetProps(i)}
+            >
+              <span className={styles.dragHandle} {...dragHandleProps(i)} aria-label={`Drag to reorder ${u.display_name || 'user'}`}>
+                <GripVertical size={14} strokeWidth={1.75} aria-hidden="true" />
+              </span>
               <span className={styles.boardOrderRank}>{i + 1}</span>
               {avatarUrl ? (
                 <Image src={avatarUrl} alt="" width={28} height={28} className={styles.adminAvatar} unoptimized referrerPolicy="no-referrer" />

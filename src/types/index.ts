@@ -1,4 +1,4 @@
-import type { SocialEmbed } from '@/types/database';
+import type { SocialEmbed, PhotoAlbumEntry } from '@/types/database';
 
 export type Event = {
   _id: string;
@@ -17,7 +17,7 @@ export type Event = {
   requires_ticket: boolean;
   ticket_price: number;
   audience: 'public' | 'ucsd_only';
-  photo_album_url: string;
+  photo_albums: PhotoAlbumEntry[];
   post_event_info: string;
   social_embeds: SocialEmbed[];
   points_value: number;

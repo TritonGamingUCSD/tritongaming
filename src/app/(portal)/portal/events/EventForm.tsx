@@ -5,7 +5,8 @@ import Link from 'next/link';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
 import SocialEmbedsField from '@/components/SocialEmbedsField/SocialEmbedsField';
-import type { SocialEmbed } from '@/types/database';
+import PhotoAlbumsField from '@/components/PhotoAlbumsField/PhotoAlbumsField';
+import type { SocialEmbed, PhotoAlbumEntry } from '@/types/database';
 import styles from './new/newevent.module.css';
 
 export interface EventFormValues {
@@ -23,7 +24,7 @@ export interface EventFormValues {
   is_online: boolean;
   audience: 'public' | 'ucsd_only';
   is_published: boolean;
-  photo_album_url: string;
+  photo_albums: PhotoAlbumEntry[];
   post_event_info: string;
   social_embeds: SocialEmbed[];
   division_id: string;
@@ -44,7 +45,7 @@ export const EMPTY_EVENT_FORM: EventFormValues = {
   is_online: false,
   audience: 'public',
   is_published: false,
-  photo_album_url: '',
+  photo_albums: [],
   post_event_info: '',
   social_embeds: [],
   division_id: '',
@@ -255,10 +256,10 @@ export default function EventForm({
           <span className={styles.hint}>Fill these in once the event has happened — they appear on the event&apos;s page in place of the ticket button.</span>
         </div>
 
-        <label className={styles.field}>
-          <span className={styles.label}>Photo Album Link</span>
-          <input className={styles.input} type="url" value={form.photo_album_url} onChange={(e) => set('photo_album_url', e.target.value)} placeholder="https://photos.google.com/…" />
-        </label>
+        <PhotoAlbumsField
+          value={form.photo_albums}
+          onChange={(v) => setForm((f) => ({ ...f, photo_albums: v }))}
+        />
 
         <MarkdownField
           label="Post-Event Notes"

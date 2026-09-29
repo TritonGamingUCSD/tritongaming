@@ -562,7 +562,35 @@
   grid-template-columns: 1fr 1.5fr auto;
   gap: 0.5rem;
   align-items: center;
+  flex: 1;
+  min-width: 0;
 }
+
+/* Wraps the drag handle + the (unchanged) kvRow grid as flex siblings,
+   rather than adding the handle as a 4th grid column — that would have
+   meant reworking kvRow's column count and its mobile breakpoint override
+   (which targets `:first-child` to span the row) just to fit one icon. */
+.kvRowWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: opacity 0.15s, border-color 0.15s, background 0.15s;
+  border-radius: 0.5rem;
+}
+
+.rowDragging { opacity: 0.4; }
+.rowDragOver { outline: 2px solid rgba(255,199,44,0.5); outline-offset: 2px; }
+
+.dragHandle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: rgba(242,241,240,0.3);
+  cursor: grab;
+  touch-action: none;
+}
+.dragHandle:active { cursor: grabbing; }
 
 .kvRemove {
   display: flex;
@@ -745,6 +773,7 @@
      a lonely full-width row of its own. */
   .kvRow { grid-template-columns: 1fr auto; }
   .kvRow > *:first-child { grid-column: 1 / -1; }
+  .kvRowWrap { align-items: flex-start; padding-top: 0.5rem; }
 
   .personFields { grid-template-columns: 1fr; }
   .imageCardFields { grid-template-columns: 1fr; }

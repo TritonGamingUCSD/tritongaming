@@ -133,13 +133,24 @@
   border: 1px solid rgba(255,255,255,0.07);
   border-radius: 1.125rem;
   padding: 1.25rem;
+  transition: opacity 0.15s, outline-color 0.15s;
 }
+
+.rowDragging { opacity: 0.4; }
+.rowDragOver { outline: 2px solid rgba(255,199,44,0.5); outline-offset: 2px; }
 
 .cardHeader {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
+}
+
+.cardHeaderLeft {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  min-width: 0;
 }
 
 .cardTitle {
@@ -187,6 +198,34 @@
 }
 .deleteBtn:hover:not(:disabled) { background: rgba(220,38,38,0.2); }
 .deleteBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.moveBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.04);
+  color: rgba(242,241,240,0.5);
+  border: 1px solid rgba(255,255,255,0.08);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.moveBtn:hover:not(:disabled) { background: rgba(255,199,44,0.1); color: var(--yellow); }
+.moveBtn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.dragHandle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+  color: rgba(242,241,240,0.3);
+  cursor: grab;
+  touch-action: none;
+}
+.dragHandle:active { cursor: grabbing; }
 
 @media (max-width: 480px) {
   .grid { grid-template-columns: 1fr; }

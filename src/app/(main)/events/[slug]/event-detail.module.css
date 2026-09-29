@@ -182,6 +182,13 @@
    is the closest practical substitute: the album's own cover photo (pulled
    from its Open Graph tags, see getAlbumPreview) as a big clickable card
    instead of a plain text link — the real album is still just a tap away. */
+.albumGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.875rem;
+  margin-bottom: 1rem;
+}
+
 .albumCard {
   position: relative;
   display: block;

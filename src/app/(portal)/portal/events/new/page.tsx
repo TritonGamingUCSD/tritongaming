@@ -50,7 +50,7 @@ export default async function NewEventPage({ searchParams }: Props) {
         division_id: source.division_id ?? '',
         // Deliberately NOT copied: slug (would collide), is_published (a
         // duplicate starts as an unpublished draft to review first),
-        // photo_album_url/post_event_info (post-event recap fields — the
+        // photo_albums/post_event_info (post-event recap fields — the
         // new event hasn't happened yet, so the old event's recap has
         // nothing to do with it).
       };

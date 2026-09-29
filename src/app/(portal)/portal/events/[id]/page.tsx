@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { utcToPacificDatetimeLocal } from '@/lib/timezone';
 import EditEventClient from './EditEventClient';
 import type { EventFormValues } from '../EventForm';
-import type { SocialEmbed } from '@/types/database';
+import type { SocialEmbed, PhotoAlbumEntry } from '@/types/database';
 
 export const metadata = { title: 'Edit Event' };
 export const dynamic = 'force-dynamic';
@@ -23,7 +23,7 @@ export default async function EditEventPage({ params }: Params) {
   const [{ data: event }, { data: divisions }] = await Promise.all([
     supabase
       .from('events')
-      .select('id, title, slug, content, description, location, start_date, end_date, flyer_url, max_capacity, ticket_price, points_value, is_online, audience, is_published, photo_album_url, post_event_info, social_embeds, division_id')
+      .select('id, title, slug, content, description, location, start_date, end_date, flyer_url, max_capacity, ticket_price, points_value, is_online, audience, is_published, photo_albums, post_event_info, social_embeds, division_id')
       .eq('id', id)
       .single(),
     supabase.from('divisions').select('id, name').order('name'),
@@ -46,7 +46,7 @@ export default async function EditEventPage({ params }: Params) {
     is_online: event.is_online ?? false,
     audience: event.audience,
     is_published: event.is_published,
-    photo_album_url: event.photo_album_url ?? '',
+    photo_albums: (event.photo_albums as PhotoAlbumEntry[]) ?? [],
     post_event_info: event.post_event_info ?? '',
     social_embeds: (event.social_embeds as SocialEmbed[]) ?? [],
     division_id: event.division_id ?? '',

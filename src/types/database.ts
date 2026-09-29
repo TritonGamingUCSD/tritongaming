@@ -15,6 +15,14 @@ export interface SocialEmbed {
   url: string;
 }
 
+// One event/division can have several — a multi-day LAN's day-1/day-2
+// albums, or a semester compilation alongside the main one. Order here is
+// the display order on the public page, same convention as SocialEmbed[].
+export interface PhotoAlbumEntry {
+  title: string;
+  url: string;
+}
+
 export interface DocAttachment {
   name: string;
   url: string;
@@ -137,7 +145,7 @@ export interface Database {
           ticket_price: number;
           audience: EventAudience;
           division_id: string | null;
-          photo_album_url: string | null;
+          photo_albums: PhotoAlbumEntry[];
           post_event_info: string | null;
           social_embeds: SocialEmbed[];
           points_value: number;
@@ -240,8 +248,9 @@ export interface Database {
           event_id: string | null;
           created_by: string | null;
           created_at: string;
+          sort_order: number;
         };
-        Insert: Omit<Database['public']['Tables']['photo_albums']['Row'], 'id' | 'created_at'>;
+        Insert: Omit<Database['public']['Tables']['photo_albums']['Row'], 'id' | 'created_at' | 'sort_order'> & { sort_order?: number };
         Update: Partial<Database['public']['Tables']['photo_albums']['Insert']>;
       };
       point_transactions: {

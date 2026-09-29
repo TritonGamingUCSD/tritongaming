@@ -362,7 +362,22 @@
   background: rgba(255,255,255,0.02);
   border: 1px solid rgba(255,255,255,0.07);
   border-radius: 0.625rem;
+  transition: opacity 0.15s, border-color 0.15s, background 0.15s;
 }
+
+.boardOrderRowDragging { opacity: 0.4; }
+.boardOrderRowDragOver { border-color: rgba(255,199,44,0.5); background: rgba(255,199,44,0.05); }
+
+.dragHandle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: rgba(242,241,240,0.3);
+  cursor: grab;
+  touch-action: none;
+}
+.dragHandle:active { cursor: grabbing; }
 
 .boardOrderRank {
   width: 1.5rem;

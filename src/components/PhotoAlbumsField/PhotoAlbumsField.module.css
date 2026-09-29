@@ -26,7 +26,6 @@
 }
 
 .input:focus { outline: none; border-color: rgba(255,199,44,0.4); }
-.input option { background: #0a0f1e; color: var(--white); }
 
 .hint {
   font-size: 0.72rem;
@@ -34,14 +33,14 @@
   color: rgba(242,241,240,0.4);
 }
 
-.embedList {
+.albumList {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   list-style: none;
 }
 
-.embedRow {
+.albumRow {
   display: flex;
   align-items: center;
   gap: 0.625rem;
@@ -66,17 +65,17 @@
 }
 .dragHandle:active { cursor: grabbing; }
 
-.embedType {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
+.albumTitle {
   font-size: 0.78rem;
-  color: rgba(242,241,240,0.7);
+  color: rgba(242,241,240,0.85);
   white-space: nowrap;
   flex-shrink: 0;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.embedUrl {
+.albumUrl {
   font-size: 0.78rem;
   color: rgba(242,241,240,0.4);
   overflow: hidden;
@@ -85,7 +84,7 @@
   flex: 1;
 }
 
-.embedRemoveBtn {
+.removeBtn {
   font-size: 0.75rem;
   color: #fca5a5;
   padding: 0.3rem 0.6rem;
@@ -94,16 +93,16 @@
   cursor: pointer;
   transition: background 0.15s;
 }
-.embedRemoveBtn:hover { background: rgba(220,38,38,0.1); }
+.removeBtn:hover { background: rgba(220,38,38,0.1); }
 
-.embedActions {
+.albumActions {
   display: flex;
   align-items: center;
   gap: 0.15rem;
   flex-shrink: 0;
 }
 
-.embedMoveBtn {
+.moveBtn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -113,16 +112,16 @@
   border-radius: 0.35rem;
   transition: color 0.15s, background 0.15s;
 }
-.embedMoveBtn:hover:not(:disabled) { color: var(--yellow); background: rgba(255,199,44,0.08); }
-.embedMoveBtn:disabled { color: rgba(242,241,240,0.12); cursor: not-allowed; }
+.moveBtn:hover:not(:disabled) { color: var(--yellow); background: rgba(255,199,44,0.08); }
+.moveBtn:disabled { color: rgba(242,241,240,0.12); cursor: not-allowed; }
 
-.embedAddRow {
+.addRow {
   display: grid;
-  grid-template-columns: 130px 1fr auto;
+  grid-template-columns: 1fr 1.5fr auto;
   gap: 0.5rem;
 }
 
-.embedAddBtn {
+.addBtn {
   padding: 0 1rem;
   background: rgba(255,255,255,0.06);
   color: rgba(242,241,240,0.85);
@@ -133,9 +132,11 @@
   cursor: pointer;
   transition: background 0.15s;
 }
-.embedAddBtn:hover:not(:disabled) { background: rgba(255,255,255,0.1); }
-.embedAddBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+.addBtn:hover:not(:disabled) { background: rgba(255,255,255,0.1); }
+.addBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 @media (max-width: 600px) {
-  .embedAddRow { grid-template-columns: 1fr; }
+  .addRow { grid-template-columns: 1fr; }
+  .albumRow { flex-wrap: wrap; }
+  .albumTitle { max-width: 100%; }
 }

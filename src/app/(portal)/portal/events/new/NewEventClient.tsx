@@ -32,7 +32,7 @@ export default function NewEventClient({ divisions, initial = EMPTY_EVENT_FORM }
       is_online: form.is_online,
       audience: form.audience,
       is_published: form.is_published,
-      photo_album_url: form.photo_album_url.trim() || null,
+      photo_albums: form.photo_albums,
       post_event_info: form.post_event_info.trim() || null,
       social_embeds: form.social_embeds,
       division_id: form.division_id || null,

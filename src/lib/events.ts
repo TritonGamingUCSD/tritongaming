@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import type { Event } from '@/types';
-import type { SocialEmbed } from '@/types/database';
+import type { SocialEmbed, PhotoAlbumEntry } from '@/types/database';
 
 const DEFAULT_LIMIT = 50;
 
@@ -20,7 +20,7 @@ function mapSupabaseEvent(row: Record<string, unknown>): Event {
     requires_ticket: (row.requires_ticket as boolean) ?? false,
     ticket_price: (row.ticket_price as number) ?? 0,
     audience: (row.audience as 'public' | 'ucsd_only') ?? 'public',
-    photo_album_url: (row.photo_album_url as string) ?? '',
+    photo_albums: (row.photo_albums as PhotoAlbumEntry[]) ?? [],
     post_event_info: (row.post_event_info as string) ?? '',
     social_embeds: (row.social_embeds as SocialEmbed[]) ?? [],
     points_value: (row.points_value as number) ?? 0,

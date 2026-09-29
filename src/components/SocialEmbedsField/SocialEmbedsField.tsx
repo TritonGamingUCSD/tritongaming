@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { ChevronUp, ChevronDown } from 'lucide-react';
+import { ChevronUp, ChevronDown, GripVertical } from 'lucide-react';
 import type { SocialEmbed } from '@/types/database';
+import { useDragReorder } from '@/lib/useDragReorder';
 import styles from './SocialEmbedsField.module.css';
 
 const EMBED_TYPES: { value: SocialEmbed['type']; label: string; logo: string; placeholder: string }[] = [
@@ -60,6 +61,8 @@ export default function SocialEmbedsField({
     onChange(next);
   }
 
+  const { dragIndex, overIndex, dragHandleProps, dropTargetProps } = useDragReorder(value, onChange);
+
   return (
     <div className={styles.field}>
       <span className={styles.label}>{label}</span>
@@ -69,7 +72,14 @@ export default function SocialEmbedsField({
           {value.map((embed, i) => {
             const config = EMBED_TYPES.find((t) => t.value === embed.type) ?? EMBED_TYPES[EMBED_TYPES.length - 1];
             return (
-              <li key={`${embed.url}-${i}`} className={styles.embedRow}>
+              <li
+                key={`${embed.url}-${i}`}
+                className={`${styles.embedRow} ${dragIndex === i ? styles.rowDragging : ''} ${overIndex === i && dragIndex !== i ? styles.rowDragOver : ''}`}
+                {...dropTargetProps(i)}
+              >
+                <span className={styles.dragHandle} {...dragHandleProps(i)} aria-label="Drag to reorder">
+                  <GripVertical size={14} strokeWidth={1.75} aria-hidden="true" />
+                </span>
                 <span className={styles.embedType}>
                   <Image src={config.logo} alt="" width={14} height={14} unoptimized /> {config.label}
                 </span>
