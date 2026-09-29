@@ -6,6 +6,17 @@ import styles from './our-story.module.css';
 export const metadata: Metadata = {
   title: 'Our Story | Triton Gaming',
   description: 'What Triton Gaming is about — our community, events, and the teams behind them.',
+  alternates: { canonical: '/our-story' },
+  openGraph: {
+    title: 'Our Story | Triton Gaming',
+    description: 'What Triton Gaming is about — our community, events, and the teams behind them.',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Our Story | Triton Gaming',
+    description: 'What Triton Gaming is about — our community, events, and the teams behind them.',
+  },
 };
 
 export const dynamic = 'force-dynamic';

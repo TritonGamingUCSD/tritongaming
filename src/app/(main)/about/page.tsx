@@ -7,6 +7,17 @@ import styles from './about.module.css';
 export const metadata: Metadata = {
   title: 'About | Triton Gaming',
   description: "Meet Triton Gaming's executive board, leads, and officers.",
+  alternates: { canonical: '/about' },
+  openGraph: {
+    title: 'About | Triton Gaming',
+    description: "Meet Triton Gaming's executive board, leads, and officers.",
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'About | Triton Gaming',
+    description: "Meet Triton Gaming's executive board, leads, and officers.",
+  },
 };
 
 export const dynamic = 'force-dynamic';

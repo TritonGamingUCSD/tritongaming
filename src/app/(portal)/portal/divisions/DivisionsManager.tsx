@@ -2,10 +2,8 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
-import SocialLinksField from '@/components/SocialLinksField/SocialLinksField';
-import SocialEmbedsField from '@/components/SocialEmbedsField/SocialEmbedsField';
-import { deleteIfReplaced, deleteStorageUrl } from '@/lib/imageUpload';
+import Link from 'next/link';
+import { deleteStorageUrl } from '@/lib/imageUpload';
 import type { SocialEmbed } from '@/types/database';
 import styles from './divisions.module.css';
 
@@ -21,30 +19,7 @@ interface Division {
   social_embeds: SocialEmbed[];
 }
 
-type DraftFields = {
-  name: string; slug: string; description: string; logo_url: string; discord_url: string;
-  application_url: string; social_links: Record<string, string>; social_embeds: SocialEmbed[];
-};
-
-function toDraft(d: Division): DraftFields {
-  return {
-    name: d.name,
-    slug: d.slug,
-    description: d.description ?? '',
-    logo_url: d.logo_url ?? '',
-    discord_url: d.discord_url ?? '',
-    application_url: d.application_url ?? '',
-    social_links: { ...d.social_links },
-    social_embeds: [...d.social_embeds],
-  };
-}
-
-const EMPTY_DRAFT: DraftFields = {
-  name: '', slug: '', description: '', logo_url: '', discord_url: '',
-  application_url: '', social_links: {}, social_embeds: [],
-};
-
-function logoSrc(url: string): string | null {
+function logoSrc(url: string | null): string | null {
   if (!url) return null;
   return url.startsWith('/') || url.startsWith('http') ? url : `/${url}`;
 }
@@ -53,40 +28,30 @@ function byName(a: Division, b: Division) {
   return a.name.localeCompare(b.name);
 }
 
+// The full exec/admin directory: a quick add (name + slug only — creating a
+// new division is rare, so it doesn't need the full page-form treatment)
+// plus a list of existing ones, each linking out to the dedicated edit page
+// (see divisions/[id]/, which mirrors event editing's own page/form
+// pattern) for everything else — logo, description, Discord, application
+// link, socials, posts. Editing itself no longer happens inline here.
 export default function DivisionsManager({ divisions: initial }: { divisions: Division[] }) {
   const [divisions, setDivisions] = useState([...initial].sort(byName));
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editDraft, setEditDraft] = useState<DraftFields>(EMPTY_DRAFT);
-  const [newDraft, setNewDraft] = useState<DraftFields>(EMPTY_DRAFT);
+  const [name, setName] = useState('');
+  const [slug, setSlug] = useState('');
   const [adding, setAdding] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState('');
 
-  function startEdit(d: Division) {
-    setEditingId(d.id);
-    setEditDraft(toDraft(d));
-    setError('');
-  }
-
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
-    if (!newDraft.name.trim()) return;
+    if (!name.trim()) return;
     setAdding(true);
     setError('');
     try {
       const res = await fetch('/api/divisions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: newDraft.name.trim(),
-          slug: newDraft.slug,
-          description: newDraft.description,
-          logo_url: newDraft.logo_url,
-          discord_url: newDraft.discord_url,
-          application_url: newDraft.application_url,
-          social_links: newDraft.social_links,
-          social_embeds: newDraft.social_embeds,
-        }),
+        body: JSON.stringify({ name: name.trim(), slug }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -94,47 +59,12 @@ export default function DivisionsManager({ divisions: initial }: { divisions: Di
         return;
       }
       setDivisions((prev) => [...prev, data.division].sort(byName));
-      setNewDraft(EMPTY_DRAFT);
+      setName('');
+      setSlug('');
     } catch {
       setError('Network error. Please try again.');
     } finally {
       setAdding(false);
-    }
-  }
-
-  async function handleSave(id: string) {
-    if (!editDraft.name.trim() || !editDraft.slug.trim()) return;
-    const before = divisions.find((d) => d.id === id);
-    setBusyId(id);
-    setError('');
-    try {
-      const res = await fetch('/api/divisions', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id,
-          name: editDraft.name.trim(),
-          slug: editDraft.slug,
-          description: editDraft.description,
-          logo_url: editDraft.logo_url,
-          discord_url: editDraft.discord_url,
-          application_url: editDraft.application_url,
-          social_links: editDraft.social_links,
-          social_embeds: editDraft.social_embeds,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || 'Failed to save changes.');
-        return;
-      }
-      setDivisions((prev) => prev.map((d) => (d.id === id ? data.division : d)).sort(byName));
-      setEditingId(null);
-      deleteIfReplaced(before?.logo_url, data.division.logo_url);
-    } catch {
-      setError('Network error. Please try again.');
-    } finally {
-      setBusyId(null);
     }
   }
 
@@ -168,173 +98,46 @@ export default function DivisionsManager({ divisions: initial }: { divisions: Di
 
       <form className={styles.addCard} onSubmit={handleAdd}>
         <h2 className={styles.addTitle}>+ Add Division</h2>
+        <span className={styles.hint}>Just the basics — logo, description, links, and everything else are set up on the division's own edit page right after.</span>
         <div className={styles.fieldRow}>
           <input
             className={styles.input}
-            value={newDraft.name}
-            onChange={(e) => setNewDraft((f) => ({ ...f, name: e.target.value }))}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             placeholder="Name (e.g. Triton Chess)"
             maxLength={80}
           />
           <input
             className={styles.input}
-            value={newDraft.slug}
-            onChange={(e) => setNewDraft((f) => ({ ...f, slug: e.target.value }))}
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
             placeholder="Slug (optional — derived from name)"
             maxLength={80}
           />
         </div>
-        <ImageUploadField
-          label="Logo"
-          value={logoSrc(newDraft.logo_url) ?? ''}
-          onChange={(url) => setNewDraft((f) => ({ ...f, logo_url: url }))}
-          bucket="division-logos"
-          shape="logo"
-          maxDimension={512}
-        />
-        <textarea
-          className={`${styles.input} ${styles.textarea}`}
-          value={newDraft.description}
-          onChange={(e) => setNewDraft((f) => ({ ...f, description: e.target.value }))}
-          placeholder="Short description shown on the public divisions page"
-          rows={2}
-        />
-        <input
-          className={styles.input}
-          type="url"
-          value={newDraft.discord_url}
-          onChange={(e) => setNewDraft((f) => ({ ...f, discord_url: e.target.value }))}
-          placeholder="Discord server invite (optional) — https://discord.gg/…"
-        />
-        <input
-          className={styles.input}
-          type="url"
-          value={newDraft.application_url}
-          onChange={(e) => setNewDraft((f) => ({ ...f, application_url: e.target.value }))}
-          placeholder="Officer application link (optional) — Google Form, etc."
-        />
-        <SocialLinksField
-          value={newDraft.social_links}
-          onChange={(v) => setNewDraft((f) => ({ ...f, social_links: v }))}
-          exclude={['discord']}
-        />
-        <SocialEmbedsField
-          value={newDraft.social_embeds}
-          onChange={(v) => setNewDraft((f) => ({ ...f, social_embeds: v }))}
-          hint="Shown on this division's own page. Instagram posts embed live; Discord links show as a card."
-        />
-        <button className={styles.saveBtn} type="submit" disabled={adding || !newDraft.name.trim()}>
+        <button className={styles.saveBtn} type="submit" disabled={adding || !name.trim()}>
           {adding ? 'Adding…' : 'Add Division'}
         </button>
       </form>
 
-      <div className={styles.grid}>
+      <div className={styles.list}>
         {divisions.length === 0 && <div className={styles.empty}>No divisions yet.</div>}
         {divisions.map((d) => {
-          const isEditing = editingId === d.id;
+          const src = logoSrc(d.logo_url);
           const isBusy = busyId === d.id;
-          const src = logoSrc(isEditing ? editDraft.logo_url : (d.logo_url ?? ''));
-
-          if (isEditing) {
-            return (
-              <div key={d.id} className={styles.card}>
-                <input
-                  className={styles.input}
-                  value={editDraft.name}
-                  onChange={(e) => setEditDraft((f) => ({ ...f, name: e.target.value }))}
-                  maxLength={80}
-                  autoFocus
-                />
-                <label className={styles.slugField}>
-                  <span className={styles.slugPrefix}>/divisions/</span>
-                  <input
-                    className={styles.input}
-                    value={editDraft.slug}
-                    onChange={(e) => setEditDraft((f) => ({ ...f, slug: e.target.value }))}
-                    maxLength={80}
-                  />
-                </label>
-                <ImageUploadField
-                  label="Logo"
-                  value={logoSrc(editDraft.logo_url) ?? ''}
-                  onChange={(url) => setEditDraft((f) => ({ ...f, logo_url: url }))}
-                  bucket="division-logos"
-                  shape="logo"
-                  maxDimension={512}
-                />
-                <textarea
-                  className={`${styles.input} ${styles.textarea}`}
-                  value={editDraft.description}
-                  onChange={(e) => setEditDraft((f) => ({ ...f, description: e.target.value }))}
-                  rows={2}
-                />
-                <input
-                  className={styles.input}
-                  type="url"
-                  value={editDraft.discord_url}
-                  onChange={(e) => setEditDraft((f) => ({ ...f, discord_url: e.target.value }))}
-                  placeholder="Discord server invite (optional) — https://discord.gg/…"
-                />
-                <input
-                  className={styles.input}
-                  type="url"
-                  value={editDraft.application_url}
-                  onChange={(e) => setEditDraft((f) => ({ ...f, application_url: e.target.value }))}
-                  placeholder="Officer application link (optional) — Google Form, etc."
-                />
-                <SocialLinksField
-                  value={editDraft.social_links}
-                  onChange={(v) => setEditDraft((f) => ({ ...f, social_links: v }))}
-                  exclude={['discord']}
-                />
-                <SocialEmbedsField
-                  value={editDraft.social_embeds}
-                  onChange={(v) => setEditDraft((f) => ({ ...f, social_embeds: v }))}
-                  hint="Shown on this division's own page. Instagram posts embed live; Discord links show as a card."
-                />
-                <div className={styles.actions}>
-                  <button className={styles.btn} onClick={() => setEditingId(null)} disabled={isBusy}>Cancel</button>
-                  <button className={styles.saveBtn} onClick={() => handleSave(d.id)} disabled={isBusy || !editDraft.slug.trim()}>
-                    {isBusy ? 'Saving…' : 'Save'}
-                  </button>
-                </div>
-              </div>
-            );
-          }
-
           return (
-            <div key={d.id} className={styles.card}>
-              <div className={styles.cardHeader}>
-                {src ? (
-                  <Image src={src} alt="" width={44} height={44} className={styles.logo} unoptimized />
-                ) : (
-                  <div className={styles.logoFallback}>{d.name[0]}</div>
-                )}
-                <div className={styles.cardHeaderText}>
-                  <div className={styles.name}>{d.name}</div>
-                  <div className={styles.slug}>/divisions/{d.slug}</div>
-                </div>
+            <div key={d.id} className={styles.listRow}>
+              {src ? (
+                <Image src={src} alt="" width={40} height={40} className={styles.logo} unoptimized />
+              ) : (
+                <div className={styles.logoFallback}>{d.name[0]}</div>
+              )}
+              <div className={styles.listRowText}>
+                <div className={styles.name}>{d.name}</div>
+                <div className={styles.slug}>/divisions/{d.slug}</div>
               </div>
-              {d.description && <p className={styles.desc}>{d.description}</p>}
-              {d.discord_url && (
-                <a href={d.discord_url} target="_blank" rel="noopener noreferrer" className={styles.discordLink}>
-                  <Image src="/logos/discord.svg" alt="" width={14} height={14} unoptimized /> Discord →
-                </a>
-              )}
-              {d.application_url && (
-                <a href={d.application_url} target="_blank" rel="noopener noreferrer" className={styles.discordLink}>
-                  Officer Application →
-                </a>
-              )}
-              {(Object.keys(d.social_links).length > 0 || d.social_embeds.length > 0) && (
-                <span className={styles.slug}>
-                  {Object.keys(d.social_links).length > 0 && `${Object.keys(d.social_links).length} social link${Object.keys(d.social_links).length === 1 ? '' : 's'}`}
-                  {Object.keys(d.social_links).length > 0 && d.social_embeds.length > 0 && ' · '}
-                  {d.social_embeds.length > 0 && `${d.social_embeds.length} post${d.social_embeds.length === 1 ? '' : 's'}`}
-                </span>
-              )}
               <div className={styles.actions}>
-                <button className={styles.btn} onClick={() => startEdit(d)}>Edit</button>
+                <Link href={`/portal/divisions/${d.id}`} className={styles.btn}>Edit</Link>
                 <button className={styles.btnDanger} onClick={() => handleDelete(d)} disabled={isBusy}>
                   {isBusy ? '…' : 'Delete'}
                 </button>

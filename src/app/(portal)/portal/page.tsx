@@ -301,6 +301,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
           allDivisions={divisionsData?.divisions}
           isDivisionLead={isDivisionLead}
           myDivisions={myDivisions ?? undefined}
+          initialTab={requestedTab}
         />
       ),
     }] : []),

@@ -19,10 +19,19 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
+    siteName: 'Triton Gaming',
     title: 'Triton Gaming | UC San Diego',
     description: 'One of the largest student-run collegiate gaming organizations in the country.',
     type: 'website',
-    images: [{ url: '/icon.png' }],
+    locale: 'en_US',
+    // No `images` here on purpose — opengraph-image.tsx (the file-convention
+    // route) supplies a properly-sized 1200x630 card automatically, for
+    // this page and every nested one that doesn't define its own.
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Triton Gaming | UC San Diego',
+    description: 'One of the largest student-run collegiate gaming organizations in the country.',
   },
   // iOS Safari's "Add to Home Screen" doesn't fully honor the web manifest
   // (see manifest.ts) — these are what actually make an installed icon open

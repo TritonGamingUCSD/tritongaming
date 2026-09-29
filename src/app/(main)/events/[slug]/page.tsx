@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { MapPin, Ticket, Camera, Award } from 'lucide-react';
 import { getEventBySlugOrId } from '@/lib/events';
 import { getAlbumPreview } from '@/lib/googlePhotosAlbum';
+import { markdownToDescription } from '@/lib/markdown';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import EventSocialEmbeds from '@/components/EventSocialEmbeds/EventSocialEmbeds';
 import AddToCalendarButton from '@/components/AddToCalendarButton/AddToCalendarButton';
@@ -21,9 +22,33 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
   const event = await getEventBySlugOrId(slug);
   if (!event) return { title: 'Event | Triton Gaming' };
+
+  const title = `${event.full_name} | Triton Gaming`;
+  // `content` (Short Summary) is already plain text; `details` (Event
+  // Details) is Markdown, so it needs stripping before it's safe in a meta
+  // description — same reasoning as the division page's own fallback.
+  const description = event.content?.trim()
+    ? event.content
+    : event.details?.trim()
+    ? markdownToDescription(event.details)
+    : `Join Triton Gaming for ${event.full_name}${event.location ? ` at ${event.location}` : ''}.`;
+
   return {
-    title: `${event.full_name} | Triton Gaming`,
-    description: event.content || event.details || undefined,
+    title,
+    description,
+    alternates: { canonical: `/events/${event.slug || event._id}` },
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      ...(event.flyer_url ? { images: [{ url: event.flyer_url }] } : {}),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      ...(event.flyer_url ? { images: [event.flyer_url] } : {}),
+    },
   };
 }
 
@@ -45,8 +70,26 @@ export default async function EventDetailPage({ params }: Params) {
   const hasPostEventContent = isPast && (event.photo_album_url || event.post_event_info);
   const albumPreview = isPast && event.photo_album_url ? await getAlbumPreview(event.photo_album_url) : null;
 
+  const eventJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Event',
+    name: event.full_name,
+    startDate: event.start_date,
+    ...(event.end_date ? { endDate: event.end_date } : {}),
+    eventAttendanceMode: event.url?.includes('discord') || !event.location
+      ? 'https://schema.org/OnlineEventAttendanceMode'
+      : 'https://schema.org/OfflineEventAttendanceMode',
+    eventStatus: 'https://schema.org/EventScheduled',
+    ...(event.location ? { location: { '@type': 'Place', name: event.location } } : {}),
+    ...(event.flyer_url ? { image: [event.flyer_url] } : {}),
+    description: event.content || undefined,
+    organizer: { '@type': 'Organization', name: 'Triton Gaming', url: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000' },
+  };
+
   return (
     <div className={styles.page}>
+      {/* eslint-disable-next-line react/no-danger -- server-built object from our own event data, not user input rendered raw */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(eventJsonLd) }} />
       <div className={styles.hero}>
         {event.flyer_url && isExternalFlyer ? (
           <>
@@ -123,7 +166,7 @@ export default async function EventDetailPage({ params }: Params) {
                       hosted by us, so a plain <img>, same as the flyer
                       treatment elsewhere on this page. */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={albumPreview.image} alt="" className={styles.albumCardImg} />
+                  <img src={albumPreview.image} alt={`Photo album cover for ${event.full_name}`} className={styles.albumCardImg} />
                   <div className={styles.albumCardOverlay} />
                   <span className={styles.albumCardLabel}>
                     <Camera size={15} strokeWidth={1.5} aria-hidden="true" />

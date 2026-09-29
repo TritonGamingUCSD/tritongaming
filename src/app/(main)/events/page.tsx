@@ -8,6 +8,17 @@ import styles from './events.module.css';
 export const metadata: Metadata = {
   title: 'Events | Triton Gaming',
   description: 'Check out upcoming and past Triton Gaming events at UC San Diego.',
+  alternates: { canonical: '/events' },
+  openGraph: {
+    title: 'Events | Triton Gaming',
+    description: 'Check out upcoming and past Triton Gaming events at UC San Diego.',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Events | Triton Gaming',
+    description: 'Check out upcoming and past Triton Gaming events at UC San Diego.',
+  },
 };
 
 export const dynamic = 'force-dynamic';

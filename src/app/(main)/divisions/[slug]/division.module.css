@@ -54,14 +54,6 @@
   margin-bottom: 0.5rem;
 }
 
-.desc {
-  color: rgba(242,241,240,0.65);
-  font-size: clamp(0.9rem, 1.4vw, 1rem);
-  line-height: 1.6;
-  max-width: 520px;
-  margin-bottom: 1.25rem;
-}
-
 /* Outline style — transparent fill, blurple hairline border, same accent
    color (#c7cbfb / rgba(88,101,242,*)) as the small Discord pill on the
    divisions list page (.cardDiscordBtn in divisions.module.css) for

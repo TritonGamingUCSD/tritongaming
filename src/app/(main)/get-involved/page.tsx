@@ -7,6 +7,17 @@ import styles from './get-involved.module.css';
 export const metadata: Metadata = {
   title: 'Get Involved | Triton Gaming',
   description: 'Join Triton Gaming — connect on Discord, follow us on Instagram, or become an officer.',
+  alternates: { canonical: '/get-involved' },
+  openGraph: {
+    title: 'Get Involved | Triton Gaming',
+    description: 'Join Triton Gaming — connect on Discord, follow us on Instagram, or become an officer.',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Get Involved | Triton Gaming',
+    description: 'Join Triton Gaming — connect on Discord, follow us on Instagram, or become an officer.',
+  },
 };
 
 export const dynamic = 'force-dynamic';

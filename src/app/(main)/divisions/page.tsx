@@ -1,10 +1,27 @@
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getDivisions, divisionLogoSrc } from '@/lib/divisions';
 import { getContentBlock } from '@/lib/content';
 import styles from './divisions.module.css';
 
-export const metadata = { title: 'Divisions' };
+const DESCRIPTION = 'Triton Gaming hosts dedicated game divisions — from competitive gaming to casual communities. Find your squad.';
+
+export const metadata: Metadata = {
+  title: 'Divisions | Triton Gaming',
+  description: DESCRIPTION,
+  alternates: { canonical: '/divisions' },
+  openGraph: {
+    title: 'Divisions | Triton Gaming',
+    description: DESCRIPTION,
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Divisions | Triton Gaming',
+    description: DESCRIPTION,
+  },
+};
 export const dynamic = 'force-dynamic';
 
 export default async function DivisionsPage() {

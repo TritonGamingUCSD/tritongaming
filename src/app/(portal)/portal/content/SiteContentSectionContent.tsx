@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { FileText, Gamepad2, LayoutGrid } from 'lucide-react';
+import { usePortalTabSync } from '@/lib/usePortalTabSync';
 import ContentEditor from '../admin/content/ContentEditor';
 import type { ContentBlock } from '@/lib/content-blocks';
 import DivisionsManager from '../divisions/DivisionsManager';
@@ -10,6 +11,7 @@ import type { MyDivision } from '../divisions/getMyDivisionsData';
 import styles from './sitecontent.module.css';
 
 type Tab = 'pages' | 'divisions' | 'my-division';
+const VALID_TABS: Tab[] = ['pages', 'divisions', 'my-division'];
 
 interface Props {
   canEditContent: boolean;
@@ -20,6 +22,7 @@ interface Props {
   allDivisions?: Parameters<typeof DivisionsManager>[0]['divisions'];
   isDivisionLead: boolean;
   myDivisions?: MyDivision[];
+  initialTab?: string;
 }
 
 // Three editors that all boil down to "change what shows on the public
@@ -31,14 +34,21 @@ interface Props {
 export default function SiteContentSectionContent({
   canEditContent, contentBlocks, contentMap, lastEdited,
   canManageDivisions, allDivisions,
-  isDivisionLead, myDivisions,
+  isDivisionLead, myDivisions, initialTab,
 }: Props) {
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     ...(canEditContent ? [{ id: 'pages' as const, label: 'Pages', icon: <FileText size={13} strokeWidth={1.5} aria-hidden="true" /> }] : []),
     ...(canManageDivisions ? [{ id: 'divisions' as const, label: 'Divisions', icon: <LayoutGrid size={13} strokeWidth={1.5} aria-hidden="true" /> }] : []),
     ...(isDivisionLead ? [{ id: 'my-division' as const, label: 'My Division', icon: <Gamepad2 size={13} strokeWidth={1.5} aria-hidden="true" /> }] : []),
   ];
-  const [tab, setTab] = useState<Tab>(tabs[0]?.id ?? 'pages');
+  const [tab, setTab] = useState<Tab>(
+    VALID_TABS.includes(initialTab as Tab) && tabs.some((t) => t.id === initialTab) ? (initialTab as Tab) : (tabs[0]?.id ?? 'pages')
+  );
+  const syncUrl = usePortalTabSync('site-content');
+  function selectTab(t: Tab) {
+    setTab(t);
+    syncUrl(t);
+  }
 
   return (
     <div className={styles.page}>
@@ -61,7 +71,7 @@ export default function SiteContentSectionContent({
               role="tab"
               aria-selected={tab === t.id}
               className={`${styles.tab} ${tab === t.id ? styles.tabActive : ''}`}
-              onClick={() => setTab(t.id)}
+              onClick={() => selectTab(t.id)}
             >
               {t.icon} {t.label}
             </button>

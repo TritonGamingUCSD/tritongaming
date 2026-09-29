@@ -51,38 +51,35 @@
   color: var(--yellow);
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1rem;
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
 }
 
 .empty {
-  grid-column: 1 / -1;
   padding: 2rem;
   text-align: center;
   color: rgba(242,241,240,0.3);
   font-size: 0.85rem;
 }
 
-.card {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 1rem;
-  padding: 1.1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.cardHeader {
+.listRow {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  min-width: 0;
+  gap: 0.85rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
 }
 
-.cardHeaderText { min-width: 0; }
+.listRowText { min-width: 0; flex: 1; }
+
+.hint {
+  font-size: 0.78rem;
+  color: rgba(242,241,240,0.4);
+}
 
 .logo {
   width: 44px;
@@ -125,22 +122,6 @@
   margin-top: 0.1rem;
 }
 
-.desc {
-  font-size: 0.8rem;
-  color: rgba(242,241,240,0.55);
-  line-height: 1.5;
-}
-
-.discordLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.78rem;
-  color: #a5b4fc;
-  align-self: flex-start;
-}
-.discordLink:hover { color: #c7d2fe; }
-
 .fieldRow {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -159,24 +140,10 @@
 }
 .input:focus { outline: none; border-color: rgba(255,199,44,0.4); }
 
-.textarea { resize: vertical; }
-
-.slugField {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.slugPrefix {
-  font-size: 0.75rem;
-  color: rgba(242,241,240,0.35);
-  white-space: nowrap;
-}
-
 .actions {
   display: flex;
   gap: 0.4rem;
-  margin-top: auto;
+  flex-shrink: 0;
 }
 
 .btn {

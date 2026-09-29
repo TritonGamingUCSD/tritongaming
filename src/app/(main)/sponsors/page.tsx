@@ -23,6 +23,17 @@ const OFFERING_ICONS = [
 export const metadata: Metadata = {
   title: 'Sponsors | Triton Gaming',
   description: 'Meet the sponsors that make Triton Gaming events possible.',
+  alternates: { canonical: '/sponsors' },
+  openGraph: {
+    title: 'Sponsors | Triton Gaming',
+    description: 'Meet the sponsors that make Triton Gaming events possible.',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Sponsors | Triton Gaming',
+    description: 'Meet the sponsors that make Triton Gaming events possible.',
+  },
 };
 
 type DbSponsor = { name?: string; logo_url?: string; website_url?: string; tier?: string };
