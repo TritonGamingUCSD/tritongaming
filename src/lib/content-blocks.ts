@@ -1,7 +1,8 @@
 import { createElement } from 'react';
 import {
   Megaphone, Settings, Link as LinkIcon, Home, Info, BarChart3, Hand, Handshake,
-  UserPlus, Users, Trophy, CalendarDays, BadgeDollarSign, BookText,
+  UserPlus, Users, Trophy, CalendarDays, BadgeDollarSign, BookText, CreditCard,
+  Video, Camera,
 } from 'lucide-react';
 
 // Icons render as small (16px) monochrome glyphs in the admin content-block
@@ -335,6 +336,74 @@ export const CONTENT_BLOCKS = [
       { name: 'recruitment_flyer_url', label: 'Recruitment Flyer', type: 'image' as const, optional: true },
     ],
   },
+
+  // ── Membership ────────────────────────────────────────────
+  {
+    key: 'page.membership',
+    title: 'Hero & Details',
+    description: 'Banner, price, validity, and purchase link on the Membership Card page. Partner discounts are the separate "Partner Discounts" block below.',
+    icon: createElement(CreditCard, ICON_PROPS),
+    category: 'Membership',
+    pages: ['/membership'],
+    fields: [
+      { name: 'hero_label',    label: 'Hero — Eyebrow Label', type: 'text'     as const, placeholder: 'MEMBERSHIP CARDS' },
+      { name: 'hero_title',    label: 'Hero — Title',         type: 'text'     as const, placeholder: 'Triton Gaming Membership Card' },
+      { name: 'hero_subtitle', label: 'Hero — Subtitle',      type: 'textarea' as const },
+      { name: 'price',         label: 'Price',                type: 'text'     as const, placeholder: '$10' },
+      { name: 'validity',      label: 'Validity',             type: 'text'     as const, placeholder: 'Valid for the entire 2026–2027 school year' },
+      { name: 'intro_text',    label: 'Intro Text',           type: 'textarea' as const },
+      { name: 'purchase_cta',  label: 'Purchase Button Text', type: 'text'     as const, placeholder: 'Get Your Card' },
+      { name: 'purchase_url',  label: 'Purchase Button URL',  type: 'url'      as const },
+    ],
+  },
+  {
+    key: 'membership.partners',
+    title: 'Partner Discounts',
+    description: 'The local partners and the discount cardholders get at each one.',
+    icon: createElement(Handshake, ICON_PROPS),
+    category: 'Membership',
+    pages: ['/membership'],
+    fields: [
+      { name: 'items', label: 'Partners', type: 'kvlist' as const, kvKeyLabel: 'Partner Name', kvValueLabel: 'Discount (e.g. 10% off)' },
+    ],
+  },
+
+  // ── Media ─────────────────────────────────────────────────
+  {
+    key: 'page.media',
+    title: 'Hero',
+    description: 'The banner at the top of the Media page.',
+    icon: createElement(Video, ICON_PROPS),
+    category: 'Media',
+    pages: ['/media'],
+    fields: [
+      { name: 'hero_label',    label: 'Eyebrow Label', type: 'text'     as const, placeholder: 'MEDIA' },
+      { name: 'hero_title',    label: 'Page Title',    type: 'text'     as const, placeholder: 'Watch & Explore' },
+      { name: 'hero_subtitle', label: 'Subtitle',      type: 'textarea' as const },
+    ],
+  },
+  {
+    key: 'media.videos',
+    title: 'Long-Form Videos',
+    description: 'YouTube videos — documentaries, recaps, interviews — embedded on the Media page.',
+    icon: createElement(Video, ICON_PROPS),
+    category: 'Media',
+    pages: ['/media'],
+    fields: [
+      { name: 'items', label: 'Videos', type: 'kvlist' as const, kvKeyLabel: 'Title', kvValueLabel: 'YouTube URL' },
+    ],
+  },
+  {
+    key: 'media.albums',
+    title: 'Photo Albums',
+    description: 'Google Photos albums linked from the Media page.',
+    icon: createElement(Camera, ICON_PROPS),
+    category: 'Media',
+    pages: ['/media'],
+    fields: [
+      { name: 'items', label: 'Albums', type: 'kvlist' as const, kvKeyLabel: 'Title', kvValueLabel: 'Google Photos Album URL' },
+    ],
+  },
 ];
 
 export type ContentBlock = (typeof CONTENT_BLOCKS)[number];
@@ -346,4 +415,4 @@ export type FieldDef =
 // Order the block list is grouped in — mirrors the site's own nav order, so
 // "where is this on the site" reads left-to-right the same way the site
 // itself does.
-export const CATEGORY_ORDER = ['Global', 'Homepage', 'About', 'Our Story', 'Divisions', 'Events', 'Sponsors', 'Get Involved'];
+export const CATEGORY_ORDER = ['Global', 'Homepage', 'About', 'Our Story', 'Divisions', 'Events', 'Sponsors', 'Get Involved', 'Membership', 'Media'];

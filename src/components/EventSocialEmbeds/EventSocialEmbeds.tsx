@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import Image from 'next/image';
 import type { SocialEmbed } from '@/types/database';
+import { youtubeVideoId } from '@/lib/youtube';
 import styles from './EventSocialEmbeds.module.css';
 
 declare global {
@@ -38,20 +39,6 @@ function loadEmbedScript(src: string, isAlreadyLoaded: () => boolean): Promise<v
     script.onload = () => resolve();
     document.body.appendChild(script);
   });
-}
-
-// Handles watch/share/shorts/embed URL shapes, with or without extra query
-// params (?t=, ?si=, playlist context, etc.) — anything YouTube itself
-// would produce from its own Share button.
-function youtubeVideoId(url: string): string | null {
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtube\.com\/shorts\/|youtube\.com\/embed\/|youtu\.be\/)([\w-]{11})/,
-  ];
-  for (const re of patterns) {
-    const match = url.match(re);
-    if (match) return match[1];
-  }
-  return null;
 }
 
 // Discord has no oEmbed/widget API for an individual message the way the

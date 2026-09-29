@@ -81,6 +81,26 @@
 }
 .embedRemoveBtn:hover { background: rgba(220,38,38,0.1); }
 
+.embedActions {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+.embedMoveBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(242,241,240,0.35);
+  cursor: pointer;
+  padding: 0.3rem;
+  border-radius: 0.35rem;
+  transition: color 0.15s, background 0.15s;
+}
+.embedMoveBtn:hover:not(:disabled) { color: var(--yellow); background: rgba(255,199,44,0.08); }
+.embedMoveBtn:disabled { color: rgba(242,241,240,0.12); cursor: not-allowed; }
+
 .embedAddRow {
   display: grid;
   grid-template-columns: 130px 1fr auto;

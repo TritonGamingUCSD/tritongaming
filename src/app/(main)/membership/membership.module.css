@@ -1,0 +1,215 @@
+.page {
+  background: #060c1a;
+}
+
+/* ── Hero — same recipe as every other main-site page hero, see globals.css ── */
+.heroBanner {
+  position: relative;
+  padding: var(--hero-padding-top) clamp(1.5rem, 5vw, 4rem) var(--hero-padding-bottom);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.heroBg {
+  position: absolute;
+  inset: 0;
+  background: var(--hero-bg);
+}
+
+.heroBg::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--hero-fade-height);
+  background: var(--hero-fade);
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  max-width: 700px;
+}
+
+.heroLabel {
+  font-family: var(--font-futura-heavy);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  color: var(--yellow);
+  margin: 0 0 0.5rem;
+}
+
+.heroTitle {
+  font-family: var(--font-brick);
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  color: var(--yellow);
+  margin: 0 0 1rem;
+  line-height: 1;
+  text-shadow: 2px 4px 12px rgba(0,0,0,0.4);
+}
+
+.heroSub {
+  font-family: var(--font-futura-medium);
+  font-size: clamp(0.95rem, 1.8vw, 1.15rem);
+  color: var(--lightblue);
+  margin: 0;
+  line-height: 1.65;
+}
+
+/* ── Price / validity bar ── */
+.priceBar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+  background: rgba(255, 199, 44, 0.06);
+  border-top: 1px solid rgba(255, 199, 44, 0.18);
+  border-bottom: 1px solid rgba(255, 199, 44, 0.18);
+  padding: 0.85rem clamp(1.5rem, 5vw, 4rem);
+  text-align: center;
+}
+
+.priceValue {
+  font-family: var(--font-soulmaze);
+  font-size: clamp(1.4rem, 3vw, 1.9rem);
+  color: var(--yellow);
+}
+
+.priceValidity {
+  font-family: var(--font-futura-medium);
+  font-size: clamp(0.85rem, 1.8vw, 1rem);
+  color: rgba(242, 241, 240, 0.85);
+}
+
+/* ── Intro + purchase CTA ── */
+.introSection {
+  padding: var(--section-pad) clamp(1.5rem, 5vw, 4rem) calc(var(--section-pad) * 0.6);
+  text-align: center;
+  max-width: 700px;
+  margin-inline: auto;
+}
+
+.introText {
+  font-family: var(--font-futura-medium);
+  font-size: var(--fs-body);
+  color: rgba(242, 241, 240, 0.85);
+  line-height: 1.7;
+  margin: 0 0 1.5rem;
+}
+
+.purchaseBtn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0.7rem 2rem;
+  background: var(--btn-primary-bg);
+  box-shadow: var(--btn-primary-shadow);
+  color: var(--btn-primary-text);
+  font-family: var(--font-futura-heavy);
+  font-size: 0.9rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--btn-primary-border);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.purchaseBtn:hover {
+  transform: translateY(-2px);
+  border-color: var(--btn-primary-border-hover);
+  box-shadow: var(--btn-primary-shadow-hover);
+}
+
+/* ── Shared section header ── */
+.sectionHeader {
+  text-align: center;
+  margin-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.sectionLabel {
+  font-family: var(--font-futura-heavy);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--yellow);
+  margin: 0 0 0.5rem;
+}
+
+.sectionTitle {
+  font-family: var(--font-soulmaze);
+  font-size: var(--fs-section-title);
+  color: var(--white);
+  margin: 0;
+  line-height: 1.15;
+}
+
+/* ── Partner discounts ── */
+.partnersSection {
+  padding: 0 clamp(1.5rem, 5vw, 4rem) var(--section-pad);
+  max-width: var(--max-width);
+  margin-inline: auto;
+}
+
+.partnersGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.1rem;
+}
+
+.partnerCard {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 1.5rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.partnerCard:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-4px);
+}
+
+.partnerIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 199, 44, 0.12);
+  color: var(--yellow);
+}
+
+.partnerName {
+  font-family: var(--font-soulmaze);
+  font-size: 1.05rem;
+  color: var(--white);
+  margin: 0;
+}
+
+.partnerDiscount {
+  font-family: var(--font-futura-heavy);
+  font-size: 0.85rem;
+  letter-spacing: 0.03em;
+  color: var(--lightblue);
+  margin: 0;
+}
+
+.noPartners {
+  text-align: center;
+  color: rgba(242, 241, 240, 0.4);
+  font-size: 0.9rem;
+  padding: 2rem 1rem;
+}

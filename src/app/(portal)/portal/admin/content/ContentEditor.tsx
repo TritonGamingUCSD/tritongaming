@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Pencil, X, Check, MapPin } from 'lucide-react';
+import { Pencil, X, Check, MapPin, ChevronUp, ChevronDown } from 'lucide-react';
 import type { ContentBlock, FieldDef } from '@/lib/content-blocks';
 import { CATEGORY_ORDER } from '@/lib/content-blocks';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
@@ -20,6 +20,15 @@ interface Props {
 const COLOR_PREVIEW: Record<string, string> = {
   yellow: '#ffc72c', blue: '#275a8f', green: '#059669', red: '#dc2626',
 };
+
+// Swaps two rows in place — used by every reorderable list editor below
+// (kvlist, imagelist) so "move up"/"move down" is a single adjacent swap
+// rather than a full re-sort; repeated clicks walk an item to any position.
+function swapItems<T>(items: T[], i: number, j: number): T[] {
+  const next = [...items];
+  [next[i], next[j]] = [next[j], next[i]];
+  return next;
+}
 
 // A block's own `pages` array is the single source of truth for "where does
 // this text actually show up" — this just turns it into the label/links
@@ -323,8 +332,18 @@ function FieldEditor({ field, value, onChange }: {
                 onChange={(e) => { const n=[...items]; n[i]={...n[i],value:e.target.value}; onChange(n); }} />
               <input className={styles.fieldInput} value={item.label ?? ''} placeholder={valLbl}
                 onChange={(e) => { const n=[...items]; n[i]={...n[i],label:e.target.value}; onChange(n); }} />
-              <button type="button" className={styles.kvRemove}
-                onClick={() => onChange(items.filter((_,j)=>j!==i))}><X size={14} strokeWidth={1.75} /></button>
+              <div className={styles.rowActions}>
+                <button type="button" className={styles.moveBtn} disabled={i === 0}
+                  onClick={() => onChange(swapItems(items, i, i - 1))} aria-label="Move up">
+                  <ChevronUp size={14} strokeWidth={2} />
+                </button>
+                <button type="button" className={styles.moveBtn} disabled={i === items.length - 1}
+                  onClick={() => onChange(swapItems(items, i, i + 1))} aria-label="Move down">
+                  <ChevronDown size={14} strokeWidth={2} />
+                </button>
+                <button type="button" className={styles.kvRemove}
+                  onClick={() => onChange(items.filter((_,j)=>j!==i))} aria-label="Remove"><X size={14} strokeWidth={1.75} /></button>
+              </div>
             </div>
           ))}
           <button type="button" className={styles.kvAdd}
@@ -392,8 +411,18 @@ function FieldEditor({ field, value, onChange }: {
                   </label>
                 ))}
               </div>
-              <button type="button" className={styles.kvRemove}
-                onClick={() => onChange(items.filter((_,j)=>j!==i))}><X size={14} strokeWidth={1.75} /></button>
+              <div className={styles.rowActions}>
+                <button type="button" className={styles.moveBtn} disabled={i === 0}
+                  onClick={() => onChange(swapItems(items, i, i - 1))} aria-label="Move up">
+                  <ChevronUp size={14} strokeWidth={2} />
+                </button>
+                <button type="button" className={styles.moveBtn} disabled={i === items.length - 1}
+                  onClick={() => onChange(swapItems(items, i, i + 1))} aria-label="Move down">
+                  <ChevronDown size={14} strokeWidth={2} />
+                </button>
+                <button type="button" className={styles.kvRemove}
+                  onClick={() => onChange(items.filter((_,j)=>j!==i))} aria-label="Remove"><X size={14} strokeWidth={1.75} /></button>
+              </div>
             </div>
           ))}
           <button type="button" className={styles.kvAdd}
@@ -498,6 +527,22 @@ function getPreview(block: BlockDef, data: Record<string, unknown>): string {
     case 'sponsors': {
       const items = data.items as unknown[] | undefined;
       return items?.length ? `${items.length} sponsor${items.length !== 1 ? 's' : ''}` : '';
+    }
+    case 'page.membership':
+      return (data.hero_title as string) || '';
+    case 'membership.partners': {
+      const items = data.items as unknown[] | undefined;
+      return items?.length ? `${items.length} partner${items.length !== 1 ? 's' : ''}` : '';
+    }
+    case 'page.media':
+      return (data.hero_title as string) || '';
+    case 'media.videos': {
+      const items = data.items as unknown[] | undefined;
+      return items?.length ? `${items.length} video${items.length !== 1 ? 's' : ''}` : '';
+    }
+    case 'media.albums': {
+      const items = data.items as unknown[] | undefined;
+      return items?.length ? `${items.length} album${items.length !== 1 ? 's' : ''}` : '';
     }
     default:
       return '';

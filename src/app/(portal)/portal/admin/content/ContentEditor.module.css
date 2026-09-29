@@ -577,6 +577,27 @@
 
 .kvRemove:hover { color: #fca5a5; background: rgba(220,38,38,0.08); }
 
+/* ── Row reordering — shared by kvlist and imagelist rows ── */
+.rowActions {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.moveBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(242,241,240,0.35);
+  cursor: pointer;
+  padding: 0.3rem;
+  border-radius: 0.375rem;
+  transition: color 0.15s, background 0.15s;
+}
+
+.moveBtn:hover:not(:disabled) { color: var(--yellow); background: rgba(255,199,44,0.08); }
+.moveBtn:disabled { color: rgba(242,241,240,0.1); cursor: not-allowed; }
+
 .kvAdd {
   font-size: 0.8rem;
   color: rgba(255,199,44,0.6);

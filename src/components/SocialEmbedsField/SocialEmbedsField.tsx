@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { ChevronUp, ChevronDown } from 'lucide-react';
 import type { SocialEmbed } from '@/types/database';
 import styles from './SocialEmbedsField.module.css';
 
@@ -47,6 +48,18 @@ export default function SocialEmbedsField({
     onChange(value.filter((_, i) => i !== index));
   }
 
+  // Swaps adjacent entries — this array's order is exactly the order posts
+  // render in on the public page (EventSocialEmbeds/division page just
+  // `.map` over it), so this is the only control for "which post shows
+  // first."
+  function handleMove(index: number, dir: -1 | 1) {
+    const target = index + dir;
+    if (target < 0 || target >= value.length) return;
+    const next = [...value];
+    [next[index], next[target]] = [next[target], next[index]];
+    onChange(next);
+  }
+
   return (
     <div className={styles.field}>
       <span className={styles.label}>{label}</span>
@@ -61,7 +74,17 @@ export default function SocialEmbedsField({
                   <Image src={config.logo} alt="" width={14} height={14} unoptimized /> {config.label}
                 </span>
                 <span className={styles.embedUrl}>{embed.url}</span>
-                <button type="button" className={styles.embedRemoveBtn} onClick={() => handleRemove(i)}>Remove</button>
+                <div className={styles.embedActions}>
+                  <button type="button" className={styles.embedMoveBtn} disabled={i === 0}
+                    onClick={() => handleMove(i, -1)} aria-label="Move up">
+                    <ChevronUp size={14} strokeWidth={2} />
+                  </button>
+                  <button type="button" className={styles.embedMoveBtn} disabled={i === value.length - 1}
+                    onClick={() => handleMove(i, 1)} aria-label="Move down">
+                    <ChevronDown size={14} strokeWidth={2} />
+                  </button>
+                  <button type="button" className={styles.embedRemoveBtn} onClick={() => handleRemove(i)}>Remove</button>
+                </div>
               </li>
             );
           })}
