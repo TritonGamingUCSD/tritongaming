@@ -3,7 +3,10 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
+import SocialLinksField from '@/components/SocialLinksField/SocialLinksField';
+import SocialEmbedsField from '@/components/SocialEmbedsField/SocialEmbedsField';
 import { deleteIfReplaced, deleteStorageUrl } from '@/lib/imageUpload';
+import type { SocialEmbed } from '@/types/database';
 import styles from './divisions.module.css';
 
 interface Division {
@@ -13,9 +16,15 @@ interface Division {
   description: string | null;
   logo_url: string | null;
   discord_url: string | null;
+  application_url: string | null;
+  social_links: Record<string, string>;
+  social_embeds: SocialEmbed[];
 }
 
-type DraftFields = { name: string; slug: string; description: string; logo_url: string; discord_url: string };
+type DraftFields = {
+  name: string; slug: string; description: string; logo_url: string; discord_url: string;
+  application_url: string; social_links: Record<string, string>; social_embeds: SocialEmbed[];
+};
 
 function toDraft(d: Division): DraftFields {
   return {
@@ -24,10 +33,16 @@ function toDraft(d: Division): DraftFields {
     description: d.description ?? '',
     logo_url: d.logo_url ?? '',
     discord_url: d.discord_url ?? '',
+    application_url: d.application_url ?? '',
+    social_links: { ...d.social_links },
+    social_embeds: [...d.social_embeds],
   };
 }
 
-const EMPTY_DRAFT: DraftFields = { name: '', slug: '', description: '', logo_url: '', discord_url: '' };
+const EMPTY_DRAFT: DraftFields = {
+  name: '', slug: '', description: '', logo_url: '', discord_url: '',
+  application_url: '', social_links: {}, social_embeds: [],
+};
 
 function logoSrc(url: string): string | null {
   if (!url) return null;
@@ -68,6 +83,9 @@ export default function DivisionsManager({ divisions: initial }: { divisions: Di
           description: newDraft.description,
           logo_url: newDraft.logo_url,
           discord_url: newDraft.discord_url,
+          application_url: newDraft.application_url,
+          social_links: newDraft.social_links,
+          social_embeds: newDraft.social_embeds,
         }),
       });
       const data = await res.json();
@@ -100,6 +118,9 @@ export default function DivisionsManager({ divisions: initial }: { divisions: Di
           description: editDraft.description,
           logo_url: editDraft.logo_url,
           discord_url: editDraft.discord_url,
+          application_url: editDraft.application_url,
+          social_links: editDraft.social_links,
+          social_embeds: editDraft.social_embeds,
         }),
       });
       const data = await res.json();
@@ -185,6 +206,23 @@ export default function DivisionsManager({ divisions: initial }: { divisions: Di
           onChange={(e) => setNewDraft((f) => ({ ...f, discord_url: e.target.value }))}
           placeholder="Discord server invite (optional) — https://discord.gg/…"
         />
+        <input
+          className={styles.input}
+          type="url"
+          value={newDraft.application_url}
+          onChange={(e) => setNewDraft((f) => ({ ...f, application_url: e.target.value }))}
+          placeholder="Officer application link (optional) — Google Form, etc."
+        />
+        <SocialLinksField
+          value={newDraft.social_links}
+          onChange={(v) => setNewDraft((f) => ({ ...f, social_links: v }))}
+          exclude={['discord']}
+        />
+        <SocialEmbedsField
+          value={newDraft.social_embeds}
+          onChange={(v) => setNewDraft((f) => ({ ...f, social_embeds: v }))}
+          hint="Shown on this division's own page. Instagram posts embed live; Discord links show as a card."
+        />
         <button className={styles.saveBtn} type="submit" disabled={adding || !newDraft.name.trim()}>
           {adding ? 'Adding…' : 'Add Division'}
         </button>
@@ -237,6 +275,23 @@ export default function DivisionsManager({ divisions: initial }: { divisions: Di
                   onChange={(e) => setEditDraft((f) => ({ ...f, discord_url: e.target.value }))}
                   placeholder="Discord server invite (optional) — https://discord.gg/…"
                 />
+                <input
+                  className={styles.input}
+                  type="url"
+                  value={editDraft.application_url}
+                  onChange={(e) => setEditDraft((f) => ({ ...f, application_url: e.target.value }))}
+                  placeholder="Officer application link (optional) — Google Form, etc."
+                />
+                <SocialLinksField
+                  value={editDraft.social_links}
+                  onChange={(v) => setEditDraft((f) => ({ ...f, social_links: v }))}
+                  exclude={['discord']}
+                />
+                <SocialEmbedsField
+                  value={editDraft.social_embeds}
+                  onChange={(v) => setEditDraft((f) => ({ ...f, social_embeds: v }))}
+                  hint="Shown on this division's own page. Instagram posts embed live; Discord links show as a card."
+                />
                 <div className={styles.actions}>
                   <button className={styles.btn} onClick={() => setEditingId(null)} disabled={isBusy}>Cancel</button>
                   <button className={styles.saveBtn} onClick={() => handleSave(d.id)} disabled={isBusy || !editDraft.slug.trim()}>
@@ -265,6 +320,18 @@ export default function DivisionsManager({ divisions: initial }: { divisions: Di
                 <a href={d.discord_url} target="_blank" rel="noopener noreferrer" className={styles.discordLink}>
                   <Image src="/logos/discord.svg" alt="" width={14} height={14} unoptimized /> Discord →
                 </a>
+              )}
+              {d.application_url && (
+                <a href={d.application_url} target="_blank" rel="noopener noreferrer" className={styles.discordLink}>
+                  Officer Application →
+                </a>
+              )}
+              {(Object.keys(d.social_links).length > 0 || d.social_embeds.length > 0) && (
+                <span className={styles.slug}>
+                  {Object.keys(d.social_links).length > 0 && `${Object.keys(d.social_links).length} social link${Object.keys(d.social_links).length === 1 ? '' : 's'}`}
+                  {Object.keys(d.social_links).length > 0 && d.social_embeds.length > 0 && ' · '}
+                  {d.social_embeds.length > 0 && `${d.social_embeds.length} post${d.social_embeds.length === 1 ? '' : 's'}`}
+                </span>
               )}
               <div className={styles.actions}>
                 <button className={styles.btn} onClick={() => startEdit(d)}>Edit</button>

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import type { RoleGrant } from '@/lib/capabilities';
+import type { SocialEmbed } from '@/types/database';
 
 export interface MyDivision {
   id: string;
@@ -8,6 +9,9 @@ export interface MyDivision {
   description: string | null;
   logo_url: string | null;
   discord_url: string | null;
+  application_url: string | null;
+  social_links: Record<string, string>;
+  social_embeds: SocialEmbed[];
 }
 
 // The divisions a 'division' role holder actually leads — someone can lead
@@ -23,7 +27,7 @@ export async function getMyDivisionsData(roles: RoleGrant[]): Promise<MyDivision
   const supabase = await createClient();
   const { data } = await supabase
     .from('divisions')
-    .select('id, name, slug, description, logo_url, discord_url')
+    .select('id, name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds')
     .in('id', divisionIds)
     .order('name');
 

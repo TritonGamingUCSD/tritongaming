@@ -4,14 +4,27 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
+import SocialLinksField from '@/components/SocialLinksField/SocialLinksField';
+import SocialEmbedsField from '@/components/SocialEmbedsField/SocialEmbedsField';
 import { deleteIfReplaced } from '@/lib/imageUpload';
+import type { SocialEmbed } from '@/types/database';
 import type { MyDivision } from './getMyDivisionsData';
 import styles from './divisions.module.css';
 
-type DraftFields = { description: string; logo_url: string; discord_url: string };
+type DraftFields = {
+  description: string; logo_url: string; discord_url: string;
+  application_url: string; social_links: Record<string, string>; social_embeds: SocialEmbed[];
+};
 
 function toDraft(d: MyDivision): DraftFields {
-  return { description: d.description ?? '', logo_url: d.logo_url ?? '', discord_url: d.discord_url ?? '' };
+  return {
+    description: d.description ?? '',
+    logo_url: d.logo_url ?? '',
+    discord_url: d.discord_url ?? '',
+    application_url: d.application_url ?? '',
+    social_links: { ...d.social_links },
+    social_embeds: [...d.social_embeds],
+  };
 }
 
 function logoSrc(url: string): string | null {
@@ -112,6 +125,23 @@ export default function MyDivisionsEditor({ divisions: initial }: { divisions: M
                 value={draft.discord_url}
                 onChange={(e) => setDraft(d.id, { discord_url: e.target.value })}
                 placeholder="Discord server invite (optional) — https://discord.gg/…"
+              />
+              <input
+                className={styles.input}
+                type="url"
+                value={draft.application_url}
+                onChange={(e) => setDraft(d.id, { application_url: e.target.value })}
+                placeholder="Officer application link (optional) — Google Form, etc."
+              />
+              <SocialLinksField
+                value={draft.social_links}
+                onChange={(v) => setDraft(d.id, { social_links: v })}
+                exclude={['discord']}
+              />
+              <SocialEmbedsField
+                value={draft.social_embeds}
+                onChange={(v) => setDraft(d.id, { social_embeds: v })}
+                hint="Shown on this division's own page. Instagram posts embed live; Discord links show as a card."
               />
               <div className={styles.actions}>
                 <button className={styles.saveBtn} onClick={() => handleSave(d)} disabled={isBusy}>

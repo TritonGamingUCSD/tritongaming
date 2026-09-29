@@ -2,6 +2,27 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { hasCapability } from '@/lib/capabilities';
 import { slugify } from '@/lib/slug';
+import type { SocialEmbed } from '@/types/database';
+
+// Same shape as profiles.social_links (see lib/profile.ts) — a plain
+// {platformKey: handle} object. Only real string values survive; this is
+// what actually enforces "handle, not a whole object of junk" against a
+// hand-crafted request, not just the client form.
+function cleanSocialLinks(value: unknown): Record<string, string> {
+  if (!value || typeof value !== 'object') return {};
+  const cleaned: Record<string, string> = {};
+  for (const [key, v] of Object.entries(value as Record<string, unknown>)) {
+    if (typeof v === 'string' && v.trim()) cleaned[key] = v.trim();
+  }
+  return cleaned;
+}
+
+function cleanSocialEmbeds(value: unknown): SocialEmbed[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter(
+    (e): e is SocialEmbed => !!e && typeof e === 'object' && (e.type === 'instagram' || e.type === 'discord') && typeof e.url === 'string' && !!e.url.trim()
+  );
+}
 
 // Mutations go through the regular (RLS-enforced) client, not a service-role
 // client — an exec/admin editing this directory is authoring their own
@@ -53,8 +74,9 @@ export async function POST(request: Request) {
   const authError = await requireDivisionsManager(supabase);
   if (authError) return authError;
 
-  const { name, slug, description, logo_url, discord_url } = await request.json() as {
+  const { name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds } = await request.json() as {
     name?: string; slug?: string; description?: string; logo_url?: string; discord_url?: string;
+    application_url?: string; social_links?: unknown; social_embeds?: unknown;
   };
   if (!name?.trim()) return NextResponse.json({ error: 'Name is required' }, { status: 400 });
 
@@ -69,8 +91,11 @@ export async function POST(request: Request) {
       description: description?.trim() || null,
       logo_url: logo_url?.trim() || null,
       discord_url: discord_url?.trim() || null,
+      application_url: application_url?.trim() || null,
+      social_links: cleanSocialLinks(social_links),
+      social_embeds: cleanSocialEmbeds(social_embeds),
     })
-    .select('id, name, slug, description, logo_url, discord_url')
+    .select('id, name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds')
     .single();
 
   if (error) {
@@ -88,8 +113,9 @@ export async function PATCH(request: Request) {
   const { error: authError, canManageDirectory } = await requireDivisionAccess(supabase);
   if (authError) return authError;
 
-  const { id, name, slug, description, logo_url, discord_url } = await request.json() as {
+  const { id, name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds } = await request.json() as {
     id?: string; name?: string; slug?: string; description?: string; logo_url?: string; discord_url?: string;
+    application_url?: string; social_links?: unknown; social_embeds?: unknown;
   };
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
 
@@ -106,6 +132,9 @@ export async function PATCH(request: Request) {
   if (description !== undefined) update.description = description.trim() || null;
   if (logo_url !== undefined) update.logo_url = logo_url.trim() || null;
   if (discord_url !== undefined) update.discord_url = discord_url.trim() || null;
+  if (application_url !== undefined) update.application_url = application_url.trim() || null;
+  if (social_links !== undefined) update.social_links = cleanSocialLinks(social_links);
+  if (social_embeds !== undefined) update.social_embeds = cleanSocialEmbeds(social_embeds);
   if (slug !== undefined) {
     const finalSlug = slugify(slug);
     if (!finalSlug) return NextResponse.json({ error: 'Slug cannot be empty' }, { status: 400 });
@@ -116,7 +145,7 @@ export async function PATCH(request: Request) {
     .from('divisions')
     .update(update)
     .eq('id', id)
-    .select('id, name, slug, description, logo_url, discord_url')
+    .select('id, name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds')
     .single();
 
   if (error) {

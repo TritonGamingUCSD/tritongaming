@@ -91,6 +91,9 @@ export interface Database {
           logo_url: string | null;
           discord_url: string | null;
           description: string | null;
+          application_url: string | null;
+          social_links: Record<string, string>;
+          social_embeds: SocialEmbed[];
           created_at: string;
         };
         Insert: Omit<Database['public']['Tables']['divisions']['Row'], 'id' | 'created_at'>;
