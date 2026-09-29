@@ -9,7 +9,7 @@ import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
 import type { AppRole } from '@/types/database';
 import type { RoleGrant } from '@/lib/capabilities';
 import { hasCapability } from '@/lib/capabilities';
-import { resolveAvatarUrl, socialHref, isVisible, SOCIAL_PLATFORMS } from '@/lib/profile';
+import { resolveAvatarUrl, socialHref, isVisible, isOrgMember, SOCIAL_PLATFORMS } from '@/lib/profile';
 import type { MemberProfileRow } from './getMembersData';
 import styles from './members.module.css';
 
@@ -68,7 +68,7 @@ export default function MembersSectionContent({ rows, roles }: { rows: MemberPro
     const { user_roles, ...profile } = row;
     const roleSet = new Set((user_roles ?? []).map((ur) => ur.role));
     const primaryRole = ORDER.find((r) => (r === 'guest' ? roleSet.size === 0 : roleSet.has(r as AppRole))) ?? 'guest';
-    if (primaryRole === 'guest' || primaryRole === 'ucsd') return;
+    if (!isOrgMember(user_roles)) return;
 
     memberCount++;
     // Someone can lead more than one division at once — join every division
@@ -164,13 +164,12 @@ export default function MembersSectionContent({ rows, roles }: { rows: MemberPro
                   <div className={styles.info}>
                     <div className={styles.name}>{m.display_name || 'Anonymous'}</div>
                     {m.org_title && <div className={styles.orgTitle}>{m.org_title}</div>}
-                    {view === 'grid' ? (
-                      <>
-                        {m.gamer_tag && <div className={styles.tag}><Gamepad2 size={12} strokeWidth={1.75} aria-hidden="true" /> {m.gamer_tag}</div>}
-                        {m.divisionName && <div className={styles.detail}>{m.divisionName}</div>}
-                        {isVisible(m.board_visibility, 'year_major') && m.major && <div className={styles.detail}>{m.major}{m.year ? ` · ${m.year}` : ''}</div>}
-                      </>
-                    ) : (
+                    {/* Grid is the compact "who's who" view — name, title,
+                        photo, nothing else. List view is the one place that
+                        still shows division/year/major, since a single-line
+                        row has room for it without turning into a wall of
+                        text like the old grid cards did. */}
+                    {view === 'list' && (
                       <div className={styles.detail}>
                         {[m.divisionName, isVisible(m.board_visibility, 'year_major') ? m.major : null, isVisible(m.board_visibility, 'year_major') ? m.year : null].filter(Boolean).join(' · ')}
                       </div>

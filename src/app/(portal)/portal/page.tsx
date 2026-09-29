@@ -246,7 +246,11 @@ export default async function PortalDashboard({ searchParams }: Props) {
     ...(canViewMembers && membersData ? [{
       id: 'members', icon: <Users size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Members',
       description: 'Browse everyone in the org',
-      badge: membersData.rows.length || undefined,
+      // Not rows.length — that counts every profile including plain
+      // verified-student accounts who never joined anything, which the
+      // Members page itself excludes. This badge would otherwise promise a
+      // much bigger roster than the page actually shows.
+      badge: membersData.memberCount || undefined,
       group: 'Resources' as const,
       content: <MembersSectionContent rows={membersData.rows} roles={roles} />,
     }] : []),

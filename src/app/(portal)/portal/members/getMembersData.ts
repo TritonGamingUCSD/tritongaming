@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { fetchLinkedEmails, pickDisplayEmails, type LinkedEmail } from '@/lib/linkedEmails';
+import { isOrgMember } from '@/lib/profile';
 import type { AppRole } from '@/types/database';
 
 export interface MemberProfileRow {
@@ -58,5 +59,5 @@ export async function getMembersData() {
     console.error('[members] failed to load member emails:', err);
   }
 
-  return { rows: members };
+  return { rows: members, memberCount: members.filter((m) => isOrgMember(m.user_roles)).length };
 }

@@ -199,10 +199,6 @@ export default function BoardSection({ members }: { members: BoardMember[] }) {
                           {m.gamer_tag && <span className={styles.tag}> &quot;{m.gamer_tag}&quot;</span>}
                         </div>
                         {m.org_title && <div className={styles.title}>{m.org_title}</div>}
-                        {isVisible(m.board_visibility, 'year_major') && (m.year || m.major) && (
-                          <div className={styles.meta}>{[m.year, m.major].filter(Boolean).join(' · ')}</div>
-                        )}
-                        {isVisible(m.board_visibility, 'bio') && m.bio && <p className={styles.bio}>{m.bio}</p>}
                       </motion.button>
                     );
                   })}

@@ -44,14 +44,17 @@ interface BoardProfileRow {
 
 // Public About page board — pulls live from profiles instead of the old
 // admin-managed "officers" content block, so each person's own title/bio/
-// picture (set on their own profile) is always current. exec/lead appear
-// automatically; officer and alumni only appear if they've opted in
-// (show_on_board) — see the profile_show_on_board migration. division and
-// recruit never appear (division has its own division pages; recruit is
-// explicitly pre-officer, not yet an org position worth showing publicly).
-// 'admin' alone does NOT qualify — it's a platform-permissions role, not an
-// org position (an admin who's also exec/lead/officer still appears, same
-// as anyone else).
+// picture (set on their own profile) is always current. exec/lead/officer
+// all appear automatically now; only alumni still opt in (show_on_board) —
+// see the profile_show_on_board migration. division and recruit never
+// appear (division has its own division pages; recruit is explicitly
+// pre-officer, not yet an org position worth showing publicly). 'admin'
+// alone does NOT qualify — it's a platform-permissions role, not an org
+// position (an admin who's also exec/lead/officer still appears, same as
+// anyone else). Per-field visibility (bio, socials, year/major, pronouns,
+// email) defaults to hidden regardless of tier — see isVisible() and the
+// board_visibility_default_hidden migration — so someone newly auto-shown
+// here isn't suddenly outed with fields they never chose to publish.
 export async function getBoardMembers(): Promise<BoardMember[]> {
   const supabase = await createClient();
 
@@ -66,8 +69,8 @@ export async function getBoardMembers(): Promise<BoardMember[]> {
 
   const rows = (data as unknown as BoardProfileRow[]).filter((row) => {
     const roles = (row.user_roles ?? []).map((r) => r.role);
-    return roles.includes('exec') || roles.includes('lead')
-      || ((roles.includes('officer') || roles.includes('alumni')) && row.show_on_board);
+    return roles.includes('exec') || roles.includes('lead') || roles.includes('officer')
+      || (roles.includes('alumni') && row.show_on_board);
   });
 
   // Emails live in auth.users, not public.profiles — only reachable via the

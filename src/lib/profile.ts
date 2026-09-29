@@ -1,4 +1,16 @@
-import type { Profile } from '@/types/database';
+import type { Profile, AppRole } from '@/types/database';
+
+// A profile counts as an org member for the portal's Members roster if it
+// holds any role besides the auto-granted 'ucsd' verified-student badge —
+// a bare 'ucsd' (or zero roles at all) means "verified/logged-in visitor,"
+// not someone who's actually joined anything. Lives here (not
+// getMembersData.ts, which pulls in the server-only Supabase client) so
+// the client-side MembersSectionContent can share it with the server-side
+// getMembersData without dragging next/headers into the client bundle.
+export function isOrgMember(userRoles: Array<{ role: AppRole }> | null | undefined): boolean {
+  const roles = new Set((userRoles ?? []).map((r) => r.role));
+  return !(roles.size === 0 || (roles.size === 1 && roles.has('ucsd')));
+}
 
 // "Basic info" required before someone can claim a ticket — checked once,
 // tied to their account, so they're never asked again after it's filled in.
@@ -70,14 +82,14 @@ export type BoardVisibility = {
   email?: boolean;
 };
 
-// Every key defaults to visible (true) when absent — so a profile that
-// predates this feature, or never touched these toggles, behaves exactly
-// like before. `email` is the one exception: it defaults to hidden, since
-// unlike the others (which were already collected for a purpose the member
-// knew was semi-public) publishing an email address is a bigger, more
-// spammable step that should be an explicit opt-IN, not opt-out.
+// Every key defaults to hidden (false) when absent — showing anything
+// beyond name/picture/title (the fields with no toggle at all) is an
+// explicit opt-IN a member turns on themselves in their profile, not
+// something that's on until they notice and turn it off. This matters most
+// now that officer is auto-shown on the board alongside exec/lead (see
+// getBoardMembers) — someone who's never touched these toggles shouldn't
+// be outed with a bio/pronouns/socials they never chose to publish just
+// because their role newly qualifies them for the roster.
 export function isVisible(visibility: BoardVisibility | null | undefined, key: keyof BoardVisibility): boolean {
-  const fallback = key !== 'email';
-  const v = visibility?.[key];
-  return v === undefined ? fallback : v;
+  return visibility?.[key] ?? false;
 }

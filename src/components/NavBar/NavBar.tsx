@@ -12,7 +12,7 @@ import styles from './NavBar.module.css';
 
 const NAV_LINKS = [
   { href: '/our-story',     label: 'OUR STORY' },
-  { href: '/about',         label: 'ABOUT' },
+  { href: '/about',         label: 'TEAM' },
   { href: '/events',        label: 'EVENTS' },
   { href: '/divisions',     label: 'DIVISIONS' },
   { href: '/media',         label: 'MEDIA' },

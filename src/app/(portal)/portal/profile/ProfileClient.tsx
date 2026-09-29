@@ -21,13 +21,13 @@ type Tab = 'basic' | 'board' | 'security';
 export default function ProfileClient({ profile, roles, isUcsd, divisions, initialTab }: { profile: Profile; roles: RoleGrant[]; isUcsd: boolean; divisions: { id: string; name: string }[]; initialTab?: string }) {
   const divisionNameById = new Map(divisions.map((d) => [d.id, d.name]));
   const canEditOrgTitle = canSetOrgTitle(roles);
-  // exec/lead appear on the public About page board automatically;
-  // officer and alumni are the roles that need to opt in themselves
-  // (division and recruit never appear at all) — see getBoardMembers.
-  const canOptIntoBoard = roles.some((r) => r.role === 'officer' || r.role === 'alumni');
-  // Anyone who can actually appear on the board (exec/lead automatically,
-  // officer/alumni once opted in) gets to control what shows beyond the
-  // always-on name/picture/title — see BoardSection for how these are read.
+  // exec/lead/officer appear on the public About page board automatically;
+  // alumni is the only role that still needs to opt in themselves (division
+  // and recruit never appear at all) — see getBoardMembers.
+  const canOptIntoBoard = roles.some((r) => r.role === 'alumni');
+  // Anyone who can actually appear on the board (exec/lead/officer
+  // automatically, alumni once opted in) gets to control what shows beyond
+  // the always-on name/picture/title — see BoardSection for how these are read.
   const isBoardEligible = roles.some((r) => r.role === 'exec' || r.role === 'lead' || r.role === 'officer' || r.role === 'alumni');
   // A division lead can set an org title (ORG_TITLE_ROLES includes
   // 'division') without being board-eligible (isBoardEligible doesn't) —
@@ -55,9 +55,9 @@ export default function ProfileClient({ profile, roles, isUcsd, divisions, initi
     show_on_board: profile.show_on_board,
     social_links: { ...profile.social_links },
     board_visibility: {
-      // email defaults off — publishing an address is a bigger step than
-      // the rest, so it's opt-in rather than opt-out. See isVisible().
-      bio: true, year_major: true, socials: true, pronouns: true, email: false,
+      // Everything here defaults off — publishing any of this is an
+      // explicit opt-in. See isVisible().
+      bio: false, year_major: false, socials: false, pronouns: false, email: false,
       ...profile.board_visibility,
     },
   });
@@ -342,7 +342,7 @@ export default function ProfileClient({ profile, roles, isUcsd, divisions, initi
                     checked={form.show_on_board}
                     onChange={(e) => setForm((f) => ({ ...f, show_on_board: e.target.checked }))}
                   />
-                  <span>Show me on the public About page&apos;s board section</span>
+                  <span>Show me on the public Team page</span>
                 </label>
               )}
             </div>

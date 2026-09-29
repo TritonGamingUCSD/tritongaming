@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: 3rem;
-  max-width: 1200px;
+  max-width: var(--max-width);
   margin-inline: auto;
   padding: 0 var(--sp-md, 1.5rem) 4rem;
 }
@@ -30,14 +30,25 @@
   text-align: center;
 }
 
+/* auto-fill + minmax (not auto-fit with a fixed width) so the grid actually
+   uses the page's full width — name/title/photo cards are compact enough
+   now that capping this at 3 columns (the old fixed-260px recipe) wasted
+   most of a 1400px-wide page on desktop. */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, 260px);
-  justify-content: center;
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
   width: 100%;
-  max-width: calc(260px * 3 + 1.25rem * 2);
-  margin: 0 auto;
+}
+
+@media (max-width: 380px) {
+  /* 150px still only fits one column on the narrowest phones (iPhone SE,
+     older Androids) — a smaller minimum keeps 2 per row instead of one
+     lonely full-width card. */
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+    gap: 0.75rem;
+  }
 }
 
 .card {
@@ -45,8 +56,8 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 0.4rem;
-  padding: 1.75rem 1.25rem;
+  gap: 0.25rem;
+  padding: 1.1rem 0.75rem;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--glass-border);
   border-radius: 1.25rem;
@@ -80,33 +91,34 @@
 }
 
 .avatar {
-  width: 96px;
-  height: 96px;
+  width: 68px;
+  height: 68px;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid rgba(255, 199, 44, 0.3);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.35rem;
 }
 
 .avatarFallback {
-  width: 96px;
-  height: 96px;
+  width: 68px;
+  height: 68px;
   border-radius: 50%;
   background: var(--gradient-nav);
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-futura-heavy);
-  font-size: 2rem;
+  font-size: 1.4rem;
   color: var(--white);
   border: 2px solid rgba(255, 199, 44, 0.3);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.35rem;
 }
 
 .name {
   font-family: var(--font-futura-heavy);
-  font-size: 1rem;
+  font-size: 0.88rem;
   color: var(--white);
+  line-height: 1.3;
 }
 
 .tag {
@@ -115,27 +127,17 @@
 }
 
 .title {
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   color: var(--yellow);
   letter-spacing: 0.02em;
+  line-height: 1.3;
 }
 
+/* Still used by the zoom panel's year/major line (see BoardSection.tsx) —
+   the grid card itself no longer shows this, just name + title + photo. */
 .meta {
   font-size: 0.75rem;
   color: rgba(242, 241, 240, 0.4);
-}
-
-.bio {
-  font-size: 0.82rem;
-  color: rgba(242, 241, 240, 0.65);
-  line-height: 1.5;
-  margin-top: 0.4rem;
-  /* Grid card keeps bios short so the grid stays even; the zoom panel
-     shows the full thing. */
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
 /* ── Zoom panel ──

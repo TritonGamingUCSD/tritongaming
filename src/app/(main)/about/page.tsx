@@ -5,17 +5,17 @@ import { getBoardMembers } from './getBoardMembers';
 import styles from './about.module.css';
 
 export const metadata: Metadata = {
-  title: 'About',
+  title: 'Team',
   description: "Meet Triton Gaming's executive board, leads, and officers.",
   alternates: { canonical: '/about' },
   openGraph: {
-    title: 'About',
+    title: 'Team',
     description: "Meet Triton Gaming's executive board, leads, and officers.",
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'About',
+    title: 'Team',
     description: "Meet Triton Gaming's executive board, leads, and officers.",
   },
 };
