@@ -38,24 +38,36 @@ export function buildCheckinFormUrl(
 ): string | null {
   if (!config.form_url?.trim()) return null;
 
-  const params = new URLSearchParams();
-  params.set('embedded', 'true');
+  // Parsed as a real URL (not string-concatenated with a bare `?`) so this
+  // is safe no matter what an admin pasted — a share link commonly already
+  // has its own query string attached (?usp=sf_link, ?pli=1, etc.), and
+  // blindly appending a second `?` produces a malformed URL Google's own
+  // servers reject with a flat "400 — that's all we know" rather than
+  // something that points at the actual problem.
+  let url: URL;
+  try {
+    url = new URL(config.form_url.trim());
+  } catch {
+    return null;
+  }
+
+  url.searchParams.set('embedded', 'true');
 
   if (config.entry_event_name) {
-    params.set(`entry.${config.entry_event_name}`, opts.eventTitle);
+    url.searchParams.set(`entry.${config.entry_event_name}`, opts.eventTitle);
   }
   if (config.entry_academic_year) {
     const mapped = lookup(config.year_mapping, opts.year);
-    if (mapped) params.set(`entry.${config.entry_academic_year}`, mapped);
+    if (mapped) url.searchParams.set(`entry.${config.entry_academic_year}`, mapped);
   }
   if (config.entry_affiliation) {
     const primaryRole = ROLE_ORDER.find((r) => opts.roles.includes(r));
     const mapped = lookup(config.affiliation_mapping, primaryRole);
-    if (mapped) params.set(`entry.${config.entry_affiliation}`, mapped);
+    if (mapped) url.searchParams.set(`entry.${config.entry_affiliation}`, mapped);
   }
   if (config.entry_food_item && opts.foodItem) {
-    params.set(`entry.${config.entry_food_item}`, opts.foodItem);
+    url.searchParams.set(`entry.${config.entry_food_item}`, opts.foodItem);
   }
 
-  return `${config.form_url.trim()}?${params.toString()}`;
+  return url.toString();
 }

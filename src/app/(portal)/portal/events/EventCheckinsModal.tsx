@@ -22,6 +22,12 @@ interface TicketRow {
   status: 'active' | 'used' | 'cancelled' | 'expired';
   created_at: string;
   checked_in_at: string | null;
+  // Honor-system only — the attendee's own "I've Completed This Form"
+  // confirmation, not proof of an actual Google Forms submission (see
+  // checkin_form_completed_at migration). This column exists so staff have
+  // *some* visibility to physically double-check at the door, since the
+  // app itself can't verify a real submission.
+  checkin_form_completed_at: string | null;
   user: TicketUser | TicketUser[] | null;
 }
 
@@ -30,6 +36,7 @@ interface EventInfo {
   title: string;
   start_date: string;
   location: string | null;
+  requires_checkin_form: boolean;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -118,6 +125,15 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
   const checkedInCount = (tickets ?? []).filter((t) => t.status === 'used').length;
   const attendanceRate = activeTickets.length > 0 ? Math.round((checkedInCount / activeTickets.length) * 100) : 0;
 
+  // Base 4 columns (see checkins.module.css) plus whichever optional ones
+  // actually apply — AS Form only for events that have it on, Actions only
+  // for whoever can manage points/undo a check-in.
+  const gridTemplateColumns = [
+    '2fr', '1fr', '1fr', '1fr',
+    ...(event?.requires_checkin_form ? ['90px'] : []),
+    ...(canManagePoints ? ['90px'] : []),
+  ].join(' ');
+
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
@@ -166,18 +182,19 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
               <div className={checkinStyles.empty}>No one has registered for this event yet.</div>
             ) : (
               <div className={checkinStyles.table}>
-                <div className={checkinStyles.tableHeader} style={canManagePoints ? { gridTemplateColumns: '2fr 1fr 1fr 1fr 90px' } : undefined}>
+                <div className={checkinStyles.tableHeader} style={{ gridTemplateColumns }}>
                   <span>Attendee</span>
                   <span>Registered</span>
                   <span>Status</span>
                   <span>Checked In</span>
+                  {event.requires_checkin_form && <span>AS Form</span>}
                   {canManagePoints && <span></span>}
                 </div>
                 {tickets.map((t) => {
                   const user = Array.isArray(t.user) ? t.user[0] : t.user;
                   const avatarUrl = user ? resolveAvatarUrl(user) : null;
                   return (
-                    <div key={t.id} className={checkinStyles.tableRow} style={canManagePoints ? { gridTemplateColumns: '2fr 1fr 1fr 1fr 90px' } : undefined}>
+                    <div key={t.id} className={checkinStyles.tableRow} style={{ gridTemplateColumns }}>
                       <div className={checkinStyles.attendee}>
                         {avatarUrl ? (
                           <Image src={avatarUrl} alt="" width={32} height={32} className={checkinStyles.avatar} unoptimized referrerPolicy="no-referrer" />
@@ -200,6 +217,17 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
                           ? new Date(t.checked_in_at).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' })
                           : '—'}
                       </span>
+                      {event.requires_checkin_form && (
+                        <span>
+                          {t.status !== 'used' ? (
+                            <span className={styles.formDash}>—</span>
+                          ) : t.checkin_form_completed_at ? (
+                            <span className={styles.formDone}><Check size={12} strokeWidth={2} aria-hidden="true" /> Done</span>
+                          ) : (
+                            <span className={styles.formPending}>Not yet</span>
+                          )}
+                        </span>
+                      )}
                       {canManagePoints && (
                         <span>
                           {t.status === 'used' ? (

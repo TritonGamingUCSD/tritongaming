@@ -85,3 +85,26 @@
 }
 .checkInBtn:hover:not(:disabled) { background: rgba(52,211,153,0.16); }
 .checkInBtn:disabled { opacity: 0.5; cursor: default; }
+
+/* ── AS Form column — honor-system status, not proof of a real submission,
+   see checkin_form_completed_at. Just enough for staff to spot-check who
+   still needs a nudge. ── */
+.formDone {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #34d399;
+  font-size: 0.72rem;
+  font-family: var(--font-futura-medium);
+}
+
+.formPending {
+  color: #fbbf24;
+  font-size: 0.72rem;
+  font-family: var(--font-futura-medium);
+}
+
+.formDash {
+  color: rgba(242,241,240,0.25);
+  font-size: 0.75rem;
+}

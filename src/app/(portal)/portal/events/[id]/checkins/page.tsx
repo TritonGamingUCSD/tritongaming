@@ -1,7 +1,7 @@
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Camera, Gamepad2, Download } from 'lucide-react';
+import { Camera, Gamepad2, Download, Check } from 'lucide-react';
 import { getUserRoles } from '@/lib/auth';
 import { hasCapability } from '@/lib/capabilities';
 import { createClient } from '@/lib/supabase/server';
@@ -28,6 +28,7 @@ interface TicketRow {
   status: 'active' | 'used' | 'cancelled' | 'expired';
   created_at: string;
   checked_in_at: string | null;
+  checkin_form_completed_at: string | null;
   user: TicketUser | TicketUser[] | null;
 }
 
@@ -43,12 +44,12 @@ export default async function EventCheckinsPage({ params }: Params) {
   const supabase = await createClient();
 
   const [{ data: event }, { data: ticketsData, error: ticketsError }] = await Promise.all([
-    supabase.from('events').select('id, title, start_date, location').eq('id', id).single(),
+    supabase.from('events').select('id, title, start_date, location, requires_checkin_form').eq('id', id).single(),
     // tickets has two foreign keys into profiles (user_id, checked_in_by) —
     // the !tickets_user_id_fkey hint is required, see checkin/route.ts.
     supabase
       .from('tickets')
-      .select('id, status, created_at, checked_in_at, user:profiles!tickets_user_id_fkey(display_name, avatar_url, custom_avatar_url, gamer_tag)')
+      .select('id, status, created_at, checked_in_at, checkin_form_completed_at, user:profiles!tickets_user_id_fkey(display_name, avatar_url, custom_avatar_url, gamer_tag)')
       .eq('event_id', id)
       .order('created_at', { ascending: true }),
   ]);
@@ -60,6 +61,7 @@ export default async function EventCheckinsPage({ params }: Params) {
   const activeTickets = tickets.filter((t) => t.status !== 'cancelled');
   const checkedInCount = tickets.filter((t) => t.status === 'used').length;
   const attendanceRate = activeTickets.length > 0 ? Math.round((checkedInCount / activeTickets.length) * 100) : 0;
+  const gridTemplateColumns = event.requires_checkin_form ? '2fr 1fr 1fr 1fr 90px' : undefined;
 
   return (
     <div className={styles.page}>
@@ -97,17 +99,18 @@ export default async function EventCheckinsPage({ params }: Params) {
         <div className={styles.empty}>No one has registered for this event yet.</div>
       ) : (
         <div className={styles.table}>
-          <div className={styles.tableHeader}>
+          <div className={styles.tableHeader} style={{ gridTemplateColumns }}>
             <span>Attendee</span>
             <span>Registered</span>
             <span>Status</span>
             <span>Checked In</span>
+            {event.requires_checkin_form && <span>AS Form</span>}
           </div>
           {tickets.map((t) => {
             const user = Array.isArray(t.user) ? t.user[0] : t.user;
             const avatarUrl = user ? resolveAvatarUrl(user) : null;
             return (
-              <div key={t.id} className={styles.tableRow}>
+              <div key={t.id} className={styles.tableRow} style={{ gridTemplateColumns }}>
                 <div className={styles.attendee}>
                   {avatarUrl ? (
                     <Image src={avatarUrl} alt="" width={32} height={32} className={styles.avatar} unoptimized referrerPolicy="no-referrer" />
@@ -130,6 +133,17 @@ export default async function EventCheckinsPage({ params }: Params) {
                     ? new Date(t.checked_in_at).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' })
                     : '—'}
                 </span>
+                {event.requires_checkin_form && (
+                  <span>
+                    {t.status !== 'used' ? (
+                      <span className={styles.formDash}>—</span>
+                    ) : t.checkin_form_completed_at ? (
+                      <span className={styles.formDone}><Check size={12} strokeWidth={2} aria-hidden="true" /> Done</span>
+                    ) : (
+                      <span className={styles.formPending}>Not yet</span>
+                    )}
+                  </span>
+                )}
               </div>
             );
           })}

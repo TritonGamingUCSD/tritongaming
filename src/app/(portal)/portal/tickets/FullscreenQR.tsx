@@ -101,6 +101,29 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
       const res = await fetchWithRetry(`/api/tickets/${ticketId}/qr`);
       const data = await res.json();
       if (!res.ok) {
+        // The /qr endpoint rejects once the ticket's no longer 'active' —
+        // exactly what happens the instant staff check someone in. Realtime
+        // and the polling backstop below are the normal, fast path for
+        // catching that, but this fetch (the scheduled refresh, or a
+        // visibility/focus regain after the phone was locked/backgrounded
+        // through the actual scan) can land *after* the check-in but
+        // *before* either of those notices it. Rather than just showing a
+        // dead-end error in that case, confirm the real status directly —
+        // if it's actually checked in, transition immediately instead of
+        // leaving the attendee stuck looking at "failed to load code" (and,
+        // with a check-in form configured, missing the auto-popup entirely).
+        try {
+          const statusRes = await fetch(`/api/tickets/${ticketId}/status`);
+          if (statusRes.ok) {
+            const statusData = await statusRes.json();
+            if (statusData.status === 'used') {
+              handleCheckedIn(statusData.checked_in_at ?? new Date().toISOString());
+              return;
+            }
+          }
+        } catch {
+          // fall through to the plain error below
+        }
         setError(data.error || 'Failed to load code');
         return;
       }

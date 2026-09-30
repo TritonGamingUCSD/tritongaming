@@ -189,8 +189,12 @@
 
 @media (max-width: 640px) {
   .tableHeader { display: none; }
+  /* !important since the AS Form column's variable width now comes from an
+     inline style (set per-page depending on whether the event has a form
+     configured) — inline styles otherwise beat a plain class rule here
+     regardless of this media query matching. */
   .tableRow {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
     gap: 0.4rem;
   }
 }

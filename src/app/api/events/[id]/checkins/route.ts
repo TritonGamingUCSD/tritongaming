@@ -23,10 +23,10 @@ export async function GET(request: Request, { params }: Params) {
   }
 
   const [{ data: event }, { data: ticketsData, error: ticketsError }] = await Promise.all([
-    supabase.from('events').select('id, title, start_date, location').eq('id', id).single(),
+    supabase.from('events').select('id, title, start_date, location, requires_checkin_form').eq('id', id).single(),
     supabase
       .from('tickets')
-      .select('id, status, created_at, checked_in_at, user:profiles!tickets_user_id_fkey(display_name, avatar_url, custom_avatar_url, gamer_tag)')
+      .select('id, status, created_at, checked_in_at, checkin_form_completed_at, user:profiles!tickets_user_id_fkey(display_name, avatar_url, custom_avatar_url, gamer_tag)')
       .eq('event_id', id)
       .order('created_at', { ascending: true }),
   ]);
