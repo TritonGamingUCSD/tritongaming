@@ -489,3 +489,66 @@
   color: #011941;
   letter-spacing: 0.02em;
 }
+
+/* Tier progress inside the points box: current tier + lifetime total, a bar
+   toward the next tier, and the exact points still needed. */
+.tierProgress {
+  width: 100%;
+  min-width: 220px;
+  margin-top: 0.55rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.tierProgressTop { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+.tierProgressName { font-weight: 800; font-size: 0.9rem; }
+.tierProgressTotal { font-size: 0.75rem; color: rgba(255, 255, 255, 0.75); font-variant-numeric: tabular-nums; }
+.tierBar { height: 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.18); overflow: hidden; }
+.tierBarFill { height: 100%; border-radius: 999px; transition: width 0.6s ease; }
+.tierNext { font-size: 0.8rem; color: #fff; text-align: center; }
+.tierNext strong { color: #ffc72c; }
+
+/* Tier-up celebration: the new tier pops in with a glow pulse while a burst
+   of confetti falls behind it. Pure CSS; honors reduced motion below. */
+.tierUp {
+  position: relative;
+  width: 100%;
+  margin-top: 0.55rem;
+  padding: 0.7rem 0.5rem;
+  border-radius: 0.9rem;
+  text-align: center;
+  background: color-mix(in srgb, var(--tier-color) 22%, #011941);
+  border: 2px solid var(--tier-color);
+  overflow: hidden;
+  animation: tierUpPop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both, tierUpGlow 1.6s ease-in-out 0.7s 3;
+}
+.tierUpKicker { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; color: #fff; }
+.tierUpName { font-size: 1.9rem; font-weight: 900; line-height: 1.1; color: var(--tier-color); text-shadow: 0 0 18px var(--tier-color); }
+.tierUpFrom { font-size: 0.72rem; color: rgba(255, 255, 255, 0.75); margin-top: 0.1rem; }
+.confetti { position: absolute; inset: 0; pointer-events: none; }
+.confetti span {
+  position: absolute;
+  top: -10px;
+  left: calc(var(--i) * 5.6%);
+  width: 7px;
+  height: 11px;
+  border-radius: 2px;
+  background: hsl(calc(var(--i) * 37), 90%, 60%);
+  opacity: 0;
+  animation: confettiFall 1.8s ease-in calc(var(--i) * 0.07s) both;
+}
+@keyframes tierUpPop { 0% { transform: scale(0.6); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes tierUpGlow {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50% { box-shadow: 0 0 26px 4px var(--tier-color); }
+}
+@keyframes confettiFall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(120px) rotate(540deg); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tierUp { animation: none; }
+  .confetti { display: none; }
+}

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { buildCheckinFormUrl, type CheckinFormConfig } from '@/lib/checkinForm';
 import type { AppRole } from '@/types/database';
+import { fetchTiers, getTier, nextTier } from '@/lib/tiers';
 
 export const runtime = 'nodejs';
 
@@ -79,8 +80,49 @@ export async function GET(request: Request, { params }: Params) {
     pointsAwarded = (pointRows ?? []).reduce((sum, r) => sum + r.amount, 0);
   }
 
+  // Where those points leave them on the status ladder — lifetime points
+  // (positive, un-reversed earnings; same definition the scanner uses), the
+  // tier that lands them in, and how far the next one is. Only when this
+  // check-in actually earned points.
+  let tierInfo: {
+    lifetime_points: number;
+    tier: { name: string; color: string };
+    tier_up: { from: string; to: string; color: string } | null;
+    next_tier: { name: string; color: string; points_needed: number; progress: number } | null;
+  } | null = null;
+  if (pointsAwarded > 0) {
+    const [{ data: allAmounts }, tiers] = await Promise.all([
+      supabase.from('point_transactions').select('amount, reversed_at').eq('user_id', user.id),
+      fetchTiers(supabase),
+    ]);
+    if (tiers.length > 0) {
+      const lifetime = (allAmounts ?? []).filter((t) => t.amount > 0 && !t.reversed_at).reduce((sum, t) => sum + t.amount, 0);
+      const current = getTier(lifetime, tiers);
+      const next = nextTier(lifetime, tiers);
+      // Did *this* check-in's points carry them over a tier line? Compare
+      // where they'd be without it. (The referral bonus, if any, goes to
+      // someone else's ledger, so this check-in only moves this member's
+      // own total by pointsAwarded.)
+      const before = getTier(lifetime - pointsAwarded, tiers);
+      tierInfo = {
+        tier_up: before.name !== current.name ? { from: before.name, to: current.name, color: current.color } : null,
+        lifetime_points: lifetime,
+        tier: { name: current.name, color: current.color },
+        next_tier: next
+          ? {
+              name: next.name,
+              color: next.color,
+              points_needed: next.min - lifetime,
+              progress: Math.max(0, Math.min(1, (lifetime - current.min) / (next.min - current.min))),
+            }
+          : null,
+      };
+    }
+  }
+
   return NextResponse.json({
     points_awarded: pointsAwarded,
+    tier_info: tierInfo,
     status: ticket.status,
     checked_in_at: ticket.checked_in_at,
     checkin_form_url: checkinFormUrl,

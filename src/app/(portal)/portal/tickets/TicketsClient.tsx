@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Ticket, MapPin, QrCode, Check, X, Timer, Award, ClipboardList } from 'lucide-react';
 import FullscreenQR from './FullscreenQR';
 import OnlineCheckinEntry from './OnlineCheckinEntry';
@@ -72,8 +72,22 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default function TicketsClient({ tickets: initialTickets, upcomingEvents, isUcsd, canEarnPoints }: Props) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [tickets, setTickets] = useState(initialTickets);
+
+  // Closing the QR screen after a successful check-in: reload the server
+  // data (so the ticket's status, points and AS Form state are the real,
+  // saved ones, not just what this screen last saw) and land on the tickets
+  // view scrolled to the top, where the ticket now shows as Checked In.
+  function closeQr() {
+    const wasCheckedIn = qrTicket ? tickets.find((t) => t.id === qrTicket.id)?.status === 'used' : false;
+    setQrTicket(null);
+    if (!wasCheckedIn) return;
+    if (!pathname.startsWith('/portal/tickets')) router.push('/portal?section=tickets');
+    router.refresh();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
   // Quietly preload the next stretch of QR codes for any in-person ticket
   // whose event is starting soon or underway (see lib/ticketCodeCache) — so
@@ -381,7 +395,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
           eventTitle={qrTicket.event?.title ?? 'Event'}
           eventDate={qrTicket.event?.start_date}
           eventLocation={qrTicket.event?.location}
-          onClose={() => setQrTicket(null)}
+          onClose={closeQr}
           onCheckedIn={(checkedInAt) => handleCheckedIn(qrTicket.id, checkedInAt)}
           checkinFormUrl={qrTicket.checkinFormUrl}
           onFormComplete={handleFormCompleted}

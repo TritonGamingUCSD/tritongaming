@@ -328,6 +328,12 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   // form settings changed since). null until resolved.
   const [resolvedFormUrl, setResolvedFormUrl] = useState<string | null>(null);
   const [pointsAwarded, setPointsAwarded] = useState(0);
+  const [tierInfo, setTierInfo] = useState<{
+    lifetime_points: number;
+    tier: { name: string; color: string };
+    tier_up: { from: string; to: string; color: string } | null;
+    next_tier: { name: string; color: string; points_needed: number; progress: number } | null;
+  } | null>(null);
   const [formResolved, setFormResolved] = useState(false);
   const [formDone, setFormDone] = useState(false);
   const unlock = useFormUnlock();
@@ -342,6 +348,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
           if (!cancelled) {
             setResolvedFormUrl(data.checkin_form_url ?? null);
             setPointsAwarded(data.points_awarded ?? 0);
+            setTierInfo(data.tier_info ?? null);
             if (data.checkin_form_completed_at) setFormDone(true);
           }
         }
@@ -460,6 +467,36 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
                 <div className={styles.pointsEarned}>
                   <span className={styles.pointsEarnedNumber}>+{pointsAwarded}</span>
                   <span className={styles.pointsEarnedLabel}>points earned</span>
+                  {tierInfo?.tier_up && (
+                    <div className={styles.tierUp} style={{ '--tier-color': tierInfo.tier_up.color } as React.CSSProperties}>
+                      <div className={styles.confetti} aria-hidden="true">
+                        {Array.from({ length: 18 }, (_, i) => <span key={i} style={{ '--i': i } as React.CSSProperties} />)}
+                      </div>
+                      <div className={styles.tierUpKicker}>Tier up!</div>
+                      <div className={styles.tierUpName}>{tierInfo.tier_up.to}</div>
+                      <div className={styles.tierUpFrom}>you were {tierInfo.tier_up.from}</div>
+                    </div>
+                  )}
+                  {tierInfo && (
+                    <div className={styles.tierProgress}>
+                      <div className={styles.tierProgressTop}>
+                        <span style={{ color: tierInfo.tier.color }} className={styles.tierProgressName}>{tierInfo.tier.name}</span>
+                        <span className={styles.tierProgressTotal}>{tierInfo.lifetime_points.toLocaleString()} pts</span>
+                      </div>
+                      {tierInfo.next_tier ? (
+                        <>
+                          <div className={styles.tierBar} aria-hidden="true">
+                            <div className={styles.tierBarFill} style={{ width: `${Math.round(tierInfo.next_tier.progress * 100)}%`, background: tierInfo.next_tier.color }} />
+                          </div>
+                          <div className={styles.tierNext}>
+                            <strong>{tierInfo.next_tier.points_needed.toLocaleString()} pts</strong> to reach <span style={{ color: tierInfo.next_tier.color }}>{tierInfo.next_tier.name}</span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className={styles.tierNext}>Top tier reached 🎉</div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
               <div className={styles.checkedInTitle}>One more step: the AS Form</div>
@@ -501,6 +538,36 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
                 <div className={styles.pointsEarned}>
                   <span className={styles.pointsEarnedNumber}>+{pointsAwarded}</span>
                   <span className={styles.pointsEarnedLabel}>points earned</span>
+                  {tierInfo?.tier_up && (
+                    <div className={styles.tierUp} style={{ '--tier-color': tierInfo.tier_up.color } as React.CSSProperties}>
+                      <div className={styles.confetti} aria-hidden="true">
+                        {Array.from({ length: 18 }, (_, i) => <span key={i} style={{ '--i': i } as React.CSSProperties} />)}
+                      </div>
+                      <div className={styles.tierUpKicker}>Tier up!</div>
+                      <div className={styles.tierUpName}>{tierInfo.tier_up.to}</div>
+                      <div className={styles.tierUpFrom}>you were {tierInfo.tier_up.from}</div>
+                    </div>
+                  )}
+                  {tierInfo && (
+                    <div className={styles.tierProgress}>
+                      <div className={styles.tierProgressTop}>
+                        <span style={{ color: tierInfo.tier.color }} className={styles.tierProgressName}>{tierInfo.tier.name}</span>
+                        <span className={styles.tierProgressTotal}>{tierInfo.lifetime_points.toLocaleString()} pts</span>
+                      </div>
+                      {tierInfo.next_tier ? (
+                        <>
+                          <div className={styles.tierBar} aria-hidden="true">
+                            <div className={styles.tierBarFill} style={{ width: `${Math.round(tierInfo.next_tier.progress * 100)}%`, background: tierInfo.next_tier.color }} />
+                          </div>
+                          <div className={styles.tierNext}>
+                            <strong>{tierInfo.next_tier.points_needed.toLocaleString()} pts</strong> to reach <span style={{ color: tierInfo.next_tier.color }}>{tierInfo.next_tier.name}</span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className={styles.tierNext}>Top tier reached 🎉</div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
               <p className={styles.hint}>{formUrl ? 'AS Form submitted — thank you. See you inside.' : 'Have a great time — see you inside.'}</p>
