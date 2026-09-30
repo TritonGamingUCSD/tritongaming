@@ -6,12 +6,13 @@ import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from 'recharts';
-import { Search, Plus, Ticket, MapPin, BarChart3, ListChecks, Award, ClipboardList, ExternalLink } from 'lucide-react';
+import { Search, Plus, Ticket, MapPin, BarChart3, ListChecks, Award, ClipboardList, ExternalLink, Trash2 } from 'lucide-react';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import type { MonthPoint } from '@/lib/monthBuckets';
 import type { EventTicketStat } from './getEventsData';
 import { usePortalTabSync } from '@/lib/usePortalTabSync';
 import EventCheckinsModal from './EventCheckinsModal';
+import DeleteEventModal from './DeleteEventModal';
 import CheckinFormSettingsPanel, { type CheckinFormSettings } from './CheckinFormSettingsPanel';
 import styles from './events.module.css';
 import chartStyles from '../admin/stats/stats.module.css';
@@ -61,6 +62,8 @@ interface Props {
   eventStats: EventTicketStat[];
   canEdit: boolean;
   canManagePoints: boolean;
+  // delete_events (admin-only) — separate from canEdit, which lead+ hold.
+  canDelete?: boolean;
   initialTab?: string;
   checkinFormSettings?: CheckinFormSettings;
 }
@@ -70,7 +73,7 @@ interface Props {
 // component — search + status filter are pure UI state over data that's
 // already fully fetched (all events + their ticket counts come in as
 // props), so filtering is instant with no round trip.
-export default function EventsSectionContent({ events, eventsPerMonth, ticketsPerMonth, eventStats, canEdit, canManagePoints, initialTab, checkinFormSettings }: Props) {
+export default function EventsSectionContent({ events, eventsPerMonth, ticketsPerMonth, eventStats, canEdit, canManagePoints, canDelete = false, initialTab, checkinFormSettings }: Props) {
   const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'manage');
   const syncUrl = usePortalTabSync('events');
   function selectTab(t: Tab) {
@@ -80,6 +83,7 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<StatusFilter>('all');
   const [checkinsEventId, setCheckinsEventId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<EventRow | null>(null);
 
   const now = Date.now();
 
@@ -295,6 +299,11 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
                             <ExternalLink size={11} strokeWidth={1.75} aria-hidden="true" /> Preview AS Form
                           </a>
                         )}
+                        {canDelete && (
+                          <button type="button" className={`${styles.checkinLink} ${styles.deleteLink}`} onClick={() => setDeleteTarget(event)}>
+                            <Trash2 size={11} strokeWidth={1.75} aria-hidden="true" /> Delete
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -304,6 +313,13 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
           )}
         </>
       ))}
+
+      {deleteTarget && (
+        <DeleteEventModal
+          event={{ id: deleteTarget.id, title: deleteTarget.title, ticketsIssued: deleteTarget.ticketsIssued, ticketsCheckedIn: deleteTarget.ticketsCheckedIn }}
+          onClose={() => setDeleteTarget(null)}
+        />
+      )}
 
       {checkinsEventId && (
         <EventCheckinsModal eventId={checkinsEventId} onClose={() => setCheckinsEventId(null)} canManagePoints={canManagePoints} />

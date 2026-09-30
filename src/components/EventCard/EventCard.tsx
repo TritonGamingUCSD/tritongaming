@@ -5,13 +5,16 @@ import styles from './EventCard.module.css';
 import type { Event } from '@/types';
 import { formatEventDateRange, formatEventTimeRange } from '@/lib/timezone';
 
-export default function EventCard({ event }: { event: Event }) {
+// `compact` = short horizontal card (flyer thumbnail beside the details,
+// no description) for the homepage carousel; default is the tall card used
+// on the events listing.
+export default function EventCard({ event, compact = false }: { event: Event; compact?: boolean }) {
   const dateStr = formatEventDateRange(event.start_date, event.end_date);
   const timeStr = formatEventTimeRange(event.start_date, event.end_date);
   const isExternal = event.flyer_url?.startsWith('http');
 
   return (
-    <article className={styles.card}>
+    <article className={`${styles.card} ${compact ? styles.compact : ''}`}>
       <div className={styles.imgWrapper}>
         {isExternal ? (
           <>

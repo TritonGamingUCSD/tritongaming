@@ -153,3 +153,53 @@
   inset: 0;
   z-index: 1;
 }
+
+/* Compact variant (homepage carousel). Mobile: flyer on top, but a short
+   banner-height strip rather than a poster-tall image. Desktop (>=769px):
+   flyer on the left, details on the right. */
+.compact {
+  flex-direction: column;
+  width: clamp(280px, 86vw, 360px);
+}
+.compact .imgWrapper {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+.compact .info {
+  padding: 0.85rem 1rem 1rem;
+  gap: 0.25rem;
+  min-width: 0;
+}
+.compact .title {
+  font-size: 1.05rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.compact .desc { display: none; }
+.compact .link { font-size: 0.85rem; margin-top: 0.2rem; }
+
+@media (min-width: 769px) {
+  .compact {
+    flex-direction: row;
+    width: 480px;
+  }
+  .compact .imgWrapper {
+    width: 150px;
+    flex-shrink: 0;
+    aspect-ratio: auto;
+    align-self: stretch;
+  }
+  .compact .info {
+    padding: 1rem 1.1rem;
+    justify-content: center;
+  }
+}
+
+/* Fill the (fixed-aspect) box explicitly — with height: 100% against an
+   aspect-ratio parent the flyer resolved to its natural size and got cut. */
+.compact .img {
+  position: absolute;
+  inset: 0;
+}

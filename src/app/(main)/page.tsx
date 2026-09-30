@@ -4,7 +4,6 @@ import LandingAbout from '@/components/LandingAbout/LandingAbout';
 import LandingStatistics from '@/components/LandingStatistics/LandingStatistics';
 import LandingEvents from '@/components/LandingEvents/LandingEvents';
 import LandingSponsors from '@/components/LandingSponsors/LandingSponsors';
-import LandingDivisions from '@/components/LandingDivisions/LandingDivisions';
 import LandingRecruitment from '@/components/LandingRecruitment/LandingRecruitment';
 import { getContentBlocks } from '@/lib/content';
 import { getUpcomingEvents } from '@/lib/events';
@@ -59,7 +58,6 @@ export default async function HomePage() {
       <LandingStatistics stats={statsItems} />
       <LandingAbout content={aboutContent as Parameters<typeof LandingAbout>[0]['content']} />
       <LandingEvents initialEvents={upcomingEvents} content={eventsContent} />
-      <LandingDivisions />
       <LandingSponsors />
       <LandingRecruitment content={recruitmentContent as Parameters<typeof LandingRecruitment>[0]['content']} />
     </>

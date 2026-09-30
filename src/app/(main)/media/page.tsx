@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Camera, ImageOff } from 'lucide-react';
 import { getContentBlocks } from '@/lib/content';
 import { youtubeVideoId } from '@/lib/youtube';
+import HoverVideo from './HoverVideo';
 import styles from './media.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -61,13 +62,7 @@ export default async function MediaPage() {
           <div className={styles.videoGrid}>
             {videos.map((v, i) => (
               <div key={`${v.videoId}-${i}`} className={styles.videoCard}>
-                <iframe
-                  className={styles.videoEmbed}
-                  src={`https://www.youtube.com/embed/${v.videoId}`}
-                  title={v.title}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
+                <HoverVideo videoId={v.videoId as string} title={v.title} />
                 <h3 className={styles.videoTitle}>{v.title}</h3>
               </div>
             ))}

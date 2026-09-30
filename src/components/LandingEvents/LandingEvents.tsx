@@ -44,6 +44,40 @@ export default function LandingEvents({ initialEvents, content = {} }: LandingEv
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialEvents.length, shouldLoop]);
 
+  // Which card counts as "lit" follows the scroll position itself — the card
+  // nearest the carousel's center. It used to change only on a click/tap, so
+  // swiping or dragging past cards never highlighted anything and the
+  // initial highlight could sit on a card that wasn't actually centered.
+  useEffect(() => {
+    if (!shouldLoop) return;
+    const container = scrollRef.current;
+    if (!container) return;
+    let raf = 0;
+
+    const updateFocused = () => {
+      raf = 0;
+      const cRect = container.getBoundingClientRect();
+      const center = cRect.left + cRect.width / 2;
+      let best = -1;
+      let bestDist = Infinity;
+      cardRefs.current.forEach((card, i) => {
+        if (!card) return;
+        const r = card.getBoundingClientRect();
+        const dist = Math.abs(r.left + r.width / 2 - center);
+        if (dist < bestDist) { bestDist = dist; best = i; }
+      });
+      if (best !== -1) setFocusedIndex((prev) => (prev === best ? prev : best));
+    };
+
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(updateFocused); };
+    container.addEventListener('scroll', onScroll, { passive: true });
+    updateFocused();
+    return () => {
+      container.removeEventListener('scroll', onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [shouldLoop, initialEvents.length]);
+
   // Infinite-scroll jump when reaching edges
   useEffect(() => {
     if (!shouldLoop) return;
@@ -92,7 +126,15 @@ export default function LandingEvents({ initialEvents, content = {} }: LandingEv
           <Link href="/events" className={styles.ctaLink}>View All Events →</Link>
         </div>
       </motion.div>
-      <div className={`${styles.wrapper} ${shouldLoop ? '' : styles.noLoop}`}>
+      {/* Lights up as the row scrolls into view (and dims again when it
+          leaves) — replays each time, unlike the header's one-shot reveal. */}
+      <motion.div
+        className={`${styles.wrapper} ${shouldLoop ? '' : styles.noLoop}`}
+        initial={{ opacity: 0.25, scale: 0.96 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        viewport={{ once: false, amount: 0.3 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      >
         <div className={`${styles.carousel} ${shouldLoop ? '' : styles.centered}`} ref={scrollRef} role="list">
           {extended.map((event, index) => (
             <div
@@ -105,11 +147,11 @@ export default function LandingEvents({ initialEvents, content = {} }: LandingEv
               className={`${styles.cardWrapper} ${shouldLoop && focusedIndex !== index ? styles.faded : ''}`}
               role="listitem"
             >
-              <EventCard event={event} />
+              <EventCard event={event} compact />
             </div>
           ))}
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }

@@ -25,6 +25,7 @@ export default async function EventsManagementPage() {
       eventStats={eventStats}
       canEdit={canEdit}
       canManagePoints={hasCapability(roles, 'manage_points')}
+      canDelete={hasCapability(roles, 'delete_events')}
       checkinFormSettings={checkinFormSettings}
     />
   );

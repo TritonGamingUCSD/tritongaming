@@ -58,6 +58,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
   const [users, setUsers] = useState(initialUsers);
   const [query, setQuery] = useState('');
   const [filterRole, setFilterRole] = useState<AppRole | 'all'>('all');
+  const [sortBy, setSortBy] = useState<'name-asc' | 'name-desc' | 'joined-new' | 'joined-old'>('name-asc');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<RoleGrant[]>([]);
   const [saving, setSaving] = useState(false);
@@ -136,15 +137,35 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
   const divisionNameById = useMemo(() => new Map(divisions.map((d) => [d.id, d.name])), [divisions]);
 
   const filtered = useMemo(() => {
-    return users.filter((u) => {
-      const matchQ =
-        !query ||
-        (u.display_name || '').toLowerCase().includes(query.toLowerCase()) ||
-        (u.gamer_tag || '').toLowerCase().includes(query.toLowerCase());
-      const matchR = filterRole === 'all' || u.user_roles.some((r) => r.role === filterRole);
-      return matchQ && matchR;
+    // Every space-separated word must match somewhere across the person's
+    // searchable text (display name, Google real name, gamer tag, every
+    // email) — so "jane doe", "jane ucsd.edu" or a tag all narrow as expected.
+    const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    const list = users.filter((u) => {
+      if (filterRole !== 'all' && !u.user_roles.some((r) => r.role === filterRole)) return false;
+      if (tokens.length === 0) return true;
+      const haystack = [
+        u.display_name,
+        u.google_first_name,
+        u.google_last_name,
+        [u.google_first_name, u.google_last_name].filter(Boolean).join(' '),
+        u.gamer_tag,
+        u.email,
+        u.preferred_email,
+        ...(u.linkedEmails ?? []).map((e) => e.email),
+      ].filter(Boolean).join(' \n ').toLowerCase();
+      return tokens.every((t) => haystack.includes(t));
     });
-  }, [users, query, filterRole]);
+    const byName = (a: User, b: User) =>
+      (a.display_name || '\uffff').localeCompare(b.display_name || '\uffff', undefined, { sensitivity: 'base' });
+    const byJoined = (a: User, b: User) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    return [...list].sort(
+      sortBy === 'name-asc' ? byName
+      : sortBy === 'name-desc' ? (a, b) => -byName(a, b)
+      : sortBy === 'joined-new' ? (a, b) => -byJoined(a, b)
+      : byJoined
+    );
+  }, [users, query, filterRole, sortBy]);
 
   const roleCounts = useMemo(() => {
     const counts: Record<string, number> = { all: users.length };
@@ -272,13 +293,25 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
             className={styles.search}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name or gamer tag…"
+            placeholder="Search name, real name, email or gamer tag…"
             autoComplete="off"
           />
           {query && (
             <button className={styles.clearSearch} onClick={() => setQuery('')} aria-label="Clear"><X size={14} strokeWidth={1.75} /></button>
           )}
         </div>
+
+        <select
+          className={styles.sortSelect}
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+          aria-label="Sort members"
+        >
+          <option value="name-asc">Name A–Z</option>
+          <option value="name-desc">Name Z–A</option>
+          <option value="joined-new">Newest joined</option>
+          <option value="joined-old">Oldest joined</option>
+        </select>
 
         <div className={styles.roleFilters}>
           <button

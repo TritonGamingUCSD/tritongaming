@@ -158,7 +158,7 @@
 
 .partnersGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1.1rem;
 }
 
@@ -193,11 +193,13 @@
 }
 
 .partnerLogo {
-  width: 40px;
-  height: 40px;
+  width: 100%;
+  max-width: 120px;
+  height: 84px;
   object-fit: contain;
-  border-radius: 8px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.06);
+  padding: 0.35rem;
 }
 
 .partnerName {

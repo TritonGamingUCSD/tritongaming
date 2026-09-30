@@ -9,6 +9,7 @@ import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import { DEFAULT_QR_OPTIONS, type QRCodeOptions } from '@/lib/qrCodeStyling';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import { fetchWithRetry } from '@/lib/fetchWithRetry';
+import { useFormUnlock } from './useFormUnlock';
 import styles from './fullscreenqr.module.css';
 
 // Same TG-branded look as the portal's QR Studio "default" preset (see
@@ -251,6 +252,40 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   }, [ticketId]);
 
   const [confirmingForm, setConfirmingForm] = useState(false);
+  // The authoritative form answer, fetched from the status endpoint the
+  // moment check-in lands — the checkinFormUrl prop was baked in when the
+  // tickets page loaded, which can be stale (screen left open a long time,
+  // form settings changed since). null until resolved.
+  const [resolvedFormUrl, setResolvedFormUrl] = useState<string | null>(null);
+  const [formResolved, setFormResolved] = useState(false);
+  const [formDone, setFormDone] = useState(false);
+  const unlock = useFormUnlock();
+  useEffect(() => {
+    if (!checkedIn) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/tickets/${ticketId}/status`);
+        if (res.ok) {
+          const data = await res.json();
+          if (!cancelled) {
+            setResolvedFormUrl(data.checkin_form_url ?? null);
+            if (data.checkin_form_completed_at) setFormDone(true);
+          }
+        }
+      } catch {
+        // fall back to the page-load prop below
+      } finally {
+        if (!cancelled) setFormResolved(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [checkedIn, ticketId]);
+  const formUrl = resolvedFormUrl ?? checkinFormUrl ?? null;
+  const formPending = checkedIn && !!formUrl && !formDone;
+  // Hold off on any "you're in" success until we know whether a form is
+  // required — otherwise a form-required event flashes a green check first.
+  const awaitingFormAnswer = checkedIn && !formResolved && !checkinFormUrl;
   // Same honor-system marker as CheckinFormModal's "I've Completed This
   // Form" — records that they told us they finished, not proof of an
   // actual Google Forms submission (no way to see inside the iframe). Lets
@@ -260,7 +295,10 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
     setConfirmingForm(true);
     try {
       const res = await fetch(`/api/tickets/${ticketId}/checkin-form-complete`, { method: 'POST' });
-      if (res.ok) onFormComplete?.(ticketId);
+      if (res.ok) {
+        onFormComplete?.(ticketId);
+        setFormDone(true);
+      }
       // A non-ok response is silent here on purpose — the ticket list's
       // own "Complete AS Form" fallback still lets them confirm it later,
       // so this doesn't need its own retry/error UI on top of that.
@@ -268,7 +306,6 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
       // Network failure — same fallback applies.
     } finally {
       setConfirmingForm(false);
-      onClose();
     }
   }
 
@@ -279,15 +316,15 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   // time to read and fill it out, so this screen stays open (closed via the
   // X, same as before check-in) until the attendee is actually done with it.
   useEffect(() => {
-    if (!checkedIn || checkinFormUrl) return;
+    if (!checkedIn || !formResolved || formPending) return;
     const timeout = setTimeout(onClose, 2500);
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [checkedIn]);
+  }, [checkedIn, formResolved, formPending]);
 
   // Close on backdrop tap
   function onBackdrop(e: React.MouseEvent) {
-    if (e.target === e.currentTarget) onClose();
+    if (e.target === e.currentTarget && !formPending) onClose();
   }
 
   // Prevent body scroll while open
@@ -319,7 +356,9 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   return createPortal(
     <div className={styles.backdrop} onClick={onBackdrop}>
       <div className={styles.sheet}>
-        <button className={styles.closeBtn} onClick={onClose} aria-label="Close"><X size={18} strokeWidth={1.75} /></button>
+        {!formPending && (
+          <button className={styles.closeBtn} onClick={onClose} aria-label="Close"><X size={18} strokeWidth={1.75} /></button>
+        )}
 
         {/* Which event this ticket is for — shown first and prominently so it
             can't be confused with a different event's ticket. */}
@@ -339,32 +378,52 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
         </div>
 
         {checkedIn ? (
-          <div className={styles.checkedInState}>
-            <div className={styles.checkedInIcon} aria-hidden="true"><Check size={32} strokeWidth={2} /></div>
-            <div className={styles.checkedInTitle}>You&apos;re Checked In!</div>
-            {checkinFormUrl ? (
-              <>
-                <p className={styles.hint}>UCSD requires this quick form for tonight — most of it's already filled in.</p>
-                <iframe
-                  key={checkinFormUrl}
-                  src={checkinFormUrl}
-                  className={styles.checkinFormFrame}
-                  title="UCSD check-in form"
-                >
-                  Loading…
-                </iframe>
-                <a href={checkinFormUrl} target="_blank" rel="noopener noreferrer" className={styles.checkinFormNewTabLink}>
-                  <ExternalLink size={12} strokeWidth={1.75} aria-hidden="true" /> Form not loading? Open it in a new tab
-                </a>
-                <button type="button" className={styles.checkinFormDoneBtn} onClick={handleFormComplete} disabled={confirmingForm}>
-                  {confirmingForm ? 'Saving…' : "I've Completed This Form"}
-                </button>
-                <p className={styles.checkinFormSmallPrint}>Only tap this after you've actually hit Submit on the form above.</p>
-              </>
-            ) : (
-              <p className={styles.hint}>Have a great time — see you inside.</p>
-            )}
-          </div>
+          awaitingFormAnswer ? (
+            <div className={styles.checkedInState}>
+              <LoadingSpinner size={32} theme="light" />
+              <p className={styles.hint}>Finishing up your check-in…</p>
+            </div>
+          ) : formPending ? (
+            // The form comes *before* the success screen, not after it — a
+            // required form shouldn't look finished (green check) until
+            // it actually is. Opens in a new tab rather than an iframe:
+            // Google's sign-in refuses to load inside a frame, so an embedded
+            // copy just says "can't access your Google account".
+            <div className={styles.formGate}>
+              <div className={styles.formGateBadge}>Almost there</div>
+              <div className={styles.checkedInTitle}>One more step: the AS Form</div>
+              <p className={styles.hint}>
+                UCSD requires everyone to fill this out at the event. Most of it&apos;s already filled in for you —
+                just review it and hit Submit on the form.
+              </p>
+              <a
+                href={formUrl!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.formGateOpenBtn}
+                onClick={unlock.markOpened}
+              >
+                <ExternalLink size={16} strokeWidth={2} aria-hidden="true" /> Open AS Form
+              </a>
+              <button
+                type="button"
+                className={styles.checkinFormDoneBtn}
+                onClick={handleFormComplete}
+                disabled={confirmingForm || !unlock.unlocked}
+              >
+                {confirmingForm ? 'Saving…' : unlock.opened && unlock.returned && unlock.secondsLeft > 0 ? `I've Submitted the Form (${unlock.secondsLeft})` : "I've Submitted the Form"}
+              </button>
+              <p className={styles.checkinFormSmallPrint}>
+                {unlock.hint}
+              </p>
+            </div>
+          ) : (
+            <div className={styles.checkedInState}>
+              <div className={styles.checkedInIcon} aria-hidden="true"><Check size={32} strokeWidth={2} /></div>
+              <div className={styles.checkedInTitle}>You&apos;re Checked In!</div>
+              <p className={styles.hint}>{formUrl ? 'AS Form submitted — thank you. See you inside.' : 'Have a great time — see you inside.'}</p>
+            </div>
+          )
         ) : (
           <>
             <div className={styles.label}>

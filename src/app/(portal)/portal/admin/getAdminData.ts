@@ -47,7 +47,7 @@ export async function getAdminData(roles: RoleGrant[]) {
         .from('profiles')
         .select('id, display_name, avatar_url, custom_avatar_url, gamer_tag, created_at, preferred_email, board_order, google_first_name, google_last_name, user_roles!user_roles_user_id_fkey(role, division_id)')
         .order('display_name', { ascending: true })
-        .limit(300),
+        .limit(2000),
       supabase.from('divisions').select('id, name, slug').order('name'),
     ]);
     if (usersError) console.error('[admin] failed to load users:', usersError);

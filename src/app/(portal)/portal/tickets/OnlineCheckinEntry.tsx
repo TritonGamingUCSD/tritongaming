@@ -79,9 +79,15 @@ export default function OnlineCheckinEntry({
   if (success) {
     return (
       <div className={styles.onlineCheckinFormWrap}>
-        <div className={styles.onlineCheckinSuccess}>
-          <Check size={16} strokeWidth={1.75} aria-hidden="true" /> You're checked in!
-        </div>
+        {checkinFormUrl && !formCompleted ? (
+          <div className={styles.onlineCheckinSuccess} style={{ color: '#fbbf24' }}>
+            One more step: submit the AS Form to finish
+          </div>
+        ) : (
+          <div className={styles.onlineCheckinSuccess}>
+            <Check size={16} strokeWidth={1.75} aria-hidden="true" /> You're checked in!
+          </div>
+        )}
         {checkinFormUrl && (
           formCompleted ? (
             <div className={styles.completeFormBtn} style={{ textDecoration: 'none', cursor: 'default' }}>

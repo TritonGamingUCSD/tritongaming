@@ -127,3 +127,19 @@
   text-align: center;
   margin: 0;
 }
+
+.openBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.95rem;
+  background: #ffc72c;
+  color: #011941;
+  font-weight: 800;
+  font-size: 1rem;
+  border-radius: 0.85rem;
+  text-decoration: none;
+  margin-top: 0.25rem;
+}

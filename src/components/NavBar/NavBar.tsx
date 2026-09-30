@@ -148,7 +148,7 @@ export default function NavBar() {
       {!authLoading && (
         <Link
           href={profile ? '/portal' : loginHref}
-          className={styles.mobileAuthFab}
+          className={`${styles.mobileAuthFab} ${!profile ? styles.mobileAuthFabWide : ''}`}
           style={{ transform: `translateY(-${offset}px)` }}
           aria-label={profile ? 'Member portal' : 'Sign in to the member portal'}
         >
@@ -157,7 +157,7 @@ export default function NavBar() {
           ) : profile ? (
             <div className={styles.authAvatarFallback}>{(profile.display_name || 'U')[0].toUpperCase()}</div>
           ) : (
-            <User size={20} strokeWidth={1.75} aria-hidden="true" />
+            <>PORTAL</>
           )}
         </Link>
       )}
@@ -222,6 +222,11 @@ export default function NavBar() {
           ×
         </button>
         <ul className={styles.mobileNavList} role="list">
+          <li>
+            <Link href="/" className={styles.mobileNavLink} onClick={() => setMobileOpen(false)}>
+              HOME
+            </Link>
+          </li>
           {NAV_LINKS.map(({ href, label }) => (
             <li key={href}>
               <Link

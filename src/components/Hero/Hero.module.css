@@ -8,23 +8,32 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  /* overflow: hidden doesn't clip position: fixed descendants, so the video
+     below stays pinned to the viewport for the whole page — the sections
+     after the hero use translucent backgrounds so it stays faintly visible
+     (dimmer) behind them while scrolling. */
 }
 
 .video {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100lvh;
   object-fit: cover;
   z-index: 0;
 }
 
 /* Darkens the video for better text contrast */
 .darkOverlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
+  height: 100lvh;
   background: rgba(1, 25, 65, 0.6);
-  z-index: 1;
+  /* Same level as the video (not above it): this overlay is fixed to the
+     whole viewport, so at z-index 1 it painted over every later section
+     that has no z-index of its own and dimmed them. At 0 it sits right
+     after the video in DOM order and later sections paint over both. */
+  z-index: 0;
 }
 
 /* Fades to dark — seamless transition into next section */
@@ -38,7 +47,7 @@
     to bottom,
     transparent 0%,
     rgba(6, 12, 26, 0.55) 50%,
-    #060c1a 100%
+    rgba(6, 12, 26, 0.72) 100%
   );
   z-index: 2;
 }

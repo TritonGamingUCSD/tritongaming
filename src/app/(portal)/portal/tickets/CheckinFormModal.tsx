@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useFormUnlock } from './useFormUnlock';
 import { createPortal } from 'react-dom';
 import { X, ExternalLink } from 'lucide-react';
 import styles from './checkinformmodal.module.css';
@@ -26,6 +27,7 @@ export default function CheckinFormModal({
   onComplete: () => void;
 }) {
   const [confirming, setConfirming] = useState(false);
+  const unlock = useFormUnlock();
   const [error, setError] = useState('');
 
   function onBackdrop(e: React.MouseEvent) {
@@ -65,19 +67,28 @@ export default function CheckinFormModal({
         </button>
         <div className={styles.header}>
           <h2 className={styles.title}>UCSD Check-In Form</h2>
-          <p className={styles.hint}>Required by UCSD — most of it's already filled in for you.</p>
+          <p className={styles.hint}>Required by UCSD — most of it's already filled in for you. Submit it in the tab that opens, then come back here.</p>
         </div>
-        <iframe src={url} className={styles.frame} title="UCSD check-in form">
-          Loading…
-        </iframe>
-        <a href={url} target="_blank" rel="noopener noreferrer" className={styles.newTabLink}>
-          <ExternalLink size={13} strokeWidth={1.75} aria-hidden="true" /> Form not loading? Open it in a new tab
+        {/* Opens in a new tab — an embedded copy can't work, Google's sign-in
+            refuses to load inside a frame ("can't access your Google
+            account"). This screen is the in-portal step: open, submit, come
+            back and confirm. */}
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.openBtn}
+          onClick={unlock.markOpened}
+        >
+          <ExternalLink size={16} strokeWidth={2} aria-hidden="true" /> Open AS Form
         </a>
         {error && <p className={styles.error}>{error}</p>}
-        <button type="button" className={styles.doneBtn} onClick={handleComplete} disabled={confirming}>
-          {confirming ? 'Saving…' : "I've Completed This Form"}
+        <button type="button" className={styles.doneBtn} onClick={handleComplete} disabled={confirming || !unlock.unlocked}>
+          {confirming ? 'Saving…' : unlock.opened && unlock.returned && unlock.secondsLeft > 0 ? `I've Submitted the Form (${unlock.secondsLeft})` : "I've Submitted the Form"}
         </button>
-        <p className={styles.smallPrint}>Only tap this after you've actually hit Submit on the form above.</p>
+        <p className={styles.smallPrint}>
+          {unlock.hint}
+        </p>
       </div>
     </div>,
     document.body

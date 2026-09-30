@@ -77,7 +77,7 @@ export default async function MembershipPage() {
             {partners.map((p, i) => (
               <div key={`${p.name}-${i}`} className={styles.partnerCard}>
                 {p.logo_url ? (
-                  <Image src={p.logo_url} alt={p.name || ''} width={40} height={40} className={styles.partnerLogo} unoptimized />
+                  <Image src={p.logo_url} alt={p.name || ''} width={240} height={168} className={styles.partnerLogo} unoptimized />
                 ) : (
                   <span className={styles.partnerIcon}><Percent size={20} strokeWidth={1.5} aria-hidden="true" /></span>
                 )}

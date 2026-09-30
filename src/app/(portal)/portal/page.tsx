@@ -233,6 +233,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
           ticketsPerMonth={eventsData.ticketsPerMonth}
           eventStats={eventsData.eventStats}
           canEdit={canManageEvents}
+          canDelete={hasCapability(roles, 'delete_events')}
           canManagePoints={canManagePoints}
           initialTab={requestedTab}
           checkinFormSettings={checkinFormSettings ?? undefined}

@@ -561,3 +561,16 @@
 }
 .deleteConfirmBtn:hover:not(:disabled) { background: rgba(220,38,38,0.3); color: #fff; }
 .deleteConfirmBtn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.sortSelect {
+  align-self: flex-start;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-pill, 999px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.sortSelect option { color: #011941; }

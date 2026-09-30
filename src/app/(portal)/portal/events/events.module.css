@@ -295,3 +295,5 @@
 
   .tableRow > div:first-child { flex: 1 1 100%; }
 }
+
+.deleteLink { color: #f87171; }
