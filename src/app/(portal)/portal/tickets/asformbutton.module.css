@@ -1,4 +1,4 @@
-.wrap { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; width: 100%; margin-top: 0.5rem; }
+.wrap { display: flex; flex-direction: column; align-items: stretch; gap: 0.4rem; width: 100%; margin-top: 0.5rem; }
 .btn, .btnOpened {
   display: inline-flex;
   align-items: center;
@@ -14,3 +14,30 @@
 .btn { background: #ffc72c; color: #011941; }
 .btnOpened { background: rgba(52, 211, 153, 0.15); color: #047857; border: 2px solid #34d399; }
 .note { margin: 0; font-size: 0.74rem; line-height: 1.4; text-align: center; color: rgba(1, 25, 65, 0.6); }
+
+/* First-time button on a list row: same gold, just not full-width/tall. */
+.btnCompact {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  background: #ffc72c;
+  color: #011941;
+  font-weight: 800;
+  font-size: 0.78rem;
+  text-decoration: none;
+  align-self: flex-start;
+}
+/* After opening: quiet inline text, not a button-sized block. */
+.reopen {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  color: #047857;
+  text-decoration: none;
+  align-self: center;
+}
+.reopenLeft { align-self: flex-start; }
+.reopenLink { text-decoration: underline; color: inherit; opacity: 0.85; }

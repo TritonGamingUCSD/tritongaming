@@ -482,6 +482,7 @@ function TicketRow({
             ticketId={ticket.id}
             url={ticket.checkinFormUrl}
             opened={!!formCompletedAt}
+            compact
             onOpened={() => { setFormCompletedAt(new Date().toISOString()); onFormComplete?.(ticket.id); }}
           />
         )}

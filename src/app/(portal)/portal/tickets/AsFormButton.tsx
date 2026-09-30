@@ -12,12 +12,14 @@ import styles from './asformbutton.module.css';
 // in-app browser navigates this same page to the form instead of opening a
 // tab (the marker request outlives the page unload).
 export default function AsFormButton({
-  ticketId, url, opened, onOpened,
+  ticketId, url, opened, onOpened, compact = false,
 }: {
   ticketId: string;
   url: string;
   opened: boolean;
   onOpened: (ticketId: string) => void;
+  // Tighter version for list rows (My Tickets) — smaller button, no note.
+  compact?: boolean;
 }) {
   function markOpened() {
     try {
@@ -28,24 +30,39 @@ export default function AsFormButton({
     onOpened(ticketId);
   }
 
+  // Already opened: just a small, quiet "opened — reopen" link. The big
+  // gold button is only for the first time, when it needs to be obvious.
+  if (opened) {
+    return (
+      <div className={styles.wrap}>
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`${styles.reopen} ${compact ? styles.reopenLeft : ''}`}
+          onClick={markOpened}
+        >
+          <Check size={13} strokeWidth={2.25} aria-hidden="true" /> AS Form opened · <span className={styles.reopenLink}>reopen</span>
+        </a>
+        {!compact && (
+          <p className={styles.note}>After you submit, keep the “response recorded” screen handy — staff may ask to see it.</p>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className={styles.wrap}>
       <a
         href={url}
         target="_blank"
         rel="noopener noreferrer"
-        className={opened ? styles.btnOpened : styles.btn}
+        className={compact ? styles.btnCompact : styles.btn}
         onClick={markOpened}
       >
-        {opened
-          ? <><Check size={16} strokeWidth={2.25} aria-hidden="true" /> AS Form opened — tap to reopen</>
-          : <><ExternalLink size={16} strokeWidth={2} aria-hidden="true" /> Fill out AS Form</>}
+        <ExternalLink size={compact ? 14 : 16} strokeWidth={2} aria-hidden="true" /> Fill out AS Form
       </a>
-      <p className={styles.note}>
-        {opened
-          ? 'After you submit, keep the “response recorded” screen handy — staff may ask to see it.'
-          : 'Required by UCSD. It’s mostly filled in for you — just review it and hit Submit.'}
-      </p>
+      {!compact && <p className={styles.note}>Required by UCSD. It’s mostly filled in for you — just review it and hit Submit.</p>}
     </div>
   );
 }
