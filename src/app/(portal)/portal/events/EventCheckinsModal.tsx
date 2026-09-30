@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import UndoCheckinModal from '@/components/UndoCheckinModal/UndoCheckinModal';
 import { X, Camera, Gamepad2, Undo2, Download, Check } from 'lucide-react';
 import { resolveAvatarUrl } from '@/lib/profile';
 import { PACIFIC_TZ } from '@/lib/timezone';
@@ -55,6 +56,8 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
   const [tickets, setTickets] = useState<TicketRow[] | null>(null);
   const [error, setError] = useState('');
   const [uncheckingId, setUncheckingId] = useState<string | null>(null);
+  // Which ticket's undo-confirm (hold-to-confirm) modal is open.
+  const [undoTargetId, setUndoTargetId] = useState<string | null>(null);
   const [checkingInId, setCheckingInId] = useState<string | null>(null);
 
   async function handleManualCheckIn(ticketId: string) {
@@ -77,7 +80,6 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
   }
 
   async function handleUncheckIn(ticketId: string) {
-    if (!window.confirm('Undo this check-in and reverse the points awarded for it?')) return;
     setUncheckingId(ticketId);
     try {
       const res = await fetch('/api/checkin/reverse', {
@@ -87,7 +89,8 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
       });
       const json = await res.json();
       if (!res.ok) { setError(json.error || 'Failed to undo check-in.'); return; }
-      setTickets((prev) => prev?.map((t) => (t.id === ticketId ? { ...t, status: 'active', checked_in_at: null } : t)) ?? null);
+      setTickets((prev) => prev?.map((t) => (t.id === ticketId ? { ...t, status: 'active', checked_in_at: null, checkin_form_completed_at: null } : t)) ?? null);
+      setUndoTargetId(null);
     } catch {
       setError('Network error. Please try again.');
     } finally {
@@ -234,7 +237,7 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
                             <button
                               type="button"
                               className={styles.uncheckBtn}
-                              onClick={() => handleUncheckIn(t.id)}
+                              onClick={() => setUndoTargetId(t.id)}
                               disabled={uncheckingId === t.id}
                             >
                               <Undo2 size={12} strokeWidth={1.75} aria-hidden="true" /> {uncheckingId === t.id ? '…' : 'Undo'}
@@ -260,6 +263,14 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
           </>
         )}
       </div>
+      {undoTargetId && (
+        <UndoCheckinModal
+          name={(() => { const u = tickets?.find((t) => t.id === undoTargetId)?.user; return (Array.isArray(u) ? u[0] : u)?.display_name ?? undefined; })()}
+          busy={uncheckingId === undoTargetId}
+          onConfirm={() => handleUncheckIn(undoTargetId)}
+          onCancel={() => setUndoTargetId(null)}
+        />
+      )}
     </div>
   );
 }

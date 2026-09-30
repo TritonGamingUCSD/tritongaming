@@ -244,7 +244,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       id: 'checkin', icon: <Camera size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Check-In',
       description: 'Scan tickets, confirm redemptions, or reveal the online check-in code',
       group: 'Events' as const,
-      content: <CheckInSectionContent events={checkinData.events} canScanRedemptions={canScanRedemptions} canManagePoints={canManagePoints} initialTab={requestedTab} tiers={memberTiers} />,
+      content: <CheckInSectionContent events={checkinData.events} canScanRedemptions={canScanRedemptions} initialTab={requestedTab} tiers={memberTiers} />,
     }] : []),
     ...(canViewMembers && membersData ? [{
       id: 'members', icon: <Users size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Members',

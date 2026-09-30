@@ -65,7 +65,22 @@ export async function GET(request: Request, { params }: Params) {
     }
   }
 
+  // Points this check-in earned, for the member's success screen — only
+  // looked up once checked in. 0 for a non-rewards-eligible member or a
+  // zero-point event (no ledger row), which the UI simply doesn't show.
+  let pointsAwarded = 0;
+  if (ticket.status === 'used') {
+    const { data: pointRows } = await supabase
+      .from('point_transactions')
+      .select('amount')
+      .eq('ticket_id', id)
+      .eq('type', 'event_checkin')
+      .is('reversed_at', null);
+    pointsAwarded = (pointRows ?? []).reduce((sum, r) => sum + r.amount, 0);
+  }
+
   return NextResponse.json({
+    points_awarded: pointsAwarded,
     status: ticket.status,
     checked_in_at: ticket.checked_in_at,
     checkin_form_url: checkinFormUrl,

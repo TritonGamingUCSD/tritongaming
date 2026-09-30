@@ -449,3 +449,33 @@
   text-decoration: none;
 }
 
+
+/* Big, high-contrast "+N points earned" on the member's post-scan screen —
+   the count used to be nowhere on this screen, and where it does appear
+   elsewhere it's small text. */
+.pointsEarned {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  margin: 0.35rem 0 0.15rem;
+  padding: 0.6rem 1.5rem;
+  border-radius: 1rem;
+  background: #011941;
+  border: 2px solid #ffc72c;
+}
+.pointsEarnedNumber {
+  font-family: var(--font-soulmaze, inherit);
+  font-size: 2.6rem;
+  line-height: 1;
+  font-weight: 800;
+  color: #ffc72c;
+  letter-spacing: 0.01em;
+}
+.pointsEarnedLabel {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #ffffff;
+}

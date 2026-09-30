@@ -20,7 +20,6 @@ export default async function CheckInPage() {
     <CheckInSectionContent
       events={events}
       canScanRedemptions={hasCapability(roles, 'scan_redemptions')}
-      canManagePoints={hasCapability(roles, 'manage_points')}
       tiers={tiers}
     />
   );

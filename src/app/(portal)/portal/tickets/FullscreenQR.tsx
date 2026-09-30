@@ -325,6 +325,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   // tickets page loaded, which can be stale (screen left open a long time,
   // form settings changed since). null until resolved.
   const [resolvedFormUrl, setResolvedFormUrl] = useState<string | null>(null);
+  const [pointsAwarded, setPointsAwarded] = useState(0);
   const [formResolved, setFormResolved] = useState(false);
   const [formDone, setFormDone] = useState(false);
   const unlock = useFormUnlock();
@@ -338,6 +339,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
           const data = await res.json();
           if (!cancelled) {
             setResolvedFormUrl(data.checkin_form_url ?? null);
+            setPointsAwarded(data.points_awarded ?? 0);
             if (data.checkin_form_completed_at) setFormDone(true);
           }
         }
@@ -459,6 +461,12 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
             // copy just says "can't access your Google account".
             <div className={styles.formGate}>
               <div className={styles.formGateBadge}>Almost there</div>
+              {pointsAwarded > 0 && (
+                <div className={styles.pointsEarned}>
+                  <span className={styles.pointsEarnedNumber}>+{pointsAwarded}</span>
+                  <span className={styles.pointsEarnedLabel}>points earned</span>
+                </div>
+              )}
               <div className={styles.checkedInTitle}>One more step: the AS Form</div>
               <p className={styles.hint}>
                 UCSD requires everyone to fill this out at the event. Most of it&apos;s already filled in for you —
@@ -489,6 +497,12 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
             <div className={styles.checkedInState}>
               <div className={styles.checkedInIcon} aria-hidden="true"><Check size={32} strokeWidth={2} /></div>
               <div className={styles.checkedInTitle}>You&apos;re Checked In!</div>
+              {pointsAwarded > 0 && (
+                <div className={styles.pointsEarned}>
+                  <span className={styles.pointsEarnedNumber}>+{pointsAwarded}</span>
+                  <span className={styles.pointsEarnedLabel}>points earned</span>
+                </div>
+              )}
               <p className={styles.hint}>{formUrl ? 'AS Form submitted — thank you. See you inside.' : 'Have a great time — see you inside.'}</p>
             </div>
           )

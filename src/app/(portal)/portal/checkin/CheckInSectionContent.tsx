@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Camera, Gift, Wifi, Undo2 } from 'lucide-react';
+import { Camera, Gift, Wifi } from 'lucide-react';
 import { usePortalTabSync } from '@/lib/usePortalTabSync';
 import type { Tier } from '@/lib/tiers';
 import CheckInClient from './CheckInClient';
@@ -14,8 +14,6 @@ interface Event { id: string; title: string; start_date: string; is_online: bool
 type Tab = 'tickets' | 'redemptions' | 'online';
 const VALID_TABS: Tab[] = ['tickets', 'redemptions', 'online'];
 
-interface RecentCheckin { ticketId: string; userName: string; }
-
 // Wraps the existing (working, camera-handling, fairly involved)
 // CheckInClient with two new sibling tools rather than touching it
 // directly — same officer audience, same events list, but genuinely
@@ -23,39 +21,18 @@ interface RecentCheckin { ticketId: string; userName: string; }
 // online check-in code), so a tab bar keeps them from competing for the
 // same screen instead of merging into one increasingly-overloaded
 // component.
-export default function CheckInSectionContent({ events, canScanRedemptions, canManagePoints, initialTab, tiers }: { events: Event[]; canScanRedemptions: boolean; canManagePoints: boolean; initialTab?: string; tiers: Tier[] }) {
+export default function CheckInSectionContent({ events, canScanRedemptions, initialTab, tiers }: { events: Event[]; canScanRedemptions: boolean; initialTab?: string; tiers: Tier[] }) {
   const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'tickets');
   const syncUrl = usePortalTabSync('checkin');
   function selectTab(t: Tab) {
     setTab(t);
     syncUrl(t);
   }
-  const [recentCheckins, setRecentCheckins] = useState<RecentCheckin[]>([]);
-  const [undoingId, setUndoingId] = useState<string | null>(null);
   // Only events actually marked online get the code-reveal panel — an
   // in-person event has no one who'd ever need a code, and showing the tab
   // anyway would just invite an officer to reveal a code nobody's meant to
   // use.
   const onlineEvents = events.filter((e) => e.is_online);
-
-  function handleCheckedIn(entry: RecentCheckin) {
-    setRecentCheckins((prev) => [entry, ...prev.filter((r) => r.ticketId !== entry.ticketId)].slice(0, 5));
-  }
-
-  async function handleUndoCheckin(ticketId: string) {
-    if (!window.confirm('Undo this check-in and reverse the points?')) return;
-    setUndoingId(ticketId);
-    try {
-      const res = await fetch('/api/checkin/reverse', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticket_id: ticketId }),
-      });
-      if (res.ok) setRecentCheckins((prev) => prev.filter((r) => r.ticketId !== ticketId));
-    } finally {
-      setUndoingId(null);
-    }
-  }
 
   return (
     <div className={styles.page}>
@@ -77,23 +54,10 @@ export default function CheckInSectionContent({ events, canScanRedemptions, canM
 
       {tab === 'tickets' && (
         <>
-          <CheckInClient events={events} onCheckedIn={handleCheckedIn} tiers={tiers} />
-          {canManagePoints && recentCheckins.length > 0 && (
-            <div className={styles.recentSection}>
-              <h2 className={styles.recentLabel}>Just Checked In</h2>
-              {recentCheckins.map((r) => (
-                <div key={r.ticketId} className={styles.recentRow}>
-                  <span>{r.userName}</span>
-                  <button type="button" className={styles.undoBtn} onClick={() => handleUndoCheckin(r.ticketId)} disabled={undoingId === r.ticketId}>
-                    <Undo2 size={13} strokeWidth={1.75} aria-hidden="true" /> {undoingId === r.ticketId ? 'Undoing…' : 'Undo'}
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+          <CheckInClient events={events} tiers={tiers} />
         </>
       )}
-      {tab === 'redemptions' && canScanRedemptions && <RedemptionScanner canManagePoints={canManagePoints} />}
+      {tab === 'redemptions' && canScanRedemptions && <RedemptionScanner />}
       {tab === 'online' && onlineEvents.length > 0 && <OnlineCheckinPanel events={onlineEvents} />}
     </div>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Camera, Gift, Check, X, Undo2 } from 'lucide-react';
+import { Camera, Gift, Check, X } from 'lucide-react';
 import { useQRScanner } from '@/lib/useQRScanner';
 import styles from './checkinsection.module.css';
 // Same viewport/placeholder/scan-box treatment as CheckInClient's camera —
@@ -17,12 +17,6 @@ interface RedemptionDetail {
   member: { display_name: string | null } | { display_name: string | null }[] | null;
 }
 
-interface ConfirmedEntry {
-  id: string;
-  title: string;
-  memberName: string;
-}
-
 function oneOf<T>(v: T | T[] | null): T | null {
   return Array.isArray(v) ? v[0] ?? null : v;
 }
@@ -31,12 +25,10 @@ function oneOf<T>(v: T | T[] | null): T | null {
 // shows what to hand over, and confirms it — same "identify, then confirm"
 // two-step shape as the ticket scanner, so an officer never marks
 // something given away just because a camera happened to see a code.
-export default function RedemptionScanner({ canManagePoints }: { canManagePoints: boolean }) {
+export default function RedemptionScanner() {
   const [detail, setDetail] = useState<RedemptionDetail | null>(null);
   const [error, setError] = useState('');
   const [confirming, setConfirming] = useState(false);
-  const [recent, setRecent] = useState<ConfirmedEntry[]>([]);
-  const [undoingId, setUndoingId] = useState<string | null>(null);
 
   async function handleScan(redemptionId: string) {
     setError('');
@@ -62,23 +54,11 @@ export default function RedemptionScanner({ canManagePoints }: { canManagePoints
       if (!res.ok) { setError(json.error || 'Failed to confirm.'); return; }
       const reward = oneOf(detail.reward);
       const member = oneOf(detail.member);
-      setRecent((prev) => [{ id: detail.id, title: reward?.title ?? 'Reward', memberName: member?.display_name ?? 'Member' }, ...prev].slice(0, 5));
       setDetail(null);
     } catch {
       setError('Network error. Please try again.');
     } finally {
       setConfirming(false);
-    }
-  }
-
-  async function handleUndo(id: string) {
-    if (!window.confirm('Undo this confirmation and refund the points?')) return;
-    setUndoingId(id);
-    try {
-      const res = await fetch(`/api/rewards/redemptions/${id}/cancel`, { method: 'POST' });
-      if (res.ok) setRecent((prev) => prev.filter((r) => r.id !== id));
-    } finally {
-      setUndoingId(null);
     }
   }
 
@@ -144,19 +124,6 @@ export default function RedemptionScanner({ canManagePoints }: { canManagePoints
         </div>
       )}
 
-      {canManagePoints && recent.length > 0 && (
-        <div className={styles.recentSection}>
-          <h2 className={styles.recentLabel}>Just Confirmed</h2>
-          {recent.map((r) => (
-            <div key={r.id} className={styles.recentRow}>
-              <span>{r.title} — {r.memberName}</span>
-              <button type="button" className={styles.undoBtn} onClick={() => handleUndo(r.id)} disabled={undoingId === r.id}>
-                <Undo2 size={13} strokeWidth={1.75} aria-hidden="true" /> {undoingId === r.id ? 'Undoing…' : 'Undo'}
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
