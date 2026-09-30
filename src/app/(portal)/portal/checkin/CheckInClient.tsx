@@ -434,7 +434,7 @@ export default function CheckInClient({ events, onCheckedIn, tiers }: CheckInCli
                 <div className={styles.resultName}>{result.user_name}</div>
                 <div className={styles.resultDetail}>Checked in!</div>
                 {result.requires_form && (
-                  <div className={styles.resultFormBadge}>AS Form needed — send them to fill it out</div>
+                  <div className={styles.resultFormBadge}>AS Form — ask to see their “response recorded” screen</div>
                 )}
                 {!!result.points_awarded && (
                   <div className={styles.resultPoints}>
@@ -463,7 +463,7 @@ export default function CheckInClient({ events, onCheckedIn, tiers }: CheckInCli
                 )}
                 {result.status === 'used' && result.requires_form && (
                   <div className={result.form_completed ? styles.resultFormDone : styles.resultFormBadge}>
-                    {result.form_completed ? 'AS Form: marked done' : 'AS Form: not done yet'}
+                    {result.form_completed ? 'AS Form opened — check their “response recorded” screen' : 'AS Form not opened yet'}
                   </div>
                 )}
               </>

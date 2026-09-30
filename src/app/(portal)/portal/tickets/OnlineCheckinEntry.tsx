@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Check, ClipboardList } from 'lucide-react';
-import CheckinFormModal from './CheckinFormModal';
+import { useState } from 'react';
+import { Check } from 'lucide-react';
+import AsFormButton from './AsFormButton';
 import styles from './tickets.module.css';
 
 // The member-facing half of online self-check-in — see
@@ -40,19 +40,7 @@ export default function OnlineCheckinEntry({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [showFormModal, setShowFormModal] = useState(false);
   const [formCompleted, setFormCompleted] = useState(false);
-
-  // Pops the form open automatically right after a fresh check-in (no
-  // extra tap needed — same "as smooth as possible" goal as the QR flow's
-  // own auto-appearing form) — but as a real modal, not inlined here,
-  // since this component often renders in a narrow list row (see the
-  // `compact` ticket-row usage) far too cramped to embed a Google Form
-  // readably. The "Complete AS Form" line below stays as a fallback once
-  // the modal's closed, in case it's dismissed before actually submitting.
-  useEffect(() => {
-    if (success && checkinFormUrl) setShowFormModal(true);
-  }, [success, checkinFormUrl]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -79,32 +67,15 @@ export default function OnlineCheckinEntry({
   if (success) {
     return (
       <div className={styles.onlineCheckinFormWrap}>
-        {checkinFormUrl && !formCompleted ? (
-          <div className={styles.onlineCheckinSuccess} style={{ color: '#fbbf24' }}>
-            One more step: submit the AS Form to finish
-          </div>
-        ) : (
-          <div className={styles.onlineCheckinSuccess}>
-            <Check size={16} strokeWidth={1.75} aria-hidden="true" /> You're checked in!
-          </div>
-        )}
+        <div className={styles.onlineCheckinSuccess}>
+          <Check size={16} strokeWidth={1.75} aria-hidden="true" /> You're checked in!
+        </div>
         {checkinFormUrl && (
-          formCompleted ? (
-            <div className={styles.completeFormBtn} style={{ textDecoration: 'none', cursor: 'default' }}>
-              <Check size={13} strokeWidth={1.75} aria-hidden="true" /> AS Form completed
-            </div>
-          ) : (
-            <button type="button" className={styles.completeFormBtn} onClick={() => setShowFormModal(true)}>
-              <ClipboardList size={13} strokeWidth={1.75} aria-hidden="true" /> Complete AS Form
-            </button>
-          )
-        )}
-        {checkinFormUrl && showFormModal && (
-          <CheckinFormModal
+          <AsFormButton
             ticketId={ticketId}
             url={checkinFormUrl}
-            onClose={() => setShowFormModal(false)}
-            onComplete={() => { setFormCompleted(true); onFormComplete?.(ticketId); }}
+            opened={formCompleted}
+            onOpened={() => { setFormCompleted(true); onFormComplete?.(ticketId); }}
           />
         )}
       </div>

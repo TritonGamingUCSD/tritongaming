@@ -2,10 +2,10 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Ticket, MapPin, QrCode, Check, X, Timer, Award, ClipboardList } from 'lucide-react';
+import { Ticket, MapPin, QrCode, Check, X, Timer, Award } from 'lucide-react';
 import FullscreenQR from './FullscreenQR';
 import OnlineCheckinEntry from './OnlineCheckinEntry';
-import CheckinFormModal from './CheckinFormModal';
+import AsFormButton from './AsFormButton';
 import AddToCalendarButton from '@/components/AddToCalendarButton/AddToCalendarButton';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import { isCheckinWindowOpen } from '@/lib/checkinWindow';
@@ -435,7 +435,6 @@ function TicketRow({
   // stay clickable once the event is actually over — someone submitting it
   // days later would be certifying something no longer true.
   const eventHasEnded = !!ev && !isCheckinWindowOpen(ev);
-  const [showFormModal, setShowFormModal] = useState(false);
   // Local override so the UI updates the instant they confirm, without
   // waiting on a full data refetch — initialized from the server value,
   // then set directly once CheckinFormModal's onComplete fires. Also kept
@@ -449,6 +448,7 @@ function TicketRow({
   useEffect(() => {
     setFormCompletedAt(ticket.checkin_form_completed_at ?? null);
   }, [ticket.checkin_form_completed_at]);
+
   return (
     <div className={`${styles.ticketRow} ${!isActionable ? styles.ticketDim : ''}`}>
       <div className={styles.ticketLeft}>
@@ -478,26 +478,15 @@ function TicketRow({
             shouldn't invite a second submission, even though we can't stop
             someone from revisiting the raw form URL on their own. */}
         {ticket.checked_in_at && ticket.checkinFormUrl && !eventHasEnded && (
-          formCompletedAt ? (
-            <div className={styles.checkedInLine}>
-              <Check size={13} strokeWidth={1.75} aria-hidden="true" /> AS Form completed
-            </div>
-          ) : (
-            <button type="button" className={styles.completeFormBtn} onClick={() => setShowFormModal(true)}>
-              <ClipboardList size={13} strokeWidth={1.75} aria-hidden="true" /> Complete AS Form
-            </button>
-          )
+          <AsFormButton
+            ticketId={ticket.id}
+            url={ticket.checkinFormUrl}
+            opened={!!formCompletedAt}
+            onOpened={() => { setFormCompletedAt(new Date().toISOString()); onFormComplete?.(ticket.id); }}
+          />
         )}
         {canEarnPoints && isActionable && !!ev?.points_value && (
           <div className={styles.ticketPointsBadge}><Award size={11} strokeWidth={1.75} aria-hidden="true" /> +{ev.points_value} pts on check-in</div>
-        )}
-        {showFormModal && ticket.checkinFormUrl && !eventHasEnded && (
-          <CheckinFormModal
-            ticketId={ticket.id}
-            url={ticket.checkinFormUrl}
-            onClose={() => setShowFormModal(false)}
-            onComplete={() => { setFormCompletedAt(new Date().toISOString()); onFormComplete?.(ticket.id); }}
-          />
         )}
       </div>
       <div className={styles.ticketRight}>

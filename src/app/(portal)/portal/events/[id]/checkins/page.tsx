@@ -138,9 +138,9 @@ export default async function EventCheckinsPage({ params }: Params) {
                     {t.status !== 'used' ? (
                       <span className={styles.formDash}>—</span>
                     ) : t.checkin_form_completed_at ? (
-                      <span className={styles.formDone}><Check size={12} strokeWidth={2} aria-hidden="true" /> Done</span>
+                      <span className={styles.formDone}><Check size={12} strokeWidth={2} aria-hidden="true" /> Opened</span>
                     ) : (
-                      <span className={styles.formPending}>Not yet</span>
+                      <span className={styles.formPending}>Not opened</span>
                     )}
                   </span>
                 )}

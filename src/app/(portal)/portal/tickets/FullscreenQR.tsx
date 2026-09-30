@@ -2,14 +2,14 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Ticket, X, Check, Zap, ExternalLink } from 'lucide-react';
+import { Ticket, X, Check, Zap } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import TicketQRBadge from '@/components/TicketQRBadge/TicketQRBadge';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import { DEFAULT_QR_OPTIONS, type QRCodeOptions } from '@/lib/qrCodeStyling';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import { fetchWithRetry } from '@/lib/fetchWithRetry';
-import { useFormUnlock } from './useFormUnlock';
+import AsFormButton from './AsFormButton';
 import { saveTicketCodes, currentCachedCode, cachedMinutesLeft, clearTicketCodes } from '@/lib/ticketCodeCache';
 import styles from './fullscreenqr.module.css';
 
@@ -321,7 +321,6 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticketId]);
 
-  const [confirmingForm, setConfirmingForm] = useState(false);
   // The authoritative form answer, fetched from the status endpoint the
   // moment check-in lands — the checkinFormUrl prop was baked in when the
   // tickets page loaded, which can be stale (screen left open a long time,
@@ -334,9 +333,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
     tier_up: { from: string; to: string; color: string } | null;
     next_tier: { name: string; color: string; points_needed: number; progress: number } | null;
   } | null>(null);
-  const [formResolved, setFormResolved] = useState(false);
-  const [formDone, setFormDone] = useState(false);
-  const unlock = useFormUnlock();
+  const [formOpened, setFormOpened] = useState(false);
   useEffect(() => {
     if (!checkedIn) return;
     let cancelled = false;
@@ -349,43 +346,22 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
             setResolvedFormUrl(data.checkin_form_url ?? null);
             setPointsAwarded(data.points_awarded ?? 0);
             setTierInfo(data.tier_info ?? null);
-            if (data.checkin_form_completed_at) setFormDone(true);
+            if (data.checkin_form_completed_at) setFormOpened(true);
           }
         }
       } catch {
         // fall back to the page-load prop below
-      } finally {
-        if (!cancelled) setFormResolved(true);
       }
     })();
     return () => { cancelled = true; };
   }, [checkedIn, ticketId]);
   const formUrl = resolvedFormUrl ?? checkinFormUrl ?? null;
-  const formPending = checkedIn && !!formUrl && !formDone;
-  // Hold off on any "you're in" success until we know whether a form is
-  // required — otherwise a form-required event flashes a green check first.
-  const awaitingFormAnswer = checkedIn && !formResolved && !checkinFormUrl;
-  // Same honor-system marker as CheckinFormModal's "I've Completed This
-  // Form" — records that they told us they finished, not proof of an
-  // actual Google Forms submission (no way to see inside the iframe). Lets
-  // the ticket list's own "Complete AS Form" fallback know not to re-offer
-  // it once someone's already confirmed here.
-  async function handleFormComplete() {
-    setConfirmingForm(true);
-    try {
-      const res = await fetch(`/api/tickets/${ticketId}/checkin-form-complete`, { method: 'POST' });
-      if (res.ok) {
-        onFormComplete?.(ticketId);
-        setFormDone(true);
-      }
-      // A non-ok response is silent here on purpose — the ticket list's
-      // own "Complete AS Form" fallback still lets them confirm it later,
-      // so this doesn't need its own retry/error UI on top of that.
-    } catch {
-      // Network failure — same fallback applies.
-    } finally {
-      setConfirmingForm(false);
-    }
+  // Opening the form is the attendee's whole step (see AsFormButton) —
+  // record it locally and tell the ticket list so its own AS Form button
+  // reflects it too.
+  function handleFormOpened(id: string) {
+    setFormOpened(true);
+    onFormComplete?.(id);
   }
 
   // The "You're Checked In!" screen deliberately stays up until the person
@@ -396,7 +372,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
 
   // Close on backdrop tap
   function onBackdrop(e: React.MouseEvent) {
-    if (e.target === e.currentTarget && !formPending) onClose();
+    if (e.target === e.currentTarget) onClose();
   }
 
   // Prevent body scroll while open
@@ -428,9 +404,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   return createPortal(
     <div className={styles.backdrop} onClick={onBackdrop}>
       <div className={styles.sheet}>
-        {!formPending && (
-          <button className={styles.closeBtn} onClick={onClose} aria-label="Close"><X size={18} strokeWidth={1.75} /></button>
-        )}
+        <button className={styles.closeBtn} onClick={onClose} aria-label="Close"><X size={18} strokeWidth={1.75} /></button>
 
         {/* Which event this ticket is for — shown first and prominently so it
             can't be confused with a different event's ticket. */}
@@ -450,82 +424,6 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
         </div>
 
         {checkedIn ? (
-          awaitingFormAnswer ? (
-            <div className={styles.checkedInState}>
-              <LoadingSpinner size={32} theme="light" />
-              <p className={styles.hint}>Finishing up your check-in…</p>
-            </div>
-          ) : formPending ? (
-            // The form comes *before* the success screen, not after it — a
-            // required form shouldn't look finished (green check) until
-            // it actually is. Opens in a new tab rather than an iframe:
-            // Google's sign-in refuses to load inside a frame, so an embedded
-            // copy just says "can't access your Google account".
-            <div className={styles.formGate}>
-              <div className={styles.formGateBadge}>Almost there</div>
-              {pointsAwarded > 0 && (
-                <div className={styles.pointsEarned}>
-                  <span className={styles.pointsEarnedNumber}>+{pointsAwarded}</span>
-                  <span className={styles.pointsEarnedLabel}>points earned</span>
-                  {tierInfo?.tier_up && (
-                    <div className={styles.tierUp} style={{ '--tier-color': tierInfo.tier_up.color } as React.CSSProperties}>
-                      <div className={styles.confetti} aria-hidden="true">
-                        {Array.from({ length: 18 }, (_, i) => <span key={i} style={{ '--i': i } as React.CSSProperties} />)}
-                      </div>
-                      <div className={styles.tierUpKicker}>Tier up!</div>
-                      <div className={styles.tierUpName}>{tierInfo.tier_up.to}</div>
-                      <div className={styles.tierUpFrom}>you were {tierInfo.tier_up.from}</div>
-                    </div>
-                  )}
-                  {tierInfo && (
-                    <div className={styles.tierProgress}>
-                      <div className={styles.tierProgressTop}>
-                        <span style={{ color: tierInfo.tier.color }} className={styles.tierProgressName}>{tierInfo.tier.name}</span>
-                        <span className={styles.tierProgressTotal}>{tierInfo.lifetime_points.toLocaleString()} pts</span>
-                      </div>
-                      {tierInfo.next_tier ? (
-                        <>
-                          <div className={styles.tierBar} aria-hidden="true">
-                            <div className={styles.tierBarFill} style={{ width: `${Math.round(tierInfo.next_tier.progress * 100)}%`, background: tierInfo.next_tier.color }} />
-                          </div>
-                          <div className={styles.tierNext}>
-                            <strong>{tierInfo.next_tier.points_needed.toLocaleString()} pts</strong> to reach <span style={{ color: tierInfo.next_tier.color }}>{tierInfo.next_tier.name}</span>
-                          </div>
-                        </>
-                      ) : (
-                        <div className={styles.tierNext}>Top tier reached 🎉</div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-              <div className={styles.checkedInTitle}>One more step: the AS Form</div>
-              <p className={styles.hint}>
-                UCSD requires everyone to fill this out at the event. Most of it&apos;s already filled in for you —
-                just review it and hit Submit on the form.
-              </p>
-              <a
-                href={formUrl!}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={styles.formGateOpenBtn}
-                onClick={unlock.markOpened}
-              >
-                <ExternalLink size={16} strokeWidth={2} aria-hidden="true" /> Open AS Form
-              </a>
-              <button
-                type="button"
-                className={styles.checkinFormDoneBtn}
-                onClick={handleFormComplete}
-                disabled={confirmingForm || !unlock.unlocked}
-              >
-                {confirmingForm ? 'Saving…' : unlock.opened && unlock.returned && unlock.secondsLeft > 0 ? `I've Submitted the Form (${unlock.secondsLeft})` : "I've Submitted the Form"}
-              </button>
-              <p className={styles.checkinFormSmallPrint}>
-                {unlock.hint}
-              </p>
-            </div>
-          ) : (
             <div className={styles.checkedInState}>
               <div className={styles.checkedInIcon} aria-hidden="true"><Check size={32} strokeWidth={2} /></div>
               <div className={styles.checkedInTitle}>You&apos;re Checked In!</div>
@@ -570,9 +468,11 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
                   )}
                 </div>
               )}
-              <p className={styles.hint}>{formUrl ? 'AS Form submitted — thank you. See you inside.' : 'Have a great time — see you inside.'}</p>
+              {formUrl && (
+                <AsFormButton ticketId={ticketId} url={formUrl} opened={formOpened} onOpened={handleFormOpened} />
+              )}
+              {!formUrl && <p className={styles.hint}>Have a great time — see you inside.</p>}
             </div>
-          )
         ) : (
           <>
             <div className={styles.label}>

@@ -1,0 +1,16 @@
+.wrap { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; width: 100%; margin-top: 0.5rem; }
+.btn, .btnOpened {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.95rem;
+  border-radius: 0.85rem;
+  font-weight: 800;
+  font-size: 1rem;
+  text-decoration: none;
+}
+.btn { background: #ffc72c; color: #011941; }
+.btnOpened { background: rgba(52, 211, 153, 0.15); color: #047857; border: 2px solid #34d399; }
+.note { margin: 0; font-size: 0.74rem; line-height: 1.4; text-align: center; color: rgba(1, 25, 65, 0.6); }
