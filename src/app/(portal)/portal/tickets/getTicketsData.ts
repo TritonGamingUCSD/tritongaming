@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import type { RoleGrant } from '@/lib/capabilities';
 import { isVerifiedMember, isRewardsEligible } from '@/lib/capabilities';
+import { buildCheckinFormUrl, type CheckinFormConfig } from '@/lib/checkinForm';
 import type TicketsClient from './TicketsClient';
 
 // Shared by the standalone /portal/tickets route and the portal hub so both
@@ -8,25 +9,65 @@ import type TicketsClient from './TicketsClient';
 export async function getTicketsData(profileId: string, roles: RoleGrant[]) {
   const supabase = await createClient();
 
-  const { data: tickets } = await supabase
-    .from('tickets')
-    .select(`
-      id, status, checked_in_at, created_at,
-      event:events(id, title, start_date, end_date, location, flyer_url, points_value, is_online)
-    `)
-    .eq('user_id', profileId)
-    .order('created_at', { ascending: false });
+  const [{ data: tickets }, { data: upcomingEvents }, { data: profile }, { data: formSettings }] = await Promise.all([
+    supabase
+      .from('tickets')
+      .select(`
+        id, status, checked_in_at, created_at, checkin_form_completed_at,
+        event:events(id, title, start_date, end_date, location, flyer_url, points_value, is_online, requires_checkin_form, checkin_food_item, checkin_form_event_name, checkin_form_override)
+      `)
+      .eq('user_id', profileId)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('events')
+      .select('id, title, start_date, location, ticket_price, audience, points_value, is_online')
+      .eq('is_published', true)
+      .gte('start_date', new Date().toISOString())
+      .order('start_date', { ascending: true })
+      .limit(6),
+    supabase.from('profiles').select('year').eq('id', profileId).maybeSingle(),
+    // Lives in its own table (event-management config, not site content) —
+    // see checkin_form_settings/CheckinFormSettingsPanel.tsx. RLS allows
+    // any signed-in user to read it, since this is what builds *their own*
+    // prefill URL below.
+    supabase.from('checkin_form_settings').select('*').eq('id', 1).maybeSingle(),
+  ]);
 
-  const { data: upcomingEvents } = await supabase
-    .from('events')
-    .select('id, title, start_date, location, ticket_price, audience, points_value, is_online')
-    .eq('is_published', true)
-    .gte('start_date', new Date().toISOString())
-    .order('start_date', { ascending: true })
-    .limit(6);
+  // Pre-computed here (server-side, ahead of time) rather than fetched at
+  // the moment someone's actually checked in — the whole point is that the
+  // form is ready to render on their phone the instant check-in happens,
+  // with no extra round-trip competing with "get everyone through the
+  // door fast." The client only ever *displays* this once status flips to
+  // 'used' (see FullscreenQR/OnlineCheckinEntry) — having the URL earlier
+  // doesn't expose the form before a real check-in, since nothing renders
+  // it until then.
+  const roleNames = roles.map((r) => r.role);
+  const ticketsWithForm = (tickets ?? []).map((t) => {
+    const event = t.event as unknown as {
+      title: string;
+      requires_checkin_form?: boolean;
+      checkin_food_item?: string | null;
+      checkin_form_event_name?: string | null;
+      checkin_form_override?: CheckinFormConfig | null;
+    } | null;
+    // A rare event can use a totally different Google Form (own URL, entry
+    // IDs, mappings) instead of the one shared default — see
+    // checkin_form_override on events. Falls back to the site-wide config
+    // when the event hasn't set one.
+    const config = event?.checkin_form_override ?? formSettings;
+    const checkinFormUrl = event?.requires_checkin_form && config
+      ? buildCheckinFormUrl(config, {
+          eventTitle: event.checkin_form_event_name?.trim() || event.title,
+          year: profile?.year ?? null,
+          roles: roleNames,
+          foodItem: event.checkin_food_item ?? null,
+        })
+      : null;
+    return { ...t, checkinFormUrl };
+  });
 
   return {
-    tickets: (tickets ?? []) as unknown as Parameters<typeof TicketsClient>[0]['tickets'],
+    tickets: ticketsWithForm as unknown as Parameters<typeof TicketsClient>[0]['tickets'],
     upcomingEvents: (upcomingEvents ?? []) as unknown as Parameters<typeof TicketsClient>[0]['upcomingEvents'],
     isUcsd: isVerifiedMember(roles),
     canEarnPoints: isRewardsEligible(roles),

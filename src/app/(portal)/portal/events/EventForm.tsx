@@ -2,11 +2,14 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { ExternalLink } from 'lucide-react';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
 import SocialEmbedsField from '@/components/SocialEmbedsField/SocialEmbedsField';
 import PhotoAlbumsField from '@/components/PhotoAlbumsField/PhotoAlbumsField';
+import { buildCheckinFormUrl } from '@/lib/checkinForm';
 import type { SocialEmbed, PhotoAlbumEntry } from '@/types/database';
+import CheckinFormFieldsEditor, { EMPTY_CHECKIN_FORM_CONFIG, type CheckinFormConfigValue } from './CheckinFormFieldsEditor';
 import styles from './new/newevent.module.css';
 
 export interface EventFormValues {
@@ -28,6 +31,13 @@ export interface EventFormValues {
   post_event_info: string;
   social_embeds: SocialEmbed[];
   division_id: string;
+  requires_checkin_form: boolean;
+  checkin_food_item: string;
+  checkin_form_event_name: string;
+  // null (the common case) = use the site-wide default form (Events →
+  // Check-In Form tab). A rare event needing a totally different Google
+  // Form gets its own full config here instead — see CheckinFormFieldsEditor.
+  checkin_form_override: CheckinFormConfigValue | null;
 }
 
 export const EMPTY_EVENT_FORM: EventFormValues = {
@@ -49,6 +59,10 @@ export const EMPTY_EVENT_FORM: EventFormValues = {
   post_event_info: '',
   social_embeds: [],
   division_id: '',
+  requires_checkin_form: false,
+  checkin_food_item: '',
+  checkin_form_event_name: '',
+  checkin_form_override: null,
 };
 
 // Markdown, not raw HTML — see MarkdownContent for why. "Write"/"Preview"
@@ -109,12 +123,16 @@ export default function EventForm({
   submitLabel,
   onSubmit,
   divisions,
+  defaultCheckinFormSettings,
 }: {
   heading: string;
   initial: EventFormValues;
   submitLabel: string;
   onSubmit: (values: EventFormValues) => Promise<string | void>;
   divisions: { id: string; name: string }[];
+  // The site-wide default (Events → Check-In Form) — used to build the
+  // preview link below when this event isn't using its own override.
+  defaultCheckinFormSettings?: CheckinFormConfigValue | null;
 }) {
   const [form, setForm] = useState<EventFormValues>(initial);
   const [saving, setSaving] = useState(false);
@@ -123,6 +141,21 @@ export default function EventForm({
   function set(field: keyof EventFormValues, value: string | boolean) {
     setForm((f) => ({ ...f, [field]: value }));
   }
+
+  // A rare per-event override (if this event's using one) always wins over
+  // the site-wide default — same precedence getTicketsData uses live. Uses
+  // a representative sample year/role, not a real attendee's, since this
+  // is just "does the mapping actually work," the same thing the settings
+  // panel's own "Test It" section previews.
+  const checkinPreviewConfig = form.checkin_form_override ?? defaultCheckinFormSettings ?? null;
+  const checkinPreviewUrl = form.requires_checkin_form && checkinPreviewConfig
+    ? buildCheckinFormUrl(checkinPreviewConfig, {
+        eventTitle: form.checkin_form_event_name.trim() || form.title || 'Test Event',
+        year: '1st Year',
+        roles: ['ucsd'],
+        foodItem: form.checkin_food_item.trim() || null,
+      })
+    : null;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -225,6 +258,62 @@ export default function EventForm({
           <input className={styles.input} type="number" min="0" value={form.points_value} onChange={(e) => set('points_value', e.target.value)} />
           <span className={styles.hint}>How many reward points an attendee earns the moment they're checked in at this event.</span>
         </label>
+
+        <label className={styles.checkbox}>
+          <input type="checkbox" checked={form.requires_checkin_form} onChange={(e) => set('requires_checkin_form', e.target.checked)} />
+          <span>Requires AS Form</span>
+        </label>
+        <span className={styles.hint} style={{ marginTop: '-0.75rem' }}>
+          Pops up (pre-filled) on the attendee's own phone the instant an officer checks them in — set up the form itself once under Events → Check-In Form.
+        </span>
+
+        {form.requires_checkin_form && (
+          <>
+            <label className={styles.field}>
+              <span className={styles.label}>Event Name for AS Form</span>
+              <input className={styles.input} value={form.checkin_form_event_name} onChange={(e) => set('checkin_form_event_name', e.target.value)} placeholder={form.title || 'Defaults to the event title above'} />
+              <span className={styles.hint}>Pre-fills the AS Form's "event name" question. Only needed if UCSD's own name for this event differs from the title above — leave blank to just use the title.</span>
+            </label>
+
+            <label className={styles.field}>
+              <span className={styles.label}>Food/Item Provided</span>
+              <input className={styles.input} value={form.checkin_food_item} onChange={(e) => set('checkin_food_item', e.target.value)} placeholder="e.g. Pizza & boba, T-shirts" />
+              <span className={styles.hint}>Pre-fills the AS Form's "food or item received" question. Leave blank if nothing was given out.</span>
+            </label>
+
+            {checkinPreviewUrl ? (
+              <a href={checkinPreviewUrl} target="_blank" rel="noopener noreferrer" className={styles.previewBtn}>
+                <ExternalLink size={14} strokeWidth={1.75} aria-hidden="true" /> Preview AS Form
+              </a>
+            ) : (
+              <span className={styles.hint}>Set up the form's URL under Events → Check-In Form to enable a preview here.</span>
+            )}
+
+            <label className={styles.checkbox}>
+              <input
+                type="checkbox"
+                checked={form.checkin_form_override !== null}
+                onChange={(e) => setForm((f) => ({ ...f, checkin_form_override: e.target.checked ? EMPTY_CHECKIN_FORM_CONFIG : null }))}
+              />
+              <span>Use a different Google Form for this event</span>
+            </label>
+            <span className={styles.hint} style={{ marginTop: '-0.75rem' }}>
+              Rare — only turn this on if this specific event needs a completely different form than the shared default.
+              Once on, this event stops using the shared default entirely — if you leave the URL below blank, no form
+              shows at all for this event until you fill it in.
+            </span>
+
+            {form.checkin_form_override && (
+              <div className={styles.sectionDivider}>
+                <span className={styles.sectionLabel}>This Event's Own Form</span>
+                <CheckinFormFieldsEditor
+                  value={form.checkin_form_override}
+                  onChange={(v) => setForm((f) => ({ ...f, checkin_form_override: v }))}
+                />
+              </div>
+            )}
+          </>
+        )}
 
         <label className={styles.field}>
           <span className={styles.label}>Audience</span>

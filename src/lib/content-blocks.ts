@@ -65,7 +65,6 @@ export const CONTENT_BLOCKS = [
       { name: 'links',     label: 'Extra Links',    type: 'kvlist' as const, kvKeyLabel: 'Label', kvValueLabel: 'URL', optional: true },
     ],
   },
-
   // ── Homepage ──────────────────────────────────────────────
   {
     key: 'homepage.hero',

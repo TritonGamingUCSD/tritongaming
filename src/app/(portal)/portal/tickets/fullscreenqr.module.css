@@ -28,6 +28,13 @@
   gap: 0.75rem;
   animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   position: relative;
+  /* Every other state here (QR code, checkmark) comfortably fits any
+     viewport — only the embedded check-in form is tall enough to risk
+     overflowing a short phone in landscape, so the sheet scrolls internally
+     rather than clipping or pushing off-screen. */
+  max-height: 92vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 @keyframes slideUp {
@@ -364,4 +371,43 @@
   font-size: 1.2rem;
   font-weight: 800;
   color: #011941;
+}
+
+.checkinFormFrame {
+  width: 100%;
+  height: min(65vh, 600px);
+  min-height: 420px;
+  border: 1px solid rgba(1, 25, 65, 0.12);
+  border-radius: 0.875rem;
+  margin-top: 0.25rem;
+  overscroll-behavior: contain;
+}
+
+.checkinFormNewTabLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  color: rgba(1, 25, 65, 0.5);
+  text-decoration: underline;
+  align-self: center;
+}
+
+.checkinFormDoneBtn {
+  width: 100%;
+  padding: 0.75rem;
+  margin-top: 0.5rem;
+  background: #011941;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 0.75rem;
+  cursor: pointer;
+}
+.checkinFormDoneBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.checkinFormSmallPrint {
+  font-size: 0.68rem;
+  color: rgba(1, 25, 65, 0.45);
+  text-align: center;
+  margin: -0.3rem 0 0;
 }

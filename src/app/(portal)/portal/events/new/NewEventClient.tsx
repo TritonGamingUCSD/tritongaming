@@ -5,8 +5,13 @@ import { createClient } from '@/lib/supabase/client';
 import { slugify } from '@/lib/slug';
 import { pacificDatetimeLocalToUTC } from '@/lib/timezone';
 import EventForm, { EMPTY_EVENT_FORM, type EventFormValues } from '../EventForm';
+import type { CheckinFormConfigValue } from '../CheckinFormFieldsEditor';
 
-export default function NewEventClient({ divisions, initial = EMPTY_EVENT_FORM }: { divisions: { id: string; name: string }[]; initial?: EventFormValues }) {
+export default function NewEventClient({ divisions, initial = EMPTY_EVENT_FORM, defaultCheckinFormSettings }: {
+  divisions: { id: string; name: string }[];
+  initial?: EventFormValues;
+  defaultCheckinFormSettings?: CheckinFormConfigValue | null;
+}) {
   const router = useRouter();
 
   async function handleCreate(form: EventFormValues): Promise<string | void> {
@@ -36,6 +41,10 @@ export default function NewEventClient({ divisions, initial = EMPTY_EVENT_FORM }
       post_event_info: form.post_event_info.trim() || null,
       social_embeds: form.social_embeds,
       division_id: form.division_id || null,
+      requires_checkin_form: form.requires_checkin_form,
+      checkin_food_item: form.checkin_food_item.trim() || null,
+      checkin_form_event_name: form.checkin_form_event_name.trim() || null,
+      checkin_form_override: form.checkin_form_override,
       created_by: user.id,
     });
 
@@ -46,5 +55,14 @@ export default function NewEventClient({ divisions, initial = EMPTY_EVENT_FORM }
     router.push('/portal?section=events');
   }
 
-  return <EventForm heading="Create Event" initial={initial} submitLabel="Create Event" onSubmit={handleCreate} divisions={divisions} />;
+  return (
+    <EventForm
+      heading="Create Event"
+      initial={initial}
+      submitLabel="Create Event"
+      onSubmit={handleCreate}
+      divisions={divisions}
+      defaultCheckinFormSettings={defaultCheckinFormSettings}
+    />
+  );
 }

@@ -2,9 +2,10 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Ticket, MapPin, QrCode, Check, X, Timer, Award } from 'lucide-react';
+import { Ticket, MapPin, QrCode, Check, X, Timer, Award, ClipboardList } from 'lucide-react';
 import FullscreenQR from './FullscreenQR';
 import OnlineCheckinEntry from './OnlineCheckinEntry';
+import CheckinFormModal from './CheckinFormModal';
 import AddToCalendarButton from '@/components/AddToCalendarButton/AddToCalendarButton';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import { isCheckinWindowOpen } from '@/lib/checkinWindow';
@@ -25,6 +26,14 @@ interface TicketData {
     points_value?: number;
     is_online: boolean;
   } | null;
+  // Pre-built server-side (see getTicketsData) — ready to render the
+  // instant this ticket flips to checked-in, no extra fetch needed then.
+  checkinFormUrl?: string | null;
+  // Set once the ticket holder explicitly confirms they finished the AS
+  // Form (see CheckinFormModal's "I've Completed This Form" button) — an
+  // honor-system marker, not proof of an actual Google Forms submission.
+  // Once set, the "Complete AS Form" button stops re-offering it.
+  checkin_form_completed_at?: string | null;
 }
 
 interface UpcomingEvent {
@@ -145,6 +154,15 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
     setTickets((prev) => prev.map((t) => (t.id === ticketId ? { ...t, status: 'used', checked_in_at: checkedInAt } : t)));
   }
 
+  // Same idea as handleCheckedIn above — reflects a completion confirmed
+  // from FullscreenQR's own "I've Completed This Form" button into the
+  // shared tickets list, so TicketRow's fallback (which reads this same
+  // field) doesn't keep offering a form that was already confirmed done
+  // somewhere else.
+  function handleFormCompleted(ticketId: string) {
+    setTickets((prev) => prev.map((t) => (t.id === ticketId ? { ...t, checkin_form_completed_at: new Date().toISOString() } : t)));
+  }
+
   const activeTickets = tickets.filter((t) => t.status === 'active');
   const pastTickets   = tickets.filter((t) => t.status !== 'active');
 
@@ -213,6 +231,8 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
                   ticketId={nextActiveTicket.id}
                   eventId={nextActiveTicket.event.id}
                   onCheckedIn={handleCheckedIn}
+                  checkinFormUrl={nextActiveTicket.checkinFormUrl}
+                  onFormComplete={handleFormCompleted}
                 />
               ) : (
                 <button
@@ -243,6 +263,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
                 ticket={ticket}
                 onShowQR={() => setQrTicket(ticket)}
                 onCheckedIn={handleCheckedIn}
+                onFormComplete={handleFormCompleted}
                 canEarnPoints={canEarnPoints}
               />
             ))}
@@ -316,7 +337,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
           <h2 className={styles.sectionTitle}>Past Tickets</h2>
           <div className={styles.ticketList}>
             {pastTickets.map((ticket) => (
-              <TicketRow key={ticket.id} ticket={ticket} canEarnPoints={canEarnPoints} />
+              <TicketRow key={ticket.id} ticket={ticket} onFormComplete={handleFormCompleted} canEarnPoints={canEarnPoints} />
             ))}
           </div>
         </section>
@@ -331,6 +352,8 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
           eventLocation={qrTicket.event?.location}
           onClose={() => setQrTicket(null)}
           onCheckedIn={(checkedInAt) => handleCheckedIn(qrTicket.id, checkedInAt)}
+          checkinFormUrl={qrTicket.checkinFormUrl}
+          onFormComplete={handleFormCompleted}
         />
       )}
     </div>
@@ -341,11 +364,13 @@ function TicketRow({
   ticket,
   onShowQR,
   onCheckedIn,
+  onFormComplete,
   canEarnPoints,
 }: {
   ticket: TicketData;
   onShowQR?: () => void;
   onCheckedIn?: (ticketId: string, checkedInAt: string) => void;
+  onFormComplete?: (ticketId: string) => void;
   canEarnPoints: boolean;
 }) {
   const ev = ticket.event;
@@ -358,6 +383,27 @@ function TicketRow({
   const isExpired = ticket.status === 'active' && !!ev && !isCheckinWindowOpen(ev);
   const displayStatus = isExpired ? 'expired' : ticket.status;
   const isActionable = ticket.status === 'active' && !isExpired;
+  // Same cutoff as isExpired above, just not tied to status === 'active' —
+  // this gates the "Complete AS Form" fallback on an *already checked-in*
+  // ticket, which is always 'used' by definition. UCSD's form has its own
+  // "I certify I am currently physically present" line, so this shouldn't
+  // stay clickable once the event is actually over — someone submitting it
+  // days later would be certifying something no longer true.
+  const eventHasEnded = !!ev && !isCheckinWindowOpen(ev);
+  const [showFormModal, setShowFormModal] = useState(false);
+  // Local override so the UI updates the instant they confirm, without
+  // waiting on a full data refetch — initialized from the server value,
+  // then set directly once CheckinFormModal's onComplete fires. Also kept
+  // in sync with the prop via the effect below: a completion confirmed
+  // elsewhere (FullscreenQR's own "I've Completed This Form", reached via
+  // the QR check-in screen rather than this row) updates the shared
+  // tickets list in TicketsClient, but a useState initializer only runs
+  // once on mount — without this sync, this row would never pick up a
+  // change that happened somewhere else and keep wrongly offering the form.
+  const [formCompletedAt, setFormCompletedAt] = useState(ticket.checkin_form_completed_at ?? null);
+  useEffect(() => {
+    setFormCompletedAt(ticket.checkin_form_completed_at ?? null);
+  }, [ticket.checkin_form_completed_at]);
   return (
     <div className={`${styles.ticketRow} ${!isActionable ? styles.ticketDim : ''}`}>
       <div className={styles.ticketLeft}>
@@ -377,15 +423,43 @@ function TicketRow({
             <Check size={13} strokeWidth={1.75} aria-hidden="true" /> Checked in {new Date(ticket.checked_in_at).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' })}
           </div>
         )}
+        {/* Fallback for the "accidentally dismissed it" / "staff checked me
+            in manually without my phone" cases — not gated on isActionable
+            (a checked-in ticket is never actionable), just on actually
+            being checked in and the event actually having a form. Stays
+            available for as long as the event's still considered ongoing,
+            then disappears — see eventHasEnded. Once they've confirmed
+            completion, this stops re-offering the form entirely — our UI
+            shouldn't invite a second submission, even though we can't stop
+            someone from revisiting the raw form URL on their own. */}
+        {ticket.checked_in_at && ticket.checkinFormUrl && !eventHasEnded && (
+          formCompletedAt ? (
+            <div className={styles.checkedInLine}>
+              <Check size={13} strokeWidth={1.75} aria-hidden="true" /> AS Form completed
+            </div>
+          ) : (
+            <button type="button" className={styles.completeFormBtn} onClick={() => setShowFormModal(true)}>
+              <ClipboardList size={13} strokeWidth={1.75} aria-hidden="true" /> Complete AS Form
+            </button>
+          )
+        )}
         {canEarnPoints && isActionable && !!ev?.points_value && (
           <div className={styles.ticketPointsBadge}><Award size={11} strokeWidth={1.75} aria-hidden="true" /> +{ev.points_value} pts on check-in</div>
+        )}
+        {showFormModal && ticket.checkinFormUrl && !eventHasEnded && (
+          <CheckinFormModal
+            ticketId={ticket.id}
+            url={ticket.checkinFormUrl}
+            onClose={() => setShowFormModal(false)}
+            onComplete={() => { setFormCompletedAt(new Date().toISOString()); onFormComplete?.(ticket.id); }}
+          />
         )}
       </div>
       <div className={styles.ticketRight}>
         <div className={styles.ticketRightRow}>
           {isActionable && ev?.id && <AddToCalendarButton eventId={ev.id} iconOnly />}
           {isActionable && ev?.is_online && onCheckedIn ? (
-            <OnlineCheckinEntry ticketId={ticket.id} eventId={ev.id} onCheckedIn={onCheckedIn} compact />
+            <OnlineCheckinEntry ticketId={ticket.id} eventId={ev.id} onCheckedIn={onCheckedIn} checkinFormUrl={ticket.checkinFormUrl} onFormComplete={onFormComplete} compact />
           ) : isActionable && onShowQR ? (
             <button className={styles.qrMiniBtn} onClick={onShowQR}>
               <span aria-hidden="true">▦</span> View QR

@@ -6,12 +6,13 @@ import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from 'recharts';
-import { Search, Plus, Ticket, MapPin, BarChart3, ListChecks, Award } from 'lucide-react';
+import { Search, Plus, Ticket, MapPin, BarChart3, ListChecks, Award, ClipboardList, ExternalLink } from 'lucide-react';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import type { MonthPoint } from '@/lib/monthBuckets';
 import type { EventTicketStat } from './getEventsData';
 import { usePortalTabSync } from '@/lib/usePortalTabSync';
 import EventCheckinsModal from './EventCheckinsModal';
+import CheckinFormSettingsPanel, { type CheckinFormSettings } from './CheckinFormSettingsPanel';
 import styles from './events.module.css';
 import chartStyles from '../admin/stats/stats.module.css';
 
@@ -27,11 +28,15 @@ interface EventRow {
   ticketsIssued: number;
   ticketsCheckedIn: number;
   points_value: number;
+  // Admin-facing only (sample year/role, not a real attendee's) — see
+  // getEventsData. Null for any event without "Requires AS Form" on, or
+  // before a form's been configured at all.
+  checkinFormPreviewUrl?: string | null;
 }
 
 type StatusFilter = 'all' | 'upcoming' | 'past' | 'draft';
-type Tab = 'manage' | 'analytics';
-const VALID_TABS: Tab[] = ['manage', 'analytics'];
+type Tab = 'manage' | 'analytics' | 'checkin-form';
+const VALID_TABS: Tab[] = ['manage', 'analytics', 'checkin-form'];
 
 const FILTERS: { key: StatusFilter; label: string }[] = [
   { key: 'all', label: 'All' },
@@ -57,6 +62,7 @@ interface Props {
   canEdit: boolean;
   canManagePoints: boolean;
   initialTab?: string;
+  checkinFormSettings?: CheckinFormSettings;
 }
 
 // Shared between the standalone /portal/events page and the portal hub's
@@ -64,7 +70,7 @@ interface Props {
 // component — search + status filter are pure UI state over data that's
 // already fully fetched (all events + their ticket counts come in as
 // props), so filtering is instant with no round trip.
-export default function EventsSectionContent({ events, eventsPerMonth, ticketsPerMonth, eventStats, canEdit, canManagePoints, initialTab }: Props) {
+export default function EventsSectionContent({ events, eventsPerMonth, ticketsPerMonth, eventStats, canEdit, canManagePoints, initialTab, checkinFormSettings }: Props) {
   const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'manage');
   const syncUrl = usePortalTabSync('events');
   function selectTab(t: Tab) {
@@ -115,7 +121,14 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
           <button type="button" role="tab" aria-selected={tab === 'analytics'} className={`${styles.tab} ${tab === 'analytics' ? styles.tabActive : ''}`} onClick={() => selectTab('analytics')}>
             <BarChart3 size={13} strokeWidth={1.5} aria-hidden="true" /> Analytics
           </button>
+          <button type="button" role="tab" aria-selected={tab === 'checkin-form'} className={`${styles.tab} ${tab === 'checkin-form' ? styles.tabActive : ''}`} onClick={() => selectTab('checkin-form')}>
+            <ClipboardList size={13} strokeWidth={1.5} aria-hidden="true" /> Check-In Form
+          </button>
         </div>
+      )}
+
+      {tab === 'checkin-form' && canEdit && checkinFormSettings && (
+        <CheckinFormSettingsPanel initial={checkinFormSettings} />
       )}
 
       {tab === 'analytics' && canEdit && (
@@ -277,6 +290,11 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
                       <div className={styles.rowActions}>
                         <Link href={`/portal/events/${event.id}`} className={styles.checkinLink}>Edit</Link>
                         <Link href={`/portal/events/new?from=${event.id}`} className={styles.checkinLink}>Duplicate</Link>
+                        {event.checkinFormPreviewUrl && (
+                          <a href={event.checkinFormPreviewUrl} target="_blank" rel="noopener noreferrer" className={styles.checkinLink}>
+                            <ExternalLink size={11} strokeWidth={1.75} aria-hidden="true" /> Preview AS Form
+                          </a>
+                        )}
                       </div>
                     )}
                   </div>

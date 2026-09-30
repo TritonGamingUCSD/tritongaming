@@ -147,6 +147,21 @@ export interface Database {
           division_id: string | null;
           photo_albums: PhotoAlbumEntry[];
           post_event_info: string | null;
+          requires_checkin_form: boolean;
+          checkin_food_item: string | null;
+          checkin_form_event_name: string | null;
+          // Same shape as checkin_form_settings' own columns (see
+          // CheckinFormConfig in src/lib/checkinForm.ts) — null means "use
+          // the site-wide default form."
+          checkin_form_override: {
+            form_url?: string | null;
+            entry_event_name?: string | null;
+            entry_academic_year?: string | null;
+            entry_affiliation?: string | null;
+            entry_food_item?: string | null;
+            year_mapping?: Array<{ value?: string; label?: string }>;
+            affiliation_mapping?: Array<{ value?: string; label?: string }>;
+          } | null;
           social_embeds: SocialEmbed[];
           points_value: number;
           is_online: boolean;
@@ -168,6 +183,7 @@ export interface Database {
           checked_in_by: string | null;
           stripe_session_id: string | null;
           created_at: string;
+          checkin_form_completed_at: string | null;
         };
         Insert: Omit<Database['public']['Tables']['tickets']['Row'], 'id' | 'ticket_code' | 'created_at'>;
         Update: Partial<Database['public']['Tables']['tickets']['Insert']>;
@@ -252,6 +268,22 @@ export interface Database {
         };
         Insert: Omit<Database['public']['Tables']['photo_albums']['Row'], 'id' | 'created_at' | 'sort_order'> & { sort_order?: number };
         Update: Partial<Database['public']['Tables']['photo_albums']['Insert']>;
+      };
+      checkin_form_settings: {
+        Row: {
+          id: number;
+          form_url: string | null;
+          entry_event_name: string | null;
+          entry_academic_year: string | null;
+          entry_affiliation: string | null;
+          entry_food_item: string | null;
+          year_mapping: Array<{ value?: string; label?: string }>;
+          affiliation_mapping: Array<{ value?: string; label?: string }>;
+          updated_by: string | null;
+          updated_at: string;
+        };
+        Insert: Partial<Database['public']['Tables']['checkin_form_settings']['Row']>;
+        Update: Partial<Database['public']['Tables']['checkin_form_settings']['Row']>;
       };
       point_transactions: {
         Row: {

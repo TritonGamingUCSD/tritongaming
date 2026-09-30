@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Ticket, X, Check, Zap } from 'lucide-react';
+import { Ticket, X, Check, Zap, ExternalLink } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import TicketQRBadge from '@/components/TicketQRBadge/TicketQRBadge';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
@@ -48,9 +48,18 @@ interface Props {
   eventLocation?: string | null;
   onClose: () => void;
   onCheckedIn?: (checkedInAt: string) => void;
+  // Pre-built server-side (see getTicketsData) for events with "Requires
+  // UCSD check-in form" turned on — null/undefined for every other event.
+  checkinFormUrl?: string | null;
+  // Lets the ticket list know completion happened here, so its own
+  // "Complete AS Form" fallback (TicketRow) doesn't keep re-offering a
+  // form this same screen already confirmed as done — without this, that
+  // fallback's local state has no way to learn about a completion that
+  // happened somewhere else.
+  onFormComplete?: (ticketId: string) => void;
 }
 
-export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLocation, onClose, onCheckedIn }: Props) {
+export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLocation, onClose, onCheckedIn, checkinFormUrl, onFormComplete }: Props) {
   const [code, setCode] = useState<string | null>(null);
   const [qrData, setQrData] = useState<string | null>(null);
   const [expiresIn, setExpiresIn] = useState(30);
@@ -218,11 +227,36 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticketId]);
 
+  const [confirmingForm, setConfirmingForm] = useState(false);
+  // Same honor-system marker as CheckinFormModal's "I've Completed This
+  // Form" — records that they told us they finished, not proof of an
+  // actual Google Forms submission (no way to see inside the iframe). Lets
+  // the ticket list's own "Complete AS Form" fallback know not to re-offer
+  // it once someone's already confirmed here.
+  async function handleFormComplete() {
+    setConfirmingForm(true);
+    try {
+      const res = await fetch(`/api/tickets/${ticketId}/checkin-form-complete`, { method: 'POST' });
+      if (res.ok) onFormComplete?.(ticketId);
+      // A non-ok response is silent here on purpose — the ticket list's
+      // own "Complete AS Form" fallback still lets them confirm it later,
+      // so this doesn't need its own retry/error UI on top of that.
+    } catch {
+      // Network failure — same fallback applies.
+    } finally {
+      setConfirmingForm(false);
+      onClose();
+    }
+  }
+
   // Give the "You're Checked In!" confirmation a moment on screen, then
   // return to the ticket list — which, thanks to onCheckedIn above, already
-  // shows this ticket's status as checked in by the time this lands.
+  // shows this ticket's status as checked in by the time this lands. Skipped
+  // entirely when a check-in form is required: 2.5s is nowhere near enough
+  // time to read and fill it out, so this screen stays open (closed via the
+  // X, same as before check-in) until the attendee is actually done with it.
   useEffect(() => {
-    if (!checkedIn) return;
+    if (!checkedIn || checkinFormUrl) return;
     const timeout = setTimeout(onClose, 2500);
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -285,7 +319,28 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
           <div className={styles.checkedInState}>
             <div className={styles.checkedInIcon} aria-hidden="true"><Check size={32} strokeWidth={2} /></div>
             <div className={styles.checkedInTitle}>You&apos;re Checked In!</div>
-            <p className={styles.hint}>Have a great time — see you inside.</p>
+            {checkinFormUrl ? (
+              <>
+                <p className={styles.hint}>UCSD requires this quick form for tonight — most of it's already filled in.</p>
+                <iframe
+                  key={checkinFormUrl}
+                  src={checkinFormUrl}
+                  className={styles.checkinFormFrame}
+                  title="UCSD check-in form"
+                >
+                  Loading…
+                </iframe>
+                <a href={checkinFormUrl} target="_blank" rel="noopener noreferrer" className={styles.checkinFormNewTabLink}>
+                  <ExternalLink size={12} strokeWidth={1.75} aria-hidden="true" /> Form not loading? Open it in a new tab
+                </a>
+                <button type="button" className={styles.checkinFormDoneBtn} onClick={handleFormComplete} disabled={confirmingForm}>
+                  {confirmingForm ? 'Saving…' : "I've Completed This Form"}
+                </button>
+                <p className={styles.checkinFormSmallPrint}>Only tap this after you've actually hit Submit on the form above.</p>
+              </>
+            ) : (
+              <p className={styles.hint}>Have a great time — see you inside.</p>
+            )}
           </div>
         ) : (
           <>

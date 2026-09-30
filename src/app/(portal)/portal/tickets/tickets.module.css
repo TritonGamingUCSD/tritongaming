@@ -464,3 +464,28 @@
   color: #34d399;
   padding: 0.5rem 0;
 }
+
+.onlineCheckinFormWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+/* The actual form always opens in CheckinFormModal (a full-width overlay,
+   portaled to <body>) rather than being inlined here — this component
+   often renders in a narrow list row (see the `compact` ticket-row usage),
+   far too cramped to embed a Google Form readably. This button just
+   (re)opens that modal. */
+.completeFormBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--yellow);
+  padding: 0.35rem 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.completeFormBtn:hover { opacity: 0.8; }

@@ -6,15 +6,18 @@ import { slugify } from '@/lib/slug';
 import { deleteIfReplaced } from '@/lib/imageUpload';
 import { pacificDatetimeLocalToUTC } from '@/lib/timezone';
 import EventForm, { type EventFormValues } from '../EventForm';
+import type { CheckinFormConfigValue } from '../CheckinFormFieldsEditor';
 
 export default function EditEventClient({
   eventId,
   initial,
   divisions,
+  defaultCheckinFormSettings,
 }: {
   eventId: string;
   initial: EventFormValues;
   divisions: { id: string; name: string }[];
+  defaultCheckinFormSettings?: CheckinFormConfigValue | null;
 }) {
   const router = useRouter();
 
@@ -45,6 +48,10 @@ export default function EditEventClient({
         post_event_info: form.post_event_info.trim() || null,
         social_embeds: form.social_embeds,
         division_id: form.division_id || null,
+        requires_checkin_form: form.requires_checkin_form,
+        checkin_food_item: form.checkin_food_item.trim() || null,
+        checkin_form_event_name: form.checkin_form_event_name.trim() || null,
+        checkin_form_override: form.checkin_form_override,
       })
       .eq('id', eventId);
 
@@ -57,5 +64,14 @@ export default function EditEventClient({
     router.push('/portal?section=events');
   }
 
-  return <EventForm heading="Edit Event" initial={initial} submitLabel="Save Changes" onSubmit={handleUpdate} divisions={divisions} />;
+  return (
+    <EventForm
+      heading="Edit Event"
+      initial={initial}
+      submitLabel="Save Changes"
+      onSubmit={handleUpdate}
+      divisions={divisions}
+      defaultCheckinFormSettings={defaultCheckinFormSettings}
+    />
+  );
 }

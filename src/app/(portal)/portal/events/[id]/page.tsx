@@ -5,6 +5,8 @@ import { createClient } from '@/lib/supabase/server';
 import { utcToPacificDatetimeLocal } from '@/lib/timezone';
 import EditEventClient from './EditEventClient';
 import type { EventFormValues } from '../EventForm';
+import { EMPTY_CHECKIN_FORM_CONFIG } from '../CheckinFormFieldsEditor';
+import { getCheckinFormSettings } from '../getEventsData';
 import type { SocialEmbed, PhotoAlbumEntry } from '@/types/database';
 
 export const metadata = { title: 'Edit Event' };
@@ -20,13 +22,14 @@ export default async function EditEventPage({ params }: Params) {
   if (!hasCapability(roles, 'manage_events')) redirect('/portal');
 
   const supabase = await createClient();
-  const [{ data: event }, { data: divisions }] = await Promise.all([
+  const [{ data: event }, { data: divisions }, defaultCheckinFormSettings] = await Promise.all([
     supabase
       .from('events')
-      .select('id, title, slug, content, description, location, start_date, end_date, flyer_url, max_capacity, ticket_price, points_value, is_online, audience, is_published, photo_albums, post_event_info, social_embeds, division_id')
+      .select('id, title, slug, content, description, location, start_date, end_date, flyer_url, max_capacity, ticket_price, points_value, is_online, audience, is_published, photo_albums, post_event_info, social_embeds, division_id, requires_checkin_form, checkin_food_item, checkin_form_event_name, checkin_form_override')
       .eq('id', id)
       .single(),
     supabase.from('divisions').select('id, name').order('name'),
+    getCheckinFormSettings(),
   ]);
 
   if (!event) notFound();
@@ -50,7 +53,11 @@ export default async function EditEventPage({ params }: Params) {
     post_event_info: event.post_event_info ?? '',
     social_embeds: (event.social_embeds as SocialEmbed[]) ?? [],
     division_id: event.division_id ?? '',
+    requires_checkin_form: event.requires_checkin_form ?? false,
+    checkin_food_item: event.checkin_food_item ?? '',
+    checkin_form_event_name: event.checkin_form_event_name ?? '',
+    checkin_form_override: event.checkin_form_override ? { ...EMPTY_CHECKIN_FORM_CONFIG, ...event.checkin_form_override } : null,
   };
 
-  return <EditEventClient eventId={event.id} initial={initial} divisions={divisions ?? []} />;
+  return <EditEventClient eventId={event.id} initial={initial} divisions={divisions ?? []} defaultCheckinFormSettings={defaultCheckinFormSettings} />;
 }

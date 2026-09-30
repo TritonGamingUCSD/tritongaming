@@ -5,6 +5,8 @@ import { createClient } from '@/lib/supabase/server';
 import { utcToPacificDatetimeLocal } from '@/lib/timezone';
 import NewEventClient from './NewEventClient';
 import { EMPTY_EVENT_FORM, type EventFormValues } from '../EventForm';
+import { EMPTY_CHECKIN_FORM_CONFIG } from '../CheckinFormFieldsEditor';
+import { getCheckinFormSettings } from '../getEventsData';
 import type { SocialEmbed } from '@/types/database';
 
 export const metadata = { title: 'Create Event' };
@@ -22,13 +24,16 @@ export default async function NewEventPage({ searchParams }: Props) {
 
   const { from } = await searchParams;
   const supabase = await createClient();
-  const { data: divisions } = await supabase.from('divisions').select('id, name').order('name');
+  const [{ data: divisions }, defaultCheckinFormSettings] = await Promise.all([
+    supabase.from('divisions').select('id, name').order('name'),
+    getCheckinFormSettings(),
+  ]);
 
   let initial = EMPTY_EVENT_FORM;
   if (from) {
     const { data: source } = await supabase
       .from('events')
-      .select('title, content, description, location, start_date, end_date, flyer_url, max_capacity, ticket_price, points_value, is_online, audience, social_embeds, division_id')
+      .select('title, content, description, location, start_date, end_date, flyer_url, max_capacity, ticket_price, points_value, is_online, audience, social_embeds, division_id, requires_checkin_form, checkin_food_item, checkin_form_event_name, checkin_form_override')
       .eq('id', from)
       .maybeSingle();
     if (source) {
@@ -48,6 +53,13 @@ export default async function NewEventPage({ searchParams }: Props) {
         audience: source.audience,
         social_embeds: (source.social_embeds as SocialEmbed[]) ?? [],
         division_id: source.division_id ?? '',
+        // A recurring event (weekly social, etc.) almost always needs the
+        // same UCSD form answer as last time, unlike the post-event fields
+        // below — copied rather than reset.
+        requires_checkin_form: source.requires_checkin_form ?? false,
+        checkin_food_item: source.checkin_food_item ?? '',
+        checkin_form_event_name: source.checkin_form_event_name ?? '',
+        checkin_form_override: source.checkin_form_override ? { ...EMPTY_CHECKIN_FORM_CONFIG, ...source.checkin_form_override } : null,
         // Deliberately NOT copied: slug (would collide), is_published (a
         // duplicate starts as an unpublished draft to review first),
         // photo_albums/post_event_info (post-event recap fields — the
@@ -57,5 +69,5 @@ export default async function NewEventPage({ searchParams }: Props) {
     }
   }
 
-  return <NewEventClient divisions={divisions ?? []} initial={initial} />;
+  return <NewEventClient divisions={divisions ?? []} initial={initial} defaultCheckinFormSettings={defaultCheckinFormSettings} />;
 }
