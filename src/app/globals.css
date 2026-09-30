@@ -198,6 +198,42 @@ video {
   display: block;
 }
 
+/* Interface chrome that has no reason to be text-selectable: buttons, tabs,
+   nav, icons/images/canvas, and small label/badge/chip pills. Stops
+   long-press/double-tap on a phone from highlighting a button label or
+   popping the image callout instead of doing what was tapped. Real content
+   (paragraphs, descriptions, names, emails, codes people read out or copy)
+   and every form field stay selectable — see the opt-back-in below. */
+button,
+summary,
+[role='button'],
+[role='tab'],
+nav,
+img,
+svg,
+canvas,
+video,
+[class*='badge'],
+[class*='Badge'],
+[class*='sectionLabel'],
+[class*='eyebrow'],
+[class*='chip'],
+[class*='pill'],
+[class*='filterTab'] {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+input,
+textarea,
+select,
+[contenteditable='true'],
+.selectable {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 ul,
 ol {
   list-style: none;
