@@ -479,3 +479,13 @@
   text-transform: uppercase;
   color: #ffffff;
 }
+
+/* Exact check-in time (to the second) on the green screen so staff glancing
+   at it can confirm it's a fresh scan, not an old screenshot. */
+.checkedInTime {
+  font-size: 1.15rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #011941;
+  letter-spacing: 0.02em;
+}

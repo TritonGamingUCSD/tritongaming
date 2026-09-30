@@ -68,6 +68,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   const [rotationSeconds, setRotationSeconds] = useState(30);
   const [error, setError] = useState('');
   const [checkedIn, setCheckedIn] = useState(false);
+  const [checkedInAt, setCheckedInAt] = useState<string | null>(null);
   // Whether this member currently holds a fulfilled Fast Pass reward (from
   // either shop — see grants_fast_pass in api/tickets/[id]/qr) — a
   // standing perk, not something specific to this one ticket, so it's just
@@ -267,6 +268,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
     if (handledCheckIn.current) return;
     handledCheckIn.current = true;
     clearTicketCodes(ticketId);
+    setCheckedInAt(checkedInAt);
     setCheckedIn(true);
     onCheckedInRef.current?.(checkedInAt);
   }
@@ -379,18 +381,11 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
     }
   }
 
-  // Give the "You're Checked In!" confirmation a moment on screen, then
-  // return to the ticket list — which, thanks to onCheckedIn above, already
-  // shows this ticket's status as checked in by the time this lands. Skipped
-  // entirely when a check-in form is required: 2.5s is nowhere near enough
-  // time to read and fill it out, so this screen stays open (closed via the
-  // X, same as before check-in) until the attendee is actually done with it.
-  useEffect(() => {
-    if (!checkedIn || !formResolved || formPending) return;
-    const timeout = setTimeout(onClose, 2500);
-    return () => clearTimeout(timeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [checkedIn, formResolved, formPending]);
+  // The "You're Checked In!" screen deliberately stays up until the person
+  // closes it themselves (X, or tapping outside) — it used to auto-close
+  // after 2.5s, which meant staff or the attendee couldn't glance at it to
+  // confirm the check-in went through. The ticket list behind it already
+  // shows the ticket as checked in (see onCheckedIn above).
 
   // Close on backdrop tap
   function onBackdrop(e: React.MouseEvent) {
@@ -497,6 +492,11 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
             <div className={styles.checkedInState}>
               <div className={styles.checkedInIcon} aria-hidden="true"><Check size={32} strokeWidth={2} /></div>
               <div className={styles.checkedInTitle}>You&apos;re Checked In!</div>
+              {checkedInAt && (
+                <div className={styles.checkedInTime}>
+                  {new Date(checkedInAt).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit', second: '2-digit' })}
+                </div>
+              )}
               {pointsAwarded > 0 && (
                 <div className={styles.pointsEarned}>
                   <span className={styles.pointsEarnedNumber}>+{pointsAwarded}</span>
