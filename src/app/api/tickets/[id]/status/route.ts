@@ -50,12 +50,12 @@ export async function GET(request: Request, { params }: Params) {
   } | null;
 
   if (ticket.status === 'used' && event?.requires_checkin_form) {
-    const [{ data: profile }, { data: roleRows }, { data: settings }] = await Promise.all([
+    const [{ data: profile }, { data: roleRows }] = await Promise.all([
       supabase.from('profiles').select('year').eq('id', user.id).maybeSingle(),
       supabase.from('user_roles').select('role').eq('user_id', user.id),
-      supabase.from('checkin_form_settings').select('*').eq('id', 1).maybeSingle(),
     ]);
-    const config = event.checkin_form_override ?? settings;
+    // Per-event config only — the form link differs for each event.
+    const config = event.checkin_form_override;
     if (config) {
       checkinFormUrl = buildCheckinFormUrl(config, {
         eventTitle: event.checkin_form_event_name?.trim() || event.title,

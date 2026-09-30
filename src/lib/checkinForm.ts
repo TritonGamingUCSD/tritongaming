@@ -30,8 +30,16 @@ function lookup(mapping: KvRow[] | undefined, key: string | null | undefined): s
 // attendee/event, or null if the form isn't configured at all (nothing to
 // show). Any field without a mapped entry ID or a matching mapping row is
 // just left blank in the form — the attendee fills that one in themselves
-// rather than the whole form failing to render. `embedded=true` is what
-// lets this load in an <iframe> instead of bouncing to a new tab.
+// rather than the whole form failing to render. Deliberately NOT
+// `embedded=true`: the form opens in its own tab now (an embedded copy can't
+// work — see the AS Form step), and that flag only adds a cookie wall /
+// sign-in bounce to the page.
+//
+// The event question is a pick-list of every club's events on UCSD's form
+// ("Org - Event name"), so `eventTitle` must be that option's exact text to
+// preselect it — the per-event "Event on AS Form" setting holds it. A value
+// that matches no option is simply ignored by Google (left for the attendee
+// to pick).
 export function buildCheckinFormUrl(
   config: CheckinFormConfig,
   opts: { eventTitle: string; year: string | null; roles: AppRole[]; foodItem: string | null }
@@ -50,8 +58,6 @@ export function buildCheckinFormUrl(
   } catch {
     return null;
   }
-
-  url.searchParams.set('embedded', 'true');
 
   if (config.entry_event_name) {
     url.searchParams.set(`entry.${config.entry_event_name}`, opts.eventTitle);

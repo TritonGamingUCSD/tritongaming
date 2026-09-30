@@ -6,14 +6,13 @@ import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from 'recharts';
-import { Search, Plus, Ticket, MapPin, BarChart3, ListChecks, Award, ClipboardList, ExternalLink, Trash2 } from 'lucide-react';
+import { Search, Plus, Ticket, MapPin, BarChart3, ListChecks, Award, ExternalLink, Trash2 } from 'lucide-react';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import type { MonthPoint } from '@/lib/monthBuckets';
 import type { EventTicketStat } from './getEventsData';
 import { usePortalTabSync } from '@/lib/usePortalTabSync';
 import EventCheckinsModal from './EventCheckinsModal';
 import DeleteEventModal from './DeleteEventModal';
-import CheckinFormSettingsPanel, { type CheckinFormSettings } from './CheckinFormSettingsPanel';
 import styles from './events.module.css';
 import chartStyles from '../admin/stats/stats.module.css';
 
@@ -36,8 +35,8 @@ interface EventRow {
 }
 
 type StatusFilter = 'all' | 'upcoming' | 'past' | 'draft';
-type Tab = 'manage' | 'analytics' | 'checkin-form';
-const VALID_TABS: Tab[] = ['manage', 'analytics', 'checkin-form'];
+type Tab = 'manage' | 'analytics';
+const VALID_TABS: Tab[] = ['manage', 'analytics'];
 
 const FILTERS: { key: StatusFilter; label: string }[] = [
   { key: 'all', label: 'All' },
@@ -65,7 +64,6 @@ interface Props {
   // delete_events (admin-only) — separate from canEdit, which lead+ hold.
   canDelete?: boolean;
   initialTab?: string;
-  checkinFormSettings?: CheckinFormSettings;
 }
 
 // Shared between the standalone /portal/events page and the portal hub's
@@ -73,7 +71,7 @@ interface Props {
 // component — search + status filter are pure UI state over data that's
 // already fully fetched (all events + their ticket counts come in as
 // props), so filtering is instant with no round trip.
-export default function EventsSectionContent({ events, eventsPerMonth, ticketsPerMonth, eventStats, canEdit, canManagePoints, canDelete = false, initialTab, checkinFormSettings }: Props) {
+export default function EventsSectionContent({ events, eventsPerMonth, ticketsPerMonth, eventStats, canEdit, canManagePoints, canDelete = false, initialTab }: Props) {
   const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'manage');
   const syncUrl = usePortalTabSync('events');
   function selectTab(t: Tab) {
@@ -125,14 +123,7 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
           <button type="button" role="tab" aria-selected={tab === 'analytics'} className={`${styles.tab} ${tab === 'analytics' ? styles.tabActive : ''}`} onClick={() => selectTab('analytics')}>
             <BarChart3 size={13} strokeWidth={1.5} aria-hidden="true" /> Analytics
           </button>
-          <button type="button" role="tab" aria-selected={tab === 'checkin-form'} className={`${styles.tab} ${tab === 'checkin-form' ? styles.tabActive : ''}`} onClick={() => selectTab('checkin-form')}>
-            <ClipboardList size={13} strokeWidth={1.5} aria-hidden="true" /> Check-In Form
-          </button>
         </div>
-      )}
-
-      {tab === 'checkin-form' && canEdit && checkinFormSettings && (
-        <CheckinFormSettingsPanel initial={checkinFormSettings} />
       )}
 
       {tab === 'analytics' && canEdit && (

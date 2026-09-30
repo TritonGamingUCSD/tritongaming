@@ -6,7 +6,7 @@ import { utcToPacificDatetimeLocal } from '@/lib/timezone';
 import NewEventClient from './NewEventClient';
 import { EMPTY_EVENT_FORM, type EventFormValues } from '../EventForm';
 import { EMPTY_CHECKIN_FORM_CONFIG } from '../CheckinFormFieldsEditor';
-import { getCheckinFormSettings } from '../getEventsData';
+import { getCheckinFormSeed } from '../getEventsData';
 import type { SocialEmbed } from '@/types/database';
 
 export const metadata = { title: 'Create Event' };
@@ -24,9 +24,9 @@ export default async function NewEventPage({ searchParams }: Props) {
 
   const { from } = await searchParams;
   const supabase = await createClient();
-  const [{ data: divisions }, defaultCheckinFormSettings] = await Promise.all([
+  const [{ data: divisions }, seedCheckinFormConfig] = await Promise.all([
     supabase.from('divisions').select('id, name').order('name'),
-    getCheckinFormSettings(),
+    getCheckinFormSeed(),
   ]);
 
   let initial = EMPTY_EVENT_FORM;
@@ -53,13 +53,20 @@ export default async function NewEventPage({ searchParams }: Props) {
         audience: source.audience,
         social_embeds: (source.social_embeds as SocialEmbed[]) ?? [],
         division_id: source.division_id ?? '',
-        // A recurring event (weekly social, etc.) almost always needs the
-        // same UCSD form answer as last time, unlike the post-event fields
-        // below — copied rather than reset.
+        // The AS Form link and the event's entry on it are specific to the
+        // original event (UCSD makes a new form/entry per event), so those
+        // are cleared — only the answer mappings (year/affiliation) carry
+        // over, which rarely change. Paste the new link and they re-detect.
         requires_checkin_form: source.requires_checkin_form ?? false,
         checkin_food_item: source.checkin_food_item ?? '',
-        checkin_form_event_name: source.checkin_form_event_name ?? '',
-        checkin_form_override: source.checkin_form_override ? { ...EMPTY_CHECKIN_FORM_CONFIG, ...source.checkin_form_override } : null,
+        checkin_form_event_name: '',
+        checkin_form_override: source.checkin_form_override
+          ? {
+              ...EMPTY_CHECKIN_FORM_CONFIG,
+              year_mapping: source.checkin_form_override.year_mapping ?? [],
+              affiliation_mapping: source.checkin_form_override.affiliation_mapping ?? [],
+            }
+          : null,
         // Deliberately NOT copied: slug (would collide), is_published (a
         // duplicate starts as an unpublished draft to review first),
         // photo_albums/post_event_info (post-event recap fields — the
@@ -69,5 +76,5 @@ export default async function NewEventPage({ searchParams }: Props) {
     }
   }
 
-  return <NewEventClient divisions={divisions ?? []} initial={initial} defaultCheckinFormSettings={defaultCheckinFormSettings} />;
+  return <NewEventClient divisions={divisions ?? []} initial={initial} seedCheckinFormConfig={seedCheckinFormConfig} />;
 }

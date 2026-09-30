@@ -12,12 +12,12 @@ export default function EditEventClient({
   eventId,
   initial,
   divisions,
-  defaultCheckinFormSettings,
+  seedCheckinFormConfig,
 }: {
   eventId: string;
   initial: EventFormValues;
   divisions: { id: string; name: string }[];
-  defaultCheckinFormSettings?: CheckinFormConfigValue | null;
+  seedCheckinFormConfig?: CheckinFormConfigValue | null;
 }) {
   const router = useRouter();
 
@@ -71,7 +71,7 @@ export default function EditEventClient({
       submitLabel="Save Changes"
       onSubmit={handleUpdate}
       divisions={divisions}
-      defaultCheckinFormSettings={defaultCheckinFormSettings}
+      seedCheckinFormConfig={seedCheckinFormConfig}
     />
   );
 }

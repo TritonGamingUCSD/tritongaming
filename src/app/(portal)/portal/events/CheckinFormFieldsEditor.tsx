@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import type { AppRole } from '@/types/database';
 import styles from './new/newevent.module.css';
@@ -64,13 +64,17 @@ function guessAssignment(title: string): AssignableField | null {
 // real fixed list to pick from rather than retyping a value that has to
 // match exactly or the mapping silently does nothing.
 function MappingField({
-  label, hint, keyOptions, keyPlaceholder, valuePlaceholder, rows, onChange, staleRows,
+  label, hint, keyOptions, keyPlaceholder, valuePlaceholder, valueOptions, rows, onChange, staleRows,
 }: {
   label: string;
   hint: string;
   keyOptions?: string[];
   keyPlaceholder: string;
   valuePlaceholder: string;
+  // The form question's actual choices, once the form's been read — turns the
+  // right column into a dropdown of them so the option text is picked, never
+  // typed (a one-character mismatch silently stops the prefill).
+  valueOptions?: string[] | null;
   rows: MappingRow[];
   onChange: (rows: MappingRow[]) => void;
   // Per-row "this option text isn't on the live form anymore" flag — see
@@ -101,12 +105,26 @@ function MappingField({
                   onChange={(e) => { const n = [...rows]; n[i] = { ...n[i], value: e.target.value }; onChange(n); }}
                 />
               )}
-              <input
-                className={styles.input}
-                value={row.label ?? ''}
-                placeholder={valuePlaceholder}
-                onChange={(e) => { const n = [...rows]; n[i] = { ...n[i], label: e.target.value }; onChange(n); }}
-              />
+              {valueOptions && valueOptions.length > 0 ? (
+                <select
+                  className={styles.input}
+                  value={row.label ?? ''}
+                  onChange={(e) => { const n = [...rows]; n[i] = { ...n[i], label: e.target.value }; onChange(n); }}
+                >
+                  <option value="">{valuePlaceholder}</option>
+                  {row.label && !valueOptions.includes(row.label) && (
+                    <option value={row.label}>{row.label} (not on the form)</option>
+                  )}
+                  {valueOptions.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                </select>
+              ) : (
+                <input
+                  className={styles.input}
+                  value={row.label ?? ''}
+                  placeholder={valuePlaceholder}
+                  onChange={(e) => { const n = [...rows]; n[i] = { ...n[i], label: e.target.value }; onChange(n); }}
+                />
+              )}
               <button type="button" className={styles.mappingRemoveBtn} onClick={() => onChange(rows.filter((_, j) => j !== i))} aria-label="Remove">
                 <X size={14} strokeWidth={1.75} />
               </button>
@@ -123,10 +141,9 @@ function MappingField({
   );
 }
 
-// The shared "configure a Google Form" editor — used both for the one
-// site-wide default (CheckinFormSettingsPanel) and a rare per-event
-// override (EventForm), since both are exactly the same shape underneath.
-// The "Detect Questions" button is the whole point of this component: it
+// The "configure this event's Google Form" editor (used in EventForm). The
+// form is read automatically when a link is pasted; the "Detect Questions"
+// button re-reads it on demand. Reading the form is the whole point of this component: it
 // reads the form's own public page (see /api/admin/checkin-form/detect)
 // and lists every question with a plain assignment dropdown, so nobody
 // managing the portal ever has to know what an "entry ID" is or go
@@ -158,6 +175,24 @@ export default function CheckinFormFieldsEditor({ value, onChange }: {
     onChange({ ...value, [field]: v });
   }
 
+  // Reads the form automatically as soon as a link is pasted (or already
+  // saved on this event) — no button press needed. Debounced so typing or
+  // pasting doesn't fire a request per keystroke, and skipped for anything
+  // that doesn't look like a Google Form link yet. The button below stays
+  // as a manual re-read after UCSD edits the form.
+  const lastAutoDetected = useRef('');
+  useEffect(() => {
+    const url = value.form_url.trim();
+    if (!url || url === lastAutoDetected.current || !/^https?:\/\/(docs\.google\.com|forms\.gle)\//i.test(url)) return;
+    const t = setTimeout(() => {
+      lastAutoDetected.current = url;
+      handleDetect();
+    }, 700);
+    return () => clearTimeout(t);
+    // handleDetect is recreated each render; only a URL change should retrigger.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value.form_url]);
+
   async function handleDetect() {
     if (!value.form_url.trim()) return;
     setDetecting(true);
@@ -179,10 +214,13 @@ export default function CheckinFormFieldsEditor({ value, onChange }: {
       // already set, so re-running Detect after manual edits never
       // clobbers a deliberate choice (including one that disagrees with
       // the guess).
+      // A field is also re-guessed when its saved entry ID doesn't exist on
+      // *this* form — the link is per event now, so pasting a different
+      // form's link leaves the previous form's IDs behind.
       let next = value;
       for (const q of detected) {
         const guess = guessAssignment(q.title);
-        if (!guess || next[guess]) continue;
+        if (!guess || (next[guess] && byEntryId.has(next[guess]))) continue;
         next = { ...next, [guess]: q.entryId };
         if (guess === 'entry_academic_year' && q.options && next.year_mapping.length === 0) {
           next = { ...next, year_mapping: q.options.map((opt) => ({ value: '', label: opt })) };
@@ -260,7 +298,7 @@ export default function CheckinFormFieldsEditor({ value, onChange }: {
             {detecting ? 'Reading…' : 'Detect Questions'}
           </button>
         </div>
-        <span className={styles.hint}>Paste the form link and click Detect — no need to find entry IDs yourself.</span>
+        <span className={styles.hint}>Paste this event's form link — the questions are read automatically and matched up for you. Use Detect Questions to re-read it if UCSD edits the form.</span>
       </label>
 
       {detectError && <p className={styles.error}>{detectError}</p>}
@@ -333,10 +371,11 @@ export default function CheckinFormFieldsEditor({ value, onChange }: {
 
       <MappingField
         label="Academic Year → Form Option Text"
-        hint="Our profile's Year value on the left (a fixed list — this doesn't change), the form's exact multiple-choice option text on the right. A year with no row here is just left blank on the form."
+        hint="Our profile's Year value on the left (a fixed list — this doesn't change), the form's option on the right, picked from the form's own list. A year with no row here is just left blank on the form."
         keyOptions={YEAR_OPTIONS}
         keyPlaceholder="Select a year…"
-        valuePlaceholder="Form's exact option text"
+        valuePlaceholder="Pick the form's option…"
+        valueOptions={questions?.find((q) => q.entryId === value.entry_academic_year)?.options}
         rows={value.year_mapping}
         onChange={(rows) => set('year_mapping', rows)}
         staleRows={stale?.yearRows}
@@ -344,10 +383,11 @@ export default function CheckinFormFieldsEditor({ value, onChange }: {
 
       <MappingField
         label="Role → Form Option Text"
-        hint="Our internal role name on the left (a fixed list — this doesn't change), the form's exact option text on the right."
+        hint="Our internal role name on the left (a fixed list — this doesn't change), the form's option on the right, picked from the form's own list."
         keyOptions={ROLE_OPTIONS}
         keyPlaceholder="Select a role…"
-        valuePlaceholder="Form's exact option text"
+        valuePlaceholder="Pick the form's option…"
+        valueOptions={questions?.find((q) => q.entryId === value.entry_affiliation)?.options}
         rows={value.affiliation_mapping}
         onChange={(rows) => set('affiliation_mapping', rows)}
         staleRows={stale?.affiliationRows}

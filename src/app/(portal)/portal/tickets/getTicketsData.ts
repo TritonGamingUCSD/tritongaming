@@ -9,7 +9,7 @@ import type TicketsClient from './TicketsClient';
 export async function getTicketsData(profileId: string, roles: RoleGrant[]) {
   const supabase = await createClient();
 
-  const [{ data: tickets }, { data: upcomingEvents }, { data: profile }, { data: formSettings }] = await Promise.all([
+  const [{ data: tickets }, { data: upcomingEvents }, { data: profile }] = await Promise.all([
     supabase
       .from('tickets')
       .select(`
@@ -26,11 +26,6 @@ export async function getTicketsData(profileId: string, roles: RoleGrant[]) {
       .order('start_date', { ascending: true })
       .limit(6),
     supabase.from('profiles').select('year').eq('id', profileId).maybeSingle(),
-    // Lives in its own table (event-management config, not site content) —
-    // see checkin_form_settings/CheckinFormSettingsPanel.tsx. RLS allows
-    // any signed-in user to read it, since this is what builds *their own*
-    // prefill URL below.
-    supabase.from('checkin_form_settings').select('*').eq('id', 1).maybeSingle(),
   ]);
 
   // Pre-computed here (server-side, ahead of time) rather than fetched at
@@ -50,11 +45,10 @@ export async function getTicketsData(profileId: string, roles: RoleGrant[]) {
       checkin_form_event_name?: string | null;
       checkin_form_override?: CheckinFormConfig | null;
     } | null;
-    // A rare event can use a totally different Google Form (own URL, entry
-    // IDs, mappings) instead of the one shared default — see
-    // checkin_form_override on events. Falls back to the site-wide config
-    // when the event hasn't set one.
-    const config = event?.checkin_form_override ?? formSettings;
+    // The AS Form is configured per event (its own URL, entry IDs and
+    // mappings live in checkin_form_override) — UCSD's form changes from
+    // event to event, so there's no shared site-wide default any more.
+    const config = event?.checkin_form_override ?? null;
     const checkinFormUrl = event?.requires_checkin_form && config
       ? buildCheckinFormUrl(config, {
           eventTitle: event.checkin_form_event_name?.trim() || event.title,

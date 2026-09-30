@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { getUserRoles } from '@/lib/auth';
 import { hasCapability } from '@/lib/capabilities';
 import EventsSectionContent from './EventsSectionContent';
-import { getEventsData, getCheckinFormSettings } from './getEventsData';
+import { getEventsData } from './getEventsData';
 
 export const metadata = { title: 'Event Management' };
 export const dynamic = 'force-dynamic';
@@ -12,10 +12,7 @@ export default async function EventsManagementPage() {
   if (!hasCapability(roles, 'view_events')) redirect('/portal');
 
   const canEdit = hasCapability(roles, 'manage_events');
-  const [{ events, eventsPerMonth, ticketsPerMonth, eventStats }, checkinFormSettings] = await Promise.all([
-    getEventsData(),
-    canEdit ? getCheckinFormSettings() : Promise.resolve(undefined),
-  ]);
+  const { events, eventsPerMonth, ticketsPerMonth, eventStats } = await getEventsData();
 
   return (
     <EventsSectionContent
@@ -26,7 +23,6 @@ export default async function EventsManagementPage() {
       canEdit={canEdit}
       canManagePoints={hasCapability(roles, 'manage_points')}
       canDelete={hasCapability(roles, 'delete_events')}
-      checkinFormSettings={checkinFormSettings}
     />
   );
 }

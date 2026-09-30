@@ -7,10 +7,10 @@ import { pacificDatetimeLocalToUTC } from '@/lib/timezone';
 import EventForm, { EMPTY_EVENT_FORM, type EventFormValues } from '../EventForm';
 import type { CheckinFormConfigValue } from '../CheckinFormFieldsEditor';
 
-export default function NewEventClient({ divisions, initial = EMPTY_EVENT_FORM, defaultCheckinFormSettings }: {
+export default function NewEventClient({ divisions, initial = EMPTY_EVENT_FORM, seedCheckinFormConfig }: {
   divisions: { id: string; name: string }[];
   initial?: EventFormValues;
-  defaultCheckinFormSettings?: CheckinFormConfigValue | null;
+  seedCheckinFormConfig?: CheckinFormConfigValue | null;
 }) {
   const router = useRouter();
 
@@ -62,7 +62,7 @@ export default function NewEventClient({ divisions, initial = EMPTY_EVENT_FORM, 
       submitLabel="Create Event"
       onSubmit={handleCreate}
       divisions={divisions}
-      defaultCheckinFormSettings={defaultCheckinFormSettings}
+      seedCheckinFormConfig={seedCheckinFormConfig}
     />
   );
 }

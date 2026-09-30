@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ExternalLink } from 'lucide-react';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
@@ -34,9 +34,9 @@ export interface EventFormValues {
   requires_checkin_form: boolean;
   checkin_food_item: string;
   checkin_form_event_name: string;
-  // null (the common case) = use the site-wide default form (Events →
-  // Check-In Form tab). A rare event needing a totally different Google
-  // Form gets its own full config here instead — see CheckinFormFieldsEditor.
+  // This event's own AS Form config (link, question IDs, answer mappings) —
+  // see CheckinFormFieldsEditor. null only while "Requires AS Form" is off;
+  // there's no site-wide default any more, the form differs per event.
   checkin_form_override: CheckinFormConfigValue | null;
 }
 
@@ -123,16 +123,17 @@ export default function EventForm({
   submitLabel,
   onSubmit,
   divisions,
-  defaultCheckinFormSettings,
+  seedCheckinFormConfig,
 }: {
   heading: string;
   initial: EventFormValues;
   submitLabel: string;
   onSubmit: (values: EventFormValues) => Promise<string | void>;
   divisions: { id: string; name: string }[];
-  // The site-wide default (Events → Check-In Form) — used to build the
-  // preview link below when this event isn't using its own override.
-  defaultCheckinFormSettings?: CheckinFormConfigValue | null;
+  // Starting point for a new event's AS Form config: the most recent event's
+  // answer mappings, with the link/question IDs blank (see
+  // getCheckinFormSeed). The form link is per event — there's no site-wide one.
+  seedCheckinFormConfig?: CheckinFormConfigValue | null;
 }) {
   const [form, setForm] = useState<EventFormValues>(initial);
   const [saving, setSaving] = useState(false);
@@ -142,12 +143,18 @@ export default function EventForm({
     setForm((f) => ({ ...f, [field]: value }));
   }
 
-  // A rare per-event override (if this event's using one) always wins over
-  // the site-wide default — same precedence getTicketsData uses live. Uses
-  // a representative sample year/role, not a real attendee's, since this
-  // is just "does the mapping actually work," the same thing the settings
-  // panel's own "Test It" section previews.
-  const checkinPreviewConfig = form.checkin_form_override ?? defaultCheckinFormSettings ?? null;
+  // Turning "Requires AS Form" on starts this event's own config from the
+  // seed (or empty) so the editor always has something to edit.
+  useEffect(() => {
+    if (form.requires_checkin_form && form.checkin_form_override === null) {
+      setForm((f) => ({ ...f, checkin_form_override: seedCheckinFormConfig ?? EMPTY_CHECKIN_FORM_CONFIG }));
+    }
+  }, [form.requires_checkin_form, form.checkin_form_override, seedCheckinFormConfig]);
+
+  // Preview uses this event's own config only (same as what attendees get —
+  // see getTicketsData), with a representative sample year/role rather than
+  // a real attendee's, since it's just "does the mapping actually work".
+  const checkinPreviewConfig = form.checkin_form_override ?? null;
   const checkinPreviewUrl = form.requires_checkin_form && checkinPreviewConfig
     ? buildCheckinFormUrl(checkinPreviewConfig, {
         eventTitle: form.checkin_form_event_name.trim() || form.title || 'Test Event',
@@ -157,8 +164,77 @@ export default function EventForm({
       })
     : null;
 
+  // The AS Form's event question is a pick-list of every club's events
+  // ("Org - Event name"). Read the live list from the form itself so an admin
+  // picks the exact option instead of typing it — a one-character mismatch
+  // would silently stop the prefill. Null until loaded / if it can't be read
+  // (then the plain text box below is the fallback).
+  const asFormUrl = checkinPreviewConfig?.form_url?.trim() || '';
+  const asFormEventEntry = checkinPreviewConfig?.entry_event_name || '';
+  const [asFormEventOptions, setAsFormEventOptions] = useState<string[] | null>(null);
+  useEffect(() => {
+    setAsFormEventOptions(null);
+    if (!form.requires_checkin_form || !asFormUrl || !asFormEventEntry) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/checkin-form/detect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ form_url: asFormUrl }),
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const q = (data.questions as { entryId: string; options: string[] | null }[]).find((x) => x.entryId === asFormEventEntry);
+        if (!cancelled && q?.options?.length) setAsFormEventOptions(q.options);
+      } catch {
+        // fall back to the text box
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [form.requires_checkin_form, asFormUrl, asFormEventEntry]);
+
+  // Options from our own org float to the top; best guess at this event's
+  // entry is the one sharing the most words with its title.
+  const { ownOptions, otherOptions, suggestion } = useMemo(() => {
+    if (!asFormEventOptions) return { ownOptions: [] as string[], otherOptions: [] as string[], suggestion: null as string | null };
+    const isOwn = (o: string) => o.toLowerCase().startsWith('triton gaming');
+    const own = asFormEventOptions.filter(isOwn);
+    const other = asFormEventOptions.filter((o) => !isOwn(o));
+    const words = (s: string) => new Set(s.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter((w) => w.length > 1 && w !== 'triton' && w !== 'gaming'));
+    const titleWords = words(form.title);
+    let best: string | null = null;
+    let bestScore = 0;
+    for (const o of own) {
+      const ow = words(o);
+      let score = 0;
+      titleWords.forEach((w) => { if (ow.has(w)) score++; });
+      if (score > bestScore) { bestScore = score; best = o; }
+    }
+    // A single Triton Gaming entry on the form is an obvious match even with
+    // no shared words.
+    const pick = bestScore > 0 ? best : own.length === 1 ? own[0] : null;
+    return { ownOptions: own, otherOptions: other, suggestion: pick };
+  }, [asFormEventOptions, form.title]);
+  const eventNameOnForm = form.checkin_form_event_name.trim();
+  const eventNameMissing = !!asFormEventOptions && !!eventNameOnForm && !asFormEventOptions.includes(eventNameOnForm);
+
+  // Once the form's options load, pre-select the best match for an event
+  // that has none yet — still changeable in the dropdown. (Never overwrites
+  // a value that's already set.)
+  const autoPickedFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (!suggestion || autoPickedFor.current === suggestion) return;
+    autoPickedFor.current = suggestion; // once per suggestion, so clearing it stays cleared
+    setForm((f) => (f.checkin_form_event_name.trim() ? f : { ...f, checkin_form_event_name: suggestion }));
+  }, [suggestion]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (form.requires_checkin_form && !form.checkin_form_override?.form_url?.trim()) {
+      setError("This event requires the AS Form — paste its form link first (or turn off “Requires AS Form”).");
+      return;
+    }
     setSaving(true);
     setError('');
     const err = await onSubmit(form);
@@ -264,15 +340,56 @@ export default function EventForm({
           <span>Requires AS Form</span>
         </label>
         <span className={styles.hint} style={{ marginTop: '-0.75rem' }}>
-          Pops up (pre-filled) on the attendee's own phone the instant an officer checks them in — set up the form itself once under Events → Check-In Form.
+          Shows a pre-filled AS Form button on the attendee's own phone the moment an officer checks them in. UCSD
+          makes a new form for each event, so paste this event's link below.
         </span>
 
         {form.requires_checkin_form && (
           <>
+            <div className={styles.sectionDivider}>
+              <span className={styles.sectionLabel}>This Event's AS Form</span>
+              <CheckinFormFieldsEditor
+                value={form.checkin_form_override ?? seedCheckinFormConfig ?? EMPTY_CHECKIN_FORM_CONFIG}
+                onChange={(v) => setForm((f) => ({ ...f, checkin_form_override: v }))}
+              />
+            </div>
+
             <label className={styles.field}>
-              <span className={styles.label}>Event Name for AS Form</span>
-              <input className={styles.input} value={form.checkin_form_event_name} onChange={(e) => set('checkin_form_event_name', e.target.value)} placeholder={form.title || 'Defaults to the event title above'} />
-              <span className={styles.hint}>Pre-fills the AS Form's "event name" question. Only needed if UCSD's own name for this event differs from the title above — leave blank to just use the title.</span>
+              <span className={styles.label}>Event on the AS Form</span>
+              {asFormEventOptions ? (
+                <select className={styles.input} value={form.checkin_form_event_name} onChange={(e) => set('checkin_form_event_name', e.target.value)}>
+                  <option value="">— Pick this event from the AS Form's list —</option>
+                  {eventNameMissing && <option value={form.checkin_form_event_name}>{form.checkin_form_event_name} (not on the form)</option>}
+                  {ownOptions.length > 0 && (
+                    <optgroup label="Triton Gaming">
+                      {ownOptions.map((o) => <option key={o} value={o}>{o}</option>)}
+                    </optgroup>
+                  )}
+                  {otherOptions.length > 0 && (
+                    <optgroup label="Other clubs' events">
+                      {otherOptions.map((o) => <option key={o} value={o}>{o}</option>)}
+                    </optgroup>
+                  )}
+                </select>
+              ) : (
+                <input className={styles.input} value={form.checkin_form_event_name} onChange={(e) => set('checkin_form_event_name', e.target.value)} placeholder="Exactly as listed on the AS Form, e.g. Triton Gaming - Fall GBM 2026" />
+              )}
+              {suggestion && !eventNameOnForm && (
+                <button type="button" className={styles.previewBtn} style={{ marginTop: '0.4rem' }} onClick={() => set('checkin_form_event_name', suggestion)}>
+                  Use “{suggestion}”
+                </button>
+              )}
+              {eventNameMissing && (
+                <span className={styles.hint} style={{ color: '#f59e0b' }}>
+                  ⚠ That option isn't on the AS Form right now — UCSD may not have added this event yet. Attendees would have to pick it themselves.
+                </span>
+              )}
+              {asFormEventOptions && !eventNameOnForm && !suggestion && (
+                <span className={styles.hint} style={{ color: '#f59e0b' }}>
+                  ⚠ No Triton Gaming event on the form looks like this one. If UCSD hasn't added it yet, it can't be pre-selected.
+                </span>
+              )}
+              <span className={styles.hint}>The AS Form now makes people pick their event from a list of every club's events. Choosing it here pre-selects it for attendees. Must be the exact option text — the dropdown is read live from the form.</span>
             </label>
 
             <label className={styles.field}>
@@ -286,31 +403,7 @@ export default function EventForm({
                 <ExternalLink size={14} strokeWidth={1.75} aria-hidden="true" /> Preview AS Form
               </a>
             ) : (
-              <span className={styles.hint}>Set up the form's URL under Events → Check-In Form to enable a preview here.</span>
-            )}
-
-            <label className={styles.checkbox}>
-              <input
-                type="checkbox"
-                checked={form.checkin_form_override !== null}
-                onChange={(e) => setForm((f) => ({ ...f, checkin_form_override: e.target.checked ? EMPTY_CHECKIN_FORM_CONFIG : null }))}
-              />
-              <span>Use a different Google Form for this event</span>
-            </label>
-            <span className={styles.hint} style={{ marginTop: '-0.75rem' }}>
-              Rare — only turn this on if this specific event needs a completely different form than the shared default.
-              Once on, this event stops using the shared default entirely — if you leave the URL below blank, no form
-              shows at all for this event until you fill it in.
-            </span>
-
-            {form.checkin_form_override && (
-              <div className={styles.sectionDivider}>
-                <span className={styles.sectionLabel}>This Event's Own Form</span>
-                <CheckinFormFieldsEditor
-                  value={form.checkin_form_override}
-                  onChange={(v) => setForm((f) => ({ ...f, checkin_form_override: v }))}
-                />
-              </div>
+              <span className={styles.hint}>Paste this event's form link above to enable a preview.</span>
             )}
           </>
         )}

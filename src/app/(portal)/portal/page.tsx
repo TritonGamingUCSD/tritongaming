@@ -28,7 +28,7 @@ import { getMyBattlepassData } from './battlepass/getMyBattlepassData';
 import { BATTLEPASS_ROLES, getOfficerTier, fetchOfficerTiers } from '@/lib/officerTiers';
 import { getTier, fetchTiers } from '@/lib/tiers';
 import EventsSectionContent from './events/EventsSectionContent';
-import { getEventsData, getCheckinFormSettings } from './events/getEventsData';
+import { getEventsData } from './events/getEventsData';
 import MembersSectionContent from './members/MembersSectionContent';
 import { getMembersData } from './members/getMembersData';
 import { getDivisionsData } from './divisions/getDivisionsData';
@@ -107,12 +107,11 @@ export default async function PortalDashboard({ searchParams }: Props) {
   // hub then just renders whichever of these were fetched; nothing is
   // re-fetched client-side when a card opens.
   const supabase = await createClient();
-  const [ticketsData, checkinData, eventsData, checkinFormSettings, membersData, divisionsData, myDivisions, contentData, adminData, statsData, docsData, roleHistoryData, photoAlbumsData, pointsData, battlepassData, memberTiers, officerTiers] =
+  const [ticketsData, checkinData, eventsData, membersData, divisionsData, myDivisions, contentData, adminData, statsData, docsData, roleHistoryData, photoAlbumsData, pointsData, battlepassData, memberTiers, officerTiers] =
     await Promise.all([
       getTicketsData(profile.id, roles),
       canCheckin ? getCheckinData() : Promise.resolve(null),
       canViewEvents ? getEventsData() : Promise.resolve(null),
-      canManageEvents ? getCheckinFormSettings() : Promise.resolve(undefined),
       canViewMembers ? getMembersData() : Promise.resolve(null),
       canManageDivisions ? getDivisionsData() : Promise.resolve(null),
       isDivisionLead ? getMyDivisionsData(roles) : Promise.resolve(null),
@@ -236,7 +235,6 @@ export default async function PortalDashboard({ searchParams }: Props) {
           canDelete={hasCapability(roles, 'delete_events')}
           canManagePoints={canManagePoints}
           initialTab={requestedTab}
-          checkinFormSettings={checkinFormSettings ?? undefined}
         />
       ),
     }] : []),
