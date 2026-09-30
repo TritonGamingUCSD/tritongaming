@@ -10,6 +10,7 @@ import { DEFAULT_QR_OPTIONS, type QRCodeOptions } from '@/lib/qrCodeStyling';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import { fetchWithRetry } from '@/lib/fetchWithRetry';
 import { useFormUnlock } from './useFormUnlock';
+import { saveTicketCodes, currentCachedCode, cachedMinutesLeft, clearTicketCodes } from '@/lib/ticketCodeCache';
 import styles from './fullscreenqr.module.css';
 
 // Same TG-branded look as the portal's QR Studio "default" preset (see
@@ -99,8 +100,12 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
       refreshTimeout.current = null;
     }
     try {
-      const res = await fetchWithRetry(`/api/tickets/${ticketId}/qr`);
+      // Top up the offline cache whenever it's running low (see
+      // lib/ticketCodeCache) — the batch rides along on the normal fetch.
+      const wantAhead = cachedMinutesLeft(ticketId) < 45;
+      const res = await fetchWithRetry(`/api/tickets/${ticketId}/qr${wantAhead ? '?ahead=1' : ''}`);
       const data = await res.json();
+      if (res.ok) saveTicketCodes(ticketId, data);
       if (!res.ok) {
         // The /qr endpoint rejects once the ticket's no longer 'active' —
         // exactly what happens the instant staff check someone in. Realtime
@@ -125,6 +130,12 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
         } catch {
           // fall through to the plain error below
         }
+        // Rejected (cancelled/expired ticket, etc.) — never keep showing a
+        // pre-fetched code for a ticket the server says is no longer valid.
+        clearTicketCodes(ticketId);
+        setQrData(null);
+        setCode(null);
+        lastCodeRef.current = null;
         setError(data.error || 'Failed to load code');
         return;
       }
@@ -161,15 +172,71 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
       // "spotty connection" case — nothing about it is permanent, so retry
       // on its own instead of leaving this screen stuck on an error forever
       // until someone thinks to close and reopen it.
-      setError('Network error — retrying…');
-      refreshTimeout.current = setTimeout(fetchCode, 4000);
+      // If we hold a pre-fetched code for right now (see ticketCodeCache),
+      // keep showing a valid QR instead of an error — the scanner accepts it
+      // exactly as if it had just been fetched.
+      const cached = currentCachedCode(ticketId);
+      if (cached) {
+        setError('');
+        setQrData(cached.qr_data);
+        setQrRenderFailed(false);
+        setHasFastPass(cached.has_fast_pass);
+        if (cached.code !== lastCodeRef.current) {
+          lastCodeRef.current = cached.code;
+          setCode(cached.code);
+          setExpiresIn(cached.expires_in);
+          setRotationSeconds(30);
+        }
+        refreshTimeout.current = setTimeout(fetchCode, cached.expires_in * 1000 + 350);
+      } else {
+        setError('Network error — retrying…');
+        refreshTimeout.current = setTimeout(fetchCode, 4000);
+      }
     }
   }, [ticketId, checkedIn]);
 
   useEffect(() => {
+    // Show the pre-fetched code for this window immediately (no spinner, no
+    // waiting on signal), then let the normal fetch confirm/refresh it.
+    const cached = currentCachedCode(ticketId);
+    if (cached && lastCodeRef.current === null) {
+      lastCodeRef.current = cached.code;
+      setQrData(cached.qr_data);
+      setCode(cached.code);
+      setExpiresIn(cached.expires_in);
+      setRotationSeconds(30);
+      setHasFastPass(cached.has_fast_pass);
+    }
     fetchCode();
     return () => { if (refreshTimeout.current) clearTimeout(refreshTimeout.current); };
-  }, [fetchCode]);
+  }, [fetchCode, ticketId]);
+
+  // Keep the phone from dimming/locking while the QR is on screen — someone
+  // waiting in line shouldn't have to unlock again to get scanned. Silently
+  // does nothing where the Wake Lock API isn't supported.
+  useEffect(() => {
+    if (checkedIn) return;
+    let lock: WakeLockSentinel | null = null;
+    let cancelled = false;
+    async function acquire() {
+      try {
+        if (!('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
+        const l = await navigator.wakeLock.request('screen');
+        if (cancelled) { l.release().catch(() => {}); return; }
+        lock = l;
+      } catch {
+        // denied (e.g. low battery mode) — not critical
+      }
+    }
+    acquire();
+    const onVisible = () => { if (document.visibilityState === 'visible') acquire(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', onVisible);
+      lock?.release().catch(() => {});
+    };
+  }, [checkedIn]);
 
   // Mobile browsers throttle or fully pause setTimeout while a tab is
   // backgrounded (screen lock, switching apps) — exactly what happens while
@@ -199,6 +266,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   function handleCheckedIn(checkedInAt: string) {
     if (handledCheckIn.current) return;
     handledCheckIn.current = true;
+    clearTicketCodes(ticketId);
     setCheckedIn(true);
     onCheckedInRef.current?.(checkedInAt);
   }

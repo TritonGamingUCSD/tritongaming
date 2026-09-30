@@ -138,29 +138,6 @@ export default function NavBar() {
 
   return (
     <>
-      {/* Mobile-only, own floating pill on the opposite edge from the
-          logo/hamburger pill — living inside that pill (see git history)
-          left too little breathing room around the logo and hamburger, so
-          this is a fully separate control instead of a third thing
-          squeezed between them. Desktop already has this via authButton
-          inside .desktopNav, so this is hidden there (see .mobileAuthFab's
-          breakpoint). */}
-      {!authLoading && (
-        <Link
-          href={profile ? '/portal' : loginHref}
-          className={`${styles.mobileAuthFab} ${!profile ? styles.mobileAuthFabWide : ''}`}
-          style={{ transform: `translateY(-${offset}px)` }}
-          aria-label={profile ? 'Member portal' : 'Sign in to the member portal'}
-        >
-          {profile && navAvatarUrl ? (
-            <Image src={navAvatarUrl} alt="" width={26} height={26} className={styles.authAvatar} unoptimized referrerPolicy="no-referrer" />
-          ) : profile ? (
-            <div className={styles.authAvatarFallback}>{(profile.display_name || 'U')[0].toUpperCase()}</div>
-          ) : (
-            <>PORTAL</>
-          )}
-        </Link>
-      )}
       <nav
         className={`${styles.navbar}${scrolled ? ` ${styles.scrolled}` : ''}`}
         style={{ transform: `translateY(-${offset}px)` }}
@@ -206,6 +183,27 @@ export default function NavBar() {
             <span />
           </button>
         </div>
+
+        {/* Mobile-only portal/login button. Lives *inside* the nav so it
+            shares the toggle's exact scroll-hide transform and transition —
+            as two separate fixed elements each with its own transform they
+            could drift out of sync while scrolling. Hidden on desktop, which
+            has this via authButton inside .desktopNav. */}
+        {!authLoading && (
+          <Link
+            href={profile ? '/portal' : loginHref}
+            className={`${styles.mobileAuthFab} ${!profile ? styles.mobileAuthFabWide : ''}`}
+            aria-label={profile ? 'Member portal' : 'Sign in to the member portal'}
+          >
+            {profile && navAvatarUrl ? (
+              <Image src={navAvatarUrl} alt="" width={26} height={26} className={styles.authAvatar} unoptimized referrerPolicy="no-referrer" />
+            ) : profile ? (
+              <div className={styles.authAvatarFallback}>{(profile.display_name || 'U')[0].toUpperCase()}</div>
+            ) : (
+              <>PORTAL</>
+            )}
+          </Link>
+        )}
       </nav>
 
       {/* Mobile menu */}

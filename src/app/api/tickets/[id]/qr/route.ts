@@ -4,6 +4,9 @@ import { rotatingCode, currentWindow, secondsUntilNextWindow, ROTATION_SECONDS }
 
 export const runtime = 'nodejs';
 
+// 90 minutes of 30s windows.
+const AHEAD_WINDOWS = 180;
+
 interface Params {
   params: Promise<{ id: string }>;
 }
@@ -70,5 +73,24 @@ export async function GET(request: Request, { params }: Params) {
   // from "a 3-second window," and would replay its entire visual countdown
   // compressed into just those 3 seconds — which is exactly the "suddenly
   // accelerates" glitch reported, especially right after first opening.
-  return NextResponse.json({ code, qr_data: qrData, expires_in: secondsUntilNextWindow(), rotation_seconds: ROTATION_SECONDS, has_fast_pass: hasFastPass });
+  // Optional look-ahead batch (?ahead=1): the codes for each upcoming window,
+  // so the phone can keep showing a valid QR through a dead-signal stretch
+  // (venue Wi-Fi/cell) and open the ticket instantly. Each code is still only
+  // *accepted* during its own 30s window (see api/tickets/checkin), and the
+  // ticket can only be checked in once, so handing the owner the next stretch
+  // of codes doesn't let a screenshot from earlier work later. Only the owner
+  // ever reaches this point (checked above).
+  const wantsAhead = new URL(request.url).searchParams.get('ahead') === '1';
+  const w0 = currentWindow();
+  const upcoming = wantsAhead
+    ? Array.from({ length: AHEAD_WINDOWS }, (_, i) => {
+        const c = rotatingCode(ticket.ticket_code, w0 + i);
+        return { w: w0 + i, code: c, qr_data: event?.slug ? `${event.slug}:${c}` : c };
+      })
+    : undefined;
+
+  return NextResponse.json({
+    code, qr_data: qrData, expires_in: secondsUntilNextWindow(), rotation_seconds: ROTATION_SECONDS, has_fast_pass: hasFastPass,
+    ...(upcoming ? { upcoming, server_now_ms: Date.now() } : {}),
+  });
 }

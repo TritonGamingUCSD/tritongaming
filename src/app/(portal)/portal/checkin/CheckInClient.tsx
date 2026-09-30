@@ -20,6 +20,8 @@ interface ScanResult {
   user_name: string;
   checked_in_at?: string;
   ticket_id?: string;
+  requires_form?: boolean;
+  form_completed?: boolean;
   points_awarded?: number;
   lifetime_points?: number;
   tier?: string;
@@ -431,6 +433,9 @@ export default function CheckInClient({ events, onCheckedIn, tiers }: CheckInCli
                 <span className={styles.resultIcon}><CircleCheck size={40} strokeWidth={1.5} aria-hidden="true" /></span>
                 <div className={styles.resultName}>{result.user_name}</div>
                 <div className={styles.resultDetail}>Checked in!</div>
+                {result.requires_form && (
+                  <div className={styles.resultFormBadge}>AS Form needed — send them to fill it out</div>
+                )}
                 {!!result.points_awarded && (
                   <div className={styles.resultPoints}>
                     <span className={styles.resultPointsGain}>+{result.points_awarded} pts</span>
@@ -454,6 +459,11 @@ export default function CheckInClient({ events, onCheckedIn, tiers }: CheckInCli
                 {result.status === 'used' && result.checked_in_at && (
                   <div className={styles.resultDetail}>
                     at {new Date(result.checked_in_at).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' })}
+                  </div>
+                )}
+                {result.status === 'used' && result.requires_form && (
+                  <div className={result.form_completed ? styles.resultFormDone : styles.resultFormBadge}>
+                    {result.form_completed ? 'AS Form: marked done' : 'AS Form: not done yet'}
                   </div>
                 )}
               </>

@@ -9,6 +9,7 @@ import CheckinFormModal from './CheckinFormModal';
 import AddToCalendarButton from '@/components/AddToCalendarButton/AddToCalendarButton';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import { isCheckinWindowOpen } from '@/lib/checkinWindow';
+import { saveTicketCodes, cachedMinutesLeft } from '@/lib/ticketCodeCache';
 import styles from './tickets.module.css';
 
 interface TicketData {
@@ -73,6 +74,36 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
   const router = useRouter();
   const searchParams = useSearchParams();
   const [tickets, setTickets] = useState(initialTickets);
+
+  // Quietly preload the next stretch of QR codes for any in-person ticket
+  // whose event is starting soon or underway (see lib/ticketCodeCache) — so
+  // the ticket opens instantly and still shows a valid code if signal drops
+  // at the venue. Runs on load and again whenever the phone regains signal
+  // or the tab comes back to the foreground.
+  useEffect(() => {
+    function preload() {
+      if (document.visibilityState !== 'visible' || !navigator.onLine) return;
+      const nowMs = Date.now();
+      tickets.forEach((t) => {
+        if (t.status !== 'active' || !t.event || t.event.is_online) return;
+        const start = new Date(t.event.start_date).getTime();
+        const end = t.event.end_date ? new Date(t.event.end_date).getTime() : start + 24 * 60 * 60 * 1000;
+        if (start - nowMs > 3 * 60 * 60 * 1000 || end < nowMs) return;
+        if (cachedMinutesLeft(t.id) >= 45) return;
+        fetch(`/api/tickets/${t.id}/qr?ahead=1`)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((data) => { if (data) saveTicketCodes(t.id, data); })
+          .catch(() => {});
+      });
+    }
+    preload();
+    document.addEventListener('visibilitychange', preload);
+    window.addEventListener('online', preload);
+    return () => {
+      document.removeEventListener('visibilitychange', preload);
+      window.removeEventListener('online', preload);
+    };
+  }, [tickets]);
   const [qrTicket, setQrTicket] = useState<TicketData | null>(null);
   const [purchasing, setPurchasing] = useState<string | null>(null);
   const [error, setError] = useState('');

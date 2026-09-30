@@ -39,9 +39,9 @@ export async function POST(request: Request) {
   const { data: allCandidates, error: candidatesError } = await supabase
     .from('tickets')
     .select(`
-      id, ticket_code, status, checked_in_at, event_id, user_id,
+      id, ticket_code, status, checked_in_at, checkin_form_completed_at, event_id, user_id,
       user:profiles!tickets_user_id_fkey(display_name),
-      event:events(title, points_value, start_date, end_date)
+      event:events(title, points_value, start_date, end_date, requires_checkin_form)
     `);
 
   if (candidatesError) {
@@ -84,6 +84,10 @@ export async function POST(request: Request) {
       event_title: eventData?.title || '',
       user_name: userData?.display_name || 'Unknown',
       checked_in_at: ticket.checked_in_at,
+      // Lets the scanner tell staff whether this (already checked-in)
+      // person still owes the AS Form.
+      requires_form: !!eventData?.requires_checkin_form,
+      form_completed: !!ticket.checkin_form_completed_at,
     });
   }
 
@@ -124,6 +128,10 @@ export async function POST(request: Request) {
     event_title: eventData?.title || '',
     user_name: userData?.display_name || 'Unknown',
     ticket_id: ticket.id,
+    // Just checked in, so the form can't be done yet — staff use this to
+    // point the attendee to the AS Form step before they head in.
+    requires_form: !!eventData?.requires_checkin_form,
+    form_completed: false,
     points_awarded: eventData?.points_value ?? 0,
     lifetime_points: lifetimeEarned,
     tier: getTier(lifetimeEarned, tiers).name,

@@ -117,10 +117,10 @@
    as part of the same header system, just a second, separate control. */
 .mobileAuthFab {
   display: none;
-  position: fixed;
-  top: max(0.85rem, env(safe-area-inset-top));
-  right: 12px;
-  z-index: 1000;
+  /* Positioned inside .navbar (mobile), which owns the scroll-hide transform. */
+  position: absolute;
+  top: 0;
+  right: 0;
   align-items: center;
   justify-content: center;
   /* Matches .navbar's actual rendered height at this breakpoint (logo
@@ -138,7 +138,7 @@
   backdrop-filter: blur(22px) saturate(130%);
   -webkit-backdrop-filter: blur(22px) saturate(130%);
   color: var(--white);
-  transition: transform 0.25s ease, background 0.35s ease, border-color 0.35s ease;
+  transition: background 0.35s ease, border-color 0.35s ease;
   flex-shrink: 0;
 }
 
@@ -169,7 +169,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  /* Keep the list clear of the floating header row (toggle / logo /
+     portal, ~52px tall plus its top offset) — centered with no padding it
+     ran up underneath the logo once the list grew a HOME entry. `safe`
+     centering falls back to top-aligned + scrolling on short screens. */
+  justify-content: safe center;
+  padding: calc(max(0.85rem, env(safe-area-inset-top)) + 52px + 1rem) 0 2rem;
+  overflow-y: auto;
   pointer-events: none;
   opacity: 0;
   transform: translateY(-12px);
@@ -210,7 +216,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2rem;
+  gap: clamp(0.75rem, 3.2vh, 2rem);
 }
 
 .mobileNavLink {
