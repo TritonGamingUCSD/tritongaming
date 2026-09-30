@@ -8,7 +8,7 @@ import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
 import SocialEmbedsField from '@/components/SocialEmbedsField/SocialEmbedsField';
 import PhotoAlbumsField from '@/components/PhotoAlbumsField/PhotoAlbumsField';
 import { buildCheckinFormUrl } from '@/lib/checkinForm';
-import type { SocialEmbed, PhotoAlbumEntry } from '@/types/database';
+import type { SocialEmbed, PhotoAlbumEntry, AppRole } from '@/types/database';
 import CheckinFormFieldsEditor, { EMPTY_CHECKIN_FORM_CONFIG, type CheckinFormConfigValue } from './CheckinFormFieldsEditor';
 import styles from './new/newevent.module.css';
 
@@ -124,6 +124,7 @@ export default function EventForm({
   onSubmit,
   divisions,
   seedCheckinFormConfig,
+  previewViewer,
 }: {
   heading: string;
   initial: EventFormValues;
@@ -134,6 +135,9 @@ export default function EventForm({
   // answer mappings, with the link/question IDs blank (see
   // getCheckinFormSeed). The form link is per event — there's no site-wide one.
   seedCheckinFormConfig?: CheckinFormConfigValue | null;
+  // The signed-in person's own year/roles, so "Preview AS Form" is what
+  // *they'd* see as an attendee (see getFormPreviewViewer).
+  previewViewer?: { year: string | null; roles: AppRole[] };
 }) {
   const [form, setForm] = useState<EventFormValues>(initial);
   const [saving, setSaving] = useState(false);
@@ -158,8 +162,8 @@ export default function EventForm({
   const checkinPreviewUrl = form.requires_checkin_form && checkinPreviewConfig
     ? buildCheckinFormUrl(checkinPreviewConfig, {
         eventTitle: form.checkin_form_event_name.trim() || form.title || 'Test Event',
-        year: '1st Year',
-        roles: ['ucsd'],
+        year: previewViewer?.year ?? null,
+        roles: previewViewer?.roles ?? [],
         foodItem: form.checkin_food_item.trim() || null,
       })
     : null;

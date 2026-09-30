@@ -6,7 +6,7 @@ import { utcToPacificDatetimeLocal } from '@/lib/timezone';
 import NewEventClient from './NewEventClient';
 import { EMPTY_EVENT_FORM, type EventFormValues } from '../EventForm';
 import { EMPTY_CHECKIN_FORM_CONFIG } from '../CheckinFormFieldsEditor';
-import { getCheckinFormSeed } from '../getEventsData';
+import { getCheckinFormSeed, getFormPreviewViewer } from '../getEventsData';
 import type { SocialEmbed } from '@/types/database';
 
 export const metadata = { title: 'Create Event' };
@@ -24,9 +24,10 @@ export default async function NewEventPage({ searchParams }: Props) {
 
   const { from } = await searchParams;
   const supabase = await createClient();
-  const [{ data: divisions }, seedCheckinFormConfig] = await Promise.all([
+  const [{ data: divisions }, seedCheckinFormConfig, previewViewer] = await Promise.all([
     supabase.from('divisions').select('id, name').order('name'),
     getCheckinFormSeed(),
+    getFormPreviewViewer(),
   ]);
 
   let initial = EMPTY_EVENT_FORM;
@@ -76,5 +77,5 @@ export default async function NewEventPage({ searchParams }: Props) {
     }
   }
 
-  return <NewEventClient divisions={divisions ?? []} initial={initial} seedCheckinFormConfig={seedCheckinFormConfig} />;
+  return <NewEventClient divisions={divisions ?? []} initial={initial} seedCheckinFormConfig={seedCheckinFormConfig} previewViewer={previewViewer} />;
 }

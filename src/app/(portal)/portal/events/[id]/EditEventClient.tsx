@@ -13,11 +13,13 @@ export default function EditEventClient({
   initial,
   divisions,
   seedCheckinFormConfig,
+  previewViewer,
 }: {
   eventId: string;
   initial: EventFormValues;
   divisions: { id: string; name: string }[];
   seedCheckinFormConfig?: CheckinFormConfigValue | null;
+  previewViewer?: { year: string | null; roles: import('@/types/database').AppRole[] };
 }) {
   const router = useRouter();
 
@@ -72,6 +74,7 @@ export default function EditEventClient({
       onSubmit={handleUpdate}
       divisions={divisions}
       seedCheckinFormConfig={seedCheckinFormConfig}
+      previewViewer={previewViewer}
     />
   );
 }

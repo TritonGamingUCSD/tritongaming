@@ -7,10 +7,11 @@ import { pacificDatetimeLocalToUTC } from '@/lib/timezone';
 import EventForm, { EMPTY_EVENT_FORM, type EventFormValues } from '../EventForm';
 import type { CheckinFormConfigValue } from '../CheckinFormFieldsEditor';
 
-export default function NewEventClient({ divisions, initial = EMPTY_EVENT_FORM, seedCheckinFormConfig }: {
+export default function NewEventClient({ divisions, initial = EMPTY_EVENT_FORM, seedCheckinFormConfig, previewViewer }: {
   divisions: { id: string; name: string }[];
   initial?: EventFormValues;
   seedCheckinFormConfig?: CheckinFormConfigValue | null;
+  previewViewer?: { year: string | null; roles: import('@/types/database').AppRole[] };
 }) {
   const router = useRouter();
 
@@ -63,6 +64,7 @@ export default function NewEventClient({ divisions, initial = EMPTY_EVENT_FORM, 
       onSubmit={handleCreate}
       divisions={divisions}
       seedCheckinFormConfig={seedCheckinFormConfig}
+      previewViewer={previewViewer}
     />
   );
 }
