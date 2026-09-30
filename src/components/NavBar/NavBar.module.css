@@ -142,19 +142,33 @@
   flex-shrink: 0;
 }
 
+.hamburger {
+  position: relative;
+}
+
+/* Bars are absolutely centered on the button (not flex-spaced), so the
+   closed lines sit at exactly -7px / 0 / +7px from center and the open X's
+   two strokes rotate about the *same* center point — flex spacing left the
+   strokes ~1.5px off from each other, which read as a crooked X. */
 .hamburger span {
-  display: block;
-  width: 100%;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 22px;
   height: 2.5px;
+  margin: -1.25px 0 0 -11px;
   background: var(--white);
   border-radius: 2px;
   transition: transform 0.3s ease, opacity 0.3s ease;
   transform-origin: center;
 }
 
-.hamburgerOpen span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+.hamburger span:nth-child(1) { transform: translateY(-7px); }
+.hamburger span:nth-child(3) { transform: translateY(7px); }
+
+.hamburgerOpen span:nth-child(1) { transform: translateY(0) rotate(45deg); }
 .hamburgerOpen span:nth-child(2) { opacity: 0; transform: scaleX(0); }
-.hamburgerOpen span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+.hamburgerOpen span:nth-child(3) { transform: translateY(0) rotate(-45deg); }
 
 /* Mobile menu overlay — same material language as the pill, just full-screen */
 .mobileMenu {
