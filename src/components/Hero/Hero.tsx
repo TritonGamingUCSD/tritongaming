@@ -31,7 +31,7 @@ export default function Hero({ content = {} }: { content?: HeroContent }) {
         className={styles.video}
         aria-hidden="true"
       >
-        <source src="/videos/tgexhighlight.mp4" type="video/mp4" />
+        <source src="/videos/tgex26highlight_1920x1080.mp4" type="video/mp4" />
       </video>
 
       <div className={styles.darkOverlay} aria-hidden="true" />
