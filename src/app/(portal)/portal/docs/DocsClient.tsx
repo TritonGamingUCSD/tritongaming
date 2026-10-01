@@ -1,5 +1,6 @@
 'use client';
 
+import { confirmHold } from '@/lib/confirmHold';
 import { showToast } from '@/lib/toast';
 import { useUnsavedChanges, confirmDiscardUnsaved } from '@/lib/useUnsavedChanges';
 import { useMemo, useRef, useState } from 'react';
@@ -247,7 +248,7 @@ export default function DocsClient({ initialDocs, initialCategories, userId, can
   }
 
   async function handleDeleteCategory(cat: DocCategory) {
-    if (!window.confirm(`Delete category "${cat.name}"? Docs in it become uncategorized, not deleted.`)) return;
+    if (!(await confirmHold({ title: `Delete category "${cat.name}"?`, message: 'Docs in it become uncategorized, not deleted.', confirmLabel: 'Hold to delete' }))) return;
     const supabase = createClient();
     const { error: err } = await supabase.from('doc_categories').delete().eq('id', cat.id);
     if (err) {
@@ -323,7 +324,7 @@ export default function DocsClient({ initialDocs, initialCategories, userId, can
     if (!selected) return;
     const childCount = docs.filter((d) => d.parent_id === selected.id).length;
     const warn = childCount > 0 ? ` Its ${childCount} sub-post${childCount === 1 ? '' : 's'} will be deleted too.` : '';
-    if (!window.confirm(`Delete "${selected.title}"?${warn} This can't be undone.`)) return;
+    if (!(await confirmHold({ title: `Delete "${selected.title}"?`, message: warn.trim() || undefined, confirmLabel: 'Hold to delete' }))) return;
     setSaving(true);
     setError('');
     const supabase = createClient();

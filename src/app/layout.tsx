@@ -1,3 +1,4 @@
+import ConfirmHost from '@/components/HoldToConfirm/ConfirmHost';
 import ToastHost from '@/components/SaveToast/ToastHost';
 import type { Metadata, Viewport } from 'next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
@@ -58,6 +59,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         {children}
         <ToastHost />
+        <ConfirmHost />
         <SpeedInsights />
         <Analytics />
       </body>

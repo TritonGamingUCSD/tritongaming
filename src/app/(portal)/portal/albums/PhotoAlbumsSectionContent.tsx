@@ -1,5 +1,6 @@
 'use client';
 
+import { confirmHold } from '@/lib/confirmHold';
 import { showToast } from '@/lib/toast';
 import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
 import { useState } from 'react';
@@ -103,7 +104,7 @@ export default function PhotoAlbumsSectionContent({ albums: initial, canManage }
   const { dragIndex, overIndex, dragHandleProps, dropTargetProps } = useDragReorder(albums, persistReorder);
 
   async function handleDelete(id: string) {
-    if (!window.confirm('Remove this album? This only removes it from the portal, not the Google Photos album itself.')) return;
+    if (!(await confirmHold({ title: 'Remove this album?', message: 'This only removes it from the portal, not the Google Photos album itself.', confirmLabel: 'Hold to remove' }))) return;
     setBusyId(id);
     setError('');
     const supabase = createClient();

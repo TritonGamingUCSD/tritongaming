@@ -1,5 +1,6 @@
 'use client';
 
+import { confirmHold } from '@/lib/confirmHold';
 import { showToast } from '@/lib/toast';
 import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
 import { useEffect, useState } from 'react';
@@ -172,7 +173,7 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, lead
   const [showTierLadder, setShowTierLadder] = useState(false);
 
   async function handleClaim(item: RewardItem) {
-    if (!window.confirm(`Redeem "${item.title}" for ${item.point_cost} points?`)) return;
+    if (!(await confirmHold({ title: `Redeem "${item.title}"?`, message: `This spends ${item.point_cost} points.`, confirmLabel: 'Hold to redeem' }))) return;
     setClaimingId(item.id);
     setShopError('');
     try {
@@ -460,7 +461,7 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, lead
   }, [correctTarget]);
 
   async function handleReverse(txn: BattlepassTransactionRow) {
-    if (!window.confirm(`Reverse this entry (${txn.amount >= 0 ? '+' : ''}${txn.amount} pts)?`)) return;
+    if (!(await confirmHold({ title: `Reverse this entry (${txn.amount >= 0 ? '+' : ''}${txn.amount} pts)?`, message: 'A reversed entry can\'t be reversed again.', confirmLabel: 'Hold to reverse' }))) return;
     setReversingId(txn.id);
     try {
       const res = await fetch('/api/admin/battlepass/reverse', {
@@ -571,7 +572,7 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, lead
   }
 
   async function handleDeleteTier(t: TierRow) {
-    if (!window.confirm(`Delete the "${t.name}" tier?`)) return;
+    if (!(await confirmHold({ title: `Delete the "${t.name}" tier?`, confirmLabel: 'Hold to delete' }))) return;
     setDeletingTierId(t.id);
     setTierError('');
     try {

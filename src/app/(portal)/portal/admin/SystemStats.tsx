@@ -1,5 +1,6 @@
 'use client';
 
+import { confirmHold } from '@/lib/confirmHold';
 import { useEffect, useState } from 'react';
 import { Database, HardDrive, Triangle, ExternalLink, Users, Server, ShieldCheck } from 'lucide-react';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
@@ -160,7 +161,7 @@ export default function SystemStats() {
 
   async function handleDelete() {
     const totalUnused = preview?.reduce((sum, b) => sum + b.unusedCount, 0) ?? 0;
-    if (!window.confirm(`Delete ${totalUnused} unused file${totalUnused === 1 ? '' : 's'}? This can't be undone.`)) return;
+    if (!(await confirmHold({ title: `Delete ${totalUnused} unused file${totalUnused === 1 ? '' : 's'}?`, message: 'These files are no longer used anywhere on the site.', confirmLabel: 'Hold to delete' }))) return;
 
     setDeleting(true);
     setCleanupError('');

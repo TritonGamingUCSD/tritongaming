@@ -29,8 +29,8 @@ export async function GET(request: Request, { params }: Params) {
 
 // Permanent, admin-only event deletion. Deliberately hard to trigger by
 // accident: besides the capability check, the caller must echo back the
-// event's exact title (the UI makes them type it after two other confirm
-// steps), so a stray request or stale client can't delete anything.
+// event's exact title (the UI sends it after two other confirm steps and a
+// press-and-hold), so a stray request or stale client can't delete anything.
 export async function DELETE(request: Request, { params }: Params) {
   const { id } = await params;
   const supabase = await createClient();

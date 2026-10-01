@@ -1,5 +1,6 @@
 'use client';
 
+import { confirmHold } from '@/lib/confirmHold';
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { UserIdentity } from '@supabase/supabase-js';
@@ -116,7 +117,7 @@ export default function LinkGoogleSection() {
 
   async function handleUnlink(identity: UserIdentity) {
     const email = emailOf(identity);
-    if (!window.confirm(`Unlink ${email}? You'll no longer be able to sign in with that Google account.`)) return;
+    if (!(await confirmHold({ title: `Unlink ${email}?`, message: 'You\'ll no longer be able to sign in with that Google account.', confirmLabel: 'Hold to unlink' }))) return;
     setError('');
     setUnlinkingId(identity.identity_id);
     const supabase = createClient();

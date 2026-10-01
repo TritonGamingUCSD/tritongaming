@@ -1,5 +1,6 @@
 'use client';
 
+import HoldButton from '@/components/HoldToConfirm/HoldButton';
 import { showToast } from '@/lib/toast';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -8,9 +9,9 @@ import { AlertTriangle, X } from 'lucide-react';
 import styles from './deleteeventmodal.module.css';
 
 // Three deliberate steps before anything is deleted: read what will be
-// wiped, re-confirm with the actual numbers, then type the event's exact
-// title. The server re-checks the title and the admin-only capability, so
-// this UI is a speed bump against accidents, not the security boundary.
+// wiped, re-confirm with the actual numbers, then press and hold the button.
+// The server re-checks the title and the admin-only capability, so this UI is
+// a speed bump against accidents, not the security boundary.
 export default function DeleteEventModal({
   event, onClose,
 }: {
@@ -20,21 +21,18 @@ export default function DeleteEventModal({
   const router = useRouter();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [reversePoints, setReversePoints] = useState(true);
-  const [typed, setTyped] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
 
-  const titleMatches = typed.trim() === event.title.trim();
-
   async function handleDelete() {
-    if (!titleMatches || deleting) return;
+    if (deleting) return;
     setDeleting(true);
     setError('');
     try {
       const res = await fetch(`/api/events/${event.id}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ confirmTitle: typed, reversePoints }),
+        body: JSON.stringify({ confirmTitle: event.title, reversePoints }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error || 'Failed to delete event.');
@@ -94,24 +92,14 @@ export default function DeleteEventModal({
 
         {step === 3 && (
           <>
-            <h2 className={styles.title}>Type the event name to confirm</h2>
-            <p className={styles.text}>Type <strong>{event.title}</strong> exactly:</p>
-            <input
-              className={styles.input}
-              value={typed}
-              onChange={(e) => setTyped(e.target.value)}
-              placeholder={event.title}
-              autoComplete="off"
-              autoCapitalize="off"
-              spellCheck={false}
-              autoFocus
-            />
+            <h2 className={styles.title}>Press and hold to delete</h2>
+            <p className={styles.text}>
+              Hold the button below to permanently delete <strong>{event.title}</strong>. Letting go early cancels.
+            </p>
             {error && <p className={styles.error}>{error}</p>}
+            <HoldButton label="Hold to permanently delete" onConfirm={handleDelete} busy={deleting} durationMs={2000} />
             <div className={styles.actions}>
               <button type="button" className={styles.cancelBtn} onClick={() => setStep(2)} disabled={deleting}>Back</button>
-              <button type="button" className={styles.dangerBtn} onClick={handleDelete} disabled={!titleMatches || deleting}>
-                {deleting ? 'Deleting…' : 'Permanently delete'}
-              </button>
             </div>
           </>
         )}

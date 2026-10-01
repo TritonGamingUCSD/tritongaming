@@ -1,5 +1,6 @@
 'use client';
 
+import HoldButton from '@/components/HoldToConfirm/HoldButton';
 import { showToast } from '@/lib/toast';
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
@@ -78,8 +79,6 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
   const [mergeMode, setMergeMode] = useState(false);
   const [mergeQuery, setMergeQuery] = useState('');
   const [mergeTarget, setMergeTarget] = useState<User | null>(null);
-  const [confirmName, setConfirmName] = useState('');
-  const [confirmChecked, setConfirmChecked] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
 
@@ -88,8 +87,6 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
     setMergeMode(false);
     setMergeQuery('');
     setMergeTarget(null);
-    setConfirmName('');
-    setConfirmChecked(false);
     setDeleteError('');
   }
 
@@ -106,8 +103,9 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
       .slice(0, 8);
   }, [users, mergeQuery, deleteTarget]);
 
-  const targetNameMatches = !!deleteTarget && confirmName.trim().toLowerCase() === (deleteTarget.display_name || '').trim().toLowerCase() && confirmName.trim().length > 0;
-  const canConfirmDelete = targetNameMatches && confirmChecked && (!mergeMode || !!mergeTarget) && !deleting;
+  // Confirmed by holding the button (no retyping a name or ticking a box) — see
+  // HoldButton. Merging additionally needs the target account picked first.
+  const canConfirmDelete = (!mergeMode || !!mergeTarget) && !deleting;
 
   async function handleConfirmDelete() {
     if (!deleteTarget || !canConfirmDelete) return;
@@ -533,28 +531,18 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
               </div>
             )}
 
-            <label className={styles.deleteConfirmLabel}>
-              Type <strong>{deleteTarget.display_name || 'Unnamed'}</strong> to confirm
-              <input
-                className={styles.modalInput}
-                value={confirmName}
-                onChange={(e) => setConfirmName(e.target.value)}
-                autoComplete="off"
-              />
-            </label>
-
-            <label className={styles.checkboxLabel}>
-              <input type="checkbox" checked={confirmChecked} onChange={(e) => setConfirmChecked(e.target.checked)} />
-              <span>I understand this cannot be undone</span>
-            </label>
-
             {deleteError && <div className={styles.saveError}>{deleteError}</div>}
 
             <div className={styles.editActions}>
               <button className={styles.roleBtn} onClick={closeDeleteModal} disabled={deleting}>Cancel</button>
-              <button className={styles.deleteConfirmBtn} onClick={handleConfirmDelete} disabled={!canConfirmDelete}>
-                {deleting ? 'Working…' : mergeMode ? 'Merge & Delete' : 'Delete Account'}
-              </button>
+              <div style={{ flex: 1 }}>
+                <HoldButton
+                  label={mergeMode ? 'Hold to merge & delete' : 'Hold to delete account'}
+                  onConfirm={handleConfirmDelete}
+                  disabled={!canConfirmDelete}
+                  busy={deleting}
+                />
+              </div>
             </div>
           </div>
         </div>

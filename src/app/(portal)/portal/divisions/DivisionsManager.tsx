@@ -1,5 +1,6 @@
 'use client';
 
+import { confirmHold } from '@/lib/confirmHold';
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -69,7 +70,7 @@ export default function DivisionsManager({ divisions: initial }: { divisions: Di
   }
 
   async function handleDelete(d: Division) {
-    if (!window.confirm(`Delete "${d.name}"? Anyone currently assigned as its division lead will lose that role, and its public /divisions/${d.slug} page will disappear.`)) return;
+    if (!(await confirmHold({ title: `Delete "${d.name}"?`, message: `Anyone currently assigned as its division lead will lose that role, and its public /divisions/${d.slug} page will disappear.`, confirmLabel: 'Hold to delete' }))) return;
     setBusyId(d.id);
     setError('');
     try {
