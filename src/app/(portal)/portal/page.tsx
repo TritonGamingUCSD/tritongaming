@@ -9,7 +9,7 @@ import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK } from '@/types/database';
 import { CONTENT_BLOCKS } from '@/lib/content-blocks';
 import { PACIFIC_TZ, pacificDaysUntil } from '@/lib/timezone';
 import { isCheckinWindowOpen } from '@/lib/checkinWindow';
-import { getDivisions } from '@/lib/divisions';
+import { getDivisions, divisionLogoSrc } from '@/lib/divisions';
 import type { HubSection } from '@/components/portal/PortalHub';
 import SignOutButton from '@/components/portal/SignOutButton';
 import OnboardingGuide from '@/components/portal/OnboardingGuide';
@@ -278,7 +278,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       id: 'qrcode', icon: <QrCode size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'QR Studio',
       description: 'Design branded QR codes',
       group: 'Resources' as const,
-      content: <QRStudioClient />,
+      content: <QRStudioClient divisions={divisions.filter((d) => d.logo_url).map((d) => ({ id: d.id, name: d.name, logo: divisionLogoSrc(d.logo_url) ?? '' })).filter((d) => d.logo)} />,
     }] : []),
     // Same Resources audience as Members/Docs/QR Studio (officer-tier and
     // up), but also explicitly opened to recruit/alumni — browsing old

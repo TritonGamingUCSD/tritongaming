@@ -6,8 +6,16 @@ import { DEFAULT_QR_OPTIONS, type QRCodeOptions } from '@/lib/qrCodeStyling';
 import QRStudioForm from './QRStudioForm';
 import styles from './qrstudio.module.css';
 
-export default function QRStudioClient() {
-  const [options, setOptions] = useState<QRCodeOptions>(DEFAULT_QR_OPTIONS);
+const PLACEHOLDER_URL = 'https://www.example.com';
+
+export interface QRDivisionLogo { id: string; name: string; logo: string }
+
+export default function QRStudioClient({ divisions = [] }: { divisions?: QRDivisionLogo[] }) {
+  // Starts empty (the field shows example.com as a placeholder, so nothing has to be deleted first).
+  // The preview draws a sample code from the placeholder until a real link is entered.
+  const [options, setOptions] = useState<QRCodeOptions>({ ...DEFAULT_QR_OPTIONS, data: '' });
+  const hasData = options.data.trim().length > 0;
+  const previewOptions = hasData ? options : { ...options, data: PLACEHOLDER_URL };
   const qrRef = useRef<StyledQRCodeHandle>(null);
 
   async function handleDownload() {
@@ -16,7 +24,7 @@ export default function QRStudioClient() {
 
   return (
     <div className={styles.layout}>
-      <QRStudioForm options={options} setOptions={setOptions} />
+      <QRStudioForm options={options} setOptions={setOptions} divisions={divisions} />
 
       <aside className={styles.previewPanel}>
         <div>
@@ -35,7 +43,8 @@ export default function QRStudioClient() {
               : { backgroundColor: '#fff' }
           }
         >
-          <StyledQRCode ref={qrRef} options={options} className={styles.canvasInner} />
+          <StyledQRCode ref={qrRef} options={previewOptions} className={styles.canvasInner} />
+          {!hasData && <span className={styles.sampleTag}>Sample — enter a link to make yours</span>}
         </div>
 
         <div className={styles.statRow}>
@@ -49,7 +58,7 @@ export default function QRStudioClient() {
           </div>
         </div>
 
-        <button className={styles.downloadBtn} onClick={handleDownload} disabled={!options.data.trim() || options.size <= 0}>
+        <button className={styles.downloadBtn} onClick={handleDownload} disabled={!hasData || options.size <= 0}>
           Download {options.downloadFormat.toUpperCase()}
         </button>
       </aside>

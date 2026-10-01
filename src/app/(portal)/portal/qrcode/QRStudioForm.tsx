@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { ChevronDown, Upload, X } from 'lucide-react';
 import type { QRCodeOptions, QRDotsType, QRCornersSquareType, QRCornersDotType } from '@/lib/qrCodeStyling';
 import { QR_PRESETS, matchingPreset } from '@/lib/qrPresets';
+import type { QRDivisionLogo } from './QRStudioClient';
 import styles from './qrstudio.module.css';
 
 const dotStyles: QRDotsType[] = ['rounded', 'dots', 'square', 'extra-rounded', 'classy', 'classy-rounded'];
@@ -155,7 +156,35 @@ function Fold({ title, hint, children }: { title: string; hint?: string; childre
   );
 }
 
-export default function QRStudioForm({ options, setOptions }: { options: QRCodeOptions; setOptions: (o: QRCodeOptions) => void }) {
+export default function QRStudioForm({ options, setOptions, divisions = [] }: { options: QRCodeOptions; setOptions: (o: QRCodeOptions) => void; divisions?: QRDivisionLogo[] }) {
+  const [loadingDivision, setLoadingDivision] = useState<string | null>(null);
+  const [divisionError, setDivisionError] = useState('');
+  const [chosenDivision, setChosenDivision] = useState<string | null>(null);
+
+  // Pull a division's logo in as the center icon. Fetched and inlined so the downloaded image
+  // isn't blocked by cross-origin rules.
+  async function useDivisionLogo(d: QRDivisionLogo) {
+    setDivisionError('');
+    setLoadingDivision(d.id);
+    try {
+      const res = await fetch(d.logo);
+      if (!res.ok) throw new Error('bad response');
+      const blob = await res.blob();
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result));
+        r.onerror = reject;
+        r.readAsDataURL(blob);
+      });
+      setChosenDivision(d.id);
+      setOptions({ ...options, customIcon: dataUrl, icon: 'custom' });
+    } catch {
+      setDivisionError(`Couldn't load ${d.name}'s logo. Try again, or upload it under “Your own icon”.`);
+    } finally {
+      setLoadingDivision(null);
+    }
+  }
+
   const activePreset = matchingPreset(options);
   const set = (patch: Partial<QRCodeOptions>) => setOptions({ ...options, ...patch });
 
@@ -169,7 +198,7 @@ export default function QRStudioForm({ options, setOptions }: { options: QRCodeO
 
       <label className={styles.field}>
         <span className={styles.label}>1 · Where should it go?</span>
-        <input className={styles.input} value={options.data} onChange={(e) => set({ data: e.target.value })} placeholder="https://example.com" inputMode="url" />
+        <input className={styles.input} value={options.data} onChange={(e) => set({ data: e.target.value })} placeholder="https://www.example.com" inputMode="url" />
       </label>
 
       <div className={styles.field}>
@@ -202,13 +231,33 @@ export default function QRStudioForm({ options, setOptions }: { options: QRCodeO
               role="radio"
               aria-checked={options.icon === i.value}
               className={`${styles.iconChip} ${options.icon === i.value ? styles.iconChipActive : ''}`}
-              onClick={() => set({ icon: i.value })}
+              onClick={() => { setChosenDivision(null); set({ icon: i.value }); }}
             >
               {i.label}
             </button>
           ))}
         </div>
       </div>
+
+      {divisions.length > 0 && (
+        <div className={styles.field}>
+          <span className={styles.label}>Or use a division logo</span>
+          <div className={styles.divRow} role="radiogroup" aria-label="Division logo">
+            {divisions.map((d) => {
+              const active = options.icon === 'custom' && chosenDivision === d.id;
+              return (
+                <button key={d.id} type="button" role="radio" aria-checked={active} disabled={loadingDivision !== null}
+                  className={`${styles.divChip} ${active ? styles.divChipActive : ''}`} onClick={() => useDivisionLogo(d)}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={d.logo} alt="" className={styles.divLogo} />
+                  <span>{loadingDivision === d.id ? 'Loading…' : d.name}</span>
+                </button>
+              );
+            })}
+          </div>
+          {divisionError && <span className={styles.dropError}>{divisionError}</span>}
+        </div>
+      )}
 
       <div className={styles.folds}>
         <Fold title="Colors" hint="Background, modules, corners">

@@ -396,7 +396,7 @@ function DesktopShell({
             <span className={styles.railLabel}>Dashboard</span>
           </button>
           {groupedSections.map(({ group, items }) => (
-            <div key={group} className={styles.railGroup} style={{ ['--accent' as string]: GROUP_ACCENT[group] }}>
+            <div key={group} className={styles.railGroup} style={{ ['--accent' as string]: GROUP_ACCENT[group], flexGrow: items.length }}>
               {groupedSections.length > 1 && (
                 <div className={styles.railGroupLabel}><span className={styles.railGroupDot} aria-hidden="true" />{group}</div>
               )}

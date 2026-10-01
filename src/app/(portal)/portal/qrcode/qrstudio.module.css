@@ -404,3 +404,13 @@
 .dropRemove { align-self: flex-start; display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.7rem; border-radius: 999px; font-size: 0.76rem; color: #f87171; background: none; border: 1px solid rgba(248, 113, 113, 0.4); cursor: pointer; }
 .dropRemove:hover { background: rgba(248, 113, 113, 0.12); }
 .dropError { font-size: 0.76rem; color: #f87171; }
+
+.canvasFrame { position: relative; }
+.sampleTag { position: absolute; left: 50%; bottom: 0.5rem; transform: translateX(-50%); padding: 0.2rem 0.65rem; border-radius: 999px; font-size: 0.68rem; white-space: nowrap; color: #fff; background: rgba(1, 25, 65, 0.85); }
+
+/* ── Division logo chips ── */
+.divRow { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.divChip { display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.3rem 0.8rem 0.3rem 0.35rem; border-radius: 999px; font-size: 0.8rem; cursor: pointer; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12); color: rgba(242, 241, 240, 0.85); }
+.divChip:disabled { opacity: 0.6; cursor: wait; }
+.divChipActive { background: rgba(255, 199, 44, 0.16); border-color: var(--yellow); color: var(--yellow); }
+.divLogo { width: 24px; height: 24px; border-radius: 50%; object-fit: contain; background: #fff; padding: 2px; }

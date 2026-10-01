@@ -597,3 +597,17 @@
 
 .sheetFooter { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.4rem 0.9rem 0.7rem; margin-bottom: 0.2rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); font-size: 0.85rem; }
 .sheetFooter a { color: rgba(242, 241, 240, 0.7); text-decoration: none; }
+
+/* ── Sidebar spacing, final: fluid instead of height breakpoints ──
+   Browsers report very different window heights (Safari's toolbars, bookmark bars…), so
+   height-triggered compaction made it look packed in some. Now each link has a small fixed
+   padding and the leftover height is shared out evenly between the links (capped), so any
+   window size gets sensible spacing with no thresholds. ── */
+.rail .railNav { display: flex; flex-direction: column; gap: 0.35rem; justify-content: flex-start; }
+.rail .railGroup { display: flex; flex-direction: column; flex: 1 1 auto; gap: 0.1rem; padding-top: 0.55rem; margin-top: 0; }
+.rail .railItem { flex: 1 1 auto; max-height: 48px; min-height: 30px; padding: 0.2rem 0.6rem; }
+.rail .railNav > .railItem { flex: 0 0 auto; min-height: 34px; }
+.rail { gap: 0.7rem; padding: 0.8rem 0.65rem; }
+@media (min-width: 900px) and (max-height: 960px) { .rail .railItem { padding: 0.2rem 0.6rem; } .rail .railGroup { padding-top: 0.55rem; } .rail { gap: 0.7rem; padding: 0.8rem 0.65rem; } }
+@media (min-width: 900px) and (max-height: 840px) { .rail .railItem { padding: 0.2rem 0.6rem; } .rail .railGroup { padding-top: 0.55rem; } .rail { gap: 0.7rem; } }
+@media (min-width: 900px) and (max-height: 820px) { .rail .railItem { padding: 0.2rem 0.6rem; } .rail .railGroup { padding-top: 0.55rem; } .rail { gap: 0.7rem; padding: 0.8rem 0.65rem; } }
