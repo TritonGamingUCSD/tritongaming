@@ -563,8 +563,8 @@ export default function DocsClient({ initialDocs, initialCategories, userId, can
                 {canEdit && (
                   <div className={styles.articleActions}>
                     {!selected.parent_id && <Button size="sm" variant="ghost" onClick={() => startNew(selected.id)}><Plus size={14} aria-hidden="true" /> Sub-post</Button>}
-                    <Button size="sm" variant="ghost" onClick={() => startEdit(selected)}><Pencil size={14} aria-hidden="true" /> Edit</Button>
-                    <Button size="sm" variant="ghost" onClick={handleDelete} disabled={saving}><Trash2 size={14} aria-hidden="true" /> Delete</Button>
+                    <Button size="sm" variant="secondary" onClick={() => startEdit(selected)}><Pencil size={14} aria-hidden="true" /> Edit</Button>
+                    <Button size="sm" variant="danger" onClick={handleDelete} disabled={saving}><Trash2 size={14} aria-hidden="true" /> Delete</Button>
                   </div>
                 )}
               </header>

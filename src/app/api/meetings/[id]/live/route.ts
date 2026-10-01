@@ -14,7 +14,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
   const [{ data: rows }, people] = await Promise.all([
     auth.svc.from('meeting_attendance').select('user_id, checked_in_at, method').eq('meeting_id', id).order('checked_in_at', { ascending: false }),
-    getExpectedPeople(auth.svc),
+    getExpectedPeople(auth.svc, m),
   ]);
   const byId = new Map(people.map((p) => [p.id, p]));
   const here = new Set((rows ?? []).map((r) => r.user_id as string));
@@ -29,6 +29,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   // Answers (newest first) and reactions. Reactions come as a cursor: without ?after the response only
   // says where the cursor is (nothing replays); with it, just the reactions sent since then.
   const afterParam = new URL(req.url).searchParams.get('after');
+  const { data: absenceRows } = await auth.svc.from('meeting_absences').select('user_id, reason, excused').eq('meeting_id', id);
+  const absent = new Set((absenceRows ?? []).map((a) => a.user_id as string));
   const [{ data: answerRows }, { data: reactionRows }] = await Promise.all([
     auth.svc.from('meeting_answers').select('user_id, answer, updated_at').eq('meeting_id', id).order('updated_at', { ascending: false }).limit(100),
     auth.svc.from('meeting_reactions').select('id, emoji').eq('meeting_id', id).order('id', { ascending: true }).limit(5000),
@@ -39,7 +41,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const reactions = allReactions.filter((r) => (r.id as number) > after).slice(0, 40).map((r) => ({ id: r.id as number, emoji: r.emoji as string }));
   const reactionTotals: Record<string, number> = {};
   for (const r of allReactions) reactionTotals[r.emoji as string] = (reactionTotals[r.emoji as string] ?? 0) + 1;
-  const answerUserIds = (answerRows ?? []).map((a) => a.user_id as string).filter((u) => !byId.has(u));
+  const answerUserIds = [...(answerRows ?? []).map((a) => a.user_id as string), ...absent].filter((u) => !byId.has(u));
   if (answerUserIds.length) {
     const { data: extra } = await auth.svc.from('profiles').select('id, display_name, avatar_url, custom_avatar_url').in('id', answerUserIds);
     for (const p of extra ?? []) byId.set(p.id as string, { id: p.id as string, name: (p.display_name as string | null) || 'Unnamed', avatar_url: p.avatar_url as string | null, custom_avatar_url: p.custom_avatar_url as string | null });
@@ -56,6 +58,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     code: cc?.code ?? null,
     expiresAt: cc?.expiresAt ?? null,
     attendees: (rows ?? []).map((r) => ({ ...byId.get(r.user_id as string)!, checked_in_at: r.checked_in_at, method: r.method })),
-    missing: people.filter((p) => !here.has(p.id)),
+    missing: people.filter((p) => !here.has(p.id) && !absent.has(p.id)),
+    absent: (absenceRows ?? []).map((a) => ({ ...(byId.get(a.user_id as string) ?? { id: a.user_id as string, name: 'Unnamed', avatar_url: null, custom_avatar_url: null }), reason: a.reason as string | null, excused: a.excused as boolean })),
   });
 }

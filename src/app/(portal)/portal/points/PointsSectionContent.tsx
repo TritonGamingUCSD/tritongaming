@@ -15,6 +15,7 @@ import { DEFAULT_QR_OPTIONS } from '@/lib/qrCodeStyling';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
 import type { TransactionRow } from './getMyPointsData';
+import IconButton from '@/components/ui/IconButton';
 import styles from './points.module.css';
 
 type Tab = 'points' | 'shop' | 'leaderboard' | 'manage';
@@ -1052,7 +1053,7 @@ export default function PointsSectionContent({
                       </div>
                     </div>
                     <div className={styles.manageRowActions}>
-                      <button type="button" className={styles.toggleBtn} onClick={() => startEdit(item)}>Edit</button>
+                      <IconButton kind="edit" label={`Edit ${item.title}`} onClick={() => startEdit(item)} />
                       <button type="button" className={styles.toggleBtn} onClick={() => toggleActive(item)}>
                         {item.active ? 'Retire' : 'Reactivate'}
                       </button>
@@ -1187,11 +1188,9 @@ export default function PointsSectionContent({
                         <div className={styles.stockNote}>{t.min_points.toLocaleString()} lifetime pts</div>
                       </div>
                       <div className={styles.manageRowActions}>
-                        <button type="button" className={styles.toggleBtn} onClick={() => startEditTier(t)}>Edit</button>
+                        <IconButton kind="edit" label={`Edit ${t.name} tier`} onClick={() => startEditTier(t)} />
                         {t.min_points !== 0 && (
-                          <button type="button" className={styles.toggleBtn} onClick={() => handleDeleteTier(t)} disabled={deletingTierId === t.id}>
-                            {deletingTierId === t.id ? 'Deleting…' : 'Delete'}
-                          </button>
+                          <IconButton kind="delete" label={`Delete ${t.name} tier`} onClick={() => handleDeleteTier(t)} disabled={deletingTierId === t.id} />
                         )}
                       </div>
                     </div>

@@ -1,4 +1,4 @@
-.page { max-width: 900px; margin-inline: auto; }
+.page { max-width: 1000px; margin-inline: auto; }
 
 .header {
   display: flex;
@@ -217,9 +217,9 @@
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.14);
   color: var(--white);
-  transition: background 0.15s, transform 0.2s;
+  transition: background 0.15s;
 }
-.closeBtn:hover { background: rgba(255, 199, 44, 0.15); transform: rotate(90deg); }
+.closeBtn:hover { background: rgba(255, 199, 44, 0.15); }
 
 
 
@@ -283,3 +283,20 @@
    it, then year · college underneath. */
 .schoolMain { font-size: 0.82rem; font-weight: 600; color: var(--white); text-wrap: balance; }
 .schoolMeta { font-size: 0.76rem; color: rgba(242, 241, 240, 0.65); }
+
+/* ── Grid and list, tidied ── */
+.header { align-items: flex-end; margin-bottom: 1.5rem; }
+.card { min-height: 60px; }
+.card .info { min-width: 0; }
+.card .name, .card .orgTitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* List: real columns (person · title · division, major, year) so every row lines up. */
+.listRow { display: grid; grid-template-columns: 32px minmax(150px, 1.1fr) minmax(130px, 1fr) minmax(0, 1.6fr); column-gap: 0.85rem; align-items: center; }
+.listRow .info { display: contents; }
+.listRow .name, .listRow .orgTitle, .listRow .detail { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; margin: 0; }
+.list { gap: 0.25rem; }
+@media (max-width: 720px) {
+  .listRow { grid-template-columns: 32px minmax(0, 1fr); row-gap: 0.05rem; }
+  .listRow .avatar, .listRow .avatarFallback { grid-row: 1 / span 3; }
+  .listRow .orgTitle:empty { display: none; }
+}

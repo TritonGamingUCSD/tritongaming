@@ -11,6 +11,7 @@ import { Plus, ExternalLink, Trash2, Image as ImageIcon, GripVertical } from 'lu
 import { createClient } from '@/lib/supabase/client';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import { useDragReorder } from '@/lib/useDragReorder';
+import IconButton from '@/components/ui/IconButton';
 import styles from './albums.module.css';
 
 interface Creator { display_name: string | null; }
@@ -189,9 +190,7 @@ export default function PhotoAlbumsSectionContent({ albums: initial, canManage }
                     </a>
                     {canManage && (
                       <>
-                        <button type="button" className={styles.deleteBtn} onClick={() => handleDelete(a.id)} disabled={busyId === a.id} aria-label={`Remove ${a.title}`}>
-                          <Trash2 size={14} strokeWidth={1.75} aria-hidden="true" />
-                        </button>
+                        <IconButton kind="delete" label={`Delete ${a.title}`} onClick={() => handleDelete(a.id)} disabled={busyId === a.id} />
                       </>
                     )}
                   </div>

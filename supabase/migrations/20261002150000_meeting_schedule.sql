@@ -59,3 +59,34 @@ create table if not exists public.meeting_reactions (
 create index if not exists meeting_reactions_meeting_idx on public.meeting_reactions (meeting_id, id);
 alter table public.meeting_answers enable row level security;     -- service role only
 alter table public.meeting_reactions enable row level security;   -- service role only
+
+-- Who a meeting is for: a list of roles (null = everyone on the team: officer, lead, exec, recruit).
+alter table public.meeting_series add column if not exists audience text[];
+alter table public.meetings add column if not exists audience text[];
+
+-- Or a hand-picked list of people (profile ids). When set, it replaces the role-based audience.
+alter table public.meeting_series add column if not exists invitees uuid[];
+alter table public.meetings add column if not exists invitees uuid[];
+
+-- Saved groups of people ("Directors", "Marketing team") an exec can pick as a meeting's audience.
+create table if not exists public.meeting_groups (
+  id          uuid primary key default gen_random_uuid(),
+  name        text not null,
+  member_ids  uuid[] not null default '{}',
+  created_by  uuid references public.profiles(id) on delete set null,
+  created_at  timestamptz not null default now()
+);
+alter table public.meeting_groups enable row level security;      -- service role only
+
+-- An exec can mark someone absent for a meeting, optionally with a reason and as "excused"
+-- (an excused absence doesn't count against their attendance).
+create table if not exists public.meeting_absences (
+  meeting_id uuid not null references public.meetings(id) on delete cascade,
+  user_id    uuid not null references public.profiles(id) on delete cascade,
+  reason     text,
+  excused    boolean not null default true,
+  marked_by  uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now(),
+  primary key (meeting_id, user_id)
+);
+alter table public.meeting_absences enable row level security;    -- service role only

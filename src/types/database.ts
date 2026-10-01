@@ -43,6 +43,7 @@ export interface DocAttachment {
 
 export type Capability =
   | 'manage_events'
+  | 'view_division_members'
   | 'manage_meetings'
   | 'attend_meetings'
   | 'view_events'

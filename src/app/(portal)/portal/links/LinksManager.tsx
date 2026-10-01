@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button';
 import { Input } from '@/components/ui/Field';
 import { confirmHold } from '@/lib/confirmHold';
 import { showToast } from '@/lib/toast';
+import IconButton from '@/components/ui/IconButton';
 import styles from './links.module.css';
 
 interface ShortLink { id: string; slug: string; destination: string; note: string | null; clicks: number; is_active: boolean; created_at: string }
@@ -130,12 +131,10 @@ export default function LinksManager() {
                   </div>
                   <div className={styles.clicks} title="Total clicks"><strong>{l.clicks.toLocaleString()}</strong> clicks</div>
                   <div className={styles.actions}>
-                    <button type="button" className={styles.iconBtn} onClick={() => copy(l)} aria-label={`Copy link /${l.slug}`} title="Copy link">
-                      {copied === l.id ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
-                    </button>
-                    <button type="button" className={styles.iconBtn} onClick={() => setEditing({ id: l.id, slug: l.slug, destination: l.destination, note: l.note ?? '' })} aria-label={`Edit /${l.slug}`} title="Edit"><Pencil size={15} aria-hidden="true" /></button>
+                    <IconButton kind="copy" label={`Copy link /${l.slug}`} onClick={() => copy(l)} icon={copied === l.id ? <Check size={16} aria-hidden="true" /> : undefined} />
+                    <IconButton kind="edit" label={`Edit /${l.slug}`} onClick={() => setEditing({ id: l.id, slug: l.slug, destination: l.destination, note: l.note ?? '' })} />
                     <button type="button" className={styles.toggle} onClick={() => update(l.id, { is_active: !l.is_active }, l.is_active ? 'Link disabled' : 'Link enabled')}>{l.is_active ? 'On' : 'Off'}</button>
-                    <button type="button" className={`${styles.iconBtn} ${styles.danger}`} onClick={() => remove(l)} aria-label={`Delete /${l.slug}`} title="Delete"><Trash2 size={15} aria-hidden="true" /></button>
+                    <IconButton kind="delete" label={`Delete /${l.slug}`} onClick={() => remove(l)} />
                   </div>
                 </>
               )}

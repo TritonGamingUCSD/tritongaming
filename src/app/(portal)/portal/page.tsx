@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, History, Image as ImageIcon, Award, Medal, Link2, ArrowLeft, CalendarCheck } from 'lucide-react';
+import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, History, Image as ImageIcon, Award, Medal, ArrowLeft, CalendarCheck, LayoutGrid } from 'lucide-react';
 import { getProfile, getUserRoles, getMyPrivateProfile, getUser } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import { hasCapability, isVerifiedMember, isRewardsEligible } from '@/lib/capabilities';
@@ -34,13 +34,16 @@ import { getMembersData } from './members/getMembersData';
 import { getDivisionsData } from './divisions/getDivisionsData';
 import { getMyDivisionsData } from './divisions/getMyDivisionsData';
 import QRStudioClient from './qrcode/QRStudioClient';
+import { redirect } from 'next/navigation';
+import DivisionMembersSectionContent from './division-members/DivisionMembersSectionContent';
+import { getDivisionMembersData } from './division-members/getDivisionMembersData';
+import DivisionsSectionContent from './divisions/DivisionsSectionContent';
 import SiteContentSectionContent from './content/SiteContentSectionContent';
 import { getContentData } from './admin/content/getContentData';
 import AdminSectionContent from './admin/AdminSectionContent';
 import MeetingsSectionContent from './meetings/MeetingsSectionContent';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { meetingHappeningNow } from '@/lib/meetings';
-import LinksSection from './links/LinksSection';
 import { getAdminData } from './admin/getAdminData';
 import { getStatsData } from './admin/stats/getStatsData';
 import DocsClient from './docs/DocsClient';
@@ -61,11 +64,17 @@ interface Props {
   // each one only honors it if it's actually one of its own tab ids and
   // ignores it otherwise, so there's no coordination needed between
   // sections about which tab names are whose.
-  searchParams: Promise<{ tab?: string; subtab?: string }>;
+  searchParams: Promise<{ tab?: string; subtab?: string; section?: string }>;
 }
 
 export default async function PortalDashboard({ searchParams }: Props) {
-  const { tab: requestedTab, subtab: requestedSubTab } = await searchParams;
+  const { tab: requestedTab, subtab: requestedSubTab, section: requestedSection } = await searchParams;
+  // Short Links is a tab of Admin now.
+  if (requestedSection === 'links') redirect('/portal?section=admin&tab=links');
+  // Division tabs used to live inside Site Content; old links land on the new Divisions section.
+  if (requestedSection === 'site-content' && (requestedTab === 'divisions' || requestedTab === 'my-division')) {
+    redirect(`/portal?section=divisions&tab=${requestedTab === 'divisions' ? 'directory' : 'my-division'}`);
+  }
   // divisions is fetched unconditionally (cheap, publicly-readable table) —
   // needed to label a division-lead role chip with *which* division below,
   // regardless of whether this user themselves can manage the directory.
@@ -77,6 +86,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const canManageEvents = hasCapability(roles, 'manage_events');
   const canCheckin = hasCapability(roles, 'checkin');
   const canViewMembers = hasCapability(roles, 'view_members');
+  // Division leads and the whole team can see who leads each division; emails stay officer+ only.
+  const canSeeDivisionMembers = hasCapability(roles, 'view_division_members');
   const canManageDivisions = hasCapability(roles, 'manage_divisions_directory');
   const canGenerateQr = hasCapability(roles, 'generate_qr_codes');
   const canEditContent = hasCapability(roles, 'manage_site_content');
@@ -92,7 +103,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const canAttendMeetings = hasCapability(roles, 'attend_meetings');
   const canManageMeetings = hasCapability(roles, 'manage_meetings');
   // Best-effort: if this lookup fails the bar just doesn't get the meeting boost.
-  const meetingNow = canAttendMeetings ? await meetingHappeningNow(createServiceClient()).catch(() => false) : false;
+  const meetingNow = canAttendMeetings ? await meetingHappeningNow(createServiceClient(), { id: profile.id, roles }).catch(() => false) : false;
   // Rewards (earning points at check-in, referral bonuses, the shop) is
   // UCSD-students-and-staff only — see is_rewards_eligible() in
   // 20260922110000_restrict_rewards_to_ucsd.sql, the actual enforcement
@@ -174,6 +185,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
   // actual Pacific calendar dates instead, so this only ever matches
   // events that fall on San Diego's "today", no matter what time it is now.
   const todayEvents = (checkinData?.events ?? []).filter((e) => pacificDaysUntil(e.start_date) === 0);
+
+  const divisionMembersData = canSeeDivisionMembers ? await getDivisionMembersData(canViewMembers).catch(() => []) : null;
 
   const sections: HubSection[] = [
     {
@@ -278,7 +291,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       // much bigger roster than the page actually shows.
       badge: membersData.memberCount || undefined,
       group: 'TG' as const,
-      content: <MembersSectionContent rows={membersData.rows} roles={roles} />,
+      content: <MembersSectionContent rows={membersData.rows} />,
     }] : []),
     ...(canViewDocs && docsData ? [{
       id: 'docs', icon: <BookOpen size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Documentation',
@@ -317,9 +330,28 @@ export default async function PortalDashboard({ searchParams }: Props) {
     // its own click and made "Admin" a mix of unrelated concerns (roles,
     // stats, AND content editing). See SiteContentSectionContent for the
     // tabbed layout, matching AdminSectionContent's own tab bar.
-    ...(canManageDivisions || isDivisionLead || canEditContent ? [{
+    ...(canManageDivisions || isDivisionLead ? [{
+      id: 'divisions', icon: <LayoutGrid size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Divisions',
+      description: canManageDivisions ? 'Manage the divisions directory and their pages' : 'Edit your division’s page',
+      group: 'Divisions' as const,
+      content: (
+        <DivisionsSectionContent
+          canManageDivisions={canManageDivisions}
+          allDivisions={divisionsData?.divisions}
+          isDivisionLead={isDivisionLead}
+          myDivisions={myDivisions ?? undefined}
+        />
+      ),
+    }] : []),
+    ...(canSeeDivisionMembers ? [{
+      id: 'division-members', icon: <Users size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Division Members',
+      description: 'Who leads each division',
+      group: 'Divisions' as const,
+      content: <DivisionMembersSectionContent groups={divisionMembersData ?? []} />,
+    }] : []),
+    ...(canEditContent ? [{
       id: 'site-content', icon: <Pencil size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Site Content',
-      description: 'Divisions, page banners, and text on the public site',
+      description: 'Page banners, text and images on the public site',
       group: 'Admin' as const,
       content: (
         <SiteContentSectionContent
@@ -327,11 +359,6 @@ export default async function PortalDashboard({ searchParams }: Props) {
           contentBlocks={CONTENT_BLOCKS}
           contentMap={contentData?.contentMap}
           lastEdited={contentData?.lastEdited}
-          canManageDivisions={canManageDivisions}
-          allDivisions={divisionsData?.divisions}
-          isDivisionLead={isDivisionLead}
-          myDivisions={myDivisions ?? undefined}
-          initialTab={requestedTab}
         />
       ),
     }] : []),
@@ -347,13 +374,6 @@ export default async function PortalDashboard({ searchParams }: Props) {
           initialTab={requestedTab}
         />
       ),
-    }] : []),
-    // Its own card in the Admin group (not a tab inside the Admin section) — admin only.
-    ...(canManageRoles ? [{
-      id: 'links', icon: <Link2 size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Short Links',
-      description: 'Custom redirects like /linktree to any page or URL',
-      group: 'Admin' as const,
-      content: <LinksSection />,
     }] : []),
   ];
 

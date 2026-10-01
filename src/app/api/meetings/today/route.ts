@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { authorizeMeetings, buildSchedule, getTodaysMeetings, isMeetingOpen } from '@/lib/meetings';
+import { authorizeMeetings, buildSchedule, checkInOpensAt, getTodaysMeetings, isCheckInAccepting, isMeetingOpen } from '@/lib/meetings';
+import { canAttendMeeting } from '@/lib/meetingAudience';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,7 +8,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   const auth = await authorizeMeetings('attend_meetings');
   if (auth.error) return auth.error;
-  const todays = await getTodaysMeetings(auth.svc);
+  const todays = (await getTodaysMeetings(auth.svc)).filter((m) => canAttendMeeting(m, auth.user.id, auth.roles));
   const { data: mine } = todays.length
     ? await auth.svc.from('meeting_attendance').select('meeting_id, checked_in_at').eq('user_id', auth.user.id).in('meeting_id', todays.map((m) => m.id))
     : { data: [] as { meeting_id: string; checked_in_at: string }[] };
@@ -17,10 +18,10 @@ export async function GET() {
     ? await auth.svc.from('meeting_answers').select('meeting_id, answer').eq('user_id', auth.user.id).in('meeting_id', checkedInIds)
     : { data: [] as { meeting_id: string; answer: string }[] };
   const myAnswer = new Map((answers ?? []).map((a) => [a.meeting_id, a.answer]));
-  const { upcoming } = await buildSchedule(auth.svc);
+  const { upcoming } = await buildSchedule(auth.svc, { id: auth.user.id, roles: auth.roles });
   const next = upcoming.find((i) => i.status === 'scheduled' || i.status === 'open');
   return NextResponse.json({
-    meetings: todays.map((m) => ({ id: m.id, title: m.title, location: m.location, starts_at: m.starts_at, ends_at: m.ends_at, open: isMeetingOpen(m), checked_in_at: inAt.get(m.id) ?? null,
+    meetings: todays.map((m) => ({ id: m.id, title: m.title, location: m.location, starts_at: m.starts_at, ends_at: m.ends_at, open: isMeetingOpen(m), accepting: isCheckInAccepting(m), opens_at: new Date(checkInOpensAt(m)).toISOString(), checked_in_at: inAt.get(m.id) ?? null,
       // The meeting doc only shows once you've checked in.
       doc_url: inAt.has(m.id) ? m.doc_url : null,
       // The question is a reward for being there: revealed after check-in.

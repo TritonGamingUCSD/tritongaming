@@ -53,7 +53,7 @@ export default async function EditDivisionPage({ params }: Params) {
       divisionId={division.id}
       initial={initial}
       canManageDirectory={canManageDirectory}
-      backHref={canManageDirectory ? '/portal?section=site-content&tab=divisions' : '/portal?section=site-content&tab=my-division'}
+      backHref={canManageDirectory ? '/portal?section=divisions&tab=directory' : '/portal?section=divisions&tab=my-division'}
     />
   );
 }

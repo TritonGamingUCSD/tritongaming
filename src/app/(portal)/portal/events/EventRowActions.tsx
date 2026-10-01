@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
-import { BarChart3, Pencil, MoreHorizontal, ExternalLink, Trash2 } from 'lucide-react';
+import { ExternalLink, Trash2 } from 'lucide-react';
+import IconButton from '@/components/ui/IconButton';
 import styles from './events.module.css';
 
 // Per-row actions for the events table: the two things people actually do
@@ -37,20 +37,14 @@ export default function EventRowActions({
   return (
     <div className={styles.rowActions} ref={ref}>
       {showSummary && (
-        <Link href={`/portal/events/${eventId}/summary`} className={styles.iconAction} aria-label={`Summary for ${title}`} title="Summary">
-          <BarChart3 size={16} strokeWidth={1.75} aria-hidden="true" />
-        </Link>
+        <IconButton kind="analytics" href={`/portal/events/${eventId}/summary`} label={`Summary for ${title}`} />
       )}
       {canEdit && (
-        <Link href={`/portal/events/${eventId}`} className={styles.iconAction} aria-label={`Edit ${title}`} title="Edit">
-          <Pencil size={16} strokeWidth={1.75} aria-hidden="true" />
-        </Link>
+        <IconButton kind="edit" href={`/portal/events/${eventId}`} label={`Edit ${title}`} />
       )}
       {canEdit && hasMore && (
         <div className={styles.moreWrap}>
-          <button type="button" className={styles.iconAction} aria-label={`More actions for ${title}`} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
-            <MoreHorizontal size={16} strokeWidth={1.75} aria-hidden="true" />
-          </button>
+          <IconButton kind="more" label={`More actions for ${title}`} aria-haspopup="menu" aria-expanded={open} active={open} onClick={() => setOpen((o) => !o)} />
           {open && (
             <div className={styles.moreMenu} role="menu">
               {previewUrl && (

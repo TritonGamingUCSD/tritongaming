@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { MyDivision } from './getMyDivisionsData';
+import IconButton from '@/components/ui/IconButton';
 import styles from './divisions.module.css';
 
 function logoSrc(url: string | null): string | null {
@@ -37,7 +38,7 @@ export default function MyDivisionsEditor({ divisions }: { divisions: MyDivision
               <Link href={`/divisions/${d.slug}`} target="_blank" className={styles.slug}>/divisions/{d.slug} ↗</Link>
             </div>
             <div className={styles.actions}>
-              <Link href={`/portal/divisions/${d.id}`} className={styles.btn}>Edit</Link>
+              <IconButton kind="edit" href={`/portal/divisions/${d.id}`} label={`Edit ${d.name}`} />
             </div>
           </div>
         );

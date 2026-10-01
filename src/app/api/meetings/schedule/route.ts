@@ -3,6 +3,7 @@ import { logAudit } from '@/lib/audit';
 import { pacificDayKey } from '@/lib/checkinDays';
 import { authorizeMeetings, buildSchedule, occurrenceTimes, validateDocUrl } from '@/lib/meetings';
 import { MAX_QUESTION_LENGTH } from '@/lib/meetingFun';
+import { validateAudienceInput } from '@/lib/meetingAudience';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,13 +27,15 @@ export async function POST(request: Request) {
   const start = String(b.start ?? ''), end = String(b.end ?? '');
   const doc = validateDocUrl(b.doc_url);
   if (!doc.ok) return NextResponse.json({ error: 'The doc link must start with https:// (or be a path on this site).' }, { status: 400 });
+  const aud = validateAudienceInput(b);
+  if (!aud.ok) return NextResponse.json({ error: 'Pick who the meeting is for.' }, { status: 400 });
   if (!title) return NextResponse.json({ error: 'Give the meeting a name.' }, { status: 400 });
   if (!TIME.test(start) || !TIME.test(end) || end <= start) return NextResponse.json({ error: 'Pick a start time and a later end time.' }, { status: 400 });
 
   if (b.repeat === 'weekly') {
     const weekday = Number(b.weekday);
     if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6) return NextResponse.json({ error: 'Pick a day of the week.' }, { status: 400 });
-    const { data, error } = await auth.svc.from('meeting_series').insert({ title, weekday, start_time: start, end_time: end, location, doc_url: doc.value, created_by: auth.user.id }).select('id').single();
+    const { data, error } = await auth.svc.from('meeting_series').insert({ title, weekday, start_time: start, end_time: end, location, doc_url: doc.value, audience: aud.audience, invitees: aud.invitees, created_by: auth.user.id }).select('id').single();
     if (error) return NextResponse.json({ error: 'Failed to schedule.' }, { status: 500 });
     await logAudit(auth.svc, { actorId: auth.user.id, action: 'create', entityType: 'meeting series', entityId: data.id, summary: `Scheduled repeating meeting "${title}"`, details: { weekday, start, end } });
     return NextResponse.json({ id: data.id }, { status: 201 });
@@ -41,7 +44,7 @@ export async function POST(request: Request) {
   const date = String(b.date ?? '');
   if (!DATE.test(date) || date < pacificDayKey()) return NextResponse.json({ error: 'Pick a date that hasn’t passed.' }, { status: 400 });
   const { starts, ends } = occurrenceTimes(date, start, end);
-  const { data, error } = await auth.svc.from('meetings').insert({ title, meeting_date: date, starts_at: starts.toISOString(), ends_at: ends.toISOString(), location, doc_url: doc.value, question: String(b.question ?? '').trim().slice(0, MAX_QUESTION_LENGTH) || null }).select('id').single();
+  const { data, error } = await auth.svc.from('meetings').insert({ title, meeting_date: date, starts_at: starts.toISOString(), ends_at: ends.toISOString(), location, doc_url: doc.value, audience: aud.audience, invitees: aud.invitees, question: String(b.question ?? '').trim().slice(0, MAX_QUESTION_LENGTH) || null }).select('id').single();
   if (error) return NextResponse.json({ error: 'Failed to schedule.' }, { status: 500 });
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'create', entityType: 'meeting', entityId: data.id, summary: `Scheduled "${title}" for ${date}` });
   return NextResponse.json({ id: data.id }, { status: 201 });

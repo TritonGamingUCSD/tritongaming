@@ -3,9 +3,10 @@
 import Notice from '@/components/ui/Notice';
 import { confirmHold } from '@/lib/confirmHold';
 import { useEffect, useState } from 'react';
-import { Database, HardDrive, Triangle, ExternalLink, Users, Server, ShieldCheck } from 'lucide-react';
+import { Database, HardDrive, Triangle, ExternalLink, Users, Server, ShieldCheck, Trash2 } from 'lucide-react';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import adminStyles from './admin.module.css';
+import Button from '@/components/ui/Button';
 import styles from './SystemStats.module.css';
 
 interface TableStat {
@@ -339,13 +340,9 @@ export default function SystemStats() {
         </div>
 
         <div className={styles.cleanupControls}>
-          <button type="button" className={styles.scanBtn} onClick={handleScan} disabled={scanning || deleting}>
-            {scanning ? 'Scanning…' : 'Scan for Unused Files'}
-          </button>
+          <Button variant="secondary" size="sm" onClick={handleScan} disabled={scanning || deleting}>{scanning ? 'Scanning…' : 'Scan for unused files'}</Button>
           {preview && totalUnused > 0 && (
-            <button type="button" className={styles.deleteBtn} onClick={handleDelete} disabled={deleting}>
-              {deleting ? 'Deleting…' : `Delete ${totalUnused} Unused File${totalUnused === 1 ? '' : 's'}`}
-            </button>
+            <Button variant="danger" size="sm" onClick={handleDelete} disabled={deleting}><Trash2 size={13} aria-hidden="true" /> {deleting ? 'Deleting…' : `Delete ${totalUnused} unused file${totalUnused === 1 ? '' : 's'}`}</Button>
           )}
         </div>
 

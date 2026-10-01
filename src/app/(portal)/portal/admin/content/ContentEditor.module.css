@@ -729,3 +729,18 @@
   .hasActive .blockList { display: none; }
   .shell:not(.hasActive) .editPanel { display: none; }
 }
+
+/* Editor is a plain card under the tabs now (no side list / slide-over) */
+.shell { gap: 0.9rem; }
+.editorCard { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 1rem; overflow: hidden; }
+.shell > .searchInput { max-width: 360px; }
+.cancelBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* One toolbar row: the page's block sub-tabs on the left, search tucked in on the right. */
+.toolbar { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+.subTabs { flex: 1 1 320px; min-width: 0; }
+.searchWrap { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; padding: 0 0.8rem; height: 38px; width: 230px; max-width: 100%; border-radius: 999px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: rgba(242, 241, 240, 0.5); }
+.searchWrap:focus-within { border-color: rgba(255, 199, 44, 0.45); color: var(--yellow); }
+.searchField { flex: 1; min-width: 0; background: none; border: none; outline: none; color: var(--white); font-family: inherit; font-size: 0.85rem; }
+.searchField::placeholder { color: rgba(242, 241, 240, 0.4); }
+@media (max-width: 640px) { .searchWrap { width: 100%; } }

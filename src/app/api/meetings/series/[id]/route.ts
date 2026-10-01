@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/audit';
 import { authorizeMeetings, validateDocUrl } from '@/lib/meetings';
+import { validateAudienceInput } from '@/lib/meetingAudience';
 
 // Pause/resume a repeating meeting, or delete it (past meetings and their attendance are kept).
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -14,6 +15,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const doc = validateDocUrl(body.doc_url);
     if (!doc.ok) return NextResponse.json({ error: 'The doc link must start with https:// (or be a path on this site).' }, { status: 400 });
     patch.doc_url = doc.value;
+  }
+  if ('audience' in body || 'invitees' in body) {
+    const aud = validateAudienceInput(body);
+    if (!aud.ok) return NextResponse.json({ error: 'Pick who the meeting is for.' }, { status: 400 });
+    patch.audience = aud.audience;
+    patch.invitees = aud.invitees;
   }
   if (Object.keys(patch).length === 0) return NextResponse.json({ error: 'Nothing to update.' }, { status: 400 });
   const { data, error } = await auth.svc.from('meeting_series').update(patch).eq('id', id).select('title').maybeSingle();

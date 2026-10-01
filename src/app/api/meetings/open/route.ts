@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     if (b.date !== today) return NextResponse.json({ error: 'You can start check-in on the day of the meeting.' }, { status: 409 });
     const { starts, ends } = occurrenceTimes(b.date, s.start_time, s.end_time);
     await auth.svc.from('meetings').upsert(
-      { series_id: s.id, title: s.title, meeting_date: b.date, starts_at: starts.toISOString(), ends_at: ends.toISOString(), location: s.location, doc_url: s.doc_url },
+      { series_id: s.id, title: s.title, meeting_date: b.date, starts_at: starts.toISOString(), ends_at: ends.toISOString(), location: s.location, doc_url: s.doc_url, audience: s.audience, invitees: s.invitees },
       { onConflict: 'series_id,meeting_date', ignoreDuplicates: true });
     const { data } = await auth.svc.from('meetings').select('*').eq('series_id', s.id).eq('meeting_date', b.date).maybeSingle();
     meeting = data as MeetingRow | null;

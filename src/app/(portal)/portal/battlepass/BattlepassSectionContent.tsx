@@ -17,6 +17,7 @@ import { useQRScanner } from '@/lib/useQRScanner';
 import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
 import checkinStyles from '../checkin/checkin.module.css';
 import type { BattlepassTransactionRow } from './getMyBattlepassData';
+import IconButton from '@/components/ui/IconButton';
 import styles from './battlepass.module.css';
 
 type Tab = 'mine' | 'shop' | 'leaderboard' | 'manage';
@@ -1132,11 +1133,9 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, lead
                         <div className={styles.stockNote}>{t.min_points.toLocaleString()} lifetime pts</div>
                       </div>
                       <div className={styles.manageRowActions}>
-                        <button type="button" className={styles.toggleBtn} onClick={() => startEditTier(t)}>Edit</button>
+                        <IconButton kind="edit" label={`Edit ${t.name} tier`} onClick={() => startEditTier(t)} />
                         {t.min_points !== 0 && (
-                          <button type="button" className={styles.toggleBtn} onClick={() => handleDeleteTier(t)} disabled={deletingTierId === t.id}>
-                            {deletingTierId === t.id ? 'Deleting…' : 'Delete'}
-                          </button>
+                          <IconButton kind="delete" label={`Delete ${t.name} tier`} onClick={() => handleDeleteTier(t)} disabled={deletingTierId === t.id} />
                         )}
                       </div>
                     </div>

@@ -5,14 +5,12 @@ import MemberCardBody from '@/components/MemberCard/MemberCardBody';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { usePortalParams, useLiveParams } from '@/lib/usePortalParams';
 import SectionTabs from '@/components/ui/SectionTabs';
 import { LayoutGrid, List, X } from 'lucide-react';
 import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
 import type { AppRole } from '@/types/database';
 import type { RoleGrant } from '@/lib/capabilities';
-import { hasCapability } from '@/lib/capabilities';
 import { resolveAvatarUrl, isOrgMember } from '@/lib/profile';
 import type { MemberProfileRow } from './getMembersData';
 import styles from './members.module.css';
@@ -43,11 +41,18 @@ type MemberEntry = Omit<MemberProfileRow, 'user_roles'> & { divisionName?: strin
 // since this list can run into the hundreds of members and animating a
 // shared-element transition across that many grid cells is exactly the
 // kind of cost that caused the lag BoardSection had to be fixed for.
-export default function MembersSectionContent({ rows, roles }: { rows: MemberProfileRow[]; roles: RoleGrant[] }) {
+export default function MembersSectionContent({ rows }: { rows: MemberProfileRow[] }) {
   const searchParams = useLiveParams();
   const setParams = usePortalParams();
   const [view, setView] = useState<'grid' | 'list'>(() => (searchParams.get('view') === 'list' ? 'list' : 'grid'));
-  const [selected, setSelected] = useState<MemberEntry | null>(null);
+  const [selected, setSelectedRaw] = useState<MemberEntry | null>(null);
+  // The id of a card the person just closed, so a lagging URL (?id=…) can't pop it open again.
+  const dismissedId = useRef<string | null>(null);
+  const setSelected = (m: MemberEntry | null) => {
+    if (m) dismissedId.current = null; else dismissedId.current = selectedRef.current?.id ?? null;
+    setSelectedRaw(m);
+  };
+  const selectedRef = useRef<MemberEntry | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   // Discord has no public profile URL to link to from a bare username, so
@@ -103,9 +108,19 @@ export default function MembersSectionContent({ rows, roles }: { rows: MemberPro
   useEffect(() => {
     if (!requestedId) return;
     const match = Object.values(grouped).flat().find((m) => m.id === requestedId);
-    if (match) setSelected(match);
+    if (match && match.id !== dismissedId.current) setSelectedRaw(match);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestedId]);
+
+  useEffect(() => { selectedRef.current = selected; }, [selected]);
+  // Escape closes the card.
+  useEffect(() => {
+    if (!selected) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setSelected(null); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected]);
 
   return (
     <div className={styles.page}>
@@ -122,11 +137,6 @@ export default function MembersSectionContent({ rows, roles }: { rows: MemberPro
             onChange={(v) => { setView(v); setParams({ view: v === 'grid' ? null : v }); }}
             tabs={[{ id: 'grid', label: 'Grid', icon: <LayoutGrid /> }, { id: 'list', label: 'List', icon: <List /> }]}
           />
-          {hasCapability(roles, 'manage_roles') && (
-            <Link href="/portal?section=admin" className={styles.adminLink}>
-              Role Manager →
-            </Link>
-          )}
         </div>
       </div>
 
@@ -161,7 +171,8 @@ export default function MembersSectionContent({ rows, roles }: { rows: MemberPro
                   )}
                   <div className={styles.info}>
                     <div className={styles.name}>{m.display_name || 'Anonymous'}</div>
-                    {m.org_title && <div className={styles.orgTitle}>{m.org_title}</div>}
+                    {/* Always rendered in list view, even when empty, so the columns line up row to row. */}
+                    {(m.org_title || view === 'list') && <div className={styles.orgTitle}>{m.org_title}</div>}
                     {/* Grid is the compact "who's who" view — name, title,
                         photo, nothing else. List view is the one place that
                         still shows division/year/major, since a single-line

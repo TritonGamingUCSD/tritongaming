@@ -184,3 +184,98 @@
 @media (prefers-reduced-motion: reduce) { .floater { animation-duration: 0.01s; } .answerCard, .reactPop { animation: none; } }
 .presenting .bigCode { font-size: clamp(4rem, 17vw, 11rem); }
 @media (max-width: 480px) { .reactBtn { width: 44px; height: 44px; font-size: 1.35rem; } .reactBtns { gap: 0.35rem; } }
+
+/* Audience */
+.audience { display: flex; flex-direction: column; gap: 0.6rem; }
+.presets { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.chip { padding: 0.35rem 0.75rem; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(255, 255, 255, 0.04); color: rgba(242, 241, 240, 0.75); font-size: 0.78rem; cursor: pointer; }
+.chip:hover { border-color: rgba(255, 199, 44, 0.45); }
+.chipOn { border-color: var(--yellow); background: rgba(255, 199, 44, 0.14); color: var(--yellow); }
+.roleChecks { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; }
+.roleCheck { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--white); cursor: pointer; }
+.audienceLine { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.72rem; color: #c4b5fd; }
+.audienceField { display: flex; flex-direction: column; gap: 0.45rem; }
+.audienceTitle { font-size: 0.78rem; color: rgba(242, 241, 240, 0.6); }
+
+/* Pick specific people */
+.pickTop { display: flex; gap: 0.7rem; align-items: center; }
+.pickTop > :first-child { flex: 1; min-width: 0; }
+.pickCount { font-size: 0.82rem; color: rgba(242, 241, 240, 0.7); white-space: nowrap; }
+.pickCount strong { color: var(--yellow); font-size: 1rem; }
+.pickList { list-style: none; margin: 0; padding: 0; max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.25rem; }
+.pickRow { display: flex; align-items: center; gap: 0.6rem; padding: 0.35rem 0.55rem; border-radius: 0.6rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); cursor: pointer; min-width: 0; }
+.pickRow:hover { background: rgba(255, 255, 255, 0.07); }
+.pickRole { font-size: 0.7rem; color: rgba(242, 241, 240, 0.5); white-space: nowrap; }
+
+/* Attendance page */
+.filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.8rem; }
+.filters > label { flex: 1 1 160px; min-width: 0; }
+.filters .exportBtns { margin-left: auto; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.7rem; }
+.tile { display: flex; flex-direction: column; gap: 0.15rem; padding: 0.85rem 1rem; border-radius: 0.9rem; background: rgba(255, 255, 255, 0.035); border: 1px solid rgba(255, 255, 255, 0.09); text-align: left; color: inherit; font: inherit; }
+.tile strong { font-family: var(--font-futura-heavy); font-size: 1.6rem; color: var(--white); line-height: 1.1; }
+.tile span { font-size: 0.74rem; color: rgba(242, 241, 240, 0.6); }
+.tileBtn { cursor: pointer; }
+.tileBtn:hover, .tileOn { border-color: rgba(251, 146, 60, 0.6); background: rgba(251, 146, 60, 0.08); }
+.tileBtn strong { color: #fb923c; }
+
+.trend { display: flex; align-items: flex-end; gap: 4px; height: 150px; overflow-x: auto; padding-bottom: 2px; }
+.trendCol { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; flex: 1 0 22px; max-width: 46px; height: 100%; background: none; border: none; padding: 0; cursor: pointer; color: rgba(242, 241, 240, 0.5); }
+.trendCol:hover .trendBar { border-color: var(--yellow); }
+.trendCol small { font-size: 0.6rem; }
+.trendBar { display: flex; flex-direction: column; justify-content: flex-end; width: 100%; min-height: 4px; border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 4px 4px 0 0; overflow: hidden; }
+.trendFill { display: block; width: 100%; background: #34d399; }
+
+.tableHead { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; flex-wrap: wrap; }
+.tableHead .listTitle { margin-bottom: 0; }
+.searchBox { max-width: 240px; }
+.sortRow { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; font-size: 0.74rem; color: rgba(242, 241, 240, 0.5); }
+.thBtn { padding: 0.2rem 0.6rem; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.12); background: transparent; color: rgba(242, 241, 240, 0.7); font-size: 0.74rem; cursor: pointer; }
+.thOn { border-color: var(--yellow); color: var(--yellow); }
+.attRow { display: flex; align-items: center; gap: 0.7rem; padding: 0.5rem 0.65rem; border-radius: 0.75rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); min-width: 0; flex-wrap: wrap; }
+.attMain { display: flex; flex-direction: column; flex: 1 1 180px; min-width: 0; }
+.attMain .personName { flex: none; }
+.attSub { font-style: normal; font-size: 0.72rem; color: rgba(242, 241, 240, 0.5); overflow-wrap: anywhere; }
+.flag { margin-left: 0.5rem; padding: 0.05rem 0.5rem; border-radius: 999px; font-size: 0.64rem; font-weight: 400; letter-spacing: 0.04em; color: #fb923c; background: rgba(251, 146, 60, 0.14); border: 1px solid rgba(251, 146, 60, 0.4); }
+.dots { display: inline-flex; gap: 3px; align-items: center; }
+.dots i { width: 9px; height: 9px; border-radius: 50%; display: block; }
+.dotP { background: #34d399; }
+.dotA { background: #f87171; }
+.dotN { background: rgba(255, 255, 255, 0.15); }
+.attRate { display: flex; align-items: center; gap: 0.5rem; }
+.collapse { display: flex; align-items: center; justify-content: space-between; width: 100%; background: none; border: none; padding: 0; color: rgba(242, 241, 240, 0.6); font-size: 0.8rem; cursor: pointer; }
+.collapse .listTitle { margin-bottom: 0; }
+@media (max-width: 640px) {
+  .filters .exportBtns { margin-left: 0; width: 100%; }
+  .attRate { width: 100%; }
+  .searchBox { max-width: none; width: 100%; }
+}
+
+/* Role checkboxes, in the site's own look: dark glass tiles, gold when on, square check box. */
+.checkGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.5rem; }
+.check { position: relative; display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 0.8rem; border-radius: 0.75rem; cursor: pointer; font-size: 0.88rem; color: rgba(242, 241, 240, 0.8); background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.12); transition: background 0.15s, border-color 0.15s, color 0.15s; user-select: none; }
+.check:hover { border-color: rgba(255, 199, 44, 0.4); background: rgba(255, 255, 255, 0.07); }
+.checkOn { color: var(--white); border-color: rgba(255, 199, 44, 0.6); background: rgba(255, 199, 44, 0.1); }
+.checkInput { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.checkBox { display: grid; place-items: center; width: 20px; height: 20px; flex-shrink: 0; border-radius: 6px; border: 1.5px solid rgba(255, 255, 255, 0.3); background: rgba(0, 0, 0, 0.25); color: #0b1226; transition: background 0.15s, border-color 0.15s; }
+.checkOn .checkBox { background: var(--yellow); border-color: var(--yellow); }
+.checkInput:focus-visible ~ .checkBox { box-shadow: 0 0 0 3px rgba(255, 199, 44, 0.35); }
+.checkWarn { font-size: 0.8rem; color: #fca5a5; }
+.customNote { display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: #c4b5fd; }
+
+/* People picker + groups */
+.picker { display: flex; flex-direction: column; gap: 0.6rem; }
+.pickRow { position: relative; }
+.pickRowOn { border-color: rgba(255, 199, 44, 0.5); background: rgba(255, 199, 44, 0.08); }
+.checkBoxOn { background: var(--yellow); border-color: var(--yellow); color: #0b1226; }
+
+/* Marking absent */
+.personCol { display: flex; flex-direction: column; gap: 0.4rem; padding: 0.45rem 0.6rem; border-radius: 0.7rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); min-width: 0; }
+.personRow { display: flex; align-items: center; gap: 0.6rem; min-width: 0; flex-wrap: wrap; }
+.personRow .personName { flex: 1 1 120px; }
+.absentBtn { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.65rem; border-radius: 999px; border: 1px solid rgba(248, 113, 113, 0.4); background: rgba(220, 38, 38, 0.1); color: #fca5a5; font-size: 0.74rem; cursor: pointer; white-space: nowrap; }
+.absentBtn:hover { background: rgba(220, 38, 38, 0.2); }
+.absentForm { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.absentForm > :first-child { flex: 1 1 200px; min-width: 0; }
+.listWide { grid-column: 1 / -1; }
+.dotE { background: transparent !important; box-shadow: inset 0 0 0 2px #fbbf24; }

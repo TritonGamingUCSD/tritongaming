@@ -4,6 +4,7 @@ import { pacificDayKey } from '@/lib/checkinDays';
 import { fetchLinkedEmails, pickDisplayEmails } from '@/lib/linkedEmails';
 import { ROLE_DISPLAY_RANK, ROLE_LABELS, type AppRole } from '@/types/database';
 import { addDaysKey, authorizeMeetings } from '@/lib/meetings';
+import { AUDIENCE_ROLES, audienceLabel, isExpected } from '@/lib/meetingAudience';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,15 +28,20 @@ export async function GET(request: Request) {
   const valid = (v: string | null) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null);
   const from = valid(url.searchParams.get('from')) ?? addDaysKey(today, -90);
   const to = valid(url.searchParams.get('to')) ?? today;
+  const titleFilter = url.searchParams.get('title');
 
-  const { data: meetings } = await auth.svc.from('meetings').select('id, title, meeting_date, starts_at')
+  let q = auth.svc.from('meetings').select('id, title, meeting_date, starts_at, audience, invitees')
     .eq('cancelled', false).not('opened_at', 'is', null).gte('meeting_date', from).lte('meeting_date', to).order('meeting_date').order('starts_at');
+  if (titleFilter) q = q.eq('title', titleFilter);
+  const { data: meetings } = await q;
   const ids = (meetings ?? []).map((m) => m.id as string);
+  const { data: abs } = ids.length ? await auth.svc.from('meeting_absences').select('meeting_id, user_id, reason, excused').in('meeting_id', ids) : { data: [] as { meeting_id: string; user_id: string; reason: string | null; excused: boolean }[] };
+  const absByKey = new Map((abs ?? []).map((a) => [`${a.meeting_id}|${a.user_id}`, a]));
   const { data: att } = ids.length ? await auth.svc.from('meeting_attendance').select('meeting_id, user_id, checked_in_at, method').in('meeting_id', ids) : { data: [] as { meeting_id: string; user_id: string; checked_in_at: string; method: string }[] };
 
   // Everyone expected (team roles) plus anyone who attended without a current team role.
-  const { data: grants } = await auth.svc.from('user_roles').select('user_id, role').in('role', ['officer', 'lead', 'exec', 'recruit']);
-  const peopleIds = new Set<string>([...(grants ?? []).map((g) => g.user_id as string), ...(att ?? []).map((a) => a.user_id as string)]);
+  const { data: grants } = await auth.svc.from('user_roles').select('user_id, role').in('role', [...AUDIENCE_ROLES]);
+  const peopleIds = new Set<string>([...(grants ?? []).map((g) => g.user_id as string), ...(att ?? []).map((a) => a.user_id as string), ...(meetings ?? []).flatMap((m) => (m.invitees as string[] | null) ?? []), ...(abs ?? []).map((a) => a.user_id as string)]);
   const idList = [...peopleIds];
   const [{ data: profiles }, { data: allRoles }, emails] = await Promise.all([
     idList.length ? auth.svc.from('profiles').select('id, display_name, preferred_email').in('id', idList) : Promise.resolve({ data: [] as { id: string; display_name: string | null; preferred_email: string | null }[] }),
@@ -55,21 +61,30 @@ export async function GET(request: Request) {
   })).sort((a, b) => a.name.localeCompare(b.name));
   const attByKey = new Map((att ?? []).map((a) => [`${a.meeting_id}|${a.user_id}`, a]));
 
+  const rolesOf = new Map<string, { role: string }[]>();
+  for (const g of grants ?? []) rolesOf.set(g.user_id as string, [...(rolesOf.get(g.user_id as string) ?? []), { role: g.role as string }]);
+  // Expected = holds one of the meeting's roles. Someone who came anyway is still listed as present.
+  const expected = (m: { audience: string[] | null; invitees: string[] | null }, personId: string) => isExpected(m, personId, rolesOf.get(personId) ?? []);
+
   let rows: string[];
   if (type === 'log') {
-    rows = [line(['Date', 'Meeting', 'Name', 'Email', 'Role', 'Status', 'Checked in at (Pacific)', 'Method'])];
+    rows = [line(['Date', 'Meeting', 'Meant for', 'Name', 'Email', 'Role', 'Status', 'Reason', 'Checked in at (Pacific)', 'Method'])];
     for (const m of meetings ?? []) {
       for (const p of people) {
         const a = attByKey.get(`${m.id}|${p.id}`);
-        rows.push(line([m.meeting_date, m.title, p.name, p.email, p.role, a ? 'Present' : 'Absent', a ? pacificTime(a.checked_in_at) : '', a ? (a.method === 'manual' ? 'Added by exec' : 'Code') : '']));
+        const ab = absByKey.get(`${m.id}|${p.id}`);
+        if (!a && !ab && !expected({ audience: m.audience as string[] | null, invitees: m.invitees as string[] | null }, p.id)) continue;   // the meeting wasn't for them
+        rows.push(line([m.meeting_date, m.title, audienceLabel({ audience: m.audience as string[] | null, invitees: m.invitees as string[] | null }), p.name, p.email, p.role, a ? 'Present' : ab ? (ab.excused ? 'Excused absence' : 'Absent') : 'Absent', ab?.reason ?? '', a ? pacificTime(a.checked_in_at) : '', a ? (a.method === 'manual' ? 'Added by exec' : 'Code') : '']));
       }
     }
   } else {
-    const total = (meetings ?? []).length;
-    rows = [line(['Name', 'Email', 'Role', 'Meetings attended', 'Meetings held', 'Attendance rate', 'Last attended'])];
+    rows = [line(['Name', 'Email', 'Role', 'Meetings attended', 'Meetings expected', 'Excused absences', 'Attendance rate', 'Last attended'])];
     for (const p of people) {
-      const mine = (meetings ?? []).filter((m) => attByKey.has(`${m.id}|${p.id}`));
-      rows.push(line([p.name, p.email, p.role, mine.length, total, total ? `${Math.round((mine.length / total) * 100)}%` : '', mine.length ? mine[mine.length - 1].meeting_date : '']));
+      const excusedN = (meetings ?? []).filter((m) => absByKey.get(`${m.id}|${p.id}`)?.excused && !attByKey.has(`${m.id}|${p.id}`)).length;
+      const relevant = (meetings ?? []).filter((m) => !(absByKey.get(`${m.id}|${p.id}`)?.excused) && (attByKey.has(`${m.id}|${p.id}`) || expected({ audience: m.audience as string[] | null, invitees: m.invitees as string[] | null }, p.id)));
+      const mine = relevant.filter((m) => attByKey.has(`${m.id}|${p.id}`));
+      const total = relevant.length;
+      rows.push(line([p.name, p.email, p.role, mine.length, total, excusedN, total ? `${Math.round((mine.length / total) * 100)}%` : '', mine.length ? mine[mine.length - 1].meeting_date : '']));
     }
   }
 

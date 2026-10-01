@@ -32,12 +32,12 @@ function smallIcon(icon: ReactNode, size = 21) {
 // moved into Resources instead (see portal/page.tsx) — it's usable by any
 // officer-tier member, the same audience as Members/Docs, not Admin's
 // actually-restricted stuff.
-const GROUP_ORDER = ['Yours', 'TG', 'Events', 'Resources', 'Admin'] as const;
+const GROUP_ORDER = ['Yours', 'Events', 'TG', 'Divisions', 'Resources', 'Admin'] as const;
 // Order inside each group (and so in the sidebar, the "More" sheet and the home grid). Anything not
 // listed goes last, in the order it was given.
-const SECTION_ORDER = ['tickets', 'profile', 'activity', 'points', 'battlepass', 'members', 'meetings', 'events', 'checkin', 'qrcode', 'docs', 'albums', 'admin', 'site-content', 'links'];
+const SECTION_ORDER = ['tickets', 'profile', 'activity', 'points', 'battlepass', 'events', 'checkin', 'members', 'meetings', 'divisions', 'division-members', 'qrcode', 'docs', 'albums', 'admin', 'site-content'];
 // Accent color per group — tints the heading dot, icon tiles and hover state.
-const GROUP_ACCENT: Record<string, string> = { Yours: '#ffc72c', TG: '#a78bfa', Events: '#4a90e2', Resources: '#34d399', Admin: '#f472b6' };
+const GROUP_ACCENT: Record<string, string> = { Yours: '#ffc72c', TG: '#a78bfa', Events: '#4a90e2', Divisions: '#fb923c', Resources: '#34d399', Admin: '#f472b6' };
 type HubGroup = (typeof GROUP_ORDER)[number];
 
 export interface HubSection {

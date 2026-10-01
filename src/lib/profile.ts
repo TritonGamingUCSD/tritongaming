@@ -7,9 +7,10 @@ import type { Profile, AppRole } from '@/types/database';
 // getMembersData.ts, which pulls in the server-only Supabase client) so
 // the client-side MembersSectionContent can share it with the server-side
 // getMembersData without dragging next/headers into the client bundle.
+// Division leads aren't TG members on their own either: a person whose only roles are ucsd and/or
+// division doesn't count (someone who is also an officer, lead, exec, etc. still does).
 export function isOrgMember(userRoles: Array<{ role: AppRole }> | null | undefined): boolean {
-  const roles = new Set((userRoles ?? []).map((r) => r.role));
-  return !(roles.size === 0 || (roles.size === 1 && roles.has('ucsd')));
+  return (userRoles ?? []).some((r) => r.role !== 'ucsd' && r.role !== 'division');
 }
 
 // ── Class year ───────────────────────────────────────────────────────────────

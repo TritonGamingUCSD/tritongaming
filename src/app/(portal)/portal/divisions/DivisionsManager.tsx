@@ -7,6 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { deleteStorageUrl } from '@/lib/imageUpload';
 import type { SocialEmbed } from '@/types/database';
+import IconButton from '@/components/ui/IconButton';
 import styles from './divisions.module.css';
 
 interface Division {
@@ -139,10 +140,8 @@ export default function DivisionsManager({ divisions: initial }: { divisions: Di
                 <div className={styles.slug}>/divisions/{d.slug}</div>
               </div>
               <div className={styles.actions}>
-                <Link href={`/portal/divisions/${d.id}`} className={styles.btn}>Edit</Link>
-                <button className={styles.btnDanger} onClick={() => handleDelete(d)} disabled={isBusy}>
-                  {isBusy ? '…' : 'Delete'}
-                </button>
+                <IconButton kind="edit" href={`/portal/divisions/${d.id}`} label={`Edit ${d.name}`} />
+                <IconButton kind="delete" label={`Delete ${d.name}`} onClick={() => handleDelete(d)} disabled={isBusy} />
               </div>
             </div>
           );

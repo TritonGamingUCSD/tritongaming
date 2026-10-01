@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ReactNode } from 'react';
-import { Pencil, BarChart3, History, Activity, X, Server, Users as UsersIcon, ListOrdered, ScrollText } from 'lucide-react';
+import { Pencil, BarChart3, History, Activity, X, Server, Users as UsersIcon, ListOrdered, ScrollText, Link2 } from 'lucide-react';
 import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
 import { resolveAvatarUrl } from '@/lib/profile';
 import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/timezone';
@@ -15,8 +15,10 @@ import SystemStats from './SystemStats';
 import StatsClient from './stats/StatsClient';
 import type { StatsData } from './stats/getStatsData';
 import AuditLogClient from './audit/AuditLogClient';
+import LinksManager from '../links/LinksManager';
 import RoleHistoryClient from './history/RoleHistoryClient';
 import type { RoleChangeEntry } from './history/getRoleHistoryData';
+import IconButton from '@/components/ui/IconButton';
 import styles from './admin.module.css';
 
 interface Props {
@@ -29,8 +31,8 @@ interface Props {
   initialTab?: string;
 }
 
-type Tab = 'overview' | 'roles' | 'order' | 'analytics' | 'audit' | 'system';
-const VALID_TABS: Tab[] = ['overview', 'roles', 'order', 'analytics', 'audit', 'system'];
+type Tab = 'overview' | 'roles' | 'order' | 'analytics' | 'audit' | 'links' | 'system';
+const VALID_TABS: Tab[] = ['overview', 'roles', 'order', 'analytics', 'audit', 'links', 'system'];
 
 // Each tab is a real destination now instead of Overview being a junk
 // drawer for Role Manager + Storage Cleanup stacked underneath the stats —
@@ -103,7 +105,7 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
           { id: 'overview', label: 'Overview' },
           ...(isAdmin ? [{ id: 'roles' as const, label: 'Member Management', icon: <UsersIcon /> }, { id: 'order' as const, label: 'Display Order', icon: <ListOrdered /> }] : []),
           { id: 'analytics', label: 'Analytics', icon: <BarChart3 /> },
-          ...(isAdmin ? [{ id: 'audit' as const, label: 'Audit Log', icon: <ScrollText /> }, { id: 'system' as const, label: 'System', icon: <Server /> }] : []),
+          ...(isAdmin ? [{ id: 'audit' as const, label: 'Audit Log', icon: <ScrollText /> }, { id: 'links' as const, label: 'Short Links', icon: <Link2 /> }, { id: 'system' as const, label: 'System', icon: <Server /> }] : []),
         ]}
       />
 
@@ -191,9 +193,7 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
             <h2 className={styles.sectionLabel}>Member Management</h2>
             <span className={styles.sectionHint}>Search any user and change their role instantly</span>
             {roleHistoryEntries && (
-              <button type="button" className={styles.historyIconBtn} onClick={() => setHistoryOpen(true)} aria-label="View role change history">
-                <History size={15} strokeWidth={1.5} aria-hidden="true" />
-              </button>
+              <IconButton kind="history" label="View role change history" onClick={() => setHistoryOpen(true)} />
             )}
           </div>
           <RoleManager users={allUsers} divisions={divisions} />
@@ -203,6 +203,16 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
       {tab === 'order' && isAdmin && <BoardOrderManager users={allUsers} />}
 
       {tab === 'analytics' && <StatsClient data={statsData} />}
+
+      {tab === 'links' && isAdmin && (
+        <section className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionLabel}>Short Links</h2>
+            <span className={styles.sectionHint}>Custom redirects on your own domain, like /linktree</span>
+          </div>
+          <LinksManager />
+        </section>
+      )}
 
       {tab === 'system' && isAdmin && <SystemStats />}
 

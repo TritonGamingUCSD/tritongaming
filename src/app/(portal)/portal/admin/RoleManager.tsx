@@ -6,12 +6,14 @@ import HoldButton from '@/components/HoldToConfirm/HoldButton';
 import { showToast } from '@/lib/toast';
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
-import { Search, Gamepad2, X, Trash2 } from 'lucide-react';
+import { Search, Gamepad2, X, Pencil } from 'lucide-react';
 import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK, ASSIGNABLE_ROLES } from '@/types/database';
 import type { AppRole } from '@/types/database';
 import { resolveAvatarUrl } from '@/lib/profile';
 import type { LinkedEmail } from '@/lib/linkedEmails';
 import { PACIFIC_TZ } from '@/lib/timezone';
+import Button from '@/components/ui/Button';
+import IconButton from '@/components/ui/IconButton';
 import styles from './RoleManager.module.css';
 
 interface RoleGrant {
@@ -437,10 +439,8 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
                         </span>
                       ))
                     )}
-                    <button className={styles.roleBtn} onClick={() => startEditing(user)}>Edit Roles</button>
-                    <button className={styles.deleteAccountBtn} onClick={() => openDeleteModal(user)} aria-label={`Delete ${user.display_name || 'user'}'s account`}>
-                      <Trash2 size={13} strokeWidth={1.75} aria-hidden="true" />
-                    </button>
+                    <Button size="sm" variant="secondary" onClick={() => startEditing(user)}><Pencil size={13} aria-hidden="true" /> Edit roles</Button>
+                    <IconButton kind="delete" label={`Delete ${user.display_name || 'user'}'s account`} onClick={() => openDeleteModal(user)} />
                   </div>
                 ) : (
                   <div className={styles.editPanel}>

@@ -17,6 +17,9 @@ import styles from './ContentEditor.module.css';
 type BlockDef = ContentBlock;
 
 interface Props {
+  /** Search text, owned by the page header's search box. */
+  query: string;
+  setQuery: (q: string) => void;
   blocks: BlockDef[];
   contentMap: Record<string, Record<string, unknown>>;
   lastEdited: Record<string, { by: string; at: string }>;
@@ -39,19 +42,21 @@ function pagesLabel(pages: string[]): string {
   return pages.map((p) => (p === '/' ? 'Homepage' : p)).join(', ');
 }
 
-export default function ContentEditor({ blocks, contentMap, lastEdited }: Props) {
-  // Which block is open and which area is showing live in the URL (?subtab=<area>&block=<key>) so any view is linkable.
+export default function ContentEditor({ query, setQuery, blocks, contentMap, lastEdited }: Props) {
+  // Which block is open and which area is showing live in the URL (?tab=<area>&subtab=<block key>) so any view is linkable.
   const searchParams = useLiveParams();
   const setParams = usePortalParams();
   const [activeKey, setActiveKey] = useState<string | null>(() => {
-    const k = searchParams.get('block');
+    // ?subtab=<block key>; the old ?block=<key> links still work.
+    const k = searchParams.get('subtab') ?? searchParams.get('block');
     return k && blocks.some((b) => b.key === k) ? k : null;
   });
   const [category, setCategory] = useState<string | null>(() => {
-    const c = searchParams.get('subtab');
+    // ?tab=<area>; the old ?tab=pages&subtab=<area> links still work.
+    const t = searchParams.get('tab');
+    const c = t === 'pages' ? searchParams.get('subtab') : t;
     return c && CATEGORY_ORDER.includes(c) ? c : null;
   });
-  const [query, setQuery] = useState('');
   const [forms, setForms] = useState<Record<string, Record<string, unknown>>>(() => {
     const init: Record<string, Record<string, unknown>> = {};
     blocks.forEach((b) => { init[b.key] = { ...(contentMap[b.key] || {}) }; });
@@ -71,8 +76,6 @@ export default function ContentEditor({ blocks, contentMap, lastEdited }: Props)
   const visibleBlocks = q
     ? blocks.filter((b) => b.title.toLowerCase().includes(q) || b.description.toLowerCase().includes(q))
     : blocks;
-
-  const activeBlock = blocks.find((b) => b.key === activeKey);
 
   function setField(key: string, field: string, value: unknown) {
     setForms((prev) => ({ ...prev, [key]: { ...prev[key], [field]: value } }));
@@ -110,63 +113,64 @@ export default function ContentEditor({ blocks, contentMap, lastEdited }: Props)
     return `${Math.floor(diff / 86400)}d ago`;
   };
 
-  // One tab per page/area of the site, so only that page's blocks are listed at a time.
+  // The same two-level pattern as every other portal section: a tab per page/area of the site
+  // (?tab=<area>), and a sub-tab per block on that page (?subtab=<block key>).
   const categories = CATEGORY_ORDER.filter((c) => blocks.some((b) => b.category === c));
-  const tabCategory = category && categories.includes(category) ? category : (activeBlock?.category ?? categories[0]);
-  const listed = q ? visibleBlocks : visibleBlocks.filter((b) => b.category === tabCategory);
+  const keyed = blocks.find((b) => b.key === activeKey);
+  const tabCategory = category && categories.includes(category) ? category : (keyed?.category ?? categories[0]);
+  const blocksInTab = blocks.filter((b) => b.category === tabCategory);
+  const activeBlock = blocksInTab.find((b) => b.key === activeKey) ?? blocksInTab[0];
+  const isDirty = (key: string) => JSON.stringify(forms[key]) !== JSON.stringify(savedForms[key]);
+
+  function selectCategory(c: string) {
+    setCategory(c); setQuery(''); setActiveKey(null); setParams({ tab: c, subtab: null, block: null });
+  }
+  function selectBlock(block: BlockDef) {
+    setCategory(block.category); setActiveKey(block.key); setQuery(''); setParams({ tab: block.category, subtab: block.key, block: null });
+  }
 
   return (
-    <div className={`${styles.shell} ${activeBlock ? styles.hasActive : ''}`}>
-      <div className={styles.topBar}>
+    <div className={styles.shell}>
+      <SectionTabs
+        label="Site areas"
+        value={tabCategory}
+        onChange={selectCategory}
+        tabs={categories.map((c) => ({ id: c, label: c, badge: blocks.filter((b) => b.category === c && isDirty(b.key)).length }))}
+      />
+
+
+      {!q && blocksInTab.length > 1 && activeBlock && (
         <SectionTabs
-          label="Site areas"
-          value={tabCategory}
+          label="Blocks on this page"
           variant="segmented"
-          onChange={(c) => { setCategory(c); setQuery(''); setActiveKey(null); setParams({ subtab: c, block: null }); }}
-          tabs={categories.map((c) => ({ id: c, label: c, badge: blocks.filter((b) => b.category === c && JSON.stringify(forms[b.key]) !== JSON.stringify(savedForms[b.key])).length }))}
+          value={activeBlock.key}
+          onChange={(k) => { const b = blocks.find((x) => x.key === k); if (b) selectBlock(b); }}
+          tabs={blocksInTab.map((b) => ({ id: b.key, label: b.title, badge: isDirty(b.key) ? 1 : 0 }))}
         />
-      </div>
+      )}
 
-      <div className={styles.layout}>
-        {/* Block list */}
-        <div className={styles.blockList}>
-          <input
-            className={styles.searchInput}
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search all blocks…"
-            aria-label="Search content blocks"
-          />
-          {q && <div className={styles.searchNote}>{listed.length} result{listed.length === 1 ? '' : 's'} across every area</div>}
-          {listed.length === 0 && <div className={styles.noResults}>No blocks match &quot;{query}&quot;.</div>}
-          <div className={styles.rows}>
-            {listed.map((block) => {
-              const isActive = activeKey === block.key;
-              const dirty = JSON.stringify(forms[block.key]) !== JSON.stringify(savedForms[block.key]);
-              const preview = getPreview(block, forms[block.key] || {});
-              return (
-                <button
-                  key={block.key}
-                  className={`${styles.row} ${isActive ? styles.rowActive : ''}`}
-                  onClick={() => { const next = isActive ? null : block.key; setActiveKey(next); setParams({ block: next, subtab: next ? block.category : tabCategory }); }}
-                >
-                  <span className={styles.blockIcon}>{block.icon}</span>
-                  <span className={styles.rowText}>
-                    <span className={styles.rowTitle}>{block.title}{q && <span className={styles.rowCat}> · {block.category}</span>}</span>
-                    {preview && <span className={styles.rowPreview}>{preview}</span>}
-                  </span>
-                  {dirty && <span className={styles.dirtyDot} title="Unsaved changes" />}
-                </button>
-              );
-            })}
-          </div>
+      {q ? (
+        <div className={styles.rows}>
+          <div className={styles.searchNote}>{visibleBlocks.length} result{visibleBlocks.length === 1 ? '' : 's'} across every area</div>
+          {visibleBlocks.length === 0 && <div className={styles.noResults}>No blocks match &quot;{query}&quot;.</div>}
+          {visibleBlocks.map((block) => {
+            const preview = getPreview(block, forms[block.key] || {});
+            return (
+              <button key={block.key} className={styles.row} onClick={() => selectBlock(block)}>
+                <span className={styles.blockIcon}>{block.icon}</span>
+                <span className={styles.rowText}>
+                  <span className={styles.rowTitle}>{block.title}<span className={styles.rowCat}> · {block.category}</span></span>
+                  {preview && <span className={styles.rowPreview}>{preview}</span>}
+                </span>
+                {isDirty(block.key) && <span className={styles.dirtyDot} title="Unsaved changes" />}
+              </button>
+            );
+          })}
         </div>
+      ) : activeBlock && (
+        <>
 
-      {/* Edit panel */}
-      <div className={`${styles.editPanel} ${activeBlock ? styles.editPanelOpen : ''}`}>
-        {activeBlock ? (
-          <div className={styles.editPanelInner}>
+          <div className={styles.editorCard}>
             <div className={styles.editPanelHeader}>
               <div>
                 <span className={styles.editPanelIcon}>{activeBlock.icon}</span>
@@ -174,19 +178,14 @@ export default function ContentEditor({ blocks, contentMap, lastEdited }: Props)
                 <p className={styles.editPanelDesc}>{activeBlock.description}</p>
                 <div className={styles.viewLiveRow}>
                   {activeBlock.pages.includes('*') ? (
-                    <a href="/" target="_blank" rel="noopener noreferrer" className={styles.viewLiveLink}>
-                      View Live Site ↗
-                    </a>
+                    <a href="/" target="_blank" rel="noopener noreferrer" className={styles.viewLiveLink}>View Live Site ↗</a>
                   ) : (
                     activeBlock.pages.map((page) => (
-                      <a key={page} href={page} target="_blank" rel="noopener noreferrer" className={styles.viewLiveLink}>
-                        View {page === '/' ? 'Homepage' : page} ↗
-                      </a>
+                      <a key={page} href={page} target="_blank" rel="noopener noreferrer" className={styles.viewLiveLink}>View {page === '/' ? 'Homepage' : page} ↗</a>
                     ))
                   )}
                 </div>
               </div>
-              <button className={styles.closePanel} onClick={() => { setActiveKey(null); setParams({ block: null }); }}><X size={18} strokeWidth={1.75} /></button>
             </div>
 
             <div className={styles.fields}>
@@ -203,12 +202,14 @@ export default function ContentEditor({ blocks, contentMap, lastEdited }: Props)
             {error && <div className={styles.editError}>{error}</div>}
 
             <div className={styles.editActions}>
-              <button className={styles.cancelBtn} onClick={() => { setActiveKey(null); setParams({ block: null }); }}>Cancel</button>
               <button
-                className={styles.saveBtn}
-                onClick={() => handleSave(activeBlock.key)}
-                disabled={saving === activeBlock.key}
+                className={styles.cancelBtn}
+                onClick={() => setForms((prev) => ({ ...prev, [activeBlock.key]: savedForms[activeBlock.key] }))}
+                disabled={!isDirty(activeBlock.key)}
               >
+                Discard changes
+              </button>
+              <button className={styles.saveBtn} onClick={() => handleSave(activeBlock.key)} disabled={saving === activeBlock.key}>
                 {saving === activeBlock.key
                   ? <><span className={styles.savingSpinner} /> Saving…</>
                   : saved === activeBlock.key
@@ -217,15 +218,8 @@ export default function ContentEditor({ blocks, contentMap, lastEdited }: Props)
               </button>
             </div>
           </div>
-        ) : (
-          <div className={styles.editPanelEmpty}>
-            <span className={styles.editPanelEmptyIcon}><Pencil size={40} strokeWidth={1.25} aria-hidden="true" /></span>
-            <p>Select a content block on the left to edit it.</p>
-            <p className={styles.editPanelEmptyHint}>Changes go live immediately — no code needed.</p>
-          </div>
-        )}
-      </div>
-      </div>
+        </>
+      )}
     </div>
   );
 }

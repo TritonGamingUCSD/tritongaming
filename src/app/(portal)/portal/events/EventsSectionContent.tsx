@@ -17,6 +17,7 @@ import type { EventTicketStat } from './getEventsData';
 import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
 import EventCheckinsModal from './EventCheckinsModal';
 import DeleteEventModal from './DeleteEventModal';
+import { ButtonLink } from '@/components/ui/Button';
 import styles from './events.module.css';
 import chartStyles from '../admin/stats/stats.module.css';
 
@@ -121,9 +122,7 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
       <div className={styles.header}>
         <h1 className={styles.title}>{canEdit ? 'Event Management' : 'Events'}</h1>
         {canEdit && (
-          <Link href="/portal/events/new" className={styles.newBtn}>
-            <Plus size={15} strokeWidth={2} aria-hidden="true" /> Create Event
-          </Link>
+          <ButtonLink href="/portal/events/new"><Plus size={15} strokeWidth={2} aria-hidden="true" /> Create Event</ButtonLink>
         )}
       </div>
 

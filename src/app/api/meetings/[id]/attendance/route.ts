@@ -11,6 +11,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!user_id) return NextResponse.json({ error: 'Missing user_id' }, { status: 400 });
   const { data: m } = await auth.svc.from('meetings').select('title, meeting_date').eq('id', id).maybeSingle();
   if (!m) return NextResponse.json({ error: 'Meeting not found' }, { status: 404 });
+  // Checking someone in clears any absence mark.
+  await auth.svc.from('meeting_absences').delete().eq('meeting_id', id).eq('user_id', user_id);
   const { error } = await auth.svc.from('meeting_attendance')
     .upsert({ meeting_id: id, user_id, method: 'manual', added_by: auth.user.id }, { onConflict: 'meeting_id,user_id', ignoreDuplicates: true });
   if (error) return NextResponse.json({ error: 'Failed to add.' }, { status: 500 });
