@@ -434,7 +434,10 @@ export default function CheckInClient({ events, onCheckedIn, tiers }: CheckInCli
                 <div className={styles.resultName}>{result.user_name}</div>
                 <div className={styles.resultDetail}>Checked in!</div>
                 {result.requires_form && (
-                  <div className={styles.resultFormBadge}>AS Form — ask to see their “response recorded” screen</div>
+                  <div className={styles.resultFormBadge}>
+                    <strong>AS Form still to do</strong>
+                    <span>Tell them: “Scanning isn’t check-in — finish your AS Form on your phone now.”</span>
+                  </div>
                 )}
                 {!!result.points_awarded && (
                   <div className={styles.resultPoints}>

@@ -18,7 +18,7 @@ import { isCheckinWindowOpen } from '@/lib/checkinWindow';
 export async function performCheckin(
   serviceClient: SupabaseClient,
   ticket: { id: string; user_id: string },
-  event: { title: string | null; start_date: string; end_date: string | null; points_value: number },
+  event: { title: string | null; start_date: string; end_date: string | null; points_value: number; requires_checkin_form?: boolean | null },
   checkedInBy: string,
   // Manual check-in by an exec/admin (api/checkin/manual) passes true: it's a
   // correction made by someone who can already reverse points, so it works
@@ -48,9 +48,11 @@ export async function performCheckin(
   await serviceClient.from('notifications').insert({
     user_id: ticket.user_id,
     type: 'ticket_checked_in',
-    title: "You're checked in!",
+    title: event.requires_checkin_form ? 'Scanned in — one more step' : "You're checked in!",
     body: [
-      event.title ? `Enjoy ${event.title}.` : 'Enjoy the event.',
+      event.requires_checkin_form
+        ? 'Open My Tickets and fill out your AS Form to finish checking in.'
+        : event.title ? `Enjoy ${event.title}.` : 'Enjoy the event.',
       pointsAwarded && event.points_value > 0 ? `+${event.points_value} points earned.` : null,
     ].filter(Boolean).join(' '),
     href: '/portal/tickets',

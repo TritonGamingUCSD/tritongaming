@@ -552,3 +552,25 @@
   .tierUp { animation: none; }
   .confetti { display: none; }
 }
+
+/* "Step 1 of 2" state after a scan while the AS Form is still unopened —
+   deliberately amber and unfinished-looking, not the green "done" check. */
+.stepIcon { background: #f59e0b; color: #011941; animation: checkedInPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), stepPulse 1.8s ease-in-out 0.5s infinite; }
+@keyframes stepPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.55); }
+  50% { box-shadow: 0 0 0 14px rgba(245, 158, 11, 0); }
+}
+.stepKicker {
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.18);
+  color: #92400e;
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.stepTitle { font-size: 1.35rem; font-weight: 900; line-height: 1.2; color: #011941; text-align: center; }
+.stepSub { margin: 0; font-size: 0.82rem; color: rgba(1, 25, 65, 0.7); text-align: center; }
+@media (prefers-reduced-motion: reduce) { .stepIcon { animation: none; } }

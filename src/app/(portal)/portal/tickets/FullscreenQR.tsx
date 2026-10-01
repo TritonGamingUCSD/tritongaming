@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Ticket, X, Check, Zap } from 'lucide-react';
+import { Ticket, X, Check, Zap, ClipboardList } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import TicketQRBadge from '@/components/TicketQRBadge/TicketQRBadge';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
@@ -270,6 +270,9 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
     clearTicketCodes(ticketId);
     setCheckedInAt(checkedInAt);
     setCheckedIn(true);
+    // A short buzz so someone about to pocket their phone notices the screen
+    // changed (Android/most Chromium browsers; iOS ignores it).
+    try { navigator.vibrate?.([220, 90, 220]); } catch { /* unsupported */ }
     onCheckedInRef.current?.(checkedInAt);
   }
 
@@ -359,6 +362,14 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   // Opening the form is the attendee's whole step (see AsFormButton) —
   // record it locally and tell the ticket list so its own AS Form button
   // reflects it too.
+  // Scanned in, but the AS Form is still outstanding. The screen looks
+  // *unfinished* (amber, "Step 1 of 2") until they open the form — people
+  // were taking the green "You're checked in" as "all done" and pocketing the
+  // phone before ever reaching the form. Staff can tell at a glance too:
+  // amber = form not opened yet, green = done.
+  const formRequired = !!formUrl || !!checkinFormUrl;
+  const stepPending = checkedIn && formRequired && !formOpened;
+
   function handleFormOpened(id: string) {
     setFormOpened(true);
     onFormComplete?.(id);
@@ -425,8 +436,22 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
 
         {checkedIn ? (
             <div className={styles.checkedInState}>
-              <div className={styles.checkedInIcon} aria-hidden="true"><Check size={32} strokeWidth={2} /></div>
-              <div className={styles.checkedInTitle}>You&apos;re Checked In!</div>
+              {stepPending ? (
+                <>
+                  <div className={`${styles.checkedInIcon} ${styles.stepIcon}`} aria-hidden="true"><ClipboardList size={32} strokeWidth={2} /></div>
+                  <div className={styles.stepKicker}>Step 1 of 2 · Scanned</div>
+                  <div className={styles.stepTitle}>One more step —<br />fill out your AS Form</div>
+                  <p className={styles.stepSub}>You&apos;re not fully checked in until the AS Form is done.</p>
+                  {/* The action goes right under the headline, above the time
+                      and points — on a short phone screen it must be in view. */}
+                  {formUrl && <AsFormButton ticketId={ticketId} url={formUrl} opened={formOpened} onOpened={handleFormOpened} />}
+                </>
+              ) : (
+                <>
+                  <div className={styles.checkedInIcon} aria-hidden="true"><Check size={32} strokeWidth={2} /></div>
+                  <div className={styles.checkedInTitle}>You&apos;re Checked In!</div>
+                </>
+              )}
               {checkedInAt && (
                 <div className={styles.checkedInTime}>
                   {new Date(checkedInAt).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit', second: '2-digit' })}
@@ -468,10 +493,10 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
                   )}
                 </div>
               )}
-              {formUrl && (
+              {formUrl && !stepPending && (
                 <AsFormButton ticketId={ticketId} url={formUrl} opened={formOpened} onOpened={handleFormOpened} />
               )}
-              {!formUrl && <p className={styles.hint}>Have a great time — see you inside.</p>}
+              {!formUrl && !stepPending && <p className={styles.hint}>Have a great time — see you inside.</p>}
             </div>
         ) : (
           <>

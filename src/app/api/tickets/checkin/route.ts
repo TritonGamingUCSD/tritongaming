@@ -102,6 +102,7 @@ export async function POST(request: Request) {
     {
       title: eventData?.title ?? null,
       points_value: eventData?.points_value ?? 0,
+      requires_checkin_form: eventData?.requires_checkin_form ?? false,
       start_date: eventData?.start_date ?? new Date().toISOString(),
       end_date: eventData?.end_date ?? null,
     },

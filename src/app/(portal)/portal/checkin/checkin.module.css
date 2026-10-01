@@ -460,3 +460,16 @@
 }
 .resultFormBadge { background: rgba(255, 199, 44, 0.2); color: #ffc72c; border: 1px solid rgba(255, 199, 44, 0.5); }
 .resultFormDone { background: rgba(52, 211, 153, 0.18); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.45); }
+
+/* Louder staff prompt after a scan on AS Form events — a script to say out
+   loud, since people were pocketing their phone right after the scan. */
+.resultFormBadge {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  border-radius: 0.9rem;
+  padding: 0.6rem 0.9rem;
+  max-width: 320px;
+}
+.resultFormBadge strong { font-size: 1rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.resultFormBadge span { font-size: 0.85rem; font-weight: 600; line-height: 1.3; }

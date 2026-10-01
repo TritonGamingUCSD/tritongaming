@@ -41,3 +41,12 @@
 }
 .reopenLeft { align-self: flex-start; }
 .reopenLink { text-decoration: underline; color: inherit; opacity: 0.85; }
+
+/* First-time button only (opened state renders .reopen instead) — a soft pulse
+   so it reads as the thing to tap next. */
+.btn { animation: asFormNudge 1.8s ease-in-out 0.8s infinite; }
+@keyframes asFormNudge {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+@media (prefers-reduced-motion: reduce) { .btn { animation: none; } }

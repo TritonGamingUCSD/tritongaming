@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   const serviceClient = createServiceClient();
   const { data: ticket } = await serviceClient
     .from('tickets')
-    .select('id, user_id, status, event:events(title, points_value, start_date, end_date)')
+    .select('id, user_id, status, event:events(title, points_value, start_date, end_date, requires_checkin_form)')
     .eq('id', ticket_id)
     .single();
 
@@ -44,6 +44,7 @@ export async function POST(request: Request) {
     {
       title: eventData?.title ?? null,
       points_value: eventData?.points_value ?? 0,
+      requires_checkin_form: eventData?.requires_checkin_form ?? false,
       start_date: eventData?.start_date ?? new Date().toISOString(),
       end_date: eventData?.end_date ?? null,
     },
