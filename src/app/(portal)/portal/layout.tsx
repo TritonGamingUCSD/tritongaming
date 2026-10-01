@@ -6,6 +6,7 @@ import { isVerifiedMember, canSetOrgTitle } from '@/lib/capabilities';
 import { getMissingProfileFields } from '@/lib/profile';
 import ProfileIncompleteBanner from '@/components/portal/ProfileIncompleteBanner';
 import NotificationBell from '@/components/portal/NotificationBell';
+import AttributionCapture from '@/components/AttributionCapture/AttributionCapture';
 import ConnectivityBanner from '@/components/ConnectivityBanner/ConnectivityBanner';
 import styles from './portal.module.css';
 
@@ -47,6 +48,7 @@ export default async function PortalLayout({ children }: { children: React.React
       <div data-print-hide style={{ display: 'contents' }}>
         <NotificationBell />
         <ConnectivityBanner />
+        <AttributionCapture />
       </div>
     </div>
   );

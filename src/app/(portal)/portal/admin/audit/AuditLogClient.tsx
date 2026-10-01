@@ -2,12 +2,11 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { ScrollText, Download } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
-import { usePortalParams } from '@/lib/usePortalParams';
+import { usePortalParams, useLiveParams } from '@/lib/usePortalParams';
 import Notice from '@/components/ui/Notice';
 import Button from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Field';
-import { PACIFIC_TZ } from '@/lib/timezone';
+import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/timezone';
 import styles from './audit.module.css';
 
 interface Entry {
@@ -58,7 +57,7 @@ export default function AuditLogClient() {
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const searchParams = useSearchParams();
+  const searchParams = useLiveParams();
   const setParams = usePortalParams();
   const [type, setType] = useState(() => searchParams.get('atype') ?? '');
   const [search, setSearch] = useState(() => searchParams.get('aq') ?? '');
@@ -122,7 +121,7 @@ export default function AuditLogClient() {
                   <span className={styles.badge}>{e.action}</span>
                   <span className={styles.type}>{e.entity_type}</span>
                   <span className={styles.meta}>
-                    {e.actor_name || 'System'} · {new Date(e.created_at).toLocaleString('en-US', { timeZone: PACIFIC_TZ, month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                    {e.actor_name || 'System'} · {formatPacificDateTime(e.created_at, { year: true })}
                   </span>
                 </div>
                 <p className={styles.summary}>{e.summary}</p>

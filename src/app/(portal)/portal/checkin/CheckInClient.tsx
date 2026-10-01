@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import jsQR from 'jsqr';
 import { Calendar, Camera, CircleCheck, TriangleAlert } from 'lucide-react';
-import { PACIFIC_TZ } from '@/lib/timezone';
+import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/timezone';
 import { fetchWithRetry } from '@/lib/fetchWithRetry';
 import type { Tier } from '@/lib/tiers';
 import styles from './checkin.module.css';
@@ -361,7 +361,7 @@ export default function CheckInClient({ events, onCheckedIn, tiers }: CheckInCli
           >
             {events.map((event) => (
               <option key={event.id} value={event.id}>
-                {event.title} — {new Date(event.start_date).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                {event.title} — {formatPacificDateTime(event.start_date)}
               </option>
             ))}
           </select>

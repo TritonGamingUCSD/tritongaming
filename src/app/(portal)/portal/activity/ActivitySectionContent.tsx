@@ -1,5 +1,5 @@
 import { Ticket, CircleCheck, Calendar } from 'lucide-react';
-import { PACIFIC_TZ } from '@/lib/timezone';
+import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/timezone';
 import styles from './activity.module.css';
 
 interface ActivityTicket {
@@ -59,7 +59,7 @@ export default function ActivitySectionContent({ tickets }: { tickets: ActivityT
             <div>
               <div className={styles.itemTitle}>{item.title} — {item.eventTitle}</div>
               <div className={styles.itemTime}>
-                {new Date(item.at).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                {formatPacificDateTime(item.at)}
               </div>
             </div>
           </li>

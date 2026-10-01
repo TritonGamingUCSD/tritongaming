@@ -4,7 +4,8 @@ import { confirmDiscardUnsaved } from '@/lib/useUnsavedChanges';
 import type { ReactElement, ReactNode } from 'react';
 import { cloneElement, isValidElement, useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import { usePortalParams } from '@/lib/usePortalParams';
 import { motion, AnimatePresence } from 'motion/react';
 import { Home, MoreHorizontal, ChevronRight, ChevronLeft } from 'lucide-react';
 import PortalSearch from './PortalSearch';
@@ -53,7 +54,10 @@ export interface HubSection {
   group: HubGroup;
 }
 
-export interface HubIdentity { name: string; avatarUrl: string | null; roleLabel: string }
+export interface HubIdentity { name: string; avatarUrl: string | null; roleLabel: string; roles?: { label: string; color: string }[] }
+
+// Params that belong to whatever was open, cleared when switching sections.
+const CLEAR_NAV = { tab: null, subtab: null, block: null, id: null, q: null, status: null, view: null, atype: null, aq: null };
 
 const SPRING = { type: 'spring' as const, stiffness: 420, damping: 38 };
 
@@ -112,7 +116,7 @@ interface GroupedSection {
 // "next ticket" banner) can react to that directly — e.g. hide itself while
 // a section takes over the screen on mobile.
 export default function PortalHub({ sections, identity, railFooter, homeExtras, onOpenChange }: { sections: HubSection[]; identity?: HubIdentity; railFooter?: ReactNode; homeExtras?: ReactNode; onOpenChange?: (open: boolean) => void }) {
-  const router = useRouter();
+  const setParams = usePortalParams();
   const searchParams = useSearchParams();
   const requestedSection = searchParams.get('section');
   const validRequested = sections.some((s) => s.id === requestedSection) ? requestedSection : null;
@@ -138,14 +142,17 @@ export default function PortalHub({ sections, identity, railFooter, homeExtras, 
     // Switching sections would throw away unsaved edits in the open one.
     if (id !== openId && !confirmDiscardUnsaved()) return;
     setOpenId(id);
-    router.replace(`/portal?section=${id}`, { scroll: false });
-  }, [router, openId]);
+    // Pure UI change — every section's content is already on the page — so update the address bar
+    // directly. (router.replace re-rendered the whole portal on the server and, being slow, could
+    // finish after a later click and snap the view back to an older section.)
+    setParams({ section: id, ...CLEAR_NAV });
+  }, [setParams, openId]);
 
   const close = useCallback(() => {
     if (!confirmDiscardUnsaved()) return;
     setOpenId(null);
-    router.replace('/portal', { scroll: false });
-  }, [router]);
+    setParams({ section: null, ...CLEAR_NAV });
+  }, [setParams]);
 
   const openSection = sections.find((s) => s.id === openId) ?? null;
 
@@ -381,7 +388,15 @@ function DesktopShell({
             )}
             <span className={styles.railIdentityText}>
               <span className={styles.railName}>{identity.name}</span>
-              <span className={styles.railRole}>{identity.roleLabel}</span>
+              {identity.roles && identity.roles.length > 0 ? (
+                <span className={styles.railRoles}>
+                  {identity.roles.map((r) => (
+                    <span key={r.label} className={styles.railRoleChip} style={{ color: r.color, background: `${r.color}1a`, borderColor: `${r.color}44` }}>{r.label}</span>
+                  ))}
+                </span>
+              ) : (
+                <span className={styles.railRole}>{identity.roleLabel}</span>
+              )}
             </span>
           </button>
         )}

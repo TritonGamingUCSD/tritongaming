@@ -7,8 +7,7 @@ import Image from 'next/image';
 import { Pencil, X, Check, MapPin, GripVertical } from 'lucide-react';
 import type { ContentBlock, FieldDef } from '@/lib/content-blocks';
 import { CATEGORY_ORDER } from '@/lib/content-blocks';
-import { useSearchParams } from 'next/navigation';
-import { usePortalParams } from '@/lib/usePortalParams';
+import { usePortalParams, useLiveParams } from '@/lib/usePortalParams';
 import SectionTabs from '@/components/ui/SectionTabs';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
@@ -42,7 +41,7 @@ function pagesLabel(pages: string[]): string {
 
 export default function ContentEditor({ blocks, contentMap, lastEdited }: Props) {
   // Which block is open and which area is showing live in the URL (?subtab=<area>&block=<key>) so any view is linkable.
-  const searchParams = useSearchParams();
+  const searchParams = useLiveParams();
   const setParams = usePortalParams();
   const [activeKey, setActiveKey] = useState<string | null>(() => {
     const k = searchParams.get('block');

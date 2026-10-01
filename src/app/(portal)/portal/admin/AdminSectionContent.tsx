@@ -6,9 +6,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ReactNode } from 'react';
 import { Pencil, BarChart3, History, Activity, X, Server, Users as UsersIcon, ListOrdered, ScrollText } from 'lucide-react';
-import { usePortalTabSync } from '@/lib/usePortalTabSync';
+import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
 import { resolveAvatarUrl } from '@/lib/profile';
-import { PACIFIC_TZ } from '@/lib/timezone';
+import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/timezone';
 import RoleManager from './RoleManager';
 import BoardOrderManager from './BoardOrderManager';
 import SystemStats from './SystemStats';
@@ -43,7 +43,8 @@ const VALID_TABS: Tab[] = ['overview', 'roles', 'order', 'analytics', 'audit', '
 // moved to the Events card's own Analytics tab — it's event data, not a
 // platform-admin metric, and Events is where someone actually managing
 // tickets for a specific event already is.
-export default function AdminSectionContent({ isAdmin, stats, allUsers, divisions, statsData, roleHistoryEntries, initialTab }: Props) {
+export default function AdminSectionContent({ isAdmin, stats, allUsers, divisions, statsData, roleHistoryEntries }: Props) {
+  const { tab: initialTab } = useUrlNav();
   const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'overview');
   const syncUrl = usePortalTabSync('admin');
   function selectTab(t: Tab) {
@@ -237,7 +238,7 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
                       <span className={styles.sectionHint}> {entry.detail}</span>
                     </div>
                     <span className={styles.sectionHint}>
-                      {new Date(entry.occurred_at).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                      {formatPacificDateTime(entry.occurred_at)}
                     </span>
                   </li>
                 ))}

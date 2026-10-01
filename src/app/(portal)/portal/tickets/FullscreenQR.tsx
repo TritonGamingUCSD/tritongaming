@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import TicketQRBadge from '@/components/TicketQRBadge/TicketQRBadge';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import { DEFAULT_QR_OPTIONS, type QRCodeOptions } from '@/lib/qrCodeStyling';
-import { PACIFIC_TZ } from '@/lib/timezone';
+import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/timezone';
 import { fetchWithRetry } from '@/lib/fetchWithRetry';
 import AsFormButton from './AsFormButton';
 import { saveTicketCodes, currentCachedCode, cachedMinutesLeft, clearTicketCodes } from '@/lib/ticketCodeCache';
@@ -394,7 +394,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   }, []);
 
   const dateLabel = eventDate
-    ? new Date(eventDate).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+    ? formatPacificDateTime(eventDate, { weekday: true })
     : null;
 
   // qr_data is `${eventSlug}:${rotatingCode}` (see /api/tickets/[id]/qr) —

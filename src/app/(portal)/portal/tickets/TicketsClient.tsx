@@ -3,6 +3,7 @@
 import Notice from '@/components/ui/Notice';
 import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
+import { getAttributionSource } from '@/lib/attribution';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Ticket, MapPin, QrCode, Check, X, Timer, Award } from 'lucide-react';
 import FullscreenQR from './FullscreenQR';
@@ -155,7 +156,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
       const res = await fetch('/api/tickets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event_id: eventId }),
+        body: JSON.stringify({ event_id: eventId, source: getAttributionSource() }),
       });
       const data = await res.json();
       if (!res.ok) {

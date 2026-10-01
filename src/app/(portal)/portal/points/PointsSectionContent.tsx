@@ -13,7 +13,7 @@ import { PACIFIC_TZ } from '@/lib/timezone';
 import StyledQRCode from '@/components/StyledQRCode/StyledQRCode';
 import { DEFAULT_QR_OPTIONS } from '@/lib/qrCodeStyling';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
-import { usePortalTabSync } from '@/lib/usePortalTabSync';
+import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
 import type { TransactionRow } from './getMyPointsData';
 import styles from './points.module.css';
 
@@ -109,8 +109,9 @@ const VALID_MANAGE_SUB_TABS: ManageSubTab[] = ['award', 'shop', 'correct', 'tier
 export default function PointsSectionContent({
   balance, lifetimeEarned, referralCode,
   leaderboardAnonymous: initialAnonymous,
-  transactions, canManageShop, canManagePoints, initialTab, initialSubTab, tiers: initialTiers,
+  transactions, canManageShop, canManagePoints, tiers: initialTiers,
 }: Props) {
+  const { tab: initialTab, subtab: initialSubTab } = useUrlNav();
   // Local state, not just the prop directly — editing a tier in the Tiers
   // sub-tab below needs the rest of this component (progress bar, shop
   // gating, dropdowns) to reflect the change immediately, without a full

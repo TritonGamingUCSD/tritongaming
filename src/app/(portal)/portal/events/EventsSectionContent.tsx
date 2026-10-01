@@ -1,8 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { usePortalParams } from '@/lib/usePortalParams';
+import { usePortalParams, useLiveParams } from '@/lib/usePortalParams';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Link from 'next/link';
 import {
@@ -15,7 +14,7 @@ import { PACIFIC_TZ, formatEventDateRangeShort, eventDayCount } from '@/lib/time
 import { isCheckinWindowOpen } from '@/lib/checkinWindow';
 import type { MonthPoint } from '@/lib/monthBuckets';
 import type { EventTicketStat } from './getEventsData';
-import { usePortalTabSync } from '@/lib/usePortalTabSync';
+import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
 import EventCheckinsModal from './EventCheckinsModal';
 import DeleteEventModal from './DeleteEventModal';
 import styles from './events.module.css';
@@ -77,7 +76,8 @@ interface Props {
 // component — search + status filter are pure UI state over data that's
 // already fully fetched (all events + their ticket counts come in as
 // props), so filtering is instant with no round trip.
-export default function EventsSectionContent({ events, eventsPerMonth, ticketsPerMonth, eventStats, canEdit, canManagePoints, canDelete = false, initialTab }: Props) {
+export default function EventsSectionContent({ events, eventsPerMonth, ticketsPerMonth, eventStats, canEdit, canManagePoints, canDelete = false }: Props) {
+  const { tab: initialTab } = useUrlNav();
   const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'manage');
   const syncUrl = usePortalTabSync('events');
   function selectTab(t: Tab) {
@@ -85,7 +85,7 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
     syncUrl(t);
   }
   // Deep-linked from portal search (?q=<event title>) — lands with that event already filtered.
-  const searchParams = useSearchParams();
+  const searchParams = useLiveParams();
   const [query, setQuery] = useState(() => searchParams.get('q') ?? '');
   const setParams = usePortalParams();
   const [filter, setFilter] = useState<StatusFilter>(() => {

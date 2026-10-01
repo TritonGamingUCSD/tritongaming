@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { History, ChevronDown } from 'lucide-react';
 import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
 import type { AppRole } from '@/types/database';
-import { PACIFIC_TZ } from '@/lib/timezone';
+import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/timezone';
 import type { RoleChangeEntry } from './getRoleHistoryData';
 import styles from './rolehistory.module.css';
 
@@ -70,7 +70,7 @@ export default function RoleHistoryClient({ entries, divisions }: { entries: Rol
                 <div className={styles.itemMeta}>
                   <span>by {entry.changed_by?.display_name || 'Unknown'}</span>
                   <span>
-                    {new Date(entry.created_at).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                    {formatPacificDateTime(entry.created_at)}
                   </span>
                   <ChevronDown size={16} strokeWidth={1.75} className={`${styles.chevron} ${isOpen ? styles.chevronOpen : ''}`} aria-hidden="true" />
                 </div>

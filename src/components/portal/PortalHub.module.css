@@ -611,3 +611,23 @@
 @media (min-width: 900px) and (max-height: 960px) { .rail .railItem { padding: 0.2rem 0.6rem; } .rail .railGroup { padding-top: 0.55rem; } .rail { gap: 0.7rem; padding: 0.8rem 0.65rem; } }
 @media (min-width: 900px) and (max-height: 840px) { .rail .railItem { padding: 0.2rem 0.6rem; } .rail .railGroup { padding-top: 0.55rem; } .rail { gap: 0.7rem; } }
 @media (min-width: 900px) and (max-height: 820px) { .rail .railItem { padding: 0.2rem 0.6rem; } .rail .railGroup { padding-top: 0.55rem; } .rail { gap: 0.7rem; padding: 0.8rem 0.65rem; } }
+
+/* Role chips under the name in the sidebar */
+.railRoles { display: flex; flex-wrap: wrap; gap: 0.2rem; margin-top: 0.2rem; }
+.railRoleChip { font-size: 0.56rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.05rem 0.4rem; border-radius: 999px; border: 1px solid; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; line-height: 1.35; }
+.railRoleMore { font-size: 0.6rem; color: rgba(242, 241, 240, 0.5); padding: 0.05rem 0.2rem; }
+
+/* Back to Site / Sign Out: two real buttons sharing the footer, not faint text links. */
+.railFooter, .sheetFooter { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.railFooter > *, .sheetFooter > * { min-width: 0; }
+.railFooter a, .sheetFooter a {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.5rem 0.8rem; border-radius: 0.65rem; white-space: nowrap;
+  font-family: var(--font-futura-heavy); font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none;
+  color: #ffc72c; background: rgba(255, 199, 44, 0.12); border: 1px solid rgba(255, 199, 44, 0.4);
+  transition: background 0.15s, border-color 0.15s;
+}
+.railFooter a:hover, .sheetFooter a:hover { color: #ffc72c; background: rgba(255, 199, 44, 0.22); border-color: #ffc72c; }
+
+/* Narrow sidebar: keep the labels inside their buttons. */
+.railFooter a, .railFooter button { padding: 0.45rem 0.3rem; font-size: 0.66rem; letter-spacing: 0.02em; gap: 0.25rem; overflow: hidden; text-overflow: ellipsis; }
+.railFooter a span { display: none; }

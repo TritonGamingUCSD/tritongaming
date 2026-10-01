@@ -11,7 +11,9 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { event_id } = await request.json();
+  const { event_id, source: rawSource } = await request.json();
+  // Where they came from (see lib/attribution) — free text from the browser, so tidy it before storing.
+  const source = typeof rawSource === 'string' ? rawSource.replace(/[\u0000-\u001f]/g, '').trim().slice(0, 60) || null : null;
   if (!event_id) return NextResponse.json({ error: 'Missing event_id' }, { status: 400 });
 
   // Verified membership (any role held, including the auto-granted 'ucsd'
@@ -87,7 +89,7 @@ export async function POST(request: Request) {
   if (price <= 0) {
     const { data: ticket, error } = await supabase
       .from('tickets')
-      .insert({ event_id, user_id: user.id })
+      .insert({ event_id, user_id: user.id, source })
       .select()
       .single();
 
@@ -131,7 +133,7 @@ export async function POST(request: Request) {
         product_data: { name: event.title },
       },
     }],
-    metadata: { event_id, user_id: user.id },
+    metadata: { event_id, user_id: user.id, ...(source ? { source } : {}) },
     success_url: `${origin}/portal/tickets?checkout=success`,
     cancel_url: `${origin}/portal/tickets?checkout=cancelled`,
   });

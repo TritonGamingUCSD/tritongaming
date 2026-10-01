@@ -3,7 +3,7 @@
 import SectionTabs from '@/components/ui/SectionTabs';
 import { useState } from 'react';
 import { FileText, Gamepad2, LayoutGrid } from 'lucide-react';
-import { usePortalTabSync } from '@/lib/usePortalTabSync';
+import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
 import ContentEditor from '../admin/content/ContentEditor';
 import type { ContentBlock } from '@/lib/content-blocks';
 import DivisionsManager from '../divisions/DivisionsManager';
@@ -35,8 +35,9 @@ interface Props {
 export default function SiteContentSectionContent({
   canEditContent, contentBlocks, contentMap, lastEdited,
   canManageDivisions, allDivisions,
-  isDivisionLead, myDivisions, initialTab,
+  isDivisionLead, myDivisions,
 }: Props) {
+  const { tab: initialTab } = useUrlNav();
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     ...(canEditContent ? [{ id: 'pages' as const, label: 'Pages', icon: <FileText size={13} strokeWidth={1.5} aria-hidden="true" /> }] : []),
     ...(canManageDivisions ? [{ id: 'divisions' as const, label: 'Divisions', icon: <LayoutGrid size={13} strokeWidth={1.5} aria-hidden="true" /> }] : []),

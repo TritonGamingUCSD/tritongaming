@@ -3,7 +3,7 @@
 import SectionTabs from '@/components/ui/SectionTabs';
 import { useState } from 'react';
 import { Camera, Gift, Wifi } from 'lucide-react';
-import { usePortalTabSync } from '@/lib/usePortalTabSync';
+import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
 import type { Tier } from '@/lib/tiers';
 import CheckInClient from './CheckInClient';
 import RedemptionScanner from './RedemptionScanner';
@@ -22,7 +22,8 @@ const VALID_TABS: Tab[] = ['tickets', 'redemptions', 'online'];
 // online check-in code), so a tab bar keeps them from competing for the
 // same screen instead of merging into one increasingly-overloaded
 // component.
-export default function CheckInSectionContent({ events, canScanRedemptions, initialTab, tiers }: { events: Event[]; canScanRedemptions: boolean; initialTab?: string; tiers: Tier[] }) {
+export default function CheckInSectionContent({ events, canScanRedemptions, tiers }: { events: Event[]; canScanRedemptions: boolean; initialTab?: string; tiers: Tier[] }) {
+  const { tab: initialTab } = useUrlNav();
   const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'tickets');
   const syncUrl = usePortalTabSync('checkin');
   function selectTab(t: Tab) {

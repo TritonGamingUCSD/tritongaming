@@ -9,15 +9,14 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { User, Users, Lock, X as XIcon, Globe, EyeOff } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types/database';
-import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK } from '@/types/database';
 import { Check } from 'lucide-react';
 import { canSetOrgTitle, type RoleGrant } from '@/lib/capabilities';
 import { hasBasicProfileInfo, getMissingProfileFields, GENDER_OPTIONS, PRONOUN_OPTIONS, PLATFORM_OPTIONS, MAX_PORTFOLIO_LINKS, normalizePortfolioUrl, resolveAvatarUrl, SOCIAL_PLATFORMS, yearChoiceOptions, yearChoiceOf, yearLabelOfChoice } from '@/lib/profile';
 import type { MyPrivateProfile } from '@/lib/auth';
 import { deleteIfReplaced, deleteStorageUrl } from '@/lib/imageUpload';
-import { usePortalTabSync } from '@/lib/usePortalTabSync';
+import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
 import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
-import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
+import AvatarEditor from './AvatarEditor';
 import BoardCardPreview from '@/components/BoardSection/BoardCardPreview';
 import { showToast } from '@/lib/toast';
 import type { BoardMember, BoardTier } from '@/app/(main)/team/getBoardMembers';
@@ -27,7 +26,7 @@ import styles from './profile.module.css';
 
 type Tab = 'basic' | 'officer' | 'security';
 
-export default function ProfileClient({ profile, privateInfo, email, roles, isUcsd, divisions, initialTab: initialTabParam }: { profile: Profile; privateInfo: MyPrivateProfile; email: string | null; roles: RoleGrant[]; isUcsd: boolean; divisions: { id: string; name: string }[]; initialTab?: string }) {
+export default function ProfileClient({ profile, privateInfo, email, roles, isUcsd, divisions }: { profile: Profile; privateInfo: MyPrivateProfile; email: string | null; roles: RoleGrant[]; isUcsd: boolean; divisions: { id: string; name: string }[]; initialTab?: string }) {
   const divisionNameById = new Map(divisions.map((d) => [d.id, d.name]));
   const canEditOrgTitle = canSetOrgTitle(roles);
   // exec/lead/officer appear on the public About page board automatically;
@@ -46,6 +45,7 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
   const VALID_TABS: Tab[] = showBoardTab ? ['basic', 'officer', 'security'] : ['basic', 'security'];
   const gender = privateInfo.gender;
   // The tab used to be called "board" — old links/bookmarks still land on it.
+  const initialTabParam = useUrlNav().tab;
   const initialTab = initialTabParam === 'board' ? 'officer' : initialTabParam;
   const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'basic');
   const syncUrl = usePortalTabSync('profile');
@@ -268,30 +268,14 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
         ]}
       />
 
-      <div className={`${styles.layout} ${tab === 'officer' && isBoardEligible ? styles.layoutOfficer : ''}`}>
+      <div className={`${styles.layout} ${tab === 'officer' && isBoardEligible ? styles.layoutOfficer : ''} ${tab === 'security' ? styles.layoutSingle : ''}`}>
+        {tab !== 'security' && (
         <div className={styles.avatarSection}>
-          <div className={styles.roleTagRow}>
-            {roles.length === 0 ? (
-              <span className={styles.roleTag} style={{ background: ROLE_COLORS.guest + '22', color: ROLE_COLORS.guest }}>
-                {ROLE_LABELS.guest}
-              </span>
-            ) : (
-              [...roles].sort((a, b) => ROLE_DISPLAY_RANK[b.role] - ROLE_DISPLAY_RANK[a.role]).map((r) => (
-                <span key={`${r.role}-${r.division_id ?? ''}`} className={styles.roleTag} style={{ background: ROLE_COLORS[r.role] + '22', color: ROLE_COLORS[r.role] }}>
-                  {r.role === 'division' && r.division_id
-                    ? `${ROLE_LABELS.division} — ${divisionNameById.get(r.division_id) ?? 'Unknown'}`
-                    : ROLE_LABELS[r.role]}
-                </span>
-              ))
-            )}
-          </div>
-
           {tab === 'officer' && isBoardEligible ? (
             <p className={styles.pictureNote}>Your picture is edited on the Basic Info tab — the preview below uses it.</p>
-          ) : tab === 'security' ? null : (
+          ) : (
           <div className={styles.avatarUpload}>
-            <ImageUploadField
-              label="Profile Picture"
+            <AvatarEditor
               value={form.custom_avatar_url}
               onChange={(url) => {
                 // A picture that was uploaded but never saved, then swapped or removed, is just
@@ -303,11 +287,8 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
               }}
               bucket="avatars"
               pathPrefix={profile.id}
-              shape="circle"
-              maxDimension={512}
-              interactiveCrop
-              fallbackPreview={resolveAvatarUrl({ avatar_url: profile.avatar_url, custom_avatar_url: null }) ?? undefined}
-              hint={form.custom_avatar_url.trim() ? 'Overrides your Google picture — remove it to go back to it.' : 'Defaults to the picture from your Google account.'}
+              fallback={resolveAvatarUrl({ avatar_url: profile.avatar_url, custom_avatar_url: null }) ?? undefined}
+              initial={(form.display_name || '?')[0].toUpperCase()}
             />
           </div>
           )}
@@ -319,6 +300,7 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
             </div>
           )}
         </div>
+        )}
 
         <div className={styles.formCol}>
 
@@ -689,6 +671,10 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
           <div className={styles.securityTab}>
             <LinkGoogleSection />
             <div className={styles.signOutSection}>
+              <div className={styles.signOutText}>
+                <h2 className={styles.backupLoginTitle}>Sign out</h2>
+                <p className={styles.backupLoginHint}>End your session on this device.</p>
+              </div>
               <button className={styles.signOutBtn} onClick={handleSignOut}>
                 Sign Out
               </button>

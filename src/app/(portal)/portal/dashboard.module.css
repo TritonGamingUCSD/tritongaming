@@ -505,7 +505,7 @@
   .tile { min-width: 0; padding: 0.45rem 0.65rem; }
 }
 
-.railFooterLink { color: rgba(242, 241, 240, 0.5); }
+
 
 /* ── Desktop: the sidebar already shows who you are (avatar, name, role) and
    has Back to Site / Sign out, so the welcome panel shrinks to just a greeting
@@ -614,3 +614,18 @@
   .emptyHomeBtn { display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.7rem 1rem; border-radius: 0.8rem; font-size: 0.86rem; color: var(--white); text-decoration: none; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.14); }
   .emptyHomeBtn:active { background: rgba(255, 199, 44, 0.14); border-color: rgba(255, 199, 44, 0.5); }
 }
+
+/* ── Mobile header: nothing may run off the right edge ──
+   Role chips and the stat chips (Rewards / Battlepass / Tickets) wrap onto extra rows instead of
+   scrolling sideways, and long role names wrap inside their chip. ── */
+@media (max-width: 899px) {
+  .welcome, .welcomeMain, .welcomeText { min-width: 0; max-width: 100%; }
+  .welcomeText .roleChips { flex-wrap: wrap; max-width: 100%; }
+  .roleChip { white-space: normal; max-width: 100%; overflow-wrap: anywhere; line-height: 1.25; }
+  .tiles { flex-wrap: wrap; overflow: visible; }
+  .tile { flex: 1 1 auto; min-width: 0; max-width: 100%; flex-wrap: wrap; }
+  .tileTier { white-space: nowrap; }
+}
+
+/* Desktop: leave room at the right of the pinned header for the fixed notification bell. */
+@media (min-width: 900px) { .stickyTop { padding-right: 3.4rem; } }

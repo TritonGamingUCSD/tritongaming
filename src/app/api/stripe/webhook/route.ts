@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       const supabase = createServiceClient();
       const { error } = await supabase
         .from('tickets')
-        .insert({ event_id: eventId, user_id: userId, stripe_session_id: session.id });
+        .insert({ event_id: eventId, user_id: userId, stripe_session_id: session.id, source: session.metadata?.source ?? null });
 
       // 23505 = unique violation — duplicate webhook delivery, or the user already
       // has a ticket for this event. Either way, not a failure worth retrying over.

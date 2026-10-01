@@ -185,3 +185,20 @@ export function formatEventDateRangeShort(startISO: string, endISO?: string | nu
   if (sp.year === ep.year && sp.month === ep.month) return `${fmt(start, false)} – ${ep.day}, ${ep.year}`;
   return `${fmt(start, sp.year !== ep.year)} – ${fmt(end, true)}`;
 }
+
+// "Fri, Oct 24, 6:00 PM" — built from parts instead of one toLocale…String call with date AND time
+// fields, because engines disagree on the glue ("Oct 24 at 6:00 PM" vs "Oct 24, 6:00 PM", and a
+// narrow no-break space before PM). That disagreement made server-rendered text differ from what
+// Safari produced on the client, which React reports as a hydration error.
+export function formatPacificDateTime(iso: string | Date, opts: { weekday?: boolean; year?: boolean } = {}): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: PACIFIC_TZ,
+    weekday: opts.weekday ? 'short' : undefined,
+    month: 'short', day: 'numeric',
+    year: opts.year ? 'numeric' : undefined,
+    hour: 'numeric', minute: '2-digit', hour12: true,
+  }).formatToParts(typeof iso === 'string' ? new Date(iso) : iso);
+  const g = (t: string) => parts.find((p) => p.type === t)?.value ?? '';
+  const date = `${opts.weekday ? `${g('weekday')}, ` : ''}${g('month')} ${g('day')}${opts.year ? `, ${g('year')}` : ''}`;
+  return `${date}, ${g('hour')}:${g('minute')} ${g('dayPeriod').toUpperCase()}`;
+}

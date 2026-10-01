@@ -1,5 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/admin';
-import { PACIFIC_TZ, eventDayCount } from '@/lib/timezone';
+import { PACIFIC_TZ, eventDayCount, pacificDaysUntil } from '@/lib/timezone';
 import { parseMajors } from '@/lib/majors';
 
 export interface Bucket { label: string; count: number }
@@ -24,6 +24,8 @@ export interface EventSummary {
   pronouns: Bucket[];
   platforms: Bucket[];
   divisions: Bucket[];
+  claimTiming: Bucket[];
+  sources: Bucket[];
   allDays: number | null; // multi-day events: attendees scanned in on every day
   feedback: { count: number; average: number | null; comments: string[] };
 }
@@ -42,6 +44,18 @@ function tally(values: (string | null | undefined)[], opts: { top?: number; blan
   return all;
 }
 
+// How far ahead of the event people claimed their tickets, in order from earliest to latest.
+const TIMING_ORDER = ['3+ weeks before', '2–3 weeks', '1–2 weeks', '3–7 days', '1–2 days', 'Day of / after'] as const;
+function claimTimingBuckets(createdAts: string[], startISO: string): Bucket[] {
+  const counts = new Map<string, number>(TIMING_ORDER.map((k) => [k, 0]));
+  for (const c of createdAts) {
+    const d = pacificDaysUntil(startISO, new Date(c)); // days between claiming and the event's start day
+    const label = d >= 21 ? TIMING_ORDER[0] : d >= 14 ? TIMING_ORDER[1] : d >= 8 ? TIMING_ORDER[2] : d >= 3 ? TIMING_ORDER[3] : d >= 1 ? TIMING_ORDER[4] : TIMING_ORDER[5];
+    counts.set(label, (counts.get(label) ?? 0) + 1);
+  }
+  return TIMING_ORDER.map((label) => ({ label, count: counts.get(label) ?? 0 }));
+}
+
 // Aggregates only — no individual's private fields (gender etc.) leave this
 // function. Callers must have already verified the viewer's capability, since
 // this reads profile_private with the service role.
@@ -50,7 +64,7 @@ export async function getEventSummary(eventId: string, event: { start_date: stri
 
   const { data: tickets } = await svc
     .from('tickets')
-    .select('user_id, status, checked_in_at, checkin_form_completed_at')
+    .select('user_id, status, checked_in_at, checkin_form_completed_at, created_at, source')
     .eq('event_id', eventId);
   const all = tickets ?? [];
   const active = all.filter((t) => t.status !== 'cancelled');
@@ -128,6 +142,8 @@ export async function getEventSummary(eventId: string, event: { start_date: stri
     doubleMajors: parsed.filter((p) => p.majors.length > 1).length,
     pronouns: tally(attendeeIds.map((id) => profileById.get(id)?.pronouns)),
     platforms: tally(attendeeIds.flatMap((id) => privById.get(id)?.platforms ?? []), { top: 8 }),
+    claimTiming: claimTimingBuckets(active.map((t) => t.created_at as string), event.start_date),
+    sources: tally(active.map((t) => (t.source as string | null) ?? null), { top: 8, blank: 'Not tracked' }),
     allDays: multiDay ? (() => { const n = new Map<string, number>(); for (const r of dayCheckins as { ticket_id: string }[]) n.set(r.ticket_id, (n.get(r.ticket_id) ?? 0) + 1); const total = eventDayCount(event.start_date, event.end_date); return [...n.values()].filter((c) => c >= total).length; })() : null,
     feedback: {
       count: fb.length,

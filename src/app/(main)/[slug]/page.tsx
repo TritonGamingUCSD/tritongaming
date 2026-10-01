@@ -15,5 +15,7 @@ export default async function ShortLinkPage({ params }: { params: Promise<{ slug
 
   const { data } = await createPublicClient().rpc('resolve_short_link', { p_slug: slug });
   if (typeof data !== 'string' || !data) notFound();
+  // Internal destinations get a tag so "where did they come from" can credit this short link.
+  if (data.startsWith('/')) redirect(`${data}${data.includes('?') ? '&' : '?'}utm_source=${encodeURIComponent(slug)}&utm_medium=shortlink`);
   redirect(data);
 }

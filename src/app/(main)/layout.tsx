@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import NavBar from '@/components/NavBar/NavBar';
 import Footer from '@/components/Footer/Footer';
 import AnnouncementBanner from '@/components/AnnouncementBanner/AnnouncementBanner';
+import AttributionCapture from '@/components/AttributionCapture/AttributionCapture';
 import ConnectivityBanner from '@/components/ConnectivityBanner/ConnectivityBanner';
 
 // NavBar and AnnouncementBanner are independent fixed elements now, not
@@ -34,6 +35,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         <AnnouncementBanner />
       </Suspense>
       <ConnectivityBanner />
+      <AttributionCapture />
     </>
   );
 }

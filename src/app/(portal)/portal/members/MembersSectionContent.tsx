@@ -6,8 +6,7 @@ import { PACIFIC_TZ } from '@/lib/timezone';
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { usePortalParams } from '@/lib/usePortalParams';
+import { usePortalParams, useLiveParams } from '@/lib/usePortalParams';
 import SectionTabs from '@/components/ui/SectionTabs';
 import { LayoutGrid, List, X } from 'lucide-react';
 import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
@@ -45,7 +44,7 @@ type MemberEntry = Omit<MemberProfileRow, 'user_roles'> & { divisionName?: strin
 // shared-element transition across that many grid cells is exactly the
 // kind of cost that caused the lag BoardSection had to be fixed for.
 export default function MembersSectionContent({ rows, roles }: { rows: MemberProfileRow[]; roles: RoleGrant[] }) {
-  const searchParams = useSearchParams();
+  const searchParams = useLiveParams();
   const setParams = usePortalParams();
   const [view, setView] = useState<'grid' | 'list'>(() => (searchParams.get('view') === 'list' ? 'list' : 'grid'));
   const [selected, setSelected] = useState<MemberEntry | null>(null);

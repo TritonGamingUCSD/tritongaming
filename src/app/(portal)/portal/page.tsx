@@ -338,6 +338,11 @@ export default async function PortalDashboard({ searchParams }: Props) {
   ];
 
   const avatarUrl = resolveAvatarUrl(profile);
+  // Every role the person holds (shown as chips in the sidebar), highest first.
+  const roleChips = (roles.length === 0 ? [{ role: 'guest' as const, division_id: null as string | null }] : [...roles].sort((a, b) => ROLE_DISPLAY_RANK[b.role] - ROLE_DISPLAY_RANK[a.role])).map((r) => ({
+    label: r.role === 'division' && r.division_id ? `${ROLE_LABELS.division} — ${divisionNameById.get(r.division_id) ?? 'Unknown'}` : ROLE_LABELS[r.role],
+    color: ROLE_COLORS[r.role],
+  }));
   const primaryRoleLabel = roles.length === 0
     ? ROLE_LABELS.guest
     : ROLE_LABELS[[...roles].sort((a, b) => ROLE_DISPLAY_RANK[b.role] - ROLE_DISPLAY_RANK[a.role])[0].role];
@@ -468,10 +473,10 @@ export default async function PortalDashboard({ searchParams }: Props) {
             )}
             </>
           }
-          identity={{ name: profile.display_name || 'Triton', avatarUrl, roleLabel: primaryRoleLabel }}
+          identity={{ name: profile.display_name || 'Triton', avatarUrl, roleLabel: primaryRoleLabel, roles: roleChips }}
           railFooter={
             <>
-              <Link href="/" className={styles.railFooterLink}>Back to Site</Link>
+              <Link href="/" className={styles.railFooterLink}><span aria-hidden="true">←</span> Back to Site</Link>
               <SignOutButton />
             </>
           }

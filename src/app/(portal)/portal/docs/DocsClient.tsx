@@ -7,8 +7,7 @@ import { confirmHold } from '@/lib/confirmHold';
 import { showToast } from '@/lib/toast';
 import { useUnsavedChanges, confirmDiscardUnsaved } from '@/lib/useUnsavedChanges';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { usePortalParams } from '@/lib/usePortalParams';
+import { usePortalParams, useLiveParams } from '@/lib/usePortalParams';
 import SectionTabs from '@/components/ui/SectionTabs';
 import { Image as ImageIcon, Paperclip, BookOpen, X, ChevronRight, ChevronLeft, ChevronDown, Plus, Search, FileText, Pencil, Trash2, FolderCog } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -163,7 +162,7 @@ export default function DocsClient({ initialDocs, initialCategories, userId, can
   const [categories, setCategories] = useState(initialCategories);
   // Deep-linked in from portal search (?id=<docId>) — opens straight to
   // that doc's content instead of just landing on the general list.
-  const searchParams = useSearchParams();
+  const searchParams = useLiveParams();
   const [selectedId, setSelectedId] = useState<string | null>(() => searchParams.get('id'));
   const setParams = usePortalParams();
   const [editing, setEditing] = useState(false);

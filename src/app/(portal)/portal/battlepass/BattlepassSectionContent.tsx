@@ -14,7 +14,7 @@ import StyledQRCode from '@/components/StyledQRCode/StyledQRCode';
 import { DEFAULT_QR_OPTIONS } from '@/lib/qrCodeStyling';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import { useQRScanner } from '@/lib/useQRScanner';
-import { usePortalTabSync } from '@/lib/usePortalTabSync';
+import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
 import checkinStyles from '../checkin/checkin.module.css';
 import type { BattlepassTransactionRow } from './getMyBattlepassData';
 import styles from './battlepass.module.css';
@@ -101,7 +101,8 @@ interface Props {
 type ManageSubTab = 'award' | 'redeem' | 'shop' | 'correct' | 'tiers';
 const VALID_MANAGE_SUB_TABS: ManageSubTab[] = ['award', 'redeem', 'shop', 'correct', 'tiers'];
 
-export default function BattlepassSectionContent({ balance, lifetimeEarned, leaderboardAnonymous: initialAnonymous, transactions, canManagePoints, initialTab, initialSubTab, tiers: initialTiers }: Props) {
+export default function BattlepassSectionContent({ balance, lifetimeEarned, leaderboardAnonymous: initialAnonymous, transactions, canManagePoints, tiers: initialTiers }: Props) {
+  const { tab: initialTab, subtab: initialSubTab } = useUrlNav();
   // Local state, not just the prop directly — editing a tier in the Tiers
   // sub-tab below needs the rest of this component (progress bar, shop
   // gating, dropdowns) to reflect the change immediately, without a full

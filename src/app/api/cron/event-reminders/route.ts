@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { PACIFIC_TZ } from '@/lib/timezone';
+import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/timezone';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -54,7 +54,7 @@ export async function GET(request: Request) {
   let inApp = 0;
   for (const { ticket, kind } of due) {
     const ev = ticket.event!;
-    const when = new Date(ev.start_date).toLocaleString('en-US', { timeZone: PACIFIC_TZ, weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    const when = formatPacificDateTime(ev.start_date, { weekday: true });
     const where = ev.is_online ? 'Online' : ev.location || '';
     const title = kind === '1h' ? `${ev.title} starts within the hour` : `${ev.title} is tomorrow`;
     const body = `${when}${where ? ` · ${where}` : ''}. Have your QR code ready.`;

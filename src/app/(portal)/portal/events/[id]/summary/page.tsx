@@ -91,6 +91,12 @@ export default async function EventSummaryPage({ params }: { params: Promise<{ i
         <Card title="Arrival time" note={peak ? `Busiest ${multiDay ? 'day' : 'half hour'}: ${peak.label} (${peak.count}). Times are Pacific.` : `Check-ins per ${multiDay ? 'day' : 'half hour'} (Pacific).`} wide>
           <Columns data={s.arrivals} color="#4a90e2" />
         </Card>
+        <Card title="When tickets were claimed" note="How far ahead of the event people got their ticket (all registrations)." wide>
+          <Columns data={s.claimTiming} color="#34d399" />
+        </Card>
+        <Card title="Where they came from" note="How each person found the event, recorded when they claimed a ticket. Tickets claimed before this tracking existed show as “Not tracked”.">
+          <RankBars data={s.sources} color="#4a90e2" base={s.registered} />
+        </Card>
         <Card title="Gender"><Donut data={s.gender} /></Card>
         <Card title="Class year"><Donut data={s.year} /></Card>
         <Card title="Field of study" note="Majors grouped into broad areas (a double major counts under the first one listed).">

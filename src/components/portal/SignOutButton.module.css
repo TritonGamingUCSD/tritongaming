@@ -1,16 +1,10 @@
 .btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: rgba(242, 241, 240, 0.45);
-  font-size: 0.82rem;
-  font-family: var(--font-futura-medium);
-  letter-spacing: 0.03em;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.25rem 0;
-  transition: color 0.2s;
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; cursor: pointer;
+  padding: 0.5rem 0.8rem; border-radius: 0.65rem; white-space: nowrap;
+  font-family: var(--font-futura-heavy); font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase;
+  background: rgba(220, 38, 38, 0.1); color: #fca5a5; border: 1px solid rgba(220, 38, 38, 0.3);
+  transition: background 0.15s, border-color 0.15s;
 }
-
-.btn:hover { color: #fca5a5; }
+.btn:hover { background: rgba(220, 38, 38, 0.2); border-color: rgba(220, 38, 38, 0.5); }
+.btn { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.btn span { display: none; }
