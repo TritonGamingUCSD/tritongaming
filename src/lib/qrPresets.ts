@@ -76,7 +76,7 @@ export const QR_PRESETS: QRPreset[] = [
   { id: 'div-rivals', name: 'Rivals', division: 'rivals', style: base({
     bgColor: '#eef0ff', dotsColor: '#1e1b5e', dotsGradientEnabled: true, dotsGradientStartColor: '#1e1b5e', dotsGradientEndColor: '#3730a3',
     cornersSquareColor: '#1e1b5e', cornersDotColor: '#3730a3', dotsType: 'classy', cornersSquareType: 'square', cornersDotType: 'square' }) },
-  { id: 'div-tio', name: 'TIO', division: 'tio', style: base({
+  { id: 'div-tio', name: 'TIO', division: 'intermission', style: base({
     bgColor: '#f7f3ea', dotsColor: '#111111', cornersSquareColor: '#111111', cornersDotColor: '#111111',
     dotsType: 'classy-rounded', cornersSquareType: 'extra-rounded', cornersDotType: 'dot' }) },
 ];
