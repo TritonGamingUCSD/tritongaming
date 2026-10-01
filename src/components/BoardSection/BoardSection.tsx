@@ -1,7 +1,7 @@
 'use client';
 
 import MemberCardBody from '@/components/MemberCard/MemberCardBody';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'motion/react';
 import { X } from 'lucide-react';
@@ -72,20 +72,10 @@ export function CardFace({ m }: { m: BoardMember }) {
 // title, bio, picture) — set by them on /portal/profile, not typed in by an
 // admin — so it's always current. See getBoardMembers for who qualifies.
 //
-// Clicking a card swaps its tier's grid for a full bio panel in place —
-// same shared-layoutId + AnimatePresence mode="popLayout" technique as the
-// portal hub (PortalHub.tsx), and deliberately NOT a fixed backdrop modal
-// (a full-viewport backdrop-filter blur fading in/out every frame was the
-// earlier lag). Deliberately also NOT wrapped in an extra `layout`-animated
-// parent — nesting a `layout` container around layoutId shared-element
-// children is a known source of Framer Motion glitches. Every *other* tier
-// section is hidden outright (not just left showing its own grid) while
-// one is open, so there's no sibling section reflowing mid-zoom either.
-// The remaining "jump on the way back out" bug was actually
-// `.tierSection` missing `position: relative` — mode="popLayout" makes the
-// *exiting* element position:absolute, and without a positioned ancestor
-// here it anchored to some element further up the tree instead. Fixed on
-// the CSS side (see BoardSection.module.css), matching PortalHub's .wrap.
+// Clicking a card opens that person's detail card as a popup over the page —
+// the same pattern as TG Members in the portal — so every tier stays on
+// screen behind it instead of the page swapping around. Closes via the X,
+// a click outside, or Escape.
 export default function BoardSection({ members }: { members: BoardMember[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -106,6 +96,15 @@ export default function BoardSection({ members }: { members: BoardMember[] }) {
   }
   const openMember = members.find((m) => m.id === openId) ?? null;
 
+  useEffect(() => {
+    if (!openId) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpenId(null); };
+    document.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prevOverflow; };
+  }, [openId]);
+
   if (members.length === 0) return null;
 
   return (
@@ -113,60 +112,53 @@ export default function BoardSection({ members }: { members: BoardMember[] }) {
       {TIER_ORDER.map((tier) => {
         const group = members.filter((m) => m.tier === tier);
         if (group.length === 0) return null;
-
-        // While a card is open anywhere, every *other* tier section
-        // disappears instead of sitting there with its own grid still
-        // showing — otherwise those sections reflow the instant the panel
-        // opens/closes, which read as a jump unrelated to the section you
-        // actually clicked into.
-        if (openMember && tier !== openMember.tier) return null;
-
-        const tierOpenMember = openMember?.tier === tier ? openMember : null;
-
         return (
           <section key={tier} className={styles.tierSection}>
             <h3 className={styles.tierLabel}>{TIER_LABELS[tier]}</h3>
-            <AnimatePresence initial={false} mode="popLayout">
-              {tierOpenMember ? (
-                <motion.div
-                  key="panel"
-                  layoutId={`board-card-${tierOpenMember.id}`}
-                  className={styles.panel}
-                  transition={SPRING}
+            <div className={styles.grid}>
+              {group.map((m) => (
+                <motion.button
+                  key={m.id}
+                  className={styles.card}
+                  onClick={() => setOpenId(m.id)}
+                  whileHover={{ y: -3, transition: { duration: 0.15 } }}
                 >
-                  <button className={styles.closeBtn} onClick={() => setOpenId(null)} aria-label="Close"><X size={16} strokeWidth={1.75} /></button>
-
-                  <PanelBody member={tierOpenMember} copiedKey={copiedKey} onCopy={copyHandle} />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="grid"
-                  className={styles.grid}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  {group.map((m) => {
-                    return (
-                      <motion.button
-                        key={m.id}
-                        layoutId={`board-card-${m.id}`}
-                        className={styles.card}
-                        onClick={() => setOpenId(m.id)}
-                        transition={SPRING}
-                        whileHover={{ y: -3, transition: { duration: 0.15 } }}
-                      >
-                        <CardFace m={m} />
-                      </motion.button>
-                    );
-                  })}
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  <CardFace m={m} />
+                </motion.button>
+              ))}
+            </div>
           </section>
         );
       })}
+
+      <AnimatePresence>
+        {openMember && (
+          <motion.div
+            key="overlay"
+            className={styles.overlay}
+            onClick={() => setOpenId(null)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+          >
+            <motion.div
+              className={`${styles.panel} ${styles.popup}`}
+              role="dialog"
+              aria-modal="true"
+              aria-label={openMember.display_name ?? 'Team member'}
+              onClick={(e) => e.stopPropagation()}
+              initial={{ opacity: 0, scale: 0.94, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={SPRING}
+            >
+              <button className={styles.closeBtn} onClick={() => setOpenId(null)} aria-label="Close"><X size={16} strokeWidth={1.75} /></button>
+              <PanelBody member={openMember} copiedKey={copiedKey} onCopy={copyHandle} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
