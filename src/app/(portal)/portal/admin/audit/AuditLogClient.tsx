@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollText } from 'lucide-react';
+import { ScrollText, Download } from 'lucide-react';
 import Notice from '@/components/ui/Notice';
 import Button from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Field';
@@ -94,6 +94,13 @@ export default function AuditLogClient() {
         <Select className={styles.select} value={type} onChange={(e) => setType(e.target.value)} aria-label="Filter by type">
           {TYPES.map((t) => <option key={t} value={t}>{t || 'All types'}</option>)}
         </Select>
+        <a
+          className={styles.exportBtn}
+          href={`/api/admin/audit/export?${new URLSearchParams({ ...(type ? { type } : {}), ...(q ? { q } : {}) })}`}
+          download
+        >
+          <Download size={14} strokeWidth={1.75} aria-hidden="true" /> Export CSV
+        </a>
       </div>
       {error && <Notice tone="error">{error}</Notice>}
       {!loading && entries.length === 0 && !error ? (

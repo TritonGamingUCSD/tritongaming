@@ -158,3 +158,30 @@ export function utcToPacificDatetimeLocal(iso: string | null): string {
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${p.year}-${pad(p.month)}-${pad(p.day)}T${pad(p.hour)}:${pad(p.minute)}`;
 }
+
+// ── Multi-day events ────────────────────────────────────────────────────────
+// Number of Pacific calendar days an event touches (1 for same-day / no end date).
+export function eventDayCount(startISO: string, endISO?: string | null): number {
+  if (!endISO) return 1;
+  return Math.max(1, pacificDaysUntil(endISO, new Date(startISO)) + 1);
+}
+
+// "Day 2 of 3" while a multi-day event is under way, else null.
+export function eventDayProgress(startISO: string, endISO?: string | null, now: Date = new Date()): { day: number; total: number } | null {
+  const total = eventDayCount(startISO, endISO);
+  if (total < 2) return null;
+  const day = pacificDaysUntil(now.toISOString(), new Date(startISO)) + 1; // days since start, 1-based
+  return day >= 1 && day <= total ? { day, total } : null;
+}
+
+// Compact version for tables: "Oct 3, 2026" or "Oct 3 – 5, 2026" / "Oct 30 – Nov 2, 2026".
+export function formatEventDateRangeShort(startISO: string, endISO?: string | null): string {
+  const start = new Date(startISO);
+  const fmt = (d: Date, withYear: boolean) => d.toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', day: 'numeric', ...(withYear ? { year: 'numeric' as const } : {}) });
+  if (!endISO || eventDayCount(startISO, endISO) < 2) return fmt(start, true);
+  const end = new Date(endISO);
+  const sp = pacificDateParts(start);
+  const ep = pacificDateParts(end);
+  if (sp.year === ep.year && sp.month === ep.month) return `${fmt(start, false)} – ${ep.day}, ${ep.year}`;
+  return `${fmt(start, sp.year !== ep.year)} – ${fmt(end, true)}`;
+}

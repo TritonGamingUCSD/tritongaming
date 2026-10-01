@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/capabilities';
 import { performCheckin } from '@/lib/performCheckin';
+import { canCheckInNow } from '@/lib/checkinDays';
 
 // Lets an exec/admin check someone in directly from the Event Management
 // attendee list — no QR scan or online code needed, for whenever someone's
@@ -29,16 +30,15 @@ export async function POST(request: Request) {
   const serviceClient = createServiceClient();
   const { data: ticket } = await serviceClient
     .from('tickets')
-    .select('id, user_id, status, event:events(title, points_value, start_date, end_date, requires_checkin_form)')
+    .select('id, user_id, status, event_id, event:events(title, points_value, start_date, end_date, requires_checkin_form)')
     .eq('id', ticket_id)
     .single();
 
   if (!ticket) return NextResponse.json({ error: 'Ticket not found' }, { status: 404 });
-  if (ticket.status !== 'active') {
-    return NextResponse.json({ error: `This ticket is ${ticket.status}, not active — nothing to check in.` }, { status: 409 });
-  }
-
   const eventData = Array.isArray(ticket.event) ? ticket.event[0] : ticket.event;
+  if (!(await canCheckInNow(serviceClient, ticket, eventData))) {
+    return NextResponse.json({ error: ticket.status === 'used' ? 'Already checked in today.' : `This ticket is ${ticket.status}, not active — nothing to check in.` }, { status: 409 });
+  }
   const { error } = await performCheckin(
     serviceClient,
     ticket,

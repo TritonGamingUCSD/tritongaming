@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { canCheckInNow } from '@/lib/checkinDays';
 import { createClient } from '@/lib/supabase/server';
 import { rotatingCode, currentWindow, secondsUntilNextWindow, ROTATION_SECONDS } from '@/lib/rotatingCode';
 
@@ -20,7 +21,7 @@ export async function GET(request: Request, { params }: Params) {
 
   const { data: ticket } = await supabase
     .from('tickets')
-    .select('id, user_id, ticket_code, status, event:events(slug)')
+    .select('id, user_id, ticket_code, status, event:events(slug, start_date, end_date)')
     .eq('id', id)
     .single();
 
@@ -29,7 +30,8 @@ export async function GET(request: Request, { params }: Params) {
   if (!ticket || ticket.user_id !== user.id) {
     return NextResponse.json({ error: 'Ticket not found' }, { status: 404 });
   }
-  if (ticket.status !== 'active') {
+  const evForDays = (Array.isArray(ticket.event) ? ticket.event[0] : ticket.event) as { start_date: string; end_date: string | null } | null;
+  if (!(await canCheckInNow(supabase, ticket, evForDays))) {
     return NextResponse.json({ error: 'Ticket is not active' }, { status: 400 });
   }
 

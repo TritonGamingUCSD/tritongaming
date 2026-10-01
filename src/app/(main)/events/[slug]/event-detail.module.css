@@ -227,3 +227,44 @@
   font-size: 0.95rem;
   color: var(--white);
 }
+
+/* ── At-a-glance facts ── */
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem; margin: 1.25rem 0 0.5rem; }
+.fact { display: flex; gap: 0.8rem; align-items: flex-start; padding: 0.9rem 1rem; border-radius: 1rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); }
+.factIcon { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 0.7rem; background: rgba(255, 199, 44, 0.14); color: var(--yellow); flex-shrink: 0; }
+.factLabel { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(242, 241, 240, 0.5); }
+.factValue { font-family: var(--font-futura-heavy); font-size: 1rem; color: var(--white); line-height: 1.3; overflow-wrap: anywhere; }
+.factSub { font-size: 0.8rem; color: rgba(242, 241, 240, 0.6); margin-top: 0.1rem; overflow-wrap: anywhere; }
+
+/* ── Schedule timeline ── */
+.timeline { list-style: none; display: flex; flex-direction: column; margin: 0; padding: 0; }
+.timelineItem { position: relative; display: grid; grid-template-columns: 92px 18px 1fr; gap: 0.75rem; padding-bottom: 1.1rem; }
+.timelineItem:not(:last-child)::before { content: ''; position: absolute; left: calc(92px + 0.75rem + 8px); top: 18px; bottom: -2px; width: 2px; background: rgba(255, 255, 255, 0.12); }
+.timelineTime { text-align: right; font-family: var(--font-futura-heavy); font-size: 0.85rem; color: var(--yellow); padding-top: 0.05rem; }
+.timelineDot { width: 14px; height: 14px; margin: 0.2rem 2px 0; border-radius: 50%; background: var(--yellow); box-shadow: 0 0 0 4px rgba(255, 199, 44, 0.18); z-index: 1; }
+.timelineTitle { font-family: var(--font-futura-medium); font-size: 1rem; color: var(--white); }
+.timelineDesc { font-size: 0.88rem; color: rgba(242, 241, 240, 0.65); margin-top: 0.15rem; line-height: 1.5; }
+
+/* ── Venue ── */
+.venue { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 1rem; align-items: stretch; }
+.map { width: 100%; min-height: 280px; height: 100%; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 1rem; background: rgba(255, 255, 255, 0.04); }
+.venueInfo { display: flex; flex-direction: column; gap: 0.75rem; padding: 1rem 1.1rem; border-radius: 1rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); }
+.venueAddress { display: flex; gap: 0.5rem; align-items: flex-start; font-family: var(--font-futura-heavy); color: var(--white); line-height: 1.4; }
+.venueNotes { font-size: 0.9rem; line-height: 1.55; color: rgba(242, 241, 240, 0.75); white-space: pre-wrap; }
+.venueLinks { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: auto; }
+.venueBtn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.9rem; border-radius: 0.7rem; font-size: 0.82rem; color: var(--white); text-decoration: none; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.16); }
+.venueBtn:hover { border-color: rgba(255, 199, 44, 0.6); color: var(--yellow); }
+
+/* ── Sponsors ── */
+.sponsors { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.75rem; }
+.sponsor { display: grid; place-items: center; min-height: 96px; padding: 1rem; border-radius: 1rem; background: rgba(255, 255, 255, 0.92); border: 1px solid rgba(255, 255, 255, 0.2); text-decoration: none; transition: transform 0.15s; }
+a.sponsor:hover { transform: translateY(-2px); }
+.sponsorLogo { max-width: 100%; max-height: 64px; object-fit: contain; }
+.sponsorName { color: #011941; font-family: var(--font-futura-heavy); text-align: center; }
+
+@media (max-width: 720px) {
+  .venue { grid-template-columns: 1fr; }
+  .map { min-height: 240px; }
+  .timelineItem { grid-template-columns: 70px 18px 1fr; }
+  .timelineItem:not(:last-child)::before { left: calc(70px + 0.75rem + 8px); }
+}

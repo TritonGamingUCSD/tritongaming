@@ -22,6 +22,9 @@ interface ScanResult {
   ticket_id?: string;
   requires_form?: boolean;
   form_completed?: boolean;
+  day_number?: number | null;
+  day_total?: number | null;
+  later_day?: boolean;
   points_awarded?: number;
   lifetime_points?: number;
   tier?: string;
@@ -432,7 +435,9 @@ export default function CheckInClient({ events, onCheckedIn, tiers }: CheckInCli
               <>
                 <span className={styles.resultIcon}><CircleCheck size={40} strokeWidth={1.5} aria-hidden="true" /></span>
                 <div className={styles.resultName}>{result.user_name}</div>
-                <div className={styles.resultDetail}>Checked in!</div>
+                <div className={styles.resultDetail}>
+                  {result.day_total && result.day_total > 1 ? `Checked in — Day ${result.day_number ?? '?'} of ${result.day_total}` : 'Checked in!'}
+                </div>
                 {result.requires_form && (
                   <div className={styles.resultFormBadge}>
                     <strong>AS Form still to do</strong>
@@ -457,7 +462,7 @@ export default function CheckInClient({ events, onCheckedIn, tiers }: CheckInCli
               <>
                 <span className={styles.resultIcon}><TriangleAlert size={40} strokeWidth={1.5} aria-hidden="true" /></span>
                 <div className={styles.resultName}>
-                  {result.status === 'used' ? 'Already checked in' : `Ticket ${result.status}`}
+                  {result.status === 'used' ? 'Already checked in today' : `Ticket ${result.status}`}
                 </div>
                 {result.status === 'used' && result.checked_in_at && (
                   <div className={styles.resultDetail}>

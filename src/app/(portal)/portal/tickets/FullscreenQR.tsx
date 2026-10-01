@@ -123,7 +123,8 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
           const statusRes = await fetch(`/api/tickets/${ticketId}/status`);
           if (statusRes.ok) {
             const statusData = await statusRes.json();
-            if (statusData.status === 'used') {
+            // checked_in_today is false for a multi-day ticket scanned on an earlier day
+            if (statusData.status === 'used' && statusData.checked_in_today !== false) {
               handleCheckedIn(statusData.checked_in_at ?? new Date().toISOString());
               return;
             }
@@ -315,7 +316,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
         const res = await fetch(`/api/tickets/${ticketId}/status`);
         if (!res.ok) return;
         const data = await res.json();
-        if (data.status === 'used') handleCheckedIn(data.checked_in_at ?? new Date().toISOString());
+        if (data.status === 'used' && data.checked_in_today !== false) handleCheckedIn(data.checked_in_at ?? new Date().toISOString());
       } catch {
         // ignore — next tick tries again
       }
@@ -565,7 +566,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
                 // does, especially for the one screen someone opens
                 // specifically to look at right now.
                 <div className={`${styles.qrCanvas} ${styles.qrLoading}`}>
-                  <LoadingSpinner size={32} theme="light" />
+                  <LoadingSpinner size={32} label="Loading your code…" theme="light" />
                 </div>
               )}
             </div>

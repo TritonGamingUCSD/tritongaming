@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { isCheckinWindowOpen } from '@/lib/checkinWindow';
+import { isMultiDayEvent, pacificDayKey, currentDayInfo } from '@/lib/checkinDays';
 
 // Nothing anywhere else in this app ever moves a ticket's status away from
 // 'active' once it's issued — there's no cron/trigger that expires one when
@@ -17,7 +18,7 @@ import { isCheckinWindowOpen } from '@/lib/checkinWindow';
 // of the two check-in paths.
 export async function performCheckin(
   serviceClient: SupabaseClient,
-  ticket: { id: string; user_id: string },
+  ticket: { id: string; user_id: string; event_id?: string },
   event: { title: string | null; start_date: string; end_date: string | null; points_value: number; requires_checkin_form?: boolean | null },
   checkedInBy: string,
   // Manual check-in by an exec/admin (api/checkin/manual) passes true: it's a
@@ -26,18 +27,58 @@ export async function performCheckin(
   // day. The scanner and online self-check-in never set this; they stay
   // bound to the event's window.
   opts: { ignoreWindow?: boolean } = {}
-): Promise<{ error?: string }> {
+): Promise<{ error?: string; firstCheckin?: boolean; day?: { day: number; total: number } | null }> {
   if (!opts.ignoreWindow && !isCheckinWindowOpen(event)) {
     return { error: 'This event has already ended — the ticket is no longer valid for check-in.' };
   }
 
-  const { error: updateError } = await serviceClient
+  const multiDay = isMultiDayEvent(event.start_date, event.end_date);
+  const now = new Date();
+
+  let eventId = ticket.event_id;
+  if (!eventId) {
+    const { data } = await serviceClient.from('tickets').select('event_id').eq('id', ticket.id).maybeSingle();
+    eventId = data?.event_id as string | undefined;
+  }
+
+  // One row per ticket per Pacific day. For a multi-day event a duplicate means they were
+  // already scanned in today.
+  if (eventId) {
+    const { error: dayError } = await serviceClient.from('ticket_checkins').insert({
+      ticket_id: ticket.id, event_id: eventId, day: pacificDayKey(now), checked_in_at: now.toISOString(), checked_in_by: checkedInBy,
+    });
+    if (dayError) {
+      if (dayError.code === '23505') {
+        if (multiDay) return { error: "Already checked in for today." };
+      } else {
+        console.error('[performCheckin] failed to record day check-in:', dayError);
+      }
+    }
+  }
+
+  // First check-in flips the ticket to used (guarded against a near-simultaneous second scan).
+  const { data: flipped, error: updateError } = await serviceClient
     .from('tickets')
-    .update({ status: 'used', checked_in_at: new Date().toISOString(), checked_in_by: checkedInBy })
+    .update({ status: 'used', checked_in_at: now.toISOString(), checked_in_by: checkedInBy })
     .eq('id', ticket.id)
-    .eq('status', 'active'); // guards against a race with a second, near-simultaneous check-in attempt
+    .eq('status', 'active')
+    .select('id');
 
   if (updateError) return { error: 'Failed to update ticket' };
+  const firstCheckin = (flipped?.length ?? 0) > 0;
+  const day = multiDay ? currentDayInfo(event.start_date, event.end_date) : null;
+
+  // Later days of a multi-day event: attendance only — points are earned once, on the first check-in.
+  if (multiDay && !firstCheckin) {
+    await serviceClient.from('notifications').insert({
+      user_id: ticket.user_id,
+      type: 'ticket_checked_in',
+      title: day ? `Checked in — Day ${day.day} of ${day.total}` : "You're checked in!",
+      body: event.title ? `Enjoy ${event.title}.` : 'Enjoy the event.',
+      href: '/portal?section=tickets',
+    });
+    return { firstCheckin: false, day };
+  }
 
   const { data: pointsAwarded, error: pointsError } = await serviceClient.rpc('award_checkin_points', {
     _ticket_id: ticket.id,
@@ -58,5 +99,5 @@ export async function performCheckin(
     href: '/portal?section=tickets',
   });
 
-  return {};
+  return { firstCheckin: true, day };
 }

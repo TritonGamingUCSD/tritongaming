@@ -2,18 +2,24 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { MapPin, Ticket, Camera, Award } from 'lucide-react';
-import { getEventBySlugOrId } from '@/lib/events';
+import { MapPin, Ticket, Camera, Award, CalendarDays, Users, Navigation, ExternalLink } from 'lucide-react';
+import { getEventBySlugOrId, getGoingCount, getAllEvents } from '@/lib/events';
 import { isCheckinWindowOpen } from '@/lib/checkinWindow';
 import { getAlbumPreview } from '@/lib/googlePhotosAlbum';
 import { markdownToDescription } from '@/lib/markdown';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import EventSocialEmbeds from '@/components/EventSocialEmbeds/EventSocialEmbeds';
 import AddToCalendarButton from '@/components/AddToCalendarButton/AddToCalendarButton';
-import { formatEventDateRange, formatEventTimeRange } from '@/lib/timezone';
+import { formatEventDateRange, formatEventTimeRange, eventDayCount } from '@/lib/timezone';
 import styles from './event-detail.module.css';
 
-export const dynamic = 'force-dynamic';
+// Cached page (data comes from the tagged caches in lib/events.ts, refreshed when an event is saved).
+export const revalidate = 60;
+
+// Built at deploy time for existing events; a new event renders on first visit, then is cached.
+export async function generateStaticParams() {
+  return (await getAllEvents(100)).map((e) => ({ slug: e.slug || e._id }));
+}
 
 interface Params {
   params: Promise<{ slug: string }>;
@@ -71,6 +77,12 @@ export default async function EventDetailPage({ params }: Params) {
   // same-day grace when it has none), not the moment it starts.
   const isPast = !isCheckinWindowOpen(event);
   const isExternalFlyer = event.flyer_url?.startsWith('http');
+  const goingCount = await getGoingCount(event._id);
+  const dayCount = eventDayCount(event.start_date, event.end_date || null);
+  const venueAddress = event.venue_address.trim();
+  const mapSrc = venueAddress ? `https://www.google.com/maps?q=${encodeURIComponent(venueAddress)}&output=embed` : null;
+  const mapsLink = venueAddress ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venueAddress)}` : null;
+  const directionsLink = venueAddress ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(venueAddress)}` : null;
   const hasPostEventContent = isPast && (event.photo_albums.length > 0 || event.post_event_info);
   // Fetched in display order, in parallel — each is an independent network
   // call to a different Google Photos page, so awaiting them one at a time
@@ -124,13 +136,6 @@ export default async function EventDetailPage({ params }: Params) {
 
         <h1 className={styles.title}>{event.full_name}</h1>
 
-        <p className={styles.meta}>
-          {formatDateRange(event.start_date, event.end_date)}
-          <span className={styles.hash}>#</span>
-          {formatTime(event.start_date, event.end_date)}
-        </p>
-        {event.location && <p className={styles.location}><MapPin size={15} strokeWidth={1.5} aria-hidden="true" /> {event.location}</p>}
-
         {event.content && <p className={styles.summary}>{event.content}</p>}
 
         {!isPast && (
@@ -151,10 +156,108 @@ export default async function EventDetailPage({ params }: Params) {
           <p className={styles.pointsNote}><Award size={15} strokeWidth={1.75} aria-hidden="true" /> Check in at this event to earn {event.points_value} reward points</p>
         )}
 
+        <div className={styles.facts}>
+          <div className={styles.fact}>
+            <span className={styles.factIcon}><CalendarDays size={18} strokeWidth={1.75} aria-hidden="true" /></span>
+            <div>
+              <div className={styles.factLabel}>When</div>
+              <div className={styles.factValue}>{formatEventDateRange(event.start_date, event.end_date || null)}</div>
+              <div className={styles.factSub}>{formatEventTimeRange(event.start_date, event.end_date || null)}{dayCount > 1 && ` · ${dayCount} days`}</div>
+            </div>
+          </div>
+          {event.location && (
+            <div className={styles.fact}>
+              <span className={styles.factIcon}><MapPin size={18} strokeWidth={1.75} aria-hidden="true" /></span>
+              <div>
+                <div className={styles.factLabel}>Where</div>
+                <div className={styles.factValue}>{event.location}</div>
+                {venueAddress && <div className={styles.factSub}>{venueAddress}</div>}
+              </div>
+            </div>
+          )}
+          {goingCount > 0 && (
+            <div className={styles.fact}>
+              <span className={styles.factIcon}><Users size={18} strokeWidth={1.75} aria-hidden="true" /></span>
+              <div>
+                <div className={styles.factLabel}>{isPast ? 'Registered' : 'Going'}</div>
+                <div className={styles.factValue}>{goingCount.toLocaleString()}</div>
+                <div className={styles.factSub}>{isPast ? 'people had a ticket' : goingCount === 1 ? 'person is going' : 'people are going'}</div>
+              </div>
+            </div>
+          )}
+        </div>
+
         {event.details && (
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Event Details</h2>
             <MarkdownContent>{event.details}</MarkdownContent>
+          </section>
+        )}
+
+        {event.schedule.length > 0 && (
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Schedule</h2>
+            <ol className={styles.timeline}>
+              {event.schedule.map((item, i) => (
+                <li key={i} className={styles.timelineItem}>
+                  <span className={styles.timelineTime}>{item.time}</span>
+                  <span className={styles.timelineDot} aria-hidden="true" />
+                  <div className={styles.timelineBody}>
+                    <div className={styles.timelineTitle}>{item.title}</div>
+                    {item.description && <div className={styles.timelineDesc}>{item.description}</div>}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
+
+        {mapSrc && (
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Venue</h2>
+            <div className={styles.venue}>
+              <iframe
+                className={styles.map}
+                src={mapSrc}
+                title={`Map of ${venueAddress}`}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                allowFullScreen
+              />
+              <div className={styles.venueInfo}>
+                <div className={styles.venueAddress}><MapPin size={16} strokeWidth={1.75} aria-hidden="true" /> {venueAddress}</div>
+                {event.venue_notes && <p className={styles.venueNotes}>{event.venue_notes}</p>}
+                <div className={styles.venueLinks}>
+                  <a href={directionsLink!} target="_blank" rel="noopener noreferrer" className={styles.venueBtn}><Navigation size={14} strokeWidth={1.75} aria-hidden="true" /> Get directions</a>
+                  <a href={mapsLink!} target="_blank" rel="noopener noreferrer" className={styles.venueBtn}><ExternalLink size={14} strokeWidth={1.75} aria-hidden="true" /> Open in Maps</a>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {event.sponsors.length > 0 && (
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Sponsors</h2>
+            <div className={styles.sponsors}>
+              {event.sponsors.map((sp, i) => {
+                const inner = (
+                  <>
+                    {sp.logo_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={sp.logo_url} alt={sp.name} className={styles.sponsorLogo} loading="lazy" />
+                    ) : (
+                      <span className={styles.sponsorName}>{sp.name}</span>
+                    )}
+                  </>
+                );
+                return sp.url ? (
+                  <a key={i} href={sp.url} target="_blank" rel="noopener noreferrer nofollow" className={styles.sponsor} aria-label={sp.name}>{inner}</a>
+                ) : (
+                  <div key={i} className={styles.sponsor} aria-label={sp.name}>{inner}</div>
+                );
+              })}
+            </div>
           </section>
         )}
 

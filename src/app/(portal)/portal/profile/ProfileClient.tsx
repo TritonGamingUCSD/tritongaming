@@ -3,7 +3,7 @@
 import SectionTabs from '@/components/ui/SectionTabs';
 import { refreshPublicCache } from '@/lib/refreshPublicCache';
 import Notice from '@/components/ui/Notice';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { User, Users, Lock, X as XIcon, Globe, EyeOff } from 'lucide-react';
@@ -14,7 +14,7 @@ import { Check } from 'lucide-react';
 import { canSetOrgTitle, type RoleGrant } from '@/lib/capabilities';
 import { hasBasicProfileInfo, getMissingProfileFields, GENDER_OPTIONS, PRONOUN_OPTIONS, PLATFORM_OPTIONS, MAX_PORTFOLIO_LINKS, normalizePortfolioUrl, resolveAvatarUrl, SOCIAL_PLATFORMS, yearChoiceOptions, yearChoiceOf, yearLabelOfChoice } from '@/lib/profile';
 import type { MyPrivateProfile } from '@/lib/auth';
-import { deleteIfReplaced } from '@/lib/imageUpload';
+import { deleteIfReplaced, deleteStorageUrl } from '@/lib/imageUpload';
 import { usePortalTabSync } from '@/lib/usePortalTabSync';
 import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
@@ -53,6 +53,8 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
     setTab(t);
     syncUrl(t);
   }
+  // The custom picture currently stored on the profile (updates after each save).
+  const savedAvatar = useRef<string | null>(profile.custom_avatar_url || null);
   const [form, setForm] = useState({
     display_name: profile.display_name || '',
     // The select's value: graduation year ("2028"), "Graduate", or "Alumni".
@@ -178,7 +180,10 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
       return;
     }
 
-    deleteIfReplaced(profile.custom_avatar_url, form.custom_avatar_url.trim() || null);
+    // Compare against what's actually stored now, not the value this page loaded with —
+    // that one goes stale after the first save and left earlier pictures behind.
+    deleteIfReplaced(savedAvatar.current, form.custom_avatar_url.trim() || null);
+    savedAvatar.current = form.custom_avatar_url.trim() || null;
 
     markSaved();
     showToast('Profile saved');
@@ -288,7 +293,14 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
             <ImageUploadField
               label="Profile Picture"
               value={form.custom_avatar_url}
-              onChange={(url) => setForm((f) => ({ ...f, custom_avatar_url: url }))}
+              onChange={(url) => {
+                // A picture that was uploaded but never saved, then swapped or removed, is just
+                // clutter in storage — delete it right away. The saved one is only removed
+                // once the new choice is actually saved (see handleSave).
+                const prev = form.custom_avatar_url.trim();
+                if (prev && prev !== url && prev !== savedAvatar.current) deleteStorageUrl(prev);
+                setForm((f) => ({ ...f, custom_avatar_url: url }));
+              }}
               bucket="avatars"
               pathPrefix={profile.id}
               shape="circle"

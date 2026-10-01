@@ -98,7 +98,7 @@ export default function NotificationBell() {
           </div>
 
           {!loaded ? (
-            <div className={styles.statusLoading}><LoadingSpinner size={22} theme="dark" /></div>
+            <div className={styles.statusLoading}><LoadingSpinner size={22} label="Loading notifications…" theme="dark" /></div>
           ) : notifications.length === 0 ? (
             <div className={styles.status}>
               <Image src="/bytes/byte_tgex25.png" alt="" width={44} height={44} aria-hidden="true" />

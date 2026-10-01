@@ -17,18 +17,15 @@ interface Props {
 // sized and paced for "the whole page is loading," not for a small inline
 // spot like a modal or a button's in-flight state, where a big animated
 // logo would be out of place.
-export default function LogoLoader({ size = 96, label, theme = 'dark', fullHeight = false }: Props) {
+// Always shows words under the logo — a bare animation doesn't say what it's waiting for.
+export default function LogoLoader({ size = 96, label = 'Loading…', theme = 'dark', fullHeight = false }: Props) {
   return (
     <div className={`${styles.wrap} ${fullHeight ? styles.fullHeight : ''}`} role="status" aria-live="polite">
       <div className={styles.logoBox} style={{ width: size, height: size }} aria-hidden="true">
         <Image src="/logos/tg_logo.png" alt="" fill className={styles.logoBase} priority />
         <div className={styles.logoShine} />
       </div>
-      {label ? (
-        <p className={`${styles.label} ${theme === 'dark' ? styles.labelDark : styles.labelLight}`}>{label}</p>
-      ) : (
-        <span className={styles.srOnly}>Loading</span>
-      )}
+      <p className={`${styles.label} ${theme === 'dark' ? styles.labelDark : styles.labelLight}`}>{label}</p>
     </div>
   );
 }

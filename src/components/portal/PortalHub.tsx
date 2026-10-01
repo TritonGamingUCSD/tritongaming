@@ -3,6 +3,7 @@
 import { confirmDiscardUnsaved } from '@/lib/useUnsavedChanges';
 import type { ReactElement, ReactNode } from 'react';
 import { cloneElement, isValidElement, useCallback, useEffect, useState } from 'react';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import { Home, MoreHorizontal, ChevronRight } from 'lucide-react';
@@ -51,6 +52,8 @@ export interface HubSection {
   content: ReactNode;
   group: HubGroup;
 }
+
+export interface HubIdentity { name: string; avatarUrl: string | null; roleLabel: string }
 
 const SPRING = { type: 'spring' as const, stiffness: 420, damping: 38 };
 
@@ -108,7 +111,7 @@ interface GroupedSection {
 // onOpenChange reports whether a panel is open so a sibling (the portal's
 // "next ticket" banner) can react to that directly — e.g. hide itself while
 // a section takes over the screen on mobile.
-export default function PortalHub({ sections, onOpenChange }: { sections: HubSection[]; onOpenChange?: (open: boolean) => void }) {
+export default function PortalHub({ sections, identity, railFooter, homeExtras, onOpenChange }: { sections: HubSection[]; identity?: HubIdentity; railFooter?: ReactNode; homeExtras?: ReactNode; onOpenChange?: (open: boolean) => void }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedSection = searchParams.get('section');
@@ -124,11 +127,9 @@ export default function PortalHub({ sections, onOpenChange }: { sections: HubSec
   }, [validRequested]);
 
   useEffect(() => {
-    // On desktop, a section being open no longer hides anything the way it
-    // does on mobile (the sidebar and everything around it stays put) — so
-    // a sibling like the "next ticket" banner has no reason to disappear
-    // there. Only report "open" (and let that sibling hide itself) on
-    // mobile, where opening a section really does take over the screen.
+    // On mobile, opening a section takes over the screen, so the home-only top
+    // section (greeting, banners, next ticket) hides. On desktop the sidebar stays
+    // next to the section, so the top section stays too.
     onOpenChange?.(!isDesktop && openId !== null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openId, isDesktop]);
@@ -167,6 +168,9 @@ export default function PortalHub({ sections, onOpenChange }: { sections: HubSec
   if (isDesktop) {
     return (
       <DesktopShell
+        identity={identity}
+        railFooter={railFooter}
+        homeExtras={homeExtras}
         groupedSections={groupedSections}
         openSection={openSection}
         openId={openId}
@@ -217,33 +221,34 @@ export default function PortalHub({ sections, onOpenChange }: { sections: HubSec
       <nav className={styles.bottomBar} aria-label="Portal quick navigation">
         <button
           type="button"
-          className={`${styles.bottomBarItem} ${openId === null ? styles.bottomBarItemActive : ''}`}
-          onClick={close}
+          className={`${styles.dockItem} ${openId === null && !moreOpen ? styles.dockItemActive : ''}`}
+          onClick={() => { setMoreOpen(false); close(); }}
         >
-          <Home size={25} strokeWidth={1.75} aria-hidden="true" />
-          <span>Hub</span>
+          <span className={styles.dockIcon}><Home size={20} strokeWidth={1.9} aria-hidden="true" /></span>
+          <span className={styles.dockLabel}>Home</span>
         </button>
         {primaryTabs.map((s) => (
           <button
             key={s.id}
             type="button"
-            className={`${styles.bottomBarItem} ${openId === s.id ? styles.bottomBarItemActive : ''}`}
+            className={`${styles.dockItem} ${openId === s.id && !moreOpen ? styles.dockItemActive : ''}`}
             onClick={() => { setMoreOpen(false); open(s.id); }}
           >
-            {s.badge !== undefined && s.badge !== 0 && (
-              <span className={styles.bottomBarBadge}>{s.badge}</span>
-            )}
-            {smallIcon(s.icon, 25)}
-            <span>{s.label}</span>
+            <span className={styles.dockIcon}>
+              {smallIcon(s.icon, 20)}
+              {s.badge !== undefined && s.badge !== 0 && <span className={styles.dockBadge}>{s.badge}</span>}
+            </span>
+            <span className={styles.dockLabel}>{s.label}</span>
           </button>
         ))}
         <button
           type="button"
-          className={`${styles.bottomBarItem} ${isMoreActive || moreOpen ? styles.bottomBarItemActive : ''}`}
+          className={`${styles.dockItem} ${isMoreActive || moreOpen ? styles.dockItemActive : ''}`}
           onClick={() => setMoreOpen((v) => !v)}
+          aria-expanded={moreOpen}
         >
-          <MoreHorizontal size={25} strokeWidth={1.75} aria-hidden="true" />
-          <span>More</span>
+          <span className={styles.dockIcon}><MoreHorizontal size={20} strokeWidth={1.9} aria-hidden="true" /></span>
+          <span className={styles.dockLabel}>More</span>
         </button>
       </nav>
 
@@ -268,20 +273,31 @@ export default function PortalHub({ sections, onOpenChange }: { sections: HubSec
               transition={SPRING}
             >
               <div className={styles.moreSheetHandle} aria-hidden="true" />
-              {moreSections.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  className={`${styles.moreSheetItem} ${openId === s.id ? styles.bottomBarItemActive : ''}`}
-                  onClick={() => { setMoreOpen(false); open(s.id); }}
-                >
-                  <span className={styles.moreSheetIcon} aria-hidden="true">{smallIcon(s.icon)}</span>
-                  <span>{s.label}</span>
-                  {s.badge !== undefined && s.badge !== 0 && (
-                    <span className={styles.moreSheetBadge}>{s.badge}</span>
-                  )}
-                </button>
-              ))}
+              {GROUP_ORDER.map((group) => {
+                const items = moreSections.filter((s) => s.group === group);
+                if (items.length === 0) return null;
+                return (
+                  <div key={group} className={styles.sheetGroup} style={{ ['--accent' as string]: GROUP_ACCENT[group] }}>
+                    <div className={styles.sheetGroupLabel}><span className={styles.railGroupDot} aria-hidden="true" />{group}</div>
+                    <div className={styles.sheetGrid}>
+                      {items.map((s) => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          className={`${styles.sheetTile} ${openId === s.id ? styles.sheetTileActive : ''}`}
+                          onClick={() => { setMoreOpen(false); open(s.id); }}
+                        >
+                          <span className={styles.sheetTileIcon} aria-hidden="true">
+                            {smallIcon(s.icon, 22)}
+                            {s.badge !== undefined && s.badge !== 0 && <span className={styles.dockBadge}>{s.badge}</span>}
+                          </span>
+                          <span className={styles.sheetTileLabel}>{s.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </motion.div>
           </>
         )}
@@ -299,12 +315,18 @@ export default function PortalHub({ sections, onOpenChange }: { sections: HubSec
 // animation here would be more fragile than useful. The zoom stays exactly
 // where it earns its keep — the first tap on mobile.
 function DesktopShell({
+  identity,
+  railFooter,
+  homeExtras,
   groupedSections,
   openSection,
   openId,
   open,
   close,
 }: {
+  identity?: HubIdentity;
+  railFooter?: ReactNode;
+  homeExtras?: ReactNode;
   groupedSections: GroupedSection[];
   openSection: HubSection | null;
   openId: string | null;
@@ -313,39 +335,54 @@ function DesktopShell({
 }) {
   return (
     <div className={styles.desktopShell}>
-      <nav className={styles.rail} aria-label="Portal sections">
-        {/* Lives in the rail, not centered above the content pane — a
-            centered 420px search bar sitting over a left-aligned card grid
-            never actually lined up with anything below it. Always visible
-            here (not just on the home view) since it's now part of the
-            rail's own nav, not a second competing "get me somewhere"
-            control floating in the content pane. */}
-        <PortalSearch compact />
-        <button
-          className={`${styles.railHome} ${!openSection ? styles.railItemActive : ''}`}
-          onClick={close}
-        >
-          Dashboard
-        </button>
-        {groupedSections.map(({ group, items }) => (
-          <div key={group} className={styles.railGroup}>
-            {groupedSections.length > 1 && <div className={styles.railGroupLabel}>{group}</div>}
-            {items.map((s) => (
-              <button
-                key={s.id}
-                className={`${styles.railItem} ${s.id === openId ? styles.railItemActive : ''}`}
-                onClick={() => open(s.id)}
-              >
-                <span className={styles.railIcon} aria-hidden="true">{s.icon}</span>
-                <span className={styles.railLabel}>{s.label}</span>
-                {s.badge !== undefined && s.badge !== 0 && (
-                  <span className={styles.railBadge}>{s.badge}</span>
-                )}
-              </button>
-            ))}
-          </div>
-        ))}
-      </nav>
+      <aside className={styles.rail}>
+        {identity && (
+          <button type="button" className={styles.railIdentity} onClick={() => open('profile')} aria-label="Open your profile" title="Your profile">
+            {identity.avatarUrl ? (
+              <Image src={identity.avatarUrl} alt="" width={40} height={40} className={styles.railAvatar} unoptimized referrerPolicy="no-referrer" />
+            ) : (
+              <span className={styles.railAvatarFallback}>{identity.name[0]?.toUpperCase() ?? 'T'}</span>
+            )}
+            <span className={styles.railIdentityText}>
+              <span className={styles.railName}>{identity.name}</span>
+              <span className={styles.railRole}>{identity.roleLabel}</span>
+            </span>
+          </button>
+        )}
+        <nav className={styles.railNav} aria-label="Portal sections">
+          <button
+            className={`${styles.railItem} ${!openSection ? styles.railItemActive : ''}`}
+            style={{ ['--accent' as string]: '#ffc72c' }}
+            onClick={close}
+            aria-current={!openSection ? 'page' : undefined}
+          >
+            <span className={styles.railIcon} aria-hidden="true"><Home /></span>
+            <span className={styles.railLabel}>Dashboard</span>
+          </button>
+          {groupedSections.map(({ group, items }) => (
+            <div key={group} className={styles.railGroup} style={{ ['--accent' as string]: GROUP_ACCENT[group] }}>
+              {groupedSections.length > 1 && (
+                <div className={styles.railGroupLabel}><span className={styles.railGroupDot} aria-hidden="true" />{group}</div>
+              )}
+              {items.map((s) => (
+                <button
+                  key={s.id}
+                  className={`${styles.railItem} ${s.id === openId ? styles.railItemActive : ''}`}
+                  onClick={() => open(s.id)}
+                  aria-current={s.id === openId ? 'page' : undefined}
+                >
+                  <span className={styles.railIcon} aria-hidden="true">{s.icon}</span>
+                  <span className={styles.railLabel}>{s.label}</span>
+                  {s.badge !== undefined && s.badge !== 0 && (
+                    <span className={styles.railBadge}>{s.badge}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          ))}
+        </nav>
+        {railFooter && <div className={styles.railFooter}>{railFooter}</div>}
+      </aside>
 
       <div className={styles.desktopContent}>
         <AnimatePresence mode="wait" initial={false}>
@@ -371,6 +408,7 @@ function DesktopShell({
               animate={{ opacity: 1, transition: { duration: 0.15 } }}
               exit={{ opacity: 0, transition: { duration: 0.08 } }}
             >
+              {homeExtras && <div className={styles.homeExtras}>{homeExtras}</div>}
               {groupedSections.map(({ group, items }) => (
                 <section key={group} className={styles.group} style={{ ['--accent' as string]: GROUP_ACCENT[group] }}>
                   {groupedSections.length > 1 && (

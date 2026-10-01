@@ -1,118 +1,57 @@
-.wrap {
-  position: relative;
-  max-width: 420px;
-  margin: 0 auto 1.25rem;
-}
-
-/* Used inside the desktop rail (a fixed 220px column) — fills its
-   container instead of centering a fixed-width box that has nothing to
-   center against in a narrow sidebar. */
-.compact {
-  max-width: none;
-  margin: 0;
-}
+.wrap { position: relative; width: 100%; max-width: 440px; margin: 0 auto 1.25rem; }
+.compact { max-width: none; margin: 0; }
 
 .inputWrap {
-  position: relative;
-  display: flex;
-  align-items: center;
+  position: relative; display: flex; align-items: center;
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
 }
+.inputWrap:hover { background: rgba(255, 255, 255, 0.07); }
+.inputFocus, .inputWrap:focus-within { border-color: rgba(255, 199, 44, 0.55); background: rgba(255, 255, 255, 0.07); box-shadow: 0 0 0 3px rgba(255, 199, 44, 0.12); }
 
-.icon {
-  position: absolute;
-  left: 0.9rem;
-  color: rgba(242, 241, 240, 0.35);
-  pointer-events: none;
-}
-
+.icon { position: absolute; left: 0.85rem; color: rgba(242, 241, 240, 0.5); pointer-events: none; }
 .input {
-  width: 100%;
-  padding: 0.65rem 2.25rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-pill);
-  color: var(--white);
-  font-family: var(--font-futura-medium);
-  font-size: 0.85rem;
+  width: 100%; padding: 0.62rem 3.4rem 0.62rem 2.5rem;
+  background: none; border: none; outline: none;
+  color: var(--white); font-family: var(--font-futura-medium); font-size: 0.88rem;
 }
+.input::placeholder { color: rgba(242, 241, 240, 0.4); }
 
-.input:focus {
-  outline: none;
-  border-color: rgba(255, 199, 44, 0.4);
-  background: rgba(255, 255, 255, 0.06);
+.kbd {
+  position: absolute; right: 0.6rem; padding: 0.12rem 0.45rem; border-radius: 0.4rem;
+  font-family: var(--font-futura-medium); font-size: 0.68rem; color: rgba(242, 241, 240, 0.5);
+  background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.12);
 }
-
-.clearBtn {
-  position: absolute;
-  right: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(242, 241, 240, 0.6);
-  cursor: pointer;
-}
+.clearBtn { position: absolute; right: 0.55rem; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: none; background: rgba(255, 255, 255, 0.1); color: rgba(242, 241, 240, 0.75); cursor: pointer; }
+.clearBtn:hover { background: rgba(255, 255, 255, 0.18); }
 
 .dropdown {
-  position: absolute;
-  top: calc(100% + 0.5rem);
-  left: 0;
-  right: 0;
-  z-index: 20;
-  max-height: 360px;
-  overflow-y: auto;
-  background: #0d1a33;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 0.875rem;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
-  padding: 0.5rem;
+  position: absolute; top: calc(100% + 0.5rem); right: 0; left: auto; z-index: 60;
+  width: max(100%, 400px); max-width: min(480px, 92vw); max-height: min(70vh, 460px); overflow-y: auto;
+  padding: 0.4rem;
+  background: #0d1325; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 1rem;
+  box-shadow: 0 22px 50px -12px rgba(0, 0, 0, 0.7);
 }
+@media (max-width: 899px) { .dropdown { left: 0; right: 0; width: auto; max-width: none; } }
 
-.status {
-  padding: 0.75rem;
-  text-align: center;
-  font-size: 0.8rem;
-  color: rgba(242, 241, 240, 0.4);
-}
+.status { padding: 1.1rem 0.75rem; text-align: center; font-size: 0.82rem; color: rgba(242, 241, 240, 0.5); }
 
-.group + .group {
-  margin-top: 0.5rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
+.group { --accent: #34d399; padding: 0.2rem 0 0.35rem; }
+.group + .group { border-top: 1px solid rgba(255, 255, 255, 0.07); padding-top: 0.5rem; }
+.groupLabel { padding: 0.15rem 0.6rem 0.35rem; font-family: var(--font-futura-heavy); font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
 
-.groupLabel {
-  padding: 0.25rem 0.6rem;
-  font-size: 0.65rem;
-  font-family: var(--font-futura-heavy);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(242, 241, 240, 0.35);
-}
+.result { display: flex; align-items: center; gap: 0.7rem; padding: 0.5rem 0.6rem; border-radius: 0.65rem; text-decoration: none; transition: background 0.1s; }
+.result:hover, .resultActive { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.resultIcon { display: grid; place-items: center; width: 30px; height: 30px; flex-shrink: 0; border-radius: 0.55rem; color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.resultText { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.resultTitle { font-size: 0.88rem; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.resultTitle mark { background: none; color: var(--yellow); font-weight: 700; }
+.resultSubtitle { font-size: 0.72rem; color: rgba(242, 241, 240, 0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.resultEnter { color: rgba(242, 241, 240, 0.35); opacity: 0; flex-shrink: 0; }
+.resultActive .resultEnter { opacity: 1; }
 
-.result {
-  display: flex;
-  flex-direction: column;
-  padding: 0.5rem 0.6rem;
-  border-radius: 0.5rem;
-  transition: background 0.1s;
-}
-
-.result:hover {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.resultTitle {
-  font-size: 0.85rem;
-  font-family: var(--font-futura-medium);
-  color: var(--white);
-}
-
-.resultSubtitle {
-  font-size: 0.72rem;
-  color: rgba(242, 241, 240, 0.45);
-}
+.hints { display: flex; gap: 0.9rem; padding: 0.5rem 0.7rem 0.2rem; margin-top: 0.2rem; border-top: 1px solid rgba(255, 255, 255, 0.07); font-size: 0.68rem; color: rgba(242, 241, 240, 0.4); }
+.hints kbd { margin-right: 0.25rem; padding: 0.05rem 0.35rem; border-radius: 0.3rem; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12); font-family: inherit; }
+@media (hover: none) { .hints, .kbd { display: none; } }

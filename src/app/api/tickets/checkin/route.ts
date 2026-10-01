@@ -4,6 +4,7 @@ import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/capabilities';
 import { rotatingCode, currentWindow } from '@/lib/rotatingCode';
 import { performCheckin } from '@/lib/performCheckin';
+import { canCheckInNow, todaysCheckinAt } from '@/lib/checkinDays';
 import { getTier, fetchTiers } from '@/lib/tiers';
 
 export async function POST(request: Request) {
@@ -78,12 +79,14 @@ export async function POST(request: Request) {
   const userData = Array.isArray(ticket.user) ? ticket.user[0] : ticket.user;
   const eventData = Array.isArray(ticket.event) ? ticket.event[0] : ticket.event;
 
-  if (ticket.status !== 'active') {
+  const serviceClient = createServiceClient();
+  if (!(await canCheckInNow(serviceClient, ticket, eventData))) {
     return NextResponse.json({
       status: ticket.status,
       event_title: eventData?.title || '',
       user_name: userData?.display_name || 'Unknown',
-      checked_in_at: ticket.checked_in_at,
+      // For a multi-day event this is today's scan; otherwise the (first) check-in.
+      checked_in_at: (await todaysCheckinAt(serviceClient, ticket.id)) ?? ticket.checked_in_at,
       // Lets the scanner tell staff whether this (already checked-in)
       // person still owes the AS Form.
       requires_form: !!eventData?.requires_checkin_form,
@@ -95,8 +98,7 @@ export async function POST(request: Request) {
   // 20260920022210_allow_self_insert_notifications.sql) and
   // award_checkin_points is a security-definer RPC — both genuinely need
   // the service-role client, not the officer's own.
-  const serviceClient = createServiceClient();
-  const { error: checkinError } = await performCheckin(
+  const { error: checkinError, firstCheckin, day } = await performCheckin(
     serviceClient,
     ticket,
     {
@@ -133,7 +135,11 @@ export async function POST(request: Request) {
     // point the attendee to the AS Form step before they head in.
     requires_form: !!eventData?.requires_checkin_form,
     form_completed: false,
-    points_awarded: eventData?.points_value ?? 0,
+    points_awarded: firstCheckin === false ? 0 : (eventData?.points_value ?? 0),
+    // Multi-day events: which day this scan counts for (shown on the scanner result).
+    day_number: day?.day ?? null,
+    day_total: day?.total ?? null,
+    later_day: firstCheckin === false,
     lifetime_points: lifetimeEarned,
     tier: getTier(lifetimeEarned, tiers).name,
   });

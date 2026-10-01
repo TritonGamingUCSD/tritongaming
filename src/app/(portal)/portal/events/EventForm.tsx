@@ -11,7 +11,9 @@ import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
 import SocialEmbedsField from '@/components/SocialEmbedsField/SocialEmbedsField';
 import PhotoAlbumsField from '@/components/PhotoAlbumsField/PhotoAlbumsField';
 import { buildCheckinFormUrl } from '@/lib/checkinForm';
-import type { SocialEmbed, PhotoAlbumEntry, AppRole } from '@/types/database';
+import { eventDayCount, pacificDatetimeLocalToUTC } from '@/lib/timezone';
+import type { SocialEmbed, PhotoAlbumEntry, AppRole, ScheduleItem, EventSponsor } from '@/types/database';
+import EventExtrasEditor from './EventExtrasEditor';
 import CheckinFormFieldsEditor, { EMPTY_CHECKIN_FORM_CONFIG, type CheckinFormConfigValue } from './CheckinFormFieldsEditor';
 import styles from './new/newevent.module.css';
 
@@ -21,6 +23,10 @@ export interface EventFormValues {
   content: string;
   details: string;
   location: string;
+  venue_address: string;
+  venue_notes: string;
+  schedule: ScheduleItem[];
+  sponsors: EventSponsor[];
   start_date: string;
   end_date: string;
   flyer_url: string;
@@ -49,6 +55,10 @@ export const EMPTY_EVENT_FORM: EventFormValues = {
   content: '',
   details: '',
   location: '',
+  venue_address: '',
+  venue_notes: '',
+  schedule: [],
+  sponsors: [],
   start_date: '',
   end_date: '',
   flyer_url: '',
@@ -292,11 +302,30 @@ export default function EventForm({
             <input className={styles.input} type="datetime-local" value={form.end_date} onChange={(e) => set('end_date', e.target.value)} />
           </label>
         </div>
+        <p className={styles.hint}>
+          {form.start_date && form.end_date && new Date(form.end_date) > new Date(form.start_date)
+            ? (() => {
+                const days = eventDayCount(pacificDatetimeLocalToUTC(form.start_date).toISOString(), pacificDatetimeLocalToUTC(form.end_date).toISOString());
+                return days > 1 ? `Multi-day event: ${days} days. One ticket covers every day, and check-in stays open until the end time.` : 'Single-day event.';
+              })()
+            : 'Running over several days (like a weekend LAN)? Set the end date to the last day — one ticket covers every day.'}
+        </p>
 
         <label className={styles.field}>
           <span className={styles.label}>Location</span>
           <input className={styles.input} value={form.location} onChange={(e) => set('location', e.target.value)} placeholder={form.is_online ? 'e.g. Discord — #main-stage' : 'e.g. Price Center Ballroom'} />
         </label>
+
+        <EventExtrasEditor
+          venueAddress={form.venue_address}
+          venueNotes={form.venue_notes}
+          schedule={form.schedule}
+          sponsors={form.sponsors}
+          onVenueAddress={(v) => set('venue_address', v)}
+          onVenueNotes={(v) => set('venue_notes', v)}
+          onSchedule={(v) => setForm((f) => ({ ...f, schedule: v }))}
+          onSponsors={(v) => setForm((f) => ({ ...f, sponsors: v }))}
+        />
 
         <label className={styles.checkbox}>
           <input type="checkbox" checked={form.is_online} onChange={(e) => set('is_online', e.target.checked)} />

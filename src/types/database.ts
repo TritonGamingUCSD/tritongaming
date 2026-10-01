@@ -10,6 +10,18 @@ export type EventAudience = 'public' | 'ucsd_only';
 // addressable by video id); 'discord' has no individual-message embed API
 // at all, so it renders as a styled link-out card instead. See
 // EventSocialEmbeds.tsx for the actual rendering of each.
+export interface ScheduleItem {
+  time: string;
+  title: string;
+  description?: string;
+}
+
+export interface EventSponsor {
+  name: string;
+  logo_url: string;
+  url?: string;
+}
+
 export interface SocialEmbed {
   type: 'instagram' | 'twitter' | 'tiktok' | 'youtube' | 'discord';
   url: string;
@@ -162,6 +174,10 @@ export interface Database {
           division_id: string | null;
           photo_albums: PhotoAlbumEntry[];
           post_event_info: string | null;
+          venue_address: string | null;
+          venue_notes: string | null;
+          schedule: ScheduleItem[];
+          sponsors: EventSponsor[];
           requires_checkin_form: boolean;
           checkin_food_item: string | null;
           checkin_form_event_name: string | null;

@@ -478,3 +478,7 @@
   transition: background 0.15s, border-color 0.15s;
 }
 .recapLink:hover { background: rgba(255, 199, 44, 0.2); border-color: rgba(255, 199, 44, 0.75); }
+
+.dayLine { margin-top: 0.15rem; font-size: 0.72rem; color: var(--yellow); letter-spacing: 0.02em; }
+
+.onlineCheckinInput { font-family: var(--font-mono, ui-monospace, monospace); letter-spacing: 0.08em; }

@@ -7,7 +7,7 @@ import Link from 'next/link';
 import UndoCheckinModal from '@/components/UndoCheckinModal/UndoCheckinModal';
 import { X, Camera, Gamepad2, Undo2, Check } from 'lucide-react';
 import { resolveAvatarUrl } from '@/lib/profile';
-import { PACIFIC_TZ } from '@/lib/timezone';
+import { PACIFIC_TZ, formatEventDateRange, eventDayCount } from '@/lib/timezone';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import checkinStyles from './checkins.module.css';
 import styles from './eventcheckinsmodal.module.css';
@@ -24,6 +24,8 @@ interface TicketRow {
   status: 'active' | 'used' | 'cancelled' | 'expired';
   created_at: string;
   checked_in_at: string | null;
+  days_attended?: number;
+  checked_in_today?: boolean;
   // Honor-system only — the attendee's own "I've Completed This Form"
   // confirmation, not proof of an actual Google Forms submission (see
   // checkin_form_completed_at migration). This column exists so staff have
@@ -35,6 +37,7 @@ interface TicketRow {
 
 interface EventInfo {
   id: string;
+  end_date?: string | null;
   title: string;
   start_date: string;
   location: string | null;
@@ -67,7 +70,7 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
       });
       const json = await res.json();
       if (!res.ok) { setError(json.error || 'Failed to check in.'); return; }
-      setTickets((prev) => prev?.map((t) => (t.id === ticketId ? { ...t, status: 'used', checked_in_at: new Date().toISOString() } : t)) ?? null);
+      setTickets((prev) => prev?.map((t) => (t.id === ticketId ? { ...t, status: 'used', checked_in_at: t.checked_in_at ?? new Date().toISOString(), checked_in_today: true, days_attended: (t.days_attended ?? 0) + 1 } : t)) ?? null);
     } catch {
       setError('Network error. Please try again.');
     } finally {
@@ -127,6 +130,7 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
   // Base 4 columns (see checkins.module.css) plus whichever optional ones
   // actually apply — AS Form only for events that have it on, Actions only
   // for whoever can manage points/undo a check-in.
+  const dayTotal = event ? eventDayCount(event.start_date, event.end_date ?? null) : 1;
   const gridTemplateColumns = [
     'minmax(0, 2fr)', 'minmax(70px, 1fr)', 'minmax(120px, 1fr)', 'minmax(112px, 1fr)',
     ...(event?.requires_checkin_form ? ['90px'] : []),
@@ -149,9 +153,7 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
             <div className={checkinStyles.header} style={{ marginBottom: '1.5rem' }}>
               <h1 className={checkinStyles.title}>{event.title}</h1>
               <p className={checkinStyles.sub}>
-                {new Date(event.start_date).toLocaleDateString('en-US', {
-                  timeZone: PACIFIC_TZ, weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit',
-                })}
+                {formatEventDateRange(event.start_date, event.end_date, { weekday: true })}
                 {event.location && ` · ${event.location}`}
               </p>
             </div>
@@ -212,6 +214,7 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
                         {t.checked_in_at
                           ? new Date(t.checked_in_at).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' })
                           : '—'}
+                        {dayTotal > 1 && !!t.days_attended && <span className={checkinStyles.checkinSub}> · {t.days_attended}/{dayTotal} days</span>}
                       </span>
                       {event.requires_checkin_form && (
                         <span>
@@ -226,7 +229,7 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
                       )}
                       {canManagePoints && (
                         <span>
-                          {t.status === 'used' ? (
+                          {t.status === 'used' && !(dayTotal > 1 && !t.checked_in_today) ? (
                             <button
                               type="button"
                               className={styles.uncheckBtn}
@@ -235,7 +238,7 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
                             >
                               <Undo2 size={12} strokeWidth={1.75} aria-hidden="true" /> {uncheckingId === t.id ? '…' : 'Undo'}
                             </button>
-                          ) : t.status === 'active' ? (
+                          ) : t.status === 'active' || t.status === 'used' ? (
                             <button
                               type="button"
                               className={styles.checkInBtn}

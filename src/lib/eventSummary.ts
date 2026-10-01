@@ -1,5 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/admin';
-import { PACIFIC_TZ } from '@/lib/timezone';
+import { PACIFIC_TZ, eventDayCount } from '@/lib/timezone';
 import { parseMajors } from '@/lib/majors';
 
 export interface Bucket { label: string; count: number }
@@ -24,6 +24,7 @@ export interface EventSummary {
   pronouns: Bucket[];
   platforms: Bucket[];
   divisions: Bucket[];
+  allDays: number | null; // multi-day events: attendees scanned in on every day
   feedback: { count: number; average: number | null; comments: string[] };
 }
 
@@ -44,7 +45,7 @@ function tally(values: (string | null | undefined)[], opts: { top?: number; blan
 // Aggregates only — no individual's private fields (gender etc.) leave this
 // function. Callers must have already verified the viewer's capability, since
 // this reads profile_private with the service role.
-export async function getEventSummary(eventId: string, event: { start_date: string; requires_checkin_form: boolean }): Promise<EventSummary> {
+export async function getEventSummary(eventId: string, event: { start_date: string; end_date?: string | null; requires_checkin_form: boolean }): Promise<EventSummary> {
   const svc = createServiceClient();
 
   const { data: tickets } = await svc
@@ -72,16 +73,29 @@ export async function getEventSummary(eventId: string, event: { start_date: stri
   const divisionName = new Map((divisionsRes.data ?? []).map((d) => [d.id as string, d.name as string]));
   const returningIds = new Set(((priorRes.data ?? []) as { user_id: string }[]).map((r) => r.user_id));
 
-  // Arrival time by half hour, Pacific.
+  // Arrival time, Pacific: by half hour for a one-day event; by day for a
+  // multi-day one (a half-hour axis spanning a weekend isn't readable).
+  const multiDay = eventDayCount(event.start_date, event.end_date) > 1;
+  const dayCheckins = multiDay
+    ? (await svc.from('ticket_checkins').select('ticket_id, day, checked_in_at').eq('event_id', eventId)).data ?? []
+    : [];
   const arrivalCounts = new Map<string, { sort: number; count: number }>();
-  for (const t of attended) {
+  const arrivalRows: { checked_in_at: string | null }[] = multiDay ? (dayCheckins as { checked_in_at: string | null }[]) : attended;
+  for (const t of arrivalRows) {
     if (!t.checked_in_at) continue;
     const d = new Date(t.checked_in_at);
-    const parts = new Intl.DateTimeFormat('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: 'numeric', hour12: false }).formatToParts(d);
-    const h = Number(parts.find((p) => p.type === 'hour')?.value) % 24;
-    const m = Number(parts.find((p) => p.type === 'minute')?.value) >= 30 ? 30 : 0;
-    const label = new Date(2000, 0, 1, h, m).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-    const cur = arrivalCounts.get(label) ?? { sort: h * 60 + m, count: 0 };
+    let label: string; let sort: number;
+    if (multiDay) {
+      label = d.toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, weekday: 'short', month: 'short', day: 'numeric' });
+      sort = d.getTime() - (d.getTime() % 86400000);
+    } else {
+      const parts = new Intl.DateTimeFormat('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: 'numeric', hour12: false }).formatToParts(d);
+      const h = Number(parts.find((p) => p.type === 'hour')?.value) % 24;
+      const m = Number(parts.find((p) => p.type === 'minute')?.value) >= 30 ? 30 : 0;
+      label = new Date(2000, 0, 1, h, m).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      sort = h * 60 + m;
+    }
+    const cur = arrivalCounts.get(label) ?? { sort, count: 0 };
     cur.count++;
     arrivalCounts.set(label, cur);
   }
@@ -114,6 +128,7 @@ export async function getEventSummary(eventId: string, event: { start_date: stri
     doubleMajors: parsed.filter((p) => p.majors.length > 1).length,
     pronouns: tally(attendeeIds.map((id) => profileById.get(id)?.pronouns)),
     platforms: tally(attendeeIds.flatMap((id) => privById.get(id)?.platforms ?? []), { top: 8 }),
+    allDays: multiDay ? (() => { const n = new Map<string, number>(); for (const r of dayCheckins as { ticket_id: string }[]) n.set(r.ticket_id, (n.get(r.ticket_id) ?? 0) + 1); const total = eventDayCount(event.start_date, event.end_date); return [...n.values()].filter((c) => c >= total).length; })() : null,
     feedback: {
       count: fb.length,
       average: fb.length ? Math.round((fb.reduce((n, r) => n + r.rating, 0) / fb.length) * 10) / 10 : null,

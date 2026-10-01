@@ -9,5 +9,5 @@ import LogoLoader from '@/components/LogoLoader/LogoLoader';
 // globals.css) everywhere, not light/white — "light" here would mean dark
 // navy label text sitting directly on that same dark navy background.
 export default function MainLoading() {
-  return <LogoLoader size={80} label="Loading…" theme="dark" fullHeight />;
+  return <LogoLoader size={80} label="Loading page…" theme="dark" fullHeight />;
 }

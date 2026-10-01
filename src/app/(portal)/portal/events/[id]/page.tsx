@@ -7,7 +7,7 @@ import EditEventClient from './EditEventClient';
 import type { EventFormValues } from '../EventForm';
 import { EMPTY_CHECKIN_FORM_CONFIG } from '../CheckinFormFieldsEditor';
 import { getCheckinFormSeed, getFormPreviewViewer } from '../getEventsData';
-import type { SocialEmbed, PhotoAlbumEntry } from '@/types/database';
+import type { SocialEmbed, PhotoAlbumEntry, ScheduleItem, EventSponsor } from '@/types/database';
 
 export const metadata = { title: 'Edit Event' };
 export const dynamic = 'force-dynamic';
@@ -25,7 +25,7 @@ export default async function EditEventPage({ params }: Params) {
   const [{ data: event }, { data: divisions }, seedCheckinFormConfig, previewViewer] = await Promise.all([
     supabase
       .from('events')
-      .select('id, title, slug, content, description, location, start_date, end_date, flyer_url, max_capacity, ticket_price, points_value, is_online, audience, is_published, photo_albums, post_event_info, social_embeds, division_id, requires_checkin_form, checkin_food_item, checkin_form_event_name, checkin_form_override')
+      .select('id, title, slug, content, description, location, venue_address, venue_notes, schedule, sponsors, start_date, end_date, flyer_url, max_capacity, ticket_price, points_value, is_online, audience, is_published, photo_albums, post_event_info, social_embeds, division_id, requires_checkin_form, checkin_food_item, checkin_form_event_name, checkin_form_override')
       .eq('id', id)
       .single(),
     supabase.from('divisions').select('id, name').order('name'),
@@ -41,6 +41,10 @@ export default async function EditEventPage({ params }: Params) {
     content: event.content ?? '',
     details: event.description ?? '',
     location: event.location ?? '',
+    venue_address: event.venue_address ?? '',
+    venue_notes: event.venue_notes ?? '',
+    schedule: (event.schedule as ScheduleItem[]) ?? [],
+    sponsors: (event.sponsors as EventSponsor[]) ?? [],
     start_date: utcToPacificDatetimeLocal(event.start_date),
     end_date: utcToPacificDatetimeLocal(event.end_date),
     flyer_url: event.flyer_url ?? '',

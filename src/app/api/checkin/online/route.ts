@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { rotatingCode, currentEventCodeWindow } from '@/lib/rotatingCode';
 import { performCheckin } from '@/lib/performCheckin';
+import { canCheckInNow } from '@/lib/checkinDays';
 
 // Member-facing self-check-in for online events — see the sibling
 // api/checkin/online/[eventId]/code (officer-facing reveal) for the code
@@ -55,8 +56,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'That code is incorrect or has expired — ask for the current one.' }, { status: 400 });
   }
 
-  if (ticket.status !== 'active') {
-    return NextResponse.json({ error: ticket.status === 'used' ? "You're already checked in." : 'This ticket is no longer valid.' }, { status: 409 });
+  if (!(await canCheckInNow(serviceClient, ticket, event))) {
+    return NextResponse.json({ error: ticket.status === 'used' ? "You're already checked in today." : 'This ticket is no longer valid.' }, { status: 409 });
   }
 
   const { error: checkinError } = await performCheckin(

@@ -3,6 +3,7 @@ import type { RoleGrant } from '@/lib/capabilities';
 import { isVerifiedMember, isRewardsEligible } from '@/lib/capabilities';
 import { buildCheckinFormUrl, type CheckinFormConfig } from '@/lib/checkinForm';
 import { openEventsFilter } from '@/lib/checkinWindow';
+import { pacificDayKey } from '@/lib/checkinDays';
 import type TicketsClient from './TicketsClient';
 
 // Shared by the standalone /portal/tickets route and the portal hub so both
@@ -40,6 +41,13 @@ export async function getTicketsData(profileId: string, roles: RoleGrant[]) {
   // 'used' (see FullscreenQR/OnlineCheckinEntry) — having the URL earlier
   // doesn't expose the form before a real check-in, since nothing renders
   // it until then.
+  // Multi-day events: which of these tickets have already been scanned in today.
+  const ticketIds = (tickets ?? []).map((t) => t.id);
+  const { data: todayRows } = ticketIds.length
+    ? await supabase.from('ticket_checkins').select('ticket_id').in('ticket_id', ticketIds).eq('day', pacificDayKey())
+    : { data: [] as { ticket_id: string }[] };
+  const checkedInToday = new Set((todayRows ?? []).map((r) => r.ticket_id));
+
   const roleNames = roles.map((r) => r.role);
   const ticketsWithForm = (tickets ?? []).map((t) => {
     const event = t.event as unknown as {
@@ -62,7 +70,7 @@ export async function getTicketsData(profileId: string, roles: RoleGrant[]) {
           foodItem: event.checkin_food_item ?? null,
         })
       : null;
-    return { ...t, checkinFormUrl };
+    return { ...t, checkinFormUrl, checkedInToday: checkedInToday.has(t.id) };
   });
 
   return {

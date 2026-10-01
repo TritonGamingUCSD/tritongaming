@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { buildCheckinFormUrl, type CheckinFormConfig } from '@/lib/checkinForm';
 import type { AppRole } from '@/types/database';
 import { fetchTiers, getTier, nextTier } from '@/lib/tiers';
+import { isMultiDayEvent, todaysCheckinAt, currentDayInfo, pacificDayKey } from '@/lib/checkinDays';
 
 export const runtime = 'nodejs';
 
@@ -32,7 +33,7 @@ export async function GET(request: Request, { params }: Params) {
 
   const { data: ticket } = await supabase
     .from('tickets')
-    .select('user_id, status, checked_in_at, checkin_form_completed_at, event:events(title, requires_checkin_form, checkin_food_item, checkin_form_event_name, checkin_form_override)')
+    .select('user_id, status, checked_in_at, checkin_form_completed_at, event:events(title, start_date, end_date, requires_checkin_form, checkin_food_item, checkin_form_event_name, checkin_form_override)')
     .eq('id', id)
     .single();
 
@@ -40,9 +41,19 @@ export async function GET(request: Request, { params }: Params) {
     return NextResponse.json({ error: 'Ticket not found' }, { status: 404 });
   }
 
+  // Multi-day events: a ticket that's 'used' from an earlier day still needs scanning today.
+  const multiDay = !!(ticket.event as unknown as { start_date: string; end_date: string | null } | null) &&
+    isMultiDayEvent((ticket.event as unknown as { start_date: string }).start_date, (ticket.event as unknown as { end_date: string | null }).end_date);
+  const todayAt = ticket.status === 'used' && multiDay ? await todaysCheckinAt(supabase, id) : null;
+  const checkedInToday = multiDay ? todayAt !== null : ticket.status === 'used';
+  // Points are earned on the first day only, so a later day's success screen shows none.
+  const laterDay = multiDay && ticket.status === 'used' && !!ticket.checked_in_at && pacificDayKey(new Date(ticket.checked_in_at)) !== pacificDayKey();
+
   let checkinFormUrl: string | null = null;
   const event = ticket.event as unknown as {
     title: string;
+    start_date: string;
+    end_date: string | null;
     requires_checkin_form: boolean;
     checkin_food_item: string | null;
     checkin_form_event_name: string | null;
@@ -71,7 +82,7 @@ export async function GET(request: Request, { params }: Params) {
   // looked up once checked in. 0 for a non-rewards-eligible member or a
   // zero-point event (no ledger row), which the UI simply doesn't show.
   let pointsAwarded = 0;
-  if (ticket.status === 'used') {
+  if (ticket.status === 'used' && !laterDay) {
     const { data: pointRows } = await supabase
       .from('point_transactions')
       .select('amount')
@@ -121,11 +132,16 @@ export async function GET(request: Request, { params }: Params) {
     }
   }
 
+  const dayInfo = multiDay && event ? currentDayInfo(event.start_date, event.end_date) : null;
+
   return NextResponse.json({
+    checked_in_today: checkedInToday,
+    day_number: dayInfo?.day ?? null,
+    day_total: dayInfo?.total ?? null,
     points_awarded: pointsAwarded,
     tier_info: tierInfo,
     status: ticket.status,
-    checked_in_at: ticket.checked_in_at,
+    checked_in_at: todayAt ?? ticket.checked_in_at,
     checkin_form_url: checkinFormUrl,
     checkin_form_completed_at: ticket.checkin_form_completed_at,
   });

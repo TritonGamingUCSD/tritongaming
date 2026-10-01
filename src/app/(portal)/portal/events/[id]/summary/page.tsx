@@ -4,7 +4,7 @@ import { Users, Sparkles, Award, Clock } from 'lucide-react';
 import { getUserRoles } from '@/lib/auth';
 import { hasCapability } from '@/lib/capabilities';
 import { createClient } from '@/lib/supabase/server';
-import { PACIFIC_TZ } from '@/lib/timezone';
+import { formatEventDateRange, eventDayCount } from '@/lib/timezone';
 import { getEventSummary } from '@/lib/eventSummary';
 import { Gauge, Donut, Columns, RankBars, Funnel, SplitBar, PALETTE } from './SummaryCharts';
 import PrintButton from './PrintButton';
@@ -31,7 +31,7 @@ export default async function EventSummaryPage({ params }: { params: Promise<{ i
   if (!hasCapability(roles, 'checkin')) redirect('/portal');
 
   const supabase = await createClient();
-  const { data: event } = await supabase.from('events').select('id, title, start_date, location, requires_checkin_form').eq('id', id).maybeSingle();
+  const { data: event } = await supabase.from('events').select('id, title, start_date, end_date, location, requires_checkin_form').eq('id', id).maybeSingle();
   if (!event) notFound();
 
   const s = await getEventSummary(id, event);
@@ -45,7 +45,9 @@ export default async function EventSummaryPage({ params }: { params: Promise<{ i
     { icon: <Sparkles size={16} strokeWidth={1.75} aria-hidden="true" />, value: s.firstTime, label: 'First-timers' },
     { icon: <Award size={16} strokeWidth={1.75} aria-hidden="true" />, value: s.pointsAwarded.toLocaleString(), label: 'Points awarded' },
     { icon: <Clock size={16} strokeWidth={1.75} aria-hidden="true" />, value: s.noShows, label: 'No-shows' },
+    ...(s.allDays !== null ? [{ icon: <Users size={16} strokeWidth={1.75} aria-hidden="true" />, value: s.allDays, label: 'Came every day' }] : []),
   ];
+  const multiDay = eventDayCount(event.start_date, event.end_date) > 1;
   const peak = [...s.arrivals].sort((a, b) => b.count - a.count)[0];
 
   return (
@@ -57,7 +59,7 @@ export default async function EventSummaryPage({ params }: { params: Promise<{ i
           <p className={styles.kicker}>Event summary</p>
           <h1 className={styles.title}>{event.title}</h1>
           <p className={styles.sub}>
-            {new Date(event.start_date).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+            {formatEventDateRange(event.start_date, event.end_date, { weekday: true })}
             {event.location && ` · ${event.location}`}
           </p>
           <div className={styles.tiles}>
@@ -86,7 +88,7 @@ export default async function EventSummaryPage({ params }: { params: Promise<{ i
         <Card title="New vs. returning" note="Returning = checked in to an earlier event.">
           <SplitBar a={{ label: 'First-timers', value: s.firstTime, color: PALETTE[0] }} b={{ label: 'Returning', value: s.returning, color: PALETTE[1] }} />
         </Card>
-        <Card title="Arrival time" note={peak ? `Busiest half hour: ${peak.label} (${peak.count}). Times are Pacific.` : 'Check-ins per half hour (Pacific).'} wide>
+        <Card title="Arrival time" note={peak ? `Busiest ${multiDay ? 'day' : 'half hour'}: ${peak.label} (${peak.count}). Times are Pacific.` : `Check-ins per ${multiDay ? 'day' : 'half hour'} (Pacific).`} wide>
           <Columns data={s.arrivals} color="#4a90e2" />
         </Card>
         <Card title="Gender"><Donut data={s.gender} /></Card>

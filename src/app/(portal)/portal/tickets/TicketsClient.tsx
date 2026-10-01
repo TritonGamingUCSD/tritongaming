@@ -9,7 +9,7 @@ import FullscreenQR from './FullscreenQR';
 import OnlineCheckinEntry from './OnlineCheckinEntry';
 import AsFormButton from './AsFormButton';
 import AddToCalendarButton from '@/components/AddToCalendarButton/AddToCalendarButton';
-import { PACIFIC_TZ } from '@/lib/timezone';
+import { PACIFIC_TZ, formatEventDateRange, eventDayCount, eventDayProgress } from '@/lib/timezone';
 import { isCheckinWindowOpen } from '@/lib/checkinWindow';
 import { saveTicketCodes, cachedMinutesLeft } from '@/lib/ticketCodeCache';
 import styles from './tickets.module.css';
@@ -19,6 +19,8 @@ interface TicketData {
   status: 'active' | 'used' | 'cancelled' | 'expired';
   checked_in_at: string | null;
   created_at: string;
+  // Multi-day events: already scanned in today (one check-in per day).
+  checkedInToday?: boolean;
   event: {
     id: string;
     title: string;
@@ -101,7 +103,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
       if (document.visibilityState !== 'visible' || !navigator.onLine) return;
       const nowMs = Date.now();
       tickets.forEach((t) => {
-        if (t.status !== 'active' || !t.event || t.event.is_online) return;
+        if (!needsScanToday(t) || !t.event || t.event.is_online) return;
         const start = new Date(t.event.start_date).getTime();
         const end = t.event.end_date ? new Date(t.event.end_date).getTime() : start + 24 * 60 * 60 * 1000;
         if (start - nowMs > 3 * 60 * 60 * 1000 || end < nowMs) return;
@@ -198,7 +200,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
   // the ticket list immediately, so closing the QR modal doesn't show a now-
   // stale "Active"/"Show QR" row until the next full page load.
   function handleCheckedIn(ticketId: string, checkedInAt: string) {
-    setTickets((prev) => prev.map((t) => (t.id === ticketId ? { ...t, status: 'used', checked_in_at: checkedInAt } : t)));
+    setTickets((prev) => prev.map((t) => (t.id === ticketId ? { ...t, status: 'used', checked_in_at: checkedInAt, checkedInToday: true } : t)));
   }
 
   // Same idea as handleCheckedIn above — reflects a completion confirmed
@@ -215,7 +217,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
   // *and* the event's check-in window is still open. One whose event has
   // ended belongs with the past tickets (shown there as Expired), not in
   // the Active list.
-  const isLive = (t: TicketData) => t.status === 'active' && !!t.event && isCheckinWindowOpen(t.event);
+  const isLive = (t: TicketData) => (t.status === 'active' || (t.status === 'used' && isMultiDay(t))) && !!t.event && isCheckinWindowOpen(t.event);
   const activeTickets = tickets.filter(isLive);
   const pastTickets   = tickets.filter((t) => !isLive(t));
 
@@ -261,9 +263,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
                 <h2 className={styles.heroEvent}>{nextActiveTicket.event?.title}</h2>
                 {nextActiveTicket.event?.start_date && (
                   <p className={styles.heroDate}>
-                    {new Date(nextActiveTicket.event.start_date).toLocaleDateString('en-US', {
-                      timeZone: PACIFIC_TZ, weekday: 'short', month: 'long', day: 'numeric',
-                    })}
+                    {formatEventDateRange(nextActiveTicket.event.start_date, nextActiveTicket.event.end_date, { weekday: true })}
                     {' · '}
                     {new Date(nextActiveTicket.event.start_date).toLocaleTimeString('en-US', {
                       timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit',
@@ -411,6 +411,14 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
   );
 }
 
+// Multi-day events let a ticket be scanned once per day, so "used" doesn't mean "done" for them.
+function isMultiDay(t: { event: { start_date: string; end_date: string | null } | null }): boolean {
+  return !!t.event && eventDayCount(t.event.start_date, t.event.end_date) > 1;
+}
+function needsScanToday(t: TicketData): boolean {
+  return t.status === 'active' || (t.status === 'used' && isMultiDay(t) && !t.checkedInToday && !!t.event && isCheckinWindowOpen(t.event));
+}
+
 function TicketRow({
   ticket,
   onShowQR,
@@ -433,7 +441,10 @@ function TicketRow({
   // checkin window actually closes.
   const isExpired = ticket.status === 'active' && !!ev && !isCheckinWindowOpen(ev);
   const displayStatus = isExpired ? 'expired' : ticket.status;
-  const isActionable = ticket.status === 'active' && !isExpired;
+  const multiDay = isMultiDay(ticket);
+  const dayProgress = multiDay && ev ? eventDayProgress(ev.start_date, ev.end_date) : null;
+  // A multi-day ticket scanned on an earlier day can show its QR again today.
+  const isActionable = needsScanToday(ticket) && !isExpired;
   // Same cutoff as isExpired above, just not tied to status === 'active' —
   // this gates the "Complete AS Form" fallback on an *already checked-in*
   // ticket, which is always 'used' by definition. UCSD's form has its own
@@ -472,6 +483,9 @@ function TicketRow({
               timeZone: PACIFIC_TZ, weekday: 'short', month: 'short', day: 'numeric',
             })}
           </div>
+        )}
+        {dayProgress && (
+          <div className={styles.dayLine}>Day {dayProgress.day} of {dayProgress.total}{ticket.checkedInToday ? ' · checked in today' : ' · scan in today'}</div>
         )}
         {ticket.checked_in_at && (
           <div className={styles.checkedInLine}>

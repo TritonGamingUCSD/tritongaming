@@ -2,6 +2,7 @@
 
 import SectionTabs from '@/components/ui/SectionTabs';
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
@@ -9,7 +10,7 @@ import {
 } from 'recharts';
 import EventRowActions from './EventRowActions';
 import { Search, Plus, Ticket, MapPin, BarChart3, ListChecks, Award, ExternalLink, Trash2 } from 'lucide-react';
-import { PACIFIC_TZ } from '@/lib/timezone';
+import { PACIFIC_TZ, formatEventDateRangeShort, eventDayCount } from '@/lib/timezone';
 import { isCheckinWindowOpen } from '@/lib/checkinWindow';
 import type { MonthPoint } from '@/lib/monthBuckets';
 import type { EventTicketStat } from './getEventsData';
@@ -82,7 +83,9 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
     setTab(t);
     syncUrl(t);
   }
-  const [query, setQuery] = useState('');
+  // Deep-linked from portal search (?q=<event title>) — lands with that event already filtered.
+  const searchParams = useSearchParams();
+  const [query, setQuery] = useState(() => searchParams.get('q') ?? '');
   const [filter, setFilter] = useState<StatusFilter>('all');
   const [checkinsEventId, setCheckinsEventId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<EventRow | null>(null);
@@ -261,11 +264,10 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
                       )}
                     </div>
                     <div className={styles.eventDate}>
-                      {new Date(event.start_date).toLocaleDateString('en-US', {
-                        timeZone: PACIFIC_TZ, month: 'short', day: 'numeric', year: 'numeric',
-                      })}
+                      {formatEventDateRangeShort(event.start_date, event.end_date)}
                       <span className={styles.checkinSub}>
                         {' '}{new Date(event.start_date).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' })}
+                        {eventDayCount(event.start_date, event.end_date) > 1 && ` · ${eventDayCount(event.start_date, event.end_date)} days`}
                       </span>
                     </div>
                     <div className={styles.ticketInfo}>

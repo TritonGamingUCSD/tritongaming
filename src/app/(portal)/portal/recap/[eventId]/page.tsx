@@ -5,7 +5,7 @@ import { getProfile, getUserRoles } from '@/lib/auth';
 import { hasCapability, isRewardsEligible } from '@/lib/capabilities';
 import { createClient } from '@/lib/supabase/server';
 import { openEventsFilter } from '@/lib/checkinWindow';
-import { PACIFIC_TZ } from '@/lib/timezone';
+import { PACIFIC_TZ, formatEventDateRange } from '@/lib/timezone';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import FeedbackForm from './FeedbackForm';
 import styles from './recap.module.css';
@@ -22,7 +22,7 @@ export default async function RecapPage({ params }: { params: Promise<{ eventId:
 
   const supabase = await createClient();
   const [{ data: event }, { data: ticket }] = await Promise.all([
-    supabase.from('events').select('id, title, start_date, location, photo_albums, post_event_info, slug').eq('id', eventId).maybeSingle(),
+    supabase.from('events').select('id, title, start_date, end_date, location, photo_albums, post_event_info, slug').eq('id', eventId).maybeSingle(),
     supabase.from('tickets').select('id, status, checked_in_at').eq('event_id', eventId).eq('user_id', profile.id).eq('status', 'used').maybeSingle(),
   ]);
   if (!event) notFound();
@@ -48,7 +48,7 @@ export default async function RecapPage({ params }: { params: Promise<{ eventId:
         <p className={styles.kicker}>Thanks for coming!</p>
         <h1 className={styles.title}>{event.title}</h1>
         <p className={styles.sub}>
-          {new Date(event.start_date).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+          {formatEventDateRange(event.start_date, event.end_date, { weekday: true })}
           {event.location && ` · ${event.location}`}
         </p>
       </header>

@@ -4,13 +4,13 @@ import Link from 'next/link';
 import FullscreenQR from './tickets/FullscreenQR';
 import { useState } from 'react';
 import { Clock, MapPin, QrCode } from 'lucide-react';
-import { PACIFIC_TZ, pacificDaysUntil } from '@/lib/timezone';
+import { PACIFIC_TZ, pacificDaysUntil, formatEventDateRange, eventDayProgress } from '@/lib/timezone';
 import styles from './dashboard.module.css';
 
 interface Ticket {
   id: string;
   status: string;
-  event: { id: string; title: string; start_date: string; location: string | null } | null;
+  event: { id: string; title: string; start_date: string; end_date?: string | null; location: string | null } | null;
 }
 
 export default function DashboardClient({ ticket }: { ticket: Ticket }) {
@@ -20,6 +20,7 @@ export default function DashboardClient({ ticket }: { ticket: Ticket }) {
 
   const d = new Date(ev.start_date);
   const daysUntil = pacificDaysUntil(ev.start_date);
+  const progress = eventDayProgress(ev.start_date, ev.end_date);
 
   return (
     <>
@@ -27,7 +28,9 @@ export default function DashboardClient({ ticket }: { ticket: Ticket }) {
         <div className={styles.ticketHeroInner}>
           <div className={styles.ticketHeroMeta}>
             <span className={styles.ticketHeroLabel}>
-              {daysUntil === 0 ? (
+              {progress ? (
+                <><span className={styles.liveDot} aria-hidden="true" /> DAY {progress.day} OF {progress.total}</>
+              ) : daysUntil === 0 ? (
                 <><span className={styles.liveDot} aria-hidden="true" /> TODAY</>
               ) : daysUntil === 1 ? (
                 <><Clock size={11} strokeWidth={1.5} aria-hidden="true" /> TOMORROW</>
@@ -37,7 +40,7 @@ export default function DashboardClient({ ticket }: { ticket: Ticket }) {
             </span>
             <h2 className={styles.ticketHeroTitle}>{ev.title}</h2>
             <p className={styles.ticketHeroDate}>
-              {d.toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, weekday: 'long', month: 'long', day: 'numeric' })}
+              {formatEventDateRange(ev.start_date, ev.end_date, { weekday: true })}
               {' · '}
               {d.toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' })}
             </p>

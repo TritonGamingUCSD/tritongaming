@@ -58,7 +58,10 @@
 }
 
 @media (min-width: 900px) {
-  .mobileSearchWrap { display: none; }
+  /* On desktop the search sits in the pinned header (right side), not the sidebar. */
+  .stickyTop { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .stickyTop > :first-child { flex: 1; min-width: 0; }
+  .mobileSearchWrap { width: 300px; flex-shrink: 0; }
 }
 
 /* ── Check-in banner (officers w/ today event) ─── */
@@ -500,4 +503,62 @@
   .welcome { flex-direction: column; align-items: stretch; padding: 0.75rem; }
   .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 0.4rem; }
   .tile { min-width: 0; padding: 0.45rem 0.65rem; }
+}
+
+.railFooterLink { color: rgba(242, 241, 240, 0.5); }
+
+/* ── Desktop: the sidebar already shows who you are (avatar, name, role) and
+   has Back to Site / Sign out, so the welcome panel shrinks to just a greeting
+   line and the stat tiles — no card, no duplicate identity. ── */
+@media (min-width: 900px) {
+  .welcome { padding: 0; background: none; border: none; border-radius: 0; overflow: visible; }
+  .welcomeAvatar, .welcomeAvatarFallback, .welcomeText .roleChips, .welcomeText .headerActions { display: none; }
+  .welcomeMain { gap: 0; }
+  .welcomeName { font-size: 1.5rem; }
+  .welcomeName::before { font-size: 1.5rem; font-family: var(--font-futura-heavy); color: var(--white); }
+}
+
+/* Desktop: the greeting header is pinned to the very top of the screen. It needs
+   the page's own background so scrolling content doesn't show through it. */
+.stickyTop {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: #080d1a;
+  padding: 1.1rem 0 0.75rem;
+}
+
+@media (min-width: 900px) {
+  /* The hub's pinned header starts flush at the top of the screen (cancels the page's own
+     top padding), so it and the sidebar sit in the same spot before and after scrolling.
+     Standalone sub-pages keep the normal top padding. */
+  .page { margin-top: -2.25rem; margin-bottom: -4rem; }
+  /* 0.75rem gap under the header = the sidebar's pinned offset, so it never shifts. */
+  .dashboardCard { gap: 0.75rem; }
+}
+
+/* ── Desktop header, slimmed: one thin row — greeting, compact stat chips, search. ── */
+@media (min-width: 900px) {
+  .stickyTop { padding: 0.8rem 0 0.55rem; }
+  .welcome { gap: 0.75rem; }
+  .welcomeName { font-size: 1.15rem; }
+  .welcomeName::before { font-size: 1.15rem; }
+  .tiles { gap: 0.4rem; flex-wrap: nowrap; }
+  .tile {
+    display: flex; flex-direction: row; align-items: center; gap: 0.45rem;
+    min-width: 0; padding: 0.28rem 0.7rem; border-radius: 999px; background: rgba(255, 255, 255, 0.04);
+  }
+  .tileTop { font-size: 0.62rem; }
+  .tileTop svg { width: 13px; height: 13px; }
+  .tileValue { font-size: 0.88rem; }
+  .tileUnit { font-size: 0.65rem; }
+  .tileTier { font-size: 0.68rem; padding-left: 0.45rem; border-left: 1px solid rgba(255, 255, 255, 0.15); }
+  .tileProgress { display: none; }
+  .mobileSearchWrap { width: 260px; }
+}
+
+/* Search in the header: no bottom margin (it would make the pinned header taller), a bit wider. */
+@media (min-width: 900px) {
+  .mobileSearchWrap { width: 320px; }
+  .mobileSearchWrap > * { margin: 0 !important; max-width: none !important; }
 }

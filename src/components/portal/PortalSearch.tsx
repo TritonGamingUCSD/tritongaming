@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Search, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Search, X, Users, Calendar, BookOpen, CornerDownLeft } from 'lucide-react';
 import styles from './PortalSearch.module.css';
 
 interface SearchResult {
@@ -20,6 +21,19 @@ interface SearchResponse {
 
 const EMPTY: SearchResponse = { members: [], events: [], docs: [] };
 const CATEGORY_LABELS: Record<keyof SearchResponse, string> = { members: 'TG Members', events: 'Events', docs: 'Docs' };
+// Same colour coding as the sidebar groups.
+const CATEGORY_META: Record<keyof SearchResponse, { icon: typeof Users; accent: string }> = {
+  members: { icon: Users, accent: '#34d399' },
+  events: { icon: Calendar, accent: '#4a90e2' },
+  docs: { icon: BookOpen, accent: '#34d399' },
+};
+
+// Bold the part of a result that matched what was typed.
+function Highlight({ text, q }: { text: string; q: string }) {
+  const i = q ? text.toLowerCase().indexOf(q.toLowerCase()) : -1;
+  if (i === -1) return <>{text}</>;
+  return <>{text.slice(0, i)}<mark>{text.slice(i, i + q.length)}</mark>{text.slice(i + q.length)}</>;
+}
 
 // A persistent bar rather than its own hub card — search needs to be
 // reachable in one step from wherever you already are in the grid, not a
@@ -32,6 +46,9 @@ export default function PortalSearch({ compact }: { compact?: boolean } = {}) {
   const [results, setResults] = useState<SearchResponse>(EMPTY);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [active, setActive] = useState(0);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const requestId = useRef(0);
 
@@ -61,26 +78,60 @@ export default function PortalSearch({ compact }: { compact?: boolean } = {}) {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [query]);
 
+  // ⌘K / Ctrl+K (or "/" when not typing somewhere) jumps straight to the box.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const typing = /^(input|textarea|select)$/i.test((e.target as HTMLElement)?.tagName ?? '') || (e.target as HTMLElement)?.isContentEditable;
+      if (((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') || (!typing && e.key === '/')) {
+        e.preventDefault();
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      }
+    }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
+
+  const flat = (Object.keys(results) as (keyof SearchResponse)[]).flatMap((k) => results[k]);
+  useEffect(() => { setActive(0); }, [results]);
+
+  function onKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Escape') { setQuery(''); inputRef.current?.blur(); return; }
+    if (!flat.length) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); setActive((a) => (a + 1) % flat.length); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setActive((a) => (a - 1 + flat.length) % flat.length); }
+    else if (e.key === 'Enter') {
+      e.preventDefault();
+      const r = flat[active];
+      if (r) { setQuery(''); inputRef.current?.blur(); router.push(r.href); }
+    }
+  }
+
   const hasResults = results.members.length > 0 || results.events.length > 0 || results.docs.length > 0;
   const showDropdown = open && query.trim().length >= 2;
 
   return (
     <div className={`${styles.wrap} ${compact ? styles.compact : ''}`}>
-      <div className={styles.inputWrap}>
-        <Search size={15} strokeWidth={1.5} className={styles.icon} aria-hidden="true" />
+      <div className={`${styles.inputWrap} ${open ? styles.inputFocus : ''}`}>
+        <Search size={16} strokeWidth={1.75} className={styles.icon} aria-hidden="true" />
         <input
+          ref={inputRef}
           className={styles.input}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={onKeyDown}
           onFocus={() => setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
-          placeholder="Search"
+          placeholder="Search members, events, docs"
+          aria-label="Search the portal"
           autoComplete="off"
         />
-        {query && (
+        {query ? (
           <button className={styles.clearBtn} onMouseDown={(e) => e.preventDefault()} onClick={() => setQuery('')} aria-label="Clear search">
-            <X size={13} strokeWidth={1.75} />
+            <X size={13} strokeWidth={2} />
           </button>
+        ) : (
+          <kbd className={styles.kbd} aria-hidden="true">⌘K</kbd>
         )}
       </div>
 
@@ -89,21 +140,38 @@ export default function PortalSearch({ compact }: { compact?: boolean } = {}) {
           {loading ? (
             <div className={styles.status}>Searching…</div>
           ) : !hasResults ? (
-            <div className={styles.status}>No results for "{query.trim()}"</div>
+            <div className={styles.status}>No results for “{query.trim()}”</div>
           ) : (
-            (Object.keys(results) as (keyof SearchResponse)[]).map((key) =>
-              results[key].length === 0 ? null : (
-                <div key={key} className={styles.group}>
-                  <div className={styles.groupLabel}>{CATEGORY_LABELS[key]}</div>
-                  {results[key].map((r) => (
-                    <Link key={r.id} href={r.href} className={styles.result} onMouseDown={(e) => e.preventDefault()}>
-                      <span className={styles.resultTitle}>{r.title}</span>
-                      {r.subtitle && <span className={styles.resultSubtitle}>{r.subtitle}</span>}
-                    </Link>
-                  ))}
-                </div>
-              )
-            )
+            <>
+              {(Object.keys(results) as (keyof SearchResponse)[]).map((key) => {
+                if (results[key].length === 0) return null;
+                const { icon: Icon, accent } = CATEGORY_META[key];
+                return (
+                  <div key={key} className={styles.group} style={{ ['--accent' as string]: accent }}>
+                    <div className={styles.groupLabel}>{CATEGORY_LABELS[key]}</div>
+                    {results[key].map((r) => (
+                      <Link
+                        key={r.id}
+                        href={r.href}
+                        className={`${styles.result} ${flat[active]?.id === r.id ? styles.resultActive : ''}`}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onMouseEnter={() => setActive(flat.findIndex((x) => x.id === r.id))}
+                      >
+                        <span className={styles.resultIcon} aria-hidden="true"><Icon size={15} strokeWidth={1.75} /></span>
+                        <span className={styles.resultText}>
+                          <span className={styles.resultTitle}><Highlight text={r.title} q={query.trim()} /></span>
+                          {r.subtitle && <span className={styles.resultSubtitle}>{r.subtitle}</span>}
+                        </span>
+                        <CornerDownLeft size={13} className={styles.resultEnter} aria-hidden="true" />
+                      </Link>
+                    ))}
+                  </div>
+                );
+              })}
+              <div className={styles.hints} aria-hidden="true">
+                <span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>↵</kbd> open</span><span><kbd>esc</kbd> close</span>
+              </div>
+            </>
           )}
         </div>
       )}

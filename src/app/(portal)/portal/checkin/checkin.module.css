@@ -427,3 +427,6 @@
 }
 .resultFormBadge strong { font-size: 1rem; text-transform: uppercase; letter-spacing: 0.06em; }
 .resultFormBadge span { font-size: 0.85rem; font-weight: 600; line-height: 1.3; }
+
+/* Codes: monospace so 0/O and 1/l are never confused at the door. */
+.codeBox { font-family: var(--font-mono, ui-monospace, monospace); }

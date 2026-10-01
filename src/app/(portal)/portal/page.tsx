@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, History, Image as ImageIcon, Award, Medal } from 'lucide-react';
+import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, History, Image as ImageIcon, Award, Medal, Link2 } from 'lucide-react';
 import { getProfile, getUserRoles, getMyPrivateProfile, getUser } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import { hasCapability, isVerifiedMember, isRewardsEligible } from '@/lib/capabilities';
@@ -37,6 +37,7 @@ import QRStudioClient from './qrcode/QRStudioClient';
 import SiteContentSectionContent from './content/SiteContentSectionContent';
 import { getContentData } from './admin/content/getContentData';
 import AdminSectionContent from './admin/AdminSectionContent';
+import LinksSection from './links/LinksSection';
 import { getAdminData } from './admin/getAdminData';
 import { getStatsData } from './admin/stats/getStatsData';
 import DocsClient from './docs/DocsClient';
@@ -327,9 +328,19 @@ export default async function PortalDashboard({ searchParams }: Props) {
         />
       ),
     }] : []),
+    // Its own card in the Admin group (not a tab inside the Admin section) — admin only.
+    ...(canManageRoles ? [{
+      id: 'links', icon: <Link2 size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Short Links',
+      description: 'Custom redirects like /linktree to any page or URL',
+      group: 'Admin' as const,
+      content: <LinksSection />,
+    }] : []),
   ];
 
   const avatarUrl = resolveAvatarUrl(profile);
+  const primaryRoleLabel = roles.length === 0
+    ? ROLE_LABELS.guest
+    : ROLE_LABELS[[...roles].sort((a, b) => ROLE_DISPLAY_RANK[b.role] - ROLE_DISPLAY_RANK[a.role])[0].role];
 
   return (
     <div className={styles.page}>
@@ -342,102 +353,6 @@ export default async function PortalDashboard({ searchParams }: Props) {
           disconnected pieces of UI. See dashboard.module.css's
           .dashboardCard for why plain spacing won out over a boxed card. */}
       <div className={styles.dashboardCard}>
-        <header className={styles.welcome}>
-          <Image src="/bytes/byte_tgex25.png" alt="" width={723} height={723} aria-hidden="true" className={styles.welcomeMascot} />
-          <div className={styles.welcomeMain}>
-            {avatarUrl ? (
-              <Image src={avatarUrl} alt={profile.display_name || 'User'} width={48} height={48} className={styles.welcomeAvatar} unoptimized referrerPolicy="no-referrer" />
-            ) : (
-              <div className={styles.welcomeAvatarFallback}>{(profile.display_name || 'U')[0].toUpperCase()}</div>
-            )}
-            <div className={styles.welcomeText}>
-              <h1 className={styles.welcomeName} data-greeting={greeting}>{profile.display_name?.split(' ')[0] || 'Triton'}</h1>
-              <div className={styles.roleChips}>
-                {roles.length === 0 ? (
-                  <span className={styles.roleChip} style={{ background: ROLE_COLORS.guest + '18', color: ROLE_COLORS.guest, borderColor: ROLE_COLORS.guest + '44' }}>
-                    {ROLE_LABELS.guest}
-                  </span>
-                ) : (
-                  [...roles].sort((a, b) => ROLE_DISPLAY_RANK[b.role] - ROLE_DISPLAY_RANK[a.role]).map((r) => (
-                    <span
-                      key={`${r.role}-${r.division_id ?? ''}`}
-                      className={styles.roleChip}
-                      style={{ background: ROLE_COLORS[r.role] + '18', color: ROLE_COLORS[r.role], borderColor: ROLE_COLORS[r.role] + '44' }}
-                    >
-                      {/* A person can lead more than one division — name it on the chip so two
-                          "Division Lead" chips don't read as a duplicate. */}
-                      {r.role === 'division' && r.division_id
-                        ? `${ROLE_LABELS.division} — ${divisionNameById.get(r.division_id) ?? 'Unknown'}`
-                        : ROLE_LABELS[r.role]}
-                    </span>
-                  ))
-                )}
-              </div>
-              <div className={styles.headerActions}>
-                <Link href="/" className={styles.headerActionLink}>Back to Site</Link>
-                <span className={styles.headerActionDivider} aria-hidden="true">·</span>
-                <SignOutButton />
-              </div>
-            </div>
-          </div>
-
-          {/* At-a-glance stats — each tile deep-links to that section's own tab. */}
-          {(pointsData || battlepassData || activeTicketCount > 0) && (
-            <div className={styles.tiles}>
-              {pointsData && memberTier && (
-                <Link href="/portal?section=points&tab=points" className={styles.tile} style={{ ['--tile-accent' as string]: memberTier.color }}>
-                  <span className={styles.tileTop}><Award size={15} strokeWidth={1.75} aria-hidden="true" /> Rewards</span>
-                  <span className={styles.tileValue}>{pointsData.balance.toLocaleString()}<span className={styles.tileUnit}> pts</span></span>
-                  <span className={styles.tileTier}>{memberTier.name}</span>
-                  {memberNext && (
-                    <span className={styles.tileProgress} title={`${memberNext.min - pointsData.lifetimeEarned} pts to ${memberNext.name}`}>
-                      <span style={{ width: `${Math.min(100, Math.max(4, ((pointsData.lifetimeEarned - memberTier.min) / Math.max(1, memberNext.min - memberTier.min)) * 100))}%` }} />
-                    </span>
-                  )}
-                </Link>
-              )}
-              {battlepassData && officerTier && (
-                <Link href="/portal?section=battlepass&tab=mine" className={styles.tile} style={{ ['--tile-accent' as string]: officerTier.color }}>
-                  <span className={styles.tileTop}><Medal size={15} strokeWidth={1.75} aria-hidden="true" /> Battlepass</span>
-                  <span className={styles.tileValue}>{battlepassData.balance.toLocaleString()}<span className={styles.tileUnit}> pts</span></span>
-                  <span className={styles.tileTier}>{officerTier.name}</span>
-                  {officerNext && (
-                    <span className={styles.tileProgress} title={`${officerNext.min - battlepassData.lifetimeEarned} pts to ${officerNext.name}`}>
-                      <span style={{ width: `${Math.min(100, Math.max(4, ((battlepassData.lifetimeEarned - officerTier.min) / Math.max(1, officerNext.min - officerTier.min)) * 100))}%` }} />
-                    </span>
-                  )}
-                </Link>
-              )}
-              {activeTicketCount > 0 && (
-                <Link href="/portal?section=tickets" className={styles.tile} style={{ ['--tile-accent' as string]: '#34d399' }}>
-                  <span className={styles.tileTop}><Ticket size={15} strokeWidth={1.75} aria-hidden="true" /> Tickets</span>
-                  <span className={styles.tileValue}>{activeTicketCount}<span className={styles.tileUnit}> active</span></span>
-                  <span className={styles.tileTier}>Ready to scan</span>
-                </Link>
-              )}
-            </div>
-          )}
-        </header>
-
-        {/* Mobile-only (desktop already has its own persistent search in
-            DesktopShell's rail — see PortalHub.tsx — showing both would be
-            a duplicate). Sits above the checkin banner and ticket/events
-            content, right below the greeting header. */}
-        <div className={styles.mobileSearchWrap}>
-          <PortalSearch />
-        </div>
-
-        {canCheckin && todayEvents.length > 0 && (
-          <Link href="/portal?section=checkin" className={styles.checkinBanner}>
-            <div className={styles.checkinBannerDot} />
-            <div>
-              <div className={styles.checkinBannerTitle}>Event today — {todayEvents[0].title}</div>
-              <div className={styles.checkinBannerSub}>Tap to open check-in scanner</div>
-            </div>
-            <span className={styles.checkinBannerIcon}><Camera size={24} strokeWidth={1.5} aria-hidden="true" /></span>
-          </Link>
-        )}
-
         {/* The "next ticket" banner is shown to anyone with an upcoming
             ticket, regardless of role — an exec/lead/officer who also has
             their own ticket to an event is still an attendee of it, so
@@ -445,6 +360,116 @@ export default async function PortalDashboard({ searchParams }: Props) {
             meant they never got the reminder. PortalTopSection owns matching
             its width to the hub grid below it. */}
         <PortalTopSection
+          top={
+            <>
+            <header className={styles.welcome}>
+              <Image src="/bytes/byte_tgex25.png" alt="" width={723} height={723} aria-hidden="true" className={styles.welcomeMascot} />
+              <div className={styles.welcomeMain}>
+                {avatarUrl ? (
+                  <Image src={avatarUrl} alt={profile.display_name || 'User'} width={48} height={48} className={styles.welcomeAvatar} unoptimized referrerPolicy="no-referrer" />
+                ) : (
+                  <div className={styles.welcomeAvatarFallback}>{(profile.display_name || 'U')[0].toUpperCase()}</div>
+                )}
+                <div className={styles.welcomeText}>
+                  <h1 className={styles.welcomeName} data-greeting={greeting}>{profile.display_name?.split(' ')[0] || 'Triton'}</h1>
+                  <div className={styles.roleChips}>
+                    {roles.length === 0 ? (
+                      <span className={styles.roleChip} style={{ background: ROLE_COLORS.guest + '18', color: ROLE_COLORS.guest, borderColor: ROLE_COLORS.guest + '44' }}>
+                        {ROLE_LABELS.guest}
+                      </span>
+                    ) : (
+                      [...roles].sort((a, b) => ROLE_DISPLAY_RANK[b.role] - ROLE_DISPLAY_RANK[a.role]).map((r) => (
+                        <span
+                          key={`${r.role}-${r.division_id ?? ''}`}
+                          className={styles.roleChip}
+                          style={{ background: ROLE_COLORS[r.role] + '18', color: ROLE_COLORS[r.role], borderColor: ROLE_COLORS[r.role] + '44' }}
+                        >
+                          {/* A person can lead more than one division — name it on the chip so two
+                              "Division Lead" chips don't read as a duplicate. */}
+                          {r.role === 'division' && r.division_id
+                            ? `${ROLE_LABELS.division} — ${divisionNameById.get(r.division_id) ?? 'Unknown'}`
+                            : ROLE_LABELS[r.role]}
+                        </span>
+                      ))
+                    )}
+                  </div>
+                  <div className={styles.headerActions}>
+                    <Link href="/" className={styles.headerActionLink}>Back to Site</Link>
+                    <span className={styles.headerActionDivider} aria-hidden="true">·</span>
+                    <SignOutButton />
+                  </div>
+                </div>
+              </div>
+
+              {/* At-a-glance stats — each tile deep-links to that section's own tab. */}
+              {(pointsData || battlepassData || activeTicketCount > 0) && (
+                <div className={styles.tiles}>
+                  {pointsData && memberTier && (
+                    <Link href="/portal?section=points&tab=points" className={styles.tile} style={{ ['--tile-accent' as string]: memberTier.color }}>
+                      <span className={styles.tileTop}><Award size={15} strokeWidth={1.75} aria-hidden="true" /> Rewards</span>
+                      <span className={styles.tileValue}>{pointsData.balance.toLocaleString()}<span className={styles.tileUnit}> pts</span></span>
+                      <span className={styles.tileTier}>{memberTier.name}</span>
+                      {memberNext && (
+                        <span className={styles.tileProgress} title={`${memberNext.min - pointsData.lifetimeEarned} pts to ${memberNext.name}`}>
+                          <span style={{ width: `${Math.min(100, Math.max(4, ((pointsData.lifetimeEarned - memberTier.min) / Math.max(1, memberNext.min - memberTier.min)) * 100))}%` }} />
+                        </span>
+                      )}
+                    </Link>
+                  )}
+                  {battlepassData && officerTier && (
+                    <Link href="/portal?section=battlepass&tab=mine" className={styles.tile} style={{ ['--tile-accent' as string]: officerTier.color }}>
+                      <span className={styles.tileTop}><Medal size={15} strokeWidth={1.75} aria-hidden="true" /> Battlepass</span>
+                      <span className={styles.tileValue}>{battlepassData.balance.toLocaleString()}<span className={styles.tileUnit}> pts</span></span>
+                      <span className={styles.tileTier}>{officerTier.name}</span>
+                      {officerNext && (
+                        <span className={styles.tileProgress} title={`${officerNext.min - battlepassData.lifetimeEarned} pts to ${officerNext.name}`}>
+                          <span style={{ width: `${Math.min(100, Math.max(4, ((battlepassData.lifetimeEarned - officerTier.min) / Math.max(1, officerNext.min - officerTier.min)) * 100))}%` }} />
+                        </span>
+                      )}
+                    </Link>
+                  )}
+                  {activeTicketCount > 0 && (
+                    <Link href="/portal?section=tickets" className={styles.tile} style={{ ['--tile-accent' as string]: '#34d399' }}>
+                      <span className={styles.tileTop}><Ticket size={15} strokeWidth={1.75} aria-hidden="true" /> Tickets</span>
+                      <span className={styles.tileValue}>{activeTicketCount}<span className={styles.tileUnit}> active</span></span>
+                      <span className={styles.tileTier}>Ready to scan</span>
+                    </Link>
+                  )}
+                </div>
+              )}
+            </header>
+
+            {/* Mobile-only (desktop already has its own persistent search in
+                DesktopShell's rail — see PortalHub.tsx — showing both would be
+                a duplicate). Sits above the checkin banner and ticket/events
+                content, right below the greeting header. */}
+            <div className={styles.mobileSearchWrap}>
+              <PortalSearch />
+            </div>
+
+            </>
+          }
+          banner={
+            <>
+            {canCheckin && todayEvents.length > 0 && (
+              <Link href="/portal?section=checkin" className={styles.checkinBanner}>
+                <div className={styles.checkinBannerDot} />
+                <div>
+                  <div className={styles.checkinBannerTitle}>Event today — {todayEvents[0].title}</div>
+                  <div className={styles.checkinBannerSub}>Tap to open check-in scanner</div>
+                </div>
+                <span className={styles.checkinBannerIcon}><Camera size={24} strokeWidth={1.5} aria-hidden="true" /></span>
+              </Link>
+            )}
+            </>
+          }
+          identity={{ name: profile.display_name || 'Triton', avatarUrl, roleLabel: primaryRoleLabel }}
+          railFooter={
+            <>
+              <Link href="/" className={styles.railFooterLink}>Back to Site</Link>
+              <SignOutButton />
+            </>
+          }
           ticket={nextTicket ? (nextTicket as Parameters<typeof DashboardClient>[0]['ticket']) : null}
           upcomingEvents={unregisteredUpcomingEvents}
           sections={sections}

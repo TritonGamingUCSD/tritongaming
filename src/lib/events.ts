@@ -2,7 +2,7 @@ import { openEventsFilter, endedEventsFilter } from '@/lib/checkinWindow';
 import { unstable_cache } from 'next/cache';
 import { createPublicClient } from '@/lib/supabase/public';
 import type { Event } from '@/types';
-import type { SocialEmbed, PhotoAlbumEntry } from '@/types/database';
+import type { SocialEmbed, PhotoAlbumEntry, ScheduleItem, EventSponsor } from '@/types/database';
 
 const DEFAULT_LIMIT = 50;
 
@@ -32,6 +32,10 @@ function mapSupabaseEvent(row: Record<string, unknown>): Event {
     audience: (row.audience as 'public' | 'ucsd_only') ?? 'public',
     photo_albums: (row.photo_albums as PhotoAlbumEntry[]) ?? [],
     post_event_info: (row.post_event_info as string) ?? '',
+    venue_address: (row.venue_address as string) ?? '',
+    venue_notes: (row.venue_notes as string) ?? '',
+    schedule: (row.schedule as ScheduleItem[]) ?? [],
+    sponsors: (row.sponsors as EventSponsor[]) ?? [],
     social_embeds: (row.social_embeds as SocialEmbed[]) ?? [],
     points_value: (row.points_value as number) ?? 0,
   };
@@ -136,5 +140,19 @@ export async function getEventBySlugOrId(slugOrId: string): Promise<Event | null
     });
   } catch {
     return null;
+  }
+}
+
+// Public headcount for "N going" — aggregate only (see event_going_count in the
+// event_details migration). Cached briefly like the rest of the public data.
+export async function getGoingCount(eventId: string): Promise<number> {
+  try {
+    return await cachedEvents(['going', eventId], async () => {
+      const { data, error } = await createPublicClient().rpc('event_going_count', { p_event_id: eventId });
+      if (error) throw error;
+      return (data as number) ?? 0;
+    });
+  } catch {
+    return 0;
   }
 }

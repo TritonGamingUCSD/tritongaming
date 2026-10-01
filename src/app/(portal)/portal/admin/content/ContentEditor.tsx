@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { Pencil, X, Check, MapPin, GripVertical } from 'lucide-react';
 import type { ContentBlock, FieldDef } from '@/lib/content-blocks';
 import { CATEGORY_ORDER } from '@/lib/content-blocks';
+import SectionTabs from '@/components/ui/SectionTabs';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import { useDragReorder } from '@/lib/useDragReorder';
@@ -39,6 +40,7 @@ function pagesLabel(pages: string[]): string {
 
 export default function ContentEditor({ blocks, contentMap, lastEdited }: Props) {
   const [activeKey, setActiveKey] = useState<string | null>(null);
+  const [category, setCategory] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [forms, setForms] = useState<Record<string, Record<string, unknown>>>(() => {
     const init: Record<string, Record<string, unknown>> = {};
@@ -98,61 +100,57 @@ export default function ContentEditor({ blocks, contentMap, lastEdited }: Props)
     return `${Math.floor(diff / 86400)}d ago`;
   };
 
+  // One tab per page/area of the site, so only that page's blocks are listed at a time.
+  const categories = CATEGORY_ORDER.filter((c) => blocks.some((b) => b.category === c));
+  const tabCategory = category && categories.includes(category) ? category : (activeBlock?.category ?? categories[0]);
+  const listed = q ? visibleBlocks : visibleBlocks.filter((b) => b.category === tabCategory);
+
   return (
-    <div className={styles.layout}>
-      {/* Block list */}
-      <div className={styles.blockList}>
-        <input
-          className={styles.searchInput}
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search content blocks…"
-          aria-label="Search content blocks"
+    <div className={`${styles.shell} ${activeBlock ? styles.hasActive : ''}`}>
+      <div className={styles.topBar}>
+        <SectionTabs
+          label="Site areas"
+          value={tabCategory}
+          onChange={(c) => { setCategory(c); setQuery(''); }}
+          tabs={categories.map((c) => ({ id: c, label: c, badge: blocks.filter((b) => b.category === c && JSON.stringify(forms[b.key]) !== JSON.stringify(savedForms[b.key])).length }))}
         />
-        {q && visibleBlocks.length === 0 && (
-          <div className={styles.noResults}>No blocks match &quot;{query}&quot;.</div>
-        )}
-        {CATEGORY_ORDER.map((cat) => {
-          const catBlocks = visibleBlocks.filter((b) => b.category === cat);
-          if (!catBlocks.length) return null;
-          return (
-            <div key={cat} className={styles.catGroup}>
-              <div className={styles.catLabel}>{cat}</div>
-              {catBlocks.map((block) => {
-                const isActive = activeKey === block.key;
-                const le = lastEdited[block.key];
-                const formData = forms[block.key] || {};
-                const preview = getPreview(block, formData);
-                return (
-                  <button
-                    key={block.key}
-                    className={`${styles.blockCard} ${isActive ? styles.blockCardActive : ''}`}
-                    onClick={() => setActiveKey(isActive ? null : block.key)}
-                  >
-                    <div className={styles.blockCardTop}>
-                      <span className={styles.blockIcon}>{block.icon}</span>
-                      <div className={styles.blockMeta}>
-                        <div className={styles.blockTitle}>{block.title}</div>
-                        <div className={styles.blockDesc}>{block.description}</div>
-                      </div>
-                      <span className={`${styles.editIndicator} ${isActive ? styles.editIndicatorActive : ''}`}>
-                        {isActive ? <X size={16} strokeWidth={1.75} aria-hidden="true" /> : <Pencil size={16} strokeWidth={1.5} aria-hidden="true" />}
-                      </span>
-                    </div>
-                    <div className={styles.blockLocation}>
-                      <MapPin size={11} strokeWidth={1.75} aria-hidden="true" />
-                      <span className={styles.blockLocationText}>{pagesLabel(block.pages)}</span>
-                    </div>
-                    {preview && <div className={styles.blockPreview}>{preview}</div>}
-                    {le && <div className={styles.lastEdited}>Edited by {le.by} · {timeAgo(le.at)}</div>}
-                  </button>
-                );
-              })}
-            </div>
-          );
-        })}
       </div>
+
+      <div className={styles.layout}>
+        {/* Block list */}
+        <div className={styles.blockList}>
+          <input
+            className={styles.searchInput}
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search all blocks…"
+            aria-label="Search content blocks"
+          />
+          {q && <div className={styles.searchNote}>{listed.length} result{listed.length === 1 ? '' : 's'} across every area</div>}
+          {listed.length === 0 && <div className={styles.noResults}>No blocks match &quot;{query}&quot;.</div>}
+          <div className={styles.rows}>
+            {listed.map((block) => {
+              const isActive = activeKey === block.key;
+              const dirty = JSON.stringify(forms[block.key]) !== JSON.stringify(savedForms[block.key]);
+              const preview = getPreview(block, forms[block.key] || {});
+              return (
+                <button
+                  key={block.key}
+                  className={`${styles.row} ${isActive ? styles.rowActive : ''}`}
+                  onClick={() => setActiveKey(isActive ? null : block.key)}
+                >
+                  <span className={styles.blockIcon}>{block.icon}</span>
+                  <span className={styles.rowText}>
+                    <span className={styles.rowTitle}>{block.title}{q && <span className={styles.rowCat}> · {block.category}</span>}</span>
+                    {preview && <span className={styles.rowPreview}>{preview}</span>}
+                  </span>
+                  {dirty && <span className={styles.dirtyDot} title="Unsaved changes" />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
       {/* Edit panel */}
       <div className={`${styles.editPanel} ${activeBlock ? styles.editPanelOpen : ''}`}>
@@ -215,6 +213,7 @@ export default function ContentEditor({ blocks, contentMap, lastEdited }: Props)
             <p className={styles.editPanelEmptyHint}>Changes go live immediately — no code needed.</p>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

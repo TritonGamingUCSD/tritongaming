@@ -24,6 +24,8 @@ export async function POST(request: Request) {
   const serviceClient = createServiceClient();
   const { error } = await serviceClient.rpc('reverse_checkin', { _ticket_id: ticket_id, _reversed_by: user.id });
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  // A reversal undoes the whole check-in, including every per-day record.
+  await serviceClient.from('ticket_checkins').delete().eq('ticket_id', ticket_id);
   await logAudit(serviceClient, { actorId: user.id, action: 'reverse', entityType: 'check-in', entityId: ticket_id, summary: 'A check-in was undone' });
 
   return NextResponse.json({ ok: true });

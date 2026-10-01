@@ -1,13 +1,19 @@
 import { Suspense } from 'react';
+import { Exo_2, JetBrains_Mono } from 'next/font/google';
 import { redirect } from 'next/navigation';
 import { getProfile, getUserRoles, getMyGender } from '@/lib/auth';
 import { isVerifiedMember, canSetOrgTitle } from '@/lib/capabilities';
 import { getMissingProfileFields } from '@/lib/profile';
 import ProfileIncompleteBanner from '@/components/portal/ProfileIncompleteBanner';
-import PortalTopbar from '@/components/portal/PortalTopbar';
 import NotificationBell from '@/components/portal/NotificationBell';
 import ConnectivityBanner from '@/components/ConnectivityBanner/ConnectivityBanner';
 import styles from './portal.module.css';
+
+// Portal-only type: Exo 2 for text (made for small UI sizes, has real in-between weights and
+// aligned digits) and JetBrains Mono for codes. Futura Heavy stays for titles. The public site
+// is untouched — these only apply inside this layout (see .fontScope in portal.module.css).
+const portalSans = Exo_2({ subsets: ['latin'], variable: '--font-dm-sans', display: 'swap' });
+const jbMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jb-mono', display: 'swap' });
 
 export const metadata = { title: 'Member Portal' };
 
@@ -24,9 +30,8 @@ export default async function PortalLayout({ children }: { children: React.React
   const missingOnlyOfficerTab = missingProfileFields.length > 0 && getMissingProfileFields({ ...profile, gender }, isUcsdMember).length === 0;
 
   return (
-    <div className={styles.layout} data-portal-layout>
+    <div className={`${styles.layout} ${styles.fontScope} ${portalSans.variable} ${jbMono.variable}`} data-portal-layout>
       <main className={styles.main}>
-        <div data-print-hide style={{ display: 'contents' }}><PortalTopbar /></div>
         <div className={styles.content}>
           <div data-print-hide style={{ display: 'contents' }}>
             <Suspense fallback={null}>

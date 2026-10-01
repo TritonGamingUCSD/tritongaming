@@ -35,7 +35,7 @@ export async function GET(request: Request) {
       ? supabase.from('profiles').select('id, display_name, gamer_tag').or(`display_name.ilike.${like},gamer_tag.ilike.${like}`).limit(LIMIT_PER_CATEGORY)
       : Promise.resolve({ data: [] }),
     hasCapability(roles, 'view_events')
-      ? supabase.from('events').select('id, title, description, slug').or(`title.ilike.${like},description.ilike.${like}`).limit(LIMIT_PER_CATEGORY)
+      ? supabase.from('events').select('id, title, description, slug, start_date').or(`title.ilike.${like},description.ilike.${like}`).limit(LIMIT_PER_CATEGORY)
       : Promise.resolve({ data: [] }),
     hasCapability(roles, 'view_docs')
       ? supabase.from('docs').select('id, title, content').or(`title.ilike.${like},content.ilike.${like}`).limit(LIMIT_PER_CATEGORY)
@@ -50,7 +50,8 @@ export async function GET(request: Request) {
     id: m.id, title: m.display_name || 'Anonymous', subtitle: m.gamer_tag || '', href: `/portal?section=members&id=${m.id}`,
   }));
   const events: SearchResult[] = (eventsRes.data ?? []).map((e) => ({
-    id: e.id, title: e.title, subtitle: e.description?.slice(0, 60) || '', href: e.slug ? `/events/${e.slug}` : '/portal/events',
+    id: e.id, title: e.title, subtitle: new Date(e.start_date).toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', month: 'short', day: 'numeric', year: 'numeric' }), // Stay inside the portal: open Events with the search box pre-filled to this event.
+    href: `/portal?section=events&q=${encodeURIComponent(e.title)}`,
   }));
   const docs: SearchResult[] = (docsRes.data ?? []).map((d) => ({
     id: d.id, title: d.title, subtitle: '', href: `/portal?section=docs&id=${d.id}`,
