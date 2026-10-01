@@ -2,17 +2,23 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { MapPin, ExternalLink } from 'lucide-react';
-import { getUserRoles } from '@/lib/auth';
-import { hasCapability } from '@/lib/capabilities';
-import { createClient } from '@/lib/supabase/server';
-import { divisionLogoSrc } from '@/lib/divisions';
+import { divisionLogoSrc, getDivisionBySlug, getDivisions } from '@/lib/divisions';
 import { resolveAvatarUrl, isVisible, SOCIAL_PLATFORMS, socialHref } from '@/lib/profile';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import { markdownToDescription } from '@/lib/markdown';
 import EventSocialEmbeds from '@/components/EventSocialEmbeds/EventSocialEmbeds';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
+import EditDivisionLink from './EditDivisionLink';
 import { getDivisionHubData } from './getDivisionHubData';
 import styles from './division.module.css';
+
+// Cached page, refreshed in the background (and right away when a division is saved).
+export const revalidate = 60;
+
+// Pre-built at deploy time; a division created later is rendered on first visit and then cached too.
+export async function generateStaticParams() {
+  return (await getDivisions()).map((d) => ({ slug: d.slug }));
+}
 
 interface Params {
   params: Promise<{ slug: string }>;
@@ -20,8 +26,7 @@ interface Params {
 
 export async function generateMetadata({ params }: Params) {
   const { slug } = await params;
-  const supabase = await createClient();
-  const { data } = await supabase.from('divisions').select('name, description, logo_url').eq('slug', slug).maybeSingle();
+  const data = await getDivisionBySlug(slug);
   if (!data) return { title: 'Division' };
 
   const title = data.name;
@@ -52,23 +57,12 @@ export async function generateMetadata({ params }: Params) {
 export default async function DivisionPage({ params }: Params) {
   const { slug } = await params;
 
-  const supabase = await createClient();
-  const { data: division } = await supabase
-    .from('divisions')
-    .select('id, name, description, logo_url, discord_url, application_url, social_links, social_embeds')
-    .eq('slug', slug)
-    .maybeSingle();
+  const division = await getDivisionBySlug(slug);
 
   if (!division) notFound();
 
   const logoUrl = divisionLogoSrc(division.logo_url);
-  const [roles, hub] = await Promise.all([getUserRoles(), getDivisionHubData(division.id)]);
-  // manage_division(id) already does the right scoping on its own — true
-  // unconditionally for lead/exec/admin, true for a 'division' role holder
-  // only for their own division — so this one edit page (see
-  // portal/divisions/[id]/) serves both without needing to branch here.
-  const canEdit = hasCapability(roles, 'manage_division', division.id);
-  const editHref = `/portal/divisions/${division.id}`;
+  const hub = await getDivisionHubData(division.id);
 
   return (
     <div className={styles.page}>
@@ -185,14 +179,8 @@ export default async function DivisionPage({ params }: Params) {
           </section>
         )}
 
-        {/* Edit section for leads/admins */}
-        {canEdit && (
-          <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Manage Division Page</h2>
-            <p className={styles.prose}>Design this page with Markdown, and update the logo, Discord link, officer application link, social links, and posts — all from the portal.</p>
-            <Link href={editHref} className={styles.discordBtn}>Edit in Portal →</Link>
-          </section>
-        )}
+        {/* Edit section for leads/admins — checked in the browser so this page can be cached for everyone. */}
+        <EditDivisionLink divisionId={division.id} />
       </div>
     </div>
   );

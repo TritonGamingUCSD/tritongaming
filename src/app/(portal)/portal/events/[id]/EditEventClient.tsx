@@ -1,5 +1,6 @@
 'use client';
 
+import { refreshPublicCache } from '@/lib/refreshPublicCache';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { slugify } from '@/lib/slug';
@@ -63,6 +64,7 @@ export default function EditEventClient({
     }
 
     deleteIfReplaced(initial.flyer_url, form.flyer_url.trim() || null);
+    refreshPublicCache('events');
     router.push('/portal?section=events');
   }
 

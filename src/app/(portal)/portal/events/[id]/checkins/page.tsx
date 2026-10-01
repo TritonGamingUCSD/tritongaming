@@ -1,7 +1,7 @@
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Camera, Gamepad2, Check, BarChart3 } from 'lucide-react';
+import { Camera, Gamepad2, Check } from 'lucide-react';
 import { getUserRoles } from '@/lib/auth';
 import { hasCapability } from '@/lib/capabilities';
 import { createClient } from '@/lib/supabase/server';
@@ -61,7 +61,7 @@ export default async function EventCheckinsPage({ params }: Params) {
   const activeTickets = tickets.filter((t) => t.status !== 'cancelled');
   const checkedInCount = tickets.filter((t) => t.status === 'used').length;
   const attendanceRate = activeTickets.length > 0 ? Math.round((checkedInCount / activeTickets.length) * 100) : 0;
-  const gridTemplateColumns = event.requires_checkin_form ? '2fr 1fr minmax(120px, 1fr) 1fr 90px' : undefined;
+  const gridTemplateColumns = event.requires_checkin_form ? 'minmax(0, 2fr) minmax(70px, 1fr) minmax(120px, 1fr) minmax(112px, 1fr) 100px' : undefined;
 
   return (
     <div className={styles.page}>
@@ -90,7 +90,6 @@ export default async function EventCheckinsPage({ params }: Params) {
           <div className={styles.statLabel}>Attendance</div>
         </div>
         <Link href="/portal?section=checkin" className={styles.scanBtn}><Camera size={16} strokeWidth={1.5} aria-hidden="true" /> Open Scanner</Link>
-        <Link href={`/portal/events/${id}/summary`} className={styles.exportBtn}><BarChart3 size={15} strokeWidth={1.5} aria-hidden="true" /> Summary</Link>
       </div>
 
       {tickets.length === 0 ? (

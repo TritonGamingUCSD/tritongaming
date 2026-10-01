@@ -94,7 +94,6 @@
 }
 .confirmBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.recentSection { width: 100%; }
 .recentLabel {
   font-size: var(--fs-label);
   font-family: var(--font-renegare);
@@ -102,16 +101,6 @@
   text-transform: uppercase;
   color: rgba(242,241,240,0.4);
   margin-bottom: 0.5rem;
-}
-.recentRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.6rem 0;
-  border-top: 1px solid rgba(255,255,255,0.05);
-  font-size: 0.82rem;
-  color: rgba(242,241,240,0.7);
 }
 .undoBtn {
   display: inline-flex;
@@ -124,7 +113,6 @@
   transition: background 0.15s;
   white-space: nowrap;
 }
-.undoBtn:hover:not(:disabled) { background: rgba(220,38,38,0.1); }
 .undoBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ── Online check-in panel ── */

@@ -66,7 +66,6 @@ export interface Database {
           class_of: number | null;
           college: string | null;
           pronouns: string | null;
-          email_reminders: boolean;
           discord: string | null;
           org_title: string | null;
           show_on_board: boolean;

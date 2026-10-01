@@ -1,3 +1,4 @@
+import { invalidate } from '@/lib/revalidate';
 import { logAudit, currentActorId } from '@/lib/audit';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
@@ -52,5 +53,6 @@ export async function POST(request: Request) {
   }
 
   await logAudit(adminClient, { actorId: user.id, action: 'update', entityType: 'site content', entityId: key, summary: `Site content "${key}" edited` });
+  invalidate('site-content');
   return NextResponse.json({ ok: true });
 }

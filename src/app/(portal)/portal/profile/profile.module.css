@@ -461,26 +461,16 @@
   max-width: 320px; margin-top: 0.4rem; padding: 1.1rem 1rem; text-align: center;
   border-radius: 1rem; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.14);
 }
-.previewAvatar, .previewAvatarFallback { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; }
 .previewAvatarFallback { display: flex; align-items: center; justify-content: center; background: var(--yellow); color: #011941; font-weight: 800; font-size: 1.6rem; }
-.previewName { font-size: 1.05rem; font-weight: 800; }
 .previewTitle { font-size: 0.82rem; color: var(--yellow); }
-.previewMeta { font-size: 0.78rem; color: rgba(242, 241, 240, 0.75); overflow-wrap: anywhere; }
 .previewBio { margin: 0.2rem 0 0; font-size: 0.8rem; line-height: 1.5; color: rgba(242, 241, 240, 0.85); }
-.previewChips { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.3rem; margin-top: 0.3rem; }
 .previewChip { padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.7rem; background: rgba(255, 255, 255, 0.1); }
-.previewChipLink { color: var(--yellow); }
 
 .previewWrap { width: 100%; margin-top: 1.25rem; }
 .previewWrap .cardPreview { max-width: 100%; }
 
 .pictureNote { margin: 0.5rem 0 0; font-size: 0.75rem; line-height: 1.4; color: rgba(242, 241, 240, 0.55); }
 .previewIcons { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.35rem; margin-top: 0.35rem; }
-.previewIcon {
-  display: flex; align-items: center; justify-content: center;
-  width: 30px; height: 30px; border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.14);
-}
 
 /* Officer tab: title / Team-page opt-in on top, then social + portfolio links, one column. */
 .fieldStack { display: flex; flex-direction: column; gap: 1.5rem; }
@@ -543,3 +533,16 @@
 .visBadgeHidden { background: rgba(255, 255, 255, 0.08); color: rgba(242, 241, 240, 0.6); }
 .previewHeading { display: inline-flex; align-items: center; gap: 0.4rem; }
 .visBadge { margin-left: auto; }
+
+/* ── Major picker ── */
+.majorPicker { display: flex; flex-direction: column; gap: 0.5rem; }
+.majorChips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.majorChip { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.4rem 0.3rem 0.75rem; border-radius: 999px; font-size: 0.82rem; background: rgba(255, 199, 44, 0.12); border: 1px solid rgba(255, 199, 44, 0.4); color: var(--white); }
+.majorChipX { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: rgba(255, 255, 255, 0.1); color: inherit; border: none; cursor: pointer; }
+.majorChipX:hover { background: rgba(255, 255, 255, 0.2); }
+.majorOther { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.majorOther .input { flex: 1; min-width: 160px; }
+.majorAddBtn, .majorCancelBtn { padding: 0.5rem 0.9rem; border-radius: var(--radius-sm); font-size: 0.82rem; cursor: pointer; }
+.majorAddBtn { background: var(--btn-primary-bg); color: var(--btn-primary-text); border: 1px solid var(--btn-primary-border); }
+.majorAddBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+.majorCancelBtn { background: transparent; color: rgba(242, 241, 240, 0.6); border: 1px solid transparent; }

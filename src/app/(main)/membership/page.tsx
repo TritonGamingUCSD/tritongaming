@@ -4,7 +4,9 @@ import { Percent } from 'lucide-react';
 import { getContentBlocks } from '@/lib/content';
 import styles from './membership.module.css';
 
-export const dynamic = 'force-dynamic';
+// Served from the CDN cache and refreshed in the background — data comes from
+// the cached fetchers in lib/ (revalidated on save), not per-request queries.
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: 'Membership Card',

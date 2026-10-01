@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { getContentBlock } from '@/lib/content';
 import AnnouncementClient from './AnnouncementClient';
 
 const COLOR_MAP: Record<string, { bg: string; text: string; border: string }> = {
@@ -10,22 +10,16 @@ const COLOR_MAP: Record<string, { bg: string; text: string; border: string }> = 
 
 export default async function AnnouncementBanner() {
   try {
-    const supabase = await createClient();
-    const { data } = await supabase
-      .from('site_contents')
-      .select('content')
-      .eq('key', 'announcement')
-      .single();
-
-    const content = data?.content as {
+    // Cookie-free + cached (see lib/content.ts) so this doesn't force every page to render per request.
+    const content = (await getContentBlock('announcement')) as {
       enabled?: boolean;
       text?: string;
       link?: string;
       link_text?: string;
       color?: string;
-    } | null;
+    };
 
-    if (!content?.enabled || !content.text) return null;
+    if (!content.enabled || !content.text) return null;
 
     const colors = COLOR_MAP[content.color || 'yellow'] || COLOR_MAP.yellow;
 

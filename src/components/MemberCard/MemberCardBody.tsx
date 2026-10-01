@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { Mail, GraduationCap, Gamepad2, ExternalLink, Copy, Check } from 'lucide-react';
+import { GraduationCap, Gamepad2, ExternalLink, Copy, Check } from 'lucide-react';
 import { socialHref, SOCIAL_PLATFORMS } from '@/lib/profile';
 import DotList, { noBreakHyphens } from '@/components/DotList/DotList';
 import styles from './MemberCard.module.css';
@@ -90,8 +90,7 @@ export default function MemberCardBody({
             </div>
           )}
           {emails.map((email) => (
-            <button key={email} type="button" className={styles.copyRow} onClick={() => onCopy(`email:${email}`, email)} title="Click to copy this email address">
-              <Mail size={14} strokeWidth={1.75} aria-hidden="true" />
+            <button key={email} type="button" className={`${styles.copyRow} ${styles.emailRow}`} onClick={() => onCopy(`email:${email}`, email)} title="Click to copy this email address">
               <span className={styles.copyRowText}>{email}</span>
               {copiedKey === `email:${email}`
                 ? <span className={styles.copied}><Check size={13} strokeWidth={2.25} aria-hidden="true" /> Copied!</span>

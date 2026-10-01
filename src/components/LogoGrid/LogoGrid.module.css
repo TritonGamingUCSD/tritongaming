@@ -56,17 +56,5 @@
 }
 
 /* Size variants */
-.size-small {
-  width: clamp(55px, 9vw, 75px);
-  height: clamp(35px, 5vw, 55px);
-}
 
-.size-medium {
-  width: clamp(90px, 14vw, 140px);
-  height: clamp(55px, 7vw, 75px);
-}
 
-.size-large {
-  width: clamp(130px, 18vw, 210px);
-  height: clamp(70px, 9vw, 100px);
-}

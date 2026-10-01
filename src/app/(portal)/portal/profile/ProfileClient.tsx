@@ -1,5 +1,6 @@
 'use client';
 
+import { refreshPublicCache } from '@/lib/refreshPublicCache';
 import Notice from '@/components/ui/Notice';
 import { useState } from 'react';
 import Image from 'next/image';
@@ -20,6 +21,7 @@ import BoardCardPreview from '@/components/BoardSection/BoardCardPreview';
 import { showToast } from '@/lib/toast';
 import type { BoardMember, BoardTier } from '@/app/(main)/team/getBoardMembers';
 import LinkGoogleSection from './LinkGoogleSection';
+import MajorPicker from './MajorPicker';
 import styles from './profile.module.css';
 
 type Tab = 'basic' | 'officer' | 'security';
@@ -179,6 +181,7 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
 
     markSaved();
     showToast('Profile saved');
+    refreshPublicCache('board', 'divisions');
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
 
@@ -419,17 +422,10 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
               </label>
               </div>
               <div className={styles.fieldRow}>
-              <label className={styles.fieldGroup}>
+              <div className={styles.fieldGroup}>
                 <span className={styles.label}>Major {isUcsd && <span className={styles.required}>*</span>}</span>
-                <input
-                  className={styles.input}
-                  value={form.major}
-                  onChange={(e) => setForm((f) => ({ ...f, major: e.target.value }))}
-                  maxLength={80}
-                  placeholder="e.g. Computer Science"
-                  required={isUcsd}
-                />
-              </label>
+                <MajorPicker value={form.major} onChange={(v) => setForm((f) => ({ ...f, major: v }))} required={isUcsd} />
+              </div>
               </div>
             </div>
           </section>

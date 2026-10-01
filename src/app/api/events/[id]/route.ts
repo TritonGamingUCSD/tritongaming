@@ -1,3 +1,4 @@
+import { invalidate } from '@/lib/revalidate';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
@@ -71,5 +72,6 @@ export async function DELETE(request: Request, { params }: Params) {
     await service.storage.from(parsed.bucket).remove([parsed.path]).catch(() => {});
   }
 
+  invalidate('events');
   return NextResponse.json({ ok: true, ...(result as object) });
 }

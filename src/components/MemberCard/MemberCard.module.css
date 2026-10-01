@@ -34,6 +34,8 @@
 }
 .copyRow:hover { color: var(--yellow); }
 .copyRow:hover .copyIcon { opacity: 1; }
+.emailRow { font-size: 0.72rem; }
+.emailRow .copyRowText { font-weight: 500; }
 .copyRowText { min-width: 0; overflow-wrap: anywhere; font-weight: 600; color: var(--white); }
 .copyRow:hover .copyRowText { color: inherit; }
 .copyIcon { opacity: 0.55; transition: opacity 0.15s; }

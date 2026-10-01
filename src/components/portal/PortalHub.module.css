@@ -143,121 +143,92 @@
 .gridWrap {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.75rem;
 }
 
 .group {
+  --accent: #ffc72c;
   display: flex;
   flex-direction: column;
-  gap: 0.875rem;
+  gap: 0.75rem;
 }
 
 .groupLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
   font-family: var(--font-futura-heavy);
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(242, 241, 240, 0.4);
-  text-align: center;
-  padding-bottom: 0.625rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  color: rgba(242, 241, 240, 0.7);
 }
+.groupDot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+.groupCount { margin-left: 0.15rem; font-size: 0.68rem; letter-spacing: 0; padding: 0.1rem 0.5rem; border-radius: 999px; background: rgba(255, 255, 255, 0.07); color: rgba(242, 241, 240, 0.55); }
 
-/* ── Card grid ────────────────────────────────────── */
-/* auto-fit (not auto-fill) collapses empty tracks instead of reserving
-   them, and justify-content centers the resulting column set — so a plain
-   member with only 2-3 cards gets a centered cluster instead of a
-   left-aligned row with a wide empty gap on the right.
-   Tried `justify-content: start` instead, on the theory that it would
-   line up with the full-width "next ticket" banner above (DashboardClient)
-   — it didn't read as "aligned," it read as the whole page listing
-   left-heavy/tilted, which was worse. Reverted; a centered card cluster
-   under a full-width banner apart is the better trade-off of the two. */
+/* ── Cards: icon tile + name + one-line description ── */
 .grid {
   display: grid;
-  /* Narrower than before (was 220-260px) — cards are just icon+label now
-     (see .cardDesc removal below), so the old width was mostly empty
-     padding around one short line of text. */
-  grid-template-columns: repeat(auto-fit, minmax(150px, 190px));
-  justify-content: center;
-  gap: 0.875rem;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 0.75rem;
 }
 
 .card {
   position: relative;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  text-align: center;
-  padding: 1.25rem 1rem;
-  min-height: 92px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 1.125rem;
+  gap: 0.85rem;
+  text-align: left;
+  padding: 0.85rem 1rem;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.95rem;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
 }
-
 .card:hover {
-  background: rgba(255, 199, 44, 0.05);
-  border-color: rgba(255, 199, 44, 0.2);
-  /* Above neighboring cards, so the tooltip below isn't clipped under the
-     next row's card when it overlaps. */
-  z-index: 1;
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  transform: translateY(-1px);
 }
+.card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+.cardIconTile {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 0.8rem;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+}
+.cardIconTile svg { width: 22px; height: 22px; }
+
+.cardText { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; flex: 1; }
+.cardLabel { font-family: var(--font-futura-heavy); font-size: 0.92rem; color: var(--white); letter-spacing: 0.01em; }
+.cardDesc {
+  font-size: 0.74rem;
+  color: rgba(242, 241, 240, 0.5);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.cardChevron { flex-shrink: 0; color: rgba(242, 241, 240, 0.3); transition: transform 0.15s, color 0.15s; }
+.card:hover .cardChevron { color: var(--accent); transform: translateX(2px); }
 .cardBadge {
-  position: absolute;
-  top: 0.875rem;
-  right: 0.875rem;
-  font-size: var(--fs-label);
-  font-family: var(--font-renegare);
-  color: var(--yellow);
-}
-
-.cardIcon { display: inline-flex; color: var(--yellow); }
-
-.cardLabel {
-  font-family: var(--font-futura-heavy);
-  font-size: 0.88rem;
-  color: var(--white);
-  letter-spacing: 0.01em;
-}
-
-.cardTooltip {
-  position: absolute;
-  top: calc(100% + 0.5rem);
-  left: 50%;
-  transform: translate(-50%, 4px);
-  width: max-content;
-  max-width: 200px;
-  padding: 0.45rem 0.7rem;
-  background: #14192b;
-  border: 1px solid rgba(255, 199, 44, 0.25);
-  border-radius: 0.5rem;
+  flex-shrink: 0;
+  min-width: 22px;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  text-align: center;
   font-size: 0.72rem;
-  font-family: var(--font-futura-medium);
-  color: rgba(242, 241, 240, 0.85);
-  line-height: 1.4;
-  box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.6);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s ease 0.35s, transform 0.15s ease 0.35s;
-}
-
-.card:hover .cardTooltip,
-.card:focus-visible .cardTooltip {
-  opacity: 1;
-  transform: translate(-50%, 0);
-}
-
-@media (hover: none) {
-  /* Touch devices have no hover state to trigger this from — tapping opens
-     the card directly instead, so the tooltip would just be permanently
-     inert dead weight in the DOM's hit-testing here. */
-  .cardTooltip { display: none; }
+  font-family: var(--font-futura-heavy);
+  color: #0a0f1e;
+  background: var(--accent);
 }
 
 /* ── Expanded panel ───────────────────────────────── */

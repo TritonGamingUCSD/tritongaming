@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server';
+import { unstable_cache } from 'next/cache';
+import { createPublicClient } from '@/lib/supabase/public';
 import { createServiceClient } from '@/lib/supabase/admin';
 import type { AppRole } from '@/types/database';
 
@@ -59,8 +60,14 @@ interface BoardProfileRow {
 // email) defaults to hidden regardless of tier — see isVisible() and the
 // board_visibility_default_hidden migration — so someone newly auto-shown
 // here isn't suddenly outed with fields they never chose to publish.
-export async function getBoardMembers(): Promise<BoardMember[]> {
-  const supabase = await createClient();
+export function getBoardMembers(): Promise<BoardMember[]> {
+  // Cached and shared between visitors; board-order / profile saves call
+  // revalidateTag('board'). Errors throw inside so an empty board is never cached.
+  return unstable_cache(fetchBoardMembers, ['board-members'], { revalidate: 300, tags: ['board'] })().catch(() => []);
+}
+
+async function fetchBoardMembers(): Promise<BoardMember[]> {
+  const supabase = createPublicClient();
 
   const { data, error } = await supabase
     .from('profiles')
@@ -69,7 +76,7 @@ export async function getBoardMembers(): Promise<BoardMember[]> {
       user_roles!user_roles_user_id_fkey(role)
     `);
 
-  if (error || !data) return [];
+  if (error || !data) throw error ?? new Error('no board data');
 
   const rows = (data as unknown as BoardProfileRow[]).filter((row) => {
     const roles = (row.user_roles ?? []).map((r) => r.role);

@@ -15,21 +15,9 @@ interface TicketRow {
   event: { id: string; title: string; start_date: string; location: string | null; is_online: boolean; slug: string | null; is_published: boolean } | null;
 }
 
-async function sendEmail(to: string, subject: string, text: string) {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) return false;
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: process.env.REMINDER_FROM_EMAIL || 'Triton Gaming <onboarding@resend.dev>', to, subject, text }),
-  });
-  return res.ok;
-}
-
 // Called on a schedule (see vercel.json) with `Authorization: Bearer $CRON_SECRET`.
-// Sends an in-app notification (always) and an email (when RESEND_API_KEY is
-// set and the person hasn't opted out) once ~24h and once ~1h before an event
-// starts. Per-ticket sent-timestamps make it safe to run as often as you like.
+// Sends an in-app (bell) notification once ~24h and once ~1h before an event
+// starts. Email is intentionally not wired up yet. Per-ticket sent-timestamps make it safe to run as often as you like.
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
   if (!secret || request.headers.get('authorization') !== `Bearer ${secret}`) {
@@ -63,11 +51,7 @@ export async function GET(request: Request) {
   }
   if (due.length === 0) return NextResponse.json({ sent: 0 });
 
-  const userIds = [...new Set(due.map((d) => d.ticket.user_id))];
-  const { data: profs } = await svc.from('profiles').select('id, email_reminders').in('id', userIds);
-  const wantsEmail = new Map((profs ?? []).map((p) => [p.id as string, p.email_reminders as boolean]));
-
-  let inApp = 0, emails = 0;
+  let inApp = 0;
   for (const { ticket, kind } of due) {
     const ev = ticket.event!;
     const when = new Date(ev.start_date).toLocaleString('en-US', { timeZone: PACIFIC_TZ, weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
@@ -84,16 +68,7 @@ export async function GET(request: Request) {
     const { error: nErr } = await svc.from('notifications').insert({ user_id: ticket.user_id, type: 'event_reminder', title, body, href: '/portal/tickets' });
     if (!nErr) inApp++;
 
-    if (wantsEmail.get(ticket.user_id) !== false && process.env.RESEND_API_KEY) {
-      try {
-        const { data: u } = await svc.auth.admin.getUserById(ticket.user_id);
-        const to = u.user?.email;
-        if (to && (await sendEmail(to, title, `${body}\n\nYour ticket: ${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/portal/tickets\n\nTurn off these emails in your portal profile.`))) emails++;
-      } catch (err) {
-        console.error('[reminders] email failed:', err);
-      }
-    }
   }
 
-  return NextResponse.json({ sent: inApp, emails });
+  return NextResponse.json({ sent: inApp });
 }

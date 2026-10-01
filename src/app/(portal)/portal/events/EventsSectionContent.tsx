@@ -6,6 +6,7 @@ import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from 'recharts';
+import EventRowActions from './EventRowActions';
 import { Search, Plus, Ticket, MapPin, BarChart3, ListChecks, Award, ExternalLink, Trash2 } from 'lucide-react';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import { isCheckinWindowOpen } from '@/lib/checkinWindow';
@@ -241,7 +242,7 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
                 <span>Date</span>
                 <span>Tickets</span>
                 <span>Status</span>
-                {canEdit && <span></span>}
+                <span className={styles.actionsHead}>Actions</span>
               </div>
               {filtered.map((event) => {
                 // Greyed only once the event has actually ended (same rule as
@@ -285,21 +286,15 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
                         <span className={`${styles.badge} ${styles.ucsdBadge}`}>UCSD Only</span>
                       )}
                     </div>
-                    {canEdit && (
-                      <div className={styles.rowActions}>
-                        <Link href={`/portal/events/${event.id}`} className={styles.checkinLink}>Edit</Link>
-                        {event.checkinFormPreviewUrl && (
-                          <a href={event.checkinFormPreviewUrl} target="_blank" rel="noopener noreferrer" className={styles.checkinLink}>
-                            <ExternalLink size={11} strokeWidth={1.75} aria-hidden="true" /> Preview AS Form
-                          </a>
-                        )}
-                        {canDelete && (
-                          <button type="button" className={`${styles.checkinLink} ${styles.deleteLink}`} onClick={() => setDeleteTarget(event)}>
-                            <Trash2 size={11} strokeWidth={1.75} aria-hidden="true" /> Delete
-                          </button>
-                        )}
-                      </div>
-                    )}
+                    <EventRowActions
+                      eventId={event.id}
+                      title={event.title}
+                      showSummary={event.requires_ticket}
+                      canEdit={canEdit}
+                      previewUrl={event.checkinFormPreviewUrl}
+                      canDelete={canDelete}
+                      onDelete={() => setDeleteTarget(event)}
+                    />
                   </div>
                 );
               })}

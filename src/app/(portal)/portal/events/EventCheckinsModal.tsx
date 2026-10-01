@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import UndoCheckinModal from '@/components/UndoCheckinModal/UndoCheckinModal';
-import { X, Camera, Gamepad2, Undo2, Check, BarChart3 } from 'lucide-react';
+import { X, Camera, Gamepad2, Undo2, Check } from 'lucide-react';
 import { resolveAvatarUrl } from '@/lib/profile';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
@@ -133,7 +133,7 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
   // actually apply — AS Form only for events that have it on, Actions only
   // for whoever can manage points/undo a check-in.
   const gridTemplateColumns = [
-    '2fr', '1fr', 'minmax(120px, 1fr)', '1fr',
+    'minmax(0, 2fr)', 'minmax(70px, 1fr)', 'minmax(120px, 1fr)', 'minmax(112px, 1fr)',
     ...(event?.requires_checkin_form ? ['90px'] : []),
     ...(canManagePoints ? ['90px'] : []),
   ].join(' ');
@@ -176,9 +176,6 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
               </div>
               <Link href="/portal?section=checkin" className={checkinStyles.scanBtn}>
                 <Camera size={16} strokeWidth={1.5} aria-hidden="true" /> Open Scanner
-              </Link>
-              <Link href={`/portal/events/${eventId}/summary`} className={checkinStyles.exportBtn}>
-                <BarChart3 size={15} strokeWidth={1.5} aria-hidden="true" /> Summary
               </Link>
             </div>
 

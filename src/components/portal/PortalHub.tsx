@@ -5,7 +5,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { cloneElement, isValidElement, useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
-import { Home, MoreHorizontal } from 'lucide-react';
+import { Home, MoreHorizontal, ChevronRight } from 'lucide-react';
 import PortalSearch from './PortalSearch';
 import styles from './PortalHub.module.css';
 
@@ -38,6 +38,8 @@ function smallIcon(icon: ReactNode, size = 21) {
 // officer-tier member, the same audience as Members/Docs, not Admin's
 // actually-restricted stuff.
 const GROUP_ORDER = ['Yours', 'Events', 'Resources', 'Admin'] as const;
+// Accent colour per group — tints the heading dot, icon tiles and hover state.
+const GROUP_ACCENT: Record<string, string> = { Yours: '#ffc72c', Events: '#4a90e2', Resources: '#34d399', Admin: '#f472b6' };
 type HubGroup = (typeof GROUP_ORDER)[number];
 
 export interface HubSection {
@@ -370,22 +372,27 @@ function DesktopShell({
               exit={{ opacity: 0, transition: { duration: 0.08 } }}
             >
               {groupedSections.map(({ group, items }) => (
-                <section key={group} className={styles.group}>
-                  {groupedSections.length > 1 && <h2 className={styles.groupLabel}>{group}</h2>}
+                <section key={group} className={styles.group} style={{ ['--accent' as string]: GROUP_ACCENT[group] }}>
+                  {groupedSections.length > 1 && (
+                    <h2 className={styles.groupLabel}>
+                      <span className={styles.groupDot} aria-hidden="true" />
+                      {group}
+                      <span className={styles.groupCount}>{items.length}</span>
+                    </h2>
+                  )}
                   <div className={styles.grid}>
                     {items.map((s) => (
-                      <button
-                        key={s.id}
-                        className={styles.card}
-                        onClick={() => open(s.id)}
-                        aria-label={`${s.label} — ${s.description}`}
-                      >
-                        {s.badge !== undefined && s.badge !== 0 && (
+                      <button key={s.id} className={styles.card} onClick={() => open(s.id)}>
+                        <span className={styles.cardIconTile} aria-hidden="true">{s.icon}</span>
+                        <span className={styles.cardText}>
+                          <span className={styles.cardLabel}>{s.label}</span>
+                          <span className={styles.cardDesc}>{s.description}</span>
+                        </span>
+                        {s.badge !== undefined && s.badge !== 0 ? (
                           <span className={styles.cardBadge}>{s.badge}</span>
+                        ) : (
+                          <ChevronRight size={16} strokeWidth={1.75} className={styles.cardChevron} aria-hidden="true" />
                         )}
-                        <span className={styles.cardIcon} aria-hidden="true">{s.icon}</span>
-                        <span className={styles.cardLabel}>{s.label}</span>
-                        <span className={styles.cardTooltip} role="tooltip">{s.description}</span>
                       </button>
                     ))}
                   </div>

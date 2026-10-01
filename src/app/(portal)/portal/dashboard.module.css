@@ -16,7 +16,7 @@
 .dashboardCard {
   display: flex;
   flex-direction: column;
-  gap: 1.75rem;
+  gap: 1rem;
 }
 
 /* ── Header ─────────────────────────────────────── */
@@ -430,37 +430,74 @@
 }
 
 /* Alert banner */
-.alertBanner {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.875rem 1.25rem;
-  background: rgba(255,199,44,0.08);
-  border: 1px solid rgba(255,199,44,0.25);
-  border-radius: 0.75rem;
-  font-size: 0.875rem;
-  color: rgba(242,241,240,0.8);
-  transition: background 0.2s;
-}
 .alertBanner:hover { background: rgba(255,199,44,0.13); }
-.alertBanner strong { color: var(--yellow); }
 
-.alertDot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: var(--yellow);
-  flex-shrink: 0;
-  animation: pulse 2s ease-in-out infinite;
-}
 
 @keyframes pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50%       { opacity: 0.5; transform: scale(0.8); }
 }
 
-.alertArrow {
-  margin-left: auto;
-  font-size: 0.8rem;
-  color: var(--yellow);
-  white-space: nowrap;
-}
 
+
+/* ── Welcome panel (compact header) ──────────────
+   One slim card: identity on the left, numbers as small tiles on the right
+   (a tidy row underneath on phones). Kept short on purpose — it's the first
+   thing on the page, not the page. */
+.welcome {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  flex-wrap: wrap;
+  padding: 0.85rem clamp(0.85rem, 2.5vw, 1.25rem);
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background:
+    radial-gradient(110% 160% at 0% 0%, rgba(74, 144, 226, 0.16), transparent 55%),
+    rgba(255, 255, 255, 0.03);
+  overflow: hidden;
+}
+.welcomeMascot { display: none; }
+.welcomeMain { display: flex; align-items: center; gap: 0.8rem; min-width: 0; position: relative; }
+.welcomeAvatar, .welcomeAvatarFallback {
+  width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0; object-fit: cover;
+  border: 2px solid rgba(255, 199, 44, 0.5);
+}
+.welcomeAvatarFallback { display: grid; place-items: center; background: var(--gradient-nav); font-family: var(--font-futura-heavy); font-size: 1.15rem; color: var(--white); }
+.welcomeText { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.welcomeKicker { display: none; }
+.welcomeName { font-family: var(--font-futura-heavy); font-size: 1.15rem; color: var(--white); line-height: 1.2; overflow-wrap: anywhere; }
+.welcomeName::before { content: attr(data-greeting) ", "; font-family: var(--font-futura-medium); font-size: 0.85rem; color: rgba(242, 241, 240, 0.55); }
+.welcomeText .roleChips { justify-content: flex-start; margin-top: 0; }
+.welcomeText .headerActions { justify-content: flex-start; margin-top: 0.1rem; }
+
+.tiles { display: flex; gap: 0.5rem; flex-wrap: wrap; position: relative; }
+.tile {
+  --tile-accent: #ffc72c;
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-areas: "top value" "tier tier" "bar bar";
+  align-items: baseline;
+  column-gap: 0.6rem;
+  row-gap: 0.1rem;
+  min-width: 128px; padding: 0.5rem 0.8rem;
+  border-radius: 0.75rem;
+  background: rgba(0, 0, 0, 0.26);
+  border: 1px solid color-mix(in srgb, var(--tile-accent) 32%, transparent);
+  transition: background 0.15s, border-color 0.15s;
+}
+.tile:hover { background: rgba(0, 0, 0, 0.38); border-color: var(--tile-accent); }
+.tileTop { grid-area: top; display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.65rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--tile-accent); }
+.tileValue { grid-area: value; justify-self: end; font-family: var(--font-futura-heavy); font-size: 1.05rem; color: var(--white); line-height: 1.1; }
+.tileUnit { font-size: 0.68rem; font-family: var(--font-futura-medium); color: rgba(242, 241, 240, 0.5); }
+.tileTier { grid-area: tier; font-size: 0.7rem; color: rgba(242, 241, 240, 0.65); }
+.tileProgress { grid-area: bar; display: block; height: 3px; border-radius: 999px; background: rgba(255, 255, 255, 0.1); overflow: hidden; margin-top: 0.2rem; }
+.tileProgress > span { display: block; height: 100%; border-radius: 999px; background: var(--tile-accent); }
+
+@media (max-width: 720px) {
+  .welcome { flex-direction: column; align-items: stretch; padding: 0.75rem; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 0.4rem; }
+  .tile { min-width: 0; padding: 0.45rem 0.65rem; }
+}

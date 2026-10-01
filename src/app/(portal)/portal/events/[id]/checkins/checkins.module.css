@@ -110,7 +110,7 @@
 
 .tableHeader {
   display: grid;
-  grid-template-columns: 2fr 1fr minmax(120px, 1fr) 1fr;
+  grid-template-columns: minmax(0, 2fr) minmax(70px, 1fr) minmax(120px, 1fr) minmax(112px, 1fr);
   gap: 1rem;
   padding: 0.75rem 1.25rem;
   background: rgba(255,255,255,0.05);
@@ -120,10 +120,11 @@
   text-transform: uppercase;
   color: rgba(242,241,240,0.4);
 }
+.tableHeader > span { white-space: nowrap; }
 
 .tableRow {
   display: grid;
-  grid-template-columns: 2fr 1fr minmax(120px, 1fr) 1fr;
+  grid-template-columns: minmax(0, 2fr) minmax(70px, 1fr) minmax(120px, 1fr) minmax(112px, 1fr);
   gap: 1rem;
   padding: 0.75rem 1.25rem;
   border-top: 1px solid rgba(255,255,255,0.05);

@@ -126,12 +126,13 @@
   background: rgba(255,255,255,0.02);
   border: 1px solid rgba(255,255,255,0.06);
   border-radius: 0.875rem;
-  overflow: hidden;
+  /* visible, not hidden: the row "more" menu has to be able to hang below the last row */
 }
 
 .tableHeader {
+  border-radius: 0.875rem 0.875rem 0 0;
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 100px 60px;
+  grid-template-columns: minmax(0, 2.4fr) minmax(0, 1.2fr) minmax(0, 1fr) 104px 120px;
   gap: 1rem;
   padding: 0.75rem 1.25rem;
   background: rgba(255,255,255,0.05);
@@ -144,7 +145,7 @@
 
 .tableRow {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 100px 60px;
+  grid-template-columns: minmax(0, 2.4fr) minmax(0, 1.2fr) minmax(0, 1fr) 104px 120px;
   gap: 1rem;
   padding: 1rem 1.25rem;
   border-top: 1px solid rgba(255,255,255,0.05);
@@ -201,7 +202,31 @@
 }
 .checkinLink:hover { opacity: 0.75; }
 
-.rowActions { display: flex; flex-direction: column; gap: 0.3rem; align-items: flex-start; }
+/* ── Row actions ── */
+.rowActions { display: flex; align-items: center; justify-content: flex-end; gap: 0.35rem; }
+.actionsHead { text-align: right; }
+.iconAction {
+  display: inline-grid; place-items: center; width: 34px; height: 34px;
+  border-radius: 0.6rem; border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04); color: rgba(242, 241, 240, 0.8);
+  cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.iconAction:hover { background: rgba(255, 199, 44, 0.12); border-color: rgba(255, 199, 44, 0.45); color: var(--yellow); }
+.moreWrap { position: relative; }
+.moreMenu {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; min-width: 190px;
+  display: flex; flex-direction: column; padding: 0.35rem;
+  background: #0d1325; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 0.75rem;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
+}
+.menuItem {
+  display: flex; align-items: center; gap: 0.55rem; width: 100%; text-align: left;
+  padding: 0.6rem 0.75rem; border-radius: 0.5rem; border: none; background: none;
+  font: inherit; font-size: 0.82rem; color: rgba(242, 241, 240, 0.9); cursor: pointer; text-decoration: none;
+}
+.menuItem:hover { background: rgba(255, 255, 255, 0.07); }
+.menuDanger { color: #f87171; }
+.menuDanger:hover { background: rgba(220, 38, 38, 0.14); }
 .checkinSub { color: rgba(242,241,240,0.4); }
 
 .noTicket { font-size: var(--fs-meta); color: rgba(242,241,240,0.3); }
@@ -294,6 +319,7 @@
   }
 
   .tableRow > div:first-child { flex: 1 1 100%; }
+  .rowActions { margin-left: auto; }
 }
 
 .deleteLink { color: #f87171; }

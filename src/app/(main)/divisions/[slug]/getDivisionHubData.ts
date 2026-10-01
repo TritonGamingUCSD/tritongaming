@@ -1,5 +1,6 @@
 import { openEventsFilter } from '@/lib/checkinWindow';
-import { createClient } from '@/lib/supabase/server';
+import { unstable_cache } from 'next/cache';
+import { createPublicClient } from '@/lib/supabase/public';
 import { isVisible, type BoardVisibility } from '@/lib/profile';
 
 export interface DivisionEvent {
@@ -42,10 +43,16 @@ interface LeadRow {
 // are gated by the same show_on_board opt-in as the About page's board
 // (getBoardMembers.ts) — division-role holders are deliberately excluded
 // from that page ("they have their own division pages") — this is that page.
-export async function getDivisionHubData(divisionId: string) {
-  const supabase = await createClient();
+export function getDivisionHubData(divisionId: string) {
+  // Cached briefly and shared between visitors; failures throw so they aren't cached.
+  return unstable_cache(() => fetchDivisionHubData(divisionId), ['division-hub', divisionId], { revalidate: 60, tags: ['divisions', 'events', 'board'] })()
+    .catch(() => ({ events: [] as DivisionEvent[], leads: [] as DivisionLead[] }));
+}
 
-  const [{ data: events }, { data: leadRows }] = await Promise.all([
+async function fetchDivisionHubData(divisionId: string) {
+  const supabase = createPublicClient();
+
+  const [{ data: events, error: eventsErr }, { data: leadRows, error: leadsErr }] = await Promise.all([
     supabase
       .from('events')
       .select('id, slug, title, start_date, location')
@@ -60,6 +67,9 @@ export async function getDivisionHubData(divisionId: string) {
       .eq('role', 'division')
       .eq('division_id', divisionId),
   ]);
+
+  if (eventsErr) throw eventsErr;
+  if (leadsErr) throw leadsErr;
 
   const leads: DivisionLead[] = ((leadRows ?? []) as unknown as LeadRow[])
     .map((r) => (Array.isArray(r.profile) ? r.profile[0] : r.profile))

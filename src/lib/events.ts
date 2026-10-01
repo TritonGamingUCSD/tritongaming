@@ -1,9 +1,18 @@
 import { openEventsFilter, endedEventsFilter } from '@/lib/checkinWindow';
-import { createClient } from '@/lib/supabase/server';
+import { unstable_cache } from 'next/cache';
+import { createPublicClient } from '@/lib/supabase/public';
 import type { Event } from '@/types';
 import type { SocialEmbed, PhotoAlbumEntry } from '@/types/database';
 
 const DEFAULT_LIMIT = 50;
+
+// Public event lists/pages are cached briefly and shared between visitors
+// (tag 'events', also invalidated when staff save an event). Fetchers throw on
+// error so failures aren't cached; callers catch outside the cache.
+const EVENTS_REVALIDATE_SECONDS = 60;
+function cachedEvents<T>(keyParts: (string | number)[], fn: () => Promise<T>): Promise<T> {
+  return unstable_cache(fn, ['events', ...keyParts.map(String)], { revalidate: EVENTS_REVALIDATE_SECONDS, tags: ['events'] })();
+}
 
 function mapSupabaseEvent(row: Record<string, unknown>): Event {
   return {
@@ -32,17 +41,19 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 export async function getUpcomingEvents(limit = DEFAULT_LIMIT): Promise<Event[]> {
   try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from('events')
-      .select('*')
-      .eq('is_published', true)
-      .or(openEventsFilter())
-      .order('start_date', { ascending: true })
-      .limit(limit);
+    return await cachedEvents(['upcoming', limit], async () => {
+      const supabase = createPublicClient();
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('is_published', true)
+        .or(openEventsFilter())
+        .order('start_date', { ascending: true })
+        .limit(limit);
 
-    if (error) throw error;
-    return (data ?? []).map(mapSupabaseEvent);
+      if (error) throw error;
+      return (data ?? []).map(mapSupabaseEvent);
+    });
   } catch {
     return [];
   }
@@ -50,17 +61,19 @@ export async function getUpcomingEvents(limit = DEFAULT_LIMIT): Promise<Event[]>
 
 export async function getPreviousEvents(limit = DEFAULT_LIMIT): Promise<Event[]> {
   try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from('events')
-      .select('*')
-      .eq('is_published', true)
-      .or(endedEventsFilter())
-      .order('start_date', { ascending: false })
-      .limit(limit);
+    return await cachedEvents(['previous', limit], async () => {
+      const supabase = createPublicClient();
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('is_published', true)
+        .or(endedEventsFilter())
+        .order('start_date', { ascending: false })
+        .limit(limit);
 
-    if (error) throw error;
-    return (data ?? []).map(mapSupabaseEvent);
+      if (error) throw error;
+      return (data ?? []).map(mapSupabaseEvent);
+    });
   } catch {
     return [];
   }
@@ -68,16 +81,18 @@ export async function getPreviousEvents(limit = DEFAULT_LIMIT): Promise<Event[]>
 
 export async function getAllEvents(limit = DEFAULT_LIMIT): Promise<Event[]> {
   try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from('events')
-      .select('*')
-      .eq('is_published', true)
-      .order('start_date', { ascending: false })
-      .limit(limit);
+    return await cachedEvents(['all', limit], async () => {
+      const supabase = createPublicClient();
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('is_published', true)
+        .order('start_date', { ascending: false })
+        .limit(limit);
 
-    if (error) throw error;
-    return (data ?? []).map(mapSupabaseEvent);
+      if (error) throw error;
+      return (data ?? []).map(mapSupabaseEvent);
+    });
   } catch {
     return [];
   }
@@ -85,15 +100,17 @@ export async function getAllEvents(limit = DEFAULT_LIMIT): Promise<Event[]> {
 
 export async function getEventById(id: string): Promise<Event | null> {
   try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from('events')
-      .select('*')
-      .eq('id', id)
-      .single();
+    return await cachedEvents(['id', id], async () => {
+      const supabase = createPublicClient();
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('id', id)
+        .single();
 
-    if (error) throw error;
-    return data ? mapSupabaseEvent(data as Record<string, unknown>) : null;
+      if (error) throw error;
+      return data ? mapSupabaseEvent(data as Record<string, unknown>) : null;
+    });
   } catch {
     return null;
   }
@@ -104,17 +121,19 @@ export async function getEventById(id: string): Promise<Event | null> {
 // uuid param skips straight to the id lookup since it can never be a slug.
 export async function getEventBySlugOrId(slugOrId: string): Promise<Event | null> {
   try {
-    const supabase = await createClient();
-    const column = UUID_RE.test(slugOrId) ? 'id' : 'slug';
-    const { data, error } = await supabase
-      .from('events')
-      .select('*')
-      .eq(column, slugOrId)
-      .eq('is_published', true)
-      .maybeSingle();
+    return await cachedEvents(['slug-or-id', slugOrId], async () => {
+      const supabase = createPublicClient();
+      const column = UUID_RE.test(slugOrId) ? 'id' : 'slug';
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq(column, slugOrId)
+        .eq('is_published', true)
+        .maybeSingle();
 
-    if (error) throw error;
-    return data ? mapSupabaseEvent(data as Record<string, unknown>) : null;
+      if (error) throw error;
+      return data ? mapSupabaseEvent(data as Record<string, unknown>) : null;
+    });
   } catch {
     return null;
   }

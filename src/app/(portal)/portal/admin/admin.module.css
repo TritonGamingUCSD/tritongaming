@@ -112,10 +112,6 @@
   transition: border-color 0.15s;
 }
 
-.statHighlight {
-  background: rgba(255,199,44,0.06);
-  border-color: rgba(255,199,44,0.2);
-}
 
 .statIcon  { display: inline-flex; color: var(--yellow); flex-shrink: 0; }
 .statValue { font-family: var(--font-futura-heavy); font-size: 1.3rem; color: var(--yellow); line-height: 1; }
@@ -244,17 +240,6 @@
   color: var(--white);
 }
 
-.badge {
-  font-size: var(--fs-label);
-  font-family: var(--font-renegare);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 0.15rem 0.5rem;
-  background: rgba(255,199,44,0.12);
-  color: var(--yellow);
-  border: 1px solid rgba(255,199,44,0.25);
-  border-radius: var(--radius-pill);
-}
 
 .adminCell {
   display: flex;

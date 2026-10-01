@@ -26,7 +26,7 @@ import { getMyPointsData } from './points/getMyPointsData';
 import BattlepassSectionContent from './battlepass/BattlepassSectionContent';
 import { getMyBattlepassData } from './battlepass/getMyBattlepassData';
 import { BATTLEPASS_ROLES, getOfficerTier, fetchOfficerTiers } from '@/lib/officerTiers';
-import { getTier, fetchTiers } from '@/lib/tiers';
+import { getTier, nextTier, fetchTiers } from '@/lib/tiers';
 import EventsSectionContent from './events/EventsSectionContent';
 import { getEventsData } from './events/getEventsData';
 import MembersSectionContent from './members/MembersSectionContent';
@@ -154,6 +154,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const unregisteredUpcomingEvents = ticketsData.upcomingEvents.filter((e) => !registeredEventIds.has(e.id));
   const memberTier = pointsData ? getTier(pointsData.lifetimeEarned, memberTiers) : null;
   const officerTier = battlepassData ? getOfficerTier(battlepassData.lifetimeEarned, officerTiers) : null;
+  const memberNext = pointsData ? nextTier(pointsData.lifetimeEarned, memberTiers) : null;
+  const officerNext = battlepassData ? nextTier(battlepassData.lifetimeEarned, officerTiers) : null;
 
   // Events on today's Pacific calendar date, for the check-in shortcut
   // banner — derived from checkinData (already scoped to "recent or soon")
@@ -340,33 +342,16 @@ export default async function PortalDashboard({ searchParams }: Props) {
           disconnected pieces of UI. See dashboard.module.css's
           .dashboardCard for why plain spacing won out over a boxed card. */}
       <div className={styles.dashboardCard}>
-        <header className={styles.header}>
-          <Image
-            src="/bytes/byte_tgex25.png"
-            alt=""
-            width={723}
-            height={723}
-            aria-hidden="true"
-            className={styles.mascotAccent}
-          />
-          <div className={styles.headerLeft}>
+        <header className={styles.welcome}>
+          <Image src="/bytes/byte_tgex25.png" alt="" width={723} height={723} aria-hidden="true" className={styles.welcomeMascot} />
+          <div className={styles.welcomeMain}>
             {avatarUrl ? (
-              <Image
-                src={avatarUrl}
-                alt={profile.display_name || 'User'}
-                width={48}
-                height={48}
-                className={styles.headerAvatar}
-                unoptimized
-                referrerPolicy="no-referrer"
-              />
+              <Image src={avatarUrl} alt={profile.display_name || 'User'} width={48} height={48} className={styles.welcomeAvatar} unoptimized referrerPolicy="no-referrer" />
             ) : (
-              <div className={styles.headerAvatarFallback}>
-                {(profile.display_name || 'U')[0].toUpperCase()}
-              </div>
+              <div className={styles.welcomeAvatarFallback}>{(profile.display_name || 'U')[0].toUpperCase()}</div>
             )}
-            <div>
-              <p className={styles.greeting}>{greeting}, {profile.display_name?.split(' ')[0] || 'Triton'}</p>
+            <div className={styles.welcomeText}>
+              <h1 className={styles.welcomeName} data-greeting={greeting}>{profile.display_name?.split(' ')[0] || 'Triton'}</h1>
               <div className={styles.roleChips}>
                 {roles.length === 0 ? (
                   <span className={styles.roleChip} style={{ background: ROLE_COLORS.guest + '18', color: ROLE_COLORS.guest, borderColor: ROLE_COLORS.guest + '44' }}>
@@ -379,9 +364,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
                       className={styles.roleChip}
                       style={{ background: ROLE_COLORS[r.role] + '18', color: ROLE_COLORS[r.role], borderColor: ROLE_COLORS[r.role] + '44' }}
                     >
-                      {/* A person can lead more than one division now — name it on
-                          the chip, otherwise two "Division Lead" chips in a row
-                          look like a duplicate/bug rather than two real grants. */}
+                      {/* A person can lead more than one division — name it on the chip so two
+                          "Division Lead" chips don't read as a duplicate. */}
                       {r.role === 'division' && r.division_id
                         ? `${ROLE_LABELS.division} — ${divisionNameById.get(r.division_id) ?? 'Unknown'}`
                         : ROLE_LABELS[r.role]}
@@ -389,36 +373,6 @@ export default async function PortalDashboard({ searchParams }: Props) {
                   ))
                 )}
               </div>
-
-              {/* At-a-glance stats — added once there was actually enough
-                  going on (points/tier, Battlepass, tickets) that landing on
-                  the dashboard and seeing only a name + role chips undersold
-                  it. Each badge deep-links straight to that section's own
-                  tab (see the initialTab wiring below) rather than just the
-                  section's default view. */}
-              <div className={styles.statBadges}>
-                {pointsData && memberTier && (
-                  <Link href="/portal?section=points&tab=points" className={styles.statBadge} style={{ borderColor: `${memberTier.color}55` }}>
-                    <Award size={13} strokeWidth={1.75} aria-hidden="true" style={{ color: memberTier.color }} />
-                    <span>{pointsData.balance.toLocaleString()} pts</span>
-                    <span className={styles.statBadgeTier} style={{ color: memberTier.color }}>{memberTier.name}</span>
-                  </Link>
-                )}
-                {battlepassData && (
-                  <Link href="/portal?section=battlepass&tab=mine" className={styles.statBadge} style={{ borderColor: `${officerTier?.color}55` }}>
-                    <Medal size={13} strokeWidth={1.75} aria-hidden="true" style={{ color: officerTier?.color }} />
-                    <span>{battlepassData.balance.toLocaleString()} pts</span>
-                    <span className={styles.statBadgeTier} style={{ color: officerTier?.color }}>{officerTier?.name}</span>
-                  </Link>
-                )}
-                {activeTicketCount > 0 && (
-                  <Link href="/portal?section=tickets" className={styles.statBadge}>
-                    <Ticket size={13} strokeWidth={1.75} aria-hidden="true" />
-                    <span>{activeTicketCount} active ticket{activeTicketCount === 1 ? '' : 's'}</span>
-                  </Link>
-                )}
-              </div>
-
               <div className={styles.headerActions}>
                 <Link href="/" className={styles.headerActionLink}>Back to Site</Link>
                 <span className={styles.headerActionDivider} aria-hidden="true">·</span>
@@ -426,6 +380,43 @@ export default async function PortalDashboard({ searchParams }: Props) {
               </div>
             </div>
           </div>
+
+          {/* At-a-glance stats — each tile deep-links to that section's own tab. */}
+          {(pointsData || battlepassData || activeTicketCount > 0) && (
+            <div className={styles.tiles}>
+              {pointsData && memberTier && (
+                <Link href="/portal?section=points&tab=points" className={styles.tile} style={{ ['--tile-accent' as string]: memberTier.color }}>
+                  <span className={styles.tileTop}><Award size={15} strokeWidth={1.75} aria-hidden="true" /> Rewards</span>
+                  <span className={styles.tileValue}>{pointsData.balance.toLocaleString()}<span className={styles.tileUnit}> pts</span></span>
+                  <span className={styles.tileTier}>{memberTier.name}</span>
+                  {memberNext && (
+                    <span className={styles.tileProgress} title={`${memberNext.min - pointsData.lifetimeEarned} pts to ${memberNext.name}`}>
+                      <span style={{ width: `${Math.min(100, Math.max(4, ((pointsData.lifetimeEarned - memberTier.min) / Math.max(1, memberNext.min - memberTier.min)) * 100))}%` }} />
+                    </span>
+                  )}
+                </Link>
+              )}
+              {battlepassData && officerTier && (
+                <Link href="/portal?section=battlepass&tab=mine" className={styles.tile} style={{ ['--tile-accent' as string]: officerTier.color }}>
+                  <span className={styles.tileTop}><Medal size={15} strokeWidth={1.75} aria-hidden="true" /> Battlepass</span>
+                  <span className={styles.tileValue}>{battlepassData.balance.toLocaleString()}<span className={styles.tileUnit}> pts</span></span>
+                  <span className={styles.tileTier}>{officerTier.name}</span>
+                  {officerNext && (
+                    <span className={styles.tileProgress} title={`${officerNext.min - battlepassData.lifetimeEarned} pts to ${officerNext.name}`}>
+                      <span style={{ width: `${Math.min(100, Math.max(4, ((battlepassData.lifetimeEarned - officerTier.min) / Math.max(1, officerNext.min - officerTier.min)) * 100))}%` }} />
+                    </span>
+                  )}
+                </Link>
+              )}
+              {activeTicketCount > 0 && (
+                <Link href="/portal?section=tickets" className={styles.tile} style={{ ['--tile-accent' as string]: '#34d399' }}>
+                  <span className={styles.tileTop}><Ticket size={15} strokeWidth={1.75} aria-hidden="true" /> Tickets</span>
+                  <span className={styles.tileValue}>{activeTicketCount}<span className={styles.tileUnit}> active</span></span>
+                  <span className={styles.tileTier}>Ready to scan</span>
+                </Link>
+              )}
+            </div>
+          )}
         </header>
 
         {/* Mobile-only (desktop already has its own persistent search in

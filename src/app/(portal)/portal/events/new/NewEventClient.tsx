@@ -1,5 +1,6 @@
 'use client';
 
+import { refreshPublicCache } from '@/lib/refreshPublicCache';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { slugify } from '@/lib/slug';
@@ -53,6 +54,7 @@ export default function NewEventClient({ divisions, initial = EMPTY_EVENT_FORM, 
       if (error.code === '23505') return 'That URL slug is already taken by another event.';
       return 'Failed to create event. Please try again.';
     }
+    refreshPublicCache('events');
     router.push('/portal?section=events');
   }
 

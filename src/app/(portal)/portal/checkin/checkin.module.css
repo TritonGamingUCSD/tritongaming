@@ -50,21 +50,7 @@
   position: relative;
 }
 
-.exportBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  align-self: flex-end;
-  font-size: 0.72rem;
-  font-family: var(--font-futura-medium);
-  color: rgba(242,241,240,0.5);
-  padding: 0.3rem 0.1rem;
-  transition: color 0.15s;
-}
 
-.exportBtn:hover {
-  color: var(--yellow);
-}
 
 .select {
   width: 100%;
@@ -95,42 +81,10 @@
 }
 
 /* ── Stats strip ───────────────────────────────── */
-.statsStrip {
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  padding: 0.875rem 1.25rem;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 0.875rem;
-}
 
-.statItem {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.15rem;
-}
 
-.statNum {
-  font-family: var(--font-futura-heavy);
-  font-size: 1.35rem;
-  color: var(--yellow);
-  line-height: 1;
-}
 
-.statLab {
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(242,241,240,0.35);
-}
 
-.statDivider {
-  width: 1px;
-  height: 30px;
-  background: rgba(255,255,255,0.08);
-}
 
 /* ── Combined scanner card ─────────────────────── */
 /* Camera and manual entry used to be two separate flows (a viewport, plus a

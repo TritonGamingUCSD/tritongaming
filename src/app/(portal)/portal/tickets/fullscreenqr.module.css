@@ -373,81 +373,14 @@
   color: #011941;
 }
 
-.checkinFormFrame {
-  width: 100%;
-  height: min(65vh, 600px);
-  min-height: 420px;
-  border: 1px solid rgba(1, 25, 65, 0.12);
-  border-radius: 0.875rem;
-  margin-top: 0.25rem;
-  overscroll-behavior: contain;
-}
 
-.checkinFormNewTabLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.75rem;
-  color: rgba(1, 25, 65, 0.5);
-  text-decoration: underline;
-  align-self: center;
-}
 
-.checkinFormDoneBtn {
-  width: 100%;
-  padding: 0.75rem;
-  margin-top: 0.5rem;
-  background: #011941;
-  color: #fff;
-  font-weight: 700;
-  border-radius: 0.75rem;
-  cursor: pointer;
-}
 .checkinFormDoneBtn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-.checkinFormSmallPrint {
-  font-size: 0.68rem;
-  color: rgba(1, 25, 65, 0.45);
-  text-align: center;
-  margin: -0.3rem 0 0;
-}
 
 /* ── AS Form gate (shown instead of the green check until it's done) ── */
-.formGate {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 1rem 0 0.25rem;
-  text-align: center;
-}
 
-.formGateBadge {
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #b45309;
-  background: rgba(251, 191, 36, 0.18);
-  padding: 0.25rem 0.7rem;
-  border-radius: 999px;
-}
 
-.formGateOpenBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.95rem;
-  margin-top: 0.4rem;
-  background: #ffc72c;
-  color: #011941;
-  font-weight: 800;
-  font-size: 1rem;
-  border-radius: 0.85rem;
-  text-decoration: none;
-}
 
 
 /* Big, high-contrast "+N points earned" on the member's post-scan screen —
