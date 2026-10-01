@@ -66,6 +66,11 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // service-role RPC, so the API route's own check is the real boundary,
   // not an RLS policy keyed to this capability.
   manage_points: ['exec', 'admin'],
+  // Weekly Gen Meeting: only exec (and admin) can open check-in and show the code; everyone on the
+  // team — recruits included — can check themselves in by typing it. UI/API gating only (the
+  // meeting routes use the service role, so these routes are the real boundary).
+  manage_meetings: ['exec', 'admin'],
+  attend_meetings: ['officer', 'lead', 'exec', 'admin', 'recruit'],
 };
 
 /**

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, History, Image as ImageIcon, Award, Medal, Link2, ArrowLeft } from 'lucide-react';
+import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, History, Image as ImageIcon, Award, Medal, Link2, ArrowLeft, CalendarCheck } from 'lucide-react';
 import { getProfile, getUserRoles, getMyPrivateProfile, getUser } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import { hasCapability, isVerifiedMember, isRewardsEligible } from '@/lib/capabilities';
@@ -37,6 +37,9 @@ import QRStudioClient from './qrcode/QRStudioClient';
 import SiteContentSectionContent from './content/SiteContentSectionContent';
 import { getContentData } from './admin/content/getContentData';
 import AdminSectionContent from './admin/AdminSectionContent';
+import MeetingsSectionContent from './meetings/MeetingsSectionContent';
+import { createServiceClient } from '@/lib/supabase/admin';
+import { meetingHappeningNow } from '@/lib/meetings';
 import LinksSection from './links/LinksSection';
 import { getAdminData } from './admin/getAdminData';
 import { getStatsData } from './admin/stats/getStatsData';
@@ -86,6 +89,10 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const canManageRewardsShop = hasCapability(roles, 'manage_rewards_shop');
   const canScanRedemptions = hasCapability(roles, 'scan_redemptions');
   const canManagePoints = hasCapability(roles, 'manage_points');
+  const canAttendMeetings = hasCapability(roles, 'attend_meetings');
+  const canManageMeetings = hasCapability(roles, 'manage_meetings');
+  // Best-effort: if this lookup fails the bar just doesn't get the meeting boost.
+  const meetingNow = canAttendMeetings ? await meetingHappeningNow(createServiceClient()).catch(() => false) : false;
   // Rewards (earning points at check-in, referral bonuses, the shop) is
   // UCSD-students-and-staff only — see is_rewards_eligible() in
   // 20260922110000_restrict_rewards_to_ucsd.sql, the actual enforcement
@@ -173,6 +180,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
       id: 'tickets', icon: <Ticket size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'My Tickets',
       description: 'View and show your event tickets',
       badge: activeTicketCount || undefined,
+      // A ticket for something today or tomorrow is what you'll want in your thumb's reach.
+      dockBoost: nextTicket?.event && pacificDaysUntil(nextTicket.event.start_date) <= 1 ? 60 : 0,
       group: 'Yours',
       content: <TicketsClient tickets={ticketsData.tickets} upcomingEvents={ticketsData.upcomingEvents} isUcsd={ticketsData.isUcsd} canEarnPoints={ticketsData.canEarnPoints} />,
     },
@@ -229,6 +238,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
     ...(canViewEvents && eventsData ? [{
       id: 'events', icon: <Calendar size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Events',
       description: canManageEvents ? 'Create and manage events' : 'Browse upcoming and past events',
+      dockBoost: canManageEvents ? 35 : 0,
       group: 'Events' as const,
       content: (
         <EventsSectionContent
@@ -246,8 +256,18 @@ export default async function PortalDashboard({ searchParams }: Props) {
     ...(canCheckin && checkinData ? [{
       id: 'checkin', icon: <Camera size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Check-In',
       description: 'Scan tickets, confirm redemptions, or reveal the online check-in code',
+      // Staff on a day with an event: the scanner is the one thing they need.
+      dockBoost: todayEvents.length > 0 ? 90 : 0,
       group: 'Events' as const,
       content: <CheckInSectionContent events={checkinData.events} canScanRedemptions={canScanRedemptions} initialTab={requestedTab} tiers={memberTiers} />,
+    }] : []),
+    ...(canAttendMeetings ? [{
+      id: 'meetings', icon: <CalendarCheck size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Meetings',
+      description: canManageMeetings ? 'Schedule meetings, run check-in, export attendance' : 'Check in to meetings and see your history',
+      // While a meeting is on (or about to start) this is the thing to have under your thumb.
+      dockBoost: (meetingNow ? 100 : 0) + (canManageMeetings ? 10 : 0),
+      group: 'Events' as const,
+      content: <MeetingsSectionContent canManage={canManageMeetings} />,
     }] : []),
     ...(canViewMembers && membersData ? [{
       id: 'members', icon: <Users size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'TG Members',

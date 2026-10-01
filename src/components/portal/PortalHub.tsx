@@ -9,17 +9,10 @@ import { usePortalParams } from '@/lib/usePortalParams';
 import { motion, AnimatePresence } from 'motion/react';
 import { Home, MoreHorizontal, ChevronRight, ChevronLeft } from 'lucide-react';
 import PortalSearch from './PortalSearch';
+import { pickDock, readUsage, recordUse } from './dockPicker';
 import styles from './PortalHub.module.css';
 
-// The bottom tab bar's fixed slots — Hub + these (whichever a person
-// actually has) + More is 5 tabs, max. Battlepass deliberately isn't one
-// of these: an officer who's also a UCSD member gets BOTH the 'points' and
-// 'battlepass' sections at once (isRewardsEligible and the officer-tier
-// check are independent, not mutually exclusive), so giving Battlepass its
-// own primary slot too would make the bar 6 items for exactly that
-// audience. It's one tap under "More" for everyone instead, same as
-// Activity/Members/Admin/etc.
-const PRIMARY_TAB_ORDER = ['tickets', 'points', 'profile'];
+// The bottom tab bar's slots aren't fixed: see dockPicker.ts for how sections are chosen.
 
 // Section icons are already sized for the big grid cards (28px) — shrink
 // to something that reads as a tab-bar glyph instead of cloning a whole
@@ -52,6 +45,8 @@ export interface HubSection {
   badge?: string | number;
   content: ReactNode;
   group: HubGroup;
+  /** Extra weight for a slot on the mobile bottom bar — what's relevant to this person right now. */
+  dockBoost?: number;
 }
 
 export interface HubIdentity { name: string; avatarUrl: string | null; roleLabel: string; roles?: { label: string; color: string }[] }
@@ -165,9 +160,15 @@ export default function PortalHub({ sections, identity, railFooter, homeExtras, 
     .map((group) => ({ group, items: sections.filter((s) => s.group === group) }))
     .filter((g) => g.items.length > 0);
 
-  const primaryTabs = PRIMARY_TAB_ORDER
-    .map((id) => sections.find((s) => s.id === id))
-    .filter((s): s is HubSection => !!s);
+  // Server render and first paint use the role/context defaults; once mounted, what this person
+  // actually opens and the time of week are folded in.
+  const [dock, setDock] = useState(() => pickDock(sections));
+  const dockKey = sections.map((s) => `${s.id}:${s.dockBoost ?? 0}`).join(',');
+  useEffect(() => {
+    setDock(pickDock(sections, { now: new Date(), usage: readUsage() }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dockKey]);
+  const primaryTabs = sections.filter((s) => dock.ids.has(s.id));
   const primaryTabIds = new Set(primaryTabs.map((s) => s.id));
   const moreSections = sections.filter((s) => !primaryTabIds.has(s.id));
   const isMoreActive = openId !== null && !primaryTabIds.has(openId);
@@ -237,8 +238,8 @@ export default function PortalHub({ sections, identity, railFooter, homeExtras, 
           <button
             key={s.id}
             type="button"
-            className={`${styles.dockItem} ${openId === s.id && !moreOpen ? styles.dockItemActive : ''}`}
-            onClick={() => { setMoreOpen(false); open(s.id); }}
+            className={`${styles.dockItem} ${openId === s.id && !moreOpen ? styles.dockItemActive : ''} ${dock.urgent.has(s.id) ? styles.dockItemUrgent : ''}`}
+            onClick={() => { setMoreOpen(false); recordUse(s.id); open(s.id); }}
           >
             <span className={styles.dockIcon}>
               {smallIcon(s.icon, 20)}
@@ -247,15 +248,17 @@ export default function PortalHub({ sections, identity, railFooter, homeExtras, 
             <span className={styles.dockLabel}>{s.label}</span>
           </button>
         ))}
-        <button
-          type="button"
-          className={`${styles.dockItem} ${isMoreActive || moreOpen ? styles.dockItemActive : ''}`}
-          onClick={() => setMoreOpen((v) => !v)}
-          aria-expanded={moreOpen}
-        >
-          <span className={styles.dockIcon}><MoreHorizontal size={20} strokeWidth={1.9} aria-hidden="true" /></span>
-          <span className={styles.dockLabel}>More</span>
-        </button>
+        {moreSections.length > 0 && (
+          <button
+            type="button"
+            className={`${styles.dockItem} ${isMoreActive || moreOpen ? styles.dockItemActive : ''}`}
+            onClick={() => setMoreOpen((v) => !v)}
+            aria-expanded={moreOpen}
+          >
+            <span className={styles.dockIcon}><MoreHorizontal size={20} strokeWidth={1.9} aria-hidden="true" /></span>
+            <span className={styles.dockLabel}>More</span>
+          </button>
+        )}
       </nav>
 
       <AnimatePresence>
@@ -292,7 +295,7 @@ export default function PortalHub({ sections, identity, railFooter, homeExtras, 
                           key={s.id}
                           type="button"
                           className={`${styles.sheetTile} ${openId === s.id ? styles.sheetTileActive : ''}`}
-                          onClick={() => { setMoreOpen(false); open(s.id); }}
+                          onClick={() => { setMoreOpen(false); recordUse(s.id); open(s.id); }}
                         >
                           <span className={styles.sheetTileIcon} aria-hidden="true">
                             {smallIcon(s.icon, 22)}

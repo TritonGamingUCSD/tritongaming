@@ -638,3 +638,9 @@
 .sheetFooter { gap: 0.6rem; padding: 0.5rem 0.9rem 0.9rem; }
 .sheetFooter a, .sheetFooter button { min-height: 48px; padding: 0.7rem 0.8rem; font-size: 0.82rem; letter-spacing: 0.05em; border-radius: 0.8rem; overflow: visible; text-overflow: clip; }
 .sheetFooter a span, .sheetFooter button span { display: inline-flex; align-items: center; }
+
+/* A slot that's there because something is happening right now (an event today, the meeting) gets a live dot. */
+.dockItemUrgent .dockIcon { position: relative; }
+.dockItemUrgent .dockIcon::after { content: ''; position: absolute; top: -1px; right: -1px; width: 8px; height: 8px; border-radius: 50%; background: #34d399; box-shadow: 0 0 0 2px #0b1226; animation: dockPulse 1.8s ease-in-out infinite; }
+@keyframes dockPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .dockItemUrgent .dockIcon::after { animation: none; } }

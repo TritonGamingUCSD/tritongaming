@@ -40,6 +40,7 @@ Gated by Google sign-in and a role/capability system (`src/lib/capabilities.ts`)
 | Yours | Rewards, Battlepass | Points, shop, and battle pass progress |
 | Events | Events | Create and edit events (flyer upload, schedule, sponsors, venue), a redesigned events table with actions menu, check-in lists with undo and manual check-in, post-event Summary. |
 | Events | Check-In | Camera QR scanner, manual and online code entry, per-day check-in for multi-day events |
+| Events | Meetings | Weekly team meetings (Gen Meeting is the example). Exec schedule one-off or repeating meetings and open one to show its rotating check-in code; officers, leads, exec and recruits type the code to check in, see their history, and open the meeting doc. A question of the meeting and emoji reactions show on the big screen. HR export to CSV. |
 | Resources | TG Members | Directory of everyone with a role |
 | Resources | Documentation | Markdown docs with a table of contents |
 | Resources | QR Studio | Quick style presets (10 gaming looks plus 10 based on division logos), color picker, center icon (built-in, your own upload, or a division logo), PNG/SVG download |
