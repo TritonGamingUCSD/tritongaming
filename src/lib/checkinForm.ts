@@ -10,6 +10,10 @@ export interface CheckinFormConfig {
   entry_academic_year?: string;
   entry_affiliation?: string;
   entry_food_item?: string;
+  // The year question's own options as read from the form (Class of ‘27 ...).
+  // With a person's graduation year these are matched directly, so nobody has to
+  // re-map "3rd Year" -> option each fall; year_mapping is the fallback.
+  year_options?: string[];
   year_mapping?: KvRow[];
   affiliation_mapping?: KvRow[];
 }
@@ -20,6 +24,14 @@ export interface CheckinFormConfig {
 // maps to their most senior affiliation rather than whichever role
 // happened to come back first from the DB.
 const ROLE_ORDER: AppRole[] = ['exec', 'lead', 'officer', 'division', 'alumni', 'recruit', 'admin', 'ucsd'];
+
+// Finds the form option for a graduation year by its trailing two digits, so
+// "Class of ‘27", "Class of '27" and "Class of 2027" all match 2027 - returning
+// the option's exact text (curly quote and all), which is what prefill needs.
+function matchClassOption(options: string[] | undefined, classOf: number): string | undefined {
+  const yy = String(classOf % 100).padStart(2, '0');
+  return options?.find((o) => /(\d{2})\D*$/.exec(o)?.[1] === yy);
+}
 
 function lookup(mapping: KvRow[] | undefined, key: string | null | undefined): string | undefined {
   if (!key) return undefined;
@@ -42,7 +54,7 @@ function lookup(mapping: KvRow[] | undefined, key: string | null | undefined): s
 // to pick).
 export function buildCheckinFormUrl(
   config: CheckinFormConfig,
-  opts: { eventTitle: string; year: string | null; roles: AppRole[]; foodItem: string | null }
+  opts: { eventTitle: string; year: string | null; classOf?: number | null; roles: AppRole[]; foodItem: string | null }
 ): string | null {
   if (!config.form_url?.trim()) return null;
 
@@ -63,7 +75,7 @@ export function buildCheckinFormUrl(
     url.searchParams.set(`entry.${config.entry_event_name}`, opts.eventTitle);
   }
   if (config.entry_academic_year) {
-    const mapped = lookup(config.year_mapping, opts.year);
+    const mapped = (opts.classOf ? matchClassOption(config.year_options, opts.classOf) : undefined) ?? lookup(config.year_mapping, opts.year);
     if (mapped) url.searchParams.set(`entry.${config.entry_academic_year}`, mapped);
   }
   if (config.entry_affiliation) {

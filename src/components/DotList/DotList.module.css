@@ -1,0 +1,4 @@
+/* Each item stays whole on one line when it fits. One that's longer than the
+   whole line by itself has to wrap — balance it so it splits into even halves
+   at a word boundary instead of leaving a single orphan word. */
+.item { display: inline-block; max-width: 100%; text-wrap: balance; }

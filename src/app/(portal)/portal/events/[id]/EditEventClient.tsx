@@ -19,7 +19,7 @@ export default function EditEventClient({
   initial: EventFormValues;
   divisions: { id: string; name: string }[];
   seedCheckinFormConfig?: CheckinFormConfigValue | null;
-  previewViewer?: { year: string | null; roles: import('@/types/database').AppRole[] };
+  previewViewer?: { year: string | null; classOf?: number | null; roles: import('@/types/database').AppRole[] };
 }) {
   const router = useRouter();
 

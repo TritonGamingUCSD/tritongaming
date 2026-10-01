@@ -11,7 +11,7 @@ export default function NewEventClient({ divisions, initial = EMPTY_EVENT_FORM, 
   divisions: { id: string; name: string }[];
   initial?: EventFormValues;
   seedCheckinFormConfig?: CheckinFormConfigValue | null;
-  previewViewer?: { year: string | null; roles: import('@/types/database').AppRole[] };
+  previewViewer?: { year: string | null; classOf?: number | null; roles: import('@/types/database').AppRole[] };
 }) {
   const router = useRouter();
 

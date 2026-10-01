@@ -5,7 +5,7 @@ import { hasCapability } from '@/lib/capabilities';
 import MembersSectionContent from './MembersSectionContent';
 import { getMembersData } from './getMembersData';
 
-export const metadata = { title: 'Members' };
+export const metadata = { title: 'TG Members' };
 export const dynamic = 'force-dynamic';
 
 export default async function MembersPage() {

@@ -1,5 +1,7 @@
 'use client';
 
+import { showToast } from '@/lib/toast';
+import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
 import { useState } from 'react';
 import Image from 'next/image';
 import { Pencil, X, Check, MapPin, ChevronUp, ChevronDown, GripVertical } from 'lucide-react';
@@ -49,7 +51,13 @@ export default function ContentEditor({ blocks, contentMap, lastEdited }: Props)
     blocks.forEach((b) => { init[b.key] = { ...(contentMap[b.key] || {}) }; });
     return init;
   });
+  // What's actually saved, per block — edits to several blocks can be pending
+  // at once (the form state outlives opening/closing a panel), so "unsaved"
+  // means forms differs from this, not "since the last save of anything".
+  const [savedForms, setSavedForms] = useState(forms);
   const [saving, setSaving] = useState<string | null>(null);
+  const hasUnsaved = JSON.stringify(forms) !== JSON.stringify(savedForms);
+  useUnsavedChanges(hasUnsaved ? forms : 'CLEAN');
   const [saved, setSaved] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -77,7 +85,9 @@ export default function ContentEditor({ blocks, contentMap, lastEdited }: Props)
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error || 'Failed to save');
       }
+      setSavedForms((prev) => ({ ...prev, [key]: forms[key] }));
       setSaved(key);
+      showToast('Site content saved');
       setTimeout(() => setSaved(null), 3000);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save');
@@ -142,7 +152,6 @@ export default function ContentEditor({ blocks, contentMap, lastEdited }: Props)
                     </div>
                     {preview && <div className={styles.blockPreview}>{preview}</div>}
                     {le && <div className={styles.lastEdited}>Edited by {le.by} · {timeAgo(le.at)}</div>}
-                    {saved === block.key && <div className={styles.savedBadge}><Check size={13} strokeWidth={1.75} aria-hidden="true" /> Saved</div>}
                   </button>
                 );
               })}
@@ -200,7 +209,7 @@ export default function ContentEditor({ blocks, contentMap, lastEdited }: Props)
                 {saving === activeBlock.key
                   ? <><span className={styles.savingSpinner} /> Saving…</>
                   : saved === activeBlock.key
-                  ? <><Check size={15} strokeWidth={1.75} aria-hidden="true" /> Saved!</>
+                  ? <><Check size={16} strokeWidth={2.5} aria-hidden="true" /> Saved</>
                   : 'Save Changes'}
               </button>
             </div>

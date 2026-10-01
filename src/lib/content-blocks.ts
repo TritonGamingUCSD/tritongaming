@@ -181,10 +181,10 @@ export const CONTENT_BLOCKS = [
   {
     key: 'page.about',
     title: 'Hero',
-    description: 'The banner at the top of the About page. Board members themselves are managed separately, from each officer’s own profile.',
+    description: 'The banner at the top of the Team page. Board members themselves are managed separately, from each officer’s own profile.',
     icon: createElement(Users, ICON_PROPS),
-    category: 'About',
-    pages: ['/about'],
+    category: 'Team',
+    pages: ['/team'],
     fields: [
       { name: 'label',    label: 'Eyebrow Label', type: 'text'     as const, placeholder: 'THE PEOPLE BEHIND TG' },
       { name: 'title',    label: 'Page Title',    type: 'text'     as const, placeholder: 'Meet the Team' },
@@ -428,4 +428,4 @@ export type FieldDef =
 // Order the block list is grouped in — mirrors the site's own nav order, so
 // "where is this on the site" reads left-to-right the same way the site
 // itself does.
-export const CATEGORY_ORDER = ['Global', 'Homepage', 'About', 'Our Story', 'Divisions', 'Events', 'Sponsors', 'Get Involved', 'Membership', 'Media'];
+export const CATEGORY_ORDER = ['Global', 'Homepage', 'Team', 'Our Story', 'Divisions', 'Events', 'Sponsors', 'Get Involved', 'Membership', 'Media'];

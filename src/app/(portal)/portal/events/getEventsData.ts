@@ -8,15 +8,15 @@ export interface EventTicketStat { title: string; issued: number; checkedIn: num
 // The signed-in person's own year and roles — what "Preview AS Form" is built
 // from, so the preview shows exactly what they'd see as an attendee (their
 // year, their affiliation) rather than a made-up sample.
-export async function getFormPreviewViewer(): Promise<{ year: string | null; roles: AppRole[] }> {
+export async function getFormPreviewViewer(): Promise<{ year: string | null; classOf: number | null; roles: AppRole[] }> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { year: null, roles: [] };
+  if (!user) return { year: null, classOf: null, roles: [] };
   const [{ data: profile }, { data: roleRows }] = await Promise.all([
-    supabase.from('profiles').select('year').eq('id', user.id).maybeSingle(),
+    supabase.from('profiles').select('year, class_of').eq('id', user.id).maybeSingle(),
     supabase.from('user_roles').select('role').eq('user_id', user.id),
   ]);
-  return { year: profile?.year ?? null, roles: (roleRows ?? []).map((r) => r.role as AppRole) };
+  return { year: profile?.year ?? null, classOf: profile?.class_of ?? null, roles: (roleRows ?? []).map((r) => r.role as AppRole) };
 }
 
 // Shared by the standalone /portal/events route and the portal hub.
@@ -48,6 +48,7 @@ export async function getEventsData() {
       ? buildCheckinFormUrl(config, {
           eventTitle: e.checkin_form_event_name?.trim() || e.title,
           year: viewer.year,
+          classOf: viewer.classOf,
           roles: viewer.roles,
           foodItem: e.checkin_food_item ?? null,
         })

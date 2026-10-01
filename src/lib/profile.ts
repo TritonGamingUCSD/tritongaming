@@ -12,16 +12,90 @@ export function isOrgMember(userRoles: Array<{ role: AppRole }> | null | undefin
   return !(roles.size === 0 || (roles.size === 1 && roles.has('ucsd')));
 }
 
-// "Basic info" required before someone can claim a ticket — checked once,
-// tied to their account, so they're never asked again after it's filled in.
-// Gamer tag, pronouns, bio, and birthday are intentionally never required.
-//
-// Year/college/major are only required for verified members (isUcsd — see
-// isVerifiedMember in lib/capabilities.ts) — a non-UCSD guest just needs a name.
-export function hasBasicProfileInfo(profile: Pick<Profile, 'display_name' | 'major' | 'year' | 'college'>, isUcsd: boolean): boolean {
-  if (!profile.display_name?.trim()) return false;
-  if (!isUcsd) return true;
-  return !!profile.major?.trim() && !!profile.year?.trim() && !!profile.college?.trim();
+// ── Class year ───────────────────────────────────────────────────────────────
+// People give their graduation year ("Class of ‘28"); "3rd Year" is derived from
+// it, so it rolls forward on its own every September (the database keeps
+// profiles.year in step — see 20261002030000_class_of_year.sql). These mirror
+// the SQL functions of the same names. The academic year runs from September.
+export function academicYearEnd(now: Date = new Date()): number {
+  const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', year: 'numeric', month: 'numeric' }).formatToParts(now);
+  const year = Number(parts.find((p) => p.type === 'year')?.value);
+  const month = Number(parts.find((p) => p.type === 'month')?.value);
+  return year + (month >= 9 ? 1 : 0);
+}
+
+export function classOfToYear(classOf: number, now: Date = new Date()): string {
+  const end = academicYearEnd(now);
+  if (classOf < end) return 'Alumni';
+  const ahead = classOf - end;
+  return ahead >= 3 ? '1st Year' : ahead === 2 ? '2nd Year' : ahead === 1 ? '3rd Year' : '4th Year';
+}
+
+// "Class of ‘28" — same wording (curly quote) as UCSD's AS Form uses.
+export const classLabel = (classOf: number) => `Class of ‘${String(classOf % 100).padStart(2, '0')}`;
+
+// The choices for the profile's year field: the classes currently enrolled
+// (plus next fall's incoming class over the summer), then Graduate / Alumni.
+// Values are the graduation year as a string, or 'Graduate' / 'Alumni'.
+export function yearChoiceOptions(now: Date = new Date()): Array<{ value: string; label: string }> {
+  const end = academicYearEnd(now);
+  const month = Number(new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', month: 'numeric' }).format(now));
+  const classes: number[] = [];
+  for (let c = end; c <= end + 3; c++) classes.push(c);
+  if (month < 9) classes.push(end + 4); // incoming freshmen, before fall quarter
+  return [
+    ...classes.map((c) => ({ value: String(c), label: `${classLabel(c)} · ${classOfToYear(c, now)}` })),
+    { value: 'Graduate', label: 'Graduate student' },
+    { value: 'Alumni', label: 'Alumni' },
+  ];
+}
+
+// The select's value for a saved profile.
+export function yearChoiceOf(profile: { class_of?: number | null; year?: string | null }): string {
+  if (profile.class_of) return String(profile.class_of);
+  const y = profile.year?.trim() ?? '';
+  return y === 'Graduate' || y === 'Alumni' ? y : '';
+}
+
+// The "3rd Year"-style label for a select value (what's shown on cards/exports).
+export function yearLabelOfChoice(choice: string, now: Date = new Date()): string {
+  const n = Number(choice);
+  return Number.isFinite(n) && n > 1900 ? classOfToYear(n, now) : choice;
+}
+
+// Gender is stored apart from the public profile row (see profile_private) —
+// these are the allowed values. "Prefer not to say" counts as answered.
+export const GENDER_OPTIONS = ['Male', 'Female', 'Non-binary', 'Other', 'Prefer not to say'] as const;
+
+type ProfileInfo = Pick<Profile, 'display_name' | 'major' | 'year' | 'college' | 'pronouns'> & { gender?: string | null; org_title?: string | null };
+
+// The required profile fields still blank, as labels. Name, gender and
+// pronouns are required for everyone; year, college and major only for verified UCSD
+// members (isUcsd — see isVerifiedMember in lib/capabilities.ts), since a
+// non-UCSD guest has none of those to give.
+// `requireOrgTitle` is for people who hold an org position (officer, lead, exec,
+// division lead — see canSetOrgTitle): their title appears on the public
+// officer card, so it isn't optional for them. It's deliberately not part of
+// hasBasicProfileInfo — a missing title shouldn't block claiming a ticket.
+export function getMissingProfileFields(profile: ProfileInfo, isUcsd: boolean, opts: { requireOrgTitle?: boolean } = {}): string[] {
+  const missing: string[] = [];
+  if (!profile.display_name?.trim()) missing.push('Name');
+  if (isUcsd) {
+    if (!profile.year?.trim()) missing.push('Year');
+    if (!profile.college?.trim()) missing.push('College');
+    if (!profile.major?.trim()) missing.push('Major');
+  }
+  if (!profile.gender?.trim()) missing.push('Gender');
+  if (!profile.pronouns?.trim()) missing.push('Pronouns');
+  if (opts.requireOrgTitle && !profile.org_title?.trim()) missing.push('Officer title');
+  return missing;
+}
+
+// "Basic info" required before someone can claim a ticket — tied to their
+// account, so once it's filled in they're never asked again. Gamer tag,
+// pronouns and bio are intentionally never required.
+export function hasBasicProfileInfo(profile: ProfileInfo, isUcsd: boolean): boolean {
+  return getMissingProfileFields(profile, isUcsd).length === 0;
 }
 
 // Leaderboard "anonymous" display — masks the first name instead of a
@@ -74,7 +148,36 @@ export function socialHref(platform: SocialPlatform, value: string): string | nu
   return platform.urlPrefix + value.trim().replace(/^@/, '');
 }
 
+// Pronoun choices for the profile dropdown. Anything not in this list is a
+// custom "Other" entry, stored as the text the person typed.
+export const PRONOUN_OPTIONS = ['He/Him', 'She/Her', 'They/Them', 'He/They', 'She/They', 'Any pronouns', 'Prefer not to say'] as const;
+
+// Optional "what do you play" answers (stored privately, for club analytics).
+export const PLATFORM_OPTIONS = ['PC', 'Console', 'Mobile', 'Tabletop'] as const;
+
+// A link on someone's officer card (portfolio, GitHub, personal site…).
+export interface PortfolioLink { label: string; url: string }
+export const MAX_PORTFOLIO_LINKS = 5;
+
+// Accepts what people actually type ("github.com/me", "https://…") and returns a
+// safe http(s) URL, or null if it isn't one — never javascript:, data:, etc.,
+// since these render as clickable links on a public page.
+export function normalizePortfolioUrl(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const withScheme = /^[a-z][a-z0-9+.-]*:/i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  try {
+    const u = new URL(withScheme);
+    if (u.protocol !== 'https:' && u.protocol !== 'http:') return null;
+    if (!u.hostname.includes('.')) return null;
+    return u.toString();
+  } catch {
+    return null;
+  }
+}
+
 export type BoardVisibility = {
+  portfolio?: boolean;
   bio?: boolean;
   year_major?: boolean;
   socials?: boolean;

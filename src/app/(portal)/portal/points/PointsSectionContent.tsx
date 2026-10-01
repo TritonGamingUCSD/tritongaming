@@ -1,5 +1,7 @@
 'use client';
 
+import { showToast } from '@/lib/toast';
+import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
 import { useEffect, useState } from 'react';
 import { Award, ShoppingBag, Trophy, Settings, Copy, Check, QrCode, Gift, Lock, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -451,6 +453,7 @@ export default function PointsSectionContent({
       const json = await res.json();
       if (!res.ok) { setManageError(json.error || 'Failed to create reward.'); return; }
       setManageItems((prev) => [json.item, ...(prev ?? [])]);
+      showToast('Reward created');
       setNewReward({ title: '', description: '', point_cost: '', stock: '', min_tier: '', max_per_user: '', reward_type: 'physical', grants_fast_pass: false, isTierUnlock: false });
     } catch {
       setManageError('Network error. Please try again.');
@@ -521,6 +524,7 @@ export default function PointsSectionContent({
       const json = await res.json();
       if (!res.ok) { setEditError(json.error || 'Failed to save changes.'); return; }
       setManageItems((prev) => prev?.map((i) => (i.id === editingId ? json.item : i)) ?? null);
+      showToast('Reward saved');
       setEditingId(null);
     } catch {
       setEditError('Network error. Please try again.');
@@ -534,6 +538,8 @@ export default function PointsSectionContent({
   const [manageTiers, setManageTiers] = useState<TierRow[] | null>(null);
   const [tierError, setTierError] = useState('');
   const [newTier, setNewTier] = useState({ name: '', min_points: '', color: '#60a5fa' });
+  // Warn if a new reward / tier has been started but not created.
+  useUnsavedChanges({ newReward, newTier });
   const [creatingTier, setCreatingTier] = useState(false);
   const [editingTierId, setEditingTierId] = useState<string | null>(null);
   const [tierEditForm, setTierEditForm] = useState({ name: '', min_points: '', color: '#60a5fa' });
@@ -577,6 +583,7 @@ export default function PointsSectionContent({
       if (!res.ok) { setTierError(json.error || 'Failed to create tier.'); return; }
       const updated = [...(manageTiers ?? []), json.tier];
       setManageTiers(updated);
+      showToast('Tier created');
       syncTiersState(updated);
       setNewTier({ name: '', min_points: '', color: '#60a5fa' });
     } catch {
@@ -607,6 +614,7 @@ export default function PointsSectionContent({
       if (!res.ok) { setTierError(json.error || 'Failed to save tier.'); return; }
       const updated = (manageTiers ?? []).map((t) => (t.id === editingTierId ? json.tier : t));
       setManageTiers(updated);
+      showToast('Tier saved');
       syncTiersState(updated);
       setEditingTierId(null);
     } catch {
@@ -626,6 +634,7 @@ export default function PointsSectionContent({
       if (!res.ok) { setTierError(json.error || 'Failed to delete tier.'); return; }
       const updated = (manageTiers ?? []).filter((x) => x.id !== t.id);
       setManageTiers(updated);
+      showToast('Tier deleted');
       syncTiersState(updated);
     } catch {
       setTierError('Network error. Please try again.');

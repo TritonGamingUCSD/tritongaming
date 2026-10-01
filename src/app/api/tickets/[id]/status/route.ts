@@ -51,7 +51,7 @@ export async function GET(request: Request, { params }: Params) {
 
   if (ticket.status === 'used' && event?.requires_checkin_form) {
     const [{ data: profile }, { data: roleRows }] = await Promise.all([
-      supabase.from('profiles').select('year').eq('id', user.id).maybeSingle(),
+      supabase.from('profiles').select('year, class_of').eq('id', user.id).maybeSingle(),
       supabase.from('user_roles').select('role').eq('user_id', user.id),
     ]);
     // Per-event config only — the form link differs for each event.
@@ -60,6 +60,7 @@ export async function GET(request: Request, { params }: Params) {
       checkinFormUrl = buildCheckinFormUrl(config, {
         eventTitle: event.checkin_form_event_name?.trim() || event.title,
         year: profile?.year ?? null,
+        classOf: profile?.class_of ?? null,
         roles: (roleRows ?? []).map((r) => r.role as AppRole),
         foodItem: event.checkin_food_item ?? null,
       });

@@ -1,11 +1,12 @@
 'use client';
 
+import MemberCardBody from '@/components/MemberCard/MemberCardBody';
 import { useState } from 'react';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'motion/react';
-import { X, Mail } from 'lucide-react';
-import { resolveAvatarUrl, socialHref, isVisible, SOCIAL_PLATFORMS } from '@/lib/profile';
-import type { BoardMember, BoardTier } from '@/app/(main)/about/getBoardMembers';
+import { X } from 'lucide-react';
+import { resolveAvatarUrl, isVisible } from '@/lib/profile';
+import type { BoardMember, BoardTier } from '@/app/(main)/team/getBoardMembers';
 import styles from './BoardSection.module.css';
 
 const TIER_LABELS: Record<BoardTier, string> = {
@@ -18,6 +19,54 @@ const TIER_LABELS: Record<BoardTier, string> = {
 const TIER_ORDER: BoardTier[] = ['exec', 'lead', 'officer', 'alumni'];
 
 const SPRING = { type: 'spring' as const, stiffness: 420, damping: 38 };
+
+// The full detail panel's contents (everything but its close button) — the same
+// MemberCardBody the portal's TG Members roster uses, fed only the fields this
+// officer chose to show publicly (board_visibility). Also used by the profile
+// page's live preview (BoardCardPreview), so the preview is the real thing.
+export function PanelBody({ member, copiedKey, onCopy }: { member: BoardMember; copiedKey: string | null; onCopy: (key: string, value: string) => void }) {
+  const show = (key: Parameters<typeof isVisible>[1]) => isVisible(member.board_visibility, key);
+  return (
+    <MemberCardBody
+      copiedKey={copiedKey}
+      onCopy={onCopy}
+      data={{
+        name: member.display_name,
+        avatarUrl: resolveAvatarUrl(member),
+        gamerTag: member.gamer_tag,
+        orgTitle: member.org_title,
+        pronouns: show('pronouns') ? member.pronouns : null,
+        // Year, major and college travel together under one visibility option.
+        major: show('year_major') ? member.major : null,
+        year: show('year_major') ? member.year : null,
+        college: show('year_major') ? member.college : null,
+        emails: show('email') && member.email ? [member.email] : [],
+        socialLinks: show('socials') ? member.social_links : null,
+        portfolioLinks: show('portfolio') ? member.portfolio_links : null,
+        bio: show('bio') ? member.bio : null,
+      }}
+    />
+  );
+}
+
+// The grid card's contents (picture, name, title) — shared with the live preview.
+export function CardFace({ m }: { m: BoardMember }) {
+  const avatarUrl = resolveAvatarUrl(m);
+  return (
+    <>
+      {avatarUrl ? (
+        <Image src={avatarUrl} alt="" width={120} height={120} className={styles.avatar} unoptimized referrerPolicy="no-referrer" />
+      ) : (
+        <div className={styles.avatarFallback}>{(m.display_name || '?')[0].toUpperCase()}</div>
+      )}
+      <div className={styles.name}>
+        {m.display_name || 'Anonymous'}
+        {m.gamer_tag && <span className={styles.tag}> &quot;{m.gamer_tag}&quot;</span>}
+      </div>
+      {m.org_title && <div className={styles.title}>{m.org_title}</div>}
+    </>
+  );
+}
 
 // Each person's card pulls straight from their own profile (name, org
 // title, bio, picture) — set by them on /portal/profile, not typed in by an
@@ -87,87 +136,7 @@ export default function BoardSection({ members }: { members: BoardMember[] }) {
                 >
                   <button className={styles.closeBtn} onClick={() => setOpenId(null)} aria-label="Close"><X size={16} strokeWidth={1.75} /></button>
 
-                  {(() => {
-                    const avatarUrl = resolveAvatarUrl(tierOpenMember);
-                    return avatarUrl ? (
-                      <Image src={avatarUrl} alt="" width={140} height={140} className={styles.panelAvatar} unoptimized referrerPolicy="no-referrer" />
-                    ) : (
-                      <div className={styles.panelAvatarFallback}>{(tierOpenMember.display_name || '?')[0].toUpperCase()}</div>
-                    );
-                  })()}
-
-                  <div className={styles.panelName}>
-                    {tierOpenMember.display_name || 'Anonymous'}
-                    {tierOpenMember.gamer_tag && (
-                      <span className={styles.tag}> &quot;{tierOpenMember.gamer_tag}&quot;</span>
-                    )}
-                  </div>
-                  {tierOpenMember.org_title && <div className={styles.panelTitle}>{tierOpenMember.org_title}</div>}
-                  {isVisible(tierOpenMember.board_visibility, 'pronouns') && tierOpenMember.pronouns && (
-                    <div className={styles.pronouns}>{tierOpenMember.pronouns}</div>
-                  )}
-                  {isVisible(tierOpenMember.board_visibility, 'year_major') && (tierOpenMember.year || tierOpenMember.major) && (
-                    <div className={styles.meta}>{[tierOpenMember.year, tierOpenMember.major].filter(Boolean).join(' · ')}</div>
-                  )}
-                  {isVisible(tierOpenMember.board_visibility, 'email') && tierOpenMember.email && (
-                    <a href={`mailto:${tierOpenMember.email}`} className={styles.emailLink}>
-                      <Mail size={13} strokeWidth={1.75} aria-hidden="true" /> {tierOpenMember.email}
-                    </a>
-                  )}
-                  {isVisible(tierOpenMember.board_visibility, 'bio') && (
-                    <motion.p
-                      className={styles.panelBio}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1, transition: { delay: 0.06, duration: 0.18 } }}
-                      exit={{ opacity: 0, transition: { duration: 0.08 } }}
-                    >
-                      {tierOpenMember.bio || 'No bio yet.'}
-                    </motion.p>
-                  )}
-                  {isVisible(tierOpenMember.board_visibility, 'socials') && Object.keys(tierOpenMember.social_links).length > 0 && (
-                    <motion.div
-                      className={styles.socialRow}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1, transition: { delay: 0.1, duration: 0.18 } }}
-                      exit={{ opacity: 0, transition: { duration: 0.05 } }}
-                    >
-                      {SOCIAL_PLATFORMS.filter((p) => tierOpenMember.social_links[p.key]).map((p) => {
-                        const value = tierOpenMember.social_links[p.key];
-                        const href = socialHref(p, value);
-                        const label = `${tierOpenMember.display_name || 'Member'}'s ${p.label}`;
-                        return href ? (
-                          <a key={p.key} href={href} target="_blank" rel="noopener noreferrer" className={styles.socialBtn} aria-label={label}>
-                            <Image src={p.logo} alt="" width={20} height={20} unoptimized />
-                          </a>
-                        ) : (
-                          <span key={p.key} className={styles.socialBtnWrap}>
-                            <AnimatePresence>
-                              {copiedKey === p.key && (
-                                <motion.span
-                                  className={styles.copiedBadge}
-                                  initial={{ opacity: 0, y: 4, scale: 0.9 }}
-                                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                                  exit={{ opacity: 0, y: 4, scale: 0.9 }}
-                                  transition={{ duration: 0.15 }}
-                                >
-                                  Copied!
-                                </motion.span>
-                              )}
-                            </AnimatePresence>
-                            <button
-                              type="button"
-                              className={styles.socialBtn}
-                              aria-label={`Copy ${label}`}
-                              title={value}
-                              onClick={() => copyHandle(p.key, value)}
-                            >
-                              <Image src={p.logo} alt="" width={20} height={20} unoptimized />
-                            </button>
-                          </span>
-                        );
-                      })}
-                    </motion.div>
-                  )}
+                  <PanelBody member={tierOpenMember} copiedKey={copiedKey} onCopy={copyHandle} />
                 </motion.div>
               ) : (
                 <motion.div
@@ -179,7 +148,6 @@ export default function BoardSection({ members }: { members: BoardMember[] }) {
                   transition={{ duration: 0.15 }}
                 >
                   {group.map((m) => {
-                    const avatarUrl = resolveAvatarUrl(m);
                     return (
                       <motion.button
                         key={m.id}
@@ -189,16 +157,7 @@ export default function BoardSection({ members }: { members: BoardMember[] }) {
                         transition={SPRING}
                         whileHover={{ y: -3, transition: { duration: 0.15 } }}
                       >
-                        {avatarUrl ? (
-                          <Image src={avatarUrl} alt="" width={120} height={120} className={styles.avatar} unoptimized referrerPolicy="no-referrer" />
-                        ) : (
-                          <div className={styles.avatarFallback}>{(m.display_name || '?')[0].toUpperCase()}</div>
-                        )}
-                        <div className={styles.name}>
-                          {m.display_name || 'Anonymous'}
-                          {m.gamer_tag && <span className={styles.tag}> &quot;{m.gamer_tag}&quot;</span>}
-                        </div>
-                        {m.org_title && <div className={styles.title}>{m.org_title}</div>}
+                        <CardFace m={m} />
                       </motion.button>
                     );
                   })}

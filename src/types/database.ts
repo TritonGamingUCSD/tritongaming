@@ -63,13 +63,14 @@ export interface Database {
           gamer_tag: string | null;
           major: string | null;
           year: string | null;
+          class_of: number | null;
           college: string | null;
           pronouns: string | null;
           discord: string | null;
-          birthday: string | null;
           org_title: string | null;
           show_on_board: boolean;
           social_links: Record<string, string>;
+          portfolio_links: Array<{ label: string; url: string }>;
           board_visibility: Record<string, boolean>;
           referral_code: string;
           referred_by: string | null;
@@ -84,6 +85,20 @@ export interface Database {
         };
         Insert: Omit<Database['public']['Tables']['profiles']['Row'], 'created_at' | 'updated_at'>;
         Update: Partial<Database['public']['Tables']['profiles']['Insert']>;
+      };
+      // Owner-only (and admin-readable) — kept off the publicly readable
+      // profiles table on purpose. See 20261002000000_profile_gender_private_drop_birthday.sql.
+      profile_private: {
+        Row: {
+          user_id: string;
+          gender: 'Male' | 'Female' | 'Non-binary' | 'Other' | 'Prefer not to say' | null;
+          division_interests: string[];
+          platforms: string[];
+          favorite_games: string | null;
+          updated_at: string;
+        };
+        Insert: Partial<Database['public']['Tables']['profile_private']['Row']> & { user_id: string };
+        Update: Partial<Database['public']['Tables']['profile_private']['Row']>;
       };
       user_roles: {
         Row: {

@@ -1,5 +1,6 @@
 'use client';
 
+import { showToast } from '@/lib/toast';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
@@ -37,6 +38,7 @@ export default function DeleteEventModal({
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error || 'Failed to delete event.');
+      showToast('Event deleted');
       router.refresh();
       onClose();
     } catch (e) {

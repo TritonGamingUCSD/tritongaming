@@ -1,5 +1,7 @@
 'use client';
 
+import { showToast } from '@/lib/toast';
+import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
 import { useState } from 'react';
 import { Plus, ExternalLink, Trash2, Image as ImageIcon, ChevronUp, ChevronDown, GripVertical } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -32,6 +34,8 @@ export default function PhotoAlbumsSectionContent({ albums: initial, canManage }
   const [albums, setAlbums] = useState(initial);
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState(EMPTY_DRAFT);
+  // The add-album form only counts while it's open.
+  useUnsavedChanges(adding ? draft : EMPTY_DRAFT);
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -62,6 +66,7 @@ export default function PhotoAlbumsSectionContent({ albums: initial, canManage }
     setAlbums((prev) => [data as AlbumRow, ...prev]);
     setDraft(EMPTY_DRAFT);
     setAdding(false);
+    showToast('Album added');
   }
 
   // Re-numbers sort_order to match a new array order (drag-and-drop can
@@ -82,6 +87,8 @@ export default function PhotoAlbumsSectionContent({ albums: initial, canManage }
     if (results.some((r) => r.error)) {
       setError('Failed to reorder albums. Please try again.');
       setAlbums(previous);
+    } else {
+      showToast('Album order saved');
     }
   }
 
@@ -107,6 +114,7 @@ export default function PhotoAlbumsSectionContent({ albums: initial, canManage }
       return;
     }
     setAlbums((prev) => prev.filter((a) => a.id !== id));
+    showToast('Album removed');
   }
 
   return (

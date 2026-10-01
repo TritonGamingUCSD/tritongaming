@@ -1,5 +1,7 @@
 'use client';
 
+import { showToast } from '@/lib/toast';
+import { useUnsavedChanges, confirmDiscardUnsaved } from '@/lib/useUnsavedChanges';
 import { useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Image as ImageIcon, Paperclip, BookOpen, X } from 'lucide-react';
@@ -165,6 +167,9 @@ export default function DocsClient({ initialDocs, initialCategories, userId, can
   const [newCategory, setNewCategory] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  // Only an open editor holds unsaved edits. Opening a different doc (or
+  // starting a new one) re-baselines via the key instead of counting as a change.
+  const { markSaved } = useUnsavedChanges(editing ? draft : null, undefined, `${editing}:${isNew}:${selectedId}`);
 
   const selected = docs.find((d) => d.id === selectedId) ?? null;
   const categoryById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
@@ -194,6 +199,7 @@ export default function DocsClient({ initialDocs, initialCategories, userId, can
   const parentOptions = docs.filter((d) => !d.parent_id && d.id !== selectedId);
 
   function startNew(parentId: string | null = null) {
+    if (!confirmDiscardUnsaved()) return;
     setIsNew(true);
     setEditing(true);
     setSelectedId(null);
@@ -202,6 +208,7 @@ export default function DocsClient({ initialDocs, initialCategories, userId, can
   }
 
   function startEdit(doc: Doc) {
+    if (!confirmDiscardUnsaved()) return;
     setIsNew(false);
     setEditing(true);
     setSelectedId(doc.id);
@@ -216,6 +223,7 @@ export default function DocsClient({ initialDocs, initialCategories, userId, can
   }
 
   function cancelEdit() {
+    if (!confirmDiscardUnsaved()) return;
     setEditing(false);
     setIsNew(false);
     setError('');
@@ -300,6 +308,8 @@ export default function DocsClient({ initialDocs, initialCategories, userId, can
         if (err) throw err;
         setDocs((prev) => prev.map((d) => (d.id === selected.id ? (data as Doc) : d)));
       }
+      markSaved();
+      showToast('Doc saved');
       setEditing(false);
       setIsNew(false);
     } catch {
@@ -324,6 +334,7 @@ export default function DocsClient({ initialDocs, initialCategories, userId, can
       return;
     }
     setDocs((prev) => prev.filter((d) => d.id !== selected.id && d.parent_id !== selected.id));
+    showToast('Doc deleted');
     setSelectedId(null);
     setEditing(false);
   }
@@ -376,7 +387,7 @@ export default function DocsClient({ initialDocs, initialCategories, userId, can
               <div key={doc.id}>
                 <button
                   className={`${styles.docItem} ${selectedId === doc.id && !isNew ? styles.docItemActive : ''}`}
-                  onClick={() => { setSelectedId(doc.id); setEditing(false); setIsNew(false); }}
+                  onClick={() => { if (!confirmDiscardUnsaved()) return; setSelectedId(doc.id); setEditing(false); setIsNew(false); }}
                 >
                   {doc.title}
                 </button>
@@ -384,7 +395,7 @@ export default function DocsClient({ initialDocs, initialCategories, userId, can
                   <button
                     key={child.id}
                     className={`${styles.docItem} ${styles.docItemChild} ${selectedId === child.id && !isNew ? styles.docItemActive : ''}`}
-                    onClick={() => { setSelectedId(child.id); setEditing(false); setIsNew(false); }}
+                    onClick={() => { if (!confirmDiscardUnsaved()) return; setSelectedId(child.id); setEditing(false); setIsNew(false); }}
                   >
                     {child.title}
                   </button>

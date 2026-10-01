@@ -13,10 +13,12 @@ export interface BoardMember {
   bio: string | null;
   major: string | null;
   year: string | null;
+  college: string | null;
   gamer_tag: string | null;
   pronouns: string | null;
   email: string | null;
   social_links: Record<string, string>;
+  portfolio_links: Array<{ label: string; url: string }>;
   board_visibility: Record<string, boolean>;
   tier: BoardTier;
   board_order: number | null;
@@ -33,10 +35,12 @@ interface BoardProfileRow {
   bio: string | null;
   major: string | null;
   year: string | null;
+  college: string | null;
   gamer_tag: string | null;
   pronouns: string | null;
   show_on_board: boolean;
   social_links: Record<string, string> | null;
+  portfolio_links: Array<{ label: string; url: string }> | null;
   board_visibility: Record<string, boolean> | null;
   board_order: number | null;
   user_roles: Array<{ role: AppRole }>;
@@ -61,7 +65,7 @@ export async function getBoardMembers(): Promise<BoardMember[]> {
   const { data, error } = await supabase
     .from('profiles')
     .select(`
-      id, display_name, avatar_url, custom_avatar_url, org_title, bio, major, year, gamer_tag, pronouns, show_on_board, social_links, board_visibility, board_order,
+      id, display_name, avatar_url, custom_avatar_url, org_title, bio, major, year, college, gamer_tag, pronouns, show_on_board, social_links, portfolio_links, board_visibility, board_order,
       user_roles!user_roles_user_id_fkey(role)
     `);
 
@@ -107,10 +111,12 @@ export async function getBoardMembers(): Promise<BoardMember[]> {
       bio: row.bio,
       major: row.major,
       year: row.year,
+      college: row.college,
       gamer_tag: row.gamer_tag,
       pronouns: row.pronouns,
       email: emailById.get(row.id) ?? null,
       social_links: row.social_links ?? {},
+      portfolio_links: row.portfolio_links ?? [],
       board_visibility: row.board_visibility ?? {},
       tier,
       board_order: row.board_order,

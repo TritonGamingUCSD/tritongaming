@@ -16,6 +16,9 @@ export interface CheckinFormConfigValue {
   entry_academic_year: string;
   entry_affiliation: string;
   entry_food_item: string;
+  // Options of the year question as read from the form - matched against a
+  // person's graduation year directly (see lib/checkinForm.ts).
+  year_options?: string[];
   year_mapping: MappingRow[];
   affiliation_mapping: MappingRow[];
 }
@@ -229,6 +232,12 @@ export default function CheckinFormFieldsEditor({ value, onChange }: {
           next = { ...next, affiliation_mapping: q.options.map((opt) => ({ value: '', label: opt })) };
         }
       }
+      // Always refresh the year question's option list from the live form, so
+      // the graduation year is matched against what the form offers *now*.
+      const yearQ = next.entry_academic_year ? byEntryId.get(next.entry_academic_year) : undefined;
+      if (yearQ?.options && JSON.stringify(yearQ.options) !== JSON.stringify(next.year_options)) {
+        next = { ...next, year_options: yearQ.options };
+      }
       if (next !== value) onChange(next);
 
       // Flag anything already configured that no longer matches the live
@@ -263,6 +272,7 @@ export default function CheckinFormFieldsEditor({ value, onChange }: {
     const next: CheckinFormConfigValue = { ...value, [field]: q.entryId };
     if (field === 'entry_academic_year' && q.options) {
       next.year_mapping = q.options.map((opt) => ({ value: '', label: opt }));
+      next.year_options = q.options;
     }
     if (field === 'entry_affiliation' && q.options) {
       next.affiliation_mapping = q.options.map((opt) => ({ value: '', label: opt }));

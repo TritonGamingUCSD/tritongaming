@@ -1,5 +1,7 @@
 'use client';
 
+import { showToast } from '@/lib/toast';
+import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
 import { useState } from 'react';
 import Link from 'next/link';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
@@ -108,6 +110,7 @@ export default function DivisionForm({
   canRename?: boolean;
 }) {
   const [form, setForm] = useState<DivisionFormValues>(initial);
+  const { markSaved } = useUnsavedChanges(form);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -122,6 +125,10 @@ export default function DivisionForm({
     const err = await onSubmit(form);
     setSaving(false);
     if (err) setError(err);
+    else {
+      markSaved();
+      showToast('Division saved', { nextPage: true });
+    }
   }
 
   return (

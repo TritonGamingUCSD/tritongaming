@@ -37,7 +37,7 @@ export async function GET(request: Request, { params }: Params) {
 
   const { data: tickets } = await supabase
     .from('tickets')
-    .select('user_id, status, checked_in_at, created_at, user:profiles!tickets_user_id_fkey(display_name, gamer_tag)')
+    .select('user_id, status, checked_in_at, created_at, user:profiles!tickets_user_id_fkey(display_name, gamer_tag, year, college, major)')
     .eq('event_id', id)
     .order('created_at', { ascending: true });
 
@@ -56,7 +56,33 @@ export async function GET(request: Request, { params }: Params) {
     console.error('[export] failed to load emails:', err);
   }
 
-  const header = ['Name', 'Gamer Tag', 'Email', 'Status', 'Registered At', 'Checked In At'];
+  // Gender is owner-only (profile_private), so it's read with the service role
+  // — safe here because the caller's `checkin` capability was verified above.
+  const genderById = new Map<string, string>();
+  const interestsById = new Map<string, { platforms: string; games: string; divisions: string }>();
+  try {
+    const userIds = [...new Set(rows.map((t) => t.user_id))];
+    if (userIds.length > 0) {
+      const svc = createServiceClient();
+      const [{ data: privateRows }, { data: divisionRows }] = await Promise.all([
+        svc.from('profile_private').select('user_id, gender, platforms, favorite_games, division_interests').in('user_id', userIds),
+        svc.from('divisions').select('id, name'),
+      ]);
+      const divisionName = new Map((divisionRows ?? []).map((d) => [d.id, d.name]));
+      (privateRows ?? []).forEach((r) => {
+        if (r.gender) genderById.set(r.user_id, r.gender);
+        interestsById.set(r.user_id, {
+          platforms: (r.platforms ?? []).join(' / '),
+          games: r.favorite_games ?? '',
+          divisions: (r.division_interests ?? []).map((id: string) => divisionName.get(id) ?? '').filter(Boolean).join(' / '),
+        });
+      });
+    }
+  } catch (err) {
+    console.error('[export] failed to load gender:', err);
+  }
+
+  const header = ['Name', 'Gamer Tag', 'Email', 'Gender', 'Year', 'College', 'Major', 'Platforms', 'Favorite Games', 'Divisions of Interest', 'Status', 'Registered At', 'Checked In At'];
   const fmt = (iso: string | null) =>
     iso ? new Date(iso).toLocaleString('en-US', { timeZone: PACIFIC_TZ, dateStyle: 'medium', timeStyle: 'short' }) : '';
 
@@ -66,6 +92,13 @@ export async function GET(request: Request, { params }: Params) {
       profile?.display_name || 'Anonymous',
       profile?.gamer_tag || '',
       emailById.get(t.user_id) || '',
+      genderById.get(t.user_id) || '',
+      profile?.year || '',
+      profile?.college || '',
+      profile?.major || '',
+      interestsById.get(t.user_id)?.platforms || '',
+      interestsById.get(t.user_id)?.games || '',
+      interestsById.get(t.user_id)?.divisions || '',
       t.status,
       fmt(t.created_at),
       fmt(t.checked_in_at),

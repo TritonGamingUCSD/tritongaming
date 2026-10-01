@@ -19,7 +19,7 @@ interface SearchResponse {
 }
 
 const EMPTY: SearchResponse = { members: [], events: [], docs: [] };
-const CATEGORY_LABELS: Record<keyof SearchResponse, string> = { members: 'Members', events: 'Events', docs: 'Docs' };
+const CATEGORY_LABELS: Record<keyof SearchResponse, string> = { members: 'TG Members', events: 'Events', docs: 'Docs' };
 
 // A persistent bar rather than its own hub card — search needs to be
 // reachable in one step from wherever you already are in the grid, not a

@@ -18,16 +18,17 @@ export async function POST(request: Request) {
   // badge) gates UCSD-only events, free pricing, and how much profile info
   // is required — checked against actual role grants, not a live email
   // re-check. See isVerifiedMember for why.
-  const [{ data: profile }, { data: roles }] = await Promise.all([
-    supabase.from('profiles').select('display_name, major, year, college').eq('id', user.id).single(),
+  const [{ data: profile }, { data: roles }, { data: priv }] = await Promise.all([
+    supabase.from('profiles').select('display_name, major, year, college, pronouns').eq('id', user.id).single(),
     supabase.from('user_roles').select('role, division_id').eq('user_id', user.id),
+    supabase.from('profile_private').select('gender').eq('user_id', user.id).maybeSingle(),
   ]);
   const isUcsd = isVerifiedMember(roles ?? []);
 
   // Require basic profile info before anyone can claim a ticket — checked
   // against their account, so once it's filled in they never see this again.
-  // Non-UCSD guests only need a name; year/college/major are UCSD-only.
-  if (!profile || !hasBasicProfileInfo(profile, isUcsd)) {
+  // Non-UCSD guests need a name, gender and pronouns; year/college/major are UCSD-only.
+  if (!profile || !hasBasicProfileInfo({ ...profile, gender: priv?.gender ?? null }, isUcsd)) {
     return NextResponse.json(
       { error: 'Please complete your profile before getting a ticket.', needsProfile: true },
       { status: 400 }

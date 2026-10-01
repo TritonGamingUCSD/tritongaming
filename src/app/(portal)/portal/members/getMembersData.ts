@@ -6,7 +6,8 @@ import type { AppRole } from '@/types/database';
 
 export interface MemberProfileRow {
   id: string; display_name: string | null; avatar_url: string | null; custom_avatar_url: string | null;
-  gamer_tag: string | null; major: string | null; year: string | null; org_title: string | null;
+  gamer_tag: string | null; major: string | null; year: string | null; college: string | null; org_title: string | null;
+  portfolio_links: Array<{ label: string; url: string }> | null; created_at: string | null;
   bio: string | null; pronouns: string | null; social_links: Record<string, string> | null;
   board_visibility: Record<string, boolean> | null; preferred_email?: string | null; emails?: LinkedEmail[];
   board_order: number | null;
@@ -30,7 +31,7 @@ export async function getMembersData() {
   const { data: rows, error } = await supabase
     .from('profiles')
     .select(`
-      id, display_name, avatar_url, custom_avatar_url, gamer_tag, major, year, org_title, bio, pronouns, social_links, board_visibility, preferred_email, board_order,
+      id, display_name, avatar_url, custom_avatar_url, gamer_tag, major, year, college, org_title, bio, pronouns, social_links, portfolio_links, created_at, board_visibility, preferred_email, board_order,
       user_roles!user_roles_user_id_fkey(role, division:divisions(name))
     `)
     // Custom-ordered members (Board Order admin tool, exec/lead mainly)
@@ -51,7 +52,10 @@ export async function getMembersData() {
   // "primary" one. Best-effort: this internal roster is officer+ only, so
   // showing email here (unlike the public About page) is fine; if the
   // lookup fails, members just render without email rather than breaking
-  // the whole directory.
+  // the whole directory. Everything a member has filled in is shown here —
+  // the Officer Card visibility toggles only govern the public Team page.
+  // (Gender and the Gaming & Interests answers live in profile_private and are
+  // deliberately not part of this roster.)
   try {
     const emailsByUserId = await fetchLinkedEmails(createServiceClient(), members.map((m) => m.id));
     members = members.map((m) => ({ ...m, emails: pickDisplayEmails(emailsByUserId.get(m.id) ?? [], m.preferred_email) }));

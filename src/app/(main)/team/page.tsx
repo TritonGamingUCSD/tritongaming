@@ -2,12 +2,12 @@ import type { Metadata } from 'next';
 import BoardSection from '@/components/BoardSection/BoardSection';
 import { getContentBlock } from '@/lib/content';
 import { getBoardMembers } from './getBoardMembers';
-import styles from './about.module.css';
+import styles from './team.module.css';
 
 export const metadata: Metadata = {
   title: 'Team',
   description: "Meet Triton Gaming's executive board, leads, and officers.",
-  alternates: { canonical: '/about' },
+  alternates: { canonical: '/team' },
   openGraph: {
     title: 'Team',
     description: "Meet Triton Gaming's executive board, leads, and officers.",
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic';
 
-export default async function AboutPage() {
+export default async function TeamPage() {
   const [boardMembers, content] = await Promise.all([
     getBoardMembers(),
     getContentBlock('page.about'),

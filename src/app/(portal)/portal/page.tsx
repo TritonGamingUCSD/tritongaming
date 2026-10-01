@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, History, Image as ImageIcon, Award, Medal } from 'lucide-react';
-import { getProfile, getUserRoles } from '@/lib/auth';
+import { getProfile, getUserRoles, getMyPrivateProfile, getUser } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import { hasCapability, isVerifiedMember, isRewardsEligible } from '@/lib/capabilities';
 import { resolveAvatarUrl } from '@/lib/profile';
@@ -65,7 +65,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
   // divisions is fetched unconditionally (cheap, publicly-readable table) —
   // needed to label a division-lead role chip with *which* division below,
   // regardless of whether this user themselves can manage the directory.
-  const [profile, roles, divisions] = await Promise.all([getProfile(), getUserRoles(), getDivisions()]);
+  const [profile, roles, divisions, myGender, authUser] = await Promise.all([getProfile(), getUserRoles(), getDivisions(), getMyPrivateProfile(), getUser()]);
   if (!profile) return null;
   const divisionNameById = new Map(divisions.map((d) => [d.id, d.name]));
 
@@ -177,7 +177,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       id: 'profile', icon: <User size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Profile',
       description: 'Update your info and preferences',
       group: 'Yours',
-      content: <ProfileClient profile={profile} roles={roles} isUcsd={isVerifiedMember(roles)} divisions={divisions} initialTab={requestedTab} />,
+      content: <ProfileClient profile={profile} privateInfo={myGender} email={authUser?.email ?? null} roles={roles} isUcsd={isVerifiedMember(roles)} divisions={divisions} initialTab={requestedTab} />,
     },
     {
       id: 'activity', icon: <History size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Activity',
@@ -247,7 +247,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       content: <CheckInSectionContent events={checkinData.events} canScanRedemptions={canScanRedemptions} initialTab={requestedTab} tiers={memberTiers} />,
     }] : []),
     ...(canViewMembers && membersData ? [{
-      id: 'members', icon: <Users size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Members',
+      id: 'members', icon: <Users size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'TG Members',
       description: 'Browse everyone in the org',
       // Not rows.length — that counts every profile including plain
       // verified-student accounts who never joined anything, which the

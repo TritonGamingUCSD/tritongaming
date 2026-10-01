@@ -1,15 +1,18 @@
 'use client';
 
+import DotList from '@/components/DotList/DotList';
+import MemberCardBody from '@/components/MemberCard/MemberCardBody';
+import { PACIFIC_TZ } from '@/lib/timezone';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { LayoutGrid, List, X, Gamepad2, Mail } from 'lucide-react';
+import { LayoutGrid, List, X } from 'lucide-react';
 import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
 import type { AppRole } from '@/types/database';
 import type { RoleGrant } from '@/lib/capabilities';
 import { hasCapability } from '@/lib/capabilities';
-import { resolveAvatarUrl, socialHref, isVisible, isOrgMember, SOCIAL_PLATFORMS } from '@/lib/profile';
+import { resolveAvatarUrl, isOrgMember } from '@/lib/profile';
 import type { MemberProfileRow } from './getMembersData';
 import styles from './members.module.css';
 
@@ -100,7 +103,7 @@ export default function MembersSectionContent({ rows, roles }: { rows: MemberPro
     <div className={styles.page}>
       <div className={styles.header}>
         <div>
-          <h1 className={styles.title}>Members</h1>
+          <h1 className={styles.title}>TG Members</h1>
           <p className={styles.sub}>{memberCount} members across the org</p>
         </div>
         <div className={styles.headerActions}>
@@ -171,7 +174,7 @@ export default function MembersSectionContent({ rows, roles }: { rows: MemberPro
                         text like the old grid cards did. */}
                     {view === 'list' && (
                       <div className={styles.detail}>
-                        {[m.divisionName, isVisible(m.board_visibility, 'year_major') ? m.major : null, isVisible(m.board_visibility, 'year_major') ? m.year : null].filter(Boolean).join(' · ')}
+                        <DotList items={[m.divisionName, m.major, m.year]} />
                       </div>
                     )}
                   </div>
@@ -188,60 +191,31 @@ export default function MembersSectionContent({ rows, roles }: { rows: MemberPro
             <button className={styles.closeBtn} onClick={() => setSelected(null)} aria-label="Close">
               <X size={18} strokeWidth={1.75} />
             </button>
-            {resolveAvatarUrl(selected) ? (
-              <Image src={resolveAvatarUrl(selected)!} alt="" width={88} height={88} className={styles.detailAvatar} unoptimized referrerPolicy="no-referrer" />
-            ) : (
-              <div className={styles.detailAvatarFallback}>{(selected.display_name || '?')[0].toUpperCase()}</div>
-            )}
-            <div className={styles.detailName}>{selected.display_name || 'Anonymous'}</div>
-            {selected.pronouns && <div className={styles.detailPronouns}>{selected.pronouns}</div>}
-            {selected.org_title && <div className={styles.detailOrgTitle}>{selected.org_title}</div>}
-            {/* Email and gamer tag are always shown here — this is an
-                internal officer+ roster, not the public About page, so the
-                per-field board_visibility toggles (which only govern what
-                the public sees) don't apply to email, and gamer tag is
-                always-visible everywhere per how board_visibility is
-                defined. */}
-            {selected.emails && selected.emails.length > 0 && (
-              <div className={styles.detailMeta}>
-                <Mail size={14} strokeWidth={1.75} aria-hidden="true" />
-                {selected.emails.map((e) => e.email).join(' · ')}
-              </div>
-            )}
-            {selected.divisionName && <div className={styles.detailMeta}>{selected.divisionName}</div>}
-            {isVisible(selected.board_visibility, 'year_major') && (selected.major || selected.year) && (
-              <div className={styles.detailMeta}>{[selected.major, selected.year].filter(Boolean).join(' · ')}</div>
-            )}
-            {selected.gamer_tag && (
-              <div className={styles.detailMeta}><Gamepad2 size={14} strokeWidth={1.75} aria-hidden="true" /> {selected.gamer_tag}</div>
-            )}
-            {isVisible(selected.board_visibility, 'bio') && selected.bio && <p className={styles.detailBio}>{selected.bio}</p>}
-            {isVisible(selected.board_visibility, 'socials') && selected.social_links && Object.keys(selected.social_links).length > 0 && (
-              <div className={styles.detailSocialRow}>
-                {SOCIAL_PLATFORMS.filter((p) => selected.social_links![p.key]).map((p) => {
-                  const value = selected.social_links![p.key];
-                  const href = socialHref(p, value);
-                  return href ? (
-                    <a key={p.key} href={href} target="_blank" rel="noopener noreferrer" className={styles.detailSocialBtn} aria-label={p.label}>
-                      <Image src={p.logo} alt="" width={20} height={20} unoptimized />
-                    </a>
-                  ) : (
-                    <span key={p.key} className={styles.socialBtnWrap}>
-                      {copiedKey === p.key && <span className={styles.copiedBadge}>Copied!</span>}
-                      <button
-                        type="button"
-                        className={styles.detailSocialBtn}
-                        aria-label={`Copy ${p.label}`}
-                        title={value}
-                        onClick={() => copyHandle(p.key, value)}
-                      >
-                        <Image src={p.logo} alt="" width={20} height={20} unoptimized />
-                      </button>
-                    </span>
-                  );
-                })}
-              </div>
-            )}
+            {/* Everything a member filled in is shown here — this is the internal
+                roster, not the public Team page, so the officer card's visibility
+                toggles don't apply. Same card component as the public Team page. */}
+            <MemberCardBody
+              copiedKey={copiedKey}
+              onCopy={copyHandle}
+              data={{
+                name: selected.display_name,
+                avatarUrl: resolveAvatarUrl(selected),
+                gamerTag: selected.gamer_tag,
+                orgTitle: selected.org_title,
+                pronouns: selected.pronouns,
+                major: selected.major,
+                year: selected.year,
+                college: selected.college,
+                divisionName: selected.divisionName,
+                emails: (selected.emails ?? []).map((e) => e.email),
+                socialLinks: selected.social_links,
+                portfolioLinks: selected.portfolio_links,
+                bio: selected.bio,
+                joinedLabel: selected.created_at
+                  ? `Joined ${new Date(selected.created_at).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', year: 'numeric' })}`
+                  : null,
+              }}
+            />
           </div>
         </div>
       )}

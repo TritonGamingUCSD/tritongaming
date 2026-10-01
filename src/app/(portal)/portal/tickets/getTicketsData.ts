@@ -29,7 +29,7 @@ export async function getTicketsData(profileId: string, roles: RoleGrant[]) {
       .or(openEventsFilter())
       .order('start_date', { ascending: true })
       .limit(6),
-    supabase.from('profiles').select('year').eq('id', profileId).maybeSingle(),
+    supabase.from('profiles').select('year, class_of').eq('id', profileId).maybeSingle(),
   ]);
 
   // Pre-computed here (server-side, ahead of time) rather than fetched at
@@ -57,6 +57,7 @@ export async function getTicketsData(profileId: string, roles: RoleGrant[]) {
       ? buildCheckinFormUrl(config, {
           eventTitle: event.checkin_form_event_name?.trim() || event.title,
           year: profile?.year ?? null,
+          classOf: profile?.class_of ?? null,
           roles: roleNames,
           foodItem: event.checkin_food_item ?? null,
         })

@@ -1,5 +1,6 @@
 'use client';
 
+import { showToast } from '@/lib/toast';
 import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import { ArrowUp, ArrowDown, GripVertical } from 'lucide-react';
@@ -54,6 +55,8 @@ export default function BoardOrderManager({ users }: { users: User[] }) {
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         setError(data.error || 'Failed to save order.');
+      } else {
+        showToast('Exec order saved');
       }
     } catch {
       setError('Network error. Please try again.');
@@ -83,7 +86,7 @@ export default function BoardOrderManager({ users }: { users: User[] }) {
       <div className={styles.sectionHeader}>
         <h2 className={styles.sectionLabel}>Board Display Order</h2>
         <span className={styles.sectionHint}>
-          Exec order on the public About page and Members tab — {saving ? 'saving…' : 'saved automatically'}
+          Exec order on the public Team page and TG Members tab — {saving ? 'saving…' : 'saved automatically'}
         </span>
       </div>
       {error && <p className={styles.saveError}>{error}</p>}

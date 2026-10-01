@@ -1,5 +1,7 @@
 'use client';
 
+import { showToast } from '@/lib/toast';
+import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ExternalLink } from 'lucide-react';
@@ -137,9 +139,11 @@ export default function EventForm({
   seedCheckinFormConfig?: CheckinFormConfigValue | null;
   // The signed-in person's own year/roles, so "Preview AS Form" is what
   // *they'd* see as an attendee (see getFormPreviewViewer).
-  previewViewer?: { year: string | null; roles: AppRole[] };
+  previewViewer?: { year: string | null; classOf?: number | null; roles: AppRole[] };
 }) {
   const [form, setForm] = useState<EventFormValues>(initial);
+  // Warn before leaving with unsaved edits (links, Back, closing the tab).
+  const { markSaved } = useUnsavedChanges(form);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -163,6 +167,7 @@ export default function EventForm({
     ? buildCheckinFormUrl(checkinPreviewConfig, {
         eventTitle: form.checkin_form_event_name.trim() || form.title || 'Test Event',
         year: previewViewer?.year ?? null,
+        classOf: previewViewer?.classOf ?? null,
         roles: previewViewer?.roles ?? [],
         foodItem: form.checkin_food_item.trim() || null,
       })
@@ -251,6 +256,11 @@ export default function EventForm({
     const err = await onSubmit(form);
     setSaving(false);
     if (err) setError(err);
+    else {
+      markSaved();
+      // These forms navigate away on success, so the confirmation is shown on the next page.
+      showToast(submitLabel.startsWith('Create') ? 'Event created' : 'Event saved', { nextPage: true });
+    }
   }
 
   return (

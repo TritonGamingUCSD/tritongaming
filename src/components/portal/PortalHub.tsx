@@ -1,5 +1,6 @@
 'use client';
 
+import { confirmDiscardUnsaved } from '@/lib/useUnsavedChanges';
 import type { ReactElement, ReactNode } from 'react';
 import { cloneElement, isValidElement, useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -131,11 +132,14 @@ export default function PortalHub({ sections, onOpenChange }: { sections: HubSec
   }, [openId, isDesktop]);
 
   const open = useCallback((id: string) => {
+    // Switching sections would throw away unsaved edits in the open one.
+    if (id !== openId && !confirmDiscardUnsaved()) return;
     setOpenId(id);
     router.replace(`/portal?section=${id}`, { scroll: false });
-  }, [router]);
+  }, [router, openId]);
 
   const close = useCallback(() => {
+    if (!confirmDiscardUnsaved()) return;
     setOpenId(null);
     router.replace('/portal', { scroll: false });
   }, [router]);

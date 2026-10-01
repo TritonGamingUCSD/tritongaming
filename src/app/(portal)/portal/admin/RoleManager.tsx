@@ -1,5 +1,6 @@
 'use client';
 
+import { showToast } from '@/lib/toast';
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { Search, Gamepad2, Check, X, Trash2, AlertTriangle } from 'lucide-react';
@@ -62,7 +63,8 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<RoleGrant[]>([]);
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
+  // Confirmations use the site-wide toast (see lib/toast).
+  const setToast = (msg: string | null) => { if (msg) showToast(msg); };
   const [saveError, setSaveError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkRole, setBulkRole] = useState<AppRole>('officer');
@@ -125,7 +127,6 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
       setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id));
       setSelectedIds((prev) => { const next = new Set(prev); next.delete(deleteTarget.id); return next; });
       setToast(mergeMode ? `Merged ${deleteTarget.display_name || 'account'} into ${mergeTarget?.display_name || 'the other account'}` : `Deleted ${deleteTarget.display_name || 'account'}`);
-      setTimeout(() => setToast(null), 3000);
       setDeleteTarget(null);
     } catch {
       setDeleteError('Network error. Please try again.');
@@ -214,8 +215,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
         setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, user_roles: draft } : u)));
         setEditingId(null);
         setToast(`Updated ${user?.display_name || 'user'}'s roles`);
-        setTimeout(() => setToast(null), 3000);
-      } else {
+        } else {
         setSaveError(data.error || `Failed to save (${res.status}).`);
       }
     } catch {
@@ -269,8 +269,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
           return roles ? { ...u, user_roles: roles as RoleGrant[] } : u;
         }));
         setToast(`Added ${ROLE_LABELS[bulkRole]} to ${selectedIds.size} user${selectedIds.size === 1 ? '' : 's'}`);
-        setTimeout(() => setToast(null), 3000);
-        setSelectedIds(new Set());
+          setSelectedIds(new Set());
       } else {
         setBulkError(data.error || `Failed to apply (${res.status}).`);
       }
@@ -283,7 +282,6 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
 
   return (
     <div className={styles.wrap}>
-      {toast && <div className={styles.toast}><Check size={15} strokeWidth={1.75} aria-hidden="true" /> {toast}</div>}
 
       {/* Controls */}
       <div className={styles.controls}>
