@@ -1,37 +1,76 @@
 # 🎮 Triton Gaming Website
 
-The official website and member portal for **Triton Gaming**, UCSD's gaming club — public event/division/sponsor pages plus a members-only portal for tickets, check-in, and club administration.
+The official website and member portal for **Triton Gaming**, UCSD's gaming club: public pages for events, divisions, the team and sponsors, plus a members-only portal for tickets, check-in, rewards, analytics and club administration.
 
 ---
 
 ## 🛠 Tech Stack
 
-- **Framework:** [Next.js 16](https://nextjs.org/) (App Router) + TypeScript, styled with plain CSS Modules
-- **Backend:** [Supabase](https://supabase.com/) — Postgres, Auth (Google sign-in), Row Level Security, Storage, and Realtime
+- **Framework:** [Next.js 16](https://nextjs.org/) (App Router, Turbopack) + TypeScript, styled with plain CSS Modules
+- **Backend:** [Supabase](https://supabase.com/): Postgres, Auth (Google sign-in), Row Level Security, Storage, Realtime
 - **Payments:** [Stripe](https://stripe.com/) Checkout, for non-UCSD attendees buying tickets to paid public events
-- **QR codes:** `qr-code-styling` to render ticket/check-in codes, `jsqr` to scan them from a camera feed
-- **Animation:** [Motion](https://motion.dev/) (`motion/react`)
+- **QR codes:** `qr-code-styling` to render codes, `jsqr` to scan them from a camera feed
+- **UI:** [Motion](https://motion.dev/) (`motion/react`), `lucide-react` icons, `recharts` for admin charts, `react-markdown` for docs, `react-easy-crop` for avatar cropping
+- **Hosting:** Vercel (with Vercel Analytics and Speed Insights)
+- **Fonts:** the public site uses the self-hosted fonts in `public/fonts`; the portal loads Exo 2 and JetBrains Mono through `next/font/google`
+
+There is no Tailwind, no zod and no email provider in this project.
 
 ---
 
-## ✨ What's in here
+## ✨ Current status
 
-**Public site** (`src/app/(main)`) — Home, About, Events, Divisions, Sponsors, Get Involved. All copy/images are editable from the portal's Content Editor rather than hardcoded.
+### Public site (`src/app/(main)`)
 
-**Member portal** (`src/app/(portal)/portal`), gated by Google sign-in and a role/capability system (`src/lib/capabilities.ts`):
+Home, Our Story, Team, Events, Divisions (with per-division pages), Sponsors, Get Involved, Membership and Media. All copy and images come from the portal's Site Content editor, not from hardcoded text.
 
-| Section | What it does |
-| --- | --- |
-| Tickets | Register for events, view a rotating (HMAC, ~60s window) QR code for check-in, see live "Checked In" status the instant staff scan it (Supabase Realtime) |
-| Profile | Name/year/college/major/etc., a croppable profile picture upload, and (officer+) a self-set org title |
-| Check-In | Camera-based QR scanner for event staff, with manual code entry fallback |
-| Events | Create/edit events, including a direct flyer image upload (auto-compressed to WebP) |
-| Divisions | Manage the public divisions directory, including logo upload |
-| Members | Directory of everyone with a role, grouped by role |
-| Admin | Platform stats, ticket/check-in breakdowns, full role manager, and a storage cleanup tool for orphaned uploads |
-| Content Editor | Edit public-site copy/images without a deploy |
+- **Event pages** (`/events/[slug]`) show the schedule, venue address with an embedded map, sponsors, a "going" count and an add-to-calendar link. Multi-day events are supported.
+- **Short links:** `/<slug>` redirects to a configured destination (for example `/linktree`). Managed in the portal under Short Links, admin only. A short link to an internal page tags the visit so tickets can be traced back to it.
+- **Speed:** public pages are cached with `unstable_cache` and ISR (`revalidate = 60`) using a cookie-free Supabase client, and are revalidated by tag when content is edited in the portal (`src/lib/revalidate.ts`).
 
-**Direct-to-Storage uploads** (event flyers, division logos, profile pictures) go straight to Supabase Storage from the browser — see `src/lib/imageUpload.ts` — with client-side compression, and for avatars, an interactive crop step (`react-easy-crop`). Replacing/removing an image, or deleting the record it belonged to, cleans up the old file; the Admin panel's Storage Cleanup can sweep up anything that still slips through (e.g. an edit that was abandoned before saving).
+### Member portal (`/portal`)
+
+Gated by Google sign-in and a role/capability system (`src/lib/capabilities.ts`). On desktop a fixed sidebar groups sections by color: **Yours** (gold), **Events** (blue), **Resources** (green), **Admin** (pink). The sidebar shows your name and all of your roles, and clicking it opens your profile. On phones there is a floating bottom dock plus a grouped "More" sheet. Every section, tab and subtab is linkable through URL parameters (`?section=…&tab=…&subtab=…`).
+
+| Group | Section | What it does |
+| --- | --- | --- |
+| Yours | My Tickets | Register for events, rotating QR code (HMAC, ~60s window) for check-in, live "Checked In" status. Multi-day events need a scan each day. |
+| Yours | Profile | Basic info (name, year, college, major picker with double-major support, favorite-games picker), profile picture editor with crop, officer card for the Team page, Login & Security (linked Google accounts). |
+| Yours | Activity | Personal timeline of registrations and check-ins |
+| Yours | Rewards, Battlepass | Points, shop, and battle pass progress |
+| Events | Events | Create and edit events (flyer upload, schedule, sponsors, venue), a redesigned events table with actions menu, check-in lists with undo and manual check-in, post-event Summary. |
+| Events | Check-In | Camera QR scanner, manual and online code entry, per-day check-in for multi-day events |
+| Resources | TG Members | Directory of everyone with a role |
+| Resources | Documentation | Markdown docs with a table of contents |
+| Resources | QR Studio | Quick style presets (10 gaming looks plus 10 based on division logos), color picker, center icon (built-in, your own upload, or a division logo), PNG/SVG download |
+| Resources | Photo Albums | Photo albums |
+| Admin | Site Content | Edit public site copy and images, organized in category tabs |
+| Admin | Admin | Platform stats, role manager, divisions, board order, audit log (with diffs, export and alerts), role history, storage cleanup |
+| Admin | Short Links | Create and edit the short links described above |
+
+There is also global search (⌘K or `/`) across members, events and docs. Results open inside the portal.
+
+### Post-event summary
+
+Each event has a Summary page that is also the PDF export (white print layout via "Save as PDF"). It covers arrivals (including per-day for multi-day events), gender, class year, college, field of study and top majors (abbreviations and typos merged, double majors counted), pronouns, platforms, **favorite games**, division interest, **when tickets were claimed**, **where attendees came from**, points earned and feedback. Only aggregates are shown, never an individual's private answers.
+
+Ticket sources are recorded from the visitor's first tagged link, referrer or short link (kept up to 30 days in the browser and attached when a ticket is claimed). Tickets created before this was added show as "Not tracked".
+
+### Other building blocks
+
+- **Audit log:** database triggers plus explicit `logAudit` calls, with an admin viewer, export and alerts.
+- **Reminders:** a daily Vercel cron (`/api/cron/event-reminders`, `vercel.json`) creates in-app bell notifications about 24 hours and 1 hour before an event. **Email is not wired up**; all mail-related code has been removed.
+- **Uploads:** event flyers, division logos and profile pictures go straight to Supabase Storage from the browser (`src/lib/imageUpload.ts`) with client-side compression. Replacing or removing an image deletes the old one, including old profile pictures. Admin → Storage Cleanup sweeps anything that still slips through.
+- **Time zones:** event days and times are shown in Pacific time through shared helpers in `src/lib/timezone.ts`, formatted deterministically so Safari and Chrome render identically.
+- **Resilience:** critical flows (QR fetch, check-in) retry on flaky connections, and an offline banner appears when the connection drops.
+- **PWA basics:** `manifest.ts` with a "My Tickets" shortcut so the portal can be added to a home screen. There is no service worker, so nothing works offline.
+
+### Not done yet
+
+- Email and web push notifications (in-app bell only).
+- Many forms still use their own styles instead of the shared `Button` and `Field` components in `src/components/ui`.
+- Browser coverage: the portal has been checked in Chromium and WebKit (Safari's engine) at desktop and phone sizes. Firefox has not been checked, and Edge and Opera were not tested separately, though they share Chrome's engine.
+- Event source tracking only covers tickets claimed after it was added.
 
 ---
 
@@ -40,8 +79,8 @@ The official website and member portal for **Triton Gaming**, UCSD's gaming club
 ### Prerequisites
 
 - Node.js ≥ 22, npm ≥ 10 (see `engines` in `package.json`)
-- A [Supabase](https://supabase.com/) project (free tier is fine)
-- The [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started) (`npm i -g supabase`, or `npx supabase`) for applying migrations
+- A [Supabase](https://supabase.com/) project (the free tier is fine)
+- The [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started) (`npx supabase`) for applying migrations
 - A [Stripe](https://stripe.com/) account if you need to test paid-ticket checkout (optional otherwise)
 
 ### 1. Clone and install
@@ -61,25 +100,32 @@ NEXT_PUBLIC_SUPABASE_URL=              # Supabase project URL
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=  # Supabase anon/publishable key
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
-# Service-role key — bypasses RLS. Server-only, never expose to the client.
-# Used by admin role management, the Stripe webhook, and the storage cleanup route.
+# Service-role key. Bypasses RLS, server-only, never expose to the client.
+# Used by role management, the Stripe webhook, analytics and storage cleanup.
 SUPABASE_SERVICE_ROLE_KEY=
 
-# Stripe — used to charge non-UCSD attendees for paid public events.
+# Stripe, for charging non-UCSD attendees at paid public events.
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
+
+# Optional: lets the portal refresh the public cache on Vercel.
+VERCEL_API_TOKEN=
+VERCEL_PROJECT_ID=
+
+# Event reminders cron (Vercel sends this as a Bearer token).
+CRON_SECRET=
 ```
 
 ### 3. Set up the database
 
-Schema and RLS policies live as timestamped SQL files in `supabase/migrations/`. Link your project once with the Supabase CLI, then apply each migration in order:
+Schema and RLS policies live as timestamped SQL files in `supabase/migrations/` (about 100 files). Link your project once, then apply each migration in order, oldest first:
 
 ```bash
 npx supabase link --project-ref <your-project-ref>
-npx supabase db query --linked -f supabase/migrations/<file>.sql   # repeat per file, oldest first
+npx supabase db query --linked -f supabase/migrations/<file>.sql   # repeat per file
 ```
 
-To add a new migration later: `npx supabase migration new <name>`, edit the generated file, then apply it the same way.
+To add a new migration later: `npx supabase migration new <name>`, edit the generated file, then apply it the same way. New migrations need to be applied to production too if it is a different Supabase project from the one you develop against.
 
 ### 4. Run it
 
@@ -87,7 +133,7 @@ To add a new migration later: `npx supabase migration new <name>`, edit the gene
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Sign in with Google to reach the portal at `/portal` — the first account you grant a role to (via a direct SQL insert into `user_roles`, since there's no UI for granting the very first admin) can then manage everyone else's roles from `/portal/admin`.
+Open [http://localhost:3000](http://localhost:3000). Sign in with Google to reach the portal at `/portal`. The first account you grant a role to (by inserting directly into `user_roles`, since there is no UI for the very first admin) can then manage everyone else's roles from the portal's Admin section.
 
 ---
 
@@ -103,13 +149,29 @@ Open [http://localhost:3000](http://localhost:3000). Sign in with Google to reac
 
 ---
 
+## 🗂 Where things live
+
+| Path | Contents |
+| --- | --- |
+| `src/app/(main)` | Public site |
+| `src/app/(portal)/portal` | Member portal (one folder per section) |
+| `src/app/api` | Route handlers (tickets, check-in, admin, Stripe webhook, cron, search) |
+| `src/components` | Shared components; `ui/` holds `Button`, `Field`, `SectionTabs`, `Notice` |
+| `src/lib` | Capabilities, check-in logic, event summary, timezone helpers, QR presets, caching |
+| `supabase/migrations` | Database schema, RLS and RPCs |
+
+---
+
 ## Common Q&A
 
-**Migration apply fails / `db push` complains about drift:**
-Use `npx supabase db query --linked -f <path>` per file instead of `db push` — this project's migration history has some out-of-band applies that make `db push` unreliable.
+**Migration apply fails or `db push` complains about drift:**
+Use `npx supabase db query --linked -f <path>` per file instead of `db push`. This project's migration history has some out-of-band applies that make `db push` unreliable.
 
 **Storage upload fails with a permissions error:**
-Check the relevant bucket's RLS policies on `storage.objects` (see the `*_storage_bucket*.sql` migrations) — writes are gated by capability (or, for avatars, by folder ownership), not just "logged in."
+Check the bucket's RLS policies on `storage.objects` (see the `*_storage_bucket*.sql` migrations). Writes are gated by capability (or, for avatars, by folder ownership), not just "logged in."
 
-**A Realtime feature (e.g. live check-in status) isn't updating:**
-Confirm the table is in the `supabase_realtime` publication (`select * from pg_publication_tables where pubname = 'supabase_realtime'`) — tables aren't broadcast by default even with RLS configured correctly.
+**A Realtime feature (such as live check-in status) isn't updating:**
+Confirm the table is in the `supabase_realtime` publication (`select * from pg_publication_tables where pubname = 'supabase_realtime'`). Tables aren't broadcast by default even with RLS configured correctly.
+
+**Vercel deploy fails on the cron:**
+The Hobby plan only allows daily crons, which is why `vercel.json` runs reminders once a day.
