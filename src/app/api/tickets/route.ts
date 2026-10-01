@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { stripe, stripeEnabled } from '@/lib/stripe';
 import { isVerifiedMember } from '@/lib/capabilities';
 import { hasBasicProfileInfo } from '@/lib/profile';
+import { isCheckinWindowOpen } from '@/lib/checkinWindow';
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -36,13 +37,19 @@ export async function POST(request: Request) {
   // Any published event can be ticketed — verify it exists and is published
   const { data: event } = await supabase
     .from('events')
-    .select('id, title, max_capacity, ticket_price, audience')
+    .select('id, title, max_capacity, ticket_price, audience, start_date, end_date')
     .eq('id', event_id)
     .eq('is_published', true)
     .single();
 
   if (!event) {
     return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+  }
+
+  // Same window as check-in: tickets can be claimed until the event ends,
+  // and not after (a ticket to a finished event could never be used).
+  if (!isCheckinWindowOpen(event)) {
+    return NextResponse.json({ error: 'This event has already ended.' }, { status: 409 });
   }
 
   if (event.audience === 'ucsd_only' && !isUcsd) {

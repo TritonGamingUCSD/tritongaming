@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import type { RoleGrant } from '@/lib/capabilities';
 import { isVerifiedMember, isRewardsEligible } from '@/lib/capabilities';
 import { buildCheckinFormUrl, type CheckinFormConfig } from '@/lib/checkinForm';
+import { openEventsFilter } from '@/lib/checkinWindow';
 import type TicketsClient from './TicketsClient';
 
 // Shared by the standalone /portal/tickets route and the portal hub so both
@@ -20,9 +21,12 @@ export async function getTicketsData(profileId: string, roles: RoleGrant[]) {
       .order('created_at', { ascending: false }),
     supabase
       .from('events')
-      .select('id, title, start_date, location, ticket_price, audience, points_value, is_online')
+      .select('id, title, start_date, end_date, location, ticket_price, audience, points_value, is_online')
       .eq('is_published', true)
-      .gte('start_date', new Date().toISOString())
+      // Joinable until the event ends (same rule as check-in), not just
+      // before it starts — someone arriving partway through should still be
+      // able to get a ticket.
+      .or(openEventsFilter())
       .order('start_date', { ascending: true })
       .limit(6),
     supabase.from('profiles').select('year').eq('id', profileId).maybeSingle(),

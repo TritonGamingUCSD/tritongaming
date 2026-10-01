@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { MapPin, Ticket, Camera, Award } from 'lucide-react';
 import { getEventBySlugOrId } from '@/lib/events';
+import { isCheckinWindowOpen } from '@/lib/checkinWindow';
 import { getAlbumPreview } from '@/lib/googlePhotosAlbum';
 import { markdownToDescription } from '@/lib/markdown';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
@@ -65,7 +66,10 @@ export default async function EventDetailPage({ params }: Params) {
   const event = await getEventBySlugOrId(slug);
   if (!event) notFound();
 
-  const isPast = new Date(event.end_date || event.start_date) < new Date();
+  // Same rule as check-in/ticketing (see lib/checkinWindow): an event isn't
+  // "past" — and its Get Ticket button stays — until its end time (or the
+  // same-day grace when it has none), not the moment it starts.
+  const isPast = !isCheckinWindowOpen(event);
   const isExternalFlyer = event.flyer_url?.startsWith('http');
   const hasPostEventContent = isPast && (event.photo_albums.length > 0 || event.post_event_info);
   // Fetched in display order, in parallel — each is an independent network

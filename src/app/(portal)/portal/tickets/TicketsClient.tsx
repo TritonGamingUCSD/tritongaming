@@ -211,12 +211,15 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
   const activeTickets = tickets.filter((t) => t.status === 'active');
   const pastTickets   = tickets.filter((t) => t.status !== 'active');
 
-  const now = new Date();
   // Tickets come back sorted by when they were registered, not by event date —
-  // pick whichever active ticket's event starts soonest, not just the first
-  // one in that list.
+  // pick whichever active ticket's event is soonest, not just the first one
+  // in that list. "Still relevant" means the event hasn't *ended* (its
+  // check-in window is still open), not that it hasn't *started*: filtering
+  // on start_date >= now made the featured ticket vanish the moment the
+  // event began — right when people most need it to scan in. An event
+  // already underway sorts ahead of later ones.
   const nextActiveTicket = activeTickets
-    .filter((t) => t.event && new Date(t.event.start_date) >= now)
+    .filter((t) => t.event && isCheckinWindowOpen(t.event))
     .sort((a, b) => new Date(a.event!.start_date).getTime() - new Date(b.event!.start_date).getTime())[0];
 
   // Don't repeat the ticket already featured in the hero card above.

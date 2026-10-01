@@ -135,9 +135,11 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const hour = rawHour === 24 ? 0 : rawHour; // some engines render midnight as "24" with hour12:false
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
-  const nowDate = new Date();
+  // Not "starts in the future" — that dropped the featured ticket the
+  // instant its event began, mid-event. Anything whose check-in window is
+  // still open counts (an event underway sorts first).
   const nextTicket = ticketsData.tickets
-    .filter((t) => t.status === 'active' && t.event && new Date(t.event.start_date) >= nowDate)
+    .filter((t) => t.status === 'active' && t.event && isCheckinWindowOpen(t.event))
     .sort((a, b) => new Date(a.event!.start_date).getTime() - new Date(b.event!.start_date).getTime())[0];
   // A ticket's status never actually flips away from 'active' once its
   // event ends (see isCheckinWindowOpen/performCheckin) — counting bare

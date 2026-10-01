@@ -1,3 +1,4 @@
+import { openEventsFilter } from '@/lib/checkinWindow';
 import { createClient } from '@/lib/supabase/server';
 import { isVisible, type BoardVisibility } from '@/lib/profile';
 
@@ -50,7 +51,7 @@ export async function getDivisionHubData(divisionId: string) {
       .select('id, slug, title, start_date, location')
       .eq('division_id', divisionId)
       .eq('is_published', true)
-      .gte('start_date', new Date().toISOString())
+      .or(openEventsFilter())
       .order('start_date', { ascending: true })
       .limit(6),
     supabase

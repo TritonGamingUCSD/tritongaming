@@ -1,3 +1,4 @@
+import { openEventsFilter, endedEventsFilter } from '@/lib/checkinWindow';
 import { createClient } from '@/lib/supabase/server';
 import type { Event } from '@/types';
 import type { SocialEmbed, PhotoAlbumEntry } from '@/types/database';
@@ -36,7 +37,7 @@ export async function getUpcomingEvents(limit = DEFAULT_LIMIT): Promise<Event[]>
       .from('events')
       .select('*')
       .eq('is_published', true)
-      .gte('start_date', new Date().toISOString())
+      .or(openEventsFilter())
       .order('start_date', { ascending: true })
       .limit(limit);
 
@@ -54,7 +55,7 @@ export async function getPreviousEvents(limit = DEFAULT_LIMIT): Promise<Event[]>
       .from('events')
       .select('*')
       .eq('is_published', true)
-      .lt('start_date', new Date().toISOString())
+      .or(endedEventsFilter())
       .order('start_date', { ascending: false })
       .limit(limit);
 
