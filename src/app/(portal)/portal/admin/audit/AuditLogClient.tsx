@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { ChevronDown, ScrollText } from 'lucide-react';
+import { ScrollText } from 'lucide-react';
 import Notice from '@/components/ui/Notice';
 import Button from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Field';
@@ -26,26 +26,28 @@ function renderValue(v: unknown) {
 }
 
 // A trigger-logged update stores { field: { from, to } }; anything else is
-// shown as plain key/value pairs.
-function DetailRows({ details }: { details: Record<string, unknown> }) {
+// shown as plain key/value pairs. Always visible — no click to see what changed.
+function Changes({ details }: { details: Record<string, unknown> }) {
   return (
-    <div className={styles.detail}>
+    <dl className={styles.changes}>
       {Object.entries(details).map(([k, v]) => {
         const change = v && typeof v === 'object' && 'to' in (v as object) ? (v as { from?: unknown; to?: unknown }) : null;
         return (
-          <div key={k} className={styles.detailRow}>
-            <span className={styles.detailKey}>{k}</span>
+          <div key={k} className={styles.change}>
+            <dt className={styles.changeKey}>{k.replace(/_/g, ' ')}</dt>
             {change ? (
-              <span className={styles.detailVal}>
-                <span className={styles.old}>{renderValue(change.from)}</span> → <span className={styles.new}>{renderValue(change.to)}</span>
-              </span>
+              <dd className={styles.changeVal}>
+                <span className={styles.from}>{renderValue(change.from)}</span>
+                <span className={styles.arrow} aria-hidden="true">→</span>
+                <span className={styles.to}>{renderValue(change.to)}</span>
+              </dd>
             ) : (
-              <span className={styles.detailVal}>{renderValue(v)}</span>
+              <dd className={styles.changeVal}><span className={styles.to}>{renderValue(v)}</span></dd>
             )}
           </div>
         );
       })}
-    </div>
+    </dl>
   );
 }
 
@@ -57,7 +59,6 @@ export default function AuditLogClient() {
   const [type, setType] = useState('');
   const [search, setSearch] = useState('');
   const [q, setQ] = useState('');
-  const [openId, setOpenId] = useState<string | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setQ(search), 300);
@@ -103,21 +104,18 @@ export default function AuditLogClient() {
       ) : (
         <ul className={styles.list}>
           {entries.map((e) => {
-            const open = openId === e.id;
             const hasDetails = !!e.details && Object.keys(e.details).length > 0;
             return (
               <li key={e.id} className={styles.item}>
-                <button type="button" className={styles.itemHeader} onClick={() => hasDetails && setOpenId(open ? null : e.id)} disabled={!hasDetails}>
+                <div className={styles.itemHead}>
                   <span className={styles.badge}>{e.action}</span>
-                  <span className={styles.summary}>
-                    <span className={styles.type}>{e.entity_type}</span> {e.summary}
-                  </span>
+                  <span className={styles.type}>{e.entity_type}</span>
                   <span className={styles.meta}>
-                    {e.actor_name || 'System'} · {new Date(e.created_at).toLocaleString('en-US', { timeZone: PACIFIC_TZ, month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                    {e.actor_name || 'System'} · {new Date(e.created_at).toLocaleString('en-US', { timeZone: PACIFIC_TZ, month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
                   </span>
-                  {hasDetails && <ChevronDown size={15} strokeWidth={1.75} className={`${styles.chevron} ${open ? styles.chevronOpen : ''}`} aria-hidden="true" />}
-                </button>
-                {open && e.details && <DetailRows details={e.details} />}
+                </div>
+                <p className={styles.summary}>{e.summary}</p>
+                {hasDetails && e.details && <Changes details={e.details} />}
               </li>
             );
           })}

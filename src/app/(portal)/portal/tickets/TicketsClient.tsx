@@ -496,9 +496,6 @@ function TicketRow({
             onOpened={() => { setFormCompletedAt(new Date().toISOString()); onFormComplete?.(ticket.id); }}
           />
         )}
-        {ticket.status === 'used' && eventHasEnded && ev?.id && (
-          <Link href={`/portal/recap/${ev.id}`} className={styles.recapLink}>Photos &amp; feedback →</Link>
-        )}
         {canEarnPoints && isActionable && !!ev?.points_value && (
           <div className={styles.ticketPointsBadge}><Award size={11} strokeWidth={1.75} aria-hidden="true" /> +{ev.points_value} pts on check-in</div>
         )}
@@ -518,6 +515,9 @@ function TicketRow({
             </span>
           )}
         </div>
+        {ticket.status === 'used' && eventHasEnded && ev?.id && (
+          <Link href={`/portal/recap/${ev.id}`} className={styles.recapLink}>Photos &amp; feedback →</Link>
+        )}
       </div>
     </div>
   );
