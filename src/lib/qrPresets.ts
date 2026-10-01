@@ -8,7 +8,9 @@ export type QRPresetStyle = Pick<QRCodeOptions,
   'bgColor' | 'transparentBg' | 'dotsColor' | 'dotsGradientEnabled' | 'dotsGradientStartColor' | 'dotsGradientEndColor' |
   'cornersSquareColor' | 'cornersDotColor' | 'dotsType' | 'cornersSquareType' | 'cornersDotType'>;
 
-export interface QRPreset { id: string; name: string; dark?: boolean; style: QRPresetStyle }
+// `division`: a keyword matched against division names — picking the preset also drops that
+// division's logo in as the center icon.
+export interface QRPreset { id: string; name: string; dark?: boolean; division?: string; style: QRPresetStyle }
 
 const base = (s: Partial<QRPresetStyle>): QRPresetStyle => ({
   bgColor: '#ffffff', transparentBg: false,
@@ -47,6 +49,36 @@ export const QR_PRESETS: QRPreset[] = [
     bgColor: '#fffbeb', dotsColor: '#92400e', dotsGradientEnabled: true, dotsGradientStartColor: '#b45309', dotsGradientEndColor: '#78350f',
     cornersSquareColor: '#f59e0b', cornersDotColor: '#facc15', dotsType: 'extra-rounded' }) },
   { id: 'mono', name: 'Mono', style: base({ dotsType: 'square', cornersSquareType: 'square', cornersDotType: 'square' }) },
+  // ── Division looks: colors pulled from each division's logo ──
+  { id: 'div-valorant', name: 'Valorant', division: 'valorant', style: base({
+    bgColor: '#fffdf5', dotsColor: '#1e3a5f', dotsGradientEnabled: true, dotsGradientStartColor: '#1e3a5f', dotsGradientEndColor: '#0f2747',
+    cornersSquareColor: '#b8860b', cornersDotColor: '#1e3a5f', dotsType: 'classy', cornersSquareType: 'square', cornersDotType: 'square' }) },
+  { id: 'div-tft', name: 'League of Tritons', dark: true, division: 'league', style: base({
+    bgColor: '#06202e', dotsColor: '#22d3ee', dotsGradientEnabled: true, dotsGradientStartColor: '#67e8f9', dotsGradientEndColor: '#facc15',
+    cornersSquareColor: '#facc15', cornersDotColor: '#22d3ee', dotsType: 'classy-rounded', cornersSquareType: 'extra-rounded' }) },
+  { id: 'div-melee', name: 'Melee', division: 'melee', style: base({
+    bgColor: '#faf5ff', dotsColor: '#4f46e5', dotsGradientEnabled: true, dotsGradientStartColor: '#4f46e5', dotsGradientEndColor: '#db2777',
+    cornersSquareColor: '#ca8a04', cornersDotColor: '#4f46e5', dotsType: 'extra-rounded' }) },
+  { id: 'div-smash', name: 'Smash', division: 'smash', style: base({
+    dotsColor: '#000000', cornersSquareColor: '#000000', cornersDotColor: '#000000', dotsType: 'rounded', cornersSquareType: 'dot', cornersDotType: 'dot' }) },
+  { id: 'div-pokemon', name: 'Pokémon', division: 'pok', style: base({
+    bgColor: '#fffafa', dotsColor: '#1d4ed8', dotsGradientEnabled: true, dotsGradientStartColor: '#1d4ed8', dotsGradientEndColor: '#1e3a8a',
+    cornersSquareColor: '#dc2626', cornersDotColor: '#dc2626', dotsType: 'dots', cornersSquareType: 'extra-rounded' }) },
+  { id: 'div-mariokart', name: 'Mario Kart', division: 'mario', style: base({
+    bgColor: '#fffde7', dotsColor: '#2f4fa8', dotsGradientEnabled: true, dotsGradientStartColor: '#2f4fa8', dotsGradientEndColor: '#7e2a6e',
+    cornersSquareColor: '#dc2626', cornersDotColor: '#ca8a04', dotsType: 'rounded', cornersSquareType: 'extra-rounded' }) },
+  { id: 'div-splatoon', name: 'Splatoon', division: 'splatoon', style: base({
+    bgColor: '#fffaf5', dotsColor: '#ea580c', dotsGradientEnabled: true, dotsGradientStartColor: '#f97316', dotsGradientEndColor: '#db2777',
+    cornersSquareColor: '#4d7c0f', cornersDotColor: '#65a30d', dotsType: 'extra-rounded', cornersSquareType: 'extra-rounded' }) },
+  { id: 'div-fighters', name: 'Fighters', division: 'fighters', style: base({
+    bgColor: '#fffbea', dotsColor: '#1e2a50', cornersSquareColor: '#a77d12', cornersDotColor: '#1e2a50',
+    dotsType: 'square', cornersSquareType: 'square', cornersDotType: 'square' }) },
+  { id: 'div-rivals', name: 'Rivals', division: 'rivals', style: base({
+    bgColor: '#eef0ff', dotsColor: '#1e1b5e', dotsGradientEnabled: true, dotsGradientStartColor: '#1e1b5e', dotsGradientEndColor: '#3730a3',
+    cornersSquareColor: '#1e1b5e', cornersDotColor: '#3730a3', dotsType: 'classy', cornersSquareType: 'square', cornersDotType: 'square' }) },
+  { id: 'div-tio', name: 'TIO', division: 'tio', style: base({
+    bgColor: '#f7f3ea', dotsColor: '#111111', cornersSquareColor: '#111111', cornersDotColor: '#111111',
+    dotsType: 'classy-rounded', cornersSquareType: 'extra-rounded', cornersDotType: 'dot' }) },
 ];
 
 // Which preset (if any) the current options match — used to highlight the active card.

@@ -163,7 +163,7 @@ export default function QRStudioForm({ options, setOptions, divisions = [] }: { 
 
   // Pull a division's logo in as the center icon. Fetched and inlined so the downloaded image
   // isn't blocked by cross-origin rules.
-  async function useDivisionLogo(d: QRDivisionLogo) {
+  async function useDivisionLogo(d: QRDivisionLogo, extra: Partial<QRCodeOptions> = {}) {
     setDivisionError('');
     setLoadingDivision(d.id);
     try {
@@ -177,8 +177,9 @@ export default function QRStudioForm({ options, setOptions, divisions = [] }: { 
         r.readAsDataURL(blob);
       });
       setChosenDivision(d.id);
-      setOptions({ ...options, customIcon: dataUrl, icon: 'custom' });
+      setOptions({ ...options, ...extra, customIcon: dataUrl, icon: 'custom' });
     } catch {
+      setOptions({ ...options, ...extra });
       setDivisionError(`Couldn't load ${d.name}'s logo. Try again, or upload it under “Your own icon”.`);
     } finally {
       setLoadingDivision(null);
@@ -186,6 +187,13 @@ export default function QRStudioForm({ options, setOptions, divisions = [] }: { 
   }
 
   const activePreset = matchingPreset(options);
+
+  // A division look also brings that division's logo along as the center icon.
+  function pickPreset(p: (typeof QR_PRESETS)[number]) {
+    const d = p.division ? divisions.find((x) => x.name.toLowerCase().includes(p.division!)) : undefined;
+    if (d) useDivisionLogo(d, { ...p.style });
+    else set({ ...p.style });
+  }
   const set = (patch: Partial<QRCodeOptions>) => setOptions({ ...options, ...patch });
 
   return (
@@ -204,14 +212,30 @@ export default function QRStudioForm({ options, setOptions, divisions = [] }: { 
       <div className={styles.field}>
         <span className={styles.label}>2 · Pick a style</span>
         <div className={styles.presetGrid} role="radiogroup" aria-label="QR style">
-          {QR_PRESETS.map((p) => (
+          {QR_PRESETS.filter((p) => !p.division).map((p) => (            <button
+              key={p.id}
+              type="button"
+              role="radio"
+              aria-checked={activePreset === p.id}
+              className={`${styles.preset} ${activePreset === p.id ? styles.presetActive : ''}`}
+              onClick={() => pickPreset(p)}
+            >
+              <PresetThumb style={p.style} />
+              <span className={styles.presetName}>{p.name}</span>
+              {p.dark && <span className={styles.darkTag}>dark</span>}
+            </button>
+          ))}
+        </div>
+        <span className={styles.groupLabel}>From our divisions&apos; logos</span>
+        <div className={styles.presetGrid} role="radiogroup" aria-label="Division QR styles">
+          {QR_PRESETS.filter((p) => p.division).map((p) => (
             <button
               key={p.id}
               type="button"
               role="radio"
               aria-checked={activePreset === p.id}
               className={`${styles.preset} ${activePreset === p.id ? styles.presetActive : ''}`}
-              onClick={() => set({ ...p.style })}
+              onClick={() => pickPreset(p)}
             >
               <PresetThumb style={p.style} />
               <span className={styles.presetName}>{p.name}</span>

@@ -414,3 +414,4 @@
 .divChip:disabled { opacity: 0.6; cursor: wait; }
 .divChipActive { background: rgba(255, 199, 44, 0.16); border-color: var(--yellow); color: var(--yellow); }
 .divLogo { width: 24px; height: 24px; border-radius: 50%; object-fit: contain; background: #fff; padding: 2px; }
+.groupLabel { margin-top: 0.4rem; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(242, 241, 240, 0.55); }
