@@ -631,3 +631,8 @@
 /* Narrow sidebar: keep the labels inside their buttons. */
 .railFooter a, .railFooter button { padding: 0.45rem 0.3rem; font-size: 0.66rem; letter-spacing: 0.02em; gap: 0.25rem; overflow: hidden; text-overflow: ellipsis; }
 .railFooter a span { display: none; }
+
+/* Mobile "More" sheet: bigger, full-size touch targets with icons back. */
+.sheetFooter { gap: 0.6rem; padding: 0.5rem 0.9rem 0.9rem; }
+.sheetFooter a, .sheetFooter button { min-height: 48px; padding: 0.7rem 0.8rem; font-size: 0.82rem; letter-spacing: 0.05em; border-radius: 0.8rem; overflow: visible; text-overflow: clip; }
+.sheetFooter a span, .sheetFooter button span { display: inline; font-size: 1.05rem; }
