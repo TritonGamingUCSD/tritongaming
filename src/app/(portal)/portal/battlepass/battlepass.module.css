@@ -105,16 +105,6 @@
   .tab { flex-shrink: 0; }
 }
 
-.error {
-  font-size: 0.85rem;
-  color: #fca5a5;
-  padding: 0.625rem 0.875rem;
-  margin-bottom: 1rem;
-  background: rgba(220,38,38,0.1);
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(220,38,38,0.2);
-}
-
 .empty { font-size: 0.85rem; color: rgba(242,241,240,0.4); padding: 1.5rem 0; text-align: center; }
 
 /* ── My Battlepass ── */

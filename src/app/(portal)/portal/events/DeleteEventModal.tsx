@@ -1,12 +1,11 @@
 'use client';
 
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Dialog, { DialogText, DialogKicker, DialogList, DialogActions, DialogCancel, DialogDanger, DialogOption } from '@/components/ui/Dialog';
+import Notice from '@/components/ui/Notice';
 import HoldButton from '@/components/HoldToConfirm/HoldButton';
 import { showToast } from '@/lib/toast';
-import { useState } from 'react';
-import { createPortal } from 'react-dom';
-import { useRouter } from 'next/navigation';
-import { AlertTriangle, X } from 'lucide-react';
-import styles from './deleteeventmodal.module.css';
 
 // Three deliberate steps before anything is deleted: read what will be
 // wiped, re-confirm with the actual numbers, then press and hold the button.
@@ -23,6 +22,7 @@ export default function DeleteEventModal({
   const [reversePoints, setReversePoints] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
+  const plural = event.ticketsIssued === 1 ? '' : 's';
 
   async function handleDelete() {
     if (deleting) return;
@@ -45,66 +45,57 @@ export default function DeleteEventModal({
     }
   }
 
-  return createPortal(
-    <div className={styles.backdrop} onClick={(e) => { if (e.target === e.currentTarget && !deleting) onClose(); }}>
-      <div className={styles.sheet} role="dialog" aria-modal="true" aria-label="Delete event">
-        <button type="button" className={styles.closeBtn} onClick={onClose} disabled={deleting} aria-label="Cancel">
-          <X size={18} strokeWidth={1.75} />
-        </button>
-        <div className={styles.icon}><AlertTriangle size={26} strokeWidth={1.75} aria-hidden="true" /></div>
-        <p className={styles.stepLabel}>Step {step} of 3</p>
+  const titles = { 1: `Delete “${event.title}”?`, 2: 'This can’t be undone', 3: 'Press and hold to delete' } as const;
 
-        {step === 1 && (
-          <>
-            <h2 className={styles.title}>Delete “{event.title}”?</h2>
-            <p className={styles.text}>This permanently removes:</p>
-            <ul className={styles.list}>
-              <li>The event and its public page</li>
-              <li><strong>{event.ticketsIssued}</strong> ticket{event.ticketsIssued === 1 ? '' : 's'} ({event.ticketsCheckedIn} checked in) — attendees lose them and their attendance record</li>
-              <li>The uploaded flyer image</li>
-            </ul>
-            <p className={styles.text}>Photo albums linked to it are kept, just unlinked.</p>
-            <label className={styles.check}>
-              <input type="checkbox" checked={reversePoints} onChange={(e) => setReversePoints(e.target.checked)} />
-              <span>Also take back the points attendees earned from checking in to this event</span>
-            </label>
-            <div className={styles.actions}>
-              <button type="button" className={styles.cancelBtn} onClick={onClose}>Cancel</button>
-              <button type="button" className={styles.dangerBtn} onClick={() => setStep(2)}>Continue</button>
-            </div>
-          </>
-        )}
+  return (
+    <Dialog title={titles[step]} tone="danger" busy={deleting} onClose={onClose} label="Delete event">
+      <DialogKicker>Step {step} of 3</DialogKicker>
 
-        {step === 2 && (
-          <>
-            <h2 className={styles.title}>This can’t be undone</h2>
-            <p className={styles.text}>
-              There is no trash or restore. {event.ticketsIssued} ticket{event.ticketsIssued === 1 ? '' : 's'} will be
-              deleted{reversePoints ? ', and check-in points for this event will be taken back from attendees' : ', and attendees will keep the points they already earned'}.
-              If you only want it hidden, unpublish it instead.
-            </p>
-            <div className={styles.actions}>
-              <button type="button" className={styles.cancelBtn} onClick={() => setStep(1)}>Back</button>
-              <button type="button" className={styles.dangerBtn} onClick={() => setStep(3)}>I understand, continue</button>
-            </div>
-          </>
-        )}
+      {step === 1 && (
+        <>
+          <DialogText>This permanently removes:</DialogText>
+          <DialogList>
+            <li>The event and its public page</li>
+            <li><strong>{event.ticketsIssued}</strong> ticket{plural} ({event.ticketsCheckedIn} checked in) — attendees lose them and their attendance record</li>
+            <li>The uploaded flyer image</li>
+          </DialogList>
+          <DialogText>Photo albums linked to it are kept, just unlinked.</DialogText>
+          <DialogOption checked={reversePoints} onChange={setReversePoints}>
+            Also take back the points attendees earned from checking in to this event
+          </DialogOption>
+          <DialogActions>
+            <DialogCancel onClick={onClose} />
+            <DialogDanger onClick={() => setStep(2)}>Continue</DialogDanger>
+          </DialogActions>
+        </>
+      )}
 
-        {step === 3 && (
-          <>
-            <h2 className={styles.title}>Press and hold to delete</h2>
-            <p className={styles.text}>
-              Hold the button below to permanently delete <strong>{event.title}</strong>. Letting go early cancels.
-            </p>
-            {error && <p className={styles.error}>{error}</p>}
-            <HoldButton label="Hold to permanently delete" onConfirm={handleDelete} busy={deleting} durationMs={2000} />
-            <div className={styles.actions}>
-              <button type="button" className={styles.cancelBtn} onClick={() => setStep(2)} disabled={deleting}>Back</button>
-            </div>
-          </>
-        )}
-      </div>
-    </div>,
-    document.body
+      {step === 2 && (
+        <>
+          <DialogText>
+            There is no trash or restore. {event.ticketsIssued} ticket{plural} will be
+            deleted{reversePoints ? ', and check-in points for this event will be taken back from attendees' : ', and attendees will keep the points they already earned'}.
+            If you only want it hidden, unpublish it instead.
+          </DialogText>
+          <DialogActions>
+            <DialogCancel onClick={() => setStep(1)}>Back</DialogCancel>
+            <DialogDanger onClick={() => setStep(3)}>I understand, continue</DialogDanger>
+          </DialogActions>
+        </>
+      )}
+
+      {step === 3 && (
+        <>
+          <DialogText>
+            Hold the button below to permanently delete <strong>{event.title}</strong>. Letting go early cancels.
+          </DialogText>
+          {error && <Notice tone="error" onLight>{error}</Notice>}
+          <HoldButton label="Hold to permanently delete" onConfirm={handleDelete} busy={deleting} durationMs={2000} />
+          <DialogActions>
+            <DialogCancel onClick={() => setStep(2)} disabled={deleting}>Back</DialogCancel>
+          </DialogActions>
+        </>
+      )}
+    </Dialog>
   );
 }

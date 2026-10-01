@@ -157,14 +157,6 @@
 .btnGhost:hover { background: rgba(255,199,44,0.14); border-color: rgba(255,199,44,0.35); color: var(--yellow); }
 
 /* Error */
-.error {
-  padding: 0.625rem 1rem;
-  background: rgba(220,38,38,0.1);
-  border: 1px solid rgba(252,165,165,0.2);
-  border-radius: 0.5rem;
-  color: #fca5a5;
-  font-size: 0.82rem;
-}
 
 /* Field group */
 .field {

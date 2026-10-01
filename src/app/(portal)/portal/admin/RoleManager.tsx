@@ -1,10 +1,12 @@
 'use client';
 
+import Dialog, { DialogText, DialogCheck, DialogInput, DialogSearch, DialogResults, DialogResult, DialogCancel } from '@/components/ui/Dialog';
+import Notice from '@/components/ui/Notice';
 import HoldButton from '@/components/HoldToConfirm/HoldButton';
 import { showToast } from '@/lib/toast';
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
-import { Search, Gamepad2, Check, X, Trash2, AlertTriangle } from 'lucide-react';
+import { Search, Gamepad2, X, Trash2 } from 'lucide-react';
 import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK, ASSIGNABLE_ROLES } from '@/types/database';
 import type { AppRole } from '@/types/database';
 import { resolveAvatarUrl } from '@/lib/profile';
@@ -349,7 +351,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
             {bulkApplying ? 'Applying…' : `Apply to ${selectedIds.size}`}
           </button>
           <button className={styles.roleBtn} onClick={() => { setSelectedIds(new Set()); setBulkError(null); }} disabled={bulkApplying}>Clear</button>
-          {bulkError && <span className={styles.saveError}>{bulkError}</span>}
+          {bulkError && <Notice tone="error" compact>{bulkError}</Notice>}
         </div>
       )}
 
@@ -474,7 +476,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
                         ))}
                       </div>
                     </div>
-                    {saveError && <div className={styles.saveError}>{saveError}</div>}
+                    {saveError && <Notice tone="error">{saveError}</Notice>}
                     <div className={styles.editActions}>
                       <button className={styles.roleBtn} onClick={() => { setEditingId(null); setSaveError(null); }} disabled={saving}>Cancel</button>
                       <button className={styles.roleBtn} onClick={() => saveDraft(user.id)} disabled={saving}>
@@ -494,58 +496,50 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
       </div>
 
       {deleteTarget && (
-        <div className={styles.deleteOverlay} onClick={closeDeleteModal}>
-          <div className={styles.deleteModal} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.deleteModalHeader}>
-              <AlertTriangle size={20} strokeWidth={1.75} aria-hidden="true" />
-              <h2>{mergeMode ? `Merge ${deleteTarget.display_name || 'this account'}` : `Delete ${deleteTarget.display_name || 'this account'}`}</h2>
-            </div>
+        <Dialog
+          title={mergeMode ? `Merge ${deleteTarget.display_name || 'this account'}` : `Delete ${deleteTarget.display_name || 'this account'}`}
+          tone="danger"
+          busy={deleting}
+          onClose={closeDeleteModal}
+        >
+          <DialogText>
+            This permanently removes their profile, tickets, points, redemptions, and role
+            history. <strong>This cannot be undone.</strong>
+          </DialogText>
 
-            <p className={styles.deleteWarning}>
-              This permanently removes their profile, tickets, points, redemptions, and role
-              history. <strong>This cannot be undone.</strong>
-            </p>
+          <DialogCheck checked={mergeMode} onChange={(checked) => { setMergeMode(checked); setMergeTarget(null); setMergeQuery(''); }}>
+            Merge their data into another account instead of deleting it
+          </DialogCheck>
 
-            <label className={styles.checkboxLabel}>
-              <input type="checkbox" checked={mergeMode} onChange={(e) => { setMergeMode(e.target.checked); setMergeTarget(null); setMergeQuery(''); }} />
-              <span>Merge their data into another account instead of deleting it</span>
-            </label>
+          {mergeMode && (
+            <DialogSearch>
+              <DialogInput
+                placeholder="Search the account to merge into…"
+                value={mergeTarget ? mergeTarget.display_name || 'Unnamed' : mergeQuery}
+                onChange={(e) => { setMergeTarget(null); setMergeQuery(e.target.value); }}
+              />
+              {mergeResults.length > 0 && !mergeTarget && (
+                <DialogResults>
+                  {mergeResults.map((u) => (
+                    <DialogResult key={u.id} onClick={() => { setMergeTarget(u); setMergeQuery(''); }}>
+                      {u.display_name || 'Unnamed'}
+                    </DialogResult>
+                  ))}
+                </DialogResults>
+              )}
+            </DialogSearch>
+          )}
 
-            {mergeMode && (
-              <div className={styles.mergeSearchWrap}>
-                <input
-                  className={styles.modalInput}
-                  placeholder="Search the account to merge into…"
-                  value={mergeTarget ? mergeTarget.display_name || 'Unnamed' : mergeQuery}
-                  onChange={(e) => { setMergeTarget(null); setMergeQuery(e.target.value); }}
-                />
-                {mergeResults.length > 0 && !mergeTarget && (
-                  <div className={styles.mergeDropdown}>
-                    {mergeResults.map((u) => (
-                      <button key={u.id} type="button" className={styles.mergeResult} onClick={() => { setMergeTarget(u); setMergeQuery(''); }}>
-                        {u.display_name || 'Unnamed'}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+          {deleteError && <Notice tone="error" onLight>{deleteError}</Notice>}
 
-            {deleteError && <div className={styles.saveError}>{deleteError}</div>}
-
-            <div className={styles.editActions}>
-              <button className={styles.roleBtn} onClick={closeDeleteModal} disabled={deleting}>Cancel</button>
-              <div style={{ flex: 1 }}>
-                <HoldButton
-                  label={mergeMode ? 'Hold to merge & delete' : 'Hold to delete account'}
-                  onConfirm={handleConfirmDelete}
-                  disabled={!canConfirmDelete}
-                  busy={deleting}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+          <HoldButton
+            label={mergeMode ? 'Hold to merge & delete' : 'Hold to delete account'}
+            onConfirm={handleConfirmDelete}
+            disabled={!canConfirmDelete}
+            busy={deleting}
+          />
+          <DialogCancel onClick={closeDeleteModal} disabled={deleting} />
+        </Dialog>
       )}
     </div>
   );

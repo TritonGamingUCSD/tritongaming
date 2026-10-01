@@ -1,5 +1,6 @@
 'use client';
 
+import Notice from '@/components/ui/Notice';
 import { confirmHold } from '@/lib/confirmHold';
 import { showToast } from '@/lib/toast';
 import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
@@ -693,7 +694,7 @@ export default function PointsSectionContent({
             )}
           </div>
 
-          {shopError && <p className={styles.error}>{shopError}</p>}
+          {shopError && <Notice tone="error">{shopError}</Notice>}
 
           {shopItems !== null && unlocks.length > 0 && (
             <div className={styles.historySection}>
@@ -812,7 +813,7 @@ export default function PointsSectionContent({
       {tab === 'shop' && (
         <div className={styles.shopTab}>
           <div className={styles.shopBalance}>Spendable balance: <strong>{shopBalance.toLocaleString()} pts</strong></div>
-          {shopError && <p className={styles.error}>{shopError}</p>}
+          {shopError && <Notice tone="error">{shopError}</Notice>}
 
           {pending.length > 0 && (
             <div className={styles.pendingSection}>
@@ -879,7 +880,7 @@ export default function PointsSectionContent({
             <p className={styles.referralHint}>Everyone&apos;s on the leaderboard — this only controls whether your full name or a masked version (like "Jas***") shows next to your rank. Your exact points are always shown either way.</p>
           </div>
 
-          {boardError && <p className={styles.error}>{boardError}</p>}
+          {boardError && <Notice tone="error">{boardError}</Notice>}
           {board === null ? (
             <LoadingSpinner size={28} label="Loading leaderboard…" theme="dark" />
           ) : board.length === 0 ? (
@@ -998,14 +999,14 @@ export default function PointsSectionContent({
               <span>Tier auto-unlock (free, one per person — appears in members&apos; &quot;To Claim&quot; tab once they reach the tier)</span>
             </label>
             {newReward.isTierUnlock && !newReward.min_tier && (
-              <p className={styles.error}>A tier auto-unlock needs a tier requirement above.</p>
+              <Notice tone="error">A tier auto-unlock needs a tier requirement above.</Notice>
             )}
             <button type="submit" className={styles.saveBtn} disabled={creating || !newReward.title.trim() || (newReward.isTierUnlock && !newReward.min_tier)}>
               {creating ? 'Adding…' : '+ Add Reward'}
             </button>
           </form>
 
-          {manageError && <p className={styles.error}>{manageError}</p>}
+          {manageError && <Notice tone="error">{manageError}</Notice>}
 
           {manageItems === null ? (
             <LoadingSpinner size={28} label="Loading rewards…" theme="dark" />
@@ -1033,7 +1034,7 @@ export default function PointsSectionContent({
                         <span>Marks a Fast Pass badge on the member&apos;s ticket QR</span>
                       </label>
                     )}
-                    {editError && <p className={styles.error}>{editError}</p>}
+                    {editError && <Notice tone="error">{editError}</Notice>}
                     <div className={styles.editActions}>
                       <button type="button" className={styles.toggleBtn} onClick={() => setEditingId(null)}>Cancel</button>
                       <button type="submit" className={styles.saveBtn} disabled={savingEdit || !editForm.title.trim()}>
@@ -1092,7 +1093,7 @@ export default function PointsSectionContent({
 
             {adjustTarget && (
               <>
-                {historyError && <p className={styles.error}>{historyError}</p>}
+                {historyError && <Notice tone="error">{historyError}</Notice>}
                 {targetHistory === null ? (
                   <LoadingSpinner size={20} label="Loading history…" theme="dark" />
                 ) : targetHistory.length === 0 ? (
@@ -1153,7 +1154,7 @@ export default function PointsSectionContent({
               </button>
             </form>
 
-            {tierError && <p className={styles.error}>{tierError}</p>}
+            {tierError && <Notice tone="error">{tierError}</Notice>}
 
             {manageTiers === null ? (
               <LoadingSpinner size={28} label="Loading tiers…" theme="dark" />

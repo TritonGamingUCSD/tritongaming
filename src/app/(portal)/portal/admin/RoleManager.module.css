@@ -386,15 +386,6 @@
   gap: 0.4rem;
 }
 
-.saveError {
-  font-size: 0.75rem;
-  color: #f87171;
-  background: rgba(220,38,38,0.1);
-  border: 1px solid rgba(248,113,113,0.25);
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.4rem;
-}
-
 .updateSpinner {
   position: absolute;
   right: 1.25rem;
@@ -493,13 +484,6 @@
   font-size: 1rem;
   color: var(--white);
 }
-
-.deleteWarning {
-  font-size: 0.82rem;
-  line-height: 1.5;
-  color: rgba(242,241,240,0.6);
-}
-.deleteWarning strong { color: #fca5a5; }
 
 .modalInput {
   width: 100%;

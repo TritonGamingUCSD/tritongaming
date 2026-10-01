@@ -1,9 +1,10 @@
 'use client';
 
+import Notice from '@/components/ui/Notice';
 import { showToast } from '@/lib/toast';
 import { useMemo, useState } from 'react';
 import Image from 'next/image';
-import { ArrowUp, ArrowDown, GripVertical } from 'lucide-react';
+import { GripVertical } from 'lucide-react';
 import { resolveAvatarUrl } from '@/lib/profile';
 import { useDragReorder } from '@/lib/useDragReorder';
 import type { AppRole } from '@/types/database';
@@ -65,15 +66,6 @@ export default function BoardOrderManager({ users }: { users: User[] }) {
     }
   }
 
-  function move(index: number, dir: -1 | 1) {
-    const target = index + dir;
-    if (target < 0 || target >= order.length) return;
-    const next = [...order];
-    [next[index], next[target]] = [next[target], next[index]];
-    setOrder(next);
-    persist(next);
-  }
-
   const { dragIndex, overIndex, dragHandleProps, dropTargetProps } = useDragReorder(order, (next) => {
     setOrder(next);
     persist(next);
@@ -89,7 +81,7 @@ export default function BoardOrderManager({ users }: { users: User[] }) {
           Exec order on the public Team page and TG Members tab — {saving ? 'saving…' : 'saved automatically'}
         </span>
       </div>
-      {error && <p className={styles.saveError}>{error}</p>}
+      {error && <Notice tone="error">{error}</Notice>}
       <div className={styles.boardOrderList}>
         {order.map((u, i) => {
           const avatarUrl = resolveAvatarUrl(u);
@@ -109,14 +101,6 @@ export default function BoardOrderManager({ users }: { users: User[] }) {
                 <span className={styles.adminAvatarFallback}>{(u.display_name || '?')[0].toUpperCase()}</span>
               )}
               <span className={styles.boardOrderName}>{u.display_name || 'Unnamed'}</span>
-              <div className={styles.boardOrderActions}>
-                <button type="button" onClick={() => move(i, -1)} disabled={i === 0 || saving} aria-label={`Move ${u.display_name || 'user'} up`}>
-                  <ArrowUp size={14} strokeWidth={1.75} aria-hidden="true" />
-                </button>
-                <button type="button" onClick={() => move(i, 1)} disabled={i === order.length - 1 || saving} aria-label={`Move ${u.display_name || 'user'} down`}>
-                  <ArrowDown size={14} strokeWidth={1.75} aria-hidden="true" />
-                </button>
-              </div>
             </div>
           );
         })}

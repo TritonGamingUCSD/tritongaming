@@ -24,15 +24,6 @@
   gap: 1.25rem;
 }
 
-.error {
-  font-size: 0.8rem;
-  color: #f87171;
-  background: rgba(220,38,38,0.1);
-  border: 1px solid rgba(248,113,113,0.2);
-  border-radius: 0.5rem;
-  padding: 0.625rem 1rem;
-}
-
 .addCard {
   background: rgba(255,199,44,0.04);
   border: 1px dashed rgba(255,199,44,0.25);

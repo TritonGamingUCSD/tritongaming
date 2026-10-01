@@ -43,15 +43,6 @@
 }
 .close:hover { background: rgba(255,255,255,0.1); color: var(--white); }
 
-.error {
-  font-size: 0.85rem;
-  color: #fca5a5;
-  padding: 0.625rem 0.875rem;
-  background: rgba(220,38,38,0.1);
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(220,38,38,0.2);
-}
-
 .uncheckBtn {
   display: inline-flex;
   align-items: center;

@@ -1,5 +1,6 @@
 'use client';
 
+import Notice from '@/components/ui/Notice';
 import { useState } from 'react';
 import { Check } from 'lucide-react';
 import AsFormButton from './AsFormButton';
@@ -95,7 +96,7 @@ export default function OnlineCheckinEntry({
       <button type="submit" className={styles.onlineCheckinSubmit} disabled={submitting || !code.trim()}>
         {submitting ? 'Checking in…' : 'Check In'}
       </button>
-      {error && <p className={styles.onlineCheckinError}>{error}</p>}
+      {error && <Notice tone="error">{error}</Notice>}
     </form>
   );
 }

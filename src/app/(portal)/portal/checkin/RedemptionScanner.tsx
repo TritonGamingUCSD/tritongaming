@@ -1,5 +1,6 @@
 'use client';
 
+import Notice from '@/components/ui/Notice';
 import { useState } from 'react';
 import { Camera, Gift, Check, X } from 'lucide-react';
 import { useQRScanner } from '@/lib/useQRScanner';
@@ -103,8 +104,8 @@ export default function RedemptionScanner() {
         )}
       </div>
 
-      {scanner.error && <p className={styles.error}>{scanner.error}</p>}
-      {error && <p className={styles.error}>{error}</p>}
+      {scanner.error && <Notice tone="error">{scanner.error}</Notice>}
+      {error && <Notice tone="error">{error}</Notice>}
 
       {detail && (
         <div className={styles.confirmCard}>
@@ -112,7 +113,7 @@ export default function RedemptionScanner() {
           <h3 className={styles.confirmTitle}>{oneOf(detail.reward)?.title ?? 'Reward'}</h3>
           <p className={styles.confirmMeta}>For {oneOf(detail.member)?.display_name ?? 'Member'} · {detail.point_cost} pts</p>
           {detail.status !== 'pending' ? (
-            <p className={styles.error}>Already {detail.status}.</p>
+            <Notice tone="error">Already {detail.status}.</Notice>
           ) : (
             <div className={styles.confirmActions}>
               <button type="button" className={styles.rejectBtn} onClick={() => setDetail(null)}><X size={15} strokeWidth={2} aria-hidden="true" /> Cancel</button>

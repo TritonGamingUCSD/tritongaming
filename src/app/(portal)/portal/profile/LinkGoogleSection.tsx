@@ -1,5 +1,6 @@
 'use client';
 
+import Notice from '@/components/ui/Notice';
 import { confirmHold } from '@/lib/confirmHold';
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -186,7 +187,7 @@ export default function LinkGoogleSection() {
         know you&apos;re graduating soon.
       </p>
 
-      {error && <p className={styles.error}>{error}</p>}
+      {error && <Notice tone="error">{error}</Notice>}
       <button type="button" className={styles.saveBtn} onClick={handleLink} disabled={linking}>
         {linking ? 'Redirecting…' : 'Link Another Google Account'}
       </button>

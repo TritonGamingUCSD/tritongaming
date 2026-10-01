@@ -1,5 +1,6 @@
 'use client';
 
+import Notice from '@/components/ui/Notice';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -145,7 +146,7 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
         </button>
 
         {error ? (
-          <p className={styles.error}>{error}</p>
+          <Notice tone="error">{error}</Notice>
         ) : !event || !tickets ? (
           <LoadingSpinner size={28} label="Loading check-ins…" theme="dark" />
         ) : (

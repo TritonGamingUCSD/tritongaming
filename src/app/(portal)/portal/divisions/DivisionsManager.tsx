@@ -1,5 +1,6 @@
 'use client';
 
+import Notice from '@/components/ui/Notice';
 import { confirmHold } from '@/lib/confirmHold';
 import { useState } from 'react';
 import Image from 'next/image';
@@ -95,7 +96,7 @@ export default function DivisionsManager({ divisions: initial }: { divisions: Di
 
   return (
     <div className={styles.wrap}>
-      {error && <div className={styles.error}>{error}</div>}
+      {error && <Notice tone="error">{error}</Notice>}
 
       <form className={styles.addCard} onSubmit={handleAdd}>
         <h2 className={styles.addTitle}>+ Add Division</h2>

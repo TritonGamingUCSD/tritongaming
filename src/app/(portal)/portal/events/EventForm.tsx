@@ -1,5 +1,6 @@
 'use client';
 
+import Notice from '@/components/ui/Notice';
 import { showToast } from '@/lib/toast';
 import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -473,7 +474,7 @@ export default function EventForm({
           hint="Markdown supported, same as Event Details above."
         />
 
-        {error && <p className={styles.error}>{error}</p>}
+        {error && <Notice tone="error">{error}</Notice>}
 
         <div className={styles.actions}>
           <Link href="/portal?section=events" className={styles.cancelBtn}>Cancel</Link>

@@ -1,5 +1,6 @@
 'use client';
 
+import Notice from '@/components/ui/Notice';
 import { showToast } from '@/lib/toast';
 import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
 import { useState } from 'react';
@@ -200,7 +201,7 @@ export default function DivisionForm({
           hint="Shown on this division's own page. Instagram, X, TikTok, and YouTube embed live; Discord links show as a card."
         />
 
-        {error && <p className={styles.error}>{error}</p>}
+        {error && <Notice tone="error">{error}</Notice>}
 
         <div className={styles.actions}>
           <Link href={backHref} className={styles.cancelBtn}>Cancel</Link>

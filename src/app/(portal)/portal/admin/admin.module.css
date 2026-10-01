@@ -338,16 +338,6 @@
 
 /* ── Board display order ── */
 
-.saveError {
-  font-size: 0.75rem;
-  color: #f87171;
-  background: rgba(220,38,38,0.1);
-  border: 1px solid rgba(248,113,113,0.25);
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.4rem;
-  margin-bottom: 0.75rem;
-}
-
 .boardOrderList {
   display: flex;
   flex-direction: column;
@@ -399,24 +389,3 @@
   white-space: nowrap;
 }
 
-.boardOrderActions {
-  display: flex;
-  gap: 0.3rem;
-  flex-shrink: 0;
-}
-
-.boardOrderActions button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: rgba(242,241,240,0.6);
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-.boardOrderActions button:hover:not(:disabled) { background: rgba(255,199,44,0.1); color: var(--yellow); }
-.boardOrderActions button:disabled { opacity: 0.3; cursor: not-allowed; }

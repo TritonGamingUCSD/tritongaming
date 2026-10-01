@@ -144,17 +144,6 @@
   to { transform: rotate(360deg); }
 }
 
-.errorBanner {
-  background: rgba(220, 38, 38, 0.15);
-  border: 1px solid rgba(220, 38, 38, 0.3);
-  border-radius: 0.5rem;
-  padding: 0.75rem 1rem;
-  color: #fca5a5;
-  font-size: 0.875rem;
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
 .footnote {
   margin-top: 1.25rem;
   font-size: 0.78rem;

@@ -350,26 +350,6 @@
 }
 
 .checkoutBanner,
-.checkoutBannerWarn {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.85rem;
-  font-family: var(--font-futura-medium);
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.checkoutBanner {
-  color: #059669;
-  background: rgba(5, 150, 105, 0.12);
-}
-
-.checkoutBannerWarn {
-  color: var(--yellow);
-  background: rgba(255, 199, 44, 0.1);
-}
 
 /* ── Empty state ─────────────────────────────────── */
 .empty {
@@ -453,8 +433,6 @@
   padding: 0.4rem 0.7rem;
   font-size: 0.72rem;
 }
-
-.onlineCheckinError { flex-basis: 100%; font-size: 0.78rem; color: #fca5a5; }
 
 .onlineCheckinSuccess {
   display: inline-flex;

@@ -1,5 +1,6 @@
 'use client';
 
+import Notice from '@/components/ui/Notice';
 import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -232,18 +233,18 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
       <h1 className={styles.title}>My Profile</h1>
 
       {promptedForTicket && (
-        <div className={styles.ticketPrompt}>
+        <Notice tone="warning">
           {isUcsd
             ? 'Almost there — fill in your name, pronouns, gender, class, college, and major to get your ticket.'
             : 'Almost there — fill in your name, pronouns, and gender to get your ticket.'}
           {' '}You&apos;ll only need to do this once.
-        </div>
+        </Notice>
       )}
 
       {!promptedForTicket && missingNow.length > 0 && (
-        <div className={styles.ticketPrompt}>
+        <Notice tone="warning">
           Your profile is incomplete — still needed: <strong>{missingNow.join(', ')}</strong>.
-        </div>
+        </Notice>
       )}
 
       <div className={`${styles.layout} ${tab === 'officer' && isBoardEligible ? styles.layoutOfficer : ''}`}>
@@ -629,10 +630,10 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
                   <h2 className={styles.publicTitle}>Public Team page — what to show</h2>
                   <a href="/team" target="_blank" rel="noopener noreferrer" className={styles.publicLink}>View Team page ↗</a>
                 </div>
-                <p className={styles.publicWarning}>
+                <Notice tone="info">
                   <strong>Anyone on the internet can see this</strong>, including people who aren&apos;t logged in.
                   Checked items appear on your public card; unchecked items stay hidden from the public.
-                </p>
+                </Notice>
                 <p className={styles.socialHint}>
                   Always public: your name, picture, title and gamer tag. Inside the portal (TG Members), officers can always see everything you&apos;ve filled in — these choices only change the public page.
                 </p>
@@ -664,7 +665,7 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
           </>
           )}
 
-          {error && <p className={styles.error}>{error}</p>}
+          {error && <Notice tone="error">{error}</Notice>}
 
           <button
             type="submit"

@@ -1,5 +1,6 @@
 'use client';
 
+import Notice from '@/components/ui/Notice';
 import { confirmHold } from '@/lib/confirmHold';
 import { useEffect, useState } from 'react';
 import { Database, HardDrive, Triangle, ExternalLink, Users, Server, ShieldCheck } from 'lucide-react';
@@ -187,7 +188,7 @@ export default function SystemStats() {
   }
 
   if (error) {
-    return <p className={styles.error}>{error}</p>;
+    return <Notice tone="error">{error}</Notice>;
   }
 
   if (!data) {
@@ -348,7 +349,7 @@ export default function SystemStats() {
           )}
         </div>
 
-        {cleanupError && <p className={styles.error}>{cleanupError}</p>}
+        {cleanupError && <Notice tone="error">{cleanupError}</Notice>}
 
         {cleanupResult && (
           <p className={styles.successNote}>
@@ -368,7 +369,7 @@ export default function SystemStats() {
             optionally <code className={styles.code}>VERCEL_TEAM_ID</code>) to show deployment status here.
           </p>
         ) : data.vercel.error ? (
-          <p className={styles.error}>{data.vercel.error}</p>
+          <Notice tone="error">{data.vercel.error}</Notice>
         ) : (
           <div className={styles.vercelCard}>
             <div className={styles.vercelHeader}>

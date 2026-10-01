@@ -1,5 +1,6 @@
 'use client';
 
+import Notice from '@/components/ui/Notice';
 import { useEffect, useRef, useState } from 'react';
 import styles from './checkinsection.module.css';
 
@@ -64,7 +65,7 @@ export default function OnlineCheckinPanel({ events }: { events: Event[] }) {
         Only works for people who already have a ticket for this event.
       </p>
 
-      {error && <p className={styles.error}>{error}</p>}
+      {error && <Notice tone="error">{error}</Notice>}
 
       {code && (
         <div className={styles.codeCard}>

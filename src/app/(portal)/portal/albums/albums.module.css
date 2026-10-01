@@ -96,16 +96,6 @@
 .saveBtn:hover:not(:disabled) { border-color: var(--btn-primary-border-hover); box-shadow: var(--btn-primary-shadow-hover); }
 .saveBtn:disabled, .cancelBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.error {
-  font-size: 0.85rem;
-  color: #fca5a5;
-  padding: 0.625rem 0.875rem;
-  margin-bottom: 1.25rem;
-  background: rgba(220,38,38,0.1);
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(220,38,38,0.2);
-}
-
 .empty {
   min-height: 40vh;
   display: flex;
@@ -198,22 +188,6 @@
 }
 .deleteBtn:hover:not(:disabled) { background: rgba(220,38,38,0.2); }
 .deleteBtn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-.moveBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.04);
-  color: rgba(242,241,240,0.5);
-  border: 1px solid rgba(255,255,255,0.08);
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-.moveBtn:hover:not(:disabled) { background: rgba(255,199,44,0.1); color: var(--yellow); }
-.moveBtn:disabled { opacity: 0.35; cursor: not-allowed; }
 
 .dragHandle {
   display: inline-flex;

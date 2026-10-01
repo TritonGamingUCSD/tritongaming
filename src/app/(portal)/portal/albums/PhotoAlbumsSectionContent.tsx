@@ -1,10 +1,11 @@
 'use client';
 
+import Notice from '@/components/ui/Notice';
 import { confirmHold } from '@/lib/confirmHold';
 import { showToast } from '@/lib/toast';
 import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
 import { useState } from 'react';
-import { Plus, ExternalLink, Trash2, Image as ImageIcon, ChevronUp, ChevronDown, GripVertical } from 'lucide-react';
+import { Plus, ExternalLink, Trash2, Image as ImageIcon, GripVertical } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import { useDragReorder } from '@/lib/useDragReorder';
@@ -93,14 +94,6 @@ export default function PhotoAlbumsSectionContent({ albums: initial, canManage }
     }
   }
 
-  function handleMove(index: number, dir: -1 | 1) {
-    const target = index + dir;
-    if (target < 0 || target >= albums.length) return;
-    const next = [...albums];
-    [next[index], next[target]] = [next[target], next[index]];
-    persistReorder(next);
-  }
-
   const { dragIndex, overIndex, dragHandleProps, dropTargetProps } = useDragReorder(albums, persistReorder);
 
   async function handleDelete(id: string) {
@@ -158,7 +151,7 @@ export default function PhotoAlbumsSectionContent({ albums: initial, canManage }
         </form>
       )}
 
-      {error && <p className={styles.error}>{error}</p>}
+      {error && <Notice tone="error">{error}</Notice>}
 
       {albums.length === 0 ? (
         <div className={styles.empty}>
@@ -196,14 +189,6 @@ export default function PhotoAlbumsSectionContent({ albums: initial, canManage }
                     </a>
                     {canManage && (
                       <>
-                        <button type="button" className={styles.moveBtn} disabled={busyId !== null || i === 0}
-                          onClick={() => handleMove(i, -1)} aria-label={`Move ${a.title} up`}>
-                          <ChevronUp size={14} strokeWidth={2} />
-                        </button>
-                        <button type="button" className={styles.moveBtn} disabled={busyId !== null || i === albums.length - 1}
-                          onClick={() => handleMove(i, 1)} aria-label={`Move ${a.title} down`}>
-                          <ChevronDown size={14} strokeWidth={2} />
-                        </button>
                         <button type="button" className={styles.deleteBtn} onClick={() => handleDelete(a.id)} disabled={busyId === a.id} aria-label={`Remove ${a.title}`}>
                           <Trash2 size={14} strokeWidth={1.75} aria-hidden="true" />
                         </button>

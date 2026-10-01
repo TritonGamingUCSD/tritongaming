@@ -38,15 +38,6 @@
   .tab { flex-shrink: 0; }
 }
 
-.error {
-  font-size: 0.85rem;
-  color: #fca5a5;
-  padding: 0.625rem 0.875rem;
-  background: rgba(220,38,38,0.1);
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(220,38,38,0.2);
-}
-
 /* ── Redemption scanner ── */
 /* The camera viewport/placeholder/controls themselves reuse checkin.module.css
    (CheckInClient's classes) so the two scanners can't visually drift apart —

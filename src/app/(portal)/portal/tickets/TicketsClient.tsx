@@ -1,5 +1,6 @@
 'use client';
 
+import Notice from '@/components/ui/Notice';
 import { useEffect, useState, type ReactNode } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Ticket, MapPin, QrCode, Check, X, Timer, Award } from 'lucide-react';
@@ -239,16 +240,12 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
       <h1 className={styles.title}>My Tickets</h1>
 
       {checkoutResult === 'success' && (
-        <div className={styles.checkoutBanner}>
-          <Check size={16} strokeWidth={1.75} aria-hidden="true" /> Payment received — your ticket will appear here in a few seconds.
-        </div>
+        <Notice tone="success">Payment received — your ticket will appear here in a few seconds.</Notice>
       )}
       {checkoutResult === 'cancelled' && (
-        <div className={styles.checkoutBannerWarn}>
-          Checkout was cancelled — no charge was made.
-        </div>
+        <Notice tone="warning">Checkout was cancelled — no charge was made.</Notice>
       )}
-      {error && <div className={styles.checkoutBannerWarn}>{error}</div>}
+      {error && <Notice tone="error">{error}</Notice>}
 
       {/* Hero: next active ticket */}
       {nextActiveTicket && (

@@ -1,5 +1,6 @@
 'use client';
 
+import Notice from '@/components/ui/Notice';
 import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import type { AppRole } from '@/types/database';
@@ -133,7 +134,7 @@ function MappingField({
               </button>
             </div>
             {staleRows?.[i] && (
-              <p className={styles.staleWarning}>⚠ &quot;{row.label}&quot; doesn&apos;t match a current option on the form — that question will just show up blank instead of pre-filled.</p>
+              <Notice tone="warning" compact>&quot;{row.label}&quot; doesn&apos;t match a current option on the form — that question will just show up blank instead of pre-filled.</Notice>
             )}
           </div>
         ))}
@@ -311,7 +312,7 @@ export default function CheckinFormFieldsEditor({ value, onChange }: {
         <span className={styles.hint}>Paste this event's form link — the questions are read automatically and matched up for you. Use Detect Questions to re-read it if UCSD edits the form.</span>
       </label>
 
-      {detectError && <p className={styles.error}>{detectError}</p>}
+      {detectError && <Notice tone="error">{detectError}</Notice>}
 
       {questions && (
         <div className={styles.field}>
@@ -352,12 +353,12 @@ export default function CheckinFormFieldsEditor({ value, onChange }: {
         <label className={styles.field}>
           <span className={styles.label}>Entry ID — Event Name</span>
           <input className={styles.input} value={value.entry_event_name} onChange={(e) => set('entry_event_name', e.target.value)} />
-          {stale?.fields.entry_event_name && <p className={styles.staleWarning}>⚠ Not found on the form anymore — re-detect to fix.</p>}
+          {stale?.fields.entry_event_name && <Notice tone="warning" compact>Not found on the form anymore — re-detect to fix.</Notice>}
         </label>
         <label className={styles.field}>
           <span className={styles.label}>Entry ID — Food/Item Received</span>
           <input className={styles.input} value={value.entry_food_item} onChange={(e) => set('entry_food_item', e.target.value)} />
-          {stale?.fields.entry_food_item && <p className={styles.staleWarning}>⚠ Not found on the form anymore — re-detect to fix.</p>}
+          {stale?.fields.entry_food_item && <Notice tone="warning" compact>Not found on the form anymore — re-detect to fix.</Notice>}
         </label>
       </div>
 
@@ -365,12 +366,12 @@ export default function CheckinFormFieldsEditor({ value, onChange }: {
         <label className={styles.field}>
           <span className={styles.label}>Entry ID — Academic Year</span>
           <input className={styles.input} value={value.entry_academic_year} onChange={(e) => set('entry_academic_year', e.target.value)} />
-          {stale?.fields.entry_academic_year && <p className={styles.staleWarning}>⚠ Not found on the form anymore — re-detect to fix.</p>}
+          {stale?.fields.entry_academic_year && <Notice tone="warning" compact>Not found on the form anymore — re-detect to fix.</Notice>}
         </label>
         <label className={styles.field}>
           <span className={styles.label}>Entry ID — Affiliation with Triton Gaming</span>
           <input className={styles.input} value={value.entry_affiliation} onChange={(e) => set('entry_affiliation', e.target.value)} />
-          {stale?.fields.entry_affiliation && <p className={styles.staleWarning}>⚠ Not found on the form anymore — re-detect to fix.</p>}
+          {stale?.fields.entry_affiliation && <Notice tone="warning" compact>Not found on the form anymore — re-detect to fix.</Notice>}
         </label>
       </div>
       <span className={styles.hint} style={{ marginTop: '-0.75rem' }}>

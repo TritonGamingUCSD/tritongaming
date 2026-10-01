@@ -4,7 +4,7 @@ import { showToast } from '@/lib/toast';
 import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
 import { useState } from 'react';
 import Image from 'next/image';
-import { Pencil, X, Check, MapPin, ChevronUp, ChevronDown, GripVertical } from 'lucide-react';
+import { Pencil, X, Check, MapPin, GripVertical } from 'lucide-react';
 import type { ContentBlock, FieldDef } from '@/lib/content-blocks';
 import { CATEGORY_ORDER } from '@/lib/content-blocks';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
@@ -27,12 +27,6 @@ const COLOR_PREVIEW: Record<string, string> = {
 // Swaps two rows in place — used by every reorderable list editor below
 // (kvlist, imagelist) so "move up"/"move down" is a single adjacent swap
 // rather than a full re-sort; repeated clicks walk an item to any position.
-function swapItems<T>(items: T[], i: number, j: number): T[] {
-  const next = [...items];
-  [next[i], next[j]] = [next[j], next[i]];
-  return next;
-}
-
 // A block's own `pages` array is the single source of truth for "where does
 // this text actually show up" — this just turns it into the label/links
 // used in the UI ('*' means every public page, rather than one specific
@@ -420,14 +414,6 @@ function KvListField({ value, onChange, labelEl, keyLbl, valLbl }: {
               <input className={styles.fieldInput} value={item.label ?? ''} placeholder={valLbl}
                 onChange={(e) => { const n=[...items]; n[i]={...n[i],label:e.target.value}; onChange(n); }} />
               <div className={styles.rowActions}>
-                <button type="button" className={styles.moveBtn} disabled={i === 0}
-                  onClick={() => onChange(swapItems(items, i, i - 1))} aria-label="Move up">
-                  <ChevronUp size={14} strokeWidth={2} />
-                </button>
-                <button type="button" className={styles.moveBtn} disabled={i === items.length - 1}
-                  onClick={() => onChange(swapItems(items, i, i + 1))} aria-label="Move down">
-                  <ChevronDown size={14} strokeWidth={2} />
-                </button>
                 <button type="button" className={styles.kvRemove}
                   onClick={() => onChange(items.filter((_,j)=>j!==i))} aria-label="Remove"><X size={14} strokeWidth={1.75} /></button>
               </div>
@@ -506,14 +492,6 @@ function ImageListField({ value, onChange, labelEl, fields, addLabel = '+ Add It
               ))}
             </div>
             <div className={styles.rowActions}>
-              <button type="button" className={styles.moveBtn} disabled={i === 0}
-                onClick={() => onChange(swapItems(items, i, i - 1))} aria-label="Move up">
-                <ChevronUp size={14} strokeWidth={2} />
-              </button>
-              <button type="button" className={styles.moveBtn} disabled={i === items.length - 1}
-                onClick={() => onChange(swapItems(items, i, i + 1))} aria-label="Move down">
-                <ChevronDown size={14} strokeWidth={2} />
-              </button>
               <button type="button" className={styles.kvRemove}
                 onClick={() => onChange(items.filter((_,j)=>j!==i))} aria-label="Remove"><X size={14} strokeWidth={1.75} /></button>
             </div>

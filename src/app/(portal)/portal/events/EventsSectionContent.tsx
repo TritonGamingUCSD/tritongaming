@@ -288,7 +288,6 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
                     {canEdit && (
                       <div className={styles.rowActions}>
                         <Link href={`/portal/events/${event.id}`} className={styles.checkinLink}>Edit</Link>
-                        <Link href={`/portal/events/new?from=${event.id}`} className={styles.checkinLink}>Duplicate</Link>
                         {event.checkinFormPreviewUrl && (
                           <a href={event.checkinFormPreviewUrl} target="_blank" rel="noopener noreferrer" className={styles.checkinLink}>
                             <ExternalLink size={11} strokeWidth={1.75} aria-hidden="true" /> Preview AS Form

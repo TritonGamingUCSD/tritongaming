@@ -1,5 +1,6 @@
 'use client';
 
+import Notice from '@/components/ui/Notice';
 import { confirmHold } from '@/lib/confirmHold';
 import { showToast } from '@/lib/toast';
 import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
@@ -639,7 +640,7 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, lead
             )}
           </div>
 
-          {shopError && <p className={styles.error}>{shopError}</p>}
+          {shopError && <Notice tone="error">{shopError}</Notice>}
 
           {shopItems !== null && unlocks.length > 0 && (
             <div className={styles.historySection}>
@@ -736,7 +737,7 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, lead
       {tab === 'shop' && (
         <div className={styles.shopTab}>
           <div className={styles.shopBalance}>Spendable balance: <strong>{shopBalance.toLocaleString()} pts</strong></div>
-          {shopError && <p className={styles.error}>{shopError}</p>}
+          {shopError && <Notice tone="error">{shopError}</Notice>}
 
           {pending.length > 0 && (
             <div className={styles.pendingSection}>
@@ -803,7 +804,7 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, lead
             <p className={styles.referralHint}>Every officer is on the leaderboard — this only controls whether your full name or a masked version (like "Jas***") shows next to your rank. Exact points are always shown either way.</p>
           </div>
 
-          {boardError && <p className={styles.error}>{boardError}</p>}
+          {boardError && <Notice tone="error">{boardError}</Notice>}
           {board === null ? (
             <LoadingSpinner size={28} label="Loading leaderboard…" theme="dark" />
           ) : board.length === 0 ? (
@@ -905,8 +906,8 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, lead
                 <button type="button" className={checkinStyles.stopBtn} onClick={scanner.stopCamera}>Stop Camera</button>
               )}
             </div>
-            {scanner.error && <p className={styles.error}>{scanner.error}</p>}
-            {scanError && <p className={styles.error}>{scanError}</p>}
+            {scanner.error && <Notice tone="error">{scanner.error}</Notice>}
+            {scanError && <Notice tone="error">{scanError}</Notice>}
 
             {redemption && (
               <div className={styles.confirmCard}>
@@ -914,7 +915,7 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, lead
                 <h3 className={styles.confirmTitle}>{oneOf(redemption.reward)?.title ?? 'Reward'}</h3>
                 <p className={styles.confirmMeta}>For {oneOf(redemption.member)?.display_name ?? 'Officer'} · {redemption.point_cost} pts</p>
                 {redemption.status !== 'pending' ? (
-                  <p className={styles.error}>Already {redemption.status}.</p>
+                  <Notice tone="error">Already {redemption.status}.</Notice>
                 ) : (
                   <div className={styles.confirmActions}>
                     <button type="button" className={styles.rejectBtn} onClick={() => setRedemption(null)}><X size={15} strokeWidth={2} aria-hidden="true" /> Cancel</button>
@@ -977,14 +978,14 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, lead
                 <span>Tier auto-unlock (free, one per person — appears in officers&apos; &quot;To Claim&quot; tab once they reach the tier)</span>
               </label>
               {newReward.isTierUnlock && !newReward.min_tier && (
-                <p className={styles.error}>A tier auto-unlock needs a tier requirement above.</p>
+                <Notice tone="error">A tier auto-unlock needs a tier requirement above.</Notice>
               )}
               <button type="submit" className={styles.saveBtn} disabled={creating || !newReward.title.trim() || (newReward.isTierUnlock && !newReward.min_tier)}>
                 {creating ? 'Adding…' : '+ Add Reward'}
               </button>
             </form>
 
-            {manageError && <p className={styles.error}>{manageError}</p>}
+            {manageError && <Notice tone="error">{manageError}</Notice>}
 
             {manageItems === null ? (
               <LoadingSpinner size={28} label="Loading rewards…" theme="dark" />
@@ -1036,7 +1037,7 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, lead
 
             {correctTarget && (
               <>
-                {correctError && <p className={styles.error}>{correctError}</p>}
+                {correctError && <Notice tone="error">{correctError}</Notice>}
                 {correctHistory === null ? (
                   <LoadingSpinner size={20} label="Loading history…" theme="dark" />
                 ) : correctHistory.length === 0 ? (
@@ -1094,7 +1095,7 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, lead
               </button>
             </form>
 
-            {tierError && <p className={styles.error}>{tierError}</p>}
+            {tierError && <Notice tone="error">{tierError}</Notice>}
 
             {manageTiers === null ? (
               <LoadingSpinner size={28} label="Loading tiers…" theme="dark" />

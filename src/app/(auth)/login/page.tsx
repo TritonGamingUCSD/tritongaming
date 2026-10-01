@@ -1,3 +1,4 @@
+import Notice from '@/components/ui/Notice';
 import { redirect } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -38,9 +39,7 @@ export default async function LoginPage({
         <div className={styles.divider} />
 
         {params.error && (
-          <div className={styles.errorBanner}>
-            Authentication failed. Please try again.
-          </div>
+          <Notice tone="error">Authentication failed. Please try again.</Notice>
         )}
 
         <p className={styles.prompt}>Sign in to access events and tickets.</p>

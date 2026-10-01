@@ -1,5 +1,6 @@
 'use client';
 
+import Notice from '@/components/ui/Notice';
 import { confirmHold } from '@/lib/confirmHold';
 import { showToast } from '@/lib/toast';
 import { useUnsavedChanges, confirmDiscardUnsaved } from '@/lib/useUnsavedChanges';
@@ -129,7 +130,7 @@ function AttachmentsField({ value, onChange }: { value: DocAttachment[]; onChang
         />
         <button type="button" className={styles.attachAddBtn} onClick={handleAddAlbum} disabled={!albumUrl.trim()}>Add</button>
       </div>
-      {error && <span className={styles.error}>{error}</span>}
+      {error && <Notice tone="error" compact>{error}</Notice>}
     </div>
   );
 }
@@ -454,7 +455,7 @@ export default function DocsClient({ initialDocs, initialCategories, userId, can
             <MarkdownField value={draft.content} onChange={(v) => setDraft((f) => ({ ...f, content: v }))} />
             <AttachmentsField value={draft.attachments} onChange={(v) => setDraft((f) => ({ ...f, attachments: v }))} />
 
-            {error && <p className={styles.error}>{error}</p>}
+            {error && <Notice tone="error">{error}</Notice>}
 
             <div className={styles.actions}>
               <button type="button" className={styles.cancelBtn} onClick={cancelEdit} disabled={saving}>Cancel</button>
@@ -485,7 +486,7 @@ export default function DocsClient({ initialDocs, initialCategories, userId, can
                 </div>
               )}
             </div>
-            {error && <p className={styles.error}>{error}</p>}
+            {error && <Notice tone="error">{error}</Notice>}
             <div className={styles.viewBody}>
               {selected.content.trim() ? <MarkdownContent>{selected.content}</MarkdownContent> : <p className={styles.emptyNote}>This doc has no content yet.</p>}
             </div>

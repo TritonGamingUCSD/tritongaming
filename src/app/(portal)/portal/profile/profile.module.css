@@ -21,18 +21,6 @@
   letter-spacing: 0.05em;
 }
 
-.ticketPrompt {
-  font-size: 0.85rem;
-  font-family: var(--font-futura-medium);
-  color: var(--yellow);
-  background: rgba(255, 199, 44, 0.1);
-  border: 1px solid rgba(255, 199, 44, 0.25);
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  margin-top: -1.25rem;
-  margin-bottom: 1.5rem;
-}
-
 /* Single column by default — the 180px sidebar was previously fixed at
    every viewport width, including phones, where 180px left almost nothing
    for the form column; .avatarUpload's own 220px max-width then didn't
@@ -265,15 +253,6 @@
   font-size: 0.7rem;
   color: rgba(242,241,240,0.3);
   text-align: right;
-}
-
-.error {
-  font-size: 0.85rem;
-  color: #fca5a5;
-  padding: 0.625rem 0.875rem;
-  background: rgba(220,38,38,0.1);
-  border-radius: 0.5rem;
-  border: 1px solid rgba(220,38,38,0.2);
 }
 
 .checkboxField {
@@ -557,7 +536,6 @@
 .publicHeader { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; color: #7dd3fc; }
 .publicTitle { margin: 0; font-size: 0.85rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--white); }
 .publicLink { margin-left: auto; font-size: 0.75rem; color: #7dd3fc; text-decoration: underline; }
-.publicWarning { margin: 0; padding: 0.5rem 0.7rem; border-radius: 0.6rem; font-size: 0.82rem; line-height: 1.4; color: var(--white); background: rgba(56, 189, 248, 0.14); }
 .visibilityRow { align-items: center; }
 .visibilityRowPublic { border-color: rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.07); }
 .visBadge { display: inline-flex; align-items: center; gap: 0.3rem; flex-shrink: 0; padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }

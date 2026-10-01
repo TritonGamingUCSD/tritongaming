@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronUp, ChevronDown, GripVertical } from 'lucide-react';
+import { GripVertical } from 'lucide-react';
 import type { PhotoAlbumEntry } from '@/types/database';
 import { useDragReorder } from '@/lib/useDragReorder';
 import styles from './PhotoAlbumsField.module.css';
@@ -37,14 +37,6 @@ export default function PhotoAlbumsField({
 
   const { dragIndex, overIndex, dragHandleProps, dropTargetProps } = useDragReorder(value, onChange);
 
-  function handleMove(index: number, dir: -1 | 1) {
-    const target = index + dir;
-    if (target < 0 || target >= value.length) return;
-    const next = [...value];
-    [next[index], next[target]] = [next[target], next[index]];
-    onChange(next);
-  }
-
   return (
     <div className={styles.field}>
       <span className={styles.label}>Photo Albums</span>
@@ -63,14 +55,6 @@ export default function PhotoAlbumsField({
               <span className={styles.albumTitle}>{album.title}</span>
               <span className={styles.albumUrl}>{album.url}</span>
               <div className={styles.albumActions}>
-                <button type="button" className={styles.moveBtn} disabled={i === 0}
-                  onClick={() => handleMove(i, -1)} aria-label="Move up">
-                  <ChevronUp size={14} strokeWidth={2} />
-                </button>
-                <button type="button" className={styles.moveBtn} disabled={i === value.length - 1}
-                  onClick={() => handleMove(i, 1)} aria-label="Move down">
-                  <ChevronDown size={14} strokeWidth={2} />
-                </button>
                 <button type="button" className={styles.removeBtn} onClick={() => handleRemove(i)}>Remove</button>
               </div>
             </li>

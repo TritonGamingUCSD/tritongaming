@@ -1,11 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { TriangleAlert, X } from 'lucide-react';
+import Dialog, { DialogText, DialogCancel } from '@/components/ui/Dialog';
 import HoldButton from './HoldButton';
 import { CONFIRM_HOLD_EVENT, type ConfirmHoldRequest } from '@/lib/confirmHold';
-import styles from './HoldToConfirm.module.css';
 
 // Mounted once in the root layout; renders the dialog for confirmHold().
 export default function ConfirmHost() {
@@ -28,17 +26,12 @@ export default function ConfirmHost() {
     setRequest(null);
   }
 
-  return createPortal(
-    <div className={styles.backdrop} onClick={(e) => { if (e.target === e.currentTarget) finish(false); }}>
-      <div className={styles.sheet} role="alertdialog" aria-modal="true" aria-label={request.title}>
-        <div className={styles.icon}><TriangleAlert size={26} strokeWidth={1.75} aria-hidden="true" /></div>
-        <h2 className={styles.title}>{request.title}</h2>
-        {request.message && <p className={styles.text}>{request.message}</p>}
-        <p className={styles.text}>This can&apos;t be undone. Press and hold the button to confirm.</p>
-        <HoldButton label={request.confirmLabel ?? 'Hold to confirm'} onConfirm={() => finish(true)} />
-        <button type="button" className={styles.cancel} onClick={() => finish(false)}>Cancel</button>
-      </div>
-    </div>,
-    document.body
+  return (
+    <Dialog title={request.title} tone="danger" onClose={() => finish(false)}>
+      {request.message && <DialogText>{request.message}</DialogText>}
+      <DialogText>This can&apos;t be undone. Press and hold the button to confirm.</DialogText>
+      <HoldButton label={request.confirmLabel ?? 'Hold to confirm'} onConfirm={() => finish(true)} />
+      <DialogCancel onClick={() => finish(false)} />
+    </Dialog>
   );
 }
