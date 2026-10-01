@@ -2,7 +2,7 @@
 
 import { confirmDiscardUnsaved } from '@/lib/useUnsavedChanges';
 import type { ReactElement, ReactNode } from 'react';
-import { cloneElement, isValidElement, useCallback, useEffect, useState } from 'react';
+import { cloneElement, isValidElement, useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { usePortalParams } from '@/lib/usePortalParams';
@@ -32,9 +32,12 @@ function smallIcon(icon: ReactNode, size = 21) {
 // moved into Resources instead (see portal/page.tsx) — it's usable by any
 // officer-tier member, the same audience as Members/Docs, not Admin's
 // actually-restricted stuff.
-const GROUP_ORDER = ['Yours', 'Events', 'Resources', 'Admin'] as const;
+const GROUP_ORDER = ['Yours', 'TG', 'Events', 'Resources', 'Admin'] as const;
+// Order inside each group (and so in the sidebar, the "More" sheet and the home grid). Anything not
+// listed goes last, in the order it was given.
+const SECTION_ORDER = ['tickets', 'profile', 'activity', 'points', 'battlepass', 'members', 'meetings', 'events', 'checkin', 'qrcode', 'docs', 'albums', 'admin', 'site-content', 'links'];
 // Accent color per group — tints the heading dot, icon tiles and hover state.
-const GROUP_ACCENT: Record<string, string> = { Yours: '#ffc72c', Events: '#4a90e2', Resources: '#34d399', Admin: '#f472b6' };
+const GROUP_ACCENT: Record<string, string> = { Yours: '#ffc72c', TG: '#a78bfa', Events: '#4a90e2', Resources: '#34d399', Admin: '#f472b6' };
 type HubGroup = (typeof GROUP_ORDER)[number];
 
 export interface HubSection {
@@ -110,7 +113,11 @@ interface GroupedSection {
 // onOpenChange reports whether a panel is open so a sibling (the portal's
 // "next ticket" banner) can react to that directly — e.g. hide itself while
 // a section takes over the screen on mobile.
-export default function PortalHub({ sections, identity, railFooter, homeExtras, onOpenChange }: { sections: HubSection[]; identity?: HubIdentity; railFooter?: ReactNode; homeExtras?: ReactNode; onOpenChange?: (open: boolean) => void }) {
+export default function PortalHub({ sections: sectionsProp, identity, railFooter, homeExtras, onOpenChange }: { sections: HubSection[]; identity?: HubIdentity; railFooter?: ReactNode; homeExtras?: ReactNode; onOpenChange?: (open: boolean) => void }) {
+  const sections = useMemo(() => {
+    const rank = (id: string) => { const i = SECTION_ORDER.indexOf(id); return i === -1 ? SECTION_ORDER.length : i; };
+    return [...sectionsProp].sort((a, b) => rank(a.id) - rank(b.id));
+  }, [sectionsProp]);
   const setParams = usePortalParams();
   const searchParams = useSearchParams();
   const requestedSection = searchParams.get('section');

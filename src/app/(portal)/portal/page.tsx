@@ -266,7 +266,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       description: canManageMeetings ? 'Schedule meetings, run check-in, export attendance' : 'Check in to meetings and see your history',
       // While a meeting is on (or about to start) this is the thing to have under your thumb.
       dockBoost: (meetingNow ? 100 : 0) + (canManageMeetings ? 10 : 0),
-      group: 'Events' as const,
+      group: 'TG' as const,
       content: <MeetingsSectionContent canManage={canManageMeetings} />,
     }] : []),
     ...(canViewMembers && membersData ? [{
@@ -277,7 +277,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       // Members page itself excludes. This badge would otherwise promise a
       // much bigger roster than the page actually shows.
       badge: membersData.memberCount || undefined,
-      group: 'Resources' as const,
+      group: 'TG' as const,
       content: <MembersSectionContent rows={membersData.rows} roles={roles} />,
     }] : []),
     ...(canViewDocs && docsData ? [{
