@@ -26,7 +26,7 @@ export async function getEventsData() {
   const [{ data: events }, { data: tickets }] = await Promise.all([
     supabase
       .from('events')
-      .select('id, title, start_date, created_at, location, is_published, requires_ticket, max_capacity, audience, points_value, requires_checkin_form, checkin_food_item, checkin_form_event_name, checkin_form_override')
+      .select('id, title, start_date, end_date, created_at, location, is_published, requires_ticket, max_capacity, audience, points_value, requires_checkin_form, checkin_food_item, checkin_form_event_name, checkin_form_override')
       .order('start_date', { ascending: false })
       .limit(50),
     supabase.from('tickets').select('event_id, status, created_at'),

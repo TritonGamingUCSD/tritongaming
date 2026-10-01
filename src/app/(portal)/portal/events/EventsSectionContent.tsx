@@ -8,6 +8,7 @@ import {
 } from 'recharts';
 import { Search, Plus, Ticket, MapPin, BarChart3, ListChecks, Award, ExternalLink, Trash2 } from 'lucide-react';
 import { PACIFIC_TZ } from '@/lib/timezone';
+import { isCheckinWindowOpen } from '@/lib/checkinWindow';
 import type { MonthPoint } from '@/lib/monthBuckets';
 import type { EventTicketStat } from './getEventsData';
 import { usePortalTabSync } from '@/lib/usePortalTabSync';
@@ -20,6 +21,7 @@ interface EventRow {
   id: string;
   title: string;
   start_date: string;
+  end_date?: string | null;
   location: string | null;
   is_published: boolean;
   requires_ticket: boolean;
@@ -87,8 +89,8 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
 
   const counts = useMemo(() => ({
     all: events.length,
-    upcoming: events.filter((e) => new Date(e.start_date).getTime() >= now).length,
-    past: events.filter((e) => new Date(e.start_date).getTime() < now).length,
+    upcoming: events.filter((e) => isCheckinWindowOpen(e)).length,
+    past: events.filter((e) => !isCheckinWindowOpen(e)).length,
     draft: events.filter((e) => !e.is_published).length,
   }), [events, now]);
 
@@ -96,8 +98,8 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
     const q = query.trim().toLowerCase();
     return events
       .filter((e) => {
-        if (filter === 'upcoming' && new Date(e.start_date).getTime() < now) return false;
-        if (filter === 'past' && new Date(e.start_date).getTime() >= now) return false;
+        if (filter === 'upcoming' && !isCheckinWindowOpen(e)) return false;
+        if (filter === 'past' && isCheckinWindowOpen(e)) return false;
         if (filter === 'draft' && e.is_published) return false;
         if (q && !e.title.toLowerCase().includes(q) && !(e.location ?? '').toLowerCase().includes(q)) return false;
         return true;
@@ -242,7 +244,9 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
                 {canEdit && <span></span>}
               </div>
               {filtered.map((event) => {
-                const isPast = new Date(event.start_date).getTime() < now;
+                // Greyed only once the event has actually ended (same rule as
+                // check-in), not as soon as it starts.
+                const isPast = !isCheckinWindowOpen(event);
                 return (
                   <div key={event.id} className={`${styles.tableRow} ${isPast ? styles.tableRowPast : ''}`}>
                     <div>

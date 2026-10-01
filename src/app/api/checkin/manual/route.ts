@@ -9,7 +9,9 @@ import { performCheckin } from '@/lib/performCheckin';
 // physically there but their phone/code isn't cooperating. Deliberately
 // gated tighter than the scanner (checkin capability, officer+) — this
 // skips the normal proof-of-presence step entirely, so it's reserved for
-// the same manage_points (exec/admin) tier as reversing a check-in.
+// the same manage_points (exec/admin) tier as reversing a check-in. Unlike
+// the scanner it also works after the event has ended (see performCheckin's
+// ignoreWindow) — this is where missed check-ins get fixed afterwards.
 export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -45,7 +47,8 @@ export async function POST(request: Request) {
       start_date: eventData?.start_date ?? new Date().toISOString(),
       end_date: eventData?.end_date ?? null,
     },
-    user.id
+    user.id,
+    { ignoreWindow: true }
   );
   if (error) {
     const status = error.includes('already ended') ? 409 : 500;

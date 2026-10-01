@@ -132,7 +132,7 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
   // actually apply — AS Form only for events that have it on, Actions only
   // for whoever can manage points/undo a check-in.
   const gridTemplateColumns = [
-    '2fr', '1fr', '1fr', '1fr',
+    '2fr', '1fr', 'minmax(120px, 1fr)', '1fr',
     ...(event?.requires_checkin_form ? ['90px'] : []),
     ...(canManagePoints ? ['90px'] : []),
   ].join(' ');

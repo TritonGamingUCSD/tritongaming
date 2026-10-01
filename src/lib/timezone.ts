@@ -131,13 +131,21 @@ function pacificPartsOf(date: Date) {
 // DST-transition hour itself, which is more than precise enough for
 // scheduling a club event.
 export function pacificDatetimeLocalToUTC(datetimeLocal: string): Date {
-  const guess = new Date(`${datetimeLocal}:00Z`);
-  const asIfUTCFromPacificReading = (() => {
-    const p = pacificPartsOf(guess);
-    return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second);
-  })();
-  const correction = guess.getTime() - asIfUTCFromPacificReading;
-  return new Date(guess.getTime() + correction);
+  const wall = new Date(`${datetimeLocal}:00Z`).getTime();
+  // Each pass measures the Pacific offset at the *current* UTC estimate and
+  // corrects by the difference. A single pass used the offset at the naive
+  // "wall time as if UTC" instant, which is on the wrong side of a daylight-
+  // saving change for several hours on the two transition days (e.g. times
+  // before ~9 AM on the spring-forward day came out an hour off); repeating
+  // it re-measures at the corrected instant and settles. (Times that don't
+  // exist — the skipped hour in March — resolve to the instant just after.)
+  let utc = wall;
+  for (let i = 0; i < 3; i++) {
+    const p = pacificPartsOf(new Date(utc));
+    const asIfUTCFromPacificReading = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second);
+    utc += wall - asIfUTCFromPacificReading;
+  }
+  return new Date(utc);
 }
 
 // The reverse, for populating the edit form: given a stored UTC ISO

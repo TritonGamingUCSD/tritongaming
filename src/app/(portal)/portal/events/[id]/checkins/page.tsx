@@ -61,7 +61,7 @@ export default async function EventCheckinsPage({ params }: Params) {
   const activeTickets = tickets.filter((t) => t.status !== 'cancelled');
   const checkedInCount = tickets.filter((t) => t.status === 'used').length;
   const attendanceRate = activeTickets.length > 0 ? Math.round((checkedInCount / activeTickets.length) * 100) : 0;
-  const gridTemplateColumns = event.requires_checkin_form ? '2fr 1fr 1fr 1fr 90px' : undefined;
+  const gridTemplateColumns = event.requires_checkin_form ? '2fr 1fr minmax(120px, 1fr) 1fr 90px' : undefined;
 
   return (
     <div className={styles.page}>

@@ -235,6 +235,13 @@ export default function EventForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    // An end time at or before the start (e.g. "12:30 AM" typed on the same
+    // date for a night event) would close ticketing and check-in before the
+    // event even began — catch it here instead of silently saving it.
+    if (form.start_date && form.end_date && new Date(`${form.end_date}:00Z`).getTime() <= new Date(`${form.start_date}:00Z`).getTime()) {
+      setError('The end time must be after the start time. For an event that runs past midnight, set the end date to the next day.');
+      return;
+    }
     if (form.requires_checkin_form && !form.checkin_form_override?.form_url?.trim()) {
       setError("This event requires the AS Form — paste its form link first (or turn off “Requires AS Form”).");
       return;

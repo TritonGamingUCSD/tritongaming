@@ -208,8 +208,14 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
     setTickets((prev) => prev.map((t) => (t.id === ticketId ? { ...t, checkin_form_completed_at: new Date().toISOString() } : t)));
   }
 
-  const activeTickets = tickets.filter((t) => t.status === 'active');
-  const pastTickets   = tickets.filter((t) => t.status !== 'active');
+  // A ticket's DB status stays 'active' forever (nothing flips it when the
+  // event ends — see isCheckinWindowOpen), so "active" here means active
+  // *and* the event's check-in window is still open. One whose event has
+  // ended belongs with the past tickets (shown there as Expired), not in
+  // the Active list.
+  const isLive = (t: TicketData) => t.status === 'active' && !!t.event && isCheckinWindowOpen(t.event);
+  const activeTickets = tickets.filter(isLive);
+  const pastTickets   = tickets.filter((t) => !isLive(t));
 
   // Tickets come back sorted by when they were registered, not by event date —
   // pick whichever active ticket's event is soonest, not just the first one
@@ -219,7 +225,6 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
   // event began — right when people most need it to scan in. An event
   // already underway sorts ahead of later ones.
   const nextActiveTicket = activeTickets
-    .filter((t) => t.event && isCheckinWindowOpen(t.event))
     .sort((a, b) => new Date(a.event!.start_date).getTime() - new Date(b.event!.start_date).getTime())[0];
 
   // Don't repeat the ticket already featured in the hero card above.
@@ -438,6 +443,10 @@ function TicketRow({
   // stay clickable once the event is actually over — someone submitting it
   // days later would be certifying something no longer true.
   const eventHasEnded = !!ev && !isCheckinWindowOpen(ev);
+  // Greyed out only once it's really over (event ended, or the ticket was
+  // cancelled) — not merely because it's already been used. A checked-in
+  // ticket for an event that's still going on should look current.
+  const shouldDim = ticket.status === 'cancelled' || eventHasEnded;
   // Local override so the UI updates the instant they confirm, without
   // waiting on a full data refetch — initialized from the server value,
   // then set directly once CheckinFormModal's onComplete fires. Also kept
@@ -453,7 +462,7 @@ function TicketRow({
   }, [ticket.checkin_form_completed_at]);
 
   return (
-    <div className={`${styles.ticketRow} ${!isActionable ? styles.ticketDim : ''}`}>
+    <div className={`${styles.ticketRow} ${shouldDim ? styles.ticketDim : ''}`}>
       <div className={styles.ticketLeft}>
         <span className={styles.ticketStatusIcon}>{STATUS_ICON[displayStatus]}</span>
       </div>

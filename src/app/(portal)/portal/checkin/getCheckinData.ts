@@ -1,3 +1,4 @@
+import { openEventsFilter } from '@/lib/checkinWindow';
 import { createClient } from '@/lib/supabase/server';
 
 // Shared by the standalone /portal/checkin route and the portal hub.
@@ -7,7 +8,10 @@ export async function getCheckinData() {
     .from('events')
     .select('id, title, start_date, is_online')
     .eq('is_published', true)
-    .gte('start_date', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+    // Every event that can still be checked into — same rule as the check-in
+    // itself (until its end time), so a multi-day or long-running event
+    // doesn't drop off the scanner's list 24h after it started.
+    .or(openEventsFilter())
     .order('start_date', { ascending: true })
     .limit(20);
 

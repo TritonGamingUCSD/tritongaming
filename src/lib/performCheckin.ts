@@ -19,9 +19,15 @@ export async function performCheckin(
   serviceClient: SupabaseClient,
   ticket: { id: string; user_id: string },
   event: { title: string | null; start_date: string; end_date: string | null; points_value: number },
-  checkedInBy: string
+  checkedInBy: string,
+  // Manual check-in by an exec/admin (api/checkin/manual) passes true: it's a
+  // correction made by someone who can already reverse points, so it works
+  // after the event has ended too — e.g. fixing a missed check-in the next
+  // day. The scanner and online self-check-in never set this; they stay
+  // bound to the event's window.
+  opts: { ignoreWindow?: boolean } = {}
 ): Promise<{ error?: string }> {
-  if (!isCheckinWindowOpen(event)) {
+  if (!opts.ignoreWindow && !isCheckinWindowOpen(event)) {
     return { error: 'This event has already ended — the ticket is no longer valid for check-in.' };
   }
 

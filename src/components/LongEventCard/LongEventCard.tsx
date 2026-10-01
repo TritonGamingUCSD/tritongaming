@@ -1,3 +1,4 @@
+import { isCheckinWindowOpen } from '@/lib/checkinWindow';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Ticket, Award } from 'lucide-react';
@@ -9,7 +10,7 @@ export default function LongEventCard({ event }: { event: Event }) {
   const dateStr = formatEventDateRange(event.start_date, event.end_date);
   const timeStr = formatEventTimeRange(event.start_date, event.end_date);
   const isExternal = event.flyer_url?.startsWith('http');
-  const isPast = new Date(event.end_date || event.start_date) < new Date();
+  const isPast = !isCheckinWindowOpen(event);
 
   return (
     <article className={styles.card}>
