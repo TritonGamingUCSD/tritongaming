@@ -22,6 +22,7 @@ import { showToast } from '@/lib/toast';
 import type { BoardMember, BoardTier } from '@/app/(main)/team/getBoardMembers';
 import LinkGoogleSection from './LinkGoogleSection';
 import MajorPicker from './MajorPicker';
+import GamePicker from './GamePicker';
 import styles from './profile.module.css';
 
 type Tab = 'basic' | 'officer' | 'security';
@@ -458,16 +459,10 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
               ))}
             </div>
 
-            <label className={styles.fieldGroup}>
+            <div className={styles.fieldGroup}>
               <span className={styles.subLabel}>Favorite games</span>
-              <input
-                className={styles.input}
-                value={form.favorite_games}
-                onChange={(e) => setForm((f) => ({ ...f, favorite_games: e.target.value }))}
-                maxLength={200}
-                placeholder="e.g. Valorant, Smash, Stardew Valley"
-              />
-            </label>
+              <GamePicker value={form.favorite_games} onChange={(v) => setForm((f) => ({ ...f, favorite_games: v }))} />
+            </div>
 
             {divisions.length > 0 && (
               <>

@@ -108,6 +108,7 @@ export default async function EventSummaryPage({ params }: { params: Promise<{ i
         <Card title="Colleges"><Donut data={s.college} /></Card>
         <Card title="Pronouns"><Donut data={s.pronouns} /></Card>
         <Card title="Platforms" note="% of attendees — they can pick several."><RankBars data={s.platforms} color="#a78bfa" base={s.checkedIn} /></Card>
+        <Card title="Favorite games" note="% of attendees. Common short names are merged (Smash, SSBU → Super Smash Bros.). They can list several."><RankBars data={s.games} color="#34d399" base={s.checkedIn} /></Card>
         <Card title="Division interest" note="% of attendees — they can pick several."><RankBars data={s.divisions} color="#f472b6" base={s.checkedIn} /></Card>
         <Card title="Attendee feedback" wide>
           {s.feedback.count === 0 ? (

@@ -272,6 +272,7 @@
   /* Sits inside a padded content pane now, not the full-bleed .wrap — the
      grid's own gap/columns already adapt fine, nothing else to override. */
   max-width: 1000px;
+  margin-inline: auto;
 }
 
 /* Wider than the home grid's own 1000px cap — a data-dense section's real
@@ -285,6 +286,7 @@
    sharing one number regardless of what it renders. */
 .desktopPanel {
   max-width: 1300px;
+  margin-inline: auto;
 }
 
 .desktopPanelHeader {
@@ -635,4 +637,4 @@
 /* Mobile "More" sheet: bigger, full-size touch targets with icons back. */
 .sheetFooter { gap: 0.6rem; padding: 0.5rem 0.9rem 0.9rem; }
 .sheetFooter a, .sheetFooter button { min-height: 48px; padding: 0.7rem 0.8rem; font-size: 0.82rem; letter-spacing: 0.05em; border-radius: 0.8rem; overflow: visible; text-overflow: clip; }
-.sheetFooter a span, .sheetFooter button span { display: inline; font-size: 1.05rem; }
+.sheetFooter a span, .sheetFooter button span { display: inline-flex; align-items: center; }

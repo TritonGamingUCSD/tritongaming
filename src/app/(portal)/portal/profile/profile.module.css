@@ -513,13 +513,13 @@
 .majorCancelBtn { background: transparent; color: rgba(242, 241, 240, 0.6); border: 1px solid transparent; }
 
 /* Login & Security has no side column: two stacked cards, full width up to a readable cap. */
-.layoutSingle { grid-template-columns: minmax(0, 1fr) !important; max-width: 720px; }
+.layoutSingle { grid-template-columns: minmax(0, 1fr) !important; max-width: 720px; margin-inline: auto; }
 .securityTab .backupLoginSection,
 .securityTab .signOutSection {
   margin: 0; padding: 1.25rem 1.4rem;
   background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 0.9rem;
 }
-.securityTab .backupLoginSection { display: flex; flex-direction: column; gap: 0.9rem; }
+.securityTab .backupLoginSection { max-width: none; display: flex; flex-direction: column; gap: 0.9rem; }
 .securityTab .backupLoginSection > * { margin: 0; }
 .securityTab .backupLoginSection .identityList { margin: 0; }
 .securityTab .backupLoginSection .saveBtn { align-self: flex-start; padding: 0.65rem 1.4rem; }

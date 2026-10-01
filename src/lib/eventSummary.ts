@@ -1,6 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/admin';
 import { PACIFIC_TZ, eventDayCount, pacificDaysUntil } from '@/lib/timezone';
 import { parseMajors } from '@/lib/majors';
+import { parseGames } from '@/lib/games';
 
 export interface Bucket { label: string; count: number }
 
@@ -23,6 +24,7 @@ export interface EventSummary {
   doubleMajors: number;
   pronouns: Bucket[];
   platforms: Bucket[];
+  games: Bucket[];
   divisions: Bucket[];
   claimTiming: Bucket[];
   sources: Bucket[];
@@ -73,7 +75,7 @@ export async function getEventSummary(eventId: string, event: { start_date: stri
 
   const [profilesRes, privateRes, divisionsRes, priorRes, pointsRes, feedbackRes] = await Promise.all([
     attendeeIds.length ? svc.from('profiles').select('id, year, college, major, pronouns').in('id', attendeeIds) : Promise.resolve({ data: [] }),
-    attendeeIds.length ? svc.from('profile_private').select('user_id, gender, platforms, division_interests').in('user_id', attendeeIds) : Promise.resolve({ data: [] }),
+    attendeeIds.length ? svc.from('profile_private').select('user_id, gender, platforms, favorite_games, division_interests').in('user_id', attendeeIds) : Promise.resolve({ data: [] }),
     svc.from('divisions').select('id, name'),
     attendeeIds.length
       ? svc.from('tickets').select('user_id, event:events!inner(start_date)').eq('status', 'used').in('user_id', attendeeIds).neq('event_id', eventId).lt('event.start_date', event.start_date)
@@ -83,7 +85,7 @@ export async function getEventSummary(eventId: string, event: { start_date: stri
   ]);
 
   const profiles = (profilesRes.data ?? []) as { id: string; year: string | null; college: string | null; major: string | null; pronouns: string | null }[];
-  const priv = (privateRes.data ?? []) as { user_id: string; gender: string | null; platforms: string[] | null; division_interests: string[] | null }[];
+  const priv = (privateRes.data ?? []) as { user_id: string; gender: string | null; platforms: string[] | null; favorite_games: string | null; division_interests: string[] | null }[];
   const divisionName = new Map((divisionsRes.data ?? []).map((d) => [d.id as string, d.name as string]));
   const returningIds = new Set(((priorRes.data ?? []) as { user_id: string }[]).map((r) => r.user_id));
 
@@ -142,6 +144,7 @@ export async function getEventSummary(eventId: string, event: { start_date: stri
     doubleMajors: parsed.filter((p) => p.majors.length > 1).length,
     pronouns: tally(attendeeIds.map((id) => profileById.get(id)?.pronouns)),
     platforms: tally(attendeeIds.flatMap((id) => privById.get(id)?.platforms ?? []), { top: 8 }),
+    games: tally(attendeeIds.flatMap((id) => parseGames(privById.get(id)?.favorite_games)), { top: 10 }),
     claimTiming: claimTimingBuckets(active.map((t) => t.created_at as string), event.start_date),
     sources: tally(active.map((t) => (t.source as string | null) ?? null), { top: 8, blank: 'Not tracked' }),
     allDays: multiDay ? (() => { const n = new Map<string, number>(); for (const r of dayCheckins as { ticket_id: string }[]) n.set(r.ticket_id, (n.get(r.ticket_id) ?? 0) + 1); const total = eventDayCount(event.start_date, event.end_date); return [...n.values()].filter((c) => c >= total).length; })() : null,

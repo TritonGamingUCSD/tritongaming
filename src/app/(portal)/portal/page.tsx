@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, History, Image as ImageIcon, Award, Medal, Link2 } from 'lucide-react';
+import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, History, Image as ImageIcon, Award, Medal, Link2, ArrowLeft } from 'lucide-react';
 import { getProfile, getUserRoles, getMyPrivateProfile, getUser } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import { hasCapability, isVerifiedMember, isRewardsEligible } from '@/lib/capabilities';
@@ -476,7 +476,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
           identity={{ name: profile.display_name || 'Triton', avatarUrl, roleLabel: primaryRoleLabel, roles: roleChips }}
           railFooter={
             <>
-              <Link href="/" className={styles.railFooterLink}><span aria-hidden="true">←</span> Back to Site</Link>
+              <Link href="/" className={styles.railFooterLink}><span aria-hidden="true"><ArrowLeft size={15} strokeWidth={2} /></span> Back to Site</Link>
               <SignOutButton />
             </>
           }
