@@ -3,10 +3,12 @@
 import DotList from '@/components/DotList/DotList';
 import MemberCardBody from '@/components/MemberCard/MemberCardBody';
 import { PACIFIC_TZ } from '@/lib/timezone';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { usePortalParams } from '@/lib/usePortalParams';
+import SectionTabs from '@/components/ui/SectionTabs';
 import { LayoutGrid, List, X } from 'lucide-react';
 import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
 import type { AppRole } from '@/types/database';
@@ -43,7 +45,9 @@ type MemberEntry = Omit<MemberProfileRow, 'user_roles'> & { divisionName?: strin
 // shared-element transition across that many grid cells is exactly the
 // kind of cost that caused the lag BoardSection had to be fixed for.
 export default function MembersSectionContent({ rows, roles }: { rows: MemberProfileRow[]; roles: RoleGrant[] }) {
-  const [view, setView] = useState<'grid' | 'list'>('grid');
+  const searchParams = useSearchParams();
+  const setParams = usePortalParams();
+  const [view, setView] = useState<'grid' | 'list'>(() => (searchParams.get('view') === 'list' ? 'list' : 'grid'));
   const [selected, setSelected] = useState<MemberEntry | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
@@ -90,8 +94,13 @@ export default function MembersSectionContent({ rows, roles }: { rows: MemberPro
   // matched a plain UCSD-verified visitor, who never actually shows up
   // here — an edge case, not worth also excluding from search results
   // over).
-  const searchParams = useSearchParams();
   const requestedId = searchParams.get('id');
+  const syncedOnce = useRef(false);
+  useEffect(() => {
+    if (!syncedOnce.current) { syncedOnce.current = true; return; }
+    setParams({ id: selected?.id ?? null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected]);
   useEffect(() => {
     if (!requestedId) return;
     const match = Object.values(grouped).flat().find((m) => m.id === requestedId);
@@ -107,26 +116,13 @@ export default function MembersSectionContent({ rows, roles }: { rows: MemberPro
           <p className={styles.sub}>{memberCount} members across the org</p>
         </div>
         <div className={styles.headerActions}>
-          <div className={styles.viewToggle} role="group" aria-label="View mode">
-            <button
-              type="button"
-              className={`${styles.viewToggleBtn} ${view === 'grid' ? styles.viewToggleBtnActive : ''}`}
-              onClick={() => setView('grid')}
-              aria-pressed={view === 'grid'}
-              aria-label="Grid view"
-            >
-              <LayoutGrid size={16} strokeWidth={1.75} />
-            </button>
-            <button
-              type="button"
-              className={`${styles.viewToggleBtn} ${view === 'list' ? styles.viewToggleBtnActive : ''}`}
-              onClick={() => setView('list')}
-              aria-pressed={view === 'list'}
-              aria-label="List view"
-            >
-              <List size={16} strokeWidth={1.75} />
-            </button>
-          </div>
+          <SectionTabs
+            variant="segmented"
+            label="View mode"
+            value={view}
+            onChange={(v) => { setView(v); setParams({ view: v === 'grid' ? null : v }); }}
+            tabs={[{ id: 'grid', label: 'Grid', icon: <LayoutGrid /> }, { id: 'list', label: 'List', icon: <List /> }]}
+          />
           {hasCapability(roles, 'manage_roles') && (
             <Link href="/portal?section=admin" className={styles.adminLink}>
               Role Manager →

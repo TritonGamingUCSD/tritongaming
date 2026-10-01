@@ -1,5 +1,5 @@
 /* Documentation: a reading-first layout.
-   Desktop: doc list (left) · article (centre, capped at a comfortable line length) · "On this page" (right).
+   Desktop: doc list (left) · article (center, capped at a comfortable line length) · "On this page" (right).
    Phone: the list is its own screen; opening a doc replaces it, with a back button. */
 
 .shell {
@@ -148,9 +148,6 @@
 .input:focus { outline: none; border-color: rgba(255, 199, 44, 0.4); }
 .textarea { resize: vertical; line-height: 1.55; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.84rem; min-height: 320px; }
 .mdHeader { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
-.mdTabs { display: inline-flex; padding: 0.15rem; gap: 0.1rem; border-radius: 0.6rem; background: rgba(255, 255, 255, 0.05); }
-.mdTab { padding: 0.25rem 0.8rem; border-radius: 0.45rem; background: none; border: none; color: rgba(242, 241, 240, 0.6); font-size: 0.78rem; cursor: pointer; }
-.mdTabActive { background: rgba(255, 199, 44, 0.16); color: var(--yellow); }
 .mdSplit { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.9rem; }
 .mdSplit[data-tab='write'] .mdPreviewPane { display: none; }
 .mdSplit[data-tab='preview'] .mdWrite { display: none; }
@@ -159,7 +156,6 @@
 @media (min-width: 1250px) {
   .mdSplit { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .mdSplit[data-tab] .mdPreviewPane, .mdSplit[data-tab] .mdWrite { display: block; }
-  .mdTabs { display: none; }
 }
 
 .attachList { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; }

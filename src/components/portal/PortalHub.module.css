@@ -506,7 +506,7 @@
 
 .railIdentity:hover .railName { color: var(--yellow); }
 
-/* ── Group colour coding (matches the home cards): Yours gold · Events blue · Resources green · Admin pink ── */
+/* ── Group color coding (matches the home cards): Yours gold · Events blue · Resources green · Admin pink ── */
 .railGroup { --accent: #ffc72c; }
 .railGroupLabel { color: var(--accent); opacity: 0.9; }
 .railGroupDot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
@@ -566,3 +566,34 @@
   .railNav { gap: 0.15rem; }
   .railAvatar, .railAvatarFallback { width: 30px; height: 30px; }
 }
+
+/* ═══ Mobile: same language as desktop ═══
+   Home = the color-coded group cards (one column); an opened section gets a slim sticky bar —
+   round back button, a tinted icon tile in the group color, the title. ═══ */
+.mobileHome { display: flex; flex-direction: column; gap: 1.4rem; }
+.panelIconTile { display: grid; place-items: center; width: 34px; height: 34px; flex-shrink: 0; border-radius: 0.7rem; color: var(--accent, #ffc72c); background: color-mix(in srgb, var(--accent, #ffc72c) 15%, transparent); border: 1px solid color-mix(in srgb, var(--accent, #ffc72c) 30%, transparent); }
+@media (max-width: 899px) {
+  .panel { background: none; border: none; border-radius: 0; padding: 0 0 1rem; min-height: 0; }
+  .panelHeader {
+    position: sticky; top: 0; z-index: 15;
+    flex-direction: row; align-items: center; justify-content: flex-start; text-align: left; gap: 0.7rem;
+    padding: 0.65rem 0; margin: 0 0 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: #080d1a;
+  }
+  .panelHeader .backBtn {
+    position: static; display: grid; place-items: center; width: 36px; height: 36px; padding: 0; flex-shrink: 0;
+    border-radius: 50%; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); color: var(--white);
+  }
+  .panelTitle { font-size: 1rem; letter-spacing: 0.03em; }
+  .card { padding: 0.75rem 0.9rem; }
+}
+
+/* Phone: one full-width card per row (cancels the old narrow-card grid rule) */
+@media (max-width: 899px) {
+  .grid { grid-template-columns: minmax(0, 1fr); gap: 0.55rem; }
+  .card { min-height: 0; padding: 0.7rem 0.85rem; }
+  .cardIconTile { width: 40px; height: 40px; }
+}
+
+.sheetFooter { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.4rem 0.9rem 0.7rem; margin-bottom: 0.2rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); font-size: 0.85rem; }
+.sheetFooter a { color: rgba(242, 241, 240, 0.7); text-decoration: none; }

@@ -7,6 +7,8 @@ import Image from 'next/image';
 import { Pencil, X, Check, MapPin, GripVertical } from 'lucide-react';
 import type { ContentBlock, FieldDef } from '@/lib/content-blocks';
 import { CATEGORY_ORDER } from '@/lib/content-blocks';
+import { useSearchParams } from 'next/navigation';
+import { usePortalParams } from '@/lib/usePortalParams';
 import SectionTabs from '@/components/ui/SectionTabs';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
@@ -39,8 +41,17 @@ function pagesLabel(pages: string[]): string {
 }
 
 export default function ContentEditor({ blocks, contentMap, lastEdited }: Props) {
-  const [activeKey, setActiveKey] = useState<string | null>(null);
-  const [category, setCategory] = useState<string | null>(null);
+  // Which block is open and which area is showing live in the URL (?subtab=<area>&block=<key>) so any view is linkable.
+  const searchParams = useSearchParams();
+  const setParams = usePortalParams();
+  const [activeKey, setActiveKey] = useState<string | null>(() => {
+    const k = searchParams.get('block');
+    return k && blocks.some((b) => b.key === k) ? k : null;
+  });
+  const [category, setCategory] = useState<string | null>(() => {
+    const c = searchParams.get('subtab');
+    return c && CATEGORY_ORDER.includes(c) ? c : null;
+  });
   const [query, setQuery] = useState('');
   const [forms, setForms] = useState<Record<string, Record<string, unknown>>>(() => {
     const init: Record<string, Record<string, unknown>> = {};
@@ -111,7 +122,8 @@ export default function ContentEditor({ blocks, contentMap, lastEdited }: Props)
         <SectionTabs
           label="Site areas"
           value={tabCategory}
-          onChange={(c) => { setCategory(c); setQuery(''); }}
+          variant="segmented"
+          onChange={(c) => { setCategory(c); setQuery(''); setActiveKey(null); setParams({ subtab: c, block: null }); }}
           tabs={categories.map((c) => ({ id: c, label: c, badge: blocks.filter((b) => b.category === c && JSON.stringify(forms[b.key]) !== JSON.stringify(savedForms[b.key])).length }))}
         />
       </div>
@@ -138,7 +150,7 @@ export default function ContentEditor({ blocks, contentMap, lastEdited }: Props)
                 <button
                   key={block.key}
                   className={`${styles.row} ${isActive ? styles.rowActive : ''}`}
-                  onClick={() => setActiveKey(isActive ? null : block.key)}
+                  onClick={() => { const next = isActive ? null : block.key; setActiveKey(next); setParams({ block: next, subtab: next ? block.category : tabCategory }); }}
                 >
                   <span className={styles.blockIcon}>{block.icon}</span>
                   <span className={styles.rowText}>
@@ -175,7 +187,7 @@ export default function ContentEditor({ blocks, contentMap, lastEdited }: Props)
                   )}
                 </div>
               </div>
-              <button className={styles.closePanel} onClick={() => setActiveKey(null)}><X size={18} strokeWidth={1.75} /></button>
+              <button className={styles.closePanel} onClick={() => { setActiveKey(null); setParams({ block: null }); }}><X size={18} strokeWidth={1.75} /></button>
             </div>
 
             <div className={styles.fields}>
@@ -192,7 +204,7 @@ export default function ContentEditor({ blocks, contentMap, lastEdited }: Props)
             {error && <div className={styles.editError}>{error}</div>}
 
             <div className={styles.editActions}>
-              <button className={styles.cancelBtn} onClick={() => setActiveKey(null)}>Cancel</button>
+              <button className={styles.cancelBtn} onClick={() => { setActiveKey(null); setParams({ block: null }); }}>Cancel</button>
               <button
                 className={styles.saveBtn}
                 onClick={() => handleSave(activeBlock.key)}

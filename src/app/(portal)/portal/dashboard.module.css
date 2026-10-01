@@ -562,3 +562,55 @@
   .mobileSearchWrap { width: 320px; }
   .mobileSearchWrap > * { margin: 0 !important; max-width: none !important; }
 }
+
+.welcomeAvatarLink { display: inline-flex; flex-shrink: 0; border-radius: 50%; }
+
+/* ── Mobile header: same compact chip style as desktop, chips in one scrollable row ── */
+@media (max-width: 899px) {
+  .tiles { display: flex; flex-wrap: nowrap; gap: 0.4rem; overflow-x: auto; scrollbar-width: none; padding-bottom: 0.1rem; }
+  .tiles::-webkit-scrollbar { display: none; }
+  .tile {
+    display: flex; flex-direction: row; align-items: center; gap: 0.45rem; flex: 0 0 auto;
+    min-width: 0; padding: 0.3rem 0.75rem; border-radius: 999px; background: rgba(255, 255, 255, 0.04);
+  }
+  .tileTop { font-size: 0.62rem; }
+  .tileTop svg { width: 13px; height: 13px; }
+  .tileValue { font-size: 0.9rem; }
+  .tileUnit { font-size: 0.65rem; }
+  .tileTier { font-size: 0.68rem; padding-left: 0.45rem; border-left: 1px solid rgba(255, 255, 255, 0.15); }
+  .tileProgress { display: none; }
+}
+
+/* ── Mobile header redesign ──
+   One card: avatar + greeting, the search field, then the stat chips. "Back to Site" and
+   "Sign out" move into the More sheet to keep the card short. ── */
+.welcomeSearch { display: none; }
+@media (max-width: 899px) {
+  .mobileSearchWrap { display: none; }
+  .welcomeSearch { display: block; width: 100%; }
+  .welcomeSearch > * { margin: 0 !important; max-width: none !important; }
+  .welcome { gap: 0.7rem; padding: 0.85rem; border-radius: 1.1rem; }
+  .welcomeMain { gap: 0.75rem; }
+  .welcomeAvatar, .welcomeAvatarFallback { width: 46px; height: 46px; }
+  .welcomeName { font-size: 1.3rem; line-height: 1.15; }
+  .welcomeName::before { display: block; font-size: 0.78rem; letter-spacing: 0.04em; margin-bottom: 0.1rem; }
+  .welcomeText .roleChips { margin-top: 0.3rem; }
+  .welcomeText .headerActions { display: none; }
+}
+
+/* ── Empty home ── */
+.emptyHome { display: none; }
+@media (max-width: 899px) {
+  .emptyHome {
+    display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.5rem;
+    padding: 1.6rem 1.2rem 1.3rem; border-radius: 1.2rem;
+    background: radial-gradient(120% 100% at 50% 0%, rgba(74, 144, 226, 0.14), transparent 60%), rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+  }
+  .emptyHomeArt { width: 84px; height: 84px; opacity: 0.95; }
+  .emptyHomeTitle { font-family: var(--font-futura-heavy); font-size: 1.1rem; color: var(--white); }
+  .emptyHomeText { font-size: 0.85rem; color: rgba(242, 241, 240, 0.6); max-width: 30ch; line-height: 1.5; }
+  .emptyHomeActions { display: flex; flex-direction: column; gap: 0.5rem; width: 100%; margin-top: 0.6rem; }
+  .emptyHomeBtn { display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.7rem 1rem; border-radius: 0.8rem; font-size: 0.86rem; color: var(--white); text-decoration: none; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.14); }
+  .emptyHomeBtn:active { background: rgba(255, 199, 44, 0.14); border-color: rgba(255, 199, 44, 0.5); }
+}

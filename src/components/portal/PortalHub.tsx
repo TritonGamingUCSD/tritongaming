@@ -6,7 +6,7 @@ import { cloneElement, isValidElement, useCallback, useEffect, useState } from '
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
-import { Home, MoreHorizontal, ChevronRight } from 'lucide-react';
+import { Home, MoreHorizontal, ChevronRight, ChevronLeft } from 'lucide-react';
 import PortalSearch from './PortalSearch';
 import styles from './PortalHub.module.css';
 
@@ -39,7 +39,7 @@ function smallIcon(icon: ReactNode, size = 21) {
 // officer-tier member, the same audience as Members/Docs, not Admin's
 // actually-restricted stuff.
 const GROUP_ORDER = ['Yours', 'Events', 'Resources', 'Admin'] as const;
-// Accent colour per group — tints the heading dot, icon tiles and hover state.
+// Accent color per group — tints the heading dot, icon tiles and hover state.
 const GROUP_ACCENT: Record<string, string> = { Yours: '#ffc72c', Events: '#4a90e2', Resources: '#34d399', Admin: '#f472b6' };
 type HubGroup = (typeof GROUP_ORDER)[number];
 
@@ -202,20 +202,19 @@ export default function PortalHub({ sections, identity, railFooter, homeExtras, 
             animate={{ opacity: 1, y: 0, transition: { duration: 0.18 } }}
             exit={{ opacity: 0, transition: { duration: 0.1 } }}
           >
-            <div className={styles.panelHeader}>
-              <button className={styles.backBtn} onClick={close}>
-                <span aria-hidden="true">←</span> Dashboard
+            <div className={styles.panelHeader} style={{ ['--accent' as string]: GROUP_ACCENT[openSection.group] }}>
+              <button className={styles.backBtn} onClick={close} aria-label="Back to dashboard">
+                <ChevronLeft size={18} strokeWidth={2} aria-hidden="true" />
               </button>
-              <div className={styles.panelTitleRow}>
-                <span className={styles.panelIcon} aria-hidden="true">{openSection.icon}</span>
-                <span className={styles.panelTitle}>{openSection.label}</span>
-              </div>
+              <span className={styles.panelIconTile} aria-hidden="true">{smallIcon(openSection.icon, 18)}</span>
+              <span className={styles.panelTitle}>{openSection.label}</span>
             </div>
             <div className={styles.panelBody}>
               {openSection.content}
             </div>
           </motion.div>
         ) : null}
+
       </AnimatePresence>
 
       <nav className={styles.bottomBar} aria-label="Portal quick navigation">
@@ -273,6 +272,7 @@ export default function PortalHub({ sections, identity, railFooter, homeExtras, 
               transition={SPRING}
             >
               <div className={styles.moreSheetHandle} aria-hidden="true" />
+              {railFooter && <div className={styles.sheetFooter}>{railFooter}</div>}
               {GROUP_ORDER.map((group) => {
                 const items = moreSections.filter((s) => s.group === group);
                 if (items.length === 0) return null;
@@ -303,6 +303,42 @@ export default function PortalHub({ sections, identity, railFooter, homeExtras, 
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+// The color-coded, grouped list of everything you can open — the home screen's main content
+// on desktop and on mobile alike (one column on a phone).
+function HomeGroups({ groupedSections, open }: { groupedSections: GroupedSection[]; open: (id: string) => void }) {
+  return (
+    <>
+      {groupedSections.map(({ group, items }) => (
+        <section key={group} className={styles.group} style={{ ['--accent' as string]: GROUP_ACCENT[group] }}>
+          {groupedSections.length > 1 && (
+            <h2 className={styles.groupLabel}>
+              <span className={styles.groupDot} aria-hidden="true" />
+              {group}
+              <span className={styles.groupCount}>{items.length}</span>
+            </h2>
+          )}
+          <div className={styles.grid}>
+            {items.map((s) => (
+              <button key={s.id} className={styles.card} onClick={() => open(s.id)}>
+                <span className={styles.cardIconTile} aria-hidden="true">{s.icon}</span>
+                <span className={styles.cardText}>
+                  <span className={styles.cardLabel}>{s.label}</span>
+                  <span className={styles.cardDesc}>{s.description}</span>
+                </span>
+                {s.badge !== undefined && s.badge !== 0 ? (
+                  <span className={styles.cardBadge}>{s.badge}</span>
+                ) : (
+                  <ChevronRight size={16} strokeWidth={1.75} className={styles.cardChevron} aria-hidden="true" />
+                )}
+              </button>
+            ))}
+          </div>
+        </section>
+      ))}
+    </>
   );
 }
 
@@ -409,33 +445,7 @@ function DesktopShell({
               exit={{ opacity: 0, transition: { duration: 0.08 } }}
             >
               {homeExtras && <div className={styles.homeExtras}>{homeExtras}</div>}
-              {groupedSections.map(({ group, items }) => (
-                <section key={group} className={styles.group} style={{ ['--accent' as string]: GROUP_ACCENT[group] }}>
-                  {groupedSections.length > 1 && (
-                    <h2 className={styles.groupLabel}>
-                      <span className={styles.groupDot} aria-hidden="true" />
-                      {group}
-                      <span className={styles.groupCount}>{items.length}</span>
-                    </h2>
-                  )}
-                  <div className={styles.grid}>
-                    {items.map((s) => (
-                      <button key={s.id} className={styles.card} onClick={() => open(s.id)}>
-                        <span className={styles.cardIconTile} aria-hidden="true">{s.icon}</span>
-                        <span className={styles.cardText}>
-                          <span className={styles.cardLabel}>{s.label}</span>
-                          <span className={styles.cardDesc}>{s.description}</span>
-                        </span>
-                        {s.badge !== undefined && s.badge !== 0 ? (
-                          <span className={styles.cardBadge}>{s.badge}</span>
-                        ) : (
-                          <ChevronRight size={16} strokeWidth={1.75} className={styles.cardChevron} aria-hidden="true" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </section>
-              ))}
+              <HomeGroups groupedSections={groupedSections} open={open} />
             </motion.div>
           )}
         </AnimatePresence>

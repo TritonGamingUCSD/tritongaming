@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { ScrollText, Download } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { usePortalParams } from '@/lib/usePortalParams';
 import Notice from '@/components/ui/Notice';
 import Button from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Field';
@@ -56,9 +58,11 @@ export default function AuditLogClient() {
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [type, setType] = useState('');
-  const [search, setSearch] = useState('');
-  const [q, setQ] = useState('');
+  const searchParams = useSearchParams();
+  const setParams = usePortalParams();
+  const [type, setType] = useState(() => searchParams.get('atype') ?? '');
+  const [search, setSearch] = useState(() => searchParams.get('aq') ?? '');
+  const [q, setQ] = useState(() => searchParams.get('aq') ?? '');
 
   useEffect(() => {
     const t = setTimeout(() => setQ(search), 300);
@@ -90,8 +94,8 @@ export default function AuditLogClient() {
   return (
     <div className={styles.wrap}>
       <div className={styles.filters}>
-        <Input className={styles.search} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search summary or person…" />
-        <Select className={styles.select} value={type} onChange={(e) => setType(e.target.value)} aria-label="Filter by type">
+        <Input className={styles.search} value={search} onChange={(e) => { setSearch(e.target.value); setParams({ aq: e.target.value || null }); }} placeholder="Search summary or person…" />
+        <Select className={styles.select} value={type} onChange={(e) => { setType(e.target.value); setParams({ atype: e.target.value || null }); }} aria-label="Filter by type">
           {TYPES.map((t) => <option key={t} value={t}>{t || 'All types'}</option>)}
         </Select>
         <a

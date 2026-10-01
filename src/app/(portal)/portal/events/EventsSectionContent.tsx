@@ -1,8 +1,9 @@
 'use client';
 
-import SectionTabs from '@/components/ui/SectionTabs';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { usePortalParams } from '@/lib/usePortalParams';
+import SectionTabs from '@/components/ui/SectionTabs';
 import Link from 'next/link';
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
@@ -86,7 +87,11 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
   // Deep-linked from portal search (?q=<event title>) — lands with that event already filtered.
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(() => searchParams.get('q') ?? '');
-  const [filter, setFilter] = useState<StatusFilter>('all');
+  const setParams = usePortalParams();
+  const [filter, setFilter] = useState<StatusFilter>(() => {
+    const f = searchParams.get('status');
+    return FILTERS.some((x) => x.key === f) ? (f as StatusFilter) : 'all';
+  });
   const [checkinsEventId, setCheckinsEventId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<EventRow | null>(null);
 
@@ -218,23 +223,17 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
               <input
                 className={styles.searchInput}
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => { setQuery(e.target.value); setParams({ q: e.target.value || null }); }}
                 placeholder="Search by name or location…"
               />
             </div>
-            <div className={styles.filterTabs} role="group" aria-label="Filter events">
-              {FILTERS.map((f) => (
-                <button
-                  key={f.key}
-                  type="button"
-                  className={`${styles.filterTab} ${filter === f.key ? styles.filterTabActive : ''}`}
-                  onClick={() => setFilter(f.key)}
-                  aria-pressed={filter === f.key}
-                >
-                  {f.label} <span className={styles.filterCount}>{counts[f.key]}</span>
-                </button>
-              ))}
-            </div>
+            <SectionTabs
+              variant="segmented"
+              label="Filter events"
+              value={filter}
+              onChange={(f) => { setFilter(f); setParams({ status: f === 'all' ? null : f }); }}
+              tabs={FILTERS.map((f) => ({ id: f.key, label: f.label, count: counts[f.key] }))}
+            />
           </div>
 
           {filtered.length === 0 ? (

@@ -72,35 +72,8 @@
 }
 .searchInput:focus { outline: none; border-color: rgba(255,199,44,0.4); }
 
-.filterTabs {
-  display: flex;
-  gap: 0.3rem;
-  flex-wrap: wrap;
-}
 
-.filterTab {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.4rem 0.7rem;
-  border-radius: 0.4rem;
-  font-size: 0.78rem;
-  font-family: var(--font-futura-medium);
-  color: rgba(242,241,240,0.5);
-  border: 1px solid transparent;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-}
-.filterTab:hover { background: rgba(255,255,255,0.05); }
-.filterTabActive {
-  background: rgba(255,199,44,0.1);
-  border-color: rgba(255,199,44,0.25);
-  color: var(--yellow);
-}
 
-.filterCount {
-  font-size: 0.7rem;
-  opacity: 0.6;
-}
 
 .empty {
   padding: 3rem;

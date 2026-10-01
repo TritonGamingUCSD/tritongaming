@@ -9,6 +9,8 @@
 .markdown > *:last-child { margin-bottom: 0; }
 
 .markdown p { margin: 0.9rem 0; }
+/* A single line break in the editor shows as a line break (plain Markdown would join the lines). */
+.markdown p { white-space: pre-line; }
 
 .markdown h1,
 .markdown h2,

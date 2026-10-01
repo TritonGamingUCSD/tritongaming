@@ -62,7 +62,7 @@
   gap: 1.25rem;
   padding-inline: var(--sp-md);
   text-align: center;
-  margin-bottom: 6rem; /* lift slightly above centre */
+  margin-bottom: 6rem; /* lift slightly above center */
 }
 
 .badge {

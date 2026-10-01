@@ -365,12 +365,14 @@ export default async function PortalDashboard({ searchParams }: Props) {
             <header className={styles.welcome}>
               <Image src="/bytes/byte_tgex25.png" alt="" width={723} height={723} aria-hidden="true" className={styles.welcomeMascot} />
               <div className={styles.welcomeMain}>
+                <Link href="/portal?section=profile" className={styles.welcomeAvatarLink} aria-label="Open your profile">
                 {avatarUrl ? (
-                  <Image src={avatarUrl} alt={profile.display_name || 'User'} width={48} height={48} className={styles.welcomeAvatar} unoptimized referrerPolicy="no-referrer" />
-                ) : (
-                  <div className={styles.welcomeAvatarFallback}>{(profile.display_name || 'U')[0].toUpperCase()}</div>
-                )}
-                <div className={styles.welcomeText}>
+                    <Image src={avatarUrl} alt={profile.display_name || 'User'} width={48} height={48} className={styles.welcomeAvatar} unoptimized referrerPolicy="no-referrer" />
+                  ) : (
+                    <div className={styles.welcomeAvatarFallback}>{(profile.display_name || 'U')[0].toUpperCase()}</div>
+                  )}
+                </Link>
+              <div className={styles.welcomeText}>
                   <h1 className={styles.welcomeName} data-greeting={greeting}>{profile.display_name?.split(' ')[0] || 'Triton'}</h1>
                   <div className={styles.roleChips}>
                     {roles.length === 0 ? (
@@ -401,7 +403,10 @@ export default async function PortalDashboard({ searchParams }: Props) {
                 </div>
               </div>
 
-              {/* At-a-glance stats — each tile deep-links to that section's own tab. */}
+              {/* Mobile only: search lives inside the header card (desktop has it in the pinned header). */}
+          <div className={styles.welcomeSearch}><PortalSearch compact /></div>
+
+          {/* At-a-glance stats — each tile deep-links to that section's own tab. */}
               {(pointsData || battlepassData || activeTicketCount > 0) && (
                 <div className={styles.tiles}>
                   {pointsData && memberTier && (

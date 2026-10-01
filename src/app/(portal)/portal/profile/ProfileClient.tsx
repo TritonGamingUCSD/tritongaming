@@ -288,7 +288,7 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
 
           {tab === 'officer' && isBoardEligible ? (
             <p className={styles.pictureNote}>Your picture is edited on the Basic Info tab — the preview below uses it.</p>
-          ) : (
+          ) : tab === 'security' ? null : (
           <div className={styles.avatarUpload}>
             <ImageUploadField
               label="Profile Picture"

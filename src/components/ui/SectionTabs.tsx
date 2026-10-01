@@ -7,7 +7,8 @@ export interface SectionTab<T extends string = string> {
   id: T;
   label: string;
   icon?: ReactNode;
-  badge?: number;
+  badge?: number; // gold attention badge (hidden at 0)
+  count?: number; // quiet total, always shown
 }
 
 // The one tab bar for every portal section: sits directly under the section's
@@ -55,6 +56,7 @@ export default function SectionTabs<T extends string>({
             {t.icon && <span className={styles.icon} aria-hidden="true">{t.icon}</span>}
             <span>{t.label}</span>
             {t.badge !== undefined && t.badge > 0 && <span className={styles.badge}>{t.badge}</span>}
+            {t.count !== undefined && <span className={styles.count}>{t.count}</span>}
           </button>
         );
       })}

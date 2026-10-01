@@ -8,6 +8,8 @@ import { showToast } from '@/lib/toast';
 import { useUnsavedChanges, confirmDiscardUnsaved } from '@/lib/useUnsavedChanges';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { usePortalParams } from '@/lib/usePortalParams';
+import SectionTabs from '@/components/ui/SectionTabs';
 import { Image as ImageIcon, Paperclip, BookOpen, X, ChevronRight, ChevronLeft, ChevronDown, Plus, Search, FileText, Pencil, Trash2, FolderCog } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { slugify } from '@/lib/slug';
@@ -38,10 +40,7 @@ function MarkdownField({ value, onChange }: { value: string; onChange: (v: strin
     <div className={styles.field}>
       <div className={styles.mdHeader}>
         <span className={styles.label}>Content <span className={styles.labelHint}>Markdown — ## headings become the table of contents</span></span>
-        <div className={styles.mdTabs}>
-          <button type="button" className={`${styles.mdTab} ${tab === 'write' ? styles.mdTabActive : ''}`} onClick={() => setTab('write')}>Write</button>
-          <button type="button" className={`${styles.mdTab} ${tab === 'preview' ? styles.mdTabActive : ''}`} onClick={() => setTab('preview')}>Preview</button>
-        </div>
+        <SectionTabs variant="segmented" label="Editor view" value={tab} onChange={setTab} tabs={[{ id: 'write', label: 'Write' }, { id: 'preview', label: 'Preview' }]} />
       </div>
       <div className={styles.mdSplit} data-tab={tab}>
         <textarea
@@ -166,6 +165,7 @@ export default function DocsClient({ initialDocs, initialCategories, userId, can
   // that doc's content instead of just landing on the general list.
   const searchParams = useSearchParams();
   const [selectedId, setSelectedId] = useState<string | null>(() => searchParams.get('id'));
+  const setParams = usePortalParams();
   const [editing, setEditing] = useState(false);
   const [isNew, setIsNew] = useState(false);
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
@@ -178,6 +178,14 @@ export default function DocsClient({ initialDocs, initialCategories, userId, can
   // Only an open editor holds unsaved edits. Opening a different doc (or
   // starting a new one) re-baselines via the key instead of counting as a change.
   const { markSaved, dirty } = useUnsavedChanges(editing ? draft : null, undefined, `${editing}:${isNew}:${selectedId}`);
+
+  // Keep ?id=<doc> in the address bar so any doc can be linked to (skipped on first render so a deep link isn't wiped).
+  const syncedOnce = useRef(false);
+  useEffect(() => {
+    if (!syncedOnce.current) { syncedOnce.current = true; return; }
+    setParams({ id: selectedId });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId]);
 
   const selected = docs.find((d) => d.id === selectedId) ?? null;
   const categoryById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);

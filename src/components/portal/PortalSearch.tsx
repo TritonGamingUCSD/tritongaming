@@ -21,7 +21,7 @@ interface SearchResponse {
 
 const EMPTY: SearchResponse = { members: [], events: [], docs: [] };
 const CATEGORY_LABELS: Record<keyof SearchResponse, string> = { members: 'TG Members', events: 'Events', docs: 'Docs' };
-// Same colour coding as the sidebar groups.
+// Same color coding as the sidebar groups.
 const CATEGORY_META: Record<keyof SearchResponse, { icon: typeof Users; accent: string }> = {
   members: { icon: Users, accent: '#34d399' },
   events: { icon: Calendar, accent: '#4a90e2' },
