@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import UndoCheckinModal from '@/components/UndoCheckinModal/UndoCheckinModal';
-import { X, Camera, Gamepad2, Undo2, Download, Check } from 'lucide-react';
+import { X, Camera, Gamepad2, Undo2, Check, BarChart3 } from 'lucide-react';
 import { resolveAvatarUrl } from '@/lib/profile';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
@@ -177,9 +177,9 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
               <Link href="/portal?section=checkin" className={checkinStyles.scanBtn}>
                 <Camera size={16} strokeWidth={1.5} aria-hidden="true" /> Open Scanner
               </Link>
-              <a href={`/api/events/${eventId}/export`} download className={checkinStyles.exportBtn}>
-                <Download size={15} strokeWidth={1.5} aria-hidden="true" /> Export CSV
-              </a>
+              <Link href={`/portal/events/${eventId}/summary`} className={checkinStyles.exportBtn}>
+                <BarChart3 size={15} strokeWidth={1.5} aria-hidden="true" /> Summary
+              </Link>
             </div>
 
             {tickets.length === 0 ? (

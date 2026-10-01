@@ -1,3 +1,4 @@
+import { logAudit } from '@/lib/audit';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
@@ -56,5 +57,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error }, { status });
   }
 
+  await logAudit(serviceClient, { actorId: user.id, action: 'manual', entityType: 'check-in', entityId: ticket_id, summary: `Manual check-in${eventData?.title ? ` for "${eventData.title}"` : ''}` });
   return NextResponse.json({ ok: true });
 }

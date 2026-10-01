@@ -1,7 +1,7 @@
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Camera, Gamepad2, Download, Check } from 'lucide-react';
+import { Camera, Gamepad2, Check, BarChart3 } from 'lucide-react';
 import { getUserRoles } from '@/lib/auth';
 import { hasCapability } from '@/lib/capabilities';
 import { createClient } from '@/lib/supabase/server';
@@ -90,9 +90,7 @@ export default async function EventCheckinsPage({ params }: Params) {
           <div className={styles.statLabel}>Attendance</div>
         </div>
         <Link href="/portal?section=checkin" className={styles.scanBtn}><Camera size={16} strokeWidth={1.5} aria-hidden="true" /> Open Scanner</Link>
-        <a href={`/api/events/${id}/export`} download className={styles.exportBtn}>
-          <Download size={15} strokeWidth={1.5} aria-hidden="true" /> Export CSV
-        </a>
+        <Link href={`/portal/events/${id}/summary`} className={styles.exportBtn}><BarChart3 size={15} strokeWidth={1.5} aria-hidden="true" /> Summary</Link>
       </div>
 
       {tickets.length === 0 ? (

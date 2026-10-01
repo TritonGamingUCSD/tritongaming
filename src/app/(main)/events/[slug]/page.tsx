@@ -135,7 +135,7 @@ export default async function EventDetailPage({ params }: Params) {
 
         {!isPast && (
           <div className={styles.ctaRow}>
-            <a href="/portal/tickets" className={styles.ticketBtn}>
+            <a href="/portal?section=tickets" className={styles.ticketBtn}>
               <Ticket size={18} strokeWidth={1.5} aria-hidden="true" />
               {event.audience === 'ucsd_only'
                 ? 'UCSD Students — Get Ticket'

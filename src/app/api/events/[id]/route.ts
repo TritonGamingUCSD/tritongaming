@@ -57,6 +57,7 @@ export async function DELETE(request: Request, { params }: Params) {
   const { data: result, error } = await service.rpc('admin_delete_event', {
     p_event_id: id,
     p_reverse_points: reversePoints,
+    p_actor: user.id,
   });
   if (error) {
     console.error('[delete event] rpc error:', error);

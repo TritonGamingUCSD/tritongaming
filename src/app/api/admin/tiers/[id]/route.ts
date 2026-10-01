@@ -1,3 +1,4 @@
+import { logAudit, currentActorId } from '@/lib/audit';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
@@ -23,7 +24,7 @@ async function requireManager(system: string) {
   if (!hasCapability(roles ?? [], capability)) {
     return { error: NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 }) };
   }
-  return {};
+  return { userId: user.id };
 }
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -50,6 +51,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  await logAudit(serviceClient, { actorId: ctx.userId ?? null, action: 'update', entityType: 'tier', entityId: id, summary: `Tier "${name}" edited (${minPoints} pts, ${system})` });
   return NextResponse.json({ tier: data });
 }
 
@@ -63,5 +65,6 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   const { error } = await serviceClient.rpc('admin_delete_tier', { _system: system, _id: id });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  await logAudit(serviceClient, { actorId: ctx.userId ?? null, action: 'delete', entityType: 'tier', entityId: id, summary: `A ${system} tier was deleted` });
   return NextResponse.json({ ok: true });
 }

@@ -1,3 +1,4 @@
+import { logAudit, currentActorId } from '@/lib/audit';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
@@ -26,7 +27,7 @@ async function requireManager(system: string) {
   if (!hasCapability(roles ?? [], capability)) {
     return { error: NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 }) };
   }
-  return { supabase };
+  return { supabase, userId: user.id };
 }
 
 export async function GET(request: Request) {
@@ -70,5 +71,6 @@ export async function POST(request: Request) {
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  await logAudit(serviceClient, { actorId: ctx.userId ?? null, action: 'create', entityType: 'tier', entityId: String((data as { id?: string } | null)?.id ?? ''), summary: `Tier "${name}" created (${minPoints} pts, ${system})` });
   return NextResponse.json({ tier: data }, { status: 201 });
 }

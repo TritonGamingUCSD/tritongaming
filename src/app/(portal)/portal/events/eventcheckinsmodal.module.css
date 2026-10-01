@@ -99,3 +99,12 @@
   color: rgba(242,241,240,0.25);
   font-size: 0.75rem;
 }
+
+/* Phones: roomier tap targets for the per-row actions staff hit mid-event, and
+   less dead space around the modal. */
+@media (max-width: 640px) {
+  .overlay { padding: 1rem 0.5rem; }
+  .modal { max-height: none; padding-top: 3rem; }
+  .close { width: 40px; height: 40px; top: 0.6rem; right: 0.6rem; }
+  .uncheckBtn, .checkInBtn { min-height: 40px; padding: 0.4rem 0.8rem; font-size: 0.78rem; }
+}

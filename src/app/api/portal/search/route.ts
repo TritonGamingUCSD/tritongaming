@@ -47,13 +47,13 @@ export async function GET(request: Request) {
   // public page (fuller detail than anything inside the portal itself has),
   // a doc straight to its content.
   const members: SearchResult[] = (membersRes.data ?? []).map((m) => ({
-    id: m.id, title: m.display_name || 'Anonymous', subtitle: m.gamer_tag || '', href: `/portal/members?id=${m.id}`,
+    id: m.id, title: m.display_name || 'Anonymous', subtitle: m.gamer_tag || '', href: `/portal?section=members&id=${m.id}`,
   }));
   const events: SearchResult[] = (eventsRes.data ?? []).map((e) => ({
     id: e.id, title: e.title, subtitle: e.description?.slice(0, 60) || '', href: e.slug ? `/events/${e.slug}` : '/portal/events',
   }));
   const docs: SearchResult[] = (docsRes.data ?? []).map((d) => ({
-    id: d.id, title: d.title, subtitle: '', href: `/portal/docs?id=${d.id}`,
+    id: d.id, title: d.title, subtitle: '', href: `/portal?section=docs&id=${d.id}`,
   }));
 
   return NextResponse.json({ members, events, docs });

@@ -1,3 +1,4 @@
+import { logAudit, currentActorId } from '@/lib/audit';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
@@ -27,6 +28,9 @@ export async function DELETE(request: Request, { params }: Params) {
   const reassignTo = typeof body.reassign_to === 'string' && body.reassign_to ? body.reassign_to : null;
 
   const serviceClient = createServiceClient();
+  // Names are read before the rows are gone, for the audit trail.
+  const { data: target } = await serviceClient.from('profiles').select('display_name').eq('id', id).maybeSingle();
+  const { data: mergeInto } = reassignTo ? await serviceClient.from('profiles').select('display_name').eq('id', reassignTo).maybeSingle() : { data: null };
   const { error: rpcError } = await serviceClient.rpc('admin_delete_account', {
     _user_id: id,
     _admin_id: user.id,
@@ -39,6 +43,17 @@ export async function DELETE(request: Request, { params }: Params) {
   // its identities, sessions) only goes away through the Admin API.
   const { error: authError } = await serviceClient.auth.admin.deleteUser(id);
   if (authError) return NextResponse.json({ error: `Account data was removed, but deleting the login itself failed: ${authError.message}` }, { status: 500 });
+
+  await logAudit(serviceClient, {
+    actorId: user.id,
+    action: reassignTo ? 'merge' : 'delete',
+    entityType: 'account',
+    entityId: id,
+    summary: reassignTo
+      ? `Account "${target?.display_name ?? 'unnamed'}" merged into "${mergeInto?.display_name ?? 'another account'}" and removed`
+      : `Account "${target?.display_name ?? 'unnamed'}" deleted`,
+    details: reassignTo ? { merged_into: reassignTo } : null,
+  });
 
   return NextResponse.json({ ok: true });
 }

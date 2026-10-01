@@ -55,7 +55,7 @@ export async function performCheckin(
         : event.title ? `Enjoy ${event.title}.` : 'Enjoy the event.',
       pointsAwarded && event.points_value > 0 ? `+${event.points_value} points earned.` : null,
     ].filter(Boolean).join(' '),
-    href: '/portal/tickets',
+    href: '/portal?section=tickets',
   });
 
   return {};

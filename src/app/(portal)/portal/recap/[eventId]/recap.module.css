@@ -1,0 +1,18 @@
+.page { display: flex; flex-direction: column; gap: 0.9rem; max-width: 640px; margin-inline: auto; }
+.back { font-size: 0.8rem; color: rgba(242, 241, 240, 0.55); text-decoration: none; }
+.hero { padding: 0.5rem 0 0.25rem; }
+.kicker { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: #4a90e2; }
+.title { font-family: var(--font-futura-heavy); font-size: 1.6rem; color: var(--white); }
+.sub { font-size: 0.85rem; color: rgba(242, 241, 240, 0.5); }
+.card { display: flex; gap: 0.8rem; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 0.9rem; padding: 1rem; }
+.grow { flex: 1; min-width: 0; }
+.icon { color: #4a90e2; padding-top: 0.15rem; }
+.cardTitle { font-family: var(--font-futura-medium); font-size: 0.95rem; color: var(--white); margin-bottom: 0.25rem; }
+.text { font-size: 0.85rem; color: rgba(242, 241, 240, 0.7); line-height: 1.5; }
+.link { color: #4a90e2; text-decoration: none; }
+.albums { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.4rem; }
+.album { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.82rem; color: var(--white); text-decoration: none; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 0.6rem; padding: 0.45rem 0.8rem; }
+.next { list-style: none; display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.85rem; }
+.feedback { display: flex; flex-direction: column; gap: 0.6rem; }
+.stars { display: flex; gap: 0.2rem; }
+.star { background: none; border: none; color: #f5b942; cursor: pointer; padding: 0.15rem; min-width: 40px; min-height: 40px; display: grid; place-items: center; }

@@ -1,3 +1,4 @@
+import { logAudit, currentActorId } from '@/lib/audit';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
@@ -32,5 +33,6 @@ export async function POST(request: Request) {
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  await logAudit(serviceClient, { actorId: user.id, action: 'adjust', entityType: 'points', entityId: user_id, summary: `Points adjusted by ${parsedAmount >= 0 ? '+' : ''}${parsedAmount}: ${String(note).trim()}`, details: { amount: parsedAmount } });
   return NextResponse.json({ ok: true });
 }

@@ -1,3 +1,4 @@
+import { logAudit, currentActorId } from '@/lib/audit';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
@@ -50,5 +51,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  await logAudit(adminClient, { actorId: user.id, action: 'update', entityType: 'site content', entityId: key, summary: `Site content "${key}" edited` });
   return NextResponse.json({ ok: true });
 }

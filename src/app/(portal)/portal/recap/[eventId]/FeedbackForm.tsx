@@ -1,0 +1,55 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Star } from 'lucide-react';
+import Notice from '@/components/ui/Notice';
+import Button from '@/components/ui/Button';
+import { Textarea } from '@/components/ui/Field';
+import { createClient } from '@/lib/supabase/client';
+import { showToast } from '@/lib/toast';
+import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
+import styles from './recap.module.css';
+
+export default function FeedbackForm({ eventId, userId, initialRating, initialComment }: { eventId: string; userId: string; initialRating: number | null; initialComment: string }) {
+  const router = useRouter();
+  const [rating, setRating] = useState<number | null>(initialRating);
+  const [comment, setComment] = useState(initialComment);
+  const [saved, setSaved] = useState({ rating: initialRating, comment: initialComment });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const { markSaved } = useUnsavedChanges({ rating, comment });
+  const dirty = rating !== saved.rating || comment !== saved.comment;
+
+  async function submit() {
+    if (!rating) return;
+    setSaving(true);
+    setError('');
+    const { error: err } = await createClient()
+      .from('event_feedback')
+      .upsert({ event_id: eventId, user_id: userId, rating, comment: comment.trim() || null, updated_at: new Date().toISOString() }, { onConflict: 'event_id,user_id' });
+    setSaving(false);
+    if (err) { setError('Could not save your feedback. Please try again.'); return; }
+    setSaved({ rating, comment });
+    markSaved();
+    showToast('Thanks for the feedback');
+    router.push('/portal');
+  }
+
+  return (
+    <div className={styles.feedback}>
+      <div className={styles.stars} role="radiogroup" aria-label="Rating">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button key={n} type="button" role="radio" aria-checked={rating === n} aria-label={`${n} star${n > 1 ? 's' : ''}`} className={styles.star} onClick={() => setRating(n)}>
+            <Star size={26} strokeWidth={1.5} fill={rating && n <= rating ? 'currentColor' : 'none'} aria-hidden="true" />
+          </button>
+        ))}
+      </div>
+      <Textarea value={comment} onChange={(e) => setComment(e.target.value)} maxLength={1000} rows={3} placeholder="Anything we should keep doing or fix? (optional)" />
+      {error && <Notice tone="error">{error}</Notice>}
+      <Button onClick={submit} disabled={!rating || !dirty} loading={saving}>
+        {saving ? 'Saving…' : saved.rating ? 'Update feedback' : 'Send feedback'}
+      </Button>
+    </div>
+  );
+}

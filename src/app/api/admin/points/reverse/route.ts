@@ -1,3 +1,4 @@
+import { logAudit, currentActorId } from '@/lib/audit';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
@@ -26,5 +27,6 @@ export async function POST(request: Request) {
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  await logAudit(serviceClient, { actorId: user.id, action: 'reverse', entityType: 'points', entityId: transaction_id, summary: 'A points entry was reversed' });
   return NextResponse.json({ ok: true });
 }

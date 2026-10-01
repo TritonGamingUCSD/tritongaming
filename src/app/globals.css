@@ -335,3 +335,22 @@ button {
   from { opacity: 0; transform: scale(0.82) translateY(12px); }
   to   { opacity: 1; transform: scale(1) translateY(0); }
 }
+
+/* ── Mobile pass ──
+   iOS Safari zooms the page when a focused field's text is under 16px, which
+   then leaves the layout stuck zoomed. Force 16px on phones; skip checkboxes
+   and the like, which have no text. */
+@media (max-width: 640px) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Printing (e.g. Save as PDF): drop the portal's navigation chrome and the dark
+   backdrop so only the page content is on the paper. */
+@media print {
+  [data-print-hide] { display: none !important; }
+  html, body, [data-portal-layout] { background: #fff !important; color: #111827 !important; min-height: 0 !important; }
+}

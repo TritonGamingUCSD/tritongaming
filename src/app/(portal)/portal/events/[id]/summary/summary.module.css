@@ -1,0 +1,144 @@
+.page { display: flex; flex-direction: column; gap: 1.1rem; max-width: 1040px; margin-inline: auto; }
+.back { font-size: 0.8rem; color: rgba(242, 241, 240, 0.55); text-decoration: none; }
+.note { font-size: 0.75rem; color: rgba(242, 241, 240, 0.5); line-height: 1.45; }
+
+/* ── hero ── */
+.hero {
+  display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap;
+  padding: 1.5rem clamp(1rem, 3vw, 2rem);
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: radial-gradient(120% 140% at 0% 0%, rgba(74, 144, 226, 0.22), transparent 55%), radial-gradient(90% 120% at 100% 100%, rgba(255, 199, 44, 0.16), transparent 55%), rgba(255, 255, 255, 0.03);
+}
+.heroText { flex: 1; min-width: 260px; display: flex; flex-direction: column; gap: 0.35rem; }
+.kicker { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: #ffc72c; }
+.title { font-family: var(--font-futura-heavy); font-size: clamp(1.4rem, 3vw, 2rem); color: var(--white); line-height: 1.15; }
+.sub { font-size: 0.85rem; color: rgba(242, 241, 240, 0.6); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.6rem; margin-top: 0.9rem; }
+.tile { display: flex; flex-direction: column; gap: 0.1rem; padding: 0.7rem 0.9rem; border-radius: 0.8rem; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.07); }
+.tileIcon { color: #ffc72c; display: inline-flex; }
+.tileValue { font-family: var(--font-futura-heavy); font-size: 1.5rem; color: var(--white); line-height: 1.1; }
+.tileLabel { font-size: 0.72rem; color: rgba(242, 241, 240, 0.55); }
+
+.gauge { position: relative; width: 170px; height: 170px; flex-shrink: 0; margin-inline: auto; }
+.gauge svg { width: 100%; height: 100%; }
+.gaugeText { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.gaugeValue { font-family: var(--font-futura-heavy); font-size: 2.2rem; color: var(--white); line-height: 1; }
+.gaugeLabel { font-size: 0.72rem; color: rgba(242, 241, 240, 0.55); margin-top: 0.2rem; }
+
+/* ── actions ── */
+.actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.actionBtn { display: inline-flex; align-items: center; gap: 0.45rem; font-family: var(--font-futura-medium); font-size: 0.82rem; color: var(--white); text-decoration: none; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 0.65rem; padding: 0.55rem 1rem; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+.actionBtn:hover { background: rgba(255, 255, 255, 0.09); border-color: rgba(255, 199, 44, 0.45); }
+
+/* ── cards ── */
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.9rem; }
+.card { display: flex; flex-direction: column; gap: 0.9rem; padding: 1.1rem 1.25rem; border-radius: 1rem; background: rgba(255, 255, 255, 0.035); border: 1px solid rgba(255, 255, 255, 0.08); break-inside: avoid; }
+.wide { grid-column: 1 / -1; }
+.cardTitle { font-family: var(--font-futura-medium); font-size: 1rem; color: var(--white); margin-bottom: 0.15rem; }
+
+/* donut */
+.donutWrap { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; }
+.donut { width: 150px; height: 150px; flex-shrink: 0; }
+.donutTotal { fill: #fff; font-size: 16px; font-weight: 700; }
+.donutSub { fill: rgba(242, 241, 240, 0.55); font-size: 6px; }
+.legend { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; flex: 1; min-width: 140px; }
+.legend li { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; }
+.legendLabel { flex: 1; color: rgba(242, 241, 240, 0.9); overflow-wrap: anywhere; }
+.legendVal { color: rgba(242, 241, 240, 0.55); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+/* columns */
+.columns { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 0.4rem; align-items: end; }
+.col { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; min-width: 0; }
+.colVal { font-size: 0.72rem; color: rgba(242, 241, 240, 0.8); font-variant-numeric: tabular-nums; }
+.colTrack { height: 140px; width: 100%; max-width: 44px; display: flex; align-items: flex-end; border-radius: 0.5rem; background: rgba(255, 255, 255, 0.04); overflow: hidden; }
+.colFill { width: 100%; border-radius: 0.5rem 0.5rem 0 0; min-height: 3px; }
+.colLabel { font-size: 0.62rem; color: rgba(242, 241, 240, 0.5); text-align: center; line-height: 1.2; }
+
+/* rank bars */
+.rank { list-style: none; display: flex; flex-direction: column; gap: 0.65rem; }
+.rankRow { display: flex; gap: 0.7rem; align-items: center; }
+.rankNum { width: 1.5rem; height: 1.5rem; border-radius: 50%; background: rgba(255, 255, 255, 0.07); color: rgba(242, 241, 240, 0.8); font-size: 0.72rem; display: grid; place-items: center; flex-shrink: 0; }
+.rankBody { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+.rankTop { display: flex; justify-content: space-between; gap: 0.75rem; font-size: 0.82rem; color: rgba(242, 241, 240, 0.92); }
+.rankCount { color: rgba(242, 241, 240, 0.5); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rankTrack { height: 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.07); overflow: hidden; }
+.rankFill { height: 100%; border-radius: 999px; }
+
+/* funnel */
+.funnel { display: flex; flex-direction: column; gap: 0.8rem; }
+.funnelRow { display: flex; flex-direction: column; gap: 0.3rem; }
+.funnelBar { min-width: 2.5rem; border-radius: 0.6rem; padding: 0.5rem 0.8rem; color: #0a0f1e; }
+.funnelValue { font-family: var(--font-futura-heavy); font-size: 1rem; }
+.funnelLabel { font-size: 0.75rem; color: rgba(242, 241, 240, 0.6); }
+
+/* split */
+.split { display: flex; height: 22px; border-radius: 999px; overflow: hidden; background: rgba(255, 255, 255, 0.06); }
+.splitLegend { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem 1rem; margin-top: 0.6rem; font-size: 0.8rem; color: rgba(242, 241, 240, 0.8); }
+.splitLegend b { color: var(--white); }
+
+/* feedback */
+.rating { display: flex; align-items: baseline; gap: 0.5rem; }
+.ratingValue { font-family: var(--font-futura-heavy); font-size: 2.2rem; color: #f5b942; line-height: 1; }
+.ratingOf { font-size: 0.82rem; color: rgba(242, 241, 240, 0.6); }
+.comments { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.6rem; }
+.comments li { font-size: 0.82rem; color: rgba(242, 241, 240, 0.85); background: rgba(255, 255, 255, 0.04); border-radius: 0.7rem; padding: 0.7rem 0.9rem; line-height: 1.45; }
+
+@media (max-width: 720px) {
+  .grid { grid-template-columns: minmax(0, 1fr); }
+  .gauge { width: 140px; height: 140px; }
+  .colTrack { height: 110px; }
+  .colLabel { font-size: 0.55rem; }
+  .donut { width: 130px; height: 130px; }
+}
+
+.gaugeTrack { stroke: rgba(255, 255, 255, 0.08); }
+.donutTrack { stroke: rgba(255, 255, 255, 0.06); }
+
+/* ── Save as PDF ──
+   The page is dark-themed, but the PDF is white paper. Rather than invert
+   things, re-skin everything for print: white page, dark text, light grey
+   tracks, and force browsers to actually print backgrounds (they drop them by
+   default, which is what made the bars vanish). The portal's own chrome is
+   hidden via [data-print-hide] — see globals.css. */
+@media print {
+  @page { size: letter; margin: 12mm; }
+  .page, .page * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page { max-width: none; gap: 0.9rem; color: #111827; }
+  .noPrint, .back { display: none !important; }
+
+  .hero { background: #f1f5fb; border: 1px solid #cbd5e1; padding: 1.1rem 1.4rem; }
+  .kicker { color: #a16207; }
+  .title { color: #0f172a; }
+  .sub { color: #475569; }
+  .tile { background: #fff; border-color: #cbd5e1; }
+  .tileIcon { color: #a16207; }
+  .tileValue { color: #0f172a; }
+  .tileLabel { color: #475569; }
+  .gaugeTrack { stroke: #e2e8f0; }
+  .gaugeValue { color: #0f172a; }
+  .gaugeLabel { color: #475569; }
+
+  .note { color: #475569; }
+  .grid { gap: 0.7rem; }
+  .card { background: #fff; border-color: #cbd5e1; break-inside: avoid; page-break-inside: avoid; }
+  .cardTitle { color: #0f172a; }
+
+  .donutTrack { stroke: #e2e8f0; }
+  .donutTotal { fill: #0f172a; }
+  .donutSub { fill: #475569; }
+  .legendLabel { color: #1e293b; }
+  .legendVal { color: #475569; }
+
+  .colTrack, .rankTrack, .split { background: #e2e8f0; }
+  .colVal, .rankTop { color: #1e293b; }
+  .colLabel, .rankCount, .funnelLabel, .splitLegend { color: #475569; }
+  .splitLegend b { color: #0f172a; }
+  .rankNum { background: #e2e8f0; color: #1e293b; }
+  .funnelBar { color: #0f172a; }
+
+  .ratingValue { color: #b45309; }
+  .ratingOf { color: #475569; }
+  .comments li { background: #f1f5f9; color: #1e293b; }
+}

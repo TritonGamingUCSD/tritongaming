@@ -2,6 +2,7 @@
 
 import Notice from '@/components/ui/Notice';
 import { useEffect, useState, type ReactNode } from 'react';
+import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Ticket, MapPin, QrCode, Check, X, Timer, Award } from 'lucide-react';
 import FullscreenQR from './FullscreenQR';
@@ -157,7 +158,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
       const data = await res.json();
       if (!res.ok) {
         if (data.needsProfile) {
-          router.push('/portal/profile?next=/portal/tickets');
+          router.push('/portal?section=profile&next=/portal?section=tickets');
           return;
         }
         setError(data.error || 'Something went wrong. Please try again.');
@@ -494,6 +495,9 @@ function TicketRow({
             compact
             onOpened={() => { setFormCompletedAt(new Date().toISOString()); onFormComplete?.(ticket.id); }}
           />
+        )}
+        {ticket.status === 'used' && eventHasEnded && ev?.id && (
+          <Link href={`/portal/recap/${ev.id}`} className={styles.recapLink}>Photos &amp; feedback →</Link>
         )}
         {canEarnPoints && isActionable && !!ev?.points_value && (
           <div className={styles.ticketPointsBadge}><Award size={11} strokeWidth={1.75} aria-hidden="true" /> +{ev.points_value} pts on check-in</div>

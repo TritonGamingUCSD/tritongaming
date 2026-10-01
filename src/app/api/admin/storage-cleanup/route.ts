@@ -1,3 +1,4 @@
+import { logAudit, currentActorId } from '@/lib/audit';
 import { NextResponse } from 'next/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
@@ -84,5 +85,7 @@ export async function POST() {
     })
   );
 
+  const filesDeleted = deleted.reduce((sum, b) => sum + b.deletedCount, 0);
+  await logAudit(supabase, { actorId: await currentActorId(), action: 'delete', entityType: 'storage', summary: `${filesDeleted} unused file${filesDeleted === 1 ? '' : 's'} deleted from storage`, details: { buckets: deleted.map((b) => ({ bucket: b.bucket, deleted: b.deletedCount })) } });
   return NextResponse.json({ buckets: deleted });
 }

@@ -24,21 +24,25 @@ export default async function PortalLayout({ children }: { children: React.React
   const missingOnlyOfficerTab = missingProfileFields.length > 0 && getMissingProfileFields({ ...profile, gender }, isUcsdMember).length === 0;
 
   return (
-    <div className={styles.layout}>
+    <div className={styles.layout} data-portal-layout>
       <main className={styles.main}>
-        <PortalTopbar />
+        <div data-print-hide style={{ display: 'contents' }}><PortalTopbar /></div>
         <div className={styles.content}>
-          <Suspense fallback={null}>
-            <ProfileIncompleteBanner missing={missingProfileFields} officerTabOnly={missingOnlyOfficerTab} />
-          </Suspense>
+          <div data-print-hide style={{ display: 'contents' }}>
+            <Suspense fallback={null}>
+              <ProfileIncompleteBanner missing={missingProfileFields} officerTabOnly={missingOnlyOfficerTab} />
+            </Suspense>
+          </div>
           {children}
         </div>
       </main>
       {/* Fixed to the viewport, not slotted into .content — needs to stay
           reachable on /portal itself, which is the one page PortalTopbar
           (the other persistent portal chrome) deliberately hides on. */}
-      <NotificationBell />
-      <ConnectivityBanner />
+      <div data-print-hide style={{ display: 'contents' }}>
+        <NotificationBell />
+        <ConnectivityBanner />
+      </div>
     </div>
   );
 }

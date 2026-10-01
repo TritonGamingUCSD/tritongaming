@@ -1,0 +1,29 @@
+.wrap { display: flex; flex-direction: column; gap: 0.75rem; }
+.filters { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.search { flex: 1; min-width: 180px; }
+.filters .select { width: auto; }
+.list { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; }
+.item { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 0.75rem; overflow: hidden; }
+.itemHeader {
+  width: 100%; display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+  padding: 0.65rem 0.9rem; background: none; border: none; text-align: left; color: var(--white); cursor: pointer;
+}
+.itemHeader:disabled { cursor: default; }
+.badge {
+  font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em;
+  padding: 0.15rem 0.5rem; border-radius: 999px; background: rgba(255, 255, 255, 0.08); color: rgba(242, 241, 240, 0.8);
+}
+.summary { flex: 1; min-width: 160px; font-size: 0.85rem; }
+.type { color: rgba(242, 241, 240, 0.45); font-size: 0.75rem; margin-right: 0.25rem; }
+.meta { font-size: 0.72rem; color: rgba(242, 241, 240, 0.45); }
+.chevron { color: rgba(242, 241, 240, 0.4); transition: transform 0.15s; }
+.chevronOpen { transform: rotate(180deg); }
+.detail { padding: 0.5rem 0.9rem 0.8rem; display: flex; flex-direction: column; gap: 0.3rem; border-top: 1px solid rgba(255, 255, 255, 0.06); }
+.detailRow { display: flex; gap: 0.75rem; font-size: 0.78rem; flex-wrap: wrap; }
+.detailKey { min-width: 110px; color: rgba(242, 241, 240, 0.45); }
+.detailVal { flex: 1; word-break: break-word; }
+.old { color: rgba(242, 241, 240, 0.5); text-decoration: line-through; }
+.new { color: var(--white); }
+.empty { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; padding: 2.5rem 0; color: rgba(242, 241, 240, 0.4); }
+.hint { font-size: 0.8rem; color: rgba(242, 241, 240, 0.4); text-align: center; }
+.more { align-self: center; }

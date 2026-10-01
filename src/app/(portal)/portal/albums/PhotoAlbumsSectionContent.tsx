@@ -1,6 +1,8 @@
 'use client';
 
 import Notice from '@/components/ui/Notice';
+import Button from '@/components/ui/Button';
+import { Input } from '@/components/ui/Field';
 import { confirmHold } from '@/lib/confirmHold';
 import { showToast } from '@/lib/toast';
 import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
@@ -127,26 +129,24 @@ export default function PhotoAlbumsSectionContent({ albums: initial, canManage }
 
       {adding && (
         <form className={styles.addForm} onSubmit={handleAdd}>
-          <input
-            className={styles.input}
+          <Input
             value={draft.title}
             onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
             placeholder="Album title (e.g. Fall 2025 Kickoff)"
             maxLength={120}
             autoFocus
           />
-          <input
-            className={styles.input}
+          <Input
             type="url"
             value={draft.url}
             onChange={(e) => setDraft((d) => ({ ...d, url: e.target.value }))}
             placeholder="Paste a Google Photos album share link…"
           />
           <div className={styles.addFormActions}>
-            <button type="button" className={styles.cancelBtn} onClick={() => { setAdding(false); setDraft(EMPTY_DRAFT); }} disabled={saving}>Cancel</button>
-            <button type="submit" className={styles.saveBtn} disabled={saving || !draft.title.trim() || !draft.url.trim()}>
+            <Button variant="ghost" onClick={() => { setAdding(false); setDraft(EMPTY_DRAFT); }} disabled={saving}>Cancel</Button>
+            <Button type="submit" loading={saving} disabled={!draft.title.trim() || !draft.url.trim()}>
               {saving ? 'Adding…' : 'Add'}
-            </button>
+            </Button>
           </div>
         </form>
       )}
