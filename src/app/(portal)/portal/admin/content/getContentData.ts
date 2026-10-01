@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 
-// Shared by the standalone /portal/admin/content route and the portal hub.
+// Shared by the portal hub's Site Content section.
 export async function getContentData() {
   const supabase = await createClient();
   const { data: rows } = await supabase

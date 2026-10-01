@@ -1,5 +1,6 @@
 'use client';
 
+import SectionTabs from '@/components/ui/SectionTabs';
 import { useState } from 'react';
 import { Camera, Gift, Wifi } from 'lucide-react';
 import { usePortalTabSync } from '@/lib/usePortalTabSync';
@@ -36,21 +37,15 @@ export default function CheckInSectionContent({ events, canScanRedemptions, init
 
   return (
     <div className={styles.page}>
-      <div className={styles.tabBar} role="tablist">
-        <button type="button" role="tab" aria-selected={tab === 'tickets'} className={`${styles.tab} ${tab === 'tickets' ? styles.tabActive : ''}`} onClick={() => selectTab('tickets')}>
-          <Camera size={13} strokeWidth={1.5} aria-hidden="true" /> Tickets
-        </button>
-        {canScanRedemptions && (
-          <button type="button" role="tab" aria-selected={tab === 'redemptions'} className={`${styles.tab} ${tab === 'redemptions' ? styles.tabActive : ''}`} onClick={() => selectTab('redemptions')}>
-            <Gift size={13} strokeWidth={1.5} aria-hidden="true" /> Redemptions
-          </button>
-        )}
-        {onlineEvents.length > 0 && (
-          <button type="button" role="tab" aria-selected={tab === 'online'} className={`${styles.tab} ${tab === 'online' ? styles.tabActive : ''}`} onClick={() => selectTab('online')}>
-            <Wifi size={13} strokeWidth={1.5} aria-hidden="true" /> Online Check-In
-          </button>
-        )}
-      </div>
+      <SectionTabs
+        value={tab}
+        onChange={selectTab}
+        tabs={[
+          { id: 'tickets', label: 'Tickets', icon: <Camera /> },
+          ...(canScanRedemptions ? [{ id: 'redemptions' as const, label: 'Redemptions', icon: <Gift /> }] : []),
+          ...(onlineEvents.length > 0 ? [{ id: 'online' as const, label: 'Online Check-In', icon: <Wifi /> }] : []),
+        ]}
+      />
 
       {tab === 'tickets' && (
         <>

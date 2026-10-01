@@ -1,5 +1,6 @@
 'use client';
 
+import SectionTabs from '@/components/ui/SectionTabs';
 import { refreshPublicCache } from '@/lib/refreshPublicCache';
 import Notice from '@/components/ui/Notice';
 import { useState } from 'react';
@@ -250,6 +251,18 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
         </Notice>
       )}
 
+      {/* Above the two-column layout, not inside it: the columns change width and
+          content from tab to tab, which used to drag the tab bar around with them. */}
+      <SectionTabs
+        value={tab}
+        onChange={selectTab}
+        tabs={[
+          { id: 'basic', label: 'Basic Info', icon: <User /> },
+          ...(showBoardTab ? [{ id: 'officer' as const, label: 'Public Officer Card', icon: <Users /> }] : []),
+          { id: 'security', label: 'Login & Security', icon: <Lock /> },
+        ]}
+      />
+
       <div className={`${styles.layout} ${tab === 'officer' && isBoardEligible ? styles.layoutOfficer : ''}`}>
         <div className={styles.avatarSection}>
           <div className={styles.roleTagRow}>
@@ -296,19 +309,6 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
         </div>
 
         <div className={styles.formCol}>
-          <div className={styles.tabBar} role="tablist">
-            <button type="button" role="tab" aria-selected={tab === 'basic'} className={`${styles.tab} ${tab === 'basic' ? styles.tabActive : ''}`} onClick={() => selectTab('basic')}>
-              <User size={13} strokeWidth={1.5} aria-hidden="true" /> Basic Info
-            </button>
-            {showBoardTab && (
-              <button type="button" role="tab" aria-selected={tab === 'officer'} className={`${styles.tab} ${tab === 'officer' ? styles.tabActive : ''}`} onClick={() => selectTab('officer')}>
-                <Users size={13} strokeWidth={1.5} aria-hidden="true" /> Public Officer Card
-              </button>
-            )}
-            <button type="button" role="tab" aria-selected={tab === 'security'} className={`${styles.tab} ${tab === 'security' ? styles.tabActive : ''}`} onClick={() => selectTab('security')}>
-              <Lock size={13} strokeWidth={1.5} aria-hidden="true" /> Login &amp; Security
-            </button>
-          </div>
 
         {(tab === 'basic' || tab === 'officer') && (
         <form className={styles.form} onSubmit={handleSave}>

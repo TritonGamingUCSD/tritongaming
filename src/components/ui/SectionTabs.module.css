@@ -1,0 +1,77 @@
+.bar {
+  display: flex;
+  align-items: stretch;
+  gap: 0.25rem;
+  width: 100%;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  /* soft fade where the row scrolls off-screen on phones */
+  mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
+}
+.bar::-webkit-scrollbar { display: none; }
+@media (min-width: 720px) { .bar { mask-image: none; -webkit-mask-image: none; } }
+
+.tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+  padding: 0.7rem 0.95rem;
+  background: none;
+  border: none;
+  color: rgba(242, 241, 240, 0.55);
+  font-family: var(--font-futura-medium);
+  font-size: 0.88rem;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.tab:hover { color: rgba(242, 241, 240, 0.9); }
+.tab:focus-visible { outline: 2px solid var(--yellow); outline-offset: -2px; border-radius: 0.4rem; }
+.tab::after {
+  content: '';
+  position: absolute;
+  left: 0.6rem; right: 0.6rem; bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: transparent;
+  transition: background 0.15s;
+}
+.active { color: var(--white); }
+.active::after { background: var(--yellow); }
+.icon { display: inline-flex; opacity: 0.85; }
+.icon svg { width: 15px; height: 15px; }
+
+.badge {
+  min-width: 18px;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: var(--yellow);
+  color: #0a0f1e;
+  font-size: 0.68rem;
+  font-family: var(--font-futura-heavy);
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* Small inner toggle (2–4 options) */
+.segmented {
+  width: auto;
+  margin-bottom: 1.25rem;
+  display: inline-flex;
+  gap: 0.2rem;
+  padding: 0.2rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  mask-image: none;
+  -webkit-mask-image: none;
+}
+.segmented .tab { padding: 0.4rem 0.8rem; border-radius: 0.55rem; font-size: 0.82rem; }
+.segmented .tab::after { display: none; }
+.segmented .active { background: rgba(255, 199, 44, 0.14); color: var(--yellow); }

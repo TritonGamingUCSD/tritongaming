@@ -1,5 +1,6 @@
 'use client';
 
+import SectionTabs from '@/components/ui/SectionTabs';
 import Notice from '@/components/ui/Notice';
 import { confirmHold } from '@/lib/confirmHold';
 import { showToast } from '@/lib/toast';
@@ -654,23 +655,16 @@ export default function PointsSectionContent({
         </div>
       </div>
 
-      <div className={styles.tabBar} role="tablist">
-        <button type="button" role="tab" aria-selected={tab === 'points'} className={`${styles.tab} ${tab === 'points' ? styles.tabActive : ''}`} onClick={() => selectTab('points')}>
-          <Award size={13} strokeWidth={1.5} aria-hidden="true" /> My Points
-          {unclaimedUnlockCount > 0 && <span className={styles.tabBadge}>{unclaimedUnlockCount}</span>}
-        </button>
-        <button type="button" role="tab" aria-selected={tab === 'shop'} className={`${styles.tab} ${tab === 'shop' ? styles.tabActive : ''}`} onClick={() => selectTab('shop')}>
-          <ShoppingBag size={13} strokeWidth={1.5} aria-hidden="true" /> Shop
-        </button>
-        <button type="button" role="tab" aria-selected={tab === 'leaderboard'} className={`${styles.tab} ${tab === 'leaderboard' ? styles.tabActive : ''}`} onClick={() => selectTab('leaderboard')}>
-          <Trophy size={13} strokeWidth={1.5} aria-hidden="true" /> Leaderboard
-        </button>
-        {canManageShop && (
-          <button type="button" role="tab" aria-selected={tab === 'manage'} className={`${styles.tab} ${tab === 'manage' ? styles.tabActive : ''}`} onClick={() => selectTab('manage')}>
-            <Settings size={13} strokeWidth={1.5} aria-hidden="true" /> Manage
-          </button>
-        )}
-      </div>
+      <SectionTabs
+        value={tab}
+        onChange={selectTab}
+        tabs={[
+          { id: 'points', label: 'My Points', icon: <Award />, badge: unclaimedUnlockCount },
+          { id: 'shop', label: 'Shop', icon: <ShoppingBag /> },
+          { id: 'leaderboard', label: 'Leaderboard', icon: <Trophy /> },
+          ...(canManageShop ? [{ id: 'manage' as const, label: 'Manage', icon: <Settings /> }] : []),
+        ]}
+      />
 
       {tab === 'points' && (
         <div className={styles.pointsTab}>
@@ -905,16 +899,18 @@ export default function PointsSectionContent({
 
       {tab === 'manage' && canManageShop && (
         <div className={styles.manageTab}>
-          <div className={styles.subTabBar} role="tablist">
-            {canManagePoints && (
-              <button type="button" role="tab" aria-selected={manageSubTab === 'award'} className={`${styles.subTab} ${manageSubTab === 'award' ? styles.subTabActive : ''}`} onClick={() => selectManageSubTab('award')}>Award Points</button>
-            )}
-            <button type="button" role="tab" aria-selected={manageSubTab === 'shop'} className={`${styles.subTab} ${manageSubTab === 'shop' ? styles.subTabActive : ''}`} onClick={() => selectManageSubTab('shop')}>Shop Items</button>
-            {canManagePoints && (
-              <button type="button" role="tab" aria-selected={manageSubTab === 'correct'} className={`${styles.subTab} ${manageSubTab === 'correct' ? styles.subTabActive : ''}`} onClick={() => selectManageSubTab('correct')}>Corrections</button>
-            )}
-            <button type="button" role="tab" aria-selected={manageSubTab === 'tiers'} className={`${styles.subTab} ${manageSubTab === 'tiers' ? styles.subTabActive : ''}`} onClick={() => selectManageSubTab('tiers')}>Tiers</button>
-          </div>
+          <SectionTabs
+            variant="segmented"
+            label="Manage views"
+            value={manageSubTab}
+            onChange={selectManageSubTab}
+            tabs={[
+              ...(canManagePoints ? [{ id: 'award' as const, label: 'Award Points' }] : []),
+              { id: 'shop', label: 'Shop Items' },
+              ...(canManagePoints ? [{ id: 'correct' as const, label: 'Corrections' }] : []),
+              { id: 'tiers', label: 'Tiers' },
+            ]}
+          />
 
           {manageSubTab === 'award' && canManagePoints && (
           <section className={styles.manageSection}>

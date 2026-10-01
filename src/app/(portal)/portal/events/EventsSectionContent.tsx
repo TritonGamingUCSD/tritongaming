@@ -1,5 +1,6 @@
 'use client';
 
+import SectionTabs from '@/components/ui/SectionTabs';
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
@@ -119,14 +120,14 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
       </div>
 
       {canEdit && (
-        <div className={styles.tabBar} role="tablist">
-          <button type="button" role="tab" aria-selected={tab === 'manage'} className={`${styles.tab} ${tab === 'manage' ? styles.tabActive : ''}`} onClick={() => selectTab('manage')}>
-            <ListChecks size={13} strokeWidth={1.5} aria-hidden="true" /> Manage
-          </button>
-          <button type="button" role="tab" aria-selected={tab === 'analytics'} className={`${styles.tab} ${tab === 'analytics' ? styles.tabActive : ''}`} onClick={() => selectTab('analytics')}>
-            <BarChart3 size={13} strokeWidth={1.5} aria-hidden="true" /> Analytics
-          </button>
-        </div>
+        <SectionTabs
+          value={tab}
+          onChange={selectTab}
+          tabs={[
+            { id: 'manage', label: 'Manage', icon: <ListChecks /> },
+            { id: 'analytics', label: 'Analytics', icon: <BarChart3 /> },
+          ]}
+        />
       )}
 
       {tab === 'analytics' && canEdit && (

@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
     const hubSections = ['tickets', 'profile', 'activity', 'points', 'battlepass', 'events', 'checkin', 'members', 'docs', 'qrcode', 'albums', 'admin'];
     return [
       { source: '/about', destination: '/team', permanent: true },
+      { source: '/portal/admin/content', destination: '/portal?section=site-content', permanent: false },
       { source: '/portal/divisions', destination: '/portal?section=site-content&tab=divisions', permanent: false },
       ...hubSections.map((id) => ({ source: `/portal/${id}`, destination: `/portal?section=${id}`, permanent: false })),
     ];

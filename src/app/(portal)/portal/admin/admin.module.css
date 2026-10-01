@@ -30,50 +30,9 @@
 }
 
 /* ── Overview / Analytics / Role History tab bar ── */
-.tabBar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1.4rem;
-  margin-bottom: 1.75rem;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
-}
 
-.tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.8rem;
-  font-family: var(--font-futura-medium);
-  color: rgba(242,241,240,0.65);
-  padding: 0.6rem 0.25rem;
-  margin-bottom: -1px;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
-}
-.tab:hover { color: rgba(242,241,240,0.75); }
 
-/* Below this width, wrapping tabs onto multiple rows breaks the "row of
-   tabs" affordance entirely — it just reads as a loose cluster of labels.
-   A single horizontally-scrolling row (same pattern as App Store category
-   tabs) keeps the row intact; the scrollbar itself is hidden since the
-   content's own slight edge-cropping is what signals "more to scroll" here. */
-@media (max-width: 640px) {
-  .tabBar {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .tabBar::-webkit-scrollbar { display: none; }
-  .tab { flex-shrink: 0; }
-}
 
-.tabActive {
-  color: var(--yellow);
-  border-bottom-color: var(--yellow);
-}
-.tabActive:hover { color: var(--yellow); }
 
 .cmsBtn {
   display: inline-flex;

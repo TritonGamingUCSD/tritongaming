@@ -1,5 +1,6 @@
 'use client';
 
+import SectionTabs from '@/components/ui/SectionTabs';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -88,40 +89,22 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
           <p className={styles.titleSub}>Platform management</p>
         </div>
         <div className={styles.headerActions}>
-          <Link href="/portal?section=content" className={styles.cmsBtn}>
+          <Link href="/portal?section=site-content" className={styles.cmsBtn}>
             <Pencil size={14} strokeWidth={1.5} aria-hidden="true" /> Edit Site Content
           </Link>
         </div>
       </div>
 
-      <div className={styles.tabBar} role="tablist">
-        <button type="button" role="tab" aria-selected={tab === 'overview'} className={`${styles.tab} ${tab === 'overview' ? styles.tabActive : ''}`} onClick={() => selectTab('overview')}>
-          Overview
-        </button>
-        {isAdmin && (
-          <button type="button" role="tab" aria-selected={tab === 'roles'} className={`${styles.tab} ${tab === 'roles' ? styles.tabActive : ''}`} onClick={() => selectTab('roles')}>
-            <UsersIcon size={13} strokeWidth={1.5} aria-hidden="true" /> Member Management
-          </button>
-        )}
-        {isAdmin && (
-          <button type="button" role="tab" aria-selected={tab === 'order'} className={`${styles.tab} ${tab === 'order' ? styles.tabActive : ''}`} onClick={() => selectTab('order')}>
-            <ListOrdered size={13} strokeWidth={1.5} aria-hidden="true" /> Display Order
-          </button>
-        )}
-        <button type="button" role="tab" aria-selected={tab === 'analytics'} className={`${styles.tab} ${tab === 'analytics' ? styles.tabActive : ''}`} onClick={() => selectTab('analytics')}>
-          <BarChart3 size={13} strokeWidth={1.5} aria-hidden="true" /> Analytics
-        </button>
-        {isAdmin && (
-          <button type="button" role="tab" aria-selected={tab === 'audit'} className={`${styles.tab} ${tab === 'audit' ? styles.tabActive : ''}`} onClick={() => selectTab('audit')}>
-            <ScrollText size={13} strokeWidth={1.5} aria-hidden="true" /> Audit Log
-          </button>
-        )}
-        {isAdmin && (
-          <button type="button" role="tab" aria-selected={tab === 'system'} className={`${styles.tab} ${tab === 'system' ? styles.tabActive : ''}`} onClick={() => selectTab('system')}>
-            <Server size={13} strokeWidth={1.5} aria-hidden="true" /> System
-          </button>
-        )}
-      </div>
+      <SectionTabs
+        value={tab}
+        onChange={selectTab}
+        tabs={[
+          { id: 'overview', label: 'Overview' },
+          ...(isAdmin ? [{ id: 'roles' as const, label: 'Member Management', icon: <UsersIcon /> }, { id: 'order' as const, label: 'Display Order', icon: <ListOrdered /> }] : []),
+          { id: 'analytics', label: 'Analytics', icon: <BarChart3 /> },
+          ...(isAdmin ? [{ id: 'audit' as const, label: 'Audit Log', icon: <ScrollText /> }, { id: 'system' as const, label: 'System', icon: <Server /> }] : []),
+        ]}
+      />
 
       {tab === 'overview' && (
         <>

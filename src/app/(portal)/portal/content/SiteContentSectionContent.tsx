@@ -1,5 +1,6 @@
 'use client';
 
+import SectionTabs from '@/components/ui/SectionTabs';
 import { useState } from 'react';
 import { FileText, Gamepad2, LayoutGrid } from 'lucide-react';
 import { usePortalTabSync } from '@/lib/usePortalTabSync';
@@ -63,20 +64,7 @@ export default function SiteContentSectionContent({
           has one of these three — a lone tab is just extra chrome around
           content that has nowhere else to go. */}
       {tabs.length > 1 && (
-        <div className={styles.tabBar} role="tablist">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              role="tab"
-              aria-selected={tab === t.id}
-              className={`${styles.tab} ${tab === t.id ? styles.tabActive : ''}`}
-              onClick={() => selectTab(t.id)}
-            >
-              {t.icon} {t.label}
-            </button>
-          ))}
-        </div>
+        <SectionTabs value={tab} onChange={selectTab} tabs={tabs.map((t) => ({ id: t.id, label: t.label, icon: t.icon }))} />
       )}
 
       {tab === 'pages' && canEditContent && contentBlocks && contentMap && (

@@ -9,7 +9,7 @@ import { X, Camera, Gamepad2, Undo2, Check } from 'lucide-react';
 import { resolveAvatarUrl } from '@/lib/profile';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
-import checkinStyles from './[id]/checkins/checkins.module.css';
+import checkinStyles from './checkins.module.css';
 import styles from './eventcheckinsmodal.module.css';
 
 interface TicketUser {
@@ -45,13 +45,8 @@ const STATUS_LABEL: Record<string, string> = {
   active: 'Registered', used: 'Checked In', cancelled: 'Cancelled', expired: 'Expired',
 };
 
-// Opened from a click in the Event Management list (see
-// EventsSectionContent.tsx) instead of navigating to the standalone
-// /portal/events/[id]/checkins page — checking who's registered for an
-// event shouldn't cost you your place in whatever list/filter/scroll
-// position you were at in the hub. The standalone page still exists as a
-// direct-link fallback, same pattern as /portal/admin/content next to the
-// hub's own Site Content card.
+// Opened from a click in the Event Management list (see EventsSectionContent.tsx),
+// so checking who's registered doesn't cost you your place in the list/filter/scroll.
 export default function EventCheckinsModal({ eventId, onClose, canManagePoints }: { eventId: string; onClose: () => void; canManagePoints: boolean }) {
   const [event, setEvent] = useState<EventInfo | null>(null);
   const [tickets, setTickets] = useState<TicketRow[] | null>(null);

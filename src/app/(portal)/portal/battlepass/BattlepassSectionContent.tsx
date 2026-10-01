@@ -1,5 +1,6 @@
 'use client';
 
+import SectionTabs from '@/components/ui/SectionTabs';
 import Notice from '@/components/ui/Notice';
 import { confirmHold } from '@/lib/confirmHold';
 import { showToast } from '@/lib/toast';
@@ -600,23 +601,16 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, lead
         </div>
       </div>
 
-      <div className={styles.tabBar} role="tablist">
-        <button type="button" role="tab" aria-selected={tab === 'mine'} className={`${styles.tab} ${tab === 'mine' ? styles.tabActive : ''}`} onClick={() => selectTab('mine')}>
-          <Shield size={13} strokeWidth={1.5} aria-hidden="true" /> My Battlepass
-          {unclaimedUnlockCount > 0 && <span className={styles.tabBadge}>{unclaimedUnlockCount}</span>}
-        </button>
-        <button type="button" role="tab" aria-selected={tab === 'shop'} className={`${styles.tab} ${tab === 'shop' ? styles.tabActive : ''}`} onClick={() => selectTab('shop')}>
-          <ShoppingBag size={13} strokeWidth={1.5} aria-hidden="true" /> Shop
-        </button>
-        <button type="button" role="tab" aria-selected={tab === 'leaderboard'} className={`${styles.tab} ${tab === 'leaderboard' ? styles.tabActive : ''}`} onClick={() => selectTab('leaderboard')}>
-          <Trophy size={13} strokeWidth={1.5} aria-hidden="true" /> Leaderboard
-        </button>
-        {canManagePoints && (
-          <button type="button" role="tab" aria-selected={tab === 'manage'} className={`${styles.tab} ${tab === 'manage' ? styles.tabActive : ''}`} onClick={() => selectTab('manage')}>
-            <Settings size={13} strokeWidth={1.5} aria-hidden="true" /> Manage
-          </button>
-        )}
-      </div>
+      <SectionTabs
+        value={tab}
+        onChange={selectTab}
+        tabs={[
+          { id: 'mine', label: 'My Battlepass', icon: <Shield />, badge: unclaimedUnlockCount },
+          { id: 'shop', label: 'Shop', icon: <ShoppingBag /> },
+          { id: 'leaderboard', label: 'Leaderboard', icon: <Trophy /> },
+          ...(canManagePoints ? [{ id: 'manage' as const, label: 'Manage', icon: <Settings /> }] : []),
+        ]}
+      />
 
       {tab === 'mine' && (
         <div className={styles.pointsTab}>
@@ -829,13 +823,19 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, lead
 
       {tab === 'manage' && canManagePoints && (
         <div className={styles.manageTab}>
-          <div className={styles.subTabBar} role="tablist">
-            <button type="button" role="tab" aria-selected={manageSubTab === 'award'} className={`${styles.subTab} ${manageSubTab === 'award' ? styles.subTabActive : ''}`} onClick={() => selectManageSubTab('award')}>Award Points</button>
-            <button type="button" role="tab" aria-selected={manageSubTab === 'redeem'} className={`${styles.subTab} ${manageSubTab === 'redeem' ? styles.subTabActive : ''}`} onClick={() => selectManageSubTab('redeem')}>Redemptions</button>
-            <button type="button" role="tab" aria-selected={manageSubTab === 'shop'} className={`${styles.subTab} ${manageSubTab === 'shop' ? styles.subTabActive : ''}`} onClick={() => selectManageSubTab('shop')}>Shop Items</button>
-            <button type="button" role="tab" aria-selected={manageSubTab === 'correct'} className={`${styles.subTab} ${manageSubTab === 'correct' ? styles.subTabActive : ''}`} onClick={() => selectManageSubTab('correct')}>Corrections</button>
-            <button type="button" role="tab" aria-selected={manageSubTab === 'tiers'} className={`${styles.subTab} ${manageSubTab === 'tiers' ? styles.subTabActive : ''}`} onClick={() => selectManageSubTab('tiers')}>Tiers</button>
-          </div>
+          <SectionTabs
+            variant="segmented"
+            label="Manage views"
+            value={manageSubTab}
+            onChange={selectManageSubTab}
+            tabs={[
+              { id: 'award', label: 'Award Points' },
+              { id: 'redeem', label: 'Redemptions' },
+              { id: 'shop', label: 'Shop Items' },
+              { id: 'correct', label: 'Corrections' },
+              { id: 'tiers', label: 'Tiers' },
+            ]}
+          />
 
           {manageSubTab === 'award' && (
           <section className={styles.manageSection}>
