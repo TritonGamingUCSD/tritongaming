@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, History, Image as ImageIcon, Award, Medal, ArrowLeft, CalendarCheck, LayoutGrid } from 'lucide-react';
+import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, History, Image as ImageIcon, Award, Medal, ArrowLeft, CalendarCheck, CalendarDays, LayoutGrid, LifeBuoy } from 'lucide-react';
 import { getProfile, getUserRoles, getMyPrivateProfile, getUser, getRealRoles, getViewAs } from '@/lib/auth';
 import { ViewAsSwitcher } from '@/components/portal/ViewAs';
 import { createClient } from '@/lib/supabase/server';
@@ -44,6 +44,8 @@ import { getContentData } from './admin/content/getContentData';
 import AdminSectionContent from './admin/AdminSectionContent';
 import MeetingsSectionContent from './meetings/MeetingsSectionContent';
 import { createServiceClient } from '@/lib/supabase/admin';
+import HelpSectionContent from './help/HelpSectionContent';
+import CalendarSectionContent from './calendar/CalendarSectionContent';
 import { meetingHappeningNow } from '@/lib/meetings';
 import { getAdminData } from './admin/getAdminData';
 import { getStatsData } from './admin/stats/getStatsData';
@@ -109,6 +111,16 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const canHostMeetings = hasCapability(roles, 'host_meetings');         // leads too: plan meetings, manage their own
   // Best-effort: if this lookup fails the bar just doesn't get the meeting boost.
   const meetingNow = canAttendMeetings ? await meetingHappeningNow(createServiceClient(), { id: profile.id, roles }).catch(() => false) : false;
+  // Help tickets: exec/admin see how many are waiting on them; everyone else how many have a new reply.
+  const canHandleHelp = hasCapability(roles, 'manage_help');
+  const helpWaiting = await (async () => {
+    try {
+      const svc = createServiceClient();
+      let q = svc.from('help_tickets').select('id', { count: 'exact', head: true }).neq('status', 'resolved');
+      q = canHandleHelp ? q.eq('last_from_user', true) : q.eq('user_id', profile.id).eq('last_from_user', false);
+      return (await q).count ?? 0;
+    } catch { return 0; }
+  })();
   // Rewards (earning points at check-in, referral bonuses, the shop) is
   // UCSD-students-and-staff only — see is_rewards_eligible() in
   // 20260922110000_restrict_rewards_to_ucsd.sql, the actual enforcement
@@ -215,6 +227,13 @@ export default async function PortalDashboard({ searchParams }: Props) {
       group: 'Yours',
       content: <ActivitySectionContent tickets={ticketsData.tickets} />,
     },
+    {
+      id: 'help', icon: <LifeBuoy size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Help',
+      description: canHandleHelp ? 'Answer questions and problems from members' : 'Ask a question or report a problem',
+      badge: helpWaiting || undefined,
+      group: 'Resources',
+      content: <HelpSectionContent isStaff={canHandleHelp} userId={profile.id} />,
+    },
     ...(canUseRewards && pointsData ? [{
       id: 'points', icon: <Award size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Rewards',
       // Officers, leads, exec and admins have the Battlepass; Rewards never takes a bottom-bar slot for them.
@@ -241,7 +260,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       id: 'battlepass', icon: <Medal size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Battlepass',
       description: 'Recognition for officer-specific contributions',
       badge: battlepassData.balance || undefined,
-      group: 'Yours' as const,
+      group: 'TG' as const,
       content: (
         <BattlepassSectionContent
           balance={battlepassData.balance}
@@ -255,6 +274,12 @@ export default async function PortalDashboard({ searchParams }: Props) {
         />
       ),
     }] : []),
+    {
+      id: 'calendar', icon: <CalendarDays size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Calendar',
+      description: 'Events and the meetings you’re invited to',
+      group: 'Overview' as const,
+      content: <CalendarSectionContent />,
+    },
     ...(canViewEvents && eventsData ? [{
       id: 'events', icon: <Calendar size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Events',
       description: canManageEvents ? 'Create and manage events' : 'Browse upcoming and past events',
@@ -510,6 +535,16 @@ export default async function PortalDashboard({ searchParams }: Props) {
           }
           banner={
             <>
+            {canHandleHelp && helpWaiting > 0 && (
+              <Link href="/portal?section=help&tab=inbox" className={styles.helpBanner}>
+                <div className={styles.helpBannerDot} />
+                <div>
+                  <div className={styles.checkinBannerTitle}>{helpWaiting} help {helpWaiting === 1 ? 'ticket needs' : 'tickets need'} a reply</div>
+                  <div className={styles.checkinBannerSub}>Tap to open the inbox</div>
+                </div>
+                <span className={styles.helpBannerIcon}><LifeBuoy size={24} strokeWidth={1.5} aria-hidden="true" /></span>
+              </Link>
+            )}
             {canCheckin && todayEvents.length > 0 && (
               <Link href="/portal?section=checkin" className={styles.checkinBanner}>
                 <div className={styles.checkinBannerDot} />

@@ -23,6 +23,7 @@ export interface MemberCardData {
   emails?: string[];
   socialLinks?: Record<string, string> | null;
   portfolioLinks?: Array<{ label: string; url: string }> | null;
+  gameIds?: Array<{ game: string; id: string }> | null;
   bio?: string | null;
   joinedLabel?: string | null; // e.g. "Joined Sep 2025"
 }
@@ -42,6 +43,7 @@ export default function MemberCardBody({
   const copyOnly = present.filter((p) => !socialHref(p, social[p.key]));
   const emails = data.emails ?? [];
   const portfolio = data.portfolioLinks ?? [];
+  const gameIds = data.gameIds ?? [];
   const classLine = [data.year, data.college && `${data.college} College`];
   const hasSchool = Boolean(data.major || data.year || data.college);
   const hasInfo = hasSchool || data.divisionName || emails.length > 0 || copyOnly.length > 0;
@@ -110,6 +112,20 @@ export default function MemberCardBody({
       )}
 
       {data.bio && <p className={styles.bio}>{data.bio}</p>}
+
+      {gameIds.length > 0 && (
+        <div className={styles.info}>
+          {gameIds.map((g, i) => (
+            <button key={`${g.game}-${i}`} type="button" className={styles.copyRow} onClick={() => onCopy(`gid:${i}`, g.id)} title={`Click to copy their ${g.game}`}>
+              <Gamepad2 size={14} strokeWidth={1.75} aria-hidden="true" />
+              <span className={styles.copyRowText}><strong>{g.game}:</strong> {g.id}</span>
+              {copiedKey === `gid:${i}`
+                ? <span className={styles.copied}><Check size={13} strokeWidth={2.25} aria-hidden="true" /> Copied!</span>
+                : <Copy size={13} strokeWidth={1.75} aria-hidden="true" className={styles.copyIcon} />}
+            </button>
+          ))}
+        </div>
+      )}
 
       {hasLinks && (
         <div className={styles.links}>

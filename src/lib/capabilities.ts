@@ -70,6 +70,8 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // team — recruits included — can check themselves in by typing it. UI/API gating only (the
   // meeting routes use the service role, so these routes are the real boundary).
   manage_meetings: ['exec', 'admin'],
+  // Help tickets: everyone signed in can ask; exec and admin see every ticket and answer them.
+  manage_help: ['exec', 'admin'],
   // The Division Members directory (who leads each division): the whole team can look —
   // officers, leads, exec and recruits — plus the division leads themselves. Editing divisions is
   // separate (manage_divisions_directory / manage_division). Emails on it stay officer+ (view_members).

@@ -90,22 +90,29 @@
 .dateChip { min-width: 74px; font-size: 0.78rem; color: var(--yellow); }
 
 .meetingList { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; margin: 0; padding: 0; }
-.meetingCard { display: flex; flex-direction: column; gap: 0.7rem; padding: 0.9rem 1rem; border-radius: 0.95rem; background: rgba(255, 255, 255, 0.035); border: 1px solid rgba(255, 255, 255, 0.09); }
+.meetingCard { display: flex; flex-direction: column; gap: 0.7rem; padding: 0.6rem 0.8rem; border-radius: 0.95rem; background: rgba(255, 255, 255, 0.035); border: 1px solid rgba(255, 255, 255, 0.09); }
 .cardOpen { border-color: rgba(52, 211, 153, 0.5); background: rgba(52, 211, 153, 0.06); }
 .meetingMain { display: flex; align-items: center; gap: 0.85rem; min-width: 0; }
-.dateBlock { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 54px; flex-shrink: 0; padding: 0.35rem 0; border-radius: 0.7rem; background: rgba(255, 255, 255, 0.06); }
-.dateBlock b { font-family: var(--font-futura-heavy); font-size: 1.15rem; color: var(--white); line-height: 1; }
-.dateBlock small { font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(242, 241, 240, 0.55); }
-.dateToday { background: rgba(255, 199, 44, 0.16); }
+.dateBlock { display: flex; flex-direction: column; align-items: stretch; width: 44px; flex-shrink: 0; overflow: hidden; border-radius: 0.6rem; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1); text-align: center; }
+.dateBlock small { padding: 0.12rem 0; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(242, 241, 240, 0.75); background: rgba(255, 255, 255, 0.1); }
+.dateBlock b { padding: 0.15rem 0 0.25rem; font-family: var(--font-futura-heavy); font-size: 1.2rem; line-height: 1.1; color: var(--white); }
+.dateToday { border-color: rgba(255, 199, 44, 0.5); }
+.dateToday small { background: var(--yellow); color: #14161f; }
 .dateToday b { color: var(--yellow); }
+.metaLine .metaDay { color: var(--white); font-weight: 600; font-size: inherit; }
 .meetingInfo { display: flex; flex-direction: column; gap: 0.15rem; flex: 1; min-width: 0; }
-.meetingInfo strong { color: var(--white); font-size: 0.98rem; overflow-wrap: anywhere; }
+.meetingInfo strong { color: var(--white); font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .inlineIcon { display: inline; vertical-align: -1px; margin-left: 0.3rem; opacity: 0.7; }
 .docLine { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.72rem; color: #8ec1ff; }
 .pill { flex-shrink: 0; padding: 0.2rem 0.65rem; border-radius: 999px; font-size: 0.7rem; letter-spacing: 0.04em; color: rgba(242, 241, 240, 0.7); background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.12); }
 .pillOpen { color: #34d399; background: rgba(52, 211, 153, 0.12); border-color: rgba(52, 211, 153, 0.4); }
 .pillDone { color: #8ec1ff; background: rgba(74, 144, 226, 0.12); border-color: rgba(74, 144, 226, 0.35); }
-.cardActions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.cardActions { display: flex; align-items: center; flex-wrap: nowrap; gap: 0.4rem; flex-shrink: 0; }
+.metaLine { display: flex; align-items: center; gap: 0.2rem 0.7rem; min-width: 0; overflow: hidden; white-space: nowrap; font-size: 0.8rem; color: rgba(242, 241, 240, 0.6); }
+.metaLine > span { display: inline-flex; align-items: center; gap: 0.25rem; flex-shrink: 0; }
+.metaLine > .metaAudience { flex-shrink: 0; max-width: 14rem; overflow: hidden; text-overflow: ellipsis; color: #c4b5fd; }
+.metaLine > .metaHost { flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.metaLine > .metaDoc { color: #8ec1ff; font-size: 0.74rem; }
 .paused { opacity: 0.5; }
 
 .seriesRow { display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 0.7rem; border-radius: 0.7rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); min-width: 0; }
@@ -123,6 +130,9 @@
 
 @media (max-width: 640px) {
   .meetingMain { flex-wrap: wrap; }
+  .meetingInfo { flex-basis: calc(100% - 140px); }
+  .metaLine { flex-wrap: wrap; white-space: normal; }
+  .cardActions { flex-basis: 100%; flex-wrap: wrap; }
   .pill { order: 3; }
   .cardActions > * { flex: 1 1 auto; }
 }
@@ -278,6 +288,7 @@
 .absentForm { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
 .absentForm > :first-child { flex: 1 1 200px; min-width: 0; }
 .listWide { grid-column: 1 / -1; }
+.dotG { background: transparent !important; box-shadow: inset 0 0 0 2px #60a5fa; }
 .dotE { background: transparent !important; box-shadow: inset 0 0 0 2px #fbbf24; }
 
 .lockNote { display: flex; align-items: center; gap: 0.45rem; font-size: 0.82rem; color: #fbbf24; }
@@ -290,4 +301,9 @@
 .audTitle em { margin-left: 0.4rem; font-style: normal; font-size: 0.72rem; color: rgba(242, 241, 240, 0.45); }
 .audToggle { display: flex; align-items: center; justify-content: space-between; width: 100%; background: none; border: none; padding: 0; cursor: pointer; text-align: left; }
 .pickRowLocked { opacity: 0.7; cursor: default; }
-.descText { font-size: 0.82rem; line-height: 1.45; color: rgba(242, 241, 240, 0.7); overflow-wrap: anywhere; }
+.descText { font-size: 0.78rem; color: rgba(242, 241, 240, 0.5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.metaSub { font-size: 0.74rem; color: rgba(242, 241, 240, 0.5); }
+.metaSub > .metaAudience { color: #c4b5fd; }
+
+.sectionHead { margin: 0.4rem 0 0; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(242, 241, 240, 0.5); }

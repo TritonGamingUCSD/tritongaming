@@ -45,6 +45,7 @@ export type Capability =
   | 'manage_events'
   | 'view_division_members'
   | 'manage_meetings'
+  | 'manage_help'
   | 'attend_meetings'
   | 'host_meetings'
   | 'view_events'
@@ -87,6 +88,7 @@ export interface Database {
           show_on_board: boolean;
           social_links: Record<string, string>;
           portfolio_links: Array<{ label: string; url: string }>;
+          game_ids: Array<{ game: string; id: string }>;
           board_visibility: Record<string, boolean>;
           referral_code: string;
           referred_by: string | null;

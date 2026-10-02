@@ -106,6 +106,16 @@
   margin-left: auto;
 }
 
+/* ── Help tickets waiting (exec/admin) ─── */
+.helpBanner {
+  display: flex; align-items: center; gap: 0.875rem; padding: 0.875rem 1.25rem;
+  background: rgba(255, 199, 44, 0.08); border: 1px solid rgba(255, 199, 44, 0.3); border-radius: 0.875rem;
+  transition: background 0.2s; cursor: pointer;
+}
+.helpBanner:hover { background: rgba(255, 199, 44, 0.14); }
+.helpBannerDot { width: 10px; height: 10px; border-radius: 50%; background: var(--yellow); flex-shrink: 0; animation: pulse 2s ease-in-out infinite; }
+.helpBannerIcon { display: inline-flex; color: var(--yellow); margin-left: auto; }
+
 /* ── Member next-ticket hero card ─────────────── */
 .ticketHeroCard {
   position: relative;

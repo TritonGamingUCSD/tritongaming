@@ -45,7 +45,7 @@ export async function POST(request: Request) {
           type: 'ticket_confirmed',
           title: 'Ticket confirmed',
           body: eventRow ? `You're registered for ${eventRow.title}.` : 'Your ticket purchase is confirmed.',
-          href: '/portal/tickets',
+          href: '/portal?section=tickets',
         });
       }
     }

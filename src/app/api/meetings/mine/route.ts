@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { authorizeMeetings, withExtras, loadGroups } from '@/lib/meetings';
-import { canAttendMeeting } from '@/lib/meetingAudience';
+import { isExpected } from '@/lib/meetingAudience';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,8 +21,9 @@ export async function GET() {
     : { data: [] as { id: string; title: string; meeting_date: string; doc_url: string | null; location: string | null }[] };
 
   // Only meetings that were meant for this person (by role, group or invitation) count toward "X of N".
+  // Exec/admin can check in to anything, but a meeting they weren't invited to isn't a miss.
   const heldWithExtras = withExtras((held ?? []).map((m) => ({ ...m, audience: m.audience as string[] | null, invitees: m.invitees as string[] | null, group_ids: m.group_ids as string[] | null })), await loadGroups(auth.svc));
-  const heldIds = new Set(heldWithExtras.filter((m) => attended.has(m.id as string) || canAttendMeeting(m, auth.user.id, auth.roles)).map((m) => m.id as string));
+  const heldIds = new Set(heldWithExtras.filter((m) => attended.has(m.id as string) || isExpected(m, auth.user.id, auth.roles)).map((m) => m.id as string));
 
   const rows = (meetings ?? [])
     .filter((m) => attended.has(m.id as string) || heldIds.has(m.id as string))

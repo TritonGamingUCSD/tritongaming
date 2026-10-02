@@ -17,6 +17,17 @@ function timeAgo(iso: string): string {
   return `${Math.round(hours / 24)}d ago`;
 }
 
+// Older notifications were stored with page-style links ("/portal/tickets") that don't exist as pages;
+// the portal is one page with sections, so turn them into "/portal?section=…". Role changes land on
+// the profile, where the roles are shown.
+function resolveHref(n: Pick<Notification, 'href' | 'type'>): string | null {
+  const h = n.href;
+  if (!h) return null;
+  const m = /^\/portal\/([a-z-]+)\/?$/.exec(h);
+  if (m) return `/portal?section=${m[1]}`;
+  return h;
+}
+
 // Fixed to the viewport corner rather than slotted into the page flow —
 // PortalTopbar (the other persistent portal chrome) hides itself on
 // /portal specifically, and the bell needs to stay reachable everywhere,
@@ -120,11 +131,11 @@ export default function NotificationBell() {
                 );
                 return (
                   <li key={n.id} className={styles.item}>
-                    {n.href ? (
+                    {resolveHref(n) ? (
                       <Link
-                        href={n.href}
+                        href={resolveHref(n)!}
                         className={styles.itemLink}
-                        onClick={() => { if (isUnread) markRead(n.id); setOpen(false); }}
+                        onClick={() => { if (isUnread) markRead(n.id); setOpen(false); window.dispatchEvent(new Event('tg:portal-nav')); }}
                       >
                         {body}
                       </Link>

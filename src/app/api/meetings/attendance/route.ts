@@ -52,13 +52,16 @@ export async function GET(request: Request) {
   const people = (profiles ?? []).map((p) => {
     const roles = rolesOf.get(p.id as string) ?? [];
     // One mark per meeting, oldest → newest: p = present, a = absent (was expected), e = excused
-    // absence (doesn't count), - = not meant for them.
+    // absence (doesn't count), g = came as a guest to a meeting not meant for them (doesn't count),
+    // - = not meant for them.
     const marks = meetings.map((m) => {
-      if (present.get(m.id as string)?.has(p.id as string)) return 'p';
+      const expectedHere = isExpected({ audience: m.audience as string[] | null, extra_ids: m.extra_ids }, p.id as string, roles);
+      // Came to a meeting that wasn't meant for them (exec/admin often do): shown, but not counted.
+      if (present.get(m.id as string)?.has(p.id as string)) return expectedHere ? 'p' : 'g';
       const abs = absences.get(`${m.id}|${p.id}`);
       if (abs === true) return 'e';
       if (abs === false) return 'a';
-      return isExpected({ audience: m.audience as string[] | null, extra_ids: m.extra_ids }, p.id as string, roles) ? 'a' : '-';
+      return expectedHere ? 'a' : '-';
     });
     const total = marks.filter((x) => x === 'p' || x === 'a').length;
     const excusedCount = marks.filter((x) => x === 'e').length;
@@ -73,7 +76,7 @@ export async function GET(request: Request) {
       last_attended: lastIdx >= 0 ? (meetings[lastIdx].meeting_date as string) : null,
       follow_up: total >= 3 && ((attended / total) < 0.5 || missedRun >= 3),
     };
-  }).filter((p) => p.total > 0 || p.excused > 0);
+  }).filter((p) => p.total > 0 || p.excused > 0 || p.marks.includes('g'));
 
   const meetingRows = meetings.map((m) => {
     const excusedHere = [...absences.entries()].filter(([k, ex]) => ex && k.startsWith(`${m.id}|`)).length;
@@ -82,7 +85,10 @@ export async function GET(request: Request) {
     for (const id of m.extra_ids) holders.add(id);
     const expectedRaw = holders.size;
     const expected = Math.max(0, expectedRaw - excusedHere);
-    return { id: m.id as string, title: m.title as string, meeting_date: m.meeting_date as string, audience: m.audience as string[] | null, invitees: m.invitees, group_ids: m.group_ids, count: present.get(m.id as string)?.size ?? 0, expected };
+    // Turnout counts people the meeting was for; anyone else who came is a guest, listed separately.
+    const here = present.get(m.id as string) ?? new Set<string>();
+    const counted = [...here].filter((id) => holders.has(id)).length;
+    return { id: m.id as string, title: m.title as string, meeting_date: m.meeting_date as string, audience: m.audience as string[] | null, invitees: m.invitees, group_ids: m.group_ids, count: counted, guests: here.size - counted, expected };
   });
   const rated = people.filter((p) => p.rate !== null);
   return NextResponse.json({

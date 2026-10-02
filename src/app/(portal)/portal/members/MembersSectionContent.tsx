@@ -216,6 +216,7 @@ export default function MembersSectionContent({ rows }: { rows: MemberProfileRow
                 emails: (selected.emails ?? []).map((e) => e.email),
                 socialLinks: selected.social_links,
                 portfolioLinks: selected.portfolio_links,
+                gameIds: selected.game_ids,
                 bio: selected.bio,
                 joinedLabel: selected.created_at
                   ? `Joined ${new Date(selected.created_at).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', year: 'numeric' })}`

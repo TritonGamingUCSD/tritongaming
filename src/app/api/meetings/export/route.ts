@@ -65,7 +65,7 @@ export async function GET(request: Request) {
 
   const rolesOf = new Map<string, { role: string }[]>();
   for (const g of grants ?? []) rolesOf.set(g.user_id as string, [...(rolesOf.get(g.user_id as string) ?? []), { role: g.role as string }]);
-  // Expected = holds one of the meeting's roles. Someone who came anyway is still listed as present.
+  // Expected = holds one of the meeting's roles, or was added. Someone who came anyway is listed as a guest and not counted.
   const expected = (m: { audience: string[] | null; extra_ids: string[] }, personId: string) => isExpected(m, personId, rolesOf.get(personId) ?? []);
 
   let rows: string[];
@@ -76,14 +76,15 @@ export async function GET(request: Request) {
         const a = attByKey.get(`${m.id}|${p.id}`);
         const ab = absByKey.get(`${m.id}|${p.id}`);
         if (!a && !ab && !expected({ audience: m.audience as string[] | null, extra_ids: m.extra_ids }, p.id)) continue;   // the meeting wasn't for them
-        rows.push(line([m.meeting_date, m.title, audienceLabel({ audience: m.audience as string[] | null, invitees: m.invitees, group_ids: m.group_ids, groupNames: (m.group_ids ?? []).map((g) => groupMap.get(g)?.name ?? '').filter(Boolean) }), p.name, p.email, p.role, a ? 'Present' : ab ? (ab.excused ? 'Excused absence' : 'Absent') : 'Absent', ab?.reason ?? '', a ? pacificTime(a.checked_in_at) : '', a ? (a.method === 'manual' ? 'Added by exec' : 'Code') : '']));
+        rows.push(line([m.meeting_date, m.title, audienceLabel({ audience: m.audience as string[] | null, invitees: m.invitees, group_ids: m.group_ids, groupNames: (m.group_ids ?? []).map((g) => groupMap.get(g)?.name ?? '').filter(Boolean) }), p.name, p.email, p.role, a ? (expected({ audience: m.audience as string[] | null, extra_ids: m.extra_ids }, p.id) ? 'Present' : 'Present (guest)') : ab ? (ab.excused ? 'Excused absence' : 'Absent') : 'Absent', ab?.reason ?? '', a ? pacificTime(a.checked_in_at) : '', a ? (a.method === 'manual' ? 'Added by exec' : 'Code') : '']));
       }
     }
   } else {
     rows = [line(['Name', 'Email', 'Role', 'Meetings attended', 'Meetings expected', 'Excused absences', 'Attendance rate', 'Last attended'])];
     for (const p of people) {
       const excusedN = (meetings ?? []).filter((m) => absByKey.get(`${m.id}|${p.id}`)?.excused && !attByKey.has(`${m.id}|${p.id}`)).length;
-      const relevant = (meetings ?? []).filter((m) => !(absByKey.get(`${m.id}|${p.id}`)?.excused) && (attByKey.has(`${m.id}|${p.id}`) || expected({ audience: m.audience as string[] | null, extra_ids: m.extra_ids }, p.id)));
+      // Only meetings that were for this person count; coming to someone else's meeting is a guest visit.
+      const relevant = (meetings ?? []).filter((m) => !(absByKey.get(`${m.id}|${p.id}`)?.excused) && expected({ audience: m.audience as string[] | null, extra_ids: m.extra_ids }, p.id));
       const mine = relevant.filter((m) => attByKey.has(`${m.id}|${p.id}`));
       const total = relevant.length;
       rows.push(line([p.name, p.email, p.role, mine.length, total, excusedN, total ? `${Math.round((mine.length / total) * 100)}%` : '', mine.length ? mine[mine.length - 1].meeting_date : '']));

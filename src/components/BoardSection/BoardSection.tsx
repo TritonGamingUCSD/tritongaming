@@ -43,6 +43,7 @@ export function PanelBody({ member, copiedKey, onCopy }: { member: BoardMember; 
         emails: show('email') && member.email ? [member.email] : [],
         socialLinks: show('socials') ? member.social_links : null,
         portfolioLinks: show('portfolio') ? member.portfolio_links : null,
+        gameIds: show('game_ids') ? member.game_ids : null,
         bio: show('bio') ? member.bio : null,
       }}
     />

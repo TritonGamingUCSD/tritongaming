@@ -2,7 +2,7 @@
 
 import { confirmDiscardUnsaved } from '@/lib/useUnsavedChanges';
 import type { ReactElement, ReactNode } from 'react';
-import { cloneElement, isValidElement, useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, cloneElement, isValidElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { usePortalParams } from '@/lib/usePortalParams';
@@ -32,12 +32,13 @@ function smallIcon(icon: ReactNode, size = 21) {
 // moved into Resources instead (see portal/page.tsx) — it's usable by any
 // officer-tier member, the same audience as Members/Docs, not Admin's
 // actually-restricted stuff.
-const GROUP_ORDER = ['Yours', 'Events', 'TG', 'Divisions', 'Resources', 'Admin'] as const;
+// 'Overview' is the unlabeled group right under Dashboard (the Calendar).
+const GROUP_ORDER = ['Overview', 'Yours', 'Events', 'TG', 'Divisions', 'Resources', 'Admin'] as const;
 // Order inside each group (and so in the sidebar, the "More" sheet and the home grid). Anything not
 // listed goes last, in the order it was given.
-const SECTION_ORDER = ['tickets', 'profile', 'activity', 'points', 'battlepass', 'events', 'checkin', 'members', 'meetings', 'divisions', 'division-members', 'qrcode', 'docs', 'albums', 'admin', 'site-content'];
+const SECTION_ORDER = ['calendar', 'tickets', 'points', 'activity', 'profile', 'events', 'checkin', 'members', 'meetings', 'battlepass', 'divisions', 'division-members', 'docs', 'qrcode', 'albums', 'help', 'admin', 'site-content'];
 // Accent color per group — tints the heading dot, icon tiles and hover state.
-const GROUP_ACCENT: Record<string, string> = { Yours: '#ffc72c', TG: '#a78bfa', Events: '#4a90e2', Divisions: '#fb923c', Resources: '#34d399', Admin: '#f472b6' };
+const GROUP_ACCENT: Record<string, string> = { Overview: '#60a5fa', Yours: '#ffc72c', TG: '#a78bfa', Events: '#4a90e2', Divisions: '#fb923c', Resources: '#34d399', Admin: '#f472b6' };
 type HubGroup = (typeof GROUP_ORDER)[number];
 
 export interface HubSection {
@@ -57,7 +58,7 @@ export interface HubSection {
 export interface HubIdentity { name: string; avatarUrl: string | null; roleLabel: string; roles?: { label: string; color: string }[] }
 
 // Params that belong to whatever was open, cleared when switching sections.
-const CLEAR_NAV = { tab: null, subtab: null, block: null, id: null, q: null, status: null, view: null, atype: null, aq: null };
+const CLEAR_NAV = { tab: null, subtab: null, block: null, id: null, q: null, status: null, view: null, atype: null, aq: null, ticket: null };
 
 const SPRING = { type: 'spring' as const, stiffness: 420, damping: 38 };
 
@@ -127,6 +128,20 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
 
   const [openId, setOpenId] = useState<string | null>(validRequested);
   const [moreOpen, setMoreOpen] = useState(false);
+  // A notification link can point at another tab (or a specific item) of the section that's already
+  // open. Sections read their starting tab from the URL when they mount, so remount once the URL has
+  // changed. In-section tab clicks never do this (they only edit the URL themselves).
+  const [navNonce, setNavNonce] = useState(0);
+  const pendingNav = useRef(false);
+  useEffect(() => {
+    const onNav = () => { pendingNav.current = true; window.setTimeout(() => { if (pendingNav.current) { pendingNav.current = false; setNavNonce((n) => n + 1); } }, 600); };
+    window.addEventListener('tg:portal-nav', onNav);
+    return () => window.removeEventListener('tg:portal-nav', onNav);
+  }, []);
+  const paramsKey = searchParams.toString();
+  useEffect(() => {
+    if (pendingNav.current) { pendingNav.current = false; setNavNonce((n) => n + 1); }
+  }, [paramsKey]);
   const isDesktop = useIsDesktop();
 
   useEffect(() => {
@@ -145,6 +160,8 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
   const open = useCallback((id: string) => {
     // Switching sections would throw away unsaved edits in the open one.
     if (id !== openId && !confirmDiscardUnsaved()) return;
+    // Help records which page the person came from, to attach to their ticket.
+    if (id === 'help') { try { sessionStorage.setItem('tg_help_from', openId ?? 'home'); } catch { /* ignore */ } }
     setOpenId(id);
     // Pure UI change — every section's content is already on the page — so update the address bar
     // directly. (router.replace re-rendered the whole portal on the server and, being slow, could
@@ -227,7 +244,7 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
               <span className={styles.panelTitle}>{openSection.label}</span>
             </div>
             <div className={styles.panelBody}>
-              {openSection.content}
+              <Fragment key={navNonce}>{openSection.content}</Fragment>
             </div>
           </motion.div>
         ) : null}
@@ -297,7 +314,7 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
                 if (items.length === 0) return null;
                 return (
                   <div key={group} className={styles.sheetGroup} style={{ ['--accent' as string]: GROUP_ACCENT[group] }}>
-                    <div className={styles.sheetGroupLabel}><span className={styles.railGroupDot} aria-hidden="true" />{group}</div>
+                    {group !== 'Overview' && <div className={styles.sheetGroupLabel}><span className={styles.railGroupDot} aria-hidden="true" />{group}</div>}
                     <div className={styles.sheetGrid}>
                       {items.map((s) => (
                         <button
@@ -330,7 +347,8 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
 function HomeGroups({ groupedSections, open }: { groupedSections: GroupedSection[]; open: (id: string) => void }) {
   return (
     <>
-      {groupedSections.map(({ group, items }) => (
+      {/* Calendar (the Overview group) lives in the sidebar only; no home card, to save space. */}
+      {groupedSections.filter(({ group }) => group !== 'Overview').map(({ group, items }) => (
         <section key={group} className={styles.group} style={{ ['--accent' as string]: GROUP_ACCENT[group] }}>
           {groupedSections.length > 1 && (
             <h2 className={styles.groupLabel}>
@@ -424,7 +442,7 @@ function DesktopShell({
           </button>
           {groupedSections.map(({ group, items }) => (
             <div key={group} className={styles.railGroup} style={{ ['--accent' as string]: GROUP_ACCENT[group], flexGrow: items.length }}>
-              {groupedSections.length > 1 && (
+              {groupedSections.length > 1 && group !== 'Overview' && (
                 <div className={styles.railGroupLabel}><span className={styles.railGroupDot} aria-hidden="true" />{group}</div>
               )}
               {items.map((s) => (

@@ -11,7 +11,7 @@ import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types/database';
 import { Check } from 'lucide-react';
 import { canSetOrgTitle, type RoleGrant } from '@/lib/capabilities';
-import { hasBasicProfileInfo, getMissingProfileFields, GENDER_OPTIONS, PRONOUN_OPTIONS, PLATFORM_OPTIONS, MAX_PORTFOLIO_LINKS, normalizePortfolioUrl, resolveAvatarUrl, SOCIAL_PLATFORMS, yearChoiceOptions, yearChoiceOf, yearLabelOfChoice } from '@/lib/profile';
+import { hasBasicProfileInfo, getMissingProfileFields, GENDER_OPTIONS, PRONOUN_OPTIONS, PLATFORM_OPTIONS, MAX_PORTFOLIO_LINKS, MAX_GAME_IDS, GAME_ID_PRESETS, OTHER_GAME, cleanGameIds, type GameId, normalizePortfolioUrl, resolveAvatarUrl, SOCIAL_PLATFORMS, yearChoiceOptions, yearChoiceOf, yearLabelOfChoice } from '@/lib/profile';
 import type { MyPrivateProfile } from '@/lib/auth';
 import { deleteIfReplaced, deleteStorageUrl } from '@/lib/imageUpload';
 import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
@@ -68,6 +68,7 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
     favorite_games: privateInfo.favorite_games,
     division_interests: privateInfo.division_interests,
     portfolio_links: (profile.portfolio_links ?? []) as { label: string; url: string }[],
+    game_ids: ((profile.game_ids ?? []) as GameId[]),
     gamer_tag: profile.gamer_tag || '',
     pronouns: profile.pronouns || '',
     custom_avatar_url: profile.custom_avatar_url || '',
@@ -78,7 +79,7 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
     board_visibility: {
       // Everything here defaults off — publishing any of this is an
       // explicit opt-in. See isVisible().
-      bio: false, year_major: false, socials: false, portfolio: false, pronouns: false, email: false,
+      bio: false, year_major: false, socials: false, portfolio: false, game_ids: false, pronouns: false, email: false,
       ...profile.board_visibility,
     },
   });
@@ -129,7 +130,7 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
     const supabase = createClient();
     // Gender lives in profile_private (owner-only), not on the public profiles
     // row — pull it out so it isn't sent as a profiles column.
-    const { gender: genderValue, platforms, favorite_games, division_interests, portfolio_links, ...profileFields } = form;
+    const { gender: genderValue, platforms, favorite_games, division_interests, portfolio_links, game_ids, ...profileFields } = form;
 
     // Portfolio links render as clickable links on a public page, so each one
     // must be a real http(s) address — normalized (adds https://) or rejected.
@@ -169,6 +170,7 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
         class_of: Number.isFinite(Number(form.year)) && form.year ? Number(form.year) : null,
         year: yearLabelOfChoice(form.year) || null,
         portfolio_links: cleanedPortfolio,
+        game_ids: cleanGameIds(game_ids),
         custom_avatar_url: form.custom_avatar_url.trim() || null,
         org_title: canEditOrgTitle ? form.org_title.trim() || null : profile.org_title,
         social_links: cleanedSocialLinks,
@@ -190,6 +192,7 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
     markSaved();
     showToast('Profile saved');
     refreshPublicCache('board', 'divisions');
+    router.refresh(); // drop cached portal pages (TG Members, this form on revisit) so they show the new values
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
 
@@ -206,6 +209,7 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
     pronounText: form.pronouns.trim(),
     yearMajorText: [yearLabelOfChoice(form.year), form.major.trim(), form.college].filter(Boolean).join(' · '),
     socials: SOCIAL_PLATFORMS.filter((p) => form.social_links[p.key]?.trim()),
+    gameIdNames: cleanGameIds(form.game_ids).map((g) => g.game),
     portfolioNames: form.portfolio_links.filter((l) => l.url.trim()).map((l) => l.label.trim() || l.url.trim()),
     avatar: resolveAvatarUrl({ avatar_url: profile.avatar_url, custom_avatar_url: form.custom_avatar_url.trim() || null }),
     title: canEditOrgTitle ? form.org_title.trim() : (profile.org_title ?? ''),
@@ -234,6 +238,7 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
       const url = normalizePortfolioUrl(l.url);
       return url ? [{ label: l.label.trim() || new URL(url).hostname.replace(/^www\./, ''), url }] : [];
     }),
+    game_ids: cleanGameIds(form.game_ids),
     board_visibility: form.board_visibility,
     tier: previewTier,
     board_order: null,
@@ -593,6 +598,54 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
                   </button>
                 )}
               </div>
+
+              <span className={`${styles.label} ${styles.portfolioLabel}`}>Game IDs</span>
+              <p className={styles.socialHint}>Steam, Riot ID, Genshin UID and so on — optional, up to {MAX_GAME_IDS}. Teammates can click one to copy it. Shown on your officer card if you turn it on below.</p>
+              <div className={styles.portfolioList}>
+                {form.game_ids.map((g, i) => {
+                  const preset = GAME_ID_PRESETS.find((p) => p.game === g.game);
+                  const custom = !preset && g.game !== '';
+                  const update = (patch: Partial<GameId>) => setForm((f) => ({ ...f, game_ids: f.game_ids.map((x, j) => (j === i ? { ...x, ...patch } : x)) }));
+                  return (
+                    <div key={i} className={styles.portfolioList}>
+                      <div className={styles.portfolioRow}>
+                        <Select className={styles.input} value={preset ? g.game : custom ? OTHER_GAME : ''} aria-label="Game or platform" onChange={(e) => update({ game: e.target.value })}>
+                          <option value="">Pick a game</option>
+                          {GAME_ID_PRESETS.map((p) => <option key={p.game} value={p.game}>{p.game}</option>)}
+                          <option value={OTHER_GAME}>Other…</option>
+                        </Select>
+                        <input
+                          className={styles.input}
+                          value={g.id}
+                          maxLength={60}
+                          placeholder={preset?.placeholder ?? 'Your ID'}
+                          aria-label="Game ID"
+                          onChange={(e) => update({ id: e.target.value })}
+                        />
+                        <button type="button" className={styles.portfolioRemove} aria-label="Remove game ID" onClick={() => setForm((f) => ({ ...f, game_ids: f.game_ids.filter((_, j) => j !== i) }))}>
+                          <XIcon size={14} strokeWidth={1.75} aria-hidden="true" />
+                        </button>
+                      </div>
+                      {custom && (
+                        <input
+                          className={styles.input}
+                          value={g.game === OTHER_GAME ? '' : g.game}
+                          maxLength={30}
+                          placeholder="Game or platform name"
+                          aria-label="Game name"
+                          autoFocus={g.game === OTHER_GAME}
+                          onChange={(e) => update({ game: e.target.value || OTHER_GAME })}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+                {form.game_ids.length < MAX_GAME_IDS && (
+                  <button type="button" className={styles.portfolioAdd} onClick={() => setForm((f) => ({ ...f, game_ids: [...f.game_ids, { game: '', id: '' }] }))}>
+                    + Add a game ID
+                  </button>
+                )}
+              </div>
             </div>
 
           </div>
@@ -606,6 +659,7 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
               { key: 'year_major', label: 'Year, major & college', current: officerCard.yearMajorText },
               { key: 'socials', label: 'Discord & social links', current: officerCard.socials.map((p) => p.label).join(', ') },
               { key: 'portfolio', label: 'Portfolio links', current: officerCard.portfolioNames.join(', ') },
+              { key: 'game_ids', label: 'Game IDs', current: officerCard.gameIdNames.join(', ') },
               { key: 'email', label: 'Email address', current: email ?? '' },
             ] as const;
             const vis = form.board_visibility;

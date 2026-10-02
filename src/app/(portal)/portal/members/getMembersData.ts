@@ -7,7 +7,7 @@ import type { AppRole } from '@/types/database';
 export interface MemberProfileRow {
   id: string; display_name: string | null; avatar_url: string | null; custom_avatar_url: string | null;
   gamer_tag: string | null; major: string | null; year: string | null; college: string | null; org_title: string | null;
-  portfolio_links: Array<{ label: string; url: string }> | null; created_at: string | null;
+  portfolio_links: Array<{ label: string; url: string }> | null; game_ids: Array<{ game: string; id: string }> | null; created_at: string | null;
   bio: string | null; pronouns: string | null; social_links: Record<string, string> | null;
   board_visibility: Record<string, boolean> | null; preferred_email?: string | null; emails?: LinkedEmail[];
   board_order: number | null;
@@ -31,7 +31,7 @@ export async function getMembersData() {
   const { data: rows, error } = await supabase
     .from('profiles')
     .select(`
-      id, display_name, avatar_url, custom_avatar_url, gamer_tag, major, year, college, org_title, bio, pronouns, social_links, portfolio_links, created_at, board_visibility, preferred_email, board_order,
+      id, display_name, avatar_url, custom_avatar_url, gamer_tag, major, year, college, org_title, bio, pronouns, social_links, portfolio_links, game_ids, created_at, board_visibility, preferred_email, board_order,
       user_roles!user_roles_user_id_fkey(role, division:divisions(name))
     `)
     // Custom-ordered members (Board Order admin tool, exec/lead mainly)

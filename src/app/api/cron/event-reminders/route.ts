@@ -65,7 +65,7 @@ export async function GET(request: Request) {
     const { data: claimed } = await svc.from('tickets').update(patch).eq('id', ticket.id).is(kind === '1h' ? 'reminder_1h_sent_at' : 'reminder_24h_sent_at', null).select('id');
     if (!claimed?.length) continue;
 
-    const { error: nErr } = await svc.from('notifications').insert({ user_id: ticket.user_id, type: 'event_reminder', title, body, href: '/portal/tickets' });
+    const { error: nErr } = await svc.from('notifications').insert({ user_id: ticket.user_id, type: 'event_reminder', title, body, href: '/portal?section=tickets' });
     if (!nErr) inApp++;
 
   }

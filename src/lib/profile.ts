@@ -177,7 +177,36 @@ export function normalizePortfolioUrl(raw: string): string | null {
   }
 }
 
+// A game account on someone's officer card (Steam, Riot ID, Genshin UID…), click-to-copy.
+export interface GameId { game: string; id: string }
+export const MAX_GAME_IDS = 10;
+export const GAME_ID_PRESETS: { game: string; placeholder: string }[] = [
+  { game: 'Steam', placeholder: 'Steam friend code or profile name' },
+  { game: 'Riot ID', placeholder: 'Name#NA1' },
+  { game: 'Genshin Impact UID', placeholder: '9-digit UID' },
+  { game: 'Honkai: Star Rail UID', placeholder: '9-digit UID' },
+  { game: 'Zenless Zone Zero UID', placeholder: 'UID' },
+  { game: 'Wuthering Waves UID', placeholder: 'UID' },
+  { game: 'Battle.net', placeholder: 'Name#1234' },
+  { game: 'Epic Games', placeholder: 'Display name' },
+  { game: 'Nintendo Friend Code', placeholder: 'SW-0000-0000-0000' },
+  { game: 'PlayStation Network', placeholder: 'PSN ID' },
+  { game: 'Xbox Gamertag', placeholder: 'Gamertag' },
+  { game: 'EA / Apex', placeholder: 'EA ID' },
+  { game: 'Minecraft', placeholder: 'Username' },
+  { game: 'Pokémon GO', placeholder: 'Trainer code' },
+  { game: 'start.gg', placeholder: 'Player tag' },
+];
+export const OTHER_GAME = '__other__';
+export function cleanGameIds(list: GameId[]): GameId[] {
+  return list
+    .map((g) => ({ game: (g.game === OTHER_GAME ? '' : g.game).trim().slice(0, 30), id: g.id.trim().slice(0, 60) }))
+    .filter((g) => g.game && g.id)
+    .slice(0, MAX_GAME_IDS);
+}
+
 export type BoardVisibility = {
+  game_ids?: boolean;
   portfolio?: boolean;
   bio?: boolean;
   year_major?: boolean;

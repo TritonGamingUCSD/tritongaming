@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { CalendarCheck, Radio, History as HistoryIcon, ClipboardList, Check, X, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Pause, Play, Trash2, Link2, MessageCircleQuestion, Shuffle, Send, Users, Minus, UserX, Lock } from 'lucide-react';
+import { CalendarCheck, CalendarDays, Radio, ClipboardList, Check, X, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Pause, Play, Trash2, Link2, MessageCircleQuestion, Shuffle, Send, Users, Minus, UserX, Lock } from 'lucide-react';
 import IconButton from '@/components/ui/IconButton';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Notice from '@/components/ui/Notice';
@@ -77,7 +77,9 @@ export default function MeetingsSectionContent({ canHost, canManageAll, userId }
   const nav = useUrlNav();
   const sync = usePortalTabSync('meetings');
   const valid: Tab[] = canManage ? ['checkin', 'mine', 'run', 'groups', 'attendance'] : ['checkin', 'mine'];
-  const [tab, setTab] = useState<Tab>(valid.includes(nav.tab as Tab) ? (nav.tab as Tab) : 'checkin');
+  // Old links (and notifications) used tab=upcoming; it's part of My meetings now.
+  const startTab = nav.tab === 'upcoming' ? 'mine' : nav.tab;
+  const [tab, setTab] = useState<Tab>(valid.includes(startTab as Tab) ? (startTab as Tab) : 'checkin');
   // Set when a meeting is opened from the Attendance tab, so Run meetings lands straight on it.
   const [runTarget, setRunTarget] = useState<string | null>(null);
 
@@ -96,7 +98,7 @@ export default function MeetingsSectionContent({ canHost, canManageAll, userId }
         onChange={pick}
         tabs={[
           { id: 'checkin', label: 'Check in', icon: <CalendarCheck size={15} /> },
-          { id: 'mine', label: 'My history', icon: <HistoryIcon size={15} /> },
+          { id: 'mine', label: 'My meetings', icon: <CalendarDays size={15} /> },
           ...(canManage ? [
             { id: 'run' as Tab, label: 'Run meetings', icon: <Radio size={15} /> },
             { id: 'groups' as Tab, label: 'Groups', icon: <Users size={15} /> },
@@ -105,7 +107,14 @@ export default function MeetingsSectionContent({ canHost, canManageAll, userId }
         ]}
       />
       {tab === 'checkin' && <CheckInPanel />}
-      {tab === 'mine' && <MyHistoryPanel />}
+      {tab === 'mine' && (
+        <div className={styles.stack}>
+          <h2 className={styles.sectionHead}>Coming up</h2>
+          <UpcomingPanel />
+          <h2 className={styles.sectionHead}>History</h2>
+          <MyHistoryPanel />
+        </div>
+      )}
       {tab === 'run' && canManage && <RunPanel initial={runTarget} />}
       {tab === 'groups' && canManage && <GroupsPanel userId={userId} canManageAll={canManageAll} />}
       {tab === 'attendance' && canManage && <AttendancePanel onOpenMeeting={openFromAttendance} canExport={canManageAll} />}
@@ -295,6 +304,48 @@ function FunBox({ meeting, onSaved }: { meeting: TodayMeeting; onSaved: () => vo
 }
 
 // ── Everyone: their own attendance record ─────────────────────────────────────
+// Everything coming up that's meant for this person (or that they planned), grouped by day.
+function UpcomingPanel() {
+  const [items, setItems] = useState<{ key: string; date: string; title: string; starts_at: string; ends_at: string; location: string | null; description: string | null; repeats: boolean; is_today: boolean; status: string; host_name: string | null; hosting: boolean }[] | null>(null);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/meetings/upcoming', { cache: 'no-store' });
+        const json = await res.json();
+        if (!res.ok) setError(json.error || 'Failed to load.'); else setItems(json.meetings);
+      } catch { setError('Network error.'); }
+    })();
+  }, []);
+  if (error) return <Notice tone="error">{error}</Notice>;
+  if (!items) return <LoadingSpinner size={28} label="Loading upcoming meetings…" theme="dark" />;
+  if (items.length === 0) return <div className={styles.card}><p className={styles.muted}>Nothing scheduled for you yet. Meetings you’re invited to show up here.</p></div>;
+  return (
+    <ul className={styles.stack}>
+      {items.map((m) => (
+        <li key={m.key} className={`${styles.meetingCard} ${m.status === 'open' ? styles.cardOpen : ''}`}>
+          <div className={styles.meetingMain}>
+            <span className={`${styles.dateBlock} ${m.is_today ? styles.dateToday : ''}`} aria-hidden="true">
+              <small>{new Date(`${m.date}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short' })}</small>
+              <b>{new Date(`${m.date}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', day: 'numeric' })}</b>
+            </span>
+            <div className={styles.meetingInfo}>
+              <strong>{m.title}{m.repeats && <Repeat size={12} aria-label="Repeats weekly" className={styles.inlineIcon} />}</strong>
+              <span className={styles.metaLine}>
+                <span><strong className={styles.metaDay}>{m.is_today ? 'Today' : dayLabel(m.date).split(',')[0]}</strong> {timeRange(m.starts_at, m.ends_at)}</span>
+                {m.location && <span><MapPin size={11} aria-hidden="true" className={styles.inlineIcon} /> {m.location}</span>}
+              </span>
+              {m.description && <span className={styles.descText} title={m.description}>{m.description}</span>}
+              {m.hosting ? <span className={`${styles.metaLine} ${styles.metaSub}`}>You’re hosting</span> : m.host_name ? <span className={`${styles.metaLine} ${styles.metaSub}`}>Hosted by {m.host_name}</span> : null}
+            </div>
+            {m.status === 'open' && <span className={`${styles.pill} ${styles.pillOpen}`}>Check-in open</span>}
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function MyHistoryPanel() {
   const [data, setData] = useState<{ meetings: { id: string; title: string; date: string; location: string | null; attended: boolean; checked_in_at: string | null; method: string | null; doc_url: string | null }[]; attended: number; total: number } | null>(null);
   const [error, setError] = useState('');
@@ -713,46 +764,45 @@ function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, o
   return (
     <li className={`${styles.meetingCard} ${status === 'open' ? styles.cardOpen : ''} ${status === 'cancelled' ? styles.paused : ''}`}>
       <div className={styles.meetingMain}>
-        <span className={`${styles.dateBlock} ${item.is_today ? styles.dateToday : ''}`}>
+        <span className={`${styles.dateBlock} ${item.is_today ? styles.dateToday : ''}`} aria-hidden="true">
+          <small>{new Date(`${item.date}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short' })}</small>
           <b>{new Date(`${item.date}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', day: 'numeric' })}</b>
-          <small>{new Date(`${item.date}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', weekday: 'short' })}</small>
         </span>
         <div className={styles.meetingInfo}>
           <strong>{item.title}{item.repeats && <Repeat size={12} aria-label="Repeats weekly" className={styles.inlineIcon} />}</strong>
-          <span className={styles.muted}>{timeRange(item.starts_at, item.ends_at)}{item.location && <> · <MapPin size={11} aria-hidden="true" className={styles.inlineIcon} /> {item.location}</>}</span>
-          {item.host_name && <span className={styles.faint}>Planned by {item.host_name}</span>}
-          {item.description && <span className={styles.descText}>{item.description}</span>}
-          {isCustomAudience(item) && <span className={styles.audienceLine}><Users size={11} aria-hidden="true" /> {audienceLabel(item)}</span>}
-          {(item.doc_url || item.question) && (
-            <span className={styles.docLine}>
-              {item.doc_url && <><Link2 size={11} aria-hidden="true" /> doc linked</>}
-              {item.doc_url && item.question && ' · '}
-              {item.question && <><MessageCircleQuestion size={11} aria-hidden="true" /> question set</>}
-            </span>
-          )}
+          <span className={styles.metaLine}>
+            <span><strong className={styles.metaDay}>{item.is_today ? 'Today' : new Date(`${item.date}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short' })}</strong> {timeRange(item.starts_at, item.ends_at)}</span>
+            {item.location && <span><MapPin size={11} aria-hidden="true" className={styles.inlineIcon} /> {item.location}</span>}
+          </span>
+          <span className={`${styles.metaLine} ${styles.metaSub}`} title={item.description ?? undefined}>
+            {isCustomAudience(item) && <span className={styles.metaAudience} title={audienceLabel(item)}><Users size={11} aria-hidden="true" /> {audienceLabel(item)}</span>}
+            {item.doc_url && <span className={styles.metaDoc}><Link2 size={11} aria-hidden="true" /> Doc</span>}
+            {item.question && <span className={styles.metaDoc}><MessageCircleQuestion size={11} aria-hidden="true" /> Question</span>}
+            {item.description && <span className={styles.metaDoc}><FileText size={11} aria-hidden="true" /> Description</span>}
+            {item.host_name && <span className={styles.metaHost}>Created by {item.host_name}</span>}
+          </span>
         </div>
         <span className={`${styles.pill} ${status === 'open' && now >= opensAt ? styles.pillOpen : status === 'closed' ? styles.pillDone : ''}`}>{label}</span>
-      </div>
-      <div className={styles.cardActions}>
-        {!past && (status === 'open' ? (
-          <Button size="sm" onClick={onView}><Radio size={14} aria-hidden="true" /> Show code</Button>
-        ) : status === 'cancelled' ? (
-          <Button size="sm" variant="secondary" onClick={() => onCancel(true)} loading={busy}><RotateCcw size={14} aria-hidden="true" /> Restore</Button>
-        ) : item.is_today ? (
-          <Button size="sm" onClick={onStart} loading={busy}>{status === 'closed' ? 'Re-open check-in' : 'Start check-in'}</Button>
-        ) : null)}
-        {(past || status === 'closed') && item.meeting_id && <Button size="sm" variant="secondary" onClick={onView}>Attendance</Button>}
-        {!past && status !== 'cancelled' && (
-          <>
-            <Button size="sm" variant="secondary" onClick={() => setEditingDoc((v) => !v)}><FileText size={14} aria-hidden="true" /> Details</Button>
-            {status === 'scheduled' && item.repeats && <Button size="sm" variant="secondary" onClick={() => onCancel(false)}><SkipForward size={14} aria-hidden="true" /> Skip</Button>}
-          </>
-        )}
-        {/* One-off meetings only. A repeating meeting's weeks use Skip (or delete the whole repeating meeting). */}
-        {item.meeting_id && !item.repeats && (
-          <IconButton kind="delete" label={`Delete ${item.title} on ${dayLabel(item.date)}`} onClick={onDelete} disabled={busy} />
-        )}
-        
+        <div className={styles.cardActions}>
+          {!past && (status === 'open' ? (
+            <Button size="sm" onClick={onView}><Radio size={14} aria-hidden="true" /> Show code</Button>
+          ) : status === 'cancelled' ? (
+            <Button size="sm" variant="secondary" onClick={() => onCancel(true)} loading={busy}><RotateCcw size={14} aria-hidden="true" /> Restore</Button>
+          ) : item.is_today ? (
+            <Button size="sm" onClick={onStart} loading={busy}>{status === 'closed' ? 'Re-open' : 'Start check-in'}</Button>
+          ) : null)}
+          {(past || status === 'closed') && item.meeting_id && <Button size="sm" variant="secondary" onClick={onView}>Attendance</Button>}
+          {!past && status !== 'cancelled' && (
+            <>
+              <Button size="sm" variant="secondary" onClick={() => setEditingDoc((v) => !v)}><FileText size={14} aria-hidden="true" /> Details</Button>
+              {status === 'scheduled' && item.repeats && <Button size="sm" variant="secondary" onClick={() => onCancel(false)}><SkipForward size={14} aria-hidden="true" /> Skip</Button>}
+            </>
+          )}
+          {/* One-off meetings only. A repeating meeting's weeks use Skip (or delete the whole repeating meeting). */}
+          {item.meeting_id && !item.repeats && (
+            <IconButton kind="delete" label={`Delete ${item.title} on ${dayLabel(item.date)}`} onClick={onDelete} disabled={busy} />
+          )}
+        </div>
       </div>
       {editingDoc && (
         <form className={styles.detailsForm} onSubmit={async (e) => { e.preventDefault(); if (await onSaveDoc({ doc, question, audience, location: room, description: desc, title, start: startT, end: endT })) setEditingDoc(false); }}>
@@ -1185,10 +1235,10 @@ const RANGES = [
   { id: 'all', label: 'All time', days: 3650 },
 ] as const;
 
-interface AttPerson { id: string; name: string; avatar_url: string | null; custom_avatar_url: string | null; role: string; attended: number; total: number; rate: number | null; streak: number; missedRun: number; marks: ('p' | 'a' | 'e' | '-')[]; excused: number; last_attended: string | null; follow_up: boolean }
+interface AttPerson { id: string; name: string; avatar_url: string | null; custom_avatar_url: string | null; role: string; attended: number; total: number; rate: number | null; streak: number; missedRun: number; marks: ('p' | 'a' | 'e' | 'g' | '-')[]; excused: number; last_attended: string | null; follow_up: boolean }
 interface AttData {
   titles: string[];
-  meetings: { id: string; title: string; meeting_date: string; audience: string[] | null; invitees: string[] | null; count: number; expected: number }[];
+  meetings: { id: string; title: string; meeting_date: string; audience: string[] | null; invitees: string[] | null; count: number; guests: number; expected: number }[];
   people: AttPerson[];
   summary: { held: number; avgTurnout: number; avgRate: number | null; followUp: number };
 }
@@ -1275,7 +1325,7 @@ function AttendancePanel({ onOpenMeeting, canExport }: { onOpenMeeting: (id: str
             <h3 className={styles.listTitle}>Turnout <span>each bar is a meeting, outline = people expected</span></h3>
             <div className={styles.trend} role="img" aria-label="Turnout per meeting">
               {bars.map((m) => (
-                <button key={m.id} type="button" className={styles.trendCol} onClick={() => onOpenMeeting(m.id)} title={`${dayLabel(m.meeting_date)} · ${m.title}: ${m.count} of ${m.expected}`}>
+                <button key={m.id} type="button" className={styles.trendCol} onClick={() => onOpenMeeting(m.id)} title={`${dayLabel(m.meeting_date)} · ${m.title}: ${m.count} of ${m.expected}${m.guests > 0 ? `, plus ${m.guests} guest${m.guests === 1 ? '' : 's'}` : ''}`}>
                   <span className={styles.trendBar} style={{ height: `${(Math.max(m.count, m.expected) / maxBar) * 100}%` }}>
                     <span className={styles.trendFill} style={{ height: `${m.expected || m.count ? Math.min(100, (m.count / Math.max(m.count, m.expected)) * 100) : 0}%` }} />
                   </span>
@@ -1303,7 +1353,7 @@ function AttendancePanel({ onOpenMeeting, canExport }: { onOpenMeeting: (id: str
                       </em>
                     </span>
                     <span className={styles.dots} aria-label="Recent meetings, oldest to newest">
-                      {p.marks.slice(-12).map((m, i) => <i key={i} className={m === 'p' ? styles.dotP : m === 'a' ? styles.dotA : m === 'e' ? styles.dotE : styles.dotN} />)}
+                      {p.marks.slice(-12).map((m, i) => <i key={i} className={m === 'p' ? styles.dotP : m === 'a' ? styles.dotA : m === 'e' ? styles.dotE : m === 'g' ? styles.dotG : styles.dotN} />)}
                     </span>
                     <span className={styles.attRate}>
                       <span className={styles.bar}><span style={{ width: `${(p.rate ?? 0) * 100}%` }} /></span>
@@ -1326,7 +1376,7 @@ function AttendancePanel({ onOpenMeeting, canExport }: { onOpenMeeting: (id: str
                 {[...data.meetings].reverse().map((m) => (
                   <li key={m.id} className={styles.person}>
                     <span className={styles.personName}>{dayLabel(m.meeting_date)}<em> · {m.title} · {audienceLabel(m)}</em></span>
-                    <span className={styles.count}>{m.count}/{m.expected}</span>
+                    <span className={styles.count}>{m.count}/{m.expected}{m.guests > 0 ? ` +${m.guests} guest${m.guests === 1 ? '' : 's'}` : ''}</span>
                     <Button size="sm" variant="ghost" onClick={() => onOpenMeeting(m.id)}>Open</Button>
                   </li>
                 ))}

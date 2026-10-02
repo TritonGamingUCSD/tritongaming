@@ -20,6 +20,7 @@ export interface BoardMember {
   email: string | null;
   social_links: Record<string, string>;
   portfolio_links: Array<{ label: string; url: string }>;
+  game_ids: Array<{ game: string; id: string }>;
   board_visibility: Record<string, boolean>;
   tier: BoardTier;
   board_order: number | null;
@@ -42,6 +43,7 @@ interface BoardProfileRow {
   show_on_board: boolean;
   social_links: Record<string, string> | null;
   portfolio_links: Array<{ label: string; url: string }> | null;
+  game_ids: Array<{ game: string; id: string }> | null;
   board_visibility: Record<string, boolean> | null;
   board_order: number | null;
   user_roles: Array<{ role: AppRole }>;
@@ -72,7 +74,7 @@ async function fetchBoardMembers(): Promise<BoardMember[]> {
   const { data, error } = await supabase
     .from('profiles')
     .select(`
-      id, display_name, avatar_url, custom_avatar_url, org_title, bio, major, year, college, gamer_tag, pronouns, show_on_board, social_links, portfolio_links, board_visibility, board_order,
+      id, display_name, avatar_url, custom_avatar_url, org_title, bio, major, year, college, gamer_tag, pronouns, show_on_board, social_links, portfolio_links, game_ids, board_visibility, board_order,
       user_roles!user_roles_user_id_fkey(role)
     `);
 
@@ -124,6 +126,7 @@ async function fetchBoardMembers(): Promise<BoardMember[]> {
       email: emailById.get(row.id) ?? null,
       social_links: row.social_links ?? {},
       portfolio_links: row.portfolio_links ?? [],
+      game_ids: row.game_ids ?? [],
       board_visibility: row.board_visibility ?? {},
       tier,
       board_order: row.board_order,

@@ -7,7 +7,7 @@ import { rotatingCode, currentWindow, secondsUntilNextWindow } from '@/lib/rotat
 import { pacificDayKey } from '@/lib/checkinDays';
 import { pacificDatetimeLocalToUTC } from '@/lib/timezone';
 import type { Capability } from '@/types/database';
-import { audienceRoles, canAttendMeeting, type MeetingAudience } from '@/lib/meetingAudience';
+import { audienceRoles, canAttendMeeting, isExpected, type MeetingAudience } from '@/lib/meetingAudience';
 
 // Gen Meeting check-in (see migration 20261002140000_gen_meetings.sql). An exec opens check-in and
 // shows a rotating 6-digit code in the room; people on the team type it into the portal.
@@ -117,9 +117,9 @@ export function occurrenceTimes(day: string, startTime: string, endTime: string)
 
 // The next two weeks of meetings (real rows plus not-yet-opened occurrences of repeating series)
 // and the last month of past ones.
-export async function buildSchedule(svc: SupabaseClient, forUser?: { id: string; roles: { role: string }[] }, ownerOnly?: string): Promise<{ series: SeriesRow[]; upcoming: ScheduleItem[]; past: ScheduleItem[] }> {
+export async function buildSchedule(svc: SupabaseClient, forUser?: { id: string; roles: { role: string }[] }, ownerOnly?: string, opts: { strict?: boolean; horizonDays?: number } = {}): Promise<{ series: SeriesRow[]; upcoming: ScheduleItem[]; past: ScheduleItem[] }> {
   const today = pacificDayKey();
-  const horizon = addDaysKey(today, 14);
+  const horizon = addDaysKey(today, opts.horizonDays ?? 14);
   const groups = await loadGroups(svc);
   const names = (ids: string[] | null) => (ids ?? []).map((g) => groups.get(g)?.name).filter((n): n is string => !!n);
   const [{ data: seriesData }, { data: rowData }] = await Promise.all([
@@ -154,7 +154,12 @@ export async function buildSchedule(svc: SupabaseClient, forUser?: { id: string;
     }
   }
   // A team member only sees the meetings meant for them; exec see everything.
-  const visible = forUser ? items.filter((i) => canAttendMeeting({ ...i, extra_ids: withExtras([i], groups)[0].extra_ids }, forUser.id, forUser.roles)) : items;
+  // `strict` is the "what's on for me" view: only meetings meant for the person (or planned by them), so
+  // exec/admin don't see meetings they weren't invited to just because they could check in to them.
+  const visible = forUser ? items.filter((i) => {
+    const m = { ...i, extra_ids: withExtras([i], groups)[0].extra_ids };
+    return opts.strict ? i.host_id === forUser.id || isExpected(m, forUser.id, forUser.roles) : canAttendMeeting(m, forUser.id, forUser.roles);
+  }) : items;
   const upcoming = visible.filter((i) => i.date >= today).sort((a, b) => a.starts_at.localeCompare(b.starts_at));
   const past = visible.filter((i) => i.date < today && i.status !== 'cancelled').sort((a, b) => b.starts_at.localeCompare(a.starts_at));
   return { series: ownerOnly ? series.filter((x) => x.created_by === ownerOnly) : series, upcoming, past };
@@ -260,7 +265,7 @@ export async function notifyMeetingInvites(
     type: 'meeting_invite',
     title: `You’re invited to ${meeting.title}`,
     body: meeting.when,
-    href: '/portal?section=meetings',
+    href: '/portal?section=meetings&tab=mine',
   }));
   if (rows.length === 0) return 0;
   const { error } = await svc.from('notifications').insert(rows);
