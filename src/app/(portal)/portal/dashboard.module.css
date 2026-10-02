@@ -642,3 +642,17 @@
 
 .viewAsSlot { display: flex; align-items: center; }
 @media (max-width: 899px) { .viewAsSlot { padding-top: 0.25rem; } }
+
+/* Help: a full-width, labeled button above Back to Site / Sign out in the sidebar footer (an icon alone wasn't obvious).
+   Doubled class for enough specificity over the footer's own link styles; hidden on phones (More has a Help tile). */
+a.railFooterHelp.railFooterHelp {
+  grid-column: 1 / -1; order: -1; position: relative; display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: auto; padding: 0.55rem 0.8rem;
+  color: #34d399; background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.4);
+}
+a.railFooterHelp.railFooterHelp:hover { color: #34d399; background: rgba(52, 211, 153, 0.2); border-color: #34d399; }
+a.railFooterHelp.railFooterHelp b { font: inherit; font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
+a.railFooterHelp.railFooterHelp .railFooterHelpBadge {
+  display: grid; min-width: 18px; height: 18px; padding: 0 5px; place-items: center; border-radius: 999px;
+  background: var(--yellow); color: #14161f; font-size: 0.66rem; font-weight: 700; letter-spacing: 0;
+}
+@media (max-width: 899px) { a.railFooterHelp.railFooterHelp { display: none; } }

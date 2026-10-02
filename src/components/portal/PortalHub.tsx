@@ -53,6 +53,8 @@ export interface HubSection {
   dockBoost?: number;
   /** Never gets a bottom-bar slot (still reachable from More). */
   dockExclude?: boolean;
+  /** Not listed in the desktop sidebar (reached another way: the name at the top, a footer button, a link inside another section). Still on the home grid and the phone's More sheet. */
+  railHidden?: boolean;
 }
 
 export interface HubIdentity { name: string; avatarUrl: string | null; roleLabel: string; roles?: { label: string; color: string }[] }
@@ -485,7 +487,7 @@ function DesktopShell({
             <span className={styles.railIcon} aria-hidden="true"><Home /></span>
             <span className={styles.railLabel}>Dashboard</span>
           </button>
-          {groupedSections.map(({ group, items }) => (
+          {groupedSections.map(({ group, items: all }) => ({ group, items: all.filter((s) => !s.railHidden) })).filter(({ items }) => items.length > 0).map(({ group, items }) => (
             <div key={group} className={styles.railGroup} style={{ ['--accent' as string]: GROUP_ACCENT[group], flexGrow: items.length }}>
               {groupedSections.length > 1 && group !== 'Overview' && (
                 <div className={styles.railGroupLabel}><span className={styles.railGroupDot} aria-hidden="true" />{group}</div>

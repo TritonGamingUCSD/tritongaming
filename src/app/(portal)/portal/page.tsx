@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, History, Image as ImageIcon, Award, Medal, ArrowLeft, CalendarCheck, CalendarDays, LayoutGrid, LifeBuoy, CalendarHeart } from 'lucide-react';
+import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, Image as ImageIcon, Award, Medal, ArrowLeft, CalendarCheck, CalendarDays, LayoutGrid, LifeBuoy, CalendarHeart } from 'lucide-react';
 import { getProfile, getUserRoles, getMyPrivateProfile, getUser, getRealRoles, getViewAs } from '@/lib/auth';
 import { ViewAsSwitcher } from '@/components/portal/ViewAs';
 import { createClient } from '@/lib/supabase/server';
@@ -17,7 +17,7 @@ import OnboardingGuide from '@/components/portal/OnboardingGuide';
 import DashboardClient from './DashboardClient';
 import PortalTopSection from './PortalTopSection';
 import PortalSearch from '@/components/portal/PortalSearch';
-import TicketsClient from './tickets/TicketsClient';
+import TicketsSectionContent from './tickets/TicketsSectionContent';
 import { getTicketsData } from './tickets/getTicketsData';
 import ProfileClient from './profile/ProfileClient';
 import CheckInSectionContent from './checkin/CheckInSectionContent';
@@ -52,7 +52,6 @@ import { getAdminData } from './admin/getAdminData';
 import { getStatsData } from './admin/stats/getStatsData';
 import DocsClient from './docs/DocsClient';
 import { getDocsData } from './docs/getDocsData';
-import ActivitySectionContent from './activity/ActivitySectionContent';
 import { getRoleHistoryData } from './admin/history/getRoleHistoryData';
 import PhotoAlbumsSectionContent from './albums/PhotoAlbumsSectionContent';
 import { getPhotoAlbumsData } from './albums/getPhotoAlbumsData';
@@ -74,7 +73,8 @@ interface Props {
 export default async function PortalDashboard({ searchParams }: Props) {
   const { tab: requestedTab, subtab: requestedSubTab, section: requestedSection } = await searchParams;
   // Short Links is a tab of Admin now.
-  if (requestedSection === 'internal_events' || requestedSection === 'team-events') redirect('/portal?section=internal-events');
+  if (requestedSection === 'activity') redirect('/portal?section=tickets&tab=history');
+  if (requestedSection === 'socials' || requestedSection === 'team-events') redirect('/portal?section=internal-events');
   if (requestedSection === 'links') redirect('/portal?section=admin&tab=links');
   // Division tabs used to live inside Site Content; old links land on the new Divisions section.
   if (requestedSection === 'site-content' && (requestedTab === 'divisions' || requestedTab === 'my-division')) {
@@ -218,22 +218,16 @@ export default async function PortalDashboard({ searchParams }: Props) {
       // A ticket for something today or tomorrow is what you'll want in your thumb's reach.
       dockBoost: nextTicket?.event && pacificDaysUntil(nextTicket.event.start_date) <= 1 ? 60 : 0,
       group: 'Yours',
-      content: <TicketsClient tickets={ticketsData.tickets} upcomingEvents={ticketsData.upcomingEvents} isUcsd={ticketsData.isUcsd} canEarnPoints={ticketsData.canEarnPoints} />,
+      content: <TicketsSectionContent tickets={ticketsData.tickets} upcomingEvents={ticketsData.upcomingEvents} isUcsd={ticketsData.isUcsd} canEarnPoints={ticketsData.canEarnPoints} activity={ticketsData.tickets} />,
     },
     {
-      id: 'profile', icon: <User size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Profile',
+      id: 'profile', icon: <User size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Profile', railHidden: true,  // opened from your name at the top of the sidebar
       description: 'Update your info and preferences',
       group: 'Yours',
       content: <ProfileClient profile={profile} privateInfo={myGender} email={authUser?.email ?? null} roles={roles} isUcsd={isVerifiedMember(roles)} divisions={divisions} initialTab={requestedTab} />,
     },
     {
-      id: 'activity', icon: <History size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Activity',
-      description: 'Your registrations and check-ins',
-      group: 'Yours',
-      content: <ActivitySectionContent tickets={ticketsData.tickets} />,
-    },
-    {
-      id: 'help', icon: <LifeBuoy size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Help',
+      id: 'help', icon: <LifeBuoy size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Help', railHidden: true,  // a button in the sidebar footer
       description: canHandleHelp ? 'Answer questions and problems from members' : 'Ask a question or report a problem',
       badge: helpWaiting || undefined,
       group: 'Resources',
@@ -575,6 +569,11 @@ export default async function PortalDashboard({ searchParams }: Props) {
             <>
               <Link href="/" className={styles.railFooterLink}><span aria-hidden="true"><ArrowLeft size={15} strokeWidth={2} /></span> Back to Site</Link>
               <SignOutButton />
+              <Link href="/portal?section=help" className={`${styles.railFooterLink} ${styles.railFooterHelp}`} aria-label={helpWaiting ? `Help (${helpWaiting} waiting)` : 'Help'} title="Help">
+                <LifeBuoy size={16} strokeWidth={2} aria-hidden="true" />
+                <b>{canHandleHelp ? 'Help inbox' : 'Help & questions'}</b>
+                {helpWaiting > 0 && <span className={styles.railFooterHelpBadge}>{helpWaiting}</span>}
+              </Link>
             </>
           }
           ticket={nextTicket ? (nextTicket as Parameters<typeof DashboardClient>[0]['ticket']) : null}
