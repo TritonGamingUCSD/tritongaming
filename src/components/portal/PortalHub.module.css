@@ -33,6 +33,7 @@
   z-index: 22;
   max-height: 70vh;
   overflow-y: auto;
+  overscroll-behavior: contain;
   background: #0c1120;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-bottom: none;
@@ -45,8 +46,10 @@
    list scrolls, and is a generous touch target (the visible bar is small). */
 .moreSheetGrab {
   position: sticky; top: -0.75rem; z-index: 2; margin: -0.75rem -0.5rem 0.25rem; padding: 0.75rem 0 0.7rem;
-  background: #0c1120; border-radius: 1.25rem 1.25rem 0 0; touch-action: none; cursor: grab;
+  background: #0c1120; border-radius: 1.25rem 1.25rem 0 0; cursor: grab; touch-action: none;
 }
+.moreSheetClose { position: absolute; top: 0.35rem; right: 0.6rem; display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 50%; background: rgba(255, 255, 255, 0.08); color: rgba(242, 241, 240, 0.85); cursor: pointer; }
+.moreSheetClose:active { background: rgba(255, 255, 255, 0.16); }
 .moreSheetHandle {
   width: 44px;
   height: 5px;

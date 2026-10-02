@@ -6,8 +6,8 @@ import { Fragment, cloneElement, isValidElement, useCallback, useEffect, useMemo
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { usePortalParams } from '@/lib/usePortalParams';
-import { motion, AnimatePresence, useDragControls } from 'motion/react';
-import { Home, MoreHorizontal, ChevronRight, ChevronLeft } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Home, MoreHorizontal, ChevronRight, ChevronLeft, X } from 'lucide-react';
 import PortalSearch from './PortalSearch';
 import { pickDock, readUsage, recordUse } from './dockPicker';
 import styles from './PortalHub.module.css';
@@ -128,8 +128,36 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
 
   const [openId, setOpenId] = useState<string | null>(validRequested);
   const [moreOpen, setMoreOpen] = useState(false);
-  // Swiping the "More" sheet down (from its top bar) closes it.
-  const sheetDrag = useDragControls();
+  // Swiping the "More" sheet down closes it: from its top bar, or from anywhere on it while the list is scrolled to the
+  // top. Plain pointer handling with a CSS `translate` (not a motion drag), so it can't interfere with the list's own
+  // touch scrolling. `sheetDy` is how far it has been pulled down right now.
+  const [sheetDy, setSheetDy] = useState(0);
+  const [sheetDragging, setSheetDragging] = useState(false);
+  const sheetGesture = useRef<{ startY: number; lastY: number; lastT: number; v: number; active: boolean; fromGrab: boolean } | null>(null);
+  const sheetEl = useRef<HTMLDivElement | null>(null);
+  useEffect(() => { if (!moreOpen) { setSheetDy(0); setSheetDragging(false); sheetGesture.current = null; } }, [moreOpen]);
+  const sheetStart = (y: number, fromGrab: boolean) => {
+    // From the body only when the list is at its top (otherwise it's an ordinary scroll).
+    if (!fromGrab && (sheetEl.current?.scrollTop ?? 0) > 0) { sheetGesture.current = null; return; }
+    sheetGesture.current = { startY: y, lastY: y, lastT: performance.now(), v: 0, active: false, fromGrab };
+  };
+  const sheetMove = (y: number) => {
+    const g = sheetGesture.current; if (!g) return;
+    const dy = y - g.startY;
+    if (!g.active) {
+      // Start pulling only for a clear downward move (and, from the body, only if the list is still at the top).
+      if (dy > 6 && (g.fromGrab || (sheetEl.current?.scrollTop ?? 0) <= 0)) { g.active = true; setSheetDragging(true); } else if (dy < -6) { sheetGesture.current = null; return; } else return;
+    }
+    const now = performance.now();
+    g.v = (y - g.lastY) / Math.max(1, now - g.lastT); g.lastY = y; g.lastT = now;
+    setSheetDy(Math.max(0, dy));
+  };
+  const sheetEnd = () => {
+    const g = sheetGesture.current; sheetGesture.current = null;
+    if (!g?.active) return;
+    setSheetDragging(false);
+    if (sheetDy > 90 || g.v > 0.6) setMoreOpen(false); else setSheetDy(0);
+  };
   // A notification link can point at another tab (or a specific item) of the section that's already
   // open. Sections read their starting tab from the URL when they mount, so remount once the URL has
   // changed. In-section tab clicks never do this (they only edit the URL themselves).
@@ -308,15 +336,22 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={SPRING}
-              drag="y"
-              dragControls={sheetDrag}
-              dragListener={false}
-              dragConstraints={{ top: 0, bottom: 0 }}
-              dragElastic={{ top: 0, bottom: 0.7 }}
-              onDragEnd={(_, info) => { if (info.offset.y > 80 || info.velocity.y > 500) setMoreOpen(false); }}
+              ref={sheetEl}
+              style={{ translate: `0 ${sheetDy}px`, transition: sheetDragging ? 'none' : 'translate 0.2s ease-out' }}
+              onTouchStart={(e) => sheetStart(e.touches[0].clientY, !!(e.target as Element).closest('[data-sheet-grab]'))}
+              onTouchMove={(e) => sheetMove(e.touches[0].clientY)}
+              onTouchEnd={sheetEnd}
+              onTouchCancel={sheetEnd}
             >
-              <div className={styles.moreSheetGrab} onPointerDown={(e) => sheetDrag.start(e)} aria-hidden="true">
-                <div className={styles.moreSheetHandle} />
+              <div
+                className={styles.moreSheetGrab}
+                data-sheet-grab=""
+                onPointerDown={(e) => { if (e.pointerType === 'mouse') { (e.target as Element).setPointerCapture?.(e.pointerId); sheetStart(e.clientY, true); } }}
+                onPointerMove={(e) => { if (e.pointerType === 'mouse') sheetMove(e.clientY); }}
+                onPointerUp={(e) => { if (e.pointerType === 'mouse') sheetEnd(); }}
+              >
+                <div className={styles.moreSheetHandle} aria-hidden="true" />
+                <button type="button" className={styles.moreSheetClose} onClick={() => setMoreOpen(false)} aria-label="Close menu"><X size={18} strokeWidth={2} aria-hidden="true" /></button>
               </div>
               {railFooter && <div className={styles.sheetFooter}>{railFooter}</div>}
               {GROUP_ORDER.map((group) => {
