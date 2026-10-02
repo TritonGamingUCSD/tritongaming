@@ -29,7 +29,7 @@ interface Live {
   reactionTotals: Record<string, number>;
   code: string | null;
   expiresAt: number | null;
-  attendees: (Person & { checked_in_at: string; method: 'code' | 'manual' })[];
+  attendees: (Person & { checked_in_at: string; method: 'code' | 'manual' | 'host' })[];
   missing: Person[];
   absent: (Person & { reason: string | null; excused: boolean })[];
 }
@@ -377,7 +377,7 @@ function MyHistoryPanel() {
             <span className={styles.dateChip}>{dayLabel(m.date)}</span>
             <span className={styles.personName}>
               {m.title}
-              <em> · {m.attended ? `checked in ${time(m.checked_in_at!)}${m.method === 'manual' ? ' (added by exec)' : ''}` : 'not checked in'}</em>
+              <em> · {m.attended ? `checked in ${time(m.checked_in_at!)}${m.method === 'manual' ? ' (added by exec)' : m.method === 'host' ? ' (host)' : ''}` : 'not checked in'}</em>
             </span>
             {m.doc_url && <DocButton url={m.doc_url} label="Doc" />}
           </li>
@@ -1176,7 +1176,7 @@ function AttendeeList({ live, onAdd, onRemove, onAbsent, onClearAbsent }: {
             {live.attendees.map((p) => (
               <li key={p.id} className={styles.person}>
                 <Avatar p={p} />
-                <span className={styles.personName}>{p.name}{p.method === 'manual' && <em> · added by exec</em>}</span>
+                <span className={styles.personName}>{p.name}{p.method === 'manual' && <em> · added by exec</em>}{p.method === 'host' && <em> · host (automatic)</em>}</span>
                 <span className={styles.personTime}>{time(p.checked_in_at)}</span>
                 <IconButton kind="remove" size="sm" label={`Remove ${p.name}`} onClick={() => onRemove(p)} />
               </li>

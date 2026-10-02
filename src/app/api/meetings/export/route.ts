@@ -77,7 +77,7 @@ export async function GET(request: Request) {
         const a = attByKey.get(`${m.id}|${p.id}`);
         const ab = absByKey.get(`${m.id}|${p.id}`);
         if (!a && !ab && !expected({ audience: m.audience as string[] | null, extra_ids: m.extra_ids }, p.id)) continue;   // the meeting wasn't for them
-        rows.push(line([m.meeting_date, m.title, audienceLabel({ audience: m.audience as string[] | null, invitees: m.invitees, group_ids: m.group_ids, groupNames: (m.group_ids ?? []).map((g) => groupMap.get(g)?.name ?? '').filter(Boolean) }), p.name, p.email, p.role, a ? (expected({ audience: m.audience as string[] | null, extra_ids: m.extra_ids }, p.id) ? 'Present' : 'Present (guest)') : ab ? (ab.excused ? 'Excused absence' : 'Absent') : 'Absent', ab?.reason ?? '', a ? pacificTime(a.checked_in_at) : '', a ? (a.method === 'manual' ? 'Added by exec' : 'Code') : '']));
+        rows.push(line([m.meeting_date, m.title, audienceLabel({ audience: m.audience as string[] | null, invitees: m.invitees, group_ids: m.group_ids, groupNames: (m.group_ids ?? []).map((g) => groupMap.get(g)?.name ?? '').filter(Boolean) }), p.name, p.email, p.role, a ? (expected({ audience: m.audience as string[] | null, extra_ids: m.extra_ids }, p.id) ? 'Present' : 'Present (guest)') : ab ? (ab.excused ? 'Excused absence' : 'Absent') : 'Absent', ab?.reason ?? '', a ? pacificTime(a.checked_in_at) : '', a ? (a.method === 'manual' ? 'Added by exec' : a.method === 'host' ? 'Host (automatic)' : 'Code') : '']));
       }
     }
   } else {
