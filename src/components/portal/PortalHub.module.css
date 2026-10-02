@@ -809,3 +809,35 @@
   .rail.railCollapsed:not(:hover):not(:focus-within) .railFooter { gap: 0.3rem; padding-top: 0.3rem; }
   .rail.railCollapsed:not(:hover):not(:focus-within) .railNav { gap: 0; }
 }
+
+/* Help / Back to Site / Sign out: one column in the same order, icon pinned at the same spot whether the sidebar is collapsed, hovered
+   open or expanded, so only the labels appear and nothing jumps. */
+@media (min-width: 900px) {
+  .appFrame .rail .railFooter { grid-template-columns: 1fr !important; gap: 0.3rem !important; padding-top: 0.5rem !important; }
+  .appFrame .rail .railFooter > a, .appFrame .rail .railFooter > button {
+    justify-content: flex-start !important; height: 28px; min-height: 28px; padding: 0 5px !important; box-sizing: border-box;
+  }
+  .appFrame .rail .railFooter > a span, .appFrame .rail .railFooter > button span:not(:last-child) { flex: none; }
+  .appFrame .rail .railFooter > a:not([class*='Help']) span, .appFrame .rail .railFooter > button span { display: inline-flex !important; }
+}
+
+/* Redesign of the footer actions: each is a nav-style row. The colored icon tile never moves or changes; opening the sidebar only
+   reveals the label beside it, and hovering tints the row. (Tile = the icon's own box, so collapsed and open look the same.) */
+@media (min-width: 900px) {
+  .appFrame .rail .railFooter > a, .appFrame .rail .railFooter > button {
+    background: transparent !important; border-color: transparent !important; padding: 0 !important; gap: 0.6rem !important; border-radius: 0.65rem !important;
+    transition: background 0.15s !important;
+  }
+  .appFrame .rail .railFooter > a:hover, .appFrame .rail .railFooter > button:hover { background: rgba(255, 255, 255, 0.05) !important; }
+  .appFrame .rail .railFooter > a > span, .appFrame .rail .railFooter > button > span, .appFrame .rail .railFooter > a > svg {
+    flex: none; width: 27px; height: 28px; box-sizing: border-box; display: inline-flex !important; align-items: center; justify-content: center; place-items: center; border-radius: 0.65rem;
+    border: 1px solid var(--tile-b); background: var(--tile-bg); color: var(--tile-c); padding: 0;
+  }
+  .appFrame .rail .railFooter > a > svg { padding: 6px; }
+  .appFrame .rail .railFooter > a:not([class*='Help']) { --tile-c: #ffc72c; --tile-bg: rgba(255, 199, 44, 0.12); --tile-b: rgba(255, 199, 44, 0.4); }
+  .appFrame .rail .railFooter > a[class*='Help'] { --tile-c: #22d3ee; --tile-bg: rgba(34, 211, 238, 0.1); --tile-b: rgba(34, 211, 238, 0.4); }
+  .appFrame .rail .railFooter > button { --tile-c: #fca5a5; --tile-bg: rgba(220, 38, 38, 0.1); --tile-b: rgba(220, 38, 38, 0.35); color: #fca5a5; }
+  .appFrame .rail .railFooter > a:not([class*='Help']):hover > span { background: rgba(255, 199, 44, 0.22); border-color: #ffc72c; }
+  .appFrame .rail .railFooter > a[class*='Help']:hover > svg { background: rgba(34, 211, 238, 0.2); border-color: #22d3ee; }
+  .appFrame .rail .railFooter > button:hover > span { background: rgba(220, 38, 38, 0.22); border-color: rgba(220, 38, 38, 0.6); }
+}
