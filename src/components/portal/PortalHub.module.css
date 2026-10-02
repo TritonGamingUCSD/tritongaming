@@ -673,3 +673,16 @@
   .rail .railItem { flex: 0 1 auto; max-height: none; min-height: 26px; padding: 0.4rem 0.65rem; margin-top: 0.1rem; }
   .rail .railLabel { font-size: 0.82rem; }
 }
+
+/* ── The link list scrolls when the window is too short for every link ──
+   With Calendar, Help, Internal Events and the Admin links the full list needs ~950px of height. Links
+   shrink first (down to their min-height); past that the list scrolls inside the sidebar with a thin,
+   visible scrollbar, so the last links (Site Content) can always be reached and Back to Site / Sign out
+   stay on screen. */
+@media (min-width: 900px) {
+  .rail .railNav { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.22) transparent; padding-right: 2px; }
+  .rail .railNav::-webkit-scrollbar { display: block; width: 6px; }
+  .rail .railNav::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.22); border-radius: 999px; }
+  .rail .railNav::-webkit-scrollbar-track { background: transparent; }
+  .rail .railNav > * { flex-shrink: 0; }
+}
