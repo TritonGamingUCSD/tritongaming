@@ -109,6 +109,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const canScanRedemptions = hasCapability(roles, 'scan_redemptions');
   const canManagePoints = hasCapability(roles, 'manage_points');
   const canAttendMeetings = hasCapability(roles, 'attend_meetings');
+  const canViewAttendanceReports = hasCapability(roles, 'view_attendance_reports');
   const canManageMeetings = hasCapability(roles, 'manage_meetings');   // exec/admin: every meeting + HR export
   const canViewInternalEvents = hasCapability(roles, 'view_internal_events');
   const canHostInternalEvents = hasCapability(roles, 'host_internal_events');
@@ -310,13 +311,13 @@ export default async function PortalDashboard({ searchParams }: Props) {
       group: 'Events' as const,
       content: <CheckInSectionContent events={checkinData.events} canScanRedemptions={canScanRedemptions} initialTab={requestedTab} tiers={memberTiers} />,
     }] : []),
-    ...(canAttendMeetings ? [{
+    ...(canAttendMeetings || canViewAttendanceReports ? [{
       id: 'meetings', icon: <CalendarCheck size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Meetings',
-      description: canManageMeetings ? 'Schedule meetings, run check-in, export attendance' : canHostMeetings ? 'Plan your meetings, run check-in, see results' : 'Check in to meetings and see your history',
+      description: !canAttendMeetings ? 'Attendance results' : canManageMeetings ? 'Schedule meetings, run check-in, export attendance' : canHostMeetings ? 'Plan your meetings, run check-in, see results' : 'Check in to meetings and see your history',
       // While a meeting is on (or about to start) this is the thing to have under your thumb.
       dockBoost: (meetingNow ? 100 : 0) + (canManageMeetings ? 10 : 0),
       group: 'TG' as const,
-      content: <MeetingsSectionContent canHost={canHostMeetings} canManageAll={canManageMeetings} userId={profile.id} />,
+      content: <MeetingsSectionContent canHost={canHostMeetings} canManageAll={canManageMeetings} userId={profile.id} canAttend={canAttendMeetings} canViewReports={canViewAttendanceReports} />,
     }] : []),
     ...(canViewInternalEvents ? [{
       id: 'internal-events', icon: <CalendarHeart size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Internal Events',
@@ -421,13 +422,15 @@ export default async function PortalDashboard({ searchParams }: Props) {
 
   const avatarUrl = resolveAvatarUrl(profile);
   // Every role the person holds (shown as chips in the sidebar), highest first.
-  const roleChips = (roles.length === 0 ? [{ role: 'guest' as const, division_id: null as string | null }] : [...roles].sort((a, b) => ROLE_DISPLAY_RANK[b.role] - ROLE_DISPLAY_RANK[a.role])).map((r) => ({
+  // Roles for display only: permissions granted straight to the person (Admin → Access) are not roles.
+  const heldRoles = roles.filter((r) => !String(r.role).startsWith('cap:'));
+  const roleChips = (heldRoles.length === 0 ? [{ role: 'guest' as const, division_id: null as string | null }] : [...heldRoles].sort((a, b) => ROLE_DISPLAY_RANK[b.role] - ROLE_DISPLAY_RANK[a.role])).map((r) => ({
     label: r.role === 'division' && r.division_id ? `${ROLE_LABELS.division} — ${divisionNameById.get(r.division_id) ?? 'Unknown'}` : ROLE_LABELS[r.role],
     color: ROLE_COLORS[r.role],
   }));
-  const primaryRoleLabel = roles.length === 0
+  const primaryRoleLabel = heldRoles.length === 0
     ? ROLE_LABELS.guest
-    : ROLE_LABELS[[...roles].sort((a, b) => ROLE_DISPLAY_RANK[b.role] - ROLE_DISPLAY_RANK[a.role])[0].role];
+    : ROLE_LABELS[[...heldRoles].sort((a, b) => ROLE_DISPLAY_RANK[b.role] - ROLE_DISPLAY_RANK[a.role])[0].role];
 
   return (
     <div className={styles.page}>
@@ -462,12 +465,12 @@ export default async function PortalDashboard({ searchParams }: Props) {
               <div className={styles.welcomeText}>
                   <h1 className={styles.welcomeName} data-greeting={greeting}>{profile.display_name?.split(' ')[0] || 'Triton'}</h1>
                   <div className={styles.roleChips}>
-                    {roles.length === 0 ? (
+                    {heldRoles.length === 0 ? (
                       <span className={styles.roleChip} style={{ background: ROLE_COLORS.guest + '18', color: ROLE_COLORS.guest, borderColor: ROLE_COLORS.guest + '44' }}>
                         {ROLE_LABELS.guest}
                       </span>
                     ) : (
-                      [...roles].sort((a, b) => ROLE_DISPLAY_RANK[b.role] - ROLE_DISPLAY_RANK[a.role]).map((r) => (
+                      [...heldRoles].sort((a, b) => ROLE_DISPLAY_RANK[b.role] - ROLE_DISPLAY_RANK[a.role]).map((r) => (
                         <span
                           key={`${r.role}-${r.division_id ?? ''}`}
                           className={styles.roleChip}

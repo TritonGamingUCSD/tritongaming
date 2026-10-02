@@ -1,7 +1,9 @@
 import { createClient } from '@/lib/supabase/server';
 import type { Profile, Capability } from '@/types/database';
 import { cookies } from 'next/headers';
-import { hasCapability, type RoleGrant } from '@/lib/capabilities';
+import { hasCapability, withGrantedCapabilities, type RoleGrant } from '@/lib/capabilities';
+import { createServiceClient } from '@/lib/supabase/admin';
+import { loadGrantedCapabilities } from '@/lib/grantedCapabilities';
 import { VIEW_AS_COOKIE, isViewAsRole, type ViewAsRole } from '@/lib/viewAs';
 
 export async function getUser() {
@@ -86,7 +88,12 @@ export async function getViewAs(): Promise<ViewAsRole | null> {
 export async function getUserRoles(): Promise<RoleGrant[]> {
   const real = await getRealRoles();
   const preview = real.some((r) => r.role === 'admin') ? (await cookies()).get(VIEW_AS_COOKIE)?.value : undefined;
-  if (!isViewAsRole(preview)) return real;
+  if (!isViewAsRole(preview)) {
+    // Plus anything granted to this person or their groups (Admin → Access).
+    const { data: { user } } = await (await createClient()).auth.getUser();
+    if (!user) return real;
+    return withGrantedCapabilities(real, await loadGrantedCapabilities(createServiceClient(), user.id).catch(() => []));
+  }
   if (preview === 'guest') return [];
   if (preview === 'division') {
     const supabase = await createClient();

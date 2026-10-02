@@ -21,7 +21,7 @@ const line = (cols: unknown[]) => cols.map(cell).join(',');
 const pacificTime = (iso: string) => new Date(iso).toLocaleString('en-US', { timeZone: 'America/Los_Angeles', month: '2-digit', day: '2-digit', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
 
 export async function GET(request: Request) {
-  const auth = await authorizeMeetings('manage_meetings');
+  const auth = await authorizeMeetings('view_attendance_reports');
   if (auth.error) return auth.error;
   const url = new URL(request.url);
   const type = url.searchParams.get('type') === 'summary' ? 'summary' : 'log';

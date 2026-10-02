@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { pacificDayKey } from '@/lib/checkinDays';
 import { AUDIENCE_ROLES, audienceRoles, isExpected } from '@/lib/meetingAudience';
-import { addDaysKey, attachExtras, authorizeMeetings } from '@/lib/meetings';
+import { addDaysKey, attachExtras, authorizeAttendance } from '@/lib/meetings';
 import { ROLE_DISPLAY_RANK, ROLE_LABELS, type AppRole } from '@/types/database';
 import { staffName } from '@/lib/names';
 
@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 // per-meeting turnout, per-person rates/streaks/dot strips, and headline numbers. A meeting only
 // counts toward someone if it was meant for them (they hold one of its roles) or they came anyway.
 export async function GET(request: Request) {
-  const auth = await authorizeMeetings('host_meetings');
+  const auth = await authorizeAttendance();
   if (auth.error) return auth.error;
   const url = new URL(request.url);
   const today = pacificDayKey();
@@ -23,7 +23,7 @@ export async function GET(request: Request) {
   let allQ = auth.svc.from('meetings').select('id, title, meeting_date, audience, invitees, group_ids')
     .eq('cancelled', false).not('opened_at', 'is', null).gte('meeting_date', from).lte('meeting_date', to)  .order('meeting_date').order('starts_at').limit(300);
   // A lead sees results only for the meetings they planned.
-  if (!auth.manageAll) allQ = allQ.eq('created_by', auth.user.id);
+  if (!auth.reportsAll) allQ = allQ.eq('created_by', auth.user.id);
   const { data: all } = await allQ;
   const inRange = await attachExtras(auth.svc, (all ?? []).map((m) => ({ ...m, invitees: m.invitees as string[] | null, group_ids: m.group_ids as string[] | null })));
   const titles = [...new Set(inRange.map((m) => m.title as string))].sort();

@@ -5,11 +5,12 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ReactNode } from 'react';
-import { Pencil, BarChart3, History, Activity, X, Server, Users as UsersIcon, ListOrdered, ScrollText, Link2 } from 'lucide-react';
+import { Pencil, BarChart3, History, Activity, X, Server, Users as UsersIcon, ListOrdered, ScrollText, Link2, KeyRound } from 'lucide-react';
 import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
 import { resolveAvatarUrl } from '@/lib/profile';
 import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/timezone';
 import RoleManager from './RoleManager';
+import AccessPanel from './AccessPanel';
 import BoardOrderManager from './BoardOrderManager';
 import SystemStats from './SystemStats';
 import StatsClient from './stats/StatsClient';
@@ -31,8 +32,8 @@ interface Props {
   initialTab?: string;
 }
 
-type Tab = 'overview' | 'roles' | 'order' | 'analytics' | 'audit' | 'links' | 'system';
-const VALID_TABS: Tab[] = ['overview', 'roles', 'order', 'analytics', 'audit', 'links', 'system'];
+type Tab = 'overview' | 'roles' | 'access' | 'order' | 'analytics' | 'audit' | 'links' | 'system';
+const VALID_TABS: Tab[] = ['overview', 'roles', 'access', 'order', 'analytics', 'audit', 'links', 'system'];
 
 // Each tab is a real destination now instead of Overview being a junk
 // drawer for Role Manager + Storage Cleanup stacked underneath the stats —
@@ -103,7 +104,7 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
         onChange={selectTab}
         tabs={[
           { id: 'overview', label: 'Overview' },
-          ...(isAdmin ? [{ id: 'roles' as const, label: 'Member Management', icon: <UsersIcon /> }, { id: 'order' as const, label: 'Display Order', icon: <ListOrdered /> }] : []),
+          ...(isAdmin ? [{ id: 'roles' as const, label: 'Member Management', icon: <UsersIcon /> }, { id: 'access' as const, label: 'Access', icon: <KeyRound /> }, { id: 'order' as const, label: 'Display Order', icon: <ListOrdered /> }] : []),
           { id: 'analytics', label: 'Analytics', icon: <BarChart3 /> },
           ...(isAdmin ? [{ id: 'audit' as const, label: 'Audit Log', icon: <ScrollText /> }, { id: 'links' as const, label: 'Short Links', icon: <Link2 /> }, { id: 'system' as const, label: 'System', icon: <Server /> }] : []),
         ]}
@@ -187,6 +188,7 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
         </section>
       )}
 
+      {tab === 'access' && isAdmin && <AccessPanel />}
       {tab === 'roles' && isAdmin && (
         <section className={styles.section}>
           <div className={styles.sectionHeader}>

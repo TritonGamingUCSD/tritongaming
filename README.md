@@ -50,7 +50,7 @@ Gated by Google sign-in and a role/capability system (`src/lib/capabilities.ts`)
 | Resources | QR Studio | Style presets (including division-logo looks), color picker, center icon, PNG/SVG download |
 | Resources | Photo Albums | Photo albums |
 | Resources | Help | Anyone can open a help ticket (category, details, screenshots; page and browser are attached automatically). Exec and admin answer from an inbox, with replies, assignment and bell notifications; the dashboard shows how many tickets need a reply. |
-| Admin | Admin | Platform stats, role manager, divisions, board order, audit log, role history, storage cleanup, **Short Links** |
+| Admin | Admin | Platform stats, role manager, divisions, board order, audit log, role history, storage cleanup, **Short Links**, and **Access**: give one extra permission (for now, view-only meeting attendance reports and the HR export) to a person or a saved group such as an HR team, without changing their role |
 | Admin | Site Content | Edit public site copy and images, organized in tabs and subtabs |
 
 There is also global search (⌘K or `/`) across members, events and docs. Results open inside the portal.

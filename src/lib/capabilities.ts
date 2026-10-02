@@ -74,6 +74,9 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   manage_help: ['exec', 'admin'],
   // Internal events (socials, recruitment training…; separate from meetings): the team can see the ones they're invited to
   // and say if they're coming; leads, exec and admin can plan them (leads manage their own, exec and admin all).
+  // Meeting attendance results for everyone (the Attendance tab with absences and reasons, check-in times and
+  // the HR CSV export). Read-only. Exec and admin by default; can be granted to a person or group (Admin → Access).
+  view_attendance_reports: ['exec', 'admin'],
   view_internal_events: ['officer', 'lead', 'exec', 'admin', 'recruit'],
   host_internal_events: ['lead', 'exec', 'admin'],
   manage_internal_events: ['exec', 'admin'],
@@ -97,6 +100,8 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
 export function hasCapability(roles: RoleGrant[], capability: Capability, divisionId?: string): boolean {
   return roles.some((r) => {
     if (r.role === 'admin') return true;
+    // A permission granted straight to the person or one of their groups (see withGrantedCapabilities).
+    if ((r.role as string) === `cap:${capability}`) return true;
     if (!CAPABILITY_ROLES[capability].includes(r.role)) return false;
     if (r.role === 'division' && divisionId) return r.division_id === divisionId;
     return true;
@@ -141,4 +146,17 @@ const ORG_TITLE_ROLES: AppRole[] = ['officer', 'lead', 'division', 'exec'];
 
 export function canSetOrgTitle(roles: RoleGrant[]): boolean {
   return roles.some((r) => ORG_TITLE_ROLES.includes(r.role));
+}
+
+// Permissions that can be handed to a person or group on top of their role (Admin → Access). Only for things
+// that are otherwise exec/admin-only (so far: meeting attendance reports); everything the team's roles already
+// cover is not grantable. Roles, points, stats and site content stay role-only.
+export const GRANTABLE_CAPABILITIES: { id: Capability; label: string; description: string }[] = [
+  { id: 'view_attendance_reports', label: 'Meeting attendance reports', description: 'See every meeting’s attendance results, absences and reasons, check-in times, and download the HR CSV export. View only.' },
+];
+
+// Adds the permissions someone was granted directly to their role list, so every existing
+// hasCapability() check just works. Used wherever roles are loaded.
+export function withGrantedCapabilities(roles: RoleGrant[], granted: Capability[]): RoleGrant[] {
+  return [...roles, ...granted.map((c) => ({ role: `cap:${c}` as unknown as AppRole, division_id: null }))];
 }

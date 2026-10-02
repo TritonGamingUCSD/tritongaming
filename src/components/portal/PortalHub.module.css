@@ -41,12 +41,18 @@
   box-shadow: 0 -16px 40px -20px rgba(0, 0, 0, 0.7);
 }
 
+/* The top bar of the sheet is the drag handle: swipe it down to close. It sticks to the top while the
+   list scrolls, and is a generous touch target (the visible bar is small). */
+.moreSheetGrab {
+  position: sticky; top: -0.75rem; z-index: 2; margin: -0.75rem -0.5rem 0.25rem; padding: 0.75rem 0 0.7rem;
+  background: #0c1120; border-radius: 1.25rem 1.25rem 0 0; touch-action: none; cursor: grab;
+}
 .moreSheetHandle {
-  width: 36px;
-  height: 4px;
+  width: 44px;
+  height: 5px;
   border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.18);
-  margin: 0.25rem auto 0.75rem;
+  background: rgba(255, 255, 255, 0.28);
+  margin: 0 auto;
 }
 
 

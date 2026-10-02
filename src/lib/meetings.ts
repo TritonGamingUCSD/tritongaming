@@ -8,6 +8,8 @@ import { pacificDayKey } from '@/lib/checkinDays';
 import { staffName } from '@/lib/names';
 import { pacificDatetimeLocalToUTC } from '@/lib/timezone';
 import type { Capability } from '@/types/database';
+import { withGrantedCapabilities } from '@/lib/capabilities';
+import { loadGrantedCapabilities } from '@/lib/grantedCapabilities';
 import { audienceRoles, canAttendMeeting, isExpected, type MeetingAudience } from '@/lib/meetingAudience';
 
 // Gen Meeting check-in (see migration 20261002140000_gen_meetings.sql). An exec opens check-in and
@@ -178,12 +180,13 @@ export function isValidMeetingCode(secret: string, input: string): boolean {
   return rotatingCode(secret, w) === c || rotatingCode(secret, w - 1) === c;
 }
 
-export async function authorizeMeetings(capability: Extract<Capability, 'manage_meetings' | 'attend_meetings' | 'host_meetings'>) {
+export async function authorizeMeetings(capability: Extract<Capability, 'manage_meetings' | 'attend_meetings' | 'host_meetings' | 'view_attendance_reports'>) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
-  const grants = roles ?? [];
+  const svc0 = createServiceClient();
+  const grants = withGrantedCapabilities(roles ?? [], await loadGrantedCapabilities(svc0, user.id).catch(() => []));
   if (!hasCapability(grants, capability)) {
     const msg = capability === 'attend_meetings' ? 'Meeting check-in is for officers, leads, exec and recruits.'
       : capability === 'host_meetings' ? 'Only leads, exec and admins can plan meetings.'
@@ -191,7 +194,7 @@ export async function authorizeMeetings(capability: Extract<Capability, 'manage_
     return { error: NextResponse.json({ error: msg }, { status: 403 }) };
   }
   // Exec/admin manage every meeting; a lead only the ones they planned (see canManageMeeting).
-  return { user, roles: grants, svc: createServiceClient(), manageAll: hasCapability(grants, 'manage_meetings') };
+  return { user, roles: grants, svc: svc0, manageAll: hasCapability(grants, 'manage_meetings') };
 }
 
 type Host = { user: { id: string }; manageAll: boolean };
@@ -271,4 +274,19 @@ export async function notifyMeetingInvites(
   if (rows.length === 0) return 0;
   const { error } = await svc.from('notifications').insert(rows);
   return error ? 0 : rows.length;
+}
+
+// Meeting results: hosts (their own meetings) and anyone with the attendance-reports permission (every meeting,
+// read only). `reportsAll` says which.
+export async function authorizeAttendance() {
+  const first = await authorizeMeetings('host_meetings');
+  if (!first.error) return { ...first, reportsAll: first.manageAll || hasCapability(first.roles, 'view_attendance_reports') };
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
+  const svc = createServiceClient();
+  const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
+  const grants = withGrantedCapabilities(roles ?? [], await loadGrantedCapabilities(svc, user.id).catch(() => []));
+  if (!hasCapability(grants, 'view_attendance_reports')) return { error: NextResponse.json({ error: 'You don’t have access to attendance results.' }, { status: 403 }) };
+  return { user, roles: grants, svc, manageAll: false, reportsAll: true };
 }

@@ -72,14 +72,17 @@ function DocButton({ url, label = 'Open meeting doc' }: { url: string; label?: s
 
 // canHost: can plan meetings (leads, exec, admin) and run/edit/see results of the ones they planned.
 // canManageAll: exec and admin, who can do that for every meeting and export attendance for HR.
-export default function MeetingsSectionContent({ canHost, canManageAll, userId }: { canHost: boolean; canManageAll: boolean; userId: string }) {
+// canAttend: checks in to meetings. canViewReports: sees every meeting's attendance results and the HR export
+// (read only), e.g. the HR team, who may not attend meetings at all.
+export default function MeetingsSectionContent({ canHost, canManageAll, userId, canAttend = true, canViewReports = false }: { canHost: boolean; canManageAll: boolean; userId: string; canAttend?: boolean; canViewReports?: boolean }) {
   const canManage = canHost;
+  const canSeeResults = canHost || canViewReports;
   const nav = useUrlNav();
   const sync = usePortalTabSync('meetings');
-  const valid: Tab[] = canManage ? ['checkin', 'mine', 'run', 'groups', 'attendance'] : ['checkin', 'mine'];
+  const valid: Tab[] = [...(canAttend ? (['checkin', 'mine'] as Tab[]) : []), ...(canManage ? (['run', 'groups'] as Tab[]) : []), ...(canSeeResults ? (['attendance'] as Tab[]) : [])];
   // Old links (and notifications) used tab=upcoming; it's part of My meetings now.
   const startTab = nav.tab === 'upcoming' ? 'mine' : nav.tab;
-  const [tab, setTab] = useState<Tab>(valid.includes(startTab as Tab) ? (startTab as Tab) : 'checkin');
+  const [tab, setTab] = useState<Tab>(valid.includes(startTab as Tab) ? (startTab as Tab) : valid[0] ?? 'checkin');
   // Set when a meeting is opened from the Attendance tab, so Run meetings lands straight on it.
   const [runTarget, setRunTarget] = useState<string | null>(null);
 
@@ -90,24 +93,26 @@ export default function MeetingsSectionContent({ canHost, canManageAll, userId }
     <div className={styles.page}>
       <div className={styles.header}>
         <h1 className={styles.title}>Meetings</h1>
-        <p className={styles.sub}>Check in to meetings in person with the code shown in the room.</p>
+        <p className={styles.sub}>{canAttend ? 'Check in to meetings in person with the code shown in the room.' : 'Attendance results for every meeting.'}</p>
       </div>
       <SectionTabs<Tab>
         label="Meetings"
         value={tab}
         onChange={pick}
         tabs={[
-          { id: 'checkin', label: 'Check in', icon: <CalendarCheck size={15} /> },
-          { id: 'mine', label: 'My meetings', icon: <CalendarDays size={15} /> },
+          ...(canAttend ? [
+            { id: 'checkin' as Tab, label: 'Check in', icon: <CalendarCheck size={15} /> },
+            { id: 'mine' as Tab, label: 'My meetings', icon: <CalendarDays size={15} /> },
+          ] : []),
           ...(canManage ? [
             { id: 'run' as Tab, label: 'Run meetings', icon: <Radio size={15} /> },
             { id: 'groups' as Tab, label: 'Groups', icon: <Users size={15} /> },
-            { id: 'attendance' as Tab, label: 'Attendance', icon: <ClipboardList size={15} /> },
           ] : []),
+          ...(canSeeResults ? [{ id: 'attendance' as Tab, label: 'Attendance', icon: <ClipboardList size={15} /> }] : []),
         ]}
       />
-      {tab === 'checkin' && <CheckInPanel />}
-      {tab === 'mine' && (
+      {tab === 'checkin' && canAttend && <CheckInPanel />}
+      {tab === 'mine' && canAttend && (
         <div className={styles.stack}>
           <h2 className={styles.sectionHead}>Coming up</h2>
           <UpcomingPanel />
@@ -117,7 +122,7 @@ export default function MeetingsSectionContent({ canHost, canManageAll, userId }
       )}
       {tab === 'run' && canManage && <RunPanel initial={runTarget} />}
       {tab === 'groups' && canManage && <GroupsPanel userId={userId} canManageAll={canManageAll} />}
-      {tab === 'attendance' && canManage && <AttendancePanel onOpenMeeting={openFromAttendance} canExport={canManageAll} />}
+      {tab === 'attendance' && canSeeResults && <AttendancePanel onOpenMeeting={canManage ? openFromAttendance : undefined} canExport={canManageAll || canViewReports} />}
     </div>
   );
 }
@@ -1291,7 +1296,7 @@ interface AttData {
 }
 type SortKey = 'name' | 'rate' | 'attended' | 'streak' | 'last';
 
-function AttendancePanel({ onOpenMeeting, canExport }: { onOpenMeeting: (id: string) => void; canExport: boolean }) {
+function AttendancePanel({ onOpenMeeting, canExport }: { onOpenMeeting?: (id: string) => void; canExport: boolean }) {
   const [range, setRange] = useState<(typeof RANGES)[number]['id']>('90');
   const [title, setTitle] = useState('');
   const [query, setQuery] = useState('');
@@ -1372,7 +1377,7 @@ function AttendancePanel({ onOpenMeeting, canExport }: { onOpenMeeting: (id: str
             <h3 className={styles.listTitle}>Turnout <span>each bar is a meeting, outline = people expected</span></h3>
             <div className={styles.trend} role="img" aria-label="Turnout per meeting">
               {bars.map((m) => (
-                <button key={m.id} type="button" className={styles.trendCol} onClick={() => onOpenMeeting(m.id)} title={`${dayLabel(m.meeting_date)} · ${m.title}: ${m.count} of ${m.expected}${m.guests > 0 ? `, plus ${m.guests} guest${m.guests === 1 ? '' : 's'}` : ''}`}>
+                <button key={m.id} type="button" className={styles.trendCol} onClick={() => onOpenMeeting?.(m.id)} title={`${dayLabel(m.meeting_date)} · ${m.title}: ${m.count} of ${m.expected}${m.guests > 0 ? `, plus ${m.guests} guest${m.guests === 1 ? '' : 's'}` : ''}`}>
                   <span className={styles.trendBar} style={{ height: `${(Math.max(m.count, m.expected) / maxBar) * 100}%` }}>
                     <span className={styles.trendFill} style={{ height: `${m.expected || m.count ? Math.min(100, (m.count / Math.max(m.count, m.expected)) * 100) : 0}%` }} />
                   </span>
@@ -1424,7 +1429,7 @@ function AttendancePanel({ onOpenMeeting, canExport }: { onOpenMeeting: (id: str
                   <li key={m.id} className={styles.person}>
                     <span className={styles.personName}>{dayLabel(m.meeting_date)}<em> · {m.title} · {audienceLabel(m)}</em></span>
                     <span className={styles.count}>{m.count}/{m.expected}{m.guests > 0 ? ` +${m.guests} guest${m.guests === 1 ? '' : 's'}` : ''}</span>
-                    <Button size="sm" variant="ghost" onClick={() => onOpenMeeting(m.id)}>Open</Button>
+                    {onOpenMeeting && <Button size="sm" variant="ghost" onClick={() => onOpenMeeting(m.id)}>Open</Button>}
                   </li>
                 ))}
               </ul>

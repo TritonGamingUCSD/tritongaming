@@ -47,6 +47,7 @@ export type Capability =
   | 'manage_meetings'
   | 'manage_help'
   | 'view_internal_events'
+  | 'view_attendance_reports'
   | 'host_internal_events'
   | 'manage_internal_events'
   | 'attend_meetings'

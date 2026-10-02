@@ -6,7 +6,7 @@ import { Fragment, cloneElement, isValidElement, useCallback, useEffect, useMemo
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { usePortalParams } from '@/lib/usePortalParams';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useDragControls } from 'motion/react';
 import { Home, MoreHorizontal, ChevronRight, ChevronLeft } from 'lucide-react';
 import PortalSearch from './PortalSearch';
 import { pickDock, readUsage, recordUse } from './dockPicker';
@@ -128,6 +128,8 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
 
   const [openId, setOpenId] = useState<string | null>(validRequested);
   const [moreOpen, setMoreOpen] = useState(false);
+  // Swiping the "More" sheet down (from its top bar) closes it.
+  const sheetDrag = useDragControls();
   // A notification link can point at another tab (or a specific item) of the section that's already
   // open. Sections read their starting tab from the URL when they mount, so remount once the URL has
   // changed. In-section tab clicks never do this (they only edit the URL themselves).
@@ -306,8 +308,16 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={SPRING}
+              drag="y"
+              dragControls={sheetDrag}
+              dragListener={false}
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={{ top: 0, bottom: 0.7 }}
+              onDragEnd={(_, info) => { if (info.offset.y > 80 || info.velocity.y > 500) setMoreOpen(false); }}
             >
-              <div className={styles.moreSheetHandle} aria-hidden="true" />
+              <div className={styles.moreSheetGrab} onPointerDown={(e) => sheetDrag.start(e)} aria-hidden="true">
+                <div className={styles.moreSheetHandle} />
+              </div>
               {railFooter && <div className={styles.sheetFooter}>{railFooter}</div>}
               {GROUP_ORDER.map((group) => {
                 const items = moreSections.filter((s) => s.group === group);
