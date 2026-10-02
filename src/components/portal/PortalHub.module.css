@@ -862,3 +862,6 @@
 @media (max-width: 340px) { .tileGrid { grid-template-columns: repeat(3, 1fr); } }
 .launcher { margin: 0.5rem 0; }
 .launcher .sheetTile { min-height: 0; }
+
+/* Labels clip their overflow (for the ellipsis), which also clipped the tails of p, q, g and y: give the text room below the baseline. */
+.railLabel, .railName { line-height: 1.45; padding-block: 0.08em; }
