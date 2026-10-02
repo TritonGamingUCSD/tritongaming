@@ -99,6 +99,7 @@ export interface Database {
           referred_by: string | null;
           leaderboard_anonymous: boolean;
           preferred_email: string | null;
+          board_email: string | null;
           board_order: number | null;
           onboarded_at: string | null;
           google_first_name: string | null;

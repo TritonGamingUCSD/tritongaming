@@ -3,7 +3,7 @@ import { fetchLinkedEmails, pickDisplayEmails } from '@/lib/linkedEmails';
 
 export interface DivisionMember {
   id: string; name: string; avatar_url: string | null; custom_avatar_url: string | null;
-  gamer_tag: string | null; org_title: string | null; major: string | null; year: string | null; pronouns: string | null;
+  gamer_tag: string | null; major: string | null; year: string | null; pronouns: string | null;
   emails: string[];
 }
 export interface DivisionGroup { id: string; name: string; logo_url: string | null; members: DivisionMember[] }
@@ -20,7 +20,7 @@ export async function getDivisionMembersData(includeEmails: boolean): Promise<Di
   if (ids.length === 0) return [];
 
   const { data: profiles } = await supabase.from('profiles')
-    .select('id, display_name, avatar_url, custom_avatar_url, gamer_tag, org_title, major, year, pronouns, preferred_email')
+    .select('id, display_name, avatar_url, custom_avatar_url, gamer_tag, major, year, pronouns, preferred_email')
     .in('id', ids);
   const byId = new Map((profiles ?? []).map((p) => [p.id as string, p]));
 
@@ -43,7 +43,7 @@ export async function getDivisionMembersData(includeEmails: boolean): Promise<Di
         .filter((p): p is NonNullable<typeof p> => !!p)
         .map((p) => ({
           id: p.id as string, name: (p.display_name as string | null) || 'Unnamed', avatar_url: p.avatar_url as string | null, custom_avatar_url: p.custom_avatar_url as string | null,
-          gamer_tag: p.gamer_tag as string | null, org_title: p.org_title as string | null, major: p.major as string | null, year: p.year as string | null, pronouns: p.pronouns as string | null,
+          gamer_tag: p.gamer_tag as string | null, major: p.major as string | null, year: p.year as string | null, pronouns: p.pronouns as string | null,
           emails: emails.get(p.id as string) ?? [],
         }))
         .sort((a, b) => a.name.localeCompare(b.name)),

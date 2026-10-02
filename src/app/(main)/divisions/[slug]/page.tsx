@@ -167,7 +167,7 @@ export default async function DivisionPage({ params }: Params) {
                     )}
                     <div>
                       <div className={styles.rosterName}>{lead.display_name || 'Anonymous'}</div>
-                      <div className={styles.rosterRole}>{lead.org_title || 'Division Lead'}</div>
+                      <div className={styles.rosterRole}>Division Lead</div>
                       {isVisible(lead.board_visibility, 'pronouns') && lead.pronouns && (
                         <div className={styles.rosterTag}>{lead.pronouns}</div>
                       )}

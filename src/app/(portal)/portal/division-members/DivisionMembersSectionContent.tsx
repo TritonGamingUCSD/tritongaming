@@ -51,7 +51,6 @@ export default function DivisionMembersSectionContent({ groups }: { groups: Divi
                       : <span className={styles.avatarFallback}>{m.name[0]?.toUpperCase()}</span>}
                     <div className={styles.info}>
                       <strong>{m.name}{m.gamer_tag && <em> &quot;{m.gamer_tag}&quot;</em>}</strong>
-                      {m.org_title && <span className={styles.role}>{m.org_title}</span>}
                       <span className={styles.meta}><DotList items={[m.major, m.year]} /></span>
                       {m.emails.length > 0 && <a className={styles.email} href={`mailto:${m.emails[0]}`}><Mail size={12} aria-hidden="true" /> {m.emails[0]}</a>}
                     </div>

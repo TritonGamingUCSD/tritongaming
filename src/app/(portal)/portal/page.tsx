@@ -46,6 +46,7 @@ import { getContentData } from './admin/content/getContentData';
 import AdminSectionContent from './admin/AdminSectionContent';
 import MeetingsSectionContent from './meetings/MeetingsSectionContent';
 import { createServiceClient } from '@/lib/supabase/admin';
+import { fetchLinkedEmails } from '@/lib/linkedEmails';
 import HelpSectionContent from './help/HelpSectionContent';
 import CalendarSectionContent from './calendar/CalendarSectionContent';
 import ProfileNudge from '@/components/portal/ProfileNudge';
@@ -88,6 +89,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
   // needed to label a division-lead role chip with *which* division below,
   // regardless of whether this user themselves can manage the directory.
   const [profile, roles, divisions, myGender, authUser] = await Promise.all([getProfile(), getUserRoles(), getDivisions(), getMyPrivateProfile(), getUser()]);
+  // Every email they can sign in with: the choices for the email on their public officer card.
+  const linkedEmails = authUser && requestedSection === 'profile' ? [...new Set([authUser.email, ...((await fetchLinkedEmails(createServiceClient(), [authUser.id])).get(authUser.id) ?? []).map((e) => e.email)].filter((e): e is string => !!e))] : [];
   if (!profile) return null;
   const divisionNameById = new Map(divisions.map((d) => [d.id, d.name]));
   // Admins (their REAL roles) get the "View as" menu.
@@ -228,7 +231,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       id: 'profile', icon: <User size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Profile', railHidden: true,  // opened from your name at the top of the sidebar
       description: 'Update your info and preferences',
       group: 'Yours',
-      content: <ProfileClient profile={profile} privateInfo={myGender} email={authUser?.email ?? null} roles={roles} isUcsd={isVerifiedMember(roles)} divisions={divisions} initialTab={requestedTab} />,
+      content: <ProfileClient profile={profile} privateInfo={myGender} email={authUser?.email ?? null} linkedEmails={linkedEmails} roles={roles} isUcsd={isVerifiedMember(roles)} divisions={divisions} initialTab={requestedTab} />,
     },
     {
       id: 'help', icon: <CircleHelp size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Help', railHidden: true,  // a button in the sidebar footer

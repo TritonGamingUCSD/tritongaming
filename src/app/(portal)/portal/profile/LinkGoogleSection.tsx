@@ -43,8 +43,6 @@ export default function LinkGoogleSection() {
   const searchParams = useSearchParams();
   const [userId, setUserId] = useState<string | null>(null);
   const [identities, setIdentities] = useState<UserIdentity[] | null>(null);
-  const [preferred, setPreferred] = useState<string | null>(null);
-  const [savingPreferred, setSavingPreferred] = useState(false);
   const [linking, setLinking] = useState(false);
   const [unlinkingId, setUnlinkingId] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -79,25 +77,12 @@ export default function LinkGoogleSection() {
       if (!user) return;
       setUserId(user.id);
 
-      const [, { data: profileData }] = await Promise.all([
-        loadIdentities(),
-        supabase.from('profiles').select('preferred_email').eq('id', user.id).single(),
-      ]);
-      setPreferred(profileData?.preferred_email ?? null);
+      await loadIdentities();
     })();
   }, []);
 
   function emailOf(identity: UserIdentity): string {
     return (identity.identity_data?.email as string | undefined) ?? '';
-  }
-
-  async function handleSetPreferred(email: string | null) {
-    if (!userId) return;
-    setPreferred(email);
-    setSavingPreferred(true);
-    const supabase = createClient();
-    await supabase.from('profiles').update({ preferred_email: email }).eq('id', userId);
-    setSavingPreferred(false);
   }
 
   async function handleLink() {
@@ -128,7 +113,6 @@ export default function LinkGoogleSection() {
       setError(err.message || 'Failed to unlink. Please try again.');
       return;
     }
-    if (preferred === email) await handleSetPreferred(null);
     await loadIdentities();
   }
 
@@ -160,24 +144,6 @@ export default function LinkGoogleSection() {
             </li>
           ))}
         </ul>
-      )}
-
-      {identities && identities.length > 1 && (
-        <div className={styles.preferredEmailBlock}>
-          <span className={styles.preferredEmailLabel}>
-            Which email should staff see (Members, Role Manager) instead of all of them?
-          </span>
-          <label className={styles.checkboxField}>
-            <input type="radio" name="preferredEmail" checked={preferred === null} onChange={() => handleSetPreferred(null)} disabled={savingPreferred} />
-            <span>Show all linked emails</span>
-          </label>
-          {identities.map((i) => (
-            <label key={`pref-${i.identity_id}`} className={styles.checkboxField}>
-              <input type="radio" name="preferredEmail" checked={preferred === emailOf(i)} onChange={() => handleSetPreferred(emailOf(i))} disabled={savingPreferred} />
-              <span>Only show {emailOf(i)}</span>
-            </label>
-          ))}
-        </div>
       )}
 
       <p className={styles.backupLoginHint}>

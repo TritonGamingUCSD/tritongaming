@@ -1,6 +1,7 @@
 import { unstable_cache } from 'next/cache';
 import { createPublicClient } from '@/lib/supabase/public';
 import { createServiceClient } from '@/lib/supabase/admin';
+import { fetchLinkedEmails } from '@/lib/linkedEmails';
 import type { AppRole } from '@/types/database';
 
 export type BoardTier = 'exec' | 'lead' | 'officer' | 'alumni';
@@ -46,6 +47,7 @@ interface BoardProfileRow {
   game_ids: Array<{ game: string; id: string }> | null;
   board_visibility: Record<string, boolean> | null;
   board_order: number | null;
+  board_email: string | null;
   user_roles: Array<{ role: AppRole }>;
 }
 
@@ -74,7 +76,7 @@ async function fetchBoardMembers(): Promise<BoardMember[]> {
   const { data, error } = await supabase
     .from('profiles')
     .select(`
-      id, display_name, avatar_url, custom_avatar_url, org_title, bio, major, year, college, gamer_tag, pronouns, show_on_board, social_links, portfolio_links, game_ids, board_visibility, board_order,
+      id, display_name, avatar_url, custom_avatar_url, org_title, bio, major, year, college, gamer_tag, pronouns, show_on_board, social_links, portfolio_links, game_ids, board_visibility, board_order, board_email,
       user_roles!user_roles_user_id_fkey(role)
     `);
 
@@ -93,12 +95,20 @@ async function fetchBoardMembers(): Promise<BoardMember[]> {
   // request would be wasteful (and pointless — only opted-in board members
   // ever render an email). Fetch by ID, and only for those who've actually
   // opted in via board_visibility.email, so the request set stays tiny.
+  // The email shown is the one they picked among their linked emails (board_email), checked against what is really linked
+  // to the account; otherwise their sign-in email. Looked up by ID and only for those who opted in to showing email.
   const emailById = new Map<string, string | null>();
   const wantsEmail = rows.filter((row) => row.board_visibility?.email === true);
   if (wantsEmail.length > 0) {
     const serviceClient = createServiceClient();
+    const picked = wantsEmail.filter((row) => row.board_email);
+    const linked = picked.length ? await fetchLinkedEmails(serviceClient, picked.map((r) => r.id)) : new Map();
     await Promise.all(wantsEmail.map(async (row) => {
       try {
+        if (row.board_email && (linked.get(row.id) ?? []).some((e: { email: string }) => e.email === row.board_email)) {
+          emailById.set(row.id, row.board_email);
+          return;
+        }
         const { data, error: authError } = await serviceClient.auth.admin.getUserById(row.id);
         if (authError) throw authError;
         emailById.set(row.id, data.user?.email ?? null);

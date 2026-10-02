@@ -142,7 +142,7 @@ export function isRewardsEligible(roles: RoleGrant[]): boolean {
 // deliberately excluded — it's a platform-permissions role, not an org
 // position, so it doesn't imply any of these on its own (someone can hold
 // both, but admin alone doesn't qualify).
-const ORG_TITLE_ROLES: AppRole[] = ['officer', 'lead', 'division', 'exec'];
+const ORG_TITLE_ROLES: AppRole[] = ['officer', 'lead', 'exec'];
 
 export function canSetOrgTitle(roles: RoleGrant[]): boolean {
   return roles.some((r) => ORG_TITLE_ROLES.includes(r.role));

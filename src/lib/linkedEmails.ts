@@ -5,16 +5,9 @@ export interface LinkedEmail {
   email: string;
 }
 
-// A member can choose one of their linked emails as "preferred" (see
-// LinkGoogleSection.tsx) — staff-facing views show only that one instead
-// of every linked email once it's set. Falls back to showing everything
-// linked if no preference is set, or if the preferred one somehow isn't
-// among the currently-linked emails anymore (e.g. that identity was
-// unlinked after the preference was saved).
-export function pickDisplayEmails(linkedEmails: LinkedEmail[], preferredEmail?: string | null): LinkedEmail[] {
-  if (!preferredEmail) return linkedEmails;
-  const match = linkedEmails.find((e) => e.email === preferredEmail);
-  return match ? [match] : linkedEmails;
+// Staff-facing views show every email a member can sign in with (the old "preferred email" choice is gone).
+export function pickDisplayEmails(linkedEmails: LinkedEmail[], _preferredEmail?: string | null): LinkedEmail[] {
+  return linkedEmails;
 }
 
 // Batched lookup of every email a set of users can sign in with — see

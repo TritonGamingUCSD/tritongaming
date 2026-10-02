@@ -28,7 +28,7 @@ import Select from '@/components/ui/Select';
 
 type Tab = 'basic' | 'officer' | 'security';
 
-export default function ProfileClient({ profile, privateInfo, email, roles, isUcsd, divisions }: { profile: Profile; privateInfo: MyPrivateProfile; email: string | null; roles: RoleGrant[]; isUcsd: boolean; divisions: { id: string; name: string }[]; initialTab?: string }) {
+export default function ProfileClient({ profile, privateInfo, email, linkedEmails, roles, isUcsd, divisions }: { profile: Profile; privateInfo: MyPrivateProfile; email: string | null; linkedEmails: string[]; roles: RoleGrant[]; isUcsd: boolean; divisions: { id: string; name: string }[]; initialTab?: string }) {
   const divisionNameById = new Map(divisions.map((d) => [d.id, d.name]));
   const canEditOrgTitle = canSetOrgTitle(roles);
   // exec/lead/officer appear on the public About page board automatically;
@@ -39,10 +39,7 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
   // automatically, alumni once opted in) gets to control what shows beyond
   // the always-on name/picture/title — see BoardSection for how these are read.
   const isBoardEligible = roles.some((r) => r.role === 'exec' || r.role === 'lead' || r.role === 'officer' || r.role === 'alumni');
-  // A division lead can set an org title (ORG_TITLE_ROLES includes
-  // 'division') without being board-eligible (isBoardEligible doesn't) —
-  // the tab still needs to exist for them even though none of its other
-  // fields (board opt-in, socials, visibility) apply.
+  // Division leads get no public officer card: just the basic profile.
   const showBoardTab = isBoardEligible || canEditOrgTitle;
   const VALID_TABS: Tab[] = showBoardTab ? ['basic', 'officer', 'security'] : ['basic', 'security'];
   const gender = privateInfo.gender;
@@ -74,6 +71,7 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
     custom_avatar_url: profile.custom_avatar_url || '',
     bio: profile.bio || '',
     org_title: profile.org_title || '',
+    board_email: profile.board_email || '',
     show_on_board: profile.show_on_board,
     social_links: { ...profile.social_links },
     board_visibility: {
@@ -217,6 +215,8 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
     onTeamPage: !roles.every((r) => r.role === 'alumni') || form.show_on_board,
   };
   const previewVis = form.board_visibility;
+  // The email shown on the public card: the one they picked among their linked emails, else their sign-in email.
+  const boardEmail = (form.board_email && linkedEmails.includes(form.board_email) ? form.board_email : email) ?? null;
   // The card as visitors would see it, built from the unsaved form — handed to
   // the same card/panel components the Team page renders.
   const previewTier: BoardTier = roles.some((r) => r.role === 'exec') ? 'exec' : roles.some((r) => r.role === 'lead') ? 'lead' : roles.some((r) => r.role === 'officer') ? 'officer' : 'alumni';
@@ -232,7 +232,7 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
     college: form.college || null,
     gamer_tag: form.gamer_tag.trim() || null,
     pronouns: form.pronouns.trim() || null,
-    email,
+    email: boardEmail,
     social_links: Object.fromEntries(Object.entries(form.social_links).map(([k, v]) => [k, v.trim()]).filter(([, v]) => v)),
     portfolio_links: form.portfolio_links.flatMap((l) => {
       const url = normalizePortfolioUrl(l.url);
@@ -660,7 +660,7 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
               { key: 'socials', label: 'Discord & social links', current: officerCard.socials.map((p) => p.label).join(', ') },
               { key: 'portfolio', label: 'Portfolio links', current: officerCard.portfolioNames.join(', ') },
               { key: 'game_ids', label: 'Game IDs', current: officerCard.gameIdNames.join(', ') },
-              { key: 'email', label: 'Email address', current: email ?? '' },
+              { key: 'email', label: 'Email address', current: boardEmail ?? '' },
             ] as const;
             const vis = form.board_visibility;
             return (
@@ -697,6 +697,21 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
                     </label>
                   ))}
                 </div>
+
+                {linkedEmails.length > 1 && (
+                  <label className={styles.fieldGroup}>
+                    <span className={styles.label}>Email shown on your card</span>
+                    <select
+                      className={styles.input}
+                      value={form.board_email && linkedEmails.includes(form.board_email) ? form.board_email : ''}
+                      onChange={(e) => setForm((f) => ({ ...f, board_email: e.target.value }))}
+                    >
+                      <option value="">{email ? `${email} (sign-in email)` : 'Sign-in email'}</option>
+                      {linkedEmails.filter((e) => e !== email).map((e) => <option key={e} value={e}>{e}</option>)}
+                    </select>
+                    <span className={styles.charCount} style={{ textAlign: 'left' }}>Only used if &ldquo;Email address&rdquo; above is checked. You can pick any email linked to your account.</span>
+                  </label>
+                )}
 
                 {!officerCard.onTeamPage && <p className={styles.socialHint}>You&apos;re not on the public Team page yet — turn on &ldquo;Show me on the public Team page&rdquo; above to appear.</p>}
               </section>
