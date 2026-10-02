@@ -15,6 +15,7 @@ import { eventDayCount, pacificDatetimeLocalToUTC } from '@/lib/timezone';
 import type { SocialEmbed, PhotoAlbumEntry, AppRole, ScheduleItem, EventSponsor } from '@/types/database';
 import EventExtrasEditor from './EventExtrasEditor';
 import CheckinFormFieldsEditor, { EMPTY_CHECKIN_FORM_CONFIG, type CheckinFormConfigValue } from './CheckinFormFieldsEditor';
+import LivePreview from '@/components/portal/LivePreview';
 import styles from './new/newevent.module.css';
 import Select from '@/components/ui/Select';
 import { DateTimeInput, TimeInput } from '@/components/ui/Field';
@@ -295,12 +296,13 @@ export default function EventForm({
   }
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-wide-page>
       <div className={styles.header}>
         <Link href="/portal?section=events" className={styles.back}>← Back to Events</Link>
         <h1 className={styles.title}>{heading}</h1>
       </div>
 
+      <div className={styles.editLayout}>
       <form className={styles.form} onSubmit={handleSubmit}>
         <label className={styles.field}>
           <span className={styles.label}>Event Title *</span>
@@ -558,6 +560,10 @@ export default function EventForm({
           </button>
         </div>
       </form>
+      <div className={styles.editPreview}>
+        <LivePreview draftKey="event" path="/preview/events/__draft__" label={form.title.trim() || 'New event'} value={form} />
+      </div>
+      </div>
     </div>
   );
 }

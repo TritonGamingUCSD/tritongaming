@@ -53,6 +53,7 @@
 /* The desktop app frame fills the window (small even margin all round) instead of sitting in the padded, centered column. */
 @media (min-width: 900px) {
   .content:has([data-app-frame]) { max-width: none; padding: 0.75rem; }
+  .content:has([data-wide-page]) { max-width: none; }
 }
 
 /* On desktop the bell lives in the app frame's top bar, so the floating one is hidden. */

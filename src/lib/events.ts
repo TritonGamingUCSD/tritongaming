@@ -2,6 +2,8 @@ import { openEventsFilter, endedEventsFilter } from '@/lib/checkinWindow';
 import { unstable_cache } from 'next/cache';
 import { createPublicClient } from '@/lib/supabase/public';
 import type { Event } from '@/types';
+import { getPreviewDrafts } from '@/lib/contentPreviewStore';
+import { pacificDatetimeLocalToUTC } from '@/lib/timezone';
 import type { SocialEmbed, PhotoAlbumEntry, ScheduleItem, EventSponsor } from '@/types/database';
 
 const DEFAULT_LIMIT = 50;
@@ -123,7 +125,41 @@ export async function getEventById(id: string): Promise<Event | null> {
 // Public event detail pages route on the (possibly null) editable slug, so
 // this looks the param up as a slug first and falls back to id — a plain
 // uuid param skips straight to the id lookup since it can never be a slug.
+// The slug the editor's live preview asks for: the event form's unsaved values, shown through the same public page.
+export const EVENT_DRAFT_SLUG = '__draft__';
+
+function eventFromDraft(d: Record<string, unknown>): Event {
+  const iso = (v: unknown) => { try { return v ? pacificDatetimeLocalToUTC(String(v)).toISOString() : ''; } catch { return ''; } };
+  const price = Number(d.ticket_price) || 0;
+  return mapSupabaseEvent({
+    id: '',
+    slug: d.slug || '',
+    title: String(d.title || '').trim() || 'Untitled event',
+    start_date: iso(d.start_date) || new Date().toISOString(),
+    end_date: iso(d.end_date) || null,
+    flyer_url: d.flyer_url || '',
+    location: d.location || '',
+    content: d.content || '',
+    description: d.details || '',
+    requires_ticket: price > 0,
+    ticket_price: price,
+    audience: d.audience === 'ucsd_only' ? 'ucsd_only' : 'public',
+    photo_albums: d.photo_albums || [],
+    post_event_info: d.post_event_info || '',
+    venue_address: d.venue_address || '',
+    venue_notes: d.venue_notes || '',
+    schedule: d.schedule || [],
+    sponsors: d.sponsors || [],
+    social_embeds: d.social_embeds || [],
+    points_value: Number(d.points_value) || 0,
+  });
+}
+
 export async function getEventBySlugOrId(slugOrId: string): Promise<Event | null> {
+  if (slugOrId === EVENT_DRAFT_SLUG) {
+    const draft = getPreviewDrafts()?.event;
+    return draft ? eventFromDraft(draft) : null;
+  }
   try {
     return await cachedEvents(['slug-or-id', slugOrId], async () => {
       const supabase = createPublicClient();

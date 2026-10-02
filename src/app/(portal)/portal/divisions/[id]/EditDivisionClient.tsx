@@ -48,6 +48,7 @@ export default function EditDivisionClient({
   return (
     <DivisionForm
       heading="Edit Division"
+      divisionId={divisionId}
       initial={initial}
       submitLabel="Save Changes"
       onSubmit={handleUpdate}

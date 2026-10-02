@@ -15,6 +15,7 @@ import type { SocialEmbed } from '@/types/database';
 // with event editing), and the classes here (.page/.form/.field/.input/
 // .mdTabs/etc.) were already fully generic, not event-specific. Importing
 // the same file guarantees the two never visually drift apart.
+import LivePreview from '@/components/portal/LivePreview';
 import styles from '../events/new/newevent.module.css';
 
 export interface DivisionFormValues {
@@ -102,8 +103,11 @@ export default function DivisionForm({
   // public URL (see the API route's own canManageDirectory gate). false
   // shows the name/slug as read-only text instead of inputs.
   canRename = true,
+  divisionId,
 }: {
   heading: string;
+  /** The division being edited: lets the live preview lay the unsaved form over it. */
+  divisionId?: string;
   initial: DivisionFormValues;
   submitLabel: string;
   onSubmit: (values: DivisionFormValues) => Promise<string | void>;
@@ -133,12 +137,13 @@ export default function DivisionForm({
   }
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-wide-page>
       <div className={styles.header}>
         <Link href={backHref} className={styles.back}>← Back to Divisions</Link>
         <h1 className={styles.title}>{heading}</h1>
       </div>
 
+      <div className={styles.editLayout}>
       <form className={styles.form} onSubmit={handleSubmit}>
         {canRename ? (
           <>
@@ -210,6 +215,12 @@ export default function DivisionForm({
           </button>
         </div>
       </form>
+      {divisionId && (
+        <div className={styles.editPreview}>
+          <LivePreview draftKey="division" path="/preview/divisions/__draft__" label={form.name.trim() || 'Division'} value={{ ...form, id: divisionId }} />
+        </div>
+      )}
+      </div>
     </div>
   );
 }

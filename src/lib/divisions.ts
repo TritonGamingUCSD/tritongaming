@@ -1,6 +1,10 @@
 import { unstable_cache } from 'next/cache';
 import { createPublicClient } from '@/lib/supabase/public';
 import type { Division } from '@/types/database';
+import { getPreviewDrafts } from '@/lib/contentPreviewStore';
+
+// The slug the editor's live preview asks for: the division form's unsaved values laid over the saved division.
+export const DIVISION_DRAFT_SLUG = '__draft__';
 
 export function divisionLogoSrc(logoUrl: string | null): string | null {
   if (!logoUrl) return null;
@@ -28,5 +32,21 @@ export async function getDivisions(): Promise<Division[]> {
 }
 
 export async function getDivisionBySlug(slug: string): Promise<Division | null> {
+  if (slug === DIVISION_DRAFT_SLUG) {
+    const d = getPreviewDrafts()?.division;
+    if (!d) return null;
+    const saved = (await getDivisions()).find((x) => x.id === d.id);
+    if (!saved) return null;
+    return {
+      ...saved,
+      name: String(d.name ?? saved.name) || saved.name,
+      description: (d.description as string) ?? saved.description,
+      logo_url: (d.logo_url as string) || null,
+      discord_url: (d.discord_url as string) || null,
+      application_url: (d.application_url as string) || null,
+      social_links: (d.social_links as Record<string, string>) ?? saved.social_links,
+      social_embeds: (d.social_embeds as Division['social_embeds']) ?? saved.social_embeds,
+    };
+  }
   return (await getDivisions()).find((d) => d.slug === slug) ?? null;
 }

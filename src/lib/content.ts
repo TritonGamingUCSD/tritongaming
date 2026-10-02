@@ -1,6 +1,6 @@
 import { unstable_cache } from 'next/cache';
 import { createPublicClient } from '@/lib/supabase/public';
-import { getPreviewDrafts } from '@/lib/contentPreview';
+import { getPreviewDrafts } from '@/lib/contentPreviewStore';
 
 // Public page copy rarely changes, so it's cached for a few minutes and shared
 // between visitors. Saving in the content editor calls revalidateTag

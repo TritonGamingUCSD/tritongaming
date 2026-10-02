@@ -18,9 +18,19 @@ const PAGES: Record<string, () => Promise<{ default: ComponentType }>> = {
   media: () => import('@/app/(main)/media/page'),
 };
 
+// Pages with a slug in the URL. The editors preview their unsaved form as the slug "__draft__" (see lib/events and lib/divisions).
+const SLUG_PAGES: Record<string, () => Promise<{ default: ComponentType<{ params: Promise<{ slug: string }> }> }>> = {
+  events: () => import('@/app/(main)/events/[slug]/page'),
+  divisions: () => import('@/app/(main)/divisions/[slug]/page'),
+};
+
 export default async function PreviewPage({ params }: { params: Promise<{ path?: string[] }> }) {
   if (!(await ensurePreviewDrafts())) notFound();
   const { path } = await params;
+  if (path?.length === 2 && SLUG_PAGES[path[0]]) {
+    const Page = (await SLUG_PAGES[path[0]]()).default;
+    return <Page params={Promise.resolve({ slug: path[1] })} />;
+  }
   const load = PAGES[(path ?? []).join('/')];
   if (!load) notFound();
   const Page = (await load()).default;

@@ -279,3 +279,12 @@
 @media (max-width: 600px) {
   .row { grid-template-columns: 1fr; }
 }
+
+/* Edit page with a live preview of the public page beside the form (side by side on a desktop-width window). */
+.page[data-wide-page] { max-width: none; }
+.editLayout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+.editPreview { min-width: 0; }
+@media (min-width: 1200px) {
+  .editLayout { grid-template-columns: minmax(420px, 5fr) minmax(0, 7fr); }
+  .editPreview { position: sticky; top: 0.75rem; }
+}
