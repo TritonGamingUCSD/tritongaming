@@ -1,4 +1,4 @@
-// Which sections get a slot on the mobile bottom bar. The bar is Home + up to three of these + More,
+// Which sections get a slot on the mobile bottom bar. The bar is Home + up to four of these + More (six slots),
 // chosen by a score instead of a fixed list:
 //   • a base weight (what most members reach for: tickets, rewards, profile)
 //   • a boost from the server for what's relevant to this person right now (an event today, a ticket
@@ -9,7 +9,7 @@
 // positions every time the scores shift slightly.
 
 const BASE_WEIGHT: Record<string, number> = {
-  tickets: 30, meetings: 25, 'internal-events': 8, points: 20, battlepass: 18, profile: 10, events: 12, checkin: 12, activity: 5,
+  tickets: 30, meetings: 25, 'internal-events': 8, points: 20, battlepass: 18, profile: 10, events: 16, checkin: 12, activity: 5, members: 6, help: 0,
 };
 
 export interface DockUsage { [sectionId: string]: { count: number; last: number } }
@@ -42,7 +42,8 @@ interface Pickable { id: string; dockBoost?: number; dockExclude?: boolean }
 export function pickDock<T extends Pickable>(sections: T[], opts: { now?: Date; usage?: DockUsage } = {}): { ids: Set<string>; urgent: Set<string>; slots: number } {
   // Sections flagged dockExclude never take a bottom-bar slot (they're still in the More sheet).
   const eligible = sections.filter((s) => !s.dockExclude);
-  const slots = sections.length <= 4 ? Math.min(eligible.length, sections.length) : 3;
+  // With five sections or fewer they all fit on the bar and there is no More; otherwise the four best.
+  const slots = sections.length <= 5 ? Math.min(eligible.length, sections.length) : 4;
   const now = opts.now;
   const scored = eligible.map((s, order) => {
     const score = (BASE_WEIGHT[s.id] ?? 0) + (s.dockBoost ?? 0) + (now ? usageScore(s.id, opts.usage ?? {}, now) : 0);

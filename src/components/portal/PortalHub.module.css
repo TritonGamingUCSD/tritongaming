@@ -31,25 +31,22 @@
   right: 0;
   bottom: 0;
   z-index: 22;
+  display: flex;
+  flex-direction: column;
   max-height: 70vh;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  max-height: 70dvh;
+  overflow: hidden;
   background: #0c1120;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-bottom: none;
   border-radius: 1.25rem 1.25rem 0 0;
-  padding: 0.75rem 0.5rem calc(1rem + env(safe-area-inset-bottom, 0px));
   box-shadow: 0 -16px 40px -20px rgba(0, 0, 0, 0.7);
 }
 
-/* The top bar of the sheet is the drag handle: swipe it down to close. It sticks to the top while the
-   list scrolls, and is a generous touch target (the visible bar is small). */
-.moreSheetGrab {
-  position: sticky; top: -0.75rem; z-index: 2; margin: -0.75rem -0.5rem 0.25rem; padding: 0.75rem 0 0.7rem;
-  background: #0c1120; border-radius: 1.25rem 1.25rem 0 0; cursor: grab; touch-action: none;
-}
-.moreSheetClose { position: absolute; top: 0.35rem; right: 0.6rem; display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 50%; background: rgba(255, 255, 255, 0.08); color: rgba(242, 241, 240, 0.85); cursor: pointer; }
-.moreSheetClose:active { background: rgba(255, 255, 255, 0.16); }
+/* The handle is a plain part of the sheet (not stuck to a scrolling list), so it travels with the sheet when it is swiped down.
+   Swipe it, or the list when scrolled to the top, to close: no close button needed. */
+.moreSheetGrab { flex: none; padding: 0.75rem 0 0.7rem; cursor: grab; touch-action: none; }
+.moreSheetScroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior-y: none; padding: 0 0.5rem calc(1rem + env(safe-area-inset-bottom, 0px)); }
 .moreSheetHandle {
   width: 44px;
   height: 5px;
@@ -318,8 +315,8 @@
   z-index: 20;
   display: flex;
   align-items: stretch;
-  gap: 0.15rem;
-  padding: 0.4rem;
+  gap: 0.05rem;
+  padding: 0.4rem 0.3rem;
   background: rgba(12, 17, 32, 0.88);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
@@ -346,12 +343,12 @@
   position: relative;
   display: grid;
   place-items: center;
-  width: 52px;
+  width: 44px;
   height: 30px;
   border-radius: 999px;
   transition: background 0.2s, color 0.2s;
 }
-.dockLabel { font-size: 0.66rem; letter-spacing: 0.01em; line-height: 1; white-space: nowrap; }
+.dockLabel { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: 0.62rem; letter-spacing: 0; line-height: 1.1; white-space: nowrap; }
 .dockItemActive { color: var(--white); }
 .dockItemActive .dockIcon { background: rgba(255, 199, 44, 0.2); color: var(--yellow); }
 .dockItem:active .dockIcon { background: rgba(255, 255, 255, 0.1); }
@@ -372,7 +369,7 @@
 }
 
 /* "More" sheet: grouped tiles instead of a plain list */
-.moreSheet { padding-bottom: calc(6.2rem + env(safe-area-inset-bottom, 0px)); }
+.moreSheetScroll { padding-bottom: calc(6.2rem + env(safe-area-inset-bottom, 0px)); }
 .sheetGroup { --accent: #ffc72c; display: flex; flex-direction: column; gap: 0.5rem; padding: 0.5rem 0.5rem 0.25rem; }
 .sheetGroupLabel { display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-futura-heavy); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(242, 241, 240, 0.55); }
 .sheetGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
@@ -582,7 +579,8 @@
    Home = the color-coded group cards (one column); an opened section gets a slim sticky bar —
    round back button, a tinted icon tile in the group color, the title. ═══ */
 .mobileHome { display: flex; flex-direction: column; gap: 1.4rem; }
-.panelIconTile { display: grid; place-items: center; width: 34px; height: 34px; flex-shrink: 0; border-radius: 0.7rem; color: var(--accent, #ffc72c); background: color-mix(in srgb, var(--accent, #ffc72c) 15%, transparent); border: 1px solid color-mix(in srgb, var(--accent, #ffc72c) 30%, transparent); }
+.panelIconTile > svg { width: 100%; height: 100%; }
+.panelIconTile { display: grid; place-items: center; box-sizing: border-box; width: 36px; height: 36px; padding: 8px; flex-shrink: 0; border-radius: 0.7rem; color: var(--accent, #ffc72c); background: color-mix(in srgb, var(--accent, #ffc72c) 15%, transparent); border: 1px solid color-mix(in srgb, var(--accent, #ffc72c) 30%, transparent); }
 @media (max-width: 899px) {
   .panel { background: none; border: none; border-radius: 0; padding: 0 0 1rem; min-height: 0; }
   .panelHeader {
@@ -848,3 +846,19 @@
   .desktopPanel:has([data-wide]) { max-width: none; margin: 0; }
   .frameBody:has([data-wide]) { padding: 1rem 1.25rem 1.5rem; }
 }
+
+/* Phone home: the launcher under the cards. */
+.launcher { display: flex; flex-direction: column; gap: 0.35rem; margin: 0.25rem 0 0.5rem; }
+.launcher .sheetGroup { padding: 0.35rem 0 0.25rem; }
+.launcher .sheetTile { padding: 0.85rem 0.4rem; min-height: 96px; justify-content: center; }
+@media (max-width: 340px) { .launcher .sheetGrid, .moreSheet .sheetGrid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 900px) { .launcher { display: none; } }
+
+/* Phone tiles: one dense, color-coded grid (no group headings, no empty rows). */
+.tileGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.45rem; }
+.tileGrid .sheetTile { padding: 0.6rem 0.2rem 0.5rem; gap: 0.35rem; min-height: 0; border-radius: 0.9rem; font-size: 0.68rem; justify-content: flex-start; }
+.tileGrid .sheetTileIcon { width: 36px; height: 36px; border-radius: 0.7rem; }
+.tileGrid .sheetTileLabel { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.4em; word-break: break-word; }
+@media (max-width: 340px) { .tileGrid { grid-template-columns: repeat(3, 1fr); } }
+.launcher { margin: 0.5rem 0; }
+.launcher .sheetTile { min-height: 0; }

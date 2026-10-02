@@ -10,7 +10,7 @@ import FullscreenQR from './FullscreenQR';
 import OnlineCheckinEntry from './OnlineCheckinEntry';
 import AsFormButton from './AsFormButton';
 import AddToCalendarButton from '@/components/AddToCalendarButton/AddToCalendarButton';
-import { PACIFIC_TZ, formatEventDateRange, eventDayCount, eventDayProgress } from '@/lib/timezone';
+import { PACIFIC_TZ, pacificDaysUntil, formatEventDateRange, eventDayCount, eventDayProgress } from '@/lib/timezone';
 import { isCheckinWindowOpen } from '@/lib/checkinWindow';
 import { saveTicketCodes, cachedMinutesLeft } from '@/lib/ticketCodeCache';
 import styles from './tickets.module.css';
@@ -128,6 +128,8 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
   const [qrTicket, setQrTicket] = useState<TicketData | null>(null);
   const [purchasing, setPurchasing] = useState<string | null>(null);
   const [error, setError] = useState('');
+  // Claimed ahead of the event: confirm it instead of opening the QR code (which only matters on the day).
+  const [claimed, setClaimed] = useState<{ title: string; when: string } | null>(null);
   const checkoutResult = searchParams.get('checkout');
 
   // `tickets` is seeded from `initialTickets` only once (useState's
@@ -189,7 +191,12 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
           event: event ? { id: event.id, title: event.title, start_date: event.start_date, end_date: null, location: event.location, flyer_url: null, points_value: event.points_value, is_online: event.is_online ?? false } : null,
         };
         setTickets((prev) => [newTicket, ...prev]);
-        setQrTicket(newTicket);
+        // On the event day (or while it runs) they will want the code right now. Before that, just confirm they have the ticket.
+        if (event && pacificDaysUntil(event.start_date) > 0) {
+          setClaimed({ title: event.title, when: formatEventDateRange(event.start_date, null, { weekday: true }) });
+        } else {
+          setQrTicket(newTicket);
+        }
       }
       router.refresh();
     } catch {
@@ -250,6 +257,12 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
       )}
       {checkoutResult === 'cancelled' && (
         <Notice tone="warning">Checkout was cancelled — no charge was made.</Notice>
+      )}
+      {claimed && (
+        <Notice tone="success">
+          You&apos;re in! You got your ticket for <strong>{claimed.title}</strong> ({claimed.when}). Your QR code will be right here in My Tickets when the day comes.
+          {' '}<button type="button" onClick={() => setClaimed(null)} style={{ background: 'none', border: 0, color: 'inherit', textDecoration: 'underline', cursor: 'pointer', font: 'inherit', padding: 0 }}>Dismiss</button>
+        </Notice>
       )}
       {error && <Notice tone="error">{error}</Notice>}
 

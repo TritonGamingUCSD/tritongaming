@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { usePortalParams } from '@/lib/usePortalParams';
 import { motion, AnimatePresence } from 'motion/react';
-import { Home, MoreHorizontal, ChevronRight, ChevronLeft, X, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Home, MoreHorizontal, ChevronRight, ChevronLeft, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import PortalSearch from './PortalSearch';
 import NotificationBell from './NotificationBell';
 import { pickDock, readUsage, recordUse } from './dockPicker';
@@ -252,8 +252,33 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
     );
   }
 
+  // Phone tiles (home and More): one continuous grid in group order, colored by group, with no per-group headings, so a group with
+  // one or two sections doesn't leave a mostly empty row behind.
+  const tilesInOrder = (list: HubSection[]) => GROUP_ORDER.flatMap((g) => list.filter((x) => x.group === g));
+  const renderTile = (s: HubSection, inSheet: boolean) => (
+    <button
+      key={s.id}
+      type="button"
+      className={`${styles.sheetTile} ${inSheet && openId === s.id ? styles.sheetTileActive : ''}`}
+      style={{ ['--accent' as string]: GROUP_ACCENT[s.group] }}
+      onClick={() => { if (inSheet) setMoreOpen(false); recordUse(s.id); open(s.id); }}
+    >
+      <span className={styles.sheetTileIcon} aria-hidden="true">
+        {smallIcon(s.icon, 20)}
+        {s.badge !== undefined && s.badge !== 0 && <span className={styles.dockBadge}>{s.badge}</span>}
+      </span>
+      <span className={styles.sheetTileLabel}>{s.label}</span>
+    </button>
+  );
+
   return (
     <div className={styles.wrap}>
+      {/* Home on a phone is also the launcher: every section you can open, grouped, one tap away (the bar and More are shortcuts). */}
+      {!openSection && (
+        <div className={styles.launcher}>
+          <div className={styles.tileGrid}>{tilesInOrder(sections).map((s) => renderTile(s, false))}</div>
+        </div>
+      )}
       <AnimatePresence initial={false}>
         {openSection ? (
           // layoutId (the shared "zoom from the tapped grid card" morph)
@@ -344,7 +369,6 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={SPRING}
-              ref={sheetEl}
               style={{ translate: `0 ${sheetDy}px`, transition: sheetDragging ? 'none' : 'translate 0.2s ease-out' }}
               onTouchStart={(e) => sheetStart(e.touches[0].clientY, !!(e.target as Element).closest('[data-sheet-grab]'))}
               onTouchMove={(e) => sheetMove(e.touches[0].clientY)}
@@ -359,34 +383,12 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
                 onPointerUp={(e) => { if (e.pointerType === 'mouse') sheetEnd(); }}
               >
                 <div className={styles.moreSheetHandle} aria-hidden="true" />
-                <button type="button" className={styles.moreSheetClose} onClick={() => setMoreOpen(false)} aria-label="Close menu"><X size={18} strokeWidth={2} aria-hidden="true" /></button>
               </div>
+              {/* The list scrolls inside the sheet; the sheet itself (handle included) is what moves when it is swiped down. */}
+              <div className={styles.moreSheetScroll} ref={sheetEl}>
               {railFooter && <div className={styles.sheetFooter}>{railFooter}</div>}
-              {GROUP_ORDER.map((group) => {
-                const items = moreSections.filter((s) => s.group === group);
-                if (items.length === 0) return null;
-                return (
-                  <div key={group} className={styles.sheetGroup} style={{ ['--accent' as string]: GROUP_ACCENT[group] }}>
-                    {group !== 'Overview' && <div className={styles.sheetGroupLabel}><span className={styles.railGroupDot} aria-hidden="true" />{group}</div>}
-                    <div className={styles.sheetGrid}>
-                      {items.map((s) => (
-                        <button
-                          key={s.id}
-                          type="button"
-                          className={`${styles.sheetTile} ${openId === s.id ? styles.sheetTileActive : ''}`}
-                          onClick={() => { setMoreOpen(false); recordUse(s.id); open(s.id); }}
-                        >
-                          <span className={styles.sheetTileIcon} aria-hidden="true">
-                            {smallIcon(s.icon, 22)}
-                            {s.badge !== undefined && s.badge !== 0 && <span className={styles.dockBadge}>{s.badge}</span>}
-                          </span>
-                          <span className={styles.sheetTileLabel}>{s.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
+              <div className={styles.tileGrid}>{tilesInOrder(moreSections).map((s) => renderTile(s, true))}</div>
+              </div>
             </motion.div>
           </>
         )}

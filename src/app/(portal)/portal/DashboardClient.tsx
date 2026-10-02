@@ -1,72 +1,41 @@
 'use client';
 
 import Link from 'next/link';
-import FullscreenQR from './tickets/FullscreenQR';
-import { useState } from 'react';
-import { Clock, MapPin, QrCode } from 'lucide-react';
-import { PACIFIC_TZ, pacificDaysUntil, formatEventDateRange, eventDayProgress } from '@/lib/timezone';
+import { ChevronRight, Clock, Ticket } from 'lucide-react';
+import { PACIFIC_TZ, pacificDaysUntil, eventDayProgress } from '@/lib/timezone';
 import styles from './dashboard.module.css';
 
-interface Ticket {
+interface TicketInfo {
   id: string;
   status: string;
   event: { id: string; title: string; start_date: string; end_date?: string | null; location: string | null } | null;
 }
 
-export default function DashboardClient({ ticket }: { ticket: Ticket }) {
-  const [showQR, setShowQR] = useState(false);
+// A small reminder of the next event you have a ticket for (the QR code itself lives in My Tickets, one tap away).
+export default function DashboardClient({ ticket }: { ticket: TicketInfo }) {
   const ev = ticket.event;
   if (!ev) return null;
 
-  const d = new Date(ev.start_date);
   const daysUntil = pacificDaysUntil(ev.start_date);
   const progress = eventDayProgress(ev.start_date, ev.end_date);
+  const when = progress ? `Day ${progress.day} of ${progress.total}` : daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `In ${daysUntil} days`;
+  const live = !!progress || daysUntil === 0;
+  const day = new Date(ev.start_date).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, weekday: 'short', month: 'short', day: 'numeric' });
+  const time = new Date(ev.start_date).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' });
 
   return (
-    <>
-      <section className={styles.ticketHeroCard}>
-        <div className={styles.ticketHeroInner}>
-          <div className={styles.ticketHeroMeta}>
-            <span className={styles.ticketHeroLabel}>
-              {progress ? (
-                <><span className={styles.liveDot} aria-hidden="true" /> DAY {progress.day} OF {progress.total}</>
-              ) : daysUntil === 0 ? (
-                <><span className={styles.liveDot} aria-hidden="true" /> TODAY</>
-              ) : daysUntil === 1 ? (
-                <><Clock size={11} strokeWidth={1.5} aria-hidden="true" /> TOMORROW</>
-              ) : (
-                `IN ${daysUntil} DAYS`
-              )}
-            </span>
-            <h2 className={styles.ticketHeroTitle}>{ev.title}</h2>
-            <p className={styles.ticketHeroDate}>
-              {formatEventDateRange(ev.start_date, ev.end_date, { weekday: true })}
-              {' · '}
-              {d.toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' })}
-            </p>
-            {ev.location && (
-              <p className={styles.ticketHeroLoc}><MapPin size={12} strokeWidth={1.5} aria-hidden="true" /> {ev.location}</p>
-            )}
-          </div>
-          <div className={styles.ticketHeroActions}>
-            <button className={styles.showQrHeroBtn} onClick={() => setShowQR(true)}>
-              <QrCode size={16} strokeWidth={1.5} aria-hidden="true" /> Show QR Code
-            </button>
-            <Link href="/portal?section=tickets" className={styles.viewAllTickets}>All tickets →</Link>
-          </div>
-        </div>
-        <div className={styles.ticketHeroGlow} aria-hidden="true" />
-      </section>
-
-      {showQR && (
-        <FullscreenQR
-          ticketId={ticket.id}
-          eventTitle={ev.title}
-          eventDate={ev.start_date}
-          eventLocation={ev.location}
-          onClose={() => setShowQR(false)}
-        />
-      )}
-    </>
+    <Link href="/portal?section=tickets" className={styles.nextReminder} aria-label={`Next event: ${ev.title}, ${when}. Open your tickets`}>
+      <span className={`${styles.nextReminderIcon} ${live ? styles.nextReminderLive : ''}`} aria-hidden="true">
+        {live ? <span className={styles.liveDot} /> : <Ticket size={16} strokeWidth={1.75} />}
+      </span>
+      <span className={styles.nextReminderText}>
+        <span className={styles.nextReminderTitle}>{ev.title}</span>
+        <span className={styles.nextReminderSub}>
+          {!live && <Clock size={11} strokeWidth={1.75} aria-hidden="true" />}
+          <strong>{when}</strong> · {day} · {time}
+        </span>
+      </span>
+      <ChevronRight size={16} strokeWidth={1.75} className={styles.nextReminderGo} aria-hidden="true" />
+    </Link>
   );
 }

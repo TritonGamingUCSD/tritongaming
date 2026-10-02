@@ -230,13 +230,15 @@ export default async function PortalDashboard({ searchParams }: Props) {
     {
       id: 'profile', icon: <User size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Profile', railHidden: true,  // opened from your name at the top of the sidebar
       description: 'Update your info and preferences',
-      group: 'Yours',
+      group: 'Overview' as const,
       content: <ProfileClient profile={profile} privateInfo={myGender} email={authUser?.email ?? null} linkedEmails={linkedEmails} roles={roles} isUcsd={isVerifiedMember(roles)} divisions={divisions} initialTab={requestedTab} />,
     },
     {
       id: 'help', icon: <CircleHelp size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Help', railHidden: true,  // a button in the sidebar footer
       description: canHandleHelp ? 'Answer questions and problems from members' : 'Ask a question or report a problem',
       badge: helpWaiting || undefined,
+      // Staff get Help on the bar while members are waiting on a reply.
+      dockBoost: canHandleHelp && helpWaiting > 0 ? 45 : 0,
       group: 'Resources',
       content: <HelpSectionContent isStaff={canHandleHelp} userId={profile.id} />,
     },
@@ -435,9 +437,14 @@ export default async function PortalDashboard({ searchParams }: Props) {
 
   // The points tiles and the "View as" menu, as pieces: the phone header shows them in the greeting card, the desktop app frame puts
   // View as in its top bar and the tiles at the top of the Dashboard.
-  const tilesNode = (pointsData || battlepassData || activeTicketCount > 0) ? (
+  // The points tile on the home screen is the Battlepass for the team (recruit, officer, lead, exec, admin) and Rewards for everyone else
+  // (UCSD students, guests, alumni): one points tile each, never both.
+  const isTeamMember = roles.some((r) => ['recruit', 'officer', 'lead', 'exec', 'admin'].includes(r.role));
+  const showRewardsTile = !isTeamMember && !!pointsData && !!memberTier;
+  const showBattlepassTile = isTeamMember && !!battlepassData && !!officerTier;
+  const tilesNode = (showRewardsTile || showBattlepassTile) ? (
                 <div className={styles.tiles}>
-                  {pointsData && memberTier && (
+                  {showRewardsTile && pointsData && memberTier && (
                     <Link href="/portal?section=points&tab=points" className={styles.tile} style={{ ['--tile-accent' as string]: memberTier.color }}>
                       <span className={styles.tileTop}><Award size={15} strokeWidth={1.75} aria-hidden="true" /> Rewards</span>
                       <span className={styles.tileValue}>{pointsData.balance.toLocaleString()}<span className={styles.tileUnit}> pts</span></span>
@@ -449,7 +456,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
                       )}
                     </Link>
                   )}
-                  {battlepassData && officerTier && (
+                  {showBattlepassTile && battlepassData && officerTier && (
                     <Link href="/portal?section=battlepass&tab=mine" className={styles.tile} style={{ ['--tile-accent' as string]: officerTier.color }}>
                       <span className={styles.tileTop}><Medal size={15} strokeWidth={1.75} aria-hidden="true" /> Battlepass</span>
                       <span className={styles.tileValue}>{battlepassData.balance.toLocaleString()}<span className={styles.tileUnit}> pts</span></span>
@@ -459,13 +466,6 @@ export default async function PortalDashboard({ searchParams }: Props) {
                           <span style={{ width: `${Math.min(100, Math.max(4, ((battlepassData.lifetimeEarned - officerTier.min) / Math.max(1, officerNext.min - officerTier.min)) * 100))}%` }} />
                         </span>
                       )}
-                    </Link>
-                  )}
-                  {activeTicketCount > 0 && (
-                    <Link href="/portal?section=tickets" className={styles.tile} style={{ ['--tile-accent' as string]: '#34d399' }}>
-                      <span className={styles.tileTop}><Ticket size={15} strokeWidth={1.75} aria-hidden="true" /> Tickets</span>
-                      <span className={styles.tileValue}>{activeTicketCount}<span className={styles.tileUnit}> active</span></span>
-                      <span className={styles.tileTier}>Ready to scan</span>
                     </Link>
                   )}
                 </div>
