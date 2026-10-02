@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     .select(`
       id, ticket_code, status, checked_in_at, checkin_form_completed_at, event_id, user_id,
       user:profiles!tickets_user_id_fkey(display_name),
-      event:events(title, points_value, start_date, end_date, requires_checkin_form)
+      event:events(title, points_value, start_date, end_date, requires_checkin_form, checkin_windows)
     `);
 
   if (candidatesError) {
@@ -107,6 +107,7 @@ export async function POST(request: Request) {
       requires_checkin_form: eventData?.requires_checkin_form ?? false,
       start_date: eventData?.start_date ?? new Date().toISOString(),
       end_date: eventData?.end_date ?? null,
+      checkin_windows: (eventData as { checkin_windows?: { day: string; start: string; end: string }[] } | null)?.checkin_windows ?? [],
     },
     user.id
   );
@@ -114,7 +115,7 @@ export async function POST(request: Request) {
     // "Event ended" is a deterministic rejection, not a transient server
     // failure — 409 (not 500) so fetchWithRetry's retry-on-5xx logic
     // doesn't waste 3 attempts retrying something that'll never succeed.
-    const status = checkinError.includes('already ended') ? 409 : 500;
+    const status = (checkinError.includes('already ended') || checkinError.startsWith('Check-in for today') || checkinError.startsWith('Already')) ? 409 : 500;
     return NextResponse.json({ error: checkinError }, { status });
   }
 

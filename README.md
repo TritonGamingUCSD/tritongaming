@@ -30,24 +30,27 @@ Home, Our Story, Team, Events, Divisions (with per-division pages), Sponsors, Ge
 
 ### Member portal (`/portal`)
 
-Gated by Google sign-in and a role/capability system (`src/lib/capabilities.ts`). On desktop a fixed sidebar groups sections by color: **Yours** (gold), **Events** (blue), **Resources** (green), **Admin** (pink). The sidebar shows your name and all of your roles, and clicking it opens your profile. On phones there is a floating bottom dock plus a grouped "More" sheet. Every section, tab and subtab is linkable through URL parameters (`?section=…&tab=…&subtab=…`).
+Gated by Google sign-in and a role/capability system (`src/lib/capabilities.ts`). On desktop a fixed sidebar lists Dashboard and Calendar at the top, then groups sections by color: **Yours** (gold), **Events** (blue), **TG** (purple), **Divisions** (orange), **Resources** (green), **Admin** (pink). Admins also get a "View as" menu to preview the portal as another role. The sidebar shows your name and all of your roles, and clicking it opens your profile. On phones there is a floating bottom dock plus a grouped "More" sheet. Every section, tab and subtab is linkable through URL parameters (`?section=…&tab=…&subtab=…`).
 
 | Group | Section | What it does |
 | --- | --- | --- |
+| Top | Calendar | Month and list views of events (with your tickets marked) and the meetings you are invited to. Click an item to open it. |
 | Yours | My Tickets | Register for events, rotating QR code (HMAC, ~60s window) for check-in, live "Checked In" status. Multi-day events need a scan each day. |
-| Yours | Profile | Basic info (name, year, college, major picker with double-major support, favorite-games picker), profile picture editor with crop, officer card for the Team page, Login & Security (linked Google accounts). |
+| Yours | Rewards | Points and the rewards shop (UCSD students and staff) |
 | Yours | Activity | Personal timeline of registrations and check-ins |
-| Yours | Rewards, Battlepass | Points, shop, and battle pass progress |
-| Events | Events | Create and edit events (flyer upload, schedule, sponsors, venue), a redesigned events table with actions menu, check-in lists with undo and manual check-in, post-event Summary. |
+| Yours | Profile | Basic info (major picker, favorite-games picker), profile picture editor with crop, officer card for the Team page (social links, portfolio links, **game IDs** such as Steam, Riot ID and Genshin UID, with per-item public visibility), Login & Security |
+| Events | Events | Create and edit events (flyer, schedule, sponsors, venue, optional **per-day check-in hours** for multi-day events), check-in lists with undo and manual check-in, post-event Summary |
 | Events | Check-In | Camera QR scanner, manual and online code entry, per-day check-in for multi-day events |
-| Events | Meetings | Weekly team meetings (Gen Meeting is the example). Exec schedule one-off or repeating meetings and open one to show its rotating check-in code; officers, leads, exec and recruits type the code to check in, see their history, and open the meeting doc. A question of the meeting and emoji reactions show on the big screen. HR export to CSV. |
-| Resources | TG Members | Directory of everyone with a role |
+| TG | TG Members | Directory of the team (recruits and alumni included, division leads excluded) |
+| TG | Meetings | Check in with a rotating code, **My meetings** (upcoming plus your history), and for leads/exec/admin: schedule one-off or weekly meetings, run check-in with a big-screen code, question of the meeting and emoji reactions, groups, absences, attendance analytics and an HR CSV export. Audiences are roles, saved groups and individuals, resolved live. Leads manage only meetings they planned. |
+| TG | Battlepass | Recognition points for officer-tier members |
+| Divisions | Divisions, Division Members | Edit division pages; see who leads each division |
 | Resources | Documentation | Markdown docs with a table of contents |
-| Resources | QR Studio | Quick style presets (10 gaming looks plus 10 based on division logos), color picker, center icon (built-in, your own upload, or a division logo), PNG/SVG download |
+| Resources | QR Studio | Style presets (including division-logo looks), color picker, center icon, PNG/SVG download |
 | Resources | Photo Albums | Photo albums |
-| Admin | Site Content | Edit public site copy and images, organized in category tabs |
-| Admin | Admin | Platform stats, role manager, divisions, board order, audit log (with diffs, export and alerts), role history, storage cleanup |
-| Admin | Short Links | Create and edit the short links described above |
+| Resources | Help | Anyone can open a help ticket (category, details, screenshots; page and browser are attached automatically). Exec and admin answer from an inbox, with replies, assignment and bell notifications; the dashboard shows how many tickets need a reply. |
+| Admin | Admin | Platform stats, role manager, divisions, board order, audit log, role history, storage cleanup, **Short Links** |
+| Admin | Site Content | Edit public site copy and images, organized in tabs and subtabs |
 
 There is also global search (⌘K or `/`) across members, events and docs. Results open inside the portal.
 
@@ -59,6 +62,8 @@ Ticket sources are recorded from the visitor's first tagged link, referrer or sh
 
 ### Other building blocks
 
+- **Notifications:** an in-app bell. Notifications link to the section they are about (tickets, meeting invites, help replies, audit alerts). Email is not wired up.
+- **Custom form controls:** dropdowns, date/time pickers, number steppers, color pickers and checkboxes are our own components in `src/components/ui`, so they look the same on every browser and OS.
 - **Audit log:** database triggers plus explicit `logAudit` calls, with an admin viewer, export and alerts.
 - **Reminders:** a daily Vercel cron (`/api/cron/event-reminders`, `vercel.json`) creates in-app bell notifications about 24 hours and 1 hour before an event. **Email is not wired up**; all mail-related code has been removed.
 - **Uploads:** event flyers, division logos and profile pictures go straight to Supabase Storage from the browser (`src/lib/imageUpload.ts`) with client-side compression. Replacing or removing an image deletes the old one, including old profile pictures. Admin → Storage Cleanup sweeps anything that still slips through.

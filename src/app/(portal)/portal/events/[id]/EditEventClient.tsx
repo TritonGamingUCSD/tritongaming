@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { slugify } from '@/lib/slug';
 import { deleteIfReplaced } from '@/lib/imageUpload';
 import { pacificDatetimeLocalToUTC } from '@/lib/timezone';
-import EventForm, { type EventFormValues } from '../EventForm';
+import EventForm, { cleanCheckinWindows, type EventFormValues } from '../EventForm';
 import type { CheckinFormConfigValue } from '../CheckinFormFieldsEditor';
 
 export default function EditEventClient({
@@ -57,6 +57,7 @@ export default function EditEventClient({
         division_id: form.division_id || null,
         requires_checkin_form: form.requires_checkin_form,
         checkin_food_item: form.checkin_food_item.trim() || null,
+        checkin_windows: cleanCheckinWindows(form.checkin_windows, form.start_date, form.end_date),
         checkin_form_event_name: form.checkin_form_event_name.trim() || null,
         checkin_form_override: form.checkin_form_override,
       })

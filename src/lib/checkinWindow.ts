@@ -15,6 +15,30 @@ export function isCheckinWindowOpen(event: { start_date: string; end_date?: stri
   return Date.now() <= deadline;
 }
 
+// Per-day check-in hours for a multi-day event (Pacific time). A day without an entry is open all day.
+export interface CheckinDayWindow { day: string; start: string; end: string }
+
+const to12h = (hhmm: string) => {
+  const [h, m] = hhmm.split(':').map(Number);
+  return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
+};
+const pacificParts = (d: Date) => {
+  const f = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(d);
+  const get = (t: string) => f.find((p) => p.type === t)!.value;
+  return { day: `${get('year')}-${get('month')}-${get('day')}`, hhmm: `${get('hour')}:${get('minute')}` };
+};
+
+// null when check-in is allowed right now; otherwise what to tell the person. Only restricts days that
+// have hours set (so single-day events and untouched days behave exactly as before).
+export function checkinHoursError(event: { checkin_windows?: CheckinDayWindow[] | null }, now: Date = new Date()): string | null {
+  const { day, hhmm } = pacificParts(now);
+  const w = (event.checkin_windows ?? []).find((x) => x.day === day);
+  if (!w) return null;
+  if (hhmm < w.start) return `Check-in for today opens at ${to12h(w.start)}.`;
+  if (hhmm > w.end) return `Check-in for today closed at ${to12h(w.end)}.`;
+  return null;
+}
+
 // Query-side twins of isCheckinWindowOpen, for PostgREST `.or()` filters — so
 // "which events are still open" (upcoming lists, ticket sign-up) is decided
 // by the exact same rule as check-in itself: an event with an end time stays

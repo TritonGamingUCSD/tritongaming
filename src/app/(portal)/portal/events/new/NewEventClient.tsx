@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { slugify } from '@/lib/slug';
 import { pacificDatetimeLocalToUTC } from '@/lib/timezone';
-import EventForm, { EMPTY_EVENT_FORM, type EventFormValues } from '../EventForm';
+import EventForm, { EMPTY_EVENT_FORM, cleanCheckinWindows, type EventFormValues } from '../EventForm';
 import type { CheckinFormConfigValue } from '../CheckinFormFieldsEditor';
 
 export default function NewEventClient({ divisions, initial = EMPTY_EVENT_FORM, seedCheckinFormConfig, previewViewer }: {
@@ -49,6 +49,7 @@ export default function NewEventClient({ divisions, initial = EMPTY_EVENT_FORM, 
       division_id: form.division_id || null,
       requires_checkin_form: form.requires_checkin_form,
       checkin_food_item: form.checkin_food_item.trim() || null,
+      checkin_windows: cleanCheckinWindows(form.checkin_windows, form.start_date, form.end_date),
       checkin_form_event_name: form.checkin_form_event_name.trim() || null,
       checkin_form_override: form.checkin_form_override,
       created_by: user.id,

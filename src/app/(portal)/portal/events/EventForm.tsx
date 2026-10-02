@@ -17,7 +17,7 @@ import EventExtrasEditor from './EventExtrasEditor';
 import CheckinFormFieldsEditor, { EMPTY_CHECKIN_FORM_CONFIG, type CheckinFormConfigValue } from './CheckinFormFieldsEditor';
 import styles from './new/newevent.module.css';
 import Select from '@/components/ui/Select';
-import { DateTimeInput } from '@/components/ui/Field';
+import { DateTimeInput, TimeInput } from '@/components/ui/Field';
 import NumberInput from '@/components/ui/NumberInput';
 
 export interface EventFormValues {
@@ -45,11 +45,27 @@ export interface EventFormValues {
   division_id: string;
   requires_checkin_form: boolean;
   checkin_food_item: string;
+  // Per-day check-in hours for multi-day events (blank start/end = open all day).
+  checkin_windows: { day: string; start: string; end: string }[];
   checkin_form_event_name: string;
   // This event's own AS Form config (link, question IDs, answer mappings) —
   // see CheckinFormFieldsEditor. null only while "Requires AS Form" is off;
   // there's no site-wide default any more, the form differs per event.
   checkin_form_override: CheckinFormConfigValue | null;
+}
+
+// The calendar days a form's start/end span (Pacific dates straight from the datetime-local values).
+export function formDays(start: string, end: string): string[] {
+  const s = start.slice(0, 10), e = end.slice(0, 10);
+  if (!s || !e || e <= s) return s ? [s] : [];
+  const out: string[] = [];
+  for (let d = new Date(`${s}T12:00:00Z`); d.toISOString().slice(0, 10) <= e && out.length < 31; d.setUTCDate(d.getUTCDate() + 1)) out.push(d.toISOString().slice(0, 10));
+  return out;
+}
+// Only days that still exist in the event, with both a start and an end, in a sane order.
+export function cleanCheckinWindows(list: { day: string; start: string; end: string }[], start: string, end: string) {
+  const days = new Set(formDays(start, end));
+  return days.size > 1 ? list.filter((w) => days.has(w.day) && w.start && w.end && w.start < w.end) : [];
 }
 
 export const EMPTY_EVENT_FORM: EventFormValues = {
@@ -77,6 +93,7 @@ export const EMPTY_EVENT_FORM: EventFormValues = {
   division_id: '',
   requires_checkin_form: false,
   checkin_food_item: '',
+  checkin_windows: [],
   checkin_form_event_name: '',
   checkin_form_override: null,
 };
@@ -313,6 +330,32 @@ export default function EventForm({
               })()
             : 'Running over several days (like a weekend LAN)? Set the end date to the last day — one ticket covers every day.'}
         </p>
+
+        {formDays(form.start_date, form.end_date).length > 1 && (
+          <div className={styles.field}>
+            <span className={styles.label}>Check-in hours for each day <span className={styles.hint}>(optional)</span></span>
+            <p className={styles.hint}>Leave a day blank and check-in stays open all day. Set both times to only allow check-in in that window (Pacific time).</p>
+            <div>
+              {formDays(form.start_date, form.end_date).map((day, i) => {
+                const w = form.checkin_windows.find((x) => x.day === day) ?? { day, start: '', end: '' };
+                const setW = (patch: Partial<typeof w>) => setForm((f) => ({ ...f, checkin_windows: [...f.checkin_windows.filter((x) => x.day !== day), { ...w, ...patch }] }));
+                const bad = !!w.start && !!w.end && w.end <= w.start;
+                return (
+                  <div key={day} className={styles.row} style={{ alignItems: 'end', marginBottom: '0.5rem' }}>
+                    <div className={styles.field}>
+                      <span className={styles.label}>Day {i + 1} · {new Date(`${day}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                      <TimeInput className={styles.input} value={w.start} onChange={(e) => setW({ start: e.target.value })} aria-label={`Day ${i + 1} check-in opens`} />
+                    </div>
+                    <div className={styles.field}>
+                      <span className={styles.label}>{bad ? 'Closes (must be after it opens)' : 'Closes'}</span>
+                      <TimeInput className={styles.input} value={w.end} onChange={(e) => setW({ end: e.target.value })} aria-label={`Day ${i + 1} check-in closes`} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <label className={styles.field}>
           <span className={styles.label}>Location</span>

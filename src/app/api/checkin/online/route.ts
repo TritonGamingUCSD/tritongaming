@@ -40,7 +40,7 @@ export async function POST(request: Request) {
 
   const { data: event } = await serviceClient
     .from('events')
-    .select('title, points_value, checkin_secret, start_date, end_date, requires_checkin_form')
+    .select('title, points_value, checkin_secret, start_date, end_date, requires_checkin_form, checkin_windows')
     .eq('id', event_id)
     .single();
 
@@ -63,11 +63,11 @@ export async function POST(request: Request) {
   const { error: checkinError } = await performCheckin(
     serviceClient,
     ticket,
-    { title: event.title, points_value: event.points_value, start_date: event.start_date, end_date: event.end_date, requires_checkin_form: event.requires_checkin_form },
+    { title: event.title, points_value: event.points_value, start_date: event.start_date, end_date: event.end_date, requires_checkin_form: event.requires_checkin_form, checkin_windows: event.checkin_windows },
     user.id
   );
   if (checkinError) {
-    const status = checkinError.includes('already ended') ? 409 : 500;
+    const status = (checkinError.includes('already ended') || checkinError.startsWith('Check-in for today') || checkinError.startsWith('Already')) ? 409 : 500;
     return NextResponse.json({ error: checkinError }, { status });
   }
 

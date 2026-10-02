@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { isCheckinWindowOpen } from '@/lib/checkinWindow';
+import { isCheckinWindowOpen, checkinHoursError, type CheckinDayWindow } from '@/lib/checkinWindow';
 import { isMultiDayEvent, pacificDayKey, currentDayInfo } from '@/lib/checkinDays';
 
 // Nothing anywhere else in this app ever moves a ticket's status away from
@@ -19,7 +19,7 @@ import { isMultiDayEvent, pacificDayKey, currentDayInfo } from '@/lib/checkinDay
 export async function performCheckin(
   serviceClient: SupabaseClient,
   ticket: { id: string; user_id: string; event_id?: string },
-  event: { title: string | null; start_date: string; end_date: string | null; points_value: number; requires_checkin_form?: boolean | null },
+  event: { title: string | null; start_date: string; end_date: string | null; points_value: number; requires_checkin_form?: boolean | null; checkin_windows?: CheckinDayWindow[] | null },
   checkedInBy: string,
   // Manual check-in by an exec/admin (api/checkin/manual) passes true: it's a
   // correction made by someone who can already reverse points, so it works
@@ -34,6 +34,10 @@ export async function performCheckin(
 
   const multiDay = isMultiDayEvent(event.start_date, event.end_date);
   const now = new Date();
+  if (!opts.ignoreWindow) {
+    const hoursError = checkinHoursError(event, now);
+    if (hoursError) return { error: hoursError };
+  }
 
   let eventId = ticket.event_id;
   if (!eventId) {

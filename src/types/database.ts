@@ -186,6 +186,7 @@ export interface Database {
           sponsors: EventSponsor[];
           requires_checkin_form: boolean;
           checkin_food_item: string | null;
+          checkin_windows: Array<{ day: string; start: string; end: string }>;
           checkin_form_event_name: string | null;
           // Same shape as checkin_form_settings' own columns (see
           // CheckinFormConfig in src/lib/checkinForm.ts) — null means "use
