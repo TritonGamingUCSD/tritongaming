@@ -11,6 +11,9 @@
 .dotEvent, .dotMeeting { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .dotEvent { background: #4a90e2; }
 .dotMeeting { background: #a78bfa; }
+.dotInternal { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: #fb923c; }
+.chipInternal { background: rgba(251, 146, 60, 0.22); color: #fdba74; }
+.itemInternal .itemBar { background: #fb923c; }
 
 .grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; border-radius: 0.9rem; overflow: hidden; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.08); }
 .weekday { padding: 0.45rem 0; text-align: center; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(242, 241, 240, 0.5); background: #0d1017; }

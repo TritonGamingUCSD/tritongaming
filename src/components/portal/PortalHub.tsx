@@ -36,7 +36,7 @@ function smallIcon(icon: ReactNode, size = 21) {
 const GROUP_ORDER = ['Overview', 'Yours', 'Events', 'TG', 'Divisions', 'Resources', 'Admin'] as const;
 // Order inside each group (and so in the sidebar, the "More" sheet and the home grid). Anything not
 // listed goes last, in the order it was given.
-const SECTION_ORDER = ['calendar', 'tickets', 'points', 'activity', 'profile', 'events', 'checkin', 'members', 'meetings', 'battlepass', 'divisions', 'division-members', 'docs', 'qrcode', 'albums', 'help', 'admin', 'site-content'];
+const SECTION_ORDER = ['calendar', 'tickets', 'points', 'activity', 'profile', 'events', 'checkin', 'members', 'meetings', 'internal-events', 'battlepass', 'divisions', 'division-members', 'docs', 'qrcode', 'albums', 'help', 'admin', 'site-content'];
 // Accent color per group — tints the heading dot, icon tiles and hover state.
 const GROUP_ACCENT: Record<string, string> = { Overview: '#60a5fa', Yours: '#ffc72c', TG: '#a78bfa', Events: '#4a90e2', Divisions: '#fb923c', Resources: '#34d399', Admin: '#f472b6' };
 type HubGroup = (typeof GROUP_ORDER)[number];

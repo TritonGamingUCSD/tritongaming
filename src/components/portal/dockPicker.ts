@@ -9,7 +9,7 @@
 // positions every time the scores shift slightly.
 
 const BASE_WEIGHT: Record<string, number> = {
-  tickets: 30, meetings: 25, points: 20, battlepass: 18, profile: 10, events: 12, checkin: 12, activity: 5,
+  tickets: 30, meetings: 25, 'internal-events': 8, points: 20, battlepass: 18, profile: 10, events: 12, checkin: 12, activity: 5,
 };
 
 export interface DockUsage { [sectionId: string]: { count: number; last: number } }

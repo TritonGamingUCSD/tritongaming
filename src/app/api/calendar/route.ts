@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 
 export interface CalendarItem {
   key: string;
-  kind: 'event' | 'meeting';
+  kind: 'event' | 'meeting' | 'internal';
   date: string;            // the Pacific day this entry sits on
   title: string;
   start: string; end: string | null;   // ISO
@@ -88,6 +88,15 @@ export async function GET(request: Request) {
       const { starts, ends } = occurrenceTimes(day, s.start_time, s.end_time);
       items.push({ key: `s|${s.id}|${day}`, kind: 'meeting', date: day, title: s.title, start: starts.toISOString(), end: ends.toISOString(), location: s.location, href: meetingHref(s.created_by), mine: s.created_by === user.id, dayLabel: null, repeats: true });
     }
+  }
+  // Internal events meant for this person (or planned by them). Their own kind: they never count as meetings.
+  const { data: internalRows } = await svc.from('internal_events').select('*').gte('event_date', from).lte('event_date', to).eq('cancelled', false);
+  const { data: myRsvps } = await svc.from('internal_event_rsvps').select('event_id, status').eq('user_id', user.id);
+  const going = new Set((myRsvps ?? []).filter((r) => r.status === 'going').map((r) => r.event_id as string));
+  for (const r of internalRows ?? []) {
+    if (!hasCapability(roles, 'view_internal_events')) break;
+    if (!mineOrManage({ audience: r.audience as string[] | null, invitees: r.invitees as string[] | null, group_ids: r.group_ids as string[] | null, created_by: r.created_by as string | null })) continue;
+    items.push({ key: `x|${r.id}`, kind: 'internal', date: r.event_date as string, title: r.title as string, start: r.starts_at as string, end: r.ends_at as string, location: r.location as string | null, href: '/portal?section=internal-events', mine: going.has(r.id as string), dayLabel: null });
   }
   items.sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
   return NextResponse.json({ from, to, today, items });

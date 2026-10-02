@@ -72,6 +72,11 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   manage_meetings: ['exec', 'admin'],
   // Help tickets: everyone signed in can ask; exec and admin see every ticket and answer them.
   manage_help: ['exec', 'admin'],
+  // Internal events (socials, recruitment training…; separate from meetings): the team can see the ones they're invited to
+  // and say if they're coming; leads, exec and admin can plan them (leads manage their own, exec and admin all).
+  view_internal_events: ['officer', 'lead', 'exec', 'admin', 'recruit'],
+  host_internal_events: ['lead', 'exec', 'admin'],
+  manage_internal_events: ['exec', 'admin'],
   // The Division Members directory (who leads each division): the whole team can look —
   // officers, leads, exec and recruits — plus the division leads themselves. Editing divisions is
   // separate (manage_divisions_directory / manage_division). Emails on it stay officer+ (view_members).

@@ -10,7 +10,7 @@ import { formatEventTimeRange } from '@/lib/timezone';
 import styles from './calendar.module.css';
 
 interface Item {
-  key: string; kind: 'event' | 'meeting'; date: string; title: string; start: string; end: string | null;
+  key: string; kind: 'event' | 'meeting' | 'internal'; date: string; title: string; start: string; end: string | null;
   location: string | null; href: string; mine: boolean; dayLabel: string | null; repeats?: boolean;
 }
 type View = 'month' | 'agenda';
@@ -84,6 +84,7 @@ export default function CalendarSectionContent() {
       <div className={styles.legend}>
         <span><i className={styles.dotEvent} /> Event</span>
         <span><i className={styles.dotMeeting} /> Meeting</span>
+        <span><i className={styles.dotInternal} /> Internal event</span>
         <span><Ticket size={12} aria-hidden="true" /> You have a ticket</span>
       </div>
 
@@ -106,11 +107,11 @@ export default function CalendarSectionContent() {
                 >
                   <span className={styles.num}>{Number(d.slice(8))}</span>
                   <span className={styles.chips}>
-                    {list.slice(0, 3).map((i) => <span key={i.key} className={`${styles.chip} ${i.kind === 'event' ? styles.chipEvent : styles.chipMeeting}`}>{i.title}</span>)}
+                    {list.slice(0, 3).map((i) => <span key={i.key} className={`${styles.chip} ${i.kind === 'event' ? styles.chipEvent : i.kind === 'internal' ? styles.chipInternal : styles.chipMeeting}`}>{i.title}</span>)}
                     {list.length > 3 && <span className={styles.more}>+{list.length - 3} more</span>}
                   </span>
                   <span className={styles.dots} aria-hidden="true">
-                    {list.slice(0, 4).map((i) => <i key={i.key} className={i.kind === 'event' ? styles.dotEvent : styles.dotMeeting} />)}
+                    {list.slice(0, 4).map((i) => <i key={i.key} className={i.kind === 'event' ? styles.dotEvent : i.kind === 'internal' ? styles.dotInternal : styles.dotMeeting} />)}
                   </span>
                 </button>
               );
@@ -146,7 +147,7 @@ function ItemList({ items }: { items: Item[] }) {
     <ul className={styles.list}>
       {items.map((i) => (
         <li key={i.key}>
-          <Link href={i.href} className={`${styles.item} ${i.kind === 'event' ? styles.itemEvent : styles.itemMeeting}`}>
+          <Link href={i.href} className={`${styles.item} ${i.kind === 'event' ? styles.itemEvent : i.kind === 'internal' ? styles.itemInternal : styles.itemMeeting}`}>
             <span className={styles.itemBar} aria-hidden="true" />
             <span className={styles.itemMain}>
               <span className={styles.itemTitle}>
@@ -160,7 +161,7 @@ function ItemList({ items }: { items: Item[] }) {
                 {i.location && <> · <MapPin size={11} aria-hidden="true" /> {i.location}</>}
               </span>
             </span>
-            <span className={styles.kind}>{i.kind === 'event' ? 'Event' : i.mine ? 'Hosting' : 'Meeting'}</span>
+            <span className={styles.kind}>{i.kind === 'event' ? 'Event' : i.kind === 'internal' ? 'Internal event' : i.mine ? 'Hosting' : 'Meeting'}</span>
           </Link>
         </li>
       ))}

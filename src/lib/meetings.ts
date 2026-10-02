@@ -255,7 +255,7 @@ type AudienceSpec = MeetingAudience & { invitees?: string[] | null; group_ids?: 
 // edited so only people who weren't already invited are notified. The host is never notified.
 export async function notifyMeetingInvites(
   svc: SupabaseClient,
-  meeting: { title: string; when: string },
+  meeting: { title: string; when: string; href?: string },
   after: AudienceSpec,
   opts: { before?: AudienceSpec; hostId?: string } = {},
 ): Promise<number> {
@@ -266,7 +266,7 @@ export async function notifyMeetingInvites(
     type: 'meeting_invite',
     title: `You’re invited to ${meeting.title}`,
     body: meeting.when,
-    href: '/portal?section=meetings&tab=mine',
+    href: meeting.href ?? '/portal?section=meetings&tab=mine',
   }));
   if (rows.length === 0) return 0;
   const { error } = await svc.from('notifications').insert(rows);

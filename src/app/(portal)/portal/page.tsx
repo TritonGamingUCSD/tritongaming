@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, History, Image as ImageIcon, Award, Medal, ArrowLeft, CalendarCheck, CalendarDays, LayoutGrid, LifeBuoy } from 'lucide-react';
+import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, History, Image as ImageIcon, Award, Medal, ArrowLeft, CalendarCheck, CalendarDays, LayoutGrid, LifeBuoy, CalendarHeart } from 'lucide-react';
 import { getProfile, getUserRoles, getMyPrivateProfile, getUser, getRealRoles, getViewAs } from '@/lib/auth';
 import { ViewAsSwitcher } from '@/components/portal/ViewAs';
 import { createClient } from '@/lib/supabase/server';
@@ -46,6 +46,7 @@ import MeetingsSectionContent from './meetings/MeetingsSectionContent';
 import { createServiceClient } from '@/lib/supabase/admin';
 import HelpSectionContent from './help/HelpSectionContent';
 import CalendarSectionContent from './calendar/CalendarSectionContent';
+import InternalEventsSectionContent from './internal-events/InternalEventsSectionContent';
 import { meetingHappeningNow } from '@/lib/meetings';
 import { getAdminData } from './admin/getAdminData';
 import { getStatsData } from './admin/stats/getStatsData';
@@ -73,6 +74,7 @@ interface Props {
 export default async function PortalDashboard({ searchParams }: Props) {
   const { tab: requestedTab, subtab: requestedSubTab, section: requestedSection } = await searchParams;
   // Short Links is a tab of Admin now.
+  if (requestedSection === 'internal_events' || requestedSection === 'team-events') redirect('/portal?section=internal-events');
   if (requestedSection === 'links') redirect('/portal?section=admin&tab=links');
   // Division tabs used to live inside Site Content; old links land on the new Divisions section.
   if (requestedSection === 'site-content' && (requestedTab === 'divisions' || requestedTab === 'my-division')) {
@@ -108,6 +110,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const canManagePoints = hasCapability(roles, 'manage_points');
   const canAttendMeetings = hasCapability(roles, 'attend_meetings');
   const canManageMeetings = hasCapability(roles, 'manage_meetings');   // exec/admin: every meeting + HR export
+  const canViewInternalEvents = hasCapability(roles, 'view_internal_events');
+  const canHostInternalEvents = hasCapability(roles, 'host_internal_events');
   const canHostMeetings = hasCapability(roles, 'host_meetings');         // leads too: plan meetings, manage their own
   // Best-effort: if this lookup fails the bar just doesn't get the meeting boost.
   const meetingNow = canAttendMeetings ? await meetingHappeningNow(createServiceClient(), { id: profile.id, roles }).catch(() => false) : false;
@@ -313,6 +317,12 @@ export default async function PortalDashboard({ searchParams }: Props) {
       dockBoost: (meetingNow ? 100 : 0) + (canManageMeetings ? 10 : 0),
       group: 'TG' as const,
       content: <MeetingsSectionContent canHost={canHostMeetings} canManageAll={canManageMeetings} userId={profile.id} />,
+    }] : []),
+    ...(canViewInternalEvents ? [{
+      id: 'internal-events', icon: <CalendarHeart size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Internal Events',
+      description: canHostInternalEvents ? 'Plan internal events and see who’s coming' : 'Socials, trainings and other internal events',
+      group: 'TG' as const,
+      content: <InternalEventsSectionContent canHost={canHostInternalEvents} />,
     }] : []),
     ...(canViewMembers && membersData ? [{
       id: 'members', icon: <Users size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'TG Members',

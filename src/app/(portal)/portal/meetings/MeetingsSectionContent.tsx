@@ -390,13 +390,13 @@ function MyHistoryPanel() {
 
 // Who a meeting is for: the UNION of roles (everyone holding them, live), saved groups (their current
 // members, live) and individually added people.
-interface Aud { roles: string[]; groups: string[]; invitees: string[] }
-const defaultAud = (): Aud => ({ roles: [...DEFAULT_AUDIENCE], groups: [], invitees: [] });
-const audFrom = (m: { audience: string[] | null; invitees: string[] | null; group_ids: string[] | null }): Aud => ({
+export interface Aud { roles: string[]; groups: string[]; invitees: string[] }
+export const defaultAud = (): Aud => ({ roles: [...DEFAULT_AUDIENCE], groups: [], invitees: [] });
+export const audFrom = (m: { audience: string[] | null; invitees: string[] | null; group_ids: string[] | null }): Aud => ({
   roles: audienceRoles({ audience: m.audience, invitees: m.invitees, group_ids: m.group_ids }), groups: m.group_ids ?? [], invitees: m.invitees ?? [],
 });
-const audPayload = (a: Aud) => ({ audience: a.roles, group_ids: a.groups, invitees: a.invitees });
-const audienceEmpty = (a: Aud) => a.roles.length === 0 && a.groups.length === 0 && a.invitees.length === 0;
+export const audPayload = (a: Aud) => ({ audience: a.roles, group_ids: a.groups, invitees: a.invitees });
+export const audienceEmpty = (a: Aud) => a.roles.length === 0 && a.groups.length === 0 && a.invitees.length === 0;
 
 function CheckTile({ checked, indeterminate, label, onChange }: { checked: boolean; indeterminate?: boolean; label: string; onChange: () => void }) {
   return (
@@ -484,7 +484,7 @@ function PeoplePicker({ team, value, onChange, covered }: { team: TeamPerson[] |
   );
 }
 
-function AudiencePicker({ value, onChange }: { value: Aud; onChange: (v: Aud) => void }) {
+export function AudiencePicker({ value, onChange }: { value: Aud; onChange: (v: Aud) => void }) {
   const team = useTeam();
   const [groups] = useGroups();
   const [showPeople, setShowPeople] = useState(value.invitees.length > 0);
