@@ -2,7 +2,9 @@ import type { Metadata } from 'next';
 import LongEventCard from '@/components/LongEventCard/LongEventCard';
 import EventCard from '@/components/EventCard/EventCard';
 import { getUpcomingEvents, getPreviousEvents } from '@/lib/events';
-import { getContentBlock } from '@/lib/content';
+import { getContentBlocks } from '@/lib/content';
+import { resolveSections } from '@/lib/pageLayout';
+import { Fragment } from 'react';
 import styles from './events.module.css';
 
 export const metadata: Metadata = {
@@ -26,11 +28,13 @@ export const metadata: Metadata = {
 export const revalidate = 60;
 
 export default async function EventsPage() {
-  const [upcoming, previous, content] = await Promise.all([
+  const [upcoming, previous, blocks] = await Promise.all([
     getUpcomingEvents(),
     getPreviousEvents(),
-    getContentBlock('page.events'),
+    getContentBlocks(['page.events', 'layout.events']),
   ]);
+  const content = blocks['page.events'] ?? {};
+  const shown = resolveSections('events', blocks['layout.events']?.sections);
   const heroLabel = content.label as string;
   const heroTitle = content.title as string;
   const heroSub = content.subtitle as string;
@@ -41,6 +45,59 @@ export default async function EventsPage() {
   // A page-long stack of uniform full-width rows was the "feels weird" of
   // it; one clear focal point plus a grid reads like an actual events page.
   const [featured, ...restUpcoming] = upcoming;
+
+  const sections: Record<string, React.ReactNode> = {
+    upcoming: (
+      <>
+      {featured && (
+        <section className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <p className={styles.sectionLabel}>{(content.next_label as string) || "DON'T MISS OUT"}</p>
+            <h2 className={styles.sectionTitle}>{(content.next_title as string) || 'Next Up'}</h2>
+          </div>
+          <LongEventCard event={featured} />
+        </section>
+      )}
+
+      {restUpcoming.length > 0 && (
+        <section className={styles.section}>
+          {!featured && (
+            <div className={styles.sectionHeader}>
+              <p className={styles.sectionLabel}>{(content.next_label as string) || "DON'T MISS OUT"}</p>
+              <h2 className={styles.sectionTitle}>{(content.upcoming_title as string) || 'Upcoming Events'}</h2>
+            </div>
+          )}
+          <div className={styles.grid}>
+            {restUpcoming.map((event) => (
+              <EventCard key={event._id} event={event} />
+            ))}
+          </div>
+        </section>
+      )}
+
+
+      </>
+    ),
+    past: (
+      <>
+      {previous.length > 0 && (
+        <section className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <p className={styles.sectionLabel}>{(content.past_label as string) || 'THE ARCHIVE'}</p>
+            <h2 className={styles.sectionTitle}>{(content.past_title as string) || 'Past Events'}</h2>
+          </div>
+          <div className={`${styles.grid} ${styles.gridPast}`}>
+            {previous.map((event) => (
+              <EventCard key={event._id} event={event} />
+            ))}
+          </div>
+        </section>
+      )}
+
+
+      </>
+    ),
+  };
 
   return (
     <div className={styles.page}>
@@ -53,49 +110,11 @@ export default async function EventsPage() {
         </div>
       </div>
 
-      {featured && (
-        <section className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <p className={styles.sectionLabel}>DON'T MISS OUT</p>
-            <h2 className={styles.sectionTitle}>Next Up</h2>
-          </div>
-          <LongEventCard event={featured} />
-        </section>
-      )}
+      {shown.map((id) => <Fragment key={id}>{sections[id]}</Fragment>)}
 
-      {restUpcoming.length > 0 && (
-        <section className={styles.section}>
-          {!featured && (
-            <div className={styles.sectionHeader}>
-              <p className={styles.sectionLabel}>DON'T MISS OUT</p>
-              <h2 className={styles.sectionTitle}>Upcoming Events</h2>
-            </div>
-          )}
-          <div className={styles.grid}>
-            {restUpcoming.map((event) => (
-              <EventCard key={event._id} event={event} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {previous.length > 0 && (
-        <section className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <p className={styles.sectionLabel}>THE ARCHIVE</p>
-            <h2 className={styles.sectionTitle}>Past Events</h2>
-          </div>
-          <div className={`${styles.grid} ${styles.gridPast}`}>
-            {previous.map((event) => (
-              <EventCard key={event._id} event={event} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {upcoming.length === 0 && previous.length === 0 && (
+      {shown.length > 0 && upcoming.length === 0 && previous.length === 0 && (
         <div className={styles.empty}>
-          <p className={styles.emptyMsg}>No events currently scheduled. Check back soon!</p>
+          <p className={styles.emptyMsg}>{(content.empty as string) || 'No events currently scheduled. Check back soon!'}</p>
         </div>
       )}
     </div>

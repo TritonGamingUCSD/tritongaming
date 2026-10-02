@@ -2,11 +2,12 @@
 
 import { showToast } from '@/lib/toast';
 import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { Pencil, X, Check, MapPin, GripVertical } from 'lucide-react';
+import { Pencil, X, Check, MapPin, GripVertical, ArrowUp, ArrowDown, Eye, EyeOff, Monitor, Smartphone, PanelRightClose, PanelRightOpen, Maximize2, Minimize2, ZoomIn } from 'lucide-react';
 import type { ContentBlock, FieldDef } from '@/lib/content-blocks';
 import { CATEGORY_ORDER } from '@/lib/content-blocks';
+import { PAGE_SECTIONS, resolveSections, type PageLayout } from '@/lib/pageLayout';
 import { usePortalParams, useLiveParams } from '@/lib/usePortalParams';
 import SectionTabs from '@/components/ui/SectionTabs';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
@@ -25,6 +26,8 @@ interface Props {
   contentMap: Record<string, Record<string, unknown>>;
   lastEdited: Record<string, { by: string; at: string }>;
 }
+
+const ALL_PAGES = ['/', '/our-story', '/team', '/events', '/divisions', '/sponsors', '/get-involved', '/membership', '/media'];
 
 const COLOR_PREVIEW: Record<string, string> = {
   yellow: '#ffc72c', blue: '#275a8f', green: '#059669', red: '#dc2626',
@@ -123,6 +126,95 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, las
   const activeBlock = blocksInTab.find((b) => b.key === activeKey) ?? blocksInTab[0];
   const isDirty = (key: string) => JSON.stringify(forms[key]) !== JSON.stringify(savedForms[key]);
 
+  // ── Live preview: the real public page, with these unsaved edits laid over it ──
+  const [previewOpen, setPreviewOpen] = useState(true);
+  const [device, setDevice] = useState<'desktop' | 'phone'>('desktop');
+  const frameRef = useRef<HTMLIFrameElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const [boxWidth, setBoxWidth] = useState(600);
+  const [boxHeight, setBoxHeight] = useState(400);
+  const [full, setFull] = useState(false);
+  useEffect(() => {
+    if (!full) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setFull(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [full]);
+  const dirtyDrafts: Record<string, Record<string, unknown>> = {};
+  blocks.forEach((b) => { if (isDirty(b.key)) dirtyDrafts[b.key] = forms[b.key]; });
+  const draftsJson = JSON.stringify(dirtyDrafts);
+  // Sitewide blocks (banner, footer, links) can be previewed on any page; others on the page(s) they appear on.
+  const pageChoices = activeBlock ? (activeBlock.pages.includes('*') ? ALL_PAGES : activeBlock.pages) : ['/'];
+  const [pagePick, setPagePick] = useState<string | null>(null);
+  const previewPage = pagePick && pageChoices.includes(pagePick) ? pagePick : pageChoices[0];
+  // Which part of the page to bring into view: the footer for the footer block, otherwise the section holding this block's own heading text.
+  const focusMsg = (() => {
+    if (!activeBlock) return { type: 'tg-preview-focus', target: 'top' };
+    if (activeBlock.key === 'footer') return { type: 'tg-preview-focus', target: 'footer' };
+    if (activeBlock.key.startsWith('layout.') || activeBlock.key === 'announcement') return { type: 'tg-preview-focus', target: 'top' };
+    const vals = (activeBlock.fields as FieldDef[])
+      .filter((f) => f.type === 'text' || f.type === 'textarea')
+      .map((f) => forms[activeBlock.key]?.[f.name])
+      .filter((v): v is string => typeof v === 'string' && v.trim().length >= 4);
+    // A heading-like field first (title/label), else whatever text there is.
+    const pref = (activeBlock.fields as FieldDef[]).filter((f) => /title|label|badge/i.test(f.name)).map((f) => forms[activeBlock.key]?.[f.name]).find((v): v is string => typeof v === 'string' && v.trim().length >= 4);
+    return { type: 'tg-preview-focus', target: 'text', text: (pref ?? vals[0] ?? '').slice(0, 60) };
+  })();
+  const focusRef = useRef(focusMsg);
+  focusRef.current = focusMsg;
+  useEffect(() => {
+    // The frame tells us when a page has loaded (a different page reloads it); scroll then, and also right away for a block on the same page.
+    const send = () => frameRef.current?.contentWindow?.postMessage(focusRef.current, window.location.origin);
+    const onReady = (e: MessageEvent) => { if (e.origin === window.location.origin && e.data?.type === 'tg-preview-ready') setTimeout(send, 400); };
+    window.addEventListener('message', onReady);
+    const t = setTimeout(send, 150);
+    return () => { window.removeEventListener('message', onReady); clearTimeout(t); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeBlock?.key, previewPage]);
+  // Keep the preview in step with the text box: send the latest edit shortly after typing pauses, one request at a time (if more typing
+  // arrives while one is in flight, only the newest is sent next), then tell the frame to redraw.
+  const syncing = useRef(false);
+  const latest = useRef(draftsJson);
+  latest.current = draftsJson;
+  const sentJson = useRef<string | null>(null);
+  const pushDrafts = useRef<() => void>(() => {});
+  pushDrafts.current = async () => {
+    if (syncing.current) return;
+    syncing.current = true;
+    try {
+      while (sentJson.current !== latest.current) {
+        const json = latest.current;
+        const res = await fetch('/api/admin/content/draft', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ drafts: JSON.parse(json) }) });
+        if (!res.ok) break;
+        sentJson.current = json;
+        frameRef.current?.contentWindow?.postMessage({ type: 'tg-preview-refresh' }, window.location.origin);
+      }
+    } catch { /* the preview just stays as it was */ }
+    syncing.current = false;
+  };
+  useEffect(() => {
+    if (!previewOpen) return;
+    const t = setTimeout(() => pushDrafts.current(), 120);
+    return () => clearTimeout(t);
+  }, [draftsJson, previewOpen]);
+  useEffect(() => {
+    const el = boxRef.current;
+    if (!el) return;
+    const measure = () => { setBoxWidth(el.clientWidth); setBoxHeight(el.clientHeight); };
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    measure();
+    return () => ro.disconnect();
+  }, [previewOpen, !!activeBlock, full]);
+  // Zoomed: real size, anchored to the bottom-right corner of the window, where the announcement banner sits (too small to read when the whole page is shrunk to fit).
+  const [zoomPick, setZoomPick] = useState<boolean | null>(null);
+  const zoomed = !full && device === 'desktop' && (zoomPick ?? activeBlock?.key === 'announcement');
+  const frameW = device === 'desktop' ? 1920 : 390;
+  const frameH = device === 'desktop' ? 1080 : 844;
+  // The preview area is as tall as the desktop page fitted to the panel; the phone is shrunk to fit that same height instead of towering over it.
+  const areaH = 1080 * Math.min(1, boxWidth / 1920);
+  const scale = zoomed ? 1 : full ? Math.min(boxWidth / frameW, boxHeight / frameH) : device === 'phone' ? Math.min(1, areaH / frameH, boxWidth / frameW) : Math.min(1, boxWidth / frameW);
+
   function selectCategory(c: string) {
     setCategory(c); setQuery(''); setActiveKey(null); setParams({ tab: c, subtab: null, block: null });
   }
@@ -171,6 +263,7 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, las
       ) : activeBlock && (
         <>
 
+          <div className={`${styles.editorWithPreview} ${styles.previewOn}`}>
           <div className={styles.editorCard}>
             <div className={styles.editPanelHeader}>
               <div>
@@ -218,6 +311,45 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, las
                   : 'Save Changes'}
               </button>
             </div>
+          </div>
+
+          {(
+            <aside className={`${styles.previewPane} ${full ? styles.previewFull : ''} ${!previewOpen ? styles.previewCollapsed : ''}`} aria-label="Live preview">
+              <div className={styles.previewBar}>
+                <span className={styles.previewTitle}>
+                  Live preview
+                  {pageChoices.length > 1 ? (
+                    <select className={styles.previewPick} value={previewPage} onChange={(e) => setPagePick(e.target.value)} aria-label="Page to preview">
+                      {pageChoices.map((pg) => <option key={pg} value={pg}>{pg === '/' ? 'Homepage' : pg}</option>)}
+                    </select>
+                  ) : <em>{previewPage === '/' ? 'Homepage' : previewPage}</em>}
+                </span>
+                <div className={styles.previewTools}>
+                  <button type="button" className={`${styles.previewTool} ${device === 'desktop' ? styles.previewToolOn : ''}`} onClick={() => setDevice('desktop')} aria-label="Desktop width" title="Desktop"><Monitor size={14} /></button>
+                  <button type="button" className={`${styles.previewTool} ${device === 'phone' ? styles.previewToolOn : ''}`} onClick={() => setDevice('phone')} aria-label="Phone width" title="Phone"><Smartphone size={14} /></button>
+                  {!full && <button type="button" className={`${styles.previewTool} ${zoomed ? styles.previewToolOn : ''}`} onClick={() => setZoomPick(!zoomed)} aria-pressed={zoomed} aria-label="Zoom to the bottom-right corner (announcement banner)" title={zoomed ? 'Show the whole page' : 'Zoom in on the bottom-right corner'}><ZoomIn size={14} /></button>}
+                  <button type="button" className={styles.previewTool} onClick={() => setFull((f) => !f)} aria-label={full ? 'Exit full screen' : 'Full screen'} title={full ? 'Exit full screen (Esc)' : 'Full screen'}>{full ? <Minimize2 size={14} /> : <Maximize2 size={14} />}</button>
+                  {!full && <button type="button" className={`${styles.previewTool} ${styles.previewHideBtn}`} onClick={() => setPreviewOpen(false)} aria-label="Hide preview" title="Hide preview"><PanelRightClose size={14} /></button>}
+                </div>
+              </div>
+              <div ref={boxRef} className={`${styles.previewBox} ${device === 'phone' && !full ? styles.previewBoxPhone : ''}`} style={full ? undefined : zoomed ? { height: 360 } : { height: device === 'phone' ? areaH : frameH * scale }}>
+                <div className={styles.previewScaler} style={zoomed ? { width: frameW, height: frameH, position: 'absolute', right: 0, bottom: 0 } : { width: frameW * scale, height: frameH * scale }}>
+                  <iframe
+                    ref={frameRef}
+                    key={previewPage}
+                    title="Live preview of the public page"
+                    src={`/preview${previewPage === '/' ? '' : previewPage}`}
+                    className={styles.previewFrame}
+                    style={{ width: frameW, height: frameH, transform: `scale(${scale})` }}
+                  />
+                </div>
+              </div>
+              <p className={styles.previewNote}>Shows your unsaved edits on the real page. Nothing is public until you press Save Changes.</p>
+            </aside>
+          )}
+          {!previewOpen && (
+            <button type="button" className={`${styles.previewShow} ${styles.previewShowBtn}`} onClick={() => setPreviewOpen(true)}><PanelRightOpen size={14} aria-hidden="true" /> Show live preview</button>
+          )}
           </div>
         </>
       )}
@@ -295,6 +427,43 @@ function FieldEditor({ field, value, onChange }: {
         />
         <div className={styles.fieldHint}>Each line = one row of text</div>
       </label>
+    );
+  }
+
+  // ── Page sections: show / hide / reorder ─────────────
+  if (field.type === 'sections') {
+    const defs = PAGE_SECTIONS[(field as { page: string }).page] ?? [];
+    const layout = (value && typeof value === 'object' ? value : {}) as PageLayout;
+    const hidden = Array.isArray(layout.hidden) ? layout.hidden : [];
+    // Current order = the saved order (hidden ones included), then any section not mentioned yet.
+    const saved = (Array.isArray(layout.order) ? layout.order : []).filter((id) => defs.some((d) => d.id === id));
+    const order = [...saved, ...defs.map((d) => d.id).filter((id) => !saved.includes(id))];
+    const set = (nextOrder: string[], nextHidden: string[]) => onChange({ order: nextOrder, hidden: nextHidden });
+    const move = (i: number, d: -1 | 1) => { const n = [...order]; const j = i + d; if (j < 0 || j >= n.length) return; [n[i], n[j]] = [n[j], n[i]]; set(n, hidden); };
+    const shownNow = resolveSections((field as { page: string }).page, layout).length;
+    return (
+      <div className={styles.fieldGroup}>
+        {labelEl}
+        <ul className={styles.sectionList}>
+          {order.map((id, i) => {
+            const def = defs.find((d) => d.id === id);
+            const off = hidden.includes(id);
+            return (
+              <li key={id} className={`${styles.sectionRow} ${off ? styles.sectionOff : ''}`}>
+                <span className={styles.sectionName}>{def?.label ?? id}</span>
+                <span className={styles.sectionBtns}>
+                  <button type="button" className={styles.sectionBtn} onClick={() => move(i, -1)} disabled={i === 0} aria-label={`Move ${def?.label} up`}><ArrowUp size={14} /></button>
+                  <button type="button" className={styles.sectionBtn} onClick={() => move(i, 1)} disabled={i === order.length - 1} aria-label={`Move ${def?.label} down`}><ArrowDown size={14} /></button>
+                  <button type="button" className={`${styles.sectionBtn} ${off ? '' : styles.sectionBtnOn}`} onClick={() => set(order, off ? hidden.filter((h) => h !== id) : [...hidden, id])} aria-pressed={!off} aria-label={off ? `Show ${def?.label}` : `Hide ${def?.label}`}>
+                    {off ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+        <div className={styles.fieldHint}>{shownNow} of {order.length} sections shown. The banner at the top of the page always stays first.</div>
+      </div>
     );
   }
 

@@ -2,7 +2,7 @@ import { createElement } from 'react';
 import {
   Megaphone, Settings, Link as LinkIcon, Home, Info, BarChart3, Hand, Handshake,
   UserPlus, Users, Trophy, CalendarDays, BadgeDollarSign, BookText, CreditCard,
-  Video, Camera,
+  Video, Camera, LayoutList,
 } from 'lucide-react';
 
 // Icons render as small (16px) monochrome glyphs in the admin content-block
@@ -16,6 +16,16 @@ const ICON_PROPS = { size: 16, strokeWidth: 1.5, 'aria-hidden': true } as const;
 // list. '*' means sitewide (every public page), used for things like the
 // announcement banner or the footer.
 const SITEWIDE = ['*'];
+
+const layoutBlock = (page: string, category: string, path: string) => ({
+  key: `layout.${page}`,
+  title: 'Page layout',
+  description: 'Show, hide and reorder the sections of this page.',
+  icon: createElement(LayoutList, ICON_PROPS),
+  category,
+  pages: [path],
+  fields: [{ name: 'sections', label: 'Sections', type: 'sections' as const, page }],
+});
 
 export const CONTENT_BLOCKS = [
   // ── Global (every page) ──────────────────────────────────
@@ -224,6 +234,8 @@ export const CONTENT_BLOCKS = [
     fields: [
       { name: 'title',    label: 'Page Title', type: 'text'     as const, placeholder: 'Our Divisions' },
       { name: 'subtitle', label: 'Subtitle',   type: 'textarea' as const },
+      { name: 'learn_more', label: 'Card Link Text',     type: 'text' as const, placeholder: 'Learn More →', optional: true },
+      { name: 'empty',      label: 'Text When No Divisions', type: 'text' as const, placeholder: 'No divisions available', optional: true },
     ],
   },
 
@@ -239,6 +251,12 @@ export const CONTENT_BLOCKS = [
       { name: 'label',    label: 'Eyebrow Label', type: 'text'     as const, placeholder: "WHAT'S HAPPENING" },
       { name: 'title',    label: 'Page Title',    type: 'text'     as const, placeholder: 'Events' },
       { name: 'subtitle', label: 'Subtitle',      type: 'textarea' as const },
+      { name: 'next_label',     label: 'Next Up — Eyebrow Label', type: 'text' as const, placeholder: "DON'T MISS OUT", optional: true },
+      { name: 'next_title',     label: 'Next Up — Title',         type: 'text' as const, placeholder: 'Next Up', optional: true },
+      { name: 'upcoming_title', label: 'Upcoming List — Title',   type: 'text' as const, placeholder: 'Upcoming Events', optional: true },
+      { name: 'past_label',     label: 'Past Events — Eyebrow Label', type: 'text' as const, placeholder: 'THE ARCHIVE', optional: true },
+      { name: 'past_title',     label: 'Past Events — Title',     type: 'text' as const, placeholder: 'Past Events', optional: true },
+      { name: 'empty',          label: 'Text When No Events',     type: 'text' as const, placeholder: 'No events currently scheduled. Check back soon!', optional: true },
     ],
   },
 
@@ -268,6 +286,9 @@ export const CONTENT_BLOCKS = [
       { name: 'offer4_body',  label: 'Offering 4 — Body',  type: 'textarea' as const },
       { name: 'cta_heading', label: 'Contact CTA — Heading',  type: 'text' as const, placeholder: 'Interested in Sponsoring Triton Gaming?' },
       { name: 'cta_sub',     label: 'Contact CTA — Subtext',  type: 'text' as const, placeholder: "Whatever you're envisioning — we'll make it happen." },
+      { name: 'sponsors_label', label: 'Sponsors — Eyebrow Label', type: 'text' as const, placeholder: 'CURRENT PARTNERS', optional: true },
+      { name: 'sponsors_title', label: 'Sponsors — Title',         type: 'text' as const, placeholder: 'Our Sponsors', optional: true },
+      { name: 'sponsors_empty', label: 'Sponsors — Text When None', type: 'text' as const, placeholder: 'Sponsor announcements coming soon.', optional: true },
     ],
   },
   {
@@ -339,6 +360,7 @@ export const CONTENT_BLOCKS = [
       { name: 'stat3_label', label: 'Stat 3 — Label', type: 'text' as const, placeholder: 'Committees' },
       { name: 'stat3_value', label: 'Stat 3 — Value', type: 'text' as const },
       { name: 'recruitment_flyer_url', label: 'Recruitment Flyer', type: 'image' as const, optional: true },
+      { name: 'apply_text', label: 'Apply Button Text', type: 'text' as const, placeholder: 'Apply Now', optional: true },
     ],
   },
 
@@ -359,6 +381,9 @@ export const CONTENT_BLOCKS = [
       { name: 'intro_text',    label: 'Intro Text',           type: 'textarea' as const },
       { name: 'purchase_cta',  label: 'Purchase Button Text', type: 'text'     as const, placeholder: 'Get Your Card' },
       { name: 'purchase_url',  label: 'Purchase Button URL',  type: 'url'      as const },
+      { name: 'partners_label', label: 'Partners — Eyebrow Label', type: 'text' as const, placeholder: 'WHERE TO USE IT', optional: true },
+      { name: 'partners_title', label: 'Partners — Title',         type: 'text' as const, placeholder: 'Partner Discounts', optional: true },
+      { name: 'partners_empty', label: 'Partners — Text When None', type: 'text' as const, placeholder: 'Partner announcements coming soon.', optional: true },
     ],
   },
   {
@@ -393,6 +418,13 @@ export const CONTENT_BLOCKS = [
       { name: 'hero_label',    label: 'Eyebrow Label', type: 'text'     as const, placeholder: 'MEDIA' },
       { name: 'hero_title',    label: 'Page Title',    type: 'text'     as const, placeholder: 'Watch & Explore' },
       { name: 'hero_subtitle', label: 'Subtitle',      type: 'textarea' as const },
+      { name: 'videos_label', label: 'Videos — Eyebrow Label', type: 'text' as const, placeholder: 'WATCH', optional: true },
+      { name: 'videos_title', label: 'Videos — Title',         type: 'text' as const, placeholder: 'Long-Form Videos', optional: true },
+      { name: 'videos_empty', label: 'Videos — Text When None', type: 'text' as const, placeholder: 'Videos coming soon.', optional: true },
+      { name: 'albums_label', label: 'Albums — Eyebrow Label', type: 'text' as const, placeholder: 'RELIVE THE MOMENT', optional: true },
+      { name: 'albums_title', label: 'Albums — Title',         type: 'text' as const, placeholder: 'Photo Albums', optional: true },
+      { name: 'albums_empty', label: 'Albums — Text When None', type: 'text' as const, placeholder: 'Albums coming soon.', optional: true },
+      { name: 'albums_link',  label: 'Album Link Text',        type: 'text' as const, placeholder: 'View Album →', optional: true },
     ],
   },
   {
@@ -417,6 +449,14 @@ export const CONTENT_BLOCKS = [
       { name: 'items', label: 'Albums', type: 'kvlist' as const, kvKeyLabel: 'Title', kvValueLabel: 'Google Photos Album URL' },
     ],
   },
+  // ── Page layouts (show / hide / reorder sections) ──────────
+  layoutBlock('homepage', 'Homepage', '/'),
+  layoutBlock('our-story', 'Our Story', '/our-story'),
+  layoutBlock('events', 'Events', '/events'),
+  layoutBlock('sponsors', 'Sponsors', '/sponsors'),
+  layoutBlock('get-involved', 'Get Involved', '/get-involved'),
+  layoutBlock('membership', 'Membership', '/membership'),
+  layoutBlock('media', 'Media', '/media'),
 ];
 
 export type ContentBlock = (typeof CONTENT_BLOCKS)[number];

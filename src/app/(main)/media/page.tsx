@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { resolveSections } from '@/lib/pageLayout';
+import { Fragment } from 'react';
 import { Camera, ImageOff } from 'lucide-react';
 import { getContentBlocks } from '@/lib/content';
 import { youtubeVideoId } from '@/lib/youtube';
@@ -26,7 +28,7 @@ export const metadata: Metadata = {
 type ListItem = { value?: string; label?: string };
 
 export default async function MediaPage() {
-  const blocks = await getContentBlocks(['page.media', 'media.videos', 'media.albums']);
+  const blocks = await getContentBlocks(['page.media', 'media.videos', 'media.albums', 'layout.media']);
   const content = blocks['page.media'] ?? {};
   const videosContent = blocks['media.videos'] ?? {};
   const albumsContent = blocks['media.albums'] ?? {};
@@ -39,24 +41,14 @@ export default async function MediaPage() {
   const albums = ((albumsContent.items as ListItem[] | undefined) ?? [])
     .filter((a) => a.value && a.label);
 
-  return (
-    <div className={styles.page}>
-
-      {/* Hero */}
-      <div className={styles.heroBanner}>
-        <div className={styles.heroBg} aria-hidden="true" />
-        <div className={styles.heroContent}>
-          <p className={styles.heroLabel}>{(content.hero_label as string) || 'MEDIA'}</p>
-          <h1 className={styles.heroTitle}>{(content.hero_title as string) || 'Watch & Explore'}</h1>
-          <p className={styles.heroSub}>{content.hero_subtitle as string}</p>
-        </div>
-      </div>
-
-      {/* Long-form videos */}
+  const sections: Record<string, React.ReactNode> = {
+    videos: (
+      <>
+{/* Long-form videos */}
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
-          <p className={styles.sectionLabel}>WATCH</p>
-          <h2 className={styles.sectionTitle}>Long-Form Videos</h2>
+          <p className={styles.sectionLabel}>{(content.videos_label as string) || 'WATCH'}</p>
+          <h2 className={styles.sectionTitle}>{(content.videos_title as string) || 'Long-Form Videos'}</h2>
         </div>
         {videos.length > 0 ? (
           <div className={styles.videoGrid}>
@@ -68,15 +60,18 @@ export default async function MediaPage() {
             ))}
           </div>
         ) : (
-          <p className={styles.emptyState}>Videos coming soon.</p>
+          <p className={styles.emptyState}>{(content.videos_empty as string) || 'Videos coming soon.'}</p>
         )}
       </section>
-
-      {/* Photo albums */}
+      </>
+    ),
+    albums: (
+      <>
+{/* Photo albums */}
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
-          <p className={styles.sectionLabel}>RELIVE THE MOMENT</p>
-          <h2 className={styles.sectionTitle}>Photo Albums</h2>
+          <p className={styles.sectionLabel}>{(content.albums_label as string) || 'RELIVE THE MOMENT'}</p>
+          <h2 className={styles.sectionTitle}>{(content.albums_title as string) || 'Photo Albums'}</h2>
         </div>
         {albums.length > 0 ? (
           <div className={styles.albumGrid}>
@@ -91,18 +86,36 @@ export default async function MediaPage() {
                 <span className={styles.albumIcon}><Camera size={22} strokeWidth={1.5} aria-hidden="true" /></span>
                 <div>
                   <div className={styles.albumTitle}>{a.value}</div>
-                  <div className={styles.albumSub}>View Album →</div>
+                  <div className={styles.albumSub}>{(content.albums_link as string) || 'View Album →'}</div>
                 </div>
               </a>
             ))}
           </div>
         ) : (
           <p className={styles.emptyState}>
-            <ImageOff size={18} strokeWidth={1.5} aria-hidden="true" /> Albums coming soon.
+            <ImageOff size={18} strokeWidth={1.5} aria-hidden="true" /> {(content.albums_empty as string) || 'Albums coming soon.'}
           </p>
         )}
       </section>
+      </>
+    ),
+  };
+  const order = resolveSections('media', blocks['layout.media']?.sections);
 
+  return (
+    <div className={styles.page}>
+
+      {/* Hero */}
+      <div className={styles.heroBanner}>
+        <div className={styles.heroBg} aria-hidden="true" />
+        <div className={styles.heroContent}>
+          <p className={styles.heroLabel}>{(content.hero_label as string) || 'MEDIA'}</p>
+          <h1 className={styles.heroTitle}>{(content.hero_title as string) || 'Watch & Explore'}</h1>
+          <p className={styles.heroSub}>{content.hero_subtitle as string}</p>
+        </div>
+      </div>
+
+      {order.map((id) => <Fragment key={id}>{sections[id]}</Fragment>)}
     </div>
   );
 }

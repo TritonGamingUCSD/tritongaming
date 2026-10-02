@@ -1,5 +1,6 @@
 import { unstable_cache } from 'next/cache';
 import { createPublicClient } from '@/lib/supabase/public';
+import { getPreviewDrafts } from '@/lib/contentPreview';
 
 // Public page copy rarely changes, so it's cached for a few minutes and shared
 // between visitors. Saving in the content editor calls revalidateTag
@@ -17,11 +18,18 @@ async function fetchBlocks(keys: string[]): Promise<Record<string, Record<string
 
 export async function getContentBlocks(keys: string[]): Promise<Record<string, Record<string, unknown>>> {
   const sorted = [...keys].sort();
+  let saved: Record<string, Record<string, unknown>> = {};
   try {
-    return await unstable_cache(() => fetchBlocks(sorted), ['site-content', ...sorted], { revalidate: REVALIDATE_SECONDS, tags: ['site-content'] })();
+    saved = await unstable_cache(() => fetchBlocks(sorted), ['site-content', ...sorted], { revalidate: REVALIDATE_SECONDS, tags: ['site-content'] })();
   } catch {
-    return {};
+    saved = {};
   }
+  // Only the editor's /preview ever has drafts: their unsaved edits replace the saved copy of that block.
+  const drafts = getPreviewDrafts();
+  if (!drafts) return saved;
+  const merged = { ...saved };
+  for (const k of keys) if (drafts[k]) merged[k] = drafts[k];
+  return merged;
 }
 
 export async function getContentBlock(key: string): Promise<Record<string, unknown>> {

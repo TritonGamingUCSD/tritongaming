@@ -744,3 +744,56 @@
 .searchField { flex: 1; min-width: 0; background: none; border: none; outline: none; color: var(--white); font-family: inherit; font-size: 0.85rem; }
 .searchField::placeholder { color: rgba(242, 241, 240, 0.4); }
 @media (max-width: 640px) { .searchWrap { width: 100%; } }
+
+/* ── Live preview beside the editor ── */
+.editorWithPreview { display: block; }
+.previewShow { display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.7rem; padding: 0.4rem 0.8rem; border-radius: 0.6rem; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.04); color: rgba(242, 241, 240, 0.8); font: inherit; font-size: 0.78rem; cursor: pointer; }
+.previewPane { margin-top: 0.9rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.previewBar { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.previewTitle { font-family: var(--font-futura-heavy); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(242, 241, 240, 0.85); }
+.previewTitle em { font-style: normal; text-transform: none; letter-spacing: 0; color: rgba(242, 241, 240, 0.45); margin-left: 0.4rem; }
+.previewTools { display: flex; gap: 0.25rem; }
+.previewTool { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 0.5rem; border: 1px solid rgba(255, 255, 255, 0.1); background: transparent; color: rgba(242, 241, 240, 0.6); cursor: pointer; }
+.previewTool:hover { color: #fff; background: rgba(255, 255, 255, 0.06); }
+.previewToolOn { color: var(--yellow); border-color: rgba(255, 199, 44, 0.5); background: rgba(255, 199, 44, 0.1); }
+
+.previewBox { border-radius: 0.9rem; border: 1px solid rgba(255, 255, 255, 0.1); background: #05070d; overflow: hidden; display: flex; justify-content: center; }
+.previewScaler { position: relative; overflow: hidden; }
+.previewFrame { border: 0; transform-origin: top left; background: #05070d; display: block; }
+.previewNote { margin: 0; font-size: 0.72rem; color: rgba(242, 241, 240, 0.4); }
+@media (min-width: 1200px) {
+  .editorWithPreview.previewOn { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
+  .editorWithPreview.previewOn .previewPane { margin-top: 0; position: sticky; top: 0.5rem; }
+}
+.previewPick { margin-left: 0.5rem; padding: 0.15rem 0.4rem; border-radius: 0.4rem; border: 1px solid rgba(255, 255, 255, 0.15); background: rgba(255, 255, 255, 0.05); color: rgba(242, 241, 240, 0.85); font: inherit; font-size: 0.74rem; text-transform: none; letter-spacing: 0; }
+.previewPick option { color: #111; }
+@media (min-width: 1200px) {
+  .editorWithPreview.previewOn { grid-template-columns: minmax(380px, 5fr) minmax(0, 7fr); }
+}
+
+/* Page layout: show / hide / reorder */
+.sectionList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.sectionRow { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.55rem 0.75rem; border-radius: 0.7rem; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.03); }
+.sectionOff { opacity: 0.55; }
+.sectionOff .sectionName { text-decoration: line-through; }
+.sectionName { font-size: 0.88rem; color: var(--white); }
+.sectionBtns { display: inline-flex; gap: 0.25rem; }
+.sectionBtn { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 0.5rem; border: 1px solid rgba(255, 255, 255, 0.1); background: transparent; color: rgba(242, 241, 240, 0.6); cursor: pointer; }
+.sectionBtn:hover:not(:disabled) { color: #fff; background: rgba(255, 255, 255, 0.07); }
+.sectionBtn:disabled { opacity: 0.3; cursor: default; }
+.sectionBtnOn { color: var(--yellow); border-color: rgba(255, 199, 44, 0.4); }
+
+/* Full-screen preview: covers the whole window; the page is scaled to fit it. Esc or the button returns. */
+.previewFull { position: fixed !important; inset: 0; z-index: 1000; margin: 0 !important; padding: 0.75rem 1rem; background: #05070d; }
+.previewFull .previewBox { flex: 1; min-height: 0; align-items: center; }
+.previewFull .previewNote { display: none; }
+
+.previewBox { position: relative; }
+
+/* Phone width: no dark bars at the sides; just the phone-shaped screen centered on the panel. */
+.previewBoxPhone { background: transparent; border: 0; border-radius: 0; }
+.previewBoxPhone .previewScaler { border-radius: 1.1rem; border: 1px solid rgba(255, 255, 255, 0.18); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45); }
+
+/* On a desktop-width window the preview is always there; it can only be hidden on narrower windows. */
+@media (max-width: 1199px) { .previewCollapsed { display: none; } }
+@media (min-width: 1200px) { .previewHideBtn, .previewShowBtn { display: none; } }

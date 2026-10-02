@@ -749,7 +749,8 @@
   .topToggle { display: grid; place-items: center; width: 36px; height: 36px; flex-shrink: 0; border: 0; border-radius: 0.65rem; background: transparent; color: rgba(242, 241, 240, 0.6); cursor: pointer; transition: background 0.15s, color 0.15s; }
   .topToggle:hover { background: rgba(255, 255, 255, 0.07); color: var(--white); }
   .topTitle { display: flex; align-items: center; gap: 0.65rem; min-width: 0; flex: 1; }
-  .topIcon { display: grid; place-items: center; width: 30px; height: 30px; flex-shrink: 0; border-radius: 0.6rem; color: var(--frame-accent); background: color-mix(in srgb, var(--frame-accent) 16%, transparent); border: 1px solid color-mix(in srgb, var(--frame-accent) 32%, transparent); }
+  .topIcon > svg { width: 100%; height: 100%; }
+  .topIcon { display: grid; place-items: center; box-sizing: border-box; width: 36px; height: 36px; padding: 8px; flex-shrink: 0; border-radius: 0.6rem; color: var(--frame-accent); background: color-mix(in srgb, var(--frame-accent) 16%, transparent); border: 1px solid color-mix(in srgb, var(--frame-accent) 32%, transparent); }
   .topName { font-family: var(--font-futura-heavy); font-size: 1.08rem; letter-spacing: 0.04em; color: var(--white); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .topRight { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
   .topSearch { width: 300px; }
@@ -840,4 +841,10 @@
   .appFrame .rail .railFooter > a:not([class*='Help']):hover > span { background: rgba(255, 199, 44, 0.22); border-color: #ffc72c; }
   .appFrame .rail .railFooter > a[class*='Help']:hover > svg { background: rgba(34, 211, 238, 0.2); border-color: #22d3ee; }
   .appFrame .rail .railFooter > button:hover > span { background: rgba(220, 38, 38, 0.22); border-color: rgba(220, 38, 38, 0.6); }
+}
+
+/* Pages that want the whole window (Site Content with its live preview) drop the centered max-width and shrink the padding. */
+@media (min-width: 900px) {
+  .desktopPanel:has([data-wide]) { max-width: none; margin: 0; }
+  .frameBody:has([data-wide]) { padding: 1rem 1.25rem 1.5rem; }
 }

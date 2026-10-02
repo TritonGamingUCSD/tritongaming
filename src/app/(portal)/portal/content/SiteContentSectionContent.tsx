@@ -18,9 +18,9 @@ interface Props {
 export default function SiteContentSectionContent({ canEditContent, contentBlocks, contentMap, lastEdited }: Props) {
   const [query, setQuery] = useState('');
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-wide>
       <div className={styles.pageHeader}>
-        <div>
+        <div className={styles.titleBlock}>
           <h1 className={styles.title}>Site Content</h1>
           <p className={styles.titleSub}>Everything that shows up on the public site</p>
         </div>

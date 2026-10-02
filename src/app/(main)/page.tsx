@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import type { Metadata } from 'next';
 import Hero from '@/components/Hero/Hero';
 import LandingAbout from '@/components/LandingAbout/LandingAbout';
@@ -6,6 +7,7 @@ import LandingEvents from '@/components/LandingEvents/LandingEvents';
 import LandingSponsors from '@/components/LandingSponsors/LandingSponsors';
 import LandingRecruitment from '@/components/LandingRecruitment/LandingRecruitment';
 import { getContentBlocks } from '@/lib/content';
+import { resolveSections } from '@/lib/pageLayout';
 import { getUpcomingEvents } from '@/lib/events';
 import type { StatInput } from '@/components/LandingStatistics/LandingStatistics';
 
@@ -40,7 +42,7 @@ const ORGANIZATION_JSON_LD = {
 export default async function HomePage() {
   const [upcomingEvents, content] = await Promise.all([
     getUpcomingEvents(6),
-    getContentBlocks(['homepage.hero', 'homepage.about', 'homepage.stats', 'homepage.events', 'homepage.recruitment']),
+    getContentBlocks(['homepage.hero', 'homepage.about', 'homepage.stats', 'homepage.events', 'homepage.recruitment', 'layout.homepage']),
   ]);
 
   const heroContent        = content['homepage.hero']        ?? {};
@@ -50,16 +52,20 @@ export default async function HomePage() {
   const recruitmentContent = content['homepage.recruitment'] ?? {};
   const statsItems         = (statsContent.items as StatInput[] | undefined) ?? undefined;
 
+  const sections: Record<string, React.ReactNode> = {
+    stats: <LandingStatistics stats={statsItems} />,
+    about: <LandingAbout content={aboutContent as Parameters<typeof LandingAbout>[0]['content']} />,
+    events: <LandingEvents initialEvents={upcomingEvents} content={eventsContent} />,
+    sponsors: <LandingSponsors />,
+    recruitment: <LandingRecruitment content={recruitmentContent as Parameters<typeof LandingRecruitment>[0]['content']} />,
+  };
+
   return (
     <>
       {/* eslint-disable-next-line react/no-danger -- static, hand-written object, not user input */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ORGANIZATION_JSON_LD) }} />
       <Hero content={heroContent as Parameters<typeof Hero>[0]['content']} />
-      <LandingStatistics stats={statsItems} />
-      <LandingAbout content={aboutContent as Parameters<typeof LandingAbout>[0]['content']} />
-      <LandingEvents initialEvents={upcomingEvents} content={eventsContent} />
-      <LandingSponsors />
-      <LandingRecruitment content={recruitmentContent as Parameters<typeof LandingRecruitment>[0]['content']} />
+      {resolveSections('homepage', content['layout.homepage']?.sections).map((id) => <Fragment key={id}>{sections[id]}</Fragment>)}
     </>
   );
 }

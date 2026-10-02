@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { resolveSections } from '@/lib/pageLayout';
+import { Fragment } from 'react';
 import Image from 'next/image';
 import { Percent } from 'lucide-react';
 import { getContentBlocks } from '@/lib/content';
@@ -27,33 +29,26 @@ export const metadata: Metadata = {
 type Partner = { name?: string; discount?: string; logo_url?: string };
 
 export default async function MembershipPage() {
-  const blocks = await getContentBlocks(['page.membership', 'membership.partners']);
+  const blocks = await getContentBlocks(['page.membership', 'membership.partners', 'layout.membership']);
   const content = blocks['page.membership'] ?? {};
   const partnersContent = blocks['membership.partners'] ?? {};
 
   const partners = ((partnersContent.items as Partner[] | undefined) ?? [])
     .filter((p) => p.name);
 
-  return (
-    <div className={styles.page}>
-
-      {/* Hero */}
-      <div className={styles.heroBanner}>
-        <div className={styles.heroBg} aria-hidden="true" />
-        <div className={styles.heroContent}>
-          <p className={styles.heroLabel}>{(content.hero_label as string) || 'MEMBERSHIP CARDS'}</p>
-          <h1 className={styles.heroTitle}>{(content.hero_title as string) || 'Triton Gaming Membership Card'}</h1>
-          <p className={styles.heroSub}>{content.hero_subtitle as string}</p>
-        </div>
-      </div>
-
-      {/* Price / validity bar */}
+  const sections: Record<string, React.ReactNode> = {
+    price: (
+      <>
+{/* Price / validity bar */}
       <div className={styles.priceBar}>
         {content.price ? <span className={styles.priceValue}>{content.price as string}</span> : null}
         {content.validity ? <span className={styles.priceValidity}>{content.validity as string}</span> : null}
       </div>
-
-      {/* Intro + purchase CTA */}
+      </>
+    ),
+    intro: (
+      <>
+{/* Intro + purchase CTA */}
       <section className={styles.introSection}>
         {content.intro_text ? <p className={styles.introText}>{content.intro_text as string}</p> : null}
         {content.purchase_url ? (
@@ -67,12 +62,15 @@ export default async function MembershipPage() {
           </a>
         ) : null}
       </section>
-
-      {/* Partner discounts */}
+      </>
+    ),
+    partners: (
+      <>
+{/* Partner discounts */}
       <section className={styles.partnersSection}>
         <div className={styles.sectionHeader}>
-          <p className={styles.sectionLabel}>WHERE TO USE IT</p>
-          <h2 className={styles.sectionTitle}>Partner Discounts</h2>
+          <p className={styles.sectionLabel}>{(content.partners_label as string) || 'WHERE TO USE IT'}</p>
+          <h2 className={styles.sectionTitle}>{(content.partners_title as string) || 'Partner Discounts'}</h2>
         </div>
         {partners.length > 0 ? (
           <div className={styles.partnersGrid}>
@@ -89,10 +87,28 @@ export default async function MembershipPage() {
             ))}
           </div>
         ) : (
-          <p className={styles.noPartners}>Partner announcements coming soon.</p>
+          <p className={styles.noPartners}>{(content.partners_empty as string) || 'Partner announcements coming soon.'}</p>
         )}
       </section>
+      </>
+    ),
+  };
+  const order = resolveSections('membership', blocks['layout.membership']?.sections);
 
+  return (
+    <div className={styles.page}>
+
+      {/* Hero */}
+      <div className={styles.heroBanner}>
+        <div className={styles.heroBg} aria-hidden="true" />
+        <div className={styles.heroContent}>
+          <p className={styles.heroLabel}>{(content.hero_label as string) || 'MEMBERSHIP CARDS'}</p>
+          <h1 className={styles.heroTitle}>{(content.hero_title as string) || 'Triton Gaming Membership Card'}</h1>
+          <p className={styles.heroSub}>{content.hero_subtitle as string}</p>
+        </div>
+      </div>
+
+      {order.map((id) => <Fragment key={id}>{sections[id]}</Fragment>)}
     </div>
   );
 }

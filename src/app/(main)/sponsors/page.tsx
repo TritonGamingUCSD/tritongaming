@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { resolveSections } from '@/lib/pageLayout';
+import { Fragment } from 'react';
 import { Building2, Trophy, RadioTower, Handshake } from 'lucide-react';
 import LogoGrid from '@/components/LogoGrid/LogoGrid';
 import { getContentBlocks } from '@/lib/content';
@@ -54,7 +56,7 @@ function dbSponsorsToLogoItems(items: DbSponsor[]): LogoItem[] {
 }
 
 export default async function SponsorsPage() {
-  const blocks = await getContentBlocks(['sponsors', 'page.sponsors', 'site.settings']);
+  const blocks = await getContentBlocks(['sponsors', 'page.sponsors', 'site.settings', 'layout.sponsors']);
   const sponsorsContent = blocks['sponsors'] ?? {};
   const content = blocks['page.sponsors'] ?? {};
   const settings = blocks['site.settings'] ?? {};
@@ -72,40 +74,36 @@ export default async function SponsorsPage() {
     icon,
   }));
 
-  return (
-    <div className={styles.page}>
-
-      {/* Hero */}
-      <div className={styles.heroBanner}>
-        <div className={styles.heroBg} aria-hidden="true" />
-        <div className={styles.heroContent}>
-          <p className={styles.heroLabel}>{content.hero_label as string}</p>
-          <h1 className={styles.heroTitle}>{content.hero_title as string}</h1>
-          <p className={styles.heroSub}>{content.hero_subtitle as string}</p>
-        </div>
-      </div>
-
-      {/* Mission bar */}
+  const sections: Record<string, React.ReactNode> = {
+    mission: (
+      <>
+{/* Mission bar */}
       <div className={styles.missionBar}>
         <p>{content.mission_text as string}</p>
       </div>
-
-      {/* Current sponsors */}
+      </>
+    ),
+    sponsors: (
+      <>
+{/* Current sponsors */}
       <section className={styles.sponsorSection}>
         <div className={styles.sectionHeader}>
-          <p className={styles.sectionLabel}>CURRENT PARTNERS</p>
-          <h2 className={styles.sectionTitle}>Our Sponsors</h2>
+          <p className={styles.sectionLabel}>{(content.sponsors_label as string) || 'CURRENT PARTNERS'}</p>
+          <h2 className={styles.sectionTitle}>{(content.sponsors_title as string) || 'Our Sponsors'}</h2>
         </div>
         {logos.length > 0 ? (
           <div className={styles.grid}>
             <LogoGrid logos={logos} />
           </div>
         ) : (
-          <p className={styles.noSponsors}>Sponsor announcements coming soon.</p>
+          <p className={styles.noSponsors}>{(content.sponsors_empty as string) || 'Sponsor announcements coming soon.'}</p>
         )}
       </section>
-
-      {/* What we offer */}
+      </>
+    ),
+    offer: (
+      <>
+{/* What we offer */}
       <section className={styles.offerSection}>
         <div className={styles.offerBg} aria-hidden="true" />
         <div className={styles.offerInner}>
@@ -125,8 +123,11 @@ export default async function SponsorsPage() {
           </div>
         </div>
       </section>
-
-      {/* Contact CTA */}
+      </>
+    ),
+    cta: (
+      <>
+{/* Contact CTA */}
       <section className={styles.ctaSection}>
         <p className={styles.ctaHeading}>{content.cta_heading as string}</p>
         <p className={styles.ctaSub}>{content.cta_sub as string}</p>
@@ -137,7 +138,25 @@ export default async function SponsorsPage() {
           {email}
         </a>
       </section>
+      </>
+    ),
+  };
+  const order = resolveSections('sponsors', blocks['layout.sponsors']?.sections);
 
+  return (
+    <div className={styles.page}>
+
+      {/* Hero */}
+      <div className={styles.heroBanner}>
+        <div className={styles.heroBg} aria-hidden="true" />
+        <div className={styles.heroContent}>
+          <p className={styles.heroLabel}>{content.hero_label as string}</p>
+          <h1 className={styles.heroTitle}>{content.hero_title as string}</h1>
+          <p className={styles.heroSub}>{content.hero_subtitle as string}</p>
+        </div>
+      </div>
+
+      {order.map((id) => <Fragment key={id}>{sections[id]}</Fragment>)}
     </div>
   );
 }

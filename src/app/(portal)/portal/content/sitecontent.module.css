@@ -3,7 +3,7 @@
    one thing under this card" read the same way it does on the Admin card,
    not invent a second tab visual language. */
 
-.page { max-width: 1100px; width: 100%; margin-inline: auto; }
+.page { width: 100%; }
 
 .pageHeader {
   display: flex;
@@ -35,3 +35,14 @@
 .headerSearch input { flex: 1; min-width: 0; background: none; border: none; outline: none; color: var(--white); font-family: inherit; font-size: 0.85rem; }
 .headerSearch input::placeholder { color: rgba(242, 241, 240, 0.4); }
 @media (max-width: 640px) { .headerSearch { width: 100%; } }
+
+/* On desktop the top bar already names the section, so the page's own title goes; the search stays, tucked right, with tighter spacing. */
+@media (min-width: 900px) {
+  .titleBlock { display: none; }
+  .pageHeader { justify-content: flex-end; margin-bottom: 0.5rem; }
+}
+/* On wide windows the search sits in the empty right end of the tab row instead of taking a row of its own. */
+@media (min-width: 1400px) {
+  .page { position: relative; }
+  .pageHeader { position: absolute; top: 0; right: 0; z-index: 2; margin: 0; }
+}

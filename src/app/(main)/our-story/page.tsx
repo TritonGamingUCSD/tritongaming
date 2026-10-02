@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import InfoSection from '@/components/InfoSection/InfoSection';
-import { getContentBlock } from '@/lib/content';
+import { getContentBlocks } from '@/lib/content';
+import { resolveSections } from '@/lib/pageLayout';
 import styles from './our-story.module.css';
 
 export const metadata: Metadata = {
@@ -32,11 +33,13 @@ const SECTIONS = [
 ];
 
 export default async function OurStoryPage() {
-  const content = await getContentBlock('page.our-story');
+  const blocks = await getContentBlocks(['page.our-story', 'layout.our-story']);
+  const content = blocks['page.our-story'] ?? {};
+  const shown = resolveSections('our-story', blocks['layout.our-story']?.sections);
 
   return (
     <div className={styles.page}>
-      {SECTIONS.map((s) => (
+      {shown.map((id) => SECTIONS.find((x) => x.key === id)!).map((s, position) => (
         <InfoSection
           key={s.key}
           title={content[`${s.key}_title`] as string}
@@ -46,7 +49,7 @@ export default async function OurStoryPage() {
           tag={s.tag}
           photoCredit={s.photoCredit}
           photoCreditLink={s.photoCreditLink}
-          reverse={s.reverse}
+          reverse={position % 2 === 1}
         />
       ))}
     </div>

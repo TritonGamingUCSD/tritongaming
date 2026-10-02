@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { resolveSections } from '@/lib/pageLayout';
+import { Fragment } from 'react';
 import Image from 'next/image';
 import { Gamepad2, Calendar, Users, Building2 } from 'lucide-react';
 import { getContentBlocks } from '@/lib/content';
@@ -35,7 +37,7 @@ const WAY_ICONS = [
 const WAY_ACCENTS = ['blue', 'yellow', 'blue'];
 
 export default async function GetInvolvedPage() {
-  const blocks = await getContentBlocks(['page.get-involved', 'page.get-involved.officer']);
+  const blocks = await getContentBlocks(['page.get-involved', 'page.get-involved.officer', 'layout.get-involved']);
   const content = blocks['page.get-involved'] ?? {};
   const officer = blocks['page.get-involved.officer'] ?? {};
 
@@ -50,20 +52,10 @@ export default async function GetInvolvedPage() {
   }));
   const perks = (Array.isArray(officer.perks) ? officer.perks as string[] : [])?.filter(Boolean);
 
-  return (
-    <div className={styles.page}>
-
-      {/* Hero banner */}
-      <div className={styles.heroBanner}>
-        <div className={styles.heroBg} aria-hidden="true" />
-        <div className={styles.heroContent}>
-          <p className={styles.heroLabel}>{content.hero_label as string}</p>
-          <h1 className={styles.heroTitle}>{content.hero_title as string}</h1>
-          <p className={styles.heroSub}>{content.hero_subtitle as string}</p>
-        </div>
-      </div>
-
-      {/* Ways to connect */}
+  const sections: Record<string, React.ReactNode> = {
+    ways: (
+      <>
+{/* Ways to connect */}
       <section className={styles.waysSection}>
         <div className={styles.sectionHeader}>
           <p className={styles.sectionLabel}>{content.ways_label as string}</p>
@@ -87,8 +79,11 @@ export default async function GetInvolvedPage() {
           ))}
         </div>
       </section>
-
-      {/* Officer application */}
+      </>
+    ),
+    officer: (
+      <>
+{/* Officer application */}
       <section className={styles.officerSection}>
         <div className={styles.officerBg} aria-hidden="true" />
         <div className={styles.officerContent}>
@@ -109,7 +104,7 @@ export default async function GetInvolvedPage() {
               rel="noopener noreferrer"
               className={styles.applyBtn}
             >
-              Apply Now
+              {(officer.apply_text as string) || 'Apply Now'}
             </a>
           </div>
           <div className={styles.officerMeta}>
@@ -135,7 +130,25 @@ export default async function GetInvolvedPage() {
           </div>
         </div>
       </section>
+      </>
+    ),
+  };
+  const order = resolveSections('get-involved', blocks['layout.get-involved']?.sections);
 
+  return (
+    <div className={styles.page}>
+
+      {/* Hero banner */}
+      <div className={styles.heroBanner}>
+        <div className={styles.heroBg} aria-hidden="true" />
+        <div className={styles.heroContent}>
+          <p className={styles.heroLabel}>{content.hero_label as string}</p>
+          <h1 className={styles.heroTitle}>{content.hero_title as string}</h1>
+          <p className={styles.heroSub}>{content.hero_subtitle as string}</p>
+        </div>
+      </div>
+
+      {order.map((id) => <Fragment key={id}>{sections[id]}</Fragment>)}
     </div>
   );
 }

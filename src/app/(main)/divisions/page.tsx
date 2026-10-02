@@ -65,7 +65,7 @@ export default async function DivisionsPage() {
                   <p className={styles.divDesc}>{div.description || ''}</p>
                 </div>
                 <div className={styles.cardFooter}>
-                  <span className={styles.learnMore}>Learn More →</span>
+                  <span className={styles.learnMore}>{(content.learn_more as string) || 'Learn More →'}</span>
                   {div.discord_url && (
                     <a
                       href={div.discord_url}
@@ -86,7 +86,7 @@ export default async function DivisionsPage() {
             );
           })
         ) : (
-          <p className={styles.noContent}>No divisions available</p>
+          <p className={styles.noContent}>{(content.empty as string) || 'No divisions available'}</p>
         )}
       </section>
     </div>
