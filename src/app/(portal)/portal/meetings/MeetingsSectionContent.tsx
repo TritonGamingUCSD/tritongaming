@@ -12,7 +12,7 @@ import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import { confirmHold } from '@/lib/confirmHold';
 import { resolveAvatarUrl } from '@/lib/profile';
 import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
-import { AUDIENCE_LABELS, AUDIENCE_ROLES, DEFAULT_AUDIENCE, audienceLabel, audienceRoles, isCustomAudience } from '@/lib/meetingAudience';
+import { AUDIENCE_LABELS, AUDIENCE_ROLES, DEFAULT_AUDIENCE, audienceLabel, audienceRoles } from '@/lib/meetingAudience';
 import { googleCalendarUrl } from '@/lib/ics';
 import { REACTION_EMOJIS, MAX_ANSWER_LENGTH, MAX_QUESTION_LENGTH, MAX_DESCRIPTION_LENGTH, suggestQuestion } from '@/lib/meetingFun';
 import styles from './meetings.module.css';
@@ -830,7 +830,7 @@ function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, o
             {item.location && <span><MapPin size={11} aria-hidden="true" className={styles.inlineIcon} /> {item.location}</span>}
           </span>
           <span className={`${styles.metaLine} ${styles.metaSub}`} title={item.description ?? undefined}>
-            {isCustomAudience(item) && <span className={styles.metaAudience} title={audienceLabel(item)}><Users size={11} aria-hidden="true" /> {audienceLabel(item)}</span>}
+            <span className={styles.metaAudience} title={`For: ${audienceLabel(item)}`}><Users size={11} aria-hidden="true" /> {audienceLabel(item)}</span>
             {item.doc_url && <span className={styles.metaDoc}><Link2 size={11} aria-hidden="true" /> Doc</span>}
             {item.question && <span className={styles.metaDoc}><MessageCircleQuestion size={11} aria-hidden="true" /> Question</span>}
             {item.description && <span className={styles.metaDoc}><FileText size={11} aria-hidden="true" /> Description</span>}

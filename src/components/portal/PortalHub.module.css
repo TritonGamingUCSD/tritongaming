@@ -809,8 +809,3 @@
   .rail.railCollapsed:not(:hover):not(:focus-within) .railFooter { gap: 0.3rem; padding-top: 0.3rem; }
   .rail.railCollapsed:not(:hover):not(:focus-within) .railNav { gap: 0; }
 }
-
-/* Just clicked in the collapsed rail: ignore the pointer so it folds back until the pointer leaves. */
-@media (min-width: 900px) {
-  .rail.railSuppressed { pointer-events: none; }
-}

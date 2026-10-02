@@ -464,18 +464,6 @@ function DesktopShell({
   // Icon-only sidebar: remembered per browser. Read after mount so server and first client render match.
   const [collapsed, setCollapsed] = useState(false);
   useEffect(() => { try { setCollapsed(localStorage.getItem('tg_rail_collapsed') === '1'); } catch { /* ignore */ } }, []);
-  // After picking something in the collapsed rail, fold it back even though the pointer is still over it (until the pointer leaves).
-  const railRef = useRef<HTMLElement>(null);
-  const [railSuppressed, setRailSuppressed] = useState(false);
-  useEffect(() => {
-    if (!railSuppressed) return;
-    const onMove = (e: PointerEvent) => {
-      const r = railRef.current?.getBoundingClientRect();
-      if (!r || e.clientX > r.right + 8 || e.clientX < r.left || e.clientY < r.top || e.clientY > r.bottom) setRailSuppressed(false);
-    };
-    window.addEventListener('pointermove', onMove);
-    return () => window.removeEventListener('pointermove', onMove);
-  }, [railSuppressed]);
   const toggleCollapsed = () => setCollapsed((c) => { const n = !c; try { localStorage.setItem('tg_rail_collapsed', n ? '1' : '0'); } catch { /* ignore */ } return n; });
   const accent = openSection ? GROUP_ACCENT[openSection.group] : DASHBOARD_ACCENT;
   // The frame fills exactly what's left of the window below whatever banners sit above it (profile reminder, "View as"), so
@@ -498,12 +486,10 @@ function DesktopShell({
   return (
     <div ref={frameRef} className={`${styles.desktopShell} ${styles.appFrame}`} data-app-frame style={{ ['--frame-accent' as string]: accent }}>
       <aside
-        ref={railRef}
-        className={`${styles.rail} ${collapsed ? styles.railCollapsed : ''} ${collapsed && railSuppressed ? styles.railSuppressed : ''}`}
+        className={`${styles.rail} ${collapsed ? styles.railCollapsed : ''}`}
+        // A mouse click leaves focus on the button, and :focus-within would keep the rail open after the pointer leaves.
         onClickCapture={(e) => {
-          if (!collapsed || !(e.target as HTMLElement).closest('button, a')) return;
-          (document.activeElement as HTMLElement | null)?.blur?.();
-          setRailSuppressed(true);
+          if (collapsed && e.detail > 0 && (e.target as HTMLElement).closest('button, a')) (document.activeElement as HTMLElement | null)?.blur?.();
         }}
       >
         {identity && (

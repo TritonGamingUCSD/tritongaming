@@ -42,7 +42,7 @@ Gated by Google sign-in and a role/capability system (`src/lib/capabilities.ts`)
 | Events | Events | Create and edit events (flyer, schedule, sponsors, venue, optional **per-day check-in hours** for multi-day events), check-in lists with undo and manual check-in, post-event Summary |
 | Events | Check-In | Camera QR scanner, manual and online code entry, per-day check-in for multi-day events |
 | TG | TG Members | Directory of the team (recruits and alumni included, division leads excluded) |
-| TG | Meetings | Check in with a rotating code, **My meetings** (upcoming plus your history), and for leads/exec/admin: schedule one-off or weekly meetings, run check-in with a big-screen code, question of the meeting and emoji reactions, groups, absences, attendance analytics and an HR CSV export. Audiences are roles, saved groups and individuals, resolved live. Leads manage only meetings they planned. |
+| TG | Meetings | Check in with a rotating code, **My meetings** (upcoming plus your history), and for leads/exec/admin: schedule one-off or weekly meetings, run check-in with a big-screen code, question of the meeting and emoji reactions, groups, absences, attendance analytics and an HR CSV export. Hosts can mark someone away (with a reason, excused or not) before a meeting starts, including a week of a repeating meeting that hasn't opened yet. Audiences are roles, saved groups and individuals, resolved live. Leads manage only meetings they planned. |
 | TG | Internal Events | Internal events for the team (socials, recruitment training, workshops), separate from meetings: no check-in or attendance stats. Leads, exec and admin plan them for roles, saved groups or individuals; invitees reply Going / Maybe / Can't go and get a notification. They show on the Calendar in their own color and never on the public site. |
 | TG | Battlepass | Recognition points for officer-tier members |
 | Divisions | Divisions, Division Members | Edit division pages; see who leads each division |
@@ -127,6 +127,15 @@ VERCEL_PROJECT_ID=
 # Event reminders cron (Vercel sends this as a Bearer token).
 CRON_SECRET=
 
+# Optional: email notifications. Without these nothing is emailed. Either SMTP (your own mailbox or server)...
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASS=
+# ...or Resend (https://resend.com):
+RESEND_API_KEY=
+# From address for either:
+EMAIL_FROM=
 ```
 
 ### 3. Set up the database
