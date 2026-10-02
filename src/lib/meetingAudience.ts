@@ -56,10 +56,11 @@ export function isExpected(m: MeetingAudience, userId: string, roles: { role: st
   return roles.some((r) => want.includes(r.role));
 }
 
-// May this person check in? Exec and admins always can (they run the meetings); everyone else must be
-// expected — by role, group or being added.
+// May this person check in? Only people the meeting is for (by role, group or being added). Exec and
+// admins get no exception: running a meeting doesn't mean attending it. (An exec can still add someone
+// by hand from the live screen.)
 export function canAttendMeeting(m: MeetingAudience, userId: string, roles: { role: string }[]): boolean {
-  return roles.some((r) => r.role === 'admin' || r.role === 'exec') || isExpected(m, userId, roles);
+  return isExpected(m, userId, roles);
 }
 
 const UUID = /^[0-9a-f-]{36}$/i;

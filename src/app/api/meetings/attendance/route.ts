@@ -3,6 +3,7 @@ import { pacificDayKey } from '@/lib/checkinDays';
 import { AUDIENCE_ROLES, audienceRoles, isExpected } from '@/lib/meetingAudience';
 import { addDaysKey, attachExtras, authorizeMeetings } from '@/lib/meetings';
 import { ROLE_DISPLAY_RANK, ROLE_LABELS, type AppRole } from '@/types/database';
+import { staffName } from '@/lib/names';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,7 +47,7 @@ export async function GET(request: Request) {
   for (const g of grants ?? []) rolesOf.set(g.user_id as string, [...(rolesOf.get(g.user_id as string) ?? []), { role: g.role as string }]);
   const peopleIds = new Set<string>([...rolesOf.keys(), ...(rows ?? []).map((r) => r.user_id as string), ...meetings.flatMap((m) => m.extra_ids), ...(absRows ?? []).map((a) => a.user_id as string)]);
   const { data: profiles } = peopleIds.size
-    ? await auth.svc.from('profiles').select('id, display_name, avatar_url, custom_avatar_url').in('id', [...peopleIds])
+    ? await auth.svc.from('profiles').select('id, display_name, google_first_name, google_last_name, avatar_url, custom_avatar_url').in('id', [...peopleIds])
     : { data: [] as { id: string; display_name: string | null; avatar_url: string | null; custom_avatar_url: string | null }[] };
 
   const people = (profiles ?? []).map((p) => {
@@ -71,7 +72,7 @@ export async function GET(request: Request) {
     const lastIdx = marks.lastIndexOf('p');
     const top = [...roles].map((r) => r.role as AppRole).sort((a, b) => ROLE_DISPLAY_RANK[b] - ROLE_DISPLAY_RANK[a])[0];
     return {
-      id: p.id as string, name: (p.display_name as string | null) || 'Unnamed', avatar_url: p.avatar_url as string | null, custom_avatar_url: p.custom_avatar_url as string | null,
+      id: p.id as string, name: staffName(p), avatar_url: p.avatar_url as string | null, custom_avatar_url: p.custom_avatar_url as string | null,
       role: top ? ROLE_LABELS[top] : '', attended, total, excused: excusedCount, rate: total ? attended / total : null, streak, missedRun, marks,
       last_attended: lastIdx >= 0 ? (meetings[lastIdx].meeting_date as string) : null,
       follow_up: total >= 3 && ((attended / total) < 0.5 || missedRun >= 3),

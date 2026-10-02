@@ -529,7 +529,7 @@ function AudiencePicker({ value, onChange }: { value: Aud; onChange: (v: Aud) =>
         {showPeople && <PeoplePicker team={team} value={value.invitees} onChange={(ids) => onChange({ ...value, invitees: ids })} covered={covered} />}
       </div>
 
-      {audienceEmpty(value) ? <p className={styles.checkWarn}>Pick at least one role, group or person.</p> : <p className={styles.faint}>Anyone matching any of these is invited. Exec and admins can always check in.</p>}
+      {audienceEmpty(value) ? <p className={styles.checkWarn}>Pick at least one role, group or person.</p> : <p className={styles.faint}>Anyone matching any of these is invited.</p>}
     </div>
   );
 }

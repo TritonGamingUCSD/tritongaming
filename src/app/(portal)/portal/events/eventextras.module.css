@@ -4,7 +4,7 @@
 .field { display: flex; flex-direction: column; gap: 0.35rem; }
 .label { font-size: 0.75rem; color: rgba(242, 241, 240, 0.6); }
 .hint { font-size: 0.72rem; color: rgba(242, 241, 240, 0.4); }
-.input { width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--radius-sm); padding: 0.55rem 0.8rem; color: var(--white); font-family: var(--font-futura-medium); font-size: 0.85rem; }
+.input { width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--radius-sm); padding: 0.625rem 0.875rem; color: var(--white); font-family: var(--font-futura-medium); font-size: 0.9rem; }
 .input:focus { outline: none; border-color: rgba(255, 199, 44, 0.4); }
 .row { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.6rem; border-radius: 0.7rem; background: rgba(255, 255, 255, 0.03); border: 1px solid transparent; }
 .dragging { opacity: 0.5; }

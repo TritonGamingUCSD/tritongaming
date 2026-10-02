@@ -55,9 +55,9 @@
 .select {
   width: 100%;
   background: rgba(255,199,44,0.07);
-  border: 1.5px solid rgba(255,199,44,0.35);
-  border-radius: 0.75rem;
-  padding: 0.875rem 2.5rem 0.875rem 1rem;
+  border: 1px solid rgba(255,199,44,0.35);
+  border-radius: 0.5rem;
+  padding: 0.625rem 2.5rem 0.625rem 0.875rem;
   color: var(--white);
   font-family: var(--font-futura-medium);
   font-size: 0.9rem;

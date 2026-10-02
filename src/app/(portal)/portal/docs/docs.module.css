@@ -26,9 +26,9 @@
 .searchWrap { position: relative; }
 .searchIcon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: rgba(242, 241, 240, 0.4); pointer-events: none; }
 .searchInput {
-  width: 100%; padding: 0.55rem 2rem 0.55rem 2.15rem; border-radius: 0.7rem;
+  width: 100%; padding: 0.625rem 2rem 0.625rem 2.15rem; border-radius: 0.5rem;
   background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--white); font-family: var(--font-futura-medium); font-size: 0.85rem;
+  color: var(--white); font-family: var(--font-futura-medium); font-size: 0.9rem;
 }
 .searchInput:focus { outline: none; border-color: rgba(255, 199, 44, 0.4); }
 .searchClear { position: absolute; right: 0.4rem; top: 50%; transform: translateY(-50%); display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: none; border: none; color: rgba(242, 241, 240, 0.5); cursor: pointer; }

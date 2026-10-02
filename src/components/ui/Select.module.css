@@ -1,4 +1,4 @@
-.trigger { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; cursor: pointer; text-align: left; font: inherit; color: inherit; min-width: 0; appearance: none; -webkit-appearance: none; background-image: none !important; padding-right: 0.75rem !important; }
+.trigger { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; cursor: pointer; text-align: left; min-width: 0; appearance: none; -webkit-appearance: none; background-image: none !important; padding-right: 0.75rem !important; }
 .trigger:disabled { cursor: not-allowed; }
 .trigger:focus-visible { outline: 2px solid rgba(255, 199, 44, 0.55); outline-offset: 1px; }
 .value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

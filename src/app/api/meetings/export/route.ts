@@ -5,6 +5,7 @@ import { fetchLinkedEmails, pickDisplayEmails } from '@/lib/linkedEmails';
 import { ROLE_DISPLAY_RANK, ROLE_LABELS, type AppRole } from '@/types/database';
 import { addDaysKey, attachExtras, authorizeMeetings, loadGroups } from '@/lib/meetings';
 import { AUDIENCE_ROLES, audienceLabel, isExpected } from '@/lib/meetingAudience';
+import { staffName } from '@/lib/names';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,7 +47,7 @@ export async function GET(request: Request) {
   const peopleIds = new Set<string>([...(grants ?? []).map((g) => g.user_id as string), ...(att ?? []).map((a) => a.user_id as string), ...(meetings ?? []).flatMap((m) => m.extra_ids), ...(abs ?? []).map((a) => a.user_id as string)]);
   const idList = [...peopleIds];
   const [{ data: profiles }, { data: allRoles }, emails] = await Promise.all([
-    idList.length ? auth.svc.from('profiles').select('id, display_name, preferred_email').in('id', idList) : Promise.resolve({ data: [] as { id: string; display_name: string | null; preferred_email: string | null }[] }),
+    idList.length ? auth.svc.from('profiles').select('id, display_name, google_first_name, google_last_name, preferred_email').in('id', idList) : Promise.resolve({ data: [] as { id: string; display_name: string | null; preferred_email: string | null }[] }),
     idList.length ? auth.svc.from('user_roles').select('user_id, role').in('user_id', idList) : Promise.resolve({ data: [] as { user_id: string; role: AppRole }[] }),
     fetchLinkedEmails(auth.svc, idList),
   ]);
@@ -57,7 +58,7 @@ export async function GET(request: Request) {
   }
   const people = (profiles ?? []).map((p) => ({
     id: p.id as string,
-    name: (p.display_name as string | null) || 'Unnamed',
+    name: staffName(p),
     email: pickDisplayEmails(emails.get(p.id as string) ?? [], p.preferred_email as string | null).map((e) => e.email).join('; '),
     role: roleOf.get(p.id as string) ?? '',
   })).sort((a, b) => a.name.localeCompare(b.name));

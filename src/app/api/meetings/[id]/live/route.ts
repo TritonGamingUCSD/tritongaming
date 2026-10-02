@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { checkInOpensAt, isCheckInAccepting, loadGroups, authorizeMeetings, currentMeetingCode, getExpectedPeople, isMeetingOpen, type MeetingRow, guardMeeting } from '@/lib/meetings';
+import { staffName } from '@/lib/names';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,8 +24,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   // Someone who checked in but no longer holds a team role still shows up in the list.
   const missingProfileIds = (rows ?? []).map((r) => r.user_id as string).filter((u) => !byId.has(u));
   if (missingProfileIds.length) {
-    const { data: extra } = await auth.svc.from('profiles').select('id, display_name, avatar_url, custom_avatar_url').in('id', missingProfileIds);
-    for (const p of extra ?? []) byId.set(p.id as string, { id: p.id as string, name: (p.display_name as string | null) || 'Unnamed', avatar_url: p.avatar_url as string | null, custom_avatar_url: p.custom_avatar_url as string | null });
+    const { data: extra } = await auth.svc.from('profiles').select('id, display_name, google_first_name, google_last_name, avatar_url, custom_avatar_url').in('id', missingProfileIds);
+    for (const p of extra ?? []) byId.set(p.id as string, { id: p.id as string, name: staffName(p), avatar_url: p.avatar_url as string | null, custom_avatar_url: p.custom_avatar_url as string | null });
   }
 
   // Answers (newest first) and reactions. Reactions come as a cursor: without ?after the response only
@@ -44,8 +45,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   for (const r of allReactions) reactionTotals[r.emoji as string] = (reactionTotals[r.emoji as string] ?? 0) + 1;
   const answerUserIds = [...(answerRows ?? []).map((a) => a.user_id as string), ...absent].filter((u) => !byId.has(u));
   if (answerUserIds.length) {
-    const { data: extra } = await auth.svc.from('profiles').select('id, display_name, avatar_url, custom_avatar_url').in('id', answerUserIds);
-    for (const p of extra ?? []) byId.set(p.id as string, { id: p.id as string, name: (p.display_name as string | null) || 'Unnamed', avatar_url: p.avatar_url as string | null, custom_avatar_url: p.custom_avatar_url as string | null });
+    const { data: extra } = await auth.svc.from('profiles').select('id, display_name, google_first_name, google_last_name, avatar_url, custom_avatar_url').in('id', answerUserIds);
+    for (const p of extra ?? []) byId.set(p.id as string, { id: p.id as string, name: staffName(p), avatar_url: p.avatar_url as string | null, custom_avatar_url: p.custom_avatar_url as string | null });
   }
 
   const groups = await loadGroups(auth.svc);

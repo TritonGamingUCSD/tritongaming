@@ -65,10 +65,10 @@
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 0.5rem;
-  padding: 0.55rem 0.75rem 0.55rem 2.1rem;
+  padding: 0.625rem 0.75rem 0.625rem 2.1rem;
   color: var(--white);
   font-family: var(--font-futura-medium);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
 }
 .searchInput:focus { outline: none; border-color: rgba(255,199,44,0.4); }
 

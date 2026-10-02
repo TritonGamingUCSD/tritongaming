@@ -6,7 +6,7 @@
   padding: 0.625rem 0.875rem;
   color: var(--white);
   font-family: var(--font-futura-medium);
-  font-size: 0.88rem;
+  font-size: 0.9rem;
 }
 .control:focus { outline: none; border-color: rgba(255, 199, 44, 0.4); }
 .control:disabled { opacity: 0.55; cursor: not-allowed; }

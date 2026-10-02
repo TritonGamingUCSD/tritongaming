@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { staffName } from '@/lib/names';
 import { createClient } from '@/lib/supabase/server';
 import { hasCapability } from '@/lib/capabilities';
 
@@ -32,7 +33,7 @@ export async function GET(request: Request) {
 
   const [membersRes, eventsRes, docsRes] = await Promise.all([
     hasCapability(roles, 'view_members')
-      ? supabase.from('profiles').select('id, display_name, gamer_tag').or(`display_name.ilike.${like},gamer_tag.ilike.${like}`).limit(LIMIT_PER_CATEGORY)
+      ? supabase.from('profiles').select('id, display_name, google_first_name, google_last_name, gamer_tag').or(`display_name.ilike.${like},google_first_name.ilike.${like},google_last_name.ilike.${like},gamer_tag.ilike.${like}`).limit(LIMIT_PER_CATEGORY)
       : Promise.resolve({ data: [] }),
     hasCapability(roles, 'view_events')
       ? supabase.from('events').select('id, title, description, slug, start_date').or(`title.ilike.${like},description.ilike.${like}`).limit(LIMIT_PER_CATEGORY)
@@ -47,7 +48,7 @@ export async function GET(request: Request) {
   // public page (fuller detail than anything inside the portal itself has),
   // a doc straight to its content.
   const members: SearchResult[] = (membersRes.data ?? []).map((m) => ({
-    id: m.id, title: m.display_name || 'Anonymous', subtitle: m.gamer_tag || '', href: `/portal?section=members&id=${m.id}`,
+    id: m.id, title: staffName(m) || 'Anonymous', subtitle: m.gamer_tag || '', href: `/portal?section=members&id=${m.id}`,
   }));
   const events: SearchResult[] = (eventsRes.data ?? []).map((e) => ({
     id: e.id, title: e.title, subtitle: new Date(e.start_date).toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', month: 'short', day: 'numeric', year: 'numeric' }), // Stay inside the portal: open Events with the search box pre-filled to this event.
