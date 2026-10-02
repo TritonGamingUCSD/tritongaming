@@ -37,7 +37,7 @@ async function call(who, path, method = 'GET', body) {
 const pacificHHMM = (ms) => new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Los_Angeles', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(Date.now() + ms));
 const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date());
 
-const meetingIds = [], eventIds = [], ticketIds = [], groupIds = [];
+const meetingIds = [], eventIds = [], ticketIds = [], groupIds = [], seriesIds = [];
 try {
   for (const r of ['admin', 'exec', 'lead', 'officer', 'recruit', 'alumni', 'division']) await mk(r);
   const U = (r) => users[r].id;
@@ -63,6 +63,26 @@ try {
   const [, up] = await call('exec', '/api/meetings/upcoming'); check('exec upcoming excludes meetings they are not on', !(up?.meetings ?? []).some((m) => m.title === 'Perm check' && !m.hosting) || (up.meetings ?? []).every((m) => m.title !== 'Perm check' || m.hosting));
   check('lead cannot edit exec meeting', (await call('lead', '/api/meetings/update', 'POST', { meeting_id: m1.id, location: 'x' }))[0] === 403);
   check('lead can edit their own meeting', (await call('lead', '/api/meetings/update', 'POST', { meeting_id: m2.id, location: 'Room 1' }))[0] === 200);
+
+  // ── Advance absences: a host can record "can't make it" before the meeting starts ───────────────────────────────────────
+  const future = new Date(Date.now() + 3 * 86400_000).toISOString().slice(0, 10);
+  const [s3, m3] = await call('exec', '/api/meetings/schedule', 'POST', { ...meetingBody, title: 'Future perm check', date: future, start: '17:00', end: '18:00' });
+  if (m3?.id) meetingIds.push(m3.id);
+  check('exec can mark someone absent before the meeting (one-off)', s3 === 201 && (await call('exec', '/api/meetings/absence', 'POST', { meeting_id: m3.id, user_id: U('officer'), reason: 'Midterm', excused: true }))[0] === 200);
+  const [, abs1] = await call('exec', `/api/meetings/absence?meeting_id=${m3.id}`);
+  check('the absence and its reason are listed', (abs1?.absences ?? []).some((a) => a.user_id === U('officer') && a.reason === 'Midterm' && a.excused === true));
+  check('only people the meeting is for can be picked', (abs1?.people ?? []).every((p) => [U('officer'), U('lead')].includes(p.id)));
+  check('lead cannot mark absences on exec meetings', (await call('lead', '/api/meetings/absence', 'POST', { meeting_id: m3.id, user_id: U('lead') }))[0] === 403);
+  check('officer cannot mark absences', (await call('officer', '/api/meetings/absence', 'POST', { meeting_id: m3.id, user_id: U('officer') }))[0] === 403);
+  check('removing the mark works', (await call('exec', '/api/meetings/absence', 'DELETE', { meeting_id: m3.id, user_id: U('officer') }))[0] === 200 && ((await call('exec', `/api/meetings/absence?meeting_id=${m3.id}`))[1]?.absences ?? []).length === 0);
+  // A repeating meeting: the occurrence is created by the first absence.
+  const wd = new Date(`${future}T12:00:00Z`).getUTCDay();
+  const [s4, ser] = await call('exec', '/api/meetings/schedule', 'POST', { title: 'Perm weekly', repeat: 'weekly', weekday: wd, start: '17:00', end: '18:00', audience: [], invitees: [U('officer')], group_ids: [] });
+  const { data: serRow } = await svc.from('meeting_series').select('id').eq('id', ser?.id ?? '').maybeSingle(); if (serRow) seriesIds.push(serRow.id);
+  check('exec can mark an absence for a repeating meeting that has not opened yet', s4 === 201 && (await call('exec', '/api/meetings/absence', 'POST', { series_id: ser.id, date: future, user_id: U('officer'), reason: 'Sick' }))[0] === 200);
+  const { data: occ } = await svc.from('meetings').select('id').eq('series_id', ser?.id ?? '').eq('meeting_date', future).maybeSingle(); if (occ) meetingIds.push(occ.id);
+  check('that week now shows one person away on the schedule', ((await call('exec', '/api/meetings/schedule'))[1]?.upcoming ?? []).some((i) => i.series_id === ser.id && i.date === future && i.absent === 1));
+  check('a date that is not that meeting’s weekday is rejected', (await call('exec', '/api/meetings/absence', 'POST', { series_id: ser.id, date: new Date(Date.now() + 4 * 86400_000).toISOString().slice(0, 10), user_id: U('officer') }))[0] === 404);
 
   // ── Attendance results: exec/admin, hosts (own), nobody else ───────────────────
   check('exec can see attendance results', (await call('exec', '/api/meetings/attendance'))[0] === 200);
@@ -121,6 +141,7 @@ try {
   check('a made-up token is not found', (await fetch(`${BASE}/api/calendar/feed/00000000-0000-0000-0000-000000000000.ics`)).status === 404);
 } finally {
   if (meetingIds.length) await svc.from('meetings').delete().in('id', meetingIds);
+  if (seriesIds.length) await svc.from('meeting_series').delete().in('id', seriesIds);
   if (eventIds.length) await svc.from('internal_events').delete().in('id', eventIds);
   if (groupIds.length) { await svc.from('capability_grants').delete().in('group_id', groupIds); await svc.from('meeting_groups').delete().in('id', groupIds); }
   // A new help ticket notifies every real exec/admin; take those test notifications back out.

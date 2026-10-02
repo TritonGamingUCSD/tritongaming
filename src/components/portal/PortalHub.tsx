@@ -39,7 +39,9 @@ const GROUP_ORDER = ['Overview', 'Yours', 'Events', 'TG', 'Divisions', 'Resource
 // listed goes last, in the order it was given.
 const SECTION_ORDER = ['calendar', 'tickets', 'points', 'activity', 'profile', 'events', 'checkin', 'members', 'meetings', 'internal-events', 'battlepass', 'divisions', 'division-members', 'docs', 'qrcode', 'albums', 'help', 'admin', 'site-content'];
 // Accent color per group — tints the heading dot, icon tiles and hover state.
-const GROUP_ACCENT: Record<string, string> = { Overview: '#60a5fa', Yours: '#ffc72c', TG: '#a78bfa', Events: '#4a90e2', Divisions: '#fb923c', Resources: '#34d399', Admin: '#f472b6' };
+// The Dashboard and the Calendar are both soft white, so neither reads as part of the gold "Yours" or blue "Events" groups.
+const DASHBOARD_ACCENT = '#e5e7eb';
+const GROUP_ACCENT: Record<string, string> = { Overview: DASHBOARD_ACCENT, Yours: '#ffc72c', TG: '#a78bfa', Events: '#4a90e2', Divisions: '#fb923c', Resources: '#34d399', Admin: '#f472b6' };
 type HubGroup = (typeof GROUP_ORDER)[number];
 
 export interface HubSection {
@@ -119,7 +121,7 @@ interface GroupedSection {
 // onOpenChange reports whether a panel is open so a sibling (the portal's
 // "next ticket" banner) can react to that directly — e.g. hide itself while
 // a section takes over the screen on mobile.
-export interface HubFrame { greeting: string; tiles: ReactNode; viewAs: ReactNode }
+export interface HubFrame { greeting: string; tiles: ReactNode; viewAs: ReactNode; banners?: ReactNode }
 
 export default function PortalHub({ sections: sectionsProp, identity, railFooter, homeExtras, onOpenChange, frame }: { sections: HubSection[]; identity?: HubIdentity; railFooter?: ReactNode; homeExtras?: ReactNode; onOpenChange?: (open: boolean) => void; frame?: HubFrame }) {
   const sections = useMemo(() => {
@@ -462,8 +464,20 @@ function DesktopShell({
   // Icon-only sidebar: remembered per browser. Read after mount so server and first client render match.
   const [collapsed, setCollapsed] = useState(false);
   useEffect(() => { try { setCollapsed(localStorage.getItem('tg_rail_collapsed') === '1'); } catch { /* ignore */ } }, []);
+  // After picking something in the collapsed rail, fold it back even though the pointer is still over it (until the pointer leaves).
+  const railRef = useRef<HTMLElement>(null);
+  const [railSuppressed, setRailSuppressed] = useState(false);
+  useEffect(() => {
+    if (!railSuppressed) return;
+    const onMove = (e: PointerEvent) => {
+      const r = railRef.current?.getBoundingClientRect();
+      if (!r || e.clientX > r.right + 8 || e.clientX < r.left || e.clientY < r.top || e.clientY > r.bottom) setRailSuppressed(false);
+    };
+    window.addEventListener('pointermove', onMove);
+    return () => window.removeEventListener('pointermove', onMove);
+  }, [railSuppressed]);
   const toggleCollapsed = () => setCollapsed((c) => { const n = !c; try { localStorage.setItem('tg_rail_collapsed', n ? '1' : '0'); } catch { /* ignore */ } return n; });
-  const accent = openSection ? GROUP_ACCENT[openSection.group] : '#ffc72c';
+  const accent = openSection ? GROUP_ACCENT[openSection.group] : DASHBOARD_ACCENT;
   // The frame fills exactly what's left of the window below whatever banners sit above it (profile reminder, "View as"), so
   // the whole frame is on screen without scrolling the page. Re-measured when the window or the page above changes.
   const frameRef = useRef<HTMLDivElement>(null);
@@ -483,7 +497,15 @@ function DesktopShell({
   }, []);
   return (
     <div ref={frameRef} className={`${styles.desktopShell} ${styles.appFrame}`} data-app-frame style={{ ['--frame-accent' as string]: accent }}>
-      <aside className={`${styles.rail} ${collapsed ? styles.railCollapsed : ''}`}>
+      <aside
+        ref={railRef}
+        className={`${styles.rail} ${collapsed ? styles.railCollapsed : ''} ${collapsed && railSuppressed ? styles.railSuppressed : ''}`}
+        onClickCapture={(e) => {
+          if (!collapsed || !(e.target as HTMLElement).closest('button, a')) return;
+          (document.activeElement as HTMLElement | null)?.blur?.();
+          setRailSuppressed(true);
+        }}
+      >
         {identity && (
           <button type="button" className={styles.railIdentity} onClick={() => open('profile')} aria-label="Open your profile" title="Your profile">
             {identity.avatarUrl ? (
@@ -508,7 +530,7 @@ function DesktopShell({
         <nav className={styles.railNav} aria-label="Portal sections">
           <button
             className={`${styles.railItem} ${!openSection ? styles.railItemActive : ''}`}
-            style={{ ['--accent' as string]: '#ffc72c' }}
+            style={{ ['--accent' as string]: DASHBOARD_ACCENT }}
             onClick={close}
             aria-current={!openSection ? 'page' : undefined}
             title="Dashboard"
@@ -562,6 +584,7 @@ function DesktopShell({
             <NotificationBell inline />
           </div>
         </header>
+        {frame?.banners && <div className={styles.frameBanners}>{frame.banners}</div>}
         <div className={styles.frameBody}>
           <div className={styles.desktopContent}>
             <AnimatePresence mode="wait" initial={false}>

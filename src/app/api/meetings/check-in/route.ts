@@ -30,6 +30,8 @@ export async function POST(request: Request) {
   const { data: existing } = await auth.svc.from('meeting_attendance').select('checked_in_at').eq('meeting_id', match.id).eq('user_id', auth.user.id).maybeSingle();
   if (existing) return NextResponse.json({ ok: true, already: true, title: match.title, doc_url: match.doc_url, checked_in_at: existing.checked_in_at });
 
+  // They came after all: take back any "can't make it" recorded ahead of time.
+  await auth.svc.from('meeting_absences').delete().eq('meeting_id', match.id).eq('user_id', auth.user.id);
   const { data, error } = await auth.svc.from('meeting_attendance')
     .upsert({ meeting_id: match.id, user_id: auth.user.id, method: 'code' }, { onConflict: 'meeting_id,user_id', ignoreDuplicates: true })
     .select('checked_in_at').maybeSingle();

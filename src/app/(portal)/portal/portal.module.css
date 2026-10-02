@@ -59,3 +59,9 @@
 @media (min-width: 900px) {
   .layout:has([data-app-frame]) .fixedBell { display: none !important; }
 }
+
+/* On desktop the reminder banners live inside the app frame (under its top bar), so the frame starts at the top of the window
+   with the same margin all round; these copies above it are hidden. */
+@media (min-width: 900px) {
+  .layout:has([data-app-frame]) .bannerSlot { display: none !important; }
+}

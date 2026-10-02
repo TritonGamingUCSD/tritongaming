@@ -1,11 +1,13 @@
+import { Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, Image as ImageIcon, Award, Medal, ArrowLeft, CalendarCheck, CalendarDays, LayoutGrid, CircleHelp, CalendarHeart } from 'lucide-react';
 import { getProfile, getUserRoles, getMyPrivateProfile, getUser, getRealRoles, getViewAs } from '@/lib/auth';
-import { ViewAsSwitcher } from '@/components/portal/ViewAs';
+import { ViewAsSwitcher, ViewAsBanner } from '@/components/portal/ViewAs';
+import ProfileIncompleteBanner from '@/components/portal/ProfileIncompleteBanner';
 import { createClient } from '@/lib/supabase/server';
-import { hasCapability, isVerifiedMember, isRewardsEligible } from '@/lib/capabilities';
-import { resolveAvatarUrl, hasBasicProfileInfo } from '@/lib/profile';
+import { hasCapability, isVerifiedMember, isRewardsEligible, canSetOrgTitle } from '@/lib/capabilities';
+import { resolveAvatarUrl, hasBasicProfileInfo, getMissingProfileFields } from '@/lib/profile';
 import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK } from '@/types/database';
 import { CONTENT_BLOCKS } from '@/lib/content-blocks';
 import { PACIFIC_TZ, pacificDaysUntil } from '@/lib/timezone';
@@ -466,6 +468,15 @@ export default async function PortalDashboard({ searchParams }: Props) {
                 </div>
   ) : null;
   const nudge = profileNudge(profile, myGender, heldRoles);
+  // The same reminders the layout shows above the page; on desktop they sit inside the app frame instead.
+  const missingProfileFields = getMissingProfileFields({ ...profile, gender: myGender.gender }, isVerifiedMember(roles), { requireOrgTitle: canSetOrgTitle(roles) });
+  const missingOnlyOfficerTab = missingProfileFields.length > 0 && getMissingProfileFields({ ...profile, gender: myGender.gender }, isVerifiedMember(roles)).length === 0;
+  const frameBanners = (
+    <>
+      {viewAs && <ViewAsBanner active={viewAs} />}
+      <Suspense fallback={null}><ProfileIncompleteBanner missing={missingProfileFields} officerTabOnly={missingOnlyOfficerTab} /></Suspense>
+    </>
+  );
   const viewAsNode = canViewAs ? <ViewAsSwitcher active={viewAs} /> : null;
   const greetingLine = `${greeting}, ${profile.display_name?.split(' ')[0] || 'Triton'}`;
 
@@ -487,7 +498,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             meant they never got the reminder. PortalTopSection owns matching
             its width to the hub grid below it. */}
         <PortalTopSection
-          desktop={{ greeting: greetingLine, tiles: tilesNode, viewAs: viewAsNode }}
+          desktop={{ greeting: greetingLine, tiles: tilesNode, viewAs: viewAsNode, banners: frameBanners }}
           top={
             <>
             <header className={styles.welcome}>

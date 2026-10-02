@@ -316,3 +316,11 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 
 .addCalLink { font-size: 0.74rem; color: rgba(242, 241, 240, 0.5); text-decoration: none; white-space: nowrap; }
 .addCalLink:hover { color: var(--yellow); text-decoration: underline; }
+
+.metaAway { color: #fbbf24; }
+.advanceAbsences { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.9rem 0 0.2rem; margin-top: 0.4rem; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+.advanceAbsences h4 { display: inline-flex; align-items: center; gap: 0.35rem; margin: 0; }
+.absentList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
+.absentList li { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.6rem; border-radius: 0.6rem; background: rgba(251, 191, 36, 0.07); border: 1px solid rgba(251, 191, 36, 0.25); }
+.absentForm { display: grid; grid-template-columns: minmax(150px, 1fr) minmax(150px, 1.3fr) auto auto; gap: 0.5rem; align-items: center; }
+@media (max-width: 640px) { .absentForm { grid-template-columns: 1fr; } }

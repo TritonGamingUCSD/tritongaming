@@ -34,9 +34,9 @@ export default async function PortalLayout({ children }: { children: React.React
   return (
     <div className={`${styles.layout} ${styles.fontScope} ${portalSans.variable} ${jbMono.variable}`} data-portal-layout>
       <main className={styles.main}>
-        {viewAs && <ViewAsBanner active={viewAs} />}
+        {viewAs && <div className={styles.bannerSlot}><ViewAsBanner active={viewAs} /></div>}
         <div className={styles.content}>
-          <div data-print-hide style={{ display: 'contents' }}>
+          <div data-print-hide className={styles.bannerSlot} style={{ display: 'contents' }}>
             <Suspense fallback={null}>
               <ProfileIncompleteBanner missing={missingProfileFields} officerTabOnly={missingOnlyOfficerTab} />
             </Suspense>

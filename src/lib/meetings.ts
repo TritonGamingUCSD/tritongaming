@@ -106,6 +106,8 @@ export interface ScheduleItem {
   count: number;
   is_today: boolean;
   repeats: boolean;
+  /** People already marked absent (can't make it) for this meeting. */
+  absent: number;
 }
 
 export function addDaysKey(key: string, days: number): string {
@@ -139,11 +141,14 @@ export async function buildSchedule(svc: SupabaseClient, forUser?: { id: string;
   const { data: att } = ids.length ? await svc.from('meeting_attendance').select('meeting_id').in('meeting_id', ids) : { data: [] as { meeting_id: string }[] };
   const counts = new Map<string, number>();
   for (const a of att ?? []) counts.set(a.meeting_id, (counts.get(a.meeting_id) ?? 0) + 1);
+  const { data: absRows } = ids.length ? await svc.from('meeting_absences').select('meeting_id').in('meeting_id', ids) : { data: [] as { meeting_id: string }[] };
+  const absentCounts = new Map<string, number>();
+  for (const a of absRows ?? []) absentCounts.set(a.meeting_id, (absentCounts.get(a.meeting_id) ?? 0) + 1);
 
   const now = Date.now();
   const fromRow = (r: MeetingRow): ScheduleItem => ({
     key: r.id, meeting_id: r.id, series_id: r.series_id, date: r.meeting_date, title: r.title, location: r.location, doc_url: r.doc_url, question: r.question, audience: r.audience, invitees: r.invitees, group_ids: r.group_ids, groupNames: names(r.group_ids), description: r.description, host_id: r.created_by, host_name: hostNames.get(r.created_by ?? '') ?? null,
-    starts_at: r.starts_at, ends_at: r.ends_at, count: counts.get(r.id) ?? 0, is_today: r.meeting_date === today, repeats: !!r.series_id,
+    starts_at: r.starts_at, ends_at: r.ends_at, count: counts.get(r.id) ?? 0, absent: absentCounts.get(r.id) ?? 0, is_today: r.meeting_date === today, repeats: !!r.series_id,
     status: r.cancelled ? 'cancelled' : isMeetingOpen(r, now) ? 'open' : (r.opened_at || r.meeting_date < today) ? 'closed' : 'scheduled',
   });
   // A lead only sees the meetings they planned.
@@ -154,7 +159,7 @@ export async function buildSchedule(svc: SupabaseClient, forUser?: { id: string;
     for (let day = today; day <= horizon; day = addDaysKey(day, 1)) {
       if (weekdayOfKey(day) !== s.weekday || taken.has(`${s.id}|${day}`)) continue;
       const { starts, ends } = occurrenceTimes(day, s.start_time, s.end_time);
-      items.push({ key: `${s.id}|${day}`, meeting_id: null, series_id: s.id, date: day, title: s.title, location: s.location, doc_url: s.doc_url, question: null, audience: s.audience, invitees: s.invitees, group_ids: s.group_ids, groupNames: names(s.group_ids), description: s.description, host_id: s.created_by, host_name: hostNames.get(s.created_by ?? '') ?? null, starts_at: starts.toISOString(), ends_at: ends.toISOString(), status: 'scheduled', count: 0, is_today: day === today, repeats: true });
+      items.push({ key: `${s.id}|${day}`, meeting_id: null, series_id: s.id, date: day, title: s.title, location: s.location, doc_url: s.doc_url, question: null, audience: s.audience, invitees: s.invitees, group_ids: s.group_ids, groupNames: names(s.group_ids), description: s.description, host_id: s.created_by, host_name: hostNames.get(s.created_by ?? '') ?? null, starts_at: starts.toISOString(), ends_at: ends.toISOString(), status: 'scheduled', count: 0, absent: 0, is_today: day === today, repeats: true });
     }
   }
   // A team member only sees the meetings meant for them; exec see everything.
@@ -288,4 +293,35 @@ export async function authorizeAttendance() {
   const grants = withGrantedCapabilities(roles ?? [], await loadGrantedCapabilities(svc, user.id).catch(() => []));
   if (!hasCapability(grants, 'view_attendance_reports')) return { error: NextResponse.json({ error: 'You don’t have access to attendance results.' }, { status: 403 }) };
   return { user, roles: grants, svc, manageAll: false, reportsAll: true };
+}
+
+// Finds the meeting a host is acting on: an existing one ({meeting_id}) or one occurrence of a repeating meeting
+// ({series_id, date}). With `create`, an occurrence that has no row yet is created on the spot (so things like an
+// advance absence can be recorded before anyone opens check-in). Without it, a missing row comes back as null.
+export async function resolveOccurrence(
+  auth: Host & { svc: SupabaseClient },
+  b: { meeting_id?: unknown; series_id?: unknown; date?: unknown },
+  create: boolean,
+): Promise<{ meeting: MeetingRow | null; series: SeriesRow | null; date: string | null } | { error: NextResponse }> {
+  if (b.meeting_id) {
+    const { data } = await auth.svc.from('meetings').select('*').eq('id', String(b.meeting_id)).maybeSingle();
+    const m = data as MeetingRow | null;
+    if (!m) return { error: NextResponse.json({ error: 'Meeting not found.' }, { status: 404 }) };
+    if (!canManageMeeting(auth, m.created_by)) return { error: notYourMeeting() };
+    return { meeting: m, series: null, date: m.meeting_date };
+  }
+  const date = String(b.date ?? '');
+  if (!b.series_id || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return { error: NextResponse.json({ error: 'Which meeting?' }, { status: 400 }) };
+  const { data: sd } = await auth.svc.from('meeting_series').select('*').eq('id', String(b.series_id)).maybeSingle();
+  const s = sd as SeriesRow | null;
+  if (!s || weekdayOfKey(date) !== s.weekday) return { error: NextResponse.json({ error: 'That meeting isn’t scheduled.' }, { status: 404 }) };
+  if (!canManageMeeting(auth, s.created_by)) return { error: notYourMeeting() };
+  if (create) {
+    const { starts, ends } = occurrenceTimes(date, s.start_time, s.end_time);
+    await auth.svc.from('meetings').upsert(
+      { series_id: s.id, title: s.title, meeting_date: date, starts_at: starts.toISOString(), ends_at: ends.toISOString(), location: s.location, doc_url: s.doc_url, audience: s.audience, invitees: s.invitees, group_ids: s.group_ids, description: s.description, created_by: s.created_by },
+      { onConflict: 'series_id,meeting_date', ignoreDuplicates: true });
+  }
+  const { data } = await auth.svc.from('meetings').select('*').eq('series_id', s.id).eq('meeting_date', date).maybeSingle();
+  return { meeting: (data as MeetingRow | null) ?? null, series: s, date };
 }

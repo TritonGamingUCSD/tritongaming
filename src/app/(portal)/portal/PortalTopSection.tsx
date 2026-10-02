@@ -27,7 +27,7 @@ export default function PortalTopSection({
 }: {
   top: ReactNode;
   /** Desktop app frame: the greeting for the Dashboard's title, the points tiles, and the admin "View as" menu. */
-  desktop: { greeting: string; tiles: ReactNode; viewAs: ReactNode };
+  desktop: { greeting: string; tiles: ReactNode; viewAs: ReactNode; banners: ReactNode };
   banner: ReactNode;
   identity: HubIdentity;
   railFooter: ReactNode;

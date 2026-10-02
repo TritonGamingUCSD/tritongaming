@@ -34,7 +34,7 @@ interface Live {
   missing: Person[];
   absent: (Person & { reason: string | null; excused: boolean })[];
 }
-interface Item { key: string; meeting_id: string | null; series_id: string | null; date: string; title: string; location: string | null; doc_url: string | null; question: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; groupNames: string[]; host_id: string | null; host_name: string | null; starts_at: string; ends_at: string; status: 'scheduled' | 'open' | 'closed' | 'cancelled'; count: number; is_today: boolean; repeats: boolean }
+interface Item { key: string; meeting_id: string | null; series_id: string | null; date: string; title: string; location: string | null; doc_url: string | null; question: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; groupNames: string[]; host_id: string | null; host_name: string | null; starts_at: string; ends_at: string; status: 'scheduled' | 'open' | 'closed' | 'cancelled'; count: number; absent?: number; is_today: boolean; repeats: boolean }
 interface Series { id: string; title: string; weekday: number; start_time: string; end_time: string; location: string | null; active: boolean; doc_url: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null }
 
 const TZ = 'America/Los_Angeles';
@@ -707,7 +707,8 @@ function MeetingList({ onOpen }: { onOpen: (id: string) => void }) {
         <h3 className={styles.listTitle}>Upcoming <span>next 2 weeks</span></h3>
         {data.upcoming.length === 0 ? <p className={styles.muted}>Nothing scheduled. Add a meeting above.</p> : (
           <ul className={styles.meetingList}>
-            {data.upcoming.map((it) => <MeetingCard key={it.key} item={it} busy={busyKey === it.key} onStart={() => start(it)} onView={() => it.meeting_id && onOpen(it.meeting_id)} onCancel={(undo) => cancel(it, undo)} onSaveDoc={(f) => saveDoc(it, f)} onDelete={() => remove(it)} />)}
+            {/* A repeating meeting's week keeps the same key before and after its row exists, so an open Details panel survives the first save. */}
+            {data.upcoming.map((it) => <MeetingCard key={it.series_id ? `${it.series_id}|${it.date}` : it.key} item={it} busy={busyKey === it.key} onStart={() => start(it)} onView={() => it.meeting_id && onOpen(it.meeting_id)} onCancel={(undo) => cancel(it, undo)} onSaveDoc={(f) => saveDoc(it, f)} onDelete={() => remove(it)} onChanged={load} />)}
           </ul>
         )}
       </section>
@@ -790,8 +791,8 @@ function SeriesEditForm({ series: s, busy, onSave, onCancel }: { series: Series;
 
 interface DetailsFields { doc: string; question: string; audience: Aud; location: string; description: string; title: string; start: string; end: string }
 
-function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, onDelete }: {
-  item: Item; busy: boolean; past?: boolean;
+function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, onDelete, onChanged }: {
+  item: Item; busy: boolean; past?: boolean; onChanged?: () => void;
   onStart: () => void; onView: () => void; onCancel: (undo: boolean) => void; onSaveDoc: (f: DetailsFields) => Promise<boolean>; onDelete: () => void;
 }) {
   const [editingDoc, setEditingDoc] = useState(false);
@@ -833,6 +834,7 @@ function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, o
             {item.doc_url && <span className={styles.metaDoc}><Link2 size={11} aria-hidden="true" /> Doc</span>}
             {item.question && <span className={styles.metaDoc}><MessageCircleQuestion size={11} aria-hidden="true" /> Question</span>}
             {item.description && <span className={styles.metaDoc}><FileText size={11} aria-hidden="true" /> Description</span>}
+            {(item.absent ?? 0) > 0 && <span className={styles.metaAway} title="People who said they can't make it"><UserX size={11} aria-hidden="true" /> {item.absent} away</span>}
             {item.host_name && <span className={styles.metaHost}>Created by {item.host_name}</span>}
           </span>
         </div>
@@ -878,7 +880,75 @@ function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, o
           <div className={styles.formActions}><Button type="submit" size="sm" loading={busy} disabled={audienceEmpty(audience)}>Save</Button></div>
         </form>
       )}
+      {editingDoc && !past && <AdvanceAbsences item={item} onChanged={onChanged} />}
     </li>
+  );
+}
+
+// "Can't make it": a host records ahead of time that someone is away (with a reason), before check-in ever opens. Works
+// for repeating meetings too (that week's meeting is created on the first one). Excused absences don't count against them.
+function AdvanceAbsences({ item, onChanged }: { item: Item; onChanged?: () => void }) {
+  const ref = item.meeting_id ? { meeting_id: item.meeting_id } : { series_id: item.series_id, date: item.date };
+  const qs = item.meeting_id ? `meeting_id=${item.meeting_id}` : `series_id=${item.series_id}&date=${item.date}`;
+  const [data, setData] = useState<{ people: { id: string; name: string }[]; absences: { user_id: string; name: string; reason: string | null; excused: boolean }[] } | null>(null);
+  const [who, setWho] = useState('');
+  const [reason, setReason] = useState('');
+  const [excused, setExcused] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/meetings/absence?${qs}`, { cache: 'no-store' });
+      const json = await res.json();
+      if (res.ok) setData(json); else setError(json.error || 'Failed to load.');
+    } catch { setError('Network error.'); }
+  }, [qs]);
+  useEffect(() => { void load(); }, [load]);
+  async function add() {
+    if (!who) return;
+    setBusy(true); setError('');
+    const res = await fetch('/api/meetings/absence', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...ref, user_id: who, reason, excused }) });
+    setBusy(false);
+    if (!res.ok) { setError((await res.json().catch(() => ({}))).error || 'Failed.'); return; }
+    setWho(''); setReason(''); setExcused(true);
+    await load(); onChanged?.();
+  }
+  async function remove(userId: string) {
+    setError('');
+    const res = await fetch('/api/meetings/absence', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...ref, user_id: userId }) });
+    if (!res.ok) setError((await res.json().catch(() => ({}))).error || 'Failed.');
+    await load(); onChanged?.();
+  }
+  const away = new Set((data?.absences ?? []).map((a) => a.user_id));
+  return (
+    <section className={styles.advanceAbsences} aria-label="Can't make it">
+      <h4 className={styles.audienceTitle}><UserX size={13} aria-hidden="true" /> Can’t make it</h4>
+      {error && <Notice tone="error">{error}</Notice>}
+      {!data ? <p className={styles.faint}>Loading…</p> : (
+        <>
+          {data.absences.length > 0 && (
+            <ul className={styles.absentList}>
+              {data.absences.map((a) => (
+                <li key={a.user_id}>
+                  <span className={styles.personName}>{a.name}<em> · {a.excused ? 'excused' : 'absent'}{a.reason ? `: ${a.reason}` : ''}</em></span>
+                  <IconButton kind="remove" label={`Take ${a.name} off the absent list`} onClick={() => remove(a.user_id)} />
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className={styles.absentForm}>
+            <Select value={who} onChange={(e) => setWho(e.target.value)} aria-label="Who can't make it">
+              <option value="">Who can’t make it?</option>
+              {data.people.filter((p) => !away.has(p.id)).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </Select>
+            <Input value={reason} onChange={(e) => setReason(e.target.value)} maxLength={140} placeholder="Reason (optional)" aria-label="Reason" />
+            <CheckTile label="Excused" checked={excused} onChange={() => setExcused((v) => !v)} />
+            <Button size="sm" onClick={add} loading={busy} disabled={!who}>Mark away</Button>
+          </div>
+          <p className={styles.faint}>Excused absences don’t count against their attendance. If they show up anyway and check in, the mark comes off.</p>
+        </>
+      )}
+    </section>
   );
 }
 

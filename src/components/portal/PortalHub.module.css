@@ -701,19 +701,26 @@
 .railToggle:hover { background: rgba(255, 255, 255, 0.06); color: var(--white); }
 @media (min-width: 900px) {
   .rail { transition: width 0.18s ease; }
-  .rail.railCollapsed { width: 68px; margin-right: 1rem; padding-left: 0.4rem; padding-right: 0.4rem; }
-  .rail.railCollapsed .railLabel,
-  .rail.railCollapsed .railGroupLabel,
-  .rail.railCollapsed .railIdentityText,
-  .rail.railCollapsed .railToggle span { display: none; }
-  .rail.railCollapsed .railIdentity { justify-content: center; padding: 0.2rem 0; }
-  .rail.railCollapsed .railItem { justify-content: center; gap: 0; padding-left: 0; padding-right: 0; position: relative; }
-  .rail.railCollapsed .railGroup { padding-top: 0.2rem; }
-  .rail.railCollapsed .railBadge { position: absolute; top: 2px; right: 6px; min-width: 8px; height: 8px; padding: 0; font-size: 0; border-radius: 999px; }
-  .rail.railCollapsed .railFooter { grid-template-columns: 1fr; }
-  .rail.railCollapsed .railFooter a, .rail.railCollapsed .railFooter button { font-size: 0; gap: 0; padding: 0.55rem 0; justify-content: center; }
-  .rail.railCollapsed .railFooter a span, .rail.railCollapsed .railFooter button span { display: inline-flex; font-size: 0; }
-  .rail.railCollapsed .railFooter a b { display: none; }
+  .rail.railCollapsed { width: 62px; margin-right: 1rem; }
+  .rail.railCollapsed:not(:hover):not(:focus-within) .railIdentity { padding: 0.2rem 0; justify-content: center; gap: 0; }
+  .rail.railCollapsed .railAvatar, .rail.railCollapsed .railAvatarFallback { min-width: 30px; aspect-ratio: 1 / 1; max-width: none; }
+  .rail.railCollapsed:not(:hover):not(:focus-within) .railIdentityText,
+  .rail.railCollapsed:not(:hover):not(:focus-within) .railToggle span { display: none; }
+  /* The text stays in the row (zero width, invisible) so every row keeps exactly its expanded height and nothing shifts vertically. */
+  .rail.railCollapsed:not(:hover):not(:focus-within) .railLabel { display: inline-block; width: 0; overflow: hidden; opacity: 0; white-space: nowrap; }
+  .rail.railCollapsed .railGroupLabel { transition: opacity 0.2s ease; }
+  /* Where a group's heading was, a short bar in the group's color (as wide as the icons below it) fills the gap and still marks the group. */
+  .rail.railCollapsed .railGroupLabel .railGroupDot { transition: width 0.25s ease, height 0.25s ease, border-radius 0.25s ease; }
+  .rail.railCollapsed:not(:hover):not(:focus-within) .railGroupLabel { position: relative; color: transparent; }
+  .rail.railCollapsed:not(:hover):not(:focus-within) .railGroupLabel .railGroupDot {
+    position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 18px; height: 3px; border-radius: 3px; box-shadow: none; opacity: 0.85;
+  }
+  .rail.railCollapsed:not(:hover):not(:focus-within) .railItem { position: relative; overflow: hidden; }
+  .rail.railCollapsed:not(:hover):not(:focus-within) .railBadge { position: absolute; top: 2px; right: 6px; min-width: 8px; height: 8px; padding: 0; font-size: 0; border-radius: 999px; }
+  .rail.railCollapsed:not(:hover):not(:focus-within) .railFooter { grid-template-columns: 1fr; }
+  .rail.railCollapsed:not(:hover):not(:focus-within) .railFooter a, .rail.railCollapsed:not(:hover):not(:focus-within) .railFooter button { font-size: 0; gap: 0; padding: 0.55rem 0; justify-content: center; }
+  .rail.railCollapsed:not(:hover):not(:focus-within) .railFooter a span, .rail.railCollapsed:not(:hover):not(:focus-within) .railFooter button span { display: inline-flex; font-size: 0; }
+  .rail.railCollapsed:not(:hover):not(:focus-within) .railFooter a b { display: none; }
 }
 @media (max-width: 899px) { .railToggle { display: none; } }
 
@@ -731,7 +738,8 @@
     position: static; align-self: stretch; height: auto !important; max-height: none !important; margin: 0; width: 252px; flex-shrink: 0;
     border: 0; border-right: 1px solid rgba(255, 255, 255, 0.08); border-radius: 0; background: rgba(0, 0, 0, 0.22);
   }
-  .appFrame .rail.railCollapsed { width: 68px; margin: 0; }
+  .appFrame .rail { position: relative; top: 0; will-change: width; transition: width 0.3s cubic-bezier(0.32, 0.72, 0, 1), padding 0.3s cubic-bezier(0.32, 0.72, 0, 1), background-color 0.3s ease; }
+  .appFrame .rail.railCollapsed { width: 62px; margin: 0; z-index: 15; }
   .frameMain { flex: 1; min-width: 0; display: flex; flex-direction: column; }
   .topBar {
     position: relative; z-index: 6; flex: none; display: flex; align-items: center; gap: 0.85rem; height: 58px; padding: 0 1rem 0 0.9rem;
@@ -749,5 +757,60 @@
   .frameBody { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.18) transparent; padding: 1.5rem 2rem 3rem; }
   .appFrame .desktopContent { padding: 0; }
   .homeTiles { margin-bottom: 1.1rem; }
+  /* Reminder banners (finish your profile, "View as") sit as slim strips right under the top bar, inside the frame. */
+  .frameBanners:empty { display: none; }
+  .frameBanners { flex: none; }
+  .frameBanners > * { margin: 0 !important; border-radius: 0 !important; border-width: 0 0 1px 0 !important; }
   .homeTiles > * { flex-wrap: wrap; }
+}
+
+/* ── Collapsed sidebar: hover (or keyboard focus) opens it, with the text ──
+   The sidebar widens with a smooth ease and the rest of the page (top bar and body) moves with it at the same time, because
+   the page simply takes whatever width is left. Labels fade in as it opens. Moving the pointer away folds it back. ── */
+@keyframes railFadeIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
+@media (min-width: 900px) and (hover: hover) {
+  .appFrame .rail.railCollapsed:hover,
+  .appFrame .rail.railCollapsed:focus-within { width: 252px; }
+  .appFrame .rail.railCollapsed:hover .railLabel,
+  .appFrame .rail.railCollapsed:focus-within .railLabel,
+  .appFrame .rail.railCollapsed:hover .railGroupLabel,
+  .appFrame .rail.railCollapsed:focus-within .railGroupLabel,
+  .appFrame .rail.railCollapsed:hover .railIdentityText,
+  .appFrame .rail.railCollapsed:focus-within .railIdentityText,
+  .appFrame .rail.railCollapsed:hover .railFooter a b,
+  .appFrame .rail.railCollapsed:focus-within .railFooter a b { animation: railFadeIn 0.3s 0.05s cubic-bezier(0.32, 0.72, 0, 1) both; }
+}
+@media (min-width: 900px) and (hover: none) {
+  /* No hover on touch screens: the collapsed sidebar stays icons-only (use the toggle in the top bar). */
+  .appFrame .rail.railCollapsed { transition: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .appFrame .rail { transition: none !important; }
+  .appFrame .rail.railCollapsed:hover .railLabel, .appFrame .rail.railCollapsed:hover .railGroupLabel, .appFrame .rail.railCollapsed:hover .railIdentityText { animation: none !important; }
+}
+
+/* Every sidebar row has the same fixed height, collapsed or expanded, so the icons never shift when the sidebar opens or
+   closes (rows used to squeeze themselves to fit, and the collapsed footer is taller, which moved them). A window too short
+   for the whole list scrolls the list instead. */
+@media (min-width: 900px) {
+  .rail .railNav > .railItem, .rail .railGroup .railItem, .rail .railItem { flex: 0 0 auto; height: 32px; min-height: 32px; max-height: 32px; box-sizing: border-box; }
+  .rail .railItem .railLabel { line-height: 1; }
+}
+
+/* Collapsed sidebar: every icon always fits on screen. Rows may squeeze (down to 20px) and the group headings shrink to a thin
+   colored bar, so even the longest list needs no scrolling on a short window. (It doesn't have to line up pixel for pixel with
+   the open sidebar; opening it restores the full-height rows.) */
+@media (min-width: 900px) {
+  .rail.railCollapsed:not(:hover):not(:focus-within) .railItem { flex: 0 1 auto; height: 32px; min-height: 20px; max-height: 32px; margin-top: 0; }
+  .rail.railCollapsed:not(:hover):not(:focus-within) .railGroupLabel {
+    flex: none; height: 9px; min-height: 0; margin: 3px 0 2px; padding: 0 !important; line-height: 0; font-size: 0; border-top: 0 !important; overflow: visible;
+  }
+  .rail.railCollapsed:not(:hover):not(:focus-within) .railFooter a, .rail.railCollapsed:not(:hover):not(:focus-within) .railFooter button { padding: 0.3rem 0; }
+  .rail.railCollapsed:not(:hover):not(:focus-within) .railFooter { gap: 0.3rem; padding-top: 0.3rem; }
+  .rail.railCollapsed:not(:hover):not(:focus-within) .railNav { gap: 0; }
+}
+
+/* Just clicked in the collapsed rail: ignore the pointer so it folds back until the pointer leaves. */
+@media (min-width: 900px) {
+  .rail.railSuppressed { pointer-events: none; }
 }
