@@ -620,6 +620,7 @@ function MeetingList({ onOpen }: { onOpen: (id: string) => void }) {
   const [error, setError] = useState('');
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [editingSeries, setEditingSeries] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -670,11 +671,12 @@ function MeetingList({ onOpen }: { onOpen: (id: string) => void }) {
     if (r.ok) load();
     return r.ok;
   }
-  async function patchSeries(s: Series, body: Record<string, unknown>) {
+  async function patchSeries(s: Series, body: Record<string, unknown>): Promise<boolean> {
     setBusyKey(s.id); setError('');
     const res = await fetch(`/api/meetings/series/${s.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     if (!res.ok) setError((await res.json().catch(() => ({}))).error || 'Failed.');
     setBusyKey(null); load();
+    return res.ok;
   }
   async function deleteSeries(s: Series) {
     if (!(await confirmHold({ title: `Delete “${s.title}”?`, message: 'It stops repeating. Meetings already held and their attendance are kept.', confirmLabel: 'Hold to delete' }))) return;
@@ -714,8 +716,17 @@ function MeetingList({ onOpen }: { onOpen: (id: string) => void }) {
                   {s.title}
                   <em> · every {WEEKDAYS[s.weekday]} {hhmmLabel(s.start_time)}–{hhmmLabel(s.end_time)}{s.location ? ` · ${s.location}` : ''} · {audienceLabel(s)}{s.active ? '' : ' · paused'}</em>
                 </span>
+                <IconButton kind="edit" label={`Edit ${s.title}`} onClick={() => setEditingSeries(editingSeries === s.id ? null : s.id)} />
                 <IconButton kind={s.active ? 'pause' : 'play'} label={s.active ? `Pause ${s.title}` : `Resume ${s.title}`} onClick={() => patchSeries(s, { active: !s.active })} disabled={busyKey === s.id} />
                 <IconButton kind="delete" label={`Delete ${s.title}`} onClick={() => deleteSeries(s)} disabled={busyKey === s.id} />
+                {editingSeries === s.id && (
+                  <SeriesEditForm
+                    series={s}
+                    busy={busyKey === s.id}
+                    onCancel={() => setEditingSeries(null)}
+                    onSave={async (body) => { const ok = await patchSeries(s, body); if (ok) setEditingSeries(null); }}
+                  />
+                )}
               </li>
             ))}
           </ul>
@@ -731,6 +742,42 @@ function MeetingList({ onOpen }: { onOpen: (id: string) => void }) {
         </section>
       )}
     </div>
+  );
+}
+
+// Edit a repeating meeting itself: its name, day, times, room, description, doc and who it's for.
+function SeriesEditForm({ series: s, busy, onSave, onCancel }: { series: Series; busy: boolean; onSave: (body: Record<string, unknown>) => Promise<void>; onCancel: () => void }) {
+  const [title, setTitle] = useState(s.title);
+  const [weekday, setWeekday] = useState(String(s.weekday));
+  const [start, setStart] = useState(s.start_time.slice(0, 5));
+  const [end, setEnd] = useState(s.end_time.slice(0, 5));
+  const [room, setRoom] = useState(s.location ?? '');
+  const [desc, setDesc] = useState(s.description ?? '');
+  const [doc, setDoc] = useState(s.doc_url ?? '');
+  const [audience, setAudience] = useState<Aud>(audFrom(s));
+  const bad = !title.trim() || end <= start || audienceEmpty(audience);
+  return (
+    <form
+      className={`${styles.detailsForm} ${styles.seriesForm}`}
+      onSubmit={(e) => { e.preventDefault(); void onSave({ title, weekday: Number(weekday), start, end, location: room, description: desc, doc_url: doc, ...audPayload(audience) }); }}
+    >
+      <p className={styles.faint}>Changes apply to the repeating meeting and to coming weeks that haven’t started. A week where you changed the room, time or doc on its own keeps its own.</p>
+      <div className={styles.formGrid}>
+        <Field label="Name"><Input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={60} required /></Field>
+        <Field label="Day of the week"><Select value={weekday} onChange={(e) => setWeekday(e.target.value)}>{WEEKDAYS.map((d, i) => <option key={d} value={i}>{d}</option>)}</Select></Field>
+        <Field label="Starts"><TimeInput value={start} onChange={(e) => setStart(e.target.value)} required /></Field>
+        <Field label="Ends"><TimeInput value={end} onChange={(e) => setEnd(e.target.value)} required /></Field>
+      </div>
+      <Field label="Room" hint="The default for every week."><Input value={room} onChange={(e) => setRoom(e.target.value)} maxLength={80} placeholder="e.g. Price Center East" /></Field>
+      <Field label="What's this meeting about? (optional)"><Textarea value={desc} onChange={(e) => setDesc(e.target.value)} maxLength={MAX_DESCRIPTION_LENGTH} rows={2} /></Field>
+      <Field label="Meeting doc link"><Input value={doc} onChange={(e) => setDoc(e.target.value)} placeholder="https://docs.google.com/…" inputMode="url" /></Field>
+      <div className={styles.audienceField}><span className={styles.audienceTitle}>Who is it for?</span><AudiencePicker value={audience} onChange={setAudience} /></div>
+      {end <= start && <p className={styles.checkWarn}>Pick an end time after the start.</p>}
+      <div className={styles.formActions}>
+        <Button type="button" size="sm" variant="ghost" onClick={onCancel}>Cancel</Button>
+        <Button type="submit" size="sm" loading={busy} disabled={bad}>Save changes</Button>
+      </div>
+    </form>
   );
 }
 

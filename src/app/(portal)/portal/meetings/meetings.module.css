@@ -309,3 +309,7 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .metaSub > .metaAudience { color: #c4b5fd; }
 
 .sectionHead { margin: 0.4rem 0 0; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(242, 241, 240, 0.5); }
+
+.seriesForm { flex-basis: 100%; width: 100%; padding-top: 0.8rem; }
+.seriesForm .formActions { gap: 0.5rem; }
+.seriesRow { flex-wrap: wrap; }
