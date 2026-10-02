@@ -18,6 +18,7 @@ import { PACIFIC_TZ } from '@/lib/timezone';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import type { Doc, DocCategory, DocAttachment } from '@/types/database';
 import styles from './docs.module.css';
+import IconButton from '@/components/ui/IconButton';
 
 const UNCATEGORIZED = 'Uncategorized';
 
@@ -103,7 +104,7 @@ function AttachmentsField({ value, onChange }: { value: DocAttachment[]; onChang
                 {a.kind === 'google_album' ? <ImageIcon size={16} strokeWidth={1.5} /> : <Paperclip size={16} strokeWidth={1.5} />}
               </span>
               <span className={styles.attachName}>{a.name}</span>
-              <button type="button" className={styles.attachRemoveBtn} onClick={() => handleRemove(i)}>Remove</button>
+              <IconButton kind="remove" size="sm" label={`Remove ${a.name}`} onClick={() => handleRemove(i)} />
             </li>
           ))}
         </ul>

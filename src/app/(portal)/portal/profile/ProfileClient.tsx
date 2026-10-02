@@ -24,6 +24,7 @@ import LinkGoogleSection from './LinkGoogleSection';
 import MajorPicker from './MajorPicker';
 import GamePicker from './GamePicker';
 import styles from './profile.module.css';
+import Select from '@/components/ui/Select';
 
 type Tab = 'basic' | 'officer' | 'security';
 
@@ -328,7 +329,7 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
               </label>
               <label className={styles.fieldGroup}>
                 <span className={styles.label}>Pronouns <span className={styles.required}>*</span></span>
-                <select
+                <Select
                   className={styles.input}
                   value={pronounsOther ? 'Other' : form.pronouns}
                   onChange={(e) => {
@@ -345,7 +346,7 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
                   <option value="">Select pronouns</option>
                   {PRONOUN_OPTIONS.map((p) => <option key={p}>{p}</option>)}
                   <option value="Other">Other…</option>
-                </select>
+                </Select>
                 {pronounsOther && (
                   <input
                     className={styles.input}
@@ -364,7 +365,7 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
             <div className={styles.fieldRow}>
               <label className={styles.fieldGroup}>
                 <span className={styles.label}>Gender <span className={styles.required}>*</span></span>
-                <select
+                <Select
                   className={styles.input}
                   value={form.gender}
                   onChange={(e) => setForm((f) => ({ ...f, gender: e.target.value }))}
@@ -372,7 +373,7 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
                 >
                   <option value="">Select gender</option>
                   {GENDER_OPTIONS.map((g) => <option key={g}>{g}</option>)}
-                </select>
+                </Select>
                 <span className={styles.charCount} style={{ textAlign: 'left' }}>Private — only used for the club&apos;s attendance statistics.</span>
               </label>
             </div>
@@ -384,7 +385,7 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
               <div className={styles.fieldRow}>
               <label className={styles.fieldGroup}>
                 <span className={styles.label}>Class of {isUcsd && <span className={styles.required}>*</span>}</span>
-                <select
+                <Select
                   className={styles.input}
                   value={form.year}
                   onChange={(e) => setForm((f) => ({ ...f, year: e.target.value }))}
@@ -392,12 +393,12 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
                 >
                   <option value="">Select your class</option>
                   {yearChoiceOptions().map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
+                </Select>
                 <span className={styles.charCount} style={{ textAlign: 'left' }}>Your graduation year — your year (3rd Year, etc.) updates itself every fall.</span>
               </label>
               <label className={styles.fieldGroup}>
                 <span className={styles.label}>College {isUcsd && <span className={styles.required}>*</span>}</span>
-                <select
+                <Select
                   className={styles.input}
                   value={form.college}
                   onChange={(e) => setForm((f) => ({ ...f, college: e.target.value }))}
@@ -413,7 +414,7 @@ export default function ProfileClient({ profile, privateInfo, email, roles, isUc
                   <option>Seventh</option>
                   <option>Eighth</option>
                   <option>N/A</option>
-                </select>
+                </Select>
               </label>
               </div>
               <div className={styles.fieldRow}>

@@ -13,6 +13,7 @@ import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import { useDragReorder } from '@/lib/useDragReorder';
 import styles from './ContentEditor.module.css';
+import IconButton from '@/components/ui/IconButton';
 
 type BlockDef = ContentBlock;
 
@@ -418,8 +419,7 @@ function KvListField({ value, onChange, labelEl, keyLbl, valLbl }: {
               <input className={styles.fieldInput} value={item.label ?? ''} placeholder={valLbl}
                 onChange={(e) => { const n=[...items]; n[i]={...n[i],label:e.target.value}; onChange(n); }} />
               <div className={styles.rowActions}>
-                <button type="button" className={styles.kvRemove}
-                  onClick={() => onChange(items.filter((_,j)=>j!==i))} aria-label="Remove"><X size={14} strokeWidth={1.75} /></button>
+                <IconButton kind="remove" size="sm" label="Remove" onClick={() => onChange(items.filter((_,j)=>j!==i))} />
               </div>
             </div>
           </div>
@@ -496,8 +496,7 @@ function ImageListField({ value, onChange, labelEl, fields, addLabel = '+ Add It
               ))}
             </div>
             <div className={styles.rowActions}>
-              <button type="button" className={styles.kvRemove}
-                onClick={() => onChange(items.filter((_,j)=>j!==i))} aria-label="Remove"><X size={14} strokeWidth={1.75} /></button>
+              <IconButton kind="remove" size="sm" label="Remove" onClick={() => onChange(items.filter((_,j)=>j!==i))} />
             </div>
           </div>
         ))}

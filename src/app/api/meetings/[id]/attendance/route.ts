@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/audit';
-import { authorizeMeetings } from '@/lib/meetings';
+import { authorizeMeetings, guardMeeting } from '@/lib/meetings';
 
 // Exec fixes attendance by hand: add someone who forgot their phone, or remove a mistaken entry.
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await authorizeMeetings('manage_meetings');
+  const auth = await authorizeMeetings('host_meetings');
   if (auth.error) return auth.error;
   const { id } = await params;
+  { const denied = await guardMeeting(auth, id); if (denied) return denied; }
   const { user_id } = await request.json().catch(() => ({}));
   if (!user_id) return NextResponse.json({ error: 'Missing user_id' }, { status: 400 });
   const { data: m } = await auth.svc.from('meetings').select('title, meeting_date').eq('id', id).maybeSingle();
@@ -21,13 +22,16 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 }
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await authorizeMeetings('manage_meetings');
+  const auth = await authorizeMeetings('host_meetings');
   if (auth.error) return auth.error;
   const { id } = await params;
+  { const denied = await guardMeeting(auth, id); if (denied) return denied; }
   const { user_id } = await request.json().catch(() => ({}));
   if (!user_id) return NextResponse.json({ error: 'Missing user_id' }, { status: 400 });
   const { data: m } = await auth.svc.from('meetings').select('title, meeting_date').eq('id', id).maybeSingle();
   const { error } = await auth.svc.from('meeting_attendance').delete().eq('meeting_id', id).eq('user_id', user_id);
+  // Taking someone's check-in back also takes back their answer to the question of the meeting.
+  await auth.svc.from('meeting_answers').delete().eq('meeting_id', id).eq('user_id', user_id);
   if (error) return NextResponse.json({ error: 'Failed to remove.' }, { status: 500 });
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'remove', entityType: 'meeting attendance', entityId: id, summary: `Removed someone from ${m?.title ?? 'meeting'} (${m?.meeting_date ?? ''})`, details: { user_id } });
   return NextResponse.json({ ok: true });

@@ -8,4 +8,5 @@
 .btn:hover:not(:disabled), .active { background: rgba(255, 199, 44, 0.12); border-color: rgba(255, 199, 44, 0.45); color: var(--yellow); }
 .btn:focus-visible { outline: 2px solid rgba(255, 199, 44, 0.6); outline-offset: 2px; }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
-.danger:hover:not(:disabled) { background: rgba(220, 38, 38, 0.16); border-color: rgba(248, 113, 113, 0.6); color: #f87171; }
+.danger { background: rgba(220, 38, 38, 0.1); border-color: rgba(248, 113, 113, 0.38); color: #f87171; }
+.danger:hover:not(:disabled) { background: rgba(220, 38, 38, 0.22); border-color: rgba(248, 113, 113, 0.7); color: #fca5a5; }

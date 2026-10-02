@@ -6,6 +6,8 @@ import { GripVertical } from 'lucide-react';
 import type { SocialEmbed } from '@/types/database';
 import { useDragReorder } from '@/lib/useDragReorder';
 import styles from './SocialEmbedsField.module.css';
+import IconButton from '@/components/ui/IconButton';
+import Select from '@/components/ui/Select';
 
 const EMBED_TYPES: { value: SocialEmbed['type']; label: string; logo: string; placeholder: string }[] = [
   { value: 'instagram', label: 'Instagram', logo: '/logos/instagram.svg', placeholder: 'https://www.instagram.com/p/…' },
@@ -75,7 +77,7 @@ export default function SocialEmbedsField({
                 </span>
                 <span className={styles.embedUrl}>{embed.url}</span>
                 <div className={styles.embedActions}>
-                  <button type="button" className={styles.embedRemoveBtn} onClick={() => handleRemove(i)}>Remove</button>
+                  <IconButton kind="remove" label="Remove embed" onClick={() => handleRemove(i)} />
                 </div>
               </li>
             );
@@ -84,11 +86,11 @@ export default function SocialEmbedsField({
       )}
 
       <div className={styles.embedAddRow}>
-        <select className={styles.input} value={draftType} onChange={(e) => setDraftType(e.target.value as SocialEmbed['type'])}>
+        <Select className={styles.input} value={draftType} onChange={(e) => setDraftType(e.target.value as SocialEmbed['type'])}>
           {EMBED_TYPES.map((t) => (
             <option key={t.value} value={t.value}>{t.label}</option>
           ))}
-        </select>
+        </Select>
         <input
           className={styles.input}
           type="url"

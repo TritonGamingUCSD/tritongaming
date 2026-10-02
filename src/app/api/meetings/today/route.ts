@@ -21,12 +21,12 @@ export async function GET() {
   const { upcoming } = await buildSchedule(auth.svc, { id: auth.user.id, roles: auth.roles });
   const next = upcoming.find((i) => i.status === 'scheduled' || i.status === 'open');
   return NextResponse.json({
-    meetings: todays.map((m) => ({ id: m.id, title: m.title, location: m.location, starts_at: m.starts_at, ends_at: m.ends_at, open: isMeetingOpen(m), accepting: isCheckInAccepting(m), opens_at: new Date(checkInOpensAt(m)).toISOString(), checked_in_at: inAt.get(m.id) ?? null,
+    meetings: todays.map((m) => ({ id: m.id, title: m.title, description: m.description, location: m.location, starts_at: m.starts_at, ends_at: m.ends_at, open: isMeetingOpen(m), accepting: isCheckInAccepting(m), opens_at: new Date(checkInOpensAt(m)).toISOString(), checked_in_at: inAt.get(m.id) ?? null,
       // The meeting doc only shows once you've checked in.
       doc_url: inAt.has(m.id) ? m.doc_url : null,
       // The question is a reward for being there: revealed after check-in.
       question: inAt.has(m.id) ? m.question : null,
       my_answer: myAnswer.get(m.id) ?? null })),
-    next: next ? { title: next.title, location: next.location, starts_at: next.starts_at, ends_at: next.ends_at, date: next.date } : null,
+    next: next ? { title: next.title, description: next.description, location: next.location, starts_at: next.starts_at, ends_at: next.ends_at, date: next.date } : null,
   });
 }

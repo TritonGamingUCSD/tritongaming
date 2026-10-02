@@ -5,6 +5,7 @@ import { GripVertical } from 'lucide-react';
 import type { PhotoAlbumEntry } from '@/types/database';
 import { useDragReorder } from '@/lib/useDragReorder';
 import styles from './PhotoAlbumsField.module.css';
+import IconButton from '@/components/ui/IconButton';
 
 // An event can have more than one photo album (e.g. a day-1/day-2 split
 // for a multi-day LAN) — this collects {title, url} pairs, in display
@@ -55,7 +56,7 @@ export default function PhotoAlbumsField({
               <span className={styles.albumTitle}>{album.title}</span>
               <span className={styles.albumUrl}>{album.url}</span>
               <div className={styles.albumActions}>
-                <button type="button" className={styles.removeBtn} onClick={() => handleRemove(i)}>Remove</button>
+                <IconButton kind="remove" label="Remove album" onClick={() => handleRemove(i)} />
               </div>
             </li>
           ))}

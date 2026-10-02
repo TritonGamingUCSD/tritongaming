@@ -37,12 +37,14 @@ function usageScore(id: string, usage: DockUsage, now: Date): number {
   return Math.min(40, u.count * 4 * Math.pow(0.5, days / 14));
 }
 
-interface Pickable { id: string; dockBoost?: number }
+interface Pickable { id: string; dockBoost?: number; dockExclude?: boolean }
 
 export function pickDock<T extends Pickable>(sections: T[], opts: { now?: Date; usage?: DockUsage } = {}): { ids: Set<string>; urgent: Set<string>; slots: number } {
-  const slots = sections.length <= 4 ? sections.length : 3;
+  // Sections flagged dockExclude never take a bottom-bar slot (they're still in the More sheet).
+  const eligible = sections.filter((s) => !s.dockExclude);
+  const slots = sections.length <= 4 ? Math.min(eligible.length, sections.length) : 3;
   const now = opts.now;
-  const scored = sections.map((s, order) => {
+  const scored = eligible.map((s, order) => {
     const score = (BASE_WEIGHT[s.id] ?? 0) + (s.dockBoost ?? 0) + (now ? usageScore(s.id, opts.usage ?? {}, now) : 0);
     return { id: s.id, score, order };
   });

@@ -15,6 +15,7 @@ import { PACIFIC_TZ } from '@/lib/timezone';
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
 import styles from './RoleManager.module.css';
+import Select from '@/components/ui/Select';
 
 interface RoleGrant {
   role: AppRole;
@@ -301,7 +302,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
           )}
         </div>
 
-        <select
+        <Select
           className={styles.sortSelect}
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
@@ -311,7 +312,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
           <option value="name-desc">Name Z–A</option>
           <option value="joined-new">Newest joined</option>
           <option value="joined-old">Oldest joined</option>
-        </select>
+        </Select>
 
         <div className={styles.roleFilters}>
           <button
@@ -336,18 +337,18 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
       {selectedIds.size > 0 && (
         <div className={styles.bulkBar}>
           <span className={styles.bulkCount}>{selectedIds.size} selected</span>
-          <select className={styles.bulkSelect} value={bulkRole} onChange={(e) => { setBulkRole(e.target.value as AppRole); setBulkError(null); }}>
+          <Select className={styles.bulkSelect} value={bulkRole} onChange={(e) => { setBulkRole(e.target.value as AppRole); setBulkError(null); }}>
             {ASSIGNABLE_ROLES.map((r) => (
               <option key={r} value={r}>Add {ROLE_LABELS[r]}</option>
             ))}
-          </select>
+          </Select>
           {bulkRole === 'division' && (
-            <select className={styles.bulkSelect} value={bulkDivisionId} onChange={(e) => setBulkDivisionId(e.target.value)}>
+            <Select className={styles.bulkSelect} value={bulkDivisionId} onChange={(e) => setBulkDivisionId(e.target.value)}>
               <option value="">Choose division…</option>
               {divisions.map((d) => (
                 <option key={d.id} value={d.id}>{d.name}</option>
               ))}
-            </select>
+            </Select>
           )}
           <button className={styles.roleBtn} onClick={applyBulkRole} disabled={bulkApplying}>
             {bulkApplying ? 'Applying…' : `Apply to ${selectedIds.size}`}

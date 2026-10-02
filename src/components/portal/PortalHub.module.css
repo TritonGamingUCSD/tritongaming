@@ -654,8 +654,22 @@
   .rail .railIcon :global(svg) { width: 11px; height: 11px; }
   .rail .railGroupLabel { padding: 0 0.6rem 0.06rem; font-size: 0.52rem; line-height: 1.05; }
 }
-@media (min-width: 900px) and (max-height: 780px) {
+@media (min-width: 900px) and (max-height: 830px) {
   .rail .railItem { min-height: 21px; }
   .rail .railGroupLabel { display: none; }
   .rail .railNav { gap: 0.2rem; }
+}
+
+/* ── Sidebar, final: sized by its content, spacing that gives way when the screen is short ──
+   The rail is only as tall as its links (a role with few sections gets a short sidebar) up to the
+   space available. Groups are display:contents so every link is a direct flex child of the nav and
+   can shrink evenly (down to min-height) instead of the page needing media queries per height. */
+@media (min-width: 900px) {
+  .rail { height: auto !important; max-height: calc(100vh - var(--portal-header-h, 0px) - 1.5rem); }
+  .rail .railNav { display: flex; flex-direction: column; gap: 0; flex: 0 1 auto; min-height: 0; overflow: hidden; }
+  .rail .railGroup { display: contents; }
+  .rail .railGroupLabel { flex: none; margin-top: 0.35rem; padding: 0.5rem 0.6rem 0.15rem; border-top: 1px solid rgba(255, 255, 255, 0.07); }
+  .rail .railGroup:first-child .railGroupLabel { margin-top: 0.1rem; }
+  .rail .railItem { flex: 0 1 auto; max-height: none; min-height: 26px; padding: 0.4rem 0.65rem; margin-top: 0.1rem; }
+  .rail .railLabel { font-size: 0.82rem; }
 }

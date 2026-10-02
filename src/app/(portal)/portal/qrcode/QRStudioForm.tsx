@@ -6,6 +6,8 @@ import type { QRCodeOptions, QRDotsType, QRCornersSquareType, QRCornersDotType }
 import { QR_PRESETS, matchingPreset } from '@/lib/qrPresets';
 import type { QRDivisionLogo } from './QRStudioClient';
 import styles from './qrstudio.module.css';
+import Select from '@/components/ui/Select';
+import NumberInput from '@/components/ui/NumberInput';
 
 const dotStyles: QRDotsType[] = ['rounded', 'dots', 'square', 'extra-rounded', 'classy', 'classy-rounded'];
 const cornerSquareStyles: QRCornersSquareType[] = ['extra-rounded', 'square', 'dot'];
@@ -309,18 +311,18 @@ export default function QRStudioForm({ options, setOptions, divisions = [] }: { 
         <Fold title="Shapes" hint="Modules and corners">
           <div className={styles.fieldRow}>
             <label className={styles.field}><span className={styles.label}>Module shape</span>
-              <select className={styles.input} value={options.dotsType} onChange={(e) => set({ dotsType: e.target.value as QRDotsType })}>
+              <Select className={styles.input} value={options.dotsType} onChange={(e) => set({ dotsType: e.target.value as QRDotsType })}>
                 {dotStyles.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select></label>
+              </Select></label>
             <label className={styles.field}><span className={styles.label}>Corner frame</span>
-              <select className={styles.input} value={options.cornersSquareType} onChange={(e) => set({ cornersSquareType: e.target.value as QRCornersSquareType })}>
+              <Select className={styles.input} value={options.cornersSquareType} onChange={(e) => set({ cornersSquareType: e.target.value as QRCornersSquareType })}>
                 {cornerSquareStyles.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select></label>
+              </Select></label>
           </div>
           <label className={styles.field}><span className={styles.label}>Corner dot</span>
-            <select className={styles.input} value={options.cornersDotType} onChange={(e) => set({ cornersDotType: e.target.value as QRCornersDotType })}>
+            <Select className={styles.input} value={options.cornersDotType} onChange={(e) => set({ cornersDotType: e.target.value as QRCornersDotType })}>
               {cornerDotStyles.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select></label>
+            </Select></label>
         </Fold>
 
         <Fold title="Your own icon" hint="Upload a logo">
@@ -341,9 +343,9 @@ export default function QRStudioForm({ options, setOptions, divisions = [] }: { 
         <Fold title="Size & download" hint={`${options.size}px · ${options.downloadFormat.toUpperCase()}`}>
           <div className={styles.fieldRow}>
             <label className={styles.field}><span className={styles.label}>Size (px)</span>
-              <input className={styles.input} type="number" min={160} max={1200} step={20} value={options.size} onChange={(e) => set({ size: Number.parseInt(e.target.value, 10) || 0 })} /></label>
+              <NumberInput className={styles.input} min={160} max={1200} step={20} value={options.size} onChange={(e) => set({ size: Number.parseInt(e.target.value, 10) || 0 })} /></label>
             <label className={styles.field}><span className={styles.label}>Outer margin</span>
-              <input className={styles.input} type="number" min={0} max={64} step={2} value={options.margin} onChange={(e) => set({ margin: Number.parseInt(e.target.value, 10) || 0 })} /></label>
+              <NumberInput className={styles.input} min={0} max={64} step={2} value={options.margin} onChange={(e) => set({ margin: Number.parseInt(e.target.value, 10) || 0 })} /></label>
           </div>
           <div className={styles.field}>
             <span className={styles.label}>Format</span>

@@ -1,7 +1,8 @@
 import { Suspense } from 'react';
 import { Exo_2, JetBrains_Mono } from 'next/font/google';
 import { redirect } from 'next/navigation';
-import { getProfile, getUserRoles, getMyGender } from '@/lib/auth';
+import { getProfile, getUserRoles, getMyGender, getViewAs } from '@/lib/auth';
+import { ViewAsBanner } from '@/components/portal/ViewAs';
 import { isVerifiedMember, canSetOrgTitle } from '@/lib/capabilities';
 import { getMissingProfileFields } from '@/lib/profile';
 import ProfileIncompleteBanner from '@/components/portal/ProfileIncompleteBanner';
@@ -24,7 +25,7 @@ export default async function PortalLayout({ children }: { children: React.React
 
   // Anything required still blank on this person's profile — surfaced as a
   // banner on every portal page, not only when a ticket claim bounces them.
-  const [roles, gender] = await Promise.all([getUserRoles(), getMyGender()]);
+  const [roles, gender, viewAs] = await Promise.all([getUserRoles(), getMyGender(), getViewAs()]);
   const isUcsdMember = isVerifiedMember(roles);
   const missingProfileFields = getMissingProfileFields({ ...profile, gender }, isUcsdMember, { requireOrgTitle: canSetOrgTitle(roles) });
   // Only the officer title missing -> send them straight to the Officer Card tab.
@@ -33,6 +34,7 @@ export default async function PortalLayout({ children }: { children: React.React
   return (
     <div className={`${styles.layout} ${styles.fontScope} ${portalSans.variable} ${jbMono.variable}`} data-portal-layout>
       <main className={styles.main}>
+        {viewAs && <ViewAsBanner active={viewAs} />}
         <div className={styles.content}>
           <div data-print-hide style={{ display: 'contents' }}>
             <Suspense fallback={null}>

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { MAJOR_OPTIONS, MAJOR_SEPARATOR, MAX_MAJORS, splitStoredMajors } from '@/lib/majors';
 import styles from './profile.module.css';
+import Select from '@/components/ui/Select';
 
 const OTHER = '__other__';
 
@@ -38,7 +39,7 @@ export default function MajorPicker({ value, onChange, required }: { value: stri
         </div>
       )}
       {!full && !other && (
-        <select
+        <Select
           className={styles.input}
           value=""
           required={required && chosen.length === 0}
@@ -50,7 +51,7 @@ export default function MajorPicker({ value, onChange, required }: { value: stri
           <option value="">{chosen.length ? 'Add another major (double major?)' : 'Select your major'}</option>
           {MAJOR_OPTIONS.filter((o) => !chosen.includes(o)).map((o) => <option key={o} value={o}>{o}</option>)}
           <option value={OTHER}>Other (type it in)…</option>
-        </select>
+        </Select>
       )}
       {!full && other && (
         <div className={styles.majorOther}>

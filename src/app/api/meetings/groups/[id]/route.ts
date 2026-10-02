@@ -4,9 +4,10 @@ import { authorizeMeetings } from '@/lib/meetings';
 import { cleanMemberIds as cleanMembers } from '@/lib/meetingAudience';
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await authorizeMeetings('manage_meetings');
+  const auth = await authorizeMeetings('host_meetings');
   if (auth.error) return auth.error;
   const { id } = await params;
+  { const { data: g } = await auth.svc.from('meeting_groups').select('created_by').eq('id', id).maybeSingle(); if (!g) return NextResponse.json({ error: 'Group not found' }, { status: 404 }); if (!auth.manageAll && g.created_by !== auth.user.id) return NextResponse.json({ error: 'That group was made by someone else.' }, { status: 403 }); }
   const b = await request.json().catch(() => ({}));
   const patch: Record<string, unknown> = {};
   if ('name' in b) { const n = String(b.name ?? '').trim().slice(0, 60); if (!n) return NextResponse.json({ error: 'Give the group a name.' }, { status: 400 }); patch.name = n; }
@@ -19,9 +20,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await authorizeMeetings('manage_meetings');
+  const auth = await authorizeMeetings('host_meetings');
   if (auth.error) return auth.error;
   const { id } = await params;
+  { const { data: g } = await auth.svc.from('meeting_groups').select('created_by').eq('id', id).maybeSingle(); if (!g) return NextResponse.json({ error: 'Group not found' }, { status: 404 }); if (!auth.manageAll && g.created_by !== auth.user.id) return NextResponse.json({ error: 'That group was made by someone else.' }, { status: 403 }); }
   const { data } = await auth.svc.from('meeting_groups').select('name').eq('id', id).maybeSingle();
   const { error } = await auth.svc.from('meeting_groups').delete().eq('id', id);
   if (error) return NextResponse.json({ error: 'Failed to delete.' }, { status: 500 });

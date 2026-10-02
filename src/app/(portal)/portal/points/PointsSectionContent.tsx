@@ -17,6 +17,9 @@ import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
 import type { TransactionRow } from './getMyPointsData';
 import IconButton from '@/components/ui/IconButton';
 import styles from './points.module.css';
+import Select from '@/components/ui/Select';
+import ColorInput from '@/components/ui/ColorInput';
+import NumberInput from '@/components/ui/NumberInput';
 
 type Tab = 'points' | 'shop' | 'leaderboard' | 'manage';
 const VALID_TABS: Tab[] = ['points', 'shop', 'leaderboard', 'manage'];
@@ -946,7 +949,7 @@ export default function PointsSectionContent({
                   ))}
                 </div>
               )}
-              <input className={styles.input} type="number" placeholder="Amount (+/-)" value={awardAmount} onChange={(e) => setAwardAmount(e.target.value)} />
+              <NumberInput className={styles.input} placeholder="Amount (+/-)" value={awardAmount} onChange={(e) => setAwardAmount(e.target.value)} />
               <input className={styles.input} placeholder="Reason (required)" value={awardNote} onChange={(e) => setAwardNote(e.target.value)} maxLength={200} />
               <button type="submit" className={styles.saveBtn} disabled={awarding || awardTargets.length === 0 || !awardAmount || !awardNote.trim()}>
                 {awarding ? 'Awarding…' : `Award ${awardTargets.length || ''}`.trim()}
@@ -961,27 +964,27 @@ export default function PointsSectionContent({
           <form className={styles.newRewardForm} onSubmit={handleCreateReward}>
             <input className={styles.input} placeholder="Reward title" value={newReward.title} onChange={(e) => setNewReward((f) => ({ ...f, title: e.target.value }))} maxLength={80} />
             <input className={styles.input} placeholder="Description (optional)" value={newReward.description} onChange={(e) => setNewReward((f) => ({ ...f, description: e.target.value }))} maxLength={200} />
-            <input
-              className={styles.input} type="number" min={0} placeholder="Point cost"
+            <NumberInput
+              className={styles.input} min={0} placeholder="Point cost"
               value={newReward.isTierUnlock ? '0' : newReward.point_cost}
               onChange={(e) => setNewReward((f) => ({ ...f, point_cost: e.target.value }))}
               disabled={newReward.isTierUnlock}
             />
-            <input className={styles.input} type="number" min={0} placeholder="Stock (blank = unlimited)" value={newReward.stock} onChange={(e) => setNewReward((f) => ({ ...f, stock: e.target.value }))} />
-            <select className={styles.input} value={newReward.min_tier} onChange={(e) => setNewReward((f) => ({ ...f, min_tier: e.target.value }))}>
+            <NumberInput className={styles.input} min={0} placeholder="Stock (blank = unlimited)" value={newReward.stock} onChange={(e) => setNewReward((f) => ({ ...f, stock: e.target.value }))} />
+            <Select className={styles.input} value={newReward.min_tier} onChange={(e) => setNewReward((f) => ({ ...f, min_tier: e.target.value }))}>
               <option value="">No tier requirement</option>
               {tiers.map((t) => <option key={t.name} value={t.name}>{t.name}+ only</option>)}
-            </select>
-            <input
-              className={styles.input} type="number" min={1} placeholder="Max per person (blank = unlimited)"
+            </Select>
+            <NumberInput
+              className={styles.input} min={1} placeholder="Max per person (blank = unlimited)"
               value={newReward.isTierUnlock ? '1' : newReward.max_per_user}
               onChange={(e) => setNewReward((f) => ({ ...f, max_per_user: e.target.value }))}
               disabled={newReward.isTierUnlock}
             />
-            <select className={styles.input} value={newReward.reward_type} onChange={(e) => setNewReward((f) => ({ ...f, reward_type: e.target.value as 'physical' | 'digital', grants_fast_pass: e.target.value === 'digital' ? f.grants_fast_pass : false }))}>
+            <Select className={styles.input} value={newReward.reward_type} onChange={(e) => setNewReward((f) => ({ ...f, reward_type: e.target.value as 'physical' | 'digital', grants_fast_pass: e.target.value === 'digital' ? f.grants_fast_pass : false }))}>
               <option value="physical">Physical — officer confirms hand-over</option>
               <option value="digital">Digital — auto-granted on claim</option>
-            </select>
+            </Select>
             {newReward.reward_type === 'digital' && (
               <label className={styles.checkboxField}>
                 <input type="checkbox" checked={newReward.grants_fast_pass} onChange={(e) => setNewReward((f) => ({ ...f, grants_fast_pass: e.target.checked }))} />
@@ -1015,17 +1018,17 @@ export default function PointsSectionContent({
                   <form key={item.id} className={styles.editForm} onSubmit={handleSaveEdit}>
                     <input className={styles.input} placeholder="Reward title" value={editForm.title} onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))} maxLength={80} />
                     <input className={styles.input} placeholder="Description (optional)" value={editForm.description} onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))} maxLength={200} />
-                    <input className={styles.input} type="number" min={0} placeholder="Point cost" value={editForm.point_cost} onChange={(e) => setEditForm((f) => ({ ...f, point_cost: e.target.value }))} />
-                    <input className={styles.input} type="number" min={0} placeholder="Stock (blank = unlimited)" value={editForm.stock} onChange={(e) => setEditForm((f) => ({ ...f, stock: e.target.value }))} />
-                    <select className={styles.input} value={editForm.min_tier} onChange={(e) => setEditForm((f) => ({ ...f, min_tier: e.target.value }))}>
+                    <NumberInput className={styles.input} min={0} placeholder="Point cost" value={editForm.point_cost} onChange={(e) => setEditForm((f) => ({ ...f, point_cost: e.target.value }))} />
+                    <NumberInput className={styles.input} min={0} placeholder="Stock (blank = unlimited)" value={editForm.stock} onChange={(e) => setEditForm((f) => ({ ...f, stock: e.target.value }))} />
+                    <Select className={styles.input} value={editForm.min_tier} onChange={(e) => setEditForm((f) => ({ ...f, min_tier: e.target.value }))}>
                       <option value="">No tier requirement</option>
                       {tiers.map((t) => <option key={t.name} value={t.name}>{t.name}+ only</option>)}
-                    </select>
-                    <input className={styles.input} type="number" min={1} placeholder="Max per person (blank = unlimited)" value={editForm.max_per_user} onChange={(e) => setEditForm((f) => ({ ...f, max_per_user: e.target.value }))} />
-                    <select className={styles.input} value={editForm.reward_type} onChange={(e) => setEditForm((f) => ({ ...f, reward_type: e.target.value as 'physical' | 'digital', grants_fast_pass: e.target.value === 'digital' ? f.grants_fast_pass : false }))}>
+                    </Select>
+                    <NumberInput className={styles.input} min={1} placeholder="Max per person (blank = unlimited)" value={editForm.max_per_user} onChange={(e) => setEditForm((f) => ({ ...f, max_per_user: e.target.value }))} />
+                    <Select className={styles.input} value={editForm.reward_type} onChange={(e) => setEditForm((f) => ({ ...f, reward_type: e.target.value as 'physical' | 'digital', grants_fast_pass: e.target.value === 'digital' ? f.grants_fast_pass : false }))}>
                       <option value="physical">Physical — officer confirms hand-over</option>
                       <option value="digital">Digital — auto-granted on claim</option>
-                    </select>
+                    </Select>
                     {editForm.reward_type === 'digital' && (
                       <label className={styles.checkboxField}>
                         <input type="checkbox" checked={editForm.grants_fast_pass} onChange={(e) => setEditForm((f) => ({ ...f, grants_fast_pass: e.target.checked }))} />
@@ -1142,10 +1145,10 @@ export default function PointsSectionContent({
 
             <form className={styles.newRewardForm} onSubmit={handleCreateTier}>
               <input className={styles.input} placeholder="Tier name" value={newTier.name} onChange={(e) => setNewTier((f) => ({ ...f, name: e.target.value }))} maxLength={40} />
-              <input className={styles.input} type="number" min={1} placeholder="Points threshold" value={newTier.min_points} onChange={(e) => setNewTier((f) => ({ ...f, min_points: e.target.value }))} />
+              <NumberInput className={styles.input} min={1} placeholder="Points threshold" value={newTier.min_points} onChange={(e) => setNewTier((f) => ({ ...f, min_points: e.target.value }))} />
               <label className={styles.colorField}>
                 Color
-                <input type="color" value={newTier.color} onChange={(e) => setNewTier((f) => ({ ...f, color: e.target.value }))} />
+                <ColorInput value={newTier.color} onChange={(e) => setNewTier((f) => ({ ...f, color: e.target.value }))} />
               </label>
               <button type="submit" className={styles.saveBtn} disabled={creatingTier || !newTier.name.trim() || newTier.min_points === ''}>
                 {creatingTier ? 'Adding…' : '+ Add Tier'}
@@ -1162,14 +1165,14 @@ export default function PointsSectionContent({
                   editingTierId === t.id ? (
                     <form key={t.id} className={styles.editForm} onSubmit={handleSaveTierEdit}>
                       <input className={styles.input} placeholder="Tier name" value={tierEditForm.name} onChange={(e) => setTierEditForm((f) => ({ ...f, name: e.target.value }))} maxLength={40} />
-                      <input
-                        className={styles.input} type="number" min={t.min_points === 0 ? 0 : 1} placeholder="Points threshold"
+                      <NumberInput
+                        className={styles.input} min={t.min_points === 0 ? 0 : 1} placeholder="Points threshold"
                         value={tierEditForm.min_points} onChange={(e) => setTierEditForm((f) => ({ ...f, min_points: e.target.value }))}
                         disabled={t.min_points === 0}
                       />
                       <label className={styles.colorField}>
                 Color
-                <input type="color" value={tierEditForm.color} onChange={(e) => setTierEditForm((f) => ({ ...f, color: e.target.value }))} />
+                <ColorInput value={tierEditForm.color} onChange={(e) => setTierEditForm((f) => ({ ...f, color: e.target.value }))} />
               </label>
                       <div className={styles.editActions}>
                         <button type="button" className={styles.toggleBtn} onClick={() => setEditingTierId(null)}>Cancel</button>

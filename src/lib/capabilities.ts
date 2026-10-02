@@ -26,7 +26,7 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   manage_division: ['division', 'lead', 'exec', 'admin'],
   manage_divisions_directory: ['exec', 'admin'],
   // alumni stay read-only-visible here, same as view_photo_albums/view_docs.
-  view_members: ['officer', 'lead', 'exec', 'admin', 'alumni'],
+  view_members: ['officer', 'lead', 'exec', 'admin', 'alumni', 'recruit'],
   // exec deliberately excluded — they get manage_site_content (Edit Site
   // Content) as its own separate section instead of the full Admin
   // Overview/Roles/Analytics/System dashboard.
@@ -35,11 +35,11 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // UI-gating only — the QR Studio doesn't write to the database, so unlike
   // every other row here it has no RLS-backed counterpart in the DB's
   // role_capabilities table.
-  generate_qr_codes: ['officer', 'division', 'lead', 'exec', 'admin'],
+  generate_qr_codes: ['officer', 'division', 'lead', 'exec', 'admin', 'recruit', 'alumni'],
   // Same officer-is-view-only split as events: manage_docs (create/edit/
   // delete) is lead+, view_docs (read) keeps officer (and recruit) in.
   manage_docs: ['lead', 'exec', 'admin'],
-  view_docs: ['officer', 'lead', 'exec', 'admin', 'recruit'],
+  view_docs: ['officer', 'lead', 'exec', 'admin', 'recruit', 'alumni'],
   // The 'division' role is deliberately NOT here — a division lead role alone
   // doesn't grant album access (they'd need officer or higher for that).
   // Alumni and recruit are explicitly included here (unlike view_docs/
@@ -75,6 +75,9 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // separate (manage_divisions_directory / manage_division). Emails on it stay officer+ (view_members).
   view_division_members: ['division', 'officer', 'lead', 'exec', 'admin', 'recruit'],
   attend_meetings: ['officer', 'lead', 'exec', 'admin', 'recruit'],
+  // Planning a meeting: leads can create meetings and run/edit/see results of the ones THEY planned;
+  // exec and admin (manage_meetings) can do all of that for every meeting.
+  host_meetings: ['lead', 'exec', 'admin'],
 };
 
 /**
@@ -112,10 +115,9 @@ export function isVerifiedMember(roles: RoleGrant[]): boolean {
 // this is UI-gating only. 'ucsd' covers verified students; the org
 // position roles are included since holding one for a UCSD club implies
 // current UCSD affiliation even without an auto-verified @ucsd.edu email.
-// Deliberately excludes 'alumni' (no longer a current student) and
-// 'recruit' (not yet a verified member) — both keep every other tier of
-// access (docs, events, photo albums), just not this one.
-const REWARDS_ELIGIBLE_ROLES: AppRole[] = ['ucsd', 'officer', 'lead', 'exec', 'division', 'admin'];
+// Recruits and alumni are included too (the club opened Rewards to them) — the DB function
+// is_rewards_eligible() mirrors this list (see 20261002160000_role_visibility.sql).
+const REWARDS_ELIGIBLE_ROLES: AppRole[] = ['ucsd', 'officer', 'lead', 'exec', 'division', 'admin', 'recruit', 'alumni'];
 
 export function isRewardsEligible(roles: RoleGrant[]): boolean {
   return roles.some((r) => REWARDS_ELIGIBLE_ROLES.includes(r.role));

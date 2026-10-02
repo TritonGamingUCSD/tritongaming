@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import type { AppRole } from '@/types/database';
 import styles from './new/newevent.module.css';
+import IconButton from '@/components/ui/IconButton';
+import Select from '@/components/ui/Select';
 
 export const YEAR_OPTIONS = ['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year+', 'Graduate', 'Alumni'];
 export const ROLE_OPTIONS: AppRole[] = ['exec', 'lead', 'officer', 'division', 'alumni', 'recruit', 'admin', 'ucsd'];
@@ -61,7 +63,7 @@ function guessAssignment(title: string): AssignableField | null {
 // not a display list), so unlike the drag-reorderable lists elsewhere in
 // the portal, this is just a plain add/remove list.
 //
-// `keyOptions`, when given, turns the left column into a <select> instead
+// `keyOptions`, when given, turns the left column into a <Select> instead
 // of free text — both Year and Role are fixed, closed sets baked into the
 // code (ProfileClient's year dropdown, the AppRole type), not something
 // that changes based on anything an admin does in the portal, so there's a
@@ -93,14 +95,14 @@ function MappingField({
           <div key={i}>
             <div className={styles.mappingRow}>
               {keyOptions ? (
-                <select
+                <Select
                   className={styles.input}
                   value={row.value ?? ''}
                   onChange={(e) => { const n = [...rows]; n[i] = { ...n[i], value: e.target.value }; onChange(n); }}
                 >
                   <option value="" disabled>{keyPlaceholder}</option>
                   {keyOptions.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
-                </select>
+                </Select>
               ) : (
                 <input
                   className={styles.input}
@@ -110,7 +112,7 @@ function MappingField({
                 />
               )}
               {valueOptions && valueOptions.length > 0 ? (
-                <select
+                <Select
                   className={styles.input}
                   value={row.label ?? ''}
                   onChange={(e) => { const n = [...rows]; n[i] = { ...n[i], label: e.target.value }; onChange(n); }}
@@ -120,7 +122,7 @@ function MappingField({
                     <option value={row.label}>{row.label} (not on the form)</option>
                   )}
                   {valueOptions.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
-                </select>
+                </Select>
               ) : (
                 <input
                   className={styles.input}
@@ -129,9 +131,7 @@ function MappingField({
                   onChange={(e) => { const n = [...rows]; n[i] = { ...n[i], label: e.target.value }; onChange(n); }}
                 />
               )}
-              <button type="button" className={styles.mappingRemoveBtn} onClick={() => onChange(rows.filter((_, j) => j !== i))} aria-label="Remove">
-                <X size={14} strokeWidth={1.75} />
-              </button>
+              <IconButton kind="remove" size="sm" label="Remove" onClick={() => onChange(rows.filter((_, j) => j !== i))} />
             </div>
             {staleRows?.[i] && (
               <Notice tone="warning" compact>&quot;{row.label}&quot; doesn&apos;t match a current option on the form — that question will just show up blank instead of pre-filled.</Notice>
@@ -326,7 +326,7 @@ export default function CheckinFormFieldsEditor({ value, onChange }: {
                     <div className={styles.detectedTitle}>{q.title}</div>
                     {q.options && <div className={styles.detectedOptions}>{q.options.join(' · ')}</div>}
                   </div>
-                  <select
+                  <Select
                     className={styles.input}
                     value={assignedField}
                     onChange={(e) => {
@@ -337,7 +337,7 @@ export default function CheckinFormFieldsEditor({ value, onChange }: {
                   >
                     <option value="">Don&apos;t use</option>
                     {ASSIGNABLE_FIELDS.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}
-                  </select>
+                  </Select>
                 </div>
               );
             })}

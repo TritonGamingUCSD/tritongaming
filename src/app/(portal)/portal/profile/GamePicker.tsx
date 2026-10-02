@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { GAME_OPTIONS, GAME_SEPARATOR, MAX_GAMES, MAX_GAMES_LENGTH, splitStoredGames } from '@/lib/games';
 import styles from './profile.module.css';
+import Select from '@/components/ui/Select';
 
 const OTHER = '__other__';
 
@@ -40,7 +41,7 @@ export default function GamePicker({ value, onChange }: { value: string; onChang
         </div>
       )}
       {!full && !other && (
-        <select
+        <Select
           className={styles.input}
           value=""
           onChange={(e) => { if (e.target.value === OTHER) setOther(true); else add(e.target.value); }}
@@ -48,7 +49,7 @@ export default function GamePicker({ value, onChange }: { value: string; onChang
           <option value="">{chosen.length ? 'Add another game' : 'Pick your favorite games'}</option>
           {GAME_OPTIONS.filter((o) => !chosen.some((c) => c.toLowerCase() === o.toLowerCase())).map((o) => <option key={o} value={o}>{o}</option>)}
           <option value={OTHER}>Other (type it in)…</option>
-        </select>
+        </Select>
       )}
       {!full && other && (
         <div className={styles.majorOther}>

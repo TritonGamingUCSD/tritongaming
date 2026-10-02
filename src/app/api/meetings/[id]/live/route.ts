@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
-import { authorizeMeetings, currentMeetingCode, getExpectedPeople, isMeetingOpen, type MeetingRow } from '@/lib/meetings';
+import { checkInOpensAt, isCheckInAccepting, loadGroups, authorizeMeetings, currentMeetingCode, getExpectedPeople, isMeetingOpen, type MeetingRow, guardMeeting } from '@/lib/meetings';
 
 export const dynamic = 'force-dynamic';
 
 // Exec's projector/phone view: the current code plus who's in and who's still missing. Polled.
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await authorizeMeetings('manage_meetings');
+  const auth = await authorizeMeetings('host_meetings');
   if (auth.error) return auth.error;
   const { id } = await params;
+  { const denied = await guardMeeting(auth, id); if (denied) return denied; }
   const { data } = await auth.svc.from('meetings').select('*').eq('id', id).maybeSingle();
   const m = data as MeetingRow | null;
   if (!m) return NextResponse.json({ error: 'Meeting not found' }, { status: 404 });
@@ -47,10 +48,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     for (const p of extra ?? []) byId.set(p.id as string, { id: p.id as string, name: (p.display_name as string | null) || 'Unnamed', avatar_url: p.avatar_url as string | null, custom_avatar_url: p.custom_avatar_url as string | null });
   }
 
+  const groups = await loadGroups(auth.svc);
   const open = isMeetingOpen(m);
   const cc = open ? currentMeetingCode(m.code_secret) : null;
   return NextResponse.json({
-    meeting: { id: m.id, title: m.title, meeting_date: m.meeting_date, starts_at: m.starts_at, ends_at: m.ends_at, open, doc_url: m.doc_url, location: m.location, cancelled: m.cancelled, question: m.question },
+    meeting: { id: m.id, title: m.title, meeting_date: m.meeting_date, starts_at: m.starts_at, ends_at: m.ends_at, open, doc_url: m.doc_url, location: m.location, cancelled: m.cancelled, series_id: m.series_id, audience: m.audience, invitees: m.invitees, group_ids: m.group_ids, groupNames: (m.group_ids ?? []).map((g) => groups.get(g)?.name ?? '').filter(Boolean), description: m.description, accepting: isCheckInAccepting(m), opens_at: new Date(checkInOpensAt(m)).toISOString(), question: m.question },
     answers: (answerRows ?? []).map((a) => ({ ...byId.get(a.user_id as string)!, answer: a.answer, at: a.updated_at })),
     reactions,
     lastReactionId: reactions.length ? reactions[reactions.length - 1].id : after,

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { pacificDayKey } from '@/lib/checkinDays';
-import { AUDIENCE_ROLES, hasInvitees, isExpected } from '@/lib/meetingAudience';
-import { addDaysKey, authorizeMeetings } from '@/lib/meetings';
+import { AUDIENCE_ROLES, audienceRoles, isExpected } from '@/lib/meetingAudience';
+import { addDaysKey, attachExtras, authorizeMeetings } from '@/lib/meetings';
 import { ROLE_DISPLAY_RANK, ROLE_LABELS, type AppRole } from '@/types/database';
 
 export const dynamic = 'force-dynamic';
@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 // per-meeting turnout, per-person rates/streaks/dot strips, and headline numbers. A meeting only
 // counts toward someone if it was meant for them (they hold one of its roles) or they came anyway.
 export async function GET(request: Request) {
-  const auth = await authorizeMeetings('manage_meetings');
+  const auth = await authorizeMeetings('host_meetings');
   if (auth.error) return auth.error;
   const url = new URL(request.url);
   const today = pacificDayKey();
@@ -19,9 +19,12 @@ export async function GET(request: Request) {
   const to = valid(url.searchParams.get('to')) ?? today;
   const title = url.searchParams.get('title');
 
-  const { data: all } = await auth.svc.from('meetings').select('id, title, meeting_date, audience, invitees')
-    .eq('cancelled', false).not('opened_at', 'is', null).gte('meeting_date', from).lte('meeting_date', to).order('meeting_date').order('starts_at').limit(300);
-  const inRange = all ?? [];
+  let allQ = auth.svc.from('meetings').select('id, title, meeting_date, audience, invitees, group_ids')
+    .eq('cancelled', false).not('opened_at', 'is', null).gte('meeting_date', from).lte('meeting_date', to)  .order('meeting_date').order('starts_at').limit(300);
+  // A lead sees results only for the meetings they planned.
+  if (!auth.manageAll) allQ = allQ.eq('created_by', auth.user.id);
+  const { data: all } = await allQ;
+  const inRange = await attachExtras(auth.svc, (all ?? []).map((m) => ({ ...m, invitees: m.invitees as string[] | null, group_ids: m.group_ids as string[] | null })));
   const titles = [...new Set(inRange.map((m) => m.title as string))].sort();
   const meetings = title ? inRange.filter((m) => m.title === title) : inRange;
   const ids = meetings.map((m) => m.id as string);
@@ -41,7 +44,7 @@ export async function GET(request: Request) {
   }
   const rolesOf = new Map<string, { role: string }[]>();
   for (const g of grants ?? []) rolesOf.set(g.user_id as string, [...(rolesOf.get(g.user_id as string) ?? []), { role: g.role as string }]);
-  const peopleIds = new Set<string>([...rolesOf.keys(), ...(rows ?? []).map((r) => r.user_id as string), ...meetings.flatMap((m) => (m.invitees as string[] | null) ?? []), ...(absRows ?? []).map((a) => a.user_id as string)]);
+  const peopleIds = new Set<string>([...rolesOf.keys(), ...(rows ?? []).map((r) => r.user_id as string), ...meetings.flatMap((m) => m.extra_ids), ...(absRows ?? []).map((a) => a.user_id as string)]);
   const { data: profiles } = peopleIds.size
     ? await auth.svc.from('profiles').select('id, display_name, avatar_url, custom_avatar_url').in('id', [...peopleIds])
     : { data: [] as { id: string; display_name: string | null; avatar_url: string | null; custom_avatar_url: string | null }[] };
@@ -55,7 +58,7 @@ export async function GET(request: Request) {
       const abs = absences.get(`${m.id}|${p.id}`);
       if (abs === true) return 'e';
       if (abs === false) return 'a';
-      return isExpected({ audience: m.audience as string[] | null, invitees: m.invitees as string[] | null }, p.id as string, roles) ? 'a' : '-';
+      return isExpected({ audience: m.audience as string[] | null, extra_ids: m.extra_ids }, p.id as string, roles) ? 'a' : '-';
     });
     const total = marks.filter((x) => x === 'p' || x === 'a').length;
     const excusedCount = marks.filter((x) => x === 'e').length;
@@ -73,11 +76,13 @@ export async function GET(request: Request) {
   }).filter((p) => p.total > 0 || p.excused > 0);
 
   const meetingRows = meetings.map((m) => {
-    const invitees = m.invitees as string[] | null;
     const excusedHere = [...absences.entries()].filter(([k, ex]) => ex && k.startsWith(`${m.id}|`)).length;
-    const expectedRaw = hasInvitees({ audience: null, invitees }) ? invitees!.length : [...rolesOf.entries()].filter(([, r]) => isExpected({ audience: m.audience as string[] | null }, '', r)).length;
+    const roleHolders = audienceRoles({ audience: m.audience as string[] | null, invitees: m.invitees, group_ids: m.group_ids });
+    const holders = new Set([...rolesOf.entries()].filter(([, r]) => r.some((x) => roleHolders.includes(x.role))).map(([id]) => id));
+    for (const id of m.extra_ids) holders.add(id);
+    const expectedRaw = holders.size;
     const expected = Math.max(0, expectedRaw - excusedHere);
-    return { id: m.id as string, title: m.title as string, meeting_date: m.meeting_date as string, audience: m.audience as string[] | null, invitees, count: present.get(m.id as string)?.size ?? 0, expected };
+    return { id: m.id as string, title: m.title as string, meeting_date: m.meeting_date as string, audience: m.audience as string[] | null, invitees: m.invitees, group_ids: m.group_ids, count: present.get(m.id as string)?.size ?? 0, expected };
   });
   const rated = people.filter((p) => p.rate !== null);
   return NextResponse.json({

@@ -6,14 +6,14 @@ import { authorizeMeetings } from '@/lib/meetings';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const auth = await authorizeMeetings('manage_meetings');
+  const auth = await authorizeMeetings('host_meetings');
   if (auth.error) return auth.error;
-  const { data } = await auth.svc.from('meeting_groups').select('id, name, member_ids').order('name');
+  const { data } = await auth.svc.from('meeting_groups').select('id, name, member_ids, created_by').order('name');
   return NextResponse.json({ groups: data ?? [] });
 }
 
 export async function POST(request: Request) {
-  const auth = await authorizeMeetings('manage_meetings');
+  const auth = await authorizeMeetings('host_meetings');
   if (auth.error) return auth.error;
   const b = await request.json().catch(() => ({}));
   const name = String(b.name ?? '').trim().slice(0, 60);

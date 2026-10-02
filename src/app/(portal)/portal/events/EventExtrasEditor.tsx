@@ -5,6 +5,7 @@ import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
 import { useDragReorder } from '@/lib/useDragReorder';
 import type { ScheduleItem, EventSponsor } from '@/types/database';
 import styles from './eventextras.module.css';
+import IconButton from '@/components/ui/IconButton';
 
 interface Props {
   venueAddress: string;
@@ -49,7 +50,7 @@ export default function EventExtrasEditor({ venueAddress, venueNotes, schedule, 
               <input className={styles.input} value={item.title} onChange={(e) => onSchedule(schedule.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)))} placeholder="Doors open" aria-label="Title" />
               <input className={styles.input} value={item.description ?? ''} onChange={(e) => onSchedule(schedule.map((x, j) => (j === i ? { ...x, description: e.target.value } : x)))} placeholder="Optional detail" aria-label="Detail" />
             </div>
-            <button type="button" className={styles.remove} onClick={() => onSchedule(schedule.filter((_, j) => j !== i))} aria-label="Remove schedule item"><Trash2 size={14} aria-hidden="true" /></button>
+            <IconButton kind="delete" size="sm" label="Remove schedule item" onClick={() => onSchedule(schedule.filter((_, j) => j !== i))} />
           </div>
         ))}
         <button type="button" className={styles.add} onClick={() => onSchedule([...schedule, { time: '', title: '' }])}><Plus size={14} aria-hidden="true" /> Add schedule item</button>
@@ -67,7 +68,7 @@ export default function EventExtrasEditor({ venueAddress, venueNotes, schedule, 
               <input className={styles.input} value={sp.name} onChange={(e) => onSponsors(sponsors.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} placeholder="Sponsor name" aria-label="Sponsor name" />
               <input className={styles.input} type="url" value={sp.url ?? ''} onChange={(e) => onSponsors(sponsors.map((x, j) => (j === i ? { ...x, url: e.target.value } : x)))} placeholder="https://… (optional)" aria-label="Sponsor link" />
             </div>
-            <button type="button" className={styles.remove} onClick={() => onSponsors(sponsors.filter((_, j) => j !== i))} aria-label="Remove sponsor"><Trash2 size={14} aria-hidden="true" /></button>
+            <IconButton kind="delete" size="sm" label="Remove sponsor" onClick={() => onSponsors(sponsors.filter((_, j) => j !== i))} />
           </div>
         ))}
         <button type="button" className={styles.add} onClick={() => onSponsors([...sponsors, { name: '', logo_url: '' }])}><Plus size={14} aria-hidden="true" /> Add sponsor</button>

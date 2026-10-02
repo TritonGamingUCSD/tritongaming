@@ -50,6 +50,8 @@ export interface HubSection {
   group: HubGroup;
   /** Extra weight for a slot on the mobile bottom bar — what's relevant to this person right now. */
   dockBoost?: number;
+  /** Never gets a bottom-bar slot (still reachable from More). */
+  dockExclude?: boolean;
 }
 
 export interface HubIdentity { name: string; avatarUrl: string | null; roleLabel: string; roles?: { label: string; color: string }[] }
@@ -170,7 +172,7 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
   // Server render and first paint use the role/context defaults; once mounted, what this person
   // actually opens and the time of week are folded in.
   const [dock, setDock] = useState(() => pickDock(sections));
-  const dockKey = sections.map((s) => `${s.id}:${s.dockBoost ?? 0}`).join(',');
+  const dockKey = sections.map((s) => `${s.id}:${s.dockBoost ?? 0}:${s.dockExclude ? 'x' : ''}`).join(',');
   useEffect(() => {
     setDock(pickDock(sections, { now: new Date(), usage: readUsage() }));
     // eslint-disable-next-line react-hooks/exhaustive-deps

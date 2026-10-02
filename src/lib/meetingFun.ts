@@ -32,3 +32,4 @@ export function suggestQuestion(exclude?: string | null): string {
   const pool = ICEBREAKERS.filter((q) => q !== exclude);
   return pool[Math.floor(Math.random() * pool.length)];
 }
+export const MAX_DESCRIPTION_LENGTH = 200;

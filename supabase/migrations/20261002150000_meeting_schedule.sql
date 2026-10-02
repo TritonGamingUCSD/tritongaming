@@ -90,3 +90,15 @@ create table if not exists public.meeting_absences (
   primary key (meeting_id, user_id)
 );
 alter table public.meeting_absences enable row level security;    -- service role only
+
+-- A meeting's audience can combine roles (everyone holding them, live), saved groups (their current
+-- members, live) and individually-added people.
+alter table public.meeting_series add column if not exists group_ids uuid[];
+alter table public.meetings add column if not exists group_ids uuid[];
+
+-- Who planned a meeting: leads can create meetings and manage only their own; exec/admin manage all.
+alter table public.meetings add column if not exists created_by uuid references public.profiles(id) on delete set null;
+
+-- A short optional description of what a meeting is about.
+alter table public.meeting_series add column if not exists description text;
+alter table public.meetings add column if not exists description text;

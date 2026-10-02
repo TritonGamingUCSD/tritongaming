@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, History, Image as ImageIcon, Award, Medal, ArrowLeft, CalendarCheck, LayoutGrid } from 'lucide-react';
-import { getProfile, getUserRoles, getMyPrivateProfile, getUser } from '@/lib/auth';
+import { getProfile, getUserRoles, getMyPrivateProfile, getUser, getRealRoles, getViewAs } from '@/lib/auth';
+import { ViewAsSwitcher } from '@/components/portal/ViewAs';
 import { createClient } from '@/lib/supabase/server';
 import { hasCapability, isVerifiedMember, isRewardsEligible } from '@/lib/capabilities';
 import { resolveAvatarUrl } from '@/lib/profile';
@@ -81,6 +82,9 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const [profile, roles, divisions, myGender, authUser] = await Promise.all([getProfile(), getUserRoles(), getDivisions(), getMyPrivateProfile(), getUser()]);
   if (!profile) return null;
   const divisionNameById = new Map(divisions.map((d) => [d.id, d.name]));
+  // Admins (their REAL roles) get the "View as" menu.
+  const [realRoles, viewAs] = await Promise.all([getRealRoles(), getViewAs()]);
+  const canViewAs = realRoles.some((r) => r.role === 'admin');
 
   const canViewEvents = hasCapability(roles, 'view_events');
   const canManageEvents = hasCapability(roles, 'manage_events');
@@ -101,7 +105,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const canScanRedemptions = hasCapability(roles, 'scan_redemptions');
   const canManagePoints = hasCapability(roles, 'manage_points');
   const canAttendMeetings = hasCapability(roles, 'attend_meetings');
-  const canManageMeetings = hasCapability(roles, 'manage_meetings');
+  const canManageMeetings = hasCapability(roles, 'manage_meetings');   // exec/admin: every meeting + HR export
+  const canHostMeetings = hasCapability(roles, 'host_meetings');         // leads too: plan meetings, manage their own
   // Best-effort: if this lookup fails the bar just doesn't get the meeting boost.
   const meetingNow = canAttendMeetings ? await meetingHappeningNow(createServiceClient(), { id: profile.id, roles }).catch(() => false) : false;
   // Rewards (earning points at check-in, referral bonuses, the shop) is
@@ -212,6 +217,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
     },
     ...(canUseRewards && pointsData ? [{
       id: 'points', icon: <Award size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Rewards',
+      // Officers, leads, exec and admins have the Battlepass; Rewards never takes a bottom-bar slot for them.
+      dockExclude: roles.some((r) => ['officer', 'lead', 'exec', 'admin'].includes(r.role)),
       description: 'Earn points for showing up, spend them on perks',
       badge: pointsData.balance || undefined,
       group: 'Yours' as const,
@@ -276,11 +283,11 @@ export default async function PortalDashboard({ searchParams }: Props) {
     }] : []),
     ...(canAttendMeetings ? [{
       id: 'meetings', icon: <CalendarCheck size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Meetings',
-      description: canManageMeetings ? 'Schedule meetings, run check-in, export attendance' : 'Check in to meetings and see your history',
+      description: canManageMeetings ? 'Schedule meetings, run check-in, export attendance' : canHostMeetings ? 'Plan your meetings, run check-in, see results' : 'Check in to meetings and see your history',
       // While a meeting is on (or about to start) this is the thing to have under your thumb.
       dockBoost: (meetingNow ? 100 : 0) + (canManageMeetings ? 10 : 0),
       group: 'TG' as const,
-      content: <MeetingsSectionContent canManage={canManageMeetings} />,
+      content: <MeetingsSectionContent canHost={canHostMeetings} canManageAll={canManageMeetings} userId={profile.id} />,
     }] : []),
     ...(canViewMembers && membersData ? [{
       id: 'members', icon: <Users size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'TG Members',
@@ -447,6 +454,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
                   </div>
                 </div>
               </div>
+
+              {canViewAs && <div className={styles.viewAsSlot}><ViewAsSwitcher active={viewAs} /></div>}
 
               {/* Mobile only: search lives inside the header card (desktop has it in the pinned header). */}
           <div className={styles.welcomeSearch}><PortalSearch compact /></div>

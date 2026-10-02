@@ -629,3 +629,6 @@
 
 /* Desktop: leave room at the right of the pinned header for the fixed notification bell. */
 @media (min-width: 900px) { .stickyTop { padding-right: 3.4rem; } }
+
+.viewAsSlot { display: flex; align-items: center; }
+@media (max-width: 899px) { .viewAsSlot { padding-top: 0.25rem; } }

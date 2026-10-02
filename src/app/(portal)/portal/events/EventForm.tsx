@@ -16,6 +16,9 @@ import type { SocialEmbed, PhotoAlbumEntry, AppRole, ScheduleItem, EventSponsor 
 import EventExtrasEditor from './EventExtrasEditor';
 import CheckinFormFieldsEditor, { EMPTY_CHECKIN_FORM_CONFIG, type CheckinFormConfigValue } from './CheckinFormFieldsEditor';
 import styles from './new/newevent.module.css';
+import Select from '@/components/ui/Select';
+import { DateTimeInput } from '@/components/ui/Field';
+import NumberInput from '@/components/ui/NumberInput';
 
 export interface EventFormValues {
   title: string;
@@ -295,11 +298,11 @@ export default function EventForm({
         <div className={styles.row}>
           <label className={styles.field}>
             <span className={styles.label}>Start Date & Time *</span>
-            <input className={styles.input} type="datetime-local" value={form.start_date} onChange={(e) => set('start_date', e.target.value)} required />
+            <DateTimeInput className={styles.input} value={form.start_date} onChange={(e) => set('start_date', e.target.value)} required />
           </label>
           <label className={styles.field}>
             <span className={styles.label}>End Date & Time</span>
-            <input className={styles.input} type="datetime-local" value={form.end_date} onChange={(e) => set('end_date', e.target.value)} />
+            <DateTimeInput className={styles.input} value={form.end_date} min={form.start_date} onChange={(e) => set('end_date', e.target.value)} placeholder="Optional" />
           </label>
         </div>
         <p className={styles.hint}>
@@ -337,12 +340,12 @@ export default function EventForm({
 
         <label className={styles.field}>
           <span className={styles.label}>Division</span>
-          <select className={styles.input} value={form.division_id} onChange={(e) => set('division_id', e.target.value)}>
+          <Select className={styles.input} value={form.division_id} onChange={(e) => set('division_id', e.target.value)}>
             <option value="">None — general club event</option>
             {divisions.map((d) => (
               <option key={d.id} value={d.id}>{d.name}</option>
             ))}
-          </select>
+          </Select>
           <span className={styles.hint}>Tags this event on that division&apos;s public page under &quot;Upcoming Events&quot;.</span>
         </label>
 
@@ -377,12 +380,12 @@ export default function EventForm({
 
         <label className={styles.field}>
           <span className={styles.label}>Max Capacity</span>
-          <input className={styles.input} type="number" min="1" value={form.max_capacity} onChange={(e) => set('max_capacity', e.target.value)} placeholder="Unlimited" />
+          <NumberInput className={styles.input} min="1" value={form.max_capacity} onChange={(e) => set('max_capacity', e.target.value)} placeholder="Unlimited" />
         </label>
 
         <label className={styles.field}>
           <span className={styles.label}>Points for Checking In</span>
-          <input className={styles.input} type="number" min="0" value={form.points_value} onChange={(e) => set('points_value', e.target.value)} />
+          <NumberInput className={styles.input} min="0" value={form.points_value} onChange={(e) => set('points_value', e.target.value)} />
           <span className={styles.hint}>How many reward points an attendee earns the moment they're checked in at this event.</span>
         </label>
 
@@ -408,7 +411,7 @@ export default function EventForm({
             <label className={styles.field}>
               <span className={styles.label}>Event on the AS Form</span>
               {asFormEventOptions ? (
-                <select className={styles.input} value={form.checkin_form_event_name} onChange={(e) => set('checkin_form_event_name', e.target.value)}>
+                <Select className={styles.input} value={form.checkin_form_event_name} onChange={(e) => set('checkin_form_event_name', e.target.value)}>
                   <option value="">— Pick this event from the AS Form's list —</option>
                   {eventNameMissing && <option value={form.checkin_form_event_name}>{form.checkin_form_event_name} (not on the form)</option>}
                   {ownOptions.length > 0 && (
@@ -421,7 +424,7 @@ export default function EventForm({
                       {otherOptions.map((o) => <option key={o} value={o}>{o}</option>)}
                     </optgroup>
                   )}
-                </select>
+                </Select>
               ) : (
                 <input className={styles.input} value={form.checkin_form_event_name} onChange={(e) => set('checkin_form_event_name', e.target.value)} placeholder="Exactly as listed on the AS Form, e.g. Triton Gaming - Fall GBM 2026" />
               )}
@@ -461,20 +464,20 @@ export default function EventForm({
 
         <label className={styles.field}>
           <span className={styles.label}>Audience</span>
-          <select
+          <Select
             className={styles.input}
             value={form.audience}
             onChange={(e) => set('audience', e.target.value as 'public' | 'ucsd_only')}
           >
             <option value="public">Open to the public</option>
             <option value="ucsd_only">UCSD-affiliated only</option>
-          </select>
+          </Select>
         </label>
 
         {form.audience === 'public' && (
           <label className={styles.field}>
             <span className={styles.label}>Ticket Price for non-UCSD attendees ($)</span>
-            <input className={styles.input} type="number" min="0" step="0.01" value={form.ticket_price} onChange={(e) => set('ticket_price', e.target.value)} />
+            <NumberInput className={styles.input} min="0" step="0.01" value={form.ticket_price} onChange={(e) => set('ticket_price', e.target.value)} />
             <span className={styles.hint}>Every published event gets a ticket automatically. UCSD-affiliated attendees (@ucsd.edu) always get a free ticket.</span>
           </label>
         )}

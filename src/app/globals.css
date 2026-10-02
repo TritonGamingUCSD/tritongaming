@@ -368,3 +368,38 @@ select:not([multiple]):not([size]) {
   padding-right: 2.5rem !important;
   text-overflow: ellipsis;
 }
+
+/* ── Form controls, one look everywhere ──
+   Native checkboxes, radios, number spinners and sliders differ on every browser and platform. Draw
+   them ourselves (the dropdowns, date/time pickers and color picker are components in components/ui). */
+:root { color-scheme: dark; }
+select option, select optgroup { background-color: #0e1424; color: #f2f1f0; }   /* any leftover native list stays readable (Windows) */
+
+input[type='checkbox'], input[type='radio'] {
+  appearance: none; -webkit-appearance: none; flex-shrink: 0;
+  width: 18px; height: 18px; margin: 0; cursor: pointer;
+  border: 1.5px solid rgba(255, 255, 255, 0.3); background-color: rgba(0, 0, 0, 0.25); background-position: center; background-repeat: no-repeat; background-size: 12px;
+  transition: background-color 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+input[type='checkbox'] { border-radius: 6px; }
+input[type='radio'] { border-radius: 50%; }
+input[type='checkbox']:hover:not(:disabled), input[type='radio']:hover:not(:disabled) { border-color: rgba(255, 199, 44, 0.6); }
+input[type='checkbox']:checked, input[type='radio']:checked { background-color: var(--yellow, #ffc72c); border-color: var(--yellow, #ffc72c); }
+input[type='checkbox']:checked { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230b1226' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E"); }
+input[type='checkbox']:indeterminate { background-color: var(--yellow, #ffc72c); border-color: var(--yellow, #ffc72c); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230b1226' stroke-width='3.5' stroke-linecap='round'%3E%3Cpath d='M6 12h12'/%3E%3C/svg%3E"); }
+input[type='radio']:checked { background-image: radial-gradient(circle, #0b1226 0 3.5px, transparent 4px); background-size: 100% 100%; }
+input[type='checkbox']:focus-visible, input[type='radio']:focus-visible { outline: 2px solid rgba(255, 199, 44, 0.6); outline-offset: 2px; }
+input[type='checkbox']:disabled, input[type='radio']:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* number fields: our own steppers (NumberInput) replace the native spinners */
+input[type='number'] { -moz-appearance: textfield; appearance: textfield; }
+input[type='number']::-webkit-inner-spin-button, input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type='search']::-webkit-search-cancel-button, input[type='search']::-webkit-search-decoration { -webkit-appearance: none; }
+
+/* sliders */
+input[type='range'] { -webkit-appearance: none; appearance: none; height: 22px; background: transparent; cursor: pointer; }
+input[type='range']::-webkit-slider-runnable-track { height: 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.14); }
+input[type='range']::-moz-range-track { height: 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.14); }
+input[type='range']::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; margin-top: -6px; border-radius: 50%; background: var(--yellow, #ffc72c); border: 2px solid #0b1226; box-shadow: 0 0 0 1px rgba(255, 199, 44, 0.6); }
+input[type='range']::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--yellow, #ffc72c); border: 2px solid #0b1226; box-shadow: 0 0 0 1px rgba(255, 199, 44, 0.6); }
+input[type='range']:focus-visible { outline: 2px solid rgba(255, 199, 44, 0.5); outline-offset: 3px; border-radius: 6px; }

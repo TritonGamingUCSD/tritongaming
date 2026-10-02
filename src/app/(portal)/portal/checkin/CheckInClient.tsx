@@ -7,6 +7,7 @@ import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/timezone';
 import { fetchWithRetry } from '@/lib/fetchWithRetry';
 import type { Tier } from '@/lib/tiers';
 import styles from './checkin.module.css';
+import Select from '@/components/ui/Select';
 
 interface Event {
   id: string;
@@ -354,7 +355,7 @@ export default function CheckInClient({ events, onCheckedIn, tiers }: CheckInCli
       <div className={styles.eventSelect}>
         <span className={styles.eventSelectLabel}>Checking in for</span>
         <div className={styles.selectWrap}>
-          <select
+          <Select
             className={styles.select}
             value={selectedEventId}
             onChange={(e) => { setSelectedEventId(e.target.value); stopCamera(); setResult(null); setError(''); }}
@@ -364,7 +365,7 @@ export default function CheckInClient({ events, onCheckedIn, tiers }: CheckInCli
                 {event.title} — {formatPacificDateTime(event.start_date)}
               </option>
             ))}
-          </select>
+          </Select>
           <span className={styles.selectChevron} aria-hidden="true">▾</span>
         </div>
       </div>

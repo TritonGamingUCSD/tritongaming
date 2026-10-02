@@ -46,6 +46,7 @@ export type Capability =
   | 'view_division_members'
   | 'manage_meetings'
   | 'attend_meetings'
+  | 'host_meetings'
   | 'view_events'
   | 'delete_events'
   | 'checkin'
@@ -495,7 +496,7 @@ export const ROLE_COLORS: Record<UserRole, string> = {
   exec: '#dc2626',
   admin: '#ffc72c',
   alumni: '#b45309',
-  recruit: '#f97316',
+  recruit: '#de4188',
 };
 
 // Roles assignable via the Role Manager UI (excludes 'guest', which is the

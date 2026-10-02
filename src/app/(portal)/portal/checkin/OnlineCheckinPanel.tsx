@@ -3,6 +3,7 @@
 import Notice from '@/components/ui/Notice';
 import { useEffect, useRef, useState } from 'react';
 import styles from './checkinsection.module.css';
+import Select from '@/components/ui/Select';
 
 interface Event { id: string; title: string; start_date: string; }
 
@@ -56,9 +57,9 @@ export default function OnlineCheckinPanel({ events }: { events: Event[] }) {
 
   return (
     <div className={styles.onlinePanel}>
-      <select className={styles.eventSelect} value={eventId} onChange={(e) => setEventId(e.target.value)}>
+      <Select className={styles.eventSelect} value={eventId} onChange={(e) => setEventId(e.target.value)}>
         {events.map((e) => <option key={e.id} value={e.id}>{e.title}</option>)}
-      </select>
+      </Select>
 
       <p className={styles.onlineHint}>
         Post this code in Discord/Zoom chat — attendees enter it themselves under their own ticket in the portal.

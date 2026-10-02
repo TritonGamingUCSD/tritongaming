@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 // Everyone on the team an exec can put in a group or invite to a meeting, with their roles so the
 // picker can offer "add all leads" style shortcuts.
 export async function GET() {
-  const auth = await authorizeMeetings('manage_meetings');
+  const auth = await authorizeMeetings('host_meetings');
   if (auth.error) return auth.error;
   const { data: grants } = await auth.svc.from('user_roles').select('user_id, role').in('role', [...AUDIENCE_ROLES]);
   const rolesOf = new Map<string, AppRole[]>();

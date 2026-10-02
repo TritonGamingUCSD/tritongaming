@@ -2,27 +2,27 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { CalendarCheck, Radio, History as HistoryIcon, ClipboardList, Check, X, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Pause, Play, Trash2, Link2, MessageCircleQuestion, Shuffle, Send, Users, Minus, UserX } from 'lucide-react';
+import { CalendarCheck, Radio, History as HistoryIcon, ClipboardList, Check, X, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Pause, Play, Trash2, Link2, MessageCircleQuestion, Shuffle, Send, Users, Minus, UserX, Lock } from 'lucide-react';
 import IconButton from '@/components/ui/IconButton';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Notice from '@/components/ui/Notice';
 import Button from '@/components/ui/Button';
-import { Field, Input, Select } from '@/components/ui/Field';
+import { Field, Input, Select, Textarea, DateInput, TimeInput } from '@/components/ui/Field';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import { confirmHold } from '@/lib/confirmHold';
 import { resolveAvatarUrl } from '@/lib/profile';
 import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
-import { AUDIENCE_LABELS, AUDIENCE_ROLES, DEFAULT_AUDIENCE, audienceLabel, audienceRoles, hasInvitees, isCustomAudience } from '@/lib/meetingAudience';
-import { REACTION_EMOJIS, MAX_ANSWER_LENGTH, MAX_QUESTION_LENGTH, suggestQuestion } from '@/lib/meetingFun';
+import { AUDIENCE_LABELS, AUDIENCE_ROLES, DEFAULT_AUDIENCE, audienceLabel, audienceRoles, isCustomAudience } from '@/lib/meetingAudience';
+import { REACTION_EMOJIS, MAX_ANSWER_LENGTH, MAX_QUESTION_LENGTH, MAX_DESCRIPTION_LENGTH, suggestQuestion } from '@/lib/meetingFun';
 import styles from './meetings.module.css';
 
 type Tab = 'checkin' | 'mine' | 'run' | 'groups' | 'attendance';
 
 interface Person { id: string; name: string; avatar_url: string | null; custom_avatar_url: string | null }
-interface TodayMeeting { id: string; title: string; location: string | null; starts_at: string; ends_at: string; open: boolean; accepting: boolean; opens_at: string; checked_in_at: string | null; doc_url: string | null; question: string | null; my_answer: string | null }
-interface NextMeeting { title: string; location: string | null; starts_at: string; ends_at: string; date: string }
+interface TodayMeeting { id: string; title: string; description: string | null; location: string | null; starts_at: string; ends_at: string; open: boolean; accepting: boolean; opens_at: string; checked_in_at: string | null; doc_url: string | null; question: string | null; my_answer: string | null }
+interface NextMeeting { title: string; description: string | null; location: string | null; starts_at: string; ends_at: string; date: string }
 interface Live {
-  meeting: { id: string; title: string; meeting_date: string; starts_at: string; ends_at: string; open: boolean; doc_url: string | null; location: string | null; cancelled: boolean; question: string | null; audience: string[] | null; invitees: string[] | null };
+  meeting: { id: string; title: string; meeting_date: string; starts_at: string; ends_at: string; open: boolean; doc_url: string | null; location: string | null; cancelled: boolean; series_id: string | null; accepting: boolean; opens_at: string; question: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; groupNames: string[] };
   answers: (Person & { answer: string; at: string })[];
   reactions: { id: number; emoji: string }[];
   lastReactionId: number;
@@ -33,8 +33,8 @@ interface Live {
   missing: Person[];
   absent: (Person & { reason: string | null; excused: boolean })[];
 }
-interface Item { key: string; meeting_id: string | null; series_id: string | null; date: string; title: string; location: string | null; doc_url: string | null; question: string | null; audience: string[] | null; invitees: string[] | null; starts_at: string; ends_at: string; status: 'scheduled' | 'open' | 'closed' | 'cancelled'; count: number; is_today: boolean; repeats: boolean }
-interface Series { id: string; title: string; weekday: number; start_time: string; end_time: string; location: string | null; active: boolean; doc_url: string | null; audience: string[] | null; invitees: string[] | null }
+interface Item { key: string; meeting_id: string | null; series_id: string | null; date: string; title: string; location: string | null; doc_url: string | null; question: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; groupNames: string[]; host_id: string | null; host_name: string | null; starts_at: string; ends_at: string; status: 'scheduled' | 'open' | 'closed' | 'cancelled'; count: number; is_today: boolean; repeats: boolean }
+interface Series { id: string; title: string; weekday: number; start_time: string; end_time: string; location: string | null; active: boolean; doc_url: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null }
 
 const TZ = 'America/Los_Angeles';
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -42,8 +42,16 @@ const time = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { timeZo
 const timeRange = (a: string, b: string) => `${time(a)} – ${time(b)}`;
 const dayLabel = (key: string, long = false) => new Date(`${key}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: long ? 'long' : 'short', month: 'short', day: 'numeric' });
 const hhmmLabel = (t: string) => { const [h, m] = t.split(':').map(Number); return `${((h + 11) % 12) + 1}${m ? `:${String(m).padStart(2, '0')}` : ''} ${h < 12 ? 'AM' : 'PM'}`; };
+const pacificHHMM = (iso: string) => new Intl.DateTimeFormat('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(iso));
 const pacificToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 const shiftKey = (key: string, days: number) => { const d = new Date(`${key}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + days); return d.toISOString().slice(0, 10); };
+
+// A clock that ticks every 30 seconds, so time-dependent labels stay right without a refresh.
+function useNow(): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => { const t = setInterval(() => setNow(Date.now()), 30_000); return () => clearInterval(t); }, []);
+  return now;
+}
 
 function Avatar({ p }: { p: Person }) {
   const src = resolveAvatarUrl(p);
@@ -62,7 +70,10 @@ function DocButton({ url, label = 'Open meeting doc' }: { url: string; label?: s
   );
 }
 
-export default function MeetingsSectionContent({ canManage }: { canManage: boolean }) {
+// canHost: can plan meetings (leads, exec, admin) and run/edit/see results of the ones they planned.
+// canManageAll: exec and admin, who can do that for every meeting and export attendance for HR.
+export default function MeetingsSectionContent({ canHost, canManageAll, userId }: { canHost: boolean; canManageAll: boolean; userId: string }) {
+  const canManage = canHost;
   const nav = useUrlNav();
   const sync = usePortalTabSync('meetings');
   const valid: Tab[] = canManage ? ['checkin', 'mine', 'run', 'groups', 'attendance'] : ['checkin', 'mine'];
@@ -96,8 +107,8 @@ export default function MeetingsSectionContent({ canManage }: { canManage: boole
       {tab === 'checkin' && <CheckInPanel />}
       {tab === 'mine' && <MyHistoryPanel />}
       {tab === 'run' && canManage && <RunPanel initial={runTarget} />}
-      {tab === 'groups' && canManage && <GroupsPanel />}
-      {tab === 'attendance' && canManage && <AttendancePanel onOpenMeeting={openFromAttendance} />}
+      {tab === 'groups' && canManage && <GroupsPanel userId={userId} canManageAll={canManageAll} />}
+      {tab === 'attendance' && canManage && <AttendancePanel onOpenMeeting={openFromAttendance} canExport={canManageAll} />}
     </div>
   );
 }
@@ -153,6 +164,7 @@ function CheckInPanel() {
           <span className={styles.doneIcon}><Check size={34} strokeWidth={2.5} aria-hidden="true" /></span>
           <h2 className={styles.cardTitle}>You&apos;re checked in</h2>
           <p className={styles.muted}>{m.title} · {time(m.checked_in_at!)}{m.location ? ` · ${m.location}` : ''}</p>
+          {m.description && <p className={styles.descText}>{m.description}</p>}
           {m.doc_url ? <DocButton url={m.doc_url} /> : <p className={styles.faint}>No meeting doc has been linked yet.</p>}
           <FunBox meeting={m} onSaved={load} />
         </div>
@@ -164,6 +176,7 @@ function CheckInPanel() {
           <p className={styles.muted}>
             {openToEnter.map((m) => m.title).join(' · ')} — the 6-digit code changes every 30 seconds.
           </p>
+          {openToEnter.filter((m) => m.description).map((m) => <p key={m.id} className={styles.descText}>{m.description}</p>)}
           <input
             className={styles.codeInput}
             value={code}
@@ -209,6 +222,7 @@ function CheckInPanel() {
           <span className={styles.nextLabel}>Next meeting</span>
           <strong>{data.next.title}</strong>
           <span className={styles.muted}>{dayLabel(data.next.date, true)} · {timeRange(data.next.starts_at, data.next.ends_at)}{data.next.location ? ` · ${data.next.location}` : ''}</span>
+          {data.next.description && <span className={styles.descText}>{data.next.description}</span>}
         </div>
       )}
     </div>
@@ -323,15 +337,16 @@ function MyHistoryPanel() {
 }
 
 
-// Who a meeting is for: everyone holding some roles, or a hand-picked list of people.
-interface Aud { mode: 'roles' | 'people'; roles: string[]; invitees: string[] }
-const defaultAud = (): Aud => ({ mode: 'roles', roles: [...DEFAULT_AUDIENCE], invitees: [] });
-const audFrom = (m: { audience: string[] | null; invitees: string[] | null }): Aud =>
-  hasInvitees(m) ? { mode: 'people', roles: [...DEFAULT_AUDIENCE], invitees: m.invitees! } : { mode: 'roles', roles: audienceRoles(m.audience), invitees: [] };
-const audPayload = (a: Aud) => (a.mode === 'people' && a.invitees.length ? { invitees: a.invitees, audience: null } : { audience: a.roles, invitees: null });
+// Who a meeting is for: the UNION of roles (everyone holding them, live), saved groups (their current
+// members, live) and individually added people.
+interface Aud { roles: string[]; groups: string[]; invitees: string[] }
+const defaultAud = (): Aud => ({ roles: [...DEFAULT_AUDIENCE], groups: [], invitees: [] });
+const audFrom = (m: { audience: string[] | null; invitees: string[] | null; group_ids: string[] | null }): Aud => ({
+  roles: audienceRoles({ audience: m.audience, invitees: m.invitees, group_ids: m.group_ids }), groups: m.group_ids ?? [], invitees: m.invitees ?? [],
+});
+const audPayload = (a: Aud) => ({ audience: a.roles, group_ids: a.groups, invitees: a.invitees });
+const audienceEmpty = (a: Aud) => a.roles.length === 0 && a.groups.length === 0 && a.invitees.length === 0;
 
-// Who a meeting is for: tick the roles. (A meeting that already has a hand-picked list keeps it until
-// a role is ticked here.)
 function CheckTile({ checked, indeterminate, label, onChange }: { checked: boolean; indeterminate?: boolean; label: string; onChange: () => void }) {
   return (
     <label className={`${styles.check} ${checked || indeterminate ? styles.checkOn : ''}`}>
@@ -344,10 +359,8 @@ function CheckTile({ checked, indeterminate, label, onChange }: { checked: boole
   );
 }
 
-const audienceEmpty = (a: Aud) => a.mode === 'roles' && a.roles.length === 0;
-
 interface TeamPerson { id: string; name: string; avatar_url: string | null; custom_avatar_url: string | null; roles: string[]; role: string }
-interface Group { id: string; name: string; member_ids: string[] }
+interface Group { id: string; name: string; member_ids: string[]; created_by?: string | null }
 let teamCache: TeamPerson[] | null = null;
 let groupsCache: Group[] | null = null;
 
@@ -378,17 +391,18 @@ function useGroups(): [Group[] | null, () => Promise<void>] {
   return [groups, load];
 }
 
-// Pick people from the team: search, "add everyone who is …" shortcuts, and a tick list.
-function PeoplePicker({ team, value, onChange }: { team: TeamPerson[] | null; value: string[]; onChange: (ids: string[]) => void }) {
+// Pick people from the team: search, "add everyone who is …" shortcuts, and a tick list. People in
+// `covered` are already included another way (a ticked role or group): shown ticked and locked.
+function PeoplePicker({ team, value, onChange, covered }: { team: TeamPerson[] | null; value: string[]; onChange: (ids: string[]) => void; covered?: Map<string, string> }) {
   const [query, setQuery] = useState('');
   const shown = (team ?? []).filter((p) => p.name.toLowerCase().includes(query.trim().toLowerCase()));
   const toggle = (id: string) => onChange(value.includes(id) ? value.filter((x) => x !== id) : [...value, id]);
-  const addRole = (role: string) => onChange([...new Set([...value, ...(team ?? []).filter((p) => p.roles.includes(role)).map((p) => p.id)])]);
+  const addRole = (role: string) => onChange([...new Set([...value, ...(team ?? []).filter((p) => p.roles.includes(role) && !covered?.has(p.id)).map((p) => p.id)])]);
   return (
     <div className={styles.picker}>
       <div className={styles.pickTop}>
         <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search people…" aria-label="Search people" />
-        <span className={styles.pickCount}><strong>{value.length}</strong> picked</span>
+        <span className={styles.pickCount}><strong>{value.length}</strong> added</span>
       </div>
       <div className={styles.presets}>
         <span className={styles.faint}>Add everyone who is</span>
@@ -398,15 +412,16 @@ function PeoplePicker({ team, value, onChange }: { team: TeamPerson[] | null; va
       {!team ? <p className={styles.faint}>Loading people…</p> : (
         <ul className={styles.pickList}>
           {shown.map((p) => {
-            const on = value.includes(p.id);
+            const via = covered?.get(p.id);
+            const on = !!via || value.includes(p.id);
             return (
               <li key={p.id}>
-                <label className={`${styles.pickRow} ${on ? styles.pickRowOn : ''}`}>
-                  <input type="checkbox" className={styles.checkInput} checked={on} onChange={() => toggle(p.id)} />
+                <label className={`${styles.pickRow} ${on ? styles.pickRowOn : ''} ${via ? styles.pickRowLocked : ''}`}>
+                  <input type="checkbox" className={styles.checkInput} checked={on} disabled={!!via} onChange={() => toggle(p.id)} />
                   <span className={`${styles.checkBox} ${on ? styles.checkBoxOn : ''}`} aria-hidden="true">{on && <Check size={13} strokeWidth={3} />}</span>
                   <Avatar p={p} />
                   <span className={styles.personName}>{p.name}</span>
-                  <span className={styles.pickRole}>{p.role}</span>
+                  <span className={styles.pickRole}>{via ? `via ${via}` : p.role}</span>
                 </label>
               </li>
             );
@@ -419,46 +434,57 @@ function PeoplePicker({ team, value, onChange }: { team: TeamPerson[] | null; va
 }
 
 function AudiencePicker({ value, onChange }: { value: Aud; onChange: (v: Aud) => void }) {
-  const people = value.mode === 'people';
   const team = useTeam();
   const [groups] = useGroups();
-  const roles = people ? [] : value.roles;
-  const all = roles.length === AUDIENCE_ROLES.length;
-  const toggle = (r: string) => onChange({ mode: 'roles', roles: roles.includes(r) ? roles.filter((x) => x !== r) : [...roles, r], invitees: [] });
-  const usingGroup = people ? groups?.find((g) => g.member_ids.length === value.invitees.length && g.member_ids.every((id) => value.invitees.includes(id))) : undefined;
+  const [showPeople, setShowPeople] = useState(value.invitees.length > 0);
+  const all = value.roles.length === AUDIENCE_ROLES.length;
+  const toggleRole = (r: string) => onChange({ ...value, roles: value.roles.includes(r) ? value.roles.filter((x) => x !== r) : [...value.roles, r] });
+  const toggleGroup = (id: string) => onChange({ ...value, groups: value.groups.includes(id) ? value.groups.filter((x) => x !== id) : [...value.groups, id] });
+  // Who is already included by a ticked role or group (so the people list can show them locked).
+  const covered = new Map<string, string>();
+  for (const p of team ?? []) {
+    const g = (groups ?? []).find((x) => value.groups.includes(x.id) && x.member_ids.includes(p.id));
+    if (p.roles.some((r) => value.roles.includes(r))) covered.set(p.id, 'role');
+    else if (g) covered.set(p.id, g.name);
+  }
   return (
     <div className={styles.audience}>
-      <div className={styles.presets} role="radiogroup" aria-label="How to choose who it's for">
-        <button type="button" role="radio" aria-checked={!people} className={`${styles.chip} ${!people ? styles.chipOn : ''}`} onClick={() => onChange({ mode: 'roles', roles: value.roles.length ? value.roles : [...DEFAULT_AUDIENCE], invitees: [] })}>By role</button>
-        <button type="button" role="radio" aria-checked={people} className={`${styles.chip} ${people ? styles.chipOn : ''}`} onClick={() => onChange({ ...value, mode: 'people' })}>Specific people</button>
+      <div className={styles.audSection}>
+        <span className={styles.audTitle}>Roles <em>everyone with the role, always up to date</em></span>
+        <div className={styles.checkGrid} role="group" aria-label="Roles">
+          <CheckTile label="Select all" checked={all} indeterminate={!all && value.roles.length > 0} onChange={() => onChange({ ...value, roles: all ? [] : [...AUDIENCE_ROLES] })} />
+          {AUDIENCE_ROLES.map((r) => <CheckTile key={r} label={AUDIENCE_LABELS[r]} checked={value.roles.includes(r)} onChange={() => toggleRole(r)} />)}
+        </div>
       </div>
 
-      {!people ? (
-        <>
-          <div className={styles.checkGrid} role="group" aria-label="Who is it for">
-            <CheckTile label="Select all" checked={all} indeterminate={!all && roles.length > 0} onChange={() => onChange({ mode: 'roles', roles: all ? [] : [...AUDIENCE_ROLES], invitees: [] })} />
-            {AUDIENCE_ROLES.map((r) => <CheckTile key={r} label={AUDIENCE_LABELS[r]} checked={roles.includes(r)} onChange={() => toggle(r)} />)}
+      <div className={styles.audSection}>
+        <span className={styles.audTitle}>Saved groups <em>pick more than one; changes to a group carry over</em></span>
+        {groups && groups.length > 0 ? (
+          <div className={styles.presets}>
+            {groups.map((g) => (
+              <button key={g.id} type="button" aria-pressed={value.groups.includes(g.id)} className={`${styles.chip} ${value.groups.includes(g.id) ? styles.chipOn : ''}`} onClick={() => toggleGroup(g.id)}>
+                {g.name} · {g.member_ids.length}
+              </button>
+            ))}
           </div>
-          {audienceEmpty(value) ? <p className={styles.checkWarn}>Pick at least one role.</p> : <p className={styles.faint}>Only people with a ticked role see the meeting and can check in. Admins can always check in.</p>}
-        </>
-      ) : (
-        <>
-          {groups && groups.length > 0 && (
-            <div className={styles.presets}>
-              <span className={styles.faint}>Saved groups</span>
-              {groups.map((g) => <button key={g.id} type="button" className={`${styles.chip} ${usingGroup?.id === g.id ? styles.chipOn : ''}`} onClick={() => onChange({ mode: 'people', roles: value.roles, invitees: [...g.member_ids] })}>{g.name} · {g.member_ids.length}</button>)}
-            </div>
-          )}
-          <PeoplePicker team={team} value={value.invitees} onChange={(ids) => onChange({ ...value, mode: 'people', invitees: ids })} />
-          {value.invitees.length === 0 ? <p className={styles.checkWarn}>Pick at least one person.</p> : <p className={styles.faint}>Only the people you pick see the meeting and can check in. Admins can always check in. Manage saved groups in the Groups tab.</p>}
-        </>
-      )}
+        ) : <p className={styles.faint}>{groups ? 'No saved groups yet. Make some in the Groups tab.' : 'Loading groups…'}</p>}
+      </div>
+
+      <div className={styles.audSection}>
+        <button type="button" className={styles.audToggle} onClick={() => setShowPeople((v) => !v)} aria-expanded={showPeople}>
+          <span className={styles.audTitle}>Add individual people <em>{value.invitees.length > 0 ? `${value.invitees.length} added` : 'optional'}</em></span>
+          <span className={styles.faint}>{showPeople ? 'Hide' : 'Show'}</span>
+        </button>
+        {showPeople && <PeoplePicker team={team} value={value.invitees} onChange={(ids) => onChange({ ...value, invitees: ids })} covered={covered} />}
+      </div>
+
+      {audienceEmpty(value) ? <p className={styles.checkWarn}>Pick at least one role, group or person.</p> : <p className={styles.faint}>Anyone matching any of these is invited. Exec and admins can always check in.</p>}
     </div>
   );
 }
 
 // ── Exec: saved groups of people ("Directors", "Marketing team") ─────────────
-function GroupsPanel() {
+function GroupsPanel({ userId, canManageAll }: { userId: string; canManageAll: boolean }) {
   const team = useTeam();
   const [groups, reload] = useGroups();
   const [editing, setEditing] = useState<{ id: string | null; name: string; ids: string[] } | null>(null);
@@ -516,8 +542,12 @@ function GroupsPanel() {
                   <strong>{g.name} <span className={styles.muted}>· {g.member_ids.length} {g.member_ids.length === 1 ? 'person' : 'people'}</span></strong>
                   <span className={styles.muted}>{g.member_ids.slice(0, 6).map(nameOf).join(', ')}{g.member_ids.length > 6 ? ` +${g.member_ids.length - 6} more` : ''}</span>
                 </div>
-                <IconButton kind="edit" label={`Edit ${g.name}`} onClick={() => { setEditing({ id: g.id, name: g.name, ids: [...g.member_ids] }); setError(''); }} />
-                <IconButton kind="delete" label={`Delete ${g.name}`} onClick={() => remove(g)} />
+                {(canManageAll || g.created_by === userId) ? (
+                  <>
+                    <IconButton kind="edit" label={`Edit ${g.name}`} onClick={() => { setEditing({ id: g.id, name: g.name, ids: [...g.member_ids] }); setError(''); }} />
+                    <IconButton kind="delete" label={`Delete ${g.name}`} onClick={() => remove(g)} />
+                  </>
+                ) : <span className={styles.faint}>made by someone else</span>}
               </div>
             </li>
           ))}
@@ -578,8 +608,13 @@ function MeetingList({ onOpen }: { onOpen: (id: string) => void }) {
     if (!res.ok) setError((await res.json().catch(() => ({}))).error || 'Failed to delete.');
     setBusyKey(null); load();
   }
-  async function saveDoc(item: Item, doc: string, question: string, audience: Aud, location: string): Promise<boolean> {
-    const fields = { doc_url: doc, question, location, ...audPayload(audience) };
+  async function saveDoc(item: Item, f: DetailsFields): Promise<boolean> {
+    // The question is locked once check-in has been opened; leave it out so an unrelated edit can't trip that.
+    // Title only changes for one-off meetings (a repeating meeting keeps its name every week).
+    const fields = {
+      doc_url: f.doc, ...(item.status === 'open' ? {} : { question: f.question }), location: f.location, description: f.description,
+      ...(item.repeats ? {} : { title: f.title }), start: f.start, end: f.end, ...audPayload(f.audience),
+    };
     const r = await post('/api/meetings/update', item.meeting_id ? { meeting_id: item.meeting_id, ...fields } : { series_id: item.series_id, date: item.date, ...fields }, item.key);
     if (r.ok) load();
     return r.ok;
@@ -612,7 +647,7 @@ function MeetingList({ onOpen }: { onOpen: (id: string) => void }) {
         <h3 className={styles.listTitle}>Upcoming <span>next 2 weeks</span></h3>
         {data.upcoming.length === 0 ? <p className={styles.muted}>Nothing scheduled. Add a meeting above.</p> : (
           <ul className={styles.meetingList}>
-            {data.upcoming.map((it) => <MeetingCard key={it.key} item={it} busy={busyKey === it.key} onStart={() => start(it)} onView={() => it.meeting_id && onOpen(it.meeting_id)} onCancel={(undo) => cancel(it, undo)} onSaveDoc={(d, q, a, l) => saveDoc(it, d, q, a, l)} onDelete={() => remove(it)} />)}
+            {data.upcoming.map((it) => <MeetingCard key={it.key} item={it} busy={busyKey === it.key} onStart={() => start(it)} onView={() => it.meeting_id && onOpen(it.meeting_id)} onCancel={(undo) => cancel(it, undo)} onSaveDoc={(f) => saveDoc(it, f)} onDelete={() => remove(it)} />)}
           </ul>
         )}
       </section>
@@ -648,17 +683,32 @@ function MeetingList({ onOpen }: { onOpen: (id: string) => void }) {
   );
 }
 
+interface DetailsFields { doc: string; question: string; audience: Aud; location: string; description: string; title: string; start: string; end: string }
+
 function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, onDelete }: {
   item: Item; busy: boolean; past?: boolean;
-  onStart: () => void; onView: () => void; onCancel: (undo: boolean) => void; onSaveDoc: (doc: string, question: string, audience: Aud, location: string) => Promise<boolean>; onDelete: () => void;
+  onStart: () => void; onView: () => void; onCancel: (undo: boolean) => void; onSaveDoc: (f: DetailsFields) => Promise<boolean>; onDelete: () => void;
 }) {
   const [editingDoc, setEditingDoc] = useState(false);
   const [doc, setDoc] = useState(item.doc_url ?? '');
   const [question, setQuestion] = useState(item.question ?? '');
   const [audience, setAudience] = useState<Aud>(audFrom(item));
   const [room, setRoom] = useState(item.location ?? '');
+  const [desc, setDesc] = useState(item.description ?? '');
+  const [title, setTitle] = useState(item.title);
+  const [startT, setStartT] = useState(pacificHHMM(item.starts_at));
+  const [endT, setEndT] = useState(pacificHHMM(item.ends_at));
   const status = item.status;
-  const label = status === 'open' ? 'Open now' : status === 'closed' ? `${item.count} checked in` : status === 'cancelled' ? 'Skipped' : item.is_today ? 'Today' : 'Scheduled';
+  // The clock decides what to say: an exec can open check-in early, but members only get in from
+  // 10 minutes before the start, so "Open now" means members can actually check in right now.
+  const now = useNow();
+  const opensAt = new Date(item.starts_at).getTime() - 10 * 60_000;
+  const label =
+    status === 'cancelled' ? 'Skipped'
+    : status === 'closed' ? `${item.count} checked in`
+    : status === 'open' ? (now >= opensAt ? 'Check-in open' : `Opens ${time(new Date(opensAt).toISOString())}`)
+    : item.is_today ? (now > new Date(item.ends_at).getTime() + 30 * 60_000 ? 'Not held' : now >= opensAt ? 'Ready to open' : `Today ${time(item.starts_at)}`)
+    : 'Scheduled';
 
   return (
     <li className={`${styles.meetingCard} ${status === 'open' ? styles.cardOpen : ''} ${status === 'cancelled' ? styles.paused : ''}`}>
@@ -670,6 +720,8 @@ function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, o
         <div className={styles.meetingInfo}>
           <strong>{item.title}{item.repeats && <Repeat size={12} aria-label="Repeats weekly" className={styles.inlineIcon} />}</strong>
           <span className={styles.muted}>{timeRange(item.starts_at, item.ends_at)}{item.location && <> · <MapPin size={11} aria-hidden="true" className={styles.inlineIcon} /> {item.location}</>}</span>
+          {item.host_name && <span className={styles.faint}>Planned by {item.host_name}</span>}
+          {item.description && <span className={styles.descText}>{item.description}</span>}
           {isCustomAudience(item) && <span className={styles.audienceLine}><Users size={11} aria-hidden="true" /> {audienceLabel(item)}</span>}
           {(item.doc_url || item.question) && (
             <span className={styles.docLine}>
@@ -679,7 +731,7 @@ function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, o
             </span>
           )}
         </div>
-        <span className={`${styles.pill} ${status === 'open' ? styles.pillOpen : status === 'closed' ? styles.pillDone : ''}`}>{label}</span>
+        <span className={`${styles.pill} ${status === 'open' && now >= opensAt ? styles.pillOpen : status === 'closed' ? styles.pillDone : ''}`}>{label}</span>
       </div>
       <div className={styles.cardActions}>
         {!past && (status === 'open' ? (
@@ -690,25 +742,32 @@ function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, o
           <Button size="sm" onClick={onStart} loading={busy}>{status === 'closed' ? 'Re-open check-in' : 'Start check-in'}</Button>
         ) : null)}
         {(past || status === 'closed') && item.meeting_id && <Button size="sm" variant="secondary" onClick={onView}>Attendance</Button>}
-        {!past && status !== 'cancelled' && status !== 'open' && (
+        {!past && status !== 'cancelled' && (
           <>
             <Button size="sm" variant="secondary" onClick={() => setEditingDoc((v) => !v)}><FileText size={14} aria-hidden="true" /> Details</Button>
             {status === 'scheduled' && item.repeats && <Button size="sm" variant="secondary" onClick={() => onCancel(false)}><SkipForward size={14} aria-hidden="true" /> Skip</Button>}
           </>
         )}
-        {item.meeting_id && (
-          <Button size="sm" variant="danger" onClick={onDelete} loading={busy}><Trash2 size={14} aria-hidden="true" /> Delete</Button>
+        {/* One-off meetings only. A repeating meeting's weeks use Skip (or delete the whole repeating meeting). */}
+        {item.meeting_id && !item.repeats && (
+          <IconButton kind="delete" label={`Delete ${item.title} on ${dayLabel(item.date)}`} onClick={onDelete} disabled={busy} />
         )}
         
       </div>
       {editingDoc && (
-        <form className={styles.detailsForm} onSubmit={async (e) => { e.preventDefault(); if (await onSaveDoc(doc, question, audience, room)) setEditingDoc(false); }}>
+        <form className={styles.detailsForm} onSubmit={async (e) => { e.preventDefault(); if (await onSaveDoc({ doc, question, audience, location: room, description: desc, title, start: startT, end: endT })) setEditingDoc(false); }}>
+          {!item.repeats && <Field label="Name"><Input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={60} required /></Field>}
+          <div className={styles.formGrid}>
+            <Field label="Starts"><TimeInput value={startT} onChange={(e) => setStartT(e.target.value)} required /></Field>
+            <Field label="Ends"><TimeInput value={endT} onChange={(e) => setEndT(e.target.value)} required /></Field>
+          </div>
+          <Field label="What's this meeting about? (optional)" hint="A line or two. Members see it when they check in."><Textarea value={desc} onChange={(e) => setDesc(e.target.value)} maxLength={MAX_DESCRIPTION_LENGTH} rows={2} placeholder="e.g. Planning the Halloween LAN: roles, budget and timeline." /></Field>
           <Field label="Room for this meeting" hint="Only changes this one meeting."><Input value={room} onChange={(e) => setRoom(e.target.value)} placeholder="e.g. Price Center East" maxLength={80} /></Field>
           <Field label="Meeting doc link"><Input value={doc} onChange={(e) => setDoc(e.target.value)} placeholder="https://docs.google.com/… or /portal?section=docs" inputMode="url" /></Field>
-          <Field label="Question of the meeting">
+          <Field label="Question of the meeting" hint={status === 'open' ? 'Locked while check-in is open.' : undefined}>
             <div className={styles.inlineRow}>
-              <Input value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={MAX_QUESTION_LENGTH} placeholder="An icebreaker people answer after checking in" />
-              <Button type="button" size="sm" variant="ghost" onClick={() => setQuestion(suggestQuestion(question))}><Shuffle size={14} aria-hidden="true" /> Suggest</Button>
+              <Input value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={MAX_QUESTION_LENGTH} placeholder="An icebreaker people answer after checking in" disabled={status === 'open'} />
+              <Button type="button" size="sm" variant="ghost" disabled={status === 'open'} onClick={() => setQuestion(suggestQuestion(question))}><Shuffle size={14} aria-hidden="true" /> Suggest</Button>
             </div>
           </Field>
           <div className={styles.audienceField}><span className={styles.audienceTitle}>Who is it for?</span><AudiencePicker value={audience} onChange={setAudience} /></div>
@@ -729,6 +788,7 @@ function ScheduleForm({ onCreated }: { onCreated: () => void }) {
   const [location, setLocation] = useState('');
   const [doc, setDoc] = useState('');
   const [question, setQuestion] = useState('');
+  const [description, setDescription] = useState('');
   const [audience, setAudience] = useState<Aud>(defaultAud());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -739,7 +799,7 @@ function ScheduleForm({ onCreated }: { onCreated: () => void }) {
     try {
       const res = await fetch('/api/meetings/schedule', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, repeat, weekday: Number(weekday), date, start, end, location, doc_url: doc, question, ...audPayload(audience) }),
+        body: JSON.stringify({ title, repeat, weekday: Number(weekday), date, start, end, location, doc_url: doc, question, description, ...audPayload(audience) }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) { setError(json.error || 'Failed to schedule.'); return; }
@@ -763,12 +823,13 @@ function ScheduleForm({ onCreated }: { onCreated: () => void }) {
         {repeat === 'weekly' ? (
           <Field label="Day of the week"><Select value={weekday} onChange={(e) => setWeekday(e.target.value)}>{WEEKDAYS.map((d, i) => <option key={d} value={i}>{d}</option>)}</Select></Field>
         ) : (
-          <Field label="Date"><Input type="date" value={date} min={pacificToday()} onChange={(e) => setDate(e.target.value)} required /></Field>
+          <Field label="Date"><DateInput value={date} min={pacificToday()} onChange={(e) => setDate(e.target.value)} required /></Field>
         )}
-        <Field label="Starts"><Input type="time" value={start} onChange={(e) => setStart(e.target.value)} required /></Field>
-        <Field label="Ends"><Input type="time" value={end} onChange={(e) => setEnd(e.target.value)} required /></Field>
+        <Field label="Starts"><TimeInput value={start} onChange={(e) => setStart(e.target.value)} required /></Field>
+        <Field label="Ends"><TimeInput value={end} onChange={(e) => setEnd(e.target.value)} required /></Field>
         <Field label={repeat === 'weekly' ? 'Usual room (optional)' : 'Room (optional)'} hint={repeat === 'weekly' ? 'Just the default — change the room for any single week from its Details.' : undefined}><Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Price Center East" maxLength={80} /></Field>
       </div>
+      <Field label="What's this meeting about? (optional)" hint="A line or two. Members see it when they check in."><Textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={MAX_DESCRIPTION_LENGTH} rows={2} placeholder="e.g. Planning the Halloween LAN: roles, budget and timeline." /></Field>
       <Field label="Meeting doc link (optional)" hint="Shown to people after they check in. For a repeating meeting this is the default; change it for any single week."><Input value={doc} onChange={(e) => setDoc(e.target.value)} placeholder="https://docs.google.com/…" inputMode="url" /></Field>
       <div className={styles.audienceField}><span className={styles.audienceTitle}>Who is it for?</span><AudiencePicker value={audience} onChange={setAudience} /></div>
       {repeat === 'once' && (
@@ -954,11 +1015,15 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
           <div className={styles.card}>
             <h3 className={styles.listTitle}><MessageCircleQuestion size={14} aria-hidden="true" /> Question of the meeting</h3>
             <p className={styles.faint}>Shown on the big screen and revealed to people after they check in. They can answer it and send reactions.</p>
-            <form className={styles.docForm} onSubmit={(e) => { e.preventDefault(); saveQuestion(question); }}>
-              <Input value={question} onChange={(e) => { setQuestion(e.target.value); setQuestionSaved(false); }} maxLength={MAX_QUESTION_LENGTH} placeholder="e.g. What game have you put the most hours into?" aria-label="Question of the meeting" />
-              <Button type="button" size="sm" variant="ghost" onClick={() => { const q = suggestQuestion(question); setQuestion(q); setQuestionSaved(false); }}><Shuffle size={14} aria-hidden="true" /> Suggest</Button>
-              <Button type="submit" size="sm" loading={busy}>{questionSaved ? 'Saved' : 'Save'}</Button>
-            </form>
+            {open ? (
+              <p className={styles.lockNote}><Lock size={13} aria-hidden="true" /> The question is locked while check-in is open, so everyone answers the same one. Close check-in to change it.</p>
+            ) : (
+              <form className={styles.docForm} onSubmit={(e) => { e.preventDefault(); saveQuestion(question); }}>
+                <Input value={question} onChange={(e) => { setQuestion(e.target.value); setQuestionSaved(false); }} maxLength={MAX_QUESTION_LENGTH} placeholder="e.g. What game have you put the most hours into?" aria-label="Question of the meeting" />
+                <Button type="button" size="sm" variant="ghost" onClick={() => { const q = suggestQuestion(question); setQuestion(q); setQuestionSaved(false); }}><Shuffle size={14} aria-hidden="true" /> Suggest</Button>
+                <Button type="submit" size="sm" loading={busy}>{questionSaved ? 'Saved' : 'Save'}</Button>
+              </form>
+            )}
             {live.meeting.question && (
               <div className={styles.answerWall}>
                 <h4 className={styles.listTitle}>Answers <span>{live.answers.length}</span></h4>
@@ -984,11 +1049,61 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
             </Field>
             <Button type="submit" size="sm" variant="ghost" loading={busy}>{docSaved ? 'Saved' : 'Save link'}</Button>
           </form>
+          <InvitePeople live={live} meetingId={id} onSaved={loadLive} />
           <AttendeeList live={live} onAdd={addPerson} onRemove={removePerson} onAbsent={markAbsent} onClearAbsent={clearAbsent} />
-          <p className={styles.faint}><Users size={12} aria-hidden="true" /> For: {audienceLabel(live.meeting)}</p>
-          <div className={styles.runActions}><Button variant="danger" size="sm" onClick={deleteMeeting}><Trash2 size={14} aria-hidden="true" /> Delete this meeting</Button></div>
+          {!live.meeting.series_id && <div className={styles.runActions}><Button variant="danger" size="sm" onClick={deleteMeeting}><Trash2 size={14} aria-hidden="true" /> Delete this meeting</Button></div>}
         </>
       )}
+    </div>
+  );
+}
+
+// Add more people to a meeting that already exists. Roles and groups stay as they are (and keep pulling
+// people in live); this only adds individuals on top. People already covered show ticked and locked.
+function InvitePeople({ live, meetingId, onSaved }: { live: Live; meetingId: string; onSaved: () => void }) {
+  const team = useTeam();
+  const [ids, setIds] = useState<string[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const m = live.meeting;
+  const invited = m.invitees ?? [];
+  // Expected people who are in only because of a role or group (not individually added).
+  const covered = new Map<string, string>();
+  for (const p of [...live.attendees, ...live.missing, ...live.absent]) if (!invited.includes(p.id)) covered.set(p.id, 'role or group');
+
+  async function save() {
+    if (!ids) return;
+    setBusy(true); setError('');
+    try {
+      const res = await fetch('/api/meetings/update', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ meeting_id: meetingId, invitees: ids, group_ids: m.group_ids ?? [], audience: audienceRoles({ audience: m.audience, invitees: m.invitees, group_ids: m.group_ids }) }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) { setError(json.error || 'Failed to save.'); return; }
+      setIds(null);
+      onSaved();
+    } finally { setBusy(false); }
+  }
+
+  if (!ids) {
+    return (
+      <div className={styles.inviteBar}>
+        <span className={styles.faint}><Users size={12} aria-hidden="true" /> For: {audienceLabel({ audience: m.audience, invitees: m.invitees, group_ids: m.group_ids, groupNames: m.groupNames })}</span>
+        <Button size="sm" variant="secondary" onClick={() => setIds([...invited])}><UserPlus size={14} aria-hidden="true" /> Add people</Button>
+      </div>
+    );
+  }
+  return (
+    <div className={styles.card}>
+      <h3 className={styles.listTitle}>Add people <span>{ids.length} added individually</span></h3>
+      <p className={styles.faint}>Tick anyone to add them, even if they&apos;re not in the roles or groups. They&apos;ll see the meeting right away.</p>
+      <PeoplePicker team={team} value={ids} onChange={setIds} covered={covered} />
+      {error && <Notice tone="error">{error}</Notice>}
+      <div className={styles.formActions}>
+        <Button variant="ghost" onClick={() => { setIds(null); setError(''); }}>Cancel</Button>
+        <Button onClick={save} loading={busy}>Save</Button>
+      </div>
     </div>
   );
 }
@@ -1079,7 +1194,7 @@ interface AttData {
 }
 type SortKey = 'name' | 'rate' | 'attended' | 'streak' | 'last';
 
-function AttendancePanel({ onOpenMeeting }: { onOpenMeeting: (id: string) => void }) {
+function AttendancePanel({ onOpenMeeting, canExport }: { onOpenMeeting: (id: string) => void; canExport: boolean }) {
   const [range, setRange] = useState<(typeof RANGES)[number]['id']>('90');
   const [title, setTitle] = useState('');
   const [query, setQuery] = useState('');
@@ -1134,12 +1249,12 @@ function AttendancePanel({ onOpenMeeting }: { onOpenMeeting: (id: string) => voi
             {(data?.titles ?? (title ? [title] : [])).map((t) => <option key={t} value={t}>{t}</option>)}
           </Select>
         </Field>
-        <div className={styles.exportBtns}>
+        {canExport && <div className={styles.exportBtns}>
           <a className={styles.docBtn} href={`/api/meetings/export?type=log&${qs}`}><Download size={15} aria-hidden="true" /> Log (CSV)</a>
           <a className={styles.docBtn} href={`/api/meetings/export?type=summary&${qs}`}><Download size={15} aria-hidden="true" /> Summary (CSV)</a>
-        </div>
+        </div>}
       </div>
-      <p className={styles.faint}>The exports follow these filters. The log lists every expected person for every meeting, absences included. The summary has one row per person.</p>
+      {canExport ? <p className={styles.faint}>The exports follow these filters. The log lists every expected person for every meeting, absences included. The summary has one row per person.</p> : <p className={styles.faint}>Results for the meetings you planned.</p>}
 
       {error && <Notice tone="error">{error}</Notice>}
       {!data && !error && <LoadingSpinner size={28} label="Loading attendance…" theme="dark" />}

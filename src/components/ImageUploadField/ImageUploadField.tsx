@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { uploadImageToStorage, uploadCroppedImage, ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES } from '@/lib/imageUpload';
 import ImageCropModal from '@/components/ImageCropModal/ImageCropModal';
 import styles from './ImageUploadField.module.css';
+import IconButton from '@/components/ui/IconButton';
 
 const PREVIEW_SIZE: Record<Shape, { width: number; height: number }> = {
   circle: { width: 96, height: 96 },
@@ -111,9 +112,7 @@ export default function ImageUploadField({
               {uploading ? 'Uploading…' : 'Replace'}
             </button>
             {value && (
-              <button type="button" className={styles.removeBtn} onClick={() => onChange('')} disabled={uploading}>
-                Remove
-              </button>
+              <IconButton kind="remove" label="Remove image" onClick={() => onChange('')} disabled={uploading} />
             )}
           </div>
         </div>
