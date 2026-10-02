@@ -7,8 +7,9 @@ import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { usePortalParams } from '@/lib/usePortalParams';
 import { motion, AnimatePresence } from 'motion/react';
-import { Home, MoreHorizontal, ChevronRight, ChevronLeft, X } from 'lucide-react';
+import { Home, MoreHorizontal, ChevronRight, ChevronLeft, X, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import PortalSearch from './PortalSearch';
+import NotificationBell from './NotificationBell';
 import { pickDock, readUsage, recordUse } from './dockPicker';
 import styles from './PortalHub.module.css';
 
@@ -118,7 +119,9 @@ interface GroupedSection {
 // onOpenChange reports whether a panel is open so a sibling (the portal's
 // "next ticket" banner) can react to that directly — e.g. hide itself while
 // a section takes over the screen on mobile.
-export default function PortalHub({ sections: sectionsProp, identity, railFooter, homeExtras, onOpenChange }: { sections: HubSection[]; identity?: HubIdentity; railFooter?: ReactNode; homeExtras?: ReactNode; onOpenChange?: (open: boolean) => void }) {
+export interface HubFrame { greeting: string; tiles: ReactNode; viewAs: ReactNode }
+
+export default function PortalHub({ sections: sectionsProp, identity, railFooter, homeExtras, onOpenChange, frame }: { sections: HubSection[]; identity?: HubIdentity; railFooter?: ReactNode; homeExtras?: ReactNode; onOpenChange?: (open: boolean) => void; frame?: HubFrame }) {
   const sections = useMemo(() => {
     const rank = (id: string) => { const i = SECTION_ORDER.indexOf(id); return i === -1 ? SECTION_ORDER.length : i; };
     return [...sectionsProp].sort((a, b) => rank(a.id) - rank(b.id));
@@ -242,6 +245,7 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
         openId={openId}
         open={open}
         close={close}
+        frame={frame}
       />
     );
   }
@@ -443,7 +447,9 @@ function DesktopShell({
   openId,
   open,
   close,
+  frame,
 }: {
+  frame?: HubFrame;
   identity?: HubIdentity;
   railFooter?: ReactNode;
   homeExtras?: ReactNode;
@@ -453,9 +459,31 @@ function DesktopShell({
   open: (id: string) => void;
   close: () => void;
 }) {
+  // Icon-only sidebar: remembered per browser. Read after mount so server and first client render match.
+  const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => { try { setCollapsed(localStorage.getItem('tg_rail_collapsed') === '1'); } catch { /* ignore */ } }, []);
+  const toggleCollapsed = () => setCollapsed((c) => { const n = !c; try { localStorage.setItem('tg_rail_collapsed', n ? '1' : '0'); } catch { /* ignore */ } return n; });
+  const accent = openSection ? GROUP_ACCENT[openSection.group] : '#ffc72c';
+  // The frame fills exactly what's left of the window below whatever banners sit above it (profile reminder, "View as"), so
+  // the whole frame is on screen without scrolling the page. Re-measured when the window or the page above changes.
+  const frameRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = frameRef.current;
+    if (!el) return;
+    const fit = () => {
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      el.style.height = `${Math.max(520, window.innerHeight - top - 12)}px`;
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(document.documentElement);
+    if (el.parentElement) ro.observe(el.parentElement);
+    window.addEventListener('resize', fit);
+    return () => { ro.disconnect(); window.removeEventListener('resize', fit); };
+  }, []);
   return (
-    <div className={styles.desktopShell}>
-      <aside className={styles.rail}>
+    <div ref={frameRef} className={`${styles.desktopShell} ${styles.appFrame}`} data-app-frame style={{ ['--frame-accent' as string]: accent }}>
+      <aside className={`${styles.rail} ${collapsed ? styles.railCollapsed : ''}`}>
         {identity && (
           <button type="button" className={styles.railIdentity} onClick={() => open('profile')} aria-label="Open your profile" title="Your profile">
             {identity.avatarUrl ? (
@@ -483,6 +511,7 @@ function DesktopShell({
             style={{ ['--accent' as string]: '#ffc72c' }}
             onClick={close}
             aria-current={!openSection ? 'page' : undefined}
+            title="Dashboard"
           >
             <span className={styles.railIcon} aria-hidden="true"><Home /></span>
             <span className={styles.railLabel}>Dashboard</span>
@@ -498,6 +527,8 @@ function DesktopShell({
                   className={`${styles.railItem} ${s.id === openId ? styles.railItemActive : ''}`}
                   onClick={() => open(s.id)}
                   aria-current={s.id === openId ? 'page' : undefined}
+                  title={s.label}
+                  aria-label={collapsed ? s.label : undefined}
                 >
                   <span className={styles.railIcon} aria-hidden="true">{s.icon}</span>
                   <span className={styles.railLabel}>{s.label}</span>
@@ -512,35 +543,54 @@ function DesktopShell({
         {railFooter && <div className={styles.railFooter}>{railFooter}</div>}
       </aside>
 
-      <div className={styles.desktopContent}>
-        <AnimatePresence mode="wait" initial={false}>
+      <div className={styles.frameMain}>
+        <header className={styles.topBar}>
+          <button type="button" className={styles.topToggle} onClick={toggleCollapsed} aria-pressed={collapsed} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar to icons'} title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
+            {collapsed ? <PanelLeftOpen size={18} strokeWidth={1.75} aria-hidden="true" /> : <PanelLeftClose size={18} strokeWidth={1.75} aria-hidden="true" />}
+          </button>
           {openSection ? (
-            <motion.div
-              key={openSection.id}
-              className={styles.desktopPanel}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1, transition: { duration: 0.15 } }}
-              exit={{ opacity: 0, transition: { duration: 0.08 } }}
-            >
-              <div className={styles.desktopPanelHeader}>
-                <span className={styles.panelIcon} aria-hidden="true">{openSection.icon}</span>
-                <span className={styles.panelTitle}>{openSection.label}</span>
-              </div>
-              <div className={styles.panelBody}>{openSection.content}</div>
-            </motion.div>
+            <div className={styles.topTitle}>
+              <span className={styles.topIcon} aria-hidden="true">{smallIcon(openSection.icon, 18)}</span>
+              <span className={styles.topName}>{openSection.label}</span>
+            </div>
           ) : (
-            <motion.div
-              key="home"
-              className={styles.gridWrap}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1, transition: { duration: 0.15 } }}
-              exit={{ opacity: 0, transition: { duration: 0.08 } }}
-            >
-              {homeExtras && <div className={styles.homeExtras}>{homeExtras}</div>}
-              <HomeGroups groupedSections={groupedSections} open={open} />
-            </motion.div>
+            <div className={styles.topTitle}><span className={styles.topName}>{frame?.greeting ?? 'Dashboard'}</span></div>
           )}
-        </AnimatePresence>
+          <div className={styles.topRight}>
+            {frame?.viewAs}
+            <div className={styles.topSearch}><PortalSearch compact /></div>
+            <NotificationBell inline />
+          </div>
+        </header>
+        <div className={styles.frameBody}>
+          <div className={styles.desktopContent}>
+            <AnimatePresence mode="wait" initial={false}>
+              {openSection ? (
+                <motion.div
+                  key={openSection.id}
+                  className={styles.desktopPanel}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1, transition: { duration: 0.15 } }}
+                  exit={{ opacity: 0, transition: { duration: 0.08 } }}
+                >
+                  <div className={styles.panelBody}>{openSection.content}</div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="home"
+                  className={styles.gridWrap}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1, transition: { duration: 0.15 } }}
+                  exit={{ opacity: 0, transition: { duration: 0.08 } }}
+                >
+                  {frame?.tiles && <div className={styles.homeTiles}>{frame.tiles}</div>}
+                  {homeExtras && <div className={styles.homeExtras}>{homeExtras}</div>}
+                  <HomeGroups groupedSections={groupedSections} open={open} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
       </div>
     </div>
   );

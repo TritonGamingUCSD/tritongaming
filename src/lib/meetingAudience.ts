@@ -24,11 +24,12 @@ export interface MeetingAudience {
 }
 
 const same = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x));
-export const hasExtras = (m: MeetingAudience) => !!(m.invitees?.length || m.group_ids?.length);
+// Someone chose people or groups (the resolved extra_ids count too, so callers that only pass those still get it right).
+export const hasExtras = (m: MeetingAudience) => !!(m.invitees?.length || m.group_ids?.length || m.extra_ids?.length);
 
 // The roles that count, live. With no explicit roles: everyone-on-the-team, unless people/groups were
 // chosen instead (then no roles).
-export function audienceRoles(m: Pick<MeetingAudience, 'audience' | 'invitees' | 'group_ids'>): string[] {
+export function audienceRoles(m: Pick<MeetingAudience, 'audience' | 'invitees' | 'group_ids' | 'extra_ids'>): string[] {
   if (m.audience && m.audience.length) return m.audience;
   return hasExtras(m) ? [] : DEFAULT_AUDIENCE;
 }

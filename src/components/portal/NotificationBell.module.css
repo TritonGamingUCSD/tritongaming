@@ -154,3 +154,6 @@
   font-size: var(--fs-meta);
   color: rgba(242, 241, 240, 0.3);
 }
+
+/* Sitting inside the desktop app frame's top bar instead of floating over the page. */
+.wrapInline { position: relative; top: auto; right: auto; z-index: 7; }

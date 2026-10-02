@@ -47,7 +47,7 @@ export async function listInternalEvents(svc: SupabaseClient, user: { id: string
   const rows = ((data ?? []) as InternalEventRow[]).filter((r) => {
     if (mode === 'manage') return manageAll || r.created_by === user.id;
     const [x] = withExtras([{ invitees: r.invitees, group_ids: r.group_ids }], groups);
-    return r.created_by === user.id || isExpected({ audience: r.audience, extra_ids: x.extra_ids }, user.id, user.roles);
+    return r.created_by === user.id || isExpected({ audience: r.audience, invitees: r.invitees, group_ids: r.group_ids, extra_ids: x.extra_ids }, user.id, user.roles);
   });
   if (rows.length === 0) return [];
   const ids = rows.map((r) => r.id);

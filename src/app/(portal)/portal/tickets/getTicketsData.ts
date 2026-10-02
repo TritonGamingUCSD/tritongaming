@@ -16,7 +16,7 @@ export async function getTicketsData(profileId: string, roles: RoleGrant[]) {
       .from('tickets')
       .select(`
         id, status, checked_in_at, created_at, checkin_form_completed_at,
-        event:events(id, title, start_date, end_date, location, flyer_url, points_value, is_online, requires_checkin_form, checkin_food_item, checkin_form_event_name, checkin_form_override)
+        event:events(id, title, start_date, end_date, location, flyer_url, points_value, is_online, checkin_windows, requires_checkin_form, checkin_food_item, checkin_form_event_name, checkin_form_override)
       `)
       .eq('user_id', profileId)
       .order('created_at', { ascending: false }),

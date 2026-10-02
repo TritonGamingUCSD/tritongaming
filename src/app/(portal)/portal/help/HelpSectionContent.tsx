@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { LifeBuoy, Inbox, MessageSquarePlus, ListChecks, ImagePlus, X, Send, ArrowLeft, UserCheck, CheckCircle2, RotateCcw } from 'lucide-react';
+import { CircleHelp, MessageSquareText, Inbox, MessageSquarePlus, ListChecks, ImagePlus, X, Send, ArrowLeft, UserCheck, CheckCircle2, RotateCcw } from 'lucide-react';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Notice from '@/components/ui/Notice';
 import Button from '@/components/ui/Button';
@@ -11,10 +11,10 @@ import { useLiveParams, usePortalParams } from '@/lib/usePortalParams';
 import { uploadImageToStorage, parseStorageUrl, ALLOWED_IMAGE_TYPES } from '@/lib/imageUpload';
 import { formatPacificDateTime } from '@/lib/timezone';
 import { showToast } from '@/lib/toast';
-import { HELP_CATEGORIES, HELP_STATUSES, MAX_ATTACHMENTS, MAX_BODY, MAX_SUBJECT, type HelpCategory, type HelpStatus } from '@/lib/helpConstants';
+import { HELP_CATEGORIES, HELP_STATUSES, HELP_TEMPLATES, MAX_ATTACHMENTS, MAX_BODY, MAX_SUBJECT, type HelpCategory, type HelpStatus } from '@/lib/helpConstants';
 import styles from './help.module.css';
 
-type Tab = 'new' | 'mine' | 'inbox';
+type Tab = 'new' | 'mine' | 'inbox' | 'replies';
 interface TicketItem {
   id: string; user_id: string; user_name: string; category: HelpCategory; subject: string; status: HelpStatus;
   assigned_to: string | null; assignee_name: string | null; created_at: string; updated_at: string; last_from_user: boolean;
@@ -43,7 +43,7 @@ export default function HelpSectionContent({ isStaff, userId }: { isStaff: boole
   const nav = useUrlNav();
   const params = useLiveParams();
   const sync = usePortalTabSync('help');
-  const valid: Tab[] = isStaff ? ['inbox', 'mine', 'new'] : ['new', 'mine'];
+  const valid: Tab[] = isStaff ? ['inbox', 'mine', 'new', 'replies'] : ['new', 'mine'];
   const [tab, setTab] = useState<Tab>(valid.includes(nav.tab as Tab) ? (nav.tab as Tab) : valid[0]);
   const setParams = usePortalParams();
   const [openId, setOpenId] = useState<string | null>(params.get('ticket'));
@@ -66,9 +66,11 @@ export default function HelpSectionContent({ isStaff, userId }: { isStaff: boole
         tabs={valid.map((id): { id: Tab; label: string; icon: React.ReactNode } => id === 'inbox'
           ? { id, label: 'Inbox', icon: <Inbox size={15} /> }
           : id === 'new' ? { id, label: 'Ask for help', icon: <MessageSquarePlus size={15} /> }
+          : id === 'replies' ? { id, label: 'Saved replies', icon: <MessageSquareText size={15} /> }
           : { id, label: 'My tickets', icon: <ListChecks size={15} /> })}
       />
       {tab === 'new' && <NewTicket userId={userId} onCreated={created} />}
+      {tab === 'replies' && isStaff && <CannedReplies />}
       {(tab === 'mine' || tab === 'inbox') && (openId
         ? <Thread id={openId} userId={userId} onBack={() => setOpenId(null)} />
         : <TicketList scope={tab === 'inbox' ? 'all' : 'mine'} onOpen={setOpenId} />)}
@@ -104,7 +106,7 @@ function TicketList({ scope, onOpen }: { scope: 'mine' | 'all'; onOpen: (id: str
       </div>
       {shown.length === 0 ? (
         <div className={styles.empty}>
-          <LifeBuoy size={28} strokeWidth={1.5} aria-hidden="true" />
+          <CircleHelp size={28} strokeWidth={1.5} aria-hidden="true" />
           <p>{scope === 'all' ? (filter === 'active' ? 'Nothing waiting. Inbox zero.' : 'No tickets here.') : 'You haven’t asked for help yet.'}</p>
         </div>
       ) : (
@@ -186,7 +188,7 @@ function AttachmentPicker({ att }: { att: ReturnType<typeof useAttachments> }) {
 function NewTicket({ userId, onCreated }: { userId: string; onCreated: (id: string) => void }) {
   const [category, setCategory] = useState<HelpCategory>('question');
   const [subject, setSubject] = useState('');
-  const [body, setBody] = useState('');
+  const [body, setBody] = useState(HELP_TEMPLATES.question);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const att = useAttachments(userId);
@@ -213,7 +215,12 @@ function NewTicket({ userId, onCreated }: { userId: string; onCreated: (id: stri
     <form className={styles.card} onSubmit={submit}>
       <label className={styles.field}>
         <span className={styles.label}>What’s this about?</span>
-        <Select value={category} onChange={(e) => setCategory(e.target.value as HelpCategory)}>
+        <Select value={category} onChange={(e) => {
+          const next = e.target.value as HelpCategory;
+          // Swap the starter text for the new category, but never throw away what the person has already typed.
+          if (!body.trim() || body === HELP_TEMPLATES[category]) setBody(HELP_TEMPLATES[next]);
+          setCategory(next);
+        }}>
           {HELP_CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
         </Select>
       </label>
@@ -223,7 +230,7 @@ function NewTicket({ userId, onCreated }: { userId: string; onCreated: (id: stri
       </label>
       <label className={styles.field}>
         <span className={styles.label}>Details</span>
-        <Textarea value={body} maxLength={MAX_BODY} rows={6} onChange={(e) => setBody(e.target.value)} placeholder="What were you trying to do, and what happened instead?" required />
+        <Textarea value={body} maxLength={MAX_BODY} rows={6} onChange={(e) => setBody(e.target.value)} placeholder="Tell us what you were trying to do and what happened." required />
         <span className={styles.count}>{body.length}/{MAX_BODY}</span>
       </label>
       <div className={styles.field}>
@@ -244,12 +251,17 @@ function Thread({ id, userId, onBack }: { id: string; userId: string; onBack: ()
   const [busy, setBusy] = useState(false);
   const att = useAttachments(userId);
   const endRef = useRef<HTMLDivElement>(null);
+  const [canned, setCanned] = useState<{ id: string; title: string; body: string }[]>([]);
 
   const load = useCallback(async () => {
     const { ok, data } = await api<Detail>(`/api/help/${id}`);
     if (ok) setD(data); else setErr(data.error ?? 'Failed to load.');
   }, [id]);
   useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    if (!d?.isStaff) return;
+    api<{ replies: { id: string; title: string; body: string }[] }>('/api/help/canned').then(({ ok, data }) => { if (ok) setCanned(data.replies); });
+  }, [d?.isStaff]);
   useEffect(() => { endRef.current?.scrollIntoView({ block: 'nearest' }); }, [d?.messages.length]);
 
   async function send(e: React.FormEvent) {
@@ -318,11 +330,69 @@ function Thread({ id, userId, onBack }: { id: string; userId: string; onBack: ()
 
       {t.status === 'resolved' && <p className={styles.muted}>This ticket is resolved. Replying will reopen it.</p>}
       <form className={styles.replyForm} onSubmit={send}>
+        {d.isStaff && !mine && canned.length > 0 && (
+          <Select value="" onChange={(e) => {
+            const r = canned.find((c) => c.id === e.target.value);
+            if (!r) return;
+            const text = r.body.replace(/\{name\}/g, (t.user_name || 'there').split(/\s+/)[0]);
+            setReply((cur) => (cur.trim() ? `${cur.trimEnd()}\n\n${text}` : text));
+          }} aria-label="Insert a saved reply">
+            <option value="">Insert a saved reply…</option>
+            {canned.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
+          </Select>
+        )}
         <Textarea value={reply} maxLength={MAX_BODY} rows={3} onChange={(e) => setReply(e.target.value)} placeholder={d.isStaff && !mine ? 'Write a reply…' : 'Add more details or reply…'} aria-label="Reply" />
         <AttachmentPicker att={att} />
         {err && <Notice tone="error">{err}</Notice>}
         <div><Button type="submit" loading={busy} disabled={att.uploading || (!reply.trim() && att.paths.length === 0)}><Send size={15} strokeWidth={1.75} aria-hidden="true" /> Send reply</Button></div>
       </form>
+    </div>
+  );
+}
+
+// Saved replies for handling tickets: add, edit and delete. {name} becomes the asker's first name when inserted.
+function CannedReplies() {
+  const [items, setItems] = useState<{ id: string; title: string; body: string }[] | null>(null);
+  const [editing, setEditing] = useState<{ id?: string; title: string; body: string } | null>(null);
+  const [error, setError] = useState('');
+  const load = useCallback(async () => {
+    const { ok, data } = await api<{ replies: { id: string; title: string; body: string }[] }>('/api/help/canned');
+    if (ok) setItems(data.replies); else setError(data.error ?? 'Failed to load.');
+  }, []);
+  useEffect(() => { void load(); }, [load]);
+  async function save() {
+    if (!editing) return;
+    setError('');
+    const { ok, data } = await api('/api/help/canned', { method: 'POST', body: JSON.stringify(editing) });
+    if (!ok) { setError(data.error ?? 'Failed to save.'); return; }
+    setEditing(null);
+    await load();
+  }
+  async function remove(id: string) {
+    await api(`/api/help/canned?id=${id}`, { method: 'DELETE' });
+    await load();
+  }
+  if (!items) return error ? <Notice tone="error">{error}</Notice> : <p className={styles.muted}>Loading…</p>;
+  return (
+    <div className={styles.listWrap}>
+      <p className={styles.muted}>Replies you can drop into a ticket from the reply box. Use {'{name}'} and it becomes the person’s first name.</p>
+      {error && <Notice tone="error">{error}</Notice>}
+      <ul className={styles.list}>
+        {items.map((r) => (
+          <li key={r.id} className={styles.cannedRow}>
+            <span className={styles.rowMain}><span className={styles.rowSubject}>{r.title}</span><span className={styles.rowMeta}>{r.body}</span></span>
+            <Button size="sm" variant="secondary" onClick={() => setEditing(r)}>Edit</Button>
+            <Button size="sm" variant="ghost" onClick={() => remove(r.id)}>Delete</Button>
+          </li>
+        ))}
+      </ul>
+      {editing ? (
+        <div className={styles.card}>
+          <label className={styles.field}><span className={styles.label}>Title</span><Input value={editing.title} maxLength={60} onChange={(e) => setEditing({ ...editing, title: e.target.value })} /></label>
+          <label className={styles.field}><span className={styles.label}>Reply</span><Textarea value={editing.body} maxLength={MAX_BODY} rows={5} onChange={(e) => setEditing({ ...editing, body: e.target.value })} /></label>
+          <div className={styles.staffBar}><Button onClick={save} disabled={!editing.title.trim() || !editing.body.trim()}>Save reply</Button><Button variant="ghost" onClick={() => setEditing(null)}>Cancel</Button></div>
+        </div>
+      ) : <div><Button variant="secondary" onClick={() => setEditing({ title: '', body: '' })}>+ New saved reply</Button></div>}
     </div>
   );
 }

@@ -30,7 +30,7 @@ Home, Our Story, Team, Events, Divisions (with per-division pages), Sponsors, Ge
 
 ### Member portal (`/portal`)
 
-Gated by Google sign-in and a role/capability system (`src/lib/capabilities.ts`). On desktop a fixed sidebar lists Dashboard and Calendar at the top, then groups sections by color: **Yours** (gold), **Events** (blue), **TG** (purple), **Divisions** (orange), **Resources** (green), **Admin** (pink). Admins also get a "View as" menu to preview the portal as another role. The sidebar shows your name and all of your roles, and clicking it opens your profile. On phones there is a floating bottom dock plus a grouped "More" sheet. Every section, tab and subtab is linkable through URL parameters (`?section=…&tab=…&subtab=…`).
+Gated by Google sign-in and a role/capability system (`src/lib/capabilities.ts`). On desktop the portal is one app frame: a sidebar (collapsible to icons) on the left, a slim top bar (section title, search, notifications, View as) and the page body, with the top bar tinted by the section's group color. The sidebar lists Dashboard and Calendar at the top, then groups sections by color: **Yours** (gold), **Events** (blue), **TG** (purple), **Divisions** (orange), **Resources** (green), **Admin** (pink). Admins also get a "View as" menu to preview the portal as another role. The sidebar shows your name and all of your roles, and clicking it opens your profile. On phones there is a floating bottom dock plus a grouped "More" sheet. Every section, tab and subtab is linkable through URL parameters (`?section=…&tab=…&subtab=…`).
 
 | Group | Section | What it does |
 | --- | --- | --- |
@@ -53,7 +53,7 @@ Gated by Google sign-in and a role/capability system (`src/lib/capabilities.ts`)
 | Admin | Admin | Platform stats, role manager, divisions, board order, audit log, role history, storage cleanup, **Short Links**, and **Access**: give one extra permission (for now, view-only meeting attendance reports and the HR export) to a person or a saved group such as an HR team, without changing their role |
 | Admin | Site Content | Edit public site copy and images, organized in tabs and subtabs |
 
-There is also global search (⌘K or `/`) across members, events and docs. Results open inside the portal.
+The search bar (⌘K or `/`) finds members, events and docs, and also **jumps to sections and actions** the person can actually use ("plan a meeting", "ask for help", "give someone access"…), based on their permissions.
 
 ### Post-event summary
 
@@ -63,7 +63,12 @@ Ticket sources are recorded from the visitor's first tagged link, referrer or sh
 
 ### Other building blocks
 
-- **Notifications:** an in-app bell. Notifications link to the section they are about (tickets, meeting invites, help replies, audit alerts). Email is not wired up.
+- **Notifications:** an in-app bell; each one links to what it is about. Email and web push are not built.
+- **Reminders:** a daily cron (`/api/cron/meeting-reminders`) sends "today at 5:00 PM" reminders for the meetings and internal events happening that day, to the people they are for (not people who said they can't go or are excused). Run it every 15 minutes with `?within=90` on a plan that allows it for "starting soon" reminders.
+- **Calendar subscription:** Calendar → "Add to my calendar" gives a private link (Google Calendar, Apple/Outlook) showing events, your meetings and your internal events; "New link" kills the old one. Meetings and internal events also have a one-click Google Calendar button.
+- **Help tickets:** category starter text for new tickets, and exec/admin saved replies (`{name}` becomes the person's first name).
+- **Profile nudge:** a dismissible Dashboard card showing how much of the optional profile is filled in.
+- **Tests:** `npm test` runs the unit tests (permission rules, audience rules, check-in hours, search targets, calendar files). `npm run test:permissions` drives the real API routes as temporary accounts of every role against a running dev server and cleans up after itself; it only addresses the temporary accounts, so nobody real is notified.
 - **Custom form controls:** dropdowns, date/time pickers, number steppers, color pickers and checkboxes are our own components in `src/components/ui`, so they look the same on every browser and OS.
 - **Audit log:** database triggers plus explicit `logAudit` calls, with an admin viewer, export and alerts.
 - **Reminders:** a daily Vercel cron (`/api/cron/event-reminders`, `vercel.json`) creates in-app bell notifications about 24 hours and 1 hour before an event. **Email is not wired up**; all mail-related code has been removed.
@@ -121,6 +126,7 @@ VERCEL_PROJECT_ID=
 
 # Event reminders cron (Vercel sends this as a Bearer token).
 CRON_SECRET=
+
 ```
 
 ### 3. Set up the database

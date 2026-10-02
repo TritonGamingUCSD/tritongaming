@@ -9,6 +9,7 @@ import { staffName } from '@/lib/names';
 import { pacificDatetimeLocalToUTC } from '@/lib/timezone';
 import type { Capability } from '@/types/database';
 import { withGrantedCapabilities } from '@/lib/capabilities';
+import { createNotifications } from '@/lib/notify';
 import { loadGrantedCapabilities } from '@/lib/grantedCapabilities';
 import { audienceRoles, canAttendMeeting, isExpected, type MeetingAudience } from '@/lib/meetingAudience';
 
@@ -266,14 +267,12 @@ export async function notifyMeetingInvites(
   const skip = new Set([...prev.map((p) => p.id), ...(opts.hostId ? [opts.hostId] : [])]);
   const rows = now.filter((p) => !skip.has(p.id)).map((p) => ({
     user_id: p.id,
-    type: 'meeting_invite',
+    type: meeting.href?.includes('internal-events') ? 'internal_event_invite' : 'meeting_invite',
     title: `You’re invited to ${meeting.title}`,
     body: meeting.when,
     href: meeting.href ?? '/portal?section=meetings&tab=mine',
   }));
-  if (rows.length === 0) return 0;
-  const { error } = await svc.from('notifications').insert(rows);
-  return error ? 0 : rows.length;
+  return createNotifications(svc, rows);
 }
 
 // Meeting results: hosts (their own meetings) and anyone with the attendance-reports permission (every meeting,

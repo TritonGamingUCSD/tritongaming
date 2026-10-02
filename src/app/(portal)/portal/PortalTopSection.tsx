@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useState } from 'react';
 import type { ReactNode } from 'react';
 import DashboardClient from './DashboardClient';
 import UpcomingEventsPreview from './UpcomingEventsPreview';
@@ -23,9 +23,11 @@ type UpcomingEvent = Parameters<typeof UpcomingEventsPreview>[0]['events'][numbe
 // banner / next-ticket / upcoming cards move into the content column (beside
 // the sidebar) on the home view only.
 export default function PortalTopSection({
-  top, banner, identity, railFooter, ticket, upcomingEvents, sections,
+  top, desktop, banner, identity, railFooter, ticket, upcomingEvents, sections,
 }: {
   top: ReactNode;
+  /** Desktop app frame: the greeting for the Dashboard's title, the points tiles, and the admin "View as" menu. */
+  desktop: { greeting: string; tiles: ReactNode; viewAs: ReactNode };
   banner: ReactNode;
   identity: HubIdentity;
   railFooter: ReactNode;
@@ -35,19 +37,6 @@ export default function PortalTopSection({
 }) {
   const [panelOpen, setPanelOpen] = useState(false);
   const isDesktop = useIsDesktop();
-  const stickyRef = useRef<HTMLDivElement>(null);
-
-  // Tell the sidebar how tall the pinned header is so it can sit right below it.
-  useEffect(() => {
-    const el = stickyRef.current;
-    const root = document.documentElement;
-    if (!isDesktop || !el) { root.style.removeProperty('--portal-header-h'); return; }
-    const set = () => root.style.setProperty('--portal-header-h', `${el.offsetHeight}px`);
-    set();
-    const ro = new ResizeObserver(set);
-    ro.observe(el);
-    return () => { ro.disconnect(); root.style.removeProperty('--portal-header-h'); };
-  }, [isDesktop]);
 
   const hasRewards = sections.some((x) => x.id === 'points');
   const cards = (
@@ -74,12 +63,9 @@ export default function PortalTopSection({
 
   if (isDesktop) {
     return (
-      <>
-        <div className={styles.stickyTop} ref={stickyRef}>{top}</div>
-        <Suspense>
-          <PortalHub sections={sections} identity={identity} railFooter={railFooter} homeExtras={cards} onOpenChange={setPanelOpen} />
-        </Suspense>
-      </>
+      <Suspense>
+        <PortalHub sections={sections} identity={identity} railFooter={railFooter} homeExtras={cards} onOpenChange={setPanelOpen} frame={desktop} />
+      </Suspense>
     );
   }
 

@@ -695,3 +695,59 @@
   .rail .railNav::-webkit-scrollbar-track { background: transparent; }
   .rail .railNav > * { flex-shrink: 0; }
 }
+
+/* ── Collapse toggle + icon-only sidebar ── */
+.railToggle { display: flex; align-items: center; justify-content: center; gap: 0.4rem; flex: none; width: 100%; padding: 0.35rem 0.5rem; border: 0; border-radius: 0.6rem; background: transparent; color: rgba(242, 241, 240, 0.45); font: inherit; font-size: 0.72rem; letter-spacing: 0.04em; cursor: pointer; transition: background 0.15s, color 0.15s; }
+.railToggle:hover { background: rgba(255, 255, 255, 0.06); color: var(--white); }
+@media (min-width: 900px) {
+  .rail { transition: width 0.18s ease; }
+  .rail.railCollapsed { width: 68px; margin-right: 1rem; padding-left: 0.4rem; padding-right: 0.4rem; }
+  .rail.railCollapsed .railLabel,
+  .rail.railCollapsed .railGroupLabel,
+  .rail.railCollapsed .railIdentityText,
+  .rail.railCollapsed .railToggle span { display: none; }
+  .rail.railCollapsed .railIdentity { justify-content: center; padding: 0.2rem 0; }
+  .rail.railCollapsed .railItem { justify-content: center; gap: 0; padding-left: 0; padding-right: 0; position: relative; }
+  .rail.railCollapsed .railGroup { padding-top: 0.2rem; }
+  .rail.railCollapsed .railBadge { position: absolute; top: 2px; right: 6px; min-width: 8px; height: 8px; padding: 0; font-size: 0; border-radius: 999px; }
+  .rail.railCollapsed .railFooter { grid-template-columns: 1fr; }
+  .rail.railCollapsed .railFooter a, .rail.railCollapsed .railFooter button { font-size: 0; gap: 0; padding: 0.55rem 0; justify-content: center; }
+  .rail.railCollapsed .railFooter a span, .rail.railCollapsed .railFooter button span { display: inline-flex; font-size: 0; }
+  .rail.railCollapsed .railFooter a b { display: none; }
+}
+@media (max-width: 899px) { .railToggle { display: none; } }
+
+/* ═══ Desktop app frame ═══
+   Sidebar, top bar and page body are one continuous surface: the sidebar runs the full height on the left, a slim top bar
+   (collapse button, section title, search) runs across the rest, and the page body scrolls underneath. The group's accent
+   color (--frame-accent) tints the top bar and its title icon. ═══ */
+@media (min-width: 900px) {
+  .appFrame {
+    position: sticky; top: 0.75rem; display: flex; align-items: stretch; height: calc(100vh - 1.5rem); min-height: 520px;
+    border-radius: 1.2rem; border: 1px solid rgba(255, 255, 255, 0.09); overflow: hidden;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.032), rgba(255, 255, 255, 0.012));
+  }
+  .appFrame .rail {
+    position: static; align-self: stretch; height: auto !important; max-height: none !important; margin: 0; width: 252px; flex-shrink: 0;
+    border: 0; border-right: 1px solid rgba(255, 255, 255, 0.08); border-radius: 0; background: rgba(0, 0, 0, 0.22);
+  }
+  .appFrame .rail.railCollapsed { width: 68px; margin: 0; }
+  .frameMain { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .topBar {
+    position: relative; z-index: 6; flex: none; display: flex; align-items: center; gap: 0.85rem; height: 58px; padding: 0 1rem 0 0.9rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--frame-accent) 32%, rgba(255, 255, 255, 0.06));
+    background: linear-gradient(90deg, color-mix(in srgb, var(--frame-accent) 10%, transparent), transparent 60%);
+  }
+  .topToggle { display: grid; place-items: center; width: 36px; height: 36px; flex-shrink: 0; border: 0; border-radius: 0.65rem; background: transparent; color: rgba(242, 241, 240, 0.6); cursor: pointer; transition: background 0.15s, color 0.15s; }
+  .topToggle:hover { background: rgba(255, 255, 255, 0.07); color: var(--white); }
+  .topTitle { display: flex; align-items: center; gap: 0.65rem; min-width: 0; flex: 1; }
+  .topIcon { display: grid; place-items: center; width: 30px; height: 30px; flex-shrink: 0; border-radius: 0.6rem; color: var(--frame-accent); background: color-mix(in srgb, var(--frame-accent) 16%, transparent); border: 1px solid color-mix(in srgb, var(--frame-accent) 32%, transparent); }
+  .topName { font-family: var(--font-futura-heavy); font-size: 1.08rem; letter-spacing: 0.04em; color: var(--white); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .topRight { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
+  .topSearch { width: 300px; }
+  .topSearch > * { margin: 0 !important; max-width: none !important; }
+  .frameBody { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.18) transparent; padding: 1.5rem 2rem 3rem; }
+  .appFrame .desktopContent { padding: 0; }
+  .homeTiles { margin-bottom: 1.1rem; }
+  .homeTiles > * { flex-wrap: wrap; }
+}

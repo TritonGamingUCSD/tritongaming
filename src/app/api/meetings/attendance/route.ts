@@ -56,7 +56,7 @@ export async function GET(request: Request) {
     // absence (doesn't count), g = came as a guest to a meeting not meant for them (doesn't count),
     // - = not meant for them.
     const marks = meetings.map((m) => {
-      const expectedHere = isExpected({ audience: m.audience as string[] | null, extra_ids: m.extra_ids }, p.id as string, roles);
+      const expectedHere = isExpected({ audience: m.audience as string[] | null, invitees: m.invitees, group_ids: m.group_ids, extra_ids: m.extra_ids }, p.id as string, roles);
       // Came to a meeting that wasn't meant for them (exec/admin often do): shown, but not counted.
       if (present.get(m.id as string)?.has(p.id as string)) return expectedHere ? 'p' : 'g';
       const abs = absences.get(`${m.id}|${p.id}`);

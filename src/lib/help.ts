@@ -3,6 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/capabilities';
+import { createNotifications } from '@/lib/notify';
 
 export * from '@/lib/helpConstants';
 import { MAX_ATTACHMENTS, type HelpCategory, type HelpStatus } from '@/lib/helpConstants';
@@ -40,7 +41,7 @@ export async function staffIds(svc: SupabaseClient): Promise<string[]> {
 
 export async function notify(svc: SupabaseClient, userIds: string[], n: { title: string; body: string; href: string }) {
   if (userIds.length === 0) return;
-  await svc.from('notifications').insert(userIds.map((user_id) => ({ user_id, type: 'help_ticket', title: n.title, body: n.body, href: n.href })));
+  await createNotifications(svc, userIds.map((user_id) => ({ user_id, type: 'help_ticket', title: n.title, body: n.body, href: n.href })));
 }
 
 // "Chrome on macOS" from a user-agent string — enough to reproduce a problem.

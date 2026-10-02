@@ -31,6 +31,8 @@ interface TicketData {
     flyer_url: string | null;
     points_value?: number;
     is_online: boolean;
+    // Multi-day events can set check-in hours per day (Pacific time); a day without an entry is open all day.
+    checkin_windows?: { day: string; start: string; end: string }[] | null;
   } | null;
   // Pre-built server-side (see getTicketsData) — ready to render the
   // instant this ticket flips to checked-in, no extra fetch needed then.
@@ -274,6 +276,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
                 {nextActiveTicket.event?.location && (
                   <p className={styles.heroLocation}><MapPin size={13} strokeWidth={1.5} aria-hidden="true" /> {nextActiveTicket.event.location}</p>
                 )}
+                {nextActiveTicket.event && isMultiDay(nextActiveTicket) && <CheckinHours windows={nextActiveTicket.event.checkin_windows} />}
                 {canEarnPoints && !!nextActiveTicket.event?.points_value && (
                   <span className={styles.heroPointsBadge}><Award size={12} strokeWidth={1.75} aria-hidden="true" /> +{nextActiveTicket.event.points_value} pts on check-in</span>
                 )}
@@ -413,6 +416,24 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
 }
 
 // Multi-day events let a ticket be scanned once per day, so "used" doesn't mean "done" for them.
+const hoursLabel = (hhmm: string) => { const [h, m] = hhmm.split(':').map(Number); return `${h % 12 || 12}${m ? `:${String(m).padStart(2, '0')}` : ''} ${h < 12 ? 'AM' : 'PM'}`; };
+
+// Each day's check-in hours for a multi-day event (only days the organizers set hours for); today's row is highlighted.
+function CheckinHours({ windows }: { windows?: { day: string; start: string; end: string }[] | null }) {
+  if (!windows?.length) return null;
+  const todayKey = new Intl.DateTimeFormat('en-CA', { timeZone: PACIFIC_TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+  return (
+    <ul className={styles.hoursList} aria-label="Check-in hours">
+      {windows.slice().sort((a, b) => a.day.localeCompare(b.day)).map((w) => (
+        <li key={w.day} className={w.day === todayKey ? styles.hoursToday : ''}>
+          <span>{new Date(`${w.day}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric' })}</span>
+          <span>{hoursLabel(w.start)} – {hoursLabel(w.end)}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function isMultiDay(t: { event: { start_date: string; end_date: string | null } | null }): boolean {
   return !!t.event && eventDayCount(t.event.start_date, t.event.end_date) > 1;
 }
@@ -488,6 +509,7 @@ function TicketRow({
         {dayProgress && (
           <div className={styles.dayLine}>Day {dayProgress.day} of {dayProgress.total}{ticket.checkedInToday ? ' · checked in today' : ' · scan in today'}</div>
         )}
+        {multiDay && <CheckinHours windows={ev?.checkin_windows} />}
         {ticket.checked_in_at && (
           <div className={styles.checkedInLine}>
             <Check size={13} strokeWidth={1.75} aria-hidden="true" /> Checked in {new Date(ticket.checked_in_at).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' })}

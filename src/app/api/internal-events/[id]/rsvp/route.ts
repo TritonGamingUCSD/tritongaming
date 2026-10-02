@@ -12,7 +12,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const s = data as InternalEventRow | null;
   if (!s || s.cancelled) return NextResponse.json({ error: 'Event not found.' }, { status: 404 });
   const [x] = withExtras([{ invitees: s.invitees, group_ids: s.group_ids }], await loadGroups(auth.svc));
-  if (s.created_by !== auth.user.id && !isExpected({ audience: s.audience, extra_ids: x.extra_ids }, auth.user.id, auth.roles)) {
+  if (s.created_by !== auth.user.id && !isExpected({ audience: s.audience, invitees: s.invitees, group_ids: s.group_ids, extra_ids: x.extra_ids }, auth.user.id, auth.roles)) {
     return NextResponse.json({ error: 'That event isn’t for you.' }, { status: 403 });
   }
   const b = await request.json().catch(() => ({}));

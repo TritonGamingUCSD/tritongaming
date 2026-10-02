@@ -13,6 +13,7 @@ import { confirmHold } from '@/lib/confirmHold';
 import { resolveAvatarUrl } from '@/lib/profile';
 import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
 import { AUDIENCE_LABELS, AUDIENCE_ROLES, DEFAULT_AUDIENCE, audienceLabel, audienceRoles, isCustomAudience } from '@/lib/meetingAudience';
+import { googleCalendarUrl } from '@/lib/ics';
 import { REACTION_EMOJIS, MAX_ANSWER_LENGTH, MAX_QUESTION_LENGTH, MAX_DESCRIPTION_LENGTH, suggestQuestion } from '@/lib/meetingFun';
 import styles from './meetings.module.css';
 
@@ -343,6 +344,7 @@ function UpcomingPanel() {
               {m.description && <span className={styles.descText} title={m.description}>{m.description}</span>}
               {m.hosting ? <span className={`${styles.metaLine} ${styles.metaSub}`}>You’re hosting</span> : m.host_name ? <span className={`${styles.metaLine} ${styles.metaSub}`}>Hosted by {m.host_name}</span> : null}
             </div>
+            <a className={styles.addCalLink} href={googleCalendarUrl({ title: m.title, start: m.starts_at, end: m.ends_at, location: m.location, details: m.description })} target="_blank" rel="noopener noreferrer" title="Add to Google Calendar">+ Calendar</a>
             {m.status === 'open' && <span className={`${styles.pill} ${styles.pillOpen}`}>Check-in open</span>}
           </div>
         </li>

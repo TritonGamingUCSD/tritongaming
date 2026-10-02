@@ -58,3 +58,14 @@
   .month { min-width: 0; font-size: 1rem; }
   .toolbar { gap: 0.5rem; }
 }
+
+.toolbarRight { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+.subscribe { display: flex; flex-direction: column; gap: 0.7rem; padding: 1rem 1.1rem; border-radius: 1rem; background: rgba(255, 199, 44, 0.05); border: 1px solid rgba(255, 199, 44, 0.25); }
+.subRow { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.subBtn { display: inline-flex; align-items: center; padding: 0.45rem 0.9rem; border-radius: 0.65rem; font-family: var(--font-futura-heavy); font-size: 0.76rem; letter-spacing: 0.05em; text-transform: uppercase; text-decoration: none; color: #ffc72c; background: rgba(255, 199, 44, 0.12); border: 1px solid rgba(255, 199, 44, 0.4); }
+.subBtn:hover { background: rgba(255, 199, 44, 0.22); }
+.subLink { width: 100%; padding: 0.55rem 0.75rem; border-radius: 0.5rem; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.12); color: rgba(242, 241, 240, 0.8); font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.74rem; }
+
+/* Line the button and the Month/List switch up: same height, centered on one line (the switch carries a bottom margin of its own). */
+.toolbarRight [role='tablist'] { margin: 0 !important; }
+.toolbarRight > button { min-height: 37px; }

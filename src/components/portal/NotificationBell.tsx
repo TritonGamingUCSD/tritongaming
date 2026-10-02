@@ -32,7 +32,7 @@ function resolveHref(n: Pick<Notification, 'href' | 'type'>): string | null {
 // PortalTopbar (the other persistent portal chrome) hides itself on
 // /portal specifically, and the bell needs to stay reachable everywhere,
 // including there.
-export default function NotificationBell() {
+export default function NotificationBell({ inline = false }: { inline?: boolean } = {}) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
@@ -87,7 +87,7 @@ export default function NotificationBell() {
   }
 
   return (
-    <div className={styles.wrap} ref={wrapRef}>
+    <div className={`${styles.wrap} ${inline ? styles.wrapInline : ''}`} ref={wrapRef}>
       <button
         type="button"
         className={styles.bellBtn}

@@ -68,3 +68,46 @@ export function buildIcsEvent(input: IcsEventInput): string {
 
   return lines.map(foldIcsLine).join('\r\n') + '\r\n';
 }
+
+// A whole calendar (many events) for a subscription feed. Same event shape as buildIcsEvent.
+export function buildIcsCalendar(events: IcsEventInput[], name: string): string {
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Triton Gaming//Portal Calendar//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    `X-WR-CALNAME:${escapeIcsText(name)}`,
+    'X-PUBLISHED-TTL:PT1H',
+    'REFRESH-INTERVAL;VALUE=DURATION:PT1H',
+  ];
+  const stamp = toIcsUtc(new Date().toISOString());
+  for (const e of events) {
+    const start = new Date(e.start);
+    const end = e.end ? new Date(e.end) : new Date(start.getTime() + 2 * 3600_000);
+    lines.push(
+      'BEGIN:VEVENT',
+      `UID:${e.uid}`,
+      `DTSTAMP:${stamp}`,
+      `DTSTART:${toIcsUtc(start.toISOString())}`,
+      `DTEND:${toIcsUtc(end.toISOString())}`,
+      `SUMMARY:${escapeIcsText(e.title)}`,
+      ...(e.location ? [`LOCATION:${escapeIcsText(e.location)}`] : []),
+      ...(e.description ? [`DESCRIPTION:${escapeIcsText(e.description)}`] : []),
+      ...(e.url ? [`URL:${escapeIcsText(e.url)}`] : []),
+      'END:VEVENT',
+    );
+  }
+  lines.push('END:VCALENDAR');
+  return lines.map(foldIcsLine).join('\r\n') + '\r\n';
+}
+
+// A one-click "add to Google Calendar" link for a single item (no server needed).
+export function googleCalendarUrl(e: { title: string; start: string; end?: string | null; location?: string | null; details?: string | null }): string {
+  const start = new Date(e.start);
+  const end = e.end ? new Date(e.end) : new Date(start.getTime() + 2 * 3600_000);
+  const params = new URLSearchParams({ action: 'TEMPLATE', text: e.title, dates: `${toIcsUtc(start.toISOString())}/${toIcsUtc(end.toISOString())}` });
+  if (e.location) params.set('location', e.location);
+  if (e.details) params.set('details', e.details);
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}

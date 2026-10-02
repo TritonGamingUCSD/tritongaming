@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search, X, Users, Calendar, BookOpen, CornerDownLeft } from 'lucide-react';
+import { Search, X, Users, Calendar, BookOpen, CornerDownLeft, ArrowRight, Zap } from 'lucide-react';
+import { matchCommands, type PortalCommand } from '@/lib/portalCommands';
 import styles from './PortalSearch.module.css';
 
 interface SearchResult {
@@ -51,6 +52,14 @@ export default function PortalSearch({ compact }: { compact?: boolean } = {}) {
   const [active, setActive] = useState(0);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const requestId = useRef(0);
+  // Sections and actions to jump to: loaded once, the first time the bar is focused.
+  const [commands, setCommands] = useState<PortalCommand[] | null>(null);
+  const loadingCommands = useRef(false);
+  function ensureCommands() {
+    if (commands || loadingCommands.current) return;
+    loadingCommands.current = true;
+    fetch('/api/portal/commands').then((r) => r.json()).then((d) => setCommands(d.commands ?? [])).catch(() => setCommands([])).finally(() => { loadingCommands.current = false; });
+  }
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -92,8 +101,14 @@ export default function PortalSearch({ compact }: { compact?: boolean } = {}) {
     return () => document.removeEventListener('keydown', onKey);
   }, []);
 
-  const flat = (Object.keys(results) as (keyof SearchResponse)[]).flatMap((k) => results[k]);
-  useEffect(() => { setActive(0); }, [results]);
+  // Jump targets: what the person typed matched against sections/actions. With nothing typed, a few suggestions.
+  const SUGGESTED = ['do-help-new', 'go-tickets', 'do-meeting-checkin', 'do-meeting-plan', 'go-calendar'];
+  const jump: SearchResult[] = (commands ?? []).length === 0 ? [] : (query.trim().length >= 1
+    ? matchCommands(commands!, query.trim())
+    : SUGGESTED.map((id) => commands!.find((c) => c.id === id)).filter((c): c is PortalCommand => !!c).slice(0, 5)
+  ).map((c) => ({ id: c.id, title: c.label, subtitle: c.hint, href: c.href, kind: c.kind } as SearchResult & { kind: string }));
+  const flat = [...jump, ...(Object.keys(results) as (keyof SearchResponse)[]).flatMap((k) => results[k])];
+  useEffect(() => { setActive(0); }, [results, query, commands]);
 
   function onKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Escape') { setQuery(''); inputRef.current?.blur(); return; }
@@ -103,12 +118,12 @@ export default function PortalSearch({ compact }: { compact?: boolean } = {}) {
     else if (e.key === 'Enter') {
       e.preventDefault();
       const r = flat[active];
-      if (r) { setQuery(''); inputRef.current?.blur(); router.push(r.href); }
+      if (r) { setQuery(''); inputRef.current?.blur(); router.push(r.href); window.dispatchEvent(new Event('tg:portal-nav')); }
     }
   }
 
   const hasResults = results.members.length > 0 || results.events.length > 0 || results.docs.length > 0;
-  const showDropdown = open && query.trim().length >= 2;
+  const showDropdown = open && (query.trim().length >= 1 ? true : jump.length > 0) && (query.trim().length >= 2 || jump.length > 0);
 
   return (
     <div className={`${styles.wrap} ${compact ? styles.compact : ''}`}>
@@ -120,9 +135,9 @@ export default function PortalSearch({ compact }: { compact?: boolean } = {}) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={onKeyDown}
-          onFocus={() => setOpen(true)}
+          onFocus={() => { setOpen(true); ensureCommands(); }}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
-          placeholder="Search members, events, docs"
+          placeholder="Search or jump to…"
           aria-label="Search the portal"
           autoComplete="off"
         />
@@ -137,11 +152,36 @@ export default function PortalSearch({ compact }: { compact?: boolean } = {}) {
 
       {showDropdown && (
         <div className={styles.dropdown}>
-          {loading ? (
+          {jump.length > 0 && (
+            <div className={styles.group} style={{ ['--accent' as string]: '#ffc72c' }}>
+              <div className={styles.groupLabel}>{query.trim() ? 'Jump to' : 'Quick actions'}</div>
+              {jump.map((r) => {
+                const isDo = (r as SearchResult & { kind?: string }).kind === 'Do';
+                return (
+                  <Link
+                    key={r.id}
+                    href={r.href}
+                    className={`${styles.result} ${flat[active]?.id === r.id ? styles.resultActive : ''}`}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => { setQuery(''); inputRef.current?.blur(); window.dispatchEvent(new Event('tg:portal-nav')); }}
+                    onMouseEnter={() => setActive(flat.findIndex((x) => x.id === r.id))}
+                  >
+                    <span className={styles.resultIcon} aria-hidden="true">{isDo ? <Zap size={15} strokeWidth={1.75} /> : <ArrowRight size={15} strokeWidth={1.75} />}</span>
+                    <span className={styles.resultText}>
+                      <span className={styles.resultTitle}><Highlight text={r.title} q={query.trim()} /></span>
+                      {r.subtitle && <span className={styles.resultSubtitle}>{r.subtitle}</span>}
+                    </span>
+                    <CornerDownLeft size={13} className={styles.resultEnter} aria-hidden="true" />
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+          {query.trim().length < 2 ? null : loading ? (
             <div className={styles.status}>Searching…</div>
-          ) : !hasResults ? (
+          ) : !hasResults && jump.length === 0 ? (
             <div className={styles.status}>No results for “{query.trim()}”</div>
-          ) : (
+          ) : !hasResults ? null : (
             <>
               {(Object.keys(results) as (keyof SearchResponse)[]).map((key) => {
                 if (results[key].length === 0) return null;

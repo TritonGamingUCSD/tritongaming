@@ -49,3 +49,13 @@
   font-family: var(--font-futura-medium);
   font-variant-numeric: tabular-nums;
 }
+
+/* The desktop app frame fills the window (small even margin all round) instead of sitting in the padded, centered column. */
+@media (min-width: 900px) {
+  .content:has([data-app-frame]) { max-width: none; padding: 0.75rem; }
+}
+
+/* On desktop the bell lives in the app frame's top bar, so the floating one is hidden. */
+@media (min-width: 900px) {
+  .layout:has([data-app-frame]) .fixedBell { display: none !important; }
+}

@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability, GRANTABLE_CAPABILITIES, CAPABILITY_ROLES } from '@/lib/capabilities';
 import { logAudit } from '@/lib/audit';
+import { createNotifications } from '@/lib/notify';
 import { ROLE_LABELS } from '@/types/database';
 
 export const dynamic = 'force-dynamic';
@@ -60,7 +61,7 @@ export async function POST(request: Request) {
   if (error) return NextResponse.json({ error: error.code === '23505' ? 'They already have that.' : 'Failed to save.' }, { status: error.code === '23505' ? 409 : 500 });
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'grant', entityType: 'access', summary: `Granted "${cap.label}" to ${b.user_id ? 'a person' : 'a group'}`, details: { capability: cap.id, ...row } });
   if (row.user_id) {
-    await auth.svc.from('notifications').insert({ user_id: row.user_id, type: 'access_granted', title: `You now have access to ${cap.label}`, body: cap.description, href: '/portal' });
+    await createNotifications(auth.svc, [{ user_id: row.user_id, type: 'access_granted', title: `You now have access to ${cap.label}`, body: cap.description, href: '/portal' }]);
   }
   return NextResponse.json({ ok: true }, { status: 201 });
 }

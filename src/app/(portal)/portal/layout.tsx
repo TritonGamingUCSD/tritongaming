@@ -48,7 +48,7 @@ export default async function PortalLayout({ children }: { children: React.React
           reachable on /portal itself, which is the one page PortalTopbar
           (the other persistent portal chrome) deliberately hides on. */}
       <div data-print-hide style={{ display: 'contents' }}>
-        <NotificationBell />
+        <div className={styles.fixedBell} style={{ display: 'contents' }}><NotificationBell /></div>
         <ConnectivityBanner />
         <AttributionCapture />
       </div>

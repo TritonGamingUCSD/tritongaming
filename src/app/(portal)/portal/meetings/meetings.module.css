@@ -313,3 +313,6 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .seriesForm { flex-basis: 100%; width: 100%; padding-top: 0.8rem; }
 .seriesForm .formActions { gap: 0.5rem; }
 .seriesRow { flex-wrap: wrap; }
+
+.addCalLink { font-size: 0.74rem; color: rgba(242, 241, 240, 0.5); text-decoration: none; white-space: nowrap; }
+.addCalLink:hover { color: var(--yellow); text-decoration: underline; }

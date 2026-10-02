@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, CalendarDays, Ticket, MapPin, Repeat } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarDays, Ticket, MapPin, Repeat, CalendarPlus, Copy, Check, RefreshCw } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Notice from '@/components/ui/Notice';
 import { formatEventTimeRange } from '@/lib/timezone';
+import { useLiveParams } from '@/lib/usePortalParams';
+import { confirmHold } from '@/lib/confirmHold';
 import styles from './calendar.module.css';
 
 interface Item {
@@ -30,6 +32,8 @@ export default function CalendarSectionContent() {
   const [selected, setSelected] = useState<string>(today);
   const [items, setItems] = useState<Item[] | null>(null);
   const [error, setError] = useState('');
+  const params = useLiveParams();
+  const [subscribeOpen, setSubscribeOpen] = useState(params.get('subscribe') === '1');
 
   // The grid always shows six full weeks, so fetch exactly that span.
   const gridStart = useMemo(() => {
@@ -78,8 +82,12 @@ export default function CalendarSectionContent() {
           <Button variant="secondary" size="sm" onClick={() => shift(1)} aria-label="Next month"><ChevronRight size={16} aria-hidden="true" /></Button>
           <Button variant="ghost" size="sm" onClick={goToday}>Today</Button>
         </div>
-        <SectionTabs<View> variant="segmented" label="View" value={view} onChange={setView} tabs={[{ id: 'month', label: 'Month' }, { id: 'agenda', label: 'List' }]} />
+        <div className={styles.toolbarRight}>
+          <Button variant="secondary" size="sm" onClick={() => setSubscribeOpen((v) => !v)} aria-expanded={subscribeOpen}><CalendarPlus size={15} strokeWidth={1.75} aria-hidden="true" /> Add to my calendar</Button>
+          <SectionTabs<View> variant="segmented" label="View" value={view} onChange={setView} tabs={[{ id: 'month', label: 'Month' }, { id: 'agenda', label: 'List' }]} />
+        </div>
       </div>
+      {subscribeOpen && <SubscribePanel />}
 
       <div className={styles.legend}>
         <span><i className={styles.dotEvent} /> Event</span>
@@ -166,5 +174,48 @@ function ItemList({ items }: { items: Item[] }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+// A private link that keeps Google / Apple / Outlook Calendar in step with this calendar (events, your meetings and
+// internal events). Calendar apps re-check it about once an hour.
+function SubscribePanel() {
+  const [links, setLinks] = useState<{ https: string; webcal: string; google: string } | null>(null);
+  const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
+  const load = useCallback(async (reset: boolean) => {
+    setError('');
+    try {
+      const r = await fetch('/api/calendar/token', { method: reset ? 'POST' : 'GET', cache: 'no-store' });
+      const j = await r.json();
+      if (r.ok) setLinks(j); else setError(j.error || 'Failed to load.');
+    } catch { setError('Couldn’t reach the server.'); }
+  }, []);
+  useEffect(() => { void load(false); }, [load]);
+  async function copy() {
+    if (!links) return;
+    try { await navigator.clipboard.writeText(links.https); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { setError('Copy didn’t work. Select the link and copy it by hand.'); }
+  }
+  async function reset() {
+    if (!(await confirmHold({ title: 'Make a new calendar link?', message: 'The old link stops working. You’ll need to add the new one to your calendar app again.', confirmLabel: 'Hold to reset' }))) return;
+    await load(true);
+  }
+  return (
+    <section className={styles.subscribe} aria-label="Add to my calendar">
+      <h3 className={styles.dayTitle}>Add to my calendar</h3>
+      <p className={styles.muted}>Subscribe once and events, your meetings and your internal events show up in your own calendar app and stay up to date. Keep this link private: anyone who has it can see your calendar.</p>
+      {error && <Notice tone="error">{error}</Notice>}
+      {!links ? <p className={styles.muted}>Loading…</p> : (
+        <>
+          <div className={styles.subRow}>
+            <a className={styles.subBtn} href={links.google} target="_blank" rel="noopener noreferrer">Google Calendar</a>
+            <a className={styles.subBtn} href={links.webcal}>Apple / Outlook</a>
+            <Button variant="secondary" size="sm" onClick={copy}>{copied ? <><Check size={14} aria-hidden="true" /> Copied</> : <><Copy size={14} aria-hidden="true" /> Copy link</>}</Button>
+            <Button variant="ghost" size="sm" onClick={reset}><RefreshCw size={14} aria-hidden="true" /> New link</Button>
+          </div>
+          <input className={styles.subLink} readOnly value={links.https} onFocus={(e) => e.currentTarget.select()} aria-label="Your private calendar link" />
+        </>
+      )}
+    </section>
   );
 }

@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:permissions": "node scripts/permissions-check.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
@@ -32,7 +35,8 @@
     "@types/react-dom": "^19.1.5",
     "eslint": "^9.27.0",
     "eslint-config-next": "^15.3.3",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^5.0.3"
   },
   "engines": {
     "node": ">=22.0.0",

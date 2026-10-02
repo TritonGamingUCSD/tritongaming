@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { CalendarHeart, CalendarPlus, Plus, MapPin, Users, Check, HelpCircle, X as XIcon } from 'lucide-react';
+import { CalendarHeart, CalendarPlus, Plus, MapPin, Users, Check, CircleDashed, X as XIcon } from 'lucide-react';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Notice from '@/components/ui/Notice';
 import Button from '@/components/ui/Button';
@@ -12,6 +12,7 @@ import { confirmHold } from '@/lib/confirmHold';
 import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
 import { audienceLabel, isCustomAudience } from '@/lib/meetingAudience';
 import { MAX_DESCRIPTION_LENGTH } from '@/lib/meetingFun';
+import { googleCalendarUrl } from '@/lib/ics';
 import { AudiencePicker, audFrom, audPayload, audienceEmpty, defaultAud, type Aud } from '../meetings/MeetingsSectionContent';
 import mstyles from '../meetings/meetings.module.css';
 import styles from './internal-events.module.css';
@@ -118,7 +119,8 @@ function UpcomingPanel() {
               </div>
             </div>
             <div className={styles.rsvp} role="group" aria-label={`Are you coming to ${s.title}?`}>
-              {([['going', 'Going', Check], ['maybe', 'Maybe', HelpCircle], ['not_going', 'Can’t go', XIcon]] as const).map(([k, label, Icon]) => (
+              <a className={styles.addCal} href={googleCalendarUrl({ title: s.title, start: s.starts_at, end: s.ends_at, location: s.location, details: s.description })} target="_blank" rel="noopener noreferrer">+ Google Calendar</a>
+              {([['going', 'Going', Check], ['maybe', 'Maybe', CircleDashed], ['not_going', 'Can’t go', XIcon]] as const).map(([k, label, Icon]) => (
                 <button key={k} type="button" disabled={busy === s.id} aria-pressed={s.mine === k} className={`${styles.rsvpBtn} ${s.mine === k ? styles[`on_${k}`] : ''}`} onClick={() => rsvp(s, k)}>
                   <Icon size={14} strokeWidth={2.25} aria-hidden="true" /> {label}
                 </button>

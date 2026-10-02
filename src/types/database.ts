@@ -92,6 +92,7 @@ export interface Database {
           show_on_board: boolean;
           social_links: Record<string, string>;
           portfolio_links: Array<{ label: string; url: string }>;
+          calendar_token: string;
           game_ids: Array<{ game: string; id: string }>;
           board_visibility: Record<string, boolean>;
           referral_code: string;

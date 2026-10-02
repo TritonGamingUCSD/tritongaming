@@ -1,11 +1,11 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, Image as ImageIcon, Award, Medal, ArrowLeft, CalendarCheck, CalendarDays, LayoutGrid, LifeBuoy, CalendarHeart } from 'lucide-react';
+import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, Image as ImageIcon, Award, Medal, ArrowLeft, CalendarCheck, CalendarDays, LayoutGrid, CircleHelp, CalendarHeart } from 'lucide-react';
 import { getProfile, getUserRoles, getMyPrivateProfile, getUser, getRealRoles, getViewAs } from '@/lib/auth';
 import { ViewAsSwitcher } from '@/components/portal/ViewAs';
 import { createClient } from '@/lib/supabase/server';
 import { hasCapability, isVerifiedMember, isRewardsEligible } from '@/lib/capabilities';
-import { resolveAvatarUrl } from '@/lib/profile';
+import { resolveAvatarUrl, hasBasicProfileInfo } from '@/lib/profile';
 import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK } from '@/types/database';
 import { CONTENT_BLOCKS } from '@/lib/content-blocks';
 import { PACIFIC_TZ, pacificDaysUntil } from '@/lib/timezone';
@@ -46,6 +46,8 @@ import MeetingsSectionContent from './meetings/MeetingsSectionContent';
 import { createServiceClient } from '@/lib/supabase/admin';
 import HelpSectionContent from './help/HelpSectionContent';
 import CalendarSectionContent from './calendar/CalendarSectionContent';
+import ProfileNudge from '@/components/portal/ProfileNudge';
+import { profileNudge } from '@/lib/profileCompleteness';
 import InternalEventsSectionContent from './internal-events/InternalEventsSectionContent';
 import { meetingHappeningNow } from '@/lib/meetings';
 import { getAdminData } from './admin/getAdminData';
@@ -227,7 +229,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       content: <ProfileClient profile={profile} privateInfo={myGender} email={authUser?.email ?? null} roles={roles} isUcsd={isVerifiedMember(roles)} divisions={divisions} initialTab={requestedTab} />,
     },
     {
-      id: 'help', icon: <LifeBuoy size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Help', railHidden: true,  // a button in the sidebar footer
+      id: 'help', icon: <CircleHelp size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Help', railHidden: true,  // a button in the sidebar footer
       description: canHandleHelp ? 'Answer questions and problems from members' : 'Ask a question or report a problem',
       badge: helpWaiting || undefined,
       group: 'Resources',
@@ -426,6 +428,47 @@ export default async function PortalDashboard({ searchParams }: Props) {
     ? ROLE_LABELS.guest
     : ROLE_LABELS[[...heldRoles].sort((a, b) => ROLE_DISPLAY_RANK[b.role] - ROLE_DISPLAY_RANK[a.role])[0].role];
 
+  // The points tiles and the "View as" menu, as pieces: the phone header shows them in the greeting card, the desktop app frame puts
+  // View as in its top bar and the tiles at the top of the Dashboard.
+  const tilesNode = (pointsData || battlepassData || activeTicketCount > 0) ? (
+                <div className={styles.tiles}>
+                  {pointsData && memberTier && (
+                    <Link href="/portal?section=points&tab=points" className={styles.tile} style={{ ['--tile-accent' as string]: memberTier.color }}>
+                      <span className={styles.tileTop}><Award size={15} strokeWidth={1.75} aria-hidden="true" /> Rewards</span>
+                      <span className={styles.tileValue}>{pointsData.balance.toLocaleString()}<span className={styles.tileUnit}> pts</span></span>
+                      <span className={styles.tileTier}>{memberTier.name}</span>
+                      {memberNext && (
+                        <span className={styles.tileProgress} title={`${memberNext.min - pointsData.lifetimeEarned} pts to ${memberNext.name}`}>
+                          <span style={{ width: `${Math.min(100, Math.max(4, ((pointsData.lifetimeEarned - memberTier.min) / Math.max(1, memberNext.min - memberTier.min)) * 100))}%` }} />
+                        </span>
+                      )}
+                    </Link>
+                  )}
+                  {battlepassData && officerTier && (
+                    <Link href="/portal?section=battlepass&tab=mine" className={styles.tile} style={{ ['--tile-accent' as string]: officerTier.color }}>
+                      <span className={styles.tileTop}><Medal size={15} strokeWidth={1.75} aria-hidden="true" /> Battlepass</span>
+                      <span className={styles.tileValue}>{battlepassData.balance.toLocaleString()}<span className={styles.tileUnit}> pts</span></span>
+                      <span className={styles.tileTier}>{officerTier.name}</span>
+                      {officerNext && (
+                        <span className={styles.tileProgress} title={`${officerNext.min - battlepassData.lifetimeEarned} pts to ${officerNext.name}`}>
+                          <span style={{ width: `${Math.min(100, Math.max(4, ((battlepassData.lifetimeEarned - officerTier.min) / Math.max(1, officerNext.min - officerTier.min)) * 100))}%` }} />
+                        </span>
+                      )}
+                    </Link>
+                  )}
+                  {activeTicketCount > 0 && (
+                    <Link href="/portal?section=tickets" className={styles.tile} style={{ ['--tile-accent' as string]: '#34d399' }}>
+                      <span className={styles.tileTop}><Ticket size={15} strokeWidth={1.75} aria-hidden="true" /> Tickets</span>
+                      <span className={styles.tileValue}>{activeTicketCount}<span className={styles.tileUnit}> active</span></span>
+                      <span className={styles.tileTier}>Ready to scan</span>
+                    </Link>
+                  )}
+                </div>
+  ) : null;
+  const nudge = profileNudge(profile, myGender, heldRoles);
+  const viewAsNode = canViewAs ? <ViewAsSwitcher active={viewAs} /> : null;
+  const greetingLine = `${greeting}, ${profile.display_name?.split(' ')[0] || 'Triton'}`;
+
   return (
     <div className={styles.page}>
       {!profile.onboarded_at && <OnboardingGuide userId={profile.id} />}
@@ -444,6 +487,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             meant they never got the reminder. PortalTopSection owns matching
             its width to the hub grid below it. */}
         <PortalTopSection
+          desktop={{ greeting: greetingLine, tiles: tilesNode, viewAs: viewAsNode }}
           top={
             <>
             <header className={styles.welcome}>
@@ -487,47 +531,13 @@ export default async function PortalDashboard({ searchParams }: Props) {
                 </div>
               </div>
 
-              {canViewAs && <div className={styles.viewAsSlot}><ViewAsSwitcher active={viewAs} /></div>}
+              {viewAsNode && <div className={styles.viewAsSlot}>{viewAsNode}</div>}
 
               {/* Mobile only: search lives inside the header card (desktop has it in the pinned header). */}
           <div className={styles.welcomeSearch}><PortalSearch compact /></div>
 
           {/* At-a-glance stats — each tile deep-links to that section's own tab. */}
-              {(pointsData || battlepassData || activeTicketCount > 0) && (
-                <div className={styles.tiles}>
-                  {pointsData && memberTier && (
-                    <Link href="/portal?section=points&tab=points" className={styles.tile} style={{ ['--tile-accent' as string]: memberTier.color }}>
-                      <span className={styles.tileTop}><Award size={15} strokeWidth={1.75} aria-hidden="true" /> Rewards</span>
-                      <span className={styles.tileValue}>{pointsData.balance.toLocaleString()}<span className={styles.tileUnit}> pts</span></span>
-                      <span className={styles.tileTier}>{memberTier.name}</span>
-                      {memberNext && (
-                        <span className={styles.tileProgress} title={`${memberNext.min - pointsData.lifetimeEarned} pts to ${memberNext.name}`}>
-                          <span style={{ width: `${Math.min(100, Math.max(4, ((pointsData.lifetimeEarned - memberTier.min) / Math.max(1, memberNext.min - memberTier.min)) * 100))}%` }} />
-                        </span>
-                      )}
-                    </Link>
-                  )}
-                  {battlepassData && officerTier && (
-                    <Link href="/portal?section=battlepass&tab=mine" className={styles.tile} style={{ ['--tile-accent' as string]: officerTier.color }}>
-                      <span className={styles.tileTop}><Medal size={15} strokeWidth={1.75} aria-hidden="true" /> Battlepass</span>
-                      <span className={styles.tileValue}>{battlepassData.balance.toLocaleString()}<span className={styles.tileUnit}> pts</span></span>
-                      <span className={styles.tileTier}>{officerTier.name}</span>
-                      {officerNext && (
-                        <span className={styles.tileProgress} title={`${officerNext.min - battlepassData.lifetimeEarned} pts to ${officerNext.name}`}>
-                          <span style={{ width: `${Math.min(100, Math.max(4, ((battlepassData.lifetimeEarned - officerTier.min) / Math.max(1, officerNext.min - officerTier.min)) * 100))}%` }} />
-                        </span>
-                      )}
-                    </Link>
-                  )}
-                  {activeTicketCount > 0 && (
-                    <Link href="/portal?section=tickets" className={styles.tile} style={{ ['--tile-accent' as string]: '#34d399' }}>
-                      <span className={styles.tileTop}><Ticket size={15} strokeWidth={1.75} aria-hidden="true" /> Tickets</span>
-                      <span className={styles.tileValue}>{activeTicketCount}<span className={styles.tileUnit}> active</span></span>
-                      <span className={styles.tileTier}>Ready to scan</span>
-                    </Link>
-                  )}
-                </div>
-              )}
+              {tilesNode}
             </header>
 
             {/* Mobile-only (desktop already has its own persistent search in
@@ -549,9 +559,10 @@ export default async function PortalDashboard({ searchParams }: Props) {
                   <div className={styles.checkinBannerTitle}>{helpWaiting} help {helpWaiting === 1 ? 'ticket needs' : 'tickets need'} a reply</div>
                   <div className={styles.checkinBannerSub}>Tap to open the inbox</div>
                 </div>
-                <span className={styles.helpBannerIcon}><LifeBuoy size={24} strokeWidth={1.5} aria-hidden="true" /></span>
+                <span className={styles.helpBannerIcon}><CircleHelp size={24} strokeWidth={1.5} aria-hidden="true" /></span>
               </Link>
             )}
+            {nudge.missing.length > 0 && hasBasicProfileInfo({ ...profile, gender: myGender.gender }, isVerifiedMember(roles)) && <ProfileNudge nudge={nudge} />}
             {canCheckin && todayEvents.length > 0 && (
               <Link href="/portal?section=checkin" className={styles.checkinBanner}>
                 <div className={styles.checkinBannerDot} />
@@ -570,7 +581,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
               <Link href="/" className={styles.railFooterLink}><span aria-hidden="true"><ArrowLeft size={15} strokeWidth={2} /></span> Back to Site</Link>
               <SignOutButton />
               <Link href="/portal?section=help" className={`${styles.railFooterLink} ${styles.railFooterHelp}`} aria-label={helpWaiting ? `Help (${helpWaiting} waiting)` : 'Help'} title="Help">
-                <LifeBuoy size={16} strokeWidth={2} aria-hidden="true" />
+                <CircleHelp size={16} strokeWidth={2} aria-hidden="true" />
                 <b>{canHandleHelp ? 'Help inbox' : 'Help & questions'}</b>
                 {helpWaiting > 0 && <span className={styles.railFooterHelpBadge}>{helpWaiting}</span>}
               </Link>
