@@ -6,7 +6,7 @@ import Notice from '@/components/ui/Notice';
 import { useRef, useState } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { User, Users, Lock, X as XIcon, Globe, EyeOff } from 'lucide-react';
+import { Bell, User, Users, Lock, X as XIcon, Globe, EyeOff } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types/database';
 import { Check } from 'lucide-react';
@@ -21,12 +21,13 @@ import BoardCardPreview from '@/components/BoardSection/BoardCardPreview';
 import { showToast } from '@/lib/toast';
 import type { BoardMember, BoardTier } from '@/app/(main)/team/getBoardMembers';
 import LinkGoogleSection from './LinkGoogleSection';
+import PushSettings from '@/components/portal/PushSettings';
 import MajorPicker from './MajorPicker';
 import GamePicker from './GamePicker';
 import styles from './profile.module.css';
 import Select from '@/components/ui/Select';
 
-type Tab = 'basic' | 'officer' | 'security';
+type Tab = 'basic' | 'officer' | 'notifications' | 'security';
 
 export default function ProfileClient({ profile, privateInfo, email, linkedEmails, roles, isUcsd, divisions }: { profile: Profile; privateInfo: MyPrivateProfile; email: string | null; linkedEmails: string[]; roles: RoleGrant[]; isUcsd: boolean; divisions: { id: string; name: string }[]; initialTab?: string }) {
   const divisionNameById = new Map(divisions.map((d) => [d.id, d.name]));
@@ -41,7 +42,7 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
   const isBoardEligible = roles.some((r) => r.role === 'exec' || r.role === 'lead' || r.role === 'officer' || r.role === 'alumni');
   // Division leads get no public officer card: just the basic profile.
   const showBoardTab = isBoardEligible || canEditOrgTitle;
-  const VALID_TABS: Tab[] = showBoardTab ? ['basic', 'officer', 'security'] : ['basic', 'security'];
+  const VALID_TABS: Tab[] = showBoardTab ? ['basic', 'officer', 'notifications', 'security'] : ['basic', 'notifications', 'security'];
   const gender = privateInfo.gender;
   // The tab used to be called "board" — old links/bookmarks still land on it.
   const initialTabParam = useUrlNav().tab;
@@ -273,12 +274,13 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
         tabs={[
           { id: 'basic', label: 'Basic Info', icon: <User /> },
           ...(showBoardTab ? [{ id: 'officer' as const, label: 'Public Officer Card', icon: <Users /> }] : []),
+          { id: 'notifications', label: 'Notifications', icon: <Bell /> },
           { id: 'security', label: 'Login & Security', icon: <Lock /> },
         ]}
       />
 
-      <div className={`${styles.layout} ${tab === 'officer' && isBoardEligible ? styles.layoutOfficer : ''} ${tab === 'security' ? styles.layoutSingle : ''}`}>
-        {tab !== 'security' && (
+      <div className={`${styles.layout} ${tab === 'officer' && isBoardEligible ? styles.layoutOfficer : ''} ${tab === 'security' || tab === 'notifications' ? styles.layoutSingle : ''}`}>
+        {tab !== 'security' && tab !== 'notifications' && (
         <div className={styles.avatarSection}>
           {tab === 'officer' && isBoardEligible ? (
             <p className={styles.pictureNote}>Your picture is edited on the Basic Info tab — the preview below uses it.</p>
@@ -738,6 +740,12 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
             {saving ? 'Saving…' : saved ? <><Check size={18} strokeWidth={2.5} aria-hidden="true" /> Saved</> : 'Save Changes'}
           </button>
         </form>
+        )}
+
+        {tab === 'notifications' && (
+          <div className={styles.securityTab}>
+            <PushSettings />
+          </div>
         )}
 
         {tab === 'security' && (

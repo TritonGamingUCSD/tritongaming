@@ -157,3 +157,10 @@
 
 /* Sitting inside the desktop app frame's top bar instead of floating over the page. */
 .wrapInline { position: relative; top: auto; right: auto; z-index: 7; }
+
+.pushOffer { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.75rem 0.9rem; border-top: 1px solid rgba(255, 255, 255, 0.09); background: rgba(255, 199, 44, 0.06); font-size: 0.8rem; color: rgba(242, 241, 240, 0.8); }
+.pushOfferBtns { display: flex; gap: 0.5rem; }
+.pushOn, .pushNo { padding: 0.3rem 0.8rem; border-radius: 0.5rem; font: inherit; font-size: 0.76rem; cursor: pointer; text-decoration: none; }
+.pushOn { border: 1px solid rgba(255, 199, 44, 0.5); background: rgba(255, 199, 44, 0.14); color: #ffc72c; }
+.pushOn:hover { background: rgba(255, 199, 44, 0.24); }
+.pushNo { border: 1px solid rgba(255, 255, 255, 0.14); background: transparent; color: rgba(242, 241, 240, 0.65); }

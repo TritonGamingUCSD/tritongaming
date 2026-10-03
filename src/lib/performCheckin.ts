@@ -1,3 +1,4 @@
+import { createNotifications } from '@/lib/notify';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { isCheckinWindowOpen, checkinHoursError, type CheckinDayWindow } from '@/lib/checkinWindow';
 import { isMultiDayEvent, pacificDayKey, currentDayInfo } from '@/lib/checkinDays';
@@ -74,13 +75,13 @@ export async function performCheckin(
 
   // Later days of a multi-day event: attendance only — points are earned once, on the first check-in.
   if (multiDay && !firstCheckin) {
-    await serviceClient.from('notifications').insert({
+    await createNotifications(serviceClient, [{
       user_id: ticket.user_id,
       type: 'ticket_checked_in',
       title: day ? `Checked in — Day ${day.day} of ${day.total}` : "You're checked in!",
       body: event.title ? `Enjoy ${event.title}.` : 'Enjoy the event.',
       href: '/portal?section=tickets',
-    });
+    }]);
     return { firstCheckin: false, day };
   }
 
@@ -90,7 +91,7 @@ export async function performCheckin(
   });
   if (pointsError) console.error('[performCheckin] failed to award points:', pointsError);
 
-  await serviceClient.from('notifications').insert({
+  await createNotifications(serviceClient, [{
     user_id: ticket.user_id,
     type: 'ticket_checked_in',
     title: event.requires_checkin_form ? 'Scanned in — one more step' : "You're checked in!",
@@ -101,7 +102,7 @@ export async function performCheckin(
       pointsAwarded && event.points_value > 0 ? `+${event.points_value} points earned.` : null,
     ].filter(Boolean).join(' '),
     href: '/portal?section=tickets',
-  });
+  }]);
 
   return { firstCheckin: true, day };
 }

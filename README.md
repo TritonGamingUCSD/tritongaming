@@ -214,3 +214,17 @@ One-time setup:
 4. The `calendar_connections` table comes from the migrations `20261003100000_calendar_connections.sql` and `20261003110000_calendar_connections_multi.sql`.
 
 Until the variables are set, the Sync panel tells members that linking isn't set up yet.
+
+## Web push notifications
+
+Everything that lands in the portal's notification bell can also be pushed to a member's browser or phone, even when the portal is closed. Members turn it on per device under **Profile → Notifications** (or from the prompt in the bell) and can mute kinds of notification (meetings, events and tickets, account and access, help inbox). It works in Chrome, Edge, Firefox, Safari on macOS 13+, and on iPhone/iPad once the site is added to the Home Screen.
+
+How it fits together: `createNotifications` in `src/lib/notify.ts` is the one place notifications are created, and it calls `src/lib/webPush.ts` to push them; `public/sw.js` is the service worker that shows them and opens the right page when tapped; subscriptions live in `push_subscriptions` (migration `20261003120000_web_push.sql`, server access only). Notifications written by the database itself (role-change notices from `admin_set_user_roles`) reach the bell but are not pushed.
+
+Setup (once per environment):
+
+1. Generate a key pair: `npx web-push generate-vapid-keys`.
+2. Set `NEXT_PUBLIC_VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY`. Local and live must use the **same** pair, because the database is shared and a subscription only works with the key it was created under. Optionally set `VAPID_SUBJECT` (a `https://` site address or `mailto:`); it defaults to `NEXT_PUBLIC_SITE_URL`.
+3. Redeploy. Until the keys are set, the settings page says push isn't set up and nothing is sent.
+
+Subscription addresses are only accepted from the real push services (Google, Mozilla, Apple, Microsoft), since the server connects to them when sending.

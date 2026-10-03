@@ -1,3 +1,4 @@
+import { createNotifications } from '@/lib/notify';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { stripe, stripeEnabled } from '@/lib/stripe';
@@ -102,13 +103,13 @@ export async function POST(request: Request) {
 
     // Best-effort — a notification that fails to write shouldn't fail the
     // ticket purchase that already succeeded.
-    await supabase.from('notifications').insert({
+    await createNotifications(supabase, [{
       user_id: user.id,
       type: 'ticket_confirmed',
       title: 'Ticket confirmed',
       body: `You're registered for ${event.title}.`,
       href: '/portal?section=tickets',
-    });
+    }]);
 
     return NextResponse.json({ free: true, ticket }, { status: 201 });
   }

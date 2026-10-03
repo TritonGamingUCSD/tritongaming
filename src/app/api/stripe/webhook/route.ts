@@ -1,3 +1,4 @@
+import { createNotifications } from '@/lib/notify';
 import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 import { stripe, stripeEnabled } from '@/lib/stripe';
@@ -40,13 +41,13 @@ export async function POST(request: Request) {
 
       if (!error) {
         const { data: eventRow } = await supabase.from('events').select('title').eq('id', eventId).single();
-        await supabase.from('notifications').insert({
+        await createNotifications(supabase, [{
           user_id: userId,
           type: 'ticket_confirmed',
           title: 'Ticket confirmed',
           body: eventRow ? `You're registered for ${eventRow.title}.` : 'Your ticket purchase is confirmed.',
           href: '/portal?section=tickets',
-        });
+        }]);
       }
     }
   }
