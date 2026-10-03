@@ -39,4 +39,17 @@ describe('meeting plans', () => {
     expect(best[0].noResponse.map((p) => p.id)).toEqual(['c']);
     expect(best[0].unavailable).toHaveLength(0);
   });
+  it('lists every time tied for best, then fills up to the limit', () => {
+    const people = [{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }];
+    const full = { '09:00': 1 as const, '09:30': 1 as const, '10:00': 1 as const, '10:30': 1 as const, '11:00': 1 as const, '11:30': 1 as const };
+    const responses = { a: { '2026-10-05': full, '2026-10-06': { '09:00': 1 as const, '09:30': 1 as const } }, b: { '2026-10-05': full } };
+    const best = bestTimes(plan, ['2026-10-05', '2026-10-06'], people, responses, 1);
+    expect(best.length).toBeGreaterThan(1);
+    expect(best.every((t) => t.top)).toBe(true);
+    expect(best.every((t) => t.available.length === 2)).toBe(true);
+    const filled = bestTimes(plan, ['2026-10-05', '2026-10-06'], people, responses, 10);
+    expect(filled.length).toBeGreaterThan(best.length);
+    expect(filled.slice(0, best.length).every((t) => t.top)).toBe(true);
+    expect(filled.slice(best.length).every((t) => !t.top)).toBe(true);
+  });
 });

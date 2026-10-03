@@ -170,3 +170,41 @@
 .dayChip, .colAll, .quick button, .clearAll { border-radius: 0.6rem; }
 .modeBtn, .kindBtn { border-radius: 0.6rem; }
 .clearAll { border-color: rgba(248, 113, 113, 0.38); background: rgba(220, 38, 38, 0.1); color: #f87171; }
+
+/* Pointing at a Best time lights up where it sits on the grid: a bright fuchsia block across the whole meeting, with its day and time lit too. */
+.heat { position: relative; }
+.heatPreview { box-shadow: inset 0 0 0 2px #f0abfc; }
+.heatPreview::after { content: ''; position: absolute; inset: 0; background: rgba(240, 171, 252, 0.5); pointer-events: none; }
+.heatPreview .heatNum { position: relative; z-index: 1; color: #fff; }
+.previewHead { color: #f0abfc; box-shadow: inset 0 -2px 0 #f0abfc; }
+.previewTime { color: #f0abfc !important; font-weight: 700; }
+.sugRow { transition: background 0.15s; }
+.sugRow:hover { background: rgba(240, 171, 252, 0.08); }
+
+/* More to choose from, and unmistakable which one you are about to pick. */
+.suggest { max-height: 26rem; overflow-y: auto; overscroll-behavior: contain; }
+.suggest h3 small { margin-left: auto; font-size: 0.68rem; font-weight: 400; text-transform: none; letter-spacing: 0; color: rgba(242, 241, 240, 0.5); }
+.sugRank { display: inline-grid; place-items: center; width: 1.3rem; height: 1.3rem; margin-right: 0.45rem; border-radius: 50%; font-size: 0.7rem; background: rgba(52, 211, 153, 0.2); color: #6ee7b7; }
+.sugRow:hover, .sugRow:focus-within { background: rgba(240, 171, 252, 0.14); }
+.sugRow:hover .sugRank, .sugRow:focus-within .sugRank { background: #f0abfc; color: #1a0b1f; }
+.sugRow:hover .chooseBtn, .sugRow:focus-within .chooseBtn { background: #f0abfc; border-color: #f0abfc; color: #1a0b1f; }
+
+/* The hovered row is a soft rounded tint with room around its text, with no edge line. */
+.sugRow { padding: 0.45rem 0.6rem; margin: 0 -0.3rem; border-radius: 0.6rem; }
+.sugRow:hover, .sugRow:focus-within { box-shadow: none; border-left: 0; }
+
+/* The hover tint runs edge to edge of the Best times box (the row bleeds out to its sides). */
+.suggest { overflow-x: hidden; }
+.sugRow { margin: 0 -0.9rem; padding: 0.5rem 0.9rem; border-radius: 0; }
+
+/* Desktop results: the right column ends where the grid ends, so picking a time and scheduling it never needs a scroll down.
+   The column adds nothing to the row's height (size containment), fills it, and its Best times list takes the spare room and scrolls inside. */
+@media (min-width: 1100px) {
+  .resultsLayout { align-items: stretch; }
+  .resultsSide { position: static; contain: size; align-self: stretch; min-height: 26rem; overflow-y: auto; overscroll-behavior: contain; }
+  .resultsSide .suggest { flex: 1 1 auto; min-height: 9rem; max-height: none; }
+  .resultsSide > :not(.suggest) { flex: none; }
+}
+
+/* A time tied for the very best carries a star; the ones after it carry their place. */
+.sugTop { background: #fbbf24; color: #1c1403; }

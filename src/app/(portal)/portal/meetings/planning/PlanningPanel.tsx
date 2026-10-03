@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeft, Bell, CalendarClock, Check, Link2, Pencil, Plus, RotateCcw, Trash2, Users } from 'lucide-react';
+import { ArrowLeft, Bell, CalendarClock, Check, Link2, Pencil, Plus, RotateCcw, Star, Trash2, Users } from 'lucide-react';
 import Notice from '@/components/ui/Notice';
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
@@ -154,6 +154,7 @@ function PlanDetail({ plan, userId, onBack, reload }: { plan: PlanView; userId: 
   const [mine, setMine] = useState<PlanSlots>(() => withoutBusy(plan.mine ?? {}, plan.busy, startsAll));
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [pick, setPick] = useState<{ day: string; start: string } | null>(null);
+  const [preview, setPreview] = useState<{ day: string; start: string } | null>(null);
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
@@ -199,13 +200,17 @@ function PlanDetail({ plan, userId, onBack, reload }: { plan: PlanView; userId: 
 
   if (editing) return <PlanForm plan={plan} onDone={async () => { setEditing(false); await reload(); }} onCancel={() => setEditing(false)} />;
 
-  const answered = plan.people.filter((p) => plan.responses[p.id]);
-  const waiting = plan.people.filter((p) => !plan.responses[p.id] && p.id !== plan.host_id);
+  // The group result counts my edits the moment I make them, not only after they are saved (an empty grid still means not answered).
+  const liveResponses = { ...plan.responses };
+  if (iAmAsked && plan.status === 'open') { if (Object.keys(mine).length) liveResponses[userId] = mine; else delete liveResponses[userId]; }
+  const live: PlanView = { ...plan, responses: liveResponses };
+  const answered = plan.people.filter((p) => live.responses[p.id]);
+  const waiting = plan.people.filter((p) => !live.responses[p.id] && p.id !== plan.host_id);
   const decided = plan.status === 'decided' && plan.decided_slot;
-  const suggestions = plan.status === 'open' && plan.canManage ? bestTimes(plan, plan.days, plan.people, plan.responses, 3, plan.blocked) : [];
-  const pickEvalFull = pick ? evaluateStart(pick.day, pick.start, plan.duration_min, plan.people, plan.responses, plan.blocked) : null;
+  const suggestions = plan.status === 'open' && plan.canManage ? bestTimes(live, plan.days, plan.people, live.responses, 10, plan.blocked) : [];
+  const pickEvalFull = pick ? evaluateStart(pick.day, pick.start, plan.duration_min, plan.people, live.responses, plan.blocked) : null;
   const pickEval = pickEvalFull ? pickEvalFull.unavailable.filter((p) => p.id !== plan.host_id) : [];
-  const hostBusy = pick && plan.host_id && plan.responses[plan.host_id] ? availabilityFor(plan.responses[plan.host_id], pick.day, pick.start, plan.duration_min) === 'unavailable' : false;
+  const hostBusy = pick && plan.host_id && live.responses[plan.host_id] ? availabilityFor(live.responses[plan.host_id], pick.day, pick.start, plan.duration_min) === 'unavailable' : false;
 
   return (
     <div className={m.stack}>
@@ -240,7 +245,7 @@ function PlanDetail({ plan, userId, onBack, reload }: { plan: PlanView; userId: 
 
       {!plan.expired && (
         <div className={styles.viewTabs} role="tablist">
-          {iAmAsked && plan.status === 'open' && <button type="button" role="tab" aria-selected={view === 'mine'} className={`${styles.viewTab} ${view === 'mine' ? styles.viewTabOn : ''}`} onClick={() => setView('mine')}>My availability{!plan.responses[userId] && !Object.keys(mine).length ? <span className={styles.todo}>to do</span> : null}</button>}
+          {iAmAsked && plan.status === 'open' && <button type="button" role="tab" aria-selected={view === 'mine'} className={`${styles.viewTab} ${view === 'mine' ? styles.viewTabOn : ''}`} onClick={() => setView('mine')}>My availability{!live.responses[userId] && !Object.keys(mine).length ? <span className={styles.todo}>to do</span> : null}</button>}
           <button type="button" role="tab" aria-selected={view === 'results'} className={`${styles.viewTab} ${view === 'results' ? styles.viewTabOn : ''}`} onClick={() => setView('results')}>Group results <span className={styles.count}>{answered.length}/{plan.people.length}</span></button>
         </div>
       )}
@@ -249,7 +254,7 @@ function PlanDetail({ plan, userId, onBack, reload }: { plan: PlanView; userId: 
         <>
           <AvailabilityGrid plan={plan} value={mine} onChange={(next) => { dirty.current = true; setMine(next); }} />
           <p className={styles.saveLine} aria-live="polite">
-            {saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? <><Check size={13} aria-hidden="true" /> Saved. You can come back and change it until the host picks a time.</> : saveState === 'error' ? 'Not saved.' : plan.responses[userId] ? 'Your answers are saved. Change them any time until a time is picked.' : 'Mark the times you can make. It saves as you go.'}
+            {saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? <><Check size={13} aria-hidden="true" /> Saved. You can come back and change it until the host picks a time.</> : saveState === 'error' ? 'Not saved.' : live.responses[userId] ? 'Your answers are saved. Change them any time until a time is picked.' : 'Mark the times you can make. It saves as you go.'}
           </p>
         </>
       )}
@@ -257,29 +262,29 @@ function PlanDetail({ plan, userId, onBack, reload }: { plan: PlanView; userId: 
       {!plan.expired && view === 'results' && (
         <div className={styles.resultsLayout} data-fill-width>
           <div className={styles.resultsMain}>
-            <ResultsGrid plan={plan} selected={pick} onSelect={setPick} />
+            <ResultsGrid plan={live} selected={pick} onSelect={setPick} preview={preview} />
           </div>
           <div className={styles.resultsSide}>
           {suggestions.length > 0 && (
             <div className={styles.suggest}>
-              <h3><CalendarClock size={14} aria-hidden="true" /> Best times</h3>
-              {suggestions.map((s) => (
-                <div key={`${s.day}-${s.start}`} className={styles.sugRow}>
+              <h3><CalendarClock size={14} aria-hidden="true" /> Best times <small>point at one to see it on the grid</small></h3>
+              {suggestions.map((s, n) => (
+                <div key={`${s.day}-${s.start}`} className={styles.sugRow} onMouseEnter={() => setPreview({ day: s.day, start: s.start })} onMouseLeave={() => setPreview(null)} onFocus={() => setPreview({ day: s.day, start: s.start })} onBlur={() => setPreview(null)}>
                   <div>
-                    <strong>{slotLabel(plan, s.day, s.start)}</strong>
+                    <strong><b className={`${styles.sugRank} ${s.top ? styles.sugTop : ''}`}>{s.top ? <Star size={11} aria-label="Best" /> : n + 1}</b>{slotLabel(plan, s.day, s.start)}</strong>
                     <span>{s.available.length} available{s.ifNeeded.length ? `, ${s.ifNeeded.length} if needed` : ''}{s.unavailable.length ? ` · can’t: ${s.unavailable.map((p) => { const b = s.blocked.find((x) => x.person.id === p.id); return b ? `${p.name} (booked: ${b.titles.join(', ')})` : p.name; }).join(', ')}` : ' · everyone who answered can make it'}{s.noResponse.length ? ` · ${s.noResponse.length} haven’t answered` : ''}</span>
                   </div>
-                  <Button size="sm" variant="ghost" onClick={() => setPick({ day: s.day, start: s.start })}>Choose</Button>
+                  <Button size="sm" variant="secondary" className={styles.chooseBtn} onClick={() => setPick({ day: s.day, start: s.start })}>Choose</Button>
                 </div>
               ))}
             </div>
           )}
           {!pick && <p className={styles.hint}>Tap a time on the grid to see who can make it{plan.canManage && plan.status === 'open' ? ' and to schedule it' : ''}.</p>}
-          {pick && <WhoPanel plan={plan} pick={pick} />}
+          {pick && <WhoPanel plan={live} pick={pick} />}
           {pick && plan.canManage && plan.status === 'open' && (
             <div className={styles.confirm}>
               <strong>Schedule {slotLabel(plan, pick.day, pick.start)}?</strong>
-              <p>{pickEval.length ? <>{pickEval.map((p) => p.name).join(', ')} {pickEval.length === 1 ? 'is' : 'are'} not available then, so will be marked absent (excused: “{AUTO_ABSENT_REASON}”).</> : 'Everyone who answered can make this time.'}{plan.people.filter((p) => !plan.responses[p.id] && p.id !== plan.host_id).length ? ' People who haven’t answered stay expected.' : ''}</p>
+              <p>{pickEval.length ? <>{pickEval.map((p) => p.name).join(', ')} {pickEval.length === 1 ? 'is' : 'are'} not available then, so will be marked absent (excused: “{AUTO_ABSENT_REASON}”).</> : 'Everyone who answered can make this time.'}{plan.people.filter((p) => !live.responses[p.id] && p.id !== plan.host_id).length ? ' People who haven’t answered stay expected.' : ''}</p>
               {hostBusy && <p className={styles.warnText}>You marked yourself unavailable at this time.</p>}
               <div className={styles.confirmBtns}>
                 <Button loading={busy === 'decide'} onClick={() => act('decide', plan.kind === 'weekly' ? { weekday: Number(pick.day), start: pick.start } : { day: pick.day, start: pick.start })}>Schedule it</Button>

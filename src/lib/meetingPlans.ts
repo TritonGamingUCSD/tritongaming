@@ -85,7 +85,7 @@ export function cleanSlots(raw: unknown, days: string[], starts: string[]): Plan
 }
 
 export interface Person { id: string; name: string }
-export interface BestTime { day: string; start: string; available: Person[]; ifNeeded: Person[]; unavailable: Person[]; noResponse: Person[]; /** Of those unavailable: who has something on their calendar then (host only). */ blocked: { person: Person; titles: string[] }[] }
+export interface BestTime { /** True for every time tied for the very best score. */ top?: boolean; day: string; start: string; available: Person[]; ifNeeded: Person[]; unavailable: Person[]; noResponse: Person[]; /** Of those unavailable: who has something on their calendar then (host only). */ blocked: { person: Person; titles: string[] }[] }
 
 // Every possible start time, scored for the people who have answered (people who haven't answered are listed but don't count against it).
 export function evaluateStart(day: string, start: string, durationMin: number, people: Person[], responses: Record<string, PlanSlots>, blocked?: Record<string, BusyBlock[]>): BestTime {
@@ -113,10 +113,19 @@ export function bestTimes(plan: PlanShape, days: string[], people: Person[], res
     all.push(evaluateStart(day, start, plan.duration_min, people, responses, blocked));
   }
   const dayIdx = new Map(days.map((d, i) => [d, i]));
-  return all
+  const ranked = all
     .filter((t) => t.available.length + t.ifNeeded.length > 0)
-      .sort((a, b) => penalty(a) - penalty(b) || a.blocked.length - b.blocked.length || b.available.length - a.available.length || a.ifNeeded.length - b.ifNeeded.length || (dayIdx.get(a.day)! - dayIdx.get(b.day)!) || toMin(a.start) - toMin(b.start))
-    .slice(0, limit);
+      .sort((a, b) => penalty(a) - penalty(b) || a.blocked.length - b.blocked.length || b.available.length - a.available.length || a.ifNeeded.length - b.ifNeeded.length || (dayIdx.get(a.day)! - dayIdx.get(b.day)!) || toMin(a.start) - toMin(b.start));
+  // Every time that scores the same as the best one is a best time (however many that is). If that is fewer than `limit`, the list is filled up
+  // with the next best, skipping a time that only shifts one already listed on its day by less than the meeting length.
+  const score = (t: BestTime) => [penalty(t), t.blocked.length, t.available.length, t.ifNeeded.length].join('|');
+  const picked: BestTime[] = ranked.length ? ranked.filter((t) => score(t) === score(ranked[0])).map((t) => ({ ...t, top: true })) : [];
+  for (const t of ranked.slice(picked.length)) {
+    if (picked.length >= limit) break;
+    if (picked.some((p) => p.day === t.day && Math.abs(toMin(p.start) - toMin(t.start)) < plan.duration_min)) continue;
+    picked.push(t);
+  }
+  return picked;
 }
 
 // Has this person marked at least one available / if-needed slot on the grid as it is now? Someone who saved an empty grid hasn't

@@ -69,3 +69,12 @@
 /* Line the button and the Month/List switch up: same height, centered on one line (the switch carries a bottom margin of its own). */
 .toolbarRight [role='tablist'] { margin: 0 !important; }
 .toolbarRight > button { min-height: 37px; }
+
+/* Desktop: the month on the left, the picked day's details on the right, so choosing a day never moves the page. A phone stacks them. */
+.monthLayout { display: flex; flex-direction: column; gap: 1rem; }
+@media (min-width: 1000px) {
+  .page[data-month] { max-width: 1240px; }
+  .monthLayout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 1.25rem; align-items: start; }
+  .monthLayout .cell { min-height: 108px; }
+  .monthLayout .dayPanel { position: sticky; top: 0.75rem; max-height: calc(100vh - 2rem); overflow-y: auto; }
+}

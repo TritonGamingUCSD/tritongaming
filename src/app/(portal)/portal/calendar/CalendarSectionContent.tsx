@@ -69,7 +69,7 @@ export default function CalendarSectionContent() {
   const agendaDays = [...byDay.keys()].filter((d) => d >= (view === 'agenda' ? today : gridStart) && d.slice(0, 7) === key(cursor.y, cursor.m, 1).slice(0, 7)).sort();
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-wide={view === 'month' ? '' : undefined} data-month={view === 'month' ? '' : undefined}>
       <div className={styles.header}>
         <h1 className={styles.title}>Calendar</h1>
         <p className={styles.sub}>Events and the meetings you’re invited to, in one place.</p>
@@ -99,7 +99,7 @@ export default function CalendarSectionContent() {
       {error && <Notice tone="error">{error}</Notice>}
 
       {view === 'month' && (
-        <>
+        <div className={styles.monthLayout}>
           <div className={styles.grid} role="grid" aria-label={title}>
             {WEEKDAYS.map((w) => <div key={w} className={styles.weekday} role="columnheader">{w}</div>)}
             {days.map((d) => {
@@ -129,7 +129,7 @@ export default function CalendarSectionContent() {
             <h3 className={styles.dayTitle}>{longDay(selected)}{selected === today && <span className={styles.todayTag}>Today</span>}</h3>
             {items === null && !error ? <p className={styles.muted}>Loading…</p> : dayItems.length === 0 ? <p className={styles.muted}>Nothing on this day.</p> : <ItemList items={dayItems} />}
           </section>
-        </>
+        </div>
       )}
 
       {view === 'agenda' && (

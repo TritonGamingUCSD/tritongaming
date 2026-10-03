@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { canStartAt, clockLabel, dayLabel, evaluateStart, slotStarts, toHhmm, toMin, type PlanView } from '@/lib/meetingPlans';
 import styles from './planning.module.css';
 
 // The group's answers as a heat map: the deeper the green, the more people can make that half hour. Tap a cell to see who, and
 // (for the host) to pick the meeting time starting there.
-export default function ResultsGrid({ plan, selected, onSelect }: { plan: PlanView; selected: { day: string; start: string } | null; onSelect: (s: { day: string; start: string }) => void }) {
+export default function ResultsGrid({ plan, selected, onSelect, preview }: { plan: PlanView; selected: { day: string; start: string } | null; onSelect: (s: { day: string; start: string }) => void; preview?: { day: string; start: string } | null }) {
   const [narrow, setNarrow] = useState(false);
   const [dayIdx, setDayIdx] = useState(0);
   const [hover, setHover] = useState<{ day: string; t: string; x: number; y: number } | null>(null);
@@ -16,6 +16,18 @@ export default function ResultsGrid({ plan, selected, onSelect }: { plan: PlanVi
     on(); q.addEventListener('change', on);
     return () => q.removeEventListener('change', on);
   }, []);
+  // On a phone only one day shows, so follow a previewed time to its day.
+  const block = useRef<HTMLDivElement>(null);
+  // If the previewed time is scrolled out of sight sideways in the grid, slide it into view (never scrolls the page itself).
+  useEffect(() => {
+    const el = block.current?.querySelector('[data-preview]') as HTMLElement | null;
+    const wrap = block.current?.querySelector('[data-gridwrap]') as HTMLElement | null;
+    if (!preview || !el || !wrap) return;
+    const e = el.getBoundingClientRect(), w = wrap.getBoundingClientRect();
+    if (e.left < w.left + 64) wrap.scrollLeft -= w.left + 64 - e.left;
+    else if (e.right > w.right) wrap.scrollLeft += e.right - w.right;
+  }, [preview]);
+  useEffect(() => { if (preview) { const i = plan.days.indexOf(preview.day); if (i >= 0) setDayIdx(i); } }, [preview, plan.days]);
   const starts = slotStarts(plan.window_start, plan.window_end);
   const days = plan.days;
   const total = Math.max(1, plan.people.length);
@@ -35,6 +47,8 @@ export default function ResultsGrid({ plan, selected, onSelect }: { plan: PlanVi
   };
   // The meeting covers `duration` from the chosen start; mark those cells.
   const inSelection = (day: string, t: string) => !!selected && selected.day === day && toMin(t) >= toMin(selected.start) && toMin(t) < toMin(selected.start) + plan.duration_min;
+  // A time being previewed from the Best times list (pointing at it): lit up in its own color across the whole meeting length.
+  const inPreview = (day: string, t: string) => !!preview && preview.day === day && toMin(t) >= toMin(preview.start) && toMin(t) < toMin(preview.start) + plan.duration_min;
   const startOk = (t: string) => canStartAt(plan, t);
 
   const render = (day: string, t: string, big: boolean) => {
@@ -44,8 +58,9 @@ export default function ResultsGrid({ plan, selected, onSelect }: { plan: PlanVi
       <button
         key={`${day}-${t}`}
         type="button"
-        className={`${big ? styles.mRow : styles.heat} ${sel ? styles.heatSel : ''} ${startOk(t) ? '' : styles.heatNoStart}`}
+        className={`${big ? styles.mRow : styles.heat} ${sel ? styles.heatSel : ''} ${inPreview(day, t) ? styles.heatPreview : ''} ${startOk(t) ? '' : styles.heatNoStart}`}
         style={style(day, t)}
+        data-preview={inPreview(day, t) ? '' : undefined}
         onPointerMove={(e) => { if (!big && e.pointerType !== 'touch') setHover({ day, t, x: e.clientX, y: e.clientY }); }}
         onClick={() => onSelect({ day, start: startOk(t) ? t : toHhmm(Math.max(toMin(plan.window_start), Math.min(toMin(t), toMin(plan.window_end) - plan.duration_min))) })}
         aria-label={`${dayLabel(day, plan.kind)} ${clockLabel(t)}: ${c.a} available, ${c.m} if needed`}
@@ -69,14 +84,14 @@ export default function ResultsGrid({ plan, selected, onSelect }: { plan: PlanVi
     );
   }
   return (
-    <div className={styles.gridBlock}>
-      <div className={styles.gridWrap}>
+    <div className={styles.gridBlock} ref={block}>
+      <div className={styles.gridWrap} data-gridwrap>
         <div className={styles.gridTable} style={{ gridTemplateColumns: `64px repeat(${days.length}, 96px)` }} onPointerLeave={() => setHover(null)}>
           <div className={styles.corner} />
-          {days.map((d) => <div key={d} className={`${styles.colHead} ${hover?.day === d ? styles.hot : ''}`}><span>{dayLabel(d, plan.kind)}</span></div>)}
+          {days.map((d) => <div key={d} className={`${styles.colHead} ${hover?.day === d ? styles.hot : ''} ${preview?.day === d ? styles.previewHead : ''}`}><span>{dayLabel(d, plan.kind)}</span></div>)}
           {starts.map((t) => (
             <div key={t} style={{ display: 'contents' }}>
-              <div className={`${styles.timeLbl} ${t.endsWith(':00') ? '' : styles.timeHalf} ${hover?.t === t ? styles.timeHot : ''}`}>{t.endsWith(':00') || hover?.t === t ? clockLabel(t) : ''}</div>
+              <div className={`${styles.timeLbl} ${t.endsWith(':00') ? '' : styles.timeHalf} ${hover?.t === t ? styles.timeHot : ''} ${preview && inPreview(preview.day, t) ? styles.previewTime : ''}`}>{t.endsWith(':00') || hover?.t === t || (preview && inPreview(preview.day, t) && t === preview.start) ? clockLabel(t) : ''}</div>
               {days.map((d) => render(d, t, false))}
             </div>
           ))}
