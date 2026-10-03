@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { ArrowLeft, Check, Lock, RotateCcw, MessageCircleQuestion, Plus, Search, Send, ShieldAlert, Ticket, X } from 'lucide-react';
+import { ArrowLeft, Check, Lock, RotateCcw, Plus, Search, Send, ShieldAlert, Ticket, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
 import Notice from '@/components/ui/Notice';
@@ -13,15 +13,14 @@ import { confirmHold } from '@/lib/confirmHold';
 import { STRIKES_AT_LIMIT, countLabel } from '@/lib/strikeLabels';
 import styles from './tracker.module.css';
 
-interface Person { id: string; name: string; avatar_url: string | null; role: string; active: number; vouchers: number; questions: number; atLimit: boolean }
-interface Question { id: string; message: string; created_at: string; resolved_at: string | null }
-interface Strike { id: string; mark: string | null; status: 'published' | 'removed'; category: string; reason: string; incident_date: string; meeting_id: string | null; created_at: string; published_at: string | null; removed_at: string | null; removed_how: 'taken' | 'voucher' | 'reset' | null; removed_note: string | null; created_by: string | null; published_by: string | null; removed_by: string | null; questions: Question[] }
+interface Person { id: string; name: string; avatar_url: string | null; role: string; active: number; vouchers: number; atLimit: boolean }
+interface Strike { id: string; mark: string | null; status: 'published' | 'removed'; category: string; reason: string; incident_date: string; meeting_id: string | null; created_at: string; published_at: string | null; removed_at: string | null; removed_how: 'taken' | 'voucher' | 'reset' | null; removed_note: string | null; created_by: string | null; published_by: string | null; removed_by: string | null; }
 interface Voucher { id: string; reason: string | null; created_at: string; used_at: string | null; used_on_strike_id: string | null; given_by: string | null; removed_at: string | null; removed_by: string | null; removed_reason: string | null }
 interface Event { id: string; kind: string; label: string | null; reason: string | null; by: string | null; at: string }
 interface PastMiss { user_id: string; name: string; meeting_id: string; title: string; date: string; outcome: 'strike' | 'dismissed'; reason: string | null }
 interface Suggestion { user_id: string; name: string; meeting_id: string; title: string; date: string }
 type Tab = 'people' | 'missed';
-type Filter = 'all' | 'strikes' | 'limit' | 'questions';
+type Filter = 'all' | 'strikes' | 'limit';
 const EVENT_LABEL: Record<string, string> = { strike_added: 'Strike added', strike_removed: 'Strike taken off', strike_reinstated: 'Strike put back', voucher_given: 'Voucher given', voucher_used: 'Voucher used', voucher_removed: 'Voucher removed', strikes_reset: 'Strikes reset' };
 
 const CATEGORIES: [string, string][] = [['meeting', 'Missed meeting'], ['event_shift', 'Missed event shift'], ['deadline', 'Missed deadline or task'], ['conduct', 'Conduct'], ['other', 'Other']];
@@ -67,20 +66,18 @@ function Tracker() {
   const shown = useMemo(() => (people ?? []).filter((p) => {
     if (filter === 'strikes' && p.active === 0) return false;
     if (filter === 'limit' && !p.atLimit) return false;
-    if (filter === 'questions' && p.questions === 0) return false;
     return !q.trim() || p.name.toLowerCase().includes(q.trim().toLowerCase());
-  }).sort((a, b) => Number(b.atLimit) - Number(a.atLimit) || b.questions - a.questions || b.active - a.active || a.name.localeCompare(b.name)), [people, filter, q]);
+  }).sort((a, b) => Number(b.atLimit) - Number(a.atLimit) || b.active - a.active || a.name.localeCompare(b.name)), [people, filter, q]);
 
   if (error && !people) return <Notice tone="error">{error}</Notice>;
   if (!people) return <LoadingSpinner size={28} label="Loading strikes…" theme="dark" />;
   const sel = people.find((p) => p.id === selected) ?? null;
-  const questions = people.reduce((n, p) => n + p.questions, 0);
 
   return (
     <div className={styles.page}>
       <Header />
       <SectionTabs<Tab> label="Strikes" value={tab} onChange={(t) => { setTab(t); setSelected(null); }} tabs={[
-        { id: 'people', label: 'People', count: people.length, badge: questions },
+        { id: 'people', label: 'People', count: people.length },
         { id: 'missed', label: 'Missed meetings', badge: missed },
       ]} />
       {error && <Notice tone="error">{error}</Notice>}
@@ -91,7 +88,7 @@ function Tracker() {
             <div className={styles.bar}>
               <div className={styles.search}><Search size={14} aria-hidden="true" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a person" aria-label="Find a person" />{q && <button type="button" className={styles.searchClear} onClick={() => setQ('')} aria-label="Clear search"><X size={14} aria-hidden="true" /></button>}</div>
               <div className={styles.filters} role="group" aria-label="Show">
-                {([['all', 'Everyone'], ['strikes', 'Has strikes'], ['questions', 'Asked HR'], ['limit', `At ${STRIKES_AT_LIMIT} strikes`]] as [Filter, string][]).map(([id, label]) => <button key={id} type="button" className={`${styles.chip} ${filter === id ? styles.chipOn : ''}`} aria-pressed={filter === id} onClick={() => setFilter(id)}>{label}</button>)}
+                {([['all', 'Everyone'], ['strikes', 'Has strikes'], ['limit', `At ${STRIKES_AT_LIMIT} strikes`]] as [Filter, string][]).map(([id, label]) => <button key={id} type="button" className={`${styles.chip} ${filter === id ? styles.chipOn : ''}`} aria-pressed={filter === id} onClick={() => setFilter(id)}>{label}</button>)}
               </div>
             </div>
             <ul className={styles.people}>
@@ -100,7 +97,6 @@ function Tracker() {
                   <button type="button" className={`${styles.person} ${selected === p.id ? styles.personOn : ''}`} onClick={() => setSelected(p.id)}>
                     <Avatar name={p.name} src={p.avatar_url} />
                     <span className={styles.personName}><strong>{p.name}</strong><small>{p.role}</small></span>
-                    {p.questions > 0 && <span className={styles.askTag} title="They asked HR about a strike"><MessageCircleQuestion size={12} aria-hidden="true" /></span>}
                     {p.vouchers > 0 && <span className={styles.voucherTag} title="Unused vouchers"><Ticket size={11} aria-hidden="true" /> {p.vouchers}</span>}
                     <Pips active={p.active} limit={limit} />
                   </button>
@@ -141,7 +137,7 @@ function CategorySelect({ value, onChange }: { value: string; onChange: (v: stri
   return <select className={styles.select} value={value} onChange={(e) => onChange(e.target.value)} aria-label="What kind of strike">{CATEGORIES.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select>;
 }
 
-// One person's record: strikes (drafts, published, removed), questions they asked, and vouchers, with everything HR can do.
+// One person's record: strikes, vouchers and history, with everything HR can do.
 function PersonDetail({ person, limit, me, onBack, onChanged }: { person: Person; limit: number; me: string; onBack: () => void; onChanged: () => Promise<void> }) {
   const [data, setData] = useState<{ strikes: Strike[]; vouchers: Voucher[]; events: Event[] } | null>(null);
   const [adding, setAdding] = useState(false);
@@ -199,7 +195,7 @@ function PersonDetail({ person, limit, me, onBack, onChanged }: { person: Person
       <h3 className={styles.h3}>Strikes</h3>
       {data === null ? <p className={styles.muted}>Loading…</p> : strikes.length === 0 ? <p className={styles.muted}>No strikes.</p> : (
         <ul className={styles.strikes}>
-          {strikes.map((s) => <StrikeRow key={s.id} s={s} readOnly={isMe} unusedVouchers={unused} busy={busy === s.id} onAct={async (body) => !!(await act(`/api/strikes/${s.id}`, 'PATCH', body, s.id))} onResolve={(qid) => act(`/api/strikes/disputes/${qid}`, 'PATCH', undefined, qid)} />)}
+          {strikes.map((s) => <StrikeRow key={s.id} s={s} readOnly={isMe} unusedVouchers={unused} busy={busy === s.id} onAct={async (body) => !!(await act(`/api/strikes/${s.id}`, 'PATCH', body, s.id))}  />)}
         </ul>
       )}
 
@@ -242,13 +238,12 @@ function VoucherRow({ v, readOnly, busy, onRemove }: { v: Voucher; readOnly: boo
   );
 }
 
-function StrikeRow({ s, readOnly, unusedVouchers, busy, onAct, onResolve }: { s: Strike; readOnly: boolean; unusedVouchers: Voucher[]; busy: boolean; onAct: (b: Record<string, unknown>) => Promise<boolean>; onResolve: (id: string) => void }) {
+function StrikeRow({ s, readOnly, unusedVouchers, busy, onAct }: { s: Strike; readOnly: boolean; unusedVouchers: Voucher[]; busy: boolean; onAct: (b: Record<string, unknown>) => Promise<boolean> }) {
   const [editing, setEditing] = useState(false);
   const [mode, setMode] = useState<null | 'remove' | 'voucher' | 'reinstate'>(null);
   const [note, setNote] = useState('');
   const [voucherId, setVoucherId] = useState(unusedVouchers[0]?.id ?? '');
   const chip = s.status === 'published' ? styles.stOn : styles.stOff;
-  const open = s.questions.filter((q) => !q.resolved_at);
   return (
     <li className={`${styles.strike} ${s.status === 'removed' ? styles.strikeOff : ''}`}>
       <div className={styles.strikeTop}>
@@ -263,13 +258,6 @@ function StrikeRow({ s, readOnly, unusedVouchers, busy, onAct, onResolve }: { s:
       <p className={styles.meta}>
         {s.created_by ? `Added by ${s.created_by}` : ''}{s.removed_by ? ` · removed by ${s.removed_by}` : ''}{s.removed_note ? ` · “${s.removed_note}”` : ''}
       </p>
-      {open.map((q) => (
-        <div key={q.id} className={styles.question}>
-          <MessageCircleQuestion size={14} aria-hidden="true" />
-          <div><b>They asked HR:</b> {q.message}<small>{day(q.created_at.slice(0, 10))}</small></div>
-          {!readOnly && <Button size="sm" variant="secondary" onClick={() => onResolve(q.id)}>Dealt with</Button>}
-        </div>
-      ))}
       {!readOnly && !editing && (
         <div className={styles.rowActions}>
           {s.status === 'published' && <Button size="sm" variant="secondary" onClick={() => setMode(mode === 'remove' ? null : 'remove')}>Take away</Button>}

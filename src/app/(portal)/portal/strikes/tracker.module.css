@@ -34,7 +34,6 @@
 .pips i.warnPip { width: 10px; height: 10px; border-radius: 2px; transform: rotate(45deg); margin-right: 0.35rem; }
 .pipsWarn i.on { background: #fbbf24; border-color: #fbbf24; }
 .pipsBad i.on { background: #f87171; border-color: #f87171; }
-.draftTag { flex: none; padding: 0.05rem 0.45rem; border-radius: 999px; font-size: 0.66rem; font-weight: 700; color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.45); }
 .voucherTag { flex: none; display: inline-flex; align-items: center; gap: 0.2rem; padding: 0.05rem 0.45rem; border-radius: 999px; font-size: 0.68rem; font-weight: 700; color: #5eead4; border: 1px solid rgba(45, 212, 191, 0.45); }
 
 .detailCol { min-width: 0; }
@@ -91,11 +90,6 @@
 
 /* categories, questions, requests, bulk missed meetings */
 .cat { padding: 0.05rem 0.55rem; border-radius: 999px; font-size: 0.68rem; font-weight: 700; color: rgba(242, 241, 240, 0.8); border: 1px solid rgba(255, 255, 255, 0.2); }
-.askTag { display: inline-grid; place-items: center; flex: none; width: 20px; height: 20px; border-radius: 50%; color: #93c5fd; border: 1px solid rgba(147, 197, 253, 0.5); }
-.question { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.5rem 0.65rem; border-radius: 0.6rem; background: rgba(96, 165, 250, 0.1); border: 1px solid rgba(96, 165, 250, 0.35); font-size: 0.84rem; color: var(--white); }
-.question svg { flex: none; margin-top: 0.15rem; color: #93c5fd; }
-.question > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; overflow-wrap: anywhere; }
-.question small { font-size: 0.7rem; color: rgba(242, 241, 240, 0.5); }
 .reasonLine { color: var(--white) !important; overflow-wrap: anywhere; }
 .doneList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.82rem; color: rgba(242, 241, 240, 0.65); }
 .doneList b { color: var(--white); font-weight: 600; }

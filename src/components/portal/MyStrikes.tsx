@@ -1,13 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Lock, MessageCircleQuestion, ShieldCheck, ShieldAlert, Ticket } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import { Lock, ShieldCheck, ShieldAlert, Ticket } from 'lucide-react';
 import Notice from '@/components/ui/Notice';
 import { countLabel } from '@/lib/strikeLabels';
 import styles from './MyStrikes.module.css';
 
-interface Strike { id: string; status: 'published' | 'removed'; mark: string | null; category: string; reason: string; incident_date: string; removed_how: 'taken' | 'voucher' | 'reset' | null; removed_note: string | null; asked: boolean }
+interface Strike { id: string; status: 'published' | 'removed'; mark: string | null; category: string; reason: string; incident_date: string; removed_how: 'taken' | 'voucher' | 'reset' | null; removed_note: string | null }
 interface Voucher { id: string; reason: string | null; given_on: string; used_on: string | null; used_for: string | null; removed_on: string | null; removed_reason: string | null }
 interface HistoryItem { id: string; kind: string; label: string | null; reason: string | null; on: string }
 interface Summary { limit: number; active: number; atLimit: boolean; vouchers: number; strikes: Strike[]; voucherList: Voucher[]; history: HistoryItem[] }
@@ -21,23 +20,11 @@ const day = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US'
 export default function MyStrikes() {
   const [s, setS] = useState<Summary | null>(null);
   const [error, setError] = useState('');
-  const [asking, setAsking] = useState<string | null>(null);
-  const [message, setMessage] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [note, setNote] = useState('');
 
   const load = useCallback(async () => {
     try { const r = await fetch('/api/strikes/mine', { cache: 'no-store' }); if (r.ok) setS(await r.json()); else setError('Couldn’t load this.'); } catch { setError('Couldn’t reach the server.'); }
   }, []);
   useEffect(() => { void load(); }, [load]);
-
-  async function ask(id: string) {
-    setBusy(true); setError(''); setNote('');
-    const r = await fetch('/api/strikes/disputes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ strike_id: id, message }) });
-    setBusy(false);
-    if (!r.ok) { setError((await r.json().catch(() => ({}))).error || 'Couldn’t send that.'); return; }
-    setAsking(null); setMessage(''); setNote('Sent. HR will look at it.'); await load();
-  }
 
   if (error && !s) return <Notice tone="error">{error}</Notice>;
   if (!s) return <p className={styles.muted}>Loading…</p>;
@@ -61,7 +48,6 @@ export default function MyStrikes() {
       <p className={styles.how}>The first mark is a warning. After it, 3 strikes is the limit, and the HR team will contact you if you reach it.</p>
       {s.atLimit && <p className={styles.limit}>You’re at 3 strikes. The HR team will be contacting you.</p>}
       {error && <Notice tone="error">{error}</Notice>}
-      {note && <Notice tone="success">{note}</Notice>}
 
       <h3 className={styles.h3}>On your record</h3>
       {onRecord.length === 0 ? <p className={styles.muted}>Nothing. If a warning or strike is ever added, it shows up here with the reason.</p> : (
@@ -74,13 +60,7 @@ export default function MyStrikes() {
                 <time>{day(k.incident_date)}</time>
               </div>
               <p className={styles.reason}>{k.reason}</p>
-              {k.asked ? <span className={styles.asked}><MessageCircleQuestion size={12} aria-hidden="true" /> You asked about this</span>
-                : asking === k.id ? (
-                  <form className={styles.ask} onSubmit={(e) => { e.preventDefault(); if (message.trim()) void ask(k.id); }}>
-                    <textarea value={message} onChange={(e) => setMessage(e.target.value)} maxLength={500} rows={3} placeholder="What would you like us to know or look at?" aria-label="Your question" autoFocus />
-                    <div className={styles.askActions}><Button type="button" size="sm" variant="ghost" onClick={() => { setAsking(null); setMessage(''); }}>Cancel</Button><Button type="submit" size="sm" loading={busy} disabled={!message.trim()}>Send</Button></div>
-                  </form>
-                ) : <button type="button" className={styles.askLink} onClick={() => { setAsking(k.id); setMessage(''); setNote(''); }}>Ask about this</button>}
+              <p className={styles.hint}>Questions about this? Message the HR team.</p>
             </li>
           ))}
         </ul>

@@ -3,7 +3,7 @@ import { logAudit } from '@/lib/audit';
 import { authorizeStrikes, cleanReason, notifyPerson, notYourOwn, recordEvent, trackedPeople } from '@/lib/strikes';
 
 // Reset strikes, usually once a quarter, for everyone or for one person with { user_id }. The old record is DELETED for good: every strike (the
-// warning too), the history, questions people asked, dismissed misses, used and removed vouchers, and the strike entries in the audit log. Nobody
+// warning too), the history, dismissed misses, used and removed vouchers, and the strike entries in the audit log. Nobody
 // can open it afterwards, admins included. Unused vouchers are kept. Needs a reason, which people then see as the only line left on their history.
 // Nobody resets their own record: a bulk reset skips yours, and someone else has to clear it.
 export async function POST(request: Request) {
@@ -30,7 +30,6 @@ export async function POST(request: Request) {
   // Delete the record (order matters: strikes before the vouchers that point at them), and remember when so old missed meetings don't come back.
   const now = new Date().toISOString();
   await auth.svc.from('strike_events').delete().in('user_id', ids);
-  await auth.svc.from('strike_disputes').delete().in('user_id', ids);
   await auth.svc.from('strike_dismissals').delete().in('user_id', ids);
   await auth.svc.from('strikes').delete().in('user_id', ids);
   if (voucherIds.length) await auth.svc.from('strike_vouchers').delete().in('id', voucherIds);

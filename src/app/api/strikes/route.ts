@@ -8,18 +8,17 @@ export async function GET() {
   const auth = await authorizeStrikes('manage');
   if (auth.error) return auth.error;
   const people = await trackedPeople(auth.svc);
-  const [{ data: strikes }, { data: vouchers }, sugg, { data: asks }] = await Promise.all([
+  const [{ data: strikes }, { data: vouchers }, sugg] = await Promise.all([
     auth.svc.from('strikes').select('user_id, status'),
     auth.svc.from('strike_vouchers').select('user_id').is('used_at', null),
     suggestions(auth.svc, people),
-    auth.svc.from('strike_disputes').select('strike_id, user_id').is('resolved_at', null),
   ]);
   const count = (rows: { user_id: unknown; status?: unknown }[] | null, id: string, status?: string) => (rows ?? []).filter((r) => r.user_id === id && (!status || r.status === status)).length;
   return NextResponse.json({
     limit: STRIKE_LIMIT, me: auth.user.id, suggestionCount: sugg.length,
     people: people.map((p) => {
       const active = count(strikes, p.id, 'published');
-      return { ...p, active, vouchers: count(vouchers, p.id), questions: (asks ?? []).filter((a) => a.user_id === p.id).length, atLimit: active >= STRIKE_LIMIT };
+      return { ...p, active, vouchers: count(vouchers, p.id), atLimit: active >= STRIKE_LIMIT };
     }),
   });
 }
