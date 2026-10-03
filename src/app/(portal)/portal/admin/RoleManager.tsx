@@ -181,7 +181,8 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
 
   function startEditing(user: User) {
     setEditingId(user.id);
-    setDraft(user.user_roles.map((r) => ({ ...r })));
+    // The inactive marker follows the quarter calendar (Quarter status), so it is not part of the roles being edited.
+    setDraft(user.user_roles.filter((r) => r.role !== 'inactive').map((r) => ({ ...r })));
     setSaveError(null);
   }
 
@@ -215,7 +216,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
         const user = users.find((u) => u.id === userId);
-        setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, user_roles: draft } : u)));
+        setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, user_roles: [...draft, ...u.user_roles.filter((r) => r.role === 'inactive')] } : u)));
         setEditingId(null);
         setToast(`Updated ${user?.display_name || 'user'}'s roles`);
         } else {

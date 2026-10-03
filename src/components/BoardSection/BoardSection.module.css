@@ -238,3 +238,36 @@
   overflow-y: auto;
 }
 .popup { max-height: 88vh; overflow-y: auto; margin-inline: 0; }
+
+/* Team page redesign: a year picker, a bigger exec row, and a compact alumni wall. */
+.yearPicker { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin-bottom: -1rem; }
+.yearChip { padding: 0.5rem 1rem; border-radius: 999px; border: 1px solid var(--glass-border); background: rgba(255, 255, 255, 0.03); color: rgba(242, 241, 240, 0.8); font: inherit; font-size: 0.9rem; cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s; }
+.yearChip:hover { border-color: rgba(255, 199, 44, 0.5); color: var(--yellow); }
+.yearOn { background: var(--yellow); border-color: var(--yellow); color: #0a0f1e; font-weight: 600; }
+.yearOn:hover { color: #0a0f1e; }
+.execGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 250px)); justify-content: center; gap: 1.25rem; width: 100%; margin-inline: auto; }
+/* a past year can be a short list: centre it instead of leaving it in the corner */
+.gridCenter { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; width: 100%; }
+.gridCenter > * { width: 170px; }
+.execCard { padding: 1.6rem 1rem; border-radius: 1.5rem; background: rgba(255, 199, 44, 0.05); border-color: rgba(255, 199, 44, 0.25); }
+.execCard .avatar, .execCard .avatarFallback { width: 128px; height: 128px; }
+.execCard .name { font-size: 1.1rem; }
+.plain { cursor: default; }
+.idle { display: inline-flex; align-items: center; gap: 0.25rem; margin-top: 0.3rem; padding: 0.1rem 0.55rem; border-radius: 999px; background: rgba(148, 163, 184, 0.2); color: #cbd5e1; font-size: 0.68rem; }
+.cardIdle .avatar, .cardIdle .avatarFallback { opacity: 0.75; }
+.wall { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 0.4rem 1rem; }
+.wallItem { display: flex; align-items: center; gap: 0.7rem; width: 100%; padding: 0.45rem 0.6rem; border: 0; border-radius: 0.9rem; background: none; color: var(--white); font: inherit; text-align: left; cursor: pointer; transition: background 0.15s; }
+.wallItem:hover { background: rgba(255, 255, 255, 0.05); }
+.wallItem span { display: flex; flex-direction: column; min-width: 0; }
+.wallItem strong { font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wallItem small { font-size: 0.76rem; color: rgba(242, 241, 240, 0.55); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wallAvatar, .wallFallback { width: 44px; height: 44px; flex: none; border-radius: 50%; object-fit: cover; }
+.wallFallback { display: grid; place-items: center; background: rgba(255, 255, 255, 0.1); font-weight: 700; }
+.gridCenter > * { width: min(170px, calc(50% - 0.5rem)); }
+@media (max-width: 520px) {
+  /* two to a row on a phone, with the exec photos a little smaller */
+  .execGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+  .execCard { padding: 1.1rem 0.6rem; }
+  .execCard .avatar, .execCard .avatarFallback { width: 92px; height: 92px; }
+  .execCard .name { font-size: 0.98rem; }
+}

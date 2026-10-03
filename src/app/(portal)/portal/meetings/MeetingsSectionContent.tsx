@@ -911,8 +911,9 @@ function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, o
 function AdvanceAbsences({ item, onChanged }: { item: Item; onChanged?: () => void }) {
   const ref = item.meeting_id ? { meeting_id: item.meeting_id } : { series_id: item.series_id, date: item.date };
   const qs = item.meeting_id ? `meeting_id=${item.meeting_id}` : `series_id=${item.series_id}&date=${item.date}`;
-  const [data, setData] = useState<{ people: { id: string; name: string }[]; absences: { user_id: string; name: string; reason: string | null; excused: boolean }[] } | null>(null);
+  const [data, setData] = useState<{ people: { id: string; name: string }[]; repeating?: boolean; absences: { user_id: string; name: string; reason: string | null; excused: boolean; every_week?: boolean; from_plan?: boolean }[] } | null>(null);
   const [who, setWho] = useState('');
+  const [everyWeek, setEveryWeek] = useState(false);
   const [reason, setReason] = useState('');
   const [excused, setExcused] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -928,15 +929,15 @@ function AdvanceAbsences({ item, onChanged }: { item: Item; onChanged?: () => vo
   async function add() {
     if (!who) return;
     setBusy(true); setError('');
-    const res = await fetch('/api/meetings/absence', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...ref, user_id: who, reason, excused }) });
+    const res = await fetch('/api/meetings/absence', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...ref, user_id: who, reason, excused, repeat: everyWeek && !!data?.repeating }) });
     setBusy(false);
     if (!res.ok) { setError((await res.json().catch(() => ({}))).error || 'Failed.'); return; }
-    setWho(''); setReason(''); setExcused(true);
+    setWho(''); setReason(''); setExcused(true); setEveryWeek(false);
     await load(); onChanged?.();
   }
-  async function remove(userId: string) {
+  async function remove(userId: string, repeat = false) {
     setError('');
-    const res = await fetch('/api/meetings/absence', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...ref, user_id: userId }) });
+    const res = await fetch('/api/meetings/absence', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...ref, user_id: userId, repeat }) });
     if (!res.ok) setError((await res.json().catch(() => ({}))).error || 'Failed.');
     await load(); onChanged?.();
   }
@@ -951,8 +952,9 @@ function AdvanceAbsences({ item, onChanged }: { item: Item; onChanged?: () => vo
             <ul className={styles.absentList}>
               {data.absences.map((a) => (
                 <li key={a.user_id}>
-                  <span className={styles.personName}>{a.name}<em> · {a.excused ? 'excused' : 'absent'}{a.reason ? `: ${a.reason}` : ''}</em></span>
-                  <IconButton kind="remove" label={`Take ${a.name} off the absent list`} onClick={() => remove(a.user_id)} />
+                  <span className={styles.personName}>{a.name}{a.every_week && <Repeat size={12} aria-label="Every week" className={styles.everyWeek} />}<em> · {a.excused ? 'excused' : 'absent'}{a.every_week ? ' every week' : ''}{a.reason ? `: ${a.reason}` : ''}</em></span>
+                  {a.every_week && !a.from_plan && <Button size="sm" variant="ghost" onClick={() => remove(a.user_id, true)} title="Stop excusing them every week">Stop every week</Button>}
+                  <IconButton kind="remove" label={a.every_week ? `Take ${a.name} off just this week` : `Take ${a.name} off the absent list`} onClick={() => remove(a.user_id)} />
                 </li>
               ))}
             </ul>
@@ -964,6 +966,7 @@ function AdvanceAbsences({ item, onChanged }: { item: Item; onChanged?: () => vo
             </Select>
             <Input value={reason} onChange={(e) => setReason(e.target.value)} maxLength={140} placeholder="Reason (optional)" aria-label="Reason" />
             <CheckTile label="Excused" checked={excused} onChange={() => setExcused((v) => !v)} />
+            {data.repeating && <CheckTile label="Every week" checked={everyWeek} onChange={() => setEveryWeek((v) => !v)} />}
             <Button size="sm" onClick={add} loading={busy} disabled={!who}>Mark away</Button>
           </div>
           <p className={styles.faint}>Excused doesn’t count against attendance.</p>

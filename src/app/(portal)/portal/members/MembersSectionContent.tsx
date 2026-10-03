@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { usePortalParams, useLiveParams } from '@/lib/usePortalParams';
 import SectionTabs from '@/components/ui/SectionTabs';
-import { KeyRound, LayoutGrid, List, X } from 'lucide-react';
+import { KeyRound, LayoutGrid, List, X, Moon } from 'lucide-react';
 import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
 import type { AppRole } from '@/types/database';
 import type { RoleGrant } from '@/lib/capabilities';
@@ -31,7 +31,7 @@ import styles from './members.module.css';
 // isn't silently dropped from the roster.
 const ORDER: (AppRole | 'guest')[] = ['exec', 'lead', 'officer', 'division', 'alumni', 'recruit', 'admin', 'ucsd', 'guest'];
 
-type MemberEntry = Omit<MemberProfileRow, 'user_roles'> & { divisionName?: string };
+type MemberEntry = Omit<MemberProfileRow, 'user_roles'> & { divisionName?: string; inactive?: boolean };
 
 // Shared between the standalone /portal/members page and the portal hub's
 // Members panel, so the two never drift apart visually. A client component
@@ -89,7 +89,7 @@ export default function MembersSectionContent({ rows, keysByUser = {} }: { rows:
       .filter((ur) => ur.role === 'division')
       .map((ur) => (Array.isArray(ur.division) ? ur.division[0] : ur.division)?.name)
       .filter((name): name is string => Boolean(name));
-    (grouped[primaryRole] ??= []).push({ ...profile, divisionName: divisionNames.join(', ') || undefined });
+    (grouped[primaryRole] ??= []).push({ ...profile, divisionName: divisionNames.join(', ') || undefined, inactive: roleSet.has('inactive') });
   });
 
   // Deep-linked in from portal search (?id=<userId>) — auto-opens that
@@ -172,6 +172,7 @@ export default function MembersSectionContent({ rows, keysByUser = {} }: { rows:
                   <div className={styles.info}>
                     <div className={styles.name}>
                       {m.display_name || 'Anonymous'}
+                      {m.inactive && <span className={styles.idleTag} title="Inactive this quarter"><Moon size={11} aria-hidden="true" /> Inactive</span>}
                       {/* One small key for each storage key this person holds. Only the team that tracks keys is sent this. */}
                       {(keysByUser[m.id]?.length ?? 0) > 0 && (
                         <span className={styles.keyIcons} role="img" aria-label={`Has ${keysByUser[m.id].length === 1 ? 'a storage key' : `${keysByUser[m.id].length} storage keys`}: ${keysByUser[m.id].map((k) => k.name).join(', ')}`}>

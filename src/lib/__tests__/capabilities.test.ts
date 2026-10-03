@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { GRANTABLE_CAPABILITIES, hasCapability, withGrantedCapabilities, type RoleGrant } from '@/lib/capabilities';
+import { GRANTABLE_CAPABILITIES, hasCapability, isInactiveStripped, withGrantedCapabilities, type RoleGrant } from '@/lib/capabilities';
 import type { AppRole, Capability } from '@/types/database';
 
 const as = (...roles: AppRole[]): RoleGrant[] => roles.map((role) => ({ role, division_id: null }));
@@ -70,3 +70,30 @@ describe('permissions granted to a person or group (Admin → Access)', () => {
     expect(hasCapability(hr, 'manage_strikes')).toBe(true);
   });
 });
+
+describe('inactive officers and leads', () => {
+  const inactiveOfficer = [{ role: 'officer' as AppRole, division_id: null }, { role: 'inactive' as AppRole, division_id: null }];
+  const inactiveLead = [{ role: 'lead' as AppRole, division_id: null }, { role: 'inactive' as AppRole, division_id: null }];
+  it('keep every viewing permission, QR studio and storage keys', () => {
+    for (const cap of ['view_events', 'view_docs', 'view_photo_albums', 'view_members', 'view_internal_events', 'view_keys', 'view_division_members', 'generate_qr_codes'] as const) {
+      expect(hasCapability(inactiveOfficer, cap)).toBe(true);
+      expect(hasCapability(inactiveLead, cap)).toBe(true);
+    }
+  });
+  it('lose checking in, scanning, attending, and anything that manages, hosts or deletes', () => {
+    for (const cap of ['checkin', 'scan_redemptions', 'attend_meetings', 'manage_events', 'manage_docs', 'manage_photo_albums', 'host_meetings', 'host_internal_events'] as const) {
+      expect(hasCapability(inactiveOfficer, cap)).toBe(false);
+      expect(hasCapability(inactiveLead, cap)).toBe(false);
+    }
+  });
+  it('are unchanged when active, and admins are never limited', () => {
+    expect(hasCapability([{ role: 'officer', division_id: null }], 'checkin')).toBe(true);
+    expect(hasCapability([{ role: 'lead', division_id: null }], 'manage_events')).toBe(true);
+    expect(hasCapability([...inactiveLead, { role: 'admin' as AppRole, division_id: null }], 'manage_events')).toBe(true);
+  });
+  it('the app rule matches the database rule', () => {
+    expect(isInactiveStripped('manage_whatever')).toBe(true);
+    expect(isInactiveStripped('view_whatever')).toBe(false);
+  });
+});
+

@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, Image as ImageIcon, Award, Medal, ArrowLeft, CalendarCheck, CalendarDays, LayoutGrid, CircleHelp, CalendarHeart, KeyRound, ShieldAlert } from 'lucide-react';
+import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, Image as ImageIcon, Award, Medal, ArrowLeft, CalendarCheck, CalendarDays, LayoutGrid, CircleHelp, CalendarHeart, KeyRound, ShieldAlert, CalendarRange } from 'lucide-react';
 import { getProfile, getUserRoles, getMyPrivateProfile, getUser, getRealRoles, getViewAs } from '@/lib/auth';
 import { ViewAsSwitcher, ViewAsBanner } from '@/components/portal/ViewAs';
 import ProfileIncompleteBanner from '@/components/portal/ProfileIncompleteBanner';
@@ -51,6 +51,10 @@ import { loadTodos } from '@/lib/todos';
 import TodoCard from './TodoCard';
 import StrikeCard from './strikes/StrikeCard';
 import StrikesSectionContent from './strikes/StrikesSectionContent';
+import QuarterStatusContent from './quarters/QuarterStatusContent';
+import InactiveNote from './quarters/InactiveNote';
+import { currentQuarter, loadQuarters, quarterName } from '@/lib/quarters';
+import { isInactiveMember } from '@/lib/meetingAudience';
 import { isTracked, mySummary } from '@/lib/strikes';
 import HelpSectionContent from './help/HelpSectionContent';
 import CalendarSectionContent from './calendar/CalendarSectionContent';
@@ -130,6 +134,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
   // Storage keys: the team sees where each key is, and which member holds which (little key icons on the members list).
   const canViewKeys = hasCapability(roles, 'view_keys');
   const canManageStrikes = hasCapability(roles, 'manage_strikes');
+  const canManageQuarters = hasCapability(roles, 'manage_quarters');
   const keyHolders: Awaited<ReturnType<typeof keysByHolder>> = canViewKeys ? await keysByHolder(createServiceClient()).catch(() => ({})) : {};
   const canHostInternalEvents = hasCapability(roles, 'host_internal_events');
   const canHostMeetings = hasCapability(roles, 'host_meetings');         // leads too: plan meetings, manage their own
@@ -341,6 +346,13 @@ export default async function PortalDashboard({ searchParams }: Props) {
       group: 'TG' as const,
       content: <StrikesSectionContent />,
     }] : []),
+    // Exec and admins mark officers and leads inactive for a quarter (admins also set the quarter dates, inside the same page).
+    ...(canManageQuarters ? [{
+      id: 'quarters', icon: <CalendarRange size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Quarter status',
+      description: 'Who is active each quarter',
+      group: 'TG' as const,
+      content: <QuarterStatusContent />,
+    }] : []),
     ...(canViewKeys ? [{
       id: 'keys', icon: <KeyRound size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Storage Keys',
       description: 'Where each storage key is right now',
@@ -352,7 +364,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       id: 'internal-events', icon: <CalendarHeart size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Internal Events',
       description: canHostInternalEvents ? 'Plan internal events and see who’s coming' : 'Socials, trainings and other internal events',
       group: 'TG' as const,
-      content: <InternalEventsSectionContent canHost={canHostInternalEvents} />,
+      content: <InternalEventsSectionContent canHost={canHostInternalEvents} canRsvp={!isInactiveMember(roles)} />,
     }] : []),
     ...(canViewMembers && membersData ? [{
       id: 'members', icon: <Users size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'TG Members',
@@ -509,8 +521,10 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const viewAsNode = canViewAs ? <ViewAsSwitcher active={viewAs} /> : null;
   // Everything waiting on this person, together at the top of home: plans to answer, events to RSVP to, help replies, check-in today.
   // My own strikes (officers, leads and exec only): private, shown only to me.
+  // Sitting the quarter out: a quiet note saying so.
+  const inactiveQuarter = isInactiveMember(roles) ? await loadQuarters(createServiceClient()).then((qs) => currentQuarter(qs)).catch(() => null) : null;
   const myStrikes = isTracked(roles) ? await mySummary(createServiceClient(), profile.id).catch(() => null) : null;
-  const todoItems = await loadTodos(createServiceClient(), { id: profile.id, roles }, { manageAll: canManageMeetings, canHost: canHostMeetings, canViewInternalEvents });
+  const todoItems = await loadTodos(createServiceClient(), { id: profile.id, roles }, { manageAll: canManageMeetings, canHost: canHostMeetings, canViewInternalEvents: canViewInternalEvents && !isInactiveMember(roles) });   // inactive people can't answer events, so there's nothing to RSVP to
   if (canHandleHelp && helpWaiting > 0) todoItems.push({ id: 'help-inbox', text: `${helpWaiting} help ${helpWaiting === 1 ? 'ticket needs' : 'tickets need'} a reply`, detail: 'Open the help inbox', href: '/portal?section=help&tab=inbox', tone: 'urgent' });
   else if (!canHandleHelp && helpWaiting > 0) todoItems.push({ id: 'help-reply', text: helpWaiting === 1 ? 'You have a reply to your question' : `You have ${helpWaiting} replies to your questions`, href: '/portal?section=help', tone: 'normal' });
   if (canCheckin && todayEvents.length > 0) todoItems.push({ id: 'checkin-today', text: `Event today: ${todayEvents[0].title}`, detail: 'Open the check-in scanner', href: '/portal?section=checkin', tone: 'urgent' });
@@ -601,6 +615,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
           banner={
             <>
             <TodoCard items={todoItems} />
+            {isInactiveMember(roles) && <InactiveNote quarter={inactiveQuarter ? quarterName(inactiveQuarter) : null} />}
             {myStrikes && <StrikeCard active={myStrikes.active} limit={myStrikes.limit} />}
             <MyKeys keys={keyHolders[profile.id] ?? []} />
             {nudge.missing.length > 0 && hasBasicProfileInfo({ ...profile, gender: myGender.gender }, isVerifiedMember(roles)) && <ProfileNudge nudge={nudge} />}

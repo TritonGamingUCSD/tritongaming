@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { isExpected } from '@/lib/meetingAudience';
+import { isExpected, isInactiveMember } from '@/lib/meetingAudience';
 import { loadGroups, withExtras } from '@/lib/meetings';
 import { authorizeInternalEvents, RSVP_STATUSES, type RsvpStatus, type InternalEventRow } from '@/lib/internalEvents';
 
@@ -7,6 +7,8 @@ import { authorizeInternalEvents, RSVP_STATUSES, type RsvpStatus, type InternalE
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await authorizeInternalEvents('view_internal_events');
   if (auth.error) return auth.error;
+  // Inactive for the quarter: they can look at events, but not answer them.
+  if (isInactiveMember(auth.roles)) return NextResponse.json({ error: 'You’re inactive this quarter, so you can look but not respond.' }, { status: 403 });
   const { id } = await params;
   const { data } = await auth.svc.from('internal_events').select('*').eq('id', id).maybeSingle();
   const s = data as InternalEventRow | null;

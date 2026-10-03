@@ -57,11 +57,16 @@ export function isExpected(m: MeetingAudience, userId: string, roles: { role: st
   return roles.some((r) => want.includes(r.role));
 }
 
+// Someone sitting the quarter out (an officer or lead marked inactive) carries an 'inactive' marker next to their roles. They can still see meetings,
+// but are never EXPECTED at one: no attendance, absences or strikes, even when they are in the meeting's group or were added by name.
+export const isInactiveMember = (roles: { role: string }[]) => roles.some((r) => r.role === 'inactive');
+export const isExpectedActive = (m: MeetingAudience, userId: string, roles: { role: string }[]) => !isInactiveMember(roles) && isExpected(m, userId, roles);
+
 // May this person check in? Only people the meeting is for (by role, group or being added). Exec and
 // admins get no exception: running a meeting doesn't mean attending it. (An exec can still add someone
-// by hand from the live screen.)
+// by hand from the live screen.) Inactive people can't check in.
 export function canAttendMeeting(m: MeetingAudience, userId: string, roles: { role: string }[]): boolean {
-  return isExpected(m, userId, roles);
+  return isExpectedActive(m, userId, roles);
 }
 
 const UUID = /^[0-9a-f-]{36}$/i;

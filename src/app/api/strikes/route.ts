@@ -33,6 +33,7 @@ export async function POST(request: Request) {
   const people = await trackedPeople(auth.svc);
   const person = people.find((p) => p.id === userId);
   if (!person) return NextResponse.json({ error: 'Strikes are only tracked for officers, leads and exec.' }, { status: 400 });
+  if (person.inactive) return NextResponse.json({ error: `${person.name} is inactive this quarter, so no strike can be added. Their record and vouchers stay as they are.` }, { status: 400 });
   const reason = String(b.reason ?? '').trim().slice(0, 300);
   if (!reason) return NextResponse.json({ error: 'Write the reason for the strike.' }, { status: 400 });
   const date = /^\d{4}-\d{2}-\d{2}$/.test(String(b.incident_date)) ? String(b.incident_date) : null;

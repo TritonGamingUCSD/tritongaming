@@ -1,0 +1,107 @@
+.page { display: flex; flex-direction: column; gap: 1rem; }
+.header { display: flex; flex-direction: column; gap: 0.3rem; }
+.title { display: flex; align-items: center; gap: 0.5rem; margin: 0; font-family: var(--font-futura-heavy); font-size: 1.6rem; color: var(--white); }
+.title svg { color: #93c5fd; }
+.sub { margin: 0; font-size: 0.86rem; color: rgba(242, 241, 240, 0.65); }
+.empty { margin: 0; font-size: 0.9rem; color: rgba(242, 241, 240, 0.6); }
+.span { grid-column: 1 / -1; padding: 0.8rem 0; }
+
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.years { display: flex; gap: 0.35rem; }
+.chip { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.8rem; border-radius: 0.6rem; border: 1px solid rgba(255, 255, 255, 0.14); background: rgba(255, 255, 255, 0.03); color: rgba(242, 241, 240, 0.8); font: inherit; font-size: 0.82rem; cursor: pointer; white-space: nowrap; }
+.chip:hover { border-color: rgba(255, 199, 44, 0.45); color: var(--yellow); }
+.chipOn { background: var(--yellow); border-color: var(--yellow); color: #0a0f1e; font-weight: 600; }
+.chipOn:hover { color: #0a0f1e; }
+.search { display: flex; align-items: center; gap: 0.5rem; flex: 1 1 14rem; max-width: 22rem; height: 36px; padding: 0 0.7rem; border-radius: 0.6rem; border: 1px solid rgba(255, 255, 255, 0.14); background: rgba(255, 255, 255, 0.04); color: rgba(242, 241, 240, 0.55); }
+.search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--white); font: inherit; font-size: 0.88rem; }
+.search:focus-within { border-color: rgba(255, 199, 44, 0.55); }
+.searchClear { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; flex: none; border: 0; border-radius: 50%; background: rgba(255, 255, 255, 0.1); color: var(--white); cursor: pointer; }
+
+/* the matrix: people down the side, a quarter per column; on a phone it scrolls sideways with the names kept in view */
+.wrap { overflow-x: auto; border-radius: 0.9rem; }
+.matrix { display: grid; min-width: min-content; }
+.corner, .person { position: sticky; left: 0; z-index: 2; background: #0a0f1e; }
+.colHead { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; padding: 0.4rem 0.3rem; text-align: center; color: var(--white); border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+.colHead small { font-size: 0.66rem; color: rgba(242, 241, 240, 0.55); white-space: nowrap; }
+.colHead em { font-style: normal; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #0a0f1e; background: #34d399; border-radius: 999px; padding: 0 0.45rem; }
+.now { background: rgba(52, 211, 153, 0.07); }
+.row { display: contents; }
+.person { display: flex; align-items: center; gap: 0.6rem; min-width: 0; padding: 0.5rem 0.6rem 0.5rem 0.1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+.avatar { border-radius: 50%; flex: none; object-fit: cover; }
+.avatarFallback { display: grid; place-items: center; width: 32px; height: 32px; flex: none; border-radius: 50%; background: rgba(255, 255, 255, 0.12); color: var(--white); font-size: 0.85rem; font-weight: 700; }
+.name { display: flex; flex-direction: column; min-width: 0; }
+.name strong { font-size: 0.9rem; color: var(--white); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.name small { font-size: 0.72rem; color: rgba(242, 241, 240, 0.55); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.role { color: #93c5fd; font-weight: 600; }
+.roleLead { color: #6ee7b7; }
+.cell { display: grid; place-items: center; padding: 0.35rem; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+.nowCell { background: rgba(52, 211, 153, 0.04); }
+.toggle { display: grid; place-items: center; width: 44px; height: 34px; border-radius: 0.6rem; border: 1px solid transparent; cursor: pointer; transition: background 0.15s, transform 0.1s; }
+.toggle:active:not(:disabled) { transform: scale(0.96); }
+.toggle:disabled { cursor: default; opacity: 0.6; }
+.toggle:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+.on { background: rgba(52, 211, 153, 0.18); border-color: rgba(52, 211, 153, 0.5); color: #6ee7b7; }
+.off { background: rgba(148, 163, 184, 0.16); border-color: rgba(148, 163, 184, 0.45); color: #cbd5e1; }
+.toggle.on:hover:not(:disabled) { background: rgba(52, 211, 153, 0.3); }
+.toggle.off:hover:not(:disabled) { background: rgba(148, 163, 184, 0.3); }
+.key { display: flex; gap: 1rem; margin: 0; font-size: 0.78rem; color: rgba(242, 241, 240, 0.6); }
+.keyItem { display: inline-flex; align-items: center; gap: 0.35rem; }
+.keyItem i { display: grid; place-items: center; width: 22px; height: 20px; border-radius: 0.4rem; border: 1px solid transparent; }
+
+/* admin: quarter dates */
+.dates { border-top: 1px solid rgba(255, 255, 255, 0.08); border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+.datesHead { display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.7rem 0; border: 0; background: none; color: var(--white); font: inherit; font-size: 0.9rem; cursor: pointer; text-align: left; }
+.datesHead span { color: rgba(242, 241, 240, 0.5); font-size: 0.78rem; }
+.datesHead svg:last-child { margin-left: auto; transition: transform 0.15s; }
+.flip { transform: rotate(180deg); }
+.datesBody { display: flex; flex-direction: column; gap: 0.8rem; padding-bottom: 0.9rem; }
+.qList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.qRow { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.qRow strong { min-width: 8rem; font-size: 0.9rem; color: var(--white); }
+.qRow em { font-style: normal; font-size: 0.7rem; color: #34d399; }
+.addForm { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.6rem; }
+.addForm > label { flex: 1 1 9rem; min-width: 0; }
+.dateBox { flex: 0 1 12rem; min-width: 10rem; }
+.addForm > label { flex: 0 1 12rem; }
+
+.inactiveNote { display: flex; align-items: center; gap: 0.7rem; padding: 0.7rem 0.9rem; border-radius: 0.9rem; background: rgba(148, 163, 184, 0.12); color: #cbd5e1; }
+.inactiveNote svg { flex: none; color: #94a3b8; }
+.inactiveNote span { display: flex; flex-direction: column; gap: 0.1rem; }
+.inactiveNote strong { font-size: 0.9rem; color: var(--white); }
+.inactiveNote small { font-size: 0.78rem; color: rgba(242, 241, 240, 0.6); }
+
+/* Team by year */
+.yearBox { display: flex; flex-direction: column; gap: 0.8rem; }
+.yearHead { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+.yearHead h2 { margin: 0; font-family: var(--font-futura-heavy); font-size: 1.25rem; color: var(--white); }
+.stamp { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.74rem; color: rgba(242, 241, 240, 0.55); margin-right: auto; }
+.stampDone { color: #6ee7b7; }
+.tierBlock h3 { display: flex; align-items: center; gap: 0.4rem; margin: 0 0 0.35rem; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(242, 241, 240, 0.55); }
+.tierBlock h3 span, .alumni h2 span { color: rgba(242, 241, 240, 0.4); font-weight: 400; }
+.memberList { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 0.4rem 1rem; }
+.member { display: flex; align-items: center; gap: 0.6rem; padding: 0.35rem 0; border-bottom: 1px solid rgba(255, 255, 255, 0.06); min-width: 0; }
+.memberName { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.memberName strong { font-size: 0.9rem; color: var(--white); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.memberName small { font-size: 0.74rem; color: rgba(242, 241, 240, 0.55); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.memberActions { display: inline-flex; gap: 0.2rem; }
+.editForm { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; flex: 1; min-width: 0; }
+.editForm strong { flex: 1 1 100%; font-size: 0.85rem; color: var(--white); }
+.editForm > * { min-width: 0; }
+.addRow { display: flex; flex-direction: column; gap: 0.6rem; align-items: flex-start; }
+.whoField { position: relative; flex: 1 1 14rem; min-width: 12rem; align-self: end; }
+.pick { position: absolute; z-index: 5; left: 0; right: 0; top: calc(100% + 4px); list-style: none; margin: 0; padding: 0.25rem; border-radius: 0.6rem; background: #0e1424; border: 1px solid rgba(255, 255, 255, 0.14); max-height: 12rem; overflow-y: auto; }
+.pick button { display: block; width: 100%; padding: 0.4rem 0.6rem; border: 0; border-radius: 0.4rem; background: none; color: var(--white); font: inherit; font-size: 0.85rem; text-align: left; cursor: pointer; }
+.pick button:hover { background: rgba(255, 255, 255, 0.08); }
+.chosen { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.7rem; border-radius: 0.6rem; background: rgba(52, 211, 153, 0.14); color: var(--white); font-size: 0.85rem; }
+.chosen button { display: inline-grid; place-items: center; border: 0; background: none; color: inherit; cursor: pointer; }
+.alumni { display: flex; flex-direction: column; gap: 0.7rem; padding-top: 0.8rem; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+.alumni h2 { display: flex; align-items: center; gap: 0.5rem; margin: 0; font-size: 1rem; color: var(--white); }
+.alumni h2 svg { color: #fbbf24; }
+.autoRow { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: rgba(242, 241, 240, 0.8); cursor: pointer; }
+.alumni > button { align-self: flex-start; }
+
+.pick { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.1rem; font-size: 0.78rem; color: rgba(242, 241, 240, 0.6); cursor: pointer; }
+.pickBox, .pick input { width: 1rem; height: 1rem; accent-color: var(--yellow); flex: none; cursor: pointer; }
+.bulkBar { position: sticky; top: 0.5rem; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding: 0.55rem 0.8rem; border-radius: 0.8rem; border: 1px solid rgba(255, 199, 44, 0.4); background: #141a2c; color: var(--white); font-size: 0.85rem; }
+.bulkSelect { padding: 0.35rem 0.6rem; border-radius: 0.5rem; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.05); color: inherit; font: inherit; font-size: 0.82rem; }
+.bulkClear { margin-left: auto; background: none; border: 0; color: rgba(242, 241, 240, 0.7); font: inherit; font-size: 0.82rem; cursor: pointer; text-decoration: underline; }

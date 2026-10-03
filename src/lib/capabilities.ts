@@ -85,6 +85,9 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // The strike tracker (private). Exec and the HR team (the "manage strikes" permission, handed out in Admin → Access) and admins see everyone's strikes,
   // add them directly (no approval), take them away, and handle vouchers. Leads and officers have no part in it. Everyone tracked always sees their own strikes. UI/API gating only.
   manage_strikes: ['exec', 'admin'],
+  // Quarter status: exec and admin mark officers and leads inactive for a quarter (and see the yearly records). Setting up the quarter dates themselves is admin only
+  // (manage_roles). UI/API gating only (the routes use the service role).
+  manage_quarters: ['exec', 'admin'],
   host_internal_events: ['lead', 'exec', 'admin'],
   manage_internal_events: ['exec', 'admin'],
   // The Division Members directory (who leads each division): the whole team can look —
@@ -97,6 +100,12 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   host_meetings: ['lead', 'exec', 'admin'],
 };
 
+// What being inactive takes away: anything that manages, hosts or deletes, plus checking in, scanning redemptions and attending meetings. Mirrors has_capability()
+// in 20261004101000_quarters.sql. Everything else (view_*, QR codes, storage keys, their own profile) stays.
+export function isInactiveStripped(capability: string): boolean {
+  return /^(manage|host|delete)_/.test(capability) || capability === 'checkin' || capability === 'scan_redemptions' || capability === 'attend_meetings';
+}
+
 /**
  * Does this set of role grants include the given capability?
  *
@@ -105,6 +114,8 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
  * person hold a capability for any division" (e.g. nav-visibility checks).
  */
 export function hasCapability(roles: RoleGrant[], capability: Capability, divisionId?: string): boolean {
+  // An inactive officer or lead keeps every viewing permission and loses the ones that change or run things (admins are never affected).
+  if (isInactiveStripped(capability) && roles.some((r) => r.role === 'inactive') && !roles.some((r) => r.role === 'admin')) return false;
   return roles.some((r) => {
     if (r.role === 'admin') return true;
     // A permission granted straight to the person or one of their groups (see withGrantedCapabilities).

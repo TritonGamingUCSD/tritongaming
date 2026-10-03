@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { audienceRoles, canAttendMeeting, isExpected, validateAudienceInput } from '@/lib/meetingAudience';
+import { audienceRoles, canAttendMeeting, isExpected, isExpectedActive, isInactiveMember, validateAudienceInput } from '@/lib/meetingAudience';
 
 const roles = (...r: string[]) => r.map((role) => ({ role }));
 
@@ -58,3 +58,16 @@ describe('meetings for chosen people only', () => {
     expect(isExpected(m, 'someone', roles('officer'))).toBe(false);
   });
 });
+
+describe('inactive officers', () => {
+  const roles = (...r: string[]) => r.map((role) => ({ role }));
+  it('are never expected or able to check in, even when added by name or through a group', () => {
+    const m = { audience: null, invitees: ['x'], extra_ids: ['x'] };
+    expect(isInactiveMember(roles('officer', 'inactive'))).toBe(true);
+    expect(isExpected(m, 'x', roles('officer', 'inactive'))).toBe(true);           // they can still SEE it
+    expect(isExpectedActive(m, 'x', roles('officer', 'inactive'))).toBe(false);
+    expect(canAttendMeeting({ audience: ['officer'] }, 'a', roles('officer', 'inactive'))).toBe(false);
+    expect(canAttendMeeting({ audience: ['officer'] }, 'a', roles('officer'))).toBe(true);
+  });
+});
+

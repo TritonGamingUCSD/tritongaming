@@ -26,6 +26,8 @@ export interface BoardMember {
   board_visibility: Record<string, boolean>;
   tier: BoardTier;
   board_order: number | null;
+  /** Sitting out this quarter: still listed, with a small tag. */
+  inactive?: boolean;
 }
 
 const TIER_RANK: Record<BoardTier, number> = { exec: 0, lead: 1, officer: 2, alumni: 3 };
@@ -143,6 +145,7 @@ async function fetchBoardMembers(): Promise<BoardMember[]> {
       board_visibility: row.board_visibility ?? {},
       tier,
       board_order: row.board_order,
+      inactive: roles.includes('inactive'),
     };
   });
 

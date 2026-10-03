@@ -26,6 +26,7 @@ const DEFS: Def[] = [
   S('battlepass', 'Battlepass', 'Officer recognition points', 'battlepass', ['points', 'tier'], undefined, (r) => r.some((x) => BATTLEPASS_ROLES.includes(x.role))),
   S('keys', 'Storage Keys', 'Who has each storage key', 'keys', ['key', 'keys', 'storage', 'closet', 'lock'], 'view_keys'),
   S('strikes', 'Strikes', 'Private strike tracker (HR and exec)', 'strikes', ['strike', 'strikes', 'voucher', 'hr', 'attendance'], ['manage_strikes']),
+  S('quarters', 'Quarter status', 'Who is active or inactive each quarter', 'quarters', ['quarter', 'inactive', 'active', 'officer', 'term', 'year'], ['manage_quarters']),
   S('divisions', 'Divisions', 'Edit the divisions directory and pages', 'divisions', ['division', 'edit'], ['manage_divisions_directory', 'manage_division']),
   S('division-members', 'Division Members', 'Who leads each division', 'division-members', ['leads', 'division'], 'view_division_members'),
   S('docs', 'Documentation', 'How-to guides', 'docs', ['guide', 'help', 'how to', 'docs'], 'view_docs'),

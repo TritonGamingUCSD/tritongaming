@@ -41,7 +41,8 @@ async function api(url: string, init?: RequestInit): Promise<{ ok: boolean; json
   } catch { return { ok: false, json: { error: 'Network error. Try again.' } }; }
 }
 
-export default function InternalEventsSectionContent({ canHost }: { canHost: boolean }) {
+// `canRsvp` is false for someone sitting the quarter out: they can look at events but not answer them.
+export default function InternalEventsSectionContent({ canHost, canRsvp = true }: { canHost: boolean; canRsvp?: boolean }) {
   const nav = useUrlNav();
   const sync = usePortalTabSync('internal-events');
   const valid: Tab[] = canHost ? ['upcoming', 'plan'] : ['upcoming'];
@@ -56,7 +57,7 @@ export default function InternalEventsSectionContent({ canHost }: { canHost: boo
         <SectionTabs<Tab> label="Internal events" value={tab} onChange={(t) => { setTab(t); sync(t); }}
           tabs={[{ id: 'upcoming', label: 'Coming up', icon: <CalendarHeart size={15} /> }, { id: 'plan', label: 'Plan', icon: <CalendarPlus size={15} /> }]} />
       )}
-      {tab === 'upcoming' ? <UpcomingPanel /> : <PlanPanel />}
+      {tab === 'upcoming' ? <UpcomingPanel canRsvp={canRsvp} /> : <PlanPanel />}
     </div>
   );
 }
@@ -86,7 +87,7 @@ function Summary({ s }: { s: InternalEvent }) {
   return <>{parts.length ? parts.join(' · ') : 'No replies yet'}</>;
 }
 
-function UpcomingPanel() {
+function UpcomingPanel({ canRsvp }: { canRsvp: boolean }) {
   const { items, error, load, setError } = useInternalEvents('invited');
   const [busy, setBusy] = useState<string | null>(null);
   async function rsvp(s: InternalEvent, status: Rsvp) {
@@ -124,7 +125,7 @@ function UpcomingPanel() {
             </div>
             <div className={styles.rsvp} role="group" aria-label={`Are you coming to ${s.title}?`}>
               <IconButton kind="calendar" size="sm" className={styles.addCal} label={`Add ${s.title} to Google Calendar`} href={googleCalendarUrl({ title: s.title, start: s.starts_at, end: s.ends_at, location: s.location, details: s.description })} />
-              {([['going', 'Going', Check], ['maybe', 'Maybe', CircleDashed], ['not_going', 'Can’t go', XIcon]] as const).map(([k, label, Icon]) => (
+              {canRsvp && ([['going', 'Going', Check], ['maybe', 'Maybe', CircleDashed], ['not_going', 'Can’t go', XIcon]] as const).map(([k, label, Icon]) => (
                 <button key={k} type="button" disabled={busy === s.id} aria-pressed={s.mine === k} className={`${styles.rsvpBtn} ${s.mine === k ? styles[`on_${k}`] : ''}`} onClick={() => rsvp(s, k)}>
                   <Icon size={14} strokeWidth={2.25} aria-hidden="true" /> {label}
                 </button>

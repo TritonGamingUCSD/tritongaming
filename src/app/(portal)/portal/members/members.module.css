@@ -318,3 +318,5 @@
 .detailKeysList { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .keyPill { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.7rem; border-radius: 999px; color: #14161f; font-size: 0.82rem; font-weight: 700; }
 .keyPill svg { transform: rotate(-40deg); }
+
+.idleTag { display: inline-flex; align-items: center; gap: 0.25rem; margin-left: 0.4rem; padding: 0.05rem 0.5rem; border-radius: 999px; background: rgba(148, 163, 184, 0.2); color: #cbd5e1; font-size: 0.66rem; font-weight: 600; vertical-align: middle; }

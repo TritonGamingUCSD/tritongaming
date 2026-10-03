@@ -1,4 +1,5 @@
-export type AppRole = 'ucsd' | 'division' | 'officer' | 'lead' | 'exec' | 'admin' | 'alumni' | 'recruit';
+// 'inactive' is a marker that sits next to someone's real roles while they sit out a quarter (see src/lib/quarters.ts); it is never assigned by hand.
+export type AppRole = 'ucsd' | 'division' | 'officer' | 'lead' | 'exec' | 'admin' | 'alumni' | 'recruit' | 'inactive';
 // 'guest' is never stored — it just means zero rows in user_roles.
 export type UserRole = 'guest' | AppRole;
 export type TicketStatus = 'active' | 'used' | 'cancelled' | 'expired';
@@ -49,6 +50,7 @@ export type Capability =
   | 'view_internal_events'
   | 'view_keys'
   | 'manage_strikes'
+  | 'manage_quarters'
   | 'manage_keys'
   | 'view_attendance_reports'
   | 'host_internal_events'
@@ -486,6 +488,7 @@ export const ROLE_DISPLAY_RANK: Record<UserRole, number> = {
   lead: 3,
   exec: 4,
   admin: 5,
+  inactive: 0,
 };
 
 export const ROLE_LABELS: Record<UserRole, string> = {
@@ -498,6 +501,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   admin: 'Admin',
   alumni: 'Alumni',
   recruit: 'Recruit',
+  inactive: 'Inactive',
 };
 
 export const ROLE_COLORS: Record<UserRole, string> = {
@@ -510,6 +514,7 @@ export const ROLE_COLORS: Record<UserRole, string> = {
   admin: '#ffc72c',
   alumni: '#b45309',
   recruit: '#de4188',
+  inactive: '#6b7280',
 };
 
 // Roles assignable via the Role Manager UI (excludes 'guest', which is the

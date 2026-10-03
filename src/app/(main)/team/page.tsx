@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import BoardSection from '@/components/BoardSection/BoardSection';
 import { getContentBlock } from '@/lib/content';
 import { getBoardMembers } from './getBoardMembers';
+import { getTeamYears } from './getTeamYears';
 import styles from './team.module.css';
 
 export const metadata: Metadata = {
@@ -25,8 +26,9 @@ export const metadata: Metadata = {
 export const revalidate = 60;
 
 export default async function TeamPage() {
-  const [boardMembers, content] = await Promise.all([
+  const [boardMembers, years, content] = await Promise.all([
     getBoardMembers(),
+    getTeamYears(),
     getContentBlock('page.about'),
   ]);
   const label = content.label as string;
@@ -43,7 +45,7 @@ export default async function TeamPage() {
           <p className={styles.heroSub}>{subtitle}</p>
         </div>
       </div>
-      <BoardSection members={boardMembers} />
+      <BoardSection members={boardMembers} years={years} />
     </div>
   );
 }

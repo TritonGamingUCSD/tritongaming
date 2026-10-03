@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { ArrowLeft, Check, Lock, RotateCcw, Plus, Search, Send, ShieldAlert, Ticket, X } from 'lucide-react';
+import { ArrowLeft, Check, Lock, Moon, RotateCcw, Plus, Search, Send, ShieldAlert, Ticket, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
 import Notice from '@/components/ui/Notice';
@@ -13,7 +13,7 @@ import { confirmHold } from '@/lib/confirmHold';
 import { STRIKES_AT_LIMIT, countLabel } from '@/lib/strikeLabels';
 import styles from './tracker.module.css';
 
-interface Person { id: string; name: string; avatar_url: string | null; role: string; active: number; vouchers: number; atLimit: boolean }
+interface Person { id: string; name: string; avatar_url: string | null; role: string; active: number; vouchers: number; atLimit: boolean; inactive: boolean }
 interface Strike { id: string; mark: string | null; status: 'published' | 'removed'; category: string; reason: string; incident_date: string; meeting_id: string | null; created_at: string; published_at: string | null; removed_at: string | null; removed_how: 'taken' | 'voucher' | 'reset' | null; removed_note: string | null; created_by: string | null; published_by: string | null; removed_by: string | null; }
 interface Voucher { id: string; reason: string | null; created_at: string; used_at: string | null; used_on_strike_id: string | null; given_by: string | null; removed_at: string | null; removed_by: string | null; removed_reason: string | null }
 interface Event { id: string; kind: string; label: string | null; reason: string | null; by: string | null; at: string }
@@ -97,6 +97,7 @@ function Tracker() {
                   <button type="button" className={`${styles.person} ${selected === p.id ? styles.personOn : ''}`} onClick={() => setSelected(p.id)}>
                     <Avatar name={p.name} src={p.avatar_url} />
                     <span className={styles.personName}><strong>{p.name}</strong><small>{p.role}</small></span>
+                    {p.inactive && <span className={styles.idleTag} title="Inactive this quarter"><Moon size={11} aria-hidden="true" /> Inactive</span>}
                     {p.vouchers > 0 && <span className={styles.voucherTag} title="Unused vouchers"><Ticket size={11} aria-hidden="true" /> {p.vouchers}</span>}
                     <Pips active={p.active} limit={limit} />
                   </button>
@@ -181,9 +182,10 @@ function PersonDetail({ person, limit, me, onBack, onChanged }: { person: Person
       {error && <Notice tone="error">{error}</Notice>}
       {note && <Notice tone="success">{note}</Notice>}
 
+      {person.inactive && <p className={styles.idleNote}><Moon size={14} aria-hidden="true" /> Inactive this quarter: no new strikes, and their record and vouchers stay as they are.</p>}
       {!isMe && (
         <div className={styles.actionsBar}>
-          <Button size="sm" variant="secondary" onClick={() => { setAdding((v) => !v); setGiving(false); }} aria-expanded={adding}><Plus size={14} aria-hidden="true" /> Add a strike</Button>
+          {!person.inactive && <Button size="sm" variant="secondary" onClick={() => { setAdding((v) => !v); setGiving(false); }} aria-expanded={adding}><Plus size={14} aria-hidden="true" /> Add a strike</Button>}
           <Button size="sm" variant="secondary" onClick={() => { setGiving((v) => !v); setAdding(false); }} aria-expanded={giving}><Ticket size={14} aria-hidden="true" /> Give a voucher</Button>
           {person.active > 0 && <Button size="sm" variant="ghost" onClick={() => { setResetting((v) => !v); setAdding(false); setGiving(false); }} aria-expanded={resetting}><RotateCcw size={14} aria-hidden="true" /> Reset</Button>}
         </div>

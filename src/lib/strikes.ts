@@ -6,7 +6,8 @@ import { hasCapability, withGrantedCapabilities } from '@/lib/capabilities';
 import { loadGrantedCapabilities } from '@/lib/grantedCapabilities';
 import { pacificDayKey } from '@/lib/checkinDays';
 import { attachExtras } from '@/lib/meetings';
-import { isExpected } from '@/lib/meetingAudience';
+import { isExpectedActive } from '@/lib/meetingAudience';
+import { inactiveIds } from '@/lib/quarters';
 import { createNotifications } from '@/lib/notify';
 import { logAudit } from '@/lib/audit';
 import { staffName } from '@/lib/names';
@@ -92,17 +93,19 @@ export async function mySummary(svc: SupabaseClient, userId: string) {
   return { limit: STRIKE_LIMIT, active, atLimit: active >= STRIKE_LIMIT, vouchers: vouchers.filter((x) => !x.used_on && !x.removed_on).length, strikes, voucherList: vouchers, history };
 }
 
-export interface TrackedPerson { id: string; name: string; avatar_url: string | null; role: string; roleRank: number }
+// `inactive`: sitting the quarter out. Their record and vouchers stay (and a reset still clears their strikes), but no new strike can be added and nothing is suggested.
+export interface TrackedPerson { id: string; name: string; avatar_url: string | null; role: string; roleRank: number; inactive: boolean }
 export async function trackedPeople(svc: SupabaseClient): Promise<TrackedPerson[]> {
   const { data: grants } = await svc.from('user_roles').select('user_id, role').in('role', [...TRACKED_ROLES]);
   const rolesOf = new Map<string, AppRole[]>();
   for (const g of grants ?? []) rolesOf.set(g.user_id as string, [...(rolesOf.get(g.user_id as string) ?? []), g.role as AppRole]);
+  const idle = await inactiveIds(svc);
   const ids = [...rolesOf.keys()];
   if (!ids.length) return [];
   const { data: ps } = await svc.from('profiles').select('id, display_name, google_first_name, google_last_name, avatar_url, custom_avatar_url').in('id', ids);
   return (ps ?? []).map((p) => {
     const top = [...(rolesOf.get(p.id as string) ?? [])].sort((a, b) => ROLE_DISPLAY_RANK[b] - ROLE_DISPLAY_RANK[a])[0];
-    return { id: p.id as string, name: staffName(p), avatar_url: resolveAvatarUrl({ avatar_url: p.avatar_url as string | null, custom_avatar_url: p.custom_avatar_url as string | null }), role: top ? ROLE_LABELS[top] : '', roleRank: top ? ROLE_DISPLAY_RANK[top] : 0 };
+    return { id: p.id as string, name: staffName(p), avatar_url: resolveAvatarUrl({ avatar_url: p.avatar_url as string | null, custom_avatar_url: p.custom_avatar_url as string | null }), role: top ? ROLE_LABELS[top] : '', roleRank: top ? ROLE_DISPLAY_RANK[top] : 0, inactive: idle.has(p.id as string) };
   }).sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -177,7 +180,7 @@ export async function suggestions(svc: SupabaseClient, people?: TrackedPerson[])
     const k = `${m.id}|${p.id}`;
     if (present.has(k) || excused.has(k) || done.has(k)) continue;
     if (new Date(m.ends_at as string).getTime() <= (clearedAt.get(p.id) ?? 0)) continue;
-    if (!isExpected({ audience: m.audience as string[] | null, invitees: m.invitees, group_ids: m.group_ids, extra_ids: m.extra_ids }, p.id, rolesOf.get(p.id) ?? [])) continue;
+    if (!isExpectedActive({ audience: m.audience as string[] | null, invitees: m.invitees, group_ids: m.group_ids, extra_ids: m.extra_ids }, p.id, rolesOf.get(p.id) ?? [])) continue;
     out.push({ user_id: p.id, name: p.name, meeting_id: m.id as string, title: m.title as string, date: m.meeting_date as string });
   }
   return out.sort((a, b) => b.date.localeCompare(a.date) || a.name.localeCompare(b.name));

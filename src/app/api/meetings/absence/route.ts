@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/audit';
-import { authorizeMeetings, getExpectedPeople, resolveOccurrence } from '@/lib/meetings';
+import { authorizeMeetings, getExpectedPeople, markEveryWeek, resolveOccurrence, stopEveryWeek } from '@/lib/meetings';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,9 +9,10 @@ const UUID = /^[0-9a-f-]{36}$/i;
 // Advance absences: a host records that someone can't make a meeting (with a reason) before it starts, for a meeting
 // or for one occurrence of a repeating meeting. Works for meetings that haven't been opened yet; the occurrence is created on the
 // first absence. {meeting_id} or {series_id, date}.
-//   GET    ?meeting_id=… | ?series_id=…&date=…   who the meeting is for + who is already marked absent
-//   POST   { …, user_id, reason?, excused? }       mark someone absent
-//   DELETE { …, user_id }                          take the mark off
+//   GET    ?meeting_id=… | ?series_id=…&date=…   who the meeting is for + who is already marked absent (and which are "every week")
+//   POST   { …, user_id, reason?, excused?, repeat? }   mark someone absent. With repeat (a repeating meeting only) they are excused every week from now on:
+//                                                  the series remembers them and every coming week that hasn't opened gets the mark.
+//   DELETE { …, user_id, repeat? }                 take the mark off (with repeat: stop it for every coming week too)
 export async function GET(request: Request) {
   const auth = await authorizeMeetings('host_meetings');
   if (auth.error) return auth.error;
@@ -25,6 +26,9 @@ export async function GET(request: Request) {
   const { data: abs } = found.meeting
     ? await auth.svc.from('meeting_absences').select('user_id, reason, excused').eq('meeting_id', found.meeting.id)
     : found.series ? await auth.svc.from('meeting_series_absences').select('user_id, reason, excused').eq('series_id', found.series.id) : { data: [] as { user_id: string; reason: string | null; excused: boolean }[] };
+  const seriesId = found.meeting?.series_id ?? found.series?.id ?? null;
+  const { data: standingRows } = seriesId ? await auth.svc.from('meeting_series_absences').select('user_id, plan_id').eq('series_id', seriesId) : { data: [] as { user_id: string; plan_id: string | null }[] };
+  const everyWeek = new Map((standingRows ?? []).map((r) => [r.user_id as string, r.plan_id as string | null]));
   const name = new Map(expected.map((p) => [p.id, p.name]));
   const missing = (abs ?? []).map((a) => a.user_id as string).filter((id) => !name.has(id));
   if (missing.length) {
@@ -33,7 +37,8 @@ export async function GET(request: Request) {
   }
   return NextResponse.json({
     people: expected.map((p) => ({ id: p.id, name: p.name })),
-    absences: (abs ?? []).map((a) => ({ user_id: a.user_id, name: name.get(a.user_id as string) ?? 'Unnamed', reason: a.reason, excused: a.excused })),
+    absences: (abs ?? []).map((a) => ({ user_id: a.user_id, name: name.get(a.user_id as string) ?? 'Unnamed', reason: a.reason, excused: a.excused, every_week: everyWeek.has(a.user_id as string), from_plan: !!everyWeek.get(a.user_id as string) })),
+    repeating: !!seriesId,
   });
 }
 
@@ -53,6 +58,10 @@ export async function POST(request: Request) {
   await auth.svc.from('meeting_answers').delete().eq('meeting_id', m.id).eq('user_id', b.user_id);
   const { error } = await auth.svc.from('meeting_absences').upsert({ meeting_id: m.id, user_id: b.user_id, reason, excused, marked_by: auth.user.id }, { onConflict: 'meeting_id,user_id' });
   if (error) return NextResponse.json({ error: 'Failed to save.' }, { status: 500 });
+  if (b.repeat === true) {
+    if (!m.series_id) return NextResponse.json({ error: 'Only a repeating meeting can be excused every week.' }, { status: 400 });
+    await markEveryWeek(auth.svc, m.series_id, String(b.user_id), reason, excused, auth.user.id);
+  }
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'mark absent', entityType: 'meeting attendance', entityId: m.id, summary: `Marked someone ${excused ? 'excused' : 'absent'} ahead of ${m.title} (${m.meeting_date})${reason ? `: ${reason}` : ''}`, details: { user_id: b.user_id } });
   return NextResponse.json({ ok: true, meeting_id: m.id });
 }
@@ -65,5 +74,7 @@ export async function DELETE(request: Request) {
   const found = await resolveOccurrence(auth, b, false);
   if ('error' in found) return found.error;
   if (found.meeting) await auth.svc.from('meeting_absences').delete().eq('meeting_id', found.meeting.id).eq('user_id', b.user_id);
+  const seriesId = found.meeting?.series_id ?? found.series?.id ?? null;
+  if (b.repeat === true && seriesId) await stopEveryWeek(auth.svc, seriesId, String(b.user_id));
   return NextResponse.json({ ok: true });
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { pacificDayKey } from '@/lib/checkinDays';
-import { AUDIENCE_ROLES, audienceRoles, isExpected } from '@/lib/meetingAudience';
+import { AUDIENCE_ROLES, audienceRoles, isExpectedActive } from '@/lib/meetingAudience';
 import { addDaysKey, attachExtras, authorizeAttendance } from '@/lib/meetings';
 import { ROLE_DISPLAY_RANK, ROLE_LABELS, type AppRole } from '@/types/database';
 import { staffName } from '@/lib/names';
@@ -32,7 +32,7 @@ export async function GET(request: Request) {
 
   const [{ data: rows }, { data: grants }, { data: absRows }] = await Promise.all([
     ids.length ? auth.svc.from('meeting_attendance').select('meeting_id, user_id').in('meeting_id', ids) : Promise.resolve({ data: [] as { meeting_id: string; user_id: string }[] }),
-    auth.svc.from('user_roles').select('user_id, role').in('role', [...AUDIENCE_ROLES]),
+    auth.svc.from('user_roles').select('user_id, role').in('role', [...AUDIENCE_ROLES, 'inactive']),
     ids.length ? auth.svc.from('meeting_absences').select('meeting_id, user_id, excused').in('meeting_id', ids) : Promise.resolve({ data: [] as { meeting_id: string; user_id: string; excused: boolean }[] }),
   ]);
   const absences = new Map<string, boolean>();   // `${meeting}|${user}` → excused
@@ -56,7 +56,7 @@ export async function GET(request: Request) {
     // absence (doesn't count), g = came as a guest to a meeting not meant for them (doesn't count),
     // - = not meant for them.
     const marks = meetings.map((m) => {
-      const expectedHere = isExpected({ audience: m.audience as string[] | null, invitees: m.invitees, group_ids: m.group_ids, extra_ids: m.extra_ids }, p.id as string, roles);
+      const expectedHere = isExpectedActive({ audience: m.audience as string[] | null, invitees: m.invitees, group_ids: m.group_ids, extra_ids: m.extra_ids }, p.id as string, roles);
       // Came to a meeting that wasn't meant for them (exec/admin often do): shown, but not counted.
       if (present.get(m.id as string)?.has(p.id as string)) return expectedHere ? 'p' : 'g';
       const abs = absences.get(`${m.id}|${p.id}`);

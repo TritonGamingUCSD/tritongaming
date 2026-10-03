@@ -4,7 +4,7 @@ import { pacificDayKey } from '@/lib/checkinDays';
 import { fetchLinkedEmails, pickDisplayEmails } from '@/lib/linkedEmails';
 import { ROLE_DISPLAY_RANK, ROLE_LABELS, type AppRole } from '@/types/database';
 import { addDaysKey, attachExtras, authorizeMeetings, loadGroups } from '@/lib/meetings';
-import { AUDIENCE_ROLES, audienceLabel, isExpected } from '@/lib/meetingAudience';
+import { AUDIENCE_ROLES, audienceLabel, isExpectedActive } from '@/lib/meetingAudience';
 import { staffName } from '@/lib/names';
 
 export const dynamic = 'force-dynamic';
@@ -43,7 +43,7 @@ export async function GET(request: Request) {
   const { data: att } = ids.length ? await auth.svc.from('meeting_attendance').select('meeting_id, user_id, checked_in_at, method').in('meeting_id', ids) : { data: [] as { meeting_id: string; user_id: string; checked_in_at: string; method: string }[] };
 
   // Everyone expected (team roles) plus anyone who attended without a current team role.
-  const { data: grants } = await auth.svc.from('user_roles').select('user_id, role').in('role', [...AUDIENCE_ROLES]);
+  const { data: grants } = await auth.svc.from('user_roles').select('user_id, role').in('role', [...AUDIENCE_ROLES, 'inactive']);
   const peopleIds = new Set<string>([...(grants ?? []).map((g) => g.user_id as string), ...(att ?? []).map((a) => a.user_id as string), ...(meetings ?? []).flatMap((m) => m.extra_ids), ...(abs ?? []).map((a) => a.user_id as string)]);
   const idList = [...peopleIds];
   const [{ data: profiles }, { data: allRoles }, emails] = await Promise.all([
@@ -67,7 +67,7 @@ export async function GET(request: Request) {
   const rolesOf = new Map<string, { role: string }[]>();
   for (const g of grants ?? []) rolesOf.set(g.user_id as string, [...(rolesOf.get(g.user_id as string) ?? []), { role: g.role as string }]);
   // Expected = holds one of the meeting's roles, or was added. Someone who came anyway is listed as a guest and not counted.
-  const expected = (m: { audience: string[] | null; extra_ids: string[]; invitees?: string[] | null; group_ids?: string[] | null }, personId: string) => isExpected(m, personId, rolesOf.get(personId) ?? []);
+  const expected = (m: { audience: string[] | null; extra_ids: string[]; invitees?: string[] | null; group_ids?: string[] | null }, personId: string) => isExpectedActive(m, personId, rolesOf.get(personId) ?? []);
 
   let rows: string[];
   if (type === 'log') {

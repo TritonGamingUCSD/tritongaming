@@ -11,6 +11,14 @@
     {
       "path": "/api/cron/cleanup-notifications",
       "schedule": "30 10 * * *"
+    },
+    {
+      "path": "/api/cron/quarter-sync",
+      "schedule": "20 8 * * *"
+    },
+    {
+      "path": "/api/cron/team-sync",
+      "schedule": "40 8 * * *"
     }
   ]
 }

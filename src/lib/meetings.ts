@@ -11,6 +11,7 @@ import type { Capability } from '@/types/database';
 import { withGrantedCapabilities } from '@/lib/capabilities';
 import { createNotifications } from '@/lib/notify';
 import { loadGrantedCapabilities } from '@/lib/grantedCapabilities';
+import { inactiveIds } from '@/lib/quarters';
 import { audienceRoles, canAttendMeeting, isExpected, type MeetingAudience } from '@/lib/meetingAudience';
 
 // Gen Meeting check-in (see migration 20261002140000_gen_meetings.sql). An exec opens check-in and
@@ -246,7 +247,9 @@ export async function getExpectedPeople(svc: SupabaseClient, m?: MeetingAudience
   const extras = m ? (m.extra_ids ?? (await attachExtras(svc, [{ invitees: m.invitees ?? null, group_ids: m.group_ids ?? null }]))[0].extra_ids) : [];
   const roles = audienceRoles(m ?? { audience: null });
   const { data: grants } = roles.length ? await svc.from('user_roles').select('user_id').in('role', roles) : { data: [] as { user_id: string }[] };
-  const ids = [...new Set([...(grants ?? []).map((g) => g.user_id as string), ...extras])];
+  // Inactive officers and leads are never expected, even when added by name or through a group.
+  const idle = await inactiveIds(svc);
+  const ids = [...new Set([...(grants ?? []).map((g) => g.user_id as string), ...extras])].filter((id) => !idle.has(id));
   if (ids.length === 0) return [];
   const { data: profiles } = await svc.from('profiles').select('id, display_name, google_first_name, google_last_name, avatar_url, custom_avatar_url').in('id', ids);
   return (profiles ?? [])
@@ -331,6 +334,21 @@ export async function ensureOccurrence(svc: SupabaseClient, s: SeriesRow, date: 
     }
   }
   return row;
+}
+
+// Excused every week for a repeating meeting: remembered on the series (so each new week starts with them marked, see ensureOccurrence) and put on the
+// coming weeks that already exist and haven't been opened yet. A week that is already over, or open, is left alone.
+export async function markEveryWeek(svc: SupabaseClient, seriesId: string, userId: string, reason: string | null, excused: boolean, actorId: string): Promise<void> {
+  await svc.from('meeting_series_absences').upsert({ series_id: seriesId, user_id: userId, reason, excused, plan_id: null }, { onConflict: 'series_id,user_id' });
+  const { data: coming } = await svc.from('meetings').select('id').eq('series_id', seriesId).gte('meeting_date', pacificDayKey()).is('opened_at', null);
+  const ids = (coming ?? []).map((m) => m.id as string);
+  if (ids.length) await svc.from('meeting_absences').upsert(ids.map((meeting_id) => ({ meeting_id, user_id: userId, reason, excused, marked_by: actorId })), { onConflict: 'meeting_id,user_id' });
+}
+export async function stopEveryWeek(svc: SupabaseClient, seriesId: string, userId: string): Promise<void> {
+  await svc.from('meeting_series_absences').delete().eq('series_id', seriesId).eq('user_id', userId);
+  const { data: coming } = await svc.from('meetings').select('id').eq('series_id', seriesId).gte('meeting_date', pacificDayKey()).is('opened_at', null);
+  const ids = (coming ?? []).map((m) => m.id as string);
+  if (ids.length) await svc.from('meeting_absences').delete().in('meeting_id', ids).eq('user_id', userId);
 }
 
 // Finds the meeting a host is acting on: an existing one ({meeting_id}) or one occurrence of a repeating meeting
