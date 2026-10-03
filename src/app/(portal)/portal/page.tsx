@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, Image as ImageIcon, Award, Medal, ArrowLeft, CalendarCheck, CalendarDays, LayoutGrid, CircleHelp, CalendarHeart } from 'lucide-react';
+import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, Image as ImageIcon, Award, Medal, ArrowLeft, CalendarCheck, CalendarDays, LayoutGrid, CircleHelp, CalendarHeart, KeyRound } from 'lucide-react';
 import { getProfile, getUserRoles, getMyPrivateProfile, getUser, getRealRoles, getViewAs } from '@/lib/auth';
 import { ViewAsSwitcher, ViewAsBanner } from '@/components/portal/ViewAs';
 import ProfileIncompleteBanner from '@/components/portal/ProfileIncompleteBanner';
@@ -54,6 +54,8 @@ import CalendarSectionContent from './calendar/CalendarSectionContent';
 import ProfileNudge from '@/components/portal/ProfileNudge';
 import { profileNudge } from '@/lib/profileCompleteness';
 import InternalEventsSectionContent from './internal-events/InternalEventsSectionContent';
+import KeysSectionContent from './keys/KeysSectionContent';
+import { keysByHolder } from '@/lib/storageKeys';
 import { meetingHappeningNow } from '@/lib/meetings';
 import { getAdminData } from './admin/getAdminData';
 import { getStatsData } from './admin/stats/getStatsData';
@@ -121,6 +123,9 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const canViewAttendanceReports = hasCapability(roles, 'view_attendance_reports');
   const canManageMeetings = hasCapability(roles, 'manage_meetings');   // exec/admin: every meeting + HR export
   const canViewInternalEvents = hasCapability(roles, 'view_internal_events');
+  // Storage keys: the team sees where each key is, and which member holds which (little key icons on the members list).
+  const canViewKeys = hasCapability(roles, 'view_keys');
+  const keyHolders: Awaited<ReturnType<typeof keysByHolder>> = canViewKeys ? await keysByHolder(createServiceClient()).catch(() => ({})) : {};
   const canHostInternalEvents = hasCapability(roles, 'host_internal_events');
   const canHostMeetings = hasCapability(roles, 'host_meetings');         // leads too: plan meetings, manage their own
   // Best-effort: if this lookup fails the bar just doesn't get the meeting boost.
@@ -324,6 +329,13 @@ export default async function PortalDashboard({ searchParams }: Props) {
       group: 'TG' as const,
       content: <MeetingsSectionContent canHost={canHostMeetings} canManageAll={canManageMeetings} userId={profile.id} canAttend={canAttendMeetings} canViewReports={canViewAttendanceReports} />,
     }] : []),
+    ...(canViewKeys ? [{
+      id: 'keys', icon: <KeyRound size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Storage Keys',
+      description: 'Where each storage key is right now',
+      badge: (keyHolders[profile.id]?.length ?? 0) || undefined,
+      group: 'TG' as const,
+      content: <KeysSectionContent />,
+    }] : []),
     ...(canViewInternalEvents ? [{
       id: 'internal-events', icon: <CalendarHeart size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Internal Events',
       description: canHostInternalEvents ? 'Plan internal events and see who’s coming' : 'Socials, trainings and other internal events',
@@ -339,7 +351,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       // much bigger roster than the page actually shows.
       badge: membersData.memberCount || undefined,
       group: 'TG' as const,
-      content: <MembersSectionContent rows={membersData.rows} />,
+      content: <MembersSectionContent rows={membersData.rows} keysByUser={keyHolders} />,
     }] : []),
     ...(canViewDocs && docsData ? [{
       id: 'docs', icon: <BookOpen size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Documentation',

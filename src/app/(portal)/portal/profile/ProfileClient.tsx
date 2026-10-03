@@ -22,6 +22,7 @@ import { showToast } from '@/lib/toast';
 import type { BoardMember, BoardTier } from '@/app/(main)/team/getBoardMembers';
 import LinkGoogleSection from './LinkGoogleSection';
 import PushSettings from '@/components/portal/PushSettings';
+import MyKeys from '@/components/portal/MyKeys';
 import MajorPicker from './MajorPicker';
 import GamePicker from './GamePicker';
 import styles from './profile.module.css';
@@ -265,6 +266,8 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
           Your profile is incomplete — still needed: <strong>{missingNow.join(', ')}</strong>.
         </Notice>
       )}
+
+      <MyKeys />
 
       {/* Above the two-column layout, not inside it: the columns change width and
           content from tab to tab, which used to drag the tab bar around with them. */}

@@ -78,6 +78,10 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // the HR CSV export). Read-only. Exec and admin by default; can be granted to a person or group (Admin → Access).
   view_attendance_reports: ['exec', 'admin'],
   view_internal_events: ['officer', 'lead', 'exec', 'admin', 'recruit'],
+  // Storage keys (who has which key right now): the whole team can see them and say they have one or give one to someone (view_keys).
+  // Only exec and admin can add, rename or delete a key (manage_keys). UI/API gating only (the key routes use the service role).
+  view_keys: ['officer', 'lead', 'exec', 'admin', 'recruit'],
+  manage_keys: ['exec', 'admin'],
   host_internal_events: ['lead', 'exec', 'admin'],
   manage_internal_events: ['exec', 'admin'],
   // The Division Members directory (who leads each division): the whole team can look —

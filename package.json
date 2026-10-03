@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:permissions": "node scripts/permissions-check.mjs",
-    "test:plans": "node scripts/plans-check.mjs"
+    "test:plans": "node scripts/plans-check.mjs",
+    "test:keys": "node scripts/keys-check.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",

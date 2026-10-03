@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { usePortalParams, useLiveParams } from '@/lib/usePortalParams';
 import SectionTabs from '@/components/ui/SectionTabs';
-import { LayoutGrid, List, X } from 'lucide-react';
+import { KeyRound, LayoutGrid, List, X } from 'lucide-react';
 import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
 import type { AppRole } from '@/types/database';
 import type { RoleGrant } from '@/lib/capabilities';
@@ -41,7 +41,7 @@ type MemberEntry = Omit<MemberProfileRow, 'user_roles'> & { divisionName?: strin
 // since this list can run into the hundreds of members and animating a
 // shared-element transition across that many grid cells is exactly the
 // kind of cost that caused the lag BoardSection had to be fixed for.
-export default function MembersSectionContent({ rows }: { rows: MemberProfileRow[] }) {
+export default function MembersSectionContent({ rows, keysByUser = {} }: { rows: MemberProfileRow[]; keysByUser?: Record<string, { id: string; name: string; color: string }[]> }) {
   const searchParams = useLiveParams();
   const setParams = usePortalParams();
   const [view, setView] = useState<'grid' | 'list'>(() => (searchParams.get('view') === 'list' ? 'list' : 'grid'));
@@ -170,7 +170,15 @@ export default function MembersSectionContent({ rows }: { rows: MemberProfileRow
                     </div>
                   )}
                   <div className={styles.info}>
-                    <div className={styles.name}>{m.display_name || 'Anonymous'}</div>
+                    <div className={styles.name}>
+                      {m.display_name || 'Anonymous'}
+                      {/* One small key for each storage key this person holds. Only the team that tracks keys is sent this. */}
+                      {(keysByUser[m.id]?.length ?? 0) > 0 && (
+                        <span className={styles.keyIcons} role="img" aria-label={`Has ${keysByUser[m.id].length === 1 ? 'a storage key' : `${keysByUser[m.id].length} storage keys`}: ${keysByUser[m.id].map((k) => k.name).join(', ')}`}>
+                          {keysByUser[m.id].map((k) => <span key={k.id} className={styles.keyBadge} style={{ background: k.color }} title={`Has the key “${k.name}”`}><KeyRound size={12} strokeWidth={2.75} aria-hidden="true" /></span>)}
+                        </span>
+                      )}
+                    </div>
                     {/* Always rendered in list view, even when empty, so the columns line up row to row. */}
                     {(m.org_title || view === 'list') && <div className={styles.orgTitle}>{m.org_title}</div>}
                     {/* Grid is the compact "who's who" view — name, title,
@@ -224,6 +232,15 @@ export default function MembersSectionContent({ rows }: { rows: MemberProfileRow
                   : null,
               }}
             />
+            {/* The profile popup also says which keys this person holds (never on the public Team page: this list is only sent to the key team). */}
+            {(keysByUser[selected.id]?.length ?? 0) > 0 && (
+              <div className={styles.detailKeys}>
+                <span className={styles.detailKeysLabel}>Storage {keysByUser[selected.id].length === 1 ? 'key' : 'keys'}</span>
+                <span className={styles.detailKeysList}>
+                  {keysByUser[selected.id].map((k) => <span key={k.id} className={styles.keyPill} style={{ background: k.color }}><KeyRound size={14} strokeWidth={2.5} aria-hidden="true" /> {k.name}</span>)}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       )}

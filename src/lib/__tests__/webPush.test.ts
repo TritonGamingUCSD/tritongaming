@@ -31,6 +31,7 @@ describe('what a notification is', () => {
     expect(categoryOf('event_reminder')).toBe('events');
     expect(categoryOf('access_granted')).toBe('account');
     expect(categoryOf('help_ticket')).toBe('help');
+    expect(categoryOf('storage_key')).toBe('keys');
     expect(categoryOf('something_new')).toBeNull();
   });
   it('only accepts real push services as a subscription address', () => {

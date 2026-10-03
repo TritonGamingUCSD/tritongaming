@@ -300,3 +300,21 @@
   .listRow .avatar, .listRow .avatarFallback { grid-row: 1 / span 3; }
   .listRow .orgTitle:empty { display: none; }
 }
+
+/* A small key beside the name for each storage key this person holds. */
+.keyIcons { display: inline-flex; align-items: center; gap: 0.15rem; margin-left: 0.4rem; vertical-align: -1px; }
+.keyIcons svg { transform: rotate(-35deg); }
+.keyIcons { gap: 0.2rem; margin-left: 0.5rem; }
+.keyIcons svg { filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.6)); }
+
+/* The key stands apart from the gold titles: a small solid colored badge with a dark key, not a thin gold line. */
+.keyIcons { gap: 0.25rem; margin-left: 0.5rem; vertical-align: 1px; }
+.keyBadge { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; color: #14161f; box-shadow: 0 0 0 2px rgba(11, 14, 21, 0.9), 0 2px 8px -2px rgba(0, 0, 0, 0.6); }
+.keyBadge svg { transform: rotate(-40deg); }
+.keyIcons svg { filter: none; transform: none; }
+.keyBadge svg { transform: rotate(-40deg); }
+.detailKeys { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin-top: 0.9rem; padding: 0.7rem 0.9rem; border-radius: 0.8rem; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.04); }
+.detailKeysLabel { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(242, 241, 240, 0.55); }
+.detailKeysList { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.keyPill { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.7rem; border-radius: 999px; color: #14161f; font-size: 0.82rem; font-weight: 700; }
+.keyPill svg { transform: rotate(-40deg); }

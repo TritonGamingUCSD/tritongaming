@@ -13,6 +13,7 @@ export const PUSH_CATEGORIES = [
   { id: 'events', label: 'Events and tickets', hint: 'Ticket confirmations, check-ins and event reminders' },
   { id: 'account', label: 'Account and access', hint: 'Role changes and access you’ve been given' },
   { id: 'help', label: 'Help inbox', hint: 'New questions that need an answer' },
+  { id: 'keys', label: 'Storage keys', hint: 'When someone gives you a key or takes one from you' },
 ] as const;
 export type PushCategory = (typeof PUSH_CATEGORIES)[number]['id'];
 
@@ -21,6 +22,7 @@ export function categoryOf(type: string): PushCategory | null {
   if (/^(ticket_|event_|manual_award)/.test(type)) return 'events';
   if (/^(access_|role_)/.test(type)) return 'account';
   if (type === 'help_ticket') return 'help';
+  if (type === 'storage_key') return 'keys';
   return null;
 }
 
