@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { enablePush, pushSupport, syncPush, type PushSupport } from '@/lib/pushClient';
+import { syncPush } from '@/lib/pushClient';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Bell } from 'lucide-react';
@@ -40,26 +40,8 @@ export default function NotificationBell({ inline = false }: { inline?: boolean 
   const [loaded, setLoaded] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
-  // Web push: keep this device's subscription current, and (once) offer to turn it on in the dropdown.
-  const [pushOffer, setPushOffer] = useState<PushSupport | null>(null);
-  const [pushBusy, setPushBusy] = useState(false);
-  useEffect(() => {
-    void syncPush();
-    try {
-      const sup = pushSupport();
-      if (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && sup !== 'unsupported' && 'Notification' in window && Notification.permission === 'default' && localStorage.getItem('push-offer-dismissed') !== '1') setPushOffer(sup);
-    } catch { /* no offer */ }
-  }, []);
-  async function turnOnPush() {
-    setPushBusy(true);
-    const r = await enablePush();
-    setPushBusy(false);
-    if (r.ok || r.denied) setPushOffer(null);
-  }
-  function dismissPushOffer() {
-    try { localStorage.setItem('push-offer-dismissed', '1'); } catch { /* ignore */ }
-    setPushOffer(null);
-  }
+  // Web push: keep this device's subscription current (the one-time offer to turn it on is PushAsk, mounted in the portal layout).
+  useEffect(() => { void syncPush(); }, []);
 
   const load = useCallback(async () => {
     try {
@@ -170,17 +152,6 @@ export default function NotificationBell({ inline = false }: { inline?: boolean 
                 );
               })}
             </ul>
-          )}
-          {pushOffer && (
-            <div className={styles.pushOffer}>
-              <span>Get these as notifications on this device, even when the portal is closed.</span>
-              <span className={styles.pushOfferBtns}>
-                {pushOffer === 'ok'
-                  ? <button type="button" className={styles.pushOn} onClick={turnOnPush} disabled={pushBusy}>Turn on</button>
-                  : <Link href="/portal?section=profile&tab=notifications" className={styles.pushOn} onClick={() => setOpen(false)}>How</Link>}
-                <button type="button" className={styles.pushNo} onClick={dismissPushOffer}>Not now</button>
-              </span>
-            </div>
           )}
         </div>
       )}

@@ -6,7 +6,7 @@ import Notice from '@/components/ui/Notice';
 import { useRef, useState } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Bell, User, Users, Lock, X as XIcon, Globe, EyeOff } from 'lucide-react';
+import { Bell, ShieldCheck, User, Users, Lock, X as XIcon, Globe, EyeOff } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types/database';
 import { Check } from 'lucide-react';
@@ -22,13 +22,13 @@ import { showToast } from '@/lib/toast';
 import type { BoardMember, BoardTier } from '@/app/(main)/team/getBoardMembers';
 import LinkGoogleSection from './LinkGoogleSection';
 import PushSettings from '@/components/portal/PushSettings';
-import MyKeys from '@/components/portal/MyKeys';
+import MyStrikes from '@/components/portal/MyStrikes';
 import MajorPicker from './MajorPicker';
 import GamePicker from './GamePicker';
 import styles from './profile.module.css';
 import Select from '@/components/ui/Select';
 
-type Tab = 'basic' | 'officer' | 'notifications' | 'security';
+type Tab = 'basic' | 'officer' | 'notifications' | 'strikes' | 'security';
 
 export default function ProfileClient({ profile, privateInfo, email, linkedEmails, roles, isUcsd, divisions }: { profile: Profile; privateInfo: MyPrivateProfile; email: string | null; linkedEmails: string[]; roles: RoleGrant[]; isUcsd: boolean; divisions: { id: string; name: string }[]; initialTab?: string }) {
   const divisionNameById = new Map(divisions.map((d) => [d.id, d.name]));
@@ -43,7 +43,9 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
   const isBoardEligible = roles.some((r) => r.role === 'exec' || r.role === 'lead' || r.role === 'officer' || r.role === 'alumni');
   // Division leads get no public officer card: just the basic profile.
   const showBoardTab = isBoardEligible || canEditOrgTitle;
-  const VALID_TABS: Tab[] = showBoardTab ? ['basic', 'officer', 'notifications', 'security'] : ['basic', 'notifications', 'security'];
+  // Strikes are tracked for officers, leads and exec: they can always look at their own here (quietly; nothing pushes it at them).
+  const showStrikesTab = roles.some((r) => r.role === 'exec' || r.role === 'lead' || r.role === 'officer');
+  const VALID_TABS: Tab[] = [...(showBoardTab ? ['basic', 'officer'] : ['basic']), 'notifications', ...(showStrikesTab ? ['strikes'] : []), 'security'] as Tab[];
   const gender = privateInfo.gender;
   // The tab used to be called "board" — old links/bookmarks still land on it.
   const initialTabParam = useUrlNav().tab;
@@ -267,8 +269,6 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
         </Notice>
       )}
 
-      <MyKeys />
-
       {/* Above the two-column layout, not inside it: the columns change width and
           content from tab to tab, which used to drag the tab bar around with them. */}
       <SectionTabs
@@ -278,12 +278,13 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
           { id: 'basic', label: 'Basic Info', icon: <User /> },
           ...(showBoardTab ? [{ id: 'officer' as const, label: 'Public Officer Card', icon: <Users /> }] : []),
           { id: 'notifications', label: 'Notifications', icon: <Bell /> },
+          ...(showStrikesTab ? [{ id: 'strikes' as const, label: 'Strikes', icon: <ShieldCheck /> }] : []),
           { id: 'security', label: 'Login & Security', icon: <Lock /> },
         ]}
       />
 
-      <div className={`${styles.layout} ${tab === 'officer' && isBoardEligible ? styles.layoutOfficer : ''} ${tab === 'security' || tab === 'notifications' ? styles.layoutSingle : ''}`}>
-        {tab !== 'security' && tab !== 'notifications' && (
+      <div className={`${styles.layout} ${tab === 'officer' && isBoardEligible ? styles.layoutOfficer : ''} ${tab === 'security' || tab === 'notifications' || tab === 'strikes' ? styles.layoutSingle : ''}`}>
+        {tab !== 'security' && tab !== 'notifications' && tab !== 'strikes' && (
         <div className={styles.avatarSection}>
           {tab === 'officer' && isBoardEligible ? (
             <p className={styles.pictureNote}>Your picture is edited on the Basic Info tab — the preview below uses it.</p>
@@ -748,6 +749,12 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
         {tab === 'notifications' && (
           <div className={styles.securityTab}>
             <PushSettings />
+          </div>
+        )}
+
+        {tab === 'strikes' && showStrikesTab && (
+          <div className={styles.securityTab}>
+            <MyStrikes />
           </div>
         )}
 

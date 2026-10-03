@@ -37,7 +37,7 @@ function smallIcon(icon: ReactNode, size = 21) {
 const GROUP_ORDER = ['Overview', 'Yours', 'Events', 'TG', 'Divisions', 'Resources', 'Admin'] as const;
 // Order inside each group (and so in the sidebar, the "More" sheet and the home grid). Anything not
 // listed goes last, in the order it was given.
-const SECTION_ORDER = ['calendar', 'tickets', 'points', 'activity', 'profile', 'events', 'checkin', 'members', 'meetings', 'internal-events', 'battlepass', 'keys', 'divisions', 'division-members', 'docs', 'qrcode', 'albums', 'help', 'admin', 'site-content'];
+const SECTION_ORDER = ['calendar', 'tickets', 'points', 'activity', 'profile', 'events', 'checkin', 'members', 'meetings', 'internal-events', 'battlepass', 'keys', 'strikes', 'divisions', 'division-members', 'docs', 'qrcode', 'albums', 'help', 'admin', 'site-content'];
 // Accent color per group — tints the heading dot, icon tiles and hover state.
 // The Dashboard and the Calendar are both soft white, so neither reads as part of the gold "Yours" or blue "Events" groups.
 const DASHBOARD_ACCENT = '#e5e7eb';

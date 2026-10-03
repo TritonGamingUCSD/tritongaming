@@ -54,12 +54,19 @@ describe('permissions granted to a person or group (Admin → Access)', () => {
     expect(hasCapability(withGrantedCapabilities([], ['view_attendance_reports']), 'view_attendance_reports')).toBe(true);
   });
   it('only attendance reports can be handed out', () => {
-    expect(GRANTABLE_CAPABILITIES.map((c) => c.id)).toEqual(['view_attendance_reports']);
+    expect(GRANTABLE_CAPABILITIES.map((c) => c.id)).toEqual(['manage_strikes', 'view_attendance_reports']);
   });
   it('storage keys: the whole team can see and move them, only exec and admin manage them', () => {
     for (const r of ['officer', 'lead', 'exec', 'recruit'] as AppRole[]) expect(can(r, 'view_keys')).toBe(true);
     for (const r of ['alumni', 'division', 'ucsd'] as AppRole[]) expect(can(r, 'view_keys')).toBe(false);
     for (const r of ['exec', 'admin'] as AppRole[]) expect(can(r, 'manage_keys')).toBe(true);
     for (const r of ['lead', 'officer', 'recruit'] as AppRole[]) expect(can(r, 'manage_keys')).toBe(false);
+  });
+  it('strikes: exec, HR (a grant) and admins manage them; leads and officers have no access', () => {
+    for (const r of ['admin', 'exec'] as AppRole[]) expect(can(r, 'manage_strikes')).toBe(true);
+    for (const r of ['lead', 'officer', 'recruit', 'alumni'] as AppRole[]) expect(can(r, 'manage_strikes')).toBe(false);
+    // the HR team gets it through a grant, which does not extend to the rest of exec's powers
+    const hr = withGrantedCapabilities([{ role: 'officer', division_id: null }], ['manage_strikes']);
+    expect(hasCapability(hr, 'manage_strikes')).toBe(true);
   });
 });

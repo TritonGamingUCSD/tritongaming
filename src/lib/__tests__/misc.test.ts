@@ -7,8 +7,8 @@ import type { AppRole } from '@/types/database';
 const as = (...roles: AppRole[]) => roles.map((role) => ({ role, division_id: null }));
 
 describe('names in staff lists', () => {
-  it('leads with the Google name and shows the chosen name in brackets', () => {
-    expect(staffName({ display_name: 'Kiiro', google_first_name: 'Jasper', google_last_name: 'Huang' })).toBe('Jasper Huang (Kiiro)');
+  it('leads with the chosen name and shows the real name in brackets', () => {
+    expect(staffName({ display_name: 'Kiiro', google_first_name: 'Jasper', google_last_name: 'Huang' })).toBe('Kiiro (Jasper Huang)');
   });
   it('shows one name when they match or only the first name was kept', () => {
     expect(staffName({ display_name: 'Jasper Huang', google_first_name: 'Jasper', google_last_name: 'Huang' })).toBe('Jasper Huang');

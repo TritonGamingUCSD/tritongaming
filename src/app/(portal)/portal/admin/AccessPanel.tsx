@@ -43,7 +43,7 @@ function CapCard({ cap, groups, onChange, onError }: { cap: Cap; groups: Data['g
   const [kind, setKind] = useState<'group' | 'person'>('group');
   const [groupId, setGroupId] = useState('');
   const [query, setQuery] = useState('');
-  const [found, setFound] = useState<{ id: string; name: string; shown: string | null }[]>([]);
+  const [found, setFound] = useState<{ id: string; name: string }[]>([]);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -104,7 +104,7 @@ function CapCard({ cap, groups, onChange, onError }: { cap: Cap; groups: Data['g
             <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by name…" aria-label="Search people" />
             {found.length > 0 && (
               <ul className={styles.results}>
-                {found.map((p) => <li key={p.id}><button type="button" onClick={() => grant({ user_id: p.id })}>{p.name}{p.shown && p.shown !== p.name ? <em> · {p.shown}</em> : null}</button></li>)}
+                {found.map((p) => <li key={p.id}><button type="button" onClick={() => grant({ user_id: p.id })}>{p.name}</button></li>)}
               </ul>
             )}
           </div>

@@ -9,6 +9,7 @@ import ProfileIncompleteBanner from '@/components/portal/ProfileIncompleteBanner
 import NotificationBell from '@/components/portal/NotificationBell';
 import AttributionCapture from '@/components/AttributionCapture/AttributionCapture';
 import ConnectivityBanner from '@/components/ConnectivityBanner/ConnectivityBanner';
+import PushAsk from '@/components/portal/PushAsk';
 import styles from './portal.module.css';
 
 // Portal-only type: Exo 2 for text (made for small UI sizes, has real in-between weights and
@@ -50,6 +51,7 @@ export default async function PortalLayout({ children }: { children: React.React
       <div data-print-hide style={{ display: 'contents' }}>
         <div className={styles.fixedBell} style={{ display: 'contents' }}><NotificationBell /></div>
         <ConnectivityBanner />
+        <PushAsk />
         <AttributionCapture />
       </div>
     </div>

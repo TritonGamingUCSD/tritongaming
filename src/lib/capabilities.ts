@@ -82,6 +82,9 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // Only exec and admin can add, rename or delete a key (manage_keys). UI/API gating only (the key routes use the service role).
   view_keys: ['officer', 'lead', 'exec', 'admin', 'recruit'],
   manage_keys: ['exec', 'admin'],
+  // The strike tracker (private). Exec and the HR team (the "manage strikes" permission, handed out in Admin → Access) and admins see everyone's strikes,
+  // add them directly (no approval), take them away, and handle vouchers. Leads and officers have no part in it. Everyone tracked always sees their own strikes. UI/API gating only.
+  manage_strikes: ['exec', 'admin'],
   host_internal_events: ['lead', 'exec', 'admin'],
   manage_internal_events: ['exec', 'admin'],
   // The Division Members directory (who leads each division): the whole team can look —
@@ -156,6 +159,7 @@ export function canSetOrgTitle(roles: RoleGrant[]): boolean {
 // that are otherwise exec/admin-only (so far: meeting attendance reports); everything the team's roles already
 // cover is not grantable. Roles, points, stats and site content stay role-only.
 export const GRANTABLE_CAPABILITIES: { id: Capability; label: string; description: string }[] = [
+  { id: 'manage_strikes', label: 'Strikes (HR team)', description: 'See every officer’s, lead’s and exec’s strikes and vouchers, add strikes directly, review missed meetings, take strikes away, and give or remove vouchers, always with a reason the person can read. Exec already have this. Very private, and nobody can change their own record.' },
   { id: 'view_attendance_reports', label: 'Meeting attendance reports', description: 'See every meeting’s attendance results, absences and reasons, check-in times, and download the HR CSV export. View only.' },
 ];
 

@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, Image as ImageIcon, Award, Medal, ArrowLeft, CalendarCheck, CalendarDays, LayoutGrid, CircleHelp, CalendarHeart, KeyRound } from 'lucide-react';
+import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, Image as ImageIcon, Award, Medal, ArrowLeft, CalendarCheck, CalendarDays, LayoutGrid, CircleHelp, CalendarHeart, KeyRound, ShieldAlert } from 'lucide-react';
 import { getProfile, getUserRoles, getMyPrivateProfile, getUser, getRealRoles, getViewAs } from '@/lib/auth';
 import { ViewAsSwitcher, ViewAsBanner } from '@/components/portal/ViewAs';
 import ProfileIncompleteBanner from '@/components/portal/ProfileIncompleteBanner';
@@ -49,12 +49,16 @@ import { createServiceClient } from '@/lib/supabase/admin';
 import { fetchLinkedEmails } from '@/lib/linkedEmails';
 import { loadTodos } from '@/lib/todos';
 import TodoCard from './TodoCard';
+import StrikeCard from './strikes/StrikeCard';
+import StrikesSectionContent from './strikes/StrikesSectionContent';
+import { isTracked, mySummary } from '@/lib/strikes';
 import HelpSectionContent from './help/HelpSectionContent';
 import CalendarSectionContent from './calendar/CalendarSectionContent';
 import ProfileNudge from '@/components/portal/ProfileNudge';
 import { profileNudge } from '@/lib/profileCompleteness';
 import InternalEventsSectionContent from './internal-events/InternalEventsSectionContent';
 import KeysSectionContent from './keys/KeysSectionContent';
+import MyKeys from '@/components/portal/MyKeys';
 import { keysByHolder } from '@/lib/storageKeys';
 import { meetingHappeningNow } from '@/lib/meetings';
 import { getAdminData } from './admin/getAdminData';
@@ -125,6 +129,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const canViewInternalEvents = hasCapability(roles, 'view_internal_events');
   // Storage keys: the team sees where each key is, and which member holds which (little key icons on the members list).
   const canViewKeys = hasCapability(roles, 'view_keys');
+  const canManageStrikes = hasCapability(roles, 'manage_strikes');
   const keyHolders: Awaited<ReturnType<typeof keysByHolder>> = canViewKeys ? await keysByHolder(createServiceClient()).catch(() => ({})) : {};
   const canHostInternalEvents = hasCapability(roles, 'host_internal_events');
   const canHostMeetings = hasCapability(roles, 'host_meetings');         // leads too: plan meetings, manage their own
@@ -329,6 +334,13 @@ export default async function PortalDashboard({ searchParams }: Props) {
       group: 'TG' as const,
       content: <MeetingsSectionContent canHost={canHostMeetings} canManageAll={canManageMeetings} userId={profile.id} canAttend={canAttendMeetings} canViewReports={canViewAttendanceReports} />,
     }] : []),
+    // Exec, HR and admins get the tracker. Nobody else (leads included) has any part in it.
+    ...(canManageStrikes ? [{
+      id: 'strikes', icon: <ShieldAlert size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Strikes',
+      description: 'Private strike tracker',
+      group: 'TG' as const,
+      content: <StrikesSectionContent />,
+    }] : []),
     ...(canViewKeys ? [{
       id: 'keys', icon: <KeyRound size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Storage Keys',
       description: 'Where each storage key is right now',
@@ -496,6 +508,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
   );
   const viewAsNode = canViewAs ? <ViewAsSwitcher active={viewAs} /> : null;
   // Everything waiting on this person, together at the top of home: plans to answer, events to RSVP to, help replies, check-in today.
+  // My own strikes (officers, leads and exec only): private, shown only to me.
+  const myStrikes = isTracked(roles) ? await mySummary(createServiceClient(), profile.id).catch(() => null) : null;
   const todoItems = await loadTodos(createServiceClient(), { id: profile.id, roles }, { manageAll: canManageMeetings, canHost: canHostMeetings, canViewInternalEvents });
   if (canHandleHelp && helpWaiting > 0) todoItems.push({ id: 'help-inbox', text: `${helpWaiting} help ${helpWaiting === 1 ? 'ticket needs' : 'tickets need'} a reply`, detail: 'Open the help inbox', href: '/portal?section=help&tab=inbox', tone: 'urgent' });
   else if (!canHandleHelp && helpWaiting > 0) todoItems.push({ id: 'help-reply', text: helpWaiting === 1 ? 'You have a reply to your question' : `You have ${helpWaiting} replies to your questions`, href: '/portal?section=help', tone: 'normal' });
@@ -587,6 +601,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
           banner={
             <>
             <TodoCard items={todoItems} />
+            {myStrikes && <StrikeCard active={myStrikes.active} limit={myStrikes.limit} />}
+            <MyKeys keys={keyHolders[profile.id] ?? []} />
             {nudge.missing.length > 0 && hasBasicProfileInfo({ ...profile, gender: myGender.gender }, isVerifiedMember(roles)) && <ProfileNudge nudge={nudge} />}
             </>
           }

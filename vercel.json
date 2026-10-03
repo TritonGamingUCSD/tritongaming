@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/meeting-reminders",
       "schedule": "5 16 * * *"
+    },
+    {
+      "path": "/api/cron/cleanup-notifications",
+      "schedule": "30 10 * * *"
     }
   ]
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { staffName } from '@/lib/names';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability, GRANTABLE_CAPABILITIES, CAPABILITY_ROLES } from '@/lib/capabilities';
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
     if (q.length < 2) return NextResponse.json({ people: [] });
     const like = `%${q.replace(/[%_,()]/g, ' ')}%`;
     const { data } = await auth.svc.from('profiles').select('id, display_name, google_first_name, google_last_name').or(`display_name.ilike.${like},google_first_name.ilike.${like},google_last_name.ilike.${like}`).limit(8);
-    return NextResponse.json({ people: (data ?? []).map((p) => ({ id: p.id, name: [p.google_first_name, p.google_last_name].filter(Boolean).join(' ') || p.display_name || 'Unnamed', shown: p.display_name })) });
+    return NextResponse.json({ people: (data ?? []).map((p) => ({ id: p.id, name: staffName(p) })) });
   }
   const [{ data: grants }, { data: groups }] = await Promise.all([
     auth.svc.from('capability_grants').select('id, capability, user_id, group_id, created_at').order('created_at'),
@@ -35,7 +36,7 @@ export async function GET(request: Request) {
   ]);
   const userIds = [...new Set((grants ?? []).map((g) => g.user_id as string | null).filter((x): x is string => !!x))];
   const { data: profiles } = userIds.length ? await auth.svc.from('profiles').select('id, display_name, google_first_name, google_last_name').in('id', userIds) : { data: [] as { id: string; display_name: string | null; google_first_name: string | null; google_last_name: string | null }[] };
-  const pname = new Map((profiles ?? []).map((p) => [p.id as string, [p.google_first_name, p.google_last_name].filter(Boolean).join(' ') || (p.display_name as string | null) || 'Unnamed']));
+  const pname = new Map((profiles ?? []).map((p) => [p.id as string, staffName(p)]));
   const gname = new Map((groups ?? []).map((g) => [g.id as string, g]));
   return NextResponse.json({
     capabilities: GRANTABLE_CAPABILITIES.map((c) => ({

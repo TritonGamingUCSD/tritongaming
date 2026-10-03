@@ -1,0 +1,30 @@
+/* ── Your own strikes (dashboard card) ─────────────────────────────────────────────────────────────────────────────────────── */
+.card { --tone: #34d399; display: flex; flex-direction: column; gap: 0.6rem; padding: 0.8rem 0.95rem; border-radius: 1rem; border: 1px solid color-mix(in srgb, var(--tone) 45%, transparent); background: color-mix(in srgb, var(--tone) 8%, transparent); }
+.toneOk { --tone: #34d399; }
+.toneWarn { --tone: #fbbf24; }
+.toneBad { --tone: #f87171; }
+.cardTop { display: flex; align-items: center; gap: 0.75rem; }
+.shield { flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 0.8rem; background: var(--tone); color: #14161f; }
+.cardTitle { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.cardTitle strong { font-family: var(--font-futura-heavy); font-size: 1rem; color: var(--white); }
+.cardTitle span { font-size: 0.74rem; color: rgba(242, 241, 240, 0.55); }
+.pips { display: inline-flex; gap: 0.3rem; flex: none; }
+.pips i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--tone) 70%, transparent); background: transparent; }
+.pips i.pipOn { background: var(--tone); border-color: var(--tone); }
+.limitNote { margin: 0; padding: 0.5rem 0.7rem; border-radius: 0.6rem; background: rgba(248, 113, 113, 0.18); color: #fecaca; font-size: 0.86rem; font-weight: 600; }
+.voucherNote { display: flex; align-items: center; gap: 0.4rem; margin: 0; font-size: 0.82rem; color: #99f6e4; }
+.details summary { cursor: pointer; font-size: 0.8rem; color: rgba(242, 241, 240, 0.7); }
+.details summary:hover { color: var(--yellow); }
+.strikeList { list-style: none; margin: 0.5rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.strikeList li { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: 0.1rem 0.7rem; font-size: 0.84rem; color: var(--white); }
+.strikeList time { font-size: 0.76rem; color: rgba(242, 241, 240, 0.55); }
+.strikeList em { grid-column: 2; font-style: normal; font-size: 0.74rem; color: #6ee7b7; }
+.removed span { text-decoration: line-through; color: rgba(242, 241, 240, 0.45); }
+@media (max-width: 520px) { .strikeList li { grid-template-columns: minmax(0, 1fr); } .strikeList em { grid-column: 1; } }
+
+/* The quiet one-line note at 2 strikes: small, low contrast, easy to ignore. */
+.quiet { display: inline-flex; align-items: center; gap: 0.5rem; align-self: flex-start; padding: 0.3rem 0.75rem; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.03); color: rgba(242, 241, 240, 0.7); font-size: 0.78rem; text-decoration: none; }
+.quiet:hover { border-color: rgba(251, 191, 36, 0.45); color: var(--white); }
+.quiet em { font-style: normal; color: rgba(242, 241, 240, 0.45); }
+.quietDot { width: 8px; height: 8px; border-radius: 50%; background: #fbbf24; }
+a.card { text-decoration: none; color: inherit; flex-direction: row; align-items: center; gap: 0.75rem; }

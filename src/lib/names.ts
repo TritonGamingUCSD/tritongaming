@@ -3,7 +3,7 @@
 // google_first_name / google_last_name and is never shown publicly.
 //
 // staffName: for lists where exec need to find a real person (meeting invites, attendance, exports,
-// search). "Jasper Huang (Kiiro)": the Google name first, the name they chose in brackets when it differs.
+// search). "Kiiro (Jasper Huang)": the name they chose first, their real (Google) name in brackets when it differs.
 type NameFields = { display_name?: string | null; google_first_name?: string | null; google_last_name?: string | null };
 const clean = (s: string | null | undefined) => (s ?? '').trim();
 const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
@@ -13,5 +13,5 @@ export function staffName(p: NameFields): string {
   const real = [clean(p.google_first_name), clean(p.google_last_name)].filter(Boolean).join(' ');
   if (!real) return shown || 'Unnamed';
   if (!shown || same(shown, real) || same(shown, clean(p.google_first_name))) return real;
-  return `${real} (${shown})`;
+  return `${shown} (${real})`;
 }

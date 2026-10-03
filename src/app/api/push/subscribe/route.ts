@@ -31,6 +31,8 @@ export async function POST(request: Request) {
   }
   const { error } = await svc.from('push_subscriptions').upsert({ user_id: user.id, endpoint, p256dh, auth, user_agent: String(request.headers.get('user-agent') ?? '').slice(0, 200) }, { onConflict: 'endpoint' });
   if (error) return NextResponse.json({ error: 'Failed to save.' }, { status: 500 });
+  // They turned it on, so a past "not now" no longer applies.
+  await svc.from('push_preferences').update({ declined_at: null }).eq('user_id', user.id).not('declined_at', 'is', null);
   return NextResponse.json({ ok: true });
 }
 

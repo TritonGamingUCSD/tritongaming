@@ -48,6 +48,7 @@ export type Capability =
   | 'manage_help'
   | 'view_internal_events'
   | 'view_keys'
+  | 'manage_strikes'
   | 'manage_keys'
   | 'view_attendance_reports'
   | 'host_internal_events'

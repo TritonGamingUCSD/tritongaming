@@ -1,20 +1,10 @@
-'use client';
-
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { KeyRound } from 'lucide-react';
 import styles from './MyKeys.module.css';
 
-interface Key { id: string; name: string; color: string; mine: boolean }
-
-// "You have these storage keys", on your own profile. Shows nothing unless you're on the key team and hold a key.
-export default function MyKeys() {
-  const [keys, setKeys] = useState<Key[]>([]);
-  useEffect(() => {
-    let live = true;
-    fetch('/api/keys', { cache: 'no-store' }).then(async (r) => (r.ok ? r.json() : null)).then((j) => { if (live && j) setKeys((j.keys as Key[]).filter((k) => k.mine)); }).catch(() => {});
-    return () => { live = false; };
-  }, []);
+// "You have these storage keys", on the dashboard. The keys come from the portal page (it already knows who holds what); shows nothing
+// unless you hold at least one.
+export default function MyKeys({ keys }: { keys: { id: string; name: string; color: string }[] }) {
   if (keys.length === 0) return null;
   return (
     <section className={styles.wrap} aria-label="Your storage keys">
