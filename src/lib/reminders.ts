@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { pacificDayKey } from '@/lib/checkinDays';
 import { createNotifications } from '@/lib/notify';
-import { getExpectedPeople, occurrenceTimes, weekdayOfKey, type MeetingRow, type SeriesRow } from '@/lib/meetings';
+import { getExpectedPeople, occurrenceTimes, seriesRunsOn, type MeetingRow, type SeriesRow } from '@/lib/meetings';
 
 const clock = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour: 'numeric', minute: '2-digit' });
 
@@ -18,7 +18,7 @@ export async function sendMeetingReminders(svc: SupabaseClient, now: Date = new 
   const today = pacificDayKey(now);
   const until = withinMinutes ? now.getTime() + withinMinutes * 60_000 : Infinity;
   const [{ data: seriesData }, { data: meetingRows }, { data: internalRows }] = await Promise.all([
-    svc.from('meeting_series').select('id, title, weekday, start_time, end_time, location, active, doc_url, audience, invitees, group_ids, description, created_by, created_at').eq('active', true),
+    svc.from('meeting_series').select('id, title, weekday, start_time, end_time, location, active, doc_url, audience, invitees, group_ids, description, created_by, created_at, ends_on').eq('active', true),
     svc.from('meetings').select('*').eq('meeting_date', today).eq('cancelled', false),
     svc.from('internal_events').select('*').eq('event_date', today).eq('cancelled', false),
   ]);
@@ -26,14 +26,15 @@ export async function sendMeetingReminders(svc: SupabaseClient, now: Date = new 
   const rows = (meetingRows ?? []) as MeetingRow[];
   const { data: absences } = rows.length ? await svc.from('meeting_absences').select('meeting_id, user_id, excused').in('meeting_id', rows.map((r) => r.id)).eq('excused', true) : { data: [] as { meeting_id: string; user_id: string }[] };
   for (const r of rows) {
-    items.push({ key: `meeting:${r.id}`, kind: 'meeting', title: r.title, starts_at: r.starts_at, location: r.location, audience: r.audience, invitees: r.invitees, group_ids: r.group_ids, href: '/portal?section=meetings&tab=checkin', skip: new Set((absences ?? []).filter((a) => a.meeting_id === r.id).map((a) => a.user_id as string)) });
+    items.push({ key: `meeting:${r.id}`, kind: 'meeting', title: r.title, starts_at: r.starts_at, location: r.location, audience: r.audience, invitees: r.invitees, group_ids: r.group_ids, href: '/portal?section=meetings&tab=mine', skip: new Set((absences ?? []).filter((a) => a.meeting_id === r.id).map((a) => a.user_id as string)) });
   }
   const taken = new Set(rows.filter((r) => r.series_id).map((r) => r.series_id as string));
+  const { data: standing } = await svc.from('meeting_series_absences').select('series_id, user_id').eq('excused', true);
   for (const s of (seriesData ?? []) as (SeriesRow & { created_at: string })[]) {
     // A repeating meeting with no row for today yet (nobody has opened it): its occurrence is virtual.
-    if (taken.has(s.id) || weekdayOfKey(today) !== s.weekday || today < pacificDayKey(new Date(s.created_at))) continue;
+    if (taken.has(s.id) || !seriesRunsOn(s, today) || today < pacificDayKey(new Date(s.created_at))) continue;
     const { starts } = occurrenceTimes(today, s.start_time, s.end_time);
-    items.push({ key: `series:${s.id}|${today}`, kind: 'meeting', title: s.title, starts_at: starts.toISOString(), location: s.location, audience: s.audience, invitees: s.invitees, group_ids: s.group_ids, href: '/portal?section=meetings&tab=checkin', skip: new Set() });
+    items.push({ key: `series:${s.id}|${today}`, kind: 'meeting', title: s.title, starts_at: starts.toISOString(), location: s.location, audience: s.audience, invitees: s.invitees, group_ids: s.group_ids, href: '/portal?section=meetings&tab=mine', skip: new Set((standing ?? []).filter((a) => a.series_id === s.id).map((a) => a.user_id as string)) });
   }
   const internal = (internalRows ?? []) as { id: string; title: string; starts_at: string; location: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null }[];
   const { data: no } = internal.length ? await svc.from('internal_event_rsvps').select('event_id, user_id').in('event_id', internal.map((e) => e.id)).eq('status', 'not_going') : { data: [] as { event_id: string; user_id: string }[] };

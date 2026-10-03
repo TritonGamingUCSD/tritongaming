@@ -865,3 +865,11 @@
 
 /* Labels clip their overflow (for the ellipsis), which also clipped the tails of p, q, g and y: give the text room below the baseline. */
 .railLabel, .railName { line-height: 1.45; padding-block: 0.08em; }
+
+/* The top bar already names the section on desktop, so the page's own title (and the description line under it) goes. Phones keep them. */
+@media (min-width: 900px) {
+  .desktopContent h1, .desktopContent h1 + p { display: none; }
+  /* A wrapper that held only that title and description is gone too, so it leaves no gap above the tabs. */
+  .desktopContent div:has(> h1):not(:has(> :not(h1):not(p))) { display: none; }
+  .frameBody { padding-top: 1rem; }
+}

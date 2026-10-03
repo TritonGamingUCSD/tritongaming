@@ -21,7 +21,10 @@ export async function GET(request: Request) {
   const src = found.meeting ?? found.series;
   if (!src) return NextResponse.json({ error: 'Meeting not found.' }, { status: 404 });
   const expected = await getExpectedPeople(auth.svc, { audience: src.audience, invitees: src.invitees, group_ids: src.group_ids });
-  const { data: abs } = found.meeting ? await auth.svc.from('meeting_absences').select('user_id, reason, excused').eq('meeting_id', found.meeting.id) : { data: [] as { user_id: string; reason: string | null; excused: boolean }[] };
+  // An occurrence nobody has opened yet still carries its series' standing absences (from a weekly plan).
+  const { data: abs } = found.meeting
+    ? await auth.svc.from('meeting_absences').select('user_id, reason, excused').eq('meeting_id', found.meeting.id)
+    : found.series ? await auth.svc.from('meeting_series_absences').select('user_id, reason, excused').eq('series_id', found.series.id) : { data: [] as { user_id: string; reason: string | null; excused: boolean }[] };
   const name = new Map(expected.map((p) => [p.id, p.name]));
   const missing = (abs ?? []).map((a) => a.user_id as string).filter((id) => !name.has(id));
   if (missing.length) {

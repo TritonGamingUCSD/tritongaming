@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { hasCapability, type RoleGrant } from '@/lib/capabilities';
 import { pacificDayKey } from '@/lib/checkinDays';
 import { isExpected } from '@/lib/meetingAudience';
-import { addDaysKey, loadGroups, occurrenceTimes, weekdayOfKey, withExtras, type MeetingRow, type SeriesRow } from '@/lib/meetings';
+import { addDaysKey, loadGroups, occurrenceTimes, seriesRunsOn, withExtras, type MeetingRow, type SeriesRow } from '@/lib/meetings';
 
 export interface CalendarItem {
   key: string;
@@ -31,7 +31,7 @@ export async function collectCalendarItems(svc: SupabaseClient, user: { id: stri
     svc.from('events').select('id, slug, title, location, start_date, end_date').eq('is_published', true).lte('start_date', endIso).order('start_date'),
     svc.from('tickets').select('event_id').eq('user_id', user.id),
     loadGroups(svc),
-    svc.from('meeting_series').select('id, title, weekday, start_time, end_time, location, active, doc_url, audience, invitees, group_ids, description, created_by, created_at').eq('active', true),
+    svc.from('meeting_series').select('id, title, weekday, start_time, end_time, location, active, doc_url, audience, invitees, group_ids, description, created_by, created_at, ends_on').eq('active', true),
     svc.from('meetings').select('*').gte('meeting_date', from).lte('meeting_date', to).eq('cancelled', false),
   ]);
 
@@ -55,7 +55,7 @@ export async function collectCalendarItems(svc: SupabaseClient, user: { id: stri
     const [x] = withExtras([m], groups);
     return m.created_by === user.id || isExpected({ audience: m.audience, invitees: m.invitees, group_ids: m.group_ids, extra_ids: x.extra_ids }, user.id, roles);
   };
-  const meetingHref = (createdBy: string | null) => (canManageAll || createdBy === user.id ? '/portal?section=meetings&tab=run' : '/portal?section=meetings');
+  const meetingHref = (createdBy: string | null) => (canManageAll || createdBy === user.id ? '/portal?section=meetings&tab=host' : '/portal?section=meetings');
   for (const r of rows) {
     if (!mineOrManage(r)) continue;
     items.push({ key: `m|${r.id}`, kind: 'meeting', date: r.meeting_date, title: r.title, start: r.starts_at, end: r.ends_at, location: r.location, href: meetingHref(r.created_by), mine: r.created_by === user.id, dayLabel: null, repeats: !!r.series_id });
@@ -67,7 +67,7 @@ export async function collectCalendarItems(svc: SupabaseClient, user: { id: stri
     if (!mineOrManage(s)) continue;
     const began = pacificDayKey(new Date(s.created_at));
     for (let day = from; day <= to && day <= horizon; day = addDaysKey(day, 1)) {
-      if (day < began || weekdayOfKey(day) !== s.weekday || taken.has(`${s.id}|${day}`)) continue;
+      if (day < began || !seriesRunsOn(s, day) || taken.has(`${s.id}|${day}`)) continue;
       const { starts, ends } = occurrenceTimes(day, s.start_time, s.end_time);
       items.push({ key: `s|${s.id}|${day}`, kind: 'meeting', date: day, title: s.title, start: starts.toISOString(), end: ends.toISOString(), location: s.location, href: meetingHref(s.created_by), mine: s.created_by === user.id, dayLabel: null, repeats: true });
     }

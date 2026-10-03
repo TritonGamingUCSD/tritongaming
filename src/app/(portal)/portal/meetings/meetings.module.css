@@ -121,8 +121,7 @@
 .form { display: flex; flex-direction: column; gap: 0.9rem; padding: 1.1rem; border-radius: 1rem; background: rgba(255, 255, 255, 0.035); border: 1px solid rgba(255, 199, 44, 0.25); }
 .formGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0.8rem; }
 .formActions { display: flex; justify-content: flex-end; }
-.presetBtn { align-self: flex-start; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.8rem; border-radius: 999px; border: 1px solid rgba(255, 199, 44, 0.4); background: rgba(255, 199, 44, 0.1); color: var(--yellow); font-size: 0.78rem; cursor: pointer; text-align: left; }
-.presetBtn:hover { background: rgba(255, 199, 44, 0.2); }
+.presetBtn { align-self: flex-start; text-transform: none; letter-spacing: 0; }
 .docForm { display: flex; align-items: flex-end; gap: 0.6rem; flex-wrap: wrap; }
 .docForm > :first-child { flex: 1 1 260px; min-width: 0; }
 .backLink { align-self: flex-start; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0; background: none; border: none; color: rgba(242, 241, 240, 0.7); font-size: 0.85rem; cursor: pointer; }
@@ -314,8 +313,6 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .seriesForm .formActions { gap: 0.5rem; }
 .seriesRow { flex-wrap: wrap; }
 
-.addCalLink { font-size: 0.74rem; color: rgba(242, 241, 240, 0.5); text-decoration: none; white-space: nowrap; }
-.addCalLink:hover { color: var(--yellow); text-decoration: underline; }
 
 .metaAway { color: #fbbf24; }
 .advanceAbsences { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.9rem 0 0.2rem; margin-top: 0.4rem; border-top: 1px solid rgba(255, 255, 255, 0.08); }
@@ -324,3 +321,57 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .absentList li { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.6rem; border-radius: 0.6rem; background: rgba(251, 191, 36, 0.07); border: 1px solid rgba(251, 191, 36, 0.25); }
 .absentForm { display: grid; grid-template-columns: minmax(150px, 1fr) minmax(150px, 1.3fr) auto auto; gap: 0.5rem; align-items: center; }
 @media (max-width: 640px) { .absentForm { grid-template-columns: 1fr; } }
+
+/* A readable column, centered, on a wide screen: lists never stretch just because the window is wide. It only goes full width when
+   something inside needs the room (the availability grid and results, marked data-fill-width). */
+.page { max-width: 800px; }
+.page:has([data-fill-width]) { max-width: none; }
+/* Everything around the wide block (tabs, titles, notes) sits in the same centered column, so the page reads as centered rather than pinned left. */
+.page:has([data-fill-width]) > :not(:has([data-fill-width])),
+.page:has([data-fill-width]) :has(> [data-fill-width]) > :not([data-fill-width]) { width: 100%; max-width: 800px; margin-inline: auto; }
+.twoCol { display: flex; flex-direction: column; gap: 1.25rem; }
+
+/* Color carries meaning, the same everywhere in meetings: green = live / available, yellow = today or needs you, blue = planning and info,
+   violet = repeats and groups of people, red = away or removed, orange = a warning, slate = blocked or skipped. */
+.meetingCard { border-left: 3px solid var(--tone, rgba(255, 255, 255, 0.14)); }
+.meetingCard[data-tone='open'] { --tone: #34d399; }
+.meetingCard[data-tone='today'] { --tone: #ffc72c; }
+.meetingCard[data-tone='repeat'] { --tone: #a78bfa; }
+.meetingCard[data-tone='done'] { --tone: #60a5fa; }
+.meetingCard[data-tone='plain'] { --tone: #38bdf8; }
+.meetingCard[data-tone='off'] { --tone: #f87171; }
+.meetingCard[data-tone='repeat'] .dateBlock small { background: rgba(167, 139, 250, 0.3); color: #ddd6fe; }
+.meetingCard[data-tone='plain'] .dateBlock small { background: rgba(56, 189, 248, 0.25); color: #bae6fd; }
+.meetingCard[data-tone='done'] .dateBlock small { background: rgba(96, 165, 250, 0.28); color: #bfdbfe; }
+.meetingCard[data-tone='open'] .dateBlock small { background: #34d399; color: #04140e; }
+.meetingCard[data-tone='off'] .dateBlock small { background: rgba(248, 113, 113, 0.3); color: #fecaca; }
+.meetingCard .inlineIcon { opacity: 0.9; }
+.meetingInfo strong .inlineIcon { color: #a78bfa; }
+.metaLine svg.inlineIcon { color: #2dd4bf; }
+.metaLine .metaAway, .metaLine .metaAway svg { color: #f87171; }
+.metaLine .metaAudience svg { color: #a78bfa; }
+.seriesIcon { color: #a78bfa; }
+.seriesRow { border-left: 3px solid #a78bfa; }
+
+/* The small controls that are not full buttons (back links, filter chips, sort headers, the present toggle) share one look:
+   a soft outlined pill, a gold hover, a clear keyboard ring and a press. */
+.backLink, .chip, .thBtn, .presentBtn { transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s; }
+.backLink { padding: 0.35rem 0.85rem 0.35rem 0.65rem; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 999px; background: rgba(255, 255, 255, 0.04); }
+.backLink:hover { background: rgba(255, 199, 44, 0.1); border-color: rgba(255, 199, 44, 0.45); }
+.chip:hover, .thBtn:hover, .presentBtn:hover { background: rgba(255, 199, 44, 0.1); border-color: rgba(255, 199, 44, 0.45); color: var(--yellow); }
+.thOn { background: rgba(255, 199, 44, 0.12); }
+.backLink:active, .chip:active, .thBtn:active, .presentBtn:active { transform: translateY(1px); }
+.backLink:focus-visible, .chip:focus-visible, .thBtn:focus-visible, .presentBtn:focus-visible, .linkBtn:focus-visible, .audToggle:focus-visible, .collapse:focus-visible { outline: 2px solid rgba(255, 199, 44, 0.7); outline-offset: 2px; }
+.chip:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Same rounded square as the edit / delete buttons, instead of full pills. */
+.backLink, .chip, .thBtn, .presentBtn, .addBtn, .absentBtn { border-radius: 0.6rem; }
+.chip, .thBtn { border-color: rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.04); }
+
+
+.meetingCard[data-tone='wnext'] { --tone: #60a5fa; }
+.meetingCard[data-tone='wlater'] { --tone: #a78bfa; }
+.meetingCard[data-tone='wnext'] .dateBlock small { background: rgba(96, 165, 250, 0.3); color: #dbeafe; }
+.meetingCard[data-tone='wlater'] .dateBlock small { background: rgba(167, 139, 250, 0.3); color: #ede9fe; }
+.meetingCard[data-tone='today'] .dateBlock small { background: var(--yellow); color: #14161f; }
+

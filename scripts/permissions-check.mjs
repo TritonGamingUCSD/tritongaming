@@ -35,6 +35,14 @@ async function call(who, path, method = 'GET', body) {
   return [r.status, json];
 }
 const pacificHHMM = (ms) => new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Los_Angeles', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(Date.now() + ms));
+// A start/end `lengthMin` apart, starting `offsetMin` from now but kept inside today (late at night "an hour from now" would
+// otherwise end after midnight, which the API rightly rejects).
+const todayWindow = (offsetMin, lengthMin) => {
+  const [h, m] = pacificHHMM(0).split(':').map(Number);
+  const startMin = Math.max(0, Math.min(h * 60 + m + offsetMin, 24 * 60 - 1 - lengthMin));
+  const at = (x) => `${String(Math.floor(x / 60)).padStart(2, '0')}:${String(x % 60).padStart(2, '0')}`;
+  return { start: at(startMin), end: at(startMin + lengthMin) };
+};
 const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date());
 
 const meetingIds = [], eventIds = [], ticketIds = [], groupIds = [], seriesIds = [];
@@ -43,7 +51,7 @@ try {
   const U = (r) => users[r].id;
 
   // ── Meetings: who can plan ──────────────────────────────────────────────────
-  const meetingBody = { title: 'Perm check', repeat: 'once', date: today, start: pacificHHMM(-5 * 60_000), end: pacificHHMM(55 * 60_000), audience: [], invitees: [U('officer'), U('lead')], group_ids: [] };
+  const meetingBody = { title: 'Perm check', repeat: 'once', date: today, ...todayWindow(-5, 60), audience: [], invitees: [U('officer'), U('lead')], group_ids: [] };
   check('officer cannot plan meetings', (await call('officer', '/api/meetings/schedule', 'POST', meetingBody))[0] === 403);
   check('recruit cannot plan meetings', (await call('recruit', '/api/meetings/schedule', 'POST', meetingBody))[0] === 403);
   const [s1, m1] = await call('exec', '/api/meetings/schedule', 'POST', meetingBody); check('exec can plan meetings', s1 === 201);
@@ -105,7 +113,7 @@ try {
   check('removing the grant removes the access', (await call('alumni', '/api/meetings/attendance'))[0] === 403);
 
   // ── Internal events ───────────────────────────────────────────────────────────
-  const evBody = { title: 'Perm event', date: today, start: pacificHHMM(3_600_000), end: pacificHHMM(7_200_000), audience: [], invitees: [U('officer'), U('recruit')], group_ids: [] };
+  const evBody = { title: 'Perm event', date: today, ...todayWindow(60, 60), audience: [], invitees: [U('officer'), U('recruit')], group_ids: [] };
   check('officer cannot plan internal events', (await call('officer', '/api/internal-events', 'POST', evBody))[0] === 403);
   const [e1, ev] = await call('lead', '/api/internal-events', 'POST', evBody); check('lead can plan internal events', e1 === 201);
   if (ev?.id) eventIds.push(ev.id);

@@ -1,6 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import WeekHead from '@/components/ui/WeekHead';
+import { startsWeekGroup } from '@/lib/weekGroups';
+import { Fragment, useCallback, useEffect, useState } from 'react';
 import { CalendarHeart, CalendarPlus, Plus, MapPin, Users, Check, CircleDashed, X as XIcon } from 'lucide-react';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Notice from '@/components/ui/Notice';
@@ -100,8 +102,10 @@ function UpcomingPanel() {
     <>
       {error && <Notice tone="error">{error}</Notice>}
       <ul className={mstyles.stack}>
-        {items.map((s) => (
-          <li key={s.id} className={mstyles.meetingCard}>
+        {items.map((s, i) => (
+          <Fragment key={s.id}>
+          {startsWeekGroup(items.map((x) => x.date), i) && <WeekHead date={s.date} />}
+          <li className={mstyles.meetingCard}>
             <div className={mstyles.meetingMain}>
               <DateTile date={s.date} soon={s.date === today()} />
               <div className={mstyles.meetingInfo}>
@@ -119,7 +123,7 @@ function UpcomingPanel() {
               </div>
             </div>
             <div className={styles.rsvp} role="group" aria-label={`Are you coming to ${s.title}?`}>
-              <a className={styles.addCal} href={googleCalendarUrl({ title: s.title, start: s.starts_at, end: s.ends_at, location: s.location, details: s.description })} target="_blank" rel="noopener noreferrer">+ Google Calendar</a>
+              <IconButton kind="calendar" size="sm" className={styles.addCal} label={`Add ${s.title} to Google Calendar`} href={googleCalendarUrl({ title: s.title, start: s.starts_at, end: s.ends_at, location: s.location, details: s.description })} />
               {([['going', 'Going', Check], ['maybe', 'Maybe', CircleDashed], ['not_going', 'Can’t go', XIcon]] as const).map(([k, label, Icon]) => (
                 <button key={k} type="button" disabled={busy === s.id} aria-pressed={s.mine === k} className={`${styles.rsvpBtn} ${s.mine === k ? styles[`on_${k}`] : ''}`} onClick={() => rsvp(s, k)}>
                   <Icon size={14} strokeWidth={2.25} aria-hidden="true" /> {label}
@@ -127,6 +131,7 @@ function UpcomingPanel() {
               ))}
             </div>
           </li>
+          </Fragment>
         ))}
       </ul>
     </>

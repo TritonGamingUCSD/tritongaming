@@ -1,23 +1,29 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { CalendarCheck, CalendarDays, Radio, ClipboardList, Check, X, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Pause, Play, Trash2, Link2, MessageCircleQuestion, Shuffle, Send, Users, Minus, UserX, Lock } from 'lucide-react';
+import { CalendarClock, CalendarDays, Radio, ClipboardList, Check, X, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Pause, Play, Trash2, Link2, MessageCircleQuestion, Shuffle, Send, Users, Minus, UserX, Lock } from 'lucide-react';
 import IconButton from '@/components/ui/IconButton';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Notice from '@/components/ui/Notice';
 import Button from '@/components/ui/Button';
+import WeekHead from '@/components/ui/WeekHead';
+import { startsWeekGroup, weekGroup } from '@/lib/weekGroups';
+
+// A card's edge takes its week's color, the same as the heading above it (repeating is shown by its icon, not a color).
+const WEEK_TONE = ['today', 'wnext', 'wlater'] as const;
 import { Field, Input, Select, Textarea, DateInput, TimeInput } from '@/components/ui/Field';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import { confirmHold } from '@/lib/confirmHold';
 import { resolveAvatarUrl } from '@/lib/profile';
 import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
-import { AUDIENCE_LABELS, AUDIENCE_ROLES, DEFAULT_AUDIENCE, audienceLabel, audienceRoles } from '@/lib/meetingAudience';
+import { AUDIENCE_LABELS, AUDIENCE_ROLES, audienceLabel, audienceRoles } from '@/lib/meetingAudience';
 import { googleCalendarUrl } from '@/lib/ics';
 import { REACTION_EMOJIS, MAX_ANSWER_LENGTH, MAX_QUESTION_LENGTH, MAX_DESCRIPTION_LENGTH, suggestQuestion } from '@/lib/meetingFun';
+import PlanningPanel from './planning/PlanningPanel';
 import styles from './meetings.module.css';
 
-type Tab = 'checkin' | 'mine' | 'run' | 'groups' | 'attendance';
+type Tab = 'mine' | 'planning' | 'host' | 'groups' | 'attendance';
 
 interface Person { id: string; name: string; avatar_url: string | null; custom_avatar_url: string | null }
 interface TodayMeeting { id: string; title: string; description: string | null; location: string | null; starts_at: string; ends_at: string; open: boolean; accepting: boolean; opens_at: string; checked_in_at: string | null; doc_url: string | null; question: string | null; my_answer: string | null }
@@ -35,7 +41,7 @@ interface Live {
   absent: (Person & { reason: string | null; excused: boolean })[];
 }
 interface Item { key: string; meeting_id: string | null; series_id: string | null; date: string; title: string; location: string | null; doc_url: string | null; question: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; groupNames: string[]; host_id: string | null; host_name: string | null; starts_at: string; ends_at: string; status: 'scheduled' | 'open' | 'closed' | 'cancelled'; count: number; absent?: number; is_today: boolean; repeats: boolean }
-interface Series { id: string; title: string; weekday: number; start_time: string; end_time: string; location: string | null; active: boolean; doc_url: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null }
+interface Series { ends_on?: string | null; id: string; title: string; weekday: number; start_time: string; end_time: string; location: string | null; active: boolean; doc_url: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null }
 
 const TZ = 'America/Los_Angeles';
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -80,18 +86,18 @@ export default function MeetingsSectionContent({ canHost, canManageAll, userId, 
   const canSeeResults = canHost || canViewReports;
   const nav = useUrlNav();
   const sync = usePortalTabSync('meetings');
-  const valid: Tab[] = [...(canAttend ? (['checkin', 'mine'] as Tab[]) : []), ...(canManage ? (['run', 'groups'] as Tab[]) : []), ...(canSeeResults ? (['attendance'] as Tab[]) : [])];
-  // Old links (and notifications) used tab=upcoming; it's part of My meetings now.
-  const startTab = nav.tab === 'upcoming' ? 'mine' : nav.tab;
-  const [tab, setTab] = useState<Tab>(valid.includes(startTab as Tab) ? (startTab as Tab) : valid[0] ?? 'checkin');
+  const valid: Tab[] = [...(canAttend ? (['mine', 'planning'] as Tab[]) : canManage ? (['planning'] as Tab[]) : []), ...(canManage ? (['host', 'groups'] as Tab[]) : []), ...(canSeeResults ? (['attendance'] as Tab[]) : [])];
+  // Old links and notifications: tab=upcoming and tab=checkin are part of My meetings now; Run meetings is called Host.
+  const startTab = nav.tab === 'upcoming' || nav.tab === 'checkin' ? 'mine' : nav.tab === 'run' ? 'host' : nav.tab;
+  const [tab, setTab] = useState<Tab>(valid.includes(startTab as Tab) ? (startTab as Tab) : valid[0] ?? 'mine');
   // Set when a meeting is opened from the Attendance tab, so Run meetings lands straight on it.
   const [runTarget, setRunTarget] = useState<string | null>(null);
 
   function pick(t: Tab) { setRunTarget(null); setTab(t); sync(t); }
-  function openFromAttendance(id: string) { setRunTarget(id); setTab('run'); sync('run'); }
+  function openFromAttendance(id: string) { setRunTarget(id); setTab('host'); sync('host'); }
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-wide>
       <div className={styles.header}>
         <h1 className={styles.title}>Meetings</h1>
         <p className={styles.sub}>{canAttend ? 'Check in to meetings in person with the code shown in the room.' : 'Attendance results for every meeting.'}</p>
@@ -101,27 +107,31 @@ export default function MeetingsSectionContent({ canHost, canManageAll, userId, 
         value={tab}
         onChange={pick}
         tabs={[
-          ...(canAttend ? [
-            { id: 'checkin' as Tab, label: 'Check in', icon: <CalendarCheck size={15} /> },
-            { id: 'mine' as Tab, label: 'My meetings', icon: <CalendarDays size={15} /> },
-          ] : []),
+          ...(canAttend ? [{ id: 'mine' as Tab, label: 'My meetings', icon: <CalendarDays size={15} /> }] : []),
+          ...(canAttend || canManage ? [{ id: 'planning' as Tab, label: 'Planning', icon: <CalendarClock size={15} /> }] : []),
           ...(canManage ? [
-            { id: 'run' as Tab, label: 'Run meetings', icon: <Radio size={15} /> },
+            { id: 'host' as Tab, label: 'Host', icon: <Radio size={15} /> },
             { id: 'groups' as Tab, label: 'Groups', icon: <Users size={15} /> },
           ] : []),
           ...(canSeeResults ? [{ id: 'attendance' as Tab, label: 'Attendance', icon: <ClipboardList size={15} /> }] : []),
         ]}
       />
-      {tab === 'checkin' && canAttend && <CheckInPanel />}
       {tab === 'mine' && canAttend && (
-        <div className={styles.stack}>
-          <h2 className={styles.sectionHead}>Coming up</h2>
-          <UpcomingPanel />
-          <h2 className={styles.sectionHead}>History</h2>
-          <MyHistoryPanel />
+        <div className={styles.twoCol}>
+          <div className={styles.stack}>
+            <h2 className={styles.sectionHead}>Check in</h2>
+            <CheckInPanel />
+            <h2 className={styles.sectionHead}>Coming up</h2>
+            <UpcomingPanel />
+          </div>
+          <div className={styles.stack}>
+            <h2 className={styles.sectionHead}>History</h2>
+            <MyHistoryPanel />
+          </div>
         </div>
       )}
-      {tab === 'run' && canManage && <RunPanel initial={runTarget} />}
+      {tab === 'planning' && (canAttend || canManage) && <PlanningPanel userId={userId} />}
+      {tab === 'host' && canManage && <RunPanel initial={runTarget} />}
       {tab === 'groups' && canManage && <GroupsPanel userId={userId} canManageAll={canManageAll} />}
       {tab === 'attendance' && canSeeResults && <AttendancePanel onOpenMeeting={canManage ? openFromAttendance : undefined} canExport={canManageAll || canViewReports} />}
     </div>
@@ -289,7 +299,7 @@ function FunBox({ meeting, onSaved }: { meeting: TodayMeeting; onSaved: () => vo
           ) : meeting.my_answer ? (
             <p className={styles.myAnswer}>
               <Check size={14} aria-hidden="true" /> “{meeting.my_answer}”
-              {meeting.open && <button type="button" className={styles.linkBtn} onClick={() => setEditing(true)}>Edit</button>}
+              {meeting.open && <IconButton kind="edit" size="sm" label="Edit my answer" onClick={() => setEditing(true)} />}
             </p>
           ) : null}
           {error && <Notice tone="error">{error}</Notice>}
@@ -314,6 +324,8 @@ function FunBox({ meeting, onSaved }: { meeting: TodayMeeting; onSaved: () => vo
 function UpcomingPanel() {
   const [items, setItems] = useState<{ key: string; date: string; title: string; starts_at: string; ends_at: string; location: string | null; description: string | null; repeats: boolean; is_today: boolean; status: string; host_name: string | null; hosting: boolean }[] | null>(null);
   const [error, setError] = useState('');
+  // Only the next few at first: a long run of weeks ahead is noise. The rest is one tap away.
+  const [showAll, setShowAll] = useState(false);
   useEffect(() => {
     (async () => {
       try {
@@ -328,8 +340,10 @@ function UpcomingPanel() {
   if (items.length === 0) return <div className={styles.card}><p className={styles.muted}>Nothing scheduled for you yet. Meetings you’re invited to show up here.</p></div>;
   return (
     <ul className={styles.stack}>
-      {items.map((m) => (
-        <li key={m.key} className={`${styles.meetingCard} ${m.status === 'open' ? styles.cardOpen : ''}`}>
+      {(showAll ? items : items.slice(0, 4)).map((m, i, shown) => (
+        <Fragment key={m.key}>
+        {startsWeekGroup(shown.map((x) => x.date), i) && <WeekHead date={m.date} />}
+        <li data-tone={m.status === 'open' ? 'open' : m.is_today ? 'today' : WEEK_TONE[weekGroup(m.date)]} className={`${styles.meetingCard} ${m.status === 'open' ? styles.cardOpen : ''}`}>
           <div className={styles.meetingMain}>
             <span className={`${styles.dateBlock} ${m.is_today ? styles.dateToday : ''}`} aria-hidden="true">
               <small>{new Date(`${m.date}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short' })}</small>
@@ -344,11 +358,15 @@ function UpcomingPanel() {
               {m.description && <span className={styles.descText} title={m.description}>{m.description}</span>}
               {m.hosting ? <span className={`${styles.metaLine} ${styles.metaSub}`}>You’re hosting</span> : m.host_name ? <span className={`${styles.metaLine} ${styles.metaSub}`}>Hosted by {m.host_name}</span> : null}
             </div>
-            <a className={styles.addCalLink} href={googleCalendarUrl({ title: m.title, start: m.starts_at, end: m.ends_at, location: m.location, details: m.description })} target="_blank" rel="noopener noreferrer" title="Add to Google Calendar">+ Calendar</a>
+            <IconButton kind="calendar" size="sm" label={`Add ${m.title} to Google Calendar`} href={googleCalendarUrl({ title: m.title, start: m.starts_at, end: m.ends_at, location: m.location, details: m.description })} />
             {m.status === 'open' && <span className={`${styles.pill} ${styles.pillOpen}`}>Check-in open</span>}
           </div>
         </li>
+        </Fragment>
       ))}
+      {!showAll && items.length > 4 && (
+        <li><Button size="sm" variant="secondary" onClick={() => setShowAll(true)}>Show {items.length - 4} more coming up</Button></li>
+      )}
     </ul>
   );
 }
@@ -398,7 +416,8 @@ function MyHistoryPanel() {
 // Who a meeting is for: the UNION of roles (everyone holding them, live), saved groups (their current
 // members, live) and individually added people.
 export interface Aud { roles: string[]; groups: string[]; invitees: string[] }
-export const defaultAud = (): Aud => ({ roles: [...DEFAULT_AUDIENCE], groups: [], invitees: [] });
+// Nobody is pre-selected: whoever plans it has to choose who it is for.
+export const defaultAud = (): Aud => ({ roles: [], groups: [], invitees: [] });
 export const audFrom = (m: { audience: string[] | null; invitees: string[] | null; group_ids: string[] | null }): Aud => ({
   roles: audienceRoles({ audience: m.audience, invitees: m.invitees, group_ids: m.group_ids }), groups: m.group_ids ?? [], invitees: m.invitees ?? [],
 });
@@ -708,7 +727,7 @@ function MeetingList({ onOpen }: { onOpen: (id: string) => void }) {
         {data.upcoming.length === 0 ? <p className={styles.muted}>Nothing scheduled. Add a meeting above.</p> : (
           <ul className={styles.meetingList}>
             {/* A repeating meeting's week keeps the same key before and after its row exists, so an open Details panel survives the first save. */}
-            {data.upcoming.map((it) => <MeetingCard key={it.series_id ? `${it.series_id}|${it.date}` : it.key} item={it} busy={busyKey === it.key} onStart={() => start(it)} onView={() => it.meeting_id && onOpen(it.meeting_id)} onCancel={(undo) => cancel(it, undo)} onSaveDoc={(f) => saveDoc(it, f)} onDelete={() => remove(it)} onChanged={load} />)}
+            {data.upcoming.map((it, i) => (<Fragment key={it.series_id ? `${it.series_id}|${it.date}` : it.key}>{startsWeekGroup(data.upcoming.map((x) => x.date), i) && <WeekHead date={it.date} />}<MeetingCard item={it} busy={busyKey === it.key} onStart={() => start(it)} onView={() => it.meeting_id && onOpen(it.meeting_id)} onCancel={(undo) => cancel(it, undo)} onSaveDoc={(f) => saveDoc(it, f)} onDelete={() => remove(it)} onChanged={load} /></Fragment>))}
           </ul>
         )}
       </section>
@@ -722,7 +741,7 @@ function MeetingList({ onOpen }: { onOpen: (id: string) => void }) {
                 <Repeat size={16} aria-hidden="true" className={styles.seriesIcon} />
                 <span className={styles.personName}>
                   {s.title}
-                  <em> · every {WEEKDAYS[s.weekday]} {hhmmLabel(s.start_time)}–{hhmmLabel(s.end_time)}{s.location ? ` · ${s.location}` : ''} · {audienceLabel(s)}{s.active ? '' : ' · paused'}</em>
+                  <em> · every {WEEKDAYS[s.weekday]} {hhmmLabel(s.start_time)}–{hhmmLabel(s.end_time)}{s.location ? ` · ${s.location}` : ''}{s.ends_on ? ` · until ${new Date(`${s.ends_on}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' })}` : ''} · {audienceLabel(s)}{s.active ? '' : ' · paused'}</em>
                 </span>
                 <IconButton kind="edit" label={`Edit ${s.title}`} onClick={() => setEditingSeries(editingSeries === s.id ? null : s.id)} />
                 <IconButton kind={s.active ? 'pause' : 'play'} label={s.active ? `Pause ${s.title}` : `Resume ${s.title}`} onClick={() => patchSeries(s, { active: !s.active })} disabled={busyKey === s.id} />
@@ -762,12 +781,13 @@ function SeriesEditForm({ series: s, busy, onSave, onCancel }: { series: Series;
   const [room, setRoom] = useState(s.location ?? '');
   const [desc, setDesc] = useState(s.description ?? '');
   const [doc, setDoc] = useState(s.doc_url ?? '');
+  const [endsOn, setEndsOn] = useState(s.ends_on ?? '');
   const [audience, setAudience] = useState<Aud>(audFrom(s));
   const bad = !title.trim() || end <= start || audienceEmpty(audience);
   return (
     <form
       className={`${styles.detailsForm} ${styles.seriesForm}`}
-      onSubmit={(e) => { e.preventDefault(); void onSave({ title, weekday: Number(weekday), start, end, location: room, description: desc, doc_url: doc, ...audPayload(audience) }); }}
+      onSubmit={(e) => { e.preventDefault(); void onSave({ title, weekday: Number(weekday), start, end, location: room, description: desc, doc_url: doc, ends_on: endsOn || null, ...audPayload(audience) }); }}
     >
       <p className={styles.faint}>Changes apply to the repeating meeting and to coming weeks that haven’t started. A week where you changed the room, time or doc on its own keeps its own.</p>
       <div className={styles.formGrid}>
@@ -777,6 +797,7 @@ function SeriesEditForm({ series: s, busy, onSave, onCancel }: { series: Series;
         <Field label="Ends"><TimeInput value={end} onChange={(e) => setEnd(e.target.value)} required /></Field>
       </div>
       <Field label="Room" hint="The default for every week."><Input value={room} onChange={(e) => setRoom(e.target.value)} maxLength={80} placeholder="e.g. Price Center East" /></Field>
+      <Field label="Last meeting on (optional)" hint="After this day it stops showing up in the portal, the portal calendar and Google Calendar. Blank means it keeps going."><DateInput value={endsOn} min={pacificToday()} onChange={(e) => setEndsOn(e.target.value)} /></Field>
       <Field label="What's this meeting about? (optional)"><Textarea value={desc} onChange={(e) => setDesc(e.target.value)} maxLength={MAX_DESCRIPTION_LENGTH} rows={2} /></Field>
       <Field label="Meeting doc link"><Input value={doc} onChange={(e) => setDoc(e.target.value)} placeholder="https://docs.google.com/…" inputMode="url" /></Field>
       <div className={styles.audienceField}><span className={styles.audienceTitle}>Who is it for?</span><AudiencePicker value={audience} onChange={setAudience} /></div>
@@ -817,7 +838,7 @@ function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, o
     : 'Scheduled';
 
   return (
-    <li className={`${styles.meetingCard} ${status === 'open' ? styles.cardOpen : ''} ${status === 'cancelled' ? styles.paused : ''}`}>
+    <li data-tone={status === 'cancelled' ? 'off' : status === 'open' ? 'open' : past ? 'done' : item.is_today ? 'today' : WEEK_TONE[weekGroup(item.date)]} className={`${styles.meetingCard} ${status === 'open' ? styles.cardOpen : ''} ${status === 'cancelled' ? styles.paused : ''}`}>
       <div className={styles.meetingMain}>
         <span className={`${styles.dateBlock} ${item.is_today ? styles.dateToday : ''}`} aria-hidden="true">
           <small>{new Date(`${item.date}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short' })}</small>
@@ -961,6 +982,7 @@ function ScheduleForm({ onCreated }: { onCreated: () => void }) {
   const [end, setEnd] = useState('18:00');
   const [location, setLocation] = useState('');
   const [doc, setDoc] = useState('');
+  const [endsOn, setEndsOn] = useState('');
   const [question, setQuestion] = useState('');
   const [description, setDescription] = useState('');
   const [audience, setAudience] = useState<Aud>(defaultAud());
@@ -973,7 +995,7 @@ function ScheduleForm({ onCreated }: { onCreated: () => void }) {
     try {
       const res = await fetch('/api/meetings/schedule', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, repeat, weekday: Number(weekday), date, start, end, location, doc_url: doc, question, description, ...audPayload(audience) }),
+        body: JSON.stringify({ title, repeat, weekday: Number(weekday), date, start, end, location, doc_url: doc, question, description, ends_on: repeat === 'weekly' ? endsOn || null : null, ...audPayload(audience) }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) { setError(json.error || 'Failed to schedule.'); return; }
@@ -983,9 +1005,9 @@ function ScheduleForm({ onCreated }: { onCreated: () => void }) {
 
   return (
     <form className={styles.form} onSubmit={submit}>
-      <button type="button" className={styles.presetBtn} onClick={() => { setTitle('Gen Meeting'); setRepeat('weekly'); setWeekday('5'); setStart('17:00'); setEnd('18:00'); }}>
+      <Button size="sm" variant="secondary" className={styles.presetBtn} onClick={() => { setTitle('Gen Meeting'); setRepeat('weekly'); setWeekday('5'); setStart('17:00'); setEnd('18:00'); }}>
         <Repeat size={14} aria-hidden="true" /> Use the Gen Meeting setup (every Friday, 5–6 PM)
-      </button>
+      </Button>
       <div className={styles.formGrid}>
         <Field label="Name"><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Gen Meeting" maxLength={60} required /></Field>
         <Field label="Repeats">
@@ -1001,6 +1023,7 @@ function ScheduleForm({ onCreated }: { onCreated: () => void }) {
         )}
         <Field label="Starts"><TimeInput value={start} onChange={(e) => setStart(e.target.value)} required /></Field>
         <Field label="Ends"><TimeInput value={end} onChange={(e) => setEnd(e.target.value)} required /></Field>
+        {repeat === 'weekly' && <Field label="Last meeting on (optional)" hint="Blank means it keeps going until you stop it."><DateInput value={endsOn} min={pacificToday()} onChange={(e) => setEndsOn(e.target.value)} /></Field>}
         <Field label={repeat === 'weekly' ? 'Usual room (optional)' : 'Room (optional)'} hint={repeat === 'weekly' ? 'Just the default — change the room for any single week from its Details.' : undefined}><Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Price Center East" maxLength={80} /></Field>
       </div>
       <Field label="What's this meeting about? (optional)" hint="A line or two. Members see it when they check in."><Textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={MAX_DESCRIPTION_LENGTH} rows={2} placeholder="e.g. Planning the Halloween LAN: roles, budget and timeline." /></Field>
@@ -1225,7 +1248,7 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
           </form>
           <InvitePeople live={live} meetingId={id} onSaved={loadLive} />
           <AttendeeList live={live} onAdd={addPerson} onRemove={removePerson} onAbsent={markAbsent} onClearAbsent={clearAbsent} />
-          {!live.meeting.series_id && <div className={styles.runActions}><Button variant="danger" size="sm" onClick={deleteMeeting}><Trash2 size={14} aria-hidden="true" /> Delete this meeting</Button></div>}
+          {!live.meeting.series_id && <div className={styles.runActions}><IconButton kind="delete" label="Delete this meeting" onClick={deleteMeeting} /></div>}
         </>
       )}
     </div>
@@ -1317,8 +1340,8 @@ function AttendeeList({ live, onAdd, onRemove, onAbsent, onClearAbsent }: {
                 <div className={styles.personRow}>
                   <Avatar p={p} />
                   <span className={styles.personName}>{p.name}</span>
-                  <button type="button" className={styles.addBtn} onClick={() => onAdd(p)}><UserPlus size={13} aria-hidden="true" /> Check in</button>
-                  <button type="button" className={styles.absentBtn} onClick={() => (absentFor === p.id ? setAbsentFor(null) : openAbsent(p))} aria-expanded={absentFor === p.id}><UserX size={13} aria-hidden="true" /> Absent</button>
+                  <Button size="sm" variant="secondary" onClick={() => onAdd(p)}><UserPlus size={13} aria-hidden="true" /> Check in</Button>
+                  <Button size="sm" variant="secondary" onClick={() => (absentFor === p.id ? setAbsentFor(null) : openAbsent(p))} aria-expanded={absentFor === p.id}><UserX size={13} aria-hidden="true" /> Absent</Button>
                 </div>
                 {absentFor === p.id && (
                   <form className={styles.absentForm} onSubmit={(e) => { e.preventDefault(); onAbsent(p, reason, excused); setAbsentFor(null); }}>

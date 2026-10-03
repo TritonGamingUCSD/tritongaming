@@ -47,6 +47,8 @@ import AdminSectionContent from './admin/AdminSectionContent';
 import MeetingsSectionContent from './meetings/MeetingsSectionContent';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { fetchLinkedEmails } from '@/lib/linkedEmails';
+import { loadTodos } from '@/lib/todos';
+import TodoCard from './TodoCard';
 import HelpSectionContent from './help/HelpSectionContent';
 import CalendarSectionContent from './calendar/CalendarSectionContent';
 import ProfileNudge from '@/components/portal/ProfileNudge';
@@ -481,6 +483,12 @@ export default async function PortalDashboard({ searchParams }: Props) {
     </>
   );
   const viewAsNode = canViewAs ? <ViewAsSwitcher active={viewAs} /> : null;
+  // Everything waiting on this person, together at the top of home: plans to answer, events to RSVP to, help replies, check-in today.
+  const todoItems = await loadTodos(createServiceClient(), { id: profile.id, roles }, { manageAll: canManageMeetings, canHost: canHostMeetings, canViewInternalEvents });
+  if (canHandleHelp && helpWaiting > 0) todoItems.push({ id: 'help-inbox', text: `${helpWaiting} help ${helpWaiting === 1 ? 'ticket needs' : 'tickets need'} a reply`, detail: 'Open the help inbox', href: '/portal?section=help&tab=inbox', tone: 'urgent' });
+  else if (!canHandleHelp && helpWaiting > 0) todoItems.push({ id: 'help-reply', text: helpWaiting === 1 ? 'You have a reply to your question' : `You have ${helpWaiting} replies to your questions`, href: '/portal?section=help', tone: 'normal' });
+  if (canCheckin && todayEvents.length > 0) todoItems.push({ id: 'checkin-today', text: `Event today: ${todayEvents[0].title}`, detail: 'Open the check-in scanner', href: '/portal?section=checkin', tone: 'urgent' });
+  if (meetingNow) todoItems.push({ id: 'meeting-now', text: 'A meeting is on now', detail: 'Check in with the code from the room', href: '/portal?section=meetings&tab=mine', tone: 'urgent' });
   const greetingLine = `${greeting}, ${profile.display_name?.split(' ')[0] || 'Triton'}`;
 
   return (
@@ -566,27 +574,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
           }
           banner={
             <>
-            {canHandleHelp && helpWaiting > 0 && (
-              <Link href="/portal?section=help&tab=inbox" className={styles.helpBanner}>
-                <div className={styles.helpBannerDot} />
-                <div>
-                  <div className={styles.checkinBannerTitle}>{helpWaiting} help {helpWaiting === 1 ? 'ticket needs' : 'tickets need'} a reply</div>
-                  <div className={styles.checkinBannerSub}>Tap to open the inbox</div>
-                </div>
-                <span className={styles.helpBannerIcon}><CircleHelp size={24} strokeWidth={1.5} aria-hidden="true" /></span>
-              </Link>
-            )}
+            <TodoCard items={todoItems} />
             {nudge.missing.length > 0 && hasBasicProfileInfo({ ...profile, gender: myGender.gender }, isVerifiedMember(roles)) && <ProfileNudge nudge={nudge} />}
-            {canCheckin && todayEvents.length > 0 && (
-              <Link href="/portal?section=checkin" className={styles.checkinBanner}>
-                <div className={styles.checkinBannerDot} />
-                <div>
-                  <div className={styles.checkinBannerTitle}>Event today — {todayEvents[0].title}</div>
-                  <div className={styles.checkinBannerSub}>Tap to open check-in scanner</div>
-                </div>
-                <span className={styles.checkinBannerIcon}><Camera size={24} strokeWidth={1.5} aria-hidden="true" /></span>
-              </Link>
-            )}
             </>
           }
           identity={{ name: profile.display_name || 'Triton', avatarUrl, roleLabel: primaryRoleLabel, roles: roleChips }}

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/audit';
-import { authorizeMeetings, isMeetingOpen, occurrenceTimes, validateDocUrl, type MeetingRow, canManageMeeting, notYourMeeting, notifyMeetingInvites } from '@/lib/meetings';
+import { authorizeMeetings, ensureOccurrence, isMeetingOpen, occurrenceTimes, validateDocUrl, type MeetingRow, type SeriesRow, canManageMeeting, notYourMeeting, notifyMeetingInvites } from '@/lib/meetings';
 import { MAX_QUESTION_LENGTH, MAX_DESCRIPTION_LENGTH } from '@/lib/meetingFun';
 import { formatPacificDateTime } from '@/lib/timezone';
 import { validateAudienceInput } from '@/lib/meetingAudience';
@@ -35,12 +35,7 @@ export async function POST(request: Request) {
     const { data: s } = await auth.svc.from('meeting_series').select('*').eq('id', b.series_id).maybeSingle();
     if (!s) return NextResponse.json({ error: 'Meeting not found.' }, { status: 404 });
     if (!canManageMeeting(auth, s.created_by)) return notYourMeeting();
-    const { starts, ends } = occurrenceTimes(b.date, s.start_time, s.end_time);
-    await auth.svc.from('meetings').upsert(
-      { series_id: s.id, title: s.title, meeting_date: b.date, starts_at: starts.toISOString(), ends_at: ends.toISOString(), location: s.location, doc_url: s.doc_url, audience: s.audience, invitees: s.invitees, group_ids: s.group_ids, description: s.description, created_by: s.created_by },
-      { onConflict: 'series_id,meeting_date', ignoreDuplicates: true });
-    const { data } = await auth.svc.from('meetings').select('id').eq('series_id', s.id).eq('meeting_date', b.date).maybeSingle();
-    id = data?.id ?? null;
+    id = (await ensureOccurrence(auth.svc, s as SeriesRow, b.date))?.id ?? null;
   }
   if (!id) return NextResponse.json({ error: 'Meeting not found.' }, { status: 404 });
   const { data: own } = await auth.svc.from('meetings').select('*').eq('id', id).maybeSingle();

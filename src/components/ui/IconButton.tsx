@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
-import { BarChart3, Pencil, Trash2, Eye, Copy, Pause, Play, History, X, MoreHorizontal, ExternalLink } from 'lucide-react';
+import { BarChart3, Pencil, Trash2, Eye, Copy, Pause, Play, History, X, MoreHorizontal, ExternalLink, CalendarPlus } from 'lucide-react';
 import styles from './IconButton.module.css';
 
 // The one icon-only action button. Pick a `kind` and it brings the standard icon, tooltip and tone, so
@@ -19,6 +19,7 @@ const KINDS = {
   play:      { icon: Play,           title: 'Resume',    tone: 'default' },
   history:   { icon: History,        title: 'History',   tone: 'default' },
   more:      { icon: MoreHorizontal, title: 'More',      tone: 'default' },
+  calendar:  { icon: CalendarPlus,   title: 'Add to calendar', tone: 'default' },
 } as const;
 
 export type IconButtonKind = keyof typeof KINDS;

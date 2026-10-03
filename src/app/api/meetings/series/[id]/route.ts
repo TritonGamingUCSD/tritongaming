@@ -33,6 +33,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     patch.title = t;
   }
   if ('location' in body) patch.location = String(body.location ?? '').trim().slice(0, 80) || null;
+  if ('ends_on' in body) {
+    const e = body.ends_on ? String(body.ends_on) : null;
+    if (e && (!/^\d{4}-\d{2}-\d{2}$/.test(e) || e < pacificDayKey())) return NextResponse.json({ error: 'The last day can’t be in the past.' }, { status: 400 });
+    patch.ends_on = e;
+  }
   if ('weekday' in body) {
     const w = Number(body.weekday);
     if (!Number.isInteger(w) || w < 0 || w > 6) return NextResponse.json({ error: 'Pick a day of the week.' }, { status: 400 });

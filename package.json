@@ -10,7 +10,8 @@
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:permissions": "node scripts/permissions-check.mjs"
+    "test:permissions": "node scripts/permissions-check.mjs",
+    "test:plans": "node scripts/plans-check.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",

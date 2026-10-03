@@ -1,7 +1,9 @@
 'use client';
 
 import Notice from '@/components/ui/Notice';
-import { useEffect, useState, type ReactNode } from 'react';
+import { Fragment, useEffect, useState, type ReactNode } from 'react';
+import WeekHead from '@/components/ui/WeekHead';
+import { pacificKey, startsWeekGroup } from '@/lib/weekGroups';
 import Link from 'next/link';
 import { getAttributionSource } from '@/lib/attribution';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -344,8 +346,10 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
         <section>
           <h2 className={styles.sectionTitle}>Upcoming Events</h2>
           <div className={styles.eventList}>
-            {unregisteredEvents.map((event) => (
-              <div key={event.id} className={styles.eventRow}>
+            {unregisteredEvents.map((event, i) => (
+              <Fragment key={event.id}>
+              {startsWeekGroup(unregisteredEvents.map((x) => pacificKey(x.start_date)), i) && <WeekHead as="div" date={pacificKey(event.start_date)} />}
+              <div className={styles.eventRow}>
                 <div className={styles.eventDateBlock}>
                   <span className={styles.eventMon}>
                     {new Date(event.start_date).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short' })}
@@ -384,6 +388,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
                   </button>
                 )}
               </div>
+              </Fragment>
             ))}
           </div>
         </section>

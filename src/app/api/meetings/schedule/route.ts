@@ -37,7 +37,9 @@ export async function POST(request: Request) {
   if (b.repeat === 'weekly') {
     const weekday = Number(b.weekday);
     if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6) return NextResponse.json({ error: 'Pick a day of the week.' }, { status: 400 });
-    const { data, error } = await auth.svc.from('meeting_series').insert({ title, weekday, start_time: start, end_time: end, location, doc_url: doc.value, audience: aud.audience, invitees: aud.invitees, group_ids: aud.group_ids, description, created_by: auth.user.id }).select('id').single();
+    const endsOn = b.ends_on ? String(b.ends_on) : null;
+    if (endsOn && (!DATE.test(endsOn) || endsOn < pacificDayKey())) return NextResponse.json({ error: 'The last day can’t be in the past.' }, { status: 400 });
+    const { data, error } = await auth.svc.from('meeting_series').insert({ ends_on: endsOn, title, weekday, start_time: start, end_time: end, location, doc_url: doc.value, audience: aud.audience, invitees: aud.invitees, group_ids: aud.group_ids, description, created_by: auth.user.id }).select('id').single();
     if (error) return NextResponse.json({ error: 'Failed to schedule.' }, { status: 500 });
     await logAudit(auth.svc, { actorId: auth.user.id, action: 'create', entityType: 'meeting series', entityId: data.id, summary: `Scheduled repeating meeting "${title}"`, details: { weekday, start, end } });
     const day = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][weekday];
