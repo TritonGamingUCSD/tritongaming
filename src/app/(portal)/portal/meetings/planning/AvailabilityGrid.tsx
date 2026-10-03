@@ -52,6 +52,10 @@ export default function AvailabilityGrid({ plan, value, onChange, disabled }: { 
   const isBusy = (day: string, t: string) => busyBy.get(day)?.has(t) ?? false;
   const busyTitle = (day: string, t: string) => busyBy.get(day)?.get(t) ?? '';
   const busyWhy = (day: string, t: string) => plan.busy.find((b) => b.day === day && b.title === busyTitle(day, t))?.why ?? '';
+  // On my Google Calendar: a hint only. These times stay clickable and count as I mark them.
+  const softBy = new Map(days.map((d) => [d, busySlots(plan.soft ?? [], d, starts)]));
+  const softTitle = (day: string, t: string) => softBy.get(day)?.get(t) ?? '';
+  const isSoft = (day: string, t: string) => !isBusy(day, t) && softBy.get(day)?.has(t) === true;
   const hasAnything = Object.keys(value).length > 0;
   async function clearEverything() {
     if (await confirmHold({ title: 'Clear everything?', message: 'This clears every time you marked on this plan, so you’d be unavailable for all of it (times already blocked by your calendar stay blocked).', confirmLabel: 'Hold to clear everything' })) onChange({});
@@ -120,6 +124,7 @@ export default function AvailabilityGrid({ plan, value, onChange, disabled }: { 
           <Button size="sm" variant="danger" onClick={clearEverything} disabled={disabled || !hasAnything}>Clear everything</Button>
         </div>
         {plan.busy.length > 0 && <p className={styles.hint}>Greyed times are already on your Triton Gaming calendar, so you are unavailable then.</p>}
+        {(plan.soft ?? []).length > 0 && <p className={styles.hint}>Teal striped times are on your Google Calendar. Only you see them, and they don’t block you: you still decide.</p>}
         <div className={styles.mRows}>
           {starts.map((t) => {
             const v = get(day, t);
@@ -132,7 +137,7 @@ export default function AvailabilityGrid({ plan, value, onChange, disabled }: { 
             );
             return (
               <button key={t} type="button" disabled={disabled} className={`${styles.mRow} ${v === 1 ? styles.cellAvail : v === 2 ? styles.cellMaybe : ''}`} onClick={() => setCells([{ day, t }], v === mode ? 0 : mode)} aria-pressed={v !== 0} aria-label={`${head(day)} ${clockLabel(t)}: ${v === 1 ? 'available' : v === 2 ? 'if needed' : 'unavailable'}`}>
-                <span className={styles.mTime}>{clockLabel(t)}</span>
+                <span className={styles.mTime}>{clockLabel(t)}{isSoft(day, t) && <span className={styles.mSoft}>Google: {softTitle(day, t)}</span>}</span>
                 <span className={styles.mState}>{v === 1 ? 'Available' : v === 2 ? 'If needed' : ''}</span>
               </button>
             );
@@ -168,10 +173,10 @@ export default function AvailabilityGrid({ plan, value, onChange, disabled }: { 
                 return (
                   <div
                     key={d}
-                    className={`${cellClass(v)} ${t.endsWith(':00') ? '' : styles.cellHalf}`}
+                    className={`${cellClass(v)} ${t.endsWith(':00') ? '' : styles.cellHalf} ${isSoft(d, t) ? styles.cellSoft : ''}`}
                     role="button"
                     tabIndex={disabled ? -1 : 0}
-                    aria-label={`${head(d)} ${clockLabel(t)}: ${v === 1 ? 'available' : v === 2 ? 'if needed' : 'unavailable'}`}
+                    aria-label={`${head(d)} ${clockLabel(t)}: ${v === 1 ? 'available' : v === 2 ? 'if needed' : 'unavailable'}${isSoft(d, t) ? `, on your Google Calendar: ${softTitle(d, t)}` : ''}`}
                     onPointerDown={(e) => {
                       if (disabled || e.pointerType === 'touch') return;
                       const next: Mode = v === mode ? 0 : mode;
@@ -182,7 +187,7 @@ export default function AvailabilityGrid({ plan, value, onChange, disabled }: { 
                     onPointerMove={(e) => { if (e.pointerType !== 'touch') setHover({ day: d, t, x: e.clientX, y: e.clientY }); }}
                     onClick={(e) => { if (!disabled && (e as unknown as PointerEvent).pointerType === 'touch') setCells([{ day: d, t }], v === mode ? 0 : mode); }}
                     onKeyDown={(e) => { if (!disabled && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); setCells([{ day: d, t }], v === mode ? 0 : mode); } }}
-                  />
+                  >{isSoft(d, t) && !isSoft(d, toHhmm(toMin(t) - 30)) && <span className={styles.softLabel}>{softTitle(d, t)}</span>}</div>
                 );
               })}
             </div>
@@ -194,6 +199,7 @@ export default function AvailabilityGrid({ plan, value, onChange, disabled }: { 
         <div className={styles.hoverTip} style={{ left: hover.x + 14, top: hover.y + 16 }} aria-hidden="true">
           {head(hover.day)} · {clockLabel(hover.t)} to {clockLabel(toHhmm(toMin(hover.t) + 30))}
           {isBusy(hover.day, hover.t) && <em>Blocked: {busyTitle(hover.day, hover.t)}</em>}
+          {isSoft(hover.day, hover.t) && <em>Google Calendar: {softTitle(hover.day, hover.t)} (you can still mark it)</em>}
         </div>
       )}
       <aside className={styles.availSide}>

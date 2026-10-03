@@ -25,7 +25,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
   const today = pacificDayKey();
   const items = await collectCalendarItems(svc, { id: profile.id as string }, roles, addDaysKey(today, -30), addDaysKey(today, 180));
   const origin = new URL(request.url).origin;
-  const kindLabel = { event: 'Event', meeting: 'Meeting', internal: 'Internal event' } as const;
+  const kindLabel = { event: 'Event', meeting: 'Meeting', internal: 'Internal event', google: 'Google Calendar' } as const;
   // A multi-day event is one entry per day in the portal; in a calendar app it should be one block.
   const seen = new Set<string>();
   const events = items.flatMap((i) => {

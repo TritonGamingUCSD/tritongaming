@@ -208,3 +208,9 @@
 
 /* A time tied for the very best carries a star; the ones after it carry their place. */
 .sugTop { background: #fbbf24; color: #1c1403; }
+
+/* Times on my own Google Calendar: teal stripes laid over the cell, as a hint only (the cell stays clickable and keeps its color). */
+.cell { position: relative; }
+.cellSoft::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(135deg, rgba(45, 212, 191, 0.34), rgba(45, 212, 191, 0.34) 3px, transparent 3px, transparent 7px); box-shadow: inset 2px 0 0 rgba(45, 212, 191, 0.85); }
+.softLabel { position: relative; z-index: 1; display: block; padding: 0 0.3rem; font-size: 0.64rem; line-height: 24px; color: #99f6e4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 0 3px rgba(0, 0, 0, 0.8); pointer-events: none; }
+.mSoft { display: block; font-size: 0.7rem; color: #5eead4; }

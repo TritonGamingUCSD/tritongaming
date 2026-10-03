@@ -5,6 +5,7 @@ import { getUserRoles } from '@/lib/auth';
 import { pacificDayKey } from '@/lib/checkinDays';
 import { addDaysKey } from '@/lib/meetings';
 import { collectCalendarItems } from '@/lib/calendarItems';
+import { googleItems } from '@/lib/externalCalendar';
 
 export const dynamic = 'force-dynamic';
 export type { CalendarItem } from '@/lib/calendarItems';
@@ -21,6 +22,8 @@ export async function GET(request: Request) {
   let to = DATE.test(url.searchParams.get('to') ?? '') ? url.searchParams.get('to')! : addDaysKey(from, 42);
   if (to < from) return NextResponse.json({ error: 'Bad range.' }, { status: 400 });
   if (to > addDaysKey(from, 62)) to = addDaysKey(from, 62);
-  const items = await collectCalendarItems(createServiceClient(), user, await getUserRoles(), from, to);
-  return NextResponse.json({ from, to, today, items });
+  const svc = createServiceClient();
+  const [items, google] = await Promise.all([collectCalendarItems(svc, user, await getUserRoles(), from, to), googleItems(svc, user.id, from, to)]);
+  // My own linked Google Calendar travels separately: it is only ever returned to me, and never goes in the shared items or the feed.
+  return NextResponse.json({ from, to, today, items, google: google.items, googleLinked: google.linked, googleError: google.error, googleAccounts: google.accounts.map((a) => a.email) });
 }

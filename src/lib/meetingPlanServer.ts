@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { googleItems } from '@/lib/externalCalendar';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
@@ -106,11 +107,14 @@ export async function loadPlanViews(auth: Auth, only?: string): Promise<PlanView
       groupNames: (plan.group_ids ?? []).map((g) => groups.get(g)?.name).filter((n): n is string => !!n),
       canReopen: false,
       busy: [],
+      soft: [],
       blocked: blockedByUser,
     });
   }
   // What is already on my calendar for each plan I'm asked to answer.
   for (const v of views.filter((x) => x.status === 'open' && !x.expired && x.people.some((p) => p.id === auth.user.id))) v.busy = await busyBlocksFor(svc, auth.user, auth.roles ?? [], v, v.days);
+  // What is on my own linked Google Calendar then: only a hint for me (see softBlocksFor).
+  for (const v of views.filter((x) => x.status === 'open' && !x.expired && x.kind === 'once' && x.people.some((p) => p.id === auth.user.id))) v.soft = await softBlocksFor(svc, auth.user.id, v.days);
   // Whether each decided plan can still be taken back (the meeting hasn't started or opened).
   for (const v of views.filter((x) => x.status === 'decided' && x.canManage)) v.canReopen = await canReopenPlan(svc, v);
   return views;
@@ -160,6 +164,26 @@ export async function busyBlocksFor(svc: SupabaseClient, user: { id: string }, r
     const end = it.date === endDay ? clock(endIso) : '23:59';
     const why = it.kind === 'meeting' ? (it.mine ? 'You’re hosting this meeting' : 'You’re invited to this meeting') : it.kind === 'internal' ? 'You said you’re going' : 'You have a ticket';
     if (end > start || it.date !== endDay) out.push({ day: key, start, end: end > start ? end : '23:59', title: it.title, why });
+  }
+  return out;
+}
+
+// Timed events on this person's own linked Google Calendar during a one-time plan. Only ever returned to that person, only a hint on their own
+// grid: unlike what is on their Triton Gaming calendar it never locks a time, never changes their answer, and is never shown to the host or
+// counted in the group's results.
+export async function softBlocksFor(svc: SupabaseClient, userId: string, days: string[]): Promise<BusyBlock[]> {
+  if (!days.length) return [];
+  const { items } = await googleItems(svc, userId, days[0], days[days.length - 1]);
+  const dayKeys = new Set(days);
+  const clock = (iso: string) => new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Los_Angeles', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(iso));
+  const out: BusyBlock[] = [];
+  for (const it of items) {
+    if (it.allDay || !dayKeys.has(it.date)) continue;
+    const endIso = it.end ?? new Date(new Date(it.start).getTime() + 3600_000).toISOString();
+    const startDay = pacificDayKey(new Date(it.start)), endDay = pacificDayKey(new Date(endIso));
+    const start = it.date === startDay ? clock(it.start) : '00:00';
+    const end = it.date === endDay ? clock(endIso) : '23:59';
+    if (end > start || it.date !== endDay) out.push({ day: it.date, start, end: end > start ? end : '23:59', title: it.title, why: it.account ? `On your Google Calendar (${it.account})` : 'On your Google Calendar' });
   }
   return out;
 }

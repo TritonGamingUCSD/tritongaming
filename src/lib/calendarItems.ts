@@ -6,7 +6,7 @@ import { addDaysKey, loadGroups, occurrenceTimes, seriesRunsOn, withExtras, type
 
 export interface CalendarItem {
   key: string;
-  kind: 'event' | 'meeting' | 'internal';
+  kind: 'event' | 'meeting' | 'internal' | 'google';
   date: string;            // the Pacific day this entry sits on
   title: string;
   start: string; end: string | null;   // ISO
@@ -16,6 +16,9 @@ export interface CalendarItem {
   /** My own standing, for the badge: a ticket, checked in, hosting, going or maybe (internal event RSVP). */
   status?: 'ticket' | 'checked_in' | 'hosting' | 'going' | 'maybe';
   description?: string | null;
+  allDay?: boolean;
+  /** For a linked Google Calendar item: which Google account it came from. */
+  account?: string;
   dayLabel: string | null; // "Day 2 of 3" for multi-day events
   repeats?: boolean;
 }

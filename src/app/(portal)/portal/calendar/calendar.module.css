@@ -160,3 +160,65 @@
 /* phone: the month is compact and swipes; the day's list sits right under it */
 @media (max-width: 640px) { .filters { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; } .filterChip { flex: none; } .grid { touch-action: pan-y; } }
 .popup .status { align-self: flex-start; }
+
+/* My own linked Google Calendar: teal, view only, and always labeled as mine. */
+.kGoogle { --k: #2dd4bf; --kbg: rgba(45, 212, 191, 0.14); --kfg: #99f6e4; }
+.dotGoogle { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: #2dd4bf; }
+.chipGoogle { background: rgba(45, 212, 191, 0.18); color: #99f6e4; }
+.itemGoogle .itemBar { background: #2dd4bf; }
+.popupNote { margin: 0.2rem 0 0; font-size: 0.74rem; color: rgba(242, 241, 240, 0.55); }
+
+.linkFacts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.84rem; color: rgba(242, 241, 240, 0.75); }
+.linkFacts li { display: flex; gap: 0.5rem; align-items: flex-start; }
+.linkFacts svg { flex: none; margin-top: 0.2rem; color: #2dd4bf; }
+.linkFacts b { color: var(--white); font-weight: 600; }
+.linkToggle { display: flex; align-items: center; gap: 0.6rem; font-size: 0.86rem; color: rgba(242, 241, 240, 0.85); cursor: pointer; }
+.tgAllDay { display: grid; grid-template-columns: var(--gutter) repeat(var(--cols), minmax(0, 1fr)); border-bottom: 1px solid rgba(255, 255, 255, 0.08); background: #0d1017; }
+.tgAllLabel { display: block; padding: 0.4rem 0.5rem 0 0; text-align: right; font-size: 0.62rem; color: rgba(242, 241, 240, 0.45); }
+.tgAllCell { display: flex; flex-direction: column; gap: 2px; padding: 3px; min-width: 0; border-left: 1px solid rgba(255, 255, 255, 0.06); }
+.tgAllChip { padding: 1px 6px; border: 0; border-left: 3px solid var(--k); border-radius: 0.35rem; background: var(--kbg); color: var(--kfg); font: inherit; font-size: 0.68rem; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+.accounts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.account { display: flex; flex-direction: column; gap: 0.45rem; padding: 0.7rem 0.8rem; border-radius: 0.75rem; border: 1px solid rgba(45, 212, 191, 0.3); background: rgba(45, 212, 191, 0.05); }
+.accountTop { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap; }
+.accountEmail { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 600; color: var(--white); overflow-wrap: anywhere; }
+.inlineLink { color: var(--yellow); }
+
+/* ── Page layout: one clear order, the same on desktop and phone ─────────────
+   1. header (phone only: the portal's top bar already names the page on desktop) with the Sync button
+   2. navigation: previous / the stretch of time / next / Today, then the view switch
+   3. Sync panel, only when opened
+   4. what to show (filters)
+   5. the calendar, and (month) the picked day beside it on desktop, under it on a phone */
+.header { flex-direction: row; align-items: flex-start; justify-content: space-between; gap: 0.75rem; }
+.headerText { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
+.syncBtn { position: relative; }
+.syncDot { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: #2dd4bf; box-shadow: 0 0 0 2px #0b0e15; }
+.syncDotWarn { background: #fbbf24; }
+.phoneOnly { display: none; }
+.syncGrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.75rem; }
+@media (min-width: 900px) { .syncGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
+.googleCard { background: rgba(45, 212, 191, 0.05); border-color: rgba(45, 212, 191, 0.28); }
+@media (max-width: 640px) {
+  .phoneOnly { display: inline-flex; }
+  .wideOnly { display: none !important; }
+  .syncText { display: none; }
+  .toolbar { flex-direction: column; align-items: stretch; gap: 0.6rem; }
+  .nav { justify-content: space-between; }
+  .month { flex: 1; min-width: 0; }
+  .toolbarRight { width: 100%; }
+  .toolbarRight > :last-child { width: 100%; }
+  .toolbarRight [role='tablist'] { width: 100%; }
+  .toolbarRight [role='tablist'] > * { flex: 1; justify-content: center; }
+}
+.syncSingle { grid-template-columns: minmax(0, 1fr) !important; max-width: 640px; }
+
+/* Desktop toolbar: navigation, then the view switch right beside it, and the share button out at the far right edge. */
+.toolbar { justify-content: flex-start; gap: 1rem; }
+.viewSwitch [role='tablist'] { margin: 0 !important; }
+.toolbarRight { margin-left: auto; }
+@media (max-width: 640px) {
+  .toolbar { gap: 0.6rem; }
+  .viewSwitch { width: 100%; }
+  .viewSwitch [role='tablist'] { width: 100%; }
+  .viewSwitch [role='tablist'] > * { flex: 1; justify-content: center; }
+}

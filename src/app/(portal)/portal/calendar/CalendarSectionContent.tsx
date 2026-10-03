@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, CalendarDays, Ticket, MapPin, Repeat, CalendarPlus, Copy, Check, RefreshCw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarDays, CalendarPlus, CalendarSync, Ticket, MapPin, Repeat, Copy, Check, RefreshCw } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Notice from '@/components/ui/Notice';
@@ -11,7 +11,9 @@ import { useLiveParams } from '@/lib/usePortalParams';
 import { confirmHold } from '@/lib/confirmHold';
 import styles from './calendar.module.css';
 import TimeGrid from './TimeGrid';
-import { ItemPopup, StatusBadge, timeOf, type Item } from './calendarParts';
+import GoogleLinkPanel from './GoogleLinkPanel';
+import { GOOGLE_CALENDAR_LINKING } from '@/lib/featureFlags';
+import { ItemPopup, ItemRow, StatusBadge, kindKey, timeOf, type Item } from './calendarParts';
 
 type View = 'month' | 'week' | 'day' | 'agenda';
 type Kind = Item['kind'];
@@ -34,23 +36,31 @@ export default function CalendarSectionContent() {
   const [weekStart, setWeekStart] = useState(() => sundayOf(today));
   const [items, setItems] = useState<Item[] | null>(null);
   // What to show: which kinds, and only the ones I have a stake in (a ticket, hosting, going). Remembered on this device.
-  const [kinds, setKinds] = useState<Kind[]>(['event', 'meeting', 'internal']);
+  const [kinds, setKinds] = useState<Kind[]>(['event', 'meeting', 'internal', 'google']);
+  // My own linked Google Calendar (view only): its events come with the response, separate from the shared ones.
+  const [google, setGoogle] = useState<Item[]>([]);
+  const [googleLinked, setGoogleLinked] = useState(false);
+  const [googleError, setGoogleError] = useState<string | null>(null);
   const [onlyMine, setOnlyMine] = useState(false);
   const [popup, setPopup] = useState<{ item: Item; rect: DOMRect } | null>(null);
   const [nowIso, setNowIso] = useState(() => new Date().toISOString());
   useEffect(() => {
-    try { const f = JSON.parse(localStorage.getItem('calendar-filters') ?? 'null'); if (f) { setKinds(f.kinds); setOnlyMine(!!f.onlyMine); } } catch { /* no saved filters */ }
+    try { const f = JSON.parse(localStorage.getItem('calendar-filters') ?? 'null'); if (f) { setKinds([...new Set([...(f.kinds as Kind[]), ...(f.kinds.includes('google') || f.googleOff ? [] : ['google' as Kind])])]); setOnlyMine(!!f.onlyMine); } } catch { /* no saved filters */ }
     const t = setInterval(() => setNowIso(new Date().toISOString()), 60_000);
     return () => clearInterval(t);
   }, []);
   function setFilters(k: Kind[], m: boolean) {
     setKinds(k); setOnlyMine(m);
-    try { localStorage.setItem('calendar-filters', JSON.stringify({ kinds: k, onlyMine: m })); } catch { /* private window */ }
+    try { localStorage.setItem('calendar-filters', JSON.stringify({ kinds: k, onlyMine: m, googleOff: !k.includes('google') })); } catch { /* private window */ }
   }
   const [error, setError] = useState('');
   const swipe = useRef<{ x: number; y: number } | null>(null);
   const params = useLiveParams();
-  const [subscribeOpen, setSubscribeOpen] = useState(params.get('subscribe') === '1');
+  // One "Sync" panel holds both directions: bring my Google Calendar in, and send this calendar out to my own calendar app.
+  const [syncOpen, setSyncOpen] = useState(params.get('subscribe') === '1' || !!params.get('gcal'));
+  // Coming back from Google's screen lands here with ?gcal=…: open the link panel so the result is seen.
+  const gcalResult = params.get('gcal');
+  const [reload, setReload] = useState(0);
 
   // The grid always shows six full weeks, so fetch exactly that span.
   const gridStart = useMemo(() => {
@@ -68,19 +78,19 @@ export default function CalendarSectionContent() {
     setItems(null); setError('');
     fetch(`/api/calendar?from=${from}&to=${to}`, { cache: 'no-store' })
       .then(async (r) => ({ ok: r.ok, j: await r.json().catch(() => ({})) }))
-      .then(({ ok, j }) => { if (!live) return; if (ok) setItems(j.items); else setError(j.error || 'Failed to load the calendar.'); })
+      .then(({ ok, j }) => { if (!live) return; if (ok) { setItems(j.items); setGoogle(j.google ?? []); setGoogleLinked(!!j.googleLinked); setGoogleError(j.googleError ?? null); } else setError(j.error || 'Failed to load the calendar.'); })
       .catch(() => { if (live) setError('Couldn’t reach the server.'); });
     return () => { live = false; };
-  }, [from, to]);
+  }, [from, to, reload]);
 
   const byDay = useMemo(() => {
     const map = new Map<string, Item[]>();
-    for (const i of items ?? []) {
-      if (!kinds.includes(i.kind) || (onlyMine && !i.status && !i.mine)) continue;
+    for (const i of [...(items ?? []), ...google]) {
+      if (!kinds.includes(i.kind) || (onlyMine && !i.status && !i.mine && i.kind !== 'google')) continue;
       map.set(i.date, [...(map.get(i.date) ?? []), i]);
     }
     return map;
-  }, [items, kinds, onlyMine]);
+  }, [items, google, kinds, onlyMine]);
 
   function shift(n: number) {
     if (view === 'week') { setWeekStart((w) => addDays(w, 7 * n)); return; }
@@ -104,11 +114,21 @@ export default function CalendarSectionContent() {
   const dayItems = byDay.get(selected) ?? [];
   const agendaDays = [...byDay.keys()].filter((d) => d >= (view === 'agenda' ? today : gridStart) && d.slice(0, 7) === key(cursor.y, cursor.m, 1).slice(0, 7)).sort();
 
+  const syncButton = (cls: 'phoneOnly' | 'wideOnly') => (
+    <Button variant="secondary" size="sm" className={`${styles.syncBtn} ${styles[cls]}`} onClick={() => setSyncOpen((v) => !v)} aria-expanded={syncOpen} aria-label={GOOGLE_CALENDAR_LINKING ? 'Sync calendars' : 'Add to my calendar'}>
+      {GOOGLE_CALENDAR_LINKING ? <CalendarSync size={15} strokeWidth={1.75} aria-hidden="true" /> : <CalendarPlus size={15} strokeWidth={1.75} aria-hidden="true" />} <span className={styles.syncText}>{GOOGLE_CALENDAR_LINKING ? 'Sync' : 'Add to my calendar'}</span>
+      {(googleLinked || googleError) && <i className={`${styles.syncDot} ${googleError ? styles.syncDotWarn : ''}`} aria-hidden="true" />}
+    </Button>
+  );
+
   return (
     <div className={styles.page} data-wide={view !== 'agenda' ? '' : undefined} data-month={view !== 'agenda' ? '' : undefined}>
       <div className={styles.header}>
-        <h1 className={styles.title}>Calendar</h1>
-        <p className={styles.sub}>Events and the meetings you’re invited to, in one place.</p>
+        <div className={styles.headerText}>
+          <h1 className={styles.title}>Calendar</h1>
+          <p className={styles.sub}>Events and the meetings you’re invited to, in one place.</p>
+        </div>
+        {syncButton('phoneOnly')}
       </div>
 
       <div className={styles.toolbar}>
@@ -118,15 +138,23 @@ export default function CalendarSectionContent() {
           <Button variant="secondary" size="sm" onClick={() => shift(1)} aria-label={view === 'week' ? 'Next week' : view === 'day' ? 'Next day' : 'Next month'}><ChevronRight size={16} aria-hidden="true" /></Button>
           <Button variant="ghost" size="sm" onClick={goToday}>Today</Button>
         </div>
-        <div className={styles.toolbarRight}>
-          <Button variant="secondary" size="sm" onClick={() => setSubscribeOpen((v) => !v)} aria-expanded={subscribeOpen}><CalendarPlus size={15} strokeWidth={1.75} aria-hidden="true" /> Add to my calendar</Button>
+        <div className={styles.viewSwitch}>
           <SectionTabs<View> variant="segmented" label="View" value={view} onChange={changeView} tabs={[{ id: 'month', label: 'Month' }, { id: 'week', label: 'Week' }, { id: 'day', label: 'Day' }, { id: 'agenda', label: 'List' }]} />
         </div>
+        <div className={styles.toolbarRight}>
+          {syncButton('wideOnly')}
+        </div>
       </div>
-      {subscribeOpen && <SubscribePanel />}
+      {syncOpen && (
+        <div className={`${styles.syncGrid} ${GOOGLE_CALENDAR_LINKING ? '' : styles.syncSingle}`}>
+          {GOOGLE_CALENDAR_LINKING && <GoogleLinkPanel result={gcalResult} onChanged={() => setReload((n) => n + 1)} />}
+          <SubscribePanel />
+        </div>
+      )}
+      {GOOGLE_CALENDAR_LINKING && googleError && !syncOpen && <Notice tone="warning">Your Google Calendar couldn’t be loaded just now, so its events aren’t shown. Open Sync to link it again.</Notice>}
 
       <div className={styles.filters} role="group" aria-label="What to show">
-        {([['event', 'Events', styles.dotEvent], ['meeting', 'Meetings', styles.dotMeeting], ['internal', 'Internal events', styles.dotInternal]] as const).map(([k, label, dot]) => {
+        {([['event', 'Events', styles.dotEvent], ['meeting', 'Meetings', styles.dotMeeting], ['internal', 'Internal events', styles.dotInternal], ...(googleLinked ? [['google', 'My Google Calendar', styles.dotGoogle]] : [])] as [Kind, string, string][]).map(([k, label, dot]) => {
           const on = kinds.includes(k);
           return <button key={k} type="button" className={`${styles.filterChip} ${on ? styles.filterOn : ''}`} aria-pressed={on} onClick={() => setFilters(on ? kinds.filter((x) => x !== k) : [...kinds, k], onlyMine)}><i className={dot} /> {label}</button>;
         })}
@@ -161,11 +189,11 @@ export default function CalendarSectionContent() {
                 >
                   <span className={styles.num}>{Number(d.slice(8))}</span>
                   <span className={styles.chips}>
-                    {list.slice(0, 3).map((i) => <span key={i.key} className={`${styles.chip} ${i.kind === 'event' ? styles.chipEvent : i.kind === 'internal' ? styles.chipInternal : styles.chipMeeting}`}>{i.title}</span>)}
+                    {list.slice(0, 3).map((i) => <span key={i.key} className={`${styles.chip} ${styles['chip' + kindKey(i.kind)]}`}>{i.title}</span>)}
                     {list.length > 3 && <span className={styles.more}>+{list.length - 3} more</span>}
                   </span>
                   <span className={styles.dots} aria-hidden="true">
-                    {list.slice(0, 4).map((i) => <i key={i.key} className={i.kind === 'event' ? styles.dotEvent : i.kind === 'internal' ? styles.dotInternal : styles.dotMeeting} />)}
+                    {list.slice(0, 4).map((i) => <i key={i.key} className={styles['dot' + kindKey(i.kind)]} />)}
                   </span>
                 </button>
               );
@@ -204,14 +232,14 @@ export default function CalendarSectionContent() {
                   <ul className={styles.weekList}>
                     {list.map((i) => (
                       <li key={i.key}>
-                        <Link href={i.href} className={`${styles.weekItem} ${i.kind === 'event' ? styles.itemEvent : i.kind === 'internal' ? styles.itemInternal : styles.itemMeeting}`}>
+                        <ItemRow item={i} className={`${styles.weekItem} ${styles['item' + kindKey(i.kind)]}`}>
                           <span className={styles.itemBar} aria-hidden="true" />
                           <span className={styles.weekItemMain}>
-                            <span className={styles.weekTime}>{i.kind === 'event' ? timeOf(i.start) : `${timeOf(i.start)}${i.end ? ` – ${timeOf(i.end)}` : ''}`}</span>
+                            <span className={styles.weekTime}>{i.allDay ? 'All day' : i.kind === 'event' ? timeOf(i.start) : `${timeOf(i.start)}${i.end ? ` – ${timeOf(i.end)}` : ''}`}</span>
                             <span className={styles.weekTitle}>{i.title}{i.repeats && <Repeat size={11} aria-label="Repeats weekly" />}<StatusBadge status={i.status} compact /></span>
                             {i.location && <span className={styles.weekLoc}><MapPin size={10} aria-hidden="true" /> {i.location}</span>}
                           </span>
-                        </Link>
+                        </ItemRow>
                       </li>
                     ))}
                   </ul>
@@ -253,7 +281,7 @@ function ItemList({ items }: { items: Item[] }) {
     <ul className={styles.list}>
       {items.map((i) => (
         <li key={i.key}>
-          <Link href={i.href} className={`${styles.item} ${i.kind === 'event' ? styles.itemEvent : i.kind === 'internal' ? styles.itemInternal : styles.itemMeeting}`}>
+          <ItemRow item={i} className={`${styles.item} ${styles['item' + kindKey(i.kind)]}`}>
             <span className={styles.itemBar} aria-hidden="true" />
             <span className={styles.itemMain}>
               <span className={styles.itemTitle}>
@@ -262,13 +290,13 @@ function ItemList({ items }: { items: Item[] }) {
                 <StatusBadge status={i.status} />
               </span>
               <span className={styles.itemMeta}>
-                {i.kind === 'event' ? formatEventTimeRange(i.start, i.end) : `${timeOf(i.start)}${i.end ? ` – ${timeOf(i.end)}` : ''}`}
+                {i.allDay ? 'All day' : i.kind === 'event' ? formatEventTimeRange(i.start, i.end) : `${timeOf(i.start)}${i.end ? ` – ${timeOf(i.end)}` : ''}`}
                 {i.dayLabel && <> · {i.dayLabel}</>}
                 {i.location && <> · <MapPin size={11} aria-hidden="true" /> {i.location}</>}
               </span>
             </span>
-            <span className={styles.kind}>{i.kind === 'event' ? 'Event' : i.kind === 'internal' ? 'Internal event' : 'Meeting'}</span>
-          </Link>
+            <span className={styles.kind}>{i.kind === 'event' ? 'Event' : i.kind === 'internal' ? 'Internal event' : i.kind === 'google' ? 'Google' : 'Meeting'}</span>
+          </ItemRow>
         </li>
       ))}
     </ul>
@@ -300,7 +328,7 @@ function SubscribePanel() {
   }
   return (
     <section className={styles.subscribe} aria-label="Add to my calendar">
-      <h3 className={styles.dayTitle}>Add to my calendar</h3>
+      <h3 className={styles.dayTitle}>Add this calendar to my own calendar app</h3>
       <p className={styles.muted}>Subscribe once and events, your meetings and your internal events show up in your own calendar app and stay up to date. Keep this link private: anyone who has it can see your calendar.</p>
       {error && <Notice tone="error">{error}</Notice>}
       {!links ? <p className={styles.muted}>Loading…</p> : (

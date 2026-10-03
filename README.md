@@ -197,3 +197,20 @@ Confirm the table is in the `supabase_realtime` publication (`select * from pg_p
 
 **Vercel deploy fails on the cron:**
 The Hobby plan only allows daily crons, which is why `vercel.json` runs reminders once a day.
+
+## Linking Google Calendar (optional, view only) — currently paused
+
+This feature is built but switched off: `GOOGLE_CALENDAR_LINKING` in `src/lib/featureFlags.ts` is `false`, so the calendar page doesn't offer it, its API routes refuse, and nothing is fetched from Google. To turn it on, finish the setup below and set that flag to `true`.
+
+Members can choose to show their own Google Calendar(s) inside the portal calendar, and as a hint (striped times, never blocking) on their availability grid when planning a meeting. This is **separate from signing in with Google**: it is its own consent, asks only for read-only access to calendar events, shows the events to that member alone, and never appears in the shared calendar feed. A member can link several Google accounts and unlink any of them (which also revokes Google's access).
+
+One-time setup:
+
+1. In Google Cloud Console (same project as the sign-in client is fine), enable the **Google Calendar API** and create an **OAuth client ID** (type: Web application). Add the redirect URI `https://<your-site>/api/calendar/google/callback` (and `http://localhost:3000/api/calendar/google/callback` for local work).
+2. On the OAuth consent screen add the scope `https://www.googleapis.com/auth/calendar.events.readonly`. This is a sensitive scope: until Google verifies the app, only listed test users (up to 100) can link. Submit for verification before opening it to everyone.
+3. Set these environment variables:
+   - `GOOGLE_CALENDAR_CLIENT_ID`, `GOOGLE_CALENDAR_CLIENT_SECRET`: from the OAuth client.
+   - `CALENDAR_TOKEN_KEY`: 32 random bytes, base64 (`openssl rand -base64 32`). Refresh tokens are stored encrypted with it; changing it unlinks everyone.
+4. The `calendar_connections` table comes from the migrations `20261003100000_calendar_connections.sql` and `20261003110000_calendar_connections_multi.sql`.
+
+Until the variables are set, the Sync panel tells members that linking isn't set up yet.

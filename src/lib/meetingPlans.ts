@@ -177,6 +177,8 @@ export interface PlanView {
   blocked: Record<string, BusyBlock[]>;
   /** Times already taken on MY Triton Gaming calendar (meetings, events I'm going to): unavailable for sure. */
   busy: BusyBlock[];
+  /** Times on MY linked Google Calendar (a hint only, shown to me alone): they never block me or count against me. */
+  soft: BusyBlock[];
 }
 
 // Something already on a person's calendar. `day` is a date (one-time plan) or a weekday 0-6 (weekly plan); times are Pacific HH:MM.
