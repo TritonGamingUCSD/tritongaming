@@ -9,7 +9,7 @@
 .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
 .years { display: flex; gap: 0.35rem; }
 .chip { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.8rem; border-radius: 0.6rem; border: 1px solid rgba(255, 255, 255, 0.14); background: rgba(255, 255, 255, 0.03); color: rgba(242, 241, 240, 0.8); font: inherit; font-size: 0.82rem; cursor: pointer; white-space: nowrap; }
-.chip:hover { border-color: rgba(255, 199, 44, 0.45); color: var(--yellow); }
+.chip:hover { border-color: rgba(255, 199, 44, 0.45); color: var(--yellow-text); }
 .chipOn { background: var(--yellow); border-color: var(--yellow); color: #0a0f1e; font-weight: 600; }
 .chipOn:hover { color: #0a0f1e; }
 .search { display: flex; align-items: center; gap: 0.5rem; flex: 1 1 14rem; max-width: 22rem; height: 36px; padding: 0 0.7rem; border-radius: 0.6rem; border: 1px solid rgba(255, 255, 255, 0.14); background: rgba(255, 255, 255, 0.04); color: rgba(242, 241, 240, 0.55); }

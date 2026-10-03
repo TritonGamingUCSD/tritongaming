@@ -39,6 +39,8 @@
   --white: #f2f1f0;
   --black: #000000;
   --yellow: #ffc72c;
+  /* Yellow used as text on dark backgrounds: a lighter, warmer tone so small labels, links and counts stay easy to read. Fills and borders keep --yellow. */
+  --yellow-text: #ffd966;
   --lightblue: #9fc4e8;
   --blue: #275a8f;
   --darkblue: #011941;

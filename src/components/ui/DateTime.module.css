@@ -9,7 +9,7 @@
 .cal { display: flex; flex-direction: column; gap: 0.5rem; }
 .calHead { display: flex; align-items: center; justify-content: space-between; color: var(--white); font-size: 0.9rem; }
 .nav { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 0.5rem; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.04); color: rgba(242, 241, 240, 0.8); cursor: pointer; }
-.nav:hover { border-color: rgba(255, 199, 44, 0.45); color: var(--yellow); }
+.nav:hover { border-color: rgba(255, 199, 44, 0.45); color: var(--yellow-text); }
 .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
 .dow { text-align: center; font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(242, 241, 240, 0.4); padding: 0.2rem 0; }
 .day { aspect-ratio: 1; display: grid; place-items: center; border-radius: 0.5rem; border: 1px solid transparent; background: none; color: rgba(242, 241, 240, 0.88); font-size: 0.85rem; cursor: pointer; }
@@ -18,7 +18,7 @@
 .dayToday { border-color: rgba(255, 199, 44, 0.45); }
 .daySel, .daySel:hover { background: var(--yellow) !important; color: #0b1226; font-weight: 700; }
 .calFoot { display: flex; justify-content: flex-end; padding-top: 0.4rem; }
-.link { background: none; border: none; color: var(--yellow); font-size: 0.8rem; cursor: pointer; padding: 0.2rem 0.4rem; }
+.link { background: none; border: none; color: var(--yellow-text); font-size: 0.8rem; cursor: pointer; padding: 0.2rem 0.4rem; }
 .link:disabled { opacity: 0.35; cursor: not-allowed; }
 
 .timeHead { display: flex; align-items: center; gap: 0.4rem; margin: 0.5rem 0 0.35rem; padding-top: 0.5rem; border-top: 1px solid rgba(255, 255, 255, 0.08); font-size: 0.78rem; color: rgba(242, 241, 240, 0.6); }

@@ -5,7 +5,7 @@
 }
 .md { width: 34px; height: 34px; }
 .sm { width: 28px; height: 28px; border-radius: 0.5rem; }
-.btn:hover:not(:disabled), .active { background: rgba(255, 199, 44, 0.12); border-color: rgba(255, 199, 44, 0.45); color: var(--yellow); }
+.btn:hover:not(:disabled), .active { background: rgba(255, 199, 44, 0.12); border-color: rgba(255, 199, 44, 0.45); color: var(--yellow-text); }
 .btn:focus-visible { outline: 2px solid rgba(255, 199, 44, 0.6); outline-offset: 2px; }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .danger { background: rgba(220, 38, 38, 0.1); border-color: rgba(248, 113, 113, 0.38); color: #f87171; }

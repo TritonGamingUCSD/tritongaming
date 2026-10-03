@@ -5,7 +5,7 @@
 .tools { display: flex; gap: 0.25rem; }
 .tool { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 0.5rem; border: 1px solid rgba(255, 255, 255, 0.1); background: transparent; color: rgba(242, 241, 240, 0.6); cursor: pointer; }
 .tool:hover { color: #fff; background: rgba(255, 255, 255, 0.06); }
-.toolOn { color: var(--yellow); border-color: rgba(255, 199, 44, 0.5); background: rgba(255, 199, 44, 0.1); }
+.toolOn { color: var(--yellow-text); border-color: rgba(255, 199, 44, 0.5); background: rgba(255, 199, 44, 0.1); }
 .box { position: relative; border-radius: 0.9rem; border: 1px solid rgba(255, 255, 255, 0.1); background: #05070d; overflow: hidden; display: flex; justify-content: center; }
 .boxPhone { background: transparent; border: 0; border-radius: 0; }
 .boxPhone .scaler { border-radius: 1.1rem; border: 1px solid rgba(255, 255, 255, 0.18); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45); }

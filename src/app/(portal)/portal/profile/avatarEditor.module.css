@@ -29,14 +29,14 @@
   font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.15rem 0.6rem; border-radius: 999px;
   color: rgba(242,241,240,0.65); background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
 }
-.sourceCustom { color: #ffc72c; background: rgba(255,199,44,0.1); border-color: rgba(255,199,44,0.3); }
+.sourceCustom { color: var(--yellow-text); background: rgba(255,199,44,0.1); border-color: rgba(255,199,44,0.3); }
 
 .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; width: 100%; }
 .primary, .ghost {
   display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; cursor: pointer;
   padding: 0.5rem 0.9rem; border-radius: 0.6rem; font-family: var(--font-futura-medium); font-size: 0.8rem;
 }
-.primary { background: rgba(255,199,44,0.14); color: #ffc72c; border: 1px solid rgba(255,199,44,0.35); }
+.primary { background: rgba(255,199,44,0.14); color: var(--yellow-text); border: 1px solid rgba(255,199,44,0.35); }
 .primary:hover:not(:disabled) { background: rgba(255,199,44,0.22); }
 .ghost { background: transparent; color: rgba(242,241,240,0.7); border: 1px solid rgba(255,255,255,0.14); }
 .ghost:hover:not(:disabled) { color: #f2f1f0; border-color: rgba(255,255,255,0.3); }

@@ -37,6 +37,8 @@ export interface MeetingRow {
   cancelled: boolean;
   doc_url: string | null;
   question: string | null;
+  question_type: 'text' | 'poll' | 'rating';
+  question_options: string[] | null;
   audience: string[] | null;
   invitees: string[] | null;
   group_ids: string[] | null;
@@ -54,12 +56,13 @@ export function isMeetingOver(m: Pick<MeetingRow, 'ends_at' | 'closed_at' | 'ope
   return now > new Date(m.ends_at).getTime() && !isMeetingOpen(m, now);
 }
 
-// When members may start checking in: a little before the meeting starts.
+// The early-arrival window before the start. Check-in itself opens whenever a host opens the meeting; this only decides whether the host who
+// opened it counts as in the room.
 export function checkInOpensAt(m: Pick<MeetingRow, 'starts_at'>): number { return new Date(m.starts_at).getTime() - EARLY_MS; }
 
-// Open for members right now: an exec has opened it, it isn't over, and the early-arrival window has begun.
+// Open for members right now: as soon as a host opens it (and until it is closed or long over), whatever the clock says.
 export function isCheckInAccepting(m: Pick<MeetingRow, 'starts_at' | 'ends_at' | 'closed_at' | 'opened_at'>, now: number = Date.now()): boolean {
-  return isMeetingOpen(m, now) && now >= checkInOpensAt(m);
+  return isMeetingOpen(m, now);
 }
 
 // ── Saved groups, resolved live ──────────────────────────────────────────────
@@ -99,6 +102,8 @@ export interface ScheduleItem {
   location: string | null;
   doc_url: string | null;
   question: string | null;
+  question_type: 'text' | 'poll' | 'rating';
+  question_options: string[] | null;
   audience: string[] | null;
   invitees: string[] | null;
   group_ids: string[] | null;
@@ -160,7 +165,7 @@ export async function buildSchedule(svc: SupabaseClient, forUser?: { id: string;
 
   const now = Date.now();
   const fromRow = (r: MeetingRow): ScheduleItem => ({
-    key: r.id, meeting_id: r.id, series_id: r.series_id, date: r.meeting_date, title: r.title, location: r.location, doc_url: r.doc_url, question: r.question, audience: r.audience, invitees: r.invitees, group_ids: r.group_ids, groupNames: names(r.group_ids), description: r.description, host_id: r.created_by, host_name: hostNames.get(r.created_by ?? '') ?? null,
+    key: r.id, meeting_id: r.id, series_id: r.series_id, date: r.meeting_date, title: r.title, location: r.location, doc_url: r.doc_url, question: r.question, question_type: r.question_type ?? 'text', question_options: r.question_options ?? null, audience: r.audience, invitees: r.invitees, group_ids: r.group_ids, groupNames: names(r.group_ids), description: r.description, host_id: r.created_by, host_name: hostNames.get(r.created_by ?? '') ?? null,
     starts_at: r.starts_at, ends_at: r.ends_at, count: counts.get(r.id) ?? 0, absent: absentCounts.get(r.id) ?? 0, is_today: r.meeting_date === today, repeats: !!r.series_id,
     status: r.cancelled ? 'cancelled' : isMeetingOpen(r, now) ? 'open' : (r.opened_at || r.meeting_date < today) ? 'closed' : 'scheduled',
   });
@@ -172,7 +177,7 @@ export async function buildSchedule(svc: SupabaseClient, forUser?: { id: string;
     for (let day = today; day <= horizon; day = addDaysKey(day, 1)) {
       if (!seriesRunsOn(s, day) || taken.has(`${s.id}|${day}`)) continue;
       const { starts, ends } = occurrenceTimes(day, s.start_time, s.end_time);
-      items.push({ key: `${s.id}|${day}`, meeting_id: null, series_id: s.id, date: day, title: s.title, location: s.location, doc_url: s.doc_url, question: null, audience: s.audience, invitees: s.invitees, group_ids: s.group_ids, groupNames: names(s.group_ids), description: s.description, host_id: s.created_by, host_name: hostNames.get(s.created_by ?? '') ?? null, starts_at: starts.toISOString(), ends_at: ends.toISOString(), status: 'scheduled', count: 0, absent: standingCounts.get(s.id) ?? 0, is_today: day === today, repeats: true });
+      items.push({ key: `${s.id}|${day}`, meeting_id: null, series_id: s.id, date: day, title: s.title, location: s.location, doc_url: s.doc_url, question: null, question_type: 'text', question_options: null, audience: s.audience, invitees: s.invitees, group_ids: s.group_ids, groupNames: names(s.group_ids), description: s.description, host_id: s.created_by, host_name: hostNames.get(s.created_by ?? '') ?? null, starts_at: starts.toISOString(), ends_at: ends.toISOString(), status: 'scheduled', count: 0, absent: standingCounts.get(s.id) ?? 0, is_today: day === today, repeats: true });
     }
   }
   // A team member only sees the meetings meant for them; exec see everything.

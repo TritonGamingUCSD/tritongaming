@@ -14,6 +14,7 @@ import { createClient } from '@/lib/supabase/client';
 import { slugify } from '@/lib/slug';
 import { extractToc } from '@/lib/markdownToc';
 import { uploadFileToStorage, MAX_FILE_BYTES } from '@/lib/fileUpload';
+import { uploadImageToStorage } from '@/lib/imageUpload';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import type { Doc, DocCategory, DocAttachment } from '@/types/database';
@@ -72,8 +73,11 @@ function AttachmentsField({ value, onChange }: { value: DocAttachment[]; onChang
     }
     setUploading(true);
     try {
-      const url = await uploadFileToStorage('doc-attachments', file);
-      onChange([...value, { name: file.name, url, kind: 'file' }]);
+      // Photos are shrunk to a screen-sized WebP; PDFs, slides and the like are kept exactly as uploaded.
+      const isPhoto = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type);
+      const url = isPhoto ? await uploadImageToStorage('doc-attachments', file, { maxDimension: 2400, quality: 0.85 }) : await uploadFileToStorage('doc-attachments', file);
+      const name = isPhoto && url.endsWith('.webp') ? file.name.replace(/\.[^.]+$/, '') + '.webp' : file.name;
+      onChange([...value, { name, url, kind: 'file' }]);
     } catch {
       setError('Upload failed. Please try again.');
     } finally {

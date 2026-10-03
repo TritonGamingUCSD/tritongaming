@@ -206,7 +206,7 @@
   transition: color 0.15s;
 }
 
-.backBtn:hover { color: var(--yellow); }
+.backBtn:hover { color: var(--yellow-text); }
 
 @media (min-width: 601px) {
   .backBtn { position: absolute; left: 0; top: 0.25rem; }
@@ -218,7 +218,7 @@
   gap: 0.6rem;
 }
 
-.panelIcon { display: inline-flex; color: var(--yellow); }
+.panelIcon { display: inline-flex; color: var(--yellow-text); }
 
 .panelTitle {
   font-family: var(--font-futura-heavy);
@@ -350,7 +350,7 @@
 }
 .dockLabel { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: 0.62rem; letter-spacing: 0; line-height: 1.1; white-space: nowrap; }
 .dockItemActive { color: var(--white); }
-.dockItemActive .dockIcon { background: rgba(255, 199, 44, 0.2); color: var(--yellow); }
+.dockItemActive .dockIcon { background: rgba(255, 199, 44, 0.2); color: var(--yellow-text); }
 .dockItem:active .dockIcon { background: rgba(255, 255, 255, 0.1); }
 .dockBadge {
   position: absolute;
@@ -443,7 +443,7 @@
 
 .railFooter { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.7rem 0.4rem 0.1rem; border-top: 1px solid rgba(255, 255, 255, 0.07); font-size: 0.76rem; }
 .railFooter a { color: rgba(242, 241, 240, 0.5); text-decoration: none; }
-.railFooter a:hover { color: var(--yellow); }
+.railFooter a:hover { color: var(--yellow-text); }
 
 /* ── Sidebar: fixed in place, everything visible ──
    Sticky to the viewport (it never scrolls with the page) and sized to its
@@ -512,7 +512,7 @@
   .railGroup { padding-top: 0.3rem; margin-top: 0.15rem; }
 }
 
-.railIdentity:hover .railName { color: var(--yellow); }
+.railIdentity:hover .railName { color: var(--yellow-text); }
 
 /* ── Group color coding (matches the home cards): Yours gold · Events blue · Resources green · Admin pink ── */
 .railGroup { --accent: #ffc72c; }
@@ -632,10 +632,10 @@
 .railFooter a, .sheetFooter a {
   display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.5rem 0.8rem; border-radius: 0.65rem; white-space: nowrap;
   font-family: var(--font-futura-heavy); font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none;
-  color: #ffc72c; background: rgba(255, 199, 44, 0.12); border: 1px solid rgba(255, 199, 44, 0.4);
+  color: var(--yellow-text); background: rgba(255, 199, 44, 0.12); border: 1px solid rgba(255, 199, 44, 0.4);
   transition: background 0.15s, border-color 0.15s;
 }
-.railFooter a:hover, .sheetFooter a:hover { color: #ffc72c; background: rgba(255, 199, 44, 0.22); border-color: #ffc72c; }
+.railFooter a:hover, .sheetFooter a:hover { color: var(--yellow-text); background: rgba(255, 199, 44, 0.22); border-color: #ffc72c; }
 
 /* Narrow sidebar: keep the labels inside their buttons. */
 .railFooter a, .railFooter button { padding: 0.45rem 0.3rem; font-size: 0.66rem; letter-spacing: 0.02em; gap: 0.25rem; overflow: hidden; text-overflow: ellipsis; }

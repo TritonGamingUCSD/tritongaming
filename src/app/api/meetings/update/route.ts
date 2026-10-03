@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/audit';
 import { authorizeMeetings, ensureOccurrence, isMeetingOpen, isMeetingOver, occurrenceTimes, validateDocUrl, type MeetingRow, type SeriesRow, canManageMeeting, notYourMeeting, notifyMeetingInvites } from '@/lib/meetings';
-import { MAX_QUESTION_LENGTH, MAX_DESCRIPTION_LENGTH } from '@/lib/meetingFun';
+import { MAX_QUESTION_LENGTH, MAX_DESCRIPTION_LENGTH, asQuestionType, cleanOptions } from '@/lib/meetingFun';
 import { formatPacificDateTime } from '@/lib/timezone';
 import { validateAudienceInput } from '@/lib/meetingAudience';
 
@@ -20,6 +20,13 @@ export async function POST(request: Request) {
   if ('location' in b) patch.location = String(b.location ?? '').trim().slice(0, 80) || null;
   if ('description' in b) patch.description = String(b.description ?? '').trim().slice(0, MAX_DESCRIPTION_LENGTH) || null;
   if ('question' in b) patch.question = String(b.question ?? '').trim().slice(0, MAX_QUESTION_LENGTH) || null;
+  if ('question_type' in b || 'question_options' in b) {
+    const type = asQuestionType(b.question_type);
+    const options = type === 'poll' ? cleanOptions(b.question_options) : null;
+    if (type === 'poll' && !options) return NextResponse.json({ error: 'A poll needs 2 to 4 different options.' }, { status: 400 });
+    patch.question_type = type;
+    patch.question_options = options;
+  }
   if ('audience' in b || 'invitees' in b || 'group_ids' in b) {
     const aud = validateAudienceInput(b);
     if (!aud.ok) return NextResponse.json({ error: 'Pick who the meeting is for.' }, { status: 400 });
@@ -65,10 +72,10 @@ export async function POST(request: Request) {
   if (Object.keys(patch).length === 0) return NextResponse.json({ error: 'Nothing to update.' }, { status: 400 });
   // Once check-in has been opened (a code is live), the question is locked so people who already
   // answered aren't answering something different.
-  if ('question' in patch) {
+  if ('question' in patch || 'question_type' in patch) {
     const { data: cur } = await auth.svc.from('meetings').select('*').eq('id', id).maybeSingle();
     const row = cur as MeetingRow | null;
-    if (row && isMeetingOpen(row) && (row.question ?? null) !== patch.question) {
+    if (row && isMeetingOpen(row) && ((row.question ?? null) !== patch.question || ('question_type' in patch && (row.question_type ?? 'text') !== patch.question_type) || ('question_options' in patch && JSON.stringify(row.question_options ?? null) !== JSON.stringify(patch.question_options)))) {
       return NextResponse.json({ error: 'The question can’t be changed while check-in is open. Close check-in first.' }, { status: 409 });
     }
   }

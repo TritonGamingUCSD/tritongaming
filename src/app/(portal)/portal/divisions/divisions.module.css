@@ -39,7 +39,7 @@
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--yellow);
+  color: var(--yellow-text);
 }
 
 .list {
@@ -148,7 +148,7 @@
   background: transparent;
   transition: all 0.15s;
 }
-.btn:hover:not(:disabled) { background: rgba(255,199,44,0.12); color: var(--yellow); border-color: rgba(255,199,44,0.3); }
+.btn:hover:not(:disabled) { background: rgba(255,199,44,0.12); color: var(--yellow-text); border-color: rgba(255,199,44,0.3); }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .btnDanger {

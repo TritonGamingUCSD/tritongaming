@@ -25,7 +25,7 @@
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
-.bellBtn:hover { background: rgba(8, 13, 26, 0.9); border-color: rgba(255, 199, 44, 0.3); color: var(--yellow); }
+.bellBtn:hover { background: rgba(8, 13, 26, 0.9); border-color: rgba(255, 199, 44, 0.3); color: var(--yellow-text); }
 
 .badge {
   position: absolute;
@@ -81,7 +81,7 @@
 
 .markAllBtn {
   font-size: var(--fs-meta);
-  color: var(--yellow);
+  color: var(--yellow-text);
   transition: opacity 0.15s;
   flex-shrink: 0;
 }
@@ -161,6 +161,6 @@
 .pushOffer { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.75rem 0.9rem; border-top: 1px solid rgba(255, 255, 255, 0.09); background: rgba(255, 199, 44, 0.06); font-size: 0.8rem; color: rgba(242, 241, 240, 0.8); }
 .pushOfferBtns { display: flex; gap: 0.5rem; }
 .pushOn, .pushNo { padding: 0.3rem 0.8rem; border-radius: 0.5rem; font: inherit; font-size: 0.76rem; cursor: pointer; text-decoration: none; }
-.pushOn { border: 1px solid rgba(255, 199, 44, 0.5); background: rgba(255, 199, 44, 0.14); color: #ffc72c; }
+.pushOn { border: 1px solid rgba(255, 199, 44, 0.5); background: rgba(255, 199, 44, 0.14); color: var(--yellow-text); }
 .pushOn:hover { background: rgba(255, 199, 44, 0.24); }
 .pushNo { border: 1px solid rgba(255, 255, 255, 0.14); background: transparent; color: rgba(242, 241, 240, 0.65); }

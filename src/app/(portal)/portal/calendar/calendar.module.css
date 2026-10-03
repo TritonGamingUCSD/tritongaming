@@ -35,7 +35,7 @@
 
 .dayPanel { display: flex; flex-direction: column; gap: 0.6rem; padding: 1rem 1.1rem; border-radius: 1rem; background: rgba(255, 255, 255, 0.035); border: 1px solid rgba(255, 255, 255, 0.09); }
 .dayTitle { display: flex; align-items: center; gap: 0.6rem; margin: 0 0 0.4rem; font-family: var(--font-futura-heavy); font-size: 1rem; color: var(--white); }
-.todayTag { font-size: 0.64rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.1rem 0.5rem; border-radius: 999px; background: rgba(255, 199, 44, 0.18); color: var(--yellow); }
+.todayTag { font-size: 0.64rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.1rem 0.5rem; border-radius: 999px; background: rgba(255, 199, 44, 0.18); color: var(--yellow-text); }
 .agenda { display: flex; flex-direction: column; gap: 1.1rem; }
 .empty { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; padding: 2.5rem 1rem; text-align: center; color: rgba(242, 241, 240, 0.55); border-radius: 1rem; border: 1px dashed rgba(255, 255, 255, 0.14); }
 
@@ -47,7 +47,7 @@
 .itemMeeting .itemBar { background: #a78bfa; }
 .itemMain { display: flex; flex-direction: column; gap: 0.15rem; flex: 1; min-width: 0; }
 .itemTitle { display: flex; align-items: center; gap: 0.4rem; font-weight: 600; color: var(--white); font-size: 0.95rem; overflow-wrap: anywhere; }
-.ticket { color: var(--yellow); flex-shrink: 0; }
+.ticket { color: var(--yellow-text); flex-shrink: 0; }
 .itemMeta { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; font-size: 0.78rem; color: rgba(242, 241, 240, 0.6); }
 .kind { align-self: center; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: rgba(242, 241, 240, 0.5); white-space: nowrap; }
 
@@ -62,7 +62,7 @@
 .toolbarRight { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
 .subscribe { display: flex; flex-direction: column; gap: 0.7rem; padding: 1rem 1.1rem; border-radius: 1rem; background: rgba(255, 199, 44, 0.05); border: 1px solid rgba(255, 199, 44, 0.25); }
 .subRow { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
-.subBtn { display: inline-flex; align-items: center; padding: 0.45rem 0.9rem; border-radius: 0.65rem; font-family: var(--font-futura-heavy); font-size: 0.76rem; letter-spacing: 0.05em; text-transform: uppercase; text-decoration: none; color: #ffc72c; background: rgba(255, 199, 44, 0.12); border: 1px solid rgba(255, 199, 44, 0.4); }
+.subBtn { display: inline-flex; align-items: center; padding: 0.45rem 0.9rem; border-radius: 0.65rem; font-family: var(--font-futura-heavy); font-size: 0.76rem; letter-spacing: 0.05em; text-transform: uppercase; text-decoration: none; color: var(--yellow-text); background: rgba(255, 199, 44, 0.12); border: 1px solid rgba(255, 199, 44, 0.4); }
 .subBtn:hover { background: rgba(255, 199, 44, 0.22); }
 .subLink { width: 100%; padding: 0.55rem 0.75rem; border-radius: 0.5rem; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.12); color: rgba(242, 241, 240, 0.8); font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.74rem; }
 
@@ -115,7 +115,7 @@
 .kMeeting { --k: #a78bfa; --kbg: rgba(167, 139, 250, 0.2); --kfg: #ddd6fe; }
 .kInternal { --k: #fb923c; --kbg: rgba(251, 146, 60, 0.2); --kfg: #fed7aa; }
 .status { display: inline-flex; align-items: center; gap: 0.25rem; flex: none; padding: 0.05rem 0.4rem; border-radius: 999px; font-size: 0.66rem; font-weight: 600; letter-spacing: 0.02em; border: 1px solid; }
-.stTicket { color: #ffc72c; background: rgba(255, 199, 44, 0.12); border-color: rgba(255, 199, 44, 0.4); }
+.stTicket { color: var(--yellow-text); background: rgba(255, 199, 44, 0.12); border-color: rgba(255, 199, 44, 0.4); }
 .stGo { color: #34d399; background: rgba(52, 211, 153, 0.12); border-color: rgba(52, 211, 153, 0.4); }
 .stMaybe { color: #fbbf24; background: rgba(251, 191, 36, 0.1); border-color: rgba(251, 191, 36, 0.4); }
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -181,7 +181,7 @@
 .account { display: flex; flex-direction: column; gap: 0.45rem; padding: 0.7rem 0.8rem; border-radius: 0.75rem; border: 1px solid rgba(45, 212, 191, 0.3); background: rgba(45, 212, 191, 0.05); }
 .accountTop { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap; }
 .accountEmail { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 600; color: var(--white); overflow-wrap: anywhere; }
-.inlineLink { color: var(--yellow); }
+.inlineLink { color: var(--yellow-text); }
 
 /* ── Page layout: one clear order, the same on desktop and phone ─────────────
    1. header (phone only: the portal's top bar already names the page on desktop) with the Sync button

@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/client';
 
 export const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
 export const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8MB, pre-compression
+const GIF_KEEP_BYTES = 1024 * 1024;
 
 export interface UploadImageOptions {
   /** Longest edge to downscale to before upload. */
@@ -27,11 +28,13 @@ export interface UploadImageOptions {
 
 // Downscales (and optionally crops or pads to square) via canvas, then
 // re-encodes as WebP so uploads use meaningfully less storage than the
-// original photo straight off a phone. GIFs are passed through untouched —
-// redrawing one onto a canvas would flatten it to its first frame and kill
-// the animation.
+// original photo straight off a phone. Small GIFs are passed through untouched
+// (redrawing one onto a canvas flattens it to its first frame and kills the
+// animation); a GIF over GIF_KEEP_BYTES is flattened to a WebP instead, since
+// a heavy animation costs far more than it is worth on a flyer or avatar.
+// If re-encoding would make an already-small file bigger, the original is kept.
 async function processImage(file: File, { maxDimension = 1600, crop = 'none', quality = 0.82 }: UploadImageOptions): Promise<{ blob: Blob; ext: string }> {
-  if (file.type === 'image/gif') return { blob: file, ext: 'gif' };
+  if (file.type === 'image/gif' && file.size <= GIF_KEEP_BYTES) return { blob: file, ext: 'gif' };
 
   const bitmap = await createImageBitmap(file);
   const canvas = document.createElement('canvas');
@@ -65,6 +68,11 @@ async function processImage(file: File, { maxDimension = 1600, crop = 'none', qu
   const blob = await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Image compression failed'))), 'image/webp', quality);
   });
+  // Already small and not shrunk by resizing: re-encoding would only make it bigger.
+  const untouched = Math.max(bitmap.width, bitmap.height) <= maxDimension && crop === 'none';
+  if (untouched && blob.size >= file.size && file.type !== 'image/gif' && ['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    return { blob: file, ext: file.type === 'image/jpeg' ? 'jpg' : file.type === 'image/png' ? 'png' : 'webp' };
+  }
   return { blob, ext: 'webp' };
 }
 

@@ -122,6 +122,22 @@ export default function SystemStats() {
   const [scanning, setScanning] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [cleanupError, setCleanupError] = useState('');
+  // Compress stored pictures in place (same address and format, so nothing breaks).
+  const [shrink, setShrink] = useState<{ buckets: { bucket: string; images: number; shrinkable: number; beforeBytes: number; saved: number; failed: number }[]; applied: boolean } | null>(null);
+  const [shrinkBusy, setShrinkBusy] = useState<'' | 'scan' | 'apply'>('');
+  const [shrinkError, setShrinkError] = useState('');
+
+  async function runShrink(apply: boolean) {
+    if (apply && !(await confirmHold({ title: 'Compress stored images?', message: 'Pictures are re-saved smaller in the same format and at the same address. They stay clear at the size the site shows them. This can’t be undone.', confirmLabel: 'Hold to compress' }))) return;
+    setShrinkBusy(apply ? 'apply' : 'scan'); setShrinkError('');
+    try {
+      const res = await fetch('/api/admin/storage-optimize', { method: apply ? 'POST' : 'GET' });
+      const json = await res.json();
+      if (!res.ok) { setShrinkError(json.error || 'That didn’t work.'); return; }
+      setShrink({ buckets: json.buckets, applied: apply });
+      if (apply) { const refreshed = await fetch('/api/admin/system-stats'); if (refreshed.ok) setData(await refreshed.json()); }
+    } catch { setShrinkError('Network error. Please try again.'); } finally { setShrinkBusy(''); }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -347,6 +363,25 @@ export default function SystemStats() {
         </div>
 
         {cleanupError && <Notice tone="error">{cleanupError}</Notice>}
+
+        <div className={styles.cleanupControls}>
+          <Button variant="secondary" size="sm" onClick={() => void runShrink(false)} disabled={!!shrinkBusy}>{shrinkBusy === 'scan' ? 'Checking…' : 'Check how much images can shrink'}</Button>
+          {shrink && !shrink.applied && shrink.buckets.some((b) => b.shrinkable > 0) && (
+            <Button size="sm" onClick={() => void runShrink(true)} disabled={!!shrinkBusy}>{shrinkBusy === 'apply' ? 'Compressing…' : `Compress ${shrink.buckets.reduce((n, b) => n + b.shrinkable, 0)} images`}</Button>
+          )}
+        </div>
+        {shrinkError && <Notice tone="error">{shrinkError}</Notice>}
+        {shrink && (() => {
+          const files = shrink.buckets.reduce((n, b) => n + b.shrinkable, 0);
+          const saved = shrink.buckets.reduce((n, b) => n + b.saved, 0);
+          const failed = shrink.buckets.reduce((n, b) => n + b.failed, 0);
+          return (
+            <p className={shrink.applied ? styles.successNote : styles.empty}>
+              {files === 0 ? 'Every image is already small enough.' : shrink.applied ? `Compressed ${files} image${files === 1 ? '' : 's'}, ${formatBytes(saved)} saved.` : `${files} image${files === 1 ? '' : 's'} can shrink, saving about ${formatBytes(saved)}.`}
+              {failed > 0 ? ` ${failed} couldn’t be processed.` : ''}
+            </p>
+          );
+        })()}
 
         {cleanupResult && (
           <p className={styles.successNote}>

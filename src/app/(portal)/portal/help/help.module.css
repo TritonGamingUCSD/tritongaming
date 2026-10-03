@@ -30,7 +30,7 @@
 .rowMain { display: flex; flex-direction: column; gap: 0.2rem; flex: 1; min-width: 0; }
 .rowSubject { font-weight: 600; color: var(--white); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rowMeta { font-size: 0.76rem; color: rgba(242, 241, 240, 0.55); }
-.attn { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--yellow); white-space: nowrap; }
+.attn { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--yellow-text); white-space: nowrap; }
 .pill { font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 999px; border: 1px solid; white-space: nowrap; }
 .pill_open { color: #60a5fa; border-color: rgba(96, 165, 250, 0.4); background: rgba(96, 165, 250, 0.1); }
 .pill_in_progress { color: #fbbf24; border-color: rgba(251, 191, 36, 0.4); background: rgba(251, 191, 36, 0.1); }

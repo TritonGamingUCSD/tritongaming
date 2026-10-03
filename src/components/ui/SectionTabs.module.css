@@ -74,7 +74,7 @@
 }
 .segmented .tab { padding: 0.4rem 0.8rem; border-radius: 0.55rem; font-size: 0.82rem; }
 .segmented .tab::after { display: none; }
-.segmented .active { background: rgba(255, 199, 44, 0.14); color: var(--yellow); }
+.segmented .active { background: rgba(255, 199, 44, 0.14); color: var(--yellow-text); }
 
 /* Phones: pack the tabs so a typical 3–4 tab bar fits without scrolling —
    no icons, tighter padding, tabs share the row. (Longer bars still scroll, with the edge fade.) */
@@ -88,4 +88,4 @@
 }
 
 .count { font-size: 0.68rem; padding: 0.02rem 0.4rem; border-radius: 999px; background: rgba(255, 255, 255, 0.08); color: rgba(242, 241, 240, 0.6); }
-.active .count { background: rgba(255, 199, 44, 0.2); color: var(--yellow); }
+.active .count { background: rgba(255, 199, 44, 0.2); color: var(--yellow-text); }

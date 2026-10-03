@@ -12,6 +12,6 @@
 .option { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; padding: 0.5rem 0.65rem; border-radius: 0.5rem; font-family: var(--font-futura-medium); font-size: 0.88rem; color: rgba(242, 241, 240, 0.9); cursor: pointer; }
 .optionText { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .active { background: rgba(255, 255, 255, 0.08); }
-.selected { color: var(--yellow); }
+.selected { color: var(--yellow-text); }
 .disabled { opacity: 0.4; cursor: not-allowed; }
 @media (max-width: 640px) { .option { padding: 0.7rem 0.75rem; font-size: 16px; } }

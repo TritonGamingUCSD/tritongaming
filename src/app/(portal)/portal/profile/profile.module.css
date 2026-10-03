@@ -147,7 +147,7 @@
 }
 
 .required {
-  color: var(--yellow);
+  color: var(--yellow-text);
 }
 
 .input {
@@ -420,14 +420,14 @@
 .currentValue { font-size: 0.78rem; color: rgba(242, 241, 240, 0.7); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
 .currentEmpty { font-size: 0.75rem; color: rgba(242, 241, 240, 0.4); font-style: italic; }
 
-.previewHeading { display: block; margin-top: 0; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--yellow); }
+.previewHeading { display: block; margin-top: 0; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--yellow-text); }
 .cardPreview {
   display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
   max-width: 320px; margin-top: 0.4rem; padding: 1.1rem 1rem; text-align: center;
   border-radius: 1rem; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.14);
 }
 .previewAvatarFallback { display: flex; align-items: center; justify-content: center; background: var(--yellow); color: #011941; font-weight: 800; font-size: 1.6rem; }
-.previewTitle { font-size: 0.82rem; color: var(--yellow); }
+.previewTitle { font-size: 0.82rem; color: var(--yellow-text); }
 .previewBio { margin: 0.2rem 0 0; font-size: 0.8rem; line-height: 1.5; color: rgba(242, 241, 240, 0.85); }
 .previewChip { padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.7rem; background: rgba(255, 255, 255, 0.1); }
 

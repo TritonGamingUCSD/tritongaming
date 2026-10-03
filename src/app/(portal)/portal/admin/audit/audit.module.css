@@ -5,7 +5,7 @@
 .list { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; }
 .item { display: flex; flex-direction: column; gap: 0.6rem; padding: 1rem 1.25rem; background: rgba(255, 255, 255, 0.035); border: 1px solid rgba(255, 255, 255, 0.09); border-radius: 0.9rem; }
 .itemHead { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
-.badge { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.2rem 0.6rem; border-radius: 999px; background: rgba(255, 199, 44, 0.14); color: #ffc72c; border: 1px solid rgba(255, 199, 44, 0.3); }
+.badge { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.2rem 0.6rem; border-radius: 999px; background: rgba(255, 199, 44, 0.14); color: var(--yellow-text); border: 1px solid rgba(255, 199, 44, 0.3); }
 .type { font-size: 0.75rem; text-transform: capitalize; color: rgba(242, 241, 240, 0.55); }
 .meta { margin-left: auto; font-size: 0.75rem; color: rgba(242, 241, 240, 0.5); }
 .summary { font-size: 0.95rem; color: var(--white); line-height: 1.4; overflow-wrap: anywhere; }

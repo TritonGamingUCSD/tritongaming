@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { authorizeMeetings, isMeetingOpen, type MeetingRow } from '@/lib/meetings';
-import { MAX_ANSWER_LENGTH } from '@/lib/meetingFun';
+import { MAX_ANSWER_LENGTH, validAnswer } from '@/lib/meetingFun';
 
 // A checked-in person answers (or edits their answer to) the meeting's question.
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -14,6 +14,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { data } = await auth.svc.from('meetings').select('*').eq('id', id).maybeSingle();
   const m = data as MeetingRow | null;
   if (!m || !m.question) return NextResponse.json({ error: 'There’s no question for this meeting.' }, { status: 404 });
+  if (!validAnswer(m.question_type ?? 'text', m.question_options ?? null, text)) return NextResponse.json({ error: 'Pick one of the choices.' }, { status: 400 });
   if (!isMeetingOpen(m)) return NextResponse.json({ error: 'The meeting is over, so answers are closed.' }, { status: 409 });
   const { data: here } = await auth.svc.from('meeting_attendance').select('user_id').eq('meeting_id', id).eq('user_id', auth.user.id).maybeSingle();
   if (!here) return NextResponse.json({ error: 'Check in first to answer.' }, { status: 403 });

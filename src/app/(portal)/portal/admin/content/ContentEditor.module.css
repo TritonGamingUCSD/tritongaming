@@ -81,7 +81,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--yellow);
+  color: var(--yellow-text);
   flex-shrink: 0;
   width: 2rem;
 }
@@ -144,7 +144,7 @@
 
 .editIndicatorActive {
   opacity: 1 !important;
-  color: var(--yellow);
+  color: var(--yellow-text);
 }
 
 .blockPreview {
@@ -202,7 +202,7 @@
 
 .editPanelIcon {
   display: inline-flex;
-  color: var(--yellow);
+  color: var(--yellow-text);
   margin-bottom: 0.5rem;
 }
 
@@ -234,7 +234,7 @@
   font-size: 0.78rem;
   font-family: var(--font-futura-heavy);
   letter-spacing: 0.04em;
-  color: var(--yellow);
+  color: var(--yellow-text);
 }
 .viewLiveLink:hover { opacity: 0.8; }
 
@@ -429,9 +429,9 @@
 
 .mdTabActive {
   background: rgba(255,199,44,0.14);
-  color: var(--yellow);
+  color: var(--yellow-text);
 }
-.mdTabActive:hover { color: var(--yellow); }
+.mdTabActive:hover { color: var(--yellow-text); }
 
 .mdPreview {
   background: rgba(255,255,255,0.03);
@@ -604,7 +604,7 @@
   text-align: left;
 }
 
-.kvAdd:hover { color: var(--yellow); }
+.kvAdd:hover { color: var(--yellow-text); }
 
 /* ── Person list ─────────────────────────────────── */
 
@@ -740,7 +740,7 @@
 .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
 .subTabs { flex: 1 1 320px; min-width: 0; }
 .searchWrap { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; padding: 0 0.8rem; height: 38px; width: 230px; max-width: 100%; border-radius: 999px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: rgba(242, 241, 240, 0.5); }
-.searchWrap:focus-within { border-color: rgba(255, 199, 44, 0.45); color: var(--yellow); }
+.searchWrap:focus-within { border-color: rgba(255, 199, 44, 0.45); color: var(--yellow-text); }
 .searchField { flex: 1; min-width: 0; background: none; border: none; outline: none; color: var(--white); font-family: inherit; font-size: 0.85rem; }
 .searchField::placeholder { color: rgba(242, 241, 240, 0.4); }
 @media (max-width: 640px) { .searchWrap { width: 100%; } }
@@ -755,7 +755,7 @@
 .previewTools { display: flex; gap: 0.25rem; }
 .previewTool { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 0.5rem; border: 1px solid rgba(255, 255, 255, 0.1); background: transparent; color: rgba(242, 241, 240, 0.6); cursor: pointer; }
 .previewTool:hover { color: #fff; background: rgba(255, 255, 255, 0.06); }
-.previewToolOn { color: var(--yellow); border-color: rgba(255, 199, 44, 0.5); background: rgba(255, 199, 44, 0.1); }
+.previewToolOn { color: var(--yellow-text); border-color: rgba(255, 199, 44, 0.5); background: rgba(255, 199, 44, 0.1); }
 
 .previewBox { border-radius: 0.9rem; border: 1px solid rgba(255, 255, 255, 0.1); background: #05070d; overflow: hidden; display: flex; justify-content: center; }
 .previewScaler { position: relative; overflow: hidden; }
@@ -781,7 +781,7 @@
 .sectionBtn { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 0.5rem; border: 1px solid rgba(255, 255, 255, 0.1); background: transparent; color: rgba(242, 241, 240, 0.6); cursor: pointer; }
 .sectionBtn:hover:not(:disabled) { color: #fff; background: rgba(255, 255, 255, 0.07); }
 .sectionBtn:disabled { opacity: 0.3; cursor: default; }
-.sectionBtnOn { color: var(--yellow); border-color: rgba(255, 199, 44, 0.4); }
+.sectionBtnOn { color: var(--yellow-text); border-color: rgba(255, 199, 44, 0.4); }
 
 /* Full-screen preview: covers the whole window; the page is scaled to fit it. Esc or the button returns. */
 .previewFull { position: fixed !important; inset: 0; z-index: 1000; margin: 0 !important; padding: 0.75rem 1rem; background: #05070d; }

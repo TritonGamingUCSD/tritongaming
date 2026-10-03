@@ -31,7 +31,7 @@
 
 
 .headerSearch { display: flex; align-items: center; gap: 0.5rem; padding: 0 0.85rem; height: 38px; width: 260px; max-width: 100%; border-radius: 999px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: rgba(242, 241, 240, 0.5); }
-.headerSearch:focus-within { border-color: rgba(255, 199, 44, 0.45); color: var(--yellow); }
+.headerSearch:focus-within { border-color: rgba(255, 199, 44, 0.45); color: var(--yellow-text); }
 .headerSearch input { flex: 1; min-width: 0; background: none; border: none; outline: none; color: var(--white); font-family: inherit; font-size: 0.85rem; }
 .headerSearch input::placeholder { color: rgba(242, 241, 240, 0.4); }
 @media (max-width: 640px) { .headerSearch { width: 100%; } }

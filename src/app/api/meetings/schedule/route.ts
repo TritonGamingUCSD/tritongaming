@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/audit';
 import { pacificDayKey } from '@/lib/checkinDays';
 import { authorizeMeetings, buildSchedule, notifyMeetingInvites, occurrenceTimes, validateDocUrl } from '@/lib/meetings';
-import { MAX_QUESTION_LENGTH, MAX_DESCRIPTION_LENGTH } from '@/lib/meetingFun';
+import { MAX_QUESTION_LENGTH, MAX_DESCRIPTION_LENGTH, asQuestionType, cleanOptions } from '@/lib/meetingFun';
 import { formatPacificDateTime } from '@/lib/timezone';
 import { validateAudienceInput } from '@/lib/meetingAudience';
 
@@ -47,10 +47,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ id: data.id }, { status: 201 });
   }
 
+  const qType = asQuestionType(b.question_type);
+  const qOptions = qType === 'poll' ? cleanOptions(b.question_options) : null;
+  if (qType === 'poll' && !qOptions) return NextResponse.json({ error: 'A poll needs 2 to 4 different options.' }, { status: 400 });
   const date = String(b.date ?? '');
   if (!DATE.test(date) || date < pacificDayKey()) return NextResponse.json({ error: 'Pick a date that hasn’t passed.' }, { status: 400 });
   const { starts, ends } = occurrenceTimes(date, start, end);
-  const { data, error } = await auth.svc.from('meetings').insert({ title, meeting_date: date, starts_at: starts.toISOString(), ends_at: ends.toISOString(), location, doc_url: doc.value, audience: aud.audience, invitees: aud.invitees, group_ids: aud.group_ids, description, created_by: auth.user.id, question: String(b.question ?? '').trim().slice(0, MAX_QUESTION_LENGTH) || null }).select('id').single();
+  const { data, error } = await auth.svc.from('meetings').insert({ title, meeting_date: date, starts_at: starts.toISOString(), ends_at: ends.toISOString(), location, doc_url: doc.value, audience: aud.audience, invitees: aud.invitees, group_ids: aud.group_ids, description, created_by: auth.user.id, question: String(b.question ?? '').trim().slice(0, MAX_QUESTION_LENGTH) || null, question_type: qType, question_options: qOptions }).select('id').single();
   if (error) return NextResponse.json({ error: 'Failed to schedule.' }, { status: 500 });
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'create', entityType: 'meeting', entityId: data.id, summary: `Scheduled "${title}" for ${date}` });
   await notifyMeetingInvites(auth.svc, { title, when: `${formatPacificDateTime(starts, { weekday: true })}${location ? ` · ${location}` : ''}` }, { audience: aud.audience, invitees: aud.invitees, group_ids: aud.group_ids }, { hostId: auth.user.id });

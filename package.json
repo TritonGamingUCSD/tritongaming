@@ -16,7 +16,9 @@
     "test:strikes": "node scripts/strikes-check.mjs",
     "test:quarters": "node scripts/quarters-check.mjs",
     "test:teamyears": "node scripts/teamyears-check.mjs",
-    "test:series-absence": "node scripts/series-absence-check.mjs"
+    "test:series-absence": "node scripts/series-absence-check.mjs",
+    "test:emojis": "node scripts/emojis-check.mjs",
+    "test:questions": "node scripts/questions-check.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
@@ -33,6 +35,7 @@
     "react-easy-crop": "^6.2.3",
     "react-markdown": "^10.1.0",
     "recharts": "^3.10.1",
+    "sharp": "^0.35.5",
     "stripe": "^22.6.2",
     "web-push": "^3.6.7"
   },

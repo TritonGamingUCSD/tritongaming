@@ -6,6 +6,6 @@
 .bar > span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #a78bfa, #ffc72c); }
 .links { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .link { padding: 0.25rem 0.65rem; border-radius: 999px; font-size: 0.76rem; text-decoration: none; color: rgba(242, 241, 240, 0.85); background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.14); }
-.link:hover { border-color: rgba(255, 199, 44, 0.5); color: var(--yellow); }
+.link:hover { border-color: rgba(255, 199, 44, 0.5); color: var(--yellow-text); }
 .close { display: grid; place-items: center; width: 26px; height: 26px; flex-shrink: 0; border: 0; border-radius: 50%; background: transparent; color: rgba(242, 241, 240, 0.5); cursor: pointer; }
 .close:hover { background: rgba(255, 255, 255, 0.1); color: var(--white); }

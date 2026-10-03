@@ -75,7 +75,7 @@
   top: 50%;
   right: 1rem;
   transform: translateY(-50%);
-  color: var(--yellow);
+  color: var(--yellow-text);
   font-size: 0.9rem;
   pointer-events: none;
 }
@@ -309,7 +309,7 @@
 .resultPointsGain {
   font-family: var(--font-futura-heavy);
   font-size: 1.4rem;
-  color: var(--yellow);
+  color: var(--yellow-text);
   text-shadow: 0 0 16px rgba(255, 199, 44, 0.6);
   animation: pointsPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
 }
@@ -412,7 +412,7 @@
   font-weight: 700;
   text-align: center;
 }
-.resultFormBadge { background: rgba(255, 199, 44, 0.2); color: #ffc72c; border: 1px solid rgba(255, 199, 44, 0.5); }
+.resultFormBadge { background: rgba(255, 199, 44, 0.2); color: var(--yellow-text); border: 1px solid rgba(255, 199, 44, 0.5); }
 .resultFormDone { background: rgba(52, 211, 153, 0.18); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.45); }
 
 /* Louder staff prompt after a scan on AS Form events — a script to say out

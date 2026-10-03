@@ -27,7 +27,7 @@
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 0.75rem;
-  color: var(--yellow);
+  color: var(--yellow-text);
   text-align: center;
 }
 
@@ -93,7 +93,7 @@
 .economyValue {
   font-family: var(--font-futura-heavy);
   font-size: 1.3rem;
-  color: var(--yellow);
+  color: var(--yellow-text);
 }
 
 .economyLabel {

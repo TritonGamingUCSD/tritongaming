@@ -50,7 +50,7 @@
   transition: background 0.15s, border-color 0.15s, color 0.15s;
   white-space: nowrap;
 }
-.cmsBtn:hover { background: rgba(255,199,44,0.16); border-color: rgba(255,199,44,0.38); color: var(--yellow); }
+.cmsBtn:hover { background: rgba(255,199,44,0.16); border-color: rgba(255,199,44,0.38); color: var(--yellow-text); }
 
 /* ── Stats ── */
 .statsGrid {
@@ -72,8 +72,8 @@
 }
 
 
-.statIcon  { display: inline-flex; color: var(--yellow); flex-shrink: 0; }
-.statValue { font-family: var(--font-futura-heavy); font-size: 1.3rem; color: var(--yellow); line-height: 1; }
+.statIcon  { display: inline-flex; color: var(--yellow-text); flex-shrink: 0; }
+.statValue { font-family: var(--font-futura-heavy); font-size: 1.3rem; color: var(--yellow-text); line-height: 1; }
 .statLabel { font-size: var(--fs-meta); color: rgba(242,241,240,0.38); margin-top: 0.2rem; }
 
 /* ── Sections ── */
@@ -98,7 +98,7 @@
   font-family: var(--font-renegare);
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: var(--yellow);
+  color: var(--yellow-text);
 }
 
 .sectionHint { font-size: var(--fs-meta); color: rgba(242,241,240,0.2); }
@@ -121,7 +121,7 @@
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
-.historyIconBtn:hover { background: rgba(255,199,44,0.1); border-color: rgba(255,199,44,0.3); color: var(--yellow); }
+.historyIconBtn:hover { background: rgba(255,199,44,0.1); border-color: rgba(255,199,44,0.3); color: var(--yellow-text); }
 
 .historyOverlay {
   position: fixed;
@@ -218,7 +218,7 @@
   flex-shrink: 0;
   border-radius: 50%;
   background: rgba(255,199,44,0.15);
-  color: var(--yellow);
+  color: var(--yellow-text);
   font-family: var(--font-futura-heavy);
   font-size: 0.8rem;
 }
@@ -238,7 +238,7 @@
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
-.activityBtn:hover { background: rgba(255,199,44,0.1); border-color: rgba(255,199,44,0.3); color: var(--yellow); }
+.activityBtn:hover { background: rgba(255,199,44,0.1); border-color: rgba(255,199,44,0.3); color: var(--yellow-text); }
 
 .activityList {
   display: flex;

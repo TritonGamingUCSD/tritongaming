@@ -2,7 +2,7 @@
 
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { CalendarClock, CalendarDays, Radio, ClipboardList, Check, X, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Pause, Play, Trash2, Link2, MessageCircleQuestion, Shuffle, Send, Users, Minus, UserX, Lock } from 'lucide-react';
+import { CalendarClock, CalendarDays, Radio, ClipboardList, Check, X, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Pause, Play, Trash2, Link2, MessageCircleQuestion, Shuffle, Send, Users, Minus, UserX, Lock, Dices, Smile, Upload, Settings2 } from 'lucide-react';
 import IconButton from '@/components/ui/IconButton';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Notice from '@/components/ui/Notice';
@@ -19,28 +19,33 @@ import { resolveAvatarUrl } from '@/lib/profile';
 import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
 import { AUDIENCE_LABELS, AUDIENCE_ROLES, audienceLabel, audienceRoles } from '@/lib/meetingAudience';
 import { googleCalendarUrl } from '@/lib/ics';
-import { REACTION_EMOJIS, MAX_ANSWER_LENGTH, MAX_QUESTION_LENGTH, MAX_DESCRIPTION_LENGTH, suggestQuestion } from '@/lib/meetingFun';
+import BubbleField from './BubbleField';
+import { QuestionEditor, ResultBars, StarPicker, Confetti, emptyQ, qFrom, qPayload, qBad, type QState } from './QuestionParts';
+import { CUSTOM_PREFIX, isCustomEmoji, customEmojiId, MAX_EMOJI_BYTES, MAX_EMOJI_PICK_BYTES, EMOJI_NAME, parseDiscordEmoji, emojiNameFrom, type CustomEmoji, type QuestionType, type Tally, MAX_ANSWER_LENGTH, MAX_QUESTION_LENGTH, MAX_DESCRIPTION_LENGTH, suggestQuestion } from '@/lib/meetingFun';
 import PlanningPanel from './planning/PlanningPanel';
 import styles from './meetings.module.css';
 
-type Tab = 'mine' | 'planning' | 'host' | 'groups' | 'attendance';
+type Tab = 'mine' | 'planning' | 'host' | 'tools';
+type ToolTab = 'attendance' | 'groups' | 'emojis';
 
 interface Person { id: string; name: string; avatar_url: string | null; custom_avatar_url: string | null }
-interface TodayMeeting { id: string; title: string; description: string | null; location: string | null; starts_at: string; ends_at: string; open: boolean; accepting: boolean; opens_at: string; checked_in_at: string | null; doc_url: string | null; question: string | null; my_answer: string | null }
+interface TodayMeeting { question_type: QuestionType; question_options: string[] | null; id: string; title: string; description: string | null; location: string | null; starts_at: string; ends_at: string; open: boolean; accepting: boolean; opens_at: string; checked_in_at: string | null; doc_url: string | null; question: string | null; my_answer: string | null }
 interface NextMeeting { title: string; description: string | null; location: string | null; starts_at: string; ends_at: string; date: string }
 interface Live {
-  meeting: { id: string; title: string; meeting_date: string; starts_at: string; ends_at: string; open: boolean; doc_url: string | null; location: string | null; cancelled: boolean; series_id: string | null; accepting: boolean; opens_at: string; question: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; groupNames: string[] };
+  meeting: { question_type: QuestionType; question_options: string[] | null; id: string; title: string; meeting_date: string; starts_at: string; ends_at: string; open: boolean; doc_url: string | null; location: string | null; cancelled: boolean; series_id: string | null; accepting: boolean; opens_at: string; question: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; groupNames: string[] };
   answers: (Person & { answer: string; at: string })[];
   reactions: { id: number; emoji: string }[];
   lastReactionId: number;
   reactionTotals: Record<string, number>;
+  customEmojis?: Record<string, { name: string; url: string }>;
+  tally: Tally;
   code: string | null;
   expiresAt: number | null;
   attendees: (Person & { checked_in_at: string; method: 'code' | 'manual' | 'host' })[];
   missing: Person[];
   absent: (Person & { reason: string | null; excused: boolean })[];
 }
-interface Item { key: string; meeting_id: string | null; series_id: string | null; date: string; title: string; location: string | null; doc_url: string | null; question: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; groupNames: string[]; host_id: string | null; host_name: string | null; starts_at: string; ends_at: string; status: 'scheduled' | 'open' | 'closed' | 'cancelled'; count: number; absent?: number; is_today: boolean; repeats: boolean }
+interface Item { question_type: QuestionType; question_options: string[] | null; key: string; meeting_id: string | null; series_id: string | null; date: string; title: string; location: string | null; doc_url: string | null; question: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; groupNames: string[]; host_id: string | null; host_name: string | null; starts_at: string; ends_at: string; status: 'scheduled' | 'open' | 'closed' | 'cancelled'; count: number; absent?: number; is_today: boolean; repeats: boolean }
 interface Series { ends_on?: string | null; id: string; title: string; weekday: number; start_time: string; end_time: string; location: string | null; active: boolean; doc_url: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null }
 
 const TZ = 'America/Los_Angeles';
@@ -86,14 +91,17 @@ export default function MeetingsSectionContent({ canHost, canManageAll, userId, 
   const canSeeResults = canHost || canViewReports;
   const nav = useUrlNav();
   const sync = usePortalTabSync('meetings');
-  const valid: Tab[] = [...(canAttend ? (['mine', 'planning'] as Tab[]) : canManage ? (['planning'] as Tab[]) : []), ...(canManage ? (['host', 'groups'] as Tab[]) : []), ...(canSeeResults ? (['attendance'] as Tab[]) : [])];
-  // Old links and notifications: tab=upcoming and tab=checkin are part of My meetings now; Run meetings is called Host.
-  const startTab = nav.tab === 'upcoming' || nav.tab === 'checkin' ? 'mine' : nav.tab === 'run' ? 'host' : nav.tab;
+  const toolTabs: ToolTab[] = [...(canSeeResults ? (['attendance'] as ToolTab[]) : []), ...(canManage ? (['groups'] as ToolTab[]) : []), ...(canAttend || canManage ? (['emojis'] as ToolTab[]) : [])];
+  const valid: Tab[] = [...(canAttend ? (['mine', 'planning'] as Tab[]) : canManage ? (['planning'] as Tab[]) : []), ...(canManage ? (['host'] as Tab[]) : []), ...(toolTabs.length ? (['tools'] as Tab[]) : [])];
+  // Old links and notifications: tab=upcoming and tab=checkin are part of My meetings now; Run meetings is called Host; Attendance, Groups and Emojis live under Tools.
+  const legacyTool = (['attendance', 'groups', 'emojis'] as const).find((t) => t === nav.tab || t === nav.subtab);
+  const startTab = nav.tab === 'upcoming' || nav.tab === 'checkin' ? 'mine' : nav.tab === 'run' ? 'host' : nav.tab === 'manage' || legacyTool ? 'tools' : nav.tab;
+  const [toolTab, setToolTab] = useState<ToolTab>(legacyTool && toolTabs.includes(legacyTool) ? legacyTool : toolTabs[0] ?? 'emojis');
   const [tab, setTab] = useState<Tab>(valid.includes(startTab as Tab) ? (startTab as Tab) : valid[0] ?? 'mine');
   // Set when a meeting is opened from the Attendance tab, so Run meetings lands straight on it.
   const [runTarget, setRunTarget] = useState<string | null>(null);
 
-  function pick(t: Tab) { setRunTarget(null); setTab(t); sync(t); }
+  function pick(t: Tab) { setRunTarget(null); setTab(t); sync(t, t === 'tools' ? toolTab : null); }
   function openFromAttendance(id: string) { setRunTarget(id); setTab('host'); sync('host'); }
 
   return (
@@ -109,11 +117,8 @@ export default function MeetingsSectionContent({ canHost, canManageAll, userId, 
         tabs={[
           ...(canAttend ? [{ id: 'mine' as Tab, label: 'My meetings', icon: <CalendarDays size={15} /> }] : []),
           ...(canAttend || canManage ? [{ id: 'planning' as Tab, label: 'Planning', icon: <CalendarClock size={15} /> }] : []),
-          ...(canManage ? [
-            { id: 'host' as Tab, label: 'Host', icon: <Radio size={15} /> },
-            { id: 'groups' as Tab, label: 'Groups', icon: <Users size={15} /> },
-          ] : []),
-          ...(canSeeResults ? [{ id: 'attendance' as Tab, label: 'Attendance', icon: <ClipboardList size={15} /> }] : []),
+          ...(canManage ? [{ id: 'host' as Tab, label: 'Host', icon: <Radio size={15} /> }] : []),
+          ...(toolTabs.length ? [{ id: 'tools' as Tab, label: 'Tools', icon: <Settings2 size={15} /> }] : []),
         ]}
       />
       {tab === 'mine' && canAttend && (
@@ -132,8 +137,17 @@ export default function MeetingsSectionContent({ canHost, canManageAll, userId, 
       )}
       {tab === 'planning' && (canAttend || canManage) && <PlanningPanel userId={userId} />}
       {tab === 'host' && canManage && <RunPanel initial={runTarget} />}
-      {tab === 'groups' && canManage && <GroupsPanel userId={userId} canManageAll={canManageAll} />}
-      {tab === 'attendance' && canSeeResults && <AttendancePanel onOpenMeeting={canManage ? openFromAttendance : undefined} canExport={canManageAll || canViewReports} />}
+      {tab === 'tools' && toolTabs.length > 0 && (
+        <div className={styles.stack}>
+          {toolTabs.length > 1 && (
+            <SectionTabs<ToolTab> label="Tools" variant="segmented" value={toolTab} onChange={(m) => { setToolTab(m); sync('tools', m); }}
+              tabs={toolTabs.map((t) => (t === 'attendance' ? { id: t, label: 'Attendance', icon: <ClipboardList size={14} /> } : t === 'groups' ? { id: t, label: 'Groups', icon: <Users size={14} /> } : { id: t, label: 'Emojis', icon: <Smile size={14} /> }))} />
+          )}
+          {toolTab === 'attendance' && canSeeResults && <AttendancePanel onOpenMeeting={canManage ? openFromAttendance : undefined} canExport={canManageAll || canViewReports} />}
+          {toolTab === 'groups' && canManage && <GroupsPanel userId={userId} canManageAll={canManageAll} />}
+          {toolTab === 'emojis' && (canAttend || canManage) && <EmojiPanel />}
+        </div>
+      )}
     </div>
   );
 }
@@ -256,13 +270,44 @@ function CheckInPanel() {
 
 
 // After checking in: the question of the meeting, and quick emoji reactions for the big screen.
+// A plain emoji, or the picture for a club custom one (`custom:<id>`).
+function EmojiView({ emoji, custom, size = '1em' }: { emoji: string; custom?: Record<string, { name: string; url: string }>; size?: string }) {
+  if (!isCustomEmoji(emoji)) return <>{emoji}</>;
+  const c = custom?.[customEmojiId(emoji)];
+  // eslint-disable-next-line @next/next/no-img-element
+  return c ? <img src={c.url} alt={`:${c.name}:`} className={styles.customEmoji} style={{ width: size, height: size }} /> : null;
+}
+
 function FunBox({ meeting, onSaved }: { meeting: TodayMeeting; onSaved: () => void }) {
   const [text, setText] = useState(meeting.my_answer ?? '');
   const [editing, setEditing] = useState(!meeting.my_answer);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [burst, setBurst] = useState<string | null>(null);
+  const [club, setClub] = useState<CustomEmoji[]>([]);
+  const [mine, setMine] = useState<string | null>(meeting.my_answer);
+  const [tallyNow, setTallyNow] = useState<Tally | null>(null);
   const last = useRef(0);
+  const type = meeting.question_type ?? 'text';
+  // Polls and ratings: after you vote you watch the bars move as everyone else votes.
+  useEffect(() => {
+    if (type === 'text' || !mine || !meeting.open) return;
+    let alive = true;
+    const pull = () => fetch(`/api/meetings/${meeting.id}/results`, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((j) => { if (alive && j) setTallyNow({ counts: j.counts, total: j.total, average: j.average }); }).catch(() => {});
+    void pull();
+    const t = setInterval(pull, 3000);
+    return () => { alive = false; clearInterval(t); };
+  }, [type, mine, meeting.id, meeting.open]);
+  async function vote(choice: string) {
+    setError(''); const before = mine; setMine(choice);
+    const res = await fetch(`/api/meetings/${meeting.id}/answer`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer: choice }) });
+    if (!res.ok) { setMine(before); setError((await res.json().catch(() => ({}))).error || 'Couldn’t send.'); return; }
+    onSaved();
+  }
+  useEffect(() => {
+    if (!meeting.open) return;
+    fetch('/api/meetings/emojis', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((j) => { if (j) setClub(j.approved ?? []); }).catch(() => {});
+  }, [meeting.open]);
 
   async function send() {
     if (!text.trim()) return;
@@ -291,12 +336,20 @@ function FunBox({ meeting, onSaved }: { meeting: TodayMeeting; onSaved: () => vo
         <div className={styles.questionBox}>
           <span className={styles.questionLabel}><MessageCircleQuestion size={14} aria-hidden="true" /> Question of the meeting</span>
           <p className={styles.questionText}>{meeting.question}</p>
-          {editing && meeting.open ? (
+          {type === 'poll' && meeting.open && (
+            <div className={styles.pollChoices}>
+              {(meeting.question_options ?? []).map((o) => <button key={o} type="button" className={`${styles.pollBtn} ${mine === o ? styles.pollOn : ''}`} aria-pressed={mine === o} onClick={() => void vote(o)}>{o}</button>)}
+            </div>
+          )}
+          {type === 'rating' && meeting.open && <StarPicker value={Number(mine) || 0} onPick={(n) => void vote(String(n))} />}
+          {type !== 'text' && mine && tallyNow && <ResultBars type={type} tally={tallyNow} mine={mine} />}
+          {type !== 'text' && !meeting.open && mine && <p className={styles.myAnswer}><Check size={14} aria-hidden="true" /> You chose {type === 'rating' ? `${mine} star${mine === '1' ? '' : 's'}` : `“${mine}”`}</p>}
+          {type === 'text' && editing && meeting.open ? (
             <form className={styles.answerForm} onSubmit={(e) => { e.preventDefault(); send(); }}>
               <Input value={text} onChange={(e) => setText(e.target.value)} maxLength={MAX_ANSWER_LENGTH} placeholder="Your answer…" aria-label="Your answer" autoComplete="off" />
               <Button type="submit" size="sm" loading={busy} disabled={!text.trim()}><Send size={14} aria-hidden="true" /> Send</Button>
             </form>
-          ) : meeting.my_answer ? (
+          ) : type === 'text' && meeting.my_answer ? (
             <p className={styles.myAnswer}>
               <Check size={14} aria-hidden="true" /> “{meeting.my_answer}”
               {meeting.open && <IconButton kind="edit" size="sm" label="Edit my answer" onClick={() => setEditing(true)} />}
@@ -309,9 +362,12 @@ function FunBox({ meeting, onSaved }: { meeting: TodayMeeting; onSaved: () => vo
         <div className={styles.reactBar} role="group" aria-label="Send a reaction to the screen">
           <span className={styles.reactLabel}>React on the big screen</span>
           <div className={styles.reactBtns}>
-            {REACTION_EMOJIS.map((e) => (
-              <button key={e} type="button" className={`${styles.reactBtn} ${burst === e ? styles.reactPop : ''}`} onClick={() => react(e)} aria-label={`Send ${e}`}>{e}</button>
-            ))}
+            {club.length > 1 && <button type="button" className={`${styles.reactBtn} ${styles.reactDice}`} onClick={() => { const c = club[Math.floor(Math.random() * club.length)]; react(`${CUSTOM_PREFIX}${c.id}`); }} aria-label="Send a random emoji" title="Surprise me"><Dices size={22} aria-hidden="true" /></button>}
+            {club.length === 0 && <p className={styles.faint}>No club emojis yet. Add one in the Emojis tab.</p>}
+            {club.map((c) => {
+              const key = `${CUSTOM_PREFIX}${c.id}`;
+              return <button key={c.id} type="button" className={`${styles.reactBtn} ${burst === key ? styles.reactPop : ''}`} onClick={() => react(key)} aria-label={`Send ${c.name}`} title={`:${c.name}:`}><EmojiView emoji={key} custom={{ [c.id]: { name: c.name, url: c.url } }} size="1.7rem" /></button>;
+            })}
           </div>
         </div>
       )}
@@ -690,7 +746,7 @@ function MeetingList({ onOpen }: { onOpen: (id: string) => void }) {
     // The question is locked once check-in has been opened; leave it out so an unrelated edit can't trip that.
     // Title only changes for one-off meetings (a repeating meeting keeps its name every week).
     const fields = {
-      doc_url: f.doc, ...(item.status === 'open' ? {} : { question: f.question }), location: f.location, description: f.description,
+      doc_url: f.doc, ...(item.status === 'open' ? {} : qPayload(f.q)), location: f.location, description: f.description,
       ...(item.repeats ? {} : { title: f.title }), start: f.start, end: f.end, ...audPayload(f.audience),
     };
     const r = await post('/api/meetings/update', item.meeting_id ? { meeting_id: item.meeting_id, ...fields } : { series_id: item.series_id, date: item.date, ...fields }, item.key);
@@ -811,7 +867,7 @@ function SeriesEditForm({ series: s, busy, onSave, onCancel }: { series: Series;
   );
 }
 
-interface DetailsFields { doc: string; question: string; audience: Aud; location: string; description: string; title: string; start: string; end: string }
+interface DetailsFields { doc: string; q: QState; audience: Aud; location: string; description: string; title: string; start: string; end: string }
 
 function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, onDelete, onChanged }: {
   item: Item; busy: boolean; past?: boolean; onChanged?: () => void;
@@ -819,7 +875,7 @@ function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, o
 }) {
   const [editingDoc, setEditingDoc] = useState(false);
   const [doc, setDoc] = useState(item.doc_url ?? '');
-  const [question, setQuestion] = useState(item.question ?? '');
+  const [q, setQ] = useState<QState>(qFrom(item));
   const [audience, setAudience] = useState<Aud>(audFrom(item));
   const [room, setRoom] = useState(item.location ?? '');
   const [desc, setDesc] = useState(item.description ?? '');
@@ -883,7 +939,7 @@ function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, o
         </div>
       </div>
       {editingDoc && (
-        <form className={styles.detailsForm} onSubmit={async (e) => { e.preventDefault(); if (await onSaveDoc({ doc, question, audience, location: room, description: desc, title, start: startT, end: endT })) setEditingDoc(false); }}>
+        <form className={styles.detailsForm} onSubmit={async (e) => { e.preventDefault(); if (await onSaveDoc({ doc, q, audience, location: room, description: desc, title, start: startT, end: endT })) setEditingDoc(false); }}>
           {!item.repeats && <Field label="Name"><Input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={60} required /></Field>}
           <div className={styles.formGrid}>
             <Field label="Starts"><TimeInput value={startT} onChange={(e) => setStartT(e.target.value)} required /></Field>
@@ -893,13 +949,10 @@ function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, o
           <Field label="Room for this meeting" hint="Only changes this one meeting."><Input value={room} onChange={(e) => setRoom(e.target.value)} placeholder="e.g. Price Center East" maxLength={80} /></Field>
           <Field label="Meeting doc link"><Input value={doc} onChange={(e) => setDoc(e.target.value)} placeholder="https://docs.google.com/… or /portal?section=docs" inputMode="url" /></Field>
           <Field label="Question of the meeting" hint={status === 'open' ? 'Locked while check-in is open.' : undefined}>
-            <div className={styles.inlineRow}>
-              <Input value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={MAX_QUESTION_LENGTH} placeholder="An icebreaker people answer after checking in" disabled={status === 'open'} />
-              <Button type="button" size="sm" variant="ghost" disabled={status === 'open'} onClick={() => setQuestion(suggestQuestion(question))}><Shuffle size={14} aria-hidden="true" /> Suggest</Button>
-            </div>
+            <QuestionEditor value={q} onChange={setQ} disabled={status === 'open'} />
           </Field>
           <div className={styles.audienceField}><span className={styles.audienceTitle}>Who is it for?</span><AudiencePicker value={audience} onChange={setAudience} /></div>
-          <div className={styles.formActions}><Button type="submit" size="sm" loading={busy} disabled={audienceEmpty(audience)}>Save</Button></div>
+          <div className={styles.formActions}><Button type="submit" size="sm" loading={busy} disabled={audienceEmpty(audience) || qBad(q)}>Save</Button></div>
         </form>
       )}
       {editingDoc && !past && <AdvanceAbsences item={item} onChanged={onChanged} />}
@@ -1031,6 +1084,127 @@ function SeriesExcused({ seriesId }: { seriesId: string }) {
   );
 }
 
+// Shrinks a picked picture in the browser (256px square WebP) so any normal photo fits. A GIF keeps its animation if it is small enough to send;
+// a bigger one becomes a still picture (the first frame) rather than being refused.
+async function prepareEmojiFile(file: File): Promise<{ file: File; note: string }> {
+  if (file.type === 'image/gif' && file.size <= MAX_EMOJI_BYTES) return { file, note: '' };
+  const bitmap = await createImageBitmap(file);
+  const side = Math.min(bitmap.width, bitmap.height), size = 256;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return { file, note: '' };
+  ctx.drawImage(bitmap, (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, size, size);
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/webp', 0.88));
+  if (!blob) return { file, note: '' };
+  const out = new File([blob], file.name.replace(/\.[^.]+$/, '') + '.webp', { type: 'image/webp' });
+  const kb = (n: number) => (n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
+  return { file: out, note: file.type === 'image/gif' ? `That GIF was too big to keep moving, so it became a still picture (${kb(out.size)}).` : file.size > 200 * 1024 ? `Shrunk from ${kb(file.size)} to ${kb(out.size)}.` : '' };
+}
+
+// The club's custom emojis: upload one (it waits for an exec to approve it), see the approved ones, and for exec/admin the review queue.
+function EmojiPanel() {
+  const [data, setData] = useState<{ manage: boolean; approved: CustomEmoji[]; mine: CustomEmoji[]; queue: CustomEmoji[] } | null>(null);
+  const [name, setName] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const [busy, setBusy] = useState('');
+  const [error, setError] = useState('');
+  const [note, setNote] = useState('');
+  const load = useCallback(async () => {
+    try { const r = await fetch('/api/meetings/emojis', { cache: 'no-store' }); const j = await r.json(); if (r.ok) setData(j); else setError(j.error || 'Failed to load.'); } catch { setError('Network error.'); }
+  }, []);
+  useEffect(() => { void load(); }, [load]);
+  const clean = name.trim().toLowerCase().replace(/^:|:$/g, '');
+  const [prepNote, setPrepNote] = useState('');
+  const [discord, setDiscord] = useState('');
+  const dEmoji = parseDiscordEmoji(discord);
+  function onDiscord(v: string) {
+    setDiscord(v); setError('');
+    const d = parseDiscordEmoji(v);
+    if (d) { setFile(null); setPrepNote(''); if (d.name && !name.trim()) setName(emojiNameFrom(d.name)); }
+  }
+  const tooBig = !!file && file.size > MAX_EMOJI_BYTES;
+  async function pick(f: File | null) {
+    setError(''); setPrepNote('');
+    if (!f) { setFile(null); return; }
+    if (f.size > MAX_EMOJI_PICK_BYTES) { setFile(null); setError('That file is huge. Pick one under 30 MB.'); return; }
+    try { const p = await prepareEmojiFile(f); setFile(p.file); setPrepNote(p.note); } catch { setFile(null); setError('Couldn’t read that image.'); }
+  }
+  async function upload(e: React.FormEvent) {
+    e.preventDefault();
+    if (!file && !dEmoji) return;
+    setBusy('upload'); setError(''); setNote('');
+    const fd = new FormData(); if (dEmoji) fd.append('discord', discord.trim()); else if (file) fd.append('file', file); fd.append('name', clean);
+    const r = await fetch('/api/meetings/emojis', { method: 'POST', body: fd });
+    const j = await r.json().catch(() => ({}));
+    setBusy('');
+    if (!r.ok) { setError(j.error || 'Couldn’t upload.'); return; }
+    setName(''); setFile(null); setDiscord(''); setPrepNote(''); setNote(j.approved ? 'Added. It’s live now.' : 'Sent. It shows up once an exec approves it.');
+    await load();
+  }
+  async function act(id: string, method: 'PATCH' | 'DELETE') {
+    setBusy(id); setError('');
+    const r = await fetch(`/api/meetings/emojis/${id}`, { method });
+    setBusy('');
+    if (!r.ok) setError((await r.json().catch(() => ({}))).error || 'Failed.');
+    await load();
+  }
+  const tile = (e: CustomEmoji, actions?: React.ReactNode) => (
+    <li key={e.id} className={styles.emojiTile}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={e.url} alt="" className={styles.emojiThumb} />
+      <span>:{e.name}:</span>
+      {actions}
+    </li>
+  );
+  if (!data) return error ? <Notice tone="error">{error}</Notice> : <LoadingSpinner size={28} label="Loading…" theme="dark" />;
+  return (
+    <div className={styles.stack}>
+      {error && <Notice tone="error">{error}</Notice>}
+      {note && <Notice tone="success">{note}</Notice>}
+      <form className={styles.emojiForm} onSubmit={upload} onPaste={(e) => { const f = [...e.clipboardData.files].find((x) => x.type.startsWith('image/')); if (f) { e.preventDefault(); setDiscord(''); void pick(f); } }}>
+        <h2 className={styles.sectionHead}>Add an emoji</h2>
+        <p className={styles.faint}>Square images work best. PNG, JPG, GIF or WebP, any size. It’s shrunk to a small square automatically. {data.manage ? 'Yours goes live straight away.' : 'An exec approves it before anyone sees it.'}</p>
+        <div className={styles.emojiRow}>
+          <Input value={discord} onChange={(e) => onDiscord(e.target.value)} placeholder="Paste a Discord emoji (or its link)" aria-label="Discord emoji" autoComplete="off" />
+          {dEmoji && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={`https://cdn.discordapp.com/emojis/${dEmoji.id}.${dEmoji.animated ? 'gif' : 'png'}?size=64`} alt="" className={styles.emojiThumb} />
+          )}
+        </div>
+        {discord.trim() && !dEmoji && <p className={styles.checkWarn}>That doesn’t look like a Discord emoji. Copy the emoji’s link, or type it as {'<:name:123…>'}.</p>}
+        <p className={styles.faint}>In Discord: right-click a custom emoji, Copy Link, and paste it above. You can also paste a copied picture anywhere in this box.</p>
+        <div className={styles.emojiRow}>
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="name, like pog_face" maxLength={22} aria-label="Emoji name" autoComplete="off" />
+          <label className={styles.filePick}><Upload size={14} aria-hidden="true" /> {file ? file.name : 'Choose image'}<input type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={(e) => void pick(e.target.files?.[0] ?? null)} hidden /></label>
+          <Button type="submit" size="sm" loading={busy === 'upload'} disabled={(!file && !dEmoji) || tooBig || !EMOJI_NAME.test(clean)}>Upload</Button>
+        </div>
+        {prepNote && <p className={styles.faint}>{prepNote}</p>}
+        {tooBig && <p className={styles.checkWarn}>That image is still too big to send.</p>}
+        {name && !EMOJI_NAME.test(clean) && <p className={styles.checkWarn}>Use 2 to 20 letters, numbers or underscores.</p>}
+      </form>
+      {data.manage && data.queue.length > 0 && (
+        <div>
+          <h2 className={styles.sectionHead}>Waiting for approval <span>{data.queue.length}</span></h2>
+          <ul className={styles.emojiGrid}>{data.queue.map((e) => tile(e, <span className={styles.emojiActions}><Button size="sm" loading={busy === e.id} onClick={() => void act(e.id, 'PATCH')}>Approve</Button><IconButton kind="delete" size="sm" label={`Reject ${e.name}`} onClick={() => void act(e.id, 'DELETE')} /></span>))}</ul>
+        </div>
+      )}
+      {!data.manage && data.mine.length > 0 && (
+        <div>
+          <h2 className={styles.sectionHead}>Your emojis waiting for approval</h2>
+          <ul className={styles.emojiGrid}>{data.mine.map((e) => tile(e, <IconButton kind="delete" size="sm" label={`Withdraw ${e.name}`} onClick={() => void act(e.id, 'DELETE')} />))}</ul>
+        </div>
+      )}
+      <div>
+        <h2 className={styles.sectionHead}>Club emojis <span>{data.approved.length}</span></h2>
+        {data.approved.length === 0 ? <p className={styles.muted}>None yet. Be the first.</p> : (
+          <ul className={styles.emojiGrid}>{data.approved.map((e) => tile(e, data.manage ? <IconButton kind="delete" size="sm" label={`Remove ${e.name}`} onClick={async () => { if (await confirmHold({ title: `Remove :${e.name}:?`, message: 'It disappears for everyone. Reactions already sent with it stop showing the picture.', confirmLabel: 'Hold to remove' })) await act(e.id, 'DELETE'); }} /> : null))}</ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ScheduleForm({ onCreated }: { onCreated: () => void }) {
   const [title, setTitle] = useState('');
   const [repeat, setRepeat] = useState<'weekly' | 'once'>('weekly');
@@ -1041,7 +1215,7 @@ function ScheduleForm({ onCreated }: { onCreated: () => void }) {
   const [location, setLocation] = useState('');
   const [doc, setDoc] = useState('');
   const [endsOn, setEndsOn] = useState('');
-  const [question, setQuestion] = useState('');
+  const [q, setQ] = useState<QState>(emptyQ);
   const [description, setDescription] = useState('');
   const [audience, setAudience] = useState<Aud>(defaultAud());
   const [busy, setBusy] = useState(false);
@@ -1053,7 +1227,7 @@ function ScheduleForm({ onCreated }: { onCreated: () => void }) {
     try {
       const res = await fetch('/api/meetings/schedule', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, repeat, weekday: Number(weekday), date, start, end, location, doc_url: doc, question, description, ends_on: repeat === 'weekly' ? endsOn || null : null, ...audPayload(audience) }),
+        body: JSON.stringify({ title, repeat, weekday: Number(weekday), date, start, end, location, doc_url: doc, ...qPayload(q), description, ends_on: repeat === 'weekly' ? endsOn || null : null, ...audPayload(audience) }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) { setError(json.error || 'Failed to schedule.'); return; }
@@ -1089,10 +1263,7 @@ function ScheduleForm({ onCreated }: { onCreated: () => void }) {
       <div className={styles.audienceField}><span className={styles.audienceTitle}>Who is it for?</span><AudiencePicker value={audience} onChange={setAudience} /></div>
       {repeat === 'once' && (
         <Field label="Question of the meeting (optional)" hint="An icebreaker people answer after checking in. You can also set it on the day.">
-          <div className={styles.inlineRow}>
-            <Input value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={MAX_QUESTION_LENGTH} placeholder="What game have you put the most hours into?" />
-            <Button type="button" size="sm" variant="ghost" onClick={() => setQuestion(suggestQuestion(question))}><Shuffle size={14} aria-hidden="true" /> Suggest</Button>
-          </div>
+          <QuestionEditor value={q} onChange={setQ} placeholder="What game have you put the most hours into?" />
         </Field>
       )}
       <p className={styles.faint}>Times are Pacific. Repeating meetings appear two weeks ahead.</p>
@@ -1107,12 +1278,22 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
   const [live, setLive] = useState<Live | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [presenting, setPresenting] = useState(false);
+  const labelRef = useRef<HTMLSpanElement>(null);
+  const codeRef = useRef<HTMLDivElement>(null);
+  const timerRef = useRef<HTMLDivElement>(null);
+  const questionRef = useRef<HTMLDivElement>(null);
+  const countRef = useRef<HTMLDivElement>(null);
+  const hintRef = useRef<HTMLParagraphElement>(null);
+  const totalsRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [doc, setDoc] = useState<string | null>(null);
   const [docSaved, setDocSaved] = useState(false);
-  const [question, setQuestion] = useState('');
+  const [q, setQ] = useState<QState>(emptyQ);
   const [questionSaved, setQuestionSaved] = useState(false);
+  const [fire, setFire] = useState(0);
+  const prevHere = useRef<number | null>(null);
+  const [bigBurst, setBigBurst] = useState<{ key: number; emoji: string } | null>(null);
   const [floaters, setFloaters] = useState<{ key: string; emoji: string; left: number; delay: number }[]>([]);
   const fieldsInit = useRef(false);
   // Reaction cursor: null until the first load, so history never replays on screen.
@@ -1124,12 +1305,21 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
       if (!res.ok) return;
       const json: Live = await res.json();
       setLive(json);
-      if (!fieldsInit.current) { fieldsInit.current = true; setDoc(json.meeting.doc_url ?? ''); setQuestion(json.meeting.question ?? ''); }
+      if (!fieldsInit.current) { fieldsInit.current = true; setDoc(json.meeting.doc_url ?? ''); setQ(qFrom(json.meeting)); }
       afterRef.current = json.lastReactionId;
+      // The moment everyone expected has checked in: confetti.
+      const here = json.attendees.length, total = here + json.missing.length;
+      if (prevHere.current !== null && prevHere.current < total && here >= total && total > 1) setFire(Date.now());
+      prevHere.current = here;
       if (json.reactions.length) {
         const fresh = json.reactions.map((r, i) => ({ key: `r${r.id}`, emoji: r.emoji, left: 8 + Math.random() * 84, delay: i * 0.18 }));
         setFloaters((f) => [...f, ...fresh].slice(-60));
         setTimeout(() => setFloaters((f) => f.filter((x) => !fresh.some((n) => n.key === x.key))), 4200 + fresh.length * 180);
+        // Lots of the same emoji at once: it explodes across the screen.
+        const counts: Record<string, number> = {};
+        for (const r of json.reactions) counts[r.emoji] = (counts[r.emoji] ?? 0) + 1;
+        const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+        if (top && top[1] >= 4) { const key = Date.now(); setBigBurst({ key, emoji: top[0] }); setTimeout(() => setBigBurst((b) => (b?.key === key ? null : b)), 1800); }
       }
     } catch { /* next poll */ }
   }, [id]);
@@ -1195,10 +1385,10 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
     onBack();
   }
 
-  async function saveQuestion(value: string) {
+  async function saveQuestion(value: QState) {
     setBusy(true); setError(''); setQuestionSaved(false);
     try {
-      const res = await fetch('/api/meetings/update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ meeting_id: id, question: value }) });
+      const res = await fetch('/api/meetings/update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ meeting_id: id, ...qPayload(value) }) });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) { setError(json.error || 'Failed to save.'); return; }
       setQuestionSaved(true);
@@ -1213,6 +1403,7 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
   const over = !open && Date.now() > new Date(live.meeting.ends_at).getTime();
   const secondsLeft = live.expiresAt ? Math.max(0, Math.ceil((live.expiresAt - now) / 1000)) : 0;
   const pct = Math.min(100, (secondsLeft / 30) * 100);
+  const ringPct = live.attendees.length + live.missing.length > 0 ? Math.min(100, (live.attendees.length / (live.attendees.length + live.missing.length)) * 100) : 0;
   const grouped = live.code ? `${live.code.slice(0, 3)} ${live.code.slice(3)}` : '';
 
   return (
@@ -1227,29 +1418,34 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
             {presenting ? <><Minimize2 size={15} aria-hidden="true" /> Exit</> : <><Maximize2 size={15} aria-hidden="true" /> Show on screen</>}
           </button>
           {live.meeting.question && (
-            <div className={styles.screenQuestion}>
+            <div ref={questionRef} className={styles.screenQuestion}>
               <span className={styles.questionLabel}><MessageCircleQuestion size={presenting ? 18 : 14} aria-hidden="true" /> Question of the meeting</span>
               <p>{live.meeting.question}</p>
             </div>
           )}
-          <span className={styles.codeLabel}>{live.meeting.title} check-in code</span>
-          <div className={styles.bigCode} aria-live="off">{grouped}</div>
-          <div className={styles.timer} aria-hidden="true"><span style={{ width: `${pct}%` }} /></div>
-          <div className={styles.liveCount}><strong>{live.attendees.length}</strong> of {live.attendees.length + live.missing.length} checked in</div>
-          {now < new Date(live.meeting.starts_at).getTime() - 10 * 60_000 && <p className={styles.faint}><Radio size={12} aria-hidden="true" /> Check-in opens {time(new Date(new Date(live.meeting.starts_at).getTime() - 10 * 60_000).toISOString())}</p>}
-          {presenting && <p className={styles.presentHint}>Open the portal → Meetings and type this code</p>}
-          {live.meeting.question && live.answers.length > 0 && (
-            <div className={styles.screenAnswers} aria-label="Latest answers">
-              {live.answers.slice(0, presenting ? 4 : 3).map((a) => (
-                <div key={`${a.id}-${a.at}`} className={styles.answerCard}>
-                  <span className={styles.answerText}>“{a.answer}”</span>
-                  <span className={styles.answerBy}>{a.name}</span>
-                </div>
-              ))}
+          <span ref={labelRef} className={styles.codeLabel}>{live.meeting.title} check-in code</span>
+          <div className={styles.codeRing}>
+            <svg className={styles.ringSvg} aria-hidden="true" preserveAspectRatio="none"><rect x="2" y="2" rx="22" ry="22" width="calc(100% - 4px)" height="calc(100% - 4px)" pathLength="100" className={styles.ringBack} /><rect x="2" y="2" rx="22" ry="22" width="calc(100% - 4px)" height="calc(100% - 4px)" pathLength="100" className={styles.ringFill} style={{ strokeDasharray: `${ringPct} 100` }} /></svg>
+            <div ref={codeRef} className={styles.bigCode} aria-live="off">{grouped}</div>
+          </div>
+          <div ref={timerRef} className={styles.timer} aria-hidden="true"><span style={{ width: `${pct}%` }} /></div>
+          <div ref={countRef} className={styles.liveCount}><strong>{live.attendees.length}</strong> of {live.attendees.length + live.missing.length} checked in</div>
+          {presenting && <p ref={hintRef} className={styles.presentHint}>Open the portal → Meetings and type this code</p>}
+          {live.meeting.question && live.meeting.question_type !== 'text' && (
+            <div className={styles.screenResults}><ResultBars type={live.meeting.question_type} tally={live.tally} big={presenting} /></div>
+          )}
+          {live.meeting.question && live.meeting.question_type === 'text' && live.answers.length > 0 && (
+            <BubbleField answers={live.answers.map((x) => ({ key: `${x.id}-${x.at}`, text: x.answer }))} avoid={[questionRef, labelRef, codeRef, timerRef, countRef, hintRef, totalsRef]} presenting={presenting} />
+          )}
+          {Object.keys(live.reactionTotals).length > 0 && (
+            <div ref={totalsRef} className={styles.screenTotals} aria-label="Reaction totals">
+              {Object.entries(live.reactionTotals).sort((x, y) => y[1] - x[1]).slice(0, 5).map(([e, n], i) => <span key={e} className={i === 0 ? styles.topTotal : ''}><EmojiView emoji={e} custom={live.customEmojis} /> <strong>{n}</strong></span>)}
             </div>
           )}
+          {bigBurst && <span key={bigBurst.key} className={styles.bigBurst} aria-hidden="true"><EmojiView emoji={bigBurst.emoji} custom={live.customEmojis} size="1em" /></span>}
+          <Confetti fire={fire} />
           <div className={styles.floaters} aria-hidden="true">
-            {floaters.map((f) => <span key={f.key} className={styles.floater} style={{ left: `${f.left}%`, animationDelay: `${f.delay}s` }}>{f.emoji}</span>)}
+            {floaters.map((f) => <span key={f.key} className={styles.floater} style={{ left: `${f.left}%`, animationDelay: `${f.delay}s` }}><EmojiView emoji={f.emoji} custom={live.customEmojis} /></span>)}
           </div>
         </div>
       ) : (
@@ -1277,10 +1473,9 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
             ) : open ? (
               <p className={styles.lockNote}><Lock size={13} aria-hidden="true" /> The question is locked while check-in is open, so everyone answers the same one. Close check-in to change it.</p>
             ) : (
-              <form className={styles.docForm} onSubmit={(e) => { e.preventDefault(); saveQuestion(question); }}>
-                <Input value={question} onChange={(e) => { setQuestion(e.target.value); setQuestionSaved(false); }} maxLength={MAX_QUESTION_LENGTH} placeholder="e.g. What game have you put the most hours into?" aria-label="Question of the meeting" />
-                <Button type="button" size="sm" variant="ghost" onClick={() => { const q = suggestQuestion(question); setQuestion(q); setQuestionSaved(false); }}><Shuffle size={14} aria-hidden="true" /> Suggest</Button>
-                <Button type="submit" size="sm" loading={busy}>{questionSaved ? 'Saved' : 'Save'}</Button>
+              <form className={styles.docForm} onSubmit={(e) => { e.preventDefault(); saveQuestion(q); }}>
+                <QuestionEditor value={q} onChange={(v) => { setQ(v); setQuestionSaved(false); }} placeholder="e.g. What game have you put the most hours into?" />
+                <Button type="submit" size="sm" loading={busy} disabled={qBad(q)}>{questionSaved ? 'Saved' : 'Save'}</Button>
               </form>
             )}
             {live.meeting.question && (
@@ -1297,7 +1492,7 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
                   </ul>
                 )}
                 {Object.keys(live.reactionTotals).length > 0 && (
-                  <p className={styles.totals}>{REACTION_EMOJIS.filter((e) => live.reactionTotals[e]).map((e) => <span key={e}>{e} {live.reactionTotals[e]}</span>)}</p>
+                  <p className={styles.totals}>{Object.keys(live.reactionTotals).map((e) => <span key={e}><EmojiView emoji={e} custom={live.customEmojis} /> {live.reactionTotals[e]}</span>)}</p>
                 )}
               </div>
             )}

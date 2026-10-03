@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { authorizeMeetings, isMeetingOpen, type MeetingRow } from '@/lib/meetings';
-import { REACTION_EMOJIS } from '@/lib/meetingFun';
+import { isCustomEmoji, customEmojiId } from '@/lib/meetingFun';
 
 // A checked-in person sends an emoji reaction; it floats up on the exec's screen. Lightly
 // rate-limited so one phone can't flood the room.
@@ -9,7 +9,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (auth.error) return auth.error;
   const { id } = await params;
   const { emoji } = await request.json().catch(() => ({}));
-  if (!(REACTION_EMOJIS as readonly string[]).includes(emoji)) return NextResponse.json({ error: 'Unknown reaction.' }, { status: 400 });
+  // Only the club's own approved custom emojis can be sent.
+  if (typeof emoji !== 'string' || !isCustomEmoji(emoji)) return NextResponse.json({ error: 'Unknown reaction.' }, { status: 400 });
+  const { data: ce } = await auth.svc.from('custom_emojis').select('id').eq('id', customEmojiId(emoji)).eq('status', 'approved').maybeSingle();
+  if (!ce) return NextResponse.json({ error: 'Unknown reaction.' }, { status: 400 });
 
   const { data } = await auth.svc.from('meetings').select('*').eq('id', id).maybeSingle();
   const m = data as MeetingRow | null;

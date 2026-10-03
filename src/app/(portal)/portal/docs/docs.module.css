@@ -56,7 +56,7 @@
 .result { display: flex; flex-direction: column; gap: 0.1rem; width: 100%; text-align: left; padding: 0.55rem 0.65rem; border-radius: 0.65rem; background: none; border: none; cursor: pointer; }
 .result:hover { background: rgba(255, 255, 255, 0.05); }
 .resultTitle { font-family: var(--font-futura-medium); font-size: 0.88rem; color: var(--white); }
-.resultCat { font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--yellow); opacity: 0.8; }
+.resultCat { font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--yellow-text); opacity: 0.8; }
 .resultSnippet { font-size: 0.76rem; color: rgba(242, 241, 240, 0.55); line-height: 1.4; }
 
 .catManager { border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 0.6rem; }
@@ -78,7 +78,7 @@
 .reader { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; align-items: start; }
 @media (min-width: 1400px) { .reader { grid-template-columns: minmax(0, 1fr) 210px; } }
 .article { min-width: 0; max-width: 780px; display: flex; flex-direction: column; gap: 0.9rem; }
-.crumbs { display: flex; align-items: center; gap: 0.35rem; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--yellow); }
+.crumbs { display: flex; align-items: center; gap: 0.35rem; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--yellow-text); }
 .crumbLink { background: none; border: none; padding: 0; cursor: pointer; font: inherit; letter-spacing: inherit; text-transform: inherit; color: rgba(242, 241, 240, 0.65); }
 .crumbLink:hover { color: var(--white); }
 .articleHead { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
@@ -93,7 +93,7 @@
 .attachCards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.6rem; }
 .attachCard { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 0.85rem; border-radius: 0.85rem; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); text-decoration: none; transition: border-color 0.15s, background 0.15s; }
 .attachCard:hover { border-color: rgba(255, 199, 44, 0.5); background: rgba(255, 199, 44, 0.06); }
-.attachCardIcon { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 0.7rem; background: rgba(255, 199, 44, 0.14); color: var(--yellow); flex-shrink: 0; }
+.attachCardIcon { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 0.7rem; background: rgba(255, 199, 44, 0.14); color: var(--yellow-text); flex-shrink: 0; }
 .attachCardText { display: flex; flex-direction: column; min-width: 0; }
 .attachCardName { font-size: 0.88rem; color: var(--white); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .attachCardKind { font-size: 0.7rem; color: rgba(242, 241, 240, 0.5); }
@@ -110,12 +110,12 @@
 .tocLink { padding: 0.28rem 0; font-size: 0.8rem; line-height: 1.35; color: rgba(242, 241, 240, 0.55); text-decoration: none; }
 .tocLink:hover { color: var(--white); }
 .tocSub { padding-left: 0.8rem; font-size: 0.76rem; }
-.tocActive { color: var(--yellow); }
+.tocActive { color: var(--yellow-text); }
 
 /* Home (nothing selected) */
 .home { display: flex; flex-direction: column; gap: 1.75rem; }
 .homeHead { display: flex; align-items: center; gap: 1rem; }
-.homeIcon { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 1rem; background: rgba(255, 199, 44, 0.14); color: var(--yellow); flex-shrink: 0; }
+.homeIcon { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 1rem; background: rgba(255, 199, 44, 0.14); color: var(--yellow-text); flex-shrink: 0; }
 .homeTitle { font-family: var(--font-futura-heavy); font-size: 1.6rem; color: var(--white); }
 .homeSub { font-size: 0.9rem; color: rgba(242, 241, 240, 0.6); max-width: 60ch; }
 .homeH2 { font-family: var(--font-futura-heavy); font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(242, 241, 240, 0.55); margin-bottom: 0.7rem; }
@@ -130,7 +130,7 @@
 .catCardName { font-family: var(--font-futura-heavy); color: var(--white); }
 .catCardList { list-style: none; display: flex; flex-direction: column; gap: 0.1rem; }
 .catCardLink { background: none; border: none; padding: 0.25rem 0; text-align: left; cursor: pointer; color: rgba(242, 241, 240, 0.75); font-size: 0.86rem; }
-.catCardLink:hover { color: var(--yellow); }
+.catCardLink:hover { color: var(--yellow-text); }
 .catCardMore { font-size: 0.74rem; color: rgba(242, 241, 240, 0.4); }
 .empty { padding: 2rem 0; color: rgba(242, 241, 240, 0.5); }
 
@@ -160,7 +160,7 @@
 
 .attachList { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; }
 .attachRow { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.75rem; border-radius: 0.7rem; background: rgba(255, 255, 255, 0.04); }
-.attachIcon { color: var(--yellow); display: inline-flex; }
+.attachIcon { color: var(--yellow-text); display: inline-flex; }
 .attachName { flex: 1; min-width: 0; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .attachRemoveBtn { background: none; border: none; color: #f87171; font-size: 0.78rem; cursor: pointer; }
 .attachAddRow { display: flex; gap: 0.5rem; }

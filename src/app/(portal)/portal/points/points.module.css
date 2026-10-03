@@ -110,7 +110,7 @@
   font-family: var(--font-renegare);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--yellow);
+  color: var(--yellow-text);
   margin-bottom: 0.5rem;
   display: block;
 }
@@ -137,7 +137,7 @@
   gap: 0.35rem;
   padding: 0.6rem 1rem;
   background: rgba(255,199,44,0.12);
-  color: var(--yellow);
+  color: var(--yellow-text);
   border: 1px solid rgba(255,199,44,0.3);
   border-radius: var(--radius-sm);
   font-size: 0.8rem;
@@ -173,7 +173,7 @@
 .shopTab { display: flex; flex-direction: column; gap: 1.25rem; }
 
 .shopBalance { font-size: 0.9rem; color: rgba(242,241,240,0.7); }
-.shopBalance strong { color: var(--yellow); font-family: var(--font-futura-heavy); }
+.shopBalance strong { color: var(--yellow-text); font-family: var(--font-futura-heavy); }
 
 .pendingSection { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 1rem; padding: 1.125rem; }
 
@@ -187,7 +187,7 @@
   background: rgba(255,199,44,0.08);
   border: 1px solid rgba(255,199,44,0.25);
   border-radius: var(--radius-md);
-  color: var(--yellow);
+  color: var(--yellow-text);
   font-size: 0.82rem;
   font-family: var(--font-futura-medium);
   cursor: pointer;
@@ -269,7 +269,7 @@
 .stockNote { font-size: 0.75rem; color: rgba(242,241,240,0.35); }
 
 .shopCardFooter { display: flex; align-items: center; justify-content: space-between; margin-top: 0.5rem; }
-.shopCardCost { font-family: var(--font-futura-heavy); color: var(--yellow); font-size: 0.95rem; }
+.shopCardCost { font-family: var(--font-futura-heavy); color: var(--yellow-text); font-size: 0.95rem; }
 
 .claimBtn {
   padding: 0.5rem 1rem;
@@ -447,7 +447,7 @@
   border: 1px solid;
   vertical-align: middle;
 }
-.tierUnlockTag { color: var(--yellow); border-color: rgba(255,199,44,0.35); background: rgba(255,199,44,0.08); }
+.tierUnlockTag { color: var(--yellow-text); border-color: rgba(255,199,44,0.35); background: rgba(255,199,44,0.08); }
 .digitalTag { color: #60a5fa; border-color: rgba(96,165,250,0.35); background: rgba(96,165,250,0.08); }
 
 .toggleBtn {
@@ -522,7 +522,7 @@
   gap: 0.35rem;
   padding: 0.3rem 0.5rem 0.3rem 0.7rem;
   background: rgba(255,199,44,0.1);
-  color: var(--yellow);
+  color: var(--yellow-text);
   border: 1px solid rgba(255,199,44,0.25);
   border-radius: var(--radius-pill);
   font-size: 0.78rem;

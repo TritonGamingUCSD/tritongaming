@@ -14,7 +14,7 @@
 .limitNote { margin: 0; padding: 0.5rem 0.7rem; border-radius: 0.6rem; background: rgba(248, 113, 113, 0.18); color: #fecaca; font-size: 0.86rem; font-weight: 600; }
 .voucherNote { display: flex; align-items: center; gap: 0.4rem; margin: 0; font-size: 0.82rem; color: #99f6e4; }
 .details summary { cursor: pointer; font-size: 0.8rem; color: rgba(242, 241, 240, 0.7); }
-.details summary:hover { color: var(--yellow); }
+.details summary:hover { color: var(--yellow-text); }
 .strikeList { list-style: none; margin: 0.5rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
 .strikeList li { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: 0.1rem 0.7rem; font-size: 0.84rem; color: var(--white); }
 .strikeList time { font-size: 0.76rem; color: rgba(242, 241, 240, 0.55); }

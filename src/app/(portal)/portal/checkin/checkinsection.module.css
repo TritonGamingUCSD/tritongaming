@@ -20,7 +20,7 @@
   border: 1px solid rgba(255,199,44,0.25);
   border-radius: 1rem;
   text-align: center;
-  color: var(--yellow);
+  color: var(--yellow-text);
 }
 .confirmTitle { font-family: var(--font-futura-heavy); font-size: 1.05rem; color: var(--white); }
 .confirmMeta { font-size: 0.85rem; color: rgba(242,241,240,0.6); }
@@ -106,7 +106,7 @@
   font-family: var(--font-futura-heavy);
   font-size: 2.5rem;
   letter-spacing: 0.15em;
-  color: var(--yellow);
+  color: var(--yellow-text);
 }
 
 .codeTimer { font-size: 0.78rem; color: rgba(242,241,240,0.4); margin-top: 0.5rem; }

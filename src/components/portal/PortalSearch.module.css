@@ -47,7 +47,7 @@
 .resultIcon { display: grid; place-items: center; width: 30px; height: 30px; flex-shrink: 0; border-radius: 0.55rem; color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
 .resultText { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .resultTitle { font-size: 0.88rem; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.resultTitle mark { background: none; color: var(--yellow); font-weight: 700; }
+.resultTitle mark { background: none; color: var(--yellow-text); font-weight: 700; }
 .resultSubtitle { font-size: 0.72rem; color: rgba(242, 241, 240, 0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .resultEnter { color: rgba(242, 241, 240, 0.35); opacity: 0; flex-shrink: 0; }
 .resultActive .resultEnter { opacity: 1; }

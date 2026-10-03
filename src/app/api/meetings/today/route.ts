@@ -26,6 +26,8 @@ export async function GET() {
       doc_url: inAt.has(m.id) ? m.doc_url : null,
       // The question is a reward for being there: revealed after check-in.
       question: inAt.has(m.id) ? m.question : null,
+      question_type: m.question_type ?? 'text',
+      question_options: inAt.has(m.id) ? m.question_options ?? null : null,
       my_answer: myAnswer.get(m.id) ?? null })),
     next: next ? { title: next.title, description: next.description, location: next.location, starts_at: next.starts_at, ends_at: next.ends_at, date: next.date } : null,
   });

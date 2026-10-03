@@ -97,7 +97,7 @@
 .formTitle { margin: 0; font-family: var(--font-futura-heavy); font-size: 1rem; color: var(--white); }
 .chosen { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.7rem; border-radius: 0.6rem; background: rgba(255, 199, 44, 0.08); border: 1px solid rgba(255, 199, 44, 0.35); color: var(--white); }
 .chosen span { font-size: 0.78rem; color: rgba(242, 241, 240, 0.6); }
-.linkBtn { margin-left: auto; padding: 0; border: 0; background: none; color: var(--yellow); font: inherit; font-size: 0.82rem; text-decoration: underline; cursor: pointer; }
+.linkBtn { margin-left: auto; padding: 0; border: 0; background: none; color: var(--yellow-text); font: inherit; font-size: 0.82rem; text-decoration: underline; cursor: pointer; }
 .pick { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.4rem; }
 .pickBtn { display: flex; flex-direction: column; width: 100%; padding: 0.4rem 0.65rem; border-radius: 0.7rem; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.03); color: var(--white); font: inherit; font-size: 0.86rem; text-align: left; cursor: pointer; }
 .pickBtn small { font-size: 0.7rem; color: rgba(242, 241, 240, 0.5); }

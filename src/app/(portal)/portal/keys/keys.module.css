@@ -48,7 +48,7 @@
 
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
 .historyBtn { margin-left: auto; display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.5rem; border: 0; background: none; color: rgba(242, 241, 240, 0.55); font: inherit; font-size: 0.78rem; cursor: pointer; }
-.historyBtn:hover { color: var(--yellow); }
+.historyBtn:hover { color: var(--yellow-text); }
 .flip { transform: rotate(180deg); }
 .history { list-style: none; margin: 0; padding: 0 0 0 0.2rem; display: flex; flex-direction: column; gap: 0.5rem; border-left: 2px solid rgba(255, 255, 255, 0.1); margin-left: 0.4rem; }
 .history li { display: flex; flex-direction: column; gap: 0.1rem; padding-left: 0.8rem; font-size: 0.82rem; color: rgba(242, 241, 240, 0.8); }
@@ -65,7 +65,7 @@
 .kinds { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .kindBtn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.8rem; border-radius: 0.6rem; border: 1px solid rgba(255, 255, 255, 0.14); background: rgba(255, 255, 255, 0.03); color: rgba(242, 241, 240, 0.75); font: inherit; font-size: 0.84rem; cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s; }
 .kindBtn:hover { border-color: rgba(255, 199, 44, 0.45); }
-.kindOn { border-color: var(--yellow); background: rgba(255, 199, 44, 0.12); color: var(--yellow); }
+.kindOn { border-color: var(--yellow); background: rgba(255, 199, 44, 0.12); color: var(--yellow-text); }
 .people { display: flex; flex-direction: column; gap: 0.5rem; }
 .people ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.4rem; }
 .person { display: flex; align-items: center; gap: 0.6rem; width: 100%; padding: 0.4rem 0.6rem; border-radius: 0.7rem; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.03); color: var(--white); font: inherit; font-size: 0.86rem; text-align: left; cursor: pointer; }
@@ -73,7 +73,7 @@
 .person small { font-size: 0.7rem; color: rgba(242, 241, 240, 0.5); }
 .person:hover { border-color: rgba(255, 199, 44, 0.45); }
 .personOn { border-color: var(--yellow); background: rgba(255, 199, 44, 0.1); }
-.person svg { color: var(--yellow); flex: none; }
+.person svg { color: var(--yellow-text); flex: none; }
 .colors { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .swatch { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2); }
 .swatchOn { border-color: #fff; box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.5); }

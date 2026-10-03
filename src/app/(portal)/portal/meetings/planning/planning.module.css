@@ -9,7 +9,7 @@
 .chip { font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.12rem 0.5rem; border-radius: 999px; border: 1px solid; }
 .chipOnce { color: #93c5fd; border-color: rgba(147, 197, 253, 0.4); }
 .chipWeekly { color: #c4b5fd; border-color: rgba(196, 181, 253, 0.4); }
-.chipOpen { color: #ffc72c; border-color: rgba(255, 199, 44, 0.45); }
+.chipOpen { color: var(--yellow-text); border-color: rgba(255, 199, 44, 0.45); }
 .chipDone { color: #34d399; border-color: rgba(52, 211, 153, 0.45); }
 .chipWarn { color: #fb923c; border-color: rgba(251, 146, 60, 0.45); }
 .needsMe { align-self: flex-start; margin-top: 0.15rem; font-size: 0.78rem; font-weight: 600; color: #0a0f1e; background: var(--yellow); border-radius: 999px; padding: 0.15rem 0.65rem; }
@@ -52,7 +52,7 @@
 .corner { position: sticky; left: 0; background: #0a0f1e; z-index: 1; }
 .colHead { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; padding: 0.4rem 0.2rem; font-size: 0.78rem; font-weight: 600; color: var(--white); text-align: center; border-left: 1px solid rgba(255, 255, 255, 0.07); }
 .colAll { background: none; border: 0; color: rgba(242, 241, 240, 0.5); font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer; padding: 0; }
-.colAll:hover { color: var(--yellow); }
+.colAll:hover { color: var(--yellow-text); }
 .timeLbl { position: sticky; left: 0; z-index: 1; background: #0a0f1e; height: 24px; font-size: 0.68rem; color: rgba(242, 241, 240, 0.55); text-align: right; padding-right: 0.4rem; transform: translateY(-0.5em); }
 .timeHalf { color: transparent; }
 .cell { height: 24px; border-left: 1px solid rgba(255, 255, 255, 0.07); border-top: 1px solid rgba(255, 255, 255, 0.07); cursor: pointer; touch-action: manipulation; }
@@ -116,8 +116,8 @@
 /* time and day read right at the cursor, and lit up on the grid's edges */
 .hoverTip { position: fixed; z-index: 50; pointer-events: none; padding: 0.3rem 0.6rem; border-radius: 0.5rem; background: #05070d; border: 1px solid rgba(255, 255, 255, 0.25); color: var(--white); font-size: 0.76rem; font-weight: 600; white-space: nowrap; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5); }
 .hoverTip em { display: block; font-style: normal; font-weight: 400; color: rgba(242, 241, 240, 0.7); }
-.hot { color: var(--yellow); }
-.timeHot { color: var(--yellow) !important; font-weight: 700; }
+.hot { color: var(--yellow-text); }
+.timeHot { color: var(--yellow-text) !important; font-weight: 700; }
 
 /* Meaning, not decoration: blue = planning, yellow = needs you, green = decided, orange = dates passed. */
 .planCard { border-left: 3px solid var(--tone, rgba(255, 255, 255, 0.14)); }

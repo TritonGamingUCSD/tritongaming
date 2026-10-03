@@ -29,7 +29,7 @@
   transition: color 0.15s, border-color 0.15s;
   white-space: nowrap;
 }
-.adminLink:hover { color: var(--yellow); border-color: rgba(255,199,44,0.4); }
+.adminLink:hover { color: var(--yellow-text); border-color: rgba(255,199,44,0.4); }
 
 .headerActions {
   display: flex;
@@ -161,7 +161,7 @@
   font-size: var(--fs-label);
   font-family: var(--font-renegare);
   letter-spacing: 0.04em;
-  color: var(--yellow);
+  color: var(--yellow-text);
   margin-bottom: 0.15rem;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
@@ -273,7 +273,7 @@
   margin-top: 0.6rem; padding-top: 0.65rem; border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 .infoRow svg, .copyRow > svg:first-child, .copyRow > img { flex-shrink: 0; opacity: 0.8; }
-.copyRow:hover { color: var(--yellow); }
+.copyRow:hover { color: var(--yellow-text); }
 .copyRowText { min-width: 0; overflow-wrap: anywhere; font-weight: 600; color: var(--white); }
 .detailBio { margin-top: 0.55rem; font-size: 0.82rem; line-height: 1.45; text-align: center; align-self: stretch; }
 .detailLinks .detailSocialBtn { width: 32px; height: 32px; }

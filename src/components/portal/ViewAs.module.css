@@ -1,6 +1,6 @@
 .wrap { position: relative; display: inline-block; }
 .trigger { display: inline-flex; align-items: center; gap: 0.4rem; height: 32px; padding: 0 0.75rem; border-radius: 999px; font-size: 0.74rem; cursor: pointer; white-space: nowrap; color: rgba(242, 241, 240, 0.75); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.14); }
-.trigger:hover { border-color: rgba(255, 199, 44, 0.5); color: var(--yellow); }
+.trigger:hover { border-color: rgba(255, 199, 44, 0.5); color: var(--yellow-text); }
 .triggerOn { color: #0b1226; background: var(--yellow); border-color: var(--yellow); }
 .triggerOn:hover { color: #0b1226; }
 .menu { position: absolute; right: 0; top: calc(100% + 0.4rem); z-index: 80; width: 230px; padding: 0.4rem; border-radius: 0.8rem; background: #0e1424; border: 1px solid rgba(255, 255, 255, 0.14); box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.7); }

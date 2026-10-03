@@ -10,9 +10,9 @@
   border: 1px solid rgba(255, 199, 44, 0.45);
   color: var(--white);
 }
-.icon { color: var(--yellow); flex-shrink: 0; }
+.icon { color: var(--yellow-text); flex-shrink: 0; }
 .text { margin: 0; flex: 1 1 200px; font-size: 0.88rem; line-height: 1.4; }
-.text strong { color: var(--yellow); }
+.text strong { color: var(--yellow-text); }
 .btn {
   flex-shrink: 0;
   padding: 0.5rem 1rem;

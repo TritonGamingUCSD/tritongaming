@@ -135,7 +135,7 @@
   align-items: center;
   gap: 0.3rem;
   font-size: 0.78rem;
-  color: var(--yellow);
+  color: var(--yellow-text);
   transition: opacity 0.15s;
   white-space: nowrap;
 }
