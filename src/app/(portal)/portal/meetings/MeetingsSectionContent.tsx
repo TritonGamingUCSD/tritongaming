@@ -801,6 +801,7 @@ function SeriesEditForm({ series: s, busy, onSave, onCancel }: { series: Series;
       <Field label="What's this meeting about? (optional)"><Textarea value={desc} onChange={(e) => setDesc(e.target.value)} maxLength={MAX_DESCRIPTION_LENGTH} rows={2} /></Field>
       <Field label="Meeting doc link"><Input value={doc} onChange={(e) => setDoc(e.target.value)} placeholder="https://docs.google.com/…" inputMode="url" /></Field>
       <div className={styles.audienceField}><span className={styles.audienceTitle}>Who is it for?</span><AudiencePicker value={audience} onChange={setAudience} /></div>
+      <SeriesExcused seriesId={s.id} />
       {end <= start && <p className={styles.checkWarn}>Pick an end time after the start.</p>}
       <div className={styles.formActions}>
         <Button type="button" size="sm" variant="ghost" onClick={onCancel}>Cancel</Button>
@@ -913,7 +914,6 @@ function AdvanceAbsences({ item, onChanged }: { item: Item; onChanged?: () => vo
   const qs = item.meeting_id ? `meeting_id=${item.meeting_id}` : `series_id=${item.series_id}&date=${item.date}`;
   const [data, setData] = useState<{ people: { id: string; name: string }[]; repeating?: boolean; absences: { user_id: string; name: string; reason: string | null; excused: boolean; every_week?: boolean; from_plan?: boolean }[] } | null>(null);
   const [who, setWho] = useState('');
-  const [everyWeek, setEveryWeek] = useState(false);
   const [reason, setReason] = useState('');
   const [excused, setExcused] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -929,10 +929,10 @@ function AdvanceAbsences({ item, onChanged }: { item: Item; onChanged?: () => vo
   async function add() {
     if (!who) return;
     setBusy(true); setError('');
-    const res = await fetch('/api/meetings/absence', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...ref, user_id: who, reason, excused, repeat: everyWeek && !!data?.repeating }) });
+    const res = await fetch('/api/meetings/absence', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...ref, user_id: who, reason, excused }) });
     setBusy(false);
     if (!res.ok) { setError((await res.json().catch(() => ({}))).error || 'Failed.'); return; }
-    setWho(''); setReason(''); setExcused(true); setEveryWeek(false);
+    setWho(''); setReason(''); setExcused(true);
     await load(); onChanged?.();
   }
   async function remove(userId: string, repeat = false) {
@@ -953,7 +953,6 @@ function AdvanceAbsences({ item, onChanged }: { item: Item; onChanged?: () => vo
               {data.absences.map((a) => (
                 <li key={a.user_id}>
                   <span className={styles.personName}>{a.name}{a.every_week && <Repeat size={12} aria-label="Every week" className={styles.everyWeek} />}<em> · {a.excused ? 'excused' : 'absent'}{a.every_week ? ' every week' : ''}{a.reason ? `: ${a.reason}` : ''}</em></span>
-                  {a.every_week && !a.from_plan && <Button size="sm" variant="ghost" onClick={() => remove(a.user_id, true)} title="Stop excusing them every week">Stop every week</Button>}
                   <IconButton kind="remove" label={a.every_week ? `Take ${a.name} off just this week` : `Take ${a.name} off the absent list`} onClick={() => remove(a.user_id)} />
                 </li>
               ))}
@@ -966,10 +965,66 @@ function AdvanceAbsences({ item, onChanged }: { item: Item; onChanged?: () => vo
             </Select>
             <Input value={reason} onChange={(e) => setReason(e.target.value)} maxLength={140} placeholder="Reason (optional)" aria-label="Reason" />
             <CheckTile label="Excused" checked={excused} onChange={() => setExcused((v) => !v)} />
-            {data.repeating && <CheckTile label="Every week" checked={everyWeek} onChange={() => setEveryWeek((v) => !v)} />}
             <Button size="sm" onClick={add} loading={busy} disabled={!who}>Mark away</Button>
           </div>
-          <p className={styles.faint}>Excused doesn’t count against attendance.</p>
+          <p className={styles.faint}>Excused doesn’t count against attendance.{data.repeating && ' To excuse someone every week, edit the repeating meeting under Repeating meetings.'}</p>
+        </>
+      )}
+    </section>
+  );
+}
+
+// Excused every week: someone who can't make this repeating meeting for as long as it repeats. Applies at once (not part of "Save changes").
+function SeriesExcused({ seriesId }: { seriesId: string }) {
+  const base = `/api/meetings/series/${seriesId}/excused`;
+  const [data, setData] = useState<{ people: { id: string; name: string }[]; excused: { user_id: string; name: string; reason: string | null; excused: boolean; from_plan: boolean }[] } | null>(null);
+  const [who, setWho] = useState('');
+  const [reason, setReason] = useState('');
+  const [excused, setExcused] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch(base, { cache: 'no-store' });
+      const json = await res.json();
+      if (res.ok) setData(json); else setError(json.error || 'Failed to load.');
+    } catch { setError('Network error.'); }
+  }, [base]);
+  useEffect(() => { void load(); }, [load]);
+  async function call(method: 'POST' | 'DELETE', body: Record<string, unknown>) {
+    setBusy(true); setError('');
+    const res = await fetch(base, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    setBusy(false);
+    if (!res.ok) { setError((await res.json().catch(() => ({}))).error || 'Failed.'); return false; }
+    await load(); return true;
+  }
+  const away = new Set((data?.excused ?? []).map((a) => a.user_id));
+  return (
+    <section className={styles.advanceAbsences} aria-label="Excused every week">
+      <h4 className={styles.audienceTitle}><UserX size={13} aria-hidden="true" /> Excused every week</h4>
+      {error && <Notice tone="error">{error}</Notice>}
+      {!data ? <p className={styles.faint}>Loading…</p> : (
+        <>
+          {data.excused.length > 0 && (
+            <ul className={styles.absentList}>
+              {data.excused.map((a) => (
+                <li key={a.user_id}>
+                  <span className={styles.personName}>{a.name}<Repeat size={12} aria-hidden="true" className={styles.everyWeek} /><em> · {a.excused ? 'excused' : 'absent'}{a.reason ? `: ${a.reason}` : ''}</em></span>
+                  {!a.from_plan && <IconButton kind="remove" label={`Stop excusing ${a.name} every week`} onClick={() => void call('DELETE', { user_id: a.user_id })} disabled={busy} />}
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className={styles.absentForm}>
+            <Select value={who} onChange={(e) => setWho(e.target.value)} aria-label="Who to excuse every week">
+              <option value="">Who can’t make it?</option>
+              {data.people.filter((p) => !away.has(p.id)).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </Select>
+            <Input value={reason} onChange={(e) => setReason(e.target.value)} maxLength={140} placeholder="Reason (optional)" aria-label="Reason" />
+            <CheckTile label="Excused" checked={excused} onChange={() => setExcused((v) => !v)} />
+            <Button type="button" size="sm" loading={busy} disabled={!who} onClick={async () => { if (await call('POST', { user_id: who, reason, excused })) { setWho(''); setReason(''); setExcused(true); } }}>Add</Button>
+          </div>
+          <p className={styles.faint}>Lasts as long as the meeting repeats. Weeks already opened keep their marks.</p>
         </>
       )}
     </section>
