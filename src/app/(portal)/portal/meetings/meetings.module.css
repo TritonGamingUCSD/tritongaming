@@ -4,7 +4,7 @@
 .sub { font-size: 0.9rem; color: rgba(242, 241, 240, 0.6); }
 .muted { font-size: 0.88rem; line-height: 1.5; color: rgba(242, 241, 240, 0.6); }
 
-.card { display: flex; flex-direction: column; gap: 0.9rem; padding: 1.4rem; border-radius: 1rem; background: rgba(255, 255, 255, 0.035); border: 1px solid rgba(255, 255, 255, 0.09); }
+.card { display: flex; flex-direction: column; gap: 0.9rem; padding: 1.2rem; border-radius: 1rem; background: rgba(255, 255, 255, 0.03); }
 .cardTitle { font-family: var(--font-futura-heavy); font-size: 1.15rem; color: var(--white); }
 .done { align-items: center; text-align: center; border-color: rgba(52, 211, 153, 0.35); background: rgba(52, 211, 153, 0.07); }
 .doneIcon { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: rgba(52, 211, 153, 0.18); color: #34d399; }
@@ -393,3 +393,8 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .lists > section { min-width: 0; }
 .lists .person, .lists .personCol { min-width: 0; }
 @media (max-width: 760px) { .lists { grid-template-columns: minmax(0, 1fr); } }
+
+/* a graphic key for the attendance dots */
+.dotKey { display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; }
+.dotKey span { display: inline-flex; align-items: center; gap: 0.35rem; }
+.dotKey i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }

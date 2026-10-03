@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeft, Bell, CalendarClock, Check, Link2, Pencil, Plus, RotateCcw, Star, Trash2, Users } from 'lucide-react';
+import { ArrowLeft, Bell, CalendarClock, Check, ChevronRight, Hourglass, Link2, Lock, MousePointerClick, Pencil, Plus, RotateCcw, Star, Trash2, UserX, Users } from 'lucide-react';
 import Notice from '@/components/ui/Notice';
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
@@ -51,12 +51,12 @@ export default function PlanningPanel({ userId }: { userId: string }) {
   return (
     <div className={m.stack}>
       <div className={styles.listHead}>
-        <p className={m.faint}>Not sure when to meet? Everyone marks the times they can make, then the host picks the best one.</p>
+        <p className={m.faint}>Everyone marks when they’re free. The host picks the time.</p>
         {canHost && <Button size="sm" onClick={() => setCreating(true)}><Plus size={14} aria-hidden="true" /> New plan</Button>}
       </div>
       {error && <Notice tone="error">{error}</Notice>}
       {plans.length === 0 ? (
-        <p className={m.faint}>{canHost ? 'No plans yet. Start one to find a time that works for everyone.' : 'Nothing to fill out right now.'}</p>
+        <p className={m.faint}>{canHost ? 'No plans yet.' : 'Nothing to fill out right now.'}</p>
       ) : (
         <ul className={styles.list}>
           {plans.map((p) => {
@@ -138,7 +138,7 @@ function PlanForm({ plan, onDone, onCancel }: { plan?: PlanView; onDone: () => v
       </div>
       <Field label="What’s it about? (optional)"><Textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={500} rows={2} /></Field>
       <div className={m.audienceField}><span className={m.audienceTitle}>Who should answer?</span><AudiencePicker value={audience} onChange={setAudience} /></div>
-      <p className={m.faint}>You fill in your own availability too. Times are Pacific. People who are free for the whole meeting stay expected; whoever can’t make the time you pick is marked absent (excused) automatically.</p>
+      <p className={m.faint}>Times are Pacific. Whoever can’t make the time you pick is marked absent (excused).</p>
       {error && <Notice tone="error">{error}</Notice>}
       <div className={m.formActions}><Button type="submit" loading={busy} disabled={audienceEmpty(audience) || rangeTooLong || toMin(we) - toMin(ws) < duration}>{plan ? 'Save changes' : 'Send to everyone'}</Button></div>
     </form>
@@ -254,7 +254,7 @@ function PlanDetail({ plan, userId, onBack, reload }: { plan: PlanView; userId: 
         <>
           <AvailabilityGrid plan={plan} value={mine} onChange={(next) => { dirty.current = true; setMine(next); }} />
           <p className={styles.saveLine} aria-live="polite">
-            {saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? <><Check size={13} aria-hidden="true" /> Saved. You can come back and change it until the host picks a time.</> : saveState === 'error' ? 'Not saved.' : live.responses[userId] ? 'Your answers are saved. Change them any time until a time is picked.' : 'Mark the times you can make. It saves as you go.'}
+            {saveState === 'saving' ? 'Saving…' : saveState === 'error' ? 'Not saved.' : saveState === 'saved' || live.responses[userId] ? <><Check size={13} aria-hidden="true" /> Saved</> : 'Marks save as you go.'}
           </p>
         </>
       )}
@@ -267,35 +267,50 @@ function PlanDetail({ plan, userId, onBack, reload }: { plan: PlanView; userId: 
           <div className={styles.resultsSide}>
           {suggestions.length > 0 && (
             <div className={styles.suggest}>
-              <h3><CalendarClock size={14} aria-hidden="true" /> Best times <small>point at one to see it on the grid</small></h3>
+              <h3><CalendarClock size={14} aria-hidden="true" /> Best times <small>tap one to pick it</small></h3>
+              <div className={styles.sugList}>
               {suggestions.map((s, n) => (
-                <div key={`${s.day}-${s.start}`} className={styles.sugRow} onMouseEnter={() => setPreview({ day: s.day, start: s.start })} onMouseLeave={() => setPreview(null)} onFocus={() => setPreview({ day: s.day, start: s.start })} onBlur={() => setPreview(null)}>
+                <div key={`${s.day}-${s.start}`} className={styles.sugRow} role="button" tabIndex={0} aria-label={`Choose ${slotLabel(plan, s.day, s.start)}`} onClick={() => setPick({ day: s.day, start: s.start })} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPick({ day: s.day, start: s.start }); } }} onMouseEnter={() => setPreview({ day: s.day, start: s.start })} onMouseLeave={() => setPreview(null)} onFocus={() => setPreview({ day: s.day, start: s.start })} onBlur={() => setPreview(null)}>
                   <div>
                     <strong><b className={`${styles.sugRank} ${s.top ? styles.sugTop : ''}`}>{s.top ? <Star size={11} aria-label="Best" /> : n + 1}</b>{slotLabel(plan, s.day, s.start)}</strong>
-                    <span>{s.available.length} available{s.ifNeeded.length ? `, ${s.ifNeeded.length} if needed` : ''}{s.unavailable.length ? ` · can’t: ${s.unavailable.map((p) => { const b = s.blocked.find((x) => x.person.id === p.id); return b ? `${p.name} (booked: ${b.titles.join(', ')})` : p.name; }).join(', ')}` : ' · everyone who answered can make it'}{s.noResponse.length ? ` · ${s.noResponse.length} haven’t answered` : ''}</span>
+                    <span className={styles.sugCounts}>
+                      <span><i className={styles.dotGreen} /> {s.available.length} available</span>
+                      {s.ifNeeded.length > 0 && <span><i className={styles.dotAmber} /> {s.ifNeeded.length} if needed</span>}
+                      {s.noResponse.length > 0 && <span><i className={styles.dotHollow} /> {s.noResponse.length} haven’t answered</span>}
+                    </span>
+                    <span>{s.unavailable.length ? `Can’t: ${s.unavailable.map((p) => { const b = s.blocked.find((x) => x.person.id === p.id); return b ? `${p.name} (booked: ${b.titles.join(', ')})` : p.name; }).join(', ')}` : 'Everyone who answered can make it'}</span>
                   </div>
-                  <Button size="sm" variant="secondary" className={styles.chooseBtn} onClick={() => setPick({ day: s.day, start: s.start })}>Choose</Button>
+                  <ChevronRight size={18} className={styles.sugGo} aria-hidden="true" />
                 </div>
               ))}
+              </div>
             </div>
           )}
-          {!pick && <p className={styles.hint}>Tap a time on the grid to see who can make it{plan.canManage && plan.status === 'open' ? ' and to schedule it' : ''}.</p>}
+          {!pick && <p className={styles.pickHint}><MousePointerClick size={16} aria-hidden="true" /> Tap a time to see who</p>}
           {pick && <WhoPanel plan={live} pick={pick} />}
           {pick && plan.canManage && plan.status === 'open' && (
             <div className={styles.confirm}>
-              <strong>Schedule {slotLabel(plan, pick.day, pick.start)}?</strong>
-              <p>{pickEval.length ? <>{pickEval.map((p) => p.name).join(', ')} {pickEval.length === 1 ? 'is' : 'are'} not available then, so will be marked absent (excused: “{AUTO_ABSENT_REASON}”).</> : 'Everyone who answered can make this time.'}{plan.people.filter((p) => !live.responses[p.id] && p.id !== plan.host_id).length ? ' People who haven’t answered stay expected.' : ''}</p>
-              {hostBusy && <p className={styles.warnText}>You marked yourself unavailable at this time.</p>}
+              <strong><CalendarClock size={16} aria-hidden="true" /> Schedule {slotLabel(plan, pick.day, pick.start)}?</strong>
+              {pickEval.length > 0
+                ? <p className={styles.confirmLine}><UserX size={15} aria-hidden="true" /> <span>Marked absent (excused): {pickEval.map((p) => p.name).join(', ')}</span></p>
+                : <p className={styles.confirmLine}><Check size={15} aria-hidden="true" /> <span>Everyone who answered can make it</span></p>}
+              {plan.people.filter((p) => !live.responses[p.id] && p.id !== plan.host_id).length > 0 && <p className={styles.confirmLine}><Hourglass size={15} aria-hidden="true" /> <span>Not answered yet: they stay expected</span></p>}
+              {hostBusy && <p className={`${styles.confirmLine} ${styles.warnText}`}><UserX size={15} aria-hidden="true" /> <span>You marked yourself unavailable then</span></p>}
               <div className={styles.confirmBtns}>
                 <Button loading={busy === 'decide'} onClick={() => act('decide', plan.kind === 'weekly' ? { weekday: Number(pick.day), start: pick.start } : { day: pick.day, start: pick.start })}>Schedule it</Button>
                 <Button variant="ghost" onClick={() => setPick(null)}>Cancel</Button>
               </div>
-              <p className={m.faint}>This makes it a {plan.kind === 'weekly' ? 'weekly meeting' : 'scheduled meeting'}, tells everyone, and locks answers.</p>
+              <p className={styles.confirmFine}><Lock size={12} aria-hidden="true" /> Tells everyone and locks answers</p>
             </div>
           )}
           <div className={styles.whoAnswered}>
-            <strong>Answered ({answered.length}):</strong> {answered.map((p) => p.name).join(', ') || 'nobody yet'}
-            {waiting.length > 0 && <><br /><strong>Waiting on ({waiting.length}):</strong> {waiting.map((p) => p.name).join(', ')}</>}
+            <span className={styles.answeredCount}><Check size={14} aria-hidden="true" /> {answered.length} of {answered.length + waiting.length} answered</span>
+            {waiting.length > 0 && (
+              <span className={styles.waitingRow}>
+                <span className={styles.waitingLabel}><Hourglass size={13} aria-hidden="true" /> Waiting on</span>
+                {waiting.map((p) => <span key={p.id} className={styles.chip2}>{p.name}</span>)}
+              </span>
+            )}
           </div>
           </div>
         </div>

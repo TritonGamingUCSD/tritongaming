@@ -62,19 +62,6 @@
 .cellAvail { background: rgba(52, 211, 153, 0.7) !important; }
 .cellMaybe { background: repeating-linear-gradient(45deg, rgba(251, 191, 36, 0.75), rgba(251, 191, 36, 0.75) 5px, rgba(251, 191, 36, 0.5) 5px, rgba(251, 191, 36, 0.5) 10px) !important; }
 
-/* phone: a day at a time */
-.dayChips { display: flex; gap: 0.35rem; overflow-x: auto; padding-bottom: 0.2rem; scrollbar-width: none; }
-.dayChips::-webkit-scrollbar { display: none; }
-.dayChip { position: relative; flex: none; padding: 0.5rem 0.8rem; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.14); background: rgba(255, 255, 255, 0.03); color: rgba(242, 241, 240, 0.8); font: inherit; font-size: 0.85rem; cursor: pointer; white-space: nowrap; }
-.dayChipOn { background: var(--yellow); border-color: var(--yellow); color: #0a0f1e; font-weight: 600; }
-.dayDot { position: absolute; top: 5px; right: 6px; width: 6px; height: 6px; border-radius: 50%; background: #34d399; }
-.quick { display: flex; gap: 0.35rem; flex-wrap: wrap; }
-.mRows { display: flex; flex-direction: column; border-radius: 0.9rem; border: 1px solid rgba(255, 255, 255, 0.1); overflow: hidden; }
-.mRow { display: flex; align-items: center; justify-content: space-between; min-height: 46px; padding: 0 0.9rem; border: 0; border-top: 1px solid rgba(255, 255, 255, 0.06); background: rgba(255, 255, 255, 0.02); color: var(--white); font: inherit; font-size: 0.92rem; cursor: pointer; text-align: left; touch-action: manipulation; }
-.mRow:first-child { border-top: 0; }
-.mTime { font-variant-numeric: tabular-nums; }
-.mState { font-size: 0.78rem; font-weight: 600; color: #0a0f1e; }
-.mRows .cellAvail .mTime, .mRows .cellMaybe .mTime { color: #0a0f1e; font-weight: 600; }
 
 /* results */
 .heat { height: 24px; border: 0; border-left: 1px solid rgba(255, 255, 255, 0.07); border-top: 1px solid rgba(255, 255, 255, 0.07); background: transparent; color: #04140e; font-size: 0.66rem; font-weight: 700; cursor: pointer; padding: 0; }
@@ -101,8 +88,6 @@
 /* times already on my Triton Gaming calendar */
 .cellBusy { cursor: not-allowed; background: repeating-linear-gradient(135deg, rgba(148, 163, 184, 0.28), rgba(148, 163, 184, 0.28) 4px, rgba(148, 163, 184, 0.08) 4px, rgba(148, 163, 184, 0.08) 8px) !important; }
 .cellBusy:hover { background: repeating-linear-gradient(135deg, rgba(148, 163, 184, 0.28), rgba(148, 163, 184, 0.28) 4px, rgba(148, 163, 184, 0.08) 4px, rgba(148, 163, 184, 0.08) 8px) !important; }
-.mBusy { cursor: default; background: rgba(148, 163, 184, 0.14); color: rgba(242, 241, 240, 0.55); }
-.mBusyText { font-size: 0.78rem; color: rgba(242, 241, 240, 0.65); text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%; }
 
 /* why a time is blocked, and the fill / clear controls */
 .busyNote { display: flex; flex-direction: column; gap: 0.25rem; padding: 0.7rem 0.9rem; border-radius: 0.9rem; border: 1px solid rgba(148, 163, 184, 0.45); background: rgba(148, 163, 184, 0.1); font-size: 0.82rem; color: rgba(242, 241, 240, 0.85); }
@@ -158,16 +143,11 @@
 .busyNote { border-left: 3px solid #94a3b8; }
 
 /* Same soft pill and keyboard ring as the rest of the meeting controls. */
-.dayChip, .colAll, .viewTab, .modeBtn, .kindBtn { transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s; }
-.dayChip:hover:not(.dayChipOn), .colAll:hover:not(:disabled) { background: rgba(255, 199, 44, 0.1); border-color: rgba(255, 199, 44, 0.45); color: var(--yellow); }
 .modeBtn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.07); }
 .kindBtn:hover { border-color: rgba(255, 199, 44, 0.45); }
 .viewTab:hover { color: var(--white); }
-.dayChip:active, .colAll:active, .modeBtn:active { transform: translateY(1px); }
-.dayChip:focus-visible, .colAll:focus-visible, .viewTab:focus-visible, .modeBtn:focus-visible, .kindBtn:focus-visible, .planCard:focus-visible, .linkBtn:focus-visible { outline: 2px solid rgba(255, 199, 44, 0.7); outline-offset: 2px; }
 .colAll:disabled { opacity: 0.4; cursor: default; }
 
-.dayChip, .colAll, .quick button, .clearAll { border-radius: 0.6rem; }
 .modeBtn, .kindBtn { border-radius: 0.6rem; }
 .clearAll { border-color: rgba(248, 113, 113, 0.38); background: rgba(220, 38, 38, 0.1); color: #f87171; }
 
@@ -213,4 +193,121 @@
 .cell { position: relative; }
 .cellSoft::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(135deg, rgba(45, 212, 191, 0.34), rgba(45, 212, 191, 0.34) 3px, transparent 3px, transparent 7px); box-shadow: inset 2px 0 0 rgba(45, 212, 191, 0.85); }
 .softLabel { position: relative; z-index: 1; display: block; padding: 0 0.3rem; font-size: 0.64rem; line-height: 24px; color: #99f6e4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 0 3px rgba(0, 0, 0, 0.8); pointer-events: none; }
-.mSoft { display: block; font-size: 0.7rem; color: #5eead4; }
+
+/* One grid for every screen. Columns are narrower on a phone (swipe sideways to go through the days) and rows are taller to touch. */
+.gridTable { --timeW: 64px; --colW: 96px; --rowH: 24px; }
+.gridWrap { scroll-snap-type: x proximity; overscroll-behavior-x: contain; }
+.colHead { scroll-snap-align: start; scroll-margin-left: var(--timeW); }
+.cell, .heat, .timeLbl { height: var(--rowH); }
+.busyLabel, .softLabel { line-height: var(--rowH); }
+@media (max-width: 719px) {
+  .gridTable { --timeW: 62px; --colW: 84px; --rowH: 34px; }
+  .gridWrap { width: 100%; }
+  .timeLbl { font-size: 0.66rem; white-space: nowrap; padding-right: 0.3rem; transform: translateY(-0.55em); }
+  .heat { font-size: 0.8rem; }
+  .colAll { font-size: 0.62rem; }
+}
+.phoneTop .modeBar { position: static; padding: 0; background: none; }
+/* Press-and-hold painting: the grid glows while a finger is painting, and the page stops scrolling under it. */
+.painting { box-shadow: 0 0 0 2px var(--yellow); }
+.gridTable { -webkit-touch-callout: none; }
+
+/* Group results: a cell shows one number (people free); an amber corner marks "some could, if needed". */
+.heat { display: grid; place-items: center; }
+.heatNum { font-size: 0.74rem; }
+.legend { display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.5rem; font-size: 0.78rem; color: rgba(242, 241, 240, 0.65); }
+.legendItem { display: flex; align-items: center; gap: 0.5rem; }
+.legendBar { flex: none; width: 54px; height: 10px; border-radius: 3px; background: linear-gradient(90deg, rgba(52, 211, 153, 0.15), rgba(52, 211, 153, 0.9)); }
+.sugCounts { display: flex; flex-wrap: wrap; gap: 0.2rem 0.8rem; color: rgba(242, 241, 240, 0.85) !important; }
+.sugCounts > span { display: inline-flex; align-items: center; gap: 0.3rem; }
+
+/* Phone gestures: cells hand sideways swipes to the grid's own scroll and keep up/down drags for painting; the time column and headers scroll the page. */
+.gridTable { touch-action: pan-x pan-y; }
+.gridTable .cell { touch-action: pan-x; }
+.gridTable .cellBusy { touch-action: pan-x pan-y; }
+.gridTable .timeLbl { touch-action: pan-y; }
+
+/* The time labels sit half a line above their row, which left a strip under the last one where scrolled cells showed through (and at the rounded corner).
+   A filler under the sticky time column closes it, with a little room below the last row. */
+.gridTable::after { content: ''; grid-column: 1; height: 0.7rem; position: sticky; left: 0; background: #0a0f1e; }
+/* Scrolled-under cells (and their amber corners) stay behind the sticky time column. */
+.timeLbl, .corner, .gridTable::after { z-index: 3; }
+
+/* Group results: one dot per person (solid = available, ring = if needed), and outlines for times that fit the whole group. */
+.fitAll::before { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1; border-left: 2px solid var(--fit); border-right: 2px solid var(--fit); border-style: solid; border-width: 0 2px; border-color: var(--fit); }
+.fitAll { --fit: #a7f3d0; }
+.fitAll.runTop::before { border-top-width: 2px; }
+.fitAll.runBottom::before { border-bottom-width: 2px; }
+.legendBox { flex: none; width: 18px; height: 14px; border-radius: 3px; background: rgba(52, 211, 153, 0.35); box-sizing: border-box; border: 2px solid; }
+.legendAll { border-color: #a7f3d0; }
+
+/* Group results: who can make a time, as a split bar and a row per group with icons. */
+.who { display: flex; flex-direction: column; gap: 0.6rem; }
+.whoTitle { display: flex; align-items: center; gap: 0.4rem; font-size: 0.95rem; color: var(--white); }
+.whoBar { display: flex; gap: 2px; height: 24px; }
+.whoBar > span { display: grid; place-items: center; min-width: 24px; border-radius: 5px; font-size: 0.72rem; font-weight: 700; }
+.whoBar > span:first-child { border-top-left-radius: 0.6rem; border-bottom-left-radius: 0.6rem; }
+.whoBar > span:last-child { border-top-right-radius: 0.6rem; border-bottom-right-radius: 0.6rem; }
+.who .gYes { --g: #34d399; } .who .gMaybe { --g: #fbbf24; } .who .gNo { --g: #94a3b8; } .who .gWait { --g: #9ca3af; }
+.whoBar .gYes { background: #34d399; color: #04140e; }
+.whoBar .gMaybe { background: repeating-linear-gradient(45deg, #fbbf24, #fbbf24 5px, #d99e0b 5px, #d99e0b 10px); color: #1c1403; }
+.whoBar .gNo { background: #475569; color: #e2e8f0; }
+.whoBar .gWait { background: transparent; box-shadow: inset 0 0 0 1.5px #9ca3af; color: #d1d5db; }
+.whoRow { display: flex; flex-direction: column; gap: 0.3rem; }
+.whoHead { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--g); }
+.whoHead b { font-weight: 700; }
+.whoPeople { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.person { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.15rem 0.6rem 0.15rem 0.2rem; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--g) 55%, transparent); background: color-mix(in srgb, var(--g) 12%, transparent); font-size: 0.82rem; color: var(--white); }
+.person i { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--g); color: #0a0f1e; font-style: normal; font-size: 0.68rem; font-weight: 700; }
+.person em { display: inline-flex; align-items: center; gap: 0.2rem; font-style: normal; font-size: 0.7rem; color: rgba(242, 241, 240, 0.6); }
+.whoRow.gWait .person { border-style: dashed; background: none; }
+.who p { display: none; }
+
+/* Hints and the legend as short icon lines. */
+.pickHint { display: flex; align-items: center; gap: 0.4rem; margin: 0; font-size: 0.85rem; color: rgba(242, 241, 240, 0.6); }
+.gestures { display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; margin: 0.4rem 0 0; font-size: 0.78rem; color: rgba(242, 241, 240, 0.7); }
+.gestures span { display: inline-flex; align-items: center; gap: 0.3rem; }
+.legend { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 0.3rem 1rem; }
+.legendItem { white-space: nowrap; }
+.confirm strong { display: flex; align-items: center; gap: 0.4rem; }
+.confirmLine { display: flex; align-items: flex-start; gap: 0.45rem; margin: 0; font-size: 0.85rem; color: rgba(242, 241, 240, 0.85); }
+.confirmLine svg { flex: none; margin-top: 0.12rem; }
+.confirmFine { display: flex; align-items: center; gap: 0.35rem; margin: 0; font-size: 0.74rem; color: rgba(242, 241, 240, 0.5); }
+.whoAnswered { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.6rem; }
+.answeredCount { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.82rem; color: rgba(242, 241, 240, 0.8); }
+.waitingChips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.chip2 { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1rem 0.55rem; border-radius: 999px; border: 1px dashed rgba(156, 163, 175, 0.7); font-size: 0.76rem; color: rgba(242, 241, 240, 0.8); }
+
+/* Best times: the whole row is the button. */
+.sugRow { cursor: pointer; }
+.sugGo { flex: none; color: rgba(242, 241, 240, 0.45); transition: transform 0.15s, color 0.15s; }
+.sugRow:hover .sugGo, .sugRow:focus-visible .sugGo { color: #f0abfc; transform: translateX(3px); }
+.sugRow:focus-visible { outline: 2px solid #f0abfc; outline-offset: -2px; }
+
+/* Less boxing: panels on the results page are plain content with spacing and hairlines, and nothing there is clipped. Boxes stay only where they
+   carry the design (the plan cards, the schedule confirmation). */
+.who, .suggest, .busyNote { border: 0; background: none; padding: 0; border-radius: 0; }
+.who { border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 0.8rem; }
+.busyNote { border-left: 3px solid #94a3b8; padding-left: 0.7rem; }
+.suggest { max-height: none; overflow: visible; }
+.suggest h3 { margin: 0 0 0.2rem; }
+.suggest .sugList { max-height: 17rem; overflow-y: auto; overscroll-behavior: contain; margin: 0 -0.5rem; padding: 0 0.5rem; }
+.sugRow { margin: 0; padding: 0.55rem 0.5rem; border-radius: 0.6rem; border-top: 1px solid rgba(255, 255, 255, 0.07); }
+.sugRow:first-of-type { border-top: 0; }
+.sugRow:hover, .sugRow:focus-within { border-top-color: transparent; }
+.confirm { background: none; border-radius: 0.8rem; }
+@media (min-width: 1100px) {
+  .resultsLayout { align-items: start; }
+  .resultsSide { position: sticky; top: 0.75rem; contain: none; align-self: start; min-height: 0; overflow: visible; }
+  .resultsSide .suggest { flex: none; min-height: 0; }
+}
+
+/* "N of M answered", then clearly who is still waiting. */
+.whoAnswered { flex-direction: column; align-items: flex-start; gap: 0.4rem; }
+.answeredCount { color: #6ee7b7; }
+.waitingRow { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.4rem; }
+.waitingLabel { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; color: #fbbf24; }
+.chip2 { border-color: rgba(251, 191, 36, 0.55); }
+
+.legendStripe { background: repeating-linear-gradient(135deg, rgba(251, 191, 36, 0.75) 0 3px, rgba(52, 211, 153, 0.35) 3px 6px); border: 0; }
+.heatNum { font-size: 0.8rem; font-weight: 700; text-shadow: 0 0 2px rgba(0, 0, 0, 0.25); }

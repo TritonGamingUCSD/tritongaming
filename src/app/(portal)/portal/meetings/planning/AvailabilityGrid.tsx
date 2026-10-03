@@ -1,5 +1,6 @@
 'use client';
 
+import { MoveHorizontal, MoveVertical, Pointer } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { useEffect, useRef, useState } from 'react';
 import { confirmHold } from '@/lib/confirmHold';
@@ -8,7 +9,7 @@ import styles from './planning.module.css';
 
 type Mode = 0 | 1 | 2;
 
-// A matchMedia hook: the phone gets one day at a time, bigger rows.
+// A matchMedia hook: on a phone the mode picker sits above the grid, and touch has its own press-and-hold painting.
 function useNarrow() {
   const [narrow, setNarrow] = useState(false);
   useEffect(() => {
@@ -27,11 +28,11 @@ const MODES: { id: Mode; label: string; hint: string; cls: string }[] = [
   { id: 0, label: 'Unavailable', hint: 'Clear it', cls: 'mNo' },
 ];
 
-// Mark when you are free: tap or drag cells (a day at a time on a phone). Anything left blank means unavailable.
+// Mark when you are free: click or drag cells with a mouse; on a phone tap a cell, drag up or down a day to paint a run of times, and swipe sideways
+// to move through the days (the same grid as on a desktop). Anything left blank means unavailable.
 export default function AvailabilityGrid({ plan, value, onChange, disabled }: { plan: PlanView; value: PlanSlots; onChange: (next: PlanSlots) => void; disabled?: boolean }) {
   const narrow = useNarrow();
   const [mode, setMode] = useState<Mode>(1);
-  const [dayIdx, setDayIdx] = useState(0);
   const starts = slotStarts(plan.window_start, plan.window_end);
   const days = plan.days;
   const drag = useRef<{ day: string; value: Mode } | null>(null);
@@ -39,7 +40,6 @@ export default function AvailabilityGrid({ plan, value, onChange, disabled }: { 
   const [hover, setHover] = useState<{ day: string; t: string; x: number; y: number } | null>(null);
   const valueRef = useRef(value);
   valueRef.current = value;
-  useEffect(() => { if (dayIdx >= days.length) setDayIdx(0); }, [days.length, dayIdx]);
   useEffect(() => {
     const up = () => { drag.current = null; };
     window.addEventListener('pointerup', up);
@@ -57,6 +57,72 @@ export default function AvailabilityGrid({ plan, value, onChange, disabled }: { 
   const softTitle = (day: string, t: string) => softBy.get(day)?.get(t) ?? '';
   const isSoft = (day: string, t: string) => !isBusy(day, t) && softBy.get(day)?.has(t) === true;
   const hasAnything = Object.keys(value).length > 0;
+
+  // Touch, with no modes: the cells let the browser handle sideways swipes only (CSS touch-action: pan-x), so a swipe sideways scrolls through the days,
+  // and a drag that starts going up or down paints a run of times straight away. A tap marks one cell. To scroll the page, touch the time column (or
+  // anywhere outside the cells). The handlers are native because stopping a scroll mid-paint needs a non-passive touchmove.
+  const tableRef = useRef<HTMLDivElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [painting, setPainting] = useState(false);
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
+  const api = useRef({ read: (_d: string, _t: string): Mode => 0, paint: (_d: string, _t: string, _v: Mode) => {}, off: false });
+  useEffect(() => {
+    const el = tableRef.current;
+    if (!el) return;
+    let edge: ReturnType<typeof setInterval> | undefined;
+    let start: { x: number; y: number; d: string; t: string } | null = null;
+    let active = false;
+    let value: Mode = 1;
+    let last = '';
+    let lastX = 0;
+    let lastY = 0;
+    const cellAt = (x: number, y: number) => { const n = (document.elementFromPoint(x, y) as HTMLElement | null)?.closest('[data-cell]') as HTMLElement | null; return n ? { d: n.dataset.d as string, t: n.dataset.t as string } : null; };
+    const stop = () => { clearInterval(edge); edge = undefined; if (active) { active = false; setPainting(false); } start = null; last = ''; };
+    const onStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1 || api.current.off) { stop(); return; }
+      const t = e.touches[0];
+      const c = cellAt(t.clientX, t.clientY);
+      start = c ? { x: t.clientX, y: t.clientY, ...c } : null;
+      lastX = t.clientX; lastY = t.clientY;
+    };
+    const onMove = (e: TouchEvent) => {
+      const t = e.touches[0];
+      lastX = t.clientX; lastY = t.clientY;
+      if (!active) {
+        if (!start) return;
+        const dx = t.clientX - start.x, dy = t.clientY - start.y;
+        if (Math.abs(dy) < 8 || Math.abs(dy) < Math.abs(dx)) return;   // not going up or down (yet): a sideways swipe belongs to the grid's own scroll
+        active = true; setPainting(true);
+        value = api.current.read(start.d, start.t) === modeRef.current ? 0 : modeRef.current;
+        api.current.paint(start.d, start.t, value);
+        last = `${start.d}|${start.t}`;
+        try { navigator.vibrate?.(8); } catch { /* not every phone can */ }
+        // A finger held near an edge keeps things moving, so a long run can be painted past the visible part.
+        edge = setInterval(() => {
+          const w = wrapRef.current;
+          if (w) { const r = w.getBoundingClientRect(); if (lastX > r.right - 36) w.scrollLeft += 8; else if (lastX < r.left + 100) w.scrollLeft -= 8; }
+          if (lastY < 90) window.scrollBy(0, -10); else if (lastY > window.innerHeight - 150) window.scrollBy(0, 10);
+        }, 16);
+      }
+      if (e.cancelable) e.preventDefault();
+      const c = cellAt(t.clientX, t.clientY);
+      if (c && `${c.d}|${c.t}` !== last) { last = `${c.d}|${c.t}`; api.current.paint(c.d, c.t, value); }
+    };
+    const onEnd = (e: TouchEvent) => {
+      if (active) { if (e.cancelable) e.preventDefault(); }
+      else if (start && Math.hypot(lastX - start.x, lastY - start.y) < 10) {   // a tap: toggle that one cell
+        api.current.paint(start.d, start.t, api.current.read(start.d, start.t) === modeRef.current ? 0 : modeRef.current);
+        if (e.cancelable) e.preventDefault();
+      }
+      stop();
+    };
+    el.addEventListener('touchstart', onStart, { passive: true });
+    el.addEventListener('touchmove', onMove, { passive: false });
+    el.addEventListener('touchend', onEnd, { passive: false });
+    el.addEventListener('touchcancel', stop, { passive: true });
+    return () => { stop(); el.removeEventListener('touchstart', onStart); el.removeEventListener('touchmove', onMove); el.removeEventListener('touchend', onEnd); el.removeEventListener('touchcancel', stop); };
+  }, []);
   async function clearEverything() {
     if (await confirmHold({ title: 'Clear everything?', message: 'This clears every time you marked on this plan, so you’d be unavailable for all of it (times already blocked by your calendar stay blocked).', confirmLabel: 'Hold to clear everything' })) onChange({});
   }
@@ -68,8 +134,10 @@ export default function AvailabilityGrid({ plan, value, onChange, disabled }: { 
       if (v === 0) delete row[t]; else row[t] = v as SlotValue;
       if (Object.keys(row).length) next[day] = row; else delete next[day];
     }
+    valueRef.current = next;   // so two paints in the same instant (a fast drag) build on each other
     onChange(next);
   }
+  api.current = { read: (d, t) => get(d, t), paint: (d, t, v) => setCells([{ day: d, t }], v), off: !!disabled };
   const dayFull = (day: string) => { const open = starts.filter((t) => !isBusy(day, t)); return open.length > 0 && open.every((t) => get(day, t) === mode); };
   const fillDay = (day: string, v: Mode, from = 0, to = 24 * 60) => setCells(starts.filter((t) => toMin(t) >= from && toMin(t) < to).map((t) => ({ day, t })), v);
 
@@ -100,59 +168,17 @@ export default function AvailabilityGrid({ plan, value, onChange, disabled }: { 
     </div>
   );
 
-  if (narrow) {
-    const day = days[Math.min(dayIdx, days.length - 1)];
-    return (
-      <div className={styles.gridBlock}>
-        {modeBar}
-        <div className={styles.dayChips} role="tablist" aria-label="Day">
-          {days.map((d, i) => {
-            const n = Object.keys(value[d] ?? {}).length;
-            return (
-              <button key={d} type="button" role="tab" aria-selected={i === dayIdx} className={`${styles.dayChip} ${i === dayIdx ? styles.dayChipOn : ''}`} onClick={() => setDayIdx(i)}>
-                {head(d)}{n > 0 && <span className={styles.dayDot} aria-label={`${n} slots marked`} />}
-              </button>
-            );
-          })}
-        </div>
-        <div className={styles.quick}>
-          <Button size="sm" variant="secondary" onClick={() => fillDay(day, mode, 0, 12 * 60)} disabled={disabled}>Morning</Button>
-          <Button size="sm" variant="secondary" onClick={() => fillDay(day, mode, 12 * 60, 17 * 60)} disabled={disabled}>Afternoon</Button>
-          <Button size="sm" variant="secondary" onClick={() => fillDay(day, mode, 17 * 60)} disabled={disabled}>Evening</Button>
-          <Button size="sm" variant="secondary" onClick={() => fillDay(day, mode)} disabled={disabled}>Whole day</Button>
-          <Button size="sm" variant="danger" onClick={() => fillDay(day, 0)} disabled={disabled}>Clear day</Button>
-          <Button size="sm" variant="danger" onClick={clearEverything} disabled={disabled || !hasAnything}>Clear everything</Button>
-        </div>
-        {plan.busy.length > 0 && <p className={styles.hint}>Greyed times are already on your Triton Gaming calendar, so you are unavailable then.</p>}
-        {(plan.soft ?? []).length > 0 && <p className={styles.hint}>Teal striped times are on your Google Calendar. Only you see them, and they don’t block you: you still decide.</p>}
-        <div className={styles.mRows}>
-          {starts.map((t) => {
-            const v = get(day, t);
-            const busy = isBusy(day, t);
-            if (busy) return (
-              <div key={t} className={`${styles.mRow} ${styles.mBusy}`} aria-label={`${head(day)} ${clockLabel(t)}: busy, ${busyTitle(day, t)}`}>
-                <span className={styles.mTime}>{clockLabel(t)}</span>
-                <span className={styles.mBusyText}>Blocked · {busyTitle(day, t)}</span>
-              </div>
-            );
-            return (
-              <button key={t} type="button" disabled={disabled} className={`${styles.mRow} ${v === 1 ? styles.cellAvail : v === 2 ? styles.cellMaybe : ''}`} onClick={() => setCells([{ day, t }], v === mode ? 0 : mode)} aria-pressed={v !== 0} aria-label={`${head(day)} ${clockLabel(t)}: ${v === 1 ? 'available' : v === 2 ? 'if needed' : 'unavailable'}`}>
-                <span className={styles.mTime}>{clockLabel(t)}{isSoft(day, t) && <span className={styles.mSoft}>Google: {softTitle(day, t)}</span>}</span>
-                <span className={styles.mState}>{v === 1 ? 'Available' : v === 2 ? 'If needed' : ''}</span>
-              </button>
-            );
-          })}
-        </div>
-        {blockedPanel}
-      </div>
-    );
-  }
-
   return (
     <div className={styles.availLayout} data-fill-width>
       <div className={styles.availMain}>
-      <div className={styles.gridWrap}>
-        <div className={styles.gridTable} style={{ gridTemplateColumns: `64px repeat(${days.length}, 96px)` }} onPointerLeave={() => { drag.current = null; setHover(null); }}>
+      {narrow && (
+        <div className={styles.phoneTop}>
+          {modeBar}
+          <p className={styles.gestures}><span><Pointer size={14} aria-hidden="true" /> Tap</span><span><MoveVertical size={14} aria-hidden="true" /> Drag to paint</span><span><MoveHorizontal size={14} aria-hidden="true" /> Swipe for days</span></p>
+        </div>
+      )}
+      <div className={`${styles.gridWrap} ${painting ? styles.painting : ''}`} ref={wrapRef}>
+        <div className={`${styles.gridTable}`} ref={tableRef} onContextMenu={(e) => e.preventDefault()} style={{ gridTemplateColumns: `var(--timeW) repeat(${days.length}, var(--colW))` }} onPointerLeave={() => { drag.current = null; setHover(null); }}>
           <div className={styles.corner} />
           {days.map((d) => (
             <div key={d} className={`${styles.colHead} ${hover?.day === d ? styles.hot : ''}`}>
@@ -175,6 +201,9 @@ export default function AvailabilityGrid({ plan, value, onChange, disabled }: { 
                     key={d}
                     className={`${cellClass(v)} ${t.endsWith(':00') ? '' : styles.cellHalf} ${isSoft(d, t) ? styles.cellSoft : ''}`}
                     role="button"
+                    data-cell=""
+                    data-d={d}
+                    data-t={t}
                     tabIndex={disabled ? -1 : 0}
                     aria-label={`${head(d)} ${clockLabel(t)}: ${v === 1 ? 'available' : v === 2 ? 'if needed' : 'unavailable'}${isSoft(d, t) ? `, on your Google Calendar: ${softTitle(d, t)}` : ''}`}
                     onPointerDown={(e) => {
@@ -185,7 +214,6 @@ export default function AvailabilityGrid({ plan, value, onChange, disabled }: { 
                     }}
                     onPointerEnter={(e) => { if (!disabled && drag.current && e.buttons === 1) setCells([{ day: d, t }], drag.current.value); }}
                     onPointerMove={(e) => { if (e.pointerType !== 'touch') setHover({ day: d, t, x: e.clientX, y: e.clientY }); }}
-                    onClick={(e) => { if (!disabled && (e as unknown as PointerEvent).pointerType === 'touch') setCells([{ day: d, t }], v === mode ? 0 : mode); }}
                     onKeyDown={(e) => { if (!disabled && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); setCells([{ day: d, t }], v === mode ? 0 : mode); } }}
                   >{isSoft(d, t) && !isSoft(d, toHhmm(toMin(t) - 30)) && <span className={styles.softLabel}>{softTitle(d, t)}</span>}</div>
                 );
@@ -203,8 +231,8 @@ export default function AvailabilityGrid({ plan, value, onChange, disabled }: { 
         </div>
       )}
       <aside className={styles.availSide}>
-        {modeBar}
-        <p className={styles.hint}>Click or drag on the grid to mark times. Anything you leave blank counts as unavailable. Use <b>fill</b> and <b>clear</b> above a day for the whole day.</p>
+        {!narrow && modeBar}
+        {!narrow && <p className={styles.hint}>Click or drag to mark times. Blank = unavailable.</p>}
         {blockedPanel}
         <Button size="sm" variant="danger" onClick={clearEverything} disabled={disabled || !hasAnything}>Clear everything</Button>
       </aside>

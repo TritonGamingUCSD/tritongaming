@@ -100,7 +100,7 @@ export default function MeetingsSectionContent({ canHost, canManageAll, userId, 
     <div className={styles.page} data-wide>
       <div className={styles.header}>
         <h1 className={styles.title}>Meetings</h1>
-        <p className={styles.sub}>{canAttend ? 'Check in to meetings in person with the code shown in the room.' : 'Attendance results for every meeting.'}</p>
+        <p className={styles.sub}>{canAttend ? 'Check in with the code in the room.' : 'Attendance for every meeting.'}</p>
       </div>
       <SectionTabs<Tab>
         label="Meetings"
@@ -190,7 +190,7 @@ function CheckInPanel() {
           <h2 className={styles.cardTitle}>You&apos;re checked in</h2>
           <p className={styles.muted}>{m.title} · {time(m.checked_in_at!)}{m.location ? ` · ${m.location}` : ''}</p>
           {m.description && <p className={styles.descText}>{m.description}</p>}
-          {m.doc_url ? <DocButton url={m.doc_url} /> : <p className={styles.faint}>No meeting doc has been linked yet.</p>}
+          {m.doc_url ? <DocButton url={m.doc_url} /> : <p className={styles.faint}>No doc linked yet</p>}
           <FunBox meeting={m} onSaved={load} />
         </div>
       ))}
@@ -199,7 +199,7 @@ function CheckInPanel() {
         <div className={styles.card}>
           <h2 className={styles.cardTitle}>Enter the code on the screen</h2>
           <p className={styles.muted}>
-            {openToEnter.map((m) => m.title).join(' · ')} — the 6-digit code changes every 30 seconds.
+            {openToEnter.map((m) => m.title).join(' · ')} · the code changes every 30 s
           </p>
           {openToEnter.filter((m) => m.description).map((m) => <p key={m.id} className={styles.descText}>{m.description}</p>)}
           <input
@@ -227,7 +227,7 @@ function CheckInPanel() {
       {early.length > 0 && openToEnter.length === 0 && (
         <div className={styles.card}>
           <h2 className={styles.cardTitle}>Check-in opens at {time(early[0].opens_at)}</h2>
-          <p className={styles.muted}>{early[0].title} starts at {time(early[0].starts_at)}. You can check in from 10 minutes before. This page updates on its own.</p>
+          <p className={styles.muted}>{early[0].title} · starts {time(early[0].starts_at)}</p>
         </div>
       )}
 
@@ -236,7 +236,7 @@ function CheckInPanel() {
           <h2 className={styles.cardTitle}>Check-in isn&apos;t open</h2>
           <p className={styles.muted}>
             {data.meetings.length > 0
-              ? 'An exec opens check-in when the meeting starts. This page updates on its own, so keep it open.'
+              ? 'Opens when the meeting starts. This page updates itself.'
               : 'There’s no meeting today.'}
           </p>
         </div>
@@ -337,7 +337,7 @@ function UpcomingPanel() {
   }, []);
   if (error) return <Notice tone="error">{error}</Notice>;
   if (!items) return <LoadingSpinner size={28} label="Loading upcoming meetings…" theme="dark" />;
-  if (items.length === 0) return <div className={styles.card}><p className={styles.muted}>Nothing scheduled for you yet. Meetings you’re invited to show up here.</p></div>;
+  if (items.length === 0) return <div className={styles.card}><p className={styles.muted}>Nothing scheduled for you yet.</p></div>;
   return (
     <ul className={styles.stack}>
       {(showAll ? items : items.slice(0, 4)).map((m, i, shown) => (
@@ -387,7 +387,7 @@ function MyHistoryPanel() {
 
   if (error) return <Notice tone="error">{error}</Notice>;
   if (!data) return <LoadingSpinner size={28} label="Loading your history…" theme="dark" />;
-  if (data.meetings.length === 0) return <div className={styles.card}><p className={styles.muted}>No meetings yet. Your check-ins will show up here.</p></div>;
+  if (data.meetings.length === 0) return <div className={styles.card}><p className={styles.muted}>No meetings yet.</p></div>;
 
   const pct = data.total ? Math.round((data.attended / data.total) * 100) : 0;
   return (
@@ -544,7 +544,7 @@ export function AudiencePicker({ value, onChange }: { value: Aud; onChange: (v: 
               </button>
             ))}
           </div>
-        ) : <p className={styles.faint}>{groups ? 'No saved groups yet. Make some in the Groups tab.' : 'Loading groups…'}</p>}
+        ) : <p className={styles.faint}>{groups ? 'No groups yet' : 'Loading groups…'}</p>}
       </div>
 
       <div className={styles.audSection}>
@@ -555,7 +555,7 @@ export function AudiencePicker({ value, onChange }: { value: Aud; onChange: (v: 
         {showPeople && <PeoplePicker team={team} value={value.invitees} onChange={(ids) => onChange({ ...value, invitees: ids })} covered={covered} />}
       </div>
 
-      {audienceEmpty(value) ? <p className={styles.checkWarn}>Pick at least one role, group or person.</p> : <p className={styles.faint}>Anyone matching any of these is invited.</p>}
+      {audienceEmpty(value) ? <p className={styles.checkWarn}>Pick at least one role, group or person.</p> : null}
     </div>
   );
 }
@@ -592,7 +592,7 @@ function GroupsPanel({ userId, canManageAll }: { userId: string; canManageAll: b
   return (
     <div className={styles.stack}>
       <div className={styles.toolbar}>
-        <p className={styles.muted}>Save the people who need to be at a kind of meeting, then pick the group when you schedule it.</p>
+        <p className={styles.muted}>Groups to invite in one go.</p>
         {!editing && <Button size="sm" onClick={() => setEditing({ id: null, name: '', ids: [] })}><Plus size={14} aria-hidden="true" /> New group</Button>}
       </div>
 
@@ -609,7 +609,7 @@ function GroupsPanel({ userId, canManageAll }: { userId: string; canManageAll: b
       )}
 
       {!groups ? <LoadingSpinner size={28} label="Loading groups…" theme="dark" /> : groups.length === 0 && !editing ? (
-        <div className={styles.card}><p className={styles.muted}>No groups yet. Create one, like “Directors”, then choose it when scheduling a meeting.</p></div>
+        <div className={styles.card}><p className={styles.muted}>No groups yet.</p></div>
       ) : (
         <ul className={styles.meetingList}>
           {groups.map((g) => (
@@ -716,7 +716,7 @@ function MeetingList({ onOpen }: { onOpen: (id: string) => void }) {
   return (
     <div className={styles.stack}>
       <div className={styles.toolbar}>
-        <p className={styles.muted}>Open a meeting on its day to show its check-in code.</p>
+        <p className={styles.muted}>Open a meeting on its day for its code.</p>
         <Button size="sm" onClick={() => setShowForm((v) => !v)}>{showForm ? 'Close' : <><Plus size={14} aria-hidden="true" /> Schedule a meeting</>}</Button>
       </div>
       {showForm && <ScheduleForm onCreated={() => { setShowForm(false); load(); }} />}
@@ -724,7 +724,7 @@ function MeetingList({ onOpen }: { onOpen: (id: string) => void }) {
 
       <section>
         <h3 className={styles.listTitle}>Upcoming <span>next 2 weeks</span></h3>
-        {data.upcoming.length === 0 ? <p className={styles.muted}>Nothing scheduled. Add a meeting above.</p> : (
+        {data.upcoming.length === 0 ? <p className={styles.muted}>Nothing scheduled.</p> : (
           <ul className={styles.meetingList}>
             {/* A repeating meeting's week keeps the same key before and after its row exists, so an open Details panel survives the first save. */}
             {data.upcoming.map((it, i) => (<Fragment key={it.series_id ? `${it.series_id}|${it.date}` : it.key}>{startsWeekGroup(data.upcoming.map((x) => x.date), i) && <WeekHead date={it.date} />}<MeetingCard item={it} busy={busyKey === it.key} onStart={() => start(it)} onView={() => it.meeting_id && onOpen(it.meeting_id)} onCancel={(undo) => cancel(it, undo)} onSaveDoc={(f) => saveDoc(it, f)} onDelete={() => remove(it)} onChanged={load} /></Fragment>))}
@@ -734,7 +734,7 @@ function MeetingList({ onOpen }: { onOpen: (id: string) => void }) {
 
       <section>
         <h3 className={styles.listTitle}>Repeating meetings</h3>
-        {data.series.length === 0 ? <p className={styles.muted}>None yet. Schedule one with “Every week”.</p> : (
+        {data.series.length === 0 ? <p className={styles.muted}>None yet.</p> : (
           <ul className={styles.people}>
             {data.series.map((s) => (
               <li key={s.id} className={`${styles.seriesRow} ${s.active ? '' : styles.paused}`}>
@@ -789,7 +789,7 @@ function SeriesEditForm({ series: s, busy, onSave, onCancel }: { series: Series;
       className={`${styles.detailsForm} ${styles.seriesForm}`}
       onSubmit={(e) => { e.preventDefault(); void onSave({ title, weekday: Number(weekday), start, end, location: room, description: desc, doc_url: doc, ends_on: endsOn || null, ...audPayload(audience) }); }}
     >
-      <p className={styles.faint}>Changes apply to the repeating meeting and to coming weeks that haven’t started. A week where you changed the room, time or doc on its own keeps its own.</p>
+      <p className={styles.faint}>Applies to the series and coming weeks. A week you edited on its own keeps its changes.</p>
       <div className={styles.formGrid}>
         <Field label="Name"><Input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={60} required /></Field>
         <Field label="Day of the week"><Select value={weekday} onChange={(e) => setWeekday(e.target.value)}>{WEEKDAYS.map((d, i) => <option key={d} value={i}>{d}</option>)}</Select></Field>
@@ -966,7 +966,7 @@ function AdvanceAbsences({ item, onChanged }: { item: Item; onChanged?: () => vo
             <CheckTile label="Excused" checked={excused} onChange={() => setExcused((v) => !v)} />
             <Button size="sm" onClick={add} loading={busy} disabled={!who}>Mark away</Button>
           </div>
-          <p className={styles.faint}>Excused absences don’t count against their attendance. If they show up anyway and check in, the mark comes off.</p>
+          <p className={styles.faint}>Excused doesn’t count against attendance.</p>
         </>
       )}
     </section>
@@ -1037,7 +1037,7 @@ function ScheduleForm({ onCreated }: { onCreated: () => void }) {
           </div>
         </Field>
       )}
-      <p className={styles.faint}>Times are Pacific. Repeating meetings show up on the list automatically, two weeks ahead.</p>
+      <p className={styles.faint}>Times are Pacific. Repeating meetings appear two weeks ahead.</p>
       {error && <Notice tone="error">{error}</Notice>}
       <div className={styles.formActions}><Button type="submit" loading={busy} disabled={audienceEmpty(audience)}>{repeat === 'weekly' ? 'Schedule weekly meeting' : 'Schedule meeting'}</Button></div>
     </form>
@@ -1178,7 +1178,7 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
           <div className={styles.bigCode} aria-live="off">{grouped}</div>
           <div className={styles.timer} aria-hidden="true"><span style={{ width: `${pct}%` }} /></div>
           <div className={styles.liveCount}><strong>{live.attendees.length}</strong> of {live.attendees.length + live.missing.length} checked in</div>
-          {now < new Date(live.meeting.starts_at).getTime() - 10 * 60_000 && <p className={styles.faint}>Members can start checking in at {time(new Date(new Date(live.meeting.starts_at).getTime() - 10 * 60_000).toISOString())}, 10 minutes before the start.</p>}
+          {now < new Date(live.meeting.starts_at).getTime() - 10 * 60_000 && <p className={styles.faint}><Radio size={12} aria-hidden="true" /> Check-in opens {time(new Date(new Date(live.meeting.starts_at).getTime() - 10 * 60_000).toISOString())}</p>}
           {presenting && <p className={styles.presentHint}>Open the portal → Meetings and type this code</p>}
           {live.meeting.question && live.answers.length > 0 && (
             <div className={styles.screenAnswers} aria-label="Latest answers">
@@ -1213,7 +1213,7 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
           )}
           <div className={styles.card}>
             <h3 className={styles.listTitle}><MessageCircleQuestion size={14} aria-hidden="true" /> Question of the meeting</h3>
-            <p className={styles.faint}>Shown on the big screen and revealed to people after they check in. They can answer it and send reactions.</p>
+            <p className={styles.faint}>On the big screen; revealed after check-in.</p>
             {over ? (
               <p className={styles.lockNote}><Lock size={13} aria-hidden="true" /> {live.meeting.question ? <>“{live.meeting.question}”. </> : null}This meeting has ended, so the question is locked.</p>
             ) : open ? (
@@ -1302,7 +1302,7 @@ function InvitePeople({ live, meetingId, onSaved }: { live: Live; meetingId: str
   return (
     <div className={styles.card}>
       <h3 className={styles.listTitle}>Add people <span>{ids.length} added individually</span></h3>
-      <p className={styles.faint}>Tick anyone to add them, even if they&apos;re not in the roles or groups. They&apos;ll see the meeting right away.</p>
+      <p className={styles.faint}>Tick anyone to invite them directly.</p>
       <PeoplePicker team={team} value={ids} onChange={setIds} covered={covered} />
       {error && <Notice tone="error">{error}</Notice>}
       <div className={styles.formActions}>
@@ -1459,11 +1459,11 @@ function AttendancePanel({ onOpenMeeting, canExport }: { onOpenMeeting?: (id: st
           <a className={styles.docBtn} href={`/api/meetings/export?type=summary&${qs}`}><Download size={15} aria-hidden="true" /> Summary (CSV)</a>
         </div>}
       </div>
-      {canExport ? <p className={styles.faint}>The exports follow these filters. The log lists every expected person for every meeting, absences included. The summary has one row per person.</p> : <p className={styles.faint}>Results for the meetings you planned.</p>}
+      {canExport ? <p className={styles.faint}>Exports follow these filters.</p> : <p className={styles.faint}>Your meetings’ results.</p>}
 
       {error && <Notice tone="error">{error}</Notice>}
       {!data && !error && <LoadingSpinner size={28} label="Loading attendance…" theme="dark" />}
-      {data && data.meetings.length === 0 && <div className={styles.card}><p className={styles.muted}>No meetings in this range yet. They show up here after check-in is opened.</p></div>}
+      {data && data.meetings.length === 0 && <div className={styles.card}><p className={styles.muted}>No meetings in this range.</p></div>}
 
       {data && data.meetings.length > 0 && (
         <>
@@ -1519,7 +1519,13 @@ function AttendancePanel({ onOpenMeeting, canExport }: { onOpenMeeting?: (id: st
               </ul>
             )}
             {!showAllPeople && !query && !onlyFollowUp && people.length > 20 && <Button variant="ghost" size="sm" onClick={() => setShowAllPeople(true)}>Show all {people.length}</Button>}
-            <p className={styles.faint}>Dots: green = came, red = was expected but didn&apos;t, yellow ring = excused absence (doesn&apos;t count against them), grey = meeting wasn&apos;t for them. “Follow up” means under 50% or the last 3 expected meetings missed.</p>
+            <p className={`${styles.faint} ${styles.dotKey}`}>
+              <span><i style={{ background: '#34d399' }} /> came</span>
+              <span><i style={{ background: '#f87171' }} /> missed</span>
+              <span><i style={{ boxShadow: 'inset 0 0 0 2px #fbbf24' }} /> excused</span>
+              <span><i style={{ background: '#6b7280' }} /> not invited</span>
+              <span title="Under 50%, or the last 3 expected meetings missed">⚑ follow up</span>
+            </p>
           </section>
 
           <section className={styles.card}>

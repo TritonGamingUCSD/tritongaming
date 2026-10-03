@@ -156,7 +156,7 @@ function KeyCard({ item, people, colors, me, onChanged, onError }: { item: KeyIt
         <HolderView h={item.holder} since={since(item.held_since)} />
         <div className={styles.actions}>
           {!editing && !item.mine && <Button size="sm" onClick={() => move({ action: 'take' })} loading={busy}><Check size={14} aria-hidden="true" /> I have it</Button>}
-          {!editing && <Button size="sm" variant="secondary" onClick={() => setGiving((v) => !v)} aria-expanded={giving}><Users size={14} aria-hidden="true" /> Give to…</Button>}
+          {!editing && <Button size="sm" variant="secondary" onClick={() => setGiving((v) => !v)} aria-expanded={giving}><Users size={14} aria-hidden="true" /> Give</Button>}
           <IconButton kind="history" size="sm" label={`History of ${item.name}`} active={showHistory} onClick={toggleHistory} aria-expanded={showHistory} />
           {item.canEdit && <IconButton kind="edit" size="sm" label={`Edit ${item.name}`} onClick={() => setEditing((v) => !v)} />}
           {item.canEdit && <IconButton kind="delete" size="sm" label={`Remove ${item.name}`} onClick={remove} />}
