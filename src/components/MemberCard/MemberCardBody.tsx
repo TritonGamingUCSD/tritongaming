@@ -17,6 +17,7 @@ export interface MemberCardData {
   orgTitle?: string | null;
   pronouns?: string | null;
   major?: string | null;
+  minor?: string | null;
   year?: string | null;
   college?: string | null;
   divisionName?: string | null;
@@ -45,7 +46,7 @@ export default function MemberCardBody({
   const portfolio = data.portfolioLinks ?? [];
   const gameIds = data.gameIds ?? [];
   const classLine = [data.year, data.college && `${data.college} College`];
-  const hasSchool = Boolean(data.major || data.year || data.college);
+  const hasSchool = Boolean(data.major || data.minor || data.year || data.college);
   const hasInfo = hasSchool || data.divisionName || emails.length > 0 || copyOnly.length > 0;
   const hasLinks = linked.length > 0 || portfolio.length > 0;
 
@@ -80,6 +81,7 @@ export default function MemberCardBody({
                   ? <span>{noBreakHyphens(data.major)}</span>
                   : <DotList items={classLine} />}
               </div>
+              {data.minor && <div className={styles.schoolMeta}>Minor: {noBreakHyphens(data.minor)}</div>}
               {data.major && (data.year || data.college) && (
                 <div className={styles.schoolMeta}><DotList items={classLine} /></div>
               )}

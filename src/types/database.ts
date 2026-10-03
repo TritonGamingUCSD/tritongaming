@@ -83,6 +83,7 @@ export interface Database {
           bio: string | null;
           gamer_tag: string | null;
           major: string | null;
+          minor: string | null;
           year: string | null;
           class_of: number | null;
           college: string | null;

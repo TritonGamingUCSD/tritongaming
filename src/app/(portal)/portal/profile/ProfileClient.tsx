@@ -60,6 +60,7 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
     year: yearChoiceOf(profile),
     college: profile.college || '',
     major: profile.major || '',
+    minor: profile.minor || '',
     gender: gender || '',
     platforms: privateInfo.platforms,
     favorite_games: privateInfo.favorite_games,
@@ -205,7 +206,7 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
   const officerCard = {
     bioText: form.bio.trim(),
     pronounText: form.pronouns.trim(),
-    yearMajorText: [yearLabelOfChoice(form.year), form.major.trim(), form.college].filter(Boolean).join(' · '),
+    yearMajorText: [yearLabelOfChoice(form.year), form.major.trim(), form.minor.trim() && `Minor: ${form.minor.trim()}`, form.college].filter(Boolean).join(' · '),
     socials: SOCIAL_PLATFORMS.filter((p) => form.social_links[p.key]?.trim()),
     gameIdNames: cleanGameIds(form.game_ids).map((g) => g.game),
     portfolioNames: form.portfolio_links.filter((l) => l.url.trim()).map((l) => l.label.trim() || l.url.trim()),
@@ -228,6 +229,7 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
     org_title: officerCard.title || null,
     bio: form.bio.trim() || null,
     major: form.major.trim() || null,
+    minor: form.minor.trim() || null,
     year: yearLabelOfChoice(form.year) || null,
     college: form.college || null,
     gamer_tag: form.gamer_tag.trim() || null,
@@ -426,6 +428,12 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
               <div className={styles.fieldGroup}>
                 <span className={styles.label}>Major {isUcsd && <span className={styles.required}>*</span>}</span>
                 <MajorPicker value={form.major} onChange={(v) => setForm((f) => ({ ...f, major: v }))} required={isUcsd} />
+              </div>
+              </div>
+              <div className={styles.fieldRow}>
+              <div className={styles.fieldGroup}>
+                <span className={styles.label}>Minor <span className={styles.optionalTag}>optional</span></span>
+                <MajorPicker value={form.minor} onChange={(v) => setForm((f) => ({ ...f, minor: v }))} noun="minor" />
               </div>
               </div>
             </div>
@@ -656,7 +664,7 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
             const rows = [
               { key: 'bio', label: 'Bio', current: officerCard.bioText },
               { key: 'pronouns', label: 'Pronouns', current: officerCard.pronounText },
-              { key: 'year_major', label: 'Year, major & college', current: officerCard.yearMajorText },
+              { key: 'year_major', label: 'Year, major, minor & college', current: officerCard.yearMajorText },
               { key: 'socials', label: 'Discord & social links', current: officerCard.socials.map((p) => p.label).join(', ') },
               { key: 'portfolio', label: 'Portfolio links', current: officerCard.portfolioNames.join(', ') },
               { key: 'game_ids', label: 'Game IDs', current: officerCard.gameIdNames.join(', ') },

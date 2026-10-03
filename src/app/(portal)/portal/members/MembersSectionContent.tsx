@@ -210,6 +210,7 @@ export default function MembersSectionContent({ rows }: { rows: MemberProfileRow
                 orgTitle: selected.org_title,
                 pronouns: selected.pronouns,
                 major: selected.major,
+                minor: selected.minor,
                 year: selected.year,
                 college: selected.college,
                 divisionName: selected.divisionName,

@@ -14,6 +14,7 @@ export interface BoardMember {
   org_title: string | null;
   bio: string | null;
   major: string | null;
+  minor: string | null;
   year: string | null;
   college: string | null;
   gamer_tag: string | null;
@@ -37,6 +38,7 @@ interface BoardProfileRow {
   org_title: string | null;
   bio: string | null;
   major: string | null;
+  minor: string | null;
   year: string | null;
   college: string | null;
   gamer_tag: string | null;
@@ -76,7 +78,7 @@ async function fetchBoardMembers(): Promise<BoardMember[]> {
   const { data, error } = await supabase
     .from('profiles')
     .select(`
-      id, display_name, avatar_url, custom_avatar_url, org_title, bio, major, year, college, gamer_tag, pronouns, show_on_board, social_links, portfolio_links, game_ids, board_visibility, board_order, board_email,
+      id, display_name, avatar_url, custom_avatar_url, org_title, bio, major, minor, year, college, gamer_tag, pronouns, show_on_board, social_links, portfolio_links, game_ids, board_visibility, board_order, board_email,
       user_roles!user_roles_user_id_fkey(role)
     `);
 
@@ -129,6 +131,7 @@ async function fetchBoardMembers(): Promise<BoardMember[]> {
       org_title: row.org_title,
       bio: row.bio,
       major: row.major,
+      minor: row.minor,
       year: row.year,
       college: row.college,
       gamer_tag: row.gamer_tag,

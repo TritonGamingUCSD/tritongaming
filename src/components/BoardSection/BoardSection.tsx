@@ -38,6 +38,7 @@ export function PanelBody({ member, copiedKey, onCopy }: { member: BoardMember; 
         pronouns: show('pronouns') ? member.pronouns : null,
         // Year, major and college travel together under one visibility option.
         major: show('year_major') ? member.major : null,
+        minor: show('year_major') ? member.minor : null,
         year: show('year_major') ? member.year : null,
         college: show('year_major') ? member.college : null,
         emails: show('email') && member.email ? [member.email] : [],

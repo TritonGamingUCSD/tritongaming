@@ -11,7 +11,7 @@ const OTHER = '__other__';
 // Pick up to three majors from a list (so "CS" / "comp sci" / "Computer Science"
 // all end up as one name and analytics can group them), with "Other" for
 // anything not listed. Stored as one string: "Computer Science / Mathematics".
-export default function MajorPicker({ value, onChange, required }: { value: string; onChange: (v: string) => void; required?: boolean }) {
+export default function MajorPicker({ value, onChange, required, noun = 'major' }: { value: string; onChange: (v: string) => void; required?: boolean; noun?: 'major' | 'minor' }) {
   const chosen = splitStoredMajors(value);
   const [other, setOther] = useState(false);
   const [otherText, setOtherText] = useState('');
@@ -48,7 +48,7 @@ export default function MajorPicker({ value, onChange, required }: { value: stri
             else add(e.target.value);
           }}
         >
-          <option value="">{chosen.length ? 'Add another major (double major?)' : 'Select your major'}</option>
+          <option value="">{chosen.length ? (noun === 'minor' ? 'Add another minor' : 'Add another major (double major?)') : noun === 'minor' ? 'Select your minor (optional)' : 'Select your major'}</option>
           {MAJOR_OPTIONS.filter((o) => !chosen.includes(o)).map((o) => <option key={o} value={o}>{o}</option>)}
           <option value={OTHER}>Other (type it in)…</option>
         </Select>
@@ -61,7 +61,7 @@ export default function MajorPicker({ value, onChange, required }: { value: stri
             onChange={(e) => setOtherText(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add(otherText); setOtherText(''); setOther(false); } }}
             maxLength={60}
-            placeholder="Type your major"
+            placeholder={`Type your ${noun}`}
             autoFocus
           />
           <button type="button" className={styles.majorAddBtn} onClick={() => { add(otherText); setOtherText(''); setOther(false); }} disabled={!otherText.trim()}>Add</button>
@@ -69,7 +69,7 @@ export default function MajorPicker({ value, onChange, required }: { value: stri
         </div>
       )}
       <span className={styles.charCount} style={{ textAlign: 'left' }}>
-        {full ? `Up to ${MAX_MAJORS} majors.` : 'Double majoring? Add each one.'}
+        {full ? `Up to ${MAX_MAJORS} ${noun === 'minor' ? 'minors' : 'majors'}.` : noun === 'minor' ? 'Optional. Add each minor you have.' : 'Double majoring? Add each one.'}
       </span>
     </div>
   );
