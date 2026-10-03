@@ -13,6 +13,9 @@ export interface CalendarItem {
   location: string | null;
   href: string;
   mine: boolean;           // I have a ticket / I'm hosting
+  /** My own standing, for the badge: a ticket, checked in, hosting, going or maybe (internal event RSVP). */
+  status?: 'ticket' | 'checked_in' | 'hosting' | 'going' | 'maybe';
+  description?: string | null;
   dayLabel: string | null; // "Day 2 of 3" for multi-day events
   repeats?: boolean;
 }
@@ -29,7 +32,7 @@ export async function collectCalendarItems(svc: SupabaseClient, user: { id: stri
   const endIso = new Date(`${addDaysKey(to, 2)}T00:00:00Z`).toISOString();
   const [{ data: events }, { data: tickets }, groups, { data: seriesData }, { data: rowData }] = await Promise.all([
     svc.from('events').select('id, slug, title, location, start_date, end_date').eq('is_published', true).lte('start_date', endIso).order('start_date'),
-    svc.from('tickets').select('event_id').eq('user_id', user.id),
+    svc.from('tickets').select('event_id, checked_in_at').eq('user_id', user.id),
     loadGroups(svc),
     svc.from('meeting_series').select('id, title, weekday, start_time, end_time, location, active, doc_url, audience, invitees, group_ids, description, created_by, created_at, ends_on').eq('active', true),
     svc.from('meetings').select('*').gte('meeting_date', from).lte('meeting_date', to).eq('cancelled', false),
@@ -37,6 +40,7 @@ export async function collectCalendarItems(svc: SupabaseClient, user: { id: stri
 
   const items: CalendarItem[] = [];
   const ticketed = new Set((tickets ?? []).map((t) => t.event_id as string));
+  const checkedIn = new Set((tickets ?? []).filter((t) => t.checked_in_at).map((t) => t.event_id as string));
   for (const e of events ?? []) {
     const endsAt = (e.end_date as string | null) ?? (e.start_date as string);
     if (endsAt < startIso) continue;
@@ -46,7 +50,7 @@ export async function collectCalendarItems(svc: SupabaseClient, user: { id: stri
     for (let i = 0; i < span; i++) {
       const day = addDaysKey(first, i);
       if (day < from || day > to) continue;
-      items.push({ key: `e|${e.id}|${day}`, kind: 'event', date: day, title: e.title as string, start: e.start_date as string, end: (e.end_date as string | null) ?? null, location: e.location as string | null, href: e.slug ? `/events/${e.slug}` : '/events', mine: ticketed.has(e.id as string), dayLabel: span > 1 ? `Day ${i + 1} of ${span}` : null });
+      items.push({ key: `e|${e.id}|${day}`, kind: 'event', date: day, title: e.title as string, start: e.start_date as string, end: (e.end_date as string | null) ?? null, location: e.location as string | null, href: e.slug ? `/events/${e.slug}` : '/events', mine: ticketed.has(e.id as string), status: checkedIn.has(e.id as string) ? 'checked_in' : ticketed.has(e.id as string) ? 'ticket' : undefined, dayLabel: span > 1 ? `Day ${i + 1} of ${span}` : null });
     }
   }
 
@@ -58,7 +62,7 @@ export async function collectCalendarItems(svc: SupabaseClient, user: { id: stri
   const meetingHref = (createdBy: string | null) => (canManageAll || createdBy === user.id ? '/portal?section=meetings&tab=host' : '/portal?section=meetings');
   for (const r of rows) {
     if (!mineOrManage(r)) continue;
-    items.push({ key: `m|${r.id}`, kind: 'meeting', date: r.meeting_date, title: r.title, start: r.starts_at, end: r.ends_at, location: r.location, href: meetingHref(r.created_by), mine: r.created_by === user.id, dayLabel: null, repeats: !!r.series_id });
+    items.push({ key: `m|${r.id}`, kind: 'meeting', date: r.meeting_date, title: r.title, start: r.starts_at, end: r.ends_at, location: r.location, href: meetingHref(r.created_by), mine: r.created_by === user.id, status: r.created_by === user.id ? 'hosting' : undefined, dayLabel: null, repeats: !!r.series_id });
   }
   const taken = new Set(rows.filter((r) => r.series_id).map((r) => `${r.series_id}|${r.meeting_date}`));
   // Occurrences of repeating meetings that nobody has opened yet (no row exists), never before the series began.
@@ -69,17 +73,18 @@ export async function collectCalendarItems(svc: SupabaseClient, user: { id: stri
     for (let day = from; day <= to && day <= horizon; day = addDaysKey(day, 1)) {
       if (day < began || !seriesRunsOn(s, day) || taken.has(`${s.id}|${day}`)) continue;
       const { starts, ends } = occurrenceTimes(day, s.start_time, s.end_time);
-      items.push({ key: `s|${s.id}|${day}`, kind: 'meeting', date: day, title: s.title, start: starts.toISOString(), end: ends.toISOString(), location: s.location, href: meetingHref(s.created_by), mine: s.created_by === user.id, dayLabel: null, repeats: true });
+      items.push({ key: `s|${s.id}|${day}`, kind: 'meeting', date: day, title: s.title, start: starts.toISOString(), end: ends.toISOString(), location: s.location, href: meetingHref(s.created_by), mine: s.created_by === user.id, status: s.created_by === user.id ? 'hosting' : undefined, dayLabel: null, repeats: true });
     }
   }
   // Internal events meant for this person (or planned by them). Their own kind: they never count as meetings.
   const { data: internalRows } = await svc.from('internal_events').select('*').gte('event_date', from).lte('event_date', to).eq('cancelled', false);
   const { data: myRsvps } = await svc.from('internal_event_rsvps').select('event_id, status').eq('user_id', user.id);
   const going = new Set((myRsvps ?? []).filter((r) => r.status === 'going').map((r) => r.event_id as string));
+  const maybe = new Set((myRsvps ?? []).filter((r) => r.status === 'maybe').map((r) => r.event_id as string));
   for (const r of internalRows ?? []) {
     if (!hasCapability(roles, 'view_internal_events')) break;
     if (!mineOrManage({ audience: r.audience as string[] | null, invitees: r.invitees as string[] | null, group_ids: r.group_ids as string[] | null, created_by: r.created_by as string | null })) continue;
-    items.push({ key: `x|${r.id}`, kind: 'internal', date: r.event_date as string, title: r.title as string, start: r.starts_at as string, end: r.ends_at as string, location: r.location as string | null, href: '/portal?section=internal-events', mine: going.has(r.id as string), dayLabel: null });
+    items.push({ key: `x|${r.id}`, kind: 'internal', date: r.event_date as string, title: r.title as string, start: r.starts_at as string, end: r.ends_at as string, location: r.location as string | null, href: '/portal?section=internal-events', mine: going.has(r.id as string), status: going.has(r.id as string) ? 'going' : maybe.has(r.id as string) ? 'maybe' : undefined, dayLabel: null });
   }
   items.sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
   return items;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, CalendarDays, Ticket, MapPin, Repeat, CalendarPlus, Copy, Check, RefreshCw } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -10,28 +10,45 @@ import { formatEventTimeRange } from '@/lib/timezone';
 import { useLiveParams } from '@/lib/usePortalParams';
 import { confirmHold } from '@/lib/confirmHold';
 import styles from './calendar.module.css';
+import TimeGrid from './TimeGrid';
+import { ItemPopup, StatusBadge, timeOf, type Item } from './calendarParts';
 
-interface Item {
-  key: string; kind: 'event' | 'meeting' | 'internal'; date: string; title: string; start: string; end: string | null;
-  location: string | null; href: string; mine: boolean; dayLabel: string | null; repeats?: boolean;
-}
-type View = 'month' | 'agenda';
+type View = 'month' | 'week' | 'day' | 'agenda';
+type Kind = Item['kind'];
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const key = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}`;
 const addDays = (k: string, n: number) => { const d = new Date(`${k}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 const pacificToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 const longDay = (k: string) => new Date(`${k}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'long', month: 'long', day: 'numeric' });
-const timeOf = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour: 'numeric', minute: '2-digit' });
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const sundayOf = (k: string) => addDays(k, -new Date(`${k}T12:00:00Z`).getUTCDay());
+const shortDay = (k: string) => new Date(`${k}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' });
 
 export default function CalendarSectionContent() {
   const today = pacificToday();
   const [cursor, setCursor] = useState(() => ({ y: Number(today.slice(0, 4)), m: Number(today.slice(5, 7)) - 1 }));
   const [view, setView] = useState<View>('month');
   const [selected, setSelected] = useState<string>(today);
+  // The week shown in the week view (its Sunday).
+  const [weekStart, setWeekStart] = useState(() => sundayOf(today));
   const [items, setItems] = useState<Item[] | null>(null);
+  // What to show: which kinds, and only the ones I have a stake in (a ticket, hosting, going). Remembered on this device.
+  const [kinds, setKinds] = useState<Kind[]>(['event', 'meeting', 'internal']);
+  const [onlyMine, setOnlyMine] = useState(false);
+  const [popup, setPopup] = useState<{ item: Item; rect: DOMRect } | null>(null);
+  const [nowIso, setNowIso] = useState(() => new Date().toISOString());
+  useEffect(() => {
+    try { const f = JSON.parse(localStorage.getItem('calendar-filters') ?? 'null'); if (f) { setKinds(f.kinds); setOnlyMine(!!f.onlyMine); } } catch { /* no saved filters */ }
+    const t = setInterval(() => setNowIso(new Date().toISOString()), 60_000);
+    return () => clearInterval(t);
+  }, []);
+  function setFilters(k: Kind[], m: boolean) {
+    setKinds(k); setOnlyMine(m);
+    try { localStorage.setItem('calendar-filters', JSON.stringify({ kinds: k, onlyMine: m })); } catch { /* private window */ }
+  }
   const [error, setError] = useState('');
+  const swipe = useRef<{ x: number; y: number } | null>(null);
   const params = useLiveParams();
   const [subscribeOpen, setSubscribeOpen] = useState(params.get('subscribe') === '1');
 
@@ -41,35 +58,54 @@ export default function CalendarSectionContent() {
     return addDays(first, -new Date(`${first}T12:00:00Z`).getUTCDay());
   }, [cursor]);
   const gridEnd = addDays(gridStart, 41);
+  // What to fetch: the six-week month grid, or just the one week.
+  const rangeWeek = view === 'week' ? weekStart : sundayOf(selected);
+  const from = view === 'week' || view === 'day' ? rangeWeek : gridStart;
+  const to = view === 'week' || view === 'day' ? addDays(rangeWeek, 6) : gridEnd;
 
   useEffect(() => {
     let live = true;
     setItems(null); setError('');
-    fetch(`/api/calendar?from=${gridStart}&to=${gridEnd}`, { cache: 'no-store' })
+    fetch(`/api/calendar?from=${from}&to=${to}`, { cache: 'no-store' })
       .then(async (r) => ({ ok: r.ok, j: await r.json().catch(() => ({})) }))
       .then(({ ok, j }) => { if (!live) return; if (ok) setItems(j.items); else setError(j.error || 'Failed to load the calendar.'); })
       .catch(() => { if (live) setError('Couldn’t reach the server.'); });
     return () => { live = false; };
-  }, [gridStart, gridEnd]);
+  }, [from, to]);
 
   const byDay = useMemo(() => {
     const map = new Map<string, Item[]>();
-    for (const i of items ?? []) map.set(i.date, [...(map.get(i.date) ?? []), i]);
+    for (const i of items ?? []) {
+      if (!kinds.includes(i.kind) || (onlyMine && !i.status && !i.mine)) continue;
+      map.set(i.date, [...(map.get(i.date) ?? []), i]);
+    }
     return map;
-  }, [items]);
+  }, [items, kinds, onlyMine]);
 
   function shift(n: number) {
+    if (view === 'week') { setWeekStart((w) => addDays(w, 7 * n)); return; }
+    if (view === 'day') { setSelected((d) => addDays(d, n)); return; }
     setCursor((c) => { const d = new Date(Date.UTC(c.y, c.m + n, 1)); return { y: d.getUTCFullYear(), m: d.getUTCMonth() }; });
   }
-  function goToday() { setCursor({ y: Number(today.slice(0, 4)), m: Number(today.slice(5, 7)) - 1 }); setSelected(today); }
+  function goToday() { setCursor({ y: Number(today.slice(0, 4)), m: Number(today.slice(5, 7)) - 1 }); setSelected(today); setWeekStart(sundayOf(today)); }
+  // Switching view keeps you on the same stretch of time: the week (or month) of the day you last picked.
+  function changeView(v: View) {
+    setPopup(null);
+    if (v === 'week') setWeekStart(sundayOf(selected));
+    if (v === 'month') setCursor({ y: Number(selected.slice(0, 4)), m: Number(selected.slice(5, 7)) - 1 });
+    setView(v);
+  }
 
-  const title = new Date(Date.UTC(cursor.y, cursor.m, 1)).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'long', year: 'numeric' });
+  const monthTitle = new Date(Date.UTC(cursor.y, cursor.m, 1)).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'long', year: 'numeric' });
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  const dayTitle = longDay(selected);
+  const title = view === 'day' ? dayTitle : view === 'week' ? `${shortDay(weekStart)} – ${shortDay(addDays(weekStart, 6))}, ${addDays(weekStart, 6).slice(0, 4)}` : monthTitle;
   const days = Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));
   const dayItems = byDay.get(selected) ?? [];
   const agendaDays = [...byDay.keys()].filter((d) => d >= (view === 'agenda' ? today : gridStart) && d.slice(0, 7) === key(cursor.y, cursor.m, 1).slice(0, 7)).sort();
 
   return (
-    <div className={styles.page} data-wide={view === 'month' ? '' : undefined} data-month={view === 'month' ? '' : undefined}>
+    <div className={styles.page} data-wide={view !== 'agenda' ? '' : undefined} data-month={view !== 'agenda' ? '' : undefined}>
       <div className={styles.header}>
         <h1 className={styles.title}>Calendar</h1>
         <p className={styles.sub}>Events and the meetings you’re invited to, in one place.</p>
@@ -77,30 +113,40 @@ export default function CalendarSectionContent() {
 
       <div className={styles.toolbar}>
         <div className={styles.nav}>
-          <Button variant="secondary" size="sm" onClick={() => shift(-1)} aria-label="Previous month"><ChevronLeft size={16} aria-hidden="true" /></Button>
+          <Button variant="secondary" size="sm" onClick={() => shift(-1)} aria-label={view === 'week' ? 'Previous week' : view === 'day' ? 'Previous day' : 'Previous month'}><ChevronLeft size={16} aria-hidden="true" /></Button>
           <h2 className={styles.month}>{title}</h2>
-          <Button variant="secondary" size="sm" onClick={() => shift(1)} aria-label="Next month"><ChevronRight size={16} aria-hidden="true" /></Button>
+          <Button variant="secondary" size="sm" onClick={() => shift(1)} aria-label={view === 'week' ? 'Next week' : view === 'day' ? 'Next day' : 'Next month'}><ChevronRight size={16} aria-hidden="true" /></Button>
           <Button variant="ghost" size="sm" onClick={goToday}>Today</Button>
         </div>
         <div className={styles.toolbarRight}>
           <Button variant="secondary" size="sm" onClick={() => setSubscribeOpen((v) => !v)} aria-expanded={subscribeOpen}><CalendarPlus size={15} strokeWidth={1.75} aria-hidden="true" /> Add to my calendar</Button>
-          <SectionTabs<View> variant="segmented" label="View" value={view} onChange={setView} tabs={[{ id: 'month', label: 'Month' }, { id: 'agenda', label: 'List' }]} />
+          <SectionTabs<View> variant="segmented" label="View" value={view} onChange={changeView} tabs={[{ id: 'month', label: 'Month' }, { id: 'week', label: 'Week' }, { id: 'day', label: 'Day' }, { id: 'agenda', label: 'List' }]} />
         </div>
       </div>
       {subscribeOpen && <SubscribePanel />}
 
-      <div className={styles.legend}>
-        <span><i className={styles.dotEvent} /> Event</span>
-        <span><i className={styles.dotMeeting} /> Meeting</span>
-        <span><i className={styles.dotInternal} /> Internal event</span>
-        <span><Ticket size={12} aria-hidden="true" /> You have a ticket</span>
+      <div className={styles.filters} role="group" aria-label="What to show">
+        {([['event', 'Events', styles.dotEvent], ['meeting', 'Meetings', styles.dotMeeting], ['internal', 'Internal events', styles.dotInternal]] as const).map(([k, label, dot]) => {
+          const on = kinds.includes(k);
+          return <button key={k} type="button" className={`${styles.filterChip} ${on ? styles.filterOn : ''}`} aria-pressed={on} onClick={() => setFilters(on ? kinds.filter((x) => x !== k) : [...kinds, k], onlyMine)}><i className={dot} /> {label}</button>;
+        })}
+        <span className={styles.filterSep} aria-hidden="true" />
+        <button type="button" className={`${styles.filterChip} ${onlyMine ? styles.filterOn : ''}`} aria-pressed={onlyMine} onClick={() => setFilters(kinds, !onlyMine)} title="Only things you have a ticket for, host, or are going to"><Ticket size={12} aria-hidden="true" /> Only mine</button>
       </div>
 
       {error && <Notice tone="error">{error}</Notice>}
 
       {view === 'month' && (
         <div className={styles.monthLayout}>
-          <div className={styles.grid} role="grid" aria-label={title}>
+          <div
+            className={styles.grid} role="grid" aria-label={title}
+            onTouchStart={(e) => { swipe.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }}
+            onTouchEnd={(e) => {
+              const st = swipe.current; swipe.current = null; if (!st) return;
+              const dx = e.changedTouches[0].clientX - st.x, dy = e.changedTouches[0].clientY - st.y;
+              if (Math.abs(dx) > 60 && Math.abs(dy) < 45) shift(dx < 0 ? 1 : -1);
+            }}
+          >
             {WEEKDAYS.map((w) => <div key={w} className={styles.weekday} role="columnheader">{w}</div>)}
             {days.map((d) => {
               const list = byDay.get(d) ?? [];
@@ -132,6 +178,57 @@ export default function CalendarSectionContent() {
         </div>
       )}
 
+      {(view === 'week' || view === 'day') && (
+        <div className={styles.onlyWide}>
+          <TimeGrid
+            days={view === 'day' ? [selected] : weekDays}
+            byDay={byDay} today={today} nowIso={nowIso}
+            dayName={(d) => ({ name: WEEKDAYS[new Date(`${d}T12:00:00Z`).getUTCDay()], num: Number(d.slice(8)) })}
+            onOpen={(item, rect) => setPopup({ item, rect })}
+          />
+          {items === null && !error && <p className={styles.muted}>Loading…</p>}
+        </div>
+      )}
+      {view === 'week' && (
+        <div className={`${styles.week} ${styles.onlyNarrow}`} role="grid" aria-label={title}>
+          {weekDays.map((d) => {
+            const list = byDay.get(d) ?? [];
+            return (
+              <section key={d} className={`${styles.weekDay} ${d === today ? styles.weekToday : ''}`} role="gridcell" aria-label={`${longDay(d)}${list.length ? `, ${list.length} item${list.length === 1 ? '' : 's'}` : ''}`}>
+                <header className={styles.weekHead}>
+                  <span className={styles.weekName}>{WEEKDAYS[new Date(`${d}T12:00:00Z`).getUTCDay()]}</span>
+                  <span className={styles.weekNum}>{Number(d.slice(8))}</span>
+                  {d === today && <span className={styles.todayTag}>Today</span>}
+                </header>
+                {items === null && !error ? <p className={styles.muted}>Loading…</p> : list.length === 0 ? <p className={styles.weekEmpty}>Nothing</p> : (
+                  <ul className={styles.weekList}>
+                    {list.map((i) => (
+                      <li key={i.key}>
+                        <Link href={i.href} className={`${styles.weekItem} ${i.kind === 'event' ? styles.itemEvent : i.kind === 'internal' ? styles.itemInternal : styles.itemMeeting}`}>
+                          <span className={styles.itemBar} aria-hidden="true" />
+                          <span className={styles.weekItemMain}>
+                            <span className={styles.weekTime}>{i.kind === 'event' ? timeOf(i.start) : `${timeOf(i.start)}${i.end ? ` – ${timeOf(i.end)}` : ''}`}</span>
+                            <span className={styles.weekTitle}>{i.title}{i.repeats && <Repeat size={11} aria-label="Repeats weekly" />}<StatusBadge status={i.status} compact /></span>
+                            {i.location && <span className={styles.weekLoc}><MapPin size={10} aria-hidden="true" /> {i.location}</span>}
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            );
+          })}
+        </div>
+      )}
+
+      {view === 'day' && (
+        <section className={`${styles.dayPanel} ${styles.onlyNarrow}`} aria-live="polite">
+          <h3 className={styles.dayTitle}>{longDay(selected)}{selected === today && <span className={styles.todayTag}>Today</span>}</h3>
+          {items === null && !error ? <p className={styles.muted}>Loading…</p> : (byDay.get(selected) ?? []).length === 0 ? <p className={styles.muted}>Nothing on this day.</p> : <ItemList items={byDay.get(selected) ?? []} />}
+        </section>
+      )}
+
       {view === 'agenda' && (
         items === null && !error ? <p className={styles.muted}>Loading…</p> : agendaDays.length === 0 ? (
           <div className={styles.empty}><CalendarDays size={28} strokeWidth={1.5} aria-hidden="true" /><p>Nothing coming up this month.</p></div>
@@ -146,6 +243,7 @@ export default function CalendarSectionContent() {
           </div>
         )
       )}
+      {popup && <ItemPopup item={popup.item} anchor={popup.rect} onClose={() => setPopup(null)} />}
     </div>
   );
 }
@@ -161,7 +259,7 @@ function ItemList({ items }: { items: Item[] }) {
               <span className={styles.itemTitle}>
                 {i.title}
                 {i.repeats && <Repeat size={12} aria-label="Repeats weekly" />}
-                {i.mine && i.kind === 'event' && <Ticket size={13} aria-label="You have a ticket" className={styles.ticket} />}
+                <StatusBadge status={i.status} />
               </span>
               <span className={styles.itemMeta}>
                 {i.kind === 'event' ? formatEventTimeRange(i.start, i.end) : `${timeOf(i.start)}${i.end ? ` – ${timeOf(i.end)}` : ''}`}
@@ -169,7 +267,7 @@ function ItemList({ items }: { items: Item[] }) {
                 {i.location && <> · <MapPin size={11} aria-hidden="true" /> {i.location}</>}
               </span>
             </span>
-            <span className={styles.kind}>{i.kind === 'event' ? 'Event' : i.kind === 'internal' ? 'Internal event' : i.mine ? 'Hosting' : 'Meeting'}</span>
+            <span className={styles.kind}>{i.kind === 'event' ? 'Event' : i.kind === 'internal' ? 'Internal event' : 'Meeting'}</span>
           </Link>
         </li>
       ))}

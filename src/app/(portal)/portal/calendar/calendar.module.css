@@ -78,3 +78,85 @@
   .monthLayout .cell { min-height: 108px; }
   .monthLayout .dayPanel { position: sticky; top: 0.75rem; max-height: calc(100vh - 2rem); overflow-y: auto; }
 }
+
+/* Week view: seven day columns on a desktop, one stacked day after another on a phone. */
+.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; border-radius: 0.9rem; overflow: hidden; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.08); }
+.weekDay { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; min-height: 320px; padding: 0.55rem 0.5rem 0.7rem; background: #0b0e15; }
+.weekToday { background: #111623; box-shadow: inset 0 2px 0 var(--yellow); }
+.weekHead { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.weekName { font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(242, 241, 240, 0.55); }
+.weekNum { display: grid; place-items: center; width: 1.7rem; height: 1.7rem; border-radius: 50%; font-weight: 600; font-size: 0.85rem; color: rgba(242, 241, 240, 0.9); }
+.weekToday .weekNum { background: var(--yellow); color: #14161f; }
+.weekEmpty { margin: 0; font-size: 0.74rem; color: rgba(242, 241, 240, 0.28); }
+.weekList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.weekItem { display: flex; gap: 0.45rem; padding: 0.4rem 0.45rem 0.4rem 0.35rem; border-radius: 0.6rem; border: 1px solid rgba(255, 255, 255, 0.09); background: rgba(255, 255, 255, 0.04); color: inherit; text-decoration: none; transition: background 0.15s, border-color 0.15s; }
+.weekItem:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 199, 44, 0.4); }
+.weekItemMain { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.weekTime { font-size: 0.68rem; color: rgba(242, 241, 240, 0.6); }
+.weekTitle { display: flex; align-items: center; gap: 0.3rem; font-size: 0.8rem; font-weight: 600; color: var(--white); overflow-wrap: anywhere; }
+.weekLoc { display: inline-flex; align-items: center; gap: 0.2rem; font-size: 0.68rem; color: rgba(242, 241, 240, 0.5); overflow-wrap: anywhere; }
+@media (max-width: 899px) {
+  .week { grid-template-columns: minmax(0, 1fr); }
+  .weekDay { min-height: 0; flex-direction: column; }
+  .weekHead { gap: 0.6rem; }
+}
+
+/* ── Filters ─────────────────────────────────────────────────────────────── */
+.filters { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+.filterChip { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.7rem; border-radius: 0.6rem; border: 1px solid rgba(255, 255, 255, 0.12); background: transparent; color: rgba(242, 241, 240, 0.5); font: inherit; font-size: 0.78rem; cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s; }
+.filterChip:hover { border-color: rgba(255, 199, 44, 0.45); color: var(--white); }
+.filterOn { background: rgba(255, 255, 255, 0.07); border-color: rgba(255, 255, 255, 0.28); color: var(--white); }
+.filterChip:not(.filterOn) i { opacity: 0.35; }
+.filterSep { width: 1px; height: 1.1rem; background: rgba(255, 255, 255, 0.14); margin: 0 0.2rem; }
+.filterChip:focus-visible { outline: 2px solid rgba(255, 199, 44, 0.7); outline-offset: 2px; }
+
+/* ── Colors by type, and my standing ────────────────────────────────────── */
+.kEvent { --k: #4a90e2; --kbg: rgba(74, 144, 226, 0.2); --kfg: #bcd9fb; }
+.kMeeting { --k: #a78bfa; --kbg: rgba(167, 139, 250, 0.2); --kfg: #ddd6fe; }
+.kInternal { --k: #fb923c; --kbg: rgba(251, 146, 60, 0.2); --kfg: #fed7aa; }
+.status { display: inline-flex; align-items: center; gap: 0.25rem; flex: none; padding: 0.05rem 0.4rem; border-radius: 999px; font-size: 0.66rem; font-weight: 600; letter-spacing: 0.02em; border: 1px solid; }
+.stTicket { color: #ffc72c; background: rgba(255, 199, 44, 0.12); border-color: rgba(255, 199, 44, 0.4); }
+.stGo { color: #34d399; background: rgba(52, 211, 153, 0.12); border-color: rgba(52, 211, 153, 0.4); }
+.stMaybe { color: #fbbf24; background: rgba(251, 191, 36, 0.1); border-color: rgba(251, 191, 36, 0.4); }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.tgTitle .status { padding: 0.1rem; margin-left: 0.25rem; }
+
+/* ── Time grid (week and day, wide screens) ─────────────────────────────── */
+.onlyNarrow { display: none; }
+@media (max-width: 899px) { .onlyWide { display: none; } .onlyNarrow { display: grid; } .dayPanel.onlyNarrow { display: flex; } }
+@media (min-width: 900px) { .week.onlyNarrow { display: none; } .dayPanel.onlyNarrow { display: none; } }
+.tg { --gutter: 56px; display: flex; flex-direction: column; border-radius: 0.9rem; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08); background: #0b0e15; }
+.tgHead { display: grid; grid-template-columns: var(--gutter) repeat(var(--cols), minmax(0, 1fr)); background: #0d1017; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+.tgCorner { display: block; }
+.tgDayHead { display: flex; align-items: center; justify-content: center; gap: 0.45rem; padding: 0.5rem 0; border-left: 1px solid rgba(255, 255, 255, 0.06); }
+.tgDayToday .weekNum { background: var(--yellow); color: #14161f; }
+.tgScroll { overflow-y: auto; max-height: min(70vh, 760px); position: relative; }
+.tgBody { position: relative; display: grid; grid-template-columns: var(--gutter) repeat(var(--cols), minmax(0, 1fr)); }
+.tgGutter { position: relative; }
+.tgHour { position: absolute; right: 8px; transform: translateY(-50%); font-size: 0.66rem; color: rgba(242, 241, 240, 0.45); white-space: nowrap; }
+.tgCol { position: relative; border-left: 1px solid rgba(255, 255, 255, 0.06); }
+.tgColToday { background: rgba(255, 199, 44, 0.035); }
+.tgLine { position: absolute; left: 0; right: 0; height: 0; border-top: 1px solid rgba(255, 255, 255, 0.06); pointer-events: none; }
+.tgBlock { position: absolute; display: flex; flex-direction: column; gap: 0.1rem; padding: 0.25rem 0.4rem 0.25rem 0.5rem; overflow: hidden; text-align: left; border: 0; border-left: 3px solid var(--k); border-radius: 0.45rem; background: var(--kbg); color: var(--kfg); font: inherit; font-size: 0.74rem; cursor: pointer; transition: filter 0.15s, box-shadow 0.15s; }
+.tgBlock:hover { filter: brightness(1.25); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4); z-index: 3; }
+.tgBlock:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; z-index: 3; }
+.tgTitle { display: flex; align-items: center; font-weight: 700; line-height: 1.25; color: #fff; overflow: hidden; }
+.tgTime { font-size: 0.66rem; opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tgNow { position: absolute; left: 0; right: 0; height: 2px; background: #ef4444; z-index: 4; pointer-events: none; }
+.tgNow::before { content: ''; position: absolute; left: -4px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: #ef4444; }
+
+/* ── The popup ──────────────────────────────────────────────────────────── */
+.popup { position: fixed; z-index: 300; width: min(320px, calc(100vw - 24px)); display: flex; flex-direction: column; gap: 0.4rem; padding: 0.9rem 1rem 1rem; border-radius: 0.9rem; background: #10151f; border: 1px solid rgba(255, 255, 255, 0.14); border-top: 3px solid var(--k); box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.7); }
+.popupClose { position: absolute; top: 0.45rem; right: 0.45rem; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 0.5rem; border: 0; background: transparent; color: rgba(242, 241, 240, 0.6); cursor: pointer; }
+.popupClose:hover { background: rgba(255, 255, 255, 0.08); color: var(--white); }
+.popupKind { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--kfg); }
+.popupDot { width: 8px; height: 8px; border-radius: 50%; background: var(--k); }
+.popupTitle { margin: 0; padding-right: 1.6rem; font-family: var(--font-futura-heavy); font-size: 1.05rem; color: var(--white); overflow-wrap: anywhere; }
+.popupMeta { display: flex; align-items: center; gap: 0.35rem; margin: 0; font-size: 0.82rem; color: rgba(242, 241, 240, 0.7); }
+.popupActions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 0.4rem; }
+.popupOpen { display: inline-flex; align-items: center; justify-content: center; min-height: 32px; padding: 0 1rem; border-radius: 0.5rem; background: var(--btn-primary-bg); color: var(--btn-primary-text); border: 1px solid var(--btn-primary-border); font-family: var(--font-futura-heavy); font-size: 0.72rem; letter-spacing: 0.04em; text-transform: uppercase; text-decoration: none; }
+.popupOpen:hover { border-color: var(--btn-primary-border-hover); }
+
+/* phone: the month is compact and swipes; the day's list sits right under it */
+@media (max-width: 640px) { .filters { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; } .filterChip { flex: none; } .grid { touch-action: pan-y; } }
+.popup .status { align-self: flex-start; }
