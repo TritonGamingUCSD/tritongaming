@@ -7,7 +7,7 @@ import Notice from '@/components/ui/Notice';
 import { countLabel } from '@/lib/strikeLabels';
 import styles from './MyStrikes.module.css';
 
-interface Strike { id: string; status: 'published' | 'removed'; mark: string | null; category: string; reason: string; incident_date: string; removed_how: 'taken' | 'voucher' | 'reset' | null; asked: boolean }
+interface Strike { id: string; status: 'published' | 'removed'; mark: string | null; category: string; reason: string; incident_date: string; removed_how: 'taken' | 'voucher' | 'reset' | null; removed_note: string | null; asked: boolean }
 interface Voucher { id: string; reason: string | null; given_on: string; used_on: string | null; used_for: string | null; removed_on: string | null; removed_reason: string | null }
 interface HistoryItem { id: string; kind: string; label: string | null; reason: string | null; on: string }
 interface Summary { limit: number; active: number; atLimit: boolean; vouchers: number; strikes: Strike[]; voucherList: Voucher[]; history: HistoryItem[] }
@@ -41,62 +41,92 @@ export default function MyStrikes() {
 
   if (error && !s) return <Notice tone="error">{error}</Notice>;
   if (!s) return <p className={styles.muted}>Loading…</p>;
-  const tone = s.atLimit ? styles.bad : s.active >= 2 ? styles.warn : styles.ok;
+  const tone = s.atLimit ? styles.bad : s.active >= 1 ? styles.warn : styles.ok;
+  const onRecord = s.strikes.filter((k) => k.status === 'published');
+  const takenOff = s.strikes.filter((k) => k.status === 'removed');
+  const vouchers = s.voucherList.filter((v) => !v.used_on);
+  const spare = vouchers.filter((v) => !v.removed_on);
   return (
     <section className={`${styles.wrap} ${tone}`} aria-label="Your strikes">
       <div className={styles.top}>
         <span className={styles.shield}>{s.active > 0 ? <ShieldAlert size={20} aria-hidden="true" /> : <ShieldCheck size={20} aria-hidden="true" />}</span>
-        <div className={styles.title}><strong>{countLabel(s.active)}</strong><span><Lock size={11} aria-hidden="true" /> Only you and HR can see this</span></div>
-        <span className={styles.pips} role="img" aria-label={countLabel(s.active)}>{Array.from({ length: s.limit }, (_, i) => <i key={i} className={i < s.active ? styles.on : ''} />)}</span>
+        <div className={styles.title}><strong>{countLabel(s.active)}</strong><span><Lock size={11} aria-hidden="true" /> Private: only you, exec and HR can see this</span></div>
+        <span className={styles.pipsWrap} role="img" aria-label={countLabel(s.active)}>
+          <span className={styles.pips}>
+            <i className={`${styles.warnPip} ${s.active >= 1 ? styles.on : ''}`} />
+            {Array.from({ length: s.limit - 1 }, (_, i) => <i key={i} className={i + 1 < s.active ? styles.on : ''} />)}
+          </span>
+        </span>
       </div>
+      <p className={styles.how}>The first mark is a warning. After it, 3 strikes is the limit, and the HR team will contact you if you reach it.</p>
       {s.atLimit && <p className={styles.limit}>You’re at 3 strikes. The HR team will be contacting you.</p>}
       {error && <Notice tone="error">{error}</Notice>}
       {note && <Notice tone="success">{note}</Notice>}
 
-      <h3 className={styles.h3}>Strikes</h3>
-      {s.strikes.length === 0 ? <p className={styles.muted}>Nothing here. If a strike is ever added, it shows up here with the reason.</p> : (
+      <h3 className={styles.h3}>On your record</h3>
+      {onRecord.length === 0 ? <p className={styles.muted}>Nothing. If a warning or strike is ever added, it shows up here with the reason.</p> : (
         <ul className={styles.list}>
-          {s.strikes.map((k) => (
-            <li key={k.id} className={k.status === 'removed' ? styles.off : ''}>
+          {onRecord.map((k) => (
+            <li key={k.id} className={k.mark === 'Warning' ? styles.isWarning : ''}>
               <div className={styles.row}>
-                <span className={styles.cat}>{k.mark ? `${k.mark} · ` : ''}{CATEGORY[k.category] ?? 'Other'}</span>
+                {k.mark && <span className={styles.mark}>{k.mark}</span>}
+                <span className={styles.cat}>{CATEGORY[k.category] ?? 'Other'}</span>
                 <time>{day(k.incident_date)}</time>
-                {k.status === 'removed' && <em>{k.removed_how === 'voucher' ? 'Removed with a voucher' : k.removed_how === 'reset' ? 'Cleared by a reset' : 'Taken off'}</em>}
               </div>
               <p className={styles.reason}>{k.reason}</p>
-              {k.status === 'published' && (k.asked ? <span className={styles.asked}><MessageCircleQuestion size={12} aria-hidden="true" /> You asked HR about this</span>
+              {k.asked ? <span className={styles.asked}><MessageCircleQuestion size={12} aria-hidden="true" /> You asked about this</span>
                 : asking === k.id ? (
                   <form className={styles.ask} onSubmit={(e) => { e.preventDefault(); if (message.trim()) void ask(k.id); }}>
-                    <textarea value={message} onChange={(e) => setMessage(e.target.value)} maxLength={500} rows={3} placeholder="What would you like HR to know or look at?" aria-label="Your question for HR" autoFocus />
-                    <div className={styles.askActions}><Button type="button" size="sm" variant="ghost" onClick={() => { setAsking(null); setMessage(''); }}>Cancel</Button><Button type="submit" size="sm" loading={busy} disabled={!message.trim()}>Send to HR</Button></div>
+                    <textarea value={message} onChange={(e) => setMessage(e.target.value)} maxLength={500} rows={3} placeholder="What would you like us to know or look at?" aria-label="Your question" autoFocus />
+                    <div className={styles.askActions}><Button type="button" size="sm" variant="ghost" onClick={() => { setAsking(null); setMessage(''); }}>Cancel</Button><Button type="submit" size="sm" loading={busy} disabled={!message.trim()}>Send</Button></div>
                   </form>
-                ) : <button type="button" className={styles.askLink} onClick={() => { setAsking(k.id); setMessage(''); setNote(''); }}>Ask HR about this</button>)}
+                ) : <button type="button" className={styles.askLink} onClick={() => { setAsking(k.id); setMessage(''); setNote(''); }}>Ask about this</button>}
             </li>
           ))}
         </ul>
       )}
 
-      <h3 className={styles.h3}>Vouchers</h3>
-      {s.voucherList.length === 0 ? <p className={styles.muted}>You have no vouchers. A voucher is used automatically the next time a strike is added.</p> : (
+      {takenOff.length > 0 && (<>
+        <h3 className={styles.h3}>Taken off</h3>
+        <ul className={styles.list}>
+          {takenOff.map((k) => (
+            <li key={k.id} className={styles.off}>
+              <div className={styles.row}>
+                <span className={styles.cat}>{CATEGORY[k.category] ?? 'Other'}</span>
+                <time>{day(k.incident_date)}</time>
+                <em>{k.removed_how === 'voucher' ? 'Removed with a voucher' : k.removed_how === 'reset' ? 'Cleared by a reset' : 'Taken off'}</em>
+              </div>
+              <p className={styles.reason}>{k.reason}</p>
+              {k.removed_note && <p className={styles.why}>Why it came off: {k.removed_note}</p>}
+            </li>
+          ))}
+        </ul>
+      </>)}
+
+      <h3 className={styles.h3}>Vouchers{spare.length > 0 ? ` · ${spare.length}` : ''}</h3>
+      <p className={styles.muted}>A voucher removes your oldest warning or strike, once. It’s used automatically as soon as you have one to remove.</p>
+      {vouchers.length > 0 && (
         <ul className={styles.vouchers}>
-          {s.voucherList.map((v) => (
-            <li key={v.id} className={v.used_on || v.removed_on ? styles.vUsed : ''}>
+          {vouchers.map((v) => (
+            <li key={v.id} className={v.removed_on ? styles.vUsed : ''}>
               <Ticket size={15} aria-hidden="true" />
               <span>
-                <span><b>{v.removed_on ? 'Removed' : v.used_on ? 'Used' : 'Unused'}</b>{v.reason ? ` · ${v.reason}` : ''}</span>
-                <small>Received {day(v.given_on)}{v.removed_on ? ` · removed ${day(v.removed_on)}${v.removed_reason ? ` · “${v.removed_reason}”` : ''}` : v.used_on ? ` · used ${day(v.used_on)}${v.used_for ? ` on “${v.used_for}”` : ''}` : ' · will be used automatically on your next strike'}</small>
+                <span><b>{v.removed_on ? 'Removed' : 'Waiting'}</b>{v.reason ? ` · ${v.reason}` : ''}</span>
+                <small>Received {day(v.given_on)}{v.removed_on ? ` · removed ${day(v.removed_on)}${v.removed_reason ? ` · “${v.removed_reason}”` : ''}` : ''}</small>
               </span>
             </li>
           ))}
         </ul>
       )}
 
-      {s.history.length > 0 && (<>
-        <h3 className={styles.h3}>History</h3>
-        <ul className={styles.vouchers}>
-          {s.history.map((e) => <li key={e.id}><span><span><b>{e.kind === 'strike_added' && e.label ? `${e.label} added` : EVENT[e.kind] ?? e.kind}</b> · {day(e.on)}</span>{e.reason && <small>{e.reason}</small>}</span></li>)}
-        </ul>
-      </>)}
+      {s.history.length > 0 && (
+        <details className={styles.history}>
+          <summary>Full history ({s.history.length})</summary>
+          <ul className={styles.vouchers}>
+            {s.history.map((e) => <li key={e.id}><span><span><b>{e.kind === 'strike_added' && e.label ? `${e.label} added` : EVENT[e.kind] ?? e.kind}</b> · {day(e.on)}</span>{e.reason && <small>{e.reason}</small>}</span></li>)}
+          </ul>
+        </details>
+      )}
     </section>
   );
 }

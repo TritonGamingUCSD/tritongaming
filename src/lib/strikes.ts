@@ -74,12 +74,12 @@ export interface VoucherView { id: string; reason: string | null; created_at: st
 
 // What a person sees about themselves: published strikes (category, date, reason) and what was taken off, and their vouchers (how and when they
 // got each, and when one was used). Never drafts, and never who in HR (or which exec or lead) did what.
-export interface MyStrike { id: string; status: 'published' | 'removed'; category: StrikeCategory; reason: string; incident_date: string; removed_how: 'taken' | 'voucher' | 'reset' | null; asked: boolean; mark: string | null }
+export interface MyStrike { id: string; status: 'published' | 'removed'; category: StrikeCategory; reason: string; incident_date: string; removed_how: 'taken' | 'voucher' | 'reset' | null; removed_note: string | null; asked: boolean; mark: string | null }
 export interface MyVoucher { id: string; reason: string | null; given_on: string; used_on: string | null; used_for: string | null; removed_on: string | null; removed_reason: string | null }
 export interface MyEvent { id: string; kind: StrikeEventKind; label: string | null; reason: string | null; on: string }
 export async function mySummary(svc: SupabaseClient, userId: string) {
   const [{ data: s }, { data: v }, { data: ev }] = await Promise.all([
-    svc.from('strikes').select('id, status, category, reason, incident_date, removed_how').eq('user_id', userId).in('status', ['published', 'removed']).order('incident_date', { ascending: false }).order('created_at', { ascending: false }),
+    svc.from('strikes').select('id, status, category, reason, incident_date, removed_how, removed_note').eq('user_id', userId).in('status', ['published', 'removed']).order('incident_date', { ascending: false }).order('created_at', { ascending: false }),
     svc.from('strike_vouchers').select('id, reason, created_at, used_at, used_on_strike_id, removed_at, removed_reason').eq('user_id', userId).order('created_at', { ascending: false }),
     svc.from('strike_events').select('id, kind, label, reason, created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(50),
   ]);
@@ -87,7 +87,7 @@ export async function mySummary(svc: SupabaseClient, userId: string) {
   const { data: asks } = ids.length ? await svc.from('strike_disputes').select('strike_id').in('strike_id', ids).is('resolved_at', null) : { data: [] as { strike_id: string }[] };
   const asked = new Set((asks ?? []).map((a) => a.strike_id as string));
   const marks = markLabels([...(s ?? [])].filter((x) => x.status === 'published').reverse() as { id: string }[]);
-  const strikes: MyStrike[] = (s ?? []).map((x) => ({ id: x.id as string, status: x.status as 'published' | 'removed', category: x.category as StrikeCategory, reason: x.reason as string, incident_date: x.incident_date as string, removed_how: x.removed_how as 'taken' | 'voucher' | 'reset' | null, asked: asked.has(x.id as string), mark: marks.get(x.id as string) ?? null }));
+  const strikes: MyStrike[] = (s ?? []).map((x) => ({ id: x.id as string, status: x.status as 'published' | 'removed', category: x.category as StrikeCategory, reason: x.reason as string, incident_date: x.incident_date as string, removed_how: x.removed_how as 'taken' | 'voucher' | 'reset' | null, removed_note: x.removed_note as string | null, asked: asked.has(x.id as string), mark: marks.get(x.id as string) ?? null }));
   const reasonOf = new Map(strikes.map((x) => [x.id, x.reason]));
   const vouchers: MyVoucher[] = (v ?? []).map((x) => ({ id: x.id as string, reason: x.reason as string | null, given_on: (x.created_at as string).slice(0, 10), used_on: x.used_at ? (x.used_at as string).slice(0, 10) : null, used_for: x.used_on_strike_id ? reasonOf.get(x.used_on_strike_id as string) ?? null : null, removed_on: x.removed_at ? (x.removed_at as string).slice(0, 10) : null, removed_reason: x.removed_reason as string | null }));
   const history: MyEvent[] = (ev ?? []).map((x) => ({ id: x.id as string, kind: x.kind as StrikeEventKind, label: x.label as string | null, reason: x.reason as string | null, on: (x.created_at as string).slice(0, 10) }));
