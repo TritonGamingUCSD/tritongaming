@@ -1151,6 +1151,8 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
   if (!live) return <LoadingSpinner size={28} label="Loading meeting…" theme="dark" />;
 
   const open = live.meeting.open;
+  // Over = its time has passed and check-in isn't running: the info below is locked (the doc link stays editable).
+  const over = !open && Date.now() > new Date(live.meeting.ends_at).getTime();
   const secondsLeft = live.expiresAt ? Math.max(0, Math.ceil((live.expiresAt - now) / 1000)) : 0;
   const pct = Math.min(100, (secondsLeft / 30) * 100);
   const grouped = live.code ? `${live.code.slice(0, 3)} ${live.code.slice(3)}` : '';
@@ -1212,7 +1214,9 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
           <div className={styles.card}>
             <h3 className={styles.listTitle}><MessageCircleQuestion size={14} aria-hidden="true" /> Question of the meeting</h3>
             <p className={styles.faint}>Shown on the big screen and revealed to people after they check in. They can answer it and send reactions.</p>
-            {open ? (
+            {over ? (
+              <p className={styles.lockNote}><Lock size={13} aria-hidden="true" /> {live.meeting.question ? <>“{live.meeting.question}”. </> : null}This meeting has ended, so the question is locked.</p>
+            ) : open ? (
               <p className={styles.lockNote}><Lock size={13} aria-hidden="true" /> The question is locked while check-in is open, so everyone answers the same one. Close check-in to change it.</p>
             ) : (
               <form className={styles.docForm} onSubmit={(e) => { e.preventDefault(); saveQuestion(question); }}>
@@ -1240,13 +1244,17 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
               </div>
             )}
           </div>
-          <form className={styles.docForm} onSubmit={(e) => { e.preventDefault(); saveDoc(); }}>
+{over ? (
+            <p className={styles.lockNote}><Lock size={13} aria-hidden="true" /> This meeting has ended, so its info is locked.{doc ? <> Doc: <a href={doc} target="_blank" rel="noopener noreferrer">{doc}</a></> : null}</p>
+          ) : (
+                    <form className={styles.docForm} onSubmit={(e) => { e.preventDefault(); saveDoc(); }}>
             <Field label="Meeting doc link" hint="Shown to people after they check in.">
               <Input value={doc ?? ''} onChange={(e) => { setDoc(e.target.value); setDocSaved(false); }} placeholder="https://docs.google.com/…" inputMode="url" />
             </Field>
             <Button type="submit" size="sm" variant="ghost" loading={busy}>{docSaved ? 'Saved' : 'Save link'}</Button>
           </form>
-          <InvitePeople live={live} meetingId={id} onSaved={loadLive} />
+          )}
+          {!over && <InvitePeople live={live} meetingId={id} onSaved={loadLive} />}
           <AttendeeList live={live} onAdd={addPerson} onRemove={removePerson} onAbsent={markAbsent} onClearAbsent={clearAbsent} />
           {!live.meeting.series_id && <div className={styles.runActions}><IconButton kind="delete" label="Delete this meeting" onClick={deleteMeeting} /></div>}
         </>
@@ -1340,8 +1348,8 @@ function AttendeeList({ live, onAdd, onRemove, onAbsent, onClearAbsent }: {
                 <div className={styles.personRow}>
                   <Avatar p={p} />
                   <span className={styles.personName}>{p.name}</span>
-                  <Button size="sm" variant="secondary" onClick={() => onAdd(p)}><UserPlus size={13} aria-hidden="true" /> Check in</Button>
-                  <Button size="sm" variant="secondary" onClick={() => (absentFor === p.id ? setAbsentFor(null) : openAbsent(p))} aria-expanded={absentFor === p.id}><UserX size={13} aria-hidden="true" /> Absent</Button>
+                  <IconButton kind="checkin" label={`Check in ${p.name}`} onClick={() => onAdd(p)} />
+                  <IconButton kind="absent" label={`Mark ${p.name} absent`} active={absentFor === p.id} onClick={() => (absentFor === p.id ? setAbsentFor(null) : openAbsent(p))} aria-expanded={absentFor === p.id} />
                 </div>
                 {absentFor === p.id && (
                   <form className={styles.absentForm} onSubmit={(e) => { e.preventDefault(); onAbsent(p, reason, excused); setAbsentFor(null); }}>

@@ -48,6 +48,11 @@ export function isMeetingOpen(m: Pick<MeetingRow, 'ends_at' | 'closed_at' | 'ope
   return !!m.opened_at && !m.closed_at && now < new Date(m.ends_at).getTime() + GRACE_MS;
 }
 
+// A meeting whose time is over (and that is not still taking check-ins): its info is a record now and is locked.
+export function isMeetingOver(m: Pick<MeetingRow, 'ends_at' | 'closed_at' | 'opened_at'>, now: number = Date.now()): boolean {
+  return now > new Date(m.ends_at).getTime() && !isMeetingOpen(m, now);
+}
+
 // When members may start checking in: a little before the meeting starts.
 export function checkInOpensAt(m: Pick<MeetingRow, 'starts_at'>): number { return new Date(m.starts_at).getTime() - EARLY_MS; }
 

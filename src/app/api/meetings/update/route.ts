@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/audit';
-import { authorizeMeetings, ensureOccurrence, isMeetingOpen, occurrenceTimes, validateDocUrl, type MeetingRow, type SeriesRow, canManageMeeting, notYourMeeting, notifyMeetingInvites } from '@/lib/meetings';
+import { authorizeMeetings, ensureOccurrence, isMeetingOpen, isMeetingOver, occurrenceTimes, validateDocUrl, type MeetingRow, type SeriesRow, canManageMeeting, notYourMeeting, notifyMeetingInvites } from '@/lib/meetings';
 import { MAX_QUESTION_LENGTH, MAX_DESCRIPTION_LENGTH } from '@/lib/meetingFun';
 import { formatPacificDateTime } from '@/lib/timezone';
 import { validateAudienceInput } from '@/lib/meetingAudience';
@@ -42,6 +42,10 @@ export async function POST(request: Request) {
   const row0 = own as MeetingRow | null;
   if (!row0) return NextResponse.json({ error: 'Meeting not found.' }, { status: 404 });
   if (!canManageMeeting(auth, row0.created_by)) return notYourMeeting();
+  // Once a meeting is over, all of its info (name, time, room, description, doc link, question, who it was for) is a record and can't change.
+  if (isMeetingOver(row0)) {
+    return NextResponse.json({ error: 'This meeting has ended, so its info is locked.' }, { status: 409 });
+  }
   // Name and time can be changed any time, even after check-in started. (Not the date: to move a
   // meeting to another day, make a new one. A repeating meeting's weeks keep the shared name.)
   if ('title' in b) {

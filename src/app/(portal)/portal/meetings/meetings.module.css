@@ -326,9 +326,12 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
    something inside needs the room (the availability grid and results, marked data-fill-width). */
 .page { max-width: 800px; }
 .page:has([data-fill-width]) { max-width: none; }
-/* Everything around the wide block (tabs, titles, notes) sits in the same centered column, so the page reads as centered rather than pinned left. */
+/* On a page with a wide block (the availability grid, the results), the page is exactly as wide as that block and is centered. Everything
+   else on the page (tabs, titles, notes) stretches to the same width instead of setting its own: contain: inline-size stops its text from
+   widening the page, so the widest block is always what everything lines up with. */
+.page:has([data-fill-width]) { width: fit-content; min-width: min(100%, 640px); max-width: 100%; margin-inline: auto; }
 .page:has([data-fill-width]) > :not(:has([data-fill-width])),
-.page:has([data-fill-width]) :has(> [data-fill-width]) > :not([data-fill-width]) { width: 100%; max-width: 800px; margin-inline: auto; }
+.page:has([data-fill-width]) :has(> [data-fill-width]) > :not([data-fill-width]) { contain: inline-size; width: 100%; max-width: none; margin-inline: 0; }
 .twoCol { display: flex; flex-direction: column; gap: 1.25rem; }
 
 /* Color carries meaning, the same everywhere in meetings: green = live / available, yellow = today or needs you, blue = planning and info,
@@ -375,3 +378,18 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .meetingCard[data-tone='wlater'] .dateBlock small { background: rgba(167, 139, 250, 0.3); color: #ede9fe; }
 .meetingCard[data-tone='today'] .dateBlock small { background: var(--yellow); color: #14161f; }
 
+
+.personRow { flex-wrap: nowrap; }
+.personRow .personName { flex: 1 1 0; min-width: 0; }
+
+/* "Back" is plain text with an arrow, not a boxed button. */
+.backLink { padding: 0.3rem 0; border: 0; border-radius: 0; background: none; }
+.backLink:hover { background: none; border-color: transparent; color: var(--yellow); }
+.backLink:hover svg { transform: translateX(-2px); }
+.backLink svg { transition: transform 0.15s; }
+
+/* Here / Not here yet: two equal columns that can never push past the page's right edge (a column's content used to set its own minimum width). */
+.lists { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.lists > section { min-width: 0; }
+.lists .person, .lists .personCol { min-width: 0; }
+@media (max-width: 760px) { .lists { grid-template-columns: minmax(0, 1fr); } }

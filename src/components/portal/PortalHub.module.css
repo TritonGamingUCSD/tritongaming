@@ -873,3 +873,10 @@
   .desktopContent div:has(> h1):not(:has(> :not(h1):not(p))) { display: none; }
   .frameBody { padding-top: 1rem; }
 }
+
+/* The footer rows used to clip their icon tile by a pixel top and bottom (an invisible 1px border shrank the row's inside, and the row hides overflow),
+   which cut the tile's border off. No border on the row, and its inside is exactly the tile's height. */
+@media (min-width: 900px) {
+  .appFrame .rail .railFooter > a, .appFrame .rail .railFooter > button { border: 0 !important; height: 30px !important; min-height: 30px !important; align-items: center !important; }
+  .appFrame .rail .railFooter > a > span, .appFrame .rail .railFooter > button > span, .appFrame .rail .railFooter > a > svg { height: 28px; }
+}
