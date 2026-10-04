@@ -24,7 +24,7 @@
 .noPoster { grid-template-columns: minmax(0, 1fr); }
 .heroCopy { display: flex; flex-direction: column; align-items: flex-start; gap: 1rem; min-width: 0; }
 
-.back { font-family: var(--font-handwriting); font-size: 1.25rem; color: var(--ev-text); text-decoration: underline; text-decoration-color: var(--ev-accent); text-underline-offset: 4px; text-decoration: none; }
+.back { font-family: var(--font-brick); font-size: 1.25rem; color: var(--ev-text); text-decoration: underline; text-decoration-color: var(--ev-accent); text-underline-offset: 4px; text-decoration: none; }
 .back:hover { text-decoration: underline; }
 .pastBadge { font-family: var(--font-renegare); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; background: var(--ev-highlight); color: var(--ev-on-highlight); padding: 0.4rem 0.6rem; transform: rotate(-2deg); box-shadow: var(--hard-shadow-sm); }
 .title { margin: 0; font-family: var(--ev-font-heading); font-weight: 400; font-size: clamp(1.9rem, 5.2vw, 4rem); line-height: 1; text-transform: uppercase; overflow-wrap: anywhere; text-wrap: balance; }
@@ -45,7 +45,7 @@
 .ticketBtn::before { top: -0.62rem; } .ticketBtn::after { bottom: -0.62rem; }
 .calBtn { color: var(--ev-text) !important; border: 2px solid var(--ev-text) !important; border-radius: 0 !important; background: color-mix(in srgb, var(--ev-bg) 60%, transparent) !important; font-family: var(--font-renegare) !important; font-size: 0.72rem !important; letter-spacing: 0.1em !important; text-transform: uppercase; }
 .back { text-shadow: none; }
-.pointsNote { margin: 0; display: inline-flex; align-items: center; gap: 0.4rem; font-family: var(--font-handwriting); font-size: 1.2rem; color: var(--ev-text); }
+.pointsNote { margin: 0; display: inline-flex; align-items: center; gap: 0.4rem; font-family: var(--font-renegare); font-size: 1.2rem; color: var(--ev-text); }
 
 /* The poster: natural shape, taped on, slightly crooked. */
 .poster { position: relative; justify-self: center; margin: 0; background: var(--ev-surface); padding: 0.6rem; box-shadow: var(--hard-shadow); transform: rotate(2.2deg); max-width: 100%; }
@@ -103,10 +103,10 @@
 .albumCard:nth-child(odd) { transform: rotate(-1.6deg); } .albumCard:nth-child(even) { transform: rotate(1.4deg); }
 .albumCard:hover { transform: rotate(0deg) translateY(-4px); }
 .albumCardImg { width: 100%; height: 100%; object-fit: cover; display: block; }
-.albumCardLabel { position: absolute; left: 0.8rem; right: 0.8rem; bottom: 0.45rem; display: flex; align-items: center; gap: 0.4rem; font-family: var(--font-handwriting); font-size: 1.1rem; color: var(--ev-on-surface); }
+.albumCardLabel { position: absolute; left: 0.8rem; right: 0.8rem; bottom: 0.45rem; display: flex; align-items: center; gap: 0.4rem; font-family: var(--font-renegare); font-size: 1.1rem; color: var(--ev-on-surface); }
 .photoLink { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1rem; background: var(--ev-surface); color: var(--ev-on-surface); text-decoration: none; box-shadow: var(--hard-shadow-sm); font-family: var(--ev-font-heading); }
 
-.credit { margin: 0; font-family: var(--font-handwriting); font-size: 1.1rem; color: var(--ev-text); opacity: 0.7; }
+.credit { margin: 0; font-family: var(--font-renegare); font-size: 1.1rem; color: var(--ev-text); opacity: 0.7; }
 
 @media (max-width: 860px) {
   .heroInner { grid-template-columns: minmax(0, 1fr); }
@@ -128,11 +128,11 @@
 .recapHead { display: flex; flex-direction: column; align-items: flex-start; gap: 0.6rem; }
 .recapSticker { font-family: var(--font-renegare); font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; background: var(--ev-accent); color: var(--ev-on-accent); padding: 0.4rem 0.75rem; border-radius: var(--radius-sm); transform: rotate(-2deg); box-shadow: var(--hard-shadow-sm); }
 .recapTitle { margin: 0; font-family: var(--font-soulmaze); font-weight: 400; font-size: clamp(1.5rem, 3.6vw, 2.3rem); line-height: 1.15; color: var(--ev-text); text-wrap: balance; }
-.recapSub { margin: 0; font-family: var(--font-handwriting); font-size: 1.25rem; color: var(--ev-text); opacity: 0.85; }
+.recapSub { margin: 0; font-family: var(--font-renegare); font-size: 1.25rem; color: var(--ev-text); opacity: 0.85; }
 .albumOpen { margin-left: auto; font-family: var(--font-renegare); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.7; }
 .photoLink { display: inline-flex; align-items: center; gap: 0.5rem; align-self: flex-start; padding: 0.6rem 0.9rem; background: var(--ev-surface); color: var(--ev-on-surface); text-decoration: none; font-family: var(--font-futura-heavy); font-size: 0.85rem; box-shadow: var(--hard-shadow-sm); }
 .note { display: flex; flex-direction: column; gap: 0.7rem; align-items: flex-start; }
-.noteLabel { font-family: var(--font-handwriting); font-size: 1.3rem; color: var(--ev-text); transform: rotate(-1.5deg); }
+.noteLabel { font-family: var(--font-brick); font-size: 1.3rem; color: var(--ev-text); transform: rotate(-1.5deg); }
 .note .paper { width: 100%; }
 @media (max-width: 640px) {
   .albumCard:nth-child(odd), .albumCard:nth-child(even) { transform: none; }

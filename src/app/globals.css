@@ -44,6 +44,10 @@
   --lightblue: #9fc4e8;
   --blue: #275a8f;
   --darkblue: #011941;
+  /* Page grounds from the brand deck: navy for pages, royal blue for the lighter band, and a darker shade of navy (never black) for the deepest band. */
+  --navy: #011941;
+  --royal: #004276;
+  --navy-deep: #000f2b;
 
   /* Gradient */
   --gradient-nav: linear-gradient(to right, #14477c, #011941);
@@ -95,7 +99,7 @@
   --hero-padding-top: max(var(--navbar-height), 6.5rem);
   --hero-padding-bottom: clamp(4rem, 8vw, 7rem);
   --hero-fade-height: 55%;
-  --hero-fade: linear-gradient(to bottom, transparent, #060c1a);
+  --hero-fade: linear-gradient(to bottom, transparent, var(--navy));
 
   /* Font Families */
   --font-brick: 'Brick', serif;
@@ -103,11 +107,10 @@
   --font-renegare: 'RenogareSoft-Regular', sans-serif;
   --font-futura-heavy: 'Futura-Heavy', sans-serif;
   --font-futura-medium: 'Futura-Medium', sans-serif;
-  --font-handwriting: var(--font-hand), 'Bradley Hand', cursive;
 
   /* Zine pieces: paper cut-outs, tape and hard offset shadows instead of glass and glow. Used by the public pages (and later the portal). */
-  --paper: #f2efe6;
-  --ink: #0a1630;
+  --paper: #f2f1f0;
+  --ink: #011941;
   --tape: rgba(255, 224, 140, 0.8);
   --hard-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55);
   --hard-shadow-sm: 4px 4px 0 rgba(0, 0, 0, 0.55);
@@ -190,7 +193,7 @@ body {
   font-family: var(--font-futura-medium);
   font-size: var(--fs-body);
   color: var(--white);
-  background-color: #060c1a;
+  background-color: var(--navy);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;

@@ -1,6 +1,6 @@
-.page { background: #060c1a; min-height: 100svh; }
+.page { background: var(--navy); min-height: 100svh; }
 
-.mission { margin: 0 auto; max-width: 44rem; text-align: center; font-family: var(--font-handwriting); font-size: clamp(1.3rem, 2.8vw, 1.9rem); line-height: 1.4; color: var(--yellow-text); text-wrap: balance; }
+.mission { margin: 0 auto; max-width: 44rem; text-align: center; font-family: var(--font-renegare); font-size: clamp(1.3rem, 2.8vw, 1.9rem); line-height: 1.4; color: var(--yellow-text); text-wrap: balance; }
 
 /* Logos sit on plates that flip light/dark by themselves (see LogoPlate), so a black or white logo is never lost */
 .logoWall { list-style: none; margin: 0; padding: 0.5rem 0 0; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 1.75rem 1.5rem; }
@@ -10,7 +10,7 @@
 .size_large { width: 15rem; height: 8.5rem; }
 .size_small { width: 8.5rem; height: 5rem; }
 .logoImg { position: absolute; inset: 0.6rem; width: calc(100% - 1.2rem); height: calc(100% - 1.2rem); object-fit: contain; }
-.noSponsors { margin: 0; text-align: center; font-family: var(--font-handwriting); font-size: 1.5rem; color: var(--yellow-text); }
+.noSponsors { margin: 0; text-align: center; font-family: var(--font-renegare); font-size: 1.5rem; color: var(--yellow-text); }
 
 .offerGrid { list-style: none; margin: 0; padding: 0.4rem 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 1.75rem 1.5rem; }
 .offerCard { position: relative; display: flex; flex-direction: column; gap: 0.6rem; background: var(--paper); color: var(--ink); padding: 1.2rem 1.1rem 1.3rem; box-shadow: var(--hard-shadow-sm); min-width: 0; }

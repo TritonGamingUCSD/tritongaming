@@ -3,16 +3,16 @@ import { titleSize } from './ogCard';
 
 export function RootCard({ logo }: { logo: string }) {
   return (
-    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', background: '#060c1a' }}>
+    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', background: '#011941' }}>
       <div style={{ display: 'flex', height: 26, background: '#ffc72c' }} />
       <div style={{ display: 'flex', flex: 1, alignItems: 'center', padding: '0 80px', gap: 56 }}>
-        <div style={{ display: 'flex', padding: 24, background: '#f2efe6', border: '6px solid #0a1630', boxShadow: '12px 12px 0 #000', transform: 'rotate(-4deg)' }}>
+        <div style={{ display: 'flex', padding: 24, background: '#f2f1f0', border: '6px solid #011941', boxShadow: '12px 12px 0 #000', transform: 'rotate(-4deg)' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={logo} width={230} height={230} alt="" />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div style={{ display: 'flex', fontFamily: 'Futura-Heavy', fontSize: 74, lineHeight: 1, color: '#f2f1f0', textTransform: 'uppercase' }}>Triton Gaming</div>
-          <div style={{ display: 'flex', alignSelf: 'flex-start', padding: '10px 22px', background: '#ffc72c', color: '#0a1630', fontFamily: 'Futura-Heavy', fontSize: 34, textTransform: 'uppercase', transform: 'rotate(-1.5deg)', boxShadow: '6px 6px 0 #000' }}>
+          <div style={{ display: 'flex', alignSelf: 'flex-start', padding: '10px 22px', background: '#ffc72c', color: '#011941', fontFamily: 'Futura-Heavy', fontSize: 34, textTransform: 'uppercase', transform: 'rotate(-1.5deg)', boxShadow: '6px 6px 0 #000' }}>
             Gaming Org at UC San Diego
           </div>
         </div>
@@ -29,13 +29,13 @@ export function EventCard({ p }: { p: { title: string; past: boolean; poster: st
       <div style={{ display: 'flex', height: 22, background: accent }} />
       <div style={{ display: 'flex', flex: 1, alignItems: 'center', padding: '0 70px', gap: 60 }}>
         {poster && (
-          <div style={{ display: 'flex', padding: 14, background: '#f2efe6', border: '5px solid #0a1630', boxShadow: '12px 12px 0 rgba(0,0,0,0.6)', transform: 'rotate(-2.5deg)' }}>
+          <div style={{ display: 'flex', padding: 14, background: '#f2f1f0', border: '5px solid #011941', boxShadow: '12px 12px 0 rgba(0,0,0,0.6)', transform: 'rotate(-2.5deg)' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={poster} height={440} alt="" style={{ height: 440, maxWidth: 420, objectFit: 'contain' }} />
           </div>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: 20 }}>
-          <div style={{ display: 'flex', alignSelf: 'flex-start', padding: '8px 20px', background: accent, color: '#0a1630', fontFamily: 'Futura-Heavy', fontSize: 28, textTransform: 'uppercase', boxShadow: '5px 5px 0 #000' }}>
+          <div style={{ display: 'flex', alignSelf: 'flex-start', padding: '8px 20px', background: accent, color: '#011941', fontFamily: 'Futura-Heavy', fontSize: 28, textTransform: 'uppercase', boxShadow: '5px 5px 0 #000' }}>
             {past ? 'Past event' : 'Event'}
           </div>
           <div style={{ display: 'flex', fontFamily: 'Futura-Heavy', fontSize: titleSize(title), lineHeight: 1.05, color: text, textTransform: 'uppercase' }}>{title}</div>
@@ -61,15 +61,15 @@ export function EventCard({ p }: { p: { title: string; past: boolean; poster: st
 export function DivisionCard({ p }: { p: { name: string; pitch: string; logoUrl: string } }) {
   const { name, pitch, logoUrl } = p;
   return (
-    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', background: '#060c1a' }}>
+    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', background: '#011941' }}>
       <div style={{ display: 'flex', height: 22, background: '#ffc72c' }} />
       <div style={{ display: 'flex', flex: 1, alignItems: 'center', padding: '0 80px', gap: 64 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 330, height: 330, background: '#f2efe6', border: '6px solid #0a1630', borderRadius: 56, boxShadow: '12px 12px 0 rgba(0,0,0,0.6)', transform: 'rotate(-4deg)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 330, height: 330, background: '#f2f1f0', border: '6px solid #011941', borderRadius: 56, boxShadow: '12px 12px 0 rgba(0,0,0,0.6)', transform: 'rotate(-4deg)' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={logoUrl} width={250} height={250} alt="" style={{ objectFit: 'contain' }} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: 22 }}>
-          <div style={{ display: 'flex', alignSelf: 'flex-start', padding: '8px 20px', background: '#ffc72c', color: '#0a1630', fontFamily: 'Futura-Heavy', fontSize: 28, textTransform: 'uppercase', boxShadow: '5px 5px 0 #000' }}>Division</div>
+          <div style={{ display: 'flex', alignSelf: 'flex-start', padding: '8px 20px', background: '#ffc72c', color: '#011941', fontFamily: 'Futura-Heavy', fontSize: 28, textTransform: 'uppercase', boxShadow: '5px 5px 0 #000' }}>Division</div>
           <div style={{ display: 'flex', fontFamily: 'Futura-Heavy', fontSize: titleSize(name, 84), lineHeight: 1.05, color: '#f2f1f0', textTransform: 'uppercase' }}>{name}</div>
           {pitch && <div style={{ display: 'flex', fontFamily: 'Futura-Medium', fontSize: 32, lineHeight: 1.3, color: '#ffd966' }}>{pitch}</div>}
           <div style={{ display: 'flex', fontFamily: 'Futura-Heavy', fontSize: 24, color: '#f2f1f0', opacity: 0.85, textTransform: 'uppercase', marginTop: 8 }}>Triton Gaming · Gaming Org at UC San Diego</div>

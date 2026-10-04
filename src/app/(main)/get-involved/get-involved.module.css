@@ -1,4 +1,4 @@
-.page { background: #060c1a; min-height: 100svh; }
+.page { background: var(--navy); min-height: 100svh; }
 
 .waysGrid { list-style: none; margin: 0; padding: 0.4rem 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1.75rem 1.5rem; }
 .wayCard { display: flex; flex-direction: column; align-items: flex-start; gap: 0.7rem; background: var(--paper); color: var(--ink); padding: 1.3rem 1.2rem 1.4rem; box-shadow: var(--hard-shadow-sm); min-width: 0; }

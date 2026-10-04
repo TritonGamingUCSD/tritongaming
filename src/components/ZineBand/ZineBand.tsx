@@ -7,7 +7,7 @@ import styles from './ZineBand.module.css';
 //   deep  – darker than ink; used for archives/galleries so the page changes tone without ever getting bright.
 // The website stays dark everywhere: the brightest thing a background ever gets is navy.
 // Bands that change colour get a cut-paper zigzag edge; a band that matches the one above it stays flush.
-export type BandTone = 'ink' | 'navy' | 'deep';
+export type BandTone = 'ink' | 'navy' | 'deep' | 'clear';
 
 export function ZineBand({
   tone = 'ink',

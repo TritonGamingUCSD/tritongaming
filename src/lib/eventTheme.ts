@@ -55,13 +55,13 @@ export function cleanTheme(raw: unknown): EventTheme | null {
 // Black or white, whichever reads better on this color. Used so text on an editor's accent color is always legible.
 export function readableOn(hex: string): string {
   const n = parseInt(hex.slice(1), 16), r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
-  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6 ? '#0a1630' : '#ffffff';
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6 ? '#011941' : '#ffffff';
 }
 
 export function themeVars(theme: EventTheme | null): Record<string, string> {
   const c = theme?.colors ?? {};
   const accent = c.accent ?? '#ffc72c';
-  const surface = c.surface ?? '#f2efe6';
+  const surface = c.surface ?? '#f2f1f0';
   const vars: Record<string, string> = {
     '--ev-bg': c.bg ?? '#050d1f',
     '--ev-surface': surface,

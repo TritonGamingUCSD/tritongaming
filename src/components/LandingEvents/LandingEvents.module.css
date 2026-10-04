@@ -1,7 +1,7 @@
 /* One big ticket for the next event. Paper object, tape, hard shadow; stickers/buttons get soft corners (die-cut), the paper stays square. */
 .section {
   padding-block: var(--sp-lg);
-  background: rgba(5, 13, 31, 0.78);
+  background: rgba(1, 25, 65, 0.78);
   position: relative;
   overflow-x: clip;
 }
@@ -14,7 +14,7 @@
   transform: rotate(-1.5deg); box-shadow: var(--hard-shadow-sm);
 }
 .ctaLink {
-  font-family: var(--font-handwriting); font-size: 1.3rem; color: var(--yellow); text-decoration: none;
+  font-family: var(--font-brick); font-size: 1.3rem; color: var(--yellow); text-decoration: none;
   border-bottom: 2px solid rgba(255, 199, 44, 0.5); padding-bottom: 2px; transition: border-color 0.2s;
 }
 .ctaLink:hover { border-color: var(--yellow); }

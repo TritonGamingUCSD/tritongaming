@@ -1,7 +1,9 @@
 'use client';
 
 import MemberCardBody from '@/components/MemberCard/MemberCardBody';
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import gsap from 'gsap';
+import { Flip } from 'gsap/Flip';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'motion/react';
 import { Moon, X } from 'lucide-react';
@@ -18,6 +20,29 @@ const TIER_LABELS: Record<BoardTier, string> = {
 };
 
 const TIER_ORDER: BoardTier[] = ['exec', 'lead', 'officer', 'alumni'];
+
+gsap.registerPlugin(Flip);
+
+// Switching years: cards of people who are on both teams glide to their new spot, everyone else fades in.
+// The state is captured before the view changes and played after React has drawn the new one.
+function useFlipOnChange<T>(view: T) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const saved = useRef<Flip.FlipState | null>(null);
+  const capture = () => { saved.current = Flip.getState('[data-flip-id]'); };
+  useLayoutEffect(() => {
+    const state = saved.current;
+    saved.current = null;
+    if (!state || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const light = window.matchMedia('(max-width: 640px)').matches;
+    Flip.from(state, {
+      targets: rootRef.current?.querySelectorAll('[data-flip-id]'),
+      duration: light ? 0.35 : 0.6,
+      ease: 'power2.inOut',
+      onEnter: (els) => gsap.fromTo(els, { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: light ? 0.25 : 0.4, delay: 0.1, clearProps: 'opacity,transform' }),
+    });
+  }, [view]);
+  return { rootRef, capture };
+}
 
 const SPRING = { type: 'spring' as const, stiffness: 420, damping: 38 };
 
@@ -85,6 +110,8 @@ export default function BoardSection({ members, years = [] }: { members: BoardMe
   const [openId, setOpenId] = useState<string | null>(null);
   // 'now' is the current team; a number is a past academic year (its recorded team).
   const [view, setView] = useState<'now' | number>('now');
+  const { rootRef, capture } = useFlipOnChange(view);
+  const changeView = (v: 'now' | number) => { if (v === view) return; capture(); setView(v); };
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   // Discord has no public profile URL to link to from a bare username, so
@@ -118,11 +145,11 @@ export default function BoardSection({ members, years = [] }: { members: BoardMe
   const openable = (p: PastMember) => (p.user_id && members.some((m) => m.id === p.user_id) ? p.user_id : null);
 
   return (
-    <div className={styles.root}>
+    <div className={styles.root} ref={rootRef}>
       {years.length > 0 && (
         <div className={styles.yearPicker} role="tablist" aria-label="Team by year">
-          <button type="button" role="tab" aria-selected={view === 'now'} className={`${styles.yearChip} ${view === 'now' ? styles.yearOn : ''}`} onClick={() => setView('now')}>Current team</button>
-          {years.map((y) => <button key={y.start_year} type="button" role="tab" aria-selected={view === y.start_year} className={`${styles.yearChip} ${view === y.start_year ? styles.yearOn : ''}`} onClick={() => setView(y.start_year)}>{y.label}</button>)}
+          <button type="button" role="tab" aria-selected={view === 'now'} className={`${styles.yearChip} ${view === 'now' ? styles.yearOn : ''}`} onClick={() => changeView('now')}>Current team</button>
+          {years.map((y) => <button key={y.start_year} type="button" role="tab" aria-selected={view === y.start_year} className={`${styles.yearChip} ${view === y.start_year ? styles.yearOn : ''}`} onClick={() => changeView(y.start_year)}>{y.label}</button>)}
         </div>
       )}
 
@@ -143,7 +170,7 @@ export default function BoardSection({ members, years = [] }: { members: BoardMe
                       {m.title && <div className={styles.title}>{m.title}</div>}
                     </>
                   );
-                  return open ? <motion.button key={m.id} className={`${styles.card} ${tier === 'exec' ? styles.execCard : ''}`} onClick={() => setOpenId(open)} whileHover={{ y: -3, transition: { duration: 0.15 } }}>{face}</motion.button> : <div key={m.id} className={`${styles.card} ${styles.plain} ${tier === 'exec' ? styles.execCard : ''}`}>{face}</div>;
+                  return open ? <motion.button key={m.id} data-flip-id={m.user_id ?? m.id} className={`${styles.card} ${tier === 'exec' ? styles.execCard : ''}`} onClick={() => setOpenId(open)} whileHover={{ y: -3, transition: { duration: 0.15 } }}>{face}</motion.button> : <div key={m.id} data-flip-id={m.user_id ?? m.id} className={`${styles.card} ${styles.plain} ${tier === 'exec' ? styles.execCard : ''}`}>{face}</div>;
                 })}
               </div>
             </section>
@@ -162,7 +189,7 @@ export default function BoardSection({ members, years = [] }: { members: BoardMe
                   {group.map((m) => {
                     const url = resolveAvatarUrl(m);
                     return (
-                      <li key={m.id}>
+                      <li key={m.id} data-flip-id={m.id}>
                         <button type="button" className={styles.wallItem} onClick={() => setOpenId(m.id)}>
                           {url ? <Image src={url} alt="" width={44} height={44} className={styles.wallAvatar} unoptimized referrerPolicy="no-referrer" /> : <span className={styles.wallFallback}>{(m.display_name || '?')[0].toUpperCase()}</span>}
                           <span><strong>{m.display_name || 'Anonymous'}</strong>{m.org_title && <small>{m.org_title}</small>}</span>
@@ -181,6 +208,7 @@ export default function BoardSection({ members, years = [] }: { members: BoardMe
                 {group.map((m) => (
                   <motion.button
                     key={m.id}
+                    data-flip-id={m.id}
                     className={`${styles.card} ${tier === 'exec' ? styles.execCard : ''} ${m.inactive ? styles.cardIdle : ''}`}
                     onClick={() => setOpenId(m.id)}
                     whileHover={{ y: -3, transition: { duration: 0.15 } }}

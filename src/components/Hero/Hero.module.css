@@ -26,7 +26,7 @@
   position: fixed;
   inset: 0;
   height: 100lvh;
-  background: rgba(5, 13, 31, 0.5);
+  background: rgba(1, 25, 65, 0.5);
   z-index: -1;
 }
 
@@ -109,7 +109,7 @@
 .photos { position: relative; height: clamp(300px, 36vw, 440px); }
 .photo { position: absolute; margin: 0; background: var(--paper); padding: 0.6rem 0.6rem 2rem; box-shadow: var(--hard-shadow); will-change: transform; }
 .photo img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; }
-.photo figcaption { position: absolute; left: 0.8rem; right: 0.8rem; bottom: 0.4rem; font-family: var(--font-handwriting); font-size: 1.15rem; line-height: 1.1; color: var(--ink); }
+.photo figcaption { position: absolute; left: 0.8rem; right: 0.8rem; bottom: 0.4rem; font-family: var(--font-renegare); font-size: 1.15rem; line-height: 1.1; color: var(--ink); }
 .photoA { top: 0; right: 0; width: 62%; transform: rotate(4deg); }
 .photoB { top: 50%; left: 2%; width: 54%; transform: rotate(-5deg); }
 .credit { position: absolute; right: 0.7rem; bottom: 0.35rem; font-family: var(--font-renegare); font-size: 0.5rem; letter-spacing: 0.1em; text-transform: uppercase; color: #5a6684; }

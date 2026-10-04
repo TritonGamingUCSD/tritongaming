@@ -1,5 +1,5 @@
-.page { background: #060c1a; min-height: 100svh; }
+.page { background: var(--navy); min-height: 100svh; }
 
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 320px)); justify-content: center; gap: 2.25rem 1.75rem; padding-top: 0.9rem; }
 
-.emptyMsg { margin: 0; text-align: center; font-family: var(--font-handwriting); font-size: 1.6rem; color: var(--yellow-text); }
+.emptyMsg { margin: 0; text-align: center; font-family: var(--font-renegare); font-size: 1.6rem; color: var(--yellow-text); }

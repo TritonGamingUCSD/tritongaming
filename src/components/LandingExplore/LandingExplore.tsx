@@ -22,7 +22,7 @@ const TILES: Tile[] = [
 
 export default function LandingExplore({ content = {} }: { content?: Record<string, string | undefined> }) {
   return (
-    <ZineBand tone="navy" label="Explore the site">
+    <ZineBand tone="clear" edge={false} className={styles.section} label="Explore the site">
       <ZineMotion />
       <BandHeader label={content.label || 'There is more'} title={content.title || 'Explore the site'} sub={content.sub || 'Seven more pages, from the people to the partners.'} />
       <ul className={styles.grid}>

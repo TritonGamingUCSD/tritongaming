@@ -1,5 +1,5 @@
 .wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.1rem; padding: 2rem 1rem; }
-.full { min-height: 70svh; width: 100%; background: #060c1a; }
+.full { min-height: 70svh; width: 100%; background: var(--navy); }
 
 .stamp { padding: 0.7rem; background: var(--paper); border: 3px solid var(--ink); box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.6); transform: rotate(-3deg); animation: stamp 1.1s cubic-bezier(0.5, 0, 0.5, 1) infinite; }
 .logo { display: block; width: 64px; height: 64px; object-fit: contain; }
@@ -13,7 +13,7 @@
 .tapeSlide { position: absolute; top: 0; bottom: 0; left: -40px; width: calc(100% + 80px); background: repeating-linear-gradient(-45deg, var(--yellow) 0 10px, var(--ink) 10px 20px); animation: slide 0.8s linear infinite; }
 @keyframes slide { to { transform: translateX(28px); } }
 
-.label { margin: 0; font-family: var(--font-handwriting); font-size: 1.4rem; color: var(--yellow-text); }
+.label { margin: 0; font-family: var(--font-brick); font-size: 1.4rem; color: var(--yellow-text); }
 
 @media (prefers-reduced-motion: reduce) {
   .stamp, .tapeSlide { animation: none; }

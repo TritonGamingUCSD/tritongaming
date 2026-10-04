@@ -47,6 +47,10 @@ export default function SocialEmbedsField({
     setDraftUrl('');
   }
 
+  function handleCaption(index: number, caption: string) {
+    onChange(value.map((e, i) => (i === index ? { ...e, caption } : e)));
+  }
+
   function handleRemove(index: number) {
     onChange(value.filter((_, i) => i !== index));
   }
@@ -79,6 +83,15 @@ export default function SocialEmbedsField({
                 <div className={styles.embedActions}>
                   <IconButton kind="remove" label="Remove embed" onClick={() => handleRemove(i)} />
                 </div>
+                <input
+                  className={`${styles.input} ${styles.captionInput}`}
+                  type="text"
+                  maxLength={80}
+                  value={embed.caption ?? ''}
+                  onChange={(e) => handleCaption(i, e.target.value)}
+                  placeholder={`Caption under the post (optional, shows “${config.label}” if empty)`}
+                  aria-label="Caption"
+                />
               </li>
             );
           })}

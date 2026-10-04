@@ -1,4 +1,4 @@
-.page { background: #060c1a; min-height: 100svh; }
+.page { background: var(--navy); min-height: 100svh; }
 
 .grid { list-style: none; margin: 0; padding: 0.5rem 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 2rem 1.5rem; }
 
@@ -37,7 +37,7 @@
 .cardLink { position: absolute; inset: 0; z-index: 2; }
 .cardLink:focus-visible { outline: 3px solid var(--yellow); outline-offset: 4px; }
 
-.noContent { margin: 0; text-align: center; font-family: var(--font-handwriting); font-size: 1.6rem; color: var(--yellow-text); }
+.noContent { margin: 0; text-align: center; font-family: var(--font-renegare); font-size: 1.6rem; color: var(--yellow-text); }
 
 @media (max-width: 520px) {
   .grid { grid-template-columns: minmax(0, 1fr); gap: 2.4rem 0; }

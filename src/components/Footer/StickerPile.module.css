@@ -9,6 +9,6 @@
 .yellow { background: var(--yellow); }
 .paper { background: var(--paper); }
 .blue { background: #9fc4e8; }
-.hint { position: absolute; right: 0; top: 0; margin: 0; font-family: var(--font-handwriting); font-size: 1.1rem; color: var(--yellow-text); transform: rotate(2deg); pointer-events: none; }
+.hint { position: absolute; right: 0; top: 0; margin: 0; font-family: var(--font-renegare); font-size: 1.1rem; color: var(--yellow-text); transform: rotate(2deg); pointer-events: none; }
 @media (max-width: 640px) { .pit { height: 8rem; } .sticker { font-size: 0.82rem; padding: 0.45rem 0.8rem; } .hint { display: none; } }
 @media (hover: none) { .hint { display: none; } .sticker { cursor: default; } }

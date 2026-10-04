@@ -3,11 +3,8 @@ import ToastHost from '@/components/SaveToast/ToastHost';
 import type { Metadata, Viewport } from 'next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/next';
-import { Gochi_Hand } from 'next/font/google';
 import './globals.css';
 
-// Stand-in for the handwriting font that will be made from a member's handwriting. Swap the font file and keep the --font-hand variable.
-const hand = Gochi_Hand({ weight: '400', subsets: ['latin'], variable: '--font-hand', display: 'swap' });
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
@@ -60,7 +57,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={hand.variable}>
+    <html lang="en">
       <body>
         {children}
         <ToastHost />

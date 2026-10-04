@@ -43,6 +43,7 @@
 
 .embedRow {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.625rem;
   background: rgba(255,255,255,0.03);
@@ -51,6 +52,8 @@
   padding: 0.5rem 0.75rem;
   transition: opacity 0.15s, outline-color 0.15s;
 }
+
+.captionInput { flex: 1 1 100%; padding: 0.4rem 0.7rem; font-size: 0.8rem; }
 
 .rowDragging { opacity: 0.4; }
 .rowDragOver { outline: 2px solid rgba(255,199,44,0.5); outline-offset: 2px; }
@@ -84,17 +87,6 @@
   white-space: nowrap;
   flex: 1;
 }
-
-.embedRemoveBtn {
-  font-size: 0.75rem;
-  color: #fca5a5;
-  padding: 0.3rem 0.6rem;
-  border-radius: 0.35rem;
-  flex-shrink: 0;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.embedRemoveBtn:hover { background: rgba(220,38,38,0.1); }
 
 .embedActions {
   display: flex;

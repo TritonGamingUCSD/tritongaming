@@ -31,8 +31,8 @@
 }
 .slot { min-height: 9rem; display: grid; align-items: center; min-width: 0; overflow: hidden; }
 .slot :global(iframe), .slot :global(.twitter-tweet), .slot :global(.instagram-media) { max-width: 100% !important; }
-.waiting { text-align: center; font-family: var(--font-handwriting); font-size: 1.2rem; color: #5a6580; }
-.caption { margin: 0.55rem 0.2rem 0.1rem; font-family: var(--font-handwriting); font-size: 1.15rem; line-height: 1.2; color: #2a3550; }
+.waiting { text-align: center; font-family: var(--font-renegare); font-size: 1.2rem; color: #5a6580; }
+.caption { margin: 0.55rem 0.2rem 0.1rem; font-family: var(--font-renegare); font-size: 1.15rem; line-height: 1.2; color: #2a3550; }
 
 .label {
   position: absolute;
@@ -97,7 +97,7 @@
 .row::-webkit-scrollbar { display: none; }
 .row > * { flex: 0 0 min(84%, 340px); scroll-snap-align: center; min-width: 0; }
 .row[data-count='1'] > * { flex-basis: 100%; }
-.swipeHint { display: block; margin: 0; text-align: right; font-family: var(--font-handwriting); font-size: 1.15rem; color: var(--yellow-text); }
+.swipeHint { display: block; margin: 0; text-align: right; font-family: var(--font-renegare); font-size: 1.15rem; color: var(--yellow-text); }
 @media (max-width: 640px) {
   .tiltL, .tiltR { transform: none; }
 }

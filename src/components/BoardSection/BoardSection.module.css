@@ -22,10 +22,10 @@
 }
 
 /* Each tier is its own flat band, never brighter than navy, so the page changes tone as you go down it. */
-.tier_exec { background: #0d2250; }
-.tier_lead { background: #060c1a; }
-.tier_officer { background: #03060f; }
-.tier_alumni { background: #060c1a; }
+.tier_exec { background: var(--royal); }
+.tier_lead { background: var(--navy); }
+.tier_officer { background: var(--navy-deep); }
+.tier_alumni { background: var(--navy); }
 .tierSection > * { width: 100%; max-width: 1180px; }
 .tierSection > .tierLabel { width: auto; }
 
@@ -211,7 +211,7 @@
 .popup { max-height: 88vh; overflow-y: auto; margin-inline: 0; }
 
 /* Team page redesign: a year picker, a bigger exec row, and a compact alumni wall. */
-.yearPicker { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; padding: var(--sp-md) clamp(1rem, 4vw, 2.5rem) 0; background: #0d2250; }
+.yearPicker { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; padding: var(--sp-md) clamp(1rem, 4vw, 2.5rem) 0; background: var(--royal); }
 .yearChip { padding: 0.5rem 0.95rem; border-radius: var(--radius-pill); border: 2px solid var(--ink); background: var(--paper); color: var(--ink); font-family: var(--font-renegare); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.55); transition: transform 0.15s ease, box-shadow 0.15s ease; }
 .yearChip:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.55); }
 .yearOn { background: var(--yellow); }

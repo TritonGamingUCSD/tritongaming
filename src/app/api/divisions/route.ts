@@ -23,9 +23,12 @@ const EMBED_TYPES: SocialEmbed['type'][] = ['instagram', 'twitter', 'tiktok', 'y
 
 function cleanSocialEmbeds(value: unknown): SocialEmbed[] {
   if (!Array.isArray(value)) return [];
-  return value.filter(
-    (e): e is SocialEmbed => !!e && typeof e === 'object' && EMBED_TYPES.includes(e.type) && typeof e.url === 'string' && !!e.url.trim()
-  );
+  return value
+    .filter((e): e is SocialEmbed => !!e && typeof e === 'object' && EMBED_TYPES.includes(e.type) && typeof e.url === 'string' && !!e.url.trim())
+    .map((e) => {
+      const caption = typeof e.caption === 'string' ? e.caption.trim().slice(0, 80) : '';
+      return caption ? { type: e.type, url: e.url, caption } : { type: e.type, url: e.url };
+    });
 }
 
 // Mutations go through the regular (RLS-enforced) client, not a service-role

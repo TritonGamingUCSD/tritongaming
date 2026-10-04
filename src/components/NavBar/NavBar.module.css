@@ -40,7 +40,7 @@
 
 /* The poster menu: flat ink, caution tape top and bottom, big links that deal in one by one. */
 .menu {
-  position: fixed; inset: 0; z-index: 1100; overflow-y: auto; background: #060c1a; color: var(--white);
+  position: fixed; inset: 0; z-index: 1100; overflow-y: auto; background: var(--navy); color: var(--white);
   visibility: hidden; opacity: 0; transform: translateY(-2.5rem); pointer-events: none;
   transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 0.3s;
 }
@@ -60,7 +60,7 @@
 .link:hover .word, .link:focus-visible .word { background-size: 100% 0.28em; }
 .link:focus-visible { outline: 3px solid var(--yellow); outline-offset: 4px; }
 .linkOn .word { color: var(--yellow-text); }
-.here { align-self: center; padding: 0.25rem 0.6rem; background: var(--yellow); color: var(--ink); border-radius: var(--radius-pill); font-family: var(--font-handwriting); font-size: 1rem; line-height: 1; transform: rotate(-3deg); box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6); white-space: nowrap; }
+.here { align-self: center; padding: 0.25rem 0.6rem; background: var(--yellow); color: var(--ink); border-radius: var(--radius-pill); font-family: var(--font-renegare); font-size: 1rem; line-height: 1; transform: rotate(-3deg); box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6); white-space: nowrap; }
 
 .side { display: flex; flex-direction: column; align-items: flex-start; gap: 1rem; padding: 1.4rem; background: var(--paper); color: var(--ink); box-shadow: var(--hard-shadow); transform-origin: left top; }
 .menuOpen .side { transform: rotate(-1deg); }
@@ -68,7 +68,7 @@
 .discord:hover, .discord:focus-visible { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--ink); }
 .sideLink { color: var(--ink); font-family: var(--font-futura-heavy); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 3px solid var(--ink); text-decoration: none; padding-bottom: 1px; }
 .sideLink:hover, .sideLink:focus-visible { border-bottom-color: #b8860b; }
-.tag { margin: 0; font-family: var(--font-handwriting); font-size: 1.25rem; color: #3a4764; }
+.tag { margin: 0; font-family: var(--font-brick); font-size: 1.25rem; color: #3a4764; }
 
 @media (max-width: 860px) {
   .menuInner { grid-template-columns: minmax(0, 1fr); padding-top: 6rem; gap: 2rem; }

@@ -22,7 +22,7 @@ export default async function EventOgImage({ params }: { params: Promise<{ slug:
           title: event?.full_name ?? 'Triton Gaming event',
           past: event ? new Date(event.end_date || event.start_date).getTime() < Date.now() : false,
           poster,
-          bg: c.bg ?? '#060c1a',
+          bg: c.bg ?? '#011941',
           accent: c.accent ?? '#ffc72c',
           text: c.text ?? '#f2f1f0',
           date: event ? formatEventDateRange(event.start_date, event.end_date || null, { weekday: true }) : '',

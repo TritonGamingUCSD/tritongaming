@@ -1,1 +1,1 @@
-.page { background: #060c1a; min-height: 100svh; --paper: #dcd6c3; } /* a softer paper on this page: dozens of cards in bright cream glare against the dark */
+.page { background: var(--navy); min-height: 100svh; --paper: #d8d7d3; } /* a softer paper on this page: dozens of cards in bright cream glare against the dark */

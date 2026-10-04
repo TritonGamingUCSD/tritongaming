@@ -16,3 +16,6 @@
 .link:focus-visible { outline: 3px solid var(--yellow); outline-offset: 4px; }
 
 @media (max-width: 640px) { .tiltL, .tiltR { transform: none; } }
+
+/* phones have the Menu button; the section is for larger screens */
+@media (max-width: 767px) { .section { display: none; } }
