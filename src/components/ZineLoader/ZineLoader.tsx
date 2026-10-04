@@ -8,7 +8,7 @@ export default function ZineLoader({ label = 'Loading…', fullHeight = true }: 
   return (
     <div className={`${styles.wrap} ${fullHeight ? styles.full : ''}`} role="status" aria-live="polite">
       <div className={styles.stamp} aria-hidden="true">
-        <Image src="/logos/tg_logo.png" alt="" width={64} height={64} priority className={styles.logo} />
+        <Image src="/logos/tg_logo.png" alt="" width={64} height={64} className={styles.logo} />
       </div>
       <div className={styles.tape} aria-hidden="true"><span className={styles.tapeSlide} /></div>
       <p className={styles.label}>{label}</p>

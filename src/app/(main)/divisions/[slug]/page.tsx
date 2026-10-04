@@ -48,13 +48,11 @@ export async function generateMetadata({ params }: Params) {
       title,
       description,
       type: 'website',
-      ...(logoUrl ? { images: [{ url: logoUrl }] } : {}),
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      ...(logoUrl ? { images: [logoUrl] } : {}),
     },
   };
 }

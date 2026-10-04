@@ -273,3 +273,8 @@
   .execCard .avatar, .execCard .avatarFallback { width: 92px; height: 92px; }
   .execCard .name { font-size: 0.98rem; }
 }
+
+/* The opened card: a paper print with a hard shadow and a yellow close sticker, to match the rest of the public site. */
+.panel { background: var(--paper); color: var(--ink); border: 3px solid var(--ink); border-radius: 0; box-shadow: var(--hard-shadow); }
+.closeBtn { top: 0.7rem; right: 0.7rem; width: 32px; height: 32px; background: var(--yellow); border: 2px solid var(--ink); border-radius: var(--radius-sm); color: var(--ink); box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5); }
+.closeBtn:hover { background: var(--yellow); box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5); }

@@ -1,200 +1,84 @@
-/* The nav is a strip of paper stuck to the top of the page: ink text, a gold block on the page you are on, a hard shadow, a dark "portal" sticker.
-   No glass, gradients or glow. It slides away as you scroll down (see NavBar.tsx) and comes back when you scroll up. */
-.navbar {
+/* Two stickers pinned to the top corners, and a full-screen poster menu. No glass, gradients or glow.
+   The bar slides away as you scroll down (see NavBar.tsx) and comes back when you scroll up. */
+.bar {
   position: fixed;
   top: calc(max(0.85rem, env(safe-area-inset-top)) + var(--banner-offset, 0px));
   left: 0;
   right: 0;
-  z-index: 1000;
+  z-index: 1200; /* above the poster menu, so Menu / Close is always reachable */
   display: flex;
-  align-items: center;
-  gap: clamp(0.5rem, 1.6vw, 1.25rem);
-  padding: 0.45rem 0.6rem 0.45rem 0.9rem;
-  width: fit-content;
-  max-width: calc(100vw - 24px);
-  margin-inline: auto;
-  background: var(--paper);
-  color: var(--ink);
-  border: 3px solid var(--ink);
-  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding-inline: clamp(0.75rem, 3vw, 1.75rem);
+  pointer-events: none;
+  transition: transform 0.25s ease;
   will-change: transform;
 }
-.scrolled { box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.6); }
+.bar > * { pointer-events: auto; }
 
-.logo { flex-shrink: 0; display: flex; align-items: center; }
-.logoImg { width: clamp(34px, 4vw, 42px); height: auto; transition: transform 0.2s ease; }
-.logo:hover .logoImg { transform: rotate(-6deg) scale(1.08); }
+.logo { display: grid; place-items: center; padding: 0.3rem 0.45rem; background: var(--paper); border: 3px solid var(--ink); box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6); transform: rotate(-3deg); transition: transform 0.2s ease; }
+.logo:hover { transform: rotate(2deg) scale(1.05); }
+.logoImg { width: clamp(36px, 4.4vw, 46px); height: auto; display: block; }
 
-.desktopNav { display: flex; align-items: center; gap: clamp(0.15rem, 0.6vw, 0.4rem); }
-.navLink {
-  font-family: var(--font-renegare);
-  font-size: clamp(0.62rem, 0.9vw, 0.74rem);
-  letter-spacing: 0.1em;
-  color: var(--ink);
-  white-space: nowrap;
-  padding: 0.55rem 0.7rem;
-  position: relative;
-  transition: background 0.15s ease, transform 0.15s ease;
+.right { display: flex; align-items: flex-start; gap: 0.7rem; }
+
+.portal, .menuBtn {
+  display: inline-flex; align-items: center; gap: 0.5rem; height: 2.9rem; padding: 0 1rem;
+  border: 3px solid var(--ink); font-family: var(--font-futura-heavy); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6); cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
-.navLink:hover, .navLink:focus-visible { background: var(--yellow); transform: rotate(-2deg); }
-.navLink:focus-visible { outline: 3px solid var(--ink); outline-offset: 1px; }
-.navLinkActive { background: var(--ink); color: var(--paper); transform: rotate(-1.5deg); }
-.navLinkActive:hover, .navLinkActive:focus-visible { background: var(--ink); color: var(--paper); }
+.portal { background: var(--ink); color: var(--yellow); border-color: var(--paper); border-radius: var(--radius-sm); transform: rotate(1.5deg); }
+.menuBtn { background: var(--yellow); color: var(--ink); border-radius: var(--radius-sm); transform: rotate(-1.5deg); }
+.portal:hover, .menuBtn:hover, .portal:focus-visible, .menuBtn:focus-visible { transform: translate(-2px, -2px) rotate(0deg); box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.6); }
+.menuBtn:focus-visible, .portal:focus-visible { outline: 3px solid var(--white); outline-offset: 2px; }
 
-/* Portal / sign-in: a dark sticker with a gold label */
-.authBtn, .loginBtn {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  background: var(--ink);
-  color: var(--yellow);
-  border: 3px solid var(--ink);
-  font-family: var(--font-renegare);
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transform: rotate(1.4deg);
-  transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
+.avatar, .avatarFallback { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 2px solid var(--paper); flex-shrink: 0; }
+.avatarFallback { display: grid; place-items: center; background: var(--yellow); color: var(--ink); font-size: 0.7rem; }
+
+.bars { display: grid; gap: 4px; width: 18px; }
+.bars i { display: block; height: 3px; background: var(--ink); }
+
+/* The poster menu: flat ink, caution tape top and bottom, big links that deal in one by one. */
+.menu {
+  position: fixed; inset: 0; z-index: 1100; overflow-y: auto; background: #060c1a; color: var(--white);
+  visibility: hidden; opacity: 0; transform: translateY(-2.5rem); pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 0.3s;
 }
-.authBtn { padding: 0.25rem 0.75rem 0.25rem 0.25rem; }
-.loginBtn { padding: 0.5rem 0.9rem; text-transform: uppercase; }
-.authBtn:hover, .loginBtn:hover { background: var(--yellow); color: var(--ink); transform: rotate(-1deg) translateY(-2px); }
-.loginBtnIcon { display: inline-flex; color: currentColor; }
-.authAvatar { width: 26px; height: 26px; object-fit: cover; border: 2px solid var(--paper); }
-.authAvatarFallback { width: 26px; height: 26px; background: var(--yellow); color: var(--ink); display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-family: var(--font-futura-heavy); flex-shrink: 0; }
-.authLabel { font-size: 0.66rem; }
+.menuOpen { visibility: visible; opacity: 1; transform: none; pointer-events: auto; transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s; }
+.menu::before, .menu::after { content: ''; position: fixed; left: 0; right: 0; height: 0.9rem; background: repeating-linear-gradient(-45deg, var(--yellow) 0 16px, var(--ink) 16px 32px); z-index: 1; }
+.menu::before { top: 0; }
+.menu::after { bottom: 0; }
 
-/* Stand-in while the sign-in check is in flight, same footprint as the real button */
-.authSkeleton { width: 96px; height: 30px; background: var(--paper-2, #e6e1d3); border: 3px solid var(--ink); animation: authSkeletonPulse 1.2s ease-in-out infinite; flex-shrink: 0; }
-@keyframes authSkeletonPulse { 50% { opacity: 0.55; } }
-@media (prefers-reduced-motion: reduce) { .authSkeleton { animation: none; } }
+.menuInner { min-height: 100%; max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 2rem 4rem; align-items: center; padding: 6.5rem clamp(1rem, 5vw, 3rem) 4rem; }
+.links { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.1rem; }
+.links > li, .side { opacity: 0; transform: translateY(1.2rem); transition: opacity 0.35s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1); }
+.menuOpen .links > li, .menuOpen .side { opacity: 1; transform: none; transition-delay: calc(0.08s + var(--i, 0) * 0.04s); }
 
-/* Phone controls (hidden on desktop) */
-.mobileControls { display: none; align-items: center; gap: 0.4rem; }
-.hamburger { position: relative; display: flex; flex-direction: column; justify-content: space-between; width: 22px; height: 18px; background: none; border: none; cursor: pointer; padding: 0; }
-.hamburger span { position: absolute; left: 50%; top: 50%; width: 22px; height: 3px; margin: -1.5px 0 0 -11px; background: var(--ink); transition: transform 0.3s ease, opacity 0.3s ease; transform-origin: center; }
-.hamburger span:nth-child(1) { transform: translateY(-7px); }
-.hamburger span:nth-child(3) { transform: translateY(7px); }
-.hamburgerOpen span:nth-child(1) { transform: translateY(0) rotate(45deg); }
-.hamburgerOpen span:nth-child(2) { opacity: 0; transform: scaleX(0); }
-.hamburgerOpen span:nth-child(3) { transform: translateY(0) rotate(-45deg); }
+.link { position: relative; display: flex; align-items: baseline; gap: 1rem; padding: 0.15rem 0; text-decoration: none; color: var(--white); }
+.num { font-family: var(--font-brick); font-size: 1rem; color: var(--yellow); min-width: 1.6rem; }
+.word { font-family: var(--font-soulmaze); font-size: clamp(1.9rem, 5.5vw, 3.4rem); line-height: 1.12; background-image: linear-gradient(var(--yellow), var(--yellow)); background-repeat: no-repeat; background-size: 0% 0.28em; background-position: 0 92%; transition: background-size 0.25s ease, color 0.2s ease; }
+.link:hover .word, .link:focus-visible .word { background-size: 100% 0.28em; }
+.link:focus-visible { outline: 3px solid var(--yellow); outline-offset: 4px; }
+.linkOn .word { color: var(--yellow-text); }
+.here { align-self: center; padding: 0.25rem 0.6rem; background: var(--yellow); color: var(--ink); border-radius: var(--radius-pill); font-family: var(--font-handwriting); font-size: 1rem; line-height: 1; transform: rotate(-3deg); box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6); white-space: nowrap; }
 
-.mobileAuthFab {
-  display: none;
-  position: absolute;
-  top: 0;
-  right: 0;
-  align-items: center;
-  justify-content: center;
-  width: 52px;
-  height: 52px;
-  background: var(--yellow);
-  color: var(--ink);
-  border: 3px solid var(--ink);
-  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.55);
-  font-family: var(--font-renegare);
-  transform: rotate(2deg);
-  flex-shrink: 0;
+.side { display: flex; flex-direction: column; align-items: flex-start; gap: 1rem; padding: 1.4rem; background: var(--paper); color: var(--ink); box-shadow: var(--hard-shadow); transform-origin: left top; }
+.menuOpen .side { transform: rotate(-1deg); }
+.discord { display: inline-flex; align-items: center; gap: 0.6rem; padding: 0.85rem 1.2rem; background: #5865f2; color: #fff; text-decoration: none; border: 3px solid var(--ink); border-radius: var(--radius-sm); box-shadow: 4px 4px 0 var(--ink); font-family: var(--font-futura-heavy); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.04em; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+.discord:hover, .discord:focus-visible { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--ink); }
+.sideLink { color: var(--ink); font-family: var(--font-futura-heavy); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 3px solid var(--ink); text-decoration: none; padding-bottom: 1px; }
+.sideLink:hover, .sideLink:focus-visible { border-bottom-color: #b8860b; }
+.tag { margin: 0; font-family: var(--font-handwriting); font-size: 1.25rem; color: #3a4764; }
+
+@media (max-width: 860px) {
+  .menuInner { grid-template-columns: minmax(0, 1fr); padding-top: 6rem; gap: 2rem; }
+  .menuOpen .side { transform: none; }
 }
-.mobileAuthFabWide { width: auto; padding: 0 1rem; font-size: 0.74rem; letter-spacing: 0.1em; white-space: nowrap; }
-
-/* Full-screen menu: big paper-strip links on the dark board */
-.mobileMenu {
-  position: fixed;
-  inset: 0;
-  z-index: 999;
-  background: var(--night, #050d1f);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: safe center;
-  padding: calc(max(0.85rem, env(safe-area-inset-top)) + 52px + 1rem) 1rem 2rem;
-  overflow-y: auto;
-  pointer-events: none;
-  opacity: 0;
-  transform: translateY(-12px);
-  transition: transform 0.3s ease, opacity 0.3s ease;
+@media (max-width: 420px) {
+  .portal span:last-child { display: none; }
+  .portal { padding: 0 0.7rem; }
+  .portal:not(:has(.avatar, .avatarFallback)) span:last-child { display: inline; }
 }
-.mobileMenuOpen { pointer-events: auto; opacity: 1; transform: translateY(0); }
-
-.closeBtn {
-  position: absolute;
-  top: clamp(1rem, 4vw, 2rem);
-  right: clamp(1rem, 4vw, 2rem);
-  width: 46px;
-  height: 46px;
-  font-size: 2rem;
-  line-height: 1;
-  color: var(--ink);
-  background: var(--yellow);
-  border: 3px solid var(--ink);
-  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.55);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transform: rotate(3deg);
-  transition: transform 0.15s ease;
-}
-.closeBtn:hover { transform: rotate(-4deg); }
-
-.mobileNavList { display: flex; flex-direction: column; align-items: stretch; gap: 0.7rem; width: min(360px, 100%); }
-.mobileNavLink {
-  display: block;
-  font-family: var(--font-soulmaze);
-  font-size: clamp(1.3rem, 5.4vw, 1.8rem);
-  letter-spacing: 0.04em;
-  color: var(--ink);
-  background: var(--paper);
-  padding: 0.7rem 1.1rem;
-  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55);
-  transition: transform 0.15s ease, background 0.15s ease;
-}
-.mobileNavList li:nth-child(odd) .mobileNavLink { transform: rotate(-1.2deg); }
-.mobileNavList li:nth-child(even) .mobileNavLink { transform: rotate(1deg); }
-.mobileNavLink:hover, .mobileNavLink:focus-visible { background: var(--yellow); transform: rotate(0deg) translateX(4px); }
-
-.mobileAuthItem { margin-top: 0.6rem; }
-.mobilePortalBtn, .mobileLoginBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.7rem;
-  font-family: var(--font-renegare);
-  font-size: 0.95rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--yellow);
-  background: var(--ink);
-  border: 3px solid var(--paper);
-  padding: 0.9rem 1.1rem;
-  transform: rotate(-1deg);
-}
-
-@media (max-width: 768px) {
-  .desktopNav { display: none; }
-  .mobileControls { display: flex; }
-  .mobileAuthFab { display: flex; }
-  /* Phone header: a menu sticker on the left, the portal sticker on the right, the logo centered between them. The bar itself is invisible and ignores taps in the gaps. */
-  .navbar {
-    left: 12px;
-    right: 12px;
-    width: auto;
-    max-width: none;
-    margin-inline: 0;
-    height: 52px;
-    padding: 0;
-    background: none;
-    border: none;
-    box-shadow: none;
-    overflow: visible;
-    pointer-events: none;
-    justify-content: flex-start;
-  }
-  .navbar > * { pointer-events: auto; }
-  .logo { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(-2deg); background: var(--paper); border: 3px solid var(--ink); box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.55); padding: 0.15rem 0.3rem; }
-  .logoImg { width: 38px; }
-  .hamburger { box-sizing: border-box; width: 52px; height: 52px; padding: 17px 15px; background: var(--paper); border: 3px solid var(--ink); box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.55); transform: rotate(-2deg); }
+@media (prefers-reduced-motion: reduce) {
+  .menu, .menuOpen, .links > li, .side { transition: none; transform: none; }
 }

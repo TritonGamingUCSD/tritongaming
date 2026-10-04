@@ -16,7 +16,7 @@ interface InfoSectionProps {
 export default function InfoSection({ title, text, image, imageAlt, reverse = false, tag, photoCredit, photoCreditLink }: InfoSectionProps) {
   return (
     <div className={`${styles.section} ${reverse ? styles.reverse : ''}`}>
-      <figure className={styles.print}>
+      <figure className={styles.print} data-drag>
         <span className={styles.tape} aria-hidden="true" />
         <div className={styles.photo}>
           <Image src={image} alt={imageAlt} fill sizes="(max-width: 768px) 100vw, 50vw" style={{ objectFit: 'cover' }} />

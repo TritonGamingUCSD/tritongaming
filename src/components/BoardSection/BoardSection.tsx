@@ -29,6 +29,7 @@ export function PanelBody({ member, copiedKey, onCopy }: { member: BoardMember; 
   const show = (key: Parameters<typeof isVisible>[1]) => isVisible(member.board_visibility, key);
   return (
     <MemberCardBody
+      variant="zine"
       copiedKey={copiedKey}
       onCopy={onCopy}
       data={{

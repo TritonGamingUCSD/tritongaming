@@ -45,8 +45,10 @@
 @keyframes slap { from { opacity: 0; transform: translateY(-10px) scale(1.35) rotate(-6deg); } to { opacity: 1; transform: rotate(-1.5deg); } }
 @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
 .heroLabel { animation: slap 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
-.heroTitle { animation: rise 0.6s 0.1s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .heroSub { animation: rise 0.6s 0.2s cubic-bezier(0.22, 1, 0.36, 1) both; }
 @media (prefers-reduced-motion: reduce) {
-  .heroLabel, .heroTitle, .heroSub { animation: none; }
+  .heroLabel, .heroSub { animation: none; }
 }
+
+.heroScribble { width: clamp(8rem, 24vw, 12rem); height: 0.8rem; color: var(--yellow); margin-top: -0.4rem; }
+.headScribble { width: clamp(6rem, 16vw, 9rem); height: 0.65rem; color: var(--yellow); margin-top: -0.3rem; }

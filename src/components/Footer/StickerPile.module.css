@@ -1,0 +1,14 @@
+.wrap { position: relative; }
+.pit { position: relative; height: 9.5rem; overflow: hidden; border-bottom: 3px solid rgba(242, 241, 240, 0.25); touch-action: pan-y; }
+.sticker {
+  position: absolute; top: 0; left: 0; display: inline-block; padding: 0.55rem 0.95rem; white-space: nowrap; user-select: none; will-change: transform;
+  font-family: var(--font-futura-heavy); font-size: 0.95rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink);
+  border: 3px solid var(--ink); border-radius: 0.7rem; box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6); cursor: grab;
+}
+.sticker:active { cursor: grabbing; }
+.yellow { background: var(--yellow); }
+.paper { background: var(--paper); }
+.blue { background: #9fc4e8; }
+.hint { position: absolute; right: 0; top: 0; margin: 0; font-family: var(--font-handwriting); font-size: 1.1rem; color: var(--yellow-text); transform: rotate(2deg); pointer-events: none; }
+@media (max-width: 640px) { .pit { height: 8rem; } .sticker { font-size: 0.82rem; padding: 0.45rem 0.8rem; } .hint { display: none; } }
+@media (hover: none) { .hint { display: none; } .sticker { cursor: default; } }

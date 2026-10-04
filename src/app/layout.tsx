@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   },
   description:
     'Triton Gaming: Gaming Org at UC San Diego. Fostering community, creativity, and industry connections.',
-  keywords: ['Triton Gaming', 'UCSD', 'UC San Diego', 'gaming', 'collegiate gaming'],
+  keywords: ['Triton Gaming', 'UC San Diego', 'gaming', 'collegiate gaming'],
   icons: {
     icon: [
       { url: '/icon.png', type: 'image/png' },
@@ -54,7 +54,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#011941',
+  // Also the colour of the side bar in a Discord link preview, so it is the brand yellow rather than a navy that disappears into Discord's dark theme.
+  themeColor: '#ffc72c',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

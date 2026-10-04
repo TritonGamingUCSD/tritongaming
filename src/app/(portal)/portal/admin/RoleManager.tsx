@@ -65,7 +65,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
   const [users, setUsers] = useState(initialUsers);
   const [query, setQuery] = useState('');
   const [filterRole, setFilterRole] = useState<AppRole | 'all'>('all');
-  const [sortBy, setSortBy] = useState<'name-asc' | 'name-desc' | 'joined-new' | 'joined-old'>('name-asc');
+  const [sortBy, setSortBy] = useState<'name-asc' | 'name-desc' | 'joined-new' | 'joined-old'>('joined-new');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<RoleGrant[]>([]);
   const [saving, setSaving] = useState(false);

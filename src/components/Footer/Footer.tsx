@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getContentBlocks } from '@/lib/content';
 import BackToTop from './BackToTop';
+import StickerPile from './StickerPile';
 import styles from './Footer.module.css';
 
 const EXPLORE_LINKS = [
@@ -122,6 +123,8 @@ export default async function Footer() {
             </div>
           </div>
         </div>
+
+        <StickerPile />
 
         <div className={styles.bottom}>
           <Image src="/logos/tg_logo.png" alt="Triton Gaming logo" width={44} height={44} className={styles.logo} />

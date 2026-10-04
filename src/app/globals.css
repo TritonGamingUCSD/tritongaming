@@ -413,3 +413,9 @@ input[type='range']::-moz-range-track { height: 6px; border-radius: 999px; backg
 input[type='range']::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; margin-top: -6px; border-radius: 50%; background: var(--yellow, #ffc72c); border: 2px solid #0b1226; box-shadow: 0 0 0 1px rgba(255, 199, 44, 0.6); }
 input[type='range']::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--yellow, #ffc72c); border: 2px solid #0b1226; box-shadow: 0 0 0 1px rgba(255, 199, 44, 0.6); }
 input[type='range']:focus-visible { outline: 2px solid rgba(255, 199, 44, 0.5); outline-offset: 3px; border-radius: 6px; }
+
+/* Prints and notes on the public pages that can be picked up and tossed (see ZineMotion). Touch screens only move them sideways, so the page still scrolls. */
+[data-drag] { cursor: grab; touch-action: pan-y; -webkit-user-select: none; user-select: none; }
+[data-drag]:active { cursor: grabbing; }
+[data-drag] img { -webkit-user-drag: none; user-select: none; }
+.zm-line { padding-bottom: 0.08em; }

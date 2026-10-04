@@ -16,7 +16,7 @@ export default function PageBlocks({ blocks }: { blocks: PageBlock[] }) {
             return (
               <ul key={b.id} className={styles.highlights} data-count={b.items.length}>
                 {b.items.map((h, i) => (
-                  <li key={i} className={`${styles.note} ${i % 2 ? styles.tiltR : styles.tiltL}`}>
+                  <li key={i} className={`${styles.note} ${i % 2 ? styles.tiltR : styles.tiltL}`} data-drag>
                     <span className={styles.tape} aria-hidden="true" />
                     {h.label && <span className={styles.noteLabel}>{h.label}</span>}
                     <span className={styles.noteValue}>{h.value}</span>
@@ -39,7 +39,7 @@ export default function PageBlocks({ blocks }: { blocks: PageBlock[] }) {
             return (
               <ul key={b.id} className={styles.gallery}>
                 {b.items.map((g, i) => (
-                  <li key={i} className={`${styles.print} ${i % 2 ? styles.tiltR : styles.tiltL}`}>
+                  <li key={i} className={`${styles.print} ${i % 2 ? styles.tiltR : styles.tiltL}`} data-drag>
                     <span className={styles.tape} aria-hidden="true" />
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={g.url} alt={g.caption || ''} className={styles.photo} loading="lazy" />

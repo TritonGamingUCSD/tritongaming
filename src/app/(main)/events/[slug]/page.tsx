@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -7,6 +7,7 @@ import { getEventBySlugOrId, getGoingCount, getAllEvents } from '@/lib/events';
 import { isCheckinWindowOpen } from '@/lib/checkinWindow';
 import { getAlbumPreview } from '@/lib/googlePhotosAlbum';
 import { markdownToDescription } from '@/lib/markdown';
+import { clampDescription } from '@/lib/ogCard';
 import PageBlocks from '@/components/PageBlocks/PageBlocks';
 import LogoPlate from '@/components/LogoPlate/LogoPlate';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
@@ -38,7 +39,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   // Details) is Markdown, so it needs stripping before it's safe in a meta
   // description — same reasoning as the division page's own fallback.
   const description = event.content?.trim()
-    ? event.content
+    ? clampDescription(event.content)
     : event.details?.trim()
     ? markdownToDescription(event.details)
     : `Join Triton Gaming for ${event.full_name}${event.location ? ` at ${event.location}` : ''}.`;
@@ -51,15 +52,20 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
       title,
       description,
       type: 'website',
-      ...(event.flyer_url ? { images: [{ url: event.flyer_url }] } : {}),
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      ...(event.flyer_url ? { images: [event.flyer_url] } : {}),
     },
   };
+}
+
+// Discord colours the side bar of a link preview with the page's theme colour: an event's own accent, else the brand yellow.
+export async function generateViewport({ params }: Params): Promise<Viewport> {
+  const { slug } = await params;
+  const event = await getEventBySlugOrId(slug);
+  return { themeColor: event?.theme?.colors.accent ?? '#ffc72c' };
 }
 
 function formatDateRange(startISO: string, endISO: string) {

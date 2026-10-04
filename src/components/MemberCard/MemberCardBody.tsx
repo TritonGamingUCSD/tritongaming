@@ -30,11 +30,13 @@ export interface MemberCardData {
 }
 
 export default function MemberCardBody({
-  data, copiedKey, onCopy,
+  data, copiedKey, onCopy, variant,
 }: {
   data: MemberCardData;
   copiedKey: string | null;
   onCopy: (key: string, value: string) => void;
+  // 'zine' = the public site's paper look (the Team page). Without it the card keeps the portal's dark look.
+  variant?: 'zine';
 }) {
   const social = data.socialLinks ?? {};
   const present = SOCIAL_PLATFORMS.filter((p) => social[p.key]);
@@ -51,7 +53,7 @@ export default function MemberCardBody({
   const hasLinks = linked.length > 0 || portfolio.length > 0;
 
   return (
-    <>
+    <div className={`${styles.body} ${variant === 'zine' ? styles.zine : ''}`}>
       {data.avatarUrl ? (
         <Image src={data.avatarUrl} alt="" width={72} height={72} className={styles.avatar} unoptimized referrerPolicy="no-referrer" />
       ) : (
@@ -145,6 +147,6 @@ export default function MemberCardBody({
       )}
 
       {data.joinedLabel && <div className={styles.joined}>{data.joinedLabel}</div>}
-    </>
+    </div>
   );
 }

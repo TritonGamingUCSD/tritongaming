@@ -4,6 +4,7 @@ import Hero from '@/components/Hero/Hero';
 import LandingAbout from '@/components/LandingAbout/LandingAbout';
 import LandingStatistics from '@/components/LandingStatistics/LandingStatistics';
 import LandingEvents from '@/components/LandingEvents/LandingEvents';
+import LandingExplore from '@/components/LandingExplore/LandingExplore';
 import LandingSponsors from '@/components/LandingSponsors/LandingSponsors';
 import LandingRecruitment from '@/components/LandingRecruitment/LandingRecruitment';
 import { getContentBlocks } from '@/lib/content';
@@ -42,7 +43,7 @@ const ORGANIZATION_JSON_LD = {
 export default async function HomePage() {
   const [upcomingEvents, content] = await Promise.all([
     getUpcomingEvents(1),
-    getContentBlocks(['homepage.hero', 'homepage.about', 'homepage.stats', 'homepage.events', 'homepage.recruitment', 'layout.homepage']),
+    getContentBlocks(['homepage.hero', 'homepage.about', 'homepage.stats', 'homepage.events', 'homepage.explore', 'homepage.recruitment', 'layout.homepage']),
   ]);
 
   const heroContent        = content['homepage.hero']        ?? {};
@@ -56,6 +57,7 @@ export default async function HomePage() {
     stats: <LandingStatistics stats={statsItems} />,
     about: <LandingAbout content={aboutContent as Parameters<typeof LandingAbout>[0]['content']} />,
     events: <LandingEvents initialEvents={upcomingEvents} content={eventsContent} />,
+    explore: <LandingExplore content={(content['homepage.explore'] ?? {}) as Record<string, string | undefined>} />,
     sponsors: <LandingSponsors />,
     recruitment: <LandingRecruitment content={recruitmentContent as Parameters<typeof LandingRecruitment>[0]['content']} />,
   };

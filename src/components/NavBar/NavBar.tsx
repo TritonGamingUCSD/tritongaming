@@ -4,27 +4,31 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { User } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types/database';
 import { resolveAvatarUrl } from '@/lib/profile';
 import styles from './NavBar.module.css';
 
 const NAV_LINKS = [
-  { href: '/our-story',     label: 'OUR STORY' },
-  { href: '/team',          label: 'TEAM' },
-  { href: '/events',        label: 'EVENTS' },
-  { href: '/divisions',     label: 'DIVISIONS' },
-  { href: '/media',         label: 'MEDIA' },
-  { href: '/sponsors',      label: 'SPONSORS' },
-  { href: '/membership',    label: 'MEMBERSHIP' },
-  { href: '/get-involved',  label: 'JOIN' },
+  { href: '/our-story',     label: 'Our Story' },
+  { href: '/team',          label: 'Team' },
+  { href: '/events',        label: 'Events' },
+  { href: '/divisions',     label: 'Divisions' },
+  { href: '/media',         label: 'Media' },
+  { href: '/sponsors',      label: 'Sponsors' },
+  { href: '/membership',    label: 'Membership' },
+  { href: '/get-involved',  label: 'Join' },
 ];
+
+const DISCORD_URL = 'https://discord.gg/tritongaming';
 
 export default function NavBar() {
   const [offset, setOffset] = useState(0);
   const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const prevScrollY = useRef(0);
@@ -39,7 +43,7 @@ export default function NavBar() {
   const loginHref = '/login';
 
   useEffect(() => {
-    setMobileOpen(false);
+    setOpen(false);
   }, [pathname]);
 
   useEffect(() => {
@@ -101,156 +105,107 @@ export default function NavBar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // While the poster menu is open: the page behind it does not scroll, Escape closes it, Tab stays inside it, and focus returns to the Menu button.
   useEffect(() => {
-    document.body.style.overflow = mobileOpen ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
-  }, [mobileOpen]);
+    if (!open) return;
+    document.body.style.overflow = 'hidden';
+    const menu = menuRef.current;
+    const focusables = () => Array.from(menu?.querySelectorAll<HTMLElement>('a[href], button:not([disabled])') ?? []);
+    focusables()[0]?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { setOpen(false); return; }
+      if (e.key !== 'Tab') return;
+      const f = focusables();
+      if (f.length === 0) return;
+      const first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    };
+    document.addEventListener('keydown', onKey);
+    const toggle = toggleRef.current;
+    return () => { document.body.style.overflow = ''; document.removeEventListener('keydown', onKey); toggle?.focus(); };
+  }, [open]);
 
   const navAvatarUrl = profile ? resolveAvatarUrl(profile) : null;
 
-  const authButton = authLoading ? (
-    <span className={styles.authSkeleton} aria-hidden="true" />
-  ) : profile ? (
-    <Link href="/portal" className={styles.authBtn} aria-label="Member portal">
-      {navAvatarUrl ? (
-        <Image
-          src={navAvatarUrl}
-          alt={profile.display_name || 'Profile'}
-          width={28}
-          height={28}
-          className={styles.authAvatar}
-          unoptimized
-          referrerPolicy="no-referrer"
-        />
-      ) : (
-        <div className={styles.authAvatarFallback}>
-          {(profile.display_name || 'U')[0].toUpperCase()}
-        </div>
-      )}
-      <span className={styles.authLabel}>PORTAL</span>
-    </Link>
-  ) : (
-    <Link href={loginHref} className={styles.loginBtn} aria-label="Sign in to the member portal">
-      <span className={styles.loginBtnIcon} aria-hidden="true"><User size={16} strokeWidth={1.5} /></span>
-      Member Portal
-    </Link>
-  );
+  const portalHref = profile ? '/portal' : loginHref;
 
   return (
     <>
-      <nav
-        className={`${styles.navbar}${scrolled ? ` ${styles.scrolled}` : ''}`}
-        style={{ transform: `translateY(-${offset}px)` }}
-        aria-label="Main navigation"
-      >
+      {/* Two stickers pinned to the top corners: the logo on the left, portal and menu on the right. They slide away when you scroll down. */}
+      <header className={`${styles.bar}${scrolled ? ` ${styles.scrolled}` : ''}`} style={{ transform: `translateY(-${offset}px)` }}>
         <Link href="/" className={styles.logo} aria-label="Triton Gaming Home">
-          <Image
-            src="/logos/tg_logo.png"
-            alt="Triton Gaming"
-            width={80}
-            height={80}
-            className={styles.logoImg}
-            priority
-          />
+          <Image src="/logos/tg_logo.png" alt="Triton Gaming" width={80} height={80} className={styles.logoImg} priority />
         </Link>
 
-        {/* Desktop nav */}
-        <ul className={styles.desktopNav} role="list">
-          {NAV_LINKS.map(({ href, label }) => (
-            <li key={href}>
-              <Link
-                href={href}
-                className={`${styles.navLink} ${pathname.startsWith(href) && href !== '/' ? styles.navLinkActive : ''}`}
-              >
-                {label}
-              </Link>
-            </li>
-          ))}
-          <li>{authButton}</li>
-        </ul>
-
-        {/* Mobile controls */}
-        <div className={styles.mobileControls}>
+        <div className={styles.right}>
+          {!authLoading && (
+            <Link href={portalHref} className={styles.portal} aria-label={profile ? 'Member portal' : 'Sign in to the member portal'}>
+              {profile && navAvatarUrl ? (
+                <Image src={navAvatarUrl} alt="" width={24} height={24} className={styles.avatar} unoptimized referrerPolicy="no-referrer" />
+              ) : profile ? (
+                <span className={styles.avatarFallback}>{(profile.display_name || 'U')[0].toUpperCase()}</span>
+              ) : null}
+              <span>Portal</span>
+            </Link>
+          )}
           <button
-            className={`${styles.hamburger} ${mobileOpen ? styles.hamburgerOpen : ''}`}
-            onClick={() => setMobileOpen((v) => !v)}
-            aria-label="Toggle menu"
-            aria-expanded={mobileOpen}
-            aria-controls="mobile-menu"
+            ref={toggleRef}
+            type="button"
+            className={styles.menuBtn}
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            aria-controls="poster-menu"
           >
-            <span />
-            <span />
-            <span />
+            <span className={styles.bars} aria-hidden="true"><i /><i /><i /></span>
+            <span>{open ? 'Close' : 'Menu'}</span>
           </button>
         </div>
+      </header>
 
-        {/* Mobile-only portal/login button. Lives *inside* the nav so it
-            shares the toggle's exact scroll-hide transform and transition —
-            as two separate fixed elements each with its own transform they
-            could drift out of sync while scrolling. Hidden on desktop, which
-            has this via authButton inside .desktopNav. */}
-        {!authLoading && (
-          <Link
-            href={profile ? '/portal' : loginHref}
-            className={`${styles.mobileAuthFab} ${!profile ? styles.mobileAuthFabWide : ''}`}
-            aria-label={profile ? 'Member portal' : 'Sign in to the member portal'}
-          >
-            {profile && navAvatarUrl ? (
-              <Image src={navAvatarUrl} alt="" width={26} height={26} className={styles.authAvatar} unoptimized referrerPolicy="no-referrer" />
-            ) : profile ? (
-              <div className={styles.authAvatarFallback}>{(profile.display_name || 'U')[0].toUpperCase()}</div>
-            ) : (
-              <>PORTAL</>
-            )}
-          </Link>
-        )}
-      </nav>
-
-      {/* Mobile menu */}
+      {/* The poster menu: full screen, big hand-lettered links. */}
       <div
-        id="mobile-menu"
-        className={`${styles.mobileMenu} ${mobileOpen ? styles.mobileMenuOpen : ''}`}
-        aria-hidden={!mobileOpen}
+        id="poster-menu"
+        ref={menuRef}
+        className={`${styles.menu} ${open ? styles.menuOpen : ''}`}
+        aria-hidden={!open}
+        inert={!open}
+        data-lenis-prevent
+        role="dialog"
+        aria-modal="true"
+        aria-label="Site menu"
       >
-        <button
-          className={styles.closeBtn}
-          onClick={() => setMobileOpen(false)}
-          aria-label="Close menu"
-        >
-          ×
-        </button>
-        <ul className={styles.mobileNavList} role="list">
-          <li>
-            <Link href="/" className={styles.mobileNavLink} onClick={() => setMobileOpen(false)}>
-              HOME
-            </Link>
-          </li>
-          {NAV_LINKS.map(({ href, label }) => (
-            <li key={href}>
-              <Link
-                href={href}
-                className={styles.mobileNavLink}
-                onClick={() => setMobileOpen(false)}
-              >
-                {label}
+        <nav className={styles.menuInner} aria-label="Main navigation">
+          <ul className={styles.links} role="list">
+            <li style={{ '--i': 0 } as React.CSSProperties}>
+              <Link href="/" className={`${styles.link} ${pathname === '/' ? styles.linkOn : ''}`} onClick={() => setOpen(false)}>
+                <span className={styles.num}>01</span><span className={styles.word}>Home</span>
               </Link>
             </li>
-          ))}
-          <li className={styles.mobileAuthItem}>
-            {profile ? (
-              <Link href="/portal" className={styles.mobilePortalBtn} onClick={() => setMobileOpen(false)}>
-                {navAvatarUrl && (
-                  <Image src={navAvatarUrl} alt="" width={24} height={24} className={styles.authAvatar} unoptimized referrerPolicy="no-referrer" />
-                )}
-                Member Portal
-              </Link>
-            ) : (
-              <Link href={loginHref} className={styles.mobileLoginBtn} onClick={() => setMobileOpen(false)}>
-                Member Portal Sign In
-              </Link>
-            )}
-          </li>
-        </ul>
+            {NAV_LINKS.map(({ href, label }, i) => {
+              const on = pathname.startsWith(href);
+              return (
+                <li key={href} style={{ '--i': i + 1 } as React.CSSProperties}>
+                  <Link href={href} className={`${styles.link} ${on ? styles.linkOn : ''}`} onClick={() => setOpen(false)} aria-current={on ? 'page' : undefined}>
+                    <span className={styles.num}>{String(i + 2).padStart(2, '0')}</span>
+                    <span className={styles.word}>{label}</span>
+                    {on && <span className={styles.here}>you are here</span>}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+
+          <div className={styles.side} style={{ '--i': 10 } as React.CSSProperties}>
+            <a href={DISCORD_URL} target="_blank" rel="noopener noreferrer" className={styles.discord} onClick={() => setOpen(false)}>
+              <Image src="/logos/discord.svg" alt="" width={22} height={22} unoptimized /> Join the Discord <ArrowUpRight size={18} aria-hidden="true" />
+            </a>
+            <Link href={portalHref} className={styles.sideLink} onClick={() => setOpen(false)}>
+              {profile ? 'Open your member portal' : 'Member portal sign in'} <span aria-hidden="true">→</span>
+            </Link>
+            <p className={styles.tag}>Gaming Org at UC San Diego</p>
+          </div>
+        </nav>
       </div>
     </>
   );

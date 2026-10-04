@@ -8,6 +8,7 @@ export const PAGE_SECTIONS: Record<string, SectionDef[]> = {
     { id: 'stats', label: 'Statistics strip' },
     { id: 'about', label: 'About' },
     { id: 'events', label: 'Upcoming events' },
+    { id: 'explore', label: 'Explore the site (cards for every page)' },
     { id: 'sponsors', label: 'Sponsors strip' },
     { id: 'recruitment', label: 'Get involved cards' },
   ],

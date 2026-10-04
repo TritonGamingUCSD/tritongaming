@@ -11,7 +11,7 @@ export default function PhotoStrip({ photos, caption, tone = 'ink', placeholders
       {caption && <p className={styles.caption}>{caption}</p>}
       <ul className={styles.strip}>
         {photos.map((p, i) => (
-          <li key={p.src} className={`${styles.print} ${styles[`t${i % 3}`]}`}>
+          <li key={p.src} className={`${styles.print} ${styles[`t${i % 3}`]}`} data-drag>
             <span className={styles.tape} aria-hidden="true" />
             <div className={styles.photo}>
               <Image src={p.src} alt={p.alt} fill sizes="(max-width: 640px) 80vw, 360px" style={{ objectFit: 'cover' }} />

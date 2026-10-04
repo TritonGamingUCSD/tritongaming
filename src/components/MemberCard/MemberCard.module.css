@@ -60,3 +60,30 @@
 }
 .portfolioLink:hover { border-color: rgba(255, 199, 44, 0.5); color: var(--yellow); }
 .joined { margin-top: 0.55rem; font-size: 0.68rem; color: rgba(242, 241, 240, 0.4); }
+
+/* The wrapper is invisible to layout (the caller's panel lays the pieces out), except in the zine variant. */
+.body { display: contents; }
+
+/* Zine variant: the public Team page. Paper, ink, hard-edged stickers. */
+.zine { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; width: 100%; color: var(--ink); }
+.zine .avatar, .zine .avatarFallback { width: 92px; height: 92px; border: 3px solid var(--ink); box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5); margin-bottom: 0.3rem; }
+.zine .avatarFallback { background: var(--yellow); color: var(--ink); font-family: var(--font-brick); font-size: 2.2rem; }
+.zine .name { color: var(--ink); font-size: 1.25rem; }
+.zine .tag { color: #5a6580; }
+.zine .sub { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.25rem; }
+.zine .orgTitle { color: #3a4764; font-family: var(--font-renegare); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; }
+.zine .pronouns { color: #5a6580; font-family: var(--font-handwriting); font-size: 1rem; }
+.zine .dot { color: rgba(10, 22, 48, 0.4); }
+.zine .info { border-top: 2px dashed rgba(10, 22, 48, 0.3); }
+.zine .schoolMain, .zine .copyRowText { color: var(--ink); }
+.zine .schoolMeta { color: #3a4764; }
+.zine .infoRow, .zine .copyRow { color: #2a3550; }
+.zine .copyRow:hover { color: #8a5f00; }
+.zine .copied { color: #0b7a55; }
+.zine .bio { color: #2a3550; font-family: var(--font-handwriting); font-size: 1.15rem; line-height: 1.3; }
+.zine .socialBtn { background: var(--yellow); border: 2px solid var(--ink); box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5); }
+.zine .socialBtn img { filter: invert(1) brightness(0.1); }
+.zine .socialBtn:hover { background: var(--yellow); border-color: var(--ink); transform: translate(-1px, -1px); box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5); }
+.zine .portfolioLink { background: var(--paper); color: var(--ink); border: 2px solid var(--ink); }
+.zine .portfolioLink:hover { background: var(--yellow); color: var(--ink); border-color: var(--ink); }
+.zine .joined { color: #5a6580; }
