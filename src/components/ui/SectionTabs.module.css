@@ -24,7 +24,7 @@
   padding: 0.7rem 0.95rem;
   background: none;
   border: none;
-  color: rgba(242, 241, 240, 0.55);
+  color: rgba(242, 241, 240, 0.65);
   font-family: var(--font-futura-medium);
   font-size: 0.88rem;
   white-space: nowrap;
@@ -52,7 +52,7 @@
   padding: 0.05rem 0.4rem;
   border-radius: 999px;
   background: var(--yellow);
-  color: #0a0f1e;
+  color: #0b1426;
   font-size: 0.68rem;
   font-family: var(--font-futura-heavy);
   text-align: center;

@@ -25,9 +25,9 @@
   border-radius: 1rem;
 }
 
-.noEventsIcon  { display: inline-flex; color: rgba(242,241,240,0.3); }
+.noEventsIcon  { display: inline-flex; color: rgba(242, 241, 240, 0.6); }
 .noEventsTitle { font-family: var(--font-futura-heavy); font-size: 1.1rem; color: var(--white); }
-.noEventsSub   { font-size: 0.85rem; color: rgba(242,241,240,0.4); }
+.noEventsSub   { font-size: 0.85rem; color: rgba(242, 241, 240, 0.6); }
 
 /* ── Event selector ────────────────────────────── */
 .eventSelect {
@@ -42,7 +42,7 @@
   font-family: var(--font-renegare);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
   padding-left: 0.1rem;
 }
 
@@ -68,7 +68,7 @@
 
 .select:hover { background: rgba(255,199,44,0.11); border-color: rgba(255,199,44,0.5); }
 .select:focus { outline: none; border-color: var(--yellow); }
-.select option { background: #0a0f1e; color: var(--white); }
+.select option { background: #0b1426; color: var(--white); }
 
 .selectChevron {
   position: absolute;
@@ -146,7 +146,7 @@
 
 .placeholderIcon  { display: inline-flex; color: rgba(255,255,255,0.5); }
 .placeholderText  { font-family: var(--font-futura-medium); font-size: 1rem; color: var(--white); }
-.placeholderEvent { font-size: var(--fs-meta); color: rgba(242,241,240,0.35); text-align: center; padding: 0 1rem; }
+.placeholderEvent { font-size: var(--fs-meta); color: rgba(242, 241, 240, 0.6); text-align: center; padding: 0 1rem; }
 
 /* Scanner overlay */
 .overlay {
@@ -192,7 +192,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: rgba(242,241,240,0.35);
+  color: rgba(242, 241, 240, 0.6);
   font-size: var(--fs-label);
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;

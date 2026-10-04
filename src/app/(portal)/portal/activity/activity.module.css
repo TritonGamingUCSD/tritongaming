@@ -54,7 +54,7 @@
 
 .itemTime {
   font-size: 0.75rem;
-  color: rgba(242, 241, 240, 0.45);
+  color: rgba(242, 241, 240, 0.6);
   margin-top: 0.15rem;
 }
 
@@ -71,6 +71,6 @@
   border-radius: 1rem;
 }
 
-.emptyIcon  { display: inline-flex; color: rgba(242, 241, 240, 0.3); }
+.emptyIcon  { display: inline-flex; color: rgba(242, 241, 240, 0.6); }
 .emptyTitle { font-family: var(--font-futura-heavy); font-size: 1.1rem; color: var(--white); }
-.emptySub   { font-size: 0.85rem; color: rgba(242, 241, 240, 0.4); }
+.emptySub   { font-size: 0.85rem; color: rgba(242, 241, 240, 0.6); }

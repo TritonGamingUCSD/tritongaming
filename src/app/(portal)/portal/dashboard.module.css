@@ -96,7 +96,7 @@
 
 .checkinBannerSub {
   font-size: 0.72rem;
-  color: rgba(242,241,240,0.45);
+  color: rgba(242, 241, 240, 0.6);
   margin-top: 0.1rem;
 }
 
@@ -173,7 +173,7 @@
   align-items: center;
   gap: 0.3rem;
   font-size: 0.78rem;
-  color: rgba(242,241,240,0.45);
+  color: rgba(242, 241, 240, 0.6);
 }
 
 .ticketHeroActions {
@@ -207,7 +207,7 @@
 
 .viewAllTickets {
   font-size: 0.8rem;
-  color: rgba(242,241,240,0.5);
+  color: rgba(242, 241, 240, 0.65);
   transition: color 0.15s;
 }
 
@@ -246,7 +246,7 @@
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(242,241,240,0.5);
+  color: rgba(242, 241, 240, 0.65);
 }
 
 .upcomingPreviewList {
@@ -316,7 +316,7 @@
   gap: 0.3rem;
   margin-top: 0.15rem;
   font-size: 0.75rem;
-  color: rgba(242,241,240,0.45);
+  color: rgba(242, 241, 240, 0.6);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -324,7 +324,7 @@
 
 .upcomingPreviewChevron {
   flex-shrink: 0;
-  color: rgba(242,241,240,0.3);
+  color: rgba(242, 241, 240, 0.6);
 }
 
 /* Header */
@@ -417,7 +417,7 @@
 }
 
 .headerActionLink {
-  color: rgba(242, 241, 240, 0.4);
+  color: rgba(242, 241, 240, 0.6);
   font-size: 0.78rem;
   font-family: var(--font-futura-medium);
   letter-spacing: 0.02em;
@@ -482,7 +482,7 @@
 .welcomeText { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
 .welcomeKicker { display: none; }
 .welcomeName { font-family: var(--font-futura-heavy); font-size: 1.15rem; color: var(--white); line-height: 1.2; overflow-wrap: anywhere; }
-.welcomeName::before { content: attr(data-greeting) ", "; font-family: var(--font-futura-medium); font-size: 0.85rem; color: rgba(242, 241, 240, 0.55); }
+.welcomeName::before { content: attr(data-greeting) ", "; font-family: var(--font-futura-medium); font-size: 0.85rem; color: rgba(242, 241, 240, 0.65); }
 .welcomeText .roleChips { justify-content: flex-start; margin-top: 0; }
 .welcomeText .headerActions { justify-content: flex-start; margin-top: 0.1rem; }
 
@@ -504,7 +504,7 @@
 .tile:hover { background: rgba(0, 0, 0, 0.38); border-color: var(--tile-accent); }
 .tileTop { grid-area: top; display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.65rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--tile-accent); }
 .tileValue { grid-area: value; justify-self: end; font-family: var(--font-futura-heavy); font-size: 1.05rem; color: var(--white); line-height: 1.1; }
-.tileUnit { font-size: 0.68rem; font-family: var(--font-futura-medium); color: rgba(242, 241, 240, 0.5); }
+.tileUnit { font-size: 0.68rem; font-family: var(--font-futura-medium); color: rgba(242, 241, 240, 0.65); }
 .tileTier { grid-area: tier; font-size: 0.7rem; color: rgba(242, 241, 240, 0.65); }
 .tileProgress { grid-area: bar; display: block; height: 3px; border-radius: 999px; background: rgba(255, 255, 255, 0.1); overflow: hidden; margin-top: 0.2rem; }
 .tileProgress > span { display: block; height: 100%; border-radius: 999px; background: var(--tile-accent); }
@@ -534,7 +534,7 @@
   position: sticky;
   top: 0;
   z-index: 30;
-  background: #080d1a;
+  background: #0b1426;
   padding: 1.1rem 0 0.75rem;
 }
 
@@ -653,7 +653,7 @@ a.railFooterHelp.railFooterHelp:hover { color: #22d3ee; background: rgba(34, 211
 a.railFooterHelp.railFooterHelp b { font: inherit; font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
 a.railFooterHelp.railFooterHelp .railFooterHelpBadge {
   display: grid; min-width: 18px; height: 18px; padding: 0 5px; place-items: center; border-radius: 999px;
-  background: var(--yellow); color: #14161f; font-size: 0.66rem; font-weight: 700; letter-spacing: 0;
+  background: var(--yellow); color: #111c33; font-size: 0.66rem; font-weight: 700; letter-spacing: 0;
 }
 @media (max-width: 899px) { a.railFooterHelp.railFooterHelp { display: none; } }
 
@@ -682,12 +682,12 @@ a.railFooterHelp.railFooterHelp .railFooterHelpBadge {
 .nextReminderTitle { font-family: var(--font-futura-heavy); font-size: 0.92rem; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .nextReminderSub { display: flex; align-items: center; gap: 0.3rem; font-size: 0.74rem; color: rgba(242, 241, 240, 0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .nextReminderSub strong { color: var(--yellow-text); font-weight: 600; }
-.nextReminderGo { flex: none; color: rgba(242, 241, 240, 0.4); }
+.nextReminderGo { flex: none; color: rgba(242, 241, 240, 0.6); }
 
 /* To do: what is waiting on this person, at the top of the home screen. */
 .todoCard { border-radius: 1rem; border: 1px solid rgba(255, 199, 44, 0.4); background: rgba(255, 199, 44, 0.07); padding: 0.75rem 0.85rem 0.6rem; }
 .todoHead { display: flex; align-items: center; gap: 0.45rem; margin: 0 0 0.4rem; font-family: var(--font-futura-heavy); font-size: 0.82rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--yellow-text); }
-.todoCount { min-width: 20px; height: 20px; padding: 0 0.4rem; display: inline-grid; place-items: center; border-radius: 999px; background: var(--yellow); color: #0a0f1e; font-size: 0.72rem; letter-spacing: 0; }
+.todoCount { min-width: 20px; height: 20px; padding: 0 0.4rem; display: inline-grid; place-items: center; border-radius: 999px; background: var(--yellow); color: #0b1426; font-size: 0.72rem; letter-spacing: 0; }
 .todoList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .todoRow { display: flex; align-items: center; gap: 0.65rem; padding: 0.6rem 0.2rem; border-top: 1px solid rgba(255, 255, 255, 0.07); text-decoration: none; color: var(--white); }
 .todoList li:first-child .todoRow { border-top: 0; }
@@ -697,4 +697,4 @@ a.railFooterHelp.railFooterHelp .railFooterHelpBadge {
 .todoText { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; flex: 1; }
 .todoText strong { font-size: 0.9rem; font-weight: 600; overflow-wrap: anywhere; }
 .todoText em { font-style: normal; font-size: 0.76rem; color: rgba(242, 241, 240, 0.6); }
-.todoGo { flex: none; color: rgba(242, 241, 240, 0.45); }
+.todoGo { flex: none; color: rgba(242, 241, 240, 0.6); }

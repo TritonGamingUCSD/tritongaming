@@ -1,13 +1,13 @@
 .group { display: flex; flex-direction: column; gap: 0.75rem; padding: 1rem 1.1rem 1.1rem; border-radius: 0.9rem; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.025); min-width: 0; margin: 0; }
 .legend { padding: 0 0.4rem; font-family: var(--font-futura-heavy); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(242, 241, 240, 0.7); }
-.hint { font-size: 0.72rem; color: rgba(242, 241, 240, 0.4); }
+.hint { font-size: 0.72rem; color: rgba(242, 241, 240, 0.6); }
 .input { width: 100%; min-width: 0; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--radius-sm); padding: 0.55rem 0.8rem; color: var(--white); font-family: var(--font-futura-medium); font-size: 0.9rem; resize: vertical; }
 .input:focus { outline: none; border-color: rgba(255, 199, 44, 0.4); }
 .block { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.7rem; border-radius: 0.7rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); min-width: 0; }
 .dragging { opacity: 0.5; }
 .dragOver { border-color: rgba(255, 199, 44, 0.5); }
 .blockHead { display: flex; align-items: center; gap: 0.5rem; }
-.grip { display: grid; place-items: center; width: 24px; height: 32px; color: rgba(242, 241, 240, 0.4); cursor: grab; flex-shrink: 0; touch-action: none; }
+.grip { display: grid; place-items: center; width: 24px; height: 32px; color: rgba(242, 241, 240, 0.6); cursor: grab; flex-shrink: 0; touch-action: none; }
 .blockTitle { flex: 1; font-family: var(--font-renegare); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--yellow-text); }
 .rows { display: flex; flex-direction: column; gap: 0.6rem; }
 .pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) auto; gap: 0.5rem; align-items: start; }

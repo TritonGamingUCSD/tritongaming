@@ -42,5 +42,5 @@
 .ghost:hover:not(:disabled) { color: #f2f1f0; border-color: rgba(255,255,255,0.3); }
 .primary:disabled, .ghost:disabled { opacity: 0.55; cursor: not-allowed; }
 
-.hint { margin: 0; font-size: 0.72rem; line-height: 1.45; color: rgba(242,241,240,0.5); }
+.hint { margin: 0; font-size: 0.72rem; line-height: 1.45; color: rgba(242, 241, 240, 0.65); }
 .error { margin: 0; font-size: 0.78rem; color: #fca5a5; }

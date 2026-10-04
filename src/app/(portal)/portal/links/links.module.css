@@ -6,10 +6,10 @@
 .label { font-size: 0.75rem; color: rgba(242, 241, 240, 0.6); }
 .slugInput { display: flex; align-items: center; border-radius: var(--radius-sm); border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.05); overflow: hidden; }
 .slugInput:focus-within { border-color: rgba(255, 199, 44, 0.4); }
-.prefix { padding: 0 0 0 0.875rem; font-size: 0.85rem; color: rgba(242, 241, 240, 0.5); white-space: nowrap; }
+.prefix { padding: 0 0 0 0.875rem; font-size: 0.85rem; color: rgba(242, 241, 240, 0.65); white-space: nowrap; }
 .bare { flex: 1; min-width: 0; background: none; border: none; outline: none; color: var(--white); font-family: var(--font-futura-medium); font-size: 0.88rem; padding: 0.625rem 0.875rem 0.625rem 0.15rem; }
-.hint { font-size: 0.82rem; color: rgba(242, 241, 240, 0.5); }
-.empty { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; padding: 2rem 0; color: rgba(242, 241, 240, 0.4); }
+.hint { font-size: 0.82rem; color: rgba(242, 241, 240, 0.65); }
+.empty { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; padding: 2rem 0; color: rgba(242, 241, 240, 0.6); }
 .list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
 .item { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; padding: 0.85rem 1rem; border-radius: 0.85rem; background: rgba(255, 255, 255, 0.035); border: 1px solid rgba(255, 255, 255, 0.08); }
 .off { opacity: 0.55; }
@@ -17,15 +17,15 @@
 .slug { font-family: var(--font-futura-heavy); font-size: 1rem; color: var(--yellow-text); }
 .dest { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; color: rgba(242, 241, 240, 0.65); overflow-wrap: anywhere; text-decoration: none; }
 .dest:hover { color: var(--white); }
-.note { font-size: 0.75rem; color: rgba(242, 241, 240, 0.45); }
-.clicks { font-size: 0.78rem; color: rgba(242, 241, 240, 0.55); white-space: nowrap; }
+.note { font-size: 0.75rem; color: rgba(242, 241, 240, 0.6); }
+.clicks { font-size: 0.78rem; color: rgba(242, 241, 240, 0.65); white-space: nowrap; }
 .clicks strong { color: var(--white); font-size: 1rem; }
 .actions { display: flex; align-items: center; gap: 0.35rem; }
 .iconBtn { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 0.6rem; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.04); color: rgba(242, 241, 240, 0.8); cursor: pointer; }
 .iconBtn:hover { border-color: rgba(255, 199, 44, 0.45); color: var(--yellow-text); }
 .danger { color: #f87171; }
 .toggle { min-width: 44px; height: 34px; padding: 0 0.7rem; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.14); background: rgba(52, 211, 153, 0.12); color: #34d399; font-size: 0.75rem; cursor: pointer; }
-.off .toggle { background: rgba(255, 255, 255, 0.05); color: rgba(242, 241, 240, 0.5); }
+.off .toggle { background: rgba(255, 255, 255, 0.05); color: rgba(242, 241, 240, 0.65); }
 .editRow { display: flex; gap: 0.5rem; flex-wrap: wrap; width: 100%; align-items: center; }
 .editRow > * { flex: 1 1 200px; }
 .editActions { display: flex; gap: 0.4rem; flex: 0 0 auto !important; }

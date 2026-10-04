@@ -10,10 +10,10 @@
 }
 .control:focus { outline: none; border-color: rgba(255, 199, 44, 0.4); }
 .control:disabled { opacity: 0.55; cursor: not-allowed; }
-.control::placeholder { color: rgba(242, 241, 240, 0.35); }
+.control::placeholder { color: rgba(242, 241, 240, 0.6); }
 .textarea { resize: vertical; line-height: 1.45; }
 @media (max-width: 640px) { .control { font-size: 16px; } }
 
 .field { display: flex; flex-direction: column; gap: 0.35rem; }
 .label { font-size: 0.75rem; color: rgba(242, 241, 240, 0.6); letter-spacing: 0.02em; }
-.hint { font-size: 0.72rem; color: rgba(242, 241, 240, 0.4); }
+.hint { font-size: 0.72rem; color: rgba(242, 241, 240, 0.6); }

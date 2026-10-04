@@ -42,7 +42,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid #080d1a;
+  border: 2px solid #0b1426;
 }
 
 .dropdown {
@@ -95,7 +95,7 @@
   padding: 1.25rem 1rem 1.5rem;
   text-align: center;
   font-size: 0.82rem;
-  color: rgba(242, 241, 240, 0.4);
+  color: rgba(242, 241, 240, 0.6);
 }
 
 .statusLoading {
@@ -146,13 +146,13 @@
 
 .itemBody {
   font-size: 0.8rem;
-  color: rgba(242, 241, 240, 0.55);
+  color: rgba(242, 241, 240, 0.65);
   line-height: 1.4;
 }
 
 .itemTime {
   font-size: var(--fs-meta);
-  color: rgba(242, 241, 240, 0.3);
+  color: rgba(242, 241, 240, 0.6);
 }
 
 /* Sitting inside the desktop app frame's top bar instead of floating over the page. */

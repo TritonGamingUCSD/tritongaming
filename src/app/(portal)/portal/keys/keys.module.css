@@ -6,15 +6,15 @@
 /* what I'm holding */
 .mine { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; padding: 0.7rem 0.9rem; border-radius: 0.9rem; border: 1px dashed rgba(255, 255, 255, 0.16); font-size: 0.88rem; }
 .mineHas { border-style: solid; border-color: rgba(255, 199, 44, 0.4); background: rgba(255, 199, 44, 0.06); }
-.mineLabel { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(242, 241, 240, 0.55); }
-.mineNone { color: rgba(242, 241, 240, 0.55); }
+.mineLabel { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(242, 241, 240, 0.65); }
+.mineNone { color: rgba(242, 241, 240, 0.65); }
 .mineKeys { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .mineChip { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.2rem 0.65rem; border-radius: 999px; border: 1px solid var(--kc); background: color-mix(in srgb, var(--kc) 16%, transparent); color: var(--white); font-size: 0.82rem; }
 .mineChip svg { color: var(--kc); }
 
 /* search, filter, add */
 .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
-.search { display: flex; align-items: center; gap: 0.5rem; flex: 1 1 220px; min-width: 0; padding: 0 0.7rem; height: 36px; border-radius: 0.6rem; border: 1px solid rgba(255, 255, 255, 0.14); background: rgba(255, 255, 255, 0.04); color: rgba(242, 241, 240, 0.55); }
+.search { display: flex; align-items: center; gap: 0.5rem; flex: 1 1 220px; min-width: 0; padding: 0 0.7rem; height: 36px; border-radius: 0.6rem; border: 1px solid rgba(255, 255, 255, 0.14); background: rgba(255, 255, 255, 0.04); color: rgba(242, 241, 240, 0.65); }
 .search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--white); font: inherit; font-size: 0.88rem; }
 .search:focus-within { border-color: rgba(255, 199, 44, 0.55); }
 .filters { display: flex; flex-wrap: wrap; gap: 0.4rem; }
@@ -34,12 +34,12 @@
 .cardTools { display: inline-flex; gap: 0.4rem; flex: none; }
 
 .where { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.75rem; padding: 0.6rem 0.75rem; border-radius: 0.75rem; background: rgba(0, 0, 0, 0.22); }
-.whereLabel { font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(242, 241, 240, 0.5); }
+.whereLabel { font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(242, 241, 240, 0.65); }
 .holder { display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
 .holder > div { display: flex; flex-direction: column; min-width: 0; }
 .holder strong { font-size: 0.92rem; color: var(--white); overflow-wrap: anywhere; }
-.holder span { font-size: 0.76rem; color: rgba(242, 241, 240, 0.55); overflow-wrap: anywhere; }
-.heldFor { font-size: 0.74rem; color: rgba(242, 241, 240, 0.5); white-space: nowrap; }
+.holder span { font-size: 0.76rem; color: rgba(242, 241, 240, 0.65); overflow-wrap: anywhere; }
+.heldFor { font-size: 0.74rem; color: rgba(242, 241, 240, 0.65); white-space: nowrap; }
 .avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex: none; }
 .avatarFallback { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; flex: none; background: rgba(255, 255, 255, 0.1); font-size: 0.95rem; color: rgba(242, 241, 240, 0.85); }
 .holderIcon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; flex: none; }
@@ -47,12 +47,12 @@
 .hiPlace { background: rgba(45, 212, 191, 0.14); color: #5eead4; border: 1px solid rgba(45, 212, 191, 0.4); }
 
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
-.historyBtn { margin-left: auto; display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.5rem; border: 0; background: none; color: rgba(242, 241, 240, 0.55); font: inherit; font-size: 0.78rem; cursor: pointer; }
+.historyBtn { margin-left: auto; display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.5rem; border: 0; background: none; color: rgba(242, 241, 240, 0.65); font: inherit; font-size: 0.78rem; cursor: pointer; }
 .historyBtn:hover { color: var(--yellow-text); }
 .flip { transform: rotate(180deg); }
 .history { list-style: none; margin: 0; padding: 0 0 0 0.2rem; display: flex; flex-direction: column; gap: 0.5rem; border-left: 2px solid rgba(255, 255, 255, 0.1); margin-left: 0.4rem; }
 .history li { display: flex; flex-direction: column; gap: 0.1rem; padding-left: 0.8rem; font-size: 0.82rem; color: rgba(242, 241, 240, 0.8); }
-.history time { font-size: 0.7rem; color: rgba(242, 241, 240, 0.45); }
+.history time { font-size: 0.7rem; color: rgba(242, 241, 240, 0.6); }
 .history b { color: var(--white); font-weight: 600; }
 .history em { color: rgba(242, 241, 240, 0.6); font-style: normal; }
 
@@ -70,7 +70,7 @@
 .people ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.4rem; }
 .person { display: flex; align-items: center; gap: 0.6rem; width: 100%; padding: 0.4rem 0.6rem; border-radius: 0.7rem; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.03); color: var(--white); font: inherit; font-size: 0.86rem; text-align: left; cursor: pointer; }
 .person span { display: flex; flex-direction: column; flex: 1; min-width: 0; }
-.person small { font-size: 0.7rem; color: rgba(242, 241, 240, 0.5); }
+.person small { font-size: 0.7rem; color: rgba(242, 241, 240, 0.65); }
 .person:hover { border-color: rgba(255, 199, 44, 0.45); }
 .personOn { border-color: var(--yellow); background: rgba(255, 199, 44, 0.1); }
 .person svg { color: var(--yellow-text); flex: none; }
@@ -78,7 +78,7 @@
 .swatch { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2); }
 .swatchOn { border-color: #fff; box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.5); }
 .formActions { display: flex; justify-content: flex-end; gap: 0.5rem; }
-.empty { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; padding: 2.5rem 1rem; text-align: center; color: rgba(242, 241, 240, 0.55); border-radius: 1rem; border: 1px dashed rgba(255, 255, 255, 0.14); }
+.empty { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; padding: 2.5rem 1rem; text-align: center; color: rgba(242, 241, 240, 0.65); border-radius: 1rem; border: 1px dashed rgba(255, 255, 255, 0.14); }
 
 @media (max-width: 640px) {
   .twoCol, .people ul { grid-template-columns: minmax(0, 1fr); }
@@ -93,10 +93,10 @@
 .people .search { flex: none; height: 36px; }
 
 /* The key itself has to be the most obvious thing on the card: a solid, bright tile with a dark key on it, clearly apart from the white name. */
-.keyTile { width: 52px; height: 52px; border-radius: 0.9rem; border: 0; transform: none; background: var(--kc); color: #14161f; box-shadow: 0 6px 18px -6px var(--kc); }
+.keyTile { width: 52px; height: 52px; border-radius: 0.9rem; border: 0; transform: none; background: var(--kc); color: #111c33; box-shadow: 0 6px 18px -6px var(--kc); }
 .keyTile svg { transform: rotate(-40deg); filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.25)); }
-.mineChip { background: var(--kc); color: #14161f; border-color: var(--kc); font-weight: 700; }
-.mineChip svg { color: #14161f; transform: rotate(-40deg); }
+.mineChip { background: var(--kc); color: #111c33; border-color: var(--kc); font-weight: 700; }
+.mineChip svg { color: #111c33; transform: rotate(-40deg); }
 .card { border-left-width: 5px; }
 
 .header { flex-direction: row !important; align-items: flex-start; justify-content: space-between; gap: 1rem; }

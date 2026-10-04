@@ -9,7 +9,7 @@
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
 }
 
 .input {
@@ -30,7 +30,7 @@
 .hint {
   font-size: 0.72rem;
   font-family: var(--font-futura-medium);
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
 }
 
 .albumList {
@@ -59,7 +59,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: rgba(242,241,240,0.3);
+  color: rgba(242, 241, 240, 0.6);
   cursor: grab;
   touch-action: none;
 }
@@ -77,7 +77,7 @@
 
 .albumUrl {
   font-size: 0.78rem;
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

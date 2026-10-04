@@ -64,7 +64,7 @@
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
   margin-bottom: 0.5rem;
 }
 .undoBtn {
@@ -109,6 +109,6 @@
   color: var(--yellow-text);
 }
 
-.codeTimer { font-size: 0.78rem; color: rgba(242,241,240,0.4); margin-top: 0.5rem; }
+.codeTimer { font-size: 0.78rem; color: rgba(242, 241, 240, 0.6); margin-top: 0.5rem; }
 
-.onlineHint { font-size: 0.82rem; color: rgba(242,241,240,0.5); line-height: 1.5; }
+.onlineHint { font-size: 0.82rem; color: rgba(242, 241, 240, 0.65); line-height: 1.5; }

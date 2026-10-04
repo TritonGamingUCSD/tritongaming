@@ -18,7 +18,7 @@
   margin-bottom: 0.2rem;
 }
 
-.sub { font-size: var(--fs-meta); color: rgba(242,241,240,0.4); }
+.sub { font-size: var(--fs-meta); color: rgba(242, 241, 240, 0.6); }
 
 .adminLink {
   font-size: 0.82rem;
@@ -223,10 +223,10 @@
 
 
 
-.detailPronouns { font-size: var(--fs-meta); color: rgba(242,241,240,0.4); }
+.detailPronouns { font-size: var(--fs-meta); color: rgba(242, 241, 240, 0.6); }
 .detailMeta {
   display: flex; align-items: center; justify-content: center; gap: 0.3rem;
-  font-size: 0.78rem; color: rgba(242,241,240,0.5);
+  font-size: 0.78rem; color: rgba(242, 241, 240, 0.65);
 }
 
 .detailSocialBtn {
@@ -277,7 +277,7 @@
 .copyRowText { min-width: 0; overflow-wrap: anywhere; font-weight: 600; color: var(--white); }
 .detailBio { margin-top: 0.55rem; font-size: 0.82rem; line-height: 1.45; text-align: center; align-self: stretch; }
 .detailLinks .detailSocialBtn { width: 32px; height: 32px; }
-.detailJoined { margin-top: 0.55rem; font-size: 0.68rem; color: rgba(242, 241, 240, 0.4); }
+.detailJoined { margin-top: 0.55rem; font-size: 0.68rem; color: rgba(242, 241, 240, 0.6); }
 
 /* School info: major (primary) on its own line with the cap icon right beside
    it, then year · college underneath. */
@@ -309,14 +309,14 @@
 
 /* The key stands apart from the gold titles: a small solid colored badge with a dark key, not a thin gold line. */
 .keyIcons { gap: 0.25rem; margin-left: 0.5rem; vertical-align: 1px; }
-.keyBadge { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; color: #14161f; box-shadow: 0 0 0 2px rgba(11, 14, 21, 0.9), 0 2px 8px -2px rgba(0, 0, 0, 0.6); }
+.keyBadge { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; color: #111c33; box-shadow: 0 0 0 2px rgba(11, 14, 21, 0.9), 0 2px 8px -2px rgba(0, 0, 0, 0.6); }
 .keyBadge svg { transform: rotate(-40deg); }
 .keyIcons svg { filter: none; transform: none; }
 .keyBadge svg { transform: rotate(-40deg); }
 .detailKeys { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin-top: 0.9rem; padding: 0.7rem 0.9rem; border-radius: 0.8rem; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.04); }
-.detailKeysLabel { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(242, 241, 240, 0.55); }
+.detailKeysLabel { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(242, 241, 240, 0.65); }
 .detailKeysList { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-.keyPill { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.7rem; border-radius: 999px; color: #14161f; font-size: 0.82rem; font-weight: 700; }
+.keyPill { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.7rem; border-radius: 999px; color: #111c33; font-size: 0.82rem; font-weight: 700; }
 .keyPill svg { transform: rotate(-40deg); }
 
 .idleTag { display: inline-flex; align-items: center; gap: 0.25rem; margin-left: 0.4rem; padding: 0.05rem 0.5rem; border-radius: 999px; background: rgba(148, 163, 184, 0.2); color: #cbd5e1; font-size: 0.66rem; font-weight: 600; vertical-align: middle; }

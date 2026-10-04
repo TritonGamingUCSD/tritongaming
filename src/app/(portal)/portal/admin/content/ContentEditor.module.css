@@ -26,7 +26,7 @@
 
 .noResults {
   font-size: 0.82rem;
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
   padding: 0.5rem 0.25rem;
 }
 
@@ -41,7 +41,7 @@
   font-family: var(--font-renegare);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(242,241,240,0.3);
+  color: rgba(242, 241, 240, 0.6);
   padding: 0 0.25rem;
   margin-bottom: 0.1rem;
 }
@@ -100,7 +100,7 @@
 
 .blockDesc {
   font-size: 0.75rem;
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
   line-height: 1.4;
 }
 
@@ -150,7 +150,7 @@
 .blockPreview {
   margin-top: 0.625rem;
   font-size: 0.78rem;
-  color: rgba(242,241,240,0.35);
+  color: rgba(242, 241, 240, 0.6);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -217,7 +217,7 @@
 
 .editPanelDesc {
   font-size: 0.8rem;
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
   max-width: 380px;
   line-height: 1.5;
 }
@@ -242,7 +242,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
   cursor: pointer;
   padding: 0.25rem 0.5rem;
   border-radius: 0.375rem;
@@ -274,7 +274,7 @@
 
 .cancelBtn {
   font-size: 0.85rem;
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
   padding: 0.6rem 1.25rem;
   border-radius: 0.5rem;
   cursor: pointer;
@@ -358,7 +358,7 @@
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(242,241,240,0.45);
+  color: rgba(242, 241, 240, 0.6);
 }
 
 .optionalTag {
@@ -366,7 +366,7 @@
   padding: 0.05rem 0.35rem;
   background: rgba(255,255,255,0.06);
   border-radius: var(--radius-pill);
-  color: rgba(242,241,240,0.3);
+  color: rgba(242, 241, 240, 0.6);
   letter-spacing: 0.06em;
 }
 
@@ -419,7 +419,7 @@
   font-size: 0.7rem;
   font-family: var(--font-futura-medium);
   letter-spacing: 0.04em;
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
   padding: 0.25rem 0.7rem;
   border-radius: 0.3rem;
   cursor: pointer;
@@ -443,7 +443,7 @@
 
 .mdPreviewEmpty {
   font-size: 0.85rem;
-  color: rgba(242,241,240,0.3);
+  color: rgba(242, 241, 240, 0.6);
   font-style: italic;
 }
 
@@ -508,7 +508,7 @@
   border-radius: 0.5rem;
   font-size: 0.8rem;
   font-family: var(--font-futura-medium);
-  color: rgba(242,241,240,0.5);
+  color: rgba(242, 241, 240, 0.65);
   border: 1px solid rgba(255,255,255,0.1);
   background: transparent;
   cursor: pointer;
@@ -569,7 +569,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: rgba(242,241,240,0.3);
+  color: rgba(242, 241, 240, 0.6);
   cursor: grab;
   touch-action: none;
 }
@@ -626,7 +626,7 @@
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(242,241,240,0.3);
+  color: rgba(242, 241, 240, 0.6);
 }
 
 /* ── Image list (sponsors) ────────────────────────── */
@@ -656,7 +656,7 @@
 .imageLogoFallback {
   width: 48px; height: 48px; border-radius: 0.375rem; background: rgba(255,255,255,0.08);
   display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-futura-heavy); font-size: 1.1rem; color: rgba(242,241,240,0.5);
+  font-family: var(--font-futura-heavy); font-size: 1.1rem; color: rgba(242, 241, 240, 0.65);
 }
 
 .imageCardFields {
@@ -705,7 +705,7 @@
 .topBar { margin-bottom: 0.25rem; }
 .layout { grid-template-columns: 300px minmax(0, 1fr); gap: 1.25rem; }
 .blockList { gap: 0.6rem; position: sticky; top: calc(var(--portal-header-h, 0px) + 0.75rem); max-height: calc(100vh - var(--portal-header-h, 0px) - 1.5rem); overflow-y: auto; scrollbar-width: thin; }
-.searchNote { font-size: 0.74rem; color: rgba(242, 241, 240, 0.45); padding: 0 0.2rem; }
+.searchNote { font-size: 0.74rem; color: rgba(242, 241, 240, 0.6); padding: 0 0.2rem; }
 .rows { display: flex; flex-direction: column; gap: 0.3rem; }
 .row {
   display: flex; align-items: center; gap: 0.7rem; width: 100%; text-align: left;
@@ -717,8 +717,8 @@
 .rowActive { background: rgba(255, 199, 44, 0.1); border-color: rgba(255, 199, 44, 0.4); }
 .rowText { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .rowTitle { font-size: 0.88rem; color: var(--white); }
-.rowCat { color: rgba(242, 241, 240, 0.45); font-size: 0.75rem; }
-.rowPreview { font-size: 0.74rem; color: rgba(242, 241, 240, 0.45); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rowCat { color: rgba(242, 241, 240, 0.6); font-size: 0.75rem; }
+.rowPreview { font-size: 0.74rem; color: rgba(242, 241, 240, 0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dirtyDot { width: 8px; height: 8px; border-radius: 50%; background: #fbbf24; flex-shrink: 0; }
 .editPanel { top: calc(var(--portal-header-h, 0px) + 0.75rem); }
 
@@ -739,10 +739,10 @@
 /* One toolbar row: the page's block sub-tabs on the left, search tucked in on the right. */
 .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
 .subTabs { flex: 1 1 320px; min-width: 0; }
-.searchWrap { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; padding: 0 0.8rem; height: 38px; width: 230px; max-width: 100%; border-radius: 999px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: rgba(242, 241, 240, 0.5); }
+.searchWrap { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; padding: 0 0.8rem; height: 38px; width: 230px; max-width: 100%; border-radius: 999px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: rgba(242, 241, 240, 0.65); }
 .searchWrap:focus-within { border-color: rgba(255, 199, 44, 0.45); color: var(--yellow-text); }
 .searchField { flex: 1; min-width: 0; background: none; border: none; outline: none; color: var(--white); font-family: inherit; font-size: 0.85rem; }
-.searchField::placeholder { color: rgba(242, 241, 240, 0.4); }
+.searchField::placeholder { color: rgba(242, 241, 240, 0.6); }
 @media (max-width: 640px) { .searchWrap { width: 100%; } }
 
 /* ── Live preview beside the editor ── */
@@ -751,16 +751,16 @@
 .previewPane { margin-top: 0.9rem; display: flex; flex-direction: column; gap: 0.5rem; }
 .previewBar { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
 .previewTitle { font-family: var(--font-futura-heavy); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(242, 241, 240, 0.85); }
-.previewTitle em { font-style: normal; text-transform: none; letter-spacing: 0; color: rgba(242, 241, 240, 0.45); margin-left: 0.4rem; }
+.previewTitle em { font-style: normal; text-transform: none; letter-spacing: 0; color: rgba(242, 241, 240, 0.6); margin-left: 0.4rem; }
 .previewTools { display: flex; gap: 0.25rem; }
 .previewTool { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 0.5rem; border: 1px solid rgba(255, 255, 255, 0.1); background: transparent; color: rgba(242, 241, 240, 0.6); cursor: pointer; }
 .previewTool:hover { color: #fff; background: rgba(255, 255, 255, 0.06); }
 .previewToolOn { color: var(--yellow-text); border-color: rgba(255, 199, 44, 0.5); background: rgba(255, 199, 44, 0.1); }
 
-.previewBox { border-radius: 0.9rem; border: 1px solid rgba(255, 255, 255, 0.1); background: #05070d; overflow: hidden; display: flex; justify-content: center; }
+.previewBox { border-radius: 0.9rem; border: 1px solid rgba(255, 255, 255, 0.1); background: #080f1d; overflow: hidden; display: flex; justify-content: center; }
 .previewScaler { position: relative; overflow: hidden; }
-.previewFrame { border: 0; transform-origin: top left; background: #05070d; display: block; }
-.previewNote { margin: 0; font-size: 0.72rem; color: rgba(242, 241, 240, 0.4); }
+.previewFrame { border: 0; transform-origin: top left; background: #080f1d; display: block; }
+.previewNote { margin: 0; font-size: 0.72rem; color: rgba(242, 241, 240, 0.6); }
 @media (min-width: 1200px) {
   .editorWithPreview.previewOn { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
   .editorWithPreview.previewOn .previewPane { margin-top: 0; position: sticky; top: 0.5rem; }
@@ -784,7 +784,7 @@
 .sectionBtnOn { color: var(--yellow-text); border-color: rgba(255, 199, 44, 0.4); }
 
 /* Full-screen preview: covers the whole window; the page is scaled to fit it. Esc or the button returns. */
-.previewFull { position: fixed !important; inset: 0; z-index: 1000; margin: 0 !important; padding: 0.75rem 1rem; background: #05070d; }
+.previewFull { position: fixed !important; inset: 0; z-index: 1000; margin: 0 !important; padding: 0.75rem 1rem; background: #080f1d; }
 .previewFull .previewBox { flex: 1; min-height: 0; align-items: center; }
 .previewFull .previewNote { display: none; }
 

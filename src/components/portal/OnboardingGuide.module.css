@@ -19,7 +19,7 @@
   align-items: center;
   text-align: center;
   gap: 0.875rem;
-  background: #0a0f1e;
+  background: #0b1426;
   border: 1px solid rgba(255, 199, 44, 0.2);
   border-radius: 1.25rem;
   padding: 2.5rem 1.75rem 1.75rem;
@@ -38,7 +38,7 @@
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(242, 241, 240, 0.5);
+  color: rgba(242, 241, 240, 0.65);
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }

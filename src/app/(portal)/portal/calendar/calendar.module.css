@@ -16,28 +16,28 @@
 .itemInternal .itemBar { background: #fb923c; }
 
 .grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; border-radius: 0.9rem; overflow: hidden; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.08); }
-.weekday { padding: 0.45rem 0; text-align: center; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(242, 241, 240, 0.5); background: #0d1017; }
+.weekday { padding: 0.45rem 0; text-align: center; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(242, 241, 240, 0.65); background: #080f1d; }
 .cell {
   display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; min-height: 92px; padding: 0.4rem; text-align: left; cursor: pointer;
-  background: #0b0e15; border: 0; color: inherit; font: inherit; min-width: 0; transition: background 0.12s;
+  background: #080f1d; border: 0; color: inherit; font: inherit; min-width: 0; transition: background 0.12s;
 }
-.cell:hover { background: #111623; }
+.cell:hover { background: #111c33; }
 .outside { opacity: 0.4; }
 .selected { background: #151b2b; box-shadow: inset 0 0 0 2px rgba(255, 199, 44, 0.7); }
 .num { font-size: 0.8rem; font-weight: 600; color: rgba(242, 241, 240, 0.85); width: 1.6rem; height: 1.6rem; display: grid; place-items: center; border-radius: 50%; }
-.today .num { background: var(--yellow); color: #14161f; }
+.today .num { background: var(--yellow); color: #111c33; }
 .chips { display: flex; flex-direction: column; gap: 2px; width: 100%; min-width: 0; }
 .chip { display: block; padding: 1px 5px; border-radius: 4px; font-size: 0.68rem; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chipEvent { background: rgba(74, 144, 226, 0.22); color: #9cc6f5; }
 .chipMeeting { background: rgba(167, 139, 250, 0.22); color: #cbbcfb; }
-.more { font-size: 0.66rem; color: rgba(242, 241, 240, 0.5); padding-left: 2px; }
+.more { font-size: 0.66rem; color: rgba(242, 241, 240, 0.65); padding-left: 2px; }
 .dots { display: none; gap: 3px; }
 
 .dayPanel { display: flex; flex-direction: column; gap: 0.6rem; padding: 1rem 1.1rem; border-radius: 1rem; background: rgba(255, 255, 255, 0.035); border: 1px solid rgba(255, 255, 255, 0.09); }
 .dayTitle { display: flex; align-items: center; gap: 0.6rem; margin: 0 0 0.4rem; font-family: var(--font-futura-heavy); font-size: 1rem; color: var(--white); }
 .todayTag { font-size: 0.64rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.1rem 0.5rem; border-radius: 999px; background: rgba(255, 199, 44, 0.18); color: var(--yellow-text); }
 .agenda { display: flex; flex-direction: column; gap: 1.1rem; }
-.empty { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; padding: 2.5rem 1rem; text-align: center; color: rgba(242, 241, 240, 0.55); border-radius: 1rem; border: 1px dashed rgba(255, 255, 255, 0.14); }
+.empty { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; padding: 2.5rem 1rem; text-align: center; color: rgba(242, 241, 240, 0.65); border-radius: 1rem; border: 1px dashed rgba(255, 255, 255, 0.14); }
 
 .list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.45rem; }
 .item { display: flex; align-items: stretch; gap: 0.7rem; padding: 0.6rem 0.8rem 0.6rem 0.6rem; border-radius: 0.75rem; border: 1px solid rgba(255, 255, 255, 0.09); background: rgba(255, 255, 255, 0.03); color: inherit; text-decoration: none; transition: border-color 0.15s, background 0.15s; }
@@ -49,7 +49,7 @@
 .itemTitle { display: flex; align-items: center; gap: 0.4rem; font-weight: 600; color: var(--white); font-size: 0.95rem; overflow-wrap: anywhere; }
 .ticket { color: var(--yellow-text); flex-shrink: 0; }
 .itemMeta { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; font-size: 0.78rem; color: rgba(242, 241, 240, 0.6); }
-.kind { align-self: center; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: rgba(242, 241, 240, 0.5); white-space: nowrap; }
+.kind { align-self: center; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: rgba(242, 241, 240, 0.65); white-space: nowrap; }
 
 @media (max-width: 640px) {
   .cell { min-height: 56px; align-items: center; padding: 0.3rem 0.15rem; }
@@ -81,12 +81,12 @@
 
 /* Week view: seven day columns on a desktop, one stacked day after another on a phone. */
 .week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; border-radius: 0.9rem; overflow: hidden; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.08); }
-.weekDay { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; min-height: 320px; padding: 0.55rem 0.5rem 0.7rem; background: #0b0e15; }
-.weekToday { background: #111623; box-shadow: inset 0 2px 0 var(--yellow); }
+.weekDay { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; min-height: 320px; padding: 0.55rem 0.5rem 0.7rem; background: #080f1d; }
+.weekToday { background: #111c33; box-shadow: inset 0 2px 0 var(--yellow); }
 .weekHead { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
-.weekName { font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(242, 241, 240, 0.55); }
+.weekName { font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(242, 241, 240, 0.65); }
 .weekNum { display: grid; place-items: center; width: 1.7rem; height: 1.7rem; border-radius: 50%; font-weight: 600; font-size: 0.85rem; color: rgba(242, 241, 240, 0.9); }
-.weekToday .weekNum { background: var(--yellow); color: #14161f; }
+.weekToday .weekNum { background: var(--yellow); color: #111c33; }
 .weekEmpty { margin: 0; font-size: 0.74rem; color: rgba(242, 241, 240, 0.28); }
 .weekList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
 .weekItem { display: flex; gap: 0.45rem; padding: 0.4rem 0.45rem 0.4rem 0.35rem; border-radius: 0.6rem; border: 1px solid rgba(255, 255, 255, 0.09); background: rgba(255, 255, 255, 0.04); color: inherit; text-decoration: none; transition: background 0.15s, border-color 0.15s; }
@@ -94,7 +94,7 @@
 .weekItemMain { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
 .weekTime { font-size: 0.68rem; color: rgba(242, 241, 240, 0.6); }
 .weekTitle { display: flex; align-items: center; gap: 0.3rem; font-size: 0.8rem; font-weight: 600; color: var(--white); overflow-wrap: anywhere; }
-.weekLoc { display: inline-flex; align-items: center; gap: 0.2rem; font-size: 0.68rem; color: rgba(242, 241, 240, 0.5); overflow-wrap: anywhere; }
+.weekLoc { display: inline-flex; align-items: center; gap: 0.2rem; font-size: 0.68rem; color: rgba(242, 241, 240, 0.65); overflow-wrap: anywhere; }
 @media (max-width: 899px) {
   .week { grid-template-columns: minmax(0, 1fr); }
   .weekDay { min-height: 0; flex-direction: column; }
@@ -103,7 +103,7 @@
 
 /* ── Filters ─────────────────────────────────────────────────────────────── */
 .filters { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
-.filterChip { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.7rem; border-radius: 0.6rem; border: 1px solid rgba(255, 255, 255, 0.12); background: transparent; color: rgba(242, 241, 240, 0.5); font: inherit; font-size: 0.78rem; cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s; }
+.filterChip { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.7rem; border-radius: 0.6rem; border: 1px solid rgba(255, 255, 255, 0.12); background: transparent; color: rgba(242, 241, 240, 0.65); font: inherit; font-size: 0.78rem; cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s; }
 .filterChip:hover { border-color: rgba(255, 199, 44, 0.45); color: var(--white); }
 .filterOn { background: rgba(255, 255, 255, 0.07); border-color: rgba(255, 255, 255, 0.28); color: var(--white); }
 .filterChip:not(.filterOn) i { opacity: 0.35; }
@@ -125,15 +125,15 @@
 .onlyNarrow { display: none; }
 @media (max-width: 899px) { .onlyWide { display: none; } .onlyNarrow { display: grid; } .dayPanel.onlyNarrow { display: flex; } }
 @media (min-width: 900px) { .week.onlyNarrow { display: none; } .dayPanel.onlyNarrow { display: none; } }
-.tg { --gutter: 56px; display: flex; flex-direction: column; border-radius: 0.9rem; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08); background: #0b0e15; }
-.tgHead { display: grid; grid-template-columns: var(--gutter) repeat(var(--cols), minmax(0, 1fr)); background: #0d1017; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+.tg { --gutter: 56px; display: flex; flex-direction: column; border-radius: 0.9rem; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08); background: #080f1d; }
+.tgHead { display: grid; grid-template-columns: var(--gutter) repeat(var(--cols), minmax(0, 1fr)); background: #080f1d; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
 .tgCorner { display: block; }
 .tgDayHead { display: flex; align-items: center; justify-content: center; gap: 0.45rem; padding: 0.5rem 0; border-left: 1px solid rgba(255, 255, 255, 0.06); }
-.tgDayToday .weekNum { background: var(--yellow); color: #14161f; }
+.tgDayToday .weekNum { background: var(--yellow); color: #111c33; }
 .tgScroll { overflow-y: auto; max-height: min(70vh, 760px); position: relative; }
 .tgBody { position: relative; display: grid; grid-template-columns: var(--gutter) repeat(var(--cols), minmax(0, 1fr)); }
 .tgGutter { position: relative; }
-.tgHour { position: absolute; right: 8px; transform: translateY(-50%); font-size: 0.66rem; color: rgba(242, 241, 240, 0.45); white-space: nowrap; }
+.tgHour { position: absolute; right: 8px; transform: translateY(-50%); font-size: 0.66rem; color: rgba(242, 241, 240, 0.6); white-space: nowrap; }
 .tgCol { position: relative; border-left: 1px solid rgba(255, 255, 255, 0.06); }
 .tgColToday { background: rgba(255, 199, 44, 0.035); }
 .tgLine { position: absolute; left: 0; right: 0; height: 0; border-top: 1px solid rgba(255, 255, 255, 0.06); pointer-events: none; }
@@ -166,15 +166,15 @@
 .dotGoogle { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: #2dd4bf; }
 .chipGoogle { background: rgba(45, 212, 191, 0.18); color: #99f6e4; }
 .itemGoogle .itemBar { background: #2dd4bf; }
-.popupNote { margin: 0.2rem 0 0; font-size: 0.74rem; color: rgba(242, 241, 240, 0.55); }
+.popupNote { margin: 0.2rem 0 0; font-size: 0.74rem; color: rgba(242, 241, 240, 0.65); }
 
 .linkFacts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.84rem; color: rgba(242, 241, 240, 0.75); }
 .linkFacts li { display: flex; gap: 0.5rem; align-items: flex-start; }
 .linkFacts svg { flex: none; margin-top: 0.2rem; color: #2dd4bf; }
 .linkFacts b { color: var(--white); font-weight: 600; }
 .linkToggle { display: flex; align-items: center; gap: 0.6rem; font-size: 0.86rem; color: rgba(242, 241, 240, 0.85); cursor: pointer; }
-.tgAllDay { display: grid; grid-template-columns: var(--gutter) repeat(var(--cols), minmax(0, 1fr)); border-bottom: 1px solid rgba(255, 255, 255, 0.08); background: #0d1017; }
-.tgAllLabel { display: block; padding: 0.4rem 0.5rem 0 0; text-align: right; font-size: 0.62rem; color: rgba(242, 241, 240, 0.45); }
+.tgAllDay { display: grid; grid-template-columns: var(--gutter) repeat(var(--cols), minmax(0, 1fr)); border-bottom: 1px solid rgba(255, 255, 255, 0.08); background: #080f1d; }
+.tgAllLabel { display: block; padding: 0.4rem 0.5rem 0 0; text-align: right; font-size: 0.62rem; color: rgba(242, 241, 240, 0.6); }
 .tgAllCell { display: flex; flex-direction: column; gap: 2px; padding: 3px; min-width: 0; border-left: 1px solid rgba(255, 255, 255, 0.06); }
 .tgAllChip { padding: 1px 6px; border: 0; border-left: 3px solid var(--k); border-radius: 0.35rem; background: var(--kbg); color: var(--kfg); font: inherit; font-size: 0.68rem; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
 .accounts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
@@ -192,7 +192,7 @@
 .header { flex-direction: row; align-items: flex-start; justify-content: space-between; gap: 0.75rem; }
 .headerText { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
 .syncBtn { position: relative; }
-.syncDot { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: #2dd4bf; box-shadow: 0 0 0 2px #0b0e15; }
+.syncDot { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: #2dd4bf; box-shadow: 0 0 0 2px #080f1d; }
 .syncDotWarn { background: #fbbf24; }
 .phoneOnly { display: none; }
 .syncGrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.75rem; }

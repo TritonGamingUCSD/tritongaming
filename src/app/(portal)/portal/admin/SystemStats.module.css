@@ -18,7 +18,7 @@
 
 .empty {
   font-size: 0.85rem;
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
   padding: 0.5rem 0;
 }
 
@@ -75,7 +75,7 @@
 
 .tableMeta {
   font-size: var(--fs-meta);
-  color: rgba(242,241,240,0.35);
+  color: rgba(242, 241, 240, 0.6);
   text-align: right;
 }
 
@@ -108,7 +108,7 @@
   font-family: var(--font-renegare);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
 }
 
 .bucketSize {
@@ -119,11 +119,11 @@
 
 .bucketCount {
   font-size: 0.78rem;
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
 }
 
 .bucketUnused { font-size: 0.75rem; color: var(--yellow-text); margin-top: 0.15rem; }
-.bucketClean { font-size: 0.75rem; color: rgba(242,241,240,0.3); margin-top: 0.15rem; }
+.bucketClean { font-size: 0.75rem; color: rgba(242, 241, 240, 0.6); margin-top: 0.15rem; }
 
 /* ── Storage cleanup controls (merged in from the old standalone
    StorageCleanup card — see SystemStats.tsx) ── */
@@ -206,7 +206,7 @@
 
 .vercelFramework {
   font-size: var(--fs-meta);
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
   margin-left: 0.6rem;
 }
 
@@ -252,12 +252,12 @@
 .stateCanceled { background: rgba(107,114,128,0.12); color: #9ca3af; }
 
 .deployTarget {
-  color: rgba(242,241,240,0.5);
+  color: rgba(242, 241, 240, 0.65);
   text-transform: capitalize;
 }
 
 .deployTime {
   margin-left: auto;
-  color: rgba(242,241,240,0.3);
+  color: rgba(242, 241, 240, 0.6);
   font-size: var(--fs-meta);
 }

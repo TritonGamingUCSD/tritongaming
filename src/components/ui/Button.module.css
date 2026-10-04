@@ -9,7 +9,7 @@
 .sm { padding: 0.4rem 0.9rem; font-size: 0.72rem; min-height: 32px; }
 
 .primary { background: var(--btn-primary-bg); color: var(--btn-primary-text); border: 1px solid var(--btn-primary-border); box-shadow: var(--btn-primary-shadow); }
-.primary:hover:not(:disabled) { border-color: var(--btn-primary-border-hover); box-shadow: var(--btn-primary-shadow-hover); }
+.primary:hover:not(:disabled) { background: #ffd45e; border-color: var(--btn-primary-border-hover); box-shadow: var(--btn-primary-shadow-hover); }
 
 .secondary { background: rgba(255, 255, 255, 0.05); color: rgba(242, 241, 240, 0.88); border: 1px solid rgba(255, 255, 255, 0.16); }
 .secondary:hover:not(:disabled) { background: rgba(255, 199, 44, 0.1); border-color: rgba(255, 199, 44, 0.5); color: var(--yellow-text); }

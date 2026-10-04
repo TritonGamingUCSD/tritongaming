@@ -9,13 +9,13 @@
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(242, 241, 240, 0.4);
+  color: rgba(242, 241, 240, 0.6);
 }
 
 .hint {
   font-size: 0.72rem;
   font-family: var(--font-futura-medium);
-  color: rgba(242, 241, 240, 0.4);
+  color: rgba(242, 241, 240, 0.6);
 }
 
 .dropzone {
@@ -24,7 +24,7 @@
   background: rgba(255, 255, 255, 0.03);
   border: 1px dashed rgba(255, 255, 255, 0.18);
   border-radius: 0.6rem;
-  color: rgba(242, 241, 240, 0.5);
+  color: rgba(242, 241, 240, 0.65);
   font-family: var(--font-futura-medium);
   font-size: 0.85rem;
   cursor: pointer;

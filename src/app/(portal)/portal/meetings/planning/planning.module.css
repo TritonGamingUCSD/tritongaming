@@ -12,7 +12,7 @@
 .chipOpen { color: var(--yellow-text); border-color: rgba(255, 199, 44, 0.45); }
 .chipDone { color: #34d399; border-color: rgba(52, 211, 153, 0.45); }
 .chipWarn { color: #fb923c; border-color: rgba(251, 146, 60, 0.45); }
-.needsMe { align-self: flex-start; margin-top: 0.15rem; font-size: 0.78rem; font-weight: 600; color: #0a0f1e; background: var(--yellow); border-radius: 999px; padding: 0.15rem 0.65rem; }
+.needsMe { align-self: flex-start; margin-top: 0.15rem; font-size: 0.78rem; font-weight: 600; color: #0b1426; background: var(--yellow); border-radius: 999px; padding: 0.15rem 0.65rem; }
 
 .kindPick { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
 .kindBtn { display: flex; flex-direction: column; gap: 0.2rem; text-align: left; padding: 0.7rem 0.85rem; border-radius: 0.9rem; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.03); color: var(--white); cursor: pointer; font: inherit; }
@@ -29,16 +29,16 @@
 .viewTabs { display: flex; gap: 0.4rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
 .viewTab { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.6rem 0.9rem; margin-bottom: -1px; background: none; border: 0; border-bottom: 2px solid transparent; color: rgba(242, 241, 240, 0.6); cursor: pointer; font: inherit; }
 .viewTabOn { color: var(--white); border-bottom-color: var(--yellow); }
-.todo { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.06em; background: var(--yellow); color: #0a0f1e; border-radius: 999px; padding: 0.05rem 0.45rem; }
-.count { font-size: 0.74rem; color: rgba(242, 241, 240, 0.5); }
+.todo { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.06em; background: var(--yellow); color: #0b1426; border-radius: 999px; padding: 0.05rem 0.45rem; }
+.count { font-size: 0.74rem; color: rgba(242, 241, 240, 0.65); }
 .saveLine { display: flex; align-items: center; gap: 0.35rem; margin: 0; font-size: 0.8rem; color: rgba(242, 241, 240, 0.65); }
-.hint { margin: 0.4rem 0 0; font-size: 0.76rem; color: rgba(242, 241, 240, 0.5); }
+.hint { margin: 0.4rem 0 0; font-size: 0.76rem; color: rgba(242, 241, 240, 0.65); }
 
 /* mode picker */
 .gridBlock { display: flex; flex-direction: column; gap: 0.6rem; }
-.modeBar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; position: sticky; top: 0; z-index: 3; padding: 0.3rem 0; background: var(--panel-bg, #0a0f1e); }
+.modeBar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; position: sticky; top: 0; z-index: 3; padding: 0.3rem 0; background: var(--panel-bg, #0b1426); }
 .modeBtn { display: flex; align-items: center; gap: 0.5rem; text-align: left; padding: 0.5rem 0.65rem; border-radius: 0.8rem; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.03); color: var(--white); cursor: pointer; font: inherit; font-size: 0.85rem; }
-.modeBtn em { display: block; font-style: normal; font-size: 0.68rem; color: rgba(242, 241, 240, 0.55); }
+.modeBtn em { display: block; font-style: normal; font-size: 0.68rem; color: rgba(242, 241, 240, 0.65); }
 .modeDot { flex: none; width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.3); }
 .mAvail .modeDot { background: #34d399; border-color: #34d399; }
 .mMaybe .modeDot { background: #fbbf24; border-color: #fbbf24; }
@@ -49,11 +49,11 @@
 /* desktop grid */
 .gridWrap { overflow-x: auto; width: fit-content; max-width: 100%; border-radius: 0.9rem; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.02); }
 .gridTable { display: grid; min-width: min-content; user-select: none; -webkit-user-select: none; }
-.corner { position: sticky; left: 0; background: #0a0f1e; z-index: 1; }
+.corner { position: sticky; left: 0; background: #0b1426; z-index: 1; }
 .colHead { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; padding: 0.4rem 0.2rem; font-size: 0.78rem; font-weight: 600; color: var(--white); text-align: center; border-left: 1px solid rgba(255, 255, 255, 0.07); }
-.colAll { background: none; border: 0; color: rgba(242, 241, 240, 0.5); font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer; padding: 0; }
+.colAll { background: none; border: 0; color: rgba(242, 241, 240, 0.65); font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer; padding: 0; }
 .colAll:hover { color: var(--yellow-text); }
-.timeLbl { position: sticky; left: 0; z-index: 1; background: #0a0f1e; height: 24px; font-size: 0.68rem; color: rgba(242, 241, 240, 0.55); text-align: right; padding-right: 0.4rem; transform: translateY(-0.5em); }
+.timeLbl { position: sticky; left: 0; z-index: 1; background: #0b1426; height: 24px; font-size: 0.68rem; color: rgba(242, 241, 240, 0.65); text-align: right; padding-right: 0.4rem; transform: translateY(-0.5em); }
 .timeHalf { color: transparent; }
 .cell { height: 24px; border-left: 1px solid rgba(255, 255, 255, 0.07); border-top: 1px solid rgba(255, 255, 255, 0.07); cursor: pointer; touch-action: manipulation; }
 .cellHalf { border-top-style: dotted; border-top-color: rgba(255, 255, 255, 0.04); }
@@ -93,8 +93,8 @@
 .busyNote { display: flex; flex-direction: column; gap: 0.25rem; padding: 0.7rem 0.9rem; border-radius: 0.9rem; border: 1px solid rgba(148, 163, 184, 0.45); background: rgba(148, 163, 184, 0.1); font-size: 0.82rem; color: rgba(242, 241, 240, 0.85); }
 .busyNote strong { color: var(--white); }
 .busyNote ul { margin: 0.2rem 0 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.15rem; }
-.busyNote i { font-style: normal; color: rgba(242, 241, 240, 0.55); }
-.gridTools { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; font-size: 0.76rem; color: rgba(242, 241, 240, 0.55); }
+.busyNote i { font-style: normal; color: rgba(242, 241, 240, 0.65); }
+.gridTools { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; font-size: 0.76rem; color: rgba(242, 241, 240, 0.65); }
 .clearAll { padding: 0.35rem 0.8rem; border-radius: 999px; border: 1px solid rgba(248, 113, 113, 0.55); background: rgba(248, 113, 113, 0.1); color: #fca5a5; font: inherit; font-size: 0.78rem; font-weight: 600; cursor: pointer; }
 .clearAll:hover:not(:disabled) { background: rgba(248, 113, 113, 0.2); }
 .clearAll:disabled { opacity: 0.4; cursor: default; }
@@ -114,7 +114,7 @@
 }
 
 /* time and day read right at the cursor, and lit up on the grid's edges */
-.hoverTip { position: fixed; z-index: 50; pointer-events: none; padding: 0.3rem 0.6rem; border-radius: 0.5rem; background: #05070d; border: 1px solid rgba(255, 255, 255, 0.25); color: var(--white); font-size: 0.76rem; font-weight: 600; white-space: nowrap; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5); }
+.hoverTip { position: fixed; z-index: 50; pointer-events: none; padding: 0.3rem 0.6rem; border-radius: 0.5rem; background: #080f1d; border: 1px solid rgba(255, 255, 255, 0.25); color: var(--white); font-size: 0.76rem; font-weight: 600; white-space: nowrap; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5); }
 .hoverTip em { display: block; font-style: normal; font-weight: 400; color: rgba(242, 241, 240, 0.7); }
 .hot { color: var(--yellow-text); }
 .timeHot { color: var(--yellow-text) !important; font-weight: 700; }
@@ -163,7 +163,7 @@
 
 /* More to choose from, and unmistakable which one you are about to pick. */
 .suggest { max-height: 26rem; overflow-y: auto; overscroll-behavior: contain; }
-.suggest h3 small { margin-left: auto; font-size: 0.68rem; font-weight: 400; text-transform: none; letter-spacing: 0; color: rgba(242, 241, 240, 0.5); }
+.suggest h3 small { margin-left: auto; font-size: 0.68rem; font-weight: 400; text-transform: none; letter-spacing: 0; color: rgba(242, 241, 240, 0.65); }
 .sugRank { display: inline-grid; place-items: center; width: 1.3rem; height: 1.3rem; margin-right: 0.45rem; border-radius: 50%; font-size: 0.7rem; background: rgba(52, 211, 153, 0.2); color: #6ee7b7; }
 .sugRow:hover, .sugRow:focus-within { background: rgba(240, 171, 252, 0.14); }
 .sugRow:hover .sugRank, .sugRow:focus-within .sugRank { background: #f0abfc; color: #1a0b1f; }
@@ -229,7 +229,7 @@
 
 /* The time labels sit half a line above their row, which left a strip under the last one where scrolled cells showed through (and at the rounded corner).
    A filler under the sticky time column closes it, with a little room below the last row. */
-.gridTable::after { content: ''; grid-column: 1; height: 0.7rem; position: sticky; left: 0; background: #0a0f1e; }
+.gridTable::after { content: ''; grid-column: 1; height: 0.7rem; position: sticky; left: 0; background: #0b1426; }
 /* Scrolled-under cells (and their amber corners) stay behind the sticky time column. */
 .timeLbl, .corner, .gridTable::after { z-index: 3; }
 
@@ -258,7 +258,7 @@
 .whoHead b { font-weight: 700; }
 .whoPeople { display: flex; flex-wrap: wrap; gap: 0.3rem; }
 .person { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.15rem 0.6rem 0.15rem 0.2rem; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--g) 55%, transparent); background: color-mix(in srgb, var(--g) 12%, transparent); font-size: 0.82rem; color: var(--white); }
-.person i { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--g); color: #0a0f1e; font-style: normal; font-size: 0.68rem; font-weight: 700; }
+.person i { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--g); color: #0b1426; font-style: normal; font-size: 0.68rem; font-weight: 700; }
 .person em { display: inline-flex; align-items: center; gap: 0.2rem; font-style: normal; font-size: 0.7rem; color: rgba(242, 241, 240, 0.6); }
 .whoRow.gWait .person { border-style: dashed; background: none; }
 .who p { display: none; }
@@ -272,7 +272,7 @@
 .confirm strong { display: flex; align-items: center; gap: 0.4rem; }
 .confirmLine { display: flex; align-items: flex-start; gap: 0.45rem; margin: 0; font-size: 0.85rem; color: rgba(242, 241, 240, 0.85); }
 .confirmLine svg { flex: none; margin-top: 0.12rem; }
-.confirmFine { display: flex; align-items: center; gap: 0.35rem; margin: 0; font-size: 0.74rem; color: rgba(242, 241, 240, 0.5); }
+.confirmFine { display: flex; align-items: center; gap: 0.35rem; margin: 0; font-size: 0.74rem; color: rgba(242, 241, 240, 0.65); }
 .whoAnswered { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.6rem; }
 .answeredCount { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.82rem; color: rgba(242, 241, 240, 0.8); }
 .waitingChips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
@@ -280,7 +280,7 @@
 
 /* Best times: the whole row is the button. */
 .sugRow { cursor: pointer; }
-.sugGo { flex: none; color: rgba(242, 241, 240, 0.45); transition: transform 0.15s, color 0.15s; }
+.sugGo { flex: none; color: rgba(242, 241, 240, 0.6); transition: transform 0.15s, color 0.15s; }
 .sugRow:hover .sugGo, .sugRow:focus-visible .sugGo { color: #f0abfc; transform: translateX(3px); }
 .sugRow:focus-visible { outline: 2px solid #f0abfc; outline-offset: -2px; }
 

@@ -2,7 +2,7 @@
 .trigger:disabled { cursor: not-allowed; opacity: 0.55; }
 .trigger:focus-visible { outline: 2px solid rgba(255, 199, 44, 0.55); outline-offset: 1px; }
 .text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.placeholder { color: rgba(242, 241, 240, 0.4); }
+.placeholder { color: rgba(242, 241, 240, 0.6); }
 .icon { flex-shrink: 0; color: #a8adb8; }
 .hidden { position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px; margin: 0; padding: 0; border: 0; }
 
@@ -11,12 +11,12 @@
 .nav { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 0.5rem; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.04); color: rgba(242, 241, 240, 0.8); cursor: pointer; }
 .nav:hover { border-color: rgba(255, 199, 44, 0.45); color: var(--yellow-text); }
 .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
-.dow { text-align: center; font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(242, 241, 240, 0.4); padding: 0.2rem 0; }
+.dow { text-align: center; font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(242, 241, 240, 0.6); padding: 0.2rem 0; }
 .day { aspect-ratio: 1; display: grid; place-items: center; border-radius: 0.5rem; border: 1px solid transparent; background: none; color: rgba(242, 241, 240, 0.88); font-size: 0.85rem; cursor: pointer; }
 .day:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); }
 .day:disabled { opacity: 0.25; cursor: not-allowed; }
 .dayToday { border-color: rgba(255, 199, 44, 0.45); }
-.daySel, .daySel:hover { background: var(--yellow) !important; color: #0b1226; font-weight: 700; }
+.daySel, .daySel:hover { background: var(--yellow) !important; color: #0b1426; font-weight: 700; }
 .calFoot { display: flex; justify-content: flex-end; padding-top: 0.4rem; }
 .link { background: none; border: none; color: var(--yellow-text); font-size: 0.8rem; cursor: pointer; padding: 0.2rem 0.4rem; }
 .link:disabled { opacity: 0.35; cursor: not-allowed; }
@@ -26,4 +26,4 @@
 .col { display: flex; flex-direction: column; gap: 2px; max-height: 190px; overflow-y: auto; scrollbar-width: thin; padding-right: 2px; }
 .cell { padding: 0.4rem 0; border-radius: 0.45rem; border: none; background: none; color: rgba(242, 241, 240, 0.85); font-size: 0.85rem; cursor: pointer; }
 .cell:hover { background: rgba(255, 255, 255, 0.08); }
-.cellOn, .cellOn:hover { background: var(--yellow); color: #0b1226; font-weight: 700; }
+.cellOn, .cellOn:hover { background: var(--yellow); color: #0b1426; font-weight: 700; }

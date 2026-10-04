@@ -36,7 +36,7 @@
   max-height: 70vh;
   max-height: 70dvh;
   overflow: hidden;
-  background: #0c1120;
+  background: #0b1426;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-bottom: none;
   border-radius: 1.25rem 1.25rem 0 0;
@@ -89,8 +89,8 @@
   text-transform: uppercase;
   color: rgba(242, 241, 240, 0.7);
 }
-.groupDot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
-.groupCount { margin-left: 0.15rem; font-size: 0.68rem; letter-spacing: 0; padding: 0.1rem 0.5rem; border-radius: 999px; background: rgba(255, 255, 255, 0.07); color: rgba(242, 241, 240, 0.55); }
+.groupDot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.groupCount { margin-left: 0.15rem; font-size: 0.68rem; letter-spacing: 0; padding: 0.1rem 0.5rem; border-radius: 6px; background: rgba(255, 255, 255, 0.07); color: rgba(242, 241, 240, 0.65); }
 
 /* ── Cards: icon tile + name + one-line description ── */
 .grid {
@@ -106,16 +106,15 @@
   gap: 0.85rem;
   text-align: left;
   padding: 0.85rem 1rem;
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 0.95rem;
+  background: #111c33;
+  border: 1px solid #1f2d4a;
+  border-radius: 0.6rem;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, transform 0.15s;
 }
 .card:hover {
-  background: color-mix(in srgb, var(--accent) 9%, transparent);
-  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
-  transform: translateY(-1px);
+  background: #15223d;
+  border-color: #3a4d78;
 }
 .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
@@ -125,10 +124,10 @@
   place-items: center;
   width: 44px;
   height: 44px;
-  border-radius: 0.8rem;
+  border-radius: 0.55rem;
   color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  background: #1a2744;
+  border: 0;
 }
 .cardIconTile svg { width: 22px; height: 22px; }
 
@@ -136,24 +135,24 @@
 .cardLabel { font-family: var(--font-futura-heavy); font-size: 0.92rem; color: var(--white); letter-spacing: 0.01em; }
 .cardDesc {
   font-size: 0.74rem;
-  color: rgba(242, 241, 240, 0.5);
+  color: rgba(242, 241, 240, 0.65);
   line-height: 1.35;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.cardChevron { flex-shrink: 0; color: rgba(242, 241, 240, 0.3); transition: transform 0.15s, color 0.15s; }
+.cardChevron { flex-shrink: 0; color: rgba(242, 241, 240, 0.6); transition: transform 0.15s, color 0.15s; }
 .card:hover .cardChevron { color: var(--accent); transform: translateX(2px); }
 .cardBadge {
   flex-shrink: 0;
   min-width: 22px;
   padding: 0.15rem 0.5rem;
-  border-radius: 999px;
+  border-radius: 6px;
   text-align: center;
   font-size: 0.72rem;
   font-family: var(--font-futura-heavy);
-  color: #0a0f1e;
+  color: #0b1426;
   background: var(--accent);
 }
 
@@ -173,9 +172,9 @@
 .panel {
   position: relative;
   z-index: 1;
-  background: linear-gradient(rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.02)), #060c1a;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 1.25rem;
+  background: #0b1426;
+  border: 1px solid #1f2d4a;
+  border-radius: 0.8rem;
   padding: 1.5rem clamp(1rem, 3vw, 2rem) 2.5rem;
   min-height: 60vh;
 }
@@ -198,7 +197,7 @@
   gap: 0.4rem;
   font-family: var(--font-futura-medium);
   font-size: 0.8rem;
-  color: rgba(242, 241, 240, 0.4);
+  color: rgba(242, 241, 240, 0.6);
   padding: 0.25rem 0;
   background: none;
   border: none;
@@ -317,12 +316,10 @@
   align-items: stretch;
   gap: 0.05rem;
   padding: 0.4rem 0.3rem;
-  background: rgba(12, 17, 32, 0.88);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 1.4rem;
-  box-shadow: 0 14px 34px -10px rgba(0, 0, 0, 0.7);
+  background: #080f1d;
+  border: 1px solid #1f2d4a;
+  border-radius: 0.9rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 .dockItem {
   flex: 1;
@@ -334,7 +331,7 @@
   padding: 0.3rem 0.1rem 0.35rem;
   background: none;
   border: none;
-  color: rgba(242, 241, 240, 0.55);
+  color: rgba(242, 241, 240, 0.65);
   font-family: var(--font-futura-medium);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -350,7 +347,7 @@
 }
 .dockLabel { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: 0.62rem; letter-spacing: 0; line-height: 1.1; white-space: nowrap; }
 .dockItemActive { color: var(--white); }
-.dockItemActive .dockIcon { background: rgba(255, 199, 44, 0.2); color: var(--yellow-text); }
+.dockItemActive .dockIcon { background: #1a2744; color: var(--yellow-text); box-shadow: inset 0 -3px 0 var(--yellow); }
 .dockItem:active .dockIcon { background: rgba(255, 255, 255, 0.1); }
 .dockBadge {
   position: absolute;
@@ -361,7 +358,7 @@
   padding: 0 0.28rem;
   border-radius: 999px;
   background: var(--yellow);
-  color: #0a0f1e;
+  color: #0b1426;
   font-family: var(--font-futura-heavy);
   font-size: 0.62rem;
   display: grid;
@@ -371,7 +368,7 @@
 /* "More" sheet: grouped tiles instead of a plain list */
 .moreSheetScroll { padding-bottom: calc(6.2rem + env(safe-area-inset-bottom, 0px)); }
 .sheetGroup { --accent: #ffc72c; display: flex; flex-direction: column; gap: 0.5rem; padding: 0.5rem 0.5rem 0.25rem; }
-.sheetGroupLabel { display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-futura-heavy); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(242, 241, 240, 0.55); }
+.sheetGroupLabel { display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-futura-heavy); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(242, 241, 240, 0.65); }
 .sheetGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
 .sheetTile {
   display: flex; flex-direction: column; align-items: center; gap: 0.45rem;
@@ -402,9 +399,9 @@
   max-height: calc(100vh - 2rem);
   margin-right: 1.5rem;
   padding: 0.9rem 0.75rem;
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 1.1rem;
+  background: #080f1d;
+  border: 1px solid #1f2d4a;
+  border-radius: 0.8rem;
 }
 .railIdentity {
   display: flex; align-items: center; gap: 0.7rem; width: 100%; text-align: left;
@@ -416,11 +413,11 @@
 .railAvatarFallback { display: grid; place-items: center; background: var(--gradient-nav); color: var(--white); font-family: var(--font-futura-heavy); }
 .railIdentityText { display: flex; flex-direction: column; min-width: 0; }
 .railName { font-family: var(--font-futura-heavy); font-size: 0.92rem; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.railRole { font-size: 0.7rem; color: rgba(242, 241, 240, 0.5); letter-spacing: 0.04em; text-transform: uppercase; }
+.railRole { font-size: 0.7rem; color: rgba(242, 241, 240, 0.65); letter-spacing: 0.04em; text-transform: uppercase; }
 
 .railNav { display: flex; flex-direction: column; gap: 0.9rem; overflow-y: auto; min-height: 0; padding-right: 2px; scrollbar-width: thin; }
 .railGroup { --accent: #ffc72c; display: flex; flex-direction: column; gap: 0.1rem; }
-.railGroupLabel { display: flex; align-items: center; gap: 0.45rem; padding: 0.15rem 0.6rem 0.35rem; font-family: var(--font-futura-heavy); font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(242, 241, 240, 0.4); }
+.railGroupLabel { display: flex; align-items: center; gap: 0.45rem; padding: 0.15rem 0.6rem 0.35rem; font-family: var(--font-futura-heavy); font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(242, 241, 240, 0.6); }
 .railGroupDot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
 
 .railItem {
@@ -430,19 +427,19 @@
   transition: background 0.15s;
 }
 .railItem:hover { background: rgba(255, 255, 255, 0.05); }
-.railItemActive { background: color-mix(in srgb, var(--accent) 13%, transparent); }
-.railItemActive::before { content: ''; position: absolute; left: -0.75rem; top: 20%; bottom: 20%; width: 3px; border-radius: 0 3px 3px 0; background: var(--accent); }
+.railItemActive { background: #16223d; }
+.railItemActive::before { content: ''; position: absolute; left: -0.75rem; top: 15%; bottom: 15%; width: 4px; border-radius: 0 3px 3px 0; background: var(--yellow); }
 .railIcon {
-  display: grid; place-items: center; flex-shrink: 0; width: 28px; height: 28px; border-radius: 0.55rem;
-  color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent);
+  display: grid; place-items: center; flex-shrink: 0; width: 28px; height: 28px; border-radius: 0.45rem;
+  color: var(--accent); background: #1a2744;
 }
 .railIcon :global(svg) { width: 15px; height: 15px; }
 .railLabel { flex: 1; min-width: 0; font-family: var(--font-futura-medium); font-size: 0.85rem; color: rgba(242, 241, 240, 0.72); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .railItemActive .railLabel { color: var(--white); }
-.railBadge { min-width: 20px; padding: 0.1rem 0.45rem; border-radius: 999px; background: var(--accent); color: #0a0f1e; font-size: 0.68rem; font-family: var(--font-futura-heavy); text-align: center; }
+.railBadge { min-width: 20px; padding: 0.1rem 0.45rem; border-radius: 6px; background: var(--accent); color: #0b1426; font-size: 0.68rem; font-family: var(--font-futura-heavy); text-align: center; }
 
 .railFooter { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.7rem 0.4rem 0.1rem; border-top: 1px solid rgba(255, 255, 255, 0.07); font-size: 0.76rem; }
-.railFooter a { color: rgba(242, 241, 240, 0.5); text-decoration: none; }
+.railFooter a { color: rgba(242, 241, 240, 0.65); text-decoration: none; }
 .railFooter a:hover { color: var(--yellow-text); }
 
 /* ── Sidebar: fixed in place, everything visible ──
@@ -493,7 +490,7 @@
 .railNav { gap: 0.2rem; }
 .railGroup { padding-top: 0.55rem; margin-top: 0.35rem; border-top: 1px solid rgba(255, 255, 255, 0.07); }
 .railNav > .railItem + .railGroup { margin-top: 0.45rem; }
-.railGroupLabel { padding: 0 0.55rem 0.3rem; font-size: 0.62rem; letter-spacing: 0.16em; color: rgba(242, 241, 240, 0.35); }
+.railGroupLabel { padding: 0 0.55rem 0.3rem; font-size: 0.62rem; letter-spacing: 0.16em; color: rgba(242, 241, 240, 0.6); }
 .railGroupDot { display: none; }
 .railItem { padding: 0.36rem 0.55rem; gap: 0.6rem; }
 .railIcon, .railItemActive .railIcon { background: none; width: 20px; height: 20px; }
@@ -587,7 +584,7 @@
     position: sticky; top: 0; z-index: 15;
     flex-direction: row; align-items: center; justify-content: flex-start; text-align: left; gap: 0.7rem;
     padding: 0.65rem 0; margin: 0 0 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    background: #080d1a;
+    background: #0b1426;
   }
   .panelHeader .backBtn {
     position: static; display: grid; place-items: center; width: 36px; height: 36px; padding: 0; flex-shrink: 0;
@@ -623,8 +620,8 @@
 
 /* Role chips under the name in the sidebar */
 .railRoles { display: flex; flex-wrap: wrap; gap: 0.2rem; margin-top: 0.2rem; }
-.railRoleChip { font-size: 0.56rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.05rem 0.4rem; border-radius: 999px; border: 1px solid; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; line-height: 1.35; }
-.railRoleMore { font-size: 0.6rem; color: rgba(242, 241, 240, 0.5); padding: 0.05rem 0.2rem; }
+.railRoleChip { font-size: 0.56rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.05rem 0.4rem; border-radius: 6px; border: 1px solid; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; line-height: 1.35; }
+.railRoleMore { font-size: 0.6rem; color: rgba(242, 241, 240, 0.65); padding: 0.05rem 0.2rem; }
 
 /* Back to Site / Sign Out: two real buttons sharing the footer, not faint text links. */
 .railFooter, .sheetFooter { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
@@ -648,7 +645,7 @@
 
 /* A slot that's there because something is happening right now (an event today, the meeting) gets a live dot. */
 .dockItemUrgent .dockIcon { position: relative; }
-.dockItemUrgent .dockIcon::after { content: ''; position: absolute; top: -1px; right: -1px; width: 8px; height: 8px; border-radius: 50%; background: #34d399; box-shadow: 0 0 0 2px #0b1226; animation: dockPulse 1.8s ease-in-out infinite; }
+.dockItemUrgent .dockIcon::after { content: ''; position: absolute; top: -1px; right: -1px; width: 8px; height: 8px; border-radius: 50%; background: #34d399; box-shadow: 0 0 0 2px #0b1426; animation: dockPulse 1.8s ease-in-out infinite; }
 @keyframes dockPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 @media (prefers-reduced-motion: reduce) { .dockItemUrgent .dockIcon::after { animation: none; } }
 
@@ -695,7 +692,7 @@
 }
 
 /* ── Collapse toggle + icon-only sidebar ── */
-.railToggle { display: flex; align-items: center; justify-content: center; gap: 0.4rem; flex: none; width: 100%; padding: 0.35rem 0.5rem; border: 0; border-radius: 0.6rem; background: transparent; color: rgba(242, 241, 240, 0.45); font: inherit; font-size: 0.72rem; letter-spacing: 0.04em; cursor: pointer; transition: background 0.15s, color 0.15s; }
+.railToggle { display: flex; align-items: center; justify-content: center; gap: 0.4rem; flex: none; width: 100%; padding: 0.35rem 0.5rem; border: 0; border-radius: 0.6rem; background: transparent; color: rgba(242, 241, 240, 0.6); font: inherit; font-size: 0.72rem; letter-spacing: 0.04em; cursor: pointer; transition: background 0.15s, color 0.15s; }
 .railToggle:hover { background: rgba(255, 255, 255, 0.06); color: var(--white); }
 @media (min-width: 900px) {
   .rail { transition: width 0.18s ease; }

@@ -3,13 +3,13 @@
 .legend { padding: 0 0.4rem; font-family: var(--font-futura-heavy); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(242, 241, 240, 0.7); }
 .field { display: flex; flex-direction: column; gap: 0.35rem; }
 .label { font-size: 0.75rem; color: rgba(242, 241, 240, 0.6); }
-.hint { font-size: 0.72rem; color: rgba(242, 241, 240, 0.4); }
+.hint { font-size: 0.72rem; color: rgba(242, 241, 240, 0.6); }
 .input { width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--radius-sm); padding: 0.625rem 0.875rem; color: var(--white); font-family: var(--font-futura-medium); font-size: 0.9rem; }
 .input:focus { outline: none; border-color: rgba(255, 199, 44, 0.4); }
 .row { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.6rem; border-radius: 0.7rem; background: rgba(255, 255, 255, 0.03); border: 1px solid transparent; }
 .dragging { opacity: 0.5; }
 .dragOver { border-color: rgba(255, 199, 44, 0.5); }
-.grip { display: grid; place-items: center; width: 24px; height: 36px; color: rgba(242, 241, 240, 0.4); flex-shrink: 0; }
+.grip { display: grid; place-items: center; width: 24px; height: 36px; color: rgba(242, 241, 240, 0.6); flex-shrink: 0; }
 .time { width: 96px; flex-shrink: 0; }
 .rowMain { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.4rem; }
 .logoCell { width: 120px; flex-shrink: 0; }
@@ -22,7 +22,7 @@
 .colorRow { display: flex; gap: 0.5rem; align-items: center; }
 .swatch { width: 44px; height: 38px; flex-shrink: 0; padding: 0; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: var(--radius-sm); background: none; cursor: pointer; }
 .swatchEmpty { opacity: 0.3; }
-.cap { font-family: var(--font-renegare); font-size: var(--fs-label); letter-spacing: 0.1em; text-transform: uppercase; color: rgba(242, 241, 240, 0.5); }
+.cap { font-family: var(--font-renegare); font-size: var(--fs-label); letter-spacing: 0.1em; text-transform: uppercase; color: rgba(242, 241, 240, 0.65); }
 .hex { min-width: 0; font-variant-numeric: tabular-nums; }
 .fontGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 0.75rem; }
 .stickerRow { display: flex; gap: 0.5rem; align-items: flex-start; }

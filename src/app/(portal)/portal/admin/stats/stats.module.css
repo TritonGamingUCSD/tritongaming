@@ -9,7 +9,7 @@
   margin-bottom: 0.2rem;
 }
 
-.sub { font-size: var(--fs-meta); color: rgba(242,241,240,0.4); margin-bottom: 1.5rem; }
+.sub { font-size: var(--fs-meta); color: rgba(242, 241, 240, 0.6); margin-bottom: 1.5rem; }
 
 .totalsGrid {
   display: grid;
@@ -41,7 +41,7 @@
   font-size: 0.7rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
 }
 
 .chartRow {
@@ -99,12 +99,12 @@
 .economyLabel {
   font-size: 0.68rem;
   letter-spacing: 0.03em;
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
 }
 
 .empty {
   text-align: center;
-  color: rgba(242,241,240,0.35);
+  color: rgba(242, 241, 240, 0.6);
   padding: 3rem 1rem;
   font-size: 0.9rem;
 }

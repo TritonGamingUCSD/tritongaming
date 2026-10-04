@@ -54,7 +54,7 @@
 
 .itemMuted {
   font-size: 0.75rem;
-  color: rgba(242, 241, 240, 0.4);
+  color: rgba(242, 241, 240, 0.6);
 }
 
 .itemMeta {
@@ -62,7 +62,7 @@
   align-items: center;
   gap: 0.6rem;
   font-size: 0.72rem;
-  color: rgba(242, 241, 240, 0.45);
+  color: rgba(242, 241, 240, 0.6);
 }
 
 .chevron { transition: transform 0.15s ease; }
@@ -89,7 +89,7 @@
   font-family: var(--font-futura-heavy);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(242, 241, 240, 0.35);
+  color: rgba(242, 241, 240, 0.6);
 }
 
 .chipRow {
@@ -119,6 +119,6 @@
   border-radius: 1rem;
 }
 
-.emptyIcon  { display: inline-flex; color: rgba(242, 241, 240, 0.3); }
+.emptyIcon  { display: inline-flex; color: rgba(242, 241, 240, 0.6); }
 .emptyTitle { font-family: var(--font-futura-heavy); font-size: 1.1rem; color: var(--white); }
-.emptySub   { font-size: 0.85rem; color: rgba(242, 241, 240, 0.4); }
+.emptySub   { font-size: 0.85rem; color: rgba(242, 241, 240, 0.6); }

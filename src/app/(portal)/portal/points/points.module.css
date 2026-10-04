@@ -18,7 +18,7 @@
   margin-bottom: 0.3rem;
 }
 
-.sub { font-size: var(--fs-meta); color: rgba(242,241,240,0.4); }
+.sub { font-size: var(--fs-meta); color: rgba(242, 241, 240, 0.6); }
 
 
 
@@ -52,11 +52,11 @@
   align-items: center;
   gap: 0.3rem;
   font-size: 0.75rem;
-  color: rgba(242,241,240,0.45);
+  color: rgba(242, 241, 240, 0.6);
 }
 
 
-.empty { font-size: 0.85rem; color: rgba(242,241,240,0.4); padding: 1.5rem 0; text-align: center; }
+.empty { font-size: 0.85rem; color: rgba(242, 241, 240, 0.6); padding: 1.5rem 0; text-align: center; }
 
 /* ── My Points ── */
 .pointsTab { display: flex; flex-direction: column; gap: 1.5rem; }
@@ -85,7 +85,7 @@
 .balanceRow { display: flex; gap: 2.5rem; flex-wrap: wrap; }
 
 .balanceValue { font-family: var(--font-futura-heavy); font-size: 1.75rem; color: var(--white); }
-.balanceLabel { font-size: var(--fs-meta); color: rgba(242,241,240,0.4); margin-top: 0.15rem; }
+.balanceLabel { font-size: var(--fs-meta); color: rgba(242, 241, 240, 0.6); margin-top: 0.15rem; }
 
 .progressWrap { display: flex; flex-direction: column; gap: 0.4rem; }
 
@@ -96,7 +96,7 @@
   overflow: hidden;
 }
 .progressFill { height: 100%; border-radius: var(--radius-pill); transition: width 0.3s; }
-.progressLabel { font-size: var(--fs-meta); color: rgba(242,241,240,0.4); }
+.progressLabel { font-size: var(--fs-meta); color: rgba(242, 241, 240, 0.6); }
 
 .referralCard {
   background: rgba(255,199,44,0.05);
@@ -115,7 +115,7 @@
   display: block;
 }
 
-.referralHint { font-size: 0.82rem; color: rgba(242,241,240,0.55); margin-bottom: 0.875rem; }
+.referralHint { font-size: 0.82rem; color: rgba(242, 241, 240, 0.65); margin-bottom: 0.875rem; }
 
 .referralRow { display: flex; gap: 0.5rem; }
 
@@ -163,7 +163,7 @@
 .historyRow:first-child { border-top: none; }
 
 .historyType { font-family: var(--font-futura-medium); font-size: 0.85rem; color: var(--white); }
-.historyMeta { font-size: 0.75rem; color: rgba(242,241,240,0.35); margin-top: 0.1rem; }
+.historyMeta { font-size: 0.75rem; color: rgba(242, 241, 240, 0.6); margin-top: 0.1rem; }
 .reversedTag { font-family: var(--font-futura-medium); font-size: 0.72rem; color: rgba(252,165,165,0.75); text-transform: uppercase; letter-spacing: 0.02em; }
 
 .amountPositive { font-family: var(--font-futura-heavy); font-size: 0.9rem; color: #34d399; white-space: nowrap; }
@@ -242,7 +242,7 @@
   border: 1px solid;
 }
 
-.tierGroupThreshold { font-size: 0.78rem; color: rgba(242,241,240,0.4); }
+.tierGroupThreshold { font-size: 0.78rem; color: rgba(242, 241, 240, 0.6); }
 
 .shopGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
 
@@ -265,8 +265,8 @@
    blockifies span children into proper flex items, which do reserve their
    full padded height. */
 .shopCardTitle { display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem; font-family: var(--font-futura-medium); font-size: 0.95rem; color: var(--white); }
-.shopCardDesc { font-size: 0.8rem; color: rgba(242,241,240,0.5); line-height: 1.4; }
-.stockNote { font-size: 0.75rem; color: rgba(242,241,240,0.35); }
+.shopCardDesc { font-size: 0.8rem; color: rgba(242, 241, 240, 0.65); line-height: 1.4; }
+.stockNote { font-size: 0.75rem; color: rgba(242, 241, 240, 0.6); }
 
 .shopCardFooter { display: flex; align-items: center; justify-content: space-between; margin-top: 0.5rem; }
 .shopCardCost { font-family: var(--font-futura-heavy); color: var(--yellow-text); font-size: 0.95rem; }
@@ -323,7 +323,7 @@
 .boardRow:first-child { border-top: none; }
 .boardRowSelf { background: rgba(255,199,44,0.06); border-radius: 0.5rem; }
 
-.boardRank { font-family: var(--font-futura-heavy); font-size: 0.85rem; color: rgba(242,241,240,0.4); width: 2.5rem; flex-shrink: 0; }
+.boardRank { font-family: var(--font-futura-heavy); font-size: 0.85rem; color: rgba(242, 241, 240, 0.6); width: 2.5rem; flex-shrink: 0; }
 .boardName { flex: 1; min-width: 0; font-family: var(--font-futura-medium); font-size: 0.88rem; color: var(--white); }
 
 .boardTier {
@@ -337,7 +337,7 @@
   flex-shrink: 0;
 }
 
-.boardPoints { font-size: 0.8rem; color: rgba(242,241,240,0.5); flex-shrink: 0; }
+.boardPoints { font-size: 0.8rem; color: rgba(242, 241, 240, 0.65); flex-shrink: 0; }
 
 /* ── Manage shop ── */
 .manageTab { display: flex; flex-direction: column; gap: 1.5rem; }
@@ -610,7 +610,7 @@
 
 .reversedLabel {
   font-size: 0.72rem;
-  color: rgba(242,241,240,0.35);
+  color: rgba(242, 241, 240, 0.6);
   white-space: nowrap;
 }
 
@@ -632,7 +632,7 @@
   flex-direction: column;
   align-items: center;
   gap: 1.25rem;
-  background: #0a0f1e;
+  background: #0b1426;
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 1.125rem;
   padding: 2rem;

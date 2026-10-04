@@ -1,7 +1,7 @@
 .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 0.9rem; padding: 0.75rem 1rem; border-radius: 0.9rem; border: 1px solid rgba(255, 255, 255, 0.14); background: rgba(255, 255, 255, 0.04); }
 .label { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(242, 241, 240, 0.6); }
 .pills { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-.pill { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.75rem; border-radius: 999px; color: #14161f; font-size: 0.84rem; font-weight: 700; }
+.pill { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.75rem; border-radius: 999px; color: #111c33; font-size: 0.84rem; font-weight: 700; }
 .pill svg { transform: rotate(-40deg); }
 .link { margin-left: auto; font-size: 0.8rem; color: var(--yellow-text); text-decoration: none; }
 .link:hover { text-decoration: underline; }

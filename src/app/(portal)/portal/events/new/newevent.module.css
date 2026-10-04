@@ -47,7 +47,7 @@
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
 }
 
 .input {
@@ -64,12 +64,12 @@
 }
 
 .input:focus { outline: none; border-color: rgba(255,199,44,0.4); }
-.input option { background: #0a0f1e; color: var(--white); }
+.input option { background: #0b1426; color: var(--white); }
 
 .hint {
   font-size: 0.72rem;
   font-family: var(--font-futura-medium);
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
 }
 
 .textarea { resize: vertical; min-height: 120px; }
@@ -93,7 +93,7 @@
   font-size: 0.7rem;
   font-family: var(--font-futura-medium);
   letter-spacing: 0.04em;
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
   padding: 0.25rem 0.7rem;
   border-radius: 0.3rem;
   cursor: pointer;
@@ -116,7 +116,7 @@
 
 .mdPreviewEmpty {
   font-size: 0.85rem;
-  color: rgba(242,241,240,0.3);
+  color: rgba(242, 241, 240, 0.6);
   font-style: italic;
 }
 
@@ -183,7 +183,7 @@
 
 .detectedOptions {
   font-size: 0.72rem;
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
   margin-top: 0.15rem;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -231,7 +231,7 @@
 
 .cancelBtn {
   font-size: 0.875rem;
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
   padding: 0.625rem 1.25rem;
   border-radius: 0.5rem;
   transition: background 0.15s, color 0.15s;

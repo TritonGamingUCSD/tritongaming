@@ -14,7 +14,7 @@
 
 .sub {
   font-size: 0.85rem;
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
   max-width: 560px;
 }
 
@@ -51,7 +51,7 @@
 .empty {
   padding: 2rem;
   text-align: center;
-  color: rgba(242,241,240,0.3);
+  color: rgba(242, 241, 240, 0.6);
   font-size: 0.85rem;
 }
 
@@ -69,7 +69,7 @@
 
 .hint {
   font-size: 0.78rem;
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
 }
 
 .logo {
@@ -109,7 +109,7 @@
 
 .slug {
   font-size: 0.7rem;
-  color: rgba(242,241,240,0.35);
+  color: rgba(242, 241, 240, 0.6);
   margin-top: 0.1rem;
 }
 

@@ -44,7 +44,7 @@
 
 .formSub {
   font-size: 0.85rem;
-  color: rgba(242,241,240,0.5);
+  color: rgba(242, 241, 240, 0.65);
   max-width: 560px;
   line-height: 1.6;
 }
@@ -93,7 +93,7 @@
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
 }
 
 .input,
@@ -108,7 +108,7 @@
   width: 100%;
 }
 .input:focus { outline: none; border-color: rgba(255,199,44,0.4); }
-.input option { background: #0a0f1e; color: var(--white); }
+.input option { background: #0b1426; color: var(--white); }
 
 .colorInput {
   height: 42px;
@@ -127,7 +127,7 @@
   align-items: center;
   gap: 0.4rem;
   font-size: 0.75rem;
-  color: rgba(242,241,240,0.5);
+  color: rgba(242, 241, 240, 0.65);
   cursor: pointer;
 }
 .checkboxRow input { width: 14px; height: 14px; accent-color: var(--yellow); }
@@ -158,13 +158,13 @@
 .sectionCardHint {
   margin-top: 0.25rem;
   font-size: 0.72rem;
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
   line-height: 1.5;
 }
 
 .hint {
   font-size: 0.72rem;
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
   line-height: 1.5;
 }
 
@@ -257,7 +257,7 @@
 .previewHint {
   margin-top: 0.4rem;
   font-size: 0.78rem;
-  color: rgba(242,241,240,0.45);
+  color: rgba(242, 241, 240, 0.6);
   line-height: 1.5;
 }
 
@@ -299,7 +299,7 @@
   font-size: 0.65rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
 }
 
 .statValue {
@@ -353,8 +353,8 @@
 .fold { border-radius: 0.85rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); }
 .foldHead { display: flex; align-items: center; gap: 0.6rem; width: 100%; padding: 0.75rem 0.9rem; background: none; border: none; cursor: pointer; color: var(--white); text-align: left; }
 .foldTitle { font-family: var(--font-futura-heavy); font-size: 0.85rem; }
-.foldHint { flex: 1; font-size: 0.74rem; color: rgba(242, 241, 240, 0.45); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.foldChevron { margin-left: auto; color: rgba(242, 241, 240, 0.5); transition: transform 0.15s; flex-shrink: 0; }
+.foldHint { flex: 1; font-size: 0.74rem; color: rgba(242, 241, 240, 0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.foldChevron { margin-left: auto; color: rgba(242, 241, 240, 0.65); transition: transform 0.15s; flex-shrink: 0; }
 .foldOpen .foldChevron { transform: rotate(180deg); }
 .foldBody { display: flex; flex-direction: column; gap: 0.9rem; padding: 0.2rem 0.9rem 1rem; }
 
@@ -400,7 +400,7 @@
 .dropPreview { width: 52px; height: 52px; flex-shrink: 0; object-fit: contain; border-radius: 0.7rem; background: #fff; padding: 6px; border: 1px solid rgba(255, 255, 255, 0.2); }
 .dropText { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
 .dropTitle { font-family: var(--font-futura-heavy); font-size: 0.9rem; color: var(--white); }
-.dropSub { font-size: 0.74rem; color: rgba(242, 241, 240, 0.5); line-height: 1.35; }
+.dropSub { font-size: 0.74rem; color: rgba(242, 241, 240, 0.65); line-height: 1.35; }
 .dropRemove { align-self: flex-start; display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.7rem; border-radius: 999px; font-size: 0.76rem; color: #f87171; background: none; border: 1px solid rgba(248, 113, 113, 0.4); cursor: pointer; }
 .dropRemove:hover { background: rgba(248, 113, 113, 0.12); }
 .dropError { font-size: 0.76rem; color: #f87171; }
@@ -414,4 +414,4 @@
 .divChip:disabled { opacity: 0.6; cursor: wait; }
 .divChipActive { background: rgba(255, 199, 44, 0.16); border-color: var(--yellow); color: var(--yellow-text); }
 .divLogo { width: 24px; height: 24px; border-radius: 50%; object-fit: contain; background: #fff; padding: 2px; }
-.groupLabel { margin-top: 0.4rem; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(242, 241, 240, 0.55); }
+.groupLabel { margin-top: 0.4rem; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(242, 241, 240, 0.65); }

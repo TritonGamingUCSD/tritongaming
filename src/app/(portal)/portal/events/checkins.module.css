@@ -22,7 +22,7 @@
   margin-bottom: 0.35rem;
 }
 
-.sub { font-size: var(--fs-meta); color: rgba(242,241,240,0.4); }
+.sub { font-size: var(--fs-meta); color: rgba(242, 241, 240, 0.6); }
 
 .statsRow {
   display: flex;
@@ -52,7 +52,7 @@
   font-family: var(--font-renegare);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
   margin-top: 0.2rem;
 }
 
@@ -98,7 +98,7 @@
   background: rgba(255,255,255,0.02);
   border: 1px dashed rgba(255,255,255,0.1);
   border-radius: 0.875rem;
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
 }
 
 .table {
@@ -118,7 +118,7 @@
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(242,241,240,0.4);
+  color: rgba(242, 241, 240, 0.6);
 }
 .tableHeader > span { white-space: nowrap; }
 
@@ -168,7 +168,7 @@
   color: var(--white);
 }
 
-.gamerTag { display: inline-flex; align-items: center; gap: 0.2rem; font-size: 0.72rem; color: rgba(242,241,240,0.4); margin-top: 0.1rem; }
+.gamerTag { display: inline-flex; align-items: center; gap: 0.2rem; font-size: 0.72rem; color: rgba(242, 241, 240, 0.6); margin-top: 0.1rem; }
 
 .date { font-size: 0.8rem; color: rgba(242,241,240,0.6); }
 
