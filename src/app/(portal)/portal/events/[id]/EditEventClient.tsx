@@ -1,7 +1,7 @@
 'use client';
 
 import { refreshPublicCache } from '@/lib/refreshPublicCache';
-import { useRouter } from 'next/navigation';
+import { useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { slugify } from '@/lib/slug';
 import { deleteIfReplaced } from '@/lib/imageUpload';
@@ -24,7 +24,7 @@ export default function EditEventClient({
   seedCheckinFormConfig?: CheckinFormConfigValue | null;
   previewViewer?: { year: string | null; classOf?: number | null; roles: import('@/types/database').AppRole[] };
 }) {
-  const router = useRouter();
+  const savedFlyer = useRef<string | null>(initial.flyer_url);
 
   async function handleUpdate(form: EventFormValues): Promise<string | void> {
     const supabase = createClient();
@@ -71,9 +71,10 @@ export default function EditEventClient({
       return 'Failed to save changes. Please try again.';
     }
 
-    deleteIfReplaced(initial.flyer_url, form.flyer_url.trim() || null);
+    // Stay on the page: the next save compares against what is saved now, not against the page as first loaded.
+    deleteIfReplaced(savedFlyer.current, form.flyer_url.trim() || null);
+    savedFlyer.current = form.flyer_url.trim() || null;
     refreshPublicCache('events');
-    router.push('/portal?section=events');
   }
 
   return (
@@ -82,6 +83,7 @@ export default function EditEventClient({
       initial={initial}
       submitLabel="Save Changes"
       onSubmit={handleUpdate}
+      stayAfterSave
       divisions={divisions}
       seedCheckinFormConfig={seedCheckinFormConfig}
       previewViewer={previewViewer}

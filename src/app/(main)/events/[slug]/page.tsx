@@ -1,3 +1,4 @@
+import PosterGallery from '@/components/PosterGallery/PosterGallery';
 import type { Metadata, Viewport } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -14,7 +15,7 @@ import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import EventSocialEmbeds from '@/components/EventSocialEmbeds/EventSocialEmbeds';
 import AddToCalendarButton from '@/components/AddToCalendarButton/AddToCalendarButton';
 import { formatEventDateRange, formatEventTimeRange, eventDayCount } from '@/lib/timezone';
-import { themeVars, themeFontsHref } from '@/lib/eventTheme';
+import { themeVars, themeFontsHref, themeFontFaceCss } from '@/lib/eventTheme';
 import styles from './event-detail.module.css';
 
 // Cached page (data comes from the tagged caches in lib/events.ts, refreshed when an event is saved).
@@ -117,26 +118,67 @@ export default async function EventDetailPage({ params }: Params) {
   };
   const theme = event.theme;
   const fontsHref = themeFontsHref(theme);
+  const fontFaceCss = themeFontFaceCss(theme);
+  const creditOf = (url: string) => theme?.asset_credits?.[url];
+  // The stickers also come back down the page (not just the hero), scattered in the margins and behind the content. The scatter looks random but
+  // is seeded from the event's address, so it is the same on every visit and between server and browser.
+  const sticks = theme?.stickers ?? [];
+  const bodyStickers = (() => {
+    if (!sticks.length) return [];
+    let seed = 0;
+    for (const ch of slug) seed = (Math.imul(seed, 31) + ch.charCodeAt(0)) | 0;
+    const rnd = () => { seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    const count = Math.min(9, Math.max(5, sticks.length * 2 + Math.floor(rnd() * 3)));
+    let lastSide = rnd() > 0.5, run = 0;
+    return Array.from({ length: count }, (_, i) => {
+      let right = rnd() > 0.5;
+      if (right === lastSide) run++; else run = 0;
+      if (run >= 2) { right = !right; run = 0; }   // never three on the same side in a row
+      lastSide = right;
+      const band = 100 / count;
+      return {
+        url: sticks[Math.floor(rnd() * sticks.length)],
+        top: Math.min(96, Math.max(1, i * band + rnd() * band * 0.9)),
+        right,
+        rot: Math.round(rnd() * 28 - 14),
+        scale: 0.75 + rnd() * 0.6,
+        bx: -(2 + rnd() * 3.5),      // how far into the margin on wide screens (rem)
+        bxm: -(0.6 + rnd() * 1.2),   // how far off the edge on narrow screens (rem)
+      };
+    });
+  })();
   // The poster is whatever picture the event has, shown at its own shape (portrait posters stay portrait): the theme's key art first, else the flyer.
-  const posterUrl = theme?.key_art_url || (isExternalFlyer ? event.flyer_url : '');
-  // Stickers stay on the right edge and the bottom so they never sit on the title or the buttons.
-  const stickerSpots = [
-    { top: '5%', right: '2%', rot: 9 }, { bottom: '4%', right: '3%', rot: -8 }, { top: '42%', right: '1%', rot: -14 }, { bottom: '3%', right: '26%', rot: 6 },
-    { top: '3%', right: '30%', rot: -7 }, { bottom: '2%', right: '45%', rot: 12 }, { top: '60%', right: '2%', rot: 11 }, { top: '2%', right: '14%', rot: -5 },
-  ];
+  const posters = theme?.posters?.length ? theme.posters : isExternalFlyer && event.flyer_url ? [event.flyer_url] : [];
+  const posterUrl = posters[0] ?? '';
+  // Hero stickers. The right side is mostly poster, so the first few go in the open space around the title: top-left, top-middle,
+  // bottom-left and bottom-middle. 1 = top-middle; 2 = top-left and bottom-middle (a diagonal); 3 = top-left, top-middle, bottom-middle;
+  // 4 = all four. With more, the rest go along the right edge, peeking out from behind the poster.
+  type Spot = { top?: string; bottom?: string; left?: string; right?: string; rot: number };
+  const TL: Spot = { top: '5%', left: '3%', rot: -8 }, TM: Spot = { top: '4%', left: '44%', rot: 8 };
+  const BL: Spot = { bottom: '4%', left: '3%', rot: 7 }, BM: Spot = { bottom: '3%', left: '33%', rot: -9 };
+  const stickerCount = theme?.stickers.length ?? 0;
+  const stickerSpots: Spot[] =
+    stickerCount === 1 ? [TM]
+    : stickerCount === 2 ? [TL, BM]
+    : stickerCount === 3 ? [TL, TM, BM]
+    : stickerCount === 4 ? [TL, TM, BL, BM]
+    : [TL, TM, BM, BL, { top: '6%', right: '1%', rot: 9 }, { top: '44%', right: '1%', rot: -14 }, { bottom: '5%', right: '1%', rot: -9 }, { top: '62%', right: '2%', rot: 11 }];
 
+
+  // Fewer stickers get more room: one or two are drawn much bigger, a full set stays at the base size.
+  const stickerScale = stickerCount <= 2 ? 1.8 : stickerCount === 3 ? 1.55 : stickerCount === 4 ? 1.35 : stickerCount <= 6 ? 1.15 : 1;
 
   return (
     <div className={styles.page} style={themeVars(theme) as React.CSSProperties}>
       {/* eslint-disable-next-line react/no-danger -- server-built object from our own event data, not user input rendered raw */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(eventJsonLd) }} />
       {fontsHref && <link rel="stylesheet" href={fontsHref} />}
-      {theme?.pattern_url && <div className={styles.pattern} style={{ backgroundImage: `url(${theme.pattern_url})` }} aria-hidden="true" />}
+      {fontFaceCss && <style dangerouslySetInnerHTML={{ __html: fontFaceCss }} />}
 
-      <header className={styles.hero}>
-        {posterUrl ? (
+      <header className={styles.hero} style={{ '--ss': stickerScale } as React.CSSProperties}>
+        {posters[0] ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={posterUrl} alt="" aria-hidden="true" className={styles.heroBackdrop} />
+          <img src={posters[0]} alt="" aria-hidden="true" className={styles.heroBackdrop} />
         ) : (
           <Image src="/images/what_is_triton_gaming_justinlu.jpg" alt="" aria-hidden="true" fill sizes="100vw" className={styles.heroBackdrop} />
         )}
@@ -144,22 +186,23 @@ export default async function EventDetailPage({ params }: Params) {
         {theme?.stickers.map((u, i) => {
           const sp = stickerSpots[i % stickerSpots.length];
           const { rot, ...pos } = sp;
-          // eslint-disable-next-line @next/next/no-img-element
-          return <img key={u + i} src={u} alt="" aria-hidden="true" className={styles.sticker} style={{ ...pos, transform: `rotate(${rot}deg)` }} loading="lazy" />;
+          const credit = creditOf(u);
+          return (
+            <div key={u + i} className={styles.sticker} style={{ ...pos, transform: `rotate(${rot}deg)` }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={u} alt="" aria-hidden="true" loading="lazy" />
+              {credit && (credit.link
+                ? <a href={credit.link} target="_blank" rel="noopener noreferrer" className={styles.stickerCredit} title={`Sticker by ${credit.name}`}>By {credit.name}</a>
+                : <span className={styles.stickerCredit}>By {credit.name}</span>)}
+            </div>
+          );
         })}
 
-        <div className={`${styles.heroInner} ${posterUrl ? '' : styles.noPoster}`}>
+        <div className={`${styles.heroInner} ${posters.length ? '' : styles.noPoster}`}>
           <div className={styles.heroCopy}>
             <Link href="/events" className={styles.back}>← All events</Link>
             {isPast && <span className={styles.pastBadge}>Past event</span>}
-            {theme?.logo_url ? (
-              <h1 className={styles.titleLogo}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={theme.logo_url} alt={event.full_name} />
-              </h1>
-            ) : (
-              <h1 className={styles.title}>{event.full_name}</h1>
-            )}
+            <h1 className={styles.title}>{event.full_name}</h1>
             {event.content && <p className={styles.summary}>{event.content}</p>}
 
             {!isPast && (
@@ -183,17 +226,19 @@ export default async function EventDetailPage({ params }: Params) {
             )}
           </div>
 
-          {posterUrl && (
-            <figure className={styles.poster}>
-              <span className={styles.tape} aria-hidden="true" />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={posterUrl} alt={`${event.full_name} poster`} />
-            </figure>
-          )}
+          {posters.length > 0 && <PosterGallery posters={posters} credits={posters.map((u) => creditOf(u))} name={event.full_name} frameClass={styles.poster} tapeClass={styles.tape} />}
         </div>
       </header>
 
       <div className={styles.body}>
+        {bodyStickers.length > 0 && (
+          <div className={styles.bodyStickers} aria-hidden="true">
+            {bodyStickers.map((b, i) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img key={i} src={b.url} alt="" loading="lazy" className={`${styles.bodySticker} ${b.right ? styles.bsR : styles.bsL}`} style={{ top: `${b.top}%`, transform: `rotate(${b.rot}deg)`, '--bs': b.scale, '--bx': `${b.bx}rem`, '--bxm': `${b.bxm}rem` } as React.CSSProperties} />
+            ))}
+          </div>
+        )}
         {hasPostEventContent && (
           <section className={`${styles.section} ${styles.recap}`} aria-label="Event recap">
             <div className={styles.recapHead}>
@@ -345,8 +390,6 @@ export default async function EventDetailPage({ params }: Params) {
             <EventSocialEmbeds embeds={event.social_embeds} />
           </section>
         )}
-
-        {theme?.credit && <p className={styles.credit}>{theme.credit}</p>}
       </div>
     </div>
   );

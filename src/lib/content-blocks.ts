@@ -82,7 +82,7 @@ export const CONTENT_BLOCKS = [
   {
     key: 'homepage.hero',
     title: 'Hero',
-    description: 'Badge, headline, subtitle, and call-to-action buttons at the top of the homepage.',
+    description: 'Badge, headline, subtitle, buttons, photos and the moving yellow strip at the top of the homepage. The strip takes one word or phrase per line, as many as you like, and loops through them.',
     icon: createElement(Home, ICON_PROPS),
     category: 'Homepage',
     pages: ['/'],
@@ -100,6 +100,8 @@ export const CONTENT_BLOCKS = [
       { name: 'photo_b',            label: 'Taped Photo 2 (lower left)',   type: 'image' as const, optional: true },
       { name: 'photo_b_caption',    label: 'Photo 2 Handwritten Caption',  type: 'text'  as const, placeholder: 'the doodle wall', optional: true },
       { name: 'photo_b_credit',     label: 'Photo 2 Credit',               type: 'text'  as const, placeholder: 'Photo: Name',     optional: true },
+      { name: 'strip_items',        label: 'Moving Yellow Strip: Words',   type: 'lines' as const, placeholder: 'Events\nCreativity\nCommunity\nIndustry', optional: true },
+      { name: 'strip_symbol',       label: 'Moving Strip: Symbol Between Words', type: 'text' as const, placeholder: '#', optional: true },
     ],
   },
   {

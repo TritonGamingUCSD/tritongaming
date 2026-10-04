@@ -1,0 +1,18 @@
+.wrap { display: flex; flex-direction: column; align-items: center; gap: 0.9rem; min-width: 0; max-width: 100%; justify-self: center; }
+.img { animation: posterIn 0.3s ease; }
+@keyframes posterIn { from { opacity: 0; } to { opacity: 1; } }
+.arrow { position: absolute; top: 50%; transform: translateY(-50%); display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 3px solid var(--ev-text, #011941); border-radius: var(--radius-sm); background: var(--ev-accent, #ffc72c); color: var(--ev-on-accent, #011941); cursor: pointer; box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5); }
+.arrow:hover, .arrow:focus-visible { transform: translateY(-50%) scale(1.06); }
+.arrow:focus-visible { outline: 3px solid var(--ev-text, #011941); outline-offset: 2px; }
+.prev { left: -1rem; }
+.next { right: -1rem; }
+.credit { margin: 0; font-family: var(--font-renegare); font-size: 0.78rem; color: var(--ev-text, #f2f1f0); opacity: 0.85; text-align: center; }
+.credit a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.thumbs { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; }
+.thumb { width: 52px; height: 68px; padding: 3px; border: 3px solid transparent; background: var(--ev-surface, #f2f1f0); cursor: pointer; box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.45); opacity: 0.75; transition: opacity 0.15s ease; }
+.thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.thumb:hover, .thumb:focus-visible { opacity: 1; }
+.thumb:focus-visible { outline: 3px solid var(--ev-text, #011941); outline-offset: 2px; }
+.thumbOn { opacity: 1; border-color: var(--ev-accent, #ffc72c); }
+@media (max-width: 640px) { .prev { left: -0.5rem; } .next { right: -0.5rem; } .arrow { width: 36px; height: 36px; } }
+@media (prefers-reduced-motion: reduce) { .img { animation: none; } }

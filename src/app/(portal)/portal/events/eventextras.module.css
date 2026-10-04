@@ -28,3 +28,15 @@
 .stickerRow { display: flex; gap: 0.5rem; align-items: flex-start; }
 .stickerMain { flex: 1; min-width: 0; }
 @media (max-width: 560px) { .row { flex-wrap: wrap; } .time { width: 100%; } .logoCell { width: 100%; } }
+/* name + link under a picture in the theme panel */
+.creditRow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 0.5rem; margin-top: 0.4rem; }
+@media (max-width: 560px) { .creditRow { grid-template-columns: minmax(0, 1fr); } }
+.posterRow { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.5rem; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 0.6rem; }
+/* compact picture + credit rows (posters, stickers) */
+.artThumb { flex-shrink: 0; }
+.artFields { display: grid; gap: 0.3rem; flex: 1; min-width: 0; }
+.artTag { font-size: 0.7rem; color: rgba(242, 241, 240, 0.65); }
+.artInput { width: 100%; min-width: 0; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--radius-sm); padding: 0.35rem 0.6rem; color: var(--white); font-family: var(--font-futura-medium); font-size: 0.8rem; }
+.artInput:focus { outline: none; border-color: rgba(255, 199, 44, 0.4); }
+.artInput:disabled { opacity: 0.5; }
+.artRowWrap { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.5rem; border-radius: 0.6rem; border: 1px solid rgba(255, 255, 255, 0.1); }

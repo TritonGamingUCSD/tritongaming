@@ -1,4 +1,4 @@
-.caption { margin: 0 0 1.5rem; text-align: center; font-family: var(--font-renegare); font-size: clamp(1.3rem, 2.8vw, 1.8rem); color: var(--yellow-text); transform: rotate(-1deg); }
+.caption { margin: 0 0 1.5rem; text-align: center; font-family: var(--font-renegare); font-size: clamp(1.05rem, 2.2vw, 1.45rem); color: var(--yellow-text); transform: rotate(-1deg); }
 .strip { list-style: none; margin: 0; padding: 0.6rem 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 2rem 1.75rem; }
 .print { position: relative; padding: 0.6rem 0.6rem 0.4rem; background: var(--paper); color: var(--ink); box-shadow: var(--hard-shadow); min-width: 0; }
 .t0 { transform: rotate(-1.5deg); }
@@ -8,9 +8,14 @@
 .photo { position: relative; aspect-ratio: 4 / 3; overflow: hidden; border: 2px solid var(--ink); background: #14213f; }
 .empty { display: grid; place-items: center; background: #d9d4c4; }
 .empty span { font-family: var(--font-renegare); font-size: 1.3rem; color: #5a6580; }
-.credit { display: block; margin: 0.45rem 0.2rem 0.1rem; font-family: var(--font-renegare); font-size: 1.05rem; color: #3a4764; }
+.credit { display: block; margin: 0.45rem 0.2rem 0.1rem; font-family: var(--font-renegare); font-size: 0.78rem; color: #3a4764; }
 .credit a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
 
 @media (max-width: 640px) {
   .t0, .t1, .t2 { transform: none; }
+  /* phones: one swipeable row instead of a tall stack, so the strip takes about one print of height */
+  .strip { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 1rem; padding: 0.9rem 1rem 1rem; margin-inline: -1rem; scrollbar-width: none; }
+  .strip::-webkit-scrollbar { display: none; }
+  .print { flex: 0 0 74%; scroll-snap-align: center; }
+  .caption { margin-bottom: 0.8rem; }
 }

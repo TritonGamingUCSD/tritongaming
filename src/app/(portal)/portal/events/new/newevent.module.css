@@ -199,7 +199,18 @@
   justify-content: flex-end;
   gap: 0.875rem;
   margin-top: 0.5rem;
+  /* Save stays in view while you scroll */
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  padding: 0.85rem 0 0.2rem;
+  background: #0b1426;
+  border-top: 1px solid #1f2d4a;
 }
+/* one tab's fields, laid out like the form itself */
+.row > * { min-width: 0; }
+.tabPanel { display: flex; flex-direction: column; gap: inherit; }
+.tabPanel[hidden] { display: none; }
 
 .cancelBtn {
   font-size: 0.875rem;
@@ -246,7 +257,14 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 .submitBtn:hover:not(:disabled) { border-color: var(--btn-primary-border-hover); box-shadow: var(--btn-primary-shadow-hover); }
-.submitBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+.submitBtn:disabled { opacity: 0.85; cursor: progress; }
+.submitBtn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; }
+.spin { animation: evSpin 0.9s linear infinite; }
+@keyframes evSpin { to { transform: rotate(360deg); } }
+/* while saving the fields are locked and dimmed, and a pill stays in view wherever you have scrolled to */
+.formSaving { opacity: 0.6; pointer-events: none; transition: opacity 0.15s ease; }
+.savingPill { position: fixed; left: 50%; bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 300; display: inline-flex; align-items: center; gap: 0.6rem; padding: 0.7rem 1.2rem; border-radius: var(--radius-sm); background: var(--yellow); color: #0b1426; font-family: var(--font-futura-heavy); font-size: 0.9rem; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); }
+@media (prefers-reduced-motion: reduce) { .spin { animation-duration: 2.5s; } }
 
 @media (max-width: 600px) {
   .row { grid-template-columns: 1fr; }

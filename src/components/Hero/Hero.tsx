@@ -18,6 +18,8 @@ interface HeroContent {
   photo_b_caption?: string;
   photo_a_credit?: string;
   photo_b_credit?: string;
+  strip_items?: string[] | string;
+  strip_symbol?: string;
 }
 
 // Splits "We are Triton Gaming" so the last two words get the brush treatment: small line on top, big hand-lettered line below.
@@ -25,6 +27,15 @@ function splitTitle(title: string): [string, string] {
   const words = title.trim().split(/\s+/);
   if (words.length <= 2) return ['', title];
   return [words.slice(0, -2).join(' '), words.slice(-2).join(' ')];
+}
+
+const DEFAULT_STRIP = ['Events', 'Creativity', 'Community', 'Industry'];
+
+// The words on the yellow tape. One per line in Site Content; any number of them. The list repeats until one half of the track is wider
+// than a big screen, and the track is two identical halves so the CSS slide (-50%) loops with no jump.
+function stripWords(raw: HeroContent['strip_items']): string[] {
+  const list = (Array.isArray(raw) ? raw : typeof raw === 'string' ? raw.split('\n') : []).map((w) => String(w).trim()).filter(Boolean);
+  return list.length ? list : DEFAULT_STRIP;
 }
 
 export default function Hero({ content = {} }: { content?: HeroContent }) {
@@ -40,6 +51,11 @@ export default function Hero({ content = {} }: { content?: HeroContent }) {
   const captionA = content.photo_a_caption ?? 'panel night';
   const captionB = content.photo_b_caption ?? 'the doodle wall';
   const [lead, brush] = splitTitle(title);
+  const words = stripWords(content.strip_items);
+  const symbol = content.strip_symbol?.trim() || '#';
+  const repeats = Math.max(1, Math.ceil(12 / words.length));
+  const half = Array.from({ length: repeats }).flatMap(() => words);
+  const seconds = Math.max(20, Math.round(half.reduce((n, w) => n + w.length + 4, 0) * 0.5));
 
   const button = (href: string, text: string, className: string) =>
     href.startsWith('http')
@@ -86,9 +102,9 @@ export default function Hero({ content = {} }: { content?: HeroContent }) {
       </div>
 
       <div className={styles.tapeBand} aria-hidden="true">
-        <div className={styles.tapeTrack}>
-          {Array.from({ length: 4 }).flatMap((_, r) => ['Events', 'Creativity', 'Community', 'Industry'].map((w, i) => (
-            <span key={`${r}-${i}`}>{w} <i>#</i></span>
+        <div className={styles.tapeTrack} style={{ animationDuration: `${seconds}s` }}>
+          {[0, 1].flatMap((copy) => half.map((w, i) => (
+            <span key={`${copy}-${i}`}>{w} <i>{symbol}</i></span>
           )))}
         </div>
       </div>

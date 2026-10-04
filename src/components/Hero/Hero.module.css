@@ -106,10 +106,10 @@
 .ctaPrimary:active, .ctaSecondary:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 var(--ink); }
 
 /* Taped photos */
-.photos { position: relative; height: clamp(300px, 36vw, 440px); }
+.photos { position: relative; height: clamp(280px, 33vw, 410px); }
 .photo { position: absolute; margin: 0; background: var(--paper); padding: 0.6rem 0.6rem 2rem; box-shadow: var(--hard-shadow); will-change: transform; }
 .photo img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; }
-.photo figcaption { position: absolute; left: 0.8rem; right: 0.8rem; bottom: 0.4rem; font-family: var(--font-renegare); font-size: 1.15rem; line-height: 1.1; color: var(--ink); }
+.photo figcaption { position: absolute; left: 0.8rem; right: 0.8rem; bottom: 0.4rem; font-family: var(--font-renegare); font-size: 0.9rem; line-height: 1.1; color: var(--ink); }
 .photoA { top: 0; right: 0; width: 62%; transform: rotate(4deg); }
 .photoB { top: 50%; left: 2%; width: 54%; transform: rotate(-5deg); }
 .credit { position: absolute; right: 0.7rem; bottom: 0.35rem; font-family: var(--font-renegare); font-size: 0.5rem; letter-spacing: 0.1em; text-transform: uppercase; color: #5a6684; }
@@ -139,6 +139,10 @@
 @media (max-width: 860px) {
   .hero { padding-bottom: 6rem; }
   .inner { grid-template-columns: 1fr; }
-  .photos { height: clamp(260px, 62vw, 340px); margin-top: 0.5rem; }
+  .photos { height: clamp(190px, 50vw, 270px); margin-top: 0.25rem; }
+  .photoA { width: 56%; }
+  .photoB { width: 50%; }
+  .photo { padding: 0.45rem 0.45rem 1.6rem; }
+  .photo figcaption { font-size: 0.8rem; left: 0.6rem; bottom: 0.3rem; }
   .arrow { display: none; }
 }

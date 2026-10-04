@@ -36,6 +36,7 @@ export default function ZineMotion() {
         const els = [...(root.matches('[data-drag]') ? [root] : []), ...root.querySelectorAll('[data-drag]')] as HTMLElement[];
         els.forEach((el) => {
           if (Draggable.get(el)) return;
+          if (coarse && el.closest('[data-no-touch-drag]')) return; // a swipeable row: a finger should scroll it, not move the cards
           Draggable.create(el, {
             type: coarse ? 'x' : 'x,y',
             inertia: true,

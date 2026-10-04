@@ -32,6 +32,7 @@ export default function ImageUploadField({
   hint,
   fallbackPreview,
   interactiveCrop = false,
+  compact = false,
 }: {
   label: string;
   value: string;
@@ -45,6 +46,8 @@ export default function ImageUploadField({
   fallbackPreview?: string;
   /** Opens a zoomable/pannable round-crop step before uploading, instead of an automatic center-crop. Ignored for GIFs (cropping would flatten the animation). */
   interactiveCrop?: boolean;
+  /** A small thumbnail row (for lists of pictures): no label or hint on screen, a short "Upload" button. The label still names the controls for screen readers. */
+  compact?: boolean;
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
@@ -97,12 +100,12 @@ export default function ImageUploadField({
   }
 
   const previewClass = shape === 'circle' ? styles.previewCircle : shape === 'wide' ? styles.previewWide : styles.previewSquare;
-  const { width, height } = PREVIEW_SIZE[shape];
+  const { width, height } = compact ? (shape === 'wide' ? { width: 84, height: 56 } : { width: 56, height: 56 }) : PREVIEW_SIZE[shape];
   const displaySrc = value || fallbackPreview;
 
   return (
-    <div className={styles.field}>
-      <span className={styles.label}>{label}</span>
+    <div className={`${styles.field} ${compact ? styles.compact : ''}`}>
+      {!compact && <span className={styles.label}>{label}</span>}
 
       {displaySrc ? (
         <div className={styles.wrap}>
@@ -119,7 +122,7 @@ export default function ImageUploadField({
         </div>
       ) : (
         <button type="button" className={styles.dropzone} onClick={() => inputRef.current?.click()} disabled={uploading}>
-          {uploading ? 'Uploading…' : `Click to upload ${label.toLowerCase()}`}
+          {uploading ? 'Uploading…' : compact ? 'Upload' : `Click to upload ${label.toLowerCase()}`}
         </button>
       )}
 
@@ -136,7 +139,7 @@ export default function ImageUploadField({
       />
 
       {error && <span className={styles.hint} style={{ color: '#fca5a5' }}>{error}</span>}
-      {hint && <span className={styles.hint}>{hint}</span>}
+      {hint && !compact && <span className={styles.hint}>{hint}</span>}
 
       {pendingFile && (
         <ImageCropModal

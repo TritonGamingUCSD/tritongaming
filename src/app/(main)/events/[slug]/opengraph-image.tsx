@@ -14,7 +14,7 @@ export default async function EventOgImage({ params }: { params: Promise<{ slug:
   const { slug } = await params;
   const [event, fonts, logo] = await Promise.all([getEventBySlugOrId(slug), ogFonts(), ogLogo()]);
   const c = event?.theme?.colors ?? {};
-  const poster = await ogImage(event?.theme?.key_art_url || event?.flyer_url);
+  const poster = await ogImage(event?.theme?.posters?.[0] || event?.flyer_url);
   return new ImageResponse(
     (
       <EventCard
