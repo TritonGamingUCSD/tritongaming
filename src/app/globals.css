@@ -65,31 +65,13 @@
   --glass-blur: blur(18px) saturate(160%);
   --glass-shadow: 0 20px 44px -24px rgba(0, 0, 0, 0.6);
 
-  /* Primary CTA button — the shared recipe for every "do the main thing"
-     button site-wide (Get Ticket, Apply Now, Join Discord, ...). Three
-     versions in: full-saturation --yellow fill (too loud), a muted
-     champagne-gold fill (still read as a "filled block"), then a near-
-     transparent ghost/outline version (illegible over busy photo/video
-     backgrounds — a nearly-invisible fill gives text nothing to contrast
-     against). This is the nav pill's own material instead — an OPAQUE dark
-     charcoal glass with a gold hairline, exactly matching NavBar.module.css
-     .navbar. It's already proven readable over the hero video and hasn't
-     drawn the "cheap" complaint the gold fills did, so buttons now share
-     that instead of inventing a fourth treatment. White text (not gold) —
-     gold-on-dark-charcoal tested lower contrast than the site's default
-     white-on-dark body text. */
-  --btn-primary-bg: linear-gradient(180deg, rgba(22, 27, 40, 0.94), rgba(8, 11, 20, 0.97));
-  --btn-primary-border: rgba(255, 199, 44, 0.4);
-  --btn-primary-border-hover: rgba(255, 199, 44, 0.7);
-  --btn-primary-text: var(--white);
-  --btn-primary-shadow:
-    0 1px 0 rgba(255, 199, 44, 0.14) inset,
-    0 0 0 1px rgba(0, 0, 0, 0.35) inset,
-    0 14px 28px -16px rgba(0, 0, 0, 0.7);
-  --btn-primary-shadow-hover:
-    0 1px 0 rgba(255, 199, 44, 0.18) inset,
-    0 0 0 1px rgba(0, 0, 0, 0.4) inset,
-    0 18px 36px -16px rgba(0, 0, 0, 0.8);
+  /* Primary button: one flat yellow button for the main action on a screen, navy text (11.8:1). No gradient, glow or glass. */
+  --btn-primary-bg: var(--yellow);
+  --btn-primary-border: transparent;
+  --btn-primary-border-hover: transparent;
+  --btn-primary-text: #0b1426;
+  --btn-primary-shadow: none;
+  --btn-primary-shadow-hover: none;
 
   /* Normalized "page hero" recipe — every main-site subpage's top banner
      (Divisions, Sponsors, Get Involved, ...) shares these exact values so
