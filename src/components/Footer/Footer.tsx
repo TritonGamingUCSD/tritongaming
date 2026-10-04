@@ -4,6 +4,7 @@ import { getContentBlocks } from '@/lib/content';
 import BackToTop from './BackToTop';
 import StickerPile from './StickerPile';
 import styles from './Footer.module.css';
+import { DISCORD_URL } from '@/lib/links';
 
 const EXPLORE_LINKS = [
   { href: '/', label: 'Home' },
@@ -36,7 +37,7 @@ async function getDiscordCount(invite: string): Promise<{ members: number; onlin
 
 const SOCIAL_DEFAULTS = {
   email:     'mailto:tritongamingofficial@gmail.com',
-  discord:   'https://discord.gg/tritongaming',
+  discord:   DISCORD_URL,
   instagram: 'https://www.instagram.com/tritongamingsd/',
   twitter:   'https://twitter.com/tritongamingsd',
   tiktok:    'https://tiktok.com/@tritongamingsd',

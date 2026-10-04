@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import HeroFx from './HeroFx';
 import styles from './Hero.module.css';
+import { DISCORD_URL } from '@/lib/links';
 
 interface HeroContent {
   badge?: string;
@@ -33,7 +34,7 @@ export default function Hero({ content = {} }: { content?: HeroContent }) {
   const ctaPrimaryText   = content.cta_primary_text   || 'Explore Events';
   const ctaPrimaryHref   = content.cta_primary_href   || '/events';
   const ctaSecondaryText = content.cta_secondary_text || 'Join Discord';
-  const ctaSecondaryHref = content.cta_secondary_href || 'https://discord.gg/tritongaming';
+  const ctaSecondaryHref = content.cta_secondary_href || DISCORD_URL;
   const photoA = content.photo_a || '/images/home/p-cosplay.jpg';
   const photoB = content.photo_b || '/images/home/p-stream.jpg';
   const captionA = content.photo_a_caption ?? 'panel night';

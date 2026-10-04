@@ -11,6 +11,7 @@ import { getContentBlocks } from '@/lib/content';
 import { resolveSections } from '@/lib/pageLayout';
 import { getUpcomingEvents } from '@/lib/events';
 import type { StatInput } from '@/components/LandingStatistics/LandingStatistics';
+import { DISCORD_URL } from '@/lib/links';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,7 +37,7 @@ const ORGANIZATION_JSON_LD = {
   url: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
   logo: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'}/logos/tg_logo.png`,
   sameAs: [
-    'https://discord.gg/tritongaming',
+    DISCORD_URL,
   ],
 };
 

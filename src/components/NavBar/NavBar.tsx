@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types/database';
 import { resolveAvatarUrl } from '@/lib/profile';
 import styles from './NavBar.module.css';
+import { DISCORD_URL } from '@/lib/links';
 
 const NAV_LINKS = [
   { href: '/our-story',     label: 'Our Story' },
@@ -21,7 +22,6 @@ const NAV_LINKS = [
   { href: '/get-involved',  label: 'Join' },
 ];
 
-const DISCORD_URL = 'https://discord.gg/tritongaming';
 
 export default function NavBar() {
   const [offset, setOffset] = useState(0);
