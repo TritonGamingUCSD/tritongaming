@@ -14,13 +14,11 @@ import { cleanBlocks } from '@/lib/pageBlocks';
 export default function EditEventClient({
   eventId,
   initial,
-  divisions,
   seedCheckinFormConfig,
   previewViewer,
 }: {
   eventId: string;
   initial: EventFormValues;
-  divisions: { id: string; name: string }[];
   seedCheckinFormConfig?: CheckinFormConfigValue | null;
   previewViewer?: { year: string | null; classOf?: number | null; roles: import('@/types/database').AppRole[] };
 }) {
@@ -60,7 +58,6 @@ export default function EditEventClient({
         social_embeds: form.social_embeds,
         theme: cleanTheme(form.theme),
         page_blocks: cleanBlocks(form.page_blocks),
-        division_id: form.division_id || null,
         requires_checkin_form: form.requires_checkin_form,
         checkin_food_item: form.checkin_food_item.trim() || null,
         checkin_windows: cleanCheckinWindows(form.checkin_windows, form.start_date, form.end_date),
@@ -87,7 +84,6 @@ export default function EditEventClient({
       submitLabel="Save Changes"
       onSubmit={handleUpdate}
       stayAfterSave
-      divisions={divisions}
       seedCheckinFormConfig={seedCheckinFormConfig}
       previewViewer={previewViewer}
     />

@@ -52,7 +52,6 @@ export interface EventFormValues {
   social_embeds: SocialEmbed[];
   theme: EventTheme;
   page_blocks: PageBlock[];
-  division_id: string;
   requires_checkin_form: boolean;
   checkin_food_item: string;
   // Per-day check-in hours for multi-day events (blank start/end = open all day).
@@ -104,7 +103,6 @@ export const EMPTY_EVENT_FORM: EventFormValues = {
   social_embeds: [],
   theme: EMPTY_THEME,
   page_blocks: [],
-  division_id: '',
   requires_checkin_form: false,
   checkin_food_item: '',
   checkin_windows: [],
@@ -159,7 +157,6 @@ export default function EventForm({
   initial,
   submitLabel,
   onSubmit,
-  divisions,
   seedCheckinFormConfig,
   previewViewer,
   stayAfterSave = false,
@@ -168,7 +165,6 @@ export default function EventForm({
   initial: EventFormValues;
   submitLabel: string;
   onSubmit: (values: EventFormValues) => Promise<string | void>;
-  divisions: { id: string; name: string }[];
   // Starting point for a new event's AS Form config: the most recent event's
   // answer mappings, with the link/question IDs blank (see
   // getCheckinFormSeed). The form link is per event — there's no site-wide one.
@@ -370,17 +366,6 @@ export default function EventForm({
         <span className={styles.hint} style={{ marginTop: '-0.75rem' }}>
           Changes how attendees check in: in-person events get the QR scanner, online events get a check-in code they type in themselves.
         </span>
-
-        <label className={styles.field}>
-          <span className={styles.label}>Division</span>
-          <Select className={styles.input} value={form.division_id} onChange={(e) => set('division_id', e.target.value)}>
-            <option value="">None — general club event</option>
-            {divisions.map((d) => (
-              <option key={d.id} value={d.id}>{d.name}</option>
-            ))}
-          </Select>
-          <span className={styles.hint}>Tags this event on that division&apos;s public page under &quot;Upcoming Events&quot;.</span>
-        </label>
 
         <label className={styles.field}>
           <span className={styles.label}>Short Summary</span>

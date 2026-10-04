@@ -10,8 +10,7 @@ import type { CheckinFormConfigValue } from '../CheckinFormFieldsEditor';
 import { cleanTheme } from '@/lib/eventTheme';
 import { cleanBlocks } from '@/lib/pageBlocks';
 
-export default function NewEventClient({ divisions, initial = EMPTY_EVENT_FORM, seedCheckinFormConfig, previewViewer }: {
-  divisions: { id: string; name: string }[];
+export default function NewEventClient({ initial = EMPTY_EVENT_FORM, seedCheckinFormConfig, previewViewer }: {
   initial?: EventFormValues;
   seedCheckinFormConfig?: CheckinFormConfigValue | null;
   previewViewer?: { year: string | null; classOf?: number | null; roles: import('@/types/database').AppRole[] };
@@ -52,7 +51,6 @@ export default function NewEventClient({ divisions, initial = EMPTY_EVENT_FORM, 
       social_embeds: form.social_embeds,
       theme: cleanTheme(form.theme),
         page_blocks: cleanBlocks(form.page_blocks),
-      division_id: form.division_id || null,
       requires_checkin_form: form.requires_checkin_form,
       checkin_food_item: form.checkin_food_item.trim() || null,
       checkin_windows: cleanCheckinWindows(form.checkin_windows, form.start_date, form.end_date),
@@ -75,7 +73,6 @@ export default function NewEventClient({ divisions, initial = EMPTY_EVENT_FORM, 
       initial={initial}
       submitLabel="Create Event"
       onSubmit={handleCreate}
-      divisions={divisions}
       seedCheckinFormConfig={seedCheckinFormConfig}
       previewViewer={previewViewer}
     />

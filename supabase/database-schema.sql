@@ -52,12 +52,10 @@ CREATE TABLE public.events (
   photo_album_url text,
   post_event_info text,
   social_embeds jsonb NOT NULL DEFAULT '[]'::jsonb,
-  division_id uuid,
   points_value integer NOT NULL DEFAULT 10,
   checkin_secret text NOT NULL DEFAULT encode(gen_random_bytes(16), 'hex'::text),
   CONSTRAINT events_pkey PRIMARY KEY (id),
-  CONSTRAINT events_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id),
-  CONSTRAINT events_division_id_fkey FOREIGN KEY (division_id) REFERENCES public.divisions(id)
+  CONSTRAINT events_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id)
 );
 CREATE TABLE public.tickets (
   id uuid NOT NULL DEFAULT gen_random_uuid(),

@@ -192,7 +192,6 @@ export interface Database {
           requires_ticket: boolean;
           ticket_price: number;
           audience: EventAudience;
-          division_id: string | null;
           photo_albums: PhotoAlbumEntry[];
           post_event_info: string | null;
           venue_address: string | null;

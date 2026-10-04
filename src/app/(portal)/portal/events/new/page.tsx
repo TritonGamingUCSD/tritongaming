@@ -13,11 +13,10 @@ export default async function NewEventPage() {
   if (!hasCapability(roles, 'manage_events')) redirect('/portal');
 
   const supabase = await createClient();
-  const [{ data: divisions }, seedCheckinFormConfig, previewViewer] = await Promise.all([
-    supabase.from('divisions').select('id, name').order('name'),
+  const [seedCheckinFormConfig, previewViewer] = await Promise.all([
     getCheckinFormSeed(),
     getFormPreviewViewer(),
   ]);
 
-  return <NewEventClient divisions={divisions ?? []} initial={EMPTY_EVENT_FORM} seedCheckinFormConfig={seedCheckinFormConfig} previewViewer={previewViewer} />;
+  return <NewEventClient initial={EMPTY_EVENT_FORM} seedCheckinFormConfig={seedCheckinFormConfig} previewViewer={previewViewer} />;
 }

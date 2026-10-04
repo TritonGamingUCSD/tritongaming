@@ -24,13 +24,12 @@ export default async function EditEventPage({ params }: Params) {
   if (!hasCapability(roles, 'manage_events')) redirect('/portal');
 
   const supabase = await createClient();
-  const [{ data: event }, { data: divisions }, seedCheckinFormConfig, previewViewer] = await Promise.all([
+  const [{ data: event }, seedCheckinFormConfig, previewViewer] = await Promise.all([
     supabase
       .from('events')
-      .select('id, title, slug, content, description, location, venue_address, venue_notes, venue_name, venue_lat, venue_lng, schedule, sponsors, start_date, end_date, flyer_url, ticket_price, points_value, is_online, audience, is_published, photo_albums, post_event_info, social_embeds, theme, page_blocks, division_id, requires_checkin_form, checkin_food_item, checkin_windows, checkin_form_event_name, checkin_form_override')
+      .select('id, title, slug, content, description, location, venue_address, venue_notes, venue_name, venue_lat, venue_lng, schedule, sponsors, start_date, end_date, flyer_url, ticket_price, points_value, is_online, audience, is_published, photo_albums, post_event_info, social_embeds, theme, page_blocks, requires_checkin_form, checkin_food_item, checkin_windows, checkin_form_event_name, checkin_form_override')
       .eq('id', id)
       .single(),
-    supabase.from('divisions').select('id, name').order('name'),
     getCheckinFormSeed(),
     getFormPreviewViewer(),
   ]);
@@ -63,7 +62,6 @@ export default async function EditEventPage({ params }: Params) {
     theme: cleanTheme(event.theme) ?? EMPTY_THEME,
     page_blocks: cleanBlocks(event.page_blocks),
     social_embeds: (event.social_embeds as SocialEmbed[]) ?? [],
-    division_id: event.division_id ?? '',
     requires_checkin_form: event.requires_checkin_form ?? false,
     checkin_food_item: event.checkin_food_item ?? '',
     checkin_windows: (event.checkin_windows as { day: string; start: string; end: string }[] | null) ?? [],
@@ -71,5 +69,5 @@ export default async function EditEventPage({ params }: Params) {
     checkin_form_override: event.checkin_form_override ? { ...EMPTY_CHECKIN_FORM_CONFIG, ...event.checkin_form_override } : null,
   };
 
-  return <EditEventClient eventId={event.id} initial={initial} divisions={divisions ?? []} seedCheckinFormConfig={seedCheckinFormConfig} previewViewer={previewViewer} />;
+  return <EditEventClient eventId={event.id} initial={initial} seedCheckinFormConfig={seedCheckinFormConfig} previewViewer={previewViewer} />;
 }
