@@ -193,7 +193,8 @@ export default function AvailabilityGrid({ plan, value, onChange, disabled }: { 
                 const v = get(d, t);
                 if (isBusy(d, t)) {
                   // The block's first slot carries its name, so it is clear on the grid itself why the time is taken.
-                  const first = !isBusy(d, toHhmm(toMin(t) - 30));
+                  const prev = toHhmm(toMin(t) - 30);
+                  const first = !isBusy(d, prev) || busyTitle(d, prev) !== busyTitle(d, t);
                   return <div key={d} onPointerMove={(e) => setHover({ day: d, t, x: e.clientX, y: e.clientY })} className={`${styles.cell} ${styles.cellBusy} ${t.endsWith(':00') ? '' : styles.cellHalf}`} title={`Blocked: ${busyTitle(d, t)} (${busyWhy(d, t)})`} aria-label={`${head(d)} ${clockLabel(t)}: busy, ${busyTitle(d, t)}`}>{first && <span className={styles.busyLabel}>{busyTitle(d, t)}</span>}</div>;
                 }
                 return (
