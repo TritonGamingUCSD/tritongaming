@@ -14,6 +14,7 @@ import TimeGrid from './TimeGrid';
 import GoogleLinkPanel from './GoogleLinkPanel';
 import { GOOGLE_CALENDAR_LINKING } from '@/lib/featureFlags';
 import { ItemPopup, ItemRow, StatusBadge, kindKey, timeOf, type Item } from './calendarParts';
+import SectionHeader from '@/components/ui/SectionHeader';
 
 type View = 'month' | 'week' | 'day' | 'agenda';
 type Kind = Item['kind'];
@@ -123,13 +124,7 @@ export default function CalendarSectionContent() {
 
   return (
     <div className={styles.page} data-wide={view !== 'agenda' ? '' : undefined} data-month={view !== 'agenda' ? '' : undefined}>
-      <div className={styles.header}>
-        <div className={styles.headerText}>
-          <h1 className={styles.title}>Calendar</h1>
-          <p className={styles.sub}>Events and the meetings you’re invited to, in one place.</p>
-        </div>
-        {syncButton('phoneOnly')}
-      </div>
+      <SectionHeader title="Calendar" flush sub="Events and the meetings you’re invited to, in one place." actions={syncButton('phoneOnly')} />
 
       <div className={styles.toolbar}>
         <div className={styles.nav}>

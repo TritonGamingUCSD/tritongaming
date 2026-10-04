@@ -13,6 +13,7 @@ import { PACIFIC_TZ } from '@/lib/timezone';
 import { useDragReorder } from '@/lib/useDragReorder';
 import IconButton from '@/components/ui/IconButton';
 import styles from './albums.module.css';
+import SectionHeader from '@/components/ui/SectionHeader';
 
 interface Creator { display_name: string | null; }
 
@@ -116,17 +117,11 @@ export default function PhotoAlbumsSectionContent({ albums: initial, canManage }
 
   return (
     <div className={styles.page}>
-      <div className={styles.header}>
-        <div>
-          <h1 className={styles.title}>Photo Albums</h1>
-          <p className={styles.sub}>Google Photos albums from past events</p>
-        </div>
-        {canManage && (
-          <button type="button" className={styles.addBtn} onClick={() => setAdding((a) => !a)}>
-            <Plus size={15} strokeWidth={2} aria-hidden="true" /> Add Album
-          </button>
-        )}
-      </div>
+      <SectionHeader title="Photo Albums" sub="Google Photos albums from past events" actions={canManage ? (
+        <button type="button" className={styles.addBtn} onClick={() => setAdding((a) => !a)}>
+          <Plus size={15} strokeWidth={2} aria-hidden="true" /> Add Album
+        </button>
+      ) : undefined} />
 
       {adding && (
         <form className={styles.addForm} onSubmit={handleAdd}>

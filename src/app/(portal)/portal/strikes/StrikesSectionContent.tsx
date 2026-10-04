@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { ArrowLeft, Check, Lock, Moon, RotateCcw, Plus, Search, Send, ShieldAlert, Ticket, X } from 'lucide-react';
+import { CalendarX, Users, ArrowLeft, Check, Lock, Moon, RotateCcw, Plus, Search, Send, ShieldAlert, Ticket, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
 import Notice from '@/components/ui/Notice';
@@ -12,6 +12,7 @@ import { DateInput, Field, Input } from '@/components/ui/Field';
 import { confirmHold } from '@/lib/confirmHold';
 import { STRIKES_AT_LIMIT, countLabel } from '@/lib/strikeLabels';
 import styles from './tracker.module.css';
+import SectionHeader from '@/components/ui/SectionHeader';
 
 interface Person { id: string; name: string; avatar_url: string | null; role: string; active: number; vouchers: number; atLimit: boolean; inactive: boolean }
 interface Strike { id: string; mark: string | null; status: 'published' | 'removed'; category: string; reason: string; incident_date: string; meeting_id: string | null; created_at: string; published_at: string | null; removed_at: string | null; removed_how: 'taken' | 'voucher' | 'reset' | null; removed_note: string | null; created_by: string | null; published_by: string | null; removed_by: string | null; }
@@ -34,12 +35,7 @@ export default function StrikesSectionContent() {
 }
 
 function Header() {
-  return (
-    <div className={styles.header}>
-      <h1 className={styles.title}>Strikes</h1>
-      <p className={styles.sub}><Lock size={13} aria-hidden="true" /> Private. Only the person themselves, exec and HR can see their strikes. The first mark is a warning, and 3 strikes after it is the limit. Every action needs a reason, which the person can read (never who did it). A voucher is used automatically, and nobody can change their own record.</p>
-    </div>
-  );
+  return <SectionHeader title="Strikes" flush sub={<><Lock size={13} aria-hidden="true" className={styles.lockIcon} /> Private to the person, exec and HR. The first mark is a warning; 3 strikes after it is the limit. Every action has a reason the person can read, never who did it.</>} />;
 }
 
 function Tracker() {
@@ -77,8 +73,8 @@ function Tracker() {
     <div className={styles.page}>
       <Header />
       <SectionTabs<Tab> label="Strikes" value={tab} onChange={(t) => { setTab(t); setSelected(null); }} tabs={[
-        { id: 'people', label: 'People', count: people.length },
-        { id: 'missed', label: 'Missed meetings', badge: missed },
+        { id: 'people', label: 'People', icon: <Users size={15} />, count: people.length },
+        { id: 'missed', label: 'Missed meetings', icon: <CalendarX size={15} />, badge: missed },
       ]} />
       {error && <Notice tone="error">{error}</Notice>}
 

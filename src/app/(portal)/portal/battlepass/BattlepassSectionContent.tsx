@@ -22,6 +22,7 @@ import styles from './battlepass.module.css';
 import Select from '@/components/ui/Select';
 import ColorInput from '@/components/ui/ColorInput';
 import NumberInput from '@/components/ui/NumberInput';
+import SectionHeader from '@/components/ui/SectionHeader';
 
 type Tab = 'mine' | 'shop' | 'leaderboard' | 'manage';
 const VALID_TABS: Tab[] = ['mine', 'shop', 'leaderboard', 'manage'];
@@ -599,12 +600,7 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, lead
 
   return (
     <div className={styles.page}>
-      <div className={styles.header}>
-        <div>
-          <h1 className={styles.title}>Battlepass</h1>
-          <p className={styles.sub}>Recognition for officer-specific contributions — separate from member Rewards</p>
-        </div>
-      </div>
+      <SectionHeader title="Battlepass" sub="Recognition for officer-specific contributions, separate from member Rewards" />
 
       <SectionTabs
         value={tab}
@@ -613,7 +609,7 @@ export default function BattlepassSectionContent({ balance, lifetimeEarned, lead
           { id: 'mine', label: 'My Battlepass', icon: <Shield />, badge: unclaimedUnlockCount },
           { id: 'shop', label: 'Shop', icon: <ShoppingBag /> },
           { id: 'leaderboard', label: 'Leaderboard', icon: <Trophy /> },
-          ...(canManagePoints ? [{ id: 'manage' as const, label: 'Manage', icon: <Settings /> }] : []),
+          ...(canManagePoints ? [{ id: 'manage' as const, label: 'Tools', icon: <Settings /> }] : []),
         ]}
       />
 

@@ -506,6 +506,8 @@
 }
 .awardForm .adjustSearchWrap { flex: 2 1 220px; margin-top: 0; }
 .awardForm > input[type="number"] { flex: 0 1 110px; }
+/* The number field is wrapped (our own +/- steppers), so it needs its own width or it collapses to a sliver and clips its placeholder. */
+.awardForm > span:has(> input[type="number"]) { flex: 0 1 170px; min-width: 150px; }
 .awardForm > input:not([type="number"]) { flex: 2 1 220px; }
 .awardForm .saveBtn { flex-shrink: 0; }
 

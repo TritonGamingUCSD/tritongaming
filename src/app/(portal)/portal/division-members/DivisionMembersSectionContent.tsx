@@ -9,6 +9,7 @@ import { resolveAvatarUrl } from '@/lib/profile';
 import { divisionLogoSrc } from '@/lib/divisions';
 import type { DivisionGroup } from './getDivisionMembersData';
 import styles from './divisionmembers.module.css';
+import SectionHeader from '@/components/ui/SectionHeader';
 
 export default function DivisionMembersSectionContent({ groups }: { groups: DivisionGroup[] }) {
   const [query, setQuery] = useState('');
@@ -20,16 +21,12 @@ export default function DivisionMembersSectionContent({ groups }: { groups: Divi
 
   return (
     <div className={styles.page}>
-      <div className={styles.header}>
-        <div>
-          <h1 className={styles.title}>Division Members</h1>
-          <p className={styles.sub}>{total} {total === 1 ? 'person' : 'people'} across {groups.length} {groups.length === 1 ? 'division' : 'divisions'}</p>
-        </div>
+      <SectionHeader title="Division Members" flush sub={`${total} ${total === 1 ? 'person' : 'people'} across ${groups.length} ${groups.length === 1 ? 'division' : 'divisions'}`} actions={
         <label className={styles.search}>
           <Search size={15} aria-hidden="true" />
           <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by name or division…" aria-label="Search division members" />
         </label>
-      </div>
+      } />
 
       {shown.length === 0 ? (
         <p className={styles.empty}>{groups.length === 0 ? 'No division leads have been added yet.' : 'No one matches that search.'}</p>

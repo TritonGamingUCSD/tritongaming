@@ -14,6 +14,7 @@ import type { RoleGrant } from '@/lib/capabilities';
 import { resolveAvatarUrl, isOrgMember } from '@/lib/profile';
 import type { MemberProfileRow } from './getMembersData';
 import styles from './members.module.css';
+import SectionHeader from '@/components/ui/SectionHeader';
 
 // alumni ranks above recruit/ucsd (see ROLE_DISPLAY_RANK) — this order used
 // to put 'ucsd' ahead of 'alumni', so an alumni who also held the
@@ -124,21 +125,15 @@ export default function MembersSectionContent({ rows, keysByUser = {} }: { rows:
 
   return (
     <div className={styles.page}>
-      <div className={styles.header}>
-        <div>
-          <h1 className={styles.title}>TG Members</h1>
-          <p className={styles.sub}>{memberCount} members across the org</p>
-        </div>
-        <div className={styles.headerActions}>
-          <SectionTabs
-            variant="segmented"
-            label="View mode"
-            value={view}
-            onChange={(v) => { setView(v); setParams({ view: v === 'grid' ? null : v }); }}
-            tabs={[{ id: 'grid', label: 'Grid', icon: <LayoutGrid /> }, { id: 'list', label: 'List', icon: <List /> }]}
-          />
-        </div>
-      </div>
+      <SectionHeader title="TG Members" sub={`${memberCount} members across the org`} actions={
+        <SectionTabs
+          variant="segmented"
+          label="View mode"
+          value={view}
+          onChange={(v) => { setView(v); setParams({ view: v === 'grid' ? null : v }); }}
+          tabs={[{ id: 'grid', label: 'Grid', icon: <LayoutGrid /> }, { id: 'list', label: 'List', icon: <List /> }]}
+        />
+      } />
 
       {ORDER.map((role) => {
         const group = grouped[role];

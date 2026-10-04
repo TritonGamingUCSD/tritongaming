@@ -13,6 +13,7 @@ import { formatPacificDateTime } from '@/lib/timezone';
 import { showToast } from '@/lib/toast';
 import { HELP_CATEGORIES, HELP_STATUSES, HELP_TEMPLATES, MAX_ATTACHMENTS, MAX_BODY, MAX_SUBJECT, type HelpCategory, type HelpStatus } from '@/lib/helpConstants';
 import styles from './help.module.css';
+import SectionHeader from '@/components/ui/SectionHeader';
 
 type Tab = 'new' | 'mine' | 'inbox' | 'replies';
 interface TicketItem {
@@ -55,10 +56,7 @@ export default function HelpSectionContent({ isStaff, userId }: { isStaff: boole
 
   return (
     <div className={styles.page}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>Help</h1>
-        <p className={styles.sub}>{isStaff ? 'Answer questions and problems from members.' : 'Stuck on something, or found a bug? Tell the exec team and we’ll get back to you here.'}</p>
-      </div>
+      <SectionHeader title="Help" flush sub={isStaff ? 'Answer questions and problems from members.' : 'Stuck on something, or found a bug? Tell the exec team and we’ll get back to you here.'} />
       <SectionTabs<Tab>
         label="Help"
         value={tab}

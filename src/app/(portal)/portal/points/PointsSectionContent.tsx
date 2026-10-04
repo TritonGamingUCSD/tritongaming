@@ -20,6 +20,7 @@ import styles from './points.module.css';
 import Select from '@/components/ui/Select';
 import ColorInput from '@/components/ui/ColorInput';
 import NumberInput from '@/components/ui/NumberInput';
+import SectionHeader from '@/components/ui/SectionHeader';
 
 type Tab = 'points' | 'shop' | 'leaderboard' | 'manage';
 const VALID_TABS: Tab[] = ['points', 'shop', 'leaderboard', 'manage'];
@@ -653,12 +654,7 @@ export default function PointsSectionContent({
 
   return (
     <div className={styles.page}>
-      <div className={styles.header}>
-        <div>
-          <h1 className={styles.title}>Rewards</h1>
-          <p className={styles.sub}>Earn points for showing up, spend them on perks</p>
-        </div>
-      </div>
+      <SectionHeader title="Rewards" sub="Earn points for showing up, spend them on perks" />
 
       <SectionTabs
         value={tab}
@@ -667,7 +663,7 @@ export default function PointsSectionContent({
           { id: 'points', label: 'My Points', icon: <Award />, badge: unclaimedUnlockCount },
           { id: 'shop', label: 'Shop', icon: <ShoppingBag /> },
           { id: 'leaderboard', label: 'Leaderboard', icon: <Trophy /> },
-          ...(canManageShop ? [{ id: 'manage' as const, label: 'Manage', icon: <Settings /> }] : []),
+          ...(canManageShop ? [{ id: 'manage' as const, label: 'Tools', icon: <Settings /> }] : []),
         ]}
       />
 

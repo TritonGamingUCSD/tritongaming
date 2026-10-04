@@ -8,6 +8,7 @@ import DivisionsManager from './DivisionsManager';
 import MyDivisionsEditor from './MyDivisionsEditor';
 import type { MyDivision } from './getMyDivisionsData';
 import styles from '../content/sitecontent.module.css';
+import SectionHeader from '@/components/ui/SectionHeader';
 
 type Tab = 'directory' | 'my-division';
 
@@ -32,12 +33,7 @@ export default function DivisionsSectionContent({ canManageDivisions, allDivisio
 
   return (
     <div className={styles.page}>
-      <div className={styles.pageHeader}>
-        <div>
-          <h1 className={styles.title}>Divisions</h1>
-          <p className={styles.titleSub}>The divisions directory and each division&apos;s public page</p>
-        </div>
-      </div>
+      <SectionHeader title="Divisions" sub="The divisions directory and each division’s public page" />
       {tabs.length > 1 && <SectionTabs value={tab} onChange={select} tabs={tabs.map((t) => ({ id: t.id, label: t.label, icon: t.icon }))} />}
       {tab === 'directory' && canManageDivisions && allDivisions && <DivisionsManager divisions={allDivisions} />}
       {tab === 'my-division' && isDivisionLead && myDivisions && <MyDivisionsEditor divisions={myDivisions} />}

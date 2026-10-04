@@ -20,6 +20,7 @@ import DeleteEventModal from './DeleteEventModal';
 import { ButtonLink } from '@/components/ui/Button';
 import styles from './events.module.css';
 import chartStyles from '../admin/stats/stats.module.css';
+import SectionHeader from '@/components/ui/SectionHeader';
 
 interface EventRow {
   id: string;
@@ -119,19 +120,15 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
 
   return (
     <div className={styles.page}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>{canEdit ? 'Event Management' : 'Events'}</h1>
-        {canEdit && (
-          <ButtonLink href="/portal/events/new"><Plus size={15} strokeWidth={2} aria-hidden="true" /> Create Event</ButtonLink>
-        )}
-      </div>
+      <SectionHeader title="Events" sub={canEdit ? 'Create, run and review events.' : 'What’s coming up and what you’ve been to.'}
+        actions={canEdit ? <ButtonLink href="/portal/events/new"><Plus size={15} strokeWidth={2} aria-hidden="true" /> Create Event</ButtonLink> : undefined} />
 
       {canEdit && (
         <SectionTabs
           value={tab}
           onChange={selectTab}
           tabs={[
-            { id: 'manage', label: 'Manage', icon: <ListChecks /> },
+            { id: 'manage', label: 'Events', icon: <ListChecks /> },
             { id: 'analytics', label: 'Analytics', icon: <BarChart3 /> },
           ]}
         />

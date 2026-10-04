@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { CalendarRange, Check, ChevronDown, Moon, Plus, Search, Settings2, X } from 'lucide-react';
+import { CalendarCheck, GraduationCap, Check, ChevronDown, Moon, Plus, Search, Settings2, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
 import Notice from '@/components/ui/Notice';
@@ -12,6 +12,7 @@ import { confirmHold } from '@/lib/confirmHold';
 import SectionTabs from '@/components/ui/SectionTabs';
 import TeamYearsPanel from './TeamYearsPanel';
 import styles from './quarters.module.css';
+import SectionHeader from '@/components/ui/SectionHeader';
 
 interface Quarter { id: string; term: 'fall' | 'winter' | 'spring'; start_year: number; starts_on: string; ends_on: string; name: string; editable: boolean }
 interface Person { id: string; name: string; avatar_url: string | null; role: string; roleLabel: string; title: string | null }
@@ -27,11 +28,8 @@ export default function QuarterStatusContent() {
   const [tab, setTab] = useState<'status' | 'years'>('status');
   return (
     <div className={styles.page}>
-      <div className={styles.header}>
-        <h1 className={styles.title}><CalendarRange size={22} aria-hidden="true" /> {tab === 'status' ? 'Quarter status' : 'Team by year'}</h1>
-        <p className={styles.sub}>{tab === 'status' ? 'Switch a quarter off for someone who’s sitting it out.' : 'Who was exec, a lead or an officer each year.'}</p>
-      </div>
-      <SectionTabs<'status' | 'years'> label="Quarter status" value={tab} onChange={setTab} tabs={[{ id: 'status', label: 'Status' }, { id: 'years', label: 'Years' }]} />
+      <SectionHeader title="Quarter Status" flush sub={tab === 'status' ? 'Switch a quarter off for someone who’s sitting it out.' : 'Who was exec, a lead or an officer each year.'} />
+      <SectionTabs<'status' | 'years'> label="Quarter status" value={tab} onChange={setTab} tabs={[{ id: 'status', label: 'Status', icon: <CalendarCheck size={15} /> }, { id: 'years', label: 'Years', icon: <GraduationCap size={15} /> }]} />
       {tab === 'status' ? <StatusPanel /> : <TeamYearsPanel />}
     </div>
   );

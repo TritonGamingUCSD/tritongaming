@@ -18,6 +18,7 @@ import { googleCalendarUrl } from '@/lib/ics';
 import { AudiencePicker, audFrom, audPayload, audienceEmpty, defaultAud, type Aud } from '../meetings/MeetingsSectionContent';
 import mstyles from '../meetings/meetings.module.css';
 import styles from './internal-events.module.css';
+import SectionHeader from '@/components/ui/SectionHeader';
 
 type Rsvp = 'going' | 'maybe' | 'not_going';
 interface InternalEvent {
@@ -49,10 +50,7 @@ export default function InternalEventsSectionContent({ canHost, canRsvp = true }
   const [tab, setTab] = useState<Tab>(valid.includes(nav.tab as Tab) ? (nav.tab as Tab) : 'upcoming');
   return (
     <div className={mstyles.page}>
-      <div className={mstyles.header}>
-        <h1 className={mstyles.title}>Internal Events</h1>
-        <p className={mstyles.sub}>Internal events for the team: socials, trainings, workshops. No check-in, just let people know if you’re coming.</p>
-      </div>
+      <SectionHeader title="Internal Events" flush sub="Socials, trainings and workshops for the team. No check-in, just let people know if you’re coming." />
       {canHost && (
         <SectionTabs<Tab> label="Internal events" value={tab} onChange={(t) => { setTab(t); sync(t); }}
           tabs={[{ id: 'upcoming', label: 'Coming up', icon: <CalendarHeart size={15} /> }, { id: 'plan', label: 'Plan', icon: <CalendarPlus size={15} /> }]} />

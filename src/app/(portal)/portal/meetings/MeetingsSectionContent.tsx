@@ -24,6 +24,7 @@ import { QuestionEditor, ResultBars, StarPicker, Confetti, emptyQ, qFrom, qPaylo
 import { CUSTOM_PREFIX, isCustomEmoji, customEmojiId, MAX_EMOJI_BYTES, MAX_EMOJI_PICK_BYTES, EMOJI_NAME, parseDiscordEmoji, emojiNameFrom, type CustomEmoji, type QuestionType, type Tally, MAX_ANSWER_LENGTH, MAX_QUESTION_LENGTH, MAX_DESCRIPTION_LENGTH, suggestQuestion } from '@/lib/meetingFun';
 import PlanningPanel from './planning/PlanningPanel';
 import styles from './meetings.module.css';
+import SectionHeader from '@/components/ui/SectionHeader';
 
 type Tab = 'mine' | 'planning' | 'host' | 'tools';
 type ToolTab = 'attendance' | 'groups' | 'emojis';
@@ -100,16 +101,16 @@ export default function MeetingsSectionContent({ canHost, canManageAll, userId, 
   const [tab, setTab] = useState<Tab>(valid.includes(startTab as Tab) ? (startTab as Tab) : valid[0] ?? 'mine');
   // Set when a meeting is opened from the Attendance tab, so Run meetings lands straight on it.
   const [runTarget, setRunTarget] = useState<string | null>(null);
+  // The schedule form is opened from the header button, on the Host tab.
+  const [scheduling, setScheduling] = useState(false);
 
   function pick(t: Tab) { setRunTarget(null); setTab(t); sync(t, t === 'tools' ? toolTab : null); }
   function openFromAttendance(id: string) { setRunTarget(id); setTab('host'); sync('host'); }
 
   return (
     <div className={styles.page} data-wide>
-      <div className={styles.header}>
-        <h1 className={styles.title}>Meetings</h1>
-        <p className={styles.sub}>{canAttend ? 'Check in with the code in the room.' : 'Attendance for every meeting.'}</p>
-      </div>
+      <SectionHeader title="Meetings" flush sub={canAttend ? 'Check in with the code in the room.' : 'Attendance for every meeting.'}
+        actions={canManage ? <Button size="sm" onClick={() => { setRunTarget(null); setTab('host'); sync('host'); setScheduling((v) => (tab === 'host' ? !v : true)); }}>{scheduling && tab === 'host' ? 'Close' : <><Plus size={14} aria-hidden="true" /> Schedule a Meeting</>}</Button> : undefined} />
       <SectionTabs<Tab>
         label="Meetings"
         value={tab}
@@ -136,7 +137,7 @@ export default function MeetingsSectionContent({ canHost, canManageAll, userId, 
         </div>
       )}
       {tab === 'planning' && (canAttend || canManage) && <PlanningPanel userId={userId} />}
-      {tab === 'host' && canManage && <RunPanel initial={runTarget} />}
+      {tab === 'host' && canManage && <RunPanel initial={runTarget} showForm={scheduling} onShowForm={setScheduling} />}
       {tab === 'tools' && toolTabs.length > 0 && (
         <div className={styles.stack}>
           {toolTabs.length > 1 && (
@@ -691,17 +692,17 @@ function GroupsPanel({ userId, canManageAll }: { userId: string; canManageAll: b
 }
 
 // ── Exec: schedule meetings, then open one to run its check-in ────────────────
-function RunPanel({ initial }: { initial: string | null }) {
+function RunPanel({ initial, showForm, onShowForm }: { initial: string | null; showForm: boolean; onShowForm: (v: boolean) => void }) {
   const [selected, setSelected] = useState<string | null>(initial);
   if (selected) return <LiveMeeting id={selected} onBack={() => setSelected(null)} />;
-  return <MeetingList onOpen={setSelected} />;
+  return <MeetingList onOpen={setSelected} showForm={showForm} onShowForm={onShowForm} />;
 }
 
-function MeetingList({ onOpen }: { onOpen: (id: string) => void }) {
+function MeetingList({ onOpen, showForm, onShowForm }: { onOpen: (id: string) => void; showForm: boolean; onShowForm: (v: boolean) => void }) {
   const [data, setData] = useState<{ series: Series[]; upcoming: Item[]; past: Item[] } | null>(null);
   const [error, setError] = useState('');
   const [busyKey, setBusyKey] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
+  const setShowForm = onShowForm;
   const [editingSeries, setEditingSeries] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -773,7 +774,6 @@ function MeetingList({ onOpen }: { onOpen: (id: string) => void }) {
     <div className={styles.stack}>
       <div className={styles.toolbar}>
         <p className={styles.muted}>Open a meeting on its day for its code.</p>
-        <Button size="sm" onClick={() => setShowForm((v) => !v)}>{showForm ? 'Close' : <><Plus size={14} aria-hidden="true" /> Schedule a meeting</>}</Button>
       </div>
       {showForm && <ScheduleForm onCreated={() => { setShowForm(false); load(); }} />}
       {error && <Notice tone="error">{error}</Notice>}

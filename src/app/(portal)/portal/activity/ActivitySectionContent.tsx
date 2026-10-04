@@ -1,6 +1,7 @@
 import { Ticket, CircleCheck, Calendar } from 'lucide-react';
 import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/timezone';
 import styles from './activity.module.css';
+import SectionHeader from '@/components/ui/SectionHeader';
 
 interface ActivityTicket {
   id: string;
@@ -49,7 +50,7 @@ export default function ActivitySectionContent({ tickets }: { tickets: ActivityT
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>Activity</h1>
+      <SectionHeader title="Activity" flush sub="Your tickets and check-ins, newest first." />
       <ol className={styles.timeline}>
         {items.map((item) => (
           <li key={item.key} className={styles.item}>

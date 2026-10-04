@@ -1,11 +1,11 @@
 'use client';
 
 import SectionTabs from '@/components/ui/SectionTabs';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ReactNode } from 'react';
-import { Pencil, BarChart3, History, Activity, X, Server, Users as UsersIcon, ListOrdered, ScrollText, Link2, KeyRound } from 'lucide-react';
+import { LayoutDashboard, Pencil, BarChart3, History, Activity, X, Server, Users as UsersIcon } from 'lucide-react';
 import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
 import { resolveAvatarUrl } from '@/lib/profile';
 import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/timezone';
@@ -21,6 +21,7 @@ import RoleHistoryClient from './history/RoleHistoryClient';
 import type { RoleChangeEntry } from './history/getRoleHistoryData';
 import IconButton from '@/components/ui/IconButton';
 import styles from './admin.module.css';
+import SectionHeader from '@/components/ui/SectionHeader';
 
 interface Props {
   isAdmin: boolean;
@@ -34,6 +35,15 @@ interface Props {
 
 type Tab = 'overview' | 'roles' | 'access' | 'order' | 'analytics' | 'audit' | 'links' | 'system';
 const VALID_TABS: Tab[] = ['overview', 'roles', 'access', 'order', 'analytics', 'audit', 'links', 'system'];
+type Group = 'overview' | 'people' | 'insights' | 'system';
+const GROUPS: Record<Group, { label: string; icon: ReactNode; views: Tab[] }> = {
+  overview: { label: 'Overview', icon: <LayoutDashboard />, views: ['overview'] },
+  people: { label: 'People', icon: <UsersIcon />, views: ['roles', 'access', 'order'] },
+  insights: { label: 'Insights', icon: <BarChart3 />, views: ['analytics', 'audit'] },
+  system: { label: 'System', icon: <Server />, views: ['system', 'links'] },
+};
+const VIEW_LABELS: Record<Tab, string> = { overview: 'Overview', roles: 'Member Management', access: 'Access', order: 'Display Order', analytics: 'Analytics', audit: 'Audit Log', links: 'Short Links', system: 'System Health' };
+const groupOf = (t: Tab): Group => (Object.keys(GROUPS) as Group[]).find((g) => GROUPS[g].views.includes(t)) ?? 'overview';
 
 // Each tab is a real destination now instead of Overview being a junk
 // drawer for Role Manager + Storage Cleanup stacked underneath the stats —
@@ -50,8 +60,11 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
   const { tab: initialTab } = useUrlNav();
   const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'overview');
   const syncUrl = usePortalTabSync('admin');
+  const lastIn = useRef<Partial<Record<Group, Tab>>>({});
+  const viewOk = (v: Tab) => v === 'overview' || v === 'analytics' || isAdmin;
   function selectTab(t: Tab) {
     setTab(t);
+    lastIn.current[groupOf(t)] = t;
     syncUrl(t);
   }
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -87,28 +100,23 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
 
   return (
     <div className={styles.page}>
-      <div className={styles.pageHeader}>
-        <div>
-          <h1 className={styles.title}>Admin</h1>
-          <p className={styles.titleSub}>Platform management</p>
-        </div>
-        <div className={styles.headerActions}>
-          <Link href="/portal?section=site-content" className={styles.cmsBtn}>
-            <Pencil size={14} strokeWidth={1.5} aria-hidden="true" /> Edit Site Content
-          </Link>
-        </div>
-      </div>
+      <SectionHeader title="Admin" sub="Platform management" actions={
+        <Link href="/portal?section=site-content" className={styles.cmsBtn}>
+          <Pencil size={14} strokeWidth={1.5} aria-hidden="true" /> Edit Site Content
+        </Link>
+      } />
 
-      <SectionTabs
-        value={tab}
-        onChange={selectTab}
-        tabs={[
-          { id: 'overview', label: 'Overview' },
-          ...(isAdmin ? [{ id: 'roles' as const, label: 'Member Management', icon: <UsersIcon /> }, { id: 'access' as const, label: 'Access', icon: <KeyRound /> }, { id: 'order' as const, label: 'Display Order', icon: <ListOrdered /> }] : []),
-          { id: 'analytics', label: 'Analytics', icon: <BarChart3 /> },
-          ...(isAdmin ? [{ id: 'audit' as const, label: 'Audit Log', icon: <ScrollText /> }, { id: 'links' as const, label: 'Short Links', icon: <Link2 /> }, { id: 'system' as const, label: 'System', icon: <Server /> }] : []),
-        ]}
+      {/* Four groups instead of eight tabs. Each view keeps its own id in the address (tab=roles, tab=audit …), so every old link still works. */}
+      <SectionTabs<Group>
+        label="Admin"
+        value={groupOf(tab)}
+        onChange={(g) => selectTab(lastIn.current[g] && GROUPS[g].views.includes(lastIn.current[g]!) ? lastIn.current[g]! : GROUPS[g].views.filter((v) => viewOk(v))[0])}
+        tabs={(Object.keys(GROUPS) as Group[]).filter((g) => GROUPS[g].views.some(viewOk)).map((g) => ({ id: g, label: GROUPS[g].label, icon: GROUPS[g].icon }))}
       />
+      {GROUPS[groupOf(tab)].views.filter(viewOk).length > 1 && (
+        <SectionTabs<Tab> variant="segmented" label={`${GROUPS[groupOf(tab)].label} views`} value={tab} onChange={selectTab}
+          tabs={GROUPS[groupOf(tab)].views.filter(viewOk).map((v) => ({ id: v, label: VIEW_LABELS[v] }))} />
+      )}
 
       {tab === 'overview' && (
         <>

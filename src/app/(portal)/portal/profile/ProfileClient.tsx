@@ -27,6 +27,7 @@ import MajorPicker from './MajorPicker';
 import GamePicker from './GamePicker';
 import styles from './profile.module.css';
 import Select from '@/components/ui/Select';
+import SectionHeader from '@/components/ui/SectionHeader';
 
 type Tab = 'basic' | 'officer' | 'notifications' | 'strikes' | 'security';
 
@@ -252,7 +253,7 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>My Profile</h1>
+      <SectionHeader title="My Profile" sub="Your details, notifications and sign-in." />
 
       {promptedForTicket && (
         <Notice tone="warning">

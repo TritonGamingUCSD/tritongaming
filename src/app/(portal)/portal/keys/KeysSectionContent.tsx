@@ -10,6 +10,7 @@ import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import { Field, Input } from '@/components/ui/Field';
 import { confirmHold } from '@/lib/confirmHold';
 import styles from './keys.module.css';
+import SectionHeader from '@/components/ui/SectionHeader';
 
 type Kind = 'member' | 'person' | 'place';
 interface KeyItem {
@@ -61,13 +62,8 @@ export default function KeysSectionContent() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.header}>
-        <div>
-          <h1 className={styles.title}>Storage Keys</h1>
-          <p className={styles.sub}>Who has each key to the storage room right now. Anyone on the team can say they have a key, or give it to someone.</p>
-        </div>
-        {canManage && <Button size="sm" variant="secondary" onClick={() => setAdding((v) => !v)} aria-expanded={adding}><Plus size={14} aria-hidden="true" /> Add a key</Button>}
-      </div>
+      <SectionHeader title="Storage Keys" flush sub="Who has each key to the storage room right now. Anyone on the team can say they have a key, or give it to someone."
+        actions={canManage ? <Button size="sm" variant="secondary" onClick={() => setAdding((v) => !v)} aria-expanded={adding}><Plus size={14} aria-hidden="true" /> Add a key</Button> : undefined} />
 
       <section className={`${styles.mine} ${mine.length ? styles.mineHas : ''}`} aria-label="Keys you have">
         <span className={styles.mineLabel}>You have</span>

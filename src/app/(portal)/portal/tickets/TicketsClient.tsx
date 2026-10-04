@@ -16,6 +16,7 @@ import { PACIFIC_TZ, pacificDaysUntil, formatEventDateRange, eventDayCount, even
 import { isCheckinWindowOpen } from '@/lib/checkinWindow';
 import { saveTicketCodes, cachedMinutesLeft } from '@/lib/ticketCodeCache';
 import styles from './tickets.module.css';
+import SectionHeader from '@/components/ui/SectionHeader';
 
 interface TicketData {
   id: string;
@@ -252,7 +253,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>My Tickets</h1>
+      <SectionHeader title="My Tickets" flush sub="Your event tickets and what you’ve been to." />
 
       {checkoutResult === 'success' && (
         <Notice tone="success">Payment received — your ticket will appear here in a few seconds.</Notice>

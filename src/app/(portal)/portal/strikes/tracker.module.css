@@ -130,3 +130,4 @@
 
 .idleTag { display: inline-flex; align-items: center; gap: 0.25rem; flex: none; padding: 0.05rem 0.5rem; border-radius: 999px; background: rgba(148, 163, 184, 0.18); color: #cbd5e1; font-size: 0.68rem; }
 .idleNote { display: flex; align-items: center; gap: 0.4rem; margin: 0; font-size: 0.82rem; color: #cbd5e1; }
+.lockIcon { flex: none; margin-top: 0.2rem; }
