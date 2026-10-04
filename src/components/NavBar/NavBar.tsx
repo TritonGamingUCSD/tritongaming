@@ -23,7 +23,8 @@ const NAV_LINKS = [
 ];
 
 
-export default function NavBar() {
+// `announcement` is the (server-rendered) announcement pill; it sits in the same row as the logo and the Portal / Menu stickers.
+export default function NavBar({ announcement }: { announcement?: React.ReactNode }) {
   const [offset, setOffset] = useState(0);
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -132,11 +133,13 @@ export default function NavBar() {
 
   return (
     <>
-      {/* Two stickers pinned to the top corners: the logo on the left, portal and menu on the right. They slide away when you scroll down. */}
+      {/* One row pinned to the top: the logo on the left, the announcement pill in the middle, portal and menu on the right. It slides away when you scroll down. */}
       <header className={`${styles.bar}${scrolled ? ` ${styles.scrolled}` : ''}`} style={{ transform: `translateY(-${offset}px)` }}>
         <Link href="/" className={styles.logo} aria-label="Triton Gaming Home">
           <Image src="/logos/tg_logo.png" alt="Triton Gaming" width={80} height={80} className={styles.logoImg} priority />
         </Link>
+
+        {announcement && <div className={`${styles.announce}${open ? ` ${styles.announceHidden}` : ''}`}>{announcement}</div>}
 
         <div className={styles.right}>
           {!authLoading && (

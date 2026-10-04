@@ -2,13 +2,15 @@
    The bar slides away as you scroll down (see NavBar.tsx) and comes back when you scroll up. */
 .bar {
   position: fixed;
-  top: calc(max(0.85rem, env(safe-area-inset-top)) + var(--banner-offset, 0px));
+  top: max(0.85rem, env(safe-area-inset-top));
   left: 0;
   right: 0;
   z-index: 1200; /* above the poster menu, so Menu / Close is always reachable */
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.6rem;
   padding-inline: clamp(0.75rem, 3vw, 1.75rem);
   pointer-events: none;
   transition: transform 0.25s ease;
@@ -21,6 +23,13 @@
 .logoImg { width: clamp(36px, 4.4vw, 46px); height: auto; display: block; }
 
 .right { display: flex; align-items: flex-start; gap: 0.7rem; }
+
+/* The announcement pill: same row, between the logo and the buttons. On phones there is no room, so it drops to a row of its own under them. */
+.announce { flex: 1 1 0; min-width: 0; display: flex; justify-content: center; align-self: center; }
+.announceHidden { visibility: hidden; }
+@media (max-width: 860px) {
+  .announce { order: 3; flex-basis: 100%; }
+}
 
 .portal, .menuBtn {
   display: inline-flex; align-items: center; gap: 0.5rem; height: 2.9rem; padding: 0 1rem;
@@ -48,7 +57,7 @@
 .menu::after { content: ''; position: fixed; left: 0; right: 0; height: 0.9rem; background: repeating-linear-gradient(-45deg, var(--yellow) 0 16px, var(--ink) 16px 32px); z-index: 1; }
 .menu::after { bottom: 0; }
 
-.menuInner { min-height: 100%; max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 2rem 4rem; align-items: center; padding: calc(6.5rem + var(--banner-offset, 0px)) clamp(1rem, 5vw, 3rem) 4rem; }
+.menuInner { min-height: 100%; max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 2rem 4rem; align-items: center; padding: 6.5rem clamp(1rem, 5vw, 3rem) 4rem; }
 .links { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.1rem; }
 .links > li, .side { opacity: 0; transform: translateY(1.2rem); transition: opacity 0.35s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1); }
 .menuOpen .links > li, .menuOpen .side { opacity: 1; transform: none; transition-delay: calc(0.08s + var(--i, 0) * 0.04s); }
@@ -70,7 +79,7 @@
 .tag { margin: 0; font-family: var(--font-brick); font-size: 1.25rem; color: #3a4764; }
 
 @media (max-width: 860px) {
-  .menuInner { grid-template-columns: minmax(0, 1fr); padding-top: calc(6rem + var(--banner-offset, 0px)); gap: 2rem; }
+  .menuInner { grid-template-columns: minmax(0, 1fr); padding-top: 6rem; gap: 2rem; }
   .menuOpen .side { transform: none; }
 }
 @media (max-width: 420px) {

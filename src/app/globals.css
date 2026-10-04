@@ -79,7 +79,7 @@
      read as one consistent system instead of each page inventing its own
      slightly-different numbers. */
   --hero-bg: var(--gradient-stats);
-  --hero-padding-top: max(var(--navbar-height), 6.5rem);
+  --hero-padding-top: calc(max(var(--navbar-height), 6.5rem) + var(--banner-offset, 0px));
   --hero-padding-bottom: clamp(4rem, 8vw, 7rem);
   --hero-fade-height: 55%;
   --hero-fade: linear-gradient(to bottom, transparent, var(--navy));

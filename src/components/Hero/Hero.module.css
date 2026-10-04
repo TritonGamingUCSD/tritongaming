@@ -9,7 +9,7 @@
   justify-content: center;
   overflow: hidden;
   isolation: isolate;
-  padding-block: calc(var(--navbar-height, 5rem) + 2rem) 6.5rem;
+  padding-block: calc(var(--navbar-height, 5rem) + 2rem + var(--banner-offset, 0px)) 6.5rem;
 }
 
 .video {

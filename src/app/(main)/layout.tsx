@@ -6,8 +6,7 @@ import AttributionCapture from '@/components/AttributionCapture/AttributionCaptu
 import ConnectivityBanner from '@/components/ConnectivityBanner/ConnectivityBanner';
 import SmoothScroll from '@/components/SmoothScroll/SmoothScroll';
 
-// The announcement is a flat strip at the very top of the page (in the flow, scrolls away).
-// The fixed nav follows it via --banner-offset (see AnnouncementClient), so the two never overlap.
+// The announcement is a pill in the nav row (see NavBar), passed in as a prop.
 //
 // Footer and AnnouncementBanner are both async server components (each
 // does its own site_contents fetch) rendered here directly rather than
@@ -24,10 +23,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   return (
     <>
       <SmoothScroll />
-      <Suspense fallback={null}>
-        <AnnouncementBanner />
-      </Suspense>
-      <NavBar />
+      <NavBar announcement={<Suspense fallback={null}><AnnouncementBanner /></Suspense>} />
       <main>{children}</main>
       <Suspense fallback={null}>
         <Footer />

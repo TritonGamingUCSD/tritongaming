@@ -32,7 +32,7 @@ export const CONTENT_BLOCKS = [
   {
     key: 'announcement',
     title: 'Announcement Banner',
-    description: 'A flat strip across the very top of every public page. It pushes the page down and scrolls away with it; visitors can dismiss it.',
+    description: 'A small pill in the top bar of every public page, between the logo and the menu. On phones it sits on its own row under them. Visitors can dismiss it.',
     icon: createElement(Megaphone, ICON_PROPS),
     category: 'Global',
     pages: SITEWIDE,

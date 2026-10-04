@@ -17,9 +17,7 @@ export default async function PreviewLayout({ children }: { children: React.Reac
 
   return (
     <>
-      {/* Same order as the real site: the announcement strip sits above the nav and pushes the page down. */}
-      <Suspense fallback={null}><AnnouncementBanner /></Suspense>
-      <NavBar />
+      <NavBar announcement={<Suspense fallback={null}><AnnouncementBanner /></Suspense>} />
       <main>{children}</main>
       <Suspense fallback={null}><Footer /></Suspense>
       <PreviewBridge />

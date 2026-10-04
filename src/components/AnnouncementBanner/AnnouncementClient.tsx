@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { X } from 'lucide-react';
 import styles from './AnnouncementBanner.module.css';
@@ -13,38 +13,25 @@ interface Props {
   label: string;
 }
 
-// A strip across the very top of the page, in the normal flow: it pushes the page down by its own height
-// and scrolls away with it, so it never covers content. The nav is fixed, so it reads --banner-offset (the part of the strip still
-// on screen) and sits just beneath the strip, then settles at its usual place once the strip has scrolled off.
+// A sticker-style pill in the nav row, between the logo and the Portal / Menu buttons (NavBar places it). Visitors can dismiss it.
 export default function AnnouncementClient({ text, link, linkText, tone, label }: Props) {
   const [dismissed, setDismissed] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
 
+  // On phones the pill drops to a second row under the buttons, so page headers need that much more room at the top (--banner-offset).
   useEffect(() => {
     const root = document.documentElement;
-    const el = ref.current;
-    if (dismissed || !el) { root.style.setProperty('--banner-offset', '0px'); return; }
-    let raf = 0;
-    const update = () => {
-      raf = 0;
-      root.style.setProperty('--banner-offset', `${Math.max(0, el.offsetHeight - window.scrollY)}px`);
-    };
-    const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
-    update();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
-      if (raf) cancelAnimationFrame(raf);
-      root.style.setProperty('--banner-offset', '0px');
-    };
-  }, [dismissed, text]);
+    if (dismissed) { root.style.setProperty('--banner-offset', '0px'); return; }
+    const mq = window.matchMedia('(max-width: 860px)');
+    const apply = () => root.style.setProperty('--banner-offset', mq.matches ? '3.6rem' : '0px');
+    apply();
+    mq.addEventListener('change', apply);
+    return () => { mq.removeEventListener('change', apply); root.style.setProperty('--banner-offset', '0px'); };
+  }, [dismissed]);
 
   if (dismissed) return null;
 
   return (
-    <div ref={ref} className={`${styles.banner} ${styles[tone]}`} role="region" aria-label="Site announcement">
+    <div className={`${styles.pill} ${styles[tone]}`} role="region" aria-label="Site announcement">
       <span className={styles.tag}>{label}</span>
       <p className={styles.text}>{text}</p>
       {link && <Link href={link} className={styles.cta}>{linkText || 'Learn more'} <span aria-hidden="true">→</span></Link>}

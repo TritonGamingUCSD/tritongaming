@@ -1,18 +1,19 @@
-.banner {
-  position: relative;
-  z-index: 1001;
-  display: flex;
+/* The announcement is a sticker-style pill that lives in the nav row. Dark tones follow the brand deck: white text on navy or royal blue,
+   with a yellow tag and button. Yellow, green and red are light pills with navy text. */
+.pill {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.9rem;
-  padding: 0.55rem clamp(2.5rem, 5vw, 3.5rem) 0.55rem clamp(1rem, 4vw, 2rem);
+  gap: 0.6rem;
+  min-height: 2.9rem;
+  max-width: min(100%, 46rem);
+  padding: 0.3rem 0.45rem 0.3rem 0.6rem;
+  border: 3px solid var(--ink);
+  border-radius: var(--radius-sm);
   color: var(--ink);
-  border-bottom: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6);
 }
-
-/* Dark tones follow the brand deck: white text on navy or royal blue, yellow for the tag and button */
-.navy { background: var(--navy-deep); color: var(--white); border-bottom-color: var(--yellow); }
-.royal { background: var(--royal); color: var(--white); border-bottom-color: var(--yellow); }
+.navy { background: var(--navy-deep); color: var(--white); border-color: var(--yellow); }
+.royal { background: var(--royal); color: var(--white); border-color: var(--yellow); }
 .yellow { background: var(--yellow); }
 .green { background: #6ee7b7; }
 .red { background: #fca5a5; }
@@ -34,12 +35,14 @@
   margin: 0;
   min-width: 0;
   font-family: var(--font-futura-heavy);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  line-height: 1.35;
-  text-wrap: balance;
-  text-align: center;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .cta {
@@ -47,10 +50,10 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.3rem 0.75rem;
+  padding: 0.3rem 0.7rem;
   background: var(--yellow);
   color: var(--ink);
-  border-radius: var(--radius-sm);
+  border-radius: 6px;
   font-family: var(--font-futura-heavy);
   font-size: 0.7rem;
   letter-spacing: 0.06em;
@@ -63,14 +66,11 @@
 .yellow .cta, .green .cta, .red .cta { background: var(--ink); color: var(--white); }
 
 .dismiss {
-  position: absolute;
-  top: 50%;
-  right: clamp(0.5rem, 2vw, 1rem);
-  transform: translateY(-50%);
+  flex-shrink: 0;
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   border: 2px solid currentColor;
   background: transparent;
@@ -78,11 +78,10 @@
   cursor: pointer;
   transition: background 0.15s ease;
 }
-.dismiss:hover, .dismiss:focus-visible { background: rgba(128, 128, 128, 0.25); }
+.dismiss:hover, .dismiss:focus-visible { background: rgba(128, 128, 128, 0.3); }
 
 @media (max-width: 560px) {
-  .banner { flex-wrap: wrap; row-gap: 0.4rem; padding-block: 0.6rem; }
-  .text { flex: 1 1 100%; font-size: 0.74rem; order: 3; }
-  .tag { order: 1; }
-  .cta { order: 2; }
+  .pill { width: 100%; max-width: 100%; gap: 0.45rem; }
+  .text { font-size: 0.7rem; }
+  .cta { padding-inline: 0.55rem; }
 }
