@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import styles from './PosterGallery.module.css';
 
@@ -8,16 +8,24 @@ import styles from './PosterGallery.module.css';
 // thumbnails; the print itself keeps the same frame and tilt so the hero layout never changes.
 export default function PosterGallery({ posters, credits = [], name, frameClass, tapeClass }: { posters: string[]; credits?: ({ name: string; link?: string } | undefined)[]; name: string; frameClass: string; tapeClass: string }) {
   const [i, setI] = useState(0);
+  // With several posters the frame keeps the first poster's shape, so flipping to a poster of another shape never resizes the frame.
+  const [ratio, setRatio] = useState<number | null>(null);
   const many = posters.length > 1;
+  const imgRef = useRef<HTMLImageElement>(null);
+  // The first image may already be loaded (cached) before React attaches onLoad.
+  useEffect(() => {
+    const im = imgRef.current;
+    if (im && i === 0 && ratio === null && im.complete && im.naturalWidth) setRatio(im.naturalWidth / im.naturalHeight);
+  }, [i, ratio]);
   const credit = credits[i];
   const go = (n: number) => setI((n + posters.length) % posters.length);
 
   return (
     <div className={styles.wrap}>
-      <figure className={frameClass}>
+      <figure className={`${frameClass} ${many && ratio ? styles.fixed : ''}`} style={many && ratio ? ({ '--ratio': ratio } as React.CSSProperties) : undefined}>
         <span className={tapeClass} aria-hidden="true" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img key={posters[i]} src={posters[i]} alt={many ? `${name} poster ${i + 1} of ${posters.length}` : `${name} poster`} className={styles.img} />
+        <img ref={imgRef} key={posters[i]} src={posters[i]} alt={many ? `${name} poster ${i + 1} of ${posters.length}` : `${name} poster`} className={styles.img} style={many && ratio ? { width: '100%', height: '100%', maxHeight: 'none', objectFit: 'contain' } : undefined} onLoad={(e) => { if (i === 0 && ratio === null) setRatio(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight); }} />
         {many && (
           <>
             <button type="button" className={`${styles.arrow} ${styles.prev}`} onClick={() => go(i - 1)} aria-label="Previous poster"><ChevronLeft size={20} aria-hidden="true" /></button>

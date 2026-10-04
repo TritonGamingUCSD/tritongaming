@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import type { SocialEmbed } from '@/types/database';
 import { youtubeVideoId } from '@/lib/youtube';
+import ScrollShield from '@/components/ScrollShield/ScrollShield';
 import styles from './EventSocialEmbeds.module.css';
 
 declare global {
@@ -82,7 +83,7 @@ function LazyFrame({ index, label, caption, onActive, children }: { index: numbe
   return (
     <figure ref={ref} className={`${styles.frame} ${index % 2 ? styles.tiltR : styles.tiltL}`}>
       <span className={styles.label}>{label}</span>
-      <div ref={slot} className={styles.slot}>{on ? children(width) : <span className={styles.waiting}>loading…</span>}</div>
+      <div ref={slot} className={styles.slot}>{on ? <ScrollShield label="Tap to interact">{children(width)}</ScrollShield> : <span className={styles.waiting}>loading…</span>}</div>
       <figcaption className={styles.caption}>{caption}</figcaption>
     </figure>
   );

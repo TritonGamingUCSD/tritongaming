@@ -1,0 +1,9 @@
+/* wide screens: in the side margins, behind the content */
+.layer { position: absolute; inset: 0; pointer-events: none; z-index: -1; }
+.margin { position: absolute; width: calc(clamp(44px, 7vw, 92px) * var(--bs, 1)); height: auto; will-change: transform; backface-visibility: hidden; filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.4)); }
+.l { left: var(--bx, -5rem); }
+.r { right: var(--bx, -5rem); }
+@media (max-width: 1100px) { .margin { width: calc(clamp(40px, 9vw, 64px) * var(--bs, 1)); } .l { left: -1.2rem; } .r { right: -1.2rem; } }
+/* phones: in the gaps between sections, above the page background, never over text */
+@media (max-width: 640px) { .layer { z-index: 2; } }
+.gap { position: absolute; height: auto; will-change: transform; backface-visibility: hidden; filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.4)); }

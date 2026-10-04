@@ -1,4 +1,7 @@
 .wrap { display: flex; flex-direction: column; align-items: center; gap: 0.9rem; min-width: 0; max-width: 100%; justify-self: center; }
+.wrap { --ph: min(78vh, 760px); }
+.fixed { width: min(100%, calc(var(--ph) * var(--ratio))); aspect-ratio: var(--ratio); }
+@media (max-width: 860px) { .wrap { --ph: 70vh; } }
 .img { animation: posterIn 0.3s ease; }
 @keyframes posterIn { from { opacity: 0; } to { opacity: 1; } }
 .arrow { position: absolute; top: 50%; transform: translateY(-50%); display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 3px solid var(--ev-text, #011941); border-radius: var(--radius-sm); background: var(--ev-accent, #ffc72c); color: var(--ev-on-accent, #011941); cursor: pointer; box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5); }

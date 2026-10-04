@@ -1,3 +1,5 @@
+import BodyStickers from '@/components/BodyStickers/BodyStickers';
+import ScrollShield from '@/components/ScrollShield/ScrollShield';
 import PosterGallery from '@/components/PosterGallery/PosterGallery';
 import type { Metadata, Viewport } from 'next';
 import Image from 'next/image';
@@ -148,7 +150,7 @@ export default async function EventDetailPage({ params }: Params) {
         rot: Math.round(rnd() * 28 - 14),
         scale: 0.75 + rnd() * 0.6,
         bx: -(2 + rnd() * 3.5),      // how far into the margin on wide screens (rem)
-        bxm: -(0.6 + rnd() * 1.2),   // how far off the edge on narrow screens (rem)
+        x: rnd(),                    // where across the width a phone's gap sticker sits (0 = left edge, 1 = right edge)
       };
     });
   })();
@@ -253,14 +255,7 @@ export default async function EventDetailPage({ params }: Params) {
       </header>
 
       <div className={styles.body}>
-        {bodyStickers.length > 0 && (
-          <div className={styles.bodyStickers} aria-hidden="true">
-            {bodyStickers.map((b, i) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img key={i} src={b.url} alt="" decoding="async" className={`${styles.bodySticker} ${b.right ? styles.bsR : styles.bsL}`} style={{ top: `${b.top}%`, transform: `rotate(${b.rot}deg) translateZ(0)`, '--bs': b.scale, '--bx': `${b.bx}rem`, '--bxm': `${b.bxm}rem` } as React.CSSProperties} />
-            ))}
-          </div>
-        )}
+        {bodyStickers.length > 0 && <BodyStickers items={bodyStickers} />}
         {hasPostEventContent && (
           <section className={`${styles.section} ${styles.recap}`} aria-label="Event recap">
             <div className={styles.recapHead}>
@@ -362,6 +357,7 @@ export default async function EventDetailPage({ params }: Params) {
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Venue</h2>
             <div className={styles.venue}>
+              <ScrollShield label="Tap to use the map" className={styles.mapWrap}>
               <iframe
                 className={styles.map}
                 src={mapSrc}
@@ -370,6 +366,7 @@ export default async function EventDetailPage({ params }: Params) {
                 referrerPolicy="no-referrer-when-downgrade"
                 allowFullScreen
               />
+              </ScrollShield>
               <div className={styles.venueInfo}>
                 <div className={styles.venueAddress}><MapPin size={16} strokeWidth={1.75} aria-hidden="true" /> {venueName || venueAddress || 'Approximate location'}</div>
                 {venueName && venueAddress && <p className={styles.venueNotes}>{venueAddress}</p>}

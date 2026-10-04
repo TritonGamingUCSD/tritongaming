@@ -1,0 +1,5 @@
+.shield { position: relative; min-width: 0; }
+.cover { position: absolute; inset: 0; z-index: 3; margin: 0; padding: 0; border: 0; background: transparent; cursor: pointer; touch-action: pan-y; }
+.chip { position: absolute; right: 0.5rem; bottom: 0.5rem; padding: 0.2rem 0.55rem; border-radius: 6px; background: rgba(1, 25, 65, 0.85); color: #f2f1f0; font-family: var(--font-renegare); font-size: 0.65rem; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.85; pointer-events: none; }
+.cover:hover .chip, .cover:focus-visible .chip { opacity: 1; }
+.cover:focus-visible { outline: 3px solid var(--yellow); outline-offset: -3px; }
