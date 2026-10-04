@@ -90,9 +90,14 @@ export default async function EventDetailPage({ params }: Params) {
   const goingCount = await getGoingCount(event._id);
   const dayCount = eventDayCount(event.start_date, event.end_date || null);
   const venueAddress = event.venue_address.trim();
-  const mapSrc = venueAddress ? `https://www.google.com/maps?q=${encodeURIComponent(venueAddress)}&output=embed` : null;
-  const mapsLink = venueAddress ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venueAddress)}` : null;
-  const directionsLink = venueAddress ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(venueAddress)}` : null;
+  const venueName = event.venue_name.trim();
+  const pin = event.venue_lat != null && event.venue_lng != null ? `${event.venue_lat},${event.venue_lng}` : '';
+  // An address wins for the map query (Google finds the exact building); with only a pin, the map points at the pin and carries the venue's name.
+  const mapQuery = venueAddress || (pin ? (venueName ? `${pin}(${venueName})` : pin) : '');
+  const mapSrc = mapQuery ? `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}${pin && !venueAddress ? '&z=17' : ''}&output=embed` : null;
+  const target = venueAddress || pin;
+  const mapsLink = target ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(target)}` : null;
+  const directionsLink = target ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(target)}` : null;
   const hasPostEventContent = isPast && (event.photo_albums.length > 0 || event.post_event_info);
   // Fetched in display order, in parallel — each is an independent network
   // call to a different Google Photos page, so awaiting them one at a time
@@ -188,9 +193,9 @@ export default async function EventDetailPage({ params }: Params) {
           const { rot, ...pos } = sp;
           const credit = creditOf(u);
           return (
-            <div key={u + i} className={styles.sticker} style={{ ...pos, transform: `rotate(${rot}deg)` }}>
+            <div key={u + i} className={`${styles.sticker} ${styles.stickerFloat}`} style={{ ...pos, transform: `rotate(${rot}deg)` }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={u} alt="" aria-hidden="true" loading="lazy" />
+              <img src={u} alt="" aria-hidden="true" decoding="async" />
               {credit && (credit.link
                 ? <a href={credit.link} target="_blank" rel="noopener noreferrer" className={styles.stickerCredit} title={`Sticker by ${credit.name}`}>By {credit.name}</a>
                 : <span className={styles.stickerCredit}>By {credit.name}</span>)}
@@ -228,6 +233,23 @@ export default async function EventDetailPage({ params }: Params) {
 
           {posters.length > 0 && <PosterGallery posters={posters} credits={posters.map((u) => creditOf(u))} name={event.full_name} frameClass={styles.poster} tapeClass={styles.tape} />}
         </div>
+        {/* Phones: no room to float stickers over the text, so they sit in a row under the poster instead. */}
+        {theme && theme.stickers.length > 0 && (
+          <div className={styles.stickerShelf}>
+            {theme.stickers.map((u, i) => {
+              const credit = creditOf(u);
+              return (
+                <div key={u + i} className={styles.shelfItem} style={{ transform: `rotate(${[-6, 5, -3, 7, -5, 4, -7, 6][i % 8]}deg)` }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={u} alt="" aria-hidden="true" decoding="async" />
+                  {credit && (credit.link
+                    ? <a href={credit.link} target="_blank" rel="noopener noreferrer" className={styles.stickerCredit} title={`Sticker by ${credit.name}`}>By {credit.name}</a>
+                    : <span className={styles.stickerCredit}>By {credit.name}</span>)}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </header>
 
       <div className={styles.body}>
@@ -235,7 +257,7 @@ export default async function EventDetailPage({ params }: Params) {
           <div className={styles.bodyStickers} aria-hidden="true">
             {bodyStickers.map((b, i) => (
               // eslint-disable-next-line @next/next/no-img-element
-              <img key={i} src={b.url} alt="" loading="lazy" className={`${styles.bodySticker} ${b.right ? styles.bsR : styles.bsL}`} style={{ top: `${b.top}%`, transform: `rotate(${b.rot}deg)`, '--bs': b.scale, '--bx': `${b.bx}rem`, '--bxm': `${b.bxm}rem` } as React.CSSProperties} />
+              <img key={i} src={b.url} alt="" decoding="async" className={`${styles.bodySticker} ${b.right ? styles.bsR : styles.bsL}`} style={{ top: `${b.top}%`, transform: `rotate(${b.rot}deg) translateZ(0)`, '--bs': b.scale, '--bx': `${b.bx}rem`, '--bxm': `${b.bxm}rem` } as React.CSSProperties} />
             ))}
           </div>
         )}
@@ -293,7 +315,7 @@ export default async function EventDetailPage({ params }: Params) {
               <div>
                 <div className={styles.factLabel}>Where</div>
                 <div className={styles.factValue}>{event.location}</div>
-                {venueAddress && <div className={styles.factSub}>{venueAddress}</div>}
+                {(venueAddress || (venueName && venueName !== event.location)) && <div className={styles.factSub}>{[venueName !== event.location ? venueName : '', venueAddress].filter(Boolean).join(' · ')}</div>}
               </div>
             </div>
           )}
@@ -343,13 +365,15 @@ export default async function EventDetailPage({ params }: Params) {
               <iframe
                 className={styles.map}
                 src={mapSrc}
-                title={`Map of ${venueAddress}`}
+                title={`Map of ${venueName || venueAddress || 'the venue'}`}
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
                 allowFullScreen
               />
               <div className={styles.venueInfo}>
-                <div className={styles.venueAddress}><MapPin size={16} strokeWidth={1.75} aria-hidden="true" /> {venueAddress}</div>
+                <div className={styles.venueAddress}><MapPin size={16} strokeWidth={1.75} aria-hidden="true" /> {venueName || venueAddress || 'Approximate location'}</div>
+                {venueName && venueAddress && <p className={styles.venueNotes}>{venueAddress}</p>}
+                {!venueAddress && pin && <p className={styles.venueNotes}>Approximate location, see the notes for how to find it.</p>}
                 {event.venue_notes && <p className={styles.venueNotes}>{event.venue_notes}</p>}
                 <div className={styles.venueLinks}>
                   <a href={directionsLink!} target="_blank" rel="noopener noreferrer" className={styles.venueBtn}><Navigation size={14} strokeWidth={1.75} aria-hidden="true" /> Get directions</a>

@@ -4,16 +4,21 @@ import { GripVertical, Plus, Trash2 } from 'lucide-react';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
 import { useDragReorder } from '@/lib/useDragReorder';
 import type { ScheduleItem, EventSponsor } from '@/types/database';
+import VenuePinMap, { type Pin } from '@/components/VenuePinMap/VenuePinMap';
 import styles from './eventextras.module.css';
 import IconButton from '@/components/ui/IconButton';
 
 interface Props {
   venueAddress: string;
   venueNotes: string;
+  venueName: string;
+  venuePin: Pin | null;
   schedule: ScheduleItem[];
   sponsors: EventSponsor[];
   onVenueAddress: (v: string) => void;
   onVenueNotes: (v: string) => void;
+  onVenueName: (v: string) => void;
+  onVenuePin: (p: Pin | null) => void;
   onSchedule: (v: ScheduleItem[]) => void;
   onSponsors: (v: EventSponsor[]) => void;
 }
@@ -21,7 +26,7 @@ interface Props {
 // Venue (address → map on the public page), a run-of-show schedule, and the
 // event's sponsors. All optional: a section only appears on the public event
 // page when it has something in it.
-export default function EventExtrasEditor({ venueAddress, venueNotes, schedule, sponsors, onVenueAddress, onVenueNotes, onSchedule, onSponsors }: Props) {
+export default function EventExtrasEditor({ venueAddress, venueNotes, venueName, venuePin, schedule, sponsors, onVenueAddress, onVenueNotes, onVenueName, onVenuePin, onSchedule, onSponsors }: Props) {
   const sched = useDragReorder(schedule, onSchedule);
   const spons = useDragReorder(sponsors, onSponsors);
 
@@ -30,10 +35,19 @@ export default function EventExtrasEditor({ venueAddress, venueNotes, schedule, 
       <fieldset className={styles.group}>
         <legend className={styles.legend}>Venue</legend>
         <label className={styles.field}>
-          <span className={styles.label}>Address</span>
+          <span className={styles.label}>Place name</span>
+          <input className={styles.input} value={venueName} onChange={(e) => onVenueName(e.target.value)} maxLength={120} placeholder="e.g. Price Center East Ballroom" />
+          <span className={styles.hint}>Shown as the venue&apos;s title on the event page. Useful when a venue has no street address.</span>
+        </label>
+        <label className={styles.field}>
+          <span className={styles.label}>Address <span className={styles.hint}>(optional if you place a pin)</span></span>
           <input className={styles.input} value={venueAddress} onChange={(e) => onVenueAddress(e.target.value)} placeholder="e.g. 9500 Gilman Dr, La Jolla, CA 92093" />
           <span className={styles.hint}>Shows a map on the public event page. Leave blank for online events.</span>
         </label>
+        <div className={styles.field}>
+          <span className={styles.label}>Pin on the map <span className={styles.hint}>(approximate is fine)</span></span>
+          <VenuePinMap value={venuePin} onChange={onVenuePin} />
+        </div>
         <label className={styles.field}>
           <span className={styles.label}>Directions, parking, accessibility</span>
           <textarea className={styles.input} rows={3} value={venueNotes} onChange={(e) => onVenueNotes(e.target.value)} placeholder="e.g. Park in Gilman Parking Structure — enter through the east doors." />

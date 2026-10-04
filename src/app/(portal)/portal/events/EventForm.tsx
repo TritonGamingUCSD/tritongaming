@@ -34,6 +34,9 @@ export interface EventFormValues {
   location: string;
   venue_address: string;
   venue_notes: string;
+  venue_name: string;
+  venue_lat: number | null;
+  venue_lng: number | null;
   schedule: ScheduleItem[];
   sponsors: EventSponsor[];
   start_date: string;
@@ -83,6 +86,9 @@ export const EMPTY_EVENT_FORM: EventFormValues = {
   location: '',
   venue_address: '',
   venue_notes: '',
+  venue_name: '',
+  venue_lat: null,
+  venue_lng: null,
   schedule: [],
   sponsors: [],
   start_date: '',
@@ -408,10 +414,14 @@ export default function EventForm({
         <EventExtrasEditor
           venueAddress={form.venue_address}
           venueNotes={form.venue_notes}
+          venueName={form.venue_name}
+          venuePin={form.venue_lat != null && form.venue_lng != null ? { lat: form.venue_lat, lng: form.venue_lng } : null}
           schedule={form.schedule}
           sponsors={form.sponsors}
           onVenueAddress={(v) => set('venue_address', v)}
           onVenueNotes={(v) => set('venue_notes', v)}
+          onVenueName={(v) => set('venue_name', v)}
+          onVenuePin={(p) => setForm((f) => ({ ...f, venue_lat: p?.lat ?? null, venue_lng: p?.lng ?? null }))}
           onSchedule={(v) => setForm((f) => ({ ...f, schedule: v }))}
           onSponsors={(v) => setForm((f) => ({ ...f, sponsors: v }))}
         />

@@ -197,6 +197,9 @@ export interface Database {
           post_event_info: string | null;
           venue_address: string | null;
           venue_notes: string | null;
+          venue_name: string | null;
+          venue_lat: number | null;
+          venue_lng: number | null;
           schedule: ScheduleItem[];
           sponsors: EventSponsor[];
           requires_checkin_form: boolean;

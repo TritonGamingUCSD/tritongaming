@@ -23,6 +23,9 @@ export type Event = {
   post_event_info: string;
   venue_address: string;
   venue_notes: string;
+  venue_name: string;
+  venue_lat: number | null;
+  venue_lng: number | null;
   schedule: ScheduleItem[];
   sponsors: EventSponsor[];
   social_embeds: SocialEmbed[];

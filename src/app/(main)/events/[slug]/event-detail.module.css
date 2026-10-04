@@ -141,11 +141,22 @@ a.stickerCredit:hover, a.stickerCredit:focus-visible { text-decoration: underlin
 }
 
 /* phones: only a little bigger, so the stickers do not sit on the title */
-@media (max-width: 640px) { .sticker { width: min(calc(clamp(54px, 9vw, 120px) * var(--ss, 1)), 19vw); z-index: 0; margin-inline: -1.2rem; } .heroInner { position: relative; z-index: 1; } } /* phones: stickers peek out from behind the text instead of sitting on it */
 
 /* stickers repeated down the page, in the margins and behind the content */
 .bodyStickers { position: absolute; inset: 0; pointer-events: none; z-index: -1; }
-.bodySticker { position: absolute; width: calc(clamp(44px, 7vw, 92px) * var(--bs, 1)); height: auto; filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.4)); }
+.bodySticker { position: absolute; will-change: transform; backface-visibility: hidden; width: calc(clamp(44px, 7vw, 92px) * var(--bs, 1)); height: auto; filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.4)); }
 .bsL { left: var(--bx, -5rem); }
 .bsR { right: var(--bx, -5rem); }
 @media (max-width: 1100px) { .bsL { left: var(--bxm, -1.2rem); } .bsR { right: var(--bxm, -1.2rem); } .bodySticker { width: calc(clamp(40px, 9vw, 64px) * var(--bs, 1)); } }
+
+/* phones: the floating hero stickers are replaced by a row under the poster; the page stickers only peek in from the edges */
+.stickerShelf { display: none; }
+@media (max-width: 640px) {
+  .stickerFloat { display: none; }
+  .stickerShelf { position: relative; z-index: 2; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.9rem 1.1rem; padding: 1.2rem 1rem 0; }
+  .shelfItem { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; width: min(26vw, 96px); }
+  .shelfItem img { display: block; width: 100%; height: auto; filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.45)); }
+  .bodySticker { --bw: calc(clamp(40px, 9vw, 64px) * var(--bs, 1)); width: var(--bw); }
+  .bsL { left: calc(var(--bw) * -0.72); }
+  .bsR { right: calc(var(--bw) * -0.72); }
+}

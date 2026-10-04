@@ -1,0 +1,10 @@
+.wrap { display: flex; flex-direction: column; gap: 0.5rem; }
+.searchRow { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.input { flex: 1 1 200px; min-width: 0; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--radius-sm); padding: 0.5rem 0.75rem; color: var(--white); font-family: var(--font-futura-medium); font-size: 0.85rem; }
+.input:focus { outline: none; border-color: rgba(255, 199, 44, 0.4); }
+.btn { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.45rem 0.8rem; border-radius: var(--radius-sm); background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.14); color: var(--white); font-size: 0.8rem; cursor: pointer; }
+.btn:hover { border-color: rgba(255, 199, 44, 0.5); }
+.map { height: 260px; border-radius: var(--radius-sm); border: 1px solid rgba(255, 255, 255, 0.14); overflow: hidden; z-index: 0; }
+.hint { font-size: 0.72rem; color: rgba(242, 241, 240, 0.65); }
+/* the pin: a yellow teardrop */
+.pin { display: block; width: 28px; height: 28px; background: var(--yellow); border: 3px solid #011941; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5); }
