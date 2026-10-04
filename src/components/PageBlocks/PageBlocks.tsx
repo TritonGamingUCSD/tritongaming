@@ -42,7 +42,7 @@ export default function PageBlocks({ blocks }: { blocks: PageBlock[] }) {
                   <li key={i} className={`${styles.print} ${i % 2 ? styles.tiltR : styles.tiltL}`} data-drag>
                     <span className={styles.tape} aria-hidden="true" />
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={g.url} alt={g.caption || ''} className={styles.photo} loading="lazy" />
+                    <img src={g.url} alt={g.caption ? '' : g.credit ? `Photo by ${g.credit}` : 'Event photo'} className={styles.photo} loading="lazy" />
                     {g.caption && <span className={styles.caption}>{g.caption}</span>}
                     {g.credit && <span className={styles.credit}>Photo: {g.credit}</span>}
                   </li>

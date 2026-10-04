@@ -141,21 +141,6 @@
 }
 .openLink:hover { opacity: 0.75; }
 
-.deleteBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: rgba(220,38,38,0.1);
-  color: #fca5a5;
-  border: 1px solid rgba(220,38,38,0.2);
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.deleteBtn:hover:not(:disabled) { background: rgba(220,38,38,0.2); }
-.deleteBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .dragHandle {
   display: inline-flex;

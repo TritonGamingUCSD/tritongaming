@@ -7,7 +7,7 @@ import { ZineBand, PageHero, BandHeader } from '@/components/ZineBand/ZineBand';
 import { getContentBlocks } from '@/lib/content';
 import type { LogoItem } from '@/types';
 import PhotoStrip from '@/components/PhotoStrip/PhotoStrip';
-import { SITE_PHOTOS } from '@/lib/sitePhotos';
+import { getSitePhotos, pickPhotos } from '@/lib/sitePhotos';
 import styles from './sponsors.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -59,6 +59,7 @@ function dbSponsorsToLogoItems(items: DbSponsor[]): LogoItem[] {
 }
 
 export default async function SponsorsPage() {
+  const sitePhotos = await getSitePhotos();
   const blocks = await getContentBlocks(['sponsors', 'page.sponsors', 'site.settings', 'layout.sponsors']);
   const sponsorsContent = blocks['sponsors'] ?? {};
   const content = blocks['page.sponsors'] ?? {};
@@ -132,7 +133,7 @@ export default async function SponsorsPage() {
     <div className={styles.page}>
       <PageHero label={content.hero_label as string} title={content.hero_title as string} sub={content.hero_subtitle as string} />
       {order.map((id) => <Fragment key={id}>{sections[id]}</Fragment>)}
-      <PhotoStrip tone="ink" caption={(content.strip_caption as string) || 'This is what your brand sits next to.'} photos={[SITE_PHOTOS.events, SITE_PHOTOS.inside, SITE_PHOTOS.stage]} />
+      <PhotoStrip tone="ink" caption={(content.strip_caption as string) || 'This is what your brand sits next to.'} photos={pickPhotos(sitePhotos, 3, 3)} />
     </div>
   );
 }

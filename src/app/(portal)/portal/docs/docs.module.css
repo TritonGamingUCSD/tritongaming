@@ -162,7 +162,6 @@
 .attachRow { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.75rem; border-radius: 0.7rem; background: rgba(255, 255, 255, 0.04); }
 .attachIcon { color: var(--yellow-text); display: inline-flex; }
 .attachName { flex: 1; min-width: 0; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.attachRemoveBtn { background: none; border: none; color: #f87171; font-size: 0.78rem; cursor: pointer; }
 .attachAddRow { display: flex; gap: 0.5rem; }
 .attachAddRow .input { flex: 1; min-width: 0; }
 .attachUploadBtn, .attachAddBtn { padding: 0.5rem 0.95rem; border-radius: var(--radius-sm); font-size: 0.82rem; cursor: pointer; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.14); color: var(--white); }

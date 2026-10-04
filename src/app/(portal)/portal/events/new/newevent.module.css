@@ -89,23 +89,6 @@
   padding: 0.15rem;
 }
 
-.mdTab {
-  font-size: 0.7rem;
-  font-family: var(--font-futura-medium);
-  letter-spacing: 0.04em;
-  color: rgba(242, 241, 240, 0.6);
-  padding: 0.25rem 0.7rem;
-  border-radius: 0.3rem;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-.mdTab:hover { color: rgba(242,241,240,0.7); }
-
-.mdTabActive {
-  background: rgba(255,199,44,0.14);
-  color: var(--yellow-text);
-}
-.mdTabActive:hover { color: var(--yellow-text); }
 
 .mdPreview {
   background: rgba(255,255,255,0.03);
@@ -194,17 +177,6 @@
   .detectedRow { grid-template-columns: 1fr; }
 }
 
-.mappingRemoveBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(242,241,240,0.25);
-  cursor: pointer;
-  padding: 0.4rem 0.5rem;
-  border-radius: 0.375rem;
-  transition: color 0.15s, background 0.15s;
-}
-.mappingRemoveBtn:hover { color: #fca5a5; background: rgba(220,38,38,0.08); }
 
 .mappingAddBtn {
   font-size: 0.8rem;

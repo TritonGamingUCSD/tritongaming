@@ -6,7 +6,7 @@ import { Gamepad2, Calendar, Users, Building2 } from 'lucide-react';
 import { getContentBlocks } from '@/lib/content';
 import { ZineBand, PageHero, BandHeader } from '@/components/ZineBand/ZineBand';
 import PhotoStrip from '@/components/PhotoStrip/PhotoStrip';
-import { SITE_PHOTOS } from '@/lib/sitePhotos';
+import { getSitePhotos, pickPhotos } from '@/lib/sitePhotos';
 import styles from './get-involved.module.css';
 
 export const metadata: Metadata = {
@@ -39,6 +39,7 @@ const WAY_ICONS = [
 ];
 
 export default async function GetInvolvedPage() {
+  const sitePhotos = await getSitePhotos();
   const blocks = await getContentBlocks(['page.get-involved', 'page.get-involved.officer', 'layout.get-involved']);
   const content = blocks['page.get-involved'] ?? {};
   const officer = blocks['page.get-involved.officer'] ?? {};
@@ -125,7 +126,7 @@ export default async function GetInvolvedPage() {
     <div className={styles.page}>
       <PageHero label={content.hero_label as string} title={content.hero_title as string} sub={content.hero_subtitle as string} />
       {order.map((id) => <Fragment key={id}>{sections[id]}</Fragment>)}
-      <PhotoStrip tone="navy" caption={(content.strip_caption as string) || 'Come as you are. Leave with a team.'} photos={[SITE_PHOTOS.inside, SITE_PHOTOS.community, SITE_PHOTOS.events]} />
+      <PhotoStrip tone="navy" caption={(content.strip_caption as string) || 'Come as you are. Leave with a team.'} photos={pickPhotos(sitePhotos, 0, 3)} />
     </div>
   );
 }

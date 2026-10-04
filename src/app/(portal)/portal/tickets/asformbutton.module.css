@@ -12,7 +12,6 @@
   text-decoration: none;
 }
 .btn { background: #ffc72c; color: #011941; }
-.btnOpened { background: rgba(52, 211, 153, 0.15); color: #047857; border: 2px solid #34d399; }
 .note { margin: 0; font-size: 0.74rem; line-height: 1.4; text-align: center; color: rgba(1, 25, 65, 0.6); }
 
 /* First-time button on a list row: same gold, just not full-width/tall. */

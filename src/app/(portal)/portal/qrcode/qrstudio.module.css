@@ -110,16 +110,6 @@
 .input:focus { outline: none; border-color: rgba(255,199,44,0.4); }
 .input option { background: #0b1426; color: var(--white); }
 
-.colorInput {
-  height: 42px;
-  width: 100%;
-  cursor: pointer;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 0.5rem;
-  padding: 0.3rem;
-}
-.colorInput:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .checkboxRow {
   margin-top: 0.4rem;
@@ -132,35 +122,6 @@
 }
 .checkboxRow input { width: 14px; height: 14px; accent-color: var(--yellow); }
 
-.sectionCard {
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 0.9rem;
-  padding: 1rem;
-  background: rgba(255,255,255,0.02);
-  display: flex;
-  flex-direction: column;
-  gap: 0.9rem;
-}
-
-.sectionCardHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.sectionCardTitle {
-  font-size: 0.85rem;
-  font-family: var(--font-futura-medium);
-  color: var(--white);
-}
-
-.sectionCardHint {
-  margin-top: 0.25rem;
-  font-size: 0.72rem;
-  color: rgba(242, 241, 240, 0.6);
-  line-height: 1.5;
-}
 
 .hint {
   font-size: 0.72rem;

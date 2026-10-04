@@ -12,8 +12,6 @@
 .dotEvent { background: #4a90e2; }
 .dotMeeting { background: #a78bfa; }
 .dotInternal { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: #fb923c; }
-.chipInternal { background: rgba(251, 146, 60, 0.22); color: #fdba74; }
-.itemInternal .itemBar { background: #fb923c; }
 
 .grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; border-radius: 0.9rem; overflow: hidden; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.08); }
 .weekday { padding: 0.45rem 0; text-align: center; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(242, 241, 240, 0.65); background: #080f1d; }
@@ -28,8 +26,6 @@
 .today .num { background: var(--yellow); color: #111c33; }
 .chips { display: flex; flex-direction: column; gap: 2px; width: 100%; min-width: 0; }
 .chip { display: block; padding: 1px 5px; border-radius: 4px; font-size: 0.68rem; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.chipEvent { background: rgba(74, 144, 226, 0.22); color: #9cc6f5; }
-.chipMeeting { background: rgba(167, 139, 250, 0.22); color: #cbbcfb; }
 .more { font-size: 0.66rem; color: rgba(242, 241, 240, 0.65); padding-left: 2px; }
 .dots { display: none; gap: 3px; }
 
@@ -43,8 +39,6 @@
 .item { display: flex; align-items: stretch; gap: 0.7rem; padding: 0.6rem 0.8rem 0.6rem 0.6rem; border-radius: 0.75rem; border: 1px solid rgba(255, 255, 255, 0.09); background: rgba(255, 255, 255, 0.03); color: inherit; text-decoration: none; transition: border-color 0.15s, background 0.15s; }
 .item:hover { background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 199, 44, 0.4); }
 .itemBar { width: 4px; border-radius: 4px; flex-shrink: 0; }
-.itemEvent .itemBar { background: #4a90e2; }
-.itemMeeting .itemBar { background: #a78bfa; }
 .itemMain { display: flex; flex-direction: column; gap: 0.15rem; flex: 1; min-width: 0; }
 .itemTitle { display: flex; align-items: center; gap: 0.4rem; font-weight: 600; color: var(--white); font-size: 0.95rem; overflow-wrap: anywhere; }
 .ticket { color: var(--yellow-text); flex-shrink: 0; }
@@ -164,8 +158,6 @@
 /* My own linked Google Calendar: teal, view only, and always labeled as mine. */
 .kGoogle { --k: #2dd4bf; --kbg: rgba(45, 212, 191, 0.14); --kfg: #99f6e4; }
 .dotGoogle { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: #2dd4bf; }
-.chipGoogle { background: rgba(45, 212, 191, 0.18); color: #99f6e4; }
-.itemGoogle .itemBar { background: #2dd4bf; }
 .popupNote { margin: 0.2rem 0 0; font-size: 0.74rem; color: rgba(242, 241, 240, 0.65); }
 
 .linkFacts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.84rem; color: rgba(242, 241, 240, 0.75); }
@@ -190,7 +182,6 @@
    4. what to show (filters)
    5. the calendar, and (month) the picked day beside it on desktop, under it on a phone */
 .header { flex-direction: row; align-items: flex-start; justify-content: space-between; gap: 0.75rem; }
-.headerText { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
 .syncBtn { position: relative; }
 .syncDot { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: #2dd4bf; box-shadow: 0 0 0 2px #080f1d; }
 .syncDotWarn { background: #fbbf24; }

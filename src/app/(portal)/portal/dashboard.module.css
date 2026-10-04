@@ -20,36 +20,7 @@
 }
 
 /* ── Header ─────────────────────────────────────── */
-.headerLeft {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.625rem;
-}
 
-.headerAvatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid rgba(255,199,44,0.3);
-  flex-shrink: 0;
-}
-
-.headerAvatarFallback {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: var(--gradient-nav);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-futura-heavy);
-  font-size: 1.2rem;
-  color: var(--white);
-  border: 2px solid rgba(255,199,44,0.3);
-  flex-shrink: 0;
-}
 
 /* Hidden at/above PortalHub's own desktop breakpoint (900px) — its
    DesktopShell rail already has a persistent compact search of its own. */
@@ -59,93 +30,16 @@
 
 @media (min-width: 900px) {
   /* On desktop the search sits in the pinned header (right side), not the sidebar. */
-  .stickyTop { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
-  .stickyTop > :first-child { flex: 1; min-width: 0; }
-  .mobileSearchWrap { width: 300px; flex-shrink: 0; }
+      .mobileSearchWrap { width: 300px; flex-shrink: 0; }
 }
 
 /* ── Check-in banner (officers w/ today event) ─── */
-.checkinBanner {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  padding: 0.875rem 1.25rem;
-  background: rgba(14,165,233,0.08);
-  border: 1px solid rgba(14,165,233,0.25);
-  border-radius: 0.875rem;
-  transition: background 0.2s;
-  cursor: pointer;
-}
 
-.checkinBanner:hover { background: rgba(14,165,233,0.13); }
-
-.checkinBannerDot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #0ea5e9;
-  flex-shrink: 0;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-.checkinBannerTitle {
-  font-family: var(--font-futura-medium);
-  font-size: 0.88rem;
-  color: var(--white);
-}
-
-.checkinBannerSub {
-  font-size: 0.72rem;
-  color: rgba(242, 241, 240, 0.6);
-  margin-top: 0.1rem;
-}
-
-.checkinBannerIcon {
-  display: inline-flex;
-  color: #0ea5e9;
-  margin-left: auto;
-}
 
 /* ── Help tickets waiting (exec/admin) ─── */
-.helpBanner {
-  display: flex; align-items: center; gap: 0.875rem; padding: 0.875rem 1.25rem;
-  background: rgba(255, 199, 44, 0.08); border: 1px solid rgba(255, 199, 44, 0.3); border-radius: 0.875rem;
-  transition: background 0.2s; cursor: pointer;
-}
-.helpBanner:hover { background: rgba(255, 199, 44, 0.14); }
-.helpBannerDot { width: 10px; height: 10px; border-radius: 50%; background: var(--yellow); flex-shrink: 0; animation: pulse 2s ease-in-out infinite; }
-.helpBannerIcon { display: inline-flex; color: var(--yellow-text); margin-left: auto; }
 
 /* ── Member next-ticket hero card ─────────────── */
-.ticketHeroCard {
-  position: relative;
-  border-radius: 1.25rem;
-  overflow: hidden;
-  background: linear-gradient(135deg, #0a1628 0%, #011941 50%, #0d2a50 100%);
-  border: 1px solid rgba(255, 199, 44, 0.3);
-  padding: 1.5rem;
-}
 
-.ticketHeroInner {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.ticketHeroMeta { display: flex; flex-direction: column; gap: 0.4rem; }
-
-.ticketHeroLabel {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: var(--fs-label);
-  font-family: var(--font-renegare);
-  letter-spacing: 0.15em;
-  color: var(--yellow-text);
-  text-transform: uppercase;
-}
 
 .liveDot {
   width: 6px;
@@ -156,54 +50,6 @@
   animation: pulse 2s ease-in-out infinite;
 }
 
-.ticketHeroTitle {
-  font-family: var(--font-futura-heavy);
-  font-size: clamp(1.1rem, 2.5vw, 1.4rem);
-  color: var(--white);
-  line-height: 1.2;
-}
-
-.ticketHeroDate {
-  font-size: 0.82rem;
-  color: rgba(242,241,240,0.6);
-}
-
-.ticketHeroLoc {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.78rem;
-  color: rgba(242, 241, 240, 0.6);
-}
-
-.ticketHeroActions {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.showQrHeroBtn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: var(--btn-primary-bg);
-  color: var(--btn-primary-text);
-  border: 1px solid var(--btn-primary-border);
-  box-shadow: var(--btn-primary-shadow);
-  border-radius: var(--radius-md);
-  padding: 0.75rem 1.25rem;
-  font-family: var(--font-futura-heavy);
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
-}
-
-.showQrHeroBtn:hover {
-  transform: translateY(-2px);
-  border-color: var(--btn-primary-border-hover);
-  box-shadow: var(--btn-primary-shadow-hover);
-}
 
 .viewAllTickets {
   font-size: 0.8rem;
@@ -213,16 +59,6 @@
 
 .viewAllTickets:hover { color: var(--yellow-text); }
 
-.ticketHeroGlow {
-  position: absolute;
-  top: -50px;
-  right: -50px;
-  width: 200px;
-  height: 200px;
-  border-radius: 50%;
-  background: rgba(255,199,44,0.06);
-  pointer-events: none;
-}
 
 /* ── Upcoming events preview (Hub home) ────────── */
 .upcomingPreview {
@@ -344,20 +180,9 @@
    decorative (aria-hidden, no alt text) and hidden at phone width, where
    the header is already tight against the viewport edge and has no spare
    corner to spare without crowding the greeting. */
-.mascotAccent {
-  position: absolute;
-  top: -0.75rem;
-  right: -0.5rem;
-  width: 64px;
-  height: 64px;
-  transform: rotate(8deg);
-  pointer-events: none;
-  opacity: 0.92;
-}
 
 @media (max-width: 480px) {
-  .mascotAccent { display: none; }
-}
+  }
 
 .greeting {
   font-family: var(--font-futura-heavy);
@@ -376,37 +201,6 @@
   margin-top: 0.3rem;
 }
 
-.statBadges {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.5rem;
-  margin-top: 0.6rem;
-}
-
-.statBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.35rem 0.75rem;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: var(--radius-pill);
-  font-size: 0.78rem;
-  font-family: var(--font-futura-medium);
-  color: rgba(242,241,240,0.8);
-  transition: background 0.15s, border-color 0.15s;
-}
-.statBadge:hover { background: rgba(255,255,255,0.07); }
-
-.statBadgeTier {
-  font-family: var(--font-renegare);
-  font-size: 0.65rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding-left: 0.4rem;
-  border-left: 1px solid rgba(255,255,255,0.15);
-}
 
 .headerActions {
   display: flex;
@@ -443,14 +237,12 @@
 }
 
 /* Alert banner */
-.alertBanner:hover { background: rgba(255,199,44,0.13); }
 
 
 @keyframes pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50%       { opacity: 0.5; transform: scale(0.8); }
 }
-
 
 
 /* ── Welcome panel (compact header) ──────────────
@@ -480,7 +272,6 @@
 }
 .welcomeAvatarFallback { display: grid; place-items: center; background: var(--gradient-nav); font-family: var(--font-futura-heavy); font-size: 1.15rem; color: var(--white); }
 .welcomeText { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
-.welcomeKicker { display: none; }
 .welcomeName { font-family: var(--font-futura-heavy); font-size: 1.15rem; color: var(--white); line-height: 1.2; overflow-wrap: anywhere; }
 .welcomeName::before { content: attr(data-greeting) ", "; font-family: var(--font-futura-medium); font-size: 0.85rem; color: rgba(242, 241, 240, 0.65); }
 .welcomeText .roleChips { justify-content: flex-start; margin-top: 0; }
@@ -516,7 +307,6 @@
 }
 
 
-
 /* ── Desktop: the sidebar already shows who you are (avatar, name, role) and
    has Back to Site / Sign out, so the welcome panel shrinks to just a greeting
    line and the stat tiles — no card, no duplicate identity. ── */
@@ -530,13 +320,6 @@
 
 /* Desktop: the greeting header is pinned to the very top of the screen. It needs
    the page's own background so scrolling content doesn't show through it. */
-.stickyTop {
-  position: sticky;
-  top: 0;
-  z-index: 30;
-  background: #0b1426;
-  padding: 1.1rem 0 0.75rem;
-}
 
 @media (min-width: 900px) {
   /* The hub's pinned header starts flush at the top of the screen (cancels the page's own
@@ -549,8 +332,7 @@
 
 /* ── Desktop header, slimmed: one thin row — greeting, compact stat chips, search. ── */
 @media (min-width: 900px) {
-  .stickyTop { padding: 0.8rem 0 0.55rem; }
-  .welcome { gap: 0.75rem; }
+    .welcome { gap: 0.75rem; }
   .welcomeName { font-size: 1.15rem; }
   .welcomeName::before { font-size: 1.15rem; }
   .tiles { gap: 0.4rem; flex-wrap: nowrap; }
@@ -638,7 +420,7 @@
 }
 
 /* Desktop: leave room at the right of the pinned header for the fixed notification bell. */
-@media (min-width: 900px) { .stickyTop { padding-right: 3.4rem; } }
+@media (min-width: 900px) {  }
 
 .viewAsSlot { display: flex; align-items: center; }
 @media (max-width: 899px) { .viewAsSlot { padding-top: 0.25rem; } }

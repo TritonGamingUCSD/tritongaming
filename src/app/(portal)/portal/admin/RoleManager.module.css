@@ -406,52 +406,10 @@
 @media (max-width: 768px) {
   .row { flex-direction: column; align-items: flex-start; }
   .roleSection { justify-content: flex-start; width: 100%; }
-  .roleButtons { max-width: 100%; }
-}
+  }
 
 /* ── Delete / merge account ──────────────────────────────────────────── */
 
-.deleteAccountBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: rgba(220,38,38,0.08);
-  border: 1px solid rgba(220,38,38,0.2);
-  color: rgba(252,165,165,0.7);
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-  flex-shrink: 0;
-}
-.deleteAccountBtn:hover { background: rgba(220,38,38,0.18); color: #fca5a5; }
-
-
-
-.deleteModalHeader h2 {
-  font-family: var(--font-futura-heavy);
-  font-size: 1rem;
-  color: var(--white);
-}
-
-.modalInput:focus { outline: none; border-color: rgba(255,199,44,0.4); }
-
-
-
-.mergeResult {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.82rem;
-  color: rgba(242,241,240,0.8);
-  transition: background 0.12s;
-}
-.mergeResult:hover { background: rgba(255,255,255,0.06); }
-
-
-.deleteConfirmBtn:hover:not(:disabled) { background: rgba(220,38,38,0.3); color: #fff; }
 
 .sortSelect {
   align-self: flex-start;

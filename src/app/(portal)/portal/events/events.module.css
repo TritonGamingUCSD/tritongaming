@@ -17,23 +17,6 @@
   letter-spacing: 0.05em;
 }
 
-.newBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.625rem 1.25rem;
-  background: var(--btn-primary-bg);
-  color: var(--btn-primary-text);
-  border: 1px solid var(--btn-primary-border);
-  box-shadow: var(--btn-primary-shadow);
-  border-radius: var(--radius-md);
-  font-family: var(--font-futura-heavy);
-  font-size: 0.85rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-.newBtn:hover { border-color: var(--btn-primary-border-hover); box-shadow: var(--btn-primary-shadow-hover); }
 
 .toolbar {
   display: flex;
@@ -71,8 +54,6 @@
   font-size: 0.9rem;
 }
 .searchInput:focus { outline: none; border-color: rgba(255,199,44,0.4); }
-
-
 
 
 .empty {
@@ -178,13 +159,6 @@
 /* ── Row actions ── */
 .rowActions { display: flex; align-items: center; justify-content: flex-end; gap: 0.35rem; }
 .actionsHead { text-align: right; }
-.iconAction {
-  display: inline-grid; place-items: center; width: 34px; height: 34px;
-  border-radius: 0.6rem; border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04); color: rgba(242, 241, 240, 0.8);
-  cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s;
-}
-.iconAction:hover { background: rgba(255, 199, 44, 0.12); border-color: rgba(255, 199, 44, 0.45); color: var(--yellow-text); }
 .moreWrap { position: relative; }
 .moreMenu {
   position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; min-width: 190px;
@@ -228,8 +202,6 @@
 /* ── Manage / Analytics tab bar ── */
 
 
-
-
 /* The 5-column grid (2fr 1fr 1fr 100px 60px) works as a real table on
    desktop but has no room to do that on a phone — the two fixed columns
    alone (160px) leave barely 200px for Event/Date/Tickets combined,
@@ -256,4 +228,3 @@
   .rowActions { margin-left: auto; }
 }
 
-.deleteLink { color: #f87171; }

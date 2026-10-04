@@ -7,7 +7,7 @@ import { markdownToDescription } from '@/lib/markdown';
 import LogoPlate from '@/components/LogoPlate/LogoPlate';
 import { ZineBand, PageHero } from '@/components/ZineBand/ZineBand';
 import PhotoStrip from '@/components/PhotoStrip/PhotoStrip';
-import { SITE_PHOTOS } from '@/lib/sitePhotos';
+import { getSitePhotos, pickPhotos } from '@/lib/sitePhotos';
 import styles from './divisions.module.css';
 
 const DESCRIPTION = 'Triton Gaming hosts dedicated game divisions — from competitive gaming to casual communities. Find your squad.';
@@ -30,6 +30,7 @@ export const metadata: Metadata = {
 export const revalidate = 60;
 
 export default async function DivisionsPage() {
+  const sitePhotos = await getSitePhotos();
   const [divisions, content] = await Promise.all([
     getDivisions(),
     getContentBlock('page.divisions'),
@@ -74,7 +75,7 @@ export default async function DivisionsPage() {
           <p className={styles.noContent}>{(content.empty as string) || 'No divisions yet. Check back soon!'}</p>
         )}
       </ZineBand>
-      <PhotoStrip tone="ink" caption={(content.strip_caption as string) || 'Every division, in the same room.'} photos={[SITE_PHOTOS.community, SITE_PHOTOS.events, SITE_PHOTOS.stage]} />
+      <PhotoStrip tone="ink" caption={(content.strip_caption as string) || 'Every division, in the same room.'} photos={pickPhotos(sitePhotos, 1, 3)} />
     </div>
   );
 }

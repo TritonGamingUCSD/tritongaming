@@ -24,7 +24,6 @@
 .detailTitle { margin: 0 0 0.25rem; font-family: var(--font-futura-heavy); font-size: 1.25rem; color: var(--white); }
 .desc { margin: 0.4rem 0 0; font-size: 0.88rem; color: rgba(242, 241, 240, 0.8); }
 .hostBtns { display: flex; gap: 0.4rem; flex-wrap: wrap; }
-.linkBtn { background: none; border: 0; padding: 0; font: inherit; color: inherit; text-decoration: underline; cursor: pointer; display: inline-flex; align-items: center; gap: 0.25rem; }
 
 .viewTabs { display: flex; gap: 0.4rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
 .viewTab { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.6rem 0.9rem; margin-bottom: -1px; background: none; border: 0; border-bottom: 2px solid transparent; color: rgba(242, 241, 240, 0.6); cursor: pointer; font: inherit; }
@@ -72,7 +71,7 @@
 .who { padding: 0.75rem 0.9rem; border-radius: 0.9rem; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.03); font-size: 0.85rem; color: rgba(242, 241, 240, 0.85); }
 .who p { margin: 0.3rem 0 0; display: flex; gap: 0.4rem; align-items: baseline; }
 .dotGreen, .dotAmber, .dotGrey, .dotHollow { flex: none; width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
-.dotGreen { background: #34d399; } .dotAmber { background: #fbbf24; } .dotGrey { background: #6b7280; } .dotHollow { border: 1px solid #9ca3af; }
+.dotGreen { background: #34d399; } .dotAmber { background: #fbbf24; }  .dotHollow { border: 1px solid #9ca3af; }
 .suggest { padding: 0.75rem 0.9rem; border-radius: 0.9rem; border: 1px solid rgba(52, 211, 153, 0.35); background: rgba(52, 211, 153, 0.06); }
 .suggest h3 { margin: 0 0 0.4rem; display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.06em; color: #34d399; }
 .sugRow { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.45rem 0; border-top: 1px solid rgba(255, 255, 255, 0.07); }
@@ -94,17 +93,12 @@
 .busyNote strong { color: var(--white); }
 .busyNote ul { margin: 0.2rem 0 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.15rem; }
 .busyNote i { font-style: normal; color: rgba(242, 241, 240, 0.65); }
-.gridTools { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; font-size: 0.76rem; color: rgba(242, 241, 240, 0.65); }
-.clearAll { padding: 0.35rem 0.8rem; border-radius: 999px; border: 1px solid rgba(248, 113, 113, 0.55); background: rgba(248, 113, 113, 0.1); color: #fca5a5; font: inherit; font-size: 0.78rem; font-weight: 600; cursor: pointer; }
-.clearAll:hover:not(:disabled) { background: rgba(248, 113, 113, 0.2); }
-.clearAll:disabled { opacity: 0.4; cursor: default; }
 .colAll { padding: 0.1rem 0.5rem; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.14); background: none; color: rgba(242, 241, 240, 0.6); font-size: 0.66rem; cursor: pointer; }
 
 /* Desktop: the grid on the left at a readable width, the controls and details in a column on the right. A phone stacks them. */
 .availLayout, .resultsLayout { display: flex; flex-direction: column; gap: 1rem; }
 .availSide, .resultsSide { display: flex; flex-direction: column; gap: 0.7rem; min-width: 0; }
 .availSide .modeBar { grid-template-columns: 1fr; position: static; padding: 0; background: none; }
-.availSide .clearAll { align-self: flex-start; }
 .busyLabel { display: block; padding: 0 0.3rem; font-size: 0.66rem; line-height: 24px; color: rgba(242, 241, 240, 0.9); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 0 3px rgba(0, 0, 0, 0.6); }
 .cellBusy { overflow: hidden; }
 @media (min-width: 1100px) {
@@ -149,7 +143,6 @@
 .colAll:disabled { opacity: 0.4; cursor: default; }
 
 .modeBtn, .kindBtn { border-radius: 0.6rem; }
-.clearAll { border-color: rgba(248, 113, 113, 0.38); background: rgba(220, 38, 38, 0.1); color: #f87171; }
 
 /* Pointing at a Best time lights up where it sits on the grid: a bright fuchsia block across the whole meeting, with its day and time lit too. */
 .heat { position: relative; }
@@ -167,7 +160,6 @@
 .sugRank { display: inline-grid; place-items: center; width: 1.3rem; height: 1.3rem; margin-right: 0.45rem; border-radius: 50%; font-size: 0.7rem; background: rgba(52, 211, 153, 0.2); color: #6ee7b7; }
 .sugRow:hover, .sugRow:focus-within { background: rgba(240, 171, 252, 0.14); }
 .sugRow:hover .sugRank, .sugRow:focus-within .sugRank { background: #f0abfc; color: #1a0b1f; }
-.sugRow:hover .chooseBtn, .sugRow:focus-within .chooseBtn { background: #f0abfc; border-color: #f0abfc; color: #1a0b1f; }
 
 /* The hovered row is a soft rounded tint with room around its text, with no edge line. */
 .sugRow { padding: 0.45rem 0.6rem; margin: 0 -0.3rem; border-radius: 0.6rem; }
@@ -275,7 +267,6 @@
 .confirmFine { display: flex; align-items: center; gap: 0.35rem; margin: 0; font-size: 0.74rem; color: rgba(242, 241, 240, 0.65); }
 .whoAnswered { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.6rem; }
 .answeredCount { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.82rem; color: rgba(242, 241, 240, 0.8); }
-.waitingChips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
 .chip2 { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1rem 0.55rem; border-radius: 999px; border: 1px dashed rgba(156, 163, 175, 0.7); font-size: 0.76rem; color: rgba(242, 241, 240, 0.8); }
 
 /* Best times: the whole row is the button. */

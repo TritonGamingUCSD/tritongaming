@@ -1,8 +1,6 @@
 .page { display: flex; flex-direction: column; gap: 1.25rem; max-width: 560px; margin-inline: auto; }
 
 
-
-
 /* ── Redemption scanner ── */
 /* The camera viewport/placeholder/controls themselves reuse checkin.module.css
    (CheckInClient's classes) so the two scanners can't visually drift apart —
@@ -67,18 +65,6 @@
   color: rgba(242, 241, 240, 0.6);
   margin-bottom: 0.5rem;
 }
-.undoBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.72rem;
-  color: #fca5a5;
-  padding: 0.3rem 0.6rem;
-  border-radius: var(--radius-sm);
-  transition: background 0.15s;
-  white-space: nowrap;
-}
-.undoBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ── Online check-in panel ── */
 .onlinePanel { display: flex; flex-direction: column; gap: 1.25rem; align-items: center; text-align: center; }

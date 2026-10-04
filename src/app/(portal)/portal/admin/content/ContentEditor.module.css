@@ -6,11 +6,6 @@
 }
 
 /* ── Block list (left column) ── */
-.blockList {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
 
 .searchInput {
   background: rgba(255,255,255,0.05);
@@ -46,36 +41,6 @@
   margin-bottom: 0.1rem;
 }
 
-.blockCard {
-  width: 100%;
-  text-align: left;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 0.875rem;
-  padding: 1rem 1.125rem;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, transform 0.15s;
-  position: relative;
-  overflow: hidden;
-}
-
-.blockCard:hover {
-  background: rgba(255,255,255,0.05);
-  border-color: rgba(255,255,255,0.12);
-  transform: translateX(2px);
-}
-
-.blockCardActive {
-  background: rgba(255,199,44,0.08) !important;
-  border-color: rgba(255,199,44,0.3) !important;
-  transform: translateX(4px);
-}
-
-.blockCardTop {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-}
 
 .blockIcon {
   display: inline-flex;
@@ -86,10 +51,6 @@
   width: 2rem;
 }
 
-.blockMeta {
-  flex: 1;
-  min-width: 0;
-}
 
 .blockTitle {
   font-family: var(--font-futura-medium);
@@ -98,64 +59,16 @@
   margin-bottom: 0.2rem;
 }
 
-.blockDesc {
-  font-size: 0.75rem;
-  color: rgba(242, 241, 240, 0.6);
-  line-height: 1.4;
-}
 
 /* "Where is this text" at a glance, without opening the panel — the whole
    point of grouping blocks by page instead of an abstract category is
    undermined if the page still isn't visible until you click in. */
-.blockLocation {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.3rem;
-  margin-top: 0.375rem;
-  padding-left: 2.75rem;
-  font-size: var(--fs-label);
-  font-family: var(--font-renegare);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: rgba(255,199,44,0.55);
-}
 
 /* Without this, a multi-page block (e.g. "Homepage, Events, Divisions")
    had no min-width to shrink against as a flex item, so it kept its
    unwrapped single-line width and overflowed past the card's right edge
    on narrow viewports instead of wrapping under the pin icon. */
-.blockLocationText { min-width: 0; overflow-wrap: break-word; }
-.blockLocation svg { flex-shrink: 0; margin-top: 0.15rem; }
 
-.editIndicator {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.9rem;
-  opacity: 0.3;
-  flex-shrink: 0;
-  transition: opacity 0.15s;
-}
-
-.blockCard:hover .editIndicator,
-.blockCardActive .editIndicator {
-  opacity: 0.8;
-}
-
-.editIndicatorActive {
-  opacity: 1 !important;
-  color: var(--yellow-text);
-}
-
-.blockPreview {
-  margin-top: 0.625rem;
-  font-size: 0.78rem;
-  color: rgba(242, 241, 240, 0.6);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding: 0 0 0 2.75rem;
-}
 
 .lastEdited {
   margin-top: 0.375rem;
@@ -182,15 +95,6 @@
   transition: border-color 0.2s;
 }
 
-.editPanelOpen {
-  border-color: rgba(255,199,44,0.2);
-  box-shadow: 0 0 0 1px rgba(255,199,44,0.06);
-}
-
-.editPanelInner {
-  display: flex;
-  flex-direction: column;
-}
 
 .editPanelHeader {
   display: flex;
@@ -238,22 +142,6 @@
 }
 .viewLiveLink:hover { opacity: 0.8; }
 
-.closePanel {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(242, 241, 240, 0.6);
-  cursor: pointer;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.375rem;
-  transition: color 0.15s, background 0.15s;
-  flex-shrink: 0;
-}
-
-.closePanel:hover {
-  color: var(--white);
-  background: rgba(255,255,255,0.08);
-}
 
 .fields {
   padding: 1.25rem;
@@ -328,20 +216,6 @@
   font-size: 0.82rem;
 }
 
-.editPanelEmpty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  min-height: 300px;
-  color: rgba(242,241,240,0.25);
-  font-size: 0.875rem;
-  text-align: center;
-  padding: 2rem;
-}
-
-.editPanelEmptyIcon { display: inline-flex; opacity: 0.3; }
 
 /* ── Field types ── */
 .fieldGroup {
@@ -415,23 +289,6 @@
   padding: 0.15rem;
 }
 
-.mdTab {
-  font-size: 0.7rem;
-  font-family: var(--font-futura-medium);
-  letter-spacing: 0.04em;
-  color: rgba(242, 241, 240, 0.6);
-  padding: 0.25rem 0.7rem;
-  border-radius: 0.3rem;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-.mdTab:hover { color: rgba(242,241,240,0.7); }
-
-.mdTabActive {
-  background: rgba(255,199,44,0.14);
-  color: var(--yellow-text);
-}
-.mdTabActive:hover { color: var(--yellow-text); }
 
 .mdPreview {
   background: rgba(255,255,255,0.03);
@@ -575,18 +432,6 @@
 }
 .dragHandle:active { cursor: grabbing; }
 
-.kvRemove {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(242,241,240,0.25);
-  cursor: pointer;
-  padding: 0.4rem 0.5rem;
-  border-radius: 0.375rem;
-  transition: color 0.15s, background 0.15s;
-}
-
-.kvRemove:hover { color: #fca5a5; background: rgba(220,38,38,0.08); }
 
 /* ── Row reordering — shared by kvlist and imagelist rows ── */
 .rowActions {
@@ -607,12 +452,6 @@
 .kvAdd:hover { color: var(--yellow-text); }
 
 /* ── Person list ─────────────────────────────────── */
-
-
-
-
-
-
 
 
 .personField {
@@ -667,11 +506,6 @@
 }
 
 /* Empty panel hint */
-.editPanelEmptyHint {
-  font-size: 0.78rem;
-  color: rgba(242,241,240,0.15);
-  margin-top: 0.25rem;
-}
 
 /* Responsive */
 @media (max-width: 900px) {
@@ -696,15 +530,13 @@
   .kvRow > *:first-child { grid-column: 1 / -1; }
   .kvRowWrap { align-items: flex-start; padding-top: 0.5rem; }
 
-  .personFields { grid-template-columns: 1fr; }
-  .imageCardFields { grid-template-columns: 1fr; }
+    .imageCardFields { grid-template-columns: 1fr; }
 }
 
 /* ── Redesign: category tabs on top, a compact list beside the editor ── */
 .shell { display: flex; flex-direction: column; gap: 0.25rem; }
 .topBar { margin-bottom: 0.25rem; }
 .layout { grid-template-columns: 300px minmax(0, 1fr); gap: 1.25rem; }
-.blockList { gap: 0.6rem; position: sticky; top: calc(var(--portal-header-h, 0px) + 0.75rem); max-height: calc(100vh - var(--portal-header-h, 0px) - 1.5rem); overflow-y: auto; scrollbar-width: thin; }
 .searchNote { font-size: 0.74rem; color: rgba(242, 241, 240, 0.6); padding: 0 0.2rem; }
 .rows { display: flex; flex-direction: column; gap: 0.3rem; }
 .row {
@@ -714,7 +546,6 @@
   transition: background 0.15s, border-color 0.15s;
 }
 .row:hover { background: rgba(255, 255, 255, 0.06); }
-.rowActive { background: rgba(255, 199, 44, 0.1); border-color: rgba(255, 199, 44, 0.4); }
 .rowText { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .rowTitle { font-size: 0.88rem; color: var(--white); }
 .rowCat { color: rgba(242, 241, 240, 0.6); font-size: 0.75rem; }
@@ -724,11 +555,8 @@
 
 @media (max-width: 900px) {
   .layout { grid-template-columns: minmax(0, 1fr); }
-  .blockList { position: static; max-height: none; }
-  /* Phone: the list and the editor are separate screens */
-  .hasActive .blockList { display: none; }
-  .shell:not(.hasActive) .editPanel { display: none; }
-}
+    /* Phone: the list and the editor are separate screens */
+    }
 
 /* Editor is a plain card under the tabs now (no side list / slide-over) */
 .shell { gap: 0.9rem; }
@@ -738,11 +566,8 @@
 
 /* One toolbar row: the page's block sub-tabs on the left, search tucked in on the right. */
 .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
-.subTabs { flex: 1 1 320px; min-width: 0; }
 .searchWrap { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; padding: 0 0.8rem; height: 38px; width: 230px; max-width: 100%; border-radius: 999px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: rgba(242, 241, 240, 0.65); }
 .searchWrap:focus-within { border-color: rgba(255, 199, 44, 0.45); color: var(--yellow-text); }
-.searchField { flex: 1; min-width: 0; background: none; border: none; outline: none; color: var(--white); font-family: inherit; font-size: 0.85rem; }
-.searchField::placeholder { color: rgba(242, 241, 240, 0.6); }
 @media (max-width: 640px) { .searchWrap { width: 100%; } }
 
 /* ── Live preview beside the editor ── */

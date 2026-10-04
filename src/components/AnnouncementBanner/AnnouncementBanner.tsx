@@ -1,13 +1,9 @@
 import { getContentBlock } from '@/lib/content';
 import AnnouncementClient from './AnnouncementClient';
 
-// Flat strip colours (ink text on all of them). The CMS still picks one of the four.
-const COLOR_MAP: Record<string, string> = {
-  yellow: '#ffc72c',
-  blue: '#9fc4e8',
-  green: '#6ee7b7',
-  red: '#fca5a5',
-};
+// Strip tones. The dark ones (navy, royal) follow the brand deck: white text, a small yellow tag and a yellow button. Yellow, green and red are light strips with navy text.
+const TONES = ['navy', 'royal', 'yellow', 'green', 'red'] as const;
+export type BannerTone = (typeof TONES)[number];
 
 export default async function AnnouncementBanner() {
   try {
@@ -18,18 +14,20 @@ export default async function AnnouncementBanner() {
       link?: string;
       link_text?: string;
       color?: string;
+      label?: string;
     };
 
     if (!content.enabled || !content.text) return null;
 
-    const color = COLOR_MAP[content.color || 'yellow'] || COLOR_MAP.yellow;
+    const tone: BannerTone = (TONES as readonly string[]).includes(content.color ?? '') ? (content.color as BannerTone) : 'navy';
 
     return (
       <AnnouncementClient
         text={content.text}
         link={content.link}
         linkText={content.link_text}
-        color={color}
+        tone={tone}
+        label={content.label || 'News'}
       />
     );
   } catch {

@@ -151,21 +151,6 @@
 .scanBtn:hover:not(:disabled) { background: rgba(255,255,255,0.1); }
 .scanBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.deleteBtn {
-  padding: 0.6rem 1.25rem;
-  background: rgba(220,38,38,0.12);
-  color: #fca5a5;
-  border: 1px solid rgba(220,38,38,0.3);
-  border-radius: var(--radius-sm);
-  font-family: var(--font-futura-heavy);
-  font-size: 0.78rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.deleteBtn:hover:not(:disabled) { background: rgba(220,38,38,0.2); }
-.deleteBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .successNote {
   font-size: 0.85rem;

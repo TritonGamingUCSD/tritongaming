@@ -84,16 +84,6 @@
   flex: 1;
 }
 
-.removeBtn {
-  font-size: 0.75rem;
-  color: #fca5a5;
-  padding: 0.3rem 0.6rem;
-  border-radius: 0.35rem;
-  flex-shrink: 0;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.removeBtn:hover { background: rgba(220,38,38,0.1); }
 
 .albumActions {
   display: flex;

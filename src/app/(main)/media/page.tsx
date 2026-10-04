@@ -7,7 +7,7 @@ import { youtubeVideoId } from '@/lib/youtube';
 import { ZineBand, PageHero, BandHeader } from '@/components/ZineBand/ZineBand';
 import HoverVideo from './HoverVideo';
 import PhotoStrip from '@/components/PhotoStrip/PhotoStrip';
-import { SITE_PHOTOS } from '@/lib/sitePhotos';
+import { getSitePhotos, pickPhotos } from '@/lib/sitePhotos';
 import styles from './media.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -31,6 +31,7 @@ export const metadata: Metadata = {
 type ListItem = { value?: string; label?: string };
 
 export default async function MediaPage() {
+  const sitePhotos = await getSitePhotos();
   const blocks = await getContentBlocks(['page.media', 'media.videos', 'media.albums', 'layout.media']);
   const content = blocks['page.media'] ?? {};
   const videosContent = blocks['media.videos'] ?? {};
@@ -93,7 +94,7 @@ export default async function MediaPage() {
     <div className={styles.page}>
       <PageHero label={(content.hero_label as string) || 'Media'} title={(content.hero_title as string) || 'Watch & explore'} sub={content.hero_subtitle as string} />
       {order.map((id) => <Fragment key={id}>{sections[id]}</Fragment>)}
-      <PhotoStrip tone="ink" caption={(content.strip_caption as string) || 'More where that came from.'} photos={[SITE_PHOTOS.events, SITE_PHOTOS.stage, SITE_PHOTOS.inside]} />
+      <PhotoStrip tone="ink" caption={(content.strip_caption as string) || 'More where that came from.'} photos={pickPhotos(sitePhotos, 1, 3)} />
     </div>
   );
 }

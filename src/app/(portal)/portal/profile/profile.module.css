@@ -57,8 +57,6 @@
 }
 
 
-
-
 /* Sticky so it actually reads as a sidebar next to the (much taller) form,
    instead of just being the first thing above it that scrolls away
    immediately — the literal "move it to the side" ask. */
@@ -70,22 +68,6 @@
   }
 }
 
-.roleTagRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  justify-content: center;
-}
-
-.roleTag {
-  font-size: var(--fs-label);
-  font-family: var(--font-renegare);
-  letter-spacing: 0.08em;
-  padding: 0.2rem 0.625rem;
-  border-radius: var(--radius-pill);
-  text-transform: uppercase;
-  border: 1px solid currentColor;
-}
 
 .avatarUpload {
   margin: 0 auto;
@@ -111,20 +93,9 @@
    underneath everything else. Single column below that — these fields
    have no natural side-by-side relationship, it's purely a space-saving
    pairing once there's space to spare. */
-.formSplit {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
 
 @media (min-width: 900px) {
-  .formSplit {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    align-items: start;
   }
-}
 
 .formSplitCol {
   display: flex;
@@ -233,21 +204,6 @@
 .checkboxField input[type="checkbox"],
 .checkboxField input[type="radio"] { width: 16px; height: 16px; accent-color: var(--yellow); }
 
-.preferredEmailBlock {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  padding: 0.875rem 1rem;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 0.625rem;
-}
-
-.preferredEmailLabel {
-  font-size: 0.78rem;
-  color: rgba(242, 241, 240, 0.65);
-}
 
 .visibilityGrid {
   display: grid;
@@ -421,21 +377,11 @@
 .currentEmpty { font-size: 0.75rem; color: rgba(242, 241, 240, 0.6); font-style: italic; }
 
 .previewHeading { display: block; margin-top: 0; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--yellow-text); }
-.cardPreview {
-  display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
-  max-width: 320px; margin-top: 0.4rem; padding: 1.1rem 1rem; text-align: center;
-  border-radius: 1rem; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.14);
-}
-.previewAvatarFallback { display: flex; align-items: center; justify-content: center; background: var(--yellow); color: #011941; font-weight: 800; font-size: 1.6rem; }
 .previewTitle { font-size: 0.82rem; color: var(--yellow-text); }
-.previewBio { margin: 0.2rem 0 0; font-size: 0.8rem; line-height: 1.5; color: rgba(242, 241, 240, 0.85); }
-.previewChip { padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.7rem; background: rgba(255, 255, 255, 0.1); }
 
 .previewWrap { width: 100%; margin-top: 1.25rem; }
-.previewWrap .cardPreview { max-width: 100%; }
 
 .pictureNote { margin: 0.5rem 0 0; font-size: 0.75rem; line-height: 1.4; color: rgba(242, 241, 240, 0.65); }
-.previewIcons { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.35rem; margin-top: 0.35rem; }
 
 /* Officer tab: title / Team-page opt-in on top, then social + portfolio links, one column. */
 .fieldStack { display: flex; flex-direction: column; gap: 1.5rem; }

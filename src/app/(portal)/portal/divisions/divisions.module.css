@@ -151,19 +151,6 @@
 .btn:hover:not(:disabled) { background: rgba(255,199,44,0.12); color: var(--yellow-text); border-color: rgba(255,199,44,0.3); }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-.btnDanger {
-  padding: 0.4rem 0.85rem;
-  border-radius: 0.4rem;
-  font-size: 0.78rem;
-  font-family: var(--font-futura-medium);
-  cursor: pointer;
-  border: 1px solid rgba(220,38,38,0.25);
-  color: #f87171;
-  background: transparent;
-  transition: all 0.15s;
-}
-.btnDanger:hover:not(:disabled) { background: rgba(220,38,38,0.12); }
-.btnDanger:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .saveBtn {
   padding: 0.5rem 1rem;

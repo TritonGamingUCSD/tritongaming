@@ -460,7 +460,6 @@
    often renders in a narrow list row (see the `compact` ticket-row usage),
    far too cramped to embed a Google Form readably. This button just
    (re)opens that modal. */
-.completeFormBtn:hover { opacity: 0.8; }
 
 /* Past-ticket call to action — stays at full brightness even though the rest of the row is dimmed. */
 .recapLink {

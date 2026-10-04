@@ -6,7 +6,7 @@ import { ZineBand, PageHero, BandHeader } from '@/components/ZineBand/ZineBand';
 import { Percent } from 'lucide-react';
 import { getContentBlocks } from '@/lib/content';
 import PhotoStrip from '@/components/PhotoStrip/PhotoStrip';
-import { SITE_PHOTOS } from '@/lib/sitePhotos';
+import { getSitePhotos, pickPhotos } from '@/lib/sitePhotos';
 import styles from './membership.module.css';
 
 // Served from the CDN cache and refreshed in the background — data comes from
@@ -32,6 +32,7 @@ export const metadata: Metadata = {
 type Partner = { name?: string; discount?: string; logo_url?: string };
 
 export default async function MembershipPage() {
+  const sitePhotos = await getSitePhotos();
   const blocks = await getContentBlocks(['page.membership', 'membership.partners', 'layout.membership']);
   const content = blocks['page.membership'] ?? {};
   const partnersContent = blocks['membership.partners'] ?? {};
@@ -92,7 +93,7 @@ export default async function MembershipPage() {
     <div className={styles.page}>
       <PageHero label={(content.hero_label as string) || 'Membership cards'} title={(content.hero_title as string) || 'Triton Gaming membership card'} sub={content.hero_subtitle as string} />
       {order.map((id) => <Fragment key={id}>{sections[id]}</Fragment>)}
-      <PhotoStrip tone="ink" caption={(content.strip_caption as string) || 'The places and people behind the card.'} photos={[SITE_PHOTOS.community, SITE_PHOTOS.stage]} />
+      <PhotoStrip tone="ink" caption={(content.strip_caption as string) || 'The places and people behind the card.'} photos={pickPhotos(sitePhotos, 0, 2)} />
     </div>
   );
 }

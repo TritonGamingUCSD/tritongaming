@@ -16,8 +16,6 @@
    from quick reach entirely. */
 
 
-
-
 .moreSheetBackdrop {
   position: fixed;
   inset: 0;
@@ -54,9 +52,6 @@
   background: rgba(255, 255, 255, 0.28);
   margin: 0 auto;
 }
-
-
-
 
 
 /* ── Groups ───────────────────────────────────────── */
@@ -211,13 +206,6 @@
   .backBtn { position: absolute; left: 0; top: 0.25rem; }
 }
 
-.panelTitleRow {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.panelIcon { display: inline-flex; color: var(--yellow-text); }
 
 .panelTitle {
   font-family: var(--font-futura-heavy);
@@ -259,14 +247,6 @@
 }
 
 
-
-
-
-
-
-
-
-
 .desktopContent {
   flex: 1;
   min-width: 0;
@@ -294,14 +274,6 @@
   margin-inline: auto;
 }
 
-.desktopPanelHeader {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding-bottom: 1.25rem;
-  margin-bottom: 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
 
 /* ═══ Mobile dock (bottom bar) ═══════════════════════════
    A floating pill inset from the screen edges. The active destination gets a
@@ -367,9 +339,6 @@
 
 /* "More" sheet: grouped tiles instead of a plain list */
 .moreSheetScroll { padding-bottom: calc(6.2rem + env(safe-area-inset-bottom, 0px)); }
-.sheetGroup { --accent: #ffc72c; display: flex; flex-direction: column; gap: 0.5rem; padding: 0.5rem 0.5rem 0.25rem; }
-.sheetGroupLabel { display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-futura-heavy); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(242, 241, 240, 0.65); }
-.sheetGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
 .sheetTile {
   display: flex; flex-direction: column; align-items: center; gap: 0.45rem;
   padding: 0.8rem 0.4rem; border-radius: 1rem; cursor: pointer;
@@ -575,7 +544,6 @@
 /* ═══ Mobile: same language as desktop ═══
    Home = the color-coded group cards (one column); an opened section gets a slim sticky bar —
    round back button, a tinted icon tile in the group color, the title. ═══ */
-.mobileHome { display: flex; flex-direction: column; gap: 1.4rem; }
 .panelIconTile > svg { width: 100%; height: 100%; }
 .panelIconTile { display: grid; place-items: center; box-sizing: border-box; width: 36px; height: 36px; padding: 8px; flex-shrink: 0; border-radius: 0.7rem; color: var(--accent, #ffc72c); background: color-mix(in srgb, var(--accent, #ffc72c) 15%, transparent); border: 1px solid color-mix(in srgb, var(--accent, #ffc72c) 30%, transparent); }
 @media (max-width: 899px) {
@@ -621,7 +589,6 @@
 /* Role chips under the name in the sidebar */
 .railRoles { display: flex; flex-wrap: wrap; gap: 0.2rem; margin-top: 0.2rem; }
 .railRoleChip { font-size: 0.56rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.05rem 0.4rem; border-radius: 6px; border: 1px solid; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; line-height: 1.35; }
-.railRoleMore { font-size: 0.6rem; color: rgba(242, 241, 240, 0.65); padding: 0.05rem 0.2rem; }
 
 /* Back to Site / Sign Out: two real buttons sharing the footer, not faint text links. */
 .railFooter, .sheetFooter { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
@@ -692,8 +659,6 @@
 }
 
 /* ── Collapse toggle + icon-only sidebar ── */
-.railToggle { display: flex; align-items: center; justify-content: center; gap: 0.4rem; flex: none; width: 100%; padding: 0.35rem 0.5rem; border: 0; border-radius: 0.6rem; background: transparent; color: rgba(242, 241, 240, 0.6); font: inherit; font-size: 0.72rem; letter-spacing: 0.04em; cursor: pointer; transition: background 0.15s, color 0.15s; }
-.railToggle:hover { background: rgba(255, 255, 255, 0.06); color: var(--white); }
 @media (min-width: 900px) {
   .rail { transition: width 0.18s ease; }
   .rail.railCollapsed { width: 62px; margin-right: 1rem; }
@@ -717,7 +682,7 @@
   .rail.railCollapsed:not(:hover):not(:focus-within) .railFooter a span, .rail.railCollapsed:not(:hover):not(:focus-within) .railFooter button span { display: inline-flex; font-size: 0; }
   .rail.railCollapsed:not(:hover):not(:focus-within) .railFooter a b { display: none; }
 }
-@media (max-width: 899px) { .railToggle { display: none; } }
+@media (max-width: 899px) {  }
 
 /* ═══ Desktop app frame ═══
    Sidebar, top bar and page body are one continuous surface: the sidebar runs the full height on the left, a slim top bar
@@ -846,9 +811,8 @@
 
 /* Phone home: the launcher under the cards. */
 .launcher { display: flex; flex-direction: column; gap: 0.35rem; margin: 0.25rem 0 0.5rem; }
-.launcher .sheetGroup { padding: 0.35rem 0 0.25rem; }
 .launcher .sheetTile { padding: 0.85rem 0.4rem; min-height: 96px; justify-content: center; }
-@media (max-width: 340px) { .launcher .sheetGrid, .moreSheet .sheetGrid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 340px) {  }
 @media (min-width: 900px) { .launcher { display: none; } }
 
 /* Phone tiles: one dense, color-coded grid (no group headings, no empty rows). */

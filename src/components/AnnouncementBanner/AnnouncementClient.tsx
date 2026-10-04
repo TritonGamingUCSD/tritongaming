@@ -9,13 +9,14 @@ interface Props {
   text: string;
   link?: string;
   linkText?: string;
-  color: string;
+  tone: 'navy' | 'royal' | 'yellow' | 'green' | 'red';
+  label: string;
 }
 
-// A caution-tape strip across the very top of the page, in the normal flow: it pushes the page down by its own height
+// A strip across the very top of the page, in the normal flow: it pushes the page down by its own height
 // and scrolls away with it, so it never covers content. The nav is fixed, so it reads --banner-offset (the part of the strip still
 // on screen) and sits just beneath the strip, then settles at its usual place once the strip has scrolled off.
-export default function AnnouncementClient({ text, link, linkText, color }: Props) {
+export default function AnnouncementClient({ text, link, linkText, tone, label }: Props) {
   const [dismissed, setDismissed] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -43,7 +44,8 @@ export default function AnnouncementClient({ text, link, linkText, color }: Prop
   if (dismissed) return null;
 
   return (
-    <div ref={ref} className={styles.banner} style={{ background: color }} role="region" aria-label="Site announcement">
+    <div ref={ref} className={`${styles.banner} ${styles[tone]}`} role="region" aria-label="Site announcement">
+      <span className={styles.tag}>{label}</span>
       <p className={styles.text}>{text}</p>
       {link && <Link href={link} className={styles.cta}>{linkText || 'Learn more'} <span aria-hidden="true">→</span></Link>}
       <button type="button" className={styles.dismiss} onClick={() => setDismissed(true)} aria-label="Dismiss announcement">

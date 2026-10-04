@@ -32,9 +32,6 @@
 /* ── Overview / Analytics / Role History tab bar ── */
 
 
-
-
-
 /* ── Stats ── */
 .statsGrid {
   display: grid;
@@ -90,21 +87,6 @@
    Role Manager's own header instead, since it's not a place anyone starts
    their visit. margin-left:auto pushes it to the row's far end regardless
    of how long .sectionHint runs. */
-.historyIconBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  margin-left: auto;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: rgba(242,241,240,0.6);
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
-}
-.historyIconBtn:hover { background: rgba(255,199,44,0.1); border-color: rgba(255,199,44,0.3); color: var(--yellow-text); }
 
 .historyOverlay {
   position: fixed;

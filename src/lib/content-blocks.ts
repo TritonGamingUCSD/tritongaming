@@ -2,7 +2,7 @@ import { createElement } from 'react';
 import {
   Megaphone, Settings, Link as LinkIcon, Home, Info, BarChart3, Hand, Handshake,
   UserPlus, Users, Trophy, CalendarDays, BadgeDollarSign, BookText, CreditCard,
-  Video, Camera, LayoutList,
+  Video, Camera, LayoutList, Images,
 } from 'lucide-react';
 
 // Icons render as small (16px) monochrome glyphs in the admin content-block
@@ -41,7 +41,8 @@ export const CONTENT_BLOCKS = [
       { name: 'text',      label: 'Message',        type: 'text'    as const, placeholder: 'e.g. Tickets for our next event are now on sale!' },
       { name: 'link',      label: 'Button URL',     type: 'url'     as const, placeholder: 'https://…',  optional: true },
       { name: 'link_text', label: 'Button Text',    type: 'text'    as const, placeholder: 'Learn More', optional: true },
-      { name: 'color',     label: 'Color Style',    type: 'select'  as const, options: ['yellow', 'blue', 'green', 'red'] },
+      { name: 'label',     label: 'Tag Before The Message', type: 'text' as const, placeholder: 'News', optional: true },
+      { name: 'color',     label: 'Color Style',    type: 'select'  as const, options: ['navy', 'royal', 'yellow', 'green', 'red'] },
     ],
   },
   {
@@ -424,6 +425,26 @@ export const CONTENT_BLOCKS = [
       { name: 'partners_title', label: 'Partners — Title',         type: 'text' as const, placeholder: 'Partner Discounts', optional: true },
       { name: 'partners_empty', label: 'Partners — Text When None', type: 'text' as const, placeholder: 'Partner announcements coming soon.', optional: true },
       { name: 'strip_caption', label: 'Photo Strip — Hand-written Caption', type: 'text' as const, placeholder: 'The places and people behind the card.', optional: true },
+    ],
+  },
+  {
+    key: 'site.photos',
+    title: 'Site Photos',
+    description: 'Photos shown in the taped photo strips and on the home page cards. Every photo needs a credit. With none added, the built-in club photos are used.',
+    icon: createElement(Images, ICON_PROPS),
+    category: 'Global',
+    pages: SITEWIDE,
+    fields: [
+      {
+        name: 'items', label: 'Photos', type: 'imagelist' as const,
+        addLabel: '+ Add Photo',
+        imageFields: [
+          { key: 'src', label: 'Photo', type: 'image' as const },
+          { key: 'credit', label: 'Photographer', type: 'text' as const },
+          { key: 'credit_url', label: 'Photographer Link (optional)', type: 'url' as const, optional: true },
+          { key: 'alt', label: 'What The Photo Shows', type: 'text' as const },
+        ],
+      },
     ],
   },
   {

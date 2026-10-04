@@ -38,18 +38,17 @@
 .bars { display: grid; gap: 4px; width: 18px; }
 .bars i { display: block; height: 3px; background: var(--ink); }
 
-/* The poster menu: flat ink, caution tape top and bottom, big links that deal in one by one. */
+/* The poster menu: flat ink, caution tape along the bottom (nothing behind the bar at the top), big links that deal in one by one. */
 .menu {
   position: fixed; inset: 0; z-index: 1100; overflow-y: auto; background: var(--navy); color: var(--white);
   visibility: hidden; opacity: 0; transform: translateY(-2.5rem); pointer-events: none;
   transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 0.3s;
 }
 .menuOpen { visibility: visible; opacity: 1; transform: none; pointer-events: auto; transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s; }
-.menu::before, .menu::after { content: ''; position: fixed; left: 0; right: 0; height: 0.9rem; background: repeating-linear-gradient(-45deg, var(--yellow) 0 16px, var(--ink) 16px 32px); z-index: 1; }
-.menu::before { top: 0; }
+.menu::after { content: ''; position: fixed; left: 0; right: 0; height: 0.9rem; background: repeating-linear-gradient(-45deg, var(--yellow) 0 16px, var(--ink) 16px 32px); z-index: 1; }
 .menu::after { bottom: 0; }
 
-.menuInner { min-height: 100%; max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 2rem 4rem; align-items: center; padding: 6.5rem clamp(1rem, 5vw, 3rem) 4rem; }
+.menuInner { min-height: 100%; max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 2rem 4rem; align-items: center; padding: calc(6.5rem + var(--banner-offset, 0px)) clamp(1rem, 5vw, 3rem) 4rem; }
 .links { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.1rem; }
 .links > li, .side { opacity: 0; transform: translateY(1.2rem); transition: opacity 0.35s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1); }
 .menuOpen .links > li, .menuOpen .side { opacity: 1; transform: none; transition-delay: calc(0.08s + var(--i, 0) * 0.04s); }
@@ -71,7 +70,7 @@
 .tag { margin: 0; font-family: var(--font-brick); font-size: 1.25rem; color: #3a4764; }
 
 @media (max-width: 860px) {
-  .menuInner { grid-template-columns: minmax(0, 1fr); padding-top: 6rem; gap: 2rem; }
+  .menuInner { grid-template-columns: minmax(0, 1fr); padding-top: calc(6rem + var(--banner-offset, 0px)); gap: 2rem; }
   .menuOpen .side { transform: none; }
 }
 @media (max-width: 420px) {
