@@ -1,3 +1,4 @@
+import { cleanBlocks } from '@/lib/pageBlocks';
 import { invalidate } from '@/lib/revalidate';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
@@ -77,9 +78,9 @@ export async function POST(request: Request) {
   const authError = await requireDivisionsManager(supabase);
   if (authError) return authError;
 
-  const { name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds } = await request.json() as {
+  const { name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds, page_blocks } = await request.json() as {
     name?: string; slug?: string; description?: string; logo_url?: string; discord_url?: string;
-    application_url?: string; social_links?: unknown; social_embeds?: unknown;
+    application_url?: string; social_links?: unknown; social_embeds?: unknown; page_blocks?: unknown;
   };
   if (!name?.trim()) return NextResponse.json({ error: 'Name is required' }, { status: 400 });
 
@@ -97,8 +98,9 @@ export async function POST(request: Request) {
       application_url: application_url?.trim() || null,
       social_links: cleanSocialLinks(social_links),
       social_embeds: cleanSocialEmbeds(social_embeds),
+      page_blocks: cleanBlocks(page_blocks),
     })
-    .select('id, name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds')
+    .select('id, name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds, page_blocks')
     .single();
 
   if (error) {
@@ -117,9 +119,9 @@ export async function PATCH(request: Request) {
   const { error: authError, canManageDirectory } = await requireDivisionAccess(supabase);
   if (authError) return authError;
 
-  const { id, name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds } = await request.json() as {
+  const { id, name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds, page_blocks } = await request.json() as {
     id?: string; name?: string; slug?: string; description?: string; logo_url?: string; discord_url?: string;
-    application_url?: string; social_links?: unknown; social_embeds?: unknown;
+    application_url?: string; social_links?: unknown; social_embeds?: unknown; page_blocks?: unknown;
   };
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
 
@@ -139,6 +141,7 @@ export async function PATCH(request: Request) {
   if (application_url !== undefined) update.application_url = application_url.trim() || null;
   if (social_links !== undefined) update.social_links = cleanSocialLinks(social_links);
   if (social_embeds !== undefined) update.social_embeds = cleanSocialEmbeds(social_embeds);
+  if (page_blocks !== undefined) update.page_blocks = cleanBlocks(page_blocks);
   if (slug !== undefined) {
     const finalSlug = slugify(slug);
     if (!finalSlug) return NextResponse.json({ error: 'Slug cannot be empty' }, { status: 400 });
@@ -149,7 +152,7 @@ export async function PATCH(request: Request) {
     .from('divisions')
     .update(update)
     .eq('id', id)
-    .select('id, name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds')
+    .select('id, name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds, page_blocks')
     .single();
 
   if (error) {

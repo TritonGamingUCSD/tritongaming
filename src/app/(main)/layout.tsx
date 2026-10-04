@@ -4,13 +4,10 @@ import Footer from '@/components/Footer/Footer';
 import AnnouncementBanner from '@/components/AnnouncementBanner/AnnouncementBanner';
 import AttributionCapture from '@/components/AttributionCapture/AttributionCapture';
 import ConnectivityBanner from '@/components/ConnectivityBanner/ConnectivityBanner';
+import SmoothScroll from '@/components/SmoothScroll/SmoothScroll';
 
-// NavBar and AnnouncementBanner are independent fixed elements now, not
-// stacked together — the banner lives as its own floating toast in the
-// bottom-right corner (see AnnouncementBanner.module.css) instead of
-// pushing the nav pill down from the top, which used to shove the nav (and
-// anything relying on the static --navbar-height clearance) down into
-// page content whenever a banner was showing.
+// The announcement is a flat strip at the very top of the page (in the flow, scrolls away).
+// The fixed nav follows it via --banner-offset (see AnnouncementClient), so the two never overlap.
 //
 // Footer and AnnouncementBanner are both async server components (each
 // does its own site_contents fetch) rendered here directly rather than
@@ -26,13 +23,14 @@ import ConnectivityBanner from '@/components/ConnectivityBanner/ConnectivityBann
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <SmoothScroll />
+      <Suspense fallback={null}>
+        <AnnouncementBanner />
+      </Suspense>
       <NavBar />
       <main>{children}</main>
       <Suspense fallback={null}>
         <Footer />
-      </Suspense>
-      <Suspense fallback={null}>
-        <AnnouncementBanner />
       </Suspense>
       <ConnectivityBanner />
       <AttributionCapture />

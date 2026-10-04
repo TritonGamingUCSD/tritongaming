@@ -1,98 +1,67 @@
 .banner {
-  position: fixed;
-  right: clamp(0.75rem, 3vw, 2rem);
-  bottom: max(clamp(0.75rem, 3vw, 2rem), env(safe-area-inset-bottom));
-  z-index: 900;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.7rem;
-  padding: 0.5rem 0.5rem 0.5rem 1rem;
-  border-radius: var(--radius-pill);
-  border: 1px solid;
-  backdrop-filter: blur(16px) saturate(160%);
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
-  box-shadow: 0 12px 30px -16px rgba(0, 0, 0, 0.55);
-  max-width: calc(100vw - 24px);
-  font-size: clamp(0.72rem, 1.1vw, 0.8rem);
-  font-family: var(--font-futura-medium);
-  animation: rise 0.35s ease;
-}
-
-@keyframes rise {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.text {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cta {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.3rem 0.8rem;
-  border-radius: var(--radius-pill);
-  border: 1px solid;
-  font-size: 0.7rem;
-  font-family: var(--font-futura-heavy);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition: opacity 0.15s;
-}
-
-.cta:hover { opacity: 0.8; }
-
-.dismiss {
-  flex-shrink: 0;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
+  position: relative;
+  z-index: 1001;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.1);
-  font-size: 0.6rem;
-  cursor: pointer;
-  opacity: 0.7;
-  transition: opacity 0.15s, background 0.15s;
+  gap: 0.9rem;
+  padding: 0.55rem clamp(2.5rem, 5vw, 3.5rem) 0.55rem clamp(1rem, 4vw, 2rem);
+  color: var(--ink);
+  border-bottom: 3px solid var(--ink);
+  /* tape edge along the bottom, like the rest of the site */
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.45);
 }
 
-.dismiss:hover { opacity: 1; background: rgba(255, 255, 255, 0.18); }
+.text {
+  margin: 0;
+  min-width: 0;
+  font-family: var(--font-futura-heavy);
+  font-size: 0.8rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  line-height: 1.35;
+  text-wrap: balance;
+  text-align: center;
+}
 
-/* Below this width, a fixed-height single-line pill with an ellipsis cut
-   most real announcement text down to just a few words — "readable" and
-   "compact floating pill" stop being compatible once the text is longer
-   than a phone can show on one line. Trading the pill shape for a
-   full-width wrapped card fixes that; nowrap/ellipsis only ever worked
-   because desktop had the horizontal room to not need them. */
-@media (max-width: 480px) {
-  .banner {
-    left: 0.75rem;
-    right: 0.75rem;
-    max-width: none;
-    flex-wrap: wrap;
-    row-gap: 0.5rem;
-    border-radius: 1.25rem;
-  }
+.cta {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  background: var(--ink);
+  color: var(--white);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-futura-heavy);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: transform 0.15s ease;
+}
+.cta:hover, .cta:focus-visible { transform: translateY(-2px); }
 
-  .text {
-    max-width: none;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
-    flex: 1 1 100%;
-    line-height: 1.45;
-  }
+.dismiss {
+  position: absolute;
+  top: 50%;
+  right: clamp(0.5rem, 2vw, 1rem);
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.dismiss:hover, .dismiss:focus-visible { background: rgba(10, 22, 48, 0.15); }
 
-  .cta { order: 2; }
-
-  .dismiss {
-    order: 3;
-    margin-left: auto;
-  }
+@media (max-width: 560px) {
+  .banner { flex-wrap: wrap; row-gap: 0.4rem; padding-block: 0.6rem; }
+  .text { flex: 1 1 100%; font-size: 0.74rem; }
 }

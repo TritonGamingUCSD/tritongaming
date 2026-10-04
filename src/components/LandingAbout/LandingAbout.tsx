@@ -8,6 +8,9 @@ interface AboutContent {
   body?: string;
   cta_text?: string;
   cta_link?: string;
+  photo?: string;
+  photo_credit?: string;
+  photo_credit_url?: string;
 }
 
 export default function LandingAbout({ content = {} }: { content?: AboutContent }) {
@@ -15,6 +18,10 @@ export default function LandingAbout({ content = {} }: { content?: AboutContent 
   const body     = content.body;
   const ctaText  = content.cta_text;
   const ctaLink  = content.cta_link;
+  // The photo and who took it are editable; until set, the original photo and its credit stay.
+  const photo = content.photo || '/images/what_is_triton_gaming_justinlu.jpg';
+  const credit = content.photo ? content.photo_credit : (content.photo_credit ?? 'Photo credit: Justin Lu');
+  const creditUrl = content.photo ? content.photo_credit_url : (content.photo_credit_url ?? 'https://www.instagram.com/justinzlu/');
 
   return (
     <section className={styles.section}>
@@ -31,21 +38,18 @@ export default function LandingAbout({ content = {} }: { content?: AboutContent 
             />
             <div className={styles.photo}>
               <Image
-                src="/images/what_is_triton_gaming_justinlu.jpg"
+                src={photo}
                 alt="Triton Gaming Event"
                 fill
                 sizes="(max-width: 640px) 100vw, 50vw"
                 style={{ objectFit: 'cover' }}
               />
             </div>
-            <a
-              href="https://www.instagram.com/justinzlu/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.credit}
-            >
-              Photo credit: Justin Lu
-            </a>
+            {credit && (creditUrl ? (
+              <a href={creditUrl} target="_blank" rel="noopener noreferrer" className={styles.credit}>{credit}</a>
+            ) : (
+              <span className={styles.credit}>{credit}</span>
+            ))}
           </div>
         </Reveal>
 

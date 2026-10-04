@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { uploadImageToStorage, uploadCroppedImage, ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES } from '@/lib/imageUpload';
 import ImageCropModal from '@/components/ImageCropModal/ImageCropModal';
 import styles from './ImageUploadField.module.css';
-import IconButton from '@/components/ui/IconButton';
+import { Camera, X } from 'lucide-react';
 
 const PREVIEW_SIZE: Record<Shape, { width: number; height: number }> = {
   circle: { width: 96, height: 96 },
@@ -106,15 +106,16 @@ export default function ImageUploadField({
 
       {displaySrc ? (
         <div className={styles.wrap}>
-          <Image src={displaySrc} alt="" width={width} height={height} unoptimized referrerPolicy="no-referrer" className={previewClass} />
-          <div className={styles.actions}>
-            <button type="button" className={styles.replaceBtn} onClick={() => inputRef.current?.click()} disabled={uploading}>
-              {uploading ? 'Uploading…' : 'Replace'}
+          {/* The picture itself is the replace button; the small x in its corner removes it. */}
+          <button type="button" className={`${styles.preview} ${shape === 'circle' ? styles.previewRound : ''}`} onClick={() => inputRef.current?.click()} disabled={uploading} aria-label={`Replace ${label.toLowerCase()}`}>
+            <Image src={displaySrc} alt="" width={width} height={height} unoptimized referrerPolicy="no-referrer" className={previewClass} />
+            <span className={styles.overlay} aria-hidden="true">{uploading ? 'Uploading…' : <><Camera size={16} /> Replace</>}</span>
+          </button>
+          {value && (
+            <button type="button" className={styles.removeChip} onClick={() => onChange('')} disabled={uploading} aria-label={`Remove ${label.toLowerCase()}`} title="Remove">
+              <X size={12} strokeWidth={2.5} aria-hidden="true" />
             </button>
-            {value && (
-              <IconButton kind="remove" label="Remove image" onClick={() => onChange('')} disabled={uploading} />
-            )}
-          </div>
+          )}
         </div>
       ) : (
         <button type="button" className={styles.dropzone} onClick={() => inputRef.current?.click()} disabled={uploading}>

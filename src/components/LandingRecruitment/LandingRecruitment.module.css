@@ -1,243 +1,67 @@
+/* "Ways in" as a handful of notes pinned to the board: paper, gold and ice-blue sticky cards at slightly different angles, ink text, hard shadows.
+   No gradients, glow, blobs or glass. */
 .section {
   position: relative;
   padding: var(--section-pad) clamp(1rem, 4vw, 2.5rem);
-  background: linear-gradient(135deg, rgba(20, 71, 124, 0.78) 0%, rgba(1, 25, 65, 0.85) 100%);
   overflow: hidden;
 }
 
-/* Fades to the page's own near-black before the floating footer island —
-   without this the section's blue cuts straight to the body background
-   showing through the footer's outer margin, a hard seam. */
-.section::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 40%;
-  background: linear-gradient(to bottom, transparent, #060c1a);
-  pointer-events: none;
-}
-
-/* Faint background text */
-.bgWrapper {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.bgText,
-.bgText2 {
-  position: absolute;
-  font-family: var(--font-brick);
-  font-size: clamp(6rem, 14vw, 14rem);
-  color: rgba(255, 255, 255, 0.04);
-  white-space: nowrap;
-  user-select: none;
-  transform: rotate(-10deg);
-}
-
-.bgText  { top: -20%; left: -5%; }
-.bgText2 { bottom: -20%; right: -5%; }
-
-/* Aurora blobs */
-.aurora {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.auroraBlob1 {
-  position: absolute;
-  width: 40vw;
-  height: 40vw;
-  top: -20%;
-  left: -10%;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 199, 44, 0.07), transparent 65%);
-  animation: blue-aurora 10s ease-in-out infinite;
-}
-
-.auroraBlob2 {
-  position: absolute;
-  width: 35vw;
-  height: 35vw;
-  bottom: -20%;
-  right: -8%;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(39, 90, 143, 0.35), transparent 65%);
-  animation: blue-aurora 10s ease-in-out -5s infinite;
-}
-
-/* ── Header ── */
-.header {
-  position: relative;
-  z-index: 1;
-  text-align: center;
-  max-width: 600px;
-  margin-inline: auto;
-  margin-bottom: clamp(2rem, 4vw, 3rem);
-}
+.header { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto 2.6rem; display: flex; flex-direction: column; align-items: flex-start; gap: 1rem; }
 
 .sectionLabel {
-  font-family: var(--font-futura-heavy);
-  font-size: 0.7rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--yellow);
-  margin: 0 0 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-}
-
-.sectionLabel::before,
-.sectionLabel::after {
-  content: '';
   display: inline-block;
-  width: 20px;
-  height: 2px;
-  background: var(--yellow);
-  flex-shrink: 0;
-}
-
-.sectionTitle {
-  font-family: var(--font-soulmaze);
-  font-size: var(--fs-section-title);
-  color: var(--white);
-  margin: 0 0 0.75rem;
-  line-height: 1.3;
-}
-
-.sectionSub {
-  font-family: var(--font-futura-medium);
-  font-size: var(--fs-body);
-  color: var(--lightblue);
   margin: 0;
-  line-height: 1.6;
+  font-family: var(--font-renegare);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  background: var(--yellow);
+  color: var(--ink);
+  padding: 0.45rem 0.65rem;
+  transform: rotate(1.5deg);
+  box-shadow: var(--hard-shadow-sm);
 }
 
-/* ── Pathway cards ── */
+.sectionTitle { margin: 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: clamp(1.6rem, 3.6vw, 2.8rem); line-height: 1.02; text-transform: uppercase; color: var(--white); }
+.sectionTitle span { font-family: var(--font-brick); text-transform: none; color: var(--yellow); font-size: 1.2em; }
+.sectionSub { margin: 0; max-width: 46ch; font-family: var(--font-handwriting); font-size: 1.35rem; line-height: 1.2; color: var(--yellow); transform: rotate(-1deg); }
+
 .pathways {
   position: relative;
   z-index: 1;
-  display: grid;
-  /* Was a fixed 3 columns — now auto-fit so this still looks right whether
-     the portal card is set (4 total) or not (3, the previous default). */
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.25rem;
-  max-width: var(--max-width);
+  width: min(1180px, 100%);
   margin-inline: auto;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.6rem;
+  align-items: start;
 }
 
 .pathway {
   position: relative;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 1.75rem 1.5rem;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  gap: 0.7rem;
+  padding: 1.6rem 1.3rem 1.3rem;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: var(--hard-shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  will-change: transform;
 }
+.pathway[data-pathway='officer'] { transform: rotate(-2.2deg); background: var(--yellow); }
+.pathway[data-pathway='discord'] { transform: rotate(1.6deg); margin-top: 1.4rem; }
+.pathway[data-pathway='social'] { transform: rotate(-1.2deg); background: #9fc4e8; }
+.pathway[data-pathway='portal'] { transform: rotate(2.2deg); margin-top: 0.8rem; }
+.pathway:hover { transform: rotate(0deg) translateY(-6px); box-shadow: 10px 10px 0 rgba(0, 0, 0, 0.55); z-index: 2; }
+.pathway::before { content: ''; position: absolute; top: -0.7rem; left: 50%; width: 4.6rem; height: 1.5rem; margin-left: -2.3rem; background: var(--tape); transform: rotate(-3deg); clip-path: polygon(0 8%, 6% 0, 12% 10%, 100% 0, 96% 50%, 100% 92%, 90% 100%, 6% 92%, 0 100%, 4% 50%); }
 
-.cardLink {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  border-radius: inherit;
-}
+.note { font-family: var(--font-handwriting); font-size: 1.5rem; line-height: 1; transform: rotate(-2deg); transform-origin: left center; }
+.pathTitle { margin: 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.2rem; line-height: 1.05; text-transform: uppercase; }
+.pathBody { margin: 0; font-family: var(--font-futura-medium); font-size: 0.95rem; line-height: 1.45; color: #2a3550; }
+.pathway[data-pathway='officer'] .pathBody, .pathway[data-pathway='social'] .pathBody { color: #14213f; }
+.pathCta { margin-top: 0.3rem; font-family: var(--font-renegare); font-size: 0.76rem; letter-spacing: 0.12em; text-transform: uppercase; border-bottom: 3px solid var(--ink); align-self: flex-start; padding-bottom: 2px; }
+.cardLink { position: absolute; inset: 0; z-index: 2; }
+.cardLink:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 
-.pathway:hover {
-  background: var(--glass-bg-hover);
-  border-color: var(--glass-border-hover);
-  transform: translateY(-4px);
-  box-shadow: var(--glass-shadow);
-}
-
-.pathIcon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  color: var(--yellow);
-  background: linear-gradient(155deg, rgba(255, 199, 44, 0.22), rgba(255, 199, 44, 0.04));
-  border: 1px solid rgba(255, 199, 44, 0.22);
-  box-shadow: 0 12px 24px -12px rgba(0, 0, 0, 0.5);
-}
-
-.pathTitle {
-  font-family: var(--font-soulmaze);
-  font-size: clamp(1.1rem, 2vw, 1.4rem);
-  color: var(--white);
-  margin: 0;
-  line-height: 1.2;
-}
-
-.pathBody {
-  font-family: var(--font-futura-medium);
-  font-size: 0.875rem;
-  color: var(--lightblue);
-  line-height: 1.65;
-  margin: 0;
-  flex: 1;
-}
-
-.pathCta {
-  font-family: var(--font-futura-heavy);
-  font-size: 0.8rem;
-  letter-spacing: 0.06em;
-  color: var(--yellow);
-  text-decoration: none;
-  text-transform: uppercase;
-  border-bottom: 1px solid rgba(255, 199, 44, 0.4);
-  padding-bottom: 2px;
-  transition: border-color 0.2s ease;
-  margin-top: auto;
-}
-
-.pathway:hover .pathCta {
-  border-color: var(--yellow);
-}
-
-/* Cleaner, lighter mobile version: the big faint TRITON/GAMING backdrop text
-   goes away, and each pathway becomes a compact row (small icon beside the
-   title, a two-line blurb, then the link) instead of a tall stacked card. */
-@media (max-width: 768px) {
-  .bgWrapper { display: none; }
-  .header { margin-bottom: 1.5rem; }
-  .pathways {
-    grid-template-columns: 1fr;
-    max-width: 440px;
-    gap: 0.75rem;
-  }
-  .pathway {
-    display: grid;
-    grid-template-columns: 44px 1fr;
-    column-gap: 0.9rem;
-    row-gap: 0.25rem;
-    align-items: start;
-    padding: 1rem 1.1rem;
-  }
-  .pathIcon { grid-row: 1 / span 3; width: 44px; height: 44px; border-radius: 12px; }
-  .pathTitle { font-size: 1.05rem; }
-  .pathBody {
-    font-size: 0.82rem;
-    line-height: 1.5;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  .pathCta { justify-self: start; margin-top: 0.15rem; font-size: 0.72rem; }
-}
-
+@media (max-width: 1000px) { .pathways { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .pathways { grid-template-columns: 1fr; gap: 1.8rem; } .pathway[data-pathway] { margin-top: 0; } }

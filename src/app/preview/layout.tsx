@@ -17,10 +17,11 @@ export default async function PreviewLayout({ children }: { children: React.Reac
 
   return (
     <>
+      {/* Same order as the real site: the announcement strip sits above the nav and pushes the page down. */}
+      <Suspense fallback={null}><AnnouncementBanner /></Suspense>
       <NavBar />
       <main>{children}</main>
       <Suspense fallback={null}><Footer /></Suspense>
-      <Suspense fallback={null}><AnnouncementBanner /></Suspense>
       <PreviewBridge />
     </>
   );

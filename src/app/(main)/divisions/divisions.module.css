@@ -1,199 +1,45 @@
-.page {
-  min-height: 100vh;
-  padding-bottom: var(--sp-xl);
-  background: #060c1a;
-}
+.page { background: #060c1a; min-height: 100svh; }
 
-.hero {
-  position: relative;
-  background: var(--hero-bg);
-  padding: var(--hero-padding-top) var(--sp-md) var(--hero-padding-bottom);
-  text-align: center;
-  overflow: hidden;
-}
+.grid { list-style: none; margin: 0; padding: 0.5rem 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 2rem 1.5rem; }
 
-/* Fades the hero into the flat page background instead of a hard cut —
-   same recipe as every other main-site page hero, see globals.css. */
-.hero::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: var(--hero-fade-height);
-  background: var(--hero-fade);
-  pointer-events: none;
-}
-
-.heroTitle {
-  position: relative;
-  z-index: 1;
-  font-family: var(--font-futura-heavy);
-  font-size: var(--fs-section-title);
-  color: var(--white);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 1rem;
-}
-
-.heroSub {
-  position: relative;
-  z-index: 1;
-  max-width: 580px;
-  margin: 0 auto;
-  color: rgba(242,241,240,0.65);
-  font-size: clamp(0.9rem, 1.5vw, 1.1rem);
-  line-height: 1.6;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.25rem;
-  max-width: var(--max-width);
-  margin: -3.5rem auto 0;
-  padding: 0 clamp(1rem, 4vw, 2.5rem);
-  position: relative;
-  z-index: 1;
-}
-
+/* each division is a paper tile with its logo stuck on as a sticker */
 .card {
-  position: relative;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 20px;
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  overflow: hidden;
-  box-shadow: var(--glass-shadow);
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
-  display: flex;
-  flex-direction: column;
-  cursor: pointer;
+  position: relative; display: flex; flex-direction: column; gap: 0.6rem; background: var(--paper); color: var(--ink);
+  padding: 3.6rem 1.1rem 1.1rem; box-shadow: var(--hard-shadow); min-width: 0;
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 }
+.tiltL { transform: rotate(-0.8deg); }
+.tiltR { transform: rotate(0.9deg); }
+.card:hover { transform: rotate(0deg) translateY(-5px); }
 
-.cardLink {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-}
-
-.card:hover {
-  transform: translateY(-6px);
-  border-color: var(--glass-border-hover);
-  background: var(--glass-bg-hover);
-}
-
-.cardHeader {
-  padding: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 140px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.logo {
-  width: 80px;
-  height: 80px;
-  /* box-sizing: border-box + padding shrinks the content box object-fit
-     scales into, so a logo asset exported with little/no internal
-     transparent margin (unlike most of ours) still gets breathing room
-     here instead of sitting flush against — and looking cropped at — the
-     box edge. */
-  padding: 6px;
-  box-sizing: border-box;
-  object-fit: contain;
-  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.4));
-}
-
+.badge { position: absolute; top: -1.6rem; left: 1rem; z-index: 3; }
+.plate { width: 4.6rem; height: 4.6rem; padding: 0.5rem; border-radius: 1.1rem; box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.55); }
+.logo { width: 100%; height: 100%; object-fit: contain; }
 .logoFallback {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-futura-heavy);
-  font-size: 2rem;
-  background: linear-gradient(135deg, rgba(255, 199, 44, 0.25), rgba(255, 199, 44, 0.05));
-  color: var(--yellow);
+  display: grid; place-items: center; width: 4.6rem; height: 4.6rem; border-radius: 1.1rem; background: var(--yellow); color: var(--ink);
+  border: 3px solid var(--ink); font-family: var(--font-brick); font-size: 2.2rem; box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.55);
 }
 
-.cardBody {
-  padding: 1.25rem 1.25rem 0.75rem;
-  flex: 1;
-}
+.divName { margin: 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.1rem; line-height: 1.1; text-transform: uppercase; overflow-wrap: anywhere; }
+.divDesc { margin: 0; flex: 1; font-family: var(--font-futura-medium); font-size: 0.85rem; line-height: 1.45; color: #2a3550; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
-.divName {
-  font-family: var(--font-futura-heavy);
-  font-size: 1rem;
-  color: var(--white);
-  margin-bottom: 0.5rem;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
+.cardFooter { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.3rem; }
+.learnMore { font-family: var(--font-renegare); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; border-bottom: 3px solid var(--ink); padding-bottom: 1px; }
+.card:hover .learnMore { border-bottom-color: #b8860b; }
 
-.divDesc {
-  font-size: 0.85rem;
-  color: rgba(242,241,240,0.55);
-  line-height: 1.55;
-  /* Long descriptions used to grow the card and throw off the grid's row
-     heights — clipped to 3 lines here, with the full text one tap away on
-     the division's own detail page (.desc in [slug]/division.module.css,
-     which this card already links to). */
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+.discordBtn {
+  position: relative; z-index: 4; display: inline-flex; align-items: center; gap: 0.4rem; background: #5865f2; color: #fff; text-decoration: none;
+  font-family: var(--font-futura-heavy); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;
+  padding: 0.4rem 0.7rem; border: 2px solid var(--ink); border-radius: var(--radius-sm); box-shadow: 2px 2px 0 var(--ink);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
+.discordBtn:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--ink); }
+.cardLink { position: absolute; inset: 0; z-index: 2; }
+.cardLink:focus-visible { outline: 3px solid var(--yellow); outline-offset: 4px; }
 
-.cardFooter {
-  padding: 0.875rem 1.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-top: 1px solid rgba(255,255,255,0.06);
-  margin-top: 0.75rem;
-}
+.noContent { margin: 0; text-align: center; font-family: var(--font-handwriting); font-size: 1.6rem; color: var(--yellow-text); }
 
-.learnMore {
-  font-family: var(--font-futura-heavy);
-  font-size: 0.8rem;
-  color: var(--yellow);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  transition: color 0.2s ease;
-}
-
-.card:hover .learnMore {
-  color: var(--white);
-}
-
-.cardDiscordBtn {
-  position: relative;
-  z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.7rem;
-  font-family: var(--font-futura-heavy);
-  letter-spacing: 0.03em;
-  padding: 0.35rem 0.7rem;
-  background: rgba(88, 101, 242, 0.15);
-  color: #c7cbfb;
-  border-radius: var(--radius-pill);
-  border: 1px solid rgba(88, 101, 242, 0.35);
-  transition: background 0.15s, transform 0.15s;
-}
-.cardDiscordBtn:hover {
-  background: rgba(88, 101, 242, 0.28);
-  transform: translateY(-2px);
-}
-
-.noContent {
-  grid-column: 1 / -1;
-  text-align: center;
-  color: rgba(242,241,240,0.4);
-  padding: 3rem;
+@media (max-width: 520px) {
+  .grid { grid-template-columns: minmax(0, 1fr); gap: 2.4rem 0; }
+  .tiltL, .tiltR { transform: none; }
 }

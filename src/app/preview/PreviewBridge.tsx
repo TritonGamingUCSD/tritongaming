@@ -23,6 +23,7 @@ export default function PreviewBridge() {
       // Bring the part being edited into view: the footer sits at the bottom of every page; otherwise find the section by a bit of
       // its own text (the block's title/label), scroll to it and flash an outline so it is easy to spot.
       if (e.data?.type === 'tg-preview-focus') {
+        if (e.data.target === 'top') { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
         if (e.data.target === 'footer') { document.querySelector('footer')?.scrollIntoView({ block: 'end', behavior: 'smooth' }); return; }
         const needle = typeof e.data.text === 'string' ? e.data.text.trim().toLowerCase() : '';
         const el = needle ? findByText(needle) : null;

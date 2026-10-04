@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
-import { RadioTower, Users, Building2, Gamepad2, Handshake, Award, BarChart3, type LucideIcon } from 'lucide-react';
 import styles from './LandingStatistics.module.css';
 
 export interface StatInput {
@@ -29,27 +28,8 @@ function parseStat(value: string): { display: string; target: number; isFloat: b
   return { display: value, target, isFloat };
 }
 
-const ICON_MAP: Record<string, LucideIcon> = {
-  'Social Media': RadioTower,
-  'Community': Users,
-  'Attendees': Building2,
-  'Members': Users,
-  'Event': Gamepad2,
-  'Sponsor': Handshake,
-  'Officer': Award,
-};
-
-// Pick an icon based on keywords in the label (fallback to generic)
-function getIcon(label: string): LucideIcon {
-  for (const [key, icon] of Object.entries(ICON_MAP)) {
-    if (label.toLowerCase().includes(key.toLowerCase())) return icon;
-  }
-  return BarChart3;
-}
-
 function StatItem({ stat }: { stat: StatInput }) {
   const { target, isFloat } = parseStat(stat.value);
-  const Icon = getIcon(stat.label);
   const [count, setCount] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
   const started = useRef(false);
@@ -87,17 +67,13 @@ function StatItem({ stat }: { stat: StatInput }) {
 
   return (
     <div className={styles.statCell} ref={ref}>
-      <span className={styles.statIcon}><Icon size={26} strokeWidth={1.5} aria-hidden="true" /></span>
       <span className={styles.statValue}>{display}</span>
       <span className={styles.statLabel}>{stat.label}</span>
     </div>
   );
 }
 
-// A single floating glass bar, pulled up to overlap the hero's bottom edge
-// (see .section's negative margin-top) instead of a separate flat section —
-// the hero and this "proof bar" read as one connected moment, not two
-// stacked blocks with a hard seam between them.
+// Three stat tickets, each a paper card at its own angle, tucked under the hero's tape band.
 export default function LandingStatistics({ stats }: { stats?: StatInput[] }) {
   if (!stats?.length) return null;
 

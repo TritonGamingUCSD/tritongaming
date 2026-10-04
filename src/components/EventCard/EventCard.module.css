@@ -1,205 +1,65 @@
+/* An event is a poster pinned to the board: the flyer on paper, ink text, a strip of tape, a hard shadow. It lifts and straightens on hover.
+   (The flyer sits on a paper mat on purpose, so a black or white flyer never melts into the background.) */
 .card {
   display: flex;
   flex-direction: column;
   width: clamp(260px, 80vw, 320px);
-  border-radius: 18px;
-  overflow: hidden;
-  background: var(--darkblue);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 0.6rem 0.6rem 0;
+  box-shadow: var(--hard-shadow);
   flex-shrink: 0;
-  transition:
-    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.3s ease,
-    border-color 0.3s ease;
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease;
   position: relative;
+  will-change: transform;
 }
-
-/* Holographic sheen sweep on hover */
 .card::before {
   content: '';
   position: absolute;
-  inset: 0;
-  z-index: 10;
-  pointer-events: none;
-  background: linear-gradient(
-    120deg,
-    transparent 20%,
-    rgba(255, 255, 255, 0.12) 50%,
-    transparent 80%
-  );
-  transform: translateX(-140%) skewX(-8deg);
-  transition: none;
+  top: -0.8rem;
+  left: 50%;
+  width: 5rem;
+  height: 1.6rem;
+  margin-left: -2.5rem;
+  background: var(--tape);
+  transform: rotate(-3deg);
+  clip-path: polygon(0 8%, 6% 0, 12% 10%, 100% 0, 96% 50%, 100% 92%, 90% 100%, 6% 92%, 0 100%, 4% 50%);
+  z-index: 3;
 }
+.card:hover { transform: rotate(0deg) translateY(-6px); box-shadow: 10px 10px 0 rgba(0, 0, 0, 0.55); }
 
-.card:hover {
-  transform: translateY(-6px) scale(1.02);
-  border-color: var(--glass-border-hover);
-  box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.45),
-    0 0 0 1px rgba(255, 199, 44, 0.15),
-    0 0 30px rgba(39, 90, 143, 0.25);
-}
+.imgWrapper { position: relative; width: 100%; aspect-ratio: 4 / 3; overflow: hidden; background: #14213f; }
+.imgBackdrop { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(24px) brightness(0.7); transform: scale(1.15); }
+.img { position: relative; width: 100%; height: 100%; object-fit: contain; display: block; }
 
-.card:hover::before {
-  animation: main-card-shimmer 0.65s ease forwards;
-}
+.info { padding: 0.9rem 0.4rem 1rem; display: flex; flex-direction: column; gap: 0.35rem; flex: 1; }
+.title { margin: 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: clamp(1rem, 2vw, 1.2rem); line-height: 1.1; text-transform: uppercase; }
+.meta, .location { margin: 0; font-family: var(--font-renegare); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: #3a4764; display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.hash { font-family: var(--font-brick); font-size: 1.05rem; color: #b8860b; line-height: 1; }
+.pointsBadge { width: fit-content; margin-top: 0.1rem; font-family: var(--font-renegare); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; background: var(--yellow); color: var(--ink); border: 2px solid var(--ink); padding: 0.2rem 0.5rem; transform: rotate(-2deg); }
+.desc { margin: 0; font-family: var(--font-futura-medium); font-size: 0.78rem; line-height: 1.45; color: #2a3550; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.link { margin-top: 0.4rem; align-self: flex-start; font-family: var(--font-renegare); font-size: 0.72rem; letter-spacing: 0.12em; border-bottom: 3px solid var(--ink); padding-bottom: 1px; }
+.card:hover .link { border-bottom-color: #b8860b; }
 
-.imgWrapper {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  overflow: hidden;
-  background: var(--blue);
-}
+.cardLink { position: absolute; inset: 0; z-index: 2; }
+.cardLink:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 
-.imgBackdrop {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  filter: blur(24px) saturate(130%) brightness(0.6);
-  transform: scale(1.15);
-}
-
-.img {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
-}
-
-.info {
-  padding: 1rem;
-  background: linear-gradient(135deg, #14477c, #011941);
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  flex: 1;
-}
-
-.title {
-  font-family: var(--font-soulmaze);
-  font-size: clamp(1rem, 2vw, 1.25rem);
-  color: var(--white);
-  line-height: 1.3;
-}
-
-.meta,
-.location {
-  font-family: var(--font-soulmaze);
-  font-size: 0.7rem;
-  color: var(--lightblue);
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-}
-
-.hash {
-  font-family: var(--font-brick);
-  font-size: 1.1rem;
-  color: var(--yellow);
-  line-height: 1;
-  position: relative;
-  top: 1px;
-}
-
-.pointsBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-family: var(--font-soulmaze);
-  font-size: 0.68rem;
-  letter-spacing: 0.02em;
-  color: var(--yellow);
-  background: rgba(255, 199, 44, 0.1);
-  border: 1px solid rgba(255, 199, 44, 0.3);
-  border-radius: var(--radius-pill, 999px);
-  padding: 0.2rem 0.55rem;
-  width: fit-content;
-  margin-top: 0.15rem;
-}
-
-.desc {
-  font-family: var(--font-futura-medium);
-  font-size: 0.72rem;
-  color: rgba(242, 241, 240, 0.8);
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.link {
-  font-family: var(--font-soulmaze);
-  font-size: 1rem;
-  color: var(--white);
-  margin-top: 0.5rem;
-  display: inline-block;
-  transition: color 0.2s ease;
-  align-self: flex-start;
-}
-
-.card:hover .link {
-  color: var(--yellow);
-}
-
-.cardLink {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-}
-
-/* Compact variant (homepage carousel). Mobile: flyer on top, but a short
-   banner-height strip rather than a poster-tall image. Desktop (>=769px):
-   flyer on the left, details on the right. */
-.compact {
-  flex-direction: column;
-  width: clamp(280px, 86vw, 360px);
-}
-.compact .imgWrapper {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-}
-.compact .info {
-  padding: 0.85rem 1rem 1rem;
-  gap: 0.25rem;
-  min-width: 0;
-}
-.compact .title {
-  font-size: 1.05rem;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
+/* Compact variant (homepage row): a short banner flyer on phones, flyer beside the details on wide screens. */
+.compact { flex-direction: column; width: clamp(280px, 86vw, 360px); }
+.compact .imgWrapper { width: 100%; aspect-ratio: 16 / 9; }
+.compact .info { padding: 0.75rem 0.4rem 0.9rem; gap: 0.25rem; min-width: 0; }
+.compact .title { font-size: 1.02rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .compact .desc { display: none; }
-.compact .link { font-size: 0.85rem; margin-top: 0.2rem; }
 
 @media (min-width: 769px) {
-  .compact {
-    flex-direction: row;
-    width: 480px;
-  }
-  .compact .imgWrapper {
-    width: 150px;
-    flex-shrink: 0;
-    aspect-ratio: auto;
-    align-self: stretch;
-  }
-  .compact .info {
-    padding: 1rem 1.1rem;
-    justify-content: center;
-  }
+  .compact { flex-direction: row; width: 480px; padding: 0.6rem; gap: 0.7rem; }
+  .compact .imgWrapper { width: 150px; flex-shrink: 0; aspect-ratio: auto; align-self: stretch; }
+  .compact .info { padding: 0.3rem 0.2rem; justify-content: center; }
 }
 
-/* Fill the (fixed-aspect) box explicitly — with height: 100% against an
-   aspect-ratio parent the flyer resolved to its natural size and got cut. */
-.compact .img {
-  position: absolute;
-  inset: 0;
-}
+/* Fill the fixed-aspect box explicitly so the flyer is never cut or stretched. */
+.compact .img { position: absolute; inset: 0; }
+
+/* On a paper band the card needs its own edge so it doesn't melt into the background. */
+.outlined { border: 2px solid var(--ink); background: #fff; }
+.outlined .imgWrapper { box-shadow: 0 0 0 2px var(--ink); }

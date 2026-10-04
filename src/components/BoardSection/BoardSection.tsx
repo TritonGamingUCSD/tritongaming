@@ -130,7 +130,7 @@ export default function BoardSection({ members, years = [] }: { members: BoardMe
           const group = past.members.filter((m) => m.tier === tier);
           if (group.length === 0) return null;
           return (
-            <section key={tier} className={styles.tierSection}>
+            <section key={tier} className={`${styles.tierSection} ${styles[`tier_${tier}`]}`} data-rv-inner>
               <h3 className={styles.tierLabel}>{TIER_LABELS[tier]}</h3>
               <div className={tier === 'exec' ? styles.execGrid : styles.gridCenter}>
                 {group.map((m) => {
@@ -155,7 +155,7 @@ export default function BoardSection({ members, years = [] }: { members: BoardMe
           // Alumni are a compact wall (small picture, name, title); the exec board gets the biggest cards.
           if (tier === 'alumni') {
             return (
-              <section key={tier} className={styles.tierSection}>
+              <section key={tier} className={`${styles.tierSection} ${styles[`tier_${tier}`]}`} data-rv-inner>
                 <h3 className={styles.tierLabel}>{TIER_LABELS[tier]}</h3>
                 <ul className={styles.wall}>
                   {group.map((m) => {
@@ -174,7 +174,7 @@ export default function BoardSection({ members, years = [] }: { members: BoardMe
             );
           }
           return (
-            <section key={tier} className={styles.tierSection}>
+            <section key={tier} className={`${styles.tierSection} ${styles[`tier_${tier}`]}`} data-rv-inner>
               <h3 className={styles.tierLabel}>{TIER_LABELS[tier]}</h3>
               <div className={tier === 'exec' ? styles.execGrid : styles.grid}>
                 {group.map((m) => (

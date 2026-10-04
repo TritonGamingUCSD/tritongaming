@@ -17,4 +17,14 @@
 .remove:hover { background: rgba(220, 38, 38, 0.12); }
 .add { align-self: flex-start; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.9rem; border-radius: var(--radius-sm); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.14); color: var(--white); font-size: 0.8rem; cursor: pointer; }
 .add:hover { border-color: rgba(255, 199, 44, 0.5); }
+/* Event theme panel */
+.colorGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr)); gap: 0.9rem 0.75rem; }
+.colorRow { display: flex; gap: 0.5rem; align-items: center; }
+.swatch { width: 44px; height: 38px; flex-shrink: 0; padding: 0; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: var(--radius-sm); background: none; cursor: pointer; }
+.swatchEmpty { opacity: 0.3; }
+.cap { font-family: var(--font-renegare); font-size: var(--fs-label); letter-spacing: 0.1em; text-transform: uppercase; color: rgba(242, 241, 240, 0.5); }
+.hex { min-width: 0; font-variant-numeric: tabular-nums; }
+.fontGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 0.75rem; }
+.stickerRow { display: flex; gap: 0.5rem; align-items: flex-start; }
+.stickerMain { flex: 1; min-width: 0; }
 @media (max-width: 560px) { .row { flex-wrap: wrap; } .time { width: 100%; } .logoCell { width: 100%; } }

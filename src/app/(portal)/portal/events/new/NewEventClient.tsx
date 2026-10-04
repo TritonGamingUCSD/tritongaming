@@ -7,6 +7,8 @@ import { slugify } from '@/lib/slug';
 import { pacificDatetimeLocalToUTC } from '@/lib/timezone';
 import EventForm, { EMPTY_EVENT_FORM, cleanCheckinWindows, type EventFormValues } from '../EventForm';
 import type { CheckinFormConfigValue } from '../CheckinFormFieldsEditor';
+import { cleanTheme } from '@/lib/eventTheme';
+import { cleanBlocks } from '@/lib/pageBlocks';
 
 export default function NewEventClient({ divisions, initial = EMPTY_EVENT_FORM, seedCheckinFormConfig, previewViewer }: {
   divisions: { id: string; name: string }[];
@@ -36,7 +38,6 @@ export default function NewEventClient({ divisions, initial = EMPTY_EVENT_FORM, 
       start_date: pacificDatetimeLocalToUTC(form.start_date).toISOString(),
       end_date: form.end_date ? pacificDatetimeLocalToUTC(form.end_date).toISOString() : null,
       flyer_url: form.flyer_url.trim() || null,
-      max_capacity: form.max_capacity ? parseInt(form.max_capacity) : null,
       requires_ticket: true, // every published event is ticketable
       ticket_price: form.audience === 'public' ? parseFloat(form.ticket_price) : 0,
       points_value: form.points_value ? Math.max(0, parseInt(form.points_value)) : 0,
@@ -46,6 +47,8 @@ export default function NewEventClient({ divisions, initial = EMPTY_EVENT_FORM, 
       photo_albums: form.photo_albums,
       post_event_info: form.post_event_info.trim() || null,
       social_embeds: form.social_embeds,
+      theme: cleanTheme(form.theme),
+        page_blocks: cleanBlocks(form.page_blocks),
       division_id: form.division_id || null,
       requires_checkin_form: form.requires_checkin_form,
       checkin_food_item: form.checkin_food_item.trim() || null,

@@ -5,7 +5,6 @@ import { showToast } from '@/lib/toast';
 import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
 import { useState } from 'react';
 import Link from 'next/link';
-import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
 import SocialLinksField from '@/components/SocialLinksField/SocialLinksField';
 import SocialEmbedsField from '@/components/SocialEmbedsField/SocialEmbedsField';
@@ -16,6 +15,8 @@ import type { SocialEmbed } from '@/types/database';
 // .mdTabs/etc.) were already fully generic, not event-specific. Importing
 // the same file guarantees the two never visually drift apart.
 import LivePreview from '@/components/portal/LivePreview';
+import PageBlocksEditor from '@/components/PageBlocksEditor/PageBlocksEditor';
+import type { PageBlock } from '@/lib/pageBlocks';
 import styles from '../events/new/newevent.module.css';
 
 export interface DivisionFormValues {
@@ -27,6 +28,7 @@ export interface DivisionFormValues {
   application_url: string;
   social_links: Record<string, string>;
   social_embeds: SocialEmbed[];
+  page_blocks: PageBlock[];
 }
 
 export const EMPTY_DIVISION_FORM: DivisionFormValues = {
@@ -38,6 +40,7 @@ export const EMPTY_DIVISION_FORM: DivisionFormValues = {
   application_url: '',
   social_links: {},
   social_embeds: [],
+  page_blocks: [],
 };
 
 // Same Write/Preview markdown field as EventForm.tsx's (not extracted to a
@@ -59,34 +62,18 @@ function MarkdownField({
   rows: number;
   placeholder?: string;
 }) {
-  const [tab, setTab] = useState<'write' | 'preview'>('write');
-
   return (
     <div className={styles.field}>
       <div className={styles.mdFieldHeader}>
         <span className={styles.label}>{label}</span>
-        <div className={styles.mdTabs}>
-          <button type="button" className={`${styles.mdTab} ${tab === 'write' ? styles.mdTabActive : ''}`} onClick={() => setTab('write')}>
-            Write
-          </button>
-          <button type="button" className={`${styles.mdTab} ${tab === 'preview' ? styles.mdTabActive : ''}`} onClick={() => setTab('preview')}>
-            Preview
-          </button>
-        </div>
       </div>
-      {tab === 'write' ? (
-        <textarea
-          className={`${styles.input} ${styles.textarea}`}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          rows={rows}
-          placeholder={placeholder}
-        />
-      ) : (
-        <div className={styles.mdPreview} style={{ minHeight: `${rows * 1.6}em` }}>
-          {value.trim() ? <MarkdownContent>{value}</MarkdownContent> : <span className={styles.mdPreviewEmpty}>Nothing to preview yet.</span>}
-        </div>
-      )}
+      <textarea
+        className={`${styles.input} ${styles.textarea}`}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={rows}
+        placeholder={placeholder}
+      />
       {hint && <span className={styles.hint}>{hint}</span>}
     </div>
   );
@@ -199,6 +186,8 @@ export default function DivisionForm({
           exclude={['discord']}
           hint="Just your handle, not the full link — optional."
         />
+
+        <PageBlocksEditor blocks={form.page_blocks} onChange={(b) => set('page_blocks', b)} bucket="site-content" />
 
         <SocialEmbedsField
           value={form.social_embeds}

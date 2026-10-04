@@ -32,7 +32,7 @@ export const CONTENT_BLOCKS = [
   {
     key: 'announcement',
     title: 'Announcement Banner',
-    description: 'A dismissible banner shown at the top of every page.',
+    description: 'A flat strip across the very top of every public page. It pushes the page down and scrolls away with it; visitors can dismiss it.',
     icon: createElement(Megaphone, ICON_PROPS),
     category: 'Global',
     pages: SITEWIDE,
@@ -65,14 +65,16 @@ export const CONTENT_BLOCKS = [
   {
     key: 'footer',
     title: 'Footer',
-    description: 'Tagline, copyright text, and any extra footer links — shown at the bottom of every page.',
+    description: 'The Discord join strip, tagline, copyright text, and any extra footer links — shown at the bottom of every page. The Discord button uses the invite link from Social Links & Contact, and the member count is fetched from Discord automatically.',
     icon: createElement(LinkIcon, ICON_PROPS),
     category: 'Global',
     pages: SITEWIDE,
     fields: [
-      { name: 'tagline',   label: 'Tagline',        type: 'text' as const, placeholder: "UC San Diego's Gaming Org" },
-      { name: 'copyright', label: 'Copyright Text', type: 'text' as const, placeholder: '© 2025 Triton Gaming at UC San Diego' },
+      { name: 'tagline',   label: 'Tagline',        type: 'text' as const, placeholder: 'Gaming Org at UC San Diego' },
+      { name: 'copyright', label: 'Copyright Text', type: 'text' as const, placeholder: '© 2026 Triton Gaming. Gaming Org at UC San Diego' },
       { name: 'links',     label: 'Extra Links',    type: 'kvlist' as const, kvKeyLabel: 'Label', kvValueLabel: 'URL', optional: true },
+      { name: 'join_kicker', label: 'Join Strip — Small Label', type: 'text' as const, placeholder: 'Come hang out', optional: true },
+      { name: 'join_title',  label: 'Join Strip — Headline',    type: 'text' as const, placeholder: 'Join the Discord', optional: true },
     ],
   },
   // ── Homepage ──────────────────────────────────────────────
@@ -84,13 +86,19 @@ export const CONTENT_BLOCKS = [
     category: 'Homepage',
     pages: ['/'],
     fields: [
-      { name: 'badge',              label: 'Badge Text',          type: 'text' as const, placeholder: "UC San Diego's Gaming Org" },
+      { name: 'badge',              label: 'Badge Text',          type: 'text' as const, placeholder: 'Gaming Org at UC San Diego' },
       { name: 'title',              label: 'Main Title (h1)',     type: 'text' as const, placeholder: 'We are Triton Gaming' },
       { name: 'subtitle',           label: 'Subtitle',            type: 'text' as const, placeholder: 'Game · Events · Community' },
       { name: 'cta_primary_text',   label: 'Primary CTA Text',   type: 'text' as const, placeholder: 'Explore Events',                  optional: true },
       { name: 'cta_primary_href',   label: 'Primary CTA URL',    type: 'url'  as const, placeholder: '/events',                          optional: true },
       { name: 'cta_secondary_text', label: 'Secondary CTA Text', type: 'text' as const, placeholder: 'Join Discord',                     optional: true },
       { name: 'cta_secondary_href', label: 'Secondary CTA URL',  type: 'url'  as const, placeholder: 'https://discord.gg/tritongaming',  optional: true },
+      { name: 'photo_a',            label: 'Taped Photo 1 (top right)',    type: 'image' as const, optional: true },
+      { name: 'photo_a_caption',    label: 'Photo 1 Handwritten Caption',  type: 'text'  as const, placeholder: 'panel night',     optional: true },
+      { name: 'photo_a_credit',     label: 'Photo 1 Credit',               type: 'text'  as const, placeholder: 'Photo: Name',     optional: true },
+      { name: 'photo_b',            label: 'Taped Photo 2 (lower left)',   type: 'image' as const, optional: true },
+      { name: 'photo_b_caption',    label: 'Photo 2 Handwritten Caption',  type: 'text'  as const, placeholder: 'the doodle wall', optional: true },
+      { name: 'photo_b_credit',     label: 'Photo 2 Credit',               type: 'text'  as const, placeholder: 'Photo: Name',     optional: true },
     ],
   },
   {
@@ -105,6 +113,9 @@ export const CONTENT_BLOCKS = [
       { name: 'body',     label: 'Body Text',      type: 'textarea' as const },
       { name: 'cta_text', label: 'Link Text',      type: 'text'     as const, optional: true, placeholder: 'Learn More' },
       { name: 'cta_link', label: 'Link URL',       type: 'url'      as const, optional: true },
+      { name: 'photo',        label: 'Photo',          type: 'image'    as const, optional: true },
+      { name: 'photo_credit', label: 'Photo Credit',   type: 'text'     as const, optional: true, placeholder: 'Photo credit: Name' },
+      { name: 'photo_credit_url', label: 'Credit Link (e.g. their Instagram)', type: 'url' as const, optional: true },
     ],
   },
   {
@@ -135,13 +146,12 @@ export const CONTENT_BLOCKS = [
   {
     key: 'homepage.events',
     title: 'Events Section',
-    description: 'The headline above the scrolling upcoming-events strip.',
+    description: 'The home page shows only the single next event as one big ticket. This is the small label above it; the ticket itself comes from the event.',
     icon: createElement(CalendarDays, ICON_PROPS),
     category: 'Homepage',
     pages: ['/'],
     fields: [
-      { name: 'label', label: 'Eyebrow Label', type: 'text' as const, placeholder: "DON'T MISS OUT" },
-      { name: 'title', label: 'Section Title', type: 'text' as const, placeholder: 'Upcoming Events' },
+      { name: 'label', label: 'Label Above the Ticket', type: 'text' as const, placeholder: 'Next up' },
     ],
   },
   {
@@ -199,6 +209,7 @@ export const CONTENT_BLOCKS = [
       { name: 'label',    label: 'Eyebrow Label', type: 'text'     as const, placeholder: 'THE PEOPLE BEHIND TG' },
       { name: 'title',    label: 'Page Title',    type: 'text'     as const, placeholder: 'Meet the Team' },
       { name: 'subtitle', label: 'Subtitle',      type: 'textarea' as const },
+      { name: 'strip_caption', label: 'Photo Strip — Hand-written Caption', type: 'text' as const, placeholder: 'The people on the other side of the screen.', optional: true },
     ],
   },
 
@@ -220,6 +231,9 @@ export const CONTENT_BLOCKS = [
       { name: 'section3_title', label: 'Section 3 — Title', type: 'text'     as const, placeholder: 'EVENTS' },
       { name: 'section3_body',  label: 'Section 3 — Body',  type: 'textarea' as const },
       { name: 'section3_image', label: 'Section 3 — Photo', type: 'image'    as const, optional: true },
+      { name: 'hero_label', label: 'Hero — Label', type: 'text' as const, placeholder: 'Who we are', optional: true },
+      { name: 'hero_title', label: 'Hero — Title', type: 'text' as const, placeholder: 'Our story', optional: true },
+      { name: 'hero_sub',   label: 'Hero — Hand-written Line', type: 'text' as const, placeholder: 'Gaming Org at UC San Diego', optional: true },
     ],
   },
 
@@ -236,6 +250,8 @@ export const CONTENT_BLOCKS = [
       { name: 'subtitle', label: 'Subtitle',   type: 'textarea' as const },
       { name: 'learn_more', label: 'Card Link Text',     type: 'text' as const, placeholder: 'Learn More →', optional: true },
       { name: 'empty',      label: 'Text When No Divisions', type: 'text' as const, placeholder: 'No divisions available', optional: true },
+      { name: 'label', label: 'Eyebrow Label', type: 'text' as const, placeholder: 'Find your squad', optional: true },
+      { name: 'strip_caption', label: 'Photo Strip — Hand-written Caption', type: 'text' as const, placeholder: 'Every division, in the same room.', optional: true },
     ],
   },
 
@@ -257,6 +273,7 @@ export const CONTENT_BLOCKS = [
       { name: 'past_label',     label: 'Past Events — Eyebrow Label', type: 'text' as const, placeholder: 'THE ARCHIVE', optional: true },
       { name: 'past_title',     label: 'Past Events — Title',     type: 'text' as const, placeholder: 'Past Events', optional: true },
       { name: 'empty',          label: 'Text When No Events',     type: 'text' as const, placeholder: 'No events currently scheduled. Check back soon!', optional: true },
+      { name: 'upcoming_label', label: 'More Upcoming — Label', type: 'text' as const, placeholder: 'Coming soon', optional: true },
     ],
   },
 
@@ -289,6 +306,7 @@ export const CONTENT_BLOCKS = [
       { name: 'sponsors_label', label: 'Sponsors — Eyebrow Label', type: 'text' as const, placeholder: 'CURRENT PARTNERS', optional: true },
       { name: 'sponsors_title', label: 'Sponsors — Title',         type: 'text' as const, placeholder: 'Our Sponsors', optional: true },
       { name: 'sponsors_empty', label: 'Sponsors — Text When None', type: 'text' as const, placeholder: 'Sponsor announcements coming soon.', optional: true },
+      { name: 'strip_caption', label: 'Photo Strip — Hand-written Caption', type: 'text' as const, placeholder: 'This is what your brand sits next to.', optional: true },
     ],
   },
   {
@@ -304,7 +322,7 @@ export const CONTENT_BLOCKS = [
         addLabel: '+ Add Sponsor',
         imageFields: [
           { key: 'name', label: 'Name', type: 'text' as const },
-          { key: 'logo_url', label: 'Logo URL', type: 'url' as const },
+          { key: 'logo_url', label: 'Logo', type: 'image' as const },
           { key: 'website_url', label: 'Website URL', type: 'url' as const },
           { key: 'tier', label: 'Tier (e.g. Gold)', type: 'text' as const },
         ],
@@ -338,6 +356,7 @@ export const CONTENT_BLOCKS = [
       { name: 'way3_body',  label: 'Card 3 (Events) — Body',  type: 'textarea' as const },
       { name: 'way3_cta',   label: 'Card 3 (Events) — Button Text', type: 'text' as const },
       { name: 'way3_href',  label: 'Card 3 (Events) — Button URL',  type: 'url'  as const },
+      { name: 'strip_caption', label: 'Photo Strip — Hand-written Caption', type: 'text' as const, placeholder: 'Come as you are. Leave with a team.', optional: true },
     ],
   },
   {
@@ -384,6 +403,7 @@ export const CONTENT_BLOCKS = [
       { name: 'partners_label', label: 'Partners — Eyebrow Label', type: 'text' as const, placeholder: 'WHERE TO USE IT', optional: true },
       { name: 'partners_title', label: 'Partners — Title',         type: 'text' as const, placeholder: 'Partner Discounts', optional: true },
       { name: 'partners_empty', label: 'Partners — Text When None', type: 'text' as const, placeholder: 'Partner announcements coming soon.', optional: true },
+      { name: 'strip_caption', label: 'Photo Strip — Hand-written Caption', type: 'text' as const, placeholder: 'The places and people behind the card.', optional: true },
     ],
   },
   {
@@ -400,7 +420,7 @@ export const CONTENT_BLOCKS = [
         imageFields: [
           { key: 'name', label: 'Partner Name', type: 'text' as const },
           { key: 'discount', label: 'Discount (e.g. 10% off)', type: 'text' as const },
-          { key: 'logo_url', label: 'Logo URL', type: 'url' as const, optional: true },
+          { key: 'logo_url', label: 'Logo', type: 'image' as const, optional: true },
         ],
       },
     ],
@@ -425,6 +445,7 @@ export const CONTENT_BLOCKS = [
       { name: 'albums_title', label: 'Albums — Title',         type: 'text' as const, placeholder: 'Photo Albums', optional: true },
       { name: 'albums_empty', label: 'Albums — Text When None', type: 'text' as const, placeholder: 'Albums coming soon.', optional: true },
       { name: 'albums_link',  label: 'Album Link Text',        type: 'text' as const, placeholder: 'View Album →', optional: true },
+      { name: 'strip_caption', label: 'Photo Strip — Hand-written Caption', type: 'text' as const, placeholder: 'More where that came from.', optional: true },
     ],
   },
   {

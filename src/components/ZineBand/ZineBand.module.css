@@ -1,0 +1,52 @@
+.band { position: relative; padding-block: var(--sp-lg); }
+.inner { max-width: 1180px; margin: 0 auto; padding-inline: clamp(1rem, 4vw, 2.5rem); }
+
+.ink { --tone: #060c1a; background: var(--tone); color: var(--white); }
+.navy { --tone: #0d2250; background: var(--tone); color: var(--white); }
+.deep { --tone: #03060f; background: var(--tone); color: var(--white); }
+
+/* cut-paper zigzag along the top edge, drawn in the band's own colour */
+.edge::before {
+  content: ''; position: absolute; left: 0; right: 0; top: -11px; height: 12px; pointer-events: none;
+  background:
+    linear-gradient(135deg, var(--tone) 25%, transparent 25%) -12px 0 / 24px 12px,
+    linear-gradient(225deg, var(--tone) 25%, transparent 25%) -12px 0 / 24px 12px;
+}
+
+/* Hero: flat ink, no glow. A caution-tape line closes it. */
+.hero { background: #060c1a; padding: var(--hero-padding-top) clamp(1rem, 5vw, 4rem) clamp(2.5rem, 5vw, 4rem); position: relative; }
+.hero::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 10px;
+  background: repeating-linear-gradient(-45deg, var(--yellow) 0 14px, #0a1630 14px 28px);
+}
+.heroInner { max-width: 760px; margin: 0 auto; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+.heroLabel {
+  margin: 0; font-family: var(--font-renegare); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase;
+  background: var(--yellow); color: var(--ink); padding: 0.45rem 0.8rem; border-radius: var(--radius-sm);
+  transform: rotate(-1.5deg); box-shadow: var(--hard-shadow-sm);
+}
+.heroTitle { margin: 0; font-family: var(--font-soulmaze); font-weight: 400; font-size: clamp(2rem, 5.5vw, 3.4rem); line-height: 1.15; color: var(--white); text-wrap: balance; }
+.heroSub { margin: 0; max-width: 34rem; font-family: var(--font-handwriting); font-size: clamp(1.15rem, 2.2vw, 1.5rem); line-height: 1.35; color: var(--yellow-text); text-wrap: balance; }
+
+.head { display: flex; flex-direction: column; gap: 0.7rem; margin-bottom: 1.75rem; align-items: flex-start; }
+.headLabel {
+  margin: 0; font-family: var(--font-renegare); font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase;
+  background: var(--yellow); color: var(--ink); padding: 0.4rem 0.75rem; border-radius: var(--radius-sm);
+  transform: rotate(1.5deg); box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
+}
+.headTitle { margin: 0; font-family: var(--font-soulmaze); font-weight: 400; font-size: clamp(1.5rem, 3.4vw, 2.3rem); line-height: 1.15; text-wrap: balance; }
+.headSub { margin: 0; font-family: var(--font-futura-medium); font-size: 0.95rem; line-height: 1.5; max-width: 38rem; opacity: 0.75; }
+
+@media (max-width: 640px) {
+  .band { padding-block: var(--sp-md); }
+}
+
+/* Hero entrance: sticker slaps on, title and line follow. CSS only, so it plays even before scripts load. */
+@keyframes slap { from { opacity: 0; transform: translateY(-10px) scale(1.35) rotate(-6deg); } to { opacity: 1; transform: rotate(-1.5deg); } }
+@keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+.heroLabel { animation: slap 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.heroTitle { animation: rise 0.6s 0.1s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.heroSub { animation: rise 0.6s 0.2s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .heroLabel, .heroTitle, .heroSub { animation: none; }
+}

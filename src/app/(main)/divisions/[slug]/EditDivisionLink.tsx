@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { hasCapability } from '@/lib/capabilities';
+import { ZineBand, BandHeader } from '@/components/ZineBand/ZineBand';
 import styles from './division.module.css';
 
 // The division page itself is cached and identical for everyone, so whether to
@@ -27,10 +28,9 @@ export default function EditDivisionLink({ divisionId }: { divisionId: string })
 
   if (!canEdit) return null;
   return (
-    <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Manage Division Page</h2>
-      <p className={styles.prose}>Design this page with Markdown, and update the logo, Discord link, officer application link, social links, and posts — all from the portal.</p>
-      <Link href={`/portal/divisions/${divisionId}`} className={styles.discordBtn}>Edit in Portal →</Link>
-    </section>
+    <ZineBand tone="deep" label="Manage division page">
+      <BandHeader label="Leads only" title="Manage this page" sub="Write the page in Markdown and update the logo, Discord link, application link, social links and posts, all from the portal." />
+      <Link href={`/portal/divisions/${divisionId}`} className={styles.applyBtn}>Edit in portal →</Link>
+    </ZineBand>
   );
 }

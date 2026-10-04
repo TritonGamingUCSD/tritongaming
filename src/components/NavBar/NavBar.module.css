@@ -1,409 +1,183 @@
-/* Floating pill — inset from the viewport edges instead of a full-width
-   bar. Fixed on its own (the announcement banner is a separate independent
-   floating toast, see AnnouncementClient.tsx — not stacked above this).
-   Centered via left/right/margin (not transform) so the
-   scroll-hide translateY set inline in NavBar.tsx has the transform
-   property to itself instead of fighting a CSS-defined one. Deliberately
-   near-opaque dark charcoal with a warm gold hairline instead of a bright
-   blue-tinted "frosted glass" look — the lighter translucent version read
-   as thin/cheap; this reads as a solid, crafted badge instead. */
+/* The nav is a strip of paper stuck to the top of the page: ink text, a gold block on the page you are on, a hard shadow, a dark "portal" sticker.
+   No glass, gradients or glow. It slides away as you scroll down (see NavBar.tsx) and comes back when you scroll up. */
 .navbar {
   position: fixed;
-  top: max(0.85rem, env(safe-area-inset-top));
+  top: calc(max(0.85rem, env(safe-area-inset-top)) + var(--banner-offset, 0px));
   left: 0;
   right: 0;
   z-index: 1000;
   display: flex;
   align-items: center;
   gap: clamp(0.5rem, 1.6vw, 1.25rem);
-  padding: 0.5rem 0.6rem 0.5rem 1rem;
+  padding: 0.45rem 0.6rem 0.45rem 0.9rem;
   width: fit-content;
   max-width: calc(100vw - 24px);
   margin-inline: auto;
-  border-radius: var(--radius-pill);
-  background: linear-gradient(180deg, rgba(22, 27, 40, 0.94), rgba(8, 11, 20, 0.97));
-  border: 1px solid rgba(255, 199, 44, 0.2);
-  box-shadow:
-    0 1px 0 rgba(255, 199, 44, 0.14) inset,
-    0 0 0 1px rgba(0, 0, 0, 0.35) inset,
-    0 20px 48px -20px rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(22px) saturate(130%);
-  -webkit-backdrop-filter: blur(22px) saturate(130%);
-  overflow: hidden;
-  transition:
-    transform 0.25s ease,
-    background 0.35s ease,
-    box-shadow 0.35s ease,
-    border-color 0.35s ease;
+  background: var(--paper);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  will-change: transform;
 }
+.scrolled { box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.6); }
 
-/* A touch more opaque/lifted once scrolled, so it still reads clearly over
-   busy page content. */
-.scrolled {
-  background: linear-gradient(180deg, rgba(22, 27, 40, 0.98), rgba(6, 9, 17, 0.99));
-  border-color: rgba(255, 199, 44, 0.32);
-  box-shadow:
-    0 1px 0 rgba(255, 199, 44, 0.18) inset,
-    0 0 0 1px rgba(0, 0, 0, 0.4) inset,
-    0 24px 56px -18px rgba(0, 0, 0, 0.85);
-}
+.logo { flex-shrink: 0; display: flex; align-items: center; }
+.logoImg { width: clamp(34px, 4vw, 42px); height: auto; transition: transform 0.2s ease; }
+.logo:hover .logoImg { transform: rotate(-6deg) scale(1.08); }
 
-/* Logo */
-.logo {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-}
-
-.logoImg {
-  width: clamp(34px, 4vw, 42px);
-  height: auto;
-  transition: filter 0.2s ease, transform 0.2s ease;
-}
-
-.logo:hover .logoImg {
-  filter: drop-shadow(0 0 10px rgba(255, 199, 44, 0.85)) brightness(1.08);
-  transform: scale(1.06);
-}
-
-/* Desktop navigation */
-.desktopNav {
-  display: flex;
-  align-items: center;
-  gap: clamp(0.35rem, 1vw, 0.75rem);
-}
-
+.desktopNav { display: flex; align-items: center; gap: clamp(0.15rem, 0.6vw, 0.4rem); }
 .navLink {
-  font-family: var(--font-futura-heavy);
-  font-size: clamp(0.66rem, 0.95vw, 0.78rem);
-  color: rgba(242, 241, 240, 0.8);
+  font-family: var(--font-renegare);
+  font-size: clamp(0.62rem, 0.9vw, 0.74rem);
+  letter-spacing: 0.1em;
+  color: var(--ink);
   white-space: nowrap;
-  letter-spacing: 0.04em;
-  padding: 0.5rem 0.7rem;
-  border-radius: var(--radius-pill);
+  padding: 0.55rem 0.7rem;
   position: relative;
-  transition: color 0.2s ease, background 0.2s ease;
+  transition: background 0.15s ease, transform 0.15s ease;
 }
+.navLink:hover, .navLink:focus-visible { background: var(--yellow); transform: rotate(-2deg); }
+.navLink:focus-visible { outline: 3px solid var(--ink); outline-offset: 1px; }
+.navLinkActive { background: var(--ink); color: var(--paper); transform: rotate(-1.5deg); }
+.navLinkActive:hover, .navLinkActive:focus-visible { background: var(--ink); color: var(--paper); }
 
-.navLink:hover,
-.navLink:focus-visible {
-  color: var(--white);
-  background: rgba(255, 255, 255, 0.08);
-}
-
-/* Mobile controls (hidden on desktop) */
-.mobileControls {
-  display: none;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.hamburger {
+/* Portal / sign-in: a dark sticker with a gold label */
+.authBtn, .loginBtn {
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  width: 22px;
-  height: 18px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
+  align-items: center;
+  gap: 0.45rem;
+  background: var(--ink);
+  color: var(--yellow);
+  border: 3px solid var(--ink);
+  font-family: var(--font-renegare);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transform: rotate(1.4deg);
+  transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
+.authBtn { padding: 0.25rem 0.75rem 0.25rem 0.25rem; }
+.loginBtn { padding: 0.5rem 0.9rem; text-transform: uppercase; }
+.authBtn:hover, .loginBtn:hover { background: var(--yellow); color: var(--ink); transform: rotate(-1deg) translateY(-2px); }
+.loginBtnIcon { display: inline-flex; color: currentColor; }
+.authAvatar { width: 26px; height: 26px; object-fit: cover; border: 2px solid var(--paper); }
+.authAvatarFallback { width: 26px; height: 26px; background: var(--yellow); color: var(--ink); display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-family: var(--font-futura-heavy); flex-shrink: 0; }
+.authLabel { font-size: 0.66rem; }
 
-/* Icon-only mobile portal/login button — its own floating circle on the
-   opposite edge of the screen from the logo/hamburger pill (see
-   .mobileAuthFab's breakpoint below), not squeezed inside that pill. Same
-   fixed positioning/scroll-hide/backdrop treatment as .navbar so it reads
-   as part of the same header system, just a second, separate control. */
+/* Stand-in while the sign-in check is in flight, same footprint as the real button */
+.authSkeleton { width: 96px; height: 30px; background: var(--paper-2, #e6e1d3); border: 3px solid var(--ink); animation: authSkeletonPulse 1.2s ease-in-out infinite; flex-shrink: 0; }
+@keyframes authSkeletonPulse { 50% { opacity: 0.55; } }
+@media (prefers-reduced-motion: reduce) { .authSkeleton { animation: none; } }
+
+/* Phone controls (hidden on desktop) */
+.mobileControls { display: none; align-items: center; gap: 0.4rem; }
+.hamburger { position: relative; display: flex; flex-direction: column; justify-content: space-between; width: 22px; height: 18px; background: none; border: none; cursor: pointer; padding: 0; }
+.hamburger span { position: absolute; left: 50%; top: 50%; width: 22px; height: 3px; margin: -1.5px 0 0 -11px; background: var(--ink); transition: transform 0.3s ease, opacity 0.3s ease; transform-origin: center; }
+.hamburger span:nth-child(1) { transform: translateY(-7px); }
+.hamburger span:nth-child(3) { transform: translateY(7px); }
+.hamburgerOpen span:nth-child(1) { transform: translateY(0) rotate(45deg); }
+.hamburgerOpen span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.hamburgerOpen span:nth-child(3) { transform: translateY(0) rotate(-45deg); }
+
 .mobileAuthFab {
   display: none;
-  /* Positioned inside .navbar (mobile), which owns the scroll-hide transform. */
   position: absolute;
   top: 0;
   right: 0;
   align-items: center;
   justify-content: center;
-  /* Matches .navbar's actual rendered height at this breakpoint (logo
-     height + its 0.5rem top/bottom padding) exactly, not a guessed value —
-     a few px off read as "these two don't belong to the same header". */
   width: 52px;
   height: 52px;
-  border-radius: 50%;
-  background: linear-gradient(180deg, rgba(22, 27, 40, 0.94), rgba(8, 11, 20, 0.97));
-  border: 1px solid rgba(255, 199, 44, 0.2);
-  box-shadow:
-    0 1px 0 rgba(255, 199, 44, 0.14) inset,
-    0 0 0 1px rgba(0, 0, 0, 0.35) inset,
-    0 20px 48px -20px rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(22px) saturate(130%);
-  -webkit-backdrop-filter: blur(22px) saturate(130%);
-  color: var(--white);
-  transition: background 0.35s ease, border-color 0.35s ease;
+  background: var(--yellow);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.55);
+  font-family: var(--font-renegare);
+  transform: rotate(2deg);
   flex-shrink: 0;
 }
+.mobileAuthFabWide { width: auto; padding: 0 1rem; font-size: 0.74rem; letter-spacing: 0.1em; white-space: nowrap; }
 
-.hamburger {
-  position: relative;
-}
-
-/* Bars are absolutely centered on the button (not flex-spaced), so the
-   closed lines sit at exactly -7px / 0 / +7px from center and the open X's
-   two strokes rotate about the *same* center point — flex spacing left the
-   strokes ~1.5px off from each other, which read as a crooked X. */
-.hamburger span {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 22px;
-  height: 2.5px;
-  margin: -1.25px 0 0 -11px;
-  background: var(--white);
-  border-radius: 2px;
-  transition: transform 0.3s ease, opacity 0.3s ease;
-  transform-origin: center;
-}
-
-.hamburger span:nth-child(1) { transform: translateY(-7px); }
-.hamburger span:nth-child(3) { transform: translateY(7px); }
-
-.hamburgerOpen span:nth-child(1) { transform: translateY(0) rotate(45deg); }
-.hamburgerOpen span:nth-child(2) { opacity: 0; transform: scaleX(0); }
-.hamburgerOpen span:nth-child(3) { transform: translateY(0) rotate(-45deg); }
-
-/* Mobile menu overlay — same material language as the pill, just full-screen */
+/* Full-screen menu: big paper-strip links on the dark board */
 .mobileMenu {
   position: fixed;
   inset: 0;
   z-index: 999;
-  background:
-    radial-gradient(60% 50% at 15% 0%, rgba(255, 199, 44, 0.1), transparent 60%),
-    linear-gradient(180deg, rgba(14, 18, 30, 0.96), rgba(5, 8, 15, 0.99));
-  backdrop-filter: blur(28px) saturate(130%);
-  -webkit-backdrop-filter: blur(28px) saturate(130%);
+  background: var(--night, #050d1f);
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* Keep the list clear of the floating header row (toggle / logo /
-     portal, ~52px tall plus its top offset) — centered with no padding it
-     ran up underneath the logo once the list grew a HOME entry. `safe`
-     centering falls back to top-aligned + scrolling on short screens. */
   justify-content: safe center;
-  padding: calc(max(0.85rem, env(safe-area-inset-top)) + 52px + 1rem) 0 2rem;
+  padding: calc(max(0.85rem, env(safe-area-inset-top)) + 52px + 1rem) 1rem 2rem;
   overflow-y: auto;
   pointer-events: none;
   opacity: 0;
   transform: translateY(-12px);
-  transition: transform 0.35s ease, opacity 0.35s ease;
+  transition: transform 0.3s ease, opacity 0.3s ease;
 }
-
-.mobileMenuOpen {
-  pointer-events: auto;
-  opacity: 1;
-  transform: translateY(0);
-}
+.mobileMenuOpen { pointer-events: auto; opacity: 1; transform: translateY(0); }
 
 .closeBtn {
   position: absolute;
   top: clamp(1rem, 4vw, 2rem);
   right: clamp(1rem, 4vw, 2rem);
+  width: 46px;
+  height: 46px;
   font-size: 2rem;
-  color: var(--white);
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 50%;
-  cursor: pointer;
   line-height: 1;
-  transition: transform 0.2s ease, background 0.2s ease;
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.closeBtn:hover {
-  transform: rotate(90deg);
-  background: rgba(255, 199, 44, 0.15);
-}
-
-.mobileNavList {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: clamp(0.75rem, 3.2vh, 2rem);
-}
-
-.mobileNavLink {
-  font-family: var(--font-futura-heavy);
-  font-size: clamp(1.5rem, 5vw, 2rem);
-  color: var(--white);
-  letter-spacing: 0.06em;
-  transition: color 0.2s ease;
-  padding: 0.5rem 1rem;
-}
-
-.mobileNavLink:hover {
-  color: var(--yellow);
-}
-
-/* Active nav link */
-.navLinkActive {
-  color: var(--white);
-  background: rgba(255, 199, 44, 0.16);
-}
-
-/* Auth button — portal link */
-.authBtn {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.3rem 0.75rem 0.3rem 0.3rem;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-pill);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  transition: background 0.2s, border-color 0.2s;
-  color: var(--white);
-  font-family: var(--font-futura-heavy);
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.authBtn:hover {
-  background: rgba(255, 199, 44, 0.15);
-  border-color: rgba(255, 199, 44, 0.3);
-  color: var(--yellow);
-}
-
-.authAvatar {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1px solid rgba(255, 199, 44, 0.3);
-}
-
-.authAvatarFallback {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
+  color: var(--ink);
   background: var(--yellow);
-  color: var(--darkblue);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.55);
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.72rem;
-  font-family: var(--font-futura-heavy);
-  flex-shrink: 0;
+  transform: rotate(3deg);
+  transition: transform 0.15s ease;
 }
+.closeBtn:hover { transform: rotate(-4deg); }
 
-.authLabel {
-  font-size: 0.68rem;
+.mobileNavList { display: flex; flex-direction: column; align-items: stretch; gap: 0.7rem; width: min(360px, 100%); }
+.mobileNavLink {
+  display: block;
+  font-family: var(--font-soulmaze);
+  font-size: clamp(1.3rem, 5.4vw, 1.8rem);
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  background: var(--paper);
+  padding: 0.7rem 1.1rem;
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55);
+  transition: transform 0.15s ease, background 0.15s ease;
 }
+.mobileNavList li:nth-child(odd) .mobileNavLink { transform: rotate(-1.2deg); }
+.mobileNavList li:nth-child(even) .mobileNavLink { transform: rotate(1deg); }
+.mobileNavLink:hover, .mobileNavLink:focus-visible { background: var(--yellow); transform: rotate(0deg) translateX(4px); }
 
-/* Login button */
-/* Sits inside the already-dark nav pill, so it borrows .authBtn's light
-   glass tint (not --btn-primary-bg, which is that same dark charcoal —
-   using it here would make the button nearly disappear into its own
-   container instead of reading as a distinct thing to click). */
-/* Stand-in for the login/portal pill while the auth check is still in
-   flight — an empty gap there read as a missing button rather than "still
-   loading," especially on a slow connection where that check can take a
-   moment. Same footprint as the real buttons so nothing shifts once it
-   resolves. */
-.authSkeleton {
-  width: 96px;
-  height: 30px;
-  border-radius: var(--radius-pill);
-  background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.14) 50%, rgba(255,255,255,0.06) 75%);
-  background-size: 200% 100%;
-  animation: authSkeletonShimmer 1.4s ease-in-out infinite;
-  flex-shrink: 0;
-}
-
-@keyframes authSkeletonShimmer {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .authSkeleton { animation-duration: 3s; }
-}
-
-.loginBtn {
+.mobileAuthItem { margin-top: 0.6rem; }
+.mobilePortalBtn, .mobileLoginBtn {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.45rem 1rem;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: var(--white);
-  border-radius: var(--radius-pill);
-  font-family: var(--font-futura-heavy);
-  font-size: 0.68rem;
-  letter-spacing: 0.06em;
-  white-space: nowrap;
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s;
-  flex-shrink: 0;
-}
-
-.loginBtn:hover {
-  background: rgba(255, 199, 44, 0.15);
-  border-color: rgba(255, 199, 44, 0.3);
+  justify-content: center;
+  gap: 0.7rem;
+  font-family: var(--font-renegare);
+  font-size: 0.95rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--yellow);
-  transform: translateY(-2px);
+  background: var(--ink);
+  border: 3px solid var(--paper);
+  padding: 0.9rem 1.1rem;
+  transform: rotate(-1deg);
 }
 
-.loginBtnIcon {
-  display: inline-flex;
-  color: currentColor;
-}
-
-/* Mobile auth */
-.mobileAuthItem {
-  margin-top: 0.5rem;
-}
-
-.mobilePortalBtn {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-family: var(--font-futura-heavy);
-  font-size: clamp(1.3rem, 4vw, 1.75rem);
-  color: var(--yellow);
-  letter-spacing: 0.06em;
-  padding: 0.5rem 1rem;
-}
-
-.mobileLoginBtn {
-  display: inline-block;
-  font-family: var(--font-futura-heavy);
-  font-size: clamp(1.3rem, 4vw, 1.75rem);
-  color: var(--yellow);
-  letter-spacing: 0.06em;
-  padding: 0.5rem 1rem;
-}
-
-/* ── Breakpoints ──
-   Below 768px the pill stays a single unit (logo + hamburger together, same
-   as desktop) but shifts to the top-right corner instead of staying
-   centered — swap the centering left/right/margin for a plain right-anchor. */
 @media (max-width: 768px) {
-  .desktopNav {
-    display: none;
-  }
-  .mobileControls {
-    display: flex;
-  }
-  .mobileAuthFab {
-    display: flex;
-  }
-  /* Mobile header: hamburger circle on the left, portal on the right (its
-     own fixed control, see .mobileAuthFab), and the logo floating centered
-     between them with no pill/border/background of its own. The bar itself
-     is just an invisible full-width row — pointer-events none so the empty
-     space between the controls never swallows taps on the page beneath. */
+  .desktopNav { display: none; }
+  .mobileControls { display: flex; }
+  .mobileAuthFab { display: flex; }
+  /* Phone header: a menu sticker on the left, the portal sticker on the right, the logo centered between them. The bar itself is invisible and ignores taps in the gaps. */
   .navbar {
     left: 12px;
     right: 12px;
@@ -415,50 +189,12 @@
     background: none;
     border: none;
     box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    border-radius: 0;
     overflow: visible;
     pointer-events: none;
     justify-content: flex-start;
   }
   .navbar > * { pointer-events: auto; }
-  .logo {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-  }
-  .logoImg {
-    width: 46px;
-    filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.6));
-  }
-  .hamburger {
-    box-sizing: border-box;
-    width: 52px;
-    height: 52px;
-    padding: 17px 15px;
-    border-radius: 50%;
-    background: linear-gradient(180deg, rgba(22, 27, 40, 0.94), rgba(8, 11, 20, 0.97));
-    border: 1px solid rgba(255, 199, 44, 0.2);
-    box-shadow:
-      0 1px 0 rgba(255, 199, 44, 0.14) inset,
-      0 0 0 1px rgba(0, 0, 0, 0.35) inset,
-      0 20px 48px -20px rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(22px) saturate(130%);
-    -webkit-backdrop-filter: blur(22px) saturate(130%);
-  }
-}
-
-/* Logged-out mobile state spells out "PORTAL" instead of a bare person icon
-   (which read as ambiguous) — same 52px height as the circle, just widened
-   into a pill to fit the word. */
-.mobileAuthFabWide {
-  width: auto;
-  padding: 0 1.1rem;
-  border-radius: var(--radius-pill);
-  font-family: var(--font-futura-heavy);
-  font-size: 0.78rem;
-  letter-spacing: 0.06em;
-  white-space: nowrap;
+  .logo { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(-2deg); background: var(--paper); border: 3px solid var(--ink); box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.55); padding: 0.15rem 0.3rem; }
+  .logoImg { width: 38px; }
+  .hamburger { box-sizing: border-box; width: 52px; height: 52px; padding: 17px 15px; background: var(--paper); border: 3px solid var(--ink); box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.55); transform: rotate(-2deg); }
 }

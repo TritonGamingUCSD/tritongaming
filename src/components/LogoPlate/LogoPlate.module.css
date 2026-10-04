@@ -1,0 +1,5 @@
+.plate { display: inline-grid; place-items: center; padding: 0.7rem 0.9rem; background: var(--paper); border: 3px solid var(--ink); box-shadow: var(--hard-shadow-sm); transform: rotate(-1.2deg); }
+.plate:nth-child(even) { transform: rotate(1.4deg); }
+.dark { background: var(--ink); border-color: var(--paper); }
+.plate img { display: block; max-width: 100%; object-fit: contain; }
+.plate img:not([class]) { height: auto; }

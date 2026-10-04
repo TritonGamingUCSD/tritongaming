@@ -1,6 +1,5 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { Award } from 'lucide-react';
 import styles from './EventCard.module.css';
 import type { Event } from '@/types';
 import { formatEventDateRange, formatEventTimeRange } from '@/lib/timezone';
@@ -8,13 +7,13 @@ import { formatEventDateRange, formatEventTimeRange } from '@/lib/timezone';
 // `compact` = short horizontal card (flyer thumbnail beside the details,
 // no description) for the homepage carousel; default is the tall card used
 // on the events listing.
-export default function EventCard({ event, compact = false }: { event: Event; compact?: boolean }) {
+export default function EventCard({ event, compact = false, outlined = false }: { event: Event; compact?: boolean; outlined?: boolean }) {
   const dateStr = formatEventDateRange(event.start_date, event.end_date);
   const timeStr = formatEventTimeRange(event.start_date, event.end_date);
   const isExternal = event.flyer_url?.startsWith('http');
 
   return (
-    <article className={`${styles.card} ${compact ? styles.compact : ''}`}>
+    <article className={`${styles.card} ${compact ? styles.compact : ''} ${outlined ? styles.outlined : ''}`}>
       <div className={styles.imgWrapper}>
         {isExternal ? (
           <>
@@ -52,7 +51,7 @@ export default function EventCard({ event, compact = false }: { event: Event; co
         </p>
         <p className={styles.location}>{event.location}</p>
         {event.points_value > 0 && (
-          <span className={styles.pointsBadge}><Award size={11} strokeWidth={1.75} aria-hidden="true" /> Earn {event.points_value} pts</span>
+          <span className={styles.pointsBadge}>Earn {event.points_value} pts</span>
         )}
         <p className={styles.desc}>
           {event.content.length > 280 ? `${event.content.slice(0, 280)}…` : event.content}

@@ -2,9 +2,12 @@ import type { Metadata } from 'next';
 import { resolveSections } from '@/lib/pageLayout';
 import { Fragment } from 'react';
 import { Building2, Trophy, RadioTower, Handshake } from 'lucide-react';
-import LogoGrid from '@/components/LogoGrid/LogoGrid';
+import LogoPlate from '@/components/LogoPlate/LogoPlate';
+import { ZineBand, PageHero, BandHeader } from '@/components/ZineBand/ZineBand';
 import { getContentBlocks } from '@/lib/content';
 import type { LogoItem } from '@/types';
+import PhotoStrip from '@/components/PhotoStrip/PhotoStrip';
+import { SITE_PHOTOS } from '@/lib/sitePhotos';
 import styles from './sponsors.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -75,88 +78,61 @@ export default async function SponsorsPage() {
   }));
 
   const sections: Record<string, React.ReactNode> = {
-    mission: (
-      <>
-{/* Mission bar */}
-      <div className={styles.missionBar}>
-        <p>{content.mission_text as string}</p>
-      </div>
-      </>
-    ),
+    mission: content.mission_text ? (
+      <ZineBand tone="navy" edge={false} label="Mission">
+        <p className={styles.mission}>{content.mission_text as string}</p>
+      </ZineBand>
+    ) : null,
     sponsors: (
-      <>
-{/* Current sponsors */}
-      <section className={styles.sponsorSection}>
-        <div className={styles.sectionHeader}>
-          <p className={styles.sectionLabel}>{(content.sponsors_label as string) || 'CURRENT PARTNERS'}</p>
-          <h2 className={styles.sectionTitle}>{(content.sponsors_title as string) || 'Our Sponsors'}</h2>
-        </div>
+      <ZineBand tone="ink" label="Current sponsors">
+        <BandHeader label={(content.sponsors_label as string) || 'Current partners'} title={(content.sponsors_title as string) || 'Our sponsors'} />
         {logos.length > 0 ? (
-          <div className={styles.grid}>
-            <LogoGrid logos={logos} />
-          </div>
+          <ul className={styles.logoWall}>
+            {logos.map((l, i) => {
+              const plate = <LogoPlate src={l.logo.startsWith('/') || l.logo.startsWith('http') ? l.logo : `/${l.logo}`} alt={l.name} className={`${styles.plate} ${styles[`size_${l.size}`]}`} imgClassName={styles.logoImg} />;
+              return (
+                <li key={`${l.name}-${i}`}>
+                  {l.link ? <a href={l.link} target="_blank" rel="noopener noreferrer nofollow" aria-label={l.name} className={styles.logoLink}>{plate}</a> : plate}
+                </li>
+              );
+            })}
+          </ul>
         ) : (
           <p className={styles.noSponsors}>{(content.sponsors_empty as string) || 'Sponsor announcements coming soon.'}</p>
         )}
-      </section>
-      </>
+      </ZineBand>
     ),
     offer: (
-      <>
-{/* What we offer */}
-      <section className={styles.offerSection}>
-        <div className={styles.offerBg} aria-hidden="true" />
-        <div className={styles.offerInner}>
-          <div className={styles.sectionHeader}>
-            <p className={styles.sectionLabelLight}>{content.offer_label as string}</p>
-            <h2 className={styles.sectionTitleLight}>{content.offer_title as string}</h2>
-            <p className={styles.sectionSub}>{content.offer_subtitle as string}</p>
-          </div>
-          <div className={styles.offerGrid}>
-            {offerings.map((o) => (
-              <div key={o.title} className={styles.offerCard}>
-                <span className={styles.offerIcon}>{o.icon}</span>
-                <h3 className={styles.offerTitle}>{o.title}</h3>
-                <p className={styles.offerBody}>{o.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-      </>
+      <ZineBand tone="navy" label="What we offer">
+        <BandHeader label={content.offer_label as string} title={content.offer_title as string} sub={content.offer_subtitle as string} />
+        <ul className={styles.offerGrid}>
+          {offerings.map((o, i) => (
+            <li key={o.title} className={`${styles.offerCard} ${i % 2 ? styles.tiltR : styles.tiltL}`}>
+              <span className={styles.offerIcon}>{o.icon}</span>
+              <h3 className={styles.offerTitle}>{o.title}</h3>
+              <p className={styles.offerBody}>{o.body}</p>
+            </li>
+          ))}
+        </ul>
+      </ZineBand>
     ),
     cta: (
-      <>
-{/* Contact CTA */}
-      <section className={styles.ctaSection}>
-        <p className={styles.ctaHeading}>{content.cta_heading as string}</p>
-        <p className={styles.ctaSub}>{content.cta_sub as string}</p>
-        <a
-          href={`mailto:${email}`}
-          className={styles.ctaEmail}
-        >
-          {email}
-        </a>
-      </section>
-      </>
+      <ZineBand tone="deep" label="Contact">
+        <div className={styles.cta}>
+          <h2 className={styles.ctaHeading}>{content.cta_heading as string}</h2>
+          <p className={styles.ctaSub}>{content.cta_sub as string}</p>
+          <a href={`mailto:${email}`} className={styles.ctaEmail}>{email}</a>
+        </div>
+      </ZineBand>
     ),
   };
   const order = resolveSections('sponsors', blocks['layout.sponsors']?.sections);
 
   return (
     <div className={styles.page}>
-
-      {/* Hero */}
-      <div className={styles.heroBanner}>
-        <div className={styles.heroBg} aria-hidden="true" />
-        <div className={styles.heroContent}>
-          <p className={styles.heroLabel}>{content.hero_label as string}</p>
-          <h1 className={styles.heroTitle}>{content.hero_title as string}</h1>
-          <p className={styles.heroSub}>{content.hero_subtitle as string}</p>
-        </div>
-      </div>
-
+      <PageHero label={content.hero_label as string} title={content.hero_title as string} sub={content.hero_subtitle as string} />
       {order.map((id) => <Fragment key={id}>{sections[id]}</Fragment>)}
+      <PhotoStrip tone="ink" caption={(content.strip_caption as string) || 'This is what your brand sits next to.'} photos={[SITE_PHOTOS.events, SITE_PHOTOS.inside, SITE_PHOTOS.stage]} />
     </div>
   );
 }

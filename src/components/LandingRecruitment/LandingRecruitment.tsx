@@ -1,5 +1,3 @@
-import Image from 'next/image';
-import { ClipboardList, Ticket } from 'lucide-react';
 import { Reveal, RevealGroup, RevealItem } from '@/components/Reveal/Reveal';
 import styles from './LandingRecruitment.module.css';
 
@@ -31,7 +29,7 @@ export default function LandingRecruitment({ content = {} }: { content?: Recruit
   const pathways = [
     {
       key: 'officer',
-      icon: <ClipboardList size={28} strokeWidth={1.5} aria-hidden="true" />,
+      note: 'apply!',
       title: content.officer_title,
       body: content.officer_body,
       cta: content.officer_cta,
@@ -39,7 +37,7 @@ export default function LandingRecruitment({ content = {} }: { content?: Recruit
     },
     {
       key: 'discord',
-      icon: <Image src="/logos/discord.svg" alt="" width={28} height={28} unoptimized />,
+      note: 'say hi',
       title: content.discord_title,
       body: content.discord_body,
       cta: content.discord_cta,
@@ -47,7 +45,7 @@ export default function LandingRecruitment({ content = {} }: { content?: Recruit
     },
     {
       key: 'social',
-      icon: <Image src="/logos/instagram.svg" alt="" width={28} height={28} unoptimized />,
+      note: 'follow along',
       title: content.social_title,
       body: content.social_body,
       cta: content.social_cta,
@@ -55,7 +53,7 @@ export default function LandingRecruitment({ content = {} }: { content?: Recruit
     },
     {
       key: 'portal',
-      icon: <Ticket size={28} strokeWidth={1.5} aria-hidden="true" />,
+      note: 'your stuff',
       title: content.portal_title,
       body: content.portal_body,
       cta: content.portal_cta,
@@ -74,19 +72,10 @@ export default function LandingRecruitment({ content = {} }: { content?: Recruit
 
   return (
     <section className={styles.section} aria-label="Join Triton Gaming">
-      <div className={styles.bgWrapper} aria-hidden="true">
-        <span className={styles.bgText}>TRITON</span>
-        <span className={styles.bgText2}>GAMING</span>
-      </div>
-      <div className={styles.aurora} aria-hidden="true">
-        <div className={styles.auroraBlob1} />
-        <div className={styles.auroraBlob2} />
-      </div>
-
       <Reveal variant="fadeUp">
         <div className={styles.header}>
           <p className={styles.sectionLabel}>JOIN THE TEAM</p>
-          <h2 className={styles.sectionTitle}>Be Part of Something Bigger</h2>
+          <h2 className={styles.sectionTitle}>Be Part of <span>Something Bigger</span></h2>
           <p className={styles.sectionSub}>
             {countWord} way{pathways.length === 1 ? '' : 's'} to get involved with Triton Gaming — find the one that fits you.
           </p>
@@ -101,8 +90,8 @@ export default function LandingRecruitment({ content = {} }: { content?: Recruit
                   just styling now, not a second nested anchor (which isn't
                   valid HTML anyway); this invisible link covers the card
                   and points to the same href. */}
-              <div className={styles.pathway}>
-                <div className={styles.pathIcon}>{p.icon}</div>
+              <div className={styles.pathway} data-pathway={p.key}>
+                <span className={styles.note}>{p.note}</span>
                 <h3 className={styles.pathTitle}>{p.title}</h3>
                 {p.body && <p className={styles.pathBody}>{p.body}</p>}
                 {p.cta && p.href && (

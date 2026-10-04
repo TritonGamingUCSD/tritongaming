@@ -6,7 +6,6 @@ import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ExternalLink } from 'lucide-react';
-import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
 import SocialEmbedsField from '@/components/SocialEmbedsField/SocialEmbedsField';
 import PhotoAlbumsField from '@/components/PhotoAlbumsField/PhotoAlbumsField';
@@ -14,6 +13,10 @@ import { buildCheckinFormUrl } from '@/lib/checkinForm';
 import { eventDayCount, pacificDatetimeLocalToUTC } from '@/lib/timezone';
 import type { SocialEmbed, PhotoAlbumEntry, AppRole, ScheduleItem, EventSponsor } from '@/types/database';
 import EventExtrasEditor from './EventExtrasEditor';
+import PageBlocksEditor from '@/components/PageBlocksEditor/PageBlocksEditor';
+import type { PageBlock } from '@/lib/pageBlocks';
+import EventThemePanel from './EventThemePanel';
+import { EMPTY_THEME, type EventTheme } from '@/lib/eventTheme';
 import CheckinFormFieldsEditor, { EMPTY_CHECKIN_FORM_CONFIG, type CheckinFormConfigValue } from './CheckinFormFieldsEditor';
 import LivePreview from '@/components/portal/LivePreview';
 import styles from './new/newevent.module.css';
@@ -34,7 +37,6 @@ export interface EventFormValues {
   start_date: string;
   end_date: string;
   flyer_url: string;
-  max_capacity: string;
   ticket_price: string;
   points_value: string;
   is_online: boolean;
@@ -43,6 +45,8 @@ export interface EventFormValues {
   photo_albums: PhotoAlbumEntry[];
   post_event_info: string;
   social_embeds: SocialEmbed[];
+  theme: EventTheme;
+  page_blocks: PageBlock[];
   division_id: string;
   requires_checkin_form: boolean;
   checkin_food_item: string;
@@ -82,7 +86,6 @@ export const EMPTY_EVENT_FORM: EventFormValues = {
   start_date: '',
   end_date: '',
   flyer_url: '',
-  max_capacity: '',
   ticket_price: '0',
   points_value: '10',
   is_online: false,
@@ -91,6 +94,8 @@ export const EMPTY_EVENT_FORM: EventFormValues = {
   photo_albums: [],
   post_event_info: '',
   social_embeds: [],
+  theme: EMPTY_THEME,
+  page_blocks: [],
   division_id: '',
   requires_checkin_form: false,
   checkin_food_item: '',
@@ -99,9 +104,7 @@ export const EMPTY_EVENT_FORM: EventFormValues = {
   checkin_form_override: null,
 };
 
-// Markdown, not raw HTML — see MarkdownContent for why. "Write"/"Preview"
-// tabs so an admin can check formatting without saving and reloading the
-// public page in another tab.
+// Markdown, not raw HTML — see MarkdownContent for why. There is no separate preview here: the live preview beside the form shows the real page.
 function MarkdownField({
   label,
   hint,
@@ -117,34 +120,18 @@ function MarkdownField({
   rows: number;
   placeholder?: string;
 }) {
-  const [tab, setTab] = useState<'write' | 'preview'>('write');
-
   return (
     <div className={styles.field}>
       <div className={styles.mdFieldHeader}>
         <span className={styles.label}>{label}</span>
-        <div className={styles.mdTabs}>
-          <button type="button" className={`${styles.mdTab} ${tab === 'write' ? styles.mdTabActive : ''}`} onClick={() => setTab('write')}>
-            Write
-          </button>
-          <button type="button" className={`${styles.mdTab} ${tab === 'preview' ? styles.mdTabActive : ''}`} onClick={() => setTab('preview')}>
-            Preview
-          </button>
-        </div>
       </div>
-      {tab === 'write' ? (
-        <textarea
-          className={`${styles.input} ${styles.textarea}`}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          rows={rows}
-          placeholder={placeholder}
-        />
-      ) : (
-        <div className={styles.mdPreview} style={{ minHeight: `${rows * 1.6}em` }}>
-          {value.trim() ? <MarkdownContent>{value}</MarkdownContent> : <span className={styles.mdPreviewEmpty}>Nothing to preview yet.</span>}
-        </div>
-      )}
+      <textarea
+        className={`${styles.input} ${styles.textarea}`}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={rows}
+        placeholder={placeholder}
+      />
       {hint && <span className={styles.hint}>{hint}</span>}
     </div>
   );
@@ -375,6 +362,8 @@ export default function EventForm({
           onSponsors={(v) => setForm((f) => ({ ...f, sponsors: v }))}
         />
 
+        <EventThemePanel theme={form.theme} onChange={(t) => setForm((f) => ({ ...f, theme: t }))} />
+
         <label className={styles.checkbox}>
           <input type="checkbox" checked={form.is_online} onChange={(e) => set('is_online', e.target.checked)} />
           <span>This event is online</span>
@@ -408,6 +397,8 @@ export default function EventForm({
           hint={<>The full write-up shown on this event&apos;s own page (what &quot;Learn More&quot; links to). Markdown supported — **bold**, _italic_, [links](https://…), lists, headings.</>}
         />
 
+        <PageBlocksEditor blocks={form.page_blocks} onChange={(b) => setForm((f) => ({ ...f, page_blocks: b }))} />
+
         <ImageUploadField
           label="Flyer Image"
           value={form.flyer_url}
@@ -422,11 +413,6 @@ export default function EventForm({
           onChange={(v) => setForm((f) => ({ ...f, social_embeds: v }))}
           hint="Shown on this event's own page. Instagram, X, TikTok, and YouTube embed live; Discord links show as a card."
         />
-
-        <label className={styles.field}>
-          <span className={styles.label}>Max Capacity</span>
-          <NumberInput className={styles.input} min="1" value={form.max_capacity} onChange={(e) => set('max_capacity', e.target.value)} placeholder="Unlimited" />
-        </label>
 
         <label className={styles.field}>
           <span className={styles.label}>Points for Checking In</span>

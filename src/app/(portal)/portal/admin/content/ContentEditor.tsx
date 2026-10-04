@@ -11,7 +11,6 @@ import { PAGE_SECTIONS, resolveSections, type PageLayout } from '@/lib/pageLayou
 import { usePortalParams, useLiveParams } from '@/lib/usePortalParams';
 import SectionTabs from '@/components/ui/SectionTabs';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
-import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import { useDragReorder } from '@/lib/useDragReorder';
 import styles from './ContentEditor.module.css';
 import IconButton from '@/components/ui/IconButton';
@@ -206,14 +205,18 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, las
     measure();
     return () => ro.disconnect();
   }, [previewOpen, !!activeBlock, full]);
-  // Zoomed: real size, anchored to the bottom-right corner of the window, where the announcement banner sits (too small to read when the whole page is shrunk to fit).
+  // Zoomed (the default on desktop): the page is shown at a readable width, in a window just tall enough for one section, and the preview
+  // jumps to the section being edited (see PreviewBridge). The zoom button switches to the whole page fitted to the panel, and back.
   const [zoomPick, setZoomPick] = useState<boolean | null>(null);
-  const zoomed = !full && device === 'desktop' && (zoomPick ?? activeBlock?.key === 'announcement');
-  const frameW = device === 'desktop' ? 1920 : 390;
-  const frameH = device === 'desktop' ? 1080 : 844;
+  const zoomed = !full && device === 'desktop' && (zoomPick ?? true);
+  const ZOOM_W = 1100;
+  const ZOOM_H = 520;
+  const zoomScale = Math.min(1, boxWidth / ZOOM_W) || 1;
+  const frameW = device === 'desktop' ? (zoomed ? ZOOM_W : 1920) : 390;
+  const frameH = device === 'desktop' ? (zoomed ? Math.round(ZOOM_H / zoomScale) : 1080) : 844;
   // The preview area is as tall as the desktop page fitted to the panel; the phone is shrunk to fit that same height instead of towering over it.
   const areaH = 1080 * Math.min(1, boxWidth / 1920);
-  const scale = zoomed ? 1 : full ? Math.min(boxWidth / frameW, boxHeight / frameH) : device === 'phone' ? Math.min(1, areaH / frameH, boxWidth / frameW) : Math.min(1, boxWidth / frameW);
+  const scale = zoomed ? zoomScale : full ? Math.min(boxWidth / frameW, boxHeight / frameH) : device === 'phone' ? Math.min(1, areaH / frameH, boxWidth / frameW) : Math.min(1, boxWidth / frameW);
 
   function selectCategory(c: string) {
     setCategory(c); setQuery(''); setActiveKey(null); setParams({ tab: c, subtab: null, block: null });
@@ -327,13 +330,13 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, las
                 <div className={styles.previewTools}>
                   <button type="button" className={`${styles.previewTool} ${device === 'desktop' ? styles.previewToolOn : ''}`} onClick={() => setDevice('desktop')} aria-label="Desktop width" title="Desktop"><Monitor size={14} /></button>
                   <button type="button" className={`${styles.previewTool} ${device === 'phone' ? styles.previewToolOn : ''}`} onClick={() => setDevice('phone')} aria-label="Phone width" title="Phone"><Smartphone size={14} /></button>
-                  {!full && <button type="button" className={`${styles.previewTool} ${zoomed ? styles.previewToolOn : ''}`} onClick={() => setZoomPick(!zoomed)} aria-pressed={zoomed} aria-label="Zoom to the bottom-right corner (announcement banner)" title={zoomed ? 'Show the whole page' : 'Zoom in on the bottom-right corner'}><ZoomIn size={14} /></button>}
+                  {!full && <button type="button" className={`${styles.previewTool} ${zoomed ? styles.previewToolOn : ''}`} onClick={() => setZoomPick(!zoomed)} aria-pressed={zoomed} aria-label="Zoom in on the section being edited" title={zoomed ? 'Show the whole page' : 'Zoom in on the section being edited'}><ZoomIn size={14} /></button>}
                   <button type="button" className={styles.previewTool} onClick={() => setFull((f) => !f)} aria-label={full ? 'Exit full screen' : 'Full screen'} title={full ? 'Exit full screen (Esc)' : 'Full screen'}>{full ? <Minimize2 size={14} /> : <Maximize2 size={14} />}</button>
                   {!full && <button type="button" className={`${styles.previewTool} ${styles.previewHideBtn}`} onClick={() => setPreviewOpen(false)} aria-label="Hide preview" title="Hide preview"><PanelRightClose size={14} /></button>}
                 </div>
               </div>
-              <div ref={boxRef} className={`${styles.previewBox} ${device === 'phone' && !full ? styles.previewBoxPhone : ''}`} style={full ? undefined : zoomed ? { height: 360 } : { height: device === 'phone' ? areaH : frameH * scale }}>
-                <div className={styles.previewScaler} style={zoomed ? { width: frameW, height: frameH, position: 'absolute', right: 0, bottom: 0 } : { width: frameW * scale, height: frameH * scale }}>
+              <div ref={boxRef} className={`${styles.previewBox} ${device === 'phone' && !full ? styles.previewBoxPhone : ''}`} style={full ? undefined : zoomed ? { height: ZOOM_H } : { height: device === 'phone' ? areaH : frameH * scale }}>
+                <div className={styles.previewScaler} style={{ width: frameW * scale, height: frameH * scale }}>
                   <iframe
                     ref={frameRef}
                     key={previewPage}
@@ -609,7 +612,7 @@ type ImgFieldDef = { key: string; label: string; type?: string; optional?: boole
 // gets sensible labels rather than raw keys.
 const DEFAULT_IMAGE_FIELDS: ImgFieldDef[] = [
   { key: 'name', label: 'Name', type: 'text' },
-  { key: 'logo_url', label: 'Logo URL', type: 'url' },
+  { key: 'logo_url', label: 'Logo', type: 'image' },
   { key: 'website_url', label: 'Website URL', type: 'url' },
   { key: 'tier', label: 'Tier (e.g. Gold)', type: 'text' },
 ];
@@ -637,7 +640,7 @@ function ImageListField({ value, onChange, labelEl, fields, addLabel = '+ Add It
             <span className={styles.dragHandle} {...dragHandleProps(i)} aria-label="Drag to reorder">
               <GripVertical size={14} strokeWidth={1.75} aria-hidden="true" />
             </span>
-            <div className={styles.imageCardLeft}>
+            {!fields.some((f) => f.type === 'image') && <div className={styles.imageCardLeft}>
               {item.logo_url ? (
                 <Image src={item.logo_url} alt={item.name||''} width={48} height={48}
                   className={styles.imageLogo} unoptimized />
@@ -646,9 +649,21 @@ function ImageListField({ value, onChange, labelEl, fields, addLabel = '+ Add It
                   {(item.name || '?')[0].toUpperCase()}
                 </div>
               )}
-            </div>
+            </div>}
             <div className={styles.imageCardFields}>
-              {fields.map(({ key: k, label: lbl, type: t, optional }) => (
+              {fields.map(({ key: k, label: lbl, type: t, optional }) => t === 'image' ? (
+                // Logos are uploaded (compressed and cropped like every other upload) rather than pasted as a link.
+                <div key={k} className={styles.personField}>
+                  <ImageUploadField
+                    label={optional ? `${lbl} (optional)` : lbl}
+                    value={item[k] ?? ''}
+                    onChange={(url) => { const n = [...items]; n[i] = { ...n[i], [k]: url }; onChange(n); }}
+                    bucket="site-content"
+                    shape="logo"
+                    maxDimension={600}
+                  />
+                </div>
+              ) : (
                 <label key={k} className={styles.personField}>
                   <span className={styles.personFieldLabel}>{lbl}{optional && <span className={styles.optionalTag}>optional</span>}</span>
                   <input
@@ -676,14 +691,10 @@ function ImageListField({ value, onChange, labelEl, fields, addLabel = '+ Add It
   );
 }
 
-// Same Write/Preview pattern as EventForm's MarkdownField — a plain
-// textarea gives no way to check formatting without saving and reloading
-// the live page in another tab.
+// Markdown text box. No separate preview: the live preview beside the editor shows the real page.
 function MarkdownField({ label, value, onChange, optional, placeholder }: {
   label: string; value: string; onChange: (val: string) => void; optional?: boolean; placeholder?: string;
 }) {
-  const [tab, setTab] = useState<'write' | 'preview'>('write');
-
   return (
     <div className={styles.fieldGroup}>
       <div className={styles.mdFieldHeader}>
@@ -691,24 +702,14 @@ function MarkdownField({ label, value, onChange, optional, placeholder }: {
           {label}
           {optional && <span className={styles.optionalTag}>optional</span>}
         </div>
-        <div className={styles.mdTabs}>
-          <button type="button" className={`${styles.mdTab} ${tab === 'write' ? styles.mdTabActive : ''}`} onClick={() => setTab('write')}>Write</button>
-          <button type="button" className={`${styles.mdTab} ${tab === 'preview' ? styles.mdTabActive : ''}`} onClick={() => setTab('preview')}>Preview</button>
-        </div>
       </div>
-      {tab === 'write' ? (
-        <textarea
-          className={`${styles.fieldInput} ${styles.fieldTextarea}`}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          rows={6}
-          placeholder={placeholder}
-        />
-      ) : (
-        <div className={styles.mdPreview}>
-          {value.trim() ? <MarkdownContent>{value}</MarkdownContent> : <span className={styles.mdPreviewEmpty}>Nothing to preview yet.</span>}
-        </div>
-      )}
+      <textarea
+        className={`${styles.fieldInput} ${styles.fieldTextarea}`}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={6}
+        placeholder={placeholder}
+      />
     </div>
   );
 }

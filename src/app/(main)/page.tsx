@@ -31,7 +31,7 @@ const ORGANIZATION_JSON_LD = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
   name: 'Triton Gaming',
-  alternateName: "Triton Gaming at UC San Diego",
+  description: 'Gaming Org at UC San Diego',
   url: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
   logo: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'}/logos/tg_logo.png`,
   sameAs: [
@@ -41,7 +41,7 @@ const ORGANIZATION_JSON_LD = {
 
 export default async function HomePage() {
   const [upcomingEvents, content] = await Promise.all([
-    getUpcomingEvents(6),
+    getUpcomingEvents(1),
     getContentBlocks(['homepage.hero', 'homepage.about', 'homepage.stats', 'homepage.events', 'homepage.recruitment', 'layout.homepage']),
   ]);
 

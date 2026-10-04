@@ -7,10 +7,13 @@ import { getEventBySlugOrId, getGoingCount, getAllEvents } from '@/lib/events';
 import { isCheckinWindowOpen } from '@/lib/checkinWindow';
 import { getAlbumPreview } from '@/lib/googlePhotosAlbum';
 import { markdownToDescription } from '@/lib/markdown';
+import PageBlocks from '@/components/PageBlocks/PageBlocks';
+import LogoPlate from '@/components/LogoPlate/LogoPlate';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import EventSocialEmbeds from '@/components/EventSocialEmbeds/EventSocialEmbeds';
 import AddToCalendarButton from '@/components/AddToCalendarButton/AddToCalendarButton';
 import { formatEventDateRange, formatEventTimeRange, eventDayCount } from '@/lib/timezone';
+import { themeVars, themeFontsHref } from '@/lib/eventTheme';
 import styles from './event-detail.module.css';
 
 // Cached page (data comes from the tagged caches in lib/events.ts, refreshed when an event is saved).
@@ -106,54 +109,122 @@ export default async function EventDetailPage({ params }: Params) {
     description: event.content || undefined,
     organizer: { '@type': 'Organization', name: 'Triton Gaming', url: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000' },
   };
+  const theme = event.theme;
+  const fontsHref = themeFontsHref(theme);
+  // The poster is whatever picture the event has, shown at its own shape (portrait posters stay portrait): the theme's key art first, else the flyer.
+  const posterUrl = theme?.key_art_url || (isExternalFlyer ? event.flyer_url : '');
+  // Stickers stay on the right edge and the bottom so they never sit on the title or the buttons.
+  const stickerSpots = [
+    { top: '5%', right: '2%', rot: 9 }, { bottom: '4%', right: '3%', rot: -8 }, { top: '42%', right: '1%', rot: -14 }, { bottom: '3%', right: '26%', rot: 6 },
+    { top: '3%', right: '30%', rot: -7 }, { bottom: '2%', right: '45%', rot: 12 }, { top: '60%', right: '2%', rot: 11 }, { top: '2%', right: '14%', rot: -5 },
+  ];
+
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} style={themeVars(theme) as React.CSSProperties}>
       {/* eslint-disable-next-line react/no-danger -- server-built object from our own event data, not user input rendered raw */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(eventJsonLd) }} />
-      <div className={styles.hero}>
-        {event.flyer_url && isExternalFlyer ? (
-          <>
-            {/* Blurred, cropped copy fills the hero band behind the real
-                flyer — same treatment as the event cards, so the flyer
-                shows in full (uncropped) instead of getting hard-cut to
-                fill a fixed-aspect box. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={event.flyer_url} alt="" aria-hidden="true" className={styles.heroBackdrop} />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={event.flyer_url} alt={event.full_name} className={styles.heroImg} />
-          </>
+      {fontsHref && <link rel="stylesheet" href={fontsHref} />}
+      {theme?.pattern_url && <div className={styles.pattern} style={{ backgroundImage: `url(${theme.pattern_url})` }} aria-hidden="true" />}
+
+      <header className={styles.hero}>
+        {posterUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={posterUrl} alt="" aria-hidden="true" className={styles.heroBackdrop} />
         ) : (
-          <Image src="/images/what_is_triton_gaming_justinlu.jpg" alt={event.full_name} fill sizes="100vw" style={{ objectFit: 'cover' }} />
+          <Image src="/images/what_is_triton_gaming_justinlu.jpg" alt="" aria-hidden="true" fill sizes="100vw" className={styles.heroBackdrop} />
         )}
-        <div className={styles.heroOverlay} />
-      </div>
+        <div className={styles.heroShade} aria-hidden="true" />
+        {theme?.stickers.map((u, i) => {
+          const sp = stickerSpots[i % stickerSpots.length];
+          const { rot, ...pos } = sp;
+          // eslint-disable-next-line @next/next/no-img-element
+          return <img key={u + i} src={u} alt="" aria-hidden="true" className={styles.sticker} style={{ ...pos, transform: `rotate(${rot}deg)` }} loading="lazy" />;
+        })}
+
+        <div className={`${styles.heroInner} ${posterUrl ? '' : styles.noPoster}`}>
+          <div className={styles.heroCopy}>
+            <Link href="/events" className={styles.back}>← All events</Link>
+            {isPast && <span className={styles.pastBadge}>Past event</span>}
+            {theme?.logo_url ? (
+              <h1 className={styles.titleLogo}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={theme.logo_url} alt={event.full_name} />
+              </h1>
+            ) : (
+              <h1 className={styles.title}>{event.full_name}</h1>
+            )}
+            {event.content && <p className={styles.summary}>{event.content}</p>}
+
+            {!isPast && (
+              <div className={styles.ctaRow}>
+                <a href="/portal?section=tickets" className={styles.ticketBtn}>
+                  <span className={styles.stubLeft}><Ticket size={20} strokeWidth={1.75} aria-hidden="true" /></span>
+                  <span className={styles.stubRight}>
+                    {event.audience === 'ucsd_only'
+                      ? 'UCSD students: get ticket'
+                      : event.ticket_price > 0
+                      ? `Get ticket · $${event.ticket_price}`
+                      : 'Get ticket · free'}
+                    {event.audience !== 'ucsd_only' && event.ticket_price > 0 && <small>free for UCSD students</small>}
+                  </span>
+                </a>
+                <AddToCalendarButton eventId={event._id} className={styles.calBtn} />
+              </div>
+            )}
+            {!isPast && event.points_value > 0 && (
+              <p className={styles.pointsNote}><Award size={15} strokeWidth={1.75} aria-hidden="true" /> Check in to earn {event.points_value} reward points</p>
+            )}
+          </div>
+
+          {posterUrl && (
+            <figure className={styles.poster}>
+              <span className={styles.tape} aria-hidden="true" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={posterUrl} alt={`${event.full_name} poster`} />
+            </figure>
+          )}
+        </div>
+      </header>
 
       <div className={styles.body}>
-        <Link href="/events" className={styles.back}>← All Events</Link>
-
-        {isPast && <span className={styles.pastBadge}>Past Event</span>}
-
-        <h1 className={styles.title}>{event.full_name}</h1>
-
-        {event.content && <p className={styles.summary}>{event.content}</p>}
-
-        {!isPast && (
-          <div className={styles.ctaRow}>
-            <a href="/portal?section=tickets" className={styles.ticketBtn}>
-              <Ticket size={18} strokeWidth={1.5} aria-hidden="true" />
-              {event.audience === 'ucsd_only'
-                ? 'UCSD Students — Get Ticket'
-                : event.ticket_price > 0
-                ? `Get Ticket — $${event.ticket_price} (free for UCSD)`
-                : 'Get Ticket — Free'}
-            </a>
-            <AddToCalendarButton eventId={event._id} />
-          </div>
-        )}
-
-        {!isPast && event.points_value > 0 && (
-          <p className={styles.pointsNote}><Award size={15} strokeWidth={1.75} aria-hidden="true" /> Check in at this event to earn {event.points_value} reward points</p>
+        {hasPostEventContent && (
+          <section className={`${styles.section} ${styles.recap}`} aria-label="Event recap">
+            <div className={styles.recapHead}>
+              <span className={styles.recapSticker}>It&apos;s a wrap</span>
+              <h2 className={styles.recapTitle}>Relive the day</h2>
+              <p className={styles.recapSub}>Photos and notes from {event.full_name}.</p>
+            </div>
+            {event.photo_albums.length > 0 && (
+              <div className={styles.albumGrid}>
+                {event.photo_albums.map((album, i) => {
+                  const preview = albumPreviews[i];
+                  return preview?.image ? (
+                    <a key={`${album.url}-${i}`} href={album.url} target="_blank" rel="noopener noreferrer" className={styles.albumCard}>
+                      {/* Google's own cover collage for the album, not hosted by us, so a plain <img>. */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={preview.image} alt={`Cover photo for ${album.title}`} className={styles.albumCardImg} />
+                      <span className={styles.albumCardLabel}>
+                        <Camera size={15} strokeWidth={1.5} aria-hidden="true" />
+                        {album.title}
+                        <span className={styles.albumOpen} aria-hidden="true">open album →</span>
+                      </span>
+                    </a>
+                  ) : (
+                    <a key={`${album.url}-${i}`} href={album.url} target="_blank" rel="noopener noreferrer" className={styles.photoLink}>
+                      <Camera size={15} strokeWidth={1.5} aria-hidden="true" /> {album.title} <span aria-hidden="true">→</span>
+                    </a>
+                  );
+                })}
+              </div>
+            )}
+            {event.post_event_info && (
+              <div className={styles.note}>
+                <span className={styles.noteLabel}>A note from the team</span>
+                <div className={styles.paper}><MarkdownContent>{event.post_event_info}</MarkdownContent></div>
+              </div>
+            )}
+          </section>
         )}
 
         <div className={styles.facts}>
@@ -190,9 +261,11 @@ export default async function EventDetailPage({ params }: Params) {
         {event.details && (
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Event Details</h2>
-            <MarkdownContent>{event.details}</MarkdownContent>
+            <div className={styles.paper}><MarkdownContent>{event.details}</MarkdownContent></div>
           </section>
         )}
+
+        {event.page_blocks.length > 0 && <PageBlocks blocks={event.page_blocks} />}
 
         {event.schedule.length > 0 && (
           <section className={styles.section}>
@@ -244,8 +317,7 @@ export default async function EventDetailPage({ params }: Params) {
                 const inner = (
                   <>
                     {sp.logo_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={sp.logo_url} alt={sp.name} className={styles.sponsorLogo} loading="lazy" />
+                      <LogoPlate src={sp.logo_url} alt={sp.name} imgClassName={styles.sponsorLogo} />
                     ) : (
                       <span className={styles.sponsorName}>{sp.name}</span>
                     )}
@@ -268,37 +340,7 @@ export default async function EventDetailPage({ params }: Params) {
           </section>
         )}
 
-        {hasPostEventContent && (
-          <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>After the Event</h2>
-            {event.photo_albums.length > 0 && (
-              <div className={styles.albumGrid}>
-                {event.photo_albums.map((album, i) => {
-                  const preview = albumPreviews[i];
-                  return preview?.image ? (
-                    <a key={`${album.url}-${i}`} href={album.url} target="_blank" rel="noopener noreferrer" className={styles.albumCard}>
-                      {/* Google's own cover collage for the album — not
-                          hosted by us, so a plain <img>, same as the flyer
-                          treatment elsewhere on this page. */}
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={preview.image} alt={`Cover photo for ${album.title}`} className={styles.albumCardImg} />
-                      <div className={styles.albumCardOverlay} />
-                      <span className={styles.albumCardLabel}>
-                        <Camera size={15} strokeWidth={1.5} aria-hidden="true" />
-                        {album.title}
-                      </span>
-                    </a>
-                  ) : (
-                    <a key={`${album.url}-${i}`} href={album.url} target="_blank" rel="noopener noreferrer" className={styles.photoLink}>
-                      <Camera size={15} strokeWidth={1.5} aria-hidden="true" /> {album.title}
-                    </a>
-                  );
-                })}
-              </div>
-            )}
-            {event.post_event_info && <MarkdownContent>{event.post_event_info}</MarkdownContent>}
-          </section>
-        )}
+        {theme?.credit && <p className={styles.credit}>{theme.credit}</p>}
       </div>
     </div>
   );

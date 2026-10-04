@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { X } from 'lucide-react';
 import styles from './AnnouncementBanner.module.css';
@@ -9,46 +9,45 @@ interface Props {
   text: string;
   link?: string;
   linkText?: string;
-  colors: { bg: string; text: string; border: string };
+  color: string;
 }
 
-// Floats independently in the bottom-right corner — deliberately NOT part
-// of the nav's fixed stack at the top of the page. It used to sit above the
-// nav pill and push it down by its own height, but pages give the nav a
-// fixed top clearance (--navbar-height), so a showing banner shoved the nav
-// down into whatever hero content assumed that fixed clearance was
-// accurate. Living in its own corner sidesteps the whole problem instead of
-// just tuning around it.
-export default function AnnouncementClient({ text, link, linkText, colors }: Props) {
+// A caution-tape strip across the very top of the page, in the normal flow: it pushes the page down by its own height
+// and scrolls away with it, so it never covers content. The nav is fixed, so it reads --banner-offset (the part of the strip still
+// on screen) and sits just beneath the strip, then settles at its usual place once the strip has scrolled off.
+export default function AnnouncementClient({ text, link, linkText, color }: Props) {
   const [dismissed, setDismissed] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const el = ref.current;
+    if (dismissed || !el) { root.style.setProperty('--banner-offset', '0px'); return; }
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      root.style.setProperty('--banner-offset', `${Math.max(0, el.offsetHeight - window.scrollY)}px`);
+    };
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (raf) cancelAnimationFrame(raf);
+      root.style.setProperty('--banner-offset', '0px');
+    };
+  }, [dismissed, text]);
 
   if (dismissed) return null;
 
   return (
-    <div
-      className={styles.banner}
-      style={{ background: colors.bg, borderColor: colors.border, color: colors.text }}
-      role="banner"
-      aria-label="Site announcement"
-    >
-      <span className={styles.text}>{text}</span>
-
-      {link && (
-        <Link
-          href={link}
-          className={styles.cta}
-          style={{ color: colors.text, borderColor: colors.border }}
-        >
-          {linkText || 'Learn More'}
-        </Link>
-      )}
-
-      <button
-        className={styles.dismiss}
-        onClick={() => setDismissed(true)}
-        aria-label="Dismiss announcement"
-      >
-        <X size={14} strokeWidth={2} />
+    <div ref={ref} className={styles.banner} style={{ background: color }} role="region" aria-label="Site announcement">
+      <p className={styles.text}>{text}</p>
+      {link && <Link href={link} className={styles.cta}>{linkText || 'Learn more'} <span aria-hidden="true">→</span></Link>}
+      <button type="button" className={styles.dismiss} onClick={() => setDismissed(true)} aria-label="Dismiss announcement">
+        <X size={14} strokeWidth={2.5} />
       </button>
     </div>
   );

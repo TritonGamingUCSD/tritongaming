@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
-import LongEventCard from '@/components/LongEventCard/LongEventCard';
+import NextEventTicket from '@/components/NextEventTicket/NextEventTicket';
+import { ZineBand, PageHero, BandHeader } from '@/components/ZineBand/ZineBand';
 import EventCard from '@/components/EventCard/EventCard';
 import { getUpcomingEvents, getPreviousEvents } from '@/lib/events';
 import { getContentBlocks } from '@/lib/content';
@@ -9,17 +10,17 @@ import styles from './events.module.css';
 
 export const metadata: Metadata = {
   title: 'Events',
-  description: 'Check out upcoming and past Triton Gaming events at UC San Diego.',
+  description: 'Upcoming and past Triton Gaming events. Gaming Org at UC San Diego.',
   alternates: { canonical: '/events' },
   openGraph: {
     title: 'Events',
-    description: 'Check out upcoming and past Triton Gaming events at UC San Diego.',
+    description: 'Upcoming and past Triton Gaming events. Gaming Org at UC San Diego.',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Events',
-    description: 'Check out upcoming and past Triton Gaming events at UC San Diego.',
+    description: 'Upcoming and past Triton Gaming events. Gaming Org at UC San Diego.',
   },
 };
 
@@ -39,83 +40,49 @@ export default async function EventsPage() {
   const heroTitle = content.title as string;
   const heroSub = content.subtitle as string;
 
-  // The soonest upcoming event gets the full featured treatment (big flyer,
-  // ticket CTA); everything else — the rest of upcoming, and all of past —
-  // reads as a scannable grid instead of another wide row identical to it.
-  // A page-long stack of uniform full-width rows was the "feels weird" of
-  // it; one clear focal point plus a grid reads like an actual events page.
+  // The soonest upcoming event is the one big ticket; the rest of upcoming is a grid on ink;
+  // the archive sits on a paper band so the page changes tone once, at the point it changes meaning.
   const [featured, ...restUpcoming] = upcoming;
 
   const sections: Record<string, React.ReactNode> = {
     upcoming: (
       <>
-      {featured && (
-        <section className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <p className={styles.sectionLabel}>{(content.next_label as string) || "DON'T MISS OUT"}</p>
-            <h2 className={styles.sectionTitle}>{(content.next_title as string) || 'Next Up'}</h2>
-          </div>
-          <LongEventCard event={featured} />
-        </section>
-      )}
-
-      {restUpcoming.length > 0 && (
-        <section className={styles.section}>
-          {!featured && (
-            <div className={styles.sectionHeader}>
-              <p className={styles.sectionLabel}>{(content.next_label as string) || "DON'T MISS OUT"}</p>
-              <h2 className={styles.sectionTitle}>{(content.upcoming_title as string) || 'Upcoming Events'}</h2>
+        {featured && (
+          <ZineBand tone="navy" edge={false} label="Next event">
+            <BandHeader label={(content.next_label as string) || "Don't miss out"} title={(content.next_title as string) || 'Next up'} />
+            <NextEventTicket event={featured} />
+          </ZineBand>
+        )}
+        {restUpcoming.length > 0 && (
+          <ZineBand tone="ink" label="Upcoming events">
+            <BandHeader label={(content.upcoming_label as string) || 'Coming soon'} title={(content.upcoming_title as string) || 'Also coming up'} />
+            <div className={styles.grid}>
+              {restUpcoming.map((event) => <EventCard key={event._id} event={event} />)}
             </div>
-          )}
-          <div className={styles.grid}>
-            {restUpcoming.map((event) => (
-              <EventCard key={event._id} event={event} />
-            ))}
-          </div>
-        </section>
-      )}
-
-
+          </ZineBand>
+        )}
       </>
     ),
-    past: (
-      <>
-      {previous.length > 0 && (
-        <section className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <p className={styles.sectionLabel}>{(content.past_label as string) || 'THE ARCHIVE'}</p>
-            <h2 className={styles.sectionTitle}>{(content.past_title as string) || 'Past Events'}</h2>
-          </div>
-          <div className={`${styles.grid} ${styles.gridPast}`}>
-            {previous.map((event) => (
-              <EventCard key={event._id} event={event} />
-            ))}
-          </div>
-        </section>
-      )}
-
-
-      </>
-    ),
+    past: previous.length > 0 ? (
+      <ZineBand tone="deep" label="Past events">
+        <BandHeader label={(content.past_label as string) || 'The archive'} title={(content.past_title as string) || 'Past events'} sub="Photos, flyers and memories from everything we've run." />
+        <div className={styles.grid}>
+          {previous.map((event) => <EventCard key={event._id} event={event} />)}
+        </div>
+      </ZineBand>
+    ) : null,
   };
 
   return (
     <div className={styles.page}>
-      <div className={styles.heroBanner}>
-        <div className={styles.heroBg} aria-hidden="true" />
-        <div className={styles.heroContent}>
-          <p className={styles.heroLabel}>{heroLabel}</p>
-          <h1 className={styles.heroTitle}>{heroTitle}</h1>
-          <p className={styles.heroSub}>{heroSub}</p>
-        </div>
-      </div>
+      <PageHero label={heroLabel} title={heroTitle} sub={heroSub} />
 
       {shown.map((id) => <Fragment key={id}>{sections[id]}</Fragment>)}
 
-      {shown.length > 0 && upcoming.length === 0 && previous.length === 0 && (
-        <div className={styles.empty}>
-          <p className={styles.emptyMsg}>{(content.empty as string) || 'No events currently scheduled. Check back soon!'}</p>
-        </div>
+      {shown.length > 0 && upcoming.length === 0 && (
+        <ZineBand tone="navy" edge={false} label="No upcoming events">
+          <p className={styles.emptyMsg}>{(content.empty as string) || 'Nothing on the calendar right now. Check back soon!'}</p>
+        </ZineBand>
       )}
     </div>
   );

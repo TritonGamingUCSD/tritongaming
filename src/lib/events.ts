@@ -5,6 +5,8 @@ import type { Event } from '@/types';
 import { getPreviewDrafts } from '@/lib/contentPreviewStore';
 import { pacificDatetimeLocalToUTC } from '@/lib/timezone';
 import type { SocialEmbed, PhotoAlbumEntry, ScheduleItem, EventSponsor } from '@/types/database';
+import { cleanTheme } from '@/lib/eventTheme';
+import { cleanBlocks } from '@/lib/pageBlocks';
 
 const DEFAULT_LIMIT = 50;
 
@@ -40,6 +42,8 @@ function mapSupabaseEvent(row: Record<string, unknown>): Event {
     sponsors: (row.sponsors as EventSponsor[]) ?? [],
     social_embeds: (row.social_embeds as SocialEmbed[]) ?? [],
     points_value: (row.points_value as number) ?? 0,
+    theme: cleanTheme(row.theme),
+    page_blocks: cleanBlocks(row.page_blocks),
   };
 }
 
@@ -152,6 +156,8 @@ function eventFromDraft(d: Record<string, unknown>): Event {
     sponsors: d.sponsors || [],
     social_embeds: d.social_embeds || [],
     points_value: Number(d.points_value) || 0,
+    theme: d.theme || null,
+    page_blocks: d.page_blocks || null,
   });
 }
 

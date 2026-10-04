@@ -1,0 +1,68 @@
+/* One big ticket for an event. Paper object, tape, hard shadow; stickers/buttons get soft corners (die-cut), the paper stays square. */
+.ticket {
+  position: relative; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.25fr);
+  background: var(--paper); color: var(--ink); box-shadow: var(--hard-shadow);
+  transform: rotate(-0.6deg); transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.ticket:hover { transform: rotate(0deg) translateY(-4px); }
+.tape {
+  position: absolute; top: -0.9rem; left: 50%; width: 6rem; height: 1.8rem; margin-left: -3rem; background: var(--tape);
+  transform: rotate(2deg); z-index: 3;
+  clip-path: polygon(0 8%, 6% 0, 12% 10%, 100% 0, 96% 50%, 100% 92%, 90% 100%, 6% 92%, 0 100%, 4% 50%);
+}
+
+.flyer {
+  position: relative; padding: 1rem; display: flex; align-items: center; justify-content: center;
+  /* perforation between flyer and details */
+  border-right: 3px dashed rgba(10, 22, 48, 0.3);
+}
+.flyerImg { display: block; width: 100%; max-height: 28rem; object-fit: contain; box-shadow: 0 0 0 2px var(--ink); background: #14213f; }
+.flyerEmpty {
+  width: 100%; aspect-ratio: 4 / 5; background: var(--ink); color: var(--yellow); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; font-family: var(--font-renegare); text-transform: uppercase; letter-spacing: 0.2em;
+}
+.flyerEmpty strong { font-family: var(--font-brick); font-weight: 400; font-size: 4rem; line-height: 1; }
+
+.body { position: relative; padding: clamp(1.25rem, 3vw, 2rem); display: flex; flex-direction: column; gap: 0.8rem; min-width: 0; justify-content: center; }
+.stickerRow { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+.countdown, .points {
+  font-family: var(--font-renegare); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 0.4rem 0.75rem; border-radius: var(--radius-pill); border: 2px solid var(--ink);
+}
+.countdown { background: var(--yellow); transform: rotate(-2deg); box-shadow: 3px 3px 0 var(--ink); }
+.points { background: var(--paper); transform: rotate(1.5deg); }
+
+.dateBlock { display: flex; align-items: center; gap: 1rem; }
+.cal {
+  display: flex; flex-direction: column; align-items: center; min-width: 4.6rem; border: 3px solid var(--ink);
+  background: #fff; line-height: 1; flex-shrink: 0;
+}
+.calMonth { width: 100%; text-align: center; background: var(--ink); color: var(--yellow); font-family: var(--font-renegare); font-size: 0.8rem; letter-spacing: 0.18em; text-transform: uppercase; padding: 0.3rem 0; }
+.calDay { font-family: var(--font-brick); font-size: 2.6rem; padding: 0.35rem 0.5rem 0.25rem; }
+.weekday { margin: 0; font-family: var(--font-futura-heavy); font-size: 1.15rem; text-transform: uppercase; display: flex; flex-direction: column; gap: 0.25rem; }
+.weekday span { font-family: var(--font-renegare); font-size: 0.75rem; letter-spacing: 0.08em; color: #3a4764; }
+
+.title { margin: 0; font-family: var(--font-soulmaze); font-weight: 400; font-size: clamp(1.35rem, 3vw, 2rem); line-height: 1.15; overflow-wrap: anywhere; }
+.where, .range { margin: 0; font-family: var(--font-futura-medium); font-size: 0.95rem; color: #2a3550; }
+.where::before { content: '\2192'; margin-right: 0.4rem; color: #b8860b; }
+.range { font-size: 0.8rem; color: #5a6580; margin-top: -0.4rem; }
+
+.actions { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 0.4rem; }
+.button {
+  position: relative; z-index: 4; display: inline-flex; align-items: center; gap: 0.5rem; background: var(--yellow); color: var(--ink);
+  font-family: var(--font-futura-heavy); font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.04em; text-decoration: none;
+  padding: 0.85rem 1.25rem; border: 3px solid var(--ink); border-radius: var(--radius-sm); box-shadow: 4px 4px 0 var(--ink);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.button:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--ink); }
+.button:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
+.price { font-family: var(--font-handwriting); font-size: 1.5rem; }
+.cardLink { position: absolute; inset: 0; z-index: 2; }
+
+@media (max-width: 768px) {
+  .ticket { grid-template-columns: minmax(0, 1fr); transform: none; }
+  .flyer { border-right: 0; border-bottom: 3px dashed rgba(10, 22, 48, 0.3); padding: 0.9rem; }
+  .flyerImg { max-height: 22rem; }
+  .button { width: 100%; justify-content: center; }
+  .actions { gap: 0.6rem; }
+}

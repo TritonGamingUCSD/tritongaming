@@ -37,57 +37,67 @@
 }
 .dropzone:disabled { opacity: 0.6; cursor: not-allowed; }
 
-.wrap {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
+/* The preview is the replace button; the x chip sits on its corner, so a picture takes no more room than the picture itself. */
+.wrap { position: relative; display: inline-block; align-self: flex-start; max-width: 100%; }
+
+.preview { position: relative; display: block; padding: 0; border: 0; background: none; cursor: pointer; border-radius: 0.5rem; overflow: hidden; max-width: 100%; line-height: 0; }
+.previewRound { border-radius: 50%; }
+.preview:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+.preview:disabled { cursor: progress; }
 
 .previewSquare,
 .previewWide {
   object-fit: cover;
   border-radius: 0.5rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  flex-shrink: 0;
+  max-width: 100%;
+  height: auto;
 }
 
 .previewCircle {
   object-fit: cover;
   border-radius: 50%;
   border: 1px solid rgba(255, 199, 44, 0.3);
-  flex-shrink: 0;
 }
 
-.actions {
+.overlay {
+  position: absolute;
+  inset: 0;
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  background: rgba(5, 8, 18, 0.62);
+  color: var(--white);
+  font-family: var(--font-futura-heavy);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.15s ease;
 }
+.preview:hover .overlay,
+.preview:focus-visible .overlay,
+.preview:disabled .overlay { opacity: 1; }
+/* touch screens have no hover: a thin "Replace" strip along the bottom edge shows the picture can be tapped */
+@media (hover: none) { .overlay { inset: auto 0 0 0; padding: 0.35rem; opacity: 1; font-size: 0.65rem; } }
 
-.replaceBtn,
-.removeBtn {
-  font-size: 0.8rem;
-  font-family: var(--font-futura-medium);
-  padding: 0.4rem 0.875rem;
-  border-radius: 0.4rem;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-
-.replaceBtn {
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(242, 241, 240, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-.replaceBtn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); }
-
-.removeBtn {
-  background: transparent;
+.removeChip {
+  position: absolute;
+  top: -0.45rem;
+  right: -0.45rem;
+  display: grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(252, 165, 165, 0.5);
+  background: #1a0f14;
   color: #fca5a5;
-  border: 1px solid rgba(220, 38, 38, 0.25);
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
 }
-.removeBtn:hover:not(:disabled) { background: rgba(220, 38, 38, 0.1); }
-
-.replaceBtn:disabled,
-.removeBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+.removeChip:hover:not(:disabled) { background: #3a1318; transform: scale(1.1); }
+.removeChip:disabled { opacity: 0.5; cursor: not-allowed; }

@@ -1,3 +1,4 @@
+import type { PageBlock } from '@/lib/pageBlocks';
 // 'inactive' is a marker that sits next to someone's real roles while they sit out a quarter (see src/lib/quarters.ts); it is never assigned by hand.
 export type AppRole = 'ucsd' | 'division' | 'officer' | 'lead' | 'exec' | 'admin' | 'alumni' | 'recruit' | 'inactive';
 // 'guest' is never stored — it just means zero rows in user_roles.
@@ -26,6 +27,8 @@ export interface EventSponsor {
 export interface SocialEmbed {
   type: 'instagram' | 'twitter' | 'tiktok' | 'youtube' | 'discord';
   url: string;
+  // Optional hand-written note shown under the post; the platform name is used when empty.
+  caption?: string;
 }
 
 // One event/division can have several — a multi-day LAN's day-1/day-2
@@ -153,6 +156,7 @@ export interface Database {
           application_url: string | null;
           social_links: Record<string, string>;
           social_embeds: SocialEmbed[];
+          page_blocks: PageBlock[] | null;
           created_at: string;
         };
         Insert: Omit<Database['public']['Tables']['divisions']['Row'], 'id' | 'created_at'>;
@@ -184,7 +188,6 @@ export interface Database {
           flyer_url: string | null;
           banner_url: string | null;
           url: string | null;
-          max_capacity: number | null;
           is_published: boolean;
           requires_ticket: boolean;
           ticket_price: number;

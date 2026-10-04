@@ -4,6 +4,9 @@ import { Fragment } from 'react';
 import Image from 'next/image';
 import { Gamepad2, Calendar, Users, Building2 } from 'lucide-react';
 import { getContentBlocks } from '@/lib/content';
+import { ZineBand, PageHero, BandHeader } from '@/components/ZineBand/ZineBand';
+import PhotoStrip from '@/components/PhotoStrip/PhotoStrip';
+import { SITE_PHOTOS } from '@/lib/sitePhotos';
 import styles from './get-involved.module.css';
 
 export const metadata: Metadata = {
@@ -34,7 +37,6 @@ const WAY_ICONS = [
   <Image key="2" src="/logos/instagram.svg" alt="" width={28} height={28} unoptimized />,
   <Gamepad2 key="3" size={28} strokeWidth={1.5} aria-hidden="true" />,
 ];
-const WAY_ACCENTS = ['blue', 'yellow', 'blue'];
 
 export default async function GetInvolvedPage() {
   const blocks = await getContentBlocks(['page.get-involved', 'page.get-involved.officer', 'layout.get-involved']);
@@ -44,7 +46,6 @@ export default async function GetInvolvedPage() {
   const flyerUrl = officer.recruitment_flyer_url as string | undefined;
   const ways = WAY_ICONS.map((icon, i) => ({
     icon,
-    accent: WAY_ACCENTS[i],
     title: content[`way${i + 1}_title`] as string,
     body: content[`way${i + 1}_body`] as string,
     cta: content[`way${i + 1}_cta`] as string,
@@ -52,19 +53,20 @@ export default async function GetInvolvedPage() {
   }));
   const perks = (Array.isArray(officer.perks) ? officer.perks as string[] : [])?.filter(Boolean);
 
+  const metas = [
+    { icon: <Calendar size={20} strokeWidth={1.75} aria-hidden="true" />, label: officer.stat1_label, value: officer.stat1_value },
+    { icon: <Users size={20} strokeWidth={1.75} aria-hidden="true" />, label: officer.stat2_label, value: officer.stat2_value },
+    { icon: <Building2 size={20} strokeWidth={1.75} aria-hidden="true" />, label: officer.stat3_label, value: officer.stat3_value },
+  ] as { icon: React.ReactNode; label?: string; value?: string }[];
+
   const sections: Record<string, React.ReactNode> = {
     ways: (
-      <>
-{/* Ways to connect */}
-      <section className={styles.waysSection}>
-        <div className={styles.sectionHeader}>
-          <p className={styles.sectionLabel}>{content.ways_label as string}</p>
-          <h2 className={styles.sectionTitle}>{content.ways_title as string}</h2>
-        </div>
-        <div className={styles.waysGrid}>
-          {ways.map((w) => (
-            <div key={w.title} className={`${styles.wayCard} ${styles[`accent_${w.accent}`]}`}>
-              <div className={styles.wayEmoji}>{w.icon}</div>
+      <ZineBand tone="navy" edge={false} label="Ways to connect">
+        <BandHeader label={content.ways_label as string} title={content.ways_title as string} />
+        <ul className={styles.waysGrid}>
+          {ways.map((w, i) => (
+            <li key={w.title} className={`${styles.wayCard} ${i % 2 ? styles.tiltR : styles.tiltL}`}>
+              <span className={styles.wayIcon}>{w.icon}</span>
               <h3 className={styles.wayTitle}>{w.title}</h3>
               <p className={styles.wayBody}>{w.body}</p>
               <a
@@ -73,82 +75,57 @@ export default async function GetInvolvedPage() {
                 target={w.href.startsWith('http') ? '_blank' : undefined}
                 rel={w.href.startsWith('http') ? 'noopener noreferrer' : undefined}
               >
-                {w.cta} →
+                {w.cta} <span aria-hidden="true">→</span>
               </a>
-            </div>
+            </li>
           ))}
-        </div>
-      </section>
-      </>
+        </ul>
+      </ZineBand>
     ),
     officer: (
-      <>
-{/* Officer application */}
-      <section className={styles.officerSection}>
-        <div className={styles.officerBg} aria-hidden="true" />
-        <div className={styles.officerContent}>
+      <ZineBand tone="ink" label="Become an officer">
+        <div className={styles.officer}>
           <div className={styles.officerText}>
-            <p className={styles.sectionLabel}>{officer.label as string}</p>
-            <h2 className={styles.officerTitle}>{officer.title as string}</h2>
+            <BandHeader label={officer.label as string} title={officer.title as string} />
             <p className={styles.officerBody}>{officer.body as string}</p>
             <ul className={styles.perkList}>
               {perks.map((perk) => (
-                <li key={perk} className={styles.perkItem}>
-                  <span className={styles.perkDot}>▸</span> {perk}
-                </li>
+                <li key={perk} className={styles.perkItem}><span className={styles.perkDot} aria-hidden="true">▸</span> {perk}</li>
               ))}
             </ul>
-            <a
-              href={officer.apply_href as string}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.applyBtn}
-            >
-              {(officer.apply_text as string) || 'Apply Now'}
+            <a href={officer.apply_href as string} target="_blank" rel="noopener noreferrer" className={styles.applyBtn}>
+              {(officer.apply_text as string) || 'Apply now'} <span aria-hidden="true">→</span>
             </a>
           </div>
           <div className={styles.officerMeta}>
             {flyerUrl && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={flyerUrl} alt="Officer recruitment flyer" className={styles.recruitmentFlyer} />
+              <figure className={styles.flyer}>
+                <span className={styles.tape} aria-hidden="true" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={flyerUrl} alt="Officer recruitment flyer" className={styles.flyerImg} />
+              </figure>
             )}
-            <div className={styles.metaCard}>
-              <span className={styles.metaEmoji}><Calendar size={22} strokeWidth={1.5} aria-hidden="true" /></span>
-              <span className={styles.metaLabel}>{officer.stat1_label as string}</span>
-              <span className={styles.metaValue}>{officer.stat1_value as string}</span>
-            </div>
-            <div className={styles.metaCard}>
-              <span className={styles.metaEmoji}><Users size={22} strokeWidth={1.5} aria-hidden="true" /></span>
-              <span className={styles.metaLabel}>{officer.stat2_label as string}</span>
-              <span className={styles.metaValue}>{officer.stat2_value as string}</span>
-            </div>
-            <div className={styles.metaCard}>
-              <span className={styles.metaEmoji}><Building2 size={22} strokeWidth={1.5} aria-hidden="true" /></span>
-              <span className={styles.metaLabel}>{officer.stat3_label as string}</span>
-              <span className={styles.metaValue}>{officer.stat3_value as string}</span>
-            </div>
+            <ul className={styles.metaList}>
+              {metas.map((m, i) => (
+                <li key={i} className={styles.metaCard}>
+                  <span className={styles.metaIcon}>{m.icon}</span>
+                  <span className={styles.metaLabel}>{m.label}</span>
+                  <span className={styles.metaValue}>{m.value}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
-      </section>
-      </>
+      </ZineBand>
     ),
   };
   const order = resolveSections('get-involved', blocks['layout.get-involved']?.sections);
 
   return (
     <div className={styles.page}>
-
-      {/* Hero banner */}
-      <div className={styles.heroBanner}>
-        <div className={styles.heroBg} aria-hidden="true" />
-        <div className={styles.heroContent}>
-          <p className={styles.heroLabel}>{content.hero_label as string}</p>
-          <h1 className={styles.heroTitle}>{content.hero_title as string}</h1>
-          <p className={styles.heroSub}>{content.hero_subtitle as string}</p>
-        </div>
-      </div>
-
+      <PageHero label={content.hero_label as string} title={content.hero_title as string} sub={content.hero_subtitle as string} />
       {order.map((id) => <Fragment key={id}>{sections[id]}</Fragment>)}
+      <PhotoStrip tone="navy" caption={(content.strip_caption as string) || 'Come as you are. Leave with a team.'} photos={[SITE_PHOTOS.inside, SITE_PHOTOS.community, SITE_PHOTOS.events]} />
     </div>
   );
 }

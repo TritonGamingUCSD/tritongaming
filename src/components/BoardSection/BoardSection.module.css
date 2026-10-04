@@ -1,16 +1,16 @@
 .root {
   display: flex;
   flex-direction: column;
-  gap: 3rem;
-  max-width: var(--max-width);
-  margin-inline: auto;
-  padding: 0 var(--sp-md, 1.5rem) 4rem;
+  gap: 0;
+  padding: 0;
 }
 
 .tierSection {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  align-items: center;
+  gap: 1.5rem;
+  padding: var(--sp-lg) clamp(1rem, 4vw, 2.5rem);
   /* AnimatePresence mode="popLayout" makes the *exiting* element
      position:absolute so the entering one can take its place immediately.
      Without a positioned ancestor here, that absolute panel anchors to
@@ -21,13 +21,27 @@
   position: relative;
 }
 
+/* Each tier is its own flat band, never brighter than navy, so the page changes tone as you go down it. */
+.tier_exec { background: #0d2250; }
+.tier_lead { background: #060c1a; }
+.tier_officer { background: #03060f; }
+.tier_alumni { background: #060c1a; }
+.tierSection > * { width: 100%; max-width: 1180px; }
+.tierSection > .tierLabel { width: auto; }
+
 .tierLabel {
-  font-size: var(--fs-label);
+  margin: 0;
+  font-size: 0.7rem;
   font-family: var(--font-renegare);
-  letter-spacing: 0.14em;
+  font-weight: 400;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--yellow);
-  text-align: center;
+  background: var(--yellow);
+  color: var(--ink);
+  padding: 0.45rem 0.8rem;
+  border-radius: var(--radius-sm);
+  transform: rotate(-1.5deg);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
 }
 
 /* auto-fill + minmax (not auto-fit with a fixed width) so the grid actually
@@ -58,44 +72,28 @@
   text-align: center;
   gap: 0.25rem;
   padding: 1.1rem 0.75rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--glass-border);
-  border-radius: 1.25rem;
-  /* No backdrop-filter here on purpose — every card in the grid animates
-     together during the shared-layout transition, and blurring N elements
-     at once (this section can easily have a dozen+) every frame is exactly
-     what caused the reported lag. Matches PortalHub's own cards, which
-     never used backdrop-filter for the same reason. */
-  box-shadow: var(--glass-shadow);
-  /* transform deliberately NOT in this list (or animated via CSS :hover at
-     all anymore) — this card is also a motion.button with layoutId, and
-     Framer Motion drives `transform` directly (via JS/WAAPI) for the
-     shared-layout zoom transition. A CSS transition on the same property
-     fights it every frame — each time Framer Motion sets a new transform,
-     the browser's own transition tries to *also* ease toward it from the
-     previous value, which is exactly the jump/stutter reported opening and
-     closing a card. The hover lift now comes from whileHover in
-     BoardSection.tsx instead, so it's animated by Framer Motion too rather
-     than a second, competing system. */
-  transition: border-color 0.2s, background 0.2s;
-  /* .card is a <button> now (opens the zoom panel) — reset button defaults
-     so it still reads as a card, not a form control. */
+  /* A name tag: paper, ink, hard shadow. No tilt here — Framer Motion owns this element's transform (hover lift + zoom). */
+  background: var(--paper);
+  color: var(--ink);
+  border: 0;
+  border-radius: 0;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.55);
+  transition: box-shadow 0.2s;
   cursor: pointer;
   font: inherit;
   width: 100%;
+  min-width: 0;
 }
 
-.card:hover {
-  border-color: var(--glass-border-hover);
-  background: var(--glass-bg-hover);
-}
+.card:hover { box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55); }
+.card:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
 
 .avatar {
   width: 68px;
   height: 68px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid rgba(255, 199, 44, 0.3);
+  border: 3px solid var(--ink);
   margin-bottom: 0.35rem;
 }
 
@@ -103,34 +101,37 @@
   width: 68px;
   height: 68px;
   border-radius: 50%;
-  background: var(--gradient-nav);
+  background: var(--yellow);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-futura-heavy);
-  font-size: 1.4rem;
-  color: var(--white);
-  border: 2px solid rgba(255, 199, 44, 0.3);
+  font-family: var(--font-brick);
+  font-size: 1.6rem;
+  color: var(--ink);
+  border: 3px solid var(--ink);
   margin-bottom: 0.35rem;
 }
 
 .name {
   font-family: var(--font-futura-heavy);
-  font-size: 0.88rem;
-  color: var(--white);
-  line-height: 1.3;
+  font-size: 0.9rem;
+  color: var(--ink);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 
 .tag {
-  color: rgba(242, 241, 240, 0.5);
+  color: #5a6580;
   font-family: var(--font-futura-medium);
 }
 
 .title {
-  font-size: 0.72rem;
-  color: var(--yellow);
-  letter-spacing: 0.02em;
-  line-height: 1.3;
+  font-family: var(--font-renegare);
+  font-size: 0.62rem;
+  color: #3a4764;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.35;
 }
 
 /* Still used by the zoom panel's year/major line (see BoardSection.tsx) —
@@ -172,11 +173,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s, transform 0.2s;
+  transition: background 0.15s;
 }
 .closeBtn:hover {
   background: rgba(255, 199, 44, 0.15);
-  transform: rotate(90deg);
 }
 
 
@@ -240,24 +240,26 @@
 .popup { max-height: 88vh; overflow-y: auto; margin-inline: 0; }
 
 /* Team page redesign: a year picker, a bigger exec row, and a compact alumni wall. */
-.yearPicker { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin-bottom: -1rem; }
-.yearChip { padding: 0.5rem 1rem; border-radius: 999px; border: 1px solid var(--glass-border); background: rgba(255, 255, 255, 0.03); color: rgba(242, 241, 240, 0.8); font: inherit; font-size: 0.9rem; cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s; }
-.yearChip:hover { border-color: rgba(255, 199, 44, 0.5); color: var(--yellow); }
-.yearOn { background: var(--yellow); border-color: var(--yellow); color: #0a0f1e; font-weight: 600; }
-.yearOn:hover { color: #0a0f1e; }
+.yearPicker { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; padding: var(--sp-md) clamp(1rem, 4vw, 2.5rem) 0; background: #0d2250; }
+.yearChip { padding: 0.5rem 0.95rem; border-radius: var(--radius-pill); border: 2px solid var(--ink); background: var(--paper); color: var(--ink); font-family: var(--font-renegare); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.55); transition: transform 0.15s ease, box-shadow 0.15s ease; }
+.yearChip:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.55); }
+.yearOn { background: var(--yellow); }
 .execGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 250px)); justify-content: center; gap: 1.25rem; width: 100%; margin-inline: auto; }
 /* a past year can be a short list: centre it instead of leaving it in the corner */
 .gridCenter { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; width: 100%; }
 .gridCenter > * { width: 170px; }
-.execCard { padding: 1.6rem 1rem; border-radius: 1.5rem; background: rgba(255, 199, 44, 0.05); border-color: rgba(255, 199, 44, 0.25); }
+.gridCenter { max-width: 1180px; margin-inline: auto; }
+.execCard { position: relative; padding: 1.8rem 1rem 1.4rem; }
+/* the exec board is told apart by a strip of tape, not a different colour */
+.execCard::before { content: ''; position: absolute; top: -0.7rem; left: 50%; width: 4.2rem; height: 1.3rem; margin-left: -2.1rem; background: var(--tape); transform: rotate(-3deg); clip-path: polygon(0 8%, 6% 0, 12% 10%, 100% 0, 96% 50%, 100% 92%, 90% 100%, 6% 92%, 0 100%, 4% 50%); }
 .execCard .avatar, .execCard .avatarFallback { width: 128px; height: 128px; }
 .execCard .name { font-size: 1.1rem; }
 .plain { cursor: default; }
-.idle { display: inline-flex; align-items: center; gap: 0.25rem; margin-top: 0.3rem; padding: 0.1rem 0.55rem; border-radius: 999px; background: rgba(148, 163, 184, 0.2); color: #cbd5e1; font-size: 0.68rem; }
+.idle { display: inline-flex; align-items: center; gap: 0.25rem; margin-top: 0.3rem; padding: 0.1rem 0.55rem; border-radius: 999px; background: #d9d4c4; color: #3a4764; font-size: 0.68rem; }
 .cardIdle .avatar, .cardIdle .avatarFallback { opacity: 0.75; }
 .wall { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 0.4rem 1rem; }
-.wallItem { display: flex; align-items: center; gap: 0.7rem; width: 100%; padding: 0.45rem 0.6rem; border: 0; border-radius: 0.9rem; background: none; color: var(--white); font: inherit; text-align: left; cursor: pointer; transition: background 0.15s; }
-.wallItem:hover { background: rgba(255, 255, 255, 0.05); }
+.wallItem { display: flex; align-items: center; gap: 0.7rem; width: 100%; padding: 0.45rem 0.6rem; border: 0; border-radius: var(--radius-sm); background: none; color: var(--white); font: inherit; text-align: left; cursor: pointer; transition: background 0.15s; }
+.wallItem:hover { background: rgba(255, 255, 255, 0.07); }
 .wallItem span { display: flex; flex-direction: column; min-width: 0; }
 .wallItem strong { font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wallItem small { font-size: 0.76rem; color: rgba(242, 241, 240, 0.55); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

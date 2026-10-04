@@ -1,0 +1,38 @@
+.blocks { display: flex; flex-direction: column; gap: clamp(1.5rem, 4vw, 2.25rem); min-width: 0; }
+
+/* long text sits on paper in ink, so any theme stays readable */
+.paper { background: var(--ev-surface, var(--paper)); color: var(--ev-on-surface, var(--ink)); padding: clamp(1.1rem, 3vw, 1.8rem); box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.55); }
+.paper, .paper * { color: var(--ev-on-surface, var(--ink)) !important; }
+.paper a { text-decoration: underline; text-underline-offset: 3px; }
+.text { max-width: 46rem; }
+
+.tiltL { transform: rotate(-0.9deg); }
+.tiltR { transform: rotate(0.9deg); }
+.tape { position: absolute; top: -0.7rem; left: 50%; width: 4rem; height: 1.3rem; margin-left: -2rem; background: var(--tape, rgba(255, 224, 140, 0.8)); transform: rotate(-3deg); clip-path: polygon(0 8%, 6% 0, 12% 10%, 100% 0, 96% 50%, 100% 92%, 90% 100%, 6% 92%, 0 100%, 4% 50%); }
+
+/* highlights: taped quick-fact notes */
+.highlights { list-style: none; margin: 0; padding: 0.5rem 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 1.5rem 1.25rem; }
+.note { position: relative; display: flex; flex-direction: column; gap: 0.35rem; padding: 1.1rem 1rem 1.2rem; background: var(--ev-surface, var(--paper)); color: var(--ev-on-surface, var(--ink)); box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.55); min-width: 0; }
+.noteLabel { font-family: var(--font-renegare); font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.7; }
+.noteValue { font-family: var(--ev-font-heading, var(--font-futura-heavy)); font-size: clamp(1.1rem, 2.6vw, 1.5rem); line-height: 1.15; overflow-wrap: anywhere; }
+
+/* FAQ: native details, so it works without scripts */
+.faq { display: flex; flex-direction: column; gap: 0.7rem; max-width: 46rem; }
+.qa { background: var(--ev-surface, var(--paper)); color: var(--ev-on-surface, var(--ink)); box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.55); }
+.q { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.85rem 1rem; font-family: var(--font-futura-heavy); font-size: 0.98rem; }
+.q::-webkit-details-marker { display: none; }
+.q::after { content: '+'; flex-shrink: 0; display: grid; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: 50%; background: var(--ev-accent, var(--yellow)); color: var(--ev-on-accent, var(--ink)); border: 2px solid var(--ev-on-surface, var(--ink)); font-family: var(--font-futura-heavy); line-height: 1; }
+.qa[open] .q::after { content: '\2212'; }
+.q:focus-visible { outline: 3px solid var(--ev-accent, var(--yellow)); outline-offset: 2px; }
+.a { margin: 0; padding: 0 1rem 1rem; font-family: var(--font-futura-medium); font-size: 0.92rem; line-height: 1.6; white-space: pre-line; }
+
+/* gallery: polaroids with credits */
+.gallery { list-style: none; margin: 0; padding: 0.5rem 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 1.75rem 1.25rem; align-items: start; }
+.print { position: relative; display: flex; flex-direction: column; gap: 0.2rem; padding: 0.55rem 0.55rem 0.4rem; background: var(--ev-surface, var(--paper)); color: var(--ev-on-surface, var(--ink)); box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.55); min-width: 0; }
+.photo { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border: 2px solid var(--ev-on-surface, var(--ink)); background: #14213f; }
+.caption { margin-top: 0.35rem; font-family: var(--font-handwriting); font-size: 1.15rem; line-height: 1.15; }
+.credit { font-family: var(--font-handwriting); font-size: 1rem; opacity: 0.7; }
+
+@media (max-width: 640px) {
+  .tiltL, .tiltR { transform: none; }
+}

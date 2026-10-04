@@ -30,7 +30,6 @@ interface EventRow {
   location: string | null;
   is_published: boolean;
   requires_ticket: boolean;
-  max_capacity: number | null;
   audience: 'public' | 'ucsd_only';
   ticketsIssued: number;
   ticketsCheckedIn: number;
@@ -269,7 +268,6 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
                       {event.requires_ticket ? (
                         <button type="button" className={styles.checkinLink} onClick={() => setCheckinsEventId(event.id)}>
                           <Ticket size={12} strokeWidth={1.75} aria-hidden="true" /> {event.ticketsIssued}
-                          {event.max_capacity ? `/${event.max_capacity}` : ''}
                           {event.ticketsIssued > 0 && <span className={styles.checkinSub}> · {event.ticketsCheckedIn} in</span>}
                         </button>
                       ) : (

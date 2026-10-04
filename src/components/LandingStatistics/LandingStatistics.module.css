@@ -1,83 +1,40 @@
-/* Used to pull up over the hero's fade-out zone with a large negative
-   margin so the two read as one connected moment, but the hero's tagline
-   ("EVENTS # CREATIVITY # ...") and video sit lower than that assumed —
-   the panel was overlapping both. A small overlap still connects the
-   sections visually via the fade without colliding with hero content. */
+/* Stats as paper tickets at slightly different angles, flat with hard shadows. No glass, glow or icons. */
 .section {
   position: relative;
   z-index: 5;
-  margin-top: -16px;
-  padding: clamp(2rem, 5vw, 3rem) clamp(1rem, 4vw, 2.5rem) clamp(3rem, 6vw, 5rem);
+  padding: clamp(2.5rem, 5vw, 3.5rem) clamp(1rem, 4vw, 2.5rem) clamp(3rem, 6vw, 5rem);
 }
 
 .panel {
-  position: relative;
-  z-index: 1;
   display: flex;
   flex-wrap: wrap;
-  max-width: 1040px;
+  justify-content: flex-start;
+  gap: 1.6rem;
+  max-width: 1180px;
   margin-inline: auto;
-  background: linear-gradient(165deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: clamp(20px, 3vw, 30px);
-  backdrop-filter: blur(28px) saturate(170%);
-  -webkit-backdrop-filter: blur(28px) saturate(170%);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.16) inset,
-    0 50px 90px -32px rgba(0, 0, 0, 0.75);
-  overflow: hidden;
 }
 
 .statCell {
-  flex: 1 1 220px;
+  flex: 0 1 280px;
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 0.5rem;
-  padding: clamp(1.75rem, 4vw, 2.75rem) 1.5rem;
-  text-align: center;
-  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 1.4rem 1.5rem 1.2rem;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: var(--hard-shadow);
+  will-change: transform;
 }
+.statCell:nth-child(1) { transform: rotate(-2deg); }
+.statCell:nth-child(2) { transform: rotate(1.5deg); background: var(--yellow); margin-top: 0.8rem; }
+.statCell:nth-child(3) { transform: rotate(-1deg); }
+.statCell:nth-child(n + 4) { transform: rotate(1.2deg); }
 
-.statCell:last-child {
-  border-right: none;
-}
-
-.statIcon {
-  display: inline-flex;
-  color: var(--yellow);
-  margin-bottom: 0.15rem;
-}
-
-.statValue {
-  font-family: var(--font-soulmaze);
-  font-size: clamp(2rem, 5vw, 3.25rem);
-  color: var(--white);
-  line-height: 1;
-  text-shadow: 0 0 32px rgba(255, 199, 44, 0.3);
-}
-
-.statLabel {
-  font-family: var(--font-futura-heavy);
-  font-size: clamp(0.68rem, 1.1vw, 0.82rem);
-  color: var(--lightblue);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
+.statValue { font-family: var(--font-soulmaze); font-size: clamp(2rem, 4.4vw, 3rem); line-height: 1; }
+.statLabel { font-family: var(--font-renegare); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.14em; }
 
 @media (max-width: 640px) {
-  .section { margin-top: -8px; }
-  .panel { flex-direction: column; }
-  .statCell {
-    /* .statCell's `flex: 1 1 220px` sets a 220px *min-width* for the
-       desktop row layout — but flex-basis tracks the main axis, and once
-       .panel switches to flex-direction:column above, that same 220px
-       becomes a 220px min-*height* instead, padding out each stat with
-       far more empty space than its icon/number/label actually need.
-       Reset the basis so each cell just sizes to its content. */
-    flex: 0 1 auto;
-    border-right: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  }
-  .statCell:last-child { border-bottom: none; }
+  .panel { flex-direction: column; align-items: stretch; gap: 1.2rem; }
+  .statCell { flex: 0 1 auto; }
+  .statCell:nth-child(2) { margin-top: 0; }
 }

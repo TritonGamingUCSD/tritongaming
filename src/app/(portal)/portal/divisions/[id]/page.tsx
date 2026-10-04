@@ -1,3 +1,4 @@
+import { cleanBlocks } from '@/lib/pageBlocks';
 import { redirect, notFound } from 'next/navigation';
 import { getUserRoles } from '@/lib/auth';
 import { hasCapability } from '@/lib/capabilities';
@@ -25,7 +26,7 @@ export default async function EditDivisionPage({ params }: Params) {
   const supabase = await createClient();
   const { data: division } = await supabase
     .from('divisions')
-    .select('id, name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds')
+    .select('id, name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds, page_blocks')
     .eq('id', id)
     .maybeSingle();
 
@@ -46,6 +47,7 @@ export default async function EditDivisionPage({ params }: Params) {
     application_url: division.application_url ?? '',
     social_links: division.social_links ?? {},
     social_embeds: division.social_embeds ?? [],
+    page_blocks: cleanBlocks(division.page_blocks),
   };
 
   return (

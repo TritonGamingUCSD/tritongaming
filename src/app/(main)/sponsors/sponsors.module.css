@@ -1,274 +1,38 @@
-.page {
-  background: #060c1a;
-}
+.page { background: #060c1a; min-height: 100svh; }
 
-/* ── Hero — same recipe as every other main-site page hero, see globals.css ── */
-.heroBanner {
-  position: relative;
-  padding: var(--hero-padding-top) clamp(1.5rem, 5vw, 4rem) var(--hero-padding-bottom);
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+.mission { margin: 0 auto; max-width: 44rem; text-align: center; font-family: var(--font-handwriting); font-size: clamp(1.3rem, 2.8vw, 1.9rem); line-height: 1.4; color: var(--yellow-text); text-wrap: balance; }
 
-.heroBg {
-  position: absolute;
-  inset: 0;
-  background: var(--hero-bg);
-}
+/* Logos sit on plates that flip light/dark by themselves (see LogoPlate), so a black or white logo is never lost */
+.logoWall { list-style: none; margin: 0; padding: 0.5rem 0 0; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 1.75rem 1.5rem; }
+.logoLink { display: block; text-decoration: none; transition: transform 0.2s ease; }
+.logoLink:hover, .logoLink:focus-visible { transform: translateY(-4px); }
+.plate { position: relative; width: 11rem; height: 6.5rem; padding: 0; overflow: hidden; }
+.size_large { width: 15rem; height: 8.5rem; }
+.size_small { width: 8.5rem; height: 5rem; }
+.logoImg { position: absolute; inset: 0.6rem; width: calc(100% - 1.2rem); height: calc(100% - 1.2rem); object-fit: contain; }
+.noSponsors { margin: 0; text-align: center; font-family: var(--font-handwriting); font-size: 1.5rem; color: var(--yellow-text); }
 
-.heroBg::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: var(--hero-fade-height);
-  background: var(--hero-fade);
-}
+.offerGrid { list-style: none; margin: 0; padding: 0.4rem 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 1.75rem 1.5rem; }
+.offerCard { position: relative; display: flex; flex-direction: column; gap: 0.6rem; background: var(--paper); color: var(--ink); padding: 1.2rem 1.1rem 1.3rem; box-shadow: var(--hard-shadow-sm); min-width: 0; }
+.tiltL { transform: rotate(-0.8deg); }
+.tiltR { transform: rotate(0.8deg); }
+.offerIcon { display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: 0.9rem; background: var(--yellow); border: 2px solid var(--ink); box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5); }
+.offerTitle { margin: 0.2rem 0 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.05rem; line-height: 1.15; text-transform: uppercase; }
+.offerBody { margin: 0; font-family: var(--font-futura-medium); font-size: 0.9rem; line-height: 1.55; color: #2a3550; }
 
-.heroContent {
-  position: relative;
-  z-index: 1;
-  text-align: center;
-  max-width: 700px;
-}
-
-.heroLabel {
-  font-family: var(--font-futura-heavy);
-  font-size: 0.75rem;
-  letter-spacing: 0.18em;
-  color: var(--yellow);
-  margin: 0 0 0.5rem;
-}
-
-.heroTitle {
-  font-family: var(--font-brick);
-  font-size: clamp(2.5rem, 6vw, 5rem);
-  color: var(--yellow);
-  margin: 0 0 1rem;
-  line-height: 1;
-  text-shadow: 2px 4px 12px rgba(0,0,0,0.4);
-}
-
-.heroSub {
-  font-family: var(--font-futura-medium);
-  font-size: clamp(0.95rem, 1.8vw, 1.15rem);
-  color: var(--lightblue);
-  margin: 0;
-  line-height: 1.65;
-}
-
-/* ── Mission bar ── */
-/* Used to be a solid var(--yellow) band across the full width — read as
-   way too bright/high-saturation next to everything else on the page.
-   Same dark-glass-with-a-gold-accent language as the rest of the site
-   instead of a flat color blast. */
-.missionBar {
-  background: rgba(255, 199, 44, 0.06);
-  border-top: 1px solid rgba(255, 199, 44, 0.18);
-  border-bottom: 1px solid rgba(255, 199, 44, 0.18);
-  padding: 0.85rem clamp(1.5rem, 5vw, 4rem);
-  text-align: center;
-}
-
-.missionBar p {
-  font-family: var(--font-soulmaze);
-  font-size: clamp(0.9rem, 2vw, 1.15rem);
-  color: rgba(242, 241, 240, 0.85);
-  margin: 0;
-}
-
-/* ── Shared headers ── */
-.sectionHeader {
-  text-align: center;
-  margin-bottom: clamp(2rem, 4vw, 3rem);
-}
-
-.sectionLabel {
-  font-family: var(--font-futura-heavy);
-  font-size: 0.75rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--yellow);
-  margin: 0 0 0.5rem;
-}
-
-.sectionLabelLight {
-  font-family: var(--font-futura-heavy);
-  font-size: 0.75rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--yellow);
-  margin: 0 0 0.5rem;
-}
-
-.sectionTitle {
-  font-family: var(--font-soulmaze);
-  font-size: var(--fs-section-title);
-  color: var(--white);
-  margin: 0;
-  line-height: 1.3;
-}
-
-.sectionTitleLight {
-  font-family: var(--font-soulmaze);
-  font-size: var(--fs-section-title);
-  color: var(--white);
-  margin: 0 0 0.75rem;
-  line-height: 1.3;
-}
-
-.sectionSub {
-  font-family: var(--font-futura-medium);
-  font-size: var(--fs-body);
-  color: var(--lightblue);
-  margin: 0;
-  max-width: 560px;
-  margin-inline: auto;
-  line-height: 1.7;
-}
-
-/* ── Current sponsors ── */
-.sponsorSection {
-  padding: var(--section-pad) clamp(1.5rem, 5vw, 4rem);
-  max-width: calc(var(--max-width) + 4rem);
-  margin-inline: auto;
-}
-
-.grid {
-  max-width: 900px;
-  margin-inline: auto;
-  padding: clamp(1.5rem, 3vw, 2.5rem);
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: clamp(20px, 3vw, 28px);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  box-shadow: var(--glass-shadow);
-}
-
-.noSponsors {
-  text-align: center;
-  color: rgba(242, 241, 240, 0.4);
-  font-size: 0.9rem;
-  padding: 2rem 1rem;
-}
-
-/* ── What We Offer ── */
-.offerSection {
-  position: relative;
-  padding: var(--section-pad) clamp(1.5rem, 5vw, 4rem);
-  overflow: hidden;
-}
-
-.offerBg {
-  position: absolute;
-  inset: 0;
-  background: var(--hero-bg);
-}
-
-.offerBg::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: var(--hero-fade-height);
-  background: var(--hero-fade);
-}
-
-.offerInner {
-  position: relative;
-  z-index: 1;
-  max-width: var(--max-width);
-  margin-inline: auto;
-}
-
-.offerGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.25rem;
-}
-
-.offerCard {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
-  padding: 1.5rem 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
-}
-
-.offerCard:hover {
-  background: var(--glass-bg-hover);
-  border-color: var(--glass-border-hover);
-  transform: translateY(-4px);
-}
-
-.offerIcon { display: inline-flex; color: var(--yellow); }
-
-.offerTitle {
-  font-family: var(--font-soulmaze);
-  font-size: 1.05rem;
-  color: var(--white);
-  margin: 0;
-}
-
-.offerBody {
-  font-family: var(--font-futura-medium);
-  font-size: 0.875rem;
-  color: rgba(255,255,255,0.75);
-  line-height: 1.65;
-  margin: 0;
-}
-
-/* ── Contact CTA ── */
-.ctaSection {
-  padding: var(--section-pad) clamp(1.5rem, 5vw, 4rem);
-  text-align: center;
-  max-width: 700px;
-  margin-inline: auto;
-}
-
-.ctaHeading {
-  font-family: var(--font-soulmaze);
-  font-size: clamp(1.4rem, 3vw, 2rem);
-  color: var(--white);
-  margin: 0 0 0.5rem;
-}
-
-.ctaSub {
-  font-family: var(--font-futura-medium);
-  font-size: var(--fs-body);
-  color: rgba(242,241,240,0.7);
-  margin: 0 0 1.25rem;
-  line-height: 1.6;
-}
-
+.cta { display: flex; flex-direction: column; align-items: center; gap: 0.8rem; text-align: center; }
+.ctaHeading { margin: 0; font-family: var(--font-soulmaze); font-weight: 400; font-size: clamp(1.4rem, 3.4vw, 2.2rem); line-height: 1.15; text-wrap: balance; }
+.ctaSub { margin: 0; max-width: 34rem; font-family: var(--font-futura-medium); font-size: 0.98rem; line-height: 1.6; color: rgba(242, 241, 240, 0.8); }
 .ctaEmail {
-  display: inline-block;
-  font-family: var(--font-futura-heavy);
-  font-size: clamp(0.9rem, 2vw, 1.1rem);
-  color: var(--lightblue);
-  letter-spacing: 0.04em;
-  text-decoration: none;
-  border-bottom: 2px solid var(--yellow);
-  padding-bottom: 3px;
-  transition: color 0.2s ease;
+  display: inline-block; max-width: 100%; margin-top: 0.4rem; background: var(--yellow); color: var(--ink); text-decoration: none; overflow-wrap: anywhere;
+  font-family: var(--font-futura-heavy); font-size: clamp(0.85rem, 2.4vw, 1.05rem); padding: 0.85rem 1.3rem; border: 3px solid var(--ink); border-radius: var(--radius-sm);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6); transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
+.ctaEmail:hover, .ctaEmail:focus-visible { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.6); }
 
-.ctaEmail:hover { color: var(--white); }
-
-@media (max-width: 900px) {
-  .offerGrid { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (max-width: 520px) {
-  .offerGrid { grid-template-columns: 1fr; }
+@media (max-width: 640px) {
+  .tiltL, .tiltR { transform: none; }
+  .plate { width: 9rem; height: 5.5rem; }
+  .size_large { width: 11.5rem; height: 6.5rem; }
+  .size_small { width: 7rem; height: 4.2rem; }
 }

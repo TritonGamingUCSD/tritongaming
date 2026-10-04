@@ -46,6 +46,7 @@ export async function getDivisionBySlug(slug: string): Promise<Division | null> 
       application_url: (d.application_url as string) || null,
       social_links: (d.social_links as Record<string, string>) ?? saved.social_links,
       social_embeds: (d.social_embeds as Division['social_embeds']) ?? saved.social_embeds,
+      page_blocks: (d.page_blocks as Division['page_blocks']) ?? saved.page_blocks,
     };
   }
   return (await getDivisions()).find((d) => d.slug === slug) ?? null;

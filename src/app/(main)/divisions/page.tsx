@@ -3,6 +3,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getDivisions, divisionLogoSrc } from '@/lib/divisions';
 import { getContentBlock } from '@/lib/content';
+import { markdownToDescription } from '@/lib/markdown';
+import LogoPlate from '@/components/LogoPlate/LogoPlate';
+import { ZineBand, PageHero } from '@/components/ZineBand/ZineBand';
+import PhotoStrip from '@/components/PhotoStrip/PhotoStrip';
+import { SITE_PHOTOS } from '@/lib/sitePhotos';
 import styles from './divisions.module.css';
 
 const DESCRIPTION = 'Triton Gaming hosts dedicated game divisions — from competitive gaming to casual communities. Find your squad.';
@@ -29,66 +34,47 @@ export default async function DivisionsPage() {
     getDivisions(),
     getContentBlock('page.divisions'),
   ]);
-  const title = content.title as string;
-  const subtitle = content.subtitle as string;
 
   return (
     <div className={styles.page}>
-      <section className={styles.hero}>
-        <h1 className={styles.heroTitle}>{title}</h1>
-        <p className={styles.heroSub}>{subtitle}</p>
-      </section>
+      <PageHero label={(content.label as string) || 'Find your squad'} title={content.title as string} sub={content.subtitle as string} />
 
-      <section className={styles.grid}>
+      <ZineBand tone="navy" edge={false} label="Divisions">
         {divisions.length > 0 ? (
-          divisions.map((div) => {
-            const logoSrc = divisionLogoSrc(div.logo_url);
-            return (
-              <div key={div.id} className={styles.card}>
-                <div className={styles.cardHeader}>
-                  {logoSrc ? (
-                    <Image
-                      src={logoSrc}
-                      alt={div.name}
-                      width={80}
-                      height={80}
-                      className={styles.logo}
-                    />
-                  ) : (
-                    <div className={styles.logoFallback}>
-                      {div.name[0]}
-                    </div>
-                  )}
-                </div>
-                <div className={styles.cardBody}>
-                  <h3 className={styles.divName}>{div.name}</h3>
-                  <p className={styles.divDesc}>{div.description || ''}</p>
-                </div>
-                <div className={styles.cardFooter}>
-                  <span className={styles.learnMore}>{(content.learn_more as string) || 'Learn More →'}</span>
-                  {div.discord_url && (
-                    <a
-                      href={div.discord_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={styles.cardDiscordBtn}
-                      aria-label={`Join ${div.name}'s Discord`}
-                    >
-                      <Image src="/logos/discord.svg" alt="" width={14} height={14} unoptimized /> Discord
-                    </a>
-                  )}
-                </div>
-                {/* Stretched link — whole card is clickable through to the
-                    division page; the Discord button above sits on top of
-                    it (higher z-index) so it stays independently clickable. */}
-                <Link href={`/divisions/${div.slug}`} className={styles.cardLink} aria-label={`View ${div.name}`} />
-              </div>
-            );
-          })
+          <ul className={styles.grid}>
+            {divisions.map((div, i) => {
+              const logoSrc = divisionLogoSrc(div.logo_url);
+              const pitch = div.description ? markdownToDescription(div.description, 120) : '';
+              return (
+                <li key={div.id} className={`${styles.card} ${i % 2 ? styles.tiltR : styles.tiltL}`}>
+                  <div className={styles.badge}>
+                    {logoSrc ? (
+                      <LogoPlate src={logoSrc} alt="" className={styles.plate} imgClassName={styles.logo} />
+                    ) : (
+                      <span className={styles.logoFallback} aria-hidden="true">{div.name[0]}</span>
+                    )}
+                  </div>
+                  <h2 className={styles.divName}>{div.name}</h2>
+                  <p className={styles.divDesc}>{pitch || 'Check the page for what this division is up to.'}</p>
+                  <div className={styles.cardFooter}>
+                    <span className={styles.learnMore}>{(content.learn_more as string) || 'Learn more'} <span aria-hidden="true">→</span></span>
+                    {div.discord_url && (
+                      <a href={div.discord_url} target="_blank" rel="noopener noreferrer" className={styles.discordBtn} aria-label={`Join ${div.name}'s Discord`}>
+                        <Image src="/logos/discord.svg" alt="" width={14} height={14} unoptimized /> Discord
+                      </a>
+                    )}
+                  </div>
+                  {/* Stretched link: the whole card opens the division; the Discord button sits above it. */}
+                  <Link href={`/divisions/${div.slug}`} className={styles.cardLink} aria-label={`View ${div.name}`} />
+                </li>
+              );
+            })}
+          </ul>
         ) : (
-          <p className={styles.noContent}>{(content.empty as string) || 'No divisions available'}</p>
+          <p className={styles.noContent}>{(content.empty as string) || 'No divisions yet. Check back soon!'}</p>
         )}
-      </section>
+      </ZineBand>
+      <PhotoStrip tone="ink" caption={(content.strip_caption as string) || 'Every division, in the same room.'} photos={[SITE_PHOTOS.community, SITE_PHOTOS.events, SITE_PHOTOS.stage]} />
     </div>
   );
 }

@@ -1,308 +1,44 @@
-.page {
-  background: #060c1a;
-  min-height: 100svh;
-}
+.page { background: #060c1a; min-height: 100svh; }
 
-/* ── Hero Banner — same recipe as every other main-site page hero, see globals.css ── */
-.heroBanner {
-  position: relative;
-  padding: var(--hero-padding-top) clamp(1.5rem, 5vw, 4rem) var(--hero-padding-bottom);
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+.waysGrid { list-style: none; margin: 0; padding: 0.4rem 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1.75rem 1.5rem; }
+.wayCard { display: flex; flex-direction: column; align-items: flex-start; gap: 0.7rem; background: var(--paper); color: var(--ink); padding: 1.3rem 1.2rem 1.4rem; box-shadow: var(--hard-shadow-sm); min-width: 0; }
+.tiltL { transform: rotate(-0.8deg); }
+.tiltR { transform: rotate(0.8deg); }
+.wayIcon { display: grid; place-items: center; width: 3.2rem; height: 3.2rem; border-radius: 0.9rem; background: var(--yellow); border: 2px solid var(--ink); box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5); }
+.wayIcon img { filter: invert(1) brightness(0.1); }
+.wayTitle { margin: 0.2rem 0 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.15rem; line-height: 1.15; text-transform: uppercase; }
+.wayBody { margin: 0; flex: 1; font-family: var(--font-futura-medium); font-size: 0.92rem; line-height: 1.55; color: #2a3550; }
+.wayCta { margin-top: 0.3rem; font-family: var(--font-renegare); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink); text-decoration: none; border-bottom: 3px solid var(--ink); padding-bottom: 1px; }
+.wayCta:hover, .wayCta:focus-visible { border-bottom-color: #b8860b; }
 
-.heroBg {
-  position: absolute;
-  inset: 0;
-  background: var(--hero-bg);
-}
-
-.heroBg::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: var(--hero-fade-height);
-  background: var(--hero-fade);
-}
-
-.heroContent {
-  position: relative;
-  z-index: 1;
-  text-align: center;
-  max-width: 700px;
-}
-
-.heroLabel {
-  font-family: var(--font-futura-heavy);
-  font-size: 0.75rem;
-  letter-spacing: 0.18em;
-  color: var(--yellow);
-  margin: 0 0 0.5rem;
-}
-
-.heroTitle {
-  font-family: var(--font-brick);
-  font-size: clamp(2.5rem, 6vw, 5rem);
-  color: var(--yellow);
-  margin: 0 0 1rem;
-  line-height: 1;
-  text-shadow: 2px 4px 12px rgba(0,0,0,0.4);
-}
-
-.heroSub {
-  font-family: var(--font-futura-medium);
-  font-size: clamp(0.95rem, 1.8vw, 1.15rem);
-  color: var(--lightblue);
-  margin: 0;
-  line-height: 1.65;
-}
-
-/* ── Ways Section ── */
-.waysSection {
-  padding: var(--section-pad) clamp(1.5rem, 5vw, 4rem);
-  max-width: calc(var(--max-width) + 4rem);
-  margin-inline: auto;
-}
-
-.sectionHeader {
-  text-align: center;
-  margin-bottom: clamp(2rem, 4vw, 3rem);
-}
-
-.sectionLabel {
-  font-family: var(--font-futura-heavy);
-  font-size: 0.75rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--yellow);
-  margin: 0 0 0.5rem;
-}
-
-.sectionTitle {
-  font-family: var(--font-soulmaze);
-  font-size: var(--fs-section-title);
-  color: var(--white);
-  margin: 0;
-  line-height: 1.3;
-}
-
-.waysGrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.25rem;
-}
-
-.wayCard {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding: 1.75rem 1.5rem;
-  border-radius: 18px;
-  border: 1px solid var(--glass-border);
-  border-top: 3px solid var(--accent-color, var(--yellow));
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  box-shadow: var(--glass-shadow);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
-}
-
-.wayCard:hover {
-  transform: translateY(-6px);
-  background: var(--glass-bg-hover);
-  border-color: var(--glass-border-hover);
-}
-
-.accent_blue { --accent-color: var(--lightblue); }
-.accent_yellow { --accent-color: var(--yellow); }
-
-.wayEmoji { display: inline-flex; color: var(--yellow); }
-
-.wayTitle {
-  font-family: var(--font-soulmaze);
-  font-size: clamp(1.1rem, 2vw, 1.35rem);
-  color: var(--white);
-  margin: 0;
-}
-
-.wayBody {
-  font-family: var(--font-futura-medium);
-  font-size: var(--fs-body);
-  color: rgba(242,241,240,0.7);
-  line-height: 1.7;
-  margin: 0;
-  flex: 1;
-}
-
-.wayCta {
-  font-family: var(--font-futura-heavy);
-  font-size: 0.8rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--lightblue);
-  text-decoration: none;
-  border-bottom: 2px solid var(--yellow);
-  padding-bottom: 2px;
-  width: fit-content;
-  transition: color 0.2s ease;
-}
-
-.wayCta:hover { color: var(--white); }
-
-/* ── Officer Section ── */
-.officerSection {
-  position: relative;
-  padding: var(--section-pad) clamp(1.5rem, 5vw, 4rem);
-  overflow: hidden;
-}
-
-.officerBg {
-  position: absolute;
-  inset: 0;
-  background: var(--hero-bg);
-}
-
-.officerBg::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: var(--hero-fade-height);
-  background: var(--hero-fade);
-}
-
-.officerContent {
-  position: relative;
-  z-index: 1;
-  max-width: var(--max-width);
-  margin-inline: auto;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: clamp(2rem, 5vw, 4rem);
-  align-items: start;
-}
-
-.officerTitle {
-  font-family: var(--font-soulmaze);
-  font-size: var(--fs-section-title);
-  color: var(--white);
-  margin: 0 0 0.75rem;
-  line-height: 1.3;
-}
-
-.officerBody {
-  font-family: var(--font-futura-medium);
-  font-size: var(--fs-body);
-  color: var(--lightblue);
-  line-height: 1.7;
-  margin: 0 0 1.25rem;
-}
-
-.perkList {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 1.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.perkItem {
-  font-family: var(--font-futura-medium);
-  font-size: 0.875rem;
-  color: rgba(255,255,255,0.85);
-  line-height: 1.5;
-}
-
-.perkDot {
-  color: var(--yellow);
-  margin-right: 0.4rem;
-}
-
+.officer { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: clamp(2rem, 5vw, 3.5rem); align-items: start; }
+.officerText { display: flex; flex-direction: column; gap: 1.1rem; min-width: 0; }
+.officerBody { margin: 0; max-width: 36rem; font-family: var(--font-futura-medium); font-size: clamp(0.95rem, 1.5vw, 1.05rem); line-height: 1.7; color: rgba(242, 241, 240, 0.85); white-space: pre-line; }
+.perkList { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.perkItem { font-family: var(--font-futura-medium); font-size: 0.95rem; line-height: 1.45; }
+.perkDot { color: var(--yellow); margin-right: 0.3rem; }
 .applyBtn {
-  display: inline-flex;
-  align-items: center;
-  min-height: 48px;
-  padding: 0.7rem 2rem;
-  background: var(--btn-primary-bg);
-  box-shadow: var(--btn-primary-shadow);
-  color: var(--btn-primary-text);
-  font-family: var(--font-futura-heavy);
-  font-size: 0.9rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  text-decoration: none;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--btn-primary-border);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 0.5rem; background: var(--yellow); color: var(--ink); text-decoration: none;
+  font-family: var(--font-futura-heavy); font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.85rem 1.3rem;
+  border: 3px solid var(--ink); border-radius: var(--radius-sm); box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6); transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
+.applyBtn:hover, .applyBtn:focus-visible { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.6); }
 
-.applyBtn:hover {
-  transform: translateY(-2px);
-  border-color: var(--btn-primary-border-hover);
-  box-shadow: var(--btn-primary-shadow-hover);
+.officerMeta { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
+/* a portrait flyer stays portrait; it is capped in height instead of being cropped */
+.flyer { position: relative; margin: 0.4rem auto 0; padding: 0.6rem; background: var(--paper); box-shadow: var(--hard-shadow); transform: rotate(1.2deg); max-width: 320px; }
+.tape { position: absolute; top: -0.8rem; left: 50%; width: 4.5rem; height: 1.5rem; margin-left: -2.25rem; background: var(--tape); transform: rotate(-3deg); z-index: 2; clip-path: polygon(0 8%, 6% 0, 12% 10%, 100% 0, 96% 50%, 100% 92%, 90% 100%, 6% 92%, 0 100%, 4% 50%); }
+.flyerImg { display: block; width: 100%; max-height: 28rem; object-fit: contain; border: 2px solid var(--ink); background: #14213f; }
+.metaList { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.9rem; }
+.metaCard { display: grid; grid-template-columns: auto 1fr; grid-template-areas: 'icon label' 'icon value'; column-gap: 0.8rem; align-items: center; padding: 0.8rem 1rem; background: var(--paper); color: var(--ink); box-shadow: var(--hard-shadow-sm); }
+.metaIcon { grid-area: icon; display: grid; place-items: center; width: 2.4rem; height: 2.4rem; border-radius: 50%; background: var(--yellow); border: 2px solid var(--ink); }
+.metaLabel { grid-area: label; font-family: var(--font-renegare); font-size: 0.64rem; letter-spacing: 0.12em; text-transform: uppercase; color: #3a4764; }
+.metaValue { grid-area: value; font-family: var(--font-futura-heavy); font-size: 1rem; overflow-wrap: anywhere; }
+
+@media (max-width: 800px) {
+  .officer { grid-template-columns: minmax(0, 1fr); }
+  .applyBtn { width: 100%; justify-content: center; }
 }
-
-/* Meta cards */
-.officerMeta {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  min-width: 220px;
+@media (max-width: 640px) {
+  .tiltL, .tiltR, .flyer { transform: none; }
 }
-
-/* Flyers are usually tall (portrait) — width:100% with no height cap let
-   one stretch to fill the narrow meta column's height unconstrained,
-   dwarfing the stat cards below it. Capped + contain so it always shows in
-   full at a sane size instead of dictating the column's height. */
-.recruitmentFlyer {
-  display: block;
-  width: 100%;
-  max-height: 320px;
-  object-fit: contain;
-  border-radius: 14px;
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-}
-
-.metaCard {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  padding: 1.1rem 1.25rem;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 14px;
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-}
-
-.metaEmoji { display: inline-flex; color: var(--yellow); }
-
-.metaLabel {
-  font-family: var(--font-futura-heavy);
-  font-size: 0.65rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--lightblue);
-}
-
-.metaValue {
-  font-family: var(--font-futura-medium);
-  font-size: 0.875rem;
-  color: var(--white);
-  line-height: 1.4;
-}
-
-@media (max-width: 900px) {
-  .waysGrid { grid-template-columns: 1fr; max-width: 480px; margin-inline: auto; }
-  .officerContent { grid-template-columns: 1fr; }
-  .officerMeta { flex-direction: row; flex-wrap: wrap; }
-  .metaCard { flex: 1; min-width: 160px; }
-}
-

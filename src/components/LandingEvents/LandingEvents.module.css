@@ -1,130 +1,21 @@
+/* One big ticket for the next event. Paper object, tape, hard shadow; stickers/buttons get soft corners (die-cut), the paper stays square. */
 .section {
-  padding-block: var(--sp-md) var(--sp-lg);
-  background: rgba(8, 16, 30, 0.74);
-  overflow: hidden;
+  padding-block: var(--sp-lg);
+  background: rgba(5, 13, 31, 0.78);
   position: relative;
+  overflow-x: clip;
 }
+.inner { max-width: 1080px; margin: 0 auto; padding-inline: clamp(1rem, 4vw, 2.5rem); display: flex; flex-direction: column; gap: 1.75rem; }
 
-/* Top accent line */
-.section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 5%;
-  right: 5%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255,199,44,0.25), transparent);
-}
-
-.header {
-  text-align: center;
-  padding: 0 clamp(1rem, 4vw, 2.5rem);
-  margin-bottom: 0.5rem;
-}
-
+.header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .sectionLabel {
-  font-family: var(--font-futura-heavy);
-  font-size: 0.7rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--yellow);
-  margin: 0 0 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
+  margin: 0; font-family: var(--font-renegare); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase;
+  background: var(--yellow); color: var(--ink); padding: 0.45rem 0.8rem; border-radius: var(--radius-sm);
+  transform: rotate(-1.5deg); box-shadow: var(--hard-shadow-sm);
 }
-
-.sectionLabel::before,
-.sectionLabel::after {
-  content: '';
-  display: inline-block;
-  width: 20px;
-  height: 2px;
-  background: var(--yellow);
-  flex-shrink: 0;
-}
-
-.sectionTitle {
-  font-family: var(--font-soulmaze);
-  font-size: var(--fs-section-title);
-  color: var(--white);
-  margin: 0;
-  line-height: 1.3;
-}
-
-.titleActions {
-  display: flex;
-  justify-content: center;
-  margin-top: 0.75rem;
-  margin-bottom: 1rem;
-}
-
 .ctaLink {
-  font-family: var(--font-futura-heavy);
-  font-size: 0.78rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--white);
-  text-decoration: none;
-  border-bottom: 1px solid rgba(255, 199, 44, 0.4);
-  padding-bottom: 2px;
-  transition: color 0.2s ease, border-color 0.2s;
+  font-family: var(--font-handwriting); font-size: 1.3rem; color: var(--yellow); text-decoration: none;
+  border-bottom: 2px solid rgba(255, 199, 44, 0.5); padding-bottom: 2px; transition: border-color 0.2s;
 }
+.ctaLink:hover { border-color: var(--yellow); }
 
-.ctaLink:hover {
-  color: var(--yellow);
-  border-color: var(--yellow);
-}
-
-.wrapper {
-  position: relative;
-  /* Fade edges to match section bg */
-  mask-image: linear-gradient(
-    to right,
-    transparent 0%,
-    black 10%,
-    black 90%,
-    transparent 100%
-  );
-}
-
-.carousel {
-  display: flex;
-  gap: clamp(1rem, 2.5vw, 2rem);
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-snap-type: x mandatory;
-  padding: 1.5rem clamp(1rem, 5vw, 6rem) 2.5rem;
-  cursor: grab;
-  scrollbar-width: none;
-}
-
-.carousel::-webkit-scrollbar { display: none; }
-.carousel:active { cursor: grabbing; }
-
-/* Few enough events that looping would just repeat the same cards —
-   center them as a plain static row instead. */
-.noLoop { mask-image: none; }
-.carousel.centered {
-  cursor: default;
-  justify-content: center;
-  flex-wrap: wrap;
-  scroll-snap-type: none;
-}
-
-.cardWrapper {
-  scroll-snap-align: center;
-  transition: opacity 0.35s ease, transform 0.35s ease;
-  flex-shrink: 0;
-}
-
-.faded {
-  opacity: 0.35;
-  transform: scale(0.9);
-}
-
-@media (max-width: 640px) {
-  .wrapper { mask-image: none; }
-  .carousel { padding-inline: 1rem; gap: 1rem; }
-}

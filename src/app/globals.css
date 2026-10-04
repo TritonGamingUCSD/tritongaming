@@ -103,6 +103,14 @@
   --font-renegare: 'RenogareSoft-Regular', sans-serif;
   --font-futura-heavy: 'Futura-Heavy', sans-serif;
   --font-futura-medium: 'Futura-Medium', sans-serif;
+  --font-handwriting: var(--font-hand), 'Bradley Hand', cursive;
+
+  /* Zine pieces: paper cut-outs, tape and hard offset shadows instead of glass and glow. Used by the public pages (and later the portal). */
+  --paper: #f2efe6;
+  --ink: #0a1630;
+  --tape: rgba(255, 224, 140, 0.8);
+  --hard-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55);
+  --hard-shadow-sm: 4px 4px 0 rgba(0, 0, 0, 0.55);
 
   /* Fluid Font Sizes — scale gracefully across all viewports */
   --fs-h1: clamp(1.6rem, 3.5vw, 3rem);

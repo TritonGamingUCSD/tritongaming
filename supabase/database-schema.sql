@@ -42,7 +42,6 @@ CREATE TABLE public.events (
   flyer_url text,
   banner_url text,
   url text,
-  max_capacity integer,
   is_published boolean DEFAULT true,
   requires_ticket boolean DEFAULT false,
   ticket_price numeric DEFAULT 0,

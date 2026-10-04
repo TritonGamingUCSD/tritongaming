@@ -3,6 +3,9 @@ import BoardSection from '@/components/BoardSection/BoardSection';
 import { getContentBlock } from '@/lib/content';
 import { getBoardMembers } from './getBoardMembers';
 import { getTeamYears } from './getTeamYears';
+import { PageHero } from '@/components/ZineBand/ZineBand';
+import PhotoStrip from '@/components/PhotoStrip/PhotoStrip';
+import { SITE_PHOTOS } from '@/lib/sitePhotos';
 import styles from './team.module.css';
 
 export const metadata: Metadata = {
@@ -37,15 +40,9 @@ export default async function TeamPage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.heroBanner}>
-        <div className={styles.heroBg} aria-hidden="true" />
-        <div className={styles.heroContent}>
-          <p className={styles.heroLabel}>{label}</p>
-          <h1 className={styles.heroTitle}>{title}</h1>
-          <p className={styles.heroSub}>{subtitle}</p>
-        </div>
-      </div>
+      <PageHero label={label} title={title} sub={subtitle} />
       <BoardSection members={boardMembers} years={years} />
+      <PhotoStrip tone="ink" caption={(content.strip_caption as string) || 'The people on the other side of the screen.'} photos={[SITE_PHOTOS.stage, SITE_PHOTOS.inside, SITE_PHOTOS.community]} />
     </div>
   );
 }

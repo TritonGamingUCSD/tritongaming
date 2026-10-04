@@ -1,11 +1,12 @@
 import { getContentBlock } from '@/lib/content';
 import AnnouncementClient from './AnnouncementClient';
 
-const COLOR_MAP: Record<string, { bg: string; text: string; border: string }> = {
-  yellow: { bg: 'rgba(255,199,44,0.12)',  text: '#ffc72c',  border: 'rgba(255,199,44,0.25)' },
-  blue:   { bg: 'rgba(39,90,143,0.2)',    text: '#9fc4e8',  border: 'rgba(159,196,232,0.2)' },
-  green:  { bg: 'rgba(5,150,105,0.15)',   text: '#6ee7b7',  border: 'rgba(52,211,153,0.2)' },
-  red:    { bg: 'rgba(220,38,38,0.12)',   text: '#fca5a5',  border: 'rgba(252,165,165,0.2)' },
+// Flat strip colours (ink text on all of them). The CMS still picks one of the four.
+const COLOR_MAP: Record<string, string> = {
+  yellow: '#ffc72c',
+  blue: '#9fc4e8',
+  green: '#6ee7b7',
+  red: '#fca5a5',
 };
 
 export default async function AnnouncementBanner() {
@@ -21,14 +22,14 @@ export default async function AnnouncementBanner() {
 
     if (!content.enabled || !content.text) return null;
 
-    const colors = COLOR_MAP[content.color || 'yellow'] || COLOR_MAP.yellow;
+    const color = COLOR_MAP[content.color || 'yellow'] || COLOR_MAP.yellow;
 
     return (
       <AnnouncementClient
         text={content.text}
         link={content.link}
         linkText={content.link_text}
-        colors={colors}
+        color={color}
       />
     );
   } catch {

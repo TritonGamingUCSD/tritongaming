@@ -1,190 +1,41 @@
-.page {
-  background: #060c1a;
-}
+.page { background: #060c1a; min-height: 100svh; }
 
-/* ── Hero — same recipe as every other main-site page hero, see globals.css ── */
-.heroBanner {
-  position: relative;
-  padding: var(--hero-padding-top) clamp(1.5rem, 5vw, 4rem) var(--hero-padding-bottom);
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.heroBg {
-  position: absolute;
-  inset: 0;
-  background: var(--hero-bg);
-}
-
-.heroBg::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: var(--hero-fade-height);
-  background: var(--hero-fade);
-}
-
-.heroContent {
-  position: relative;
-  z-index: 1;
-  text-align: center;
-  max-width: 700px;
-}
-
-.heroLabel {
-  font-family: var(--font-futura-heavy);
-  font-size: 0.75rem;
-  letter-spacing: 0.18em;
-  color: var(--yellow);
-  margin: 0 0 0.5rem;
-}
-
-.heroTitle {
-  font-family: var(--font-brick);
-  font-size: clamp(2.5rem, 6vw, 5rem);
-  color: var(--yellow);
-  margin: 0 0 1rem;
-  line-height: 1;
-  text-shadow: 2px 4px 12px rgba(0,0,0,0.4);
-}
-
-.heroSub {
-  font-family: var(--font-futura-medium);
-  font-size: clamp(0.95rem, 1.8vw, 1.15rem);
-  color: var(--lightblue);
-  margin: 0;
-  line-height: 1.65;
-}
-
-/* ── Shared section ── */
-.section {
-  padding: var(--section-pad) clamp(1.5rem, 5vw, 4rem);
-  max-width: var(--max-width);
-  margin-inline: auto;
-}
-
-.sectionHeader {
-  text-align: center;
-  margin-bottom: clamp(2rem, 4vw, 3rem);
-}
-
-.sectionLabel {
-  font-family: var(--font-futura-heavy);
-  font-size: 0.75rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--yellow);
-  margin: 0 0 0.5rem;
-}
-
-.sectionTitle {
-  font-family: var(--font-soulmaze);
-  font-size: var(--fs-section-title);
-  color: var(--white);
-  margin: 0;
-  line-height: 1.3;
-}
-
-/* ── Long-form videos ── */
-.videoGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 1.75rem;
-}
-
-/* Capped rather than filling the whole grid track — on a wide viewport
-   with few videos, a 16:9 iframe scaled to 100% of a stretched 1fr column
-   got tall enough that the full player no longer fit on screen at once.
-   A comfortable max-width (centered) keeps every video at a normal,
-   fully-visible size no matter how wide its grid cell ends up. */
-.videoCard {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  width: 100%;
-  max-width: 640px;
-  margin-inline: auto;
-}
-
-.videoEmbed {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  border: none;
-  border-radius: 0.875rem;
-  border: 1px solid var(--glass-border);
-}
-
-.videoTitle {
-  font-family: var(--font-soulmaze);
-  font-size: 1rem;
-  color: var(--white);
-  margin: 0;
-}
-
-/* ── Photo albums ── */
-.albumGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1rem;
-}
-
-.albumCard {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  padding: 1.25rem;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 0.875rem;
-  text-decoration: none;
-  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
-}
-
-.albumCard:hover {
-  background: var(--glass-bg-hover);
-  border-color: var(--glass-border-hover);
-  transform: translateY(-2px);
-}
-
-.albumIcon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: rgba(255, 199, 44, 0.12);
-  color: var(--yellow);
-}
-
-.albumTitle {
-  font-family: var(--font-futura-heavy);
-  font-size: 0.95rem;
-  color: var(--white);
-}
-
-.albumSub {
-  font-family: var(--font-futura-medium);
-  font-size: 0.8rem;
-  color: var(--lightblue);
-  margin-top: 0.15rem;
-}
-
-/* ── Empty states ── */
-.emptyState {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  text-align: center;
-  color: rgba(242, 241, 240, 0.4);
-  font-size: 0.9rem;
-  padding: 2rem 1rem;
-}
+/* Videos: each one is a taped print with its title under it */
+.videoGrid { list-style: none; margin: 0; padding: 0.5rem 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 2.25rem 1.75rem; }
+.videoCard { position: relative; display: flex; flex-direction: column; gap: 0.7rem; background: var(--paper); color: var(--ink); padding: 0.7rem 0.7rem 0.9rem; box-shadow: var(--hard-shadow); min-width: 0; }
+.videoCard::before { content: ''; position: absolute; top: -0.7rem; left: 50%; width: 4.5rem; height: 1.4rem; margin-left: -2.25rem; background: var(--tape); transform: rotate(-3deg); z-index: 2; clip-path: polygon(0 8%, 6% 0, 12% 10%, 100% 0, 96% 50%, 100% 92%, 90% 100%, 6% 92%, 0 100%, 4% 50%); }
+.tiltL { transform: rotate(-0.7deg); }
+.tiltR { transform: rotate(0.7deg); }
+.videoTitle { margin: 0; padding-inline: 0.2rem; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 0.95rem; line-height: 1.2; text-transform: uppercase; overflow-wrap: anywhere; }
 
 .hoverWrap { width: 100%; }
+.videoEmbed { display: block; width: 100%; aspect-ratio: 16 / 9; border: 2px solid var(--ink); background: #000; }
+
+/* poster + preview stills; no iframe until it is clicked */
+.facade { position: relative; display: block; width: 100%; aspect-ratio: 16 / 9; padding: 0; border: 2px solid var(--ink); background: #000; overflow: hidden; cursor: pointer; }
+.facade:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
+.poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.still { opacity: 0; transition: opacity 0.35s ease; }
+.stillOn { opacity: 1; }
+.playSticker {
+  position: absolute; left: 0.7rem; bottom: 0.7rem; display: inline-flex; align-items: center; gap: 0.4rem;
+  background: var(--yellow); color: var(--ink); padding: 0.45rem 0.8rem; border: 2px solid var(--ink); border-radius: var(--radius-pill);
+  font-family: var(--font-futura-heavy); font-size: 0.78rem; letter-spacing: 0.05em; text-transform: uppercase;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6); transition: transform 0.15s ease;
+}
+.facade:hover .playSticker, .facade:focus-visible .playSticker { transform: translate(-2px, -2px) rotate(-2deg); }
+
+/* Albums: paper tiles that open the album */
+.albumGrid { list-style: none; margin: 0; padding: 0.4rem 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 1.5rem; }
+.albumCard { display: flex; align-items: center; gap: 0.9rem; padding: 1rem 1.1rem; background: var(--paper); color: var(--ink); text-decoration: none; box-shadow: var(--hard-shadow-sm); transition: transform 0.2s ease, box-shadow 0.2s ease; min-width: 0; }
+.albumCard:hover, .albumCard:focus-visible { transform: rotate(0deg) translateY(-4px); box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55); }
+.albumIcon { display: grid; place-items: center; width: 2.6rem; height: 2.6rem; flex-shrink: 0; border-radius: 50%; background: var(--yellow); border: 2px solid var(--ink); }
+.albumText { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+.albumTitle { font-family: var(--font-futura-heavy); font-size: 0.95rem; text-transform: uppercase; overflow-wrap: anywhere; }
+.albumSub { font-family: var(--font-handwriting); font-size: 1.1rem; color: #3a4764; }
+
+.emptyState { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin: 0; text-align: center; font-family: var(--font-handwriting); font-size: 1.4rem; color: var(--yellow-text); padding: 1.5rem 0; }
+
+@media (max-width: 640px) {
+  .tiltL, .tiltR { transform: none; }
+}

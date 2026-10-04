@@ -1,4 +1,6 @@
+import type { PageBlock } from '@/lib/pageBlocks';
 import type { SocialEmbed, PhotoAlbumEntry, ScheduleItem, EventSponsor } from '@/types/database';
+import type { EventTheme } from '@/lib/eventTheme';
 
 export type Event = {
   _id: string;
@@ -25,6 +27,10 @@ export type Event = {
   sponsors: EventSponsor[];
   social_embeds: SocialEmbed[];
   points_value: number;
+  // The event's own look from its design guide; null = the default Triton Gaming look.
+  theme: EventTheme | null;
+  // Extra page sections (highlights, FAQ, gallery, text), shown below the main text.
+  page_blocks: PageBlock[];
 };
 
 export type LogoItem = {

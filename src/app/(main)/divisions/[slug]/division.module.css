@@ -1,251 +1,58 @@
-/* No min-height:100vh here on purpose — this page's content is often just
-   a single placeholder line (division detail content is minimal today),
-   and forcing a full-viewport floor turned that into a huge, obviously
-   empty gap before the footer instead of the footer just sitting
-   naturally below the (short) content, which reads fine. */
-.page {
-  padding-bottom: var(--sp-xl);
-  background: #060c1a;
-}
+.page { background: #060c1a; min-height: 100svh; }
 
-.hero {
-  padding: var(--hero-padding-top) var(--sp-md) clamp(2rem, 5vw, 3rem);
-}
-
-.heroInner {
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-  max-width: var(--max-width);
-  margin: 0 auto;
-  flex-wrap: wrap;
-}
-
-.logo {
-  width: 120px;
-  height: 120px;
-  /* See divisions.module.css's .logo for why — same fix, larger box. */
-  padding: 8px;
-  box-sizing: border-box;
-  object-fit: contain;
-  filter: drop-shadow(0 4px 16px rgba(0,0,0,0.4));
-  flex-shrink: 0;
-}
-
+/* Hero: flat ink, logo as a die-cut sticker, caution tape under it */
+.hero { position: relative; background: #060c1a; padding: var(--hero-padding-top) clamp(1rem, 5vw, 4rem) clamp(2.5rem, 5vw, 3.5rem); }
+.hero::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 10px; background: repeating-linear-gradient(-45deg, var(--yellow) 0 14px, #0a1630 14px 28px); }
+.heroInner { max-width: 1000px; margin: 0 auto; display: flex; align-items: center; gap: clamp(1.25rem, 4vw, 2.5rem); }
+.badge { flex-shrink: 0; transform: rotate(-3deg); }
+.plate { width: clamp(6rem, 16vw, 9rem); height: clamp(6rem, 16vw, 9rem); padding: 0.9rem; border-radius: 1.6rem; box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.6); }
+.logo { width: 100%; height: 100%; object-fit: contain; }
 .logoFallback {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-futura-heavy);
-  font-size: 2.5rem;
-  color: var(--white);
-  flex-shrink: 0;
+  display: grid; place-items: center; width: clamp(6rem, 16vw, 9rem); aspect-ratio: 1; border-radius: 1.6rem; background: var(--yellow); color: var(--ink);
+  border: 3px solid var(--ink); font-family: var(--font-brick); font-size: 4rem; box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.6);
+}
+.heroText { display: flex; flex-direction: column; gap: 0.8rem; align-items: flex-start; min-width: 0; }
+.kicker { margin: 0; font-family: var(--font-renegare); font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; background: var(--yellow); color: var(--ink); padding: 0.4rem 0.75rem; border-radius: var(--radius-sm); transform: rotate(-1.5deg); box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5); }
+.name { margin: 0; font-family: var(--font-soulmaze); font-weight: 400; font-size: clamp(1.8rem, 5vw, 3rem); line-height: 1.15; overflow-wrap: anywhere; text-wrap: balance; }
+.pitch { margin: 0; max-width: 36rem; font-family: var(--font-handwriting); font-size: clamp(1.1rem, 2.2vw, 1.4rem); line-height: 1.35; color: var(--yellow-text); }
+
+.ctaRow { display: flex; flex-wrap: wrap; gap: 0.7rem; align-items: center; margin-top: 0.2rem; }
+.discordBtn, .applyBtn, .socialBtn {
+  display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; border: 3px solid var(--ink); border-radius: var(--radius-sm);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6); transition: transform 0.15s ease, box-shadow 0.15s ease;
+  font-family: var(--font-futura-heavy); font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.discordBtn { background: #5865f2; color: #fff; padding: 0.65rem 1rem; }
+.applyBtn { background: var(--yellow); color: var(--ink); padding: 0.65rem 1rem; }
+.socialBtn { background: var(--paper); padding: 0.55rem; }
+.discordBtn:hover, .applyBtn:hover, .socialBtn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.6); }
+
+.prose { max-width: 46rem; margin: 0 auto; }
+
+/* Upcoming events: ticket rows on the paper band */
+.eventList { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.9rem; max-width: 46rem; }
+.eventRow { display: flex; align-items: center; gap: 1rem; padding: 0.8rem 1rem; background: var(--paper); color: var(--ink); text-decoration: none; border: 2px solid var(--ink); box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6); transition: transform 0.15s ease, box-shadow 0.15s ease; }
+a.eventRow:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.6); }
+.eventDate { display: flex; flex-direction: column; align-items: center; min-width: 3.4rem; line-height: 1; border: 2px solid var(--ink); flex-shrink: 0; }
+.eventDate span { width: 100%; text-align: center; background: var(--ink); color: var(--yellow); font-family: var(--font-renegare); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; padding: 0.2rem 0; }
+.eventDate strong { font-family: var(--font-brick); font-weight: 400; font-size: 1.6rem; padding: 0.25rem 0 0.2rem; }
+.eventText { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+.eventName { font-family: var(--font-futura-heavy); font-size: 1rem; text-transform: uppercase; overflow-wrap: anywhere; }
+.eventLoc { display: inline-flex; align-items: center; gap: 0.3rem; font-family: var(--font-futura-medium); font-size: 0.8rem; color: #3a4764; }
+
+/* Leads: name tags */
+.rosterGrid { list-style: none; margin: 0; padding: 0.4rem 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.5rem; }
+.rosterCard { display: flex; align-items: center; gap: 0.9rem; background: var(--paper); color: var(--ink); padding: 0.9rem 1rem; box-shadow: var(--hard-shadow-sm); min-width: 0; }
+.tiltL { transform: rotate(-0.8deg); }
+.tiltR { transform: rotate(0.8deg); }
+.rosterAvatar { display: grid; place-items: center; width: 3.5rem; height: 3.5rem; border-radius: 50%; border: 3px solid var(--ink); background: var(--yellow); font-family: var(--font-brick); font-size: 1.5rem; flex-shrink: 0; overflow: hidden; }
+.rosterName { display: block; font-family: var(--font-futura-heavy); font-size: 1rem; overflow-wrap: anywhere; }
+.rosterRole { display: block; font-family: var(--font-renegare); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: #3a4764; margin-top: 0.15rem; }
+.rosterTag { display: block; font-family: var(--font-handwriting); font-size: 1rem; color: #5a6580; }
+
+@media (max-width: 640px) {
+  .heroInner { flex-direction: column; text-align: left; align-items: flex-start; }
+  .tiltL, .tiltR { transform: none; }
 }
 
-.name {
-  font-family: var(--font-futura-heavy);
-  font-size: clamp(1.8rem, 4vw, 3rem);
-  color: var(--white);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-bottom: 0.5rem;
-}
-
-/* Outline style — transparent fill, blurple hairline border, same accent
-   color (#c7cbfb / rgba(88,101,242,*)) as the small Discord pill on the
-   divisions list page (.cardDiscordBtn in divisions.module.css) for
-   consistency, just sized as this page's larger CTA. Used to be a solid
-   filled blurple gradient button (raised-gradient technique, same as
-   --btn-primary-*) — that read as too heavy/loud next to the rest of this
-   page's understated dark styling. */
-.discordBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-height: 44px;
-  padding: 0.65rem 1.25rem;
-  background: transparent;
-  color: #c7cbfb;
-  border: 1.5px solid rgba(88, 101, 242, 0.5);
-  border-radius: 0.6rem;
-  font-family: var(--font-futura-heavy);
-  font-size: 0.85rem;
-  letter-spacing: 0.03em;
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
-}
-.discordBtn:hover {
-  background: rgba(88, 101, 242, 0.12);
-  border-color: rgba(88, 101, 242, 0.8);
-  transform: translateY(-2px);
-}
-
-.ctaRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-top: 1rem;
-}
-
-.applyBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-height: 44px;
-  padding: 0.65rem 1.25rem;
-  background: rgba(255, 199, 44, 0.1);
-  color: var(--yellow);
-  border: 1.5px solid rgba(255, 199, 44, 0.4);
-  border-radius: 0.6rem;
-  font-family: var(--font-futura-heavy);
-  font-size: 0.85rem;
-  letter-spacing: 0.03em;
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
-}
-.applyBtn:hover {
-  background: rgba(255, 199, 44, 0.18);
-  border-color: rgba(255, 199, 44, 0.7);
-  transform: translateY(-2px);
-}
-
-.socialRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.85rem;
-}
-
-.socialBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  transition: background 0.15s, border-color 0.15s, transform 0.15s;
-}
-.socialBtn:hover {
-  background: rgba(255, 199, 44, 0.15);
-  border-color: rgba(255, 199, 44, 0.3);
-  transform: translateY(-2px);
-}
-
-.body {
-  max-width: var(--max-width);
-  margin: 3rem auto 0;
-  padding: 0 clamp(1rem, 4vw, 2.5rem);
-  display: flex;
-  flex-direction: column;
-  gap: 3rem;
-}
-
-.section {}
-
-.sectionTitle {
-  font-family: var(--font-futura-heavy);
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: rgba(242,241,240,0.4);
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-}
-
-.prose {
-  font-size: 0.95rem;
-  color: rgba(242,241,240,0.75);
-  line-height: 1.7;
-  white-space: pre-wrap;
-}
-
-.rosterGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 0.875rem;
-}
-
-.rosterCard {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  padding: 0.875rem 1rem;
-  background: rgba(1,25,65,0.04);
-  border: 1px solid rgba(1,25,65,0.08);
-  border-radius: 0.75rem;
-}
-
-.rosterAvatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--gradient-nav);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-futura-heavy);
-  font-size: 1rem;
-  color: var(--white);
-  flex-shrink: 0;
-}
-
-.rosterName {
-  font-family: var(--font-futura-medium);
-  font-size: 0.875rem;
-  color: var(--white);
-}
-
-.rosterTag {
-  font-size: 0.75rem;
-  color: var(--blue);
-}
-
-.rosterRole {
-  font-size: 0.72rem;
-  color: rgba(242,241,240,0.4);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-family: var(--font-renegare);
-}
-
-.eventList {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 0.875rem;
-  overflow: hidden;
-  box-shadow: 0 2px 12px rgba(1,25,65,0.06);
-}
-
-.eventRow {
-  display: grid;
-  grid-template-columns: 80px 1fr auto;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-
-.eventRow:last-child {
-  border-bottom: none;
-}
-
-.eventDate {
-  font-family: var(--font-futura-heavy);
-  font-size: 0.85rem;
-  color: var(--blue);
-}
-
-.eventName {
-  font-family: var(--font-futura-medium);
-  font-size: 0.9rem;
-  color: var(--white);
-}
-
-.eventLoc {
-  font-size: 0.75rem;
-  color: rgba(242,241,240,0.4);
-}
+.socialBtn img { filter: invert(1) brightness(0.1); }

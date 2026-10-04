@@ -41,7 +41,7 @@ export async function POST(request: Request) {
   // Any published event can be ticketed — verify it exists and is published
   const { data: event } = await supabase
     .from('events')
-    .select('id, title, max_capacity, ticket_price, audience, start_date, end_date')
+    .select('id, title, ticket_price, audience, start_date, end_date')
     .eq('id', event_id)
     .eq('is_published', true)
     .single();
@@ -69,19 +69,6 @@ export async function POST(request: Request) {
     .maybeSingle();
   if (existing) {
     return NextResponse.json({ error: 'Already registered for this event' }, { status: 409 });
-  }
-
-  // Check capacity
-  if (event.max_capacity) {
-    const { count } = await supabase
-      .from('tickets')
-      .select('id', { count: 'exact', head: true })
-      .eq('event_id', event_id)
-      .in('status', ['active', 'used']);
-
-    if ((count ?? 0) >= event.max_capacity) {
-      return NextResponse.json({ error: 'Event is at full capacity' }, { status: 409 });
-    }
   }
 
   const price = isUcsd ? 0 : (event.ticket_price ?? 0);

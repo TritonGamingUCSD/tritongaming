@@ -36,6 +36,7 @@ export default function EditDivisionClient({
         application_url: form.application_url,
         social_links: form.social_links,
         social_embeds: form.social_embeds,
+        page_blocks: form.page_blocks,
       }),
     });
     const data = await res.json().catch(() => ({}));

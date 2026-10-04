@@ -10,7 +10,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Triton Gaming',
     short_name: 'Triton Gaming',
-    description: "UC San Diego's collegiate gaming organization",
+    description: 'Gaming Org at UC San Diego',
     start_url: '/portal',
     display: 'standalone',
     background_color: '#011941',
