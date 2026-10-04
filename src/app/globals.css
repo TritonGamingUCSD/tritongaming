@@ -172,6 +172,11 @@ html {
     env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
+/* The portal is a working tool read at arm's length on a desktop monitor, so its rem-based text is 10% larger there. Phones keep the base size. */
+@media (min-width: 1024px) {
+  html:has([data-portal-layout]) { font-size: 110%; }
+}
+
 body {
   font-family: var(--font-futura-medium);
   font-size: var(--fs-body);

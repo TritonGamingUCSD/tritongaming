@@ -34,23 +34,6 @@
 
 
 
-.cmsBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.55rem 1.125rem;
-  background: rgba(255,199,44,0.09);
-  color: rgba(255,199,44,0.85);
-  border: 1px solid rgba(255,199,44,0.22);
-  border-radius: 0.5rem;
-  font-family: var(--font-futura-heavy);
-  font-size: 0.78rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
-  white-space: nowrap;
-}
-.cmsBtn:hover { background: rgba(255,199,44,0.16); border-color: rgba(255,199,44,0.38); color: var(--yellow-text); }
 
 /* ── Stats ── */
 .statsGrid {

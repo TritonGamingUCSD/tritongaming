@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ReactNode } from 'react';
-import { LayoutDashboard, Pencil, BarChart3, History, Activity, X, Server, Users as UsersIcon } from 'lucide-react';
+import { LayoutDashboard, BarChart3, History, Activity, X, Server, Users as UsersIcon } from 'lucide-react';
 import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
 import { resolveAvatarUrl } from '@/lib/profile';
 import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/timezone';
@@ -100,11 +100,7 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
 
   return (
     <div className={styles.page}>
-      <SectionHeader title="Admin" sub="Platform management" actions={
-        <Link href="/portal?section=site-content" className={styles.cmsBtn}>
-          <Pencil size={14} strokeWidth={1.5} aria-hidden="true" /> Edit Site Content
-        </Link>
-      } />
+      <SectionHeader title="Admin" sub="Platform management" />
 
       {/* Four groups instead of eight tabs. Each view keeps its own id in the address (tab=roles, tab=audit …), so every old link still works. */}
       <SectionTabs<Group>
