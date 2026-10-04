@@ -57,7 +57,7 @@ export default function EventThemePanel({ theme, onChange }: { theme: EventTheme
         {fontPicker('body', 'Body font')}
       </div>
 
-      <ImageUploadField label="Key art (the poster)" value={theme.key_art_url ?? ''} onChange={(u) => set({ key_art_url: u || undefined })} bucket="event-flyers" shape="wide" maxDimension={2400} hint="Portrait or landscape both work: it is shown at its own shape. Up to 2400 px on the long side." />
+      <ImageUploadField label="Page poster (optional)" value={theme.key_art_url ?? ''} onChange={(u) => set({ key_art_url: u || undefined })} bucket="event-flyers" shape="wide" maxDimension={2400} hint="Only for the top of this event's page. Leave empty to use the flyer. Portrait or landscape both work, shown at its own shape." />
       <ImageUploadField label="Title logo (optional)" value={theme.logo_url ?? ''} onChange={(u) => set({ logo_url: u || undefined })} bucket="event-flyers" shape="logo" maxDimension={1600} hint="The event name as designed text, transparent background. Replaces the plain title." />
       <ImageUploadField label="Repeating pattern (optional)" value={theme.pattern_url ?? ''} onChange={(u) => set({ pattern_url: u || undefined })} bucket="event-flyers" shape="logo" maxDimension={600} hint="A tile that repeats faintly behind the page." />
 
