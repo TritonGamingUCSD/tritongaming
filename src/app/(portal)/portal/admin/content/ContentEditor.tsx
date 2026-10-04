@@ -735,7 +735,6 @@ function getPreview(block: BlockDef, data: Record<string, unknown>): string {
       return (data.title as string) || (data.label as string) || '';
     case 'page.sponsors':
       return (data.hero_title as string) || '';
-    case 'homepage.divisions':
     case 'homepage.events':
     case 'homepage.sponsors':
       return (data.title as string) || (data.label as string) || '';

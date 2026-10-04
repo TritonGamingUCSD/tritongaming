@@ -132,19 +132,6 @@ export const CONTENT_BLOCKS = [
     ],
   },
   {
-    key: 'homepage.divisions',
-    title: 'Divisions Section',
-    description: 'The headline above the division cards, between About and Events.',
-    icon: createElement(Trophy, ICON_PROPS),
-    category: 'Homepage',
-    pages: ['/'],
-    fields: [
-      { name: 'label',    label: 'Eyebrow Label', type: 'text'     as const, placeholder: 'OUR DIVISIONS' },
-      { name: 'title',    label: 'Section Title', type: 'text'     as const, placeholder: 'Compete. Connect. Create.' },
-      { name: 'subtitle', label: 'Subtitle',      type: 'textarea' as const },
-    ],
-  },
-  {
     key: 'homepage.events',
     title: 'Events Section',
     description: 'The home page shows only the single next event as one big ticket. This is the small label above it; the ticket itself comes from the event.',
@@ -158,7 +145,7 @@ export const CONTENT_BLOCKS = [
   {
     key: 'homepage.explore',
     title: 'Explore the Site',
-    description: 'Cards on the home page that point to every other page, so visitors can see the whole site without opening the menu. The links and pictures are fixed; the words are yours.',
+    description: 'Links on the home page to every other page, so visitors can see the whole site without opening the menu. The links are fixed; the words are yours. Hidden on phones, which have the Menu button.',
     icon: createElement(Home, ICON_PROPS),
     category: 'Homepage',
     pages: ['/'],
