@@ -47,6 +47,7 @@
   /* Page grounds from the brand deck: navy for pages, royal blue for the lighter band, and a darker shade of navy (never black) for the deepest band. */
   --navy: #011941;
   --royal: #004276;
+  --navy-mid: #02285a; /* the lighter band: royal blue pulled toward navy so it stays dark */
   --navy-deep: #000f2b;
 
   /* Gradient */

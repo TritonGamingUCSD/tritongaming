@@ -69,6 +69,10 @@ export default function ZineMotion() {
             const rest = Array.from(block.children).filter((c) => c !== label && !c.hasAttribute('data-split') && !c.hasAttribute('data-draw'));
             if (label) play([label], { scale: 1.35, opacity: 0, y: -10 }, block);
             play(rest, { y: 22, opacity: 0 }, block, 0.1);
+          } else if (block.hasAttribute('data-stagger')) {
+            // card grids: one card after another, quicker when there are many so the whole grid is in within about a second
+            const cards = Array.from(block.children);
+            play(cards, { y: 34, opacity: 0, rotate: coarse ? 0 : 2 }, block, Math.min(0.08, 0.9 / Math.max(cards.length, 1)));
           } else if (block.tagName === 'UL' || block.tagName === 'OL') {
             play(Array.from(block.children), { y: 34, opacity: 0 }, block);
           } else {

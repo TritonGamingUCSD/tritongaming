@@ -2,7 +2,7 @@
 .inner { max-width: 1180px; margin: 0 auto; padding-inline: clamp(1rem, 4vw, 2.5rem); }
 
 .ink { --tone: var(--navy); background: var(--tone); color: var(--white); }
-.navy { --tone: var(--royal); background: var(--tone); color: var(--white); }
+.navy { --tone: var(--navy-mid); background: var(--tone); color: var(--white); }
 .clear { --tone: rgba(1, 25, 65, 0.78); background: var(--tone); color: var(--white); } /* see-through: the home page's fixed video shows behind it */
 .deep { --tone: var(--navy-deep); background: var(--tone); color: var(--white); }
 

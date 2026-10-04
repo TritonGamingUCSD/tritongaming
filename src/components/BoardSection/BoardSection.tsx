@@ -160,7 +160,7 @@ export default function BoardSection({ members, years = [] }: { members: BoardMe
           return (
             <section key={tier} className={`${styles.tierSection} ${styles[`tier_${tier}`]}`} data-rv-inner>
               <h3 className={styles.tierLabel}>{TIER_LABELS[tier]}</h3>
-              <div className={tier === 'exec' ? styles.execGrid : styles.gridCenter}>
+              <div className={tier === 'exec' ? styles.execGrid : styles.gridCenter} data-stagger>
                 {group.map((m) => {
                   const open = openable(m);
                   const face = (
@@ -204,7 +204,7 @@ export default function BoardSection({ members, years = [] }: { members: BoardMe
           return (
             <section key={tier} className={`${styles.tierSection} ${styles[`tier_${tier}`]}`} data-rv-inner>
               <h3 className={styles.tierLabel}>{TIER_LABELS[tier]}</h3>
-              <div className={tier === 'exec' ? styles.execGrid : styles.grid}>
+              <div className={tier === 'exec' ? styles.execGrid : styles.grid} data-stagger>
                 {group.map((m) => (
                   <motion.button
                     key={m.id}
