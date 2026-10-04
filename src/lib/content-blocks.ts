@@ -2,7 +2,7 @@ import { createElement } from 'react';
 import {
   Megaphone, Settings, Link as LinkIcon, Home, Info, BarChart3, Hand, Handshake,
   UserPlus, Users, Trophy, CalendarDays, BadgeDollarSign, BookText, CreditCard,
-  Video, Camera, LayoutList, Images,
+  Video, Camera, Images,
 } from 'lucide-react';
 
 // Icons render as small (16px) monochrome glyphs in the admin content-block
@@ -16,16 +16,6 @@ const ICON_PROPS = { size: 16, strokeWidth: 1.5, 'aria-hidden': true } as const;
 // list. '*' means sitewide (every public page), used for things like the
 // announcement banner or the footer.
 const SITEWIDE = ['*'];
-
-const layoutBlock = (page: string, category: string, path: string) => ({
-  key: `layout.${page}`,
-  title: 'Page layout',
-  description: 'Show, hide and reorder the sections of this page.',
-  icon: createElement(LayoutList, ICON_PROPS),
-  category,
-  pages: [path],
-  fields: [{ name: 'sections', label: 'Sections', type: 'sections' as const, page }],
-});
 
 export const CONTENT_BLOCKS = [
   // ── Global (every page) ──────────────────────────────────
@@ -500,14 +490,6 @@ export const CONTENT_BLOCKS = [
       { name: 'items', label: 'Albums', type: 'kvlist' as const, kvKeyLabel: 'Title', kvValueLabel: 'Google Photos Album URL' },
     ],
   },
-  // ── Page layouts (show / hide / reorder sections) ──────────
-  layoutBlock('homepage', 'Homepage', '/'),
-  layoutBlock('our-story', 'Our Story', '/our-story'),
-  layoutBlock('events', 'Events', '/events'),
-  layoutBlock('sponsors', 'Sponsors', '/sponsors'),
-  layoutBlock('get-involved', 'Get Involved', '/get-involved'),
-  layoutBlock('membership', 'Membership', '/membership'),
-  layoutBlock('media', 'Media', '/media'),
 ];
 
 export type ContentBlock = (typeof CONTENT_BLOCKS)[number];
@@ -520,3 +502,46 @@ export type FieldDef =
 // "where is this on the site" reads left-to-right the same way the site
 // itself does.
 export const CATEGORY_ORDER = ['Global', 'Homepage', 'Team', 'Our Story', 'Divisions', 'Events', 'Sponsors', 'Get Involved', 'Membership', 'Media'];
+
+// The order blocks are listed in: each page's blocks run top to bottom in the order they appear on the real page, so editing goes down the
+// editor the same way the page reads. Anything not listed goes last.
+export const BLOCK_ORDER = [
+  'announcement', 'site.settings', 'site.photos', 'footer',
+  'homepage.hero', 'homepage.stats', 'homepage.about', 'homepage.events', 'homepage.explore', 'homepage.sponsors', 'homepage.recruitment',
+  'page.about', 'page.our-story', 'page.divisions', 'page.events',
+  'page.sponsors', 'sponsors', 'page.get-involved', 'page.get-involved.officer',
+  'page.membership', 'membership.partners', 'page.media', 'media.videos', 'media.albums',
+];
+
+// Sub-tabs inside a page's tab, used only where a page has enough blocks to need them. Blocks that belong together share a group and sit in one
+// tab, stacked in page order; a page whose blocks all share one group (or are not listed) shows them all at once with no sub-tabs.
+export const BLOCK_GROUPS: Record<string, string> = {
+  announcement: 'Top bar',
+  'site.settings': 'Contact and footer', footer: 'Contact and footer',
+  'site.photos': 'Photos',
+  'homepage.hero': 'Top of the page', 'homepage.stats': 'Top of the page', 'homepage.about': 'Top of the page',
+  'homepage.events': 'Events, pages and sponsors', 'homepage.explore': 'Events, pages and sponsors', 'homepage.sponsors': 'Events, pages and sponsors',
+  'homepage.recruitment': 'Get involved',
+};
+
+// The order fields are listed in within a block: top to bottom the way they appear on the real page (the page's own heading first, then each
+// section down the page, the photo strip caption last). A field not listed here keeps its place after the listed ones.
+export const FIELD_ORDER: Record<string, string[]> = {
+  announcement: ['enabled', 'label', 'text', 'link', 'link_text', 'color'],
+  footer: ['join_kicker', 'join_title', 'links', 'tagline', 'copyright'],
+  'page.our-story': ['hero_label', 'hero_title', 'hero_sub', 'section1_title', 'section1_body', 'section1_image', 'section2_title', 'section2_body', 'section2_image', 'section3_title', 'section3_body', 'section3_image'],
+  'page.divisions': ['label', 'title', 'subtitle', 'learn_more', 'empty', 'strip_caption'],
+  'page.events': ['label', 'title', 'subtitle', 'next_label', 'next_title', 'upcoming_label', 'upcoming_title', 'past_label', 'past_title', 'empty'],
+  'page.sponsors': ['hero_label', 'hero_title', 'hero_subtitle', 'mission_text', 'sponsors_label', 'sponsors_title', 'sponsors_empty', 'offer_label', 'offer_title', 'offer_subtitle', 'offer1_title', 'offer1_body', 'offer2_title', 'offer2_body', 'offer3_title', 'offer3_body', 'offer4_title', 'offer4_body', 'cta_heading', 'cta_sub', 'strip_caption'],
+  'page.get-involved': ['hero_label', 'hero_title', 'hero_subtitle', 'ways_label', 'ways_title', 'way1_title', 'way1_body', 'way1_cta', 'way1_href', 'way2_title', 'way2_body', 'way2_cta', 'way2_href', 'way3_title', 'way3_body', 'way3_cta', 'way3_href', 'strip_caption'],
+  'page.get-involved.officer': ['label', 'title', 'body', 'perks', 'stat1_label', 'stat1_value', 'stat2_label', 'stat2_value', 'stat3_label', 'stat3_value', 'recruitment_flyer_url', 'apply_text', 'apply_href'],
+  'page.membership': ['hero_label', 'hero_title', 'hero_subtitle', 'price', 'validity', 'intro_text', 'purchase_cta', 'purchase_url', 'partners_label', 'partners_title', 'partners_empty', 'strip_caption'],
+  'page.media': ['hero_label', 'hero_title', 'hero_subtitle', 'videos_label', 'videos_title', 'videos_empty', 'albums_label', 'albums_title', 'albums_link', 'albums_empty', 'strip_caption'],
+};
+
+export function sortFields<T extends { name: string }>(blockKey: string, fields: readonly T[]): T[] {
+  const order = FIELD_ORDER[blockKey];
+  if (!order) return [...fields];
+  const rank = (n: string) => { const i = order.indexOf(n); return i === -1 ? order.length : i; };
+  return [...fields].sort((a, b) => rank(a.name) - rank(b.name));
+}

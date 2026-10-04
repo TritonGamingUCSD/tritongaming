@@ -1,5 +1,4 @@
-// Which sections a public page shows, and in what order. Staff set this in Site Content ("Page layout" block per page); the page
-// renders the sections it is given. Unknown or missing ids fall back to the default order, so a page can never lose a section by accident.
+// The sections each public page is made of, in the order they appear on the page.
 export interface SectionDef { id: string; label: string }
 export interface PageLayout { order?: string[]; hidden?: string[] }
 
@@ -42,12 +41,8 @@ export const PAGE_SECTIONS: Record<string, SectionDef[]> = {
   ],
 };
 
-// The section ids to show, in order: the saved order first, then anything not mentioned (e.g. a section added later) in its default spot.
-export function resolveSections(page: string, layout: unknown): string[] {
-  const defaults = (PAGE_SECTIONS[page] ?? []).map((s) => s.id);
-  const l = (layout && typeof layout === 'object' ? layout : {}) as PageLayout;
-  const order = Array.isArray(l.order) ? l.order.filter((id) => defaults.includes(id)) : [];
-  const all = [...order, ...defaults.filter((id) => !order.includes(id))];
-  const hidden = Array.isArray(l.hidden) ? l.hidden : [];
-  return all.filter((id) => !hidden.includes(id));
+// The section ids to show, in order. Sections can no longer be hidden or moved from Site Content, so every page shows all of its sections in the
+// default order (any layout saved earlier is ignored). The second argument is kept so the pages calling this did not need to change.
+export function resolveSections(page: string, _layout?: unknown): string[] {
+  return (PAGE_SECTIONS[page] ?? []).map((s) => s.id);
 }

@@ -16,10 +16,12 @@ export default function EditEventClient({
   initial,
   seedCheckinFormConfig,
   previewViewer,
+  creditPeople,
 }: {
   eventId: string;
   initial: EventFormValues;
   seedCheckinFormConfig?: CheckinFormConfigValue | null;
+  creditPeople?: import('@/lib/creditPeople').CreditPerson[];
   previewViewer?: { year: string | null; classOf?: number | null; roles: import('@/types/database').AppRole[] };
 }) {
   const savedFlyer = useRef<string | null>(initial.flyer_url);
@@ -84,6 +86,7 @@ export default function EditEventClient({
       submitLabel="Save Changes"
       onSubmit={handleUpdate}
       stayAfterSave
+      creditPeople={creditPeople}
       seedCheckinFormConfig={seedCheckinFormConfig}
       previewViewer={previewViewer}
     />

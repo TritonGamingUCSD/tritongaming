@@ -1,5 +1,7 @@
 import BodyStickers from '@/components/BodyStickers/BodyStickers';
 import ScrollShield from '@/components/ScrollShield/ScrollShield';
+import { eventCardInputs, ogVersion } from '@/lib/ogRoutes';
+import HeroStickers from '@/components/HeroStickers/HeroStickers';
 import PosterGallery from '@/components/PosterGallery/PosterGallery';
 import type { Metadata, Viewport } from 'next';
 import Image from 'next/image';
@@ -47,6 +49,9 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     ? markdownToDescription(event.details)
     : `Join Triton Gaming for ${event.full_name}${event.location ? ` at ${event.location}` : ''}.`;
 
+  // The card's address carries a fingerprint of what it shows, so a changed poster or title means a new address and a fresh card everywhere.
+  const ogUrl = `/api/og/events/${encodeURIComponent(event.slug || event._id)}?v=${ogVersion(eventCardInputs(event), event.location, event.start_date)}`;
+
   return {
     title,
     description,
@@ -55,11 +60,13 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
       title,
       description,
       type: 'website',
+      images: [{ url: ogUrl, width: 1200, height: 630, alt: title }],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
+      images: [ogUrl],
     },
   };
 }
@@ -157,19 +164,7 @@ export default async function EventDetailPage({ params }: Params) {
   // The poster is whatever picture the event has, shown at its own shape (portrait posters stay portrait): the theme's key art first, else the flyer.
   const posters = theme?.posters?.length ? theme.posters : isExternalFlyer && event.flyer_url ? [event.flyer_url] : [];
   const posterUrl = posters[0] ?? '';
-  // Hero stickers. The right side is mostly poster, so the first few go in the open space around the title: top-left, top-middle,
-  // bottom-left and bottom-middle. 1 = top-middle; 2 = top-left and bottom-middle (a diagonal); 3 = top-left, top-middle, bottom-middle;
-  // 4 = all four. With more, the rest go along the right edge, peeking out from behind the poster.
-  type Spot = { top?: string; bottom?: string; left?: string; right?: string; rot: number };
-  const TL: Spot = { top: '5%', left: '3%', rot: -8 }, TM: Spot = { top: '4%', left: '44%', rot: 8 };
-  const BL: Spot = { bottom: '4%', left: '3%', rot: 7 }, BM: Spot = { bottom: '3%', left: '33%', rot: -9 };
   const stickerCount = theme?.stickers.length ?? 0;
-  const stickerSpots: Spot[] =
-    stickerCount === 1 ? [TM]
-    : stickerCount === 2 ? [TL, BM]
-    : stickerCount === 3 ? [TL, TM, BM]
-    : stickerCount === 4 ? [TL, TM, BL, BM]
-    : [TL, TM, BM, BL, { top: '6%', right: '1%', rot: 9 }, { top: '44%', right: '1%', rot: -14 }, { bottom: '5%', right: '1%', rot: -9 }, { top: '62%', right: '2%', rot: 11 }];
 
 
   // Fewer stickers get more room: one or two are drawn much bigger, a full set stays at the base size.
@@ -190,30 +185,17 @@ export default async function EventDetailPage({ params }: Params) {
           <Image src="/images/what_is_triton_gaming_justinlu.jpg" alt="" aria-hidden="true" fill sizes="100vw" className={styles.heroBackdrop} />
         )}
         <div className={styles.heroShade} aria-hidden="true" />
-        {theme?.stickers.map((u, i) => {
-          const sp = stickerSpots[i % stickerSpots.length];
-          const { rot, ...pos } = sp;
-          const credit = creditOf(u);
-          return (
-            <div key={u + i} className={`${styles.sticker} ${styles.stickerFloat}`} style={{ ...pos, transform: `rotate(${rot}deg)` }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={u} alt="" aria-hidden="true" decoding="async" />
-              {credit && (credit.link
-                ? <a href={credit.link} target="_blank" rel="noopener noreferrer" className={styles.stickerCredit} title={`Sticker by ${credit.name}`}>By {credit.name}</a>
-                : <span className={styles.stickerCredit}>By {credit.name}</span>)}
-            </div>
-          );
-        })}
+        {theme && theme.stickers.length > 0 && <HeroStickers items={theme.stickers.map((u) => ({ url: u, credit: creditOf(u) }))} scale={stickerScale} />}
 
         <div className={`${styles.heroInner} ${posters.length ? '' : styles.noPoster}`}>
           <div className={styles.heroCopy}>
-            <Link href="/events" className={styles.back}>← All events</Link>
-            {isPast && <span className={styles.pastBadge}>Past event</span>}
-            <h1 className={styles.title}>{event.full_name}</h1>
-            {event.content && <p className={styles.summary}>{event.content}</p>}
+            <Link href="/events" className={styles.back} data-avoid>← All events</Link>
+            {isPast && <span className={styles.pastBadge} data-avoid>Past event</span>}
+            <h1 className={styles.title} data-avoid>{event.full_name}</h1>
+            {event.content && <p className={styles.summary} data-avoid>{event.content}</p>}
 
             {!isPast && (
-              <div className={styles.ctaRow}>
+              <div className={styles.ctaRow} data-avoid>
                 <a href="/portal?section=tickets" className={styles.ticketBtn}>
                   <span className={styles.stubLeft}><Ticket size={20} strokeWidth={1.75} aria-hidden="true" /></span>
                   <span className={styles.stubRight}>
@@ -229,7 +211,7 @@ export default async function EventDetailPage({ params }: Params) {
               </div>
             )}
             {!isPast && event.points_value > 0 && (
-              <p className={styles.pointsNote}><Award size={15} strokeWidth={1.75} aria-hidden="true" /> Check in to earn {event.points_value} reward points</p>
+              <p className={styles.pointsNote} data-avoid><Award size={15} strokeWidth={1.75} aria-hidden="true" /> Check in to earn {event.points_value} reward points</p>
             )}
           </div>
 

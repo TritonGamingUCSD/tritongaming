@@ -4,6 +4,7 @@ import { GripVertical, Plus } from 'lucide-react';
 import ArtRow from './ArtRow';
 import { useDragReorder } from '@/lib/useDragReorder';
 import { MAX_POSTERS, type AssetCredit } from '@/lib/eventTheme';
+import type { CreditPerson } from '@/lib/creditPeople';
 import styles from './eventextras.module.css';
 
 // The event's posters in one list. The first is the main poster at the top of the event page and on event cards; with more than one, the page
@@ -12,7 +13,9 @@ export default function EventPostersField({
   posters,
   credits,
   onChange,
+  people = [],
 }: {
+  people?: CreditPerson[];
   posters: string[];
   credits: Record<string, AssetCredit>;
   onChange: (posters: string[], credits: Record<string, AssetCredit>) => void;
@@ -48,6 +51,7 @@ export default function EventPostersField({
             onChange={(url) => setPoster(i, url)}
             shape="wide"
             maxDimension={2400}
+            people={people}
             credit={credits[u]}
             onCredit={(patch) => setCredit(u, patch)}
             grip={<span className={styles.grip} {...dragHandleProps(i)} aria-label={`Drag to reorder poster ${i + 1}`}><GripVertical size={16} aria-hidden="true" /></span>}

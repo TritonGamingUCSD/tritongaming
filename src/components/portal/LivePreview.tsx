@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Monitor, Smartphone, Maximize2, Minimize2 } from 'lucide-react';
 import styles from './LivePreview.module.css';
 
@@ -64,7 +65,9 @@ export default function LivePreview({ draftKey, value, path, label }: { draftKey
   const areaH = 1080 * Math.min(1, box.w / 1920);
   const scale = full ? Math.min(box.w / frameW, box.h / frameH) : device === 'phone' ? Math.min(1, areaH / frameH, box.w / frameW) : Math.min(1, box.w / frameW);
 
-  return (
+  // Full screen is drawn on the page body, not inside the editor: a sticky or positioned ancestor (the event form's Save bar, for one) would otherwise
+  // keep painting above it.
+  const pane = (
     <aside className={`${styles.pane} ${full ? styles.full : ''}`} aria-label="Live preview">
       <div className={styles.bar}>
         <span className={styles.title}>Live preview <em>{label}</em></span>
@@ -82,4 +85,5 @@ export default function LivePreview({ draftKey, value, path, label }: { draftKey
       <p className={styles.note}>Shows your unsaved changes on the real page. Nothing is public until you save.</p>
     </aside>
   );
+  return full ? createPortal(pane, document.body) : pane;
 }

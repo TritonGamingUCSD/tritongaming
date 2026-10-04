@@ -147,8 +147,12 @@ a.stickerCredit:hover, a.stickerCredit:focus-visible { text-decoration: underlin
 /* phones: the floating hero stickers are replaced by a row under the poster; the page stickers only peek in from the edges */
 .stickerShelf { display: none; }
 @media (max-width: 640px) {
-  .stickerFloat { display: none; }
+  
   .stickerShelf { position: relative; z-index: 2; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.9rem 1.1rem; padding: 1.2rem 1rem 0; }
   .shelfItem { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; width: min(26vw, 96px); }
   .shelfItem img { display: block; width: 100%; height: auto; filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.45)); }
 }
+
+/* the hero's layout box must not catch clicks meant for the stickers' credit links underneath; its own content still does */
+.heroInner { pointer-events: none; }
+.heroInner > * { pointer-events: auto; }

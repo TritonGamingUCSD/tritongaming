@@ -160,6 +160,7 @@ export default function EventForm({
   seedCheckinFormConfig,
   previewViewer,
   stayAfterSave = false,
+  creditPeople = [],
 }: {
   heading: string;
   initial: EventFormValues;
@@ -174,6 +175,8 @@ export default function EventForm({
   previewViewer?: { year: string | null; classOf?: number | null; roles: AppRole[] };
   // Editing: stay on the page after saving (the caller does not navigate), and confirm with a toast right here.
   stayAfterSave?: boolean;
+  // Officers who can be credited for a poster or sticker (name and link filled in from their profile).
+  creditPeople?: import('@/lib/creditPeople').CreditPerson[];
 }) {
   // Older events have only a flyer: it becomes poster 1.
   const [form, setForm] = useState<EventFormValues>(() => (initial.theme.posters?.length || !initial.flyer_url ? initial : { ...initial, theme: { ...initial.theme, posters: [initial.flyer_url] } }));
@@ -381,6 +384,7 @@ export default function EventForm({
 
         <div data-tab="page" hidden={tab !== 'page'} className={styles.tabPanel}>
         <EventPostersField
+          people={creditPeople}
           posters={form.theme.posters ?? []}
           credits={form.theme.asset_credits ?? {}}
           onChange={(posters, credits) => setForm((f) => ({ ...f, flyer_url: posters.find(Boolean) ?? '', theme: { ...f.theme, posters, asset_credits: credits } }))}
@@ -411,7 +415,7 @@ export default function EventForm({
           onSponsors={(v) => setForm((f) => ({ ...f, sponsors: v }))}
         />
 
-        <EventThemePanel theme={form.theme} onChange={(t) => setForm((f) => ({ ...f, theme: t }))} />
+        <EventThemePanel theme={form.theme} onChange={(t) => setForm((f) => ({ ...f, theme: t }))} people={creditPeople} />
 
         <SocialEmbedsField
           value={form.social_embeds}

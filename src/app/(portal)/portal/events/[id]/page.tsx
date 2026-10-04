@@ -1,3 +1,4 @@
+import { getCreditPeople } from '@/lib/creditPeople';
 import { redirect, notFound } from 'next/navigation';
 import { getUserRoles } from '@/lib/auth';
 import { hasCapability } from '@/lib/capabilities';
@@ -24,7 +25,7 @@ export default async function EditEventPage({ params }: Params) {
   if (!hasCapability(roles, 'manage_events')) redirect('/portal');
 
   const supabase = await createClient();
-  const [{ data: event }, seedCheckinFormConfig, previewViewer] = await Promise.all([
+  const [{ data: event }, seedCheckinFormConfig, previewViewer, creditPeople] = await Promise.all([
     supabase
       .from('events')
       .select('id, title, slug, content, description, location, venue_address, venue_notes, venue_name, venue_lat, venue_lng, schedule, sponsors, start_date, end_date, flyer_url, ticket_price, points_value, is_online, audience, is_published, photo_albums, post_event_info, social_embeds, theme, page_blocks, requires_checkin_form, checkin_food_item, checkin_windows, checkin_form_event_name, checkin_form_override')
@@ -32,6 +33,7 @@ export default async function EditEventPage({ params }: Params) {
       .single(),
     getCheckinFormSeed(),
     getFormPreviewViewer(),
+    getCreditPeople(supabase),
   ]);
 
   if (!event) notFound();
@@ -69,5 +71,5 @@ export default async function EditEventPage({ params }: Params) {
     checkin_form_override: event.checkin_form_override ? { ...EMPTY_CHECKIN_FORM_CONFIG, ...event.checkin_form_override } : null,
   };
 
-  return <EditEventClient eventId={event.id} initial={initial} seedCheckinFormConfig={seedCheckinFormConfig} previewViewer={previewViewer} />;
+  return <EditEventClient eventId={event.id} initial={initial} seedCheckinFormConfig={seedCheckinFormConfig} previewViewer={previewViewer} creditPeople={creditPeople} />;
 }

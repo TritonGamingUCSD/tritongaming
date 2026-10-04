@@ -1,3 +1,4 @@
+import { divisionCardInputs, ogVersion } from '@/lib/ogRoutes';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -38,7 +39,7 @@ export async function generateMetadata({ params }: Params) {
   const description = data.description?.trim()
     ? markdownToDescription(data.description)
     : `${data.name}, a Triton Gaming division. Gaming Org at UC San Diego.`;
-  const logoUrl = divisionLogoSrc(data.logo_url);
+  const ogUrl = `/api/og/divisions/${encodeURIComponent(slug)}?v=${ogVersion(divisionCardInputs(data))}`;
 
   return {
     title,
@@ -48,11 +49,13 @@ export async function generateMetadata({ params }: Params) {
       title,
       description,
       type: 'website',
+      images: [{ url: ogUrl, width: 1200, height: 630, alt: title }],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
+      images: [ogUrl],
     },
   };
 }

@@ -5,6 +5,7 @@ import { Plus, X, Upload } from 'lucide-react';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
 import Select from '@/components/ui/Select';
 import ArtRow from './ArtRow';
+import type { CreditPerson } from '@/lib/creditPeople';
 import { COLOR_FIELDS, FONT_CHOICES, MAX_STICKERS, MAX_CUSTOM_FONTS, FONT_FILE_TYPES, type EventTheme } from '@/lib/eventTheme';
 import { uploadFontFile } from '@/lib/fontUpload';
 import styles from './eventextras.module.css';
@@ -13,7 +14,7 @@ const HEX = /^#[0-9a-fA-F]{6}$/;
 const OTHER = '__other__';
 
 // A big event's look, from its design guide. Everything is optional: leave it empty and the event uses the default Triton Gaming look.
-export default function EventThemePanel({ theme, onChange }: { theme: EventTheme; onChange: (t: EventTheme) => void }) {
+export default function EventThemePanel({ theme, onChange, people = [] }: { theme: EventTheme; onChange: (t: EventTheme) => void; people?: CreditPerson[] }) {
   const set = (patch: Partial<EventTheme>) => onChange({ ...theme, ...patch });
   const setColor = (k: keyof EventTheme['colors'], v: string) => onChange({ ...theme, colors: { ...theme.colors, [k]: v } });
   // A name and a portfolio / social link for any picture in the theme. Moving to a new picture keeps the credit.
@@ -151,6 +152,7 @@ export default function EventThemePanel({ theme, onChange }: { theme: EventTheme
               onChange={(url) => set({ stickers: url ? theme.stickers.map((x, j) => (j === i ? url : x)) : theme.stickers.filter((_, j) => j !== i), asset_credits: carry(u, url) })}
               shape="logo"
               maxDimension={512}
+              people={people}
               credit={credits[u]}
               onCredit={(patch) => setCredit(u, patch)}
               onRemoveEmpty={() => set({ stickers: theme.stickers.filter((_, j) => j !== i) })}

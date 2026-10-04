@@ -31,7 +31,7 @@ type ToolTab = 'attendance' | 'groups' | 'emojis';
 
 interface Person { id: string; name: string; avatar_url: string | null; custom_avatar_url: string | null }
 interface TodayMeeting { question_type: QuestionType; question_options: string[] | null; id: string; title: string; description: string | null; location: string | null; starts_at: string; ends_at: string; open: boolean; accepting: boolean; opens_at: string; checked_in_at: string | null; doc_url: string | null; question: string | null; my_answer: string | null }
-interface NextMeeting { title: string; description: string | null; location: string | null; starts_at: string; ends_at: string; date: string }
+interface NextMeeting { doc_url?: string | null; title: string; description: string | null; location: string | null; starts_at: string; ends_at: string; date: string }
 interface Live {
   meeting: { question_type: QuestionType; question_options: string[] | null; id: string; title: string; meeting_date: string; starts_at: string; ends_at: string; open: boolean; doc_url: string | null; location: string | null; cancelled: boolean; series_id: string | null; accepting: boolean; opens_at: string; question: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; groupNames: string[] };
   answers: (Person & { answer: string; at: string })[];
@@ -217,6 +217,7 @@ function CheckInPanel() {
             {openToEnter.map((m) => m.title).join(' · ')} · the code changes every 30 s
           </p>
           {openToEnter.filter((m) => m.description).map((m) => <p key={m.id} className={styles.descText}>{m.description}</p>)}
+          {openToEnter.filter((m) => m.doc_url).map((m) => <DocButton key={m.id} url={m.doc_url!} label={openToEnter.length > 1 ? `Doc: ${m.title}` : 'Open meeting doc'} />)}
           <input
             className={styles.codeInput}
             value={code}
@@ -243,6 +244,7 @@ function CheckInPanel() {
         <div className={styles.card}>
           <h2 className={styles.cardTitle}>Check-in opens at {time(early[0].opens_at)}</h2>
           <p className={styles.muted}>{early[0].title} · starts {time(early[0].starts_at)}</p>
+          {early[0].doc_url && <DocButton url={early[0].doc_url} />}
         </div>
       )}
 
@@ -263,6 +265,7 @@ function CheckInPanel() {
           <strong>{data.next.title}</strong>
           <span className={styles.muted}>{dayLabel(data.next.date, true)} · {timeRange(data.next.starts_at, data.next.ends_at)}{data.next.location ? ` · ${data.next.location}` : ''}</span>
           {data.next.description && <span className={styles.descText}>{data.next.description}</span>}
+          {data.next.doc_url && <DocButton url={data.next.doc_url} />}
         </div>
       )}
     </div>

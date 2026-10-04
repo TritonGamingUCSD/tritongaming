@@ -21,7 +21,7 @@ export default function PosterGallery({ posters, credits = [], name, frameClass,
   const go = (n: number) => setI((n + posters.length) % posters.length);
 
   return (
-    <div className={styles.wrap}>
+    <div className={styles.wrap} data-avoid-poster>
       <figure className={`${frameClass} ${many && ratio ? styles.fixed : ''}`} style={many && ratio ? ({ '--ratio': ratio } as React.CSSProperties) : undefined}>
         <span className={tapeClass} aria-hidden="true" />
         {/* eslint-disable-next-line @next/next/no-img-element */}

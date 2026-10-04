@@ -6,8 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { Pencil, X, Check, MapPin, GripVertical, ArrowUp, ArrowDown, Eye, EyeOff, Monitor, Smartphone, PanelRightClose, PanelRightOpen, Maximize2, Minimize2, ZoomIn } from 'lucide-react';
 import type { ContentBlock, FieldDef } from '@/lib/content-blocks';
-import { CATEGORY_ORDER } from '@/lib/content-blocks';
-import { PAGE_SECTIONS, resolveSections, type PageLayout } from '@/lib/pageLayout';
+import { CATEGORY_ORDER, BLOCK_ORDER, BLOCK_GROUPS, sortFields } from '@/lib/content-blocks';
 import { usePortalParams, useLiveParams } from '@/lib/usePortalParams';
 import SectionTabs from '@/components/ui/SectionTabs';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
@@ -121,8 +120,16 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, las
   const categories = CATEGORY_ORDER.filter((c) => blocks.some((b) => b.category === c));
   const keyed = blocks.find((b) => b.key === activeKey);
   const tabCategory = category && categories.includes(category) ? category : (keyed?.category ?? categories[0]);
-  const blocksInTab = blocks.filter((b) => b.category === tabCategory);
-  const activeBlock = blocksInTab.find((b) => b.key === activeKey) ?? blocksInTab[0];
+  // The blocks of the open page, in the order they appear on that page (BLOCK_ORDER), so editing goes top to bottom like the page reads.
+  const rank = (k: string) => { const i = BLOCK_ORDER.indexOf(k); return i === -1 ? 999 : i; };
+  const blocksInTab = blocks.filter((b) => b.category === tabCategory).sort((a, b) => rank(a.key) - rank(b.key));
+  // Sub-tabs only where a page has blocks in more than one group (BLOCK_GROUPS); the blocks of the open group are stacked in page order.
+  const groupOf = (k: string) => BLOCK_GROUPS[k] ?? 'Page';
+  const groups = [...new Set(blocksInTab.map((b) => groupOf(b.key)))];
+  const [groupPick, setGroupPick] = useState<string | null>(null);
+  const group = groupPick && groups.includes(groupPick) ? groupPick : (keyed && groups.includes(groupOf(keyed.key)) && keyed.category === tabCategory ? groupOf(keyed.key) : groups[0]);
+  const blocksShown = blocksInTab.filter((b) => groupOf(b.key) === group);
+  const activeBlock = blocksShown.find((b) => b.key === activeKey) ?? blocksShown[0];
   const isDirty = (key: string) => JSON.stringify(forms[key]) !== JSON.stringify(savedForms[key]);
 
   // ── Live preview: the real public page, with these unsaved edits laid over it ──
@@ -150,7 +157,7 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, las
   const focusMsg = (() => {
     if (!activeBlock) return { type: 'tg-preview-focus', target: 'top' };
     if (activeBlock.key === 'footer') return { type: 'tg-preview-focus', target: 'footer' };
-    if (activeBlock.key.startsWith('layout.') || activeBlock.key === 'announcement') return { type: 'tg-preview-focus', target: 'top' };
+    if (activeBlock.key === 'announcement') return { type: 'tg-preview-focus', target: 'top' };
     const vals = (activeBlock.fields as FieldDef[])
       .filter((f) => f.type === 'text' || f.type === 'textarea')
       .map((f) => forms[activeBlock.key]?.[f.name])
@@ -218,11 +225,20 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, las
   const areaH = 1080 * Math.min(1, boxWidth / 1920);
   const scale = zoomed ? zoomScale : full ? Math.min(boxWidth / frameW, boxHeight / frameH) : device === 'phone' ? Math.min(1, areaH / frameH, boxWidth / frameW) : Math.min(1, boxWidth / frameW);
 
+  // Opening the editor from a link to one block (?subtab=<key>) scrolls to it.
+  useEffect(() => {
+    const k = searchParams.get('subtab') ?? searchParams.get('block');
+    if (k) setTimeout(() => document.getElementById(`block-${k}`)?.scrollIntoView({ block: 'start' }), 300);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function selectCategory(c: string) {
-    setCategory(c); setQuery(''); setActiveKey(null); setParams({ tab: c, subtab: null, block: null });
+    setCategory(c); setGroupPick(null); setQuery(''); setActiveKey(null); setParams({ tab: c, subtab: null, block: null });
   }
   function selectBlock(block: BlockDef) {
-    setCategory(block.category); setActiveKey(block.key); setQuery(''); setParams({ tab: block.category, subtab: block.key, block: null });
+    setCategory(block.category); setGroupPick(groupOf(block.key)); setActiveKey(block.key); setQuery(''); setParams({ tab: block.category, subtab: block.key, block: null });
+    // the page's blocks are all on screen: bring this one into view once the list has drawn
+    setTimeout(() => document.getElementById(`block-${block.key}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   }
 
   return (
@@ -235,13 +251,13 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, las
       />
 
 
-      {!q && blocksInTab.length > 1 && activeBlock && (
+      {!q && groups.length > 1 && (
         <SectionTabs
-          label="Blocks on this page"
+          label="Parts of this page"
           variant="segmented"
-          value={activeBlock.key}
-          onChange={(k) => { const b = blocks.find((x) => x.key === k); if (b) selectBlock(b); }}
-          tabs={blocksInTab.map((b) => ({ id: b.key, label: b.title, badge: isDirty(b.key) ? 1 : 0 }))}
+          value={group}
+          onChange={(g) => { setGroupPick(g); setActiveKey(null); }}
+          tabs={groups.map((g) => ({ id: g, label: g, badge: blocksInTab.filter((b) => groupOf(b.key) === g && isDirty(b.key)).length }))}
         />
       )}
 
@@ -267,53 +283,54 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, las
         <>
 
           <div className={`${styles.editorWithPreview} ${styles.previewOn}`}>
-          <div className={styles.editorCard}>
-            <div className={styles.editPanelHeader}>
-              <div>
-                <span className={styles.editPanelIcon}>{activeBlock.icon}</span>
-                <h2 className={styles.editPanelTitle}>{activeBlock.title}</h2>
-                <p className={styles.editPanelDesc}>{activeBlock.description}</p>
-                <div className={styles.viewLiveRow}>
-                  {activeBlock.pages.includes('*') ? (
-                    <a href="/" target="_blank" rel="noopener noreferrer" className={styles.viewLiveLink}>View Live Site ↗</a>
-                  ) : (
-                    activeBlock.pages.map((page) => (
-                      <a key={page} href={page} target="_blank" rel="noopener noreferrer" className={styles.viewLiveLink}>View {page === '/' ? 'Homepage' : page} ↗</a>
-                    ))
-                  )}
+          <div className={styles.editorStack}>
+            {blocksShown.map((block) => (
+              <div
+                key={block.key}
+                id={`block-${block.key}`}
+                className={`${styles.editorCard} ${block.key === activeBlock.key ? styles.editorCardActive : ''}`}
+                onFocusCapture={() => { if (activeKey !== block.key) setActiveKey(block.key); }}
+                onClick={() => { if (activeKey !== block.key) setActiveKey(block.key); }}
+              >
+                <div className={styles.editPanelHeader}>
+                  <div>
+                    <span className={styles.editPanelIcon}>{block.icon}</span>
+                    <h2 className={styles.editPanelTitle}>{block.title}{isDirty(block.key) && <span className={styles.dirtyDot} title="Unsaved changes" />}</h2>
+                    <p className={styles.editPanelDesc}>{block.description}</p>
+                  </div>
+                </div>
+
+                <div className={styles.fields}>
+                  {sortFields(block.key, block.fields as FieldDef[]).map((field) => (
+                    <FieldEditor
+                      key={field.name}
+                      field={field}
+                      value={forms[block.key]?.[field.name]}
+                      onChange={(val) => setField(block.key, field.name, val)}
+                    />
+                  ))}
+                </div>
+
+                {error && saving === null && block.key === activeBlock.key && <div className={styles.editError}>{error}</div>}
+
+                <div className={styles.editActions}>
+                  <button
+                    className={styles.cancelBtn}
+                    onClick={() => setForms((prev) => ({ ...prev, [block.key]: savedForms[block.key] }))}
+                    disabled={!isDirty(block.key)}
+                  >
+                    Discard changes
+                  </button>
+                  <button className={styles.saveBtn} onClick={() => handleSave(block.key)} disabled={saving === block.key}>
+                    {saving === block.key
+                      ? <><span className={styles.savingSpinner} /> Saving…</>
+                      : saved === block.key
+                      ? <><Check size={16} strokeWidth={2.5} aria-hidden="true" /> Saved</>
+                      : 'Save Changes'}
+                  </button>
                 </div>
               </div>
-            </div>
-
-            <div className={styles.fields}>
-              {activeBlock.fields.map((field) => (
-                <FieldEditor
-                  key={field.name}
-                  field={field}
-                  value={forms[activeBlock.key]?.[field.name]}
-                  onChange={(val) => setField(activeBlock.key, field.name, val)}
-                />
-              ))}
-            </div>
-
-            {error && <div className={styles.editError}>{error}</div>}
-
-            <div className={styles.editActions}>
-              <button
-                className={styles.cancelBtn}
-                onClick={() => setForms((prev) => ({ ...prev, [activeBlock.key]: savedForms[activeBlock.key] }))}
-                disabled={!isDirty(activeBlock.key)}
-              >
-                Discard changes
-              </button>
-              <button className={styles.saveBtn} onClick={() => handleSave(activeBlock.key)} disabled={saving === activeBlock.key}>
-                {saving === activeBlock.key
-                  ? <><span className={styles.savingSpinner} /> Saving…</>
-                  : saved === activeBlock.key
-                  ? <><Check size={16} strokeWidth={2.5} aria-hidden="true" /> Saved</>
-                  : 'Save Changes'}
-              </button>
-            </div>
+            ))}
           </div>
 
           {(
@@ -430,43 +447,6 @@ function FieldEditor({ field, value, onChange }: {
         />
         <div className={styles.fieldHint}>Each line = one row of text</div>
       </label>
-    );
-  }
-
-  // ── Page sections: show / hide / reorder ─────────────
-  if (field.type === 'sections') {
-    const defs = PAGE_SECTIONS[(field as { page: string }).page] ?? [];
-    const layout = (value && typeof value === 'object' ? value : {}) as PageLayout;
-    const hidden = Array.isArray(layout.hidden) ? layout.hidden : [];
-    // Current order = the saved order (hidden ones included), then any section not mentioned yet.
-    const saved = (Array.isArray(layout.order) ? layout.order : []).filter((id) => defs.some((d) => d.id === id));
-    const order = [...saved, ...defs.map((d) => d.id).filter((id) => !saved.includes(id))];
-    const set = (nextOrder: string[], nextHidden: string[]) => onChange({ order: nextOrder, hidden: nextHidden });
-    const move = (i: number, d: -1 | 1) => { const n = [...order]; const j = i + d; if (j < 0 || j >= n.length) return; [n[i], n[j]] = [n[j], n[i]]; set(n, hidden); };
-    const shownNow = resolveSections((field as { page: string }).page, layout).length;
-    return (
-      <div className={styles.fieldGroup}>
-        {labelEl}
-        <ul className={styles.sectionList}>
-          {order.map((id, i) => {
-            const def = defs.find((d) => d.id === id);
-            const off = hidden.includes(id);
-            return (
-              <li key={id} className={`${styles.sectionRow} ${off ? styles.sectionOff : ''}`}>
-                <span className={styles.sectionName}>{def?.label ?? id}</span>
-                <span className={styles.sectionBtns}>
-                  <button type="button" className={styles.sectionBtn} onClick={() => move(i, -1)} disabled={i === 0} aria-label={`Move ${def?.label} up`}><ArrowUp size={14} /></button>
-                  <button type="button" className={styles.sectionBtn} onClick={() => move(i, 1)} disabled={i === order.length - 1} aria-label={`Move ${def?.label} down`}><ArrowDown size={14} /></button>
-                  <button type="button" className={`${styles.sectionBtn} ${off ? '' : styles.sectionBtnOn}`} onClick={() => set(order, off ? hidden.filter((h) => h !== id) : [...hidden, id])} aria-pressed={!off} aria-label={off ? `Show ${def?.label}` : `Hide ${def?.label}`}>
-                    {off ? <EyeOff size={14} /> : <Eye size={14} />}
-                  </button>
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-        <div className={styles.fieldHint}>{shownNow} of {order.length} sections shown. The banner at the top of the page always stays first.</div>
-      </div>
     );
   }
 

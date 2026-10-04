@@ -10,9 +10,10 @@ import type { CheckinFormConfigValue } from '../CheckinFormFieldsEditor';
 import { cleanTheme } from '@/lib/eventTheme';
 import { cleanBlocks } from '@/lib/pageBlocks';
 
-export default function NewEventClient({ initial = EMPTY_EVENT_FORM, seedCheckinFormConfig, previewViewer }: {
+export default function NewEventClient({ initial = EMPTY_EVENT_FORM, seedCheckinFormConfig, previewViewer, creditPeople }: {
   initial?: EventFormValues;
   seedCheckinFormConfig?: CheckinFormConfigValue | null;
+  creditPeople?: import('@/lib/creditPeople').CreditPerson[];
   previewViewer?: { year: string | null; classOf?: number | null; roles: import('@/types/database').AppRole[] };
 }) {
   const router = useRouter();
@@ -69,6 +70,7 @@ export default function NewEventClient({ initial = EMPTY_EVENT_FORM, seedCheckin
 
   return (
     <EventForm
+      creditPeople={creditPeople}
       heading="Create Event"
       initial={initial}
       submitLabel="Create Event"

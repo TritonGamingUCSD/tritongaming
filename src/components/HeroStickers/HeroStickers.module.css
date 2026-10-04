@@ -1,0 +1,6 @@
+.layer { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+.sticker { position: absolute; will-change: transform; backface-visibility: hidden; }
+.sticker img { display: block; width: 100%; height: auto; filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.45)); }
+.chip { display: block; margin-top: 0.35rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0.1rem 0.4rem; background: var(--ev-surface); color: var(--ev-on-surface); font-family: var(--font-renegare); font-size: 0.62rem; letter-spacing: 0.04em; text-align: center; text-decoration: none; box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4); pointer-events: auto; }
+a.chip:hover, a.chip:focus-visible { text-decoration: underline; }
+@media (max-width: 640px) { .layer { display: none; } }

@@ -22,10 +22,16 @@ export default function MarkdownContent({ children, className, headingIds }: { c
   return (
     <div className={`${styles.markdown} ${className ?? ''}`}>
       <ReactMarkdown
-        components={headingIds ? {
-          h2: ({ children: c }) => <h2 id={headingId(textOf(c))}>{c}</h2>,
-          h3: ({ children: c }) => <h3 id={headingId(textOf(c))}>{c}</h3>,
-        } : undefined}
+        components={{
+          // Links to other sites open in a new tab; links inside this site stay in the tab.
+          a: ({ href, children: c }) => (/^https?:\/\//i.test(href ?? '')
+            ? <a href={href} target="_blank" rel="noopener noreferrer">{c}</a>
+            : <a href={href}>{c}</a>),
+          ...(headingIds ? {
+            h2: ({ children: c }: { children?: ReactNode }) => <h2 id={headingId(textOf(c))}>{c}</h2>,
+            h3: ({ children: c }: { children?: ReactNode }) => <h3 id={headingId(textOf(c))}>{c}</h3>,
+          } : {}),
+        }}
       >
         {children}
       </ReactMarkdown>
