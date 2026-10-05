@@ -156,6 +156,7 @@ export default function DivisionForm({
           value={form.logo_url}
           onChange={(v) => set('logo_url', v)}
           bucket="division-logos"
+          pathPrefix={divisionId}
           shape="logo"
           maxDimension={512}
         />
