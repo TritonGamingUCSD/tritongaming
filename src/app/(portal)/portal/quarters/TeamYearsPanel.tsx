@@ -78,7 +78,7 @@ export default function TeamYearsPanel() {
             <Button size="sm" variant="secondary" loading={busy === 'archive'} onClick={async () => {
               if (shown.archived && !(await confirmHold({ title: `Rebuild the ${shown.label} list?`, message: 'This re-reads the quarters and redoes the list: everyone who was active in at least one quarter, at the highest title they held. People you added or edited by hand are kept. Anyone you removed by hand can come back.', confirmLabel: 'Hold to rebuild' }))) return;
               const j = await call(`/api/team-years/${shown.start_year}`, 'POST', { action: 'archive' }, 'archive');
-              if (j) setNote(shown.archived ? 'Rebuilt from the quarters. Names you added or edited by hand were kept.' : 'Recorded.');
+              if (j) setNote(`${shown.archived ? 'Rebuilt from the quarters' : 'Recorded'}: ${j.count ?? 0} ${j.count === 1 ? 'person' : 'people'} on the ${shown.label} list.${shown.archived ? ' Names you added or edited by hand were kept.' : ''}`);
             }}><Archive size={14} aria-hidden="true" /> {shown.archived ? 'Rebuild from quarters' : 'Record this year now'}</Button>
           </div>
           <p className={styles.yearHelp}>
@@ -86,7 +86,7 @@ export default function TeamYearsPanel() {
               ? <><strong>Rebuild from quarters</strong> throws away this list and works it out again from each quarter’s record: anyone who was active (not inactive) in at least one quarter, at the highest title they held. Use it after you fix a quarter’s status. People you added or edited by hand stay; anyone you removed by hand may come back.</>
               : <><strong>Record this year now</strong> saves the list below as this year’s permanent record. It also happens by itself after Spring ends.</>}
           </p>
-          {shown.members.length === 0 && <p className={styles.empty}>Nobody yet.</p>}
+          {shown.members.length === 0 && <p className={styles.empty}>Nobody on this list yet. {shown.archived ? 'Press “Rebuild from quarters” to fill it from the quarter records.' : 'People appear here once a quarter of this year has started.'}</p>}
           {TIERS.map((t) => {
             const list = shown.members.filter((m) => m.tier === t);
             return list.length === 0 ? null : (

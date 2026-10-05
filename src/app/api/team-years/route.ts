@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { pacificDayKey } from '@/lib/checkinDays';
 import { academicYearLabel, authorizeQuarters, currentQuarter, loadQuarters } from '@/lib/quarters';
-import { alumniCandidates, autoAlumniOn, buildYear } from '@/lib/teamYears';
+import { alumniCandidates, autoAlumniOn, buildYear, captureRoster } from '@/lib/teamYears';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +12,7 @@ export async function GET() {
   if (auth.error) return auth.error;
   const quarters = await loadQuarters(auth.svc);
   const today = pacificDayKey();
+  await captureRoster(auth.svc, today);   // so the running quarter's year is never empty just because the daily job has not run yet
   const { data: stored } = await auth.svc.from('team_years').select('start_year, archived_at, auto');
   const { data: members } = await auth.svc.from('team_year_members').select('id, start_year, user_id, name, title, tier, avatar_url, manual').order('name');
   // Years still to come are not shown: only a year with a quarter that has started, or one that was recorded.

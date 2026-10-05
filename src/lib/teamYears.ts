@@ -72,6 +72,8 @@ export async function buildYear(svc: SupabaseClient, startYear: number): Promise
 
 // Record a year's list. Names added or changed by hand ("manual") are kept; the rest is rebuilt from the quarters.
 export async function archiveYear(svc: SupabaseClient, startYear: number, actorId: string | null): Promise<number> {
+  // Make sure today's titles are on the roster first: the daily job may not have run yet (a quarter that just started would otherwise build an empty list).
+  await captureRoster(svc);
   const built = await buildYear(svc, startYear);
   await svc.from('team_years').upsert({ start_year: startYear, archived_at: new Date().toISOString(), archived_by: actorId, auto: actorId === null }, { onConflict: 'start_year' });
   const { data: kept } = await svc.from('team_year_members').select('user_id').eq('start_year', startYear).eq('manual', true);
