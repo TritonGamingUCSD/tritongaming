@@ -16,19 +16,23 @@ import SectionHeader from '@/components/ui/SectionHeader';
 
 interface Quarter { id: string; term: 'fall' | 'winter' | 'spring'; start_year: number; starts_on: string; ends_on: string; name: string; editable: boolean }
 interface Person { id: string; name: string; avatar_url: string | null; role: string; roleLabel: string; title: string | null }
-interface Data { canSetup: boolean; today: string; currentId: string | null; quarters: Quarter[]; people: Person[]; marks: { user_id: string; quarter_id: string }[] }
+interface Data {
+  canSetup: boolean; today: string; currentId: string | null; quarters: Quarter[]; allQuarters: Quarter[]; people: Person[];
+  marks: { user_id: string; quarter_id: string; carried: boolean }[]; roster: { quarter_id: string; user_id: string; name: string; tier: string; title: string | null }[];
+}
+// One line in the Active / Inactive lists.
+interface Entry { id: string; name: string; avatar_url: string | null; roleLabel: string; role: string; title: string | null; inactive: boolean; carried: boolean }
 
 const short = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' });
 const yearLabel = (y: number) => `${y}-${String((y + 1) % 100).padStart(2, '0')}`;
 
-// Quarter status: every officer and lead (rows) against each quarter of an academic year (columns). A green check means active; the moon means they are
-// sitting that quarter out (inactive: they keep their title, are not expected at meetings, and have view-only access). Exec and admins mark it; the
-// next quarter starts everyone active again.
+// Quarter status: pick a quarter (back to the first one) and see who is Active and who is Inactive in it. Only the current quarter can be changed; a new
+// quarter starts as a copy of the last one's inactive list, so exec only edits who is different. Future quarters are never shown or planned.
 export default function QuarterStatusContent() {
   const [tab, setTab] = useState<'status' | 'years'>('status');
   return (
     <div className={styles.page}>
-      <SectionHeader title="Quarter Status" flush sub={tab === 'status' ? 'Switch a quarter off for someone who’s sitting it out.' : 'Who was exec, a lead or an officer each year.'} />
+      <SectionHeader title="Quarter Status" flush sub={tab === 'status' ? 'Who is sitting out this quarter, and who sat out earlier ones.' : 'Who was exec, a lead or an officer each year.'} />
       <SectionTabs<'status' | 'years'> label="Quarter status" value={tab} onChange={setTab} tabs={[{ id: 'status', label: 'Status', icon: <CalendarCheck size={15} /> }, { id: 'years', label: 'Years', icon: <GraduationCap size={15} /> }]} />
       {tab === 'status' ? <StatusPanel /> : <TeamYearsPanel />}
     </div>
@@ -38,13 +42,11 @@ export default function QuarterStatusContent() {
 function StatusPanel() {
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState('');
-  const [year, setYear] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [q, setQ] = useState('');
-  const [onlyInactive, setOnlyInactive] = useState(false);
   const [showDates, setShowDates] = useState(false);
   const [picked, setPicked] = useState<Set<string>>(new Set());
-  const [bulkQuarter, setBulkQuarter] = useState('');
-  const [bulkBusy, setBulkBusy] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -56,44 +58,81 @@ function StatusPanel() {
   }, []);
   useEffect(() => { void load(); }, [load]);
 
-  const years = useMemo(() => [...new Set((data?.quarters ?? []).map((x) => x.start_year))].sort((a, b) => b - a), [data]);
-  const current = data?.quarters.find((x) => x.id === data.currentId) ?? null;
-  const shownYear = year ?? current?.start_year ?? years[0] ?? null;
-  const cols = useMemo(() => (data?.quarters ?? []).filter((x) => x.start_year === shownYear).sort((a, b) => a.starts_on.localeCompare(b.starts_on)), [data, shownYear]);
-  const markSet = useMemo(() => new Set((data?.marks ?? []).map((m) => `${m.user_id}|${m.quarter_id}`)), [data]);
-  const inactiveNow = useMemo(() => new Set((data?.marks ?? []).filter((m) => m.quarter_id === data?.currentId).map((m) => m.user_id)), [data]);
+  // Newest first, only quarters that have started.
+  const quarters = data?.quarters ?? [];
+  const selected = quarters.find((x) => x.id === (selectedId ?? data?.currentId)) ?? quarters[0] ?? null;
+  const isCurrent = !!selected && selected.id === data?.currentId;
+  const editable = !!selected?.editable;
+  const before = selected ? quarters[quarters.findIndex((x) => x.id === selected.id) + 1] ?? null : null;
 
-  const people = useMemo(() => (data?.people ?? []).filter((p) => (!onlyInactive || inactiveNow.has(p.id)) && (!q.trim() || p.name.toLowerCase().includes(q.trim().toLowerCase()))), [data, q, onlyInactive, inactiveNow]);
+  const marksIn = useMemo(() => {
+    const m = new Map<string, { carried: boolean }>();
+    for (const x of data?.marks ?? []) if (x.quarter_id === selected?.id) m.set(x.user_id, { carried: x.carried });
+    return m;
+  }, [data, selected]);
+  const countIn = useMemo(() => {
+    const n = new Map<string, number>();
+    for (const x of data?.marks ?? []) n.set(x.quarter_id, (n.get(x.quarter_id) ?? 0) + 1);
+    return n;
+  }, [data]);
 
-  async function setStatus(p: Person, quarter: Quarter, inactive: boolean) {
-    if (!data) return;
-    const key = `${p.id}|${quarter.id}`;
-    const before = data.marks;
+  // The current quarter lists everyone who is an officer or lead right now; an earlier quarter lists who held the title back then.
+  const entries = useMemo<Entry[]>(() => {
+    if (!data || !selected) return [];
+    const make = (id: string, name: string, avatar: string | null, role: string, title: string | null): Entry => ({ id, name, avatar_url: avatar, role, roleLabel: role === 'lead' ? 'Lead' : 'Officer', title, inactive: marksIn.has(id), carried: !!marksIn.get(id)?.carried });
+    if (isCurrent) return data.people.map((p) => make(p.id, p.name, p.avatar_url, p.role, p.title));
+    const byId = new Map(data.people.map((p) => [p.id, p]));
+    const seen = new Set<string>();
+    const out: Entry[] = [];
+    for (const r of data.roster) {
+      if (r.quarter_id !== selected.id || seen.has(r.user_id) || r.tier === 'exec') continue;
+      seen.add(r.user_id);
+      out.push(make(r.user_id, r.name, byId.get(r.user_id)?.avatar_url ?? null, r.tier, r.title));
+    }
+    return out.sort((a, b) => a.name.localeCompare(b.name));
+  }, [data, selected, isCurrent, marksIn]);
+
+  const shown = entries.filter((e) => !q.trim() || e.name.toLowerCase().includes(q.trim().toLowerCase()));
+  const activeList = shown.filter((e) => !e.inactive);
+  const inactiveList = shown.filter((e) => e.inactive);
+  const pickedActive = activeList.filter((e) => picked.has(e.id)).map((e) => e.id);
+  const pickedInactive = inactiveList.filter((e) => picked.has(e.id)).map((e) => e.id);
+  const carriedCount = isCurrent ? entries.filter((e) => e.carried).length : 0;
+  function toggle(id: string) { setPicked((x) => { const n = new Set(x); if (n.has(id)) n.delete(id); else n.add(id); return n; }); }
+
+  async function change(ids: string[], inactive: boolean) {
+    if (!data || !selected || ids.length === 0) return;
+    const keep = data.marks;
     // Show it straight away; put it back if the server says no.
-    setData({ ...data, marks: inactive ? [...before, { user_id: p.id, quarter_id: quarter.id }] : before.filter((m) => !(m.user_id === p.id && m.quarter_id === quarter.id)) });
-    setError('');
-    const r = await fetch('/api/quarters/status', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quarter_id: quarter.id, user_ids: [p.id], inactive }) });
-    if (!r.ok) { setData((d) => (d ? { ...d, marks: before } : d)); setError((await r.json().catch(() => ({}))).error || 'That didn’t work.'); void key; }
-  }
-
-  const editableCols = cols.filter((c) => c.editable);
-  const targetId = editableCols.find((c) => c.id === bulkQuarter)?.id ?? editableCols.find((c) => c.id === data?.currentId)?.id ?? editableCols[0]?.id ?? '';
-  const allShown = people.length > 0 && people.every((p) => picked.has(p.id));
-  function toggle(id: string) { setPicked((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; }); }
-
-  async function bulk(inactive: boolean) {
-    if (!data || !targetId || picked.size === 0) return;
-    setBulkBusy(true); setError('');
+    setData({ ...data, marks: inactive ? [...keep.filter((m) => !(ids.includes(m.user_id) && m.quarter_id === selected.id)), ...ids.map((user_id) => ({ user_id, quarter_id: selected.id, carried: false }))] : keep.filter((m) => !(ids.includes(m.user_id) && m.quarter_id === selected.id)) });
+    setBusy(true); setError('');
     try {
-      const r = await fetch('/api/quarters/status', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quarter_id: targetId, user_ids: [...picked], inactive }) });
-      if (!r.ok) { setError((await r.json().catch(() => ({}))).error || 'That didn’t work.'); return; }
+      const r = await fetch('/api/quarters/status', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quarter_id: selected.id, user_ids: ids, inactive }) });
+      if (!r.ok) { setData((d) => (d ? { ...d, marks: keep } : d)); setError((await r.json().catch(() => ({}))).error || 'That didn’t work.'); return; }
       setPicked(new Set());
       await load();
-    } catch { setError('Couldn’t reach the server.'); } finally { setBulkBusy(false); }
+    } catch { setData((d) => (d ? { ...d, marks: keep } : d)); setError('Couldn’t reach the server.'); } finally { setBusy(false); }
   }
 
   if (error && !data) return <Notice tone="error">{error}</Notice>;
   if (!data) return <LoadingSpinner size={28} label="Loading…" theme="dark" />;
+
+  const column = (title: string, list: Entry[], inactive: boolean) => (
+    <section className={`${styles.listCol} ${inactive ? styles.listColOff : styles.listColOn}`} aria-label={title}>
+      <h3 className={styles.listHead}>{inactive ? <Moon size={15} aria-hidden="true" /> : <Check size={15} aria-hidden="true" />} {title} <span>{list.length}</span></h3>
+      {list.length === 0 && <p className={styles.empty}>{inactive ? 'Nobody is sitting this quarter out.' : 'Nobody here.'}</p>}
+      <ul className={styles.people}>
+        {list.map((e) => (
+          <li key={e.id} className={styles.personRow}>
+            {editable && <input type="checkbox" className={styles.pickBox} checked={picked.has(e.id)} onChange={() => toggle(e.id)} aria-label={`Select ${e.name}`} />}
+            {e.avatar_url ? <Image src={e.avatar_url} alt="" width={32} height={32} unoptimized referrerPolicy="no-referrer" className={styles.avatar} /> : <span className={styles.avatarFallback}>{e.name[0]?.toUpperCase()}</span>}
+            <span className={styles.name}><strong>{e.name}{e.carried && <em className={styles.carriedTag} title={`Copied from ${before?.name ?? 'the last quarter'}`}>carried over</em>}</strong><small><span className={`${styles.role} ${e.role === 'lead' ? styles.roleLead : ''}`}>{e.roleLabel}</span>{e.title ? ` · ${e.title}` : ''}</small></span>
+            {editable && <Button size="sm" variant="secondary" disabled={busy} onClick={() => void change([e.id], !inactive)}>{inactive ? <><Check size={13} aria-hidden="true" /> Make active</> : <><Moon size={13} aria-hidden="true" /> Make inactive</>}</Button>}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
 
   return (
     <div className={styles.page}>
@@ -101,71 +140,52 @@ function StatusPanel() {
 
       {data.canSetup && <QuarterDates data={data} open={showDates} onToggle={() => setShowDates((v) => !v)} onChanged={load} />}
 
-      {data.quarters.length === 0 ? (
-        <p className={styles.empty}>{data.canSetup ? 'Add the quarters above to get started.' : 'An admin needs to add the quarter dates first.'}</p>
-      ) : (<>
-        <div className={styles.bar}>
-          {years.length > 1 && (
-            <div className={styles.years} role="tablist" aria-label="Academic year">
-              {years.map((y) => <button key={y} type="button" role="tab" aria-selected={y === shownYear} className={`${styles.chip} ${y === shownYear ? styles.chipOn : ''}`} onClick={() => setYear(y)}>{yearLabel(y)}</button>)}
-            </div>
-          )}
-          <div className={styles.search}><Search size={14} aria-hidden="true" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a person" aria-label="Find a person" />{q && <button type="button" className={styles.searchClear} onClick={() => setQ('')} aria-label="Clear search"><X size={14} aria-hidden="true" /></button>}</div>
-          <button type="button" className={`${styles.chip} ${onlyInactive ? styles.chipOn : ''}`} aria-pressed={onlyInactive} onClick={() => setOnlyInactive((v) => !v)}><Moon size={13} aria-hidden="true" /> Inactive now{inactiveNow.size > 0 ? ` · ${inactiveNow.size}` : ''}</button>
+      {quarters.length === 0 ? (
+        <p className={styles.empty}>{data.canSetup ? 'Add the quarter dates above. A quarter shows here once it starts.' : 'No quarter has started yet.'}</p>
+      ) : selected && (<>
+        <div className={styles.explain} role="note">
+          <Moon size={18} aria-hidden="true" />
+          <div>
+            <strong>What “inactive” does</strong>
+            <p>An inactive officer or lead keeps their title but is sitting the quarter out: they are not expected at meetings (unless someone adds them by name), get no strikes, and have view-only access. Each quarter starts as a copy of the last one, so you only change who is different. Only the current quarter can be changed.</p>
+          </div>
         </div>
 
-        {picked.size > 0 && (
+        <div className={styles.qChips} role="tablist" aria-label="Quarter">
+          {quarters.map((x) => {
+            const n = countIn.get(x.id) ?? 0;
+            return (
+              <button key={x.id} type="button" role="tab" aria-selected={x.id === selected.id} className={`${styles.qChip} ${x.id === selected.id ? styles.qChipOn : ''}`} onClick={() => { setSelectedId(x.id); setPicked(new Set()); }}>
+                <strong>{x.name}{x.id === data.currentId && <em>now</em>}</strong>
+                <small>{n === 0 ? 'no one inactive' : `${n} inactive`}</small>
+              </button>
+            );
+          })}
+        </div>
+
+        <p className={styles.range}>{selected.name}: {short(selected.starts_on)} to {short(selected.ends_on)}{!isCurrent && ' · this quarter is over, so it is a record and can’t be changed'}</p>
+
+        {carriedCount > 0 && (
+          <Notice tone="info">{carriedCount} {carriedCount === 1 ? 'person was' : 'people were'} copied over from {before?.name ?? 'last quarter'} when this quarter started. Check them, and make anyone who is back active again.</Notice>
+        )}
+
+        <div className={styles.bar}>
+          <div className={styles.search}><Search size={14} aria-hidden="true" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a person" aria-label="Find a person" />{q && <button type="button" className={styles.searchClear} onClick={() => setQ('')} aria-label="Clear search"><X size={14} aria-hidden="true" /></button>}</div>
+        </div>
+
+        {editable && picked.size > 0 && (
           <div className={styles.bulkBar} role="region" aria-label="Change several people">
             <strong>{picked.size} selected</strong>
-            {editableCols.length > 1 && (
-              <select className={styles.bulkSelect} value={targetId} onChange={(e) => setBulkQuarter(e.target.value)} aria-label="Quarter to change">
-                {editableCols.map((c) => <option key={c.id} value={c.id}>{c.name.split(' ')[0]}</option>)}
-              </select>
-            )}
-            <Button size="sm" loading={bulkBusy} disabled={!targetId} onClick={() => void bulk(true)}><Moon size={14} aria-hidden="true" /> Make inactive</Button>
-            <Button size="sm" variant="secondary" loading={bulkBusy} disabled={!targetId} onClick={() => void bulk(false)}><Check size={14} aria-hidden="true" /> Make active</Button>
+            {pickedActive.length > 0 && <Button size="sm" loading={busy} onClick={() => void change(pickedActive, true)}><Moon size={14} aria-hidden="true" /> Make {pickedActive.length} inactive</Button>}
+            {pickedInactive.length > 0 && <Button size="sm" variant="secondary" loading={busy} onClick={() => void change(pickedInactive, false)}><Check size={14} aria-hidden="true" /> Make {pickedInactive.length} active</Button>}
             <button type="button" className={styles.bulkClear} onClick={() => setPicked(new Set())}>Clear</button>
           </div>
         )}
 
-        <div className={styles.wrap}>
-          <div className={styles.matrix} style={{ gridTemplateColumns: `minmax(11rem, 1fr) repeat(${cols.length}, minmax(5.5rem, 7rem))` }}>
-            <div className={styles.corner}>
-              <label className={styles.pick}><input type="checkbox" checked={allShown} onChange={() => setPicked(allShown ? new Set() : new Set(people.map((p) => p.id)))} aria-label="Select everyone shown" /> <span>All</span></label>
-            </div>
-            {cols.map((c) => (
-              <div key={c.id} className={`${styles.colHead} ${c.id === data.currentId ? styles.now : ''}`}>
-                <strong>{c.name.split(' ')[0]}</strong>
-                <small>{short(c.starts_on)} to {short(c.ends_on)}</small>
-                {c.id === data.currentId && <em>now</em>}
-              </div>
-            ))}
-            {people.map((p) => (
-              <div key={p.id} className={styles.row}>
-                <div className={styles.person}>
-                  <input type="checkbox" className={styles.pickBox} checked={picked.has(p.id)} onChange={() => toggle(p.id)} aria-label={`Select ${p.name}`} />
-                  {p.avatar_url ? <Image src={p.avatar_url} alt="" width={32} height={32} unoptimized referrerPolicy="no-referrer" className={styles.avatar} /> : <span className={styles.avatarFallback}>{p.name[0]?.toUpperCase()}</span>}
-                  <span className={styles.name}><strong>{p.name}</strong><small><span className={`${styles.role} ${p.role === 'lead' ? styles.roleLead : ''}`}>{p.roleLabel}</span>{p.title ? ` · ${p.title}` : ''}</small></span>
-                </div>
-                {cols.map((c) => {
-                  const off = markSet.has(`${p.id}|${c.id}`);
-                  return (
-                    <div key={c.id} className={`${styles.cell} ${c.id === data.currentId ? styles.nowCell : ''}`}>
-                      <button type="button" disabled={!c.editable} className={`${styles.toggle} ${off ? styles.off : styles.on}`} aria-pressed={!off}
-                        aria-label={`${p.name}, ${c.name}: ${off ? 'inactive' : 'active'}${c.editable ? '. Press to change.' : ''}`}
-                        title={c.editable ? (off ? 'Inactive: press to make active' : 'Active: press to make inactive') : 'This quarter is over'}
-                        onClick={() => setStatus(p, c, !off)}>
-                        {off ? <Moon size={16} aria-hidden="true" /> : <Check size={16} aria-hidden="true" />}
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-            {people.length === 0 && <p className={`${styles.empty} ${styles.span}`}>No one matches.</p>}
-          </div>
+        <div className={styles.lists}>
+          {column('Active', activeList, false)}
+          {column('Inactive', inactiveList, true)}
         </div>
-        <p className={styles.key}><span className={styles.keyItem}><i className={styles.on}><Check size={12} aria-hidden="true" /></i> active</span><span className={styles.keyItem}><i className={styles.off}><Moon size={12} aria-hidden="true" /></i> inactive</span></p>
       </>)}
     </div>
   );
@@ -192,13 +212,13 @@ function QuarterDates({ data, open, onToggle, onChanged }: { data: Data; open: b
 
   return (
     <section className={styles.dates}>
-      <button type="button" className={styles.datesHead} onClick={onToggle} aria-expanded={open}><Settings2 size={15} aria-hidden="true" /> Quarter dates <span>{data.quarters.length}</span><ChevronDown size={15} aria-hidden="true" className={open ? styles.flip : ''} /></button>
+      <button type="button" className={styles.datesHead} onClick={onToggle} aria-expanded={open}><Settings2 size={15} aria-hidden="true" /> Quarter dates <span>{data.allQuarters.length}</span><ChevronDown size={15} aria-hidden="true" className={open ? styles.flip : ''} /></button>
       {open && (
         <div className={styles.datesBody}>
           {error && <Notice tone="error">{error}</Notice>}
           <ul className={styles.qList}>
-            {[...data.quarters].sort((a, b) => b.starts_on.localeCompare(a.starts_on)).map((c) => <QuarterRow key={c.id} c={c} now={c.id === data.currentId} busy={busy === c.id} onSave={(s, e) => call(`/api/quarters/${c.id}`, 'PATCH', { starts_on: s, ends_on: e }, c.id)}
-              onDelete={async () => { if (await confirmHold({ title: `Delete ${c.name}?`, message: 'Anyone marked inactive for it is active again.', confirmLabel: 'Hold to delete' })) await call(`/api/quarters/${c.id}`, 'DELETE', undefined, c.id); }} />)}
+            {[...data.allQuarters].sort((a, b) => b.starts_on.localeCompare(a.starts_on)).map((c) => <QuarterRow key={c.id} c={c} now={c.id === data.currentId} busy={busy === c.id} onSave={(s, e) => call(`/api/quarters/${c.id}`, 'PATCH', { starts_on: s, ends_on: e }, c.id)}
+              onDelete={async () => { if (await confirmHold({ title: `Delete ${c.name}?`, message: 'Anyone marked inactive for it is active again, and its record is gone.', confirmLabel: 'Hold to delete' })) await call(`/api/quarters/${c.id}`, 'DELETE', undefined, c.id); }} />)}
           </ul>
           <form className={styles.addForm} onSubmit={async (e) => { e.preventDefault(); if (await call('/api/quarters', 'POST', { term, start_year: Number(startYear), starts_on: starts, ends_on: ends }, 'add')) { setStarts(''); setEnds(''); } }}>
             <Field label="Quarter"><Select value={term} onChange={(e) => setTerm(e.target.value)} aria-label="Quarter"><option value="fall">Fall</option><option value="winter">Winter</option><option value="spring">Spring</option></Select></Field>

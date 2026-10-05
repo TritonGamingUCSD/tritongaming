@@ -14,7 +14,8 @@ export async function GET() {
   const today = pacificDayKey();
   const { data: stored } = await auth.svc.from('team_years').select('start_year, archived_at, auto');
   const { data: members } = await auth.svc.from('team_year_members').select('id, start_year, user_id, name, title, tier, avatar_url, manual').order('name');
-  const years = [...new Set([...quarters.map((q) => q.start_year), ...(stored ?? []).map((s) => s.start_year as number)])].sort((a, b) => b - a);
+  // Years still to come are not shown: only a year with a quarter that has started, or one that was recorded.
+  const years = [...new Set([...quarters.filter((q) => q.starts_on <= today).map((q) => q.start_year), ...(stored ?? []).map((s) => s.start_year as number)])].sort((a, b) => b - a);
   const out = [];
   for (const y of years) {
     const row = (stored ?? []).find((s) => s.start_year === y);

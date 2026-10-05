@@ -8,12 +8,12 @@ import { createNotifications } from '@/lib/notify';
 import { invalidate } from '@/lib/revalidate';
 
 // Quarters and "inactive". An officer or lead can sit a quarter out: they keep their title, but are not expected at meetings, are left out of the strike
-// tracker, and have view-only access. An exec or admin marks them for a quarter; the next quarter starts everyone active again. While a mark is in
+// tracker, and have view-only access. An exec or admin marks them for the current quarter; a new quarter starts as a copy of the last one's list, and only the current quarter can be changed. While a mark is in
 // effect the person carries an 'inactive' marker row in user_roles (see 20261004100000_inactive_role.sql), which hasCapability()/has_capability() read.
 
 export type Term = 'fall' | 'winter' | 'spring';
 export const TERMS: Term[] = ['fall', 'winter', 'spring'];
-export interface Quarter { id: string; term: Term; start_year: number; starts_on: string; ends_on: string }
+export interface Quarter { id: string; term: Term; start_year: number; starts_on: string; ends_on: string; carried_over_at?: string | null }
 
 const TERM_LABEL: Record<Term, string> = { fall: 'Fall', winter: 'Winter', spring: 'Spring' };
 // Fall belongs to the calendar year the academic year starts in; Winter and Spring to the next one.
@@ -30,10 +30,15 @@ export function currentQuarter(quarters: Quarter[], today: string = pacificDayKe
   const started = quarters.filter((q) => q.starts_on <= today).sort(byStart);
   return started.length ? started[started.length - 1] : null;
 }
-// Quarters that can still be marked: the current one and any that have not started.
+// Quarters that can be marked: only the current one. A quarter that has not started is never planned ahead (nobody knows yet who will sit it out), and a
+// finished one is a record.
 export function markableQuarters(quarters: Quarter[], today: string = pacificDayKey()): Quarter[] {
   const cur = currentQuarter(quarters, today);
-  return [...quarters].sort(byStart).filter((q) => q.starts_on > today || q.id === cur?.id);
+  return cur ? [cur] : [];
+}
+// Quarters that have started (newest first): the only ones shown anywhere.
+export function startedQuarters(quarters: Quarter[], today: string = pacificDayKey()): Quarter[] {
+  return quarters.filter((q) => q.starts_on <= today).sort((a, b) => byStart(b, a));
 }
 
 // Only officers and leads can be inactive (exec and admin never are).
@@ -46,7 +51,7 @@ export async function inactiveIds(svc: SupabaseClient): Promise<Set<string>> {
 }
 
 export async function loadQuarters(svc: SupabaseClient): Promise<Quarter[]> {
-  const { data } = await svc.from('academic_quarters').select('id, term, start_year, starts_on, ends_on').order('starts_on');
+  const { data } = await svc.from('academic_quarters').select('id, term, start_year, starts_on, ends_on, carried_over_at').order('starts_on');
   return (data ?? []) as Quarter[];
 }
 
@@ -61,11 +66,33 @@ export async function authorizeQuarters(mode: 'manage' | 'setup') {
   return { user, svc: createServiceClient(), canSetup: hasCapability(roles ?? [], 'manage_roles') };
 }
 
+// The day a quarter starts it begins as a copy of the last quarter's inactive list (people can come back or sit out from there). Done once: the claim on
+// carried_over_at is atomic, so two runs at the same moment can't copy twice. A quarter someone already marked by hand is left alone. Exec and admins get a
+// notice to look it over; the copied marks have no set_by, which is how the page shows them as "carried over".
+async function carryOver(svc: SupabaseClient, quarters: Quarter[], cur: Quarter): Promise<void> {
+  const { data: claimed } = await svc.from('academic_quarters').update({ carried_over_at: new Date().toISOString() }).eq('id', cur.id).is('carried_over_at', null).select('id');
+  if (!claimed?.length) return;
+  const prev = quarters.filter((q) => q.starts_on < cur.starts_on).sort(byStart).pop();
+  if (!prev) return;
+  const { data: already } = await svc.from('officer_quarter_status').select('user_id').eq('quarter_id', cur.id).limit(1);
+  if (already?.length) return;
+  const { data: before } = await svc.from('officer_quarter_status').select('user_id').eq('quarter_id', prev.id);
+  const ids = [...new Set((before ?? []).map((m) => m.user_id as string))];
+  if (!ids.length) return;
+  await svc.from('officer_quarter_status').upsert(ids.map((user_id) => ({ user_id, quarter_id: cur.id, set_by: null })), { onConflict: 'user_id,quarter_id' });
+  const { data: staff } = await svc.from('user_roles').select('user_id').in('role', ['exec', 'admin']);
+  await createNotifications(svc, [...new Set((staff ?? []).map((u) => u.user_id as string))].map((user_id) => ({
+    user_id, type: 'quarter_status', title: `Check who’s inactive for ${quarterName(cur)}`,
+    body: `${ids.length} ${ids.length === 1 ? 'person was' : 'people were'} copied over from ${quarterName(prev)}. Change anyone who’s different.`, href: '/portal?section=quarters',
+  })));
+}
+
 // Make the inactive markers match the calendar: everyone marked for the current quarter carries the marker, everyone else does not. Run after every change
 // and daily (so a new quarter switches people over by itself). Tells people when they go inactive and when they are active again.
 export async function syncInactive(svc: SupabaseClient, today: string = pacificDayKey()): Promise<{ added: string[]; removed: string[]; quarter: string | null }> {
   const quarters = await loadQuarters(svc);
   const cur = currentQuarter(quarters, today);
+  if (cur && !cur.carried_over_at) await carryOver(svc, quarters, cur);
   const [{ data: marks }, { data: markers }] = await Promise.all([
     cur ? svc.from('officer_quarter_status').select('user_id').eq('quarter_id', cur.id) : Promise.resolve({ data: [] as { user_id: string }[] }),
     svc.from('user_roles').select('id, user_id').eq('role', 'inactive'),

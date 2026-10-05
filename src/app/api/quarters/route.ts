@@ -4,12 +4,12 @@ import { pacificDayKey } from '@/lib/checkinDays';
 import { staffName } from '@/lib/names';
 import { resolveAvatarUrl } from '@/lib/profile';
 import { ROLE_DISPLAY_RANK, ROLE_LABELS, type AppRole } from '@/types/database';
-import { TERMS, authorizeQuarters, canBeInactive, currentQuarter, loadQuarters, markableQuarters, quarterName, syncInactive } from '@/lib/quarters';
+import { TERMS, authorizeQuarters, canBeInactive, currentQuarter, loadQuarters, markableQuarters, quarterName, startedQuarters, syncInactive } from '@/lib/quarters';
 
 export const dynamic = 'force-dynamic';
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-// The Quarter status page: the quarters, and every officer and lead with the quarters they are sitting out.
+// The Quarter status page: the quarters that have started (never one still to come), and every officer and lead with the quarters they sat out.
 export async function GET() {
   const auth = await authorizeQuarters('manage');
   if (auth.error) return auth.error;
@@ -19,9 +19,12 @@ export async function GET() {
   const rolesOf = new Map<string, AppRole[]>();
   for (const g of grants ?? []) rolesOf.set(g.user_id as string, [...(rolesOf.get(g.user_id as string) ?? []), g.role as AppRole]);
   const ids = [...rolesOf.entries()].filter(([, r]) => canBeInactive(r.map((role) => ({ role })))).map(([id]) => id);
-  const [{ data: ps }, { data: marks }] = await Promise.all([
+  const started = startedQuarters(quarters, today);
+  const [{ data: ps }, { data: marks }, { data: roster }] = await Promise.all([
     ids.length ? auth.svc.from('profiles').select('id, display_name, google_first_name, google_last_name, avatar_url, custom_avatar_url, org_title').in('id', ids) : Promise.resolve({ data: [] as Record<string, unknown>[] }),
-    auth.svc.from('officer_quarter_status').select('user_id, quarter_id'),
+    auth.svc.from('officer_quarter_status').select('user_id, quarter_id, set_by').in('quarter_id', started.map((q) => q.id)),
+    // Who held an officer, lead or exec title in each started quarter (so a past quarter lists the people who were there then).
+    auth.svc.from('quarter_roster').select('quarter_id, user_id, name, tier, title').in('quarter_id', started.map((q) => q.id)),
   ]);
   const people = (ps ?? []).map((p) => {
     const top = [...(rolesOf.get(p.id as string) ?? [])].sort((a, b) => ROLE_DISPLAY_RANK[b] - ROLE_DISPLAY_RANK[a])[0];
@@ -30,8 +33,11 @@ export async function GET() {
   const cur = currentQuarter(quarters, today);
   return NextResponse.json({
     canSetup: auth.canSetup, today, currentId: cur?.id ?? null,
-    quarters: quarters.map((q) => ({ ...q, name: quarterName(q), editable: markableQuarters(quarters, today).some((m) => m.id === q.id) })),
-    people, marks: (marks ?? []).map((m) => ({ user_id: m.user_id, quarter_id: m.quarter_id })),
+    // Quarters still to come are not listed: nobody can see or plan who sits out a quarter before it starts. (The admin's date editor reads allQuarters.)
+    quarters: started.map((q) => ({ ...q, name: quarterName(q), editable: markableQuarters(quarters, today).some((m) => m.id === q.id) })),
+    allQuarters: auth.canSetup ? quarters.map((q) => ({ ...q, name: quarterName(q) })) : [],
+    people, marks: (marks ?? []).map((m) => ({ user_id: m.user_id, quarter_id: m.quarter_id, carried: !m.set_by })),
+    roster: (roster ?? []).map((r) => ({ quarter_id: r.quarter_id, user_id: r.user_id, name: r.name, tier: r.tier, title: r.title })),
   });
 }
 

@@ -105,3 +105,35 @@
 .bulkBar { position: sticky; top: 0.5rem; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding: 0.55rem 0.8rem; border-radius: 0.8rem; border: 1px solid rgba(255, 199, 44, 0.4); background: #141a2c; color: var(--white); font-size: 0.85rem; }
 .bulkSelect { padding: 0.35rem 0.6rem; border-radius: 0.5rem; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.05); color: inherit; font: inherit; font-size: 0.82rem; }
 .bulkClear { margin-left: auto; background: none; border: 0; color: rgba(242, 241, 240, 0.7); font: inherit; font-size: 0.82rem; cursor: pointer; text-decoration: underline; }
+
+.yearHelp { margin: 0; padding: 0.6rem 0.8rem; border-radius: 0.7rem; background: rgba(255, 255, 255, 0.04); font-size: 0.82rem; line-height: 1.5; color: rgba(242, 241, 240, 0.78); }
+.yearHelp strong { color: var(--white); }
+
+/* Quarter status: explainer, quarter chips, and the Active / Inactive lists */
+.explain { display: flex; gap: 0.8rem; padding: 0.8rem 1rem; border-radius: 0.9rem; background: rgba(148, 163, 184, 0.12); color: #cbd5e1; }
+.explain > svg { flex: none; margin-top: 0.15rem; color: #94a3b8; }
+.explain strong { font-size: 0.92rem; color: var(--white); }
+.explain p { margin: 0.2rem 0 0; font-size: 0.84rem; line-height: 1.5; color: rgba(242, 241, 240, 0.75); }
+.qChips { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.3rem; scrollbar-width: thin; }
+.qChip { flex: none; display: flex; flex-direction: column; align-items: flex-start; gap: 0.1rem; min-height: 44px; padding: 0.45rem 0.8rem; border-radius: 0.7rem; border: 1px solid rgba(255, 255, 255, 0.14); background: rgba(255, 255, 255, 0.03); color: rgba(242, 241, 240, 0.85); font: inherit; cursor: pointer; text-align: left; }
+.qChip:hover { border-color: rgba(255, 199, 44, 0.45); }
+.qChip strong { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.88rem; white-space: nowrap; }
+.qChip em { font-style: normal; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #0b1426; background: #34d399; border-radius: 999px; padding: 0 0.4rem; }
+.qChip small { font-size: 0.7rem; color: rgba(242, 241, 240, 0.65); white-space: nowrap; }
+.qChipOn { background: var(--yellow); border-color: var(--yellow); color: #0b1426; }
+.qChipOn small { color: rgba(11, 20, 38, 0.75); }
+.range { margin: 0; font-size: 0.82rem; color: rgba(242, 241, 240, 0.7); }
+.lists { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; align-items: start; }
+@media (max-width: 760px) { .lists { grid-template-columns: minmax(0, 1fr); } }
+.listCol { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.8rem 0.9rem; border-radius: 0.9rem; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.03); min-width: 0; }
+.listColOn { border-color: rgba(52, 211, 153, 0.35); }
+.listColOff { border-style: dashed; border-color: rgba(148, 163, 184, 0.5); background: repeating-linear-gradient(135deg, rgba(148, 163, 184, 0.1) 0 8px, transparent 8px 16px); }
+.listHead { display: flex; align-items: center; gap: 0.45rem; margin: 0; font-family: var(--font-futura-heavy); font-size: 1rem; color: var(--white); }
+.listColOn .listHead svg { color: #6ee7b7; }
+.listColOff .listHead svg { color: #cbd5e1; }
+.listHead span { margin-left: auto; font-size: 0.8rem; color: rgba(242, 241, 240, 0.7); }
+.people { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.personRow { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(255, 255, 255, 0.06); min-width: 0; }
+.personRow:last-child { border-bottom: 0; }
+.personRow .name { flex: 1; }
+.carriedTag { margin-left: 0.4rem; font-style: normal; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.05rem 0.45rem; border-radius: 999px; background: rgba(251, 191, 36, 0.2); color: #fcd34d; white-space: nowrap; }

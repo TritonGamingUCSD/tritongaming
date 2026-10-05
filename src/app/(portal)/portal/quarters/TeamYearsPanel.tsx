@@ -75,8 +75,17 @@ export default function TeamYearsPanel() {
           <div className={styles.yearHead}>
             <h2>{shown.label}</h2>
             <span className={`${styles.stamp} ${shown.archived ? styles.stampDone : ''}`}>{shown.archived ? <><Check size={12} aria-hidden="true" /> Recorded {shown.archived_at ? when(shown.archived_at) : ''}</> : 'Not recorded yet'}</span>
-            <Button size="sm" variant="secondary" loading={busy === 'archive'} onClick={async () => { const j = await call(`/api/team-years/${shown.start_year}`, 'POST', { action: 'archive' }, 'archive'); if (j) setNote(shown.archived ? 'Rebuilt from the quarters. Names you added or edited by hand were kept.' : 'Recorded.'); }}><Archive size={14} aria-hidden="true" /> {shown.archived ? 'Rebuild' : 'Record now'}</Button>
+            <Button size="sm" variant="secondary" loading={busy === 'archive'} onClick={async () => {
+              if (shown.archived && !(await confirmHold({ title: `Rebuild the ${shown.label} list?`, message: 'This re-reads the quarters and redoes the list: everyone who was active in at least one quarter, at the highest title they held. People you added or edited by hand are kept. Anyone you removed by hand can come back.', confirmLabel: 'Hold to rebuild' }))) return;
+              const j = await call(`/api/team-years/${shown.start_year}`, 'POST', { action: 'archive' }, 'archive');
+              if (j) setNote(shown.archived ? 'Rebuilt from the quarters. Names you added or edited by hand were kept.' : 'Recorded.');
+            }}><Archive size={14} aria-hidden="true" /> {shown.archived ? 'Rebuild from quarters' : 'Record this year now'}</Button>
           </div>
+          <p className={styles.yearHelp}>
+            {shown.archived
+              ? <><strong>Rebuild from quarters</strong> throws away this list and works it out again from each quarter’s record: anyone who was active (not inactive) in at least one quarter, at the highest title they held. Use it after you fix a quarter’s status. People you added or edited by hand stay; anyone you removed by hand may come back.</>
+              : <><strong>Record this year now</strong> saves the list below as this year’s permanent record. It also happens by itself after Spring ends.</>}
+          </p>
           {shown.members.length === 0 && <p className={styles.empty}>Nobody yet.</p>}
           {TIERS.map((t) => {
             const list = shown.members.filter((m) => m.tier === t);
@@ -100,8 +109,9 @@ export default function TeamYearsPanel() {
       )}
 
       <section className={styles.alumni}>
-        <h2><GraduationCap size={18} aria-hidden="true" /> Graduates ready for Alumni <span>{data.candidates.length}</span></h2>
-        {data.candidates.length === 0 ? <p className={styles.empty}>No one right now. Anyone whose class year has finished (after June 30) and who was active at least once shows here.</p> : (
+        <h2><GraduationCap size={18} aria-hidden="true" /> Graduated, still holding a role <span>{data.candidates.length}</span></h2>
+        <p className={styles.yearHelp}>These are officers, leads and exec whose graduation year (“class of”, from their profile) has ended, so they have graduated. <strong>Move to Alumni</strong> turns them into alumni: they lose their officer, lead or exec role and tool access, but they stay on every year’s list and can show on the team page if they choose.</p>
+        {data.candidates.length === 0 ? <p className={styles.empty}>No one right now. A person shows here after June 30 of their class year, if they were active in at least one quarter.</p> : (
           <>
             <ul className={styles.memberList}>
               {data.candidates.map((c) => <li key={c.id} className={styles.member}><span className={styles.memberName}><strong>{c.name}</strong><small>Class of {c.class_of}</small></span></li>)}
