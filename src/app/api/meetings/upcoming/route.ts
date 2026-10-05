@@ -12,6 +12,8 @@ export async function GET() {
   return NextResponse.json({
     meetings: upcoming.filter((m) => m.status !== 'cancelled').map((m) => ({
       key: m.key, date: m.date, title: m.title, starts_at: m.starts_at, ends_at: m.ends_at, location: m.location, description: m.description,
+      // Shown as soon as the host has added one, before the meeting starts.
+      doc_url: m.doc_url ?? null,
       repeats: m.repeats, is_today: m.is_today, status: m.status, host_name: m.host_name, hosting: m.host_id === auth.user.id,
     })),
   });

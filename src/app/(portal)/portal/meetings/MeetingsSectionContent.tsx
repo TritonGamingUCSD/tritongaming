@@ -256,6 +256,7 @@ function CheckInPanel() {
               ? 'Opens when the meeting starts. This page updates itself.'
               : 'There’s no meeting today.'}
           </p>
+          {data.meetings.filter((m) => m.doc_url).map((m) => <DocButton key={m.id} url={m.doc_url!} label={data.meetings.length > 1 ? `Doc: ${m.title}` : 'Meeting doc'} />)}
         </div>
       )}
 
@@ -382,7 +383,7 @@ function FunBox({ meeting, onSaved }: { meeting: TodayMeeting; onSaved: () => vo
 // ── Everyone: their own attendance record ─────────────────────────────────────
 // Everything coming up that's meant for this person (or that they planned), grouped by day.
 function UpcomingPanel() {
-  const [items, setItems] = useState<{ key: string; date: string; title: string; starts_at: string; ends_at: string; location: string | null; description: string | null; repeats: boolean; is_today: boolean; status: string; host_name: string | null; hosting: boolean }[] | null>(null);
+  const [items, setItems] = useState<{ key: string; date: string; title: string; starts_at: string; ends_at: string; location: string | null; description: string | null; doc_url: string | null; repeats: boolean; is_today: boolean; status: string; host_name: string | null; hosting: boolean }[] | null>(null);
   const [error, setError] = useState('');
   // Only the next few at first: a long run of weeks ahead is noise. The rest is one tap away.
   const [showAll, setShowAll] = useState(false);
@@ -417,6 +418,7 @@ function UpcomingPanel() {
               </span>
               {m.description && <span className={styles.descText} title={m.description}>{m.description}</span>}
               {m.hosting ? <span className={`${styles.metaLine} ${styles.metaSub}`}>You’re hosting</span> : m.host_name ? <span className={`${styles.metaLine} ${styles.metaSub}`}>Hosted by {m.host_name}</span> : null}
+              {m.doc_url && <DocButton url={m.doc_url} label="Meeting doc" />}
             </div>
             <IconButton kind="calendar" size="sm" label={`Add ${m.title} to Google Calendar`} href={googleCalendarUrl({ title: m.title, start: m.starts_at, end: m.ends_at, location: m.location, details: m.description })} />
             {m.status === 'open' && <span className={`${styles.pill} ${styles.pillOpen}`}>Check-in open</span>}

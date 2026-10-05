@@ -63,7 +63,7 @@ export interface HubSection {
 export interface HubIdentity { name: string; avatarUrl: string | null; roleLabel: string; roles?: { label: string; color: string }[] }
 
 // Params that belong to whatever was open, cleared when switching sections.
-const CLEAR_NAV = { tab: null, subtab: null, block: null, id: null, q: null, status: null, view: null, atype: null, aq: null, ticket: null };
+const CLEAR_NAV = { tab: null, subtab: null, block: null, id: null, q: null, status: null, view: null, atype: null, aq: null, ticket: null, plan: null };
 
 const SPRING = { type: 'spring' as const, stiffness: 420, damping: 38 };
 

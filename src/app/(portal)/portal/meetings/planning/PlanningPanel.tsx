@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { usePortalParams } from '@/lib/usePortalParams';
 import { ArrowLeft, Bell, CalendarClock, Check, ChevronRight, Hourglass, Link2, Lock, MousePointerClick, Pencil, Plus, RotateCcw, Star, Trash2, UserX, Users } from 'lucide-react';
 import Notice from '@/components/ui/Notice';
 import Button from '@/components/ui/Button';
@@ -26,6 +27,7 @@ const slotLabel = (p: PlanView, day: string, start: string) => `${dayLabel(day, 
 
 export default function PlanningPanel({ userId }: { userId: string }) {
   const params = useSearchParams();
+  const setParams = usePortalParams();
   const [plans, setPlans] = useState<PlanView[] | null>(null);
   const [canHost, setCanHost] = useState(false);
   const [openId, setOpenId] = useState<string | null>(params.get('plan'));
@@ -46,7 +48,7 @@ export default function PlanningPanel({ userId }: { userId: string }) {
   if (plans === null) return error ? <Notice tone="error">{error}</Notice> : <LoadingSpinner />;
 
   if (creating) return <PlanForm onDone={() => { setCreating(false); void load(); }} onCancel={() => setCreating(false)} />;
-  if (open) return <PlanDetail key={open.id} plan={open} userId={userId} onBack={() => { setOpenId(null); void load(); }} reload={load} />;
+  if (open) return <PlanDetail key={open.id} plan={open} userId={userId} onBack={() => { setOpenId(null); setParams({ plan: null }); void load(); }} reload={load} />;
 
   return (
     <div className={m.stack}>
@@ -65,7 +67,7 @@ export default function PlanningPanel({ userId }: { userId: string }) {
             const needsMe = iAmAsked && p.status === 'open' && !p.expired && !p.responses[userId];
             return (
               <li key={p.id}>
-                <button type="button" data-tone={needsMe ? 'todo' : p.status === 'decided' ? 'done' : p.expired ? 'warn' : 'plan'} className={styles.planCard} onClick={() => setOpenId(p.id)}>
+                <button type="button" data-tone={needsMe ? 'todo' : p.status === 'decided' ? 'done' : p.expired ? 'warn' : 'plan'} className={styles.planCard} onClick={() => { setOpenId(p.id); setParams({ plan: p.id }); }}>
                   <span className={styles.planTop}>
                     <strong>{p.title}</strong>
                     <span className={`${styles.chip} ${p.kind === 'weekly' ? styles.chipWeekly : styles.chipOnce}`}>{p.kind === 'weekly' ? 'Weekly' : 'One time'}</span>

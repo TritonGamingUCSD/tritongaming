@@ -265,12 +265,12 @@ export async function getExpectedPeople(svc: SupabaseClient, m?: MeetingAudience
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-// Is a meeting happening around now (from 2 hours before it starts until an hour after it ends)?
+// Is a meeting actually happening now (between its start and end, or opened by a host and still taking check-ins)?
 // Drives the mobile bar's "Meetings" slot. Counts a repeating meeting's occurrence for today even
-// before an exec has opened it.
+// before an exec has opened it, but not before it starts.
 export async function meetingHappeningNow(svc: SupabaseClient, user: { id: string; roles: { role: string }[] }, now: Date = new Date()): Promise<boolean> {
   const t = now.getTime();
-  const near = (starts: string, ends: string) => t >= new Date(starts).getTime() - 2 * 3600_000 && t <= new Date(ends).getTime() + 3600_000;
+  const near = (starts: string, ends: string) => t >= new Date(starts).getTime() && t <= new Date(ends).getTime();
   const rows = (await getTodaysMeetings(svc)).filter((m) => canAttendMeeting(m, user.id, user.roles));
   if (rows.some((m) => isMeetingOpen(m, t) || near(m.starts_at, m.ends_at))) return true;
   const today = pacificDayKey(now);
