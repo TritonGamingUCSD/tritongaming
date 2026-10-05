@@ -41,6 +41,9 @@ export default function CalendarSectionContent() {
   // My own linked Google Calendar (view only): its events come with the response, separate from the shared ones.
   const [google, setGoogle] = useState<Item[]>([]);
   const [googleLinked, setGoogleLinked] = useState(false);
+  // null until the first answer. A student outside the TG team gets events only, with no filters and no Google sync.
+  const [eventsOnly, setEventsOnly] = useState<boolean | null>(null);
+  const linking = GOOGLE_CALENDAR_LINKING && eventsOnly === false;
   const [googleError, setGoogleError] = useState<string | null>(null);
   // "All TG meetings": also show everyone else's meetings (not the private ones), as plain read-only entries.
   const [allMeetings, setAllMeetings] = useState(false);
@@ -81,7 +84,7 @@ export default function CalendarSectionContent() {
     setItems(null); setError('');
     fetch(`/api/calendar?from=${from}&to=${to}${allMeetings && canAll ? '&scope=all' : ''}`, { cache: 'no-store' })
       .then(async (r) => ({ ok: r.ok, status: r.status, j: await r.json().catch(() => ({})) }))
-      .then(({ ok, j, status }) => { if (!live) return; if (status === 403 && allMeetings) { setCanAll(false); return; } if (ok) { setItems(j.items); setGoogle(j.google ?? []); setGoogleLinked(!!j.googleLinked); setGoogleError(j.googleError ?? null); } else setError(j.error || 'Failed to load the calendar.'); })
+      .then(({ ok, j, status }) => { if (!live) return; if (status === 403 && allMeetings) { setCanAll(false); return; } if (ok) { setEventsOnly(!!j.eventsOnly); setItems(j.items); setGoogle(j.google ?? []); setGoogleLinked(!!j.googleLinked); setGoogleError(j.googleError ?? null); } else setError(j.error || 'Failed to load the calendar.'); })
       .catch(() => { if (live) setError('Couldn’t reach the server.'); });
     return () => { live = false; };
   }, [from, to, reload, allMeetings, canAll]);
@@ -89,11 +92,11 @@ export default function CalendarSectionContent() {
   const byDay = useMemo(() => {
     const map = new Map<string, Item[]>();
     for (const i of [...(items ?? []), ...google]) {
-      if (!kinds.includes(i.kind)) continue;
+      if (eventsOnly !== true && !kinds.includes(i.kind)) continue;
       map.set(i.date, [...(map.get(i.date) ?? []), i]);
     }
     return map;
-  }, [items, google, kinds]);
+  }, [items, google, kinds, eventsOnly]);
 
   function shift(n: number) {
     if (view === 'week') { setWeekStart((w) => addDays(w, 7 * n)); return; }
@@ -118,15 +121,15 @@ export default function CalendarSectionContent() {
   const agendaDays = [...byDay.keys()].filter((d) => d >= (view === 'agenda' ? today : gridStart) && d.slice(0, 7) === key(cursor.y, cursor.m, 1).slice(0, 7)).sort();
 
   const syncButton = (cls: 'phoneOnly' | 'wideOnly') => (
-    <Button variant="secondary" size="sm" className={`${styles.syncBtn} ${styles[cls]}`} onClick={() => setSyncOpen((v) => !v)} aria-expanded={syncOpen} aria-label={GOOGLE_CALENDAR_LINKING ? 'Sync calendars' : 'Add to my calendar'}>
-      {GOOGLE_CALENDAR_LINKING ? <CalendarSync size={15} strokeWidth={1.75} aria-hidden="true" /> : <CalendarPlus size={15} strokeWidth={1.75} aria-hidden="true" />} <span className={styles.syncText}>{GOOGLE_CALENDAR_LINKING ? 'Sync' : 'Add to my calendar'}</span>
+    <Button variant="secondary" size="sm" className={`${styles.syncBtn} ${styles[cls]}`} onClick={() => setSyncOpen((v) => !v)} aria-expanded={syncOpen} aria-label={linking ? 'Sync calendars' : 'Add to my calendar'}>
+      {linking ? <CalendarSync size={15} strokeWidth={1.75} aria-hidden="true" /> : <CalendarPlus size={15} strokeWidth={1.75} aria-hidden="true" />} <span className={styles.syncText}>{linking ? 'Sync' : 'Add to my calendar'}</span>
       {(googleLinked || googleError) && <i className={`${styles.syncDot} ${googleError ? styles.syncDotWarn : ''}`} aria-hidden="true" />}
     </Button>
   );
 
   return (
     <div className={styles.page} data-wide={view !== 'agenda' ? '' : undefined} data-month={view !== 'agenda' ? '' : undefined}>
-      <SectionHeader title="Calendar" flush sub="Events and the meetings you’re invited to, in one place." actions={syncButton('phoneOnly')} />
+      <SectionHeader title="Calendar" flush sub={eventsOnly ? 'Upcoming Triton Gaming events.' : 'Events and the meetings you’re invited to, in one place.'} actions={syncButton('phoneOnly')} />
 
       <div className={styles.toolbar}>
         <div className={styles.nav}>
@@ -143,21 +146,21 @@ export default function CalendarSectionContent() {
         </div>
       </div>
       {syncOpen && (
-        <div className={`${styles.syncGrid} ${GOOGLE_CALENDAR_LINKING ? '' : styles.syncSingle}`}>
-          {GOOGLE_CALENDAR_LINKING && <GoogleLinkPanel result={gcalResult} onChanged={() => setReload((n) => n + 1)} />}
+        <div className={`${styles.syncGrid} ${linking ? '' : styles.syncSingle}`}>
+          {linking && <GoogleLinkPanel result={gcalResult} onChanged={() => setReload((n) => n + 1)} />}
           <SubscribePanel />
         </div>
       )}
-      {GOOGLE_CALENDAR_LINKING && googleError && !syncOpen && <Notice tone="warning">Your Google Calendar couldn’t be loaded just now, so its events aren’t shown. Open Sync to link it again.</Notice>}
+      {linking && googleError && !syncOpen && <Notice tone="warning">Your Google Calendar couldn’t be loaded just now, so its events aren’t shown. Open Sync to link it again.</Notice>}
 
-      <div className={styles.filters} role="group" aria-label="What to show">
+      {eventsOnly === false && <div className={styles.filters} role="group" aria-label="What to show">
         {([['event', 'Events', styles.dotEvent], ['meeting', 'Meetings', styles.dotMeeting], ['internal', 'Internal events', styles.dotInternal], ...(googleLinked ? [['google', 'My Google Calendar', styles.dotGoogle]] : [])] as [Kind, string, string][]).map(([k, label, dot]) => {
           const on = kinds.includes(k);
           return <button key={k} type="button" className={`${styles.filterChip} ${on ? styles.filterOn : ''}`} aria-pressed={on} onClick={() => setFilters(on ? kinds.filter((x) => x !== k) : [...kinds, k])}><i className={dot} /> {label}</button>;
         })}
         {canAll && <span className={styles.filterSep} aria-hidden="true" />}
         {canAll && <button type="button" className={`${styles.filterChip} ${allMeetings ? styles.filterOn : ''}`} aria-pressed={allMeetings} onClick={() => setFilters(kinds, !allMeetings)} title="Also show every other meeting on the team, except the ones a host marked private"><Users size={12} aria-hidden="true" /> All TG meetings</button>}
-      </div>
+      </div>}
 
       {error && <Notice tone="error">{error}</Notice>}
 
@@ -345,7 +348,7 @@ function SubscribePanel() {
       {!links ? <p className={styles.muted}>Loading…</p> : (
         <>
           {links.tg && block('tg', links.tg, 'TG Calendar', 'Everything at Triton Gaming: all events and every public meeting on the team (private meetings are left out).')}
-          {block('mine', links, 'My TG Calendar', 'Just yours: events, your meetings and your internal events, including the ones you host or are going to.')}
+          {block('mine', links, links.tg ? 'My TG Calendar' : 'TG Events Calendar', links.tg ? 'Just yours: events, your meetings and your internal events, including the ones you host or are going to.' : 'All upcoming Triton Gaming events.')}
           <div className={styles.subRow}>
             <Button variant="ghost" size="sm" onClick={reset}><RefreshCw size={14} aria-hidden="true" /> New links</Button>
           </div>

@@ -60,6 +60,9 @@ export async function collectCalendarItems(svc: SupabaseClient, user: { id: stri
     }
   }
 
+  // Anyone who is not on the TG team (a UCSD student with just the student badge) sees the events and nothing else.
+  if (!isTgMember(roles)) { items.sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start)); return items; }
+
   const rows = (rowData ?? []) as MeetingRow[];
   const mineOrManage = (m: { audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; created_by: string | null }) => {
     const [x] = withExtras([m], groups);

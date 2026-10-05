@@ -1,187 +1,67 @@
 'use client';
 
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronLeft, X } from 'lucide-react';
 import Notice from '@/components/ui/Notice';
-import Button from '@/components/ui/Button';
-import { Input, Select } from '@/components/ui/Field';
 import { confirmHold } from '@/lib/confirmHold';
 import { showToast } from '@/lib/toast';
-import { useUnsavedChanges, confirmDiscardUnsaved } from '@/lib/useUnsavedChanges';
-import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePortalParams, useLiveParams } from '@/lib/usePortalParams';
-import SectionTabs from '@/components/ui/SectionTabs';
-import { Image as ImageIcon, Paperclip, BookOpen, X, ChevronRight, ChevronLeft, ChevronDown, Plus, Search, FileText, Pencil, Trash2, FolderCog } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { slugify } from '@/lib/slug';
-import { extractToc } from '@/lib/markdownToc';
-import { uploadFileToStorage, MAX_FILE_BYTES } from '@/lib/fileUpload';
-import { uploadImageToStorage } from '@/lib/imageUpload';
-import { PACIFIC_TZ } from '@/lib/timezone';
-import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
-import type { Doc, DocCategory, DocAttachment } from '@/types/database';
+import { buildSections, canMoveUnder, readingOrder, reorder, searchDocs, UNCATEGORIZED } from '@/lib/docsTree';
+import { diffSync, joinNames, type DocChange, type SyncDoc } from '@/lib/docsSync';
+import type { Doc, DocCategory } from '@/types/database';
+import DocSidebar, { type DropTarget } from './DocSidebar';
+import DocHome from './DocHome';
+import DocReader, { type ReaderSize, type ReaderWidth } from './DocReader';
+import DocEditView, { type DocEditViewHandle } from './DocEditView';
+import NewDocDialog, { type NewDocChoice } from './NewDocDialog';
+import MoveDialog from './MoveDialog';
+import ConflictDialog from './ConflictDialog';
+import { templateById } from './docTemplates';
+import { dayTime, docsGet, docsPost } from './docsApi';
 import styles from './docs.module.css';
-import IconButton from '@/components/ui/IconButton';
 
-const UNCATEGORIZED = 'Uncategorized';
+interface Notice2 { id: number; text: string; tone: 'info' | 'warning'; docId?: string }
+const POLL_MS = 20_000;
+const DOC_SELECT = 'id, slug, title, category_id, parent_id, order_index, content, attachments, created_by, updated_by, created_at, updated_at, icon, cover_url, tags, pinned, published, revision, draft_title, draft_content, draft_updated_at, draft_updated_by';
 
-interface Draft {
-  title: string;
-  categoryId: string | null;
-  parentId: string | null;
-  content: string;
-  attachments: DocAttachment[];
-}
-
-const EMPTY_DRAFT: Draft = { title: '', categoryId: null, parentId: null, content: '', attachments: [] };
-
-// Markdown editor: write and preview side by side on wide screens, tabbed on
-// narrow ones — so you see the result as you type instead of flipping back and forth.
-function MarkdownField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const [tab, setTab] = useState<'write' | 'preview'>('write');
-  return (
-    <div className={styles.field}>
-      <div className={styles.mdHeader}>
-        <span className={styles.label}>Content <span className={styles.labelHint}>Markdown — ## headings become the table of contents</span></span>
-        <SectionTabs variant="segmented" label="Editor view" value={tab} onChange={setTab} tabs={[{ id: 'write', label: 'Write' }, { id: 'preview', label: 'Preview' }]} />
-      </div>
-      <div className={styles.mdSplit} data-tab={tab}>
-        <textarea
-          className={`${styles.input} ${styles.textarea} ${styles.mdWrite}`}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          rows={20}
-          placeholder="Write in Markdown — **bold**, _italic_, [links](https://…), lists, ## headings…"
-        />
-        <div className={`${styles.mdPreview} ${styles.mdPreviewPane}`}>
-          {value.trim() ? <MarkdownContent>{value}</MarkdownContent> : <span className={styles.mdPreviewEmpty}>Nothing to preview yet.</span>}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function AttachmentsField({ value, onChange }: { value: DocAttachment[]; onChange: (v: DocAttachment[]) => void }) {
-  const [uploading, setUploading] = useState(false);
-  const [albumUrl, setAlbumUrl] = useState('');
-  const [error, setError] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  async function handleFilePick(file: File) {
-    setError('');
-    if (file.size > MAX_FILE_BYTES) {
-      setError('File must be under 20MB.');
-      return;
-    }
-    setUploading(true);
-    try {
-      // Photos are shrunk to a screen-sized WebP; PDFs, slides and the like are kept exactly as uploaded.
-      const isPhoto = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type);
-      const url = isPhoto ? await uploadImageToStorage('doc-attachments', file, { maxDimension: 2400, quality: 0.85 }) : await uploadFileToStorage('doc-attachments', file);
-      const name = isPhoto && url.endsWith('.webp') ? file.name.replace(/\.[^.]+$/, '') + '.webp' : file.name;
-      onChange([...value, { name, url, kind: 'file' }]);
-    } catch {
-      setError('Upload failed. Please try again.');
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  function handleAddAlbum() {
-    const url = albumUrl.trim();
-    if (!url) return;
-    onChange([...value, { name: 'Photo Album', url, kind: 'google_album' }]);
-    setAlbumUrl('');
-  }
-
-  function handleRemove(i: number) {
-    onChange(value.filter((_, idx) => idx !== i));
-  }
-
-  return (
-    <div className={styles.field}>
-      <span className={styles.label}>Attachments</span>
-
-      {value.length > 0 && (
-        <ul className={styles.attachList}>
-          {value.map((a, i) => (
-            <li key={`${a.url}-${i}`} className={styles.attachRow}>
-              <span className={styles.attachIcon} aria-hidden="true">
-                {a.kind === 'google_album' ? <ImageIcon size={16} strokeWidth={1.5} /> : <Paperclip size={16} strokeWidth={1.5} />}
-              </span>
-              <span className={styles.attachName}>{a.name}</span>
-              <IconButton kind="remove" size="sm" label={`Remove ${a.name}`} onClick={() => handleRemove(i)} />
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <div className={styles.attachAddRow}>
-        <button type="button" className={styles.attachUploadBtn} onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-          {uploading ? 'Uploading…' : '+ Add File'}
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          hidden
-          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFilePick(f); e.target.value = ''; }}
-        />
-      </div>
-      <div className={styles.attachAddRow}>
-        <input
-          className={styles.input}
-          type="url"
-          value={albumUrl}
-          onChange={(e) => setAlbumUrl(e.target.value)}
-          placeholder="Paste a Google Photos album link…"
-        />
-        <button type="button" className={styles.attachAddBtn} onClick={handleAddAlbum} disabled={!albumUrl.trim()}>Add</button>
-      </div>
-      {error && <Notice tone="error" compact>{error}</Notice>}
-    </div>
-  );
-}
-
-function AttachmentsView({ attachments }: { attachments: DocAttachment[] }) {
-  if (attachments.length === 0) return null;
-  return (
-    <section className={styles.viewAttachments}>
-      <h2 className={styles.attachHeading}>Attachments</h2>
-      <div className={styles.attachCards}>
-        {attachments.map((a, i) => (
-          <a key={`${a.url}-${i}`} href={a.url} target="_blank" rel="noopener noreferrer" className={styles.attachCard}>
-            <span className={styles.attachCardIcon} aria-hidden="true">
-              {a.kind === 'google_album' ? <ImageIcon size={18} strokeWidth={1.5} /> : <Paperclip size={18} strokeWidth={1.5} />}
-            </span>
-            <span className={styles.attachCardText}>
-              <span className={styles.attachCardName}>{a.name}</span>
-              <span className={styles.attachCardKind}>{a.kind === 'google_album' ? 'Photo album' : 'File'}</span>
-            </span>
-          </a>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-export default function DocsClient({ initialDocs, initialCategories, userId, canEdit }: { initialDocs: Doc[]; initialCategories: DocCategory[]; userId: string; canEdit: boolean }) {
+export default function DocsClient({ initialDocs, initialCategories, initialFavorites, userId, canEdit }: { initialDocs: Doc[]; initialCategories: DocCategory[]; initialFavorites: string[]; userId: string; canEdit: boolean }) {
   const [docs, setDocs] = useState(initialDocs);
   const [categories, setCategories] = useState(initialCategories);
-  // Deep-linked in from portal search (?id=<docId>) — opens straight to
-  // that doc's content instead of just landing on the general list.
+  const [favorites, setFavorites] = useState(() => new Set(initialFavorites));
   const searchParams = useLiveParams();
-  const [selectedId, setSelectedId] = useState<string | null>(() => searchParams.get('id'));
   const setParams = usePortalParams();
+  const [selectedId, setSelectedId] = useState<string | null>(() => searchParams.get('id'));
   const [editing, setEditing] = useState(false);
-  const [isNew, setIsNew] = useState(false);
-  const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
+  const [editingNew, setEditingNew] = useState(false);
   const [query, setQuery] = useState('');
-  const [newCategory, setNewCategory] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
-  const [manageCats, setManageCats] = useState(false);
-  // Only an open editor holds unsaved edits. Opening a different doc (or
-  // starting a new one) re-baselines via the key instead of counting as a change.
-  const { markSaved, dirty } = useUnsavedChanges(editing ? draft : null, undefined, `${editing}:${isNew}:${selectedId}`);
+  const [error, setError] = useState('');
+  const [newDialog, setNewDialog] = useState<{ parentId: string | null; categoryId: string | null } | null>(null);
+  const [moveDoc, setMoveDoc] = useState<Doc | null>(null);
+  const [size, setSize] = useState<ReaderSize>('md');
+  const [width, setWidth] = useState<ReaderWidth>('narrow');
+  const [notices, setNotices] = useState<Notice2[]>([]);
+  const [sync, setSync] = useState<Map<string, SyncDoc>>(new Map());
+  const [goneIds, setGoneIds] = useState<Set<string>>(new Set());
+  const [dialog, setDialog] = useState<null
+    | { kind: 'edit_busy'; doc: Doc; names: string[]; draftBy: string | null; draftAt: string | null }
+    | { kind: 'delete_busy'; doc: Doc; text: string }
+    | { kind: 'move_conflict'; id: string; target: DropTarget; text: string; code: 'moved_elsewhere' }>(null);
+
+  const prevSync = useRef<SyncDoc[] | null>(null);
+  const docsRef = useRef(docs); docsRef.current = docs;
+  const editRef = useRef<DocEditViewHandle>(null);
+  const editingRef = useRef({ editing, selectedId }); editingRef.current = { editing, selectedId };
+  const noticeId = useRef(1);
+
+  // Remembered per device: how big the text is and how wide the page.
+  useEffect(() => {
+    try { const s = JSON.parse(localStorage.getItem('docs-reader') ?? 'null'); if (s?.size) setSize(s.size); if (s?.width) setWidth(s.width); } catch { /* none saved */ }
+  }, []);
+  const saveReader = (s: ReaderSize, w: ReaderWidth) => { setSize(s); setWidth(w); try { localStorage.setItem('docs-reader', JSON.stringify({ size: s, width: w })); } catch { /* private window */ } };
 
   // Keep ?id=<doc> in the address bar so any doc can be linked to (skipped on first render so a deep link isn't wiped).
   const syncedOnce = useRef(false);
@@ -191,478 +71,284 @@ export default function DocsClient({ initialDocs, initialCategories, userId, can
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId]);
 
-  const selected = docs.find((d) => d.id === selectedId) ?? null;
-  const categoryById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
+  const addNotice = useCallback((text: string, tone: Notice2['tone'] = 'info', docId?: string) => {
+    const id = noticeId.current++;
+    setNotices((n) => [...n.slice(-3), { id, text, tone, docId }]);
+    setTimeout(() => setNotices((n) => n.filter((x) => x.id !== id)), 45_000);
+  }, []);
 
-  // Sidebar tree: category -> top-level docs -> their sub-posts (one level).
-  const tree = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const matches = (d: Doc) => !q || d.title.toLowerCase().includes(q) || d.content.toLowerCase().includes(q);
-    const topLevel = docs.filter((d) => !d.parent_id);
-    const childrenOf = (id: string) => docs.filter((d) => d.parent_id === id);
-
-    const groups = new Map<string, Doc[]>();
-    for (const d of topLevel) {
-      const catName = (d.category_id && categoryById.get(d.category_id)?.name) || UNCATEGORIZED;
-      const kids = childrenOf(d.id);
-      if (!matches(d) && !kids.some(matches)) continue;
-      if (!groups.has(catName)) groups.set(catName, []);
-      groups.get(catName)!.push(d);
+  // ── What other people did while this page was open ──────────────────────────────────────────────────────────────────────────────────
+  const poll = useCallback(async (silent = false) => {
+    const r = await docsGet<{ docs: SyncDoc[]; categories: DocCategory[] }>('/api/docs/sync');
+    if (!r.ok) return;
+    const next = r.json.docs;
+    const prev = prevSync.current;
+    prevSync.current = next;
+    setSync(new Map(next.map((d) => [d.id, d])));
+    setCategories((cur) => { const same = JSON.stringify(cur.map((c) => [c.id, c.name, c.order_index])) === JSON.stringify(r.json.categories.map((c) => [c.id, c.name, c.order_index])); return same ? cur : r.json.categories; });
+    if (!silent && prev) {
+      const changes = diffSync(prev, next, null);
+      for (const c of changes) describe(c);
     }
-    return Array.from(groups.entries())
-      .sort(([a], [b]) => (a === UNCATEGORIZED ? 1 : b === UNCATEGORIZED ? -1 : a.localeCompare(b)))
-      .map(([name, items]) => ({ name, items: items.map((d) => ({ doc: d, children: childrenOf(d.id) })) }));
-  }, [docs, query, categoryById]);
-
-  // Valid parents for the doc form — top-level docs only, and never the doc
-  // being edited itself (a sub-post can't be its own parent).
-  const parentOptions = docs.filter((d) => !d.parent_id && d.id !== selectedId);
-
-  function startNew(parentId: string | null = null) {
-    if (!confirmDiscardUnsaved()) return;
-    setIsNew(true);
-    setEditing(true);
-    setSelectedId(null);
-    setDraft({ ...EMPTY_DRAFT, parentId });
-    setError('');
-  }
-
-  function startEdit(doc: Doc) {
-    if (!confirmDiscardUnsaved()) return;
-    setIsNew(false);
-    setEditing(true);
-    setSelectedId(doc.id);
-    setDraft({
-      title: doc.title,
-      categoryId: doc.category_id,
-      parentId: doc.parent_id,
-      content: doc.content,
-      attachments: doc.attachments,
+    const local = docsRef.current;
+    const nextIds = new Set(next.map((d) => d.id));
+    const open = editingRef.current;
+    // Merge the light fields; fetch the full text for anything newly published or new.
+    const toFetch: string[] = [];
+    const merged = local.flatMap((d) => {
+      const s = next.find((x) => x.id === d.id);
+      if (!s) return open.editing && open.selectedId === d.id ? [d] : [];
+      if (s.revision > d.revision && !(open.editing && open.selectedId === d.id)) toFetch.push(d.id);
+      return [{ ...d, title: open.editing && open.selectedId === d.id ? d.title : s.title, parent_id: s.parent_id, category_id: s.category_id, order_index: s.order_index, icon: s.icon, cover_url: s.cover_url, tags: s.tags, pinned: s.pinned, published: s.published, ...(open.editing && open.selectedId === d.id ? {} : { revision: d.revision }) } as Doc];
     });
-    setError('');
-  }
-
-  function cancelEdit() {
-    if (!confirmDiscardUnsaved()) return;
-    setEditing(false);
-    setIsNew(false);
-    setError('');
-  }
-
-  async function handleAddCategory() {
-    const name = newCategory.trim();
-    if (!name) return;
-    const supabase = createClient();
-    const { data, error: err } = await supabase
-      .from('doc_categories')
-      .insert({ name, order_index: categories.length })
-      .select('id, name, order_index, created_at')
-      .single();
-    if (err) {
-      setError(err.code === '23505' ? 'A category with that name already exists.' : 'Failed to add category.');
-      return;
+    for (const s of next) if (!local.some((d) => d.id === s.id)) toFetch.push(s.id);
+    setGoneIds((g) => { const n = new Set(local.filter((d) => !nextIds.has(d.id)).map((d) => d.id)); return n.size === g.size && [...n].every((x) => g.has(x)) ? g : n; });
+    setDocs(merged);
+    for (const id of toFetch) {
+      const full = await docsGet<{ doc: Doc }>(`/api/docs/get?id=${id}`);
+      if (full.ok) setDocs((cur) => (cur.some((d) => d.id === id) ? cur.map((d) => (d.id === id ? { ...full.json.doc } : d)) : [...cur, full.json.doc]));
     }
-    setCategories((prev) => [...prev, data as DocCategory]);
-    setNewCategory('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function describe(c: DocChange) {
+    const who = c.by ?? 'Someone';
+    const viewing = editingRef.current.selectedId === c.id;
+    if (c.kind === 'deleted') addNotice(`“${c.title}” was deleted by someone.`, 'warning');
+    else if (c.kind === 'created') addNotice(`${who} added “${c.title}”.`, 'info', c.id);
+    else if (c.kind === 'published') addNotice(`${who} published a new version of “${c.title}”${viewing && !editingRef.current.editing ? '. You are now reading the latest.' : '.'}`, 'info', c.id);
+    else if (c.kind === 'moved') addNotice(`“${c.title}” was moved by someone.`, 'info', c.id);
+    else if (c.kind === 'draft' && canEdit) addNotice(`${who} saved unpublished changes to “${c.title}”.`, 'info', c.id);
+    else if (c.kind === 'editing' && canEdit) addNotice(`${joinNames(c.names ?? [])} started editing “${c.title}”.`, 'warning', c.id);
   }
 
-  async function handleDeleteCategory(cat: DocCategory) {
+  useEffect(() => {
+    void poll(true);
+    const t = setInterval(() => { if (document.visibilityState === 'visible') void poll(false); }, POLL_MS);
+    const vis = () => { if (document.visibilityState === 'visible') void poll(false); };
+    document.addEventListener('visibilitychange', vis);
+    window.addEventListener('focus', vis);
+    return () => { clearInterval(t); document.removeEventListener('visibilitychange', vis); window.removeEventListener('focus', vis); };
+  }, [poll]);
+
+  // ── Derived ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  const selected = docs.find((d) => d.id === selectedId) ?? null;
+  const sections = useMemo(() => buildSections(docs, categories), [docs, categories]);
+  const order = useMemo(() => readingOrder(sections), [sections]);
+  const hits = useMemo(() => searchDocs(docs, query), [docs, query]);
+  const catName = useCallback((d: Doc) => {
+    let top: Doc = d;
+    const seen = new Set<string>();
+    while (top.parent_id && !seen.has(top.id)) { seen.add(top.id); const p = docs.find((x) => x.id === top.parent_id); if (!p) break; top = p; }
+    return categories.find((c) => c.id === top.category_id)?.name ?? UNCATEGORIZED;
+  }, [docs, categories]);
+
+  // ── Navigation (never leaves an edit with unsaved typing) ───────────────────────────────────────────────────────────────────────────
+  async function guard(go: () => void) {
+    if (editing) {
+      const ok = (await editRef.current?.flush()) ?? true;
+      if (!ok) return;
+      setEditing(false); setEditingNew(false);
+    }
+    go();
+  }
+  const openDoc = (id: string) => void guard(() => { setSelectedId(id); window.scrollTo({ top: 0 }); });
+  const goHome = () => void guard(() => { setSelectedId(null); setTagFilter(null); });
+  const toggleCollapse = (key: string) => setCollapsed((p) => { const n = new Set(p); if (n.has(key)) n.delete(key); else n.add(key); return n; });
+  const patchDoc = useCallback((id: string, patch: Partial<Doc>) => setDocs((cur) => cur.map((d) => (d.id === id ? { ...d, ...patch } : d))), []);
+
+  // ── Creating ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  async function createDoc(c: { title: string; content: string; icon: string | null; tags: string[]; parentId: string | null; categoryId: string | null; draft?: boolean }): Promise<Doc | null> {
+    const supabase = createClient();
+    const base = slugify(c.title) || 'doc';
+    let slug = base; let n = 1;
+    while (docsRef.current.some((d) => d.slug === slug)) slug = `${base}-${++n}`;
+    const siblings = docsRef.current.filter((d) => (d.parent_id ?? null) === c.parentId && (c.parentId ? true : (d.category_id ?? null) === c.categoryId));
+    const { data, error: err } = await supabase.from('docs').insert({
+      slug, title: c.title, category_id: c.parentId ? null : c.categoryId, parent_id: c.parentId, order_index: siblings.length ? Math.max(...siblings.map((d) => d.order_index)) + 1 : 0,
+      content: c.draft ? '' : c.content, attachments: [], created_by: userId, updated_by: userId, icon: c.icon, tags: c.tags, published: false,
+      ...(c.draft ? { draft_title: c.title, draft_content: c.content, draft_updated_at: new Date().toISOString(), draft_updated_by: userId } : {}),
+    }).select(DOC_SELECT).single();
+    if (err || !data) { setError('Couldn’t create the doc. Try again.'); return null; }
+    return data as unknown as Doc;
+  }
+
+  async function onCreate(c: NewDocChoice) {
+    const t = templateById(c.templateId);
+    const doc = await createDoc({ title: c.title, content: t.content, icon: t.icon === '📄' ? null : t.icon, tags: t.tags, parentId: c.parentId, categoryId: c.categoryId });
+    if (!doc) return;
+    setDocs((cur) => [...cur, doc]);
+    setNewDialog(null);
+    await guard(() => { setSelectedId(doc.id); setEditing(true); setEditingNew(true); });
+    void poll(true);
+  }
+
+  async function saveAsNew(title: string, content: string) {
+    const gone = selected;
+    const parent = gone?.parent_id && docsRef.current.some((d) => d.id === gone.parent_id) ? gone.parent_id : null;
+    const doc = await createDoc({ title: title.trim() || 'Recovered doc', content, icon: gone?.icon ?? null, tags: gone?.tags ?? [], parentId: parent, categoryId: parent ? null : gone?.category_id ?? null, draft: true });
+    if (!doc) return;
+    setDocs((cur) => [...cur.filter((d) => d.id !== gone?.id), doc]);
+    setSelectedId(doc.id); setEditing(true); setEditingNew(true);
+    showToast('Saved as a new, unpublished doc');
+  }
+
+  // ── Editing ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  function startEdit(doc: Doc) {
+    const live = sync.get(doc.id);
+    const draftBy = live?.draft_updated_at && !live.draft_by_me ? live.draft_by_name : null;
+    if ((live?.editing.length ?? 0) > 0 || draftBy) { setDialog({ kind: 'edit_busy', doc, names: live?.editing ?? [], draftBy, draftAt: live?.draft_updated_at ?? null }); return; }
+    void beginEdit(doc);
+  }
+  async function beginEdit(doc: Doc) {
+    // Take the newest copy first, so the editor never starts from stale text.
+    const fresh = await docsGet<{ doc: Doc }>(`/api/docs/get?id=${doc.id}`);
+    if (!fresh.ok) { addNotice('That doc is gone, so it can’t be edited.', 'warning'); void poll(true); return; }
+    patchDoc(doc.id, fresh.json.doc);
+    setEditingNew(false); setEditing(true); setDialog(null);
+  }
+  function leaveEdit(published?: Partial<Doc>) {
+    if (published && selectedId) patchDoc(selectedId, published);
+    setEditing(false); setEditingNew(false);
+    void poll(true);
+  }
+
+  // ── Deleting ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  async function removeDoc(doc: Doc, force = false) {
+    const r = await docsPost<{ removed?: number; names?: string[]; titles?: string[] }>('/api/docs/delete', { id: doc.id, force });
+    if (r.ok) {
+      const gone = new Set([doc.id, ...docsRef.current.filter((d) => { let p = d.parent_id; const seen = new Set<string>(); while (p && !seen.has(p)) { if (p === doc.id) return true; seen.add(p); p = docsRef.current.find((x) => x.id === p)?.parent_id ?? null; } return false; }).map((d) => d.id)]);
+      setDocs((cur) => cur.filter((d) => !gone.has(d.id)));
+      if (selectedId && gone.has(selectedId)) { setSelectedId(null); setEditing(false); }
+      setDialog(null); showToast('Doc deleted'); void poll(true); return;
+    }
+    if (r.json.code === 'being_edited' || r.json.code === 'has_drafts') { setDialog({ kind: 'delete_busy', doc, text: r.json.error ?? 'Someone is working on it.' }); return; }
+    setError(r.json.error || 'Couldn’t delete.');
+  }
+  async function askDelete(doc: Doc) {
+    const kids = docs.filter((d) => d.parent_id === doc.id).length;
+    if (!(await confirmHold({ title: `Delete "${doc.title}"?`, message: kids ? `Its ${kids} sub-page${kids === 1 ? '' : 's'} will be deleted too.` : undefined, confirmLabel: 'Hold to delete' }))) return;
+    await removeDoc(doc);
+  }
+
+  // ── Moving ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  async function moveTo(id: string, t: DropTarget, force = false) {
+    const me = docsRef.current.find((d) => d.id === id);
+    if (!me || !canMoveUnder(docsRef.current, id, t.parentId)) return;
+    const r = await docsPost<{ changed: { id: string; parent_id: string | null; category_id: string | null; order_index: number }[] }>('/api/docs/move', { id, parent_id: t.parentId, category_id: t.categoryId, before_id: t.beforeId, from_parent_id: me.parent_id, force });
+    if (r.ok) {
+      setDocs((cur) => cur.map((d) => { const c = r.json.changed.find((x) => x.id === d.id); return c ? { ...d, parent_id: c.parent_id, category_id: c.category_id, order_index: c.order_index } : d; }));
+      setMoveDoc(null); setDialog(null); void poll(true); return;
+    }
+    if (r.json.code === 'moved_elsewhere') { setDialog({ kind: 'move_conflict', id, target: t, text: r.json.error ?? 'Someone already moved this page.', code: 'moved_elsewhere' }); void poll(true); return; }
+    if (r.json.code === 'deleted' || r.json.code === 'parent_deleted') { addNotice(r.json.error ?? 'That page was deleted.', 'warning'); setMoveDoc(null); void poll(true); return; }
+    setError(r.json.error || 'Couldn’t move that.');
+  }
+  function menuAction(doc: Doc, action: 'sub' | 'move' | 'up' | 'down') {
+    if (action === 'sub') { setNewDialog({ parentId: doc.id, categoryId: null }); return; }
+    if (action === 'move') { setMoveDoc(doc); return; }
+    const sibs = docs.filter((d) => (d.parent_id ?? null) === (doc.parent_id ?? null) && (doc.parent_id ? true : (d.category_id ?? null) === (doc.category_id ?? null))).sort((a, b) => a.order_index - b.order_index || a.title.localeCompare(b.title));
+    const i = sibs.findIndex((d) => d.id === doc.id);
+    if (action === 'up' && i > 0) void moveTo(doc.id, { parentId: doc.parent_id, categoryId: doc.category_id, beforeId: sibs[i - 1].id });
+    if (action === 'down' && i < sibs.length - 1) void moveTo(doc.id, { parentId: doc.parent_id, categoryId: doc.category_id, beforeId: sibs[i + 2]?.id ?? null });
+    void reorder;
+  }
+
+  // ── Favorites, pin, categories ──────────────────────────────────────────────────────────────────────────────────────────────────────
+  async function toggleFavorite(id: string) {
+    const on = !favorites.has(id);
+    setFavorites((f) => { const n = new Set(f); if (on) n.add(id); else n.delete(id); return n; });
+    const r = await docsPost('/api/docs/favorite', { id, on });
+    if (!r.ok) setFavorites((f) => { const n = new Set(f); if (on) n.delete(id); else n.add(id); return n; });
+  }
+  async function togglePin(doc: Doc) {
+    const r = await docsPost<{ doc: Partial<Doc> }>('/api/docs/meta', { id: doc.id, pinned: !doc.pinned });
+    if (r.ok) patchDoc(doc.id, r.json.doc); else setError(r.json.error || 'Couldn’t pin that.');
+  }
+  async function addCategory(name: string) {
+    const supabase = createClient();
+    const { data, error: err } = await supabase.from('doc_categories').insert({ name, order_index: categories.length }).select('id, name, order_index, created_at').single();
+    if (err) { setError(err.code === '23505' ? 'A category with that name already exists.' : 'Failed to add category.'); return; }
+    setCategories((p) => [...p, data as DocCategory]);
+  }
+  async function deleteCategory(cat: DocCategory) {
     if (!(await confirmHold({ title: `Delete category "${cat.name}"?`, message: 'Docs in it become uncategorized, not deleted.', confirmLabel: 'Hold to delete' }))) return;
     const supabase = createClient();
     const { error: err } = await supabase.from('doc_categories').delete().eq('id', cat.id);
-    if (err) {
-      setError('Failed to delete category.');
-      return;
-    }
-    setCategories((prev) => prev.filter((c) => c.id !== cat.id));
-    setDocs((prev) => prev.map((d) => (d.category_id === cat.id ? { ...d, category_id: null } : d)));
-  }
-
-  async function handleSave() {
-    if (!draft.title.trim()) return;
-    setSaving(true);
-    setError('');
-    const supabase = createClient();
-
-    try {
-      if (isNew) {
-        const baseSlug = slugify(draft.title) || 'doc';
-        let slug = baseSlug;
-        let attempt = 1;
-        while (docs.some((d) => d.slug === slug)) {
-          slug = `${baseSlug}-${++attempt}`;
-        }
-        const { data, error: err } = await supabase
-          .from('docs')
-          .insert({
-            slug,
-            title: draft.title.trim(),
-            category_id: draft.categoryId,
-            parent_id: draft.parentId,
-            order_index: 0,
-            content: draft.content,
-            attachments: draft.attachments,
-            created_by: userId,
-            updated_by: userId,
-          })
-          .select('id, slug, title, category_id, parent_id, order_index, content, attachments, created_by, updated_by, created_at, updated_at')
-          .single();
-        if (err) throw err;
-        setDocs((prev) => [...prev, data as Doc]);
-        setSelectedId((data as Doc).id);
-      } else if (selected) {
-        const { data, error: err } = await supabase
-          .from('docs')
-          .update({
-            title: draft.title.trim(),
-            category_id: draft.categoryId,
-            parent_id: draft.parentId,
-            content: draft.content,
-            attachments: draft.attachments,
-            updated_by: userId,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', selected.id)
-          .select('id, slug, title, category_id, parent_id, order_index, content, attachments, created_by, updated_by, created_at, updated_at')
-          .single();
-        if (err) throw err;
-        setDocs((prev) => prev.map((d) => (d.id === selected.id ? (data as Doc) : d)));
-      }
-      markSaved();
-      showToast('Doc saved');
-      setEditing(false);
-      setIsNew(false);
-    } catch {
-      setError('Failed to save. Please try again.');
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleDelete() {
-    if (!selected) return;
-    const childCount = docs.filter((d) => d.parent_id === selected.id).length;
-    const warn = childCount > 0 ? ` Its ${childCount} sub-post${childCount === 1 ? '' : 's'} will be deleted too.` : '';
-    if (!(await confirmHold({ title: `Delete "${selected.title}"?`, message: warn.trim() || undefined, confirmLabel: 'Hold to delete' }))) return;
-    setSaving(true);
-    setError('');
-    const supabase = createClient();
-    const { error: err } = await supabase.from('docs').delete().eq('id', selected.id);
-    setSaving(false);
-    if (err) {
-      setError('Failed to delete. Please try again.');
-      return;
-    }
-    setDocs((prev) => prev.filter((d) => d.id !== selected.id && d.parent_id !== selected.id));
-    showToast('Doc deleted');
-    setSelectedId(null);
-    setEditing(false);
+    if (err) { setError('Failed to delete category.'); return; }
+    setCategories((p) => p.filter((c) => c.id !== cat.id));
+    setDocs((p) => p.map((d) => (d.category_id === cat.id ? { ...d, category_id: null } : d)));
   }
 
   const showDetail = editing || !!selected;
-  const q = query.trim().toLowerCase();
-
-  // Everything in reading order (category → doc → its sub-posts), for prev/next.
-  const ordered = useMemo(() => {
-    const out: Doc[] = [];
-    const cats = [...categories].sort((a, b) => a.order_index - b.order_index || a.name.localeCompare(b.name));
-    const byCat = (cid: string | null) => docs.filter((d) => !d.parent_id && (d.category_id ?? null) === cid);
-    const push = (d: Doc) => { out.push(d); docs.filter((c) => c.parent_id === d.id).forEach((c) => out.push(c)); };
-    cats.forEach((c) => byCat(c.id).forEach(push));
-    byCat(null).forEach(push);
-    return out;
-  }, [docs, categories]);
-  const idx = selected ? ordered.findIndex((d) => d.id === selected.id) : -1;
-  const prevDoc = idx > 0 ? ordered[idx - 1] : null;
-  const nextDoc = idx >= 0 && idx < ordered.length - 1 ? ordered[idx + 1] : null;
-  const parentDoc = selected?.parent_id ? docs.find((d) => d.id === selected.parent_id) ?? null : null;
-  const toc = useMemo(() => (selected ? extractToc(selected.content) : []), [selected]);
-  const recent = useMemo(() => [...docs].sort((a, b) => b.updated_at.localeCompare(a.updated_at)).slice(0, 5), [docs]);
-
-  const results = useMemo(() => {
-    if (!q) return [];
-    return docs.flatMap((d) => {
-      const inTitle = d.title.toLowerCase().includes(q);
-      const at = d.content.toLowerCase().indexOf(q);
-      if (!inTitle && at === -1) return [];
-      const snippet = at === -1 ? '' : (at > 40 ? '…' : '') + d.content.slice(Math.max(0, at - 40), at + 90).replace(/\s+/g, ' ').trim() + '…';
-      return [{ doc: d, snippet }];
-    });
-  }, [docs, q]);
-
-  // "On this page" scroll spy
-  const proseRef = useRef<HTMLDivElement>(null);
-  const [activeHeading, setActiveHeading] = useState<string | null>(null);
-  useEffect(() => {
-    setActiveHeading(null);
-    const root = proseRef.current;
-    if (!root || toc.length === 0) return;
-    const heads = toc.map((t) => root.querySelector<HTMLElement>(`#${CSS.escape(t.id)}`)).filter((h): h is HTMLElement => !!h);
-    if (heads.length === 0) return;
-    const obs = new IntersectionObserver((entries) => {
-      const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-      if (visible) setActiveHeading(visible.target.id);
-    }, { rootMargin: '-90px 0px -65% 0px' });
-    heads.forEach((h) => obs.observe(h));
-    return () => obs.disconnect();
-  }, [toc, selectedId]);
-
-  function openDoc(id: string) {
-    if (!confirmDiscardUnsaved()) return;
-    setSelectedId(id);
-    setEditing(false);
-    setIsNew(false);
-    window.scrollTo({ top: 0 });
-  }
-  function toggleCat(name: string) {
-    setCollapsed((prev) => { const n = new Set(prev); if (n.has(name)) n.delete(name); else n.add(name); return n; });
-  }
-  const catName = (d: Doc) => (d.category_id && categoryById.get(d.category_id)?.name) || UNCATEGORIZED;
+  const live = selected ? sync.get(selected.id) ?? null : null;
+  const deleted = !!selected && goneIds.has(selected.id);
+  const readerNotice = selected && live && live.revision > selected.revision ? `${live.updated_by_name ?? 'Someone'} just published a newer version. Loading it now.` : null;
 
   return (
     <div className={`${styles.shell} ${showDetail ? styles.showDetail : ''}`}>
-      {/* ── Left: navigation ── */}
-      <aside className={styles.nav}>
-        <div className={styles.navTop}>
-          <div className={styles.searchWrap}>
-            <Search size={15} strokeWidth={1.75} className={styles.searchIcon} aria-hidden="true" />
-            <input className={styles.searchInput} type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search docs…" aria-label="Search documentation" />
-            {query && <button type="button" className={styles.searchClear} onClick={() => setQuery('')} aria-label="Clear search"><X size={13} strokeWidth={2} /></button>}
-          </div>
-          {canEdit && <Button size="sm" onClick={() => startNew(null)}><Plus size={14} aria-hidden="true" /> New doc</Button>}
-        </div>
+      <DocSidebar docs={docs} sections={sections} categories={categories} selectedId={selectedId} query={query} onQuery={setQuery} hits={hits} favorites={favorites}
+        collapsed={collapsed} onToggle={toggleCollapse} onOpen={openDoc} onHome={goHome} canEdit={canEdit} sync={sync}
+        onNew={(parentId, categoryId) => setNewDialog({ parentId, categoryId })} onMenu={menuAction} onDrop={(id, t) => void moveTo(id, t)}
+        onAddCategory={addCategory} onDeleteCategory={deleteCategory} catName={catName} />
 
-        <div className={styles.navScroll}>
-          {docs.length === 0 && <p className={styles.emptyNote}>No docs yet — create the first one.</p>}
-
-          {q ? (
-            <div className={styles.results}>
-              <div className={styles.resultsLabel}>{results.length} result{results.length === 1 ? '' : 's'}</div>
-              {results.length === 0 && <p className={styles.emptyNote}>Nothing matches “{query.trim()}”.</p>}
-              {results.map(({ doc, snippet }) => (
-                <button key={doc.id} type="button" className={`${styles.result} ${selectedId === doc.id && !isNew ? styles.navActive : ''}`} onClick={() => openDoc(doc.id)}>
-                  <span className={styles.resultTitle}>{doc.title}</span>
-                  <span className={styles.resultCat}>{catName(doc)}</span>
-                  {snippet && <span className={styles.resultSnippet}>{snippet}</span>}
-                </button>
-              ))}
-            </div>
-          ) : (
-            tree.map(({ name, items }) => {
-              const isCollapsed = collapsed.has(name);
-              return (
-                <section key={name} className={styles.catGroup}>
-                  <button type="button" className={styles.catHeader} onClick={() => toggleCat(name)} aria-expanded={!isCollapsed}>
-                    {isCollapsed ? <ChevronRight size={14} strokeWidth={2} aria-hidden="true" /> : <ChevronDown size={14} strokeWidth={2} aria-hidden="true" />}
-                    <span className={styles.catName}>{name}</span>
-                    <span className={styles.catCount}>{items.reduce((n, i) => n + 1 + i.children.length, 0)}</span>
-                  </button>
-                  {!isCollapsed && (
-                    <div className={styles.catItems}>
-                      {items.map(({ doc, children }) => (
-                        <div key={doc.id}>
-                          <button type="button" className={`${styles.navItem} ${selectedId === doc.id && !isNew ? styles.navActive : ''}`} onClick={() => openDoc(doc.id)}>
-                            <FileText size={14} strokeWidth={1.5} aria-hidden="true" />
-                            <span>{doc.title}</span>
-                          </button>
-                          {children.map((child) => (
-                            <button key={child.id} type="button" className={`${styles.navItem} ${styles.navChild} ${selectedId === child.id && !isNew ? styles.navActive : ''}`} onClick={() => openDoc(child.id)}>
-                              <span>{child.title}</span>
-                            </button>
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </section>
-              );
-            })
-          )}
-        </div>
-
-        {canEdit && (
-          <div className={styles.catManager}>
-            <button type="button" className={styles.catManagerToggle} onClick={() => setManageCats((v) => !v)} aria-expanded={manageCats}>
-              <FolderCog size={14} strokeWidth={1.75} aria-hidden="true" /> Manage categories
-              <ChevronDown size={14} className={manageCats ? styles.flip : ''} aria-hidden="true" />
-            </button>
-            {manageCats && (
-              <div className={styles.catManagerBody}>
-                {categories.length > 0 && (
-                  <div className={styles.categoryChips}>
-                    {categories.map((c) => (
-                      <span key={c.id} className={styles.categoryChip}>
-                        {c.name}
-                        <button type="button" className={styles.categoryChipRemove} onClick={() => handleDeleteCategory(c)} aria-label={`Delete category ${c.name}`}><X size={12} strokeWidth={2} /></button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <div className={styles.categoryAddRow}>
-                  <Input value={newCategory} onChange={(e) => setNewCategory(e.target.value)} placeholder="New category…" onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCategory(); } }} />
-                  <Button size="sm" onClick={handleAddCategory} disabled={!newCategory.trim()}>Add</Button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </aside>
-
-      {/* ── Main ── */}
       <main className={styles.main}>
-        {showDetail && (
-          <button type="button" className={styles.backToList} onClick={() => { if (!confirmDiscardUnsaved()) return; setSelectedId(null); setEditing(false); setIsNew(false); }}>
-            <ChevronLeft size={16} aria-hidden="true" /> All docs
-          </button>
+        {notices.length > 0 && (
+          <div className={styles.noticeStack} role="status" aria-live="polite">
+            {notices.map((n) => (
+              <div key={n.id} className={`${styles.liveNotice} ${n.tone === 'warning' ? styles.liveWarn : ''}`}>
+                <span>{n.text}</span>
+                {n.docId && docs.some((d) => d.id === n.docId) && <button type="button" className={styles.linkBtn} onClick={() => { setNotices((x) => x.filter((y) => y.id !== n.id)); openDoc(n.docId!); }}>Open</button>}
+                <button type="button" className={styles.iconBtn} aria-label="Dismiss" onClick={() => setNotices((x) => x.filter((y) => y.id !== n.id))}><X size={14} aria-hidden="true" /></button>
+              </div>
+            ))}
+          </div>
+        )}
+        {error && <Notice tone="error">{error} <button type="button" className={styles.linkBtn} onClick={() => setError('')}>Dismiss</button></Notice>}
+
+        {showDetail && !editing && (
+          <button type="button" className={styles.backToList} onClick={() => void guard(() => setSelectedId(null))}><ChevronLeft size={16} aria-hidden="true" /> All Docs</button>
         )}
 
-        {editing ? (
-          <div className={styles.editor}>
-            <header className={styles.editorHead}>
-              <h1 className={styles.editorTitle}>{isNew ? (draft.parentId ? 'New sub-post' : 'New doc') : 'Edit doc'}</h1>
-              {dirty && <span className={styles.unsaved}>Unsaved changes</span>}
-            </header>
-
-            <label className={styles.field}>
-              <span className={styles.label}>Title *</span>
-              <Input value={draft.title} onChange={(e) => setDraft((f) => ({ ...f, title: e.target.value }))} maxLength={120} autoFocus placeholder="e.g. Event day checklist" />
-            </label>
-
-            <div className={styles.formRow}>
-              <label className={styles.field}>
-                <span className={styles.label}>Category</span>
-                <Select value={draft.categoryId ?? ''} onChange={(e) => setDraft((f) => ({ ...f, categoryId: e.target.value || null }))}>
-                  <option value="">Uncategorized</option>
-                  {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </Select>
-              </label>
-              <label className={styles.field}>
-                <span className={styles.label}>Parent doc</span>
-                <Select value={draft.parentId ?? ''} onChange={(e) => setDraft((f) => ({ ...f, parentId: e.target.value || null }))}>
-                  <option value="">Top-level (no parent)</option>
-                  {parentOptions.map((d) => <option key={d.id} value={d.id}>{d.title}</option>)}
-                </Select>
-                <span className={styles.hint}>Pick a parent to make this a sub-post under it.</span>
-              </label>
-            </div>
-
-            <MarkdownField value={draft.content} onChange={(v) => setDraft((f) => ({ ...f, content: v }))} />
-            <AttachmentsField value={draft.attachments} onChange={(v) => setDraft((f) => ({ ...f, attachments: v }))} />
-
-            {error && <Notice tone="error">{error}</Notice>}
-
-            <div className={styles.saveBar}>
-              <Button variant="ghost" onClick={cancelEdit} disabled={saving}>Cancel</Button>
-              <Button onClick={handleSave} loading={saving} disabled={!draft.title.trim()}>{saving ? 'Saving…' : 'Save doc'}</Button>
-            </div>
-          </div>
+        {editing && selected ? (
+          <DocEditView ref={editRef} key={selected.id} doc={selected} isNew={editingNew} myName={null} latest={live} deletedElsewhere={deleted}
+            onLeave={leaveEdit} onDocPatch={(p) => patchDoc(selected.id, p)} onSaveAsNew={saveAsNew} />
         ) : selected ? (
-          <div className={styles.reader}>
-            <article className={styles.article}>
-              <nav className={styles.crumbs} aria-label="Breadcrumb">
-                <span>{catName(selected)}</span>
-                {parentDoc && (<><ChevronRight size={12} aria-hidden="true" /><button type="button" className={styles.crumbLink} onClick={() => openDoc(parentDoc.id)}>{parentDoc.title}</button></>)}
-              </nav>
-              <header className={styles.articleHead}>
-                <h1 className={styles.articleTitle}>{selected.title}</h1>
-                {canEdit && (
-                  <div className={styles.articleActions}>
-                    {!selected.parent_id && <Button size="sm" variant="ghost" onClick={() => startNew(selected.id)}><Plus size={14} aria-hidden="true" /> Sub-post</Button>}
-                    <Button size="sm" variant="secondary" onClick={() => startEdit(selected)}><Pencil size={14} aria-hidden="true" /> Edit</Button>
-                    <Button size="sm" variant="danger" onClick={handleDelete} disabled={saving}><Trash2 size={14} aria-hidden="true" /> Delete</Button>
-                  </div>
-                )}
-              </header>
-              <p className={styles.articleMeta}>Updated {new Date(selected.updated_at).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', day: 'numeric', year: 'numeric' })}</p>
-
-              {error && <Notice tone="error">{error}</Notice>}
-
-              <div className={styles.prose} ref={proseRef}>
-                {selected.content.trim() ? <MarkdownContent headingIds>{selected.content}</MarkdownContent> : <p className={styles.emptyNote}>This doc has no content yet.</p>}
-              </div>
-
-              <AttachmentsView attachments={selected.attachments} />
-
-              {(prevDoc || nextDoc) && (
-                <nav className={styles.pager} aria-label="Previous and next doc">
-                  {prevDoc ? (
-                    <button type="button" className={styles.pagerBtn} onClick={() => openDoc(prevDoc.id)}>
-                      <span className={styles.pagerLabel}><ChevronLeft size={13} aria-hidden="true" /> Previous</span>
-                      <span className={styles.pagerTitle}>{prevDoc.title}</span>
-                    </button>
-                  ) : <span />}
-                  {nextDoc ? (
-                    <button type="button" className={`${styles.pagerBtn} ${styles.pagerNext}`} onClick={() => openDoc(nextDoc.id)}>
-                      <span className={styles.pagerLabel}>Next <ChevronRight size={13} aria-hidden="true" /></span>
-                      <span className={styles.pagerTitle}>{nextDoc.title}</span>
-                    </button>
-                  ) : <span />}
-                </nav>
-              )}
-            </article>
-
-            {toc.length > 1 && (
-              <aside className={styles.toc} aria-label="On this page">
-                <div className={styles.tocLabel}>On this page</div>
-                {toc.map((t) => (
-                  <a key={t.id} href={`#${t.id}`} className={`${styles.tocLink} ${t.level === 3 ? styles.tocSub : ''} ${activeHeading === t.id ? styles.tocActive : ''}`}
-                    onClick={(e) => { e.preventDefault(); document.getElementById(t.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); setActiveHeading(t.id); }}>
-                    {t.text}
-                  </a>
-                ))}
-              </aside>
-            )}
-          </div>
+          deleted ? (
+            <div className={styles.empty}><p><strong>“{selected.title}” was deleted by someone else.</strong></p><p><button type="button" className={styles.linkBtn} onClick={() => { setSelectedId(null); }}>Back to all docs</button></p></div>
+          ) : (
+            <DocReader doc={selected} docs={docs} sections={sections} categories={categories} canEdit={canEdit} favorite={favorites.has(selected.id)} size={size} width={width}
+              onSize={(s) => saveReader(s, width)} onWidth={(w) => saveReader(size, w)} order={order} live={live} notice={readerNotice}
+              onOpen={openDoc} onHome={goHome} onEdit={() => startEdit(selected)} onDelete={() => void askDelete(selected)} onNewSub={() => setNewDialog({ parentId: selected.id, categoryId: null })}
+              onFavorite={() => void toggleFavorite(selected.id)} onPin={() => void togglePin(selected)} onTag={(t) => { setTagFilter(t); void guard(() => setSelectedId(null)); }} />
+          )
         ) : (
-          <div className={styles.home}>
-            <header className={styles.homeHead}>
-              <span className={styles.homeIcon}><BookOpen size={26} strokeWidth={1.5} aria-hidden="true" /></span>
-              <div>
-                <h1 className={styles.homeTitle}>Documentation</h1>
-                <p className={styles.homeSub}>{docs.length} doc{docs.length === 1 ? '' : 's'} across {tree.length} categor{tree.length === 1 ? 'y' : 'ies'} — guides, checklists and how-tos for the team.</p>
-              </div>
-            </header>
-
-            {recent.length > 0 && (
-              <section>
-                <h2 className={styles.homeH2}>Recently updated</h2>
-                <div className={styles.recentList}>
-                  {recent.map((d) => (
-                    <button key={d.id} type="button" className={styles.recentItem} onClick={() => openDoc(d.id)}>
-                      <span className={styles.recentTitle}>{d.title}</span>
-                      <span className={styles.recentMeta}>{catName(d)} · {new Date(d.updated_at).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', day: 'numeric' })}</span>
-                    </button>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {tree.length > 0 && (
-              <section>
-                <h2 className={styles.homeH2}>Browse by category</h2>
-                <div className={styles.catCards}>
-                  {tree.map(({ name, items }) => (
-                    <div key={name} className={styles.catCard}>
-                      <div className={styles.catCardHead}>
-                        <span className={styles.catCardName}>{name}</span>
-                        <span className={styles.catCount}>{items.reduce((n, i) => n + 1 + i.children.length, 0)}</span>
-                      </div>
-                      <ul className={styles.catCardList}>
-                        {items.slice(0, 4).map(({ doc }) => (
-                          <li key={doc.id}><button type="button" className={styles.catCardLink} onClick={() => openDoc(doc.id)}>{doc.title}</button></li>
-                        ))}
-                      </ul>
-                      {items.length > 4 && <span className={styles.catCardMore}>+{items.length - 4} more</span>}
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {docs.length === 0 && <div className={styles.empty}><p>{canEdit ? 'No docs yet — create the first one.' : 'No docs have been published yet.'}</p></div>}
-          </div>
+          <DocHome docs={docs.filter((d) => d.published || canEdit)} sections={sections} favorites={favorites} tagFilter={tagFilter} onTag={setTagFilter} onOpen={openDoc} canEdit={canEdit} catName={catName} />
         )}
       </main>
+
+      {newDialog && <NewDocDialog sections={sections} defaultParentId={newDialog.parentId} defaultCategoryId={newDialog.categoryId} onCreate={onCreate} onClose={() => setNewDialog(null)} />}
+      {moveDoc && <MoveDialog doc={moveDoc} docs={docs} sections={sections} onMove={(t) => moveTo(moveDoc.id, t)} onClose={() => setMoveDoc(null)} />}
+
+      {dialog?.kind === 'edit_busy' && (
+        <ConflictDialog title="Someone Else Is Working On This" onClose={() => setDialog(null)}
+          summary={<>
+            {dialog.names.length > 0 && <><strong>{joinNames(dialog.names)}</strong> {dialog.names.length === 1 ? 'has' : 'have'} this doc open in the editor right now. </>}
+            {dialog.draftBy && <><strong>{dialog.draftBy}</strong> has unpublished changes saved{dialog.draftAt ? ` (${dayTime(dialog.draftAt)})` : ''}; you will continue from their draft. </>}
+            You all share one draft, so you could overwrite each other. You will be asked before anything is replaced.
+          </>}
+          actions={[{ label: 'Edit anyway', variant: 'primary', onClick: () => void beginEdit(dialog.doc) }, { label: 'Not now', variant: 'ghost', onClick: () => setDialog(null) }]} />
+      )}
+      {dialog?.kind === 'delete_busy' && (
+        <ConflictDialog tone="danger" title="Someone Is Working On This" onClose={() => setDialog(null)}
+          summary={<>{dialog.text} Deleting throws away what they are writing.</>}
+          actions={[{ label: 'Delete anyway', variant: 'danger', onClick: () => void removeDoc(dialog.doc, true) }, { label: 'Keep the doc', variant: 'ghost', onClick: () => setDialog(null) }]} />
+      )}
+      {dialog?.kind === 'move_conflict' && (
+        <ConflictDialog title="Someone Already Moved This" onClose={() => setDialog(null)}
+          summary={<>{dialog.text} The tree on your screen was out of date; it has been refreshed.</>}
+          actions={[{ label: 'Move it where I chose', variant: 'primary', onClick: () => void moveTo(dialog.id, dialog.target, true) }, { label: 'Leave it where it is', variant: 'ghost', onClick: () => setDialog(null) }]} />
+      )}
     </div>
   );
 }

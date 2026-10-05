@@ -36,7 +36,7 @@ export async function calendarFeed(request: Request, rawToken: string, kind: 'mi
     seen.add(uid);
     return [{ uid: `${uid}@tritongaming`, title: i.title, start: i.start, end: i.end, location: i.location, description: `Triton Gaming · ${kindLabel[i.kind]}${i.audience ? ` · For ${i.audience}` : ''}`, url: `${origin}${i.href}` }];
   });
-  return new NextResponse(buildIcsCalendar(events, CALENDAR_NAMES[kind]), {
+  return new NextResponse(buildIcsCalendar(events, kind === 'mine' && !isTgMember(roles) ? 'TG Events' : CALENDAR_NAMES[kind]), {
     headers: { 'Content-Type': 'text/calendar; charset=utf-8', 'Cache-Control': 'private, max-age=900', 'Content-Disposition': `inline; filename="${kind === 'tg' ? 'tg-calendar' : 'my-tg-calendar'}.ics"` },
   });
 }

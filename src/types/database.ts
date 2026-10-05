@@ -283,8 +283,21 @@ export interface Database {
           updated_by: string | null;
           created_at: string;
           updated_at: string;
+          icon: string | null;
+          cover_url: string | null;
+          tags: string[];
+          pinned: boolean;
+          /** false = a brand new doc only editors can see, until its first publish. */
+          published: boolean;
+          /** Bumped on every publish. */
+          revision: number;
+          /** The team's shared unpublished edit, if any (editors only). */
+          draft_title: string | null;
+          draft_content: string | null;
+          draft_updated_at: string | null;
+          draft_updated_by: string | null;
         };
-        Insert: Omit<Database['public']['Tables']['docs']['Row'], 'id' | 'created_at' | 'updated_at'>;
+        Insert: Omit<Database['public']['Tables']['docs']['Row'], 'id' | 'created_at' | 'updated_at' | DocOptionalColumns> & Partial<Pick<Database['public']['Tables']['docs']['Row'], DocOptionalColumns>>;
         Update: Partial<Database['public']['Tables']['docs']['Insert']>;
       };
       doc_categories: {
@@ -461,6 +474,7 @@ export type Event = Database['public']['Tables']['events']['Row'];
 export type Ticket = Database['public']['Tables']['tickets']['Row'];
 export type SiteContent = Database['public']['Tables']['site_contents']['Row'];
 export type Sponsor = Database['public']['Tables']['sponsors']['Row'];
+type DocOptionalColumns = 'icon' | 'cover_url' | 'tags' | 'pinned' | 'published' | 'revision' | 'draft_title' | 'draft_content' | 'draft_updated_at' | 'draft_updated_by';
 export type Doc = Database['public']['Tables']['docs']['Row'];
 export type DocCategory = Database['public']['Tables']['doc_categories']['Row'];
 export type Notification = Database['public']['Tables']['notifications']['Row'];

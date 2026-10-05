@@ -183,7 +183,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       canEditContent ? getContentData() : Promise.resolve(null),
       canViewAdmin ? getAdminData(roles) : Promise.resolve(null),
       canViewAdmin ? getStatsData() : Promise.resolve(null),
-      canViewDocs ? getDocsData() : Promise.resolve(null),
+      canViewDocs ? getDocsData({ userId: profile.id, canEdit: canManageDocs }) : Promise.resolve(null),
       canManageRoles ? getRoleHistoryData() : Promise.resolve(null),
       canViewPhotoAlbums ? getPhotoAlbumsData() : Promise.resolve(null),
       canUseRewards ? getMyPointsData(profile.id) : Promise.resolve(null),
@@ -382,7 +382,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       group: 'Resources' as const,
       description: 'How-to guides for officers, leads, and execs',
       badge: docsData.docs.length || undefined,
-      content: <DocsClient initialDocs={docsData.docs} initialCategories={docsData.categories} userId={profile.id} canEdit={canManageDocs} />,
+      content: <DocsClient initialDocs={docsData.docs} initialCategories={docsData.categories} initialFavorites={docsData.favorites} userId={profile.id} canEdit={canManageDocs} />,
     }] : []),
     // In Resources, not Admin — generate_qr_codes is granted to every
     // officer-tier role (officer/division/lead/exec/admin, see
