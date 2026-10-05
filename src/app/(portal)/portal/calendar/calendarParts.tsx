@@ -10,7 +10,7 @@ import styles from './calendar.module.css';
 
 export interface Item {
   key: string; kind: 'event' | 'meeting' | 'internal' | 'google'; date: string; title: string; start: string; end: string | null;
-  location: string | null; href: string; mine: boolean; dayLabel: string | null; repeats?: boolean;
+  location: string | null; href: string; mine: boolean; dayLabel: string | null; repeats?: boolean; others?: boolean; audience?: string;
   status?: 'ticket' | 'checked_in' | 'hosting' | 'going' | 'maybe'; description?: string | null; allDay?: boolean; account?: string;
 }
 
@@ -61,12 +61,13 @@ export function ItemPopup({ item, anchor, onClose }: { item: Item; anchor: DOMRe
       <h3 className={styles.popupTitle}>{item.title}</h3>
       <p className={styles.popupMeta}>{whenLabel(item)}{item.dayLabel ? ` · ${item.dayLabel}` : ''}</p>
       {item.location && <p className={styles.popupMeta}><MapPin size={12} aria-hidden="true" /> {item.location}</p>}
+      {item.others && <p className={styles.popupNote}>From “All TG meetings”: not on your list{item.audience ? `. For ${item.audience}` : ''}.</p>}
       {item.status && <StatusBadge status={item.status} />}
       {item.kind === 'google' && <p className={styles.popupNote}>From your Google Calendar{item.account ? ` (${item.account})` : ''}. Only you can see this.</p>}
       <div className={styles.popupActions}>
         {item.kind === 'google' ? (
           item.href ? <a href={item.href} target="_blank" rel="noopener noreferrer" className={styles.popupOpen}>Open in Google</a> : null
-        ) : <Link href={item.href} className={styles.popupOpen} onClick={onClose}>Open</Link>}
+        ) : item.others ? null : <Link href={item.href} className={styles.popupOpen} onClick={onClose}>Open</Link>}
         {item.kind !== 'google' && <Button size="sm" variant="secondary" onClick={() => window.open(googleCalendarUrl({ title: item.title, start: item.start, end: item.end, location: item.location, details: item.description ?? null }), '_blank', 'noopener,noreferrer')}>Add to Google Calendar</Button>}
       </div>
     </div>
@@ -75,6 +76,7 @@ export function ItemPopup({ item, anchor, onClose }: { item: Item; anchor: DOMRe
 
 // One calendar row. Ours link to their page; my own Google events open in Google (or are plain when there is nothing to open).
 export function ItemRow({ item, className, children }: { item: Item; className: string; children: React.ReactNode }) {
+  if (item.others) return <div className={`${className} ${styles.others}`}>{children}</div>;
   if (item.kind !== 'google') return <Link href={item.href} className={className}>{children}</Link>;
   return item.href ? <a href={item.href} target="_blank" rel="noopener noreferrer" className={className}>{children}</a> : <div className={className}>{children}</div>;
 }

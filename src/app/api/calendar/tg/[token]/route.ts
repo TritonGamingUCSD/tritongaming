@@ -2,7 +2,7 @@ import { calendarFeed } from '@/lib/calendarFeed';
 
 export const dynamic = 'force-dynamic';
 
-// A person's private calendar subscription (what their portal Calendar shows). See lib/calendarFeed.
+// The unified TG calendar subscription: all events and every non-private meeting. See lib/calendarFeed.
 export async function GET(request: Request, { params }: { params: Promise<{ token: string }> }) {
-  return calendarFeed(request, (await params).token, 'mine');
+  return calendarFeed(request, (await params).token, 'tg');
 }

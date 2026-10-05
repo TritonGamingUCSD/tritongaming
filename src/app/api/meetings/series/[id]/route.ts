@@ -26,6 +26,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     patch.invitees = aud.invitees;
     patch.group_ids = aud.group_ids;
   }
+  if ('is_private' in body) patch.is_private = body.is_private === true;
   if ('description' in body) patch.description = String(body.description ?? '').trim().slice(0, MAX_DESCRIPTION_LENGTH) || null;
   if ('title' in body) {
     const t = String(body.title ?? '').trim().slice(0, 60);
@@ -63,7 +64,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const same = (a: unknown, b: unknown) => JSON.stringify(norm(a)) === JSON.stringify(norm(b));
     for (const r of rows ?? []) {
       const up: Record<string, unknown> = {};
-      for (const k of ['title', 'location', 'doc_url', 'description', 'audience', 'invitees', 'group_ids'] as const) {
+      for (const k of ['title', 'location', 'doc_url', 'description', 'audience', 'invitees', 'group_ids', 'is_private'] as const) {
         if (k in patch && same(r[k], old[k])) up[k] = patch[k];
       }
       const oldStart = old.start_time.slice(0, 5), oldEnd = old.end_time.slice(0, 5);

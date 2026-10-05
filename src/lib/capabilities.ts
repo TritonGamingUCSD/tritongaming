@@ -77,7 +77,7 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // Meeting attendance results for everyone (the Attendance tab with absences and reasons, check-in times and
   // the HR CSV export). Read-only. Exec and admin by default; can be granted to a person or group (Admin → Access).
   view_attendance_reports: ['exec', 'admin'],
-  view_internal_events: ['officer', 'lead', 'exec', 'admin', 'recruit'],
+  view_internal_events: ['officer', 'lead', 'exec', 'admin', 'recruit', 'alumni'],
   // Storage keys (who has which key right now): the whole team can see them and say they have one or give one to someone (view_keys).
   // Only exec and admin can add, rename or delete a key (manage_keys). UI/API gating only (the key routes use the service role).
   view_keys: ['officer', 'lead', 'exec', 'admin', 'recruit'],
@@ -105,6 +105,9 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
 export function isInactiveStripped(capability: string): boolean {
   return /^(manage|host|delete)_/.test(capability) || capability === 'checkin' || capability === 'scan_redemptions';
 }
+
+/** A member of the TG team in the wide sense: exec, lead, officer, recruit or alumni (and admins). Used for team-wide views like the unified TG calendar. */
+export const isTgMember = (roles: RoleGrant[]): boolean => roles.some((r) => (['exec', 'lead', 'officer', 'recruit', 'alumni', 'admin'] as string[]).includes(r.role));
 
 /**
  * Does this set of role grants include the given capability?

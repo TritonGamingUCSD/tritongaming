@@ -33,8 +33,8 @@ describe('search jump targets follow permissions', () => {
     expect(ids(['exec'])).not.toContain('do-access');
     expect(ids(['admin'])).toContain('do-access');
   });
-  it('alumni get no internal events', () => {
-    expect(ids(['alumni'])).not.toContain('go-internal');
+  it('alumni get internal events too (open to every TG member)', () => {
+    expect(ids(['alumni'])).toContain('go-internal');
   });
   it('matches by label words and keywords', () => {
     const list = commandsFor(as('admin'));

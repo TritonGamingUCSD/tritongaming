@@ -22,8 +22,8 @@ describe('who can do what', () => {
   });
 
   it('internal events: the team sees them, alumni and division leads do not, only leads/exec/admin plan', () => {
-    for (const r of ['officer', 'lead', 'exec', 'recruit'] as AppRole[]) expect(can(r, 'view_internal_events')).toBe(true);
-    for (const r of ['alumni', 'division'] as AppRole[]) expect(can(r, 'view_internal_events')).toBe(false);
+    for (const r of ['officer', 'lead', 'exec', 'recruit', 'alumni'] as AppRole[]) expect(can(r, 'view_internal_events')).toBe(true);
+    for (const r of ['division'] as AppRole[]) expect(can(r, 'view_internal_events')).toBe(false);
     expect(can('recruit', 'host_internal_events')).toBe(false);
     expect(can('officer', 'host_internal_events')).toBe(false);
     for (const r of ['lead', 'exec'] as AppRole[]) expect(can(r, 'host_internal_events')).toBe(true);

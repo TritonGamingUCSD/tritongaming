@@ -4,7 +4,6 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/capabilities';
 import { pacificDayKey } from '@/lib/checkinDays';
-import { isExpected } from '@/lib/meetingAudience';
 import { loadGroups, withExtras } from '@/lib/meetings';
 import type { Capability } from '@/types/database';
 
@@ -38,7 +37,7 @@ export interface InternalEventItem {
   mine: RsvpStatus | null; counts: Record<RsvpStatus, number>; going: string[]; invited: number;
 }
 
-// Internal events for a person. `mode: 'invited'` = the ones meant for them (or planned by them); `'manage'` = the ones they can
+// Internal events for a person. `mode: 'invited'` = every one they can see (open to all TG members); `'manage'` = the ones they can
 // edit (their own, or every one for exec/admin). Upcoming only (today onward), soonest first.
 export async function listInternalEvents(svc: SupabaseClient, user: { id: string; roles: { role: string }[] }, manageAll: boolean, mode: 'invited' | 'manage'): Promise<InternalEventItem[]> {
   const today = pacificDayKey();
@@ -46,8 +45,8 @@ export async function listInternalEvents(svc: SupabaseClient, user: { id: string
   const groups = await loadGroups(svc);
   const rows = ((data ?? []) as InternalEventRow[]).filter((r) => {
     if (mode === 'manage') return manageAll || r.created_by === user.id;
-    const [x] = withExtras([{ invitees: r.invitees, group_ids: r.group_ids }], groups);
-    return r.created_by === user.id || isExpected({ audience: r.audience, invitees: r.invitees, group_ids: r.group_ids, extra_ids: x.extra_ids }, user.id, user.roles);
+    // Internal events are open to every TG member (the caller already checked that), whoever the host aimed them at.
+    return true;
   });
   if (rows.length === 0) return [];
   const ids = rows.map((r) => r.id);

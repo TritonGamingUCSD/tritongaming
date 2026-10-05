@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { getUserRoles } from '@/lib/auth';
+import { isTgMember } from '@/lib/capabilities';
 import { pacificDayKey } from '@/lib/checkinDays';
 import { addDaysKey } from '@/lib/meetings';
 import { collectCalendarItems } from '@/lib/calendarItems';
@@ -23,7 +24,11 @@ export async function GET(request: Request) {
   if (to < from) return NextResponse.json({ error: 'Bad range.' }, { status: 400 });
   if (to > addDaysKey(from, 62)) to = addDaysKey(from, 62);
   const svc = createServiceClient();
-  const [items, google] = await Promise.all([collectCalendarItems(svc, user, await getUserRoles(), from, to), googleItems(svc, user.id, from, to)]);
+  const roles = await getUserRoles();
+  // ?scope=all adds everyone else's meetings (not the private ones): for TG members (exec, leads, officers, recruits and alumni).
+  const everyone = url.searchParams.get('scope') === 'all';
+  if (everyone && !isTgMember(roles)) return NextResponse.json({ error: 'The all-meetings view is for the team.' }, { status: 403 });
+  const [items, google] = await Promise.all([collectCalendarItems(svc, user, roles, from, to, { everyone }), googleItems(svc, user.id, from, to)]);
   // My own linked Google Calendar travels separately: it is only ever returned to me, and never goes in the shared items or the feed.
   return NextResponse.json({ from, to, today, items, google: google.items, googleLinked: google.linked, googleError: google.error, googleAccounts: google.accounts.map((a) => a.email) });
 }

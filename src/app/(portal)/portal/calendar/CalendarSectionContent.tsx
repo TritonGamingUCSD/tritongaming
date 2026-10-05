@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, CalendarDays, CalendarPlus, CalendarSync, Ticket, MapPin, Repeat, Copy, Check, RefreshCw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarDays, CalendarPlus, CalendarSync, Users, MapPin, Repeat, Copy, Check, RefreshCw } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Notice from '@/components/ui/Notice';
@@ -42,17 +42,19 @@ export default function CalendarSectionContent() {
   const [google, setGoogle] = useState<Item[]>([]);
   const [googleLinked, setGoogleLinked] = useState(false);
   const [googleError, setGoogleError] = useState<string | null>(null);
-  const [onlyMine, setOnlyMine] = useState(false);
+  // "All TG meetings": also show everyone else's meetings (not the private ones), as plain read-only entries.
+  const [allMeetings, setAllMeetings] = useState(false);
+  const [canAll, setCanAll] = useState(true);
   const [popup, setPopup] = useState<{ item: Item; rect: DOMRect } | null>(null);
   const [nowIso, setNowIso] = useState(() => new Date().toISOString());
   useEffect(() => {
-    try { const f = JSON.parse(localStorage.getItem('calendar-filters') ?? 'null'); if (f) { setKinds([...new Set([...(f.kinds as Kind[]), ...(f.kinds.includes('google') || f.googleOff ? [] : ['google' as Kind])])]); setOnlyMine(!!f.onlyMine); } } catch { /* no saved filters */ }
+    try { const f = JSON.parse(localStorage.getItem('calendar-filters') ?? 'null'); if (f) { setKinds([...new Set([...(f.kinds as Kind[]), ...(f.kinds.includes('google') || f.googleOff ? [] : ['google' as Kind])])]); setAllMeetings(!!f.allMeetings); } } catch { /* no saved filters */ }
     const t = setInterval(() => setNowIso(new Date().toISOString()), 60_000);
     return () => clearInterval(t);
   }, []);
-  function setFilters(k: Kind[], m: boolean) {
-    setKinds(k); setOnlyMine(m);
-    try { localStorage.setItem('calendar-filters', JSON.stringify({ kinds: k, onlyMine: m, googleOff: !k.includes('google') })); } catch { /* private window */ }
+  function setFilters(k: Kind[], all: boolean = allMeetings) {
+    setKinds(k); setAllMeetings(all);
+    try { localStorage.setItem('calendar-filters', JSON.stringify({ kinds: k, allMeetings: all, googleOff: !k.includes('google') })); } catch { /* private window */ }
   }
   const [error, setError] = useState('');
   const swipe = useRef<{ x: number; y: number } | null>(null);
@@ -77,21 +79,21 @@ export default function CalendarSectionContent() {
   useEffect(() => {
     let live = true;
     setItems(null); setError('');
-    fetch(`/api/calendar?from=${from}&to=${to}`, { cache: 'no-store' })
-      .then(async (r) => ({ ok: r.ok, j: await r.json().catch(() => ({})) }))
-      .then(({ ok, j }) => { if (!live) return; if (ok) { setItems(j.items); setGoogle(j.google ?? []); setGoogleLinked(!!j.googleLinked); setGoogleError(j.googleError ?? null); } else setError(j.error || 'Failed to load the calendar.'); })
+    fetch(`/api/calendar?from=${from}&to=${to}${allMeetings && canAll ? '&scope=all' : ''}`, { cache: 'no-store' })
+      .then(async (r) => ({ ok: r.ok, status: r.status, j: await r.json().catch(() => ({})) }))
+      .then(({ ok, j, status }) => { if (!live) return; if (status === 403 && allMeetings) { setCanAll(false); return; } if (ok) { setItems(j.items); setGoogle(j.google ?? []); setGoogleLinked(!!j.googleLinked); setGoogleError(j.googleError ?? null); } else setError(j.error || 'Failed to load the calendar.'); })
       .catch(() => { if (live) setError('Couldn’t reach the server.'); });
     return () => { live = false; };
-  }, [from, to, reload]);
+  }, [from, to, reload, allMeetings, canAll]);
 
   const byDay = useMemo(() => {
     const map = new Map<string, Item[]>();
     for (const i of [...(items ?? []), ...google]) {
-      if (!kinds.includes(i.kind) || (onlyMine && !i.status && !i.mine && i.kind !== 'google')) continue;
+      if (!kinds.includes(i.kind)) continue;
       map.set(i.date, [...(map.get(i.date) ?? []), i]);
     }
     return map;
-  }, [items, google, kinds, onlyMine]);
+  }, [items, google, kinds]);
 
   function shift(n: number) {
     if (view === 'week') { setWeekStart((w) => addDays(w, 7 * n)); return; }
@@ -151,10 +153,10 @@ export default function CalendarSectionContent() {
       <div className={styles.filters} role="group" aria-label="What to show">
         {([['event', 'Events', styles.dotEvent], ['meeting', 'Meetings', styles.dotMeeting], ['internal', 'Internal events', styles.dotInternal], ...(googleLinked ? [['google', 'My Google Calendar', styles.dotGoogle]] : [])] as [Kind, string, string][]).map(([k, label, dot]) => {
           const on = kinds.includes(k);
-          return <button key={k} type="button" className={`${styles.filterChip} ${on ? styles.filterOn : ''}`} aria-pressed={on} onClick={() => setFilters(on ? kinds.filter((x) => x !== k) : [...kinds, k], onlyMine)}><i className={dot} /> {label}</button>;
+          return <button key={k} type="button" className={`${styles.filterChip} ${on ? styles.filterOn : ''}`} aria-pressed={on} onClick={() => setFilters(on ? kinds.filter((x) => x !== k) : [...kinds, k])}><i className={dot} /> {label}</button>;
         })}
-        <span className={styles.filterSep} aria-hidden="true" />
-        <button type="button" className={`${styles.filterChip} ${onlyMine ? styles.filterOn : ''}`} aria-pressed={onlyMine} onClick={() => setFilters(kinds, !onlyMine)} title="Only things you have a ticket for, host, or are going to"><Ticket size={12} aria-hidden="true" /> Only mine</button>
+        {canAll && <span className={styles.filterSep} aria-hidden="true" />}
+        {canAll && <button type="button" className={`${styles.filterChip} ${allMeetings ? styles.filterOn : ''}`} aria-pressed={allMeetings} onClick={() => setFilters(kinds, !allMeetings)} title="Also show every other meeting on the team, except the ones a host marked private"><Users size={12} aria-hidden="true" /> All TG meetings</button>}
       </div>
 
       {error && <Notice tone="error">{error}</Notice>}
@@ -184,11 +186,10 @@ export default function CalendarSectionContent() {
                 >
                   <span className={styles.num}>{Number(d.slice(8))}</span>
                   <span className={styles.chips}>
-                    {list.slice(0, 3).map((i) => <span key={i.key} className={`${styles.chip} ${styles['chip' + kindKey(i.kind)]}`}>{i.title}</span>)}
-                    {list.length > 3 && <span className={styles.more}>+{list.length - 3} more</span>}
+                    {list.map((i) => <span key={i.key} className={`${styles.chip} ${styles['chip' + kindKey(i.kind)]} ${i.others ? styles.chipOthers : ''}`}>{i.title}</span>)}
                   </span>
                   <span className={styles.dots} aria-hidden="true">
-                    {list.slice(0, 4).map((i) => <i key={i.key} className={styles['dot' + kindKey(i.kind)]} />)}
+                    {list.map((i) => <i key={i.key} className={`${styles['dot' + kindKey(i.kind)]} ${i.others ? styles.chipOthers : ''}`} />)}
                   </span>
                 </button>
               );
@@ -298,12 +299,14 @@ function ItemList({ items }: { items: Item[] }) {
   );
 }
 
-// A private link that keeps Google / Apple / Outlook Calendar in step with this calendar (events, your meetings and
-// internal events). Calendar apps re-check it about once an hour.
+// Private links that keep Google / Apple / Outlook Calendar in step with this calendar. "My TG Calendar" is what this page shows for you
+// (events, your meetings and your internal events); "TG Calendar" is the unified one: all events plus every public meeting on the team.
+// Calendar apps re-check them about once an hour.
+type FeedLink = { https: string; webcal: string; google: string };
 function SubscribePanel() {
-  const [links, setLinks] = useState<{ https: string; webcal: string; google: string } | null>(null);
+  const [links, setLinks] = useState<(FeedLink & { tg: FeedLink | null }) | null>(null);
   const [error, setError] = useState('');
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<'mine' | 'tg' | null>(null);
   const load = useCallback(async (reset: boolean) => {
     setError('');
     try {
@@ -313,28 +316,39 @@ function SubscribePanel() {
     } catch { setError('Couldn’t reach the server.'); }
   }, []);
   useEffect(() => { void load(false); }, [load]);
-  async function copy() {
-    if (!links) return;
-    try { await navigator.clipboard.writeText(links.https); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { setError('Copy didn’t work. Select the link and copy it by hand.'); }
+  async function copy(which: 'mine' | 'tg') {
+    const link = which === 'tg' ? links?.tg : links;
+    if (!link) return;
+    try { await navigator.clipboard.writeText(link.https); setCopied(which); setTimeout(() => setCopied(null), 2000); } catch { setError('Copy didn’t work. Select the link and copy it by hand.'); }
   }
   async function reset() {
-    if (!(await confirmHold({ title: 'Make a new calendar link?', message: 'The old link stops working. You’ll need to add the new one to your calendar app again.', confirmLabel: 'Hold to reset' }))) return;
+    if (!(await confirmHold({ title: 'Make new calendar links?', message: 'Both of your calendar links stop working. You’ll need to add the new ones to your calendar app again.', confirmLabel: 'Hold to reset' }))) return;
     await load(true);
   }
+  const block = (which: 'mine' | 'tg', link: FeedLink, title: string, blurb: string) => (
+    <div className={styles.subBlock}>
+      <h4 className={styles.subTitle}>{title}</h4>
+      <p className={styles.muted}>{blurb}</p>
+      <div className={styles.subRow}>
+        <a className={styles.subBtn} href={link.google} target="_blank" rel="noopener noreferrer">Google Calendar</a>
+        <a className={styles.subBtn} href={link.webcal}>Apple / Outlook</a>
+        <Button variant="secondary" size="sm" onClick={() => copy(which)}>{copied === which ? <><Check size={14} aria-hidden="true" /> Copied</> : <><Copy size={14} aria-hidden="true" /> Copy link</>}</Button>
+      </div>
+      <input className={styles.subLink} readOnly value={link.https} onFocus={(e) => e.currentTarget.select()} aria-label={`${title} link`} />
+    </div>
+  );
   return (
     <section className={styles.subscribe} aria-label="Add to my calendar">
-      <h3 className={styles.dayTitle}>Add this calendar to my own calendar app</h3>
-      <p className={styles.muted}>Subscribe once and events, your meetings and your internal events show up in your own calendar app and stay up to date. Keep this link private: anyone who has it can see your calendar.</p>
+      <h3 className={styles.dayTitle}>Add Triton Gaming to my own calendar app</h3>
+      <p className={styles.muted}>Subscribe once and it stays up to date in your calendar app. Keep these links private: anyone who has one can see what is on that calendar.</p>
       {error && <Notice tone="error">{error}</Notice>}
       {!links ? <p className={styles.muted}>Loading…</p> : (
         <>
+          {links.tg && block('tg', links.tg, 'TG Calendar', 'Everything at Triton Gaming: all events and every public meeting on the team (private meetings are left out).')}
+          {block('mine', links, 'My TG Calendar', 'Just yours: events, your meetings and your internal events, including the ones you host or are going to.')}
           <div className={styles.subRow}>
-            <a className={styles.subBtn} href={links.google} target="_blank" rel="noopener noreferrer">Google Calendar</a>
-            <a className={styles.subBtn} href={links.webcal}>Apple / Outlook</a>
-            <Button variant="secondary" size="sm" onClick={copy}>{copied ? <><Check size={14} aria-hidden="true" /> Copied</> : <><Copy size={14} aria-hidden="true" /> Copy link</>}</Button>
-            <Button variant="ghost" size="sm" onClick={reset}><RefreshCw size={14} aria-hidden="true" /> New link</Button>
+            <Button variant="ghost" size="sm" onClick={reset}><RefreshCw size={14} aria-hidden="true" /> New links</Button>
           </div>
-          <input className={styles.subLink} readOnly value={links.https} onFocus={(e) => e.currentTarget.select()} aria-label="Your private calendar link" />
         </>
       )}
     </section>

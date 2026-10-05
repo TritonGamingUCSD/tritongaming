@@ -213,3 +213,16 @@
   .viewSwitch [role='tablist'] { width: 100%; }
   .viewSwitch [role='tablist'] > * { flex: 1; justify-content: center; }
 }
+
+/* Someone else's meeting from "All TG meetings": dashed and lighter, not a link. */
+.others { border-style: dashed; opacity: 0.8; cursor: default; }
+.others:hover { filter: none; }
+
+.subBlock { display: flex; flex-direction: column; gap: 0.5rem; padding-top: 0.75rem; }
+.subBlock + .subBlock { border-top: 1px solid rgba(255, 255, 255, 0.08); margin-top: 0.4rem; }
+.subTitle { margin: 0; font-size: 0.95rem; color: var(--white); }
+
+/* Month view: every item gets its own small box, so nothing is hidden behind "+N more". On a phone the box is a small colored block instead of text. */
+.dots { flex-wrap: wrap; width: 100%; }
+.dots i { width: 100%; max-width: 100%; height: 5px; border-radius: 2px; }
+.chipOthers { border: 1px dashed rgba(255, 255, 255, 0.35); opacity: 0.85; }

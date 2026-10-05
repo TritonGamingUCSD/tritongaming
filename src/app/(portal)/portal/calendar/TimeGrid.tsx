@@ -96,7 +96,7 @@ export default function TimeGrid({ days, byDay, today, nowIso, dayName, onOpen }
                 return (
                   <button
                     key={b.item.key} type="button"
-                    className={`${styles.tgBlock} ${kindClass(b.item.kind)}`}
+                    className={`${styles.tgBlock} ${kindClass(b.item.kind)} ${b.item.others ? styles.others : ''}`}
                     style={{ top, height, left: `calc(${(b.lane / b.lanes) * 100}% + 2px)`, width: `calc(${100 / b.lanes}% - 4px)` }}
                     onClick={(e) => onOpen(b.item, e.currentTarget.getBoundingClientRect())}
                     aria-label={`${b.item.title}, ${timeOf(b.item.start)}`}
