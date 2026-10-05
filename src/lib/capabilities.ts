@@ -100,10 +100,10 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   host_meetings: ['lead', 'exec', 'admin'],
 };
 
-// What being inactive takes away: anything that manages, hosts or deletes, plus checking in, scanning redemptions and attending meetings. Mirrors has_capability()
-// in 20261004101000_quarters.sql. Everything else (view_*, QR codes, storage keys, their own profile) stays.
+// What being inactive takes away: anything that manages, hosts or deletes, plus checking in and scanning redemptions. Attending meetings is NOT stripped: roles never
+// pull an inactive person into a meeting, but one added by name (or planning one they were asked about) must still work (see isExpectedActive). Everything else (view_*, QR codes, storage keys, their own profile) stays.
 export function isInactiveStripped(capability: string): boolean {
-  return /^(manage|host|delete)_/.test(capability) || capability === 'checkin' || capability === 'scan_redemptions' || capability === 'attend_meetings';
+  return /^(manage|host|delete)_/.test(capability) || capability === 'checkin' || capability === 'scan_redemptions';
 }
 
 /**

@@ -177,6 +177,7 @@ export async function suggestions(svc: SupabaseClient, people?: TrackedPerson[])
   for (const r of roleRows ?? []) rolesOf.set(r.user_id as string, [...(rolesOf.get(r.user_id as string) ?? []), { role: r.role as string }]);
   const out: Suggestion[] = [];
   for (const m of meetings) for (const p of tracked) {
+    if (p.inactive) continue;   // no strike can be added while inactive, even for a meeting they were added to by name
     const k = `${m.id}|${p.id}`;
     if (present.has(k) || excused.has(k) || done.has(k)) continue;
     if (new Date(m.ends_at as string).getTime() <= (clearedAt.get(p.id) ?? 0)) continue;

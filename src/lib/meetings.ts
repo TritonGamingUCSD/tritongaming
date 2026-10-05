@@ -252,9 +252,12 @@ export async function getExpectedPeople(svc: SupabaseClient, m?: MeetingAudience
   const extras = m ? (m.extra_ids ?? (await attachExtras(svc, [{ invitees: m.invitees ?? null, group_ids: m.group_ids ?? null }]))[0].extra_ids) : [];
   const roles = audienceRoles(m ?? { audience: null });
   const { data: grants } = roles.length ? await svc.from('user_roles').select('user_id').in('role', roles) : { data: [] as { user_id: string }[] };
-  // Inactive officers and leads are never expected, even when added by name or through a group.
+  // Inactive officers and leads (and alumni) are never pulled in by a role, but someone chosen by name (or through a group) is deliberately expected.
   const idle = await inactiveIds(svc);
-  const ids = [...new Set([...(grants ?? []).map((g) => g.user_id as string), ...extras])].filter((id) => !idle.has(id));
+  // Alumni are skipped the same way, even if a team role is still on their account.
+  const { data: alumni } = roles.length ? await svc.from('user_roles').select('user_id').eq('role', 'alumni') : { data: [] as { user_id: string }[] };
+  const gone = new Set([...idle, ...(alumni ?? []).map((a) => a.user_id as string)]);
+  const ids = [...new Set([...(grants ?? []).map((g) => g.user_id as string).filter((id) => !gone.has(id)), ...extras])];
   if (ids.length === 0) return [];
   const { data: profiles } = await svc.from('profiles').select('id, display_name, google_first_name, google_last_name, avatar_url, custom_avatar_url').in('id', ids);
   return (profiles ?? [])

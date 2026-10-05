@@ -2,7 +2,7 @@
 
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { CalendarClock, CalendarDays, Radio, ClipboardList, Check, X, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Pause, Play, Trash2, Link2, MessageCircleQuestion, Shuffle, Send, Users, Minus, UserX, Lock, Dices, Smile, Upload, Settings2 } from 'lucide-react';
+import { CalendarClock, CalendarDays, Radio, ClipboardList, Check, X, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Pause, Play, Trash2, Link2, MessageCircleQuestion, Shuffle, Send, Users, Minus, UserX, Lock, Dices, Smile, Upload, Settings2, Moon } from 'lucide-react';
 import IconButton from '@/components/ui/IconButton';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Notice from '@/components/ui/Notice';
@@ -496,7 +496,7 @@ function CheckTile({ checked, indeterminate, label, onChange }: { checked: boole
   );
 }
 
-interface TeamPerson { id: string; name: string; avatar_url: string | null; custom_avatar_url: string | null; roles: string[]; role: string }
+interface TeamPerson { id: string; name: string; avatar_url: string | null; custom_avatar_url: string | null; roles: string[]; role: string; inactive?: boolean; alumni?: boolean }
 interface Group { id: string; name: string; member_ids: string[]; created_by?: string | null }
 let teamCache: TeamPerson[] | null = null;
 let groupsCache: Group[] | null = null;
@@ -534,7 +534,7 @@ function PeoplePicker({ team, value, onChange, covered }: { team: TeamPerson[] |
   const [query, setQuery] = useState('');
   const shown = (team ?? []).filter((p) => p.name.toLowerCase().includes(query.trim().toLowerCase()));
   const toggle = (id: string) => onChange(value.includes(id) ? value.filter((x) => x !== id) : [...value, id]);
-  const addRole = (role: string) => onChange([...new Set([...value, ...(team ?? []).filter((p) => p.roles.includes(role) && !covered?.has(p.id)).map((p) => p.id)])]);
+  const addRole = (role: string) => onChange([...new Set([...value, ...(team ?? []).filter((p) => p.roles.includes(role) && !p.inactive && !covered?.has(p.id)).map((p) => p.id)])]);
   return (
     <div className={styles.picker}>
       <div className={styles.pickTop}>
@@ -553,11 +553,12 @@ function PeoplePicker({ team, value, onChange, covered }: { team: TeamPerson[] |
             const on = !!via || value.includes(p.id);
             return (
               <li key={p.id}>
-                <label className={`${styles.pickRow} ${on ? styles.pickRowOn : ''} ${via ? styles.pickRowLocked : ''}`}>
+                <label className={`${styles.pickRow} ${on ? styles.pickRowOn : ''} ${via ? styles.pickRowLocked : ''} ${p.inactive ? styles.pickRowIdle : ''}`}>
                   <input type="checkbox" className={styles.checkInput} checked={on} disabled={!!via} onChange={() => toggle(p.id)} />
                   <span className={`${styles.checkBox} ${on ? styles.checkBoxOn : ''}`} aria-hidden="true">{on && <Check size={13} strokeWidth={3} />}</span>
                   <Avatar p={p} />
                   <span className={styles.personName}>{p.name}</span>
+                  {p.inactive && <span className={styles.idleTag} title={p.alumni ? 'Alumni: role-based meetings skip them, but they can be added by name' : 'Inactive this quarter: role-based meetings skip them, but they can be added by name'}><Moon size={11} aria-hidden="true" /> {p.alumni ? 'Alumni' : 'Inactive now'}</span>}
                   <span className={styles.pickRole}>{via ? `via ${via}` : p.role}</span>
                 </label>
               </li>
@@ -581,7 +582,7 @@ export function AudiencePicker({ value, onChange }: { value: Aud; onChange: (v: 
   const covered = new Map<string, string>();
   for (const p of team ?? []) {
     const g = (groups ?? []).find((x) => value.groups.includes(x.id) && x.member_ids.includes(p.id));
-    if (p.roles.some((r) => value.roles.includes(r))) covered.set(p.id, 'role');
+    if (!p.inactive && p.roles.some((r) => value.roles.includes(r))) covered.set(p.id, 'role');
     else if (g) covered.set(p.id, g.name);
   }
   return (

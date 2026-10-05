@@ -80,11 +80,15 @@ describe('inactive officers and leads', () => {
       expect(hasCapability(inactiveLead, cap)).toBe(true);
     }
   });
-  it('lose checking in, scanning, attending, and anything that manages, hosts or deletes', () => {
-    for (const cap of ['checkin', 'scan_redemptions', 'attend_meetings', 'manage_events', 'manage_docs', 'manage_photo_albums', 'host_meetings', 'host_internal_events'] as const) {
+  it('lose checking in, scanning, and anything that manages, hosts or deletes', () => {
+    for (const cap of ['checkin', 'scan_redemptions', 'manage_events', 'manage_docs', 'manage_photo_albums', 'host_meetings', 'host_internal_events'] as const) {
       expect(hasCapability(inactiveOfficer, cap)).toBe(false);
       expect(hasCapability(inactiveLead, cap)).toBe(false);
     }
+  });
+  it('keep attending meetings: roles skip them, but a meeting they were added to still works', () => {
+    expect(hasCapability(inactiveOfficer, 'attend_meetings')).toBe(true);
+    expect(hasCapability(inactiveLead, 'attend_meetings')).toBe(true);
   });
   it('are unchanged when active, and admins are never limited', () => {
     expect(hasCapability([{ role: 'officer', division_id: null }], 'checkin')).toBe(true);

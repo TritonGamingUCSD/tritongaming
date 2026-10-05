@@ -154,7 +154,7 @@ export default function MembersSectionContent({ rows, keysByUser = {} }: { rows:
                 <button
                   key={m.id}
                   type="button"
-                  className={view === 'grid' ? styles.card : styles.listRow}
+                  className={`${view === 'grid' ? styles.card : styles.listRow} ${m.inactive ? styles.idle : ''}`}
                   onClick={() => setSelected(m)}
                 >
                   {resolveAvatarUrl(m) ? (
@@ -167,7 +167,7 @@ export default function MembersSectionContent({ rows, keysByUser = {} }: { rows:
                   <div className={styles.info}>
                     <div className={styles.name}>
                       {m.display_name || 'Anonymous'}
-                      {m.inactive && <span className={styles.idleTag} title="Inactive this quarter"><Moon size={11} aria-hidden="true" /> Inactive</span>}
+                      {m.inactive && <span className={styles.idleTag} title="Inactive this quarter: view-only, not expected at meetings"><Moon size={11} aria-hidden="true" /> Inactive now</span>}
                       {/* One small key for each storage key this person holds. Only the team that tracks keys is sent this. */}
                       {(keysByUser[m.id]?.length ?? 0) > 0 && (
                         <span className={styles.keyIcons} role="img" aria-label={`Has ${keysByUser[m.id].length === 1 ? 'a storage key' : `${keysByUser[m.id].length} storage keys`}: ${keysByUser[m.id].map((k) => k.name).join(', ')}`}>

@@ -53,18 +53,22 @@ export const isCustomAudience = (m: MeetingAudience) => hasExtras(m) || !!(m.aud
 // Is this person someone the meeting EXPECTS? (Counts toward its attendance.)
 export function isExpected(m: MeetingAudience, userId: string, roles: { role: string }[]): boolean {
   if (extraIds(m).includes(userId)) return true;
+  // An alumnus is never pulled in by a role, even if an old team role is still on their account; only being chosen by name counts.
+  if (roles.some((r) => r.role === 'alumni')) return false;
   const want = audienceRoles(m);
   return roles.some((r) => want.includes(r.role));
 }
 
-// Someone sitting the quarter out (an officer or lead marked inactive) carries an 'inactive' marker next to their roles. They can still see meetings,
-// but are never EXPECTED at one: no attendance, absences or strikes, even when they are in the meeting's group or were added by name.
+// Someone sitting the quarter out (an officer or lead marked inactive) carries an 'inactive' marker next to their roles. They can still see meetings.
+// The roles of a meeting never pull them in: "everyone" or "all officers" skips them, so no attendance, absences or strikes. But when someone chose
+// them by name (added individually, or put in one of the meeting's groups), that is deliberate: they are expected, can check in, and count like anyone.
 export const isInactiveMember = (roles: { role: string }[]) => roles.some((r) => r.role === 'inactive');
-export const isExpectedActive = (m: MeetingAudience, userId: string, roles: { role: string }[]) => !isInactiveMember(roles) && isExpected(m, userId, roles);
+export const isExpectedActive = (m: MeetingAudience, userId: string, roles: { role: string }[]) =>
+  isInactiveMember(roles) ? extraIds(m).includes(userId) : isExpected(m, userId, roles);
 
 // May this person check in? Only people the meeting is for (by role, group or being added). Exec and
 // admins get no exception: running a meeting doesn't mean attending it. (An exec can still add someone
-// by hand from the live screen.) Inactive people can't check in.
+// by hand from the live screen.) Inactive people can check in only to a meeting they were added to by name.
 export function canAttendMeeting(m: MeetingAudience, userId: string, roles: { role: string }[]): boolean {
   return isExpectedActive(m, userId, roles);
 }

@@ -61,13 +61,30 @@ describe('meetings for chosen people only', () => {
 
 describe('inactive officers', () => {
   const roles = (...r: string[]) => r.map((role) => ({ role }));
-  it('are never expected or able to check in, even when added by name or through a group', () => {
-    const m = { audience: null, invitees: ['x'], extra_ids: ['x'] };
-    expect(isInactiveMember(roles('officer', 'inactive'))).toBe(true);
-    expect(isExpected(m, 'x', roles('officer', 'inactive'))).toBe(true);           // they can still SEE it
-    expect(isExpectedActive(m, 'x', roles('officer', 'inactive'))).toBe(false);
-    expect(canAttendMeeting({ audience: ['officer'] }, 'a', roles('officer', 'inactive'))).toBe(false);
+  const idle = roles('officer', 'inactive');
+  it('are not pulled in by a meeting\'s roles', () => {
+    expect(isInactiveMember(idle)).toBe(true);
+    expect(isExpected({ audience: null }, 'x', idle)).toBe(true);                   // they can still SEE it
+    expect(isExpectedActive({ audience: null }, 'x', idle)).toBe(false);            // default everyone
+    expect(isExpectedActive({ audience: ['officer'] }, 'x', idle)).toBe(false);     // an all-officers meeting
+    expect(canAttendMeeting({ audience: ['officer'] }, 'x', idle)).toBe(false);
     expect(canAttendMeeting({ audience: ['officer'] }, 'a', roles('officer'))).toBe(true);
+  });
+  it('are expected and can check in when added by name or through a group', () => {
+    const m = { audience: null, invitees: ['x'], extra_ids: ['x'] };
+    expect(isExpectedActive(m, 'x', idle)).toBe(true);
+    expect(canAttendMeeting(m, 'x', idle)).toBe(true);
+    expect(isExpectedActive(m, 'y', idle)).toBe(false);                             // someone else who was not added
   });
 });
 
+describe('alumni', () => {
+  const roles = (...r: string[]) => r.map((role) => ({ role }));
+  it('are not pulled in by a role, even with an old team role left on the account', () => {
+    expect(isExpected({ audience: null }, 'x', roles('officer', 'alumni'))).toBe(false);
+    expect(isExpectedActive({ audience: ['officer'] }, 'x', roles('officer', 'alumni'))).toBe(false);
+  });
+  it('are expected when added by name', () => {
+    expect(isExpectedActive({ audience: null, invitees: ['x'], extra_ids: ['x'] }, 'x', roles('alumni'))).toBe(true);
+  });
+});

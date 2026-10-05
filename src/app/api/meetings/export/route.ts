@@ -43,7 +43,7 @@ export async function GET(request: Request) {
   const { data: att } = ids.length ? await auth.svc.from('meeting_attendance').select('meeting_id, user_id, checked_in_at, method').in('meeting_id', ids) : { data: [] as { meeting_id: string; user_id: string; checked_in_at: string; method: string }[] };
 
   // Everyone expected (team roles) plus anyone who attended without a current team role.
-  const { data: grants } = await auth.svc.from('user_roles').select('user_id, role').in('role', [...AUDIENCE_ROLES, 'inactive']);
+  const { data: grants } = await auth.svc.from('user_roles').select('user_id, role').in('role', [...AUDIENCE_ROLES, 'inactive', 'alumni']);
   const peopleIds = new Set<string>([...(grants ?? []).map((g) => g.user_id as string), ...(att ?? []).map((a) => a.user_id as string), ...(meetings ?? []).flatMap((m) => m.extra_ids), ...(abs ?? []).map((a) => a.user_id as string)]);
   const idList = [...peopleIds];
   const [{ data: profiles }, { data: allRoles }, emails] = await Promise.all([

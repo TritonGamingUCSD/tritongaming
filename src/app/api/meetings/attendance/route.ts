@@ -32,7 +32,7 @@ export async function GET(request: Request) {
 
   const [{ data: rows }, { data: grants }, { data: absRows }] = await Promise.all([
     ids.length ? auth.svc.from('meeting_attendance').select('meeting_id, user_id').in('meeting_id', ids) : Promise.resolve({ data: [] as { meeting_id: string; user_id: string }[] }),
-    auth.svc.from('user_roles').select('user_id, role').in('role', [...AUDIENCE_ROLES, 'inactive']),
+    auth.svc.from('user_roles').select('user_id, role').in('role', [...AUDIENCE_ROLES, 'inactive', 'alumni']),
     ids.length ? auth.svc.from('meeting_absences').select('meeting_id, user_id, excused').in('meeting_id', ids) : Promise.resolve({ data: [] as { meeting_id: string; user_id: string; excused: boolean }[] }),
   ]);
   const absences = new Map<string, boolean>();   // `${meeting}|${user}` → excused
