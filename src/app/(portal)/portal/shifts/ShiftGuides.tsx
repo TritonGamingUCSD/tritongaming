@@ -33,10 +33,9 @@ export function Legend({ grid }: { grid: ShiftGrid }) {
 /** Everything about one station at this event: where, what to do, the script. Anyone who can see shifts can read it. */
 export function GuideBody({ grid, station }: { grid: ShiftGrid; station: ShiftStation }) {
   const g = guideFor(station, grid.eventGuides[station.id]);
-  const empty = !g.location && !g.instructions && !g.notes && !g.doc_id && !g.link_url && !station.description;
+  const empty = !g.location && !g.instructions && !g.notes && !g.doc_id && !g.link_url;
   return (
     <div className={styles.guide}>
-      {station.description && <p className={styles.guideLead}>{station.description}</p>}
       {g.location && <p className={styles.guideRow}><MapPin size={15} aria-hidden="true" /> <span><strong>Where:</strong> {g.location}</span></p>}
       {g.instructions && <div className={styles.guideText}><h4>What to do</h4><p>{g.instructions}</p></div>}
       {g.notes && <div className={styles.guideText}><h4>For this event</h4><p>{g.notes}</p></div>}

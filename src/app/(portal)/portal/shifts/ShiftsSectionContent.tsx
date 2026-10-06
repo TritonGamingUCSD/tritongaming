@@ -214,7 +214,7 @@ function GridView({ grid, busyCell, onClaim, onGuide, onPlace }: {
                   <span className={`${styles.badge} ${catClass(st)}`}>{catName(st)}</span>
                   <small>usually {st.default_needed}</small>
                   {loc && <span className={styles.stationLoc}><MapPin size={11} aria-hidden="true" /> {loc}</span>}
-                  {st.description && <span className={styles.stationDesc}>{st.description}</span>}
+                  {st.instructions && <span className={styles.stationDesc}>{st.instructions}</span>}
                   {onGuide && <button type="button" className={styles.guideBtn} onClick={() => onGuide(st.id)}><BookOpen size={12} aria-hidden="true" /> Guide</button>}
                 </th>
               );
@@ -531,26 +531,24 @@ function StationSheet({ event, grid, stations, setStations, onChanged, setError 
   const slots = plan ? slotCount(plan) : 0;
   const [newName, setNewName] = useState('');
   const [newNeeded, setNewNeeded] = useState('1');
-  const [newDesc, setNewDesc] = useState('');
   async function addStation() {
     if (!newName.trim()) return;
-    const r = await api<{ station: ShiftStation }>('/api/shifts/stations', 'POST', { name: newName, default_needed: Number(newNeeded) || 0, description: newDesc });
+    const r = await api<{ station: ShiftStation }>('/api/shifts/stations', 'POST', { name: newName, default_needed: Number(newNeeded) || 0 });
     if (!r.ok) { setError(r.json.error || 'Couldn’t add that.'); return; }
-    setStations([...stations, r.json.station]); setNewName(''); setNewNeeded('1'); setNewDesc(''); await onChanged();
+    setStations([...stations, r.json.station]); setNewName(''); setNewNeeded('1'); await onChanged();
   }
   // Station and cell edits stay on screen until Save changes: nothing is sent on blur, and Discard puts back what was saved.
-  const [stEdits, setStEdits] = useState<Record<string, Partial<Record<'name' | 'default_needed' | 'description', string>>>>({});
+  const [stEdits, setStEdits] = useState<Record<string, Partial<Record<'name' | 'default_needed', string>>>>({});
   const [cellEdits, setCellEdits] = useState<Record<string, string>>({});
   const [savingSheet, setSavingSheet] = useState(false);
-  const stBase = (st: ShiftStation, f: 'name' | 'default_needed' | 'description') => (f === 'name' ? st.name : f === 'default_needed' ? String(st.default_needed) : st.description ?? '');
-  const stVal = (st: ShiftStation, f: 'name' | 'default_needed' | 'description') => stEdits[st.id]?.[f] ?? stBase(st, f);
-  const setSt = (st: ShiftStation, f: 'name' | 'default_needed' | 'description', v: string) => setStEdits((prev) => ({ ...prev, [st.id]: { ...prev[st.id], [f]: v } }));
+  const stBase = (st: ShiftStation, f: 'name' | 'default_needed') => (f === 'name' ? st.name : f === 'default_needed' ? String(st.default_needed) : '');
+  const stVal = (st: ShiftStation, f: 'name' | 'default_needed') => stEdits[st.id]?.[f] ?? stBase(st, f);
+  const setSt = (st: ShiftStation, f: 'name' | 'default_needed', v: string) => setStEdits((prev) => ({ ...prev, [st.id]: { ...prev[st.id], [f]: v } }));
   const stationPatches = stations.flatMap((st) => {
     const e = stEdits[st.id]; if (!e) return [];
-    const patch: Partial<Pick<ShiftStation, 'name' | 'default_needed' | 'description'>> = {};
+    const patch: Partial<Pick<ShiftStation, 'name' | 'default_needed'>> = {};
     if (e.name !== undefined && e.name.trim() !== st.name) patch.name = e.name.trim();
     if (e.default_needed !== undefined && e.default_needed.trim() !== String(st.default_needed)) patch.default_needed = Number(e.default_needed);
-    if (e.description !== undefined && e.description.trim() !== (st.description ?? '')) patch.description = e.description.trim();
     return Object.keys(patch).length ? [{ st, patch }] : [];
   });
   const cellChanges = Object.entries(cellEdits).flatMap(([key, raw]) => {
@@ -604,7 +602,7 @@ function StationSheet({ event, grid, stations, setStations, onChanged, setError 
     <section className={styles.card}>
       <h3 className={styles.h}>Stations and people needed</h3>
       <EditingNow room={sheetDirty ? 'shifts-stations' : null} what="the stations" />
-      <p className={styles.muted}>Same layout as Sign up. Each station column has its name, usual number of people and a short note; the cells below change the number for just that time slot (blank = the usual number). Add a station with the last column.</p>
+      <p className={styles.muted}>Same layout as Sign up. Each station column has its name and usual number of people; the cells below change the number for just that time slot (blank = the usual number). What each station does is written in the Guides tab.</p>
       <div className={styles.gridWrap}>
         <table className={`${styles.grid} ${styles.sheet}`}>
           <thead>
@@ -618,8 +616,6 @@ function StationSheet({ event, grid, stations, setStations, onChanged, setError 
                     <input className={`${styles.sheetInput} ${styles.sheetNum} ${stEdits[st.id]?.default_needed !== undefined ? styles.sheetChanged : ''}`} type="number" min={0} max={50} value={stVal(st, 'default_needed')} aria-label={`Usual number of people at ${st.name}`}
                       onChange={(e) => setSt(st, 'default_needed', e.target.value)} />
                   </label>
-                  <textarea className={`${styles.sheetInput} ${styles.sheetNote} ${stEdits[st.id]?.description !== undefined ? styles.sheetChanged : ''}`} rows={2} value={stVal(st, 'description')} maxLength={240} placeholder="What they do (shown when signing up)" aria-label={`What people do at ${st.name}`}
-                    onChange={(e) => setSt(st, 'description', e.target.value)} />
                   <button type="button" className={styles.removeStation} onClick={() => removeStation(st)} aria-label={`Remove ${st.name}`}><Trash2 size={13} aria-hidden="true" /> Remove</button>
                 </div>
                 </th>
@@ -631,7 +627,6 @@ function StationSheet({ event, grid, stations, setStations, onChanged, setError 
                 <label className={styles.usually}>Usually
                   <input className={`${styles.sheetInput} ${styles.sheetNum}`} type="number" min={0} max={50} value={newNeeded} onChange={(e) => setNewNeeded(e.target.value)} aria-label="Usual number of people for the new station" />
                 </label>
-                <textarea className={`${styles.sheetInput} ${styles.sheetNote}`} rows={2} value={newDesc} onChange={(e) => setNewDesc(e.target.value)} maxLength={240} placeholder="What they do (optional)" aria-label="What people do at the new station" />
                 <Button size="sm" onClick={addStation} disabled={!newName.trim()}><Plus size={14} aria-hidden="true" /> Add station</Button>
                 </div>
               </th>
