@@ -1,6 +1,8 @@
 'use client';
 
+import SectionHeader from '@/components/ui/SectionHeader';
 import { useState } from 'react';
+import { roleInk } from '@/lib/roleColors';
 import { History, ChevronDown } from 'lucide-react';
 import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
 import type { AppRole } from '@/types/database';
@@ -28,7 +30,7 @@ function RoleChip({ grant, divisionNameById }: { grant: Grant; divisionNameById:
     ? `${ROLE_LABELS.division} — ${divisionNameById.get(grant.division_id) ?? 'Unknown'}`
     : ROLE_LABELS[grant.role];
   return (
-    <span className={styles.chip} style={{ background: ROLE_COLORS[grant.role] + '18', color: ROLE_COLORS[grant.role], borderColor: ROLE_COLORS[grant.role] + '44' }}>
+    <span className={styles.chip} style={{ background: ROLE_COLORS[grant.role] + '18', color: roleInk(ROLE_COLORS[grant.role]), borderColor: ROLE_COLORS[grant.role] + '44' }}>
       {label}
     </span>
   );
@@ -50,7 +52,7 @@ export default function RoleHistoryClient({ entries, divisions }: { entries: Rol
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>Role History</h1>
+      <SectionHeader title="Role History" sub="Who changed whose roles, and when." />
       <ul className={styles.list}>
         {entries.map((entry) => {
           const { added, removed } = diff(entry.before, entry.after);

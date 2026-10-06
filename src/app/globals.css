@@ -39,6 +39,19 @@
   --white: #f2f1f0;
   --black: #000000;
   --yellow: #ffc72c;
+  /* Portal accent: blue leads, yellow stays reserved for the main action on a screen */
+  --p-accent: #7db4ea;
+  /* Public site: sky blue carries bands, lines and subtitles; yellow is kept for main buttons and section label stickers. */
+  --sky: #004276;
+  --sky-text: #a9cdf2;
+  --p-accent-text: #0a4c8a;
+  /* Portal theme tokens (light is the default; dark below) */
+  --pp-ink: #011941; --pp-ink-rgb: 1, 25, 65;
+  --pp-paper: #e9e6df; --pp-paper-2: #dcd8cf; --pp-card: #f3f1ea;
+  --pp-line: rgba(1, 25, 65, 0.22); --pp-shadow: 4px 4px 0 rgba(1, 25, 65, 0.8);
+  /* Sidebar and top bar: a light paper-2 in light mode, Ink in dark */
+  --pp-chrome: #dcd8cf; --pp-chrome-2: #e6e3dd; --pp-chrome-fg: #011941; --pp-chrome-rgb: 1, 25, 65; --pp-chrome-edge: #011941; --pp-chrome-accent: #0a4c8a;
+  --pp-ok: #047857; --pp-warn: #b45309; --pp-bad: #b91c1c; --pp-info: #1d4ed8; --pp-violet: #6d28d9; --pp-teal: #0f766e;
   /* Yellow used as text on dark backgrounds: a lighter, warmer tone so small labels, links and counts stay easy to read. Fills and borders keep --yellow. */
   --yellow-text: #ffd966;
   --lightblue: #9fc4e8;
@@ -47,7 +60,7 @@
   /* Page grounds from the brand deck: navy for pages, royal blue for the lighter band, and a darker shade of navy (never black) for the deepest band. */
   --navy: #011941;
   --royal: #004276;
-  --navy-mid: #02285a; /* the lighter band: royal blue pulled toward navy so it stays dark */
+  --navy-mid: #004276; /* the lighter band: the brand deck royal blue (#004276) */
   --navy-deep: #000f2b;
 
   /* Gradient */
@@ -152,6 +165,38 @@
      stack above the nav and pushing it down by a variable amount. */
   --navbar-height: 96px;
   --section-pad: clamp(3rem, 6vw, 6rem);
+}
+
+/* Portal dark theme: follows the system unless the toggle chose light/dark (data-pp-theme on <html>) */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-pp-theme='light']) {
+  --pp-chrome: #0b1020; --pp-chrome-2: #121a30; --pp-chrome-fg: #f2f1f0; --pp-chrome-rgb: 242, 241, 240; --pp-chrome-edge: #04070f; --pp-chrome-accent: #a9cdf2;
+  --pp-ink: #ece9e2; --pp-ink-rgb: 236, 233, 226;
+  --pp-paper: #131a2b; --pp-paper-2: #0d1220; --pp-card: #1b2540;
+  --pp-line: rgba(236, 233, 226, 0.2); --pp-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6);
+  --pp-ok: #6ee7b7; --pp-warn: #fbbf24; --pp-bad: #fca5a5; --pp-info: #93c5fd; --pp-violet: #c4b5fd; --pp-teal: #5eead4; color-scheme: dark;
+  --p-accent-text: #a9cdf2;
+  }
+}
+:root[data-pp-theme='dark'] {
+  --pp-chrome: #0b1020; --pp-chrome-2: #121a30; --pp-chrome-fg: #f2f1f0; --pp-chrome-rgb: 242, 241, 240; --pp-chrome-edge: #04070f; --pp-chrome-accent: #a9cdf2;
+  --pp-ink: #ece9e2; --pp-ink-rgb: 236, 233, 226;
+  --pp-paper: #131a2b; --pp-paper-2: #0d1220; --pp-card: #1b2540;
+  --pp-line: rgba(236, 233, 226, 0.2); --pp-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6);
+  --pp-ok: #6ee7b7; --pp-warn: #fbbf24; --pp-bad: #fca5a5; --pp-info: #93c5fd; --pp-violet: #c4b5fd; --pp-teal: #5eead4; color-scheme: dark;
+  --p-accent-text: #a9cdf2;
+}
+
+/* A "dark island": a surface that is navy in both themes (the phone's bottom bar, More sheet and section header). Everything inside reads the
+   dark token set, so tokens like --p-accent-text or --pp-ink stay readable on it even while the page around it is light. */
+.pp-dark {
+  --pp-chrome: #0b1020; --pp-chrome-2: #121a30; --pp-chrome-fg: #f2f1f0; --pp-chrome-rgb: 242, 241, 240; --pp-chrome-edge: #04070f; --pp-chrome-accent: #a9cdf2;
+  --pp-ink: #ece9e2; --pp-ink-rgb: 236, 233, 226;
+  --pp-paper: #131a2b; --pp-paper-2: #0d1220; --pp-card: #1b2540;
+  --pp-line: rgba(236, 233, 226, 0.2); --pp-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6);
+  --pp-ok: #6ee7b7; --pp-warn: #fbbf24; --pp-bad: #fca5a5; --pp-info: #93c5fd; --pp-violet: #c4b5fd; --pp-teal: #5eead4;
+  --p-accent-text: #a9cdf2;
+  color-scheme: dark;
 }
 
 /* ============================================================

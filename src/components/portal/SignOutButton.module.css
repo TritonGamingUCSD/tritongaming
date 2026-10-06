@@ -1,10 +1,10 @@
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; cursor: pointer;
-  padding: 0.5rem 0.8rem; border-radius: 0.65rem; white-space: nowrap;
+  padding: 0.5rem 0.8rem; border-radius: 6px; white-space: nowrap;
   font-family: var(--font-futura-heavy); font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase;
-  background: rgba(220, 38, 38, 0.1); color: #fca5a5; border: 1px solid rgba(220, 38, 38, 0.3);
-  transition: background 0.15s, border-color 0.15s;
+  background: transparent; color: var(--pp-bad); border: 2px solid var(--pp-bad); box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.45);
+  transition: background 0.15s, transform 0.1s, box-shadow 0.1s;
 }
-.btn:hover { background: rgba(220, 38, 38, 0.2); border-color: rgba(220, 38, 38, 0.5); }
+.btn:hover { background: rgba(220, 38, 38, 0.12); transform: translate(-1px, -1px); box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.45); }
 .btn { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .btn span { display: none; }

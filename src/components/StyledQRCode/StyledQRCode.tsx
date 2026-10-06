@@ -6,6 +6,8 @@ import { buildQRCodeStylingOptions, type QRCodeOptions } from '@/lib/qrCodeStyli
 
 export interface StyledQRCodeHandle {
   download: (name: string) => Promise<void>;
+  /** Puts the code on the clipboard as an image; false when the browser does not allow it. */
+  copy: () => Promise<boolean>;
 }
 
 interface Props {
@@ -39,6 +41,14 @@ const StyledQRCode = forwardRef<StyledQRCodeHandle, Props>(function StyledQRCode
     download: async (name: string) => {
       if (!qrRef.current) return;
       await qrRef.current.download({ name, extension: options.downloadFormat });
+    },
+    copy: async () => {
+      try {
+        const raw = await qrRef.current?.getRawData('png');
+        if (!raw || typeof ClipboardItem === 'undefined') return false;
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': raw as Blob })]);
+        return true;
+      } catch { return false; }
     },
   }), [options.downloadFormat]);
 

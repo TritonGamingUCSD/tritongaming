@@ -1,5 +1,8 @@
 'use client';
 
+import SaveBar from '@/components/portal/SaveBar';
+import EditingNow from '@/components/portal/EditingNow';
+import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { CalendarClock, CalendarDays, Radio, ClipboardList, Check, X, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Pause, Play, Trash2, Link2, MessageCircleQuestion, Shuffle, Send, Users, Minus, UserX, Lock, Dices, Smile, Upload, Settings2, Moon } from 'lucide-react';
@@ -26,7 +29,7 @@ import styles from './meetings.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
 
 type Tab = 'mine' | 'planning' | 'host' | 'tools';
-type ToolTab = 'attendance' | 'groups' | 'emojis';
+type ToolTab = 'attendance' | 'emojis';
 
 interface Person { id: string; name: string; avatar_url: string | null; custom_avatar_url: string | null }
 interface TodayMeeting { question_type: QuestionType; question_options: string[] | null; id: string; title: string; description: string | null; location: string | null; starts_at: string; ends_at: string; open: boolean; accepting: boolean; opens_at: string; checked_in_at: string | null; doc_url: string | null; question: string | null; my_answer: string | null }
@@ -90,11 +93,11 @@ export default function MeetingsSectionContent({ canHost, canManageAll, userId, 
   const canManage = canHost;
   const canSeeResults = canHost || canViewReports;
   const nav = useUrlNav();
-  const sync = usePortalTabSync('meetings');
-  const toolTabs: ToolTab[] = [...(canSeeResults ? (['attendance'] as ToolTab[]) : []), ...(canManage ? (['groups'] as ToolTab[]) : []), ...(canAttend || canManage ? (['emojis'] as ToolTab[]) : [])];
+  const sync = usePortalTabSync('meetings', () => valid[0]);
+  const toolTabs: ToolTab[] = [...(canSeeResults ? (['attendance'] as ToolTab[]) : []), ...(canAttend || canManage ? (['emojis'] as ToolTab[]) : [])];
   const valid: Tab[] = [...(canAttend ? (['mine', 'planning'] as Tab[]) : canManage ? (['planning'] as Tab[]) : []), ...(canManage ? (['host'] as Tab[]) : []), ...(toolTabs.length ? (['tools'] as Tab[]) : [])];
-  // Old links and notifications: tab=upcoming and tab=checkin are part of My meetings now; Run meetings is called Host; Attendance, Groups and Emojis live under Tools.
-  const legacyTool = (['attendance', 'groups', 'emojis'] as const).find((t) => t === nav.tab || t === nav.subtab);
+  // Old links and notifications: tab=upcoming and tab=checkin are part of My meetings now; Run meetings is called Host; Attendance and Emojis live under Tools (Teams moved to TG Members).
+  const legacyTool = (['attendance', 'emojis'] as const).find((t) => t === nav.tab || t === nav.subtab);
   const startTab = nav.tab === 'upcoming' || nav.tab === 'checkin' ? 'mine' : nav.tab === 'run' ? 'host' : nav.tab === 'manage' || legacyTool ? 'tools' : nav.tab;
   const [toolTab, setToolTab] = useState<ToolTab>(legacyTool && toolTabs.includes(legacyTool) ? legacyTool : toolTabs[0] ?? 'emojis');
   const [tab, setTab] = useState<Tab>(valid.includes(startTab as Tab) ? (startTab as Tab) : valid[0] ?? 'mine');
@@ -107,7 +110,7 @@ export default function MeetingsSectionContent({ canHost, canManageAll, userId, 
   function openFromAttendance(id: string) { setRunTarget(id); setTab('host'); sync('host'); }
 
   return (
-    <div className={styles.page} data-wide>
+    <div className={styles.page}>
       <SectionHeader title="Meetings" flush sub={canAttend ? 'Check in with the code in the room.' : 'Attendance for every meeting.'}
         actions={canManage ? <Button size="sm" onClick={() => { setRunTarget(null); setTab('host'); sync('host'); setScheduling((v) => (tab === 'host' ? !v : true)); }}>{scheduling && tab === 'host' ? 'Close' : <><Plus size={14} aria-hidden="true" /> Schedule a Meeting</>}</Button> : undefined} />
       <SectionTabs<Tab>
@@ -141,10 +144,9 @@ export default function MeetingsSectionContent({ canHost, canManageAll, userId, 
         <div className={styles.stack}>
           {toolTabs.length > 1 && (
             <SectionTabs<ToolTab> label="Tools" variant="segmented" value={toolTab} onChange={(m) => { setToolTab(m); sync('tools', m); }}
-              tabs={toolTabs.map((t) => (t === 'attendance' ? { id: t, label: 'Attendance', icon: <ClipboardList size={14} /> } : t === 'groups' ? { id: t, label: 'Groups', icon: <Users size={14} /> } : { id: t, label: 'Emojis', icon: <Smile size={14} /> }))} />
+              tabs={toolTabs.map((t) => (t === 'attendance' ? { id: t, label: 'Attendance', icon: <ClipboardList size={14} /> } : { id: t, label: 'Emojis', icon: <Smile size={14} /> }))} />
           )}
           {toolTab === 'attendance' && canSeeResults && <AttendancePanel onOpenMeeting={canManage ? openFromAttendance : undefined} canExport={canManageAll || canViewReports} />}
-          {toolTab === 'groups' && canManage && <GroupsPanel userId={userId} canManageAll={canManageAll} />}
           {toolTab === 'emojis' && (canAttend || canManage) && <EmojiPanel />}
         </div>
       )}
@@ -189,7 +191,7 @@ function CheckInPanel() {
     }
   }
 
-  if (!data) return <LoadingSpinner size={28} label="Loading meetings…" theme="dark" />;
+  if (!data) return <LoadingSpinner size={28} label="Loading meetings…" theme="auto" />;
 
   const checkedIn = data.meetings.filter((m) => m.checked_in_at);
   const openToEnter = data.meetings.filter((m) => m.accepting && !m.checked_in_at);
@@ -396,7 +398,7 @@ function UpcomingPanel() {
     })();
   }, []);
   if (error) return <Notice tone="error">{error}</Notice>;
-  if (!items) return <LoadingSpinner size={28} label="Loading upcoming meetings…" theme="dark" />;
+  if (!items) return <LoadingSpinner size={28} label="Loading upcoming meetings…" theme="auto" />;
   if (items.length === 0) return <div className={styles.card}><p className={styles.muted}>Nothing scheduled for you yet.</p></div>;
   return (
     <ul className={styles.stack}>
@@ -446,7 +448,7 @@ function MyHistoryPanel() {
   }, []);
 
   if (error) return <Notice tone="error">{error}</Notice>;
-  if (!data) return <LoadingSpinner size={28} label="Loading your history…" theme="dark" />;
+  if (!data) return <LoadingSpinner size={28} label="Loading your history…" theme="auto" />;
   if (data.meetings.length === 0) return <div className={styles.card}><p className={styles.muted}>No meetings yet.</p></div>;
 
   const pct = data.total ? Math.round((data.attended / data.total) * 100) : 0;
@@ -606,7 +608,7 @@ export function AudiencePicker({ value, onChange }: { value: Aud; onChange: (v: 
       </div>
 
       <div className={styles.audSection}>
-        <span className={styles.audTitle}>Saved groups <em>pick more than one; changes to a group carry over</em></span>
+        <span className={styles.audTitle}>Teams <em>pick more than one; changes to a team carry over</em></span>
         {groups && groups.length > 0 ? (
           <div className={styles.presets}>
             {groups.map((g) => (
@@ -615,7 +617,7 @@ export function AudiencePicker({ value, onChange }: { value: Aud; onChange: (v: 
               </button>
             ))}
           </div>
-        ) : <p className={styles.faint}>{groups ? 'No groups yet' : 'Loading groups…'}</p>}
+        ) : <p className={styles.faint}>{groups ? 'No teams yet. Make one under TG Members › Team.' : 'Loading teams…'}</p>}
       </div>
 
       <div className={styles.audSection}>
@@ -631,31 +633,53 @@ export function AudiencePicker({ value, onChange }: { value: Aud; onChange: (v: 
   );
 }
 
-// ── Exec: saved groups of people ("Directors", "Marketing team") ─────────────
-function GroupsPanel({ userId, canManageAll }: { userId: string; canManageAll: boolean }) {
+// ── Teams: saved groups of people ("Directors", "Marketing team"), managed from TG Members and used to invite people in one go ─────────────
+// One team being made or changed. Edits stay local until Save changes (the bar at the bottom): Discard puts back what was saved, and the page will not let you leave until you pick one.
+function TeamEditor({ initial, team, busy, error, onSave, onClose }: { initial: { id: string | null; name: string; ids: string[] }; team: TeamPerson[] | null; busy: boolean; error: string; onSave: (v: { name: string; ids: string[] }) => Promise<boolean>; onClose: () => void }) {
+  const [name, setName] = useState(initial.name);
+  const [ids, setIds] = useState(initial.ids);
+  const { dirty, markSaved, saved } = useUnsavedChanges({ name, ids });
+  const [problem, setProblem] = useState('');
+  return (
+    <div className={styles.form}>
+      <EditingNow room={initial.id ? `team:${initial.id}` : null} what="this team" />
+      <Field label="Team name"><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Directors, Marketing team" maxLength={60} autoFocus /></Field>
+      <PeoplePicker team={team} value={ids} onChange={setIds} />
+      {(problem || error) && <Notice tone="error">{problem || error}</Notice>}
+      <div className={styles.formActions}><Button variant="ghost" onClick={onClose}>{dirty ? 'Close without saving' : 'Close'}</Button></div>
+      <SaveBar dirty={dirty} saving={busy} saveLabel={initial.id ? 'Save changes' : 'Create team'}
+        onSave={async () => { if (!name.trim() || ids.length === 0) { setProblem('Give the team a name and pick at least one person.'); return; } setProblem(''); if (await onSave({ name, ids })) markSaved(); }}
+        onDiscard={() => { const v = saved(); setName(v.name); setIds(v.ids); }} />
+    </div>
+  );
+}
+
+export function TeamsPanel({ userId, canManageAll, canEdit = true }: { userId: string; canManageAll: boolean; canEdit?: boolean }) {
   const team = useTeam();
   const [groups, reload] = useGroups();
   const [editing, setEditing] = useState<{ id: string | null; name: string; ids: string[] } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [open, setOpen] = useState<Set<string>>(new Set());   // teams shown with every member, not just the first few
   const nameOf = (id: string) => team?.find((p) => p.id === id)?.name ?? 'Someone';
 
-  async function save() {
-    if (!editing) return;
+  async function save(v: { name: string; ids: string[] }) {
+    if (!editing) return false;
     setBusy(true); setError('');
     try {
       const res = await fetch(editing.id ? `/api/meetings/groups/${editing.id}` : '/api/meetings/groups', {
         method: editing.id ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: editing.name, member_ids: editing.ids }),
+        body: JSON.stringify({ name: v.name, member_ids: v.ids }),
       });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) { setError(json.error || 'Failed to save.'); return; }
+      if (!res.ok) { setError(json.error || 'Failed to save.'); return false; }
       setEditing(null);
       await reload();
+      return true;
     } finally { setBusy(false); }
   }
   async function remove(g: Group) {
-    if (!(await confirmHold({ title: `Delete “${g.name}”?`, message: 'Meetings already scheduled for this group keep their invited people.', confirmLabel: 'Hold to delete' }))) return;
+    if (!(await confirmHold({ title: `Delete “${g.name}”?`, message: 'Meetings already scheduled for this team keep their invited people.', confirmLabel: 'Hold to delete' }))) return;
     await fetch(`/api/meetings/groups/${g.id}`, { method: 'DELETE' });
     reload();
   }
@@ -663,24 +687,14 @@ function GroupsPanel({ userId, canManageAll }: { userId: string; canManageAll: b
   return (
     <div className={styles.stack}>
       <div className={styles.toolbar}>
-        <p className={styles.muted}>Groups to invite in one go.</p>
-        {!editing && <Button size="sm" onClick={() => setEditing({ id: null, name: '', ids: [] })}><Plus size={14} aria-hidden="true" /> New group</Button>}
+        <p className={styles.muted}>{canEdit ? 'Teams to invite in one go: to meetings today, and to events and shifts.' : 'The teams leads and exec invite in one go. You can look but not change them.'}</p>
+        {canEdit && !editing && <Button size="sm" onClick={() => setEditing({ id: null, name: '', ids: [] })}><Plus size={14} aria-hidden="true" /> New team</Button>}
       </div>
 
-      {editing && (
-        <div className={styles.form}>
-          <Field label="Group name"><Input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} placeholder="e.g. Directors, Marketing team" maxLength={60} autoFocus /></Field>
-          <PeoplePicker team={team} value={editing.ids} onChange={(ids) => setEditing({ ...editing, ids })} />
-          {error && <Notice tone="error">{error}</Notice>}
-          <div className={styles.formActions}>
-            <Button variant="ghost" onClick={() => { setEditing(null); setError(''); }}>Cancel</Button>
-            <Button onClick={save} loading={busy} disabled={!editing.name.trim() || editing.ids.length === 0}>{editing.id ? 'Save group' : 'Create group'}</Button>
-          </div>
-        </div>
-      )}
+      {editing && <TeamEditor key={editing.id ?? 'new'} initial={editing} team={team} busy={busy} error={error} onSave={save} onClose={() => { setEditing(null); setError(''); }} />}
 
-      {!groups ? <LoadingSpinner size={28} label="Loading groups…" theme="dark" /> : groups.length === 0 && !editing ? (
-        <div className={styles.card}><p className={styles.muted}>No groups yet.</p></div>
+      {!groups ? <LoadingSpinner size={28} label="Loading teams…" theme="auto" /> : groups.length === 0 && !editing ? (
+        <div className={styles.card}><p className={styles.muted}>No teams yet.</p></div>
       ) : (
         <ul className={styles.meetingList}>
           {groups.map((g) => (
@@ -688,9 +702,16 @@ function GroupsPanel({ userId, canManageAll }: { userId: string; canManageAll: b
               <div className={styles.meetingMain}>
                 <div className={styles.meetingInfo}>
                   <strong>{g.name} <span className={styles.muted}>· {g.member_ids.length} {g.member_ids.length === 1 ? 'person' : 'people'}</span></strong>
-                  <span className={styles.muted}>{g.member_ids.slice(0, 6).map(nameOf).join(', ')}{g.member_ids.length > 6 ? ` +${g.member_ids.length - 6} more` : ''}</span>
+                  {open.has(g.id)
+                    ? <ul className={styles.teamPeople}>{g.member_ids.map((id) => <li key={id}>{nameOf(id)}</li>)}</ul>
+                    : <span className={styles.muted}>{g.member_ids.slice(0, 6).map(nameOf).join(', ')}{g.member_ids.length > 6 ? ` +${g.member_ids.length - 6} more` : ''}</span>}
+                  {g.member_ids.length > 6 && (
+                    <button type="button" className={styles.linkBtn} aria-expanded={open.has(g.id)} onClick={() => setOpen((prev) => { const n = new Set(prev); if (n.has(g.id)) n.delete(g.id); else n.add(g.id); return n; })}>
+                      {open.has(g.id) ? 'Show fewer' : `Show all ${g.member_ids.length}`}
+                    </button>
+                  )}
                 </div>
-                {(canManageAll || g.created_by === userId) ? (
+                {!canEdit ? null : (canManageAll || g.created_by === userId) ? (
                   <>
                     <IconButton kind="edit" label={`Edit ${g.name}`} onClick={() => { setEditing({ id: g.id, name: g.name, ids: [...g.member_ids] }); setError(''); }} />
                     <IconButton kind="delete" label={`Delete ${g.name}`} onClick={() => remove(g)} />
@@ -782,7 +803,7 @@ function MeetingList({ onOpen, showForm, onShowForm }: { onOpen: (id: string) =>
     setBusyKey(null); load();
   }
 
-  if (!data) return error ? <Notice tone="error">{error}</Notice> : <LoadingSpinner size={28} label="Loading meetings…" theme="dark" />;
+  if (!data) return error ? <Notice tone="error">{error}</Notice> : <LoadingSpinner size={28} label="Loading meetings…" theme="auto" />;
 
   return (
     <div className={styles.stack}>
@@ -949,8 +970,8 @@ function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, o
               {status === 'scheduled' && item.repeats && <Button size="sm" variant="secondary" onClick={() => onCancel(false)}><SkipForward size={14} aria-hidden="true" /> Skip</Button>}
             </>
           )}
-          {/* One-off meetings only. A repeating meeting's weeks use Skip (or delete the whole repeating meeting). */}
-          {item.meeting_id && !item.repeats && (
+          {/* Any meeting that has ended can be deleted. Coming weeks of a repeating meeting use Skip (or delete the whole repeating meeting). */}
+          {item.meeting_id && (!item.repeats || past || item.date < pacificToday()) && (
             <IconButton kind="delete" label={`Delete ${item.title} on ${dayLabel(item.date)}`} onClick={onDelete} disabled={busy} />
           )}
         </div>
@@ -964,7 +985,7 @@ function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, o
           </div>
           <Field label="What's this meeting about? (optional)" hint="A line or two. Members see it when they check in."><Textarea value={desc} onChange={(e) => setDesc(e.target.value)} maxLength={MAX_DESCRIPTION_LENGTH} rows={2} placeholder="e.g. Planning the Halloween LAN: roles, budget and timeline." /></Field>
           <Field label="Room for this meeting" hint="Only changes this one meeting."><Input value={room} onChange={(e) => setRoom(e.target.value)} placeholder="e.g. Price Center East" maxLength={80} /></Field>
-          <Field label="Meeting doc link"><Input value={doc} onChange={(e) => setDoc(e.target.value)} placeholder="https://docs.google.com/… or /portal?section=docs" inputMode="url" /></Field>
+          <Field label="Meeting doc link"><Input value={doc} onChange={(e) => setDoc(e.target.value)} placeholder="https://docs.google.com/… or /portal/docs" inputMode="url" /></Field>
           <Field label="Question of the meeting" hint={status === 'open' ? 'Locked while check-in is open.' : undefined}>
             <QuestionEditor value={q} onChange={setQ} disabled={status === 'open'} />
           </Field>
@@ -1175,7 +1196,7 @@ function EmojiPanel() {
       {actions}
     </li>
   );
-  if (!data) return error ? <Notice tone="error">{error}</Notice> : <LoadingSpinner size={28} label="Loading…" theme="dark" />;
+  if (!data) return error ? <Notice tone="error">{error}</Notice> : <LoadingSpinner size={28} label="Loading…" theme="auto" />;
   return (
     <div className={styles.stack}>
       {error && <Notice tone="error">{error}</Notice>}
@@ -1416,7 +1437,7 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
     } finally { setBusy(false); }
   }
 
-  if (!live) return <LoadingSpinner size={28} label="Loading meeting…" theme="dark" />;
+  if (!live) return <LoadingSpinner size={28} label="Loading meeting…" theme="auto" />;
 
   const open = live.meeting.open;
   // Over = its time has passed and check-in isn't running: the info below is locked (the doc link stays editable).
@@ -1735,7 +1756,7 @@ function AttendancePanel({ onOpenMeeting, canExport }: { onOpenMeeting?: (id: st
       {canExport ? <p className={styles.faint}>Exports follow these filters.</p> : <p className={styles.faint}>Your meetings’ results.</p>}
 
       {error && <Notice tone="error">{error}</Notice>}
-      {!data && !error && <LoadingSpinner size={28} label="Loading attendance…" theme="dark" />}
+      {!data && !error && <LoadingSpinner size={28} label="Loading attendance…" theme="auto" />}
       {data && data.meetings.length === 0 && <div className={styles.card}><p className={styles.muted}>No meetings in this range.</p></div>}
 
       {data && data.meetings.length > 0 && (

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/capabilities';
+import { logAudit } from '@/lib/audit';
 import { ASSIGNABLE_ROLES } from '@/types/database';
 import type { AppRole } from '@/types/database';
 
@@ -73,5 +74,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to update any users', results }, { status: 500 });
   }
 
+  const applied = results.filter((r) => !r.error && !('skipped' in r && r.skipped));
+  if (applied.length > 0) {
+    await logAudit(adminClient, { actorId: user.id, action: 'update', entityType: 'roles', summary: `Added ${role} to ${applied.length} account${applied.length === 1 ? '' : 's'} in bulk`, details: { role, divisionId: divisionId ?? null, userIds: applied.map((r) => r.userId) } });
+  }
   return NextResponse.json({ ok: true, results });
 }

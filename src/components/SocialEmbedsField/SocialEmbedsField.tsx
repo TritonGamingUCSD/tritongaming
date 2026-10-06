@@ -57,7 +57,7 @@ export default function SocialEmbedsField({
 
   // This array's order is exactly the order posts render in on the public page
   // (EventSocialEmbeds/division page just `.map` over it) — drag to reorder.
-  const { dragIndex, overIndex, dragHandleProps, dropTargetProps } = useDragReorder(value, onChange);
+  const { view, dragIndex, overIndex, dragHandleProps, dropTargetProps } = useDragReorder(value, onChange);
 
   return (
     <div className={styles.field}>
@@ -65,7 +65,7 @@ export default function SocialEmbedsField({
 
       {value.length > 0 && (
         <ul className={styles.embedList}>
-          {value.map((embed, i) => {
+          {view.map((embed, i) => {
             const config = EMBED_TYPES.find((t) => t.value === embed.type) ?? EMBED_TYPES[EMBED_TYPES.length - 1];
             return (
               <li

@@ -1,19 +1,21 @@
 .control {
   width: 100%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-sm);
-  padding: 0.625rem 0.875rem;
-  color: var(--white);
+  background: var(--pp-card);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.32);
+  border-radius: 6px;
+  padding: 0.6rem 0.85rem;
+  color: var(--pp-ink);
   font-family: var(--font-futura-medium);
-  font-size: 0.9rem;
+  font-size: 0.92rem;
+  transition: border-color 0.12s, box-shadow 0.12s;
 }
-.control:focus { outline: none; border-color: rgba(255, 199, 44, 0.4); }
-.control:disabled { opacity: 0.55; cursor: not-allowed; }
-.control::placeholder { color: rgba(242, 241, 240, 0.6); }
+.control:hover:not(:disabled) { border-color: rgba(var(--pp-ink-rgb), 0.55); }
+.control:focus { outline: none; border-color: var(--pp-ink); box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.55); }
+.control:disabled { opacity: 0.55; cursor: not-allowed; background: rgba(var(--pp-ink-rgb), 0.06); }
+.control::placeholder { color: rgba(var(--pp-ink-rgb), 0.83); }
 .textarea { resize: vertical; line-height: 1.45; }
 @media (max-width: 640px) { .control { font-size: 16px; } }
 
 .field { display: flex; flex-direction: column; gap: 0.35rem; }
-.label { font-size: 0.75rem; color: rgba(242, 241, 240, 0.6); letter-spacing: 0.02em; }
-.hint { font-size: 0.72rem; color: rgba(242, 241, 240, 0.6); }
+.label { font-family: var(--font-renegare); font-size: 0.68rem; color: rgba(var(--pp-ink-rgb), 0.89); letter-spacing: 0.12em; text-transform: uppercase; }
+.hint { font-size: 0.75rem; color: rgba(var(--pp-ink-rgb), 0.86); }

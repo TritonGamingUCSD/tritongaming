@@ -58,7 +58,7 @@ export default function KeysSectionContent() {
   const mine = (keys ?? []).filter((k) => k.mine);
 
   if (error && !keys) return <Notice tone="error">{error}</Notice>;
-  if (!keys) return <LoadingSpinner size={28} label="Loading keys…" theme="dark" />;
+  if (!keys) return <LoadingSpinner size={28} label="Loading keys…" theme="auto" />;
 
   return (
     <div className={styles.page}>

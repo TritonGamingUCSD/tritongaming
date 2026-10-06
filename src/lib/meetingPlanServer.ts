@@ -22,7 +22,7 @@ export interface PlanRow {
   meeting_id: string | null; series_id: string | null; decided_slot: PlanView['decided_slot']; created_by: string | null; created_at: string; reminded_at: string | null; nudged_at: string | null;
 }
 
-export const PLAN_HREF = (id: string) => `/portal?section=meetings&tab=planning&plan=${id}`;
+export const PLAN_HREF = (id: string) => `/portal/meetings/planning?plan=${id}`;
 
 type Auth = { user: { id: string }; svc: SupabaseClient; manageAll: boolean; canHost: boolean; roles?: { role: string; division_id?: string | null }[] };
 
@@ -275,7 +275,7 @@ export async function decidePlan(svc: SupabaseClient, plan: PlanRow, pick: { day
     user_id: p.id, type: 'meeting_invite',
     title: out.has(p.id) ? `${plan.title} is set, and you’re marked absent` : `${plan.title} is set`,
     body: out.has(p.id) ? `${when}. ${conflicts.has(p.id) ? `You already have ${conflicts.get(p.id)!.join(', ')} then` : 'You said you’re not available then'}, so you’re marked absent (excused).` : when,
-    href: '/portal?section=meetings&tab=mine',
+    href: '/portal/meetings/mine',
   })));
   return { ok: true, meeting_id: meetingId, series_id: seriesId, absent: unavailable.map((p) => p.name) };
 }

@@ -11,8 +11,8 @@ import { resolveAvatarUrl } from '@/lib/profile';
 import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/timezone';
 import RoleManager from './RoleManager';
 import AccessPanel from './AccessPanel';
-import BoardOrderManager from './BoardOrderManager';
 import SystemStats from './SystemStats';
+import AdminOverviewPanels from './AdminOverviewPanels';
 import StatsClient from './stats/StatsClient';
 import type { StatsData } from './stats/getStatsData';
 import AuditLogClient from './audit/AuditLogClient';
@@ -33,16 +33,16 @@ interface Props {
   initialTab?: string;
 }
 
-type Tab = 'overview' | 'roles' | 'access' | 'order' | 'analytics' | 'audit' | 'links' | 'system';
-const VALID_TABS: Tab[] = ['overview', 'roles', 'access', 'order', 'analytics', 'audit', 'links', 'system'];
+type Tab = 'overview' | 'members' | 'access' | 'analytics' | 'audit-log' | 'short-links' | 'system';
+const VALID_TABS: Tab[] = ['overview', 'members', 'access', 'analytics', 'audit-log', 'short-links', 'system'];
 type Group = 'overview' | 'people' | 'insights' | 'system';
 const GROUPS: Record<Group, { label: string; icon: ReactNode; views: Tab[] }> = {
   overview: { label: 'Overview', icon: <LayoutDashboard />, views: ['overview'] },
-  people: { label: 'People', icon: <UsersIcon />, views: ['roles', 'access', 'order'] },
-  insights: { label: 'Insights', icon: <BarChart3 />, views: ['analytics', 'audit'] },
-  system: { label: 'System', icon: <Server />, views: ['system', 'links'] },
+  people: { label: 'People', icon: <UsersIcon />, views: ['members', 'access'] },
+  insights: { label: 'Insights', icon: <BarChart3 />, views: ['analytics', 'audit-log'] },
+  system: { label: 'System', icon: <Server />, views: ['system', 'short-links'] },
 };
-const VIEW_LABELS: Record<Tab, string> = { overview: 'Overview', roles: 'Member Management', access: 'Access', order: 'Display Order', analytics: 'Analytics', audit: 'Audit Log', links: 'Short Links', system: 'System Health' };
+const VIEW_LABELS: Record<Tab, string> = { overview: 'Overview', members: 'Member Management', access: 'Access', analytics: 'Analytics', 'audit-log': 'Audit Log', 'short-links': 'Short Links', system: 'System Health' };
 const groupOf = (t: Tab): Group => (Object.keys(GROUPS) as Group[]).find((g) => GROUPS[g].views.includes(t)) ?? 'overview';
 
 // Each tab is a real destination now instead of Overview being a junk
@@ -128,6 +128,8 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
           ))}
         </div>
 
+        {isAdmin && <AdminOverviewPanels />}
+
         {isAdmin && (
           <section className={styles.section}>
             <div className={styles.sectionHeader}>
@@ -182,7 +184,7 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
         </>
       )}
 
-      {tab === 'audit' && isAdmin && (
+      {tab === 'audit-log' && isAdmin && (
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionLabel}>Audit Log</h2>
@@ -193,7 +195,7 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
       )}
 
       {tab === 'access' && isAdmin && <AccessPanel />}
-      {tab === 'roles' && isAdmin && (
+      {tab === 'members' && isAdmin && (
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionLabel}>Member Management</h2>
@@ -206,11 +208,10 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
         </section>
       )}
 
-      {tab === 'order' && isAdmin && <BoardOrderManager users={allUsers} />}
 
       {tab === 'analytics' && <StatsClient data={statsData} />}
 
-      {tab === 'links' && isAdmin && (
+      {tab === 'short-links' && isAdmin && (
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionLabel}>Short Links</h2>

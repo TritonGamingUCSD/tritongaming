@@ -12,7 +12,7 @@ export default function MyKeys({ keys }: { keys: { id: string; name: string; col
       <span className={styles.pills}>
         {keys.map((k) => <span key={k.id} className={styles.pill} style={{ background: k.color }}><KeyRound size={14} strokeWidth={2.5} aria-hidden="true" /> {k.name}</span>)}
       </span>
-      <Link href="/portal?section=keys" className={styles.link}>Open Storage Keys →</Link>
+      <Link href="/portal/keys" className={styles.link}>Open Storage Keys →</Link>
     </section>
   );
 }

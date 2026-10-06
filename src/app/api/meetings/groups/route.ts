@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/audit';
 import { cleanMemberIds as cleanMembers } from '@/lib/meetingAudience';
-import { authorizeMeetings } from '@/lib/meetings';
+import { authorizeMeetings, authorizeTeamView } from '@/lib/meetings';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const auth = await authorizeMeetings('host_meetings');
+  const auth = await authorizeTeamView();
   if (auth.error) return auth.error;
   const { data } = await auth.svc.from('meeting_groups').select('id, name, member_ids, created_by').order('name');
   return NextResponse.json({ groups: data ?? [] });

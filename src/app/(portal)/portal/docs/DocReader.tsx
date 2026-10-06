@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, ChevronLeft, ChevronRight, FileText, Pencil, Pin, PinOff, Plus, Star, Trash2, Type } from 'lucide-react';
+import { AlertTriangle, ChevronRight, FileText, MoreHorizontal, Pencil, Pin, PinOff, Plus, Star, Trash2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import { extractToc } from '@/lib/markdownToc';
+import { backlinksTo, resolveWikiLinks } from '@/lib/docsLinks';
 import { ageLabel, ancestors, type DocSection } from '@/lib/docsTree';
 import type { SyncDoc } from '@/lib/docsSync';
 import type { Doc, DocCategory } from '@/types/database';
@@ -14,29 +15,38 @@ import { clock } from './docsApi';
 import styles from './docs.module.css';
 
 export type ReaderSize = 'sm' | 'md' | 'lg';
-export type ReaderWidth = 'narrow' | 'wide';
 export const SIZE_REM: Record<ReaderSize, string> = { sm: '0.92rem', md: '1rem', lg: '1.14rem' };
 
 export default function DocReader({
-  doc, docs, sections, categories, canEdit, favorite, size, width, onSize, onWidth, order, live, notice,
+  doc, docs, sections, categories, canEdit, favorite, size, onSize, live, notice,
   onOpen, onHome, onEdit, onDelete, onNewSub, onFavorite, onPin, onTag,
 }: {
-  doc: Doc; docs: Doc[]; sections: DocSection<Doc>[]; categories: DocCategory[]; canEdit: boolean; favorite: boolean; size: ReaderSize; width: ReaderWidth;
-  onSize: (s: ReaderSize) => void; onWidth: (w: ReaderWidth) => void; order: Doc[]; live: SyncDoc | null; notice: string | null;
+  doc: Doc; docs: Doc[]; sections: DocSection<Doc>[]; categories: DocCategory[]; canEdit: boolean; favorite: boolean; size: ReaderSize;
+  onSize: (s: ReaderSize) => void; live: SyncDoc | null; notice: string | null;
   onOpen: (id: string) => void; onHome: () => void; onEdit: () => void; onDelete: () => void; onNewSub: () => void; onFavorite: () => void; onPin: () => void; onTag: (t: string) => void;
 }) {
   const crumbs = useMemo(() => ancestors(docs, doc.id), [docs, doc.id]);
   const top = crumbs[0] ?? doc;
   const category = categories.find((c) => c.id === top.category_id)?.name ?? 'Uncategorized';
   const kids = useMemo(() => docs.filter((d) => d.parent_id === doc.id).sort((a, b) => a.order_index - b.order_index || a.title.localeCompare(b.title)), [docs, doc.id]);
-  const idx = order.findIndex((d) => d.id === doc.id);
-  const prev = idx > 0 ? order[idx - 1] : null;
-  const next = idx >= 0 && idx < order.length - 1 ? order[idx + 1] : null;
-  const toc = useMemo(() => extractToc(doc.content), [doc.content]);
   const age = ageLabel(doc.updated_at);
+  const linkedFrom = useMemo(() => backlinksTo(doc, docs, canEdit), [doc, docs, canEdit]);
+  const body = useMemo(() => resolveWikiLinks(doc.content, docs), [doc.content, docs]);
+  const toc = useMemo(() => extractToc(body), [body]);
+  // The list of headings as a plain string: the highlight below must only restart when the headings really change, not whenever the docs list is re-read.
+  const tocKey = toc.map((t) => t.id).join('|');
   const [settings, setSettings] = useState(false);
   const proseRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!settings) return;
+    const off = (e: MouseEvent) => { if (!menuRef.current?.contains(e.target as Node)) setSettings(false); };
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setSettings(false); };
+    document.addEventListener('mousedown', off); document.addEventListener('keydown', esc);
+    return () => { document.removeEventListener('mousedown', off); document.removeEventListener('keydown', esc); };
+  }, [settings]);
   const [active, setActive] = useState<string | null>(null);
+  const pickedRef = useRef<string | null>(null);
   void sections;
 
   useEffect(() => {
@@ -45,18 +55,36 @@ export default function DocReader({
     if (!root || toc.length === 0) return;
     const heads = toc.map((t) => root.querySelector<HTMLElement>(`#${CSS.escape(t.id)}`)).filter((h): h is HTMLElement => !!h);
     if (!heads.length) return;
-    const obs = new IntersectionObserver((entries) => {
-      const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-      if (visible) setActive(visible.target.id);
-    }, { rootMargin: '-90px 0px -65% 0px' });
-    heads.forEach((h) => obs.observe(h));
-    return () => obs.disconnect();
-  }, [toc, doc.id]);
+    // The current section is the last heading that has reached the top of the reading area; at the very bottom it is the last heading, so short
+    // sections at the end of a page can still be reached. Listens to any scroller (the page or an inner panel).
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      // A link you just clicked stays current while its heading is on screen (a short page cannot always scroll it to the top).
+      const picked = pickedRef.current ? document.getElementById(pickedRef.current) : null;
+      if (picked) { const top = picked.getBoundingClientRect().top; if (top >= 0 && top < window.innerHeight * 0.85) { setActive(picked.id); return; } pickedRef.current = null; }
+      let current = heads[0].id;
+      for (const h of heads) if (h.getBoundingClientRect().top <= 130) current = h.id;
+      const doc = document.documentElement;
+      const atBottom = doc.scrollHeight > window.innerHeight + 8 && window.innerHeight + window.scrollY >= doc.scrollHeight - 4;
+      if (atBottom) current = heads[heads.length - 1].id;
+      setActive(current);
+    };
+    const queue = () => { if (!raf) raf = requestAnimationFrame(update); };
+    const release = () => { pickedRef.current = null; };
+    window.addEventListener('wheel', release, { passive: true });
+    window.addEventListener('touchmove', release, { passive: true });
+    window.addEventListener('keydown', release);
+    document.addEventListener('scroll', queue, { capture: true, passive: true });
+    window.addEventListener('resize', queue);
+    update();
+    return () => { document.removeEventListener('scroll', queue, true); window.removeEventListener('resize', queue); window.removeEventListener('wheel', release); window.removeEventListener('touchmove', release); window.removeEventListener('keydown', release); if (raf) cancelAnimationFrame(raf); };
+  }, [tocKey, doc.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const draftBy = live?.draft_updated_at ? (live.draft_by_me ? 'you' : live.draft_by_name ?? 'someone') : doc.draft_updated_at ? 'you' : null;
 
   return (
-    <div className={styles.reader} style={{ ['--doc-size' as string]: SIZE_REM[size] }} data-width={width}>
+    <div className={styles.reader} style={{ ['--doc-size' as string]: SIZE_REM[size] }}>
       <article className={styles.article}>
         <nav className={styles.crumbs} aria-label="Breadcrumb">
           <button type="button" className={styles.crumbLink} onClick={onHome}>Docs</button>
@@ -76,30 +104,24 @@ export default function DocReader({
         <header className={styles.articleHead}>
           <h1 className={styles.articleTitle}>{doc.icon && <span className={styles.titleIcon} aria-hidden="true">{doc.icon}</span>}{doc.title}</h1>
           <div className={styles.articleActions}>
-            <Button size="sm" variant="ghost" onClick={onFavorite} aria-pressed={favorite}><Star size={14} fill={favorite ? 'currentColor' : 'none'} aria-hidden="true" /> {favorite ? 'Favorited' : 'Favorite'}</Button>
-            <div className={styles.settingsWrap}>
-              <Button size="sm" variant="ghost" onClick={() => setSettings((v) => !v)} aria-expanded={settings}><Type size={14} aria-hidden="true" /> Reading</Button>
+            <Button size="sm" variant="ghost" onClick={onFavorite} aria-pressed={favorite} aria-label={favorite ? 'Remove from favorites' : 'Add to favorites'}><Star size={14} fill={favorite ? 'currentColor' : 'none'} aria-hidden="true" /> {favorite ? 'Favorited' : 'Favorite'}</Button>
+            {canEdit && <Button size="sm" variant="secondary" onClick={onEdit}><Pencil size={14} aria-hidden="true" /> Edit</Button>}
+            <div className={styles.settingsWrap} ref={menuRef}>
+              <Button size="sm" variant="ghost" onClick={() => setSettings((v) => !v)} aria-expanded={settings} aria-haspopup="menu" aria-label="More actions"><MoreHorizontal size={16} aria-hidden="true" /></Button>
               {settings && (
-                <div className={styles.settingsPop} role="dialog" aria-label="Reading settings" onMouseLeave={() => setSettings(false)}>
+                <div className={styles.settingsPop} role="menu" aria-label="More actions">
                   <span className={styles.label}>Text size</span>
                   <div className={styles.seg} role="group" aria-label="Text size">
                     {(['sm', 'md', 'lg'] as const).map((s) => <button key={s} type="button" className={size === s ? styles.segOn : ''} aria-pressed={size === s} onClick={() => onSize(s)}>{s === 'sm' ? 'Small' : s === 'md' ? 'Medium' : 'Large'}</button>)}
                   </div>
-                  <span className={styles.label}>Page width</span>
-                  <div className={styles.seg} role="group" aria-label="Page width">
-                    {(['narrow', 'wide'] as const).map((w) => <button key={w} type="button" className={width === w ? styles.segOn : ''} aria-pressed={width === w} onClick={() => onWidth(w)}>{w === 'narrow' ? 'Narrow' : 'Wide'}</button>)}
+                  <div className={styles.menuList}>
+                    {canEdit && <button type="button" role="menuitem" onClick={() => { setSettings(false); onPin(); }}>{doc.pinned ? <PinOff size={14} aria-hidden="true" /> : <Pin size={14} aria-hidden="true" />} {doc.pinned ? 'Unpin from Docs Home' : 'Pin to Docs Home'}</button>}
+                    {canEdit && <button type="button" role="menuitem" onClick={() => { setSettings(false); onNewSub(); }}><Plus size={14} aria-hidden="true" /> New sub-page</button>}
+                    {canEdit && <button type="button" role="menuitem" className={styles.menuDanger} onClick={() => { setSettings(false); onDelete(); }}><Trash2 size={14} aria-hidden="true" /> Delete doc</button>}
                   </div>
                 </div>
               )}
             </div>
-            {canEdit && (
-              <>
-                <Button size="sm" variant="ghost" onClick={onPin} aria-pressed={doc.pinned}>{doc.pinned ? <PinOff size={14} aria-hidden="true" /> : <Pin size={14} aria-hidden="true" />} {doc.pinned ? 'Unpin' : 'Pin'}</Button>
-                <Button size="sm" variant="ghost" onClick={onNewSub}><Plus size={14} aria-hidden="true" /> Sub-Page</Button>
-                <Button size="sm" variant="secondary" onClick={onEdit}><Pencil size={14} aria-hidden="true" /> Edit</Button>
-                <Button size="sm" variant="danger" onClick={onDelete}><Trash2 size={14} aria-hidden="true" /> Delete</Button>
-              </>
-            )}
           </div>
         </header>
 
@@ -113,8 +135,13 @@ export default function DocReader({
           </div>
         )}
 
-        <div className={styles.prose} ref={proseRef}>
-          {doc.content.trim() ? <MarkdownContent headingIds>{doc.content}</MarkdownContent> : <p className={styles.emptyNote}>This doc has no content yet.{canEdit ? ' Press Edit to start writing.' : ''}</p>}
+        <div className={styles.prose} ref={proseRef} onClick={(e) => {
+          // [[Doc title]] links open the doc inside the page, without reloading it.
+          const a = (e.target as HTMLElement).closest('a');
+          const m = a && /^\/portal\/docs\?id=([0-9a-f-]{36})$/.exec(a.getAttribute('href') ?? '');
+          if (m && !e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); onOpen(m[1]); }
+        }}>
+          {doc.content.trim() ? <MarkdownContent headingIds>{body}</MarkdownContent> : <p className={styles.emptyNote}>This doc has no content yet.{canEdit ? ' Press Edit to start writing.' : ''}</p>}
         </div>
 
         {kids.length > 0 && (
@@ -131,22 +158,30 @@ export default function DocReader({
           </section>
         )}
 
+        {linkedFrom.length > 0 && (
+          <section className={styles.subpages}>
+            <h2 className={styles.attachHeading}>Linked From</h2>
+            <div className={styles.attachCards}>
+              {linkedFrom.map((k) => (
+                <button key={k.id} type="button" className={styles.attachCard} onClick={() => onOpen(k.id)}>
+                  <span className={styles.attachCardIcon} aria-hidden="true"><FileText size={18} strokeWidth={1.5} /></span>
+                  <span className={styles.attachCardText}><span className={styles.attachCardName}>{k.title}</span><span className={styles.attachCardKind}>mentions this doc</span></span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
         <AttachmentsView attachments={doc.attachments} />
 
-        {(prev || next) && (
-          <nav className={styles.pager} aria-label="Previous and next doc">
-            {prev ? <button type="button" className={styles.pagerBtn} onClick={() => onOpen(prev.id)}><span className={styles.pagerLabel}><ChevronLeft size={13} aria-hidden="true" /> Previous</span><span className={styles.pagerTitle}>{prev.title}</span></button> : <span />}
-            {next ? <button type="button" className={`${styles.pagerBtn} ${styles.pagerNext}`} onClick={() => onOpen(next.id)}><span className={styles.pagerLabel}>Next <ChevronRight size={13} aria-hidden="true" /></span><span className={styles.pagerTitle}>{next.title}</span></button> : <span />}
-          </nav>
-        )}
       </article>
 
       {toc.length > 1 && (
         <aside className={styles.toc} aria-label="On this page">
           <div className={styles.tocLabel}>On This Page</div>
           {toc.map((t) => (
-            <a key={t.id} href={`#${t.id}`} className={`${styles.tocLink} ${t.level === 3 ? styles.tocSub : ''} ${active === t.id ? styles.tocActive : ''}`}
-              onClick={(e) => { e.preventDefault(); document.getElementById(t.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); setActive(t.id); }}>{t.text}</a>
+            <a key={t.id} href={`#${t.id}`} className={`${styles.tocLink} ${active === t.id ? styles.tocActive : ''}`} style={{ paddingLeft: `${0.4 + (t.level - Math.min(...toc.map((x) => x.level))) * 0.8}rem` }}
+              onClick={(e) => { e.preventDefault(); document.getElementById(t.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); pickedRef.current = t.id; setActive(t.id); }}>{t.text}</a>
           ))}
         </aside>
       )}

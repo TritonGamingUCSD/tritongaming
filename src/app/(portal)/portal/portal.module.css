@@ -1,8 +1,8 @@
 .layout {
   display: flex;
   min-height: 100vh;
-  background: #0b1426;
-  color: var(--white);
+  background: var(--pp-card);
+  color: var(--pp-ink);
 }
 
 .main {

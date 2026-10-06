@@ -1,19 +1,19 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-// The three buckets the direct-upload system writes to (event flyers,
-// division logos, profile pictures — see the storage migrations). Shared
-// between the storage-cleanup route (which buckets to sweep for orphans)
-// and the system-stats route (which buckets to total up for the Storage
-// tab's usage panel) so the two never list a different set of buckets.
-export const MANAGED_BUCKETS: { bucket: string; table: string; column: string }[] = [
-  { bucket: 'event-flyers', table: 'events', column: 'flyer_url' },
-  { bucket: 'division-logos', table: 'divisions', column: 'logo_url' },
-  { bucket: 'avatars', table: 'profiles', column: 'custom_avatar_url' },
+// The buckets the direct-upload system writes to (event flyers, stickers and fonts, division logos, profile pictures, site content). Shared
+// by the weekly storage tidy-up (which buckets to sweep) and the system-stats route (which buckets to total up).
+export const MANAGED_BUCKETS: { bucket: string }[] = [
+  { bucket: 'event-flyers' },
+  { bucket: 'division-logos' },
+  { bucket: 'avatars' },
+  { bucket: 'site-content' },
 ];
 
 export interface StorageObject {
   path: string;
   size: number;
+  /** When the file was uploaded (ms since epoch), 0 when unknown. */
+  createdAt: number;
 }
 
 // Recurses into subfolders (avatars are stored as "<user_id>/<file>") —
@@ -37,7 +37,7 @@ export async function listAllObjects(
       if (entry.id === null) {
         results.push(...await listAllObjects(supabase, bucket, fullPath));
       } else {
-        results.push({ path: fullPath, size: entry.metadata?.size ?? 0 });
+        results.push({ path: fullPath, size: entry.metadata?.size ?? 0, createdAt: entry.created_at ? new Date(entry.created_at).getTime() : 0 });
       }
     }
 

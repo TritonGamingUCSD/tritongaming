@@ -61,5 +61,5 @@
 .compact .img { position: absolute; inset: 0; }
 
 /* On a paper band the card needs its own edge so it doesn't melt into the background. */
-.outlined { border: 2px solid var(--ink); background: #fff; }
+.outlined { border: 2px solid var(--ink); background: #f2f1f0; }
 .outlined .imgWrapper { box-shadow: 0 0 0 2px var(--ink); }

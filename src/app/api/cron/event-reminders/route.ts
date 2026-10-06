@@ -66,7 +66,7 @@ export async function GET(request: Request) {
     const { data: claimed } = await svc.from('tickets').update(patch).eq('id', ticket.id).is(kind === '1h' ? 'reminder_1h_sent_at' : 'reminder_24h_sent_at', null).select('id');
     if (!claimed?.length) continue;
 
-    if (await createNotifications(svc, [{ user_id: ticket.user_id, type: 'event_reminder', title, body, href: '/portal?section=tickets' }])) inApp++;
+    if (await createNotifications(svc, [{ user_id: ticket.user_id, type: 'event_reminder', title, body, href: '/portal/tickets' }])) inApp++;
 
   }
 

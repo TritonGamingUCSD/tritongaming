@@ -45,6 +45,7 @@ export function ViewAsSwitcher({ active }: { active: string | null }) {
               <span>{o.label}</span>{active === o.id && <Check size={14} aria-hidden="true" />}
             </button>
           ))}
+          <ViewAsPerson />
           <p className={styles.note}>Only what you see changes. You can still do everything an admin can.</p>
         </div>
       )}
@@ -62,6 +63,53 @@ export function ViewAsBanner({ active }: { active: string }) {
       <button type="button" className={styles.exit} onClick={async () => { setBusy(true); await setViewAs(null); setBusy(false); }} disabled={busy}>
         <X size={13} aria-hidden="true" /> Exit preview
       </button>
+    </div>
+  );
+}
+
+export async function viewAsPerson(userId: string | null) {
+  const res = await fetch('/api/admin/view-as-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId }) });
+  if (res.ok) window.location.assign(userId ? '/portal' : window.location.pathname + window.location.search);
+  return res.ok;
+}
+
+// Shown on every portal page while viewing as a specific person.
+export function ViewingUserBanner({ name }: { name: string }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <div className={styles.banner} role="status" data-print-hide>
+      <Eye size={15} aria-hidden="true" />
+      <span>Viewing the portal as <strong>{name}</strong>. View only: nothing can be changed.</span>
+      <button type="button" className={styles.exit} onClick={async () => { setBusy(true); await viewAsPerson(null); setBusy(false); }} disabled={busy}>
+        <X size={13} aria-hidden="true" /> Exit
+      </button>
+    </div>
+  );
+}
+
+// A small search inside the View as menu: find a member and view the portal as them.
+export function ViewAsPerson() {
+  const [q, setQ] = useState('');
+  const [found, setFound] = useState<{ id: string; title: string; subtitle?: string }[]>([]);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    const term = q.trim();
+    if (term.length < 2) { setFound([]); return; }
+    const t = setTimeout(async () => {
+      const r = await fetch(`/api/portal/search?q=${encodeURIComponent(term)}`).then((x) => x.json()).catch(() => null);
+      setFound((r?.members ?? []).slice(0, 5));
+    }, 220);
+    return () => clearTimeout(t);
+  }, [q]);
+  return (
+    <div className={styles.person}>
+      <div className={styles.menuHead}>Or view as one person…</div>
+      <input className={styles.personInput} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name" aria-label="Find a member to view as" />
+      {found.map((m) => (
+        <button key={m.id} type="button" role="menuitem" className={styles.item} disabled={busy} onClick={async () => { setBusy(true); await viewAsPerson(m.id); setBusy(false); }}>
+          <span>{m.title}</span>{m.subtitle && <small>{m.subtitle}</small>}
+        </button>
+      ))}
     </div>
   );
 }

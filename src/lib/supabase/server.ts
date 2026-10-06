@@ -1,7 +1,10 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { createServiceClient } from '@/lib/supabase/admin';
+import { VIEW_USER_COOKIE, isUuid } from '@/lib/viewAs';
 
-export async function createClient() {
+// The client for the person actually signed in. Only the "who is signed in" checks in lib/auth.ts and the view-as route use this directly.
+export async function createRealClient() {
   const cookieStore = await cookies();
 
   return createServerClient(
@@ -24,6 +27,25 @@ export async function createClient() {
       },
     }
   );
+}
+
+// What every page and route normally uses. While an admin is viewing the portal as one specific person (admin only, re-checked here every time),
+// `auth.getUser()` answers with THAT person, so the data routes the portal calls (meetings, shifts, docs, keys…) return what that person would see.
+// It stays read only: the proxy refuses every write while the cookie is set. Row-level security still runs as the admin, so a route that relies on
+// it alone (with no filter on the user's id) would show more than that person sees; the portal's routes filter by user id explicitly.
+export async function createClient() {
+  const client = await createRealClient();
+  const id = (await cookies()).get(VIEW_USER_COOKIE)?.value;
+  if (!isUuid(id)) return client;
+  const { data: { user: me } } = await client.auth.getUser();
+  if (!me || me.id === id) return client;
+  const { data: roles } = await client.from('user_roles').select('role').eq('user_id', me.id);
+  if (!roles?.some((r) => r.role === 'admin')) return client;
+  const { data } = await createServiceClient().auth.admin.getUserById(id);
+  const viewed = data?.user;
+  if (!viewed) return client;
+  client.auth.getUser = (async () => ({ data: { user: viewed }, error: null })) as typeof client.auth.getUser;
+  return client;
 }
 
 export async function createAdminClient() {

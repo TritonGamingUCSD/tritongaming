@@ -26,7 +26,7 @@ export async function sendMeetingReminders(svc: SupabaseClient, now: Date = new 
   const rows = (meetingRows ?? []) as MeetingRow[];
   const { data: absences } = rows.length ? await svc.from('meeting_absences').select('meeting_id, user_id, excused').in('meeting_id', rows.map((r) => r.id)).eq('excused', true) : { data: [] as { meeting_id: string; user_id: string }[] };
   for (const r of rows) {
-    items.push({ key: `meeting:${r.id}`, kind: 'meeting', title: r.title, starts_at: r.starts_at, location: r.location, audience: r.audience, invitees: r.invitees, group_ids: r.group_ids, href: '/portal?section=meetings&tab=mine', skip: new Set((absences ?? []).filter((a) => a.meeting_id === r.id).map((a) => a.user_id as string)) });
+    items.push({ key: `meeting:${r.id}`, kind: 'meeting', title: r.title, starts_at: r.starts_at, location: r.location, audience: r.audience, invitees: r.invitees, group_ids: r.group_ids, href: '/portal/meetings/mine', skip: new Set((absences ?? []).filter((a) => a.meeting_id === r.id).map((a) => a.user_id as string)) });
   }
   const taken = new Set(rows.filter((r) => r.series_id).map((r) => r.series_id as string));
   const { data: standing } = await svc.from('meeting_series_absences').select('series_id, user_id').eq('excused', true);
@@ -34,12 +34,12 @@ export async function sendMeetingReminders(svc: SupabaseClient, now: Date = new 
     // A repeating meeting with no row for today yet (nobody has opened it): its occurrence is virtual.
     if (taken.has(s.id) || !seriesRunsOn(s, today) || today < pacificDayKey(new Date(s.created_at))) continue;
     const { starts } = occurrenceTimes(today, s.start_time, s.end_time);
-    items.push({ key: `series:${s.id}|${today}`, kind: 'meeting', title: s.title, starts_at: starts.toISOString(), location: s.location, audience: s.audience, invitees: s.invitees, group_ids: s.group_ids, href: '/portal?section=meetings&tab=mine', skip: new Set((standing ?? []).filter((a) => a.series_id === s.id).map((a) => a.user_id as string)) });
+    items.push({ key: `series:${s.id}|${today}`, kind: 'meeting', title: s.title, starts_at: starts.toISOString(), location: s.location, audience: s.audience, invitees: s.invitees, group_ids: s.group_ids, href: '/portal/meetings/mine', skip: new Set((standing ?? []).filter((a) => a.series_id === s.id).map((a) => a.user_id as string)) });
   }
   const internal = (internalRows ?? []) as { id: string; title: string; starts_at: string; location: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null }[];
   const { data: no } = internal.length ? await svc.from('internal_event_rsvps').select('event_id, user_id').in('event_id', internal.map((e) => e.id)).eq('status', 'not_going') : { data: [] as { event_id: string; user_id: string }[] };
   for (const e of internal) {
-    items.push({ key: `internal:${e.id}`, kind: 'internal', title: e.title, starts_at: e.starts_at, location: e.location, audience: e.audience, invitees: e.invitees, group_ids: e.group_ids, href: '/portal?section=internal-events', skip: new Set((no ?? []).filter((n) => n.event_id === e.id).map((n) => n.user_id as string)) });
+    items.push({ key: `internal:${e.id}`, kind: 'internal', title: e.title, starts_at: e.starts_at, location: e.location, audience: e.audience, invitees: e.invitees, group_ids: e.group_ids, href: '/portal/internal-events', skip: new Set((no ?? []).filter((n) => n.event_id === e.id).map((n) => n.user_id as string)) });
   }
 
   let sent = 0, counted = 0;

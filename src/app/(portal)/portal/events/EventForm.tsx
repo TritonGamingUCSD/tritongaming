@@ -1,9 +1,14 @@
 'use client';
 
+import SectionHeader from '@/components/ui/SectionHeader';
 import Notice from '@/components/ui/Notice';
 import { showToast } from '@/lib/toast';
+import SaveBar from '@/components/portal/SaveBar';
+import EditingNow from '@/components/portal/EditingNow';
 import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useDraft } from '@/lib/useDraft';
+import DraftBanner from '@/components/portal/DraftBanner';
 import Link from 'next/link';
 import { ExternalLink, Loader2 } from 'lucide-react';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
@@ -160,9 +165,12 @@ export default function EventForm({
   seedCheckinFormConfig,
   previewViewer,
   stayAfterSave = false,
+  eventId,
   creditPeople = [],
 }: {
   heading: string;
+  /** The event being edited (not set for a new one): lets everyone editing it see each other. */
+  eventId?: string;
   initial: EventFormValues;
   submitLabel: string;
   onSubmit: (values: EventFormValues) => Promise<string | void>;
@@ -181,7 +189,11 @@ export default function EventForm({
   // Older events have only a flyer: it becomes poster 1.
   const [form, setForm] = useState<EventFormValues>(() => (initial.theme.posters?.length || !initial.flyer_url ? initial : { ...initial, theme: { ...initial.theme, posters: [initial.flyer_url] } }));
   // Warn before leaving with unsaved edits (links, Back, closing the tab).
-  const { markSaved } = useUnsavedChanges(form);
+  const { dirty, markSaved, saved: savedForm } = useUnsavedChanges(form);
+  // A new event autosaves in this browser, so a closed tab or lost connection does not lose the work (editing an existing event does not need it).
+  const startForm = useRef(form);
+  const isNewEvent = !stayAfterSave;
+  const draft = useDraft<EventFormValues>('event-new', form, (v) => !isNewEvent || JSON.stringify(v) === JSON.stringify(startForm.current));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [tab, setTab] = useState<EventTab>('basics');
@@ -310,6 +322,7 @@ export default function EventForm({
     if (err) setError(err);
     else {
       markSaved();
+      draft.clear();
       // These forms navigate away on success, so the confirmation is shown on the next page.
       if (stayAfterSave) showToast('Event saved');
       else showToast(submitLabel.startsWith('Create') ? 'Event created' : 'Event saved', { nextPage: true });
@@ -318,13 +331,13 @@ export default function EventForm({
 
   return (
     <div className={styles.page} data-wide-page>
-      <div className={styles.header}>
-        <Link href="/portal?section=events" className={styles.back}>← Back to Events</Link>
-        <h1 className={styles.title}>{heading}</h1>
-      </div>
+      <Link href="/portal/events" className={styles.back}>← Back to Events</Link>
+      <SectionHeader title={heading} />
+      <EditingNow room={eventId ? `event:${eventId}` : null} what="this event" />
+      {isNewEvent && draft.offer && <DraftBanner at={draft.offer.at} what="event" onContinue={() => { const d = draft.accept(); if (d) setForm(d); }} onDiscard={draft.discard} />}
 
       <div className={styles.editLayout}>
-      <form ref={formRef} className={`${styles.form}${saving ? ` ${styles.formSaving}` : ''}`} onSubmit={handleSubmit} onInvalidCapture={onInvalid} aria-busy={saving}>
+      <form id="event-form" ref={formRef} className={`${styles.form}${saving ? ` ${styles.formSaving}` : ''}`} onSubmit={handleSubmit} onInvalidCapture={onInvalid} aria-busy={saving}>
         <SectionTabs<EventTab> label="Event sections" value={tab} onChange={setTab} tabs={EVENT_TABS} />
 
         <div data-tab="basics" hidden={tab !== 'basics'} className={styles.tabPanel}>
@@ -398,7 +411,7 @@ export default function EventForm({
           hint={<>The full write-up shown on this event&apos;s own page (what &quot;Learn More&quot; links to). Markdown supported — **bold**, _italic_, [links](https://…), lists, headings.</>}
         />
 
-        <PageBlocksEditor blocks={form.page_blocks} onChange={(b) => setForm((f) => ({ ...f, page_blocks: b }))} />
+        <PageBlocksEditor blocks={form.page_blocks} onChange={(b) => setForm((f) => ({ ...f, page_blocks: b }))} creditPeople={creditPeople} />
 
         <EventExtrasEditor
           venueAddress={form.venue_address}
@@ -575,11 +588,9 @@ export default function EventForm({
         {error && <Notice tone="error">{error}</Notice>}
 
         <div className={styles.actions}>
-          <Link href="/portal?section=events" className={styles.cancelBtn}>Cancel</Link>
-          <button type="submit" className={styles.submitBtn} disabled={saving}>
-            {saving ? <><Loader2 size={16} className={styles.spin} aria-hidden="true" /> Saving…</> : submitLabel}
-          </button>
+          <Link href="/portal/events" className={styles.cancelBtn}>Back</Link>
         </div>
+        <SaveBar dirty={dirty} saving={saving} formId="event-form" saveLabel={submitLabel} onDiscard={() => { setForm(savedForm()); setError(''); }} />
       </form>
       {saving && <div className={styles.savingPill} role="status"><Loader2 size={18} className={styles.spin} aria-hidden="true" /> Saving your event…</div>}
       <div className={styles.editPreview}>

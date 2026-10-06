@@ -24,6 +24,10 @@ export const QR_PRESETS: QRPreset[] = [
   { id: 'triton', name: 'Triton', style: base({
     dotsColor: DEFAULT_QR_OPTIONS.dotsColor, dotsGradientEnabled: true, dotsGradientStartColor: DEFAULT_QR_OPTIONS.dotsGradientStartColor, dotsGradientEndColor: DEFAULT_QR_OPTIONS.dotsGradientEndColor,
     cornersSquareColor: DEFAULT_QR_OPTIONS.cornersSquareColor, cornersDotColor: DEFAULT_QR_OPTIONS.cornersDotColor, dotsType: 'extra-rounded' }) },
+  // The portal's own dark: navy ground, light-blue modules, yellow finder corners, the Triton logo in the middle.
+  { id: 'triton-dark', name: 'Triton Night', dark: true, style: base({
+    bgColor: '#0b1020', dotsColor: '#a9cdf2', dotsGradientEnabled: true, dotsGradientStartColor: '#a9cdf2', dotsGradientEndColor: '#f2f1f0',
+    cornersSquareColor: '#ffc72c', cornersDotColor: '#ffc72c', dotsType: 'extra-rounded', cornersSquareType: 'extra-rounded', cornersDotType: 'dot' }) },
   { id: 'neon-arcade', name: 'Neon Arcade', dark: true, style: base({
     bgColor: '#0b1020', dotsColor: '#22d3ee', dotsGradientEnabled: true, dotsGradientStartColor: '#22d3ee', dotsGradientEndColor: '#a855f7',
     cornersSquareColor: '#f472b6', cornersDotColor: '#22d3ee', dotsType: 'dots', cornersSquareType: 'extra-rounded' }) },

@@ -4,12 +4,16 @@ import { confirmDiscardUnsaved } from '@/lib/useUnsavedChanges';
 import type { ReactElement, ReactNode } from 'react';
 import { Fragment, cloneElement, isValidElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { mergedPortalParams, portalHref } from '@/lib/portalPath';
 import { usePortalParams } from '@/lib/usePortalParams';
 import { motion, AnimatePresence } from 'motion/react';
-import { Home, MoreHorizontal, ChevronRight, ChevronLeft, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Home, MoreHorizontal, ChevronRight, ChevronLeft } from 'lucide-react';
 import PortalSearch from './PortalSearch';
 import NotificationBell from './NotificationBell';
+import PortalThemeToggle from './PortalThemeToggle';
+import PortalCopyLink from './PortalCopyLink';
+import PortalCrumbs from './PortalCrumbs';
 import { pickDock, readUsage, recordUse } from './dockPicker';
 import styles from './PortalHub.module.css';
 
@@ -34,15 +38,18 @@ function smallIcon(icon: ReactNode, size = 21) {
 // officer-tier member, the same audience as Members/Docs, not Admin's
 // actually-restricted stuff.
 // 'Overview' is the unlabeled group right under Dashboard (the Calendar).
-const GROUP_ORDER = ['Overview', 'Yours', 'Events', 'TG', 'Divisions', 'Resources', 'Admin'] as const;
+const GROUP_ORDER = ['Overview', 'Yours', 'Events', 'Team', 'Resources', 'Admin'] as const;
 // Order inside each group (and so in the sidebar, the "More" sheet and the home grid). Anything not
 // listed goes last, in the order it was given.
-const SECTION_ORDER = ['calendar', 'tickets', 'points', 'activity', 'profile', 'events', 'checkin', 'members', 'meetings', 'internal-events', 'battlepass', 'keys', 'strikes', 'divisions', 'division-members', 'docs', 'qrcode', 'albums', 'help', 'admin', 'site-content'];
+const SECTION_LABELS: Record<string, string> = { tickets: 'My Tickets', profile: 'Profile', points: 'Rewards', events: 'Events', checkin: 'Check-In', members: 'TG Members', meetings: 'Meetings', 'internal-events': 'Internal Events', shifts: 'Shifts', keys: 'Storage Keys', strikes: 'Strikes', divisions: 'Divisions', 'division-members': 'Division Members', docs: 'Documentation', qrcode: 'QR Studio', albums: 'Photo Albums', admin: 'Admin', 'site-content': 'Site Content' };
+const SECTION_ORDER = ['calendar', 'tickets', 'points', 'activity', 'profile', 'events', 'checkin', 'shifts', 'members', 'meetings', 'internal-events', 'keys', 'quarters', 'strikes', 'divisions', 'division-members', 'docs', 'qrcode', 'albums', 'help', 'admin', 'site-content'];
 // Accent color per group — tints the heading dot, icon tiles and hover state.
-// The Dashboard and the Calendar are both soft white, so neither reads as part of the gold "Yours" or blue "Events" groups.
+// The Dashboard and the Calendar are both soft white, so neither reads as part of the blue "Yours" or "Events" groups.
 const DASHBOARD_ACCENT = '#e5e7eb';
-const GROUP_ACCENT: Record<string, string> = { Overview: DASHBOARD_ACCENT, Yours: '#ffc72c', TG: '#a78bfa', Events: '#4a90e2', Divisions: '#fb923c', Resources: '#34d399', Admin: '#f472b6' };
+const GROUP_ACCENT: Record<string, string> = { Overview: DASHBOARD_ACCENT, Yours: '#4a90d9', Events: '#e8912d', Team: '#8b6cdc', Resources: '#2fae86', Admin: '#d9487f' };
 type HubGroup = (typeof GROUP_ORDER)[number];
+// Names shown for each group: what you are doing, not who is allowed.
+const GROUP_LABEL: Record<string, string> = { Overview: 'Portal', Yours: 'Me', Events: 'Events', Team: 'Team', Resources: 'Library', Admin: 'Manage' };
 
 export interface HubSection {
   id: string;
@@ -56,6 +63,8 @@ export interface HubSection {
   dockBoost?: number;
   /** Never gets a bottom-bar slot (still reachable from More). */
   dockExclude?: boolean;
+  /** Never suggested under "For you" on the dashboard (still in the sidebar and All pages). */
+  homeExclude?: boolean;
   /** Not listed in the desktop sidebar (reached another way: the name at the top, a footer button, a link inside another section). Still on the home grid and the phone's More sheet. */
   railHidden?: boolean;
 }
@@ -116,7 +125,7 @@ interface GroupedSection {
 // start, which is what made it feel laggy. The URL is still kept in sync —
 // via router.replace after the fact, and via the effect below picking up
 // changes that arrive from *outside* this component (e.g. a <Link> to
-// /portal?section=x elsewhere on the same route) — just without the UI
+// /portal/x elsewhere on the same route) — just without the UI
 // waiting on it.
 // onOpenChange reports whether a panel is open so a sibling (the portal's
 // "next ticket" banner) can react to that directly — e.g. hide itself while
@@ -129,8 +138,19 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
     return [...sectionsProp].sort((a, b) => rank(a.id) - rank(b.id));
   }, [sectionsProp]);
   const setParams = usePortalParams();
-  const searchParams = useSearchParams();
+  const rawSearchParams = useSearchParams();
+  const pathname = usePathname();
+  // Section, tab and subtab live in the path (/portal/docs/read); the hub reads them folded back into one set of params.
+  const searchParams = useMemo(() => mergedPortalParams(pathname, rawSearchParams.toString()), [pathname, rawSearchParams]);
+  // Old-style addresses (/portal/docs/read, from a link or bookmark) are tidied into the path form in place — no reload.
+  useEffect(() => {
+    if (rawSearchParams.get('section')) {
+      window.history.replaceState(window.history.state, '', portalHref(mergedPortalParams(window.location.pathname, window.location.search)));
+    }
+  }, [rawSearchParams, pathname]);
   const requestedSection = searchParams.get('section');
+  const sectionIdsRef = useRef(new Set<string>());
+  sectionIdsRef.current = new Set(sections.map((s) => s.id));
   const validRequested = sections.some((s) => s.id === requestedSection) ? requestedSection : null;
 
   const [openId, setOpenId] = useState<string | null>(validRequested);
@@ -170,10 +190,30 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
   // changed. In-section tab clicks never do this (they only edit the URL themselves).
   const [navNonce, setNavNonce] = useState(0);
   const pendingNav = useRef(false);
+  // Browser Back/Forward between portal views: the address changes under us, so remount the open section to re-read its tab.
+  useEffect(() => {
+    const onPop = () => { const w = window as unknown as { __tgPop?: number; __tgPush?: number }; w.__tgPop = Date.now(); w.__tgPush = Math.max(0, (w.__tgPush ?? 0) - 1); // Back/Forward may land on another section (or home): show the one the address now names.
+      const id = mergedPortalParams(window.location.pathname, window.location.search).get('section');
+      setOpenId(id && sectionIdsRef.current.has(id) ? id : null);
+      window.setTimeout(() => setNavNonce((n) => n + 1), 0); };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
   useEffect(() => {
     const onNav = () => { pendingNav.current = true; window.setTimeout(() => { if (pendingNav.current) { pendingNav.current = false; setNavNonce((n) => n + 1); } }, 600); };
     window.addEventListener('tg:portal-nav', onNav);
     return () => window.removeEventListener('tg:portal-nav', onNav);
+  }, []);
+  // A link or search result inside the portal changes the address with the history API; Next doesn't report that to
+  // usePathname, so read the address again on the portal's own navigation event.
+  useEffect(() => {
+    const sync = () => {
+      const id = mergedPortalParams(window.location.pathname, window.location.search).get('section');
+      const ok = !!id && sectionIdsRef.current.has(id);
+      setOpenId(ok ? id : null);
+    };
+    window.addEventListener('tg:portal-nav', sync);
+    return () => window.removeEventListener('tg:portal-nav', sync);
   }, []);
   const paramsKey = searchParams.toString();
   useEffect(() => {
@@ -199,6 +239,8 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
     if (id !== openId && !confirmDiscardUnsaved()) return;
     // Help records which page the person came from, to attach to their ticket.
     if (id === 'help') { try { sessionStorage.setItem('tg_help_from', openId ?? 'home'); } catch { /* ignore */ } }
+    // Choosing the section you are already in goes back to its first tab (the section is rebuilt), not wherever you left it.
+    if (id === openId) setNavNonce((n) => n + 1);
     setOpenId(id);
     // Pure UI change — every section's content is already on the page — so update the address bar
     // directly. (router.replace re-rendered the whole portal on the server and, being slow, could
@@ -213,6 +255,23 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
   }, [setParams]);
 
   const openSection = sections.find((s) => s.id === openId) ?? null;
+
+  // A link to a page this person's roles don't include (a UCSD student or someone with no role following a shared
+  // link, say) used to just land on home with no explanation. Point them to Help, which explains how to get the role.
+  const lockedSection = requestedSection && !validRequested && SECTION_ORDER.includes(requestedSection) && requestedSection !== 'help'
+    ? SECTION_LABELS[requestedSection] ?? null
+    : null;
+  const [lockedDismissed, setLockedDismissed] = useState(false);
+  const lockedNotice = lockedSection && !lockedDismissed ? (
+    <div className={styles.lockedNotice} role="status">
+      <span><strong>{lockedSection}</strong> needs a role your account doesn’t have yet. Open Help to see which role it is and how to get it.</span>
+      <span className={styles.lockedActions}>
+        <button type="button" className={styles.lockedHelp} onClick={() => open('help')}>Open Help</button>
+        <button type="button" className={styles.lockedClose} onClick={() => setLockedDismissed(true)} aria-label="Dismiss">×</button>
+      </span>
+    </div>
+  ) : null;
+  const frameWithNotice: HubFrame | undefined = frame && lockedNotice ? { ...frame, banners: <>{frame.banners}{lockedNotice}</> } : frame;
 
   // Groups a plain member actually qualifies for (just Tickets/Profile/
   // Activity) only render that one section, no empty "Community"/"Staff &
@@ -231,6 +290,13 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
     setDock(pickDock(sections, { now: new Date(), usage: readUsage() }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dockKey]);
+  // "For you": the few pages this person most likely wants (their role, what they open most on this device, the time of week),
+  // so home is not a wall of every page. The rest sit behind "All pages".
+  const [forYou, setForYou] = useState(() => pickDock(sections, { slots: 6, desk: true }).ids);
+  useEffect(() => {
+    setForYou(pickDock(sections, { now: new Date(), usage: readUsage(), slots: 6, desk: true }).ids);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dockKey]);
   const primaryTabs = sections.filter((s) => dock.ids.has(s.id));
   const primaryTabIds = new Set(primaryTabs.map((s) => s.id));
   const moreSections = sections.filter((s) => !primaryTabIds.has(s.id));
@@ -247,7 +313,9 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
         openId={openId}
         open={open}
         close={close}
-        frame={frame}
+        frame={frameWithNotice}
+        navNonce={navNonce}
+        forYou={forYou}
       />
     );
   }
@@ -276,7 +344,14 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
       {/* Home on a phone is also the launcher: every section you can open, grouped, one tap away (the bar and More are shortcuts). */}
       {!openSection && (
         <div className={styles.launcher}>
-          <div className={styles.tileGrid}>{tilesInOrder(sections).map((s) => renderTile(s, false))}</div>
+          <h2 className={styles.forYouLabel}>For you</h2>
+          <div className={styles.tileGrid}>{tilesInOrder(sections).filter((s) => forYou.has(s.id)).map((s) => renderTile(s, false))}</div>
+          {sections.some((s) => !forYou.has(s.id)) && (
+            <details className={styles.allPages}>
+              <summary>All pages</summary>
+              <div className={styles.tileGrid}>{tilesInOrder(sections).filter((s) => !forYou.has(s.id)).map((s) => renderTile(s, false))}</div>
+            </details>
+          )}
         </div>
       )}
       <AnimatePresence initial={false}>
@@ -295,16 +370,20 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
           <motion.div
             key="panel"
             className={styles.panel}
+            style={{ ['--accent' as string]: GROUP_ACCENT[openSection.group] }}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0, transition: { duration: 0.18 } }}
             exit={{ opacity: 0, transition: { duration: 0.1 } }}
           >
-            <div className={styles.panelHeader} style={{ ['--accent' as string]: GROUP_ACCENT[openSection.group] }}>
+            <div className={`${styles.panelHeader} pp-dark`} style={{ ['--accent' as string]: GROUP_ACCENT[openSection.group] }}>
               <button className={styles.backBtn} onClick={close} aria-label="Back to dashboard">
                 <ChevronLeft size={18} strokeWidth={2} aria-hidden="true" />
               </button>
               <span className={styles.panelIconTile} aria-hidden="true">{smallIcon(openSection.icon, 18)}</span>
-              <span className={styles.panelTitle}>{openSection.label}</span>
+              <span className={styles.panelTitle}>
+                <span className={styles.crumbGroup}>{GROUP_LABEL[openSection.group]}</span>
+                {openSection.label}
+              </span>
             </div>
             <div className={styles.panelBody}>
               <Fragment key={navNonce}>{openSection.content}</Fragment>
@@ -334,7 +413,7 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
               {smallIcon(s.icon, 20)}
               {s.badge !== undefined && s.badge !== 0 && <span className={styles.dockBadge}>{s.badge}</span>}
             </span>
-            <span className={styles.dockLabel}>{s.label}</span>
+            <span className={styles.dockLabel}>{s.label.replace(/^My /, '')}</span>
           </button>
         ))}
         {moreSections.length > 0 && (
@@ -364,7 +443,7 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
             />
             <motion.div
               key="more-sheet"
-              className={styles.moreSheet}
+              className={`${styles.moreSheet} pp-dark`}
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
@@ -386,6 +465,7 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
               </div>
               {/* The list scrolls inside the sheet; the sheet itself (handle included) is what moves when it is swiped down. */}
               <div className={styles.moreSheetScroll} ref={sheetEl}>
+              <div className={styles.sheetTheme}><PortalThemeToggle labelled /></div>
               {railFooter && <div className={styles.sheetFooter}>{railFooter}</div>}
               <div className={styles.tileGrid}>{tilesInOrder(moreSections).map((s) => renderTile(s, true))}</div>
               </div>
@@ -399,16 +479,33 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
 
 // The color-coded, grouped list of everything you can open — the home screen's main content
 // on desktop and on mobile alike (one column on a phone).
-function HomeGroups({ groupedSections, open }: { groupedSections: GroupedSection[]; open: (id: string) => void }) {
+function HomeGroups({ groupedSections, open, forYou }: { groupedSections: GroupedSection[]; open: (id: string) => void; forYou: Set<string> }) {
+  const picked = groupedSections.flatMap(({ items }) => items).filter((s) => forYou.has(s.id) && s.group !== 'Overview');
+  const card = (s: HubSection) => (
+    <button key={s.id} className={styles.card} style={{ ['--accent' as string]: GROUP_ACCENT[s.group] }} onClick={() => { recordUse(s.id); open(s.id); }}>
+      <span className={styles.cardIconTile} aria-hidden="true">{s.icon}</span>
+      <span className={styles.cardText}>
+        <span className={styles.cardLabel}>{s.label}</span>
+        <span className={styles.cardDesc}>{s.description}</span>
+      </span>
+      {s.badge !== undefined && s.badge !== 0 ? <span className={styles.cardBadge}>{s.badge}</span> : <ChevronRight size={16} strokeWidth={1.75} className={styles.cardChevron} aria-hidden="true" />}
+    </button>
+  );
   return (
     <>
+      <section className={styles.group} aria-label="For you">
+        <h2 className={styles.groupLabel}>For you</h2>
+        <div className={styles.grid}>{picked.map(card)}</div>
+      </section>
+      <details className={styles.allPages}>
+        <summary>All pages</summary>
       {/* Calendar (the Overview group) lives in the sidebar only; no home card, to save space. */}
       {groupedSections.filter(({ group }) => group !== 'Overview').map(({ group, items }) => (
         <section key={group} className={styles.group} style={{ ['--accent' as string]: GROUP_ACCENT[group] }}>
           {groupedSections.length > 1 && (
             <h2 className={styles.groupLabel}>
               <span className={styles.groupDot} aria-hidden="true" />
-              {group}
+              {GROUP_LABEL[group]}
               <span className={styles.groupCount}>{items.length}</span>
             </h2>
           )}
@@ -430,6 +527,7 @@ function HomeGroups({ groupedSections, open }: { groupedSections: GroupedSection
           </div>
         </section>
       ))}
+      </details>
     </>
   );
 }
@@ -452,6 +550,8 @@ function DesktopShell({
   open,
   close,
   frame,
+  navNonce,
+  forYou,
 }: {
   frame?: HubFrame;
   identity?: HubIdentity;
@@ -462,6 +562,8 @@ function DesktopShell({
   openId: string | null;
   open: (id: string) => void;
   close: () => void;
+  navNonce: number;
+  forYou: Set<string>;
 }) {
   // Icon-only sidebar: remembered per browser. Read after mount so server and first client render match.
   const [collapsed, setCollapsed] = useState(false);
@@ -506,7 +608,7 @@ function DesktopShell({
               {identity.roles && identity.roles.length > 0 ? (
                 <span className={styles.railRoles}>
                   {identity.roles.map((r) => (
-                    <span key={r.label} className={styles.railRoleChip} style={{ color: r.color, background: `${r.color}1a`, borderColor: `${r.color}44` }}>{r.label}</span>
+                    <span key={r.label} className={styles.railRoleChip} style={{ color: `color-mix(in srgb, ${r.color} 55%, var(--pp-chrome-fg))`, background: `${r.color}26`, borderColor: `${r.color}66` }}>{r.label}</span>
                   ))}
                 </span>
               ) : (
@@ -529,7 +631,7 @@ function DesktopShell({
           {groupedSections.map(({ group, items: all }) => ({ group, items: all.filter((s) => !s.railHidden) })).filter(({ items }) => items.length > 0).map(({ group, items }) => (
             <div key={group} className={styles.railGroup} style={{ ['--accent' as string]: GROUP_ACCENT[group], flexGrow: items.length }}>
               {groupedSections.length > 1 && group !== 'Overview' && (
-                <div className={styles.railGroupLabel}><span className={styles.railGroupDot} aria-hidden="true" />{group}</div>
+                <div className={styles.railGroupLabel}><span className={styles.railGroupDot} aria-hidden="true" />{GROUP_LABEL[group]}</div>
               )}
               {items.map((s) => (
                 <button
@@ -540,7 +642,7 @@ function DesktopShell({
                   title={s.label}
                   aria-label={collapsed ? s.label : undefined}
                 >
-                  <span className={styles.railIcon} aria-hidden="true">{s.icon}</span>
+                  <span className={styles.railMono} aria-hidden="true">{s.label.charAt(0)}</span>
                   <span className={styles.railLabel}>{s.label}</span>
                   {s.badge !== undefined && s.badge !== 0 && (
                     <span className={styles.railBadge}>{s.badge}</span>
@@ -555,13 +657,13 @@ function DesktopShell({
 
       <div className={styles.frameMain}>
         <header className={styles.topBar}>
-          <button type="button" className={styles.topToggle} onClick={toggleCollapsed} aria-pressed={collapsed} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar to icons'} title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
-            {collapsed ? <PanelLeftOpen size={18} strokeWidth={1.75} aria-hidden="true" /> : <PanelLeftClose size={18} strokeWidth={1.75} aria-hidden="true" />}
-          </button>
+          <button type="button" className={styles.topToggle} onClick={toggleCollapsed} aria-pressed={collapsed} aria-label={collapsed ? 'Show menu' : 'Hide menu'} title={collapsed ? 'Show menu' : 'Hide menu'}>{collapsed ? 'Menu' : 'Hide menu'}</button>
           {openSection ? (
             <div className={styles.topTitle}>
               <span className={styles.topIcon} aria-hidden="true">{smallIcon(openSection.icon, 18)}</span>
-              <span className={styles.topName}>{openSection.label}</span>
+              <span className={styles.topName}>
+                <PortalCrumbs section={openSection.id} sectionLabel={openSection.label} />
+              </span>
             </div>
           ) : (
             <div className={styles.topTitle}><span className={styles.topName}>{frame?.greeting ?? 'Dashboard'}</span></div>
@@ -569,11 +671,13 @@ function DesktopShell({
           <div className={styles.topRight}>
             {frame?.viewAs}
             <div className={styles.topSearch}><PortalSearch compact /></div>
+            <PortalCopyLink />
+            <PortalThemeToggle />
             <NotificationBell inline />
           </div>
         </header>
         {frame?.banners && <div className={styles.frameBanners}>{frame.banners}</div>}
-        <div className={styles.frameBody}>
+        <div className={styles.frameBody} data-save-anchor>
           <div className={styles.desktopContent}>
             <AnimatePresence mode="wait" initial={false}>
               {openSection ? (
@@ -584,7 +688,7 @@ function DesktopShell({
                   animate={{ opacity: 1, transition: { duration: 0.15 } }}
                   exit={{ opacity: 0, transition: { duration: 0.08 } }}
                 >
-                  <div className={styles.panelBody}>{openSection.content}</div>
+                  <div className={styles.panelBody} key={navNonce}>{openSection.content}</div>
                 </motion.div>
               ) : (
                 <motion.div
@@ -596,7 +700,8 @@ function DesktopShell({
                 >
                   {frame?.tiles && <div className={styles.homeTiles}>{frame.tiles}</div>}
                   {homeExtras && <div className={styles.homeExtras}>{homeExtras}</div>}
-                  <HomeGroups groupedSections={groupedSections} open={open} />
+                  {/* The dashboard's own "Your tools" replaces this list; the sidebar still lists every page. */}
+                  {!homeExtras && <HomeGroups groupedSections={groupedSections} open={open} forYou={forYou} />}
                 </motion.div>
               )}
             </AnimatePresence>

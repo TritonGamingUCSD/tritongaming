@@ -1,4 +1,4 @@
-.page { max-width: 1000px; margin-inline: auto; }
+.page { max-width: 1240px; margin-inline: auto; }
 
 .header {
   display: flex;
@@ -12,13 +12,13 @@
 .title {
   font-family: var(--font-futura-heavy);
   font-size: clamp(1.25rem, 2.5vw, 1.6rem);
-  color: var(--white);
+  color: var(--pp-ink);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 0.2rem;
 }
 
-.sub { font-size: var(--fs-meta); color: rgba(242, 241, 240, 0.6); }
+.sub { font-size: var(--fs-meta); color: rgba(var(--pp-ink-rgb), 0.87); }
 
 
 .headerActions {
@@ -45,14 +45,16 @@
   padding: 0.2rem 0.625rem;
   border-radius: var(--radius-pill);
   border: 1px solid;
+  white-space: nowrap;
 }
 
 .groupCount {
   font-size: 0.7rem;
-  color: rgba(242,241,240,0.25);
-  background: rgba(255,255,255,0.05);
+  color: rgba(var(--pp-ink-rgb), 0.68);
+  background: rgba(var(--pp-ink-rgb), 0.05);
   padding: 0.1rem 0.4rem;
   border-radius: var(--radius-pill);
+  white-space: nowrap;
 }
 
 /* auto-fill + minmax, not auto-fit with a fixed width — the old recipe
@@ -71,13 +73,11 @@
 }
 
 .card {
+  composes: card from '../../../../components/ui/Surface.module.css';
   display: flex;
   align-items: center;
   gap: 0.625rem;
   padding: 0.625rem 0.75rem;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 0.75rem;
   transition: background 0.15s, border-color 0.15s;
   /* .card/.listRow are <button>s now (open the detail panel) */
   cursor: pointer;
@@ -85,7 +85,7 @@
   text-align: left;
   width: 100%;
 }
-.card:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); }
+.card:hover { background: rgba(var(--pp-ink-rgb), 0.05); border-color: rgba(var(--pp-ink-rgb), 0.23); }
 
 .list {
   display: flex;
@@ -98,7 +98,7 @@
   align-items: center;
   gap: 0.625rem;
   padding: 0.5rem 0.75rem;
-  background: rgba(255,255,255,0.02);
+  background: rgba(var(--pp-ink-rgb), 0.02);
   border: 1px solid transparent;
   border-radius: 0.5rem;
   transition: background 0.15s, border-color 0.15s;
@@ -107,7 +107,7 @@
   text-align: left;
   width: 100%;
 }
-.listRow:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.08); }
+.listRow:hover { background: rgba(var(--pp-ink-rgb), 0.05); border-color: rgba(var(--pp-ink-rgb), 0.20); }
 .listRow .avatar,
 .listRow .avatarFallback { width: 32px; height: 32px; font-size: 0.8rem; }
 .listRow .info { display: flex; align-items: baseline; gap: 0.5rem; min-width: 0; flex: 1; }
@@ -128,20 +128,20 @@
 .avatar {
   width: 38px; height: 38px; border-radius: 50%;
   object-fit: cover; flex-shrink: 0;
-  border: 2px solid rgba(255,255,255,0.08);
+  border: 2px solid rgba(var(--pp-ink-rgb), 0.20);
 }
 
 .avatarFallback {
   width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-futura-heavy); font-size: 0.9rem; color: var(--white);
+  font-family: var(--font-futura-heavy); font-size: 0.9rem; color: #011941; /* theme-ok */
 }
 
 .info { min-width: 0; }
 
 .name {
   font-family: var(--font-futura-medium);
-  font-size: 0.875rem; color: var(--white);
+  font-size: 0.875rem; color: var(--pp-ink);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   margin-bottom: 0.15rem;
 }
@@ -150,12 +150,12 @@
   font-size: var(--fs-label);
   font-family: var(--font-renegare);
   letter-spacing: 0.04em;
-  color: var(--yellow-text);
+  color: var(--p-accent-text);
   margin-bottom: 0.15rem;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
-.detail { font-size: 0.7rem; color: rgba(242,241,240,0.28); margin-top: 0.1rem; }
+.detail { font-size: 0.7rem; color: rgba(var(--pp-ink-rgb), 0.79); margin-top: 0.1rem; }
 
 /* ── Detail panel ── */
 .overlay {
@@ -187,28 +187,15 @@
   text-align: center;
   gap: 0.4rem;
   padding: 2.25rem 1.75rem 1.75rem;
-  background: linear-gradient(165deg, rgba(22, 27, 40, 0.97), rgba(8, 11, 20, 0.99));
-  border: 1px solid rgba(255, 199, 44, 0.2);
-  border-radius: 1.25rem;
-  box-shadow: 0 24px 56px -20px rgba(0, 0, 0, 0.7);
+  /* The same card the public team page shows, in the portal's current theme (the public page itself stays navy). */
+  --mc-rgb: var(--pp-ink-rgb); --mc-strong: var(--pp-ink); --mc-accent: var(--p-accent-text); --mc-ok: var(--pp-ok); --mc-ring: rgba(var(--pp-ink-rgb), 0.3);
+  background: var(--pp-card);
+  color: var(--pp-ink);
+  border: 3px solid rgba(var(--pp-ink-rgb), 0.85);
+  border-radius: 8px;
+  box-shadow: 6px 6px 0 rgba(var(--pp-ink-rgb), 0.25);
 }
 
-.closeBtn {
-  position: absolute;
-  top: 0.875rem;
-  right: 0.875rem;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: var(--white);
-  transition: background 0.15s;
-}
-.closeBtn:hover { background: rgba(255, 199, 44, 0.15); }
 
 
 @keyframes copiedPop {
@@ -225,13 +212,13 @@
 /* ── Compact detail card ── tighter panel, a single info list, one links row. */
 .detailPanel { max-width: 340px; padding: 1.5rem 1.25rem 1.1rem; gap: 0.25rem; }
 .infoRow svg, .copyRow > svg:first-child, .copyRow > img { flex-shrink: 0; opacity: 0.8; }
-.copyRow:hover { color: var(--yellow-text); }
-.copyRowText { min-width: 0; overflow-wrap: anywhere; font-weight: 600; color: var(--white); }
+.copyRow:hover { color: var(--p-accent-text); }
+.copyRowText { min-width: 0; overflow-wrap: anywhere; font-weight: 600; color: var(--pp-ink); }
 
 /* School info: major (primary) on its own line with the cap icon right beside
    it, then year · college underneath. */
-.schoolMain { font-size: 0.82rem; font-weight: 600; color: var(--white); text-wrap: balance; }
-.schoolMeta { font-size: 0.76rem; color: rgba(242, 241, 240, 0.65); }
+.schoolMain { font-size: 0.82rem; font-weight: 600; color: var(--pp-ink); text-wrap: balance; }
+.schoolMeta { font-size: 0.76rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 
 /* ── Grid and list, tidied ── */
 .header { align-items: flex-end; margin-bottom: 1.5rem; }
@@ -262,10 +249,18 @@
 .keyBadge svg { transform: rotate(-40deg); }
 .keyIcons svg { filter: none; transform: none; }
 .keyBadge svg { transform: rotate(-40deg); }
-.detailKeys { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin-top: 0.9rem; padding: 0.7rem 0.9rem; border-radius: 0.8rem; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.04); }
-.detailKeysLabel { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(242, 241, 240, 0.65); }
+.detailKeys {
+  composes: card from '../../../../components/ui/Surface.module.css';
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+  padding: 0.7rem 0.9rem;
+}
+.detailKeysLabel { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.88); }
 .detailKeysList { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-.keyPill { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.7rem; border-radius: 999px; color: #111c33; font-size: 0.82rem; font-weight: 700; }
+.keyPill { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.7rem; border-radius: 999px; color: #111c33; font-size: 0.82rem; font-weight: 700; white-space: nowrap; }
 .keyPill svg { transform: rotate(-40deg); }
 
 .idleTag { display: inline-flex; align-items: center; gap: 0.25rem; margin-left: 0.4rem; padding: 0.1rem 0.55rem; border-radius: 999px; background: #94a3b8; color: #0b1426; font-size: 0.64rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; vertical-align: middle; white-space: nowrap; }
@@ -274,4 +269,18 @@
 .idle { border-style: dashed; border-color: rgba(148, 163, 184, 0.5); background: repeating-linear-gradient(135deg, rgba(148, 163, 184, 0.12) 0 8px, transparent 8px 16px); }
 .idle:hover { background: repeating-linear-gradient(135deg, rgba(148, 163, 184, 0.18) 0 8px, transparent 8px 16px); border-color: rgba(148, 163, 184, 0.7); }
 .idle .avatar, .idle .avatarFallback { filter: grayscale(1); opacity: 0.55; }
-.idle .name { color: rgba(242, 241, 240, 0.7); }
+.idle .name { color: rgba(var(--pp-ink-rgb), 0.89); }
+
+/* A long name shortens with an ellipsis; the badges beside it never shrink or get clipped (the old ellipsis box cut the key's ring and pushed
+   the key out of view on phones). The ring takes the card colour so it reads in light and dark. */
+.card .name, .listRow .name { display: flex; align-items: center; gap: 0.4rem; overflow: visible; text-overflow: clip; }
+.nameText { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card .name .keyIcons, .listRow .name .keyIcons, .name .idleTag { flex-shrink: 0; margin-left: 0; }
+.name .idleTag { margin-top: 0; }
+.keyBadge { box-shadow: 0 0 0 2px var(--pp-card), 0 0 0 3px rgba(var(--pp-ink-rgb), 0.35); }
+
+
+.tabsRow { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; }
+.tabsRow > :first-child { flex: 1 1 14rem; width: auto; min-width: 0; }
+.tabsRow > :last-child:not(:first-child) { flex: none; }
+.closeBtn { position: absolute; top: 0.875rem; right: 0.875rem; }

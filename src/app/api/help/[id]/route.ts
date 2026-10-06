@@ -64,7 +64,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const { error } = await auth.svc.from('help_tickets').update(patch).eq('id', id);
   if (error) return NextResponse.json({ error: 'Failed to update.' }, { status: 500 });
   if (auth.isStaff && patch.status === 'resolved' && t.user_id !== auth.user.id) {
-    await notify(auth.svc, [t.user_id], { title: `Resolved: ${t.subject}`, body: 'Your help ticket was marked resolved. Reply on it if you still need help.', href: `/portal?section=help&ticket=${id}` });
+    await notify(auth.svc, [t.user_id], { title: `Resolved: ${t.subject}`, body: 'Your help ticket was marked resolved. Reply on it if you still need help.', href: `/portal/help?ticket=${id}` });
   }
   return NextResponse.json({ ok: true });
 }

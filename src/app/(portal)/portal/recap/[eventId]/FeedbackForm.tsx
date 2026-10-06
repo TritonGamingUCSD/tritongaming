@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Star } from 'lucide-react';
 import Notice from '@/components/ui/Notice';
-import Button from '@/components/ui/Button';
+import SaveBar from '@/components/portal/SaveBar';
 import { Textarea } from '@/components/ui/Field';
 import { createClient } from '@/lib/supabase/client';
 import { showToast } from '@/lib/toast';
@@ -18,11 +18,10 @@ export default function FeedbackForm({ eventId, userId, initialRating, initialCo
   const [saved, setSaved] = useState({ rating: initialRating, comment: initialComment });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const { markSaved } = useUnsavedChanges({ rating, comment });
-  const dirty = rating !== saved.rating || comment !== saved.comment;
+  const { dirty, markSaved, saved: savedValue } = useUnsavedChanges({ rating, comment });
 
   async function submit() {
-    if (!rating) return;
+    if (!rating) { setError('Pick a star rating first.'); return; }
     setSaving(true);
     setError('');
     const { error: err } = await createClient()
@@ -47,9 +46,7 @@ export default function FeedbackForm({ eventId, userId, initialRating, initialCo
       </div>
       <Textarea value={comment} onChange={(e) => setComment(e.target.value)} maxLength={1000} rows={3} placeholder="Anything we should keep doing or fix? (optional)" />
       {error && <Notice tone="error">{error}</Notice>}
-      <Button onClick={submit} disabled={!rating || !dirty} loading={saving}>
-        {saving ? 'Saving…' : saved.rating ? 'Update feedback' : 'Send feedback'}
-      </Button>
+      <SaveBar dirty={dirty} saving={saving} onSave={submit} saveLabel={saved.rating ? 'Update feedback' : 'Send feedback'} onDiscard={() => { const v = savedValue(); setRating(v.rating); setComment(v.comment); setError(''); }} />
     </div>
   );
 }

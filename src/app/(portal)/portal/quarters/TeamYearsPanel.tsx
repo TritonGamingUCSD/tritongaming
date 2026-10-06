@@ -1,5 +1,9 @@
 'use client';
 
+import SaveBar from '@/components/portal/SaveBar';
+import EditingNow from '@/components/portal/EditingNow';
+import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
+import SectionTabs from '@/components/ui/SectionTabs';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { Archive, Check, GraduationCap, Plus, Search, X } from 'lucide-react';
@@ -57,7 +61,7 @@ export default function TeamYearsPanel() {
   }, [data, year]);
 
   if (error && !data) return <Notice tone="error">{error}</Notice>;
-  if (!data) return <LoadingSpinner size={28} label="Loading…" theme="dark" />;
+  if (!data) return <LoadingSpinner size={28} label="Loading…" theme="auto" />;
 
   return (
     <div className={styles.page}>
@@ -65,9 +69,7 @@ export default function TeamYearsPanel() {
       {note && <Notice tone="success">{note}</Notice>}
 
       {data.years.length === 0 ? <p className={styles.empty}>No years yet. They appear once quarters are added{data.canEdit ? ', or add an earlier year by hand below' : ''}.</p> : (
-        <div className={styles.years} role="tablist" aria-label="Academic year">
-          {data.years.map((y) => <button key={y.start_year} type="button" role="tab" aria-selected={y.start_year === shown?.start_year} className={`${styles.chip} ${y.start_year === shown?.start_year ? styles.chipOn : ''}`} onClick={() => setYear(y.start_year)}>{y.label}</button>)}
-        </div>
+        <SectionTabs<string> label="Academic year" variant="segmented" value={String(shown?.start_year ?? '')} onChange={(v) => setYear(Number(v))} tabs={data.years.map((y) => ({ id: String(y.start_year), label: y.label }))} />
       )}
 
       {shown && (
@@ -134,15 +136,18 @@ function MemberRow({ m, canEdit, busy, onSave, onDelete }: { m: Member; canEdit:
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(m.title ?? '');
   const [tier, setTier] = useState<Tier>(m.tier);
+  const { dirty, markSaved, saved } = useUnsavedChanges({ title, tier });
   return (
     <li className={styles.member}>
       {m.avatar_url ? <Image src={m.avatar_url} alt="" width={32} height={32} unoptimized referrerPolicy="no-referrer" className={styles.avatar} /> : <span className={styles.avatarFallback}>{m.name[0]?.toUpperCase()}</span>}
       {editing ? (
-        <form className={styles.editForm} onSubmit={async (e) => { e.preventDefault(); if (await onSave({ title, tier })) setEditing(false); }}>
+        <form className={styles.editForm} onSubmit={(e) => e.preventDefault()}>
+          <EditingNow room={m.id ? `teamyear:${m.id}` : null} what={`${m.name}’s title`} />
           <strong>{m.name}</strong>
           <Select value={tier} onChange={(e) => setTier(e.target.value as Tier)} aria-label="Title level"><option value="exec">Exec</option><option value="lead">Lead</option><option value="officer">Officer</option></Select>
           <Input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={80} placeholder="Title, e.g. Events Lead" aria-label="Title" />
-          <Button type="submit" size="sm" loading={busy}>Save</Button><Button type="button" size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancel</Button>
+          <Button type="button" size="sm" variant="ghost" onClick={() => setEditing(false)}>{dirty ? 'Close without saving' : 'Close'}</Button>
+          <SaveBar dirty={dirty} saving={busy} message={`Unsaved changes for ${m.name}`} onSave={async () => { if (await onSave({ title, tier })) { markSaved(); setEditing(false); } }} onDiscard={() => { const v = saved(); setTitle(v.title); setTier(v.tier); }} />
         </form>
       ) : (
         <span className={styles.memberName}><strong>{m.name}</strong><small>{m.title || 'No title'}{m.manual ? ' · added by hand' : ''}</small></span>

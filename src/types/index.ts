@@ -3,6 +3,8 @@ import type { SocialEmbed, PhotoAlbumEntry, ScheduleItem, EventSponsor } from '@
 import type { EventTheme } from '@/lib/eventTheme';
 
 export type Event = {
+  /** When the event page was last saved (used for the sitemap's lastmod). */
+  updated_at?: string;
   _id: string;
   slug: string;
   full_name: string;

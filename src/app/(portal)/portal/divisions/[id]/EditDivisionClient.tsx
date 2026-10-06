@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { deleteIfReplaced } from '@/lib/imageUpload';
+import type { CreditPerson } from '@/lib/creditPeople';
 import DivisionForm, { type DivisionFormValues } from '../DivisionForm';
 
 export default function EditDivisionClient({
@@ -9,11 +10,13 @@ export default function EditDivisionClient({
   initial,
   canManageDirectory,
   backHref,
+  creditPeople,
 }: {
   divisionId: string;
   initial: DivisionFormValues;
   canManageDirectory: boolean;
   backHref: string;
+  creditPeople?: CreditPerson[];
 }) {
   const router = useRouter();
 
@@ -55,6 +58,7 @@ export default function EditDivisionClient({
       onSubmit={handleUpdate}
       backHref={backHref}
       canRename={canManageDirectory}
+      creditPeople={creditPeople}
     />
   );
 }

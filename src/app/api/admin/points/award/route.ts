@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/capabilities';
 
-// Mirrors /api/admin/battlepass/award — accepts multiple members at once,
+// Accepts multiple members at once,
 // all credited the same amount in a single call.
 export async function POST(request: Request) {
   const supabase = await createClient();

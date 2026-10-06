@@ -2,10 +2,13 @@
 // Kept free of React and Supabase so the rules can be tested.
 
 export interface TreeDoc { id: string; title: string; category_id: string | null; parent_id: string | null; order_index: number; content?: string; tags?: string[] }
-export interface TreeCategory { id: string; name: string; order_index: number }
+export interface TreeCategory { id: string; name: string; order_index: number; color?: string | null }
 
 export interface DocNode<T extends TreeDoc> { doc: T; children: DocNode<T>[]; depth: number }
-export interface DocSection<T extends TreeDoc> { id: string | null; name: string; nodes: DocNode<T>[]; count: number }
+export interface DocSection<T extends TreeDoc> { id: string | null; name: string; color: string | null; nodes: DocNode<T>[]; count: number }
+
+/** The colours a category can take (a dot and a stripe in the docs list). */
+export const CATEGORY_COLORS = ['#2563eb', '#7c3aed', '#db2777', '#dc2626', '#ea580c', '#ca8a04', '#16a34a', '#0d9488', '#64748b'];
 
 export const UNCATEGORIZED = 'Uncategorized';
 const byOrder = <T extends TreeDoc>(a: T, b: T) => a.order_index - b.order_index || a.title.localeCompare(b.title);
@@ -23,11 +26,11 @@ export function buildSections<T extends TreeDoc>(docs: T[], categories: TreeCate
   const roots = docs.filter((d) => !d.parent_id || !ids.has(d.parent_id));
   const count = (n: DocNode<T>): number => 1 + n.children.reduce((s, c) => s + count(c), 0);
   const cats = [...categories].sort((a, b) => a.order_index - b.order_index || a.name.localeCompare(b.name));
-  const make = (id: string | null, name: string): DocSection<T> => {
+  const make = (id: string | null, name: string, color: string | null = null): DocSection<T> => {
     const nodes = roots.filter((d) => (d.category_id ?? null) === id).sort(byOrder).map((d) => node(d, 0, new Set()));
-    return { id, name, nodes, count: nodes.reduce((s, n) => s + count(n), 0) };
+    return { id, name, color, nodes, count: nodes.reduce((s, n) => s + count(n), 0) };
   };
-  const sections = cats.map((c) => make(c.id, c.name));
+  const sections = cats.map((c) => make(c.id, c.name, c.color ?? null));
   const loose = make(null, UNCATEGORIZED);
   return [...sections, ...(loose.count ? [loose] : [])].filter((s) => s.count > 0 || s.id !== null);
 }
@@ -74,6 +77,8 @@ export function reorder<T extends TreeDoc>(siblings: T[], movingId: string, befo
 // ── Search ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 export interface SearchHit<T extends TreeDoc> { doc: T; titleMatch: boolean; snippet: string | null; score: number }
 const plain = (md: string) => md.replace(/```[\s\S]*?```/g, ' ').replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[#>*_`~|-]+/g, ' ').replace(/\s+/g, ' ').trim();
+/** The first line or two of a doc as plain text, for cards. */
+export const docSummary = (md: string, max = 110): string => { const t = plain(md); return t.length > max ? `${t.slice(0, max).trimEnd()}…` : t; };
 export const searchTerms = (q: string) => q.toLowerCase().split(/\s+/).map((t) => t.trim()).filter(Boolean);
 
 // Every word has to appear somewhere (title, tags or text). Titles and tags rank above body text. The snippet is the stretch of text around the first match.

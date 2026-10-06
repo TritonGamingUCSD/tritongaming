@@ -22,8 +22,8 @@
 }
 
 .sectionTitle { margin: 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: clamp(1.6rem, 3.6vw, 2.8rem); line-height: 1.02; text-transform: uppercase; color: var(--white); }
-.sectionTitle span { font-family: var(--font-brick); text-transform: none; color: var(--yellow); font-size: 1.2em; }
-.sectionSub { margin: 0; max-width: 46ch; font-family: var(--font-renegare); font-size: 1.35rem; line-height: 1.2; color: var(--yellow); transform: rotate(-1deg); }
+.sectionTitle span { font-family: var(--font-brick); text-transform: none; color: var(--sky-text); font-size: 1.2em; }
+.sectionSub { margin: 0; max-width: 46ch; font-family: var(--font-renegare); font-size: 1.35rem; line-height: 1.2; color: var(--sky-text); transform: rotate(-1deg); }
 
 .pathways {
   position: relative;
@@ -48,9 +48,9 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   will-change: transform;
 }
-.pathway[data-pathway='officer'] { transform: rotate(-2.2deg); background: var(--yellow); }
+.pathway[data-pathway='officer'] { transform: rotate(-2.2deg); background: var(--sky); color: var(--white); }
 .pathway[data-pathway='discord'] { transform: rotate(1.6deg); margin-top: 1.4rem; }
-.pathway[data-pathway='social'] { transform: rotate(-1.2deg); background: #9fc4e8; }
+.pathway[data-pathway='social'] { transform: rotate(-1.2deg); background: var(--sky); color: var(--white); }
 .pathway[data-pathway='portal'] { transform: rotate(2.2deg); margin-top: 0.8rem; }
 .pathway:hover { transform: rotate(0deg) translateY(-6px); box-shadow: 10px 10px 0 rgba(0, 0, 0, 0.55); z-index: 2; }
 .pathway::before { content: ''; position: absolute; top: -0.7rem; left: 50%; width: 4.6rem; height: 1.5rem; margin-left: -2.3rem; background: var(--tape); transform: rotate(-3deg); clip-path: polygon(0 8%, 6% 0, 12% 10%, 100% 0, 96% 50%, 100% 92%, 90% 100%, 6% 92%, 0 100%, 4% 50%); }
@@ -58,7 +58,10 @@
 .note { font-family: var(--font-brick); font-size: 1.5rem; line-height: 1; transform: rotate(-2deg); transform-origin: left center; }
 .pathTitle { margin: 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.2rem; line-height: 1.05; text-transform: uppercase; }
 .pathBody { margin: 0; font-family: var(--font-futura-medium); font-size: 0.95rem; line-height: 1.45; color: #2a3550; }
-.pathway[data-pathway='officer'] .pathBody, .pathway[data-pathway='social'] .pathBody { color: #14213f; }
+.pathway[data-pathway='officer'] .pathBody, .pathway[data-pathway='social'] .pathBody { color: var(--white); }
+.pathway[data-pathway='officer'] .note, .pathway[data-pathway='social'] .note { color: var(--sky-text); }
+.pathway[data-pathway='officer'] .pathCta, .pathway[data-pathway='social'] .pathCta { border-bottom-color: var(--white); }
+.pathway[data-pathway='officer'] .cardLink:focus-visible, .pathway[data-pathway='social'] .cardLink:focus-visible { outline-color: var(--white); }
 .pathCta { margin-top: 0.3rem; font-family: var(--font-renegare); font-size: 0.76rem; letter-spacing: 0.12em; text-transform: uppercase; border-bottom: 3px solid var(--ink); align-self: flex-start; padding-bottom: 2px; }
 .cardLink { position: absolute; inset: 0; z-index: 2; }
 .cardLink:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }

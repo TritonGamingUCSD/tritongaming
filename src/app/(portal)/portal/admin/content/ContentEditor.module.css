@@ -8,20 +8,20 @@
 /* ── Block list (left column) ── */
 
 .searchInput {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(var(--pp-ink-rgb), 0.05);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.23);
   border-radius: 0.5rem;
   padding: 0.625rem 0.875rem;
-  color: var(--white);
+  color: var(--pp-ink);
   font-family: var(--font-futura-medium);
   font-size: 0.9rem;
   transition: border-color 0.2s;
 }
-.searchInput:focus { outline: none; border-color: rgba(255,199,44,0.4); }
+.searchInput:focus { outline: none; border-color: var(--pp-ink); box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.55); }
 
 .noResults {
   font-size: 0.82rem;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
   padding: 0.5rem 0.25rem;
 }
 
@@ -36,9 +36,10 @@
   font-family: var(--font-renegare);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
   padding: 0 0.25rem;
   margin-bottom: 0.1rem;
+  white-space: nowrap;
 }
 
 
@@ -46,7 +47,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--yellow-text);
+  color: var(--p-accent-text);
   flex-shrink: 0;
   width: 2rem;
 }
@@ -55,7 +56,7 @@
 .blockTitle {
   font-family: var(--font-futura-medium);
   font-size: 0.875rem;
-  color: var(--white);
+  color: var(--pp-ink);
   margin-bottom: 0.2rem;
 }
 
@@ -73,7 +74,7 @@
 .lastEdited {
   margin-top: 0.375rem;
   font-size: 0.68rem;
-  color: rgba(242,241,240,0.2);
+  color: rgba(var(--pp-ink-rgb), 0.68);
   padding: 0 0 0 2.75rem;
 }
 
@@ -85,11 +86,9 @@
 
 /* ── Edit panel (right column) ── */
 .editPanel {
+  composes: card from '../../../../../components/ui/Surface.module.css';
   position: sticky;
   top: calc(var(--navbar-height, 64px) + 1.5rem);
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 1rem;
   overflow: hidden;
   min-height: 300px;
   transition: border-color 0.2s;
@@ -101,19 +100,19 @@
   align-items: flex-start;
   justify-content: space-between;
   padding: 1.25rem 1.25rem 1rem;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+  border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.18);
 }
 
 .editPanelIcon {
   display: inline-flex;
-  color: var(--yellow-text);
+  color: var(--p-accent-text);
   margin-bottom: 0.5rem;
 }
 
 .editPanelTitle {
   font-family: var(--font-futura-heavy);
   font-size: 1.05rem;
-  color: var(--white);
+  color: var(--pp-ink);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin-bottom: 0.25rem;
@@ -121,7 +120,7 @@
 
 .editPanelDesc {
   font-size: 0.8rem;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
   max-width: 380px;
   line-height: 1.5;
 }
@@ -138,7 +137,7 @@
   font-size: 0.78rem;
   font-family: var(--font-futura-heavy);
   letter-spacing: 0.04em;
-  color: var(--yellow-text);
+  color: var(--p-accent-text);
 }
 .viewLiveLink:hover { opacity: 0.8; }
 
@@ -150,69 +149,13 @@
   gap: 1.125rem;
 }
 
-.editActions {
-  padding: 1rem 1.25rem;
-  border-top: 1px solid rgba(255,255,255,0.07);
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  background: rgba(0,0,0,0.1);
-}
-
-.cancelBtn {
-  font-size: 0.85rem;
-  color: rgba(242, 241, 240, 0.6);
-  padding: 0.6rem 1.25rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-
-.cancelBtn:hover {
-  background: rgba(255,255,255,0.06);
-  color: rgba(242,241,240,0.7);
-}
-
-.saveBtn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.7rem 1.75rem;
-  background: var(--btn-primary-bg);
-  color: var(--btn-primary-text);
-  border: 1px solid var(--btn-primary-border);
-  box-shadow: var(--btn-primary-shadow);
-  border-radius: var(--radius-md);
-  font-family: var(--font-futura-heavy);
-  font-size: 0.85rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.saveBtn:hover:not(:disabled) { border-color: var(--btn-primary-border-hover); box-shadow: var(--btn-primary-shadow-hover); }
-.saveBtn:disabled { opacity: 0.6; cursor: not-allowed; }
-
-.savingSpinner {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(1,25,65,0.3);
-  border-top-color: var(--darkblue);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
 .editError {
   margin: 0 1.25rem;
   padding: 0.625rem 0.875rem;
   background: rgba(220,38,38,0.1);
   border: 1px solid rgba(220,38,38,0.2);
   border-radius: 0.5rem;
-  color: #fca5a5;
+  color: var(--pp-bad);
   font-size: 0.82rem;
 }
 
@@ -232,41 +175,27 @@
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
 }
 
 .optionalTag {
   font-size: 0.62rem;
   padding: 0.05rem 0.35rem;
-  background: rgba(255,255,255,0.06);
+  background: rgba(var(--pp-ink-rgb), 0.06);
   border-radius: var(--radius-pill);
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
   letter-spacing: 0.06em;
+  white-space: nowrap;
 }
 
 .fieldHint {
   font-size: 0.72rem;
-  color: rgba(242,241,240,0.25);
+  color: rgba(var(--pp-ink-rgb), 0.68);
   margin-top: 0.15rem;
 }
 
-.fieldInput {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 0.5rem;
-  padding: 0.625rem 0.875rem;
-  color: var(--white);
-  font-family: var(--font-futura-medium);
-  font-size: 0.9rem;
-  transition: border-color 0.2s;
-  width: 100%;
-}
+.fieldInput { composes: control from '../../../../../components/ui/Field.module.css'; }
 
-.fieldInput:focus {
-  outline: none;
-  border-color: rgba(255,199,44,0.4);
-  background: rgba(255,255,255,0.07);
-}
 
 .fieldTextarea {
   resize: vertical;
@@ -284,15 +213,15 @@
 .mdTabs {
   display: flex;
   gap: 0.25rem;
-  background: rgba(255,255,255,0.04);
+  background: rgba(var(--pp-ink-rgb), 0.04);
   border-radius: 0.4rem;
   padding: 0.15rem;
 }
 
 
 .mdPreview {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(var(--pp-ink-rgb), 0.03);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.20);
   border-radius: 0.5rem;
   padding: 0.75rem 0.875rem;
   min-height: 100px;
@@ -300,19 +229,17 @@
 
 .mdPreviewEmpty {
   font-size: 0.85rem;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
   font-style: italic;
 }
 
 /* Toggle */
 .toggleField {
+  composes: card from '../../../../../components/ui/Surface.module.css';
   display: flex;
   align-items: center;
   gap: 1rem;
   padding: 0.875rem 1rem;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 0.625rem;
   cursor: pointer;
 }
 
@@ -325,7 +252,7 @@
   width: 44px;
   height: 24px;
   border-radius: var(--radius-pill);
-  background: rgba(255,255,255,0.12);
+  background: rgba(var(--pp-ink-rgb), 0.12);
   position: relative;
   transition: background 0.2s;
 }
@@ -339,7 +266,7 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: white;
+  background: #f2f1f0;
   transition: transform 0.2s;
   box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
@@ -365,8 +292,8 @@
   border-radius: 0.5rem;
   font-size: 0.8rem;
   font-family: var(--font-futura-medium);
-  color: rgba(242, 241, 240, 0.65);
-  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(var(--pp-ink-rgb), 0.88);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.23);
   background: transparent;
   cursor: pointer;
   transition: all 0.15s;
@@ -377,8 +304,8 @@
 }
 
 .selectOpt:hover {
-  background: rgba(255,255,255,0.07);
-  color: var(--white);
+  background: rgba(var(--pp-ink-rgb), 0.07);
+  color: var(--pp-ink);
 }
 
 .selectOptActive { font-family: var(--font-futura-heavy); }
@@ -419,14 +346,14 @@
 }
 
 .rowDragging { opacity: 0.4; }
-.rowDragOver { outline: 2px solid rgba(255,199,44,0.5); outline-offset: 2px; }
+.rowDragOver { outline: 2px solid rgba(125, 180, 234,0.5); outline-offset: 2px; }
 
 .dragHandle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
   cursor: grab;
   touch-action: none;
 }
@@ -442,14 +369,14 @@
 
 .kvAdd {
   font-size: 0.8rem;
-  color: rgba(255,199,44,0.6);
+  color: rgba(125, 180, 234,0.6);
   cursor: pointer;
   padding: 0.4rem 0;
   transition: color 0.15s;
   text-align: left;
 }
 
-.kvAdd:hover { color: var(--yellow-text); }
+.kvAdd:hover { color: var(--p-accent-text); }
 
 /* ── Person list ─────────────────────────────────── */
 
@@ -465,7 +392,7 @@
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
 }
 
 /* ── Image list (sponsors) ────────────────────────── */
@@ -476,26 +403,24 @@
 }
 
 .imageCard {
+  composes: card from '../../../../../components/ui/Surface.module.css';
   display: flex;
   align-items: flex-start;
   gap: 0.875rem;
   padding: 0.875rem;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 0.75rem;
 }
 
 .imageCardLeft { flex-shrink: 0; }
 
 .imageLogo {
   width: 48px; height: 48px; object-fit: contain; border-radius: 0.375rem;
-  background: rgba(255,255,255,0.06);
+  background: rgba(var(--pp-ink-rgb), 0.06);
 }
 
 .imageLogoFallback {
-  width: 48px; height: 48px; border-radius: 0.375rem; background: rgba(255,255,255,0.08);
+  width: 48px; height: 48px; border-radius: 0.375rem; background: rgba(var(--pp-ink-rgb), 0.08);
   display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-futura-heavy); font-size: 1.1rem; color: rgba(242, 241, 240, 0.65);
+  font-family: var(--font-futura-heavy); font-size: 1.1rem; color: rgba(var(--pp-ink-rgb), 0.88);
 }
 
 .imageCardFields {
@@ -537,19 +462,24 @@
 .shell { display: flex; flex-direction: column; gap: 0.25rem; }
 .topBar { margin-bottom: 0.25rem; }
 .layout { grid-template-columns: 300px minmax(0, 1fr); gap: 1.25rem; }
-.searchNote { font-size: 0.74rem; color: rgba(242, 241, 240, 0.6); padding: 0 0.2rem; }
+.searchNote { font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.87); padding: 0 0.2rem; }
 .rows { display: flex; flex-direction: column; gap: 0.3rem; }
 .row {
-  display: flex; align-items: center; gap: 0.7rem; width: 100%; text-align: left;
-  padding: 0.6rem 0.75rem; border-radius: 0.75rem; cursor: pointer;
-  background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.07);
+  composes: card from '../../../../../components/ui/Surface.module.css';
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 }
-.row:hover { background: rgba(255, 255, 255, 0.06); }
+.row:hover { background: rgba(var(--pp-ink-rgb), 0.06); }
 .rowText { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-.rowTitle { font-size: 0.88rem; color: var(--white); }
-.rowCat { color: rgba(242, 241, 240, 0.6); font-size: 0.75rem; }
-.rowPreview { font-size: 0.74rem; color: rgba(242, 241, 240, 0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rowTitle { font-size: 0.88rem; color: var(--pp-ink); }
+.rowCat { color: rgba(var(--pp-ink-rgb), 0.87); font-size: 0.75rem; }
+.rowPreview { font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.87); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dirtyDot { width: 8px; height: 8px; border-radius: 50%; background: #fbbf24; flex-shrink: 0; }
 .editPanel { top: calc(var(--portal-header-h, 0px) + 0.75rem); }
 
@@ -560,37 +490,44 @@
 
 /* Editor is a plain card under the tabs now (no side list / slide-over) */
 .shell { gap: 0.9rem; }
-.editorCard { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 1rem; overflow: hidden; }
+.editorCard {
+  composes: card from '../../../../../components/ui/Surface.module.css';
+  overflow: hidden;
+}
 .shell > .searchInput { max-width: 360px; }
-.cancelBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* One toolbar row: the page's block sub-tabs on the left, search tucked in on the right. */
 .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
-.searchWrap { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; padding: 0 0.8rem; height: 38px; width: 230px; max-width: 100%; border-radius: 999px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: rgba(242, 241, 240, 0.65); }
-.searchWrap:focus-within { border-color: rgba(255, 199, 44, 0.45); color: var(--yellow-text); }
+.searchWrap { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; padding: 0 0.8rem; height: 38px; width: 230px; max-width: 100%; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.05); border: 1px solid rgba(var(--pp-ink-rgb), 0.23); color: rgba(var(--pp-ink-rgb), 0.88); }
+.searchWrap:focus-within { outline: none; border-color: var(--pp-ink); box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.55); color: var(--p-accent-text); }
 @media (max-width: 640px) { .searchWrap { width: 100%; } }
 
 /* ── Live preview beside the editor ── */
 .editorWithPreview { display: block; }
-.previewShow { display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.7rem; padding: 0.4rem 0.8rem; border-radius: 0.6rem; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.04); color: rgba(242, 241, 240, 0.8); font: inherit; font-size: 0.78rem; cursor: pointer; }
+.previewShow { display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.7rem; padding: 0.4rem 0.8rem; border-radius: 0.6rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.26); background: rgba(var(--pp-ink-rgb), 0.04); color: rgba(var(--pp-ink-rgb), 0.92); font: inherit; font-size: 0.78rem; cursor: pointer; }
 .previewPane { margin-top: 0.9rem; display: flex; flex-direction: column; gap: 0.5rem; }
 .previewBar { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
-.previewTitle { font-family: var(--font-futura-heavy); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(242, 241, 240, 0.85); }
-.previewTitle em { font-style: normal; text-transform: none; letter-spacing: 0; color: rgba(242, 241, 240, 0.6); margin-left: 0.4rem; }
+.previewTitle { font-family: var(--font-futura-heavy); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.97); }
+.previewTitle em { font-style: normal; text-transform: none; letter-spacing: 0; color: rgba(var(--pp-ink-rgb), 0.87); margin-left: 0.4rem; }
 .previewTools { display: flex; gap: 0.25rem; }
-.previewTool { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 0.5rem; border: 1px solid rgba(255, 255, 255, 0.1); background: transparent; color: rgba(242, 241, 240, 0.6); cursor: pointer; }
-.previewTool:hover { color: #fff; background: rgba(255, 255, 255, 0.06); }
-.previewToolOn { color: var(--yellow-text); border-color: rgba(255, 199, 44, 0.5); background: rgba(255, 199, 44, 0.1); }
+.previewTool { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 0.5rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.23); background: transparent; color: rgba(var(--pp-ink-rgb), 0.87); cursor: pointer; }
+.previewTool:hover { color: var(--pp-ink); background: rgba(var(--pp-ink-rgb), 0.06); }
+.previewToolOn { color: var(--p-accent-text); border-color: rgba(125, 180, 234, 0.5); background: rgba(125, 180, 234, 0.1); }
 
-.previewBox { border-radius: 0.9rem; border: 1px solid rgba(255, 255, 255, 0.1); background: #080f1d; overflow: hidden; display: flex; justify-content: center; }
+.previewBox {
+  composes: card from '../../../../../components/ui/Surface.module.css';
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+}
 .previewScaler { position: relative; overflow: hidden; }
-.previewFrame { border: 0; transform-origin: top left; background: #080f1d; display: block; }
-.previewNote { margin: 0; font-size: 0.72rem; color: rgba(242, 241, 240, 0.6); }
+.previewFrame { border: 0; transform-origin: top left; background: var(--pp-card); display: block; }
+.previewNote { margin: 0; font-size: 0.72rem; color: rgba(var(--pp-ink-rgb), 0.87); }
 @media (min-width: 1200px) {
   .editorWithPreview.previewOn { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
   .editorWithPreview.previewOn .previewPane { margin-top: 0; position: sticky; top: 0.5rem; }
 }
-.previewPick { margin-left: 0.5rem; padding: 0.15rem 0.4rem; border-radius: 0.4rem; border: 1px solid rgba(255, 255, 255, 0.15); background: rgba(255, 255, 255, 0.05); color: rgba(242, 241, 240, 0.85); font: inherit; font-size: 0.74rem; text-transform: none; letter-spacing: 0; }
+.previewPick { margin-left: 0.5rem; padding: 0.15rem 0.4rem; border-radius: 0.4rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.32); background: rgba(var(--pp-ink-rgb), 0.05); color: rgba(var(--pp-ink-rgb), 0.97); font: inherit; font-size: 0.74rem; text-transform: none; letter-spacing: 0; }
 .previewPick option { color: #111; }
 @media (min-width: 1200px) {
   .editorWithPreview.previewOn { grid-template-columns: minmax(380px, 5fr) minmax(0, 7fr); }
@@ -598,18 +535,25 @@
 
 /* Page layout: show / hide / reorder */
 .sectionList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
-.sectionRow { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.55rem 0.75rem; border-radius: 0.7rem; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.03); }
+.sectionRow {
+  composes: card from '../../../../../components/ui/Surface.module.css';
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0.75rem;
+}
 .sectionOff { opacity: 0.55; }
 .sectionOff .sectionName { text-decoration: line-through; }
-.sectionName { font-size: 0.88rem; color: var(--white); }
+.sectionName { font-size: 0.88rem; color: var(--pp-ink); }
 .sectionBtns { display: inline-flex; gap: 0.25rem; }
-.sectionBtn { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 0.5rem; border: 1px solid rgba(255, 255, 255, 0.1); background: transparent; color: rgba(242, 241, 240, 0.6); cursor: pointer; }
-.sectionBtn:hover:not(:disabled) { color: #fff; background: rgba(255, 255, 255, 0.07); }
+.sectionBtn { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 0.5rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.23); background: transparent; color: rgba(var(--pp-ink-rgb), 0.87); cursor: pointer; }
+.sectionBtn:hover:not(:disabled) { color: var(--pp-ink); background: rgba(var(--pp-ink-rgb), 0.07); }
 .sectionBtn:disabled { opacity: 0.3; cursor: default; }
-.sectionBtnOn { color: var(--yellow-text); border-color: rgba(255, 199, 44, 0.4); }
+.sectionBtnOn { color: var(--p-accent-text); border-color: rgba(125, 180, 234, 0.4); }
 
 /* Full-screen preview: covers the whole window; the page is scaled to fit it. Esc or the button returns. */
-.previewFull { position: fixed !important; inset: 0; z-index: 1000; margin: 0 !important; padding: 0.75rem 1rem; background: #080f1d; }
+.previewFull { position: fixed !important; inset: 0; z-index: 1000; margin: 0 !important; padding: 0.75rem 1rem; background: var(--pp-card); }
 .previewFull .previewBox { flex: 1; min-height: 0; align-items: center; }
 .previewFull .previewNote { display: none; }
 
@@ -617,7 +561,7 @@
 
 /* Phone width: no dark bars at the sides; just the phone-shaped screen centered on the panel. */
 .previewBoxPhone { background: transparent; border: 0; border-radius: 0; }
-.previewBoxPhone .previewScaler { border-radius: 1.1rem; border: 1px solid rgba(255, 255, 255, 0.18); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45); }
+.previewBoxPhone .previewScaler { border-radius: 1.1rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.37); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45); }
 
 /* On a desktop-width window the preview is always there; it can only be hidden on narrower windows. */
 @media (max-width: 1199px) { .previewCollapsed { display: none; } }
@@ -625,4 +569,4 @@
 
 /* every block of the open page, stacked in page order */
 .editorStack { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
-.editorCardActive { border-color: rgba(255, 199, 44, 0.45); }
+.editorCardActive { border-color: rgba(125, 180, 234, 0.45); }

@@ -1,6 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useDraft } from '@/lib/useDraft';
+import DraftBanner from '@/components/portal/DraftBanner';
 import { CircleHelp, MessageSquareText, Inbox, MessageSquarePlus, ListChecks, ImagePlus, X, Send, ArrowLeft, UserCheck, CheckCircle2, RotateCcw } from 'lucide-react';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Notice from '@/components/ui/Notice';
@@ -11,11 +13,11 @@ import { useLiveParams, usePortalParams } from '@/lib/usePortalParams';
 import { uploadImageToStorage, parseStorageUrl, ALLOWED_IMAGE_TYPES } from '@/lib/imageUpload';
 import { formatPacificDateTime } from '@/lib/timezone';
 import { showToast } from '@/lib/toast';
-import { HELP_CATEGORIES, HELP_STATUSES, HELP_TEMPLATES, MAX_ATTACHMENTS, MAX_BODY, MAX_SUBJECT, type HelpCategory, type HelpStatus } from '@/lib/helpConstants';
+import { HELP_CATEGORIES, HELP_STATUSES, HELP_TEMPLATES, MAX_ATTACHMENTS, MAX_BODY, MAX_SUBJECT, roleRequest, type HelpCategory, type HelpStatus } from '@/lib/helpConstants';
 import styles from './help.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
 
-type Tab = 'new' | 'mine' | 'inbox' | 'replies';
+type Tab = 'ask' | 'mine' | 'inbox' | 'replies';
 interface TicketItem {
   id: string; user_id: string; user_name: string; category: HelpCategory; subject: string; status: HelpStatus;
   assigned_to: string | null; assignee_name: string | null; created_at: string; updated_at: string; last_from_user: boolean;
@@ -29,7 +31,7 @@ interface Detail {
 
 const catLabel = (c: string) => HELP_CATEGORIES.find((x) => x.id === c)?.label ?? c;
 const statusLabel = (s: string) => HELP_STATUSES.find((x) => x.id === s)?.label ?? s;
-const SECTION_NAMES: Record<string, string> = { home: 'Home', tickets: 'My Tickets', profile: 'Profile', activity: 'Activity', points: 'Rewards', battlepass: 'Battlepass', events: 'Events', checkin: 'Check-In', meetings: 'Meetings', members: 'TG Members', divisions: 'Divisions', 'division-members': 'Division Members', qrcode: 'QR Studio', docs: 'Documentation', albums: 'Photo Albums', admin: 'Admin', 'site-content': 'Site Content' };
+const SECTION_NAMES: Record<string, string> = { home: 'Home', tickets: 'My Tickets', profile: 'Profile', activity: 'Activity', points: 'Rewards', events: 'Events', checkin: 'Check-In', meetings: 'Meetings', members: 'TG Members', divisions: 'Divisions', 'division-members': 'Division Members', qrcode: 'QR Studio', docs: 'Documentation', albums: 'Photo Albums', admin: 'Admin', 'site-content': 'Site Content' };
 
 async function api<T = unknown>(url: string, init?: RequestInit): Promise<{ ok: boolean; data: T & { error?: string } }> {
   try {
@@ -43,8 +45,8 @@ async function api<T = unknown>(url: string, init?: RequestInit): Promise<{ ok: 
 export default function HelpSectionContent({ isStaff, userId }: { isStaff: boolean; userId: string }) {
   const nav = useUrlNav();
   const params = useLiveParams();
-  const sync = usePortalTabSync('help');
-  const valid: Tab[] = isStaff ? ['inbox', 'mine', 'new', 'replies'] : ['new', 'mine'];
+  const sync = usePortalTabSync('help', () => valid[0]);
+  const valid: Tab[] = isStaff ? ['inbox', 'mine', 'ask', 'replies'] : ['ask', 'mine'];
   const [tab, setTab] = useState<Tab>(valid.includes(nav.tab as Tab) ? (nav.tab as Tab) : valid[0]);
   const setParams = usePortalParams();
   const [openId, setOpenId] = useState<string | null>(params.get('ticket'));
@@ -63,11 +65,11 @@ export default function HelpSectionContent({ isStaff, userId }: { isStaff: boole
         onChange={pick}
         tabs={valid.map((id): { id: Tab; label: string; icon: React.ReactNode } => id === 'inbox'
           ? { id, label: 'Inbox', icon: <Inbox size={15} /> }
-          : id === 'new' ? { id, label: 'Ask for help', icon: <MessageSquarePlus size={15} /> }
+          : id === 'ask' ? { id, label: 'Ask for help', icon: <MessageSquarePlus size={15} /> }
           : id === 'replies' ? { id, label: 'Saved replies', icon: <MessageSquareText size={15} /> }
           : { id, label: 'My tickets', icon: <ListChecks size={15} /> })}
       />
-      {tab === 'new' && <NewTicket userId={userId} onCreated={created} />}
+      {tab === 'ask' && <NewTicket userId={userId} onCreated={created} />}
       {tab === 'replies' && isStaff && <CannedReplies />}
       {(tab === 'mine' || tab === 'inbox') && (openId
         ? <Thread id={openId} userId={userId} onBack={() => setOpenId(null)} />
@@ -184,13 +186,19 @@ function AttachmentPicker({ att }: { att: ReturnType<typeof useAttachments> }) {
 }
 
 function NewTicket({ userId, onCreated }: { userId: string; onCreated: (id: string) => void }) {
-  const [category, setCategory] = useState<HelpCategory>('question');
-  const [subject, setSubject] = useState('');
-  const [body, setBody] = useState(HELP_TEMPLATES.question);
+  // Arriving from "I need a role" on the dashboard: the account category, a subject and a starter message are already filled in.
+  const asks = useLiveParams();
+  const roleAsk = useRef(asks.get('topic') === 'role' ? roleRequest(asks.get('role')) : null).current;
+  const [category, setCategory] = useState<HelpCategory>(roleAsk ? 'account' : 'question');
+  const [subject, setSubject] = useState(roleAsk?.subject ?? '');
+  const [body, setBody] = useState(roleAsk?.body ?? HELP_TEMPLATES.question);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const att = useAttachments(userId);
   const [from, setFrom] = useState('Home');
+  // An unsent message is kept in this browser, so a reload or a lost connection does not lose it.
+  const draftValue = { category, subject, body };
+  const draft = useDraft('help-new', draftValue, (v) => !v.subject.trim() && (!v.body.trim() || v.body === HELP_TEMPLATES[v.category]));
   useEffect(() => {
     try { const s = sessionStorage.getItem('tg_help_from'); if (s) setFrom(SECTION_NAMES[s] ?? s); } catch { /* ignore */ }
   }, []);
@@ -205,12 +213,14 @@ function NewTicket({ userId, onCreated }: { userId: string; onCreated: (id: stri
     });
     setBusy(false);
     if (!ok) { setError(data.error ?? 'Failed to send.'); return; }
+    draft.clear();
     showToast('Sent. We’ll reply here and you’ll get a notification.');
     onCreated(data.id);
   }
 
   return (
     <form className={styles.card} onSubmit={submit}>
+      {draft.offer && <DraftBanner at={draft.offer.at} what="message" onContinue={() => { const d = draft.accept(); if (d) { setCategory(d.category); setSubject(d.subject); setBody(d.body); } }} onDiscard={draft.discard} />}
       <label className={styles.field}>
         <span className={styles.label}>What’s this about?</span>
         <Select value={category} onChange={(e) => {

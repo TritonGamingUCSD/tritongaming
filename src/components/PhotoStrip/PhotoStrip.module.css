@@ -1,4 +1,4 @@
-.caption { margin: 0 0 1.5rem; text-align: center; font-family: var(--font-renegare); font-size: clamp(1.05rem, 2.2vw, 1.45rem); color: var(--yellow-text); transform: rotate(-1deg); }
+.caption { margin: 0 0 1.5rem; text-align: center; font-family: var(--font-renegare); font-size: clamp(1.05rem, 2.2vw, 1.45rem); color: var(--sky-text); transform: rotate(-1deg); }
 .strip { list-style: none; margin: 0; padding: 0.6rem 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 2rem 1.75rem; }
 .print { position: relative; padding: 0.6rem 0.6rem 0.4rem; background: var(--paper); color: var(--ink); box-shadow: var(--hard-shadow); min-width: 0; }
 .t0 { transform: rotate(-1.5deg); }

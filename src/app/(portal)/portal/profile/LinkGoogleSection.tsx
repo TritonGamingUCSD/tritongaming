@@ -8,6 +8,7 @@ import type { UserIdentity } from '@supabase/supabase-js';
 import { X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import styles from './profile.module.css';
+import Button from '@/components/ui/Button';
 
 // Error codes auth/callback/route.ts can hand back after a failed
 // linkIdentity() redirect round-trip — see that route's own comment for
@@ -91,7 +92,7 @@ export default function LinkGoogleSection() {
     const supabase = createClient();
     const { error: err } = await supabase.auth.linkIdentity({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent('/portal?section=profile&tab=security')}` },
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent('/portal/profile/security')}` },
     });
     // On success this navigates away to Google's consent screen — setLinking(false)
     // only actually runs if it failed before that redirect happened.
@@ -154,9 +155,7 @@ export default function LinkGoogleSection() {
       </p>
 
       {error && <Notice tone="error">{error}</Notice>}
-      <button type="button" className={styles.saveBtn} onClick={handleLink} disabled={linking}>
-        {linking ? 'Redirecting…' : 'Link Another Google Account'}
-      </button>
+      <Button onClick={handleLink} loading={linking}>{linking ? 'Redirecting…' : 'Link Another Google Account'}</Button>
     </div>
   );
 }

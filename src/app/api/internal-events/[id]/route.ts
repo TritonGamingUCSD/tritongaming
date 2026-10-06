@@ -48,7 +48,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'update', entityType: 'internal event', entityId: id, summary: `Updated internal event "${(patch.title as string) ?? cur.title}"` });
   if ('audience' in patch) {
     const when = formatPacificDateTime((patch.starts_at as string) ?? cur.starts_at, { weekday: true });
-    await notifyMeetingInvites(auth.svc, { title: (patch.title as string) ?? cur.title, when, href: '/portal?section=internal-events' },
+    await notifyMeetingInvites(auth.svc, { title: (patch.title as string) ?? cur.title, when, href: '/portal/internal-events' },
       { audience: patch.audience as string[] | null, invitees: patch.invitees as string[] | null, group_ids: patch.group_ids as string[] | null },
       { before: cur, hostId: auth.user.id });
   }

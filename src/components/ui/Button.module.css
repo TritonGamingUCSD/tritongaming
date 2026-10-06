@@ -1,36 +1,27 @@
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
-  font-family: var(--font-futura-heavy); letter-spacing: 0.04em; text-transform: uppercase; text-decoration: none; white-space: nowrap;
-  border-radius: var(--radius-sm); cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s, background 0.15s, color 0.15s;
-  min-height: 36px;
+  font-family: var(--font-futura-heavy); letter-spacing: 0.05em; text-transform: uppercase; text-decoration: none; white-space: nowrap;
+  border-radius: 6px; cursor: pointer; min-height: 38px; border: 1.5px solid var(--pp-ink);
+  transition: transform 0.1s, box-shadow 0.1s, background 0.12s;
 }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.md { padding: 0.55rem 1.5rem; font-size: 0.8rem; }
-.sm { padding: 0.4rem 0.9rem; font-size: 0.72rem; min-height: 32px; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+.md { padding: 0.55rem 1.3rem; font-size: 0.8rem; }
+.sm { padding: 0.35rem 0.85rem; font-size: 0.72rem; min-height: 32px; }
 
-.primary { background: var(--btn-primary-bg); color: var(--btn-primary-text); border: 1px solid var(--btn-primary-border); box-shadow: var(--btn-primary-shadow); }
-.primary:hover:not(:disabled) { background: #ffd45e; border-color: var(--btn-primary-border-hover); box-shadow: var(--btn-primary-shadow-hover); }
+/* Yellow is the one main action on a screen. */
+.primary { background: var(--yellow); color: #011941; border-color: #011941; box-shadow: 3px 3px 0 rgba(1, 25, 65, 0.85); } /* theme-ok */
+.primary:hover:not(:disabled) { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 rgba(1, 25, 65, 0.85); }
+.primary:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 1px 1px 0 rgba(1, 25, 65, 0.85); }
 
-.secondary { background: rgba(255, 255, 255, 0.05); color: rgba(242, 241, 240, 0.88); border: 1px solid rgba(255, 255, 255, 0.16); }
-.secondary:hover:not(:disabled) { background: rgba(255, 199, 44, 0.1); border-color: rgba(255, 199, 44, 0.5); color: var(--yellow-text); }
+.secondary { background: var(--pp-card); color: var(--pp-ink); border-color: rgba(var(--pp-ink-rgb), 0.25); box-shadow: 3px 3px 0 rgba(var(--pp-ink-rgb), 0.55); }
+.secondary:hover:not(:disabled) { background: rgba(125, 180, 234, 0.28); transform: translate(-1px, -1px); box-shadow: 4px 4px 0 rgba(var(--pp-ink-rgb), 0.55); }
+.secondary:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 1px 1px 0 rgba(var(--pp-ink-rgb), 0.55); }
 
-.ghost { background: transparent; color: rgba(242, 241, 240, 0.6); border: 1px solid transparent; text-transform: none; letter-spacing: 0; font-family: var(--font-futura-medium); font-size: 0.85rem; }
-.ghost:hover:not(:disabled) { background: rgba(255, 255, 255, 0.06); color: rgba(242, 241, 240, 0.9); }
+.ghost { background: transparent; color: var(--pp-ink); border-color: rgba(var(--pp-ink-rgb), 0.35); text-transform: none; letter-spacing: 0; font-family: var(--font-futura-medium); font-size: 0.86rem; }
+.ghost:hover:not(:disabled) { background: rgba(var(--pp-ink-rgb), 0.08); border-color: var(--pp-ink); }
 
-.danger { background: rgba(220, 38, 38, 0.1); color: #fca5a5; border: 1px solid rgba(220, 38, 38, 0.35); }
-.danger:hover:not(:disabled) { background: rgba(220, 38, 38, 0.2); border-color: rgba(248, 113, 113, 0.65); color: #fecaca; }
+.danger { background: var(--pp-card); color: var(--pp-bad); border-color: var(--pp-bad); }
+.danger:hover:not(:disabled) { background: rgba(185, 28, 28, 0.1); }
+.danger:active:not(:disabled) { transform: translateY(1px); }
 
-/* Keyboard focus and press feedback, for every button in the portal. */
-.btn:focus-visible { outline: 2px solid rgba(255, 199, 44, 0.7); outline-offset: 2px; }
-.btn:active:not(:disabled) { transform: translateY(1px); }
-.danger:focus-visible { outline-color: rgba(248, 113, 113, 0.75); }
-
-/* Match the icon buttons (edit / delete): the same rounded square, soft fill and border, gold hover; destructive is the same red. */
-.btn { border-radius: 0.6rem; transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.1s; }
-.sm { border-radius: 0.5rem; }
-.secondary { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.12); color: rgba(242, 241, 240, 0.78); }
-.secondary:hover:not(:disabled) { background: rgba(255, 199, 44, 0.12); border-color: rgba(255, 199, 44, 0.45); color: var(--yellow-text); }
-.ghost { border-color: rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.04); color: rgba(242, 241, 240, 0.78); }
-.ghost:hover:not(:disabled) { background: rgba(255, 199, 44, 0.12); border-color: rgba(255, 199, 44, 0.45); color: var(--yellow-text); }
-.danger { background: rgba(220, 38, 38, 0.1); border-color: rgba(248, 113, 113, 0.38); color: #f87171; }
-.danger:hover:not(:disabled) { background: rgba(220, 38, 38, 0.22); border-color: rgba(248, 113, 113, 0.7); color: #fca5a5; }
+.btn:focus-visible { outline: 3px solid rgba(125, 180, 234, 0.95); outline-offset: 2px; }

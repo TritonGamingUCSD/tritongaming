@@ -1,7 +1,7 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(0, 0, 0, 0.85); /* theme-ok */
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   z-index: 1000;
@@ -50,7 +50,7 @@
   height: 32px;
   border-radius: 50%;
   border: none;
-  background: rgba(0,0,0,0.08);
+  background: rgba(0,0,0,0.08); /* theme-ok */
   color: #333;
   font-size: 0.9rem;
   cursor: pointer;
@@ -60,7 +60,7 @@
   transition: background 0.15s;
 }
 
-.closeBtn:hover { background: rgba(0,0,0,0.15); }
+.closeBtn:hover { background: rgba(0,0,0,0.15); } /* theme-ok */
 
 .eventBlock {
   display: flex;
@@ -97,9 +97,9 @@
   gap: 0.35rem;
   margin-top: 0.5rem;
   padding: 0.3rem 0.75rem;
-  background: rgba(255, 199, 44, 0.12);
-  color: var(--yellow-text);
-  border: 1px solid rgba(255, 199, 44, 0.35);
+  background: rgba(125, 180, 234, 0.12);
+  color: var(--p-accent-text);
+  border: 1px solid rgba(125, 180, 234, 0.35);
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 700;
@@ -113,7 +113,7 @@
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.15em;
-  color: #011941;
+  color: #011941; /* theme-ok */
   text-transform: uppercase;
   margin-bottom: 0.5rem;
 }
@@ -221,7 +221,7 @@
 .eventName {
   font-size: 1.15rem;
   font-weight: 800;
-  color: #011941;
+  color: #011941; /* theme-ok */
   text-align: center;
 }
 
@@ -270,7 +270,7 @@
    fractions of whatever expiresIn actually is, not fixed seconds, so this
    holds up correctly regardless of the rotation window's actual length. */
 @keyframes ringDrain {
-  0%   { stroke-dashoffset: 0;      stroke: #ffc72c; }
+  0%   { stroke-dashoffset: 0;      stroke: var(--p-accent); }
   55%  { stroke-dashoffset: 165.9;  stroke: #f59e0b; }
   80%  { stroke-dashoffset: 241.28; stroke: #f97316; }
   100% { stroke-dashoffset: 301.6;  stroke: #dc2626; }
@@ -327,7 +327,7 @@
   font-size: 1.75rem;
   font-weight: 800;
   letter-spacing: 0.2em;
-  color: #011941;
+  color: #011941; /* theme-ok */
 }
 
 .fallbackValuePlaceholder {
@@ -354,7 +354,7 @@
   height: 72px;
   border-radius: 50%;
   background: #16a34a;
-  color: #fff;
+  color: #fff; /* theme-ok */
   font-size: 2.25rem;
   display: flex;
   align-items: center;
@@ -370,7 +370,7 @@
 .checkedInTitle {
   font-size: 1.2rem;
   font-weight: 800;
-  color: #011941;
+  color: #011941; /* theme-ok */
 }
 
 
@@ -388,15 +388,15 @@
   margin: 0.35rem 0 0.15rem;
   padding: 0.6rem 1.5rem;
   border-radius: 1rem;
-  background: #011941;
-  border: 2px solid #ffc72c;
+  background: #011941; /* theme-ok */
+  border: 2px solid var(--p-accent);
 }
 .pointsEarnedNumber {
   font-family: var(--font-soulmaze, inherit);
   font-size: 2.6rem;
   line-height: 1;
   font-weight: 800;
-  color: var(--yellow-text);
+  color: var(--p-accent-text);
   letter-spacing: 0.01em;
 }
 .pointsEarnedLabel {
@@ -404,7 +404,7 @@
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #ffffff;
+  color: #ffffff; /* theme-ok */
 }
 
 /* Exact check-in time (to the second) on the green screen so staff glancing
@@ -413,7 +413,7 @@
   font-size: 1.15rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
-  color: #011941;
+  color: #011941; /* theme-ok */
   letter-spacing: 0.02em;
 }
 
@@ -424,18 +424,18 @@
   min-width: 220px;
   margin-top: 0.55rem;
   padding-top: 0.55rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  border-top: 1px solid rgba(255, 255, 255, 0.18); /* theme-ok */
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
 }
 .tierProgressTop { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
 .tierProgressName { font-weight: 800; font-size: 0.9rem; }
-.tierProgressTotal { font-size: 0.75rem; color: rgba(255, 255, 255, 0.75); font-variant-numeric: tabular-nums; }
-.tierBar { height: 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.18); overflow: hidden; }
+.tierProgressTotal { font-size: 0.75rem; color: rgba(255, 255, 255, 0.75); font-variant-numeric: tabular-nums; } /* theme-ok */
+.tierBar { height: 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.18); overflow: hidden; } /* theme-ok */
 .tierBarFill { height: 100%; border-radius: 999px; transition: width 0.6s ease; }
-.tierNext { font-size: 0.8rem; color: #fff; text-align: center; }
-.tierNext strong { color: var(--yellow-text); }
+.tierNext { font-size: 0.8rem; color: #fff; text-align: center; } /* theme-ok */
+.tierNext strong { color: var(--p-accent-text); }
 
 /* Tier-up celebration: the new tier pops in with a glow pulse while a burst
    of confetti falls behind it. Pure CSS; honors reduced motion below. */
@@ -451,9 +451,9 @@
   overflow: hidden;
   animation: tierUpPop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both, tierUpGlow 1.6s ease-in-out 0.7s 3;
 }
-.tierUpKicker { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; color: #fff; }
+.tierUpKicker { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; color: #fff; } /* theme-ok */
 .tierUpName { font-size: 1.9rem; font-weight: 900; line-height: 1.1; color: var(--tier-color); text-shadow: 0 0 18px var(--tier-color); }
-.tierUpFrom { font-size: 0.72rem; color: rgba(255, 255, 255, 0.75); margin-top: 0.1rem; }
+.tierUpFrom { font-size: 0.72rem; color: rgba(255, 255, 255, 0.75); margin-top: 0.1rem; } /* theme-ok */
 .confetti { position: absolute; inset: 0; pointer-events: none; }
 .confetti span {
   position: absolute;
@@ -482,7 +482,7 @@
 
 /* "Step 1 of 2" state after a scan while the AS Form is still unopened —
    deliberately amber and unfinished-looking, not the green "done" check. */
-.stepIcon { background: #f59e0b; color: #011941; animation: checkedInPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), stepPulse 1.8s ease-in-out 0.5s infinite; }
+.stepIcon { background: #f59e0b; color: #011941; animation: checkedInPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), stepPulse 1.8s ease-in-out 0.5s infinite; } /* theme-ok */
 @keyframes stepPulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.55); }
   50% { box-shadow: 0 0 0 14px rgba(245, 158, 11, 0); }
@@ -498,6 +498,25 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
-.stepTitle { font-size: 1.35rem; font-weight: 900; line-height: 1.2; color: #011941; text-align: center; }
+.stepTitle { font-size: 1.35rem; font-weight: 900; line-height: 1.2; color: #011941; text-align: center; } /* theme-ok */
 .stepSub { margin: 0; font-size: 0.82rem; color: rgba(1, 25, 65, 0.7); text-align: center; }
 @media (prefers-reduced-motion: reduce) { .stepIcon { animation: none; } }
+
+/* ═══ Ticket, redesigned: a paper ticket with a yellow header band and a torn stub line, ink borders, hard shadow.
+   Always light paper (not themed): the QR code needs a light ground to scan. ═══ */
+.backdrop { background: rgba(4, 7, 15, 0.88); backdrop-filter: none; -webkit-backdrop-filter: none; align-items: center; padding: 1rem; }
+.sheet {
+  background: #f2f1f0; color: #011941; border: 3px solid #011941; border-radius: 8px; box-shadow: 8px 8px 0 #000; /* theme-ok */
+  max-width: 400px; padding: 0 1.4rem 1.6rem; gap: 0.6rem; overflow-x: hidden;
+}
+.sheet::before { content: ''; display: block; height: 14px; margin: 0 -1.4rem 0.8rem; background: #ffc72c; border-bottom: 3px solid #011941; flex: none; align-self: stretch; }
+.closeBtn { z-index: 3; /* above the positioned event block that overlaps it, which used to swallow part of the clicks */ top: 1.7rem; right: 0.8rem; width: 40px; height: 40px; border-radius: 4px; border: 2px solid #011941; background: #f2f1f0; color: #011941; } /* theme-ok */
+.closeBtn:hover { background: #ffc72c; }
+.eventBlock { border-bottom: 0; padding-bottom: 1rem; margin-bottom: 0.4rem; position: relative; }
+.eventBlock::after { content: ''; position: absolute; left: -1.4rem; right: -1.4rem; bottom: 0; height: 0; border-bottom: 3px dashed rgba(1, 25, 65, 0.45); }
+.eventEyebrow { color: #011941; font-family: var(--font-renegare); letter-spacing: 0.16em; } /* theme-ok */
+.eventMeta { color: rgba(1, 25, 65, 0.75); font-size: 0.86rem; }
+.qrCanvas { border-radius: 4px; }
+.fastPassBadge { background: #ffc72c; color: #011941; border: 2px solid #011941; border-radius: 4px; box-shadow: 2px 2px 0 #011941; } /* theme-ok */
+.liveBadge { border: 2px solid #dc2626; border-radius: 3px; background: transparent; }
+.eventBlock { padding-inline: 2.6rem; }

@@ -26,7 +26,7 @@
   will-change: transform;
 }
 .statCell:nth-child(1) { transform: rotate(-2deg); }
-.statCell:nth-child(2) { transform: rotate(1.5deg); background: var(--yellow); margin-top: 0.8rem; }
+.statCell:nth-child(2) { transform: rotate(1.5deg); background: var(--sky); color: var(--white); margin-top: 0.8rem; }
 .statCell:nth-child(3) { transform: rotate(-1deg); }
 .statCell:nth-child(n + 4) { transform: rotate(1.2deg); }
 

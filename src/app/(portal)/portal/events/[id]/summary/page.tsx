@@ -8,10 +8,21 @@ import { formatEventDateRange, eventDayCount } from '@/lib/timezone';
 import { getEventSummary } from '@/lib/eventSummary';
 import { Gauge, Donut, Columns, RankBars, Funnel, SplitBar, PALETTE } from './SummaryCharts';
 import PrintButton from './PrintButton';
+import SectionHeader from '@/components/ui/SectionHeader';
+import Notice from '@/components/ui/Notice';
 import styles from './summary.module.css';
 
 export const metadata = { title: 'Event Summary' };
 export const dynamic = 'force-dynamic';
+
+function Group({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className={styles.group}>
+      <h2 className={styles.groupTitle}>{title}</h2>
+      <div className={styles.grid}>{children}</div>
+    </section>
+  );
+}
 
 function Card({ title, note, wide, children }: { title: string; note?: string; wide?: boolean; children: React.ReactNode }) {
   return (
@@ -52,36 +63,28 @@ export default async function EventSummaryPage({ params }: { params: Promise<{ i
 
   return (
     <div className={styles.page}>
-      <Link href="/portal?section=events" className={styles.back}>← Back to Events</Link>
+      <Link href="/portal/events" className={styles.back}>← Back to Events</Link>
+      <SectionHeader title={event.title} sub={<>{formatEventDateRange(event.start_date, event.end_date, { weekday: true })}{event.location && ` · ${event.location}`}</>}
+        actions={<span className={styles.noPrint}><PrintButton /></span>} />
 
-      <header className={styles.hero}>
-        <div className={styles.heroText}>
-          <p className={styles.kicker}>Event summary</p>
-          <h1 className={styles.title}>{event.title}</h1>
-          <p className={styles.sub}>
-            {formatEventDateRange(event.start_date, event.end_date, { weekday: true })}
-            {event.location && ` · ${event.location}`}
-          </p>
-          <div className={styles.tiles}>
-            {tiles.map((t) => (
-              <div key={t.label} className={styles.tile}>
-                <span className={styles.tileIcon}>{t.icon}</span>
-                <span className={styles.tileValue}>{t.value}</span>
-                <span className={styles.tileLabel}>{t.label}</span>
-              </div>
-            ))}
-          </div>
+      <div className={styles.stats}>
+        <div className={styles.gaugeTile}><Gauge value={s.attendanceRate} label="showed up" /></div>
+        <div className={styles.tiles}>
+          {tiles.map((t) => (
+            <div key={t.label} className={styles.tile}>
+              <span className={styles.tileIcon}>{t.icon}</span>
+              <span className={styles.tileValue}>{t.value}</span>
+              <span className={styles.tileLabel}>{t.label}</span>
+            </div>
+          ))}
         </div>
-        <Gauge value={s.attendanceRate} label="showed up" />
-      </header>
-
-      <div className={`${styles.actions} ${styles.noPrint}`}>
-        <PrintButton />
       </div>
 
-      <p className={styles.note}>Breakdowns cover the {s.checkedIn} checked-in attendee{s.checkedIn === 1 ? '' : 's'}. Aggregates only — nobody&apos;s individual answers are shown here.</p>
+      {s.checkedIn === 0
+        ? <Notice tone="info">Nobody has checked in yet, so the breakdowns below are empty. They fill in as people check in.</Notice>
+        : <p className={styles.note}>Breakdowns cover the {s.checkedIn} checked-in attendee{s.checkedIn === 1 ? '' : 's'}. Aggregates only; nobody&apos;s individual answers are shown here.</p>}
 
-      <div className={styles.grid}>
+      <Group title="Attendance">
         <Card title="Attendance funnel" note={s.cancelled ? `${s.cancelled} cancelled ticket${s.cancelled === 1 ? '' : 's'} not counted.` : undefined}>
           <Funnel steps={funnel} />
         </Card>
@@ -97,6 +100,9 @@ export default async function EventSummaryPage({ params }: { params: Promise<{ i
         <Card title="Where they came from" note="How each person found the event, recorded when they claimed a ticket. Tickets claimed before this tracking existed show as “Not tracked”.">
           <RankBars data={s.sources} color="#4a90e2" base={s.registered} />
         </Card>
+      </Group>
+      {s.checkedIn > 0 && <>
+      <Group title="Who came">
         <Card title="Gender"><Donut data={s.gender} /></Card>
         <Card title="Class year"><Donut data={s.year} /></Card>
         <Card title="Field of study" note="Majors grouped into broad areas (a double major counts under the first one listed).">
@@ -107,9 +113,14 @@ export default async function EventSummaryPage({ params }: { params: Promise<{ i
         </Card>
         <Card title="Colleges"><Donut data={s.college} /></Card>
         <Card title="Pronouns"><Donut data={s.pronouns} /></Card>
+      </Group>
+      <Group title="What they play and want">
         <Card title="Platforms" note="% of attendees — they can pick several."><RankBars data={s.platforms} color="#a78bfa" base={s.checkedIn} /></Card>
         <Card title="Favorite games" note="% of attendees. Common short names are merged (Smash, SSBU → Super Smash Bros.). They can list several."><RankBars data={s.games} color="#34d399" base={s.checkedIn} /></Card>
         <Card title="Division interest" note="% of attendees — they can pick several."><RankBars data={s.divisions} color="#f472b6" base={s.checkedIn} /></Card>
+      </Group>
+      </>}
+      <Group title="Feedback">
         <Card title="Attendee feedback" wide>
           {s.feedback.count === 0 ? (
             <p className={styles.note}>No feedback yet — attendees can leave a rating from their ticket after the event.</p>
@@ -120,7 +131,7 @@ export default async function EventSummaryPage({ params }: { params: Promise<{ i
             </>
           )}
         </Card>
-      </div>
+      </Group>
     </div>
   );
 }

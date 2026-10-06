@@ -47,6 +47,7 @@ function mapSupabaseEvent(row: Record<string, unknown>): Event {
     points_value: (row.points_value as number) ?? 0,
     theme: cleanTheme(row.theme),
     page_blocks: cleanBlocks(row.page_blocks),
+    updated_at: row.updated_at ? new Date(row.updated_at as string).toISOString() : undefined,
   };
 }
 

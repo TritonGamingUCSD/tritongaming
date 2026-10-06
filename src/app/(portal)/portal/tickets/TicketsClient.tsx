@@ -2,6 +2,7 @@
 
 import Notice from '@/components/ui/Notice';
 import { Fragment, useEffect, useState, type ReactNode } from 'react';
+import { usePortalParams } from '@/lib/usePortalParams';
 import WeekHead from '@/components/ui/WeekHead';
 import { pacificKey, startsWeekGroup } from '@/lib/weekGroups';
 import Link from 'next/link';
@@ -93,8 +94,9 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
   function closeQr() {
     const wasCheckedIn = qrTicket ? tickets.find((t) => t.id === qrTicket.id)?.status === 'used' : false;
     setQrTicket(null);
+    setPortalParams({ qr: null });
     if (!wasCheckedIn) return;
-    if (!pathname.startsWith('/portal/tickets')) router.push('/portal?section=tickets');
+    if (!pathname.startsWith('/portal/tickets')) router.push('/portal/tickets');
     router.refresh();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -128,7 +130,16 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
       window.removeEventListener('online', preload);
     };
   }, [tickets]);
+  // /portal/tickets?qr=<ticket id> (the dashboard's "Show my QR") opens that ticket's code straight away.
+  const setPortalParams = usePortalParams();
   const [qrTicket, setQrTicket] = useState<TicketData | null>(null);
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('qr');
+    const t = id ? tickets.find((x) => x.id === id && x.status === 'active') : null;
+    if (t) setQrTicket(t);
+    // only on arrival: later changes to the ticket list must not reopen a code that was closed
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [purchasing, setPurchasing] = useState<string | null>(null);
   const [error, setError] = useState('');
   // Claimed ahead of the event: confirm it instead of opening the QR code (which only matters on the day).
@@ -168,7 +179,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
       const data = await res.json();
       if (!res.ok) {
         if (data.needsProfile) {
-          router.push('/portal?section=profile&next=/portal?section=tickets');
+          router.push('/portal/profile?next=/portal/tickets');
           return;
         }
         setError(data.error || 'Something went wrong. Please try again.');

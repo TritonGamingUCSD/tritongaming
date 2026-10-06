@@ -94,9 +94,16 @@ export default async function GetInvolvedPage() {
                 <li key={perk} className={styles.perkItem}><span className={styles.perkDot} aria-hidden="true">▸</span> {perk}</li>
               ))}
             </ul>
-            <a href={officer.apply_href as string} target="_blank" rel="noopener noreferrer" className={styles.applyBtn}>
-              {(officer.apply_text as string) || 'Apply now'} <span aria-hidden="true">→</span>
-            </a>
+            {officer.applications_closed ? (
+              <div className={styles.closedNote} role="status">
+                <strong className={styles.closedTitle}>Applications closed right now</strong>
+                <span>{(officer.closed_message as string) || 'Applications are closed right now. Follow our Discord and Instagram to hear when they reopen.'}</span>
+              </div>
+            ) : (
+              <a href={officer.apply_href as string} target="_blank" rel="noopener noreferrer" className={styles.applyBtn}>
+                {(officer.apply_text as string) || 'Apply now'} <span aria-hidden="true">→</span>
+              </a>
+            )}
           </div>
           <div className={styles.officerMeta}>
             {flyerUrl && (

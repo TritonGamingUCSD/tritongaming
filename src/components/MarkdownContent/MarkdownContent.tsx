@@ -1,7 +1,9 @@
-import { Children, cloneElement, isValidElement, type ReactElement, type ReactNode } from 'react';
-import ReactMarkdown from 'react-markdown';
+'use client';
+
+import { Children, cloneElement, isValidElement, useMemo, type ReactElement, type ReactNode } from 'react';
+import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { headingId } from '@/lib/markdownToc';
+import { extractToc, headingId } from '@/lib/markdownToc';
 import styles from './MarkdownContent.module.css';
 
 // Renders admin-authored Markdown (event details, post-event notes, etc.)
@@ -37,13 +39,16 @@ function asCallout(children: ReactNode): { kind: keyof typeof CALLOUT_LABEL; bod
   return { kind: m[1].toLowerCase() as keyof typeof CALLOUT_LABEL, body };
 }
 
-// `headingIds` gives h2/h3 an id so a table of contents can link to them.
+// `headingIds` gives h1 to h5 an id (repeated titles get -1, -2 like the table of contents) so a table of contents can link to them.
 export default function MarkdownContent({ children, className, headingIds }: { children: string; className?: string; headingIds?: boolean }) {
-  return (
-    <div className={`${styles.markdown} ${className ?? ''}`}>
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        components={{
+  // Ids come from the heading's line, the same way the table of contents numbers repeated titles, so the two always match
+  // (counting while rendering would give a different id whenever React renders a heading twice).
+  // The component functions must keep the same identity between renders: new ones every time would make React throw away and rebuild every heading
+  // (and anything watching them, like the table-of-contents highlight) on each re-render.
+  const components = useMemo((): Components => {
+    const byLine = headingIds ? new Map(extractToc(children).map((t) => [t.line, t.id])) : null;
+    const idFor = (text: string, node?: { position?: { start?: { line?: number } } }) => byLine?.get(node?.position?.start?.line ?? -1) ?? headingId(text);
+    return {
           blockquote: ({ children: c }) => {
             const call = asCallout(c);
             return call ? <aside className={`${styles.callout} ${styles['callout_' + call.kind]}`}><strong className={styles.calloutLabel}>{CALLOUT_LABEL[call.kind]}</strong>{call.body}</aside> : <blockquote>{c}</blockquote>;
@@ -54,10 +59,19 @@ export default function MarkdownContent({ children, className, headingIds }: { c
             ? <a href={href} target="_blank" rel="noopener noreferrer">{c}</a>
             : <a href={href}>{c}</a>),
           ...(headingIds ? {
-            h2: ({ children: c }: { children?: ReactNode }) => <h2 id={headingId(textOf(c))}>{c}</h2>,
-            h3: ({ children: c }: { children?: ReactNode }) => <h3 id={headingId(textOf(c))}>{c}</h3>,
+            h1: ({ children: c, node }: { children?: ReactNode; node?: { position?: { start?: { line?: number } } } }) => <h1 id={idFor(textOf(c), node)}>{c}</h1>,
+            h2: ({ children: c, node }: { children?: ReactNode; node?: { position?: { start?: { line?: number } } } }) => <h2 id={idFor(textOf(c), node)}>{c}</h2>,
+            h3: ({ children: c, node }: { children?: ReactNode; node?: { position?: { start?: { line?: number } } } }) => <h3 id={idFor(textOf(c), node)}>{c}</h3>,
+            h4: ({ children: c, node }: { children?: ReactNode; node?: { position?: { start?: { line?: number } } } }) => <h4 id={idFor(textOf(c), node)}>{c}</h4>,
+            h5: ({ children: c, node }: { children?: ReactNode; node?: { position?: { start?: { line?: number } } } }) => <h5 id={idFor(textOf(c), node)}>{c}</h5>,
           } : {}),
-        }}
+        };
+  }, [children, headingIds]);
+  return (
+    <div data-md className={`${styles.markdown} ${className ?? ''}`}>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={components}
       >
         {children}
       </ReactMarkdown>

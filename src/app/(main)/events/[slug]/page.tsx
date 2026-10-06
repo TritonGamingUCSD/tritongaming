@@ -196,7 +196,7 @@ export default async function EventDetailPage({ params }: Params) {
 
             {!isPast && (
               <div className={styles.ctaRow} data-avoid>
-                <a href="/portal?section=tickets" className={styles.ticketBtn}>
+                <a href="/portal/tickets" className={styles.ticketBtn}>
                   <span className={styles.stubLeft}><Ticket size={20} strokeWidth={1.75} aria-hidden="true" /></span>
                   <span className={styles.stubRight}>
                     {event.audience === 'ucsd_only'

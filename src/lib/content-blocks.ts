@@ -371,6 +371,8 @@ export const CONTENT_BLOCKS = [
       { name: 'title',      label: 'Title',         type: 'text'     as const, placeholder: 'Shape Gaming at UC San Diego' },
       { name: 'body',       label: 'Body Text',     type: 'textarea' as const },
       { name: 'perks',      label: 'Perks List',    type: 'lines'    as const, placeholder: 'One perk per line' },
+      { name: 'applications_closed', label: 'Applications Closed Right Now', type: 'toggle' as const, optional: true },
+      { name: 'closed_message', label: 'Closed Message', type: 'textarea' as const, placeholder: 'Applications are closed right now. Follow our Discord and Instagram to hear when they reopen.', optional: true },
       { name: 'apply_href', label: 'Apply Button URL', type: 'url'   as const },
       { name: 'stat1_label', label: 'Stat 1 — Label', type: 'text' as const, placeholder: 'Applications Open' },
       { name: 'stat1_value', label: 'Stat 1 — Value', type: 'text' as const, placeholder: 'Fall & Winter Quarter' },
@@ -534,7 +536,7 @@ export const FIELD_ORDER: Record<string, string[]> = {
   'page.events': ['label', 'title', 'subtitle', 'next_label', 'next_title', 'upcoming_label', 'upcoming_title', 'past_label', 'past_title', 'empty'],
   'page.sponsors': ['hero_label', 'hero_title', 'hero_subtitle', 'mission_text', 'sponsors_label', 'sponsors_title', 'sponsors_empty', 'offer_label', 'offer_title', 'offer_subtitle', 'offer1_title', 'offer1_body', 'offer2_title', 'offer2_body', 'offer3_title', 'offer3_body', 'offer4_title', 'offer4_body', 'cta_heading', 'cta_sub', 'strip_caption'],
   'page.get-involved': ['hero_label', 'hero_title', 'hero_subtitle', 'ways_label', 'ways_title', 'way1_title', 'way1_body', 'way1_cta', 'way1_href', 'way2_title', 'way2_body', 'way2_cta', 'way2_href', 'way3_title', 'way3_body', 'way3_cta', 'way3_href', 'strip_caption'],
-  'page.get-involved.officer': ['label', 'title', 'body', 'perks', 'stat1_label', 'stat1_value', 'stat2_label', 'stat2_value', 'stat3_label', 'stat3_value', 'recruitment_flyer_url', 'apply_text', 'apply_href'],
+  'page.get-involved.officer': ['label', 'title', 'body', 'perks', 'stat1_label', 'stat1_value', 'stat2_label', 'stat2_value', 'stat3_label', 'stat3_value', 'recruitment_flyer_url', 'apply_text', 'apply_href', 'applications_closed', 'closed_message'],
   'page.membership': ['hero_label', 'hero_title', 'hero_subtitle', 'price', 'validity', 'intro_text', 'purchase_cta', 'purchase_url', 'partners_label', 'partners_title', 'partners_empty', 'strip_caption'],
   'page.media': ['hero_label', 'hero_title', 'hero_subtitle', 'videos_label', 'videos_title', 'videos_empty', 'albums_label', 'albums_title', 'albums_link', 'albums_empty', 'strip_caption'],
 };

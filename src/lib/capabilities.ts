@@ -48,7 +48,7 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // prospect would want, unlike day-to-day ops docs or the events calendar.
   view_photo_albums: ['officer', 'lead', 'exec', 'admin', 'recruit', 'alumni'],
   manage_photo_albums: ['lead', 'exec', 'admin'],
-  // Creating/editing/retiring shop items (member Rewards and Battlepass) —
+  // Creating/editing/retiring shop items —
   // tightened to exec+ only, same bar as manage_points' "correction-level
   // ops decisions are exec+" reasoning below.
   manage_rewards_shop: ['exec', 'admin'],
@@ -66,6 +66,12 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // service-role RPC, so the API route's own check is the real boundary,
   // not an RLS policy keyed to this capability.
   manage_points: ['exec', 'admin'],
+  // Shifts: exec set up the stations and open signup; officers and leads claim cells. UI/API gating only (the shift tables have no direct policies;
+  // every read and write goes through the API with the service role), so there is no role_capabilities row for these two.
+  manage_shifts: ['exec', 'admin'],
+  // The order exec appear on the public Team page and in TG Members.
+  manage_board_order: ['exec', 'admin'],
+  signup_shifts: ['officer', 'lead', 'exec', 'admin'],
   // Weekly Gen Meeting: only exec (and admin) can open check-in and show the code; everyone on the
   // team — recruits included — can check themselves in by typing it. UI/API gating only (the
   // meeting routes use the service role, so these routes are the real boundary).
@@ -152,7 +158,13 @@ export function isVerifiedMember(roles: RoleGrant[]): boolean {
 // is_rewards_eligible() mirrors this list (see 20261002160000_role_visibility.sql).
 const REWARDS_ELIGIBLE_ROLES: AppRole[] = ['ucsd', 'officer', 'lead', 'exec', 'division', 'admin', 'recruit', 'alumni'];
 
+// The team (officer, lead, exec) runs Rewards rather than using it, and recruits and alumni aren't eligible either:
+// no points, no leaderboard entry, no Rewards tile.
+// This is UI/leaderboard gating only; the DB function is_rewards_eligible() still lists these roles.
+const REWARDS_EXCLUDED_ROLES: AppRole[] = ['officer', 'lead', 'exec', 'recruit', 'alumni'];
+
 export function isRewardsEligible(roles: RoleGrant[]): boolean {
+  if (roles.some((r) => REWARDS_EXCLUDED_ROLES.includes(r.role))) return false;
   return roles.some((r) => REWARDS_ELIGIBLE_ROLES.includes(r.role));
 }
 
@@ -167,6 +179,11 @@ const ORG_TITLE_ROLES: AppRole[] = ['officer', 'lead', 'exec'];
 
 export function canSetOrgTitle(roles: RoleGrant[]): boolean {
   return roles.some((r) => ORG_TITLE_ROLES.includes(r.role));
+}
+
+/** A title is required for leads and exec only; officers may add one but are never asked for it. */
+export function requiresOrgTitle(roles: RoleGrant[]): boolean {
+  return roles.some((r) => r.role === 'lead' || r.role === 'exec');
 }
 
 // Permissions that can be handed to a person or group on top of their role (Admin → Access). Only for things

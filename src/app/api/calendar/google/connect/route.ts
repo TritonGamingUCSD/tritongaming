@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.redirect(`${origin}/login`);
-  if (!googleConfigured()) return NextResponse.redirect(`${origin}/portal?section=calendar&gcal=not_configured`);
+  if (!googleConfigured()) return NextResponse.redirect(`${origin}/portal/calendar?gcal=not_configured`);
   const state = crypto.randomBytes(24).toString('hex');
   const res = NextResponse.redirect(authUrl(origin, state));
   res.cookies.set('gcal_state', state, { httpOnly: true, sameSite: 'lax', secure: origin.startsWith('https'), path: '/api/calendar/google', maxAge: 600 });

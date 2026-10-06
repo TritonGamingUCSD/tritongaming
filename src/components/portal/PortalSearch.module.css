@@ -4,54 +4,70 @@
 .inputWrap {
   position: relative; display: flex; align-items: center;
   border-radius: 0.8rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(var(--pp-chrome-rgb), 0.05);
+  border: 1px solid rgba(var(--pp-chrome-rgb), 0.12);
   transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
 }
-.inputWrap:hover { background: rgba(255, 255, 255, 0.07); }
-.inputFocus, .inputWrap:focus-within { border-color: rgba(255, 199, 44, 0.55); background: rgba(255, 255, 255, 0.07); box-shadow: 0 0 0 3px rgba(255, 199, 44, 0.12); }
+.inputWrap:hover { background: rgba(var(--pp-chrome-rgb), 0.07); }
+.inputFocus, .inputWrap:focus-within { border-color: rgba(125, 180, 234, 0.55); background: rgba(var(--pp-chrome-rgb), 0.07); box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.12); }
 
-.icon { position: absolute; left: 0.85rem; color: rgba(242, 241, 240, 0.65); pointer-events: none; }
+.icon { position: absolute; left: 0.85rem; color: rgba(var(--pp-chrome-rgb), 0.65); pointer-events: none; }
 .input {
   width: 100%; padding: 0.62rem 3.4rem 0.62rem 2.5rem;
   background: none; border: none; outline: none;
-  color: var(--white); font-family: var(--font-futura-medium); font-size: 0.88rem;
+  color: var(--pp-chrome-fg); font-family: var(--font-futura-medium); font-size: 0.88rem;
 }
-.input::placeholder { color: rgba(242, 241, 240, 0.6); }
+.input::placeholder { color: rgba(var(--pp-chrome-rgb), 0.6); }
 
 .kbd {
   position: absolute; right: 0.6rem; padding: 0.12rem 0.45rem; border-radius: 0.4rem;
-  font-family: var(--font-futura-medium); font-size: 0.68rem; color: rgba(242, 241, 240, 0.65);
-  background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.12);
+  font-family: var(--font-futura-medium); font-size: 0.68rem; color: rgba(var(--pp-chrome-rgb), 0.65);
+  background: rgba(var(--pp-chrome-rgb), 0.07); border: 1px solid rgba(var(--pp-chrome-rgb), 0.12);
 }
-.clearBtn { position: absolute; right: 0.55rem; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: none; background: rgba(255, 255, 255, 0.1); color: rgba(242, 241, 240, 0.75); cursor: pointer; }
-.clearBtn:hover { background: rgba(255, 255, 255, 0.18); }
+.clearBtn { position: absolute; right: 0.55rem; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: none; background: rgba(var(--pp-chrome-rgb), 0.1); color: rgba(var(--pp-chrome-rgb), 0.75); cursor: pointer; }
+.clearBtn:hover { background: rgba(var(--pp-chrome-rgb), 0.18); }
 
 .dropdown {
   position: absolute; top: calc(100% + 0.5rem); right: 0; left: auto; z-index: 60;
   width: max(100%, 400px); max-width: min(480px, 92vw); max-height: min(70vh, 460px); overflow-y: auto;
   padding: 0.4rem;
-  background: #0d1325; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 1rem;
+  background: var(--pp-chrome); border: 1px solid rgba(var(--pp-chrome-rgb), 0.14); border-radius: 1rem;
   box-shadow: 0 22px 50px -12px rgba(0, 0, 0, 0.7);
 }
 @media (max-width: 899px) { .dropdown { left: 0; right: 0; width: auto; max-width: none; } }
 
-.status { padding: 1.1rem 0.75rem; text-align: center; font-size: 0.82rem; color: rgba(242, 241, 240, 0.65); }
+.status { padding: 1.1rem 0.75rem; text-align: center; font-size: 0.82rem; color: rgba(var(--pp-chrome-rgb), 0.65); }
 
 .group { --accent: #34d399; padding: 0.2rem 0 0.35rem; }
-.group + .group { border-top: 1px solid rgba(255, 255, 255, 0.07); padding-top: 0.5rem; }
-.groupLabel { padding: 0.15rem 0.6rem 0.35rem; font-family: var(--font-futura-heavy); font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+.group + .group { border-top: 1px solid rgba(var(--pp-chrome-rgb), 0.07); padding-top: 0.5rem; }
+.groupLabel { padding: 0.15rem 0.6rem 0.35rem; font-family: var(--font-futura-heavy); font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase; color: color-mix(in srgb, var(--accent) 50%, var(--pp-chrome-fg)); white-space: nowrap; }
 
 .result { display: flex; align-items: center; gap: 0.7rem; padding: 0.5rem 0.6rem; border-radius: 0.65rem; text-decoration: none; transition: background 0.1s; }
 .result:hover, .resultActive { background: color-mix(in srgb, var(--accent) 12%, transparent); }
-.resultIcon { display: grid; place-items: center; width: 30px; height: 30px; flex-shrink: 0; border-radius: 0.55rem; color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.resultIcon { display: grid; place-items: center; width: 30px; height: 30px; flex-shrink: 0; border-radius: 0.55rem; color: color-mix(in srgb, var(--accent) 50%, var(--pp-chrome-fg)); background: color-mix(in srgb, var(--accent) 14%, transparent); }
 .resultText { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-.resultTitle { font-size: 0.88rem; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.resultTitle mark { background: none; color: var(--yellow-text); font-weight: 700; }
-.resultSubtitle { font-size: 0.72rem; color: rgba(242, 241, 240, 0.65); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.resultEnter { color: rgba(242, 241, 240, 0.6); opacity: 0; flex-shrink: 0; }
+.resultTitle { font-size: 0.88rem; color: var(--pp-chrome-fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.resultTitle mark { background: none; color: var(--pp-chrome-accent); font-weight: 700; }
+.resultSubtitle { font-size: 0.72rem; color: rgba(var(--pp-chrome-rgb), 0.65); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.resultSubtitle mark { background: transparent; color: inherit; font-weight: 700; }
+.resultEnter { color: rgba(var(--pp-chrome-rgb), 0.6); opacity: 0; flex-shrink: 0; }
 .resultActive .resultEnter { opacity: 1; }
 
-.hints { display: flex; gap: 0.9rem; padding: 0.5rem 0.7rem 0.2rem; margin-top: 0.2rem; border-top: 1px solid rgba(255, 255, 255, 0.07); font-size: 0.68rem; color: rgba(242, 241, 240, 0.6); }
-.hints kbd { margin-right: 0.25rem; padding: 0.05rem 0.35rem; border-radius: 0.3rem; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12); font-family: inherit; }
+.hints { display: flex; gap: 0.9rem; padding: 0.5rem 0.7rem 0.2rem; margin-top: 0.2rem; border-top: 1px solid rgba(var(--pp-chrome-rgb), 0.07); font-size: 0.68rem; color: rgba(var(--pp-chrome-rgb), 0.6); }
+.hints kbd { margin-right: 0.25rem; padding: 0.05rem 0.35rem; border-radius: 0.3rem; background: rgba(var(--pp-chrome-rgb), 0.08); border: 1px solid rgba(var(--pp-chrome-rgb), 0.12); font-family: inherit; }
 @media (hover: none) { .hints, .kbd { display: none; } }
+
+/* The big dashboard bar: the results panel is exactly as wide as the field, with larger rows to match. */
+.large { max-width: none; margin: 0; }
+.large .inputWrap { border-radius: 1rem; }
+.large .icon { left: 1.1rem; width: 20px; height: 20px; }
+.large .input { min-height: 3.4rem; padding-left: 3.1rem; font-size: 1.05rem; }
+.large .dropdown { left: 0; right: 0; width: auto; max-width: none; max-height: min(70vh, 560px); }
+.large .result { padding: 0.65rem 0.8rem; }
+.large .resultTitle { font-size: 0.98rem; }
+.large .resultSubtitle { font-size: 0.78rem; }
+.large .resultIcon { width: 34px; height: 34px; }
+
+/* The ring belongs to the whole field (.inputWrap:focus-within), so the bare input inside shows none of its own: otherwise a square blue box
+   sits inside the rounded field. */
+.input:focus, .input:focus-visible { outline: none; border: 0; box-shadow: none; background: none; }

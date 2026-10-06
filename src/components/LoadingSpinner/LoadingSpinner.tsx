@@ -6,9 +6,8 @@ interface Props {
   // 'dark' = spinner sits on the portal's dark navy background, so the
   // label needs light text; 'light' = the public site's mostly-white
   // content areas, so it needs dark-muted text. The ring itself (a
-  // translucent-gold track with a solid-gold leading edge) already reads
-  // fine against either background unchanged.
-  theme?: 'light' | 'dark';
+  // three cut-paper blocks that hop in turn) reads on either background.
+  theme?: 'light' | 'dark' | 'auto';
   // Fills the nearest positioned/flex ancestor at a sensible minimum
   // height and centers the spinner in it — for a whole loading.tsx page
   // or panel, as opposed to a small inline spinner sized to fit next to
@@ -21,7 +20,6 @@ interface Props {
 // while its own data is in flight — one visual language for "loading"
 // everywhere instead of each spot inventing its own.
 export default function LoadingSpinner({ size = 32, label, theme = 'light', fullHeight = false }: Props) {
-  const borderWidth = Math.max(2, Math.round(size / 10));
   return (
     <div
       className={`${styles.wrap} ${fullHeight ? styles.fullHeight : ''}`}
@@ -29,12 +27,14 @@ export default function LoadingSpinner({ size = 32, label, theme = 'light', full
       aria-live="polite"
     >
       <div
-        className={styles.spinner}
-        style={{ width: size, height: size, borderWidth }}
+        className={`${styles.blocks} ${theme === 'dark' ? styles.blocksDark : theme === 'auto' ? styles.blocksAuto : ''}`}
+        style={{ ['--ls' as string]: `${Math.max(8, Math.round(size / 3.2))}px` }}
         aria-hidden="true"
-      />
+      >
+        <span /><span /><span />
+      </div>
       {label ? (
-        <p className={`${styles.label} ${theme === 'dark' ? styles.labelDark : styles.labelLight}`}>{label}</p>
+        <p className={`${styles.label} ${theme === 'dark' ? styles.labelDark : theme === 'auto' ? styles.labelAuto : styles.labelLight}`}>{label}</p>
       ) : (
         <span className={styles.srOnly}>Loading</span>
       )}

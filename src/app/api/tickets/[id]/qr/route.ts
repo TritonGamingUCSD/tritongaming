@@ -36,28 +36,18 @@ export async function GET(request: Request, { params }: Params) {
   }
 
   // Does this member currently hold a fulfilled reward that grants a Fast
-  // Pass? Checked across both the member Rewards shop and the Battlepass
-  // shop (an officer's Fast Pass, if they have one, should show here too)
-  // — see 20260921105000_add_digital_rewards.sql's grants_fast_pass flag.
+  // Pass? Checked against the member Rewards shop — see 20260921105000_add_digital_rewards.sql's grants_fast_pass flag.
   // Not scoped to this specific event; it's a standing perk, not a
   // per-event consumable.
-  const [{ data: memberFastPass }, { data: officerFastPass }] = await Promise.all([
-    supabase
+  const { data: memberFastPass } = await
+  supabase
       .from('reward_redemptions')
       .select('id, reward:reward_items!inner(grants_fast_pass)')
       .eq('user_id', user.id)
       .eq('status', 'fulfilled')
       .eq('reward.grants_fast_pass', true)
-      .limit(1),
-    supabase
-      .from('officer_reward_redemptions')
-      .select('id, reward:officer_reward_items!inner(grants_fast_pass)')
-      .eq('user_id', user.id)
-      .eq('status', 'fulfilled')
-      .eq('reward.grants_fast_pass', true)
-      .limit(1),
-  ]);
-  const hasFastPass = (memberFastPass?.length ?? 0) > 0 || (officerFastPass?.length ?? 0) > 0;
+      .limit(1);
+  const hasFastPass = (memberFastPass?.length ?? 0) > 0;
 
   const event = Array.isArray(ticket.event) ? ticket.event[0] : ticket.event;
   const code = rotatingCode(ticket.ticket_code, currentWindow());

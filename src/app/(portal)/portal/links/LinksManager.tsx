@@ -1,5 +1,8 @@
 'use client';
 
+import SaveBar from '@/components/portal/SaveBar';
+import EditingNow from '@/components/portal/EditingNow';
+import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
 import { useCallback, useEffect, useState } from 'react';
 import { Copy, Check, Trash2, Pencil, ExternalLink, Link2 } from 'lucide-react';
 import Notice from '@/components/ui/Notice';
@@ -77,6 +80,9 @@ export default function LinksManager() {
 
   const host = origin.replace(/^https?:\/\//, '');
 
+  const editedLink = editing ? links?.find((l) => l.id === editing.id) : undefined;
+  const editDirty = !!editing && !!editedLink && (editing.slug !== editedLink.slug || editing.destination !== editedLink.destination || editing.note !== (editedLink.note ?? ''));
+  useUnsavedChanges(editDirty ? editing : 'CLEAN');
   return (
     <div className={styles.wrap}>
       <form className={styles.form} onSubmit={create}>
@@ -114,12 +120,15 @@ export default function LinksManager() {
             <li key={l.id} className={`${styles.item} ${l.is_active ? '' : styles.off}`}>
               {editing?.id === l.id ? (
                 <div className={styles.editRow}>
+                  <EditingNow room={`link:${l.id}`} what={`/${l.slug}`} />
                   <Input value={editing.slug} onChange={(e) => setEditing({ ...editing, slug: e.target.value.toLowerCase() })} aria-label="Short link name" />
                   <Input value={editing.destination} onChange={(e) => setEditing({ ...editing, destination: e.target.value })} aria-label="Destination" />
                   <Input value={editing.note} onChange={(e) => setEditing({ ...editing, note: e.target.value })} placeholder="Note" aria-label="Note" />
                   <div className={styles.editActions}>
-                    <Button size="sm" onClick={async () => { if (await update(l.id, { slug: editing.slug, destination: editing.destination, note: editing.note }, 'Link updated')) setEditing(null); }}>Save</Button>
-                    <Button size="sm" variant="ghost" onClick={() => setEditing(null)}>Cancel</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setEditing(null)}>{editDirty ? 'Close without saving' : 'Close'}</Button>
+                    <SaveBar dirty={editDirty} saving={saving} message={`Unsaved changes to /${l.slug}`}
+                      onSave={async () => { if (await update(l.id, { slug: editing.slug, destination: editing.destination, note: editing.note }, 'Link updated')) setEditing(null); }}
+                      onDiscard={() => setEditing({ id: l.id, slug: l.slug, destination: l.destination, note: l.note ?? '' })} />
                   </div>
                 </div>
               ) : (

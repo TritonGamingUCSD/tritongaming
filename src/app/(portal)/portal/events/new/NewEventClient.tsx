@@ -65,7 +65,7 @@ export default function NewEventClient({ initial = EMPTY_EVENT_FORM, seedCheckin
       return 'Failed to create event. Please try again.';
     }
     refreshPublicCache('events');
-    router.push('/portal?section=events');
+    router.push('/portal/events');
   }
 
   return (

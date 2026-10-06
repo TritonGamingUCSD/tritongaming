@@ -3,38 +3,38 @@
 .top { display: flex; align-items: center; gap: 0.75rem; }
 .shield { flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 0.8rem; background: var(--tone); color: #111c33; }
 .title { display: flex; flex-direction: column; flex: 1; min-width: 0; }
-.title strong { font-family: var(--font-futura-heavy); font-size: 1.05rem; color: var(--white); }
-.title span { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.74rem; color: rgba(242, 241, 240, 0.65); }
+.title strong { font-family: var(--font-futura-heavy); font-size: 1.05rem; color: var(--pp-ink); }
+.title span { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 .pipsWrap { display: inline-flex; align-items: center; }
 .pips { display: inline-flex; align-items: center; gap: 0.3rem; }
 .pips i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--tone) 70%, transparent); }
 .pips i.on { background: var(--tone); border-color: var(--tone); }
 /* The warning is a diamond set apart from the three round strikes, so the row reads "warning, then three strikes". */
 .pips i.warnPip { width: 12px; height: 12px; border-radius: 2px; transform: rotate(45deg); margin-right: 0.4rem; }
-.how { margin: 0; font-size: 0.8rem; color: rgba(242, 241, 240, 0.6); }
+.how { margin: 0; font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.87); }
 .mark { padding: 0.05rem 0.55rem; border-radius: 999px; font-size: 0.7rem; font-weight: 800; color: #111c33; background: #f87171; }
 .isWarning { border-left-color: #fbbf24 !important; }
 .isWarning .mark { background: #fbbf24; }
-.why { margin: 0; font-size: 0.8rem; color: rgba(242, 241, 240, 0.65); }
+.why { margin: 0; font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 .history { margin-top: 0.4rem; }
-.history summary { cursor: pointer; font-size: 0.8rem; color: rgba(242, 241, 240, 0.65); }
-.history summary:hover { color: var(--white); }
+.history summary { cursor: pointer; font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.88); }
+.history summary:hover { color: var(--pp-ink); }
 .history ul { margin-top: 0.5rem; }
-.limit { margin: 0; padding: 0.5rem 0.7rem; border-radius: 0.6rem; background: rgba(248, 113, 113, 0.18); color: #fecaca; font-size: 0.88rem; font-weight: 600; }
-.h3 { margin: 0.5rem 0 0; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(242, 241, 240, 0.65); }
-.muted { margin: 0; font-size: 0.86rem; color: rgba(242, 241, 240, 0.6); }
+.limit { margin: 0; padding: 0.5rem 0.7rem; border-radius: 0.6rem; background: rgba(248, 113, 113, 0.18); color: var(--pp-bad); font-size: 0.88rem; font-weight: 600; }
+.h3 { margin: 0.5rem 0 0; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.88); }
+.muted { margin: 0; font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.87); }
 .list, .vouchers { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
-.list li { display: flex; flex-direction: column; gap: 0.3rem; padding: 0.65rem 0.8rem; border-radius: 0.8rem; border: 1px solid rgba(255, 255, 255, 0.1); border-left: 4px solid #f87171; background: rgba(255, 255, 255, 0.03); }
-.list li.off { border-left-color: rgba(255, 255, 255, 0.2); }
-.off .reason { text-decoration: line-through; color: rgba(242, 241, 240, 0.65); }
+.list li { display: flex; flex-direction: column; gap: 0.3rem; padding: 0.65rem 0.8rem; border-radius: 0.8rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.23); border-left: 4px solid #f87171; background: rgba(var(--pp-ink-rgb), 0.03); }
+.list li.off { border-left-color: rgba(var(--pp-ink-rgb), 0.40); }
+.off .reason { text-decoration: line-through; color: rgba(var(--pp-ink-rgb), 0.88); }
 .row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.7rem; }
-.cat { padding: 0.05rem 0.55rem; border-radius: 999px; font-size: 0.68rem; font-weight: 700; color: rgba(242, 241, 240, 0.85); border: 1px solid rgba(255, 255, 255, 0.2); }
-.row time { font-size: 0.78rem; color: rgba(242, 241, 240, 0.6); }
-.row em { font-style: normal; font-size: 0.74rem; color: #6ee7b7; }
-.reason { margin: 0; font-size: 0.92rem; color: var(--white); overflow-wrap: anywhere; }
-.hint { margin: 0; font-size: 0.74rem; color: rgba(242, 241, 240, 0.6); }
-.vouchers li { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.6rem 0.8rem; border-radius: 0.8rem; border: 1px solid rgba(45, 212, 191, 0.3); background: rgba(45, 212, 191, 0.06); font-size: 0.88rem; color: var(--white); }
-.vouchers li svg { flex: none; margin-top: 0.15rem; color: #5eead4; }
+.cat { padding: 0.05rem 0.55rem; border-radius: 999px; font-size: 0.68rem; font-weight: 700; color: rgba(var(--pp-ink-rgb), 0.97); border: 1px solid rgba(var(--pp-ink-rgb), 0.40); }
+.row time { font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.87); }
+.row em { font-style: normal; font-size: 0.74rem; color: var(--pp-ok); }
+.reason { margin: 0; font-size: 0.92rem; color: var(--pp-ink); overflow-wrap: anywhere; }
+.hint { margin: 0; font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.87); }
+.vouchers li { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.6rem 0.8rem; border-radius: 0.8rem; border: 1px solid rgba(45, 212, 191, 0.3); background: rgba(45, 212, 191, 0.06); font-size: 0.88rem; color: var(--pp-ink); }
+.vouchers li svg { flex: none; margin-top: 0.15rem; color: var(--pp-teal); }
 .vouchers li > span { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; overflow-wrap: anywhere; }
-.vouchers small { font-size: 0.74rem; color: rgba(242, 241, 240, 0.6); }
-.vUsed { opacity: 0.6; border-color: rgba(255, 255, 255, 0.1) !important; background: transparent !important; }
+.vouchers small { font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.87); }
+.vUsed { opacity: 0.6; border-color: rgba(var(--pp-ink-rgb), 0.23) !important; background: transparent !important; }

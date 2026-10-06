@@ -1,0 +1,113 @@
+import { NextResponse } from 'next/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/admin';
+import { loadGrantedCapabilities } from '@/lib/grantedCapabilities';
+import { hasCapability, withGrantedCapabilities } from '@/lib/capabilities';
+import { staffName } from '@/lib/names';
+import { UUID } from '@/lib/docsServer';
+import { mayClaim, type ShiftGrid, type ShiftPlan, type ShiftStation } from '@/lib/shifts';
+
+export { UUID };
+export const bad = (error: string, status = 400) => NextResponse.json({ error }, { status });
+
+// Everyone on the team can look; 'manage_shifts' (exec, admin) sets things up. The routes use the service client, so this is the real boundary.
+export async function authorizeShifts(need: 'view' | 'manage') {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
+  const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
+  const svc = createServiceClient();
+  const grants = withGrantedCapabilities(roles ?? [], await loadGrantedCapabilities(svc, user.id).catch(() => []));
+  const manage = hasCapability(grants, 'manage_shifts');
+  if (need === 'manage' ? !manage : !(manage || hasCapability(grants, 'signup_shifts'))) {
+    return { error: NextResponse.json({ error: need === 'manage' ? 'Only exec can set up shifts.' : 'Shifts are for officers, leads and exec.' }, { status: 403 }) };
+  }
+  return { user, svc, roles: grants, manage };
+}
+
+/** The person and event a manager's change is about: null if either does not exist or the person is not on the shift roster (officer, lead, exec). Used to name them in the audit log. */
+export async function shiftSubject(svc: SupabaseClient, eventId: string, userId: string): Promise<{ who: string; title: string } | null> {
+  const [{ data: ev }, { data: roles }, { data: p }] = await Promise.all([
+    svc.from('events').select('title').eq('id', eventId).maybeSingle(),
+    svc.from('user_roles').select('role').eq('user_id', userId).in('role', ['officer', 'lead', 'exec']),
+    svc.from('profiles').select('id, display_name, google_first_name, google_last_name').eq('id', userId).maybeSingle(),
+  ]);
+  if (!ev || !p || !(roles ?? []).length) return null;
+  return { who: staffName(p as never), title: ev.title as string };
+}
+
+/** The whole grid for one event, as the signed-in person sees it. */
+export async function loadGrid(svc: SupabaseClient, eventId: string, me: string, roles: { role: string }[], manage: boolean): Promise<ShiftGrid | null> {
+  const { data: ev } = await svc.from('events').select('id, title, start_date, location').eq('id', eventId).maybeSingle();
+  if (!ev) return null;
+  const [{ data: plan }, { data: stations }, { data: overrides }, { data: signups }] = await Promise.all([
+    svc.from('event_shifts').select('event_id, starts_at, ends_at, slot_minutes, signup_open, team_only, min_per_person').eq('event_id', eventId).maybeSingle(),
+    svc.from('shift_stations').select('id, name, default_needed, sort_order, description').order('sort_order').order('name'),
+    svc.from('shift_overrides').select('station_id, slot_index, needed').eq('event_id', eventId),
+    svc.from('shift_signups').select('id, station_id, slot_index, user_id').eq('event_id', eventId).order('created_at'),
+  ]);
+  const ids = [...new Set((signups ?? []).map((s) => s.user_id as string))];
+  const { data: people } = ids.length ? await svc.from('profiles').select('id, display_name, google_first_name, google_last_name, avatar_url, custom_avatar_url').in('id', ids) : { data: [] };
+  const byId = new Map((people ?? []).map((p) => [p.id as string, p]));
+  const teamOnly = (plan as ShiftPlan | null)?.team_only ?? true;
+  const { data: gone } = await svc.from('shift_absences').select('id, user_id, starts_at, ends_at, needs').eq('event_id', eventId).order('starts_at');
+  const absentIds = new Set((gone ?? []).map((g) => g.user_id as string));
+  // The requirement: every active officer and lead needs at least this many slots (fewer if they are away for part of the event).
+  // Inactive (exempt) people have none, but may still sign up.
+  let requirement: ShiftGrid['requirement'] = null;
+  let officers: { id: string; name: string }[] = [];
+  let roster: { id: string; name: string }[] = [];
+  const min = (plan as ShiftPlan | null)?.min_per_person ?? null;
+  const nameRow = async (idList: string[]) => {
+    const { data } = idList.length ? await svc.from('profiles').select('id, display_name, google_first_name, google_last_name').in('id', idList) : { data: [] };
+    return new Map((data ?? []).map((p) => [p.id as string, staffName(p as never)]));
+  };
+  let absences: ShiftGrid['absences'] = [];
+  let exemptions: ShiftGrid['exemptions'] = [];
+  const counts = new Map<string, number>();
+  for (const sg of signups ?? []) counts.set(sg.user_id as string, (counts.get(sg.user_id as string) ?? 0) + 1);
+  if (manage) {
+    const { data: rows } = await svc.from('user_roles').select('user_id, role').in('role', ['officer', 'lead', 'exec', 'inactive']);
+    const exempt = new Set((rows ?? []).filter((r) => r.role === 'inactive').map((r) => r.user_id as string));
+    const rosterIds = [...new Set((rows ?? []).filter((r) => r.role !== 'inactive').map((r) => r.user_id as string))];
+    // Officers, leads and exec all have the requirement unless they are inactive or exempted for this event.
+    const { data: ex } = await svc.from('shift_exemptions').select('id, user_id, note').eq('event_id', eventId);
+    const eventExempt = new Map((ex ?? []).map((e) => [e.user_id as string, e]));
+    const staff = [...new Set(rosterIds)];
+    const required = staff.filter((id) => !exempt.has(id) && !eventExempt.has(id));
+    const exemptList = staff.filter((id) => exempt.has(id) || eventExempt.has(id));
+    const names = await nameRow([...new Set([...rosterIds, ...absentIds, ...exemptList])]);
+    exemptions = (ex ?? []).map((e) => ({ id: e.id as string, user_id: e.user_id as string, name: names.get(e.user_id as string) ?? 'Someone', note: (e.note as string | null) ?? null }));
+    roster = rosterIds.map((id) => ({ id, name: names.get(id) ?? 'Someone' })).sort((a, b) => a.name.localeCompare(b.name));
+    officers = required.map((id) => ({ id, name: names.get(id) ?? 'Someone' })).sort((a, b) => a.name.localeCompare(b.name));
+    absences = (gone ?? []).map((g) => ({ id: g.id as string, user_id: g.user_id as string, name: names.get(g.user_id as string) ?? 'Someone', starts_at: g.starts_at as string, ends_at: g.ends_at as string, needs: g.needs as number }));
+    if (min) {
+      requirement = {
+        min,
+        // Everyone who has a requirement, the ones still short first; inactive (exempt) officers are listed apart.
+        people: officers.map((o) => { const isAbsent = absentIds.has(o.id); return { id: o.id, name: o.name, count: counts.get(o.id) ?? 0, need: isAbsent ? Math.min(min, ...(gone ?? []).filter((g) => g.user_id === o.id).map((g) => g.needs as number)) : min, absent: isAbsent }; })
+          .sort((a, b) => Number(a.count >= a.need) - Number(b.count >= b.need) || (a.count - a.need) - (b.count - b.need) || a.name.localeCompare(b.name)),
+        exempt: exemptList.map((id) => ({ id, name: names.get(id) ?? 'Someone', count: counts.get(id) ?? 0, reason: (eventExempt.has(id) ? 'event' : 'inactive') as 'event' | 'inactive', note: (eventExempt.get(id)?.note as string | null) ?? null })).sort((a, b) => a.name.localeCompare(b.name)),
+      };
+    }
+  } else {
+    const { data: mine } = await svc.from('shift_exemptions').select('id, note').eq('event_id', eventId).eq('user_id', me);
+    exemptions = (mine ?? []).map((e) => ({ id: e.id as string, user_id: me, name: 'You', note: (e.note as string | null) ?? null }));
+    absences = (gone ?? []).filter((g) => g.user_id === me).map((g) => ({ id: g.id as string, user_id: me, name: 'You', starts_at: g.starts_at as string, ends_at: g.ends_at as string, needs: g.needs as number }));
+  }
+  return {
+    requirement, absences, exemptions, officers, roster,
+    event: ev as ShiftGrid['event'],
+    plan: (plan as ShiftPlan | null) ?? null,
+    stations: (stations ?? []) as ShiftStation[],
+    overrides: Object.fromEntries((overrides ?? []).map((o) => [`${o.station_id}|${o.slot_index}`, o.needed as number])),
+    signups: (signups ?? []).map((s) => {
+      const p = byId.get(s.user_id as string);
+      return { id: s.id as string, station_id: s.station_id as string, slot_index: s.slot_index as number, user_id: s.user_id as string, name: p ? staffName(p as never) : 'Someone', avatar: ((p?.custom_avatar_url ?? p?.avatar_url) as string | null) ?? null };
+    }),
+    me,
+    canManage: manage,
+    canSignUp: manage || mayClaim(roles, teamOnly),
+  };
+}

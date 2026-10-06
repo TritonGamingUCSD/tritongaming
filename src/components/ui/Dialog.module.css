@@ -1,27 +1,28 @@
 .backdrop {
   position: fixed; inset: 0; z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 1rem;
-  background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); /* theme-ok */
   animation: dialogFade 0.15s ease;
 }
 @keyframes dialogFade { from { opacity: 0; } to { opacity: 1; } }
 .sheet {
   position: relative; width: 100%; max-width: 420px; max-height: 92vh; overflow-y: auto;
-  background: #fff; color: #011941; border-radius: 1.25rem; padding: 1.5rem;
+  --pp-ink: #011941; --pp-ink-rgb: 1, 25, 65; --pp-card: #fff; --pp-paper: #f2f1f0; --pp-line: rgba(1, 25, 65, 0.22); --pp-ok: #047857; --pp-warn: #b45309; --pp-bad: #b91c1c; --pp-info: #1d4ed8; --pp-violet: #6d28d9; --pp-teal: #0f766e; --p-accent-text: #0a4c8a;
+  background: #fff; color: #011941; border-radius: 1.25rem; padding: 1.5rem; /* theme-ok */
   display: flex; flex-direction: column; gap: 0.75rem;
 }
 .close {
   position: absolute; top: 0.75rem; right: 0.75rem; width: 32px; height: 32px; border-radius: 50%;
-  background: rgba(1, 25, 65, 0.06); color: #011941; display: flex; align-items: center; justify-content: center; cursor: pointer;
+  background: rgba(1, 25, 65, 0.06); color: #011941; display: flex; align-items: center; justify-content: center; cursor: pointer; /* theme-ok */
 }
 .close:disabled { opacity: 0.5; cursor: not-allowed; }
 .icon { color: #dc2626; }
 .title { margin: 0; font-size: 1.1rem; font-weight: 800; padding-right: 2rem; }
 .text { margin: 0; font-size: 0.88rem; line-height: 1.45; color: rgba(1, 25, 65, 0.75); }
-.text strong { color: #011941; }
+.text strong { color: #011941; } /* theme-ok */
 .actions { display: flex; gap: 0.6rem; margin-top: 0.25rem; }
 .cancel {
   flex: 1; padding: 0.7rem; border-radius: 0.75rem; font-weight: 700; font-size: 0.9rem; font-family: inherit;
-  background: rgba(1, 25, 65, 0.08); color: #011941; cursor: pointer;
+  background: rgba(1, 25, 65, 0.08); color: #011941; cursor: pointer; /* theme-ok */
 }
 .cancel:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -29,7 +30,7 @@
 .check { display: flex; align-items: center; gap: 0.5rem; font-size: 0.88rem; cursor: pointer; }
 .input {
   width: 100%; padding: 0.7rem 0.8rem; border-radius: 0.7rem; font-family: inherit; font-size: 0.9rem;
-  border: 2px solid rgba(1, 25, 65, 0.18); background: #fff; color: #011941;
+  border: 2px solid rgba(1, 25, 65, 0.18); background: #fff; color: #011941; /* theme-ok */
 }
 .input:focus { outline: none; border-color: #011941; }
 .searchWrap { position: relative; }
@@ -37,14 +38,14 @@
   position: absolute; top: calc(100% + 0.3rem); left: 0; right: 0; z-index: 10; max-height: 200px; overflow-y: auto;
   background: #fff; border: 1px solid rgba(1, 25, 65, 0.18); border-radius: 0.7rem; box-shadow: 0 12px 30px rgba(1, 25, 65, 0.18);
 }
-.result { display: block; width: 100%; text-align: left; padding: 0.55rem 0.8rem; font-size: 0.88rem; color: #011941; cursor: pointer; }
+.result { display: block; width: 100%; text-align: left; padding: 0.55rem 0.8rem; font-size: 0.88rem; color: #011941; cursor: pointer; } /* theme-ok */
 .result:hover { background: rgba(1, 25, 65, 0.06); }
 
 .kicker { margin: 0; font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(1, 25, 65, 0.5); }
 .list { margin: 0; padding-left: 1.2rem; font-size: 0.88rem; line-height: 1.5; color: rgba(1, 25, 65, 0.85); }
 .danger {
   flex: 1; padding: 0.7rem; border-radius: 0.75rem; font-weight: 700; font-size: 0.9rem; font-family: inherit;
-  background: #dc2626; color: #fff; cursor: pointer;
+  background: #dc2626; color: #fff; cursor: pointer; /* theme-ok */
 }
 .danger:disabled { opacity: 0.45; cursor: not-allowed; }
 .checkBox { padding: 0.7rem; border-radius: 0.75rem; background: rgba(1, 25, 65, 0.05); }

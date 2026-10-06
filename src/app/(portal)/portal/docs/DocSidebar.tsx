@@ -1,35 +1,34 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, ChevronRight, FileText, FolderCog, MoreHorizontal, Plus, Search, Star, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, FileText, FolderCog, MoreHorizontal, Plus, Star, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { Input } from '@/components/ui/Field';
-import { canMoveUnder, highlightParts, type DocNode, type DocSection, type SearchHit } from '@/lib/docsTree';
+import { CATEGORY_COLORS, canMoveUnder, type DocNode, type DocSection } from '@/lib/docsTree';
 import type { SyncDoc } from '@/lib/docsSync';
 import type { Doc, DocCategory } from '@/types/database';
 import styles from './docs.module.css';
 
 export interface DropTarget { parentId: string | null; categoryId: string | null; beforeId: string | null }
 
-function Highlight({ text, query }: { text: string; query: string }) {
-  return <>{highlightParts(text, query).map((p, i) => (p.hit ? <mark key={i} className={styles.mark}>{p.text}</mark> : <span key={i}>{p.text}</span>))}</>;
-}
-
 export default function DocSidebar({
-  docs, sections, categories, selectedId, query, onQuery, hits, favorites, collapsed, onToggle, onOpen, onHome, canEdit, sync,
-  onNew, onMenu, onDrop, onAddCategory, onDeleteCategory, catName,
+  docs, sections, categories, selectedId, onClose, favorites, collapsed, onToggle, onCollapseAll, onExpandAll, onOpen, onHome, canEdit, sync,
+  onNew, onMenu, onDrop, onAddCategory, onDeleteCategory, onCategoryColor, onReorderCategories, catName,
 }: {
-  docs: Doc[]; sections: DocSection<Doc>[]; categories: DocCategory[]; selectedId: string | null; query: string; onQuery: (q: string) => void; hits: SearchHit<Doc>[];
-  favorites: Set<string>; collapsed: Set<string>; onToggle: (key: string) => void; onOpen: (id: string) => void; onHome: () => void; canEdit: boolean;
+  docs: Doc[]; sections: DocSection<Doc>[]; categories: DocCategory[]; selectedId: string | null; onClose: () => void;
+  favorites: Set<string>; collapsed: Set<string>; onToggle: (key: string) => void; onCollapseAll: () => void; onExpandAll: () => void; onOpen: (id: string) => void; onHome: () => void; canEdit: boolean;
   sync: Map<string, SyncDoc>; onNew: (parentId: string | null, categoryId: string | null) => void; onMenu: (doc: Doc, action: 'sub' | 'move' | 'up' | 'down') => void;
-  onDrop: (dragId: string, target: DropTarget) => void; onAddCategory: (name: string) => Promise<void>; onDeleteCategory: (c: DocCategory) => void; catName: (d: Doc) => string;
+  onDrop: (dragId: string, target: DropTarget) => void; onAddCategory: (name: string) => Promise<void>; onDeleteCategory: (c: DocCategory) => void; onCategoryColor: (c: DocCategory, color: string | null) => void; onReorderCategories: (ids: string[]) => void; catName: (d: Doc) => string;
 }) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [over, setOver] = useState<{ id: string; zone: 'before' | 'inside' | 'after' } | null>(null);
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [manageCats, setManageCats] = useState(false);
   const [newCategory, setNewCategory] = useState('');
-  const q = query.trim();
+  const [colorFor, setColorFor] = useState<string | null>(null);
+  const [dragCat, setDragCat] = useState<string | null>(null);
+  const [liveCats, setLiveCats] = useState<string[] | null>(null);
+  const shownCats = liveCats ? liveCats.map((id) => categories.find((x) => x.id === id)).filter((x): x is (typeof categories)[number] => !!x) : categories;
 
   const siblingsAfter = (n: DocNode<Doc>, list: DocNode<Doc>[]) => { const i = list.findIndex((x) => x.doc.id === n.doc.id); return list[i + 1]?.doc.id ?? null; };
   const favDocs = docs.filter((d) => favorites.has(d.id));
@@ -107,14 +106,14 @@ export default function DocSidebar({
   return (
     <aside className={styles.nav} aria-label="Docs navigation">
       <div className={styles.navTop}>
-        <div className={styles.searchWrap}>
-          <Search size={15} strokeWidth={1.75} className={styles.searchIcon} aria-hidden="true" />
-          <input className={styles.searchInput} type="search" value={query} onChange={(e) => onQuery(e.target.value)} placeholder="Search every doc…" aria-label="Search documentation"
-            onKeyDown={(e) => { if (e.key === 'Enter' && hits[0]) onOpen(hits[0].doc.id); if (e.key === 'Escape') onQuery(''); }} />
-          {query && <button type="button" className={styles.searchClear} onClick={() => onQuery('')} aria-label="Clear search"><X size={13} strokeWidth={2} /></button>}
+        <div className={styles.drawerHead}>
+          <strong>All docs</strong>
+          <button type="button" className={styles.iconBtn} onClick={onClose} aria-label="Close the doc list"><X size={16} aria-hidden="true" /></button>
         </div>
         <div className={styles.navButtons}>
           <Button size="sm" variant="ghost" onClick={onHome}>Docs Home</Button>
+          <button type="button" className={styles.collapseAll} onClick={onCollapseAll} aria-label="Collapse all" title="Collapse all"><ChevronsDownUp size={15} aria-hidden="true" /></button>
+          <button type="button" className={styles.collapseAll} onClick={onExpandAll} aria-label="Expand all" title="Expand all"><ChevronsUpDown size={15} aria-hidden="true" /></button>
           {canEdit && <Button size="sm" onClick={() => onNew(null, null)}><Plus size={14} aria-hidden="true" /> New Doc</Button>}
         </div>
       </div>
@@ -122,19 +121,7 @@ export default function DocSidebar({
       <div className={styles.navScroll}>
         {docs.length === 0 && <p className={styles.emptyNote}>No docs yet.</p>}
 
-        {q ? (
-          <div className={styles.results} role="list" aria-label="Search results">
-            <div className={styles.resultsLabel}>{hits.length} result{hits.length === 1 ? '' : 's'}</div>
-            {hits.length === 0 && <p className={styles.emptyNote}>Nothing matches “{q}”. Try fewer words.</p>}
-            {hits.map(({ doc, snippet }) => (
-              <button key={doc.id} type="button" role="listitem" className={`${styles.result} ${selectedId === doc.id ? styles.rowActive : ''}`} onClick={() => onOpen(doc.id)}>
-                <span className={styles.resultTitle}>{doc.icon ? `${doc.icon} ` : ''}<Highlight text={doc.title} query={q} /></span>
-                <span className={styles.resultCat}>{catName(doc)}{doc.tags.length ? ` · ${doc.tags.map((t) => `#${t}`).join(' ')}` : ''}</span>
-                {snippet && <span className={styles.resultSnippet}><Highlight text={snippet} query={q} /></span>}
-              </button>
-            ))}
-          </div>
-        ) : (
+        {(
           <>
             {favDocs.length > 0 && (
               <section className={styles.catGroup}>
@@ -146,7 +133,7 @@ export default function DocSidebar({
                 </ul>
               </section>
             )}
-            {sections.map((s) => {
+            {sections.filter((s) => canEdit || s.count > 0).map((s) => {
               const key = `cat:${s.id ?? 'none'}`;
               const isCollapsed = collapsed.has(key);
               return (
@@ -154,13 +141,14 @@ export default function DocSidebar({
                   <button type="button" className={styles.catHeader} onClick={() => onToggle(key)} aria-expanded={!isCollapsed}
                     onDragOver={(e) => { if (dragId) { e.preventDefault(); } }} onDrop={(e) => { e.preventDefault(); const id = dragId; setDragId(null); setOver(null); if (id) onDrop(id, { parentId: null, categoryId: s.id, beforeId: null }); }}>
                     {isCollapsed ? <ChevronRight size={14} strokeWidth={2} aria-hidden="true" /> : <ChevronDown size={14} strokeWidth={2} aria-hidden="true" />}
+                    {s.color && <span className={styles.catDot} style={{ background: s.color }} aria-hidden="true" />}
                     <span className={styles.catName}>{s.name}</span>
                     <span className={styles.catCount}>{s.count}</span>
                   </button>
                   {!isCollapsed && (
                     <ul role="tree" className={styles.treeList} aria-label={s.name}>
                       {s.nodes.map((n) => renderNode(n, s.nodes, s.id))}
-                      {s.nodes.length === 0 && <li className={styles.emptyNote}>Nothing here yet. {canEdit ? 'Drag a doc onto the title.' : ''}</li>}
+                      {s.nodes.length === 0 && <li className={styles.emptyNote}>Empty. Drag a doc onto the title.</li>}
                     </ul>
                   )}
                 </section>
@@ -180,9 +168,34 @@ export default function DocSidebar({
             <div className={styles.catManagerBody}>
               {categories.length > 0 && (
                 <div className={styles.categoryChips}>
-                  {categories.map((c) => (
-                    <span key={c.id} className={styles.categoryChip}>{c.name}
+                  {shownCats.map((c) => (
+                    <span key={c.id} className={`${styles.categoryChip} ${dragCat === c.id ? styles.rowDragging : ''}`} draggable
+                      onDragStart={(e) => { setDragCat(c.id); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', c.id); }}
+                      onDragEnd={() => { setDragCat(null); setLiveCats(null); }}
+                      // The other chips move out of the way while you drag; nothing is saved until you let go.
+                      onDragOver={(e) => {
+                        if (!dragCat) return;
+                        e.preventDefault();
+                        if (dragCat === c.id) return;
+                        const ids = shownCats.map((x) => x.id);
+                        const next = ids.filter((id) => id !== dragCat);
+                        next.splice(ids.indexOf(c.id), 0, dragCat);
+                        if (next.join() !== ids.join()) setLiveCats(next);
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const ids = liveCats; setDragCat(null); setLiveCats(null);
+                        if (ids && ids.join() !== categories.map((x) => x.id).join()) onReorderCategories(ids);
+                      }}>
+                      <button type="button" className={styles.swatchBtn} style={{ background: c.color ?? 'transparent' }} onClick={() => setColorFor(colorFor === c.id ? null : c.id)} aria-label={`Colour for ${c.name}`} aria-expanded={colorFor === c.id} />
+                      {c.name}
                       <button type="button" className={styles.categoryChipRemove} onClick={() => onDeleteCategory(c)} aria-label={`Delete category ${c.name}`}><X size={12} strokeWidth={2} /></button>
+                      {colorFor === c.id && (
+                        <span className={styles.swatchPop} role="group" aria-label={`Colours for ${c.name}`}>
+                          {CATEGORY_COLORS.map((col) => <button key={col} type="button" className={styles.swatchOpt} style={{ background: col }} aria-label={col} aria-pressed={c.color === col} onClick={() => { setColorFor(null); onCategoryColor(c, col); }} />)}
+                          <button type="button" className={styles.swatchNone} onClick={() => { setColorFor(null); onCategoryColor(c, null); }}>None</button>
+                        </span>
+                      )}
                     </span>
                   ))}
                 </div>

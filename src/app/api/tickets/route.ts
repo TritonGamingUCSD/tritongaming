@@ -95,7 +95,7 @@ export async function POST(request: Request) {
       type: 'ticket_confirmed',
       title: 'Ticket confirmed',
       body: `You're registered for ${event.title}.`,
-      href: '/portal?section=tickets',
+      href: '/portal/tickets',
     }]);
 
     return NextResponse.json({ free: true, ticket }, { status: 201 });

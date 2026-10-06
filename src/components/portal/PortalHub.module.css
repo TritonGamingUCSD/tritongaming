@@ -10,7 +10,7 @@
    Mobile-only persistent nav — the card grid alone means every section is
    at least one tap-then-scroll away with nothing on screen indicating
    where the frequently-used stuff lives. Pins the handful of destinations
-   an attendee actually opens over and over (Tickets, Rewards/Battlepass,
+   an attendee actually opens over and over (Tickets, Rewards,
    Profile) one thumb-reach away, with everything else (Activity, Members,
    Divisions, Admin, etc.) a single tap under "More" instead of disappearing
    from quick reach entirely. */
@@ -20,7 +20,7 @@
   position: fixed;
   inset: 0;
   z-index: 21;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.5); /* theme-ok */
 }
 
 .moreSheet {
@@ -35,7 +35,7 @@
   max-height: 70dvh;
   overflow: hidden;
   background: #0b1426;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08); /* theme-ok */
   border-bottom: none;
   border-radius: 1.25rem 1.25rem 0 0;
   box-shadow: 0 -16px 40px -20px rgba(0, 0, 0, 0.7);
@@ -49,7 +49,7 @@
   width: 44px;
   height: 5px;
   border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.28); /* theme-ok */
   margin: 0 auto;
 }
 
@@ -68,7 +68,7 @@
 }
 
 .group {
-  --accent: #ffc72c;
+  --accent: var(--p-accent);
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -82,10 +82,10 @@
   font-size: 0.78rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(242, 241, 240, 0.7);
+  color: rgba(var(--pp-ink-rgb), 0.75);
 }
 .groupDot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
-.groupCount { margin-left: 0.15rem; font-size: 0.68rem; letter-spacing: 0; padding: 0.1rem 0.5rem; border-radius: 6px; background: rgba(255, 255, 255, 0.07); color: rgba(242, 241, 240, 0.65); }
+.groupCount { margin-left: 0.15rem; font-size: 0.68rem; letter-spacing: 0; padding: 0.1rem 0.5rem; border-radius: 6px; background: rgba(var(--pp-ink-rgb), 0.08); color: rgba(var(--pp-ink-rgb), 0.7); }
 
 /* ── Cards: icon tile + name + one-line description ── */
 .grid {
@@ -101,15 +101,15 @@
   gap: 0.85rem;
   text-align: left;
   padding: 0.85rem 1rem;
-  background: #111c33;
-  border: 1px solid #1f2d4a;
-  border-radius: 0.6rem;
+  background: var(--pp-card);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.25);
+  border-radius: 8px;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+  transition: background 0.12s, border-color 0.12s;
 }
 .card:hover {
-  background: #15223d;
-  border-color: #3a4d78;
+  background: color-mix(in srgb, var(--accent, var(--p-accent)) 10%, var(--pp-card));
+  border-color: rgba(var(--pp-ink-rgb), 0.5);
 }
 .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
@@ -121,24 +121,24 @@
   height: 44px;
   border-radius: 0.55rem;
   color: var(--accent);
-  background: #1a2744;
+  background: rgba(var(--pp-ink-rgb), 0.08);
   border: 0;
 }
 .cardIconTile svg { width: 22px; height: 22px; }
 
 .cardText { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; flex: 1; }
-.cardLabel { font-family: var(--font-futura-heavy); font-size: 0.92rem; color: var(--white); letter-spacing: 0.01em; }
+.cardLabel { font-family: var(--font-futura-heavy); font-size: 0.92rem; color: var(--pp-ink); letter-spacing: 0.01em; }
 .cardDesc {
   font-size: 0.74rem;
-  color: rgba(242, 241, 240, 0.65);
+  color: rgba(var(--pp-ink-rgb), 0.72);
   line-height: 1.35;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.cardChevron { flex-shrink: 0; color: rgba(242, 241, 240, 0.6); transition: transform 0.15s, color 0.15s; }
-.card:hover .cardChevron { color: var(--accent); transform: translateX(2px); }
+.cardChevron { flex-shrink: 0; color: rgba(var(--pp-ink-rgb), 0.6); transition: transform 0.15s, color 0.15s; }
+.card:hover .cardChevron { color: var(--pp-ink); transform: translateX(2px); }
 .cardBadge {
   flex-shrink: 0;
   min-width: 22px;
@@ -167,9 +167,11 @@
 .panel {
   position: relative;
   z-index: 1;
-  background: #0b1426;
-  border: 1px solid #1f2d4a;
-  border-radius: 0.8rem;
+  background: var(--pp-paper);
+  color: var(--pp-ink);
+  border: 3px solid var(--pp-ink);
+  border-radius: 8px;
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55);
   padding: 1.5rem clamp(1rem, 3vw, 2rem) 2.5rem;
   min-height: 60vh;
 }
@@ -183,7 +185,7 @@
   gap: 0.6rem;
   padding-bottom: 1.5rem;
   margin-bottom: 1.75rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 2px solid rgba(var(--pp-ink-rgb), 0.18);
 }
 
 .backBtn {
@@ -192,7 +194,7 @@
   gap: 0.4rem;
   font-family: var(--font-futura-medium);
   font-size: 0.8rem;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.7);
   padding: 0.25rem 0;
   background: none;
   border: none;
@@ -200,7 +202,7 @@
   transition: color 0.15s;
 }
 
-.backBtn:hover { color: var(--yellow-text); }
+.backBtn:hover { color: var(--pp-ink); }
 
 @media (min-width: 601px) {
   .backBtn { position: absolute; left: 0; top: 0.25rem; }
@@ -212,7 +214,7 @@
   font-size: 1.1rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--white);
+  color: var(--pp-ink);
 }
 
 .panelBody {
@@ -303,7 +305,7 @@
   padding: 0.3rem 0.1rem 0.35rem;
   background: none;
   border: none;
-  color: rgba(242, 241, 240, 0.65);
+  color: rgba(242, 241, 240, 0.65); /* theme-ok */
   font-family: var(--font-futura-medium);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -318,9 +320,9 @@
   transition: background 0.2s, color 0.2s;
 }
 .dockLabel { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: 0.62rem; letter-spacing: 0; line-height: 1.1; white-space: nowrap; }
-.dockItemActive { color: var(--white); }
-.dockItemActive .dockIcon { background: #1a2744; color: var(--yellow-text); box-shadow: inset 0 -3px 0 var(--yellow); }
-.dockItem:active .dockIcon { background: rgba(255, 255, 255, 0.1); }
+.dockItemActive { color: var(--white); } /* theme-ok */
+.dockItemActive .dockIcon { background: #1a2744; color: #a9cdf2; box-shadow: inset 0 -3px 0 var(--p-accent); }
+.dockItem:active .dockIcon { background: rgba(255, 255, 255, 0.1); } /* theme-ok */
 .dockBadge {
   position: absolute;
   top: -4px;
@@ -342,8 +344,8 @@
 .sheetTile {
   display: flex; flex-direction: column; align-items: center; gap: 0.45rem;
   padding: 0.8rem 0.4rem; border-radius: 1rem; cursor: pointer;
-  background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08);
-  color: var(--white); font-family: var(--font-futura-medium); font-size: 0.74rem; text-align: center;
+  background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); /* theme-ok */
+  color: var(--white); font-family: var(--font-futura-medium); font-size: 0.74rem; text-align: center; /* theme-ok */
 }
 .sheetTile:active { background: color-mix(in srgb, var(--accent) 14%, transparent); }
 .sheetTileActive { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
@@ -377,16 +379,16 @@
   padding: 0.35rem 0.4rem; border-radius: 0.8rem; background: none; border: none; cursor: pointer;
   transition: background 0.15s;
 }
-.railIdentity:hover { background: rgba(255, 255, 255, 0.05); }
-.railAvatar, .railAvatarFallback { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; object-fit: cover; border: 2px solid rgba(255, 199, 44, 0.45); }
-.railAvatarFallback { display: grid; place-items: center; background: var(--gradient-nav); color: var(--white); font-family: var(--font-futura-heavy); }
+.railIdentity:hover { background: rgba(var(--pp-chrome-rgb), 0.05); }
+.railAvatar, .railAvatarFallback { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; object-fit: cover; border: 2px solid rgba(125, 180, 234, 0.45); }
+.railAvatarFallback { display: grid; place-items: center; background: var(--gradient-nav); color: var(--pp-chrome-fg); font-family: var(--font-futura-heavy); }
 .railIdentityText { display: flex; flex-direction: column; min-width: 0; }
-.railName { font-family: var(--font-futura-heavy); font-size: 0.92rem; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.railRole { font-size: 0.7rem; color: rgba(242, 241, 240, 0.65); letter-spacing: 0.04em; text-transform: uppercase; }
+.railName { font-family: var(--font-futura-heavy); font-size: 0.92rem; color: var(--pp-chrome-fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.railRole { font-size: 0.7rem; color: rgba(var(--pp-chrome-rgb), 0.65); letter-spacing: 0.04em; text-transform: uppercase; }
 
 .railNav { display: flex; flex-direction: column; gap: 0.9rem; overflow-y: auto; min-height: 0; padding-right: 2px; scrollbar-width: thin; }
-.railGroup { --accent: #ffc72c; display: flex; flex-direction: column; gap: 0.1rem; }
-.railGroupLabel { display: flex; align-items: center; gap: 0.45rem; padding: 0.15rem 0.6rem 0.35rem; font-family: var(--font-futura-heavy); font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(242, 241, 240, 0.6); }
+.railGroup { --accent: var(--p-accent); display: flex; flex-direction: column; gap: 0.1rem; }
+.railGroupLabel { display: flex; align-items: center; gap: 0.45rem; padding: 0.15rem 0.6rem 0.35rem; font-family: var(--font-futura-heavy); font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(var(--pp-chrome-rgb), 0.6); }
 .railGroupDot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
 
 .railItem {
@@ -395,21 +397,21 @@
   padding: 0.5rem 0.6rem; border-radius: 0.7rem; background: none; border: none; cursor: pointer; text-align: left;
   transition: background 0.15s;
 }
-.railItem:hover { background: rgba(255, 255, 255, 0.05); }
-.railItemActive { background: #16223d; }
-.railItemActive::before { content: ''; position: absolute; left: -0.75rem; top: 15%; bottom: 15%; width: 4px; border-radius: 0 3px 3px 0; background: var(--yellow); }
+.railItem:hover { background: rgba(var(--pp-chrome-rgb), 0.05); }
+.railItemActive { background: var(--pp-chrome); }
+.railItemActive::before { content: ''; position: absolute; left: -0.75rem; top: 15%; bottom: 15%; width: 4px; border-radius: 0 3px 3px 0; background: var(--p-accent); }
 .railIcon {
   display: grid; place-items: center; flex-shrink: 0; width: 28px; height: 28px; border-radius: 0.45rem;
-  color: var(--accent); background: #1a2744;
+  color: var(--accent); background: var(--pp-chrome);
 }
 .railIcon :global(svg) { width: 15px; height: 15px; }
-.railLabel { flex: 1; min-width: 0; font-family: var(--font-futura-medium); font-size: 0.85rem; color: rgba(242, 241, 240, 0.72); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.railItemActive .railLabel { color: var(--white); }
-.railBadge { min-width: 20px; padding: 0.1rem 0.45rem; border-radius: 6px; background: var(--accent); color: #0b1426; font-size: 0.68rem; font-family: var(--font-futura-heavy); text-align: center; }
+.railLabel { flex: 1; min-width: 0; font-family: var(--font-futura-medium); font-size: 0.85rem; color: rgba(var(--pp-chrome-rgb), 0.72); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.railItemActive .railLabel { color: var(--pp-chrome-fg); }
+.railBadge { min-width: 20px; padding: 0.1rem 0.45rem; border-radius: 6px; background: var(--accent); color: var(--pp-chrome); font-size: 0.68rem; font-family: var(--font-futura-heavy); text-align: center; }
 
-.railFooter { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.7rem 0.4rem 0.1rem; border-top: 1px solid rgba(255, 255, 255, 0.07); font-size: 0.76rem; }
-.railFooter a { color: rgba(242, 241, 240, 0.65); text-decoration: none; }
-.railFooter a:hover { color: var(--yellow-text); }
+.railFooter { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.7rem 0.4rem 0.1rem; border-top: 1px solid rgba(var(--pp-chrome-rgb), 0.07); font-size: 0.76rem; }
+.railFooter a { color: rgba(var(--pp-chrome-rgb), 0.65); text-decoration: none; }
+.railFooter a:hover { color: var(--pp-chrome-accent); }
 
 /* ── Sidebar: fixed in place, everything visible ──
    Sticky to the viewport (it never scrolls with the page) and sized to its
@@ -457,9 +459,9 @@
    group names as quiet dividers, and a bit more breathing room. ── */
 .rail { gap: 0.7rem; padding: 0.75rem 0.65rem; }
 .railNav { gap: 0.2rem; }
-.railGroup { padding-top: 0.55rem; margin-top: 0.35rem; border-top: 1px solid rgba(255, 255, 255, 0.07); }
+.railGroup { padding-top: 0.55rem; margin-top: 0.35rem; border-top: 1px solid rgba(var(--pp-chrome-rgb), 0.07); }
 .railNav > .railItem + .railGroup { margin-top: 0.45rem; }
-.railGroupLabel { padding: 0 0.55rem 0.3rem; font-size: 0.62rem; letter-spacing: 0.16em; color: rgba(242, 241, 240, 0.6); }
+.railGroupLabel { padding: 0 0.55rem 0.3rem; font-size: 0.62rem; letter-spacing: 0.16em; color: rgba(var(--pp-chrome-rgb), 0.6); }
 .railGroupDot { display: none; }
 .railItem { padding: 0.36rem 0.55rem; gap: 0.6rem; }
 .railIcon, .railItemActive .railIcon { background: none; width: 20px; height: 20px; }
@@ -478,16 +480,16 @@
   .railGroup { padding-top: 0.3rem; margin-top: 0.15rem; }
 }
 
-.railIdentity:hover .railName { color: var(--yellow-text); }
+.railIdentity:hover .railName { color: var(--pp-chrome-accent); }
 
 /* ── Group color coding (matches the home cards): Yours gold · Events blue · Resources green · Admin pink ── */
-.railGroup { --accent: #ffc72c; }
+.railGroup { --accent: var(--p-accent); }
 .railGroupLabel { color: var(--accent); opacity: 0.9; }
 .railGroupDot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
 .railIcon { color: var(--accent); }
 .railItem:hover { background: color-mix(in srgb, var(--accent) 9%, transparent); }
 .railItemActive { background: color-mix(in srgb, var(--accent) 16%, transparent); }
-.railItemActive .railLabel { color: var(--white); }
+.railItemActive .railLabel { color: var(--pp-chrome-fg); }
 .railGroup { border-top-color: color-mix(in srgb, var(--accent) 22%, transparent); }
 
 /* ── Stretch: the sidebar fills the full height under the header, with the
@@ -545,18 +547,19 @@
    Home = the color-coded group cards (one column); an opened section gets a slim sticky bar —
    round back button, a tinted icon tile in the group color, the title. ═══ */
 .panelIconTile > svg { width: 100%; height: 100%; }
-.panelIconTile { display: grid; place-items: center; box-sizing: border-box; width: 36px; height: 36px; padding: 8px; flex-shrink: 0; border-radius: 0.7rem; color: var(--accent, #ffc72c); background: color-mix(in srgb, var(--accent, #ffc72c) 15%, transparent); border: 1px solid color-mix(in srgb, var(--accent, #ffc72c) 30%, transparent); }
+.panelIconTile { display: grid; place-items: center; box-sizing: border-box; width: 36px; height: 36px; padding: 8px; flex-shrink: 0; border-radius: 0.7rem; color: var(--accent, var(--p-accent)); background: color-mix(in srgb, var(--accent, var(--p-accent)) 15%, transparent); border: 1px solid color-mix(in srgb, var(--accent, var(--p-accent)) 30%, transparent); }
 @media (max-width: 899px) {
   .panel { background: none; border: none; border-radius: 0; padding: 0 0 1rem; min-height: 0; }
   .panelHeader {
     position: sticky; top: 0; z-index: 15;
     flex-direction: row; align-items: center; justify-content: flex-start; text-align: left; gap: 0.7rem;
-    padding: 0.65rem 0; margin: 0 0 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    background: #0b1426;
+    padding: 0.65rem 0; margin: 0 0 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); /* theme-ok */
+    background: #0b1020; padding-inline: 0.7rem; border-bottom: 3px solid #04070f; /* theme-ok */
   }
+  .panelHeader .panelTitle { color: #f2f1f0; } /* theme-ok */
   .panelHeader .backBtn {
     position: static; display: grid; place-items: center; width: 36px; height: 36px; padding: 0; flex-shrink: 0;
-    border-radius: 50%; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); color: var(--white);
+    border-radius: 50%; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); color: var(--white); /* theme-ok */
   }
   .panelTitle { font-size: 1rem; letter-spacing: 0.03em; }
   .card { padding: 0.75rem 0.9rem; }
@@ -569,8 +572,8 @@
   .cardIconTile { width: 40px; height: 40px; }
 }
 
-.sheetFooter { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.4rem 0.9rem 0.7rem; margin-bottom: 0.2rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); font-size: 0.85rem; }
-.sheetFooter a { color: rgba(242, 241, 240, 0.7); text-decoration: none; }
+.sheetFooter { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.4rem 0.9rem 0.7rem; margin-bottom: 0.2rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); font-size: 0.85rem; } /* theme-ok */
+.sheetFooter a { color: rgba(242, 241, 240, 0.7); text-decoration: none; } /* theme-ok */
 
 /* ── Sidebar spacing, final: fluid instead of height breakpoints ──
    Browsers report very different window heights (Safari's toolbars, bookmark bars…), so
@@ -596,10 +599,10 @@
 .railFooter a, .sheetFooter a {
   display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.5rem 0.8rem; border-radius: 0.65rem; white-space: nowrap;
   font-family: var(--font-futura-heavy); font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none;
-  color: var(--yellow-text); background: rgba(255, 199, 44, 0.12); border: 1px solid rgba(255, 199, 44, 0.4);
-  transition: background 0.15s, border-color 0.15s;
+  color: var(--pp-chrome-fg); background: transparent; border: 2px solid rgba(var(--pp-chrome-rgb), 0.55); border-radius: 6px; box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.45);
+  transition: background 0.15s, transform 0.1s, box-shadow 0.1s;
 }
-.railFooter a:hover, .sheetFooter a:hover { color: var(--yellow-text); background: rgba(255, 199, 44, 0.22); border-color: #ffc72c; }
+.railFooter a:hover, .sheetFooter a:hover { color: var(--pp-chrome-fg); background: rgba(var(--pp-chrome-rgb), 0.1); transform: translate(-1px, -1px); box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.45); }
 
 /* Narrow sidebar: keep the labels inside their buttons. */
 .railFooter a, .railFooter button { padding: 0.45rem 0.3rem; font-size: 0.66rem; letter-spacing: 0.02em; gap: 0.25rem; overflow: hidden; text-overflow: ellipsis; }
@@ -639,7 +642,7 @@
   .rail { height: auto !important; max-height: calc(100vh - var(--portal-header-h, 0px) - 1.5rem); }
   .rail .railNav { display: flex; flex-direction: column; gap: 0; flex: 0 1 auto; min-height: 0; overflow: hidden; }
   .rail .railGroup { display: contents; }
-  .rail .railGroupLabel { flex: none; margin-top: 0.35rem; padding: 0.5rem 0.6rem 0.15rem; border-top: 1px solid rgba(255, 255, 255, 0.07); }
+  .rail .railGroupLabel { flex: none; margin-top: 0.35rem; padding: 0.5rem 0.6rem 0.15rem; border-top: 1px solid rgba(var(--pp-chrome-rgb), 0.07); }
   .rail .railGroup:first-child .railGroupLabel { margin-top: 0.1rem; }
   .rail .railItem { flex: 0 1 auto; max-height: none; min-height: 26px; padding: 0.4rem 0.65rem; margin-top: 0.1rem; }
   .rail .railLabel { font-size: 0.82rem; }
@@ -651,9 +654,9 @@
    visible scrollbar, so the last links (Site Content) can always be reached and Back to Site / Sign out
    stay on screen. */
 @media (min-width: 900px) {
-  .rail .railNav { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.22) transparent; padding-right: 2px; }
+  .rail .railNav { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(var(--pp-chrome-rgb), 0.22) transparent; padding-right: 2px; }
   .rail .railNav::-webkit-scrollbar { display: block; width: 6px; }
-  .rail .railNav::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.22); border-radius: 999px; }
+  .rail .railNav::-webkit-scrollbar-thumb { background: rgba(var(--pp-chrome-rgb), 0.22); border-radius: 999px; }
   .rail .railNav::-webkit-scrollbar-track { background: transparent; }
   .rail .railNav > * { flex-shrink: 0; }
 }
@@ -691,27 +694,27 @@
 @media (min-width: 900px) {
   .appFrame {
     position: sticky; top: 0.75rem; display: flex; align-items: stretch; height: calc(100vh - 1.5rem); min-height: 520px;
-    border-radius: 1.2rem; border: 1px solid rgba(255, 255, 255, 0.09); overflow: hidden;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.032), rgba(255, 255, 255, 0.012));
+    border-radius: 1.2rem; border: 1px solid rgba(var(--pp-chrome-rgb), 0.09); overflow: hidden;
+    background: linear-gradient(180deg, rgba(var(--pp-chrome-rgb), 0.032), rgba(var(--pp-chrome-rgb), 0.012));
   }
   .appFrame .rail {
     position: static; align-self: stretch; height: auto !important; max-height: none !important; margin: 0; width: 252px; flex-shrink: 0;
-    border: 0; border-right: 1px solid rgba(255, 255, 255, 0.08); border-radius: 0; background: rgba(0, 0, 0, 0.22);
+    border: 0; border-right: 1px solid rgba(var(--pp-chrome-rgb), 0.08); border-radius: 0; background: rgba(var(--pp-ink-rgb), 0.06);
   }
   .appFrame .rail { position: relative; top: 0; will-change: width; transition: width 0.3s cubic-bezier(0.32, 0.72, 0, 1), padding 0.3s cubic-bezier(0.32, 0.72, 0, 1), background-color 0.3s ease; }
   .appFrame .rail.railCollapsed { width: 62px; margin: 0; z-index: 15; }
   .frameMain { flex: 1; min-width: 0; display: flex; flex-direction: column; }
   .topBar {
     position: relative; z-index: 6; flex: none; display: flex; align-items: center; gap: 0.85rem; height: 58px; padding: 0 1rem 0 0.9rem;
-    border-bottom: 1px solid color-mix(in srgb, var(--frame-accent) 32%, rgba(255, 255, 255, 0.06));
+    border-bottom: 1px solid color-mix(in srgb, var(--frame-accent) 32%, rgba(var(--pp-chrome-rgb), 0.06));
     background: linear-gradient(90deg, color-mix(in srgb, var(--frame-accent) 10%, transparent), transparent 60%);
   }
-  .topToggle { display: grid; place-items: center; width: 36px; height: 36px; flex-shrink: 0; border: 0; border-radius: 0.65rem; background: transparent; color: rgba(242, 241, 240, 0.6); cursor: pointer; transition: background 0.15s, color 0.15s; }
-  .topToggle:hover { background: rgba(255, 255, 255, 0.07); color: var(--white); }
+  .topToggle { display: grid; place-items: center; width: 36px; height: 36px; flex-shrink: 0; border: 0; border-radius: 0.65rem; background: transparent; color: rgba(var(--pp-chrome-rgb), 0.6); cursor: pointer; transition: background 0.15s, color 0.15s; }
+  .topToggle:hover { background: rgba(var(--pp-chrome-rgb), 0.07); color: var(--pp-chrome-fg); }
   .topTitle { display: flex; align-items: center; gap: 0.65rem; min-width: 0; flex: 1; }
   .topIcon > svg { width: 100%; height: 100%; }
   .topIcon { display: grid; place-items: center; box-sizing: border-box; width: 36px; height: 36px; padding: 8px; flex-shrink: 0; border-radius: 0.6rem; color: var(--frame-accent); background: color-mix(in srgb, var(--frame-accent) 16%, transparent); border: 1px solid color-mix(in srgb, var(--frame-accent) 32%, transparent); }
-  .topName { font-family: var(--font-futura-heavy); font-size: 1.08rem; letter-spacing: 0.04em; color: var(--white); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .topName { font-family: var(--font-futura-heavy); font-size: 1.08rem; letter-spacing: 0.04em; color: var(--pp-chrome-fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .topRight { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
   .topSearch { width: 300px; }
   .topSearch > * { margin: 0 !important; max-width: none !important; }
@@ -789,18 +792,20 @@
     background: transparent !important; border-color: transparent !important; padding: 0 !important; gap: 0.6rem !important; border-radius: 0.65rem !important;
     transition: background 0.15s !important;
   }
-  .appFrame .rail .railFooter > a:hover, .appFrame .rail .railFooter > button:hover { background: rgba(255, 255, 255, 0.05) !important; }
+  .appFrame .rail .railFooter > a:hover, .appFrame .rail .railFooter > button:hover { background: rgba(var(--pp-chrome-rgb), 0.05) !important; }
   .appFrame .rail .railFooter > a > span, .appFrame .rail .railFooter > button > span, .appFrame .rail .railFooter > a > svg {
     flex: none; width: 27px; height: 28px; box-sizing: border-box; display: inline-flex !important; align-items: center; justify-content: center; place-items: center; border-radius: 0.65rem;
     border: 1px solid var(--tile-b); background: var(--tile-bg); color: var(--tile-c); padding: 0;
   }
   .appFrame .rail .railFooter > a > svg { padding: 6px; }
-  .appFrame .rail .railFooter > a:not([class*='Help']) { --tile-c: #ffc72c; --tile-bg: rgba(255, 199, 44, 0.12); --tile-b: rgba(255, 199, 44, 0.4); }
-  .appFrame .rail .railFooter > a[class*='Help'] { --tile-c: #22d3ee; --tile-bg: rgba(34, 211, 238, 0.1); --tile-b: rgba(34, 211, 238, 0.4); }
-  .appFrame .rail .railFooter > button { --tile-c: #fca5a5; --tile-bg: rgba(220, 38, 38, 0.1); --tile-b: rgba(220, 38, 38, 0.35); color: #fca5a5; }
-  .appFrame .rail .railFooter > a:not([class*='Help']):hover > span { background: rgba(255, 199, 44, 0.22); border-color: #ffc72c; }
-  .appFrame .rail .railFooter > a[class*='Help']:hover > svg { background: rgba(34, 211, 238, 0.2); border-color: #22d3ee; }
-  .appFrame .rail .railFooter > button:hover > span { background: rgba(220, 38, 38, 0.22); border-color: rgba(220, 38, 38, 0.6); }
+  /* One look for all three: an outlined tile with a hard shadow (the cut-paper style of the rest of the portal). Help's is the yellow sticker. */
+  .appFrame .rail .railFooter > a, .appFrame .rail .railFooter > button { --tile-c: var(--pp-chrome-fg); --tile-bg: transparent; --tile-b: rgba(var(--pp-chrome-rgb), 0.55); color: rgba(var(--pp-chrome-rgb), 0.9); }
+  .appFrame .rail .railFooter > a[class*='Help'] { --tile-c: #011941; --tile-bg: var(--yellow); --tile-b: #011941; color: var(--pp-chrome-fg); } /* theme-ok */
+  .appFrame .rail .railFooter > button { --tile-c: var(--pp-bad); }
+  .appFrame .rail .railFooter > a > span, .appFrame .rail .railFooter > button > span, .appFrame .rail .railFooter > a > svg { border-width: 2px; border-radius: 6px; box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.45); }
+  .appFrame .rail .railFooter > a:hover > span, .appFrame .rail .railFooter > button:hover > span, .appFrame .rail .railFooter > a:hover > svg { border-color: var(--pp-chrome-fg); }
+  .appFrame .rail .railFooter > a[class*='Help']:hover > svg { border-color: #011941; filter: brightness(1.05); } /* theme-ok */
+  .appFrame .rail .railFooter > a, .appFrame .rail .railFooter > button { box-shadow: none; transform: none; }
 }
 
 /* Pages that want the whole window (Site Content with its live preview) drop the centered max-width and shrink the padding. */
@@ -827,11 +832,8 @@
 /* Labels clip their overflow (for the ellipsis), which also clipped the tails of p, q, g and y: give the text room below the baseline. */
 .railLabel, .railName { line-height: 1.45; padding-block: 0.08em; }
 
-/* The top bar already names the section on desktop, so the page's own title (and the description line under it) goes. Phones keep them. */
+/* Page intros (SectionHeader) now show on desktop too, so every page opens like the dashboard. */
 @media (min-width: 900px) {
-  .desktopContent h1, .desktopContent h1 + p { display: none; }
-  /* A wrapper that held only that title and description is gone too, so it leaves no gap above the tabs. */
-  .desktopContent div:has(> h1):not(:has(> :not(h1):not(p))) { display: none; }
   .frameBody { padding-top: 1rem; }
 }
 
@@ -841,3 +843,173 @@
   .appFrame .rail .railFooter > a, .appFrame .rail .railFooter > button { border: 0 !important; height: 30px !important; min-height: 30px !important; align-items: center !important; }
   .appFrame .rail .railFooter > a > span, .appFrame .rail .railFooter > button > span, .appFrame .rail .railFooter > a > svg { height: 28px; }
 }
+
+.lockedNotice { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin: 0 0 0.75rem; padding: 0.7rem 0.9rem; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.18); background: rgba(255, 255, 255, 0.06); color: rgba(255, 255, 255, 0.9); font-size: 0.88rem; line-height: 1.45; } /* theme-ok */
+.lockedActions { display: inline-flex; align-items: center; gap: 0.4rem; }
+.lockedHelp { font: inherit; font-weight: 600; padding: 0.35rem 0.8rem; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.35); background: transparent; color: inherit; cursor: pointer; } /* theme-ok */
+.lockedHelp:hover { background: rgba(255, 255, 255, 0.1); } /* theme-ok */
+.lockedClose { font: inherit; font-size: 1.2rem; line-height: 1; padding: 0.1rem 0.5rem; border: 0; background: transparent; color: inherit; cursor: pointer; opacity: 0.7; }
+
+/* "You are here": the group the open section belongs to, shown ahead of its name (not on the home view) */
+.crumbGroup { display: inline-flex; align-items: center; gap: 0.2rem; margin-right: 0.35rem; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--pp-chrome-accent); opacity: 0.85; }
+.panelTitle .crumbGroup { display: block; margin: 0 0 0.1rem; }
+
+/* ═══ Cut-paper portal: navy chrome (sidebar + top bar), ink-on-paper pages ═══ */
+.crumbGroup { color: var(--pp-chrome-accent); }
+@media (min-width: 900px) {
+  .appFrame {
+    border: 3px solid var(--pp-chrome-edge); border-radius: 10px; background: var(--pp-chrome);
+    box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.55);
+  }
+  /* Ink: a near-black chrome in both themes, so the paper pages and the group colors carry the color. */
+  .appFrame .rail { background: var(--pp-chrome); border-right: 3px solid var(--pp-chrome-edge); }
+  .topBar { background: var(--pp-chrome); border-bottom: 3px solid var(--pp-chrome-edge); }
+  .frameBody { background: var(--pp-paper); color: var(--pp-ink); scrollbar-color: rgba(1, 25, 65, 0.35) transparent; }
+  .frameBanners > * { border-bottom: 2px solid var(--pp-ink) !important; }
+  .railItem { border-radius: 4px; }
+  .railItemActive { background: var(--pp-paper); box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.55); }
+  .railItemActive, .railItemActive * { color: var(--pp-ink) !important; }
+  .railItemActive::before { display: none; }
+}
+
+/* Sidebar: words, not icons. Collapsed, each item shrinks to the first letter of its name. */
+.railIcon { display: none !important; }
+.railMono { display: none; place-items: center; flex-shrink: 0; width: 24px; height: 24px; border-radius: 4px; font-family: var(--font-futura-heavy); font-size: 0.78rem; color: var(--pp-chrome-fg); background: rgba(var(--pp-chrome-rgb), 0.1); }
+.railCollapsed .railMono { display: grid; }
+.railCollapsed:hover .railMono, .railCollapsed:focus-within .railMono { display: none; }
+.railCollapsed .railItem { justify-content: center; }
+.railCollapsed:hover .railItem, .railCollapsed:focus-within .railItem { justify-content: flex-start; }
+.railItemActive .railMono { background: rgba(var(--pp-ink-rgb), 0.15); }
+
+/* Color coding: each group keeps its color wherever you are in it (top band, tab underline, sidebar marker, home cards). */
+@media (min-width: 900px) {
+  .frameBody { border-top: 6px solid var(--frame-accent); }
+  .railItemActive { box-shadow: 3px 3px 0 var(--accent, rgba(0, 0, 0, 0.55)); }
+}
+.card { border-left: 8px solid var(--accent); }
+.panel { border-top: 8px solid var(--accent, var(--pp-ink)); }
+.railGroupLabel { color: color-mix(in srgb, var(--accent) 52%, var(--pp-chrome-fg)); }
+
+/* Collapsed sidebar: gone entirely (the page gets the full width); the Menu button in the top bar brings it back. */
+@media (min-width: 900px) {
+  .appFrame .rail.railCollapsed, .appFrame .rail.railCollapsed:hover, .appFrame .rail.railCollapsed:focus-within { width: 0 !important; padding: 0; border: 0; overflow: hidden; visibility: hidden; }
+  .topToggle { width: auto; padding: 0 0.75rem; border: 2px solid rgba(var(--pp-chrome-rgb), 0.3); border-radius: 4px; font-family: var(--font-futura-medium); font-size: 0.78rem; white-space: nowrap; }
+}
+
+/* Reminder banners inside the dark desktop frame: light text on Ink. (On phones the same banner sits on paper, see its own file.) */
+@media (min-width: 900px) {
+  .frameBanners > * { background: var(--pp-chrome) !important; color: var(--pp-chrome-fg) !important; border-color: var(--pp-chrome-edge) !important; }
+  .frameBanners > * strong, .frameBanners > * svg { color: var(--pp-chrome-accent) !important; }
+}
+
+/* Layering, lowest to highest: page content < sticky banners (80) < top bar and its menus (90) < modals (500+)
+   < dialogs (3000) < pickers/popovers (3500, so a dropdown inside a dialog opens over it). The top bar sits above the reminder and "View as" banners so its menus open over them, not under. */
+@media (min-width: 900px) {
+  .topBar { z-index: 90; }
+  .frameBanners { position: relative; z-index: 80; }
+}
+
+/* Home shows a short "For you" list; every page stays one click away under "All pages". */
+.forYouLabel { margin: 0 0 0.6rem; font-family: var(--font-futura-heavy); font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--pp-ink); }
+.allPages { margin-top: 1.2rem; }
+.allPages > summary { cursor: pointer; list-style: none; display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0.9rem; font-family: var(--font-futura-heavy); font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--pp-ink); background: var(--pp-card); border: 2px solid var(--pp-ink); border-radius: 5px; box-shadow: 3px 3px 0 rgba(var(--pp-ink-rgb), 0.3); }
+.allPages > summary::-webkit-details-marker { display: none; }
+.allPages > summary::after { content: '+'; font-size: 1rem; line-height: 1; }
+.allPages[open] > summary::after { content: '\2212'; }
+.allPages[open] > summary { margin-bottom: 1rem; }
+.allPages .group { margin-bottom: 1rem; }
+
+.railBadge { color: #011941; } /* theme-ok */
+.railAvatarFallback { color: #f2f1f0; } /* theme-ok */
+
+/* ═══ Same language as the public site ═══
+   Wide display face for titles with the yellow hand-drawn line, yellow tilted sticker labels, a and the open page as a paper sticker in the sidebar. ═══ */
+@media (min-width: 900px) {
+  .topName { font-family: var(--font-soulmaze); font-weight: 400; font-size: 1.15rem; letter-spacing: 0.02em; text-transform: none; }
+  .railGroupLabel { display: inline-flex; align-self: flex-start; margin: 0.4rem 0 0.35rem 0.5rem; padding: 0.28rem 0.6rem; font-family: var(--font-renegare); font-size: 0.62rem; letter-spacing: 0.16em; color: #011941 !important; background: var(--yellow); border-radius: 4px; transform: rotate(-1.5deg); box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.45); } /* theme-ok */
+  .railGroup:nth-of-type(even) .railGroupLabel { transform: rotate(1.2deg); }
+  .railGroupDot { display: none; }
+  .railItem { font-family: var(--font-futura-heavy); }
+  .railLabel { font-family: var(--font-futura-heavy); font-size: 0.8rem; letter-spacing: 0.03em; text-transform: uppercase; }
+  .railItemActive { transform: rotate(-0.8deg); box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.45); }
+}
+.panelTitle { font-family: var(--font-soulmaze); font-weight: 400; text-transform: none; }
+
+.crumbBtn { font-family: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; transition: text-decoration-color 0.12s; }
+.crumbBtn:hover, .crumbBtn:focus-visible { text-decoration-color: currentColor; }
+
+.railItemActive .railBadge { color: #011941 !important; } /* theme-ok */
+
+/* Breadcrumb trail: Group › Section › Tab › Subtab. The parents are small caps links; the last level is the title. */
+.crumbTrail { display: flex; align-items: baseline; flex-wrap: nowrap; gap: 0.3rem; min-width: 0; line-height: 1.3; }
+.crumbSep { flex-shrink: 0; align-self: center; opacity: 0.55; }
+.crumbLink { flex-shrink: 0; font-family: var(--font-futura-heavy); font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; background: none; border: 0; padding: 0; cursor: pointer; color: var(--pp-chrome-accent); text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; transition: text-decoration-color 0.12s; }
+.crumbLink:hover, .crumbLink:focus-visible { text-decoration-color: currentColor; }
+.crumbHere { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: inherit; }
+@media (max-width: 640px) { .crumbTrail .crumbLink:not(:last-of-type):nth-of-type(n+2) { display: none; } }
+
+
+/* ═══ Phone portal, in the public site's language ═══
+   Navy bar, a yellow tilted sticker for the menu group, wide display type for the page, light-blue hazard dashes as the divider, outlined buttons
+   with hard shadows. One slim header: the page's own title stays in the page for screen readers but is not drawn on phones. Tokens, not fixed
+   colours, so it follows the person's theme. ═══ */
+@media (max-width: 899px) {
+  .panel { border-top: 0 !important; }
+  .panelHeader {
+    position: sticky; flex-wrap: wrap; row-gap: 0.1rem; padding: 0.6rem 0.8rem 0.95rem; margin: 0 0 1rem; border: 0;
+    background: var(--pp-chrome); box-shadow: none;
+  }
+  .panelHeader::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 9px;
+    background: repeating-linear-gradient(-60deg, var(--pp-chrome-accent) 0 11px, transparent 11px 19px);
+  }
+  .panelHeader .panelIconTile { display: none; }
+  .panelHeader .panelTitle {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; min-width: 0; flex: 1; color: var(--pp-chrome-fg);
+    font-family: var(--font-renegare); font-size: 1.05rem; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1.1;
+  }
+  .panelHeader .crumbGroup {
+    display: inline-block; padding: 0.2rem 0.5rem; font-family: var(--font-renegare); font-size: 0.58rem; letter-spacing: 0.16em; color: #011941; /* theme-ok */
+    background: var(--yellow); border-radius: 3px; transform: rotate(-1.5deg); box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4);
+  }
+  .panelHeader .backBtn {
+    width: 40px; height: 40px; border-radius: 6px; background: transparent; color: var(--pp-chrome-fg);
+    border: 2px solid var(--pp-chrome-fg); box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.45);
+  }
+  .panelBody :global([data-section-header]) { margin-bottom: 0.9rem; align-items: flex-start; }
+  .panelBody :global([data-section-header]) :global(h1) { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .panelBody :global([data-section-header]) > div:first-child { flex-basis: 100%; }
+  .panelBody :global([data-section-header]) :global(p) { font-size: 0.92rem; }
+
+  /* Bottom bar: an outlined slab with a hard shadow; the open page is a yellow sticker. */
+  .bottomBar {
+    left: 0.6rem; right: 0.6rem; padding: 0.35rem 0.3rem; background: var(--pp-chrome); border: 2px solid var(--pp-chrome-fg); border-radius: 8px;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.5);
+  }
+  .dockItem { color: rgba(var(--pp-chrome-rgb), 0.78); }
+  .dockLabel { font-family: var(--font-renegare); font-size: 0.55rem; letter-spacing: 0.05em; text-transform: uppercase; }
+  .dockItemActive { color: var(--pp-chrome-fg); }
+  .dockItemActive .dockIcon { background: var(--yellow); color: #011941; box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5); transform: rotate(-3deg); border-radius: 5px; } /* theme-ok */
+  .dockItem:active .dockIcon { background: rgba(var(--pp-chrome-rgb), 0.14); }
+  .dockBadge { box-shadow: 0 0 0 2px var(--pp-chrome); }
+}
+
+/* ═══ Phone bottom bar, redesigned ═══ A bar fixed to the bottom edge in the page's own surface (light or dark with the theme): five even slots,
+   readable labels, and the open page marked by a yellow pill behind its icon. The theme switch lives in the More sheet. */
+@media (max-width: 899px) {
+  .bottomBar {
+    left: 0; right: 0; bottom: 0; gap: 0.1rem; padding: 0.4rem 0.5rem calc(0.4rem + env(safe-area-inset-bottom, 0px));
+    background: var(--pp-card); border: 0; border-top: 2px solid var(--pp-ink); border-radius: 0; box-shadow: 0 -8px 18px -12px rgba(0, 0, 0, 0.35);
+  }
+  .dockItem { min-height: 54px; justify-content: center; gap: 0.18rem; padding: 0.15rem 0; color: rgba(var(--pp-ink-rgb), 0.66); border-radius: 10px; }
+  .dockIcon { width: 52px; height: 30px; border-radius: 999px; }
+  .dockLabel { font-family: var(--font-futura-medium); font-size: 0.7rem; letter-spacing: 0; text-transform: none; line-height: 1.1; }
+  .dockItemActive { color: var(--pp-ink); }
+  .dockItemActive .dockLabel { font-weight: 700; }
+  .dockItemActive .dockIcon { background: var(--yellow); color: #011941; box-shadow: none; transform: none; border-radius: 999px; } /* theme-ok */
+  .dockItem:active .dockIcon { background: rgba(var(--pp-ink-rgb), 0.12); }
+  .dockBadge { box-shadow: 0 0 0 2px var(--pp-card); }
+  .moreSheetScroll { padding-bottom: calc(5.2rem + env(safe-area-inset-bottom, 0px)); }
+  .sheetTheme { padding: 0.2rem 0.9rem 0.6rem; }
+}
+@media (min-width: 900px) { .sheetTheme { display: none; } }

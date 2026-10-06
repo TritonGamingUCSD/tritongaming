@@ -1,19 +1,23 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, X } from 'lucide-react';
+import { PanelLeft, Plus, Search, X } from 'lucide-react';
+import SectionHeader from '@/components/ui/SectionHeader';
+import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import { confirmHold } from '@/lib/confirmHold';
 import { showToast } from '@/lib/toast';
-import { usePortalParams, useLiveParams } from '@/lib/usePortalParams';
+import { useLiveParams } from '@/lib/usePortalParams';
+import { mergedPortalParams, portalHref } from '@/lib/portalPath';
 import { createClient } from '@/lib/supabase/client';
 import { slugify } from '@/lib/slug';
-import { buildSections, canMoveUnder, readingOrder, reorder, searchDocs, UNCATEGORIZED } from '@/lib/docsTree';
+import { buildSections, canMoveUnder, reorder, UNCATEGORIZED } from '@/lib/docsTree';
 import { diffSync, joinNames, type DocChange, type SyncDoc } from '@/lib/docsSync';
 import type { Doc, DocCategory } from '@/types/database';
+import DocPicker from './DocPicker';
 import DocSidebar, { type DropTarget } from './DocSidebar';
 import DocHome from './DocHome';
-import DocReader, { type ReaderSize, type ReaderWidth } from './DocReader';
+import DocReader, { type ReaderSize } from './DocReader';
 import DocEditView, { type DocEditViewHandle } from './DocEditView';
 import NewDocDialog, { type NewDocChoice } from './NewDocDialog';
 import MoveDialog from './MoveDialog';
@@ -31,18 +35,20 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
   const [categories, setCategories] = useState(initialCategories);
   const [favorites, setFavorites] = useState(() => new Set(initialFavorites));
   const searchParams = useLiveParams();
-  const setParams = usePortalParams();
   const [selectedId, setSelectedId] = useState<string | null>(() => searchParams.get('id'));
   const [editing, setEditing] = useState(false);
   const [editingNew, setEditingNew] = useState(false);
-  const [query, setQuery] = useState('');
   const [tagFilter, setTagFilter] = useState<string | null>(null);
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  // Categories start closed so the list is short; the one holding the doc you opened stays open.
+  const [collapsed, setCollapsed] = useState<Set<string>>(() => {
+    const open = initialDocs.find((d) => d.id === searchParams.get('id'))?.category_id ?? null;
+    const keys = [...initialCategories.map((c) => c.id as string), 'none'].filter((k) => k !== (open ?? 'none') || !searchParams.get('id'));
+    return new Set(keys.map((k) => `cat:${k}`));
+  });
   const [error, setError] = useState('');
   const [newDialog, setNewDialog] = useState<{ parentId: string | null; categoryId: string | null } | null>(null);
   const [moveDoc, setMoveDoc] = useState<Doc | null>(null);
   const [size, setSize] = useState<ReaderSize>('md');
-  const [width, setWidth] = useState<ReaderWidth>('narrow');
   const [notices, setNotices] = useState<Notice2[]>([]);
   const [sync, setSync] = useState<Map<string, SyncDoc>>(new Map());
   const [goneIds, setGoneIds] = useState<Set<string>>(new Set());
@@ -59,17 +65,30 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
 
   // Remembered per device: how big the text is and how wide the page.
   useEffect(() => {
-    try { const s = JSON.parse(localStorage.getItem('docs-reader') ?? 'null'); if (s?.size) setSize(s.size); if (s?.width) setWidth(s.width); } catch { /* none saved */ }
+    try { const s = JSON.parse(localStorage.getItem('docs-reader') ?? 'null'); if (s?.size) setSize(s.size); } catch { /* none saved */ }
   }, []);
-  const saveReader = (s: ReaderSize, w: ReaderWidth) => { setSize(s); setWidth(w); try { localStorage.setItem('docs-reader', JSON.stringify({ size: s, width: w })); } catch { /* private window */ } };
+  const saveReader = (s: ReaderSize) => { setSize(s); try { localStorage.setItem('docs-reader', JSON.stringify({ size: s })); } catch { /* private window */ } };
 
-  // Keep ?id=<doc> in the address bar so any doc can be linked to (skipped on first render so a deep link isn't wiped).
+  // Keep ?id=<doc> in the address bar so any doc can be linked to (skipped on first render so a deep link isn't wiped). Opening a doc (or going back
+  // to the docs home) is a step in the browser's history, so Back returns to the doc you came from.
   const syncedOnce = useRef(false);
   useEffect(() => {
     if (!syncedOnce.current) { syncedOnce.current = true; return; }
-    setParams({ id: selectedId });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const params = mergedPortalParams(window.location.pathname, window.location.search);
+    if ((params.get('id') || null) === (selectedId || null)) return;
+    if (selectedId) params.set('id', selectedId); else params.delete('id');
+    window.history.pushState(window.history.state, '', portalHref(params));
+    const w = window as unknown as { __tgPush?: number }; w.__tgPush = (w.__tgPush ?? 0) + 1;
   }, [selectedId]);
+  // Back / Forward: show the doc the address now names.
+  useEffect(() => {
+    const onPop = () => {
+      const id = mergedPortalParams(window.location.pathname, window.location.search).get('id');
+      if ((id || null) !== (editingRef.current.selectedId || null)) { setSelectedId(id); setEditing(false); }
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
 
   const addNotice = useCallback((text: string, tone: Notice2['tone'] = 'info', docId?: string) => {
     const id = noticeId.current++;
@@ -134,8 +153,6 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
   // ── Derived ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
   const selected = docs.find((d) => d.id === selectedId) ?? null;
   const sections = useMemo(() => buildSections(docs, categories), [docs, categories]);
-  const order = useMemo(() => readingOrder(sections), [sections]);
-  const hits = useMemo(() => searchDocs(docs, query), [docs, query]);
   const catName = useCallback((d: Doc) => {
     let top: Doc = d;
     const seen = new Set<string>();
@@ -152,8 +169,27 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
     }
     go();
   }
-  const openDoc = (id: string) => void guard(() => { setSelectedId(id); window.scrollTo({ top: 0 }); });
-  const goHome = () => void guard(() => { setSelectedId(null); setTagFilter(null); });
+  // "Browse all docs" is a searchable picker that drops from the button; Organize (the full tree, drag and drop, categories) opens in its own window.
+  const [navOpen, setNavOpen] = useState(false);
+  const [organizeOpen, setOrganizeOpen] = useState(false);
+  const navBtnRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!organizeOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOrganizeOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [organizeOpen]);
+  const openDoc = (id: string) => { setNavOpen(false); setOrganizeOpen(false); void guard(() => { setSelectedId(id); window.scrollTo({ top: 0 }); }); };
+  const goHome = () => { setNavOpen(false); void guard(() => { setSelectedId(null); setTagFilter(null); }); };
+  // Opening a doc (from search, a link or Back) opens the category it lives in.
+  useEffect(() => {
+    const d = docs.find((x) => x.id === selectedId);
+    if (!d) return;
+    setCollapsed((prev) => { const key = `cat:${d.category_id ?? 'none'}`; if (!prev.has(key)) return prev; const n = new Set(prev); n.delete(key); return n; });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId]);
+  const collapseAll = () => setCollapsed(new Set([...sections.map((x) => `cat:${x.id ?? 'none'}`), ...docs.filter((d) => docs.some((c) => c.parent_id === d.id)).map((d) => d.id)]));
+  const expandAll = () => setCollapsed(new Set());
   const toggleCollapse = (key: string) => setCollapsed((p) => { const n = new Set(p); if (n.has(key)) n.delete(key); else n.add(key); return n; });
   const patchDoc = useCallback((id: string, patch: Partial<Doc>) => setDocs((cur) => cur.map((d) => (d.id === id ? { ...d, ...patch } : d))), []);
 
@@ -271,6 +307,23 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
     if (err) { setError(err.code === '23505' ? 'A category with that name already exists.' : 'Failed to add category.'); return; }
     setCategories((p) => [...p, data as DocCategory]);
   }
+  async function setCategoryColor(cat: DocCategory, color: string | null) {
+    setCategories((p) => p.map((c) => (c.id === cat.id ? { ...c, color } : c)));
+    const { error: err } = await createClient().from('doc_categories').update({ color }).eq('id', cat.id);
+    if (err) { setError('Couldn’t change the colour.'); setCategories((p) => p.map((c) => (c.id === cat.id ? { ...c, color: cat.color } : c))); }
+  }
+  async function reorderCategories(ids: string[]) {
+    const before = categories;
+    setCategories((p) => ids.map((id, i) => ({ ...(p.find((c) => c.id === id) as DocCategory), order_index: i })));
+    const supabase = createClient();
+    const results = await Promise.all(ids.map((id, i) => supabase.from('doc_categories').update({ order_index: i }).eq('id', id)));
+    if (results.some((r) => r.error)) { setError('Couldn’t save the new order.'); setCategories(before); }
+  }
+  async function reorderPins(ids: string[]) {
+    setDocs((p) => p.map((d) => (ids.includes(d.id) ? { ...d, pin_order: ids.indexOf(d.id) } : d)));
+    const r = await docsPost<{ ok: boolean }>('/api/docs/pin-order', { ids });
+    if (!r.ok) setError(r.json.error || 'Couldn’t save the order.');
+  }
   async function deleteCategory(cat: DocCategory) {
     if (!(await confirmHold({ title: `Delete category "${cat.name}"?`, message: 'Docs in it become uncategorized, not deleted.', confirmLabel: 'Hold to delete' }))) return;
     const supabase = createClient();
@@ -280,17 +333,36 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
     setDocs((p) => p.map((d) => (d.category_id === cat.id ? { ...d, category_id: null } : d)));
   }
 
-  const showDetail = editing || !!selected;
   const live = selected ? sync.get(selected.id) ?? null : null;
   const deleted = !!selected && goneIds.has(selected.id);
   const readerNotice = selected && live && live.revision > selected.revision ? `${live.updated_by_name ?? 'Someone'} just published a newer version. Loading it now.` : null;
 
   return (
-    <div className={`${styles.shell} ${showDetail ? styles.showDetail : ''}`}>
-      <DocSidebar docs={docs} sections={sections} categories={categories} selectedId={selectedId} query={query} onQuery={setQuery} hits={hits} favorites={favorites}
-        collapsed={collapsed} onToggle={toggleCollapse} onOpen={openDoc} onHome={goHome} canEdit={canEdit} sync={sync}
+    <div className={styles.shell}>
+      {!selected && !editing && (
+        <SectionHeader flush title="Documentation" sub="Guides, checklists and how-tos for the team."
+          actions={canEdit ? <Button onClick={() => setNewDialog({ parentId: null, categoryId: null })}><Plus size={14} aria-hidden="true" /> New doc</Button> : undefined} />
+      )}
+      <div className={styles.docsBar}>
+        <button type="button" ref={navBtnRef} className={styles.docsBarBtn} onClick={() => setNavOpen((v) => !v)} aria-expanded={navOpen} aria-haspopup="dialog"><PanelLeft size={15} aria-hidden="true" /> Browse all docs</button>
+        {/* Searching lives in the one search bar at the top; this just opens it ready to search the docs. */}
+        <button type="button" className={styles.docsBarBtn} onClick={() => window.dispatchEvent(new CustomEvent('tg:search', { detail: 'docs ' }))}><Search size={15} aria-hidden="true" /> Search docs <kbd className={styles.docsBarKbd}>⌘K</kbd></button>
+        <span className={styles.docsBarCount}>{docs.filter((d) => d.published || canEdit).length} docs</span>
+      </div>
+      {navOpen && <DocPicker anchor={navBtnRef} docs={docs.filter((d) => d.published || canEdit)} sections={sections} favorites={favorites} selectedId={selectedId} canEdit={canEdit}
+        onOpen={openDoc} onHome={goHome} onClose={() => setNavOpen(false)} onNew={() => { setNavOpen(false); setNewDialog({ parentId: null, categoryId: null }); }} onOrganize={() => { setNavOpen(false); setOrganizeOpen(true); }} />}
+      {organizeOpen && (
+        <div className={styles.organizeBack} onClick={(e) => { if (e.target === e.currentTarget) setOrganizeOpen(false); }}>
+          <div className={styles.organizeSheet} role="dialog" aria-modal="true" aria-label="Organize docs">
+            <div className={styles.organizeBody}>
+              <DocSidebar docs={docs} sections={sections} categories={categories} selectedId={selectedId} onClose={() => setOrganizeOpen(false)} favorites={favorites}
+        collapsed={collapsed} onToggle={toggleCollapse} onCollapseAll={collapseAll} onExpandAll={expandAll} onOpen={openDoc} onHome={goHome} canEdit={canEdit} sync={sync}
         onNew={(parentId, categoryId) => setNewDialog({ parentId, categoryId })} onMenu={menuAction} onDrop={(id, t) => void moveTo(id, t)}
-        onAddCategory={addCategory} onDeleteCategory={deleteCategory} catName={catName} />
+        onAddCategory={addCategory} onDeleteCategory={deleteCategory} onCategoryColor={setCategoryColor} onReorderCategories={reorderCategories} catName={catName} />
+            </div>
+          </div>
+        </div>
+      )}
 
       <main className={styles.main}>
         {notices.length > 0 && (
@@ -306,24 +378,21 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
         )}
         {error && <Notice tone="error">{error} <button type="button" className={styles.linkBtn} onClick={() => setError('')}>Dismiss</button></Notice>}
 
-        {showDetail && !editing && (
-          <button type="button" className={styles.backToList} onClick={() => void guard(() => setSelectedId(null))}><ChevronLeft size={16} aria-hidden="true" /> All Docs</button>
-        )}
 
         {editing && selected ? (
-          <DocEditView ref={editRef} key={selected.id} doc={selected} isNew={editingNew} myName={null} latest={live} deletedElsewhere={deleted}
+          <DocEditView ref={editRef} key={selected.id} doc={selected} linkTitles={docs.filter((d) => d.id !== selected.id).map((d) => d.title)} isNew={editingNew} myName={null} latest={live} deletedElsewhere={deleted}
             onLeave={leaveEdit} onDocPatch={(p) => patchDoc(selected.id, p)} onSaveAsNew={saveAsNew} />
         ) : selected ? (
           deleted ? (
             <div className={styles.empty}><p><strong>“{selected.title}” was deleted by someone else.</strong></p><p><button type="button" className={styles.linkBtn} onClick={() => { setSelectedId(null); }}>Back to all docs</button></p></div>
           ) : (
-            <DocReader doc={selected} docs={docs} sections={sections} categories={categories} canEdit={canEdit} favorite={favorites.has(selected.id)} size={size} width={width}
-              onSize={(s) => saveReader(s, width)} onWidth={(w) => saveReader(size, w)} order={order} live={live} notice={readerNotice}
+            <DocReader doc={selected} docs={docs} sections={sections} categories={categories} canEdit={canEdit} favorite={favorites.has(selected.id)} size={size}
+              onSize={(s) => saveReader(s)} live={live} notice={readerNotice}
               onOpen={openDoc} onHome={goHome} onEdit={() => startEdit(selected)} onDelete={() => void askDelete(selected)} onNewSub={() => setNewDialog({ parentId: selected.id, categoryId: null })}
               onFavorite={() => void toggleFavorite(selected.id)} onPin={() => void togglePin(selected)} onTag={(t) => { setTagFilter(t); void guard(() => setSelectedId(null)); }} />
           )
         ) : (
-          <DocHome docs={docs.filter((d) => d.published || canEdit)} sections={sections} favorites={favorites} tagFilter={tagFilter} onTag={setTagFilter} onOpen={openDoc} canEdit={canEdit} catName={catName} />
+          <DocHome docs={docs.filter((d) => d.published || canEdit)} sections={sections} favorites={favorites} tagFilter={tagFilter} onTag={setTagFilter} onOpen={openDoc} onBrowse={(key) => { setCollapsed((prev) => { const n = new Set(prev); n.delete(key); return n; }); setNavOpen(true); }} canEdit={canEdit} catName={catName} onReorderPins={reorderPins} />
         )}
       </main>
 

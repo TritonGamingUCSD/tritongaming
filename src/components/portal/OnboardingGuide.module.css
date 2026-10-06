@@ -7,7 +7,7 @@
   align-items: center;
   justify-content: center;
   padding: 1.25rem;
-  z-index: 1000;
+  z-index: 2500;
 }
 
 .modal {
@@ -20,29 +20,12 @@
   text-align: center;
   gap: 0.875rem;
   background: #0b1426;
-  border: 1px solid rgba(255, 199, 44, 0.2);
+  border: 1px solid rgba(125, 180, 234, 0.2);
   border-radius: 1.25rem;
   padding: 2.5rem 1.75rem 1.75rem;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
 }
 
-.closeBtn {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(242, 241, 240, 0.65);
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-.closeBtn:hover { background: rgba(255, 255, 255, 0.1); color: var(--white); }
 
 .dots {
   display: flex;
@@ -53,10 +36,10 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(var(--pp-ink-rgb), 0.15);
   transition: background 0.2s, width 0.2s;
 }
-.dotActive { background: var(--yellow); width: 18px; border-radius: var(--radius-pill); }
+.dotActive { background: var(--p-accent); width: 18px; border-radius: var(--radius-pill); }
 
 .icon {
   display: inline-flex;
@@ -65,15 +48,15 @@
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: rgba(255, 199, 44, 0.1);
-  color: var(--yellow-text);
+  background: rgba(125, 180, 234, 0.1);
+  color: #a9cdf2;
   margin-top: 0.25rem;
 }
 
 .title {
   font-family: var(--font-futura-heavy);
   font-size: 1.15rem;
-  color: var(--white);
+  color: var(--pp-ink);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -81,7 +64,7 @@
 .body {
   font-size: 0.88rem;
   line-height: 1.55;
-  color: rgba(242, 241, 240, 0.65);
+  color: rgba(var(--pp-ink-rgb), 0.65);
 }
 
 .actions {
@@ -96,15 +79,15 @@
 .backBtn {
   padding: 0.6rem 1.1rem;
   background: none;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.12);
   border-radius: var(--radius-pill);
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.6);
   font-family: var(--font-futura-medium);
   font-size: 0.82rem;
   cursor: pointer;
   transition: background 0.15s;
 }
-.backBtn:hover { background: rgba(255, 255, 255, 0.05); }
+.backBtn:hover { background: rgba(var(--pp-ink-rgb), 0.05); }
 
 .nextBtn {
   display: inline-flex;
@@ -122,3 +105,4 @@
   transition: transform 0.15s;
 }
 .nextBtn:hover { transform: translateY(-1px); }
+.closeBtn { position: absolute; top: 1rem; right: 1rem; }

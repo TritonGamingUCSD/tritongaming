@@ -16,14 +16,17 @@ import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
 import type { TransactionRow } from './getMyPointsData';
 import IconButton from '@/components/ui/IconButton';
+import Button from '@/components/ui/Button';
+import SaveBar from '@/components/portal/SaveBar';
+import EditingNow from '@/components/portal/EditingNow';
 import styles from './points.module.css';
 import Select from '@/components/ui/Select';
 import ColorInput from '@/components/ui/ColorInput';
 import NumberInput from '@/components/ui/NumberInput';
 import SectionHeader from '@/components/ui/SectionHeader';
 
-type Tab = 'points' | 'shop' | 'leaderboard' | 'manage';
-const VALID_TABS: Tab[] = ['points', 'shop', 'leaderboard', 'manage'];
+type Tab = 'mine' | 'shop' | 'leaderboard' | 'tools';
+const VALID_TABS: Tab[] = ['mine', 'shop', 'leaderboard', 'tools'];
 
 interface RewardItem {
   id: string;
@@ -96,20 +99,18 @@ interface Props {
   canManageShop: boolean;
   canManagePoints: boolean;
   initialTab?: string;
-  // /portal?section=points&tab=manage&subtab=shop — reaches all the way into
-  // the Manage tab's own sub-tab bar, not just its top-level tab (mirrors
-  // BattlepassSectionContent's identical prop).
+  // /portal/points/tools/items — reaches all the way into
+  // the Manage tab's own sub-tab bar, not just its top-level tab.
   initialSubTab?: string;
   tiers: Tier[];
 }
 
 // The Manage tab does four genuinely separate jobs (award points, edit the
-// catalog, correct a member's points, edit the tier ladder) — mirrors
-// Battlepass's own Manage sub-tab split exactly, minus Redemptions (member
+// catalog, correct a member's points, edit the tier ladder) — member
 // reward redemptions are confirmed from Check-in's own Redemptions tab,
 // not from here — see CheckInSectionContent.tsx).
-type ManageSubTab = 'award' | 'shop' | 'correct' | 'tiers';
-const VALID_MANAGE_SUB_TABS: ManageSubTab[] = ['award', 'shop', 'correct', 'tiers'];
+type ManageSubTab = 'award' | 'items' | 'corrections' | 'tiers';
+const VALID_MANAGE_SUB_TABS: ManageSubTab[] = ['award', 'items', 'corrections', 'tiers'];
 
 export default function PointsSectionContent({
   balance, lifetimeEarned, referralCode,
@@ -125,7 +126,7 @@ export default function PointsSectionContent({
   const [tab, setTab] = useState<Tab>(
     VALID_TABS.includes(initialTab as Tab)
       ? (initialTab as Tab)
-      : VALID_MANAGE_SUB_TABS.includes(initialSubTab as ManageSubTab) ? 'manage' : 'points'
+      : VALID_MANAGE_SUB_TABS.includes(initialSubTab as ManageSubTab) ? 'tools' : 'mine'
   );
   const [manageSubTab, setManageSubTab] = useState<ManageSubTab>(
     VALID_MANAGE_SUB_TABS.includes(initialSubTab as ManageSubTab) ? (initialSubTab as ManageSubTab) : 'award'
@@ -133,15 +134,14 @@ export default function PointsSectionContent({
   const syncUrl = usePortalTabSync('points');
   function selectTab(t: Tab) {
     setTab(t);
-    syncUrl(t, t === 'manage' ? manageSubTab : undefined);
+    syncUrl(t, t === 'tools' ? manageSubTab : undefined);
   }
   function selectManageSubTab(st: ManageSubTab) {
     setManageSubTab(st);
-    syncUrl('manage', st);
+    syncUrl('tools', st);
   }
   const tier = getTier(lifetimeEarned, tiers);
   const next = nextTier(lifetimeEarned, tiers);
-  const progressPct = next ? Math.min(100, Math.round(((lifetimeEarned - tier.min) / (next.min - tier.min)) * 100)) : 100;
 
   const [copied, setCopied] = useState(false);
   const referralLink = typeof window !== 'undefined' ? `${window.location.origin}/login?ref=${referralCode}` : '';
@@ -169,7 +169,7 @@ export default function PointsSectionContent({
   const [claimedNote, setClaimedNote] = useState('');
 
   useEffect(() => {
-    if ((tab !== 'shop' && tab !== 'points') || shopItems !== null) return;
+    if ((tab !== 'shop' && tab !== 'mine') || shopItems !== null) return;
     (async () => {
       try {
         const res = await fetch('/api/rewards');
@@ -293,10 +293,8 @@ export default function PointsSectionContent({
 
   // Correct a member's points — browse their ledger and reverse the exact
   // entry that was wrong. Reuses the existing portal member search rather
-  // than building a second member-lookup endpoint just for this. Mirrors
-  // Battlepass's Corrections sub-tab exactly (no manual amount/note form
-  // here anymore — that's the Award Points sub-tab's job now, same as
-  // Battlepass).
+  // than building a second member-lookup endpoint just for this. (no manual amount/note form
+  // here — that's the Award Points sub-tab's job).
   const [adjustQuery, setAdjustQuery] = useState('');
   const [adjustResults, setAdjustResults] = useState<{ id: string; title: string }[]>([]);
   const [adjustTarget, setAdjustTarget] = useState<{ id: string; title: string } | null>(null);
@@ -359,9 +357,8 @@ export default function PointsSectionContent({
     return () => clearTimeout(t);
   }, [adjustQuery, adjustTarget]);
 
-  // ── Manage: batch award — mirrors Battlepass's Award Points sub-tab
-  // exactly, just backed by /api/admin/points/award and the shared portal
-  // member search instead of the officer-scoped one. ─────────────────────
+  // ── Manage: batch award, backed by /api/admin/points/award and the shared
+  // portal member search. ─────────────────────
   const [awardQuery, setAwardQuery] = useState('');
   const [awardResults, setAwardResults] = useState<{ id: string; title: string }[]>([]);
   const [awardTargets, setAwardTargets] = useState<{ id: string; title: string }[]>([]);
@@ -422,7 +419,7 @@ export default function PointsSectionContent({
   }
 
   useEffect(() => {
-    if (tab !== 'manage' || !canManageShop || manageItems !== null) return;
+    if (tab !== 'tools' || !canManageShop || manageItems !== null) return;
     (async () => {
       try {
         const res = await fetch('/api/admin/rewards');
@@ -492,6 +489,7 @@ export default function PointsSectionContent({
     title: '', description: '', point_cost: '', stock: '', min_tier: '',
     max_per_user: '', reward_type: 'physical' as 'physical' | 'digital', grants_fast_pass: false,
   });
+  const { dirty: rewardDirty, saved: savedReward } = useUnsavedChanges(editingId ? editForm : null, undefined, editingId);
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState('');
 
@@ -552,6 +550,7 @@ export default function PointsSectionContent({
   const [creatingTier, setCreatingTier] = useState(false);
   const [editingTierId, setEditingTierId] = useState<string | null>(null);
   const [tierEditForm, setTierEditForm] = useState({ name: '', min_points: '', color: '#60a5fa' });
+  const { dirty: tierDirty, saved: savedTier } = useUnsavedChanges(editingTierId ? tierEditForm : null, undefined, editingTierId);
   const [savingTierEdit, setSavingTierEdit] = useState(false);
   const [deletingTierId, setDeletingTierId] = useState<string | null>(null);
 
@@ -660,34 +659,34 @@ export default function PointsSectionContent({
         value={tab}
         onChange={selectTab}
         tabs={[
-          { id: 'points', label: 'My Points', icon: <Award />, badge: unclaimedUnlockCount },
+          { id: 'mine', label: 'My Points', icon: <Award />, badge: unclaimedUnlockCount },
           { id: 'shop', label: 'Shop', icon: <ShoppingBag /> },
           { id: 'leaderboard', label: 'Leaderboard', icon: <Trophy /> },
-          ...(canManageShop ? [{ id: 'manage' as const, label: 'Tools', icon: <Settings /> }] : []),
+          ...(canManageShop ? [{ id: 'tools' as const, label: 'Tools', icon: <Settings /> }] : []),
         ]}
       />
 
-      {tab === 'points' && (
+      {tab === 'mine' && (
         <div className={styles.pointsTab}>
-          <div className={styles.tierCard} style={{ borderColor: `${tier.color}44` }}>
-            <div className={styles.tierBadge} style={{ background: `${tier.color}22`, color: tier.color, borderColor: `${tier.color}55` }}>{tier.name}</div>
-            <div className={styles.balanceRow}>
-              <div>
-                <div className={styles.balanceValue}>{balance.toLocaleString()}</div>
-                <div className={styles.balanceLabel}>Spendable points</div>
-              </div>
-              <div>
-                <div className={styles.balanceValue}>{lifetimeEarned.toLocaleString()}</div>
-                <div className={styles.balanceLabel}>Lifetime earned</div>
-              </div>
+          <section className={styles.hero} style={{ ['--tier' as string]: tier.color }} aria-label="Your points">
+            <div className={styles.heroTop}>
+              <span className={styles.heroKicker}>Your points</span>
+              <span className={styles.tierTag}>{tier.name}</span>
             </div>
-            {next && (
-              <div className={styles.progressWrap}>
-                <div className={styles.progressBar}><div className={styles.progressFill} style={{ width: `${progressPct}%`, background: tier.color }} /></div>
-                <span className={styles.progressLabel}>{next.min - lifetimeEarned} pts to {next.name}</span>
-              </div>
-            )}
-          </div>
+            <div className={styles.heroNum}>{balance.toLocaleString()}<small>to spend</small></div>
+            <ol className={styles.ladder} aria-label="Tiers">
+              {tiers.map((t) => (
+                <li key={t.name} className={`${styles.rung} ${lifetimeEarned >= t.min ? styles.rungReached : ''} ${t.name === tier.name ? styles.rungNow : ''}`} style={{ ['--rc' as string]: t.color }}>
+                  <i aria-hidden="true" />
+                  <b>{t.name}</b>
+                  <span>{t.min.toLocaleString()}</span>
+                </li>
+              ))}
+            </ol>
+            <p className={styles.heroNote}>
+              {lifetimeEarned.toLocaleString()} earned in total{next ? <> · <strong>{(next.min - lifetimeEarned).toLocaleString()} pts</strong> to {next.name}</> : ' · top tier reached'}
+            </p>
+          </section>
 
           {shopError && <Notice tone="error">{shopError}</Notice>}
 
@@ -695,9 +694,8 @@ export default function PointsSectionContent({
             <div className={styles.historySection}>
               <div className={styles.tierUnlocksHeader}>
                 <h2 className={styles.sectionLabel}><Gift size={14} strokeWidth={1.75} aria-hidden="true" /> Tier Unlocks</h2>
-                <button type="button" className={styles.toggleBtn} onClick={() => setShowTierLadder((v) => !v)}>
-                  {showTierLadder ? 'Hide Full Ladder' : 'View Full Ladder'}
-                </button>
+                <Button type="button" onClick={() => setShowTierLadder((v) => !v)} variant="secondary" size="sm">
+                  {showTierLadder ? 'Hide Full Ladder' : 'View Full Ladder'}</Button>
               </div>
               {claimedNote && <p className={styles.claimedNote}><Check size={14} strokeWidth={2} aria-hidden="true" /> {claimedNote}</p>}
 
@@ -711,9 +709,8 @@ export default function PointsSectionContent({
                   {readyToClaimUnlocks.map((u) => (
                     <li key={u.id} className={styles.readyToClaimRow}>
                       <span className={styles.readyToClaimTitle}>{u.title}</span>
-                      <button type="button" className={styles.claimBtn} onClick={() => handleClaimUnlock(u)} disabled={claimingId === u.id}>
-                        {claimingId === u.id ? 'Claiming…' : 'Claim'}
-                      </button>
+                      <Button type="button" onClick={() => handleClaimUnlock(u)} disabled={claimingId === u.id} size="sm">
+                        {claimingId === u.id ? 'Claiming…' : 'Claim'}</Button>
                     </li>
                   ))}
                 </ul>
@@ -746,9 +743,8 @@ export default function PointsSectionContent({
                             {u.claimed ? (
                               <span className={styles.unlockClaimedLabel}><Check size={13} strokeWidth={2} aria-hidden="true" /> Claimed</span>
                             ) : u.unlocked ? (
-                              <button type="button" className={styles.claimBtn} onClick={() => handleClaimUnlock(u)} disabled={claimingId === u.id}>
-                                {claimingId === u.id ? 'Claiming…' : 'Claim'}
-                              </button>
+                              <Button type="button" onClick={() => handleClaimUnlock(u)} disabled={claimingId === u.id} size="sm">
+                                {claimingId === u.id ? 'Claiming…' : 'Claim'}</Button>
                             ) : (
                               <span className={styles.unlockLockedLabel}><Lock size={12} strokeWidth={1.75} aria-hidden="true" /> Reach {t.name} to unlock</span>
                             )}
@@ -829,7 +825,7 @@ export default function PointsSectionContent({
           )}
 
           {shopItems === null ? (
-            <LoadingSpinner size={28} label="Loading shop…" theme="dark" />
+            <LoadingSpinner size={28} label="Loading shop…" theme="auto" />
           ) : shopItems.length === 0 ? (
             <p className={styles.empty}>Nothing in the shop yet — check back soon.</p>
           ) : (
@@ -848,14 +844,8 @@ export default function PointsSectionContent({
                     {item.stock !== null && <p className={styles.stockNote}>{outOfStock ? 'Out of stock' : `${item.stock} left`}</p>}
                     <div className={styles.shopCardFooter}>
                       <span className={styles.shopCardCost}>{item.point_cost} pts</span>
-                      <button
-                        type="button"
-                        className={styles.claimBtn}
-                        onClick={() => handleClaim(item)}
-                        disabled={!canAfford || outOfStock || tierLocked || claimingId === item.id}
-                      >
-                        {claimingId === item.id ? 'Claiming…' : outOfStock ? 'Sold Out' : tierLocked ? `${item.min_tier}+ Only` : !canAfford ? 'Not Enough' : 'Redeem'}
-                      </button>
+                      <Button size="sm" onClick={() => handleClaim(item)} disabled={!canAfford || outOfStock || tierLocked || claimingId === item.id}>
+                        {claimingId === item.id ? 'Claiming…' : outOfStock ? 'Sold Out' : tierLocked ? `${item.min_tier}+ Only` : !canAfford ? 'Not Enough' : 'Redeem'}</Button>
                     </div>
                   </div>
                 );
@@ -877,7 +867,7 @@ export default function PointsSectionContent({
 
           {boardError && <Notice tone="error">{boardError}</Notice>}
           {board === null ? (
-            <LoadingSpinner size={28} label="Loading leaderboard…" theme="dark" />
+            <LoadingSpinner size={28} label="Loading leaderboard…" theme="auto" />
           ) : board.length === 0 ? (
             <p className={styles.empty}>No one&apos;s ranked yet.</p>
           ) : (
@@ -888,7 +878,7 @@ export default function PointsSectionContent({
                   <li key={row.rank} className={`${styles.boardRow} ${row.isSelf ? styles.boardRowSelf : ''}`}>
                     <span className={styles.boardRank}>#{row.rank}</span>
                     <span className={styles.boardName}>{row.name}{row.isSelf ? ' (you)' : ''}</span>
-                    <span className={styles.boardTier} style={{ color: rowTier.color, borderColor: `${rowTier.color}55` }}>{row.tier}</span>
+                    <span className={styles.boardTier} style={{ color: `color-mix(in srgb, ${rowTier.color} 55%, var(--pp-ink))`, borderColor: `${rowTier.color}88` }}>{row.tier}</span>
                     <span className={styles.boardPoints}>{row.points.toLocaleString()} pts</span>
                   </li>
                 );
@@ -898,7 +888,7 @@ export default function PointsSectionContent({
         </div>
       )}
 
-      {tab === 'manage' && canManageShop && (
+      {tab === 'tools' && canManageShop && (
         <div className={styles.manageTab}>
           <SectionTabs
             variant="segmented"
@@ -907,8 +897,8 @@ export default function PointsSectionContent({
             onChange={selectManageSubTab}
             tabs={[
               ...(canManagePoints ? [{ id: 'award' as const, label: 'Award Points' }] : []),
-              { id: 'shop', label: 'Shop Items' },
-              ...(canManagePoints ? [{ id: 'correct' as const, label: 'Corrections' }] : []),
+              { id: 'items', label: 'Shop Items' },
+              ...(canManagePoints ? [{ id: 'corrections' as const, label: 'Corrections' }] : []),
               { id: 'tiers', label: 'Tiers' },
             ]}
           />
@@ -947,15 +937,13 @@ export default function PointsSectionContent({
               )}
               <NumberInput className={styles.input} placeholder="Amount (+/-)" value={awardAmount} onChange={(e) => setAwardAmount(e.target.value)} />
               <input className={styles.input} placeholder="Reason (required)" value={awardNote} onChange={(e) => setAwardNote(e.target.value)} maxLength={200} />
-              <button type="submit" className={styles.saveBtn} disabled={awarding || awardTargets.length === 0 || !awardAmount || !awardNote.trim()}>
-                {awarding ? 'Awarding…' : `Award ${awardTargets.length || ''}`.trim()}
-              </button>
+              <Button type="submit" disabled={awarding || awardTargets.length === 0 || !awardAmount || !awardNote.trim()}>{awarding ? 'Awarding…' : `Award ${awardTargets.length || ''}`.trim()}</Button>
             </form>
             {awardResult && <p className={styles.referralHint}>{awardResult}</p>}
           </section>
           )}
 
-          {manageSubTab === 'shop' && (
+          {manageSubTab === 'items' && (
           <>
           <form className={styles.newRewardForm} onSubmit={handleCreateReward}>
             <input className={styles.input} placeholder="Reward title" value={newReward.title} onChange={(e) => setNewReward((f) => ({ ...f, title: e.target.value }))} maxLength={80} />
@@ -998,20 +986,19 @@ export default function PointsSectionContent({
             {newReward.isTierUnlock && !newReward.min_tier && (
               <Notice tone="error">A tier auto-unlock needs a tier requirement above.</Notice>
             )}
-            <button type="submit" className={styles.saveBtn} disabled={creating || !newReward.title.trim() || (newReward.isTierUnlock && !newReward.min_tier)}>
-              {creating ? 'Adding…' : '+ Add Reward'}
-            </button>
+            <Button type="submit" disabled={creating || !newReward.title.trim() || (newReward.isTierUnlock && !newReward.min_tier)}>{creating ? 'Adding…' : 'Add reward'}</Button>
           </form>
 
           {manageError && <Notice tone="error">{manageError}</Notice>}
 
           {manageItems === null ? (
-            <LoadingSpinner size={28} label="Loading rewards…" theme="dark" />
+            <LoadingSpinner size={28} label="Loading rewards…" theme="auto" />
           ) : (
             <div className={styles.manageList}>
               {manageItems.map((item) => (
                 editingId === item.id ? (
                   <form key={item.id} className={styles.editForm} onSubmit={handleSaveEdit}>
+                    <EditingNow room={`reward:${item.id}`} what="this reward" />
                     <input className={styles.input} placeholder="Reward title" value={editForm.title} onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))} maxLength={80} />
                     <input className={styles.input} placeholder="Description (optional)" value={editForm.description} onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))} maxLength={200} />
                     <NumberInput className={styles.input} min={0} placeholder="Point cost" value={editForm.point_cost} onChange={(e) => setEditForm((f) => ({ ...f, point_cost: e.target.value }))} />
@@ -1033,10 +1020,8 @@ export default function PointsSectionContent({
                     )}
                     {editError && <Notice tone="error">{editError}</Notice>}
                     <div className={styles.editActions}>
-                      <button type="button" className={styles.toggleBtn} onClick={() => setEditingId(null)}>Cancel</button>
-                      <button type="submit" className={styles.saveBtn} disabled={savingEdit || !editForm.title.trim()}>
-                        {savingEdit ? 'Saving…' : 'Save'}
-                      </button>
+                      <Button type="button" onClick={() => setEditingId(null)} variant="ghost" size="sm">{rewardDirty ? 'Close without saving' : 'Close'}</Button>
+                      <SaveBar dirty={rewardDirty} saving={savingEdit} message="Unsaved changes to this reward" onSave={() => { if (editForm.title.trim()) void handleSaveEdit({ preventDefault() {} } as React.FormEvent) }} onDiscard={() => setEditForm(savedReward() ?? editForm)} />
                     </div>
                   </form>
                 ) : (
@@ -1053,9 +1038,8 @@ export default function PointsSectionContent({
                     </div>
                     <div className={styles.manageRowActions}>
                       <IconButton kind="edit" label={`Edit ${item.title}`} onClick={() => startEdit(item)} />
-                      <button type="button" className={styles.toggleBtn} onClick={() => toggleActive(item)}>
-                        {item.active ? 'Retire' : 'Reactivate'}
-                      </button>
+                      <Button type="button" onClick={() => toggleActive(item)} variant="secondary" size="sm">
+                        {item.active ? 'Retire' : 'Reactivate'}</Button>
                     </div>
                   </div>
                 )
@@ -1065,7 +1049,7 @@ export default function PointsSectionContent({
           </>
           )}
 
-          {manageSubTab === 'correct' && canManagePoints && (
+          {manageSubTab === 'corrections' && canManagePoints && (
           <div className={styles.adjustSection}>
             <h2 className={styles.sectionLabel}>Correct a Member&apos;s Points</h2>
             <p className={styles.referralHint}>Find a member to see their points history and reverse a specific entry.</p>
@@ -1092,7 +1076,7 @@ export default function PointsSectionContent({
               <>
                 {historyError && <Notice tone="error">{historyError}</Notice>}
                 {targetHistory === null ? (
-                  <LoadingSpinner size={20} label="Loading history…" theme="dark" />
+                  <LoadingSpinner size={20} label="Loading history…" theme="auto" />
                 ) : targetHistory.length === 0 ? (
                   <p className={styles.empty}>No point activity for {adjustTarget.title} yet.</p>
                 ) : (
@@ -1146,20 +1130,19 @@ export default function PointsSectionContent({
                 Color
                 <ColorInput value={newTier.color} onChange={(e) => setNewTier((f) => ({ ...f, color: e.target.value }))} />
               </label>
-              <button type="submit" className={styles.saveBtn} disabled={creatingTier || !newTier.name.trim() || newTier.min_points === ''}>
-                {creatingTier ? 'Adding…' : '+ Add Tier'}
-              </button>
+              <Button type="submit" disabled={creatingTier || !newTier.name.trim() || newTier.min_points === ''}>{creatingTier ? 'Adding…' : 'Add tier'}</Button>
             </form>
 
             {tierError && <Notice tone="error">{tierError}</Notice>}
 
             {manageTiers === null ? (
-              <LoadingSpinner size={28} label="Loading tiers…" theme="dark" />
+              <LoadingSpinner size={28} label="Loading tiers…" theme="auto" />
             ) : (
               <div className={styles.manageList}>
                 {[...manageTiers].sort((a, b) => a.min_points - b.min_points).map((t) => (
                   editingTierId === t.id ? (
                     <form key={t.id} className={styles.editForm} onSubmit={handleSaveTierEdit}>
+                      <EditingNow room={`tier:${t.id}`} what="this tier" />
                       <input className={styles.input} placeholder="Tier name" value={tierEditForm.name} onChange={(e) => setTierEditForm((f) => ({ ...f, name: e.target.value }))} maxLength={40} />
                       <NumberInput
                         className={styles.input} min={t.min_points === 0 ? 0 : 1} placeholder="Points threshold"
@@ -1171,10 +1154,8 @@ export default function PointsSectionContent({
                 <ColorInput value={tierEditForm.color} onChange={(e) => setTierEditForm((f) => ({ ...f, color: e.target.value }))} />
               </label>
                       <div className={styles.editActions}>
-                        <button type="button" className={styles.toggleBtn} onClick={() => setEditingTierId(null)}>Cancel</button>
-                        <button type="submit" className={styles.saveBtn} disabled={savingTierEdit || !tierEditForm.name.trim() || tierEditForm.min_points === ''}>
-                          {savingTierEdit ? 'Saving…' : 'Save'}
-                        </button>
+                        <Button type="button" onClick={() => setEditingTierId(null)} variant="ghost" size="sm">{tierDirty ? 'Close without saving' : 'Close'}</Button>
+                        <SaveBar dirty={tierDirty} saving={savingTierEdit} message="Unsaved changes to this tier" onSave={() => { if (tierEditForm.name.trim() && tierEditForm.min_points !== '') void handleSaveTierEdit({ preventDefault() {} } as React.FormEvent) }} onDiscard={() => setTierEditForm(savedTier() ?? tierEditForm)} />
                       </div>
                     </form>
                   ) : (
@@ -1207,7 +1188,7 @@ export default function PointsSectionContent({
           <div className={styles.qrModal} onClick={(e) => e.stopPropagation()}>
             <p className={styles.qrHint}>Show this to an officer at an event</p>
             <StyledQRCode options={{ ...DEFAULT_QR_OPTIONS, data: qrFor, size: 280 }} className={styles.qrCanvas} />
-            <button type="button" className={styles.saveBtn} onClick={() => setQrFor(null)}>Done</button>
+            <Button type="button" onClick={() => setQrFor(null)}>Done</Button>
           </div>
         </div>
       )}

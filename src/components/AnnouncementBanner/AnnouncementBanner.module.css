@@ -1,4 +1,4 @@
-/* The announcement is a sticker-style pill that lives in the nav row. Dark tones follow the brand deck: white text on navy or royal blue,
+/* The announcement is a sticker-style pill that lives in the nav row. Dark tones follow the brand deck: #f2f1f0 text on navy or royal blue,
    with a yellow tag and button. Yellow, green and red are light pills with navy text. */
 .pill {
   display: inline-flex;

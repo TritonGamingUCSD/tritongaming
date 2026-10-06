@@ -1,48 +1,7 @@
-/* Deliberately mirrors admin.module.css's page header + tab bar exactly —
-   the whole point of tabbing this section was to make "there's more than
-   one thing under this card" read the same way it does on the Admin card,
-   not invent a second tab visual language. */
-
 .page { width: 100%; }
 
-.pageHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 2.25rem;
-  flex-wrap: wrap;
-}
-
-.title {
-  font-family: var(--font-futura-heavy);
-  font-size: clamp(1.25rem, 2.5vw, 1.6rem);
-  color: var(--white);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  line-height: 1.3;
-  margin-bottom: 0.5rem;
-}
-
-.titleSub { font-size: var(--fs-meta); color: rgba(242, 241, 240, 0.6); }
-
-
-
-
-
-.headerSearch { display: flex; align-items: center; gap: 0.5rem; padding: 0 0.85rem; height: 38px; width: 260px; max-width: 100%; border-radius: 999px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: rgba(242, 241, 240, 0.65); }
-.headerSearch:focus-within { border-color: rgba(255, 199, 44, 0.45); color: var(--yellow-text); }
-.headerSearch input { flex: 1; min-width: 0; background: none; border: none; outline: none; color: var(--white); font-family: inherit; font-size: 0.85rem; }
-.headerSearch input::placeholder { color: rgba(242, 241, 240, 0.6); }
+.headerSearch { display: flex; align-items: center; gap: 0.5rem; padding: 0 0.85rem; height: 38px; width: 260px; max-width: 100%; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.05); border: 1px solid rgba(var(--pp-ink-rgb), 0.23); color: rgba(var(--pp-ink-rgb), 0.88); }
+.headerSearch:focus-within { outline: none; border-color: var(--pp-ink); box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.55); color: var(--p-accent-text); }
+.headerSearch input { flex: 1; min-width: 0; background: none; border: none; outline: none; color: var(--pp-ink); font-family: inherit; font-size: 0.85rem; }
+.headerSearch input::placeholder { color: rgba(var(--pp-ink-rgb), 0.87); }
 @media (max-width: 640px) { .headerSearch { width: 100%; } }
-
-/* On desktop the top bar already names the section, so the page's own title goes; the search stays, tucked right, with tighter spacing. */
-@media (min-width: 900px) {
-  .titleBlock { display: none; }
-  .pageHeader { justify-content: flex-end; margin-bottom: 0.5rem; }
-}
-/* On wide windows the search sits in the empty right end of the tab row instead of taking a row of its own. */
-@media (min-width: 1400px) {
-  .page { position: relative; }
-  .pageHeader { position: absolute; top: 0; right: 0; z-index: 2; margin: 0; }
-}

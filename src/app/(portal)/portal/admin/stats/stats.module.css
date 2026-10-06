@@ -1,15 +1,15 @@
-.page { max-width: 1000px; margin-inline: auto; }
+.page { max-width: 1320px; margin-inline: auto; }
 
 .title {
   font-family: var(--font-futura-heavy);
   font-size: clamp(1.25rem, 2.5vw, 1.6rem);
-  color: var(--white);
+  color: var(--pp-ink);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 0.2rem;
 }
 
-.sub { font-size: var(--fs-meta); color: rgba(242, 241, 240, 0.6); margin-bottom: 1.5rem; }
+.sub { font-size: var(--fs-meta); color: rgba(var(--pp-ink-rgb), 0.87); margin-bottom: 1.5rem; }
 
 .totalsGrid {
   display: grid;
@@ -19,29 +19,27 @@
 }
 
 .totalCard {
+  composes: card from '../../../../../components/ui/Surface.module.css';
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.3rem;
   padding: 1.25rem 1rem;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 0.75rem;
-  color: var(--yellow-text);
+  color: var(--p-accent-text);
   text-align: center;
 }
 
 .totalValue {
   font-family: var(--font-futura-heavy);
   font-size: 1.6rem;
-  color: var(--white);
+  color: var(--pp-ink);
 }
 
 .totalLabel {
   font-size: 0.7rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
 }
 
 .chartRow {
@@ -57,9 +55,7 @@
 }
 
 .chartCard {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 0.75rem;
+  composes: card from '../../../../../components/ui/Surface.module.css';
   padding: 1.25rem 1rem 0.75rem;
   margin-bottom: 1rem;
 }
@@ -70,7 +66,7 @@
   font-family: var(--font-futura-heavy);
   font-size: 0.85rem;
   letter-spacing: 0.03em;
-  color: rgba(242,241,240,0.7);
+  color: rgba(var(--pp-ink-rgb), 0.89);
   margin-bottom: 0.5rem;
   display: flex;
   align-items: center;
@@ -93,18 +89,18 @@
 .economyValue {
   font-family: var(--font-futura-heavy);
   font-size: 1.3rem;
-  color: var(--yellow-text);
+  color: var(--p-accent-text);
 }
 
 .economyLabel {
   font-size: 0.68rem;
   letter-spacing: 0.03em;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
 }
 
 .empty {
   text-align: center;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
   padding: 3rem 1rem;
   font-size: 0.9rem;
 }

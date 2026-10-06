@@ -10,6 +10,7 @@ import styles from './IconButton.module.css';
 const KINDS = {
   edit:      { icon: Pencil,         title: 'Edit',      tone: 'default' },
   delete:    { icon: Trash2,         title: 'Delete',    tone: 'danger' },
+  close:     { icon: X,              title: 'Close',     tone: 'default' },
   remove:    { icon: X,              title: 'Remove',    tone: 'danger' },
   analytics: { icon: BarChart3,      title: 'Analytics', tone: 'default' },
   view:      { icon: Eye,            title: 'View',      tone: 'default' },

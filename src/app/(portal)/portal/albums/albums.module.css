@@ -1,4 +1,4 @@
-.page { max-width: 1000px; width: 100%; margin-inline: auto; }
+.page { max-width: 1240px; width: 100%; margin-inline: auto; }
 
 .header {
   display: flex;
@@ -12,13 +12,13 @@
 .title {
   font-family: var(--font-futura-heavy);
   font-size: clamp(1.25rem, 2.5vw, 1.6rem);
-  color: var(--white);
+  color: var(--pp-ink);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 0.3rem;
 }
 
-.sub { font-size: var(--fs-meta); color: rgba(242, 241, 240, 0.6); }
+.sub { font-size: var(--fs-meta); color: rgba(var(--pp-ink-rgb), 0.87); }
 
 .addBtn {
   display: inline-flex;
@@ -41,17 +41,15 @@
 .addBtn:hover { border-color: var(--btn-primary-border-hover); box-shadow: var(--btn-primary-shadow-hover); }
 
 .addForm {
+  composes: card from '../../../../components/ui/Surface.module.css';
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   padding: 1.25rem;
   margin-bottom: 1.5rem;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: var(--radius-md);
 }
 
-.input:focus { outline: none; border-color: rgba(255,199,44,0.4); }
+.input:focus { outline: none; border-color: rgba(125, 180, 234,0.4); }
 
 .addFormActions {
   display: flex;
@@ -60,7 +58,7 @@
   gap: 0.75rem;
 }
 
-.cancelBtn:hover:not(:disabled) { background: rgba(255,255,255,0.05); color: rgba(242,241,240,0.7); }
+.cancelBtn:hover:not(:disabled) { background: rgba(var(--pp-ink-rgb), 0.05); color: rgba(var(--pp-ink-rgb), 0.89); }
 
 .saveBtn:hover:not(:disabled) { border-color: var(--btn-primary-border-hover); box-shadow: var(--btn-primary-shadow-hover); }
 
@@ -71,11 +69,11 @@
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
   font-size: 0.9rem;
   text-align: center;
 }
-.emptyIcon { display: inline-flex; color: rgba(242, 241, 240, 0.6); }
+.emptyIcon { display: inline-flex; color: rgba(var(--pp-ink-rgb), 0.87); }
 
 .grid {
   display: grid;
@@ -84,18 +82,16 @@
 }
 
 .card {
+  composes: card from '../../../../components/ui/Surface.module.css';
   display: flex;
   flex-direction: column;
   gap: 0.875rem;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 1.125rem;
   padding: 1.25rem;
   transition: opacity 0.15s, outline-color 0.15s;
 }
 
 .rowDragging { opacity: 0.4; }
-.rowDragOver { outline: 2px solid rgba(255,199,44,0.5); outline-offset: 2px; }
+.rowDragOver { outline: 2px solid rgba(125, 180, 234,0.5); outline-offset: 2px; }
 
 .cardHeader {
   display: flex;
@@ -114,12 +110,12 @@
 .cardTitle {
   font-family: var(--font-futura-medium);
   font-size: 0.95rem;
-  color: var(--white);
+  color: var(--pp-ink);
 }
 
 .cardMeta {
   font-size: var(--fs-meta);
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
   margin-top: 0.2rem;
 }
 
@@ -135,7 +131,7 @@
   align-items: center;
   gap: 0.3rem;
   font-size: 0.78rem;
-  color: var(--yellow-text);
+  color: var(--p-accent-text);
   transition: opacity 0.15s;
   white-space: nowrap;
 }
@@ -148,7 +144,7 @@
   justify-content: center;
   flex-shrink: 0;
   margin-top: 0.15rem;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
   cursor: grab;
   touch-action: none;
 }

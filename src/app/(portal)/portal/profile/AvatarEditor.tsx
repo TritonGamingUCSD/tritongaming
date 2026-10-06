@@ -1,8 +1,9 @@
 'use client';
 
+import IconButton from '@/components/ui/IconButton';
 import { useRef, useState } from 'react';
 import Image from 'next/image';
-import { Camera, Trash2, Upload } from 'lucide-react';
+import { Camera, X } from 'lucide-react';
 import { uploadCroppedImage, uploadImageToStorage, ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES } from '@/lib/imageUpload';
 import ImageCropModal from '@/components/ImageCropModal/ImageCropModal';
 import styles from './avatarEditor.module.css';
@@ -48,6 +49,7 @@ export default function AvatarEditor({ value, onChange, fallback, bucket, pathPr
 
   return (
     <div className={styles.card}>
+      <div className={styles.holder}>
       <button
         type="button"
         className={`${styles.avatar} ${dragging ? styles.dragging : ''}`}
@@ -68,23 +70,12 @@ export default function AvatarEditor({ value, onChange, fallback, bucket, pathPr
           <span>{uploading ? 'Uploading…' : dragging ? 'Drop it' : 'Change'}</span>
         </span>
       </button>
-
-      <span className={`${styles.source} ${value ? styles.sourceCustom : ''}`}>
-        {value ? 'Custom photo' : fallback ? 'Google photo' : 'No photo yet'}
-      </span>
-
-      <div className={styles.actions}>
-        <button type="button" className={styles.primary} onClick={() => inputRef.current?.click()} disabled={uploading}>
-          <Upload size={14} strokeWidth={2} aria-hidden="true" /> {value ? 'Replace' : 'Upload photo'}
-        </button>
-        {value && (
-          <button type="button" className={styles.ghost} onClick={() => onChange('')} disabled={uploading}>
-            <Trash2 size={14} strokeWidth={1.75} aria-hidden="true" /> {fallback ? 'Use Google photo' : 'Remove'}
-          </button>
-        )}
+      {value && (
+        <IconButton kind="remove" size="sm" className={styles.remove} onClick={() => onChange('')} disabled={uploading} label={fallback ? 'Remove my photo and use my Google photo' : 'Remove my photo'} />
+      )}
       </div>
 
-      <p className={styles.hint}>Drop an image on the circle, or click it. PNG, JPEG, WEBP or GIF, up to 8MB.</p>
+      <p className={styles.hint}>Click the circle or drop a picture on it.</p>
       {error && <p className={styles.error}>{error}</p>}
 
       <input

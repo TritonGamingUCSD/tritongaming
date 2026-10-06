@@ -22,6 +22,21 @@ export const HELP_TEMPLATES: Record<HelpCategory, string> = {
   other: '',
 };
 
+// "I need a role": the starter message the dashboard's role card links to (/portal/help/ask?topic=role&role=officer). The role is one of ROLE_ASKS.
+export const ROLE_ASKS = [
+  { id: 'officer', label: 'Officer' },
+  { id: 'division', label: 'Division lead' },
+  { id: 'other', label: 'Something else' },
+] as const;
+export function roleRequest(role: string | null): { subject: string; body: string } {
+  const ask = ROLE_ASKS.find((r) => r.id === role);
+  const what = ask && ask.id !== 'other' ? ask.label : '';
+  return {
+    subject: what ? `Role request: ${what}` : 'Role or access request',
+    body: `The role or access I need: ${what || '(for example officer, a division lead, or access to a specific tool)'}\n\nWhat I help with in Triton Gaming (team, division, events):\n\nWho can confirm this (an exec or lead I work with):\n\nAnything else we should know:\n`,
+  };
+}
+
 export const MAX_SUBJECT = 100;
 export const MAX_BODY = 2000;
 export const MAX_ATTACHMENTS = 3;

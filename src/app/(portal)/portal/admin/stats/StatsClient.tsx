@@ -1,123 +1,139 @@
 'use client';
 
 import {
-  ResponsiveContainer, LineChart, Line, BarChart, Bar,
+  ResponsiveContainer, LineChart, Line, BarChart, Bar, Legend,
   XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts';
-import { Users, Calendar, Ticket, CircleCheck, Coins, Shield, Gift } from 'lucide-react';
+import { Users, UserPlus, Calendar, Ticket, CircleCheck, Percent, Coins, Gift } from 'lucide-react';
+import { ROLE_LABELS } from '@/types/database';
 import type { StatsData } from './getStatsData';
 import styles from './stats.module.css';
 
-const TOOLTIP_STYLE = {
-  background: 'rgba(10, 15, 28, 0.95)',
-  border: '1px solid rgba(255,255,255,0.12)',
-  borderRadius: 8,
-  fontSize: 12,
-  color: '#f2f1f0',
-};
-const AXIS_STYLE = { fontSize: 11, fill: 'rgba(242,241,240,0.5)' };
+// Charts read the portal's theme tokens, so they stay readable in light and dark.
+const TOOLTIP_STYLE = { background: 'var(--pp-card)', border: '1px solid var(--pp-line)', borderRadius: 8, fontSize: 12, color: 'var(--pp-ink)' };
+const AXIS = { fontSize: 11, fill: 'var(--pp-ink)', fillOpacity: 0.8 };
+const GRID = 'var(--pp-line)';
 
-// Event-specific breakdowns (per-event ticket sales/attendance,
-// events/tickets-per-month trends) live in the Events card's own
-// Analytics tab now — this stays scoped to org-wide platform metrics that
-// aren't about any one event: total membership/event/ticket counts,
-// member growth over time, and division sizes.
+function Tile({ icon, value, label }: { icon: React.ReactNode; value: string; label: string }) {
+  return (
+    <div className={styles.totalCard}>
+      {icon}
+      <div className={styles.totalValue}>{value}</div>
+      <div className={styles.totalLabel}>{label}</div>
+    </div>
+  );
+}
+
+// Org-wide numbers only. Per-event ticket and attendance breakdowns live in the Events section's own Analytics tab.
 export default function StatsClient({ data }: { data: StatsData }) {
-  const { totals, memberGrowth, divisionSizes, pointsEconomy, battlepassEconomy, topRewards } = data;
+  const { totals, memberGrowth, divisionSizes, pointsEconomy, topRewards, activity, roleCounts } = data;
+  const rate = totals.ticketsIssued > 0 ? Math.round((totals.checkins / totals.ticketsIssued) * 100) : 0;
+  const roles = roleCounts.map((r) => ({ name: (ROLE_LABELS as Record<string, string>)[r.role] ?? r.role, count: r.count }));
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>Analytics</h1>
-      <p className={styles.sub}>Org-wide trends across membership and divisions.</p>
-
       <div className={styles.totalsGrid}>
-        <div className={styles.totalCard}>
-          <Users size={20} strokeWidth={1.5} aria-hidden="true" />
-          <div className={styles.totalValue}>{totals.members}</div>
-          <div className={styles.totalLabel}>Members</div>
-        </div>
-        <div className={styles.totalCard}>
-          <Calendar size={20} strokeWidth={1.5} aria-hidden="true" />
-          <div className={styles.totalValue}>{totals.events}</div>
-          <div className={styles.totalLabel}>Events</div>
-        </div>
-        <div className={styles.totalCard}>
-          <Ticket size={20} strokeWidth={1.5} aria-hidden="true" />
-          <div className={styles.totalValue}>{totals.ticketsIssued}</div>
-          <div className={styles.totalLabel}>Tickets Issued</div>
-        </div>
-        <div className={styles.totalCard}>
-          <CircleCheck size={20} strokeWidth={1.5} aria-hidden="true" />
-          <div className={styles.totalValue}>{totals.checkins}</div>
-          <div className={styles.totalLabel}>Check-Ins</div>
-        </div>
+        <Tile icon={<Users size={20} strokeWidth={1.5} aria-hidden="true" />} value={totals.members.toLocaleString()} label="Members" />
+        <Tile icon={<UserPlus size={20} strokeWidth={1.5} aria-hidden="true" />} value={totals.newMembers.toLocaleString()} label="Joined in 30 days" />
+        <Tile icon={<Calendar size={20} strokeWidth={1.5} aria-hidden="true" />} value={totals.events.toLocaleString()} label="Events" />
+        <Tile icon={<Ticket size={20} strokeWidth={1.5} aria-hidden="true" />} value={totals.ticketsIssued.toLocaleString()} label="Tickets issued" />
+        <Tile icon={<CircleCheck size={20} strokeWidth={1.5} aria-hidden="true" />} value={totals.checkins.toLocaleString()} label="Check-ins" />
+        <Tile icon={<Percent size={20} strokeWidth={1.5} aria-hidden="true" />} value={`${rate}%`} label="Showed up" />
+      </div>
+
+      <div className={styles.chartRow}>
+        {memberGrowth.length > 1 && (
+          <section className={styles.chartCard}>
+            <h2 className={styles.chartTitle}>Member growth</h2>
+            <ResponsiveContainer width="100%" height={260}>
+              <LineChart data={memberGrowth}>
+                <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
+                <XAxis dataKey="month" tick={AXIS} />
+                <YAxis tick={AXIS} allowDecimals={false} />
+                <Tooltip contentStyle={TOOLTIP_STYLE} />
+                <Line type="monotone" dataKey="count" name="Total members" stroke="var(--p-accent-text)" strokeWidth={2.5} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </section>
+        )}
+
+        {activity.length > 1 && (
+          <section className={styles.chartCard}>
+            <h2 className={styles.chartTitle}>Tickets and check-ins each month</h2>
+            <ResponsiveContainer width="100%" height={260}>
+              <LineChart data={activity}>
+                <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
+                <XAxis dataKey="month" tick={AXIS} />
+                <YAxis tick={AXIS} allowDecimals={false} />
+                <Tooltip contentStyle={TOOLTIP_STYLE} />
+                <Legend wrapperStyle={{ fontSize: 12, color: 'var(--pp-ink)' }} />
+                <Line type="monotone" dataKey="tickets" name="Tickets" stroke="var(--pp-info)" strokeWidth={2.5} dot={false} />
+                <Line type="monotone" dataKey="checkins" name="Check-ins" stroke="var(--pp-ok)" strokeWidth={2.5} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </section>
+        )}
+      </div>
+
+      <div className={styles.chartRow}>
+        {roles.length > 0 && (
+          <section className={styles.chartCard}>
+            <h2 className={styles.chartTitle}>People by role</h2>
+            <ResponsiveContainer width="100%" height={Math.max(200, roles.length * 38)}>
+              <BarChart data={roles} layout="vertical" margin={{ left: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={GRID} horizontal={false} />
+                <XAxis type="number" tick={AXIS} allowDecimals={false} />
+                <YAxis type="category" dataKey="name" tick={AXIS} width={120} />
+                <Tooltip contentStyle={TOOLTIP_STYLE} />
+                <Bar dataKey="count" name="People" fill="var(--pp-violet)" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </section>
+        )}
+
+        {divisionSizes.length > 0 && (
+          <section className={styles.chartCard}>
+            <h2 className={styles.chartTitle}>Division sizes</h2>
+            <ResponsiveContainer width="100%" height={Math.max(200, divisionSizes.length * 38)}>
+              <BarChart data={divisionSizes} layout="vertical" margin={{ left: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={GRID} horizontal={false} />
+                <XAxis type="number" tick={AXIS} allowDecimals={false} />
+                <YAxis type="category" dataKey="name" tick={AXIS} width={120} />
+                <Tooltip contentStyle={TOOLTIP_STYLE} />
+                <Bar dataKey="count" name="Members" fill="var(--pp-teal)" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </section>
+        )}
       </div>
 
       <div className={styles.chartRow}>
         <section className={styles.chartCard}>
-          <h2 className={styles.chartTitle}><Coins size={15} strokeWidth={1.75} aria-hidden="true" /> Rewards Economy</h2>
+          <h2 className={styles.chartTitle}><Coins size={15} strokeWidth={1.75} aria-hidden="true" /> Rewards economy</h2>
           <div className={styles.economyStats}>
             <div><span className={styles.economyValue}>{pointsEconomy.inCirculation.toLocaleString()}</span><span className={styles.economyLabel}>Points in circulation</span></div>
             <div><span className={styles.economyValue}>{pointsEconomy.totalRedeemed.toLocaleString()}</span><span className={styles.economyLabel}>Points redeemed</span></div>
             <div><span className={styles.economyValue}>{pointsEconomy.pendingRedemptions.toLocaleString()}</span><span className={styles.economyLabel}>Awaiting fulfillment</span></div>
           </div>
         </section>
-        <section className={styles.chartCard}>
-          <h2 className={styles.chartTitle}><Shield size={15} strokeWidth={1.75} aria-hidden="true" /> Battlepass Economy</h2>
-          <div className={styles.economyStats}>
-            <div><span className={styles.economyValue}>{battlepassEconomy.inCirculation.toLocaleString()}</span><span className={styles.economyLabel}>Points in circulation</span></div>
-            <div><span className={styles.economyValue}>{battlepassEconomy.totalRedeemed.toLocaleString()}</span><span className={styles.economyLabel}>Points redeemed</span></div>
-            <div><span className={styles.economyValue}>{battlepassEconomy.pendingRedemptions.toLocaleString()}</span><span className={styles.economyLabel}>Awaiting fulfillment</span></div>
-          </div>
-        </section>
+
+        {topRewards.length > 0 && (
+          <section className={styles.chartCard}>
+            <h2 className={styles.chartTitle}><Gift size={15} strokeWidth={1.75} aria-hidden="true" /> Most redeemed rewards</h2>
+            <ResponsiveContainer width="100%" height={Math.max(180, topRewards.length * 42)}>
+              <BarChart data={topRewards} layout="vertical" margin={{ left: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={GRID} horizontal={false} />
+                <XAxis type="number" tick={AXIS} allowDecimals={false} />
+                <YAxis type="category" dataKey="title" tick={{ ...AXIS, fontSize: 10 }} width={140} />
+                <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value) => [`${value} claimed`, 'Rewards']} />
+                <Bar dataKey="count" name="Claimed" fill="var(--pp-ok)" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </section>
+        )}
       </div>
 
-      {topRewards.length > 0 && (
-        <section className={styles.chartCard}>
-          <h2 className={styles.chartTitle}><Gift size={15} strokeWidth={1.75} aria-hidden="true" /> Most Redeemed Rewards</h2>
-          <ResponsiveContainer width="100%" height={Math.max(180, topRewards.length * 42)}>
-            <BarChart data={topRewards} layout="vertical" margin={{ left: 8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" horizontal={false} />
-              <XAxis type="number" tick={AXIS_STYLE} allowDecimals={false} />
-              <YAxis type="category" dataKey="title" tick={{ ...AXIS_STYLE, fontSize: 10 }} width={140} />
-              <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value, _name, item) => [`${value} claimed`, item.payload.system]} />
-              <Bar dataKey="count" name="Claimed" fill="#4ade80" radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </section>
-      )}
-
-      {memberGrowth.length > 1 && (
-        <section className={styles.chartCard}>
-          <h2 className={styles.chartTitle}>Member Growth</h2>
-          <ResponsiveContainer width="100%" height={260}>
-            <LineChart data={memberGrowth}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-              <XAxis dataKey="month" tick={AXIS_STYLE} />
-              <YAxis tick={AXIS_STYLE} allowDecimals={false} />
-              <Tooltip contentStyle={TOOLTIP_STYLE} />
-              <Line type="monotone" dataKey="count" name="Total members" stroke="#ffc72c" strokeWidth={2} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </section>
-      )}
-
-      {divisionSizes.length > 0 && (
-        <section className={styles.chartCard}>
-          <h2 className={styles.chartTitle}>Division Sizes</h2>
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={divisionSizes}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-              <XAxis dataKey="name" tick={{ ...AXIS_STYLE, fontSize: 10 }} interval={0} angle={-20} textAnchor="end" height={50} />
-              <YAxis tick={AXIS_STYLE} allowDecimals={false} />
-              <Tooltip contentStyle={TOOLTIP_STYLE} />
-              <Bar dataKey="count" name="Members" fill="#a78bfa" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </section>
-      )}
-
-      {memberGrowth.length <= 1 && divisionSizes.length === 0 && (
+      {memberGrowth.length <= 1 && divisionSizes.length === 0 && activity.length <= 1 && (
         <p className={styles.empty}>Not enough data yet to chart trends.</p>
       )}
     </div>

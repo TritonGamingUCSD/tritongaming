@@ -26,11 +26,11 @@ export default function UpcomingEventsPreview({ events }: { events: UpcomingEven
         <span className={styles.upcomingPreviewLabel}>
           <CalendarDays size={13} strokeWidth={1.75} aria-hidden="true" /> Upcoming Events
         </span>
-        <Link href="/portal?section=tickets" className={styles.viewAllTickets}>See all →</Link>
+        <Link href="/portal/tickets" className={styles.viewAllTickets}>See all →</Link>
       </div>
       <div className={styles.upcomingPreviewList}>
         {preview.map((event) => (
-          <Link key={event.id} href="/portal?section=tickets" className={styles.upcomingPreviewRow}>
+          <Link key={event.id} href="/portal/tickets" className={styles.upcomingPreviewRow}>
             <div className={styles.eventDateBlockSmall}>
               <span>{new Date(event.start_date).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short' })}</span>
               <span>{new Date(event.start_date).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, day: 'numeric' })}</span>

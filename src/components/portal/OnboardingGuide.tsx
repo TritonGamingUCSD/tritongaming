@@ -1,5 +1,6 @@
 'use client';
 
+import IconButton from '@/components/ui/IconButton';
 import { useState } from 'react';
 import { Ticket, Award, Users, Calendar, X, ArrowRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -57,9 +58,7 @@ export default function OnboardingGuide({ userId }: { userId: string }) {
   return (
     <div className={styles.overlay}>
       <div className={styles.modal}>
-        <button type="button" className={styles.closeBtn} onClick={dismiss} aria-label="Close welcome guide">
-          <X size={18} strokeWidth={1.75} aria-hidden="true" />
-        </button>
+        <IconButton kind="close" label="Close welcome guide" className={styles.closeBtn} onClick={dismiss} />
 
         <div className={styles.dots}>
           {STEPS.map((_, i) => (

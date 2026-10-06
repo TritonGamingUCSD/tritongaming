@@ -1,4 +1,4 @@
-.page { max-width: 1000px; width: 100%; margin-inline: auto; }
+.page { max-width: 1240px; width: 100%; margin-inline: auto; }
 
 .header {
   display: flex;
@@ -12,13 +12,13 @@
 .title {
   font-family: var(--font-futura-heavy);
   font-size: clamp(1.25rem, 2.5vw, 1.6rem);
-  color: var(--white);
+  color: var(--pp-ink);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 0.3rem;
 }
 
-.sub { font-size: var(--fs-meta); color: rgba(242, 241, 240, 0.6); }
+.sub { font-size: var(--fs-meta); color: rgba(var(--pp-ink-rgb), 0.87); }
 
 
 
@@ -28,7 +28,7 @@
   align-items: center;
   gap: 0.4rem;
   font-size: 0.85rem;
-  color: #34d399;
+  color: var(--pp-ok);
   background: rgba(52,211,153,0.08);
   border: 1px solid rgba(52,211,153,0.2);
   border-radius: var(--radius-sm);
@@ -36,7 +36,7 @@
   margin-bottom: 0.5rem;
 }
 
-.unlockCardReady { border-color: rgba(255,199,44,0.35); background: rgba(255,199,44,0.04); }
+.unlockCardReady { border-color: rgba(125, 180, 234,0.35); background: rgba(125, 180, 234,0.04); }
 .unlockCardLocked { opacity: 0.6; }
 
 .unlockClaimedLabel {
@@ -44,7 +44,7 @@
   align-items: center;
   gap: 0.3rem;
   font-size: 0.8rem;
-  color: #34d399;
+  color: var(--pp-ok);
 }
 
 .unlockLockedLabel {
@@ -52,19 +52,17 @@
   align-items: center;
   gap: 0.3rem;
   font-size: 0.75rem;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
 }
 
 
-.empty { font-size: 0.85rem; color: rgba(242, 241, 240, 0.6); padding: 1.5rem 0; text-align: center; }
+.empty { font-size: 0.85rem; color: rgba(var(--pp-ink-rgb), 0.87); padding: 1.5rem 0; text-align: center; }
 
 /* ── My Points ── */
 .pointsTab { display: flex; flex-direction: column; gap: 1.5rem; }
 
 .tierCard {
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 1.125rem;
+  composes: card from '../../../../components/ui/Surface.module.css';
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
@@ -80,27 +78,28 @@
   padding: 0.3rem 0.875rem;
   border-radius: var(--radius-pill);
   border: 1px solid;
+  white-space: nowrap;
 }
 
 .balanceRow { display: flex; gap: 2.5rem; flex-wrap: wrap; }
 
-.balanceValue { font-family: var(--font-futura-heavy); font-size: 1.75rem; color: var(--white); }
-.balanceLabel { font-size: var(--fs-meta); color: rgba(242, 241, 240, 0.6); margin-top: 0.15rem; }
+.balanceValue { font-family: var(--font-futura-heavy); font-size: 1.75rem; color: var(--pp-ink); }
+.balanceLabel { font-size: var(--fs-meta); color: rgba(var(--pp-ink-rgb), 0.87); margin-top: 0.15rem; }
 
 .progressWrap { display: flex; flex-direction: column; gap: 0.4rem; }
 
 .progressBar {
   height: 6px;
   border-radius: var(--radius-pill);
-  background: rgba(255,255,255,0.08);
+  background: rgba(var(--pp-ink-rgb), 0.08);
   overflow: hidden;
 }
 .progressFill { height: 100%; border-radius: var(--radius-pill); transition: width 0.3s; }
-.progressLabel { font-size: var(--fs-meta); color: rgba(242, 241, 240, 0.6); }
+.progressLabel { font-size: var(--fs-meta); color: rgba(var(--pp-ink-rgb), 0.87); }
 
 .referralCard {
-  background: rgba(255,199,44,0.05);
-  border: 1px solid rgba(255,199,44,0.18);
+  background: rgba(125, 180, 234,0.05);
+  border: 1px solid rgba(125, 180, 234,0.18);
   border-radius: 1rem;
   padding: 1.25rem;
 }
@@ -110,23 +109,23 @@
   font-family: var(--font-renegare);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--yellow-text);
+  color: var(--p-accent-text);
   margin-bottom: 0.5rem;
   display: block;
 }
 
-.referralHint { font-size: 0.82rem; color: rgba(242, 241, 240, 0.65); margin-bottom: 0.875rem; }
+.referralHint { font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.88); margin-bottom: 0.875rem; }
 
 .referralRow { display: flex; gap: 0.5rem; }
 
 .referralInput {
   flex: 1;
   min-width: 0;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(var(--pp-ink-rgb), 0.05);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.23);
   border-radius: var(--radius-sm);
   padding: 0.625rem 0.875rem;
-  color: var(--white);
+  color: var(--pp-ink);
   font-family: var(--font-futura-medium);
   font-size: 0.9rem;
 }
@@ -136,9 +135,9 @@
   align-items: center;
   gap: 0.35rem;
   padding: 0.6rem 1rem;
-  background: rgba(255,199,44,0.12);
-  color: var(--yellow-text);
-  border: 1px solid rgba(255,199,44,0.3);
+  background: rgba(125, 180, 234,0.12);
+  color: var(--p-accent-text);
+  border: 1px solid rgba(125, 180, 234,0.3);
   border-radius: var(--radius-sm);
   font-size: 0.8rem;
   font-family: var(--font-futura-medium);
@@ -146,7 +145,7 @@
   white-space: nowrap;
   transition: background 0.15s;
 }
-.copyBtn:hover { background: rgba(255,199,44,0.2); }
+.copyBtn:hover { background: rgba(125, 180, 234,0.2); }
 
 .historySection { display: flex; flex-direction: column; }
 
@@ -158,24 +157,27 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 0.75rem 0;
-  border-top: 1px solid rgba(255,255,255,0.05);
+  border-top: 1px solid rgba(var(--pp-ink-rgb), 0.15);
 }
 .historyRow:first-child { border-top: none; }
 
-.historyType { font-family: var(--font-futura-medium); font-size: 0.85rem; color: var(--white); }
-.historyMeta { font-size: 0.75rem; color: rgba(242, 241, 240, 0.6); margin-top: 0.1rem; }
+.historyType { font-family: var(--font-futura-medium); font-size: 0.85rem; color: var(--pp-ink); }
+.historyMeta { font-size: 0.75rem; color: rgba(var(--pp-ink-rgb), 0.87); margin-top: 0.1rem; }
 .reversedTag { font-family: var(--font-futura-medium); font-size: 0.72rem; color: rgba(252,165,165,0.75); text-transform: uppercase; letter-spacing: 0.02em; }
 
-.amountPositive { font-family: var(--font-futura-heavy); font-size: 0.9rem; color: #34d399; white-space: nowrap; }
-.amountNegative { font-family: var(--font-futura-heavy); font-size: 0.9rem; color: #fca5a5; white-space: nowrap; }
+.amountPositive { font-family: var(--font-futura-heavy); font-size: 0.9rem; color: var(--pp-ok); white-space: nowrap; }
+.amountNegative { font-family: var(--font-futura-heavy); font-size: 0.9rem; color: var(--pp-bad); white-space: nowrap; }
 
 /* ── Shop ── */
 .shopTab { display: flex; flex-direction: column; gap: 1.25rem; }
 
-.shopBalance { font-size: 0.9rem; color: rgba(242,241,240,0.7); }
-.shopBalance strong { color: var(--yellow-text); font-family: var(--font-futura-heavy); }
+.shopBalance { font-size: 0.9rem; color: rgba(var(--pp-ink-rgb), 0.89); }
+.shopBalance strong { color: var(--p-accent-text); font-family: var(--font-futura-heavy); }
 
-.pendingSection { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 1rem; padding: 1.125rem; }
+.pendingSection {
+  composes: card from '../../../../components/ui/Surface.module.css';
+  padding: 1.125rem;
+}
 
 .pendingGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; margin-top: 0.75rem; }
 
@@ -184,16 +186,16 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
-  background: rgba(255,199,44,0.08);
-  border: 1px solid rgba(255,199,44,0.25);
+  background: rgba(125, 180, 234,0.08);
+  border: 1px solid rgba(125, 180, 234,0.25);
   border-radius: var(--radius-md);
-  color: var(--yellow-text);
+  color: var(--p-accent-text);
   font-size: 0.82rem;
   font-family: var(--font-futura-medium);
   cursor: pointer;
   transition: background 0.15s;
 }
-.pendingCard:hover { background: rgba(255,199,44,0.14); }
+.pendingCard:hover { background: rgba(125, 180, 234,0.14); }
 
 .tierUnlocksHeader {
   display: flex;
@@ -216,15 +218,15 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.6rem 0.875rem;
-  background: rgba(255,199,44,0.06);
-  border: 1px solid rgba(255,199,44,0.2);
+  background: rgba(125, 180, 234,0.06);
+  border: 1px solid rgba(125, 180, 234,0.2);
   border-radius: var(--radius-sm);
 }
 
 .readyToClaimTitle {
   font-family: var(--font-futura-medium);
   font-size: 0.85rem;
-  color: var(--white);
+  color: var(--pp-ink);
 }
 
 .tierGroup { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.25rem; }
@@ -240,19 +242,18 @@
   padding: 0.3rem 0.875rem;
   border-radius: var(--radius-pill);
   border: 1px solid;
+  white-space: nowrap;
 }
 
-.tierGroupThreshold { font-size: 0.78rem; color: rgba(242, 241, 240, 0.6); }
+.tierGroupThreshold { font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.87); }
 
 .shopGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
 
 .shopCard {
+  composes: card from '../../../../components/ui/Surface.module.css';
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 1rem;
   padding: 1.25rem;
 }
 
@@ -264,12 +265,12 @@
    here visually overlapped .stockNote sitting right underneath it. Flex
    blockifies span children into proper flex items, which do reserve their
    full padded height. */
-.shopCardTitle { display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem; font-family: var(--font-futura-medium); font-size: 0.95rem; color: var(--white); }
-.shopCardDesc { font-size: 0.8rem; color: rgba(242, 241, 240, 0.65); line-height: 1.4; }
-.stockNote { font-size: 0.75rem; color: rgba(242, 241, 240, 0.6); }
+.shopCardTitle { display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem; font-family: var(--font-futura-medium); font-size: 0.95rem; color: var(--pp-ink); }
+.shopCardDesc { font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.88); line-height: 1.4; }
+.stockNote { font-size: 0.75rem; color: rgba(var(--pp-ink-rgb), 0.87); }
 
 .shopCardFooter { display: flex; align-items: center; justify-content: space-between; margin-top: 0.5rem; }
-.shopCardCost { font-family: var(--font-futura-heavy); color: var(--yellow-text); font-size: 0.95rem; }
+.shopCardCost { font-family: var(--font-futura-heavy); color: var(--p-accent-text); font-size: 0.95rem; }
 
 .claimBtn {
   padding: 0.5rem 1rem;
@@ -292,12 +293,10 @@
 .leaderboardTab { display: flex; flex-direction: column; gap: 1.5rem; }
 
 .prefsCard {
+  composes: card from '../../../../components/ui/Surface.module.css';
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 1rem;
   padding: 1.125rem 1.25rem;
 }
 
@@ -306,10 +305,10 @@
   align-items: center;
   gap: 0.625rem;
   font-size: 0.85rem;
-  color: rgba(242,241,240,0.75);
+  color: rgba(var(--pp-ink-rgb), 0.87);
   cursor: pointer;
 }
-.checkboxField input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--yellow); flex-shrink: 0; }
+.checkboxField input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--p-accent); flex-shrink: 0; }
 
 .boardList { display: flex; flex-direction: column; }
 
@@ -318,13 +317,13 @@
   align-items: center;
   gap: 1rem;
   padding: 0.75rem 0.5rem;
-  border-top: 1px solid rgba(255,255,255,0.05);
+  border-top: 1px solid rgba(var(--pp-ink-rgb), 0.15);
 }
 .boardRow:first-child { border-top: none; }
-.boardRowSelf { background: rgba(255,199,44,0.06); border-radius: 0.5rem; }
+.boardRowSelf { background: rgba(125, 180, 234,0.06); border-radius: 0.5rem; }
 
-.boardRank { font-family: var(--font-futura-heavy); font-size: 0.85rem; color: rgba(242, 241, 240, 0.6); width: 2.5rem; flex-shrink: 0; }
-.boardName { flex: 1; min-width: 0; font-family: var(--font-futura-medium); font-size: 0.88rem; color: var(--white); }
+.boardRank { font-family: var(--font-futura-heavy); font-size: 0.85rem; color: rgba(var(--pp-ink-rgb), 0.87); width: 2.5rem; flex-shrink: 0; }
+.boardName { flex: 1; min-width: 0; font-family: var(--font-futura-medium); font-size: 0.88rem; color: var(--pp-ink); }
 
 .boardTier {
   font-size: 0.65rem;
@@ -337,7 +336,7 @@
   flex-shrink: 0;
 }
 
-.boardPoints { font-size: 0.8rem; color: rgba(242, 241, 240, 0.65); flex-shrink: 0; }
+.boardPoints { font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.88); flex-shrink: 0; }
 
 /* ── Manage shop ── */
 .manageTab { display: flex; flex-direction: column; gap: 1.5rem; }
@@ -358,22 +357,13 @@
   gap: 0.625rem;
   align-items: center;
 }
-.newRewardForm .input { width: auto; flex: 1 1 180px; }
-.newRewardForm .checkboxField { flex-basis: 100%; }
-.newRewardForm .error { flex-basis: 100%; margin: 0; }
-.newRewardForm .saveBtn { flex-shrink: 0; }
+.newRewardForm > * { flex: 1 1 200px !important; min-width: 0; }
+.newRewardForm .input { width: 100%; }
+.newRewardForm .checkboxField { flex: 1 1 100% !important; }
+.newRewardForm .error { flex: 1 1 100% !important; margin: 0; }
 
-.input {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: var(--radius-sm);
-  padding: 0.6rem 0.75rem;
-  color: var(--white);
-  font-family: var(--font-futura-medium);
-  font-size: 0.85rem;
-  width: 100%;
-}
-.input:focus { outline: none; border-color: rgba(255,199,44,0.4); }
+
+.input { composes: control from '../../../../components/ui/Field.module.css'; }
 
 /* Same bordered-box treatment as .input, holding a label + native color
    swatch instead of text — .checkboxField (bare label+control, no box) was
@@ -384,10 +374,10 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.4rem 0.75rem;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(var(--pp-ink-rgb), 0.05);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.23);
   border-radius: var(--radius-sm);
-  color: rgba(242,241,240,0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
   font-family: var(--font-futura-medium);
   font-size: 0.85rem;
   flex: 0 0 auto;
@@ -423,15 +413,13 @@
 .manageList { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1.25rem; }
 
 .manageRow {
+  composes: card from '../../../../components/ui/Surface.module.css';
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 0.625rem 1rem;
   padding: 0.875rem 1.125rem;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: var(--radius-md);
 }
 .manageRowInactive { opacity: 0.5; }
 
@@ -447,21 +435,21 @@
   border: 1px solid;
   vertical-align: middle;
 }
-.tierUnlockTag { color: var(--yellow-text); border-color: rgba(255,199,44,0.35); background: rgba(255,199,44,0.08); }
-.digitalTag { color: #60a5fa; border-color: rgba(96,165,250,0.35); background: rgba(96,165,250,0.08); }
+.tierUnlockTag { color: var(--p-accent-text); border-color: rgba(125, 180, 234,0.35); background: rgba(125, 180, 234,0.08); }
+.digitalTag { color: var(--pp-info); border-color: rgba(96,165,250,0.35); background: rgba(96,165,250,0.08); }
 
 .toggleBtn {
   padding: 0.4rem 0.875rem;
-  background: rgba(255,255,255,0.06);
-  color: rgba(242,241,240,0.8);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(var(--pp-ink-rgb), 0.06);
+  color: rgba(var(--pp-ink-rgb), 0.92);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.26);
   border-radius: var(--radius-sm);
   font-size: 0.75rem;
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.15s;
 }
-.toggleBtn:hover { background: rgba(255,255,255,0.1); }
+.toggleBtn:hover { background: rgba(var(--pp-ink-rgb), 0.1); }
 
 .manageRowActions { display: flex; gap: 0.5rem; flex-shrink: 0; }
 
@@ -470,8 +458,8 @@
   flex-direction: column;
   gap: 0.625rem;
   padding: 1rem 1.125rem;
-  background: rgba(255,199,44,0.05);
-  border: 1px solid rgba(255,199,44,0.2);
+  background: rgba(125, 180, 234,0.05);
+  border: 1px solid rgba(125, 180, 234,0.2);
   border-radius: var(--radius-md);
 }
 
@@ -485,7 +473,7 @@
 .adjustSection {
   margin-top: 0.5rem;
   padding-top: 1.5rem;
-  border-top: 1px solid rgba(255,255,255,0.07);
+  border-top: 1px solid rgba(var(--pp-ink-rgb), 0.18);
 }
 
 .manageSection {
@@ -493,7 +481,7 @@
   border-top: none;
 }
 
-/* Flex-wrap, not a fixed grid — mirrors Battlepass's identical .awardForm:
+/* Flex-wrap, not a fixed grid —
    flex-basis per field expresses the actual intended proportions (search
    wide, amount narrow, reason wide, button auto) directly, instead of a
    fixed-column grid whose track count has to match the real children. */
@@ -509,7 +497,7 @@
 /* The number field is wrapped (our own +/- steppers), so it needs its own width or it collapses to a sliver and clips its placeholder. */
 .awardForm > span:has(> input[type="number"]) { flex: 0 1 170px; min-width: 150px; }
 .awardForm > input:not([type="number"]) { flex: 2 1 220px; }
-.awardForm .saveBtn { flex-shrink: 0; }
+
 
 .awardTargets {
   display: flex;
@@ -523,12 +511,13 @@
   align-items: center;
   gap: 0.35rem;
   padding: 0.3rem 0.5rem 0.3rem 0.7rem;
-  background: rgba(255,199,44,0.1);
-  color: var(--yellow-text);
-  border: 1px solid rgba(255,199,44,0.25);
+  background: rgba(125, 180, 234,0.1);
+  color: var(--p-accent-text);
+  border: 1px solid rgba(125, 180, 234,0.25);
   border-radius: var(--radius-pill);
   font-size: 0.78rem;
   font-family: var(--font-futura-medium);
+  white-space: nowrap;
 }
 .awardChip button { display: inline-flex; color: inherit; background: none; border: none; cursor: pointer; padding: 0; }
 
@@ -540,8 +529,8 @@
   left: 0;
   right: 0;
   z-index: 10;
-  background: #0d1a33;
-  border: 1px solid rgba(255,255,255,0.1);
+  background: var(--pp-card);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.23);
   border-radius: var(--radius-sm);
   box-shadow: 0 12px 30px rgba(0,0,0,0.35);
   max-height: 220px;
@@ -554,14 +543,14 @@
   text-align: left;
   padding: 0.5rem 0.75rem;
   font-size: 0.82rem;
-  color: rgba(242,241,240,0.8);
+  color: rgba(var(--pp-ink-rgb), 0.92);
   transition: background 0.12s;
 }
-.adjustResult:hover { background: rgba(255,255,255,0.06); }
+.adjustResult:hover { background: rgba(var(--pp-ink-rgb), 0.06); }
 
 .targetHistory {
   margin-top: 1rem;
-  border: 1px solid rgba(255,255,255,0.07);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.18);
   border-radius: var(--radius-sm);
   overflow: hidden;
 }
@@ -572,7 +561,7 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.6rem 0.85rem;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.15);
 }
 .targetHistoryRow:last-child { border-bottom: none; }
 
@@ -610,7 +599,7 @@
 
 .reversedLabel {
   font-size: 0.72rem;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
   white-space: nowrap;
 }
 
@@ -628,16 +617,37 @@
 }
 
 .qrModal {
+  composes: card from '../../../../components/ui/Surface.module.css';
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1.25rem;
-  background: #0b1426;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 1.125rem;
   padding: 2rem;
-  box-shadow: 0 24px 60px rgba(0,0,0,0.5);
 }
 
-.qrHint { font-size: 0.85rem; color: rgba(242,241,240,0.6); text-align: center; }
+.qrHint { font-size: 0.85rem; color: rgba(var(--pp-ink-rgb), 0.87); text-align: center; }
 .qrCanvas { border-radius: 0.75rem; overflow: hidden; }
+
+/* ── My Points, redesigned: one hero panel with the tier ladder, perks and activity below ── */
+.hero { display: grid; gap: 0.8rem; padding: 1.2rem 1.3rem 1.1rem; background: var(--pp-card); border: 2px solid rgba(var(--pp-ink-rgb), 0.7); border-left: 10px solid var(--tier); border-radius: 8px; box-shadow: 3px 3px 0 rgba(var(--pp-ink-rgb), 0.25); }
+.heroTop { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap; }
+.heroKicker { font-family: var(--font-renegare); font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.86); }
+.tierTag { padding: 0.2rem 0.7rem; background: color-mix(in srgb, var(--tier) 38%, var(--pp-card)); color: var(--pp-ink); border: 2px solid #011941; border-radius: 3px; font-family: var(--font-futura-heavy); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
+.heroNum { font-family: var(--font-futura-heavy); font-size: clamp(2.6rem, 8vw, 4.2rem); line-height: 1; color: var(--pp-ink); }
+.heroNum small { margin-left: 0.5rem; font-family: var(--font-futura-medium); font-size: 0.95rem; color: rgba(var(--pp-ink-rgb), 0.85); }
+.ladder { list-style: none; display: flex; margin: 0.2rem 0 0; padding: 0; overflow-x: auto; scrollbar-width: none; }
+.rung { position: relative; flex: 1 0 4.2rem; display: grid; gap: 0.1rem; justify-items: start; padding-top: 1.1rem; font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.84); }
+.rung i { position: absolute; top: 0; left: 0; right: 0; height: 10px; background: rgba(var(--pp-ink-rgb), 0.14); border: 2px solid rgba(var(--pp-ink-rgb), 0.4); border-right-width: 0; }
+.rung:first-child i { border-radius: 3px 0 0 3px; }
+.rung:last-child i { border-radius: 0 3px 3px 0; border-right-width: 2px; }
+.rungReached i { background: var(--rc); border-color: var(--pp-ink); }
+.rung b { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.86); }
+.rungReached b, .rungNow b { color: var(--pp-ink); }
+.rungNow::after { content: 'You are here'; position: absolute; top: -1.15rem; left: 0; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; color: var(--pp-ink); white-space: nowrap; }
+.heroNote { margin: 0; font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.88); }
+.heroNote strong { color: var(--pp-ink); }
+@media (min-width: 1100px) {
+  .pointsTab { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr); gap: 1.2rem; align-items: start; }
+  .pointsTab > .hero, .pointsTab > .historySection:last-child { grid-column: 1; }
+  .pointsTab > .referralCard { grid-column: 2; grid-row: 1 / span 2; }
+}

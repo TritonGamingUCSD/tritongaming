@@ -6,7 +6,7 @@ interface Props {
   label?: string;
   // Same light/dark split as LoadingSpinner — dark for the portal's navy
   // background, light for the public site's mostly-white content areas.
-  theme?: 'light' | 'dark';
+  theme?: 'light' | 'dark' | 'auto';
   fullHeight?: boolean;
 }
 
@@ -22,10 +22,10 @@ export default function LogoLoader({ size = 96, label = 'Loading…', theme = 'd
   return (
     <div className={`${styles.wrap} ${fullHeight ? styles.fullHeight : ''}`} role="status" aria-live="polite">
       <div className={styles.logoBox} style={{ width: size, height: size }} aria-hidden="true">
-        <Image src="/logos/tg_logo.png" alt="" fill className={styles.logoBase} priority />
+        <Image src="/logos/tg_logo.png" alt="" fill sizes={`${size}px`} className={styles.logoBase} loading="eager" fetchPriority="high" />
         <div className={styles.logoShine} />
       </div>
-      <p className={`${styles.label} ${theme === 'dark' ? styles.labelDark : styles.labelLight}`}>{label}</p>
+      <p className={`${styles.label} ${theme === 'dark' ? styles.labelDark : theme === 'auto' ? styles.labelAuto : styles.labelLight}`}>{label}</p>
     </div>
   );
 }

@@ -125,13 +125,13 @@ export async function strikeManagers(svc: SupabaseClient): Promise<string[]> {
 
 // Notices are deliberately plain: they can show on a lock screen, so they say a strike changed, not what it was for.
 export async function notifyPerson(svc: SupabaseClient, userId: string, title: string, body: string) {
-  await createNotifications(svc, [{ user_id: userId, type: 'strike_update', title, body, href: '/portal?section=profile&tab=strikes' }]);
+  await createNotifications(svc, [{ user_id: userId, type: 'strike_update', title, body, href: '/portal/profile/strikes' }]);
 }
 
 export async function notifyManagers(svc: SupabaseClient, title: string, body: string, except?: string, quiet = false) {
   if (quiet) return;
   const managers = (await strikeManagers(svc)).filter((m) => m !== except);
-  if (managers.length) await createNotifications(svc, managers.map((m) => ({ user_id: m, type: 'strike_update', title, body, href: '/portal?section=strikes' })));
+  if (managers.length) await createNotifications(svc, managers.map((m) => ({ user_id: m, type: 'strike_update', title, body, href: '/portal/strikes' })));
 }
 
 // Reaching the limit: tell the person the HR team will contact them, and tell the managers.

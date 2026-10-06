@@ -23,7 +23,7 @@ export async function authorizeDocs(capability: 'manage_docs' | 'view_docs') {
 export const UUID = /^[0-9a-f-]{36}$/i;
 export const MAX_DOC_CHARS = 200_000;
 export const bad = (error: string, status = 400) => NextResponse.json({ error }, { status });
-export const DOC_COLUMNS = 'id, slug, title, category_id, parent_id, order_index, content, attachments, created_by, updated_by, created_at, updated_at, icon, cover_url, tags, pinned, published, revision';
+export const DOC_COLUMNS = 'id, slug, title, category_id, parent_id, order_index, content, attachments, created_by, updated_by, created_at, updated_at, icon, cover_url, tags, pinned, pin_order, published, revision';
 export const DRAFT_COLUMNS = 'draft_title, draft_content, draft_updated_at, draft_updated_by';
 
 export const EDITING_WINDOW_MS = 60_000;

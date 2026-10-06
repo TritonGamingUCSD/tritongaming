@@ -1,5 +1,6 @@
 'use client';
 
+import Button from '@/components/ui/Button';
 import { GripVertical, Plus } from 'lucide-react';
 import ArtRow from './ArtRow';
 import { useDragReorder } from '@/lib/useDragReorder';
@@ -21,7 +22,7 @@ export default function EventPostersField({
   onChange: (posters: string[], credits: Record<string, AssetCredit>) => void;
 }) {
   const list = posters.length ? posters : [''];
-  const { dragIndex, overIndex, dragHandleProps, dropTargetProps } = useDragReorder(list, (next) => onChange(next, credits));
+  const { view, dragIndex, overIndex, dragHandleProps, dropTargetProps } = useDragReorder(list, (next) => onChange(next, credits));
 
   const setPoster = (i: number, url: string) => {
     const old = list[i];
@@ -38,7 +39,7 @@ export default function EventPostersField({
     <div className={styles.field}>
       <span className={`${styles.label} ${styles.cap}`}>Posters * (up to {MAX_POSTERS})</span>
       <span className={styles.hint}>At least one is required. Drag the grip to reorder; the first is the main poster. Click a thumbnail to replace it.</span>
-      {list.map((u, i) => (
+      {view.map((u, i) => (
         <div
           key={i}
           className={`${styles.artRowWrap} ${dragIndex === i ? styles.dragging : ''} ${overIndex === i && dragIndex !== i ? styles.dragOver : ''}`}
@@ -60,7 +61,7 @@ export default function EventPostersField({
         </div>
       ))}
       {list.length < MAX_POSTERS && list[list.length - 1] !== '' && (
-        <button type="button" className={styles.add} onClick={() => onChange([...list, ''], credits)}><Plus size={14} aria-hidden="true" /> Add another poster</button>
+        <Button size="sm" variant="secondary" onClick={() => onChange([...list, ''], credits)}><Plus size={14} aria-hidden="true" /> Add another poster</Button>
       )}
     </div>
   );

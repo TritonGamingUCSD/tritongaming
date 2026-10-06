@@ -9,6 +9,7 @@ import { deleteStorageUrl } from '@/lib/imageUpload';
 import type { SocialEmbed } from '@/types/database';
 import IconButton from '@/components/ui/IconButton';
 import styles from './divisions.module.css';
+import Button from '@/components/ui/Button';
 
 interface Division {
   id: string;
@@ -118,9 +119,7 @@ export default function DivisionsManager({ divisions: initial }: { divisions: Di
             maxLength={80}
           />
         </div>
-        <button className={styles.saveBtn} type="submit" disabled={adding || !name.trim()}>
-          {adding ? 'Adding…' : 'Add Division'}
-        </button>
+        <Button type="submit" loading={adding} disabled={!name.trim()}>{adding ? 'Adding…' : 'Add Division'}</Button>
       </form>
 
       <div className={styles.list}>

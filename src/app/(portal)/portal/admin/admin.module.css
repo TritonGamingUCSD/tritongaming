@@ -1,4 +1,4 @@
-.page  { max-width: 1100px; width: 100%; margin-inline: auto; }
+.page  { max-width: 1320px; width: 100%; margin-inline: auto; }
 
 /* ── Header ── */
 .pageHeader {
@@ -13,14 +13,14 @@
 .title {
   font-family: var(--font-futura-heavy);
   font-size: clamp(1.25rem, 2.5vw, 1.6rem);
-  color: var(--white);
+  color: var(--pp-ink);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   line-height: 1.3;
   margin-bottom: 0.5rem;
 }
 
-.titleSub { font-size: var(--fs-meta); color: rgba(242, 241, 240, 0.6); }
+.titleSub { font-size: var(--fs-meta); color: rgba(var(--pp-ink-rgb), 0.87); }
 
 .headerActions {
   display: flex;
@@ -41,20 +41,18 @@
 }
 
 .statCard {
+  composes: card from '../../../../components/ui/Surface.module.css';
   display: flex;
   align-items: center;
   gap: 0.75rem;
   padding: 1rem 1.125rem;
-  background: rgba(255,255,255,0.035);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 0.875rem;
   transition: border-color 0.15s;
 }
 
 
-.statIcon  { display: inline-flex; color: var(--yellow-text); flex-shrink: 0; }
-.statValue { font-family: var(--font-futura-heavy); font-size: 1.3rem; color: var(--yellow-text); line-height: 1; }
-.statLabel { font-size: var(--fs-meta); color: rgba(242,241,240,0.38); margin-top: 0.2rem; }
+.statIcon  { display: inline-flex; color: var(--p-accent-text); flex-shrink: 0; }
+.statValue { font-family: var(--font-futura-heavy); font-size: 1.3rem; color: var(--p-accent-text); line-height: 1; }
+.statLabel { font-size: var(--fs-meta); color: rgba(var(--pp-ink-rgb), 0.82); margin-top: 0.2rem; }
 
 /* ── Sections ── */
 .section {
@@ -78,10 +76,10 @@
   font-family: var(--font-renegare);
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: var(--yellow-text);
+  color: var(--p-accent-text);
 }
 
-.sectionHint { font-size: var(--fs-meta); color: rgba(242,241,240,0.2); }
+.sectionHint { font-size: var(--fs-meta); color: rgba(var(--pp-ink-rgb), 0.68); }
 
 /* Role History used to be its own tab — now a small lookup reachable from
    Role Manager's own header instead, since it's not a place anyone starts
@@ -102,16 +100,13 @@
 }
 
 .historyModal {
+  composes: card from '../../../../components/ui/Surface.module.css';
   position: relative;
   width: 100%;
   max-width: 720px;
   max-height: 80vh;
   overflow-y: auto;
-  background: #0b1426;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 1.125rem;
   padding: 1.75rem clamp(1rem, 3vw, 2rem);
-  box-shadow: 0 24px 60px rgba(0,0,0,0.5);
 }
 
 .historyClose {
@@ -124,18 +119,16 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: rgba(242,241,240,0.6);
+  background: rgba(var(--pp-ink-rgb), 0.05);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.23);
+  color: rgba(var(--pp-ink-rgb), 0.87);
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
-.historyClose:hover { background: rgba(255,255,255,0.1); color: var(--white); }
+.historyClose:hover { background: rgba(var(--pp-ink-rgb), 0.1); color: var(--pp-ink); }
 
 .table {
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 0.875rem;
+  composes: card from '../../../../components/ui/Surface.module.css';
   overflow: hidden;
 }
 
@@ -144,12 +137,12 @@
   grid-template-columns: 2fr 1fr 1fr;
   gap: 1rem;
   padding: 0.75rem 1.25rem;
-  background: rgba(255,255,255,0.05);
+  background: rgba(var(--pp-ink-rgb), 0.05);
   font-size: var(--fs-label);
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
 }
 
 .tableRow {
@@ -157,11 +150,11 @@
   grid-template-columns: 2fr 1fr 1fr;
   gap: 1rem;
   padding: 0.875rem 1.25rem;
-  border-top: 1px solid rgba(255,255,255,0.05);
+  border-top: 1px solid rgba(var(--pp-ink-rgb), 0.15);
   align-items: center;
   font-family: var(--font-futura-medium);
   font-size: 0.85rem;
-  color: var(--white);
+  color: var(--pp-ink);
 }
 
 
@@ -182,8 +175,8 @@
   height: 28px;
   flex-shrink: 0;
   border-radius: 50%;
-  background: rgba(255,199,44,0.15);
-  color: var(--yellow-text);
+  background: rgba(125, 180, 234,0.15);
+  color: var(--p-accent-text);
   font-family: var(--font-futura-heavy);
   font-size: 0.8rem;
 }
@@ -194,16 +187,16 @@
   gap: 0.35rem;
   width: fit-content;
   padding: 0.35rem 0.7rem;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(var(--pp-ink-rgb), 0.05);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.23);
   border-radius: var(--radius-pill);
-  color: rgba(242,241,240,0.7);
+  color: rgba(var(--pp-ink-rgb), 0.89);
   font-family: var(--font-futura-medium);
   font-size: 0.78rem;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
-.activityBtn:hover { background: rgba(255,199,44,0.1); border-color: rgba(255,199,44,0.3); color: var(--yellow-text); }
+.activityBtn:hover { background: rgba(125, 180, 234,0.1); border-color: rgba(125, 180, 234,0.3); color: var(--p-accent-text); }
 
 .activityList {
   display: flex;
@@ -219,13 +212,13 @@
   justify-content: space-between;
   gap: 0.5rem 1rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.16);
   font-size: 0.85rem;
 }
 
 .activityAction {
   font-family: var(--font-futura-heavy);
-  color: var(--white);
+  color: var(--pp-ink);
 }
 
 /* Same problem as events.module.css's table: a 3-column grid still leaves
@@ -254,25 +247,23 @@
 }
 
 .boardOrderRow {
+  composes: card from '../../../../components/ui/Surface.module.css';
   display: flex;
   align-items: center;
   gap: 0.75rem;
   padding: 0.5rem 0.875rem;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 0.625rem;
   transition: opacity 0.15s, border-color 0.15s, background 0.15s;
 }
 
 .boardOrderRowDragging { opacity: 0.4; }
-.boardOrderRowDragOver { border-color: rgba(255,199,44,0.5); background: rgba(255,199,44,0.05); }
+.boardOrderRowDragOver { border-color: rgba(125, 180, 234,0.5); background: rgba(125, 180, 234,0.05); }
 
 .dragHandle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
   cursor: grab;
   touch-action: none;
 }
@@ -283,7 +274,7 @@
   flex-shrink: 0;
   font-family: var(--font-futura-heavy);
   font-size: 0.8rem;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
   text-align: center;
 }
 
@@ -292,7 +283,7 @@
   min-width: 0;
   font-family: var(--font-futura-medium);
   font-size: 0.85rem;
-  color: var(--white);
+  color: var(--pp-ink);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

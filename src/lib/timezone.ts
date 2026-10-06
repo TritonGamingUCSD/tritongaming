@@ -48,7 +48,7 @@ export function pacificDaysUntil(iso: string, from: Date = new Date()): number {
   return Math.round((targetUTC - nowUTC) / 86400_000);
 }
 
-// Shared by every event card/detail view (EventCard, LongEventCard, the
+// Shared by every event card/detail view (EventCard, the
 // public event detail page) — was previously copy-pasted three times with
 // no explicit timeZone, so the same-day/same-month comparisons it makes were
 // each done in whichever timezone the viewer's browser (or the server

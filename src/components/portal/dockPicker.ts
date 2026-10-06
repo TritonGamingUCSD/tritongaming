@@ -1,5 +1,5 @@
-// Which sections get a slot on the mobile bottom bar. The bar is Home + up to four of these + More (six slots),
-// chosen by a score instead of a fixed list:
+// Which sections get a slot on the mobile bottom bar. The bar is Home + up to three of these + More (five slots),
+// chosen by a score instead of a fixed list (Home + three + More on a phone, so every label fits):
 //   • a base weight (what most members reach for: tickets, rewards, profile)
 //   • a boost from the server for what's relevant to this person right now (an event today, a ticket
 //     for tomorrow, a role that runs events…) — see `dockBoost` in portal/page.tsx
@@ -9,7 +9,7 @@
 // positions every time the scores shift slightly.
 
 const BASE_WEIGHT: Record<string, number> = {
-  tickets: 30, meetings: 25, 'internal-events': 8, points: 20, battlepass: 18, profile: 10, events: 16, checkin: 12, activity: 5, members: 6, help: 0,
+  tickets: 30, meetings: 25, 'internal-events': 8, points: 20, profile: 10, events: 16, checkin: 12, activity: 5, members: 6, help: 0,
 };
 
 export interface DockUsage { [sectionId: string]: { count: number; last: number } }
@@ -37,13 +37,16 @@ function usageScore(id: string, usage: DockUsage, now: Date): number {
   return Math.min(40, u.count * 4 * Math.pow(0.5, days / 14));
 }
 
-interface Pickable { id: string; dockBoost?: number; dockExclude?: boolean }
+// Tools used mostly at a desk (editors, admin, rosters): never on the phone's bottom bar, always one tap away in More.
+const DESK_ONLY = new Set(['qrcode', 'site-content', 'admin', 'divisions', 'division-members', 'quarters', 'keys', 'strikes', 'albums', 'docs', 'calendar']);
 
-export function pickDock<T extends Pickable>(sections: T[], opts: { now?: Date; usage?: DockUsage } = {}): { ids: Set<string>; urgent: Set<string>; slots: number } {
+interface Pickable { id: string; dockBoost?: number; dockExclude?: boolean; homeExclude?: boolean }
+
+export function pickDock<T extends Pickable>(sections: T[], opts: { now?: Date; usage?: DockUsage; slots?: number; desk?: boolean } = {}): { ids: Set<string>; urgent: Set<string>; slots: number } {
   // Sections flagged dockExclude never take a bottom-bar slot (they're still in the More sheet).
-  const eligible = sections.filter((s) => !s.dockExclude);
+  const eligible = sections.filter((s) => (opts.desk ? s.id !== 'calendar' && !s.homeExclude : !s.dockExclude && !DESK_ONLY.has(s.id)));
   // With five sections or fewer they all fit on the bar and there is no More; otherwise the four best.
-  const slots = sections.length <= 5 ? Math.min(eligible.length, sections.length) : 4;
+  const slots = opts.slots ?? (sections.length <= 4 ? Math.min(eligible.length, sections.length) : 3);
   const now = opts.now;
   const scored = eligible.map((s, order) => {
     const score = (BASE_WEIGHT[s.id] ?? 0) + (s.dockBoost ?? 0) + (now ? usageScore(s.id, opts.usage ?? {}, now) : 0);

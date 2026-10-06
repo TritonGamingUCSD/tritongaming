@@ -4,7 +4,7 @@
   gap: 0.25rem;
   width: 100%;
   margin-bottom: 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 3px solid rgba(var(--pp-ink-rgb), 0.28);
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
@@ -24,26 +24,28 @@
   padding: 0.7rem 0.95rem;
   background: none;
   border: none;
-  color: rgba(242, 241, 240, 0.65);
-  font-family: var(--font-futura-medium);
-  font-size: 0.88rem;
+  color: rgba(var(--pp-ink-rgb), 0.88);
+  font-family: var(--font-futura-heavy);
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   white-space: nowrap;
   cursor: pointer;
   transition: color 0.15s;
 }
-.tab:hover { color: rgba(242, 241, 240, 0.9); }
-.tab:focus-visible { outline: 2px solid var(--yellow); outline-offset: -2px; border-radius: 0.4rem; }
+.tab:hover { color: rgba(var(--pp-ink-rgb), 1.00); }
+.tab:focus-visible { outline: 3px solid rgba(125, 180, 234, 0.95); outline-offset: -3px; border-radius: 4px; }
 .tab::after {
   content: '';
   position: absolute;
-  left: 0.6rem; right: 0.6rem; bottom: -1px;
-  height: 2px;
-  border-radius: 2px;
+  left: 0; right: 0; bottom: -3px;
+  height: 5px;
+  border-radius: 0;
   background: transparent;
   transition: background 0.15s;
 }
-.active { color: var(--white); }
-.active::after { background: var(--yellow); }
+.active { color: var(--pp-ink); }
+.active::after { background: var(--frame-accent, var(--pp-ink)); }
 .icon { display: inline-flex; opacity: 0.85; }
 .icon svg { width: 15px; height: 15px; }
 
@@ -51,12 +53,13 @@
   min-width: 18px;
   padding: 0.05rem 0.4rem;
   border-radius: 999px;
-  background: var(--yellow);
-  color: #0b1426;
+  background: var(--p-accent);
+  color: #011941; /* theme-ok */
   font-size: 0.68rem;
   font-family: var(--font-futura-heavy);
   text-align: center;
   line-height: 1.4;
+  white-space: nowrap;
 }
 
 /* Small inner toggle (2–4 options) */
@@ -66,15 +69,15 @@
   display: inline-flex;
   gap: 0.2rem;
   padding: 0.2rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 0.75rem;
-  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid var(--pp-ink);
+  border-radius: 6px;
+  background: var(--pp-card);
   mask-image: none;
   -webkit-mask-image: none;
 }
-.segmented .tab { padding: 0.4rem 0.8rem; border-radius: 0.55rem; font-size: 0.82rem; }
+.segmented .tab { padding: 0.4rem 0.8rem; border-radius: 3px; font-size: 0.78rem; }
 .segmented .tab::after { display: none; }
-.segmented .active { background: rgba(255, 199, 44, 0.14); color: var(--yellow-text); }
+.segmented .active { background: var(--pp-ink); color: var(--pp-paper); }
 
 /* Phones: pack the tabs so a typical 3–4 tab bar fits without scrolling —
    no icons, tighter padding, tabs share the row. (Longer bars still scroll, with the edge fade.) */
@@ -87,5 +90,12 @@
   .segmented .tab { flex: 1 0 auto; justify-content: center; padding: 0.45rem 0.5rem; font-size: 0.76rem; }
 }
 
-.count { font-size: 0.68rem; padding: 0.02rem 0.4rem; border-radius: 999px; background: rgba(255, 255, 255, 0.08); color: rgba(242, 241, 240, 0.6); }
-.active .count { background: rgba(255, 199, 44, 0.2); color: var(--yellow-text); }
+.count { font-size: 0.68rem; padding: 0.02rem 0.4rem; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.08); color: rgba(var(--pp-ink-rgb), 0.87); white-space: nowrap; }
+.active .count { background: rgba(125, 180, 234, 0.4); color: var(--pp-ink); }
+.segmented .active .count { background: rgba(var(--pp-ink-rgb), 0.25); color: inherit; }
+
+/* Which tab you are on: a lifted folder tab (filled, outlined, group-colored foot); the others are plain and dimmer. */
+.bar:not(.segmented) .tab { border-radius: 6px 6px 0 0; border: 2px solid transparent; border-bottom: 0; margin-bottom: -3px; color: rgba(var(--pp-ink-rgb), 0.68); }
+.bar:not(.segmented) .tab:hover { color: var(--pp-ink); background: rgba(var(--pp-ink-rgb), 0.06); }
+.bar:not(.segmented) .active { color: var(--pp-ink); background: var(--pp-card); border-color: var(--pp-ink); }
+.bar:not(.segmented) .active::after { left: -2px; right: -2px; bottom: 0; height: 5px; background: var(--frame-accent, var(--p-accent)); border: 2px solid var(--pp-ink); border-top: 0; }

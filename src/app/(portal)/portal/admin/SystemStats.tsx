@@ -1,12 +1,10 @@
 'use client';
 
 import Notice from '@/components/ui/Notice';
-import { confirmHold } from '@/lib/confirmHold';
 import { useEffect, useState } from 'react';
 import { Database, HardDrive, Triangle, ExternalLink, Users, Server, ShieldCheck, Trash2 } from 'lucide-react';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import adminStyles from './admin.module.css';
-import Button from '@/components/ui/Button';
 import styles from './SystemStats.module.css';
 
 interface TableStat {
@@ -64,24 +62,11 @@ interface SystemStatsResponse {
   environment: EnvironmentInfo;
 }
 
-interface BucketPreview {
-  bucket: string;
-  totalObjects: number;
-  unusedCount: number;
-  unusedBytes: number;
-}
-
-interface BucketResult {
-  bucket: string;
-  deletedCount: number;
-  deletedBytes: number;
-  error?: string;
-}
-
 const BUCKET_LABELS: Record<string, string> = {
   'event-flyers': 'Event Flyers',
   'division-logos': 'Division Logos',
   avatars: 'Profile Pictures',
+  'site-content': 'Site Content',
 };
 
 function formatBytes(bytes: number): string {
@@ -112,33 +97,6 @@ export default function SystemStats() {
   const [data, setData] = useState<SystemStatsResponse | null>(null);
   const [error, setError] = useState('');
 
-  // Unused-file scan/delete — was its own separate StorageCleanup card
-  // sitting right below this one with its own near-identical per-bucket
-  // list, which just meant "how much am I using" and "what can I clean up"
-  // were two things to reconcile in your head instead of one bucket grid
-  // with both answers on it.
-  const [preview, setPreview] = useState<BucketPreview[] | null>(null);
-  const [cleanupResult, setCleanupResult] = useState<BucketResult[] | null>(null);
-  const [scanning, setScanning] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [cleanupError, setCleanupError] = useState('');
-  // Compress stored pictures in place (same address and format, so nothing breaks).
-  const [shrink, setShrink] = useState<{ buckets: { bucket: string; images: number; shrinkable: number; beforeBytes: number; saved: number; failed: number }[]; applied: boolean } | null>(null);
-  const [shrinkBusy, setShrinkBusy] = useState<'' | 'scan' | 'apply'>('');
-  const [shrinkError, setShrinkError] = useState('');
-
-  async function runShrink(apply: boolean) {
-    if (apply && !(await confirmHold({ title: 'Compress stored images?', message: 'Pictures are re-saved smaller in the same format and at the same address. They stay clear at the size the site shows them. This can’t be undone.', confirmLabel: 'Hold to compress' }))) return;
-    setShrinkBusy(apply ? 'apply' : 'scan'); setShrinkError('');
-    try {
-      const res = await fetch('/api/admin/storage-optimize', { method: apply ? 'POST' : 'GET' });
-      const json = await res.json();
-      if (!res.ok) { setShrinkError(json.error || 'That didn’t work.'); return; }
-      setShrink({ buckets: json.buckets, applied: apply });
-      if (apply) { const refreshed = await fetch('/api/admin/system-stats'); if (refreshed.ok) setData(await refreshed.json()); }
-    } catch { setShrinkError('Network error. Please try again.'); } finally { setShrinkBusy(''); }
-  }
-
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -158,144 +116,38 @@ export default function SystemStats() {
     return () => { cancelled = true; };
   }, []);
 
-  async function handleScan() {
-    setScanning(true);
-    setCleanupError('');
-    setCleanupResult(null);
-    try {
-      const res = await fetch('/api/admin/storage-cleanup');
-      const json = await res.json();
-      if (!res.ok) {
-        setCleanupError(json.error || 'Scan failed.');
-        return;
-      }
-      setPreview(json.buckets);
-    } catch {
-      setCleanupError('Network error. Please try again.');
-    } finally {
-      setScanning(false);
-    }
-  }
-
-  async function handleDelete() {
-    const totalUnused = preview?.reduce((sum, b) => sum + b.unusedCount, 0) ?? 0;
-    if (!(await confirmHold({ title: `Delete ${totalUnused} unused file${totalUnused === 1 ? '' : 's'}?`, message: 'These files are no longer used anywhere on the site.', confirmLabel: 'Hold to delete' }))) return;
-
-    setDeleting(true);
-    setCleanupError('');
-    try {
-      const res = await fetch('/api/admin/storage-cleanup', { method: 'POST' });
-      const json = await res.json();
-      if (!res.ok) {
-        setCleanupError(json.error || 'Cleanup failed.');
-        return;
-      }
-      setCleanupResult(json.buckets);
-      setPreview(null);
-      // The scan that just ran deleted real objects — the totals fetched on
-      // mount are now stale, so pull fresh ones rather than let the bucket
-      // cards keep showing pre-cleanup sizes.
-      const refreshed = await fetch('/api/admin/system-stats');
-      if (refreshed.ok) setData(await refreshed.json());
-    } catch {
-      setCleanupError('Network error. Please try again.');
-    } finally {
-      setDeleting(false);
-    }
-  }
-
   if (error) {
     return <Notice tone="error">{error}</Notice>;
   }
 
   if (!data) {
-    return <LoadingSpinner size={28} label="Loading system stats…" theme="dark" />;
+    return <LoadingSpinner size={28} label="Loading system stats…" theme="auto" />;
   }
 
   const totalStorageBytes = data.storage.reduce((sum, b) => sum + b.totalBytes, 0);
-  const previewByBucket = new Map((preview ?? []).map((p) => [p.bucket, p]));
-  const totalUnused = preview?.reduce((sum, b) => sum + b.unusedCount, 0) ?? 0;
-  const totalDeleted = cleanupResult?.reduce((sum, b) => sum + b.deletedCount, 0) ?? 0;
-  const totalDeletedBytes = cleanupResult?.reduce((sum, b) => sum + b.deletedBytes, 0) ?? 0;
 
   return (
     <div className={styles.wrap}>
-      <section className={adminStyles.section}>
-        <div className={adminStyles.sectionHeader}>
-          <h2 className={adminStyles.sectionLabel}><Server size={13} strokeWidth={1.75} aria-hidden="true" /> Environment</h2>
+      <div className={adminStyles.statsGrid} aria-label="System at a glance">
+        <div className={adminStyles.statCard}>
+          <span className={adminStyles.statIcon}><Database size={22} strokeWidth={1.5} aria-hidden="true" /></span>
+          <div><div className={adminStyles.statValue}>{data.database ? formatBytes(data.database.totalBytes) : '—'}</div><div className={adminStyles.statLabel}>Database</div></div>
         </div>
-        <div className={adminStyles.statsGrid}>
-          <div className={adminStyles.statCard}>
-            <span className={adminStyles.statIcon}><Server size={22} strokeWidth={1.5} aria-hidden="true" /></span>
-            <div>
-              <div className={styles.envValue}>{data.environment.vercelEnv ?? 'local'}</div>
-              <div className={adminStyles.statLabel}>Environment</div>
-            </div>
-          </div>
-          <div className={adminStyles.statCard}>
-            <span className={adminStyles.statIcon}><Server size={22} strokeWidth={1.5} aria-hidden="true" /></span>
-            <div>
-              <div className={styles.envValue}>{data.environment.gitCommitSha ?? '—'}</div>
-              <div className={adminStyles.statLabel}>{data.environment.gitCommitRef ?? 'Commit'}</div>
-            </div>
-          </div>
-          <div className={adminStyles.statCard}>
-            <span className={adminStyles.statIcon}><Server size={22} strokeWidth={1.5} aria-hidden="true" /></span>
-            <div>
-              <div className={styles.envValue}>{data.environment.nodeVersion}</div>
-              <div className={adminStyles.statLabel}>Node</div>
-            </div>
-          </div>
-          {data.database?.postgresVersion && (
-            <div className={adminStyles.statCard}>
-              <span className={adminStyles.statIcon}><Database size={22} strokeWidth={1.5} aria-hidden="true" /></span>
-              <div>
-                <div className={styles.envValue}>{data.database.postgresVersion.replace('PostgreSQL ', '')}</div>
-                <div className={adminStyles.statLabel}>Postgres</div>
-              </div>
-            </div>
-          )}
+        <div className={adminStyles.statCard}>
+          <span className={adminStyles.statIcon}><HardDrive size={22} strokeWidth={1.5} aria-hidden="true" /></span>
+          <div><div className={adminStyles.statValue}>{formatBytes(totalStorageBytes)}</div><div className={adminStyles.statLabel}>File storage</div></div>
         </div>
-      </section>
+        <div className={adminStyles.statCard}>
+          <span className={adminStyles.statIcon}><Server size={22} strokeWidth={1.5} aria-hidden="true" /></span>
+          <div><div className={adminStyles.statValue}>{data.database?.activeConnections ?? '—'}</div><div className={adminStyles.statLabel}>Active connections</div></div>
+        </div>
+        <div className={adminStyles.statCard}>
+          <span className={adminStyles.statIcon}><Triangle size={20} strokeWidth={1.75} aria-hidden="true" /></span>
+          <div><div className={adminStyles.statValue}>{data.vercel.connected && data.vercel.deployments?.[0] ? data.vercel.deployments[0].state.toLowerCase() : '—'}</div><div className={adminStyles.statLabel}>Latest deploy</div></div>
+        </div>
+      </div>
 
-      {data.accounts && (
-        <section className={adminStyles.section}>
-          <div className={adminStyles.sectionHeader}>
-            <h2 className={adminStyles.sectionLabel}><Users size={13} strokeWidth={1.75} aria-hidden="true" /> Accounts</h2>
-          </div>
-          <div className={adminStyles.statsGrid}>
-            <div className={adminStyles.statCard}>
-              <span className={adminStyles.statIcon}><Users size={22} strokeWidth={1.5} aria-hidden="true" /></span>
-              <div>
-                <div className={adminStyles.statValue}>{data.accounts.total_accounts.toLocaleString()}</div>
-                <div className={adminStyles.statLabel}>Total Accounts</div>
-              </div>
-            </div>
-            <div className={adminStyles.statCard}>
-              <span className={adminStyles.statIcon}><Users size={22} strokeWidth={1.5} aria-hidden="true" /></span>
-              <div>
-                <div className={adminStyles.statValue}>{data.accounts.signups_last_30d.toLocaleString()}</div>
-                <div className={adminStyles.statLabel}>Signups (30d)</div>
-              </div>
-            </div>
-            <div className={adminStyles.statCard}>
-              <span className={adminStyles.statIcon}><ShieldCheck size={22} strokeWidth={1.5} aria-hidden="true" /></span>
-              <div>
-                <div className={adminStyles.statValue}>{data.accounts.multi_identity_accounts.toLocaleString()}</div>
-                <div className={adminStyles.statLabel}>Have a Backup Google Linked</div>
-              </div>
-            </div>
-            <div className={adminStyles.statCard}>
-              <span className={adminStyles.statIcon}><Users size={22} strokeWidth={1.5} aria-hidden="true" /></span>
-              <div>
-                <div className={adminStyles.statValue}>{data.accounts.no_role_accounts.toLocaleString()}</div>
-                <div className={adminStyles.statLabel}>No Role Assigned</div>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
+      <h2 className={styles.groupTitle}>Usage</h2>
       <section className={adminStyles.section}>
         <div className={adminStyles.sectionHeader}>
           <h2 className={adminStyles.sectionLabel}><Database size={13} strokeWidth={1.75} aria-hidden="true" /> Database</h2>
@@ -337,58 +189,100 @@ export default function SystemStats() {
 
         <div className={styles.bucketGrid}>
           {data.storage.map((b) => {
-            const bucketPreview = previewByBucket.get(b.bucket);
             return (
               <div key={b.bucket} className={styles.bucketCard}>
                 <span className={styles.bucketName}>{BUCKET_LABELS[b.bucket] ?? b.bucket}</span>
                 <span className={styles.bucketSize}>{formatBytes(b.totalBytes)}</span>
                 <span className={styles.bucketCount}>{b.objectCount.toLocaleString()} file{b.objectCount === 1 ? '' : 's'}</span>
-                {bucketPreview && (
-                  <span className={bucketPreview.unusedCount > 0 ? styles.bucketUnused : styles.bucketClean}>
-                    {bucketPreview.unusedCount > 0
-                      ? `${bucketPreview.unusedCount} unused (${formatBytes(bucketPreview.unusedBytes)})`
-                      : 'All in use'}
-                  </span>
-                )}
               </div>
             );
           })}
         </div>
 
-        <div className={styles.cleanupControls}>
-          <Button variant="secondary" size="sm" onClick={handleScan} disabled={scanning || deleting}>{scanning ? 'Scanning…' : 'Scan for unused files'}</Button>
-          {preview && totalUnused > 0 && (
-            <Button variant="danger" size="sm" onClick={handleDelete} disabled={deleting}><Trash2 size={13} aria-hidden="true" /> {deleting ? 'Deleting…' : `Delete ${totalUnused} unused file${totalUnused === 1 ? '' : 's'}`}</Button>
+      </section>
+
+      <section className={adminStyles.section}>
+        <div className={adminStyles.sectionHeader}>
+          <h2 className={adminStyles.sectionLabel}><Trash2 size={13} strokeWidth={1.75} aria-hidden="true" /> Automatic tidy-up</h2>
+        </div>
+        <p className={styles.empty}>Storage looks after itself. Pictures are compressed as they are uploaded, a replaced or removed picture is deleted right away, and every Sunday the site deletes any file nothing links to any more (once it is a day old) and compresses older pictures. There is nothing to run by hand.</p>
+      </section>
+
+      <h2 className={styles.groupTitle}>Platform</h2>
+      {data.accounts && (
+        <section className={adminStyles.section}>
+          <div className={adminStyles.sectionHeader}>
+            <h2 className={adminStyles.sectionLabel}><Users size={13} strokeWidth={1.75} aria-hidden="true" /> Accounts</h2>
+          </div>
+          <div className={adminStyles.statsGrid}>
+            <div className={adminStyles.statCard}>
+              <span className={adminStyles.statIcon}><Users size={22} strokeWidth={1.5} aria-hidden="true" /></span>
+              <div>
+                <div className={adminStyles.statValue}>{data.accounts.total_accounts.toLocaleString()}</div>
+                <div className={adminStyles.statLabel}>Total Accounts</div>
+              </div>
+            </div>
+            <div className={adminStyles.statCard}>
+              <span className={adminStyles.statIcon}><Users size={22} strokeWidth={1.5} aria-hidden="true" /></span>
+              <div>
+                <div className={adminStyles.statValue}>{data.accounts.signups_last_30d.toLocaleString()}</div>
+                <div className={adminStyles.statLabel}>Signups (30d)</div>
+              </div>
+            </div>
+            <div className={adminStyles.statCard}>
+              <span className={adminStyles.statIcon}><ShieldCheck size={22} strokeWidth={1.5} aria-hidden="true" /></span>
+              <div>
+                <div className={adminStyles.statValue}>{data.accounts.multi_identity_accounts.toLocaleString()}</div>
+                <div className={adminStyles.statLabel}>Have a Backup Google Linked</div>
+              </div>
+            </div>
+            <div className={adminStyles.statCard}>
+              <span className={adminStyles.statIcon}><Users size={22} strokeWidth={1.5} aria-hidden="true" /></span>
+              <div>
+                <div className={adminStyles.statValue}>{data.accounts.no_role_accounts.toLocaleString()}</div>
+                <div className={adminStyles.statLabel}>No Role Assigned</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      <section className={adminStyles.section}>
+        <div className={adminStyles.sectionHeader}>
+          <h2 className={adminStyles.sectionLabel}><Server size={13} strokeWidth={1.75} aria-hidden="true" /> Environment</h2>
+        </div>
+        <div className={adminStyles.statsGrid}>
+          <div className={adminStyles.statCard}>
+            <span className={adminStyles.statIcon}><Server size={22} strokeWidth={1.5} aria-hidden="true" /></span>
+            <div>
+              <div className={styles.envValue}>{data.environment.vercelEnv ?? 'local'}</div>
+              <div className={adminStyles.statLabel}>Environment</div>
+            </div>
+          </div>
+          <div className={adminStyles.statCard}>
+            <span className={adminStyles.statIcon}><Server size={22} strokeWidth={1.5} aria-hidden="true" /></span>
+            <div>
+              <div className={styles.envValue}>{data.environment.gitCommitSha ?? '—'}</div>
+              <div className={adminStyles.statLabel}>{data.environment.gitCommitRef ?? 'Commit'}</div>
+            </div>
+          </div>
+          <div className={adminStyles.statCard}>
+            <span className={adminStyles.statIcon}><Server size={22} strokeWidth={1.5} aria-hidden="true" /></span>
+            <div>
+              <div className={styles.envValue}>{data.environment.nodeVersion}</div>
+              <div className={adminStyles.statLabel}>Node</div>
+            </div>
+          </div>
+          {data.database?.postgresVersion && (
+            <div className={adminStyles.statCard}>
+              <span className={adminStyles.statIcon}><Database size={22} strokeWidth={1.5} aria-hidden="true" /></span>
+              <div>
+                <div className={styles.envValue}>{data.database.postgresVersion.replace('PostgreSQL ', '')}</div>
+                <div className={adminStyles.statLabel}>Postgres</div>
+              </div>
+            </div>
           )}
         </div>
-
-        {cleanupError && <Notice tone="error">{cleanupError}</Notice>}
-
-        <div className={styles.cleanupControls}>
-          <Button variant="secondary" size="sm" onClick={() => void runShrink(false)} disabled={!!shrinkBusy}>{shrinkBusy === 'scan' ? 'Checking…' : 'Check how much images can shrink'}</Button>
-          {shrink && !shrink.applied && shrink.buckets.some((b) => b.shrinkable > 0) && (
-            <Button size="sm" onClick={() => void runShrink(true)} disabled={!!shrinkBusy}>{shrinkBusy === 'apply' ? 'Compressing…' : `Compress ${shrink.buckets.reduce((n, b) => n + b.shrinkable, 0)} images`}</Button>
-          )}
-        </div>
-        {shrinkError && <Notice tone="error">{shrinkError}</Notice>}
-        {shrink && (() => {
-          const files = shrink.buckets.reduce((n, b) => n + b.shrinkable, 0);
-          const saved = shrink.buckets.reduce((n, b) => n + b.saved, 0);
-          const failed = shrink.buckets.reduce((n, b) => n + b.failed, 0);
-          return (
-            <p className={shrink.applied ? styles.successNote : styles.empty}>
-              {files === 0 ? 'Every image is already small enough.' : shrink.applied ? `Compressed ${files} image${files === 1 ? '' : 's'}, ${formatBytes(saved)} saved.` : `${files} image${files === 1 ? '' : 's'} can shrink, saving about ${formatBytes(saved)}.`}
-              {failed > 0 ? ` ${failed} couldn’t be processed.` : ''}
-            </p>
-          );
-        })()}
-
-        {cleanupResult && (
-          <p className={styles.successNote}>
-            Deleted {totalDeleted} file{totalDeleted === 1 ? '' : 's'}
-            {totalDeletedBytes > 0 ? ` (${formatBytes(totalDeletedBytes)} freed)` : ''}.
-          </p>
-        )}
       </section>
 
       <section className={adminStyles.section}>

@@ -81,6 +81,12 @@ export function DivisionCard({ p }: { p: { name: string; pitch: string; logoUrl:
 }
 
 // The card for a page that is not an event or a division (Team, Events, Divisions, ...): the logo sticker, a tag with the page name, a big title and one line.
+// A long single word can't wrap, so shrink the type until the longest word fits the text column.
+function fitWord(title: string, size: number): number {
+  const longest = Math.max(...title.split(/\s+/).map((w) => w.length));
+  return Math.min(size, Math.floor(660 / (longest * 0.74)));
+}
+
 export function PageCard({ logo, kicker, title, sub, accent = '#ffc72c' }: { logo: string; kicker: string; title: string; sub: string; accent?: string }) {
   return (
     <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', background: '#011941' }}>
@@ -92,7 +98,7 @@ export function PageCard({ logo, kicker, title, sub, accent = '#ffc72c' }: { log
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: 22 }}>
           <div style={{ display: 'flex', alignSelf: 'flex-start', padding: '8px 20px', background: accent, color: '#011941', fontFamily: 'Futura-Heavy', fontSize: 28, textTransform: 'uppercase', boxShadow: '5px 5px 0 #000' }}>{kicker}</div>
-          <div style={{ display: 'flex', fontFamily: 'Futura-Heavy', fontSize: titleSize(title, 104), lineHeight: 1.02, color: '#f2f1f0', textTransform: 'uppercase' }}>{title}</div>
+          <div style={{ display: 'flex', fontFamily: 'Futura-Heavy', fontSize: fitWord(title, titleSize(title, 104)), lineHeight: 1.02, color: '#f2f1f0', textTransform: 'uppercase' }}>{title}</div>
           <div style={{ display: 'flex', fontFamily: 'Futura-Medium', fontSize: 34, lineHeight: 1.3, color: '#ffd966' }}>{sub}</div>
           <div style={{ display: 'flex', fontFamily: 'Futura-Heavy', fontSize: 24, color: '#f2f1f0', opacity: 0.85, textTransform: 'uppercase', marginTop: 8 }}>Triton Gaming · Gaming Org at UC San Diego</div>
         </div>

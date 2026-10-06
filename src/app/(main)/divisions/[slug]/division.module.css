@@ -22,7 +22,7 @@
   box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6); transition: transform 0.15s ease, box-shadow 0.15s ease;
   font-family: var(--font-futura-heavy); font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.04em;
 }
-.discordBtn { background: #5865f2; color: #fff; padding: 0.65rem 1rem; }
+.discordBtn { background: #5865f2; color: #f2f1f0; padding: 0.65rem 1rem; }
 .applyBtn { background: var(--yellow); color: var(--ink); padding: 0.65rem 1rem; }
 .socialBtn { background: var(--paper); padding: 0.55rem; }
 .discordBtn:hover, .applyBtn:hover, .socialBtn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.6); }

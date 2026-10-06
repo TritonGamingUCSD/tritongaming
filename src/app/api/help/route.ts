@@ -41,6 +41,6 @@ export async function POST(request: Request) {
   await auth.svc.from('help_messages').insert({ ticket_id: t.id, author_id: auth.user.id, body, attachments: cleanAttachments(b.attachments, auth.user.id) });
   const staff = (await staffIds(auth.svc)).filter((id) => id !== auth.user.id);
   const { data: me } = await auth.svc.from('profiles').select('display_name').eq('id', auth.user.id).maybeSingle();
-  await notify(auth.svc, staff, { title: `New help ticket: ${subject}`, body: `From ${me?.display_name ?? 'a member'}`, href: `/portal?section=help&tab=inbox&ticket=${t.id}` });
+  await notify(auth.svc, staff, { title: `New help ticket: ${subject}`, body: `From ${me?.display_name ?? 'a member'}`, href: `/portal/help/inbox?ticket=${t.id}` });
   return NextResponse.json({ id: t.id }, { status: 201 });
 }

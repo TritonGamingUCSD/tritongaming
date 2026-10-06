@@ -5,8 +5,18 @@ import Link from 'next/link';
 import { getUser } from '@/lib/auth';
 import LoginClient from './LoginClient';
 import styles from './login.module.css';
+import type { Metadata } from 'next';
+import { portalTargetFromNext } from '@/lib/portalShare';
 
-export const metadata = { title: 'Sign In' };
+// A shared portal link lands here first (the portal needs a login), so the preview card names the page it points at.
+export async function generateMetadata({ searchParams }: { searchParams: Promise<{ next?: string }> }): Promise<Metadata> {
+  const target = portalTargetFromNext((await searchParams).next);
+  if (!target) return { title: 'Sign In' };
+  const title = `${target.name} · Triton Gaming Portal`;
+  const description = 'Sign in to open this page.';
+  const image = `/api/og/portal/${target.section}`;
+  return { title, description, openGraph: { title, description, images: [image] }, twitter: { card: 'summary_large_image', title, description, images: [image] } };
+}
 
 export default async function LoginPage({
   searchParams,
@@ -30,7 +40,8 @@ export default async function LoginPage({
             width={80}
             height={80}
             className={styles.logo}
-            priority
+            loading="eager"
+            fetchPriority="high"
           />
           <h1 className={styles.title}>Triton Gaming</h1>
           <p className={styles.subtitle}>Member Portal</p>

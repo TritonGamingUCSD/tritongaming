@@ -8,11 +8,26 @@ const DEFAULT_MESSAGE = 'You have changes that haven’t been saved. Leave witho
 // through a link or the browser (button handlers that call router.replace, like
 // the portal hub's open/close of a section) asks via confirmDiscardUnsaved()
 // before leaving.
-let pendingMessage: string | null = null;
+// One entry per form that is dirty right now (several can be on screen at once, and one finishing must not switch the guard off for the others).
+const pending = new Map<symbol, string>();
 
 export function confirmDiscardUnsaved(): boolean {
-  if (!pendingMessage) return true;
-  return window.confirm(pendingMessage);
+  const message = [...pending.values()][0];
+  if (!message) return true;
+  return ask(message);
+}
+
+// When a SaveBar is on screen, leaving is not a question: the page just refuses and the bar shakes red until they save or discard.
+// Without a bar the old confirm dialog is used.
+export const UNSAVED_BLOCKED_EVENT = 'tg:unsaved-blocked';
+let barCount = 0;
+export function registerSaveBar(): () => void {
+  barCount += 1;
+  return () => { barCount = Math.max(0, barCount - 1); };
+}
+function ask(message: string): boolean {
+  if (barCount > 0) { window.dispatchEvent(new Event(UNSAVED_BLOCKED_EVENT)); return false; }
+  return window.confirm(message);
 }
 
 // Warns before someone loses edits they haven't saved, anywhere a form holds
@@ -31,11 +46,12 @@ export function confirmDiscardUnsaved(): boolean {
 //
 // `resetKey` (optional) re-baselines when it changes — see below. `value` is compared by JSON, so a field being edited and then restored to
 // what it was doesn't count as a change.
-export function useUnsavedChanges(value: unknown, message: string = DEFAULT_MESSAGE, resetKey: unknown = null) {
+export function useUnsavedChanges<T = unknown>(value: T, message: string = DEFAULT_MESSAGE, resetKey: unknown = null) {
   const serialize = (v: unknown) => {
     try { return JSON.stringify(v); } catch { return String(Math.random()); }
   };
   const baseline = useRef<string>(serialize(value));
+  const baselineValue = useRef<T>(value);
   const current = serialize(value);
   // A form that's reused for different things (e.g. an editor that opens a
   // different document) passes a resetKey: when it changes, what's on screen
@@ -45,6 +61,7 @@ export function useUnsavedChanges(value: unknown, message: string = DEFAULT_MESS
   if (keyNow !== lastKey.current) {
     lastKey.current = keyNow;
     baseline.current = current;
+    baselineValue.current = value;
   }
   const dirty = current !== baseline.current;
   const dirtyRef = useRef(dirty);
@@ -54,9 +71,10 @@ export function useUnsavedChanges(value: unknown, message: string = DEFAULT_MESS
 
   const markSaved = useCallback(() => {
     baseline.current = current;
+    baselineValue.current = value;
     dirtyRef.current = false;
     refresh((n) => n + 1); // re-render so the guard releases right away
-  }, [current]);
+  }, [current, value]);
 
   useEffect(() => {
     if (!dirty) return;
@@ -76,38 +94,59 @@ export function useUnsavedChanges(value: unknown, message: string = DEFAULT_MESS
       try { url = new URL(anchor.href, window.location.href); } catch { return; }
       if (url.origin !== window.location.origin) return; // a real page load — beforeunload covers it
       if (url.pathname === window.location.pathname && url.search === window.location.search) return; // same page (hash, etc.)
-      if (!window.confirm(message)) {
+      if (!ask(message)) {
         e.preventDefault();
         e.stopPropagation();
       }
     }
 
-    // Back button: keep an extra history entry on top of this page so that
-    // pressing Back lands on it first, where we can ask.
-    window.history.pushState(window.history.state, '', window.location.href);
-    guardPushed.current = true;
-    function onPopState() {
-      if (!dirtyRef.current) return;
-      if (window.confirm(message)) {
-        // They chose to leave: don't prompt again (the browser's own
-        // beforeunload check included), and step back past the guard entry.
+    // Back and Forward. Where the browser has the Navigation API, the move is cancelled before anything happens: the router and the portal's
+    // tab/section listeners never see it, so the page and the edits stay exactly as they are. Elsewhere, keep an extra history entry on top of
+    // this page so Back lands on it first and we can ask.
+    type Nav = { addEventListener: (t: string, f: (e: NavEvent) => void) => void; removeEventListener: (t: string, f: (e: NavEvent) => void) => void; traverseTo: (key: string) => void };
+    type NavEvent = { navigationType: string; cancelable: boolean; destination: { key: string }; preventDefault: () => void };
+    const nav = (window as unknown as { navigation?: Nav }).navigation;
+    const guardHref = window.location.href;
+    const guardState = window.history.state;
+    function onNavigate(e: NavEvent) {
+      if (!dirtyRef.current || e.navigationType !== 'traverse' || !e.cancelable) return;
+      e.preventDefault();
+      if (ask(message)) {
+        // They chose to leave: don't prompt again, then make the same move.
         dirtyRef.current = false;
-        window.removeEventListener('popstate', onPopState);
-        window.history.back();
-      } else {
-        window.history.pushState(window.history.state, '', window.location.href);
+        nav?.removeEventListener('navigate', onNavigate);
+        nav?.traverseTo(e.destination.key);
       }
     }
+    function onPopState(e: PopStateEvent) {
+      if (!dirtyRef.current) return;
+      if (ask(message)) {
+        dirtyRef.current = false;
+        window.removeEventListener('popstate', onPopState, true);
+        window.history.back();
+      } else {
+        e.stopImmediatePropagation();
+        window.history.pushState(guardState, '', guardHref);
+      }
+    }
+    if (nav?.addEventListener) {
+      nav.addEventListener('navigate', onNavigate);
+    } else {
+      window.history.pushState(guardState, '', guardHref);
+      guardPushed.current = true;
+      window.addEventListener('popstate', onPopState, true);
+    }
 
-    pendingMessage = message;
+    const token = Symbol('unsaved');
+    pending.set(token, message);
     window.addEventListener('beforeunload', onBeforeUnload);
     document.addEventListener('click', onClickCapture, true);
-    window.addEventListener('popstate', onPopState);
     return () => {
-      if (pendingMessage === message) pendingMessage = null;
+      pending.delete(token);
       window.removeEventListener('beforeunload', onBeforeUnload);
       document.removeEventListener('click', onClickCapture, true);
-      window.removeEventListener('popstate', onPopState);
+      window.removeEventListener('popstate', onPopState, true);
+      nav?.removeEventListener('navigate', onNavigate);
     };
   }, [dirty, message]);
 
@@ -121,5 +160,7 @@ export function useUnsavedChanges(value: unknown, message: string = DEFAULT_MESS
     }
   }, [dirty]);
 
-  return { dirty, markSaved };
+  /** What was last saved: hand it back to the form's state to throw the edits away. */
+  const saved = () => baselineValue.current;
+  return { dirty, markSaved, saved };
 }

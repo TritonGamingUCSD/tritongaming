@@ -1,5 +1,6 @@
 'use client';
 
+import IconButton from '@/components/ui/IconButton';
 import Notice from '@/components/ui/Notice';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
@@ -140,14 +141,12 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <button type="button" className={styles.close} onClick={onClose} aria-label="Close check-ins">
-          <X size={18} strokeWidth={1.75} aria-hidden="true" />
-        </button>
+        <IconButton kind="close" label="Close check-ins" className={styles.close} onClick={onClose} />
 
         {error ? (
           <Notice tone="error">{error}</Notice>
         ) : !event || !tickets ? (
-          <LoadingSpinner size={28} label="Loading check-ins…" theme="dark" />
+          <LoadingSpinner size={28} label="Loading check-ins…" theme="auto" />
         ) : (
           <>
             <div className={checkinStyles.header} style={{ marginBottom: '1.5rem' }}>
@@ -171,7 +170,7 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
                 <div className={checkinStyles.statValue}>{attendanceRate}%</div>
                 <div className={checkinStyles.statLabel}>Attendance</div>
               </div>
-              <Link href="/portal?section=checkin" className={checkinStyles.scanBtn}>
+              <Link href="/portal/checkin" className={checkinStyles.scanBtn}>
                 <Camera size={16} strokeWidth={1.5} aria-hidden="true" /> Open Scanner
               </Link>
             </div>

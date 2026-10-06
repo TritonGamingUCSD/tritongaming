@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   const origin = siteOrigin(request);
   const back = (code: string) => {
-    const res = NextResponse.redirect(`${origin}/portal?section=calendar&gcal=${code}`);
+    const res = NextResponse.redirect(`${origin}/portal/calendar?gcal=${code}`);
     res.cookies.delete({ name: 'gcal_state', path: '/api/calendar/google' });
     return res;
   };

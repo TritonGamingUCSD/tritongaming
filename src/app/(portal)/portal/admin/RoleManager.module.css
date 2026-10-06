@@ -1,8 +1,6 @@
 .wrap {
+  composes: card from '../../../../components/ui/Surface.module.css';
   position: relative;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 1rem;
   overflow: hidden;
 }
 
@@ -16,7 +14,7 @@
   gap: 0.4rem;
   background: rgba(5, 150, 105, 0.15);
   border: 1px solid rgba(52, 211, 153, 0.3);
-  color: #6ee7b7;
+  color: var(--pp-ok);
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
   font-size: 0.82rem;
@@ -33,7 +31,7 @@
 /* Controls */
 .controls {
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.16);
   display: flex;
   flex-direction: column;
   gap: 0.875rem;
@@ -49,17 +47,15 @@
   position: absolute;
   left: 0.875rem;
   display: inline-flex;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
   pointer-events: none;
 }
 
 .search {
+  composes: card from '../../../../components/ui/Surface.module.css';
   width: 100%;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 0.625rem;
   padding: 0.625rem 2.5rem 0.625rem 2.5rem;
-  color: var(--white);
+  color: var(--pp-ink);
   font-family: var(--font-futura-medium);
   font-size: 0.9rem;
   transition: border-color 0.2s;
@@ -67,7 +63,7 @@
 
 .search:focus {
   outline: none;
-  border-color: rgba(255,199,44,0.4);
+  border-color: rgba(125, 180, 234,0.4);
 }
 
 .clearSearch {
@@ -76,7 +72,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255,255,255,0.35);
+  color: rgba(var(--pp-ink-rgb), 0.81);
   cursor: pointer;
   padding: 0.25rem;
   border-radius: 50%;
@@ -84,8 +80,8 @@
 }
 
 .clearSearch:hover {
-  color: var(--white);
-  background: rgba(255,255,255,0.1);
+  color: var(--pp-ink);
+  background: rgba(var(--pp-ink-rgb), 0.1);
 }
 
 .roleFilters {
@@ -99,33 +95,35 @@
   border-radius: var(--radius-pill);
   font-size: 0.75rem;
   font-family: var(--font-futura-medium);
-  color: rgba(242, 241, 240, 0.65);
-  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(var(--pp-ink-rgb), 0.88);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.23);
   background: transparent;
   cursor: pointer;
   transition: all 0.15s;
   display: flex;
   align-items: center;
   gap: 0.4rem;
+  white-space: nowrap;
 }
 
 .roleFilter:hover {
-  background: rgba(255,255,255,0.06);
-  color: var(--white);
+  background: rgba(var(--pp-ink-rgb), 0.06);
+  color: var(--pp-ink);
 }
 
 .roleFilterActive {
-  background: rgba(255,199,44,0.12);
-  color: var(--yellow-text);
-  border-color: rgba(255,199,44,0.3);
+  background: rgba(125, 180, 234,0.12);
+  color: var(--p-accent-text);
+  border-color: rgba(125, 180, 234,0.3);
 }
 
 .count {
   font-size: 0.68rem;
-  opacity: 0.6;
-  background: rgba(255,255,255,0.08);
+  color: rgba(var(--pp-ink-rgb), 0.85);
+  background: rgba(var(--pp-ink-rgb), 0.08);
   padding: 0.05rem 0.35rem;
   border-radius: var(--radius-pill);
+  white-space: nowrap;
 }
 
 .bulkBar {
@@ -135,24 +133,24 @@
   gap: 0.6rem;
   padding: 0.75rem 1rem;
   margin-bottom: 0.75rem;
-  background: rgba(255, 199, 44, 0.08);
-  border: 1px solid rgba(255, 199, 44, 0.25);
+  background: rgba(125, 180, 234, 0.08);
+  border: 1px solid rgba(125, 180, 234, 0.25);
   border-radius: 0.6rem;
 }
 
 .bulkCount {
   font-family: var(--font-futura-medium);
   font-size: 0.8rem;
-  color: var(--white);
+  color: var(--pp-ink);
   margin-right: 0.25rem;
 }
 
 .bulkSelect {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(var(--pp-ink-rgb), 0.05);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.23);
   border-radius: 0.4rem;
   padding: 0.35rem 0.6rem;
-  color: var(--white);
+  color: var(--pp-ink);
   font-family: var(--font-futura-medium);
   font-size: 0.78rem;
 }
@@ -163,9 +161,9 @@
   gap: 0.5rem;
   padding: 0.5rem 1.25rem;
   font-size: 0.75rem;
-  color: rgba(242, 241, 240, 0.65);
+  color: rgba(var(--pp-ink-rgb), 0.88);
   cursor: pointer;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.15);
 }
 
 .rowCheckbox {
@@ -180,7 +178,7 @@
 
 .list::-webkit-scrollbar { width: 4px; }
 .list::-webkit-scrollbar-track { background: transparent; }
-.list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+.list::-webkit-scrollbar-thumb { background: rgba(var(--pp-ink-rgb), 0.1); border-radius: 2px; }
 
 .row {
   display: flex;
@@ -188,14 +186,14 @@
   flex-wrap: wrap;
   gap: 0.5rem 1rem;
   padding: 0.875rem 1.25rem;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.15);
   transition: background 0.15s;
   position: relative;
 }
 
 .row:last-child { border-bottom: none; }
 
-.row:hover { background: rgba(255,255,255,0.02); }
+.row:hover { background: rgba(var(--pp-ink-rgb), 0.02); }
 
 .rowUpdating { opacity: 0.6; pointer-events: none; }
 
@@ -213,7 +211,7 @@
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
-  border: 2px solid rgba(255,255,255,0.1);
+  border: 2px solid rgba(var(--pp-ink-rgb), 0.23);
 }
 
 .avatarFallback {
@@ -225,7 +223,7 @@
   justify-content: center;
   font-family: var(--font-futura-heavy);
   font-size: 0.9rem;
-  color: var(--white);
+  color: #011941; /* theme-ok */
   flex-shrink: 0;
   opacity: 0.9;
 }
@@ -233,7 +231,7 @@
 .userName {
   font-family: var(--font-futura-medium);
   font-size: 0.875rem;
-  color: var(--white);
+  color: var(--pp-ink);
   margin-bottom: 0.2rem;
 }
 
@@ -251,7 +249,7 @@
   min-width: 0;
   max-width: 160px;
   font-size: 0.72rem;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
 }
 
 /* A custom gamer tag has no length limit worth enforcing at entry time, but
@@ -273,13 +271,13 @@
 
 .joinDate {
   font-size: 0.7rem;
-  color: rgba(242,241,240,0.25);
+  color: rgba(var(--pp-ink-rgb), 0.68);
   white-space: nowrap;
 }
 
 .userEmail {
   font-size: 0.68rem;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
   margin-top: 0.15rem;
 }
 
@@ -319,8 +317,8 @@
   font-family: var(--font-futura-medium);
   letter-spacing: 0.03em;
   cursor: pointer;
-  border: 1px solid rgba(255,255,255,0.1);
-  color: rgba(255,255,255,0.45);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.23);
+  color: rgba(var(--pp-ink-rgb), 0.83);
   background: transparent;
   transition: all 0.15s;
   white-space: nowrap;
@@ -362,8 +360,8 @@
   flex-direction: column;
   gap: 0.4rem;
   padding: 0.5rem 0.6rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(var(--pp-ink-rgb), 0.03);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.20);
   border-radius: 0.5rem;
 }
 
@@ -385,16 +383,16 @@
 .empty {
   padding: 3rem 2rem;
   text-align: center;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
   font-size: 0.875rem;
 }
 
 .footer {
   padding: 0.625rem 1.25rem;
-  border-top: 1px solid rgba(255,255,255,0.05);
+  border-top: 1px solid rgba(var(--pp-ink-rgb), 0.15);
   font-size: 0.72rem;
-  color: rgba(242,241,240,0.25);
-  background: rgba(0,0,0,0.1);
+  color: rgba(var(--pp-ink-rgb), 0.68);
+  background: rgba(var(--pp-ink-rgb), 0.06);
 }
 
 /* Matches portal.module.css's own 768px tablet cutoff (where the page
@@ -415,11 +413,21 @@
   align-self: flex-start;
   padding: 0.5rem 0.75rem;
   border-radius: var(--radius-pill, 999px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.32);
+  background: rgba(var(--pp-ink-rgb), 0.06);
   color: inherit;
   font-family: inherit;
   font-size: 0.8rem;
   cursor: pointer;
 }
-.sortSelect option { color: #011941; }
+.sortSelect option { color: #011941; } /* theme-ok */
+
+.resultCount { margin: 0; padding: 0.9rem 1.2rem 0.4rem; font-size: 0.82rem; letter-spacing: 0.02em; color: rgba(var(--pp-ink-rgb), 0.8); }
+.resultCount b { color: var(--pp-ink); font-variant-numeric: tabular-nums; }
+.exportRow { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; padding: 0.1rem 0.25rem 0.4rem; font-size: 0.84rem; color: rgba(var(--pp-ink-rgb), 0.8); }
+.exportRow b { color: var(--pp-ink); font-variant-numeric: tabular-nums; }
+
+/* Search and sort share a row (stacked on phones); the role chips sit under them. */
+.searchRow { display: flex; gap: 0.6rem; align-items: stretch; }
+.searchRow .searchWrap { flex: 1; min-width: 0; }
+@media (max-width: 560px) { .searchRow { flex-direction: column; } }

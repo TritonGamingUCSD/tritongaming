@@ -27,7 +27,7 @@ interface InternalEvent {
   host_id: string | null; host_name: string | null; hosting: boolean; canManage: boolean;
   mine: Rsvp | null; counts: Record<Rsvp, number>; going: string[]; invited: number;
 }
-type Tab = 'upcoming' | 'plan';
+type Tab = 'coming-up' | 'plan';
 
 const TZ = 'America/Los_Angeles';
 const pt = (iso: string) => new Intl.DateTimeFormat('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(iso));
@@ -46,16 +46,16 @@ async function api(url: string, init?: RequestInit): Promise<{ ok: boolean; json
 export default function InternalEventsSectionContent({ canHost, canRsvp = true }: { canHost: boolean; canRsvp?: boolean }) {
   const nav = useUrlNav();
   const sync = usePortalTabSync('internal-events');
-  const valid: Tab[] = canHost ? ['upcoming', 'plan'] : ['upcoming'];
-  const [tab, setTab] = useState<Tab>(valid.includes(nav.tab as Tab) ? (nav.tab as Tab) : 'upcoming');
+  const valid: Tab[] = canHost ? ['coming-up', 'plan'] : ['coming-up'];
+  const [tab, setTab] = useState<Tab>(valid.includes(nav.tab as Tab) ? (nav.tab as Tab) : 'coming-up');
   return (
     <div className={mstyles.page}>
       <SectionHeader title="Internal Events" flush sub="Socials, trainings and workshops for the team. No check-in, just let people know if you’re coming." />
       {canHost && (
         <SectionTabs<Tab> label="Internal events" value={tab} onChange={(t) => { setTab(t); sync(t); }}
-          tabs={[{ id: 'upcoming', label: 'Coming up', icon: <CalendarHeart size={15} /> }, { id: 'plan', label: 'Plan', icon: <CalendarPlus size={15} /> }]} />
+          tabs={[{ id: 'coming-up', label: 'Coming up', icon: <CalendarHeart size={15} /> }, { id: 'plan', label: 'Plan', icon: <CalendarPlus size={15} /> }]} />
       )}
-      {tab === 'upcoming' ? <UpcomingPanel canRsvp={canRsvp} /> : <PlanPanel />}
+      {tab === 'coming-up' ? <UpcomingPanel canRsvp={canRsvp} /> : <PlanPanel />}
     </div>
   );
 }
@@ -95,7 +95,7 @@ function UpcomingPanel({ canRsvp }: { canRsvp: boolean }) {
     setBusy(null); void load();
   }
   if (error && !items) return <Notice tone="error">{error}</Notice>;
-  if (!items) return <LoadingSpinner size={28} label="Loading events…" theme="dark" />;
+  if (!items) return <LoadingSpinner size={28} label="Loading events…" theme="auto" />;
   if (items.length === 0) return <div className={mstyles.card}><p className={mstyles.muted}>Nothing coming up. When an event is planned for you, it shows up here.</p></div>;
   return (
     <>
@@ -118,7 +118,13 @@ function UpcomingPanel({ canRsvp }: { canRsvp: boolean }) {
                   <span><Summary s={s} /></span>
                   {s.host_name && <span>{s.hosting ? 'You’re hosting' : `Hosted by ${s.host_name}`}</span>}
                 </span>
-                {s.going.length > 0 && <span className={styles.who}>Going: {s.going.join(', ')}</span>}
+                {s.going.length > 0 && (
+                  <span className={styles.who}>
+                    <b>Going · {s.going.length}</b>
+                    {s.going.slice(0, 8).map((n) => <span key={n} className={styles.goer}>{n}</span>)}
+                    {s.going.length > 8 && <span className={styles.goer}>+{s.going.length - 8} more</span>}
+                  </span>
+                )}
               </div>
             </div>
             <div className={styles.rsvp} role="group" aria-label={`Are you coming to ${s.title}?`}>
@@ -155,7 +161,7 @@ function PlanPanel() {
       </div>
       {showForm && <InternalEventForm onDone={() => { setShowForm(false); void load(); }} />}
       {error && <Notice tone="error">{error}</Notice>}
-      {!items ? <LoadingSpinner size={28} label="Loading…" theme="dark" /> : items.length === 0 ? <p className={mstyles.muted}>Nothing planned yet.</p> : (
+      {!items ? <LoadingSpinner size={28} label="Loading…" theme="auto" /> : items.length === 0 ? <p className={mstyles.muted}>Nothing planned yet.</p> : (
         <ul className={mstyles.stack}>
           {items.map((s) => (
             <li key={s.id} className={mstyles.meetingCard}>

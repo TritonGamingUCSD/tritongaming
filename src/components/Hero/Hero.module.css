@@ -116,7 +116,7 @@
 .tape { position: absolute; top: -0.7rem; left: 50%; width: 5.2rem; height: 1.6rem; margin-left: -2.6rem; background: var(--tape); transform: rotate(-4deg); clip-path: polygon(0 8%, 6% 0, 12% 10%, 100% 0, 96% 50%, 100% 92%, 90% 100%, 6% 92%, 0 100%, 4% 50%); }
 .tapeR { transform: rotate(5deg); }
 .arrow { position: absolute; right: 4%; bottom: -0.5rem; width: 9rem; height: auto; overflow: visible; }
-.arrow path { fill: none; stroke: var(--yellow); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.arrow path { fill: none; stroke: var(--sky-text); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
 
 /* Bottom: caution-tape band that scrolls sideways (CSS only, so it stays smooth) */
 .tapeBand {
@@ -124,8 +124,8 @@
   left: -2%;
   right: -2%;
   bottom: 1.8rem;
-  background: var(--yellow);
-  color: var(--ink);
+  background: var(--sky);
+  color: var(--white);
   overflow: hidden;
   border-block: 4px solid var(--ink);
   transform: rotate(-1.2deg);

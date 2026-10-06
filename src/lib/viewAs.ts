@@ -17,3 +17,7 @@ export const VIEW_AS_OPTIONS = [
 export type ViewAsRole = (typeof VIEW_AS_OPTIONS)[number]['id'];
 export const isViewAsRole = (v: unknown): v is ViewAsRole => VIEW_AS_OPTIONS.some((o) => o.id === v);
 export const viewAsLabel = (id: string) => VIEW_AS_OPTIONS.find((o) => o.id === id)?.label ?? id;
+
+// "View as a specific person": an admin sees the portal exactly as that person does (their roles and their own data) with every change refused.
+export const VIEW_USER_COOKIE = 'tg_view_user';
+export const isUuid = (v: unknown): v is string => typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);

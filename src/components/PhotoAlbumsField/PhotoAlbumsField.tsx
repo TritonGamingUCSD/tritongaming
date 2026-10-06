@@ -36,7 +36,7 @@ export default function PhotoAlbumsField({
     onChange(value.filter((_, i) => i !== index));
   }
 
-  const { dragIndex, overIndex, dragHandleProps, dropTargetProps } = useDragReorder(value, onChange);
+  const { view, dragIndex, overIndex, dragHandleProps, dropTargetProps } = useDragReorder(value, onChange);
 
   return (
     <div className={styles.field}>
@@ -44,7 +44,7 @@ export default function PhotoAlbumsField({
 
       {value.length > 0 && (
         <ul className={styles.albumList}>
-          {value.map((album, i) => (
+          {view.map((album, i) => (
             <li
               key={`${album.url}-${i}`}
               className={`${styles.albumRow} ${dragIndex === i ? styles.rowDragging : ''} ${overIndex === i && dragIndex !== i ? styles.rowDragOver : ''}`}

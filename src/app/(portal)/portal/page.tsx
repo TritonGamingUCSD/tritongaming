@@ -1,12 +1,13 @@
 import { Suspense } from 'react';
+import { roleInk } from '@/lib/roleColors';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, Image as ImageIcon, Award, Medal, ArrowLeft, CalendarCheck, CalendarDays, LayoutGrid, CircleHelp, CalendarHeart, KeyRound, ShieldAlert, CalendarRange } from 'lucide-react';
-import { getProfile, getUserRoles, getMyPrivateProfile, getUser, getRealRoles, getViewAs } from '@/lib/auth';
-import { ViewAsSwitcher, ViewAsBanner } from '@/components/portal/ViewAs';
+import { Ticket, User, Camera, Calendar, Users, Gamepad2, QrCode, Pencil, Shield, BookOpen, Image as ImageIcon, Award, ArrowLeft, CalendarCheck, CalendarDays, LayoutGrid, CircleHelp, CalendarHeart, KeyRound, ShieldAlert, CalendarRange, CalendarClock } from 'lucide-react';
+import { getProfile, getUserRoles, getMyPrivateProfile, getUser, getSessionRoles, getViewAs, getViewingUser } from '@/lib/auth';
+import { ViewAsSwitcher, ViewAsBanner, ViewingUserBanner } from '@/components/portal/ViewAs';
 import ProfileIncompleteBanner from '@/components/portal/ProfileIncompleteBanner';
 import { createClient } from '@/lib/supabase/server';
-import { hasCapability, isVerifiedMember, isRewardsEligible, canSetOrgTitle } from '@/lib/capabilities';
+import { hasCapability, isVerifiedMember, isRewardsEligible, requiresOrgTitle } from '@/lib/capabilities';
 import { resolveAvatarUrl, hasBasicProfileInfo, getMissingProfileFields } from '@/lib/profile';
 import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK } from '@/types/database';
 import { CONTENT_BLOCKS } from '@/lib/content-blocks';
@@ -19,6 +20,11 @@ import OnboardingGuide from '@/components/portal/OnboardingGuide';
 import DashboardClient from './DashboardClient';
 import PortalTopSection from './PortalTopSection';
 import PortalSearch from '@/components/portal/PortalSearch';
+import { getCreditPeople } from '@/lib/creditPeople';
+import ShiftsSectionContent from './shifts/ShiftsSectionContent';
+import { PortalParamsProvider } from '@/components/portal/PortalParamsContext';
+import { getShiftsData } from './shifts/getShiftsData';
+import { DashboardWelcome, DashboardBody, type HomeTool } from './DashboardHome';
 import TicketsSectionContent from './tickets/TicketsSectionContent';
 import { getTicketsData } from './tickets/getTicketsData';
 import ProfileClient from './profile/ProfileClient';
@@ -26,9 +32,6 @@ import CheckInSectionContent from './checkin/CheckInSectionContent';
 import { getCheckinData } from './checkin/getCheckinData';
 import PointsSectionContent from './points/PointsSectionContent';
 import { getMyPointsData } from './points/getMyPointsData';
-import BattlepassSectionContent from './battlepass/BattlepassSectionContent';
-import { getMyBattlepassData } from './battlepass/getMyBattlepassData';
-import { BATTLEPASS_ROLES, getOfficerTier, fetchOfficerTiers } from '@/lib/officerTiers';
 import { getTier, nextTier, fetchTiers } from '@/lib/tiers';
 import EventsSectionContent from './events/EventsSectionContent';
 import { getEventsData } from './events/getEventsData';
@@ -78,7 +81,7 @@ export const dynamic = 'force-dynamic';
 
 interface Props {
   // Next's async searchParams (App Router convention) — lets a link like
-  // /portal?section=points&tab=shop both open a hub section AND land on one
+  // /portal/points/shop both open a hub section AND land on one
   // of its internal tabs, instead of only ever opening to that section's
   // first tab. `tab` is handed to every multi-tab section unconditionally;
   // each one only honors it if it's actually one of its own tab ids and
@@ -88,15 +91,9 @@ interface Props {
 }
 
 export default async function PortalDashboard({ searchParams }: Props) {
-  const { tab: requestedTab, subtab: requestedSubTab, section: requestedSection } = await searchParams;
-  // Short Links is a tab of Admin now.
-  if (requestedSection === 'activity') redirect('/portal?section=tickets&tab=history');
-  if (requestedSection === 'socials' || requestedSection === 'team-events') redirect('/portal?section=internal-events');
-  if (requestedSection === 'links') redirect('/portal?section=admin&tab=links');
-  // Division tabs used to live inside Site Content; old links land on the new Divisions section.
-  if (requestedSection === 'site-content' && (requestedTab === 'divisions' || requestedTab === 'my-division')) {
-    redirect(`/portal?section=divisions&tab=${requestedTab === 'divisions' ? 'directory' : 'my-division'}`);
-  }
+  const rawParams = await searchParams;
+  const { tab: requestedTab, subtab: requestedSubTab, section: requestedSection } = rawParams;
+  const serverQuery = new URLSearchParams(Object.entries(rawParams as Record<string, string | string[] | undefined>).flatMap(([k, v]) => (v === undefined ? [] : [[k, Array.isArray(v) ? v[0] : v] as [string, string]]))).toString();
   // divisions is fetched unconditionally (cheap, publicly-readable table) —
   // needed to label a division-lead role chip with *which* division below,
   // regardless of whether this user themselves can manage the directory.
@@ -106,8 +103,9 @@ export default async function PortalDashboard({ searchParams }: Props) {
   if (!profile) return null;
   const divisionNameById = new Map(divisions.map((d) => [d.id, d.name]));
   // Admins (their REAL roles) get the "View as" menu.
-  const [realRoles, viewAs] = await Promise.all([getRealRoles(), getViewAs()]);
-  const canViewAs = realRoles.some((r) => r.role === 'admin');
+  const [realRoles, viewAs, viewingUser] = await Promise.all([getSessionRoles(), getViewAs(), getViewingUser()]);
+  const canViewAs = realRoles.some((r) => r.role === 'admin') && !viewingUser;
+  const canViewAsPerson = realRoles.some((r) => r.role === 'admin') && !viewingUser;
 
   const canViewEvents = hasCapability(roles, 'view_events');
   const canManageEvents = hasCapability(roles, 'manage_events');
@@ -156,23 +154,23 @@ export default async function PortalDashboard({ searchParams }: Props) {
   // boundary; this just keeps the section/badge from showing at all to
   // someone who'd hit a permission error the moment they tried to use it.
   const canUseRewards = isRewardsEligible(roles);
+  const canManageShifts = hasCapability(roles, 'manage_shifts');
+  const canSignUpShifts = canManageShifts || hasCapability(roles, 'signup_shifts');
+  const shiftsData = canSignUpShifts ? await getShiftsData().catch(() => null) : null;
   // A separate, lighter tool from the full exec/admin directory manager
   // below — gated on actually holding the 'division' role itself (not the
   // broader manage_division capability, which lead/exec/admin also hold),
   // so it only shows up for the people the full directory tool doesn't
   // already cover, instead of duplicating that entry point for everyone.
   const isDivisionLead = roles.some((r) => r.role === 'division');
-  // The Battlepass is a fully separate system from member Rewards (see
-  // 20260921100000_add_officer_points_system.sql) — only officer-tier
-  // role holders have one at all.
-  const isOfficerTier = roles.some((r) => BATTLEPASS_ROLES.includes(r.role));
 
   // Every section a user can reach is fetched here, in parallel, capability
   // by capability — a plain member only ever triggers the tickets query. The
   // hub then just renders whichever of these were fetched; nothing is
   // re-fetched client-side when a card opens.
   const supabase = await createClient();
-  const [ticketsData, checkinData, eventsData, membersData, divisionsData, myDivisions, contentData, adminData, statsData, docsData, roleHistoryData, photoAlbumsData, pointsData, battlepassData, memberTiers, officerTiers] =
+  const creditPeople = canEditContent ? await getCreditPeople(supabase).catch(() => []) : [];
+  const [ticketsData, checkinData, eventsData, membersData, divisionsData, myDivisions, contentData, adminData, statsData, docsData, roleHistoryData, photoAlbumsData, pointsData, memberTiers] =
     await Promise.all([
       getTicketsData(profile.id, roles),
       canCheckin ? getCheckinData() : Promise.resolve(null),
@@ -187,9 +185,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       canManageRoles ? getRoleHistoryData() : Promise.resolve(null),
       canViewPhotoAlbums ? getPhotoAlbumsData() : Promise.resolve(null),
       canUseRewards ? getMyPointsData(profile.id) : Promise.resolve(null),
-      isOfficerTier ? getMyBattlepassData(profile.id) : Promise.resolve(null),
       fetchTiers(supabase),
-      isOfficerTier ? fetchOfficerTiers(supabase) : Promise.resolve([]),
     ]);
 
   // getHours() reads the server process's own runtime clock, which on most
@@ -218,9 +214,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const registeredEventIds = new Set(ticketsData.tickets.map((t) => t.event?.id).filter(Boolean));
   const unregisteredUpcomingEvents = ticketsData.upcomingEvents.filter((e) => !registeredEventIds.has(e.id));
   const memberTier = pointsData ? getTier(pointsData.lifetimeEarned, memberTiers) : null;
-  const officerTier = battlepassData ? getOfficerTier(battlepassData.lifetimeEarned, officerTiers) : null;
   const memberNext = pointsData ? nextTier(pointsData.lifetimeEarned, memberTiers) : null;
-  const officerNext = battlepassData ? nextTier(battlepassData.lifetimeEarned, officerTiers) : null;
 
   // Events on today's Pacific calendar date, for the check-in shortcut
   // banner — derived from checkinData (already scoped to "recent or soon")
@@ -241,6 +235,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
       badge: activeTicketCount || undefined,
       // A ticket for something today or tomorrow is what you'll want in your thumb's reach.
       dockBoost: nextTicket?.event && pacificDaysUntil(nextTicket.event.start_date) <= 1 ? 60 : 0,
+      // Suggested on the dashboard only when there is something to do: a ticket for an event within a few days, or an open event they have no ticket for yet.
+      homeExclude: !((nextTicket?.event && pacificDaysUntil(nextTicket.event.start_date) <= 3) || unregisteredUpcomingEvents.length > 0),
       group: 'Yours',
       content: <TicketsSectionContent tickets={ticketsData.tickets} upcomingEvents={ticketsData.upcomingEvents} isUcsd={ticketsData.isUcsd} canEarnPoints={ticketsData.canEarnPoints} activity={ticketsData.tickets} />,
     },
@@ -261,9 +257,9 @@ export default async function PortalDashboard({ searchParams }: Props) {
     },
     ...(canUseRewards && pointsData ? [{
       id: 'points', icon: <Award size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Rewards',
-      // Officers, leads, exec and admins have the Battlepass; Rewards never takes a bottom-bar slot for them.
-      dockExclude: roles.some((r) => ['officer', 'lead', 'exec', 'admin'].includes(r.role)),
       description: 'Earn points for showing up, spend them on perks',
+      // Members of the team have their own work to surface; Rewards is for attendees.
+      homeExclude: roles.some((r) => ['recruit', 'officer', 'lead', 'exec', 'admin'].includes(r.role)),
       badge: pointsData.balance || undefined,
       group: 'Yours' as const,
       content: (
@@ -278,24 +274,6 @@ export default async function PortalDashboard({ searchParams }: Props) {
           initialTab={requestedTab}
           initialSubTab={requestedSubTab}
           tiers={memberTiers}
-        />
-      ),
-    }] : []),
-    ...(isOfficerTier && battlepassData ? [{
-      id: 'battlepass', icon: <Medal size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Battlepass',
-      description: 'Recognition for officer-specific contributions',
-      badge: battlepassData.balance || undefined,
-      group: 'TG' as const,
-      content: (
-        <BattlepassSectionContent
-          balance={battlepassData.balance}
-          lifetimeEarned={battlepassData.lifetimeEarned}
-          leaderboardAnonymous={battlepassData.leaderboardAnonymous}
-          transactions={battlepassData.transactions}
-          canManagePoints={canManagePoints}
-          initialTab={requestedTab}
-          initialSubTab={requestedSubTab}
-          tiers={officerTiers}
         />
       ),
     }] : []),
@@ -328,6 +306,10 @@ export default async function PortalDashboard({ searchParams }: Props) {
       description: 'Scan tickets, confirm redemptions, or reveal the online check-in code',
       // Staff on a day with an event: the scanner is the one thing they need.
       dockBoost: todayEvents.length > 0 ? 90 : 0,
+      // Not suggested on the dashboard unless an event is actually happening today.
+      homeExclude: todayEvents.length === 0,
+      // No event today: nothing to scan, so it does not take a slot on the phone's bottom bar (it is still in More).
+      dockExclude: todayEvents.length === 0,
       group: 'Events' as const,
       content: <CheckInSectionContent events={checkinData.events} canScanRedemptions={canScanRedemptions} initialTab={requestedTab} tiers={memberTiers} />,
     }] : []),
@@ -336,34 +318,41 @@ export default async function PortalDashboard({ searchParams }: Props) {
       description: !canAttendMeetings ? 'Attendance results' : canManageMeetings ? 'Schedule meetings, run check-in, export attendance' : canHostMeetings ? 'Plan your meetings, run check-in, see results' : 'Check in to meetings and see your history',
       // While a meeting is on (or about to start) this is the thing to have under your thumb.
       dockBoost: (meetingNow ? 100 : 0) + (canManageMeetings ? 10 : 0),
-      group: 'TG' as const,
+      group: 'Team' as const,
       content: <MeetingsSectionContent canHost={canHostMeetings} canManageAll={canManageMeetings} userId={profile.id} canAttend={canAttendMeetings} canViewReports={canViewAttendanceReports} />,
+    }] : []),
+    // Officers and leads sign up for a station and time at an event; exec set the grids up. See lib/shifts.ts.
+    ...(shiftsData ? [{
+      id: 'shifts', icon: <CalendarClock size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Shifts',
+      description: 'Sign up for a station and time at an event',
+      group: 'Events' as const,
+      content: <ShiftsSectionContent events={shiftsData.events} stations={shiftsData.stations} canManage={canManageShifts} canSignUp={canSignUpShifts} userId={profile.id} userName={profile.display_name || 'Someone'} />,
     }] : []),
     // Exec, HR and admins get the tracker. Nobody else (leads included) has any part in it.
     ...(canManageStrikes ? [{
       id: 'strikes', icon: <ShieldAlert size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Strikes',
       description: 'Private strike tracker',
-      group: 'TG' as const,
+      group: 'Team' as const,
       content: <StrikesSectionContent />,
     }] : []),
     // Exec and admins mark officers and leads inactive for a quarter (admins also set the quarter dates, inside the same page).
     ...(canManageQuarters ? [{
       id: 'quarters', icon: <CalendarRange size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Quarter status',
       description: 'Who is active each quarter',
-      group: 'TG' as const,
+      group: 'Team' as const,
       content: <QuarterStatusContent />,
     }] : []),
     ...(canViewKeys ? [{
       id: 'keys', icon: <KeyRound size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Storage Keys',
       description: 'Where each storage key is right now',
       badge: (keyHolders[profile.id]?.length ?? 0) || undefined,
-      group: 'TG' as const,
+      group: 'Team' as const,
       content: <KeysSectionContent />,
     }] : []),
     ...(canViewInternalEvents ? [{
       id: 'internal-events', icon: <CalendarHeart size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Internal Events',
       description: canHostInternalEvents ? 'Plan internal events and see who’s coming' : 'Socials, trainings and other internal events',
-      group: 'TG' as const,
+      group: 'Events' as const,
       content: <InternalEventsSectionContent canHost={canHostInternalEvents} canRsvp={!isInactiveMember(roles)} />,
     }] : []),
     ...(canViewMembers && membersData ? [{
@@ -374,11 +363,13 @@ export default async function PortalDashboard({ searchParams }: Props) {
       // Members page itself excludes. This badge would otherwise promise a
       // much bigger roster than the page actually shows.
       badge: membersData.memberCount || undefined,
-      group: 'TG' as const,
-      content: <MembersSectionContent rows={membersData.rows} keysByUser={keyHolders} />,
+      homeExclude: true, dockExclude: true,
+      group: 'Team' as const,
+      content: <MembersSectionContent rows={membersData.rows} keysByUser={keyHolders} canViewAsPerson={canViewAsPerson} selfId={profile.id} canOrder={hasCapability(roles, 'manage_board_order')} teams={canHostMeetings || canManageMeetings ? { userId: profile.id, canManageAll: canManageMeetings, canEdit: true } : roles.some((r) => r.role === 'officer') ? { userId: profile.id, canManageAll: false, canEdit: false } : undefined} />,
     }] : []),
     ...(canViewDocs && docsData ? [{
       id: 'docs', icon: <BookOpen size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Documentation',
+      homeExclude: true, dockExclude: true,
       group: 'Resources' as const,
       description: 'How-to guides for officers, leads, and execs',
       badge: docsData.docs.length || undefined,
@@ -417,7 +408,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
     ...(canManageDivisions || isDivisionLead ? [{
       id: 'divisions', icon: <LayoutGrid size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Divisions',
       description: canManageDivisions ? 'Manage the divisions directory and their pages' : 'Edit your division’s page',
-      group: 'Divisions' as const,
+      group: 'Team' as const,
       content: (
         <DivisionsSectionContent
           canManageDivisions={canManageDivisions}
@@ -430,7 +421,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
     ...(canSeeDivisionMembers ? [{
       id: 'division-members', icon: <Users size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Division Members',
       description: 'Who leads each division',
-      group: 'Divisions' as const,
+      group: 'Team' as const,
       content: <DivisionMembersSectionContent groups={divisionMembersData ?? []} />,
     }] : []),
     ...(canEditContent ? [{
@@ -443,6 +434,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
           contentBlocks={CONTENT_BLOCKS}
           contentMap={contentData?.contentMap}
           lastEdited={contentData?.lastEdited}
+          creditPeople={creditPeople}
         />
       ),
     }] : []),
@@ -475,15 +467,14 @@ export default async function PortalDashboard({ searchParams }: Props) {
 
   // The points tiles and the "View as" menu, as pieces: the phone header shows them in the greeting card, the desktop app frame puts
   // View as in its top bar and the tiles at the top of the Dashboard.
-  // The points tile on the home screen is the Battlepass for the team (recruit, officer, lead, exec, admin) and Rewards for everyone else
-  // (UCSD students, guests, alumni): one points tile each, never both.
+  // The points tile on the home screen is the member Rewards tile, shown to anyone who can use Rewards.
+  // The team (recruit and up) gets the work-oriented home; students and guests get the attendee home.
   const isTeamMember = roles.some((r) => ['recruit', 'officer', 'lead', 'exec', 'admin'].includes(r.role));
-  const showRewardsTile = !isTeamMember && !!pointsData && !!memberTier;
-  const showBattlepassTile = isTeamMember && !!battlepassData && !!officerTier;
-  const tilesNode = (showRewardsTile || showBattlepassTile) ? (
+  const showRewardsTile = !!pointsData && !!memberTier;
+  const tilesNode = showRewardsTile ? (
                 <div className={styles.tiles}>
                   {showRewardsTile && pointsData && memberTier && (
-                    <Link href="/portal?section=points&tab=points" className={styles.tile} style={{ ['--tile-accent' as string]: memberTier.color }}>
+                    <Link href="/portal/points/mine" className={styles.tile} style={{ ['--tile-accent' as string]: memberTier.color }}>
                       <span className={styles.tileTop}><Award size={15} strokeWidth={1.75} aria-hidden="true" /> Rewards</span>
                       <span className={styles.tileValue}>{pointsData.balance.toLocaleString()}<span className={styles.tileUnit}> pts</span></span>
                       <span className={styles.tileTier}>{memberTier.name}</span>
@@ -494,27 +485,16 @@ export default async function PortalDashboard({ searchParams }: Props) {
                       )}
                     </Link>
                   )}
-                  {showBattlepassTile && battlepassData && officerTier && (
-                    <Link href="/portal?section=battlepass&tab=mine" className={styles.tile} style={{ ['--tile-accent' as string]: officerTier.color }}>
-                      <span className={styles.tileTop}><Medal size={15} strokeWidth={1.75} aria-hidden="true" /> Battlepass</span>
-                      <span className={styles.tileValue}>{battlepassData.balance.toLocaleString()}<span className={styles.tileUnit}> pts</span></span>
-                      <span className={styles.tileTier}>{officerTier.name}</span>
-                      {officerNext && (
-                        <span className={styles.tileProgress} title={`${officerNext.min - battlepassData.lifetimeEarned} pts to ${officerNext.name}`}>
-                          <span style={{ width: `${Math.min(100, Math.max(4, ((battlepassData.lifetimeEarned - officerTier.min) / Math.max(1, officerNext.min - officerTier.min)) * 100))}%` }} />
-                        </span>
-                      )}
-                    </Link>
-                  )}
                 </div>
   ) : null;
   const nudge = profileNudge(profile, myGender, heldRoles);
   // The same reminders the layout shows above the page; on desktop they sit inside the app frame instead.
-  const missingProfileFields = getMissingProfileFields({ ...profile, gender: myGender.gender }, isVerifiedMember(roles), { requireOrgTitle: canSetOrgTitle(roles) });
+  const missingProfileFields = getMissingProfileFields({ ...profile, gender: myGender.gender }, isVerifiedMember(roles), { requireOrgTitle: requiresOrgTitle(roles) });
   const missingOnlyOfficerTab = missingProfileFields.length > 0 && getMissingProfileFields({ ...profile, gender: myGender.gender }, isVerifiedMember(roles)).length === 0;
   const frameBanners = (
     <>
       {viewAs && <ViewAsBanner active={viewAs} />}
+      {viewingUser && <ViewingUserBanner name={profile.display_name || profile.google_first_name || 'this person'} />}
       <Suspense fallback={null}><ProfileIncompleteBanner missing={missingProfileFields} officerTabOnly={missingOnlyOfficerTab} /></Suspense>
     </>
   );
@@ -525,13 +505,32 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const inactiveQuarter = isInactiveMember(roles) ? await loadQuarters(createServiceClient()).then((qs) => currentQuarter(qs)).catch(() => null) : null;
   const myStrikes = isTracked(roles) ? await mySummary(createServiceClient(), profile.id).catch(() => null) : null;
   const todoItems = await loadTodos(createServiceClient(), { id: profile.id, roles }, { manageAll: canManageMeetings, canHost: canHostMeetings, canViewInternalEvents: canViewInternalEvents && !isInactiveMember(roles) });   // inactive people can't answer events, so there's nothing to RSVP to
-  if (canHandleHelp && helpWaiting > 0) todoItems.push({ id: 'help-inbox', text: `${helpWaiting} help ${helpWaiting === 1 ? 'ticket needs' : 'tickets need'} a reply`, detail: 'Open the help inbox', href: '/portal?section=help&tab=inbox', tone: 'urgent' });
-  else if (!canHandleHelp && helpWaiting > 0) todoItems.push({ id: 'help-reply', text: helpWaiting === 1 ? 'You have a reply to your question' : `You have ${helpWaiting} replies to your questions`, href: '/portal?section=help', tone: 'normal' });
-  if (canCheckin && todayEvents.length > 0) todoItems.push({ id: 'checkin-today', text: `Event today: ${todayEvents[0].title}`, detail: 'Open the check-in scanner', href: '/portal?section=checkin', tone: 'urgent' });
-  if (meetingNow) todoItems.push({ id: 'meeting-now', text: 'A meeting is on now', detail: 'Check in with the code from the room', href: '/portal?section=meetings&tab=mine', tone: 'urgent' });
+  if (canHandleHelp && helpWaiting > 0) todoItems.push({ id: 'help-inbox', text: `${helpWaiting} help ${helpWaiting === 1 ? 'ticket needs' : 'tickets need'} a reply`, detail: 'Open the help inbox', href: '/portal/help/inbox', tone: 'urgent' });
+  else if (!canHandleHelp && helpWaiting > 0) todoItems.push({ id: 'help-reply', text: helpWaiting === 1 ? 'You have a reply to your question' : `You have ${helpWaiting} replies to your questions`, href: '/portal/help', tone: 'normal' });
+  if (canCheckin && todayEvents.length > 0) todoItems.push({ id: 'checkin-today', text: `Event today: ${todayEvents[0].title}`, detail: 'Open the check-in scanner', href: '/portal/checkin', tone: 'urgent' });
+  if (meetingNow) todoItems.push({ id: 'meeting-now', text: 'A meeting is on now', detail: 'Check in with the code from the room', href: '/portal/meetings/mine', tone: 'urgent' });
   const greetingLine = `${greeting}, ${profile.display_name?.split(' ')[0] || 'Triton'}`;
 
+  // The redesigned dashboard's pieces: the quarter in the eyebrow, the next event as a ticket, a pinned doc as the note,
+  // tools split into paper (every member) and glass (team), and the latest ticket activity.
+  const termNow = (() => { const m = Number(new Intl.DateTimeFormat('en-US', { timeZone: PACIFIC_TZ, month: 'numeric' }).format(new Date())); const y = new Intl.DateTimeFormat('en-US', { timeZone: PACIFIC_TZ, year: 'numeric' }).format(new Date()); return `${m >= 9 || m === 1 ? (m === 1 ? 'Winter' : 'Fall') : m <= 3 ? 'Winter' : m <= 6 ? 'Spring' : 'Summer'} ${y}`; })();
+  const homeEyebrow = `${termNow} · Home`;
+  const ticketEvent = nextTicket?.event ?? null;
+  const featured = ticketEvent ?? unregisteredUpcomingEvents[0] ?? null;
+  const homeEvent = featured ? { id: featured.id, title: featured.title, start_date: featured.start_date, location: featured.location, hasTicket: !!ticketEvent, ticketId: nextTicket?.id } : null;
+  const pinnedDoc = docsData ? docsData.docs.find((d) => d.pinned && d.published !== false) : null;
+  const homeNote = pinnedDoc ? { title: pinnedDoc.title, href: `/portal/docs?id=${pinnedDoc.id}` } : null;
+  const EVERYONE_TOOLS = ['tickets', 'points', 'calendar', 'profile'];
+  const homeTools: HomeTool[] = [
+    ...EVERYONE_TOOLS.map((id) => sections.find((x) => x.id === id)).filter((x): x is HubSection => !!x).map((x) => ({ id: x.id, label: x.label, hint: x.description, href: `/portal/${x.id}`, tier: 'everyone' as const })),
+    ...sections.filter((x) => !EVERYONE_TOOLS.includes(x.id) && !x.homeExclude && ['Events', 'Team', 'Admin', 'Resources'].includes(x.group)).slice(0, 8).map((x) => ({ id: x.id, label: x.label, hint: x.description, href: `/portal/${x.id}`, tier: 'officer' as const })),
+  ];
+  const homeActivity = ticketsData.tickets
+    .flatMap((t) => (t.event ? [{ key: `${t.id}-r`, text: 'Got a ticket', detail: t.event.title, at: t.created_at }, ...(t.checked_in_at ? [{ key: `${t.id}-c`, text: 'Checked in', detail: t.event.title, at: t.checked_in_at }] : [])] : []))
+    .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime()).slice(0, 5);
+
   return (
+    <PortalParamsProvider query={serverQuery}>
     <div className={styles.page}>
       {!profile.onboarded_at && <OnboardingGuide userId={profile.id} />}
 
@@ -549,13 +548,15 @@ export default async function PortalDashboard({ searchParams }: Props) {
             meant they never got the reminder. PortalTopSection owns matching
             its width to the hub grid below it. */}
         <PortalTopSection
+          welcome={<DashboardWelcome eyebrow={homeEyebrow} name={profile.display_name?.split(' ')[0] || 'Triton'} />}
+          body={<DashboardBody event={homeEvent} note={homeNote} tools={homeTools} activity={homeActivity} showRoleAsk={!isTeamMember} />}
           desktop={{ greeting: greetingLine, tiles: tilesNode, viewAs: viewAsNode, banners: frameBanners }}
           top={
             <>
             <header className={styles.welcome}>
               <Image src="/bytes/byte_tgex25.png" alt="" width={723} height={723} aria-hidden="true" className={styles.welcomeMascot} />
               <div className={styles.welcomeMain}>
-                <Link href="/portal?section=profile" className={styles.welcomeAvatarLink} aria-label="Open your profile">
+                <Link href="/portal/profile" className={styles.welcomeAvatarLink} aria-label="Open your profile">
                 {avatarUrl ? (
                     <Image src={avatarUrl} alt={profile.display_name || 'User'} width={48} height={48} className={styles.welcomeAvatar} unoptimized referrerPolicy="no-referrer" />
                   ) : (
@@ -574,7 +575,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
                         <span
                           key={`${r.role}-${r.division_id ?? ''}`}
                           className={styles.roleChip}
-                          style={{ background: ROLE_COLORS[r.role] + '18', color: ROLE_COLORS[r.role], borderColor: ROLE_COLORS[r.role] + '44' }}
+                          style={{ background: ROLE_COLORS[r.role] + '18', color: roleInk(ROLE_COLORS[r.role]), borderColor: ROLE_COLORS[r.role] + '44' }}
                         >
                           {/* A person can lead more than one division — name it on the chip so two
                               "Division Lead" chips don't read as a duplicate. */}
@@ -586,7 +587,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
                     )}
                   </div>
                   <div className={styles.headerActions}>
-                    <Link href="/" className={styles.headerActionLink}>Back to Site</Link>
+                    <Link href="/" className={styles.headerActionLink}>← Back to site</Link>
                     <span className={styles.headerActionDivider} aria-hidden="true">·</span>
                     <SignOutButton />
                   </div>
@@ -607,7 +608,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
                 a duplicate). Sits above the checkin banner and ticket/events
                 content, right below the greeting header. */}
             <div className={styles.mobileSearchWrap}>
-              <PortalSearch />
+              <PortalSearch large />
             </div>
 
             </>
@@ -626,7 +627,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             <>
               <Link href="/" className={styles.railFooterLink}><span aria-hidden="true"><ArrowLeft size={15} strokeWidth={2} /></span> Back to Site</Link>
               <SignOutButton />
-              <Link href="/portal?section=help" className={`${styles.railFooterLink} ${styles.railFooterHelp}`} aria-label={helpWaiting ? `Help (${helpWaiting} waiting)` : 'Help'} title="Help">
+              <Link href="/portal/help" className={`${styles.railFooterLink} ${styles.railFooterHelp}`} aria-label={helpWaiting ? `Help (${helpWaiting} waiting)` : 'Help'} title="Help">
                 <CircleHelp size={16} strokeWidth={2} aria-hidden="true" />
                 <b>{canHandleHelp ? 'Help inbox' : 'Help & questions'}</b>
                 {helpWaiting > 0 && <span className={styles.railFooterHelpBadge}>{helpWaiting}</span>}
@@ -639,5 +640,6 @@ export default async function PortalDashboard({ searchParams }: Props) {
         />
       </div>
     </div>
+    </PortalParamsProvider>
   );
 }

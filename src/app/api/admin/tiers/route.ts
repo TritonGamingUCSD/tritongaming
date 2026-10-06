@@ -5,12 +5,9 @@ import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/capabilities';
 import type { Capability } from '@/types/database';
 
-// Same split as reward_items/officer_reward_items management: the member
-// tier ladder is a manage_rewards_shop concern, the officer one is
-// manage_points (matches BattlepassSectionContent's own Manage tab gate).
+// The member tier ladder is a manage_rewards_shop concern.
 const SYSTEM_CAPABILITY: Record<string, Capability> = {
   member: 'manage_rewards_shop',
-  officer: 'manage_points',
 };
 
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;

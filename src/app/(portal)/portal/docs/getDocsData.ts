@@ -18,7 +18,7 @@ export async function getDocsData({ userId, canEdit }: { userId: string; canEdit
     docsQuery,
     supabase
       .from('doc_categories')
-      .select('id, name, order_index, created_at')
+      .select('id, name, order_index, color, created_at')
       .order('order_index', { ascending: true })
       .order('name', { ascending: true }),
     createServiceClient().from('doc_favorites').select('doc_id').eq('user_id', userId),

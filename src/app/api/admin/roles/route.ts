@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/capabilities';
+import { logAudit } from '@/lib/audit';
 import { ASSIGNABLE_ROLES } from '@/types/database';
 import type { AppRole } from '@/types/database';
 
@@ -49,5 +50,7 @@ export async function PUT(request: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  const { data: target } = await adminClient.from('profiles').select('display_name').eq('id', userId).maybeSingle();
+  await logAudit(adminClient, { actorId: user.id, action: 'update', entityType: 'roles', entityId: userId, summary: `Roles for "${target?.display_name ?? 'someone'}" set to ${roles.length ? roles.map((r) => r.role).join(', ') : 'none'}`, details: { roles } });
   return NextResponse.json({ ok: true });
 }

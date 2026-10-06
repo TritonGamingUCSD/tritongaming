@@ -1,13 +1,20 @@
 'use client';
 
+import Button from '@/components/ui/Button';
+import { viewAsPerson } from '@/components/portal/ViewAs';
+import IconButton from '@/components/ui/IconButton';
 import DotList from '@/components/DotList/DotList';
+import { roleInk } from '@/lib/roleColors';
 import MemberCardBody from '@/components/MemberCard/MemberCardBody';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { usePortalParams, useLiveParams } from '@/lib/usePortalParams';
 import SectionTabs from '@/components/ui/SectionTabs';
-import { KeyRound, LayoutGrid, List, X, Moon } from 'lucide-react';
+import { Eye, KeyRound, LayoutGrid, List, ListOrdered, X, Moon, Users, UsersRound } from 'lucide-react';
+import BoardOrderManager from './BoardOrderManager';
+import { mergedPortalParams } from '@/lib/portalPath';
+import { TeamsPanel } from '../meetings/MeetingsSectionContent';
 import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
 import type { AppRole } from '@/types/database';
 import type { RoleGrant } from '@/lib/capabilities';
@@ -24,8 +31,7 @@ import SectionHeader from '@/components/ui/SectionHeader';
 // this list's purposes but "alumni" everywhere else.
 //
 // 'admin' sits near the back, not the front — it's a platform-permissions
-// role, not an org position (same reasoning as BATTLEPASS_ROLES excluding
-// it in officerTiers.ts), so an admin who's also e.g. an exec should show
+// role, not an org position, so an admin who's also e.g. an exec should show
 // up under Exec, not get bucketed into a generic Admin section that says
 // nothing about what they actually do. It's still checked before
 // ucsd/guest, though, so a bare admin account with no other real role
@@ -42,10 +48,19 @@ type MemberEntry = Omit<MemberProfileRow, 'user_roles'> & { divisionName?: strin
 // since this list can run into the hundreds of members and animating a
 // shared-element transition across that many grid cells is exactly the
 // kind of cost that caused the lag BoardSection had to be fixed for.
-export default function MembersSectionContent({ rows, keysByUser = {} }: { rows: MemberProfileRow[]; keysByUser?: Record<string, { id: string; name: string; color: string }[]> }) {
+export default function MembersSectionContent({ rows, keysByUser = {}, teams, canViewAsPerson = false, selfId = '', canOrder = false }: { canOrder?: boolean; canViewAsPerson?: boolean; selfId?: string; rows: MemberProfileRow[]; keysByUser?: Record<string, { id: string; name: string; color: string }[]>; teams?: { userId: string; canManageAll: boolean; canEdit: boolean } }) {
   const searchParams = useLiveParams();
   const setParams = usePortalParams();
   const [view, setView] = useState<'grid' | 'list'>(() => (searchParams.get('view') === 'list' ? 'list' : 'grid'));
+  // The roster is the first tab (/portal/members); Team is its own tab (/portal/members/team).
+  type MembersTab = 'members' | 'team' | 'display-order';
+  const tabFrom = (t: string | null): MembersTab => (t === 'team' && teams ? 'team' : t === 'display-order' && canOrder ? 'display-order' : 'members');
+  const [tab, setTab] = useState<MembersTab>(() => tabFrom(searchParams.get('tab')));
+  useEffect(() => {
+    const read = () => { const t = mergedPortalParams(window.location.pathname, window.location.search).get('tab'); setTab(tabFrom(t)); };
+    window.addEventListener('popstate', read); window.addEventListener('tg:portal-nav', read);
+    return () => { window.removeEventListener('popstate', read); window.removeEventListener('tg:portal-nav', read); };
+  }, [teams, canOrder]); // eslint-disable-line react-hooks/exhaustive-deps
   const [selected, setSelectedRaw] = useState<MemberEntry | null>(null);
   // The id of a card the person just closed, so a lagging URL (?id=…) can't pop it open again.
   const dismissedId = useRef<string | null>(null);
@@ -125,17 +140,32 @@ export default function MembersSectionContent({ rows, keysByUser = {} }: { rows:
 
   return (
     <div className={styles.page}>
-      <SectionHeader title="TG Members" sub={`${memberCount} members across the org`} actions={
-        <SectionTabs
-          variant="segmented"
-          label="View mode"
-          value={view}
-          onChange={(v) => { setView(v); setParams({ view: v === 'grid' ? null : v }); }}
-          tabs={[{ id: 'grid', label: 'Grid', icon: <LayoutGrid /> }, { id: 'list', label: 'List', icon: <List /> }]}
-        />
-      } />
+      <SectionHeader title="TG Members" sub={`${memberCount} members across the org`} />
+      {/* One row: the tabs on the left stay put; the grid / list switch sits on the right (only on the Members tab) so nothing moves. */}
+      <div className={styles.tabsRow}>
+        {teams || canOrder ? (
+          <SectionTabs<MembersTab>
+            label="TG Members"
+            value={tab}
+            onChange={(t) => { setSelected(null); setTab(t); setParams(t === 'members' ? { tab: null, subtab: null } : { tab: t, view: null, id: null }); }}
+            tabs={[{ id: 'members', label: 'Members', icon: <Users size={15} /> }, ...(teams ? [{ id: 'team' as const, label: 'Team', icon: <UsersRound size={15} /> }] : []), ...(canOrder ? [{ id: 'display-order' as const, label: 'Display Order', icon: <ListOrdered size={15} /> }] : [])]}
+          />
+        ) : <span />}
+        {tab === 'members' && (
+          <SectionTabs
+            variant="segmented"
+            label="View mode"
+            value={view}
+            onChange={(v) => { setView(v); setParams({ view: v === 'grid' ? null : v }); }}
+            tabs={[{ id: 'grid', label: 'Grid', icon: <LayoutGrid /> }, { id: 'list', label: 'List', icon: <List /> }]}
+          />
+        )}
+      </div>
 
-      {ORDER.map((role) => {
+      {tab === 'display-order' && canOrder && <BoardOrderManager users={rows.map((r) => ({ id: r.id, display_name: r.display_name, avatar_url: r.avatar_url, custom_avatar_url: r.custom_avatar_url, board_order: r.board_order, user_roles: r.user_roles.map((x) => ({ role: x.role, division_id: null })) }))} />}
+      {tab === 'team' && teams && <TeamsPanel userId={teams.userId} canManageAll={teams.canManageAll} canEdit={teams.canEdit} />}
+
+      {tab === 'members' && ORDER.map((role) => {
         const group = grouped[role];
         if (!group?.length) return null;
         return (
@@ -143,7 +173,7 @@ export default function MembersSectionContent({ rows, keysByUser = {} }: { rows:
             <div className={styles.groupHeader}>
               <span
                 className={styles.groupLabel}
-                style={{ color: ROLE_COLORS[role], borderColor: ROLE_COLORS[role] + '44' }}
+                style={{ color: roleInk(ROLE_COLORS[role]), borderColor: ROLE_COLORS[role] + '44' }}
               >
                 {ROLE_LABELS[role]}
               </span>
@@ -166,7 +196,7 @@ export default function MembersSectionContent({ rows, keysByUser = {} }: { rows:
                   )}
                   <div className={styles.info}>
                     <div className={styles.name}>
-                      {m.display_name || 'Anonymous'}
+                      <span className={styles.nameText}>{m.display_name || 'Anonymous'}</span>
                       {m.inactive && <span className={styles.idleTag} title="Inactive this quarter: view-only, not expected at meetings"><Moon size={11} aria-hidden="true" /> Inactive now</span>}
                       {/* One small key for each storage key this person holds. Only the team that tracks keys is sent this. */}
                       {(keysByUser[m.id]?.length ?? 0) > 0 && (
@@ -198,9 +228,7 @@ export default function MembersSectionContent({ rows, keysByUser = {} }: { rows:
       {selected && (
         <div className={styles.overlay} onClick={() => setSelected(null)}>
           <div className={styles.detailPanel} onClick={(e) => e.stopPropagation()}>
-            <button className={styles.closeBtn} onClick={() => setSelected(null)} aria-label="Close">
-              <X size={18} strokeWidth={1.75} />
-            </button>
+            <IconButton kind="close" className={styles.closeBtn} onClick={() => setSelected(null)} />
             {/* Everything a member filled in is shown here — this is the internal
                 roster, not the public Team page, so the officer card's visibility
                 toggles don't apply. Same card component as the public Team page. */}
@@ -228,6 +256,11 @@ export default function MembersSectionContent({ rows, keysByUser = {} }: { rows:
                   : null,
               }}
             />
+            {canViewAsPerson && selected.id !== selfId && (
+              <div className={styles.detailKeys}>
+                <Button size="sm" variant="secondary" onClick={() => void viewAsPerson(selected.id)}><Eye size={14} aria-hidden="true" /> View portal as {selected.display_name?.split(' ')[0] || 'them'}</Button>
+              </div>
+            )}
             {/* The profile popup also says which keys this person holds (never on the public Team page: this list is only sent to the key team). */}
             {(keysByUser[selected.id]?.length ?? 0) > 0 && (
               <div className={styles.detailKeys}>

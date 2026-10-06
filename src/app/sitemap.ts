@@ -31,7 +31,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .filter((e) => e.slug)
     .map((e) => ({
       url: `${SITE_URL}/events/${e.slug}`,
-      lastModified: e.start_date ? new Date(e.start_date) : undefined,
+      // When the page was last saved; with no value the date is left out rather than guessed (Google ignores a lastmod that is wrong).
+      lastModified: e.updated_at ? new Date(e.updated_at) : undefined,
       changeFrequency: 'weekly',
       priority: 0.6,
     }));

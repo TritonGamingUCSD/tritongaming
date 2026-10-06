@@ -29,7 +29,7 @@ export default function AccessPanel() {
     if (ok) setData(json as unknown as Data); else setError((json.error as string) || 'Failed to load.');
   }, []);
   useEffect(() => { void load(); }, [load]);
-  if (!data) return error ? <Notice tone="error">{error}</Notice> : <LoadingSpinner size={28} label="Loading access…" theme="dark" />;
+  if (!data) return error ? <Notice tone="error">{error}</Notice> : <LoadingSpinner size={28} label="Loading access…" theme="auto" />;
   return (
     <div className={styles.wrap}>
       <p className={styles.intro}>Give one specific permission to a person or a saved group, without changing their role. Make groups in Meetings → Groups (for example an “HR team” group) and anyone you add to the group gets the access automatically.</p>

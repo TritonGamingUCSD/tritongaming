@@ -228,6 +228,20 @@ export async function authorizeMeetings(capability: Extract<Capability, 'manage_
   return { user, roles: grants, svc: svc0, manageAll: hasCapability(grants, 'manage_meetings') };
 }
 
+// Looking at the teams (and who is on the team) is open to officers as well as the people who plan meetings; only hosts can change them.
+export async function authorizeTeamView() {
+  const host = await authorizeMeetings('host_meetings');
+  if (!host.error) return host;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return host;
+  const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
+  const svc = createServiceClient();
+  const grants = withGrantedCapabilities(roles ?? [], await loadGrantedCapabilities(svc, user.id).catch(() => []));
+  if (!grants.some((r) => r.role === 'officer')) return host;
+  return { user, roles: grants, svc, manageAll: false, error: undefined };
+}
+
 type Host = { user: { id: string }; manageAll: boolean };
 // May this host run/edit/see results of a meeting (or series) that was planned by `createdBy`?
 export const canManageMeeting = (auth: Host, createdBy: string | null | undefined) => auth.manageAll || createdBy === auth.user.id;
@@ -305,7 +319,7 @@ export async function notifyMeetingInvites(
     type: meeting.href?.includes('internal-events') ? 'internal_event_invite' : 'meeting_invite',
     title: `You’re invited to ${meeting.title}`,
     body: meeting.when,
-    href: meeting.href ?? '/portal?section=meetings&tab=mine',
+    href: meeting.href ?? '/portal/meetings/mine',
   }));
   return createNotifications(svc, rows);
 }

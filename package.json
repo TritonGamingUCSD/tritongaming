@@ -18,7 +18,8 @@
     "test:teamyears": "node scripts/teamyears-check.mjs",
     "test:series-absence": "node scripts/series-absence-check.mjs",
     "test:emojis": "node scripts/emojis-check.mjs",
-    "test:questions": "node scripts/questions-check.mjs"
+    "test:questions": "node scripts/questions-check.mjs",
+    "check:theme": "node scripts/check-theme.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",

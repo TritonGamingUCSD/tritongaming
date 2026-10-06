@@ -24,7 +24,7 @@ export default function DashboardClient({ ticket }: { ticket: TicketInfo }) {
   const time = new Date(ev.start_date).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' });
 
   return (
-    <Link href="/portal?section=tickets" className={styles.nextReminder} aria-label={`Next event: ${ev.title}, ${when}. Open your tickets`}>
+    <Link href="/portal/tickets" className={styles.nextReminder} aria-label={`Next event: ${ev.title}, ${when}. Open your tickets`}>
       <span className={`${styles.nextReminderIcon} ${live ? styles.nextReminderLive : ''}`} aria-hidden="true">
         {live ? <span className={styles.liveDot} /> : <Ticket size={16} strokeWidth={1.75} />}
       </span>

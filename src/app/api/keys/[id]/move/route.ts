@@ -52,7 +52,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   // Tell the people it affects (never the one who just recorded it): who now has it, and who had it.
   const actor = nameOf.get(auth.user.id) ?? 'Someone';
   const rows: { user_id: string; type: string; title: string; body: string; href: string }[] = [];
-  const href = '/portal?section=keys';
+  const href = '/portal/keys';
   if (to.kind === 'member' && to.user_id !== auth.user.id) rows.push({ user_id: to.user_id!, type: 'storage_key', title: `${actor} gave you the key “${k.name}”`, body: 'It’s with you now. Tap to see all the keys.', href });
   if (fromUser && fromUser !== auth.user.id && fromUser !== to.user_id) {
     const nowWith = holderText({ kind: to.kind as HolderKind, name: to.kind === 'member' ? (nameOf.get(to.user_id!) ?? 'someone') : (to.label ?? '') });

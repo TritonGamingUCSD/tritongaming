@@ -16,7 +16,7 @@ export interface TodoItem {
   tone: 'urgent' | 'normal';
 }
 
-const PLAN_HREF = (id: string) => `/portal?section=meetings&tab=planning&plan=${id}`;
+const PLAN_HREF = (id: string) => `/portal/meetings/planning?plan=${id}`;
 
 // Meeting plans that need me (my availability, or, for a host, a time to pick) and internal events I haven't answered. The other
 // to-dos (help replies, an event to check in today, a meeting on now) are already known by the page and added there.
@@ -51,7 +51,7 @@ export async function loadTodos(
       const events = await listInternalEvents(svc, user, opts.manageAll, 'invited');
       const horizon = new Date(Date.now() + 14 * 86_400_000).toISOString().slice(0, 10);
       for (const e of events.filter((x) => !x.hosting && x.mine === null && x.date <= horizon)) {
-        out.push({ id: `rsvp-${e.id}`, text: `RSVP to “${e.title}”`, detail: dayLabel(e.date, 'once'), href: '/portal?section=internal-events', tone: e.date === today ? 'urgent' : 'normal' });
+        out.push({ id: `rsvp-${e.id}`, text: `RSVP to “${e.title}”`, detail: dayLabel(e.date, 'once'), href: '/portal/internal-events', tone: e.date === today ? 'urgent' : 'normal' });
       }
     } catch { /* ignore */ }
   }

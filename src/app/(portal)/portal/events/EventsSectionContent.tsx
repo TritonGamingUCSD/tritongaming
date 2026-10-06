@@ -41,8 +41,8 @@ interface EventRow {
 }
 
 type StatusFilter = 'all' | 'upcoming' | 'past' | 'draft';
-type Tab = 'manage' | 'analytics';
-const VALID_TABS: Tab[] = ['manage', 'analytics'];
+type Tab = 'list' | 'analytics';
+const VALID_TABS: Tab[] = ['list', 'analytics'];
 
 const FILTERS: { key: StatusFilter; label: string }[] = [
   { key: 'all', label: 'All' },
@@ -79,7 +79,7 @@ interface Props {
 // props), so filtering is instant with no round trip.
 export default function EventsSectionContent({ events, eventsPerMonth, ticketsPerMonth, eventStats, canEdit, canManagePoints, canDelete = false }: Props) {
   const { tab: initialTab } = useUrlNav();
-  const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'manage');
+  const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'list');
   const syncUrl = usePortalTabSync('events');
   function selectTab(t: Tab) {
     setTab(t);
@@ -127,7 +127,7 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
           value={tab}
           onChange={selectTab}
           tabs={[
-            { id: 'manage', label: 'Events', icon: <ListChecks /> },
+            { id: 'list', label: 'Events', icon: <ListChecks /> },
             { id: 'analytics', label: 'Analytics', icon: <BarChart3 /> },
           ]}
         />
@@ -205,7 +205,7 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
         )
       )}
 
-      {tab === 'manage' && (events.length === 0 ? (
+      {tab === 'list' && (events.length === 0 ? (
         <div className={styles.empty}>
           <p>No events yet.</p>
           {canEdit && <Link href="/portal/events/new" className={styles.createLink}>Create your first event →</Link>}

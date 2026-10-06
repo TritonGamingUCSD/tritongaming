@@ -19,7 +19,7 @@ const NAV_LINKS = [
   { href: '/media',         label: 'Media' },
   { href: '/sponsors',      label: 'Sponsors' },
   { href: '/membership',    label: 'Membership' },
-  { href: '/get-involved',  label: 'Join' },
+  { href: '/get-involved',  label: 'Get Involved' },
 ];
 
 
@@ -136,7 +136,7 @@ export default function NavBar({ announcement }: { announcement?: React.ReactNod
       {/* One row pinned to the top: the logo on the left, the announcement pill in the middle, portal and menu on the right. It slides away when you scroll down. */}
       <header className={`${styles.bar}${scrolled ? ` ${styles.scrolled}` : ''}`} style={{ transform: `translateY(-${offset}px)` }}>
         <Link href="/" className={styles.logo} aria-label="Triton Gaming Home">
-          <Image src="/logos/tg_logo.png" alt="Triton Gaming" width={80} height={80} className={styles.logoImg} priority />
+          <Image src="/logos/tg_logo.png" alt="Triton Gaming" width={80} height={80} className={styles.logoImg} loading="eager" fetchPriority="high" />
         </Link>
 
         {announcement && <div className={`${styles.announce}${open ? ` ${styles.announceHidden}` : ''}`}>{announcement}</div>}
@@ -181,8 +181,9 @@ export default function NavBar({ announcement }: { announcement?: React.ReactNod
         <nav className={styles.menuInner} aria-label="Main navigation">
           <ul className={styles.links} role="list">
             <li style={{ '--i': 0 } as React.CSSProperties}>
-              <Link href="/" className={`${styles.link} ${pathname === '/' ? styles.linkOn : ''}`} onClick={() => setOpen(false)}>
+              <Link href="/" className={`${styles.link} ${pathname === '/' ? styles.linkOn : ''}`} onClick={() => setOpen(false)} aria-current={pathname === '/' ? 'page' : undefined}>
                 <span className={styles.num}>01</span><span className={styles.word}>Home</span>
+                {pathname === '/' && <span className={styles.here}>you are here</span>}
               </Link>
             </li>
             {NAV_LINKS.map(({ href, label }, i) => {

@@ -98,7 +98,7 @@ export default function PhotoAlbumsSectionContent({ albums: initial, canManage }
     }
   }
 
-  const { dragIndex, overIndex, dragHandleProps, dropTargetProps } = useDragReorder(albums, persistReorder);
+  const { view, dragIndex, overIndex, dragHandleProps, dropTargetProps } = useDragReorder(albums, persistReorder);
 
   async function handleDelete(id: string) {
     if (!(await confirmHold({ title: 'Remove this album?', message: 'This only removes it from the portal, not the Google Photos album itself.', confirmLabel: 'Hold to remove' }))) return;
@@ -156,7 +156,7 @@ export default function PhotoAlbumsSectionContent({ albums: initial, canManage }
         </div>
       ) : (
         <div className={styles.grid}>
-          {albums.map((a, i) => {
+          {view.map((a, i) => {
             const creator = Array.isArray(a.creator) ? a.creator[0] : a.creator;
             return (
               <div

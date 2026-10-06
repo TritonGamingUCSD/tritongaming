@@ -3,6 +3,9 @@
 import { useRef, useState } from 'react';
 import StyledQRCode, { type StyledQRCodeHandle } from '@/components/StyledQRCode/StyledQRCode';
 import { DEFAULT_QR_OPTIONS, type QRCodeOptions } from '@/lib/qrCodeStyling';
+import { Check, Copy, Download } from 'lucide-react';
+import Button from '@/components/ui/Button';
+import { showToast } from '@/lib/toast';
 import QRStudioForm from './QRStudioForm';
 import styles from './qrstudio.module.css';
 
@@ -17,6 +20,12 @@ export default function QRStudioClient({ divisions = [] }: { divisions?: QRDivis
   const hasData = options.data.trim().length > 0;
   const previewOptions = hasData ? options : { ...options, data: PLACEHOLDER_URL };
   const qrRef = useRef<StyledQRCodeHandle>(null);
+
+  const [copied, setCopied] = useState(false);
+  async function handleCopy() {
+    const ok = await qrRef.current?.copy();
+    if (ok) { setCopied(true); window.setTimeout(() => setCopied(false), 1600); } else showToast('Your browser would not copy the image. Use Download instead.');
+  }
 
   async function handleDownload() {
     await qrRef.current?.download(`${options.data.trim() || 'qr-code'}-${options.size}x${options.size}`);
@@ -58,9 +67,11 @@ export default function QRStudioClient({ divisions = [] }: { divisions?: QRDivis
           </div>
         </div>
 
-        <button className={styles.downloadBtn} onClick={handleDownload} disabled={!hasData || options.size <= 0}>
-          Download {options.downloadFormat.toUpperCase()}
-        </button>
+        <div className={styles.previewActions}>
+          <Button onClick={handleDownload} disabled={!hasData || options.size <= 0}><Download size={15} aria-hidden="true" /> Download {options.downloadFormat.toUpperCase()}</Button>
+          <Button variant="secondary" onClick={handleCopy} disabled={!hasData}>{copied ? <><Check size={15} aria-hidden="true" /> Copied</> : <><Copy size={15} aria-hidden="true" /> Copy image</>}</Button>
+        </div>
+        {!hasData ? null : <p className={styles.previewHint}>{options.transparentBg ? 'Transparent background: it shows through on dark pages, so use white if you are not sure where it will go.' : 'White background scans on every camera and in dark mode.'}</p>}
       </aside>
     </div>
   );

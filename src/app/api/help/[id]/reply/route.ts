@@ -21,7 +21,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!isOwner && t.status === 'open') patch.status = 'in_progress';
   if (!isOwner && !t.assigned_to) patch.assigned_to = auth.user.id;
   await auth.svc.from('help_tickets').update(patch).eq('id', id);
-  const href = `/portal?section=help&tab=${isOwner ? 'inbox' : 'mine'}&ticket=${id}`;
+  const href = `/portal/help?tab=${isOwner ? 'inbox' : 'mine'}&ticket=${id}`;
   if (isOwner) await notify(auth.svc, (t.assigned_to ? [t.assigned_to] : await staffIds(auth.svc)).filter((u) => u !== auth.user.id), { title: `New reply on: ${t.subject}`, body: body.slice(0, 120), href });
   else await notify(auth.svc, [t.user_id], { title: `Reply to your help ticket: ${t.subject}`, body: body.slice(0, 120), href });
   return NextResponse.json({ ok: true }, { status: 201 });

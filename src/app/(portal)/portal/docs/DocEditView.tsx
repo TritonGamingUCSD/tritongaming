@@ -1,7 +1,7 @@
 'use client';
 
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { ChevronLeft, Cloud, CloudOff, Copy, History, Send, Trash2, TriangleAlert, Users, X } from 'lucide-react';
+import { ChevronLeft, Cloud, CloudOff, Copy, History, TriangleAlert, Users, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import { Input } from '@/components/ui/Field';
@@ -12,6 +12,7 @@ import type { Doc, DocAttachment } from '@/types/database';
 import DocEditor, { type DocEditorHandle } from './DocEditor';
 import ConflictDialog from './ConflictDialog';
 import VersionHistory from './VersionHistory';
+import SaveBar from '@/components/portal/SaveBar';
 import { AttachmentsEditor } from './DocAttachments';
 import { clock, dayTime, docsPost } from './docsApi';
 import styles from './docs.module.css';
@@ -52,9 +53,11 @@ interface Props {
   onLeave: (published?: Partial<Doc>) => void;
   onDocPatch: (patch: Partial<Doc>) => void;
   onSaveAsNew: (title: string, content: string) => Promise<void>;
+  /** Titles of the other docs, offered when someone types [[ to link to one. */
+  linkTitles?: string[];
 }
 
-const DocEditView = forwardRef<DocEditViewHandle, Props>(function DocEditView({ doc, isNew, latest, deletedElsewhere, onLeave, onDocPatch, onSaveAsNew }, ref) {
+const DocEditView = forwardRef<DocEditViewHandle, Props>(function DocEditView({ doc, isNew, latest, deletedElsewhere, onLeave, onDocPatch, onSaveAsNew, linkTitles }, ref) {
   const startTitle = doc.draft_title ?? doc.title;
   const startContent = doc.draft_content ?? doc.content;
   const [title, setTitle] = useState(startTitle);
@@ -67,6 +70,7 @@ const DocEditView = forwardRef<DocEditViewHandle, Props>(function DocEditView({ 
   const [historyOpen, setHistoryOpen] = useState(false);
   const [metaBusy, setMetaBusy] = useState(false);
   const [tagText, setTagText] = useState('');
+  const [coverOpen, setCoverOpen] = useState(false);
   const [iconOpen, setIconOpen] = useState(false);
   const [error, setError] = useState('');
 
@@ -265,8 +269,6 @@ const DocEditView = forwardRef<DocEditViewHandle, Props>(function DocEditView({ 
         </span>
         <div className={styles.editActions}>
           <Button size="sm" variant="ghost" onClick={() => setHistoryOpen((v) => !v)} aria-expanded={historyOpen}><History size={14} aria-hidden="true" /> History</Button>
-          {hasDraft && !isNew && <Button size="sm" variant="ghost" loading={busy === 'discard'} onClick={() => void discard()}><Trash2 size={14} aria-hidden="true" /> Discard Draft</Button>}
-          <Button size="sm" loading={busy === 'publish'} disabled={gone || !title.trim() || (!hasDraft && !dirty.current)} onClick={() => void publish()}><Send size={14} aria-hidden="true" /> Publish</Button>
         </div>
       </div>
 
@@ -298,21 +300,24 @@ const DocEditView = forwardRef<DocEditViewHandle, Props>(function DocEditView({ 
           </div>
 
           <div className={styles.metaRow}>
-            <label className={styles.metaField}>
-              <span className={styles.label}>Cover image <span className={styles.labelHint}>Saves right away</span></span>
-              <Input defaultValue={doc.cover_url ?? ''} key={doc.cover_url ?? 'none'} placeholder="https://… (an image link)" inputMode="url" onBlur={(e) => { const v = e.target.value.trim(); if (v !== (doc.cover_url ?? '')) void meta({ cover_url: v }); }} />
-            </label>
             <div className={styles.metaField}>
               <span className={styles.label}>Tags <span className={styles.labelHint}>Saves right away</span></span>
               <div className={styles.tagEdit}>
                 {liveTags.map((t) => <span key={t} className={styles.tagChip}>{t}<button type="button" aria-label={`Remove tag ${t}`} onClick={() => void meta({ remove_tags: [t] })}><X size={11} aria-hidden="true" /></button></span>)}
                 <input className={styles.tagInput} value={tagText} onChange={(e) => setTagText(e.target.value)} placeholder={liveTags.length >= MAX_TAGS ? 'Tag limit reached' : 'Add a tag…'} disabled={liveTags.length >= MAX_TAGS || metaBusy}
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); void addTag(); } }} onBlur={() => { if (tagText.trim()) void addTag(); }} aria-label="Add a tag" />
+                <button type="button" className={styles.coverToggle} aria-expanded={coverOpen || !!doc.cover_url} onClick={() => setCoverOpen((v) => !v)}>{doc.cover_url ? 'Cover image' : '+ Cover image'}</button>
               </div>
             </div>
+            {(coverOpen || !!doc.cover_url) && (
+              <label className={styles.metaField}>
+                <span className={styles.label}>Cover image <span className={styles.labelHint}>Link to a picture. Saves right away</span></span>
+                <Input defaultValue={doc.cover_url ?? ''} key={doc.cover_url ?? 'none'} placeholder="https://… (an image link)" inputMode="url" onBlur={(e) => { const v = e.target.value.trim(); if (v !== (doc.cover_url ?? '')) void meta({ cover_url: v }); }} />
+              </label>
+            )}
           </div>
 
-          <DocEditor ref={editor} value={startContent} onChange={onText} disabled={gone} />
+          <DocEditor ref={editor} value={startContent} onChange={onText} disabled={gone} linkTitles={linkTitles} />
 
           <AttachmentsEditor value={doc.attachments as DocAttachment[]} busy={metaBusy || gone}
             onAdd={async (a) => { await meta({ add_attachments: [a] }); }} onRemove={async (url) => { await meta({ remove_attachment_urls: [url] }); }} />
@@ -399,6 +404,9 @@ const DocEditView = forwardRef<DocEditViewHandle, Props>(function DocEditView({ 
             { label: 'Cancel', variant: 'ghost', onClick: () => setDialog(null) },
           ]} />
       )}
+      <SaveBar blocking={false} dirty={hasDraft || dirty.current} discarding={busy === 'discard'} saving={busy === 'publish'} saveDisabled={gone || !title.trim()}
+        saveLabel="Publish" discardLabel={isNew ? 'Close' : 'Discard draft'} onSave={() => void publish()} onDiscard={() => (isNew ? void leave() : void discard())}
+        message={saveState === 'saving' ? 'Saving your draft…' : saveState === 'error' ? 'Not saved yet' : 'Draft saved. It is not public until you publish.'} />
     </div>
   );
 });

@@ -1,22 +1,44 @@
 .wrap { display: flex; flex-direction: column; gap: 1rem; }
-.intro { font-size: 0.88rem; line-height: 1.5; color: rgba(242, 241, 240, 0.65); max-width: 62ch; }
-.card { display: flex; flex-direction: column; gap: 0.85rem; padding: 1.1rem 1.2rem; border-radius: 1rem; background: rgba(255, 255, 255, 0.035); border: 1px solid rgba(255, 255, 255, 0.09); }
+.intro { font-size: 0.88rem; line-height: 1.5; color: rgba(var(--pp-ink-rgb), 0.88); max-width: 62ch; }
+.card {
+  composes: card from '../../../../components/ui/Surface.module.css';
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1.1rem 1.2rem;
+}
 .head { display: flex; flex-direction: column; gap: 0.3rem; }
-.title { margin: 0; font-family: var(--font-futura-heavy); font-size: 1.05rem; color: var(--white); }
-.desc { margin: 0; font-size: 0.84rem; line-height: 1.45; color: rgba(242, 241, 240, 0.65); }
-.byRole { display: inline-flex; align-items: center; gap: 0.35rem; margin: 0; font-size: 0.74rem; color: rgba(242, 241, 240, 0.6); }
+.title { margin: 0; font-family: var(--font-futura-heavy); font-size: 1.05rem; color: var(--pp-ink); }
+.desc { margin: 0; font-size: 0.84rem; line-height: 1.45; color: rgba(var(--pp-ink-rgb), 0.88); }
+.byRole { display: inline-flex; align-items: center; gap: 0.35rem; margin: 0; font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.87); }
 .grants { display: flex; flex-wrap: wrap; gap: 0.45rem; }
-.none { font-size: 0.8rem; color: rgba(242, 241, 240, 0.6); }
-.chip { display: inline-flex; align-items: center; gap: 0.55rem; padding: 0.4rem 0.45rem 0.4rem 0.75rem; border-radius: 0.65rem; font-size: 0.85rem; color: var(--white); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.14); }
-.chip > svg { color: var(--yellow-text); flex-shrink: 0; }
-.chipName em { font-style: normal; color: rgba(242, 241, 240, 0.65); }
-.chipX { display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 0.45rem; background: transparent; color: rgba(242, 241, 240, 0.65); cursor: pointer; transition: background 0.15s, color 0.15s; }
-.chipX:hover { background: rgba(248, 113, 113, 0.18); color: #f87171; }
+.none { font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.87); }
+.chip {
+  composes: card from '../../../../components/ui/Surface.module.css';
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.4rem 0.45rem 0.4rem 0.75rem;
+  font-size: 0.85rem;
+  color: var(--pp-ink);
+  white-space: nowrap;
+}
+.chip > svg { color: var(--p-accent-text); flex-shrink: 0; }
+.chipName em { font-style: normal; color: rgba(var(--pp-ink-rgb), 0.88); }
+.chipX { display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 0.45rem; background: transparent; color: rgba(var(--pp-ink-rgb), 0.88); cursor: pointer; transition: background 0.15s, color 0.15s; }
+.chipX:hover { background: rgba(248, 113, 113, 0.18); color: var(--pp-bad); }
 .chipX:focus-visible { outline: 2px solid rgba(248, 113, 113, 0.6); outline-offset: 1px; }
 .add { display: grid; grid-template-columns: minmax(150px, 0.8fr) minmax(180px, 1.4fr) auto; gap: 0.6rem; align-items: start; }
 .personBox { position: relative; grid-column: span 2; min-width: 0; }
-.results { list-style: none; margin: 0.3rem 0 0; padding: 0.25rem; border-radius: 0.7rem; background: #0b1426; border: 1px solid rgba(255, 255, 255, 0.14); display: flex; flex-direction: column; }
-.results button { width: 100%; text-align: left; padding: 0.5rem 0.65rem; border: 0; border-radius: 0.5rem; background: none; color: var(--white); font: inherit; font-size: 0.86rem; cursor: pointer; }
-.results button:hover { background: rgba(255, 199, 44, 0.12); }
-.results em { color: rgba(242, 241, 240, 0.65); font-style: normal; }
+.results {
+  composes: card from '../../../../components/ui/Surface.module.css';
+  list-style: none;
+  margin: 0.3rem 0 0;
+  padding: 0.25rem;
+  display: flex;
+  flex-direction: column;
+}
+.results button { width: 100%; text-align: left; padding: 0.5rem 0.65rem; border: 0; border-radius: 0.5rem; background: none; color: var(--pp-ink); font: inherit; font-size: 0.86rem; cursor: pointer; }
+.results button:hover { background: rgba(125, 180, 234, 0.12); }
+.results em { color: rgba(var(--pp-ink-rgb), 0.88); font-style: normal; }
 @media (max-width: 640px) { .add { grid-template-columns: 1fr; } .personBox { grid-column: auto; } }

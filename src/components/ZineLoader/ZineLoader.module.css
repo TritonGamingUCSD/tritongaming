@@ -10,10 +10,10 @@
 }
 
 .tape { position: relative; width: min(16rem, 70vw); height: 0.9rem; overflow: hidden; border: 3px solid var(--ink); background: var(--ink); }
-.tapeSlide { position: absolute; top: 0; bottom: 0; left: -40px; width: calc(100% + 80px); background: repeating-linear-gradient(-45deg, var(--yellow) 0 10px, var(--ink) 10px 20px); animation: slide 0.8s linear infinite; }
+.tapeSlide { position: absolute; top: 0; bottom: 0; left: -40px; width: calc(100% + 80px); background: repeating-linear-gradient(-45deg, var(--sky-text) 0 10px, var(--ink) 10px 20px); animation: slide 0.8s linear infinite; }
 @keyframes slide { to { transform: translateX(28px); } }
 
-.label { margin: 0; font-family: var(--font-brick); font-size: 1.4rem; color: var(--yellow-text); }
+.label { margin: 0; font-family: var(--font-brick); font-size: 1.4rem; color: var(--sky-text); }
 
 @media (prefers-reduced-motion: reduce) {
   .stamp, .tapeSlide { animation: none; }

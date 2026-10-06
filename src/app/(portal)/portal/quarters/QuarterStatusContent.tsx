@@ -1,5 +1,8 @@
 'use client';
 
+import SaveBar from '@/components/portal/SaveBar';
+import EditingNow from '@/components/portal/EditingNow';
+import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { CalendarCheck, GraduationCap, Check, ChevronDown, Moon, Plus, Search, Settings2, X } from 'lucide-react';
@@ -115,7 +118,7 @@ function StatusPanel() {
   }
 
   if (error && !data) return <Notice tone="error">{error}</Notice>;
-  if (!data) return <LoadingSpinner size={28} label="Loading…" theme="dark" />;
+  if (!data) return <LoadingSpinner size={28} label="Loading…" theme="auto" />;
 
   const column = (title: string, list: Entry[], inactive: boolean) => (
     <section className={`${styles.listCol} ${inactive ? styles.listColOff : styles.listColOn}`} aria-label={title}>
@@ -151,17 +154,7 @@ function StatusPanel() {
           </div>
         </div>
 
-        <div className={styles.qChips} role="tablist" aria-label="Quarter">
-          {quarters.map((x) => {
-            const n = countIn.get(x.id) ?? 0;
-            return (
-              <button key={x.id} type="button" role="tab" aria-selected={x.id === selected.id} className={`${styles.qChip} ${x.id === selected.id ? styles.qChipOn : ''}`} onClick={() => { setSelectedId(x.id); setPicked(new Set()); }}>
-                <strong>{x.name}{x.id === data.currentId && <em>now</em>}</strong>
-                <small>{n === 0 ? 'no one inactive' : `${n} inactive`}</small>
-              </button>
-            );
-          })}
-        </div>
+        <SectionTabs<string> label="Quarter" variant="segmented" value={selected.id} onChange={(id) => { setSelectedId(id); setPicked(new Set()); }} tabs={quarters.map((x) => ({ id: x.id, label: x.id === data.currentId ? `${x.name} (now)` : x.name, count: countIn.get(x.id) ?? 0 }))} />
 
         <p className={styles.range}>{selected.name}: {short(selected.starts_on)} to {short(selected.ends_on)}{!isCurrent && ' · this quarter is over, so it is a record and can’t be changed'}</p>
 
@@ -237,13 +230,15 @@ function QuarterRow({ c, now, busy, onSave, onDelete }: { c: Quarter; now: boole
   const [s, setS] = useState(c.starts_on);
   const [e, setE] = useState(c.ends_on);
   const changed = s !== c.starts_on || e !== c.ends_on;
+  useUnsavedChanges(changed ? { s, e } : 'CLEAN');   // stops leaving the page with unsaved dates
   return (
     <li className={styles.qRow}>
+      <EditingNow room={changed ? `quarter:${c.id}` : null} what={`${c.name}’s dates`} />
       <strong>{c.name}{now && <em> now</em>}</strong>
       <span className={styles.dateBox}><DateInput value={s} onChange={(ev) => setS(ev.target.value)} aria-label={`${c.name} starts`} /></span>
       <span aria-hidden="true">to</span>
       <span className={styles.dateBox}><DateInput value={e} onChange={(ev) => setE(ev.target.value)} aria-label={`${c.name} ends`} /></span>
-      {changed && <Button size="sm" loading={busy} onClick={() => void onSave(s, e)}>Save</Button>}
+      <SaveBar dirty={changed} saving={busy} message={`Unsaved dates for ${c.name}`} onSave={() => void onSave(s, e)} onDiscard={() => { setS(c.starts_on); setE(c.ends_on); }} />
       <IconButton kind="delete" size="sm" label={`Delete ${c.name}`} onClick={onDelete} />
     </li>
   );

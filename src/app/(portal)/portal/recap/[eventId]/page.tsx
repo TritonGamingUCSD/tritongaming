@@ -27,7 +27,7 @@ export default async function RecapPage({ params }: { params: Promise<{ eventId:
   ]);
   if (!event) notFound();
   // A recap is for people who were actually there (staff can preview any).
-  if (!ticket && !hasCapability(roles, 'checkin')) redirect('/portal?section=tickets');
+  if (!ticket && !hasCapability(roles, 'checkin')) redirect('/portal/tickets');
 
   const [{ data: earned }, { data: allTx }, { data: feedback }, { data: upcoming }] = await Promise.all([
     supabase.from('point_transactions').select('amount').eq('user_id', profile.id).eq('event_id', eventId).eq('type', 'event_checkin').is('reversed_at', null),
@@ -43,7 +43,7 @@ export default async function RecapPage({ params }: { params: Promise<{ eventId:
 
   return (
     <div className={styles.page}>
-      <Link href="/portal?section=tickets" className={styles.back}>← Back to My Tickets</Link>
+      <Link href="/portal/tickets" className={styles.back}>← Back to My Tickets</Link>
       <header className={styles.hero}>
         <p className={styles.kicker}>Thanks for coming!</p>
         <h1 className={styles.title}>{event.title}</h1>
@@ -59,7 +59,7 @@ export default async function RecapPage({ params }: { params: Promise<{ eventId:
           <div>
             <h2 className={styles.cardTitle}>You earned {pointsEarned} point{pointsEarned === 1 ? '' : 's'}</h2>
             <p className={styles.text}>Your balance is now {balance.toLocaleString()} points.{' '}
-              <Link href="/portal?section=rewards" className={styles.link}>Browse rewards</Link></p>
+              <Link href="/portal/rewards" className={styles.link}>Browse rewards</Link></p>
           </div>
         </section>
       )}

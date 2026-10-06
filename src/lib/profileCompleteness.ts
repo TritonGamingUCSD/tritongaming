@@ -10,14 +10,14 @@ export function profileNudge(profile: Profile, priv: MyPrivateProfile, roles: Ro
   const team = roles.some((r) => ['exec', 'lead', 'officer', 'recruit'].includes(r.role));
   const hasSocial = Object.values((profile.social_links ?? {}) as Record<string, string>).some((v) => String(v).trim());
   const items: { key: string; label: string; href: string; done: boolean }[] = [
-    { key: 'photo', label: 'Add a profile picture', href: '/portal?section=profile', done: !!(profile.custom_avatar_url || profile.avatar_url) },
-    { key: 'gamertag', label: 'Pick a gamer tag', href: '/portal?section=profile', done: !!profile.gamer_tag?.trim() },
-    { key: 'games', label: 'Add your favorite games', href: '/portal?section=profile', done: !!priv.favorite_games?.trim() },
-    { key: 'platforms', label: 'Say where you play (PC, console…)', href: '/portal?section=profile', done: (priv.platforms ?? []).length > 0 },
+    { key: 'photo', label: 'Add a profile picture', href: '/portal/profile', done: !!(profile.custom_avatar_url || profile.avatar_url) },
+    { key: 'gamertag', label: 'Pick a gamer tag', href: '/portal/profile', done: !!profile.gamer_tag?.trim() },
+    { key: 'games', label: 'Add your favorite games', href: '/portal/profile', done: !!priv.favorite_games?.trim() },
+    { key: 'platforms', label: 'Say where you play (PC, console…)', href: '/portal/profile', done: (priv.platforms ?? []).length > 0 },
     ...(team ? [
-      { key: 'gameids', label: 'Add your game IDs (Steam, Riot…)', href: '/portal?section=profile&tab=officer', done: ((profile.game_ids ?? []) as unknown[]).length > 0 },
-      { key: 'bio', label: 'Write a short bio', href: '/portal?section=profile&tab=officer', done: !!profile.bio?.trim() },
-      { key: 'social', label: 'Add a social link', href: '/portal?section=profile&tab=officer', done: hasSocial },
+      { key: 'gameids', label: 'Add your game IDs (Steam, Riot…)', href: '/portal/profile/card', done: ((profile.game_ids ?? []) as unknown[]).length > 0 },
+      { key: 'bio', label: 'Write a short bio', href: '/portal/profile/card', done: !!profile.bio?.trim() },
+      { key: 'social', label: 'Add a social link', href: '/portal/profile/card', done: hasSocial },
     ] : []),
   ];
   const done = items.filter((i) => i.done).length;

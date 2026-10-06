@@ -76,7 +76,10 @@ export type Capability =
   | 'manage_photo_albums'
   | 'manage_rewards_shop'
   | 'scan_redemptions'
-  | 'manage_points';
+  | 'manage_points'
+  | 'manage_shifts'
+  | 'manage_board_order'
+  | 'signup_shifts';
 
 export interface Database {
   public: {
@@ -287,6 +290,7 @@ export interface Database {
           cover_url: string | null;
           tags: string[];
           pinned: boolean;
+          pin_order: number | null;
           /** false = a brand new doc only editors can see, until its first publish. */
           published: boolean;
           /** Bumped on every publish. */
@@ -305,9 +309,10 @@ export interface Database {
           id: string;
           name: string;
           order_index: number;
+          color: string | null;
           created_at: string;
         };
-        Insert: Omit<Database['public']['Tables']['doc_categories']['Row'], 'id' | 'created_at'>;
+        Insert: Omit<Database['public']['Tables']['doc_categories']['Row'], 'id' | 'created_at' | 'color'> & { color?: string | null };
         Update: Partial<Database['public']['Tables']['doc_categories']['Insert']>;
       };
       notifications: {
@@ -405,56 +410,6 @@ export interface Database {
         };
         Insert: Omit<Database['public']['Tables']['reward_redemptions']['Row'], 'id' | 'claimed_at'>;
         Update: Partial<Database['public']['Tables']['reward_redemptions']['Insert']>;
-      };
-      officer_point_transactions: {
-        Row: {
-          id: string;
-          user_id: string;
-          amount: number;
-          type: 'manual_award' | 'redemption';
-          redemption_id: string | null;
-          note: string | null;
-          created_by: string | null;
-          created_at: string;
-          reversed_at: string | null;
-          reverses_transaction_id: string | null;
-        };
-        Insert: Omit<Database['public']['Tables']['officer_point_transactions']['Row'], 'id' | 'created_at'>;
-        Update: Partial<Database['public']['Tables']['officer_point_transactions']['Insert']>;
-      };
-      officer_reward_items: {
-        Row: {
-          id: string;
-          title: string;
-          description: string | null;
-          point_cost: number;
-          stock: number | null;
-          min_tier: string | null;
-          active: boolean;
-          max_per_user: number | null;
-          reward_type: 'physical' | 'digital';
-          grants_fast_pass: boolean;
-          created_by: string | null;
-          created_at: string;
-        };
-        Insert: Omit<Database['public']['Tables']['officer_reward_items']['Row'], 'id' | 'created_at'>;
-        Update: Partial<Database['public']['Tables']['officer_reward_items']['Insert']>;
-      };
-      officer_reward_redemptions: {
-        Row: {
-          id: string;
-          user_id: string;
-          reward_id: string;
-          status: 'pending' | 'fulfilled' | 'cancelled';
-          point_cost: number;
-          claimed_at: string;
-          fulfilled_at: string | null;
-          fulfilled_by: string | null;
-          cancelled_at: string | null;
-          cancelled_by: string | null;
-        };
-        Insert: Omit<Database['public']['Tables']['officer_reward_redemptions']['Row'], 'id' | 'claimed_at'>;
-        Update: Partial<Database['public']['Tables']['officer_reward_redemptions']['Insert']>;
       };
     };
     Views: Record<string, never>;

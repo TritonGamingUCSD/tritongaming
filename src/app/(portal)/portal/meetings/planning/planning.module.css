@@ -1,105 +1,147 @@
 /* Meeting plans: the availability grid (a day at a time on a phone), the group heat map, and the plan list. */
 .listHead { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
 .list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
-.planCard { width: 100%; text-align: left; display: flex; flex-direction: column; gap: 0.3rem; padding: 0.9rem 1rem; border-radius: 1rem; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.03); color: var(--white); cursor: pointer; font: inherit; }
-.planCard:hover { border-color: rgba(255, 199, 44, 0.45); background: rgba(255, 255, 255, 0.05); }
+.planCard {
+  composes: card from '../../../../../components/ui/Surface.module.css';
+  width: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.9rem 1rem;
+  color: var(--pp-ink);
+  cursor: pointer;
+  font: inherit;
+}
+.planCard:hover { border-color: rgba(125, 180, 234, 0.45); background: rgba(var(--pp-ink-rgb), 0.05); }
 .planTop { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
 .planTop strong { font-family: var(--font-futura-heavy); font-size: 1rem; }
-.planMeta { display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; color: rgba(242, 241, 240, 0.6); margin: 0; }
-.chip { font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.12rem 0.5rem; border-radius: 999px; border: 1px solid; }
-.chipOnce { color: #93c5fd; border-color: rgba(147, 197, 253, 0.4); }
-.chipWeekly { color: #c4b5fd; border-color: rgba(196, 181, 253, 0.4); }
-.chipOpen { color: var(--yellow-text); border-color: rgba(255, 199, 44, 0.45); }
-.chipDone { color: #34d399; border-color: rgba(52, 211, 153, 0.45); }
-.chipWarn { color: #fb923c; border-color: rgba(251, 146, 60, 0.45); }
+.planMeta { display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.87); margin: 0; }
+.chip { font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.12rem 0.5rem; border-radius: 999px; border: 1px solid; white-space: nowrap; }
+.chipOnce { color: var(--pp-info); border-color: rgba(147, 197, 253, 0.4); }
+.chipWeekly { color: var(--pp-violet); border-color: rgba(196, 181, 253, 0.4); }
+.chipOpen { color: var(--p-accent-text); border-color: rgba(125, 180, 234, 0.45); }
+.chipDone { color: var(--pp-ok); border-color: rgba(52, 211, 153, 0.45); }
+.chipWarn { color: var(--pp-warn); border-color: rgba(251, 146, 60, 0.45); }
 .needsMe { align-self: flex-start; margin-top: 0.15rem; font-size: 0.78rem; font-weight: 600; color: #0b1426; background: var(--yellow); border-radius: 999px; padding: 0.15rem 0.65rem; }
 
 .kindPick { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
-.kindBtn { display: flex; flex-direction: column; gap: 0.2rem; text-align: left; padding: 0.7rem 0.85rem; border-radius: 0.9rem; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.03); color: var(--white); cursor: pointer; font: inherit; }
-.kindBtn span { font-size: 0.76rem; color: rgba(242, 241, 240, 0.6); }
-.kindOn { border-color: var(--yellow); background: rgba(255, 199, 44, 0.1); }
+.kindBtn {
+  composes: card from '../../../../../components/ui/Surface.module.css';
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  text-align: left;
+  padding: 0.7rem 0.85rem;
+  color: var(--pp-ink);
+  cursor: pointer;
+  font: inherit;
+}
+.kindBtn span { font-size: 0.76rem; color: rgba(var(--pp-ink-rgb), 0.87); }
+.kindOn { border-color: var(--p-accent); background: rgba(125, 180, 234, 0.1); }
 @media (max-width: 520px) { .kindPick { grid-template-columns: 1fr; } }
 
 .detailHead { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; align-items: flex-start; }
-.detailTitle { margin: 0 0 0.25rem; font-family: var(--font-futura-heavy); font-size: 1.25rem; color: var(--white); }
-.desc { margin: 0.4rem 0 0; font-size: 0.88rem; color: rgba(242, 241, 240, 0.8); }
+.detailTitle { margin: 0 0 0.25rem; font-family: var(--font-futura-heavy); font-size: 1.25rem; color: var(--pp-ink); }
+.desc { margin: 0.4rem 0 0; font-size: 0.88rem; color: rgba(var(--pp-ink-rgb), 0.92); }
 .hostBtns { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 
-.viewTabs { display: flex; gap: 0.4rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
-.viewTab { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.6rem 0.9rem; margin-bottom: -1px; background: none; border: 0; border-bottom: 2px solid transparent; color: rgba(242, 241, 240, 0.6); cursor: pointer; font: inherit; }
-.viewTabOn { color: var(--white); border-bottom-color: var(--yellow); }
+.viewTabs { display: flex; gap: 0.4rem; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.23); }
+.viewTab { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.6rem 0.9rem; margin-bottom: -1px; background: none; border: 0; border-bottom: 2px solid transparent; color: rgba(var(--pp-ink-rgb), 0.87); cursor: pointer; font: inherit; }
+.viewTabOn { color: var(--pp-ink); border-bottom-color: var(--p-accent); }
 .todo { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.06em; background: var(--yellow); color: #0b1426; border-radius: 999px; padding: 0.05rem 0.45rem; }
-.count { font-size: 0.74rem; color: rgba(242, 241, 240, 0.65); }
-.saveLine { display: flex; align-items: center; gap: 0.35rem; margin: 0; font-size: 0.8rem; color: rgba(242, 241, 240, 0.65); }
-.hint { margin: 0.4rem 0 0; font-size: 0.76rem; color: rgba(242, 241, 240, 0.65); }
+.count { font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.88); }
+.saveLine { display: flex; align-items: center; gap: 0.35rem; margin: 0; font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.88); }
+.hint { margin: 0.4rem 0 0; font-size: 0.76rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 
 /* mode picker */
 .gridBlock { display: flex; flex-direction: column; gap: 0.6rem; }
-.modeBar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; position: sticky; top: 0; z-index: 3; padding: 0.3rem 0; background: var(--panel-bg, #0b1426); }
-.modeBtn { display: flex; align-items: center; gap: 0.5rem; text-align: left; padding: 0.5rem 0.65rem; border-radius: 0.8rem; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.03); color: var(--white); cursor: pointer; font: inherit; font-size: 0.85rem; }
-.modeBtn em { display: block; font-style: normal; font-size: 0.68rem; color: rgba(242, 241, 240, 0.65); }
-.modeDot { flex: none; width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.3); }
+.modeBar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; position: sticky; top: 0; z-index: 3; padding: 0.3rem 0; background: var(--panel-bg, var(--pp-card)); }
+.modeBtn {
+  composes: card from '../../../../../components/ui/Surface.module.css';
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: left;
+  padding: 0.5rem 0.65rem;
+  color: var(--pp-ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.85rem;
+}
+.modeBtn em { display: block; font-style: normal; font-size: 0.68rem; color: rgba(var(--pp-ink-rgb), 0.88); }
+.modeDot { flex: none; width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(var(--pp-ink-rgb), 0.57); }
 .mAvail .modeDot { background: #34d399; border-color: #34d399; }
 .mMaybe .modeDot { background: #fbbf24; border-color: #fbbf24; }
 .mNo .modeDot { background: transparent; }
-.modeOn { border-color: var(--yellow); background: rgba(255, 199, 44, 0.1); }
+.modeOn { border-color: var(--p-accent); background: rgba(125, 180, 234, 0.1); }
 @media (max-width: 520px) { .modeBtn em { display: none; } .modeBtn { padding: 0.55rem 0.5rem; font-size: 0.8rem; } }
 
 /* desktop grid */
-.gridWrap { overflow-x: auto; width: fit-content; max-width: 100%; border-radius: 0.9rem; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.02); }
+.gridWrap {
+  composes: card from '../../../../../components/ui/Surface.module.css';
+  overflow-x: auto;
+  width: fit-content;
+  max-width: 100%;
+}
 .gridTable { display: grid; min-width: min-content; user-select: none; -webkit-user-select: none; }
-.corner { position: sticky; left: 0; background: #0b1426; z-index: 1; }
-.colHead { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; padding: 0.4rem 0.2rem; font-size: 0.78rem; font-weight: 600; color: var(--white); text-align: center; border-left: 1px solid rgba(255, 255, 255, 0.07); }
-.colAll { background: none; border: 0; color: rgba(242, 241, 240, 0.65); font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer; padding: 0; }
-.colAll:hover { color: var(--yellow-text); }
-.timeLbl { position: sticky; left: 0; z-index: 1; background: #0b1426; height: 24px; font-size: 0.68rem; color: rgba(242, 241, 240, 0.65); text-align: right; padding-right: 0.4rem; transform: translateY(-0.5em); }
+.corner { position: sticky; left: 0; background: var(--pp-card); z-index: 1; }
+.colHead { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; padding: 0.4rem 0.2rem; font-size: 0.78rem; font-weight: 600; color: var(--pp-ink); text-align: center; border-left: 1px solid rgba(var(--pp-ink-rgb), 0.18); }
+.colAll { background: none; border: 0; color: rgba(var(--pp-ink-rgb), 0.88); font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer; padding: 0; }
+.colAll:hover { color: var(--p-accent-text); }
+.timeLbl { position: sticky; left: 0; z-index: 1; background: var(--pp-card); height: 24px; font-size: 0.68rem; color: rgba(var(--pp-ink-rgb), 0.88); text-align: right; padding-right: 0.4rem; transform: translateY(-0.5em); }
 .timeHalf { color: transparent; }
-.cell { height: 24px; border-left: 1px solid rgba(255, 255, 255, 0.07); border-top: 1px solid rgba(255, 255, 255, 0.07); cursor: pointer; touch-action: manipulation; }
-.cellHalf { border-top-style: dotted; border-top-color: rgba(255, 255, 255, 0.04); }
-.cell:hover { background: rgba(255, 255, 255, 0.07); }
-.cell:focus-visible { outline: 2px solid var(--yellow); outline-offset: -2px; }
+.cell { height: 24px; border-left: 1px solid rgba(var(--pp-ink-rgb), 0.18); border-top: 1px solid rgba(var(--pp-ink-rgb), 0.18); cursor: pointer; touch-action: manipulation; }
+.cellHalf { border-top-style: dotted; border-top-color: rgba(var(--pp-ink-rgb), 0.13); }
+.cell:hover { background: rgba(var(--pp-ink-rgb), 0.07); }
+.cell:focus-visible { outline: 2px solid var(--p-accent); outline-offset: -2px; }
 .cellAvail { background: rgba(52, 211, 153, 0.7) !important; }
 .cellMaybe { background: repeating-linear-gradient(45deg, rgba(251, 191, 36, 0.75), rgba(251, 191, 36, 0.75) 5px, rgba(251, 191, 36, 0.5) 5px, rgba(251, 191, 36, 0.5) 10px) !important; }
 
 
 /* results */
-.heat { height: 24px; border: 0; border-left: 1px solid rgba(255, 255, 255, 0.07); border-top: 1px solid rgba(255, 255, 255, 0.07); background: transparent; color: #04140e; font-size: 0.66rem; font-weight: 700; cursor: pointer; padding: 0; }
-.heat:hover { outline: 1px solid rgba(255, 255, 255, 0.5); outline-offset: -1px; }
+.heat { height: 24px; border: 0; border-left: 1px solid rgba(var(--pp-ink-rgb), 0.18); border-top: 1px solid rgba(var(--pp-ink-rgb), 0.18); background: transparent; color: #04140e; font-size: 0.66rem; font-weight: 700; cursor: pointer; padding: 0; }
+.heat:hover { outline: 1px solid rgba(var(--pp-ink-rgb), 0.60); outline-offset: -1px; }
 .heatNum { pointer-events: none; }
-.heatSel { box-shadow: inset 0 0 0 2px var(--yellow); }
+.heatSel { box-shadow: inset 0 0 0 2px var(--p-accent); }
 .heatNoStart { cursor: pointer; }
-.who { padding: 0.75rem 0.9rem; border-radius: 0.9rem; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.03); font-size: 0.85rem; color: rgba(242, 241, 240, 0.85); }
+.who {
+  composes: card from '../../../../../components/ui/Surface.module.css';
+  padding: 0.75rem 0.9rem;
+  font-size: 0.85rem;
+  color: rgba(var(--pp-ink-rgb), 0.97);
+}
 .who p { margin: 0.3rem 0 0; display: flex; gap: 0.4rem; align-items: baseline; }
 .dotGreen, .dotAmber, .dotGrey, .dotHollow { flex: none; width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
 .dotGreen { background: #34d399; } .dotAmber { background: #fbbf24; }  .dotHollow { border: 1px solid #9ca3af; }
 .suggest { padding: 0.75rem 0.9rem; border-radius: 0.9rem; border: 1px solid rgba(52, 211, 153, 0.35); background: rgba(52, 211, 153, 0.06); }
-.suggest h3 { margin: 0 0 0.4rem; display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.06em; color: #34d399; }
-.sugRow { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.45rem 0; border-top: 1px solid rgba(255, 255, 255, 0.07); }
+.suggest h3 { margin: 0 0 0.4rem; display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--pp-ok); }
+.sugRow { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.45rem 0; border-top: 1px solid rgba(var(--pp-ink-rgb), 0.18); }
 .sugRow:first-of-type { border-top: 0; }
 .sugRow div { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; font-size: 0.84rem; }
-.sugRow span { font-size: 0.76rem; color: rgba(242, 241, 240, 0.65); }
-.confirm { padding: 0.9rem 1rem; border-radius: 1rem; border: 1px solid var(--yellow); background: rgba(255, 199, 44, 0.07); display: flex; flex-direction: column; gap: 0.5rem; }
-.confirm p { margin: 0; font-size: 0.85rem; color: rgba(242, 241, 240, 0.85); }
+.sugRow span { font-size: 0.76rem; color: rgba(var(--pp-ink-rgb), 0.88); }
+.confirm { padding: 0.9rem 1rem; border-radius: 1rem; border: 1px solid var(--p-accent); background: rgba(125, 180, 234, 0.07); display: flex; flex-direction: column; gap: 0.5rem; }
+.confirm p { margin: 0; font-size: 0.85rem; color: rgba(var(--pp-ink-rgb), 0.97); }
 .confirmBtns { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-.warnText { color: #fb923c !important; }
-.whoAnswered { font-size: 0.82rem; color: rgba(242, 241, 240, 0.7); line-height: 1.5; }
+.warnText { color: var(--pp-warn) !important; }
+.whoAnswered { font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.89); line-height: 1.5; }
 
 /* times already on my Triton Gaming calendar */
 .cellBusy { cursor: not-allowed; background: repeating-linear-gradient(135deg, rgba(148, 163, 184, 0.28), rgba(148, 163, 184, 0.28) 4px, rgba(148, 163, 184, 0.08) 4px, rgba(148, 163, 184, 0.08) 8px) !important; }
 .cellBusy:hover { background: repeating-linear-gradient(135deg, rgba(148, 163, 184, 0.28), rgba(148, 163, 184, 0.28) 4px, rgba(148, 163, 184, 0.08) 4px, rgba(148, 163, 184, 0.08) 8px) !important; }
 
 /* why a time is blocked, and the fill / clear controls */
-.busyNote { display: flex; flex-direction: column; gap: 0.25rem; padding: 0.7rem 0.9rem; border-radius: 0.9rem; border: 1px solid rgba(148, 163, 184, 0.45); background: rgba(148, 163, 184, 0.1); font-size: 0.82rem; color: rgba(242, 241, 240, 0.85); }
-.busyNote strong { color: var(--white); }
+.busyNote { display: flex; flex-direction: column; gap: 0.25rem; padding: 0.7rem 0.9rem; border-radius: 0.9rem; border: 1px solid rgba(148, 163, 184, 0.45); background: rgba(148, 163, 184, 0.1); font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.97); }
+.busyNote strong { color: var(--pp-ink); }
 .busyNote ul { margin: 0.2rem 0 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.15rem; }
-.busyNote i { font-style: normal; color: rgba(242, 241, 240, 0.65); }
-.colAll { padding: 0.1rem 0.5rem; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.14); background: none; color: rgba(242, 241, 240, 0.6); font-size: 0.66rem; cursor: pointer; }
+.busyNote i { font-style: normal; color: rgba(var(--pp-ink-rgb), 0.88); }
+.colAll { padding: 0.1rem 0.5rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.30); background: none; color: rgba(var(--pp-ink-rgb), 0.87); font-size: 0.66rem; cursor: pointer; }
 
 /* Desktop: the grid on the left at a readable width, the controls and details in a column on the right. A phone stacks them. */
 .availLayout, .resultsLayout { display: flex; flex-direction: column; gap: 1rem; }
 .availSide, .resultsSide { display: flex; flex-direction: column; gap: 0.7rem; min-width: 0; }
 .availSide .modeBar { grid-template-columns: 1fr; position: static; padding: 0; background: none; }
-.busyLabel { display: block; padding: 0 0.3rem; font-size: 0.66rem; line-height: 24px; color: rgba(242, 241, 240, 0.9); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 0 3px rgba(0, 0, 0, 0.6); }
+.busyLabel { display: block; padding: 0 0.3rem; font-size: 0.66rem; line-height: 24px; color: rgba(var(--pp-ink-rgb), 1.00); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 0 3px rgba(0, 0, 0, 0.6); }
 .cellBusy { overflow: hidden; }
 @media (min-width: 1100px) {
   .availLayout, .resultsLayout { display: grid; grid-template-columns: minmax(0, max-content) minmax(300px, 380px); justify-content: center; gap: 1.25rem; align-items: start; }
@@ -108,21 +150,21 @@
 }
 
 /* time and day read right at the cursor, and lit up on the grid's edges */
-.hoverTip { position: fixed; z-index: 50; pointer-events: none; padding: 0.3rem 0.6rem; border-radius: 0.5rem; background: #080f1d; border: 1px solid rgba(255, 255, 255, 0.25); color: var(--white); font-size: 0.76rem; font-weight: 600; white-space: nowrap; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5); }
-.hoverTip em { display: block; font-style: normal; font-weight: 400; color: rgba(242, 241, 240, 0.7); }
-.hot { color: var(--yellow-text); }
-.timeHot { color: var(--yellow-text) !important; font-weight: 700; }
+.hoverTip { position: fixed; z-index: 50; pointer-events: none; padding: 0.3rem 0.6rem; border-radius: 0.5rem; background: var(--pp-card); border: 1px solid rgba(var(--pp-ink-rgb), 0.48); color: var(--pp-ink); font-size: 0.76rem; font-weight: 600; white-space: nowrap; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5); }
+.hoverTip em { display: block; font-style: normal; font-weight: 400; color: rgba(var(--pp-ink-rgb), 0.89); }
+.hot { color: var(--p-accent-text); }
+.timeHot { color: var(--p-accent-text) !important; font-weight: 700; }
 
 /* Meaning, not decoration: blue = planning, yellow = needs you, green = decided, orange = dates passed. */
-.planCard { border-left: 3px solid var(--tone, rgba(255, 255, 255, 0.14)); }
+.planCard { border-left: 3px solid var(--tone, rgba(var(--pp-ink-rgb), 0.30)); }
 .planCard[data-tone='plan'] { --tone: #60a5fa; }
-.planCard[data-tone='todo'] { --tone: #ffc72c; background: rgba(255, 199, 44, 0.05); }
+.planCard[data-tone='todo'] { --tone: var(--p-accent); background: rgba(125, 180, 234, 0.05); }
 .planCard[data-tone='done'] { --tone: #34d399; }
 .planCard[data-tone='warn'] { --tone: #fb923c; }
-.planCard:hover { border-color: var(--tone, rgba(255, 199, 44, 0.45)); }
-.chipOpen { color: #93c5fd; border-color: rgba(147, 197, 253, 0.45); background: rgba(96, 165, 250, 0.1); }
+.planCard:hover { border-color: var(--tone, rgba(125, 180, 234, 0.45)); }
+.chipOpen { color: var(--pp-info); border-color: rgba(147, 197, 253, 0.45); background: rgba(96, 165, 250, 0.1); }
 .chipDone { background: rgba(52, 211, 153, 0.1); }
-.chipOnce { background: rgba(56, 189, 248, 0.1); color: #7dd3fc; border-color: rgba(125, 211, 252, 0.4); }
+.chipOnce { background: rgba(56, 189, 248, 0.1); color: var(--pp-info); border-color: rgba(125, 211, 252, 0.4); }
 .chipWeekly { background: rgba(167, 139, 250, 0.1); }
 .chipWarn { background: rgba(251, 146, 60, 0.1); }
 /* the three modes wear their own color when picked, matching the grid */
@@ -137,9 +179,9 @@
 .busyNote { border-left: 3px solid #94a3b8; }
 
 /* Same soft pill and keyboard ring as the rest of the meeting controls. */
-.modeBtn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.07); }
-.kindBtn:hover { border-color: rgba(255, 199, 44, 0.45); }
-.viewTab:hover { color: var(--white); }
+.modeBtn:hover:not(:disabled) { background: rgba(var(--pp-ink-rgb), 0.07); }
+.kindBtn:hover { border-color: rgba(125, 180, 234, 0.45); }
+.viewTab:hover { color: var(--pp-ink); }
 .colAll:disabled { opacity: 0.4; cursor: default; }
 
 .modeBtn, .kindBtn { border-radius: 0.6rem; }
@@ -148,16 +190,16 @@
 .heat { position: relative; }
 .heatPreview { box-shadow: inset 0 0 0 2px #f0abfc; }
 .heatPreview::after { content: ''; position: absolute; inset: 0; background: rgba(240, 171, 252, 0.5); pointer-events: none; }
-.heatPreview .heatNum { position: relative; z-index: 1; color: #fff; }
-.previewHead { color: #f0abfc; box-shadow: inset 0 -2px 0 #f0abfc; }
-.previewTime { color: #f0abfc !important; font-weight: 700; }
+.heatPreview .heatNum { position: relative; z-index: 1; color: #f2f1f0; } /* theme-ok */
+.previewHead { color: var(--pp-violet); box-shadow: inset 0 -2px 0 #f0abfc; }
+.previewTime { color: var(--pp-violet) !important; font-weight: 700; }
 .sugRow { transition: background 0.15s; }
 .sugRow:hover { background: rgba(240, 171, 252, 0.08); }
 
 /* More to choose from, and unmistakable which one you are about to pick. */
 .suggest { max-height: 26rem; overflow-y: auto; overscroll-behavior: contain; }
-.suggest h3 small { margin-left: auto; font-size: 0.68rem; font-weight: 400; text-transform: none; letter-spacing: 0; color: rgba(242, 241, 240, 0.65); }
-.sugRank { display: inline-grid; place-items: center; width: 1.3rem; height: 1.3rem; margin-right: 0.45rem; border-radius: 50%; font-size: 0.7rem; background: rgba(52, 211, 153, 0.2); color: #6ee7b7; }
+.suggest h3 small { margin-left: auto; font-size: 0.68rem; font-weight: 400; text-transform: none; letter-spacing: 0; color: rgba(var(--pp-ink-rgb), 0.88); }
+.sugRank { display: inline-grid; place-items: center; width: 1.3rem; height: 1.3rem; margin-right: 0.45rem; border-radius: 50%; font-size: 0.7rem; background: rgba(52, 211, 153, 0.2); color: var(--pp-ok); }
 .sugRow:hover, .sugRow:focus-within { background: rgba(240, 171, 252, 0.14); }
 .sugRow:hover .sugRank, .sugRow:focus-within .sugRank { background: #f0abfc; color: #1a0b1f; }
 
@@ -184,7 +226,7 @@
 /* Times on my own Google Calendar: teal stripes laid over the cell, as a hint only (the cell stays clickable and keeps its color). */
 .cell { position: relative; }
 .cellSoft::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(135deg, rgba(45, 212, 191, 0.34), rgba(45, 212, 191, 0.34) 3px, transparent 3px, transparent 7px); box-shadow: inset 2px 0 0 rgba(45, 212, 191, 0.85); }
-.softLabel { position: relative; z-index: 1; display: block; padding: 0 0.3rem; font-size: 0.64rem; line-height: 24px; color: #99f6e4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 0 3px rgba(0, 0, 0, 0.8); pointer-events: none; }
+.softLabel { position: relative; z-index: 1; display: block; padding: 0 0.3rem; font-size: 0.64rem; line-height: 24px; color: var(--pp-teal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 0 3px rgba(0, 0, 0, 0.8); pointer-events: none; }
 
 /* One grid for every screen. Columns are narrower on a phone (swipe sideways to go through the days) and rows are taller to touch. */
 .gridTable { --timeW: 64px; --colW: 96px; --rowH: 24px; }
@@ -201,16 +243,16 @@
 }
 .phoneTop .modeBar { position: static; padding: 0; background: none; }
 /* Press-and-hold painting: the grid glows while a finger is painting, and the page stops scrolling under it. */
-.painting { box-shadow: 0 0 0 2px var(--yellow); }
+.painting { box-shadow: 0 0 0 2px var(--p-accent); }
 .gridTable { -webkit-touch-callout: none; }
 
 /* Group results: a cell shows one number (people free); an amber corner marks "some could, if needed". */
 .heat { display: grid; place-items: center; }
 .heatNum { font-size: 0.74rem; }
-.legend { display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.5rem; font-size: 0.78rem; color: rgba(242, 241, 240, 0.65); }
+.legend { display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.5rem; font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 .legendItem { display: flex; align-items: center; gap: 0.5rem; }
 .legendBar { flex: none; width: 54px; height: 10px; border-radius: 3px; background: linear-gradient(90deg, rgba(52, 211, 153, 0.15), rgba(52, 211, 153, 0.9)); }
-.sugCounts { display: flex; flex-wrap: wrap; gap: 0.2rem 0.8rem; color: rgba(242, 241, 240, 0.85) !important; }
+.sugCounts { display: flex; flex-wrap: wrap; gap: 0.2rem 0.8rem; color: rgba(var(--pp-ink-rgb), 0.97) !important; }
 .sugCounts > span { display: inline-flex; align-items: center; gap: 0.3rem; }
 
 /* Phone gestures: cells hand sideways swipes to the grid's own scroll and keep up/down drags for painting; the time column and headers scroll the page. */
@@ -221,7 +263,7 @@
 
 /* The time labels sit half a line above their row, which left a strip under the last one where scrolled cells showed through (and at the rounded corner).
    A filler under the sticky time column closes it, with a little room below the last row. */
-.gridTable::after { content: ''; grid-column: 1; height: 0.7rem; position: sticky; left: 0; background: #0b1426; }
+.gridTable::after { content: ''; grid-column: 1; height: 0.7rem; position: sticky; left: 0; background: var(--pp-card); }
 /* Scrolled-under cells (and their amber corners) stay behind the sticky time column. */
 .timeLbl, .corner, .gridTable::after { z-index: 3; }
 
@@ -235,7 +277,7 @@
 
 /* Group results: who can make a time, as a split bar and a row per group with icons. */
 .who { display: flex; flex-direction: column; gap: 0.6rem; }
-.whoTitle { display: flex; align-items: center; gap: 0.4rem; font-size: 0.95rem; color: var(--white); }
+.whoTitle { display: flex; align-items: center; gap: 0.4rem; font-size: 0.95rem; color: var(--pp-ink); }
 .whoBar { display: flex; gap: 2px; height: 24px; }
 .whoBar > span { display: grid; place-items: center; min-width: 24px; border-radius: 5px; font-size: 0.72rem; font-weight: 700; }
 .whoBar > span:first-child { border-top-left-radius: 0.6rem; border-bottom-left-radius: 0.6rem; }
@@ -243,47 +285,47 @@
 .who .gYes { --g: #34d399; } .who .gMaybe { --g: #fbbf24; } .who .gNo { --g: #94a3b8; } .who .gWait { --g: #9ca3af; }
 .whoBar .gYes { background: #34d399; color: #04140e; }
 .whoBar .gMaybe { background: repeating-linear-gradient(45deg, #fbbf24, #fbbf24 5px, #d99e0b 5px, #d99e0b 10px); color: #1c1403; }
-.whoBar .gNo { background: #475569; color: #e2e8f0; }
+.whoBar .gNo { background: rgba(var(--pp-ink-rgb), 0.65); color: #e2e8f0; }
 .whoBar .gWait { background: transparent; box-shadow: inset 0 0 0 1.5px #9ca3af; color: #d1d5db; }
 .whoRow { display: flex; flex-direction: column; gap: 0.3rem; }
 .whoHead { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--g); }
 .whoHead b { font-weight: 700; }
 .whoPeople { display: flex; flex-wrap: wrap; gap: 0.3rem; }
-.person { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.15rem 0.6rem 0.15rem 0.2rem; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--g) 55%, transparent); background: color-mix(in srgb, var(--g) 12%, transparent); font-size: 0.82rem; color: var(--white); }
+.person { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.15rem 0.6rem 0.15rem 0.2rem; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--g) 55%, transparent); background: color-mix(in srgb, var(--g) 12%, transparent); font-size: 0.82rem; color: var(--pp-ink); }
 .person i { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--g); color: #0b1426; font-style: normal; font-size: 0.68rem; font-weight: 700; }
-.person em { display: inline-flex; align-items: center; gap: 0.2rem; font-style: normal; font-size: 0.7rem; color: rgba(242, 241, 240, 0.6); }
+.person em { display: inline-flex; align-items: center; gap: 0.2rem; font-style: normal; font-size: 0.7rem; color: rgba(var(--pp-ink-rgb), 0.87); }
 .whoRow.gWait .person { border-style: dashed; background: none; }
 .who p { display: none; }
 
 /* Hints and the legend as short icon lines. */
-.pickHint { display: flex; align-items: center; gap: 0.4rem; margin: 0; font-size: 0.85rem; color: rgba(242, 241, 240, 0.6); }
-.gestures { display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; margin: 0.4rem 0 0; font-size: 0.78rem; color: rgba(242, 241, 240, 0.7); }
+.pickHint { display: flex; align-items: center; gap: 0.4rem; margin: 0; font-size: 0.85rem; color: rgba(var(--pp-ink-rgb), 0.87); }
+.gestures { display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; margin: 0.4rem 0 0; font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.89); }
 .gestures span { display: inline-flex; align-items: center; gap: 0.3rem; }
 .legend { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 0.3rem 1rem; }
 .legendItem { white-space: nowrap; }
 .confirm strong { display: flex; align-items: center; gap: 0.4rem; }
-.confirmLine { display: flex; align-items: flex-start; gap: 0.45rem; margin: 0; font-size: 0.85rem; color: rgba(242, 241, 240, 0.85); }
+.confirmLine { display: flex; align-items: flex-start; gap: 0.45rem; margin: 0; font-size: 0.85rem; color: rgba(var(--pp-ink-rgb), 0.97); }
 .confirmLine svg { flex: none; margin-top: 0.12rem; }
-.confirmFine { display: flex; align-items: center; gap: 0.35rem; margin: 0; font-size: 0.74rem; color: rgba(242, 241, 240, 0.65); }
+.confirmFine { display: flex; align-items: center; gap: 0.35rem; margin: 0; font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 .whoAnswered { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.6rem; }
-.answeredCount { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.82rem; color: rgba(242, 241, 240, 0.8); }
-.chip2 { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1rem 0.55rem; border-radius: 999px; border: 1px dashed rgba(156, 163, 175, 0.7); font-size: 0.76rem; color: rgba(242, 241, 240, 0.8); }
+.answeredCount { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.92); }
+.chip2 { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1rem 0.55rem; border-radius: 999px; border: 1px dashed rgba(156, 163, 175, 0.7); font-size: 0.76rem; color: rgba(var(--pp-ink-rgb), 0.92); white-space: nowrap; }
 
 /* Best times: the whole row is the button. */
 .sugRow { cursor: pointer; }
-.sugGo { flex: none; color: rgba(242, 241, 240, 0.6); transition: transform 0.15s, color 0.15s; }
-.sugRow:hover .sugGo, .sugRow:focus-visible .sugGo { color: #f0abfc; transform: translateX(3px); }
+.sugGo { flex: none; color: rgba(var(--pp-ink-rgb), 0.87); transition: transform 0.15s, color 0.15s; }
+.sugRow:hover .sugGo, .sugRow:focus-visible .sugGo { color: var(--pp-violet); transform: translateX(3px); }
 .sugRow:focus-visible { outline: 2px solid #f0abfc; outline-offset: -2px; }
 
 /* Less boxing: panels on the results page are plain content with spacing and hairlines, and nothing there is clipped. Boxes stay only where they
    carry the design (the plan cards, the schedule confirmation). */
 .who, .suggest, .busyNote { border: 0; background: none; padding: 0; border-radius: 0; }
-.who { border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 0.8rem; }
+.who { border-top: 1px solid rgba(var(--pp-ink-rgb), 0.20); padding-top: 0.8rem; }
 .busyNote { border-left: 3px solid #94a3b8; padding-left: 0.7rem; }
 .suggest { max-height: none; overflow: visible; }
 .suggest h3 { margin: 0 0 0.2rem; }
 .suggest .sugList { max-height: 17rem; overflow-y: auto; overscroll-behavior: contain; margin: 0 -0.5rem; padding: 0 0.5rem; }
-.sugRow { margin: 0; padding: 0.55rem 0.5rem; border-radius: 0.6rem; border-top: 1px solid rgba(255, 255, 255, 0.07); }
+.sugRow { margin: 0; padding: 0.55rem 0.5rem; border-radius: 0.6rem; border-top: 1px solid rgba(var(--pp-ink-rgb), 0.18); }
 .sugRow:first-of-type { border-top: 0; }
 .sugRow:hover, .sugRow:focus-within { border-top-color: transparent; }
 .confirm { background: none; border-radius: 0.8rem; }
@@ -295,9 +337,9 @@
 
 /* "N of M answered", then clearly who is still waiting. */
 .whoAnswered { flex-direction: column; align-items: flex-start; gap: 0.4rem; }
-.answeredCount { color: #6ee7b7; }
+.answeredCount { color: var(--pp-ok); }
 .waitingRow { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.4rem; }
-.waitingLabel { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; color: #fbbf24; }
+.waitingLabel { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; color: var(--pp-warn); }
 .chip2 { border-color: rgba(251, 191, 36, 0.55); }
 
 .legendStripe { background: repeating-linear-gradient(135deg, rgba(251, 191, 36, 0.75) 0 3px, rgba(52, 211, 153, 0.35) 3px 6px); border: 0; }

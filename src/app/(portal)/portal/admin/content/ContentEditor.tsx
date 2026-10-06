@@ -1,10 +1,16 @@
 'use client';
 
+import { Select } from '@/components/ui/Field';
 import { showToast } from '@/lib/toast';
 import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
 import { useEffect, useRef, useState } from 'react';
+import { useDraft } from '@/lib/useDraft';
+import type { CreditPerson } from '@/lib/creditPeople';
+import SaveBar from '@/components/portal/SaveBar';
+import EditingNow from '@/components/portal/EditingNow';
+import DraftBanner from '@/components/portal/DraftBanner';
 import Image from 'next/image';
-import { Pencil, X, Check, MapPin, GripVertical, ArrowUp, ArrowDown, Eye, EyeOff, Monitor, Smartphone, PanelRightClose, PanelRightOpen, Maximize2, Minimize2, ZoomIn } from 'lucide-react';
+import { Pencil, Plus, X, MapPin, GripVertical, ArrowUp, ArrowDown, Eye, EyeOff, Monitor, Smartphone, PanelRightClose, PanelRightOpen, Maximize2, Minimize2, ZoomIn } from 'lucide-react';
 import type { ContentBlock, FieldDef } from '@/lib/content-blocks';
 import { CATEGORY_ORDER, BLOCK_ORDER, BLOCK_GROUPS, sortFields } from '@/lib/content-blocks';
 import { usePortalParams, useLiveParams } from '@/lib/usePortalParams';
@@ -13,6 +19,7 @@ import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
 import { useDragReorder } from '@/lib/useDragReorder';
 import styles from './ContentEditor.module.css';
 import IconButton from '@/components/ui/IconButton';
+import Button from '@/components/ui/Button';
 
 type BlockDef = ContentBlock;
 
@@ -23,6 +30,8 @@ interface Props {
   blocks: BlockDef[];
   contentMap: Record<string, Record<string, unknown>>;
   lastEdited: Record<string, { by: string; at: string }>;
+  /** Officers an editor can credit, so a name and link are picked, not typed twice. */
+  creditPeople?: CreditPerson[];
 }
 
 const ALL_PAGES = ['/', '/our-story', '/team', '/events', '/divisions', '/sponsors', '/get-involved', '/membership', '/media'];
@@ -44,7 +53,7 @@ function pagesLabel(pages: string[]): string {
   return pages.map((p) => (p === '/' ? 'Homepage' : p)).join(', ');
 }
 
-export default function ContentEditor({ query, setQuery, blocks, contentMap, lastEdited }: Props) {
+export default function ContentEditor({ query, setQuery, blocks, contentMap, lastEdited, creditPeople }: Props) {
   // Which block is open and which area is showing live in the URL (?tab=<area>&subtab=<block key>) so any view is linkable.
   const searchParams = useLiveParams();
   const setParams = usePortalParams();
@@ -71,7 +80,9 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, las
   const [saving, setSaving] = useState<string | null>(null);
   const hasUnsaved = JSON.stringify(forms) !== JSON.stringify(savedForms);
   useUnsavedChanges(hasUnsaved ? forms : 'CLEAN');
-  const [saved, setSaved] = useState<string | null>(null);
+  // Only the blocks that differ from what is saved are kept as a draft in this browser.
+  const edited = Object.fromEntries(Object.keys(forms).filter((k) => JSON.stringify(forms[k]) !== JSON.stringify(savedForms[k])).map((k) => [k, forms[k]]));
+  const draft = useDraft<Record<string, Record<string, unknown>>>('site-content', edited, (v) => Object.keys(v).length === 0);
   const [error, setError] = useState<string | null>(null);
 
   const q = query.trim().toLowerCase();
@@ -83,7 +94,7 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, las
     setForms((prev) => ({ ...prev, [key]: { ...prev[key], [field]: value } }));
   }
 
-  async function handleSave(key: string) {
+  async function handleSave(key: string): Promise<boolean> {
     setSaving(key);
     setError(null);
     try {
@@ -97,14 +108,20 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, las
         throw new Error(body.error || 'Failed to save');
       }
       setSavedForms((prev) => ({ ...prev, [key]: forms[key] }));
-      setSaved(key);
       showToast('Site content saved');
-      setTimeout(() => setSaved(null), 3000);
+      return true;
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save');
+      return false;
     } finally {
       setSaving(null);
     }
+  }
+
+  // Every section with edits, saved one after the other; it stops at the first one that fails so the error stays on screen.
+  const dirtyKeys = Object.keys(forms).filter((k) => JSON.stringify(forms[k]) !== JSON.stringify(savedForms[k]));
+  async function saveAll() {
+    for (const k of dirtyKeys) if (!(await handleSave(k))) return;
   }
 
   const timeAgo = (date: string) => {
@@ -243,12 +260,14 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, las
 
   return (
     <div className={styles.shell}>
+      {draft.offer && <DraftBanner at={draft.offer.at} what="edits" onContinue={() => { const d = draft.accept(); if (d) setForms((f) => ({ ...f, ...Object.fromEntries(Object.entries(d).filter(([k]) => k in f)) })); }} onDiscard={draft.discard} />}
       <SectionTabs
         label="Site areas"
         value={tabCategory}
         onChange={selectCategory}
         tabs={categories.map((c) => ({ id: c, label: c, badge: blocks.filter((b) => b.category === c && isDirty(b.key)).length }))}
       />
+      <EditingNow room={`content:${tabCategory}`} what={`the ${tabCategory} content`} />
 
 
       {!q && groups.length > 1 && (
@@ -307,30 +326,17 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, las
                       field={field}
                       value={forms[block.key]?.[field.name]}
                       onChange={(val) => setField(block.key, field.name, val)}
+                      creditPeople={creditPeople}
+                      hasField={(n) => (block.fields as FieldDef[]).some((f) => f.name === n)}
+                      setSibling={(n, v) => setField(block.key, n, v)}
                     />
                   ))}
                 </div>
 
                 {error && saving === null && block.key === activeBlock.key && <div className={styles.editError}>{error}</div>}
-
-                <div className={styles.editActions}>
-                  <button
-                    className={styles.cancelBtn}
-                    onClick={() => setForms((prev) => ({ ...prev, [block.key]: savedForms[block.key] }))}
-                    disabled={!isDirty(block.key)}
-                  >
-                    Discard changes
-                  </button>
-                  <button className={styles.saveBtn} onClick={() => handleSave(block.key)} disabled={saving === block.key}>
-                    {saving === block.key
-                      ? <><span className={styles.savingSpinner} /> Saving…</>
-                      : saved === block.key
-                      ? <><Check size={16} strokeWidth={2.5} aria-hidden="true" /> Saved</>
-                      : 'Save Changes'}
-                  </button>
-                </div>
               </div>
             ))}
+            <SaveBar dirty={hasUnsaved} saving={saving !== null} onSave={saveAll} saveLabel="Save changes" message={dirtyKeys.length > 1 ? `${dirtyKeys.length} sections have unsaved changes` : 'You have unsaved changes'} onDiscard={() => { setForms(savedForms); setError(null); }} />
           </div>
 
           {(
@@ -339,9 +345,9 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, las
                 <span className={styles.previewTitle}>
                   Live preview
                   {pageChoices.length > 1 ? (
-                    <select className={styles.previewPick} value={previewPage} onChange={(e) => setPagePick(e.target.value)} aria-label="Page to preview">
+                    <Select className={styles.previewPick} value={previewPage} onChange={(e) => setPagePick(e.target.value)} aria-label="Page to preview">
                       {pageChoices.map((pg) => <option key={pg} value={pg}>{pg === '/' ? 'Homepage' : pg}</option>)}
-                    </select>
+                    </Select>
                   ) : <em>{previewPage === '/' ? 'Homepage' : previewPage}</em>}
                 </span>
                 <div className={styles.previewTools}>
@@ -380,8 +386,9 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, las
 // ──────────────────────────────────────────────────────────────────
 // FieldEditor — renders the right input for each field type
 // ──────────────────────────────────────────────────────────────────
-function FieldEditor({ field, value, onChange }: {
+function FieldEditor({ field, value, onChange, creditPeople, hasField, setSibling }: {
   field: FieldDef; value: unknown; onChange: (val: unknown) => void;
+  creditPeople?: CreditPerson[]; hasField?: (name: string) => boolean; setSibling?: (name: string, value: unknown) => void;
 }) {
   const fieldAny = field as Record<string, unknown>;
   const isOptional = !!fieldAny.optional;
@@ -463,9 +470,9 @@ function FieldEditor({ field, value, onChange }: {
               type="button"
               className={`${styles.selectOpt} ${value === opt ? styles.selectOptActive : ''}`}
               style={value === opt ? {
-                background: (COLOR_PREVIEW[opt] || '#fff') + '22',
-                borderColor: COLOR_PREVIEW[opt] || '#fff',
-                color: COLOR_PREVIEW[opt] || '#fff',
+                background: (COLOR_PREVIEW[opt] || '#888888') + '22',
+                borderColor: COLOR_PREVIEW[opt] || 'var(--pp-ink)',
+                color: `color-mix(in srgb, ${COLOR_PREVIEW[opt] || 'var(--pp-ink)'} 55%, var(--pp-ink))`,
               } : {}}
               onClick={() => onChange(opt)}
             >
@@ -516,11 +523,16 @@ function FieldEditor({ field, value, onChange }: {
         labelEl={labelEl}
         fields={(fieldAny.imageFields as ImgFieldDef[]) ?? DEFAULT_IMAGE_FIELDS}
         addLabel={fieldAny.addLabel as string | undefined}
+        creditPeople={creditPeople}
       />
     );
   }
 
   // ── Default: text / url ───────────────────────────────
+  // A credit line can be picked from the officers: it fills the name (keeping the "Photo: " style) and, when the person shares one and the
+  // block has a link field next to it, their link too.
+  const isCredit = field.type !== 'url' && /credit$/.test(field.name) && !!creditPeople?.length;
+  const prefix = ((fieldAny.placeholder as string | undefined) ?? '').match(/^[^:]+:\s*/)?.[0] ?? '';
   return (
     <label className={styles.fieldGroup}>
       {labelEl}
@@ -531,6 +543,19 @@ function FieldEditor({ field, value, onChange }: {
         onChange={(e) => onChange(e.target.value)}
         placeholder={fieldAny.placeholder as string}
       />
+      {isCredit && (
+        <Select className={styles.fieldInput} value="" aria-label={`Pick an officer for ${field.label}`}
+          onChange={(e) => {
+            const p = creditPeople!.find((x) => x.id === e.target.value);
+            if (!p) return;
+            onChange(`${prefix}${p.name}`);
+            const urlField = `${field.name}_url`;
+            if (p.link && hasField?.(urlField)) setSibling?.(urlField, p.link);
+          }}>
+          <option value="">Pick an officer…</option>
+          {creditPeople!.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+        </Select>
+      )}
     </label>
   );
 }
@@ -550,13 +575,13 @@ function KvListField({ value, onChange, labelEl, keyLbl, valLbl }: {
   valLbl: string;
 }) {
   const items = Array.isArray(value) ? value : [];
-  const { dragIndex, overIndex, dragHandleProps, dropTargetProps } = useDragReorder(items, onChange);
+  const { view: viewItems, dragIndex, overIndex, dragHandleProps, dropTargetProps } = useDragReorder(items, onChange);
 
   return (
     <div className={styles.fieldGroup}>
       {labelEl}
       <div className={styles.kvList}>
-        {items.map((item, i) => (
+        {viewItems.map((item, i) => (
           <div
             key={i}
             className={`${styles.kvRowWrap} ${dragIndex === i ? styles.rowDragging : ''} ${overIndex === i && dragIndex !== i ? styles.rowDragOver : ''}`}
@@ -576,8 +601,7 @@ function KvListField({ value, onChange, labelEl, keyLbl, valLbl }: {
             </div>
           </div>
         ))}
-        <button type="button" className={styles.kvAdd}
-          onClick={() => onChange([...items,{value:'',label:''}])}>+ Add Item</button>
+        <Button size="sm" variant="secondary" onClick={() => onChange([...items, { value: '', label: '' }])}><Plus size={14} aria-hidden="true" /> Add item</Button>
       </div>
     </div>
   );
@@ -597,21 +621,22 @@ const DEFAULT_IMAGE_FIELDS: ImgFieldDef[] = [
   { key: 'tier', label: 'Tier (e.g. Gold)', type: 'text' },
 ];
 
-function ImageListField({ value, onChange, labelEl, fields, addLabel = '+ Add Item' }: {
+function ImageListField({ value, onChange, labelEl, fields, addLabel = '+ Add Item', creditPeople }: {
   value: ImgItem[] | undefined;
   onChange: (val: ImgItem[]) => void;
   labelEl: React.ReactNode;
   fields: ImgFieldDef[];
   addLabel?: string;
+  creditPeople?: CreditPerson[];
 }) {
   const items = Array.isArray(value) ? value : [];
-  const { dragIndex, overIndex, dragHandleProps, dropTargetProps } = useDragReorder(items, onChange);
+  const { view: viewItems, dragIndex, overIndex, dragHandleProps, dropTargetProps } = useDragReorder(items, onChange);
 
   return (
     <div className={styles.fieldGroup}>
       {labelEl}
       <div className={styles.imageList}>
-        {items.map((item, i) => (
+        {viewItems.map((item, i) => (
           <div
             key={i}
             className={`${styles.imageCard} ${dragIndex === i ? styles.rowDragging : ''} ${overIndex === i && dragIndex !== i ? styles.rowDragOver : ''}`}
@@ -656,6 +681,19 @@ function ImageListField({ value, onChange, labelEl, fields, addLabel = '+ Add It
                       onChange(n);
                     }}
                   />
+                  {k === 'credit' && !!creditPeople?.length && (
+                    <Select className={styles.fieldInput} value="" aria-label="Pick an officer to credit"
+                      onChange={(e) => {
+                        const p = creditPeople.find((x) => x.id === e.target.value);
+                        if (!p) return;
+                        const n = [...items];
+                        n[i] = { ...n[i], credit: p.name, ...(p.link && fields.some((f) => f.key === 'credit_url') ? { credit_url: p.link } : {}) };
+                        onChange(n);
+                      }}>
+                      <option value="">Pick an officer…</option>
+                      {creditPeople.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </Select>
+                  )}
                 </label>
               ))}
             </div>
@@ -664,8 +702,7 @@ function ImageListField({ value, onChange, labelEl, fields, addLabel = '+ Add It
             </div>
           </div>
         ))}
-        <button type="button" className={styles.kvAdd}
-          onClick={() => onChange([...items, {}])}>{addLabel}</button>
+        <Button size="sm" variant="secondary" onClick={() => onChange([...items, {}])}><Plus size={14} aria-hidden="true" /> {addLabel.replace(/^\+\s*/, '')}</Button>
       </div>
     </div>
   );

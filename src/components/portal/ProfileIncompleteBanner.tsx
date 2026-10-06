@@ -20,7 +20,7 @@ export default function ProfileIncompleteBanner({ missing, officerTabOnly = fals
   const here = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '');
   // Only the officer title missing -> open the Officer Card tab directly.
   const href = officerTabOnly
-    ? `/portal?section=profile&tab=officer&next=${encodeURIComponent(here)}`
+    ? `/portal/profile/card?next=${encodeURIComponent(here)}`
     : `/portal/profile?next=${encodeURIComponent(here)}`;
 
   return (

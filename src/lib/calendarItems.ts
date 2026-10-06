@@ -68,7 +68,7 @@ export async function collectCalendarItems(svc: SupabaseClient, user: { id: stri
     const [x] = withExtras([m], groups);
     return m.created_by === user.id || isExpected({ audience: m.audience, invitees: m.invitees, group_ids: m.group_ids, extra_ids: x.extra_ids }, user.id, roles);
   };
-  const meetingHref = (createdBy: string | null) => (canManageAll || createdBy === user.id ? '/portal?section=meetings&tab=host' : '/portal?section=meetings');
+  const meetingHref = (createdBy: string | null) => (canManageAll || createdBy === user.id ? '/portal/meetings/host' : '/portal/meetings');
   // "All TG meetings": everyone else's meetings too, except the ones a host marked private. Only the bare facts leave here.
   const othersItem = (m: { audience: string[] | null; invitees: string[] | null; group_ids: string[] | null }) => {
     const [x] = withExtras([m], groups);
@@ -77,7 +77,7 @@ export async function collectCalendarItems(svc: SupabaseClient, user: { id: stri
   for (const r of rows) {
     const mine = mineOrManage(r);
     if (!mine && !(opts.everyone && !r.is_private)) continue;
-    if (!mine) { items.push({ key: `m|${r.id}`, kind: 'meeting', date: r.meeting_date, title: r.title, start: r.starts_at, end: r.ends_at, href: '/portal?section=calendar', mine: false, dayLabel: null, repeats: !!r.series_id, ...othersItem(r) }); continue; }
+    if (!mine) { items.push({ key: `m|${r.id}`, kind: 'meeting', date: r.meeting_date, title: r.title, start: r.starts_at, end: r.ends_at, href: '/portal/calendar', mine: false, dayLabel: null, repeats: !!r.series_id, ...othersItem(r) }); continue; }
     items.push({ key: `m|${r.id}`, kind: 'meeting', date: r.meeting_date, title: r.title, start: r.starts_at, end: r.ends_at, location: r.location, href: meetingHref(r.created_by), mine: r.created_by === user.id, status: r.created_by === user.id ? 'hosting' : undefined, dayLabel: null, repeats: !!r.series_id });
   }
   const taken = new Set(rows.filter((r) => r.series_id).map((r) => `${r.series_id}|${r.meeting_date}`));
@@ -88,9 +88,10 @@ export async function collectCalendarItems(svc: SupabaseClient, user: { id: stri
     if (!mine && !(opts.everyone && !s.is_private)) continue;
     const began = pacificDayKey(new Date(s.created_at));
     for (let day = from; day <= to && day <= horizon; day = addDaysKey(day, 1)) {
-      if (day < began || !seriesRunsOn(s, day) || taken.has(`${s.id}|${day}`)) continue;
+      // A week that has gone by with no meeting opened or kept never happened: deleting a held meeting must not bring it back as "scheduled".
+      if (day < today || day < began || !seriesRunsOn(s, day) || taken.has(`${s.id}|${day}`)) continue;
       const { starts, ends } = occurrenceTimes(day, s.start_time, s.end_time);
-      if (!mine) { items.push({ key: `s|${s.id}|${day}`, kind: 'meeting', date: day, title: s.title, start: starts.toISOString(), end: ends.toISOString(), href: '/portal?section=calendar', mine: false, dayLabel: null, repeats: true, ...othersItem(s) }); continue; }
+      if (!mine) { items.push({ key: `s|${s.id}|${day}`, kind: 'meeting', date: day, title: s.title, start: starts.toISOString(), end: ends.toISOString(), href: '/portal/calendar', mine: false, dayLabel: null, repeats: true, ...othersItem(s) }); continue; }
       items.push({ key: `s|${s.id}|${day}`, kind: 'meeting', date: day, title: s.title, start: starts.toISOString(), end: ends.toISOString(), location: s.location, href: meetingHref(s.created_by), mine: s.created_by === user.id, status: s.created_by === user.id ? 'hosting' : undefined, dayLabel: null, repeats: true });
     }
   }
@@ -105,7 +106,7 @@ export async function collectCalendarItems(svc: SupabaseClient, user: { id: stri
     // Internal events are open to every TG member (exec, leads, officers, recruits, alumni), whoever they were aimed at.
     if (!isTgMember(roles)) break;
     if (declined.has(r.id as string)) continue;
-    items.push({ key: `x|${r.id}`, kind: 'internal', date: r.event_date as string, title: r.title as string, start: r.starts_at as string, end: r.ends_at as string, location: r.location as string | null, href: '/portal?section=internal-events', mine: going.has(r.id as string), status: going.has(r.id as string) ? 'going' : maybe.has(r.id as string) ? 'maybe' : undefined, dayLabel: null });
+    items.push({ key: `x|${r.id}`, kind: 'internal', date: r.event_date as string, title: r.title as string, start: r.starts_at as string, end: r.ends_at as string, location: r.location as string | null, href: '/portal/internal-events', mine: going.has(r.id as string), status: going.has(r.id as string) ? 'going' : maybe.has(r.id as string) ? 'maybe' : undefined, dayLabel: null });
   }
   items.sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
   return items;

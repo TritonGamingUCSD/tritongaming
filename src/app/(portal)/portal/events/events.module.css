@@ -1,4 +1,4 @@
-.page { max-width: 900px; margin-inline: auto; }
+.page { max-width: 1240px; margin-inline: auto; }
 
 .header {
   display: flex;
@@ -12,7 +12,7 @@
 .title {
   font-family: var(--font-futura-heavy);
   font-size: clamp(1.25rem, 2.5vw, 1.6rem);
-  color: var(--white);
+  color: var(--pp-ink);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -39,30 +39,30 @@
   left: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
   pointer-events: none;
 }
 
 .searchInput {
   width: 100%;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(var(--pp-ink-rgb), 0.04);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.23);
   border-radius: 0.5rem;
   padding: 0.625rem 0.75rem 0.625rem 2.1rem;
-  color: var(--white);
+  color: var(--pp-ink);
   font-family: var(--font-futura-medium);
   font-size: 0.9rem;
 }
-.searchInput:focus { outline: none; border-color: rgba(255,199,44,0.4); }
+.searchInput:focus { outline: none; border-color: var(--pp-ink); box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.55); }
 
 
 .empty {
   padding: 3rem;
   text-align: center;
-  background: rgba(255,255,255,0.02);
-  border: 1px dashed rgba(255,255,255,0.1);
+  background: rgba(var(--pp-ink-rgb), 0.02);
+  border: 1px dashed rgba(var(--pp-ink-rgb), 0.23);
   border-radius: 0.875rem;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -71,56 +71,54 @@
 
 .createLink {
   font-size: 0.875rem;
-  color: var(--yellow-text);
+  color: var(--p-accent-text);
   transition: opacity 0.15s;
 }
 .createLink:hover { opacity: 0.8; }
 
 .table {
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 0.875rem;
-  /* visible, not hidden: the row "more" menu has to be able to hang below the last row */
+  composes: card from '../../../../components/ui/Surface.module.css';
+  /* visible, not hidden: the row "more" menu has to be able to hang below the last row */;
 }
 
 .tableHeader {
   border-radius: 0.875rem 0.875rem 0 0;
   display: grid;
-  grid-template-columns: minmax(0, 2.4fr) minmax(0, 1.2fr) minmax(0, 1fr) 104px 120px;
+  grid-template-columns: minmax(0, 2.2fr) minmax(10.5rem, 1.1fr) 6.5rem 14rem 7.5rem;
   gap: 1rem;
   padding: 0.75rem 1.25rem;
-  background: rgba(255,255,255,0.05);
+  background: rgba(var(--pp-ink-rgb), 0.05);
   font-size: var(--fs-label);
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
 }
 
 .tableRow {
   display: grid;
-  grid-template-columns: minmax(0, 2.4fr) minmax(0, 1.2fr) minmax(0, 1fr) 104px 120px;
+  grid-template-columns: minmax(0, 2.2fr) minmax(10.5rem, 1.1fr) 6.5rem 14rem 7.5rem;
   gap: 1rem;
   padding: 1rem 1.25rem;
-  border-top: 1px solid rgba(255,255,255,0.05);
+  border-top: 1px solid rgba(var(--pp-ink-rgb), 0.15);
   align-items: center;
   transition: background 0.15s;
 }
-.tableRow:hover { background: rgba(255,255,255,0.02); }
-.tableRowPast { opacity: 0.55; }
-.tableRowPast:hover { opacity: 0.8; }
+.tableRow:hover { background: rgba(var(--pp-ink-rgb), 0.02); }
+.tableRowPast { opacity: 0.78; }
+.tableRowPast:hover { opacity: 1; }
 
 .eventTitle {
   font-family: var(--font-futura-medium);
   font-size: 0.9rem;
-  color: var(--white);
+  color: var(--pp-ink);
 }
 .eventLocation {
   display: flex;
   align-items: center;
   gap: 0.25rem;
   font-size: 0.75rem;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
   margin-top: 0.2rem;
 }
 
@@ -131,11 +129,11 @@
   font-family: var(--font-futura-heavy);
   font-size: 0.7rem;
   letter-spacing: 0.02em;
-  color: var(--yellow-text);
+  color: var(--p-accent-text);
   margin-top: 0.25rem;
 }
 
-.eventDate { font-size: var(--fs-meta); color: rgba(242,241,240,0.6); }
+.eventDate { font-size: var(--fs-meta); color: rgba(var(--pp-ink-rgb), 0.87); }
 
 /* Also used as a <button> (the ticket-count trigger for the check-ins
    modal) alongside its original <a> uses (Edit/Duplicate) — background/
@@ -147,7 +145,7 @@
   gap: 0.3rem;
   font-size: 0.8rem;
   font-family: inherit;
-  color: var(--yellow-text);
+  color: var(--p-accent-text);
   background: none;
   border: none;
   padding: 0;
@@ -159,24 +157,30 @@
 /* ── Row actions ── */
 .rowActions { display: flex; align-items: center; justify-content: flex-end; gap: 0.35rem; }
 .actionsHead { text-align: right; }
+.tableHeader > div, .tableRow > div { min-width: 0; }
 .moreWrap { position: relative; }
 .moreMenu {
-  position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; min-width: 190px;
-  display: flex; flex-direction: column; padding: 0.35rem;
-  background: #0d1325; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 0.75rem;
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
+  composes: card from '../../../../components/ui/Surface.module.css';
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 20;
+  min-width: 190px;
+  display: flex;
+  flex-direction: column;
+  padding: 0.35rem;
 }
 .menuItem {
   display: flex; align-items: center; gap: 0.55rem; width: 100%; text-align: left;
   padding: 0.6rem 0.75rem; border-radius: 0.5rem; border: none; background: none;
-  font: inherit; font-size: 0.82rem; color: rgba(242, 241, 240, 0.9); cursor: pointer; text-decoration: none;
+  font: inherit; font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 1.00); cursor: pointer; text-decoration: none;
 }
-.menuItem:hover { background: rgba(255, 255, 255, 0.07); }
-.menuDanger { color: #f87171; }
+.menuItem:hover { background: rgba(var(--pp-ink-rgb), 0.07); }
+.menuDanger { color: var(--pp-bad); }
 .menuDanger:hover { background: rgba(220, 38, 38, 0.14); }
-.checkinSub { color: rgba(242, 241, 240, 0.6); }
+.checkinSub { color: rgba(var(--pp-ink-rgb), 0.87); }
 
-.noTicket { font-size: var(--fs-meta); color: rgba(242, 241, 240, 0.6); }
+.noTicket { font-size: var(--fs-meta); color: rgba(var(--pp-ink-rgb), 0.87); }
 
 .badge {
   display: inline-block;
@@ -186,16 +190,18 @@
   padding: 0.2rem 0.5rem;
   border-radius: var(--radius-pill);
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
-.published { background: rgba(5,150,105,0.15); color: #34d399; border: 1px solid rgba(52,211,153,0.25); }
-.draft     { background: rgba(107,114,128,0.12); color: #9ca3af; border: 1px solid rgba(156,163,175,0.2); }
-.ucsdBadge { background: rgba(14,165,233,0.12); color: #38bdf8; border: 1px solid rgba(56,189,248,0.25); }
+.published { background: rgba(5,150,105,0.15); color: var(--pp-ok); border: 1px solid rgba(52,211,153,0.25); }
+.draft     { background: rgba(107,114,128,0.12); color: rgba(var(--pp-ink-rgb), 0.85); border: 1px solid rgba(156,163,175,0.2); }
+.ucsdBadge { background: rgba(14,165,233,0.12); color: var(--pp-info); border: 1px solid rgba(56,189,248,0.25); }
 
 .statusCol {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 0.3rem;
 }
 

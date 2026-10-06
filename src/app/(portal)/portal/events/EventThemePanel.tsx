@@ -1,5 +1,6 @@
 'use client';
 
+import Button from '@/components/ui/Button';
 import { useRef, useState } from 'react';
 import { Plus, X, Upload } from 'lucide-react';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
@@ -134,7 +135,7 @@ export default function EventThemePanel({ theme, onChange, people = [] }: { them
         {own.length < MAX_CUSTOM_FONTS && (
           <>
             <input ref={fileRef} type="file" accept={FONT_FILE_TYPES.map((t) => `.${t}`).join(',')} hidden onChange={(e) => addFontFile(e.target.files?.[0])} />
-            <button type="button" className={styles.add} onClick={() => fileRef.current?.click()} disabled={fontBusy}><Upload size={14} aria-hidden="true" /> {fontBusy ? 'Uploading…' : 'Upload a font'}</button>
+            <Button size="sm" variant="secondary" onClick={() => fileRef.current?.click()} disabled={fontBusy}><Upload size={14} aria-hidden="true" /> {fontBusy ? 'Uploading…' : 'Upload a font'}</Button>
           </>
         )}
         {fontError && <span className={styles.hint} role="alert" style={{ color: '#fca5a5' }}>{fontError}</span>}
@@ -160,7 +161,7 @@ export default function EventThemePanel({ theme, onChange, people = [] }: { them
           </div>
         ))}
         {theme.stickers.length < MAX_STICKERS && (
-          <button type="button" className={styles.add} onClick={() => set({ stickers: [...theme.stickers, ''] })}><Plus size={14} aria-hidden="true" /> Add a sticker</button>
+          <Button size="sm" variant="secondary" onClick={() => set({ stickers: [...theme.stickers, ''] })}><Plus size={14} aria-hidden="true" /> Add a sticker</Button>
         )}
       </div>
     </fieldset>

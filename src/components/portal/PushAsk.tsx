@@ -1,5 +1,6 @@
 'use client';
 
+import IconButton from '@/components/ui/IconButton';
 import { useEffect, useState } from 'react';
 import { Bell, X } from 'lucide-react';
 import { enablePush, pushSupport } from '@/lib/pushClient';
@@ -55,7 +56,7 @@ export default function PushAsk() {
         <button type="button" className={styles.on} onClick={turnOn} disabled={busy}>Turn on</button>
         <button type="button" className={styles.no} onClick={notNow} disabled={busy}>Not now</button>
       </div>
-      <button type="button" className={styles.close} onClick={notNow} aria-label="Close and don’t ask again"><X size={15} aria-hidden="true" /></button>
+      <IconButton kind="close" size="sm" label="Close and don’t ask again" className={styles.close} onClick={notNow} />
     </div>
   );
 }

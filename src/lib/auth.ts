@@ -1,20 +1,48 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createRealClient } from '@/lib/supabase/server';
 import type { Profile, Capability } from '@/types/database';
 import { cookies } from 'next/headers';
 import { hasCapability, withGrantedCapabilities, type RoleGrant } from '@/lib/capabilities';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { loadGrantedCapabilities } from '@/lib/grantedCapabilities';
-import { VIEW_AS_COOKIE, isViewAsRole, type ViewAsRole } from '@/lib/viewAs';
+import { cache } from 'react';
+import type { User } from '@supabase/supabase-js';
+import { VIEW_AS_COOKIE, VIEW_USER_COOKIE, isUuid, isViewAsRole, type ViewAsRole } from '@/lib/viewAs';
 
-export async function getUser() {
-  const supabase = await createClient();
+// The person who is actually signed in (never the one being viewed).
+const getSessionUser = cache(async () => {
+  const supabase = await createRealClient();
   const { data: { user } } = await supabase.auth.getUser();
   return user;
+});
+
+// Roles of the signed-in person themselves, straight from the database.
+export async function getSessionRoles(): Promise<RoleGrant[]> {
+  const user = await getSessionUser();
+  if (!user) return [];
+  const { data } = await (await createRealClient()).from('user_roles').select('role, division_id').eq('user_id', user.id);
+  return data ?? [];
+}
+
+// "View as a specific person": set only by an admin (checked here every time, so a copied cookie does nothing for anyone else).
+// While it is set the portal renders as that person and every change is refused (see proxy.ts and ViewOnlyGuard).
+export const getViewingUser = cache(async (): Promise<User | null> => {
+  const id = (await cookies()).get(VIEW_USER_COOKIE)?.value;
+  if (!isUuid(id)) return null;
+  const me = await getSessionUser();
+  if (!me || me.id === id) return null;
+  if (!(await getSessionRoles()).some((r) => r.role === 'admin')) return null;
+  const { data } = await createServiceClient().auth.admin.getUserById(id);
+  return data?.user ?? null;
+});
+
+export async function getUser() {
+  return (await getViewingUser()) ?? (await getSessionUser());
 }
 
 export async function getProfile(): Promise<Profile | null> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const viewing = await getViewingUser();
+  const supabase = viewing ? createServiceClient() : await createClient();
+  const user = viewing ?? (await getSessionUser());
   if (!user) return null;
 
   const { data } = await supabase
@@ -29,8 +57,9 @@ export async function getProfile(): Promise<Profile | null> {
 // The signed-in user's own gender (stored in profile_private — owner-only,
 // not on the public profiles row).
 export async function getMyGender(): Promise<string | null> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const viewing = await getViewingUser();
+  const supabase = viewing ? createServiceClient() : await createClient();
+  const user = viewing ?? (await getSessionUser());
   if (!user) return null;
   const { data } = await supabase.from('profile_private').select('gender').eq('user_id', user.id).maybeSingle();
   return data?.gender ?? null;
@@ -45,8 +74,9 @@ export interface MyPrivateProfile {
 }
 export async function getMyPrivateProfile(): Promise<MyPrivateProfile> {
   const empty = { gender: null, platforms: [], favorite_games: '', division_interests: [] };
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const viewing = await getViewingUser();
+  const supabase = viewing ? createServiceClient() : await createClient();
+  const user = viewing ?? (await getSessionUser());
   if (!user) return empty;
   const { data } = await supabase
     .from('profile_private')
@@ -63,8 +93,9 @@ export async function getMyPrivateProfile(): Promise<MyPrivateProfile> {
 
 // The person's real role grants, straight from the database.
 export async function getRealRoles(): Promise<RoleGrant[]> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const viewing = await getViewingUser();
+  const supabase = viewing ? createServiceClient() : await createClient();
+  const user = viewing ?? (await getSessionUser());
   if (!user) return [];
 
   const { data } = await supabase
@@ -77,6 +108,7 @@ export async function getRealRoles(): Promise<RoleGrant[]> {
 
 // The role an admin is currently previewing ("View as"), or null. Only ever set for a real admin.
 export async function getViewAs(): Promise<ViewAsRole | null> {
+  if (await getViewingUser()) return null;
   const value = (await cookies()).get(VIEW_AS_COOKIE)?.value;
   if (!isViewAsRole(value)) return null;
   const real = await getRealRoles();
@@ -87,6 +119,8 @@ export async function getViewAs(): Promise<ViewAsRole | null> {
 // another role, just that role. Page code uses this; API routes check real roles on their own.
 export async function getUserRoles(): Promise<RoleGrant[]> {
   const real = await getRealRoles();
+  const viewing = await getViewingUser();
+  if (viewing) return withGrantedCapabilities(real, await loadGrantedCapabilities(createServiceClient(), viewing.id).catch(() => []));
   const preview = real.some((r) => r.role === 'admin') ? (await cookies()).get(VIEW_AS_COOKIE)?.value : undefined;
   if (!isViewAsRole(preview)) {
     // Plus anything granted to this person or their groups (Admin → Access).

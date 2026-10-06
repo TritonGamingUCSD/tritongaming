@@ -1,0 +1,9 @@
+.box { display: flex; flex-direction: column; gap: 0.7rem; }
+/* The code itself is always dark on white so every camera reads it; the frame around it follows the theme. */
+.tile { padding: 0.6rem; border-radius: 10px; background: #fff; border: 1px solid var(--pp-line); } /* theme-ok */
+.code { display: block; }
+.code canvas { display: block; width: 100% !important; height: auto !important; }
+.url { margin: 0; font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.8); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; }
+.actions { display: flex; gap: 0.5rem; }
+.actions > * { flex: 1; }
+.tileDark { background: #0b1020; border-color: rgba(255, 255, 255, 0.25); } /* theme-ok */

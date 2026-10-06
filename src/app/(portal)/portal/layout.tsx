@@ -1,9 +1,10 @@
 import { Suspense } from 'react';
 import { Exo_2, JetBrains_Mono } from 'next/font/google';
 import { redirect } from 'next/navigation';
-import { getProfile, getUserRoles, getMyGender, getViewAs } from '@/lib/auth';
-import { ViewAsBanner } from '@/components/portal/ViewAs';
-import { isVerifiedMember, canSetOrgTitle } from '@/lib/capabilities';
+import { getProfile, getUserRoles, getMyGender, getViewAs, getViewingUser } from '@/lib/auth';
+import { ViewAsBanner, ViewingUserBanner } from '@/components/portal/ViewAs';
+import ViewOnlyGuard from '@/components/portal/ViewOnlyGuard';
+import { isVerifiedMember, requiresOrgTitle } from '@/lib/capabilities';
 import { getMissingProfileFields } from '@/lib/profile';
 import ProfileIncompleteBanner from '@/components/portal/ProfileIncompleteBanner';
 import NotificationBell from '@/components/portal/NotificationBell';
@@ -26,9 +27,10 @@ export default async function PortalLayout({ children }: { children: React.React
 
   // Anything required still blank on this person's profile — surfaced as a
   // banner on every portal page, not only when a ticket claim bounces them.
-  const [roles, gender, viewAs] = await Promise.all([getUserRoles(), getMyGender(), getViewAs()]);
+  const [roles, gender, viewAs, viewing] = await Promise.all([getUserRoles(), getMyGender(), getViewAs(), getViewingUser()]);
+  const viewingName = viewing ? (profile.display_name || profile.google_first_name || viewing.email || 'this person') : null;
   const isUcsdMember = isVerifiedMember(roles);
-  const missingProfileFields = getMissingProfileFields({ ...profile, gender }, isUcsdMember, { requireOrgTitle: canSetOrgTitle(roles) });
+  const missingProfileFields = getMissingProfileFields({ ...profile, gender }, isUcsdMember, { requireOrgTitle: requiresOrgTitle(roles) });
   // Only the officer title missing -> send them straight to the Officer Card tab.
   const missingOnlyOfficerTab = missingProfileFields.length > 0 && getMissingProfileFields({ ...profile, gender }, isUcsdMember).length === 0;
 
@@ -36,6 +38,8 @@ export default async function PortalLayout({ children }: { children: React.React
     <div className={`${styles.layout} ${styles.fontScope} ${portalSans.variable} ${jbMono.variable}`} data-portal-layout>
       <main className={styles.main}>
         {viewAs && <div className={styles.bannerSlot}><ViewAsBanner active={viewAs} /></div>}
+        {viewingName && <div className={styles.bannerSlot}><ViewingUserBanner name={viewingName} /></div>}
+        {viewingName && <ViewOnlyGuard name={viewingName} />}
         <div className={styles.content}>
           <div data-print-hide className={styles.bannerSlot} style={{ display: 'contents' }}>
             <Suspense fallback={null}>

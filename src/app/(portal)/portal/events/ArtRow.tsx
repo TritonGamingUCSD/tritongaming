@@ -1,5 +1,6 @@
 'use client';
 
+import { Select } from '@/components/ui/Field';
 import type { ReactNode } from 'react';
 import { X } from 'lucide-react';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
@@ -34,7 +35,7 @@ export default function ArtRow({
       <div className={styles.artFields}>
         {extra && <span className={styles.artTag}>{extra}</span>}
         {people.length > 0 && (
-          <select
+          <Select
             className={styles.artInput}
             value=""
             disabled={!value}
@@ -46,7 +47,7 @@ export default function ArtRow({
           >
             <option value="">Pick an officer…</option>
             {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
+          </Select>
         )}
         <input className={styles.artInput} value={credit?.name ?? ''} onChange={(e) => onCredit({ name: e.target.value })} maxLength={60} placeholder="Made by" aria-label={`${label}: who made it`} disabled={!value} />
         <input className={styles.artInput} type="url" value={credit?.link ?? ''} onChange={(e) => onCredit({ link: e.target.value })} placeholder="Their portfolio or social link" aria-label={`${label}: link to their portfolio or social page`} disabled={!value} />

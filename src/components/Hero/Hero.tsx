@@ -85,15 +85,15 @@ export default function Hero({ content = {} }: { content?: HeroContent }) {
         </div>
 
         <div className={styles.photos} aria-hidden="true">
-          <figure className={`${styles.photo} ${styles.photoA}`} data-hero-in data-hero-float>
+          <figure className={`${styles.photo} ${styles.photoA}`} data-hero-in>
             <span className={styles.tape} />
-            <Image src={photoA} alt="" width={560} height={315} sizes="(max-width: 860px) 60vw, 28vw" />
+            <Image src={photoA} alt="" loading="eager" width={560} height={315} sizes="(max-width: 860px) 60vw, 28vw" />
             {captionA && <figcaption>{captionA}</figcaption>}
             {content.photo_a_credit && <span className={styles.credit}>{content.photo_a_credit}</span>}
           </figure>
-          <figure className={`${styles.photo} ${styles.photoB}`} data-hero-in data-hero-float>
+          <figure className={`${styles.photo} ${styles.photoB}`} data-hero-in>
             <span className={`${styles.tape} ${styles.tapeR}`} />
-            <Image src={photoB} alt="" width={560} height={315} sizes="(max-width: 860px) 56vw, 24vw" />
+            <Image src={photoB} alt="" loading="eager" width={560} height={315} sizes="(max-width: 860px) 56vw, 24vw" />
             {captionB && <figcaption>{captionB}</figcaption>}
             {content.photo_b_credit && <span className={styles.credit}>{content.photo_b_credit}</span>}
           </figure>

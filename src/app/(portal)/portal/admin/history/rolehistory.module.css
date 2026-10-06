@@ -9,7 +9,7 @@
 .title {
   font-family: var(--font-futura-heavy);
   font-size: 1.3rem;
-  color: var(--white);
+  color: var(--pp-ink);
 }
 
 .list {
@@ -20,9 +20,7 @@
 }
 
 .item {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 0.75rem;
+  composes: card from '../../../../../components/ui/Surface.module.css';
   overflow: hidden;
 }
 
@@ -49,12 +47,12 @@
 .itemUser {
   font-family: var(--font-futura-medium);
   font-size: 0.85rem;
-  color: var(--white);
+  color: var(--pp-ink);
 }
 
 .itemMuted {
   font-size: 0.75rem;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
 }
 
 .itemMeta {
@@ -62,7 +60,7 @@
   align-items: center;
   gap: 0.6rem;
   font-size: 0.72rem;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
 }
 
 .chevron { transition: transform 0.15s ease; }
@@ -73,7 +71,7 @@
   flex-wrap: wrap;
   gap: 1.5rem;
   padding: 0 1rem 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgba(var(--pp-ink-rgb), 0.16);
   padding-top: 0.75rem;
 }
 
@@ -89,7 +87,7 @@
   font-family: var(--font-futura-heavy);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
 }
 
 .chipRow {
@@ -104,6 +102,7 @@
   padding: 0.2rem 0.55rem;
   border-radius: var(--radius-pill);
   border: 1px solid;
+  white-space: nowrap;
 }
 
 /* ── Empty state — mirrors checkin.module.css's .noEvents ────── */
@@ -114,11 +113,11 @@
   gap: 0.75rem;
   padding: 4rem 2rem;
   text-align: center;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px dashed rgba(255, 255, 255, 0.1);
+  background: rgba(var(--pp-ink-rgb), 0.02);
+  border: 1px dashed rgba(var(--pp-ink-rgb), 0.23);
   border-radius: 1rem;
 }
 
-.emptyIcon  { display: inline-flex; color: rgba(242, 241, 240, 0.6); }
-.emptyTitle { font-family: var(--font-futura-heavy); font-size: 1.1rem; color: var(--white); }
-.emptySub   { font-size: 0.85rem; color: rgba(242, 241, 240, 0.6); }
+.emptyIcon  { display: inline-flex; color: rgba(var(--pp-ink-rgb), 0.87); }
+.emptyTitle { font-family: var(--font-futura-heavy); font-size: 1.1rem; color: var(--pp-ink); }
+.emptySub   { font-size: 0.85rem; color: rgba(var(--pp-ink-rgb), 0.87); }

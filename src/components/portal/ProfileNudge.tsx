@@ -1,5 +1,6 @@
 'use client';
 
+import IconButton from '@/components/ui/IconButton';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Sparkles, X } from 'lucide-react';
@@ -28,9 +29,7 @@ export default function ProfileNudge({ nudge }: { nudge: Nudge }) {
           {next.map((m) => <Link key={m.key} href={m.href} className={styles.link}>{m.label}</Link>)}
         </div>
       </div>
-      <button type="button" className={styles.close} aria-label="Hide for a week" title="Hide for a week" onClick={() => { try { localStorage.setItem(KEY, String(Date.now() + 7 * 86400_000)); } catch { /* ignore */ } setHidden(true); }}>
-        <X size={14} strokeWidth={2} aria-hidden="true" />
-      </button>
+      <IconButton kind="close" size="sm" label="Hide for a week" onClick={() => { try { localStorage.setItem(KEY, String(Date.now() + 7 * 86400_000)); } catch { /* ignore */ } setHidden(true); }} />
     </section>
   );
 }

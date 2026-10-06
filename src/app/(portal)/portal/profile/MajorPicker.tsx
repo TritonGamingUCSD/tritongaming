@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import { MAJOR_OPTIONS, MAJOR_SEPARATOR, MAX_MAJORS, splitStoredMajors } from '@/lib/majors';
 import styles from './profile.module.css';
 import Select from '@/components/ui/Select';
+import Button from '@/components/ui/Button';
 
 const OTHER = '__other__';
 
@@ -64,8 +65,8 @@ export default function MajorPicker({ value, onChange, required, noun = 'major' 
             placeholder={`Type your ${noun}`}
             autoFocus
           />
-          <button type="button" className={styles.majorAddBtn} onClick={() => { add(otherText); setOtherText(''); setOther(false); }} disabled={!otherText.trim()}>Add</button>
-          <button type="button" className={styles.majorCancelBtn} onClick={() => { setOther(false); setOtherText(''); }}>Cancel</button>
+          <Button size="sm" onClick={() => { add(otherText); setOtherText(''); setOther(false); }} disabled={!otherText.trim()}>Add</Button>
+          <Button size="sm" variant="ghost" onClick={() => { setOther(false); setOtherText(''); }}>Cancel</Button>
         </div>
       )}
       <span className={styles.charCount} style={{ textAlign: 'left' }}>

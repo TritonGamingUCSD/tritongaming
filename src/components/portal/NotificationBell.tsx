@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { syncPush } from '@/lib/pushClient';
 import Image from 'next/image';
 import Link from 'next/link';
+import { navigatePortal } from '@/lib/portalNav';
 import { Bell } from 'lucide-react';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import type { Notification } from '@/types/database';
@@ -25,7 +26,7 @@ function resolveHref(n: Pick<Notification, 'href' | 'type'>): string | null {
   const h = n.href;
   if (!h) return null;
   const m = /^\/portal\/([a-z-]+)\/?$/.exec(h);
-  if (m) return `/portal?section=${m[1]}`;
+  if (m) return `/portal/${m[1]}`;
   return h;
 }
 
@@ -113,7 +114,7 @@ export default function NotificationBell({ inline = false }: { inline?: boolean 
           </div>
 
           {!loaded ? (
-            <div className={styles.statusLoading}><LoadingSpinner size={22} label="Loading notifications…" theme="dark" /></div>
+            <div className={styles.statusLoading}><LoadingSpinner size={22} label="Loading notifications…" theme="auto" /></div>
           ) : notifications.length === 0 ? (
             <div className={styles.status}>
               <Image src="/bytes/byte_tgex25.png" alt="" width={44} height={44} aria-hidden="true" />
@@ -139,7 +140,7 @@ export default function NotificationBell({ inline = false }: { inline?: boolean 
                       <Link
                         href={resolveHref(n)!}
                         className={styles.itemLink}
-                        onClick={() => { if (isUnread) markRead(n.id); setOpen(false); window.dispatchEvent(new Event('tg:portal-nav')); }}
+                        onClick={(e) => { if (isUnread) markRead(n.id); setOpen(false); if (navigatePortal(resolveHref(n)!, e)) e.preventDefault(); else window.dispatchEvent(new Event('tg:portal-nav')); }}
                       >
                         {body}
                       </Link>

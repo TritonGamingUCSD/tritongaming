@@ -11,9 +11,20 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 // Usage — the same two spots per row as before:
 //   `dragHandleProps(i)`  on a small grip element,
 //   `dropTargetProps(i)`  on the whole row (so a drop anywhere on it lands).
+//
+// The list moves live while you drag: render `view` (not `items`) and the other rows slide out of the way before you let go. `dragIndex` is where the
+// dragged row sits right now. Nothing is saved until the drop (`onReorder` runs once, on release).
 export function useDragReorder<T>(items: T[], onReorder: (next: T[]) => void) {
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const [overIndex, setOverIndex] = useState<number | null>(null);
+  const [drag, setDrag] = useState<{ from: number; at: number } | null>(null);
+  const dragIndex = drag ? drag.at : null;
+  const overIndex: number | null = null;   // no drop line any more: the rows themselves show where it will land
+  const view = (() => {
+    if (!drag || drag.from === drag.at || drag.from >= items.length || drag.at >= items.length) return items;
+    const next = [...items];
+    const [moved] = next.splice(drag.from, 1);
+    next.splice(drag.at, 0, moved);
+    return next;
+  })();
   const itemsRef = useRef(items);
   itemsRef.current = items;
   const reorderRef = useRef(onReorder);
@@ -46,14 +57,13 @@ export function useDragReorder<T>(items: T[], onReorder: (next: T[]) => void) {
       onPointerDown: (e: React.PointerEvent) => {
         if (e.button !== undefined && e.button !== 0) return; // primary button / touch / pen only
         e.preventDefault();
-        setDragIndex(index);
-        setOverIndex(index);
+        setDrag({ from: index, at: index });
         let over = index;
 
         const onMove = (ev: PointerEvent) => {
           const el = document.elementFromPoint(ev.clientX, ev.clientY)?.closest('[data-drag-index]');
           const idx = el ? Number(el.getAttribute('data-drag-index')) : null;
-          if (idx !== null && !Number.isNaN(idx) && idx !== over) { over = idx; setOverIndex(idx); }
+          if (idx !== null && !Number.isNaN(idx) && idx !== over) { over = idx; setDrag({ from: index, at: idx }); }
           // Scroll the page when dragging near the top/bottom edge.
           if (ev.clientY < 70) window.scrollBy(0, -14);
           else if (ev.clientY > window.innerHeight - 70) window.scrollBy(0, 14);
@@ -63,8 +73,7 @@ export function useDragReorder<T>(items: T[], onReorder: (next: T[]) => void) {
           window.removeEventListener('pointerup', onUp);
           window.removeEventListener('pointercancel', onCancel);
           if (commit && over !== index) move(index, over);
-          setDragIndex(null);
-          setOverIndex(null);
+          setDrag(null);
         };
         const onUp = () => finish(true);
         const onCancel = () => finish(false);
@@ -87,5 +96,5 @@ export function useDragReorder<T>(items: T[], onReorder: (next: T[]) => void) {
     return { 'data-drag-index': index };
   }
 
-  return { dragIndex, overIndex, dragHandleProps, dropTargetProps };
+  return { view, dragIndex, overIndex, dragHandleProps, dropTargetProps };
 }

@@ -1,6 +1,10 @@
 'use client';
 
+import SaveBar from '@/components/portal/SaveBar';
+import EditingNow from '@/components/portal/EditingNow';
+import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
 import Dialog, { DialogText, DialogCheck, DialogInput, DialogSearch, DialogResults, DialogResult, DialogCancel } from '@/components/ui/Dialog';
+import { roleInk } from '@/lib/roleColors';
 import Notice from '@/components/ui/Notice';
 import HoldButton from '@/components/HoldToConfirm/HoldButton';
 import { showToast } from '@/lib/toast';
@@ -16,6 +20,7 @@ import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
 import styles from './RoleManager.module.css';
 import Select from '@/components/ui/Select';
+import UserDetail from './UserDetail';
 
 interface RoleGrant {
   role: AppRole;
@@ -64,9 +69,10 @@ interface DivisionOption {
 export default function RoleManager({ users: initialUsers, divisions }: { users: User[]; divisions: DivisionOption[] }) {
   const [users, setUsers] = useState(initialUsers);
   const [query, setQuery] = useState('');
-  const [filterRole, setFilterRole] = useState<AppRole | 'all'>('all');
+  const [filterRole, setFilterRole] = useState<AppRole | 'all' | 'none'>('all');
   const [sortBy, setSortBy] = useState<'name-asc' | 'name-desc' | 'joined-new' | 'joined-old'>('joined-new');
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
   const [draft, setDraft] = useState<RoleGrant[]>([]);
   const [saving, setSaving] = useState(false);
   // Confirmations use the site-wide toast (see lib/toast).
@@ -146,7 +152,8 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
     // email) — so "jane doe", "jane ucsd.edu" or a tag all narrow as expected.
     const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
     const list = users.filter((u) => {
-      if (filterRole !== 'all' && !u.user_roles.some((r) => r.role === filterRole)) return false;
+      if (filterRole === 'none') { if (u.user_roles.length > 0) return false; }
+      else if (filterRole !== 'all' && !u.user_roles.some((r) => r.role === filterRole)) return false;
       if (tokens.length === 0) return true;
       const haystack = [
         u.display_name,
@@ -172,12 +179,15 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
   }, [users, query, filterRole, sortBy]);
 
   const roleCounts = useMemo(() => {
-    const counts: Record<string, number> = { all: users.length };
+    const counts: Record<string, number> = { all: users.length, none: users.filter((u) => u.user_roles.length === 0).length };
     ASSIGNABLE_ROLES.forEach((r) => {
       counts[r] = users.filter((u) => u.user_roles.some((ur) => ur.role === r)).length;
     });
     return counts;
   }, [users]);
+
+  // Role changes stay a draft until Save changes (the bar at the bottom). Opening someone else's roles starts fresh.
+  const { dirty: rolesDirty, saved: savedRoles } = useUnsavedChanges(editingId ? draft : null, undefined, editingId);
 
   function startEditing(user: User) {
     setEditingId(user.id);
@@ -286,16 +296,18 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
 
   return (
     <div className={styles.wrap}>
+      {detailId && <UserDetail userId={detailId} onClose={() => setDetailId(null)} />}
 
       {/* Controls */}
       <div className={styles.controls}>
+        <div className={styles.searchRow}>
         <div className={styles.searchWrap}>
           <span className={styles.searchIcon}><Search size={15} strokeWidth={1.5} aria-hidden="true" /></span>
           <input
             className={styles.search}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search name, real name, email or gamer tag…"
+            placeholder="Search people…"
             autoComplete="off"
           />
           {query && (
@@ -314,6 +326,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
           <option value="joined-new">Newest joined</option>
           <option value="joined-old">Oldest joined</option>
         </Select>
+        </div>
 
         <div className={styles.roleFilters}>
           <button
@@ -321,6 +334,13 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
             onClick={() => setFilterRole('all')}
           >
             All <span className={styles.count}>{roleCounts.all}</span>
+          </button>
+          <button
+            className={`${styles.roleFilter} ${filterRole === 'none' ? styles.roleFilterActive : ''}`}
+            onClick={() => setFilterRole('none')}
+            title="Accounts with no role at all (students and guests)"
+          >
+            No role <span className={styles.count}>{roleCounts.none}</span>
           </button>
           {ASSIGNABLE_ROLES.filter((r) => roleCounts[r] > 0).map((r) => (
             <button
@@ -334,6 +354,10 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
           ))}
         </div>
       </div>
+
+      <p className={styles.resultCount} role="status" aria-live="polite">
+        {filtered.length === users.length ? <><b>{users.length.toLocaleString()}</b> accounts</> : <>Showing <b>{filtered.length.toLocaleString()}</b> of <b>{users.length.toLocaleString()}</b> accounts</>}
+      </p>
 
       {selectedIds.size > 0 && (
         <div className={styles.bulkBar}>
@@ -351,10 +375,8 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
               ))}
             </Select>
           )}
-          <button className={styles.roleBtn} onClick={applyBulkRole} disabled={bulkApplying}>
-            {bulkApplying ? 'Applying…' : `Apply to ${selectedIds.size}`}
-          </button>
-          <button className={styles.roleBtn} onClick={() => { setSelectedIds(new Set()); setBulkError(null); }} disabled={bulkApplying}>Clear</button>
+          <Button size="sm" onClick={applyBulkRole} loading={bulkApplying}>{bulkApplying ? 'Applying…' : `Apply to ${selectedIds.size}`}</Button>
+          <Button size="sm" variant="ghost" onClick={() => { setSelectedIds(new Set()); setBulkError(null); }} disabled={bulkApplying}>Clear</Button>
           {bulkError && <Notice tone="error" compact>{bulkError}</Notice>}
         </div>
       )}
@@ -430,7 +452,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
                         <span
                           key={`${r.role}-${r.division_id ?? ''}`}
                           className={styles.currentRole}
-                          style={{ background: ROLE_COLORS[r.role] + '18', color: ROLE_COLORS[r.role], borderColor: ROLE_COLORS[r.role] + '44' }}
+                          style={{ background: ROLE_COLORS[r.role] + '18', color: roleInk(ROLE_COLORS[r.role]), borderColor: ROLE_COLORS[r.role] + '44' }}
                         >
                           {/* A user can lead more than one division at once now — name it
                               on the badge itself, otherwise two "Division Lead" badges in a
@@ -441,11 +463,13 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
                         </span>
                       ))
                     )}
+                    <Button size="sm" variant="secondary" onClick={() => setDetailId(user.id)}>Details</Button>
                     <Button size="sm" variant="secondary" onClick={() => startEditing(user)}><Pencil size={13} aria-hidden="true" /> Edit roles</Button>
                     <IconButton kind="delete" label={`Delete ${user.display_name || 'user'}'s account`} onClick={() => openDeleteModal(user)} />
                   </div>
                 ) : (
                   <div className={styles.editPanel}>
+                    <EditingNow room={`roles:${user.id}`} what={`${user.display_name || 'this person'}’s roles`} />
                     <div className={styles.checkboxGrid}>
                       {/* 'division' is excluded here — it gets its own multi-select
                           list below instead of a plain on/off toggle, since someone
@@ -457,7 +481,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
                             checked={draft.some((d) => d.role === r)}
                             onChange={(e) => toggleDraftRole(r, e.target.checked)}
                           />
-                          <span style={{ color: ROLE_COLORS[r] }}>{ROLE_LABELS[r]}</span>
+                          <span style={{ color: roleInk(ROLE_COLORS[r]) }}>{ROLE_LABELS[r]}</span>
                         </label>
                       ))}
                     </div>
@@ -480,10 +504,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
                     </div>
                     {saveError && <Notice tone="error">{saveError}</Notice>}
                     <div className={styles.editActions}>
-                      <button className={styles.roleBtn} onClick={() => { setEditingId(null); setSaveError(null); }} disabled={saving}>Cancel</button>
-                      <button className={styles.roleBtn} onClick={() => saveDraft(user.id)} disabled={saving}>
-                        {saving ? 'Saving…' : 'Save'}
-                      </button>
+                      <Button size="sm" variant="ghost" onClick={() => { setEditingId(null); setSaveError(null); }} disabled={saving}>{rolesDirty ? 'Close without saving' : 'Close'}</Button>
                     </div>
                   </div>
                 )}
@@ -493,9 +514,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
         )}
       </div>
 
-      <div className={styles.footer}>
-        Showing {filtered.length} of {users.length} users
-      </div>
+      <SaveBar dirty={!!editingId && rolesDirty} saving={saving} onSave={() => editingId && void saveDraft(editingId)} onDiscard={() => setDraft(savedRoles() ?? [])} />
 
       {deleteTarget && (
         <Dialog

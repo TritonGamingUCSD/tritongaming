@@ -74,9 +74,8 @@ type ProfileInfo = Pick<Profile, 'display_name' | 'major' | 'year' | 'college' |
 // pronouns are required for everyone; year, college and major only for verified UCSD
 // members (isUcsd — see isVerifiedMember in lib/capabilities.ts), since a
 // non-UCSD guest has none of those to give.
-// `requireOrgTitle` is for people who hold an org position (officer, lead, exec,
-// division lead — see canSetOrgTitle): their title appears on the public
-// officer card, so it isn't optional for them. It's deliberately not part of
+// `requireOrgTitle` is for leads and exec (see requiresOrgTitle): their title appears on the public
+// officer card, so it isn't optional for them. Officers may add one, but are not asked for it. It's deliberately not part of
 // hasBasicProfileInfo — a missing title shouldn't block claiming a ticket.
 export function getMissingProfileFields(profile: ProfileInfo, isUcsd: boolean, opts: { requireOrgTitle?: boolean } = {}): string[] {
   const missing: string[] = [];

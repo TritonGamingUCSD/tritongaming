@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import { GAME_OPTIONS, GAME_SEPARATOR, MAX_GAMES, MAX_GAMES_LENGTH, splitStoredGames } from '@/lib/games';
 import styles from './profile.module.css';
 import Select from '@/components/ui/Select';
+import Button from '@/components/ui/Button';
 
 const OTHER = '__other__';
 
@@ -62,8 +63,8 @@ export default function GamePicker({ value, onChange }: { value: string; onChang
             placeholder="Type a game"
             autoFocus
           />
-          <button type="button" className={styles.majorAddBtn} onClick={submitOther} disabled={!otherText.trim()}>Add</button>
-          <button type="button" className={styles.majorCancelBtn} onClick={() => { setOther(false); setOtherText(''); }}>Cancel</button>
+          <Button size="sm" onClick={submitOther} disabled={!otherText.trim()}>Add</Button>
+          <Button size="sm" variant="ghost" onClick={() => { setOther(false); setOtherText(''); }}>Cancel</Button>
         </div>
       )}
       <span className={styles.charCount} style={{ textAlign: 'left' }}>

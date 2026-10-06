@@ -36,6 +36,6 @@ export async function POST(request: Request) {
   const { data, error } = await auth.svc.from('internal_events').insert({ title, event_date: date, starts_at: starts.toISOString(), ends_at: ends.toISOString(), location, description, audience: aud.audience, invitees: aud.invitees ?? [], group_ids: aud.group_ids ?? [], created_by: auth.user.id }).select('id').single();
   if (error || !data) return NextResponse.json({ error: 'Failed to create the event.' }, { status: 500 });
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'create', entityType: 'internal event', entityId: data.id, summary: `Planned internal event "${title}" for ${date}` });
-  await notifyMeetingInvites(auth.svc, { title, when: `${formatPacificDateTime(starts, { weekday: true })}${location ? ` · ${location}` : ''}`, href: '/portal?section=internal-events' }, { audience: aud.audience, invitees: aud.invitees, group_ids: aud.group_ids }, { hostId: auth.user.id });
+  await notifyMeetingInvites(auth.svc, { title, when: `${formatPacificDateTime(starts, { weekday: true })}${location ? ` · ${location}` : ''}`, href: '/portal/internal-events' }, { audience: aud.audience, invitees: aud.invitees, group_ids: aud.group_ids }, { hostId: auth.user.id });
   return NextResponse.json({ id: data.id }, { status: 201 });
 }

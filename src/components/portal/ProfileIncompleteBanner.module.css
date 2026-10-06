@@ -5,20 +5,21 @@
   flex-wrap: wrap;
   margin-bottom: 1rem;
   padding: 0.75rem 1rem;
-  border-radius: 0.75rem;
-  background: rgba(255, 199, 44, 0.12);
-  border: 1px solid rgba(255, 199, 44, 0.45);
-  color: var(--white);
+  border-radius: 6px;
+  background: var(--pp-card);
+  border: 2px solid var(--pp-ink);
+  box-shadow: 3px 3px 0 rgba(var(--pp-ink-rgb), 0.3);
+  color: var(--pp-ink);
 }
-.icon { color: var(--yellow-text); flex-shrink: 0; }
+.icon { color: var(--p-accent-text); flex-shrink: 0; }
 .text { margin: 0; flex: 1 1 200px; font-size: 0.88rem; line-height: 1.4; }
-.text strong { color: var(--yellow-text); }
+.text strong { color: var(--pp-ink); }
 .btn {
   flex-shrink: 0;
   padding: 0.5rem 1rem;
   border-radius: 999px;
   background: var(--yellow);
-  color: #011941;
+  color: #011941; /* theme-ok */
   font-weight: 800;
   font-size: 0.82rem;
   text-decoration: none;

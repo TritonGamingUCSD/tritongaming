@@ -15,7 +15,7 @@
   width: 100%;
   max-width: 420px;
   background: #0a0f1e;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.1);
   border-radius: 1rem;
   padding: 1.5rem;
   display: flex;
@@ -27,7 +27,7 @@
 .title {
   font-family: var(--font-futura-heavy);
   font-size: 1.05rem;
-  color: var(--white);
+  color: var(--pp-ink);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -52,7 +52,7 @@
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(242, 241, 240, 0.4);
+  color: rgba(var(--pp-ink-rgb), 0.4);
   flex-shrink: 0;
 }
 
@@ -70,13 +70,13 @@
 
 .cancelBtn {
   font-size: 0.85rem;
-  color: rgba(242, 241, 240, 0.5);
+  color: rgba(var(--pp-ink-rgb), 0.5);
   padding: 0.625rem 1.1rem;
   border-radius: 0.5rem;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
-.cancelBtn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.05); color: rgba(242, 241, 240, 0.8); }
+.cancelBtn:hover:not(:disabled) { background: rgba(var(--pp-ink-rgb), 0.05); color: rgba(var(--pp-ink-rgb), 0.8); }
 .cancelBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .confirmBtn {

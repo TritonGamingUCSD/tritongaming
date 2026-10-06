@@ -42,7 +42,8 @@ export async function updateSession(request: NextRequest) {
   if (pathname.startsWith('/portal') && !user) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
-    url.searchParams.set('next', pathname);
+    url.search = '';
+    url.searchParams.set('next', pathname + request.nextUrl.search);   // keep the open doc, filters and search through sign-in
     return NextResponse.redirect(url);
   }
 

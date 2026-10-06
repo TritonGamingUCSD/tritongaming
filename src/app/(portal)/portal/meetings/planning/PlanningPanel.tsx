@@ -1,9 +1,12 @@
 'use client';
 
+import SectionTabs from '@/components/ui/SectionTabs';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useDraft } from '@/lib/useDraft';
+import DraftBanner from '@/components/portal/DraftBanner';
 import { useSearchParams } from 'next/navigation';
 import { usePortalParams } from '@/lib/usePortalParams';
-import { ArrowLeft, Bell, CalendarClock, Check, ChevronRight, Hourglass, Link2, Lock, MousePointerClick, Pencil, Plus, RotateCcw, Star, Trash2, UserX, Users } from 'lucide-react';
+import { ArrowLeft, Bell, CalendarClock, Check, ChevronRight, Hourglass, Lock, MousePointerClick, Pencil, Plus, RotateCcw, Star, Trash2, UserX, Users } from 'lucide-react';
 import Notice from '@/components/ui/Notice';
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
@@ -103,6 +106,8 @@ function PlanForm({ plan, onDone, onCancel }: { plan?: PlanView; onDone: () => v
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const rangeTooLong = kind === 'once' && daysBetween(rs, re) > MAX_RANGE_DAYS - 1;
+  // A new plan autosaves in this browser, so a reload or lost connection does not lose it (editing an existing plan does not need it).
+  const draft = useDraft('meeting-plan-new', { kind, title, description, location, duration, ws, we, rs, re, answerBy, audience }, (v) => !!plan || (!v.title.trim() && !v.description.trim() && !v.location.trim() && audienceEmpty(v.audience)));
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -112,6 +117,7 @@ function PlanForm({ plan, onDone, onCancel }: { plan?: PlanView; onDone: () => v
       const res = await fetch(plan ? `/api/meeting-plans/${plan.id}` : '/api/meeting-plans', { method: plan ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) { setError(json.error || 'Couldn’t save the plan.'); return; }
+      draft.clear();
       onDone();
     } finally { setBusy(false); }
   }
@@ -120,6 +126,7 @@ function PlanForm({ plan, onDone, onCancel }: { plan?: PlanView; onDone: () => v
     <form className={m.form} onSubmit={submit}>
       <button type="button" className={m.backLink} onClick={onCancel}><ArrowLeft size={15} aria-hidden="true" /> Back to plans</button>
       <h2 className={m.sectionHead}>{plan ? 'Edit plan' : 'Plan a meeting'}</h2>
+      {!plan && draft.offer && <DraftBanner at={draft.offer.at} what="plan" onContinue={() => { const d = draft.accept(); if (d) { setKind(d.kind); setTitle(d.title); setDescription(d.description); setLocation(d.location); setDuration(d.duration); setWs(d.ws); setWe(d.we); setRs(d.rs >= today ? d.rs : today); setRe(d.re >= today ? d.re : addDays(today, 6)); setAnswerBy(d.answerBy); setAudience(d.audience); } }} onDiscard={draft.discard} />}
       {!plan && (
         <div className={styles.kindPick} role="radiogroup" aria-label="Type of plan">
           <button type="button" role="radio" aria-checked={kind === 'once'} className={`${styles.kindBtn} ${kind === 'once' ? styles.kindOn : ''}`} onClick={() => setKind('once')}><strong>One time</strong><span>Pick from a range of dates (up to {MAX_RANGE_DAYS} days)</span></button>
@@ -161,7 +168,6 @@ function PlanDetail({ plan, userId, onBack, reload }: { plan: PlanView; userId: 
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
   const [note, setNote] = useState('');
-  const [copied, setCopied] = useState(false);
   const dirty = useRef(JSON.stringify(withoutBusy(plan.mine ?? {}, plan.busy, startsAll)) !== JSON.stringify(plan.mine ?? {}));
   const latest = useRef(mine);
   latest.current = mine;
@@ -191,15 +197,6 @@ function PlanDetail({ plan, userId, onBack, reload }: { plan: PlanView; userId: 
     } finally { setBusy(''); }
   }
 
-  // The link to this plan's page: whoever it asks (signed in) lands straight on filling out their availability.
-  async function copyLink() {
-    const link = `${window.location.origin}/portal?section=meetings&tab=planning&plan=${plan.id}`;
-    try { await navigator.clipboard.writeText(link); } catch {
-      const t = document.createElement('textarea'); t.value = link; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove();
-    }
-    setCopied(true); setTimeout(() => setCopied(false), 2000);
-  }
-
   if (editing) return <PlanForm plan={plan} onDone={async () => { setEditing(false); await reload(); }} onCancel={() => setEditing(false)} />;
 
   // The group result counts my edits the moment I make them, not only after they are saved (an empty grid still means not answered).
@@ -207,7 +204,9 @@ function PlanDetail({ plan, userId, onBack, reload }: { plan: PlanView; userId: 
   if (iAmAsked && plan.status === 'open') { if (Object.keys(mine).length) liveResponses[userId] = mine; else delete liveResponses[userId]; }
   const live: PlanView = { ...plan, responses: liveResponses };
   const answered = plan.people.filter((p) => live.responses[p.id]);
-  const waiting = plan.people.filter((p) => !live.responses[p.id] && p.id !== plan.host_id);
+  // Everyone who has not answered, the host included, so the count matches the Group results tab. Reminders still go only to the others (the host is the one asking).
+  const waiting = plan.people.filter((p) => !live.responses[p.id]);
+  const remindable = waiting.filter((p) => p.id !== plan.host_id);
   const decided = plan.status === 'decided' && plan.decided_slot;
   const suggestions = plan.status === 'open' && plan.canManage ? bestTimes(live, plan.days, plan.people, live.responses, 10, plan.blocked) : [];
   const pickEvalFull = pick ? evaluateStart(pick.day, pick.start, plan.duration_min, plan.people, live.responses, plan.blocked) : null;
@@ -225,10 +224,9 @@ function PlanDetail({ plan, userId, onBack, reload }: { plan: PlanView; userId: 
           {plan.description && <p className={styles.desc}>{plan.description}</p>}
         </div>
         <div className={styles.hostBtns}>
-          <IconButton kind="copy" active={copied} icon={copied ? <Check size={16} strokeWidth={1.75} aria-hidden="true" /> : <Link2 size={16} strokeWidth={1.75} aria-hidden="true" />} label={copied ? 'Link copied' : 'Copy link to this plan (only people the plan asks can open it)'} onClick={copyLink} />
         {plan.canManage && plan.status === 'open' && (<>
             <IconButton kind="edit" label="Edit this plan" onClick={() => setEditing(true)} />
-            <Button size="sm" variant="ghost" loading={busy === 'nudge'} onClick={async () => { if (await confirmHold({ title: `Remind ${waiting.length} ${waiting.length === 1 ? 'person' : 'people'}?`, message: `This sends a notification to everyone who hasn’t answered (${waiting.map((p) => p.name).slice(0, 6).join(', ')}${waiting.length > 6 ? ', …' : ''}). It can be sent once every 12 hours.`, confirmLabel: 'Hold to send' })) await act('nudge'); }} disabled={waiting.length === 0}><Bell size={14} aria-hidden="true" /> Remind{waiting.length ? ` (${waiting.length})` : ''}</Button>
+            <Button size="sm" variant="ghost" loading={busy === 'nudge'} onClick={async () => { if (await confirmHold({ title: `Remind ${remindable.length} ${remindable.length === 1 ? 'person' : 'people'}?`, message: `This sends a notification to everyone who hasn’t answered (${remindable.map((p) => p.name).slice(0, 6).join(', ')}${remindable.length > 6 ? ', …' : ''}). It can be sent once every 12 hours.`, confirmLabel: 'Hold to send' })) await act('nudge'); }} disabled={waiting.length === 0}><Bell size={14} aria-hidden="true" /> Remind{waiting.length ? ` (${waiting.length})` : ''}</Button>
             <IconButton kind="delete" label="Delete this plan" onClick={async () => { if (await confirmHold({ title: 'Delete this plan?', message: 'Everyone’s answers are removed.', confirmLabel: 'Hold to delete' })) { const r = await fetch(`/api/meeting-plans/${plan.id}`, { method: 'DELETE' }); if (r.ok) onBack(); else setError((await r.json().catch(() => ({}))).error || 'Couldn’t delete.'); } }} />
         </>)}
         </div>
@@ -246,10 +244,10 @@ function PlanDetail({ plan, userId, onBack, reload }: { plan: PlanView; userId: 
       )}
 
       {!plan.expired && (
-        <div className={styles.viewTabs} role="tablist">
-          {iAmAsked && plan.status === 'open' && <button type="button" role="tab" aria-selected={view === 'mine'} className={`${styles.viewTab} ${view === 'mine' ? styles.viewTabOn : ''}`} onClick={() => setView('mine')}>My availability{!live.responses[userId] && !Object.keys(mine).length ? <span className={styles.todo}>to do</span> : null}</button>}
-          <button type="button" role="tab" aria-selected={view === 'results'} className={`${styles.viewTab} ${view === 'results' ? styles.viewTabOn : ''}`} onClick={() => setView('results')}>Group results <span className={styles.count}>{answered.length}/{plan.people.length}</span></button>
-        </div>
+        <SectionTabs<'mine' | 'results'> label="View" variant="segmented" value={view} onChange={setView} tabs={[
+          ...(iAmAsked && plan.status === 'open' ? [{ id: 'mine' as const, label: 'My availability', badge: !live.responses[userId] && !Object.keys(mine).length ? 1 : 0 }] : []),
+          { id: 'results' as const, label: `Group results ${answered.length}/${plan.people.length}` },
+        ]} />
       )}
 
       {!plan.expired && view === 'mine' && iAmAsked && plan.status === 'open' && (
@@ -296,7 +294,7 @@ function PlanDetail({ plan, userId, onBack, reload }: { plan: PlanView; userId: 
               {pickEval.length > 0
                 ? <p className={styles.confirmLine}><UserX size={15} aria-hidden="true" /> <span>Marked absent (excused): {pickEval.map((p) => p.name).join(', ')}</span></p>
                 : <p className={styles.confirmLine}><Check size={15} aria-hidden="true" /> <span>Everyone who answered can make it</span></p>}
-              {plan.people.filter((p) => !live.responses[p.id] && p.id !== plan.host_id).length > 0 && <p className={styles.confirmLine}><Hourglass size={15} aria-hidden="true" /> <span>Not answered yet: they stay expected</span></p>}
+              {waiting.length > 0 && <p className={styles.confirmLine}><Hourglass size={15} aria-hidden="true" /> <span>Not answered yet: they stay expected</span></p>}
               {hostBusy && <p className={`${styles.confirmLine} ${styles.warnText}`}><UserX size={15} aria-hidden="true" /> <span>You marked yourself unavailable then</span></p>}
               <div className={styles.confirmBtns}>
                 <Button loading={busy === 'decide'} onClick={() => act('decide', plan.kind === 'weekly' ? { weekday: Number(pick.day), start: pick.start } : { day: pick.day, start: pick.start })}>Schedule it</Button>
@@ -310,7 +308,7 @@ function PlanDetail({ plan, userId, onBack, reload }: { plan: PlanView; userId: 
             {waiting.length > 0 && (
               <span className={styles.waitingRow}>
                 <span className={styles.waitingLabel}><Hourglass size={13} aria-hidden="true" /> Waiting on</span>
-                {waiting.map((p) => <span key={p.id} className={styles.chip2}>{p.name}</span>)}
+                {waiting.map((p) => <span key={p.id} className={styles.chip2}>{p.name}{p.id === plan.host_id ? ' (host)' : ''}</span>)}
               </span>
             )}
           </div>

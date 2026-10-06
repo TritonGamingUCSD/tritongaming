@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { AUDIENCE_ROLES } from '@/lib/meetingAudience';
-import { authorizeMeetings } from '@/lib/meetings';
+import { authorizeMeetings, authorizeTeamView } from '@/lib/meetings';
 import { ROLE_DISPLAY_RANK, ROLE_LABELS, type AppRole } from '@/types/database';
 import { staffName } from '@/lib/names';
 
@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 // Everyone on the team an exec can put in a group or invite to a meeting, with their roles so the
 // picker can offer "add all leads" style shortcuts.
 export async function GET() {
-  const auth = await authorizeMeetings('host_meetings');
+  const auth = await authorizeTeamView();
   if (auth.error) return auth.error;
   const { data: grants } = await auth.svc.from('user_roles').select('user_id, role').in('role', [...AUDIENCE_ROLES, 'inactive', 'alumni']);
   const rolesOf = new Map<string, AppRole[]>();

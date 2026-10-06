@@ -86,6 +86,7 @@ export default function EditEventClient({
       submitLabel="Save Changes"
       onSubmit={handleUpdate}
       stayAfterSave
+      eventId={eventId}
       creditPeople={creditPeople}
       seedCheckinFormConfig={seedCheckinFormConfig}
       previewViewer={previewViewer}

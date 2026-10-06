@@ -4,6 +4,7 @@ import { getUserRoles } from '@/lib/auth';
 import { hasCapability } from '@/lib/capabilities';
 import { createClient } from '@/lib/supabase/server';
 import EditDivisionClient from './EditDivisionClient';
+import { getCreditPeople } from '@/lib/creditPeople';
 import type { DivisionFormValues } from '../DivisionForm';
 
 export const metadata = { title: 'Edit Division' };
@@ -55,7 +56,8 @@ export default async function EditDivisionPage({ params }: Params) {
       divisionId={division.id}
       initial={initial}
       canManageDirectory={canManageDirectory}
-      backHref={canManageDirectory ? '/portal?section=divisions&tab=directory' : '/portal?section=divisions&tab=my-division'}
+      creditPeople={await getCreditPeople(supabase).catch(() => [])}
+      backHref={canManageDirectory ? '/portal/divisions/all' : '/portal/divisions/my-division'}
     />
   );
 }

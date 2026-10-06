@@ -24,6 +24,9 @@
 }
 .applyBtn:hover, .applyBtn:focus-visible { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.6); }
 
+.closedNote { align-self: flex-start; display: grid; gap: 0.35rem; max-width: 34rem; padding: 0.9rem 1.1rem; border: 2px dashed rgba(255, 255, 255, 0.45); border-radius: var(--radius-sm); color: rgba(255, 255, 255, 0.85); font-size: 0.95rem; line-height: 1.5; }
+.closedTitle { font-family: var(--font-futura-heavy); text-transform: uppercase; letter-spacing: 0.04em; color: #f2f1f0; }
+
 .officerMeta { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
 /* a portrait flyer stays portrait; it is capped in height instead of being cropped */
 .flyer { position: relative; margin: 0.4rem auto 0; padding: 0.6rem; background: var(--paper); box-shadow: var(--hard-shadow); transform: rotate(1.2deg); max-width: 320px; }

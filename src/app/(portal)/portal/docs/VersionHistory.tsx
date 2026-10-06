@@ -31,7 +31,7 @@ export default function VersionHistory({ docId, onRestore, onClose }: { docId: s
         <button type="button" className={styles.iconBtn} onClick={onClose} aria-label="Close history"><X size={16} aria-hidden="true" /></button>
       </header>
       {error && <p className={styles.errorText}>{error}</p>}
-      {!versions && !error && <LoadingSpinner size={22} label="Loading…" theme="dark" />}
+      {!versions && !error && <LoadingSpinner size={22} label="Loading…" theme="auto" />}
       {versions && versions.length === 0 && <p className={styles.muted}>Nothing published yet.</p>}
       {versions && versions.length > 0 && (
         <div className={styles.historyBody}>

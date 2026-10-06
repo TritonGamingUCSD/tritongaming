@@ -3,8 +3,9 @@ import { createServiceClient } from '@/lib/supabase/admin';
 import { bucketByMonth, cumulative } from '@/lib/monthBuckets';
 
 export interface DivisionCount { name: string; count: number; }
+export interface RoleCount { role: string; count: number; }
 export interface EconomyStats { inCirculation: number; totalRedeemed: number; pendingRedemptions: number; }
-export interface TopReward { title: string; count: number; system: 'Rewards' | 'Battlepass'; }
+export interface TopReward { title: string; count: number; system: 'Rewards'; }
 
 // Analytics dashboard data — everything here is built from tables that
 // already exist (events, tickets, profiles, user_roles, divisions), no new
@@ -16,23 +17,21 @@ export interface TopReward { title: string; count: number; system: 'Rewards' | '
 // platform metric the way member growth and division sizes are.
 export async function getStatsData() {
   const supabase = await createClient();
-  // Points/Battlepass ledgers and redemptions are RLS-scoped to "your own
+  // Points ledgers and redemptions are RLS-scoped to "your own
   // rows or has_capability(...)" — narrower than the public-ish reads
   // above, so these use the service client rather than assume admin reads
   // are covered by every one of those policies.
   const serviceClient = createServiceClient();
 
   const [eventsRes, ticketsRes, profilesRes, rolesRes, divisionsRes,
-    memberPointsRes, officerPointsRes, memberRedemptionsRes, officerRedemptionsRes] = await Promise.all([
+    memberPointsRes, memberRedemptionsRes] = await Promise.all([
     supabase.from('events').select('id', { count: 'exact', head: true }),
-    supabase.from('tickets').select('status'),
+    supabase.from('tickets').select('status, created_at, checked_in_at'),
     supabase.from('profiles').select('created_at'),
     supabase.from('user_roles').select('role, division_id'),
     supabase.from('divisions').select('id, name'),
     serviceClient.from('point_transactions').select('amount, type, reversed_at'),
-    serviceClient.from('officer_point_transactions').select('amount, type, reversed_at'),
     serviceClient.from('reward_redemptions').select('status, reward:reward_items(title)').neq('status', 'cancelled'),
-    serviceClient.from('officer_reward_redemptions').select('status, reward:officer_reward_items(title)').neq('status', 'cancelled'),
   ]);
 
   const tickets = ticketsRes.data ?? [];
@@ -53,7 +52,6 @@ export async function getStatsData() {
     };
   }
   const pointsEconomy = summarizeEconomy(memberPointsRes.data ?? [], memberRedemptionsRes.data ?? []);
-  const battlepassEconomy = summarizeEconomy(officerPointsRes.data ?? [], officerRedemptionsRes.data ?? []);
 
   function topRewardsFrom(rows: { reward: { title: string } | { title: string }[] | null }[] | null, system: TopReward['system']) {
     const counts = new Map<string, number>();
@@ -66,7 +64,6 @@ export async function getStatsData() {
   }
   const topRewards: TopReward[] = [
     ...topRewardsFrom(memberRedemptionsRes.data, 'Rewards'),
-    ...topRewardsFrom(officerRedemptionsRes.data, 'Battlepass'),
   ].sort((a, b) => b.count - a.count).slice(0, 6);
 
   const memberGrowth = cumulative(bucketByMonth(profiles.map((p) => p.created_at)));
@@ -82,14 +79,30 @@ export async function getStatsData() {
     .filter((d) => d.count > 0)
     .sort((a, b) => b.count - a.count);
 
+  // Tickets taken and people actually checked in, per month: how much of the interest turns into attendance.
+  const issued = tickets.filter((t) => t.status === 'active' || t.status === 'used');
+  const ticketsByMonth = bucketByMonth(issued.map((t) => t.created_at as string));
+  const checkinsByMonth = bucketByMonth(tickets.filter((t) => t.checked_in_at).map((t) => t.checked_in_at as string));
+  const months = [...new Set([...ticketsByMonth, ...checkinsByMonth].map((p) => p.month))];
+  const monthOrder = (m: string) => new Date(`1 ${m.replace(/ (\d\d)$/, ' 20$1')}`).getTime();
+  const activity = months.sort((a, b) => monthOrder(a) - monthOrder(b)).map((month) => ({
+    month, tickets: ticketsByMonth.find((p) => p.month === month)?.count ?? 0, checkins: checkinsByMonth.find((p) => p.month === month)?.count ?? 0,
+  }));
+  const roleTotals = new Map<string, number>();
+  roleRows.forEach((r) => roleTotals.set(r.role, (roleTotals.get(r.role) ?? 0) + 1));
+  const roleCounts: RoleCount[] = [...roleTotals.entries()].map(([role, count]) => ({ role, count })).sort((a, b) => b.count - a.count);
+  const monthAgo = Date.now() - 30 * 86_400_000;
+  const newMembers = profiles.filter((p) => new Date(p.created_at as string).getTime() >= monthAgo).length;
+
   const totals = {
     members: profiles.length,
+    newMembers,
     events: eventsRes.count ?? 0,
     ticketsIssued: tickets.filter((t) => t.status === 'active' || t.status === 'used').length,
     checkins: tickets.filter((t) => t.status === 'used').length,
   };
 
-  return { memberGrowth, divisionSizes, totals, pointsEconomy, battlepassEconomy, topRewards };
+  return { memberGrowth, divisionSizes, totals, pointsEconomy, topRewards, activity, roleCounts };
 }
 
 export type StatsData = Awaited<ReturnType<typeof getStatsData>>;

@@ -80,7 +80,7 @@ export async function performCheckin(
       type: 'ticket_checked_in',
       title: day ? `Checked in — Day ${day.day} of ${day.total}` : "You're checked in!",
       body: event.title ? `Enjoy ${event.title}.` : 'Enjoy the event.',
-      href: '/portal?section=tickets',
+      href: '/portal/tickets',
     }]);
     return { firstCheckin: false, day };
   }
@@ -101,7 +101,7 @@ export async function performCheckin(
         : event.title ? `Enjoy ${event.title}.` : 'Enjoy the event.',
       pointsAwarded && event.points_value > 0 ? `+${event.points_value} points earned.` : null,
     ].filter(Boolean).join(' '),
-    href: '/portal?section=tickets',
+    href: '/portal/tickets',
   }]);
 
   return { firstCheckin: true, day };

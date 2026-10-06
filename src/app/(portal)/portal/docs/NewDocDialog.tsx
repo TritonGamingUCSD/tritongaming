@@ -1,5 +1,6 @@
 'use client';
 
+import { Select } from '@/components/ui/Field';
 import { useMemo, useState } from 'react';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
@@ -34,7 +35,7 @@ export default function NewDocDialog({ sections, defaultParentId, defaultCategor
       </div>
       <label className={styles.dlgField}><span className={styles.dlgLabel}>Title</span><DialogInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder={tpl.title || 'e.g. Event day checklist'} maxLength={120} autoFocus /></label>
       <label className={styles.dlgField}><span className={styles.dlgLabel}>Where</span>
-        <select className={styles.dlgSelect} value={where} onChange={(e) => setWhere(e.target.value)}>{places.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}</select>
+        <Select className={styles.dlgSelect} value={where} onChange={(e) => setWhere(e.target.value)}>{places.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}</Select>
       </label>
       <DialogActions>
         <DialogCancel onClick={onClose} disabled={busy} />

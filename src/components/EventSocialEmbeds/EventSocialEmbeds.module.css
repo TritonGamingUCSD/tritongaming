@@ -75,7 +75,7 @@
   gap: 0.9rem;
   padding: 1rem 1.1rem;
   background: #5865f2;
-  color: #fff;
+  color: #f2f1f0;
   text-decoration: none;
   border: 3px solid var(--ink);
   border-radius: var(--radius-md);
@@ -97,7 +97,7 @@
 .row::-webkit-scrollbar { display: none; }
 .row > * { flex: 0 0 min(84%, 340px); scroll-snap-align: center; min-width: 0; }
 .row[data-count='1'] > * { flex-basis: 100%; }
-.swipeHint { display: block; margin: 0; text-align: right; font-family: var(--font-renegare); font-size: 1.15rem; color: var(--yellow-text); }
+.swipeHint { display: block; margin: 0; text-align: right; font-family: var(--font-renegare); font-size: 1.15rem; color: var(--sky-text); }
 @media (max-width: 640px) {
   .tiltL, .tiltR { transform: none; }
 }

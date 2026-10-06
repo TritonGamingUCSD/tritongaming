@@ -34,13 +34,13 @@ export async function notifyGroupAdditions(svc: SupabaseClient, groupId: string,
 
   const rows: NotificationInput[] = [];
   for (const m of (meetings ?? []) as (Spec & { starts_at: string; location: string | null })[]) {
-    for (const id of await fresh(m)) rows.push({ user_id: id, type: 'meeting_invite', title: `You’re invited to ${m.title}`, body: `${formatPacificDateTime(new Date(m.starts_at), { weekday: true })}${m.location ? ` · ${m.location}` : ''}`, href: '/portal?section=meetings&tab=mine' });
+    for (const id of await fresh(m)) rows.push({ user_id: id, type: 'meeting_invite', title: `You’re invited to ${m.title}`, body: `${formatPacificDateTime(new Date(m.starts_at), { weekday: true })}${m.location ? ` · ${m.location}` : ''}`, href: '/portal/meetings/mine' });
   }
   for (const s of (series ?? []) as (Spec & { weekday: number; start_time: string; end_time: string; location: string | null })[]) {
-    for (const id of await fresh(s)) rows.push({ user_id: id, type: 'meeting_invite', title: `You’re invited to ${s.title}`, body: `Every ${WEEKDAYS[s.weekday]}, ${clockLabel(s.start_time)} to ${clockLabel(s.end_time)}${s.location ? ` · ${s.location}` : ''}`, href: '/portal?section=meetings&tab=mine' });
+    for (const id of await fresh(s)) rows.push({ user_id: id, type: 'meeting_invite', title: `You’re invited to ${s.title}`, body: `Every ${WEEKDAYS[s.weekday]}, ${clockLabel(s.start_time)} to ${clockLabel(s.end_time)}${s.location ? ` · ${s.location}` : ''}`, href: '/portal/meetings/mine' });
   }
   for (const e of (events ?? []) as (Spec & { starts_at: string; location: string | null })[]) {
-    for (const id of await fresh(e)) rows.push({ user_id: id, type: 'internal_event_invite', title: `You’re invited to ${e.title}`, body: `${formatPacificDateTime(new Date(e.starts_at), { weekday: true })}${e.location ? ` · ${e.location}` : ''}`, href: '/portal?section=internal-events' });
+    for (const id of await fresh(e)) rows.push({ user_id: id, type: 'internal_event_invite', title: `You’re invited to ${e.title}`, body: `${formatPacificDateTime(new Date(e.starts_at), { weekday: true })}${e.location ? ` · ${e.location}` : ''}`, href: '/portal/internal-events' });
   }
   for (const p of (plans ?? []) as PlanRow[]) {
     if (planDayKeys(p, today).length === 0) continue;   // every day has passed; nothing to fill out

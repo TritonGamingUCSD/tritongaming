@@ -8,7 +8,7 @@ import IconButton from '@/components/ui/IconButton';
 import Notice from '@/components/ui/Notice';
 import SectionTabs from '@/components/ui/SectionTabs';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
-import { DateInput, Field, Input } from '@/components/ui/Field';
+import { DateInput, Field, Input, Select } from '@/components/ui/Field';
 import { confirmHold } from '@/lib/confirmHold';
 import { STRIKES_AT_LIMIT, countLabel } from '@/lib/strikeLabels';
 import styles from './tracker.module.css';
@@ -66,7 +66,7 @@ function Tracker() {
   }).sort((a, b) => Number(b.atLimit) - Number(a.atLimit) || b.active - a.active || a.name.localeCompare(b.name)), [people, filter, q]);
 
   if (error && !people) return <Notice tone="error">{error}</Notice>;
-  if (!people) return <LoadingSpinner size={28} label="Loading strikes…" theme="dark" />;
+  if (!people) return <LoadingSpinner size={28} label="Loading strikes…" theme="auto" />;
   const sel = people.find((p) => p.id === selected) ?? null;
 
   return (
@@ -131,7 +131,7 @@ function Pips({ active, limit }: { active: number; limit: number }) {
   );
 }
 function CategorySelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  return <select className={styles.select} value={value} onChange={(e) => onChange(e.target.value)} aria-label="What kind of strike">{CATEGORIES.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select>;
+  return <Select className={styles.select} value={value} onChange={(e) => onChange(e.target.value)} aria-label="What kind of strike">{CATEGORIES.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</Select>;
 }
 
 // One person's record: strikes, vouchers and history, with everything HR can do.
@@ -272,9 +272,9 @@ function StrikeRow({ s, readOnly, unusedVouchers, busy, onAct }: { s: Strike; re
       )}
       {mode === 'voucher' && (
         <form className={styles.inline} onSubmit={async (e) => { e.preventDefault(); if (voucherId && note.trim() && await onAct({ action: 'apply_voucher', voucher_id: voucherId, reason: note.trim() })) { setMode(null); setNote(''); } }}>
-          <select className={styles.select} value={voucherId} onChange={(e) => setVoucherId(e.target.value)} aria-label="Which voucher">
+          <Select className={styles.select} value={voucherId} onChange={(e) => setVoucherId(e.target.value)} aria-label="Which voucher">
             {unusedVouchers.map((v) => <option key={v.id} value={v.id}>Voucher from {day(v.created_at.slice(0, 10))}{v.reason ? ` · ${v.reason}` : ''}</option>)}
-          </select>
+          </Select>
           <Input value={note} onChange={(e) => setNote(e.target.value)} maxLength={200} placeholder="Why (they will see this)" aria-label="Why the voucher is being used" required />
           <Button type="submit" size="sm" loading={busy} disabled={!note.trim()}>Remove with voucher</Button><Button type="button" size="sm" variant="ghost" onClick={() => setMode(null)}>Cancel</Button>
         </form>
@@ -385,7 +385,7 @@ function Missed({ me, onChanged }: { me: string; onChanged: () => Promise<void> 
     await load(); await onChanged();
   }
   const chosen = () => (list ?? []).filter((s) => picked.has(key(s))).map((s) => ({ user_id: s.user_id, meeting_id: s.meeting_id }));
-  if (!list) return <LoadingSpinner size={26} label="Loading…" theme="dark" />;
+  if (!list) return <LoadingSpinner size={26} label="Loading…" theme="auto" />;
   return (
     <div className={styles.review}>
       <p className={styles.muted}>People who were meant to be at a meeting, didn’t check in, and weren’t excused. A miss shows here as soon as the meeting ends. For each person, add a strike, or excuse them with a reason (for a mistake, say) and they come off the list and are marked excused on the meeting. Tick people to add strikes or dismiss several at once; “Select all” is per meeting. Dismissed ones move to Past missed meetings.</p>

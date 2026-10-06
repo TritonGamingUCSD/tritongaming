@@ -83,7 +83,7 @@ async function carryOver(svc: SupabaseClient, quarters: Quarter[], cur: Quarter)
   const { data: staff } = await svc.from('user_roles').select('user_id').in('role', ['exec', 'admin']);
   await createNotifications(svc, [...new Set((staff ?? []).map((u) => u.user_id as string))].map((user_id) => ({
     user_id, type: 'quarter_status', title: `Check who’s inactive for ${quarterName(cur)}`,
-    body: `${ids.length} ${ids.length === 1 ? 'person was' : 'people were'} copied over from ${quarterName(prev)}. Change anyone who’s different.`, href: '/portal?section=quarters',
+    body: `${ids.length} ${ids.length === 1 ? 'person was' : 'people were'} copied over from ${quarterName(prev)}. Change anyone who’s different.`, href: '/portal/quarters',
   })));
 }
 
@@ -111,7 +111,7 @@ export async function syncInactive(svc: SupabaseClient, today: string = pacificD
   if (added.length || removed.length) invalidate('board');   // the Team page shows an Inactive tag
   const name = cur ? quarterName(cur) : 'this quarter';
   await createNotifications(svc, [
-    ...added.map((user_id) => ({ user_id, type: 'quarter_status', title: `You’re inactive for ${name}`, body: 'You keep your title. You have view-only access and aren’t expected at meetings.', href: '/portal?section=profile' })),
+    ...added.map((user_id) => ({ user_id, type: 'quarter_status', title: `You’re inactive for ${name}`, body: 'You keep your title. You have view-only access and aren’t expected at meetings.', href: '/portal/profile' })),
     ...removed.map((user_id) => ({ user_id, type: 'quarter_status', title: 'You’re active again', body: 'Meetings and your officer tools are back.', href: '/portal' })),
   ]);
   return { added, removed, quarter: cur ? quarterName(cur) : null };

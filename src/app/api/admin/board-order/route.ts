@@ -1,3 +1,4 @@
+import { logAudit } from '@/lib/audit';
 import { invalidate } from '@/lib/revalidate';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
@@ -16,7 +17,7 @@ export async function PUT(request: Request) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
-  if (!hasCapability(roles ?? [], 'manage_roles')) {
+  if (!hasCapability(roles ?? [], 'manage_board_order')) {
     return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
   }
 
@@ -33,5 +34,6 @@ export async function PUT(request: Request) {
   if (failed?.error) return NextResponse.json({ error: failed.error.message }, { status: 500 });
 
   invalidate('board', 'divisions');
+  await logAudit(serviceClient, { actorId: user.id, action: 'update', entityType: 'board order', summary: `Team page order changed (${order.length} people)` });
   return NextResponse.json({ ok: true });
 }

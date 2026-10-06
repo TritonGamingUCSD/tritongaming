@@ -1,5 +1,4 @@
 import { hasCapability, isRewardsEligible, type RoleGrant } from '@/lib/capabilities';
-import { BATTLEPASS_ROLES } from '@/lib/officerTiers';
 import type { Capability } from '@/types/database';
 
 // Sections and actions the portal search can jump to. Filtered by what the person can actually open, so the
@@ -9,7 +8,7 @@ export interface PortalCommand { id: string; label: string; hint: string; href: 
 interface Def extends PortalCommand { cap?: Capability | Capability[]; test?: (roles: RoleGrant[]) => boolean }
 
 const S = (id: string, label: string, hint: string, section: string, keywords: string[], cap?: Def['cap'], test?: Def['test']): Def =>
-  ({ id: `go-${id}`, label, hint, href: `/portal?section=${section}`, kind: 'Go to', keywords, cap, test });
+  ({ id: `go-${id}`, label, hint, href: `/portal/${section}`, kind: 'Go to', keywords, cap, test });
 const A = (id: string, label: string, hint: string, href: string, keywords: string[], cap?: Def['cap'], test?: Def['test']): Def =>
   ({ id: `do-${id}`, label, hint, href, kind: 'Do', keywords, cap, test });
 
@@ -22,8 +21,8 @@ const DEFS: Def[] = [
   S('checkin', 'Check-In', 'Scan tickets and reveal the online code', 'checkin', ['scan', 'scanner', 'qr'], 'checkin'),
   S('members', 'TG Members', 'Everyone in the org', 'members', ['people', 'directory', 'roster', 'team'], 'view_members'),
   S('meetings', 'Meetings', 'Check in, history and results', 'meetings', ['meeting', 'attendance'], ['attend_meetings', 'view_attendance_reports']),
+  S('shifts', 'Shifts', 'Sign up for a station and time at an event', 'shifts', ['shift', 'station', 'staff', 'volunteer', 'signup', 'sign up'], ['signup_shifts', 'manage_shifts']),
   S('internal', 'Internal Events', 'Socials, trainings and workshops for the team', 'internal-events', ['social', 'training', 'workshop', 'hangout', 'rsvp'], 'view_internal_events'),
-  S('battlepass', 'Battlepass', 'Officer recognition points', 'battlepass', ['points', 'tier'], undefined, (r) => r.some((x) => BATTLEPASS_ROLES.includes(x.role))),
   S('keys', 'Storage Keys', 'Who has each storage key', 'keys', ['key', 'keys', 'storage', 'closet', 'lock'], 'view_keys'),
   S('strikes', 'Strikes', 'Private strike tracker (HR and exec)', 'strikes', ['strike', 'strikes', 'voucher', 'hr', 'attendance'], ['manage_strikes']),
   S('quarters', 'Quarter status', 'Who is active or inactive each quarter', 'quarters', ['quarter', 'inactive', 'active', 'officer', 'term', 'year'], ['manage_quarters']),
@@ -37,24 +36,25 @@ const DEFS: Def[] = [
   S('admin', 'Admin', 'Stats, roles, analytics and audit history', 'admin', ['roles', 'stats', 'audit', 'system'], 'view_admin_dashboard'),
   S('site-content', 'Site Content', 'Edit the public website', 'site-content', ['website', 'cms', 'banners', 'text', 'images'], 'manage_site_content'),
 
-  A('help-new', 'Ask for help', 'Open a help ticket', '/portal?section=help&tab=new', ['support', 'question', 'bug', 'problem', 'report', 'ticket']),
-  A('profile-edit', 'Edit my profile', 'Name, major, games, picture', '/portal?section=profile', ['update', 'change', 'name', 'major', 'college']),
-  A('game-ids', 'Add my game IDs', 'Steam, Riot ID, Genshin UID…', '/portal?section=profile&tab=officer', ['steam', 'riot', 'genshin', 'discord', 'gamertag', 'username'], 'view_members'),
-  A('security', 'Login & security', 'Linked Google accounts, sign out', '/portal?section=profile&tab=security', ['google', 'password', 'sign out', 'logout', 'account']),
-  A('calendar-subscribe', 'Subscribe to my calendar', 'Add it to Google or Apple Calendar', '/portal?section=calendar&subscribe=1', ['google calendar', 'apple calendar', 'ics', 'feed', 'sync', 'phone']),
-  A('meeting-checkin', 'Check in to a meeting', 'Type the code from the screen', '/portal?section=meetings&tab=mine', ['code', 'attend', 'present'], 'attend_meetings'),
-  A('meeting-history', 'My meetings and history', 'Coming up and what you attended', '/portal?section=meetings&tab=mine', ['upcoming', 'attended', 'attendance'], 'attend_meetings'),
-  A('meeting-plan', 'Plan a meeting', 'Schedule one-off or weekly meetings', '/portal?section=meetings&tab=host', ['schedule', 'create', 'new', 'weekly', 'repeat', 'run', 'show code'], 'host_meetings'),
-  A('meeting-groups', 'Meeting groups', 'Saved groups of people', '/portal?section=meetings&tab=tools&subtab=groups', ['group', 'people', 'hr team'], 'host_meetings'),
-  A('attendance', 'Meeting attendance results', 'Turnout, rates and follow-ups', '/portal?section=meetings&tab=tools&subtab=attendance', ['hr', 'export', 'csv', 'absent', 'results'], ['host_meetings', 'view_attendance_reports']),
-  A('internal-plan', 'Plan an internal event', 'Social, training or workshop', '/portal?section=internal-events&tab=plan', ['create', 'new', 'schedule', 'social', 'training'], 'host_internal_events'),
+  A('help-new', 'Ask for help', 'Open a help ticket', '/portal/help/ask', ['support', 'question', 'bug', 'problem', 'report', 'ticket']),
+  A('profile-edit', 'Edit my profile', 'Name, major, games, picture', '/portal/profile', ['update', 'change', 'name', 'major', 'college']),
+  A('game-ids', 'Add my game IDs', 'Steam, Riot ID, Genshin UID…', '/portal/profile/card', ['steam', 'riot', 'genshin', 'discord', 'gamertag', 'username'], 'view_members'),
+  A('security', 'Login & security', 'Linked Google accounts, sign out', '/portal/profile/security', ['google', 'password', 'sign out', 'logout', 'account']),
+  A('calendar-subscribe', 'Subscribe to my calendar', 'Add it to Google or Apple Calendar', '/portal/calendar?subscribe=1', ['google calendar', 'apple calendar', 'ics', 'feed', 'sync', 'phone']),
+  A('meeting-checkin', 'Check in to a meeting', 'Type the code from the screen', '/portal/meetings/mine', ['code', 'attend', 'present'], 'attend_meetings'),
+  A('meeting-history', 'My meetings and history', 'Coming up and what you attended', '/portal/meetings/mine', ['upcoming', 'attended', 'attendance'], 'attend_meetings'),
+  A('meeting-plan', 'Plan a meeting', 'Schedule one-off or weekly meetings', '/portal/meetings/host', ['schedule', 'create', 'new', 'weekly', 'repeat', 'run', 'show code'], 'host_meetings'),
+  A('teams', 'Teams', 'Saved teams of people to invite in one go', '/portal/members/team', ['team', 'group', 'groups', 'people', 'hr team'], 'host_meetings'),
+  A('attendance', 'Meeting attendance results', 'Turnout, rates and follow-ups', '/portal/meetings/tools/attendance', ['hr', 'export', 'csv', 'absent', 'results'], ['host_meetings', 'view_attendance_reports']),
+  A('internal-plan', 'Plan an internal event', 'Social, training or workshop', '/portal/internal-events/plan', ['create', 'new', 'schedule', 'social', 'training'], 'host_internal_events'),
   A('event-new', 'Create a public event', 'New event with tickets and flyer', '/portal/events/new', ['new', 'add', 'flyer', 'tickets'], 'manage_events'),
-  A('scan', 'Scan tickets', 'Open the check-in scanner', '/portal?section=checkin', ['camera', 'qr', 'redeem'], 'checkin'),
-  A('help-inbox', 'Help inbox', 'Answer questions from members', '/portal?section=help&tab=inbox', ['tickets', 'support', 'reply'], 'manage_help'),
-  A('access', 'Give someone access', 'Hand one permission to a person or group', '/portal?section=admin&tab=access', ['permission', 'hr', 'grant', 'capability'], 'view_admin_dashboard'),
-  A('roles', 'Manage roles', 'Change who holds which role', '/portal?section=admin&tab=roles', ['member', 'promote', 'exec', 'officer', 'recruit'], 'manage_roles'),
-  A('audit', 'Audit log', 'Who changed what', '/portal?section=admin&tab=audit', ['history', 'log'], 'view_admin_dashboard'),
-  A('links', 'Short links', 'Manage /go links', '/portal?section=admin&tab=links', ['url', 'redirect', 'linktree'], 'view_admin_dashboard'),
+  A('scan', 'Scan tickets', 'Open the check-in scanner', '/portal/checkin', ['camera', 'qr', 'redeem'], 'checkin'),
+  A('help-inbox', 'Help inbox', 'Answer questions from members', '/portal/help/inbox', ['tickets', 'support', 'reply'], 'manage_help'),
+  A('access', 'Give someone access', 'Hand one permission to a person or group', '/portal/admin/access', ['permission', 'hr', 'grant', 'capability'], 'view_admin_dashboard'),
+  A('roles', 'Manage roles', 'Change who holds which role', '/portal/admin/members', ['member', 'promote', 'exec', 'officer', 'recruit'], 'manage_roles'),
+  A('board-order', 'Team page order', 'Put exec in the order they show on the Team page', '/portal/members/display-order', ['display', 'order', 'board', 'exec', 'sort'], 'manage_board_order'),
+  A('audit', 'Audit log', 'Who changed what', '/portal/admin/audit-log', ['history', 'log'], 'view_admin_dashboard'),
+  A('links', 'Short links', 'Manage /go links', '/portal/admin/short-links', ['url', 'redirect', 'linktree'], 'view_admin_dashboard'),
 ];
 
 export function commandsFor(roles: RoleGrant[]): PortalCommand[] {

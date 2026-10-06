@@ -16,7 +16,7 @@ import { GOOGLE_CALENDAR_LINKING } from '@/lib/featureFlags';
 import { ItemPopup, ItemRow, StatusBadge, kindKey, timeOf, type Item } from './calendarParts';
 import SectionHeader from '@/components/ui/SectionHeader';
 
-type View = 'month' | 'week' | 'day' | 'agenda';
+type View = 'month' | 'week' | 'day' | 'list';
 type Kind = Item['kind'];
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -118,7 +118,7 @@ export default function CalendarSectionContent() {
   const title = view === 'day' ? dayTitle : view === 'week' ? `${shortDay(weekStart)} – ${shortDay(addDays(weekStart, 6))}, ${addDays(weekStart, 6).slice(0, 4)}` : monthTitle;
   const days = Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));
   const dayItems = byDay.get(selected) ?? [];
-  const agendaDays = [...byDay.keys()].filter((d) => d >= (view === 'agenda' ? today : gridStart) && d.slice(0, 7) === key(cursor.y, cursor.m, 1).slice(0, 7)).sort();
+  const agendaDays = [...byDay.keys()].filter((d) => d >= (view === 'list' ? today : gridStart) && d.slice(0, 7) === key(cursor.y, cursor.m, 1).slice(0, 7)).sort();
 
   const syncButton = (cls: 'phoneOnly' | 'wideOnly') => (
     <Button variant="secondary" size="sm" className={`${styles.syncBtn} ${styles[cls]}`} onClick={() => setSyncOpen((v) => !v)} aria-expanded={syncOpen} aria-label={linking ? 'Sync calendars' : 'Add to my calendar'}>
@@ -128,7 +128,7 @@ export default function CalendarSectionContent() {
   );
 
   return (
-    <div className={styles.page} data-wide={view !== 'agenda' ? '' : undefined} data-month={view !== 'agenda' ? '' : undefined}>
+    <div className={styles.page} data-wide={view !== 'list' ? '' : undefined} data-month={view !== 'list' ? '' : undefined}>
       <SectionHeader title="Calendar" flush sub={eventsOnly ? 'Upcoming Triton Gaming events.' : 'Events and the meetings you’re invited to, in one place.'} actions={syncButton('phoneOnly')} />
 
       <div className={styles.toolbar}>
@@ -139,7 +139,7 @@ export default function CalendarSectionContent() {
           <Button variant="ghost" size="sm" onClick={goToday}>Today</Button>
         </div>
         <div className={styles.viewSwitch}>
-          <SectionTabs<View> variant="segmented" label="View" value={view} onChange={changeView} tabs={[{ id: 'month', label: 'Month' }, { id: 'week', label: 'Week' }, { id: 'day', label: 'Day' }, { id: 'agenda', label: 'List' }]} />
+          <SectionTabs<View> variant="segmented" label="View" value={view} onChange={changeView} tabs={[{ id: 'month', label: 'Month' }, { id: 'week', label: 'Week' }, { id: 'day', label: 'Day' }, { id: 'list', label: 'List' }]} />
         </div>
         <div className={styles.toolbarRight}>
           {syncButton('wideOnly')}
@@ -256,7 +256,7 @@ export default function CalendarSectionContent() {
         </section>
       )}
 
-      {view === 'agenda' && (
+      {view === 'list' && (
         items === null && !error ? <p className={styles.muted}>Loading…</p> : agendaDays.length === 0 ? (
           <div className={styles.empty}><CalendarDays size={28} strokeWidth={1.5} aria-hidden="true" /><p>Nothing coming up this month.</p></div>
         ) : (

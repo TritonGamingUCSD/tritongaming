@@ -1,5 +1,6 @@
 'use client';
 
+import Button from '@/components/ui/Button';
 import { GripVertical, Plus, Trash2 } from 'lucide-react';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
 import { useDragReorder } from '@/lib/useDragReorder';
@@ -56,7 +57,7 @@ export default function EventExtrasEditor({ venueAddress, venueNotes, venueName,
 
       <fieldset className={styles.group}>
         <legend className={styles.legend}>Schedule</legend>
-        {schedule.map((item, i) => (
+        {sched.view.map((item, i) => (
           <div key={i} className={`${styles.row} ${sched.dragIndex === i ? styles.dragging : ''} ${sched.overIndex === i && sched.dragIndex !== i ? styles.dragOver : ''}`} {...sched.dropTargetProps(i)}>
             <span className={styles.grip} {...sched.dragHandleProps(i)} aria-label={`Drag to reorder schedule item ${i + 1}`}><GripVertical size={14} aria-hidden="true" /></span>
             <input className={`${styles.input} ${styles.time}`} value={item.time} onChange={(e) => onSchedule(schedule.map((x, j) => (j === i ? { ...x, time: e.target.value } : x)))} placeholder="6:00 PM" aria-label="Time" />
@@ -67,12 +68,12 @@ export default function EventExtrasEditor({ venueAddress, venueNotes, venueName,
             <IconButton kind="delete" size="sm" label="Remove schedule item" onClick={() => onSchedule(schedule.filter((_, j) => j !== i))} />
           </div>
         ))}
-        <button type="button" className={styles.add} onClick={() => onSchedule([...schedule, { time: '', title: '' }])}><Plus size={14} aria-hidden="true" /> Add schedule item</button>
+        <Button size="sm" variant="secondary" onClick={() => onSchedule([...schedule, { time: '', title: '' }])}><Plus size={14} aria-hidden="true" /> Add schedule item</Button>
       </fieldset>
 
       <fieldset className={styles.group}>
         <legend className={styles.legend}>Sponsors</legend>
-        {sponsors.map((sp, i) => (
+        {spons.view.map((sp, i) => (
           <div key={i} className={`${styles.row} ${spons.dragIndex === i ? styles.dragging : ''} ${spons.overIndex === i && spons.dragIndex !== i ? styles.dragOver : ''}`} {...spons.dropTargetProps(i)}>
             <span className={styles.grip} {...spons.dragHandleProps(i)} aria-label={`Drag to reorder sponsor ${i + 1}`}><GripVertical size={14} aria-hidden="true" /></span>
             <div className={styles.logoCell}>
@@ -85,7 +86,7 @@ export default function EventExtrasEditor({ venueAddress, venueNotes, venueName,
             <IconButton kind="delete" size="sm" label="Remove sponsor" onClick={() => onSponsors(sponsors.filter((_, j) => j !== i))} />
           </div>
         ))}
-        <button type="button" className={styles.add} onClick={() => onSponsors([...sponsors, { name: '', logo_url: '' }])}><Plus size={14} aria-hidden="true" /> Add sponsor</button>
+        <Button size="sm" variant="secondary" onClick={() => onSponsors([...sponsors, { name: '', logo_url: '' }])}><Plus size={14} aria-hidden="true" /> Add sponsor</Button>
       </fieldset>
     </div>
   );

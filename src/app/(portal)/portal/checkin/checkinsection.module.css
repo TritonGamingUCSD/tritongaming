@@ -14,14 +14,14 @@
   gap: 0.5rem;
   width: 100%;
   padding: 1.5rem;
-  background: rgba(255,199,44,0.06);
-  border: 1px solid rgba(255,199,44,0.25);
+  background: rgba(125, 180, 234,0.06);
+  border: 1px solid rgba(125, 180, 234,0.25);
   border-radius: 1rem;
   text-align: center;
-  color: var(--yellow-text);
+  color: var(--p-accent-text);
 }
-.confirmTitle { font-family: var(--font-futura-heavy); font-size: 1.05rem; color: var(--white); }
-.confirmMeta { font-size: 0.85rem; color: rgba(242,241,240,0.6); }
+.confirmTitle { font-family: var(--font-futura-heavy); font-size: 1.05rem; color: var(--pp-ink); }
+.confirmMeta { font-size: 0.85rem; color: rgba(var(--pp-ink-rgb), 0.87); }
 
 .confirmActions { display: flex; gap: 0.75rem; margin-top: 0.5rem; width: 100%; }
 
@@ -32,9 +32,9 @@
   justify-content: center;
   gap: 0.4rem;
   padding: 0.6rem 1rem;
-  background: rgba(255,255,255,0.06);
-  color: rgba(242,241,240,0.8);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(var(--pp-ink-rgb), 0.06);
+  color: rgba(var(--pp-ink-rgb), 0.92);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.26);
   border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 0.85rem;
@@ -48,7 +48,7 @@
   gap: 0.4rem;
   padding: 0.6rem 1rem;
   background: rgba(5,150,105,0.15);
-  color: #34d399;
+  color: var(--pp-ok);
   border: 1px solid rgba(52,211,153,0.3);
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -62,7 +62,7 @@
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.87);
   margin-bottom: 0.5rem;
 }
 
@@ -71,11 +71,11 @@
 
 .eventSelect {
   width: 100%;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(var(--pp-ink-rgb), 0.05);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.23);
   border-radius: var(--radius-sm);
   padding: 0.65rem 0.875rem;
-  color: var(--white);
+  color: var(--pp-ink);
   font-family: var(--font-futura-medium);
   font-size: 0.9rem;
 }
@@ -83,8 +83,8 @@
 .codeCard {
   width: 100%;
   padding: 2rem;
-  background: rgba(255,199,44,0.06);
-  border: 1px solid rgba(255,199,44,0.25);
+  background: rgba(125, 180, 234,0.06);
+  border: 1px solid rgba(125, 180, 234,0.25);
   border-radius: 1.125rem;
 }
 
@@ -92,9 +92,9 @@
   font-family: var(--font-futura-heavy);
   font-size: 2.5rem;
   letter-spacing: 0.15em;
-  color: var(--yellow-text);
+  color: var(--p-accent-text);
 }
 
-.codeTimer { font-size: 0.78rem; color: rgba(242, 241, 240, 0.6); margin-top: 0.5rem; }
+.codeTimer { font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.87); margin-top: 0.5rem; }
 
-.onlineHint { font-size: 0.82rem; color: rgba(242, 241, 240, 0.65); line-height: 1.5; }
+.onlineHint { font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.88); line-height: 1.5; }

@@ -1,0 +1,15 @@
+/* Shape of the portal while it loads: chrome sidebar and top bar, then paper cards. Tokens follow the system light/dark. */
+.frame { min-height: 100vh; display: flex; background: var(--pp-paper); color: var(--pp-ink); }
+.rail { width: 232px; flex-shrink: 0; background: var(--pp-chrome); border-right: 1px solid rgba(var(--pp-chrome-rgb), 0.12); padding: 1rem 0.8rem; display: flex; flex-direction: column; gap: 0.55rem; }
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.top { height: 56px; background: var(--pp-chrome); border-bottom: 1px solid rgba(var(--pp-chrome-rgb), 0.12); display: flex; align-items: center; gap: 0.75rem; padding: 0 1rem; }
+.body { padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; max-width: 1240px; width: 100%; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
+
+.bone { border-radius: 8px; background: rgba(var(--pp-ink-rgb), 0.09); animation: pulse 1.4s ease-in-out infinite; }
+.chromeBone { border-radius: 8px; background: rgba(var(--pp-chrome-rgb), 0.14); animation: pulse 1.4s ease-in-out infinite; }
+.card { background: var(--pp-card); border: 1px solid var(--pp-line); border-radius: 10px; box-shadow: var(--pp-shadow); padding: 1rem; display: flex; flex-direction: column; gap: 0.6rem; }
+.ticket { composes: card; min-height: 150px; }
+@keyframes pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .bone, .chromeBone { animation: none; } }
+@media (max-width: 899px) { .rail { display: none; } .body { padding: 1rem; } }

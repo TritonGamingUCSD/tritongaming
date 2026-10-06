@@ -6,15 +6,15 @@ import Notice from '@/components/ui/Notice';
 import { useRef, useState } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Bell, ShieldCheck, User, Users, Lock, X as XIcon, Globe, EyeOff } from 'lucide-react';
+import { Bell, ShieldCheck, User, Users, Lock, X as XIcon, Globe, EyeOff, GraduationCap } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types/database';
-import { Check } from 'lucide-react';
-import { canSetOrgTitle, type RoleGrant } from '@/lib/capabilities';
+import { canSetOrgTitle, requiresOrgTitle, type RoleGrant } from '@/lib/capabilities';
 import { hasBasicProfileInfo, getMissingProfileFields, GENDER_OPTIONS, PRONOUN_OPTIONS, PLATFORM_OPTIONS, MAX_PORTFOLIO_LINKS, MAX_GAME_IDS, GAME_ID_PRESETS, OTHER_GAME, cleanGameIds, type GameId, normalizePortfolioUrl, resolveAvatarUrl, SOCIAL_PLATFORMS, yearChoiceOptions, yearChoiceOf, yearLabelOfChoice } from '@/lib/profile';
 import type { MyPrivateProfile } from '@/lib/auth';
 import { deleteIfReplaced, deleteStorageUrl } from '@/lib/imageUpload';
 import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
+import SaveBar from '@/components/portal/SaveBar';
 import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
 import AvatarEditor from './AvatarEditor';
 import BoardCardPreview from '@/components/BoardSection/BoardCardPreview';
@@ -29,7 +29,7 @@ import styles from './profile.module.css';
 import Select from '@/components/ui/Select';
 import SectionHeader from '@/components/ui/SectionHeader';
 
-type Tab = 'basic' | 'officer' | 'notifications' | 'strikes' | 'security';
+type Tab = 'info' | 'school' | 'card' | 'notifications' | 'strikes' | 'security';
 
 export default function ProfileClient({ profile, privateInfo, email, linkedEmails, roles, isUcsd, divisions }: { profile: Profile; privateInfo: MyPrivateProfile; email: string | null; linkedEmails: string[]; roles: RoleGrant[]; isUcsd: boolean; divisions: { id: string; name: string }[]; initialTab?: string }) {
   const divisionNameById = new Map(divisions.map((d) => [d.id, d.name]));
@@ -46,12 +46,12 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
   const showBoardTab = isBoardEligible || canEditOrgTitle;
   // Strikes are tracked for officers, leads and exec: they can always look at their own here (quietly; nothing pushes it at them).
   const showStrikesTab = roles.some((r) => r.role === 'exec' || r.role === 'lead' || r.role === 'officer');
-  const VALID_TABS: Tab[] = [...(showBoardTab ? ['basic', 'officer'] : ['basic']), 'notifications', ...(showStrikesTab ? ['strikes'] : []), 'security'] as Tab[];
+  const VALID_TABS: Tab[] = [...(showBoardTab ? ['info', 'school', 'card'] : ['info', 'school']), 'notifications', ...(showStrikesTab ? ['strikes'] : []), 'security'] as Tab[];
   const gender = privateInfo.gender;
   // The tab used to be called "board" — old links/bookmarks still land on it.
   const initialTabParam = useUrlNav().tab;
-  const initialTab = initialTabParam === 'board' ? 'officer' : initialTabParam;
-  const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'basic');
+  const initialTab = initialTabParam;
+  const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'info');
   const syncUrl = usePortalTabSync('profile');
   function selectTab(t: Tab) {
     setTab(t);
@@ -91,15 +91,14 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
   // "Other…") switches to a text box for a custom entry.
   const [pronounsOther, setPronounsOther] = useState(!!profile.pronouns?.trim() && !(PRONOUN_OPTIONS as readonly string[]).includes(profile.pronouns.trim()));
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get('next');
   const profileForCheck = { ...profile, gender, year: yearLabelOfChoice(yearChoiceOf(profile)) || profile.year };
-  const missingNow = getMissingProfileFields(profileForCheck, isUcsd, { requireOrgTitle: canEditOrgTitle });
+  const missingNow = getMissingProfileFields(profileForCheck, isUcsd, { requireOrgTitle: requiresOrgTitle(roles) });
   // Warn before leaving with edits that haven't been saved (any tab).
-  const { markSaved } = useUnsavedChanges(form);
+  const { dirty, markSaved, saved: savedForm } = useUnsavedChanges(form);
   const promptedForTicket = !!next && !hasBasicProfileInfo(profileForCheck, isUcsd);
 
   async function handleSignOut() {
@@ -112,15 +111,14 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    setSaved(false);
 
     // The browser only validates inputs that are on screen, and the form is
     // split across tabs — so check every required field here and jump to the
     // tab that's missing something.
-    const stillMissing = getMissingProfileFields({ ...profile, ...form, year: yearLabelOfChoice(form.year) }, isUcsd, { requireOrgTitle: canEditOrgTitle });
+    const stillMissing = getMissingProfileFields({ ...profile, ...form, year: yearLabelOfChoice(form.year) }, isUcsd, { requireOrgTitle: requiresOrgTitle(roles) });
     if (stillMissing.length > 0) {
       setError(`Please fill in: ${stillMissing.join(', ')}.`);
-      setTab(stillMissing.every((m) => m === 'Officer title') ? 'officer' : 'basic');
+      setTab(stillMissing.every((m) => m === 'Officer title') ? 'card' : 'info');
       return;
     }
     setSaving(true);
@@ -197,8 +195,6 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
     showToast('Profile saved');
     refreshPublicCache('board', 'divisions');
     router.refresh(); // drop cached portal pages (TG Members, this form on revisit) so they show the new values
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
 
     if (next && hasBasicProfileInfo({ ...profile, ...form, year: yearLabelOfChoice(form.year) }, isUcsd)) {
       router.push(next);
@@ -276,19 +272,20 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
         value={tab}
         onChange={selectTab}
         tabs={[
-          { id: 'basic', label: 'Basic Info', icon: <User /> },
-          ...(showBoardTab ? [{ id: 'officer' as const, label: 'Public Officer Card', icon: <Users /> }] : []),
+          { id: 'info', label: 'About Me', icon: <User /> },
+          { id: 'school', label: 'School', icon: <GraduationCap /> },
+          ...(showBoardTab ? [{ id: 'card' as const, label: 'Public Officer Card', icon: <Users /> }] : []),
           { id: 'notifications', label: 'Notifications', icon: <Bell /> },
           ...(showStrikesTab ? [{ id: 'strikes' as const, label: 'Strikes', icon: <ShieldCheck /> }] : []),
           { id: 'security', label: 'Login & Security', icon: <Lock /> },
         ]}
       />
 
-      <div className={`${styles.layout} ${tab === 'officer' && isBoardEligible ? styles.layoutOfficer : ''} ${tab === 'security' || tab === 'notifications' || tab === 'strikes' ? styles.layoutSingle : ''}`}>
-        {tab !== 'security' && tab !== 'notifications' && tab !== 'strikes' && (
+      <div className={`${styles.layout} ${tab === 'card' && isBoardEligible ? styles.layoutOfficer : ''} ${tab === 'security' || tab === 'notifications' || tab === 'strikes' || tab === 'school' ? styles.layoutSingle : ''}`}>
+        {tab !== 'security' && tab !== 'notifications' && tab !== 'strikes' && tab !== 'school' && (
         <div className={styles.avatarSection}>
-          {tab === 'officer' && isBoardEligible ? (
-            <p className={styles.pictureNote}>Your picture is edited on the Basic Info tab — the preview below uses it.</p>
+          {tab === 'card' && isBoardEligible ? (
+            <p className={styles.pictureNote}>Your picture is edited on the About Me tab — the preview below uses it.</p>
           ) : (
           <div className={styles.avatarUpload}>
             <AvatarEditor
@@ -309,10 +306,11 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
           </div>
           )}
 
-          {tab === 'officer' && isBoardEligible && (
+          {tab === 'card' && isBoardEligible && (
             <div className={styles.previewWrap}>
               <span className={styles.previewHeading}><Globe size={13} strokeWidth={2} aria-hidden="true" /> Live preview · public Team page</span>
-              <BoardCardPreview member={previewMember} />
+              <p className={styles.previewNote}>This is how visitors see your card. The public site is always dark, so the preview stays dark in light mode too.</p>
+              <div className={styles.previewFrame}><BoardCardPreview member={previewMember} /></div>
             </div>
           )}
         </div>
@@ -320,9 +318,9 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
 
         <div className={styles.formCol}>
 
-        {(tab === 'basic' || tab === 'officer') && (
-        <form className={styles.form} onSubmit={handleSave}>
-          {tab === 'basic' && (
+        {(tab === 'info' || tab === 'school' || tab === 'card') && (
+        <form id="profile-form" className={styles.form} onSubmit={handleSave} data-sub={tab} noValidate>
+          {(tab === 'info' || tab === 'school') && (
           <>
           <section className={styles.requiredGroup} aria-label="Required information">
             <h2 className={styles.groupHeading}><span className={styles.required}>*</span> Required</h2>
@@ -392,7 +390,7 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
               </label>
             </div>
 
-            <div className={styles.subGroup}>
+            <div className={styles.subGroup} data-school>
               <span className={styles.subGroupLabel}>
                 UCSD students {!isUcsd && <span className={styles.optionalTag}>not needed if you&apos;re not a UCSD student</span>}
               </span>
@@ -507,7 +505,7 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
           </>
           )}
 
-          {tab === 'officer' && showBoardTab && (
+          {tab === 'card' && showBoardTab && (
           <>
           <div className={styles.fieldStack}>
             <div className={styles.formSplitCol}>
@@ -716,14 +714,14 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
                 {linkedEmails.length > 1 && (
                   <label className={styles.fieldGroup}>
                     <span className={styles.label}>Email shown on your card</span>
-                    <select
+                    <Select
                       className={styles.input}
                       value={form.board_email && linkedEmails.includes(form.board_email) ? form.board_email : ''}
                       onChange={(e) => setForm((f) => ({ ...f, board_email: e.target.value }))}
                     >
                       <option value="">{email ? `${email} (sign-in email)` : 'Sign-in email'}</option>
                       {linkedEmails.filter((e) => e !== email).map((e) => <option key={e} value={e}>{e}</option>)}
-                    </select>
+                    </Select>
                     <span className={styles.charCount} style={{ textAlign: 'left' }}>Only used if &ldquo;Email address&rdquo; above is checked. You can pick any email linked to your account.</span>
                   </label>
                 )}
@@ -737,13 +735,7 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
 
           {error && <Notice tone="error">{error}</Notice>}
 
-          <button
-            type="submit"
-            className={`${styles.saveBtn} ${saved ? styles.saveBtnSaved : ''}`}
-            disabled={saving}
-          >
-            {saving ? 'Saving…' : saved ? <><Check size={18} strokeWidth={2.5} aria-hidden="true" /> Saved</> : 'Save Changes'}
-          </button>
+          <SaveBar dirty={dirty} saving={saving} formId="profile-form" onDiscard={() => { const f = savedForm(); setForm(f); setPronounsOther(!!f.pronouns.trim() && !(PRONOUN_OPTIONS as readonly string[]).includes(f.pronouns.trim())); setError(''); }} />
         </form>
         )}
 

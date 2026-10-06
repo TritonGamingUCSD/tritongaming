@@ -1,7 +1,10 @@
 'use client';
 
+import SectionHeader from '@/components/ui/SectionHeader';
 import Notice from '@/components/ui/Notice';
 import { showToast } from '@/lib/toast';
+import SaveBar from '@/components/portal/SaveBar';
+import EditingNow from '@/components/portal/EditingNow';
 import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
 import { useState } from 'react';
 import Link from 'next/link';
@@ -91,6 +94,7 @@ export default function DivisionForm({
   // shows the name/slug as read-only text instead of inputs.
   canRename = true,
   divisionId,
+  creditPeople = [],
 }: {
   heading: string;
   /** The division being edited: lets the live preview lay the unsaved form over it. */
@@ -100,9 +104,10 @@ export default function DivisionForm({
   onSubmit: (values: DivisionFormValues) => Promise<string | void>;
   backHref: string;
   canRename?: boolean;
+  creditPeople?: import('@/lib/creditPeople').CreditPerson[];
 }) {
   const [form, setForm] = useState<DivisionFormValues>(initial);
-  const { markSaved } = useUnsavedChanges(form);
+  const { dirty, markSaved, saved: savedForm } = useUnsavedChanges(form);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -125,13 +130,12 @@ export default function DivisionForm({
 
   return (
     <div className={styles.page} data-wide-page>
-      <div className={styles.header}>
-        <Link href={backHref} className={styles.back}>← Back to Divisions</Link>
-        <h1 className={styles.title}>{heading}</h1>
-      </div>
+      <Link href={backHref} className={styles.back}>← Back to Divisions</Link>
+      <SectionHeader title={heading} />
+      <EditingNow room={divisionId ? `division:${divisionId}` : null} what="this division" />
 
       <div className={styles.editLayout}>
-      <form className={styles.form} onSubmit={handleSubmit}>
+      <form id="division-form" className={styles.form} onSubmit={handleSubmit}>
         {canRename ? (
           <>
             <label className={styles.field}>
@@ -188,7 +192,7 @@ export default function DivisionForm({
           hint="Just your handle, not the full link — optional."
         />
 
-        <PageBlocksEditor blocks={form.page_blocks} onChange={(b) => set('page_blocks', b)} bucket="site-content" />
+        <PageBlocksEditor blocks={form.page_blocks} onChange={(b) => set('page_blocks', b)} bucket="site-content" creditPeople={creditPeople} />
 
         <SocialEmbedsField
           value={form.social_embeds}
@@ -199,11 +203,9 @@ export default function DivisionForm({
         {error && <Notice tone="error">{error}</Notice>}
 
         <div className={styles.actions}>
-          <Link href={backHref} className={styles.cancelBtn}>Cancel</Link>
-          <button type="submit" className={styles.submitBtn} disabled={saving}>
-            {saving ? 'Saving…' : submitLabel}
-          </button>
+          <Link href={backHref} className={styles.cancelBtn}>Back</Link>
         </div>
+        <SaveBar dirty={dirty} saving={saving} formId="division-form" saveLabel={submitLabel} onDiscard={() => { setForm(savedForm()); setError(''); }} />
       </form>
       {divisionId && (
         <div className={styles.editPreview}>
