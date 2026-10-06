@@ -132,6 +132,10 @@ export default async function Footer() {
             <p className={styles.copy}>
               {copyright}
               {copyright && ' · '}
+              <Link href="/privacy" className={styles.portalLink}>Privacy</Link>
+              {' · '}
+              <Link href="/terms" className={styles.portalLink}>Terms</Link>
+              {' · '}
               <Link href="/portal" className={styles.portalLink}>Member portal</Link>
             </p>
           </div>

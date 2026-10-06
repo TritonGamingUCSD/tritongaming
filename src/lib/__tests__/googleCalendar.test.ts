@@ -1,9 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import crypto from 'node:crypto';
 
-// The feature is switched off in the app; these tests exercise it switched on.
-vi.mock('@/lib/featureFlags', () => ({ GOOGLE_CALENDAR_LINKING: true }));
-
 process.env.GOOGLE_CALENDAR_CLIENT_ID = 'id';
 process.env.GOOGLE_CALENDAR_CLIENT_SECRET = 'secret';
 process.env.CALENDAR_TOKEN_KEY = crypto.randomBytes(32).toString('base64');
@@ -88,14 +85,14 @@ describe('pulling events from several accounts', () => {
   });
 });
 
-describe('while the feature is paused', () => {
-  it('does nothing at all without the switch', async () => {
-    vi.resetModules();
-    vi.doMock('@/lib/featureFlags', () => ({ GOOGLE_CALENDAR_LINKING: false }));
-    const off = await import('@/lib/googleCalendar');
-    expect(off.googleConfigured()).toBe(false);
-    const svc = { from: () => { throw new Error('should not even look at the database'); } } as never;
-    expect(await off.fetchExternalEvents(svc, 'u1', '2026-10-01T00:00:00Z', '2026-10-10T00:00:00Z')).toBeNull();
-    vi.doUnmock('@/lib/featureFlags');
+describe('when the Google keys are not set', () => {
+  it('does nothing at all', async () => {
+    const key = process.env.CALENDAR_TOKEN_KEY;
+    delete process.env.CALENDAR_TOKEN_KEY;
+    try {
+      expect(g.googleConfigured()).toBe(false);
+      const svc = { from: () => { throw new Error('should not even look at the database'); } } as never;
+      expect(await g.fetchExternalEvents(svc, 'u1', '2026-10-01T00:00:00Z', '2026-10-10T00:00:00Z')).toBeNull();
+    } finally { process.env.CALENDAR_TOKEN_KEY = key; }
   });
 });

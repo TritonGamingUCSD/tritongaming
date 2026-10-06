@@ -12,7 +12,6 @@ import { confirmHold } from '@/lib/confirmHold';
 import styles from './calendar.module.css';
 import TimeGrid from './TimeGrid';
 import GoogleLinkPanel from './GoogleLinkPanel';
-import { GOOGLE_CALENDAR_LINKING } from '@/lib/featureFlags';
 import { ItemPopup, ItemRow, StatusBadge, kindKey, timeOf, type Item } from './calendarParts';
 import SectionHeader from '@/components/ui/SectionHeader';
 
@@ -43,7 +42,7 @@ export default function CalendarSectionContent() {
   const [googleLinked, setGoogleLinked] = useState(false);
   // null until the first answer. A student outside the TG team gets events only, with no filters and no Google sync.
   const [eventsOnly, setEventsOnly] = useState<boolean | null>(null);
-  const linking = GOOGLE_CALENDAR_LINKING && eventsOnly === false;
+  const linking = eventsOnly === false;
   const [googleError, setGoogleError] = useState<string | null>(null);
   // "All TG meetings": also show everyone else's meetings (not the private ones), as plain read-only entries.
   const [allMeetings, setAllMeetings] = useState(false);

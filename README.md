@@ -197,9 +197,9 @@ Confirm the table is in the `supabase_realtime` publication (`select * from pg_p
 **Vercel deploy fails on the cron:**
 The Hobby plan only allows daily crons, which is why `vercel.json` runs reminders once a day.
 
-## Linking Google Calendar (optional, view only) — currently paused
+## Linking Google Calendar (optional, view only)
 
-This feature is built but switched off: `GOOGLE_CALENDAR_LINKING` in `src/lib/featureFlags.ts` is `false`, so the calendar page doesn't offer it, its API routes refuse, and nothing is fetched from Google. To turn it on, finish the setup below and set that flag to `true`.
+There is no switch in the code: linking turns on by itself once the three environment variables below are set. Until then the Sync panel tells members that linking isn't set up, the API routes refuse, and nothing is fetched from Google. To turn it off, remove the variables.
 
 Members can choose to show their own Google Calendar(s) inside the portal calendar, and as a hint (striped times, never blocking) on their availability grid when planning a meeting. This is **separate from signing in with Google**: it is its own consent, asks only for read-only access to calendar events, shows the events to that member alone, and never appears in the shared calendar feed. A member can link several Google accounts and unlink any of them (which also revokes Google's access).
 

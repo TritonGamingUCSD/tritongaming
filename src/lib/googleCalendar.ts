@@ -1,6 +1,5 @@
 import crypto from 'node:crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { GOOGLE_CALENDAR_LINKING } from '@/lib/featureFlags';
 
 // A member's own Google Calendar, shown to them (and only them) here. View only: the one permission asked for is "see events on my
 // calendars", so nothing here can ever create, change or delete anything in Google. Signing in with Google is a different thing and
@@ -20,7 +19,7 @@ const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const REVOKE_URL = 'https://oauth2.googleapis.com/revoke';
 const EVENTS_URL = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
 
-export const googleConfigured = () => GOOGLE_CALENDAR_LINKING && !!(process.env.GOOGLE_CALENDAR_CLIENT_ID && process.env.GOOGLE_CALENDAR_CLIENT_SECRET && keyBytes());
+export const googleConfigured = () => !!(process.env.GOOGLE_CALENDAR_CLIENT_ID && process.env.GOOGLE_CALENDAR_CLIENT_SECRET && keyBytes());
 function keyBytes(): Buffer | null {
   const raw = process.env.CALENDAR_TOKEN_KEY;
   if (!raw) return null;

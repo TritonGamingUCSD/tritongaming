@@ -1,0 +1,12 @@
+.page { background: var(--navy); min-height: 100svh; }
+.doc { width: min(46rem, calc(100% - 2rem)); margin-inline: auto; display: flex; flex-direction: column; gap: 1rem; font-size: 1.02rem; line-height: 1.7; color: var(--white); }
+.updated { margin: 0; font-size: 0.9rem; color: var(--sky-text); }
+.doc h2 { margin: 1.6rem 0 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.35rem; line-height: 1.25; color: var(--yellow); text-wrap: balance; }
+.doc h3 { margin: 0.6rem 0 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.05rem; color: var(--white); }
+.doc p { margin: 0; }
+.doc ul { margin: 0; padding-left: 1.3rem; list-style: disc; display: flex; flex-direction: column; gap: 0.4rem; }
+.doc a { color: var(--sky-text); text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
+.doc a:hover { color: var(--white); }
+.doc strong { color: var(--white); }
+.callout { padding: 0.9rem 1.1rem; border-left: 4px solid var(--yellow); background: rgba(255, 255, 255, 0.06); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+@media (max-width: 640px) { .doc { font-size: 1rem; } }
