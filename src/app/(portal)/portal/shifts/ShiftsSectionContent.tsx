@@ -15,9 +15,9 @@ import { confirmHold } from '@/lib/confirmHold';
 import { createClient } from '@/lib/supabase/client';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
-import { SLOT_CHOICES, awayDuring, cellKey, guideFor, neededFor, slotCount, slotRange, type ShiftGrid, type ShiftStation } from '@/lib/shifts';
+import { SLOT_CHOICES, awayDuring, cellKey, guideFor, neededFor, slotCount, slotRange, type ShiftGrid, type ShiftStation, type ShiftTemplate } from '@/lib/shifts';
 import Dialog, { DialogActions, DialogCancel, DialogText } from '@/components/ui/Dialog';
-import { GuideDialog, GuideSetup, GuidesView, Legend, MyShifts, catClass, catName, colorVars } from './ShiftGuides';
+import { GuideDialog, GuideSetup, GuidesView, Legend, MyShifts, catClass, catName } from './ShiftGuides';
 import type { ShiftEvent } from './getShiftsData';
 import styles from './shifts.module.css';
 
@@ -34,15 +34,20 @@ async function api<T = Record<string, unknown>>(url: string, method: string, bod
   } catch { return { ok: false, json: { error: 'Network error. Try again.' } as T & { error?: string } }; }
 }
 
-export default function ShiftsSectionContent({ events, stations: initialStations, docs, canManage, canSignUp, userId, userName }: {
-  events: ShiftEvent[]; stations: ShiftStation[]; docs: { id: string; title: string }[]; canManage: boolean; canSignUp: boolean; userId: string; userName: string;
+export default function ShiftsSectionContent({ events, stations: initialStations, docs, templates: initialTemplates, canManage, canSignUp, userId, userName }: {
+  events: ShiftEvent[]; stations: ShiftStation[]; docs: { id: string; title: string }[]; templates: ShiftTemplate[]; canManage: boolean; canSignUp: boolean; userId: string; userName: string;
 }) {
   const nav = useUrlNav();
   const sync = usePortalTabSync('shifts', () => tabs[0]);
-  const tabs: Tab[] = [...(canSignUp ? (['signup', 'schedule', 'guides'] as Tab[]) : (['schedule', 'guides'] as Tab[])), ...(canManage ? (['people', 'setup'] as Tab[]) : [])];
-  const [tab, setTab] = useState<Tab>(tabs.includes((nav.tab === 'board' ? 'schedule' : nav.tab) as Tab) ? ((nav.tab === 'board' ? 'schedule' : nav.tab) as Tab) : tabs[0]);
+  // Signup-capable people get the grid and the by-time list as two views of one tab; people who can only look get the by-time list as the Schedule tab.
+  const tabs: Tab[] = [...(canSignUp ? (['signup', 'guides'] as Tab[]) : (['schedule', 'guides'] as Tab[])), ...(canManage ? (['people', 'setup'] as Tab[]) : [])];
+  const wanted = (nav.tab === 'board' || nav.tab === 'schedule') && canSignUp ? 'signup' : nav.tab === 'board' ? 'schedule' : nav.tab;
+  const [tab, setTab] = useState<Tab>(tabs.includes(wanted as Tab) ? (wanted as Tab) : tabs[0]);
+  const [view, setViewState] = useState<'grid' | 'time'>(nav.tab === 'signup' && nav.subtab === 'time' || ((nav.tab === 'board' || nav.tab === 'schedule') && canSignUp) ? 'time' : 'grid');
+  const setView = (v: 'grid' | 'time') => { setViewState(v); sync('signup', v === 'grid' ? null : 'time'); };
   const [eventId, setEventId] = useState<string | null>(() => events.find((e) => e.plan?.signup_open)?.id ?? events[0]?.id ?? null);
   const [stations, setStations] = useState(initialStations);
+  const [templates, setTemplates] = useState(initialTemplates);
   const [grid, setGrid] = useState<ShiftGrid | null>(null);
   const [error, setError] = useState('');
   const [busyCell, setBusyCell] = useState<string | null>(null);
@@ -123,7 +128,7 @@ export default function ShiftsSectionContent({ events, stations: initialStations
   }
 
   return (
-    <div className={styles.page} style={colorVars(grid)}>
+    <div className={styles.page}>
       <SectionHeader title="Shifts" sub="Who works which station, and when" />
       {tabs.length > 1 && (
         <SectionTabs<Tab> label="Shifts" value={tab} onChange={(t) => { setTab(t); sync(t); }}
@@ -158,8 +163,10 @@ export default function ShiftsSectionContent({ events, stations: initialStations
           )}
           {grid && <Legend grid={grid} />}
           {grid && <MyShifts grid={grid} onArrive={arrive} onOpen={(id) => setGuideOpen({ id })} />}
-          {grid && <GridView grid={grid} busyCell={busyCell} onClaim={tryClaim} onGuide={(id) => setGuideOpen({ id })} onPlace={(station, slot) => setPlacing({ station, slot })} />}
-          {grid && placing && canManage && <PlaceBar grid={grid} placing={placing} busy={busyCell === cellKey(placing.station, placing.slot)} onPlace={place} onClose={() => setPlacing(null)} />}
+          <SectionTabs<'grid' | 'time'> label="View" variant="segmented" value={view} onChange={setView} tabs={[{ id: 'grid', label: 'Grid' }, { id: 'time', label: 'By time' }]} />
+          {grid && view === 'grid' && <GridView grid={grid} busyCell={busyCell} onClaim={tryClaim} onGuide={(id) => setGuideOpen({ id })} onPlace={(station, slot) => setPlacing({ station, slot })} />}
+          {grid && view === 'time' && <BoardView grid={grid} />}
+          {grid && view === 'grid' && placing && canManage && <PlaceBar grid={grid} placing={placing} busy={busyCell === cellKey(placing.station, placing.slot)} onPlace={place} onClose={() => setPlacing(null)} />}
         </>
       )}
       {plan && tab === 'schedule' && grid && <><Legend grid={grid} /><MyShifts grid={grid} onArrive={arrive} onOpen={(id) => setGuideOpen({ id })} /><BoardView grid={grid} /></>}
@@ -175,7 +182,7 @@ export default function ShiftsSectionContent({ events, stations: initialStations
       )}
       {guideOpen && grid && grid.stations.find((x) => x.id === guideOpen.id) && <GuideDialog grid={grid} station={grid.stations.find((x) => x.id === guideOpen.id)!} arrivedNow={guideOpen.arrived} onClose={() => setGuideOpen(null)} />}
       {tab === 'setup' && canManage && ev && (
-        <SetupView event={ev} sync={sync} initial={nav.tab === 'setup' ? nav.subtab : undefined} docs={docs} grid={grid} stations={stations} setStations={setStations} onChanged={load} setError={setError} />
+        <SetupView event={ev} sync={sync} initial={nav.tab === 'setup' ? nav.subtab : undefined} docs={docs} templates={templates} setTemplates={setTemplates} grid={grid} stations={stations} setStations={setStations} onChanged={load} setError={setError} />
       )}
     </div>
   );
@@ -393,8 +400,8 @@ function PeopleView({ event, sync, initial, grid, onChanged, setError }: { event
   );
 }
 
-function SetupView({ event, sync, initial, docs, grid, stations, setStations, onChanged, setError }: {
-  event: ShiftEvent; sync: (tab: string, subtab?: string | null) => void; initial?: string; docs: { id: string; title: string }[]; grid: ShiftGrid | null; stations: ShiftStation[]; setStations: (s: ShiftStation[]) => void; onChanged: () => Promise<void>; setError: (e: string) => void;
+function SetupView({ event, sync, initial, docs, templates, setTemplates, grid, stations, setStations, onChanged, setError }: {
+  event: ShiftEvent; sync: (tab: string, subtab?: string | null) => void; initial?: string; docs: { id: string; title: string }[]; templates: ShiftTemplate[]; setTemplates: (t: ShiftTemplate[]) => void; grid: ShiftGrid | null; stations: ShiftStation[]; setStations: (s: ShiftStation[]) => void; onChanged: () => Promise<void>; setError: (e: string) => void;
 }) {
   const plan = grid?.plan ?? event.plan;
   // Remounting on a changed plan gives the form a fresh starting point, so what is on screen is always what is saved until someone edits it.
@@ -434,7 +441,7 @@ function SetupView({ event, sync, initial, docs, grid, stations, setStations, on
 
       {part === 'stations' && <StationSheet event={event} grid={grid} stations={stations} setStations={setStations} onChanged={onChanged} setError={setError} />}
 
-      {part === 'guides' && <GuideSetup grid={grid} stations={stations} setStations={setStations} docs={docs} eventId={event.id} onChanged={onChanged} setError={setError} api={api} />}
+      {part === 'guides' && <GuideSetup grid={grid} stations={stations} setStations={setStations} docs={docs} templates={templates} setTemplates={setTemplates} eventId={event.id} onChanged={onChanged} setError={setError} api={api} />}
 
       {part === 'event' && plan && (
         <section className={`${styles.card} ${styles.dangerCard}`}>

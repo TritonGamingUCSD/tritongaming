@@ -6,7 +6,7 @@ import { loadGrantedCapabilities } from '@/lib/grantedCapabilities';
 import { hasCapability, withGrantedCapabilities } from '@/lib/capabilities';
 import { staffName } from '@/lib/names';
 import { UUID } from '@/lib/docsServer';
-import { DEFAULT_SHIFT_COLORS, STATION_COLS, mayClaim, type ShiftEventGuide, type ShiftGrid, type ShiftPlan, type ShiftStation } from '@/lib/shifts';
+import { STATION_COLS, mayClaim, type ShiftEventGuide, type ShiftGrid, type ShiftPlan, type ShiftStation } from '@/lib/shifts';
 
 export { UUID };
 export const bad = (error: string, status = 400) => NextResponse.json({ error }, { status });
@@ -41,13 +41,12 @@ export async function shiftSubject(svc: SupabaseClient, eventId: string, userId:
 export async function loadGrid(svc: SupabaseClient, eventId: string, me: string, roles: { role: string }[], manage: boolean): Promise<ShiftGrid | null> {
   const { data: ev } = await svc.from('events').select('id, title, start_date, location').eq('id', eventId).maybeSingle();
   if (!ev) return null;
-  const [{ data: plan }, { data: stations }, { data: overrides }, { data: signups }, { data: guides }, { data: settings }] = await Promise.all([
+  const [{ data: plan }, { data: stations }, { data: overrides }, { data: signups }, { data: guides }] = await Promise.all([
     svc.from('event_shifts').select('event_id, starts_at, ends_at, slot_minutes, signup_open, team_only, min_per_person').eq('event_id', eventId).maybeSingle(),
     svc.from('shift_stations').select(STATION_COLS).order('sort_order').order('name'),
     svc.from('shift_overrides').select('station_id, slot_index, needed').eq('event_id', eventId),
     svc.from('shift_signups').select('id, station_id, slot_index, user_id, arrived_at').eq('event_id', eventId).order('created_at'),
     svc.from('shift_event_guides').select('station_id, location, notes, doc_id, link_url, link_label').eq('event_id', eventId),
-    svc.from('shift_settings').select('general_color, team_color').maybeSingle(),
   ]);
   const ids = [...new Set((signups ?? []).map((s) => s.user_id as string))];
   const { data: people } = ids.length ? await svc.from('profiles').select('id, display_name, google_first_name, google_last_name, avatar_url, custom_avatar_url').in('id', ids) : { data: [] };
@@ -104,7 +103,6 @@ export async function loadGrid(svc: SupabaseClient, eventId: string, me: string,
     plan: (plan as ShiftPlan | null) ?? null,
     stations: await withDocTitles(svc, (stations ?? []) as ShiftStation[]),
     eventGuides: await eventGuideMap(svc, guides ?? []),
-    colors: settings ? { general: settings.general_color as string, team: settings.team_color as string } : DEFAULT_SHIFT_COLORS,
     overrides: Object.fromEntries((overrides ?? []).map((o) => [`${o.station_id}|${o.slot_index}`, o.needed as number])),
     signups: (signups ?? []).map((s) => {
       const p = byId.get(s.user_id as string);

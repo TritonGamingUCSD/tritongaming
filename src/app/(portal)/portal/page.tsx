@@ -326,7 +326,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       id: 'shifts', icon: <CalendarClock size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Shifts',
       description: 'Sign up for a station and time at an event',
       group: 'Events' as const,
-      content: <ShiftsSectionContent events={shiftsData.events} stations={shiftsData.stations} docs={shiftsData.docs} canManage={canManageShifts} canSignUp={canSignUpShifts} userId={profile.id} userName={profile.display_name || 'Someone'} />,
+      content: <ShiftsSectionContent events={shiftsData.events} stations={shiftsData.stations} docs={shiftsData.docs} templates={shiftsData.templates} canManage={canManageShifts} canSignUp={canSignUpShifts} userId={profile.id} userName={profile.display_name || 'Someone'} />,
     }] : []),
     // Exec, HR and admins get the tracker. Nobody else (leads included) has any part in it.
     ...(canManageStrikes ? [{

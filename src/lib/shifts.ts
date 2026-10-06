@@ -6,11 +6,10 @@ export interface ShiftStation {
   /** The station guide, readable by everyone who can see shifts. */
   location: string | null; instructions: string | null; doc_id: string | null; doc_title?: string | null; link_url: string | null; link_label: string | null;
 }
+export interface ShiftTemplate { id: string; name: string; body: string; sort_order: number }
 export const STATION_COLS = 'id, name, default_needed, sort_order, description, category, team_label, location, instructions, doc_id, link_url, link_label';
 /** What exec changed for one event on top of a station's guide. Blank fields fall back to the station. */
 export interface ShiftEventGuide { location: string | null; notes: string | null; doc_id: string | null; doc_title?: string | null; link_url: string | null; link_label: string | null }
-export interface ShiftColors { general: string; team: string }
-export const DEFAULT_SHIFT_COLORS: ShiftColors = { general: '#2563eb', team: '#7c3aed' };
 export interface ShiftPlan { event_id: string; starts_at: string; ends_at: string; slot_minutes: number; signup_open: boolean; team_only: boolean; min_per_person: number | null }
 export interface ShiftSignup { id: string; station_id: string; slot_index: number; user_id: string; name: string; avatar: string | null; arrived_at: string | null }
 export interface ShiftAbsence { id: string; user_id: string; name: string; starts_at: string; ends_at: string; needs: number }
@@ -19,7 +18,6 @@ export interface ShiftGrid {
   plan: ShiftPlan | null;
   stations: ShiftStation[];
   eventGuides: Record<string, ShiftEventGuide>;   // by station id
-  colors: ShiftColors;
   overrides: Record<string, number>;   // "<station id>|<slot index>" -> needed
   signups: ShiftSignup[];
   /** With a requirement set: the active officers and leads below it (managers only). */

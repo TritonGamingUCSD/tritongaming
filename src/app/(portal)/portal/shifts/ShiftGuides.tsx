@@ -1,16 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { BookOpen, Check, ExternalLink, FileText, MapPin } from 'lucide-react';
+import { BookOpen, Check, ChevronDown, ExternalLink, FileText, MapPin } from 'lucide-react';
 import PortalLink from '@/components/portal/PortalLink';
 import Button from '@/components/ui/Button';
-import ColorInput from '@/components/ui/ColorInput';
 import EditingNow from '@/components/portal/EditingNow';
 import Dialog, { DialogActions, DialogCancel, DialogText } from '@/components/ui/Dialog';
 import { Field, Input, Select, Textarea } from '@/components/ui/Field';
 import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
 import { PACIFIC_TZ } from '@/lib/timezone';
-import { cellKey, guideFor, slotCount, slotRange, type ShiftGrid, type ShiftStation } from '@/lib/shifts';
+import { confirmHold } from '@/lib/confirmHold';
+import { cellKey, guideFor, slotCount, slotRange, type ShiftGrid, type ShiftStation, type ShiftTemplate } from '@/lib/shifts';
 import styles from './shifts.module.css';
 
 const time = (d: Date) => d.toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' });
@@ -18,9 +18,6 @@ const ARRIVE_EARLY_MS = 30 * 60_000;   // keep in step with api/shifts/[eventId]
 
 export const catClass = (st: Pick<ShiftStation, 'category'>) => (st.category === 'team' ? styles.catTeam : styles.catGeneral);
 export const catName = (st: Pick<ShiftStation, 'category' | 'team_label'>) => (st.category === 'team' ? st.team_label || 'Team' : 'General');
-
-/** The two colors as CSS variables for everything inside the page. */
-export const colorVars = (grid: ShiftGrid | null) => (grid ? ({ '--sh-general': grid.colors.general, '--sh-team': grid.colors.team } as React.CSSProperties) : undefined);
 
 export function Legend({ grid }: { grid: ShiftGrid }) {
   if (!grid.stations.some((s) => s.category === 'team')) return null;
@@ -55,11 +52,9 @@ export function GuideBody({ grid, station }: { grid: ShiftGrid; station: ShiftSt
 export function GuideDialog({ grid, station, arrivedNow, onClose }: { grid: ShiftGrid; station: ShiftStation; arrivedNow?: boolean; onClose: () => void }) {
   return (
     <Dialog title={station.name} label={`${station.name} guide`} onClose={onClose}>
-      <div style={colorVars(grid)}>
-        <p className={`${styles.badge} ${catClass(station)}`}>{catName(station)}</p>
-        {arrivedNow && <DialogText>You’re checked in. Here’s what to do:</DialogText>}
-        <GuideBody grid={grid} station={station} />
-      </div>
+      <p className={`${styles.badge} ${catClass(station)}`}>{catName(station)}</p>
+      {arrivedNow && <DialogText>You’re checked in. Here’s what to do:</DialogText>}
+      <GuideBody grid={grid} station={station} />
       <DialogActions><DialogCancel onClick={onClose}>Close</DialogCancel></DialogActions>
     </Dialog>
   );
@@ -98,116 +93,180 @@ export function MyShifts({ grid, onArrive, onOpen }: { grid: ShiftGrid; onArrive
   );
 }
 
-/** Every station's guide on one page: the master doc for what each shift does. Visible to everyone who can see shifts. */
+/** Every station's guide on one page: the master doc for what each shift does. Visible to everyone who can see shifts. One row per station, closed until opened (your own stations start open). */
 export function GuidesView({ grid }: { grid: ShiftGrid }) {
+  const mine = new Set(grid.signups.filter((x) => x.user_id === grid.me).map((x) => x.station_id));
+  const [open, setOpen] = useState<Set<string>>(mine);
   if (!grid.stations.length) return <div className={styles.card}><p className={styles.muted}>There are no stations yet.</p></div>;
+  const toggle = (id: string) => setOpen((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const allOpen = open.size === grid.stations.length;
   return (
     <div className={styles.guides}>
-      <Legend grid={grid} />
-      {grid.stations.map((st) => (
-        <section key={st.id} className={`${styles.card} ${styles.guideCard} ${catClass(st)}`} aria-label={st.name}>
-          <h3 className={styles.h}>{st.name} <span className={`${styles.badge} ${catClass(st)}`}>{catName(st)}</span></h3>
-          <GuideBody grid={grid} station={st} />
-        </section>
-      ))}
+      <div className={styles.guidesBar}>
+        <Legend grid={grid} />
+        <button type="button" className={styles.guideBtn} onClick={() => setOpen(allOpen ? new Set() : new Set(grid.stations.map((x) => x.id)))}>{allOpen ? 'Collapse all' : 'Expand all'}</button>
+      </div>
+      {grid.stations.map((st) => {
+        const isOpen = open.has(st.id);
+        const g = guideFor(st, grid.eventGuides[st.id]);
+        return (
+          <section key={st.id} className={`${styles.guideItem} ${catClass(st)}`} aria-label={st.name}>
+            <button type="button" className={styles.guideHead} aria-expanded={isOpen} onClick={() => toggle(st.id)}>
+              <ChevronDown size={16} className={isOpen ? styles.chevOpen : styles.chev} aria-hidden="true" />
+              <span className={styles.guideName}>{st.name}</span>
+              <span className={`${styles.badge} ${catClass(st)}`}>{catName(st)}</span>
+              {mine.has(st.id) && <span className={styles.youTag}>Your shift</span>}
+              {g.location && <span className={styles.guideWhere}><MapPin size={12} aria-hidden="true" /> {g.location}</span>}
+            </button>
+            {isOpen && <div className={styles.guideBodyWrap}><GuideBody grid={grid} station={st} /></div>}
+          </section>
+        );
+      })}
     </div>
   );
 }
 
 type Api = <T = Record<string, unknown>>(url: string, method: string, body?: unknown) => Promise<{ ok: boolean; json: T & { error?: string } }>;
+type Docs = { id: string; title: string }[];
 
-const linkFields = (docs: { id: string; title: string }[], v: { doc_id: string; link_url: string; link_label: string }, set: (k: 'doc_id' | 'link_url' | 'link_label', val: string) => void) => (
-  <>
-    <Field label="Script or portal doc" hint="Pick a doc from the portal, such as the emcee script"><Select value={v.doc_id} onChange={(e) => set('doc_id', e.target.value)}>
-      <option value="">None</option>{docs.map((d) => <option key={d.id} value={d.id}>{d.title}</option>)}</Select></Field>
-    <Field label="Or an outside link"><Input value={v.link_url} onChange={(e) => set('link_url', e.target.value)} placeholder="https://" maxLength={500} /></Field>
-    <Field label="Link label"><Input value={v.link_label} onChange={(e) => set('link_label', e.target.value)} placeholder="Emcee script" maxLength={60} /></Field>
-  </>
+const scriptFields = (docs: Docs, v: { doc_id: string; link_url: string; link_label: string }, set: (k: 'doc_id' | 'link_url' | 'link_label', val: string) => void) => (
+  <div className={styles.formRow}>
+    <Field label="Script (portal doc)"><Select value={v.doc_id} onChange={(e) => set('doc_id', e.target.value)} aria-label="Script doc"><option value="">None</option>{docs.map((d) => <option key={d.id} value={d.id}>{d.title}</option>)}</Select></Field>
+    <Field label="Or a link"><Input value={v.link_url} onChange={(e) => set('link_url', e.target.value)} placeholder="https://" maxLength={500} /></Field>
+    {v.link_url.trim() && <Field label="Link name"><Input value={v.link_label} onChange={(e) => set('link_label', e.target.value)} placeholder="Emcee script" maxLength={60} /></Field>}
+  </div>
 );
 
-/** Setup, exec only: the colors, each station's standing guide, and what is different for this event. */
-export function GuideSetup({ grid, stations, setStations, docs, eventId, onChanged, setError, api }: {
-  grid: ShiftGrid | null; stations: ShiftStation[]; setStations: (s: ShiftStation[]) => void; docs: { id: string; title: string }[]; eventId: string;
+/** Setup, exec only: pick a station, then one short form. "Every event" is the station's standing guide; "Just this event" changes only where it is, adds notes and swaps the script. */
+export function GuideSetup({ grid, stations, setStations, docs, templates, setTemplates, eventId, onChanged, setError, api }: {
+  grid: ShiftGrid | null; stations: ShiftStation[]; setStations: (s: ShiftStation[]) => void; docs: Docs; templates: ShiftTemplate[]; setTemplates: (t: ShiftTemplate[]) => void; eventId: string;
   onChanged: () => Promise<void>; setError: (e: string) => void; api: Api;
 }) {
   const [pick, setPick] = useState(stations[0]?.id ?? '');
-  const st = stations.find((s) => s.id === pick) ?? stations[0];
-  const colors = grid?.colors;
-  async function setColor(k: 'general' | 'team', v: string) {
-    const r = await api('/api/shifts/settings', 'PATCH', { [k]: v });
-    if (!r.ok) setError(r.json.error || 'Couldn’t save that.'); else await onChanged();
+  const [scope, setScope] = useState<'all' | 'event'>('all');
+  const st = stations.find((x) => x.id === pick) ?? stations[0];
+  const canEvent = !!grid?.plan;
+  return (
+    <div className={styles.guideSetup}>
+      <section className={styles.card}>
+        <h3 className={styles.h}>Station guide</h3>
+        <p className={styles.muted}>What a station is, where it is, and what to do. Everyone who can see shifts can read it.</p>
+        {stations.length === 0 ? <p className={styles.muted}>Add a station first (Stations tab).</p> : (
+          <>
+            <div className={styles.formRow}>
+              <Field label="Station"><Select value={st?.id ?? ''} onChange={(e) => setPick(e.target.value)} aria-label="Station">{stations.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</Select></Field>
+              <Field label="Applies to"><Select value={canEvent ? scope : 'all'} onChange={(e) => setScope(e.target.value as 'all' | 'event')} aria-label="Applies to">
+                <option value="all">Every event</option>{canEvent && <option value="event">Just this event</option>}</Select></Field>
+            </div>
+            {st && <GuideForm key={`${st.id}|${scope}|${scope === 'event' ? eventId : ''}`} scope={canEvent ? scope : 'all'} station={st} grid={grid} docs={docs} templates={templates} eventId={eventId} api={api} setError={setError}
+              onSaved={async (next) => { if (next) setStations(stations.map((x) => (x.id === next.id ? next : x))); await onChanged(); }} />}
+          </>
+        )}
+      </section>
+      <TemplatesCard templates={templates} setTemplates={setTemplates} setError={setError} api={api} />
+    </div>
+  );
+}
+
+function GuideForm({ scope, station, grid, docs, templates, eventId, api, setError, onSaved }: {
+  scope: 'all' | 'event'; station: ShiftStation; grid: ShiftGrid | null; docs: Docs; templates: ShiftTemplate[]; eventId: string; api: Api; setError: (e: string) => void; onSaved: (s: ShiftStation | null) => Promise<void>;
+}) {
+  const eg = grid?.eventGuides[station.id];
+  const base = scope === 'all'
+    ? { category: station.category, team_label: station.team_label ?? '', location: station.location ?? '', text: station.instructions ?? '', doc_id: station.doc_id ?? '', link_url: station.link_url ?? '', link_label: station.link_label ?? '' }
+    : { category: station.category, team_label: station.team_label ?? '', location: eg?.location ?? '', text: eg?.notes ?? '', doc_id: eg?.doc_id ?? '', link_url: eg?.link_url ?? '', link_label: eg?.link_label ?? '' };
+  const [v, setV] = useState(base);
+  const [busy, setBusy] = useState(false);
+  const dirty = (Object.keys(base) as (keyof typeof base)[]).some((k) => v[k] !== base[k]);
+  useUnsavedChanges(dirty ? v : 'CLEAN');
+  const room = scope === 'all' ? `shifts-guide-${station.id}` : `shifts-guide-${eventId}-${station.id}`;
+  const set = (k: keyof typeof base, val: string) => setV((prev) => ({ ...prev, [k]: val }));
+  async function save() {
+    setBusy(true); setError('');
+    if (scope === 'all') {
+      const r = await api<{ station: ShiftStation }>('/api/shifts/stations', 'PATCH', { id: station.id, category: v.category, team_label: v.team_label, location: v.location, instructions: v.text, doc_id: v.doc_id, link_url: v.link_url, link_label: v.link_label });
+      if (!r.ok) setError(r.json.error || 'Couldn’t save that.'); else await onSaved(r.json.station);
+    } else {
+      const r = await api(`/api/shifts/${eventId}/guide`, 'POST', { station_id: station.id, location: v.location, notes: v.text, doc_id: v.doc_id, link_url: v.link_url, link_label: v.link_label });
+      if (!r.ok) setError(r.json.error || 'Couldn’t save that.'); else await onSaved(null);
+    }
+    setBusy(false);
   }
   return (
-    <section className={styles.card}>
-      <h3 className={styles.h}>Station guides</h3>
-      <p className={styles.muted}>Each station is also the guide for that job, and everyone who can see shifts can read it. Write what it is once here; use “This event” for the location, notes and script that change each time.</p>
-      {colors && (
-        <div className={styles.colorRow}>
-          <Field label="General shift color"><ColorInput value={colors.general} onChange={(e) => void setColor('general', e.target.value)} aria-label="General shift color" /></Field>
-          <Field label="Team shift color"><ColorInput value={colors.team} onChange={(e) => void setColor('team', e.target.value)} aria-label="Team shift color" /></Field>
+    <div className={styles.guideForm}>
+      <EditingNow room={dirty ? room : null} what={`the ${station.name} guide`} />
+      {scope === 'event' && <p className={styles.muted}>Only for this event. Anything you leave blank uses the guide for every event.</p>}
+      {scope === 'all' && (
+        <div className={styles.formRow}>
+          <Field label="Who is it for?"><Select value={v.category} onChange={(e) => set('category', e.target.value)} aria-label="Who is it for"><option value="general">Anyone on the team</option><option value="team">One team</option></Select></Field>
+          {v.category === 'team' && <Field label="Which team?"><Input value={v.team_label} onChange={(e) => set('team_label', e.target.value)} maxLength={40} placeholder="LE" /></Field>}
         </div>
       )}
-      {stations.length === 0 ? <p className={styles.muted}>Add a station first.</p> : (
-        <>
-          <Field label="Station"><Select value={st?.id ?? ''} onChange={(e) => setPick(e.target.value)} aria-label="Station">{stations.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></Field>
-          {st && <StationGuideForm key={st.id} station={st} docs={docs} api={api} setError={setError} onSaved={async (next) => { setStations(stations.map((x) => (x.id === next.id ? next : x))); await onChanged(); }} />}
-          {st && grid?.plan && <EventGuideForm key={`${eventId}|${st.id}`} station={st} grid={grid} docs={docs} eventId={eventId} api={api} setError={setError} onSaved={onChanged} />}
-        </>
+      <Field label="Where"><Input value={v.location} onChange={(e) => set('location', e.target.value)} maxLength={120} placeholder={scope === 'event' ? station.location ?? 'Where this is' : 'Front desk, by the entrance'} /></Field>
+      {scope === 'all' && templates.length > 0 && (
+        <Field label="Start from a saved write-up" hint="Fills in the box below. You can change it after.">
+          <Select value="" onChange={(e) => { const t = templates.find((x) => x.id === e.target.value); if (t) set('text', v.text.trim() ? `${v.text.trim()}\n\n${t.body}` : t.body); }} aria-label="Start from a saved write-up">
+            <option value="">Pick one…</option>{templates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </Select>
+        </Field>
       )}
-    </section>
-  );
-}
-
-function StationGuideForm({ station, docs, api, setError, onSaved }: { station: ShiftStation; docs: { id: string; title: string }[]; api: Api; setError: (e: string) => void; onSaved: (s: ShiftStation) => Promise<void> }) {
-  const [v, setV] = useState({ category: station.category, team_label: station.team_label ?? '', location: station.location ?? '', instructions: station.instructions ?? '', doc_id: station.doc_id ?? '', link_url: station.link_url ?? '', link_label: station.link_label ?? '' });
-  const [busy, setBusy] = useState(false);
-  const dirty = v.category !== station.category || v.team_label !== (station.team_label ?? '') || v.location !== (station.location ?? '') || v.instructions !== (station.instructions ?? '') || v.doc_id !== (station.doc_id ?? '') || v.link_url !== (station.link_url ?? '') || v.link_label !== (station.link_label ?? '');
-  useUnsavedChanges(dirty ? v : 'CLEAN');
-  async function save() {
-    setBusy(true); setError('');
-    const r = await api<{ station: ShiftStation }>('/api/shifts/stations', 'PATCH', { id: station.id, ...v });
-    if (!r.ok) setError(r.json.error || 'Couldn’t save that.'); else await onSaved(r.json.station);
-    setBusy(false);
-  }
-  return (
-    <div className={styles.guideForm}>
-      <h4>{station.name}: usual guide</h4>
-      <EditingNow room={dirty ? `shifts-guide-${station.id}` : null} what={`the ${station.name} guide`} />
-      <div className={styles.formRow}>
-        <Field label="Who it’s for"><Select value={v.category} onChange={(e) => setV({ ...v, category: e.target.value as 'general' | 'team' })} aria-label="Who it is for"><option value="general">General: anyone on the team</option><option value="team">A specific team</option></Select></Field>
-        {v.category === 'team' && <Field label="Team name" hint="Shown as a label, and in the warning when someone else joins"><Input value={v.team_label} onChange={(e) => setV({ ...v, team_label: e.target.value })} maxLength={40} placeholder="LE" /></Field>}
-        <Field label="Usual location"><Input value={v.location} onChange={(e) => setV({ ...v, location: e.target.value })} maxLength={120} placeholder="Front desk, by the entrance" /></Field>
-      </div>
-      <Field label="What to do"><Textarea rows={5} value={v.instructions} onChange={(e) => setV({ ...v, instructions: e.target.value })} maxLength={4000} placeholder="Step by step: where to stand, who to talk to, what to do if something goes wrong" /></Field>
-      <div className={styles.formRow}>{linkFields(docs, v, (k, val) => setV({ ...v, [k]: val }))}</div>
-      <div className={styles.actions}><Button size="sm" onClick={save} disabled={!dirty || busy} loading={busy}>Save guide</Button></div>
+      <Field label={scope === 'all' ? 'What to do' : 'Extra notes for this event'}>
+        <Textarea rows={scope === 'all' ? 7 : 3} value={v.text} onChange={(e) => set('text', e.target.value)} maxLength={4000} placeholder={scope === 'all' ? 'Step by step: where to stand, who to talk to, what to do if something goes wrong' : 'Anything different tonight'} />
+      </Field>
+      {scriptFields(docs, v, (k, val) => set(k, val))}
+      <div className={styles.actions}><Button size="sm" onClick={save} disabled={!dirty || busy} loading={busy}>Save</Button></div>
     </div>
   );
 }
 
-function EventGuideForm({ station, grid, docs, eventId, api, setError, onSaved }: { station: ShiftStation; grid: ShiftGrid; docs: { id: string; title: string }[]; eventId: string; api: Api; setError: (e: string) => void; onSaved: () => Promise<void> }) {
-  const eg = grid.eventGuides[station.id];
-  const [v, setV] = useState({ location: eg?.location ?? '', notes: eg?.notes ?? '', doc_id: eg?.doc_id ?? '', link_url: eg?.link_url ?? '', link_label: eg?.link_label ?? '' });
-  const [busy, setBusy] = useState(false);
-  const dirty = v.location !== (eg?.location ?? '') || v.notes !== (eg?.notes ?? '') || v.doc_id !== (eg?.doc_id ?? '') || v.link_url !== (eg?.link_url ?? '') || v.link_label !== (eg?.link_label ?? '');
-  useUnsavedChanges(dirty ? v : 'CLEAN');
-  async function save() {
-    setBusy(true); setError('');
-    const r = await api(`/api/shifts/${eventId}/guide`, 'POST', { station_id: station.id, ...v });
-    if (!r.ok) setError(r.json.error || 'Couldn’t save that.'); else await onSaved();
-    setBusy(false);
+/** Saved write-ups: pick one on a station to fill in "what to do" (it is copied, so editing the station afterwards does not change the saved one). */
+function TemplatesCard({ templates, setTemplates, setError, api }: { templates: ShiftTemplate[]; setTemplates: (t: ShiftTemplate[]) => void; setError: (e: string) => void; api: Api }) {
+  const [edits, setEdits] = useState<Record<string, { name?: string; body?: string }>>({});
+  const [name, setName] = useState('');
+  const [body, setBody] = useState('');
+  const [busy, setBusy] = useState<string | null>(null);
+  async function add() {
+    setBusy('new'); setError('');
+    const r = await api<{ template: ShiftTemplate }>('/api/shifts/templates', 'POST', { name, body });
+    if (!r.ok) setError(r.json.error || 'Couldn’t save that.'); else { setTemplates([...templates, r.json.template]); setName(''); setBody(''); }
+    setBusy(null);
   }
+  async function save(t: ShiftTemplate) {
+    setBusy(t.id); setError('');
+    const r = await api<{ template: ShiftTemplate }>('/api/shifts/templates', 'PATCH', { id: t.id, ...edits[t.id] });
+    if (!r.ok) setError(r.json.error || 'Couldn’t save that.'); else { setTemplates(templates.map((x) => (x.id === t.id ? r.json.template : x))); setEdits(({ [t.id]: _, ...rest }) => rest); }
+    setBusy(null);
+  }
+  async function remove(t: ShiftTemplate) {
+    if (!(await confirmHold({ title: `Remove “${t.name}”?`, message: 'Stations that already used it keep their text.', confirmLabel: 'Hold to remove' }))) return;
+    setBusy(t.id);
+    await api('/api/shifts/templates', 'DELETE', { id: t.id });
+    setTemplates(templates.filter((x) => x.id !== t.id)); setBusy(null);
+  }
+  const dirty = Object.keys(edits).length > 0 || !!name || !!body;
+  useUnsavedChanges(dirty ? { edits, name, body } : 'CLEAN');
   return (
-    <div className={styles.guideForm}>
-      <h4>{station.name}: this event</h4>
-      <EditingNow room={dirty ? `shifts-guide-${eventId}-${station.id}` : null} what={`the ${station.name} guide for this event`} />
-      <p className={styles.muted}>Blank fields use the usual guide above.</p>
-      <div className={styles.formRow}>
-        <Field label="Location this time"><Input value={v.location} onChange={(e) => setV({ ...v, location: e.target.value })} maxLength={120} placeholder={station.location ?? ''} /></Field>
+    <details className={styles.card}>
+      <summary className={styles.templatesSummary}>Saved write-ups ({templates.length})</summary>
+      <p className={styles.muted}>Reusable “what to do” text. On a station, choose “Start from a saved write-up” to fill it in, then change what you need.</p>
+      {templates.map((t) => {
+        const e = edits[t.id];
+        return (
+          <div key={t.id} className={styles.templateRow}>
+            <Input value={e?.name ?? t.name} onChange={(ev) => setEdits((p) => ({ ...p, [t.id]: { ...p[t.id], name: ev.target.value } }))} maxLength={60} aria-label="Write-up name" />
+            <Textarea rows={4} value={e?.body ?? t.body} onChange={(ev) => setEdits((p) => ({ ...p, [t.id]: { ...p[t.id], body: ev.target.value } }))} maxLength={4000} aria-label={`${t.name} text`} />
+            <div className={styles.actions}>
+              <Button size="sm" disabled={!e || busy === t.id} onClick={() => void save(t)}>Save</Button>
+              <Button size="sm" variant="danger" disabled={busy === t.id} onClick={() => void remove(t)}>Remove</Button>
+            </div>
+          </div>
+        );
+      })}
+      <div className={styles.templateRow}>
+        <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} placeholder="New write-up name" aria-label="New write-up name" />
+        <Textarea rows={4} value={body} onChange={(e) => setBody(e.target.value)} maxLength={4000} placeholder="What to do" aria-label="New write-up text" />
+        <div className={styles.actions}><Button size="sm" disabled={!name.trim() || !body.trim() || busy === 'new'} onClick={() => void add()}>Add write-up</Button></div>
       </div>
-      <Field label="Notes for this event" hint="Shown under the usual instructions"><Textarea rows={3} value={v.notes} onChange={(e) => setV({ ...v, notes: e.target.value })} maxLength={4000} /></Field>
-      <div className={styles.formRow}>{linkFields(docs, v, (k, val) => setV({ ...v, [k]: val }))}</div>
-      <div className={styles.actions}><Button size="sm" onClick={save} disabled={!dirty || busy} loading={busy}>Save for this event</Button></div>
-    </div>
+    </details>
   );
 }
