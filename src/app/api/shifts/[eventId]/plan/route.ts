@@ -43,7 +43,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ even
       return rel >= 0 && rel % step === 0 && rel / step < count ? rel / step : null;
     };
     const [{ data: sg }, { data: ov }] = await Promise.all([
-      auth.svc.from('shift_signups').select('event_id, station_id, slot_index, user_id').eq('event_id', eventId),
+      auth.svc.from('shift_signups').select('event_id, station_id, slot_index, user_id, arrived_at').eq('event_id', eventId),
       auth.svc.from('shift_overrides').select('event_id, station_id, slot_index, needed').eq('event_id', eventId),
     ]);
     const keepS = (sg ?? []).flatMap((r) => { const n = remap(r.slot_index as number); return n === null ? [] : [{ ...r, slot_index: n }]; });

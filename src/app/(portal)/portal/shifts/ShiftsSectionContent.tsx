@@ -165,7 +165,7 @@ export default function ShiftsSectionContent({ events, stations: initialStations
       {plan && tab === 'schedule' && grid && <><Legend grid={grid} /><MyShifts grid={grid} onArrive={arrive} onOpen={(id) => setGuideOpen({ id })} /><BoardView grid={grid} /></>}
       {plan && tab === 'guides' && grid && <GuidesView grid={grid} />}
       {!plan && tab === 'guides' && <div className={styles.card}><p className={styles.muted}>Guides show up once the shifts for this event are set up.</p></div>}
-      {plan && tab === 'people' && grid && canManage && <PeopleView event={ev!} grid={grid} onChanged={load} setError={setError} />}
+      {plan && tab === 'people' && grid && canManage && <PeopleView event={ev!} sync={sync} initial={nav.tab === 'people' ? nav.subtab : undefined} grid={grid} onChanged={load} setError={setError} />}
       {!plan && tab === 'people' && <div className={styles.card}><p className={styles.muted}>Make the grid in Setup first, then you can see who has their shifts.</p></div>}
       {warn && (
         <Dialog title="This is a team shift" onClose={() => setWarn(null)}>
@@ -175,7 +175,7 @@ export default function ShiftsSectionContent({ events, stations: initialStations
       )}
       {guideOpen && grid && grid.stations.find((x) => x.id === guideOpen.id) && <GuideDialog grid={grid} station={grid.stations.find((x) => x.id === guideOpen.id)!} arrivedNow={guideOpen.arrived} onClose={() => setGuideOpen(null)} />}
       {tab === 'setup' && canManage && ev && (
-        <SetupView event={ev} docs={docs} grid={grid} stations={stations} setStations={setStations} onChanged={load} setError={setError} />
+        <SetupView event={ev} sync={sync} initial={nav.tab === 'setup' ? nav.subtab : undefined} docs={docs} grid={grid} stations={stations} setStations={setStations} onChanged={load} setError={setError} />
       )}
     </div>
   );
@@ -333,10 +333,11 @@ function BoardView({ grid }: { grid: ShiftGrid }) {
 }
 
 // Who has taken the shifts they need. Active officers and leads each have a requirement; the ones still short come first, and inactive (exempt) officers are listed apart.
-function PeopleView({ event, grid, onChanged, setError }: { event: ShiftEvent; grid: ShiftGrid; onChanged: () => Promise<void>; setError: (e: string) => void }) {
+function PeopleView({ event, sync, initial, grid, onChanged, setError }: { event: ShiftEvent; sync: (tab: string, subtab?: string | null) => void; initial?: string; grid: ShiftGrid; onChanged: () => Promise<void>; setError: (e: string) => void }) {
   const r = grid.requirement;
   const [show, setShow] = useState<'owe' | 'all'>('owe');
-  const [sub, setSub] = useState<'requirement' | 'exempt' | 'away'>('requirement');
+  const [sub, setSubState] = useState<'requirement' | 'exempt' | 'away'>(initial === 'exempt' || initial === 'away' ? initial : 'requirement');
+  const setSub = (v: 'requirement' | 'exempt' | 'away') => { setSubState(v); sync('people', v === 'requirement' ? null : v); };
   const subTabs = (
     <SectionTabs<'requirement' | 'exempt' | 'away'> label="People" variant="segmented" value={sub} onChange={setSub}
       tabs={[{ id: 'requirement', label: 'Requirement' }, { id: 'exempt', label: 'Exempt', count: grid.exemptions.length + (r?.exempt.filter((p) => p.reason === 'inactive').length ?? 0) }, { id: 'away', label: 'Away', count: grid.absences.length }]} />
@@ -392,8 +393,8 @@ function PeopleView({ event, grid, onChanged, setError }: { event: ShiftEvent; g
   );
 }
 
-function SetupView({ event, docs, grid, stations, setStations, onChanged, setError }: {
-  event: ShiftEvent; docs: { id: string; title: string }[]; grid: ShiftGrid | null; stations: ShiftStation[]; setStations: (s: ShiftStation[]) => void; onChanged: () => Promise<void>; setError: (e: string) => void;
+function SetupView({ event, sync, initial, docs, grid, stations, setStations, onChanged, setError }: {
+  event: ShiftEvent; sync: (tab: string, subtab?: string | null) => void; initial?: string; docs: { id: string; title: string }[]; grid: ShiftGrid | null; stations: ShiftStation[]; setStations: (s: ShiftStation[]) => void; onChanged: () => Promise<void>; setError: (e: string) => void;
 }) {
   const plan = grid?.plan ?? event.plan;
   // Remounting on a changed plan gives the form a fresh starting point, so what is on screen is always what is saved until someone edits it.
@@ -415,7 +416,8 @@ function SetupView({ event, docs, grid, stations, setStations, onChanged, setErr
   }
 
   // Three small pages instead of one long one: this event's basics, the stations and their numbers, and the station guides.
-  const [part, setPart] = useState<'event' | 'stations' | 'guides'>('event');
+  const [part, setPartState] = useState<'event' | 'stations' | 'guides'>(initial === 'stations' || initial === 'guides' ? initial : 'event');
+  const setPart = (v: 'event' | 'stations' | 'guides') => { setPartState(v); sync('setup', v === 'event' ? null : v); };
   return (
     <div className={styles.setup}>
       <SectionTabs<'event' | 'stations' | 'guides'> label="Setup" variant="segmented" value={part} onChange={setPart}

@@ -5,8 +5,10 @@ import { BookOpen, Check, ExternalLink, FileText, MapPin } from 'lucide-react';
 import PortalLink from '@/components/portal/PortalLink';
 import Button from '@/components/ui/Button';
 import ColorInput from '@/components/ui/ColorInput';
+import EditingNow from '@/components/portal/EditingNow';
 import Dialog, { DialogActions, DialogCancel, DialogText } from '@/components/ui/Dialog';
 import { Field, Input, Select, Textarea } from '@/components/ui/Field';
+import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import { cellKey, guideFor, slotCount, slotRange, type ShiftGrid, type ShiftStation } from '@/lib/shifts';
 import styles from './shifts.module.css';
@@ -160,6 +162,7 @@ function StationGuideForm({ station, docs, api, setError, onSaved }: { station: 
   const [v, setV] = useState({ category: station.category, team_label: station.team_label ?? '', location: station.location ?? '', instructions: station.instructions ?? '', doc_id: station.doc_id ?? '', link_url: station.link_url ?? '', link_label: station.link_label ?? '' });
   const [busy, setBusy] = useState(false);
   const dirty = v.category !== station.category || v.team_label !== (station.team_label ?? '') || v.location !== (station.location ?? '') || v.instructions !== (station.instructions ?? '') || v.doc_id !== (station.doc_id ?? '') || v.link_url !== (station.link_url ?? '') || v.link_label !== (station.link_label ?? '');
+  useUnsavedChanges(dirty ? v : 'CLEAN');
   async function save() {
     setBusy(true); setError('');
     const r = await api<{ station: ShiftStation }>('/api/shifts/stations', 'PATCH', { id: station.id, ...v });
@@ -169,6 +172,7 @@ function StationGuideForm({ station, docs, api, setError, onSaved }: { station: 
   return (
     <div className={styles.guideForm}>
       <h4>{station.name}: usual guide</h4>
+      <EditingNow room={dirty ? `shifts-guide-${station.id}` : null} what={`the ${station.name} guide`} />
       <div className={styles.formRow}>
         <Field label="Who it’s for"><Select value={v.category} onChange={(e) => setV({ ...v, category: e.target.value as 'general' | 'team' })} aria-label="Who it is for"><option value="general">General: anyone on the team</option><option value="team">A specific team</option></Select></Field>
         {v.category === 'team' && <Field label="Team name" hint="Shown as a label, and in the warning when someone else joins"><Input value={v.team_label} onChange={(e) => setV({ ...v, team_label: e.target.value })} maxLength={40} placeholder="LE" /></Field>}
@@ -186,6 +190,7 @@ function EventGuideForm({ station, grid, docs, eventId, api, setError, onSaved }
   const [v, setV] = useState({ location: eg?.location ?? '', notes: eg?.notes ?? '', doc_id: eg?.doc_id ?? '', link_url: eg?.link_url ?? '', link_label: eg?.link_label ?? '' });
   const [busy, setBusy] = useState(false);
   const dirty = v.location !== (eg?.location ?? '') || v.notes !== (eg?.notes ?? '') || v.doc_id !== (eg?.doc_id ?? '') || v.link_url !== (eg?.link_url ?? '') || v.link_label !== (eg?.link_label ?? '');
+  useUnsavedChanges(dirty ? v : 'CLEAN');
   async function save() {
     setBusy(true); setError('');
     const r = await api(`/api/shifts/${eventId}/guide`, 'POST', { station_id: station.id, ...v });
@@ -195,6 +200,7 @@ function EventGuideForm({ station, grid, docs, eventId, api, setError, onSaved }
   return (
     <div className={styles.guideForm}>
       <h4>{station.name}: this event</h4>
+      <EditingNow room={dirty ? `shifts-guide-${eventId}-${station.id}` : null} what={`the ${station.name} guide for this event`} />
       <p className={styles.muted}>Blank fields use the usual guide above.</p>
       <div className={styles.formRow}>
         <Field label="Location this time"><Input value={v.location} onChange={(e) => setV({ ...v, location: e.target.value })} maxLength={120} placeholder={station.location ?? ''} /></Field>

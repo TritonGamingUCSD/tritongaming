@@ -15,8 +15,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ eve
   if (!UUID.test(eventId) || !UUID.test(stationId)) return bad('Station not found.', 404);
   const url = webUrl(b.link_url);
   if (url === undefined) return bad('The link must start with https://');
-  let docId: string | null = b.doc_id ? String(b.doc_id) : null;
-  if (docId) { const { data: d } = UUID.test(docId) ? await auth.svc.from('docs').select('id').eq('id', docId).maybeSingle() : { data: null }; if (!d) docId = null; }
+  const docId: string | null = b.doc_id ? String(b.doc_id) : null;
+  if (docId) { const { data: d } = UUID.test(docId) ? await auth.svc.from('docs').select('id').eq('id', docId).maybeSingle() : { data: null }; if (!d) return bad('That doc no longer exists.', 404); }
   const [{ data: st }, { data: ev }] = await Promise.all([
     auth.svc.from('shift_stations').select('name').eq('id', stationId).maybeSingle(),
     auth.svc.from('events').select('title').eq('id', eventId).maybeSingle(),
