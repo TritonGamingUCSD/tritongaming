@@ -11,7 +11,11 @@ import { portalTargetFromNext } from '@/lib/portalShare';
 // A shared portal link lands here first (the portal needs a login), so the preview card names the page it points at.
 export async function generateMetadata({ searchParams }: { searchParams: Promise<{ next?: string }> }): Promise<Metadata> {
   const target = portalTargetFromNext((await searchParams).next);
-  if (!target) return { title: 'Sign In' };
+  if (!target) {
+    const title = 'Sign in · Triton Gaming Portal';
+    const description = 'Members and officers: sign in to the Triton Gaming portal.';
+    return { title: 'Sign In', openGraph: { title, description, images: ['/opengraph-image'] }, twitter: { card: 'summary_large_image', title, description, images: ['/opengraph-image'] } };
+  }
   const title = `${target.name} · Triton Gaming Portal`;
   const description = 'Sign in to open this page.';
   const image = `/api/og/portal/${target.section}`;

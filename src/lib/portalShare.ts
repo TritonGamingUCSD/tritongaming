@@ -3,6 +3,7 @@ import { parsePortalPath } from '@/lib/portalPath';
 // What a shared portal link looks like in a chat preview. The portal needs a login, so an outsider (and a link-preview robot)
 // only ever reaches the sign-in page; it uses this to name the page the link points at, without showing anything private.
 export const PORTAL_PAGE_INFO: Record<string, { name: string; sub: string; accent: string }> = {
+  dashboard: { name: 'Dashboard', sub: 'Your tickets, events and to-dos.', accent: '#4a90d9' },
   calendar: { name: 'Calendar', sub: 'Events and meetings in one place.', accent: '#4a90d9' },
   tickets: { name: 'My Tickets', sub: 'Your event tickets and history.', accent: '#4a90d9' },
   points: { name: 'Rewards', sub: 'Points, perks and the leaderboard.', accent: '#4a90d9' },
@@ -13,6 +14,7 @@ export const PORTAL_PAGE_INFO: Record<string, { name: string; sub: string; accen
   meetings: { name: 'Meetings', sub: 'Check in, plan and review meetings.', accent: '#8b6cdc' },
   'internal-events': { name: 'Internal Events', sub: 'Socials, trainings and workshops for the team.', accent: '#8b6cdc' },
   keys: { name: 'Storage Keys', sub: 'Who holds each storage key.', accent: '#8b6cdc' },
+  shifts: { name: 'Shifts', sub: 'Who works which station, and when.', accent: '#8b6cdc' },
   strikes: { name: 'Strikes', sub: 'Attendance and strike tracking.', accent: '#8b6cdc' },
   quarters: { name: 'Quarter Status', sub: 'Who is active each quarter.', accent: '#8b6cdc' },
   divisions: { name: 'Divisions', sub: 'Manage divisions.', accent: '#8b6cdc' },
@@ -30,6 +32,7 @@ export function portalTargetFromNext(next: string | undefined): { section: strin
   if (!next || !next.startsWith('/portal')) return null;
   const path = next.split('?')[0];
   let section = parsePortalPath(path)?.section;
+  if (!section && /^\/portal\/?$/.test(path) && !new URLSearchParams(next.split('?')[1] ?? '').get('section')) section = 'dashboard';
   if (!section) section = new URLSearchParams(next.split('?')[1] ?? '').get('section') ?? undefined;
   const info = section ? PORTAL_PAGE_INFO[section] : undefined;
   return section && info ? { section, name: info.name } : null;

@@ -10,7 +10,7 @@ import PhotoStrip from '@/components/PhotoStrip/PhotoStrip';
 import { getSitePhotos, pickPhotos } from '@/lib/sitePhotos';
 import styles from './media.module.css';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: 'Media',

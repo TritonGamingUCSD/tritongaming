@@ -76,7 +76,7 @@ export default function DocPicker({ anchor, docs, sections, favorites, selectedI
                   <button key={`${g.label}-${r.doc.id}`} type="button" role="option" aria-selected={r.doc.id === selectedId} data-i={idx}
                     className={`${styles.pickerRow} ${idx === cursor ? styles.pickerCursor : ''} ${r.doc.id === selectedId ? styles.pickerCurrent : ''}`}
                     style={{ paddingLeft: `${0.6 + r.depth * 0.9}rem` }} onMouseMove={() => setCursor(idx)} onClick={() => onOpen(r.doc.id)}>
-                    <span className={styles.pickerIcon} aria-hidden="true">{r.doc.icon || <FileText size={14} />}</span>
+                    <span className={styles.pickerIcon} aria-hidden="true"><FileText size={14} /></span>
                     <span className={styles.pickerTitle}>{r.doc.title || 'Untitled'}</span>
                     {favorites.has(r.doc.id) && g.label !== 'Favorites' && <Star size={12} className={styles.pickerStar} aria-label="Favorite" />}
                     {q.trim() && <span className={styles.pickerWhere}>{r.group}</span>}

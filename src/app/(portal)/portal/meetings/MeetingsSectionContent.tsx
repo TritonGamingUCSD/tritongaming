@@ -25,6 +25,7 @@ import BubbleField from './BubbleField';
 import { QuestionEditor, ResultBars, StarPicker, Confetti, emptyQ, qFrom, qPayload, qBad, type QState } from './QuestionParts';
 import { CUSTOM_PREFIX, isCustomEmoji, customEmojiId, MAX_EMOJI_BYTES, MAX_EMOJI_PICK_BYTES, EMOJI_NAME, parseDiscordEmoji, emojiNameFrom, type CustomEmoji, type QuestionType, type Tally, MAX_ANSWER_LENGTH, MAX_QUESTION_LENGTH, MAX_DESCRIPTION_LENGTH, suggestQuestion } from '@/lib/meetingFun';
 import PlanningPanel from './planning/PlanningPanel';
+import { useVisiblePoll } from '@/lib/useVisiblePoll';
 import styles from './meetings.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
 
@@ -168,11 +169,8 @@ function CheckInPanel() {
     } catch { /* keep what we have */ }
   }, []);
 
-  useEffect(() => {
-    load();
-    const t = setInterval(load, 10_000);
-    return () => clearInterval(t);
-  }, [load]);
+  useEffect(() => { void load(); }, [load]);
+  useVisiblePoll(load, 30_000);   // paused while the tab is hidden; refreshes the moment it comes back
 
   async function submit(value: string) {
     if (busy) return;
@@ -295,15 +293,11 @@ function FunBox({ meeting, onSaved }: { meeting: TodayMeeting; onSaved: () => vo
   const [tallyNow, setTallyNow] = useState<Tally | null>(null);
   const last = useRef(0);
   const type = meeting.question_type ?? 'text';
-  // Polls and ratings: after you vote you watch the bars move as everyone else votes.
-  useEffect(() => {
-    if (type === 'text' || !mine || !meeting.open) return;
-    let alive = true;
-    const pull = () => fetch(`/api/meetings/${meeting.id}/results`, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((j) => { if (alive && j) setTallyNow({ counts: j.counts, total: j.total, average: j.average }); }).catch(() => {});
-    void pull();
-    const t = setInterval(pull, 3000);
-    return () => { alive = false; clearInterval(t); };
-  }, [type, mine, meeting.id, meeting.open]);
+  // Polls and ratings: after you vote you watch the bars move as everyone else votes (paused while the tab is hidden).
+  const watching = type !== 'text' && !!mine && meeting.open;
+  const pullResults = useCallback(() => fetch(`/api/meetings/${meeting.id}/results`, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((j) => { if (j) setTallyNow({ counts: j.counts, total: j.total, average: j.average }); }).catch(() => {}), [meeting.id]);
+  useEffect(() => { if (watching) void pullResults(); }, [watching, pullResults]);
+  useVisiblePoll(pullResults, 3000, watching);
   async function vote(choice: string) {
     setError(''); const before = mine; setMine(choice);
     const res = await fetch(`/api/meetings/${meeting.id}/answer`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer: choice }) });
@@ -747,7 +741,8 @@ function MeetingList({ onOpen, showForm, onShowForm }: { onOpen: (id: string) =>
       if (res.ok) setData(json); else setError(json.error || 'Failed to load.');
     } catch { setError('Network error.'); }
   }, []);
-  useEffect(() => { load(); const t = setInterval(load, 15_000); return () => clearInterval(t); }, [load]);
+  useEffect(() => { void load(); }, [load]);
+  useVisiblePoll(load, 60_000);
 
   async function post(url: string, body: unknown, key: string): Promise<{ ok: boolean; json: Record<string, unknown> }> {
     setBusyKey(key); setError('');
@@ -1365,12 +1360,9 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
     } catch { /* next poll */ }
   }, [id]);
 
-  useEffect(() => {
-    loadLive();
-    // Faster than before so reactions and answers feel live on the big screen.
-    const t = setInterval(loadLive, 2000);
-    return () => clearInterval(t);
-  }, [loadLive]);
+  useEffect(() => { void loadLive(); }, [loadLive]);
+  // Fast so reactions and answers feel live on the big screen, but only while the tab is visible.
+  useVisiblePoll(loadLive, 2000);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 250);

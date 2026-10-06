@@ -132,3 +132,19 @@ export async function eventGuideMap(svc: SupabaseClient, rows: Record<string, un
     doc_title: r.doc_id ? titles.get(r.doc_id as string) ?? null : null, link_url: (r.link_url as string | null) ?? null, link_label: (r.link_label as string | null) ?? null,
   }]));
 }
+
+/** Tells everyone looking at this event's shifts that something changed, so their page refreshes right away instead of polling. Failing to send is harmless: pages also refresh slowly on their own. */
+/** The channel for changes that affect every event's shifts (the stations list). */
+export const STATIONS_CHANNEL = 'stations';
+
+export async function notifyShifts(eventId: string) {
+  const send = async () => {
+    const svc = createServiceClient();
+    const channel = svc.channel(`shifts:${eventId}`);
+    const sent = await channel.httpSend('changed', {});
+    if (!sent.success) console.warn('shift broadcast was not accepted', sent);
+    await svc.removeChannel(channel);
+  };
+  // Never holds up (or fails) the shift change itself: give up after a moment.
+  try { await Promise.race([send(), new Promise((resolve) => setTimeout(resolve, 1500))]); } catch (e) { console.warn('shift broadcast failed', e); }
+}

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { UUID, authorizeShifts, bad } from '@/lib/shiftsServer';
+import { UUID, authorizeShifts, bad, notifyShifts } from '@/lib/shiftsServer';
 import { slotRange } from '@/lib/shifts';
 
 export const dynamic = 'force-dynamic';
@@ -30,5 +30,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ eve
   }
   const { error } = await auth.svc.from('shift_signups').update({ arrived_at: arrived ? new Date().toISOString() : null }).eq('id', mine.id as string);
   if (error) return bad('Couldn’t save that. Try again.', 500);
+  await notifyShifts(eventId);
   return NextResponse.json({ ok: true });
 }

@@ -8,7 +8,8 @@ export const metadata: Metadata = {
   title: 'Terms of Service',
   description: DESCRIPTION,
   alternates: { canonical: '/terms' },
-  openGraph: { title: 'Terms of Service', description: DESCRIPTION, type: 'website' },
+  openGraph: { title: 'Terms of Service', description: DESCRIPTION, type: 'website', images: ['/opengraph-image'] },
+  twitter: { card: 'summary_large_image', title: 'Terms of Service', description: DESCRIPTION, images: ['/opengraph-image'] },
 };
 
 const CONTACT = 'tritongamingofficial@gmail.com';

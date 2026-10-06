@@ -10,7 +10,7 @@ import { Field, Input, Select, Textarea } from '@/components/ui/Field';
 import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import { confirmHold } from '@/lib/confirmHold';
-import { cellKey, guideFor, slotCount, slotRange, type ShiftGrid, type ShiftStation, type ShiftTemplate } from '@/lib/shifts';
+import { cellKey, groupByArea, guideFor, slotCount, slotRange, type ShiftGrid, type ShiftStation, type ShiftTemplate } from '@/lib/shifts';
 import styles from './shifts.module.css';
 
 const time = (d: Date) => d.toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' });
@@ -23,8 +23,8 @@ export function Legend({ grid }: { grid: ShiftGrid }) {
   if (!grid.stations.some((s) => s.category === 'team')) return null;
   return (
     <p className={styles.legend}>
-      <span><i className={`${styles.dot} ${styles.catGeneral}`} /><span><strong>General</strong>: anyone on the team can sign up</span></span>
-      <span><i className={`${styles.dot} ${styles.catTeam}`} /><span><strong>Team shift</strong>: aimed at one team. If that isn’t yours, contact the leads and LE directors before signing up</span></span>
+      <span><i className={`${styles.dot} ${styles.catGeneral}`} /><span><strong>General</strong>: anyone can sign up</span></span>
+      <span><i className={`${styles.dot} ${styles.catTeam}`} /><span><strong>Team shift</strong>: for a specific team. If that isn’t yours, contact the leads and LE directors before signing up</span></span>
     </p>
   );
 }
@@ -68,8 +68,8 @@ export function MyShifts({ grid, onArrive, onOpen }: { grid: ShiftGrid; onArrive
   const [busy, setBusy] = useState<string | null>(null);
   if (!mine.length) return null;
   return (
-    <section className={styles.card} aria-label="Your shifts">
-      <h3 className={styles.h}>Your shifts</h3>
+    <section className={`${styles.card} ${styles.myCard}`} aria-label="Your shifts">
+      <h3 className={styles.myTitle}>Your shifts</h3>
       <ul className={styles.myList}>
         {mine.filter((s) => s.slot_index < slotCount(plan)).map((s) => {
           const st = grid.stations.find((x) => x.id === s.station_id); if (!st) return null;
@@ -106,7 +106,10 @@ export function GuidesView({ grid }: { grid: ShiftGrid }) {
         <Legend grid={grid} />
         <button type="button" className={styles.guideBtn} onClick={() => setOpen(allOpen ? new Set() : new Set(grid.stations.map((x) => x.id)))}>{allOpen ? 'Collapse all' : 'Expand all'}</button>
       </div>
-      {grid.stations.map((st) => {
+      {groupByArea(grid.stations).map((group) => (
+        <div key={group.key} className={styles.area}>
+          {group.label && <h3 className={styles.areaHead}>{group.label}</h3>}
+          {group.stations.map((st) => {
         const isOpen = open.has(st.id);
         const g = guideFor(st, grid.eventGuides[st.id]);
         return (
@@ -122,6 +125,8 @@ export function GuidesView({ grid }: { grid: ShiftGrid }) {
           </section>
         );
       })}
+        </div>
+      ))}
     </div>
   );
 }

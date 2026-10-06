@@ -102,7 +102,7 @@ export default function DocReader({
         {doc.cover_url && /* eslint-disable-next-line @next/next/no-img-element */ <img className={styles.cover} src={doc.cover_url} alt="" referrerPolicy="no-referrer" />}
 
         <header className={styles.articleHead}>
-          <h1 className={styles.articleTitle}>{doc.icon && <span className={styles.titleIcon} aria-hidden="true">{doc.icon}</span>}{doc.title}</h1>
+          <h1 className={styles.articleTitle}>{doc.title}</h1>
           <div className={styles.articleActions}>
             <Button size="sm" variant="ghost" onClick={onFavorite} aria-pressed={favorite} aria-label={favorite ? 'Remove from favorites' : 'Add to favorites'}><Star size={14} fill={favorite ? 'currentColor' : 'none'} aria-hidden="true" /> {favorite ? 'Favorited' : 'Favorite'}</Button>
             {canEdit && <Button size="sm" variant="secondary" onClick={onEdit}><Pencil size={14} aria-hidden="true" /> Edit</Button>}

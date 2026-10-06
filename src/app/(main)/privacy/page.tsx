@@ -7,7 +7,8 @@ export const metadata: Metadata = {
   title: 'Privacy Policy',
   description: DESCRIPTION,
   alternates: { canonical: '/privacy' },
-  openGraph: { title: 'Privacy Policy', description: DESCRIPTION, type: 'website' },
+  openGraph: { title: 'Privacy Policy', description: DESCRIPTION, type: 'website', images: ['/opengraph-image'] },
+  twitter: { card: 'summary_large_image', title: 'Privacy Policy', description: DESCRIPTION, images: ['/opengraph-image'] },
 };
 
 const CONTACT = 'tritongamingofficial@gmail.com';

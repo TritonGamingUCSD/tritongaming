@@ -77,7 +77,7 @@ export default function DocSidebar({
             {open ? <ChevronDown size={13} aria-hidden="true" /> : <ChevronRight size={13} aria-hidden="true" />}
           </button>
           <button type="button" className={styles.rowMain} onClick={() => onOpen(d.id)}>
-            <span className={styles.rowIcon} aria-hidden="true">{d.icon ? d.icon : <FileText size={14} strokeWidth={1.5} />}</span>
+            <span className={styles.rowIcon} aria-hidden="true"><FileText size={14} strokeWidth={1.5} /></span>
             <span className={styles.rowTitle}>{d.title || 'Untitled'}</span>
             {!d.published && canEdit && <span className={styles.tagMini}>New</span>}
             {hasDraft && d.published && <span className={styles.dot} title="Has unpublished changes" aria-label="Has unpublished changes" />}
@@ -128,7 +128,7 @@ export default function DocSidebar({
                 <div className={styles.catHeaderStatic}><Star size={12} aria-hidden="true" /> <span className={styles.catName}>Favorites</span></div>
                 <ul className={styles.treeList}>
                   {favDocs.map((d) => (
-                    <li key={d.id}><div className={`${styles.row} ${selectedId === d.id ? styles.rowActive : ''}`}><span className={styles.twisty} style={{ visibility: 'hidden' }} /><button type="button" className={styles.rowMain} onClick={() => onOpen(d.id)}><span className={styles.rowIcon} aria-hidden="true">{d.icon ?? <FileText size={14} strokeWidth={1.5} />}</span><span className={styles.rowTitle}>{d.title}</span></button></div></li>
+                    <li key={d.id}><div className={`${styles.row} ${selectedId === d.id ? styles.rowActive : ''}`}><span className={styles.twisty} style={{ visibility: 'hidden' }} /><button type="button" className={styles.rowMain} onClick={() => onOpen(d.id)}><span className={styles.rowIcon} aria-hidden="true"><FileText size={14} strokeWidth={1.5} /></span><span className={styles.rowTitle}>{d.title}</span></button></div></li>
                   ))}
                 </ul>
               </section>

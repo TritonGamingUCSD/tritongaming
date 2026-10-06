@@ -13,7 +13,7 @@ import { getUpcomingEvents } from '@/lib/events';
 import type { StatInput } from '@/components/LandingStatistics/LandingStatistics';
 import { DISCORD_URL } from '@/lib/links';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 // Title/description are left unset here — they inherit the root layout's
 // defaults, which are already written for the home page specifically (not

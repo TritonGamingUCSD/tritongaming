@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/audit';
-import { UUID, authorizeShifts, bad } from '@/lib/shiftsServer';
+import { UUID, authorizeShifts, bad, notifyShifts } from '@/lib/shiftsServer';
 import { text, webUrl } from '@/lib/shiftFields';
 
 export const dynamic = 'force-dynamic';
@@ -29,5 +29,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ eve
     : await auth.svc.from('shift_event_guides').upsert(row);
   if (error) return bad('Couldn’t save that.', 500);
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'update', entityType: 'shift station', entityId: stationId, summary: `Edited the "${st.name}" shift guide for "${ev.title}"` });
+  await notifyShifts(eventId);
   return NextResponse.json({ ok: true });
 }

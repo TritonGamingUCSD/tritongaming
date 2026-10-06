@@ -1,5 +1,6 @@
 'use client';
 
+import { useVisiblePoll } from '@/lib/useVisiblePoll';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { syncPush } from '@/lib/pushClient';
 import Image from 'next/image';
@@ -59,15 +60,9 @@ export default function NotificationBell({ inline = false }: { inline?: boolean 
     }
   }, []);
 
-  useEffect(() => {
-    load();
-    // Light polling instead of a realtime subscription — a notification
-    // arriving a few seconds late is a non-issue for this content (unlike
-    // FullscreenQR's live check-in status), so this avoids introducing a
-    // second realtime-channel pattern into the codebase for one bell icon.
-    const interval = setInterval(load, 60_000);
-    return () => clearInterval(interval);
-  }, [load]);
+  useEffect(() => { void load(); }, [load]);
+  // Light polling instead of a realtime subscription: a notification arriving a little late is a non-issue. Paused while the tab is hidden.
+  useVisiblePoll(load, 60_000);
 
   useEffect(() => {
     if (!open) return;

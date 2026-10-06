@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, CalendarClock, Check, Eye, MapPin, LayoutGrid, Pencil, Plus, Settings2, Trash2, UserPlus, Users, X } from 'lucide-react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { BookOpen, CalendarClock, Check, Eye, GripVertical, Loader2, MapPin, LayoutGrid, Pencil, Plus, Settings2, Trash2, UserPlus, Users, X } from 'lucide-react';
 import SectionHeader from '@/components/ui/SectionHeader';
 import PortalLink from '@/components/portal/PortalLink';
 import SectionTabs from '@/components/ui/SectionTabs';
@@ -15,7 +15,9 @@ import { confirmHold } from '@/lib/confirmHold';
 import { createClient } from '@/lib/supabase/client';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
-import { SLOT_CHOICES, awayDuring, cellKey, guideFor, neededFor, slotCount, slotRange, type ShiftGrid, type ShiftStation, type ShiftTemplate } from '@/lib/shifts';
+import { useVisiblePoll } from '@/lib/useVisiblePoll';
+import { useDragReorder } from '@/lib/useDragReorder';
+import { SLOT_CHOICES, awayDuring, cellKey, groupByArea, guideFor, neededFor, slotCount, slotRange, type ShiftGrid, type ShiftStation, type ShiftTemplate } from '@/lib/shifts';
 import Dialog, { DialogActions, DialogCancel, DialogText } from '@/components/ui/Dialog';
 import { GuideDialog, GuideSetup, GuidesView, Legend, MyShifts, catClass, catName } from './ShiftGuides';
 import type { ShiftEvent } from './getShiftsData';
@@ -51,32 +53,45 @@ export default function ShiftsSectionContent({ events, stations: initialStations
   const [grid, setGrid] = useState<ShiftGrid | null>(null);
   const [error, setError] = useState('');
   const [busyCell, setBusyCell] = useState<string | null>(null);
+  const [busyAct, setBusyAct] = useState<'join' | 'leave' | null>(null);   // what the person is doing in the busy cell, so the grid can say so while it saves
   const [viewers, setViewers] = useState<string[]>([]);
   const gridRef = useRef<ShiftGrid | null>(null); gridRef.current = grid;
 
   const load = useCallback(async () => {
     if (!eventId) return;
     const r = await api<{ grid: ShiftGrid }>(`/api/shifts/${eventId}`, 'GET');
-    if (r.ok && r.json.grid) { const g = r.json.grid as ShiftGrid; setGrid({ ...g, canManage: g.canManage && canManage, canSignUp: g.canSignUp && canSignUp }); }   // an admin previewing a lower role sees only what that role could use
+    if (r.ok && r.json.grid) { const g = r.json.grid as ShiftGrid; setStations(g.stations); setGrid({ ...g, canManage: g.canManage && canManage, canSignUp: g.canSignUp && canSignUp }); }   // an admin previewing a lower role sees only what that role could use
     else if (!r.ok) setError(r.json.error || 'Couldn’t load the shifts.');
   }, [eventId]);
   useEffect(() => { setGrid(null); setError(''); void load(); }, [load]);
-  // The board stays live: refresh every few seconds while the tab is visible.
-  useEffect(() => {
-    const t = setInterval(() => { if (!document.hidden) void load(); }, 5000);
-    return () => clearInterval(t);
-  }, [load]);
+  // The board stays live without polling: the server sends a "changed" message to this event's channel after every shift change (see the effect
+  // below), and the page refreshes then. A slow refresh remains as a backstop in case the connection is blocked; it pauses while the tab is hidden.
+  const loadRef = useRef(load); loadRef.current = load;
+  useVisiblePoll(load, 60_000);
 
   // Who else is looking at this event right now.
   useEffect(() => {
     if (!eventId) return;
     const supabase = createClient();
     const channel = supabase.channel(`shifts:${eventId}`, { config: { presence: { key: userId } } });
+    let pending: ReturnType<typeof setTimeout> | undefined;
+    let joined = false;
     channel.on('presence', { event: 'sync' }, () => {
       const state = channel.presenceState() as Record<string, { name?: string }[]>;
       setViewers(Object.entries(state).filter(([k]) => k !== userId).map(([, v]) => v[0]?.name ?? 'Someone'));
-    }).subscribe(async (status) => { if (status === 'SUBSCRIBED') await channel.track({ name: userName }); });
-    return () => { void supabase.removeChannel(channel); };
+    }).on('broadcast', { event: 'changed' }, () => {
+      clearTimeout(pending);   // several changes close together make one refresh
+      pending = setTimeout(() => { if (!document.hidden) void loadRef.current(); }, 250);
+    }).subscribe(async (status) => {
+      if (status !== 'SUBSCRIBED') return;
+      await channel.track({ name: userName });
+      if (joined) void loadRef.current();   // reconnected: catch up on anything missed
+      joined = true;
+    });
+    // Changes to the stations list (add, rename, reorder, area, team) affect every event, so they come on one shared channel.
+    const shared = supabase.channel('shifts:stations');
+    shared.on('broadcast', { event: 'changed' }, () => { clearTimeout(pending); pending = setTimeout(() => { if (!document.hidden) void loadRef.current(); }, 250); }).subscribe();
+    return () => { clearTimeout(pending); void supabase.removeChannel(channel); void supabase.removeChannel(shared); };
   }, [eventId, userId, userName]);
 
   const ev = events.find((e) => e.id === eventId) ?? null;
@@ -101,11 +116,11 @@ export default function ShiftsSectionContent({ events, stations: initialStations
   }
   async function claim(stationId: string, slot: number, join: boolean) {
     const key = cellKey(stationId, slot);
-    setBusyCell(key); setError('');
+    setBusyCell(key); setBusyAct(join ? 'join' : 'leave'); setError('');
     const r = await api(`/api/shifts/${eventId}/signup`, 'POST', { station_id: stationId, slot_index: slot, join });
     if (!r.ok) setError(r.json.error || 'Couldn’t save that.');
     await load();
-    setBusyCell(null);
+    setBusyCell(null); setBusyAct(null);
   }
 
   const [placing, setPlacing] = useState<{ station: string; slot: number } | null>(null);
@@ -140,6 +155,11 @@ export default function ShiftsSectionContent({ events, stations: initialStations
             {events.map((e) => <option key={e.id} value={e.id}>{e.title} · {dayLabel(e.start_date)}{e.plan ? (e.plan.signup_open ? ' · signup open' : ' · signup not open yet') : ''}</option>)}
           </Select>
         </Field>
+        {plan && tab === 'signup' && (
+          <div className={styles.viewToggle}>
+            <SectionTabs<'grid' | 'time'> label="View" variant="segmented" value={view} onChange={setView} tabs={[{ id: 'grid', label: 'Grid' }, { id: 'time', label: 'By time' }]} />
+          </div>
+        )}
         {viewers.length > 0 && <p className={styles.viewers} role="status"><Eye size={14} aria-hidden="true" /> {viewers.slice(0, 3).join(', ')}{viewers.length > 3 ? ` +${viewers.length - 3}` : ''} looking now</p>}
       </div>
 
@@ -163,8 +183,7 @@ export default function ShiftsSectionContent({ events, stations: initialStations
           )}
           {grid && <Legend grid={grid} />}
           {grid && <MyShifts grid={grid} onArrive={arrive} onOpen={(id) => setGuideOpen({ id })} />}
-          <SectionTabs<'grid' | 'time'> label="View" variant="segmented" value={view} onChange={setView} tabs={[{ id: 'grid', label: 'Grid' }, { id: 'time', label: 'By time' }]} />
-          {grid && view === 'grid' && <GridView grid={grid} busyCell={busyCell} onClaim={tryClaim} onGuide={(id) => setGuideOpen({ id })} onPlace={(station, slot) => setPlacing({ station, slot })} />}
+          {grid && view === 'grid' && <GridView grid={grid} busyCell={busyCell} busyAct={busyAct} onClaim={tryClaim} onGuide={(id) => setGuideOpen({ id })} onPlace={(station, slot) => setPlacing({ station, slot })} />}
           {grid && view === 'time' && <BoardView grid={grid} />}
           {grid && view === 'grid' && placing && canManage && <PlaceBar grid={grid} placing={placing} busy={busyCell === cellKey(placing.station, placing.slot)} onPlace={place} onClose={() => setPlacing(null)} />}
         </>
@@ -197,8 +216,8 @@ function useCellNames(grid: ShiftGrid) {
 }
 
 // Time slots down the side, stations across the top. A cell shows who is on it and how many are still needed.
-function GridView({ grid, busyCell, onClaim, onGuide, onPlace }: {
-  grid: ShiftGrid; busyCell?: string | null; onClaim?: (station: string, slot: number, join: boolean) => void; onGuide?: (station: string) => void; onPlace?: (station: string, slot: number) => void;
+function GridView({ grid, busyCell, busyAct, onClaim, onGuide, onPlace }: {
+  grid: ShiftGrid; busyCell?: string | null; busyAct?: 'join' | 'leave' | null; onClaim?: (station: string, slot: number, join: boolean) => void; onGuide?: (station: string) => void; onPlace?: (station: string, slot: number) => void;
 }) {
   const plan = grid.plan!;
   const slots = slotCount(plan);
@@ -208,21 +227,25 @@ function GridView({ grid, busyCell, onClaim, onGuide, onPlace }: {
   if (grid.stations.length === 0) return <div className={styles.card}><p className={styles.muted}>There are no stations yet. Exec can add them in Setup.</p></div>;
   const open = grid.canSignUp && (grid.canManage || plan.signup_open);
   return (
-    <div className={styles.gridWrap}>
-      <table className={styles.grid}>
+    <div className={styles.areas}>
+      {groupByArea(grid.stations).map((group) => (
+        <section key={group.key} className={styles.area} aria-label={group.label || 'Stations'}>
+          {group.label && <h3 className={styles.areaHead}>{group.label}</h3>}
+          <div className={styles.gridWrap}>
+      <table className={styles.grid} style={{ minWidth: `${120 + group.stations.length * 88}px` }}>
         <thead>
           <tr>
             <th scope="col" className={styles.corner}>Time</th>
-            {grid.stations.map((st) => {
+            {group.stations.map((st) => {
               const loc = guideFor(st, grid.eventGuides[st.id]).location;
               return (
                 <th key={st.id} scope="col" className={`${styles.slotHead} ${styles.stationHead} ${styles.catHead} ${catClass(st)}`}>
                   {st.name}
-                  <span className={`${styles.badge} ${catClass(st)}`}>{catName(st)}</span>
-                  <small>usually {st.default_needed}</small>
+                  <span className={styles.headMeta}>
+                    <span className={`${styles.badge} ${catClass(st)}`}>{catName(st)}</span>
+                    {onGuide && <button type="button" className={styles.guideBtn} onClick={() => onGuide(st.id)}><BookOpen size={12} aria-hidden="true" /> Guide</button>}
+                  </span>
                   {loc && <span className={styles.stationLoc}><MapPin size={11} aria-hidden="true" /> {loc}</span>}
-                  {st.instructions && <span className={styles.stationDesc}>{st.instructions}</span>}
-                  {onGuide && <button type="button" className={styles.guideBtn} onClick={() => onGuide(st.id)}><BookOpen size={12} aria-hidden="true" /> Guide</button>}
                 </th>
               );
             })}
@@ -234,23 +257,30 @@ function GridView({ grid, busyCell, onClaim, onGuide, onPlace }: {
             const away = awayDuring(myAway, r);
             return (
               <tr key={i}>
-                <th scope="row" className={styles.stationName}>{time(r.start)}<small className={styles.rowSub}>to {time(r.end)}</small></th>
-                {grid.stations.map((st) => {
+                <th scope="row" className={`${styles.stationName} ${styles.gridTime}`}>{time(r.start)} – {time(r.end)}</th>
+                {group.stations.map((st) => {
                   const key = cellKey(st.id, i);
                   const here = names.get(key) ?? [];
                   const needed = neededFor(grid, st.id, i);
                   const mine = here.some((h) => h.user_id === grid.me);
                   const full = here.length >= needed;
                   const clash = !mine && mySlots.has(i);
+                  const saving = busyCell === key;
+                  const adding = saving && busyAct === 'join';
+                  const leaving = saving && busyAct === 'leave';
                   const disabled = busyCell === key || needed === 0 || !open || (!mine && (full || clash || away));
                   return (
-                    <td key={st.id} className={`${styles.cell} ${catClass(st)} ${mine ? styles.cellMine : ''} ${needed === 0 ? styles.cellNone : full ? styles.cellFull : here.length === 0 ? styles.cellEmpty : styles.cellPart}`}>
-                      <button type="button" className={styles.cellBtn} disabled={disabled}
+                    <td key={st.id} className={`${styles.cell} ${catClass(st)} ${saving ? styles.cellSaving : ''} ${mine ? styles.cellMine : ''} ${needed === 0 ? styles.cellNone : full ? styles.cellFull : here.length === 0 ? styles.cellEmpty : styles.cellPart}`}>
+                      <button type="button" className={styles.cellBtn} disabled={disabled} aria-busy={saving || undefined}
                         aria-label={`${st.name}, ${time(r.start)}: ${here.length} of ${needed}${mine ? ', you are on this shift' : ''}${away && !mine ? ', you are away then' : ''}`}
                         onClick={() => onClaim?.(st.id, i, !mine)}>
                         <span className={styles.count}>{here.length}/{needed}</span>
-                        <span className={styles.chips}>{here.map((h) => <span key={h.id} className={`${styles.chip} ${h.user_id === grid.me ? styles.chipMe : ''}`}>{h.name}</span>)}</span>
+                        <span className={styles.chips}>
+                          {here.map((h) => { const gone = leaving && h.user_id === grid.me; return <span key={h.id} className={`${styles.chip} ${h.user_id === grid.me ? styles.chipMe : ''} ${gone ? styles.chipLeaving : ''}`}>{h.name}{gone && <><Loader2 size={11} className={styles.spin} aria-hidden="true" /> removing…</>}</span>; })}
+                          {adding && <span className={`${styles.chip} ${styles.chipPending}`} role="status"><Loader2 size={11} className={styles.spin} aria-hidden="true" /> adding you…</span>}
+                        </span>
                         {!disabled && <span className={styles.act}>{mine ? 'Leave' : 'Join'}</span>}
+                        {saving && !adding && !leaving && <Loader2 size={13} className={styles.spin} aria-label="Saving" />}
                         {away && !mine && needed > 0 && <span className={styles.awayTag}>Away</span>}
                       </button>
                       {/* Exec and admins can put anyone on a shift, or take them off, even before signup opens: the small button opens the panel at the bottom. */}
@@ -265,6 +295,9 @@ function GridView({ grid, busyCell, onClaim, onGuide, onPlace }: {
           })}
         </tbody>
       </table>
+          </div>
+        </section>
+      ))}
     </div>
   );
 }
@@ -319,7 +352,8 @@ function BoardView({ grid }: { grid: ShiftGrid }) {
           <section key={i} className={`${styles.slotCard} ${i === nowIdx ? styles.slotNow : ''}`} aria-label={`${time(r.start)} to ${time(r.end)}`}>
             <h3 className={styles.slotTitle}>{time(r.start)} – {time(r.end)}{i === nowIdx && <span className={styles.nowTag}>Now</span>}</h3>
             <ul className={styles.slotList}>
-              {grid.stations.map((st) => {
+              {groupByArea(grid.stations).map((group) => {
+                const rows = group.stations.map((st) => {
                 const here = names.get(cellKey(st.id, i)) ?? [];
                 const needed = neededFor(grid, st.id, i);
                 if (needed === 0 && here.length === 0) return null;
@@ -330,6 +364,10 @@ function BoardView({ grid }: { grid: ShiftGrid }) {
                     <span className={styles.who}>{here.length ? here.map((h, k) => <span key={h.id}>{k > 0 && ', '}{h.name}{h.arrived_at && <Check size={12} className={styles.arrivedMark} aria-label="checked in" />}</span>) : 'nobody yet'}</span>
                   </li>
                 );
+              });
+                const shown = rows.filter(Boolean);
+                if (!shown.length) return null;
+                return <Fragment key={group.key}>{group.label && <li className={styles.areaLi}>{group.label}</li>}{shown}</Fragment>;
               })}
             </ul>
           </section>
@@ -540,34 +578,46 @@ function StationSheet({ event, grid, stations, setStations, onChanged, setError 
   const slots = plan ? slotCount(plan) : 0;
   const [newName, setNewName] = useState('');
   const [newNeeded, setNewNeeded] = useState('1');
+  const [newArea, setNewArea] = useState('');
   async function addStation() {
     if (!newName.trim()) return;
-    const r = await api<{ station: ShiftStation }>('/api/shifts/stations', 'POST', { name: newName, default_needed: Number(newNeeded) || 0 });
+    const r = await api<{ station: ShiftStation }>('/api/shifts/stations', 'POST', { name: newName, default_needed: Number(newNeeded) || 0, area: newArea });
     if (!r.ok) { setError(r.json.error || 'Couldn’t add that.'); return; }
-    setStations([...stations, r.json.station]); setNewName(''); setNewNeeded('1'); await onChanged();
+    setStations([...stations, r.json.station]); setNewName(''); setNewNeeded('1'); setNewArea(''); await onChanged();
   }
   // Station and cell edits stay on screen until Save changes: nothing is sent on blur, and Discard puts back what was saved.
-  const [stEdits, setStEdits] = useState<Record<string, Partial<Record<'name' | 'default_needed' | 'category' | 'team_label', string>>>>({});
+  const [stEdits, setStEdits] = useState<Record<string, Partial<Record<'name' | 'default_needed' | 'category' | 'team_label' | 'area', string>>>>({});
   const [cellEdits, setCellEdits] = useState<Record<string, string>>({});
   const [savingSheet, setSavingSheet] = useState(false);
-  const stBase = (st: ShiftStation, f: 'name' | 'default_needed' | 'category' | 'team_label') => (f === 'name' ? st.name : f === 'default_needed' ? String(st.default_needed) : f === 'category' ? st.category : st.team_label ?? '');
-  const stVal = (st: ShiftStation, f: 'name' | 'default_needed' | 'category' | 'team_label') => stEdits[st.id]?.[f] ?? stBase(st, f);
-  const setSt = (st: ShiftStation, f: 'name' | 'default_needed' | 'category' | 'team_label', v: string) => setStEdits((prev) => ({ ...prev, [st.id]: { ...prev[st.id], [f]: v } }));
+  const stBase = (st: ShiftStation, f: 'name' | 'default_needed' | 'category' | 'team_label' | 'area') => (f === 'name' ? st.name : f === 'default_needed' ? String(st.default_needed) : f === 'category' ? st.category : f === 'area' ? st.area ?? '' : st.team_label ?? '');
+  const stVal = (st: ShiftStation, f: 'name' | 'default_needed' | 'category' | 'team_label' | 'area') => stEdits[st.id]?.[f] ?? stBase(st, f);
+  const setSt = (st: ShiftStation, f: 'name' | 'default_needed' | 'category' | 'team_label' | 'area', v: string) => setStEdits((prev) => ({ ...prev, [st.id]: { ...prev[st.id], [f]: v } }));
   const stationPatches = stations.flatMap((st) => {
     const e = stEdits[st.id]; if (!e) return [];
-    const patch: Partial<Pick<ShiftStation, 'name' | 'default_needed' | 'category' | 'team_label'>> = {};
+    const patch: Partial<Pick<ShiftStation, 'name' | 'default_needed' | 'category' | 'team_label' | 'area'>> = {};
     if (e.name !== undefined && e.name.trim() !== st.name) patch.name = e.name.trim();
     if (e.default_needed !== undefined && e.default_needed.trim() !== String(st.default_needed)) patch.default_needed = Number(e.default_needed);
     if (e.category !== undefined && e.category !== st.category) patch.category = e.category as ShiftStation['category'];
     if (e.team_label !== undefined && e.team_label.trim() !== (st.team_label ?? '')) patch.team_label = e.team_label.trim() || null;
+    if (e.area !== undefined && e.area.trim() !== (st.area ?? '')) patch.area = e.area.trim() || null;
     return Object.keys(patch).length ? [{ st, patch }] : [];
   });
   const cellChanges = Object.entries(cellEdits).flatMap(([key, raw]) => {
     const o = grid?.overrides[key];
     return raw.trim() === (o === undefined ? '' : String(o)) ? [] : [{ key, raw }];
   });
-  const sheetDirty = stationPatches.length + cellChanges.length > 0;
-  useUnsavedChanges(sheetDirty ? { stEdits, cellEdits } : 'CLEAN');
+  // Dragging a station column only changes this list; it is saved with everything else by Save changes.
+  const [orderEdit, setOrderEdit] = useState<string[] | null>(null);
+  const byId = new Map(stations.map((x) => [x.id, x]));
+  const ordered = orderEdit ? orderEdit.map((id) => byId.get(id)).filter((x): x is ShiftStation => !!x).concat(stations.filter((x) => !orderEdit.includes(x.id))) : stations;
+  const orderChanged = !!orderEdit && ordered.map((x) => x.id).join() !== stations.map((x) => x.id).join();
+  function reorderWithin(group: ShiftStation[], nextGroup: ShiftStation[]) {
+    const inGroup = new Set(group.map((x) => x.id));
+    let k = 0;
+    setOrderEdit(ordered.map((x) => (inGroup.has(x.id) ? nextGroup[k++].id : x.id)));
+  }
+  const sheetDirty = stationPatches.length + cellChanges.length > 0 || orderChanged;
+  useUnsavedChanges(sheetDirty ? { stEdits, cellEdits, orderEdit } : 'CLEAN');
   async function saveSheet() {
     for (const { st, patch } of stationPatches) {
       if ((patch.name !== undefined && !patch.name) || (patch.default_needed !== undefined && (!Number.isInteger(patch.default_needed) || patch.default_needed < 0 || patch.default_needed > 50))) { setError(`Check “${st.name}”: it needs a name and a usual number from 0 to 50.`); return; }
@@ -583,6 +633,12 @@ function StationSheet({ event, grid, stations, setStations, onChanged, setError 
       if (!r.ok) { setError(r.json.error || 'Couldn’t save that.'); setStations(next); setSavingSheet(false); return; }
       next = next.map((x) => (x.id === st.id ? r.json.station : x));
     }
+    if (orderChanged) {
+      const ids = ordered.map((x) => x.id);
+      const r = await api('/api/shifts/stations/order', 'PUT', { ids });
+      if (!r.ok) { setError(r.json.error || 'Couldn’t save the order.'); setStations(next); setSavingSheet(false); return; }
+      next = ids.map((id, i) => ({ ...next.find((x) => x.id === id)!, sort_order: i }));
+    }
     setStations(next);
     for (const { key, raw } of cellChanges) {
       const [stationId, slot] = key.split('|');
@@ -591,7 +647,7 @@ function StationSheet({ event, grid, stations, setStations, onChanged, setError 
       const r = await api(`/api/shifts/${event.id}/override`, 'POST', { station_id: stationId, slot_index: Number(slot), needed: v === st.default_needed ? null : v });
       if (!r.ok) { setError(r.json.error || 'Couldn’t save that.'); setSavingSheet(false); await onChanged(); return; }
     }
-    setStEdits({}); setCellEdits({});
+    setStEdits({}); setCellEdits({}); setOrderEdit(null);
     await onChanged(); setSavingSheet(false);
   }
   async function removeStation(st: ShiftStation) {
@@ -609,42 +665,70 @@ function StationSheet({ event, grid, stations, setStations, onChanged, setError 
     await onChanged();
   }
 
+  const areas = [...new Set(stations.map((x) => x.area).filter((x): x is string => !!x))];
   return (
     <section className={styles.card}>
       <h3 className={styles.h}>Stations and people needed</h3>
       <EditingNow room={sheetDirty ? 'shifts-stations' : null} what="the stations" />
-      <p className={styles.muted}>Same layout as Sign up. Each station column has its name and usual number of people; the cells below change the number for just that time slot (blank = the usual number). Mark a station “One team” to colour it green and warn others who sign up. What each station does is written in the Guides tab.</p>
+      <p className={styles.muted}>Same layout as Sign up. Each station column has its name and usual number of people; the cells below change the number for just that time slot (blank = the usual number). Drag the grip on a station to reorder. Give stations an area (East Ballroom, Theater…) to split them into separate tables. Mark a station “Specific team” to colour it green and warn others who sign up. What each station does is written in the Guides tab.</p>
+      <datalist id="shift-areas">{areas.map((x) => <option key={x} value={x} />)}</datalist>
+      <div className={styles.areas}>
+        {groupByArea(ordered).map((group) => (
+          <AreaSheet key={group.key} group={group} slots={slots} plan={plan} grid={grid} stVal={stVal} stEdits={stEdits} setSt={setSt} cellEdits={cellEdits} setCellEdits={setCellEdits} removeStation={removeStation} onReorder={(next) => reorderWithin(group.stations, next)} />
+        ))}
+      </div>
+      <div className={styles.addStation}>
+        <strong>Add a station</strong>
+        <div className={styles.formRow}>
+          <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Station name" maxLength={60} aria-label="New station name" onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void addStation(); } }} />
+          <Input list="shift-areas" value={newArea} onChange={(e) => setNewArea(e.target.value)} placeholder="Area (optional)" maxLength={40} aria-label="Area of the new station" />
+          <Input type="number" min={0} max={50} value={newNeeded} onChange={(e) => setNewNeeded(e.target.value)} aria-label="Usual number of people for the new station" />
+        </div>
+        <div className={styles.actions}><Button size="sm" onClick={addStation} disabled={!newName.trim()}><Plus size={14} aria-hidden="true" /> Add station</Button></div>
+      </div>
+      <SaveBar dirty={sheetDirty} saving={savingSheet} onSave={() => void saveSheet()} onDiscard={() => { setStEdits({}); setCellEdits({}); setOrderEdit(null); }} message="You have unsaved station changes" />
+    </section>
+  );
+}
+
+// One area's table of the setup sheet: its stations side by side (drag the grip to reorder), a row per time slot below.
+function AreaSheet({ group, slots, plan, grid, stVal, stEdits, setSt, cellEdits, setCellEdits, removeStation, onReorder }: {
+  group: { key: string; label: string; stations: ShiftStation[] }; slots: number; plan: ShiftGrid['plan']; grid: ShiftGrid | null;
+  stVal: (st: ShiftStation, f: 'name' | 'default_needed' | 'category' | 'team_label' | 'area') => string;
+  stEdits: Record<string, Partial<Record<'name' | 'default_needed' | 'category' | 'team_label' | 'area', string>>>;
+  setSt: (st: ShiftStation, f: 'name' | 'default_needed' | 'category' | 'team_label' | 'area', v: string) => void;
+  cellEdits: Record<string, string>; setCellEdits: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  removeStation: (st: ShiftStation) => void; onReorder: (next: ShiftStation[]) => void;
+}) {
+  const { view, dragIndex, dragHandleProps, dropTargetProps } = useDragReorder(group.stations, onReorder, group.key || 'none');
+  const changed = (st: ShiftStation, f: 'name' | 'default_needed' | 'category' | 'team_label' | 'area') => (stEdits[st.id]?.[f] !== undefined ? styles.sheetChanged : '');
+  return (
+    <section className={styles.area} aria-label={group.label || 'Stations'}>
+      {group.label && <h3 className={styles.areaHead}>{group.label}</h3>}
       <div className={styles.gridWrap}>
-        <table className={`${styles.grid} ${styles.sheet}`}>
+        <table className={`${styles.grid} ${styles.sheet}`} style={{ minWidth: `${130 + view.length * 200}px` }}>
           <thead>
             <tr>
               <th scope="col" className={styles.corner}>Time</th>
-              {stations.map((st) => (
-                <th key={st.id} scope="col" className={`${styles.slotHead} ${styles.stationHead}`}>
-                <div className={styles.editHead}>
-                  <input className={`${styles.sheetInput} ${stEdits[st.id]?.name !== undefined ? styles.sheetChanged : ''}`} value={stVal(st, 'name')} aria-label={`Name of ${st.name}`} maxLength={60} onChange={(e) => setSt(st, 'name', e.target.value)} />
-                  <label className={styles.usually}>Usually
-                    <input className={`${styles.sheetInput} ${styles.sheetNum} ${stEdits[st.id]?.default_needed !== undefined ? styles.sheetChanged : ''}`} type="number" min={0} max={50} value={stVal(st, 'default_needed')} aria-label={`Usual number of people at ${st.name}`}
-                      onChange={(e) => setSt(st, 'default_needed', e.target.value)} />
-                  </label>
-                  <Select value={stVal(st, 'category')} onChange={(e) => setSt(st, 'category', e.target.value)} aria-label={`Who ${st.name} is for`}>
-                    <option value="general">Anyone on the team</option><option value="team">One team</option>
-                  </Select>
-                  {stVal(st, 'category') === 'team' && <input className={`${styles.sheetInput} ${stEdits[st.id]?.team_label !== undefined ? styles.sheetChanged : ''}`} value={stVal(st, 'team_label')} placeholder="Team name, e.g. LE" aria-label={`Team for ${st.name}`} maxLength={40} onChange={(e) => setSt(st, 'team_label', e.target.value)} />}
-                  <button type="button" className={styles.removeStation} onClick={() => removeStation(st)} aria-label={`Remove ${st.name}`}><Trash2 size={13} aria-hidden="true" /> Remove</button>
-                </div>
+              {view.map((st, idx) => (
+                <th key={st.id} scope="col" className={`${styles.slotHead} ${styles.stationHead} ${dragIndex === idx ? styles.dragging : ''}`} {...dropTargetProps(idx)}>
+                  <div className={styles.editHead}>
+                    <div className={styles.headTop}>
+                      <span className={styles.grip} {...dragHandleProps(idx)} aria-label={`Move ${st.name}. Drag, or press the up and down arrow keys`}><GripVertical size={14} aria-hidden="true" /></span>
+                      <input className={`${styles.sheetInput} ${changed(st, 'name')}`} value={stVal(st, 'name')} aria-label={`Name of ${st.name}`} maxLength={60} onChange={(e) => setSt(st, 'name', e.target.value)} />
+                    </div>
+                    <label className={styles.usually}>Usually
+                      <input className={`${styles.sheetInput} ${styles.sheetNum} ${changed(st, 'default_needed')}`} type="number" min={0} max={50} value={stVal(st, 'default_needed')} aria-label={`Usual number of people at ${st.name}`} onChange={(e) => setSt(st, 'default_needed', e.target.value)} />
+                    </label>
+                    <input list="shift-areas" className={`${styles.sheetInput} ${changed(st, 'area')}`} value={stVal(st, 'area')} placeholder="Area (optional)" aria-label={`Area of ${st.name}`} maxLength={40} onChange={(e) => setSt(st, 'area', e.target.value)} />
+                    <Select value={stVal(st, 'category')} onChange={(e) => setSt(st, 'category', e.target.value)} aria-label={`Who ${st.name} is for`}>
+                      <option value="general">Anyone</option><option value="team">Specific team</option>
+                    </Select>
+                    {stVal(st, 'category') === 'team' && <input className={`${styles.sheetInput} ${changed(st, 'team_label')}`} value={stVal(st, 'team_label')} placeholder="Team name, e.g. LE" aria-label={`Team for ${st.name}`} maxLength={40} onChange={(e) => setSt(st, 'team_label', e.target.value)} />}
+                    <button type="button" className={styles.removeStation} onClick={() => removeStation(st)} aria-label={`Remove ${st.name}`}><Trash2 size={13} aria-hidden="true" /> Remove</button>
+                  </div>
                 </th>
               ))}
-              <th scope="col" className={`${styles.slotHead} ${styles.stationHead} ${styles.addCol}`}>
-                <div className={styles.editHead}>
-                <input className={styles.sheetInput} value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="+ Add a station" maxLength={60} aria-label="New station name"
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void addStation(); } }} />
-                <label className={styles.usually}>Usually
-                  <input className={`${styles.sheetInput} ${styles.sheetNum}`} type="number" min={0} max={50} value={newNeeded} onChange={(e) => setNewNeeded(e.target.value)} aria-label="Usual number of people for the new station" />
-                </label>
-                <Button size="sm" onClick={addStation} disabled={!newName.trim()}><Plus size={14} aria-hidden="true" /> Add station</Button>
-                </div>
-              </th>
             </tr>
           </thead>
           <tbody>
@@ -653,7 +737,7 @@ function StationSheet({ event, grid, stations, setStations, onChanged, setError 
               return (
                 <tr key={i}>
                   <th scope="row" className={styles.stationName}>{time(r.start)}<small className={styles.rowSub}>to {time(r.end)}</small></th>
-                  {stations.map((st) => {
+                  {view.map((st) => {
                     const o = grid?.overrides[cellKey(st.id, i)];
                     return (
                       <td key={st.id} className={styles.sheetCell}>
@@ -662,14 +746,12 @@ function StationSheet({ event, grid, stations, setStations, onChanged, setError 
                       </td>
                     );
                   })}
-                  <td className={styles.sheetCell} />
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
-      <SaveBar dirty={sheetDirty} saving={savingSheet} onSave={() => void saveSheet()} onDiscard={() => { setStEdits({}); setCellEdits({}); }} message="You have unsaved station changes" />
     </section>
   );
 }

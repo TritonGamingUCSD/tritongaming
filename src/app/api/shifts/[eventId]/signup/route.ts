@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/audit';
-import { UUID, authorizeShifts, bad } from '@/lib/shiftsServer';
+import { UUID, authorizeShifts, bad, notifyShifts } from '@/lib/shiftsServer';
 import { mayClaim, slotCount, slotRange } from '@/lib/shifts';
 import { staffName } from '@/lib/names';
 import { PACIFIC_TZ } from '@/lib/timezone';
@@ -54,6 +54,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ eve
   if (!join) {
     await auth.svc.from('shift_signups').delete().eq('event_id', eventId).eq('station_id', stationId).eq('slot_index', slot).eq('user_id', target);
     await note('leave');
+    await notifyShifts(eventId);
     return NextResponse.json({ ok: true });
   }
 
@@ -65,5 +66,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ eve
   if (result === 'clash') { await note('join', 'already on another station then'); return bad(forOther ? 'They already work another station in that time slot.' : 'You already work another station in that time slot.', 409); }
   if (result === 'away') { await note('join', 'away at that time'); return bad(forOther ? 'They are away during that time.' : 'You marked yourself away during that time.', 409); }
   await note('join');
+  await notifyShifts(eventId);
   return NextResponse.json({ ok: true });
 }

@@ -1,13 +1,15 @@
 // Shift grids: stations (rows) by time slots (columns) for one event. Pure helpers shared by the API and the portal.
 export interface ShiftStation {
-  id: string; name: string; default_needed: number; sort_order: number; description: string | null;
-  /** 'general' shifts are for anyone on the team; 'team' ones are aimed at one team (a warning, never a block, for everyone else). */
+  id: string; name: string; default_needed: number; sort_order: number;
+  /** 'general' shifts are for anyone; 'team' ones are for a specific team (a warning, never a block, for everyone else). */
   category: 'general' | 'team'; team_label: string | null;
+  /** Which table of the grid it sits in (East Ballroom, Theater...). Blank = no area. */
+  area: string | null;
   /** The station guide, readable by everyone who can see shifts. */
   location: string | null; instructions: string | null; doc_id: string | null; doc_title?: string | null; link_url: string | null; link_label: string | null;
 }
 export interface ShiftTemplate { id: string; name: string; body: string; sort_order: number }
-export const STATION_COLS = 'id, name, default_needed, sort_order, description, category, team_label, location, instructions, doc_id, link_url, link_label';
+export const STATION_COLS = 'id, name, default_needed, sort_order, category, team_label, area, location, instructions, doc_id, link_url, link_label';
 /** What exec changed for one event on top of a station's guide. Blank fields fall back to the station. */
 export interface ShiftEventGuide { location: string | null; notes: string | null; doc_id: string | null; doc_title?: string | null; link_url: string | null; link_label: string | null }
 export interface ShiftPlan { event_id: string; starts_at: string; ends_at: string; slot_minutes: number; signup_open: boolean; team_only: boolean; min_per_person: number | null }
@@ -75,4 +77,17 @@ export function guideFor(station: ShiftStation, eg: ShiftEventGuide | undefined)
     link_url: eg?.link_url || station.link_url,
     link_label: eg?.link_url ? eg.link_label : station.link_label,
   };
+}
+
+/** The stations split into one table per area, in the order each area first appears. With no areas at all there is a single group and no heading. */
+export function groupByArea<T extends Pick<ShiftStation, 'area'>>(stations: T[]): { key: string; area: string | null; label: string; stations: T[] }[] {
+  const named = stations.some((s) => s.area);
+  if (!named) return stations.length ? [{ key: '', area: null, label: '', stations }] : [];
+  const groups = new Map<string, { key: string; area: string | null; label: string; stations: T[] }>();
+  for (const s of stations) {
+    const key = s.area ?? '';
+    if (!groups.has(key)) groups.set(key, { key, area: s.area, label: s.area ?? 'Other stations', stations: [] });
+    groups.get(key)!.stations.push(s);
+  }
+  return [...groups.values()];
 }

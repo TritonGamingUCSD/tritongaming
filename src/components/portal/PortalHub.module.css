@@ -272,7 +272,7 @@
    width-hungry panels the room they actually need instead of every panel
    sharing one number regardless of what it renders. */
 .desktopPanel {
-  max-width: 1300px;
+  max-width: 1700px;
   margin-inline: auto;
 }
 
@@ -718,7 +718,7 @@
   .topRight { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
   .topSearch { width: 300px; }
   .topSearch > * { margin: 0 !important; max-width: none !important; }
-  .frameBody { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.18) transparent; padding: 1.5rem 2rem 3rem; }
+  .frameBody { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.18) transparent; padding: 1.5rem 1rem 3rem; }
   .appFrame .desktopContent { padding: 0; }
   .homeTiles { margin-bottom: 1.1rem; }
   /* Reminder banners (finish your profile, "View as") sit as slim strips right under the top bar, inside the frame. */

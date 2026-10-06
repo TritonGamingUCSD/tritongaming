@@ -10,7 +10,7 @@ function Tile({ d, meta, onOpen, big }: { d: Doc; meta: string; onOpen: (id: str
   const summary = big ? docSummary(d.content, 120) : '';
   return (
     <button type="button" className={`${styles.homeCard} ${big ? styles.homeCardBig : ''}`} onClick={() => onOpen(d.id)}>
-      <span className={styles.homeCardIcon} aria-hidden="true">{d.icon ?? <FileText size={18} strokeWidth={1.5} />}</span>
+      <span className={styles.homeCardIcon} aria-hidden="true"><FileText size={18} strokeWidth={1.5} /></span>
       <span className={styles.homeCardText}><strong>{d.title}</strong>{summary && <em className={styles.homeCardSummary}>{summary}</em>}<small>{meta}</small></span>
     </button>
   );
@@ -20,7 +20,7 @@ function Tile({ d, meta, onOpen, big }: { d: Doc; meta: string; onOpen: (id: str
 function MiniRow({ d, note, onOpen }: { d: Doc; note: string; onOpen: (id: string) => void }) {
   return (
     <button type="button" className={styles.miniRow} onClick={() => onOpen(d.id)}>
-      <span className={styles.miniIcon} aria-hidden="true">{d.icon ?? <FileText size={14} strokeWidth={1.75} />}</span>
+      <span className={styles.miniIcon} aria-hidden="true"><FileText size={14} strokeWidth={1.75} /></span>
       <span className={styles.miniTitle}>{d.title}</span>
       <small className={styles.miniNote}>{note}</small>
     </button>
@@ -96,7 +96,7 @@ export default function DocHome({ docs, sections, favorites, tagFilter, onTag, o
                 <div key={s.id ?? 'none'} className={styles.catCard} style={s.color ? { borderTop: `4px solid ${s.color}` } : undefined}>
                   <div className={styles.catCardHead}><span className={styles.catCardName}>{s.name}</span><span className={styles.catCount}>{s.count}</span></div>
                   <ul className={styles.catCardList}>
-                    {shown.slice(0, 5).map(({ doc }) => <li key={doc.id}><button type="button" className={styles.catCardLink} onClick={() => onOpen(doc.id)}>{doc.icon ? `${doc.icon} ` : ''}{doc.title}</button></li>)}
+                    {shown.slice(0, 5).map(({ doc }) => <li key={doc.id}><button type="button" className={styles.catCardLink} onClick={() => onOpen(doc.id)}>{doc.title}</button></li>)}
                   </ul>
                   <button type="button" className={styles.catCardMore} onClick={() => onBrowse(`cat:${s.id ?? 'none'}`)}>{shown.length > 5 ? `See all ${s.count}` : 'Open in the list'} <ArrowRight size={12} aria-hidden="true" /></button>
                 </div>

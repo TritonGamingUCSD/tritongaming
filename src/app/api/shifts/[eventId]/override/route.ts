@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { UUID, authorizeShifts, bad } from '@/lib/shiftsServer';
+import { UUID, authorizeShifts, bad, notifyShifts } from '@/lib/shiftsServer';
 import { logAudit } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
@@ -20,6 +20,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ eve
   if (b.needed === null) {
     await auth.svc.from('shift_overrides').delete().eq('event_id', eventId).eq('station_id', stationId).eq('slot_index', slot);
     await logAudit(auth.svc, { actorId: auth.user.id, action: 'update', entityType: 'shift', entityId: eventId, summary: `Set ${st?.name ?? 'a station'}, slot ${slot + 1} back to the usual ${st?.default_needed ?? ''} people for "${ev?.title ?? 'an event'}"` });
+    await notifyShifts(eventId);
     return NextResponse.json({ ok: true });
   }
   const needed = Number(b.needed);
@@ -27,5 +28,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ eve
   const { error } = await auth.svc.from('shift_overrides').upsert({ event_id: eventId, station_id: stationId, slot_index: slot, needed }, { onConflict: 'event_id,station_id,slot_index' });
   if (error) return bad('Couldn’t save that.', 500);
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'update', entityType: 'shift', entityId: eventId, summary: `Set ${st?.name ?? 'a station'}, slot ${slot + 1} to ${needed} people for "${ev?.title ?? 'an event'}"` });
+  await notifyShifts(eventId);
   return NextResponse.json({ ok: true });
 }

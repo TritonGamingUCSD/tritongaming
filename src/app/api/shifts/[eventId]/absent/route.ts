@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/audit';
-import { UUID, authorizeShifts, bad, shiftSubject } from '@/lib/shiftsServer';
+import { UUID, authorizeShifts, bad, shiftSubject, notifyShifts } from '@/lib/shiftsServer';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,6 +33,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ eve
     if (clash.length) await auth.svc.from('shift_signups').delete().in('id', clash);
   }
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'update', entityType: 'shift', entityId: eventId, summary: `Marked ${subject.who} away for part of the shifts at "${subject.title}" (needs ${needs})` });
+  await notifyShifts(eventId);
   return NextResponse.json({ ok: true });
 }
 
@@ -46,5 +47,6 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ e
   if (!UUID.test(eventId) || !UUID.test(id)) return bad('Not found.', 404);
   await auth.svc.from('shift_absences').delete().eq('id', id).eq('event_id', eventId);
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'update', entityType: 'shift', entityId: eventId, summary: 'Took a time away off someone for an event’s shifts' });
+  await notifyShifts(eventId);
   return NextResponse.json({ ok: true });
 }

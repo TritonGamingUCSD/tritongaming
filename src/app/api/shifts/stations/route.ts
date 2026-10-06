@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/audit';
-import { UUID, authorizeShifts, bad, withDocTitles } from '@/lib/shiftsServer';
+import { UUID, authorizeShifts, bad, withDocTitles, STATIONS_CHANNEL, notifyShifts } from '@/lib/shiftsServer';
 import { STATION_COLS } from '@/lib/shifts';
 import { text, webUrl } from '@/lib/shiftFields';
 
 export const dynamic = 'force-dynamic';
 
 const clean = (v: unknown) => String(v ?? '').trim().slice(0, 60);
-const brief = (v: unknown) => { const t = String(v ?? '').trim().slice(0, 240); return t || null; };
 const count = (v: unknown, fallback = 1) => { const n = Number(v); return Number.isInteger(n) && n >= 0 && n <= 50 ? n : fallback; };
 
 // Exec: the stations (rows of every grid). { name, default_needed } adds one at the bottom.
@@ -18,13 +17,14 @@ export async function POST(request: Request) {
   const name = clean(b.name);
   if (!name) return bad('Give the station a name.');
   const { data: last } = await auth.svc.from('shift_stations').select('sort_order').order('sort_order', { ascending: false }).limit(1).maybeSingle();
-  const { data, error } = await auth.svc.from('shift_stations').insert({ name, default_needed: count(b.default_needed), description: brief(b.description), sort_order: ((last?.sort_order as number | undefined) ?? -1) + 1 }).select(STATION_COLS).single();
+  const { data, error } = await auth.svc.from('shift_stations').insert({ name, default_needed: count(b.default_needed), area: text(b.area, 40), sort_order: ((last?.sort_order as number | undefined) ?? -1) + 1 }).select(STATION_COLS).single();
   if (error) return bad(error.code === '23505' ? 'A station with that name already exists.' : 'Couldn’t add the station.', error.code === '23505' ? 409 : 500);
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'create', entityType: 'shift station', entityId: data.id as string, summary: `Added the shift station "${name}"` });
+  await notifyShifts(STATIONS_CHANNEL);
   return NextResponse.json({ station: data });
 }
 
-// Change a station: { id, name?, default_needed?, description? }.
+// Change a station: { id, name?, default_needed?, category?, team_label? }.
 export async function PATCH(request: Request) {
   const auth = await authorizeShifts('manage');
   if ('error' in auth) return auth.error;
@@ -34,9 +34,9 @@ export async function PATCH(request: Request) {
   const patch: Record<string, unknown> = {};
   if ('name' in b) { const n = clean(b.name); if (!n) return bad('Give the station a name.'); patch.name = n; }
   if ('default_needed' in b) patch.default_needed = count(b.default_needed);
-  if ('description' in b) patch.description = brief(b.description);
   if ('category' in b) { if (b.category !== 'general' && b.category !== 'team') return bad('Pick general or team.'); patch.category = b.category; }
   if ('team_label' in b) patch.team_label = text(b.team_label, 40);
+  if ('area' in b) patch.area = text(b.area, 40);
   if ('location' in b) patch.location = text(b.location, 120);
   if ('instructions' in b) patch.instructions = text(b.instructions, 4000);
   if ('link_label' in b) patch.link_label = text(b.link_label, 60);
@@ -52,6 +52,7 @@ export async function PATCH(request: Request) {
   if (!data) return bad('Station not found.', 404);
   if (['category', 'team_label', 'location', 'instructions', 'doc_id', 'link_url', 'link_label'].some((k) => k in patch)) await logAudit(auth.svc, { actorId: auth.user.id, action: 'update', entityType: 'shift station', entityId: id, summary: `Edited the guide for the shift station "${data.name}"` });
   const [withTitle] = await withDocTitles(auth.svc, [data as never]);
+  await notifyShifts(STATIONS_CHANNEL);
   return NextResponse.json({ station: withTitle });
 }
 
@@ -65,5 +66,6 @@ export async function DELETE(request: Request) {
   const { data: st } = await auth.svc.from('shift_stations').select('name').eq('id', id).maybeSingle();
   await auth.svc.from('shift_stations').delete().eq('id', id);
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'delete', entityType: 'shift station', entityId: id, summary: `Removed the shift station "${st?.name ?? ''}"` });
+  await notifyShifts(STATIONS_CHANNEL);
   return NextResponse.json({ ok: true });
 }

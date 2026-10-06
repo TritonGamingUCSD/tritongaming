@@ -1,5 +1,6 @@
 'use client';
 
+import { useVisiblePoll } from '@/lib/useVisiblePoll';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Ticket, X, Check, Zap, ClipboardList } from 'lucide-react';
@@ -309,21 +310,17 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   // "check-in doesn't show up" is bad enough that this shouldn't depend on
   // Realtime alone. Polls a tiny status endpoint every few seconds; stops
   // once checked in.
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      if (handledCheckIn.current) return;
-      try {
-        const res = await fetch(`/api/tickets/${ticketId}/status`);
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data.status === 'used' && data.checked_in_today !== false) handleCheckedIn(data.checked_in_at ?? new Date().toISOString());
-      } catch {
-        // ignore — next tick tries again
-      }
-    }, 4000);
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ticketId]);
+  useVisiblePoll(async () => {
+    if (handledCheckIn.current) return;
+    try {
+      const res = await fetch(`/api/tickets/${ticketId}/status`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.status === 'used' && data.checked_in_today !== false) handleCheckedIn(data.checked_in_at ?? new Date().toISOString());
+    } catch {
+      // ignore — next tick tries again
+    }
+  }, 4000, !handledCheckIn.current);
 
   // The authoritative form answer, fetched from the status endpoint the
   // moment check-in lands — the checkinFormUrl prop was baked in when the

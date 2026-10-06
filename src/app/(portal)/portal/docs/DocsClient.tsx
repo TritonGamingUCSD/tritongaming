@@ -211,7 +211,7 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
 
   async function onCreate(c: NewDocChoice) {
     const t = templateById(c.templateId);
-    const doc = await createDoc({ title: c.title, content: t.content, icon: t.icon === '📄' ? null : t.icon, tags: t.tags, parentId: c.parentId, categoryId: c.categoryId });
+    const doc = await createDoc({ title: c.title, content: t.content, icon: null, tags: t.tags, parentId: c.parentId, categoryId: c.categoryId });
     if (!doc) return;
     setDocs((cur) => [...cur, doc]);
     setNewDialog(null);
@@ -222,7 +222,7 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
   async function saveAsNew(title: string, content: string) {
     const gone = selected;
     const parent = gone?.parent_id && docsRef.current.some((d) => d.id === gone.parent_id) ? gone.parent_id : null;
-    const doc = await createDoc({ title: title.trim() || 'Recovered doc', content, icon: gone?.icon ?? null, tags: gone?.tags ?? [], parentId: parent, categoryId: parent ? null : gone?.category_id ?? null, draft: true });
+    const doc = await createDoc({ title: title.trim() || 'Recovered doc', content, icon: null, tags: gone?.tags ?? [], parentId: parent, categoryId: parent ? null : gone?.category_id ?? null, draft: true });
     if (!doc) return;
     setDocs((cur) => [...cur.filter((d) => d.id !== gone?.id), doc]);
     setSelectedId(doc.id); setEditing(true); setEditingNew(true);

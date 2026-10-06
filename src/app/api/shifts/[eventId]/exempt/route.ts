@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/audit';
-import { UUID, authorizeShifts, bad, shiftSubject } from '@/lib/shiftsServer';
+import { UUID, authorizeShifts, bad, shiftSubject, notifyShifts } from '@/lib/shiftsServer';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +18,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ eve
   const { error } = await auth.svc.from('shift_exemptions').upsert({ event_id: eventId, user_id: userId, note, marked_by: auth.user.id }, { onConflict: 'event_id,user_id' });
   if (error) return bad('Couldn’t save that.', 500);
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'update', entityType: 'shift', entityId: eventId, summary: `Exempted ${subject.who} from the shift requirement for "${subject.title}"${note ? ` (${note})` : ''}` });
+  await notifyShifts(eventId);
   return NextResponse.json({ ok: true });
 }
 
@@ -31,5 +32,6 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ e
   if (!UUID.test(eventId) || !UUID.test(id)) return bad('Not found.', 404);
   await auth.svc.from('shift_exemptions').delete().eq('id', id).eq('event_id', eventId);
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'update', entityType: 'shift', entityId: eventId, summary: 'Took an exemption off someone for an event’s shifts' });
+  await notifyShifts(eventId);
   return NextResponse.json({ ok: true });
 }

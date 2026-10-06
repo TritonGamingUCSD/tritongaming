@@ -17,7 +17,6 @@ import { AttachmentsEditor } from './DocAttachments';
 import { clock, dayTime, docsPost } from './docsApi';
 import styles from './docs.module.css';
 
-const ICONS = ['📄', '📘', '🧭', '🎮', '🏆', '🎟️', '📅', '💰', '📣', '🎨', '🛠️', '🎓', '✅', '🔑', '🧩', '🎬', '📸', '🍕', '🚀', '💡', '⚠️', '❤️', '🧪', '🗂️'];
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error' | 'blocked';
 
@@ -71,7 +70,6 @@ const DocEditView = forwardRef<DocEditViewHandle, Props>(function DocEditView({ 
   const [metaBusy, setMetaBusy] = useState(false);
   const [tagText, setTagText] = useState('');
   const [coverOpen, setCoverOpen] = useState(false);
-  const [iconOpen, setIconOpen] = useState(false);
   const [error, setError] = useState('');
 
   const editor = useRef<DocEditorHandle>(null);
@@ -287,15 +285,6 @@ const DocEditView = forwardRef<DocEditViewHandle, Props>(function DocEditView({ 
       <div className={`${styles.editBody} ${historyOpen ? styles.withHistory : ''}`}>
         <div className={styles.editMain}>
           <div className={styles.titleRow}>
-            <div className={styles.iconPick}>
-              <button type="button" className={styles.iconBtn2} aria-label="Choose an icon" aria-expanded={iconOpen} onClick={() => setIconOpen((v) => !v)}>{doc.icon || '📄'}</button>
-              {iconOpen && (
-                <div className={styles.iconGrid} role="listbox" aria-label="Icons">
-                  {ICONS.map((i) => <button key={i} type="button" role="option" aria-selected={doc.icon === i} className={styles.iconCell} onClick={async () => { setIconOpen(false); await meta({ icon: i }); }}>{i}</button>)}
-                  {doc.icon && <button type="button" className={styles.iconClear} onClick={async () => { setIconOpen(false); await meta({ icon: null }); }}><X size={12} aria-hidden="true" /> Remove</button>}
-                </div>
-              )}
-            </div>
             <input className={styles.titleInput} value={title} onChange={(e) => onTitle(e.target.value)} maxLength={120} placeholder="Untitled doc" aria-label="Doc title" disabled={gone} autoFocus={isNew} />
           </div>
 

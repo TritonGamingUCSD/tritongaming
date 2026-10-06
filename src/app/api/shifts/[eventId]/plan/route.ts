@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/audit';
-import { UUID, authorizeShifts, bad } from '@/lib/shiftsServer';
+import { UUID, authorizeShifts, bad, notifyShifts } from '@/lib/shiftsServer';
 import { MAX_SLOTS, SLOT_CHOICES, slotCount } from '@/lib/shifts';
 
 export const dynamic = 'force-dynamic';
@@ -57,6 +57,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ even
     await auth.svc.from('shift_overrides').delete().eq('event_id', eventId).gte('slot_index', count);
   }
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'update', entityType: 'shift', entityId: eventId, summary: `Set up shifts for "${ev.title}" (${count} slots of ${slotMinutes} min, signup ${b.signup_open === true ? 'open' : 'closed'})` });
+  await notifyShifts(eventId);
   return NextResponse.json({ ok: true });
 }
 
@@ -71,5 +72,6 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ even
   await auth.svc.from('shift_overrides').delete().eq('event_id', eventId);
   await auth.svc.from('event_shifts').delete().eq('event_id', eventId);
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'delete', entityType: 'shift', entityId: eventId, summary: `Removed the shifts for "${ev?.title ?? 'an event'}"` });
+  await notifyShifts(eventId);
   return NextResponse.json({ ok: true });
 }

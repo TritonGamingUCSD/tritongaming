@@ -14,7 +14,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 //
 // The list moves live while you drag: render `view` (not `items`) and the other rows slide out of the way before you let go. `dragIndex` is where the
 // dragged row sits right now. Nothing is saved until the drop (`onReorder` runs once, on release).
-export function useDragReorder<T>(items: T[], onReorder: (next: T[]) => void) {
+// `group` names this list when several lists are on screen at once (one table per area): a drag only lands on rows of its own list.
+export function useDragReorder<T>(items: T[], onReorder: (next: T[]) => void, group?: string) {
   const [drag, setDrag] = useState<{ from: number; at: number } | null>(null);
   const dragIndex = drag ? drag.at : null;
   const overIndex: number | null = null;   // no drop line any more: the rows themselves show where it will land
@@ -45,7 +46,7 @@ export function useDragReorder<T>(items: T[], onReorder: (next: T[]) => void) {
     if (focusAfterMove.current === null) return;
     const idx = focusAfterMove.current;
     focusAfterMove.current = null;
-    (document.querySelector(`[data-drag-handle="${idx}"]`) as HTMLElement | null)?.focus();
+    (document.querySelector(`[data-drag-handle="${idx}"]${group !== undefined ? `[data-drag-group="${group}"]` : ''}`) as HTMLElement | null)?.focus();
   });
 
   function dragHandleProps(index: number) {
@@ -53,6 +54,7 @@ export function useDragReorder<T>(items: T[], onReorder: (next: T[]) => void) {
       role: 'button' as const,
       tabIndex: 0,
       'data-drag-handle': index,
+      ...(group !== undefined ? { 'data-drag-group': group } : {}),
       style: { touchAction: 'none' as const, cursor: 'grab', userSelect: 'none' as const },
       onPointerDown: (e: React.PointerEvent) => {
         if (e.button !== undefined && e.button !== 0) return; // primary button / touch / pen only
@@ -61,7 +63,8 @@ export function useDragReorder<T>(items: T[], onReorder: (next: T[]) => void) {
         let over = index;
 
         const onMove = (ev: PointerEvent) => {
-          const el = document.elementFromPoint(ev.clientX, ev.clientY)?.closest('[data-drag-index]');
+          const hit = document.elementFromPoint(ev.clientX, ev.clientY)?.closest('[data-drag-index]');
+          const el = hit && (group === undefined || hit.getAttribute('data-drag-group') === group) ? hit : null;
           const idx = el ? Number(el.getAttribute('data-drag-index')) : null;
           if (idx !== null && !Number.isNaN(idx) && idx !== over) { over = idx; setDrag({ from: index, at: idx }); }
           // Scroll the page when dragging near the top/bottom edge.
@@ -93,7 +96,7 @@ export function useDragReorder<T>(items: T[], onReorder: (next: T[]) => void) {
   }
 
   function dropTargetProps(index: number) {
-    return { 'data-drag-index': index };
+    return { 'data-drag-index': index, ...(group !== undefined ? { 'data-drag-group': group } : {}) };
   }
 
   return { view, dragIndex, overIndex, dragHandleProps, dropTargetProps };

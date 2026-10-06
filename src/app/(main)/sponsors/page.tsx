@@ -10,7 +10,7 @@ import PhotoStrip from '@/components/PhotoStrip/PhotoStrip';
 import { getSitePhotos, pickPhotos } from '@/lib/sitePhotos';
 import styles from './sponsors.module.css';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 const TIER_SIZE: Record<string, 'small' | 'medium' | 'large'> = {
   platinum: 'large', gold: 'large', silver: 'medium', bronze: 'small',
