@@ -149,3 +149,44 @@
 .facts dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
 .dangerCard { border-color: color-mix(in srgb, var(--pp-bad) 55%, var(--pp-line)); }
 .switch:disabled { opacity: 0.6; cursor: wait; }
+
+/* Categories: the two colors come from Setup (--sh-general, --sh-team) and are only used as accents, so they read on light and dark */
+.catGeneral { --cat: var(--sh-general, #2563eb); } /* theme-ok */
+.catTeam { --cat: var(--sh-team, #7c3aed); } /* theme-ok */
+.catHead { border-top: 4px solid var(--cat); }
+.cell.catGeneral, .cell.catTeam { box-shadow: inset 3px 0 0 var(--cat); }
+.badge { display: block; width: fit-content; margin: 0.25rem 0 0; padding: 0.05rem 0.5rem; border-radius: 999px; border: 1px solid var(--cat); background: color-mix(in srgb, var(--cat) 18%, var(--pp-card)); color: var(--pp-ink); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; white-space: normal; }
+.dot { display: inline-block; flex: none; width: 0.7rem; height: 0.7rem; border-radius: 50%; background: var(--cat); vertical-align: middle; }
+.legend { margin: 0; display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; font-size: 0.82rem; color: var(--pp-ink); }
+.legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
+.legend .dot { width: 0.8rem; height: 0.8rem; }
+.stationLoc { display: flex; align-items: flex-start; gap: 0.25rem; margin-top: 0.2rem; font-weight: 600; font-size: 0.72rem; color: var(--pp-ink); }
+.stationLoc svg { flex: none; margin-top: 0.1rem; }
+.guideBtn { margin-top: 0.35rem; display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.15rem 0.5rem; border: 1px solid var(--pp-line); border-radius: 6px; background: var(--pp-card); color: var(--pp-ink); font: inherit; font-size: 0.72rem; font-weight: 600; cursor: pointer; }
+.guideBtn:hover { background: rgba(var(--pp-ink-rgb), 0.07); }
+.boardStation { display: inline-flex; align-items: center; gap: 0.4rem; }
+.arrivedMark { margin-left: 0.15rem; vertical-align: -1px; color: var(--pp-ok); }
+
+/* Your shifts + the guide */
+.myList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.myRow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; padding: 0.5rem 0.7rem; border-radius: 8px; border: 1px solid var(--pp-line); border-left: 4px solid var(--cat); }
+.myMain { display: flex; flex-direction: column; min-width: 0; font-size: 0.86rem; color: var(--pp-ink); }
+.myMain span { color: rgba(var(--pp-ink-rgb), 0.85); font-size: 0.8rem; }
+.myActs { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.here { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.82rem; font-weight: 700; color: var(--pp-ok); }
+.guide { display: flex; flex-direction: column; gap: 0.7rem; color: var(--pp-ink); font-size: 0.9rem; }
+.guideLead { margin: 0; font-weight: 600; }
+.guideRow { margin: 0; display: flex; align-items: flex-start; gap: 0.4rem; }
+.guideRow svg { flex: none; margin-top: 0.15rem; }
+.guideText h4 { margin: 0 0 0.2rem; font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.85); }
+.guideText p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
+.guideLinks { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.guideLink { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.7rem; border-radius: 8px; border: 1px solid var(--pp-line); color: var(--p-accent-text); font-weight: 600; font-size: 0.85rem; text-decoration: none; }
+.guideLink:hover { background: rgba(var(--pp-ink-rgb), 0.07); }
+.guides { display: flex; flex-direction: column; gap: 0.8rem; }
+.guideCard { border-left: 4px solid var(--cat); }
+.guideCard .h { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.guideCard .badge { display: inline-block; margin: 0; }
+.colorRow { display: flex; flex-wrap: wrap; gap: 1rem; }
+.guideForm { display: flex; flex-direction: column; gap: 0.7rem; padding-top: 0.8rem; border-top: 1px solid var(--pp-line); }
+.guideForm h4 { margin: 0; font-size: 0.95rem; color: var(--pp-ink); }

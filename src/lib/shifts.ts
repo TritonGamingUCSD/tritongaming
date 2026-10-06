@@ -1,12 +1,25 @@
 // Shift grids: stations (rows) by time slots (columns) for one event. Pure helpers shared by the API and the portal.
-export interface ShiftStation { id: string; name: string; default_needed: number; sort_order: number; description: string | null }
+export interface ShiftStation {
+  id: string; name: string; default_needed: number; sort_order: number; description: string | null;
+  /** 'general' shifts are for anyone on the team; 'team' ones are aimed at one team (a warning, never a block, for everyone else). */
+  category: 'general' | 'team'; team_label: string | null;
+  /** The station guide, readable by everyone who can see shifts. */
+  location: string | null; instructions: string | null; doc_id: string | null; doc_title?: string | null; link_url: string | null; link_label: string | null;
+}
+export const STATION_COLS = 'id, name, default_needed, sort_order, description, category, team_label, location, instructions, doc_id, link_url, link_label';
+/** What exec changed for one event on top of a station's guide. Blank fields fall back to the station. */
+export interface ShiftEventGuide { location: string | null; notes: string | null; doc_id: string | null; doc_title?: string | null; link_url: string | null; link_label: string | null }
+export interface ShiftColors { general: string; team: string }
+export const DEFAULT_SHIFT_COLORS: ShiftColors = { general: '#2563eb', team: '#7c3aed' };
 export interface ShiftPlan { event_id: string; starts_at: string; ends_at: string; slot_minutes: number; signup_open: boolean; team_only: boolean; min_per_person: number | null }
-export interface ShiftSignup { id: string; station_id: string; slot_index: number; user_id: string; name: string; avatar: string | null }
+export interface ShiftSignup { id: string; station_id: string; slot_index: number; user_id: string; name: string; avatar: string | null; arrived_at: string | null }
 export interface ShiftAbsence { id: string; user_id: string; name: string; starts_at: string; ends_at: string; needs: number }
 export interface ShiftGrid {
   event: { id: string; title: string; start_date: string; location: string | null };
   plan: ShiftPlan | null;
   stations: ShiftStation[];
+  eventGuides: Record<string, ShiftEventGuide>;   // by station id
+  colors: ShiftColors;
   overrides: Record<string, number>;   // "<station id>|<slot index>" -> needed
   signups: ShiftSignup[];
   /** With a requirement set: the active officers and leads below it (managers only). */
@@ -42,7 +55,7 @@ export function awayDuring(absences: Pick<ShiftAbsence, 'starts_at' | 'ends_at'>
   return absences.some((a) => new Date(a.starts_at) < range.end && new Date(a.ends_at) > range.start);
 }
 
-export function neededFor(grid: Pick<ShiftGrid, 'overrides' | 'stations'>, stationId: string, slot: number): number {
+export function neededFor(grid: { overrides: Record<string, number>; stations: Pick<ShiftStation, 'id' | 'default_needed'>[] }, stationId: string, slot: number): number {
   const o = grid.overrides[cellKey(stationId, slot)];
   if (o !== undefined) return o;
   return grid.stations.find((s) => s.id === stationId)?.default_needed ?? 0;
@@ -51,4 +64,17 @@ export function neededFor(grid: Pick<ShiftGrid, 'overrides' | 'stations'>, stati
 /** The roles that may claim cells: officers, leads and exec; with team_only off, recruits too. Being marked inactive for a quarter (a marker next to the real roles) does not stop anyone: they can still fill themselves in. */
 export function mayClaim(roles: { role: string }[], teamOnly: boolean): boolean {
   return roles.some((r) => ['officer', 'lead', 'exec', 'admin'].includes(r.role) || (!teamOnly && r.role === 'recruit'));
+}
+
+/** The guide a person sees for a station at this event: the station's, with this event's location and script where exec set them, plus the event's notes. */
+export function guideFor(station: ShiftStation, eg: ShiftEventGuide | undefined) {
+  return {
+    location: eg?.location || station.location,
+    instructions: station.instructions,
+    notes: eg?.notes ?? null,
+    doc_id: eg?.doc_id ?? station.doc_id,
+    doc_title: eg?.doc_id ? eg.doc_title ?? null : station.doc_title ?? null,
+    link_url: eg?.link_url || station.link_url,
+    link_label: eg?.link_url ? eg.link_label : station.link_label,
+  };
 }

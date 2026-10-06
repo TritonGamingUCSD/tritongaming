@@ -1013,3 +1013,10 @@
   .sheetTheme { padding: 0.2rem 0.9rem 0.6rem; }
 }
 @media (min-width: 900px) { .sheetTheme { display: none; } }
+
+/* Sidebar footer tiles (Help, Back to Site, Sign out): the outlined tile and its hard shadow need room, so the rows are a little taller and never clip them. */
+@media (min-width: 900px) {
+  .appFrame .rail .railFooter { gap: 0.2rem !important; padding-top: 0.5rem !important; }
+  .appFrame .rail .railFooter > a, .appFrame .rail .railFooter > button { overflow: visible !important; height: 34px !important; min-height: 34px !important; padding-right: 4px !important; }
+  .appFrame .rail .railFooter > a > span, .appFrame .rail .railFooter > button > span, .appFrame .rail .railFooter > a > svg { height: 30px; width: 30px; }
+}

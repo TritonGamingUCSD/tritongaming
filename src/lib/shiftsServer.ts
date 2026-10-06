@@ -6,7 +6,7 @@ import { loadGrantedCapabilities } from '@/lib/grantedCapabilities';
 import { hasCapability, withGrantedCapabilities } from '@/lib/capabilities';
 import { staffName } from '@/lib/names';
 import { UUID } from '@/lib/docsServer';
-import { mayClaim, type ShiftGrid, type ShiftPlan, type ShiftStation } from '@/lib/shifts';
+import { DEFAULT_SHIFT_COLORS, STATION_COLS, mayClaim, type ShiftEventGuide, type ShiftGrid, type ShiftPlan, type ShiftStation } from '@/lib/shifts';
 
 export { UUID };
 export const bad = (error: string, status = 400) => NextResponse.json({ error }, { status });
@@ -41,11 +41,13 @@ export async function shiftSubject(svc: SupabaseClient, eventId: string, userId:
 export async function loadGrid(svc: SupabaseClient, eventId: string, me: string, roles: { role: string }[], manage: boolean): Promise<ShiftGrid | null> {
   const { data: ev } = await svc.from('events').select('id, title, start_date, location').eq('id', eventId).maybeSingle();
   if (!ev) return null;
-  const [{ data: plan }, { data: stations }, { data: overrides }, { data: signups }] = await Promise.all([
+  const [{ data: plan }, { data: stations }, { data: overrides }, { data: signups }, { data: guides }, { data: settings }] = await Promise.all([
     svc.from('event_shifts').select('event_id, starts_at, ends_at, slot_minutes, signup_open, team_only, min_per_person').eq('event_id', eventId).maybeSingle(),
-    svc.from('shift_stations').select('id, name, default_needed, sort_order, description').order('sort_order').order('name'),
+    svc.from('shift_stations').select(STATION_COLS).order('sort_order').order('name'),
     svc.from('shift_overrides').select('station_id, slot_index, needed').eq('event_id', eventId),
-    svc.from('shift_signups').select('id, station_id, slot_index, user_id').eq('event_id', eventId).order('created_at'),
+    svc.from('shift_signups').select('id, station_id, slot_index, user_id, arrived_at').eq('event_id', eventId).order('created_at'),
+    svc.from('shift_event_guides').select('station_id, location, notes, doc_id, link_url, link_label').eq('event_id', eventId),
+    svc.from('shift_settings').select('general_color, team_color').maybeSingle(),
   ]);
   const ids = [...new Set((signups ?? []).map((s) => s.user_id as string))];
   const { data: people } = ids.length ? await svc.from('profiles').select('id, display_name, google_first_name, google_last_name, avatar_url, custom_avatar_url').in('id', ids) : { data: [] };
@@ -100,14 +102,35 @@ export async function loadGrid(svc: SupabaseClient, eventId: string, me: string,
     requirement, absences, exemptions, officers, roster,
     event: ev as ShiftGrid['event'],
     plan: (plan as ShiftPlan | null) ?? null,
-    stations: (stations ?? []) as ShiftStation[],
+    stations: await withDocTitles(svc, (stations ?? []) as ShiftStation[]),
+    eventGuides: await eventGuideMap(svc, guides ?? []),
+    colors: settings ? { general: settings.general_color as string, team: settings.team_color as string } : DEFAULT_SHIFT_COLORS,
     overrides: Object.fromEntries((overrides ?? []).map((o) => [`${o.station_id}|${o.slot_index}`, o.needed as number])),
     signups: (signups ?? []).map((s) => {
       const p = byId.get(s.user_id as string);
-      return { id: s.id as string, station_id: s.station_id as string, slot_index: s.slot_index as number, user_id: s.user_id as string, name: p ? staffName(p as never) : 'Someone', avatar: ((p?.custom_avatar_url ?? p?.avatar_url) as string | null) ?? null };
+      return { id: s.id as string, station_id: s.station_id as string, slot_index: s.slot_index as number, user_id: s.user_id as string, name: p ? staffName(p as never) : 'Someone', avatar: ((p?.custom_avatar_url ?? p?.avatar_url) as string | null) ?? null, arrived_at: (s.arrived_at as string | null) ?? null };
     }),
     me,
     canManage: manage,
     canSignUp: manage || mayClaim(roles, teamOnly),
   };
+}
+
+/** Fills in the title of each station's linked portal doc, so the guide can show a readable link. */
+export async function withDocTitles(svc: SupabaseClient, stations: ShiftStation[]): Promise<ShiftStation[]> {
+  const ids = [...new Set(stations.map((s) => s.doc_id).filter(Boolean) as string[])];
+  if (!ids.length) return stations;
+  const { data } = await svc.from('docs').select('id, title').in('id', ids);
+  const titles = new Map((data ?? []).map((d) => [d.id as string, d.title as string]));
+  return stations.map((s) => ({ ...s, doc_title: s.doc_id ? titles.get(s.doc_id) ?? null : null }));
+}
+
+export async function eventGuideMap(svc: SupabaseClient, rows: Record<string, unknown>[]): Promise<Record<string, ShiftEventGuide>> {
+  const ids = [...new Set(rows.map((r) => r.doc_id).filter(Boolean) as string[])];
+  const { data } = ids.length ? await svc.from('docs').select('id, title').in('id', ids) : { data: [] };
+  const titles = new Map((data ?? []).map((d) => [d.id as string, d.title as string]));
+  return Object.fromEntries(rows.map((r) => [r.station_id as string, {
+    location: (r.location as string | null) ?? null, notes: (r.notes as string | null) ?? null, doc_id: (r.doc_id as string | null) ?? null,
+    doc_title: r.doc_id ? titles.get(r.doc_id as string) ?? null : null, link_url: (r.link_url as string | null) ?? null, link_label: (r.link_label as string | null) ?? null,
+  }]));
 }
