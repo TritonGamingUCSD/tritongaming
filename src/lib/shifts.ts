@@ -64,12 +64,12 @@ export function mayClaim(roles: { role: string }[], teamOnly: boolean): boolean 
   return roles.some((r) => ['officer', 'lead', 'exec', 'admin'].includes(r.role) || (!teamOnly && r.role === 'recruit'));
 }
 
-/** The guide a person sees for a station at this event: the station's, with this event's location and script where exec set them, plus the event's notes. */
+/** The guide a person sees for a station at this event: what exec wrote for this event, falling back to anything saved on the station itself. */
 export function guideFor(station: ShiftStation, eg: ShiftEventGuide | undefined) {
   return {
     location: eg?.location || station.location,
-    instructions: station.instructions,
-    notes: eg?.notes ?? null,
+    instructions: eg?.notes || station.instructions,
+    notes: null as string | null,
     doc_id: eg?.doc_id ?? station.doc_id,
     doc_title: eg?.doc_id ? eg.doc_title ?? null : station.doc_title ?? null,
     link_url: eg?.link_url || station.link_url,

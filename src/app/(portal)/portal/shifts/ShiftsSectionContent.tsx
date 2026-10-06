@@ -441,7 +441,7 @@ function SetupView({ event, sync, initial, docs, templates, setTemplates, grid, 
 
       {part === 'stations' && <StationSheet event={event} grid={grid} stations={stations} setStations={setStations} onChanged={onChanged} setError={setError} />}
 
-      {part === 'guides' && <GuideSetup grid={grid} stations={stations} setStations={setStations} docs={docs} templates={templates} setTemplates={setTemplates} eventId={event.id} onChanged={onChanged} setError={setError} api={api} />}
+      {part === 'guides' && <GuideSetup grid={grid} stations={stations} docs={docs} templates={templates} setTemplates={setTemplates} eventId={event.id} onChanged={onChanged} setError={setError} api={api} />}
 
       {part === 'event' && plan && (
         <section className={`${styles.card} ${styles.dangerCard}`}>
@@ -547,17 +547,19 @@ function StationSheet({ event, grid, stations, setStations, onChanged, setError 
     setStations([...stations, r.json.station]); setNewName(''); setNewNeeded('1'); await onChanged();
   }
   // Station and cell edits stay on screen until Save changes: nothing is sent on blur, and Discard puts back what was saved.
-  const [stEdits, setStEdits] = useState<Record<string, Partial<Record<'name' | 'default_needed', string>>>>({});
+  const [stEdits, setStEdits] = useState<Record<string, Partial<Record<'name' | 'default_needed' | 'category' | 'team_label', string>>>>({});
   const [cellEdits, setCellEdits] = useState<Record<string, string>>({});
   const [savingSheet, setSavingSheet] = useState(false);
-  const stBase = (st: ShiftStation, f: 'name' | 'default_needed') => (f === 'name' ? st.name : f === 'default_needed' ? String(st.default_needed) : '');
-  const stVal = (st: ShiftStation, f: 'name' | 'default_needed') => stEdits[st.id]?.[f] ?? stBase(st, f);
-  const setSt = (st: ShiftStation, f: 'name' | 'default_needed', v: string) => setStEdits((prev) => ({ ...prev, [st.id]: { ...prev[st.id], [f]: v } }));
+  const stBase = (st: ShiftStation, f: 'name' | 'default_needed' | 'category' | 'team_label') => (f === 'name' ? st.name : f === 'default_needed' ? String(st.default_needed) : f === 'category' ? st.category : st.team_label ?? '');
+  const stVal = (st: ShiftStation, f: 'name' | 'default_needed' | 'category' | 'team_label') => stEdits[st.id]?.[f] ?? stBase(st, f);
+  const setSt = (st: ShiftStation, f: 'name' | 'default_needed' | 'category' | 'team_label', v: string) => setStEdits((prev) => ({ ...prev, [st.id]: { ...prev[st.id], [f]: v } }));
   const stationPatches = stations.flatMap((st) => {
     const e = stEdits[st.id]; if (!e) return [];
-    const patch: Partial<Pick<ShiftStation, 'name' | 'default_needed'>> = {};
+    const patch: Partial<Pick<ShiftStation, 'name' | 'default_needed' | 'category' | 'team_label'>> = {};
     if (e.name !== undefined && e.name.trim() !== st.name) patch.name = e.name.trim();
     if (e.default_needed !== undefined && e.default_needed.trim() !== String(st.default_needed)) patch.default_needed = Number(e.default_needed);
+    if (e.category !== undefined && e.category !== st.category) patch.category = e.category as ShiftStation['category'];
+    if (e.team_label !== undefined && e.team_label.trim() !== (st.team_label ?? '')) patch.team_label = e.team_label.trim() || null;
     return Object.keys(patch).length ? [{ st, patch }] : [];
   });
   const cellChanges = Object.entries(cellEdits).flatMap(([key, raw]) => {
@@ -611,7 +613,7 @@ function StationSheet({ event, grid, stations, setStations, onChanged, setError 
     <section className={styles.card}>
       <h3 className={styles.h}>Stations and people needed</h3>
       <EditingNow room={sheetDirty ? 'shifts-stations' : null} what="the stations" />
-      <p className={styles.muted}>Same layout as Sign up. Each station column has its name and usual number of people; the cells below change the number for just that time slot (blank = the usual number). What each station does is written in the Guides tab.</p>
+      <p className={styles.muted}>Same layout as Sign up. Each station column has its name and usual number of people; the cells below change the number for just that time slot (blank = the usual number). Mark a station “One team” to colour it green and warn others who sign up. What each station does is written in the Guides tab.</p>
       <div className={styles.gridWrap}>
         <table className={`${styles.grid} ${styles.sheet}`}>
           <thead>
@@ -625,6 +627,10 @@ function StationSheet({ event, grid, stations, setStations, onChanged, setError 
                     <input className={`${styles.sheetInput} ${styles.sheetNum} ${stEdits[st.id]?.default_needed !== undefined ? styles.sheetChanged : ''}`} type="number" min={0} max={50} value={stVal(st, 'default_needed')} aria-label={`Usual number of people at ${st.name}`}
                       onChange={(e) => setSt(st, 'default_needed', e.target.value)} />
                   </label>
+                  <Select value={stVal(st, 'category')} onChange={(e) => setSt(st, 'category', e.target.value)} aria-label={`Who ${st.name} is for`}>
+                    <option value="general">Anyone on the team</option><option value="team">One team</option>
+                  </Select>
+                  {stVal(st, 'category') === 'team' && <input className={`${styles.sheetInput} ${stEdits[st.id]?.team_label !== undefined ? styles.sheetChanged : ''}`} value={stVal(st, 'team_label')} placeholder="Team name, e.g. LE" aria-label={`Team for ${st.name}`} maxLength={40} onChange={(e) => setSt(st, 'team_label', e.target.value)} />}
                   <button type="button" className={styles.removeStation} onClick={() => removeStation(st)} aria-label={`Remove ${st.name}`}><Trash2 size={13} aria-hidden="true" /> Remove</button>
                 </div>
                 </th>

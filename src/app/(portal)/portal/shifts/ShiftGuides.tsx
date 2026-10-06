@@ -137,29 +137,22 @@ const scriptFields = (docs: Docs, v: { doc_id: string; link_url: string; link_la
   </div>
 );
 
-/** Setup, exec only: pick a station, then one short form. "Every event" is the station's standing guide; "Just this event" changes only where it is, adds notes and swaps the script. */
-export function GuideSetup({ grid, stations, setStations, docs, templates, setTemplates, eventId, onChanged, setError, api }: {
-  grid: ShiftGrid | null; stations: ShiftStation[]; setStations: (s: ShiftStation[]) => void; docs: Docs; templates: ShiftTemplate[]; setTemplates: (t: ShiftTemplate[]) => void; eventId: string;
+/** Setup, exec only: for the event picked above, one short form per station: where it is, what to do (type it, or start from a saved write-up) and the script. */
+export function GuideSetup({ grid, stations, docs, templates, setTemplates, eventId, onChanged, setError, api }: {
+  grid: ShiftGrid | null; stations: ShiftStation[]; docs: Docs; templates: ShiftTemplate[]; setTemplates: (t: ShiftTemplate[]) => void; eventId: string;
   onChanged: () => Promise<void>; setError: (e: string) => void; api: Api;
 }) {
   const [pick, setPick] = useState(stations[0]?.id ?? '');
-  const [scope, setScope] = useState<'all' | 'event'>('all');
   const st = stations.find((x) => x.id === pick) ?? stations[0];
-  const canEvent = !!grid?.plan;
   return (
     <div className={styles.guideSetup}>
       <section className={styles.card}>
-        <h3 className={styles.h}>Station guide</h3>
-        <p className={styles.muted}>What a station is, where it is, and what to do. Everyone who can see shifts can read it.</p>
-        {stations.length === 0 ? <p className={styles.muted}>Add a station first (Stations tab).</p> : (
+        <h3 className={styles.h}>Station guide for this event</h3>
+        <p className={styles.muted}>For the event picked above: where each station is and what to do. Everyone who can see shifts can read it.</p>
+        {stations.length === 0 || !grid ? <p className={styles.muted}>Add a station first (Stations tab).</p> : (
           <>
-            <div className={styles.formRow}>
-              <Field label="Station"><Select value={st?.id ?? ''} onChange={(e) => setPick(e.target.value)} aria-label="Station">{stations.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</Select></Field>
-              <Field label="Applies to"><Select value={canEvent ? scope : 'all'} onChange={(e) => setScope(e.target.value as 'all' | 'event')} aria-label="Applies to">
-                <option value="all">Every event</option>{canEvent && <option value="event">Just this event</option>}</Select></Field>
-            </div>
-            {st && <GuideForm key={`${st.id}|${scope}|${scope === 'event' ? eventId : ''}`} scope={canEvent ? scope : 'all'} station={st} grid={grid} docs={docs} templates={templates} eventId={eventId} api={api} setError={setError}
-              onSaved={async (next) => { if (next) setStations(stations.map((x) => (x.id === next.id ? next : x))); await onChanged(); }} />}
+            <Field label="Station"><Select value={st?.id ?? ''} onChange={(e) => setPick(e.target.value)} aria-label="Station">{stations.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</Select></Field>
+            {st && <GuideForm key={`${eventId}|${st.id}`} station={st} grid={grid} docs={docs} templates={templates} eventId={eventId} api={api} setError={setError} onSaved={onChanged} />}
           </>
         )}
       </section>
@@ -168,51 +161,35 @@ export function GuideSetup({ grid, stations, setStations, docs, templates, setTe
   );
 }
 
-function GuideForm({ scope, station, grid, docs, templates, eventId, api, setError, onSaved }: {
-  scope: 'all' | 'event'; station: ShiftStation; grid: ShiftGrid | null; docs: Docs; templates: ShiftTemplate[]; eventId: string; api: Api; setError: (e: string) => void; onSaved: (s: ShiftStation | null) => Promise<void>;
+function GuideForm({ station, grid, docs, templates, eventId, api, setError, onSaved }: {
+  station: ShiftStation; grid: ShiftGrid; docs: Docs; templates: ShiftTemplate[]; eventId: string; api: Api; setError: (e: string) => void; onSaved: () => Promise<void>;
 }) {
-  const eg = grid?.eventGuides[station.id];
-  const base = scope === 'all'
-    ? { category: station.category, team_label: station.team_label ?? '', location: station.location ?? '', text: station.instructions ?? '', doc_id: station.doc_id ?? '', link_url: station.link_url ?? '', link_label: station.link_label ?? '' }
-    : { category: station.category, team_label: station.team_label ?? '', location: eg?.location ?? '', text: eg?.notes ?? '', doc_id: eg?.doc_id ?? '', link_url: eg?.link_url ?? '', link_label: eg?.link_label ?? '' };
+  // What is saved for this event, or (for older stations) what was written on the station itself, so nothing already written disappears.
+  const g = guideFor(station, grid.eventGuides[station.id]);
+  const base = { location: g.location ?? '', text: g.instructions ?? '', doc_id: g.doc_id ?? '', link_url: g.link_url ?? '', link_label: g.link_label ?? '' };
   const [v, setV] = useState(base);
   const [busy, setBusy] = useState(false);
   const dirty = (Object.keys(base) as (keyof typeof base)[]).some((k) => v[k] !== base[k]);
   useUnsavedChanges(dirty ? v : 'CLEAN');
-  const room = scope === 'all' ? `shifts-guide-${station.id}` : `shifts-guide-${eventId}-${station.id}`;
   const set = (k: keyof typeof base, val: string) => setV((prev) => ({ ...prev, [k]: val }));
   async function save() {
     setBusy(true); setError('');
-    if (scope === 'all') {
-      const r = await api<{ station: ShiftStation }>('/api/shifts/stations', 'PATCH', { id: station.id, category: v.category, team_label: v.team_label, location: v.location, instructions: v.text, doc_id: v.doc_id, link_url: v.link_url, link_label: v.link_label });
-      if (!r.ok) setError(r.json.error || 'Couldn’t save that.'); else await onSaved(r.json.station);
-    } else {
-      const r = await api(`/api/shifts/${eventId}/guide`, 'POST', { station_id: station.id, location: v.location, notes: v.text, doc_id: v.doc_id, link_url: v.link_url, link_label: v.link_label });
-      if (!r.ok) setError(r.json.error || 'Couldn’t save that.'); else await onSaved(null);
-    }
+    const r = await api(`/api/shifts/${eventId}/guide`, 'POST', { station_id: station.id, location: v.location, notes: v.text, doc_id: v.doc_id, link_url: v.link_url, link_label: v.link_label });
+    if (!r.ok) setError(r.json.error || 'Couldn’t save that.'); else await onSaved();
     setBusy(false);
   }
   return (
     <div className={styles.guideForm}>
-      <EditingNow room={dirty ? room : null} what={`the ${station.name} guide`} />
-      {scope === 'event' && <p className={styles.muted}>Only for this event. Anything you leave blank uses the guide for every event.</p>}
-      {scope === 'all' && (
-        <div className={styles.formRow}>
-          <Field label="Who is it for?"><Select value={v.category} onChange={(e) => set('category', e.target.value)} aria-label="Who is it for"><option value="general">Anyone on the team</option><option value="team">One team</option></Select></Field>
-          {v.category === 'team' && <Field label="Which team?"><Input value={v.team_label} onChange={(e) => set('team_label', e.target.value)} maxLength={40} placeholder="LE" /></Field>}
-        </div>
-      )}
-      <Field label="Where"><Input value={v.location} onChange={(e) => set('location', e.target.value)} maxLength={120} placeholder={scope === 'event' ? station.location ?? 'Where this is' : 'Front desk, by the entrance'} /></Field>
-      {scope === 'all' && templates.length > 0 && (
+      <EditingNow room={dirty ? `shifts-guide-${eventId}-${station.id}` : null} what={`the ${station.name} guide`} />
+      <Field label="Where"><Input value={v.location} onChange={(e) => set('location', e.target.value)} maxLength={120} placeholder="Front desk, by the entrance" /></Field>
+      {templates.length > 0 && (
         <Field label="Start from a saved write-up" hint="Fills in the box below. You can change it after.">
           <Select value="" onChange={(e) => { const t = templates.find((x) => x.id === e.target.value); if (t) set('text', v.text.trim() ? `${v.text.trim()}\n\n${t.body}` : t.body); }} aria-label="Start from a saved write-up">
             <option value="">Pick one…</option>{templates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
           </Select>
         </Field>
       )}
-      <Field label={scope === 'all' ? 'What to do' : 'Extra notes for this event'}>
-        <Textarea rows={scope === 'all' ? 7 : 3} value={v.text} onChange={(e) => set('text', e.target.value)} maxLength={4000} placeholder={scope === 'all' ? 'Step by step: where to stand, who to talk to, what to do if something goes wrong' : 'Anything different tonight'} />
-      </Field>
+      <Field label="What to do"><Textarea rows={7} value={v.text} onChange={(e) => set('text', e.target.value)} maxLength={4000} placeholder="Step by step: where to stand, who to talk to, what to do if something goes wrong" /></Field>
       {scriptFields(docs, v, (k, val) => set(k, val))}
       <div className={styles.actions}><Button size="sm" onClick={save} disabled={!dirty || busy} loading={busy}>Save</Button></div>
     </div>
