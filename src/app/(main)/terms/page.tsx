@@ -18,7 +18,7 @@ export default function TermsPage() {
     <LegalPage label="The rules" title="Terms of service" sub="Please read these before using the site and portal." updated="October 6, 2026">
       <p>
         These terms cover your use of the Triton Gaming website and member portal (the &ldquo;site&rdquo;). Triton Gaming is a Gaming Org at UC San Diego and is not affiliated with or endorsed by the University of California.
-        By using the site you agree to these terms. If you do not agree, please do not use it.
+        By using the site you agree to these terms.
       </p>
 
       <h2>Your account</h2>
