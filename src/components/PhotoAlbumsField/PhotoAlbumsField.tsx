@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { GripVertical } from 'lucide-react';
 import type { PhotoAlbumEntry } from '@/types/database';
-import { useDragReorder } from '@/lib/useDragReorder';
+import { useDragReorder } from '@/lib/ui/useDragReorder';
 import styles from './PhotoAlbumsField.module.css';
 import IconButton from '@/components/ui/IconButton';
 

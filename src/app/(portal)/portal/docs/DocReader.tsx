@@ -8,13 +8,14 @@ import Dialog, { DialogActions, DialogCancel, DialogText } from '@/components/ui
 import { Textarea } from '@/components/ui/Field';
 import PortalLink from '@/components/portal/PortalLink';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
-import { extractToc } from '@/lib/markdownToc';
-import { backlinksTo, resolveWikiLinks } from '@/lib/docsLinks';
-import { ageLabel, ancestors, type DocSection } from '@/lib/docsTree';
-import type { SyncDoc } from '@/lib/docsSync';
+import { extractToc } from '@/lib/docs/markdownToc';
+import { backlinksTo, resolveWikiLinks } from '@/lib/docs/docsLinks';
+import { ageLabel, ancestors, type DocSection } from '@/lib/docs/docsTree';
+import type { SyncDoc } from '@/lib/docs/docsSync';
 import type { Doc, DocCategory } from '@/types/database';
 import { AttachmentsView } from './DocAttachments';
 import { RequiredReadingDialog } from './DocRequired';
+import DocComments from './DocComments';
 import { clock } from './docsApi';
 import styles from './docs.module.css';
 
@@ -107,7 +108,7 @@ export default function DocReader({
         )}
         {canEdit && live && live.editing.length > 0 && <Notice tone="warning"><strong>{live.editing.join(', ')} {live.editing.length === 1 ? 'is' : 'are'} editing this doc right now.</strong> Wait before you edit, or you could overwrite each other.</Notice>}
 
-        {doc.cover_url && /* eslint-disable-next-line @next/next/no-img-element */ <img className={styles.cover} src={doc.cover_url} alt="" referrerPolicy="no-referrer" />}
+        {doc.cover_url &&   <img className={styles.cover} src={doc.cover_url} alt="" referrerPolicy="no-referrer" />}
 
         <header className={styles.articleHead}>
           <h1 className={styles.articleTitle}>{doc.title}</h1>
@@ -183,6 +184,7 @@ export default function DocReader({
         )}
 
         <AttachmentsView attachments={doc.attachments} />
+        {doc.published && <DocComments docId={doc.id} />}
         {requiring && <RequiredReadingDialog doc={doc} onClose={() => setRequiring(false)} />}
         {reporting && <ReportDoc doc={doc} onClose={() => setReporting(false)} />}
 
@@ -211,7 +213,7 @@ function ReportDoc({ doc, onClose }: { doc: Doc; onClose: () => void }) {
     setBusy(true); setErr('');
     try {
       const r = await fetch('/api/help', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
-        category: 'bug', subject: `Doc issue: ${doc.title}`.slice(0, 100), page: `/portal/docs?id=${doc.id}`,
+        category: 'doc', subject: `Doc issue: ${doc.title}`.slice(0, 100), page: `/portal/docs?id=${doc.id}`,
         body: `${text.trim()}\n\nDoc: ${window.location.origin}/portal/docs?id=${doc.id}`,
       }) });
       const j = await r.json().catch(() => ({}));

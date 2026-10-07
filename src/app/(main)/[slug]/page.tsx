@@ -1,6 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
 import { createPublicClient } from '@/lib/supabase/public';
-import { validateSlug } from '@/lib/shortLinks';
+import { validateSlug } from '@/lib/site/shortLinks';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { robots: { index: false } };

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ShieldAlert } from 'lucide-react';
-import { STRIKES_AT_LIMIT } from '@/lib/strikeLabels';
+import { STRIKES_AT_LIMIT } from '@/lib/members/strikeLabels';
 import styles from './strikes.module.css';
 
 // On the dashboard only at the limit: nothing below it (a person can always look in Profile → Strikes). Private: it is shown only to the person.

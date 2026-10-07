@@ -1,7 +1,7 @@
 'use client';
 
 import { WifiOff } from 'lucide-react';
-import { useOnlineStatus } from '@/lib/useOnlineStatus';
+import { useOnlineStatus } from '@/lib/ui/useOnlineStatus';
 import styles from './ConnectivityBanner.module.css';
 
 // A subtle, non-alarming strip rather than a blocking modal — being offline

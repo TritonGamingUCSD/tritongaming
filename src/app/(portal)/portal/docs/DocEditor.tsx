@@ -17,8 +17,8 @@ import {
   Bold, Italic, Strikethrough, Code, Link2, List, ListOrdered, ListChecks, Quote, Table2, ImageIcon, Minus, Undo2, Redo2,
   Info, Lightbulb, TriangleAlert, FileCode2, Pencil, BookOpen, Plus, ChevronDown,
 } from 'lucide-react';
-import { uploadImageToStorage } from '@/lib/imageUpload';
-import { showToast } from '@/lib/toast';
+import { uploadImageToStorage } from '@/lib/storage/imageUpload';
+import { showToast } from '@/lib/ui/toast';
 import styles from './docEditor.module.css';
 
 export type CalloutKind = 'note' | 'tip' | 'warning';

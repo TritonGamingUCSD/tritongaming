@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { AlertTriangle, CheckCircle2, ChevronRight, History } from 'lucide-react';
 import PortalLink from '@/components/portal/PortalLink';
-import { formatPacificDateTime } from '@/lib/timezone';
+import { formatPacificDateTime } from '@/lib/core/timezone';
 import styles from './adminOverview.module.css';
 
 interface Attention { id: string; text: string; detail: string; href: string }

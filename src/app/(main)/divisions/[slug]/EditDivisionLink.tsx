@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { hasCapability } from '@/lib/capabilities';
+import { hasCapability } from '@/lib/portal/capabilities';
 import { ZineBand, BandHeader } from '@/components/ZineBand/ZineBand';
 import styles from './division.module.css';
 

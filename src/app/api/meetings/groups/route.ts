@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { logAudit } from '@/lib/audit';
-import { cleanMemberIds as cleanMembers } from '@/lib/meetingAudience';
-import { authorizeMeetings, authorizeTeamView } from '@/lib/meetings';
+import { logAudit } from '@/lib/notifications/audit';
+import { cleanMemberIds as cleanMembers } from '@/lib/meetings/meetingAudience';
+import { authorizeMeetings, authorizeTeamView } from '@/lib/meetings/meetings';
 
 export const dynamic = 'force-dynamic';
 

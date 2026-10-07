@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { cleanTags } from '@/lib/docsTree';
-import { UUID, authorizeDocs, bad } from '@/lib/docsServer';
+import { cleanTags } from '@/lib/docs/docsTree';
+import { UUID, authorizeDocs, bad } from '@/lib/docs/docsServer';
 
 export const dynamic = 'force-dynamic';
 

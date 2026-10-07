@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getDivisions, divisionLogoSrc } from '@/lib/divisions';
-import { getContentBlock } from '@/lib/content';
-import { markdownToDescription } from '@/lib/markdown';
+import { getDivisions, divisionLogoSrc } from '@/lib/members/divisions';
+import { getContentBlock } from '@/lib/site/content';
+import { markdownToDescription } from '@/lib/docs/markdown';
 import LogoPlate from '@/components/LogoPlate/LogoPlate';
 import { ZineBand, PageHero } from '@/components/ZineBand/ZineBand';
 import PhotoStrip from '@/components/PhotoStrip/PhotoStrip';
-import { getSitePhotos, pickPhotos } from '@/lib/sitePhotos';
+import { getSitePhotos, pickPhotos } from '@/lib/storage/sitePhotos';
 import styles from './divisions.module.css';
 
 const DESCRIPTION = 'Triton Gaming hosts dedicated game divisions — from competitive gaming to casual communities. Find your squad.';

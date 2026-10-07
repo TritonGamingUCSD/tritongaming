@@ -3,12 +3,11 @@
 import SectionTabs from '@/components/ui/SectionTabs';
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { ReactNode } from 'react';
-import { LayoutDashboard, BarChart3, History, Activity, X, Server, Users as UsersIcon } from 'lucide-react';
-import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
-import { resolveAvatarUrl } from '@/lib/profile';
-import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/timezone';
+import { LayoutDashboard, BarChart3, Activity, X, Server, Users as UsersIcon } from 'lucide-react';
+import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
+import { resolveAvatarUrl } from '@/lib/members/profile';
+import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/core/timezone';
 import RoleManager from './RoleManager';
 import AccessPanel from './AccessPanel';
 import SystemStats from './SystemStats';

@@ -7,11 +7,11 @@ import LandingEvents from '@/components/LandingEvents/LandingEvents';
 import LandingExplore from '@/components/LandingExplore/LandingExplore';
 import LandingSponsors from '@/components/LandingSponsors/LandingSponsors';
 import LandingRecruitment from '@/components/LandingRecruitment/LandingRecruitment';
-import { getContentBlocks } from '@/lib/content';
-import { resolveSections } from '@/lib/pageLayout';
-import { getUpcomingEvents } from '@/lib/events';
+import { getContentBlocks } from '@/lib/site/content';
+import { resolveSections } from '@/lib/site/pageLayout';
+import { getUpcomingEvents } from '@/lib/events/events';
 import type { StatInput } from '@/components/LandingStatistics/LandingStatistics';
-import { DISCORD_URL } from '@/lib/links';
+import { DISCORD_URL } from '@/lib/site/links';
 
 export const revalidate = 60;
 
@@ -65,7 +65,7 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* eslint-disable-next-line react/no-danger -- static, hand-written object, not user input */}
+      { }
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ORGANIZATION_JSON_LD) }} />
       <Hero content={heroContent as Parameters<typeof Hero>[0]['content']} />
       {resolveSections('homepage', content['layout.homepage']?.sections).map((id) => <Fragment key={id}>{sections[id]}</Fragment>)}

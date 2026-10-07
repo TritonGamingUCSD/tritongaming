@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { logAudit } from '@/lib/audit';
-import { KEY_COLORS, authorizeKeys, keyPeople, listKeys, parseHolder } from '@/lib/storageKeys';
+import { logAudit } from '@/lib/notifications/audit';
+import { KEY_COLORS, authorizeKeys, keyPeople, listKeys, parseHolder } from '@/lib/storage/storageKeys';
 
 export const dynamic = 'force-dynamic';
 

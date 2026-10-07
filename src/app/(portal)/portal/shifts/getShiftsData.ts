@@ -1,6 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/admin';
-import { STATION_COLS, type ShiftPlan, type ShiftStation, type ShiftTemplate } from '@/lib/shifts';
-import { withDocTitles } from '@/lib/shiftsServer';
+import { STATION_COLS, type ShiftPlan, type ShiftStation, type ShiftTemplate } from '@/lib/shifts/shifts';
+import { withDocTitles } from '@/lib/shifts/shiftsServer';
 
 export interface ShiftEvent { id: string; title: string; start_date: string; end_date: string | null; location: string | null; plan: ShiftPlan | null }
 

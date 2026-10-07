@@ -1,5 +1,5 @@
 import Link from '@/components/portal/PortalLink';
-import { ROLE_ASKS } from '@/lib/helpConstants';
+import { ROLE_ASKS } from '@/lib/notifications/helpConstants';
 import styles from './roleAsk.module.css';
 
 // For people with no team role yet: the way to ask for one. Each link opens Help with the account category, a subject and a starter message already filled in.

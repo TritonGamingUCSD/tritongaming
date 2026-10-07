@@ -1,8 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { deleteIfReplaced } from '@/lib/imageUpload';
-import type { CreditPerson } from '@/lib/creditPeople';
+import { deleteIfReplaced } from '@/lib/storage/imageUpload';
+import type { CreditPerson } from '@/lib/members/creditPeople';
 import DivisionForm, { type DivisionFormValues } from '../DivisionForm';
 
 export default function EditDivisionClient({

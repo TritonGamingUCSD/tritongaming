@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { hasCapability } from '@/lib/capabilities';
+import { hasCapability } from '@/lib/portal/capabilities';
 
 interface Params { params: Promise<{ id: string }>; }
 

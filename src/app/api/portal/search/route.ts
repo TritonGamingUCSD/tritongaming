@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { staffName } from '@/lib/names';
+import { staffName } from '@/lib/members/names';
 import { createClient } from '@/lib/supabase/server';
-import { hasCapability, isRewardsEligible } from '@/lib/capabilities';
+import { hasCapability, isRewardsEligible } from '@/lib/portal/capabilities';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { collectCalendarItems } from '@/lib/calendarItems';
-import { ancestors, searchDocs } from '@/lib/docsTree';
+import { collectCalendarItems } from '@/lib/events/calendarItems';
+import { ancestors, searchDocs } from '@/lib/docs/docsTree';
 
 interface SearchResult {
   id: string;

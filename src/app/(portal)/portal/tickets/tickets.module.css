@@ -352,8 +352,6 @@
   white-space: nowrap;
 }
 
-.checkoutBanner,
-
 /* ── Empty state ─────────────────────────────────── */
 .empty {
   display: flex;

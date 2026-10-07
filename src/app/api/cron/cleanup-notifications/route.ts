@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { cleanupNotifications } from '@/lib/notificationCleanup';
+import { cleanupNotifications } from '@/lib/notifications/notificationCleanup';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

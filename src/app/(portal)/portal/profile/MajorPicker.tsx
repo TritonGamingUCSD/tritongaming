@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { MAJOR_OPTIONS, MAJOR_SEPARATOR, MAX_MAJORS, splitStoredMajors } from '@/lib/majors';
+import { MAJOR_OPTIONS, MAJOR_SEPARATOR, MAX_MAJORS, splitStoredMajors } from '@/lib/members/majors';
 import styles from './profile.module.css';
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';

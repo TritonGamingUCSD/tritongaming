@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import { ZineBand, type BandTone } from '@/components/ZineBand/ZineBand';
-import type { SitePhoto } from '@/lib/sitePhotos';
+import type { SitePhoto } from '@/lib/storage/sitePhotos';
 import styles from './PhotoStrip.module.css';
 
 // A row of taped prints with hand-written captions. Every photo shows its credit; a missing photo shows a stand-in with a credit slot

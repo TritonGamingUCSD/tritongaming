@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { authorizeHelp } from '@/lib/help';
+import { authorizeHelp } from '@/lib/notifications/help';
 
 export const dynamic = 'force-dynamic';
 

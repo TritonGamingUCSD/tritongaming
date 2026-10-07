@@ -2,11 +2,11 @@
 
 import SectionHeader from '@/components/ui/SectionHeader';
 import { useState } from 'react';
-import { roleInk } from '@/lib/roleColors';
+import { roleInk } from '@/lib/portal/roleColors';
 import { History, ChevronDown } from 'lucide-react';
 import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
 import type { AppRole } from '@/types/database';
-import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/timezone';
+import { formatPacificDateTime } from '@/lib/core/timezone';
 import type { RoleChangeEntry } from './getRoleHistoryData';
 import styles from './rolehistory.module.css';
 

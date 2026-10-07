@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { MAX_ACCOUNTS, clearExternalCache, decryptToken, googleConfigured, revokeToken } from '@/lib/googleCalendar';
+import { MAX_ACCOUNTS, clearExternalCache, decryptToken, googleConfigured, revokeToken } from '@/lib/events/googleCalendar';
 
 export const dynamic = 'force-dynamic';
 const UUID = /^[0-9a-f-]{36}$/i;

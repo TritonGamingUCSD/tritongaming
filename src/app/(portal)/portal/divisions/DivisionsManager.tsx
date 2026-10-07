@@ -1,11 +1,10 @@
 'use client';
 
 import Notice from '@/components/ui/Notice';
-import { confirmHold } from '@/lib/confirmHold';
+import { confirmHold } from '@/lib/ui/confirmHold';
 import { useState } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
-import { deleteStorageUrl } from '@/lib/imageUpload';
+import { deleteStorageUrl } from '@/lib/storage/imageUpload';
 import type { SocialEmbed } from '@/types/database';
 import IconButton from '@/components/ui/IconButton';
 import styles from './divisions.module.css';

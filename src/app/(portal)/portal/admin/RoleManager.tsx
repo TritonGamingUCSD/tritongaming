@@ -2,20 +2,20 @@
 
 import SaveBar from '@/components/portal/SaveBar';
 import EditingNow from '@/components/portal/EditingNow';
-import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
+import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import Dialog, { DialogText, DialogCheck, DialogInput, DialogSearch, DialogResults, DialogResult, DialogCancel } from '@/components/ui/Dialog';
-import { roleInk } from '@/lib/roleColors';
+import { roleInk } from '@/lib/portal/roleColors';
 import Notice from '@/components/ui/Notice';
 import HoldButton from '@/components/HoldToConfirm/HoldButton';
-import { showToast } from '@/lib/toast';
+import { showToast } from '@/lib/ui/toast';
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { Search, Gamepad2, X, Pencil } from 'lucide-react';
 import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK, ASSIGNABLE_ROLES } from '@/types/database';
 import type { AppRole } from '@/types/database';
-import { resolveAvatarUrl } from '@/lib/profile';
-import type { LinkedEmail } from '@/lib/linkedEmails';
-import { PACIFIC_TZ } from '@/lib/timezone';
+import { resolveAvatarUrl } from '@/lib/members/profile';
+import type { LinkedEmail } from '@/lib/members/linkedEmails';
+import { PACIFIC_TZ } from '@/lib/core/timezone';
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
 import styles from './RoleManager.module.css';

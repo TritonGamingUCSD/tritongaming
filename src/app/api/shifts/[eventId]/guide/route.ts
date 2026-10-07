@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { logAudit } from '@/lib/audit';
-import { UUID, authorizeShifts, bad, notifyShifts } from '@/lib/shiftsServer';
-import { text, webUrl } from '@/lib/shiftFields';
+import { logAudit } from '@/lib/notifications/audit';
+import { UUID, authorizeShifts, bad, notifyShifts } from '@/lib/shifts/shiftsServer';
+import { parseChecklist, text, webUrl } from '@/lib/shifts/shiftFields';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +30,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ eve
   if (error) return bad('Couldn’t save that.', 500);
   // The checklist: one item per line. Items that keep their wording keep their ticks; removed ones go; new ones are added.
   if (typeof b.checklist === 'string') {
-    const lines = [...new Set(b.checklist.split('\n').map((l: string) => l.trim().slice(0, 120)).filter(Boolean))].slice(0, 30) as string[];
+    const lines = parseChecklist(b.checklist);
     const { data: have } = await auth.svc.from('shift_checklist_items').select('id, label').eq('event_id', eventId).eq('station_id', stationId);
     const byLabel = new Map((have ?? []).map((h) => [h.label as string, h.id as string]));
     const gone = (have ?? []).filter((h) => !lines.includes(h.label as string)).map((h) => h.id as string);

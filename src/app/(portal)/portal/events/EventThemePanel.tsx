@@ -3,12 +3,11 @@
 import Button from '@/components/ui/Button';
 import { useRef, useState } from 'react';
 import { Plus, X, Upload } from 'lucide-react';
-import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
 import Select from '@/components/ui/Select';
 import ArtRow from './ArtRow';
-import type { CreditPerson } from '@/lib/creditPeople';
-import { COLOR_FIELDS, FONT_CHOICES, MAX_STICKERS, MAX_CUSTOM_FONTS, FONT_FILE_TYPES, type EventTheme } from '@/lib/eventTheme';
-import { uploadFontFile } from '@/lib/fontUpload';
+import type { CreditPerson } from '@/lib/members/creditPeople';
+import { COLOR_FIELDS, FONT_CHOICES, MAX_STICKERS, MAX_CUSTOM_FONTS, FONT_FILE_TYPES, type EventTheme } from '@/lib/events/eventTheme';
+import { uploadFontFile } from '@/lib/storage/fontUpload';
 import styles from './eventextras.module.css';
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
@@ -23,16 +22,6 @@ export default function EventThemePanel({ theme, onChange, people = [] }: { them
   const setCredit = (url: string, patch: { name?: string; link?: string }) => {
     const cur = credits[url] ?? { name: '' };
     set({ asset_credits: { ...credits, [url]: { ...cur, ...patch } } });
-  };
-  const creditFields = (url: string | undefined, what: string) => {
-    if (!url) return null;
-    const c = credits[url] ?? { name: '' };
-    return (
-      <div className={styles.creditRow}>
-        <input className={styles.input} value={c.name} onChange={(e) => setCredit(url, { name: e.target.value })} maxLength={60} placeholder="Made by (name)" aria-label={`${what}: who made it`} />
-        <input className={styles.input} type="url" value={c.link ?? ''} onChange={(e) => setCredit(url, { link: e.target.value })} placeholder="Their portfolio or social link" aria-label={`${what}: link to their portfolio or social page`} />
-      </div>
-    );
   };
   // Replacing a picture with another: the credit follows it.
   const carry = (oldUrl: string | undefined, newUrl: string): Record<string, { name: string; link?: string }> | undefined => {

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
-import { authorizeMeetings } from '@/lib/meetings';
-import { EMOJI_NAME, MAX_EMOJI_BYTES, parseDiscordEmoji } from '@/lib/meetingFun';
-import { hasCapability } from '@/lib/capabilities';
+import { authorizeMeetings } from '@/lib/meetings/meetings';
+import { EMOJI_NAME, MAX_EMOJI_BYTES, parseDiscordEmoji } from '@/lib/meetings/meetingFun';
+import { hasCapability } from '@/lib/portal/capabilities';
 
 export const dynamic = 'force-dynamic';
 

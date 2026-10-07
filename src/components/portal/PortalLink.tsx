@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import type { ComponentProps } from 'react';
-import { navigatePortal } from '@/lib/portalNav';
+import { navigatePortal } from '@/lib/portal/portalNav';
 
 // A link to another page of the portal. Inside the hub it just switches the view (the data is already loaded), so it is instant
 // instead of asking the server for the whole portal again; "open in new tab" and links outside the portal behave as usual.

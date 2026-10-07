@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getUserRoles, getUser } from '@/lib/auth';
-import { commandsFor } from '@/lib/portalCommands';
+import { getUserRoles, getUser } from '@/lib/core/auth';
+import { commandsFor } from '@/lib/portal/portalCommands';
 
 export const dynamic = 'force-dynamic';
 

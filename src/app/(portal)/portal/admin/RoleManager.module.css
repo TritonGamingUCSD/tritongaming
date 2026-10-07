@@ -309,29 +309,6 @@
   flex-shrink: 0;
 }
 
-
-.roleBtn {
-  padding: 0.22rem 0.6rem;
-  border-radius: 0.3rem;
-  font-size: 0.68rem;
-  font-family: var(--font-futura-medium);
-  letter-spacing: 0.03em;
-  cursor: pointer;
-  border: 1px solid rgba(var(--pp-ink-rgb), 0.23);
-  color: rgba(var(--pp-ink-rgb), 0.83);
-  background: transparent;
-  transition: all 0.15s;
-  white-space: nowrap;
-}
-
-.roleBtn:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--role-color) 15%, transparent);
-  color: var(--role-color);
-  border-color: color-mix(in srgb, var(--role-color) 40%, transparent);
-}
-
-.roleBtn:disabled { opacity: 0.3; cursor: not-allowed; }
-
 .editPanel {
   display: flex;
   flex-direction: column;
@@ -387,14 +364,6 @@
   font-size: 0.875rem;
 }
 
-.footer {
-  padding: 0.625rem 1.25rem;
-  border-top: 1px solid rgba(var(--pp-ink-rgb), 0.15);
-  font-size: 0.72rem;
-  color: rgba(var(--pp-ink-rgb), 0.68);
-  background: rgba(var(--pp-ink-rgb), 0.06);
-}
-
 /* Matches portal.module.css's own 768px tablet cutoff (where the page
    container's padding also tightens) rather than an unrelated one-off
    value — otherwise this row collapses to a stacked layout ~70px before
@@ -424,8 +393,6 @@
 
 .resultCount { margin: 0; padding: 0.9rem 1.2rem 0.4rem; font-size: 0.82rem; letter-spacing: 0.02em; color: rgba(var(--pp-ink-rgb), 0.8); }
 .resultCount b { color: var(--pp-ink); font-variant-numeric: tabular-nums; }
-.exportRow { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; padding: 0.1rem 0.25rem 0.4rem; font-size: 0.84rem; color: rgba(var(--pp-ink-rgb), 0.8); }
-.exportRow b { color: var(--pp-ink); font-variant-numeric: tabular-nums; }
 
 /* Search and sort share a row (stacked on phones); the role chips sit under them. */
 .searchRow { display: flex; gap: 0.6rem; align-items: stretch; }

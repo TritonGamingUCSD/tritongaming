@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { logAudit } from '@/lib/audit';
-import { authorizeMeetings, ensureOccurrence, type MeetingRow, type SeriesRow, canManageMeeting, notYourMeeting } from '@/lib/meetings';
+import { logAudit } from '@/lib/notifications/audit';
+import { authorizeMeetings, ensureOccurrence, type MeetingRow, type SeriesRow, canManageMeeting, notYourMeeting } from '@/lib/meetings/meetings';
 
 // Skip one meeting (a holiday week) or bring it back. A one-off meeting is simply removed;
 // one that belongs to a repeating series stays in the list as "skipped" so it can be restored.

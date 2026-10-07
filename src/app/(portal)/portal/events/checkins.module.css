@@ -1,16 +1,6 @@
-.page { max-width: 900px; margin-inline: auto; }
+
 
 .header { margin-bottom: 1.75rem; }
-
-.back {
-  font-size: 0.85rem;
-  color: var(--p-accent-text);
-  display: inline-block;
-  margin-bottom: 0.875rem;
-  opacity: 0.7;
-  transition: opacity 0.15s;
-}
-.back:hover { opacity: 1; }
 
 .title {
   font-family: var(--font-futura-heavy);
@@ -72,21 +62,6 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 .scanBtn:hover { border-color: var(--btn-primary-border-hover); box-shadow: var(--btn-primary-shadow-hover); }
-
-.exportBtn {
-  composes: card from '../../../../components/ui/Surface.module.css';
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  padding: 0.875rem 1.25rem;
-  color: rgba(var(--pp-ink-rgb), 0.87);
-  font-family: var(--font-futura-medium);
-  font-size: 0.8rem;
-  white-space: nowrap;
-  transition: background 0.15s, color 0.15s;
-}
-.exportBtn:hover { background: rgba(var(--pp-ink-rgb), 0.08); color: var(--pp-ink); }
 
 .empty {
   padding: 3rem;

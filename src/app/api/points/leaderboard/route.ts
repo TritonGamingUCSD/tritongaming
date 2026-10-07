@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { getTier, fetchTiers } from '@/lib/tiers';
-import { isRewardsEligible, type RoleGrant } from '@/lib/capabilities';
-import { maskDisplayName } from '@/lib/profile';
+import { getTier, fetchTiers } from '@/lib/members/tiers';
+import { isRewardsEligible, type RoleGrant } from '@/lib/portal/capabilities';
+import { maskDisplayName } from '@/lib/members/profile';
 
 // Every rewards-eligible member (see is_rewards_eligible — the same
 // group that can actually earn points at all) is on this leaderboard,

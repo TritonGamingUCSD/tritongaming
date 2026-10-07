@@ -1,45 +1,9 @@
-.layout {
-  display: grid;
-  grid-template-columns: 380px 1fr;
-  gap: 1.5rem;
-  align-items: start;
-}
 
-/* ── Block list (left column) ── */
-
-.searchInput {
-  background: rgba(var(--pp-ink-rgb), 0.05);
-  border: 1px solid rgba(var(--pp-ink-rgb), 0.23);
-  border-radius: 0.5rem;
-  padding: 0.625rem 0.875rem;
-  color: var(--pp-ink);
-  font-family: var(--font-futura-medium);
-  font-size: 0.9rem;
-  transition: border-color 0.2s;
-}
-.searchInput:focus { outline: none; border-color: var(--pp-ink); box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.55); }
 
 .noResults {
   font-size: 0.82rem;
   color: rgba(var(--pp-ink-rgb), 0.87);
   padding: 0.5rem 0.25rem;
-}
-
-.catGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.catLabel {
-  font-size: var(--fs-label);
-  font-family: var(--font-renegare);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgba(var(--pp-ink-rgb), 0.87);
-  padding: 0 0.25rem;
-  margin-bottom: 0.1rem;
-  white-space: nowrap;
 }
 
 
@@ -50,14 +14,6 @@
   color: var(--p-accent-text);
   flex-shrink: 0;
   width: 2rem;
-}
-
-
-.blockTitle {
-  font-family: var(--font-futura-medium);
-  font-size: 0.875rem;
-  color: var(--pp-ink);
-  margin-bottom: 0.2rem;
 }
 
 
@@ -82,16 +38,6 @@
 @keyframes popIn {
   from { opacity: 0; transform: scale(0.8); }
   to   { opacity: 1; transform: scale(1); }
-}
-
-/* ── Edit panel (right column) ── */
-.editPanel {
-  composes: card from '../../../../../components/ui/Surface.module.css';
-  position: sticky;
-  top: calc(var(--navbar-height, 64px) + 1.5rem);
-  overflow: hidden;
-  min-height: 300px;
-  transition: border-color 0.2s;
 }
 
 
@@ -124,22 +70,6 @@
   max-width: 380px;
   line-height: 1.5;
 }
-
-.viewLiveRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem 1rem;
-  margin-top: 0.5rem;
-}
-
-.viewLiveLink {
-  display: inline-block;
-  font-size: 0.78rem;
-  font-family: var(--font-futura-heavy);
-  letter-spacing: 0.04em;
-  color: var(--p-accent-text);
-}
-.viewLiveLink:hover { opacity: 0.8; }
 
 
 .fields {
@@ -208,29 +138,6 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-}
-
-.mdTabs {
-  display: flex;
-  gap: 0.25rem;
-  background: rgba(var(--pp-ink-rgb), 0.04);
-  border-radius: 0.4rem;
-  padding: 0.15rem;
-}
-
-
-.mdPreview {
-  background: rgba(var(--pp-ink-rgb), 0.03);
-  border: 1px solid rgba(var(--pp-ink-rgb), 0.20);
-  border-radius: 0.5rem;
-  padding: 0.75rem 0.875rem;
-  min-height: 100px;
-}
-
-.mdPreviewEmpty {
-  font-size: 0.85rem;
-  color: rgba(var(--pp-ink-rgb), 0.87);
-  font-style: italic;
 }
 
 /* Toggle */
@@ -367,17 +274,6 @@
   gap: 0.15rem;
 }
 
-.kvAdd {
-  font-size: 0.8rem;
-  color: rgba(125, 180, 234,0.6);
-  cursor: pointer;
-  padding: 0.4rem 0;
-  transition: color 0.15s;
-  text-align: left;
-}
-
-.kvAdd:hover { color: var(--p-accent-text); }
-
 /* ── Person list ─────────────────────────────────── */
 
 
@@ -430,19 +326,6 @@
   gap: 0.5rem;
 }
 
-/* Empty panel hint */
-
-/* Responsive */
-@media (max-width: 900px) {
-  .layout {
-    grid-template-columns: 1fr;
-  }
-
-  .editPanel {
-    position: static;
-  }
-}
-
 /* These sub-grids (key/value pairs, a person's name+title fields, a
    sponsor's name+url fields) stay 2-column through tablet widths — there's
    still enough room there — but on an actual phone that leaves each input
@@ -460,8 +343,6 @@
 
 /* ── Redesign: category tabs on top, a compact list beside the editor ── */
 .shell { display: flex; flex-direction: column; gap: 0.25rem; }
-.topBar { margin-bottom: 0.25rem; }
-.layout { grid-template-columns: 300px minmax(0, 1fr); gap: 1.25rem; }
 .searchNote { font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.87); padding: 0 0.2rem; }
 .rows { display: flex; flex-direction: column; gap: 0.3rem; }
 .row {
@@ -481,10 +362,8 @@
 .rowCat { color: rgba(var(--pp-ink-rgb), 0.87); font-size: 0.75rem; }
 .rowPreview { font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.87); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dirtyDot { width: 8px; height: 8px; border-radius: 50%; background: #fbbf24; flex-shrink: 0; }
-.editPanel { top: calc(var(--portal-header-h, 0px) + 0.75rem); }
 
 @media (max-width: 900px) {
-  .layout { grid-template-columns: minmax(0, 1fr); }
     /* Phone: the list and the editor are separate screens */
     }
 
@@ -494,13 +373,6 @@
   composes: card from '../../../../../components/ui/Surface.module.css';
   overflow: hidden;
 }
-.shell > .searchInput { max-width: 360px; }
-
-/* One toolbar row: the page's block sub-tabs on the left, search tucked in on the right. */
-.toolbar { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
-.searchWrap { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; padding: 0 0.8rem; height: 38px; width: 230px; max-width: 100%; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.05); border: 1px solid rgba(var(--pp-ink-rgb), 0.23); color: rgba(var(--pp-ink-rgb), 0.88); }
-.searchWrap:focus-within { outline: none; border-color: var(--pp-ink); box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.55); color: var(--p-accent-text); }
-@media (max-width: 640px) { .searchWrap { width: 100%; } }
 
 /* ── Live preview beside the editor ── */
 .editorWithPreview { display: block; }
@@ -532,25 +404,6 @@
 @media (min-width: 1200px) {
   .editorWithPreview.previewOn { grid-template-columns: minmax(380px, 5fr) minmax(0, 7fr); }
 }
-
-/* Page layout: show / hide / reorder */
-.sectionList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
-.sectionRow {
-  composes: card from '../../../../../components/ui/Surface.module.css';
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.55rem 0.75rem;
-}
-.sectionOff { opacity: 0.55; }
-.sectionOff .sectionName { text-decoration: line-through; }
-.sectionName { font-size: 0.88rem; color: var(--pp-ink); }
-.sectionBtns { display: inline-flex; gap: 0.25rem; }
-.sectionBtn { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 0.5rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.23); background: transparent; color: rgba(var(--pp-ink-rgb), 0.87); cursor: pointer; }
-.sectionBtn:hover:not(:disabled) { color: var(--pp-ink); background: rgba(var(--pp-ink-rgb), 0.07); }
-.sectionBtn:disabled { opacity: 0.3; cursor: default; }
-.sectionBtnOn { color: var(--p-accent-text); border-color: rgba(125, 180, 234, 0.4); }
 
 /* Full-screen preview: covers the whole window; the page is scaled to fit it. Esc or the button returns. */
 .previewFull { position: fixed !important; inset: 0; z-index: 1000; margin: 0 !important; padding: 0.75rem 1rem; background: var(--pp-card); }

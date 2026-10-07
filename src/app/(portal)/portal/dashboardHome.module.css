@@ -72,3 +72,12 @@
 .nnError { margin: 0; font-size: 0.85rem; color: var(--pp-bad); }
 .nnLater { list-style: none; margin: 0.4rem 0 0; padding: 0.5rem 0 0; border-top: 1px solid var(--pp-line); display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; }
 .nnLater span { color: rgba(var(--pp-ink-rgb), 0.85); }
+
+/* Event day: the checklist, the last note and the cover link on the shift card */
+.nnNote { margin: 0.6rem 0 0; font-size: 0.88rem; color: var(--pp-ink); overflow-wrap: anywhere; }
+.nnChecks { list-style: none; margin: 0.6rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.2rem; }
+.nnChecks label { display: flex; align-items: center; gap: 0.5rem; min-height: 32px; font-size: 0.9rem; color: var(--pp-ink); cursor: pointer; }
+.nnChecks input { width: 18px; height: 18px; accent-color: var(--p-accent-text); }
+.nnDone { text-decoration: line-through; opacity: 0.75; }
+.nnCover { margin: 0.6rem 0 0; font-size: 0.82rem; }
+.nnCover a { color: var(--p-accent-text); text-decoration: underline; }

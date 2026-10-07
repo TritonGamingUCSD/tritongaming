@@ -34,7 +34,6 @@
 .clicks { font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.88); white-space: nowrap; }
 .clicks strong { color: var(--pp-ink); font-size: 1rem; }
 .actions { display: flex; align-items: center; gap: 0.35rem; }
-.danger { color: var(--pp-bad); }
 .toggle { min-width: 44px; height: 34px; padding: 0 0.7rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.30); background: rgba(52, 211, 153, 0.12); color: var(--pp-ok); font-size: 0.75rem; cursor: pointer; }
 .off .toggle { background: rgba(var(--pp-ink-rgb), 0.05); color: rgba(var(--pp-ink-rgb), 0.88); }
 .editRow { display: flex; gap: 0.5rem; flex-wrap: wrap; width: 100%; align-items: center; }

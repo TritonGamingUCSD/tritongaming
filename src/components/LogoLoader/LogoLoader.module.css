@@ -75,16 +75,4 @@
 .labelDark { color: rgba(242, 241, 240, 0.85); }
 .labelLight { color: rgba(1, 25, 65, 0.75); }
 
-.srOnly {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
 .labelAuto { color: rgba(var(--pp-ink-rgb), 0.7); }

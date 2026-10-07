@@ -1,4 +1,4 @@
-import { WEEK_GROUPS, weekGroup } from '@/lib/weekGroups';
+import { WEEK_GROUPS, weekGroup } from '@/lib/events/weekGroups';
 import styles from './WeekHead.module.css';
 
 // The heading above each week in a "coming up" list: this week (gold), next week (blue), two weeks out and later (violet).

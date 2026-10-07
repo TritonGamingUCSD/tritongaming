@@ -1,13 +1,13 @@
 'use client';
 
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { ChevronLeft, Cloud, CloudOff, Copy, History, TriangleAlert, Users, X } from 'lucide-react';
+import { ChevronLeft, Cloud, CloudOff, History, TriangleAlert, Users, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import { Input } from '@/components/ui/Field';
-import { showToast } from '@/lib/toast';
-import { cleanTags, MAX_TAGS } from '@/lib/docsTree';
-import { joinNames, type SyncDoc } from '@/lib/docsSync';
+import { showToast } from '@/lib/ui/toast';
+import { cleanTags, MAX_TAGS } from '@/lib/docs/docsTree';
+import { joinNames, type SyncDoc } from '@/lib/docs/docsSync';
 import type { Doc, DocAttachment } from '@/types/database';
 import DocEditor, { type DocEditorHandle } from './DocEditor';
 import ConflictDialog from './ConflictDialog';
@@ -60,7 +60,7 @@ const DocEditView = forwardRef<DocEditViewHandle, Props>(function DocEditView({ 
   const startTitle = doc.draft_title ?? doc.title;
   const startContent = doc.draft_content ?? doc.content;
   const [title, setTitle] = useState(startTitle);
-  const [content, setContent] = useState(startContent);
+  const [, setContent] = useState(startContent);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [lastSaved, setLastSaved] = useState<string | null>(doc.draft_updated_at);
   const [dialog, setDialog] = useState<Dialog | null>(null);

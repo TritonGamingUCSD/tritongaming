@@ -3,7 +3,7 @@
 import Notice from '@/components/ui/Notice';
 import { useState } from 'react';
 import { Camera, Gift, Check, X } from 'lucide-react';
-import { useQRScanner } from '@/lib/useQRScanner';
+import { useQRScanner } from '@/lib/qr/useQRScanner';
 import styles from './checkinsection.module.css';
 // Same viewport/placeholder/scan-box treatment as CheckInClient's camera —
 // imported rather than duplicated so the two scanners can't visually drift
@@ -53,8 +53,6 @@ export default function RedemptionScanner() {
       const res = await fetch(`/api/rewards/redemptions/${detail.id}/confirm`, { method: 'POST' });
       const json = await res.json();
       if (!res.ok) { setError(json.error || 'Failed to confirm.'); return; }
-      const reward = oneOf(detail.reward);
-      const member = oneOf(detail.member);
       setDetail(null);
     } catch {
       setError('Network error. Please try again.');

@@ -1,7 +1,7 @@
 'use client';
 
 import Notice from '@/components/ui/Notice';
-import { confirmHold } from '@/lib/confirmHold';
+import { confirmHold } from '@/lib/ui/confirmHold';
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { UserIdentity } from '@supabase/supabase-js';
@@ -42,7 +42,6 @@ const LINK_ERROR_MESSAGES: Record<string, string> = {
 export default function LinkGoogleSection() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [userId, setUserId] = useState<string | null>(null);
   const [identities, setIdentities] = useState<UserIdentity[] | null>(null);
   const [linking, setLinking] = useState(false);
   const [unlinkingId, setUnlinkingId] = useState<string | null>(null);
@@ -76,7 +75,6 @@ export default function LinkGoogleSection() {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      setUserId(user.id);
 
       await loadIdentities();
     })();

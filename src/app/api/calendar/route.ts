@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { getUserRoles } from '@/lib/auth';
-import { isTgMember } from '@/lib/capabilities';
-import { pacificDayKey } from '@/lib/checkinDays';
-import { addDaysKey } from '@/lib/meetings';
-import { collectCalendarItems } from '@/lib/calendarItems';
-import { googleItems } from '@/lib/externalCalendar';
+import { getUserRoles } from '@/lib/core/auth';
+import { isTgMember } from '@/lib/portal/capabilities';
+import { pacificDayKey } from '@/lib/events/checkinDays';
+import { addDaysKey } from '@/lib/meetings/meetings';
+import { collectCalendarItems } from '@/lib/events/calendarItems';
+import { googleItems } from '@/lib/events/externalCalendar';
 
 export const dynamic = 'force-dynamic';
-export type { CalendarItem } from '@/lib/calendarItems';
+export type { CalendarItem } from '@/lib/events/calendarItems';
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 

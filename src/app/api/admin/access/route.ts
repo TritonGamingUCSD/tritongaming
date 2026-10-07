@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { staffName } from '@/lib/names';
+import { staffName } from '@/lib/members/names';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { hasCapability, GRANTABLE_CAPABILITIES, CAPABILITY_ROLES } from '@/lib/capabilities';
-import { logAudit } from '@/lib/audit';
-import { createNotifications } from '@/lib/notify';
+import { hasCapability, GRANTABLE_CAPABILITIES, CAPABILITY_ROLES } from '@/lib/portal/capabilities';
+import { logAudit } from '@/lib/notifications/audit';
+import { createNotifications } from '@/lib/notifications/notify';
 import { ROLE_LABELS } from '@/types/database';
 
 export const dynamic = 'force-dynamic';

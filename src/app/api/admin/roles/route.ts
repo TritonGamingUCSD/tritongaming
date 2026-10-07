@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { hasCapability } from '@/lib/capabilities';
-import { logAudit } from '@/lib/audit';
+import { hasCapability } from '@/lib/portal/capabilities';
+import { logAudit } from '@/lib/notifications/audit';
 import { ASSIGNABLE_ROLES } from '@/types/database';
 import type { AppRole } from '@/types/database';
 

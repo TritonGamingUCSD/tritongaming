@@ -5,15 +5,7 @@
 .cardTitle { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .cardTitle strong { font-family: var(--font-futura-heavy); font-size: 1rem; color: var(--pp-ink); }
 .cardTitle span { font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.88); }
-.pips { display: inline-flex; gap: 0.3rem; flex: none; }
-.pips i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--tone) 70%, transparent); background: transparent; }
 .details summary { cursor: pointer; font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.89); }
 .details summary:hover { color: var(--p-accent-text); }
-.removed span { text-decoration: line-through; color: rgba(var(--pp-ink-rgb), 0.87); }
 @media (max-width: 520px) {   }
-
-/* The quiet one-line note at 2 strikes: small, low contrast, easy to ignore. */
-.quiet { display: inline-flex; align-items: center; gap: 0.5rem; align-self: flex-start; padding: 0.3rem 0.75rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.26); background: rgba(var(--pp-ink-rgb), 0.03); color: rgba(var(--pp-ink-rgb), 0.89); font-size: 0.78rem; text-decoration: none; }
-.quiet:hover { border-color: rgba(251, 191, 36, 0.45); color: var(--pp-ink); }
-.quiet em { font-style: normal; color: rgba(var(--pp-ink-rgb), 0.87); }
 a.card { text-decoration: none; color: inherit; flex-direction: row; align-items: center; gap: 0.75rem; }

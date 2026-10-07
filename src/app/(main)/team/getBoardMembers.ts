@@ -1,7 +1,7 @@
 import { unstable_cache } from 'next/cache';
 import { createPublicClient } from '@/lib/supabase/public';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { fetchLinkedEmails } from '@/lib/linkedEmails';
+import { fetchLinkedEmails } from '@/lib/members/linkedEmails';
 import type { AppRole } from '@/types/database';
 
 export type BoardTier = 'exec' | 'lead' | 'officer' | 'alumni';

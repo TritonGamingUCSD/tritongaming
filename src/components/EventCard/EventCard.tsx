@@ -2,7 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import styles from './EventCard.module.css';
 import type { Event } from '@/types';
-import { formatEventDateRange, formatEventTimeRange } from '@/lib/timezone';
+import { formatEventDateRange, formatEventTimeRange } from '@/lib/core/timezone';
 
 // `compact` = short horizontal card (flyer thumbnail beside the details,
 // no description) for the homepage carousel; default is the tall card used

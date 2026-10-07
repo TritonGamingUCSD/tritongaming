@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import BoardSection from '@/components/BoardSection/BoardSection';
-import { getContentBlock } from '@/lib/content';
+import { getContentBlock } from '@/lib/site/content';
 import { getBoardMembers } from './getBoardMembers';
 import { getTeamYears } from './getTeamYears';
 import { PageHero } from '@/components/ZineBand/ZineBand';
 import PhotoStrip from '@/components/PhotoStrip/PhotoStrip';
-import { getSitePhotos, pickPhotos } from '@/lib/sitePhotos';
+import { getSitePhotos, pickPhotos } from '@/lib/storage/sitePhotos';
 import styles from './team.module.css';
 
 export const metadata: Metadata = {

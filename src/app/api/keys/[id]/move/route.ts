@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createNotifications } from '@/lib/notify';
-import { authorizeKeys, holderText, keyPeople, parseHolder, type HolderKind } from '@/lib/storageKeys';
+import { createNotifications } from '@/lib/notifications/notify';
+import { authorizeKeys, holderText, keyPeople, parseHolder, type HolderKind } from '@/lib/storage/storageKeys';
 
 const UUID = /^[0-9a-f-]{36}$/i;
 

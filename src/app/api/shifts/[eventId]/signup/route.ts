@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { logAudit } from '@/lib/audit';
-import { UUID, authorizeShifts, bad, notifyShifts } from '@/lib/shiftsServer';
-import { mayClaim, slotCount, slotRange } from '@/lib/shifts';
-import { staffName } from '@/lib/names';
-import { PACIFIC_TZ } from '@/lib/timezone';
+import { logAudit } from '@/lib/notifications/audit';
+import { UUID, authorizeShifts, bad, notifyShifts } from '@/lib/shifts/shiftsServer';
+import { mayClaim, slotCount, slotRange } from '@/lib/shifts/shifts';
+import { staffName } from '@/lib/members/names';
+import { PACIFIC_TZ } from '@/lib/core/timezone';
 
 export const dynamic = 'force-dynamic';
 

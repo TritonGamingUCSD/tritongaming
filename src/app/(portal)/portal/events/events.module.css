@@ -1,14 +1,5 @@
 .page { max-width: 1240px; margin-inline: auto; }
 
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
 .title {
   font-family: var(--font-futura-heavy);
   font-size: clamp(1.25rem, 2.5vw, 1.6rem);

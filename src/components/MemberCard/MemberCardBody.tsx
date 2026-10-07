@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { GraduationCap, Gamepad2, ExternalLink, Copy, Check } from 'lucide-react';
-import { socialHref, SOCIAL_PLATFORMS } from '@/lib/profile';
+import { socialHref, SOCIAL_PLATFORMS } from '@/lib/members/profile';
 import DotList, { noBreakHyphens } from '@/components/DotList/DotList';
 import styles from './MemberCard.module.css';
 

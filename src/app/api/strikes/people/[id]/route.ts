@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { authorizeStrikes, trackedPeople } from '@/lib/strikes';
-import { markLabels } from '@/lib/strikeLabels';
+import { authorizeStrikes, trackedPeople } from '@/lib/members/strikes';
+import { markLabels } from '@/lib/members/strikeLabels';
 
 export const dynamic = 'force-dynamic';
 const UUID = /^[0-9a-f-]{36}$/i;

@@ -27,8 +27,6 @@
 .logoCell { width: 120px; flex-shrink: 0; }
 .remove { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 0.5rem; background: none; border: 1px solid rgba(var(--pp-ink-rgb), 0.23); color: var(--pp-bad); cursor: pointer; flex-shrink: 0; }
 .remove:hover { background: rgba(220, 38, 38, 0.12); }
-.add { align-self: flex-start; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.9rem; border-radius: var(--radius-sm); background: rgba(var(--pp-ink-rgb), 0.05); border: 1px solid rgba(var(--pp-ink-rgb), 0.30); color: var(--pp-ink); font-size: 0.8rem; cursor: pointer; }
-.add:hover { border-color: rgba(125, 180, 234, 0.5); }
 /* Event theme panel */
 .colorGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr)); gap: 0.9rem 0.75rem; }
 .colorRow { display: flex; gap: 0.5rem; align-items: center; }
@@ -40,10 +38,6 @@
 .stickerRow { display: flex; gap: 0.5rem; align-items: flex-start; }
 .stickerMain { flex: 1; min-width: 0; }
 @media (max-width: 560px) { .row { flex-wrap: wrap; } .time { width: 100%; } .logoCell { width: 100%; } }
-/* name + link under a picture in the theme panel */
-.creditRow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 0.5rem; margin-top: 0.4rem; }
-@media (max-width: 560px) { .creditRow { grid-template-columns: minmax(0, 1fr); } }
-.posterRow { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.5rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.23); border-radius: 0.6rem; }
 /* compact picture + credit rows (posters, stickers) */
 .artThumb { flex-shrink: 0; }
 .artFields { display: grid; gap: 0.3rem; flex: 1; min-width: 0; }

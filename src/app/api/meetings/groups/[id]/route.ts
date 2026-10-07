@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { logAudit } from '@/lib/audit';
-import { authorizeMeetings } from '@/lib/meetings';
-import { cleanMemberIds as cleanMembers } from '@/lib/meetingAudience';
-import { notifyGroupAdditions } from '@/lib/groupChanges';
+import { logAudit } from '@/lib/notifications/audit';
+import { authorizeMeetings } from '@/lib/meetings/meetings';
+import { cleanMemberIds as cleanMembers } from '@/lib/meetings/meetingAudience';
+import { notifyGroupAdditions } from '@/lib/meetings/groupChanges';
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await authorizeMeetings('host_meetings');

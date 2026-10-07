@@ -1,4 +1,4 @@
-import { pageOgResponse } from '@/lib/ogPage';
+import { pageOgResponse } from '@/lib/site/ogPage';
 
 // Link-preview card for the Sponsors page. The design is PageCard in lib/ogCards.tsx.
 export const size = { width: 1200, height: 630 };

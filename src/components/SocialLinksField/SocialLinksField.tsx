@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { SOCIAL_PLATFORMS } from '@/lib/profile';
+import { SOCIAL_PLATFORMS } from '@/lib/members/profile';
 import styles from './SocialLinksField.module.css';
 
 // Same {platformKey: handle} editor already used for a member's own profile

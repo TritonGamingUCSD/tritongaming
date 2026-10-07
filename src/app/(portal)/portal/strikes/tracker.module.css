@@ -1,5 +1,4 @@
 .page { display: flex; flex-direction: column; gap: 1rem; max-width: 1240px; margin-inline: auto; width: 100%; }
-.header { display: flex; flex-direction: column; gap: 0.3rem; }
 .title { font-family: var(--font-futura-heavy); font-size: 1.6rem; color: var(--pp-ink); }
 .sub { display: flex; align-items: flex-start; gap: 0.4rem; margin: 0; font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 .sub svg { flex: none; margin-top: 0.2rem; color: var(--pp-teal); }
@@ -97,12 +96,6 @@
 .formActions { display: flex; justify-content: flex-end; gap: 0.5rem; }
 
 .review { display: flex; flex-direction: column; gap: 0.8rem; max-width: 760px; }
-.sugg { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
-.sugg li { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; flex-wrap: wrap; padding: 0.65rem 0.85rem; border-radius: 0.8rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.23); background: rgba(var(--pp-ink-rgb), 0.03); }
-.sugg li > div { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
-.sugg strong { color: var(--pp-ink); }
-.sugg span { font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.88); }
-.sugg b { color: var(--pp-ink); font-weight: 600; }
 
 @media (max-width: 860px) {
   .split { grid-template-columns: minmax(0, 1fr); }
@@ -117,7 +110,6 @@
 .doneList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 .doneList b { color: var(--pp-ink); font-weight: 600; }
 .twoCol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; }
-.formTitle { margin: 0; font-family: var(--font-futura-heavy); font-size: 1rem; color: var(--pp-ink); }
 .chosen { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.7rem; border-radius: 0.6rem; background: rgba(125, 180, 234, 0.08); border: 1px solid rgba(125, 180, 234, 0.35); color: var(--pp-ink); }
 .chosen span { font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.87); }
 .pick { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.4rem; }

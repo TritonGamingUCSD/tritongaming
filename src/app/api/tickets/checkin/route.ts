@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { hasCapability } from '@/lib/capabilities';
-import { rotatingCode, currentWindow } from '@/lib/rotatingCode';
-import { performCheckin } from '@/lib/performCheckin';
-import { canCheckInNow, todaysCheckinAt } from '@/lib/checkinDays';
-import { getTier, fetchTiers } from '@/lib/tiers';
+import { hasCapability } from '@/lib/portal/capabilities';
+import { rotatingCode, currentWindow } from '@/lib/events/rotatingCode';
+import { performCheckin } from '@/lib/events/performCheckin';
+import { canCheckInNow, todaysCheckinAt } from '@/lib/events/checkinDays';
+import { getTier, fetchTiers } from '@/lib/members/tiers';
 
 export async function POST(request: Request) {
   const supabase = await createClient();

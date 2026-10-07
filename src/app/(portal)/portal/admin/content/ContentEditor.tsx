@@ -1,22 +1,22 @@
 'use client';
 
 import { Select } from '@/components/ui/Field';
-import { showToast } from '@/lib/toast';
-import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
+import { showToast } from '@/lib/ui/toast';
+import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import { useEffect, useRef, useState } from 'react';
-import { useDraft } from '@/lib/useDraft';
-import type { CreditPerson } from '@/lib/creditPeople';
+import { useDraft } from '@/lib/ui/useDraft';
+import type { CreditPerson } from '@/lib/members/creditPeople';
 import SaveBar from '@/components/portal/SaveBar';
 import EditingNow from '@/components/portal/EditingNow';
 import DraftBanner from '@/components/portal/DraftBanner';
 import Image from 'next/image';
-import { Pencil, Plus, X, MapPin, GripVertical, ArrowUp, ArrowDown, Eye, EyeOff, Monitor, Smartphone, PanelRightClose, PanelRightOpen, Maximize2, Minimize2, ZoomIn } from 'lucide-react';
-import type { ContentBlock, FieldDef } from '@/lib/content-blocks';
-import { CATEGORY_ORDER, BLOCK_ORDER, BLOCK_GROUPS, sortFields } from '@/lib/content-blocks';
-import { usePortalParams, useLiveParams } from '@/lib/usePortalParams';
+import { Plus, GripVertical, Monitor, Smartphone, PanelRightClose, PanelRightOpen, Maximize2, Minimize2, ZoomIn } from 'lucide-react';
+import type { ContentBlock, FieldDef } from '@/lib/site/content-blocks';
+import { CATEGORY_ORDER, BLOCK_ORDER, BLOCK_GROUPS, sortFields } from '@/lib/site/content-blocks';
+import { usePortalParams, useLiveParams } from '@/lib/portal/usePortalParams';
 import SectionTabs from '@/components/ui/SectionTabs';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
-import { useDragReorder } from '@/lib/useDragReorder';
+import { useDragReorder } from '@/lib/ui/useDragReorder';
 import styles from './ContentEditor.module.css';
 import IconButton from '@/components/ui/IconButton';
 import Button from '@/components/ui/Button';
@@ -43,17 +43,7 @@ const COLOR_PREVIEW: Record<string, string> = {
 // Swaps two rows in place — used by every reorderable list editor below
 // (kvlist, imagelist) so "move up"/"move down" is a single adjacent swap
 // rather than a full re-sort; repeated clicks walk an item to any position.
-// A block's own `pages` array is the single source of truth for "where does
-// this text actually show up" — this just turns it into the label/links
-// used in the UI ('*' means every public page, rather than one specific
-// route to link to).
-function pagesLabel(pages: string[]): string {
-  if (pages.includes('*')) return 'Every page';
-  if (pages.length === 1) return pages[0] === '/' ? 'Homepage' : pages[0];
-  return pages.map((p) => (p === '/' ? 'Homepage' : p)).join(', ');
-}
-
-export default function ContentEditor({ query, setQuery, blocks, contentMap, lastEdited, creditPeople }: Props) {
+export default function ContentEditor({ query, setQuery, blocks, contentMap, creditPeople }: Props) {
   // Which block is open and which area is showing live in the URL (?tab=<area>&subtab=<block key>) so any view is linkable.
   const searchParams = useLiveParams();
   const setParams = usePortalParams();
@@ -124,14 +114,6 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, las
     for (const k of dirtyKeys) if (!(await handleSave(k))) return;
   }
 
-  const timeAgo = (date: string) => {
-    const diff = (Date.now() - new Date(date).getTime()) / 1000;
-    if (diff < 60)    return 'just now';
-    if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-    return `${Math.floor(diff / 86400)}d ago`;
-  };
-
   // The same two-level pattern as every other portal section: a tab per page/area of the site
   // (?tab=<area>), and a sub-tab per block on that page (?subtab=<block key>).
   const categories = CATEGORY_ORDER.filter((c) => blocks.some((b) => b.category === c));
@@ -192,7 +174,7 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, las
     window.addEventListener('message', onReady);
     const t = setTimeout(send, 150);
     return () => { window.removeEventListener('message', onReady); clearTimeout(t); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [activeBlock?.key, previewPage]);
   // Keep the preview in step with the text box: send the latest edit shortly after typing pauses, one request at a time (if more typing
   // arrives while one is in flight, only the newest is sent next), then tell the frame to redraw.

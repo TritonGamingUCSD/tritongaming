@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { getTier, fetchTiers } from '@/lib/tiers';
+import { getTier, fetchTiers } from '@/lib/members/tiers';
 
 // Powers the "Shop" and "To Claim" tabs of the Rewards card — active
 // items, the caller's own spendable balance + tier (so the UI can show a

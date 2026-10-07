@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Bell, BellOff, Send, Share, Smartphone } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
-import { currentSubscription, disablePush, enablePush, pushSupport, type PushSupport } from '@/lib/pushClient';
+import { currentSubscription, disablePush, enablePush, pushSupport, type PushSupport } from '@/lib/notifications/pushClient';
 import styles from './PushSettings.module.css';
 
 interface Settings { configured: boolean; devices: number; muted: string[]; categories: { id: string; label: string; hint: string }[] }

@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import NavBar from '@/components/NavBar/NavBar';
 import Footer from '@/components/Footer/Footer';
 import AnnouncementBanner from '@/components/AnnouncementBanner/AnnouncementBanner';
-import { ensurePreviewDrafts } from '@/lib/contentPreview';
+import { ensurePreviewDrafts } from '@/lib/site/contentPreview';
 import PreviewBridge from './PreviewBridge';
 
 export const dynamic = 'force-dynamic';

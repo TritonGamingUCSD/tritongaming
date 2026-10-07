@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { GAME_OPTIONS, GAME_SEPARATOR, MAX_GAMES, MAX_GAMES_LENGTH, splitStoredGames } from '@/lib/games';
+import { GAME_OPTIONS, GAME_SEPARATOR, MAX_GAMES, MAX_GAMES_LENGTH, splitStoredGames } from '@/lib/site/games';
 import styles from './profile.module.css';
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { logAudit } from '@/lib/audit';
-import { pacificDayKey } from '@/lib/checkinDays';
-import { authorizeQuarters } from '@/lib/quarters';
-import { alumniCandidates, moveToAlumni } from '@/lib/teamYears';
+import { logAudit } from '@/lib/notifications/audit';
+import { pacificDayKey } from '@/lib/events/checkinDays';
+import { authorizeQuarters } from '@/lib/members/quarters';
+import { alumniCandidates, moveToAlumni } from '@/lib/members/teamYears';
 
 // Graduates (June 30 of their class year) who were active at least once: move them to Alumni (drops their officer, lead or exec role, which is kept in the
 // year lists), or switch the daily automatic move on or off. Admin only.

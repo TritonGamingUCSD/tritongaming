@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { hasCapability } from '@/lib/capabilities';
+import { hasCapability } from '@/lib/portal/capabilities';
 
 // Backs the admin "reverse a specific transaction" tool — lets an officer
 // browse a member's own ledger instead of guessing a free-form amount to

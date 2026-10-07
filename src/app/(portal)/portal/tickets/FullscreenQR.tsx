@@ -1,17 +1,17 @@
 'use client';
 
-import { useVisiblePoll } from '@/lib/useVisiblePoll';
+import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Ticket, X, Check, Zap, ClipboardList } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import TicketQRBadge from '@/components/TicketQRBadge/TicketQRBadge';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
-import { DEFAULT_QR_OPTIONS, type QRCodeOptions } from '@/lib/qrCodeStyling';
-import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/timezone';
-import { fetchWithRetry } from '@/lib/fetchWithRetry';
+import { DEFAULT_QR_OPTIONS, type QRCodeOptions } from '@/lib/qr/qrCodeStyling';
+import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/core/timezone';
+import { fetchWithRetry } from '@/lib/ui/fetchWithRetry';
 import AsFormButton from './AsFormButton';
-import { saveTicketCodes, currentCachedCode, cachedMinutesLeft, clearTicketCodes } from '@/lib/ticketCodeCache';
+import { saveTicketCodes, currentCachedCode, cachedMinutesLeft, clearTicketCodes } from '@/lib/events/ticketCodeCache';
 import styles from './fullscreenqr.module.css';
 
 // Same TG-branded look as the portal's QR Studio "default" preset (see

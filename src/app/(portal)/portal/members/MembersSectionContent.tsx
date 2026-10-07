@@ -4,21 +4,20 @@ import Button from '@/components/ui/Button';
 import { viewAsPerson } from '@/components/portal/ViewAs';
 import IconButton from '@/components/ui/IconButton';
 import DotList from '@/components/DotList/DotList';
-import { roleInk } from '@/lib/roleColors';
+import { roleInk } from '@/lib/portal/roleColors';
 import MemberCardBody from '@/components/MemberCard/MemberCardBody';
-import { PACIFIC_TZ } from '@/lib/timezone';
+import { PACIFIC_TZ } from '@/lib/core/timezone';
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { usePortalParams, useLiveParams } from '@/lib/usePortalParams';
+import { usePortalParams, useLiveParams } from '@/lib/portal/usePortalParams';
 import SectionTabs from '@/components/ui/SectionTabs';
-import { Eye, KeyRound, LayoutGrid, List, ListOrdered, X, Moon, Users, UsersRound } from 'lucide-react';
+import { Eye, KeyRound, LayoutGrid, List, ListOrdered, Moon, Users, UsersRound } from 'lucide-react';
 import BoardOrderManager from './BoardOrderManager';
-import { mergedPortalParams } from '@/lib/portalPath';
+import { mergedPortalParams } from '@/lib/portal/portalPath';
 import { TeamsPanel } from '../meetings/MeetingsSectionContent';
 import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
 import type { AppRole } from '@/types/database';
-import type { RoleGrant } from '@/lib/capabilities';
-import { resolveAvatarUrl, isOrgMember } from '@/lib/profile';
+import { resolveAvatarUrl, isOrgMember } from '@/lib/members/profile';
 import type { MemberProfileRow } from './getMembersData';
 import styles from './members.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
@@ -135,7 +134,7 @@ export default function MembersSectionContent({ rows, keysByUser = {}, teams, ca
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setSelected(null); };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [selected]);
 
   return (

@@ -4,8 +4,8 @@ import { useRef, useState } from 'react';
 import { Image as ImageIcon, Paperclip } from 'lucide-react';
 import Notice from '@/components/ui/Notice';
 import IconButton from '@/components/ui/IconButton';
-import { uploadFileToStorage, MAX_FILE_BYTES } from '@/lib/fileUpload';
-import { uploadImageToStorage } from '@/lib/imageUpload';
+import { uploadFileToStorage, MAX_FILE_BYTES } from '@/lib/storage/fileUpload';
+import { uploadImageToStorage } from '@/lib/storage/imageUpload';
 import type { DocAttachment } from '@/types/database';
 import styles from './docs.module.css';
 

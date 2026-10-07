@@ -1,6 +1,6 @@
 import { unstable_cache } from 'next/cache';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { academicYearLabel } from '@/lib/quarters';
+import { academicYearLabel } from '@/lib/members/quarters';
 
 export interface PastMember { id: string; user_id: string | null; name: string; title: string | null; tier: 'exec' | 'lead' | 'officer'; avatar_url: string | null }
 export interface PastYear { start_year: number; label: string; members: PastMember[] }

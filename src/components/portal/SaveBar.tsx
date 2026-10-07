@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Button from '@/components/ui/Button';
-import { UNSAVED_BLOCKED_EVENT, registerSaveBar } from '@/lib/useUnsavedChanges';
+import { UNSAVED_BLOCKED_EVENT, registerSaveBar } from '@/lib/ui/useUnsavedChanges';
 import styles from './SaveBar.module.css';
 
 // The one way every editing form saves: a bar sticks to the bottom as soon as there is anything unsaved, with Discard and Save changes.

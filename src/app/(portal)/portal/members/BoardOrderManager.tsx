@@ -2,14 +2,14 @@
 
 import SaveBar from '@/components/portal/SaveBar';
 import EditingNow from '@/components/portal/EditingNow';
-import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
+import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import Notice from '@/components/ui/Notice';
-import { showToast } from '@/lib/toast';
+import { showToast } from '@/lib/ui/toast';
 import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import { GripVertical } from 'lucide-react';
-import { resolveAvatarUrl } from '@/lib/profile';
-import { useDragReorder } from '@/lib/useDragReorder';
+import { resolveAvatarUrl } from '@/lib/members/profile';
+import { useDragReorder } from '@/lib/ui/useDragReorder';
 import type { AppRole } from '@/types/database';
 import styles from '../admin/admin.module.css';
 

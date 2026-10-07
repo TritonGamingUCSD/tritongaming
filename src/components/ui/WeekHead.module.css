@@ -2,6 +2,5 @@
 .head:first-child { margin-top: 0; }
 .head strong { font-family: var(--font-futura-heavy); font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: color-mix(in srgb, var(--wk) 55%, var(--pp-ink)); }
 .head span { font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.88); }
-.now { --wk: #ffc72c; }
 .next { --wk: #60a5fa; }
 .later { --wk: #a78bfa; }

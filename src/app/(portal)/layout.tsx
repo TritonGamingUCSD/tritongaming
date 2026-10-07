@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import './portal-controls.css';
-import { getProfile, getViewingUser } from '@/lib/auth';
+import { getProfile, getViewingUser } from '@/lib/core/auth';
 import { PortalIdentityProvider } from '@/components/portal/PortalIdentity';
 
 // robots.txt (see app/robots.ts) disallows /portal by path, but that only

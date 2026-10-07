@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { availabilityFor, bestTimes, canStartAt, cleanSlots, coveredSlots, planDayKeys, slotStarts } from '@/lib/meetingPlans';
+import { availabilityFor, bestTimes, canStartAt, cleanSlots, coveredSlots, planDayKeys, slotStarts } from '@/lib/meetings/meetingPlans';
 
 const plan = { kind: 'once' as const, duration_min: 60, window_start: '09:00', window_end: '12:00', range_start: '2026-10-05', range_end: '2026-10-08' };
 

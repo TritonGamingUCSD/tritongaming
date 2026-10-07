@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Gamepad2, LayoutGrid } from 'lucide-react';
 import SectionTabs from '@/components/ui/SectionTabs';
-import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
+import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
 import DivisionsManager from './DivisionsManager';
 import MyDivisionsEditor from './MyDivisionsEditor';
 import type { MyDivision } from './getMyDivisionsData';

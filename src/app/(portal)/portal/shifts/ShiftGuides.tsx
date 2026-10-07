@@ -7,10 +7,10 @@ import Button from '@/components/ui/Button';
 import EditingNow from '@/components/portal/EditingNow';
 import Dialog, { DialogActions, DialogCancel, DialogText } from '@/components/ui/Dialog';
 import { Field, Input, Select, Textarea } from '@/components/ui/Field';
-import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
-import { PACIFIC_TZ } from '@/lib/timezone';
-import { confirmHold } from '@/lib/confirmHold';
-import { cellKey, groupByArea, guideFor, slotCount, slotRange, type ShiftGrid, type ShiftStation, type ShiftTemplate } from '@/lib/shifts';
+import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
+import { PACIFIC_TZ } from '@/lib/core/timezone';
+import { confirmHold } from '@/lib/ui/confirmHold';
+import { cellKey, groupByArea, guideFor, slotCount, slotRange, type ShiftGrid, type ShiftStation, type ShiftTemplate } from '@/lib/shifts/shifts';
 import styles from './shifts.module.css';
 
 const time = (d: Date) => d.toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' });
@@ -26,6 +26,27 @@ export function Legend({ grid }: { grid: ShiftGrid }) {
       <span><i className={`${styles.dot} ${styles.catGeneral}`} /><span><strong>General</strong>: anyone can sign up</span></span>
       <span><i className={`${styles.dot} ${styles.catTeam}`} /><span><strong>Team shift</strong>: for a specific team. If that isn’t yours, contact the leads and LE directors before signing up</span></span>
     </p>
+  );
+}
+
+function Handoff({ notes, stationId, onHandoff }: { notes: ShiftGrid['handoffs'][string]; stationId: string; onHandoff?: (stationId: string, body: string) => Promise<boolean> }) {
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  return (
+    <div className={styles.handoff}>
+      <h4>Note from the last shift</h4>
+      {notes.length === 0 ? <p className={styles.muted}>Nothing yet.</p> : (
+        <ul className={styles.handoffList}>
+          {notes.map((n) => <li key={n.id}><p>{n.body}</p><small className={styles.muted}>{n.author_name}, {time(new Date(n.created_at))}</small></li>)}
+        </ul>
+      )}
+      {onHandoff && (
+        <form className={styles.handoffForm} onSubmit={async (e) => { e.preventDefault(); setBusy(true); if (await onHandoff(stationId, text)) setText(''); setBusy(false); }}>
+          <input className={styles.coverInput} value={text} maxLength={500} onChange={(e) => setText(e.target.value)} placeholder="Leave a note for the next person here" aria-label="Note for the next person" />
+          <Button size="sm" type="submit" loading={busy} disabled={!text.trim()}>Leave note</Button>
+        </form>
+      )}
+    </div>
   );
 }
 
@@ -52,14 +73,17 @@ function Checklist({ items, mayTick, onTick }: { items: ShiftGrid['checklists'][
 }
 
 /** Everything about one station at this event: where, what to do, the script. Anyone who can see shifts can read it. */
-export function GuideBody({ grid, station, onTick }: { grid: ShiftGrid; station: ShiftStation; onTick?: (itemId: string, done: boolean) => Promise<void> }) {
+export function GuideBody({ grid, station, onTick, onHandoff }: { grid: ShiftGrid; station: ShiftStation; onTick?: (itemId: string, done: boolean) => Promise<void>; onHandoff?: (stationId: string, body: string) => Promise<boolean> }) {
   const g = guideFor(station, grid.eventGuides[station.id]);
   const items = grid.checklists?.[station.id] ?? [];
-  const empty = !g.location && !g.instructions && !g.notes && !g.doc_id && !g.link_url && items.length === 0;
+  const notes = grid.handoffs?.[station.id] ?? [];
+  const empty = !g.location && !g.instructions && !g.notes && !g.doc_id && !g.link_url && items.length === 0 && notes.length === 0;
   // Ticking is for people working this station at this event (exec always); everyone else just sees the progress.
-  const mayTick = !!onTick && (grid.canManage || grid.signups.some((x) => x.user_id === grid.me && x.station_id === station.id));
+  const onStation = grid.canManage || grid.signups.some((x) => x.user_id === grid.me && x.station_id === station.id);
+  const mayTick = !!onTick && onStation;
   return (
     <div className={styles.guide}>
+      {(notes.length > 0 || (onHandoff && onStation)) && <Handoff notes={notes} stationId={station.id} onHandoff={onStation ? onHandoff : undefined} />}
       {g.location && <p className={styles.guideRow}><MapPin size={15} aria-hidden="true" /> <span><strong>Where:</strong> {g.location}</span></p>}
       {g.instructions && <div className={styles.guideText}><h4>What to do</h4><p>{g.instructions}</p></div>}
       {g.notes && <div className={styles.guideText}><h4>For this event</h4><p>{g.notes}</p></div>}
@@ -75,12 +99,12 @@ export function GuideBody({ grid, station, onTick }: { grid: ShiftGrid; station:
   );
 }
 
-export function GuideDialog({ grid, station, arrivedNow, onClose, onTick }: { grid: ShiftGrid; station: ShiftStation; arrivedNow?: boolean; onClose: () => void; onTick?: (itemId: string, done: boolean) => Promise<void> }) {
+export function GuideDialog({ grid, station, arrivedNow, onClose, onTick, onHandoff }: { grid: ShiftGrid; station: ShiftStation; arrivedNow?: boolean; onClose: () => void; onTick?: (itemId: string, done: boolean) => Promise<void>; onHandoff?: (stationId: string, body: string) => Promise<boolean> }) {
   return (
     <Dialog title={station.name} label={`${station.name} guide`} onClose={onClose}>
       <p className={`${styles.badge} ${catClass(station)}`}>{catName(station)}</p>
       {arrivedNow && <DialogText>You’re checked in. Here’s what to do:</DialogText>}
-      <GuideBody grid={grid} station={station} onTick={onTick} />
+      <GuideBody grid={grid} station={station} onTick={onTick} onHandoff={onHandoff} />
       <DialogActions><DialogCancel onClick={onClose}>Close</DialogCancel></DialogActions>
     </Dialog>
   );
@@ -120,7 +144,7 @@ export function MyShifts({ grid, onArrive, onOpen }: { grid: ShiftGrid; onArrive
 }
 
 /** Every station's guide on one page: the master doc for what each shift does. Visible to everyone who can see shifts. One row per station, closed until opened (your own stations start open). */
-export function GuidesView({ grid, onTick }: { grid: ShiftGrid; onTick?: (itemId: string, done: boolean) => Promise<void> }) {
+export function GuidesView({ grid, onTick, onHandoff }: { grid: ShiftGrid; onTick?: (itemId: string, done: boolean) => Promise<void>; onHandoff?: (stationId: string, body: string) => Promise<boolean> }) {
   const mine = new Set(grid.signups.filter((x) => x.user_id === grid.me).map((x) => x.station_id));
   const [open, setOpen] = useState<Set<string>>(mine);
   if (!grid.stations.length) return <div className={styles.card}><p className={styles.muted}>There are no stations yet.</p></div>;
@@ -147,7 +171,7 @@ export function GuidesView({ grid, onTick }: { grid: ShiftGrid; onTick?: (itemId
               {mine.has(st.id) && <span className={styles.youTag}>Your shift</span>}
               {g.location && <span className={styles.guideWhere}><MapPin size={12} aria-hidden="true" /> {g.location}</span>}
             </button>
-            {isOpen && <div className={styles.guideBodyWrap}><GuideBody grid={grid} station={st} onTick={onTick} /></div>}
+            {isOpen && <div className={styles.guideBodyWrap}><GuideBody grid={grid} station={st} onTick={onTick} onHandoff={onHandoff} /></div>}
           </section>
         );
       })}

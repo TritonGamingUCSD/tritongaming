@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { CalendarClock, CalendarX, Check, CircleHelp, Hourglass, X } from 'lucide-react';
-import { canStartAt, clockLabel, dayLabel, evaluateStart, slotStarts, toHhmm, toMin, type PlanView } from '@/lib/meetingPlans';
+import { canStartAt, clockLabel, dayLabel, evaluateStart, slotStarts, toHhmm, toMin, type PlanView } from '@/lib/meetings/meetingPlans';
 import styles from './planning.module.css';
 
 // The group's answers as a heat map: the number is how many people can make that half hour, and the deeper the green, the more of them. Amber

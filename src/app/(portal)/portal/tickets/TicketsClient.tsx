@@ -2,20 +2,20 @@
 
 import Notice from '@/components/ui/Notice';
 import { Fragment, useEffect, useState, type ReactNode } from 'react';
-import { usePortalParams } from '@/lib/usePortalParams';
+import { usePortalParams } from '@/lib/portal/usePortalParams';
 import WeekHead from '@/components/ui/WeekHead';
-import { pacificKey, startsWeekGroup } from '@/lib/weekGroups';
+import { pacificKey, startsWeekGroup } from '@/lib/events/weekGroups';
 import Link from 'next/link';
-import { getAttributionSource } from '@/lib/attribution';
+import { getAttributionSource } from '@/lib/site/attribution';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Ticket, MapPin, QrCode, Check, X, Timer, Award } from 'lucide-react';
 import FullscreenQR from './FullscreenQR';
 import OnlineCheckinEntry from './OnlineCheckinEntry';
 import AsFormButton from './AsFormButton';
 import AddToCalendarButton from '@/components/AddToCalendarButton/AddToCalendarButton';
-import { PACIFIC_TZ, pacificDaysUntil, formatEventDateRange, eventDayCount, eventDayProgress } from '@/lib/timezone';
-import { isCheckinWindowOpen } from '@/lib/checkinWindow';
-import { saveTicketCodes, cachedMinutesLeft } from '@/lib/ticketCodeCache';
+import { PACIFIC_TZ, pacificDaysUntil, formatEventDateRange, eventDayCount, eventDayProgress } from '@/lib/core/timezone';
+import { isCheckinWindowOpen } from '@/lib/events/checkinWindow';
+import { saveTicketCodes, cachedMinutesLeft } from '@/lib/events/ticketCodeCache';
 import styles from './tickets.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
 

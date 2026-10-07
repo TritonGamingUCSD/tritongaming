@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { authorizeMeetings, buildSchedule } from '@/lib/meetings';
+import { authorizeMeetings, buildSchedule } from '@/lib/meetings/meetings';
 
 export const dynamic = 'force-dynamic';
 

@@ -2,8 +2,8 @@
 
 import IconButton from '@/components/ui/IconButton';
 import { useEffect, useState } from 'react';
-import { Bell, X } from 'lucide-react';
-import { enablePush, pushSupport } from '@/lib/pushClient';
+import { Bell } from 'lucide-react';
+import { enablePush, pushSupport } from '@/lib/notifications/pushClient';
 import styles from './PushAsk.module.css';
 
 const KEY = 'push-asked';

@@ -1,9 +1,9 @@
 'use client';
 
 import Button from '@/components/ui/Button';
-import { GripVertical, Plus, Trash2 } from 'lucide-react';
+import { GripVertical, Plus } from 'lucide-react';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
-import { useDragReorder } from '@/lib/useDragReorder';
+import { useDragReorder } from '@/lib/ui/useDragReorder';
 import type { ScheduleItem, EventSponsor } from '@/types/database';
 import VenuePinMap, { type Pin } from '@/components/VenuePinMap/VenuePinMap';
 import styles from './eventextras.module.css';

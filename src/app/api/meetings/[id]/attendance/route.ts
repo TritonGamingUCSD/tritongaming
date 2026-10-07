@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { logAudit } from '@/lib/audit';
-import { authorizeMeetings, guardMeeting } from '@/lib/meetings';
+import { logAudit } from '@/lib/notifications/audit';
+import { authorizeMeetings, guardMeeting } from '@/lib/meetings/meetings';
 
 // Exec fixes attendance by hand: add someone who forgot their phone, or remove a mistaken entry.
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {

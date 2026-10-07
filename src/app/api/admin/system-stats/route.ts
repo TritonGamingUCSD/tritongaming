@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { hasCapability } from '@/lib/capabilities';
-import { MANAGED_BUCKETS, listAllObjects } from '@/lib/storageBuckets';
+import { hasCapability } from '@/lib/portal/capabilities';
+import { MANAGED_BUCKETS, listAllObjects } from '@/lib/storage/storageBuckets';
 
 interface TableStat {
   name: string;

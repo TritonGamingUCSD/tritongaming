@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Lock, ShieldCheck, ShieldAlert, Ticket } from 'lucide-react';
 import Notice from '@/components/ui/Notice';
-import { countLabel } from '@/lib/strikeLabels';
+import { countLabel } from '@/lib/members/strikeLabels';
 import styles from './MyStrikes.module.css';
 
 interface Strike { id: string; status: 'published' | 'removed'; mark: string | null; category: string; reason: string; incident_date: string; removed_how: 'taken' | 'voucher' | 'reset' | null; removed_note: string | null }

@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { pacificDayKey } from '@/lib/checkinDays';
-import { AUDIENCE_ROLES, audienceRoles, isExpectedActive } from '@/lib/meetingAudience';
-import { addDaysKey, attachExtras, authorizeAttendance } from '@/lib/meetings';
+import { pacificDayKey } from '@/lib/events/checkinDays';
+import { AUDIENCE_ROLES, audienceRoles, isExpectedActive } from '@/lib/meetings/meetingAudience';
+import { addDaysKey, attachExtras, authorizeAttendance } from '@/lib/meetings/meetings';
 import { ROLE_DISPLAY_RANK, ROLE_LABELS, type AppRole } from '@/types/database';
-import { staffName } from '@/lib/names';
+import { staffName } from '@/lib/members/names';
 
 export const dynamic = 'force-dynamic';
 

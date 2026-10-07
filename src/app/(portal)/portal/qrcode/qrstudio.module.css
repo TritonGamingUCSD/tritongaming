@@ -22,29 +22,12 @@
   container-type: inline-size;
 }
 
-.formHeader { display: flex; flex-direction: column; gap: 0.4rem; }
-
 .eyebrow {
   font-size: var(--fs-label);
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--p-accent-text);
-}
-
-.formTitle {
-  font-family: var(--font-futura-heavy);
-  font-size: clamp(1.25rem, 2.5vw, 1.6rem);
-  color: var(--pp-ink);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.formSub {
-  font-size: 0.85rem;
-  color: rgba(var(--pp-ink-rgb), 0.88);
-  max-width: 560px;
-  line-height: 1.6;
 }
 
 .grid {
@@ -68,12 +51,6 @@
   .grid { grid-template-columns: 1fr; }
 }
 
-.col {
-  display: flex;
-  flex-direction: column;
-  gap: 1.1rem;
-}
-
 .field {
   display: flex;
   flex-direction: column;
@@ -94,8 +71,7 @@
   color: rgba(var(--pp-ink-rgb), 0.87);
 }
 
-.input,
-.fileInput {
+.input {
   background: rgba(var(--pp-ink-rgb), 0.05);
   border: 1px solid rgba(var(--pp-ink-rgb), 0.23);
   border-radius: 0.5rem;

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import SaveToast from './SaveToast';
-import { TOAST_EVENT, takePendingToast } from '@/lib/toast';
+import { TOAST_EVENT, takePendingToast } from '@/lib/ui/toast';
 
 // Mounted once (root layout). Shows whatever showToast() sends — the same green
 // banner on every page — and picks up a message left by a save that navigated.
@@ -23,7 +23,7 @@ export default function ToastHost() {
   useEffect(() => {
     const pending = takePendingToast();
     if (pending) show(pending);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [pathname]);
 
   useEffect(() => {

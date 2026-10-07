@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Check, CircleDashed, MapPin, Radio, Repeat, Ticket, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import { formatEventTimeRange } from '@/lib/timezone';
-import { googleCalendarUrl } from '@/lib/ics';
+import { formatEventTimeRange } from '@/lib/core/timezone';
+import { googleCalendarUrl } from '@/lib/events/ics';
 import styles from './calendar.module.css';
 
 export interface Item {

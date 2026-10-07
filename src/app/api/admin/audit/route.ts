@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { hasCapability } from '@/lib/capabilities';
-import { applyAuditFilters, auditFacets } from '@/lib/auditFilters';
+import { hasCapability } from '@/lib/portal/capabilities';
+import { applyAuditFilters, auditFacets } from '@/lib/notifications/auditFilters';
 
 const PAGE_SIZE = 50;
 

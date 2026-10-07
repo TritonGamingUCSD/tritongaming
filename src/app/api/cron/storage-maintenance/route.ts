@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { logAudit } from '@/lib/audit';
-import { compressStored, sweepUnused } from '@/lib/storageMaintenance';
+import { logAudit } from '@/lib/notifications/audit';
+import { compressStored, sweepUnused } from '@/lib/storage/storageMaintenance';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

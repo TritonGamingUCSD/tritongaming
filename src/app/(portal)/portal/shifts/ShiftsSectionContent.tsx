@@ -9,19 +9,20 @@ import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import SaveBar from '@/components/portal/SaveBar';
 import EditingNow from '@/components/portal/EditingNow';
-import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
+import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import { DateTimeInput, Field, Input, Select } from '@/components/ui/Field';
-import { confirmHold } from '@/lib/confirmHold';
+import { confirmHold } from '@/lib/ui/confirmHold';
 import { createClient } from '@/lib/supabase/client';
-import { PACIFIC_TZ } from '@/lib/timezone';
-import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
-import { useLiveParams } from '@/lib/usePortalParams';
-import { useVisiblePoll } from '@/lib/useVisiblePoll';
-import { useDragReorder } from '@/lib/useDragReorder';
-import { SLOT_CHOICES, awayDuring, cellKey, groupByArea, guideFor, neededFor, slotCount, slotRange, type ShiftGrid, type ShiftStation, type ShiftTemplate } from '@/lib/shifts';
+import { PACIFIC_TZ } from '@/lib/core/timezone';
+import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
+import { useLiveParams } from '@/lib/portal/usePortalParams';
+import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
+import { useDragReorder } from '@/lib/ui/useDragReorder';
+import { SLOT_CHOICES, awayDuring, cellKey, groupByArea, guideFor, neededFor, slotCount, slotRange, type ShiftGrid, type ShiftStation, type ShiftTemplate } from '@/lib/shifts/shifts';
 import Dialog, { DialogActions, DialogCancel, DialogText } from '@/components/ui/Dialog';
 import GapsPanel, { gapsOf } from './ShiftGaps';
 import CoverPanel from './ShiftCover';
+import ChecklistSummary from './ChecklistSummary';
 import { GuideDialog, GuideSetup, GuidesView, Legend, MyShifts, catClass, catName } from './ShiftGuides';
 import type { ShiftEvent } from './getShiftsData';
 import styles from './shifts.module.css';
@@ -141,6 +142,14 @@ export default function ShiftsSectionContent({ events, stations: initialStations
     await load();
   }
 
+  async function handoff(stationId: string, body: string): Promise<boolean> {
+    setError('');
+    const r = await api(`/api/shifts/${eventId}/handoff`, 'POST', { station_id: stationId, body });
+    if (!r.ok) setError(r.json.error || 'Couldn’t save that.');
+    await load();
+    return r.ok;
+  }
+
   // Swap and cover: ask / take / withdraw / undo. Errors show in the page's usual error line; the grid refreshes either way.
   async function coverAct(body: Record<string, unknown>): Promise<boolean> {
     setError('');
@@ -220,7 +229,7 @@ export default function ShiftsSectionContent({ events, stations: initialStations
         </>
       )}
       {plan && tab === 'schedule' && grid && <><Legend grid={grid} /><MyShifts grid={grid} onArrive={arrive} onOpen={(id) => setGuideOpen({ id })} /><BoardView grid={grid} /></>}
-      {plan && tab === 'guides' && grid && <GuidesView grid={grid} onTick={tick} />}
+      {plan && tab === 'guides' && grid && <GuidesView grid={grid} onTick={tick} onHandoff={handoff} />}
       {!plan && tab === 'guides' && <div className={styles.card}><p className={styles.muted}>Guides show up once the shifts for this event are set up.</p></div>}
       {plan && tab === 'people' && grid && canManage && <PeopleView event={ev!} sync={sync} initial={nav.tab === 'people' ? nav.subtab : undefined} grid={grid} onChanged={load} setError={setError} />}
       {!plan && tab === 'people' && <div className={styles.card}><p className={styles.muted}>Make the grid in Setup first, then you can see who has their shifts.</p></div>}
@@ -230,7 +239,7 @@ export default function ShiftsSectionContent({ events, stations: initialStations
           <DialogActions><DialogCancel onClick={() => setWarn(null)} /><Button onClick={() => { const w = warn; setWarn(null); void claim(w.station.id, w.slot, true); }}>Sign up anyway</Button></DialogActions>
         </Dialog>
       )}
-      {guideOpen && grid && grid.stations.find((x) => x.id === guideOpen.id) && <GuideDialog grid={grid} station={grid.stations.find((x) => x.id === guideOpen.id)!} arrivedNow={guideOpen.arrived} onTick={tick} onClose={() => setGuideOpen(null)} />}
+      {guideOpen && grid && grid.stations.find((x) => x.id === guideOpen.id) && <GuideDialog grid={grid} station={grid.stations.find((x) => x.id === guideOpen.id)!} arrivedNow={guideOpen.arrived} onTick={tick} onHandoff={handoff} onClose={() => setGuideOpen(null)} />}
       {tab === 'setup' && canManage && ev && (
         <SetupView event={ev} sync={sync} initial={nav.tab === 'setup' ? nav.subtab : undefined} docs={docs} templates={templates} setTemplates={setTemplates} grid={grid} stations={stations} setStations={setStations} onChanged={load} setError={setError} />
       )}
@@ -412,12 +421,13 @@ function BoardView({ grid }: { grid: ShiftGrid }) {
 function PeopleView({ event, sync, initial, grid, onChanged, setError }: { event: ShiftEvent; sync: (tab: string, subtab?: string | null) => void; initial?: string; grid: ShiftGrid; onChanged: () => Promise<void>; setError: (e: string) => void }) {
   const r = grid.requirement;
   const [show, setShow] = useState<'owe' | 'all'>('owe');
-  const [sub, setSubState] = useState<'requirement' | 'exempt' | 'away' | 'gaps'>(initial === 'exempt' || initial === 'away' || initial === 'gaps' ? initial : 'requirement');
-  const setSub = (v: 'requirement' | 'exempt' | 'away' | 'gaps') => { setSubState(v); sync('people', v === 'requirement' ? null : v); };
+  const [sub, setSubState] = useState<'requirement' | 'exempt' | 'away' | 'gaps' | 'checklists'>(initial === 'exempt' || initial === 'away' || initial === 'gaps' || initial === 'checklists' ? initial : 'requirement');
+  const setSub = (v: 'requirement' | 'exempt' | 'away' | 'gaps' | 'checklists') => { setSubState(v); sync('people', v === 'requirement' ? null : v); };
   const subTabs = (
-    <SectionTabs<'requirement' | 'exempt' | 'away' | 'gaps'> label="People" variant="segmented" value={sub} onChange={setSub}
-      tabs={[{ id: 'requirement', label: 'Requirement' }, { id: 'gaps', label: 'Gaps', count: gapsOf(grid).reduce((n, x) => n + x.gaps.reduce((m, g) => m + g.open, 0), 0) }, { id: 'exempt', label: 'Exempt', count: grid.exemptions.length + (r?.exempt.filter((p) => p.reason === 'inactive').length ?? 0) }, { id: 'away', label: 'Away', count: grid.absences.length }]} />
+    <SectionTabs<'requirement' | 'exempt' | 'away' | 'gaps' | 'checklists'> label="People" variant="segmented" value={sub} onChange={setSub}
+      tabs={[{ id: 'requirement', label: 'Requirement' }, { id: 'gaps', label: 'Gaps', count: gapsOf(grid).reduce((n, x) => n + x.gaps.reduce((m, g) => m + g.open, 0), 0) }, { id: 'checklists', label: 'Checklists' }, { id: 'exempt', label: 'Exempt', count: grid.exemptions.length + (r?.exempt.filter((p) => p.reason === 'inactive').length ?? 0) }, { id: 'away', label: 'Away', count: grid.absences.length }]} />
   );
+  if (sub === 'checklists') return <div className={styles.people}>{subTabs}<ChecklistSummary grid={grid} /></div>;
   if (sub === 'gaps') return <div className={styles.people}>{subTabs}<GapsPanel grid={grid} onPlace={async (stationId, slot, who) => { const r = await api(`/api/shifts/${event.id}/signup`, 'POST', { station_id: stationId, slot_index: slot, join: true, user_id: who }); if (!r.ok) setError(r.json.error || 'Couldn’t add them.'); await onChanged(); }} /></div>;
   if (sub === 'exempt') return (
     <div className={styles.people}>
@@ -687,16 +697,6 @@ function StationSheet({ event, grid, stations, setStations, onChanged, setError 
     await api('/api/shifts/stations', 'DELETE', { id: st.id });
     setStations(stations.filter((x) => x.id !== st.id)); await onChanged();
   }
-  async function saveCell(st: ShiftStation, slot: number, raw: string) {
-    const current = grid ? neededFor(grid, st.id, slot) : st.default_needed;
-    const next = raw.trim() === '' ? null : Number(raw);
-    if (next !== null && (!Number.isInteger(next) || next < 0 || next > 50)) { setError('Choose a number from 0 to 50.'); return; }
-    if ((next ?? st.default_needed) === current) return;
-    const r = await api(`/api/shifts/${event.id}/override`, 'POST', { station_id: st.id, slot_index: slot, needed: next === st.default_needed ? null : next });
-    if (!r.ok) setError(r.json.error || 'Couldn’t save that.');
-    await onChanged();
-  }
-
   const areas = [...new Set(stations.map((x) => x.area).filter((x): x is string => !!x))];
   return (
     <section className={styles.card}>

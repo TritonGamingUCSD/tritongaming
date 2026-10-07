@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ArrowRight, FileText, GripVertical, Pin, Star } from 'lucide-react';
-import { ageLabel, allTags, docSummary, type DocNode, type DocSection } from '@/lib/docsTree';
+import { ageLabel, allTags, docSummary, type DocNode, type DocSection } from '@/lib/docs/docsTree';
 import type { Doc } from '@/types/database';
 import { RequiredBanner } from './DocRequired';
 import styles from './docs.module.css';
@@ -56,7 +56,7 @@ export default function DocHome({ docs, sections, favorites, tagFilter, onTag, o
       <div className={styles.homeLayout}>
       <div className={styles.homeMain}>
       {pinned.length > 0 && (
-        <section aria-labelledby="home-pinned"><h2 id="home-pinned" className={styles.homeH2}><Pin size={15} aria-hidden="true" /> Start here</h2>
+        <section className={styles.homePinned} aria-labelledby="home-pinned"><h2 id="home-pinned" className={styles.homeH2}><Pin size={15} aria-hidden="true" /> Start here</h2>
           <div className={styles.homeGridBig}>{shownPins.map((d) => (
             <div key={d.id} className={`${styles.pinSlot} ${dragPin === d.id ? styles.rowDragging : ''}`} draggable={canEdit}
               onDragStart={(e) => { setDragPin(d.id); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', d.id); }}
@@ -84,7 +84,7 @@ export default function DocHome({ docs, sections, favorites, tagFilter, onTag, o
       )}
 
       {filled.length > 0 && (
-        <section aria-labelledby="home-browse">
+        <section className={styles.homeBrowse} aria-labelledby="home-browse">
           <div className={styles.browseHead}>
             <h2 id="home-browse" className={styles.homeH2}>Browse by category</h2>
           </div>

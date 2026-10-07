@@ -1,8 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { tally } from '@/lib/meetingFun';
+import { tally } from '@/lib/meetings/meetingFun';
 import { NextResponse } from 'next/server';
-import { checkInOpensAt, isCheckInAccepting, loadGroups, authorizeMeetings, currentMeetingCode, getExpectedPeople, isMeetingOpen, type MeetingRow, guardMeeting } from '@/lib/meetings';
-import { staffName } from '@/lib/names';
+import { checkInOpensAt, isCheckInAccepting, loadGroups, authorizeMeetings, currentMeetingCode, getExpectedPeople, isMeetingOpen, type MeetingRow, guardMeeting } from '@/lib/meetings/meetings';
+import { staffName } from '@/lib/members/names';
 
 export const dynamic = 'force-dynamic';
 

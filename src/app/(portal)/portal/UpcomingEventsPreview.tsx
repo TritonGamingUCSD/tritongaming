@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { MapPin, ChevronRight, CalendarDays } from 'lucide-react';
-import { PACIFIC_TZ } from '@/lib/timezone';
+import { PACIFIC_TZ } from '@/lib/core/timezone';
 import styles from './dashboard.module.css';
 import type TicketsClient from './tickets/TicketsClient';
 

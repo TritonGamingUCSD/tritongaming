@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { authorizeMeetings, withExtras, loadGroups } from '@/lib/meetings';
-import { isExpectedActive } from '@/lib/meetingAudience';
+import { authorizeMeetings, withExtras, loadGroups } from '@/lib/meetings/meetings';
+import { isExpectedActive } from '@/lib/meetings/meetingAudience';
 
 export const dynamic = 'force-dynamic';
 

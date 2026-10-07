@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { FileText, FolderCog, Home, Plus, Search, Star } from 'lucide-react';
 import Popover from '@/components/ui/Popover';
-import type { DocNode, DocSection } from '@/lib/docsTree';
+import type { DocNode, DocSection } from '@/lib/docs/docsTree';
 import type { Doc } from '@/types/database';
 import styles from './docs.module.css';
 

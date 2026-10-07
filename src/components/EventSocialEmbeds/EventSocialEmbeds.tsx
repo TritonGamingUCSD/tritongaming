@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import type { SocialEmbed } from '@/types/database';
-import { youtubeVideoId } from '@/lib/youtube';
+import { youtubeVideoId } from '@/lib/site/youtube';
 import ScrollShield from '@/components/ScrollShield/ScrollShield';
 import styles from './EventSocialEmbeds.module.css';
 

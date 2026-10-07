@@ -18,7 +18,7 @@ vi.mock('@/lib/supabase/admin', () => ({
   }),
 }));
 
-const { categoryOf, validPushEndpoint, pushNotifications } = await import('@/lib/webPush');
+const { categoryOf, validPushEndpoint, pushNotifications } = await import('@/lib/notifications/webPush');
 const sub = (id: string, user: string) => ({ id, user_id: user, endpoint: `https://fcm.googleapis.com/fcm/send/${id}`, p256dh: 'k', auth: 'a' });
 
 beforeEach(() => { send.mockReset(); send.mockResolvedValue({}); deleted.length = 0; subs = []; prefs = []; });

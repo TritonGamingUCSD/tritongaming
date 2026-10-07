@@ -1,7 +1,5 @@
 .page { max-width: 700px; margin-inline: auto; }
 
-.header { margin-bottom: 1.75rem; }
-
 .back {
   font-size: 0.85rem;
   color: var(--p-accent-text);
@@ -73,20 +71,6 @@
   background: rgba(var(--pp-ink-rgb), 0.04);
   border-radius: 0.4rem;
   padding: 0.15rem;
-}
-
-
-.mdPreview {
-  background: rgba(var(--pp-ink-rgb), 0.03);
-  border: 1px solid rgba(var(--pp-ink-rgb), 0.20);
-  border-radius: 0.5rem;
-  padding: 0.75rem 0.875rem;
-}
-
-.mdPreviewEmpty {
-  font-size: 0.85rem;
-  color: rgba(var(--pp-ink-rgb), 0.87);
-  font-style: italic;
 }
 
 
@@ -227,24 +211,6 @@
   transition: background 0.15s, border-color 0.15s;
 }
 .previewBtn:hover { background: rgba(125, 180, 234,0.18); border-color: rgba(125, 180, 234,0.55); }
-
-.submitBtn {
-  padding: 0.75rem 2rem;
-  background: var(--btn-primary-bg);
-  color: var(--btn-primary-text);
-  border: 1px solid var(--btn-primary-border);
-  box-shadow: var(--btn-primary-shadow);
-  border-radius: var(--radius-md);
-  font-family: var(--font-futura-heavy);
-  font-size: 0.875rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-.submitBtn:hover:not(:disabled) { border-color: var(--btn-primary-border-hover); box-shadow: var(--btn-primary-shadow-hover); }
-.submitBtn:disabled { opacity: 0.85; cursor: progress; }
-.submitBtn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; }
 .spin { animation: evSpin 0.9s linear infinite; }
 @keyframes evSpin { to { transform: rotate(360deg); } }
 /* while saving the fields are locked and dimmed, and a pill stays in view wherever you have scrolled to */

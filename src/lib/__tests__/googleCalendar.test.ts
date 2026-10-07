@@ -5,7 +5,7 @@ process.env.GOOGLE_CALENDAR_CLIENT_ID = 'id';
 process.env.GOOGLE_CALENDAR_CLIENT_SECRET = 'secret';
 process.env.CALENDAR_TOKEN_KEY = crypto.randomBytes(32).toString('base64');
 
-const g = await import('@/lib/googleCalendar');
+const g = await import('@/lib/events/googleCalendar');
 
 // A tiny stand-in for the database client: calendar_connections rows in, updates ignored.
 const fakeSvc = (rows: Record<string, unknown>[]) => ({

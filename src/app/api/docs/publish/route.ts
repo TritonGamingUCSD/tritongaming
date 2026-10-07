@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { DOC_COLUMNS, UUID, authorizeDocs, bad, editingNow, namesOf } from '@/lib/docsServer';
+import { DOC_COLUMNS, UUID, authorizeDocs, bad, editingNow, namesOf } from '@/lib/docs/docsServer';
 
 export const dynamic = 'force-dynamic';
 

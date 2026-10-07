@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cellKey, mayClaim, neededFor, slotCount, slotRange } from '@/lib/shifts';
+import { cellKey, mayClaim, neededFor, slotCount, slotRange } from '@/lib/shifts/shifts';
 
 const plan = { starts_at: '2026-10-24T18:00:00.000Z', ends_at: '2026-10-24T21:30:00.000Z', slot_minutes: 60 };
 

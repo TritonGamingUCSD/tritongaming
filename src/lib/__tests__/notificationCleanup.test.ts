@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { KEEP_ANY_DAYS, KEEP_READ_DAYS, cleanupNotifications } from '@/lib/notificationCleanup';
+import { KEEP_ANY_DAYS, KEEP_READ_DAYS, cleanupNotifications } from '@/lib/notifications/notificationCleanup';
 
 // A tiny stand-in for the Supabase client that records what each delete was told to match.
 function fakeSvc() {

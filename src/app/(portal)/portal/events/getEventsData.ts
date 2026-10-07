@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
-import { bucketByMonth } from '@/lib/monthBuckets';
-import { buildCheckinFormUrl, type CheckinFormConfig } from '@/lib/checkinForm';
+import { bucketByMonth } from '@/lib/events/monthBuckets';
+import { buildCheckinFormUrl, type CheckinFormConfig } from '@/lib/events/checkinForm';
 import type { AppRole } from '@/types/database';
 
 export interface EventTicketStat { title: string; issued: number; checkedIn: number; rate: number; startDate: string; }

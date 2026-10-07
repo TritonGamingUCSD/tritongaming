@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { hasCapability } from '@/lib/capabilities';
+import { hasCapability } from '@/lib/portal/capabilities';
 
 // The whole point of this route: nobody managing the portal should need to
 // know what a Google Forms "entry ID" even is. Given a plain form URL, it

@@ -1,8 +1,8 @@
-import { logAudit, currentActorId } from '@/lib/audit';
+import { logAudit } from '@/lib/notifications/audit';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { hasCapability } from '@/lib/capabilities';
+import { hasCapability } from '@/lib/portal/capabilities';
 
 // Reverses one specific, known ledger entry — the precise alternative to
 // the free-form Manual Point Adjustment tool, for whenever the exact

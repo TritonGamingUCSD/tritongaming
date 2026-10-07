@@ -3,8 +3,8 @@
 import SectionTabs from '@/components/ui/SectionTabs';
 import { useState } from 'react';
 import { Camera, Gift, Wifi } from 'lucide-react';
-import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
-import type { Tier } from '@/lib/tiers';
+import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
+import type { Tier } from '@/lib/members/tiers';
 import CheckInClient from './CheckInClient';
 import RedemptionScanner from './RedemptionScanner';
 import OnlineCheckinPanel from './OnlineCheckinPanel';

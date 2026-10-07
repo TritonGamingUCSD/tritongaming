@@ -13,7 +13,7 @@ export async function getContentData() {
   });
 
   const updaterIds = [...new Set((rows ?? []).map((r) => r.updated_by).filter(Boolean))];
-  let updaterNames: Record<string, string> = {};
+  const updaterNames: Record<string, string> = {};
   if (updaterIds.length > 0) {
     const { data: updaters } = await supabase
       .from('profiles')

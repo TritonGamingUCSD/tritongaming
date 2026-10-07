@@ -2,10 +2,10 @@
 
 import SectionHeader from '@/components/ui/SectionHeader';
 import Notice from '@/components/ui/Notice';
-import { showToast } from '@/lib/toast';
+import { showToast } from '@/lib/ui/toast';
 import SaveBar from '@/components/portal/SaveBar';
 import EditingNow from '@/components/portal/EditingNow';
-import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
+import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import { useState } from 'react';
 import Link from 'next/link';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
@@ -19,7 +19,7 @@ import type { SocialEmbed } from '@/types/database';
 // the same file guarantees the two never visually drift apart.
 import LivePreview from '@/components/portal/LivePreview';
 import PageBlocksEditor from '@/components/PageBlocksEditor/PageBlocksEditor';
-import type { PageBlock } from '@/lib/pageBlocks';
+import type { PageBlock } from '@/lib/site/pageBlocks';
 import styles from '../events/new/newevent.module.css';
 
 export interface DivisionFormValues {
@@ -104,7 +104,7 @@ export default function DivisionForm({
   onSubmit: (values: DivisionFormValues) => Promise<string | void>;
   backHref: string;
   canRename?: boolean;
-  creditPeople?: import('@/lib/creditPeople').CreditPerson[];
+  creditPeople?: import('@/lib/members/creditPeople').CreditPerson[];
 }) {
   const [form, setForm] = useState<DivisionFormValues>(initial);
   const { dirty, markSaved, saved: savedForm } = useUnsavedChanges(form);

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { invalidate, type CacheTag } from '@/lib/revalidate';
+import { invalidate, type CacheTag } from '@/lib/site/revalidate';
 
 const ALLOWED: CacheTag[] = ['events', 'board', 'divisions', 'site-content'];
 

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { GripVertical } from 'lucide-react';
 import type { SocialEmbed } from '@/types/database';
-import { useDragReorder } from '@/lib/useDragReorder';
+import { useDragReorder } from '@/lib/ui/useDragReorder';
 import styles from './SocialEmbedsField.module.css';
 import IconButton from '@/components/ui/IconButton';
 import Select from '@/components/ui/Select';

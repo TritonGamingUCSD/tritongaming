@@ -4,7 +4,7 @@ import SectionHeader from '@/components/ui/SectionHeader';
 import { useState } from 'react';
 import { Search } from 'lucide-react';
 import ContentEditor from '../admin/content/ContentEditor';
-import type { ContentBlock } from '@/lib/content-blocks';
+import type { ContentBlock } from '@/lib/site/content-blocks';
 import styles from './sitecontent.module.css';
 
 interface Props {
@@ -12,7 +12,7 @@ interface Props {
   contentBlocks?: ContentBlock[];
   contentMap?: Record<string, Record<string, unknown>>;
   lastEdited?: Record<string, { by: string; at: string }>;
-  creditPeople?: import('@/lib/creditPeople').CreditPerson[];
+  creditPeople?: import('@/lib/members/creditPeople').CreditPerson[];
 }
 
 // The editor for page copy and images on the public site. (The divisions directory and "My division"

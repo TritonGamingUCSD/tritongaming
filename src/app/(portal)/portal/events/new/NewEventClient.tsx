@@ -1,19 +1,19 @@
 'use client';
 
-import { refreshPublicCache } from '@/lib/refreshPublicCache';
+import { refreshPublicCache } from '@/lib/site/refreshPublicCache';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { slugify } from '@/lib/slug';
-import { pacificDatetimeLocalToUTC } from '@/lib/timezone';
+import { slugify } from '@/lib/core/slug';
+import { pacificDatetimeLocalToUTC } from '@/lib/core/timezone';
 import EventForm, { EMPTY_EVENT_FORM, cleanCheckinWindows, type EventFormValues } from '../EventForm';
 import type { CheckinFormConfigValue } from '../CheckinFormFieldsEditor';
-import { cleanTheme } from '@/lib/eventTheme';
-import { cleanBlocks } from '@/lib/pageBlocks';
+import { cleanTheme } from '@/lib/events/eventTheme';
+import { cleanBlocks } from '@/lib/site/pageBlocks';
 
 export default function NewEventClient({ initial = EMPTY_EVENT_FORM, seedCheckinFormConfig, previewViewer, creditPeople }: {
   initial?: EventFormValues;
   seedCheckinFormConfig?: CheckinFormConfigValue | null;
-  creditPeople?: import('@/lib/creditPeople').CreditPerson[];
+  creditPeople?: import('@/lib/members/creditPeople').CreditPerson[];
   previewViewer?: { year: string | null; classOf?: number | null; roles: import('@/types/database').AppRole[] };
 }) {
   const router = useRouter();

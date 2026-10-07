@@ -9,8 +9,8 @@ import Notice from '@/components/ui/Notice';
 import SectionTabs from '@/components/ui/SectionTabs';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import { DateInput, Field, Input, Select } from '@/components/ui/Field';
-import { confirmHold } from '@/lib/confirmHold';
-import { STRIKES_AT_LIMIT, countLabel } from '@/lib/strikeLabels';
+import { confirmHold } from '@/lib/ui/confirmHold';
+import { STRIKES_AT_LIMIT, countLabel } from '@/lib/members/strikeLabels';
 import styles from './tracker.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
 

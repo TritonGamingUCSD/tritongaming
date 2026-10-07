@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { logAudit } from '@/lib/audit';
-import { authorizeMeetings, ensureOccurrence, isMeetingOpen, isMeetingOver, occurrenceTimes, validateDocUrl, type MeetingRow, type SeriesRow, canManageMeeting, notYourMeeting, notifyMeetingInvites } from '@/lib/meetings';
-import { MAX_QUESTION_LENGTH, MAX_DESCRIPTION_LENGTH, asQuestionType, cleanOptions } from '@/lib/meetingFun';
-import { formatPacificDateTime } from '@/lib/timezone';
-import { validateAudienceInput } from '@/lib/meetingAudience';
+import { logAudit } from '@/lib/notifications/audit';
+import { authorizeMeetings, ensureOccurrence, isMeetingOpen, isMeetingOver, occurrenceTimes, validateDocUrl, type MeetingRow, type SeriesRow, canManageMeeting, notYourMeeting, notifyMeetingInvites } from '@/lib/meetings/meetings';
+import { MAX_QUESTION_LENGTH, MAX_DESCRIPTION_LENGTH, asQuestionType, cleanOptions } from '@/lib/meetings/meetingFun';
+import { formatPacificDateTime } from '@/lib/core/timezone';
+import { validateAudienceInput } from '@/lib/meetings/meetingAudience';
 
 // Set the doc link (and room) for ONE meeting — an existing one ({meeting_id}) or the next
 // occurrence of a repeating series ({series_id, date}), which is created on the spot.

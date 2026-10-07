@@ -1,5 +1,5 @@
 .wrap { display: flex; flex-direction: column; align-items: stretch; gap: 0.4rem; width: 100%; margin-top: 0.5rem; }
-.btn, .btnOpened {
+.btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;

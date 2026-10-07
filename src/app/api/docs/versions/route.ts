@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { staffName } from '@/lib/names';
-import { UUID, authorizeDocs, bad, editingNow, namesOf } from '@/lib/docsServer';
+import { staffName } from '@/lib/members/names';
+import { UUID, authorizeDocs, bad, editingNow, namesOf } from '@/lib/docs/docsServer';
 
 export const dynamic = 'force-dynamic';
 

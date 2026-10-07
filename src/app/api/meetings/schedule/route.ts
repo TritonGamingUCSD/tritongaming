@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { logAudit } from '@/lib/audit';
-import { pacificDayKey } from '@/lib/checkinDays';
-import { authorizeMeetings, buildSchedule, notifyMeetingInvites, occurrenceTimes, validateDocUrl } from '@/lib/meetings';
-import { MAX_QUESTION_LENGTH, MAX_DESCRIPTION_LENGTH, asQuestionType, cleanOptions } from '@/lib/meetingFun';
-import { formatPacificDateTime } from '@/lib/timezone';
-import { validateAudienceInput } from '@/lib/meetingAudience';
+import { logAudit } from '@/lib/notifications/audit';
+import { pacificDayKey } from '@/lib/events/checkinDays';
+import { authorizeMeetings, buildSchedule, notifyMeetingInvites, occurrenceTimes, validateDocUrl } from '@/lib/meetings/meetings';
+import { MAX_QUESTION_LENGTH, MAX_DESCRIPTION_LENGTH, asQuestionType, cleanOptions } from '@/lib/meetings/meetingFun';
+import { formatPacificDateTime } from '@/lib/core/timezone';
+import { validateAudienceInput } from '@/lib/meetings/meetingAudience';
 
 export const dynamic = 'force-dynamic';
 

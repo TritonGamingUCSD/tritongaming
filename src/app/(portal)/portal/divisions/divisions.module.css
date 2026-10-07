@@ -1,7 +1,5 @@
 .page { max-width: 1240px; margin-inline: auto; }
 
-.header { margin-bottom: 1.75rem; }
-
 .title {
   font-family: var(--font-futura-heavy);
   font-size: clamp(1.25rem, 2.5vw, 1.6rem);
@@ -124,38 +122,6 @@
   gap: 0.4rem;
   flex-shrink: 0;
 }
-
-.btn {
-  padding: 0.4rem 0.85rem;
-  border-radius: 0.4rem;
-  font-size: 0.78rem;
-  font-family: var(--font-futura-medium);
-  cursor: pointer;
-  border: 1px solid rgba(var(--pp-ink-rgb), 0.23);
-  color: rgba(var(--pp-ink-rgb), 0.87);
-  background: transparent;
-  transition: all 0.15s;
-}
-.btn:hover:not(:disabled) { background: rgba(125, 180, 234,0.12); color: var(--p-accent-text); border-color: rgba(125, 180, 234,0.3); }
-.btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-
-.saveBtn {
-  padding: 0.5rem 1rem;
-  border-radius: var(--radius-md);
-  background: var(--btn-primary-bg);
-  color: var(--btn-primary-text);
-  box-shadow: var(--btn-primary-shadow);
-  font-family: var(--font-futura-heavy);
-  font-size: 0.8rem;
-  letter-spacing: 0.03em;
-  cursor: pointer;
-  border: 1px solid var(--btn-primary-border);
-  align-self: flex-start;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-.saveBtn:hover:not(:disabled) { border-color: var(--btn-primary-border-hover); box-shadow: var(--btn-primary-shadow-hover); }
-.saveBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 @media (max-width: 500px) {
   .fieldRow { grid-template-columns: 1fr; }

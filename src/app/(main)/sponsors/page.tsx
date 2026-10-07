@@ -1,20 +1,16 @@
 import type { Metadata } from 'next';
-import { resolveSections } from '@/lib/pageLayout';
+import { resolveSections } from '@/lib/site/pageLayout';
 import { Fragment } from 'react';
 import { Building2, Trophy, RadioTower, Handshake } from 'lucide-react';
 import LogoPlate from '@/components/LogoPlate/LogoPlate';
 import { ZineBand, PageHero, BandHeader } from '@/components/ZineBand/ZineBand';
-import { getContentBlocks } from '@/lib/content';
+import { getContentBlocks } from '@/lib/site/content';
 import type { LogoItem } from '@/types';
 import PhotoStrip from '@/components/PhotoStrip/PhotoStrip';
-import { getSitePhotos, pickPhotos } from '@/lib/sitePhotos';
+import { getSitePhotos, pickPhotos } from '@/lib/storage/sitePhotos';
 import styles from './sponsors.module.css';
 
 export const revalidate = 60;
-
-const TIER_SIZE: Record<string, 'small' | 'medium' | 'large'> = {
-  platinum: 'large', gold: 'large', silver: 'medium', bronze: 'small',
-};
 
 // Icons are a design choice tied to what each offering *is*, not copy — the
 // title/body text next to them comes from the page.sponsors content block.

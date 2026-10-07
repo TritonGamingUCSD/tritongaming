@@ -1,5 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/admin';
-import { fetchLinkedEmails, pickDisplayEmails } from '@/lib/linkedEmails';
+import { fetchLinkedEmails, pickDisplayEmails } from '@/lib/members/linkedEmails';
 
 export interface DivisionMember {
   id: string; name: string; avatar_url: string | null; custom_avatar_url: string | null;

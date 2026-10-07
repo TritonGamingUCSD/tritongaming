@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { logAudit } from '@/lib/audit';
-import { authorizeStrikes, cleanReason, notifyPerson, notYourOwn, recordEvent, trackedPeople } from '@/lib/strikes';
+import { logAudit } from '@/lib/notifications/audit';
+import { authorizeStrikes, cleanReason, notifyPerson, notYourOwn, recordEvent, trackedPeople } from '@/lib/members/strikes';
 
 // Reset strikes, usually once a quarter, for everyone or for one person with { user_id }. The old record is DELETED for good: every strike (the
 // warning too), the history, dismissed misses, used and removed vouchers, and the strike entries in the audit log. Nobody

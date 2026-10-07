@@ -1,19 +1,21 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useDraft } from '@/lib/useDraft';
+import { useDraft } from '@/lib/ui/useDraft';
 import DraftBanner from '@/components/portal/DraftBanner';
 import { CircleHelp, MessageSquareText, Inbox, MessageSquarePlus, ListChecks, ImagePlus, X, Send, ArrowLeft, UserCheck, CheckCircle2, RotateCcw } from 'lucide-react';
 import SectionTabs from '@/components/ui/SectionTabs';
+import PortalLink from '@/components/portal/PortalLink';
 import Notice from '@/components/ui/Notice';
 import Button from '@/components/ui/Button';
 import { Input, Textarea, Select } from '@/components/ui/Field';
-import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
-import { useLiveParams, usePortalParams } from '@/lib/usePortalParams';
-import { uploadImageToStorage, parseStorageUrl, ALLOWED_IMAGE_TYPES } from '@/lib/imageUpload';
-import { formatPacificDateTime } from '@/lib/timezone';
-import { showToast } from '@/lib/toast';
-import { HELP_CATEGORIES, HELP_STATUSES, HELP_TEMPLATES, MAX_ATTACHMENTS, MAX_BODY, MAX_SUBJECT, roleRequest, type HelpCategory, type HelpStatus } from '@/lib/helpConstants';
+import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
+import { useLiveParams, usePortalParams } from '@/lib/portal/usePortalParams';
+import { uploadImageToStorage, parseStorageUrl, ALLOWED_IMAGE_TYPES } from '@/lib/storage/imageUpload';
+import { formatPacificDateTime } from '@/lib/core/timezone';
+import { showToast } from '@/lib/ui/toast';
+import { createClient } from '@/lib/supabase/client';
+import { HELP_CATEGORIES, HELP_STATUSES, HELP_TEMPLATES, MAX_ATTACHMENTS, MAX_BODY, MAX_SUBJECT, roleRequest, roleRequestBody, parseRoleRequest, REQUESTABLE_ROLES, type RequestableRole, type HelpCategory, type HelpStatus } from '@/lib/notifications/helpConstants';
 import styles from './help.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
 
@@ -186,7 +188,59 @@ function AttachmentPicker({ att }: { att: ReturnType<typeof useAttachments> }) {
   );
 }
 
+// "I need a role" from the dashboard opens a short form (role, division, who can vouch); anything else is the usual free-text message.
 function NewTicket({ userId, onCreated }: { userId: string; onCreated: (id: string) => void }) {
+  const asks = useLiveParams();
+  const asked = asks.get('topic') === 'role' ? asks.get('role') : null;
+  const role = REQUESTABLE_ROLES.find((r) => r.id === asked)?.id;
+  return role ? <RoleRequestForm initial={role} onCreated={onCreated} /> : <FreeTicket userId={userId} onCreated={onCreated} />;
+}
+
+function RoleRequestForm({ initial, onCreated }: { initial: RequestableRole; onCreated: (id: string) => void }) {
+  const [role, setRole] = useState<RequestableRole>(initial);
+  const [division, setDivision] = useState('');
+  const [divisions, setDivisions] = useState<string[]>([]);
+  const [vouch, setVouch] = useState('');
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  useEffect(() => { createClient().from('divisions').select('name').order('name').then(({ data }) => { const n = (data ?? []).map((d) => d.name as string); setDivisions(n); setDivision((cur) => cur || n[0] || ''); }); }, []);
+  async function submit(e: React.FormEvent) {
+    e.preventDefault(); setError(''); setBusy(true);
+    const msg = roleRequestBody({ role, division, vouch, note });
+    const { ok, data } = await api<{ id: string }>('/api/help', { method: 'POST', body: JSON.stringify({ category: 'account', ...msg, page: window.location.pathname }) });
+    setBusy(false);
+    if (!ok) { setError(data.error ?? 'Failed to send.'); return; }
+    showToast('Sent. An admin will review it and you’ll get a notification.');
+    onCreated(data.id);
+  }
+  return (
+    <form className={styles.card} onSubmit={submit}>
+      <label className={styles.field}>
+        <span className={styles.label}>Role you need</span>
+        <Select value={role} onChange={(e) => setRole(e.target.value as RequestableRole)}>{REQUESTABLE_ROLES.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}</Select>
+      </label>
+      {role === 'division' && (
+        <label className={styles.field}>
+          <span className={styles.label}>Division</span>
+          <Select value={division} onChange={(e) => setDivision(e.target.value)}>{divisions.map((d) => <option key={d} value={d}>{d}</option>)}</Select>
+        </label>
+      )}
+      <label className={styles.field}>
+        <span className={styles.label}>Who can vouch for this?</span>
+        <Input value={vouch} maxLength={80} onChange={(e) => setVouch(e.target.value)} placeholder="An exec or lead you work with" required />
+      </label>
+      <label className={styles.field}>
+        <span className={styles.label}>Anything else <span className={styles.optional}>optional</span></span>
+        <Textarea value={note} maxLength={500} rows={3} onChange={(e) => setNote(e.target.value)} />
+      </label>
+      {error && <Notice tone="error">{error}</Notice>}
+      <div><Button type="submit" loading={busy} disabled={!vouch.trim() || (role === 'division' && !division)}><Send size={15} strokeWidth={1.75} aria-hidden="true" /> Send request</Button></div>
+    </form>
+  );
+}
+
+function FreeTicket({ userId, onCreated }: { userId: string; onCreated: (id: string) => void }) {
   // Arriving from "I need a role" on the dashboard: the account category, a subject and a starter message are already filled in.
   const asks = useLiveParams();
   const roleAsk = useRef(asks.get('topic') === 'role' ? roleRequest(asks.get('role')) : null).current;
@@ -302,6 +356,7 @@ function Thread({ id, userId, onBack }: { id: string; userId: string; onBack: ()
       <div className={styles.threadTitle}>
         <h2>{t.subject}</h2>
         <p className={styles.rowMeta}>{catLabel(t.category)} · opened {formatPacificDateTime(t.created_at)}{d.isStaff && !mine && <> by <strong>{t.user_name}</strong></>}{t.assignee_name && <> · handled by {t.assignee_name}</>}</p>
+        {d.isStaff && t.category === 'doc' && t.page?.startsWith('/portal/docs') && <p><PortalLink href={t.page} className={styles.docLink}>Open the doc</PortalLink></p>}
         {d.isStaff && (t.page || t.user_agent) && <p className={styles.tech}>{[t.page, t.user_agent].filter(Boolean).join(' · ')}</p>}
       </div>
 
@@ -313,7 +368,7 @@ function Thread({ id, userId, onBack }: { id: string; userId: string; onBack: ()
             : <Button variant="secondary" size="sm" onClick={() => patch({ status: 'open' })}><RotateCcw size={15} strokeWidth={1.75} aria-hidden="true" /> Reopen</Button>}
         </div>
       )}
-      {d.roleGrant && t.status !== 'resolved' && <RoleApprove ticketId={id} grant={d.roleGrant} who={t.user_name} onDone={load} />}
+      {d.roleGrant && t.status !== 'resolved' && <RoleApprove ticketId={id} grant={d.roleGrant} who={t.user_name} asked={parseRoleRequest(t.subject, d.messages[0]?.body ?? '')} onDone={load} />}
       {!d.isStaff && t.status !== 'resolved' && (
         <div className={styles.staffBar}><Button variant="secondary" size="sm" onClick={() => patch({ status: 'resolved' })}><CheckCircle2 size={15} strokeWidth={1.75} aria-hidden="true" /> Mark as solved</Button></div>
       )}
@@ -408,9 +463,9 @@ function CannedReplies() {
 }
 
 // Admins only, on a role request: pick the role and approve. It gives the role, replies on the ticket, tells the person and resolves it.
-function RoleApprove({ ticketId, grant, who, onDone }: { ticketId: string; grant: { have: { role: string; division_id: string | null }[]; divisions: { id: string; name: string }[] }; who: string; onDone: () => Promise<void> }) {
-  const [role, setRole] = useState<'officer' | 'lead' | 'division'>('officer');
-  const [division, setDivision] = useState(grant.divisions[0]?.id ?? '');
+function RoleApprove({ ticketId, grant, who, asked, onDone }: { ticketId: string; grant: { have: { role: string; division_id: string | null }[]; divisions: { id: string; name: string }[] }; who: string; asked: { role: RequestableRole | null; division: string | null }; onDone: () => Promise<void> }) {
+  const [role, setRole] = useState<RequestableRole>(asked.role ?? 'officer');
+  const [division, setDivision] = useState(grant.divisions.find((d) => d.name === asked.division)?.id ?? grant.divisions[0]?.id ?? '');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const current = grant.have.map((r) => r.role).join(', ') || 'no roles yet';

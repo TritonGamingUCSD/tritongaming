@@ -668,8 +668,7 @@
   .rail.railCollapsed { width: 62px; margin-right: 1rem; }
   .rail.railCollapsed:not(:hover):not(:focus-within) .railIdentity { padding: 0.2rem 0; justify-content: center; gap: 0; }
   .rail.railCollapsed .railAvatar, .rail.railCollapsed .railAvatarFallback { min-width: 30px; aspect-ratio: 1 / 1; max-width: none; }
-  .rail.railCollapsed:not(:hover):not(:focus-within) .railIdentityText,
-  .rail.railCollapsed:not(:hover):not(:focus-within) .railToggle span { display: none; }
+  .rail.railCollapsed:not(:hover):not(:focus-within) .railIdentityText { display: none; }
   /* The text stays in the row (zero width, invisible) so every row keeps exactly its expanded height and nothing shifts vertically. */
   .rail.railCollapsed:not(:hover):not(:focus-within) .railLabel { display: inline-block; width: 0; overflow: hidden; opacity: 0; white-space: nowrap; }
   .rail.railCollapsed .railGroupLabel { transition: opacity 0.2s ease; }
@@ -935,9 +934,6 @@
   .railItemActive { transform: rotate(-0.8deg); box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.45); }
 }
 .panelTitle { font-family: var(--font-soulmaze); font-weight: 400; text-transform: none; }
-
-.crumbBtn { font-family: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; transition: text-decoration-color 0.12s; }
-.crumbBtn:hover, .crumbBtn:focus-visible { text-decoration-color: currentColor; }
 
 .railItemActive .railBadge { color: #011941 !important; } /* theme-ok */
 

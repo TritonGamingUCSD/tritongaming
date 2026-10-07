@@ -1,10 +1,10 @@
 import { notFound, redirect } from 'next/navigation';
-import { getProfile, getUserRoles } from '@/lib/auth';
-import { hasCapability } from '@/lib/capabilities';
+import { getProfile, getUserRoles } from '@/lib/core/auth';
+import { hasCapability } from '@/lib/portal/capabilities';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { UUID, loadGrid } from '@/lib/shiftsServer';
-import { cellKey, groupByArea, guideFor, neededFor, slotCount, slotRange } from '@/lib/shifts';
-import { PACIFIC_TZ } from '@/lib/timezone';
+import { UUID, loadGrid } from '@/lib/shifts/shiftsServer';
+import { cellKey, groupByArea, guideFor, neededFor, slotCount, slotRange } from '@/lib/shifts/shifts';
+import { PACIFIC_TZ } from '@/lib/core/timezone';
 import PrintButton from './PrintButton';
 import styles from './print.module.css';
 

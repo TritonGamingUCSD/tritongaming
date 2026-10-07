@@ -3,9 +3,9 @@
 import Button from '@/components/ui/Button';
 import { GripVertical, Plus } from 'lucide-react';
 import ArtRow from './ArtRow';
-import { useDragReorder } from '@/lib/useDragReorder';
-import { MAX_POSTERS, type AssetCredit } from '@/lib/eventTheme';
-import type { CreditPerson } from '@/lib/creditPeople';
+import { useDragReorder } from '@/lib/ui/useDragReorder';
+import { MAX_POSTERS, type AssetCredit } from '@/lib/events/eventTheme';
+import type { CreditPerson } from '@/lib/members/creditPeople';
 import styles from './eventextras.module.css';
 
 // The event's posters in one list. The first is the main poster at the top of the event page and on event cards; with more than one, the page

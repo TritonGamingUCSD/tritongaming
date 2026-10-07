@@ -8,5 +8,4 @@
 .doc a { color: var(--sky-text); text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
 .doc a:hover { color: var(--white); }
 .doc strong { color: var(--white); }
-.callout { padding: 0.9rem 1.1rem; border-left: 4px solid var(--yellow); background: rgba(255, 255, 255, 0.06); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
 @media (max-width: 640px) { .doc { font-size: 1rem; } }

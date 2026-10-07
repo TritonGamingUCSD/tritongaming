@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { logAudit } from '@/lib/audit';
-import { authorizeQuarters, loadQuarters, quarterName, syncInactive } from '@/lib/quarters';
+import { logAudit } from '@/lib/notifications/audit';
+import { authorizeQuarters, loadQuarters, quarterName, syncInactive } from '@/lib/members/quarters';
 
 const UUID = /^[0-9a-f-]{36}$/i;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;

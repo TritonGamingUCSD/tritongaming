@@ -1,14 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
 import { ChevronLeft, ChevronRight, CalendarDays, CalendarPlus, CalendarSync, Users, MapPin, Repeat, Copy, Check, RefreshCw } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Notice from '@/components/ui/Notice';
-import { formatEventTimeRange } from '@/lib/timezone';
-import { useLiveParams } from '@/lib/usePortalParams';
-import { confirmHold } from '@/lib/confirmHold';
+import { formatEventTimeRange } from '@/lib/core/timezone';
+import { useLiveParams } from '@/lib/portal/usePortalParams';
+import { confirmHold } from '@/lib/ui/confirmHold';
 import styles from './calendar.module.css';
 import TimeGrid from './TimeGrid';
 import GoogleLinkPanel from './GoogleLinkPanel';

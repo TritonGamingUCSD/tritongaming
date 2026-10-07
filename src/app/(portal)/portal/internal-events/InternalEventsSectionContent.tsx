@@ -1,7 +1,7 @@
 'use client';
 
 import WeekHead from '@/components/ui/WeekHead';
-import { startsWeekGroup } from '@/lib/weekGroups';
+import { startsWeekGroup } from '@/lib/events/weekGroups';
 import { Fragment, useCallback, useEffect, useState } from 'react';
 import { CalendarHeart, CalendarPlus, Plus, MapPin, Users, Check, CircleDashed, X as XIcon } from 'lucide-react';
 import SectionTabs from '@/components/ui/SectionTabs';
@@ -10,11 +10,11 @@ import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
 import { Field, Input, Textarea, DateInput, TimeInput } from '@/components/ui/Field';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
-import { confirmHold } from '@/lib/confirmHold';
-import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
-import { audienceLabel, isCustomAudience } from '@/lib/meetingAudience';
-import { MAX_DESCRIPTION_LENGTH } from '@/lib/meetingFun';
-import { googleCalendarUrl } from '@/lib/ics';
+import { confirmHold } from '@/lib/ui/confirmHold';
+import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
+import { audienceLabel, isCustomAudience } from '@/lib/meetings/meetingAudience';
+import { MAX_DESCRIPTION_LENGTH } from '@/lib/meetings/meetingFun';
+import { googleCalendarUrl } from '@/lib/events/ics';
 import { AudiencePicker, audFrom, audPayload, audienceEmpty, defaultAud, type Aud } from '../meetings/MeetingsSectionContent';
 import mstyles from '../meetings/meetings.module.css';
 import styles from './internal-events.module.css';

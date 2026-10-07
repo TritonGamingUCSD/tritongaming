@@ -1,7 +1,7 @@
-import { getCreditPeople } from '@/lib/creditPeople';
+import { getCreditPeople } from '@/lib/members/creditPeople';
 import { redirect } from 'next/navigation';
-import { getUserRoles } from '@/lib/auth';
-import { hasCapability } from '@/lib/capabilities';
+import { getUserRoles } from '@/lib/core/auth';
+import { hasCapability } from '@/lib/portal/capabilities';
 import { createClient } from '@/lib/supabase/server';
 import NewEventClient from './NewEventClient';
 import { EMPTY_EVENT_FORM } from '../EventForm';

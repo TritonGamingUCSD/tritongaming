@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { logAudit } from '@/lib/audit';
-import { authorizeMeetings, guardMeeting } from '@/lib/meetings';
+import { logAudit } from '@/lib/notifications/audit';
+import { authorizeMeetings, guardMeeting } from '@/lib/meetings/meetings';
 
 // Exec marks someone absent for a meeting (with an optional reason; "excused" absences don't count
 // against their attendance), or takes the mark back off.

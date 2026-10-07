@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { buildCheckinFormUrl, type CheckinFormConfig } from '@/lib/checkinForm';
+import { buildCheckinFormUrl, type CheckinFormConfig } from '@/lib/events/checkinForm';
 import type { AppRole } from '@/types/database';
-import { fetchTiers, getTier, nextTier } from '@/lib/tiers';
-import { isMultiDayEvent, todaysCheckinAt, currentDayInfo, pacificDayKey } from '@/lib/checkinDays';
+import { fetchTiers, getTier, nextTier } from '@/lib/members/tiers';
+import { isMultiDayEvent, todaysCheckinAt, currentDayInfo, pacificDayKey } from '@/lib/events/checkinDays';
 
 export const runtime = 'nodejs';
 

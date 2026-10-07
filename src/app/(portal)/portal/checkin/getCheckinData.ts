@@ -1,4 +1,4 @@
-import { openEventsFilter } from '@/lib/checkinWindow';
+import { openEventsFilter } from '@/lib/events/checkinWindow';
 import { createClient } from '@/lib/supabase/server';
 
 // Shared by the standalone /portal/checkin route and the portal hub.

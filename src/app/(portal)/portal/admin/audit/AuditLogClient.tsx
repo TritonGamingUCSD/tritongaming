@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { ScrollText, Download } from 'lucide-react';
-import { usePortalParams, useLiveParams } from '@/lib/usePortalParams';
+import { usePortalParams, useLiveParams } from '@/lib/portal/usePortalParams';
 import Notice from '@/components/ui/Notice';
 import Button from '@/components/ui/Button';
 import { DateInput, Input, Select } from '@/components/ui/Field';
-import { PACIFIC_TZ, formatPacificDateTime, pacificDatetimeLocalToUTC } from '@/lib/timezone';
+import { PACIFIC_TZ, formatPacificDateTime, pacificDatetimeLocalToUTC } from '@/lib/core/timezone';
 import styles from './audit.module.css';
 
 interface Entry {

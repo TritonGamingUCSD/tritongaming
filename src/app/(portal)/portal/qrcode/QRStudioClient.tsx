@@ -2,10 +2,10 @@
 
 import { useRef, useState } from 'react';
 import StyledQRCode, { type StyledQRCodeHandle } from '@/components/StyledQRCode/StyledQRCode';
-import { DEFAULT_QR_OPTIONS, type QRCodeOptions } from '@/lib/qrCodeStyling';
+import { DEFAULT_QR_OPTIONS, type QRCodeOptions } from '@/lib/qr/qrCodeStyling';
 import { Check, Copy, Download } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import { showToast } from '@/lib/toast';
+import { showToast } from '@/lib/ui/toast';
 import QRStudioForm from './QRStudioForm';
 import styles from './qrstudio.module.css';
 

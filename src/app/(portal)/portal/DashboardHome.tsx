@@ -1,11 +1,12 @@
 import Link from '@/components/portal/PortalLink';
 import { CalendarPlus, MapPin, QrCode, Ticket } from 'lucide-react';
-import { PACIFIC_TZ } from '@/lib/timezone';
+import { PACIFIC_TZ } from '@/lib/core/timezone';
 import PortalSearch from '@/components/portal/PortalSearch';
 import EventCountdown from './EventCountdown';
 import RoleAsk from './RoleAsk';
 import NowNext from './NowNext';
-import type { MyShift } from '@/lib/myShifts';
+import { RequiredBanner } from './docs/DocRequired';
+import type { MyShift } from '@/lib/shifts/myShifts';
 import styles from './dashboardHome.module.css';
 
 export interface HomeEvent { id: string; title: string; start_date: string; location: string | null; hasTicket: boolean; ticketId?: string }
@@ -40,6 +41,7 @@ export function DashboardBody({ event, note, tools, activity, showRoleAsk = fals
   return (
     <div className={styles.body}>
       {showRoleAsk && <RoleAsk />}
+      <RequiredBanner hrefBase="/portal/docs?id=" />
       <div className={styles.top}>
         {shifts.length > 0 && <NowNext shifts={shifts} />}
         {event && (

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { AUDIENCE_ROLES } from '@/lib/meetingAudience';
-import { authorizeMeetings, authorizeTeamView } from '@/lib/meetings';
+import { AUDIENCE_ROLES } from '@/lib/meetings/meetingAudience';
+import { authorizeTeamView } from '@/lib/meetings/meetings';
 import { ROLE_DISPLAY_RANK, ROLE_LABELS, type AppRole } from '@/types/database';
-import { staffName } from '@/lib/names';
+import { staffName } from '@/lib/members/names';
 
 export const dynamic = 'force-dynamic';
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { MAX_ACCOUNTS, clearExternalCache, emailFromIdToken, encryptToken, exchangeCode, googleConfigured, onlyViewScopes, revokeToken, siteOrigin } from '@/lib/googleCalendar';
+import { MAX_ACCOUNTS, clearExternalCache, emailFromIdToken, encryptToken, exchangeCode, googleConfigured, onlyViewScopes, revokeToken, siteOrigin } from '@/lib/events/googleCalendar';
 
 export const dynamic = 'force-dynamic';
 

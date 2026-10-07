@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { logAudit } from '@/lib/audit';
-import { authorizeMeetings, validateDocUrl, guardSeries, notifyMeetingInvites, occurrenceTimes, type SeriesRow } from '@/lib/meetings';
-import { pacificDayKey } from '@/lib/checkinDays';
-import { validateAudienceInput } from '@/lib/meetingAudience';
-import { MAX_DESCRIPTION_LENGTH } from '@/lib/meetingFun';
+import { logAudit } from '@/lib/notifications/audit';
+import { authorizeMeetings, validateDocUrl, guardSeries, notifyMeetingInvites, occurrenceTimes, type SeriesRow } from '@/lib/meetings/meetings';
+import { pacificDayKey } from '@/lib/events/checkinDays';
+import { validateAudienceInput } from '@/lib/meetings/meetingAudience';
+import { MAX_DESCRIPTION_LENGTH } from '@/lib/meetings/meetingFun';
 
 // Pause/resume a repeating meeting, or delete it (past meetings and their attendance are kept).
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {

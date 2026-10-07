@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Event } from '@/types';
-import { formatEventDateRange, formatEventTimeRange, pacificDaysUntil } from '@/lib/timezone';
+import { formatEventDateRange, formatEventTimeRange, pacificDaysUntil } from '@/lib/core/timezone';
 import styles from './NextEventTicket.module.css';
 
 function whenLabel(startISO: string): string {

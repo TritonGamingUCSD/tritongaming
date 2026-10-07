@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Dialog, { DialogText, DialogCancel } from '@/components/ui/Dialog';
 import HoldButton from './HoldButton';
-import { CONFIRM_HOLD_EVENT, type ConfirmHoldRequest } from '@/lib/confirmHold';
+import { CONFIRM_HOLD_EVENT, type ConfirmHoldRequest } from '@/lib/ui/confirmHold';
 
 // Mounted once in the root layout; renders the dialog for confirmHold().
 export default function ConfirmHost() {

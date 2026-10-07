@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { getRealRoles } from '@/lib/auth';
-import { VIEW_AS_COOKIE, isViewAsRole } from '@/lib/viewAs';
+import { getRealRoles } from '@/lib/core/auth';
+import { VIEW_AS_COOKIE, isViewAsRole } from '@/lib/portal/viewAs';
 
 // Admin only: start previewing the portal as another role ({ role }), or stop ({ role: null }).
 export async function POST(request: Request) {

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { logAudit } from '@/lib/audit';
-import { authorizeMeetings, canManageMeeting, notYourMeeting } from '@/lib/meetings';
+import { logAudit } from '@/lib/notifications/audit';
+import { authorizeMeetings, canManageMeeting, notYourMeeting } from '@/lib/meetings/meetings';
 
 export async function POST(request: Request) {
   const auth = await authorizeMeetings('host_meetings');

@@ -1,4 +1,4 @@
-import type { Bucket } from '@/lib/eventSummary';
+import type { Bucket } from '@/lib/events/eventSummary';
 import styles from './summary.module.css';
 
 export const PALETTE = ['#ffc72c', '#4a90e2', '#34d399', '#f472b6', '#a78bfa', '#fb923c', '#22d3ee', '#94a3b8'];

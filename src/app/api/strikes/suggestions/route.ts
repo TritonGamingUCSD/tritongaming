@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { logAudit } from '@/lib/audit';
-import { authorizeStrikes, cleanReason, notYourOwn, pastMisses, publishStrike, quietTest, suggestions, trackedPeople } from '@/lib/strikes';
+import { logAudit } from '@/lib/notifications/audit';
+import { authorizeStrikes, cleanReason, notYourOwn, pastMisses, publishStrike, quietTest, suggestions, trackedPeople } from '@/lib/members/strikes';
 
 export const dynamic = 'force-dynamic';
 

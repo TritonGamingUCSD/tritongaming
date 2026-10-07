@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
-import { getUserRoles } from '@/lib/auth';
-import { hasCapability } from '@/lib/capabilities';
+import { getUserRoles } from '@/lib/core/auth';
+import { hasCapability } from '@/lib/portal/capabilities';
 import StatsClient from './StatsClient';
 import { getStatsData } from './getStatsData';
 

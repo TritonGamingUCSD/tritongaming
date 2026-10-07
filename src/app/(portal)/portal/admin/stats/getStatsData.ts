@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { bucketByMonth, cumulative } from '@/lib/monthBuckets';
+import { bucketByMonth, cumulative } from '@/lib/events/monthBuckets';
 
 export interface DivisionCount { name: string; count: number; }
 export interface RoleCount { role: string; count: number; }

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { UUID, authorizeDocs, bad } from '@/lib/docsServer';
+import { UUID, authorizeDocs, bad } from '@/lib/docs/docsServer';
 
 export const dynamic = 'force-dynamic';
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { cleanOptions, parseDiscordEmoji, tally, validAnswer, emojiNameFrom, asQuestionType } from '../meetingFun';
+import { cleanOptions, parseDiscordEmoji, tally, validAnswer, emojiNameFrom, asQuestionType } from '@/lib/meetings/meetingFun';
 
 describe('discord emoji paste', () => {
   it('reads the emoji text', () => {

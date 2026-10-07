@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
 import { DialogInput } from '@/components/ui/Dialog';
-import type { DocSection } from '@/lib/docsTree';
+import type { DocSection } from '@/lib/docs/docsTree';
 import type { Doc } from '@/types/database';
 import { DOC_TEMPLATES } from './docTemplates';
 import styles from './docs.module.css';

@@ -1,6 +1,6 @@
-import type { PageBlock } from '@/lib/pageBlocks';
+import type { PageBlock } from '@/lib/site/pageBlocks';
 import type { SocialEmbed, PhotoAlbumEntry, ScheduleItem, EventSponsor } from '@/types/database';
-import type { EventTheme } from '@/lib/eventTheme';
+import type { EventTheme } from '@/lib/events/eventTheme';
 
 export type Event = {
   /** When the event page was last saved (used for the sitemap's lastmod). */

@@ -2,7 +2,7 @@
 
 import { Users } from 'lucide-react';
 import Notice from '@/components/ui/Notice';
-import { useEditingPresence } from '@/lib/useEditingPresence';
+import { useEditingPresence } from '@/lib/ui/useEditingPresence';
 
 const join = (names: string[]) => names.length <= 2 ? names.join(' and ') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 

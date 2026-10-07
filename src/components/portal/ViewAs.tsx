@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Eye, Check, X } from 'lucide-react';
-import { VIEW_AS_OPTIONS, viewAsLabel } from '@/lib/viewAs';
+import { VIEW_AS_OPTIONS, viewAsLabel } from '@/lib/portal/viewAs';
 import styles from './ViewAs.module.css';
 
 async function setViewAs(role: string | null) {

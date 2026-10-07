@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { authorizeHelp, cleanAttachments, notify, staffIds, MAX_BODY, type HelpTicketRow } from '@/lib/help';
+import { authorizeHelp, cleanAttachments, notify, staffIds, MAX_BODY, type HelpTicketRow } from '@/lib/notifications/help';
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await authorizeHelp();

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { authorizeMeetings, isMeetingOpen, type MeetingRow } from '@/lib/meetings';
-import { tally } from '@/lib/meetingFun';
+import { authorizeMeetings, isMeetingOpen, type MeetingRow } from '@/lib/meetings/meetings';
+import { tally } from '@/lib/meetings/meetingFun';
 
 export const dynamic = 'force-dynamic';
 

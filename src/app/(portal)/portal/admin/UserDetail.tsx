@@ -7,9 +7,9 @@ import Notice from '@/components/ui/Notice';
 import Button from '@/components/ui/Button';
 import { ROLE_LABELS } from '@/types/database';
 import type { AppRole } from '@/types/database';
-import { resolveAvatarUrl } from '@/lib/profile';
-import { PACIFIC_TZ } from '@/lib/timezone';
-import { showToast } from '@/lib/toast';
+import { resolveAvatarUrl } from '@/lib/members/profile';
+import { PACIFIC_TZ } from '@/lib/core/timezone';
+import { showToast } from '@/lib/ui/toast';
 import styles from './userDetail.module.css';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

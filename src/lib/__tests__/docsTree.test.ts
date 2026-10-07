@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ageLabel, ancestors, buildSections, canMoveUnder, categoryOf, cleanTags, descendantIds, highlightParts, readingOrder, reorder, searchDocs } from '@/lib/docsTree';
+import { ageLabel, ancestors, buildSections, canMoveUnder, categoryOf, cleanTags, descendantIds, highlightParts, readingOrder, reorder, searchDocs } from '@/lib/docs/docsTree';
 
 const d = (id: string, parent: string | null, extra: Partial<{ title: string; category_id: string | null; order_index: number; content: string; tags: string[] }> = {}) =>
   ({ id, title: extra.title ?? id, parent_id: parent, category_id: extra.category_id ?? null, order_index: extra.order_index ?? 0, content: extra.content ?? '', tags: extra.tags ?? [] });

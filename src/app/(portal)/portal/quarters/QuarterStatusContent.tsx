@@ -2,7 +2,7 @@
 
 import SaveBar from '@/components/portal/SaveBar';
 import EditingNow from '@/components/portal/EditingNow';
-import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
+import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { CalendarCheck, GraduationCap, Check, ChevronDown, Moon, Plus, Search, Settings2, X } from 'lucide-react';
@@ -11,7 +11,7 @@ import IconButton from '@/components/ui/IconButton';
 import Notice from '@/components/ui/Notice';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import { DateInput, Field, Select } from '@/components/ui/Field';
-import { confirmHold } from '@/lib/confirmHold';
+import { confirmHold } from '@/lib/ui/confirmHold';
 import SectionTabs from '@/components/ui/SectionTabs';
 import TeamYearsPanel from './TeamYearsPanel';
 import styles from './quarters.module.css';

@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { fetchLinkedEmails, pickDisplayEmails, type LinkedEmail } from '@/lib/linkedEmails';
-import { isOrgMember } from '@/lib/profile';
+import { fetchLinkedEmails, pickDisplayEmails, type LinkedEmail } from '@/lib/members/linkedEmails';
+import { isOrgMember } from '@/lib/members/profile';
 import type { AppRole } from '@/types/database';
 
 export interface MemberProfileRow {

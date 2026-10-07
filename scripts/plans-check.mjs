@@ -106,7 +106,7 @@ try{
  await host.call('DELETE',`/api/meeting-plans/${gp.j.id}`); await svc.from('meetings').delete().eq('id',gm.j.id); await svc.from('internal_events').delete().eq('id',ge.j.id); await host.call('DELETE',`/api/meetings/groups/${gid}`);
  // reminders after 24h
  await svc.from('meeting_plans').update({created_at:new Date(Date.now()-30*3600e3).toISOString()}).eq('id',pid);
- const {sendPlanReminders}=await import('/Users/jasperhuang/Repositories/tritongaming/src/lib/meetingPlanServer.ts').catch(()=>({}));
+ const {sendPlanReminders}=await import('/Users/jasperhuang/Repositories/tritongaming/src/lib/meetings/meetingPlanServer.ts').catch(()=>({}));
  r=await host.call('DELETE',`/api/meeting-plans/${pid}`); ok('host deletes open plan',r.s===200); r=await host.call('DELETE',`/api/meeting-plans/${wid}`);
 }catch(e){console.log('ERR',e); fails++}
 finally{

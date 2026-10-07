@@ -1,10 +1,10 @@
-import { invalidate } from '@/lib/revalidate';
+import { invalidate } from '@/lib/site/revalidate';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { hasCapability } from '@/lib/capabilities';
-import { parseStorageUrl } from '@/lib/imageUpload';
-import { getEventById } from '@/lib/events';
+import { hasCapability } from '@/lib/portal/capabilities';
+import { parseStorageUrl } from '@/lib/storage/imageUpload';
+import { getEventById } from '@/lib/events/events';
 
 export const runtime = 'nodejs';
 

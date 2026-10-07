@@ -3,8 +3,8 @@
 import { useMemo, useState } from 'react';
 import { Plus } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import { PACIFIC_TZ } from '@/lib/timezone';
-import { awayDuring, cellKey, groupByArea, neededFor, slotCount, slotRange, type ShiftGrid } from '@/lib/shifts';
+import { PACIFIC_TZ } from '@/lib/core/timezone';
+import { awayDuring, cellKey, groupByArea, neededFor, slotCount, slotRange, type ShiftGrid } from '@/lib/shifts/shifts';
 import styles from './shifts.module.css';
 
 const time = (d: Date) => d.toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' });

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { logAudit } from '@/lib/audit';
-import { pacificDayKey } from '@/lib/checkinDays';
-import { authorizeQuarters, canBeInactive, loadQuarters, markableQuarters, quarterName, syncInactive } from '@/lib/quarters';
+import { logAudit } from '@/lib/notifications/audit';
+import { pacificDayKey } from '@/lib/events/checkinDays';
+import { authorizeQuarters, canBeInactive, loadQuarters, markableQuarters, quarterName, syncInactive } from '@/lib/members/quarters';
 
 const UUID = /^[0-9a-f-]{36}$/i;
 

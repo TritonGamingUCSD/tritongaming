@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { hasCapability } from '@/lib/capabilities';
-import { logAudit } from '@/lib/audit';
+import { hasCapability } from '@/lib/portal/capabilities';
+import { logAudit } from '@/lib/notifications/audit';
+import { withRole } from '@/lib/portal/roleGrant';
 import { ASSIGNABLE_ROLES } from '@/types/database';
 import type { AppRole } from '@/types/database';
 
@@ -50,16 +51,8 @@ export async function POST(request: Request) {
       .select('role, division_id')
       .eq('user_id', userId);
 
-    const existing = currentRoles ?? [];
-    const alreadyHasThis = role === 'division'
-      ? existing.some((r) => r.role === 'division' && r.division_id === divisionId)
-      : existing.some((r) => r.role === role);
-
-    if (alreadyHasThis) return { userId, skipped: true };
-
-    const nextRoles = role === 'division'
-      ? [...existing, { role, division_id: divisionId ?? null }]
-      : [...existing.filter((r) => r.role !== role), { role, division_id: null }];
+    const nextRoles = withRole(currentRoles ?? [], role, divisionId ?? null);
+    if (!nextRoles) return { userId, skipped: true };
 
     const { error } = await adminClient.rpc('admin_set_user_roles', {
       _user_id: userId,

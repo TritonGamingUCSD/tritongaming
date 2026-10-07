@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { logAudit } from '@/lib/audit';
-import { UUID, authorizeShifts, bad, shiftSubject, notifyShifts } from '@/lib/shiftsServer';
+import { logAudit } from '@/lib/notifications/audit';
+import { UUID, authorizeShifts, bad, shiftSubject, notifyShifts } from '@/lib/shifts/shiftsServer';
 
 export const dynamic = 'force-dynamic';
 

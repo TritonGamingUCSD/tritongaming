@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ChevronRight, ClipboardCheck } from 'lucide-react';
-import type { TodoItem } from '@/lib/todos';
+import type { TodoItem } from '@/lib/portal/todos';
 import styles from './dashboard.module.css';
 
 // Everything waiting on this person, together at the top of the portal home. Urgent ones first and highlighted.

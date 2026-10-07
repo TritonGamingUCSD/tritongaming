@@ -1,11 +1,11 @@
 'use client';
 
-import { useVisiblePoll } from '@/lib/useVisiblePoll';
+import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { syncPush } from '@/lib/pushClient';
+import { syncPush } from '@/lib/notifications/pushClient';
 import Image from 'next/image';
 import Link from 'next/link';
-import { navigatePortal } from '@/lib/portalNav';
+import { navigatePortal } from '@/lib/portal/portalNav';
 import { Bell } from 'lucide-react';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import type { Notification } from '@/types/database';

@@ -1,5 +1,5 @@
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
-import type { PageBlock } from '@/lib/pageBlocks';
+import type { PageBlock } from '@/lib/site/pageBlocks';
 import styles from './PageBlocks.module.css';
 
 // Draws a page's blocks as zine pieces. It reads the event theme's CSS variables when they exist (--ev-*), so an event's colors carry

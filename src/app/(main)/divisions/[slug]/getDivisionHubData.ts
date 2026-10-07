@@ -1,7 +1,7 @@
-import { openEventsFilter } from '@/lib/checkinWindow';
+import { openEventsFilter } from '@/lib/events/checkinWindow';
 import { unstable_cache } from 'next/cache';
 import { createPublicClient } from '@/lib/supabase/public';
-import { isVisible, type BoardVisibility } from '@/lib/profile';
+import { isVisible, type BoardVisibility } from '@/lib/members/profile';
 
 export interface DivisionEvent {
   id: string;
@@ -91,6 +91,6 @@ async function fetchDivisionHubData(divisionId: string) {
   };
 }
 
-// Re-exported so callers don't need to reach into '@/lib/profile' just to
+// Re-exported so callers don't need to reach into '@/lib/members/profile' just to
 // render a lead's pronouns.
 export { isVisible };

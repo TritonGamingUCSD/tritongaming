@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { getUserRoles } from '@/lib/auth';
-import { isTgMember } from '@/lib/capabilities';
+import { getUserRoles } from '@/lib/core/auth';
+import { isTgMember } from '@/lib/portal/capabilities';
 
 export const dynamic = 'force-dynamic';
 

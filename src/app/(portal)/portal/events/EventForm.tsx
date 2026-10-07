@@ -2,27 +2,26 @@
 
 import SectionHeader from '@/components/ui/SectionHeader';
 import Notice from '@/components/ui/Notice';
-import { showToast } from '@/lib/toast';
+import { showToast } from '@/lib/ui/toast';
 import SaveBar from '@/components/portal/SaveBar';
 import EditingNow from '@/components/portal/EditingNow';
-import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
+import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useDraft } from '@/lib/useDraft';
+import { useDraft } from '@/lib/ui/useDraft';
 import DraftBanner from '@/components/portal/DraftBanner';
 import Link from 'next/link';
 import { ExternalLink, Loader2 } from 'lucide-react';
-import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
 import SocialEmbedsField from '@/components/SocialEmbedsField/SocialEmbedsField';
 import PhotoAlbumsField from '@/components/PhotoAlbumsField/PhotoAlbumsField';
-import { buildCheckinFormUrl } from '@/lib/checkinForm';
-import { eventDayCount, pacificDatetimeLocalToUTC } from '@/lib/timezone';
+import { buildCheckinFormUrl } from '@/lib/events/checkinForm';
+import { eventDayCount, pacificDatetimeLocalToUTC } from '@/lib/core/timezone';
 import type { SocialEmbed, PhotoAlbumEntry, AppRole, ScheduleItem, EventSponsor } from '@/types/database';
 import EventExtrasEditor from './EventExtrasEditor';
 import PageBlocksEditor from '@/components/PageBlocksEditor/PageBlocksEditor';
-import type { PageBlock } from '@/lib/pageBlocks';
+import type { PageBlock } from '@/lib/site/pageBlocks';
 import EventThemePanel from './EventThemePanel';
 import EventPostersField from './EventPostersField';
-import { EMPTY_THEME, type EventTheme } from '@/lib/eventTheme';
+import { EMPTY_THEME, type EventTheme } from '@/lib/events/eventTheme';
 import CheckinFormFieldsEditor, { EMPTY_CHECKIN_FORM_CONFIG, type CheckinFormConfigValue } from './CheckinFormFieldsEditor';
 import LivePreview from '@/components/portal/LivePreview';
 import styles from './new/newevent.module.css';
@@ -184,7 +183,7 @@ export default function EventForm({
   // Editing: stay on the page after saving (the caller does not navigate), and confirm with a toast right here.
   stayAfterSave?: boolean;
   // Officers who can be credited for a poster or sticker (name and link filled in from their profile).
-  creditPeople?: import('@/lib/creditPeople').CreditPerson[];
+  creditPeople?: import('@/lib/members/creditPeople').CreditPerson[];
 }) {
   // Older events have only a flyer: it becomes poster 1.
   const [form, setForm] = useState<EventFormValues>(() => (initial.theme.posters?.length || !initial.flyer_url ? initial : { ...initial, theme: { ...initial.theme, posters: [initial.flyer_url] } }));

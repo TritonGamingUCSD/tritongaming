@@ -1,9 +1,9 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { getContentBlocks } from '@/lib/content';
+import { getContentBlocks } from '@/lib/site/content';
 import BackToTop from './BackToTop';
 import styles from './Footer.module.css';
-import { DISCORD_URL } from '@/lib/links';
+import { DISCORD_URL } from '@/lib/site/links';
 
 const EXPLORE_LINKS = [
   { href: '/', label: 'Home' },

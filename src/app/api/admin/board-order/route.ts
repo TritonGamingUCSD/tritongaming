@@ -1,9 +1,9 @@
-import { logAudit } from '@/lib/audit';
-import { invalidate } from '@/lib/revalidate';
+import { logAudit } from '@/lib/notifications/audit';
+import { invalidate } from '@/lib/site/revalidate';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { hasCapability } from '@/lib/capabilities';
+import { hasCapability } from '@/lib/portal/capabilities';
 
 // Sets profiles.board_order = its index in the given array — the exec/
 // lead display order shown on the public About page board section and

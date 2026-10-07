@@ -1,15 +1,15 @@
 'use client';
 
-import { refreshPublicCache } from '@/lib/refreshPublicCache';
+import { refreshPublicCache } from '@/lib/site/refreshPublicCache';
 import { useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { slugify } from '@/lib/slug';
-import { deleteIfReplaced } from '@/lib/imageUpload';
-import { pacificDatetimeLocalToUTC } from '@/lib/timezone';
+import { slugify } from '@/lib/core/slug';
+import { deleteIfReplaced } from '@/lib/storage/imageUpload';
+import { pacificDatetimeLocalToUTC } from '@/lib/core/timezone';
 import EventForm, { cleanCheckinWindows, type EventFormValues } from '../EventForm';
 import type { CheckinFormConfigValue } from '../CheckinFormFieldsEditor';
-import { cleanTheme } from '@/lib/eventTheme';
-import { cleanBlocks } from '@/lib/pageBlocks';
+import { cleanTheme } from '@/lib/events/eventTheme';
+import { cleanBlocks } from '@/lib/site/pageBlocks';
 
 export default function EditEventClient({
   eventId,
@@ -21,7 +21,7 @@ export default function EditEventClient({
   eventId: string;
   initial: EventFormValues;
   seedCheckinFormConfig?: CheckinFormConfigValue | null;
-  creditPeople?: import('@/lib/creditPeople').CreditPerson[];
+  creditPeople?: import('@/lib/members/creditPeople').CreditPerson[];
   previewViewer?: { year: string | null; classOf?: number | null; roles: import('@/types/database').AppRole[] };
 }) {
   const savedFlyer = useRef<string | null>(initial.flyer_url);

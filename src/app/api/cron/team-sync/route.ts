@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { cronAllowed } from '@/lib/cronAuth';
+import { cronAllowed } from '@/lib/core/cronAuth';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { runTeamSync } from '@/lib/teamYears';
+import { runTeamSync } from '@/lib/members/teamYears';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

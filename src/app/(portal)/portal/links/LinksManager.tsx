@@ -2,14 +2,14 @@
 
 import SaveBar from '@/components/portal/SaveBar';
 import EditingNow from '@/components/portal/EditingNow';
-import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
+import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import { useCallback, useEffect, useState } from 'react';
-import { Copy, Check, Trash2, Pencil, ExternalLink, Link2 } from 'lucide-react';
+import { Check, ExternalLink, Link2 } from 'lucide-react';
 import Notice from '@/components/ui/Notice';
 import Button from '@/components/ui/Button';
 import { Input } from '@/components/ui/Field';
-import { confirmHold } from '@/lib/confirmHold';
-import { showToast } from '@/lib/toast';
+import { confirmHold } from '@/lib/ui/confirmHold';
+import { showToast } from '@/lib/ui/toast';
 import IconButton from '@/components/ui/IconButton';
 import styles from './links.module.css';
 

@@ -2,8 +2,8 @@
 
 import { useEffect, useRef } from 'react';
 import StyledQRCode from '@/components/StyledQRCode/StyledQRCode';
-import { qrBadgeOptionsFromQR, drawQRBadge } from '@/lib/qrBadge';
-import type { QRCodeOptions } from '@/lib/qrCodeStyling';
+import { qrBadgeOptionsFromQR, drawQRBadge } from '@/lib/qr/qrBadge';
+import type { QRCodeOptions } from '@/lib/qr/qrCodeStyling';
 import styles from './TicketQRBadge.module.css';
 
 interface Props {

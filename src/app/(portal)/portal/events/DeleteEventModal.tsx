@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Dialog, { DialogText, DialogKicker, DialogList, DialogActions, DialogCancel, DialogDanger, DialogOption } from '@/components/ui/Dialog';
 import Notice from '@/components/ui/Notice';
 import HoldButton from '@/components/HoldToConfirm/HoldButton';
-import { showToast } from '@/lib/toast';
+import { showToast } from '@/lib/ui/toast';
 
 // Three deliberate steps before anything is deleted: read what will be
 // wiped, re-confirm with the actual numbers, then press and hold the button.

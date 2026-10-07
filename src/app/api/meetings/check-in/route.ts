@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { authorizeMeetings, checkInOpensAt, getTodaysMeetings, isCheckInAccepting, isMeetingOpen, isValidMeetingCode } from '@/lib/meetings';
-import { canAttendMeeting } from '@/lib/meetingAudience';
+import { authorizeMeetings, checkInOpensAt, getTodaysMeetings, isCheckInAccepting, isMeetingOpen, isValidMeetingCode } from '@/lib/meetings/meetings';
+import { canAttendMeeting } from '@/lib/meetings/meetingAudience';
 
 // A team member typing the code shown in the room. The code identifies the meeting: it's checked
 // against every meeting that's open today. Only ever checks in the caller themselves.

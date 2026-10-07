@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { authUrl, googleConfigured, siteOrigin } from '@/lib/googleCalendar';
+import { authUrl, googleConfigured, siteOrigin } from '@/lib/events/googleCalendar';
 
 export const dynamic = 'force-dynamic';
 

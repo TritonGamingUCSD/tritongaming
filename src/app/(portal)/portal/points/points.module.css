@@ -1,14 +1,5 @@
 .page { max-width: 1240px; width: 100%; margin-inline: auto; }
 
-.header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.75rem;
-  flex-wrap: wrap;
-}
-
 .title {
   font-family: var(--font-futura-heavy);
   font-size: clamp(1.25rem, 2.5vw, 1.6rem);
@@ -60,42 +51,6 @@
 
 /* ── My Points ── */
 .pointsTab { display: flex; flex-direction: column; gap: 1.5rem; }
-
-.tierCard {
-  composes: card from '../../../../components/ui/Surface.module.css';
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.tierBadge {
-  align-self: flex-start;
-  font-family: var(--font-renegare);
-  font-size: 0.78rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 0.3rem 0.875rem;
-  border-radius: var(--radius-pill);
-  border: 1px solid;
-  white-space: nowrap;
-}
-
-.balanceRow { display: flex; gap: 2.5rem; flex-wrap: wrap; }
-
-.balanceValue { font-family: var(--font-futura-heavy); font-size: 1.75rem; color: var(--pp-ink); }
-.balanceLabel { font-size: var(--fs-meta); color: rgba(var(--pp-ink-rgb), 0.87); margin-top: 0.15rem; }
-
-.progressWrap { display: flex; flex-direction: column; gap: 0.4rem; }
-
-.progressBar {
-  height: 6px;
-  border-radius: var(--radius-pill);
-  background: rgba(var(--pp-ink-rgb), 0.08);
-  overflow: hidden;
-}
-.progressFill { height: 100%; border-radius: var(--radius-pill); transition: width 0.3s; }
-.progressLabel { font-size: var(--fs-meta); color: rgba(var(--pp-ink-rgb), 0.87); }
 
 .referralCard {
   background: rgba(125, 180, 234,0.05);
@@ -272,23 +227,6 @@
 .shopCardFooter { display: flex; align-items: center; justify-content: space-between; margin-top: 0.5rem; }
 .shopCardCost { font-family: var(--font-futura-heavy); color: var(--p-accent-text); font-size: 0.95rem; }
 
-.claimBtn {
-  padding: 0.5rem 1rem;
-  background: var(--btn-primary-bg);
-  color: var(--btn-primary-text);
-  border: 1px solid var(--btn-primary-border);
-  box-shadow: var(--btn-primary-shadow);
-  border-radius: var(--radius-sm);
-  font-family: var(--font-futura-heavy);
-  font-size: 0.75rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-.claimBtn:hover:not(:disabled) { border-color: var(--btn-primary-border-hover); box-shadow: var(--btn-primary-shadow-hover); }
-.claimBtn:disabled { opacity: 0.4; cursor: not-allowed; }
-
 /* ── Leaderboard ── */
 .leaderboardTab { display: flex; flex-direction: column; gap: 1.5rem; }
 
@@ -392,24 +330,6 @@
   cursor: pointer;
 }
 
-.saveBtn {
-  padding: 0.6rem 1.25rem;
-  background: var(--btn-primary-bg);
-  color: var(--btn-primary-text);
-  border: 1px solid var(--btn-primary-border);
-  box-shadow: var(--btn-primary-shadow);
-  border-radius: var(--radius-sm);
-  font-family: var(--font-futura-heavy);
-  font-size: 0.78rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-.saveBtn:hover:not(:disabled) { border-color: var(--btn-primary-border-hover); box-shadow: var(--btn-primary-shadow-hover); }
-.saveBtn:disabled { opacity: 0.5; cursor: not-allowed; }
-
 .manageList { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1.25rem; }
 
 .manageRow {
@@ -437,19 +357,6 @@
 }
 .tierUnlockTag { color: var(--p-accent-text); border-color: rgba(125, 180, 234,0.35); background: rgba(125, 180, 234,0.08); }
 .digitalTag { color: var(--pp-info); border-color: rgba(96,165,250,0.35); background: rgba(96,165,250,0.08); }
-
-.toggleBtn {
-  padding: 0.4rem 0.875rem;
-  background: rgba(var(--pp-ink-rgb), 0.06);
-  color: rgba(var(--pp-ink-rgb), 0.92);
-  border: 1px solid rgba(var(--pp-ink-rgb), 0.26);
-  border-radius: var(--radius-sm);
-  font-size: 0.75rem;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.15s;
-}
-.toggleBtn:hover { background: rgba(var(--pp-ink-rgb), 0.1); }
 
 .manageRowActions { display: flex; gap: 0.5rem; flex-shrink: 0; }
 

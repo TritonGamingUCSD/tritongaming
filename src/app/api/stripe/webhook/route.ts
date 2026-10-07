@@ -1,7 +1,7 @@
-import { createNotifications } from '@/lib/notify';
+import { createNotifications } from '@/lib/notifications/notify';
 import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
-import { stripe, stripeEnabled } from '@/lib/stripe';
+import { stripe, stripeEnabled } from '@/lib/events/stripe';
 import { createServiceClient } from '@/lib/supabase/admin';
 
 export const runtime = 'nodejs';

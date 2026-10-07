@@ -6,8 +6,6 @@
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; }
 .nav { display: flex; align-items: center; gap: 0.5rem; }
 .month { font-family: var(--font-futura-heavy); font-size: 1.15rem; color: var(--pp-ink); min-width: 10.5rem; text-align: center; margin: 0; }
-.legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; font-size: 0.75rem; color: rgba(var(--pp-ink-rgb), 0.87); }
-.legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
 .dotEvent, .dotMeeting { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .dotEvent { background: #4a90e2; }
 .dotMeeting { background: #a78bfa; }
@@ -32,7 +30,6 @@
 .today .num { background: var(--p-accent); color: #111c33; }
 .chips { display: flex; flex-direction: column; gap: 2px; width: 100%; min-width: 0; }
 .chip { display: block; padding: 2px 6px; border-radius: 4px; background: var(--kbg); color: var(--kfg); border-left: 3px solid var(--k); font-weight: 600; font-size: 0.68rem; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.more { font-size: 0.66rem; color: rgba(var(--pp-ink-rgb), 0.88); padding-left: 2px; }
 .dots { display: none; gap: 3px; }
 
 .dayPanel {
@@ -271,13 +268,6 @@
 .dots { flex-wrap: wrap; width: 100%; }
 .dots i { width: 100%; max-width: 100%; height: 5px; border-radius: 2px; }
 .chipOthers { border: 1px dashed rgba(var(--pp-ink-rgb), 0.60); opacity: 0.85; }
-
-/* Month-view boxes take their type's colors (same variables the week/day blocks use). */
-.chipEvent { composes: kEvent; }
-.chipMeeting { composes: kMeeting; }
-.chipInternal { composes: kInternal; }
-.chipGoogle { composes: kGoogle; }
-.chipShift { composes: kShift; }
 
 /* A meeting or event name is never cut off mid-word: it wraps (up to two lines in the month grid and all-day row, as many as fit in a time block)
    and only then shortens with an ellipsis. */

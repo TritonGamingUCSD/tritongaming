@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { logAudit } from '@/lib/audit';
-import { authorizeStrikes, cleanReason, notYourOwn, notifyPerson, recordEvent } from '@/lib/strikes';
+import { logAudit } from '@/lib/notifications/audit';
+import { authorizeStrikes, cleanReason, notYourOwn, notifyPerson, recordEvent } from '@/lib/members/strikes';
 
 const UUID = /^[0-9a-f-]{36}$/i;
 

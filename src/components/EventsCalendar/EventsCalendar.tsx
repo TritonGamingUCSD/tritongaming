@@ -3,8 +3,8 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { CalendarPlus, ChevronLeft, ChevronRight, ExternalLink, MapPin } from 'lucide-react';
-import { googleCalendarUrl } from '@/lib/calendarLinks';
-import { PACIFIC_TZ } from '@/lib/timezone';
+import { googleCalendarUrl } from '@/lib/events/calendarLinks';
+import { PACIFIC_TZ } from '@/lib/core/timezone';
 import styles from './EventsCalendar.module.css';
 
 export interface CalEvent { id: string; slug: string; name: string; start_date: string; end_date: string; location: string }

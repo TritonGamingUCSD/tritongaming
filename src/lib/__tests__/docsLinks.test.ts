@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { backlinksTo, resolveWikiLinks } from '@/lib/docsLinks';
+import { backlinksTo, resolveWikiLinks } from '@/lib/docs/docsLinks';
 
 const A = '11111111-1111-1111-1111-111111111111';
 const docs = [{ id: A, title: 'Google Drive' }];

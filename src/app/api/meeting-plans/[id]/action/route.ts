@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { logAudit } from '@/lib/audit';
-import { answeredUserIds, authorizePlans, decidePlan, notifyPlanAsk, planPeople, reopenPlan, type PlanRow } from '@/lib/meetingPlanServer';
+import { logAudit } from '@/lib/notifications/audit';
+import { answeredUserIds, authorizePlans, decidePlan, notifyPlanAsk, planPeople, reopenPlan, type PlanRow } from '@/lib/meetings/meetingPlanServer';
 
 export const dynamic = 'force-dynamic';
 

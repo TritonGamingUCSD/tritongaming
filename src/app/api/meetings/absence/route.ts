@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { logAudit } from '@/lib/audit';
-import { authorizeMeetings, getExpectedPeople, markEveryWeek, resolveOccurrence, stopEveryWeek } from '@/lib/meetings';
+import { logAudit } from '@/lib/notifications/audit';
+import { authorizeMeetings, getExpectedPeople, markEveryWeek, resolveOccurrence, stopEveryWeek } from '@/lib/meetings/meetings';
 
 export const dynamic = 'force-dynamic';
 

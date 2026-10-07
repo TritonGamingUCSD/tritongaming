@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { logAudit } from '@/lib/audit';
-import { academicYearLabel, authorizeQuarters } from '@/lib/quarters';
-import { TIERS, archiveYear, type Tier } from '@/lib/teamYears';
-import { resolveAvatarUrl } from '@/lib/profile';
-import { invalidate } from '@/lib/revalidate';
+import { logAudit } from '@/lib/notifications/audit';
+import { academicYearLabel, authorizeQuarters } from '@/lib/members/quarters';
+import { TIERS, archiveYear, type Tier } from '@/lib/members/teamYears';
+import { resolveAvatarUrl } from '@/lib/members/profile';
+import { invalidate } from '@/lib/site/revalidate';
 
 const UUID = /^[0-9a-f-]{36}$/i;
 

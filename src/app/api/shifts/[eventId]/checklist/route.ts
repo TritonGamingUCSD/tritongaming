@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { UUID, authorizeShifts, bad, notifyShifts } from '@/lib/shiftsServer';
+import { UUID, authorizeShifts, bad, notifyShifts } from '@/lib/shifts/shiftsServer';
 
 export const dynamic = 'force-dynamic';
 

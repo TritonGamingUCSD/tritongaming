@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { usePortalParams, useLiveParams } from '@/lib/usePortalParams';
+import { usePortalParams, useLiveParams } from '@/lib/portal/usePortalParams';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Link from 'next/link';
 import {
@@ -9,12 +9,12 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from 'recharts';
 import EventRowActions from './EventRowActions';
-import { Search, Plus, Ticket, MapPin, BarChart3, ListChecks, Award, ExternalLink, Trash2 } from 'lucide-react';
-import { PACIFIC_TZ, formatEventDateRangeShort, eventDayCount } from '@/lib/timezone';
-import { isCheckinWindowOpen } from '@/lib/checkinWindow';
-import type { MonthPoint } from '@/lib/monthBuckets';
+import { Search, Plus, Ticket, MapPin, BarChart3, ListChecks, Award } from 'lucide-react';
+import { PACIFIC_TZ, formatEventDateRangeShort, eventDayCount } from '@/lib/core/timezone';
+import { isCheckinWindowOpen } from '@/lib/events/checkinWindow';
+import type { MonthPoint } from '@/lib/events/monthBuckets';
 import type { EventTicketStat } from './getEventsData';
-import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
+import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
 import EventCheckinsModal from './EventCheckinsModal';
 import DeleteEventModal from './DeleteEventModal';
 import { ButtonLink } from '@/components/ui/Button';

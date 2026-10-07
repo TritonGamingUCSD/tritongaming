@@ -1,5 +1,5 @@
 import { CalendarPlus, ExternalLink } from 'lucide-react';
-import { googleCalendarUrl } from '@/lib/calendarLinks';
+import { googleCalendarUrl } from '@/lib/events/calendarLinks';
 import styles from './AddToCalendarButton.module.css';
 
 // Just a styled download link — src/app/api/events/[id]/ics/route.ts does

@@ -7,7 +7,7 @@ import { Flip } from 'gsap/Flip';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'motion/react';
 import { Moon, X } from 'lucide-react';
-import { resolveAvatarUrl, isVisible } from '@/lib/profile';
+import { resolveAvatarUrl, isVisible } from '@/lib/members/profile';
 import type { BoardMember, BoardTier } from '@/app/(main)/team/getBoardMembers';
 import type { PastMember, PastYear } from '@/app/(main)/team/getTeamYears';
 import styles from './BoardSection.module.css';

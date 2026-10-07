@@ -3,8 +3,8 @@
 import IconButton from '@/components/ui/IconButton';
 import { useRef, useState } from 'react';
 import Image from 'next/image';
-import { Camera, X } from 'lucide-react';
-import { uploadCroppedImage, uploadImageToStorage, ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES } from '@/lib/imageUpload';
+import { Camera } from 'lucide-react';
+import { uploadCroppedImage, uploadImageToStorage, ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES } from '@/lib/storage/imageUpload';
 import ImageCropModal from '@/components/ImageCropModal/ImageCropModal';
 import styles from './avatarEditor.module.css';
 

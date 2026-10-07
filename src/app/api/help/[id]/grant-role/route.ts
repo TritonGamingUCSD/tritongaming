@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { logAudit } from '@/lib/audit';
-import { authorizeHelp, notify, type HelpTicketRow } from '@/lib/help';
+import { logAudit } from '@/lib/notifications/audit';
+import { authorizeHelp, notify, type HelpTicketRow } from '@/lib/notifications/help';
+import { withRole } from '@/lib/portal/roleGrant';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,11 +29,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     divisionName = d.name as string;
   }
   const { data: current } = await auth.svc.from('user_roles').select('role, division_id').eq('user_id', t.user_id);
-  const existing = current ?? [];
-  const has = role === 'division' ? existing.some((r) => r.role === 'division' && r.division_id === divisionId) : existing.some((r) => r.role === role);
+  const next = withRole(current ?? [], role, divisionId);
   const label = role === 'division' ? `Division Lead (${divisionName})` : role === 'officer' ? 'Officer' : 'Lead';
-  if (!has) {
-    const next = role === 'division' ? [...existing, { role, division_id: divisionId }] : [...existing.filter((r) => r.role !== role), { role, division_id: null }];
+  if (next) {
     const { error } = await auth.svc.rpc('admin_set_user_roles', { _user_id: t.user_id, _roles: next, _granted_by: auth.user.id });
     if (error) return NextResponse.json({ error: 'Couldn’t give the role.' }, { status: 500 });
   }

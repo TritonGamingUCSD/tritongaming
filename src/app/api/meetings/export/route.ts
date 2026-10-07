@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { logAudit } from '@/lib/audit';
-import { pacificDayKey } from '@/lib/checkinDays';
-import { fetchLinkedEmails, pickDisplayEmails } from '@/lib/linkedEmails';
+import { logAudit } from '@/lib/notifications/audit';
+import { pacificDayKey } from '@/lib/events/checkinDays';
+import { fetchLinkedEmails, pickDisplayEmails } from '@/lib/members/linkedEmails';
 import { ROLE_DISPLAY_RANK, ROLE_LABELS, type AppRole } from '@/types/database';
-import { addDaysKey, attachExtras, authorizeMeetings, loadGroups } from '@/lib/meetings';
-import { AUDIENCE_ROLES, audienceLabel, isExpectedActive } from '@/lib/meetingAudience';
-import { staffName } from '@/lib/names';
+import { addDaysKey, attachExtras, authorizeMeetings, loadGroups } from '@/lib/meetings/meetings';
+import { AUDIENCE_ROLES, audienceLabel, isExpectedActive } from '@/lib/meetings/meetingAudience';
+import { staffName } from '@/lib/members/names';
 
 export const dynamic = 'force-dynamic';
 

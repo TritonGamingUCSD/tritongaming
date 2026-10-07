@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { MAX_DOC_CHARS, UUID, authorizeDocs, bad, namesOf } from '@/lib/docsServer';
+import { MAX_DOC_CHARS, UUID, authorizeDocs, bad, namesOf } from '@/lib/docs/docsServer';
 
 export const dynamic = 'force-dynamic';
 

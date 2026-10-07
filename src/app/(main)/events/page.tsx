@@ -3,9 +3,9 @@ import NextEventTicket from '@/components/NextEventTicket/NextEventTicket';
 import { ZineBand, PageHero, BandHeader } from '@/components/ZineBand/ZineBand';
 import EventCard from '@/components/EventCard/EventCard';
 import EventsCalendar from '@/components/EventsCalendar/EventsCalendar';
-import { getUpcomingEvents, getPreviousEvents } from '@/lib/events';
-import { getContentBlocks } from '@/lib/content';
-import { resolveSections } from '@/lib/pageLayout';
+import { getUpcomingEvents, getPreviousEvents } from '@/lib/events/events';
+import { getContentBlocks } from '@/lib/site/content';
+import { resolveSections } from '@/lib/site/pageLayout';
 import { Fragment } from 'react';
 import styles from './events.module.css';
 

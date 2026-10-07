@@ -1,10 +1,10 @@
-import { createNotifications } from '@/lib/notify';
+import { createNotifications } from '@/lib/notifications/notify';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { stripe, stripeEnabled } from '@/lib/stripe';
-import { isVerifiedMember } from '@/lib/capabilities';
-import { hasBasicProfileInfo } from '@/lib/profile';
-import { isCheckinWindowOpen } from '@/lib/checkinWindow';
+import { stripe, stripeEnabled } from '@/lib/events/stripe';
+import { isVerifiedMember } from '@/lib/portal/capabilities';
+import { hasBasicProfileInfo } from '@/lib/members/profile';
+import { isCheckinWindowOpen } from '@/lib/events/checkinWindow';
 
 export async function POST(request: Request) {
   const supabase = await createClient();

@@ -1,4 +1,4 @@
-import { calendarFeed } from '@/lib/calendarFeed';
+import { calendarFeed } from '@/lib/events/calendarFeed';
 
 export const dynamic = 'force-dynamic';
 

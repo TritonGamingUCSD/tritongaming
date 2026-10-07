@@ -4,9 +4,9 @@ import { Select } from '@/components/ui/Field';
 import { GripVertical, Plus } from 'lucide-react';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
 import IconButton from '@/components/ui/IconButton';
-import { useDragReorder } from '@/lib/useDragReorder';
-import { BLOCK_LABELS, BLOCK_LIMITS, newBlock, type BlockType, type PageBlock } from '@/lib/pageBlocks';
-import type { CreditPerson } from '@/lib/creditPeople';
+import { useDragReorder } from '@/lib/ui/useDragReorder';
+import { BLOCK_LABELS, BLOCK_LIMITS, newBlock, type BlockType, type PageBlock } from '@/lib/site/pageBlocks';
+import type { CreditPerson } from '@/lib/members/creditPeople';
 import styles from './PageBlocksEditor.module.css';
 
 const TYPES: BlockType[] = ['text', 'highlights', 'faq', 'gallery'];

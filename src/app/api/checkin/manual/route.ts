@@ -1,10 +1,10 @@
-import { logAudit } from '@/lib/audit';
+import { logAudit } from '@/lib/notifications/audit';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { hasCapability } from '@/lib/capabilities';
-import { performCheckin } from '@/lib/performCheckin';
-import { canCheckInNow } from '@/lib/checkinDays';
+import { hasCapability } from '@/lib/portal/capabilities';
+import { performCheckin } from '@/lib/events/performCheckin';
+import { canCheckInNow } from '@/lib/events/checkinDays';
 
 // Lets an exec/admin check someone in directly from the Event Management
 // attendee list — no QR scan or online code needed, for whenever someone's

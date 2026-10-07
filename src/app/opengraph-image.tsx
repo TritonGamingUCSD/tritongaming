@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
-import { OG_SIZE, ogFonts, ogLogo } from '@/lib/ogCard';
-import { RootCard } from '@/lib/ogCards';
+import { OG_SIZE, ogFonts, ogLogo } from '@/lib/site/ogCard';
+import { RootCard } from '@/lib/site/ogCards';
 
 // The default link-preview card for every page that doesn't make its own (events and divisions do). Flat poster look, and the wording is
 // exactly "Gaming Org at UC San Diego". The design lives in lib/ogCards.tsx.

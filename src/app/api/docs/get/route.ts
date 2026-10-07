@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { hasCapability } from '@/lib/capabilities';
-import { DOC_COLUMNS, DRAFT_COLUMNS, UUID, authorizeDocs, bad } from '@/lib/docsServer';
+import { hasCapability } from '@/lib/portal/capabilities';
+import { DOC_COLUMNS, DRAFT_COLUMNS, UUID, authorizeDocs, bad } from '@/lib/docs/docsServer';
 
 export const dynamic = 'force-dynamic';
 

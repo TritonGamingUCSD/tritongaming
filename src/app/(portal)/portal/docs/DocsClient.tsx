@@ -5,14 +5,14 @@ import { PanelLeft, Plus, Search, X } from 'lucide-react';
 import SectionHeader from '@/components/ui/SectionHeader';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
-import { confirmHold } from '@/lib/confirmHold';
-import { showToast } from '@/lib/toast';
-import { useLiveParams } from '@/lib/usePortalParams';
-import { mergedPortalParams, portalHref } from '@/lib/portalPath';
+import { confirmHold } from '@/lib/ui/confirmHold';
+import { showToast } from '@/lib/ui/toast';
+import { useLiveParams } from '@/lib/portal/usePortalParams';
+import { mergedPortalParams, portalHref } from '@/lib/portal/portalPath';
 import { createClient } from '@/lib/supabase/client';
-import { slugify } from '@/lib/slug';
-import { buildSections, canMoveUnder, reorder, UNCATEGORIZED } from '@/lib/docsTree';
-import { diffSync, joinNames, type DocChange, type SyncDoc } from '@/lib/docsSync';
+import { slugify } from '@/lib/core/slug';
+import { CATEGORY_COLORS, buildSections, canMoveUnder, reorder, UNCATEGORIZED } from '@/lib/docs/docsTree';
+import { diffSync, joinNames, type DocChange, type SyncDoc } from '@/lib/docs/docsSync';
 import type { Doc, DocCategory } from '@/types/database';
 import DocPicker from './DocPicker';
 import DocSidebar, { type DropTarget } from './DocSidebar';
@@ -303,7 +303,9 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
   }
   async function addCategory(name: string) {
     const supabase = createClient();
-    const { data, error: err } = await supabase.from('doc_categories').insert({ name, order_index: categories.length }).select('id, name, order_index, created_at').single();
+    // A new category takes the next palette colour nobody is using yet (the colour can be changed from the category's menu).
+    const color = CATEGORY_COLORS.find((c) => !categories.some((x) => x.color === c)) ?? CATEGORY_COLORS[categories.length % CATEGORY_COLORS.length];
+    const { data, error: err } = await supabase.from('doc_categories').insert({ name, order_index: categories.length, color }).select('id, name, order_index, color, created_at').single();
     if (err) { setError(err.code === '23505' ? 'A category with that name already exists.' : 'Failed to add category.'); return; }
     setCategories((p) => [...p, data as DocCategory]);
   }
@@ -358,7 +360,7 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
               <DocSidebar docs={docs} sections={sections} categories={categories} selectedId={selectedId} onClose={() => setOrganizeOpen(false)} favorites={favorites}
         collapsed={collapsed} onToggle={toggleCollapse} onCollapseAll={collapseAll} onExpandAll={expandAll} onOpen={openDoc} onHome={goHome} canEdit={canEdit} sync={sync}
         onNew={(parentId, categoryId) => setNewDialog({ parentId, categoryId })} onMenu={menuAction} onDrop={(id, t) => void moveTo(id, t)}
-        onAddCategory={addCategory} onDeleteCategory={deleteCategory} onCategoryColor={setCategoryColor} onReorderCategories={reorderCategories} catName={catName} />
+        onAddCategory={addCategory} onDeleteCategory={deleteCategory} onCategoryColor={setCategoryColor} onReorderCategories={reorderCategories} />
             </div>
           </div>
         </div>

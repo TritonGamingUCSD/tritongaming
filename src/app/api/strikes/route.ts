@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { STRIKE_LIMIT, authorizeStrikes, cleanCategory, notYourOwn, publishStrike, quietTest, suggestions, trackedPeople } from '@/lib/strikes';
+import { STRIKE_LIMIT, authorizeStrikes, cleanCategory, notYourOwn, publishStrike, quietTest, suggestions, trackedPeople } from '@/lib/members/strikes';
 
 export const dynamic = 'force-dynamic';
 

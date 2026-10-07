@@ -1,5 +1,5 @@
 import { Ticket, CircleCheck, Calendar } from 'lucide-react';
-import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/timezone';
+import { formatPacificDateTime } from '@/lib/core/timezone';
 import styles from './activity.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
 

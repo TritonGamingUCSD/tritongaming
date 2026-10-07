@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { pushConfigured, validPushEndpoint } from '@/lib/webPush';
+import { pushConfigured, validPushEndpoint } from '@/lib/notifications/webPush';
 
 export const dynamic = 'force-dynamic';
 const MAX_DEVICES = 10;

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { isLazySection, loadPortalSection } from '@/lib/portalSectionData';
+import { isLazySection, loadPortalSection } from '@/lib/portal/portalSectionData';
 
 export const dynamic = 'force-dynamic';
 

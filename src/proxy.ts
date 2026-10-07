@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware-client';
-import { VIEW_USER_COOKIE } from '@/lib/viewAs';
+import { VIEW_USER_COOKIE } from '@/lib/portal/viewAs';
 
 // While an admin is viewing the portal as another person it is view only: every request that would change something is refused here,
 // before it reaches any route. (The cookie is only honoured for a real admin; for anyone else a copied cookie just blocks their own edits.)

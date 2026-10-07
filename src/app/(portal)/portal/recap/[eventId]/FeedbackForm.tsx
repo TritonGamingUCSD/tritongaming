@@ -7,8 +7,8 @@ import Notice from '@/components/ui/Notice';
 import SaveBar from '@/components/portal/SaveBar';
 import { Textarea } from '@/components/ui/Field';
 import { createClient } from '@/lib/supabase/client';
-import { showToast } from '@/lib/toast';
-import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
+import { showToast } from '@/lib/ui/toast';
+import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import styles from './recap.module.css';
 
 export default function FeedbackForm({ eventId, userId, initialRating, initialComment }: { eventId: string; userId: string; initialRating: number | null; initialComment: string }) {

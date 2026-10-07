@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
-import { resolveSections } from '@/lib/pageLayout';
+import { resolveSections } from '@/lib/site/pageLayout';
 import { Fragment } from 'react';
 import { Camera, ImageOff } from 'lucide-react';
-import { getContentBlocks } from '@/lib/content';
-import { youtubeVideoId } from '@/lib/youtube';
+import { getContentBlocks } from '@/lib/site/content';
+import { youtubeVideoId } from '@/lib/site/youtube';
 import { ZineBand, PageHero, BandHeader } from '@/components/ZineBand/ZineBand';
 import HoverVideo from './HoverVideo';
 import PhotoStrip from '@/components/PhotoStrip/PhotoStrip';
-import { getSitePhotos, pickPhotos } from '@/lib/sitePhotos';
+import { getSitePhotos, pickPhotos } from '@/lib/storage/sitePhotos';
 import styles from './media.module.css';
 
 export const revalidate = 60;

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Plus, Shuffle, Star, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { Input } from '@/components/ui/Field';
-import { MAX_OPTION_LENGTH, MAX_QUESTION_LENGTH, RATING_MAX, suggestQuestionOf, type QuestionType, type Tally } from '@/lib/meetingFun';
+import { MAX_OPTION_LENGTH, MAX_QUESTION_LENGTH, RATING_MAX, suggestQuestionOf, type QuestionType, type Tally } from '@/lib/meetings/meetingFun';
 import styles from './meetings.module.css';
 
 export interface QState { text: string; type: QuestionType; options: string[] }

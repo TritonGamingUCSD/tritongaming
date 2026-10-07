@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, FileText, FolderCog, MoreHorizontal, Plus, Star, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { Input } from '@/components/ui/Field';
-import { CATEGORY_COLORS, canMoveUnder, type DocNode, type DocSection } from '@/lib/docsTree';
-import type { SyncDoc } from '@/lib/docsSync';
+import { CATEGORY_COLORS, canMoveUnder, type DocNode, type DocSection } from '@/lib/docs/docsTree';
+import type { SyncDoc } from '@/lib/docs/docsSync';
 import type { Doc, DocCategory } from '@/types/database';
 import styles from './docs.module.css';
 
@@ -13,12 +13,12 @@ export interface DropTarget { parentId: string | null; categoryId: string | null
 
 export default function DocSidebar({
   docs, sections, categories, selectedId, onClose, favorites, collapsed, onToggle, onCollapseAll, onExpandAll, onOpen, onHome, canEdit, sync,
-  onNew, onMenu, onDrop, onAddCategory, onDeleteCategory, onCategoryColor, onReorderCategories, catName,
+  onNew, onMenu, onDrop, onAddCategory, onDeleteCategory, onCategoryColor, onReorderCategories,
 }: {
   docs: Doc[]; sections: DocSection<Doc>[]; categories: DocCategory[]; selectedId: string | null; onClose: () => void;
   favorites: Set<string>; collapsed: Set<string>; onToggle: (key: string) => void; onCollapseAll: () => void; onExpandAll: () => void; onOpen: (id: string) => void; onHome: () => void; canEdit: boolean;
   sync: Map<string, SyncDoc>; onNew: (parentId: string | null, categoryId: string | null) => void; onMenu: (doc: Doc, action: 'sub' | 'move' | 'up' | 'down') => void;
-  onDrop: (dragId: string, target: DropTarget) => void; onAddCategory: (name: string) => Promise<void>; onDeleteCategory: (c: DocCategory) => void; onCategoryColor: (c: DocCategory, color: string | null) => void; onReorderCategories: (ids: string[]) => void; catName: (d: Doc) => string;
+  onDrop: (dragId: string, target: DropTarget) => void; onAddCategory: (name: string) => Promise<void>; onDeleteCategory: (c: DocCategory) => void; onCategoryColor: (c: DocCategory, color: string | null) => void; onReorderCategories: (ids: string[]) => void;
 }) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [over, setOver] = useState<{ id: string; zone: 'before' | 'inside' | 'after' } | null>(null);

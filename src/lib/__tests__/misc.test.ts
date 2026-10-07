@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { staffName } from '@/lib/names';
-import { commandsFor, matchCommands } from '@/lib/portalCommands';
-import { buildIcsCalendar, googleCalendarUrl } from '@/lib/ics';
+import { staffName } from '@/lib/members/names';
+import { commandsFor, matchCommands } from '@/lib/portal/portalCommands';
+import { buildIcsCalendar, googleCalendarUrl } from '@/lib/events/ics';
 import type { AppRole } from '@/types/database';
 
 const as = (...roles: AppRole[]) => roles.map((role) => ({ role, division_id: null }));

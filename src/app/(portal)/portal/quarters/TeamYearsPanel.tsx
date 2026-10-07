@@ -2,7 +2,7 @@
 
 import SaveBar from '@/components/portal/SaveBar';
 import EditingNow from '@/components/portal/EditingNow';
-import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
+import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import SectionTabs from '@/components/ui/SectionTabs';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
@@ -12,7 +12,7 @@ import IconButton from '@/components/ui/IconButton';
 import Notice from '@/components/ui/Notice';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import { Field, Input, Select } from '@/components/ui/Field';
-import { confirmHold } from '@/lib/confirmHold';
+import { confirmHold } from '@/lib/ui/confirmHold';
 import styles from './quarters.module.css';
 
 type Tier = 'exec' | 'lead' | 'officer';

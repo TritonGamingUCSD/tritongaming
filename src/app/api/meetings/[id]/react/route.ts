@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { authorizeMeetings, isMeetingOpen, type MeetingRow } from '@/lib/meetings';
-import { isCustomEmoji, customEmojiId } from '@/lib/meetingFun';
+import { authorizeMeetings, isMeetingOpen, type MeetingRow } from '@/lib/meetings/meetings';
+import { isCustomEmoji, customEmojiId } from '@/lib/meetings/meetingFun';
 
 // A checked-in person sends an emoji reaction; it floats up on the exec's screen. Lightly
 // rate-limited so one phone can't flood the room.

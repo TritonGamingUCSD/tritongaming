@@ -2,18 +2,18 @@
 
 import SectionTabs from '@/components/ui/SectionTabs';
 import Notice from '@/components/ui/Notice';
-import { confirmHold } from '@/lib/confirmHold';
-import { showToast } from '@/lib/toast';
-import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
+import { confirmHold } from '@/lib/ui/confirmHold';
+import { showToast } from '@/lib/ui/toast';
+import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import { useEffect, useState } from 'react';
 import { Award, ShoppingBag, Trophy, Settings, Copy, Check, QrCode, Gift, Lock, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { getTier, nextTier, type Tier } from '@/lib/tiers';
-import { PACIFIC_TZ } from '@/lib/timezone';
+import { getTier, nextTier, type Tier } from '@/lib/members/tiers';
+import { PACIFIC_TZ } from '@/lib/core/timezone';
 import StyledQRCode from '@/components/StyledQRCode/StyledQRCode';
-import { DEFAULT_QR_OPTIONS } from '@/lib/qrCodeStyling';
+import { DEFAULT_QR_OPTIONS } from '@/lib/qr/qrCodeStyling';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
-import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
+import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
 import type { TransactionRow } from './getMyPointsData';
 import IconButton from '@/components/ui/IconButton';
 import Button from '@/components/ui/Button';

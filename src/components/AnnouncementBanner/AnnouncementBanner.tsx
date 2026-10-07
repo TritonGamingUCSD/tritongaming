@@ -1,4 +1,4 @@
-import { getContentBlock } from '@/lib/content';
+import { getContentBlock } from '@/lib/site/content';
 import AnnouncementClient from './AnnouncementClient';
 
 // Strip tones. The dark ones (navy, royal) follow the brand deck: white text, a small yellow tag and a yellow button. Yellow, green and red are light strips with navy text.

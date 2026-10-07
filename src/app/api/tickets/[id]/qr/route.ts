@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { canCheckInNow } from '@/lib/checkinDays';
+import { canCheckInNow } from '@/lib/events/checkinDays';
 import { createClient } from '@/lib/supabase/server';
-import { rotatingCode, currentWindow, secondsUntilNextWindow, ROTATION_SECONDS } from '@/lib/rotatingCode';
+import { rotatingCode, currentWindow, secondsUntilNextWindow, ROTATION_SECONDS } from '@/lib/events/rotatingCode';
 
 export const runtime = 'nodejs';
 

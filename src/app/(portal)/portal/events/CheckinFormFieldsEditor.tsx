@@ -2,7 +2,6 @@
 
 import Notice from '@/components/ui/Notice';
 import { useEffect, useRef, useState } from 'react';
-import { X } from 'lucide-react';
 import type { AppRole } from '@/types/database';
 import styles from './new/newevent.module.css';
 import IconButton from '@/components/ui/IconButton';

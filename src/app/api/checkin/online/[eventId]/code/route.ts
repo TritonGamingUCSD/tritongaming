@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { hasCapability } from '@/lib/capabilities';
-import { rotatingCode, currentEventCodeWindow, secondsUntilNextEventCodeWindow } from '@/lib/rotatingCode';
+import { hasCapability } from '@/lib/portal/capabilities';
+import { rotatingCode, currentEventCodeWindow, secondsUntilNextEventCodeWindow } from '@/lib/events/rotatingCode';
 
 interface Params { params: Promise<{ eventId: string }>; }
 

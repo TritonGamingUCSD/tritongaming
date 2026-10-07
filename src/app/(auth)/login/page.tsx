@@ -2,11 +2,11 @@ import Notice from '@/components/ui/Notice';
 import { redirect } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getUser } from '@/lib/auth';
+import { getUser } from '@/lib/core/auth';
 import LoginClient from './LoginClient';
 import styles from './login.module.css';
 import type { Metadata } from 'next';
-import { portalTargetFromNext } from '@/lib/portalShare';
+import { portalTargetFromNext } from '@/lib/portal/portalShare';
 import PortalThemeToggle from '@/components/portal/PortalThemeToggle';
 
 // A shared portal link lands here first (the portal needs a login), so the preview card names the page it points at.
@@ -58,7 +58,8 @@ export default async function LoginPage({
           <Notice tone="error">Authentication failed. Please try again.</Notice>
         )}
 
-        <p className={styles.prompt}>Sign in to access events and tickets.</p>
+        <p className={styles.prompt}>Sign in to access events, tickets and the team’s tools.</p>
+        <p className={styles.about}>The member portal for Gaming Org at UC San Diego. Looking for the public site? <Link href="/">Go to the website</Link>.</p>
         <p className={styles.ucsdHint}>UCSD student? Sign in with your @ucsd.edu Google account to get verified access.</p>
 
         <LoginClient next={params.next} ref={params.ref} />

@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { logAudit } from '@/lib/audit';
-import { pacificDayKey } from '@/lib/checkinDays';
-import { notifyMeetingInvites, occurrenceTimes } from '@/lib/meetings';
-import { MAX_DESCRIPTION_LENGTH } from '@/lib/meetingFun';
-import { validateAudienceInput } from '@/lib/meetingAudience';
-import { formatPacificDateTime } from '@/lib/timezone';
-import { authorizeInternalEvents, listInternalEvents } from '@/lib/internalEvents';
+import { logAudit } from '@/lib/notifications/audit';
+import { pacificDayKey } from '@/lib/events/checkinDays';
+import { notifyMeetingInvites, occurrenceTimes } from '@/lib/meetings/meetings';
+import { MAX_DESCRIPTION_LENGTH } from '@/lib/meetings/meetingFun';
+import { validateAudienceInput } from '@/lib/meetings/meetingAudience';
+import { formatPacificDateTime } from '@/lib/core/timezone';
+import { authorizeInternalEvents, listInternalEvents } from '@/lib/meetings/internalEvents';
 
 export const dynamic = 'force-dynamic';
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;

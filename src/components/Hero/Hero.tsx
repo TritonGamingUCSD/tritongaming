@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import HeroFx from './HeroFx';
 import styles from './Hero.module.css';
-import { DISCORD_URL } from '@/lib/links';
+import { DISCORD_URL } from '@/lib/site/links';
 
 interface HeroContent {
   badge?: string;

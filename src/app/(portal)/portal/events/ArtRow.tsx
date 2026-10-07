@@ -4,8 +4,8 @@ import { Select } from '@/components/ui/Field';
 import type { ReactNode } from 'react';
 import { X } from 'lucide-react';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
-import type { AssetCredit } from '@/lib/eventTheme';
-import type { CreditPerson } from '@/lib/creditPeople';
+import type { AssetCredit } from '@/lib/events/eventTheme';
+import type { CreditPerson } from '@/lib/members/creditPeople';
 import styles from './eventextras.module.css';
 
 // One picture and who made it, on a single compact row: a small thumbnail (click it to replace, x in its corner to remove), then the artist's

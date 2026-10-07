@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { authorizeStrikes, cleanReason, giveVoucher, notYourOwn, trackedPeople } from '@/lib/strikes';
+import { authorizeStrikes, cleanReason, giveVoucher, notYourOwn, trackedPeople } from '@/lib/members/strikes';
 
 // Give someone a voucher, with the reason (they see it). With a strike on their record it removes the oldest one right away; otherwise it waits.
 export async function POST(request: Request) {

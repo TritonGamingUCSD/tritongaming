@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { logAudit } from '@/lib/audit';
-import { createNotifications } from '@/lib/notify';
-import { pacificDayKey } from '@/lib/checkinDays';
-import { UUID, authorizeDocs, bad, namesOf } from '@/lib/docsServer';
+import { logAudit } from '@/lib/notifications/audit';
+import { createNotifications } from '@/lib/notifications/notify';
+import { pacificDayKey } from '@/lib/events/checkinDays';
+import { UUID, authorizeDocs, bad, namesOf } from '@/lib/docs/docsServer';
 
 export const dynamic = 'force-dynamic';
 
@@ -68,16 +68,22 @@ export async function POST(request: Request) {
   if ('error' in auth) return auth.error;
   const b = await request.json().catch(() => ({}));
   const id = String(b.id ?? '');
-  if (!UUID.test(id) || b.action !== 'remind') return bad('Doc not found.', 404);
+  if (!UUID.test(id) || (b.action !== 'remind' && b.action !== 'reread')) return bad('Doc not found.', 404);
   const { data: doc } = await auth.svc.from('docs').select('title, published').eq('id', id).maybeSingle();
   if (!doc) return bad('Doc not found.', 404);
   if (!doc.published) return bad('Publish the doc first; people can’t read a draft.', 409);
+  // "Ask for a re-read": after a big change, everyone's read mark is cleared and they are told once.
+  if (b.action === 'reread') {
+    await auth.svc.from('doc_reads').delete().eq('doc_id', id);
+    await auth.svc.from('reminders_sent').delete().eq('item_key', `docread:${id}|${pacificDayKey()}`);
+    await logAudit(auth.svc, { actorId: auth.user.id, action: 'update', entityType: 'doc', entityId: id, summary: `Asked everyone to re-read "${doc.title}"` });
+  }
   const { people } = await expectedReaders(auth.svc, id);
   const unread = people.filter((p) => !p.read_at && p.id !== auth.user.id).map((p) => p.id);
   if (!unread.length) return NextResponse.json({ ok: true, sent: 0 });
   // Once a day per person per doc, so pressing the button twice doesn't nag.
   const { data: fresh } = await auth.svc.from('reminders_sent').upsert(unread.map((user_id) => ({ item_key: `docread:${id}|${pacificDayKey()}`, user_id })), { onConflict: 'item_key,user_id', ignoreDuplicates: true }).select('user_id');
   const ids = (fresh ?? []).map((f) => f.user_id as string);
-  const sent = await createNotifications(auth.svc, ids.map((user_id) => ({ user_id, type: 'doc_required', title: `Please read: ${doc.title}`, body: 'The exec team marked this as required reading.', href: `/portal/docs?id=${id}` })));
+  const sent = await createNotifications(auth.svc, ids.map((user_id) => ({ user_id, type: 'doc_required', title: b.action === 'reread' ? `Please read again: ${doc.title}` : `Please read: ${doc.title}`, body: b.action === 'reread' ? 'It changed in a way that matters. Please read it again.' : 'The exec team marked this as required reading.', href: `/portal/docs?id=${id}` })));
   return NextResponse.json({ ok: true, sent, already: unread.length - ids.length });
 }

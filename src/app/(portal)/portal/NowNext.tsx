@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BookOpen, Check, MapPin } from 'lucide-react';
 import Link from '@/components/portal/PortalLink';
-import { useVisiblePoll } from '@/lib/useVisiblePoll';
-import { PACIFIC_TZ } from '@/lib/timezone';
-import type { MyShift } from '@/lib/myShifts';
+import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
+import { PACIFIC_TZ } from '@/lib/core/timezone';
+import type { MyShift } from '@/lib/shifts/myShifts';
 import styles from './dashboardHome.module.css';
 
 const time = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' });
@@ -27,12 +27,31 @@ export default function NowNext({ shifts }: { shifts: MyShift[] }) {
   const [error, setError] = useState('');
   useVisiblePoll(() => setNow(Date.now()), 30_000);   // keeps the countdowns honest without any request
   const live = shifts.filter((s) => new Date(s.end).getTime() > now);
-  if (!live.length) return null;
   const key = (s: MyShift) => `${s.eventId}|${s.stationId}|${s.slot}`;
   const [first, ...later] = live;
+  // Close to the shift: bring in its checklist and the last note, so the card is everything you need on the day.
+  // (Hooks stay above the early return below, so the order never changes between renders.)
+  const [prep, setPrep] = useState<{ items: { id: string; label: string; done: boolean }[]; note: string | null } | null>(null);
+  const soon = !!first && now >= new Date(first.start).getTime() - ARRIVE_EARLY_MS;
+  const eventId = first?.eventId, stationId = first?.stationId;
+  useEffect(() => {
+    if (!soon || !eventId || !stationId) return;
+    let alive = true;
+    fetch(`/api/shifts/${eventId}`).then((r) => r.json()).then((j) => {
+      if (!alive || !j.grid) return;
+      setPrep({ items: (j.grid.checklists?.[stationId] ?? []).map((i: { id: string; label: string; done_at: string | null }) => ({ id: i.id, label: i.label, done: !!i.done_at })), note: j.grid.handoffs?.[stationId]?.[0]?.body ?? null });
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, [soon, eventId, stationId]);
+  if (!first) return null;
   const on = new Date(first.start).getTime() <= now;
-  const canTap = now >= new Date(first.start).getTime() - ARRIVE_EARLY_MS;
+  const canTap = soon;
   const here = first.arrived || arrived[key(first)];
+  async function toggle(id: string, done: boolean) {
+    setPrep((p) => p && { ...p, items: p.items.map((i) => (i.id === id ? { ...i, done } : i)) });
+    const r = await fetch(`/api/shifts/${first.eventId}/checklist`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ item_id: id, done }) });
+    if (!r.ok) { setPrep((p) => p && { ...p, items: p.items.map((i) => (i.id === id ? { ...i, done: !done } : i)) }); setError(((await r.json().catch(() => ({}))) as { error?: string }).error || 'Couldn’t save that.'); }
+  }
   async function tap() {
     setBusy(key(first)); setError('');
     const r = await fetch(`/api/shifts/${first.eventId}/arrive`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ station_id: first.stationId, slot_index: first.slot }) });
@@ -52,6 +71,13 @@ export default function NowNext({ shifts }: { shifts: MyShift[] }) {
         <Link href={`/portal/shifts?event=${first.eventId}&guide=${first.stationId}`} className={styles.secondary}><BookOpen size={16} aria-hidden="true" /> Open guide</Link>
       </div>
       {error && <p className={styles.nnError} role="alert">{error}</p>}
+      {prep?.note && <p className={styles.nnNote}><strong>Note from the last shift:</strong> {prep.note}</p>}
+      {prep && prep.items.length > 0 && (
+        <ul className={styles.nnChecks} aria-label="Checklist">
+          {prep.items.map((i) => <li key={i.id}><label><input type="checkbox" checked={i.done} onChange={(e) => void toggle(i.id, e.target.checked)} /> <span className={i.done ? styles.nnDone : undefined}>{i.label}</span></label></li>)}
+        </ul>
+      )}
+      <p className={styles.nnCover}><Link href={`/portal/shifts?event=${first.eventId}`}>Can’t make it? Ask for cover</Link></p>
       {later.length > 0 && (
         <ul className={styles.nnLater} aria-label="Later">
           {later.slice(0, 3).map((s) => <li key={key(s)}><strong>{s.stationName}</strong> <span>{day(s.start)} · {time(s.start)} to {time(s.end)}{s.location ? ` · ${s.location}` : ''}</span></li>)}

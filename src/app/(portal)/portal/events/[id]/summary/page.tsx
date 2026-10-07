@@ -1,11 +1,11 @@
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Users, Sparkles, Award, Clock } from 'lucide-react';
-import { getUserRoles } from '@/lib/auth';
-import { hasCapability } from '@/lib/capabilities';
+import { getUserRoles } from '@/lib/core/auth';
+import { hasCapability } from '@/lib/portal/capabilities';
 import { createClient } from '@/lib/supabase/server';
-import { formatEventDateRange, eventDayCount } from '@/lib/timezone';
-import { getEventSummary } from '@/lib/eventSummary';
+import { formatEventDateRange, eventDayCount } from '@/lib/core/timezone';
+import { getEventSummary } from '@/lib/events/eventSummary';
 import { Gauge, Donut, Columns, RankBars, Funnel, SplitBar, PALETTE } from './SummaryCharts';
 import PrintButton from './PrintButton';
 import SectionHeader from '@/components/ui/SectionHeader';

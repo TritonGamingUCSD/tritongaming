@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { getSessionRoles } from '@/lib/auth';
+import { getSessionRoles } from '@/lib/core/auth';
 import { createRealClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { logAudit } from '@/lib/audit';
-import { VIEW_USER_COOKIE, isUuid } from '@/lib/viewAs';
+import { logAudit } from '@/lib/notifications/audit';
+import { VIEW_USER_COOKIE, isUuid } from '@/lib/portal/viewAs';
 
 // Admin only: start viewing the portal as one specific person ({ userId }), or stop ({ userId: null }). It is view only: every change is refused while it is on.
 export async function POST(request: Request) {

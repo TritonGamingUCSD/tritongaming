@@ -62,7 +62,6 @@
 .prose th, .prose td { padding: 0.45rem 0.7rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.33); vertical-align: top; min-width: 3rem; position: relative; }
 .prose th { background: rgba(var(--pp-ink-rgb), 0.07); color: var(--pp-ink); text-align: left; }
 .prose td > p, .prose th > p { margin: 0.1rem 0; }
-.prose :global(.selectedCell)::after { content: ''; position: absolute; inset: 0; background: rgba(125, 180, 234, 0.18); pointer-events: none; }
 .prose :global(p.is-editor-empty:first-child)::before { content: attr(data-placeholder); float: left; height: 0; pointer-events: none; color: rgba(var(--pp-ink-rgb), 0.82); }
 
 .slash {

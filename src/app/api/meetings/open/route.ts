@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { logAudit } from '@/lib/audit';
-import { pacificDayKey } from '@/lib/checkinDays';
-import { isExpected } from '@/lib/meetingAudience';
-import { attachExtras, authorizeMeetings, checkInOpensAt, ensureOccurrence, weekdayOfKey, type MeetingRow, type SeriesRow, canManageMeeting, notYourMeeting } from '@/lib/meetings';
+import { logAudit } from '@/lib/notifications/audit';
+import { pacificDayKey } from '@/lib/events/checkinDays';
+import { isExpected } from '@/lib/meetings/meetingAudience';
+import { attachExtras, authorizeMeetings, checkInOpensAt, ensureOccurrence, weekdayOfKey, type MeetingRow, type SeriesRow, canManageMeeting, notYourMeeting } from '@/lib/meetings/meetings';
 
 // Exec starts (or re-opens) check-in for one specific meeting: either an existing meeting
 // ({meeting_id}) or the occurrence of a repeating series on a date ({series_id, date}).

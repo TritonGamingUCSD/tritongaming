@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
-import { Building2, Check, ChevronDown, History, KeyRound, MapPin, Plus, Search, UserRound, Users } from 'lucide-react';
+import { Building2, Check, KeyRound, MapPin, Plus, Search, UserRound, Users } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
 import Notice from '@/components/ui/Notice';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import { Field, Input } from '@/components/ui/Field';
-import { confirmHold } from '@/lib/confirmHold';
+import { confirmHold } from '@/lib/ui/confirmHold';
 import styles from './keys.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
 
@@ -79,7 +79,7 @@ export default function KeysSectionContent() {
         <div className={styles.empty}><KeyRound size={28} strokeWidth={1.5} aria-hidden="true" /><p>No keys yet. An exec or admin can add them.</p></div>
       ) : (
         <ul className={styles.list}>
-          {keys.map((k) => <KeyCard key={k.id} item={k} people={people} colors={colors} me={me} onChanged={load} onError={setError} />)}
+          {keys.map((k) => <KeyCard key={k.id} item={k} people={people} colors={colors} onChanged={load} onError={setError} />)}
         </ul>
       )}
     </div>
@@ -116,7 +116,7 @@ function describe(e: HistoryEvent) {
   return <><b>{giver}</b> {e.fromKind === 'place' ? <>took it from <b>{e.from}</b> and gave it to</> : <>gave it to</>} <b>{withWho(e.to, e.toKind)}</b>{recorded}</>;
 }
 
-function KeyCard({ item, people, colors, me, onChanged, onError }: { item: KeyItem; people: Person[]; colors: string[]; me: string; onChanged: () => Promise<void>; onError: (m: string) => void }) {
+function KeyCard({ item, people, colors, onChanged, onError }: { item: KeyItem; people: Person[]; colors: string[]; onChanged: () => Promise<void>; onError: (m: string) => void }) {
   const [giving, setGiving] = useState(false);
   const [editing, setEditing] = useState(false);
   const [history, setHistory] = useState<HistoryEvent[] | null>(null);

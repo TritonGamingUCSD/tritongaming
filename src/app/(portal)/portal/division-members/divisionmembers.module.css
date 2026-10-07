@@ -1,5 +1,4 @@
 .page { display: flex; flex-direction: column; gap: 1.4rem; width: 100%; max-width: 1240px; margin-inline: auto; }
-.header { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .title { font-family: var(--font-futura-heavy); font-size: 1.6rem; color: var(--pp-ink); }
 .sub { font-size: 0.88rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 .search { display: flex; align-items: center; gap: 0.5rem; width: min(320px, 100%); color: rgba(var(--pp-ink-rgb), 0.88); }
@@ -23,7 +22,6 @@
 .info { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
 .info strong { color: var(--pp-ink); font-size: 0.95rem; overflow-wrap: anywhere; }
 .info strong em { font-style: normal; font-weight: 400; color: rgba(var(--pp-ink-rgb), 0.88); }
-.role { font-size: 0.78rem; color: var(--accent); }
 .meta { font-size: 0.76rem; color: rgba(var(--pp-ink-rgb), 0.87); }
 .email { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.74rem; color: var(--pp-info); text-decoration: none; overflow-wrap: anywhere; }
 .email:hover { text-decoration: underline; }

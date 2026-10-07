@@ -189,8 +189,6 @@
   letter-spacing: 0.02em;
 }
 
-.sub { font-size: var(--fs-meta); color: rgba(var(--pp-ink-rgb), 0.82); }
-
 .roleChips {
   display: flex;
   flex-wrap: wrap;

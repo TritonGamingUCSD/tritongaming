@@ -2,30 +2,30 @@
 
 import SaveBar from '@/components/portal/SaveBar';
 import EditingNow from '@/components/portal/EditingNow';
-import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
+import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { CalendarClock, CalendarDays, Radio, ClipboardList, Check, X, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Pause, Play, Trash2, Link2, MessageCircleQuestion, Shuffle, Send, Users, Minus, UserX, Lock, Dices, Smile, Upload, Settings2, Moon } from 'lucide-react';
+import { CalendarClock, CalendarDays, Radio, ClipboardList, Check, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Link2, MessageCircleQuestion, Send, Users, Minus, UserX, Lock, Dices, Smile, Upload, Settings2, Moon } from 'lucide-react';
 import IconButton from '@/components/ui/IconButton';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Notice from '@/components/ui/Notice';
 import Button from '@/components/ui/Button';
 import WeekHead from '@/components/ui/WeekHead';
-import { startsWeekGroup, weekGroup } from '@/lib/weekGroups';
+import { startsWeekGroup, weekGroup } from '@/lib/events/weekGroups';
 
 // A card's edge takes its week's color, the same as the heading above it (repeating is shown by its icon, not a color).
 const WEEK_TONE = ['today', 'wnext', 'wlater'] as const;
 import { Field, Input, Select, Textarea, DateInput, TimeInput } from '@/components/ui/Field';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
-import { confirmHold } from '@/lib/confirmHold';
-import { resolveAvatarUrl } from '@/lib/profile';
-import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
-import { AUDIENCE_LABELS, AUDIENCE_ROLES, audienceLabel, audienceRoles } from '@/lib/meetingAudience';
+import { confirmHold } from '@/lib/ui/confirmHold';
+import { resolveAvatarUrl } from '@/lib/members/profile';
+import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
+import { AUDIENCE_LABELS, AUDIENCE_ROLES, audienceLabel, audienceRoles } from '@/lib/meetings/meetingAudience';
 import BubbleField from './BubbleField';
 import { QuestionEditor, ResultBars, StarPicker, Confetti, emptyQ, qFrom, qPayload, qBad, type QState } from './QuestionParts';
-import { CUSTOM_PREFIX, isCustomEmoji, customEmojiId, MAX_EMOJI_BYTES, MAX_EMOJI_PICK_BYTES, EMOJI_NAME, parseDiscordEmoji, emojiNameFrom, type CustomEmoji, type QuestionType, type Tally, MAX_ANSWER_LENGTH, MAX_QUESTION_LENGTH, MAX_DESCRIPTION_LENGTH, suggestQuestion } from '@/lib/meetingFun';
+import { CUSTOM_PREFIX, isCustomEmoji, customEmojiId, MAX_EMOJI_BYTES, MAX_EMOJI_PICK_BYTES, EMOJI_NAME, parseDiscordEmoji, emojiNameFrom, type CustomEmoji, type QuestionType, type Tally, MAX_ANSWER_LENGTH, MAX_DESCRIPTION_LENGTH } from '@/lib/meetings/meetingFun';
 import PlanningPanel from './planning/PlanningPanel';
-import { useVisiblePoll } from '@/lib/useVisiblePoll';
+import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
 import styles from './meetings.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
 

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { authorizeMeetings, isMeetingOpen, type MeetingRow } from '@/lib/meetings';
-import { MAX_ANSWER_LENGTH, validAnswer } from '@/lib/meetingFun';
+import { authorizeMeetings, isMeetingOpen, type MeetingRow } from '@/lib/meetings/meetings';
+import { MAX_ANSWER_LENGTH, validAnswer } from '@/lib/meetings/meetingFun';
 
 // A checked-in person answers (or edits their answer to) the meeting's question.
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {

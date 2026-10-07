@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { authorizeMeetings } from '@/lib/meetings';
-import { hasCapability } from '@/lib/capabilities';
+import { authorizeMeetings } from '@/lib/meetings/meetings';
+import { hasCapability } from '@/lib/portal/capabilities';
 
 const BUCKET = 'custom-emojis';
 const UUID = /^[0-9a-f-]{36}$/i;

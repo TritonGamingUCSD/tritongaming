@@ -1,16 +1,16 @@
-import { getCreditPeople } from '@/lib/creditPeople';
+import { getCreditPeople } from '@/lib/members/creditPeople';
 import { redirect, notFound } from 'next/navigation';
-import { getUserRoles } from '@/lib/auth';
-import { hasCapability } from '@/lib/capabilities';
+import { getUserRoles } from '@/lib/core/auth';
+import { hasCapability } from '@/lib/portal/capabilities';
 import { createClient } from '@/lib/supabase/server';
-import { utcToPacificDatetimeLocal } from '@/lib/timezone';
+import { utcToPacificDatetimeLocal } from '@/lib/core/timezone';
 import EditEventClient from './EditEventClient';
 import type { EventFormValues } from '../EventForm';
 import { EMPTY_CHECKIN_FORM_CONFIG } from '../CheckinFormFieldsEditor';
 import { getCheckinFormSeed, getFormPreviewViewer } from '../getEventsData';
 import type { SocialEmbed, PhotoAlbumEntry, ScheduleItem, EventSponsor } from '@/types/database';
-import { cleanTheme, EMPTY_THEME } from '@/lib/eventTheme';
-import { cleanBlocks } from '@/lib/pageBlocks';
+import { cleanTheme, EMPTY_THEME } from '@/lib/events/eventTheme';
+import { cleanBlocks } from '@/lib/site/pageBlocks';
 
 export const metadata = { title: 'Edit Event' };
 export const dynamic = 'force-dynamic';

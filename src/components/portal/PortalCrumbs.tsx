@@ -2,8 +2,8 @@
 
 import { Fragment, useEffect, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
-import { mergedPortalParams, portalHref } from '@/lib/portalPath';
-import { navigatePortal } from '@/lib/portalNav';
+import { mergedPortalParams, portalHref } from '@/lib/portal/portalPath';
+import { navigatePortal } from '@/lib/portal/portalNav';
 import styles from './PortalHub.module.css';
 
 // "Admin › People › Member Management": the open section, then its tab and subtab, read from the address

@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { DOC_COLUMNS, DRAFT_COLUMNS } from '@/lib/docsServer';
+import { DOC_COLUMNS, DRAFT_COLUMNS } from '@/lib/docs/docsServer';
 import type { Doc, DocCategory } from '@/types/database';
 
 // Shared by the standalone /portal/docs route and the portal hub. RLS already restricts reads to the roles that may see docs (see the docs_table

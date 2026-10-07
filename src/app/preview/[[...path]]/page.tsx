@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import type { ComponentType } from 'react';
-import { ensurePreviewDrafts } from '@/lib/contentPreview';
+import { ensurePreviewDrafts } from '@/lib/site/contentPreview';
 
 export const dynamic = 'force-dynamic';
 

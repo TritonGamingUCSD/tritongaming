@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { authorizeHelp, cleanAttachments, describeAgent, notify, staffIds, HELP_CATEGORIES, MAX_BODY, MAX_SUBJECT, type HelpTicketRow } from '@/lib/help';
+import { authorizeHelp, cleanAttachments, describeAgent, notify, staffIds, HELP_CATEGORIES, MAX_BODY, MAX_SUBJECT, type HelpTicketRow } from '@/lib/notifications/help';
 
 export const dynamic = 'force-dynamic';
 

@@ -1,6 +1,6 @@
 import BodyStickers from '@/components/BodyStickers/BodyStickers';
 import ScrollShield from '@/components/ScrollShield/ScrollShield';
-import { eventCardInputs, ogVersion } from '@/lib/ogRoutes';
+import { eventCardInputs, ogVersion } from '@/lib/site/ogRoutes';
 import HeroStickers from '@/components/HeroStickers/HeroStickers';
 import PosterGallery from '@/components/PosterGallery/PosterGallery';
 import type { Metadata, Viewport } from 'next';
@@ -8,18 +8,18 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { MapPin, Ticket, Camera, Award, CalendarDays, Users, Navigation, ExternalLink } from 'lucide-react';
-import { getEventBySlugOrId, getGoingCount, getAllEvents } from '@/lib/events';
-import { isCheckinWindowOpen } from '@/lib/checkinWindow';
-import { getAlbumPreview } from '@/lib/googlePhotosAlbum';
-import { markdownToDescription } from '@/lib/markdown';
-import { clampDescription } from '@/lib/ogCard';
+import { getEventBySlugOrId, getGoingCount, getAllEvents } from '@/lib/events/events';
+import { isCheckinWindowOpen } from '@/lib/events/checkinWindow';
+import { getAlbumPreview } from '@/lib/storage/googlePhotosAlbum';
+import { markdownToDescription } from '@/lib/docs/markdown';
+import { clampDescription } from '@/lib/site/ogCard';
 import PageBlocks from '@/components/PageBlocks/PageBlocks';
 import LogoPlate from '@/components/LogoPlate/LogoPlate';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import EventSocialEmbeds from '@/components/EventSocialEmbeds/EventSocialEmbeds';
 import AddToCalendarButton, { AddToGoogleCalendarButton } from '@/components/AddToCalendarButton/AddToCalendarButton';
-import { formatEventDateRange, formatEventTimeRange, eventDayCount } from '@/lib/timezone';
-import { themeVars, themeFontsHref, themeFontFaceCss } from '@/lib/eventTheme';
+import { formatEventDateRange, formatEventTimeRange, eventDayCount } from '@/lib/core/timezone';
+import { themeVars, themeFontsHref, themeFontFaceCss } from '@/lib/events/eventTheme';
 import styles from './event-detail.module.css';
 
 // Cached page (data comes from the tagged caches in lib/events.ts, refreshed when an event is saved).
@@ -76,14 +76,6 @@ export async function generateViewport({ params }: Params): Promise<Viewport> {
   const { slug } = await params;
   const event = await getEventBySlugOrId(slug);
   return { themeColor: event?.theme?.colors.accent ?? '#ffc72c' };
-}
-
-function formatDateRange(startISO: string, endISO: string) {
-  return formatEventDateRange(startISO, endISO, { weekday: true });
-}
-
-function formatTime(startISO: string, endISO: string) {
-  return formatEventTimeRange(startISO, endISO);
 }
 
 export default async function EventDetailPage({ params }: Params) {
@@ -163,7 +155,6 @@ export default async function EventDetailPage({ params }: Params) {
   })();
   // The poster is whatever picture the event has, shown at its own shape (portrait posters stay portrait): the theme's key art first, else the flyer.
   const posters = theme?.posters?.length ? theme.posters : isExternalFlyer && event.flyer_url ? [event.flyer_url] : [];
-  const posterUrl = posters[0] ?? '';
   const stickerCount = theme?.stickers.length ?? 0;
 
 
@@ -172,7 +163,7 @@ export default async function EventDetailPage({ params }: Params) {
 
   return (
     <div className={styles.page} style={themeVars(theme) as React.CSSProperties}>
-      {/* eslint-disable-next-line react/no-danger -- server-built object from our own event data, not user input rendered raw */}
+      { }
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(eventJsonLd) }} />
       {fontsHref && <link rel="stylesheet" href={fontsHref} />}
       {fontFaceCss && <style dangerouslySetInnerHTML={{ __html: fontFaceCss }} />}

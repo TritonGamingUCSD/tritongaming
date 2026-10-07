@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link2Off, Lock } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
-import { confirmHold } from '@/lib/confirmHold';
+import { confirmHold } from '@/lib/ui/confirmHold';
 import styles from './calendar.module.css';
 
 interface Account { id: string; email: string; showTitles: boolean; connectedAt: string; error: string | null }

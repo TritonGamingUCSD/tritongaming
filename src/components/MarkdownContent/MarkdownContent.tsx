@@ -3,7 +3,7 @@
 import { Children, cloneElement, isValidElement, useMemo, type ReactElement, type ReactNode } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { extractToc, headingId } from '@/lib/markdownToc';
+import { extractToc, headingId } from '@/lib/docs/markdownToc';
 import styles from './MarkdownContent.module.css';
 
 // Renders admin-authored Markdown (event details, post-event notes, etc.)

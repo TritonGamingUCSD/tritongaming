@@ -3,7 +3,7 @@
 import { useState, type ComponentProps } from 'react';
 import { Ticket, History } from 'lucide-react';
 import SectionTabs from '@/components/ui/SectionTabs';
-import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
+import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
 import TicketsClient from './TicketsClient';
 import ActivitySectionContent from '../activity/ActivitySectionContent';
 

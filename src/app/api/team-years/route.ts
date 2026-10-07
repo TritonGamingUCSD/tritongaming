@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { pacificDayKey } from '@/lib/checkinDays';
-import { academicYearLabel, authorizeQuarters, currentQuarter, loadQuarters } from '@/lib/quarters';
-import { alumniCandidates, autoAlumniOn, buildYear, captureRoster } from '@/lib/teamYears';
+import { pacificDayKey } from '@/lib/events/checkinDays';
+import { academicYearLabel, authorizeQuarters, currentQuarter, loadQuarters } from '@/lib/members/quarters';
+import { alumniCandidates, autoAlumniOn, buildYear, captureRoster } from '@/lib/members/teamYears';
 
 export const dynamic = 'force-dynamic';
 

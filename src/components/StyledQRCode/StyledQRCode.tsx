@@ -2,7 +2,7 @@
 
 import { useEffect, useImperativeHandle, useRef, forwardRef } from 'react';
 import QRCodeStyling from 'qr-code-styling';
-import { buildQRCodeStylingOptions, type QRCodeOptions } from '@/lib/qrCodeStyling';
+import { buildQRCodeStylingOptions, type QRCodeOptions } from '@/lib/qr/qrCodeStyling';
 
 export interface StyledQRCodeHandle {
   download: (name: string) => Promise<void>;

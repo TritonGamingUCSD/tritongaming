@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import Dialog, { DialogActions, DialogCancel, DialogText } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
-import { descendantIds, flatten, type DocSection } from '@/lib/docsTree';
+import { descendantIds, flatten, type DocSection } from '@/lib/docs/docsTree';
 import type { Doc } from '@/types/database';
 import type { DropTarget } from './DocSidebar';
 import styles from './docs.module.css';

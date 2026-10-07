@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
-import { resolveSections } from '@/lib/pageLayout';
+import { resolveSections } from '@/lib/site/pageLayout';
 import { Fragment } from 'react';
 import Image from 'next/image';
 import { Gamepad2, Calendar, Users, Building2 } from 'lucide-react';
-import { getContentBlocks } from '@/lib/content';
+import { getContentBlocks } from '@/lib/site/content';
 import { ZineBand, PageHero, BandHeader } from '@/components/ZineBand/ZineBand';
 import PhotoStrip from '@/components/PhotoStrip/PhotoStrip';
-import { getSitePhotos, pickPhotos } from '@/lib/sitePhotos';
+import { getSitePhotos, pickPhotos } from '@/lib/storage/sitePhotos';
 import styles from './get-involved.module.css';
 
 export const metadata: Metadata = {

@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import Image from 'next/image';
-import { uploadImageToStorage, uploadCroppedImage, ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES } from '@/lib/imageUpload';
+import { uploadImageToStorage, uploadCroppedImage, ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES } from '@/lib/storage/imageUpload';
 import ImageCropModal from '@/components/ImageCropModal/ImageCropModal';
 import styles from './ImageUploadField.module.css';
 import { Camera, X } from 'lucide-react';

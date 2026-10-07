@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { audienceRoles, canAttendMeeting, isExpected, isExpectedActive, isInactiveMember, validateAudienceInput } from '@/lib/meetingAudience';
+import { audienceRoles, canAttendMeeting, isExpected, isExpectedActive, isInactiveMember, validateAudienceInput } from '@/lib/meetings/meetingAudience';
 
 const roles = (...r: string[]) => r.map((role) => ({ role }));
 

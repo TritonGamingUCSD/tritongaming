@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { navigatePortal } from '@/lib/portalNav';
+import { navigatePortal } from '@/lib/portal/portalNav';
 import { useRouter } from 'next/navigation';
 import { Search, X, Users, Calendar, BookOpen, CornerDownLeft, ArrowRight, Zap } from 'lucide-react';
-import { matchCommands, type PortalCommand } from '@/lib/portalCommands';
+import { matchCommands, type PortalCommand } from '@/lib/portal/portalCommands';
 import styles from './PortalSearch.module.css';
 
 interface SearchResult {

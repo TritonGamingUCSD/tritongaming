@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const sent: { user_id: string; title: string; body?: string | null }[] = [];
-vi.mock('@/lib/notify', () => ({ createNotifications: async (_svc: unknown, rows: typeof sent) => { sent.push(...rows); return rows.length; } }));
+vi.mock('@/lib/notifications/notify', () => ({ createNotifications: async (_svc: unknown, rows: typeof sent) => { sent.push(...rows); return rows.length; } }));
 
-const { STRIKE_LIMIT, crossesLimit, isTracked, notifyLimit, notifyPerson, strikeManagers } = await import('@/lib/strikes');
+const { STRIKE_LIMIT, crossesLimit, isTracked, notifyLimit, notifyPerson, strikeManagers } = await import('@/lib/members/strikes');
 
 const fakeSvc = (opts: { roles?: string[]; grants?: { user_id: string | null; group_id: string | null }[]; groups?: string[][] }) => ({
   from: (t: string) => ({
@@ -39,7 +39,7 @@ describe('what a notice says', () => {
   it('the test header silences alerts to HR and admins (and is ignored in production)', async () => {
     await notifyLimit(fakeSvc({ roles: ['admin1'], grants: [] }), 'person', 'Ann Lee', true);
     expect(sent.map((n) => n.user_id)).toEqual(['person']);
-    const { quietTest } = await import('@/lib/strikes');
+    const { quietTest } = await import('@/lib/members/strikes');
     const req = new Request('http://x', { headers: { 'x-strikes-test': '1' } });
     const old = process.env.NODE_ENV;
     (process.env as Record<string, string>).NODE_ENV = 'development'; expect(quietTest(req)).toBe(true);

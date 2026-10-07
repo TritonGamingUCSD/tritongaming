@@ -1,6 +1,6 @@
 # 🎮 Triton Gaming Website
 
-The official website and member portal for **Triton Gaming**, UCSD's gaming club: public pages for events, divisions, the team and sponsors, plus a members-only portal for tickets, check-in, rewards, analytics and club administration.
+The website and member portal for **Gaming Org at UC San Diego**: public pages for events, divisions, the team and sponsors, plus a members-only portal for tickets, check-in, rewards, analytics and club administration.
 
 ---
 
@@ -26,11 +26,11 @@ Home, Our Story, Team, Events, Divisions (with per-division pages), Sponsors, Ge
 
 - **Event pages** (`/events/[slug]`) show the schedule, venue address with an embedded map, sponsors, a "going" count and an add-to-calendar link. Multi-day events are supported.
 - **Short links:** `/<slug>` redirects to a configured destination (for example `/linktree`). Managed in the portal under Short Links, admin only. A short link to an internal page tags the visit so tickets can be traced back to it.
-- **Speed:** public pages are cached with `unstable_cache` and ISR (`revalidate = 60`) using a cookie-free Supabase client, and are revalidated by tag when content is edited in the portal (`src/lib/revalidate.ts`).
+- **Speed:** public pages are cached with `unstable_cache` and ISR (`revalidate = 60`) using a cookie-free Supabase client, and are revalidated by tag when content is edited in the portal (`src/lib/site/revalidate.ts`).
 
 ### Member portal (`/portal`)
 
-Gated by Google sign-in and a role/capability system (`src/lib/capabilities.ts`). On desktop the portal is one app frame: a sidebar (collapsible to icons) on the left, a slim top bar (section title, search, notifications, View as) and the page body, with the top bar tinted by the section's group color. The sidebar lists Dashboard and Calendar at the top, then groups sections by color: **Yours** (gold), **Events** (blue), **TG** (purple), **Divisions** (orange), **Resources** (green), **Admin** (pink). Admins also get a "View as" menu to preview the portal as another role. The sidebar shows your name and all of your roles, and clicking it opens your profile. On phones there is a floating bottom dock plus a grouped "More" sheet. Every section, tab and subtab is linkable through URL parameters (`?section=…&tab=…&subtab=…`).
+Gated by Google sign-in and a role/capability system (`src/lib/portal/capabilities.ts`). On desktop the portal is one app frame: a sidebar (collapsible to icons) on the left, a slim top bar (section title, search, notifications, View as) and the page body, with the top bar tinted by the section's group color. The sidebar lists Dashboard and Calendar at the top, then groups sections by color: **Yours** (gold), **Events** (blue), **TG** (purple), **Divisions** (orange), **Resources** (green), **Admin** (pink). Admins also get a "View as" menu to preview the portal as another role. The sidebar shows your name and all of your roles, and clicking it opens your profile. On phones there is a floating bottom dock plus a grouped "More" sheet. Every section, tab and subtab is linkable through URL parameters (`?section=…&tab=…&subtab=…`).
 
 | Group | Section | What it does |
 | --- | --- | --- |
@@ -41,14 +41,15 @@ Gated by Google sign-in and a role/capability system (`src/lib/capabilities.ts`)
 | Yours | Profile | Basic info (major picker, favorite-games picker), profile picture editor with crop, officer card for the Team page (social links, portfolio links, **game IDs** such as Steam, Riot ID and Genshin UID, with per-item public visibility), Login & Security |
 | Events | Events | Create and edit events (flyer, schedule, sponsors, venue, optional **per-day check-in hours** for multi-day events), check-in lists with undo and manual check-in, post-event Summary |
 | Events | Check-In | Camera QR scanner, manual and online code entry, per-day check-in for multi-day events |
+| Events | Shifts | Who works which station, and when: sign up in a grid, station guides with a checklist and a hand-off note, swap and cover requests, a morning-of reminder, a print sheet, and for exec a requirement tracker, gap finder and checklist summary. The dashboard's "Now and next" card is the same thing on the day. |
 | TG | TG Members | Directory of the team (recruits and alumni included, division leads excluded) |
 | TG | Meetings | Check in with a rotating code, **My meetings** (upcoming plus your history), and for leads/exec/admin: schedule one-off or weekly meetings, run check-in with a big-screen code, question of the meeting and emoji reactions, groups, absences, attendance analytics and an HR CSV export. Hosts can mark someone away (with a reason, excused or not) before a meeting starts, including a week of a repeating meeting that hasn't opened yet. **Planning** finds a time first: a one-time plan (a date range of up to 14 days) or a weekly one (Sunday to Saturday); everyone asked, host included, marks 30-minute slots as available or if needed (per plan, nothing carried over), the host sees the group heat map and best times and picks one, which turns the plan into the meeting and marks anyone unavailable as absent (excused). Audiences are roles, saved groups and individuals, resolved live. Leads manage only meetings they planned. |
 | TG | Internal Events | Internal events for the team (socials, recruitment training, workshops), separate from meetings: no check-in or attendance stats. Leads, exec and admin plan them for roles, saved groups or individuals; invitees reply Going / Maybe / Can't go and get a notification. They show on the Calendar in their own color and never on the public site. |
 | Divisions | Divisions, Division Members | Edit division pages; see who leads each division |
-| Resources | Documentation | Markdown docs with a table of contents |
+| Resources | Documentation | Markdown docs in colored categories, with drafts, versions, tags, required reading (who has read it, remind, ask for a re-read), comments, and a "report a problem" button that opens a Help ticket |
 | Resources | QR Studio | Style presets (including division-logo looks), color picker, center icon, PNG/SVG download |
 | Resources | Photo Albums | Photo albums |
-| Resources | Help | Anyone can open a help ticket (category, details, screenshots; page and browser are attached automatically). Exec and admin answer from an inbox, with replies, assignment and bell notifications; the dashboard shows how many tickets need a reply. |
+| Resources | Help | Anyone can open a help ticket (category, details, screenshots; page and browser are attached automatically). Exec and admin answer from an inbox, with replies, assignment and bell notifications; the dashboard shows how many tickets need a reply. Role requests use a short form (role, division, who can vouch) and admins approve them from the ticket. |
 | Admin | Admin | Platform stats, role manager, divisions, board order, audit log, role history, storage cleanup, **Short Links**, and **Access**: give one extra permission (for now, view-only meeting attendance reports and the HR export) to a person or a saved group such as an HR team, without changing their role |
 | Admin | Site Content | Edit public site copy and images, organized in tabs and subtabs |
 
@@ -62,23 +63,24 @@ Ticket sources are recorded from the visitor's first tagged link, referrer or sh
 
 ### Other building blocks
 
-- **Notifications:** an in-app bell; each one links to what it is about. Email and web push are not built.
+- **Notifications:** an in-app bell plus optional web push (Profile → notifications, with mute options per kind: meetings, events, account, help, shifts, docs, keys). Each one links to what it is about. Email is not built.
 - **Reminders:** a daily cron (`/api/cron/meeting-reminders`) sends "today at 5:00 PM" reminders for the meetings and internal events happening that day, to the people they are for (not people who said they can't go or are excused). Run it every 15 minutes with `?within=90` on a plan that allows it for "starting soon" reminders.
 - **Calendar subscription:** Calendar → "Add to my calendar" gives a private link (Google Calendar, Apple/Outlook) showing events, your meetings and your internal events; "New link" kills the old one. Meetings and internal events also have a one-click Google Calendar button.
 - **Help tickets:** category starter text for new tickets, and exec/admin saved replies (`{name}` becomes the person's first name).
 - **Profile nudge:** a dismissible Dashboard card showing how much of the optional profile is filled in.
+- **Developer docs:** the `docs/` folder (also in the portal under Documentation → Codebase). Start with `docs/README.md`.
 - **Tests:** `npm test` runs the unit tests (permission rules, audience rules, check-in hours, search targets, calendar files). `npm run test:plans` does the same for meeting plans. `npm run test:permissions` drives the real API routes as temporary accounts of every role against a running dev server and cleans up after itself; it only addresses the temporary accounts, so nobody real is notified.
 - **Custom form controls:** dropdowns, date/time pickers, number steppers, color pickers and checkboxes are our own components in `src/components/ui`, so they look the same on every browser and OS.
 - **Audit log:** database triggers plus explicit `logAudit` calls, with an admin viewer, export and alerts.
 - **Reminders:** a daily Vercel cron (`/api/cron/event-reminders`, `vercel.json`) creates in-app bell notifications about 24 hours and 1 hour before an event. **Email is not wired up**; all mail-related code has been removed.
-- **Uploads:** event flyers, division logos and profile pictures go straight to Supabase Storage from the browser (`src/lib/imageUpload.ts`) with client-side compression. Replacing or removing an image deletes the old one, including old profile pictures. Admin → Storage Cleanup sweeps anything that still slips through.
-- **Time zones:** event days and times are shown in Pacific time through shared helpers in `src/lib/timezone.ts`, formatted deterministically so Safari and Chrome render identically.
+- **Uploads:** event flyers, division logos and profile pictures go straight to Supabase Storage from the browser (`src/lib/storage/imageUpload.ts`) with client-side compression. Replacing or removing an image deletes the old one, including old profile pictures. Admin → Storage Cleanup sweeps anything that still slips through.
+- **Time zones:** event days and times are shown in Pacific time through shared helpers in `src/lib/core/timezone.ts`, formatted deterministically so Safari and Chrome render identically.
 - **Resilience:** critical flows (QR fetch, check-in) retry on flaky connections, and an offline banner appears when the connection drops.
 - **PWA basics:** `manifest.ts` with a "My Tickets" shortcut so the portal can be added to a home screen. There is no service worker, so nothing works offline.
 
 ### Not done yet
 
-- Email and web push notifications (in-app bell only).
+- Email notifications (the bell and web push exist).
 - Many forms still use their own styles instead of the shared `Button` and `Field` components in `src/components/ui`.
 - Browser coverage: the portal has been checked in Chromium and WebKit (Safari's engine) at desktop and phone sizes. Firefox has not been checked, and Edge and Opera were not tested separately, though they share Chrome's engine.
 - Event source tracking only covers tickets claimed after it was added.
@@ -166,7 +168,9 @@ Open [http://localhost:3000](http://localhost:3000). Sign in with Google to reac
 | `npm run build` | Production build |
 | `npm run start` | Serve a production build |
 | `npm run type-check` | `tsc --noEmit` |
-| `npm run lint` | ESLint |
+| `npm run lint` | ESLint (Next's rules; no errors, a few advisory warnings) |
+| `npm test` | Vitest unit tests |
+| `npm run check:theme` | Rejects colors that only work in one theme |
 
 ---
 
@@ -178,7 +182,9 @@ Open [http://localhost:3000](http://localhost:3000). Sign in with Google to reac
 | `src/app/(portal)/portal` | Member portal (one folder per section) |
 | `src/app/api` | Route handlers (tickets, check-in, admin, Stripe webhook, cron, search) |
 | `src/components` | Shared components; `ui/` holds `Button`, `Field`, `SectionTabs`, `Notice` |
-| `src/lib` | Capabilities, check-in logic, event summary, timezone helpers, QR presets, caching |
+| `src/lib` | Shared logic grouped by topic (`shifts`, `docs`, `meetings`, `events`, `members`, `portal`, `notifications`, `storage`, `site`, `qr`, `ui`, `core`). See `docs/code-map.md` |
+| `docs` | Developer docs: architecture, code map, conventions, database, features, testing |
+| `scripts` | Check scripts (`npm run test:*`, `check:theme`) |
 | `supabase/migrations` | Database schema, RLS and RPCs |
 
 ---
@@ -218,7 +224,7 @@ Until the variables are set, the Sync panel tells members that linking isn't set
 
 Everything that lands in the portal's notification bell can also be pushed to a member's browser or phone, even when the portal is closed. Members turn it on per device under **Profile → Notifications** (or from the prompt in the bell) and can mute kinds of notification (meetings, events and tickets, account and access, help inbox). It works in Chrome, Edge, Firefox, Safari on macOS 13+, and on iPhone/iPad once the site is added to the Home Screen.
 
-How it fits together: `createNotifications` in `src/lib/notify.ts` is the one place notifications are created, and it calls `src/lib/webPush.ts` to push them; `public/sw.js` is the service worker that shows them and opens the right page when tapped; subscriptions live in `push_subscriptions` (migration `20261003120000_web_push.sql`, server access only). Notifications written by the database itself (role-change notices from `admin_set_user_roles`) reach the bell but are not pushed.
+How it fits together: `createNotifications` in `src/lib/notifications/notify.ts` is the one place notifications are created, and it calls `src/lib/notifications/webPush.ts` to push them; `public/sw.js` is the service worker that shows them and opens the right page when tapped; subscriptions live in `push_subscriptions` (migration `20261003120000_web_push.sql`, server access only). Notifications written by the database itself (role-change notices from `admin_set_user_roles`) reach the bell but are not pushed.
 
 Setup (once per environment):
 

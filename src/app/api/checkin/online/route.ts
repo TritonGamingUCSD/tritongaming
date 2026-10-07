@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { rotatingCode, currentEventCodeWindow } from '@/lib/rotatingCode';
-import { performCheckin } from '@/lib/performCheckin';
-import { canCheckInNow } from '@/lib/checkinDays';
+import { rotatingCode, currentEventCodeWindow } from '@/lib/events/rotatingCode';
+import { performCheckin } from '@/lib/events/performCheckin';
+import { canCheckInNow } from '@/lib/events/checkinDays';
 
 // Member-facing self-check-in for online events — see the sibling
 // api/checkin/online/[eventId]/code (officer-facing reveal) for the code

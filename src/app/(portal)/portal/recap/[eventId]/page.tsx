@@ -1,11 +1,11 @@
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Award, Images, CalendarDays, ExternalLink } from 'lucide-react';
-import { getProfile, getUserRoles } from '@/lib/auth';
-import { hasCapability, isRewardsEligible } from '@/lib/capabilities';
+import { getProfile, getUserRoles } from '@/lib/core/auth';
+import { hasCapability, isRewardsEligible } from '@/lib/portal/capabilities';
 import { createClient } from '@/lib/supabase/server';
-import { openEventsFilter } from '@/lib/checkinWindow';
-import { PACIFIC_TZ, formatEventDateRange } from '@/lib/timezone';
+import { openEventsFilter } from '@/lib/events/checkinWindow';
+import { PACIFIC_TZ, formatEventDateRange } from '@/lib/core/timezone';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import FeedbackForm from './FeedbackForm';
 import styles from './recap.module.css';

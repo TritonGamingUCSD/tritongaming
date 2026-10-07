@@ -1,4 +1,4 @@
-import type { PageBlock } from '@/lib/pageBlocks';
+import type { PageBlock } from '@/lib/site/pageBlocks';
 // 'inactive' is a marker that sits next to someone's real roles while they sit out a quarter (see src/lib/quarters.ts); it is never assigned by hand.
 export type AppRole = 'ucsd' | 'division' | 'officer' | 'lead' | 'exec' | 'admin' | 'alumni' | 'recruit' | 'inactive';
 // 'guest' is never stored — it just means zero rows in user_roles.

@@ -3,9 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import jsQR from 'jsqr';
 import { Calendar, Camera, CircleCheck, TriangleAlert } from 'lucide-react';
-import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/timezone';
-import { fetchWithRetry } from '@/lib/fetchWithRetry';
-import type { Tier } from '@/lib/tiers';
+import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/core/timezone';
+import { fetchWithRetry } from '@/lib/ui/fetchWithRetry';
+import type { Tier } from '@/lib/members/tiers';
 import styles from './checkin.module.css';
 import Select from '@/components/ui/Select';
 
@@ -332,7 +332,7 @@ export default function CheckInClient({ events, onCheckedIn, tiers }: CheckInCli
     }
     document.addEventListener('visibilitychange', handleVisibility);
     return () => document.removeEventListener('visibilitychange', handleVisibility);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const selectedEvent = events.find((e) => e.id === selectedEventId);

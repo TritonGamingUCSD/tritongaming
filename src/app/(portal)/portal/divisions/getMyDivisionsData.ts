@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import type { RoleGrant } from '@/lib/capabilities';
+import type { RoleGrant } from '@/lib/portal/capabilities';
 import type { SocialEmbed } from '@/types/database';
 
 export interface MyDivision {

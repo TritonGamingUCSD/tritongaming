@@ -57,15 +57,6 @@
 }
 .confirmBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.recentLabel {
-  font-size: var(--fs-label);
-  font-family: var(--font-renegare);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(var(--pp-ink-rgb), 0.87);
-  margin-bottom: 0.5rem;
-}
-
 /* ── Online check-in panel ── */
 .onlinePanel { display: flex; flex-direction: column; gap: 1.25rem; align-items: center; text-align: center; }
 

@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { VIEW_USER_COOKIE, isUuid } from '@/lib/viewAs';
+import { VIEW_USER_COOKIE, isUuid } from '@/lib/portal/viewAs';
 
 // The client for the person actually signed in. Only the "who is signed in" checks in lib/auth.ts and the view-as route use this directly.
 export async function createRealClient() {

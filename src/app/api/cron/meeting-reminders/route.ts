@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { sendMeetingReminders } from '@/lib/reminders';
-import { sendShiftReminders } from '@/lib/shiftReminders';
-import { sendPlanReminders } from '@/lib/meetingPlanServer';
+import { sendMeetingReminders } from '@/lib/meetings/reminders';
+import { alertStaleCovers, sendShiftReminders } from '@/lib/shifts/shiftReminders';
+import { sendPlanReminders } from '@/lib/meetings/meetingPlanServer';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -22,5 +22,6 @@ export async function GET(request: Request) {
   const plans = within ? undefined : await sendPlanReminders(svc, new Date(), only);
   // And the morning-of reminder to everyone who has a shift today.
   const shifts = within ? undefined : await sendShiftReminders(svc, new Date(), only);
-  return NextResponse.json({ ...result, plans, shifts });
+  const covers = await alertStaleCovers(svc);
+  return NextResponse.json({ ...result, plans, shifts, covers });
 }

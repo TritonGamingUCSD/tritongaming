@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
-import { getAllEvents } from '@/lib/events';
-import { getDivisions } from '@/lib/divisions';
+import { getAllEvents } from '@/lib/events/events';
+import { getDivisions } from '@/lib/members/divisions';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 

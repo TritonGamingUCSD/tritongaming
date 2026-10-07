@@ -1,7 +1,7 @@
 'use client';
 
 import SectionTabs from '@/components/ui/SectionTabs';
-import { refreshPublicCache } from '@/lib/refreshPublicCache';
+import { refreshPublicCache } from '@/lib/site/refreshPublicCache';
 import Notice from '@/components/ui/Notice';
 import { useRef, useState } from 'react';
 import Image from 'next/image';
@@ -9,16 +9,16 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Bell, ShieldCheck, User, Users, Lock, X as XIcon, Globe, EyeOff, GraduationCap } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types/database';
-import { canSetOrgTitle, requiresOrgTitle, type RoleGrant } from '@/lib/capabilities';
-import { hasBasicProfileInfo, getMissingProfileFields, GENDER_OPTIONS, PRONOUN_OPTIONS, PLATFORM_OPTIONS, MAX_PORTFOLIO_LINKS, MAX_GAME_IDS, GAME_ID_PRESETS, OTHER_GAME, cleanGameIds, type GameId, normalizePortfolioUrl, resolveAvatarUrl, SOCIAL_PLATFORMS, yearChoiceOptions, yearChoiceOf, yearLabelOfChoice } from '@/lib/profile';
-import type { MyPrivateProfile } from '@/lib/auth';
-import { deleteIfReplaced, deleteStorageUrl } from '@/lib/imageUpload';
-import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
+import { canSetOrgTitle, requiresOrgTitle, type RoleGrant } from '@/lib/portal/capabilities';
+import { hasBasicProfileInfo, getMissingProfileFields, GENDER_OPTIONS, PRONOUN_OPTIONS, PLATFORM_OPTIONS, MAX_PORTFOLIO_LINKS, MAX_GAME_IDS, GAME_ID_PRESETS, OTHER_GAME, cleanGameIds, type GameId, normalizePortfolioUrl, resolveAvatarUrl, SOCIAL_PLATFORMS, yearChoiceOptions, yearChoiceOf, yearLabelOfChoice } from '@/lib/members/profile';
+import type { MyPrivateProfile } from '@/lib/core/auth';
+import { deleteIfReplaced, deleteStorageUrl } from '@/lib/storage/imageUpload';
+import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
 import SaveBar from '@/components/portal/SaveBar';
-import { useUnsavedChanges } from '@/lib/useUnsavedChanges';
+import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import AvatarEditor from './AvatarEditor';
 import BoardCardPreview from '@/components/BoardSection/BoardCardPreview';
-import { showToast } from '@/lib/toast';
+import { showToast } from '@/lib/ui/toast';
 import type { BoardMember, BoardTier } from '@/app/(main)/team/getBoardMembers';
 import LinkGoogleSection from './LinkGoogleSection';
 import PushSettings from '@/components/portal/PushSettings';
@@ -32,7 +32,6 @@ import SectionHeader from '@/components/ui/SectionHeader';
 type Tab = 'info' | 'school' | 'card' | 'notifications' | 'strikes' | 'security';
 
 export default function ProfileClient({ profile, privateInfo, email, linkedEmails, roles, isUcsd, divisions }: { profile: Profile; privateInfo: MyPrivateProfile; email: string | null; linkedEmails: string[]; roles: RoleGrant[]; isUcsd: boolean; divisions: { id: string; name: string }[]; initialTab?: string }) {
-  const divisionNameById = new Map(divisions.map((d) => [d.id, d.name]));
   const canEditOrgTitle = canSetOrgTitle(roles);
   // exec/lead/officer appear on the public About page board automatically;
   // alumni is the only role that still needs to opt in themselves (division
@@ -216,7 +215,6 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
     // exec/lead/officer are shown automatically; alumni only once opted in.
     onTeamPage: !roles.every((r) => r.role === 'alumni') || form.show_on_board,
   };
-  const previewVis = form.board_visibility;
   // The email shown on the public card: the one they picked among their linked emails, else their sign-in email.
   const boardEmail = (form.board_email && linkedEmails.includes(form.board_email) ? form.board_email : email) ?? null;
   // The card as visitors would see it, built from the unsaved form — handed to

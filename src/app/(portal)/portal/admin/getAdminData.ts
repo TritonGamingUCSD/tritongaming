@@ -2,9 +2,9 @@ import { createElement } from 'react';
 import { Users, Calendar, Ticket } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { hasCapability } from '@/lib/capabilities';
-import type { RoleGrant } from '@/lib/capabilities';
-import { fetchLinkedEmails, pickDisplayEmails } from '@/lib/linkedEmails';
+import { hasCapability } from '@/lib/portal/capabilities';
+import type { RoleGrant } from '@/lib/portal/capabilities';
+import { fetchLinkedEmails, pickDisplayEmails } from '@/lib/members/linkedEmails';
 import type RoleManager from './RoleManager';
 
 // createElement instead of JSX since this is a plain .ts module, not .tsx.

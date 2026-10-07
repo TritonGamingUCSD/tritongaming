@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { authorizeKeys, keyPeople } from '@/lib/storageKeys';
+import { authorizeKeys, keyPeople } from '@/lib/storage/storageKeys';
 
 export const dynamic = 'force-dynamic';
 const UUID = /^[0-9a-f-]{36}$/i;

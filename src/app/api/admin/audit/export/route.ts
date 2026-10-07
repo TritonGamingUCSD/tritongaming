@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { hasCapability } from '@/lib/capabilities';
-import { PACIFIC_TZ } from '@/lib/timezone';
-import { applyAuditFilters } from '@/lib/auditFilters';
+import { hasCapability } from '@/lib/portal/capabilities';
+import { PACIFIC_TZ } from '@/lib/core/timezone';
+import { applyAuditFilters } from '@/lib/notifications/auditFilters';
 
 const MAX_ROWS = 10000;
 

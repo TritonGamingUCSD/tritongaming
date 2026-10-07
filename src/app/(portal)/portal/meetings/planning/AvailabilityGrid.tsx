@@ -3,8 +3,8 @@
 import { MoveHorizontal, MoveVertical, Pointer } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { useEffect, useRef, useState } from 'react';
-import { confirmHold } from '@/lib/confirmHold';
-import { busySlots, clockLabel, dayLabel, slotStarts, toHhmm, toMin, type PlanSlots, type PlanView, type SlotValue } from '@/lib/meetingPlans';
+import { confirmHold } from '@/lib/ui/confirmHold';
+import { busySlots, clockLabel, dayLabel, slotStarts, toHhmm, toMin, type PlanSlots, type PlanView, type SlotValue } from '@/lib/meetings/meetingPlans';
 import styles from './planning.module.css';
 
 type Mode = 0 | 1 | 2;

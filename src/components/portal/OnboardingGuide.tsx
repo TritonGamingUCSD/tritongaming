@@ -2,7 +2,7 @@
 
 import IconButton from '@/components/ui/IconButton';
 import { useState } from 'react';
-import { Ticket, Award, Users, Calendar, X, ArrowRight } from 'lucide-react';
+import { Ticket, Award, Users, Calendar, ArrowRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import styles from './OnboardingGuide.module.css';
 

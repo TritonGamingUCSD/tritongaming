@@ -1,9 +1,9 @@
 import { createClient } from '@/lib/supabase/server';
-import type { RoleGrant } from '@/lib/capabilities';
-import { isVerifiedMember, isRewardsEligible } from '@/lib/capabilities';
-import { buildCheckinFormUrl, type CheckinFormConfig } from '@/lib/checkinForm';
-import { openEventsFilter } from '@/lib/checkinWindow';
-import { pacificDayKey } from '@/lib/checkinDays';
+import type { RoleGrant } from '@/lib/portal/capabilities';
+import { isVerifiedMember, isRewardsEligible } from '@/lib/portal/capabilities';
+import { buildCheckinFormUrl, type CheckinFormConfig } from '@/lib/events/checkinForm';
+import { openEventsFilter } from '@/lib/events/checkinWindow';
+import { pacificDayKey } from '@/lib/events/checkinDays';
 import type TicketsClient from './TicketsClient';
 
 // Shared by the standalone /portal/tickets route and the portal hub so both

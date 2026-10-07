@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { authorizeStrikes, mySummary } from '@/lib/strikes';
+import { authorizeStrikes, mySummary } from '@/lib/members/strikes';
 
 export const dynamic = 'force-dynamic';
 

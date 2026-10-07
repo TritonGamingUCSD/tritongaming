@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { GRANTABLE_CAPABILITIES, hasCapability, isInactiveStripped, withGrantedCapabilities, type RoleGrant } from '@/lib/capabilities';
+import { GRANTABLE_CAPABILITIES, hasCapability, isInactiveStripped, withGrantedCapabilities, type RoleGrant } from '@/lib/portal/capabilities';
 import type { AppRole, Capability } from '@/types/database';
 
 const as = (...roles: AppRole[]): RoleGrant[] => roles.map((role) => ({ role, division_id: null }));

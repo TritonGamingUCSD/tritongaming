@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { hasCapability } from '@/lib/capabilities';
-import { authorizeDocs, editingNow, namesOf } from '@/lib/docsServer';
+import { hasCapability } from '@/lib/portal/capabilities';
+import { authorizeDocs, editingNow, namesOf } from '@/lib/docs/docsServer';
 
 export const dynamic = 'force-dynamic';
 

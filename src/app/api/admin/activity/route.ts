@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { hasCapability } from '@/lib/capabilities';
+import { hasCapability } from '@/lib/portal/capabilities';
 
 // Backs the Admin overview's per-admin "recent activity" panel — see
 // get_admin_activity in 20260921150000_add_admin_activity_feed.sql for

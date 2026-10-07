@@ -7,9 +7,9 @@ import { usePathname } from 'next/navigation';
 import { ArrowUpRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types/database';
-import { resolveAvatarUrl } from '@/lib/profile';
+import { resolveAvatarUrl } from '@/lib/members/profile';
 import styles from './NavBar.module.css';
-import { DISCORD_URL } from '@/lib/links';
+import { DISCORD_URL } from '@/lib/site/links';
 
 const NAV_LINKS = [
   { href: '/our-story',     label: 'Our Story' },

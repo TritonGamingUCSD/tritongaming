@@ -1,5 +1,5 @@
-import { pageOgResponse } from '@/lib/ogPage';
-import { PORTAL_PAGE_INFO } from '@/lib/portalShare';
+import { pageOgResponse } from '@/lib/site/ogPage';
+import { PORTAL_PAGE_INFO } from '@/lib/portal/portalShare';
 
 // The link-preview card for a portal page: only its name, never anything from inside it.
 export async function GET(_req: Request, { params }: { params: Promise<{ section: string }> }) {

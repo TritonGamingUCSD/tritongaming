@@ -196,37 +196,6 @@
   gap: 0.5rem 1rem;
 }
 
-.saveBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  padding: 0.75rem 2rem;
-  background: var(--btn-primary-bg);
-  color: var(--btn-primary-text);
-  border: 1px solid var(--btn-primary-border);
-  box-shadow: var(--btn-primary-shadow);
-  border-radius: var(--radius-md);
-  font-family: var(--font-futura-heavy);
-  font-size: 0.875rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
-  align-self: flex-start;
-}
-
-.saveBtn:hover:not(:disabled) {
-  border-color: var(--btn-primary-border-hover);
-  box-shadow: var(--btn-primary-shadow-hover);
-  transform: translateY(-2px);
-}
-
-.saveBtn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
 @media (max-width: 600px) {
   .fieldRow {
     grid-template-columns: 1fr;
@@ -360,7 +329,6 @@
 .currentEmpty { font-size: 0.75rem; color: rgba(var(--pp-ink-rgb), 0.87); font-style: italic; }
 
 .previewHeading { display: block; margin-top: 0; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--p-accent-text); }
-.previewTitle { font-size: 0.82rem; color: var(--p-accent-text); }
 
 .previewWrap { width: 100%; margin-top: 1.25rem; }
 
@@ -430,9 +398,6 @@
 .majorChipX:hover { background: rgba(var(--pp-ink-rgb), 0.2); }
 .majorOther { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .majorOther .input { flex: 1; min-width: 160px; }
-.majorAddBtn { background: var(--btn-primary-bg); color: var(--btn-primary-text); border: 1px solid var(--btn-primary-border); }
-.majorAddBtn:disabled { opacity: 0.5; cursor: not-allowed; }
-.majorCancelBtn { background: transparent; color: rgba(var(--pp-ink-rgb), 0.87); border: 1px solid transparent; }
 
 /* Login & Security has no side column: two stacked cards, full width up to a readable cap. */
 .layoutSingle { grid-template-columns: minmax(0, 1fr) !important; max-width: 720px; margin-inline: auto; }

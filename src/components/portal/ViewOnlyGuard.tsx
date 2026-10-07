@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { showToast } from '@/lib/toast';
+import { showToast } from '@/lib/ui/toast';
 
 // Mounted only while an admin views the portal as someone else. The server already refuses changes to our own API (see proxy.ts); this also stops the
 // browser's direct calls to the database and storage, so nothing can be saved, uploaded or deleted from this window until the view is exited.

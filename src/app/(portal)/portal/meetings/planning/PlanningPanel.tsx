@@ -2,19 +2,19 @@
 
 import SectionTabs from '@/components/ui/SectionTabs';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useDraft } from '@/lib/useDraft';
+import { useDraft } from '@/lib/ui/useDraft';
 import DraftBanner from '@/components/portal/DraftBanner';
 import { useSearchParams } from 'next/navigation';
-import { usePortalParams } from '@/lib/usePortalParams';
-import { ArrowLeft, Bell, CalendarClock, Check, ChevronRight, Hourglass, Lock, MousePointerClick, Pencil, Plus, RotateCcw, Star, Trash2, UserX, Users } from 'lucide-react';
+import { usePortalParams } from '@/lib/portal/usePortalParams';
+import { ArrowLeft, Bell, CalendarClock, Check, ChevronRight, Hourglass, Lock, MousePointerClick, Plus, RotateCcw, Star, UserX, Users } from 'lucide-react';
 import Notice from '@/components/ui/Notice';
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
 import { Field, Input, Select, Textarea, DateInput } from '@/components/ui/Field';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
-import { confirmHold } from '@/lib/confirmHold';
-import { audienceLabel } from '@/lib/meetingAudience';
-import { AUTO_ABSENT_REASON, MAX_RANGE_DAYS, addDays, availabilityFor, bestTimes, evaluateStart, clockLabel, dayLabel, daysBetween, slotStarts, toHhmm, toMin, withoutBusy, type PlanSlots, type PlanView } from '@/lib/meetingPlans';
+import { confirmHold } from '@/lib/ui/confirmHold';
+import { audienceLabel } from '@/lib/meetings/meetingAudience';
+import { MAX_RANGE_DAYS, addDays, availabilityFor, bestTimes, evaluateStart, clockLabel, dayLabel, daysBetween, slotStarts, toHhmm, toMin, withoutBusy, type PlanSlots, type PlanView } from '@/lib/meetings/meetingPlans';
 import { AudiencePicker, audienceEmpty, audFrom, audPayload, defaultAud, type Aud } from '../MeetingsSectionContent';
 import m from '../meetings.module.css';
 import styles from './planning.module.css';

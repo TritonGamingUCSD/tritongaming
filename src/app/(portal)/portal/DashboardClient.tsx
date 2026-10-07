@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { ChevronRight, Clock, Ticket } from 'lucide-react';
-import { PACIFIC_TZ, pacificDaysUntil, eventDayProgress } from '@/lib/timezone';
+import { PACIFIC_TZ, pacificDaysUntil, eventDayProgress } from '@/lib/core/timezone';
 import styles from './dashboard.module.css';
 
 interface TicketInfo {

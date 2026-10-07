@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
-import { resolveSections } from '@/lib/pageLayout';
+import { resolveSections } from '@/lib/site/pageLayout';
 import { Fragment } from 'react';
 import LogoPlate from '@/components/LogoPlate/LogoPlate';
 import { ZineBand, PageHero, BandHeader } from '@/components/ZineBand/ZineBand';
 import { Percent } from 'lucide-react';
-import { getContentBlocks } from '@/lib/content';
+import { getContentBlocks } from '@/lib/site/content';
 import PhotoStrip from '@/components/PhotoStrip/PhotoStrip';
-import { getSitePhotos, pickPhotos } from '@/lib/sitePhotos';
+import { getSitePhotos, pickPhotos } from '@/lib/storage/sitePhotos';
 import styles from './membership.module.css';
 
 // Served from the CDN cache and refreshed in the background — data comes from

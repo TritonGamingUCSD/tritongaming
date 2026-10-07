@@ -2,7 +2,7 @@
 
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
-import { draftAge } from '@/lib/useDraft';
+import { draftAge } from '@/lib/ui/useDraft';
 
 // "You have an unfinished draft": shown when a form that autosaves is opened again.
 export default function DraftBanner({ at, what = 'draft', onContinue, onDiscard }: { at: number; what?: string; onContinue: () => void; onDiscard: () => void }) {

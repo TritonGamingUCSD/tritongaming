@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { checkinHoursError, isCheckinWindowOpen } from '@/lib/checkinWindow';
+import { checkinHoursError, isCheckinWindowOpen } from '@/lib/events/checkinWindow';
 
 // Pacific time in November is UTC-8.
 const windows = [{ day: '2026-11-07', start: '10:00', end: '18:00' }];

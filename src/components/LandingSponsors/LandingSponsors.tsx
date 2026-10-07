@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import LogoGrid from '@/components/LogoGrid/LogoGrid';
 import { Reveal } from '@/components/Reveal/Reveal';
-import { getContentBlock } from '@/lib/content';
+import { getContentBlock } from '@/lib/site/content';
 import styles from './LandingSponsors.module.css';
 import type { LogoItem } from '@/types';
 

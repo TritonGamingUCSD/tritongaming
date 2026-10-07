@@ -3,8 +3,8 @@
 import IconButton from '@/components/ui/IconButton';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Sparkles, X } from 'lucide-react';
-import type { ProfileNudge as Nudge } from '@/lib/profileCompleteness';
+import { Sparkles } from 'lucide-react';
+import type { ProfileNudge as Nudge } from '@/lib/members/profileCompleteness';
 import styles from './ProfileNudge.module.css';
 
 const KEY = 'tg_profile_nudge_hidden_until';

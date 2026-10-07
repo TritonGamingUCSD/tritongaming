@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { cronAllowed } from '@/lib/cronAuth';
+import { cronAllowed } from '@/lib/core/cronAuth';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { syncInactive } from '@/lib/quarters';
+import { syncInactive } from '@/lib/members/quarters';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

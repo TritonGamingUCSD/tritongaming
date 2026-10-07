@@ -1,12 +1,12 @@
 'use client';
 
-import { confirmDiscardUnsaved } from '@/lib/useUnsavedChanges';
+import { confirmDiscardUnsaved } from '@/lib/ui/useUnsavedChanges';
 import type { ReactElement, ReactNode } from 'react';
 import { Fragment, cloneElement, isValidElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { mergedPortalParams, portalHref } from '@/lib/portalPath';
-import { usePortalParams } from '@/lib/usePortalParams';
+import { mergedPortalParams, portalHref } from '@/lib/portal/portalPath';
+import { usePortalParams } from '@/lib/portal/usePortalParams';
 import { motion, AnimatePresence } from 'motion/react';
 import { Home, MoreHorizontal, ChevronRight, ChevronLeft } from 'lucide-react';
 import PortalSearch from './PortalSearch';
@@ -223,7 +223,7 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
 
   useEffect(() => {
     setOpenId(validRequested);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [validRequested]);
 
   useEffect(() => {

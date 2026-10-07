@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { logAudit } from '@/lib/audit';
-import { UUID, authorizeShifts, bad, withDocTitles, STATIONS_CHANNEL, notifyShifts } from '@/lib/shiftsServer';
-import { STATION_COLS } from '@/lib/shifts';
-import { text, webUrl } from '@/lib/shiftFields';
+import { logAudit } from '@/lib/notifications/audit';
+import { UUID, authorizeShifts, bad, withDocTitles, STATIONS_CHANNEL, notifyShifts } from '@/lib/shifts/shiftsServer';
+import { STATION_COLS } from '@/lib/shifts/shifts';
+import { text, webUrl } from '@/lib/shifts/shiftFields';
 
 export const dynamic = 'force-dynamic';
 

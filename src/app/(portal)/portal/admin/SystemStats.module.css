@@ -121,26 +121,6 @@
 }
 
 
-/* ── Storage cleanup controls (merged in from the old standalone
-   StorageCleanup card — see SystemStats.tsx) ── */
-
-.scanBtn {
-  padding: 0.6rem 1.25rem;
-  background: rgba(var(--pp-ink-rgb), 0.06);
-  color: rgba(var(--pp-ink-rgb), 0.97);
-  border: 1px solid rgba(var(--pp-ink-rgb), 0.26);
-  border-radius: var(--radius-sm);
-  font-family: var(--font-futura-heavy);
-  font-size: 0.78rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.scanBtn:hover:not(:disabled) { background: rgba(var(--pp-ink-rgb), 0.1); }
-.scanBtn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-
 
 /* ── Vercel ── */
 .vercelCard {

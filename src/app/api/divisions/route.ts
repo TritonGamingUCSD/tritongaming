@@ -1,9 +1,9 @@
-import { cleanBlocks } from '@/lib/pageBlocks';
-import { invalidate } from '@/lib/revalidate';
+import { cleanBlocks } from '@/lib/site/pageBlocks';
+import { invalidate } from '@/lib/site/revalidate';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { hasCapability } from '@/lib/capabilities';
-import { slugify } from '@/lib/slug';
+import { hasCapability } from '@/lib/portal/capabilities';
+import { slugify } from '@/lib/core/slug';
 import type { SocialEmbed } from '@/types/database';
 
 // Same shape as profiles.social_links (see lib/profile.ts) — a plain

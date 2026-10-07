@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { isInactiveMember } from '@/lib/meetingAudience';
-import { authorizeInternalEvents, RSVP_STATUSES, type RsvpStatus, type InternalEventRow } from '@/lib/internalEvents';
+import { isInactiveMember } from '@/lib/meetings/meetingAudience';
+import { authorizeInternalEvents, RSVP_STATUSES, type RsvpStatus, type InternalEventRow } from '@/lib/meetings/internalEvents';
 
 // Say whether you're coming ({status: 'going' | 'maybe' | 'not_going'}) or clear your answer ({status: null}).
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {

@@ -3,8 +3,8 @@
 import SectionHeader from '@/components/ui/SectionHeader';
 import { useEffect, useState } from 'react';
 import { ChevronDown, Upload, X } from 'lucide-react';
-import type { QRCodeOptions, QRDotsType, QRCornersSquareType, QRCornersDotType } from '@/lib/qrCodeStyling';
-import { QR_PRESETS, matchingPreset } from '@/lib/qrPresets';
+import type { QRCodeOptions, QRDotsType, QRCornersSquareType, QRCornersDotType } from '@/lib/qr/qrCodeStyling';
+import { QR_PRESETS, matchingPreset } from '@/lib/qr/qrPresets';
 import type { QRDivisionLogo } from './QRStudioClient';
 import styles from './qrstudio.module.css';
 import Select from '@/components/ui/Select';
@@ -166,7 +166,7 @@ export default function QRStudioForm({ options, setOptions, divisions = [] }: { 
 
   // Pull a division's logo in as the center icon. Fetched and inlined so the downloaded image
   // isn't blocked by cross-origin rules.
-  async function useDivisionLogo(d: QRDivisionLogo, extra: Partial<QRCodeOptions> = {}) {
+  async function applyDivisionLogo(d: QRDivisionLogo, extra: Partial<QRCodeOptions> = {}) {
     setDivisionError('');
     setLoadingDivision(d.id);
     try {
@@ -194,7 +194,7 @@ export default function QRStudioForm({ options, setOptions, divisions = [] }: { 
   // A division look also brings that division's logo along as the center icon.
   function pickPreset(p: (typeof QR_PRESETS)[number]) {
     const d = p.division ? divisions.find((x) => x.name.toLowerCase().includes(p.division!)) : undefined;
-    if (d) useDivisionLogo(d, { ...p.style });
+    if (d) applyDivisionLogo(d, { ...p.style });
     else set({ ...p.style });
   }
   const set = (patch: Partial<QRCodeOptions>) => setOptions({ ...options, ...patch });
@@ -270,7 +270,7 @@ export default function QRStudioForm({ options, setOptions, divisions = [] }: { 
               const active = options.icon === 'custom' && chosenDivision === d.id;
               return (
                 <button key={d.id} type="button" role="radio" aria-checked={active} disabled={loadingDivision !== null}
-                  className={`${styles.divChip} ${active ? styles.divChipActive : ''}`} onClick={() => useDivisionLogo(d)}>
+                  className={`${styles.divChip} ${active ? styles.divChipActive : ''}`} onClick={() => applyDivisionLogo(d)}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={d.logo} alt="" className={styles.divLogo} />
                   <span>{loadingDivision === d.id ? 'Loading…' : d.name}</span>

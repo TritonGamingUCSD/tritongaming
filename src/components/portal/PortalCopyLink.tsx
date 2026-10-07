@@ -5,9 +5,9 @@ import { Check, Copy, Download, QrCode } from 'lucide-react';
 import Popover from '@/components/ui/Popover';
 import Button from '@/components/ui/Button';
 import StyledQRCode, { type StyledQRCodeHandle } from '@/components/StyledQRCode/StyledQRCode';
-import { DEFAULT_QR_OPTIONS } from '@/lib/qrCodeStyling';
-import { QR_PRESETS } from '@/lib/qrPresets';
-import { showToast } from '@/lib/toast';
+import { DEFAULT_QR_OPTIONS } from '@/lib/qr/qrCodeStyling';
+import { QR_PRESETS } from '@/lib/qr/qrPresets';
+import { showToast } from '@/lib/ui/toast';
 import styles from './PortalThemeToggle.module.css';
 import qr from './PortalShare.module.css';
 

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { logAudit } from '@/lib/audit';
-import { authorizeMeetings, canManageMeeting, notYourMeeting } from '@/lib/meetings';
+import { logAudit } from '@/lib/notifications/audit';
+import { authorizeMeetings, canManageMeeting, notYourMeeting } from '@/lib/meetings/meetings';
 
 // Delete a meeting for good, including its attendance, answers and reactions. Exec only. To just
 // skip one week of a repeating meeting, use /api/meetings/cancel instead (it can be restored).

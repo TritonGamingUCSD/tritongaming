@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import InfoSection from '@/components/InfoSection/InfoSection';
-import { getContentBlocks } from '@/lib/content';
-import { resolveSections } from '@/lib/pageLayout';
+import { getContentBlocks } from '@/lib/site/content';
+import { resolveSections } from '@/lib/site/pageLayout';
 import { ZineBand, PageHero } from '@/components/ZineBand/ZineBand';
 import styles from './our-story.module.css';
 
