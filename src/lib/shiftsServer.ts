@@ -6,7 +6,7 @@ import { loadGrantedCapabilities } from '@/lib/grantedCapabilities';
 import { hasCapability, withGrantedCapabilities } from '@/lib/capabilities';
 import { staffName } from '@/lib/names';
 import { UUID } from '@/lib/docsServer';
-import { STATION_COLS, mayClaim, type ShiftEventGuide, type ShiftGrid, type ShiftPlan, type ShiftStation } from '@/lib/shifts';
+import { STATION_COLS, mayClaim, type ShiftChecklistItem, type ShiftEventGuide, type ShiftGrid, type ShiftPlan, type ShiftStation } from '@/lib/shifts';
 
 export { UUID };
 export const bad = (error: string, status = 400) => NextResponse.json({ error }, { status });
@@ -97,8 +97,17 @@ export async function loadGrid(svc: SupabaseClient, eventId: string, me: string,
     exemptions = (mine ?? []).map((e) => ({ id: e.id as string, user_id: me, name: 'You', note: (e.note as string | null) ?? null }));
     absences = (gone ?? []).filter((g) => g.user_id === me).map((g) => ({ id: g.id as string, user_id: me, name: 'You', starts_at: g.starts_at as string, ends_at: g.ends_at as string, needs: g.needs as number }));
   }
+  const weekAgo = new Date(Date.now() - 7 * 86_400_000).toISOString();
+  const { data: coverRows } = await svc.from('shift_cover_requests').select('id, station_id, slot_index, requester_id, note, status, taken_by, resolved_at').eq('event_id', eventId).in('status', ['open', 'taken']).order('created_at');
+  const liveCovers = (coverRows ?? []).filter((c) => c.status === 'open' || (c.resolved_at as string) >= weekAgo);
+  const coverNames = await nameRow([...new Set(liveCovers.flatMap((c) => [c.requester_id as string, ...(c.taken_by ? [c.taken_by as string] : [])]))]);
+  const covers = liveCovers.map((c) => ({ id: c.id as string, station_id: c.station_id as string, slot_index: c.slot_index as number, requester_id: c.requester_id as string, requester_name: coverNames.get(c.requester_id as string) ?? 'Someone', note: (c.note as string | null) ?? null, status: c.status as 'open' | 'taken', taken_by: (c.taken_by as string | null) ?? null, taken_by_name: c.taken_by ? coverNames.get(c.taken_by as string) ?? 'Someone' : null }));
+  const { data: itemRows } = await svc.from('shift_checklist_items').select('id, station_id, label, done_by, done_at').eq('event_id', eventId).order('sort_order');
+  const itemNames = await nameRow([...new Set((itemRows ?? []).map((i) => i.done_by as string | null).filter(Boolean) as string[])]);
+  const checklists: Record<string, ShiftChecklistItem[]> = {};
+  for (const i of itemRows ?? []) (checklists[i.station_id as string] ??= []).push({ id: i.id as string, label: i.label as string, done_by_name: i.done_by ? itemNames.get(i.done_by as string) ?? 'Someone' : null, done_at: (i.done_at as string | null) ?? null });
   return {
-    requirement, absences, exemptions, officers, roster,
+    requirement, absences, covers, checklists, exemptions, officers, roster,
     event: ev as ShiftGrid['event'],
     plan: (plan as ShiftPlan | null) ?? null,
     stations: await withDocTitles(svc, (stations ?? []) as ShiftStation[]),

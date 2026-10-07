@@ -7,6 +7,7 @@ import LoginClient from './LoginClient';
 import styles from './login.module.css';
 import type { Metadata } from 'next';
 import { portalTargetFromNext } from '@/lib/portalShare';
+import PortalThemeToggle from '@/components/portal/PortalThemeToggle';
 
 // A shared portal link lands here first (the portal needs a login), so the preview card names the page it points at.
 export async function generateMetadata({ searchParams }: { searchParams: Promise<{ next?: string }> }): Promise<Metadata> {
@@ -35,8 +36,9 @@ export default async function LoginPage({
   return (
     <div className={styles.page}>
       <Link href="/" className={styles.backLink}>← Back to Site</Link>
+      <div className={styles.themeSlot}><PortalThemeToggle /></div>
 
-      <div className={styles.card}>
+      <main className={styles.card}>
         <div className={styles.logoSection}>
           <Image
             src="/logos/tg_logo.png"
@@ -51,7 +53,6 @@ export default async function LoginPage({
           <p className={styles.subtitle}>Member Portal</p>
         </div>
 
-        <div className={styles.divider} />
 
         {params.error && (
           <Notice tone="error">Authentication failed. Please try again.</Notice>
@@ -66,9 +67,7 @@ export default async function LoginPage({
           Losing access to this Google account someday? Link another one from your Profile page
           so you can still sign in with it.
         </p>
-      </div>
-
-      <div className={styles.bgGlow} aria-hidden="true" />
+      </main>
     </div>
   );
 }

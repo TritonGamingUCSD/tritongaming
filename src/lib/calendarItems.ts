@@ -2,11 +2,12 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { hasCapability, isTgMember, type RoleGrant } from '@/lib/capabilities';
 import { pacificDayKey } from '@/lib/checkinDays';
 import { audienceLabel, isExpected } from '@/lib/meetingAudience';
+import { loadMyShifts } from '@/lib/myShifts';
 import { addDaysKey, loadGroups, occurrenceTimes, seriesRunsOn, withExtras, type MeetingRow, type SeriesRow } from '@/lib/meetings';
 
 export interface CalendarItem {
   key: string;
-  kind: 'event' | 'meeting' | 'internal' | 'google';
+  kind: 'event' | 'meeting' | 'internal' | 'google' | 'shift';
   date: string;            // the Pacific day this entry sits on
   title: string;
   start: string; end: string | null;   // ISO
@@ -107,6 +108,16 @@ export async function collectCalendarItems(svc: SupabaseClient, user: { id: stri
     if (!isTgMember(roles)) break;
     if (declined.has(r.id as string)) continue;
     items.push({ key: `x|${r.id}`, kind: 'internal', date: r.event_date as string, title: r.title as string, start: r.starts_at as string, end: r.ends_at as string, location: r.location as string | null, href: '/portal/internal-events', mine: going.has(r.id as string), status: going.has(r.id as string) ? 'going' : maybe.has(r.id as string) ? 'maybe' : undefined, dayLabel: null });
+  }
+  // My own shifts (one block per station, back-to-back slots joined): only ever the signed-in person's, never anyone else's.
+  for (const sh of await loadMyShifts(svc, user.id, new Date(startIso).getTime(), new Date(endIso).getTime()).catch(() => [])) {
+    const day = pacificDayKey(new Date(sh.start));
+    if (day < from || day > to) continue;
+    items.push({
+      key: `s|${sh.eventId}|${sh.stationId}|${sh.start}`, kind: 'shift', date: day, title: `Shift: ${sh.stationName}`, start: sh.start, end: sh.end, location: sh.location,
+      href: `/portal/shifts?event=${sh.eventId}&guide=${sh.stationId}`, mine: true,
+      description: `${sh.eventTitle}${sh.category === 'team' ? ` (${sh.teamLabel || 'team'} shift)` : ''}. Where to be and what to do is in the station guide.`, dayLabel: null,
+    });
   }
   items.sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
   return items;

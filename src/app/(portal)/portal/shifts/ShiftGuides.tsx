@@ -29,15 +29,41 @@ export function Legend({ grid }: { grid: ShiftGrid }) {
   );
 }
 
+function Checklist({ items, mayTick, onTick }: { items: ShiftGrid['checklists'][string]; mayTick: boolean; onTick?: (itemId: string, done: boolean) => Promise<void> }) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const done = items.filter((i) => i.done_at).length;
+  return (
+    <div className={styles.guideText}>
+      <h4>Checklist <span className={styles.muted}>{done}/{items.length}</span></h4>
+      <ul className={styles.checkList}>
+        {items.map((i) => (
+          <li key={i.id}>
+            <label className={styles.checkRow}>
+              <input type="checkbox" checked={!!i.done_at} disabled={!mayTick || busy === i.id} onChange={async (e) => { setBusy(i.id); await onTick?.(i.id, e.target.checked); setBusy(null); }} />
+              <span className={i.done_at ? styles.checkDone : undefined}>{i.label}</span>
+              {i.done_at && i.done_by_name && <small className={styles.muted}>{i.done_by_name}, {time(new Date(i.done_at))}</small>}
+            </label>
+          </li>
+        ))}
+      </ul>
+      {!mayTick && <p className={styles.muted}>Only people on this station’s shift can tick items.</p>}
+    </div>
+  );
+}
+
 /** Everything about one station at this event: where, what to do, the script. Anyone who can see shifts can read it. */
-export function GuideBody({ grid, station }: { grid: ShiftGrid; station: ShiftStation }) {
+export function GuideBody({ grid, station, onTick }: { grid: ShiftGrid; station: ShiftStation; onTick?: (itemId: string, done: boolean) => Promise<void> }) {
   const g = guideFor(station, grid.eventGuides[station.id]);
-  const empty = !g.location && !g.instructions && !g.notes && !g.doc_id && !g.link_url;
+  const items = grid.checklists?.[station.id] ?? [];
+  const empty = !g.location && !g.instructions && !g.notes && !g.doc_id && !g.link_url && items.length === 0;
+  // Ticking is for people working this station at this event (exec always); everyone else just sees the progress.
+  const mayTick = !!onTick && (grid.canManage || grid.signups.some((x) => x.user_id === grid.me && x.station_id === station.id));
   return (
     <div className={styles.guide}>
       {g.location && <p className={styles.guideRow}><MapPin size={15} aria-hidden="true" /> <span><strong>Where:</strong> {g.location}</span></p>}
       {g.instructions && <div className={styles.guideText}><h4>What to do</h4><p>{g.instructions}</p></div>}
       {g.notes && <div className={styles.guideText}><h4>For this event</h4><p>{g.notes}</p></div>}
+      {items.length > 0 && <Checklist items={items} mayTick={mayTick} onTick={onTick} />}
       {(g.doc_id || g.link_url) && (
         <div className={styles.guideLinks}>
           {g.doc_id && <PortalLink href={`/portal/docs?id=${g.doc_id}`} className={styles.guideLink}><FileText size={14} aria-hidden="true" /> {g.doc_title || 'Open the script'}</PortalLink>}
@@ -49,12 +75,12 @@ export function GuideBody({ grid, station }: { grid: ShiftGrid; station: ShiftSt
   );
 }
 
-export function GuideDialog({ grid, station, arrivedNow, onClose }: { grid: ShiftGrid; station: ShiftStation; arrivedNow?: boolean; onClose: () => void }) {
+export function GuideDialog({ grid, station, arrivedNow, onClose, onTick }: { grid: ShiftGrid; station: ShiftStation; arrivedNow?: boolean; onClose: () => void; onTick?: (itemId: string, done: boolean) => Promise<void> }) {
   return (
     <Dialog title={station.name} label={`${station.name} guide`} onClose={onClose}>
       <p className={`${styles.badge} ${catClass(station)}`}>{catName(station)}</p>
       {arrivedNow && <DialogText>You’re checked in. Here’s what to do:</DialogText>}
-      <GuideBody grid={grid} station={station} />
+      <GuideBody grid={grid} station={station} onTick={onTick} />
       <DialogActions><DialogCancel onClick={onClose}>Close</DialogCancel></DialogActions>
     </Dialog>
   );
@@ -94,7 +120,7 @@ export function MyShifts({ grid, onArrive, onOpen }: { grid: ShiftGrid; onArrive
 }
 
 /** Every station's guide on one page: the master doc for what each shift does. Visible to everyone who can see shifts. One row per station, closed until opened (your own stations start open). */
-export function GuidesView({ grid }: { grid: ShiftGrid }) {
+export function GuidesView({ grid, onTick }: { grid: ShiftGrid; onTick?: (itemId: string, done: boolean) => Promise<void> }) {
   const mine = new Set(grid.signups.filter((x) => x.user_id === grid.me).map((x) => x.station_id));
   const [open, setOpen] = useState<Set<string>>(mine);
   if (!grid.stations.length) return <div className={styles.card}><p className={styles.muted}>There are no stations yet.</p></div>;
@@ -121,7 +147,7 @@ export function GuidesView({ grid }: { grid: ShiftGrid }) {
               {mine.has(st.id) && <span className={styles.youTag}>Your shift</span>}
               {g.location && <span className={styles.guideWhere}><MapPin size={12} aria-hidden="true" /> {g.location}</span>}
             </button>
-            {isOpen && <div className={styles.guideBodyWrap}><GuideBody grid={grid} station={st} /></div>}
+            {isOpen && <div className={styles.guideBodyWrap}><GuideBody grid={grid} station={st} onTick={onTick} /></div>}
           </section>
         );
       })}
@@ -171,7 +197,7 @@ function GuideForm({ station, grid, docs, templates, eventId, api, setError, onS
 }) {
   // What is saved for this event, or (for older stations) what was written on the station itself, so nothing already written disappears.
   const g = guideFor(station, grid.eventGuides[station.id]);
-  const base = { location: g.location ?? '', text: g.instructions ?? '', doc_id: g.doc_id ?? '', link_url: g.link_url ?? '', link_label: g.link_label ?? '' };
+  const base = { location: g.location ?? '', text: g.instructions ?? '', doc_id: g.doc_id ?? '', link_url: g.link_url ?? '', link_label: g.link_label ?? '', checklist: (grid.checklists?.[station.id] ?? []).map((i) => i.label).join('\n') };
   const [v, setV] = useState(base);
   const [busy, setBusy] = useState(false);
   const dirty = (Object.keys(base) as (keyof typeof base)[]).some((k) => v[k] !== base[k]);
@@ -179,7 +205,7 @@ function GuideForm({ station, grid, docs, templates, eventId, api, setError, onS
   const set = (k: keyof typeof base, val: string) => setV((prev) => ({ ...prev, [k]: val }));
   async function save() {
     setBusy(true); setError('');
-    const r = await api(`/api/shifts/${eventId}/guide`, 'POST', { station_id: station.id, location: v.location, notes: v.text, doc_id: v.doc_id, link_url: v.link_url, link_label: v.link_label });
+    const r = await api(`/api/shifts/${eventId}/guide`, 'POST', { station_id: station.id, location: v.location, notes: v.text, doc_id: v.doc_id, link_url: v.link_url, link_label: v.link_label, checklist: v.checklist });
     if (!r.ok) setError(r.json.error || 'Couldn’t save that.'); else await onSaved();
     setBusy(false);
   }
@@ -195,6 +221,7 @@ function GuideForm({ station, grid, docs, templates, eventId, api, setError, onS
         </Field>
       )}
       <Field label="What to do"><Textarea rows={7} value={v.text} onChange={(e) => set('text', e.target.value)} maxLength={4000} placeholder="Step by step: where to stand, who to talk to, what to do if something goes wrong" /></Field>
+      <Field label="Checklist" hint="One item per line, up to 30. People on this station tick them off during the shift. Keeping an item’s wording keeps its tick."><Textarea rows={5} value={v.checklist} onChange={(e) => set('checklist', e.target.value)} maxLength={3600} placeholder={'Set out the sign-in sheet\nTest the scanner\nCount the wristbands'} /></Field>
       {scriptFields(docs, v, (k, val) => set(k, val))}
       <div className={styles.actions}><Button size="sm" onClick={save} disabled={!dirty || busy} loading={busy}>Save</Button></div>
     </div>

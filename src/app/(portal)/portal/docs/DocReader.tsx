@@ -1,9 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, ChevronRight, FileText, MoreHorizontal, Pencil, Pin, PinOff, Plus, Star, Trash2 } from 'lucide-react';
+import { AlertTriangle, ChevronRight, FileText, BookCheck, Flag, MoreHorizontal, Pencil, Pin, PinOff, Plus, Star, Trash2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
+import Dialog, { DialogActions, DialogCancel, DialogText } from '@/components/ui/Dialog';
+import { Textarea } from '@/components/ui/Field';
+import PortalLink from '@/components/portal/PortalLink';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import { extractToc } from '@/lib/markdownToc';
 import { backlinksTo, resolveWikiLinks } from '@/lib/docsLinks';
@@ -11,6 +14,7 @@ import { ageLabel, ancestors, type DocSection } from '@/lib/docsTree';
 import type { SyncDoc } from '@/lib/docsSync';
 import type { Doc, DocCategory } from '@/types/database';
 import { AttachmentsView } from './DocAttachments';
+import { RequiredReadingDialog } from './DocRequired';
 import { clock } from './docsApi';
 import styles from './docs.module.css';
 
@@ -25,6 +29,10 @@ export default function DocReader({
   onSize: (s: ReaderSize) => void; live: SyncDoc | null; notice: string | null;
   onOpen: (id: string) => void; onHome: () => void; onEdit: () => void; onDelete: () => void; onNewSub: () => void; onFavorite: () => void; onPin: () => void; onTag: (t: string) => void;
 }) {
+  const [reporting, setReporting] = useState(false);
+  const [requiring, setRequiring] = useState(false);
+  // Opening a doc counts as reading it; the server only keeps it when the doc is required reading for one of my roles.
+  useEffect(() => { void fetch('/api/docs/read', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: doc.id }) }).catch(() => {}); }, [doc.id]);
   const crumbs = useMemo(() => ancestors(docs, doc.id), [docs, doc.id]);
   const top = crumbs[0] ?? doc;
   const category = categories.find((c) => c.id === top.category_id)?.name ?? 'Uncategorized';
@@ -115,6 +123,8 @@ export default function DocReader({
                     {(['sm', 'md', 'lg'] as const).map((s) => <button key={s} type="button" className={size === s ? styles.segOn : ''} aria-pressed={size === s} onClick={() => onSize(s)}>{s === 'sm' ? 'Small' : s === 'md' ? 'Medium' : 'Large'}</button>)}
                   </div>
                   <div className={styles.menuList}>
+                    <button type="button" role="menuitem" onClick={() => { setSettings(false); setReporting(true); }}><Flag size={14} aria-hidden="true" /> Report a problem with this doc</button>
+                    {canEdit && <button type="button" role="menuitem" onClick={() => { setSettings(false); setRequiring(true); }}><BookCheck size={14} aria-hidden="true" /> Required reading…</button>}
                     {canEdit && <button type="button" role="menuitem" onClick={() => { setSettings(false); onPin(); }}>{doc.pinned ? <PinOff size={14} aria-hidden="true" /> : <Pin size={14} aria-hidden="true" />} {doc.pinned ? 'Unpin from Docs Home' : 'Pin to Docs Home'}</button>}
                     {canEdit && <button type="button" role="menuitem" onClick={() => { setSettings(false); onNewSub(); }}><Plus size={14} aria-hidden="true" /> New sub-page</button>}
                     {canEdit && <button type="button" role="menuitem" className={styles.menuDanger} onClick={() => { setSettings(false); onDelete(); }}><Trash2 size={14} aria-hidden="true" /> Delete doc</button>}
@@ -173,6 +183,8 @@ export default function DocReader({
         )}
 
         <AttachmentsView attachments={doc.attachments} />
+        {requiring && <RequiredReadingDialog doc={doc} onClose={() => setRequiring(false)} />}
+        {reporting && <ReportDoc doc={doc} onClose={() => setReporting(false)} />}
 
       </article>
 
@@ -186,5 +198,45 @@ export default function DocReader({
         </aside>
       )}
     </div>
+  );
+}
+
+// "Report a problem with this doc": opens a Help ticket for the exec team that names the doc and links to it, so wrong or out-of-date text gets fixed.
+function ReportDoc({ doc, onClose }: { doc: Doc; onClose: () => void }) {
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const [sent, setSent] = useState<string | null>(null);
+  async function send() {
+    setBusy(true); setErr('');
+    try {
+      const r = await fetch('/api/help', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+        category: 'bug', subject: `Doc issue: ${doc.title}`.slice(0, 100), page: `/portal/docs?id=${doc.id}`,
+        body: `${text.trim()}\n\nDoc: ${window.location.origin}/portal/docs?id=${doc.id}`,
+      }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) setErr(j.error || 'Couldn’t send that.'); else setSent(j.id);
+    } catch { setErr('Couldn’t reach the server. Check your connection and try again.'); }
+    setBusy(false);
+  }
+  return (
+    <Dialog title="Report a problem" label="Report a problem with this doc" onClose={onClose}>
+      {sent ? (
+        <>
+          <DialogText>Thanks. The exec team has it and will reply in Help.</DialogText>
+          <DialogActions><PortalLink href={`/portal/help?ticket=${sent}`}>See it in Help</PortalLink><DialogCancel onClick={onClose}>Close</DialogCancel></DialogActions>
+        </>
+      ) : (
+        <>
+          <DialogText>What is wrong or out of date in “{doc.title}”?</DialogText>
+          <Textarea rows={5} value={text} maxLength={1500} onChange={(e) => setText(e.target.value)} placeholder="The step that no longer works, the link that is broken…" aria-label="What is wrong" />
+          {err && <Notice tone="error">{err}</Notice>}
+          <DialogActions>
+            <DialogCancel onClick={onClose}>Cancel</DialogCancel>
+            <Button loading={busy} disabled={!text.trim()} onClick={send}>Send to the exec team</Button>
+          </DialogActions>
+        </>
+      )}
+    </Dialog>
   );
 }

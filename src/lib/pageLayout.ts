@@ -37,6 +37,7 @@ export const PAGE_SECTIONS: Record<string, SectionDef[]> = {
   ],
   events: [
     { id: 'upcoming', label: 'Upcoming events' },
+    { id: 'calendar', label: 'Calendar' },
     { id: 'past', label: 'Past events' },
   ],
 };

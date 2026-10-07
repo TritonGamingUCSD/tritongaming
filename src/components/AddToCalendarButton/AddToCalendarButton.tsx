@@ -1,4 +1,5 @@
-import { CalendarPlus } from 'lucide-react';
+import { CalendarPlus, ExternalLink } from 'lucide-react';
+import { googleCalendarUrl } from '@/lib/calendarLinks';
 import styles from './AddToCalendarButton.module.css';
 
 // Just a styled download link — src/app/api/events/[id]/ics/route.ts does
@@ -15,6 +16,15 @@ export default function AddToCalendarButton({ eventId, className, iconOnly }: { 
       title="Add to Calendar"
     >
       <CalendarPlus size={iconOnly ? 16 : 15} strokeWidth={1.75} aria-hidden="true" /> {!iconOnly && 'Add to Calendar'}
+    </a>
+  );
+}
+
+// The same button for Google Calendar: opens its "add event" screen already filled in.
+export function AddToGoogleCalendarButton({ event, className }: { event: { name: string; start_date: string; end_date?: string | null; location?: string | null; slug: string }; className?: string }) {
+  return (
+    <a href={googleCalendarUrl(event)} target="_blank" rel="noopener noreferrer" className={`${styles.btn} ${className ?? ''}`} aria-label="Add to Google Calendar">
+      <ExternalLink size={15} strokeWidth={1.75} aria-hidden="true" /> Google Calendar
     </a>
   );
 }

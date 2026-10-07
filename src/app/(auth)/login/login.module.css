@@ -1,93 +1,97 @@
+/* The sign-in page wears the portal's look: paper ground, a cut-paper card with a hard edge, ink text, the yellow main button.
+   Everything reads the --pp-* tokens, so it follows the portal's light/dark choice. */
 .page {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  overflow: hidden;
   padding: 1.5rem;
 }
 
+.backLink, .themeSlot { position: absolute; top: clamp(1rem, 3vw, 2rem); z-index: 2; }
 .backLink {
-  position: absolute;
-  top: clamp(1rem, 3vw, 2rem);
   left: clamp(1rem, 3vw, 2rem);
-  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 0.85rem;
+  border: 1px solid var(--pp-line);
+  border-radius: 8px;
+  background: var(--pp-card);
   font-family: var(--font-futura-medium);
   font-size: 0.85rem;
-  color: rgba(242, 241, 240, 0.6);
-  transition: color 0.2s ease;
+  color: var(--pp-ink);
 }
-
-.backLink:hover {
-  color: var(--yellow);
-}
+.backLink:hover { background: rgba(var(--pp-ink-rgb), 0.07); }
+.themeSlot { right: clamp(1rem, 3vw, 2rem); }
 
 .card {
   position: relative;
-  z-index: 1;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 1.25rem;
-  padding: 2.5rem 2rem;
   width: 100%;
   max-width: 420px;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow:
-    0 4px 40px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(255, 199, 44, 0.08);
+  overflow: hidden;
+  background: var(--pp-card);
+  border: 2px solid rgba(var(--pp-ink-rgb), 0.75);
+  border-radius: 8px;
+  box-shadow: var(--pp-shadow);
+  padding: 2.5rem 2rem 2rem;
+}
+/* The striped band along the top, like the portal's section headers */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 10px;
+  background: repeating-linear-gradient(135deg, var(--p-accent) 0 8px, transparent 8px 16px);
+  border-bottom: 2px solid rgba(var(--pp-ink-rgb), 0.75);
 }
 
 .logoSection {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.6rem;
   margin-bottom: 1.5rem;
 }
 
-.logo {
-  border-radius: 50%;
-  filter: drop-shadow(0 0 12px rgba(255, 199, 44, 0.3));
-}
+.logo { border-radius: 50%; }
 
 .title {
   font-family: var(--font-futura-heavy);
   font-size: 1.6rem;
-  color: var(--white);
+  color: var(--pp-ink);
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
+/* A sticker, like the section labels in the portal's sidebar */
 .subtitle {
-  font-family: var(--font-renegare);
-  font-size: 0.85rem;
-  color: var(--yellow);
-  letter-spacing: 0.15em;
+  padding: 0.2rem 0.6rem;
+  background: var(--yellow);
+  color: var(--darkblue);
+  border: 1px solid var(--darkblue);
+  border-radius: 3px;
+  font-family: var(--font-futura-heavy);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
-.divider {
-  height: 1px;
-  background: linear-gradient(to right, transparent, rgba(255,199,44,0.3), transparent);
-  margin-bottom: 1.5rem;
-}
-
 .prompt {
-  color: rgba(242, 241, 240, 0.65);
-  font-size: 0.9rem;
+  color: var(--pp-ink);
+  font-size: 0.95rem;
   text-align: center;
   line-height: 1.5;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.6rem;
 }
 
 .ucsdHint {
-  color: var(--yellow);
-  font-size: 0.78rem;
+  color: rgba(var(--pp-ink-rgb), 0.85);
+  font-size: 0.8rem;
   text-align: center;
-  line-height: 1.4;
-  margin: -1rem 0 1.5rem;
+  line-height: 1.45;
+  margin: 0 0 1.5rem;
 }
 
 .googleBtn {
@@ -96,67 +100,53 @@
   justify-content: center;
   gap: 0.75rem;
   width: 100%;
-  padding: 0.875rem 1.5rem;
-  background: var(--white);
-  color: #1a1a1a;
-  border-radius: 0.625rem;
-  font-family: var(--font-futura-medium);
-  font-size: 0.95rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  min-height: 52px;
+  padding: 0.75rem 1.5rem;
+  background: var(--yellow);
+  color: var(--darkblue);
+  border: 2px solid var(--darkblue);
+  border-radius: 8px;
+  font-family: var(--font-futura-heavy);
+  font-size: 0.9rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: 3px 3px 0 var(--darkblue);
+  transition: transform 0.12s, box-shadow 0.12s;
   cursor: pointer;
 }
+.googleBtn:hover:not(:disabled) { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--darkblue); }
+.googleBtn:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--darkblue); }
+.googleBtn:focus-visible { outline: 3px solid var(--p-accent-text); outline-offset: 3px; }
+.googleBtn:disabled { opacity: 0.75; cursor: not-allowed; }
+@media (prefers-reduced-motion: reduce) { .googleBtn { transition: none; } }
 
-.googleBtn:hover:not(:disabled) {
-  background: #f8f8f8;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-}
-
-.googleBtn:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.googleBtn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.googleIcon {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-}
+.googleIcon { width: 20px; height: 20px; flex-shrink: 0; }
 
 .spinner {
   display: inline-block;
   width: 20px;
   height: 20px;
-  border: 2px solid rgba(0,0,0,0.2);
-  border-top-color: #011941;
+  border: 2px solid rgba(1, 25, 65, 0.25); /* theme-ok */
+  border-top-color: var(--darkblue);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2s; } }
 
 .footnote {
   margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--pp-line);
   font-size: 0.78rem;
-  color: rgba(242, 241, 240, 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.85);
   text-align: center;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
-.bgGlow {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 60% 50% at 30% 40%, rgba(39, 90, 143, 0.25) 0%, transparent 70%),
-    radial-gradient(ellipse 50% 40% at 70% 60%, rgba(255, 199, 44, 0.08) 0%, transparent 70%);
-  pointer-events: none;
+@media (max-width: 480px) {
+  .card { padding: 2.25rem 1.25rem 1.5rem; }
+  .backLink { top: 0.75rem; left: 0.75rem; }
+  .themeSlot { top: 0.75rem; right: 0.75rem; }
+  .page { padding-top: 4.5rem; align-items: flex-start; }
 }

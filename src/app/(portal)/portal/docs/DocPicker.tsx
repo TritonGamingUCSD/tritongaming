@@ -13,7 +13,7 @@ interface Group { label: string; color?: string | null; rows: Row[] }
 const walk = (nodes: DocNode<Doc>[], group: string): Row[] => nodes.flatMap((n) => [{ doc: n.doc, depth: n.depth, group }, ...walk(n.children, group)]);
 
 // "Browse all docs": a small searchable list that drops from the button. Type to filter; with nothing typed it shows your favourites,
-// what changed lately, and then every category. Arrow keys move, Enter opens. Editors also get Organize and New doc at the bottom.
+// then every category (what changed lately lives on the docs home, not here). Arrow keys move, Enter opens. Editors also get Organize and New doc at the bottom.
 export default function DocPicker({ anchor, docs, sections, favorites, selectedId, canEdit, onOpen, onHome, onOrganize, onNew, onClose }: {
   anchor: RefObject<HTMLElement | null>; docs: Doc[]; sections: DocSection<Doc>[]; favorites: Set<string>; selectedId: string | null; canEdit: boolean;
   onOpen: (id: string) => void; onHome: () => void; onOrganize: () => void; onNew: () => void; onClose: () => void;
@@ -38,8 +38,6 @@ export default function DocPicker({ anchor, docs, sections, favorites, selectedI
     const out: Group[] = [];
     const favs = docs.filter((d) => favorites.has(d.id));
     if (favs.length) out.push({ label: 'Favorites', rows: favs.map((doc) => ({ doc, depth: 0, group: 'Favorites' })) });
-    const recent = [...docs].sort((a, b) => b.updated_at.localeCompare(a.updated_at)).slice(0, 4);
-    out.push({ label: 'Recently updated', rows: recent.map((doc) => ({ doc, depth: 0, group: 'Recent' })) });
     for (const { s, rows } of sectionRows) if (rows.length) out.push({ label: s.name, color: s.color, rows });
     return out;
   }, [q, docs, sections, favorites, visible]);

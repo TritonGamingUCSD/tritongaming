@@ -5,8 +5,8 @@ import { ScrollText, Download } from 'lucide-react';
 import { usePortalParams, useLiveParams } from '@/lib/usePortalParams';
 import Notice from '@/components/ui/Notice';
 import Button from '@/components/ui/Button';
-import { Input, Select } from '@/components/ui/Field';
-import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/timezone';
+import { DateInput, Input, Select } from '@/components/ui/Field';
+import { PACIFIC_TZ, formatPacificDateTime, pacificDatetimeLocalToUTC } from '@/lib/timezone';
 import styles from './audit.module.css';
 
 interface Entry {
@@ -19,7 +19,19 @@ interface Entry {
   details: Record<string, unknown> | null;
 }
 
-const TYPES = ['', 'event', 'division', 'doc', 'doc category', 'photo album', 'reward', 'officer reward', 'account', 'site content', 'tier', 'points', 'check-in'];
+// Types are stored as plain words ("shift station", "doc"); the list is built from the log itself, so new kinds of entries show up without editing anything.
+const typeLabel = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+const RANGES: { id: string; label: string }[] = [{ id: '', label: 'All time' }, { id: 'today', label: 'Today' }, { id: '7d', label: 'Last 7 days' }, { id: '30d', label: 'Last 30 days' }, { id: 'custom', label: 'Pick dates…' }];
+
+/** The from/to timestamps for a range choice (San Diego days), as ISO strings the server understands. */
+function rangeBounds(range: string, from: string, to: string): { from?: string; to?: string } {
+  const day = (offset: number) => { const d = new Date(Date.now() + offset * 86_400_000); return d.toLocaleDateString('en-CA', { timeZone: PACIFIC_TZ }); };
+  if (range === 'today') return { from: pacificDatetimeLocalToUTC(`${day(0)}T00:00`).toISOString() };
+  if (range === '7d') return { from: pacificDatetimeLocalToUTC(`${day(-6)}T00:00`).toISOString() };
+  if (range === '30d') return { from: pacificDatetimeLocalToUTC(`${day(-29)}T00:00`).toISOString() };
+  if (range === 'custom') return { ...(from ? { from: pacificDatetimeLocalToUTC(`${from}T00:00`).toISOString() } : {}), ...(to ? { to: pacificDatetimeLocalToUTC(`${to}T00:00`).toISOString() } : {}) };
+  return {};
+}
 
 function renderValue(v: unknown) {
   if (v === null || v === undefined || v === '') return '—';
@@ -62,6 +74,11 @@ export default function AuditLogClient() {
   const [type, setType] = useState(() => searchParams.get('atype') ?? '');
   const [search, setSearch] = useState(() => searchParams.get('aq') ?? '');
   const [q, setQ] = useState(() => searchParams.get('aq') ?? '');
+  const [action, setAction] = useState(() => searchParams.get('aaction') ?? '');
+  const [range, setRange] = useState(() => searchParams.get('arange') ?? '');
+  const [from, setFrom] = useState(() => searchParams.get('afrom') ?? '');
+  const [to, setTo] = useState(() => searchParams.get('ato') ?? '');
+  const [facets, setFacets] = useState<{ types: { value: string; n: number }[]; actions: { value: string; n: number }[] } | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setQ(search), 300);
@@ -74,19 +91,26 @@ export default function AuditLogClient() {
     try {
       const p = new URLSearchParams();
       if (type) p.set('type', type);
+      if (action) p.set('action', action);
+      const b = rangeBounds(range, from, to);
+      if (b.from) p.set('from', b.from);
+      // An end date means the whole of that day, so the limit is the start of the day after.
+      if (b.to) p.set('to', new Date(new Date(b.to).getTime() + 86_400_000).toISOString());
       if (q) p.set('q', q);
       if (before) p.set('before', before);
+      else p.set('facets', '1');
       const res = await fetch(`/api/admin/audit?${p}`);
       const json = await res.json();
       if (!res.ok) { setError(json.error || 'Failed to load audit log.'); return; }
       setEntries((prev) => (before ? [...prev, ...json.entries] : json.entries));
       setHasMore(!!json.hasMore);
+      if (json.facets) setFacets(json.facets);
     } catch {
       setError('Network error loading audit log.');
     } finally {
       setLoading(false);
     }
-  }, [type, q]);
+  }, [type, action, range, from, to, q]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -95,11 +119,25 @@ export default function AuditLogClient() {
       <div className={styles.filters}>
         <Input className={styles.search} value={search} onChange={(e) => { setSearch(e.target.value); setParams({ aq: e.target.value || null }); }} placeholder="Search summary or person…" />
         <Select className={styles.select} value={type} onChange={(e) => { setType(e.target.value); setParams({ atype: e.target.value || null }); }} aria-label="Filter by type">
-          {TYPES.map((t) => <option key={t} value={t}>{t || 'All types'}</option>)}
+          <option value="">All types</option>
+          {(facets?.types ?? (type ? [{ value: type, n: 0 }] : [])).map((t) => <option key={t.value} value={t.value}>{typeLabel(t.value)}{t.n ? ` (${t.n})` : ''}</option>)}
         </Select>
+        <Select className={styles.select} value={action} onChange={(e) => { setAction(e.target.value); setParams({ aaction: e.target.value || null }); }} aria-label="Filter by action">
+          <option value="">All actions</option>
+          {(facets?.actions ?? (action ? [{ value: action, n: 0 }] : [])).map((a) => <option key={a.value} value={a.value}>{a.value}{a.n ? ` (${a.n})` : ''}</option>)}
+        </Select>
+        <Select className={styles.select} value={range} onChange={(e) => { setRange(e.target.value); setParams({ arange: e.target.value || null, ...(e.target.value === 'custom' ? {} : { afrom: null, ato: null }) }); if (e.target.value !== 'custom') { setFrom(''); setTo(''); } }} aria-label="Filter by date">
+          {RANGES.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
+        </Select>
+        {range === 'custom' && (
+          <>
+            <DateInput value={from} onChange={(e) => { setFrom(e.target.value); setParams({ afrom: e.target.value || null }); }} aria-label="From date" />
+            <DateInput value={to} onChange={(e) => { setTo(e.target.value); setParams({ ato: e.target.value || null }); }} aria-label="To date" />
+          </>
+        )}
         <a
           className={styles.exportBtn}
-          href={`/api/admin/audit/export?${new URLSearchParams({ ...(type ? { type } : {}), ...(q ? { q } : {}) })}`}
+          href={`/api/admin/audit/export?${new URLSearchParams({ ...(type ? { type } : {}), ...(action ? { action } : {}), ...(rangeBounds(range, from, to).from ? { from: rangeBounds(range, from, to).from! } : {}), ...(rangeBounds(range, from, to).to ? { to: new Date(new Date(rangeBounds(range, from, to).to!).getTime() + 86_400_000).toISOString() } : {}), ...(q ? { q } : {}) })}`}
           download
         >
           <Download size={14} strokeWidth={1.75} aria-hidden="true" /> Export CSV
@@ -119,7 +157,7 @@ export default function AuditLogClient() {
               <li key={e.id} className={styles.item}>
                 <div className={styles.itemHead}>
                   <span className={styles.badge}>{e.action}</span>
-                  <span className={styles.type}>{e.entity_type}</span>
+                  <span className={styles.type}>{typeLabel(e.entity_type)}</span>
                   <span className={styles.meta}>
                     {e.actor_name || 'System'} · {formatPacificDateTime(e.created_at, { year: true })}
                   </span>

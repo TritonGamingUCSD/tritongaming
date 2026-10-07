@@ -26,7 +26,7 @@
   background: var(--pp-card); border: 0; color: inherit; font: inherit; min-width: 0; transition: background 0.12s;
 }
 .cell:hover { background: var(--pp-card); }
-.outside { opacity: 0.4; }
+.outside { opacity: 0.8; }
 .selected { background: var(--pp-card); box-shadow: inset 0 0 0 2px rgba(125, 180, 234, 0.7); }
 .num { font-size: 0.8rem; font-weight: 600; color: rgba(var(--pp-ink-rgb), 0.97); width: 1.6rem; height: 1.6rem; display: grid; place-items: center; border-radius: 50%; }
 .today .num { background: var(--p-accent); color: #111c33; }
@@ -132,9 +132,9 @@
 .filterChip:focus-visible { outline: 2px solid rgba(125, 180, 234, 0.7); outline-offset: 2px; }
 
 /* ── Colors by type, and my standing ────────────────────────────────────── */
-.kEvent { --k: #4a90e2; --kbg: rgba(74, 144, 226, 0.2); --kfg: var(--pp-info); }
-.kMeeting { --k: #a78bfa; --kbg: rgba(167, 139, 250, 0.2); --kfg: var(--pp-violet); }
-.kInternal { --k: #fb923c; --kbg: rgba(251, 146, 60, 0.2); --kfg: var(--pp-warn); }
+.kEvent { --k: #4a90e2; --kbg: rgba(74, 144, 226, 0.2); --kfg: color-mix(in srgb, var(--pp-info) 65%, var(--pp-ink)); }
+.kMeeting { --k: #a78bfa; --kbg: rgba(167, 139, 250, 0.2); --kfg: color-mix(in srgb, var(--pp-violet) 65%, var(--pp-ink)); }
+.kInternal { --k: #fb923c; --kbg: rgba(251, 146, 60, 0.2); --kfg: color-mix(in srgb, var(--pp-warn) 60%, var(--pp-ink)); }
 .status { display: inline-flex; align-items: center; gap: 0.25rem; flex: none; padding: 0.05rem 0.4rem; border-radius: 999px; font-size: 0.66rem; font-weight: 600; letter-spacing: 0.02em; border: 1px solid; }
 .stTicket { color: var(--p-accent-text); background: rgba(125, 180, 234, 0.12); border-color: rgba(125, 180, 234, 0.4); }
 .stGo { color: var(--pp-ok); background: rgba(52, 211, 153, 0.12); border-color: rgba(52, 211, 153, 0.4); }
@@ -199,7 +199,9 @@
 .popup .status { align-self: flex-start; }
 
 /* My own linked Google Calendar: teal, view only, and always labeled as mine. */
-.kGoogle { --k: #2dd4bf; --kbg: rgba(45, 212, 191, 0.14); --kfg: var(--pp-teal); }
+.kGoogle { --k: #2dd4bf; --kbg: rgba(45, 212, 191, 0.14); --kfg: color-mix(in srgb, var(--pp-teal) 65%, var(--pp-ink)); }
+.kShift { --k: #f472b6; --kbg: rgba(244, 114, 182, 0.2); --kfg: var(--pp-ink); }
+.dotShift { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: #f472b6; }
 .dotGoogle { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: #2dd4bf; }
 .popupNote { margin: 0.2rem 0 0; font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 
@@ -275,6 +277,7 @@
 .chipMeeting { composes: kMeeting; }
 .chipInternal { composes: kInternal; }
 .chipGoogle { composes: kGoogle; }
+.chipShift { composes: kShift; }
 
 /* A meeting or event name is never cut off mid-word: it wraps (up to two lines in the month grid and all-day row, as many as fit in a time block)
    and only then shortens with an ellipsis. */

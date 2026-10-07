@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import NextEventTicket from '@/components/NextEventTicket/NextEventTicket';
 import { ZineBand, PageHero, BandHeader } from '@/components/ZineBand/ZineBand';
 import EventCard from '@/components/EventCard/EventCard';
+import EventsCalendar from '@/components/EventsCalendar/EventsCalendar';
 import { getUpcomingEvents, getPreviousEvents } from '@/lib/events';
 import { getContentBlocks } from '@/lib/content';
 import { resolveSections } from '@/lib/pageLayout';
@@ -62,6 +63,12 @@ export default async function EventsPage() {
           </ZineBand>
         )}
       </>
+    ),
+    calendar: (
+      <ZineBand tone="navy" label="Calendar">
+        <BandHeader label="Plan ahead" title="Calendar" sub="Every event by day. Add any of them to your own calendar." />
+        <EventsCalendar events={[...upcoming, ...previous].map((e) => ({ id: e._id, slug: e.slug, name: e.name, start_date: e.start_date, end_date: e.end_date, location: e.location }))} />
+      </ZineBand>
     ),
     past: previous.length > 0 ? (
       <ZineBand tone="deep" label="Past events">

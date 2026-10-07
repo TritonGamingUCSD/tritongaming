@@ -4,6 +4,8 @@ import { PACIFIC_TZ } from '@/lib/timezone';
 import PortalSearch from '@/components/portal/PortalSearch';
 import EventCountdown from './EventCountdown';
 import RoleAsk from './RoleAsk';
+import NowNext from './NowNext';
+import type { MyShift } from '@/lib/myShifts';
 import styles from './dashboardHome.module.css';
 
 export interface HomeEvent { id: string; title: string; start_date: string; location: string | null; hasTicket: boolean; ticketId?: string }
@@ -32,13 +34,14 @@ export function DashboardWelcome({ eyebrow, name }: { eyebrow: string; name: str
 }
 
 // Below the to-dos: the next event as a paper ticket, the pinned note, the tools for this person's role, and what happened lately.
-export function DashboardBody({ event, note, tools, activity, showRoleAsk = false }: { showRoleAsk?: boolean; event: HomeEvent | null; note: HomeNote | null; tools: HomeTool[]; activity: HomeActivity[] }) {
+export function DashboardBody({ event, note, tools, activity, showRoleAsk = false, shifts = [] }: { shifts?: MyShift[]; showRoleAsk?: boolean; event: HomeEvent | null; note: HomeNote | null; tools: HomeTool[]; activity: HomeActivity[] }) {
   const hasOfficer = tools.some((t) => t.tier === 'officer');
   const hasEveryone = tools.some((t) => t.tier === 'everyone');
   return (
     <div className={styles.body}>
       {showRoleAsk && <RoleAsk />}
       <div className={styles.top}>
+        {shifts.length > 0 && <NowNext shifts={shifts} />}
         {event && (
           <article className={styles.ticket} aria-label="Next up">
             <span className={styles.tape} aria-hidden="true" />

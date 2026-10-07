@@ -28,6 +28,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ eve
     ? await auth.svc.from('shift_event_guides').delete().eq('event_id', eventId).eq('station_id', stationId)
     : await auth.svc.from('shift_event_guides').upsert(row);
   if (error) return bad('Couldn’t save that.', 500);
+  // The checklist: one item per line. Items that keep their wording keep their ticks; removed ones go; new ones are added.
+  if (typeof b.checklist === 'string') {
+    const lines = [...new Set(b.checklist.split('\n').map((l: string) => l.trim().slice(0, 120)).filter(Boolean))].slice(0, 30) as string[];
+    const { data: have } = await auth.svc.from('shift_checklist_items').select('id, label').eq('event_id', eventId).eq('station_id', stationId);
+    const byLabel = new Map((have ?? []).map((h) => [h.label as string, h.id as string]));
+    const gone = (have ?? []).filter((h) => !lines.includes(h.label as string)).map((h) => h.id as string);
+    if (gone.length) await auth.svc.from('shift_checklist_items').delete().in('id', gone);
+    const fresh = lines.map((label, i) => ({ label, i })).filter((l) => !byLabel.has(l.label));
+    if (fresh.length) await auth.svc.from('shift_checklist_items').insert(fresh.map((l) => ({ event_id: eventId, station_id: stationId, label: l.label, sort_order: l.i })));
+    for (const [i, label] of lines.entries()) { const id = byLabel.get(label); if (id) await auth.svc.from('shift_checklist_items').update({ sort_order: i }).eq('id', id); }
+  }
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'update', entityType: 'shift station', entityId: stationId, summary: `Edited the "${st.name}" shift guide for "${ev.title}"` });
   await notifyShifts(eventId);
   return NextResponse.json({ ok: true });

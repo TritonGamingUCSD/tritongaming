@@ -25,8 +25,15 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const signed = await signAttachments(auth.svc, messages.flatMap((m) => m.attachments));
   const urlOf = new Map(signed.map((s) => [s.path, s.url]));
   const staffAuthors = new Set((await auth.svc.from('user_roles').select('user_id').in('role', ['exec', 'admin']).in('user_id', ids)).data?.map((r) => r.user_id as string) ?? []);
+  // Admins see an "Approve this role" box on a role request: the roles a request can ask for, the person's current ones, and the divisions to pick from.
+  const asksRole = auth.canGrantRoles && t.user_id !== auth.user.id && /^role (or access )?request/i.test(t.subject);
+  const [{ data: have }, { data: divs }] = asksRole ? await Promise.all([
+    auth.svc.from('user_roles').select('role, division_id').eq('user_id', t.user_id),
+    auth.svc.from('divisions').select('id, name').order('name'),
+  ]) : [{ data: null }, { data: null }];
   return NextResponse.json({
     isStaff: auth.isStaff,
+    roleGrant: asksRole ? { have: have ?? [], divisions: divs ?? [] } : null,
     ticket: { ...t, user_agent: auth.isStaff ? t.user_agent : null, page: auth.isStaff ? t.page : null, user_name: names.get(t.user_id) ?? 'Unnamed', assignee_name: t.assigned_to ? names.get(t.assigned_to) ?? null : null },
     messages: messages.map((m) => ({
       id: m.id, body: m.body, created_at: m.created_at, author_id: m.author_id, author_name: names.get(m.author_id) ?? 'Unnamed',

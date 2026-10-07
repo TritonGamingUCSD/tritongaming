@@ -6,7 +6,7 @@ import { VIEW_USER_COOKIE } from '@/lib/viewAs';
 // before it reaches any route. (The cookie is only honoured for a real admin; for anyone else a copied cookie just blocks their own edits.)
 const READ_ONLY_OK = ['/api/admin/view-as-user', '/api/admin/view-as', '/api/auth/'];
 
-const NEEDS_SESSION = ['/portal', '/login', '/api', '/auth'];
+const NEEDS_SESSION = ['/portal', '/login', '/api', '/auth', '/print'];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

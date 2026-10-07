@@ -62,3 +62,13 @@
 .countBox b { font-family: var(--font-futura-heavy); font-size: 1.35rem; line-height: 1; color: var(--pp-ink); font-variant-numeric: tabular-nums; }
 .countBox small { margin-top: 0.15rem; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.8); }
 .countdownNow { margin: 0.2rem 0; font-family: var(--font-futura-heavy); font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--pp-ok); }
+
+/* Now and next: the shift you are on, or the next one */
+.nowNext { position: relative; display: flex; flex-direction: column; gap: 0.4rem; padding: 1rem 1.2rem; border: 2px solid var(--pp-line); border-left-width: 6px; border-radius: 12px; background: var(--pp-card); color: var(--pp-ink); min-width: 0; }
+.nnGeneral { border-left-color: color-mix(in srgb, var(--pp-ink) 45%, var(--pp-card)); }
+.nnTeam { border-left-color: var(--pp-violet); }
+.nnCount { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.nnHere { display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 700; color: var(--pp-ok); }
+.nnError { margin: 0; font-size: 0.85rem; color: var(--pp-bad); }
+.nnLater { list-style: none; margin: 0.4rem 0 0; padding: 0.5rem 0 0; border-top: 1px solid var(--pp-line); display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; }
+.nnLater span { color: rgba(var(--pp-ink-rgb), 0.85); }

@@ -43,6 +43,7 @@
 
 .avatar, .avatarFallback { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 2px solid var(--paper); flex-shrink: 0; }
 .avatarFallback { display: grid; place-items: center; background: var(--yellow); color: var(--ink); font-size: 0.7rem; }
+.avatarFallback::before { content: attr(data-letter); }
 
 .bars { display: grid; gap: 4px; width: 18px; }
 .bars i { display: block; height: 3px; background: var(--ink); }

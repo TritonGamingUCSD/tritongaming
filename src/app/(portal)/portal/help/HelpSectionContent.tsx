@@ -25,6 +25,7 @@ interface TicketItem {
 interface Msg { id: string; body: string; created_at: string; author_id: string; author_name: string; from_staff: boolean; attachments: string[] }
 interface Detail {
   isStaff: boolean;
+  roleGrant: { have: { role: string; division_id: string | null }[]; divisions: { id: string; name: string }[] } | null;
   ticket: TicketItem & { page: string | null; user_agent: string | null };
   messages: Msg[];
 }
@@ -312,6 +313,7 @@ function Thread({ id, userId, onBack }: { id: string; userId: string; onBack: ()
             : <Button variant="secondary" size="sm" onClick={() => patch({ status: 'open' })}><RotateCcw size={15} strokeWidth={1.75} aria-hidden="true" /> Reopen</Button>}
         </div>
       )}
+      {d.roleGrant && t.status !== 'resolved' && <RoleApprove ticketId={id} grant={d.roleGrant} who={t.user_name} onDone={load} />}
       {!d.isStaff && t.status !== 'resolved' && (
         <div className={styles.staffBar}><Button variant="secondary" size="sm" onClick={() => patch({ status: 'resolved' })}><CheckCircle2 size={15} strokeWidth={1.75} aria-hidden="true" /> Mark as solved</Button></div>
       )}
@@ -401,6 +403,32 @@ function CannedReplies() {
           <div className={styles.staffBar}><Button onClick={save} disabled={!editing.title.trim() || !editing.body.trim()}>Save reply</Button><Button variant="ghost" onClick={() => setEditing(null)}>Cancel</Button></div>
         </div>
       ) : <div><Button variant="secondary" onClick={() => setEditing({ title: '', body: '' })}>+ New saved reply</Button></div>}
+    </div>
+  );
+}
+
+// Admins only, on a role request: pick the role and approve. It gives the role, replies on the ticket, tells the person and resolves it.
+function RoleApprove({ ticketId, grant, who, onDone }: { ticketId: string; grant: { have: { role: string; division_id: string | null }[]; divisions: { id: string; name: string }[] }; who: string; onDone: () => Promise<void> }) {
+  const [role, setRole] = useState<'officer' | 'lead' | 'division'>('officer');
+  const [division, setDivision] = useState(grant.divisions[0]?.id ?? '');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const current = grant.have.map((r) => r.role).join(', ') || 'no roles yet';
+  async function approve() {
+    setBusy(true); setErr('');
+    const { ok, data } = await api(`/api/help/${ticketId}/grant-role`, { method: 'POST', body: JSON.stringify({ role, division_id: role === 'division' ? division : null }) });
+    if (!ok) setErr(data.error ?? 'Couldn’t approve that.'); else await onDone();
+    setBusy(false);
+  }
+  return (
+    <div className={styles.staffBar} role="group" aria-label="Approve this role request">
+      <span className={styles.muted}>Approve for {who} (now: {current}):</span>
+      <Select value={role} onChange={(e) => setRole(e.target.value as typeof role)} aria-label="Role to give">
+        <option value="officer">Officer</option><option value="lead">Lead</option><option value="division">Division lead</option>
+      </Select>
+      {role === 'division' && <Select value={division} onChange={(e) => setDivision(e.target.value)} aria-label="Division">{grant.divisions.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</Select>}
+      <Button size="sm" loading={busy} disabled={role === 'division' && !division} onClick={approve}><CheckCircle2 size={15} strokeWidth={1.75} aria-hidden="true" /> Approve and give role</Button>
+      {err && <Notice tone="error">{err}</Notice>}
     </div>
   );
 }

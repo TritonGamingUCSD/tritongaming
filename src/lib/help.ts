@@ -19,7 +19,7 @@ export async function authorizeHelp() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
-  return { user, svc: createServiceClient(), isStaff: hasCapability(roles ?? [], 'manage_help') };
+  return { user, svc: createServiceClient(), isStaff: hasCapability(roles ?? [], 'manage_help'), canGrantRoles: hasCapability(roles ?? [], 'manage_roles') };
 }
 
 // Only paths inside the sender's own folder of the help bucket are accepted.

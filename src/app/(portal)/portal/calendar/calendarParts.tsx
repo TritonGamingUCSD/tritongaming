@@ -9,17 +9,17 @@ import { googleCalendarUrl } from '@/lib/ics';
 import styles from './calendar.module.css';
 
 export interface Item {
-  key: string; kind: 'event' | 'meeting' | 'internal' | 'google'; date: string; title: string; start: string; end: string | null;
+  key: string; kind: 'event' | 'meeting' | 'internal' | 'google' | 'shift'; date: string; title: string; start: string; end: string | null;
   location: string | null; href: string; mine: boolean; dayLabel: string | null; repeats?: boolean; others?: boolean; audience?: string;
   status?: 'ticket' | 'checked_in' | 'hosting' | 'going' | 'maybe'; description?: string | null; allDay?: boolean; account?: string;
 }
 
 const TZ = 'America/Los_Angeles';
 export const timeOf = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit' });
-export const kindClass = (k: Item['kind']) => (k === 'event' ? styles.kEvent : k === 'internal' ? styles.kInternal : k === 'google' ? styles.kGoogle : styles.kMeeting);
+export const kindClass = (k: Item['kind']) => (k === 'event' ? styles.kEvent : k === 'internal' ? styles.kInternal : k === 'google' ? styles.kGoogle : k === 'shift' ? styles.kShift : styles.kMeeting);
 // The class suffix for a type's chip / dot / bar / list row, so every view colors a type the same way.
-export const kindKey = (k: Item['kind']) => (k === 'event' ? 'Event' : k === 'internal' ? 'Internal' : k === 'google' ? 'Google' : 'Meeting');
-export const kindLabel = (i: Item) => (i.kind === 'event' ? 'Event' : i.kind === 'internal' ? 'Internal event' : i.kind === 'google' ? 'My Google Calendar' : 'Meeting');
+export const kindKey = (k: Item['kind']) => (k === 'event' ? 'Event' : k === 'internal' ? 'Internal' : k === 'google' ? 'Google' : k === 'shift' ? 'Shift' : 'Meeting');
+export const kindLabel = (i: Item) => (i.kind === 'event' ? 'Event' : i.kind === 'internal' ? 'Internal event' : i.kind === 'google' ? 'My Google Calendar' : i.kind === 'shift' ? 'My shift' : 'Meeting');
 export const whenLabel = (i: Item) => (i.allDay ? 'All day' : i.kind === 'event' ? formatEventTimeRange(i.start, i.end) : `${timeOf(i.start)}${i.end ? ` – ${timeOf(i.end)}` : ''}`);
 
 // My own standing on an item, in the same colors everywhere: gold ticket, green checked in / hosting / going, amber maybe.

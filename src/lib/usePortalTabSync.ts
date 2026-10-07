@@ -25,7 +25,7 @@ export function usePortalTabSync(sectionId: string, firstTab?: () => string | un
       section: sectionId,
       tab: isMain ? null : tab,
       subtab: subtab ?? null,
-      block: null, id: null, q: null, status: null, view: null, atype: null, aq: null, ticket: null, plan: null,
+      block: null, id: null, q: null, status: null, view: null, atype: null, aq: null, aaction: null, arange: null, afrom: null, ato: null, ticket: null, plan: null,
     });
   }, [setParams, sectionId]);
 }

@@ -382,6 +382,7 @@
 .railIdentity:hover { background: rgba(var(--pp-chrome-rgb), 0.05); }
 .railAvatar, .railAvatarFallback { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; object-fit: cover; border: 2px solid rgba(125, 180, 234, 0.45); }
 .railAvatarFallback { display: grid; place-items: center; background: var(--gradient-nav); color: var(--pp-chrome-fg); font-family: var(--font-futura-heavy); }
+.railAvatarFallback::before { content: attr(data-letter); }
 .railIdentityText { display: flex; flex-direction: column; min-width: 0; }
 .railName { font-family: var(--font-futura-heavy); font-size: 0.92rem; color: var(--pp-chrome-fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .railRole { font-size: 0.7rem; color: rgba(var(--pp-chrome-rgb), 0.65); letter-spacing: 0.04em; text-transform: uppercase; }
@@ -709,7 +710,7 @@
     border-bottom: 1px solid color-mix(in srgb, var(--frame-accent) 32%, rgba(var(--pp-chrome-rgb), 0.06));
     background: linear-gradient(90deg, color-mix(in srgb, var(--frame-accent) 10%, transparent), transparent 60%);
   }
-  .topToggle { display: grid; place-items: center; width: 36px; height: 36px; flex-shrink: 0; border: 0; border-radius: 0.65rem; background: transparent; color: rgba(var(--pp-chrome-rgb), 0.6); cursor: pointer; transition: background 0.15s, color 0.15s; }
+  .topToggle { display: grid; place-items: center; width: 36px; height: 36px; flex-shrink: 0; border: 0; border-radius: 0.65rem; background: transparent; color: rgba(var(--pp-chrome-rgb), 0.78); cursor: pointer; transition: background 0.15s, color 0.15s; }
   .topToggle:hover { background: rgba(var(--pp-chrome-rgb), 0.07); color: var(--pp-chrome-fg); }
   .topTitle { display: flex; align-items: center; gap: 0.65rem; min-width: 0; flex: 1; }
   .topIcon > svg { width: 100%; height: 100%; }
@@ -919,7 +920,7 @@
 .allPages[open] > summary { margin-bottom: 1rem; }
 .allPages .group { margin-bottom: 1rem; }
 
-.railBadge { color: #011941; } /* theme-ok */
+.railBadge { color: #011941; background: color-mix(in srgb, var(--accent) 86%, #fff); } /* theme-ok */
 .railAvatarFallback { color: #f2f1f0; } /* theme-ok */
 
 /* ═══ Same language as the public site ═══

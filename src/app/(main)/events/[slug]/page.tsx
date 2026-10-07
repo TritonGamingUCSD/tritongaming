@@ -17,7 +17,7 @@ import PageBlocks from '@/components/PageBlocks/PageBlocks';
 import LogoPlate from '@/components/LogoPlate/LogoPlate';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import EventSocialEmbeds from '@/components/EventSocialEmbeds/EventSocialEmbeds';
-import AddToCalendarButton from '@/components/AddToCalendarButton/AddToCalendarButton';
+import AddToCalendarButton, { AddToGoogleCalendarButton } from '@/components/AddToCalendarButton/AddToCalendarButton';
 import { formatEventDateRange, formatEventTimeRange, eventDayCount } from '@/lib/timezone';
 import { themeVars, themeFontsHref, themeFontFaceCss } from '@/lib/eventTheme';
 import styles from './event-detail.module.css';
@@ -208,6 +208,7 @@ export default async function EventDetailPage({ params }: Params) {
                   </span>
                 </a>
                 <AddToCalendarButton eventId={event._id} className={styles.calBtn} />
+                <AddToGoogleCalendarButton event={event} className={styles.calBtn} />
               </div>
             )}
             {!isPast && event.points_value > 0 && (

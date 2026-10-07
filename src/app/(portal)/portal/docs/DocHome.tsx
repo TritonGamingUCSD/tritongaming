@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { ArrowRight, FileText, GripVertical, Pin, Star } from 'lucide-react';
-import { ageLabel, allTags, docSummary, type DocSection } from '@/lib/docsTree';
+import { ageLabel, allTags, docSummary, type DocNode, type DocSection } from '@/lib/docsTree';
 import type { Doc } from '@/types/database';
+import { RequiredBanner } from './DocRequired';
 import styles from './docs.module.css';
 
 function Tile({ d, meta, onOpen, big }: { d: Doc; meta: string; onOpen: (id: string) => void; big?: boolean }) {
@@ -35,6 +36,7 @@ export default function DocHome({ docs, sections, favorites, tagFilter, onTag, o
 }) {
   const pool = tagFilter ? docs.filter((d) => d.tags.includes(tagFilter)) : docs;
   const pinned = pool.filter((d) => d.pinned).sort((a, b) => (a.pin_order ?? 9999) - (b.pin_order ?? 9999) || a.title.localeCompare(b.title));
+  const [allTagsOpen, setAllTagsOpen] = useState(false);
   const [dragPin, setDragPin] = useState<string | null>(null);
   const [live, setLive] = useState<string[] | null>(null);
   const shownPins = live ? live.map((id) => pinned.find((x) => x.id === id)).filter((x): x is Doc => !!x) : pinned;
@@ -43,8 +45,12 @@ export default function DocHome({ docs, sections, favorites, tagFilter, onTag, o
   const tags = allTags(docs);
   const stale = pool.filter((d) => ageLabel(d.updated_at).stale).length;
   const filled = sections.filter((s) => s.count > 0);
+  // Every doc of a category, parents first with their sub-docs right under them (indented by depth); a tag filter keeps only the docs that carry it.
+  const rows = (nodes: DocNode<Doc>[]): { doc: Doc; depth: number }[] => nodes.flatMap((n) => [{ doc: n.doc, depth: n.depth }, ...rows(n.children)]);
+  const visible = filled.map((s) => ({ ...s, shown: rows(s.nodes).filter(({ doc }) => !tagFilter || doc.tags.includes(tagFilter)) })).filter((s) => s.shown.length > 0);
   return (
     <div className={styles.home}>
+      <RequiredBanner onOpen={onOpen} />
       {canEdit && stale > 0 && <p className={styles.homeNote}>{stale} doc{stale === 1 ? ' hasn’t' : 's haven’t'} been updated in six months. Open “Recently updated” sorted by age from the doc list to review them.</p>}
 
       <div className={styles.homeLayout}>
@@ -81,27 +87,37 @@ export default function DocHome({ docs, sections, favorites, tagFilter, onTag, o
         <section aria-labelledby="home-browse">
           <div className={styles.browseHead}>
             <h2 id="home-browse" className={styles.homeH2}>Browse by category</h2>
-            {tags.length > 0 && (
-              <div className={styles.tagRow} role="group" aria-label="Filter by tag">
-                <button type="button" className={`${styles.tagChip} ${!tagFilter ? styles.tagChipOn : ''}`} aria-pressed={!tagFilter} onClick={() => onTag(null)}>All</button>
-                {tags.slice(0, 8).map(({ tag, count }) => <button key={tag} type="button" className={`${styles.tagChip} ${tagFilter === tag ? styles.tagChipOn : ''}`} aria-pressed={tagFilter === tag} onClick={() => onTag(tagFilter === tag ? null : tag)}>#{tag} <small>{count}</small></button>)}
-              </div>
-            )}
           </div>
-          <div className={styles.catCards}>
-            {filled.map((s) => {
-              const shown = tagFilter ? s.nodes.filter(({ doc }) => doc.tags.includes(tagFilter)) : s.nodes;
-              if (tagFilter && shown.length === 0) return null;
-              return (
-                <div key={s.id ?? 'none'} className={styles.catCard} style={s.color ? { borderTop: `4px solid ${s.color}` } : undefined}>
-                  <div className={styles.catCardHead}><span className={styles.catCardName}>{s.name}</span><span className={styles.catCount}>{s.count}</span></div>
-                  <ul className={styles.catCardList}>
-                    {shown.slice(0, 5).map(({ doc }) => <li key={doc.id}><button type="button" className={styles.catCardLink} onClick={() => onOpen(doc.id)}>{doc.title}</button></li>)}
-                  </ul>
-                  <button type="button" className={styles.catCardMore} onClick={() => onBrowse(`cat:${s.id ?? 'none'}`)}>{shown.length > 5 ? `See all ${s.count}` : 'Open in the list'} <ArrowRight size={12} aria-hidden="true" /></button>
-                </div>
-              );
-            })}
+          {tags.length > 0 && (
+            <div className={styles.tagBar} role="group" aria-label="Filter by tag">
+              <span className={styles.tagBarLabel}>Tags</span>
+              <div className={styles.tagRow}>
+                <button type="button" className={`${styles.tagPill} ${!tagFilter ? styles.tagPillOn : ''}`} aria-pressed={!tagFilter} onClick={() => onTag(null)}>All</button>
+                {(allTagsOpen ? tags : tags.slice(0, 8)).map(({ tag, count }) => <button key={tag} type="button" className={`${styles.tagPill} ${tagFilter === tag ? styles.tagPillOn : ''}`} aria-pressed={tagFilter === tag} onClick={() => onTag(tagFilter === tag ? null : tag)}>#{tag}<small>{count}</small></button>)}
+                {tags.length > 8 && <button type="button" className={styles.tagMore} aria-expanded={allTagsOpen} onClick={() => setAllTagsOpen((o) => !o)}>{allTagsOpen ? 'Show fewer' : `+${tags.length - 8} more`}</button>}
+              </div>
+            </div>
+          )}
+          <div className={styles.catGrid}>
+            {visible.map((s) => (
+              <section key={s.id ?? 'none'} id={`cat-${s.id ?? 'none'}`} className={styles.catPanel} style={s.color ? ({ '--cat': s.color } as React.CSSProperties) : undefined} aria-labelledby={`cat-h-${s.id ?? 'none'}`}>
+                <header className={styles.catPanelHead}>
+                  <h3 id={`cat-h-${s.id ?? 'none'}`} className={styles.catPanelName}>{s.name}</h3>
+                  <span className={styles.catCount}>{s.shown.length}</span>
+                  <button type="button" className={styles.catPanelOpen} onClick={() => onBrowse(`cat:${s.id ?? 'none'}`)} aria-label={`Open ${s.name} in the list`} title="Open in the list"><ArrowRight size={14} aria-hidden="true" /></button>
+                </header>
+                <ul className={styles.catPanelList} tabIndex={s.shown.length > 7 ? 0 : undefined} aria-label={`${s.name} docs`}>
+                  {s.shown.map(({ doc, depth }) => (
+                    <li key={doc.id}>
+                      <button type="button" className={styles.catPanelDoc} style={{ paddingLeft: `${0.8 + Math.min(depth, 3) * 0.9}rem` }} onClick={() => onOpen(doc.id)}>
+                        {depth > 0 ? <span className={styles.catBranch} aria-hidden="true">└</span> : <FileText size={13} strokeWidth={1.75} aria-hidden="true" />}
+                        <span>{doc.title}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
           </div>
         </section>
       )}

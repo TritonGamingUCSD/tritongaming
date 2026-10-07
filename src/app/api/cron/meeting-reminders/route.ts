@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { sendMeetingReminders } from '@/lib/reminders';
+import { sendShiftReminders } from '@/lib/shiftReminders';
 import { sendPlanReminders } from '@/lib/meetingPlanServer';
 
 export const runtime = 'nodejs';
@@ -19,5 +20,7 @@ export async function GET(request: Request) {
   const result = await sendMeetingReminders(svc, new Date(), within, only);
   // Also: a one-time nudge to people who haven't answered a meeting plan a day after it was made.
   const plans = within ? undefined : await sendPlanReminders(svc, new Date(), only);
-  return NextResponse.json({ ...result, plans });
+  // And the morning-of reminder to everyone who has a shift today.
+  const shifts = within ? undefined : await sendShiftReminders(svc, new Date(), only);
+  return NextResponse.json({ ...result, plans, shifts });
 }

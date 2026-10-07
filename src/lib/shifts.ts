@@ -14,6 +14,8 @@ export const STATION_COLS = 'id, name, default_needed, sort_order, category, tea
 export interface ShiftEventGuide { location: string | null; notes: string | null; doc_id: string | null; doc_title?: string | null; link_url: string | null; link_label: string | null }
 export interface ShiftPlan { event_id: string; starts_at: string; ends_at: string; slot_minutes: number; signup_open: boolean; team_only: boolean; min_per_person: number | null }
 export interface ShiftSignup { id: string; station_id: string; slot_index: number; user_id: string; name: string; avatar: string | null; arrived_at: string | null }
+export interface ShiftCover { id: string; station_id: string; slot_index: number; requester_id: string; requester_name: string; note: string | null; status: 'open' | 'taken'; taken_by: string | null; taken_by_name: string | null }
+export interface ShiftChecklistItem { id: string; label: string; done_by_name: string | null; done_at: string | null }
 export interface ShiftAbsence { id: string; user_id: string; name: string; starts_at: string; ends_at: string; needs: number }
 export interface ShiftGrid {
   event: { id: string; title: string; start_date: string; location: string | null };
@@ -27,6 +29,8 @@ export interface ShiftGrid {
   roster: { id: string; name: string }[];   // everyone exec can put on a shift: officers, leads and exec (managers only)
   officers: { id: string; name: string }[];   // active officers and leads (managers only), for marking time away
   exemptions: { id: string; user_id: string; name: string; note: string | null }[];   // exempt from the requirement for this event (managers only)
+  checklists: Record<string, ShiftChecklistItem[]>;   // by station id, for this event
+  covers: ShiftCover[];   // open cover requests, plus the ones taken in the last week (so exec can undo them)
   absences: ShiftAbsence[];   // times people are away (managers see everyone's, everyone else sees their own)
   me: string;
   canManage: boolean;

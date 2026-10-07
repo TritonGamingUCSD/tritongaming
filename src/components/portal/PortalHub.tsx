@@ -597,18 +597,19 @@ function DesktopShell({
         }}
       >
         {identity && (
-          <button type="button" className={styles.railIdentity} onClick={() => open('profile')} aria-label="Open your profile" title="Your profile">
+          <button type="button" className={styles.railIdentity} onClick={() => open('profile')} aria-label={`${identity.name}${identity.roles?.length ? ` ${identity.roles.map((r) => r.label).join(' ')}` : ''}, open your profile`} title="Your profile">
             {identity.avatarUrl ? (
               <Image src={identity.avatarUrl} alt="" width={40} height={40} className={styles.railAvatar} unoptimized referrerPolicy="no-referrer" />
             ) : (
-              <span className={styles.railAvatarFallback}>{identity.name[0]?.toUpperCase() ?? 'T'}</span>
+              <span className={styles.railAvatarFallback} aria-hidden="true" data-letter={identity.name[0]?.toUpperCase() ?? 'T'} />
             )}
             <span className={styles.railIdentityText}>
               <span className={styles.railName}>{identity.name}</span>
+              {' '}
               {identity.roles && identity.roles.length > 0 ? (
                 <span className={styles.railRoles}>
                   {identity.roles.map((r) => (
-                    <span key={r.label} className={styles.railRoleChip} style={{ color: `color-mix(in srgb, ${r.color} 55%, var(--pp-chrome-fg))`, background: `${r.color}26`, borderColor: `${r.color}66` }}>{r.label}</span>
+                    <span key={r.label} className={styles.railRoleChip} style={{ color: `color-mix(in srgb, ${r.color} 30%, var(--pp-chrome-fg))`, background: `${r.color}26`, borderColor: `${r.color}66` }}>{r.label}</span>
                   ))}
                 </span>
               ) : (

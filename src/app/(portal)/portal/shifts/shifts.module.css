@@ -257,3 +257,34 @@
 .chipPending { display: inline-flex; align-items: center; gap: 0.25rem; border: 1px dashed var(--p-accent-text); background: transparent; color: var(--pp-ink); font-style: italic; }
 .chipLeaving { display: inline-flex; align-items: center; gap: 0.25rem; text-decoration: line-through; opacity: 0.65; }
 .chipLeaving svg { text-decoration: none; }
+
+.printLink { display: inline-flex; align-items: center; gap: 0.35rem; align-self: flex-end; padding: 0.45rem 0.8rem; border: 1px solid var(--pp-line); border-radius: 8px; color: var(--pp-ink); font-size: 0.82rem; font-weight: 600; text-decoration: none; background: var(--pp-card); }
+.printLink:hover { background: rgba(var(--pp-ink-rgb), 0.07); }
+
+/* Gap finder */
+.gaps { display: flex; flex-direction: column; gap: 0.7rem; }
+.gapList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.7rem; }
+.gapHead { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem; color: var(--pp-ink); }
+.gapPick { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.owes { margin-left: 0.25rem; font-size: 0.72rem; font-weight: 700; color: var(--pp-warn); }
+
+/* Counts keep their color meaning but with enough contrast on the tinted cell */
+.cellEmpty .count { color: color-mix(in srgb, var(--pp-warn) 60%, var(--pp-ink)); }
+.cellPart .count { color: color-mix(in srgb, var(--pp-info) 60%, var(--pp-ink)); }
+.cellFull .count { color: color-mix(in srgb, var(--pp-ok) 60%, var(--pp-ink)); }
+
+/* Swap and cover */
+.coverH { display: flex; align-items: center; gap: 0.4rem; margin: 0 0 0.5rem; font-size: 0.95rem; color: var(--pp-ink); }
+.coverList { list-style: none; margin: 0 0 0.5rem; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.coverRow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.4rem 0.75rem; color: var(--pp-ink); font-size: 0.88rem; }
+.coverRow > span:first-child { min-width: 0; flex: 1 1 14rem; }
+.coverAsk summary { cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--p-accent-text); margin-bottom: 0.4rem; }
+.coverNote { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; flex: 1 1 18rem; justify-content: flex-end; }
+.coverInput { flex: 1 1 12rem; min-width: 0; min-height: 34px; padding: 0 0.6rem; border-radius: 8px; border: 1px solid var(--pp-line); background: var(--pp-card); color: var(--pp-ink); font: inherit; font-size: 0.85rem; }
+
+/* Station checklist */
+.checkList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+.checkRow { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem 0.6rem; min-height: 32px; color: var(--pp-ink); font-size: 0.9rem; cursor: pointer; }
+.checkRow input { width: 18px; height: 18px; flex: none; accent-color: var(--p-accent-text); }
+.checkRow input:disabled { cursor: default; }
+.checkDone { text-decoration: line-through; color: rgba(var(--pp-ink-rgb), 0.75); }

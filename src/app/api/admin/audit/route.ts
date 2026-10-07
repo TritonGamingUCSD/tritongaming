@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/capabilities';
+import { applyAuditFilters, auditFacets } from '@/lib/auditFilters';
 
 const PAGE_SIZE = 50;
 
 // Admin-only, cursor-paginated (by created_at) read of audit_log.
-// Query: ?type=<entity_type>&q=<search>&before=<iso created_at>
+// Query: ?type=<entity_type>&action=<action>&from=<iso>&to=<iso>&q=<search>&before=<iso created_at> (and &facets=1 on the first page for the filter lists)
 export async function GET(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -18,9 +19,7 @@ export async function GET(request: Request) {
   }
 
   const params = new URL(request.url).searchParams;
-  const type = params.get('type');
   const before = params.get('before');
-  const q = (params.get('q') ?? '').trim().replace(/[%,()]/g, ' ');
 
   const service = createServiceClient();
   let query = service
@@ -28,13 +27,17 @@ export async function GET(request: Request) {
     .select('id, created_at, actor_id, actor_name, action, entity_type, entity_id, summary, details')
     .order('created_at', { ascending: false })
     .limit(PAGE_SIZE + 1);
-  if (type) query = query.eq('entity_type', type);
+  query = applyAuditFilters(query, params);
   if (before) query = query.lt('created_at', before);
-  if (q) query = query.or(`summary.ilike.%${q}%,actor_name.ilike.%${q}%`);
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: 'Failed to load audit log.' }, { status: 500 });
   const rows = data ?? [];
   const hasMore = rows.length > PAGE_SIZE;
-  return NextResponse.json({ entries: rows.slice(0, PAGE_SIZE), hasMore });
+  let facets;
+  if (params.get('facets')) {
+    const { data: recent } = await service.from('audit_log').select('entity_type, action').order('created_at', { ascending: false }).limit(5000);
+    facets = auditFacets((recent ?? []) as { entity_type: string; action: string }[]);
+  }
+  return NextResponse.json({ entries: rows.slice(0, PAGE_SIZE), hasMore, facets });
 }

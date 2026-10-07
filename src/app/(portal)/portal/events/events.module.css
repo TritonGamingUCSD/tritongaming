@@ -105,7 +105,7 @@
   transition: background 0.15s;
 }
 .tableRow:hover { background: rgba(var(--pp-ink-rgb), 0.02); }
-.tableRowPast { opacity: 0.78; }
+.tableRowPast { opacity: 0.9; }
 .tableRowPast:hover { opacity: 1; }
 
 .eventTitle {
@@ -193,9 +193,9 @@
   white-space: nowrap;
 }
 
-.published { background: rgba(5,150,105,0.15); color: var(--pp-ok); border: 1px solid rgba(52,211,153,0.25); }
+.published { background: rgba(5,150,105,0.15); color: color-mix(in srgb, var(--pp-ok) 65%, var(--pp-ink)); border: 1px solid rgba(52,211,153,0.25); }
 .draft     { background: rgba(107,114,128,0.12); color: rgba(var(--pp-ink-rgb), 0.85); border: 1px solid rgba(156,163,175,0.2); }
-.ucsdBadge { background: rgba(14,165,233,0.12); color: var(--pp-info); border: 1px solid rgba(56,189,248,0.25); }
+.ucsdBadge { background: rgba(14,165,233,0.12); color: color-mix(in srgb, var(--pp-info) 65%, var(--pp-ink)); border: 1px solid rgba(56,189,248,0.25); }
 
 .statusCol {
   display: flex;

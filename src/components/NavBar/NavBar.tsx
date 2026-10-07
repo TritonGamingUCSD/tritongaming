@@ -147,7 +147,7 @@ export default function NavBar({ announcement }: { announcement?: React.ReactNod
               {profile && navAvatarUrl ? (
                 <Image src={navAvatarUrl} alt="" width={24} height={24} className={styles.avatar} unoptimized referrerPolicy="no-referrer" />
               ) : profile ? (
-                <span className={styles.avatarFallback}>{(profile.display_name || 'U')[0].toUpperCase()}</span>
+                <span className={styles.avatarFallback} aria-hidden="true" data-letter={(profile.display_name || 'U')[0].toUpperCase()} />
               ) : null}
               <span>Portal</span>
             </Link>

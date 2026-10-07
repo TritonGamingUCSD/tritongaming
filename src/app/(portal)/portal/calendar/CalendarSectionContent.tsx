@@ -36,7 +36,7 @@ export default function CalendarSectionContent() {
   const [weekStart, setWeekStart] = useState(() => sundayOf(today));
   const [items, setItems] = useState<Item[] | null>(null);
   // What to show: which kinds, and only the ones I have a stake in (a ticket, hosting, going). Remembered on this device.
-  const [kinds, setKinds] = useState<Kind[]>(['event', 'meeting', 'internal', 'google']);
+  const [kinds, setKinds] = useState<Kind[]>(['event', 'meeting', 'internal', 'google', 'shift']);
   // My own linked Google Calendar (view only): its events come with the response, separate from the shared ones.
   const [google, setGoogle] = useState<Item[]>([]);
   const [googleLinked, setGoogleLinked] = useState(false);
@@ -50,13 +50,13 @@ export default function CalendarSectionContent() {
   const [popup, setPopup] = useState<{ item: Item; rect: DOMRect } | null>(null);
   const [nowIso, setNowIso] = useState(() => new Date().toISOString());
   useEffect(() => {
-    try { const f = JSON.parse(localStorage.getItem('calendar-filters') ?? 'null'); if (f) { setKinds([...new Set([...(f.kinds as Kind[]), ...(f.kinds.includes('google') || f.googleOff ? [] : ['google' as Kind])])]); setAllMeetings(!!f.allMeetings); } } catch { /* no saved filters */ }
+    try { const f = JSON.parse(localStorage.getItem('calendar-filters') ?? 'null'); if (f) { setKinds([...new Set([...(f.kinds as Kind[]), ...(f.kinds.includes('google') || f.googleOff ? [] : ['google' as Kind]), ...(f.kinds.includes('shift') || f.shiftOff ? [] : ['shift' as Kind])])]); setAllMeetings(!!f.allMeetings); } } catch { /* no saved filters */ }
     const t = setInterval(() => setNowIso(new Date().toISOString()), 60_000);
     return () => clearInterval(t);
   }, []);
   function setFilters(k: Kind[], all: boolean = allMeetings) {
     setKinds(k); setAllMeetings(all);
-    try { localStorage.setItem('calendar-filters', JSON.stringify({ kinds: k, allMeetings: all, googleOff: !k.includes('google') })); } catch { /* private window */ }
+    try { localStorage.setItem('calendar-filters', JSON.stringify({ kinds: k, allMeetings: all, googleOff: !k.includes('google'), shiftOff: !k.includes('shift') })); } catch { /* private window */ }
   }
   const [error, setError] = useState('');
   const swipe = useRef<{ x: number; y: number } | null>(null);
@@ -153,7 +153,7 @@ export default function CalendarSectionContent() {
       {linking && googleError && !syncOpen && <Notice tone="warning">Your Google Calendar couldn’t be loaded just now, so its events aren’t shown. Open Sync to link it again.</Notice>}
 
       {eventsOnly === false && <div className={styles.filters} role="group" aria-label="What to show">
-        {([['event', 'Events', styles.dotEvent], ['meeting', 'Meetings', styles.dotMeeting], ['internal', 'Internal events', styles.dotInternal], ...(googleLinked ? [['google', 'My Google Calendar', styles.dotGoogle]] : [])] as [Kind, string, string][]).map(([k, label, dot]) => {
+        {([['event', 'Events', styles.dotEvent], ['meeting', 'Meetings', styles.dotMeeting], ['internal', 'Internal events', styles.dotInternal], ['shift', 'My shifts', styles.dotShift], ...(googleLinked ? [['google', 'My Google Calendar', styles.dotGoogle]] : [])] as [Kind, string, string][]).map(([k, label, dot]) => {
           const on = kinds.includes(k);
           return <button key={k} type="button" className={`${styles.filterChip} ${on ? styles.filterOn : ''}`} aria-pressed={on} onClick={() => setFilters(on ? kinds.filter((x) => x !== k) : [...kinds, k])}><i className={dot} /> {label}</button>;
         })}
@@ -166,7 +166,7 @@ export default function CalendarSectionContent() {
       {view === 'month' && (
         <div className={styles.monthLayout}>
           <div
-            className={styles.grid} role="grid" aria-label={title}
+            className={styles.grid} role="group" aria-label={title}
             onTouchStart={(e) => { swipe.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }}
             onTouchEnd={(e) => {
               const st = swipe.current; swipe.current = null; if (!st) return;
@@ -174,19 +174,19 @@ export default function CalendarSectionContent() {
               if (Math.abs(dx) > 60 && Math.abs(dy) < 45) shift(dx < 0 ? 1 : -1);
             }}
           >
-            {WEEKDAYS.map((w) => <div key={w} className={styles.weekday} role="columnheader">{w}</div>)}
+            {WEEKDAYS.map((w) => <div key={w} className={styles.weekday} aria-hidden="true">{w}</div>)}
             {days.map((d) => {
               const list = byDay.get(d) ?? [];
               const inMonth = d.slice(0, 7) === key(cursor.y, cursor.m, 1).slice(0, 7);
               return (
                 <button
-                  key={d} type="button" role="gridcell"
+                  key={d} type="button"
                   className={`${styles.cell} ${inMonth ? '' : styles.outside} ${d === today ? styles.today : ''} ${d === selected ? styles.selected : ''}`}
                   onClick={() => setSelected(d)}
-                  aria-label={`${longDay(d)}${list.length ? `, ${list.length} item${list.length === 1 ? '' : 's'}` : ''}`}
                   aria-pressed={d === selected}
                 >
                   <span className={styles.num}>{Number(d.slice(8))}</span>
+                  <span className={styles.srOnly}>{longDay(d)}{list.length ? `, ${list.length} item${list.length === 1 ? '' : 's'}` : ''}</span>
                   <span className={styles.chips}>
                     {list.map((i) => <span key={i.key} className={`${styles.chip} ${styles['chip' + kindKey(i.kind)]} ${i.others ? styles.chipOthers : ''}`}>{i.title}</span>)}
                   </span>
@@ -216,11 +216,11 @@ export default function CalendarSectionContent() {
         </div>
       )}
       {view === 'week' && (
-        <div className={`${styles.week} ${styles.onlyNarrow}`} role="grid" aria-label={title}>
+        <div className={`${styles.week} ${styles.onlyNarrow}`} role="group" aria-label={title}>
           {weekDays.map((d) => {
             const list = byDay.get(d) ?? [];
             return (
-              <section key={d} className={`${styles.weekDay} ${d === today ? styles.weekToday : ''}`} role="gridcell" aria-label={`${longDay(d)}${list.length ? `, ${list.length} item${list.length === 1 ? '' : 's'}` : ''}`}>
+              <section key={d} className={`${styles.weekDay} ${d === today ? styles.weekToday : ''}`} aria-label={`${longDay(d)}${list.length ? `, ${list.length} item${list.length === 1 ? '' : 's'}` : ''}`}>
                 <header className={styles.weekHead}>
                   <span className={styles.weekName}>{WEEKDAYS[new Date(`${d}T12:00:00Z`).getUTCDay()]}</span>
                   <span className={styles.weekNum}>{Number(d.slice(8))}</span>
@@ -293,7 +293,7 @@ function ItemList({ items }: { items: Item[] }) {
                 {i.location && <> · <MapPin size={11} aria-hidden="true" /> {i.location}</>}
               </span>
             </span>
-            <span className={styles.kind}>{i.kind === 'event' ? 'Event' : i.kind === 'internal' ? 'Internal event' : i.kind === 'google' ? 'Google' : 'Meeting'}</span>
+            <span className={styles.kind}>{i.kind === 'event' ? 'Event' : i.kind === 'internal' ? 'Internal event' : i.kind === 'google' ? 'Google' : i.kind === 'shift' ? 'Shift' : 'Meeting'}</span>
           </ItemRow>
         </li>
       ))}

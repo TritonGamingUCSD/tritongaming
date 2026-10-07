@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, CalendarClock, Check, Eye, GripVertical, Loader2, MapPin, LayoutGrid, Pencil, Plus, Settings2, Trash2, UserPlus, Users, X } from 'lucide-react';
+import { BookOpen, CalendarClock, Check, Eye, GripVertical, Loader2, MapPin, Printer, LayoutGrid, Pencil, Plus, Settings2, Trash2, UserPlus, Users, X } from 'lucide-react';
 import SectionHeader from '@/components/ui/SectionHeader';
 import PortalLink from '@/components/portal/PortalLink';
 import SectionTabs from '@/components/ui/SectionTabs';
@@ -15,10 +15,13 @@ import { confirmHold } from '@/lib/confirmHold';
 import { createClient } from '@/lib/supabase/client';
 import { PACIFIC_TZ } from '@/lib/timezone';
 import { usePortalTabSync, useUrlNav } from '@/lib/usePortalTabSync';
+import { useLiveParams } from '@/lib/usePortalParams';
 import { useVisiblePoll } from '@/lib/useVisiblePoll';
 import { useDragReorder } from '@/lib/useDragReorder';
 import { SLOT_CHOICES, awayDuring, cellKey, groupByArea, guideFor, neededFor, slotCount, slotRange, type ShiftGrid, type ShiftStation, type ShiftTemplate } from '@/lib/shifts';
 import Dialog, { DialogActions, DialogCancel, DialogText } from '@/components/ui/Dialog';
+import GapsPanel, { gapsOf } from './ShiftGaps';
+import CoverPanel from './ShiftCover';
 import { GuideDialog, GuideSetup, GuidesView, Legend, MyShifts, catClass, catName } from './ShiftGuides';
 import type { ShiftEvent } from './getShiftsData';
 import styles from './shifts.module.css';
@@ -47,7 +50,10 @@ export default function ShiftsSectionContent({ events, stations: initialStations
   const [tab, setTab] = useState<Tab>(tabs.includes(wanted as Tab) ? (wanted as Tab) : tabs[0]);
   const [view, setViewState] = useState<'grid' | 'time'>(nav.tab === 'signup' && nav.subtab === 'time' || ((nav.tab === 'board' || nav.tab === 'schedule') && canSignUp) ? 'time' : 'grid');
   const setView = (v: 'grid' | 'time') => { setViewState(v); sync('signup', v === 'grid' ? null : 'time'); };
-  const [eventId, setEventId] = useState<string | null>(() => events.find((e) => e.plan?.signup_open)?.id ?? events[0]?.id ?? null);
+  // A link can name the event (and a station whose guide should open): the dashboard's "Open guide" uses ?event=<id>&guide=<station id>.
+  const liveParams = useLiveParams();
+  const wantedEvent = liveParams.get('event');
+  const [eventId, setEventId] = useState<string | null>(() => (wantedEvent && events.some((e) => e.id === wantedEvent) ? wantedEvent : events.find((e) => e.plan?.signup_open)?.id ?? events[0]?.id ?? null));
   const [stations, setStations] = useState(initialStations);
   const [templates, setTemplates] = useState(initialTemplates);
   const [grid, setGrid] = useState<ShiftGrid | null>(null);
@@ -102,6 +108,11 @@ export default function ShiftsSectionContent({ events, stations: initialStations
   // Joining a team shift asks first: it is a warning, not a block (the person may well be on that team).
   const [warn, setWarn] = useState<{ station: ShiftStation; slot: number } | null>(null);
   const [guideOpen, setGuideOpen] = useState<{ id: string; arrived?: boolean } | null>(null);
+  const openedFromLink = useRef(false);
+  useEffect(() => {
+    const g = liveParams.get('guide');
+    if (!openedFromLink.current && g && grid?.stations.some((x) => x.id === g)) { openedFromLink.current = true; setGuideOpen({ id: g }); }
+  }, [grid, liveParams]);
   function tryClaim(stationId: string, slot: number, join: boolean) {
     const st = grid?.stations.find((x) => x.id === stationId);
     if (join && st?.category === 'team') { setWarn({ station: st, slot }); return; }
@@ -121,6 +132,22 @@ export default function ShiftsSectionContent({ events, stations: initialStations
     if (!r.ok) setError(r.json.error || 'Couldn’t save that.');
     await load();
     setBusyCell(null); setBusyAct(null);
+  }
+
+  async function tick(itemId: string, done: boolean) {
+    setError('');
+    const r = await api(`/api/shifts/${eventId}/checklist`, 'POST', { item_id: itemId, done });
+    if (!r.ok) setError(r.json.error || 'Couldn’t save that.');
+    await load();
+  }
+
+  // Swap and cover: ask / take / withdraw / undo. Errors show in the page's usual error line; the grid refreshes either way.
+  async function coverAct(body: Record<string, unknown>): Promise<boolean> {
+    setError('');
+    const r = await api(`/api/shifts/${eventId}/cover`, 'POST', body);
+    if (!r.ok) setError(r.json.error || 'Couldn’t save that.');
+    await load();
+    return r.ok;
   }
 
   const [placing, setPlacing] = useState<{ station: string; slot: number } | null>(null);
@@ -155,6 +182,9 @@ export default function ShiftsSectionContent({ events, stations: initialStations
             {events.map((e) => <option key={e.id} value={e.id}>{e.title} · {dayLabel(e.start_date)}{e.plan ? (e.plan.signup_open ? ' · signup open' : ' · signup not open yet') : ''}</option>)}
           </Select>
         </Field>
+        {plan && eventId && (
+          <a className={styles.printLink} href={`/print/shifts/${eventId}`} target="_blank" rel="noopener noreferrer"><Printer size={14} aria-hidden="true" /> Print sheet</a>
+        )}
         {plan && tab === 'signup' && (
           <div className={styles.viewToggle}>
             <SectionTabs<'grid' | 'time'> label="View" variant="segmented" value={view} onChange={setView} tabs={[{ id: 'grid', label: 'Grid' }, { id: 'time', label: 'By time' }]} />
@@ -182,6 +212,7 @@ export default function ShiftsSectionContent({ events, stations: initialStations
             </p>
           )}
           {grid && <Legend grid={grid} />}
+          {grid && <CoverPanel grid={grid} onAct={coverAct} />}
           {grid && <MyShifts grid={grid} onArrive={arrive} onOpen={(id) => setGuideOpen({ id })} />}
           {grid && view === 'grid' && <GridView grid={grid} busyCell={busyCell} busyAct={busyAct} onClaim={tryClaim} onGuide={(id) => setGuideOpen({ id })} onPlace={(station, slot) => setPlacing({ station, slot })} />}
           {grid && view === 'time' && <BoardView grid={grid} />}
@@ -189,7 +220,7 @@ export default function ShiftsSectionContent({ events, stations: initialStations
         </>
       )}
       {plan && tab === 'schedule' && grid && <><Legend grid={grid} /><MyShifts grid={grid} onArrive={arrive} onOpen={(id) => setGuideOpen({ id })} /><BoardView grid={grid} /></>}
-      {plan && tab === 'guides' && grid && <GuidesView grid={grid} />}
+      {plan && tab === 'guides' && grid && <GuidesView grid={grid} onTick={tick} />}
       {!plan && tab === 'guides' && <div className={styles.card}><p className={styles.muted}>Guides show up once the shifts for this event are set up.</p></div>}
       {plan && tab === 'people' && grid && canManage && <PeopleView event={ev!} sync={sync} initial={nav.tab === 'people' ? nav.subtab : undefined} grid={grid} onChanged={load} setError={setError} />}
       {!plan && tab === 'people' && <div className={styles.card}><p className={styles.muted}>Make the grid in Setup first, then you can see who has their shifts.</p></div>}
@@ -199,7 +230,7 @@ export default function ShiftsSectionContent({ events, stations: initialStations
           <DialogActions><DialogCancel onClick={() => setWarn(null)} /><Button onClick={() => { const w = warn; setWarn(null); void claim(w.station.id, w.slot, true); }}>Sign up anyway</Button></DialogActions>
         </Dialog>
       )}
-      {guideOpen && grid && grid.stations.find((x) => x.id === guideOpen.id) && <GuideDialog grid={grid} station={grid.stations.find((x) => x.id === guideOpen.id)!} arrivedNow={guideOpen.arrived} onClose={() => setGuideOpen(null)} />}
+      {guideOpen && grid && grid.stations.find((x) => x.id === guideOpen.id) && <GuideDialog grid={grid} station={grid.stations.find((x) => x.id === guideOpen.id)!} arrivedNow={guideOpen.arrived} onTick={tick} onClose={() => setGuideOpen(null)} />}
       {tab === 'setup' && canManage && ev && (
         <SetupView event={ev} sync={sync} initial={nav.tab === 'setup' ? nav.subtab : undefined} docs={docs} templates={templates} setTemplates={setTemplates} grid={grid} stations={stations} setStations={setStations} onChanged={load} setError={setError} />
       )}
@@ -272,8 +303,8 @@ function GridView({ grid, busyCell, busyAct, onClaim, onGuide, onPlace }: {
                   return (
                     <td key={st.id} className={`${styles.cell} ${catClass(st)} ${saving ? styles.cellSaving : ''} ${mine ? styles.cellMine : ''} ${needed === 0 ? styles.cellNone : full ? styles.cellFull : here.length === 0 ? styles.cellEmpty : styles.cellPart}`}>
                       <button type="button" className={styles.cellBtn} disabled={disabled} aria-busy={saving || undefined}
-                        aria-label={`${st.name}, ${time(r.start)}: ${here.length} of ${needed}${mine ? ', you are on this shift' : ''}${away && !mine ? ', you are away then' : ''}`}
                         onClick={() => onClaim?.(st.id, i, !mine)}>
+                        <span className={styles.srOnly}>{st.name}, {time(r.start)}.{mine ? ' You are on this shift.' : ''}{away && !mine ? ' You are away then.' : ''} </span>
                         <span className={styles.count}>{here.length}/{needed}</span>
                         <span className={styles.chips}>
                           {here.map((h) => { const gone = leaving && h.user_id === grid.me; return <span key={h.id} className={`${styles.chip} ${h.user_id === grid.me ? styles.chipMe : ''} ${gone ? styles.chipLeaving : ''}`}>{h.name}{gone && <><Loader2 size={11} className={styles.spin} aria-hidden="true" /> removing…</>}</span>; })}
@@ -381,12 +412,13 @@ function BoardView({ grid }: { grid: ShiftGrid }) {
 function PeopleView({ event, sync, initial, grid, onChanged, setError }: { event: ShiftEvent; sync: (tab: string, subtab?: string | null) => void; initial?: string; grid: ShiftGrid; onChanged: () => Promise<void>; setError: (e: string) => void }) {
   const r = grid.requirement;
   const [show, setShow] = useState<'owe' | 'all'>('owe');
-  const [sub, setSubState] = useState<'requirement' | 'exempt' | 'away'>(initial === 'exempt' || initial === 'away' ? initial : 'requirement');
-  const setSub = (v: 'requirement' | 'exempt' | 'away') => { setSubState(v); sync('people', v === 'requirement' ? null : v); };
+  const [sub, setSubState] = useState<'requirement' | 'exempt' | 'away' | 'gaps'>(initial === 'exempt' || initial === 'away' || initial === 'gaps' ? initial : 'requirement');
+  const setSub = (v: 'requirement' | 'exempt' | 'away' | 'gaps') => { setSubState(v); sync('people', v === 'requirement' ? null : v); };
   const subTabs = (
-    <SectionTabs<'requirement' | 'exempt' | 'away'> label="People" variant="segmented" value={sub} onChange={setSub}
-      tabs={[{ id: 'requirement', label: 'Requirement' }, { id: 'exempt', label: 'Exempt', count: grid.exemptions.length + (r?.exempt.filter((p) => p.reason === 'inactive').length ?? 0) }, { id: 'away', label: 'Away', count: grid.absences.length }]} />
+    <SectionTabs<'requirement' | 'exempt' | 'away' | 'gaps'> label="People" variant="segmented" value={sub} onChange={setSub}
+      tabs={[{ id: 'requirement', label: 'Requirement' }, { id: 'gaps', label: 'Gaps', count: gapsOf(grid).reduce((n, x) => n + x.gaps.reduce((m, g) => m + g.open, 0), 0) }, { id: 'exempt', label: 'Exempt', count: grid.exemptions.length + (r?.exempt.filter((p) => p.reason === 'inactive').length ?? 0) }, { id: 'away', label: 'Away', count: grid.absences.length }]} />
   );
+  if (sub === 'gaps') return <div className={styles.people}>{subTabs}<GapsPanel grid={grid} onPlace={async (stationId, slot, who) => { const r = await api(`/api/shifts/${event.id}/signup`, 'POST', { station_id: stationId, slot_index: slot, join: true, user_id: who }); if (!r.ok) setError(r.json.error || 'Couldn’t add them.'); await onChanged(); }} /></div>;
   if (sub === 'exempt') return (
     <div className={styles.people}>
       {subTabs}
@@ -670,7 +702,7 @@ function StationSheet({ event, grid, stations, setStations, onChanged, setError 
     <section className={styles.card}>
       <h3 className={styles.h}>Stations and people needed</h3>
       <EditingNow room={sheetDirty ? 'shifts-stations' : null} what="the stations" />
-      <p className={styles.muted}>Same layout as Sign up. Each station column has its name and usual number of people; the cells below change the number for just that time slot (blank = the usual number). Drag the grip on a station to reorder. Give stations an area (East Ballroom, Theater…) to split them into separate tables. Mark a station “Specific team” to colour it green and warn others who sign up. What each station does is written in the Guides tab.</p>
+      <p className={styles.muted}>Same layout as Sign up. Each station column has its name and usual number of people; the cells below change the number for just that time slot (blank = the usual number). Drag the grip on a station to reorder. Give stations an area (East Ballroom, Theater…) to split them into separate tables. Mark a station “Specific team” to colour it violet and warn others who sign up. What each station does is written in the Guides tab.</p>
       <datalist id="shift-areas">{areas.map((x) => <option key={x} value={x} />)}</datalist>
       <div className={styles.areas}>
         {groupByArea(ordered).map((group) => (

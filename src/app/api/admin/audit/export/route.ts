@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/capabilities';
 import { PACIFIC_TZ } from '@/lib/timezone';
+import { applyAuditFilters } from '@/lib/auditFilters';
 
 const MAX_ROWS = 10000;
 
@@ -20,16 +21,12 @@ export async function GET(request: Request) {
   if (!hasCapability(roles ?? [], 'view_admin_dashboard')) return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
 
   const params = new URL(request.url).searchParams;
-  const type = params.get('type');
-  const q = (params.get('q') ?? '').trim().replace(/[%,()]/g, ' ');
-
   let query = createServiceClient()
     .from('audit_log')
     .select('created_at, actor_name, action, entity_type, entity_id, summary, details')
     .order('created_at', { ascending: false })
     .limit(MAX_ROWS);
-  if (type) query = query.eq('entity_type', type);
-  if (q) query = query.or(`summary.ilike.%${q}%,actor_name.ilike.%${q}%`);
+  query = applyAuditFilters(query, params);
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: 'Failed to export.' }, { status: 500 });
 
