@@ -74,7 +74,7 @@ export default function ShiftsSectionContent({ events, stations: initialStations
   // The board stays live without polling: the server sends a "changed" message to this event's channel after every shift change (see the effect
   // below), and the page refreshes then. A slow refresh remains as a backstop in case the connection is blocked; it pauses while the tab is hidden.
   const loadRef = useRef(load); loadRef.current = load;
-  useVisiblePoll(load, 60_000);
+  useVisiblePoll(load, 180_000);
 
   // Who else is looking at this event right now.
   useEffect(() => {

@@ -170,7 +170,7 @@ function CheckInPanel() {
   }, []);
 
   useEffect(() => { void load(); }, [load]);
-  useVisiblePoll(load, 30_000);   // paused while the tab is hidden; refreshes the moment it comes back
+  useVisiblePoll(load, 60_000);   // paused while the tab is hidden; refreshes the moment it comes back
 
   async function submit(value: string) {
     if (busy) return;
@@ -297,7 +297,7 @@ function FunBox({ meeting, onSaved }: { meeting: TodayMeeting; onSaved: () => vo
   const watching = type !== 'text' && !!mine && meeting.open;
   const pullResults = useCallback(() => fetch(`/api/meetings/${meeting.id}/results`, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((j) => { if (j) setTallyNow({ counts: j.counts, total: j.total, average: j.average }); }).catch(() => {}), [meeting.id]);
   useEffect(() => { if (watching) void pullResults(); }, [watching, pullResults]);
-  useVisiblePoll(pullResults, 3000, watching);
+  useVisiblePoll(pullResults, 5000, watching);
   async function vote(choice: string) {
     setError(''); const before = mine; setMine(choice);
     const res = await fetch(`/api/meetings/${meeting.id}/answer`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer: choice }) });
@@ -742,7 +742,7 @@ function MeetingList({ onOpen, showForm, onShowForm }: { onOpen: (id: string) =>
     } catch { setError('Network error.'); }
   }, []);
   useEffect(() => { void load(); }, [load]);
-  useVisiblePoll(load, 60_000);
+  useVisiblePoll(load, 120_000);
 
   async function post(url: string, body: unknown, key: string): Promise<{ ok: boolean; json: Record<string, unknown> }> {
     setBusyKey(key); setError('');
@@ -1334,13 +1334,20 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
   const fieldsInit = useRef(false);
   // Reaction cursor: null until the first load, so history never replays on screen.
   const afterRef = useRef<number | null>(null);
+  const polls = useRef(0);
 
   const loadLive = useCallback(async () => {
     try {
-      const res = await fetch(`/api/meetings/${id}/live${afterRef.current === null ? '' : `?after=${afterRef.current}`}`, { cache: 'no-store' });
+      polls.current++;
+      const res = await fetch(`/api/meetings/${id}/live${afterRef.current === null ? '' : `?after=${afterRef.current}${polls.current % 8 === 0 ? '&totals=1' : ''}`}`, { cache: 'no-store' });
       if (!res.ok) return;
-      const json: Live = await res.json();
-      setLive(json);
+      const json: Omit<Live, 'reactionTotals'> & { reactionTotals?: Record<string, number> } = await res.json();   // totals only come now and then; the screen keeps counting in between
+      setLive((prev) => {
+        if (json.reactionTotals) return json as Live;
+        const totals = { ...(prev?.reactionTotals ?? {}) };
+        for (const r of json.reactions) totals[r.emoji] = (totals[r.emoji] ?? 0) + 1;
+        return { ...json, reactionTotals: totals } as Live;
+      });
       if (!fieldsInit.current) { fieldsInit.current = true; setDoc(json.meeting.doc_url ?? ''); setQ(qFrom(json.meeting)); }
       afterRef.current = json.lastReactionId;
       // The moment everyone expected has checked in: confetti.
@@ -1362,7 +1369,7 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
 
   useEffect(() => { void loadLive(); }, [loadLive]);
   // Fast so reactions and answers feel live on the big screen, but only while the tab is visible.
-  useVisiblePoll(loadLive, 2000);
+  useVisiblePoll(loadLive, 3000);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 250);

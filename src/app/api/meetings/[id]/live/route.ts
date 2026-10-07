@@ -35,16 +35,22 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const afterParam = new URL(req.url).searchParams.get('after');
   const { data: absenceRows } = await auth.svc.from('meeting_absences').select('user_id, reason, excused').eq('meeting_id', id);
   const absent = new Set((absenceRows ?? []).map((a) => a.user_id as string));
-  const [{ data: answerRows }, { data: reactionRows }] = await Promise.all([
+  // Reactions are the heavy part: the totals need every row, so they are only worked out when asked for (`?totals=1`, or on the first call).
+  // Every other poll just fetches the few reactions newer than the cursor.
+  const wantTotals = afterParam === null || new URL(req.url).searchParams.get('totals') === '1';
+  const [{ data: answerRows }, newest, fresh, allRows] = await Promise.all([
     auth.svc.from('meeting_answers').select('user_id, answer, updated_at').eq('meeting_id', id).order('updated_at', { ascending: false }).limit(100),
-    auth.svc.from('meeting_reactions').select('id, emoji').eq('meeting_id', id).order('id', { ascending: true }).limit(5000),
+    afterParam === null ? auth.svc.from('meeting_reactions').select('id').eq('meeting_id', id).order('id', { ascending: false }).limit(1) : Promise.resolve({ data: null }),
+    afterParam === null ? Promise.resolve({ data: null }) : auth.svc.from('meeting_reactions').select('id, emoji').eq('meeting_id', id).gt('id', Number(afterParam) || 0).order('id', { ascending: true }).limit(40),
+    wantTotals ? auth.svc.from('meeting_reactions').select('emoji').eq('meeting_id', id).limit(5000) : Promise.resolve({ data: null }),
   ]);
-  const allReactions = reactionRows ?? [];
-  const lastReactionId = allReactions.length ? (allReactions[allReactions.length - 1].id as number) : 0;
-  const after = afterParam === null ? lastReactionId : Number(afterParam) || 0;
-  const reactions = allReactions.filter((r) => (r.id as number) > after).slice(0, 40).map((r) => ({ id: r.id as number, emoji: r.emoji as string }));
-  const reactionTotals: Record<string, number> = {};
-  for (const r of allReactions) reactionTotals[r.emoji as string] = (reactionTotals[r.emoji as string] ?? 0) + 1;
+  const lastReactionId = afterParam === null ? ((newest.data?.[0]?.id as number | undefined) ?? 0) : Number(afterParam) || 0;
+  const reactions = (fresh.data ?? []).map((r) => ({ id: r.id as number, emoji: r.emoji as string }));
+  let reactionTotals: Record<string, number> | undefined;
+  if (allRows.data) {
+    reactionTotals = {};
+    for (const r of allRows.data) reactionTotals[r.emoji as string] = (reactionTotals[r.emoji as string] ?? 0) + 1;
+  }
   const answerUserIds = [...(answerRows ?? []).map((a) => a.user_id as string), ...absent].filter((u) => !byId.has(u));
   if (answerUserIds.length) {
     const { data: extra } = await auth.svc.from('profiles').select('id, display_name, google_first_name, google_last_name, avatar_url, custom_avatar_url').in('id', answerUserIds);
@@ -58,7 +64,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     meeting: { id: m.id, title: m.title, meeting_date: m.meeting_date, starts_at: m.starts_at, ends_at: m.ends_at, open, doc_url: m.doc_url, location: m.location, cancelled: m.cancelled, series_id: m.series_id, audience: m.audience, invitees: m.invitees, group_ids: m.group_ids, groupNames: (m.group_ids ?? []).map((g) => groups.get(g)?.name ?? '').filter(Boolean), description: m.description, accepting: isCheckInAccepting(m), opens_at: new Date(checkInOpensAt(m)).toISOString(), question: m.question, question_type: m.question_type ?? 'text', question_options: m.question_options ?? null },
     answers: (answerRows ?? []).map((a) => ({ ...byId.get(a.user_id as string)!, answer: a.answer, at: a.updated_at })),
     reactions,
-    lastReactionId: reactions.length ? reactions[reactions.length - 1].id : after,
+    lastReactionId: reactions.length ? reactions[reactions.length - 1].id : lastReactionId,
     reactionTotals,
     tally: tally(m.question_type ?? 'text', m.question_options ?? null, (answerRows ?? []).map((a) => a.answer as string)),
     customEmojis: await customEmojiMap(auth.svc),

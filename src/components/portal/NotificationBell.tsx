@@ -62,7 +62,17 @@ export default function NotificationBell({ inline = false }: { inline?: boolean 
 
   useEffect(() => { void load(); }, [load]);
   // Light polling instead of a realtime subscription: a notification arriving a little late is a non-issue. Paused while the tab is hidden.
-  useVisiblePoll(load, 60_000);
+  // Each check is only the unread number; the list itself is fetched when that number changes (or the bell is opened).
+  const lastCount = useRef(-1);
+  const check = useCallback(async () => {
+    try {
+      const res = await fetch('/api/notifications?count=1');
+      if (!res.ok) return;
+      const { unreadCount: n } = await res.json();
+      if (n !== lastCount.current) { lastCount.current = n; await load(); }
+    } catch { /* keep the last known state */ }
+  }, [load]);
+  useVisiblePoll(check, 120_000);
 
   useEffect(() => {
     if (!open) return;
