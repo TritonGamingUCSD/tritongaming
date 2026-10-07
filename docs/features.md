@@ -15,10 +15,18 @@ Code: `src/app/(portal)/portal/shifts`, `src/app/api/shifts`, `src/lib/shifts`, 
 - **Dashboard card:** "Now and next" (`NowNext.tsx`) shows the shift you are on or next, and close to the start brings in the checklist, the last note and a link to ask for cover.
 - **Print:** `/print/shifts/[eventId]` is the staff sheet.
 
+## Meetings (live screen)
+
+Code: `src/app/(portal)/portal/meetings`, `src/app/api/meetings`, `src/lib/meetings`.
+
+- The projector screen (`api/meetings/[id]/live`) refreshes when the server sends a signal (`notifyMeetingLive`, called after a check-in, answer, reaction or excuse) and every 30 seconds as a backstop. Only reactions newer than a cursor are returned; totals come every eighth refresh.
+- People answering a poll or rating watch the results move the same way.
+
 ## Documentation
 
 Code: `src/app/(portal)/portal/docs`, `src/app/api/docs`, `src/lib/docs`.
 
+- Open pages refresh on a `notifyDocs` signal (publish, move, rename, delete) with a 2-minute backstop.
 - Pages are grouped in categories (each with a color) and can have sub-pages. Edits go to a draft; **Publish** makes them live and keeps a version.
 - **Home:** Start here (pinned), a card per category listing every page (long lists scroll inside the card), tags, and a side panel with favorites and recently updated. A banner lists required reading you haven't opened.
 - **Required reading:** editors choose roles in a page's ⋯ menu (`doc_required_roles`). Opening the page counts as read (`api/docs/read`, `doc_reads`). Editors see who has read it, can remind the unread (once a day) and can **ask everyone to re-read** after a big change (clears the marks and sends one bell).

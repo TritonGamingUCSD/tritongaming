@@ -4,7 +4,7 @@
 
 - **Next.js 16** (App Router, Turbopack) and React 19. This version differs from older Next.js: read `node_modules/next/dist/docs/` before writing Next code. Cache Components are not enabled.
 - **Supabase:** Google sign-in, Postgres, Realtime (presence and broadcast) and file Storage.
-- **Vercel:** hosting and scheduled jobs (`vercel.json`).
+- **Vercel:** hosting and scheduled jobs (`vercel.json`: two daily jobs, the free-plan limit).
 - **Stripe** for paid tickets, **Web Push (VAPID)** for notifications, **Google Calendar API** for optional calendar linking.
 - **CSS Modules** with theme tokens. **Vitest** for unit tests. **ESLint** (`eslint.config.mjs`, Next's rules).
 
@@ -33,6 +33,7 @@
 
 - `createClient()` (server): uses the visitor's session. While an admin is viewing as another person it returns that person.
 - `createRealClient()`: the real signed-in identity, for checks that must not be faked.
+- On both, `auth.getUser()` is checked **locally** (`localAuth.ts`, no request to Supabase). Routes that change roles or settings call `strictUser(client)` instead, which also asks Supabase. See [usage-and-limits.md](usage-and-limits.md).
 - `createServiceClient()`: service role, bypasses row security. Use it only in API routes that have already checked who is calling.
 - `createPublicClient()`: cookie-free, for cacheable public data.
 - `client.ts` is the browser client.
@@ -43,7 +44,7 @@ Roles grant **capabilities** (`src/lib/portal/capabilities.ts`). Server routes c
 
 ## Real time
 
-Shifts, docs and the board use Supabase Realtime. A route that changes shared state broadcasts "changed" (`notifyShifts`) and open pages refresh within a couple of seconds; pages also refresh slowly on their own, so a missed message is harmless.
+Shifts, the live meeting screen, docs and the board use Supabase Realtime. A route that changes shared state broadcasts "changed" (`notifyShifts`, `notifyMeetingLive`, `notifyDocs`) and open pages refresh within a couple of seconds; pages also refresh slowly on their own, so a missed message is harmless.
 
 ## Notifications
 

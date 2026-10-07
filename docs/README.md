@@ -9,6 +9,7 @@ The same material lives in the portal under **Documentation → Website & Portal
 | [conventions.md](conventions.md) | Write code that matches the rest: theme tokens, routing, UI habits, lint |
 | [database.md](database.md) | Change the database, or learn what each table is for |
 | [features.md](features.md) | See how shifts, docs, Help, notifications and scheduled jobs fit together |
+| [usage-and-limits.md](usage-and-limits.md) | Stay inside the free Vercel and Supabase plans (polling, caching, the login check, backups) |
 | [testing.md](testing.md) | Test safely against the live database without messaging real people |
 | [portal-navigation.md](portal-navigation.md) | Build a new portal section the same shape as the others |
 

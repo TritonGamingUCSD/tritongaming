@@ -40,7 +40,8 @@ Pure logic (no database, no React) is what the unit tests in `src/lib/__tests__`
 |---|---|
 | `docsTree.ts` | Builds the category/sub-page tree; category colors; ages ("Updated 3 days ago"); tags |
 | `docsServer.ts` | Authorization (`authorizeDocs`), the columns routes read, who is editing now |
-| `docsSync.ts` | The light "what changed" payload the open page polls |
+| `docsSync.ts` | The light "what changed" payload the open page loads |
+| `docsLive.ts` | `notifyDocs()`: tells open pages something changed |
 | `docsLinks.ts` | `[[Doc title]]` links and "linked from" |
 | `markdown.ts`, `markdownToc.ts` | Markdown helpers and the "On this page" outline |
 
@@ -50,6 +51,7 @@ Pure logic (no database, no React) is what the unit tests in `src/lib/__tests__`
 | `meetings.ts` | Meetings, repeating series, who is expected, check-in rules |
 | `meetingAudience.ts` | Who a meeting or internal event is for |
 | `meetingPlans.ts`, `meetingPlanServer.ts` | "When can you meet?" planning |
+| `meetingLive.ts`, `useMeetingLive.ts` | The live "something changed" signal for the projector screen and poll results (server sends, browser listens) |
 | `meetingFun.ts` | Polls, ratings and reactions during a meeting |
 | `internalEvents.ts` | Socials, trainings and workshops for the team |
 | `groupChanges.ts` | Team groups |
@@ -96,4 +98,4 @@ Pure logic (no database, no React) is what the unit tests in `src/lib/__tests__`
 `confirmHold.ts` (hold to confirm), `toast.ts`, `fetchWithRetry.ts`, `useDraft.ts` (unsent drafts), `useDragReorder.ts`, `useEditingPresence.ts`, `useOnlineStatus.ts`, `useUnsavedChanges.ts`, `useVisiblePoll.ts`.
 
 ## `supabase/`
-The four Supabase clients described in [architecture.md](architecture.md).
+The four Supabase clients described in [architecture.md](architecture.md). `localAuth.ts` makes `auth.getUser()` a local check and provides `strictUser` for routes that change roles or settings (see [usage-and-limits.md](usage-and-limits.md)).
