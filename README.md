@@ -203,23 +203,6 @@ Confirm the table is in the `supabase_realtime` publication (`select * from pg_p
 **Vercel deploy fails on the cron:**
 The Hobby plan only allows daily crons, which is why `vercel.json` has just two daily jobs (`daily-reminders` and `daily-maintenance`) that run the others in turn.
 
-## Linking Google Calendar (optional, view only)
-
-There is no switch in the code: linking turns on by itself once the three environment variables below are set. Until then the Sync panel tells members that linking isn't set up, the API routes refuse, and nothing is fetched from Google. To turn it off, remove the variables.
-
-Members can choose to show their own Google Calendar(s) inside the portal calendar, and as a hint (striped times, never blocking) on their availability grid when planning a meeting. This is **separate from signing in with Google**: it is its own consent, asks only for read-only access to calendar events, shows the events to that member alone, and never appears in the shared calendar feed. A member can link several Google accounts and unlink any of them (which also revokes Google's access).
-
-One-time setup:
-
-1. In Google Cloud Console (same project as the sign-in client is fine), enable the **Google Calendar API** and create an **OAuth client ID** (type: Web application). Add the redirect URI `https://<your-site>/api/calendar/google/callback` (and `http://localhost:3000/api/calendar/google/callback` for local work).
-2. On the OAuth consent screen add the scope `https://www.googleapis.com/auth/calendar.events.readonly`. This is a sensitive scope: until Google verifies the app, only listed test users (up to 100) can link. Submit for verification before opening it to everyone.
-3. Set these environment variables:
-   - `GOOGLE_CALENDAR_CLIENT_ID`, `GOOGLE_CALENDAR_CLIENT_SECRET`: from the OAuth client.
-   - `CALENDAR_TOKEN_KEY`: 32 random bytes, base64 (`openssl rand -base64 32`). Refresh tokens are stored encrypted with it; changing it unlinks everyone.
-4. The `calendar_connections` table comes from the migrations `20261003100000_calendar_connections.sql` and `20261003110000_calendar_connections_multi.sql`.
-
-Until the variables are set, the Sync panel tells members that linking isn't set up yet.
-
 ## Web push notifications
 
 Everything that lands in the portal's notification bell can also be pushed to a member's browser or phone, even when the portal is closed. Members turn it on per device under **Profile → Notifications** (or from the prompt in the bell) and can mute kinds of notification (meetings, events and tickets, account and access, help inbox). It works in Chrome, Edge, Firefox, Safari on macOS 13+, and on iPhone/iPad once the site is added to the Home Screen.

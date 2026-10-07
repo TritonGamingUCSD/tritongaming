@@ -45,9 +45,7 @@ export default function TimeGrid({ days, byDay, today, nowIso, dayName, onOpen }
   onOpen: (item: Item, rect: DOMRect) => void;
 }) {
   const scroller = useRef<HTMLDivElement>(null);
-  const blocks = new Map(days.map((d) => [d, layout((byDay.get(d) ?? []).filter((i) => !i.allDay), d)]));
-  const allDay = new Map(days.map((d) => [d, (byDay.get(d) ?? []).filter((i) => i.allDay)]));
-  const hasAllDay = [...allDay.values()].some((l) => l.length);
+  const blocks = new Map(days.map((d) => [d, layout(byDay.get(d) ?? [], d)]));
   const all = [...blocks.values()].flat();
   // The hours shown: 8 AM to 10 PM, widened to take in anything earlier or later.
   const startH = Math.max(0, Math.min(8, all.length ? Math.floor(Math.min(...all.map((b) => b.from)) / 60) : 8));
@@ -73,16 +71,6 @@ export default function TimeGrid({ days, byDay, today, nowIso, dayName, onOpen }
           <span key={d} className={`${styles.tgDayHead} ${d === today ? styles.tgDayToday : ''}`}><span className={styles.weekName}>{n.name}</span><span className={styles.weekNum}>{n.num}</span></span>
         ); })}
       </div>
-      {hasAllDay && (
-        <div className={styles.tgAllDay}>
-          <span className={styles.tgCorner}><span className={styles.tgAllLabel}>All day</span></span>
-          {days.map((d) => (
-            <span key={d} className={styles.tgAllCell}>
-              {(allDay.get(d) ?? []).map((i) => <button key={i.key} type="button" className={`${styles.tgAllChip} ${kindClass(i.kind)}`} onClick={(e) => onOpen(i, e.currentTarget.getBoundingClientRect())}>{i.title}</button>)}
-            </span>
-          ))}
-        </div>
-      )}
       <div className={styles.tgScroll} ref={scroller}>
         <div className={styles.tgBody} style={{ height: hours.length * HOUR_PX }}>
           <div className={styles.tgGutter}>

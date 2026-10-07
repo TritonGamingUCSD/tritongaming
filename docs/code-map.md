@@ -64,7 +64,7 @@ Pure logic (no database, no React) is what the unit tests in `src/lib/__tests__`
 | `checkinDays.ts`, `checkinWindow.ts`, `checkinForm.ts`, `performCheckin.ts` | Check-in rules and the check-in action |
 | `rotatingCode.ts`, `rotationConstants.ts`, `ticketCodeCache.ts` | The QR code that changes every few seconds |
 | `calendarItems.ts`, `calendarFeed.ts`, `calendarLinks.ts`, `monthBuckets.ts`, `weekGroups.ts` | The portal and public calendars |
-| `googleCalendar.ts`, `externalCalendar.ts`, `ics.ts` | Google Calendar linking and `.ics` downloads |
+| `ics.ts`, `calendarLinks.ts` | `.ics` downloads and the "Add to Google Calendar" links (no account linking) |
 | `stripe.ts` | Stripe client |
 
 ## `members/`

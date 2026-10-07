@@ -5,7 +5,7 @@
 - **Next.js 16** (App Router, Turbopack) and React 19. This version differs from older Next.js: read `node_modules/next/dist/docs/` before writing Next code. Cache Components are not enabled.
 - **Supabase:** Google sign-in, Postgres, Realtime (presence and broadcast) and file Storage.
 - **Vercel:** hosting and scheduled jobs (`vercel.json`: two daily jobs, the free-plan limit).
-- **Stripe** for paid tickets, **Web Push (VAPID)** for notifications, **Google Calendar API** for optional calendar linking.
+- **Stripe** for paid tickets, **Web Push (VAPID)** for notifications.
 - **CSS Modules** with theme tokens. **Vitest** for unit tests. **ESLint** (`eslint.config.mjs`, Next's rules).
 
 ## Folders

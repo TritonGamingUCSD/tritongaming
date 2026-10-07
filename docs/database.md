@@ -39,7 +39,7 @@ Check the result with a `select` afterwards. This runs on the **live** database,
 
 **Members and attendance:** `strikes` and its tables (`strike_events`, `strike_settings`, ...), `academic_quarters`, `quarter_roster`, `officer_quarter_status`, `team_years`, `team_year_members`, `team_settings`.
 
-**Other:** `notifications`, `push_subscriptions`, `push_preferences`, `audit_log`, `storage_keys` and `storage_key_events`, `site_contents` and `content_drafts` (editable website text), `short_links`, `photo_albums`, `calendar_connections`, `help_canned_replies`.
+**Other:** `notifications`, `push_subscriptions`, `push_preferences`, `audit_log`, `storage_keys` and `storage_key_events`, `site_contents` and `content_drafts` (editable website text), `short_links`, `photo_albums`, `help_canned_replies`.
 
 ## Test data
 

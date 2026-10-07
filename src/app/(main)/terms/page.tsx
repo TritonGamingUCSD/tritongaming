@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import LegalPage from '@/components/LegalPage/LegalPage';
 
 const DESCRIPTION = 'The rules for using the Triton Gaming website, member portal, tickets and events.';
@@ -53,11 +52,6 @@ export default function TermsPage() {
       <p>
         You keep ownership of what you submit, such as profile details, photos and messages. You give Triton Gaming permission to store and display it as needed to run the site and, where you choose to make it public (for example on a team card),
         to show it there. You can remove it at any time in the portal or by asking us.
-      </p>
-
-      <h2>Google Calendar link</h2>
-      <p>
-        Linking a Google Calendar is optional and read only. How we handle that data is described in our <Link href="/privacy#google-calendar">privacy policy</Link>. You can disconnect at any time.
       </p>
 
       <h2>Our content</h2>

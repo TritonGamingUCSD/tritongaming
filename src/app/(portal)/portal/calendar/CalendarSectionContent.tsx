@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, CalendarDays, CalendarPlus, CalendarSync, Users, MapPin, Repeat, Copy, Check, RefreshCw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarDays, CalendarPlus, Users, MapPin, Repeat, Copy, Check, RefreshCw } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Notice from '@/components/ui/Notice';
@@ -10,7 +10,6 @@ import { useLiveParams } from '@/lib/portal/usePortalParams';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import styles from './calendar.module.css';
 import TimeGrid from './TimeGrid';
-import GoogleLinkPanel from './GoogleLinkPanel';
 import { ItemPopup, ItemRow, StatusBadge, kindKey, timeOf, type Item } from './calendarParts';
 import SectionHeader from '@/components/ui/SectionHeader';
 
@@ -35,36 +34,28 @@ export default function CalendarSectionContent() {
   const [weekStart, setWeekStart] = useState(() => sundayOf(today));
   const [items, setItems] = useState<Item[] | null>(null);
   // What to show: which kinds, and only the ones I have a stake in (a ticket, hosting, going). Remembered on this device.
-  const [kinds, setKinds] = useState<Kind[]>(['event', 'meeting', 'internal', 'google', 'shift']);
-  // My own linked Google Calendar (view only): its events come with the response, separate from the shared ones.
-  const [google, setGoogle] = useState<Item[]>([]);
-  const [googleLinked, setGoogleLinked] = useState(false);
-  // null until the first answer. A student outside the TG team gets events only, with no filters and no Google sync.
+  const [kinds, setKinds] = useState<Kind[]>(['event', 'meeting', 'internal', 'shift']);
+  // null until the first answer. A student outside the TG team gets events only, with no filters.
   const [eventsOnly, setEventsOnly] = useState<boolean | null>(null);
-  const linking = eventsOnly === false;
-  const [googleError, setGoogleError] = useState<string | null>(null);
   // "All TG meetings": also show everyone else's meetings (not the private ones), as plain read-only entries.
   const [allMeetings, setAllMeetings] = useState(false);
   const [canAll, setCanAll] = useState(true);
   const [popup, setPopup] = useState<{ item: Item; rect: DOMRect } | null>(null);
   const [nowIso, setNowIso] = useState(() => new Date().toISOString());
   useEffect(() => {
-    try { const f = JSON.parse(localStorage.getItem('calendar-filters') ?? 'null'); if (f) { setKinds([...new Set([...(f.kinds as Kind[]), ...(f.kinds.includes('google') || f.googleOff ? [] : ['google' as Kind]), ...(f.kinds.includes('shift') || f.shiftOff ? [] : ['shift' as Kind])])]); setAllMeetings(!!f.allMeetings); } } catch { /* no saved filters */ }
+    try { const f = JSON.parse(localStorage.getItem('calendar-filters') ?? 'null'); if (f) { setKinds([...new Set([...(f.kinds as string[]).filter((x): x is Kind => ['event', 'meeting', 'internal', 'shift'].includes(x)), ...(f.kinds.includes('shift') || f.shiftOff ? [] : ['shift' as Kind])])]); setAllMeetings(!!f.allMeetings); } } catch { /* no saved filters */ }
     const t = setInterval(() => setNowIso(new Date().toISOString()), 60_000);
     return () => clearInterval(t);
   }, []);
   function setFilters(k: Kind[], all: boolean = allMeetings) {
     setKinds(k); setAllMeetings(all);
-    try { localStorage.setItem('calendar-filters', JSON.stringify({ kinds: k, allMeetings: all, googleOff: !k.includes('google'), shiftOff: !k.includes('shift') })); } catch { /* private window */ }
+    try { localStorage.setItem('calendar-filters', JSON.stringify({ kinds: k, allMeetings: all, shiftOff: !k.includes('shift') })); } catch { /* private window */ }
   }
   const [error, setError] = useState('');
   const swipe = useRef<{ x: number; y: number } | null>(null);
   const params = useLiveParams();
-  // One "Sync" panel holds both directions: bring my Google Calendar in, and send this calendar out to my own calendar app.
-  const [syncOpen, setSyncOpen] = useState(params.get('subscribe') === '1' || !!params.get('gcal'));
-  // Coming back from Google's screen lands here with ?gcal=…: open the link panel so the result is seen.
-  const gcalResult = params.get('gcal');
-  const [reload, setReload] = useState(0);
+  // The "Add to my calendar" panel (the private subscription links). Old links with ?gcal=… (from the removed Google link) just open the calendar.
+  const [syncOpen, setSyncOpen] = useState(params.get('subscribe') === '1');
 
   // The grid always shows six full weeks, so fetch exactly that span.
   const gridStart = useMemo(() => {
@@ -82,19 +73,19 @@ export default function CalendarSectionContent() {
     setItems(null); setError('');
     fetch(`/api/calendar?from=${from}&to=${to}${allMeetings && canAll ? '&scope=all' : ''}`, { cache: 'no-store' })
       .then(async (r) => ({ ok: r.ok, status: r.status, j: await r.json().catch(() => ({})) }))
-      .then(({ ok, j, status }) => { if (!live) return; if (status === 403 && allMeetings) { setCanAll(false); return; } if (ok) { setEventsOnly(!!j.eventsOnly); setItems(j.items); setGoogle(j.google ?? []); setGoogleLinked(!!j.googleLinked); setGoogleError(j.googleError ?? null); } else setError(j.error || 'Failed to load the calendar.'); })
+      .then(({ ok, j, status }) => { if (!live) return; if (status === 403 && allMeetings) { setCanAll(false); return; } if (ok) { setEventsOnly(!!j.eventsOnly); setItems(j.items); } else setError(j.error || 'Failed to load the calendar.'); })
       .catch(() => { if (live) setError('Couldn’t reach the server.'); });
     return () => { live = false; };
-  }, [from, to, reload, allMeetings, canAll]);
+  }, [from, to, allMeetings, canAll]);
 
   const byDay = useMemo(() => {
     const map = new Map<string, Item[]>();
-    for (const i of [...(items ?? []), ...google]) {
+    for (const i of items ?? []) {
       if (eventsOnly !== true && !kinds.includes(i.kind)) continue;
       map.set(i.date, [...(map.get(i.date) ?? []), i]);
     }
     return map;
-  }, [items, google, kinds, eventsOnly]);
+  }, [items, kinds, eventsOnly]);
 
   function shift(n: number) {
     if (view === 'week') { setWeekStart((w) => addDays(w, 7 * n)); return; }
@@ -119,9 +110,8 @@ export default function CalendarSectionContent() {
   const agendaDays = [...byDay.keys()].filter((d) => d >= (view === 'list' ? today : gridStart) && d.slice(0, 7) === key(cursor.y, cursor.m, 1).slice(0, 7)).sort();
 
   const syncButton = (cls: 'phoneOnly' | 'wideOnly') => (
-    <Button variant="secondary" size="sm" className={`${styles.syncBtn} ${styles[cls]}`} onClick={() => setSyncOpen((v) => !v)} aria-expanded={syncOpen} aria-label={linking ? 'Sync calendars' : 'Add to my calendar'}>
-      {linking ? <CalendarSync size={15} strokeWidth={1.75} aria-hidden="true" /> : <CalendarPlus size={15} strokeWidth={1.75} aria-hidden="true" />} <span className={styles.syncText}>{linking ? 'Sync' : 'Add to my calendar'}</span>
-      {(googleLinked || googleError) && <i className={`${styles.syncDot} ${googleError ? styles.syncDotWarn : ''}`} aria-hidden="true" />}
+    <Button variant="secondary" size="sm" className={`${styles.syncBtn} ${styles[cls]}`} onClick={() => setSyncOpen((v) => !v)} aria-expanded={syncOpen} aria-label="Add to my calendar">
+      <CalendarPlus size={15} strokeWidth={1.75} aria-hidden="true" /> <span className={styles.syncText}>Add to my calendar</span>
     </Button>
   );
 
@@ -144,15 +134,13 @@ export default function CalendarSectionContent() {
         </div>
       </div>
       {syncOpen && (
-        <div className={`${styles.syncGrid} ${linking ? '' : styles.syncSingle}`}>
-          {linking && <GoogleLinkPanel result={gcalResult} onChanged={() => setReload((n) => n + 1)} />}
+        <div className={`${styles.syncGrid} ${styles.syncSingle}`}>
           <SubscribePanel />
         </div>
       )}
-      {linking && googleError && !syncOpen && <Notice tone="warning">Your Google Calendar couldn’t be loaded just now, so its events aren’t shown. Open Sync to link it again.</Notice>}
 
       {eventsOnly === false && <div className={styles.filters} role="group" aria-label="What to show">
-        {([['event', 'Events', styles.dotEvent], ['meeting', 'Meetings', styles.dotMeeting], ['internal', 'Internal events', styles.dotInternal], ['shift', 'My shifts', styles.dotShift], ...(googleLinked ? [['google', 'My Google Calendar', styles.dotGoogle]] : [])] as [Kind, string, string][]).map(([k, label, dot]) => {
+        {([['event', 'Events', styles.dotEvent], ['meeting', 'Meetings', styles.dotMeeting], ['internal', 'Internal events', styles.dotInternal], ['shift', 'My shifts', styles.dotShift]] as [Kind, string, string][]).map(([k, label, dot]) => {
           const on = kinds.includes(k);
           return <button key={k} type="button" className={`${styles.filterChip} ${on ? styles.filterOn : ''}`} aria-pressed={on} onClick={() => setFilters(on ? kinds.filter((x) => x !== k) : [...kinds, k])}><i className={dot} /> {label}</button>;
         })}
@@ -232,7 +220,7 @@ export default function CalendarSectionContent() {
                         <ItemRow item={i} className={`${styles.weekItem} ${styles['item' + kindKey(i.kind)]}`}>
                           <span className={styles.itemBar} aria-hidden="true" />
                           <span className={styles.weekItemMain}>
-                            <span className={styles.weekTime}>{i.allDay ? 'All day' : i.kind === 'event' ? timeOf(i.start) : `${timeOf(i.start)}${i.end ? ` – ${timeOf(i.end)}` : ''}`}</span>
+                            <span className={styles.weekTime}>{i.kind === 'event' ? timeOf(i.start) : `${timeOf(i.start)}${i.end ? ` – ${timeOf(i.end)}` : ''}`}</span>
                             <span className={styles.weekTitle}>{i.title}{i.repeats && <Repeat size={11} aria-label="Repeats weekly" />}<StatusBadge status={i.status} compact /></span>
                             {i.location && <span className={styles.weekLoc}><MapPin size={10} aria-hidden="true" /> {i.location}</span>}
                           </span>
@@ -287,12 +275,12 @@ function ItemList({ items }: { items: Item[] }) {
                 <StatusBadge status={i.status} />
               </span>
               <span className={styles.itemMeta}>
-                {i.allDay ? 'All day' : i.kind === 'event' ? formatEventTimeRange(i.start, i.end) : `${timeOf(i.start)}${i.end ? ` – ${timeOf(i.end)}` : ''}`}
+                {i.kind === 'event' ? formatEventTimeRange(i.start, i.end) : `${timeOf(i.start)}${i.end ? ` – ${timeOf(i.end)}` : ''}`}
                 {i.dayLabel && <> · {i.dayLabel}</>}
                 {i.location && <> · <MapPin size={11} aria-hidden="true" /> {i.location}</>}
               </span>
             </span>
-            <span className={styles.kind}>{i.kind === 'event' ? 'Event' : i.kind === 'internal' ? 'Internal event' : i.kind === 'google' ? 'Google' : i.kind === 'shift' ? 'Shift' : 'Meeting'}</span>
+            <span className={styles.kind}>{i.kind === 'event' ? 'Event' : i.kind === 'internal' ? 'Internal event' : i.kind === 'shift' ? 'Shift' : 'Meeting'}</span>
           </ItemRow>
         </li>
       ))}

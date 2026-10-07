@@ -195,27 +195,10 @@
 @media (max-width: 640px) { .filters { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; } .filterChip { flex: none; } .grid { touch-action: pan-y; } }
 .popup .status { align-self: flex-start; }
 
-/* My own linked Google Calendar: teal, view only, and always labeled as mine. */
-.kGoogle { --k: #2dd4bf; --kbg: rgba(45, 212, 191, 0.14); --kfg: color-mix(in srgb, var(--pp-teal) 65%, var(--pp-ink)); }
 .kShift { --k: #f472b6; --kbg: rgba(244, 114, 182, 0.2); --kfg: var(--pp-ink); }
 .dotShift { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: #f472b6; }
-.dotGoogle { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: #2dd4bf; }
 .popupNote { margin: 0.2rem 0 0; font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 
-.linkFacts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.84rem; color: rgba(var(--pp-ink-rgb), 0.87); }
-.linkFacts li { display: flex; gap: 0.5rem; align-items: flex-start; }
-.linkFacts svg { flex: none; margin-top: 0.2rem; color: var(--pp-teal); }
-.linkFacts b { color: var(--pp-ink); font-weight: 600; }
-.linkToggle { display: flex; align-items: center; gap: 0.6rem; font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.97); cursor: pointer; }
-.tgAllDay { display: grid; grid-template-columns: var(--gutter) repeat(var(--cols), minmax(0, 1fr)); border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.20); background: var(--pp-card); }
-.tgAllLabel { display: block; padding: 0.4rem 0.5rem 0 0; text-align: right; font-size: 0.62rem; color: rgba(var(--pp-ink-rgb), 0.87); white-space: nowrap; }
-.tgAllCell { display: flex; flex-direction: column; gap: 2px; padding: 3px; min-width: 0; border-left: 1px solid rgba(var(--pp-ink-rgb), 0.16); }
-.tgAllChip { padding: 1px 6px; border: 0; border-left: 3px solid var(--k); border-radius: 0.35rem; background: var(--kbg); color: var(--kfg); font: inherit; font-size: 0.68rem; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
-.accounts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
-.account { display: flex; flex-direction: column; gap: 0.45rem; padding: 0.7rem 0.8rem; border-radius: 0.75rem; border: 1px solid rgba(45, 212, 191, 0.3); background: rgba(45, 212, 191, 0.05); }
-.accountTop { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap; }
-.accountEmail { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 600; color: var(--pp-ink); overflow-wrap: anywhere; }
-.inlineLink { color: var(--p-accent-text); }
 
 /* ── Page layout: one clear order, the same on desktop and phone ─────────────
    1. header (phone only: the portal's top bar already names the page on desktop) with the Sync button
@@ -225,12 +208,9 @@
    5. the calendar, and (month) the picked day beside it on desktop, under it on a phone */
 .header { flex-direction: row; align-items: flex-start; justify-content: space-between; gap: 0.75rem; }
 .syncBtn { position: relative; }
-.syncDot { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: #2dd4bf; box-shadow: 0 0 0 2px #080f1d; }
-.syncDotWarn { background: #fbbf24; }
 .phoneOnly { display: none; }
 .syncGrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.75rem; }
 @media (min-width: 900px) { .syncGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
-.googleCard { background: rgba(45, 212, 191, 0.05); border-color: rgba(45, 212, 191, 0.28); }
 @media (max-width: 640px) {
   .phoneOnly { display: inline-flex; }
   .wideOnly { display: none !important; }
@@ -271,6 +251,6 @@
 
 /* A meeting or event name is never cut off mid-word: it wraps (up to two lines in the month grid and all-day row, as many as fit in a time block)
    and only then shortens with an ellipsis. */
-.chip, .tgAllChip { white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+.chip { white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
 .tgBlock { min-width: 0; }
 .tgTitle { min-width: 0; overflow-wrap: anywhere; word-break: break-word; }

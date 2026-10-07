@@ -217,17 +217,13 @@
 /* A time tied for the very best carries a star; the ones after it carry their place. */
 .sugTop { background: #fbbf24; color: #1c1403; }
 
-/* Times on my own Google Calendar: teal stripes laid over the cell, as a hint only (the cell stays clickable and keeps its color). */
-.cell { position: relative; }
-.cellSoft::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(135deg, rgba(45, 212, 191, 0.34), rgba(45, 212, 191, 0.34) 3px, transparent 3px, transparent 7px); box-shadow: inset 2px 0 0 rgba(45, 212, 191, 0.85); }
-.softLabel { position: relative; z-index: 1; display: block; padding: 0 0.3rem; font-size: 0.64rem; line-height: 24px; color: var(--pp-teal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 0 3px rgba(0, 0, 0, 0.8); pointer-events: none; }
 
 /* One grid for every screen. Columns are narrower on a phone (swipe sideways to go through the days) and rows are taller to touch. */
 .gridTable { --timeW: 64px; --colW: 96px; --rowH: 24px; }
 .gridWrap { scroll-snap-type: x proximity; overscroll-behavior-x: contain; }
 .colHead { scroll-snap-align: start; scroll-margin-left: var(--timeW); }
 .cell, .heat, .timeLbl { height: var(--rowH); }
-.busyLabel, .softLabel { line-height: var(--rowH); }
+.busyLabel { line-height: var(--rowH); }
 @media (max-width: 719px) {
   .gridTable { --timeW: 62px; --colW: 84px; --rowH: 34px; }
   .gridWrap { width: 100%; }

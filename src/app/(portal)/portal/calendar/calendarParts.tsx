@@ -9,18 +9,18 @@ import { googleCalendarUrl } from '@/lib/events/ics';
 import styles from './calendar.module.css';
 
 export interface Item {
-  key: string; kind: 'event' | 'meeting' | 'internal' | 'google' | 'shift'; date: string; title: string; start: string; end: string | null;
+  key: string; kind: 'event' | 'meeting' | 'internal' | 'shift'; date: string; title: string; start: string; end: string | null;
   location: string | null; href: string; mine: boolean; dayLabel: string | null; repeats?: boolean; others?: boolean; audience?: string;
-  status?: 'ticket' | 'checked_in' | 'hosting' | 'going' | 'maybe'; description?: string | null; allDay?: boolean; account?: string;
+  status?: 'ticket' | 'checked_in' | 'hosting' | 'going' | 'maybe'; description?: string | null;
 }
 
 const TZ = 'America/Los_Angeles';
 export const timeOf = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit' });
-export const kindClass = (k: Item['kind']) => (k === 'event' ? styles.kEvent : k === 'internal' ? styles.kInternal : k === 'google' ? styles.kGoogle : k === 'shift' ? styles.kShift : styles.kMeeting);
+export const kindClass = (k: Item['kind']) => (k === 'event' ? styles.kEvent : k === 'internal' ? styles.kInternal : k === 'shift' ? styles.kShift : styles.kMeeting);
 // The class suffix for a type's chip / dot / bar / list row, so every view colors a type the same way.
-export const kindKey = (k: Item['kind']) => (k === 'event' ? 'Event' : k === 'internal' ? 'Internal' : k === 'google' ? 'Google' : k === 'shift' ? 'Shift' : 'Meeting');
-export const kindLabel = (i: Item) => (i.kind === 'event' ? 'Event' : i.kind === 'internal' ? 'Internal event' : i.kind === 'google' ? 'My Google Calendar' : i.kind === 'shift' ? 'My shift' : 'Meeting');
-export const whenLabel = (i: Item) => (i.allDay ? 'All day' : i.kind === 'event' ? formatEventTimeRange(i.start, i.end) : `${timeOf(i.start)}${i.end ? ` – ${timeOf(i.end)}` : ''}`);
+export const kindKey = (k: Item['kind']) => (k === 'event' ? 'Event' : k === 'internal' ? 'Internal' : k === 'shift' ? 'Shift' : 'Meeting');
+export const kindLabel = (i: Item) => (i.kind === 'event' ? 'Event' : i.kind === 'internal' ? 'Internal event' : i.kind === 'shift' ? 'My shift' : 'Meeting');
+export const whenLabel = (i: Item) => (i.kind === 'event' ? formatEventTimeRange(i.start, i.end) : `${timeOf(i.start)}${i.end ? ` – ${timeOf(i.end)}` : ''}`);
 
 // My own standing on an item, in the same colors everywhere: gold ticket, green checked in / hosting / going, amber maybe.
 const STATUS = {
@@ -63,20 +63,16 @@ export function ItemPopup({ item, anchor, onClose }: { item: Item; anchor: DOMRe
       {item.location && <p className={styles.popupMeta}><MapPin size={12} aria-hidden="true" /> {item.location}</p>}
       {item.others && <p className={styles.popupNote}>From “All TG meetings”: not on your list{item.audience ? `. For ${item.audience}` : ''}.</p>}
       {item.status && <StatusBadge status={item.status} />}
-      {item.kind === 'google' && <p className={styles.popupNote}>From your Google Calendar{item.account ? ` (${item.account})` : ''}. Only you can see this.</p>}
       <div className={styles.popupActions}>
-        {item.kind === 'google' ? (
-          item.href ? <a href={item.href} target="_blank" rel="noopener noreferrer" className={styles.popupOpen}>Open in Google</a> : null
-        ) : item.others ? null : <Link href={item.href} className={styles.popupOpen} onClick={onClose}>Open</Link>}
-        {item.kind !== 'google' && <Button size="sm" variant="secondary" onClick={() => window.open(googleCalendarUrl({ title: item.title, start: item.start, end: item.end, location: item.location, details: item.description ?? null }), '_blank', 'noopener,noreferrer')}>Add to Google Calendar</Button>}
+        {item.others ? null : <Link href={item.href} className={styles.popupOpen} onClick={onClose}>Open</Link>}
+        <Button size="sm" variant="secondary" onClick={() => window.open(googleCalendarUrl({ title: item.title, start: item.start, end: item.end, location: item.location, details: item.description ?? null }), '_blank', 'noopener,noreferrer')}>Add to Google Calendar</Button>
       </div>
     </div>
   );
 }
 
-// One calendar row. Ours link to their page; my own Google events open in Google (or are plain when there is nothing to open).
+// One calendar row: it links to its page (or is plain when it is someone else's meeting).
 export function ItemRow({ item, className, children }: { item: Item; className: string; children: React.ReactNode }) {
   if (item.others) return <div className={`${className} ${styles.others}`}>{children}</div>;
-  if (item.kind !== 'google') return <Link href={item.href} className={className}>{children}</Link>;
-  return item.href ? <a href={item.href} target="_blank" rel="noopener noreferrer" className={className}>{children}</a> : <div className={className}>{children}</div>;
+  return <Link href={item.href} className={className}>{children}</Link>;
 }
