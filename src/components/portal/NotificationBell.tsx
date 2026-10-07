@@ -4,7 +4,7 @@ import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { syncPush } from '@/lib/notifications/pushClient';
 import Image from 'next/image';
-import Link from 'next/link';
+import Link from '@/components/portal/NoPrefetchLink';
 import { navigatePortal } from '@/lib/portal/portalNav';
 import { Bell } from 'lucide-react';
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';

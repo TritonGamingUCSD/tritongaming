@@ -5,7 +5,7 @@ import { Fragment, useEffect, useState, type ReactNode } from 'react';
 import { usePortalParams } from '@/lib/portal/usePortalParams';
 import WeekHead from '@/components/ui/WeekHead';
 import { pacificKey, startsWeekGroup } from '@/lib/events/weekGroups';
-import Link from 'next/link';
+import Link from '@/components/portal/NoPrefetchLink';
 import { getAttributionSource } from '@/lib/site/attribution';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Ticket, MapPin, QrCode, Check, X, Timer, Award } from 'lucide-react';

@@ -143,7 +143,7 @@ export default function NavBar({ announcement }: { announcement?: React.ReactNod
 
         <div className={styles.right}>
           {!authLoading && (
-            <Link href={portalHref} className={styles.portal} aria-label={profile ? 'Member portal' : 'Sign in to the member portal'}>
+            <Link href={portalHref} prefetch={false} className={styles.portal} aria-label={profile ? 'Member portal' : 'Sign in to the member portal'}>
               {profile && navAvatarUrl ? (
                 <Image src={navAvatarUrl} alt="" width={24} height={24} className={styles.avatar} unoptimized referrerPolicy="no-referrer" />
               ) : profile ? (
@@ -204,7 +204,7 @@ export default function NavBar({ announcement }: { announcement?: React.ReactNod
             <a href={DISCORD_URL} target="_blank" rel="noopener noreferrer" className={styles.discord} onClick={() => setOpen(false)}>
               <Image src="/logos/discord.svg" alt="" width={22} height={22} unoptimized /> Join the Discord <ArrowUpRight size={18} aria-hidden="true" />
             </a>
-            <Link href={portalHref} className={styles.sideLink} onClick={() => setOpen(false)}>
+            <Link href={portalHref} prefetch={false} className={styles.sideLink} onClick={() => setOpen(false)}>
               {profile ? 'Open your member portal' : 'Member portal sign in'} <span aria-hidden="true">→</span>
             </Link>
             <p className={styles.tag}>Gaming Org at UC San Diego</p>

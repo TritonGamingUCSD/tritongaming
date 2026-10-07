@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/components/portal/NoPrefetchLink';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { UserRoundPen } from 'lucide-react';
 import styles from './ProfileIncompleteBanner.module.css';

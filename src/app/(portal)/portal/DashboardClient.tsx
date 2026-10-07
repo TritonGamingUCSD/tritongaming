@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/components/portal/NoPrefetchLink';
 import { ChevronRight, Clock, Ticket } from 'lucide-react';
 import { PACIFIC_TZ, pacificDaysUntil, eventDayProgress } from '@/lib/core/timezone';
 import styles from './dashboard.module.css';

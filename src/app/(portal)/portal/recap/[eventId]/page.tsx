@@ -1,5 +1,5 @@
 import { notFound, redirect } from 'next/navigation';
-import Link from 'next/link';
+import Link from '@/components/portal/NoPrefetchLink';
 import { Award, Images, CalendarDays, ExternalLink } from 'lucide-react';
 import { getProfile, getUserRoles } from '@/lib/core/auth';
 import { hasCapability, isRewardsEligible } from '@/lib/portal/capabilities';

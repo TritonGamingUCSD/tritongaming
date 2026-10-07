@@ -136,7 +136,7 @@ export default async function Footer() {
               {' · '}
               <Link href="/terms" className={styles.portalLink}>Terms</Link>
               {' · '}
-              <Link href="/portal" className={styles.portalLink}>Member portal</Link>
+              <Link href="/portal" prefetch={false} className={styles.portalLink}>Member portal</Link>
             </p>
           </div>
           <BackToTop />

@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/components/portal/NoPrefetchLink';
 import { MapPin, ChevronRight, CalendarDays } from 'lucide-react';
 import { PACIFIC_TZ } from '@/lib/core/timezone';
 import styles from './dashboard.module.css';

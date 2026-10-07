@@ -10,6 +10,7 @@ export default function PortalLink({ href, onClick, ...rest }: ComponentProps<ty
   return (
     <Link
       href={href}
+      prefetch={false}
       onClick={(e) => {
         onClick?.(e);
         if (!e.defaultPrevented && typeof href === 'string' && navigatePortal(href, e)) e.preventDefault();

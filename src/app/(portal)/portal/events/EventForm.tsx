@@ -9,7 +9,7 @@ import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDraft } from '@/lib/ui/useDraft';
 import DraftBanner from '@/components/portal/DraftBanner';
-import Link from 'next/link';
+import Link from '@/components/portal/NoPrefetchLink';
 import { ExternalLink, Loader2 } from 'lucide-react';
 import SocialEmbedsField from '@/components/SocialEmbedsField/SocialEmbedsField';
 import PhotoAlbumsField from '@/components/PhotoAlbumsField/PhotoAlbumsField';

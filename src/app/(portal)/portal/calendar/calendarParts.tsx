@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/portal/NoPrefetchLink';
 import { Check, CircleDashed, MapPin, Radio, Repeat, Ticket, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { formatEventTimeRange } from '@/lib/core/timezone';

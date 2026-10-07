@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/components/portal/NoPrefetchLink';
 import { ShieldAlert } from 'lucide-react';
 import { STRIKES_AT_LIMIT } from '@/lib/members/strikeLabels';
 import styles from './strikes.module.css';

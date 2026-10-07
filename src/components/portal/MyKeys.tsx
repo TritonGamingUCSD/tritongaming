@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/components/portal/NoPrefetchLink';
 import { KeyRound } from 'lucide-react';
 import styles from './MyKeys.module.css';
 

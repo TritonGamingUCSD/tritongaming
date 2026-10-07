@@ -2,7 +2,7 @@
 
 import IconButton from '@/components/ui/IconButton';
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/portal/NoPrefetchLink';
 import { Sparkles } from 'lucide-react';
 import type { ProfileNudge as Nudge } from '@/lib/members/profileCompleteness';
 import styles from './ProfileNudge.module.css';

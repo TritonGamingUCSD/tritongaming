@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/portal/NoPrefetchLink';
 import { navigatePortal } from '@/lib/portal/portalNav';
 import { useRouter } from 'next/navigation';
 import { Search, X, Users, Calendar, BookOpen, CornerDownLeft, ArrowRight, Zap } from 'lucide-react';

@@ -1,12 +1,11 @@
 import { Suspense } from 'react';
 import { roleInk } from '@/lib/portal/roleColors';
-import Link from 'next/link';
+import Link from '@/components/portal/NoPrefetchLink';
 import Image from 'next/image';
 import { Ticket, User, Camera, Calendar, Users, QrCode, Pencil, Shield, BookOpen, Image as ImageIcon, Award, ArrowLeft, CalendarCheck, CalendarDays, LayoutGrid, CircleHelp, CalendarHeart, KeyRound, ShieldAlert, CalendarRange, CalendarClock } from 'lucide-react';
 import { getProfile, getUserRoles, getMyPrivateProfile, getUser, getSessionRoles, getViewAs, getViewingUser } from '@/lib/core/auth';
 import { ViewAsSwitcher, ViewAsBanner, ViewingUserBanner } from '@/components/portal/ViewAs';
 import ProfileIncompleteBanner from '@/components/portal/ProfileIncompleteBanner';
-import { createClient } from '@/lib/supabase/server';
 import { hasCapability, isVerifiedMember, isRewardsEligible, requiresOrgTitle } from '@/lib/portal/capabilities';
 import { resolveAvatarUrl, hasBasicProfileInfo, getMissingProfileFields } from '@/lib/members/profile';
 import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK } from '@/types/database';
@@ -146,7 +145,6 @@ export default async function PortalDashboard({ searchParams }: Props) {
   // by capability — a plain member only ever triggers the tickets query. The
   // hub then just renders whichever of these were fetched; nothing is
   // re-fetched client-side when a card opens.
-  const supabase = await createClient();
   // Only what the dashboard, the card badges and the next sections need loads here. The heavy sections (Events, TG Members, Documentation,
   // Photo Albums, Divisions, Site Content, Admin) fetch their own data the first time they are opened (see lib/portalSectionData.ts).
   const [ticketsData, checkinData, pointsData, memberTiers, memberCount, docsSummary, albumCount, myShifts] =

@@ -4,7 +4,7 @@ import IconButton from '@/components/ui/IconButton';
 import Notice from '@/components/ui/Notice';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import Link from '@/components/portal/NoPrefetchLink';
 import UndoCheckinModal from '@/components/UndoCheckinModal/UndoCheckinModal';
 import { Camera, Gamepad2, Undo2, Check } from 'lucide-react';
 import { resolveAvatarUrl } from '@/lib/members/profile';

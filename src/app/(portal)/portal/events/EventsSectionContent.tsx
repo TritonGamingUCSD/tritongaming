@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { usePortalParams, useLiveParams } from '@/lib/portal/usePortalParams';
 import SectionTabs from '@/components/ui/SectionTabs';
-import Link from 'next/link';
+import Link from '@/components/portal/NoPrefetchLink';
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,

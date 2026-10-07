@@ -7,7 +7,7 @@ import SaveBar from '@/components/portal/SaveBar';
 import EditingNow from '@/components/portal/EditingNow';
 import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import { useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/portal/NoPrefetchLink';
 import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
 import SocialLinksField from '@/components/SocialLinksField/SocialLinksField';
 import SocialEmbedsField from '@/components/SocialEmbedsField/SocialEmbedsField';

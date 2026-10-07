@@ -1,5 +1,5 @@
 import { redirect, notFound } from 'next/navigation';
-import Link from 'next/link';
+import Link from '@/components/portal/NoPrefetchLink';
 import { Users, Sparkles, Award, Clock } from 'lucide-react';
 import { getUserRoles } from '@/lib/core/auth';
 import { hasCapability } from '@/lib/portal/capabilities';

@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/components/portal/NoPrefetchLink';
 import { ChevronRight, ClipboardCheck } from 'lucide-react';
 import type { TodoItem } from '@/lib/portal/todos';
 import styles from './dashboard.module.css';

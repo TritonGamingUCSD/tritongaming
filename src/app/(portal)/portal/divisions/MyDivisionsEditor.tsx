@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import Link from 'next/link';
+import Link from '@/components/portal/NoPrefetchLink';
 import type { MyDivision } from './getMyDivisionsData';
 import IconButton from '@/components/ui/IconButton';
 import styles from './divisions.module.css';

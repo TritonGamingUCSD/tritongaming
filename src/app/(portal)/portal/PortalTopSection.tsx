@@ -6,7 +6,7 @@ import DashboardClient from './DashboardClient';
 import UpcomingEventsPreview from './UpcomingEventsPreview';
 import PortalSearch from '@/components/portal/PortalSearch';
 import PortalHub, { useIsDesktop, type HubSection, type HubIdentity } from '@/components/portal/PortalHub';
-import Link from 'next/link';
+import Link from '@/components/portal/NoPrefetchLink';
 import Image from 'next/image';
 import { CalendarDays, Gift, UserPlus } from 'lucide-react';
 import styles from './dashboard.module.css';
