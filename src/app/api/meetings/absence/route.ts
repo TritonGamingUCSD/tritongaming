@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/notifications/audit';
 import { authorizeMeetings, getExpectedPeople, markEveryWeek, resolveOccurrence, stopEveryWeek } from '@/lib/meetings/meetings';
+import { notifyMeetingLive } from '@/lib/meetings/meetingLive';
 
 export const dynamic = 'force-dynamic';
 
@@ -63,6 +64,7 @@ export async function POST(request: Request) {
     await markEveryWeek(auth.svc, m.series_id, String(b.user_id), reason, excused, auth.user.id);
   }
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'mark absent', entityType: 'meeting attendance', entityId: m.id, summary: `Marked someone ${excused ? 'excused' : 'absent'} ahead of ${m.title} (${m.meeting_date})${reason ? `: ${reason}` : ''}`, details: { user_id: b.user_id } });
+  await notifyMeetingLive(m.id);
   return NextResponse.json({ ok: true, meeting_id: m.id });
 }
 

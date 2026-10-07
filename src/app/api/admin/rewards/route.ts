@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { hasCapability } from '@/lib/portal/capabilities';
+import { strictUser } from '@/lib/supabase/localAuth';
 
 async function requireManager() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await strictUser(supabase);
   if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
 
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);

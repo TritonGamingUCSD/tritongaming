@@ -1,13 +1,14 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { createServiceClient } from '@/lib/supabase/admin';
+import { withLocalAuthCheck } from '@/lib/supabase/localAuth';
 import { VIEW_USER_COOKIE, isUuid } from '@/lib/portal/viewAs';
 
 // The client for the person actually signed in. Only the "who is signed in" checks in lib/auth.ts and the view-as route use this directly.
 export async function createRealClient() {
   const cookieStore = await cookies();
 
-  return createServerClient(
+  return withLocalAuthCheck(createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
@@ -26,7 +27,7 @@ export async function createRealClient() {
         },
       },
     }
-  );
+  ));
 }
 
 // What every page and route normally uses. While an admin is viewing the portal as one specific person (admin only, re-checked here every time),

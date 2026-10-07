@@ -10,7 +10,7 @@ import PhotoStrip from '@/components/PhotoStrip/PhotoStrip';
 import { getSitePhotos, pickPhotos } from '@/lib/storage/sitePhotos';
 import styles from './media.module.css';
 
-export const revalidate = 60;
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: 'Media',

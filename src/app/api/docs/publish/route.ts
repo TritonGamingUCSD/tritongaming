@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { DOC_COLUMNS, UUID, authorizeDocs, bad, editingNow, namesOf } from '@/lib/docs/docsServer';
+import { notifyDocs } from '@/lib/docs/docsLive';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,5 +35,6 @@ export async function POST(request: Request) {
     .eq('id', id).eq('revision', doc.revision).select(DOC_COLUMNS).maybeSingle();
   if (error || !data) return NextResponse.json({ error: 'Someone else published at the same moment. Reload and look at their version first.', code: 'published_elsewhere' }, { status: 409 });
   await auth.svc.from('doc_versions').insert({ doc_id: id, title, content, created_by: auth.user.id, note: typeof b.note === 'string' ? b.note.trim().slice(0, 120) || null : null });
+  await notifyDocs();
   return NextResponse.json({ doc: data });
 }

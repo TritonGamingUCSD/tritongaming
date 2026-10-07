@@ -6,12 +6,13 @@ import { hasCapability, GRANTABLE_CAPABILITIES, CAPABILITY_ROLES } from '@/lib/p
 import { logAudit } from '@/lib/notifications/audit';
 import { createNotifications } from '@/lib/notifications/notify';
 import { ROLE_LABELS } from '@/types/database';
+import { strictUser } from '@/lib/supabase/localAuth';
 
 export const dynamic = 'force-dynamic';
 
 async function authorize() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await strictUser(supabase);
   if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
   if (!hasCapability(roles ?? [], 'manage_roles')) return { error: NextResponse.json({ error: 'Only admins can manage access.' }, { status: 403 }) };

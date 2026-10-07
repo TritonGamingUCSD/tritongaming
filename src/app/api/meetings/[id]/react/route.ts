@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { authorizeMeetings, isMeetingOpen, type MeetingRow } from '@/lib/meetings/meetings';
 import { isCustomEmoji, customEmojiId } from '@/lib/meetings/meetingFun';
+import { notifyMeetingLive } from '@/lib/meetings/meetingLive';
 
 // A checked-in person sends an emoji reaction; it floats up on the exec's screen. Lightly
 // rate-limited so one phone can't flood the room.
@@ -25,5 +26,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if ((count ?? 0) >= 12) return NextResponse.json({ ok: true, throttled: true });
 
   await auth.svc.from('meeting_reactions').insert({ meeting_id: id, user_id: auth.user.id, emoji });
+  await notifyMeetingLive(id);
   return NextResponse.json({ ok: true });
 }

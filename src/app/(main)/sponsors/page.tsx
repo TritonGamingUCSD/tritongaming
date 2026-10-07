@@ -10,7 +10,7 @@ import PhotoStrip from '@/components/PhotoStrip/PhotoStrip';
 import { getSitePhotos, pickPhotos } from '@/lib/storage/sitePhotos';
 import styles from './sponsors.module.css';
 
-export const revalidate = 60;
+export const revalidate = 300;
 
 // Icons are a design choice tied to what each offering *is*, not copy — the
 // title/body text next to them comes from the page.sponsors content block.

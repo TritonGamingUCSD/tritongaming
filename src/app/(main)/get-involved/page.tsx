@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 
 // Served from the CDN cache and refreshed in the background — data comes from
 // the cached fetchers in lib/ (revalidated on save), not per-request queries.
-export const revalidate = 60;
+export const revalidate = 300;
 
 // Icon and accent color are a design/brand choice (Discord and Instagram's
 // own logos), not copy — title/body/cta/href for each card come from the

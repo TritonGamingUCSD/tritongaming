@@ -27,7 +27,7 @@ import { dayTime, docsGet, docsPost } from './docsApi';
 import styles from './docs.module.css';
 
 interface Notice2 { id: number; text: string; tone: 'info' | 'warning'; docId?: string }
-const POLL_MS = 20_000;
+const POLL_MS = 120_000;
 const DOC_SELECT = 'id, slug, title, category_id, parent_id, order_index, content, attachments, created_by, updated_by, created_at, updated_at, icon, cover_url, tags, pinned, published, revision, draft_title, draft_content, draft_updated_at, draft_updated_by';
 
 export default function DocsClient({ initialDocs, initialCategories, initialFavorites, userId, canEdit }: { initialDocs: Doc[]; initialCategories: DocCategory[]; initialFavorites: string[]; userId: string; canEdit: boolean }) {
@@ -145,9 +145,16 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
     void poll(true);
     const t = setInterval(() => { if (document.visibilityState === 'visible') void poll(false); }, POLL_MS);
     const vis = () => { if (document.visibilityState === 'visible') void poll(false); };
+    // Others' changes arrive as a signal from the server (see lib/docs/docsLive.ts); the timer above is only the backstop. Signals close together make one refresh.
+    const supabase = createClient();
+    let pending: ReturnType<typeof setTimeout> | undefined;
+    const channel = supabase.channel('docs-live').on('broadcast', { event: 'changed' }, () => {
+      if (pending) return;
+      pending = setTimeout(() => { pending = undefined; if (document.visibilityState === 'visible') void poll(false); }, 800);
+    }).subscribe();
     document.addEventListener('visibilitychange', vis);
     window.addEventListener('focus', vis);
-    return () => { clearInterval(t); document.removeEventListener('visibilitychange', vis); window.removeEventListener('focus', vis); };
+    return () => { clearInterval(t); clearTimeout(pending); void supabase.removeChannel(channel); document.removeEventListener('visibilitychange', vis); window.removeEventListener('focus', vis); };
   }, [poll]);
 
   // ── Derived ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────

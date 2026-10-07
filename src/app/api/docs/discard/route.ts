@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { UUID, authorizeDocs, bad, namesOf } from '@/lib/docs/docsServer';
+import { notifyDocs } from '@/lib/docs/docsLive';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,5 +19,6 @@ export async function POST(request: Request) {
   }
   const { error } = await auth.svc.from('docs').update({ draft_title: null, draft_content: null, draft_updated_at: null, draft_updated_by: null }).eq('id', id);
   if (error) return bad('Couldn’t discard the draft.', 500);
+  await notifyDocs();
   return NextResponse.json({ ok: true });
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { authorizeMeetings, checkInOpensAt, getTodaysMeetings, isCheckInAccepting, isMeetingOpen, isValidMeetingCode } from '@/lib/meetings/meetings';
 import { canAttendMeeting } from '@/lib/meetings/meetingAudience';
+import { notifyMeetingLive } from '@/lib/meetings/meetingLive';
 
 // A team member typing the code shown in the room. The code identifies the meeting: it's checked
 // against every meeting that's open today. Only ever checks in the caller themselves.
@@ -36,5 +37,6 @@ export async function POST(request: Request) {
     .upsert({ meeting_id: match.id, user_id: auth.user.id, method: 'code' }, { onConflict: 'meeting_id,user_id', ignoreDuplicates: true })
     .select('checked_in_at').maybeSingle();
   if (error) return NextResponse.json({ error: 'Couldn’t check you in. Try again.' }, { status: 500 });
+  await notifyMeetingLive(match.id);
   return NextResponse.json({ ok: true, title: match.title, doc_url: match.doc_url, checked_in_at: data?.checked_in_at ?? new Date().toISOString() });
 }

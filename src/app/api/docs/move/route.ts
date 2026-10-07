@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { canMoveUnder, reorder } from '@/lib/docs/docsTree';
 import { UUID, authorizeDocs, bad } from '@/lib/docs/docsServer';
+import { notifyDocs } from '@/lib/docs/docsLive';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,5 +42,6 @@ export async function POST(request: Request) {
     await auth.svc.from('docs').update({ parent_id: parentId, category_id: newCategory }).eq('id', id);
     changed.push({ id, parent_id: parentId, category_id: newCategory, order_index: me.order_index });
   }
+  await notifyDocs();
   return NextResponse.json({ changed });
 }

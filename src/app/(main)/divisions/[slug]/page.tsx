@@ -19,7 +19,7 @@ import { getDivisionHubData } from './getDivisionHubData';
 import styles from './division.module.css';
 
 // Cached page, refreshed in the background (and right away when a division is saved).
-export const revalidate = 60;
+export const revalidate = 300;
 
 // Pre-built at deploy time; a division created later is rendered on first visit and then cached too.
 export async function generateStaticParams() {

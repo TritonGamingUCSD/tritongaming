@@ -4,10 +4,11 @@ import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
 import { logAudit } from '@/lib/notifications/audit';
 import { validateSlug, validateDestination, RESERVED_SLUGS } from '@/lib/site/shortLinks';
+import { strictUser } from '@/lib/supabase/localAuth';
 
 async function authorize() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await strictUser(supabase);
   if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
   if (!hasCapability(roles ?? [], 'manage_roles')) return { error: NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 }) };

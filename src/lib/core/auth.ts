@@ -16,12 +16,12 @@ const getSessionUser = cache(async () => {
 });
 
 // Roles of the signed-in person themselves, straight from the database.
-export async function getSessionRoles(): Promise<RoleGrant[]> {
+export const getSessionRoles = cache(async (): Promise<RoleGrant[]> => {
   const user = await getSessionUser();
   if (!user) return [];
   const { data } = await (await createRealClient()).from('user_roles').select('role, division_id').eq('user_id', user.id);
   return data ?? [];
-}
+});
 
 // "View as a specific person": set only by an admin (checked here every time, so a copied cookie does nothing for anyone else).
 // While it is set the portal renders as that person and every change is refused (see proxy.ts and ViewOnlyGuard).
@@ -92,7 +92,7 @@ export async function getMyPrivateProfile(): Promise<MyPrivateProfile> {
 }
 
 // The person's real role grants, straight from the database.
-export async function getRealRoles(): Promise<RoleGrant[]> {
+export const getRealRoles = cache(async (): Promise<RoleGrant[]> => {
   const viewing = await getViewingUser();
   const supabase = viewing ? createServiceClient() : await createClient();
   const user = viewing ?? (await getSessionUser());
@@ -104,20 +104,20 @@ export async function getRealRoles(): Promise<RoleGrant[]> {
     .eq('user_id', user.id);
 
   return data ?? [];
-}
+});
 
 // The role an admin is currently previewing ("View as"), or null. Only ever set for a real admin.
-export async function getViewAs(): Promise<ViewAsRole | null> {
+export const getViewAs = cache(async (): Promise<ViewAsRole | null> => {
   if (await getViewingUser()) return null;
   const value = (await cookies()).get(VIEW_AS_COOKIE)?.value;
   if (!isViewAsRole(value)) return null;
   const real = await getRealRoles();
   return real.some((r) => r.role === 'admin') ? value : null;
-}
+});
 
 // The roles the portal should render for. Normally the real ones; while an admin is previewing
 // another role, just that role. Page code uses this; API routes check real roles on their own.
-export async function getUserRoles(): Promise<RoleGrant[]> {
+export const getUserRoles = cache(async (): Promise<RoleGrant[]> => {
   const real = await getRealRoles();
   const viewing = await getViewingUser();
   if (viewing) return withGrantedCapabilities(real, await loadGrantedCapabilities(createServiceClient(), viewing.id).catch(() => []));
@@ -135,7 +135,7 @@ export async function getUserRoles(): Promise<RoleGrant[]> {
     return [{ role: 'division', division_id: data?.[0]?.id ?? null }];
   }
   return [{ role: preview, division_id: null }];
-}
+});
 
 export async function requireAuth() {
   const user = await getUser();

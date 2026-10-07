@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { hasCapability } from '@/lib/portal/capabilities';
+import { strictUser } from '@/lib/supabase/localAuth';
 
 // The whole point of this route: nobody managing the portal should need to
 // know what a Google Forms "entry ID" even is. Given a plain form URL, it
@@ -12,7 +13,7 @@ import { hasCapability } from '@/lib/portal/capabilities';
 // is ever submitted to it.
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await strictUser(supabase);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data: roles } = await supabase

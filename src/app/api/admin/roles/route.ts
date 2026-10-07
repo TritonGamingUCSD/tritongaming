@@ -5,6 +5,7 @@ import { hasCapability } from '@/lib/portal/capabilities';
 import { logAudit } from '@/lib/notifications/audit';
 import { ASSIGNABLE_ROLES } from '@/types/database';
 import type { AppRole } from '@/types/database';
+import { strictUser } from '@/lib/supabase/localAuth';
 
 interface RoleInput {
   role: AppRole;
@@ -14,7 +15,7 @@ interface RoleInput {
 export async function PUT(request: Request) {
   // 1. Verify the caller is an admin via the user's session
   const userClient = await createClient();
-  const { data: { user } } = await userClient.auth.getUser();
+  const { data: { user } } = await strictUser(userClient);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data: callerRoles } = await userClient

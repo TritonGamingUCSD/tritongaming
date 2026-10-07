@@ -23,7 +23,7 @@ import { themeVars, themeFontsHref, themeFontFaceCss } from '@/lib/events/eventT
 import styles from './event-detail.module.css';
 
 // Cached page (data comes from the tagged caches in lib/events.ts, refreshed when an event is saved).
-export const revalidate = 60;
+export const revalidate = 300;
 
 // Built at deploy time for existing events; a new event renders on first visit, then is cached.
 export async function generateStaticParams() {

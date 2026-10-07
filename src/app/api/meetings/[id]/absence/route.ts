@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/notifications/audit';
 import { authorizeMeetings, guardMeeting } from '@/lib/meetings/meetings';
+import { notifyMeetingLive } from '@/lib/meetings/meetingLive';
 
 // Exec marks someone absent for a meeting (with an optional reason; "excused" absences don't count
 // against their attendance), or takes the mark back off.
@@ -22,6 +23,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { error } = await auth.svc.from('meeting_absences').upsert({ meeting_id: id, user_id: b.user_id, reason, excused, marked_by: auth.user.id }, { onConflict: 'meeting_id,user_id' });
   if (error) return NextResponse.json({ error: 'Failed to save.' }, { status: 500 });
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'mark absent', entityType: 'meeting attendance', entityId: id, summary: `Marked someone ${excused ? 'excused' : 'absent'} for ${m.title} (${m.meeting_date})${reason ? `: ${reason}` : ''}`, details: { user_id: b.user_id } });
+  await notifyMeetingLive(id);
   return NextResponse.json({ ok: true });
 }
 
@@ -33,5 +35,6 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   const { user_id } = await request.json().catch(() => ({}));
   if (!user_id) return NextResponse.json({ error: 'Missing user_id' }, { status: 400 });
   await auth.svc.from('meeting_absences').delete().eq('meeting_id', id).eq('user_id', user_id);
+  await notifyMeetingLive(id);
   return NextResponse.json({ ok: true });
 }

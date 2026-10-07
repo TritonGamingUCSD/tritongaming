@@ -320,7 +320,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
     } catch {
       // ignore — next tick tries again
     }
-  }, 4000, !handledCheckIn.current);
+  }, 10_000, !handledCheckIn.current);
 
   // The authoritative form answer, fetched from the status endpoint the
   // moment check-in lands — the checkinFormUrl prop was baked in when the

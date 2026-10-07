@@ -4,6 +4,8 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
 import type { Capability } from '@/types/database';
+import { strictUser } from '@/lib/supabase/localAuth';
+import { invalidate } from '@/lib/site/revalidate';
 
 // The member tier ladder is a manage_rewards_shop concern.
 const SYSTEM_CAPABILITY: Record<string, Capability> = {
@@ -17,7 +19,7 @@ async function requireManager(system: string) {
   if (!capability) return { error: NextResponse.json({ error: 'Invalid tier system.' }, { status: 400 }) };
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await strictUser(supabase);
   if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
 
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
@@ -69,5 +71,6 @@ export async function POST(request: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
   await logAudit(serviceClient, { actorId: ctx.userId ?? null, action: 'create', entityType: 'tier', entityId: String((data as { id?: string } | null)?.id ?? ''), summary: `Tier "${name}" created (${minPoints} pts, ${system})` });
+  invalidate('tiers');
   return NextResponse.json({ tier: data }, { status: 201 });
 }

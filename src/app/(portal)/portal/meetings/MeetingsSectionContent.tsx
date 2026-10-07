@@ -25,6 +25,7 @@ import BubbleField from './BubbleField';
 import { QuestionEditor, ResultBars, StarPicker, Confetti, emptyQ, qFrom, qPayload, qBad, type QState } from './QuestionParts';
 import { CUSTOM_PREFIX, isCustomEmoji, customEmojiId, MAX_EMOJI_BYTES, MAX_EMOJI_PICK_BYTES, EMOJI_NAME, parseDiscordEmoji, emojiNameFrom, type CustomEmoji, type QuestionType, type Tally, MAX_ANSWER_LENGTH, MAX_DESCRIPTION_LENGTH } from '@/lib/meetings/meetingFun';
 import PlanningPanel from './planning/PlanningPanel';
+import { useMeetingLive } from '@/lib/meetings/useMeetingLive';
 import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
 import styles from './meetings.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
@@ -297,7 +298,8 @@ function FunBox({ meeting, onSaved }: { meeting: TodayMeeting; onSaved: () => vo
   const watching = type !== 'text' && !!mine && meeting.open;
   const pullResults = useCallback(() => fetch(`/api/meetings/${meeting.id}/results`, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((j) => { if (j) setTallyNow({ counts: j.counts, total: j.total, average: j.average }); }).catch(() => {}), [meeting.id]);
   useEffect(() => { if (watching) void pullResults(); }, [watching, pullResults]);
-  useVisiblePoll(pullResults, 5000, watching);
+  useMeetingLive(meeting.id, pullResults, watching);
+  useVisiblePoll(pullResults, 30_000, watching);   // slow backstop
   async function vote(choice: string) {
     setError(''); const before = mine; setMine(choice);
     const res = await fetch(`/api/meetings/${meeting.id}/answer`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer: choice }) });
@@ -1368,8 +1370,8 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
   }, [id]);
 
   useEffect(() => { void loadLive(); }, [loadLive]);
-  // Fast so reactions and answers feel live on the big screen, but only while the tab is visible.
-  useVisiblePoll(loadLive, 3000);
+  useMeetingLive(id, loadLive);   // refreshes when someone checks in, answers or reacts
+  useVisiblePoll(loadLive, 30_000);   // slow backstop in case the live connection is blocked
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 250);

@@ -22,7 +22,7 @@ import PortalTopSection from './PortalTopSection';
 import PortalSearch from '@/components/portal/PortalSearch';
 import { PortalParamsProvider } from '@/components/portal/PortalParamsContext';
 import { AdminLazy, AlbumsLazy, DivisionMembersLazy, DivisionsLazy, DocsLazy, EventsLazy, MembersLazy, ShiftsLazy, SiteContentLazy } from './LazySections';
-import { getAlbumCount, getDocsSummary, getMemberCount } from '@/lib/portal/portalCounts';
+import { getAlbumCount, getDocsSummary, getMemberCount, getTiersCached } from '@/lib/portal/portalCounts';
 import { getMyShifts } from '@/lib/shifts/myShifts';
 import { DashboardWelcome, DashboardBody, type HomeTool } from './DashboardHome';
 import TicketsSectionContent from './tickets/TicketsSectionContent';
@@ -32,7 +32,7 @@ import CheckInSectionContent from './checkin/CheckInSectionContent';
 import { getCheckinData } from './checkin/getCheckinData';
 import PointsSectionContent from './points/PointsSectionContent';
 import { getMyPointsData } from './points/getMyPointsData';
-import { getTier, nextTier, fetchTiers } from '@/lib/members/tiers';
+import { getTier, nextTier } from '@/lib/members/tiers';
 import QRStudioClient from './qrcode/QRStudioClient';
 import MeetingsSectionContent from './meetings/MeetingsSectionContent';
 import { createServiceClient } from '@/lib/supabase/admin';
@@ -154,7 +154,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       getTicketsData(profile.id, roles),
       canCheckin ? getCheckinData() : Promise.resolve(null),
       canUseRewards ? getMyPointsData(profile.id) : Promise.resolve(null),
-      fetchTiers(supabase),
+      getTiersCached(),
       canViewMembers ? getMemberCount().catch(() => 0) : Promise.resolve(0),
       canViewDocs ? getDocsSummary(canManageDocs).catch(() => ({ count: 0, pinned: null })) : Promise.resolve(null),
       canViewPhotoAlbums ? getAlbumCount().catch(() => 0) : Promise.resolve(0),

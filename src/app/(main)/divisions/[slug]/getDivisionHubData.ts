@@ -45,7 +45,7 @@ interface LeadRow {
 // from that page ("they have their own division pages") — this is that page.
 export function getDivisionHubData(divisionId: string) {
   // Cached briefly and shared between visitors; failures throw so they aren't cached.
-  return unstable_cache(() => fetchDivisionHubData(divisionId), ['division-hub', divisionId], { revalidate: 60, tags: ['divisions', 'events', 'board'] })()
+  return unstable_cache(() => fetchDivisionHubData(divisionId), ['division-hub', divisionId], { revalidate: 300, tags: ['divisions', 'events', 'board'] })()
     .catch(() => ({ events: [] as DivisionEvent[], leads: [] as DivisionLead[] }));
 }
 

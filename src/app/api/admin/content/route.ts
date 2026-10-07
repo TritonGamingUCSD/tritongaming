@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
+import { strictUser } from '@/lib/supabase/localAuth';
 
 export async function GET() {
   // Public read — anyone can fetch content for rendering
@@ -15,7 +16,7 @@ export async function GET() {
 export async function POST(request: Request) {
   // 1. Verify caller is officer+
   const userClient = await createClient();
-  const { data: { user } } = await userClient.auth.getUser();
+  const { data: { user } } = await strictUser(userClient);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data: roles } = await userClient

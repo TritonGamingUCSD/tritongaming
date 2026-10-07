@@ -6,6 +6,7 @@ import { logAudit } from '@/lib/notifications/audit';
 import { withRole } from '@/lib/portal/roleGrant';
 import { ASSIGNABLE_ROLES } from '@/types/database';
 import type { AppRole } from '@/types/database';
+import { strictUser } from '@/lib/supabase/localAuth';
 
 interface BulkRoleInput {
   userIds: string[];
@@ -24,7 +25,7 @@ interface BulkRoleInput {
 // already holds (someone can lead more than one division).
 export async function POST(request: Request) {
   const userClient = await createClient();
-  const { data: { user } } = await userClient.auth.getUser();
+  const { data: { user } } = await strictUser(userClient);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data: callerRoles } = await userClient

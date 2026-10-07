@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
+import { strictUser } from '@/lib/supabase/localAuth';
 
 // Backs the admin "reverse a specific transaction" tool — lets an officer
 // browse a member's own ledger instead of guessing a free-form amount to
@@ -9,7 +10,7 @@ import { hasCapability } from '@/lib/portal/capabilities';
 // 20260921093000_fix_reversal_math_and_generic_reverse.sql.
 export async function GET(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await strictUser(supabase);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);

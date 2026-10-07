@@ -4,6 +4,7 @@ import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
 import { PACIFIC_TZ } from '@/lib/core/timezone';
 import { applyAuditFilters } from '@/lib/notifications/auditFilters';
+import { strictUser } from '@/lib/supabase/localAuth';
 
 const MAX_ROWS = 10000;
 
@@ -15,7 +16,7 @@ function csvField(v: unknown): string {
 // Admin-only CSV of the audit log, honouring the same type/search filters as the tab.
 export async function GET(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await strictUser(supabase);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
   if (!hasCapability(roles ?? [], 'view_admin_dashboard')) return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });

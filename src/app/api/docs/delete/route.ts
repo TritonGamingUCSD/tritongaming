@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { descendantIds } from '@/lib/docs/docsTree';
 import { UUID, authorizeDocs, bad, editingNow } from '@/lib/docs/docsServer';
+import { notifyDocs } from '@/lib/docs/docsLive';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,5 +29,6 @@ export async function POST(request: Request) {
   }
   const { error } = await auth.svc.from('docs').delete().eq('id', id);
   if (error) return bad('Couldn’t delete that.', 500);
+  await notifyDocs();
   return NextResponse.json({ ok: true, removed: inside.length });
 }

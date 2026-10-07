@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
+import { strictUser } from '@/lib/supabase/localAuth';
 
 // Sets profiles.board_order = its index in the given array — the exec/
 // lead display order shown on the public About page board section and
@@ -13,7 +14,7 @@ import { hasCapability } from '@/lib/portal/capabilities';
 // needing swap/insert logic to reconcile concurrent edits.
 export async function PUT(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await strictUser(supabase);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);

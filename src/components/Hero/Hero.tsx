@@ -66,7 +66,9 @@ export default function Hero({ content = {} }: { content?: HeroContent }) {
     <section className={styles.hero} aria-label="Hero">
       <HeroFx />
       <video autoPlay loop muted playsInline className={styles.video} aria-hidden="true">
-        <source src="/videos/tgex26highlight_1920x1080.mp4" type="video/mp4" />
+        {/* Two small copies (the original was 32 MB, which every visitor downloaded): phones get the 360p one. */}
+        <source src="/videos/tgex26highlight-360.mp4" type="video/mp4" media="(max-width: 860px)" />
+        <source src="/videos/tgex26highlight-720.mp4" type="video/mp4" />
       </video>
       <div className={styles.darkOverlay} aria-hidden="true" />
 

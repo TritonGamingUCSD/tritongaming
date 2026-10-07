@@ -13,7 +13,7 @@ import { getUpcomingEvents } from '@/lib/events/events';
 import type { StatInput } from '@/components/LandingStatistics/LandingStatistics';
 import { DISCORD_URL } from '@/lib/site/links';
 
-export const revalidate = 60;
+export const revalidate = 300;
 
 // Title/description are left unset here — they inherit the root layout's
 // defaults, which are already written for the home page specifically (not

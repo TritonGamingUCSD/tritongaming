@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { authorizeMeetings, isMeetingOpen, type MeetingRow } from '@/lib/meetings/meetings';
 import { MAX_ANSWER_LENGTH, validAnswer } from '@/lib/meetings/meetingFun';
+import { notifyMeetingLive } from '@/lib/meetings/meetingLive';
 
 // A checked-in person answers (or edits their answer to) the meeting's question.
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -21,5 +22,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   const { error } = await auth.svc.from('meeting_answers').upsert({ meeting_id: id, user_id: auth.user.id, answer: text, updated_at: new Date().toISOString() }, { onConflict: 'meeting_id,user_id' });
   if (error) return NextResponse.json({ error: 'Couldn’t save your answer.' }, { status: 500 });
+  await notifyMeetingLive(id);
   return NextResponse.json({ ok: true, answer: text });
 }

@@ -24,6 +24,10 @@ const nextConfig: NextConfig = {
   // The push service worker must always be fetched fresh and may only load its own code.
   async headers() {
     return [{
+      // The hero videos never change under the same name (a new version gets a new file name), so browsers may keep them for a year.
+      source: '/videos/:file*',
+      headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+    }, {
       source: '/sw.js',
       headers: [
         { key: 'Content-Type', value: 'application/javascript; charset=utf-8' },

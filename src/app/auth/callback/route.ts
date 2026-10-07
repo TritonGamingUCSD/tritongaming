@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { strictUser } from '@/lib/supabase/localAuth';
 import { createServiceClient } from '@/lib/supabase/admin';
 
 export async function GET(request: Request) {
@@ -61,7 +62,7 @@ export async function GET(request: Request) {
         // guaranteed to carry the full identities array. A fresh
         // getUser() call is the same authoritative source every other
         // route in this codebase uses for "who is this, completely".
-        const { data: { user: freshUser } } = await supabase.auth.getUser();
+        const { data: { user: freshUser } } = await strictUser(supabase);
         const hasUcsdIdentity = (freshUser?.identities ?? []).some((identity) => {
           const email = (identity.identity_data?.email as string | undefined) ?? '';
           return email.toLowerCase().endsWith('@ucsd.edu');

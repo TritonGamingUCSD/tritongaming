@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 
 // Served from the CDN cache and refreshed in the background — data comes from
 // the cached fetchers in lib/ (revalidated on save), not per-request queries.
-export const revalidate = 60;
+export const revalidate = 300;
 
 export default async function TeamPage() {
   const sitePhotos = await getSitePhotos();

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/notifications/audit';
 import { authorizeMeetings, guardMeeting } from '@/lib/meetings/meetings';
+import { notifyMeetingLive } from '@/lib/meetings/meetingLive';
 
 // Exec fixes attendance by hand: add someone who forgot their phone, or remove a mistaken entry.
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -18,6 +19,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     .upsert({ meeting_id: id, user_id, method: 'manual', added_by: auth.user.id }, { onConflict: 'meeting_id,user_id', ignoreDuplicates: true });
   if (error) return NextResponse.json({ error: 'Failed to add.' }, { status: 500 });
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'add', entityType: 'meeting attendance', entityId: id, summary: `Manually checked someone in to ${m.title} (${m.meeting_date})`, details: { user_id } });
+  await notifyMeetingLive(id);
   return NextResponse.json({ ok: true });
 }
 
@@ -34,5 +36,6 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   await auth.svc.from('meeting_answers').delete().eq('meeting_id', id).eq('user_id', user_id);
   if (error) return NextResponse.json({ error: 'Failed to remove.' }, { status: 500 });
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'remove', entityType: 'meeting attendance', entityId: id, summary: `Removed someone from ${m?.title ?? 'meeting'} (${m?.meeting_date ?? ''})`, details: { user_id } });
+  await notifyMeetingLive(id);
   return NextResponse.json({ ok: true });
 }

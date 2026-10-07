@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
 import { MANAGED_BUCKETS, listAllObjects } from '@/lib/storage/storageBuckets';
+import { strictUser } from '@/lib/supabase/localAuth';
 
 interface TableStat {
   name: string;
@@ -65,7 +66,7 @@ async function fetchVercelStats() {
 
 export async function GET() {
   const userClient = await createClient();
-  const { data: { user } } = await userClient.auth.getUser();
+  const { data: { user } } = await strictUser(userClient);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data: roles } = await userClient.from('user_roles').select('role, division_id').eq('user_id', user.id);

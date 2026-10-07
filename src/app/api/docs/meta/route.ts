@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cleanTags } from '@/lib/docs/docsTree';
 import { UUID, authorizeDocs, bad } from '@/lib/docs/docsServer';
+import { notifyDocs } from '@/lib/docs/docsLive';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,5 +37,6 @@ export async function POST(request: Request) {
   if (Object.keys(patch).length === 0) return bad('Nothing to change.');
   const { data, error } = await auth.svc.from('docs').update(patch).eq('id', id).select('id, icon, cover_url, pinned, tags, attachments').single();
   if (error) return bad('Couldn’t save that.', 500);
+  await notifyDocs();
   return NextResponse.json({ doc: data });
 }
