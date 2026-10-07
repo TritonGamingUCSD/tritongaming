@@ -69,7 +69,7 @@ export default function ShiftsSectionContent({ events, stations: initialStations
     const r = await api<{ grid: ShiftGrid }>(`/api/shifts/${eventId}`, 'GET');
     if (r.ok && r.json.grid) { const g = r.json.grid as ShiftGrid; setStations(g.stations); setGrid({ ...g, canManage: g.canManage && canManage, canSignUp: g.canSignUp && canSignUp }); }   // an admin previewing a lower role sees only what that role could use
     else if (!r.ok) setError(r.json.error || 'Couldn’t load the shifts.');
-  }, [eventId]);
+  }, [eventId, canManage, canSignUp]);
   useEffect(() => { setGrid(null); setError(''); void load(); }, [load]);
   // The board stays live without polling: the server sends a "changed" message to this event's channel after every shift change (see the effect
   // below), and the page refreshes then. A slow refresh remains as a backstop in case the connection is blocked; it pauses while the tab is hidden.

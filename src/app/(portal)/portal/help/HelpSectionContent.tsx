@@ -53,11 +53,19 @@ export default function HelpSectionContent({ isStaff, userId }: { isStaff: boole
   const [tab, setTab] = useState<Tab>(valid.includes(nav.tab as Tab) ? (nav.tab as Tab) : valid[0]);
   const setParams = usePortalParams();
   const [openId, setOpenId] = useState<string | null>(params.get('ticket'));
-  // A link from a notification opens that ticket; once it's open the address doesn't need to keep it.
-  useEffect(() => { if (params.get('ticket')) setParams({ ticket: null }); }, [params, setParams]);
+  // The open ticket lives in the address (?ticket=<id>), so a notification link opens it, a copied link reopens it, and it survives a reload.
+  function showTicket(id: string | null) { setOpenId(id); setParams({ ticket: id }); }
+  // (On a fresh load the address isn't readable during the first render, so a ticket named there is picked up here as well.)
+  useEffect(() => {
+    const t = params.get('ticket');
+    if (!t || t === openId) return;
+    setOpenId(t);
+    setTab((cur) => (cur === 'mine' || cur === 'inbox' ? cur : valid[0] === 'inbox' ? 'inbox' : 'mine'));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params]);
 
-  function pick(t: Tab) { setOpenId(null); setTab(t); sync(t); }
-  function created(id: string) { setTab('mine'); sync('mine'); setOpenId(id); }
+  function pick(t: Tab) { showTicket(null); setTab(t); sync(t); }
+  function created(id: string) { setTab('mine'); sync('mine'); showTicket(id); }
 
   return (
     <div className={styles.page}>
@@ -75,8 +83,8 @@ export default function HelpSectionContent({ isStaff, userId }: { isStaff: boole
       {tab === 'ask' && <NewTicket userId={userId} onCreated={created} />}
       {tab === 'replies' && isStaff && <CannedReplies />}
       {(tab === 'mine' || tab === 'inbox') && (openId
-        ? <Thread id={openId} userId={userId} onBack={() => setOpenId(null)} />
-        : <TicketList scope={tab === 'inbox' ? 'all' : 'mine'} onOpen={setOpenId} />)}
+        ? <Thread id={openId} userId={userId} onBack={() => showTicket(null)} />
+        : <TicketList scope={tab === 'inbox' ? 'all' : 'mine'} onOpen={showTicket} />)}
     </div>
   );
 }

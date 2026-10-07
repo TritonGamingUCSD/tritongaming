@@ -533,7 +533,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
                   <h1 className={styles.welcomeName} data-greeting={greeting}>{profile.display_name?.split(' ')[0] || 'Triton'}</h1>
                   <div className={styles.roleChips}>
                     {heldRoles.length === 0 ? (
-                      <span className={styles.roleChip} style={{ background: ROLE_COLORS.guest + '18', color: ROLE_COLORS.guest, borderColor: ROLE_COLORS.guest + '44' }}>
+                      <span className={styles.roleChip} style={{ background: ROLE_COLORS.guest + '18', color: roleInk(ROLE_COLORS.guest), borderColor: ROLE_COLORS.guest + '44' }}>
                         {ROLE_LABELS.guest}
                       </span>
                     ) : (

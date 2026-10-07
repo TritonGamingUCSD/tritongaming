@@ -1,28 +1,12 @@
 {
   "crons": [
     {
-      "path": "/api/cron/event-reminders",
+      "path": "/api/cron/daily-reminders",
       "schedule": "0 16 * * *"
     },
     {
-      "path": "/api/cron/meeting-reminders",
-      "schedule": "5 16 * * *"
-    },
-    {
-      "path": "/api/cron/cleanup-notifications",
-      "schedule": "30 10 * * *"
-    },
-    {
-      "path": "/api/cron/quarter-sync",
-      "schedule": "20 8 * * *"
-    },
-    {
-      "path": "/api/cron/team-sync",
-      "schedule": "40 8 * * *"
-    },
-    {
-      "path": "/api/cron/storage-maintenance",
-      "schedule": "0 9 * * 0"
+      "path": "/api/cron/daily-maintenance",
+      "schedule": "30 9 * * *"
     }
   ]
 }

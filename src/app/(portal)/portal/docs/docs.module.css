@@ -452,3 +452,5 @@
 .commentActs { display: flex; gap: 0.75rem; margin: 0; }
 .commentActs button { padding: 0; border: 0; background: none; color: var(--p-accent-text); font: inherit; font-size: 0.8rem; text-decoration: underline; cursor: pointer; }
 .commentForm { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.75rem; }
+
+.reqExtras { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.25rem 0 0.75rem; }

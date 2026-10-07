@@ -38,12 +38,11 @@ Code: `src/app/(portal)/portal/help`, `src/app/api/help`, `src/lib/notifications
 
 ## Scheduled jobs (`vercel.json`, `src/app/api/cron`)
 
-| Job | Does |
-|---|---|
-| `event-reminders` | Day-before and hour-before event reminders |
-| `meeting-reminders` | "Today at ..." meeting reminders, meeting-plan nudges, **morning-of shift reminders**, **stale cover alerts** |
-| `cleanup-notifications` | Removes old notifications |
-| `quarter-sync`, `team-sync` | Keeps the quarter and team-year records in line with the calendar |
-| `storage-maintenance` | Weekly: removes files nothing uses |
+The free Vercel plan allows two scheduled jobs, each at most once a day, so `vercel.json` has exactly two. Each one runs the older single-purpose routes in turn (a failure in one never stops the next); those routes still work on their own.
 
-Each is called with `Authorization: Bearer $CRON_SECRET`.
+| Job | Runs | Does |
+|---|---|---|
+| `daily-reminders` | `event-reminders`, `meeting-reminders` | Day-before and hour-before event reminders; "Today at ..." meeting reminders, meeting-plan nudges, morning-of shift reminders, stale cover alerts |
+| `daily-maintenance` | `cleanup-notifications`, `quarter-sync`, `team-sync`, and on Sundays `storage-maintenance` | Removes old notifications; keeps the quarter and team-year records in line with the calendar; weekly removes files nothing uses |
+
+Each is called with `Authorization: Bearer $CRON_SECRET`. Don't add a third job to `vercel.json`; add a step to one of these two instead.

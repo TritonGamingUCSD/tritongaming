@@ -120,11 +120,12 @@ try {
   const titles = async (r) => ((await call(r, '/api/internal-events'))[1]?.events ?? []).map((e) => e.title);
   check('invited officer sees it', (await titles('officer')).includes('Perm event'));
   check('invited recruit sees it', (await titles('recruit')).includes('Perm event'));
-  check('not-invited exec does not see it', !(await titles('exec')).includes('Perm event'));
-  check('alumni cannot open the section', (await call('alumni', '/api/internal-events'))[0] === 403);
+  // Internal events are open to every team member whoever the host aimed them at (alumni included), so a not-invited exec sees it too.
+  check('not-invited exec also sees it (open to the whole team)', (await titles('exec')).includes('Perm event'));
+  check('alumni can open the section (read access)', (await call('alumni', '/api/internal-events'))[0] === 200);
   check('division lead cannot open the section', (await call('division', '/api/internal-events'))[0] === 403);
   check('invited recruit can RSVP', (await call('recruit', `/api/internal-events/${ev.id}/rsvp`, 'POST', { status: 'going' }))[0] === 200);
-  check('not-invited exec cannot RSVP', (await call('exec', `/api/internal-events/${ev.id}/rsvp`, 'POST', { status: 'going' }))[0] === 403);
+  check('not-invited exec can RSVP too', (await call('exec', `/api/internal-events/${ev.id}/rsvp`, 'POST', { status: 'going' }))[0] === 200);
   check('bad RSVP value is rejected', (await call('officer', `/api/internal-events/${ev.id}/rsvp`, 'POST', { status: 'yes' }))[0] === 400);
   check('another lead cannot edit it', (await call('officer', `/api/internal-events/${ev.id}`, 'PATCH', { title: 'x' }))[0] === 403);
   check('exec can edit any internal event', (await call('exec', `/api/internal-events/${ev.id}`, 'PATCH', { location: 'Room 9' }))[0] === 200);

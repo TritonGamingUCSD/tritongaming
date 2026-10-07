@@ -294,3 +294,9 @@
 .sumStation ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.25rem; }
 .sumStation li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.1rem 0.5rem; font-size: 0.86rem; color: var(--pp-ink); }
 .sumStation li svg { flex: none; }
+
+/* On a phone the note boxes take the whole row, with their buttons underneath, so the placeholder is readable */
+@media (max-width: 640px) {
+  .coverNote { flex-basis: 100%; justify-content: flex-start; }
+  .coverNote .coverInput, .handoffForm .coverInput { flex: 1 1 100%; }
+}

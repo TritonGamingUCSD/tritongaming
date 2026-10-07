@@ -88,10 +88,14 @@ export function RequiredReadingDialog({ doc, onClose }: { doc: { id: string; tit
       {!doc.published && saved.length > 0 && <Notice tone="warning">This doc isn’t published yet, so people can’t read it. Publish it first.</Notice>}
       {err && <Notice tone="error">{err}</Notice>}
       {msg && <p className={styles.muted} role="status">{msg}</p>}
+      {!dirty && saved.length > 0 && doc.published && (
+        <div className={styles.reqExtras}>
+          {unread > 0 && <Button size="sm" variant="secondary" loading={busy === 'remind'} onClick={() => remind('remind')}><Bell size={14} aria-hidden="true" /> Remind {unread} unread</Button>}
+          <Button size="sm" variant="secondary" loading={busy === 'reread'} onClick={() => remind('reread')} title="Clears everyone’s read mark and sends one bell. Use it after a change that matters.">Ask everyone to re-read</Button>
+        </div>
+      )}
       <DialogActions>
         <DialogCancel onClick={onClose}>Close</DialogCancel>
-        {!dirty && unread > 0 && doc.published && <Button variant="secondary" loading={busy === 'remind'} onClick={() => remind('remind')}><Bell size={14} aria-hidden="true" /> Remind {unread} unread</Button>}
-        {!dirty && saved.length > 0 && doc.published && <Button variant="secondary" loading={busy === 'reread'} onClick={() => remind('reread')} title="Clears everyone’s read mark and sends one bell. Use it after a change that matters.">Ask everyone to re-read</Button>}
         <Button loading={busy === 'save'} disabled={!dirty} onClick={save}>Save</Button>
       </DialogActions>
     </Dialog>

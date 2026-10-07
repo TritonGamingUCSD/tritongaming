@@ -201,7 +201,7 @@ Check the bucket's RLS policies on `storage.objects` (see the `*_storage_bucket*
 Confirm the table is in the `supabase_realtime` publication (`select * from pg_publication_tables where pubname = 'supabase_realtime'`). Tables aren't broadcast by default even with RLS configured correctly.
 
 **Vercel deploy fails on the cron:**
-The Hobby plan only allows daily crons, which is why `vercel.json` runs reminders once a day.
+The Hobby plan only allows daily crons, which is why `vercel.json` has just two daily jobs (`daily-reminders` and `daily-maintenance`) that run the others in turn.
 
 ## Linking Google Calendar (optional, view only)
 

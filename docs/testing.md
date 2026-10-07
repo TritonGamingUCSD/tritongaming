@@ -15,14 +15,14 @@ Unit tests cover pure logic (rules, time math, text parsing). When you add a rou
 
 `scripts/*-check.mjs` (`npm run test:permissions`, `test:keys`, `test:strikes`, `test:quarters`, `test:teamyears`, `test:series-absence`, `test:plans`, `test:emojis`, `test:questions`) run against a **running dev server** and the Supabase project in `.env.local`. Each creates temporary accounts, drives the real routes as each of them, and deletes what it made.
 
-The `test:permissions` run currently reports three failures about internal events (a not-invited exec still sees one, alumni can open the section, a not-invited exec can RSVP). They are older than the Stage B work; decide whether the checks or the rules are out of date and fix whichever it is.
+`test:permissions` covers every role against the real routes (58 checks). Internal events are open to the whole team (alumni included), and the checks say so.
 
 ## Testing against the live database safely
 
 The dev server talks to the real Supabase project, so a test can reach real people. Rules:
 
 1. **Throwaway data only.** Name everything `ZZ ...`. Never edit a real event, doc or person.
-2. **Only the test accounts are notified.** Put `DEV_NOTIFY_TEST_ONLY=1` in `.env.local` (it is there now). A development server then only notifies accounts whose display name starts with `ZZ`. It never applies in production. Remove the line when you really want to test real notifications.
+2. **Only the test accounts are notified.** (A second dev server for testing, so a stale one never gets in the way: `NEXT_DIST_DIR=.next-qa npx next dev -p 3101`.) Put `DEV_NOTIFY_TEST_ONLY=1` in `.env.local` (it is there now). A development server then only notifies accounts whose display name starts with `ZZ`. It never applies in production. Remove the line when you really want to test real notifications.
 3. **Clean up both the audit log and the notifications** a test caused. Audit lines and notifications whose text contains `ZZ` can be removed together; check that no `ZZ` events, stations or docs are left.
 4. **Look at the page.** Typecheck and unit tests cannot see a page that crashes at render (for example a function passed from a server component to a client component). Open the screens you changed in light, dark and at phone width, and run an accessibility scan (axe) on them.
 

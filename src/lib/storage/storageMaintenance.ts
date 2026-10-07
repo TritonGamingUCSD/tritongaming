@@ -53,7 +53,7 @@ export async function compressStored(svc: SupabaseClient): Promise<Pick<Maintena
         if (error || !blob) { out.failed++; continue; }
         const smaller = await optimizeImage(bucket, Buffer.from(await blob.arrayBuffer()));
         if (!smaller) continue;
-        const { error: upErr } = await svc.storage.from(bucket).upload(o.path, smaller.bytes, { contentType: smaller.mime, upsert: true, cacheControl: '3600' });
+        const { error: upErr } = await svc.storage.from(bucket).upload(o.path, smaller.bytes, { contentType: smaller.mime, upsert: true, cacheControl: '31536000' });
         if (upErr) { out.failed++; continue; }
         out.compressedFiles++; out.savedBytes += o.size - smaller.bytes.length;
       } catch { out.failed++; }

@@ -1,6 +1,8 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  // A second copy of the dev server can run beside the first (for testing) with NEXT_DIST_DIR=.next-qa; normally this is just .next.
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   // /portal/<section>/<tab>/<subtab> is the portal's address. On a fresh load it is served by the hub page, which still
   // reads section/tab/subtab as query params. Real pages (/portal/events/new, /portal/events/<id>, /portal/admin/stats…)
   // are matched first, since these are fallback rewrites.
@@ -31,6 +33,8 @@ const nextConfig: NextConfig = {
     }];
   },
   images: {
+    // Uploaded pictures get a new address when replaced, so the optimizer can keep its copy for a month instead of asking Supabase again (egress is the free plan's tightest limit).
+    minimumCacheTTL: 60 * 60 * 24 * 31,
     remotePatterns: [
       {
         protocol: 'https',

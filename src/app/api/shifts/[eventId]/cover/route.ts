@@ -73,6 +73,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ eve
   const what = `${st}, ${clock(range.start)} slot, "${eventTitle}"`;
 
   if (b.action === 'take') {
+    if (range.end.getTime() <= Date.now()) return bad('That shift is already over.', 409);
     if (!auth.manage && !mayClaim(auth.roles, plan.team_only as boolean)) return bad('These shifts are for the team.', 403);
     const { data: res, error } = await svc.rpc('take_shift_cover', { p_request: reqId, p_user: auth.user.id, p_slot_start: range.start.toISOString(), p_slot_end: range.end.toISOString() });
     if (error) return bad('Couldn’t save that. Try again.', 500);

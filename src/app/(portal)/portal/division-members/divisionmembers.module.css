@@ -5,7 +5,7 @@
 .search > :last-child { flex: 1; min-width: 0; }
 .empty { padding: 2rem 0; text-align: center; color: rgba(var(--pp-ink-rgb), 0.88); }
 .group { display: flex; flex-direction: column; gap: 0.7rem; --accent: #fb923c; }
-.groupTitle { display: flex; align-items: center; gap: 0.6rem; font-family: var(--font-futura-heavy); font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); padding-bottom: 0.4rem; border-bottom: 1px solid rgba(251, 146, 60, 0.25); }
+.groupTitle { display: flex; align-items: center; gap: 0.6rem; font-family: var(--font-futura-heavy); font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--pp-ink); padding-bottom: 0.4rem; border-bottom: 2px solid var(--accent); }
 .groupTitle span { font-size: 0.75rem; letter-spacing: 0; color: rgba(var(--pp-ink-rgb), 0.88); }
 .logo { width: 26px; height: 26px; border-radius: 6px; object-fit: contain; }
 .grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0.6rem; }

@@ -51,7 +51,7 @@
   --pp-line: rgba(1, 25, 65, 0.22); --pp-shadow: 4px 4px 0 rgba(1, 25, 65, 0.8);
   /* Sidebar and top bar: a light paper-2 in light mode, Ink in dark */
   --pp-chrome: #dcd8cf; --pp-chrome-2: #e6e3dd; --pp-chrome-fg: #011941; --pp-chrome-rgb: 1, 25, 65; --pp-chrome-edge: #011941; --pp-chrome-accent: #0a4c8a;
-  --pp-ok: #047857; --pp-warn: #b45309; --pp-bad: #b91c1c; --pp-info: #1d4ed8; --pp-violet: #6d28d9; --pp-teal: #0f766e;
+  --pp-ok: #05674a; --pp-warn: #92400e; --pp-bad: #b91c1c; --pp-info: #1d4ed8; --pp-violet: #6d28d9; --pp-teal: #0b645d;
   /* Yellow used as text on dark backgrounds: a lighter, warmer tone so small labels, links and counts stay easy to read. Fills and borders keep --yellow. */
   --yellow-text: #ffd966;
   --lightblue: #9fc4e8;

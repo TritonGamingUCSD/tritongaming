@@ -13,7 +13,7 @@ export async function uploadFileToStorage(bucket: string, file: File, pathPrefix
   const path = pathPrefix ? `${pathPrefix}/${filename}` : filename;
 
   const { error } = await supabase.storage.from(bucket).upload(path, file, {
-    cacheControl: '3600',
+    cacheControl: '31536000',
     contentType: file.type || 'application/octet-stream',
   });
   if (error) throw error;

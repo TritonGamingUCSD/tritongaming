@@ -154,6 +154,8 @@ export default function Select({ value, defaultValue, onChange, children, classN
         aria-expanded={open}
         aria-controls={open ? listId : undefined}
         aria-activedescendant={open ? `${listId}-${active}` : undefined}
+        // With no label and nothing chosen the button would have no name at all, so give it a plain one.
+        aria-label={!aria['aria-label'] && !aria['aria-labelledby'] && !title && empty ? 'Choose an option' : undefined}
         {...aria}
         autoFocus={autoFocus}
         disabled={disabled}

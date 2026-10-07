@@ -357,6 +357,7 @@ export default function CheckInClient({ events, onCheckedIn, tiers }: CheckInCli
         <div className={styles.selectWrap}>
           <Select
             className={styles.select}
+            aria-label="Event to check people in to"
             value={selectedEventId}
             onChange={(e) => { setSelectedEventId(e.target.value); stopCamera(); setResult(null); setError(''); }}
           >

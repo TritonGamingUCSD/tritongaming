@@ -28,7 +28,7 @@
 .card:hover .learnMore { border-bottom-color: #b8860b; }
 
 .discordBtn {
-  position: relative; z-index: 4; display: inline-flex; align-items: center; gap: 0.4rem; background: #5865f2; color: #f2f1f0; text-decoration: none;
+  position: relative; z-index: 4; display: inline-flex; align-items: center; gap: 0.4rem; background: #4752c4; color: #f2f1f0; text-decoration: none;
   font-family: var(--font-futura-heavy); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;
   padding: 0.4rem 0.7rem; border: 2px solid var(--ink); border-radius: var(--radius-sm); box-shadow: 2px 2px 0 var(--ink);
   transition: transform 0.15s ease, box-shadow 0.15s ease;

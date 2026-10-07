@@ -102,7 +102,7 @@
 }
 .historyRow .personName { flex: 1 1 160px; white-space: normal; }
 .historyRow .docBtn { padding: 0.3rem 0.7rem; font-size: 0.78rem; border-radius: 999px; }
-.missed { opacity: 0.55; }
+.missed { opacity: 0.8; }   /* dimmed, but not so far that its text fails contrast */
 .dateChip { min-width: 74px; font-size: 0.78rem; color: var(--p-accent-text); }
 
 .meetingList { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; margin: 0; padding: 0; }
@@ -134,7 +134,7 @@
 .metaLine > .metaAudience { flex-shrink: 0; max-width: 14rem; overflow: hidden; text-overflow: ellipsis; color: var(--pp-violet); }
 .metaLine > .metaHost { flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .metaLine > .metaDoc { color: var(--pp-info); font-size: 0.74rem; }
-.paused { opacity: 0.5; }
+.paused { opacity: 0.8; }
 
 .seriesRow {
   composes: card from '../../../../components/ui/Surface.module.css';
@@ -407,11 +407,11 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .meetingCard[data-tone='done'] { --tone: #60a5fa; }
 .meetingCard[data-tone='plain'] { --tone: #38bdf8; }
 .meetingCard[data-tone='off'] { --tone: #f87171; }
-.meetingCard[data-tone='repeat'] .dateBlock small { background: rgba(167, 139, 250, 0.3); color: var(--pp-violet); }
-.meetingCard[data-tone='plain'] .dateBlock small { background: rgba(56, 189, 248, 0.25); color: var(--pp-info); }
-.meetingCard[data-tone='done'] .dateBlock small { background: rgba(96, 165, 250, 0.28); color: var(--pp-info); }
+.meetingCard[data-tone='repeat'] .dateBlock small { background: rgba(167, 139, 250, 0.3); color: color-mix(in srgb, var(--pp-violet) 70%, var(--pp-ink)); }
+.meetingCard[data-tone='plain'] .dateBlock small { background: rgba(56, 189, 248, 0.25); color: color-mix(in srgb, var(--pp-info) 70%, var(--pp-ink)); }
+.meetingCard[data-tone='done'] .dateBlock small { background: rgba(96, 165, 250, 0.28); color: color-mix(in srgb, var(--pp-info) 70%, var(--pp-ink)); }
 .meetingCard[data-tone='open'] .dateBlock small { background: #34d399; color: #04140e; }
-.meetingCard[data-tone='off'] .dateBlock small { background: rgba(248, 113, 113, 0.3); color: var(--pp-bad); }
+.meetingCard[data-tone='off'] .dateBlock small { background: rgba(248, 113, 113, 0.3); color: color-mix(in srgb, var(--pp-bad) 70%, var(--pp-ink)); }
 .meetingCard .inlineIcon { opacity: 0.9; }
 .meetingInfo strong .inlineIcon { color: var(--pp-violet); }
 .metaLine svg.inlineIcon { color: var(--pp-teal); }
@@ -438,8 +438,8 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 
 .meetingCard[data-tone='wnext'] { --tone: #60a5fa; }
 .meetingCard[data-tone='wlater'] { --tone: #a78bfa; }
-.meetingCard[data-tone='wnext'] .dateBlock small { background: rgba(96, 165, 250, 0.3); color: var(--pp-info); }
-.meetingCard[data-tone='wlater'] .dateBlock small { background: rgba(167, 139, 250, 0.3); color: var(--pp-violet); }
+.meetingCard[data-tone='wnext'] .dateBlock small { background: rgba(96, 165, 250, 0.3); color: color-mix(in srgb, var(--pp-info) 70%, var(--pp-ink)); }
+.meetingCard[data-tone='wlater'] .dateBlock small { background: rgba(167, 139, 250, 0.3); color: color-mix(in srgb, var(--pp-violet) 70%, var(--pp-ink)); }
 .meetingCard[data-tone='today'] .dateBlock small { background: var(--p-accent); color: #111c33; }
 
 

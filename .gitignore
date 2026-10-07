@@ -65,3 +65,6 @@ next-env.d.ts
 # Windows alternate data streams
 :Zone.Identifier 
 
+
+# Second dev server used for testing (NEXT_DIST_DIR=.next-qa)
+/.next-qa/

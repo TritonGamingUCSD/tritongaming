@@ -762,7 +762,7 @@ export default function PointsSectionContent({
             <h2 className={styles.sectionLabel}>Invite a Friend</h2>
             <p className={styles.referralHint}>Share your link — when they sign up and check into their first event, you earn a bonus.</p>
             <div className={styles.referralRow}>
-              <input className={styles.referralInput} value={referralLink} readOnly onFocus={(e) => e.target.select()} />
+              <input className={styles.referralInput} aria-label="Your invite link" value={referralLink} readOnly onFocus={(e) => e.target.select()} />
               <button type="button" className={styles.copyBtn} onClick={copyReferralLink}>
                 {copied ? <Check size={14} strokeWidth={2} /> : <Copy size={14} strokeWidth={1.75} />} {copied ? 'Copied' : 'Copy'}
               </button>

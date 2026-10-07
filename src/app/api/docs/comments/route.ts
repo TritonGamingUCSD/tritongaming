@@ -14,6 +14,9 @@ export async function GET(request: Request) {
   if ('error' in auth) return auth.error;
   const docId = new URL(request.url).searchParams.get('doc_id') ?? '';
   if (!UUID.test(docId)) return bad('Doc not found.', 404);
+  // A draft that nobody can read yet has no readable thread either.
+  const { data: d } = await auth.svc.from('docs').select('published').eq('id', docId).maybeSingle();
+  if (!d || (!d.published && !hasCapability(auth.roles, 'manage_docs'))) return bad('Doc not found.', 404);
   const { data } = await auth.svc.from('doc_comments').select('id, author_id, body, created_at, resolved_at').eq('doc_id', docId).order('created_at');
   const names = await namesOf(auth.svc, (data ?? []).map((c) => c.author_id as string | null));
   const edit = hasCapability(auth.roles, 'manage_docs');

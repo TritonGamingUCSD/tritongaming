@@ -82,7 +82,7 @@ async function uploadBlob(bucket: string, blob: Blob, ext: string, pathPrefix?: 
   const path = pathPrefix ? `${pathPrefix}/${filename}` : filename;
 
   const { error } = await supabase.storage.from(bucket).upload(path, blob, {
-    cacheControl: '3600',
+    cacheControl: '31536000',
     contentType: blob.type,
   });
   if (error) throw error;

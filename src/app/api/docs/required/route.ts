@@ -15,7 +15,8 @@ export async function GET(request: Request) {
   const id = new URL(request.url).searchParams.get('id');
   if (!id) {
     const auth = await authorizeDocs('view_docs');
-    if ('error' in auth) return auth.error;
+    // The dashboard asks everyone; people who can't read the docs simply have nothing required (a 403 would be console noise on every load).
+    if ('error' in auth) { const e = auth.error as NextResponse; return e.status === 403 ? NextResponse.json({ unread: [] }) : e; }
     const mine = [...new Set((auth.roles as { role: string }[]).map((r) => r.role))];
     const { data: req } = await auth.svc.from('doc_required_roles').select('doc_id').in('role', mine.length ? mine : ['none']);
     const ids = [...new Set((req ?? []).map((r) => r.doc_id as string))];
