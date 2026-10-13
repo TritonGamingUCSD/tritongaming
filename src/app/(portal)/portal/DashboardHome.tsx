@@ -1,12 +1,10 @@
 import Link from '@/components/portal/PortalLink';
-import { CalendarPlus, MapPin, QrCode, Ticket } from 'lucide-react';
+import { MapPin, QrCode, Ticket } from 'lucide-react';
 import { PACIFIC_TZ } from '@/lib/core/timezone';
 import PortalSearch from '@/components/portal/PortalSearch';
 import EventCountdown from './EventCountdown';
 import RoleAsk from './RoleAsk';
-import NowNext from './NowNext';
 import { RequiredBanner } from './docs/DocRequired';
-import type { MyShift } from '@/lib/shifts/myShifts';
 import styles from './dashboardHome.module.css';
 
 export interface HomeEvent { id: string; title: string; start_date: string; location: string | null; hasTicket: boolean; ticketId?: string }
@@ -35,7 +33,7 @@ export function DashboardWelcome({ eyebrow, name }: { eyebrow: string; name: str
 }
 
 // Below the to-dos: the next event as a paper ticket, the pinned note, the tools for this person's role, and what happened lately.
-export function DashboardBody({ event, note, tools, activity, showRoleAsk = false, shifts = [] }: { shifts?: MyShift[]; showRoleAsk?: boolean; event: HomeEvent | null; note: HomeNote | null; tools: HomeTool[]; activity: HomeActivity[] }) {
+export function DashboardBody({ event, note, tools, activity, showRoleAsk = false }: { showRoleAsk?: boolean; event: HomeEvent | null; note: HomeNote | null; tools: HomeTool[]; activity: HomeActivity[] }) {
   const hasOfficer = tools.some((t) => t.tier === 'officer');
   const hasEveryone = tools.some((t) => t.tier === 'everyone');
   return (
@@ -43,7 +41,6 @@ export function DashboardBody({ event, note, tools, activity, showRoleAsk = fals
       {showRoleAsk && <RoleAsk />}
       <RequiredBanner hrefBase="/portal/docs?id=" />
       <div className={styles.top}>
-        {shifts.length > 0 && <NowNext shifts={shifts} />}
         {event && (
           <article className={styles.ticket} aria-label="Next up">
             <span className={styles.tape} aria-hidden="true" />
@@ -55,7 +52,6 @@ export function DashboardBody({ event, note, tools, activity, showRoleAsk = fals
               {event.location && <p className={styles.where}><MapPin size={14} aria-hidden="true" /> {event.location}</p>}
               <div className={styles.actions}>
                 <Link href={event.hasTicket && event.ticketId ? `/portal/tickets?qr=${event.ticketId}` : '/portal/tickets'} className={styles.primary}>{event.hasTicket ? <><QrCode size={16} aria-hidden="true" /> Show my QR</> : <><Ticket size={16} aria-hidden="true" /> Get my ticket</>}</Link>
-                <a href={`/api/events/${event.id}/ics`} download className={styles.secondary}><CalendarPlus size={16} aria-hidden="true" /> Add to calendar</a>
               </div>
             </div>
             <div className={styles.stub} aria-hidden="true"><span>Admit one</span></div>

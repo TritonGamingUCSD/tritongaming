@@ -9,7 +9,7 @@ import { createNotifications } from '@/lib/notifications/notify';
 import { staffName } from '@/lib/members/names';
 import { formatPacificDateTime } from '@/lib/core/timezone';
 import { getExpectedPeople, loadGroups, occurrenceTimes, weekdayOfKey, type PersonRow } from '@/lib/meetings/meetings';
-import { collectCalendarItems } from '@/lib/events/calendarItems';
+import { collectBusyItems } from '@/lib/meetings/busyItems';
 import { addDays } from '@/lib/meetings/meetingPlans';
 import type { BusyBlock } from '@/lib/meetings/meetingPlans';
 import { AUTO_ABSENT_REASON, MAX_RANGE_DAYS, hasAnySlot, SLOT_MIN, availabilityFor, canStartAt, clockLabel, daysBetween, planDayKeys, slotStarts, toHhmm, toMin, WEEKDAYS, type PlanSlots, type PlanView, type Person } from '@/lib/meetings/meetingPlans';
@@ -135,19 +135,18 @@ async function canReopenPlan(svc: SupabaseClient, v: Pick<PlanView, 'meeting_id'
   return true;
 }
 
-// What is already on this person's Triton Gaming calendar during the plan: meetings meant for them or hosted by them, internal events
-// they're going to, events they have a ticket for. They can't be available then. A weekly plan uses the weekly meetings they attend.
+// What is already on this person's schedule during the plan: meetings meant for them or hosted by them and events they have a ticket for. They can't be available then. A weekly plan uses the weekly meetings they attend.
 export async function busyBlocksFor(svc: SupabaseClient, user: { id: string }, roles: { role: string; division_id?: string | null }[], plan: Pick<PlanRow, 'kind' | 'range_start' | 'range_end'>, days: string[]): Promise<BusyBlock[]> {
   const today = pacificDayKey();
   const from = plan.kind === 'weekly' ? today : days[0];
   const to = plan.kind === 'weekly' ? addDays(today, 6) : days[days.length - 1];
   if (!from || !to) return [];
-  const items = await collectCalendarItems(svc, user, roles as never, from, to).catch(() => []);
+  const items = await collectBusyItems(svc, user, roles as never, from, to).catch(() => []);
   const dayKeys = new Set(days);
   const clock = (iso: string) => new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Los_Angeles', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(iso));
   const out: BusyBlock[] = [];
   for (const it of items) {
-    // Only what is really theirs: meetings for them, internal events they're going to, events they have a ticket for.
+    // Only what is really theirs: meetings for them and events they have a ticket for.
     if (it.kind !== 'meeting' && !it.mine) continue;
     if (plan.kind === 'weekly' && !it.repeats) continue;
     const key = plan.kind === 'weekly' ? String(weekdayOfKey(it.date)) : it.date;
@@ -158,7 +157,7 @@ export async function busyBlocksFor(svc: SupabaseClient, user: { id: string }, r
     // A multi-day event takes its whole day on the days in between; on its first and last day only the hours it runs.
     const start = it.date === startDay ? clock(it.start) : '00:00';
     const end = it.date === endDay ? clock(endIso) : '23:59';
-    const why = it.kind === 'meeting' ? (it.mine ? 'You’re hosting this meeting' : 'You’re invited to this meeting') : it.kind === 'internal' ? 'You said you’re going' : 'You have a ticket';
+    const why = it.kind === 'meeting' ? (it.mine ? 'You’re hosting this meeting' : 'You’re invited to this meeting') : 'You have a ticket';
     if (end > start || it.date !== endDay) out.push({ day: key, start, end: end > start ? end : '23:59', title: it.title, why });
   }
   return out;

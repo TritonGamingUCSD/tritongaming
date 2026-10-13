@@ -9,7 +9,7 @@
 // positions every time the scores shift slightly.
 
 const BASE_WEIGHT: Record<string, number> = {
-  tickets: 30, meetings: 25, 'internal-events': 8, points: 20, profile: 10, events: 16, checkin: 12, activity: 5, members: 6, help: 0,
+  tickets: 30, meetings: 25, points: 20, profile: 10, events: 16, checkin: 12, activity: 5, members: 6, help: 0,
 };
 
 export interface DockUsage { [sectionId: string]: { count: number; last: number } }
@@ -38,13 +38,13 @@ function usageScore(id: string, usage: DockUsage, now: Date): number {
 }
 
 // Tools used mostly at a desk (editors, admin, rosters): never on the phone's bottom bar, always one tap away in More.
-const DESK_ONLY = new Set(['qrcode', 'site-content', 'admin', 'divisions', 'division-members', 'quarters', 'keys', 'strikes', 'albums', 'docs', 'calendar']);
+const DESK_ONLY = new Set(['qrcode', 'site-content', 'admin', 'divisions', 'division-members', 'quarters', 'strikes', 'docs']);
 
 interface Pickable { id: string; dockBoost?: number; dockExclude?: boolean; homeExclude?: boolean }
 
 export function pickDock<T extends Pickable>(sections: T[], opts: { now?: Date; usage?: DockUsage; slots?: number; desk?: boolean } = {}): { ids: Set<string>; urgent: Set<string>; slots: number } {
   // Sections flagged dockExclude never take a bottom-bar slot (they're still in the More sheet).
-  const eligible = sections.filter((s) => (opts.desk ? s.id !== 'calendar' && !s.homeExclude : !s.dockExclude && !DESK_ONLY.has(s.id)));
+  const eligible = sections.filter((s) => (opts.desk ? !s.homeExclude : !s.dockExclude && !DESK_ONLY.has(s.id)));
   // With five sections or fewer they all fit on the bar and there is no More; otherwise the four best.
   const slots = opts.slots ?? (sections.length <= 4 ? Math.min(eligible.length, sections.length) : 3);
   const now = opts.now;

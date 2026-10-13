@@ -20,13 +20,13 @@ type SearchResponse = Record<string, SearchResult[]>;
 const EMPTY: SearchResponse = {};
 // Shown in this order; same color coding as the sidebar groups (Me blue, Events orange, Team violet, Library green, Manage rose).
 const CATEGORY_LABELS: Record<string, string> = {
-  tickets: 'My tickets', events: 'Events', internal: 'Internal events', meetings: 'Meetings', members: 'TG Members', divisions: 'Divisions', keys: 'Storage keys',
-  docs: 'Docs', albums: 'Photo albums', shop: 'Rewards shop', help: 'Help', links: 'Short links',
+  tickets: 'My tickets', events: 'Events', meetings: 'Meetings', members: 'TG Members', divisions: 'Divisions',
+  docs: 'Docs', shop: 'Rewards shop', help: 'Help', links: 'Short links',
 };
 const CATEGORY_META: Record<string, { icon: typeof Users; accent: string }> = {
-  tickets: { icon: Calendar, accent: '#4a90d9' }, events: { icon: Calendar, accent: '#e8912d' }, internal: { icon: Calendar, accent: '#e8912d' },
-  meetings: { icon: Users, accent: '#8b6cdc' }, members: { icon: Users, accent: '#8b6cdc' }, divisions: { icon: Users, accent: '#8b6cdc' }, keys: { icon: Users, accent: '#8b6cdc' },
-  docs: { icon: BookOpen, accent: '#2fae86' }, albums: { icon: BookOpen, accent: '#2fae86' }, shop: { icon: BookOpen, accent: '#4a90d9' }, help: { icon: BookOpen, accent: '#2fae86' }, links: { icon: BookOpen, accent: '#d9487f' },
+  tickets: { icon: Calendar, accent: '#4a90d9' }, events: { icon: Calendar, accent: '#e8912d' },
+  meetings: { icon: Users, accent: '#8b6cdc' }, members: { icon: Users, accent: '#8b6cdc' }, divisions: { icon: Users, accent: '#8b6cdc' },
+  docs: { icon: BookOpen, accent: '#2fae86' }, shop: { icon: BookOpen, accent: '#4a90d9' }, help: { icon: BookOpen, accent: '#2fae86' }, links: { icon: BookOpen, accent: '#d9487f' },
 };
 const CATEGORY_ORDER = Object.keys(CATEGORY_LABELS);
 const orderedKeys = (r: SearchResponse) => CATEGORY_ORDER.filter((k) => (r[k]?.length ?? 0) > 0);

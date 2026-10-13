@@ -37,14 +37,14 @@ function smallIcon(icon: ReactNode, size = 21) {
 // moved into Resources instead (see portal/page.tsx) — it's usable by any
 // officer-tier member, the same audience as Members/Docs, not Admin's
 // actually-restricted stuff.
-// 'Overview' is the unlabeled group right under Dashboard (the Calendar).
+// 'Overview' is the unlabeled group right under Dashboard (Profile and Help, which have no sidebar entry of their own).
 const GROUP_ORDER = ['Overview', 'Yours', 'Events', 'Team', 'Resources', 'Admin'] as const;
 // Order inside each group (and so in the sidebar, the "More" sheet and the home grid). Anything not
 // listed goes last, in the order it was given.
-const SECTION_LABELS: Record<string, string> = { tickets: 'My Tickets', profile: 'Profile', points: 'Rewards', events: 'Events', checkin: 'Check-In', members: 'TG Members', meetings: 'Meetings', 'internal-events': 'Internal Events', shifts: 'Shifts', keys: 'Storage Keys', strikes: 'Strikes', divisions: 'Divisions', 'division-members': 'Division Members', docs: 'Documentation', qrcode: 'QR Studio', albums: 'Photo Albums', admin: 'Admin', 'site-content': 'Site Content' };
-const SECTION_ORDER = ['calendar', 'tickets', 'points', 'activity', 'profile', 'events', 'checkin', 'shifts', 'members', 'meetings', 'internal-events', 'keys', 'quarters', 'strikes', 'divisions', 'division-members', 'docs', 'qrcode', 'albums', 'help', 'admin', 'site-content'];
+const SECTION_LABELS: Record<string, string> = { tickets: 'My Tickets', profile: 'Profile', points: 'Rewards', events: 'Events', checkin: 'Check-In', members: 'TG Members', meetings: 'Meetings', strikes: 'Strikes', divisions: 'Divisions', 'division-members': 'Division Members', docs: 'Documentation', qrcode: 'QR Studio', admin: 'Admin', 'site-content': 'Site Content' };
+const SECTION_ORDER = ['tickets', 'points', 'activity', 'profile', 'events', 'checkin', 'members', 'meetings', 'quarters', 'strikes', 'divisions', 'division-members', 'docs', 'qrcode', 'help', 'admin', 'site-content'];
 // Accent color per group — tints the heading dot, icon tiles and hover state.
-// The Dashboard and the Calendar are both soft white, so neither reads as part of the blue "Yours" or "Events" groups.
+// The Dashboard is soft white, so it does not read as part of the blue "Yours" or "Events" groups.
 const DASHBOARD_ACCENT = '#e5e7eb';
 const GROUP_ACCENT: Record<string, string> = { Overview: DASHBOARD_ACCENT, Yours: '#4a90d9', Events: '#e8912d', Team: '#8b6cdc', Resources: '#2fae86', Admin: '#d9487f' };
 type HubGroup = (typeof GROUP_ORDER)[number];
@@ -499,7 +499,7 @@ function HomeGroups({ groupedSections, open, forYou }: { groupedSections: Groupe
       </section>
       <details className={styles.allPages}>
         <summary>All pages</summary>
-      {/* Calendar (the Overview group) lives in the sidebar only; no home card, to save space. */}
+      {/* The Overview group (Profile and Help) lives in the sidebar only; no home card, to save space. */}
       {groupedSections.filter(({ group }) => group !== 'Overview').map(({ group, items }) => (
         <section key={group} className={styles.group} style={{ ['--accent' as string]: GROUP_ACCENT[group] }}>
           {groupedSections.length > 1 && (

@@ -3,7 +3,7 @@ import { staffName } from '@/lib/members/names';
 import { createClient } from '@/lib/supabase/server';
 import { hasCapability, isRewardsEligible } from '@/lib/portal/capabilities';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { collectCalendarItems } from '@/lib/events/calendarItems';
+import { collectBusyItems } from '@/lib/meetings/busyItems';
 import { ancestors, searchDocs } from '@/lib/docs/docsTree';
 
 interface SearchResult {
@@ -40,7 +40,7 @@ export async function GET(request: Request) {
   const can = (c: Parameters<typeof hasCapability>[1]) => hasCapability(roles, c);
   const none = Promise.resolve({ data: [] as never[] });
   // Everything a person can open, each gated like its own page and read with their own session (so row-level rules apply too).
-  const [membersRes, eventsRes, docsRes, divisionsRes, internalRes, , keysRes, albumsRes, shopRes, myTicketsRes, helpRes, linksRes] = await Promise.all([
+  const [membersRes, eventsRes, docsRes, divisionsRes, shopRes, myTicketsRes, helpRes, linksRes] = await Promise.all([
     can('view_members')
       ? supabase.from('profiles').select('id, display_name, google_first_name, google_last_name, gamer_tag').or(`display_name.ilike.${like},google_first_name.ilike.${like},google_last_name.ilike.${like},gamer_tag.ilike.${like}`).limit(LIMIT_PER_CATEGORY)
       : none,
@@ -52,16 +52,6 @@ export async function GET(request: Request) {
       : none,
     can('view_division_members') || can('manage_division')
       ? supabase.from('divisions').select('id, name, slug, description').or(`name.ilike.${like},description.ilike.${like}`).limit(LIMIT_PER_CATEGORY)
-      : none,
-    can('view_internal_events')
-      ? supabase.from('internal_events').select('id, title, event_date, location').or(`title.ilike.${like},description.ilike.${like},location.ilike.${like}`).eq('cancelled', false).limit(LIMIT_PER_CATEGORY)
-      : none,
-    none, // meetings are found below with the same "meant for me" rules the calendar uses (one-off, repeating and not yet opened)
-    can('view_keys')
-      ? supabase.from('storage_keys').select('id, name, holder_label').or(`name.ilike.${like},holder_label.ilike.${like}`).limit(LIMIT_PER_CATEGORY)
-      : none,
-    can('view_photo_albums')
-      ? supabase.from('photo_albums').select('id, title, description').or(`title.ilike.${like},description.ilike.${like}`).limit(LIMIT_PER_CATEGORY)
       : none,
     isRewardsEligible(roles)
       ? supabase.from('reward_items').select('id, title, point_cost').eq('active', true).or(`title.ilike.${like},description.ilike.${like}`).limit(LIMIT_PER_CATEGORY)
@@ -79,8 +69,8 @@ export async function GET(request: Request) {
   // "meeting" or "meetings" lists the meetings meant for this person, not only ones with that word in the title.
   const askingForMeetings = /^meetings?$/.test(needle);
   const meetingItems = (can('attend_meetings') || can('view_attendance_reports') || can('host_meetings'))
-    ? (await collectCalendarItems(createServiceClient(), user, roles, dayKey(-60), dayKey(120)).catch(() => []))
-        .filter((i) => i.kind === 'meeting' && !i.others && (askingForMeetings || i.title.toLowerCase().includes(needle) || (i.location ?? '').toLowerCase().includes(needle)))
+    ? (await collectBusyItems(createServiceClient(), user, roles, dayKey(-60), dayKey(120)).catch(() => []))
+        .filter((i) => i.kind === 'meeting' && (askingForMeetings || i.title.toLowerCase().includes(needle) || (i.location ?? '').toLowerCase().includes(needle)))
     : [];
   const todayKey = dayKey(0);
   const byTitle = new Map<string, (typeof meetingItems)[number]>();
@@ -108,15 +98,12 @@ export async function GET(request: Request) {
     return { id: h.doc.id, title: h.doc.title, subtitle: [where, h.snippet].filter(Boolean).join(' · '), href: `/portal/docs?id=${h.doc.id}` };
   });
   const divisions: SearchResult[] = (divisionsRes.data ?? []).map((d) => ({ id: d.id, title: d.name, subtitle: 'Division', href: `/portal/division-members?q=${encodeURIComponent(d.name)}` }));
-  const internal: SearchResult[] = (internalRes.data ?? []).map((i) => ({ id: i.id, title: i.title, subtitle: [day(i.event_date), i.location].filter(Boolean).join(' · '), href: '/portal/internal-events/coming-up' }));
-  const meetings: SearchResult[] = [...byTitle.values()].slice(0, LIMIT_PER_CATEGORY).map((m) => ({ id: m.key, title: m.title, subtitle: `${m.repeats ? 'Repeats · ' : ''}${m.date >= todayKey ? 'next' : 'last'} ${day(m.start)}`, href: m.href }));
-  const keys: SearchResult[] = (keysRes.data ?? []).map((k) => ({ id: k.id, title: k.name, subtitle: k.holder_label ? `Held by ${k.holder_label}` : 'Storage key', href: '/portal/keys' }));
-  const albums: SearchResult[] = (albumsRes.data ?? []).map((a) => ({ id: a.id, title: a.title, subtitle: 'Photo album', href: '/portal/albums' }));
+  const meetings: SearchResult[] = [...byTitle.values()].slice(0, LIMIT_PER_CATEGORY).map((m) => ({ id: m.key ?? m.title, title: m.title, subtitle: `${m.repeats ? 'Repeats · ' : ''}${m.date >= todayKey ? 'next' : 'last'} ${day(m.start)}`, href: m.href ?? '/portal/meetings' }));
   const shop: SearchResult[] = (shopRes.data ?? []).map((r) => ({ id: r.id, title: r.title, subtitle: `${r.point_cost} pts`, href: '/portal/points/shop' }));
   const tickets: SearchResult[] = (myTicketsRes.data ?? []).map((t) => { const ev = one(t.event as { title: string; start_date: string } | { title: string; start_date: string }[] | null); return { id: t.id, title: ev?.title ?? 'Ticket', subtitle: ev ? `Your ticket · ${day(ev.start_date)}` : 'Your ticket', href: '/portal/tickets' }; });
   const help: SearchResult[] = (helpRes.data ?? []).filter((h) => h.user_id === user.id || can('manage_help')).map((h) => ({ id: h.id, title: h.subject, subtitle: `Help · ${h.status}`, href: `/portal/help/${h.user_id === user.id ? 'mine' : 'inbox'}?ticket=${h.id}` }));
   const links: SearchResult[] = (linksRes.data ?? []).map((l) => ({ id: l.id, title: `/go/${l.slug}`, subtitle: l.destination, href: '/portal/admin/short-links' }));
 
   if (docsOnly) return NextResponse.json({ docs });
-  return NextResponse.json({ tickets, members, events, internal, meetings, docs, divisions, keys, albums, shop, help, links });
+  return NextResponse.json({ tickets, members, events, meetings, docs, divisions, shop, help, links });
 }

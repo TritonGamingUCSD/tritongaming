@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { roleInk } from '@/lib/portal/roleColors';
 import Link from '@/components/portal/NoPrefetchLink';
 import Image from 'next/image';
-import { Ticket, User, Camera, Calendar, Users, QrCode, Pencil, Shield, BookOpen, Image as ImageIcon, Award, ArrowLeft, CalendarCheck, CalendarDays, LayoutGrid, CircleHelp, CalendarHeart, KeyRound, ShieldAlert, CalendarRange, CalendarClock } from 'lucide-react';
+import { Ticket, User, Camera, Calendar, Users, QrCode, Pencil, Shield, BookOpen, Award, ArrowLeft, CalendarCheck, LayoutGrid, CircleHelp, ShieldAlert, CalendarRange } from 'lucide-react';
 import { getProfile, getUserRoles, getMyPrivateProfile, getUser, getSessionRoles, getViewAs, getViewingUser } from '@/lib/core/auth';
 import { ViewAsSwitcher, ViewAsBanner, ViewingUserBanner } from '@/components/portal/ViewAs';
 import ProfileIncompleteBanner from '@/components/portal/ProfileIncompleteBanner';
@@ -20,9 +20,8 @@ import DashboardClient from './DashboardClient';
 import PortalTopSection from './PortalTopSection';
 import PortalSearch from '@/components/portal/PortalSearch';
 import { PortalParamsProvider } from '@/components/portal/PortalParamsContext';
-import { AdminLazy, AlbumsLazy, DivisionMembersLazy, DivisionsLazy, DocsLazy, EventsLazy, MembersLazy, ShiftsLazy, SiteContentLazy } from './LazySections';
-import { getAlbumCount, getDocsSummary, getMemberCount, getTiersCached } from '@/lib/portal/portalCounts';
-import { getMyShifts } from '@/lib/shifts/myShifts';
+import { AdminLazy, DivisionMembersLazy, DivisionsLazy, DocsLazy, EventsLazy, MembersLazy, SiteContentLazy } from './LazySections';
+import { getDocsSummary, getMemberCount, getTiersCached } from '@/lib/portal/portalCounts';
 import { DashboardWelcome, DashboardBody, type HomeTool } from './DashboardHome';
 import TicketsSectionContent from './tickets/TicketsSectionContent';
 import { getTicketsData } from './tickets/getTicketsData';
@@ -46,13 +45,8 @@ import { currentQuarter, loadQuarters, quarterName } from '@/lib/members/quarter
 import { isInactiveMember } from '@/lib/meetings/meetingAudience';
 import { isTracked, mySummary } from '@/lib/members/strikes';
 import HelpSectionContent from './help/HelpSectionContent';
-import CalendarSectionContent from './calendar/CalendarSectionContent';
 import ProfileNudge from '@/components/portal/ProfileNudge';
 import { profileNudge } from '@/lib/members/profileCompleteness';
-import InternalEventsSectionContent from './internal-events/InternalEventsSectionContent';
-import KeysSectionContent from './keys/KeysSectionContent';
-import MyKeys from '@/components/portal/MyKeys';
-import { keysByHolder } from '@/lib/storage/storageKeys';
 import { meetingHappeningNow } from '@/lib/meetings/meetings';
 import styles from './dashboard.module.css';
 
@@ -98,21 +92,14 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const canViewAdmin = hasCapability(roles, 'view_admin_dashboard');
   const canViewDocs = hasCapability(roles, 'view_docs');
   const canManageDocs = hasCapability(roles, 'manage_docs');
-  const canViewPhotoAlbums = hasCapability(roles, 'view_photo_albums');
-  const canManagePhotoAlbums = hasCapability(roles, 'manage_photo_albums');
   const canManageRewardsShop = hasCapability(roles, 'manage_rewards_shop');
   const canScanRedemptions = hasCapability(roles, 'scan_redemptions');
   const canManagePoints = hasCapability(roles, 'manage_points');
   const canAttendMeetings = hasCapability(roles, 'attend_meetings');
   const canViewAttendanceReports = hasCapability(roles, 'view_attendance_reports');
   const canManageMeetings = hasCapability(roles, 'manage_meetings');   // exec/admin: every meeting + HR export
-  const canViewInternalEvents = hasCapability(roles, 'view_internal_events');
-  // Storage keys: the team sees where each key is, and which member holds which (little key icons on the members list).
-  const canViewKeys = hasCapability(roles, 'view_keys');
   const canManageStrikes = hasCapability(roles, 'manage_strikes');
   const canManageQuarters = hasCapability(roles, 'manage_quarters');
-  const keyHolders: Awaited<ReturnType<typeof keysByHolder>> = canViewKeys ? await keysByHolder(createServiceClient()).catch(() => ({})) : {};
-  const canHostInternalEvents = hasCapability(roles, 'host_internal_events');
   const canHostMeetings = hasCapability(roles, 'host_meetings');         // leads too: plan meetings, manage their own
   // Best-effort: if this lookup fails the bar just doesn't get the meeting boost.
   const meetingNow = canAttendMeetings ? await meetingHappeningNow(createServiceClient(), { id: profile.id, roles }).catch(() => false) : false;
@@ -132,8 +119,6 @@ export default async function PortalDashboard({ searchParams }: Props) {
   // boundary; this just keeps the section/badge from showing at all to
   // someone who'd hit a permission error the moment they tried to use it.
   const canUseRewards = isRewardsEligible(roles);
-  const canManageShifts = hasCapability(roles, 'manage_shifts');
-  const canSignUpShifts = canManageShifts || hasCapability(roles, 'signup_shifts');
   // A separate, lighter tool from the full exec/admin directory manager
   // below — gated on actually holding the 'division' role itself (not the
   // broader manage_division capability, which lead/exec/admin also hold),
@@ -146,8 +131,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
   // hub then just renders whichever of these were fetched; nothing is
   // re-fetched client-side when a card opens.
   // Only what the dashboard, the card badges and the next sections need loads here. The heavy sections (Events, TG Members, Documentation,
-  // Photo Albums, Divisions, Site Content, Admin) fetch their own data the first time they are opened (see lib/portalSectionData.ts).
-  const [ticketsData, checkinData, pointsData, memberTiers, memberCount, docsSummary, albumCount, myShifts] =
+  // Divisions, Site Content, Admin) fetch their own data the first time they are opened (see lib/portalSectionData.ts).
+  const [ticketsData, checkinData, pointsData, memberTiers, memberCount, docsSummary] =
     await Promise.all([
       getTicketsData(profile.id, roles),
       canCheckin ? getCheckinData() : Promise.resolve(null),
@@ -155,8 +140,6 @@ export default async function PortalDashboard({ searchParams }: Props) {
       getTiersCached(),
       canViewMembers ? getMemberCount().catch(() => 0) : Promise.resolve(0),
       canViewDocs ? getDocsSummary(canManageDocs).catch(() => ({ count: 0, pinned: null })) : Promise.resolve(null),
-      canViewPhotoAlbums ? getAlbumCount().catch(() => 0) : Promise.resolve(0),
-      canSignUpShifts ? getMyShifts(createServiceClient(), profile.id).catch(() => []) : Promise.resolve([]),
     ]);
   // Who is looking, and as whom: the lazy sections keep their data per view, so a changed "view as" never shows another view's data.
   const scope = `${profile.id}|${viewAs ?? ''}|${viewingUser?.id ?? ''}`;
@@ -249,12 +232,6 @@ export default async function PortalDashboard({ searchParams }: Props) {
         />
       ),
     }] : []),
-    {
-      id: 'calendar', icon: <CalendarDays size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Calendar',
-      description: 'Events and the meetings you’re invited to',
-      group: 'Overview' as const,
-      content: <CalendarSectionContent />,
-    },
     ...(canViewEvents ? [{
       id: 'events', icon: <Calendar size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Events',
       description: canManageEvents ? 'Create and manage events' : 'Browse upcoming and past events',
@@ -290,13 +267,6 @@ export default async function PortalDashboard({ searchParams }: Props) {
       group: 'Team' as const,
       content: <MeetingsSectionContent canHost={canHostMeetings} canManageAll={canManageMeetings} userId={profile.id} canAttend={canAttendMeetings} canViewReports={canViewAttendanceReports} />,
     }] : []),
-    // Officers and leads sign up for a station and time at an event; exec set the grids up. See lib/shifts.ts.
-    ...(canSignUpShifts ? [{
-      id: 'shifts', icon: <CalendarClock size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Shifts',
-      description: 'Sign up for a station and time at an event',
-      group: 'Events' as const,
-      content: <ShiftsLazy scope={scope} canManage={canManageShifts} canSignUp={canSignUpShifts} userId={profile.id} userName={profile.display_name || 'Someone'} />,
-    }] : []),
     // Exec, HR and admins get the tracker. Nobody else (leads included) has any part in it.
     ...(canManageStrikes ? [{
       id: 'strikes', icon: <ShieldAlert size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Strikes',
@@ -311,19 +281,6 @@ export default async function PortalDashboard({ searchParams }: Props) {
       group: 'Team' as const,
       content: <QuarterStatusContent />,
     }] : []),
-    ...(canViewKeys ? [{
-      id: 'keys', icon: <KeyRound size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Storage Keys',
-      description: 'Where each storage key is right now',
-      badge: (keyHolders[profile.id]?.length ?? 0) || undefined,
-      group: 'Team' as const,
-      content: <KeysSectionContent />,
-    }] : []),
-    ...(canViewInternalEvents ? [{
-      id: 'internal-events', icon: <CalendarHeart size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Internal Events',
-      description: canHostInternalEvents ? 'Plan internal events and see who’s coming' : 'Socials, trainings and other internal events',
-      group: 'Events' as const,
-      content: <InternalEventsSectionContent canHost={canHostInternalEvents} canRsvp={!isInactiveMember(roles)} />,
-    }] : []),
     ...(canViewMembers ? [{
       id: 'members', icon: <Users size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'TG Members',
       description: 'Browse everyone in the org',
@@ -334,7 +291,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       badge: memberCount || undefined,
       homeExclude: true, dockExclude: true,
       group: 'Team' as const,
-      content: <MembersLazy scope={scope} keysByUser={keyHolders} canViewAsPerson={canViewAsPerson} selfId={profile.id} canOrder={hasCapability(roles, 'manage_board_order')} teams={canHostMeetings || canManageMeetings ? { userId: profile.id, canManageAll: canManageMeetings, canEdit: true } : roles.some((r) => r.role === 'officer') ? { userId: profile.id, canManageAll: false, canEdit: false } : undefined} />,
+      content: <MembersLazy scope={scope} canViewAsPerson={canViewAsPerson} selfId={profile.id} canOrder={hasCapability(roles, 'manage_board_order')} teams={canHostMeetings || canManageMeetings ? { userId: profile.id, canManageAll: canManageMeetings, canEdit: true } : roles.some((r) => r.role === 'officer') ? { userId: profile.id, canManageAll: false, canEdit: false } : undefined} />,
     }] : []),
     ...(canViewDocs && docsSummary ? [{
       id: 'docs', icon: <BookOpen size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Documentation',
@@ -361,13 +318,6 @@ export default async function PortalDashboard({ searchParams }: Props) {
     // up), but also explicitly opened to recruit/alumni — browsing old
     // event photos is exactly what a prospect or a former member would
     // want, unlike the more ops-focused cards next to it.
-    ...(canViewPhotoAlbums ? [{
-      id: 'albums', icon: <ImageIcon size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Photo Albums',
-      description: 'Google Photos albums from past events',
-      badge: albumCount || undefined,
-      group: 'Resources' as const,
-      content: <AlbumsLazy scope={scope} canManage={canManagePhotoAlbums} />,
-    }] : []),
     // One card for everything that boils down to "edit what shows on the
     // public site" — used to be three separate Admin-group cards (Divisions
     // directory, My Division, Edit Site Content), which buried each behind
@@ -468,7 +418,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
   // Sitting the quarter out: a quiet note saying so.
   const inactiveQuarter = isInactiveMember(roles) ? await loadQuarters(createServiceClient()).then((qs) => currentQuarter(qs)).catch(() => null) : null;
   const myStrikes = isTracked(roles) ? await mySummary(createServiceClient(), profile.id).catch(() => null) : null;
-  const todoItems = await loadTodos(createServiceClient(), { id: profile.id, roles }, { manageAll: canManageMeetings, canHost: canHostMeetings, canViewInternalEvents: canViewInternalEvents && !isInactiveMember(roles) });   // inactive people can't answer events, so there's nothing to RSVP to
+  const todoItems = await loadTodos(createServiceClient(), { id: profile.id, roles }, { manageAll: canManageMeetings, canHost: canHostMeetings });
   if (canHandleHelp && helpWaiting > 0) todoItems.push({ id: 'help-inbox', text: `${helpWaiting} help ${helpWaiting === 1 ? 'ticket needs' : 'tickets need'} a reply`, detail: 'Open the help inbox', href: '/portal/help/inbox', tone: 'urgent' });
   else if (!canHandleHelp && helpWaiting > 0) todoItems.push({ id: 'help-reply', text: helpWaiting === 1 ? 'You have a reply to your question' : `You have ${helpWaiting} replies to your questions`, href: '/portal/help', tone: 'normal' });
   if (canCheckin && todayEvents.length > 0) todoItems.push({ id: 'checkin-today', text: `Event today: ${todayEvents[0].title}`, detail: 'Open the check-in scanner', href: '/portal/checkin', tone: 'urgent' });
@@ -484,7 +434,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const homeEvent = featured ? { id: featured.id, title: featured.title, start_date: featured.start_date, location: featured.location, hasTicket: !!ticketEvent, ticketId: nextTicket?.id } : null;
   const pinnedDoc = docsSummary?.pinned ?? null;
   const homeNote = pinnedDoc ? { title: pinnedDoc.title, href: `/portal/docs?id=${pinnedDoc.id}` } : null;
-  const EVERYONE_TOOLS = ['tickets', 'points', 'calendar', 'profile'];
+  const EVERYONE_TOOLS = ['tickets', 'points', 'profile'];
   const homeTools: HomeTool[] = [
     ...EVERYONE_TOOLS.map((id) => sections.find((x) => x.id === id)).filter((x): x is HubSection => !!x).map((x) => ({ id: x.id, label: x.label, hint: x.description, href: `/portal/${x.id}`, tier: 'everyone' as const })),
     ...sections.filter((x) => !EVERYONE_TOOLS.includes(x.id) && !x.homeExclude && ['Events', 'Team', 'Admin', 'Resources'].includes(x.group)).slice(0, 8).map((x) => ({ id: x.id, label: x.label, hint: x.description, href: `/portal/${x.id}`, tier: 'officer' as const })),
@@ -513,7 +463,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             its width to the hub grid below it. */}
         <PortalTopSection
           welcome={<DashboardWelcome eyebrow={homeEyebrow} name={profile.display_name?.split(' ')[0] || 'Triton'} />}
-          body={<DashboardBody shifts={myShifts} event={homeEvent} note={homeNote} tools={homeTools} activity={homeActivity} showRoleAsk={!isTeamMember} />}
+          body={<DashboardBody event={homeEvent} note={homeNote} tools={homeTools} activity={homeActivity} showRoleAsk={!isTeamMember} />}
           desktop={{ greeting: greetingLine, tiles: tilesNode, viewAs: viewAsNode, banners: frameBanners }}
           top={
             <>
@@ -582,7 +532,6 @@ export default async function PortalDashboard({ searchParams }: Props) {
             <TodoCard items={todoItems} />
             {isInactiveMember(roles) && <InactiveNote quarter={inactiveQuarter ? quarterName(inactiveQuarter) : null} />}
             {myStrikes && <StrikeCard active={myStrikes.active} limit={myStrikes.limit} />}
-            <MyKeys keys={keyHolders[profile.id] ?? []} />
             {nudge.missing.length > 0 && hasBasicProfileInfo({ ...profile, gender: myGender.gender }, isVerifiedMember(roles)) && <ProfileNudge nudge={nudge} />}
             </>
           }

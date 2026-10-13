@@ -17,7 +17,6 @@ import PageBlocks from '@/components/PageBlocks/PageBlocks';
 import LogoPlate from '@/components/LogoPlate/LogoPlate';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import EventSocialEmbeds from '@/components/EventSocialEmbeds/EventSocialEmbeds';
-import AddToCalendarButton, { AddToGoogleCalendarButton } from '@/components/AddToCalendarButton/AddToCalendarButton';
 import { formatEventDateRange, formatEventTimeRange, eventDayCount } from '@/lib/core/timezone';
 import { themeVars, themeFontsHref, themeFontFaceCss } from '@/lib/events/eventTheme';
 import styles from './event-detail.module.css';
@@ -198,8 +197,6 @@ export default async function EventDetailPage({ params }: Params) {
                     {event.audience !== 'ucsd_only' && event.ticket_price > 0 && <small>free for UCSD students</small>}
                   </span>
                 </a>
-                <AddToCalendarButton eventId={event._id} className={styles.calBtn} />
-                <AddToGoogleCalendarButton event={event} className={styles.calBtn} />
               </div>
             )}
             {!isPast && event.points_value > 0 && (

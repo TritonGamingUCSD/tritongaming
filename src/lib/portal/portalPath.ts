@@ -3,8 +3,8 @@
 // server page keeps reading the old params; in the browser the address is updated with the history API (no refetch).
 
 export const PORTAL_SECTION_IDS = [
-  'calendar', 'tickets', 'points', 'activity', 'profile', 'events', 'checkin', 'members', 'meetings', 'internal-events',
-  'keys', 'strikes', 'quarters', 'divisions', 'division-members', 'docs', 'qrcode', 'albums', 'help', 'admin', 'site-content', 'shifts',
+  'tickets', 'points', 'activity', 'profile', 'events', 'checkin', 'members', 'meetings',
+  'strikes', 'quarters', 'divisions', 'division-members', 'docs', 'qrcode', 'help', 'admin', 'site-content',
 ] as const;
 
 const SECTIONS = new Set<string>(PORTAL_SECTION_IDS);

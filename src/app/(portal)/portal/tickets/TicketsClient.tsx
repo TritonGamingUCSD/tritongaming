@@ -12,7 +12,6 @@ import { Ticket, MapPin, QrCode, Check, X, Timer, Award } from 'lucide-react';
 import FullscreenQR from './FullscreenQR';
 import OnlineCheckinEntry from './OnlineCheckinEntry';
 import AsFormButton from './AsFormButton';
-import AddToCalendarButton from '@/components/AddToCalendarButton/AddToCalendarButton';
 import { PACIFIC_TZ, pacificDaysUntil, formatEventDateRange, eventDayCount, eventDayProgress } from '@/lib/core/timezone';
 import { isCheckinWindowOpen } from '@/lib/events/checkinWindow';
 import { saveTicketCodes, cachedMinutesLeft } from '@/lib/events/ticketCodeCache';
@@ -284,9 +283,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
       {nextActiveTicket && (
         <section className={styles.heroSection}>
           <div className={styles.heroCard}>
-            {nextActiveTicket.event?.id && (
-              <AddToCalendarButton eventId={nextActiveTicket.event.id} className={styles.heroCalendarCorner} iconOnly />
-            )}
+            
             <div className={styles.heroCardInner}>
               <div className={styles.heroMeta}>
                 <span className={styles.heroLabel}>NEXT EVENT</span>
@@ -569,7 +566,6 @@ function TicketRow({
       </div>
       <div className={styles.ticketRight}>
         <div className={styles.ticketRightRow}>
-          {isActionable && ev?.id && <AddToCalendarButton eventId={ev.id} iconOnly />}
           {isActionable && ev?.is_online && onCheckedIn ? (
             <OnlineCheckinEntry ticketId={ticket.id} eventId={ev.id} onCheckedIn={onCheckedIn} checkinFormUrl={ticket.checkinFormUrl} onFormComplete={onFormComplete} compact />
           ) : isActionable && onShowQR ? (

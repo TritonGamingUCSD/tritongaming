@@ -6,20 +6,16 @@ import { SectionLoading, useSectionData } from '@/components/portal/useSectionDa
 import EventsSectionContent from './events/EventsSectionContent';
 import MembersSectionContent from './members/MembersSectionContent';
 import DocsClient from './docs/DocsClient';
-import PhotoAlbumsSectionContent from './albums/PhotoAlbumsSectionContent';
 import DivisionsSectionContent from './divisions/DivisionsSectionContent';
 import SiteContentSectionContent from './content/SiteContentSectionContent';
 import AdminSectionContent from './admin/AdminSectionContent';
-import ShiftsSectionContent from './shifts/ShiftsSectionContent';
 import DivisionMembersSectionContent from './division-members/DivisionMembersSectionContent';
 import type { getEventsData } from './events/getEventsData';
 import type { getMembersData } from './members/getMembersData';
 import type { getDocsData } from './docs/getDocsData';
-import type { getPhotoAlbumsData } from './albums/getPhotoAlbumsData';
 import type { getAdminData } from './admin/getAdminData';
 import type { getStatsData } from './admin/stats/getStatsData';
 import type { getContentData } from './admin/content/getContentData';
-import type { getShiftsData } from './shifts/getShiftsData';
 
 // The heavy sections: each fetches its own data the first time it is opened (see lib/portalSectionData.ts), then renders the real section.
 // `scope` is who is looking (and "viewing as" what), so a changed view never reuses another view's data.
@@ -43,12 +39,6 @@ export function DocsLazy({ scope, ...rest }: { scope: string } & Omit<ComponentP
   return <DocsClient {...rest} initialDocs={data.docs} initialCategories={data.categories} initialFavorites={data.favorites} />;
 }
 
-export function AlbumsLazy({ scope, ...rest }: { scope: string } & Omit<ComponentProps<typeof PhotoAlbumsSectionContent>, 'albums'>) {
-  const { data, error, retry } = useSectionData<Awaited_<typeof getPhotoAlbumsData>>('albums', scope);
-  if (!data) return <SectionLoading error={error} retry={retry} />;
-  return <PhotoAlbumsSectionContent {...rest} albums={data.albums} />;
-}
-
 export function DivisionsLazy({ scope, ...rest }: { scope: string } & Omit<ComponentProps<typeof DivisionsSectionContent>, 'allDivisions' | 'myDivisions'>) {
   const { data, error, retry } = useSectionData<{ divisions: ComponentProps<typeof DivisionsSectionContent>['allDivisions'] | null; myDivisions: ComponentProps<typeof DivisionsSectionContent>['myDivisions'] | null }>('divisions', scope);
   if (!data) return <SectionLoading error={error} retry={retry} />;
@@ -68,12 +58,6 @@ export function AdminLazy({ scope, ...rest }: { scope: string } & Omit<Component
   const ICONS: Record<string, typeof Users> = { Members: Users, Events: Calendar, Tickets: Ticket };
   const stats = data.admin.stats.map(({ label, value }) => ({ label, value, icon: createElement(ICONS[label] ?? Users, iconProps) }));
   return <AdminSectionContent {...rest} {...data.admin} stats={stats} statsData={data.stats} roleHistoryEntries={data.roleHistoryEntries ?? undefined} />;
-}
-
-export function ShiftsLazy({ scope, ...rest }: { scope: string } & Omit<ComponentProps<typeof ShiftsSectionContent>, 'events' | 'stations' | 'docs' | 'templates'>) {
-  const { data, error, retry } = useSectionData<Awaited_<typeof getShiftsData>>('shifts', scope);
-  if (!data) return <SectionLoading error={error} retry={retry} />;
-  return <ShiftsSectionContent {...rest} events={data.events} stations={data.stations} docs={data.docs} templates={data.templates} />;
 }
 
 export function DivisionMembersLazy({ scope }: { scope: string }) {

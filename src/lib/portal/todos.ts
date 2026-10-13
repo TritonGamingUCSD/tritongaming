@@ -1,6 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { pacificDayKey } from '@/lib/events/checkinDays';
-import { listInternalEvents } from '@/lib/meetings/internalEvents';
 import { loadPlanViews } from '@/lib/meetings/meetingPlanServer';
 import { dayLabel } from '@/lib/meetings/meetingPlans';
 
@@ -18,12 +17,12 @@ export interface TodoItem {
 
 const PLAN_HREF = (id: string) => `/portal/meetings/planning?plan=${id}`;
 
-// Meeting plans that need me (my availability, or, for a host, a time to pick) and internal events I haven't answered. The other
+// Meeting plans that need me (my availability, or, for a host, a time to pick) The other
 // to-dos (help replies, an event to check in today, a meeting on now) are already known by the page and added there.
 export async function loadTodos(
   svc: SupabaseClient,
   user: { id: string; roles: { role: string; division_id?: string | null }[] },
-  opts: { manageAll: boolean; canHost: boolean; canViewInternalEvents: boolean },
+  opts: { manageAll: boolean; canHost: boolean },
 ): Promise<TodoItem[]> {
   const out: TodoItem[] = [];
   const today = pacificDayKey();
@@ -46,14 +45,5 @@ export async function loadTodos(
     }
   } catch { /* the rest of the list still shows */ }
 
-  if (opts.canViewInternalEvents) {
-    try {
-      const events = await listInternalEvents(svc, user, opts.manageAll, 'invited');
-      const horizon = new Date(Date.now() + 14 * 86_400_000).toISOString().slice(0, 10);
-      for (const e of events.filter((x) => !x.hosting && x.mine === null && x.date <= horizon)) {
-        out.push({ id: `rsvp-${e.id}`, text: `RSVP to “${e.title}”`, detail: dayLabel(e.date, 'once'), href: '/portal/internal-events', tone: e.date === today ? 'urgent' : 'normal' });
-      }
-    } catch { /* ignore */ }
-  }
   return out;
 }
