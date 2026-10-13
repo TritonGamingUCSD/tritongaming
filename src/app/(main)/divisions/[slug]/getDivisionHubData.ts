@@ -1,4 +1,3 @@
-import { openEventsFilter } from '@/lib/events/checkinWindow';
 import { unstable_cache } from 'next/cache';
 import { createPublicClient } from '@/lib/supabase/public';
 import { isVisible, type BoardVisibility } from '@/lib/members/profile';
@@ -45,22 +44,14 @@ interface LeadRow {
 // from that page ("they have their own division pages") — this is that page.
 export function getDivisionHubData(divisionId: string) {
   // Cached briefly and shared between visitors; failures throw so they aren't cached.
-  return unstable_cache(() => fetchDivisionHubData(divisionId), ['division-hub', divisionId], { revalidate: 300, tags: ['divisions', 'events', 'board'] })()
-    .catch(() => ({ events: [] as DivisionEvent[], leads: [] as DivisionLead[] }));
+  return unstable_cache(() => fetchDivisionHubData(divisionId), ['division-hub', divisionId], { revalidate: 300, tags: ['divisions', 'board'] })()
+    .catch(() => ({ leads: [] as DivisionLead[] }));
 }
 
 async function fetchDivisionHubData(divisionId: string) {
   const supabase = createPublicClient();
 
-  const [{ data: events, error: eventsErr }, { data: leadRows, error: leadsErr }] = await Promise.all([
-    supabase
-      .from('events')
-      .select('id, slug, title, start_date, location')
-      .eq('division_id', divisionId)
-      .eq('is_published', true)
-      .or(openEventsFilter())
-      .order('start_date', { ascending: true })
-      .limit(6),
+  const [{ data: leadRows, error: leadsErr }] = await Promise.all([
     supabase
       .from('user_roles')
       .select('user_id, profile:profiles(id, display_name, avatar_url, custom_avatar_url, org_title, gamer_tag, pronouns, show_on_board, board_visibility)')
@@ -68,7 +59,6 @@ async function fetchDivisionHubData(divisionId: string) {
       .eq('division_id', divisionId),
   ]);
 
-  if (eventsErr) throw eventsErr;
   if (leadsErr) throw leadsErr;
 
   const leads: DivisionLead[] = ((leadRows ?? []) as unknown as LeadRow[])
@@ -86,7 +76,6 @@ async function fetchDivisionHubData(divisionId: string) {
     }));
 
   return {
-    events: (events ?? []) as DivisionEvent[],
     leads,
   };
 }
