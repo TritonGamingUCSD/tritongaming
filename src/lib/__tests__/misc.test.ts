@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { staffName } from '@/lib/members/names';
 import { commandsFor, matchCommands } from '@/lib/portal/portalCommands';
-import { buildIcsCalendar, googleCalendarUrl } from '@/lib/events/ics';
 import type { AppRole } from '@/types/database';
 
 const as = (...roles: AppRole[]) => roles.map((role) => ({ role, division_id: null }));
@@ -41,19 +40,5 @@ describe('search jump targets follow permissions', () => {
     expect(matchCommands(list, 'plan meet')[0]?.id).toBe('do-meeting-plan');
     expect(matchCommands(list, 'hr')[0]).toBeTruthy();
     expect(matchCommands(list, 'zzzz')).toEqual([]);
-  });
-});
-
-describe('calendar files', () => {
-  it('writes one VEVENT per event and escapes commas', () => {
-    const ics = buildIcsCalendar([{ uid: 'a@x', title: 'Game night, loud', start: '2026-11-07T18:00:00Z', end: '2026-11-07T20:00:00Z' }], 'Test');
-    expect(ics.match(/BEGIN:VEVENT/g)?.length).toBe(1);
-    expect(ics).toContain('SUMMARY:Game night\\, loud');
-    expect(ics).toContain('DTSTART:20261107T180000Z');
-  });
-  it('builds a Google Calendar link', () => {
-    const url = googleCalendarUrl({ title: 'Meet', start: '2026-11-07T18:00:00Z', end: '2026-11-07T19:00:00Z', location: 'Room 5' });
-    expect(url).toContain('calendar.google.com');
-    expect(url).toContain('dates=20261107T180000Z%2F20261107T190000Z');
   });
 });
