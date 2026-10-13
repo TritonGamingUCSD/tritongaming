@@ -1,11 +1,9 @@
 import { divisionCardInputs, ogVersion } from '@/lib/site/ogRoutes';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
-import Link from 'next/link';
-import { MapPin, ExternalLink } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { divisionLogoSrc, getDivisionBySlug, getDivisions } from '@/lib/members/divisions';
 import { resolveAvatarUrl, isVisible, SOCIAL_PLATFORMS, socialHref } from '@/lib/members/profile';
-import { PACIFIC_TZ } from '@/lib/core/timezone';
 import { markdownToDescription } from '@/lib/docs/markdown';
 import EventSocialEmbeds from '@/components/EventSocialEmbeds/EventSocialEmbeds';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
@@ -127,34 +125,6 @@ export default async function DivisionPage({ params }: Params) {
       {cleanBlocks(division.page_blocks).length > 0 && (
         <ZineBand tone="ink" label="More about this division">
           <PageBlocks blocks={cleanBlocks(division.page_blocks)} />
-        </ZineBand>
-      )}
-
-      {hub.events.length > 0 && (
-        <ZineBand tone="deep" label="Upcoming events">
-          <BandHeader label="Mark your calendar" title="Upcoming events" />
-          <ul className={styles.eventList}>
-            {hub.events.map((e) => {
-              const date = new Date(e.start_date);
-              const content = (
-                <>
-                  <span className={styles.eventDate}>
-                    <span>{date.toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short' })}</span>
-                    <strong>{date.toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, day: 'numeric' })}</strong>
-                  </span>
-                  <span className={styles.eventText}>
-                    <span className={styles.eventName}>{e.title}</span>
-                    {e.location && <span className={styles.eventLoc}><MapPin size={12} strokeWidth={1.75} aria-hidden="true" /> {e.location}</span>}
-                  </span>
-                </>
-              );
-              return (
-                <li key={e.id}>
-                  {e.slug ? <Link href={`/events/${e.slug}`} className={styles.eventRow}>{content}</Link> : <div className={styles.eventRow}>{content}</div>}
-                </li>
-              );
-            })}
-          </ul>
         </ZineBand>
       )}
 
