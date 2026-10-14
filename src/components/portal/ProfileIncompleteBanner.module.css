@@ -25,3 +25,6 @@
   text-decoration: none;
   white-space: nowrap;
 }
+
+/* On a phone the floating bell sits in the top-right corner; keep the banner clear of it. */
+@media (max-width: 899px) { .banner { margin-right: 3rem; } }

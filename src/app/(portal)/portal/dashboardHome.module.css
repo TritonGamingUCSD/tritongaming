@@ -61,3 +61,6 @@
 .countBox b { font-family: var(--font-futura-heavy); font-size: 1.35rem; line-height: 1; color: var(--pp-ink); font-variant-numeric: tabular-nums; }
 .countBox small { margin-top: 0.15rem; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.8); }
 .countdownNow { margin: 0.2rem 0; font-family: var(--font-futura-heavy); font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--pp-ok); }
+
+/* On a phone the page list under the greeting (and the bottom bar) already lists every tool, so these cards would repeat it. */
+@media (max-width: 899px) { .toolsSection { display: none; } }

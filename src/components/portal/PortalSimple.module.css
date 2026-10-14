@@ -1,0 +1,33 @@
+/* The desktop layout for guests and UCSD students: a plain top bar, then the page. (People on the team get the sidebar app frame in PortalHub.module.css.) */
+.shell { display: flex; flex-direction: column; min-height: 100%; width: 100%; max-width: 1180px; margin-inline: auto; gap: 1rem; padding-bottom: 2rem; }
+.bar {
+  position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 1rem; padding: 0.6rem 1rem;
+  background: var(--pp-card); color: var(--pp-ink); border: 2px solid rgba(var(--pp-ink-rgb), 0.85); border-radius: 10px; box-shadow: 4px 4px 0 rgba(var(--pp-ink-rgb), 0.2);
+}
+.who { display: inline-flex; align-items: center; gap: 0.6rem; padding: 0.15rem 0.5rem 0.15rem 0.15rem; border: 0; border-radius: 999px; background: none; color: inherit; font: inherit; cursor: pointer; text-align: left; }
+.who:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
+.avatar, .avatarFallback { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; }
+.avatar { object-fit: cover; }
+.avatarFallback { display: grid; place-items: center; background: var(--yellow); color: var(--ink); font-family: var(--font-futura-heavy); }
+.whoText { display: flex; flex-direction: column; line-height: 1.2; }
+.whoText strong { font-size: 0.9rem; }
+.whoText small { font-size: 0.72rem; color: rgba(var(--pp-ink-rgb), 0.8); }
+.nav { display: flex; align-items: center; gap: 0.25rem; flex: 1; min-width: 0; flex-wrap: wrap; }
+.link {
+  position: relative; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.8rem; border: 0; border-radius: 8px; background: none;
+  color: var(--pp-ink); font: inherit; font-size: 0.92rem; cursor: pointer;
+}
+.link:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
+.active { background: var(--yellow); color: var(--ink); font-weight: 700; }
+.active:hover { background: var(--yellow); }
+.link:focus-visible, .who:focus-visible { outline: 2px solid var(--pp-ink); outline-offset: 2px; }
+.badge { min-width: 18px; padding: 0 0.35rem; border-radius: 999px; background: var(--pp-bad); color: var(--ink); font-size: 0.7rem; font-weight: 700; text-align: center; }
+.right { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+.search { width: 220px; }
+.banners { display: flex; flex-direction: column; gap: 0.6rem; }
+.main { flex: 1; min-width: 0; }
+.page { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
+.pageTitle { margin: 0; font-family: var(--font-futura-heavy); font-size: 1.3rem; color: var(--pp-ink); }
+.tiles { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.foot { display: flex; justify-content: center; gap: 1rem; padding-top: 0.5rem; font-size: 0.85rem; color: var(--pp-ink); }
+@media (max-width: 1100px) { .search { display: none; } .whoText small { display: none; } }

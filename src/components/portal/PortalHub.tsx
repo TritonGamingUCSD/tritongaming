@@ -16,6 +16,8 @@ import PortalCopyLink from './PortalCopyLink';
 import PortalCrumbs from './PortalCrumbs';
 import { pickDock, readUsage, recordUse } from './dockPicker';
 import styles from './PortalHub.module.css';
+import simple from './PortalSimple.module.css';
+import mob from './PortalMobile.module.css';
 
 // The bottom tab bar's slots aren't fixed: see dockPicker.ts for how sections are chosen.
 
@@ -132,7 +134,7 @@ interface GroupedSection {
 // a section takes over the screen on mobile.
 export interface HubFrame { greeting: string; tiles: ReactNode; viewAs: ReactNode; banners?: ReactNode }
 
-export default function PortalHub({ sections: sectionsProp, identity, railFooter, homeExtras, onOpenChange, frame }: { sections: HubSection[]; identity?: HubIdentity; railFooter?: ReactNode; homeExtras?: ReactNode; onOpenChange?: (open: boolean) => void; frame?: HubFrame }) {
+export default function PortalHub({ sections: sectionsProp, identity, railFooter, homeExtras, onOpenChange, frame, plain = false }: { sections: HubSection[]; identity?: HubIdentity; railFooter?: ReactNode; homeExtras?: ReactNode; onOpenChange?: (open: boolean) => void; frame?: HubFrame; /** Guests and UCSD-only accounts: on a desktop, a plain top bar instead of the sidebar app frame. */ plain?: boolean }) {
   const sections = useMemo(() => {
     const rank = (id: string) => { const i = SECTION_ORDER.indexOf(id); return i === -1 ? SECTION_ORDER.length : i; };
     return [...sectionsProp].sort((a, b) => rank(a.id) - rank(b.id));
@@ -302,6 +304,12 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
   const moreSections = sections.filter((s) => !primaryTabIds.has(s.id));
   const isMoreActive = openId !== null && !primaryTabIds.has(openId);
 
+  if (isDesktop && plain) {
+    return (
+      <PlainShell identity={identity} railFooter={railFooter} homeExtras={homeExtras} groupedSections={groupedSections} openSection={openSection} openId={openId} open={open} close={close} frame={frameWithNotice} navNonce={navNonce} />
+    );
+  }
+
   if (isDesktop) {
     return (
       <DesktopShell
@@ -327,15 +335,15 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
     <button
       key={s.id}
       type="button"
-      className={`${styles.sheetTile} ${inSheet && openId === s.id ? styles.sheetTileActive : ''}`}
-      style={{ ['--accent' as string]: GROUP_ACCENT[s.group] }}
+      className={`${mob.row} ${inSheet && openId === s.id ? mob.rowActive : ''}`}
       onClick={() => { if (inSheet) setMoreOpen(false); recordUse(s.id); open(s.id); }}
     >
-      <span className={styles.sheetTileIcon} aria-hidden="true">
-        {smallIcon(s.icon, 20)}
-        {s.badge !== undefined && s.badge !== 0 && <span className={styles.dockBadge}>{s.badge}</span>}
+      <span className={mob.rowText}>
+        <span className={mob.rowLabel}>{s.label}</span>
+        <span className={mob.rowDesc}>{s.description}</span>
       </span>
-      <span className={styles.sheetTileLabel}>{s.label}</span>
+      {s.badge !== undefined && s.badge !== 0 && <span className={mob.rowBadge}>{s.badge}</span>}
+      <ChevronRight size={16} strokeWidth={1.75} className={mob.rowGo} aria-hidden="true" />
     </button>
   );
 
@@ -345,11 +353,11 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
       {!openSection && (
         <div className={styles.launcher}>
           <h2 className={styles.forYouLabel}>For you</h2>
-          <div className={styles.tileGrid}>{tilesInOrder(sections).filter((s) => forYou.has(s.id)).map((s) => renderTile(s, false))}</div>
+          <div className={mob.list}>{tilesInOrder(sections).filter((s) => forYou.has(s.id)).map((s) => renderTile(s, false))}</div>
           {sections.some((s) => !forYou.has(s.id)) && (
             <details className={styles.allPages}>
               <summary>All pages</summary>
-              <div className={styles.tileGrid}>{tilesInOrder(sections).filter((s) => !forYou.has(s.id)).map((s) => renderTile(s, false))}</div>
+              <div className={mob.list}>{tilesInOrder(sections).filter((s) => !forYou.has(s.id)).map((s) => renderTile(s, false))}</div>
             </details>
           )}
         </div>
@@ -379,7 +387,6 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
               <button className={styles.backBtn} onClick={close} aria-label="Back to dashboard">
                 <ChevronLeft size={18} strokeWidth={2} aria-hidden="true" />
               </button>
-              <span className={styles.panelIconTile} aria-hidden="true">{smallIcon(openSection.icon, 18)}</span>
               <span className={styles.panelTitle}>
                 <span className={styles.crumbGroup}>{GROUP_LABEL[openSection.group]}</span>
                 {openSection.label}
@@ -467,7 +474,7 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
               <div className={styles.moreSheetScroll} ref={sheetEl}>
               <div className={styles.sheetTheme}><PortalThemeToggle labelled /></div>
               {railFooter && <div className={styles.sheetFooter}>{railFooter}</div>}
-              <div className={styles.tileGrid}>{tilesInOrder(moreSections).map((s) => renderTile(s, true))}</div>
+              <div className={mob.list}>{tilesInOrder(moreSections).map((s) => renderTile(s, true))}</div>
               </div>
             </motion.div>
           </>
@@ -709,6 +716,59 @@ function DesktopShell({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// The desktop layout for people who are not on the team (guests and UCSD students): one plain top bar with the few pages they have, and the page below it.
+// The sidebar app frame is for people with many sections to move between.
+function PlainShell({ identity, railFooter, homeExtras, groupedSections, openSection, openId, open, close, frame, navNonce }: {
+  identity?: HubIdentity; railFooter?: ReactNode; homeExtras?: ReactNode; groupedSections: GroupedSection[]; openSection: HubSection | null; openId: string | null;
+  open: (id: string) => void; close: () => void; frame?: HubFrame; navNonce: number;
+}) {
+  const items = groupedSections.flatMap((g) => g.items).filter((s) => !s.railHidden);
+  return (
+    <div className={simple.shell} data-app-frame>
+      <header className={simple.bar}>
+        {identity && (
+          <button type="button" className={simple.who} onClick={() => open('profile')} aria-label={`${identity.name}, open your profile`}>
+            {identity.avatarUrl
+              ? <Image src={identity.avatarUrl} alt="" width={36} height={36} className={simple.avatar} unoptimized referrerPolicy="no-referrer" />
+              : <span className={simple.avatarFallback} aria-hidden="true">{identity.name[0]?.toUpperCase() ?? 'T'}</span>}
+            <span className={simple.whoText}><strong>{identity.name}</strong><small>{identity.roleLabel}</small></span>
+          </button>
+        )}
+        <nav className={simple.nav} aria-label="Portal pages">
+          <button type="button" className={`${simple.link} ${!openSection ? simple.active : ''}`} onClick={close} aria-current={!openSection ? 'page' : undefined}>Home</button>
+          {items.map((s) => (
+            <button key={s.id} type="button" className={`${simple.link} ${s.id === openId ? simple.active : ''}`} onClick={() => open(s.id)} aria-current={s.id === openId ? 'page' : undefined}>
+              {s.label}
+              {s.badge !== undefined && s.badge !== 0 && <span className={simple.badge}>{s.badge}</span>}
+            </button>
+          ))}
+        </nav>
+        <div className={simple.right}>
+          {frame?.viewAs}
+          <div className={simple.search}><PortalSearch compact /></div>
+          <PortalThemeToggle />
+          <NotificationBell inline />
+        </div>
+      </header>
+      {frame?.banners && <div className={simple.banners}>{frame.banners}</div>}
+      <main className={simple.main} data-save-anchor>
+        {openSection ? (
+          <div className={simple.page} key={navNonce}>
+            <h1 className={simple.pageTitle}><PortalCrumbs section={openSection.id} sectionLabel={openSection.label} /></h1>
+            {openSection.content}
+          </div>
+        ) : (
+          <div className={simple.page}>
+            {frame?.tiles && <div className={simple.tiles}>{frame.tiles}</div>}
+            {homeExtras}
+          </div>
+        )}
+      </main>
+      {railFooter && <footer className={simple.foot}>{railFooter}</footer>}
     </div>
   );
 }

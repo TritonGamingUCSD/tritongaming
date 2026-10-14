@@ -7,6 +7,7 @@ The same material lives in the portal under **Documentation → Website & Portal
 | [architecture.md](architecture.md) | Understand the stack, the folders and how the portal hub works |
 | [code-map.md](code-map.md) | Find where a piece of logic lives (`src/lib` is grouped by topic) |
 | [conventions.md](conventions.md) | Write code that matches the rest: theme tokens, routing, UI habits, lint |
+| [roles-and-capabilities.md](roles-and-capabilities.md) | See exactly what each role can do, which sections it sees, and where each permission is checked (generated: `npm run docs:roles`; add `-- --db` to compare with the live database) |
 | [database.md](database.md) | Change the database, or learn what each table is for |
 | [features.md](features.md) | See how meetings, docs, Help, notifications and scheduled jobs fit together |
 | [usage-and-limits.md](usage-and-limits.md) | Stay inside the free Vercel and Supabase plans (polling, caching, the login check, backups) |

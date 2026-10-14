@@ -14,6 +14,9 @@
 .pronouns { color: rgba(var(--mc-rgb, 242, 241, 240), 0.5); }
 .dot { color: rgba(var(--mc-rgb, 242, 241, 240), 0.35); }
 
+.teams { list-style: none; margin: 0.45rem 0 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.3rem; }
+.teamChip { font-size: 0.7rem; line-height: 1.2; padding: 0.15rem 0.55rem; border-radius: 999px; border: 1px solid rgba(var(--mc-rgb, 242, 241, 240), 0.35); color: var(--mc-strong, var(--white)); }
+
 .info {
   align-self: stretch; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
   margin-top: 0.6rem; padding-top: 0.65rem; border-top: 1px solid rgba(var(--mc-rgb, 255, 255, 255), 0.08);
@@ -47,12 +50,14 @@
 
 .bio { margin: 0.55rem 0 0; font-size: 0.82rem; line-height: 1.45; text-align: center; align-self: stretch; color: rgba(var(--mc-rgb, 242, 241, 240), 0.78); }
 .links { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.35rem; margin-top: 0.6rem; }
+/* The same yellow sticker button on the public Team page and in the portal, in either theme (the icons are light, so the button stays yellow with a dark icon). */
 .socialBtn {
   display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border-radius: 50%;
-  background: rgba(var(--mc-rgb, 255, 255, 255), 0.06); border: 1px solid rgba(var(--mc-rgb, 255, 255, 255), 0.14); cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+  background: var(--yellow); border: 2px solid var(--ink); box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5); cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
 }
-.socialBtn:hover { background: rgba(255, 199, 44, 0.15); border-color: rgba(255, 199, 44, 0.3); transform: translateY(-2px); }
+.socialBtn img { filter: invert(1) brightness(0.1); }
+.socialBtn:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5); }
 .portfolioLink {
   display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.2rem 0.65rem; border-radius: 999px;
   font-size: 0.74rem; text-decoration: none; background: rgba(var(--mc-rgb, 255, 255, 255), 0.06);
@@ -81,9 +86,6 @@
 .zine .copyRow:hover { color: #8a5f00; }
 .zine .copied { color: #0b7a55; }
 .zine .bio { color: #2a3550; font-family: var(--font-renegare); font-size: 1.15rem; line-height: 1.3; }
-.zine .socialBtn { background: var(--yellow); border: 2px solid var(--ink); box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5); }
-.zine .socialBtn img { filter: invert(1) brightness(0.1); }
-.zine .socialBtn:hover { background: var(--yellow); border-color: var(--ink); transform: translate(-1px, -1px); box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5); }
 .zine .portfolioLink { background: var(--paper); color: var(--ink); border: 2px solid var(--ink); }
 .zine .portfolioLink:hover { background: var(--yellow); color: var(--ink); border-color: var(--ink); }
 .zine .joined { color: #5a6580; }

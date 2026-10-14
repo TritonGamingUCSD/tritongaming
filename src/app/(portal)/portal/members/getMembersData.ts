@@ -11,6 +11,8 @@ export interface MemberProfileRow {
   bio: string | null; pronouns: string | null; social_links: Record<string, string> | null;
   board_visibility: Record<string, boolean> | null; preferred_email?: string | null; emails?: LinkedEmail[];
   board_order: number | null;
+  /** The teams (Team tab) they are on; only the TG team sees this. */
+  teams?: string[];
   user_roles: Array<{
     role: AppRole;
     division: { name: string } | { name: string }[] | null;
@@ -61,6 +63,16 @@ export async function getMembersData() {
     members = members.map((m) => ({ ...m, emails: pickDisplayEmails(emailsByUserId.get(m.id) ?? [], m.preferred_email) }));
   } catch (err) {
     console.error('[members] failed to load member emails:', err);
+  }
+
+  // Which teams (the Team tab's saved groups) each person is on. Best-effort, like the emails.
+  try {
+    const { data: groups } = await createServiceClient().from('meeting_groups').select('name, member_ids').order('name');
+    const teamsOf = new Map<string, string[]>();
+    for (const g of groups ?? []) for (const id of (g.member_ids as string[] | null) ?? []) teamsOf.set(id, [...(teamsOf.get(id) ?? []), g.name as string]);
+    members = members.map((m) => ({ ...m, teams: teamsOf.get(m.id) ?? [] }));
+  } catch (err) {
+    console.error('[members] failed to load teams:', err);
   }
 
   return { rows: members, memberCount: members.filter((m) => isOrgMember(m.user_roles)).length };

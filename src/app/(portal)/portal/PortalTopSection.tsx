@@ -24,8 +24,10 @@ type UpcomingEvent = Parameters<typeof UpcomingEventsPreview>[0]['events'][numbe
 // banner / next-ticket / upcoming cards move into the content column (beside
 // the sidebar) on the home view only.
 export default function PortalTopSection({
-  top, desktop, banner, identity, railFooter, ticket, upcomingEvents, sections, welcome, body,
+  top, desktop, banner, identity, railFooter, ticket, upcomingEvents, sections, welcome, body, plain = false,
 }: {
+  /** Guests and UCSD-only accounts get a plain top-bar layout on a desktop instead of the sidebar. */
+  plain?: boolean;
   /** The redesigned dashboard: the welcome header (desktop) and the body under the to-dos. When given, they replace the older ticket/events cards. */
   welcome?: ReactNode;
   body?: ReactNode;
@@ -72,7 +74,7 @@ export default function PortalTopSection({
   if (isDesktop) {
     return (
       <Suspense>
-        <PortalHub sections={sections} identity={identity} railFooter={railFooter} homeExtras={cards} onOpenChange={setPanelOpen} frame={desktop} />
+        <PortalHub sections={sections} identity={identity} railFooter={railFooter} homeExtras={cards} onOpenChange={setPanelOpen} frame={desktop} plain={plain} />
       </Suspense>
     );
   }

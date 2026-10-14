@@ -15,7 +15,7 @@ const A = (id: string, label: string, hint: string, href: string, keywords: stri
 const DEFS: Def[] = [
   { id: 'go-home', label: 'Dashboard', hint: 'Your home screen', href: '/portal', kind: 'Go to', keywords: ['home', 'overview'] },
   S('tickets', 'My Tickets', 'Your event tickets and history', 'tickets', ['qr', 'ticket', 'history', 'activity', 'registered']),
-  S('points', 'Rewards', 'Points and the shop', 'points', ['points', 'shop', 'perks', 'redeem'], undefined, (r) => isRewardsEligible(r)),
+  S('points', 'Rewards', 'Points and the shop', 'points', ['points', 'shop', 'perks', 'redeem'], undefined, (r) => isRewardsEligible(r) || hasCapability(r, 'manage_rewards_shop')),
   S('events', 'Events', 'Create and manage events', 'events', ['event', 'manage'], 'view_events'),
   S('checkin', 'Check-In', 'Scan tickets and reveal the online code', 'checkin', ['scan', 'scanner', 'qr'], 'checkin'),
   S('members', 'TG Members', 'Everyone in the org', 'members', ['people', 'directory', 'roster', 'team'], 'view_members'),

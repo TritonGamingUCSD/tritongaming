@@ -21,6 +21,8 @@ export interface MemberCardData {
   year?: string | null;
   college?: string | null;
   divisionName?: string | null;
+  /** The teams they are on (Marketing, Creative...; the Team tab in TG Members). Only the TG Members roster passes this; the public Team page never does. */
+  teams?: Array<{ name: string }>;
   emails?: string[];
   socialLinks?: Record<string, string> | null;
   portfolioLinks?: Array<{ label: string; url: string }> | null;
@@ -69,6 +71,12 @@ export default function MemberCardBody({
           {data.orgTitle && data.pronouns && <span className={styles.dot}> · </span>}
           {data.pronouns && <span className={styles.pronouns}>{data.pronouns}</span>}
         </div>
+      )}
+
+      {(data.teams?.length ?? 0) > 0 && (
+        <ul className={styles.teams} aria-label="Teams">
+          {data.teams!.map((t) => <li key={t.name} className={styles.teamChip}>{t.name}</li>)}
+        </ul>
       )}
 
       {hasInfo && (

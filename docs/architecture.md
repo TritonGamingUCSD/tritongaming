@@ -28,6 +28,10 @@
 
 `src/app/(portal)/portal/page.tsx` decides which sections a person may open (by capability). The sections that are heavy to load are lazy: `LazySections.tsx` fetches a section's data from `api/portal/section/<name>` the first time it opens, using the loaders in `src/lib/portal/portalSectionData.ts`. The dashboard (the first thing people see) is loaded with the page.
 
+**Layout by person.** `PortalHub.tsx` picks the shell. On a phone: a bottom bar (icons) plus plain list rows for every page (home and the More sheet), no icon tiles. On a desktop: people holding Recruit, Alumni, Officer, Lead, Exec or Admin get the sidebar app frame (`DesktopShell`); guests and UCSD-only accounts get a plain top bar (`PlainShell`, `PortalSimple.module.css`). The page passes `plain={!isTgMember(roles)}`. Exec and admins who do not earn points still get Rewards (just Leaderboard and Tools).
+
+**Theme.** The portal's light or dark choice is settled once, before first paint, by `lib/portal/themeScript.ts` (saved choice, else the device setting at the first visit), kept in localStorage and a one-year cookie, and changed only by the toggle. The device switching to night mode later does not change it.
+
 ## Supabase clients (`src/lib/supabase`)
 
 - `createClient()` (server): uses the visitor's session. While an admin is viewing as another person it returns that person.
@@ -39,7 +43,7 @@
 
 ## Who may do what
 
-Roles grant **capabilities** (`src/lib/portal/capabilities.ts`). Server routes check them (`authorizeMeetings`, `authorizeDocs`, `authorizeHelp`, ...); the UI hides what a person cannot use but is never the only check. Exec can also give one person one extra capability (a granted capability, `grantedCapabilities.ts`).
+Roles grant **capabilities** (`src/lib/portal/capabilities.ts`). Server routes check them (`authorizeMeetings`, `authorizeDocs`, `authorizeHelp`, ...); the UI hides what a person cannot use but is never the only check. Exec can also give one person one extra capability (a granted capability, `grantedCapabilities.ts`). The full, generated list (every capability, every role, the sections each sees, and a check against the live database) is in [roles-and-capabilities.md](roles-and-capabilities.md).
 
 ## Real time
 

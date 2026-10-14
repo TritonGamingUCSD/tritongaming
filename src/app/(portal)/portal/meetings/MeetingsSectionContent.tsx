@@ -644,70 +644,155 @@ function TeamEditor({ initial, team, busy, error, onSave, onClose }: { initial: 
 export function TeamsPanel({ userId, canManageAll, canEdit = true }: { userId: string; canManageAll: boolean; canEdit?: boolean }) {
   const team = useTeam();
   const [groups, reload] = useGroups();
+  const { subtab } = useUrlNav();
+  const syncTab = usePortalTabSync('members');
+  const view: 'teams' | 'people' = subtab === 'people' ? 'people' : 'teams';
   const [editing, setEditing] = useState<{ id: string | null; name: string; ids: string[] } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [open, setOpen] = useState<Set<string>>(new Set());   // teams shown with every member, not just the first few
-  const nameOf = (id: string) => team?.find((p) => p.id === id)?.name ?? 'Someone';
+  const [query, setQuery] = useState('');
+  const [adding, setAdding] = useState<string | null>(null);   // the team whose "add a person" box is open
+  const [onlyNone, setOnlyNone] = useState(false);
+  const mayChange = (g: Group) => canEdit && (canManageAll || g.created_by === userId);
 
-  async function save(v: { name: string; ids: string[] }) {
-    if (!editing) return false;
-    setBusy(true); setError('');
+  async function send(url: string, method: string, body?: unknown): Promise<boolean> {
+    setError('');
     try {
-      const res = await fetch(editing.id ? `/api/meetings/groups/${editing.id}` : '/api/meetings/groups', {
-        method: editing.id ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: v.name, member_ids: v.ids }),
-      });
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) { setError(json.error || 'Failed to save.'); return false; }
-      setEditing(null);
+      if (!res.ok) { setError(json.error || 'Something went wrong.'); return false; }
       await reload();
       return true;
+    } catch { setError('Network error. Please try again.'); return false; }
+  }
+  async function save(v: { name: string; ids: string[] }) {
+    if (!editing) return false;
+    setBusy(true);
+    try {
+      const ok = await send(editing.id ? `/api/meetings/groups/${editing.id}` : '/api/meetings/groups', editing.id ? 'PATCH' : 'POST', { name: v.name, member_ids: v.ids });
+      if (ok) setEditing(null);
+      return ok;
     } finally { setBusy(false); }
   }
   async function remove(g: Group) {
     if (!(await confirmHold({ title: `Delete “${g.name}”?`, message: 'Meetings already scheduled for this team keep their invited people.', confirmLabel: 'Hold to delete' }))) return;
-    await fetch(`/api/meetings/groups/${g.id}`, { method: 'DELETE' });
-    reload();
+    await send(`/api/meetings/groups/${g.id}`, 'DELETE');
   }
+  // One person on or off a team without opening the editor.
+  async function setMember(g: Group, personId: string, on: boolean) {
+    const ids = on ? [...new Set([...g.member_ids, personId])] : g.member_ids.filter((x) => x !== personId);
+    if (ids.length === 0) { setError('A team needs at least one person. Delete the team instead.'); return; }
+    await send(`/api/meetings/groups/${g.id}`, 'PATCH', { member_ids: ids });
+  }
+
+  const people = (team ?? []).filter((p) => !p.alumni);
+  const byId = new Map((team ?? []).map((p) => [p.id, p]));
+  const teamsOf = (id: string) => (groups ?? []).filter((g) => g.member_ids.includes(id));
+  const q = query.trim().toLowerCase();
+  const shownTeams = (groups ?? []).filter((g) => !q || g.name.toLowerCase().includes(q) || g.member_ids.some((id) => (byId.get(id)?.name ?? '').toLowerCase().includes(q)));
+  const withoutTeam = people.filter((p) => teamsOf(p.id).length === 0);
+  const shownPeople = people.filter((p) => (!q || p.name.toLowerCase().includes(q)) && (!onlyNone || teamsOf(p.id).length === 0));
+  const switchView = (v: 'teams' | 'people') => syncTab('team', v === 'people' ? 'people' : null);
 
   return (
     <div className={styles.stack}>
       <div className={styles.toolbar}>
-        <p className={styles.muted}>{canEdit ? 'Teams to invite to a meeting in one go.' : 'The teams leads and exec invite in one go. You can look but not change them.'}</p>
+        <p className={styles.muted}>{canEdit ? 'Put people on teams here; a team can also be invited to a meeting in one go.' : 'The teams leads and exec use. You can look but not change them.'}</p>
         {canEdit && !editing && <Button size="sm" onClick={() => setEditing({ id: null, name: '', ids: [] })}><Plus size={14} aria-hidden="true" /> New team</Button>}
       </div>
 
       {editing && <TeamEditor key={editing.id ?? 'new'} initial={editing} team={team} busy={busy} error={error} onSave={save} onClose={() => { setEditing(null); setError(''); }} />}
+      {error && !editing && <Notice tone="error">{error}</Notice>}
+
+      {!editing && groups && groups.length > 0 && (
+        <div className={styles.teamTools}>
+          <SectionTabs value={view} onChange={switchView} tabs={[{ id: 'teams', label: 'By team' }, { id: 'people', label: 'By person' }]} />
+          <Input className={styles.teamSearch} value={query} onChange={(e) => setQuery(e.target.value)} placeholder={view === 'teams' ? 'Search teams or people…' : 'Search people…'} aria-label="Search" />
+        </div>
+      )}
 
       {!groups ? <LoadingSpinner size={28} label="Loading teams…" theme="auto" /> : groups.length === 0 && !editing ? (
         <div className={styles.card}><p className={styles.muted}>No teams yet.</p></div>
-      ) : (
+      ) : editing ? null : view === 'teams' ? (
         <ul className={styles.meetingList}>
-          {groups.map((g) => (
-            <li key={g.id} className={styles.meetingCard}>
-              <div className={styles.meetingMain}>
-                <div className={styles.meetingInfo}>
+          {shownTeams.length === 0 && <li className={styles.faint}>No team or person matches that.</li>}
+          {shownTeams.map((g) => {
+            const may = mayChange(g);
+            const free = people.filter((p) => !g.member_ids.includes(p.id));
+            const pickQ = adding === g.id ? query.trim().toLowerCase() : '';
+            return (
+              <li key={g.id} className={`${styles.meetingCard} ${styles.teamCard}`}>
+                <div className={styles.teamHead}>
                   <strong>{g.name} <span className={styles.muted}>· {g.member_ids.length} {g.member_ids.length === 1 ? 'person' : 'people'}</span></strong>
-                  {open.has(g.id)
-                    ? <ul className={styles.teamPeople}>{g.member_ids.map((id) => <li key={id}>{nameOf(id)}</li>)}</ul>
-                    : <span className={styles.muted}>{g.member_ids.slice(0, 6).map(nameOf).join(', ')}{g.member_ids.length > 6 ? ` +${g.member_ids.length - 6} more` : ''}</span>}
-                  {g.member_ids.length > 6 && (
-                    <button type="button" className={styles.linkBtn} aria-expanded={open.has(g.id)} onClick={() => setOpen((prev) => { const n = new Set(prev); if (n.has(g.id)) n.delete(g.id); else n.add(g.id); return n; })}>
-                      {open.has(g.id) ? 'Show fewer' : `Show all ${g.member_ids.length}`}
-                    </button>
-                  )}
+                  {may ? (
+                    <span className={styles.teamActions}>
+                      <Button size="sm" variant="secondary" onClick={() => setAdding(adding === g.id ? null : g.id)} aria-expanded={adding === g.id}><UserPlus size={14} aria-hidden="true" /> Add person</Button>
+                      <IconButton kind="edit" label={`Rename or edit ${g.name}`} onClick={() => { setEditing({ id: g.id, name: g.name, ids: [...g.member_ids] }); setError(''); }} />
+                      <IconButton kind="delete" label={`Delete ${g.name}`} onClick={() => remove(g)} />
+                    </span>
+                  ) : canEdit ? <span className={styles.faint}>made by someone else</span> : null}
                 </div>
-                {!canEdit ? null : (canManageAll || g.created_by === userId) ? (
-                  <>
-                    <IconButton kind="edit" label={`Edit ${g.name}`} onClick={() => { setEditing({ id: g.id, name: g.name, ids: [...g.member_ids] }); setError(''); }} />
-                    <IconButton kind="delete" label={`Delete ${g.name}`} onClick={() => remove(g)} />
-                  </>
-                ) : <span className={styles.faint}>made by someone else</span>}
-              </div>
-            </li>
-          ))}
+                <ul className={styles.memberChips}>
+                  {g.member_ids.map((id) => {
+                    const p = byId.get(id);
+                    return (
+                      <li key={id} className={styles.memberChip}>
+                        {p ? <Avatar p={p} /> : null}
+                        <span>{p?.name ?? 'Someone'}</span>
+                        {may && <button type="button" className={styles.chipX} aria-label={`Take ${p?.name ?? 'them'} off ${g.name}`} onClick={() => setMember(g, id, false)}>×</button>}
+                      </li>
+                    );
+                  })}
+                </ul>
+                {adding === g.id && (
+                  <div className={styles.quickAdd}>
+                    <span className={styles.faint}>Tap a person to add them{pickQ ? '' : ' (search above to narrow the list)'}:</span>
+                    <ul className={styles.quickList}>
+                      {free.filter((p) => !pickQ || p.name.toLowerCase().includes(pickQ)).slice(0, 40).map((p) => (
+                        <li key={p.id}><button type="button" className={styles.quickPick} onClick={() => setMember(g, p.id, true)}><Avatar p={p} /><span>{p.name}</span><Plus size={13} aria-hidden="true" /></button></li>
+                      ))}
+                      {free.length === 0 && <li className={styles.faint}>Everyone is already on this team.</li>}
+                    </ul>
+                  </div>
+                )}
+              </li>
+            );
+          })}
         </ul>
+      ) : (
+        <>
+          <label className={styles.onlyNone}>
+            <input type="checkbox" checked={onlyNone} onChange={(e) => setOnlyNone(e.target.checked)} /> Only people on no team yet <strong>({withoutTeam.length})</strong>
+          </label>
+          <ul className={styles.meetingList}>
+            {shownPeople.length === 0 && <li className={styles.faint}>{onlyNone && !q ? 'Everyone is on at least one team.' : 'No one matches that.'}</li>}
+            {shownPeople.map((p) => {
+              const mine = teamsOf(p.id);
+              const addable = (groups ?? []).filter((g) => mayChange(g) && !g.member_ids.includes(p.id));
+              return (
+                <li key={p.id} className={`${styles.meetingCard} ${styles.teamPersonRow}`}>
+                  <Avatar p={p} />
+                  <span className={styles.personWho}><strong>{p.name}</strong><span className={styles.faint}>{p.role}{p.inactive ? ' · inactive' : ''}</span></span>
+                  <ul className={styles.memberChips}>
+                    {mine.length === 0 && <li className={styles.noTeam}>No team yet</li>}
+                    {mine.map((g) => (
+                      <li key={g.id} className={styles.memberChip}>
+                        <span>{g.name}</span>
+                        {mayChange(g) && <button type="button" className={styles.chipX} aria-label={`Take ${p.name} off ${g.name}`} onClick={() => setMember(g, p.id, false)}>×</button>}
+                      </li>
+                    ))}
+                  </ul>
+                  {addable.length > 0 && (
+                    <Select value="" onChange={(e) => { const g = addable.find((x) => x.id === e.target.value); if (g) setMember(g, p.id, true); }} aria-label={`Add ${p.name} to a team`}>
+                      <option value="">+ Add to a team</option>
+                      {addable.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+                    </Select>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </>
       )}
     </div>
   );

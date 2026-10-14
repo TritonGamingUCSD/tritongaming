@@ -98,6 +98,8 @@ interface Props {
   transactions: TransactionRow[];
   canManageShop: boolean;
   canManagePoints: boolean;
+  /** Exec and admins who run Rewards but don't earn points themselves: no My Points or Shop tabs, opens on Tools. */
+  manageOnly?: boolean;
   initialTab?: string;
   // /portal/points/tools/items — reaches all the way into
   // the Manage tab's own sub-tab bar, not just its top-level tab.
@@ -115,7 +117,7 @@ const VALID_MANAGE_SUB_TABS: ManageSubTab[] = ['award', 'items', 'corrections', 
 export default function PointsSectionContent({
   balance, lifetimeEarned, referralCode,
   leaderboardAnonymous: initialAnonymous,
-  transactions, canManageShop, canManagePoints, tiers: initialTiers,
+  transactions, canManageShop, canManagePoints, manageOnly = false, tiers: initialTiers,
 }: Props) {
   const { tab: initialTab, subtab: initialSubTab } = useUrlNav();
   // Local state, not just the prop directly — editing a tier in the Tiers
@@ -126,7 +128,7 @@ export default function PointsSectionContent({
   const [tab, setTab] = useState<Tab>(
     VALID_TABS.includes(initialTab as Tab)
       ? (initialTab as Tab)
-      : VALID_MANAGE_SUB_TABS.includes(initialSubTab as ManageSubTab) ? 'tools' : 'mine'
+      : VALID_MANAGE_SUB_TABS.includes(initialSubTab as ManageSubTab) || manageOnly ? 'tools' : 'mine'
   );
   const [manageSubTab, setManageSubTab] = useState<ManageSubTab>(
     VALID_MANAGE_SUB_TABS.includes(initialSubTab as ManageSubTab) ? (initialSubTab as ManageSubTab) : 'award'
@@ -659,8 +661,7 @@ export default function PointsSectionContent({
         value={tab}
         onChange={selectTab}
         tabs={[
-          { id: 'mine', label: 'My Points', icon: <Award />, badge: unclaimedUnlockCount },
-          { id: 'shop', label: 'Shop', icon: <ShoppingBag /> },
+          ...(manageOnly ? [] : [{ id: 'mine' as const, label: 'My Points', icon: <Award />, badge: unclaimedUnlockCount }, { id: 'shop' as const, label: 'Shop', icon: <ShoppingBag /> }]),
           { id: 'leaderboard', label: 'Leaderboard', icon: <Trophy /> },
           ...(canManageShop ? [{ id: 'tools' as const, label: 'Tools', icon: <Settings /> }] : []),
         ]}

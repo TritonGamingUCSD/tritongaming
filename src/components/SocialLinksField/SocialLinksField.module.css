@@ -9,12 +9,12 @@
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(242,241,240,0.5);
+  color: rgba(var(--pp-ink-rgb), 0.5);
 }
 
 .hint {
   font-size: 0.78rem;
-  color: rgba(242,241,240,0.4);
+  color: rgba(var(--pp-ink-rgb), 0.4);
   margin: -0.15rem 0 0.15rem;
 }
 
@@ -28,8 +28,8 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(var(--pp-ink-rgb), 0.05);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.1);
   border-radius: 0.5rem;
   padding: 0 0.75rem;
 }
@@ -42,7 +42,7 @@
   background: none;
   border: none;
   padding: 0.625rem 0;
-  color: var(--white);
+  color: var(--pp-ink);
   font-family: var(--font-futura-medium);
   font-size: 0.9rem;
   width: 100%;

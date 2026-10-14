@@ -213,7 +213,7 @@ export default function MembersSectionContent({ rows, keysByUser = {}, teams, ca
                         text like the old grid cards did. */}
                     {view === 'list' && (
                       <div className={styles.detail}>
-                        <DotList items={[m.divisionName, m.major, m.year]} />
+                        <DotList items={[m.divisionName, m.teams?.join(', '), m.major, m.year]} />
                       </div>
                     )}
                   </div>
@@ -245,6 +245,7 @@ export default function MembersSectionContent({ rows, keysByUser = {}, teams, ca
                 year: selected.year,
                 college: selected.college,
                 divisionName: selected.divisionName,
+                teams: selected.teams?.map((name) => ({ name })),
                 emails: (selected.emails ?? []).map((e) => e.email),
                 socialLinks: selected.social_links,
                 portfolioLinks: selected.portfolio_links,

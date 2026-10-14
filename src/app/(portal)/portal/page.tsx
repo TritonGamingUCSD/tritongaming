@@ -6,7 +6,7 @@ import { Ticket, User, Camera, Calendar, Users, QrCode, Pencil, Shield, BookOpen
 import { getProfile, getUserRoles, getMyPrivateProfile, getUser, getSessionRoles, getViewAs, getViewingUser } from '@/lib/core/auth';
 import { ViewAsSwitcher, ViewAsBanner, ViewingUserBanner } from '@/components/portal/ViewAs';
 import ProfileIncompleteBanner from '@/components/portal/ProfileIncompleteBanner';
-import { hasCapability, isVerifiedMember, isRewardsEligible, requiresOrgTitle } from '@/lib/portal/capabilities';
+import { hasCapability, isVerifiedMember, isRewardsEligible, isTgMember, requiresOrgTitle } from '@/lib/portal/capabilities';
 import { resolveAvatarUrl, hasBasicProfileInfo, getMissingProfileFields } from '@/lib/members/profile';
 import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK } from '@/types/database';
 import { CONTENT_BLOCKS } from '@/lib/site/content-blocks';
@@ -119,6 +119,9 @@ export default async function PortalDashboard({ searchParams }: Props) {
   // boundary; this just keeps the section/badge from showing at all to
   // someone who'd hit a permission error the moment they tried to use it.
   const canUseRewards = isRewardsEligible(roles);
+  // Exec and admins run Rewards even though they don't earn points themselves (officers, leads and exec are not eligible), so they still get the section: just the
+  // leaderboard and the Tools tab.
+  const runsRewards = !canUseRewards && canManageRewardsShop;
   // A separate, lighter tool from the full exec/admin directory manager
   // below — gated on actually holding the 'division' role itself (not the
   // broader manage_division capability, which lead/exec/admin also hold),
@@ -210,20 +213,21 @@ export default async function PortalDashboard({ searchParams }: Props) {
       group: 'Resources',
       content: <HelpSectionContent isStaff={canHandleHelp} userId={profile.id} />,
     },
-    ...(canUseRewards && pointsData ? [{
+    ...((canUseRewards && pointsData) || runsRewards ? [{
       id: 'points', icon: <Award size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Rewards',
       description: 'Earn points for showing up, spend them on perks',
       // Members of the team have their own work to surface; Rewards is for attendees.
-      homeExclude: roles.some((r) => ['recruit', 'officer', 'lead', 'exec', 'admin'].includes(r.role)),
-      badge: pointsData.balance || undefined,
+      homeExclude: runsRewards || roles.some((r) => ['recruit', 'officer', 'lead', 'exec', 'admin'].includes(r.role)),
+      badge: pointsData?.balance || undefined,
       group: 'Yours' as const,
       content: (
         <PointsSectionContent
-          balance={pointsData.balance}
-          lifetimeEarned={pointsData.lifetimeEarned}
-          referralCode={pointsData.referralCode ?? ''}
-          leaderboardAnonymous={pointsData.leaderboardAnonymous}
-          transactions={pointsData.transactions}
+          balance={pointsData?.balance ?? 0}
+          lifetimeEarned={pointsData?.lifetimeEarned ?? 0}
+          referralCode={pointsData?.referralCode ?? ''}
+          leaderboardAnonymous={pointsData?.leaderboardAnonymous ?? false}
+          transactions={pointsData?.transactions ?? []}
+          manageOnly={runsRewards}
           canManageShop={canManageRewardsShop}
           canManagePoints={canManagePoints}
           initialTab={requestedTab}
@@ -462,6 +466,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             meant they never got the reminder. PortalTopSection owns matching
             its width to the hub grid below it. */}
         <PortalTopSection
+          plain={!isTgMember(roles)}
           welcome={<DashboardWelcome eyebrow={homeEyebrow} name={profile.display_name?.split(' ')[0] || 'Triton'} />}
           body={<DashboardBody event={homeEvent} note={homeNote} tools={homeTools} activity={homeActivity} showRoleAsk={!isTeamMember} />}
           desktop={{ greeting: greetingLine, tiles: tilesNode, viewAs: viewAsNode, banners: frameBanners }}

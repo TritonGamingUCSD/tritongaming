@@ -9,7 +9,7 @@
   font-family: var(--font-renegare);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(var(--pp-ink-rgb), 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.72);
 }
 
 .input { composes: control from '../ui/Field.module.css'; }
@@ -18,7 +18,7 @@
 .hint {
   font-size: 0.72rem;
   font-family: var(--font-futura-medium);
-  color: rgba(var(--pp-ink-rgb), 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.72);
 }
 
 .albumList {
@@ -47,7 +47,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: rgba(var(--pp-ink-rgb), 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.72);
   cursor: grab;
   touch-action: none;
 }
@@ -65,7 +65,7 @@
 
 .albumUrl {
   font-size: 0.78rem;
-  color: rgba(var(--pp-ink-rgb), 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.72);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

@@ -997,7 +997,7 @@
     left: 0; right: 0; bottom: 0; gap: 0.1rem; padding: 0.4rem 0.5rem calc(0.4rem + env(safe-area-inset-bottom, 0px));
     background: var(--pp-card); border: 0; border-top: 2px solid var(--pp-ink); border-radius: 0; box-shadow: 0 -8px 18px -12px rgba(0, 0, 0, 0.35);
   }
-  .dockItem { min-height: 54px; justify-content: center; gap: 0.18rem; padding: 0.15rem 0; color: rgba(var(--pp-ink-rgb), 0.66); border-radius: 10px; }
+  .dockItem { min-height: 54px; justify-content: center; gap: 0.18rem; padding: 0.15rem 0; color: rgba(var(--pp-ink-rgb), 0.84); border-radius: 10px; }
   .dockIcon { width: 52px; height: 30px; border-radius: 999px; }
   .dockLabel { font-family: var(--font-futura-medium); font-size: 0.7rem; letter-spacing: 0; text-transform: none; line-height: 1.1; }
   .dockItemActive { color: var(--pp-ink); }

@@ -68,7 +68,7 @@ export function DashboardBody({ event, note, tools, activity, showRoleAsk = fals
       </div>
 
       {tools.length > 0 && (
-        <section aria-label="Your tools">
+        <section aria-label="Your tools" className={styles.toolsSection}>
           <h2 className={styles.h}>Your tools</h2>
           {hasOfficer && hasEveryone && <p className={styles.legend}>Paper is for every member · Glass is for officers</p>}
           <div className={styles.tools}>

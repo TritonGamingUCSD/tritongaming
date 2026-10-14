@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { THEME_SCRIPT } from '@/lib/portal/themeScript';
 import './portal-controls.css';
 import { getProfile, getViewingUser } from '@/lib/core/auth';
 import { PortalIdentityProvider } from '@/components/portal/PortalIdentity';
@@ -14,13 +15,12 @@ export const metadata: Metadata = {
 };
 
 export default async function PortalGroupLayout({ children }: { children: React.ReactNode }) {
-  // Applies the saved light/dark choice before first paint (no flash). With none saved, the CSS follows the device.
-  const themeScript = `try{var t=localStorage.getItem('tg_portal_theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-pp-theme',t)}catch(e){}`;
+  // The light/dark choice is settled before first paint by this script (lib/portal/themeScript.ts).
   const [profile, viewing] = await Promise.all([getProfile().catch(() => null), getViewingUser().catch(() => null)]);
   const content = profile ? <PortalIdentityProvider id={profile.id} name={profile.display_name || profile.google_first_name || 'Someone'} track={!viewing}>{children}</PortalIdentityProvider> : children;
   return (
     <>
-      <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       <div className="pp-root" style={{ display: 'contents' }}>{content}</div>
     </>
   );

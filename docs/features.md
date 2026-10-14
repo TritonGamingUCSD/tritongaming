@@ -1,5 +1,7 @@
 # Features reference
 
+Who may do what is in [roles-and-capabilities.md](roles-and-capabilities.md).
+
 How the main pieces work and where the code is. Each section names the files so you can start reading in the right place.
 
 ## Meetings (live screen)
@@ -9,6 +11,15 @@ Code: `src/app/(portal)/portal/meetings`, `src/app/api/meetings`, `src/lib/meeti
 - The projector screen (`api/meetings/[id]/live`) refreshes when the server sends a signal (`notifyMeetingLive`, called after a check-in, answer, reaction or excuse) and every 30 seconds as a backstop. Only reactions newer than a cursor are returned; totals come every eighth refresh.
 - People answering a poll or rating watch the results move the same way.
 - The availability grid blocks times a person already has: meetings meant for them or hosted by them and events they have a ticket for (`lib/meetings/busyItems.ts`).
+
+## Teams (TG Members → Team)
+
+Code: `TeamsPanel` in `src/app/(portal)/portal/meetings/MeetingsSectionContent.tsx`, `src/app/api/meetings/groups`, table `meeting_groups`.
+
+- A team is a name and a list of people (`meeting_groups.member_ids`). It is also what a meeting, plan or event can be sent to, so there is one list, not two.
+- **By team** shows each team with everyone on it as removable chips and an “Add person” box; **By person** shows each officer, lead and exec with their teams, a “no team yet” filter, and a “+ Add to a team” picker. The view is in the address (`/portal/members/team/people`).
+- Changes use the same update route as the editor, so people added to a team are told about the meetings and plans the team was chosen for (`lib/meetings/groupChanges.ts`).
+- Each person's teams are loaded with the roster (`getMembersData`) and shown as chips on their TG Members card (`MemberCardBody`, `teams`). The public Team page never passes them.
 
 ## Documentation
 

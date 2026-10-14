@@ -53,7 +53,7 @@ export async function GET(request: Request) {
     can('view_division_members') || can('manage_division')
       ? supabase.from('divisions').select('id, name, slug, description').or(`name.ilike.${like},description.ilike.${like}`).limit(LIMIT_PER_CATEGORY)
       : none,
-    isRewardsEligible(roles)
+    isRewardsEligible(roles) || can('manage_rewards_shop')
       ? supabase.from('reward_items').select('id, title, point_cost').eq('active', true).or(`title.ilike.${like},description.ilike.${like}`).limit(LIMIT_PER_CATEGORY)
       : none,
     supabase.from('tickets').select('id, event:events!inner(title, start_date)').eq('user_id', user.id).ilike('event.title', like).limit(LIMIT_PER_CATEGORY),
