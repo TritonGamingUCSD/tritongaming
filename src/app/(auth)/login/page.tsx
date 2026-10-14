@@ -60,7 +60,6 @@ export default async function LoginPage({
 
         <p className={styles.prompt}>Sign in to access events, tickets and the team’s tools.</p>
         <p className={styles.about}>The member portal for Gaming Org at UC San Diego. Looking for the public site? <Link href="/">Go to the website</Link>.</p>
-        <p className={styles.ucsdHint}>UCSD student? Use the main button and pick your @ucsd.edu account to get verified access. Guests at public events can use the other option.</p>
 
         <LoginClient next={params.next} />
 

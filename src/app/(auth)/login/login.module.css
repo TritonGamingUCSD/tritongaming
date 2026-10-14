@@ -120,10 +120,14 @@
 .googleBtn:disabled { opacity: 0.75; cursor: not-allowed; }
 @media (prefers-reduced-motion: reduce) { .googleBtn { transition: none; } }
 
-.guestBtn { display: block; width: 100%; margin-top: 0.7rem; padding: 0.55rem 1rem; border: 0; background: transparent; color: rgba(var(--pp-ink-rgb), 0.9); font: inherit; font-size: 0.82rem; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
-.guestBtn:hover:not(:disabled) { color: var(--pp-ink); }
-.guestBtn:focus-visible { outline: 3px solid var(--p-accent-text); outline-offset: 2px; border-radius: 6px; }
-.guestBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+.who { margin: 0 0 0.45rem; font-size: 0.85rem; color: rgba(var(--pp-ink-rgb), 0.9); }
+.who strong { font-family: var(--font-futura-heavy); font-weight: 400; letter-spacing: 0.04em; text-transform: uppercase; color: var(--pp-ink); }
+.whoGuest { margin-top: 1.4rem; }
+.guestBtn { display: flex; align-items: center; justify-content: center; gap: 0.75rem; width: 100%; min-height: 52px; padding: 0.75rem 1.25rem; background: var(--pp-card); color: var(--pp-ink); border: 2px solid var(--pp-ink); border-radius: 8px; font-family: var(--font-futura-heavy); font-size: 0.85rem; letter-spacing: 0.04em; text-transform: uppercase; cursor: pointer; }
+.guestBtn:hover:not(:disabled) { background: rgba(var(--pp-ink-rgb), 0.07); }
+.guestBtn:focus-visible { outline: 3px solid var(--p-accent-text); outline-offset: 3px; }
+.guestBtn:disabled { opacity: 0.7; cursor: not-allowed; }
+.spinnerDark { border-color: rgba(var(--pp-ink-rgb), 0.25); border-top-color: var(--pp-ink); }
 
 .googleIcon { width: 20px; height: 20px; flex-shrink: 0; }
 
