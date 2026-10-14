@@ -47,8 +47,6 @@ export function audienceLabel(m: MeetingAudience & { groupNames?: string[] }): s
   if (m.invitees?.length) parts.push(`${m.invitees.length} added ${m.invitees.length === 1 ? 'person' : 'people'}`);
   return parts.join(' + ') || 'Everyone';
 }
-// Is it something other than the plain "everyone on the team" default?
-export const isCustomAudience = (m: MeetingAudience) => hasExtras(m) || !!(m.audience && m.audience.length);
 
 // Is this person someone the meeting EXPECTS? (Counts toward its attendance.)
 export function isExpected(m: MeetingAudience, userId: string, roles: { role: string }[]): boolean {

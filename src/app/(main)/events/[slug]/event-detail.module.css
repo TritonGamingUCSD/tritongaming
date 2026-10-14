@@ -46,7 +46,6 @@ a.stickerCredit:hover, a.stickerCredit:focus-visible { text-decoration: underlin
 .stubRight small { font-size: 0.62rem; letter-spacing: 0.08em; opacity: 0.8; margin-top: 0.15rem; }
 .ticketBtn::before, .ticketBtn::after { content: ''; position: absolute; left: calc(2.7rem - 0.45rem); width: 0.9rem; height: 0.9rem; border-radius: 50%; background: var(--ev-bg); border: 3px solid var(--ev-on-accent); }
 .ticketBtn::before { top: -0.62rem; } .ticketBtn::after { bottom: -0.62rem; }
-.calBtn { color: var(--ev-text) !important; border: 2px solid var(--ev-text) !important; border-radius: 0 !important; background: color-mix(in srgb, var(--ev-bg) 60%, transparent) !important; font-family: var(--font-renegare) !important; font-size: 0.72rem !important; letter-spacing: 0.1em !important; text-transform: uppercase; }
 .back { text-shadow: none; }
 .pointsNote { margin: 0; display: inline-flex; align-items: center; gap: 0.4rem; font-family: var(--font-renegare); font-size: 1.2rem; color: var(--ev-text); }
 

@@ -13,7 +13,6 @@
     "test:permissions": "node scripts/permissions-check.mjs",
     "backup:db": "node scripts/backup-db.mjs",
     "test:plans": "node scripts/plans-check.mjs",
-    "test:keys": "node scripts/keys-check.mjs",
     "test:strikes": "node scripts/strikes-check.mjs",
     "test:quarters": "node scripts/quarters-check.mjs",
     "test:teamyears": "node scripts/teamyears-check.mjs",

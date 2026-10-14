@@ -35,15 +35,6 @@
 .catHeader:hover { color: var(--pp-ink); }
 .catName { flex: 1; font-family: var(--font-futura-heavy); font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; }
 .catCount { font-size: 0.68rem; padding: 0.05rem 0.45rem; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.07); color: rgba(var(--pp-ink-rgb), 0.88); white-space: nowrap; }
-.navItem {
-  display: flex; align-items: center; gap: 0.5rem; width: 100%; text-align: left;
-  padding: 0.42rem 0.6rem; border-radius: 0.6rem; background: none; border: none; cursor: pointer;
-  font-family: var(--font-futura-medium); font-size: 0.85rem; color: rgba(var(--pp-ink-rgb), 0.90);
-}
-.navItem svg { flex-shrink: 0; opacity: 0.55; }
-.navItem:hover { background: rgba(var(--pp-ink-rgb), 0.05); }
-.navChild { padding-left: 2rem; font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.87); }
-.navActive { background: rgba(125, 180, 234, 0.13) !important; color: var(--pp-ink) !important; box-shadow: inset 3px 0 0 var(--p-accent); }
 
 .results { display: flex; flex-direction: column; gap: 0.2rem; }
 
@@ -244,7 +235,6 @@
 .titleRow { display: flex; align-items: center; gap: 0.6rem; }
 .titleInput { flex: 1; min-width: 0; padding: 0.4rem 0; border: 0; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.30); background: none; color: var(--pp-ink); font-family: var(--font-futura-heavy); font-size: clamp(1.4rem, 3vw, 2rem); }
 .titleInput:focus { outline: none; border-bottom-color: var(--p-accent); }
-.iconBtn2 { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 0.9rem; border: 1px dashed rgba(var(--pp-ink-rgb), 0.48); background: rgba(var(--pp-ink-rgb), 0.04); font-size: 1.6rem; cursor: pointer; }
 .metaRow { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem; }
 .metaField { display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
 .tagEdit { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; min-height: 42px; padding: 0.3rem 0.5rem; border-radius: var(--radius-sm, 0.5rem); border: 1px solid rgba(var(--pp-ink-rgb), 0.23); background: rgba(var(--pp-ink-rgb), 0.05); }

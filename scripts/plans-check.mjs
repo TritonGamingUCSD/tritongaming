@@ -85,7 +85,6 @@ try{
  const ser=await host.call('POST','/api/meetings/schedule',{title:'Mtg Ends Test',repeat:'weekly',weekday:wd,start:'09:00',end:'10:00',ends_on:day(9),audience:[],group_ids:[],invitees:[A.id]}); ok('weekly meeting with a last day',ser.s===201,JSON.stringify(ser.j));
  r=await host.call('POST','/api/meetings/schedule',{title:'Mtg Ends Test',repeat:'weekly',weekday:wd,start:'09:00',end:'10:00',ends_on:day(-3),audience:[],group_ids:[],invitees:[A.id]}); ok('a last day in the past is refused',r.s===400,JSON.stringify(r.j));
  r=await host.call('GET','/api/meetings/schedule'); const mine=r.j.upcoming.filter(x=>x.series_id===ser.j.id); ok('no occurrences after the last day',mine.length>=1&&mine.every(x=>x.date<=day(9)),JSON.stringify(mine.map(x=>x.date)));
- r=await A.call('GET',`/api/calendar?from=${day(0)}&to=${day(60)}`); const cal=(r.j.items??[]).filter(x=>x.title==='Mtg Ends Test'); ok('calendar stops at the last day',cal.length>=1&&cal.every(x=>x.date<=day(9)),JSON.stringify(cal.map(x=>x.date)));
  r=await host.call('PATCH',`/api/meetings/series/${ser.j.id}`,{ends_on:null}); const {data:cleared}=await svc.from('meeting_series').select('ends_on').eq('id',ser.j.id).single(); ok('clearing the last day removes it',r.s===200&&cleared.ends_on===null,JSON.stringify(cleared));
  await svc.from('meeting_series').delete().eq('id',ser.j.id);
  // someone added to a saved group later is asked to everything the group was chosen for
@@ -94,16 +93,15 @@ try{
  const gAud={audience:[],invitees:[D.id],group_ids:[gid]};
  const gm=await host.call('POST','/api/meetings/schedule',{title:'Mtg Group Meeting',repeat:'once',date:day(2),start:'10:00',end:'11:00',...gAud}); ok('meeting for a group',gm.s===201,JSON.stringify(gm.j));
  const gp=await host.call('POST','/api/meeting-plans',{kind:'weekly',title:'Mtg Group Plan',duration_min:60,window_start:'17:00',window_end:'20:00',...gAud}); ok('plan for a group',gp.s===201,JSON.stringify(gp.j));
- const ge=await host.call('POST','/api/internal-events',{title:'Mtg Group Event',date:day(2),start:'12:00',end:'13:00',...gAud}); ok('internal event for a group',ge.s===201,JSON.stringify(ge.j));
  await svc.from('notifications').delete().in('user_id',[A.id,B.id,C.id,D.id]);
  r=await host.call('PATCH',`/api/meetings/groups/${gid}`,{member_ids:[A.id,B.id,C.id,D.id]}); ok('group updated',r.s===200,JSON.stringify(r.j));
  const gn=async(u)=>((await svc.from('notifications').select('title').eq('user_id',u).ilike('title','%Mtg Group%')).data??[]).map(x=>x.title).sort();
  const nb=await gn(B.id), na=await gn(A.id), nd=await gn(D.id);
- ok('new member told about the meeting, the event and the plan',nb.length===3&&nb.some(t=>t.includes('Meeting'))&&nb.some(t=>t.includes('Event'))&&nb.some(t=>t.includes('Plan')),JSON.stringify(nb));
+ ok('new member told about the meeting and the plan',nb.length===2&&nb.some(t=>t.includes('Meeting'))&&nb.some(t=>t.includes('Plan')),JSON.stringify(nb));
  ok('existing member not told again',na.length===0,JSON.stringify(na));
  ok('person already invited directly not told twice',nd.length===0,JSON.stringify(nd));
- r=await host.call('PATCH',`/api/meetings/groups/${gid}`,{member_ids:[A.id,B.id,C.id,D.id]}); const nb2=await gn(B.id); ok('saving again with no new people sends nothing more',nb2.length===3,JSON.stringify(nb2));
- await host.call('DELETE',`/api/meeting-plans/${gp.j.id}`); await svc.from('meetings').delete().eq('id',gm.j.id); await svc.from('internal_events').delete().eq('id',ge.j.id); await host.call('DELETE',`/api/meetings/groups/${gid}`);
+ r=await host.call('PATCH',`/api/meetings/groups/${gid}`,{member_ids:[A.id,B.id,C.id,D.id]}); const nb2=await gn(B.id); ok('saving again with no new people sends nothing more',nb2.length===2,JSON.stringify(nb2));
+ await host.call('DELETE',`/api/meeting-plans/${gp.j.id}`); await svc.from('meetings').delete().eq('id',gm.j.id); await host.call('DELETE',`/api/meetings/groups/${gid}`);
  // reminders after 24h
  await svc.from('meeting_plans').update({created_at:new Date(Date.now()-30*3600e3).toISOString()}).eq('id',pid);
  const {sendPlanReminders}=await import('/Users/jasperhuang/Repositories/tritongaming/src/lib/meetings/meetingPlanServer.ts').catch(()=>({}));

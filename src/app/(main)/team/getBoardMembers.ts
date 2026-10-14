@@ -71,7 +71,7 @@ interface BoardProfileRow {
 export function getBoardMembers(): Promise<BoardMember[]> {
   // Cached and shared between visitors; board-order / profile saves call
   // revalidateTag('board'). Errors throw inside so an empty board is never cached.
-  return unstable_cache(fetchBoardMembers, ['board-members'], { revalidate: 300, tags: ['board'] })().catch(() => []);
+  return unstable_cache(fetchBoardMembers, ['board-members'], { revalidate: 3600, tags: ['board'] })().catch(() => []);
 }
 
 async function fetchBoardMembers(): Promise<BoardMember[]> {

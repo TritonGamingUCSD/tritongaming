@@ -34,8 +34,3 @@ export async function getDocsSummary(canEdit: boolean): Promise<{ count: number;
   const p = pinned?.[0];
   return { count: n ?? 0, pinned: p ? { id: p.id as string, title: p.title as string } : null };
 }
-
-export async function getAlbumCount(): Promise<number> {
-  const { count } = await (await createClient()).from('photo_albums').select('id', { count: 'exact', head: true });
-  return count ?? 0;
-}

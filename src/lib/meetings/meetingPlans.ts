@@ -85,14 +85,14 @@ export function cleanSlots(raw: unknown, days: string[], starts: string[]): Plan
 }
 
 export interface Person { id: string; name: string }
-export interface BestTime { /** True for every time tied for the very best score. */ top?: boolean; day: string; start: string; available: Person[]; ifNeeded: Person[]; unavailable: Person[]; noResponse: Person[]; /** Of those unavailable: who has something on their calendar then (host only). */ blocked: { person: Person; titles: string[] }[] }
+export interface BestTime { /** True for every time tied for the very best score. */ top?: boolean; day: string; start: string; available: Person[]; ifNeeded: Person[]; unavailable: Person[]; noResponse: Person[]; /** Of those unavailable: who already has a meeting or event then (host only). */ blocked: { person: Person; titles: string[] }[] }
 
 // Every possible start time, scored for the people who have answered (people who haven't answered are listed but don't count against it).
 export function evaluateStart(day: string, start: string, durationMin: number, people: Person[], responses: Record<string, PlanSlots>, blocked?: Record<string, BusyBlock[]>): BestTime {
   const t: BestTime = { day, start, available: [], ifNeeded: [], unavailable: [], noResponse: [], blocked: [] };
   const covered = new Set(coveredSlots(start, durationMin));
   for (const p of people) {
-    // Something already on their calendar then: unavailable for sure (even if they haven't answered).
+    // A meeting or event already then: unavailable for sure (even if they haven't answered).
     const titles = [...new Set((blocked?.[p.id] ?? []).filter((b) => b.day === day && [...covered].some((s) => toMin(s) < toMin(b.end) && toMin(s) + SLOT_MIN > toMin(b.start))).map((b) => b.title))];
     if (titles.length) { t.blocked.push({ person: p, titles }); t.unavailable.push(p); continue; }
     const r = responses[p.id];
@@ -104,7 +104,7 @@ export function evaluateStart(day: string, start: string, durationMin: number, p
 }
 
 // The best few times: fewest people unavailable first, then most fully available, then earliest.
-// A person blocked by their calendar counts double against a time (they are unavailable for sure, not just by choice).
+// A person already booked counts double against a time (they are unavailable for sure, not just by choice).
 export const penalty = (t: BestTime) => t.unavailable.length + t.blocked.length;
 export function bestTimes(plan: PlanShape, days: string[], people: Person[], responses: Record<string, PlanSlots>, limit = 3, blocked?: Record<string, BusyBlock[]>): BestTime[] {
   const all: BestTime[] = [];
@@ -173,13 +173,13 @@ export interface PlanView {
   groupNames: string[];
   /** Can the host still take the decision back? */
   canReopen: boolean;
-  /** For the host: what is on each person's Triton Gaming calendar (as of their last save), used to rank times. */
+  /** For the host: what each person already has then (meetings, events; as of their last save), used to rank times. */
   blocked: Record<string, BusyBlock[]>;
-  /** Times already taken on MY Triton Gaming calendar (meetings, events I'm going to): unavailable for sure. */
+  /** Times already taken for ME (meetings, events I have a ticket for): unavailable for sure. */
   busy: BusyBlock[];
 }
 
-// Something already on a person's calendar. `day` is a date (one-time plan) or a weekday 0-6 (weekly plan); times are Pacific HH:MM.
+// Something a person already has (a meeting or an event with a ticket). `day` is a date (one-time plan) or a weekday 0-6 (weekly plan); times are Pacific HH:MM.
 export interface BusyBlock { day: string; start: string; end: string; title: string; /** Why it is blocked, in plain words. */ why: string }
 
 // The slots (by start time) that these blocks take on a day, with what is on at that time.

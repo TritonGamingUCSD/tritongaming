@@ -122,7 +122,7 @@
 .warnText { color: var(--pp-warn) !important; }
 .whoAnswered { font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.89); line-height: 1.5; }
 
-/* times already on my Triton Gaming calendar */
+/* times already taken (my meetings and events) */
 .cellBusy { cursor: not-allowed; background: repeating-linear-gradient(135deg, rgba(148, 163, 184, 0.28), rgba(148, 163, 184, 0.28) 4px, rgba(148, 163, 184, 0.08) 4px, rgba(148, 163, 184, 0.08) 8px) !important; }
 .cellBusy:hover { background: repeating-linear-gradient(135deg, rgba(148, 163, 184, 0.28), rgba(148, 163, 184, 0.28) 4px, rgba(148, 163, 184, 0.08) 4px, rgba(148, 163, 184, 0.08) 8px) !important; }
 

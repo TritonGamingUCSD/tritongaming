@@ -6,7 +6,7 @@ import { VIEW_USER_COOKIE } from '@/lib/portal/viewAs';
 // before it reaches any route. (The cookie is only honoured for a real admin; for anyone else a copied cookie just blocks their own edits.)
 const READ_ONLY_OK = ['/api/admin/view-as-user', '/api/admin/view-as', '/api/auth/'];
 
-const NEEDS_SESSION = ['/portal', '/login', '/api', '/auth', '/print'];
+const NEEDS_SESSION = ['/portal', '/login', '/api', '/auth'];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -19,8 +19,9 @@ export async function proxy(request: NextRequest) {
   return await updateSession(request);
 }
 
+// The proxy is a server function that runs before a request is answered, and on the free Vercel plan every run counts against the CPU time and the
+// invocation limits. So it is only attached to the paths that need it (the portal, sign-in and the APIs); every public page, picture and file
+// is served without running it at all. Keep this list in step with NEEDS_SESSION above.
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|mp4|pdf|otf|ttf)$).*)',
-  ],
+  matcher: ['/portal/:path*', '/login', '/auth/:path*', '/api/:path*'],
 };

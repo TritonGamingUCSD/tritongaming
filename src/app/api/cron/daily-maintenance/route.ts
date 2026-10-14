@@ -1,33 +1,41 @@
 import { NextResponse } from 'next/server';
-import { GET as cleanupNotifications } from '../cleanup-notifications/route';
-import { GET as quarterSync } from '../quarter-sync/route';
-import { GET as teamSync } from '../team-sync/route';
-import { GET as storageMaintenance } from '../storage-maintenance/route';
+import { cronDevOk, cronSecretOk } from '@/lib/core/cronAuth';
+import { createServiceClient } from '@/lib/supabase/admin';
+import { cleanupNotifications } from '@/lib/notifications/notificationCleanup';
+import { syncInactive } from '@/lib/members/quarters';
+import { runTeamSync } from '@/lib/members/teamYears';
+import { runStorageMaintenance } from '@/lib/storage/storageMaintenance';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
-// The one scheduled job for housekeeping (see vercel.json; the free Vercel plan allows two jobs, each at most once a day). Every day: tidy old
-// notifications and bring the quarter and team-year records in line with the calendar. On Sundays also: remove stored files nothing uses.
-// A failure in one step never stops the others. The separate routes still work on their own.
+// The one scheduled job for housekeeping (see vercel.json; the free Vercel plan allows two jobs, each at most once a day), called with
+// `Authorization: Bearer $CRON_SECRET`. Every day: delete old notifications (read ones after 30 days, anything after 90), start a new quarter's
+// inactive markers when the quarter changes, and record today's team roster (archive years whose Spring has ended and, when an admin has turned it
+// on, move graduates to Alumni). On Sundays also: remove stored files nothing uses and re-save pictures smaller.
+// `?only=notifications|quarters|teams|storage` runs just that step (`?storage=1` adds storage on another day). A failure in one step never stops the
+// others. On a dev machine `x-cron-dev: 1` may run only the quarters and teams steps, which are safe at any time.
+const SAFE_ANY_TIME = ['quarters', 'teams'];
+
 export async function GET(request: Request) {
-  const steps: [string, (r: Request) => Promise<Response>][] = [
-    ['notifications', cleanupNotifications],
-    ['quarters', quarterSync],
-    ['teams', teamSync],
+  const url = new URL(request.url);
+  const only = url.searchParams.get('only');
+  const secret = cronSecretOk(request);
+  if (!secret && !(cronDevOk(request) && only && SAFE_ANY_TIME.includes(only))) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const svc = createServiceClient();
+  const steps: [string, () => Promise<unknown>][] = [
+    ['notifications', () => cleanupNotifications(svc)],
+    ['quarters', async () => { const r = await syncInactive(svc); return { added: r.added.length, removed: r.removed.length, quarter: r.quarter }; }],
+    ['teams', () => runTeamSync(svc)],
   ];
-  if (new Date().getUTCDay() === 0 || new URL(request.url).searchParams.get('storage') === '1') steps.push(['storage', storageMaintenance]);
+  if (new Date().getUTCDay() === 0 || url.searchParams.get('storage') === '1' || only === 'storage') steps.push(['storage', () => runStorageMaintenance(svc)]);
+
   const out: Record<string, unknown> = {};
-  for (const [name, job] of steps) {
-    try {
-      const res = await job(request);
-      if (res.status === 401) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      out[name] = res.ok ? await res.json() : { error: res.status };
-    } catch (e) {
-      console.error(`[cron] ${name} failed:`, e);
-      out[name] = { error: 'failed' };
-    }
+  for (const [name, run] of steps) {
+    if (only && only !== name) continue;
+    try { out[name] = await run(); } catch (e) { console.error(`[cron] ${name} failed:`, e); out[name] = { error: 'failed' }; }
   }
   return NextResponse.json(out);
 }

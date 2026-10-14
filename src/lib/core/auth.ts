@@ -1,7 +1,7 @@
 import { createClient, createRealClient } from '@/lib/supabase/server';
-import type { Profile, Capability } from '@/types/database';
+import type { Profile } from '@/types/database';
 import { cookies } from 'next/headers';
-import { hasCapability, withGrantedCapabilities, type RoleGrant } from '@/lib/portal/capabilities';
+import { withGrantedCapabilities, type RoleGrant } from '@/lib/portal/capabilities';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { loadGrantedCapabilities } from '@/lib/portal/grantedCapabilities';
 import { cache } from 'react';
@@ -137,25 +137,5 @@ export const getUserRoles = cache(async (): Promise<RoleGrant[]> => {
   return [{ role: preview, division_id: null }];
 });
 
-export async function requireAuth() {
-  const user = await getUser();
-  if (!user) throw new Error('Unauthorized');
-  return user;
-}
 
-export async function requireCapability(capability: Capability, divisionId?: string): Promise<RoleGrant[]> {
-  const roles = await getUserRoles();
-  if (!hasCapability(roles, capability, divisionId)) throw new Error('Insufficient permissions');
-  return roles;
-}
 
-export async function signInWithGoogle(redirectTo?: string) {
-  const supabase = await createClient();
-  const origin = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-  return supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: `${origin}/auth/callback${redirectTo ? `?next=${redirectTo}` : ''}`,
-    },
-  });
-}

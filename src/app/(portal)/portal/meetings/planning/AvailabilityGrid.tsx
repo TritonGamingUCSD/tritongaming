@@ -47,7 +47,7 @@ export default function AvailabilityGrid({ plan, value, onChange, disabled }: { 
     return () => { window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up); };
   }, []);
 
-  // Times already on my Triton Gaming calendar: unavailable for sure, locked.
+  // Times already taken (my meetings, events I have a ticket for): unavailable for sure, locked.
   const busyBy = new Map(days.map((d) => [d, busySlots(plan.busy, d, starts)]));
   const isBusy = (day: string, t: string) => busyBy.get(day)?.has(t) ?? false;
   const busyTitle = (day: string, t: string) => busyBy.get(day)?.get(t) ?? '';
@@ -140,11 +140,11 @@ export default function AvailabilityGrid({ plan, value, onChange, disabled }: { 
   const head = (day: string) => dayLabel(day, plan.kind);
   const cellClass = (v: Mode) => `${styles.cell} ${v === 1 ? styles.cellAvail : v === 2 ? styles.cellMaybe : ''}`;
 
-  // Why some times are already blocked: each one is on the person's own Triton Gaming calendar.
+  // Why some times are already blocked: each one is a meeting or event they are already in.
   const blockedPanel = plan.busy.length > 0 ? (
     <div className={styles.busyNote} role="note">
       <strong>Some times are already blocked off for you</strong>
-      <span>They’re on your Triton Gaming calendar, so you’re unavailable then and can’t mark them.</span>
+      <span>You already have a meeting or event then, so you’re unavailable and can’t mark them.</span>
       <ul>
         {[...new Map(plan.busy.map((b) => [`${b.day}|${b.start}|${b.title}`, b])).values()].map((b) => (
           <li key={`${b.day}|${b.start}|${b.title}`}><b>{b.title}</b>: {dayLabel(b.day, plan.kind)}, {clockLabel(b.start)} to {clockLabel(b.end)} <i>({b.why})</i></li>

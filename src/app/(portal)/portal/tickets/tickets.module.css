@@ -105,13 +105,6 @@
   margin-top: 0.2rem;
 }
 
-.heroCalendarCorner {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  z-index: 2;
-}
-
 .showQrBtn {
   display: flex;
   align-items: center;
@@ -169,7 +162,7 @@
 }
 
 /* Below this width there just isn't room for the online check-in code
-   form (icon + input + button) or the QR/calendar pair to sit inline next
+   form (icon + input + button) to sit inline next
    to the title without crushing both — same "let it wrap to its own row"
    treatment as the Event Management table's mobile layout. */
 @media (max-width: 480px) {

@@ -649,7 +649,7 @@
 }
 
 /* ── The link list scrolls when the window is too short for every link ──
-   With Calendar, Help, Internal Events and the Admin links the full list needs ~950px of height. Links
+   With every section and the Admin links the full list needs a lot of height. Links
    shrink first (down to their min-height); past that the list scrolls inside the sidebar with a thin,
    visible scrollbar, so the last links (Site Content) can always be reached and Back to Site / Sign out
    stay on screen. */

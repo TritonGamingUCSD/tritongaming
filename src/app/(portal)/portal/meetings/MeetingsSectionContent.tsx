@@ -50,8 +50,8 @@ interface Live {
   missing: Person[];
   absent: (Person & { reason: string | null; excused: boolean })[];
 }
-interface Item { question_type: QuestionType; question_options: string[] | null; key: string; meeting_id: string | null; series_id: string | null; date: string; title: string; location: string | null; doc_url: string | null; question: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; groupNames: string[]; is_private?: boolean; host_id: string | null; host_name: string | null; starts_at: string; ends_at: string; status: 'scheduled' | 'open' | 'closed' | 'cancelled'; count: number; absent?: number; is_today: boolean; repeats: boolean }
-interface Series { is_private?: boolean; ends_on?: string | null; id: string; title: string; weekday: number; start_time: string; end_time: string; location: string | null; active: boolean; doc_url: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null }
+interface Item { question_type: QuestionType; question_options: string[] | null; key: string; meeting_id: string | null; series_id: string | null; date: string; title: string; location: string | null; doc_url: string | null; question: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; groupNames: string[]; host_id: string | null; host_name: string | null; starts_at: string; ends_at: string; status: 'scheduled' | 'open' | 'closed' | 'cancelled'; count: number; absent?: number; is_today: boolean; repeats: boolean }
+interface Series { ends_on?: string | null; id: string; title: string; weekday: number; start_time: string; end_time: string; location: string | null; active: boolean; doc_url: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null }
 
 const TZ = 'America/Los_Angeles';
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -569,15 +569,6 @@ function PeoplePicker({ team, value, onChange, covered }: { team: TeamPerson[] |
   );
 }
 
-// Hosts: keep a meeting off the "All TG meetings" calendar that every member can switch to. It still shows for the people it is meant for.
-function PrivateToggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <div className={styles.audienceField}>
-      <CheckTile label="Private: leave it off the “All TG meetings” calendar" checked={value} onChange={() => onChange(!value)} />
-      <p className={styles.faint}>Members it is meant for still see it. Everyone else can only see public meetings, with just the title, time and who it is for.</p>
-    </div>
-  );
-}
 
 export function AudiencePicker({ value, onChange }: { value: Aud; onChange: (v: Aud) => void }) {
   const team = useTeam();
@@ -683,7 +674,7 @@ export function TeamsPanel({ userId, canManageAll, canEdit = true }: { userId: s
   return (
     <div className={styles.stack}>
       <div className={styles.toolbar}>
-        <p className={styles.muted}>{canEdit ? 'Teams to invite in one go: to meetings today, and to events and shifts.' : 'The teams leads and exec invite in one go. You can look but not change them.'}</p>
+        <p className={styles.muted}>{canEdit ? 'Teams to invite to a meeting in one go.' : 'The teams leads and exec invite in one go. You can look but not change them.'}</p>
         {canEdit && !editing && <Button size="sm" onClick={() => setEditing({ id: null, name: '', ids: [] })}><Plus size={14} aria-hidden="true" /> New team</Button>}
       </div>
 
@@ -779,7 +770,7 @@ function MeetingList({ onOpen, showForm, onShowForm }: { onOpen: (id: string) =>
     // The question is locked once check-in has been opened; leave it out so an unrelated edit can't trip that.
     // Title only changes for one-off meetings (a repeating meeting keeps its name every week).
     const fields = {
-      doc_url: f.doc, is_private: f.priv, ...(item.status === 'open' ? {} : qPayload(f.q)), location: f.location, description: f.description,
+      doc_url: f.doc, ...(item.status === 'open' ? {} : qPayload(f.q)), location: f.location, description: f.description,
       ...(item.repeats ? {} : { title: f.title }), start: f.start, end: f.end, ...audPayload(f.audience),
     };
     const r = await post('/api/meetings/update', item.meeting_id ? { meeting_id: item.meeting_id, ...fields } : { series_id: item.series_id, date: item.date, ...fields }, item.key);
@@ -870,13 +861,12 @@ function SeriesEditForm({ series: s, busy, onSave, onCancel }: { series: Series;
   const [desc, setDesc] = useState(s.description ?? '');
   const [doc, setDoc] = useState(s.doc_url ?? '');
   const [endsOn, setEndsOn] = useState(s.ends_on ?? '');
-  const [priv, setPriv] = useState(!!s.is_private);
   const [audience, setAudience] = useState<Aud>(audFrom(s));
   const bad = !title.trim() || end <= start || audienceEmpty(audience);
   return (
     <form
       className={`${styles.detailsForm} ${styles.seriesForm}`}
-      onSubmit={(e) => { e.preventDefault(); void onSave({ title, weekday: Number(weekday), start, end, location: room, description: desc, doc_url: doc, is_private: priv, ends_on: endsOn || null, ...audPayload(audience) }); }}
+      onSubmit={(e) => { e.preventDefault(); void onSave({ title, weekday: Number(weekday), start, end, location: room, description: desc, doc_url: doc, ends_on: endsOn || null, ...audPayload(audience) }); }}
     >
       <p className={styles.faint}>Applies to the series and coming weeks. A week you edited on its own keeps its changes.</p>
       <div className={styles.formGrid}>
@@ -886,11 +876,10 @@ function SeriesEditForm({ series: s, busy, onSave, onCancel }: { series: Series;
         <Field label="Ends"><TimeInput value={end} onChange={(e) => setEnd(e.target.value)} required /></Field>
       </div>
       <Field label="Room" hint="The default for every week."><Input value={room} onChange={(e) => setRoom(e.target.value)} maxLength={80} placeholder="e.g. Price Center East" /></Field>
-      <Field label="Last meeting on (optional)" hint="After this day it stops showing up in the portal, the portal calendar and Google Calendar. Blank means it keeps going."><DateInput value={endsOn} min={pacificToday()} onChange={(e) => setEndsOn(e.target.value)} /></Field>
+      <Field label="Last meeting on (optional)" hint="After this day it stops showing up in the portal. Blank means it keeps going."><DateInput value={endsOn} min={pacificToday()} onChange={(e) => setEndsOn(e.target.value)} /></Field>
       <Field label="What's this meeting about? (optional)"><Textarea value={desc} onChange={(e) => setDesc(e.target.value)} maxLength={MAX_DESCRIPTION_LENGTH} rows={2} /></Field>
       <Field label="Meeting doc link"><Input value={doc} onChange={(e) => setDoc(e.target.value)} placeholder="https://docs.google.com/…" inputMode="url" /></Field>
       <div className={styles.audienceField}><span className={styles.audienceTitle}>Who is it for?</span><AudiencePicker value={audience} onChange={setAudience} /></div>
-      <PrivateToggle value={priv} onChange={setPriv} />
       <SeriesExcused seriesId={s.id} />
       {end <= start && <p className={styles.checkWarn}>Pick an end time after the start.</p>}
       <div className={styles.formActions}>
@@ -901,7 +890,7 @@ function SeriesEditForm({ series: s, busy, onSave, onCancel }: { series: Series;
   );
 }
 
-interface DetailsFields { priv: boolean; doc: string; q: QState; audience: Aud; location: string; description: string; title: string; start: string; end: string }
+interface DetailsFields { doc: string; q: QState; audience: Aud; location: string; description: string; title: string; start: string; end: string }
 
 function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, onDelete, onChanged }: {
   item: Item; busy: boolean; past?: boolean; onChanged?: () => void;
@@ -909,7 +898,6 @@ function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, o
 }) {
   const [editingDoc, setEditingDoc] = useState(false);
   const [doc, setDoc] = useState(item.doc_url ?? '');
-  const [priv, setPriv] = useState(!!item.is_private);
   const [q, setQ] = useState<QState>(qFrom(item));
   const [audience, setAudience] = useState<Aud>(audFrom(item));
   const [room, setRoom] = useState(item.location ?? '');
@@ -974,7 +962,7 @@ function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, o
         </div>
       </div>
       {editingDoc && (
-        <form className={styles.detailsForm} onSubmit={async (e) => { e.preventDefault(); if (await onSaveDoc({ priv, doc, q, audience, location: room, description: desc, title, start: startT, end: endT })) setEditingDoc(false); }}>
+        <form className={styles.detailsForm} onSubmit={async (e) => { e.preventDefault(); if (await onSaveDoc({ doc, q, audience, location: room, description: desc, title, start: startT, end: endT })) setEditingDoc(false); }}>
           {!item.repeats && <Field label="Name"><Input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={60} required /></Field>}
           <div className={styles.formGrid}>
             <Field label="Starts"><TimeInput value={startT} onChange={(e) => setStartT(e.target.value)} required /></Field>
@@ -987,8 +975,7 @@ function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, o
             <QuestionEditor value={q} onChange={setQ} disabled={status === 'open'} />
           </Field>
           <div className={styles.audienceField}><span className={styles.audienceTitle}>Who is it for?</span><AudiencePicker value={audience} onChange={setAudience} /></div>
-          <PrivateToggle value={priv} onChange={setPriv} />
-          <div className={styles.formActions}><Button type="submit" size="sm" loading={busy} disabled={audienceEmpty(audience) || qBad(q)}>Save</Button></div>
+              <div className={styles.formActions}><Button type="submit" size="sm" loading={busy} disabled={audienceEmpty(audience) || qBad(q)}>Save</Button></div>
         </form>
       )}
       {editingDoc && !past && <AdvanceAbsences item={item} onChanged={onChanged} />}
@@ -1250,7 +1237,6 @@ function ScheduleForm({ onCreated }: { onCreated: () => void }) {
   const [end, setEnd] = useState('18:00');
   const [location, setLocation] = useState('');
   const [doc, setDoc] = useState('');
-  const [priv, setPriv] = useState(false);
   const [endsOn, setEndsOn] = useState('');
   const [q, setQ] = useState<QState>(emptyQ);
   const [description, setDescription] = useState('');
@@ -1264,7 +1250,7 @@ function ScheduleForm({ onCreated }: { onCreated: () => void }) {
     try {
       const res = await fetch('/api/meetings/schedule', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, repeat, weekday: Number(weekday), date, start, end, location, doc_url: doc, is_private: priv, ...qPayload(q), description, ends_on: repeat === 'weekly' ? endsOn || null : null, ...audPayload(audience) }),
+        body: JSON.stringify({ title, repeat, weekday: Number(weekday), date, start, end, location, doc_url: doc, ...qPayload(q), description, ends_on: repeat === 'weekly' ? endsOn || null : null, ...audPayload(audience) }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) { setError(json.error || 'Failed to schedule.'); return; }
@@ -1298,7 +1284,6 @@ function ScheduleForm({ onCreated }: { onCreated: () => void }) {
       <Field label="What's this meeting about? (optional)" hint="A line or two. Members see it when they check in."><Textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={MAX_DESCRIPTION_LENGTH} rows={2} placeholder="e.g. Planning the Halloween LAN: roles, budget and timeline." /></Field>
       <Field label="Meeting doc link (optional)" hint="Members it is meant for see the link as soon as you add it. For a repeating meeting this is the default; change it for any single week."><Input value={doc} onChange={(e) => setDoc(e.target.value)} placeholder="https://docs.google.com/…" inputMode="url" /></Field>
       <div className={styles.audienceField}><span className={styles.audienceTitle}>Who is it for?</span><AudiencePicker value={audience} onChange={setAudience} /></div>
-      <PrivateToggle value={priv} onChange={setPriv} />
       {repeat === 'once' && (
         <Field label="Question of the meeting (optional)" hint="An icebreaker people answer after checking in. You can also set it on the day.">
           <QuestionEditor value={q} onChange={setQ} placeholder="What game have you put the most hours into?" />

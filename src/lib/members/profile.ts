@@ -155,8 +155,6 @@ export const PRONOUN_OPTIONS = ['He/Him', 'She/Her', 'They/Them', 'He/They', 'Sh
 // Optional "what do you play" answers (stored privately, for club analytics).
 export const PLATFORM_OPTIONS = ['PC', 'Console', 'Mobile', 'Tabletop'] as const;
 
-// A link on someone's officer card (portfolio, GitHub, personal site…).
-export interface PortfolioLink { label: string; url: string }
 export const MAX_PORTFOLIO_LINKS = 5;
 
 // Accepts what people actually type ("github.com/me", "https://…") and returns a

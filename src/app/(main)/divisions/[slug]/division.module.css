@@ -29,16 +29,6 @@
 
 .prose { max-width: 46rem; margin: 0 auto; }
 
-/* Upcoming events: ticket rows on the paper band */
-.eventList { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.9rem; max-width: 46rem; }
-.eventRow { display: flex; align-items: center; gap: 1rem; padding: 0.8rem 1rem; background: var(--paper); color: var(--ink); text-decoration: none; border: 2px solid var(--ink); box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6); transition: transform 0.15s ease, box-shadow 0.15s ease; }
-a.eventRow:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.6); }
-.eventDate { display: flex; flex-direction: column; align-items: center; min-width: 3.4rem; line-height: 1; border: 2px solid var(--ink); flex-shrink: 0; }
-.eventDate span { width: 100%; text-align: center; background: var(--ink); color: var(--yellow); font-family: var(--font-renegare); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; padding: 0.2rem 0; }
-.eventDate strong { font-family: var(--font-brick); font-weight: 400; font-size: 1.6rem; padding: 0.25rem 0 0.2rem; }
-.eventText { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
-.eventName { font-family: var(--font-futura-heavy); font-size: 1rem; text-transform: uppercase; overflow-wrap: anywhere; }
-.eventLoc { display: inline-flex; align-items: center; gap: 0.3rem; font-family: var(--font-futura-medium); font-size: 0.8rem; color: #3a4764; }
 
 /* Leads: name tags */
 .rosterGrid { list-style: none; margin: 0; padding: 0.4rem 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.5rem; }

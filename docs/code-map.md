@@ -1,6 +1,6 @@
 # Code map: `src/lib`
 
-Shared logic is grouped by topic. Import with the alias, for example `import { slotRange } from '@/lib/shifts/shifts'`. A name that starts with `use` is a React hook for client components. A name ending in `Server` only runs on the server.
+Shared logic is grouped by topic. Import with the alias, for example `import { hasCapability } from '@/lib/portal/capabilities'`. A name that starts with `use` is a React hook for client components. A name ending in `Server` only runs on the server.
 
 Pure logic (no database, no React) is what the unit tests in `src/lib/__tests__` cover. Keep new logic pure where you can and put the database calls in a thin layer around it.
 
@@ -26,15 +26,6 @@ Pure logic (no database, no React) is what the unit tests in `src/lib/__tests__`
 | `portalSectionData.ts` | Loaders for the lazily loaded sections |
 | `viewAs.ts` | "View as" another role or person (read-only preview) |
 
-## `shifts/`
-| File | Purpose |
-|---|---|
-| `shifts.ts` | Types and pure helpers: slots, time ranges, who may claim, the `ShiftGrid` shape |
-| `shiftsServer.ts` | Authorization (`authorizeShifts`), `loadGrid` (everything the grid needs), live-update broadcast |
-| `shiftFields.ts` | Cleaning for guide fields, `parseChecklist`, `coverAlertDue` |
-| `shiftReminders.ts` | Morning-of reminders and alerts for cover requests nobody took |
-| `myShifts.ts` | A person's own shifts (for the dashboard card and reminders) |
-
 ## `docs/`
 | File | Purpose |
 |---|---|
@@ -49,13 +40,13 @@ Pure logic (no database, no React) is what the unit tests in `src/lib/__tests__`
 | File | Purpose |
 |---|---|
 | `meetings.ts` | Meetings, repeating series, who is expected, check-in rules |
-| `meetingAudience.ts` | Who a meeting or internal event is for |
+| `meetingAudience.ts` | Who a meeting is for |
 | `meetingPlans.ts`, `meetingPlanServer.ts` | "When can you meet?" planning |
 | `meetingLive.ts`, `useMeetingLive.ts` | The live "something changed" signal for the projector screen and poll results (server sends, browser listens) |
 | `meetingFun.ts` | Polls, ratings and reactions during a meeting |
-| `internalEvents.ts` | Socials, trainings and workshops for the team |
 | `groupChanges.ts` | Team groups |
 | `reminders.ts` | "Today at ..." meeting reminders |
+| `busyItems.ts` | The meetings and ticketed events a person already has (blocks times on the planning grid, feeds portal search) |
 
 ## `events/`
 | File | Purpose |
@@ -63,8 +54,7 @@ Pure logic (no database, no React) is what the unit tests in `src/lib/__tests__`
 | `events.ts`, `eventSummary.ts`, `eventTheme.ts` | Event data, the post-event summary, an event's own look |
 | `checkinDays.ts`, `checkinWindow.ts`, `checkinForm.ts`, `performCheckin.ts` | Check-in rules and the check-in action |
 | `rotatingCode.ts`, `rotationConstants.ts`, `ticketCodeCache.ts` | The QR code that changes every few seconds |
-| `calendarItems.ts`, `calendarFeed.ts`, `calendarLinks.ts`, `monthBuckets.ts`, `weekGroups.ts` | The portal and public calendars |
-| `ics.ts`, `calendarLinks.ts` | `.ics` downloads and the "Add to Google Calendar" links (no account linking) |
+| `monthBuckets.ts`, `weekGroups.ts` | Group events by month and week for the events lists |
 | `stripe.ts` | Stripe client |
 
 ## `members/`

@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   },
 };
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 // Photo, tag, and credit stay fixed here rather than in the CMS — they're
 // tied to specific real photos/photographers, not copy that changes on its

@@ -1,8 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { MANAGED_BUCKETS, listAllObjects } from '@/lib/storage/storageBuckets';
 import { optimizeImage } from '@/lib/storage/imageOptimize';
+import { logAudit } from '@/lib/notifications/audit';
 
-// Keeps file storage tidy without anyone pressing a button (see /api/cron/storage-maintenance):
+// Keeps file storage tidy without anyone pressing a button (the Sunday step of /api/cron/daily-maintenance):
 //   • a file that nothing points to any more is deleted, but only once it is a day old, so a picture that was just uploaded into a
 //     form that has not been saved yet is never taken away;
 //   • every stored picture is re-saved smaller in place (same address and format, so no link changes).
@@ -60,4 +61,16 @@ export async function compressStored(svc: SupabaseClient): Promise<Pick<Maintena
     }
   }
   return out;
+}
+
+const mb = (n: number) => `${(n / (1024 * 1024)).toFixed(1)} MB`;
+
+// The whole weekly tidy-up: delete what nothing uses, shrink old pictures, and write one audit line only when something actually changed.
+export async function runStorageMaintenance(svc: SupabaseClient): Promise<MaintenanceResult> {
+  const swept = await sweepUnused(svc);
+  const packed = await compressStored(svc);
+  if (swept.deletedFiles > 0 || packed.compressedFiles > 0) {
+    await logAudit(svc, { actorId: null, action: 'update', entityType: 'storage', summary: `Storage tidy-up: deleted ${swept.deletedFiles} unused file${swept.deletedFiles === 1 ? '' : 's'} (${mb(swept.deletedBytes)}), compressed ${packed.compressedFiles} picture${packed.compressedFiles === 1 ? '' : 's'} (${mb(packed.savedBytes)} saved)` });
+  }
+  return { ...swept, ...packed, failed: swept.failed + packed.failed };
 }

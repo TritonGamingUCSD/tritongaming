@@ -135,6 +135,7 @@
 .metaLine > .metaHost { flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .metaLine > .metaDoc { color: var(--pp-info); font-size: 0.74rem; }
 .paused { opacity: 0.8; }
+.paused .metaLine > .metaAudience, .paused .metaLine > .metaDoc, .missed .metaLine > .metaAudience, .missed .metaLine > .metaDoc { color: var(--pp-ink); }   /* the colored tags would fall under 4.5:1 once the row is dimmed */
 
 .seriesRow {
   composes: card from '../../../../components/ui/Surface.module.css';
@@ -411,7 +412,7 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .meetingCard[data-tone='plain'] .dateBlock small { background: rgba(56, 189, 248, 0.25); color: color-mix(in srgb, var(--pp-info) 70%, var(--pp-ink)); }
 .meetingCard[data-tone='done'] .dateBlock small { background: rgba(96, 165, 250, 0.28); color: color-mix(in srgb, var(--pp-info) 70%, var(--pp-ink)); }
 .meetingCard[data-tone='open'] .dateBlock small { background: #34d399; color: #04140e; }
-.meetingCard[data-tone='off'] .dateBlock small { background: rgba(248, 113, 113, 0.3); color: color-mix(in srgb, var(--pp-bad) 70%, var(--pp-ink)); }
+.meetingCard[data-tone='off'] .dateBlock small { background: rgba(248, 113, 113, 0.3); color: var(--pp-ink); }
 .meetingCard .inlineIcon { opacity: 0.9; }
 .meetingInfo strong .inlineIcon { color: var(--pp-violet); }
 .metaLine svg.inlineIcon { color: var(--pp-teal); }

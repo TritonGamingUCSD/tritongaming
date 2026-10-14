@@ -116,7 +116,7 @@ export default function PortalSearch({ compact, large, placeholder }: { compact?
   }, []);
 
   // Jump targets: what the person typed matched against sections/actions. With nothing typed, a few suggestions.
-  const SUGGESTED = ['do-help-new', 'go-tickets', 'do-meeting-checkin', 'do-meeting-plan', 'go-calendar'];
+  const SUGGESTED = ['do-help-new', 'go-tickets', 'do-meeting-checkin', 'do-meeting-plan'];
   const jump: SearchResult[] = (commands ?? []).length === 0 ? [] : (query.trim().length >= 1
     ? matchCommands(commands!, query.trim())
     : SUGGESTED.map((id) => commands!.find((c) => c.id === id)).filter((c): c is PortalCommand => !!c).slice(0, 5)

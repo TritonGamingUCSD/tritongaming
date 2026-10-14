@@ -57,7 +57,7 @@ export default function PortalTopSection({
       {!body && !ticket && upcomingEvents.length === 0 && (
         <section className={styles.emptyHome}>
           <Image src="/bytes/byte_tgex25.png" alt="" width={96} height={96} aria-hidden="true" className={styles.emptyHomeArt} />
-          <h2 className={styles.emptyHomeTitle}>Nothing on your calendar</h2>
+          <h2 className={styles.emptyHomeTitle}>Nothing coming up</h2>
           <p className={styles.emptyHomeText}>No tickets yet, and no new events are open right now. Here&apos;s what you can do in the meantime.</p>
           <div className={styles.emptyHomeActions}>
             <Link href="/events" className={styles.emptyHomeBtn}><CalendarDays size={16} aria-hidden="true" /> See past events &amp; photos</Link>

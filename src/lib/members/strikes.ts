@@ -60,18 +60,12 @@ export async function authorizeStrikes(mode: 'manage' | 'self') {
 // Nobody changes their own record: someone else has to (so nobody can add, remove or reinstate their own strikes).
 export const notYourOwn = () => NextResponse.json({ error: 'You can’t change your own strikes. Someone else has to.' }, { status: 403 });
 
-export interface StrikeView {
-  id: string; status: 'draft' | 'published' | 'removed'; category: StrikeCategory; reason: string; incident_date: string;
-  published_at: string | null; removed_at: string | null; removed_how: 'taken' | 'voucher' | 'reset' | null; removed_note: string | null;
-  meeting_id: string | null; created_by: string | null; published_by: string | null; removed_by: string | null; created_at: string;
-}
 // The history: one line for every action, with the reason given. A person sees what happened and why; HR and exec also see who did it.
 export type StrikeEventKind = 'strikes_reset' | 'strike_added' | 'strike_removed' | 'strike_reinstated' | 'voucher_given' | 'voucher_used' | 'voucher_removed';
 export async function recordEvent(svc: SupabaseClient, e: { userId: string; kind: StrikeEventKind; reason: string | null; actorId: string | null; strikeId?: string | null; voucherId?: string | null; label?: string | null }) {
   await svc.from('strike_events').insert({ user_id: e.userId, kind: e.kind, reason: e.reason, label: e.label ?? null, actor_id: e.actorId, strike_id: e.strikeId ?? null, voucher_id: e.voucherId ?? null });
 }
 export const cleanReason = (v: unknown, max = 200) => String(v ?? '').trim().slice(0, max);
-export interface VoucherView { id: string; reason: string | null; created_at: string; used_at: string | null; used_on_strike_id: string | null }
 
 // What a person sees about themselves: published strikes (category, date, reason) and what was taken off, and their vouchers (how and when they
 // got each, and when one was used). Never drafts, and never who in HR (or which exec or lead) did what.

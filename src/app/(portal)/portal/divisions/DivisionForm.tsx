@@ -34,17 +34,6 @@ export interface DivisionFormValues {
   page_blocks: PageBlock[];
 }
 
-export const EMPTY_DIVISION_FORM: DivisionFormValues = {
-  name: '',
-  slug: '',
-  description: '',
-  logo_url: '',
-  discord_url: '',
-  application_url: '',
-  social_links: {},
-  social_embeds: [],
-  page_blocks: [],
-};
 
 // Same Write/Preview markdown field as EventForm.tsx's (not extracted to a
 // shared component — that file's own version is the third near-identical

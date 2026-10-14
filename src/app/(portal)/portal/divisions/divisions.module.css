@@ -10,11 +10,6 @@
   margin-bottom: 0.4rem;
 }
 
-.sub {
-  font-size: 0.85rem;
-  color: rgba(var(--pp-ink-rgb), 0.87);
-  max-width: 560px;
-}
 
 .wrap {
   display: flex;

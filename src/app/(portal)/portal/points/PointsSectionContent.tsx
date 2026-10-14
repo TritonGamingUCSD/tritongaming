@@ -674,7 +674,7 @@ export default function PointsSectionContent({
               <span className={styles.tierTag}>{tier.name}</span>
             </div>
             <div className={styles.heroNum}>{balance.toLocaleString()}<small>to spend</small></div>
-            <ol className={styles.ladder} aria-label="Tiers">
+            <ol className={styles.ladder} aria-label="Tiers" tabIndex={0}>
               {tiers.map((t) => (
                 <li key={t.name} className={`${styles.rung} ${lifetimeEarned >= t.min ? styles.rungReached : ''} ${t.name === tier.name ? styles.rungNow : ''}`} style={{ ['--rc' as string]: t.color }}>
                   <i aria-hidden="true" />

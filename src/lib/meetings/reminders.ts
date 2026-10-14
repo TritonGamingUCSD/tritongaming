@@ -6,21 +6,20 @@ import { getExpectedPeople, occurrenceTimes, seriesRunsOn, type MeetingRow, type
 const clock = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour: 'numeric', minute: '2-digit' });
 
 interface Item {
-  key: string; kind: 'meeting' | 'internal'; title: string; starts_at: string; location: string | null;
+  key: string; kind: 'meeting'; title: string; starts_at: string; location: string | null;
   audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; href: string;
   skip: Set<string>;   // people who shouldn't get it (excused from the meeting, said they can't go)
 }
 
-// "Today at 5:00 PM" reminders for the meetings and internal events happening today that haven't started yet, sent to
+// "Today at 5:00 PM" reminders for the meetings happening today that haven't started yet, sent to
 // the people they're for. Safe to run as often as you like: reminders_sent remembers who already got which one.
 // (Run it once a morning; run it every 15 minutes with `withinMinutes` set to get "starting soon" reminders instead.)
 export async function sendMeetingReminders(svc: SupabaseClient, now: Date = new Date(), withinMinutes?: number, onlyUsers?: string[]): Promise<{ items: number; sent: number }> {
   const today = pacificDayKey(now);
   const until = withinMinutes ? now.getTime() + withinMinutes * 60_000 : Infinity;
-  const [{ data: seriesData }, { data: meetingRows }, { data: internalRows }] = await Promise.all([
+  const [{ data: seriesData }, { data: meetingRows }] = await Promise.all([
     svc.from('meeting_series').select('id, title, weekday, start_time, end_time, location, active, doc_url, audience, invitees, group_ids, description, created_by, created_at, ends_on').eq('active', true),
     svc.from('meetings').select('*').eq('meeting_date', today).eq('cancelled', false),
-    svc.from('internal_events').select('*').eq('event_date', today).eq('cancelled', false),
   ]);
   const items: Item[] = [];
   const rows = (meetingRows ?? []) as MeetingRow[];
@@ -36,11 +35,6 @@ export async function sendMeetingReminders(svc: SupabaseClient, now: Date = new 
     const { starts } = occurrenceTimes(today, s.start_time, s.end_time);
     items.push({ key: `series:${s.id}|${today}`, kind: 'meeting', title: s.title, starts_at: starts.toISOString(), location: s.location, audience: s.audience, invitees: s.invitees, group_ids: s.group_ids, href: '/portal/meetings/mine', skip: new Set((standing ?? []).filter((a) => a.series_id === s.id).map((a) => a.user_id as string)) });
   }
-  const internal = (internalRows ?? []) as { id: string; title: string; starts_at: string; location: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null }[];
-  const { data: no } = internal.length ? await svc.from('internal_event_rsvps').select('event_id, user_id').in('event_id', internal.map((e) => e.id)).eq('status', 'not_going') : { data: [] as { event_id: string; user_id: string }[] };
-  for (const e of internal) {
-    items.push({ key: `internal:${e.id}`, kind: 'internal', title: e.title, starts_at: e.starts_at, location: e.location, audience: e.audience, invitees: e.invitees, group_ids: e.group_ids, href: '/portal/internal-events', skip: new Set((no ?? []).filter((n) => n.event_id === e.id).map((n) => n.user_id as string)) });
-  }
 
   let sent = 0, counted = 0;
   for (const it of items) {
@@ -55,7 +49,7 @@ export async function sendMeetingReminders(svc: SupabaseClient, now: Date = new 
     if (ids.length === 0) continue;
     sent += await createNotifications(svc, ids.map((user_id) => ({
       user_id,
-      type: it.kind === 'meeting' ? 'meeting_reminder' : 'internal_event_reminder',
+      type: 'meeting_reminder',
       title: `${it.title} is today at ${clock(it.starts_at)}`,
       body: it.location ? `Where: ${it.location}` : null,
       href: it.href,

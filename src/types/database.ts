@@ -50,14 +50,9 @@ export type Capability =
   | 'view_division_members'
   | 'manage_meetings'
   | 'manage_help'
-  | 'view_internal_events'
-  | 'view_keys'
   | 'manage_strikes'
   | 'manage_quarters'
-  | 'manage_keys'
   | 'view_attendance_reports'
-  | 'host_internal_events'
-  | 'manage_internal_events'
   | 'attend_meetings'
   | 'host_meetings'
   | 'view_events'
@@ -72,14 +67,10 @@ export type Capability =
   | 'generate_qr_codes'
   | 'view_docs'
   | 'manage_docs'
-  | 'view_photo_albums'
-  | 'manage_photo_albums'
   | 'manage_rewards_shop'
   | 'scan_redemptions'
   | 'manage_points'
-  | 'manage_shifts'
-  | 'manage_board_order'
-  | 'signup_shifts';
+  | 'manage_board_order';
 
 export interface Database {
   public: {
@@ -104,7 +95,6 @@ export interface Database {
           show_on_board: boolean;
           social_links: Record<string, string>;
           portfolio_links: Array<{ label: string; url: string }>;
-          calendar_token: string;
           game_ids: Array<{ game: string; id: string }>;
           board_visibility: Record<string, boolean>;
           referral_code: string;
@@ -329,19 +319,6 @@ export interface Database {
         Insert: Omit<Database['public']['Tables']['notifications']['Row'], 'id' | 'created_at'>;
         Update: Partial<Database['public']['Tables']['notifications']['Insert']>;
       };
-      photo_albums: {
-        Row: {
-          id: string;
-          title: string;
-          url: string;
-          event_id: string | null;
-          created_by: string | null;
-          created_at: string;
-          sort_order: number;
-        };
-        Insert: Omit<Database['public']['Tables']['photo_albums']['Row'], 'id' | 'created_at' | 'sort_order'> & { sort_order?: number };
-        Update: Partial<Database['public']['Tables']['photo_albums']['Insert']>;
-      };
       checkin_form_settings: {
         Row: {
           id: number;
@@ -423,24 +400,16 @@ export interface Database {
 
 // Convenience types with joined data
 export type Profile = Database['public']['Tables']['profiles']['Row'];
-export type UserRoleGrant = Database['public']['Tables']['user_roles']['Row'];
 export type Division = Database['public']['Tables']['divisions']['Row'];
 export type Event = Database['public']['Tables']['events']['Row'];
 export type Ticket = Database['public']['Tables']['tickets']['Row'];
-export type SiteContent = Database['public']['Tables']['site_contents']['Row'];
 export type Sponsor = Database['public']['Tables']['sponsors']['Row'];
 type DocOptionalColumns = 'icon' | 'cover_url' | 'tags' | 'pinned' | 'published' | 'revision' | 'draft_title' | 'draft_content' | 'draft_updated_at' | 'draft_updated_by';
 export type Doc = Database['public']['Tables']['docs']['Row'];
 export type DocCategory = Database['public']['Tables']['doc_categories']['Row'];
 export type Notification = Database['public']['Tables']['notifications']['Row'];
-export type PhotoAlbum = Database['public']['Tables']['photo_albums']['Row'];
-export type PointTransaction = Database['public']['Tables']['point_transactions']['Row'];
 export type RewardItem = Database['public']['Tables']['reward_items']['Row'];
-export type RewardRedemption = Database['public']['Tables']['reward_redemptions']['Row'];
 
-export type TicketWithEvent = Ticket & {
-  event: Pick<Event, 'id' | 'title' | 'start_date' | 'end_date' | 'location' | 'flyer_url'>;
-};
 
 // Display-only ordering for badges/sorting — NOT used for authorization.
 // officer and division intentionally tie: they're peers with different

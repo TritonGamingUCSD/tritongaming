@@ -20,27 +20,29 @@ Check the result with a `select` afterwards. This runs on the **live** database,
 
 **Events and rewards:** `events`, `tickets`, `ticket_checkins` (one row per ticket per day), `event_feedback`, `checkin_form_settings`, `point_transactions`, `reward_items`, `reward_redemptions`, `tier_definitions`.
 
-**Shifts**
-- `event_shifts` the grid for one event (start, end, slot length, signup open, requirement).
-- `shift_stations` the stations; `shift_overrides` per-slot headcount changes.
-- `shift_signups` who is on which station and slot; `arrived_at` marks "I'm here".
-- `shift_event_guides` per-event location, notes and script for a station; `shift_templates` saved write-ups.
-- `shift_absences` time people are away; `shift_exemptions` exempt from the requirement.
-- `shift_cover_requests` swap and cover requests (`open`, `taken`, `cancelled`, `undone`; `alerted_at` / `alerted_final_at` stamp the exec alerts).
-- `shift_checklist_items` a checklist per event and station; the tick is on the row (`done_by`, `done_at`).
-- `shift_handoff_notes` notes for the next person at a station.
-- Functions: `claim_shift` (locks the slot so a cell can never be over-filled), `take_shift_cover` and `undo_shift_cover` (move a shift in one step).
-
 **Docs:** `docs`, `doc_categories` (with a color), `doc_versions` (every publish), `doc_favorites`, `doc_editing` (who has it open), `doc_required_roles` and `doc_reads` (required reading), `doc_comments` (threads).
 
 **Help:** `help_tickets` (categories `bug`, `question`, `account`, `tickets`, `doc`, `other`), `help_messages`.
 
-**Meetings and team:** `meetings`, `meeting_series`, `meeting_attendance`, `meeting_absences`, `meeting_series_absences`, `meeting_plans`, `meeting_plan_responses`, `meeting_answers`, `meeting_reactions`, `meeting_groups`, `custom_emojis`, `internal_events`, `internal_event_rsvps`, and `reminders_sent` (remembers who already got which reminder; also used to send once a day).
+**Meetings and team:** `meetings`, `meeting_series`, `meeting_attendance`, `meeting_absences`, `meeting_series_absences`, `meeting_plans`, `meeting_plan_responses`, `meeting_answers`, `meeting_reactions`, `meeting_groups`, `custom_emojis` and `reminders_sent` (remembers who already got which reminder; also used to send once a day).
 
 **Members and attendance:** `strikes` and its tables (`strike_events`, `strike_settings`, ...), `academic_quarters`, `quarter_roster`, `officer_quarter_status`, `team_years`, `team_year_members`, `team_settings`.
 
-**Other:** `notifications`, `push_subscriptions`, `push_preferences`, `audit_log`, `storage_keys` and `storage_key_events`, `site_contents` and `content_drafts` (editable website text), `short_links`, `photo_albums`, `help_canned_replies`.
+**Other:** `notifications`, `push_subscriptions`, `push_preferences`, `audit_log`, `site_contents` and `content_drafts` (editable website text), `short_links`, `help_canned_replies`.
 
 ## Test data
 
 Never test against real events or docs. Create throwaway rows (names starting `ZZ`), and delete them and their audit lines afterwards. See [testing.md](testing.md).
+
+## Features that were removed
+
+The older migration files stay as history, but these no longer exist in the live database (the last two migrations, `20261007100000` and `20261014100000`, finish the clean-up):
+
+- **Shifts:** `event_shifts`, `shift_stations`, `shift_signups`, `shift_overrides`, `shift_event_guides`, `shift_templates`, `shift_absences`, `shift_exemptions`, `shift_cover_requests`, `shift_checklist_items`, `shift_handoff_notes` and the functions `claim_shift`, `take_shift_cover`, `undo_shift_cover`.
+- **Storage keys:** `storage_keys`, `storage_key_events`.
+- **Internal events:** `internal_events`, `internal_event_rsvps`.
+- **Portal photo albums:** `photo_albums`. (An event's own albums are the `events.photo_albums` column and are still there.)
+- **Calendar:** `calendar_connections` (the Google Calendar link) and `profiles.calendar_token` (the subscription link).
+- **Meeting "private" flag:** `meetings.is_private` and `meeting_series.is_private` (it only hid a meeting from the removed "All TG meetings" calendar).
+
+When you drop a table, also search the SQL functions for it (`select proname from pg_proc where pg_get_functiondef(oid) ~ 'table_name'`, limited to normal functions): deleting an event, deleting an account and the admin activity feed all read `photo_albums` and would have failed until they were rewritten.

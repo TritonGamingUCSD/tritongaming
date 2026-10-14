@@ -12,16 +12,25 @@ The site runs on the free plans of Vercel (Hobby) and Supabase. Both meter diffe
 | Supabase **Log Ingestion** | The number of API calls, not their size |
 | Vercel **cron jobs** | Two jobs, once a day each (see below) |
 
+## Active CPU, the tight one
+
+Vercel's Hobby plan includes about 4 hours of Active CPU a month, which is spent on every page render, API call and proxy run. What keeps it low:
+
+- **The proxy matcher** (above): no proxy run for public traffic.
+- **Long page caches.** Public pages regenerate at most every 15 minutes (home, events, division pages) or hour (the rest) instead of every few minutes, and saving in the portal clears the cache at once through tags (`invalidate`), so edits are not delayed. A change made straight in the database, outside the portal, can take up to that long to appear.
+- **Few repeating requests** (below) and no prefetching of portal pages.
+- **Check the numbers:** Vercel → Usage → Fluid Active CPU, before and after a change. The daily total is more telling than the monthly one.
+
 ## Public pages
 
-- Use `export const revalidate = 300` rather than `force-dynamic`. Content is cached with tags (`site-content`, `events`, `board`, `divisions`, `tiers`); saving calls `invalidate(...)` (`src/lib/site/revalidate.ts`), so edits show at once.
+- Use `export const revalidate = 900` (or `3600` for pages that rarely change) rather than `force-dynamic`. Content is cached with tags (`site-content`, `events`, `board`, `divisions`, `tiers`); saving calls `invalidate(...)` (`src/lib/site/revalidate.ts`), so edits show at once.
 - Public pages must not read cookies on the server. The nav checks the login in the browser.
 - The short-link page `/[slug]` stays dynamic because it redirects.
 - Keep files in `public/` small. The home video has two copies (`tgex26highlight-720.mp4` and `-360.mp4` for phones); `/videos/*` is cached for a year, so a new version needs a new file name. Compress pictures before adding them (about 1800 px wide is plenty).
 
 ## The proxy and the login check
 
-- `src/proxy.ts` only refreshes the session for `/portal`, `/login`, `/api`, `/auth` and `/print`.
+- `src/proxy.ts` is attached (through its `matcher`) only to `/portal`, `/login`, `/auth` and `/api`, and only there does it refresh the session. Every public page, picture and file is served without running it: a proxy run is a server invocation that counts against Active CPU, so keep the matcher narrow and update it together with `NEEDS_SESSION` if a new path ever needs a session.
 - `auth.getUser()` on the server clients is **local**: `src/lib/supabase/localAuth.ts` verifies the signed login token with Supabase's public key and makes no request. The cost: someone removed or banned keeps access until their token expires (about an hour).
 - Routes that change roles and settings (everything under `/api/admin`, granting a role from a help ticket) and the sign-in callback use `strictUser(client)`, which also asks Supabase. Use `strictUser` for any new route like that.
 - Roles are read once per request (`getSessionRoles`, `getRealRoles`, `getUserRoles` are cached per request).
@@ -30,7 +39,6 @@ The site runs on the free plans of Vercel (Hobby) and Supabase. Both meter diffe
 
 - Use `useVisiblePoll(fn, ms)` for anything that repeats. It pauses while the tab is hidden.
 - Prefer a **signal** from the server over polling. The server sends a Realtime broadcast after a change and open pages reload:
-  - Shifts: `notifyShifts(eventId)` (`src/lib/shifts/shiftsServer.ts`).
   - Meetings (the projector screen and live poll results): `notifyMeetingLive(meetingId)` (`src/lib/meetings/meetingLive.ts`), listened to with `useMeetingLive`. Refreshes are at least 2 seconds apart.
   - Docs: `notifyDocs()` (`src/lib/docs/docsLive.ts`).
   - A slow timer (30 seconds to 3 minutes) stays as a backstop in case the connection is blocked.
@@ -40,7 +48,7 @@ The site runs on the free plans of Vercel (Hobby) and Supabase. Both meter diffe
 
 ## Portal data loading
 
-`/portal/page.tsx` only loads what the dashboard, the card badges and the next sections need. The heavy sections (Events, TG Members, Documentation, Photo Albums, Divisions, Site Content, Admin) load their own data the **first time they are opened** (`src/lib/portal/portalSectionData.ts`, `LazySections.tsx`). The member count (5 minutes) and point tiers (10 minutes, cleared when an admin edits them) are cached in `src/lib/portal/portalCounts.ts`.
+`/portal/page.tsx` only loads what the dashboard, the card badges and the next sections need. The heavy sections (Events, TG Members, Documentation, Divisions, Site Content, Admin) load their own data the **first time they are opened** (`src/lib/portal/portalSectionData.ts`, `LazySections.tsx`). The member count (5 minutes) and point tiers (10 minutes, cleared when an admin edits them) are cached in `src/lib/portal/portalCounts.ts`.
 
 ## Uploaded files
 
@@ -50,8 +58,10 @@ Pictures are shrunk to WebP in the browser before upload and files get unique na
 
 `vercel.json` has two jobs (the Hobby limit), each once a day:
 
-- `daily-reminders` runs `event-reminders` then `meeting-reminders` (which also sends shift reminders and cover alerts).
-- `daily-maintenance` runs `cleanup-notifications`, `quarter-sync`, `team-sync`, and on Sundays `storage-maintenance`.
+- `daily-reminders` sends the event reminders, the meeting reminders and the meeting-plan nudge.
+- `daily-maintenance` cleans old notifications, syncs the quarter and team records, and on Sundays runs the storage tidy-up (`?only=…` runs one step).
+
+Each is one route that calls library functions directly (see `docs/features.md`).
 
 Add new scheduled work as a step inside one of them, not as a third job.
 

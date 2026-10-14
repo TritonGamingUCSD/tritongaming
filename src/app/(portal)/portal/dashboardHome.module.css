@@ -16,10 +16,9 @@
 .when { margin: 0; font-family: var(--font-renegare); font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.8); }
 .where { margin: 0; display: flex; align-items: center; gap: 0.3rem; color: var(--p-accent-text); font-size: 0.92rem; }
 .actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.6rem; }
-.primary, .secondary { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.6rem 1rem; border-radius: 999px; font-family: var(--font-futura-heavy); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none; }
+.primary { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.6rem 1rem; border-radius: 999px; font-family: var(--font-futura-heavy); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none; }
 .primary { background: var(--yellow); color: #011941; border: 2px solid #011941; box-shadow: 3px 3px 0 #011941; } /* theme-ok */
-.secondary { background: transparent; color: var(--pp-ink); border: 2px solid var(--pp-ink); }
-.primary:hover, .secondary:hover { transform: translate(-1px, -1px); }
+.primary:hover { transform: translate(-1px, -1px); }
 .stub { position: relative; display: grid; place-items: center; border-left: 2px dashed rgba(var(--pp-ink-rgb), 0.35); }
 .stub::before, .stub::after { content: ''; position: absolute; left: -9px; width: 16px; height: 16px; border-radius: 50%; background: var(--pp-paper); }
 .stub::before { top: -8px; } .stub::after { bottom: -8px; }
@@ -62,22 +61,3 @@
 .countBox b { font-family: var(--font-futura-heavy); font-size: 1.35rem; line-height: 1; color: var(--pp-ink); font-variant-numeric: tabular-nums; }
 .countBox small { margin-top: 0.15rem; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.8); }
 .countdownNow { margin: 0.2rem 0; font-family: var(--font-futura-heavy); font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--pp-ok); }
-
-/* Now and next: the shift you are on, or the next one */
-.nowNext { position: relative; display: flex; flex-direction: column; gap: 0.4rem; padding: 1rem 1.2rem; border: 2px solid var(--pp-line); border-left-width: 6px; border-radius: 12px; background: var(--pp-card); color: var(--pp-ink); min-width: 0; }
-.nnGeneral { border-left-color: color-mix(in srgb, var(--pp-ink) 45%, var(--pp-card)); }
-.nnTeam { border-left-color: var(--pp-violet); }
-.nnCount { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
-.nnHere { display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 700; color: var(--pp-ok); }
-.nnError { margin: 0; font-size: 0.85rem; color: var(--pp-bad); }
-.nnLater { list-style: none; margin: 0.4rem 0 0; padding: 0.5rem 0 0; border-top: 1px solid var(--pp-line); display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; }
-.nnLater span { color: rgba(var(--pp-ink-rgb), 0.85); }
-
-/* Event day: the checklist, the last note and the cover link on the shift card */
-.nnNote { margin: 0.6rem 0 0; font-size: 0.88rem; color: var(--pp-ink); overflow-wrap: anywhere; }
-.nnChecks { list-style: none; margin: 0.6rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.2rem; }
-.nnChecks label { display: flex; align-items: center; gap: 0.5rem; min-height: 32px; font-size: 0.9rem; color: var(--pp-ink); cursor: pointer; }
-.nnChecks input { width: 18px; height: 18px; accent-color: var(--p-accent-text); }
-.nnDone { text-decoration: line-through; opacity: 0.75; }
-.nnCover { margin: 0.6rem 0 0; font-size: 0.82rem; }
-.nnCover a { color: var(--p-accent-text); text-decoration: underline; }

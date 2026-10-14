@@ -25,7 +25,7 @@ async function fetchDivisions(): Promise<Division[]> {
 
 export async function getDivisions(): Promise<Division[]> {
   try {
-    return await unstable_cache(fetchDivisions, ['divisions-list'], { revalidate: 300, tags: ['divisions'] })();
+    return await unstable_cache(fetchDivisions, ['divisions-list'], { revalidate: 3600, tags: ['divisions'] })();
   } catch {
     return [];
   }

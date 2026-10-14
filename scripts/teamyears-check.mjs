@@ -51,7 +51,7 @@ try{
  // the daily job: a finished year gets archived by itself; today's roster is recorded
  const f6=await q('fall',2086,-300,-250), s6=await q('spring',2086,-240,-210); await roster(s6,A,'officer','Marketing Officer'); await roster(f6,L,'lead','Events Lead');
  const cur=await q('fall',2090,-3,60); await mark(cur,H);   // H sits this quarter out too, so they were never active on record
- r=await fetch('http://localhost:3000/api/cron/team-sync',{headers:{'x-cron-dev':'1'}}); const cj=await r.json(); ok('the daily job runs',r.status===200&&cj.captured>=1,JSON.stringify(cj));
+ r=await fetch('http://localhost:3000/api/cron/daily-maintenance?only=teams',{headers:{'x-cron-dev':'1'}}); const cj=await r.json(); ok('the daily job runs',r.status===200&&cj.teams?.captured>=1,JSON.stringify(cj));
  ok('it archived the finished year by itself (marked automatic)',(await svc.from('team_years').select('auto').eq('start_year',2086).single()).data?.auto===true);
  ok('and recorded who held a title this quarter',(await svc.from('quarter_roster').select('user_id').eq('quarter_id',cur).eq('user_id',A.id)).data.length===1);
  ok('moving to alumni did not run (the setting is off)',cj.moved===0);

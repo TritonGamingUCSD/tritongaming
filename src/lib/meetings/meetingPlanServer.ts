@@ -109,7 +109,7 @@ export async function loadPlanViews(auth: Auth, only?: string): Promise<PlanView
       blocked: blockedByUser,
     });
   }
-  // What is already on my calendar for each plan I'm asked to answer.
+  // What I already have (meetings, events) during each plan I'm asked to answer.
   for (const v of views.filter((x) => x.status === 'open' && !x.expired && x.people.some((p) => p.id === auth.user.id))) v.busy = await busyBlocksFor(svc, auth.user, auth.roles ?? [], v, v.days);
   // Whether each decided plan can still be taken back (the meeting hasn't started or opened).
   for (const v of views.filter((x) => x.status === 'decided' && x.canManage)) v.canReopen = await canReopenPlan(svc, v);
@@ -212,8 +212,8 @@ export async function decidePlan(svc: SupabaseClient, plan: PlanRow, pick: { day
   const { data: resp } = await svc.from('meeting_plan_responses').select('user_id, slots').eq('plan_id', plan.id);
   const done = await answeredUserIds(svc, plan);
   const byUser = new Map((resp ?? []).filter((r) => done.has(r.user_id as string)).map((r) => [r.user_id as string, r.slots as PlanSlots]));
-  // Who can't make it: people who answered and are unavailable, plus anyone (answered or not) with something already on their
-  // Triton Gaming calendar then. The calendar item is named in the reason, so they know why.
+  // Who can't make it: people who answered and are unavailable, plus anyone (answered or not) with a meeting or event already
+  // then. What it is gets named in the reason, so they know why.
   const startMin = toMin(pick.start), endMin = startMin + plan.duration_min;
   const conflicts = new Map<string, string[]>();
   const others = expected.filter((p) => p.id !== hostId);

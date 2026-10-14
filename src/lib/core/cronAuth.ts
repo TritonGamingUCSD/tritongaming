@@ -1,7 +1,11 @@
-// A scheduled job is called with `Authorization: Bearer $CRON_SECRET`. For the jobs that are safe to run any time (they only bring things in line with the
-// calendar), automated tests on a dev machine can send `x-cron-dev: 1` instead. It is ignored in production.
-export function cronAllowed(request: Request): boolean {
+// A scheduled job is called with `Authorization: Bearer $CRON_SECRET`.
+export function cronSecretOk(request: Request): boolean {
   const secret = process.env.CRON_SECRET;
-  if (secret && request.headers.get('authorization') === `Bearer ${secret}`) return true;
+  return !!secret && request.headers.get('authorization') === `Bearer ${secret}`;
+}
+
+// For the steps that are safe to run any time (they only bring records in line with the calendar), automated tests on a dev machine can send
+// `x-cron-dev: 1` instead of the secret. It is ignored in production.
+export function cronDevOk(request: Request): boolean {
   return process.env.NODE_ENV !== 'production' && request.headers.get('x-cron-dev') === '1';
 }

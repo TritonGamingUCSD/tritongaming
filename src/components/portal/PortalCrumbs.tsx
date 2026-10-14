@@ -8,7 +8,7 @@ import styles from './PortalHub.module.css';
 
 // "Admin › People › Member Management": the open section, then its tab and subtab, read from the address
 // (/portal/<section>/<tab>/<subtab>). Each level before the last is a link back to that level.
-const WORD: Record<string, string> = { qr: 'QR', ics: 'ICS', faq: 'FAQ', tg: 'TG', ucsd: 'UCSD', api: 'API' };
+const WORD: Record<string, string> = { qr: 'QR', faq: 'FAQ', tg: 'TG', ucsd: 'UCSD', api: 'API' };
 export function slugLabel(slug: string): string {
   return decodeURIComponent(slug).split(/[-_\s]+/).filter(Boolean).map((w) => WORD[w.toLowerCase()] ?? w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }

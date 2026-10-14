@@ -112,26 +112,6 @@ try {
   await svc.from('capability_grants').delete().eq('group_id', g.id);
   check('removing the grant removes the access', (await call('alumni', '/api/meetings/attendance'))[0] === 403);
 
-  // ── Internal events ───────────────────────────────────────────────────────────
-  const evBody = { title: 'Perm event', date: today, ...todayWindow(60, 60), audience: [], invitees: [U('officer'), U('recruit')], group_ids: [] };
-  check('officer cannot plan internal events', (await call('officer', '/api/internal-events', 'POST', evBody))[0] === 403);
-  const [e1, ev] = await call('lead', '/api/internal-events', 'POST', evBody); check('lead can plan internal events', e1 === 201);
-  if (ev?.id) eventIds.push(ev.id);
-  const titles = async (r) => ((await call(r, '/api/internal-events'))[1]?.events ?? []).map((e) => e.title);
-  check('invited officer sees it', (await titles('officer')).includes('Perm event'));
-  check('invited recruit sees it', (await titles('recruit')).includes('Perm event'));
-  // Internal events are open to every team member whoever the host aimed them at (alumni included), so a not-invited exec sees it too.
-  check('not-invited exec also sees it (open to the whole team)', (await titles('exec')).includes('Perm event'));
-  check('alumni can open the section (read access)', (await call('alumni', '/api/internal-events'))[0] === 200);
-  check('division lead cannot open the section', (await call('division', '/api/internal-events'))[0] === 403);
-  check('invited recruit can RSVP', (await call('recruit', `/api/internal-events/${ev.id}/rsvp`, 'POST', { status: 'going' }))[0] === 200);
-  check('not-invited exec can RSVP too', (await call('exec', `/api/internal-events/${ev.id}/rsvp`, 'POST', { status: 'going' }))[0] === 200);
-  check('bad RSVP value is rejected', (await call('officer', `/api/internal-events/${ev.id}/rsvp`, 'POST', { status: 'yes' }))[0] === 400);
-  check('another lead cannot edit it', (await call('officer', `/api/internal-events/${ev.id}`, 'PATCH', { title: 'x' }))[0] === 403);
-  check('exec can edit any internal event', (await call('exec', `/api/internal-events/${ev.id}`, 'PATCH', { location: 'Room 9' }))[0] === 200);
-  const [, cal] = await call('officer', `/api/calendar?from=${today}&to=${today}`);
-  check('calendar shows it as an internal event, not a meeting', (cal?.items ?? []).some((i) => i.title === 'Perm event' && i.kind === 'internal'));
-
   // ── Help tickets ──────────────────────────────────────────────────────────────
   const [h1, t] = await call('recruit', '/api/help', 'POST', { category: 'bug', subject: `Perm ticket ${stamp}`, body: 'testing' }); check('member can open a ticket', h1 === 201);
   const tid = t?.id;
@@ -141,17 +121,9 @@ try {
   check('member cannot assign tickets', (await call('recruit', `/api/help/${tid}`, 'PATCH', { assigned_to: U('recruit') }))[0] === 403);
   check('member cannot use saved replies', (await call('recruit', '/api/help/canned'))[0] === 403);
   check('exec can use saved replies', (await call('exec', '/api/help/canned'))[0] === 200);
-
-  // ── Calendar subscription link ────────────────────────────────────────────────
-  const [, tok] = await call('officer', '/api/calendar/token');
-  check('feed link works without signing in', (await fetch(tok.https)).status === 200);
-  await call('officer', '/api/calendar/token', 'POST');
-  check('resetting the link kills the old one', (await fetch(tok.https)).status === 404);
-  check('a made-up token is not found', (await fetch(`${BASE}/api/calendar/feed/00000000-0000-0000-0000-000000000000.ics`)).status === 404);
 } finally {
   if (meetingIds.length) await svc.from('meetings').delete().in('id', meetingIds);
   if (seriesIds.length) await svc.from('meeting_series').delete().in('id', seriesIds);
-  if (eventIds.length) await svc.from('internal_events').delete().in('id', eventIds);
   if (groupIds.length) { await svc.from('capability_grants').delete().in('group_id', groupIds); await svc.from('meeting_groups').delete().in('id', groupIds); }
   // A new help ticket notifies every real exec/admin; take those test notifications back out.
   await svc.from('notifications').delete().eq('title', `New help ticket: Perm ticket ${stamp}`);

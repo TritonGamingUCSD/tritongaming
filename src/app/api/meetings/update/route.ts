@@ -17,7 +17,6 @@ export async function POST(request: Request) {
     if (!doc.ok) return NextResponse.json({ error: 'The doc link must start with https:// (or be a path on this site).' }, { status: 400 });
     patch.doc_url = doc.value;
   }
-  if ('is_private' in b) patch.is_private = b.is_private === true;
   if ('location' in b) patch.location = String(b.location ?? '').trim().slice(0, 80) || null;
   if ('description' in b) patch.description = String(b.description ?? '').trim().slice(0, MAX_DESCRIPTION_LENGTH) || null;
   if ('question' in b) patch.question = String(b.question ?? '').trim().slice(0, MAX_QUESTION_LENGTH) || null;

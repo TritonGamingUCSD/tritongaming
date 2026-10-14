@@ -19,7 +19,7 @@ interface Entry {
   details: Record<string, unknown> | null;
 }
 
-// Types are stored as plain words ("shift station", "doc"); the list is built from the log itself, so new kinds of entries show up without editing anything.
+// Types are stored as plain words ("doc", "meeting attendance"); the list is built from the log itself, so new kinds of entries show up without editing anything.
 const typeLabel = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 const RANGES: { id: string; label: string }[] = [{ id: '', label: 'All time' }, { id: 'today', label: 'Today' }, { id: '7d', label: 'Last 7 days' }, { id: '30d', label: 'Last 30 days' }, { id: 'custom', label: 'Pick dates…' }];
 

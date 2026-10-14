@@ -26,12 +26,10 @@ beforeEach(() => { send.mockReset(); send.mockResolvedValue({}); deleted.length 
 describe('what a notification is', () => {
   it('sorts types into the kinds a member can mute', () => {
     expect(categoryOf('meeting_invite')).toBe('meetings');
-    expect(categoryOf('internal_event_reminder')).toBe('meetings');
     expect(categoryOf('ticket_confirmed')).toBe('events');
     expect(categoryOf('event_reminder')).toBe('events');
     expect(categoryOf('access_granted')).toBe('account');
     expect(categoryOf('help_ticket')).toBe('help');
-    expect(categoryOf('storage_key')).toBe('keys');
     expect(categoryOf('something_new')).toBeNull();
   });
   it('only accepts real push services as a subscription address', () => {

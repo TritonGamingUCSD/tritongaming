@@ -18,7 +18,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const b = await request.json().catch(() => ({}));
   const days = planDayKeys(plan, pacificDayKey());
   const starts = slotStarts(plan.window_start, plan.window_end);
-  // Whatever is already on their Triton Gaming calendar can't be marked available.
+  // Whatever they already have then (a meeting, an event with a ticket) can't be marked available.
   const busy = await busyBlocksFor(auth.svc, auth.user, auth.roles, plan, days);
   const mine = withoutBusy(cleanSlots(b.slots, days, starts), busy, starts);
   const { data: existing } = await auth.svc.from('meeting_plan_responses').select('slots').eq('plan_id', plan.id).eq('user_id', auth.user.id).maybeSingle();

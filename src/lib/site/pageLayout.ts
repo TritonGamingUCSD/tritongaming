@@ -1,6 +1,5 @@
 // The sections each public page is made of, in the order they appear on the page.
 export interface SectionDef { id: string; label: string }
-export interface PageLayout { order?: string[]; hidden?: string[] }
 
 export const PAGE_SECTIONS: Record<string, SectionDef[]> = {
   homepage: [

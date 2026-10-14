@@ -1,7 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { pacificDayKey } from '@/lib/events/checkinDays';
 import { loadPlanViews } from '@/lib/meetings/meetingPlanServer';
-import { dayLabel } from '@/lib/meetings/meetingPlans';
 
 // Things waiting on this person, shown together at the top of the portal home so nobody has to go looking for them.
 export interface TodoItem {

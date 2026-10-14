@@ -13,19 +13,15 @@ export const PUSH_CATEGORIES = [
   { id: 'events', label: 'Events and tickets', hint: 'Ticket confirmations, check-ins and event reminders' },
   { id: 'account', label: 'Account and access', hint: 'Role changes and access you’ve been given' },
   { id: 'help', label: 'Help inbox', hint: 'New questions that need an answer' },
-  { id: 'shifts', label: 'Shifts', hint: 'Shift reminders and requests to cover a shift' },
   { id: 'docs', label: 'Documentation', hint: 'Docs you are asked to read, and comments on your docs' },
-  { id: 'keys', label: 'Storage keys', hint: 'When someone gives you a key or takes one from you' },
 ] as const;
 export type PushCategory = (typeof PUSH_CATEGORIES)[number]['id'];
 
 export function categoryOf(type: string): PushCategory | null {
-  if (/^(meeting|internal_event)_/.test(type)) return 'meetings';
+  if (/^meeting_/.test(type)) return 'meetings';
   if (/^(ticket_|event_|manual_award)/.test(type)) return 'events';
   if (/^(access_|role_)/.test(type)) return 'account';
   if (type === 'help_ticket') return 'help';
-  if (type === 'storage_key') return 'keys';
-  if (/^shift_/.test(type)) return 'shifts';
   if (type === 'doc_required' || type === 'doc_comment') return 'docs';
   return null;
 }

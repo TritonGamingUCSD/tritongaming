@@ -16,7 +16,6 @@
 | `src/app/(auth)` | The login page, in the portal's look |
 | `src/app/(portal)` | The signed-in portal (`/portal`) and the pages that sit beside it |
 | `src/app/api` | Route handlers. The real security boundary |
-| `src/app/print` | Print-only pages (the staff sheet for an event's shifts) |
 | `src/components` | Shared components: `ui` (buttons, fields, dialogs), `portal` (hub, search, notifications), and public page parts |
 | `src/lib` | Shared logic, grouped by topic. See [code-map.md](code-map.md) |
 | `supabase/migrations` | SQL migrations, one file per change |
@@ -40,11 +39,11 @@
 
 ## Who may do what
 
-Roles grant **capabilities** (`src/lib/portal/capabilities.ts`). Server routes check them (`authorizeShifts`, `authorizeDocs`, `authorizeHelp`, ...); the UI hides what a person cannot use but is never the only check. Exec can also give one person one extra capability (a granted capability, `grantedCapabilities.ts`).
+Roles grant **capabilities** (`src/lib/portal/capabilities.ts`). Server routes check them (`authorizeMeetings`, `authorizeDocs`, `authorizeHelp`, ...); the UI hides what a person cannot use but is never the only check. Exec can also give one person one extra capability (a granted capability, `grantedCapabilities.ts`).
 
 ## Real time
 
-Shifts, the live meeting screen, docs and the board use Supabase Realtime. A route that changes shared state broadcasts "changed" (`notifyShifts`, `notifyMeetingLive`, `notifyDocs`) and open pages refresh within a couple of seconds; pages also refresh slowly on their own, so a missed message is harmless.
+The live meeting screen and the docs use Supabase Realtime. A route that changes shared state broadcasts "changed" (`notifyMeetingLive`, `notifyDocs`) and open pages refresh within a couple of seconds; pages also refresh slowly on their own, so a missed message is harmless.
 
 ## Notifications
 

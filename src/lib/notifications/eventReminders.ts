@@ -1,10 +1,6 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { createNotifications } from '@/lib/notifications/notify';
-import { NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase/admin';
 import { formatPacificDateTime } from '@/lib/core/timezone';
-
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
 
 const HOUR = 3600_000;
 
@@ -16,17 +12,10 @@ interface TicketRow {
   event: { id: string; title: string; start_date: string; location: string | null; is_online: boolean; slug: string | null; is_published: boolean } | null;
 }
 
-// Called on a schedule (see vercel.json) with `Authorization: Bearer $CRON_SECRET`.
-// Sends an in-app (bell) notification once ~24h and once ~1h before an event
-// starts. Email is intentionally not wired up yet. Per-ticket sent-timestamps make it safe to run as often as you like.
-export async function GET(request: Request) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret || request.headers.get('authorization') !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const svc = createServiceClient();
-  const now = Date.now();
+// Sends an in-app (bell) notification, with a push, once ~24h and once ~1h before an event starts (no email). Per-ticket sent-timestamps make it safe to run as
+// often as you like. (Called by the daily-reminders job, see src/app/api/cron/daily-reminders.)
+export async function sendEventReminders(svc: SupabaseClient, nowDate: Date = new Date()): Promise<{ sent: number; error?: string }> {
+  const now = nowDate.getTime();
   const horizon = new Date(now + 24 * HOUR).toISOString();
 
   const { data, error } = await svc
@@ -38,7 +27,7 @@ export async function GET(request: Request) {
     .lte('event.start_date', horizon);
   if (error) {
     console.error('[reminders] query failed:', error);
-    return NextResponse.json({ error: 'Query failed' }, { status: 500 });
+    return { sent: 0, error: 'Query failed' };
   }
 
   const due: { ticket: TicketRow; kind: '24h' | '1h' }[] = [];
@@ -50,7 +39,7 @@ export async function GET(request: Request) {
     if (until <= 90 * 60_000) due.push({ ticket: t, kind: '1h' });
     else if (until > 2 * HOUR && !t.reminder_24h_sent_at) due.push({ ticket: t, kind: '24h' });
   }
-  if (due.length === 0) return NextResponse.json({ sent: 0 });
+  if (due.length === 0) return { sent: 0 };
 
   let inApp = 0;
   for (const { ticket, kind } of due) {
@@ -70,5 +59,5 @@ export async function GET(request: Request) {
 
   }
 
-  return NextResponse.json({ sent: inApp });
+  return { sent: inApp };
 }

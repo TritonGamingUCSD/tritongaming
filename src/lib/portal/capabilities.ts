@@ -15,7 +15,7 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // events; that's lead+ only. view_events is the broader read-only gate.
   manage_events: ['lead', 'exec', 'admin'],
   // 'recruit' is mid-onboarding, pre-Officer — read-only access to the
-  // calendar and docs makes sense before they hold any real position.
+  // events list and docs makes sense before they hold any real position.
   view_events: ['officer', 'lead', 'exec', 'admin', 'recruit'],
   delete_events: ['admin'],
   // recruit can staff check-in before formally becoming Officer.
@@ -25,7 +25,7 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   manage_site_content: ['exec', 'admin'],
   manage_division: ['division', 'lead', 'exec', 'admin'],
   manage_divisions_directory: ['exec', 'admin'],
-  // alumni stay read-only-visible here, same as view_photo_albums/view_docs.
+  // alumni stay read-only-visible here, same as view_docs.
   view_members: ['officer', 'lead', 'exec', 'admin', 'alumni', 'recruit'],
   // exec deliberately excluded — they get manage_site_content (Edit Site
   // Content) as its own separate section instead of the full Admin
@@ -40,14 +40,6 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // delete) is lead+, view_docs (read) keeps officer (and recruit) in.
   manage_docs: ['lead', 'exec', 'admin'],
   view_docs: ['officer', 'lead', 'exec', 'admin', 'recruit', 'alumni'],
-  // The 'division' role is deliberately NOT here — a division lead role alone
-  // doesn't grant album access (they'd need officer or higher for that).
-  // Alumni and recruit are explicitly included here (unlike view_docs/
-  // view_events, which exclude alumni) — browsing old event photos is
-  // exactly the kind of thing a former member or a not-yet-onboarded
-  // prospect would want, unlike day-to-day ops docs or the events calendar.
-  view_photo_albums: ['officer', 'lead', 'exec', 'admin', 'recruit', 'alumni'],
-  manage_photo_albums: ['lead', 'exec', 'admin'],
   // Creating/editing/retiring shop items —
   // tightened to exec+ only, same bar as manage_points' "correction-level
   // ops decisions are exec+" reasoning below.
@@ -66,36 +58,23 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // service-role RPC, so the API route's own check is the real boundary,
   // not an RLS policy keyed to this capability.
   manage_points: ['exec', 'admin'],
-  // Shifts: exec set up the stations and open signup; officers and leads claim cells. UI/API gating only (the shift tables have no direct policies;
-  // every read and write goes through the API with the service role), so there is no role_capabilities row for these two.
-  manage_shifts: ['exec', 'admin'],
   // The order exec appear on the public Team page and in TG Members.
   manage_board_order: ['exec', 'admin'],
-  signup_shifts: ['officer', 'lead', 'exec', 'admin'],
   // Weekly Gen Meeting: only exec (and admin) can open check-in and show the code; everyone on the
   // team — recruits included — can check themselves in by typing it. UI/API gating only (the
   // meeting routes use the service role, so these routes are the real boundary).
   manage_meetings: ['exec', 'admin'],
   // Help tickets: everyone signed in can ask; exec and admin see every ticket and answer them.
   manage_help: ['exec', 'admin'],
-  // Internal events (socials, recruitment training…; separate from meetings): the team can see the ones they're invited to
-  // and say if they're coming; leads, exec and admin can plan them (leads manage their own, exec and admin all).
   // Meeting attendance results for everyone (the Attendance tab with absences and reasons, check-in times and
   // the HR CSV export). Read-only. Exec and admin by default; can be granted to a person or group (Admin → Access).
   view_attendance_reports: ['exec', 'admin'],
-  view_internal_events: ['officer', 'lead', 'exec', 'admin', 'recruit', 'alumni'],
-  // Storage keys (who has which key right now): the whole team can see them and say they have one or give one to someone (view_keys).
-  // Only exec and admin can add, rename or delete a key (manage_keys). UI/API gating only (the key routes use the service role).
-  view_keys: ['officer', 'lead', 'exec', 'admin', 'recruit'],
-  manage_keys: ['exec', 'admin'],
   // The strike tracker (private). Exec and the HR team (the "manage strikes" permission, handed out in Admin → Access) and admins see everyone's strikes,
   // add them directly (no approval), take them away, and handle vouchers. Leads and officers have no part in it. Everyone tracked always sees their own strikes. UI/API gating only.
   manage_strikes: ['exec', 'admin'],
   // Quarter status: exec and admin mark officers and leads inactive for a quarter (and see the yearly records). Setting up the quarter dates themselves is admin only
   // (manage_roles). UI/API gating only (the routes use the service role).
   manage_quarters: ['exec', 'admin'],
-  host_internal_events: ['lead', 'exec', 'admin'],
-  manage_internal_events: ['exec', 'admin'],
   // The Division Members directory (who leads each division): the whole team can look —
   // officers, leads, exec and recruits — plus the division leads themselves. Editing divisions is
   // separate (manage_divisions_directory / manage_division). Emails on it stay officer+ (view_members).
@@ -107,12 +86,12 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
 };
 
 // What being inactive takes away: anything that manages, hosts or deletes, plus checking in and scanning redemptions. Attending meetings is NOT stripped: roles never
-// pull an inactive person into a meeting, but one added by name (or planning one they were asked about) must still work (see isExpectedActive). Everything else (view_*, QR codes, storage keys, their own profile) stays.
+// pull an inactive person into a meeting, but one added by name (or planning one they were asked about) must still work (see isExpectedActive). Everything else (view_*, QR codes, their own profile) stays.
 export function isInactiveStripped(capability: string): boolean {
   return /^(manage|host|delete)_/.test(capability) || capability === 'checkin' || capability === 'scan_redemptions';
 }
 
-/** A member of the TG team in the wide sense: exec, lead, officer, recruit or alumni (and admins). Used for team-wide views like the unified TG calendar. */
+/** A member of the TG team in the wide sense: exec, lead, officer, recruit or alumni (and admins). Used for team-wide views (what the team is allowed to see together). */
 export const isTgMember = (roles: RoleGrant[]): boolean => roles.some((r) => (['exec', 'lead', 'officer', 'recruit', 'alumni', 'admin'] as string[]).includes(r.role));
 
 /**

@@ -6,7 +6,7 @@ import { getPreviewDrafts } from '@/lib/site/contentPreviewStore';
 // between visitors. Saving in the content editor calls revalidateTag
 // ('site-content'), so edits still show up right away. The fetchers throw on a
 // database error so a failure is never cached — the catch is outside the cache.
-const REVALIDATE_SECONDS = 300;
+const REVALIDATE_SECONDS = 3600;
 
 async function fetchBlocks(keys: string[]): Promise<Record<string, Record<string, unknown>>> {
   const { data, error } = await createPublicClient().from('site_contents').select('key, content').in('key', keys);

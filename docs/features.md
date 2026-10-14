@@ -2,25 +2,13 @@
 
 How the main pieces work and where the code is. Each section names the files so you can start reading in the right place.
 
-## Shifts
-
-Code: `src/app/(portal)/portal/shifts`, `src/app/api/shifts`, `src/lib/shifts`, `src/app/print/shifts`.
-
-- **Grid:** `event_shifts` defines an event's slots; `shift_signups` holds who is on which station and slot. `claim_shift` (SQL) is the only way to join, so a cell can't be over-filled and nobody is on two stations at once.
-- **Guides:** per station (`shift_stations`) with per-event changes (`shift_event_guides`). The guide also holds the **checklist** and the **hand-off note**.
-- **Checklists:** exec writes one item per line in Setup → Guides (`api/shifts/[eventId]/guide`). People on that station tick items (`api/.../checklist`); the tick is shared. Exec sees the result in People → Checklists (`ChecklistSummary.tsx`).
-- **Hand-off notes:** anyone on a station leaves a note for the next person (`api/.../handoff`). The newest three show at the top of the station's guide.
-- **Swap and cover:** a person asks for cover on a shift they hold (`api/.../cover`, action `ask`). Exec and people already working that event who are free in that slot get a bell. Anyone eligible takes it (`take`; SQL `take_shift_cover` moves it in one step). The requester and exec are told; exec can `undo`. If nobody takes it, exec is alerted after 3 hours and again within 2 hours of the shift (`shiftReminders.ts` → `alertStaleCovers`; it runs from the daily job and whenever someone opens the grid, because a daily job alone can't be that exact).
-- **Reminders:** the morning of an event, each person with a shift that day gets one bell and push (`sendShiftReminders`, called from the `meeting-reminders` job).
-- **Dashboard card:** "Now and next" (`NowNext.tsx`) shows the shift you are on or next, and close to the start brings in the checklist, the last note and a link to ask for cover.
-- **Print:** `/print/shifts/[eventId]` is the staff sheet.
-
 ## Meetings (live screen)
 
 Code: `src/app/(portal)/portal/meetings`, `src/app/api/meetings`, `src/lib/meetings`.
 
 - The projector screen (`api/meetings/[id]/live`) refreshes when the server sends a signal (`notifyMeetingLive`, called after a check-in, answer, reaction or excuse) and every 30 seconds as a backstop. Only reactions newer than a cursor are returned; totals come every eighth refresh.
 - People answering a poll or rating watch the results move the same way.
+- The availability grid blocks times a person already has: meetings meant for them or hosted by them and events they have a ticket for (`lib/meetings/busyItems.ts`).
 
 ## Documentation
 
@@ -42,15 +30,15 @@ Code: `src/app/(portal)/portal/help`, `src/app/api/help`, `src/lib/notifications
 
 ## Notifications
 
-`createNotifications` writes the bell and sends push together. Kinds people can mute (Profile → notifications): meetings, events, account, help, **shifts** (`shift_*`), **docs** (`doc_required`, `doc_comment`), keys. A kind not listed always sends.
+`createNotifications` writes the bell and sends push together. Kinds people can mute (Profile → notifications): meetings, events, account, help and **docs** (`doc_required`, `doc_comment`). A kind not listed always sends.
 
 ## Scheduled jobs (`vercel.json`, `src/app/api/cron`)
 
-The free Vercel plan allows two scheduled jobs, each at most once a day, so `vercel.json` has exactly two. Each one runs the older single-purpose routes in turn (a failure in one never stops the next); those routes still work on their own.
+The free Vercel plan allows two scheduled jobs, each at most once a day, so `vercel.json` has exactly two. Each one is a single route that runs its steps in turn (a failure in one never stops the next).
 
-| Job | Runs | Does |
+| Job | Steps | Code |
 |---|---|---|
-| `daily-reminders` | `event-reminders`, `meeting-reminders` | Day-before and hour-before event reminders; "Today at ..." meeting reminders, meeting-plan nudges, morning-of shift reminders, stale cover alerts |
-| `daily-maintenance` | `cleanup-notifications`, `quarter-sync`, `team-sync`, and on Sundays `storage-maintenance` | Removes old notifications; keeps the quarter and team-year records in line with the calendar; weekly removes files nothing uses |
+| `daily-reminders` | Day-before and hour-before event reminders; "Today at ..." meeting reminders; a nudge to people who haven't answered a meeting plan | `lib/notifications/eventReminders.ts`, `lib/meetings/reminders.ts`, `lib/meetings/meetingPlanServer.ts` |
+| `daily-maintenance` | Removes old notifications; starts a new quarter's inactive markers; records the team roster and archives finished years; on Sundays removes files nothing uses and shrinks old pictures | `lib/notifications/notificationCleanup.ts`, `lib/members/quarters.ts`, `lib/members/teamYears.ts`, `lib/storage/storageMaintenance.ts` |
 
-Each is called with `Authorization: Bearer $CRON_SECRET`. Don't add a third job to `vercel.json`; add a step to one of these two instead.
+Both are called with `Authorization: Bearer $CRON_SECRET`. `daily-maintenance?only=notifications|quarters|teams|storage` runs a single step; on a dev machine `x-cron-dev: 1` may run only the quarters and teams steps. Don't add a third job to `vercel.json`; add a step to one of these two instead.

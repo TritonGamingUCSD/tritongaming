@@ -1,5 +1,4 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { createClient } from '@/lib/supabase/server';
 
 // Server routes that act with the service role (so database triggers can't tell
 // who is behind them) record their sensitive actions here — see audit_log and
@@ -30,9 +29,3 @@ export async function logAudit(
   }
 }
 
-// For routes whose auth helper doesn't hand back the user id.
-export async function currentActorId(): Promise<string | null> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  return user?.id ?? null;
-}

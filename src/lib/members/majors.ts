@@ -170,16 +170,3 @@ export function splitStoredMajors(value: string): string[] {
   return value.split(MAJOR_SEPARATOR).map((v) => v.trim()).filter(Boolean);
 }
 
-// For tidying stored values without losing anything the person wrote: returns the
-// canonical name only when the text is that name (ignoring case, spacing,
-// "&"/"and") or a plain abbreviation of it ("CS", "econ", "poli sci"). Anything
-// with a specialization, a double major, or that needed guessing returns null.
-const SAFE_ABBREVIATIONS = new Set(['cs', 'comp sci', 'compsci', 'cogsci', 'cog sci', 'econ', 'psych', 'poli sci', 'polisci', 'math', 'bio', 'chem', 'biochem', 'ds', 'data sci', 'mcb', 'phys', 'stats', 'neuro', 'ling', 'soc', 'anthro']);
-export function canonicalMajorIfSafe(raw: string): string | null {
-  if (/[()]/.test(raw)) return null; // "Visual Arts (ICAM)" says more than either name alone
-  const k = key(raw);
-  if (!k) return null;
-  const hit = LOOKUP.get(k);
-  if (!hit) return null;
-  return k === key(hit.name) || SAFE_ABBREVIATIONS.has(k) ? hit.name : null;
-}

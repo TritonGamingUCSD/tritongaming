@@ -9,7 +9,7 @@ export interface PastYear { start_year: number; label: string; members: PastMemb
 // is recorded or edited). Everyone recorded for a year appears (name, title and picture only): they were on the public board
 // that year, so becoming an alumnus later doesn't remove them. An admin can remove a person from a year in Quarter status → Years.
 export function getTeamYears(): Promise<PastYear[]> {
-  return unstable_cache(fetchTeamYears, ['team-years'], { revalidate: 300, tags: ['board'] })().catch(() => []);
+  return unstable_cache(fetchTeamYears, ['team-years'], { revalidate: 3600, tags: ['board'] })().catch(() => []);
 }
 
 async function fetchTeamYears(): Promise<PastYear[]> {

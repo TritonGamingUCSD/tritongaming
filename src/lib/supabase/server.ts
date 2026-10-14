@@ -31,7 +31,7 @@ export async function createRealClient() {
 }
 
 // What every page and route normally uses. While an admin is viewing the portal as one specific person (admin only, re-checked here every time),
-// `auth.getUser()` answers with THAT person, so the data routes the portal calls (meetings, shifts, docs, keys…) return what that person would see.
+// `auth.getUser()` answers with THAT person, so the data routes the portal calls (meetings, docs, help…) return what that person would see.
 // It stays read only: the proxy refuses every write while the cookie is set. Row-level security still runs as the admin, so a route that relies on
 // it alone (with no filter on the user's id) would show more than that person sees; the portal's routes filter by user id explicitly.
 export async function createClient() {
@@ -49,25 +49,3 @@ export async function createClient() {
   return client;
 }
 
-export async function createAdminClient() {
-  const cookieStore = await cookies();
-
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {}
-        },
-      },
-    }
-  );
-}
