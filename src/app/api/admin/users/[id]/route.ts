@@ -19,7 +19,7 @@ export async function GET(_request: Request, { params }: Params) {
   if (!hasCapability(roles ?? [], 'manage_roles')) return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
 
   const svc = createServiceClient();
-  const [profile, priv, auth, grants, history, tickets, points, redemptions, referred, strikes, attendance, absences, quarters, notifications, help, audit, docsMade, pushes, divisions] = await Promise.all([
+  const [profile, priv, auth, grants, history, tickets, points, redemptions, strikes, attendance, absences, quarters, notifications, help, audit, docsMade, pushes, divisions] = await Promise.all([
     svc.from('profiles').select('*').eq('id', id).maybeSingle(),
     svc.from('profile_private').select('gender, division_interests, platforms, favorite_games').eq('user_id', id).maybeSingle(),
     svc.auth.admin.getUserById(id),
@@ -28,7 +28,6 @@ export async function GET(_request: Request, { params }: Params) {
     svc.from('tickets').select('status, checked_in_at, created_at, event:events(title, start_date)').eq('user_id', id).order('created_at', { ascending: false }),
     svc.from('point_transactions').select('amount, type, note, created_at, reversed_at').eq('user_id', id).order('created_at', { ascending: false }),
     svc.from('reward_redemptions').select('status').eq('user_id', id),
-    svc.from('profiles').select('id', { count: 'exact', head: true }).eq('referred_by', id),
     svc.from('strikes').select('status, category, reason, incident_date, created_at').eq('user_id', id).order('created_at', { ascending: false }).limit(8),
     svc.from('meeting_attendance').select('checked_in_at, method, meeting:meetings(title, starts_at)').eq('user_id', id).order('checked_in_at', { ascending: false }).limit(8),
     svc.from('meeting_absences').select('excused', { count: 'exact' }).eq('user_id', id),
@@ -46,7 +45,6 @@ export async function GET(_request: Request, { params }: Params) {
   const whoIds = new Set<string>();
   (grants.data ?? []).forEach((g) => g.granted_by && whoIds.add(g.granted_by));
   (history.data ?? []).forEach((h) => h.changed_by && whoIds.add(h.changed_by));
-  if (profile.data.referred_by) whoIds.add(profile.data.referred_by);
   const { data: names } = whoIds.size ? await svc.from('profiles').select('id, display_name').in('id', [...whoIds]) : { data: [] as { id: string; display_name: string | null }[] };
   const nameOf = new Map((names ?? []).map((n) => [n.id, n.display_name ?? 'Someone']));
   const divName = new Map((divisions.data ?? []).map((d) => [d.id as string, d.name as string]));
@@ -72,7 +70,6 @@ export async function GET(_request: Request, { params }: Params) {
     tickets: { total: tk.length, checked_in: tk.filter((t) => t.checked_in_at).length, recent: tk.slice(0, 6) },
     points: { balance: live.reduce((a, t) => a + t.amount, 0), lifetime: live.filter((t) => t.amount > 0).reduce((a, t) => a + t.amount, 0), recent: txns.slice(0, 6) },
     rewards: { redeemed: (redemptions.data ?? []).filter((r) => r.status === 'fulfilled').length, pending: (redemptions.data ?? []).filter((r) => r.status === 'pending').length },
-    referral: { code: profile.data.referral_code ?? null, referred_by: profile.data.referred_by ? nameOf.get(profile.data.referred_by) ?? null : null, referred_count: referred.count ?? 0 },
     strikes: strikes.data ?? [],
     meetings: { attended_recent: attendance.data ?? [], absences: absences.count ?? 0, excused: (absences.data ?? []).filter((a) => a.excused).length },
     quarters: quarters.data ?? [],

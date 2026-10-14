@@ -6,7 +6,7 @@ import { confirmHold } from '@/lib/ui/confirmHold';
 import { showToast } from '@/lib/ui/toast';
 import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import { useEffect, useState } from 'react';
-import { Award, ShoppingBag, Trophy, Settings, Copy, Check, QrCode, Gift, Lock, X } from 'lucide-react';
+import { Award, ShoppingBag, Trophy, Settings, Check, QrCode, Gift, Lock, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { getTier, nextTier, type Tier } from '@/lib/members/tiers';
 import { PACIFIC_TZ } from '@/lib/core/timezone';
@@ -81,7 +81,6 @@ interface HistoryTxn {
 
 const TYPE_LABELS: Record<string, string> = {
   event_checkin: 'Event check-in',
-  referral_bonus: 'Referral bonus',
   redemption: 'Reward redeemed',
   admin_adjustment: 'Adjustment',
 };
@@ -93,7 +92,6 @@ function oneOf<T>(v: T | T[] | null): T | null {
 interface Props {
   balance: number;
   lifetimeEarned: number;
-  referralCode: string;
   leaderboardAnonymous: boolean;
   transactions: TransactionRow[];
   canManageShop: boolean;
@@ -115,7 +113,7 @@ type ManageSubTab = 'award' | 'items' | 'corrections' | 'tiers';
 const VALID_MANAGE_SUB_TABS: ManageSubTab[] = ['award', 'items', 'corrections', 'tiers'];
 
 export default function PointsSectionContent({
-  balance, lifetimeEarned, referralCode,
+  balance, lifetimeEarned,
   leaderboardAnonymous: initialAnonymous,
   transactions, canManageShop, canManagePoints, manageOnly = false, tiers: initialTiers,
 }: Props) {
@@ -144,19 +142,6 @@ export default function PointsSectionContent({
   }
   const tier = getTier(lifetimeEarned, tiers);
   const next = nextTier(lifetimeEarned, tiers);
-
-  const [copied, setCopied] = useState(false);
-  const referralLink = typeof window !== 'undefined' ? `${window.location.origin}/login?ref=${referralCode}` : '';
-
-  async function copyReferralLink() {
-    try {
-      await navigator.clipboard.writeText(referralLink);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // clipboard unavailable — the link is still visible/selectable in the input
-    }
-  }
 
   // ── Shop / To Claim (same endpoint — one fetch backs both) ────────────
   // "To Claim" used to be its own tab; folded into My Points since tier
@@ -717,7 +702,7 @@ export default function PointsSectionContent({
                 </ul>
               ) : (
                 !showTierLadder && (
-                  <p className={styles.referralHint}>
+                  <p className={styles.hint}>
                     Free perks you unlock automatically by reaching a tier — nothing ready to claim right now.
                   </p>
                 )
@@ -759,17 +744,6 @@ export default function PointsSectionContent({
             </div>
           )}
 
-          <div className={styles.referralCard}>
-            <h2 className={styles.sectionLabel}>Invite a Friend</h2>
-            <p className={styles.referralHint}>Share your link — when they sign up and check into their first event, you earn a bonus.</p>
-            <div className={styles.referralRow}>
-              <input className={styles.referralInput} aria-label="Your invite link" value={referralLink} readOnly onFocus={(e) => e.target.select()} />
-              <button type="button" className={styles.copyBtn} onClick={copyReferralLink}>
-                {copied ? <Check size={14} strokeWidth={2} /> : <Copy size={14} strokeWidth={1.75} />} {copied ? 'Copied' : 'Copy'}
-              </button>
-            </div>
-          </div>
-
           <div className={styles.historySection}>
             <h2 className={styles.sectionLabel}>Recent Activity</h2>
             {transactions.length === 0 ? (
@@ -810,7 +784,7 @@ export default function PointsSectionContent({
           {pending.length > 0 && (
             <div className={styles.pendingSection}>
               <h2 className={styles.sectionLabel}>Ready to Claim</h2>
-              <p className={styles.referralHint}>Show one of these to an officer at an event to receive it.</p>
+              <p className={styles.hint}>Show one of these to an officer at an event to receive it.</p>
               <div className={styles.pendingGrid}>
                 {pending.map((r) => {
                   const reward = oneOf(r.reward);
@@ -863,7 +837,7 @@ export default function PointsSectionContent({
               <input type="checkbox" checked={anonymous} disabled={savingPrefs} onChange={(e) => setAnonymousPref(e.target.checked)} />
               <span>Stay anonymous on the leaderboard (otherwise shown under your name)</span>
             </label>
-            <p className={styles.referralHint}>Everyone&apos;s on the leaderboard — this only controls whether your full name or a masked version (like "Jas***") shows next to your rank. Your exact points are always shown either way.</p>
+            <p className={styles.hint}>Everyone&apos;s on the leaderboard — this only controls whether your full name or a masked version (like "Jas***") shows next to your rank. Your exact points are always shown either way.</p>
           </div>
 
           {boardError && <Notice tone="error">{boardError}</Notice>}
@@ -907,7 +881,7 @@ export default function PointsSectionContent({
           {manageSubTab === 'award' && canManagePoints && (
           <section className={styles.manageSection}>
             <h2 className={styles.sectionLabel}>Award Points</h2>
-            <p className={styles.referralHint}>Award the same amount to one or more members at once — for a goodwill bonus, a correction, or any other contribution.</p>
+            <p className={styles.hint}>Award the same amount to one or more members at once — for a goodwill bonus, a correction, or any other contribution.</p>
             <form className={styles.awardForm} onSubmit={handleAward}>
               <div className={styles.adjustSearchWrap}>
                 <input
@@ -940,7 +914,7 @@ export default function PointsSectionContent({
               <input className={styles.input} placeholder="Reason (required)" value={awardNote} onChange={(e) => setAwardNote(e.target.value)} maxLength={200} />
               <Button type="submit" disabled={awarding || awardTargets.length === 0 || !awardAmount || !awardNote.trim()}>{awarding ? 'Awarding…' : `Award ${awardTargets.length || ''}`.trim()}</Button>
             </form>
-            {awardResult && <p className={styles.referralHint}>{awardResult}</p>}
+            {awardResult && <p className={styles.hint}>{awardResult}</p>}
           </section>
           )}
 
@@ -1053,7 +1027,7 @@ export default function PointsSectionContent({
           {manageSubTab === 'corrections' && canManagePoints && (
           <div className={styles.adjustSection}>
             <h2 className={styles.sectionLabel}>Correct a Member&apos;s Points</h2>
-            <p className={styles.referralHint}>Find a member to see their points history and reverse a specific entry.</p>
+            <p className={styles.hint}>Find a member to see their points history and reverse a specific entry.</p>
 
             <div className={styles.adjustSearchWrap}>
               <input
@@ -1120,7 +1094,7 @@ export default function PointsSectionContent({
           {manageSubTab === 'tiers' && (
           <div>
             <h2 className={styles.sectionLabel}>Rewards Tier Ladder</h2>
-            <p className={styles.referralHint}>
+            <p className={styles.hint}>
               The starting tier always stays at 0 points and can&apos;t be renamed away or deleted — every other tier can be added, retitled, recolored, or removed (as long as no shop item still requires it).
             </p>
 

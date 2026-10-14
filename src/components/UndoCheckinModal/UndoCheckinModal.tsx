@@ -17,8 +17,7 @@ export default function UndoCheckinModal({
   return (
     <Dialog title={`Undo ${name ? `${name}’s` : 'this'} check-in?`} tone="danger" busy={busy} onClose={onCancel} label="Undo check-in">
       <DialogText>
-        The ticket goes back to unused, and the points they earned for this check-in are taken back
-        (along with any referral bonus it triggered). They’ll need to be scanned again to get in.
+        The ticket goes back to unused, and the points they earned for this check-in are taken back. They’ll need to be scanned again to get in.
       </DialogText>
       <HoldButton label="Hold to undo check-in" onConfirm={onConfirm} busy={busy} />
       <DialogCancel onClick={onCancel} disabled={busy} />

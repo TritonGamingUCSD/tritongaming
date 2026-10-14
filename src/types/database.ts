@@ -97,8 +97,6 @@ export interface Database {
           portfolio_links: Array<{ label: string; url: string }>;
           game_ids: Array<{ game: string; id: string }>;
           board_visibility: Record<string, boolean>;
-          referral_code: string;
-          referred_by: string | null;
           leaderboard_anonymous: boolean;
           preferred_email: string | null;
           board_email: string | null;
@@ -340,10 +338,9 @@ export interface Database {
           id: string;
           user_id: string;
           amount: number;
-          type: 'event_checkin' | 'referral_bonus' | 'redemption' | 'admin_adjustment';
+          type: 'event_checkin' | 'redemption' | 'admin_adjustment';
           event_id: string | null;
           ticket_id: string | null;
-          related_user_id: string | null;
           redemption_id: string | null;
           note: string | null;
           created_by: string | null;

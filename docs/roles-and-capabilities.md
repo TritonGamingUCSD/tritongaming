@@ -104,7 +104,7 @@ Admin passes every check. Roles combine: a person has everything each of their r
 
 **Other rules that are not capabilities**
 
-- **Rewards are for UCSD students only.** Only someone whose **only** role is UCSD Student can earn points, collect referral bonuses, claim rewards or be on the leaderboard. Any other role (or no role) rules it out. The database function `is_rewards_eligible()` and the app (`isRewardsEligible`) use the same rule, so no one else is awarded points. Their old points stay in the ledger, hidden. Exec and Admin keep a management-only Rewards section.
+- **Rewards are for UCSD students only.** Only someone whose **only** role is UCSD Student can earn points, claim rewards or be on the leaderboard. Any other role (or no role) rules it out. The database function `is_rewards_eligible()` and the app (`isRewardsEligible`) use the same rule, so no one else is awarded points. Their old points stay in the ledger, hidden. Exec and Admin keep a management-only Rewards section.
 - **Team member (wide sense):** Exec, Lead, Officer, Recruit, Alumni or Admin. Used for team-wide views and to decide the desktop layout.
 - **Verified member:** holds at least one role (even just UCSD). Decides UCSD-only event access and free ticket pricing.
 - **Officer title on the profile:** only Officer, Lead and Exec can set it (a database trigger enforces this); Admin alone cannot. Lead and Exec must have one; Officers may add one.

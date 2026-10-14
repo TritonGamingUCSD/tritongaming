@@ -26,7 +26,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; error?: string; ref?: string }>;
+  searchParams: Promise<{ next?: string; error?: string }>;
 }) {
   const user = await getUser();
   const params = await searchParams;
@@ -62,7 +62,7 @@ export default async function LoginPage({
         <p className={styles.about}>The member portal for Gaming Org at UC San Diego. Looking for the public site? <Link href="/">Go to the website</Link>.</p>
         <p className={styles.ucsdHint}>UCSD student? Sign in with your @ucsd.edu Google account to get verified access.</p>
 
-        <LoginClient next={params.next} ref={params.ref} />
+        <LoginClient next={params.next} />
 
         <p className={styles.footnote}>
           Losing access to this Google account someday? Link another one from your Profile page

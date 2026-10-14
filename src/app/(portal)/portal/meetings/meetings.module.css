@@ -595,3 +595,12 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .onlyNone { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--pp-ink); cursor: pointer; }
 .onlyNone input { width: 18px; height: 18px; accent-color: var(--yellow); }
 .teamPersonRow > :last-child:not(ul) { flex: 0 1 220px; max-width: 220px; min-width: 160px; }
+
+/* A team is closed until opened: the header shows its name and size, not who is on it. */
+.teamToggle { display: inline-flex; align-items: center; gap: 0.5rem; flex: 1 1 200px; min-width: 0; padding: 0.25rem 0.1rem; border: 0; background: none; color: var(--pp-ink); font: inherit; text-align: left; cursor: pointer; border-radius: 8px; }
+.teamToggle strong { font-size: 1rem; }
+.teamToggle:hover .teamShow { text-decoration: underline; }
+.teamToggle:focus-visible { outline: 2px solid var(--pp-ink); outline-offset: 2px; }
+.teamChevron { flex-shrink: 0; transition: transform 0.15s; }
+.teamChevronOpen { transform: rotate(90deg); }
+.teamShow { margin-left: auto; font-size: 0.78rem; font-weight: 600; color: var(--p-accent-text); }

@@ -5,7 +5,7 @@ import EditingNow from '@/components/portal/EditingNow';
 import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { CalendarClock, CalendarDays, Radio, ClipboardList, Check, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Link2, MessageCircleQuestion, Send, Users, Minus, UserX, Lock, Dices, Smile, Upload, Settings2, Moon } from 'lucide-react';
+import { ChevronRight, CalendarClock, CalendarDays, Radio, ClipboardList, Check, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Link2, MessageCircleQuestion, Send, Users, Minus, UserX, Lock, Dices, Smile, Upload, Settings2, Moon } from 'lucide-react';
 import IconButton from '@/components/ui/IconButton';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Notice from '@/components/ui/Notice';
@@ -646,12 +646,15 @@ export function TeamsPanel({ userId, canManageAll, canEdit = true }: { userId: s
   const [groups, reload] = useGroups();
   const { subtab } = useUrlNav();
   const syncTab = usePortalTabSync('members');
-  const view: 'teams' | 'people' = subtab === 'people' ? 'people' : 'teams';
+  // Local state drives the view (the address is a path, which changes without re-rendering this); the address is kept in step so the view can be linked to.
+  const [view, setView] = useState<'teams' | 'people'>(subtab === 'people' ? 'people' : 'teams');
   const [editing, setEditing] = useState<{ id: string | null; name: string; ids: string[] } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [query, setQuery] = useState('');
   const [adding, setAdding] = useState<string | null>(null);   // the team whose "add a person" box is open
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());   // teams opened to show who is on them (closed by default)
+  const toggleOpen = (id: string) => setExpanded((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const [onlyNone, setOnlyNone] = useState(false);
   const mayChange = (g: Group) => canEdit && (canManageAll || g.created_by === userId);
 
@@ -692,7 +695,7 @@ export function TeamsPanel({ userId, canManageAll, canEdit = true }: { userId: s
   const shownTeams = (groups ?? []).filter((g) => !q || g.name.toLowerCase().includes(q) || g.member_ids.some((id) => (byId.get(id)?.name ?? '').toLowerCase().includes(q)));
   const withoutTeam = people.filter((p) => teamsOf(p.id).length === 0);
   const shownPeople = people.filter((p) => (!q || p.name.toLowerCase().includes(q)) && (!onlyNone || teamsOf(p.id).length === 0));
-  const switchView = (v: 'teams' | 'people') => syncTab('team', v === 'people' ? 'people' : null);
+  const switchView = (v: 'teams' | 'people') => { setView(v); syncTab('team', v === 'people' ? 'people' : null); };
 
   return (
     <div className={styles.stack}>
@@ -718,21 +721,29 @@ export function TeamsPanel({ userId, canManageAll, canEdit = true }: { userId: s
           {shownTeams.length === 0 && <li className={styles.faint}>No team or person matches that.</li>}
           {shownTeams.map((g) => {
             const may = mayChange(g);
+            // Closed unless opened, or unless a search is on (someone searching for a person wants to see where they are).
+            const isOpen = expanded.has(g.id) || q !== '';
             const free = people.filter((p) => !g.member_ids.includes(p.id));
             const pickQ = adding === g.id ? query.trim().toLowerCase() : '';
             return (
               <li key={g.id} className={`${styles.meetingCard} ${styles.teamCard}`}>
                 <div className={styles.teamHead}>
-                  <strong>{g.name} <span className={styles.muted}>· {g.member_ids.length} {g.member_ids.length === 1 ? 'person' : 'people'}</span></strong>
+                  <button type="button" className={styles.teamToggle} aria-expanded={isOpen} aria-controls={`team-${g.id}`} onClick={() => toggleOpen(g.id)}>
+                    <ChevronRight size={16} strokeWidth={2} aria-hidden="true" className={`${styles.teamChevron} ${isOpen ? styles.teamChevronOpen : ''}`} />
+                    <strong>{g.name}</strong>
+                    <span className={styles.muted}>· {g.member_ids.length} {g.member_ids.length === 1 ? 'person' : 'people'}</span>
+                    <span className={styles.teamShow}>{isOpen ? 'Hide' : 'Show who'}</span>
+                  </button>
                   {may ? (
                     <span className={styles.teamActions}>
-                      <Button size="sm" variant="secondary" onClick={() => setAdding(adding === g.id ? null : g.id)} aria-expanded={adding === g.id}><UserPlus size={14} aria-hidden="true" /> Add person</Button>
+                      <Button size="sm" variant="secondary" onClick={() => { const open = adding !== g.id; setAdding(open ? g.id : null); if (open) setExpanded((prev) => new Set(prev).add(g.id)); }} aria-expanded={adding === g.id}><UserPlus size={14} aria-hidden="true" /> Add person</Button>
                       <IconButton kind="edit" label={`Rename or edit ${g.name}`} onClick={() => { setEditing({ id: g.id, name: g.name, ids: [...g.member_ids] }); setError(''); }} />
                       <IconButton kind="delete" label={`Delete ${g.name}`} onClick={() => remove(g)} />
                     </span>
                   ) : canEdit ? <span className={styles.faint}>made by someone else</span> : null}
                 </div>
-                <ul className={styles.memberChips}>
+                {isOpen && (
+                <ul className={styles.memberChips} id={`team-${g.id}`}>
                   {g.member_ids.map((id) => {
                     const p = byId.get(id);
                     return (
@@ -744,6 +755,7 @@ export function TeamsPanel({ userId, canManageAll, canEdit = true }: { userId: s
                     );
                   })}
                 </ul>
+                )}
                 {adding === g.id && (
                   <div className={styles.quickAdd}>
                     <span className={styles.faint}>Tap a person to add them{pickQ ? '' : ' (search above to narrow the list)'}:</span>

@@ -52,13 +52,6 @@
 /* ── My Points ── */
 .pointsTab { display: flex; flex-direction: column; gap: 1.5rem; }
 
-.referralCard {
-  background: rgba(125, 180, 234,0.05);
-  border: 1px solid rgba(125, 180, 234,0.18);
-  border-radius: 1rem;
-  padding: 1.25rem;
-}
-
 .sectionLabel {
   font-size: var(--fs-label);
   font-family: var(--font-renegare);
@@ -69,38 +62,7 @@
   display: block;
 }
 
-.referralHint { font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.88); margin-bottom: 0.875rem; }
-
-.referralRow { display: flex; gap: 0.5rem; }
-
-.referralInput {
-  flex: 1;
-  min-width: 0;
-  background: rgba(var(--pp-ink-rgb), 0.05);
-  border: 1px solid rgba(var(--pp-ink-rgb), 0.23);
-  border-radius: var(--radius-sm);
-  padding: 0.625rem 0.875rem;
-  color: var(--pp-ink);
-  font-family: var(--font-futura-medium);
-  font-size: 0.9rem;
-}
-
-.copyBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.6rem 1rem;
-  background: rgba(125, 180, 234,0.12);
-  color: var(--p-accent-text);
-  border: 1px solid rgba(125, 180, 234,0.3);
-  border-radius: var(--radius-sm);
-  font-size: 0.8rem;
-  font-family: var(--font-futura-medium);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.15s;
-}
-.copyBtn:hover { background: rgba(125, 180, 234,0.2); }
+.hint { font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.88); margin-bottom: 0.875rem; }
 
 .historySection { display: flex; flex-direction: column; }
 
@@ -553,8 +515,3 @@
 .rungNow::after { content: 'You are here'; position: absolute; top: -1.15rem; left: 0; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; color: var(--pp-ink); white-space: nowrap; }
 .heroNote { margin: 0; font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 .heroNote strong { color: var(--pp-ink); }
-@media (min-width: 1100px) {
-  .pointsTab { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr); gap: 1.2rem; align-items: start; }
-  .pointsTab > .hero, .pointsTab > .historySection:last-child { grid-column: 1; }
-  .pointsTab > .referralCard { grid-column: 2; grid-row: 1 / span 2; }
-}

@@ -113,9 +113,9 @@ export default async function PortalDashboard({ searchParams }: Props) {
       return (await q).count ?? 0;
     } catch { return 0; }
   })();
-  // Rewards (earning points at check-in, referral bonuses, the shop) is
-  // UCSD-students-and-staff only — see is_rewards_eligible() in
-  // 20260922110000_restrict_rewards_to_ucsd.sql, the actual enforcement
+  // Rewards (earning points at check-in, the shop) is
+  // UCSD-students-only — see is_rewards_eligible() in
+  // 20261015110000_rewards_students_only.sql, the actual enforcement
   // boundary; this just keeps the section/badge from showing at all to
   // someone who'd hit a permission error the moment they tried to use it.
   const canUseRewards = isRewardsEligible(roles);
@@ -224,7 +224,6 @@ export default async function PortalDashboard({ searchParams }: Props) {
         <PointsSectionContent
           balance={pointsData?.balance ?? 0}
           lifetimeEarned={pointsData?.lifetimeEarned ?? 0}
-          referralCode={pointsData?.referralCode ?? ''}
           leaderboardAnonymous={pointsData?.leaderboardAnonymous ?? false}
           transactions={pointsData?.transactions ?? []}
           manageOnly={runsRewards}

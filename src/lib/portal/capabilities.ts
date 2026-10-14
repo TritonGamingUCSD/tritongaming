@@ -127,7 +127,7 @@ export function isVerifiedMember(roles: RoleGrant[]): boolean {
   return roles.length > 0;
 }
 
-// Rewards (points earned at check-in, referral bonuses, the shop) are for UCSD students only: someone whose only role is "UCSD Student". Holding any other
+// Rewards (points earned at check-in, and the shop) are for UCSD students only: someone whose only role is "UCSD Student". Holding any other
 // role (recruit, alumni, officer, lead, exec, division lead, admin) means no points and no Rewards section of their own, and a person with no role (guest)
 // is not a student, so they have none either. Exec and admin still see Rewards to run it (see page.tsx). Mirrors is_rewards_eligible() in
 // 20261015110000_rewards_students_only.sql, which is what actually stops points being awarded; this keeps the section and leaderboard in step with it.

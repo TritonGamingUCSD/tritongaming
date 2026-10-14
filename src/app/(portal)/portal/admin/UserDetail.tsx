@@ -132,11 +132,6 @@ export default function UserDetail({ userId, onClose }: { userId: string; onClos
             <Block title="Points and rewards">
               <p className={styles.sum}><b>{d.points.balance.toLocaleString()}</b> to spend · <b>{d.points.lifetime.toLocaleString()}</b> earned · {d.rewards.redeemed} rewards claimed, {d.rewards.pending} pending</p>
               <ul className={styles.items}>{d.points.recent.map((t: any, i: number) => <li key={i}><b>{t.amount >= 0 ? '+' : ''}{t.amount} · {t.type}{t.reversed_at ? ' (reversed)' : ''}</b><span>{t.note ?? ''} {when(t.created_at)}</span></li>)}</ul>
-              <dl className={styles.list}>
-                <Row k="Referral code" v={d.referral.code} />
-                <Row k="Referred by" v={d.referral.referred_by} />
-                <Row k="People referred" v={d.referral.referred_count} />
-              </dl>
             </Block>
 
             <Block title="Strikes" count={d.strikes.length}>

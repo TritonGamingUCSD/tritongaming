@@ -4,20 +4,16 @@ import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import styles from './login.module.css';
 
-export default function LoginClient({ next, ref }: { next?: string; ref?: string }) {
+export default function LoginClient({ next }: { next?: string }) {
   const [loading, setLoading] = useState(false);
 
   async function handleGoogleSignIn() {
     setLoading(true);
     const supabase = createClient();
     const origin = window.location.origin;
-    // The referral code has to ride along in this URL specifically — it's
-    // the one thing that survives the round trip out to Google and back
-    // (see auth/callback/route.ts, which reads it back off these same
-    // params once the session exists).
+    // `next` rides along in this URL because it is the one thing that survives the round trip out to Google and back (auth/callback/route.ts reads it).
     const callbackParams = new URLSearchParams();
     if (next) callbackParams.set('next', next);
-    if (ref) callbackParams.set('ref', ref);
     const query = callbackParams.toString();
     await supabase.auth.signInWithOAuth({
       provider: 'google',

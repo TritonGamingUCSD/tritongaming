@@ -112,9 +112,8 @@ export async function GET(request: Request, { params }: Params) {
       const current = getTier(lifetime, tiers);
       const next = nextTier(lifetime, tiers);
       // Did *this* check-in's points carry them over a tier line? Compare
-      // where they'd be without it. (The referral bonus, if any, goes to
-      // someone else's ledger, so this check-in only moves this member's
-      // own total by pointsAwarded.)
+      // where they'd be without it (this check-in moves their own total by
+      // pointsAwarded).
       const before = getTier(lifetime - pointsAwarded, tiers);
       tierInfo = {
         tier_up: before.name !== current.name ? { from: before.name, to: current.name, color: current.color } : null,

@@ -5,9 +5,8 @@ import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
 
 // Undoes a mis-scan or wrong-code check-in — flips the ticket back to
-// active and reverses its point award (and the referral bonus, if that
-// checkin was what triggered it). See reverse_checkin in
-// 20260921080115_add_points_reversal_functions.sql.
+// active and reverses its point award. See reverse_checkin (last
+// redefined in 20261015130000_remove_referrals.sql).
 export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

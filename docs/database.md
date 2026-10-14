@@ -42,6 +42,7 @@ The older migration files stay as history, but these no longer exist in the live
 - **Storage keys:** `storage_keys`, `storage_key_events`.
 - **Internal events:** `internal_events`, `internal_event_rsvps`.
 - **Portal photo albums:** `photo_albums`. (An event's own albums are the `events.photo_albums` column and are still there.)
+- **Referrals (invite a friend):** `profiles.referral_code`, `profiles.referred_by`, `point_transactions.related_user_id`, the `referral_bonus` ledger type and the `referral_bonus_points()` function (migration `20261015130000`). `award_checkin_points`, `reverse_checkin`, `reverse_point_transaction`, `handle_new_user` and `admin_delete_account` were rewritten without them. Nothing had ever been referred or paid.
 - **Calendar:** `calendar_connections` (the Google Calendar link) and `profiles.calendar_token` (the subscription link).
 - **Meeting "private" flag:** `meetings.is_private` and `meeting_series.is_private` (it only hid a meeting from the removed "All TG meetings" calendar).
 
