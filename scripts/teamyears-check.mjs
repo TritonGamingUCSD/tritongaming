@@ -1,10 +1,10 @@
 // Drives the yearly team records and the graduate-to-alumni move as temporary accounts against a running dev server, and removes everything it made.
-// It never turns the automatic alumni move on while it runs a sync, and only moves its own test accounts. Run: npm run test:teamyears
+// While it runs it switches the automatic alumni move off (and restores it after), records into the real current quarter when there is one, and only moves its own test accounts. Run: npm run test:teamyears
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 const env = Object.fromEntries(fs.readFileSync('.env.local','utf8').split('\n').filter(l=>l&&!l.startsWith('#')&&l.includes('=')).map(l=>[l.slice(0,l.indexOf('=')),l.slice(l.indexOf('=')+1).replace(/^"|"$/g,'')]));
 const url=env.NEXT_PUBLIC_SUPABASE_URL, svc=createClient(url, env.SUPABASE_SERVICE_ROLE_KEY); const ref=new URL(url).hostname.split('.')[0];
-const made=[]; const quarterIds=[]; const years=[2080,2085,2086,2090]; let fails=0; const ok=(n,c,x='')=>{console.log((c?'PASS':'FAIL'),n,c?'':x); if(!c)fails++;};
+let autoBefore='off'; const made=[]; const quarterIds=[]; const years=[2080,2085,2086,2090]; let fails=0; const ok=(n,c,x='')=>{console.log((c?'PASS':'FAIL'),n,c?'':x); if(!c)fails++;};
 async function user(name,roles,profile={}){
   const email=`mtg-ty-${name}-${Date.now()}@example.test`; const {data}=await svc.auth.admin.createUser({email,email_confirm:true}); const id=data.user.id; made.push(id);
   await svc.from('profiles').update({display_name:'Mtg '+name,onboarded_at:new Date().toISOString(),year:'2028',class_of:2028,college:'Sixth',major:'CS',pronouns:'they/them',...profile}).eq('id',id);
@@ -20,6 +20,8 @@ const roster=(qid,u,tier,title)=>svc.from('quarter_roster').insert({quarter_id:q
 const mark=(qid,u)=>svc.from('officer_quarter_status').insert({quarter_id:qid,user_id:u.id});
 const member=(list,u)=>list.find(m=>m.user_id===u.id);
 try{
+ autoBefore=(await svc.from('team_settings').select('value').eq('key','auto_alumni').maybeSingle()).data?.value??'off';
+ await svc.from('team_settings').upsert({key:'auto_alumni',value:'off'},{onConflict:'key'});   // the daily job must not move real people while this runs
  const admin=await user('admin',['admin']), exec=await user('exec',['exec']);
  const A=await user('a',['officer'],{org_title:'Marketing Officer'}), L=await user('l',['lead'],{org_title:'Events Lead'}), E=await user('e',['exec'],{org_title:'President'});
  const I=await user('i',['officer']), M=await user('m',['officer']), X=await user('x',['alumni']), G=await user('g',['officer'],{class_of:2020}), H=await user('h',['officer'],{class_of:2020}), F=await user('f',['officer'],{class_of:2099});
@@ -50,11 +52,13 @@ try{
  r=await admin.call('DELETE',`/api/team-years/members/${xm}`); ok('admin removes one',r.s===200);
  // the daily job: a finished year gets archived by itself; today's roster is recorded
  const f6=await q('fall',2086,-300,-250), s6=await q('spring',2086,-240,-210); await roster(s6,A,'officer','Marketing Officer'); await roster(f6,L,'lead','Events Lead');
- const cur=await q('fall',2090,-3,60); await mark(cur,H);   // H sits this quarter out too, so they were never active on record
+ // The daily job records into whichever quarter holds today, so use the real one when it exists (a made-up overlapping quarter would be ignored).
+ const {data:realCur}=await svc.from('academic_quarters').select('id').lte('starts_on',day(0)).gte('ends_on',day(0)).limit(1);
+ const cur=realCur?.length?realCur[0].id:await q('fall',2090,-3,60); await mark(cur,H);   // H sits this quarter out too, so they were never active on record
  r=await fetch('http://localhost:3000/api/cron/daily-maintenance?only=teams',{headers:{'x-cron-dev':'1'}}); const cj=await r.json(); ok('the daily job runs',r.status===200&&cj.teams?.captured>=1,JSON.stringify(cj));
  ok('it archived the finished year by itself (marked automatic)',(await svc.from('team_years').select('auto').eq('start_year',2086).single()).data?.auto===true);
  ok('and recorded who held a title this quarter',(await svc.from('quarter_roster').select('user_id').eq('quarter_id',cur).eq('user_id',A.id)).data.length===1);
- ok('moving to alumni did not run (the setting is off)',cj.moved===0);
+ ok('moving to alumni did not run (the setting is off)',cj.teams?.moved===0,JSON.stringify(cj.teams));
  // alumni
  r=await exec.call('GET','/api/team-years'); const cand=r.j.candidates.map(c=>c.id);
  ok('graduates who were active are ready for Alumni',cand.includes(G.id));
@@ -69,7 +73,7 @@ try{
 finally{
  for(const y of years) await svc.from('team_years').delete().eq('start_year',y);
  for(const id of quarterIds) await svc.from('academic_quarters').delete().eq('id',id);
- await svc.from('team_settings').upsert({key:'auto_alumni',value:'off'},{onConflict:'key'});
+ await svc.from('team_settings').upsert({key:'auto_alumni',value:autoBefore},{onConflict:'key'});
  await svc.from('user_roles').update({granted_by:null}).in('granted_by',made); await svc.from('role_change_log').delete().in('user_id',made);
  for(const id of [...made].reverse()){ await svc.from('notifications').delete().eq('user_id',id); const {error}=await svc.auth.admin.deleteUser(id); if(error) console.log('could not delete',id,error.message); }
  await svc.from('audit_log').delete().eq('entity_type','team year').gte('created_at',new Date(Date.now()-3600e3).toISOString());
