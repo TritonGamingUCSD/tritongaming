@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import styles from './login.module.css';
 
-export default function LoginClient({ next }: { next?: string }) {
+// `ucsdOnly` is set when the person was sent here to switch to their UCSD account (a UCSD-only event): Google then lists only @ucsd.edu accounts first.
+export default function LoginClient({ next, ucsdOnly = false }: { next?: string; ucsdOnly?: boolean }) {
   const [loading, setLoading] = useState(false);
 
   async function handleGoogleSignIn() {
@@ -19,6 +20,9 @@ export default function LoginClient({ next }: { next?: string }) {
       provider: 'google',
       options: {
         redirectTo: `${origin}/auth/callback${query ? `?${query}` : ''}`,
+        // Always show Google's account chooser: many phones have a personal Gmail as the default, and one tap on it signs in without a UCSD role.
+        // `hd` is only a hint to Google; the role itself is still granted by the @ucsd.edu check on our side.
+        queryParams: { prompt: 'select_account', ...(ucsdOnly ? { hd: 'ucsd.edu' } : {}) },
       },
     });
   }

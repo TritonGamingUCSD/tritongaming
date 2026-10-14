@@ -345,6 +345,12 @@
   white-space: nowrap;
 }
 
+/* UCSD-only event seen by someone signed in without a UCSD account */
+.ucsdOnlyBox { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 0.2rem; }
+.switchBtn { padding: 0.25rem 0.6rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.45); background: transparent; color: var(--pp-ink); font: inherit; font-size: 0.75rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.switchBtn:hover { background: rgba(var(--pp-ink-rgb), 0.08); border-color: var(--pp-ink); }
+.switchBtn:focus-visible { outline: 3px solid var(--p-accent-text); outline-offset: 2px; }
+
 /* ── Empty state ─────────────────────────────────── */
 .empty {
   display: flex;

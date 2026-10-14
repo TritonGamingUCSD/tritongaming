@@ -17,6 +17,7 @@ import { isCheckinWindowOpen } from '@/lib/events/checkinWindow';
 import { saveTicketCodes, cachedMinutesLeft } from '@/lib/events/ticketCodeCache';
 import styles from './tickets.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
+import { createClient } from '@/lib/supabase/client';
 
 interface TicketData {
   id: string;
@@ -85,6 +86,12 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [tickets, setTickets] = useState(initialTickets);
+
+  // Signed in with a personal Google account on a UCSD-only event: sign out and reopen the sign-in with only UCSD accounts offered, coming back here.
+  async function switchToUcsd() {
+    await createClient().auth.signOut();
+    window.location.href = `/login?ucsd=1&next=${encodeURIComponent('/portal/tickets')}`;
+  }
 
   // Closing the QR screen after a successful check-in: reload the server
   // data (so the ticket's status, points and AS Form state are the real,
@@ -382,7 +389,10 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
                   )}
                 </div>
                 {event.audience === 'ucsd_only' && !isUcsd ? (
-                  <span className={styles.registerBtnDisabled}>UCSD students only</span>
+                  <span className={styles.ucsdOnlyBox}>
+                    <span className={styles.registerBtnDisabled}>UCSD students only</span>
+                    <button type="button" className={styles.switchBtn} onClick={switchToUcsd}>Use my UCSD account</button>
+                  </span>
                 ) : (
                   <button
                     className={styles.registerBtn}
