@@ -20,7 +20,7 @@ A **role** is a label on a person (a person can hold several, for example Office
 | **Guest** (`guest`) | 0 | Signed in with no role yet (for example a personal email that is not linked to UCSD). |
 | **UCSD Student** (`ucsd`) | 1 | A verified UCSD student (given automatically for an @ucsd.edu sign-in). |
 | **Recruit** (`recruit`) | 1.5 | A prospective officer going through onboarding. Can see and take part in team things, but has no position yet. |
-| **Alumni** (`alumni`) | 1.8 | A former team member. Read-only visibility, no Rewards. |
+| **Alumni** (`alumni`) | 1.8 | A former team member. Read-only: can open TG Members, Documentation, Events and Division Members. No check-in, no Rewards. |
 | **Officer** (`officer`) | 2 | A team member. Can look at most things and staff check-in, but not create or edit events or docs. |
 | **Division Lead** (`division`) | 2 | Leads one or more divisions (a role scoped to a division). Edits only their own division’s page. |
 | **Lead** (`lead`) | 3 | Runs a committee. Creates and edits events, docs and meetings they plan. |
@@ -38,7 +38,7 @@ Rank is only used for sorting and badges. It never decides what someone may do.
 |---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | **Events** ||||||||||
 | `manage_events` | · | · | · | · | · | · | ✔ | ✔ | ✔ |
-| `view_events` | · | · | ✔ | · | ✔ | · | ✔ | ✔ | ✔ |
+| `view_events` | · | · | ✔ | ✔ | ✔ | · | ✔ | ✔ | ✔ |
 | `delete_events` | · | · | · | · | · | · | · | · | ✔ |
 | `checkin` | · | · | ✔ | · | ✔ | · | ✔ | ✔ | ✔ |
 | **Rewards** ||||||||||
@@ -48,9 +48,9 @@ Rank is only used for sorting and badges. It never decides what someone may do.
 | **People** ||||||||||
 | `view_members` | · | · | ✔ | ✔ | ✔ | · | ✔ | ✔ | ✔ |
 | `manage_board_order` | · | · | · | · | · | · | · | ✔ | ✔ |
-| `view_division_members` | · | · | ✔ | · | ✔ | ✔ | ✔ | ✔ | ✔ |
+| `view_division_members` | · | · | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
 | **Divisions** ||||||||||
-| `manage_division` | · | · | · | · | · | ✔ | ✔ | ✔ | ✔ |
+| `manage_division` | · | · | · | · | · | ✔ | · | ✔ | ✔ |
 | `manage_divisions_directory` | · | · | · | · | · | · | · | ✔ | ✔ |
 | **Documentation** ||||||||||
 | `manage_docs` | · | · | · | · | · | · | ✔ | ✔ | ✔ |
@@ -86,8 +86,8 @@ Rank is only used for sorting and badges. It never decides what someone may do.
 
 **See events** (`view_events`)
 
-- Open the Events section and read the event list, attendee lists and check-in counts. Cannot create, edit or delete.
-- Held by: Recruit, Officer, Lead, Executive, and Admin.
+- Open the Events section and read the event list, each event’s check-in list (names and check-in times) and the stats. Cannot create, edit or delete.
+- Held by: Recruit, Alumni, Officer, Lead, Executive, and Admin.
 - Enforced by: database + pages.
 - Checked in 5 files: `app/(portal)/portal/page`, `app/api/events/[id]/checkins/route`, `app/api/portal/search/route`, `lib/portal/portalCommands.ts`, `lib/portal/portalSectionData.ts`.
 
@@ -147,7 +147,7 @@ Rank is only used for sorting and badges. It never decides what someone may do.
 **See Division Members** (`view_division_members`)
 
 - Open the directory of who leads each division. Emails on it need view_members.
-- Held by: Recruit, Officer, Division Lead, Lead, Executive, and Admin.
+- Held by: Recruit, Alumni, Officer, Division Lead, Lead, Executive, and Admin.
 - Enforced by: pages.
 - Checked in 4 files: `app/(portal)/portal/page`, `app/api/portal/search/route`, `lib/portal/portalCommands.ts`, `lib/portal/portalSectionData.ts`.
 
@@ -155,8 +155,8 @@ Rank is only used for sorting and badges. It never decides what someone may do.
 
 **Edit a division** (`manage_division`)
 
-- Edit a division’s own public page: logo, description, links, socials, posts. A Division Lead can only edit the division they lead.
-- Held by: Division Lead, Lead, Executive, and Admin.
+- Edit a division’s public page: logo, description, links, socials, posts (not its name or address; that is “Manage all divisions”). A Division Lead can only edit the division they lead; exec and admin can edit any.
+- Held by: Division Lead, Executive, and Admin.
 - Enforced by: database + routes. Lost while inactive.
 - Checked in 7 files: `app/(main)/divisions/[slug]/EditDivisionLink.tsx`, `app/(portal)/portal/divisions/[id]/page`, `app/api/admin/content/draft/route`, `app/api/divisions/route`, `app/api/portal/search/route`, `lib/portal/portalCommands.ts`, `lib/site/contentPreview.ts`.
 
@@ -304,13 +304,14 @@ Cannot: create and edit events; delete events; edit the public site; edit a divi
 
 ### Alumni
 
-A former team member. Read-only visibility, no Rewards.
+A former team member. Read-only: can open TG Members, Documentation, Events and Division Members. No check-in, no Rewards.
 
-- **People:** See TG Members
+- **Events:** See events
+- **People:** See TG Members; See Division Members
 - **Documentation:** Read documentation
 - **Tools:** QR Studio
 
-Cannot: create and edit events; see events; delete events; check people in; edit the public site; edit a division; manage all divisions; admin dashboard; change roles; write documentation; run the rewards shop; hand over rewards; change points; set the public board order; run every meeting; answer help tickets; see attendance reports; strike tracker; quarter status; see division members; attend meetings; plan meetings.
+Cannot: create and edit events; delete events; check people in; edit the public site; edit a division; manage all divisions; admin dashboard; change roles; write documentation; run the rewards shop; hand over rewards; change points; set the public board order; run every meeting; answer help tickets; see attendance reports; strike tracker; quarter status; attend meetings; plan meetings.
 
 ### Officer
 
@@ -342,12 +343,11 @@ Runs a committee. Creates and edits events, docs and meetings they plan.
 - **Events:** Create and edit events; See events; Check people in
 - **Rewards:** Hand over rewards
 - **People:** See TG Members; See Division Members
-- **Divisions:** Edit a division
 - **Documentation:** Write documentation; Read documentation
 - **Meetings:** Attend meetings; Plan meetings
 - **Tools:** QR Studio
 
-Cannot: delete events; edit the public site; manage all divisions; admin dashboard; change roles; run the rewards shop; change points; set the public board order; run every meeting; answer help tickets; see attendance reports; strike tracker; quarter status.
+Cannot: delete events; edit the public site; edit a division; manage all divisions; admin dashboard; change roles; run the rewards shop; change points; set the public board order; run every meeting; answer help tickets; see attendance reports; strike tracker; quarter status.
 
 ### Executive
 
@@ -390,8 +390,8 @@ What decides whether a section appears (from `src/app/(portal)/portal/page.tsx`)
 |---|---|
 | My Tickets | Everyone signed in. |
 | Profile, Help | Everyone signed in (Help opens from a footer button on a desktop). Exec and admin see the Help inbox. |
-| Rewards | Verified UCSD students (and Division Leads and admins) who hold no Officer, Lead, Exec, Recruit or Alumni role: they earn points and use the shop. Exec and admins also get it, with just the Leaderboard and Tools tabs, because they run it. |
-| Events | `view_events`: Recruit, Officer, Lead, Executive, Admin. |
+| Rewards | UCSD students whose only role is UCSD Student: they earn points and use the shop. Everyone else, including guests and every team role, has no Rewards of their own. Exec and Admin still get the section, with just the Leaderboard and Tools tabs, because they run it. |
+| Events | `view_events`: Recruit, Alumni, Officer, Lead, Executive, Admin. |
 | Check-In | `checkin`: Recruit, Officer, Lead, Executive, Admin. |
 | Meetings | `attend_meetings` or `view_attendance_reports`: Recruit, Officer, Lead, Executive, Admin. |
 | Strikes | `manage_strikes`: Executive, Admin, and anyone granted it in Admin → Access. |
@@ -400,7 +400,7 @@ What decides whether a section appears (from `src/app/(portal)/portal/page.tsx`)
 | Documentation | `view_docs`: Recruit, Alumni, Officer, Lead, Executive, Admin. |
 | QR Studio | `generate_qr_codes`: Recruit, Alumni, Officer, Division Lead, Lead, Executive, Admin. |
 | Divisions | `manage_divisions_directory` (Executive, Admin) or holding the Division Lead role (their own division only). |
-| Division Members | `view_division_members`: Recruit, Officer, Division Lead, Lead, Executive, Admin. |
+| Division Members | `view_division_members`: Recruit, Alumni, Officer, Division Lead, Lead, Executive, Admin. |
 | Site Content | `manage_site_content`: Executive, Admin. |
 | Admin | `view_admin_dashboard`: Admin only. The role-change history inside it needs `manage_roles`. |
 
@@ -410,7 +410,7 @@ What decides whether a section appears (from `src/app/(portal)/portal/page.tsx`)
 
 - **Team member (wide sense):** Exec, Lead, Officer, Recruit, Alumni or Admin. Used for team-wide views (meeting teams, who can be invited).
 - **Verified member:** holds at least one role (even just UCSD). Decides UCSD-only event access and free ticket pricing.
-- **Rewards eligibility:** Roles allowed: UCSD, Officer, Lead, Exec, Division Lead, Admin, Recruit, Alumni (the database function `is_rewards_eligible()` uses this list). The app then hides Rewards for Officer, Lead, Exec, Recruit and Alumni, so they earn no points and are not on the leaderboard.
+- **Rewards eligibility:** only someone whose **only** role is UCSD Student can earn points, collect referral bonuses, claim rewards or appear on the leaderboard. Holding any other role (Recruit, Alumni, Officer, Division Lead, Lead, Exec, Admin) rules it out, and so does having no role. The database function `is_rewards_eligible()` and the app (`isRewardsEligible`) use the same rule, so nobody else is awarded points. Their old points stay in the ledger, hidden. Exec and Admin still see a Rewards section to run it (Leaderboard and Tools only).
 - **Officer title on the profile:** can be set by Officer, Lead and Exec only (a database trigger enforces it). Admin alone cannot. Lead and Exec are required to have one; Officers may add one.
 - **Lost while inactive:** every capability whose name starts with `manage_`, `host_` or `delete_`, plus `checkin` and `scan_redemptions`. Currently: `manage_events`, `delete_events`, `checkin`, `manage_site_content`, `manage_division`, `manage_divisions_directory`, `manage_roles`, `manage_docs`, `manage_rewards_shop`, `scan_redemptions`, `manage_points`, `manage_board_order`, `manage_meetings`, `manage_help`, `manage_strikes`, `manage_quarters`, `host_meetings`. Attending meetings and everything that is only viewing stay.
 - **Anyone can** see their own profile, tickets, points, strikes and notifications, ask for help, and use their own data. No capability is needed.
@@ -421,11 +421,9 @@ Places where the rules may surprise you. Each is how the code works today; tell 
 
 - Check-In: Recruits, Officers and Leads can scan tickets, but checking someone in **by hand** or undoing a check-in needs “Change points”, which only Exec and Admin have.
 - Scanning a reward QR (`scan_redemptions`) is open to Officers and Leads but **not Recruits**, while Recruits can scan event tickets.
-- `manage_division` lists **every Lead** and Exec with no division attached (the live database table lists Lead the same way), so a Lead who is not that division’s lead **can edit any division’s page content** (not its name or address). Only the Division Lead role itself is limited to its own division. Confirmed in `app/api/divisions/route.ts` and `divisions/[id]/page.tsx`.
+- Rewards are student-only on purpose: a team member earns no points even if they check in to an event, and a guest with no role earns none either. Exec and Admin keep a management-only Rewards section.
+- Alumni can now open Events and an event’s check-in list (names and times), the same view Officers have. They still cannot check anyone in.
 - Division Leads cannot open TG Members (`view_members` does not include them). They get Division Members and their own division’s page.
-- Alumni can open TG Members and Documentation but **not Events**. Recruits can open Events and Check-In.
-- `view_division_members` includes Recruits but **not Alumni**.
-- Rewards: the database function lets Recruits and Alumni earn points, but the app hides Rewards for them (and for Officer, Lead and Exec). Only the app hides it, so the two disagree.
 - Exec cannot open the Admin dashboard (`view_admin_dashboard` is Admin only), and only Admin can change roles or delete events.
 - Only Exec and Admin can run **every** meeting. Leads can plan meetings but only manage their own.
 - Anyone marked Inactive loses check-in, scanning and every `manage_`, `host_` and `delete_` capability, but keeps viewing and meeting attendance.
@@ -444,10 +442,10 @@ Compared with the live `role_capabilities` table (the database’s own copy, use
 | Capability | In code | In database | Match |
 |---|---|---|:-:|
 | `manage_events` | lead, exec | exec, lead | ✔ |
-| `view_events` | recruit, officer, lead, exec | exec, lead, officer, recruit | ✔ |
+| `view_events` | recruit, alumni, officer, lead, exec | alumni, exec, lead, officer, recruit | ✔ |
 | `checkin` | recruit, officer, lead, exec | exec, lead, officer, recruit | ✔ |
 | `manage_site_content` | exec | exec | ✔ |
-| `manage_division` | division, lead, exec | division, exec, lead | ✔ |
+| `manage_division` | division, exec | division, exec | ✔ |
 | `manage_divisions_directory` | exec | exec | ✔ |
 | `view_members` | recruit, alumni, officer, lead, exec | alumni, exec, lead, officer, recruit | ✔ |
 | `manage_docs` | lead, exec | exec, lead | ✔ |

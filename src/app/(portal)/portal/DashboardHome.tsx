@@ -22,23 +22,23 @@ const ago = (iso: string) => {
 };
 
 // The top of the dashboard: which quarter it is, a welcome by name, and the big search field (it only ever finds what this person can open).
-export function DashboardWelcome({ eyebrow, name }: { eyebrow: string; name: string }) {
+export function DashboardWelcome({ eyebrow, name, showSearch = true }: { eyebrow: string; name: string; showSearch?: boolean }) {
   return (
     <header className={styles.welcome}>
       <p className={styles.eyebrow}>{eyebrow}</p>
       <h1 className={styles.hello} data-keep>Welcome back, <span className={styles.name}>{name}</span>.</h1>
-      <div className={styles.search}><PortalSearch large placeholder="Search anything: people, events, meetings, docs, pages…" /></div>
+      {showSearch && <div className={styles.search}><PortalSearch large placeholder="Search anything: people, events, meetings, docs, pages…" /></div>}
     </header>
   );
 }
 
 // Below the to-dos: the next event as a paper ticket, the pinned note, the tools for this person's role, and what happened lately.
-export function DashboardBody({ event, note, tools, activity, showRoleAsk = false }: { showRoleAsk?: boolean; event: HomeEvent | null; note: HomeNote | null; tools: HomeTool[]; activity: HomeActivity[] }) {
+export function DashboardBody({ event, note, tools, activity, showRoleAsk = false, compact = false }: { showRoleAsk?: boolean; /** Guests and students on a desktop: their few pages are in the top bar, so no tool cards, and the role request sits under the ticket. */ compact?: boolean; event: HomeEvent | null; note: HomeNote | null; tools: HomeTool[]; activity: HomeActivity[] }) {
   const hasOfficer = tools.some((t) => t.tier === 'officer');
   const hasEveryone = tools.some((t) => t.tier === 'everyone');
   return (
     <div className={styles.body}>
-      {showRoleAsk && <RoleAsk />}
+      {showRoleAsk && !compact && <RoleAsk />}
       <RequiredBanner hrefBase="/portal/docs?id=" />
       <div className={styles.top}>
         {event && (
@@ -67,7 +67,9 @@ export function DashboardBody({ event, note, tools, activity, showRoleAsk = fals
         )}
       </div>
 
-      {tools.length > 0 && (
+      {showRoleAsk && compact && <RoleAsk />}
+
+      {tools.length > 0 && !compact && (
         <section aria-label="Your tools" className={styles.toolsSection}>
           <h2 className={styles.h}>Your tools</h2>
           {hasOfficer && hasEveryone && <p className={styles.legend}>Paper is for every member · Glass is for officers</p>}

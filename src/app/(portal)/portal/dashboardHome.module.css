@@ -64,3 +64,6 @@
 
 /* On a phone the page list under the greeting (and the bottom bar) already lists every tool, so these cards would repeat it. */
 @media (max-width: 899px) { .toolsSection { display: none; } }
+
+/* No pinned note: the ticket takes the whole row instead of leaving the note's column empty. */
+.top:not(:has(.note)) { grid-template-columns: minmax(0, 1fr); }

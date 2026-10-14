@@ -12,7 +12,7 @@ const ROLE_NOTE = {
   guest: 'Signed in with no role yet (for example a personal email that is not linked to UCSD).',
   ucsd: 'A verified UCSD student (given automatically for an @ucsd.edu sign-in).',
   recruit: 'A prospective officer going through onboarding. Can see and take part in team things, but has no position yet.',
-  alumni: 'A former team member. Read-only visibility, no Rewards.',
+  alumni: 'A former team member. Read-only: can open TG Members, Documentation, Events and Division Members. No check-in, no Rewards.',
   officer: 'A team member. Can look at most things and staff check-in, but not create or edit events or docs.',
   division: 'Leads one or more divisions (a role scoped to a division). Edits only their own division’s page.',
   lead: 'Runs a committee. Creates and edits events, docs and meetings they plan.',
@@ -23,7 +23,7 @@ const ROLE_NOTE = {
 // What each capability lets someone do, in plain words, and what actually enforces it.
 const CAPS = {
   // area, label, what, enforced
-  view_events: ['Events', 'See events', 'Open the Events section and read the event list, attendee lists and check-in counts. Cannot create, edit or delete.', 'database + pages'],
+  view_events: ['Events', 'See events', 'Open the Events section and read the event list, each event’s check-in list (names and check-in times) and the stats. Cannot create, edit or delete.', 'database + pages'],
   manage_events: ['Events', 'Create and edit events', 'Create events and edit their details, tickets, check-in setup and event page, and publish them.', 'database + routes'],
   delete_events: ['Events', 'Delete events', 'Permanently delete an event and its tickets (the delete runs through a database function that also clears everything linked to it).', 'routes'],
   checkin: ['Events', 'Check people in', 'Open Check-In: scan tickets and reveal the online check-in code. Checking someone in by hand and undoing a check-in need “Change points” (exec and admin).', 'database + routes'],
@@ -34,7 +34,7 @@ const CAPS = {
   manage_board_order: ['People', 'Set the public board order', 'Choose the order exec and leads appear in on the public Team page and in TG Members (Display order tab).', 'routes'],
   view_division_members: ['People', 'See Division Members', 'Open the directory of who leads each division. Emails on it need view_members.', 'pages'],
   manage_divisions_directory: ['Divisions', 'Manage all divisions', 'Create, rename and delete divisions and edit any division’s page.', 'database + routes'],
-  manage_division: ['Divisions', 'Edit a division', 'Edit a division’s own public page: logo, description, links, socials, posts. A Division Lead can only edit the division they lead.', 'database + routes'],
+  manage_division: ['Divisions', 'Edit a division', 'Edit a division’s public page: logo, description, links, socials, posts (not its name or address; that is “Manage all divisions”). A Division Lead can only edit the division they lead; exec and admin can edit any.', 'database + routes'],
   view_docs: ['Documentation', 'Read documentation', 'Open the Documentation section and read the guides.', 'database + pages'],
   manage_docs: ['Documentation', 'Write documentation', 'Create, edit, publish, pin, move and delete docs, and choose which docs are required reading.', 'database + routes'],
   attend_meetings: ['Meetings', 'Attend meetings', 'Check in to meetings with the room code, see their own meeting history, answer plans and questions.', 'routes'],
@@ -140,7 +140,7 @@ const roleList = (c) => ROLES.filter((r) => r !== 'admin' && has(c, r)).map((r) 
 const S = [
   ['My Tickets', 'Everyone signed in.'],
   ['Profile, Help', 'Everyone signed in (Help opens from a footer button on a desktop). Exec and admin see the Help inbox.'],
-  ['Rewards', 'Verified UCSD students (and Division Leads and admins) who hold no Officer, Lead, Exec, Recruit or Alumni role: they earn points and use the shop. Exec and admins also get it, with just the Leaderboard and Tools tabs, because they run it.'],
+  ['Rewards', 'UCSD students whose only role is UCSD Student: they earn points and use the shop. Everyone else, including guests and every team role, has no Rewards of their own. Exec and Admin still get the section, with just the Leaderboard and Tools tabs, because they run it.'],
   ['Events', `\`view_events\`: ${roleList('view_events')}, Admin.`],
   ['Check-In', `\`checkin\`: ${roleList('checkin')}, Admin.`],
   ['Meetings', `\`attend_meetings\` or \`view_attendance_reports\`: ${roleList('attend_meetings')}, Admin.`],
@@ -160,7 +160,7 @@ L.push('', '**Layout.** Anyone holding Recruit, Alumni, Officer, Lead, Exec or A
 L.push('## Other rules that are not capabilities', '');
 L.push('- **Team member (wide sense):** Exec, Lead, Officer, Recruit, Alumni or Admin. Used for team-wide views (meeting teams, who can be invited).');
 L.push('- **Verified member:** holds at least one role (even just UCSD). Decides UCSD-only event access and free ticket pricing.');
-L.push('- **Rewards eligibility:** Roles allowed: UCSD, Officer, Lead, Exec, Division Lead, Admin, Recruit, Alumni (the database function `is_rewards_eligible()` uses this list). The app then hides Rewards for Officer, Lead, Exec, Recruit and Alumni, so they earn no points and are not on the leaderboard.');
+L.push('- **Rewards eligibility:** only someone whose **only** role is UCSD Student can earn points, collect referral bonuses, claim rewards or appear on the leaderboard. Holding any other role (Recruit, Alumni, Officer, Division Lead, Lead, Exec, Admin) rules it out, and so does having no role. The database function `is_rewards_eligible()` and the app (`isRewardsEligible`) use the same rule, so nobody else is awarded points. Their old points stay in the ledger, hidden. Exec and Admin still see a Rewards section to run it (Leaderboard and Tools only).');
 L.push('- **Officer title on the profile:** can be set by Officer, Lead and Exec only (a database trigger enforces it). Admin alone cannot. Lead and Exec are required to have one; Officers may add one.');
 L.push('- **Lost while inactive:** every capability whose name starts with `manage_`, `host_` or `delete_`, plus `checkin` and `scan_redemptions`. Currently: ' + caps.filter(isInactiveStripped).map((c) => `\`${c}\``).join(', ') + '. Attending meetings and everything that is only viewing stay.');
 L.push('- **Anyone can** see their own profile, tickets, points, strikes and notifications, ask for help, and use their own data. No capability is needed.', '');
@@ -169,11 +169,9 @@ L.push('## Worth a second look', '', 'Places where the rules may surprise you. E
 const w = [
   'Check-In: Recruits, Officers and Leads can scan tickets, but checking someone in **by hand** or undoing a check-in needs “Change points”, which only Exec and Admin have.',
   'Scanning a reward QR (`scan_redemptions`) is open to Officers and Leads but **not Recruits**, while Recruits can scan event tickets.',
-  '`manage_division` lists **every Lead** and Exec with no division attached (the live database table lists Lead the same way), so a Lead who is not that division’s lead **can edit any division’s page content** (not its name or address). Only the Division Lead role itself is limited to its own division. Confirmed in `app/api/divisions/route.ts` and `divisions/[id]/page.tsx`.',
+  'Rewards are student-only on purpose: a team member earns no points even if they check in to an event, and a guest with no role earns none either. Exec and Admin keep a management-only Rewards section.',
+  'Alumni can now open Events and an event’s check-in list (names and times), the same view Officers have. They still cannot check anyone in.',
   'Division Leads cannot open TG Members (`view_members` does not include them). They get Division Members and their own division’s page.',
-  'Alumni can open TG Members and Documentation but **not Events**. Recruits can open Events and Check-In.',
-  '`view_division_members` includes Recruits but **not Alumni**.',
-  'Rewards: the database function lets Recruits and Alumni earn points, but the app hides Rewards for them (and for Officer, Lead and Exec). Only the app hides it, so the two disagree.',
   'Exec cannot open the Admin dashboard (`view_admin_dashboard` is Admin only), and only Admin can change roles or delete events.',
   'Only Exec and Admin can run **every** meeting. Leads can plan meetings but only manage their own.',
   'Anyone marked Inactive loses check-in, scanning and every `manage_`, `host_` and `delete_` capability, but keeps viewing and meeting attendance.',

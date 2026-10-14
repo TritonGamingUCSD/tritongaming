@@ -19,7 +19,7 @@ export default async function EditDivisionPage({ params }: Params) {
   const roles = await getUserRoles();
   // Scoped exactly like the RLS policy that actually enforces this write
   // (manage_division can update own division content) — true unconditionally
-  // for lead/exec/admin, true for a 'division' role holder only when this
+  // for exec/admin, true for a 'division' role holder only when this
   // id matches their own division_id. One edit page serves both the full
   // exec/admin directory and a division lead editing just their own page.
   if (!hasCapability(roles, 'manage_division', id)) redirect('/portal');

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { GRANTABLE_CAPABILITIES, hasCapability, isInactiveStripped, withGrantedCapabilities, type RoleGrant } from '@/lib/portal/capabilities';
+import { GRANTABLE_CAPABILITIES, hasCapability, isInactiveStripped, isRewardsEligible, withGrantedCapabilities, type RoleGrant } from '@/lib/portal/capabilities';
 import type { AppRole, Capability } from '@/types/database';
 
 const as = (...roles: AppRole[]): RoleGrant[] => roles.map((role) => ({ role, division_id: null }));
@@ -87,3 +87,19 @@ describe('inactive officers and leads', () => {
   });
 });
 
+
+describe('rewards are for UCSD students only', () => {
+  it('a student whose only role is UCSD Student is eligible', () => {
+    expect(isRewardsEligible(as('ucsd'))).toBe(true);
+  });
+  it('anyone with no role, or with any other role, is not', () => {
+    expect(isRewardsEligible([])).toBe(false);
+    for (const r of ['recruit', 'alumni', 'officer', 'lead', 'exec', 'division', 'admin'] as AppRole[]) {
+      expect(isRewardsEligible(as(r))).toBe(false);
+      expect(isRewardsEligible(as('ucsd', r))).toBe(false);
+    }
+  });
+  it('a permission handed to a student directly does not make them a team member', () => {
+    expect(isRewardsEligible(withGrantedCapabilities(as('ucsd'), ['view_attendance_reports']))).toBe(true);
+  });
+});

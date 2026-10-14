@@ -124,7 +124,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const runsRewards = !canUseRewards && canManageRewardsShop;
   // A separate, lighter tool from the full exec/admin directory manager
   // below — gated on actually holding the 'division' role itself (not the
-  // broader manage_division capability, which lead/exec/admin also hold),
+  // broader manage_division capability, which exec/admin also hold),
   // so it only shows up for the people the full directory tool doesn't
   // already cover, instead of duplicating that entry point for everyone.
   const isDivisionLead = roles.some((r) => r.role === 'division');
@@ -467,8 +467,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
             its width to the hub grid below it. */}
         <PortalTopSection
           plain={!isTgMember(roles)}
-          welcome={<DashboardWelcome eyebrow={homeEyebrow} name={profile.display_name?.split(' ')[0] || 'Triton'} />}
-          body={<DashboardBody event={homeEvent} note={homeNote} tools={homeTools} activity={homeActivity} showRoleAsk={!isTeamMember} />}
+          welcome={<DashboardWelcome eyebrow={homeEyebrow} name={profile.display_name?.split(' ')[0] || 'Triton'} showSearch={isTgMember(roles)} />}
+          body={<DashboardBody event={homeEvent} note={homeNote} tools={homeTools} activity={homeActivity} showRoleAsk={!isTeamMember} compact={!isTgMember(roles)} />}
           desktop={{ greeting: greetingLine, tiles: tilesNode, viewAs: viewAsNode, banners: frameBanners }}
           top={
             <>

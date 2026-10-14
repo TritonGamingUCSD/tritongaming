@@ -25,7 +25,7 @@ There is no Tailwind, no zod and no email provider in this project.
 Home, Our Story, Team, Events, Divisions (with per-division pages), Sponsors, Get Involved, Membership and Media. All copy and images come from the portal's Site Content editor, not from hardcoded text.
 
 - **Event pages** (`/events/[slug]`) show the schedule, venue address with an embedded map, sponsors, a "going" count. Multi-day events are supported.
-- **Short links:** `/<slug>` redirects to a configured destination (for example `/linktree`). Managed in the portal under Short Links, admin only. A short link to an internal page tags the visit so tickets can be traced back to it.
+- **Short links:** `/<slug>` redirects to a configured destination (for example `/linktree`). Managed in the portal under Short Links, admin only. A short link to an internal page tags the visit so tickets can be traced back to it. It is a route (`src/app/(main)/[slug]/route.ts`), not a page: the answer is an immediate HTTP 307, so the site's navbar, footer and loading screens never flash before the redirect. An unknown link gets a small self-contained 404 page.
 - **Speed:** public pages are cached with `unstable_cache` and ISR (`revalidate` of 15 minutes to an hour) using a cookie-free Supabase client, and are revalidated by tag when content is edited in the portal (`src/lib/site/revalidate.ts`).
 
 ### Member portal (`/portal`)

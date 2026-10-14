@@ -729,6 +729,7 @@ function PlainShell({ identity, railFooter, homeExtras, groupedSections, openSec
   const items = groupedSections.flatMap((g) => g.items).filter((s) => !s.railHidden);
   return (
     <div className={simple.shell} data-app-frame>
+      <div className={simple.barWrap}>
       <header className={simple.bar}>
         {identity && (
           <button type="button" className={simple.who} onClick={() => open('profile')} aria-label={`${identity.name}, open your profile`}>
@@ -754,15 +755,15 @@ function PlainShell({ identity, railFooter, homeExtras, groupedSections, openSec
           <NotificationBell inline />
         </div>
       </header>
+      </div>
       {frame?.banners && <div className={simple.banners}>{frame.banners}</div>}
       <main className={simple.main} data-save-anchor>
         {openSection ? (
           <div className={simple.page} key={navNonce}>
-            <h1 className={simple.pageTitle}><PortalCrumbs section={openSection.id} sectionLabel={openSection.label} /></h1>
             {openSection.content}
           </div>
         ) : (
-          <div className={simple.page}>
+          <div className={`${simple.page} ${simple.home}`}>
             {frame?.tiles && <div className={simple.tiles}>{frame.tiles}</div>}
             {homeExtras}
           </div>

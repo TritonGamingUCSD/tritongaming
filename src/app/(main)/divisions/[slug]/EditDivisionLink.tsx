@@ -9,7 +9,7 @@ import styles from './division.module.css';
 
 // The division page itself is cached and identical for everyone, so whether to
 // show "Edit in Portal" is decided here, in the browser, once the visitor's
-// roles are known. manage_division(id) is true for lead/exec/admin and for a
+// roles are known. manage_division(id) is true for exec/admin and for a
 // division-role holder only on their own division.
 export default function EditDivisionLink({ divisionId }: { divisionId: string }) {
   const [canEdit, setCanEdit] = useState(false);

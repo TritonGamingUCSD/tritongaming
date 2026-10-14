@@ -16,14 +16,15 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   manage_events: ['lead', 'exec', 'admin'],
   // 'recruit' is mid-onboarding, pre-Officer — read-only access to the
   // events list and docs makes sense before they hold any real position.
-  view_events: ['officer', 'lead', 'exec', 'admin', 'recruit'],
+  view_events: ['officer', 'lead', 'exec', 'admin', 'recruit', 'alumni'],
   delete_events: ['admin'],
   // recruit can staff check-in before formally becoming Officer.
   checkin: ['officer', 'lead', 'exec', 'admin', 'recruit'],
   // Public marketing copy is an org-wide, exec-tier call — not tied to any
   // one committee a Lead runs, unlike manage_events/manage_docs above.
   manage_site_content: ['exec', 'admin'],
-  manage_division: ['division', 'lead', 'exec', 'admin'],
+  // A Division Lead edits only their own division (the check is scoped); exec and admin edit any. Leads do not.
+  manage_division: ['division', 'exec', 'admin'],
   manage_divisions_directory: ['exec', 'admin'],
   // alumni stay read-only-visible here, same as view_docs.
   view_members: ['officer', 'lead', 'exec', 'admin', 'alumni', 'recruit'],
@@ -78,7 +79,7 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // The Division Members directory (who leads each division): the whole team can look —
   // officers, leads, exec and recruits — plus the division leads themselves. Editing divisions is
   // separate (manage_divisions_directory / manage_division). Emails on it stay officer+ (view_members).
-  view_division_members: ['division', 'officer', 'lead', 'exec', 'admin', 'recruit'],
+  view_division_members: ['division', 'officer', 'lead', 'exec', 'admin', 'recruit', 'alumni'],
   attend_meetings: ['officer', 'lead', 'exec', 'admin', 'recruit'],
   // Planning a meeting: leads can create meetings and run/edit/see results of the ones THEY planned;
   // exec and admin (manage_meetings) can do all of that for every meeting.
@@ -126,25 +127,14 @@ export function isVerifiedMember(roles: RoleGrant[]): boolean {
   return roles.length > 0;
 }
 
-// Rewards (points earned at check-in, referral bonuses, the shop) is
-// restricted to current UCSD students and club staff — mirrors
-// is_rewards_eligible() in 20260922110000_restrict_rewards_to_ucsd.sql,
-// the actual enforcement boundary (award_checkin_points/claim_reward);
-// this is UI-gating only. 'ucsd' covers verified students; the org
-// position roles are included since holding one for a UCSD club implies
-// current UCSD affiliation even without an auto-verified @ucsd.edu email.
-// Recruits and alumni are included too (the club opened Rewards to them) — the DB function
-// is_rewards_eligible() mirrors this list (see 20261002160000_role_visibility.sql).
-const REWARDS_ELIGIBLE_ROLES: AppRole[] = ['ucsd', 'officer', 'lead', 'exec', 'division', 'admin', 'recruit', 'alumni'];
-
-// The team (officer, lead, exec) runs Rewards rather than using it, and recruits and alumni aren't eligible either:
-// no points, no leaderboard entry, no Rewards tile.
-// This is UI/leaderboard gating only; the DB function is_rewards_eligible() still lists these roles.
-const REWARDS_EXCLUDED_ROLES: AppRole[] = ['officer', 'lead', 'exec', 'recruit', 'alumni'];
-
+// Rewards (points earned at check-in, referral bonuses, the shop) are for UCSD students only: someone whose only role is "UCSD Student". Holding any other
+// role (recruit, alumni, officer, lead, exec, division lead, admin) means no points and no Rewards section of their own, and a person with no role (guest)
+// is not a student, so they have none either. Exec and admin still see Rewards to run it (see page.tsx). Mirrors is_rewards_eligible() in
+// 20261015110000_rewards_students_only.sql, which is what actually stops points being awarded; this keeps the section and leaderboard in step with it.
+// (Permissions handed to a person directly appear as `cap:` pseudo-roles and are not roles.)
 export function isRewardsEligible(roles: RoleGrant[]): boolean {
-  if (roles.some((r) => REWARDS_EXCLUDED_ROLES.includes(r.role))) return false;
-  return roles.some((r) => REWARDS_ELIGIBLE_ROLES.includes(r.role));
+  const held = roles.filter((r) => !String(r.role).startsWith('cap:'));
+  return held.some((r) => r.role === 'ucsd') && held.every((r) => r.role === 'ucsd');
 }
 
 // Gates the profile's self-set "org title" field (e.g. "Marketing Lead"),
