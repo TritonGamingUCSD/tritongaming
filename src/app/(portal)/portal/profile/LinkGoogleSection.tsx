@@ -14,7 +14,7 @@ import Button from '@/components/ui/Button';
 // linkIdentity() redirect round-trip — see that route's own comment for
 // why this can't just be a rejected promise like a normal API call.
 const LINK_ERROR_MESSAGES: Record<string, string> = {
-  identity_already_exists: 'That Google account is already linked to a different profile. Sign out and use "Continue with Google" with it directly if that’s the account you meant to sign into.',
+  identity_already_exists: 'That Google account is already linked to a different profile. Sign out and use the sign-in button for it directly if that’s the account you meant to sign into.',
   manual_linking_disabled: 'Account linking isn’t turned on for this site yet — an admin needs to enable "Manual linking" in Supabase’s Auth settings.',
 };
 
@@ -26,7 +26,7 @@ const LINK_ERROR_MESSAGES: Record<string, string> = {
 // user id). supabase.auth.linkIdentity attaches a *second* Google account
 // (e.g. a personal Gmail) to the same account without disturbing the
 // existing one — Supabase matches by the Google identity itself at sign-in,
-// not by which button was clicked, so "Continue with Google" on the login
+// not by which button was clicked, so the sign-in buttons on the login
 // page works with either account afterward. No password to set or manage
 // (an earlier version of this feature used an email+password backup
 // credential instead — removed in favor of this, so there's only ever one

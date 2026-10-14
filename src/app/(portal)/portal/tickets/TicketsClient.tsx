@@ -87,10 +87,10 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
   const searchParams = useSearchParams();
   const [tickets, setTickets] = useState(initialTickets);
 
-  // Signed in with a personal Google account on a UCSD-only event: sign out and reopen the sign-in with only UCSD accounts offered, coming back here.
+  // Signed in with a personal Google account on a UCSD-only event: sign out and reopen the sign-in (its main button offers only UCSD accounts), coming back here.
   async function switchToUcsd() {
     await createClient().auth.signOut();
-    window.location.href = `/login?ucsd=1&next=${encodeURIComponent('/portal/tickets')}`;
+    window.location.href = `/login?next=${encodeURIComponent('/portal/tickets')}`;
   }
 
   // Closing the QR screen after a successful check-in: reload the server

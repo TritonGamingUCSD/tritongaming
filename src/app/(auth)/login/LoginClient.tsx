@@ -4,12 +4,13 @@ import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import styles from './login.module.css';
 
-// `ucsdOnly` is set when the person was sent here to switch to their UCSD account (a UCSD-only event): Google then lists only @ucsd.edu accounts first.
-export default function LoginClient({ next, ucsdOnly = false }: { next?: string; ucsdOnly?: boolean }) {
-  const [loading, setLoading] = useState(false);
+// Two ways in. The main button is for UCSD accounts: Google then lists only @ucsd.edu accounts, so nobody lands on a personal Gmail by accident. The smaller
+// one is for guests at public events, who sign in with any Google account.
+export default function LoginClient({ next }: { next?: string }) {
+  const [loading, setLoading] = useState<'ucsd' | 'guest' | null>(null);
 
-  async function handleGoogleSignIn() {
-    setLoading(true);
+  async function handleGoogleSignIn(ucsd: boolean) {
+    setLoading(ucsd ? 'ucsd' : 'guest');
     const supabase = createClient();
     const origin = window.location.origin;
     // `next` rides along in this URL because it is the one thing that survives the round trip out to Google and back (auth/callback/route.ts reads it).
@@ -22,19 +23,19 @@ export default function LoginClient({ next, ucsdOnly = false }: { next?: string;
         redirectTo: `${origin}/auth/callback${query ? `?${query}` : ''}`,
         // Always show Google's account chooser: many phones have a personal Gmail as the default, and one tap on it signs in without a UCSD role.
         // `hd` is only a hint to Google; the role itself is still granted by the @ucsd.edu check on our side.
-        queryParams: { prompt: 'select_account', ...(ucsdOnly ? { hd: 'ucsd.edu' } : {}) },
+        queryParams: { prompt: 'select_account', ...(ucsd ? { hd: 'ucsd.edu' } : {}) },
       },
     });
   }
 
   return (
+    <>
     <button
       className={styles.googleBtn}
-      onClick={handleGoogleSignIn}
-      disabled={loading}
-      aria-label="Sign in with Google"
+      onClick={() => handleGoogleSignIn(true)}
+      disabled={loading !== null}
     >
-      {loading ? (
+      {loading === 'ucsd' ? (
         <span className={styles.spinner} aria-hidden="true" />
       ) : (
         <svg
@@ -60,7 +61,11 @@ export default function LoginClient({ next, ucsdOnly = false }: { next?: string;
           />
         </svg>
       )}
-      {loading ? 'Redirecting…' : 'Continue with Google'}
+      {loading === 'ucsd' ? 'Redirecting…' : 'Continue with UCSD Account'}
     </button>
+    <button className={styles.guestBtn} onClick={() => handleGoogleSignIn(false)} disabled={loading !== null}>
+      {loading === 'guest' ? 'Redirecting…' : 'Not at UCSD? Use another Google account'}
+    </button>
+    </>
   );
 }
