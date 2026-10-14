@@ -1,5 +1,6 @@
 'use client';
 
+import Loading from '@/components/Loading/Loading';
 import { useCallback, useEffect, useState } from 'react';
 import { Bell, BellOff, Send, Share, Smartphone } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -56,7 +57,7 @@ export default function PushSettings() {
     else setNote(j.sent ? 'Sent. It should arrive in a moment.' : 'Nothing was sent: no device has notifications on.');
   }
 
-  if (support === null || s === null) return <p className={styles.muted}>Loading…</p>;
+  if (support === null || s === null) return <Loading variant="inline" label="Loading…" />;
   return (
     <section className={styles.card} aria-label="Push notifications">
       <div className={styles.head}>

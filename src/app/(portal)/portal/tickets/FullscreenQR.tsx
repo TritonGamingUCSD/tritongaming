@@ -1,12 +1,12 @@
 'use client';
 
+import Loading from '@/components/Loading/Loading';
 import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Ticket, X, Check, Zap, ClipboardList } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import TicketQRBadge from '@/components/TicketQRBadge/TicketQRBadge';
-import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import { DEFAULT_QR_OPTIONS, type QRCodeOptions } from '@/lib/qr/qrCodeStyling';
 import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/core/timezone';
 import { fetchWithRetry } from '@/lib/ui/fetchWithRetry';
@@ -563,7 +563,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
                 // does, especially for the one screen someone opens
                 // specifically to look at right now.
                 <div className={`${styles.qrCanvas} ${styles.qrLoading}`}>
-                  <LoadingSpinner size={32} label="Loading your code…" theme="light" />
+                  <Loading variant="inline" label="Loading your code…" />
                 </div>
               )}
             </div>

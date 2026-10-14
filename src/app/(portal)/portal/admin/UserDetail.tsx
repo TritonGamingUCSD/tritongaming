@@ -1,8 +1,8 @@
 'use client';
 
+import Loading from '@/components/Loading/Loading';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import Notice from '@/components/ui/Notice';
 import Button from '@/components/ui/Button';
 import { ROLE_LABELS } from '@/types/database';
@@ -59,7 +59,7 @@ export default function UserDetail({ userId, onClose }: { userId: string; onClos
           <Button size="sm" variant="secondary" onClick={onClose}>Close</Button>
         </header>
 
-        {!d && !err && <div className={styles.center}><LoadingSpinner size={28} label="Loading details…" theme="auto" /></div>}
+        {!d && !err && <div className={styles.center}><Loading label="Loading details…" /></div>}
         {err && <Notice tone="error">{err}</Notice>}
 
         {d && (

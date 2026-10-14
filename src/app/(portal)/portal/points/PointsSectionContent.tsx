@@ -1,5 +1,6 @@
 'use client';
 
+import Loading from '@/components/Loading/Loading';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Notice from '@/components/ui/Notice';
 import { confirmHold } from '@/lib/ui/confirmHold';
@@ -12,7 +13,6 @@ import { getTier, nextTier, type Tier } from '@/lib/members/tiers';
 import { PACIFIC_TZ } from '@/lib/core/timezone';
 import StyledQRCode from '@/components/StyledQRCode/StyledQRCode';
 import { DEFAULT_QR_OPTIONS } from '@/lib/qr/qrCodeStyling';
-import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
 import type { TransactionRow } from './getMyPointsData';
 import IconButton from '@/components/ui/IconButton';
@@ -800,7 +800,7 @@ export default function PointsSectionContent({
           )}
 
           {shopItems === null ? (
-            <LoadingSpinner size={28} label="Loading shop…" theme="auto" />
+            <Loading label="Loading shop…" />
           ) : shopItems.length === 0 ? (
             <p className={styles.empty}>Nothing in the shop yet — check back soon.</p>
           ) : (
@@ -842,7 +842,7 @@ export default function PointsSectionContent({
 
           {boardError && <Notice tone="error">{boardError}</Notice>}
           {board === null ? (
-            <LoadingSpinner size={28} label="Loading leaderboard…" theme="auto" />
+            <Loading label="Loading leaderboard…" />
           ) : board.length === 0 ? (
             <p className={styles.empty}>No one&apos;s ranked yet.</p>
           ) : (
@@ -967,7 +967,7 @@ export default function PointsSectionContent({
           {manageError && <Notice tone="error">{manageError}</Notice>}
 
           {manageItems === null ? (
-            <LoadingSpinner size={28} label="Loading rewards…" theme="auto" />
+            <Loading label="Loading rewards…" />
           ) : (
             <div className={styles.manageList}>
               {manageItems.map((item) => (
@@ -1051,7 +1051,7 @@ export default function PointsSectionContent({
               <>
                 {historyError && <Notice tone="error">{historyError}</Notice>}
                 {targetHistory === null ? (
-                  <LoadingSpinner size={20} label="Loading history…" theme="auto" />
+                  <Loading variant="inline" label="Loading history…" />
                 ) : targetHistory.length === 0 ? (
                   <p className={styles.empty}>No point activity for {adjustTarget.title} yet.</p>
                 ) : (
@@ -1111,7 +1111,7 @@ export default function PointsSectionContent({
             {tierError && <Notice tone="error">{tierError}</Notice>}
 
             {manageTiers === null ? (
-              <LoadingSpinner size={28} label="Loading tiers…" theme="auto" />
+              <Loading label="Loading tiers…" />
             ) : (
               <div className={styles.manageList}>
                 {[...manageTiers].sort((a, b) => a.min_points - b.min_points).map((t) => (

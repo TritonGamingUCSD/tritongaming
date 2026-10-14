@@ -279,6 +279,11 @@ export interface Database {
           tags: string[];
           pinned: boolean;
           pin_order: number | null;
+          /** 'guide' is a normal page; 'link' is a quick link to a Google Drive file or other address (see link_url). */
+          kind: 'guide' | 'link';
+          link_url: string | null;
+          /** The teams (meeting_groups ids) this doc is most useful for; empty means everyone. */
+          teams: string[];
           /** false = a brand new doc only editors can see, until its first publish. */
           published: boolean;
           /** Bumped on every publish. */
@@ -401,7 +406,7 @@ export type Division = Database['public']['Tables']['divisions']['Row'];
 export type Event = Database['public']['Tables']['events']['Row'];
 export type Ticket = Database['public']['Tables']['tickets']['Row'];
 export type Sponsor = Database['public']['Tables']['sponsors']['Row'];
-type DocOptionalColumns = 'icon' | 'cover_url' | 'tags' | 'pinned' | 'published' | 'revision' | 'draft_title' | 'draft_content' | 'draft_updated_at' | 'draft_updated_by';
+type DocOptionalColumns = 'kind' | 'link_url' | 'teams' | 'icon' | 'cover_url' | 'tags' | 'pinned' | 'published' | 'revision' | 'draft_title' | 'draft_content' | 'draft_updated_at' | 'draft_updated_by';
 export type Doc = Database['public']['Tables']['docs']['Row'];
 export type DocCategory = Database['public']['Tables']['doc_categories']['Row'];
 export type Notification = Database['public']['Tables']['notifications']['Row'];

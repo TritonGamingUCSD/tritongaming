@@ -8,7 +8,7 @@ import { createClient } from '@supabase/supabase-js';
 import fs from 'node:fs';
 
 const BASE = process.env.BASE_URL || 'http://localhost:3000';
-const env = Object.fromEntries(fs.readFileSync(new URL('../.env.local', import.meta.url), 'utf8').split('\n').filter((l) => l && !l.startsWith('#') && l.includes('=')).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1).replace(/^"|"$/g, '')]));
+const env = Object.fromEntries(fs.readFileSync(new URL('../../.env.local', import.meta.url), 'utf8').split('\n').filter((l) => l && !l.startsWith('#') && l.includes('=')).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1).replace(/^"|"$/g, '')]));
 const url = env.NEXT_PUBLIC_SUPABASE_URL;
 const svc = createClient(url, env.SUPABASE_SERVICE_ROLE_KEY);
 const ref = new URL(url).hostname.split('.')[0];

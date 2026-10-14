@@ -1,5 +1,6 @@
 'use client';
 
+import Loading from '@/components/Loading/Loading';
 import { Select } from '@/components/ui/Field';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { useEditor, EditorContent, useEditorState } from '@tiptap/react';
@@ -329,7 +330,7 @@ const DocEditor = forwardRef<DocEditorHandle, { value: string; onChange: (markdo
     setViewState(next);
   }
 
-  if (!editor || !state) return <div className={styles.shell}><div className={styles.loading}>Loading the editor…</div></div>;
+  if (!editor || !state) return <div className={styles.shell}><Loading variant="inline" label="Loading the editor…" /></div>;
 
   return (
     <div className={styles.shell}>

@@ -1,5 +1,6 @@
 'use client';
 
+import Loading from '@/components/Loading/Loading';
 import SaveBar from '@/components/portal/SaveBar';
 import EditingNow from '@/components/portal/EditingNow';
 import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
@@ -111,7 +112,7 @@ export default function LinksManager() {
       {error && <Notice tone="error">{error}</Notice>}
 
       {links === null ? (
-        <p className={styles.hint}>Loading…</p>
+        <Loading variant="inline" label="Loading…" />
       ) : links.length === 0 ? (
         <div className={styles.empty}><Link2 size={32} strokeWidth={1.25} aria-hidden="true" /><p>No short links yet.</p></div>
       ) : (

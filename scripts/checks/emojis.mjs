@@ -1,20 +1,13 @@
 // Club custom emojis (upload, approval, reactions) as temporary accounts against a running dev server. Run: npm run test:emojis
-import { createClient } from '@supabase/supabase-js';
-import fs from 'fs';
-const env = Object.fromEntries(fs.readFileSync('.env.local','utf8').split('\n').filter(l=>l&&!l.startsWith('#')&&l.includes('=')).map(l=>[l.slice(0,l.indexOf('=')),l.slice(l.indexOf('=')+1).replace(/^"|"$/g,'')]));
-const url=env.NEXT_PUBLIC_SUPABASE_URL, svc=createClient(url, env.SUPABASE_SERVICE_ROLE_KEY); const ref=new URL(url).hostname.split('.')[0];
-const made=[]; let meetingId; let fails=0; const ok=(n,c,x='')=>{console.log((c?'PASS':'FAIL'),n,c?'':x); if(!c)fails++;};
+import { svc, url, env, day, tracker, accounts } from './lib.mjs';
+let meetingId; const t=tracker(); const ok=t.ok;
 const PNG=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==','base64');
+const { user: baseUser, made, cleanup } = accounts('em');
 async function user(name,roles){
-  const email=`mtg-em-${name}-${Date.now()}@example.test`; const {data}=await svc.auth.admin.createUser({email,email_confirm:true}); const id=data.user.id; made.push(id);
-  await svc.from('profiles').update({display_name:'Mtg '+name,onboarded_at:new Date().toISOString(),year:'2028',class_of:2028,college:'Sixth',major:'CS',pronouns:'they/them'}).eq('id',id);
-  for(const r of roles) await svc.from('user_roles').insert({user_id:id,role:r});
-  const c=createClient(url,env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY); const {data:lk}=await svc.auth.admin.generateLink({type:'magiclink',email}); const {data:s}=await c.auth.verifyOtp({token_hash:lk.properties.hashed_token,type:'magiclink'});
-  const cookie=`sb-${ref}-auth-token=base64-${Buffer.from(JSON.stringify(s.session)).toString('base64url')}`;
-  const call=async(m,p,b)=>{const r=await fetch('http://localhost:3000'+p,{method:m,headers:{cookie,'content-type':'application/json'},body:b?JSON.stringify(b):undefined}); let j={}; try{j=await r.json()}catch{} return {s:r.status,j};};
+  const u=await baseUser(name,roles); const cookie=u.cookie;
   const up=async(name,bytes,type='image/png')=>{const fd=new FormData(); fd.append('file',new Blob([bytes],{type}),'x.png'); fd.append('name',name); const r=await fetch('http://localhost:3000/api/meetings/emojis',{method:'POST',headers:{cookie},body:fd}); let j={}; try{j=await r.json()}catch{} return {s:r.status,j};};
   const upD=async(name,discord)=>{const fd=new FormData(); fd.append('discord',discord); fd.append('name',name); const r=await fetch('http://localhost:3000/api/meetings/emojis',{method:'POST',headers:{cookie},body:fd}); let j={}; try{j=await r.json()}catch{} return {s:r.status,j};};
-  return {id,call,up,upD};
+  return {id:u.id,call:u.call,up,upD};
 }
 try{
  const officer=await user('officer',['officer']), exec=await user('exec',['exec']), nobody=await user('nobody',[]);
@@ -51,11 +44,12 @@ try{
  // removal
  r=await exec.call('DELETE',`/api/meetings/emojis/${id}`); ok('exec removes it',r.s===200);
  r=await exec.call('GET','/api/meetings/emojis'); ok('it is gone',!r.j.approved.some(e=>e.id===id));
-}catch(e){ console.log('ERROR',e); fails++; }
+}catch(e){ console.log('ERROR',e); t.fail(); }
 finally{
  const {data:rows}=await svc.from('custom_emojis').select('id,path').like('name','mtgtest_%');
  if(rows?.length){ await svc.storage.from('custom-emojis').remove(rows.map(x=>x.path)); await svc.from('custom_emojis').delete().in('id',rows.map(x=>x.id)); }
  if(meetingId) await svc.from('meetings').delete().eq('id',meetingId);
- for(const id of [...made].reverse()){ await svc.from('custom_emojis').delete().eq('created_by',id); await svc.from('notifications').delete().eq('user_id',id); await svc.auth.admin.deleteUser(id); }
- console.log(fails?`${fails} FAILED`:'ALL PASSED'); process.exit(fails?1:0);
+ for(const id of made) await svc.from('custom_emojis').delete().eq('created_by',id);
+ await cleanup();
+ process.exit(t.result());
 }

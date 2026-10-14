@@ -1,24 +1,7 @@
-import LogoLoader from '@/components/LogoLoader/LogoLoader';
+import PageLoading from '@/components/Loading/PageLoading';
 
-// The outermost Suspense fallback Next.js has — only ever shown for the
-// brief moment before routing even resolves which route group (main site,
-// portal, or auth) is loading, so it can't assume any of their specific
-// styling. Its own solid background means a slow connection shows a
-// deliberate branded loading screen instead of a blank white flash while
-// the very first byte of real content is still in flight.
+// The outermost Suspense fallback Next.js has: only shown for the brief moment before routing has worked out which area (public site, portal or
+// sign-in) is loading, so it picks the portal's or the site's look from the address. It is the same loader as every other loading screen.
 export default function RootLoading() {
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: '#080d1a',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <LogoLoader size={96} label="Loading Triton Gaming…" theme="dark" />
-    </div>
-  );
+  return <PageLoading area="auto" fixed label="Loading Triton Gaming…" />;
 }

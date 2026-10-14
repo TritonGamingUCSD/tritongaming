@@ -1,5 +1,6 @@
 'use client';
 
+import Loading from '@/components/Loading/Loading';
 import IconButton from '@/components/ui/IconButton';
 import Notice from '@/components/ui/Notice';
 import { useEffect, useState } from 'react';
@@ -9,7 +10,6 @@ import UndoCheckinModal from '@/components/UndoCheckinModal/UndoCheckinModal';
 import { Camera, Gamepad2, Undo2, Check } from 'lucide-react';
 import { resolveAvatarUrl } from '@/lib/members/profile';
 import { PACIFIC_TZ, formatEventDateRange, eventDayCount } from '@/lib/core/timezone';
-import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import checkinStyles from './checkins.module.css';
 import styles from './eventcheckinsmodal.module.css';
 
@@ -146,7 +146,7 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
         {error ? (
           <Notice tone="error">{error}</Notice>
         ) : !event || !tickets ? (
-          <LoadingSpinner size={28} label="Loading check-ins…" theme="auto" />
+          <Loading label="Loading check-ins…" />
         ) : (
           <>
             <div className={checkinStyles.header} style={{ marginBottom: '1.5rem' }}>

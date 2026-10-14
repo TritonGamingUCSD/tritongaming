@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Loading from '@/components/Loading/Loading';
 
 // Loads the data of a heavy portal section the first time it is opened (see lib/portalSectionData.ts) and keeps it for a minute, so
 // switching away and back is instant but never shows anything older than that. `scope` changes when the person or the "view as" role does.
@@ -41,9 +42,10 @@ export function useSectionData<T>(id: string, scope: string): { data: T | null; 
 }
 
 export function SectionLoading({ error, retry }: { error: string; retry: () => void }) {
+  if (!error) return <div style={{ color: 'var(--pp-ink)' }}><Loading variant="section" label="Loading…" /></div>;
   return (
     <div role="status" style={{ padding: '2rem 0.5rem', color: 'var(--pp-ink)', fontSize: '0.95rem' }}>
-      {error ? (<>{error} <button type="button" onClick={retry} style={{ marginLeft: '0.5rem', font: 'inherit', textDecoration: 'underline', background: 'none', border: 0, color: 'var(--p-accent-text)', cursor: 'pointer' }}>Try again</button></>) : 'Loading…'}
+      {error} <button type="button" onClick={retry} style={{ marginLeft: '0.5rem', font: 'inherit', textDecoration: 'underline', background: 'none', border: 0, color: 'var(--p-accent-text)', cursor: 'pointer' }}>Try again</button>
     </div>
   );
 }

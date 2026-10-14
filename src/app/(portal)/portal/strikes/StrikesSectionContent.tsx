@@ -1,5 +1,6 @@
 'use client';
 
+import Loading from '@/components/Loading/Loading';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { CalendarX, Users, ArrowLeft, Check, Lock, Moon, RotateCcw, Plus, Search, Send, ShieldAlert, Ticket, X } from 'lucide-react';
@@ -7,7 +8,6 @@ import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
 import Notice from '@/components/ui/Notice';
 import SectionTabs from '@/components/ui/SectionTabs';
-import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import { DateInput, Field, Input, Select } from '@/components/ui/Field';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import { STRIKES_AT_LIMIT, countLabel } from '@/lib/members/strikeLabels';
@@ -66,7 +66,7 @@ function Tracker() {
   }).sort((a, b) => Number(b.atLimit) - Number(a.atLimit) || b.active - a.active || a.name.localeCompare(b.name)), [people, filter, q]);
 
   if (error && !people) return <Notice tone="error">{error}</Notice>;
-  if (!people) return <LoadingSpinner size={28} label="Loading strikes…" theme="auto" />;
+  if (!people) return <Loading label="Loading strikes…" />;
   const sel = people.find((p) => p.id === selected) ?? null;
 
   return (
@@ -191,7 +191,7 @@ function PersonDetail({ person, limit, me, onBack, onChanged }: { person: Person
       {giving && <VoucherForm hasStrikes={person.active > 0} busy={busy === 'voucher'} onCancel={() => setGiving(false)} onSave={async (reason) => { const j = await act('/api/strikes/vouchers', 'POST', { user_id: person.id, reason }, 'voucher'); if (j) { setGiving(false); if (j.usedOnStrike) setNote('Voucher given. It removed their oldest strike right away.'); } }} />}
 
       <h3 className={styles.h3}>Strikes</h3>
-      {data === null ? <p className={styles.muted}>Loading…</p> : strikes.length === 0 ? <p className={styles.muted}>No strikes.</p> : (
+      {data === null ? <Loading variant="inline" label="Loading…" /> : strikes.length === 0 ? <p className={styles.muted}>No strikes.</p> : (
         <ul className={styles.strikes}>
           {strikes.map((s) => <StrikeRow key={s.id} s={s} readOnly={isMe} unusedVouchers={unused} busy={busy === s.id} onAct={async (body) => !!(await act(`/api/strikes/${s.id}`, 'PATCH', body, s.id))}  />)}
         </ul>
@@ -385,7 +385,7 @@ function Missed({ me, onChanged }: { me: string; onChanged: () => Promise<void> 
     await load(); await onChanged();
   }
   const chosen = () => (list ?? []).filter((s) => picked.has(key(s))).map((s) => ({ user_id: s.user_id, meeting_id: s.meeting_id }));
-  if (!list) return <LoadingSpinner size={26} label="Loading…" theme="auto" />;
+  if (!list) return <Loading label="Loading…" />;
   return (
     <div className={styles.review}>
       <p className={styles.muted}>People who were meant to be at a meeting, didn’t check in, and weren’t excused. A miss shows here as soon as the meeting ends. For each person, add a strike, or excuse them with a reason (for a mistake, say) and they come off the list and are marked excused on the meeting. Tick people to add strikes or dismiss several at once; “Select all” is per meeting. Dismissed ones move to Past missed meetings.</p>

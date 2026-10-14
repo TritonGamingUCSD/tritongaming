@@ -1,5 +1,6 @@
 'use client';
 
+import Loading from '@/components/Loading/Loading';
 import { useCallback, useEffect, useState } from 'react';
 import { Lock, ShieldCheck, ShieldAlert, Ticket } from 'lucide-react';
 import Notice from '@/components/ui/Notice';
@@ -27,7 +28,7 @@ export default function MyStrikes() {
   useEffect(() => { void load(); }, [load]);
 
   if (error && !s) return <Notice tone="error">{error}</Notice>;
-  if (!s) return <p className={styles.muted}>Loading…</p>;
+  if (!s) return <Loading variant="inline" label="Loading…" />;
   const tone = s.atLimit ? styles.bad : s.active >= 1 ? styles.warn : styles.ok;
   const onRecord = s.strikes.filter((k) => k.status === 'published');
   const takenOff = s.strikes.filter((k) => k.status === 'removed');

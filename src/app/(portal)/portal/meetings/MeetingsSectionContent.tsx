@@ -1,5 +1,6 @@
 'use client';
 
+import Loading from '@/components/Loading/Loading';
 import SaveBar from '@/components/portal/SaveBar';
 import EditingNow from '@/components/portal/EditingNow';
 import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
@@ -16,7 +17,6 @@ import { startsWeekGroup, weekGroup } from '@/lib/events/weekGroups';
 // A card's edge takes its week's color, the same as the heading above it (repeating is shown by its icon, not a color).
 const WEEK_TONE = ['today', 'wnext', 'wlater'] as const;
 import { Field, Input, Select, Textarea, DateInput, TimeInput } from '@/components/ui/Field';
-import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import { resolveAvatarUrl } from '@/lib/members/profile';
 import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
@@ -190,7 +190,7 @@ function CheckInPanel() {
     }
   }
 
-  if (!data) return <LoadingSpinner size={28} label="Loading meetings…" theme="auto" />;
+  if (!data) return <Loading label="Loading meetings…" />;
 
   const checkedIn = data.meetings.filter((m) => m.checked_in_at);
   const openToEnter = data.meetings.filter((m) => m.accepting && !m.checked_in_at);
@@ -394,7 +394,7 @@ function UpcomingPanel() {
     })();
   }, []);
   if (error) return <Notice tone="error">{error}</Notice>;
-  if (!items) return <LoadingSpinner size={28} label="Loading upcoming meetings…" theme="auto" />;
+  if (!items) return <Loading label="Loading upcoming meetings…" />;
   if (items.length === 0) return <div className={styles.card}><p className={styles.muted}>Nothing scheduled for you yet.</p></div>;
   return (
     <ul className={styles.stack}>
@@ -444,7 +444,7 @@ function MyHistoryPanel() {
   }, []);
 
   if (error) return <Notice tone="error">{error}</Notice>;
-  if (!data) return <LoadingSpinner size={28} label="Loading your history…" theme="auto" />;
+  if (!data) return <Loading label="Loading your history…" />;
   if (data.meetings.length === 0) return <div className={styles.card}><p className={styles.muted}>No meetings yet.</p></div>;
 
   const pct = data.total ? Math.round((data.attended / data.total) * 100) : 0;
@@ -544,7 +544,7 @@ function PeoplePicker({ team, value, onChange, covered }: { team: TeamPerson[] |
         {(['exec', 'lead', 'officer', 'recruit'] as const).map((r) => <button key={r} type="button" className={styles.chip} onClick={() => addRole(r)} disabled={!team}>{AUDIENCE_LABELS[r]}</button>)}
         {value.length > 0 && <button type="button" className={styles.chip} onClick={() => onChange([])}>Clear</button>}
       </div>
-      {!team ? <p className={styles.faint}>Loading people…</p> : (
+      {!team ? <Loading variant="inline" label="Loading people…" /> : (
         <ul className={styles.pickList}>
           {shown.map((p) => {
             const via = covered?.get(p.id);
@@ -604,7 +604,7 @@ export function AudiencePicker({ value, onChange }: { value: Aud; onChange: (v: 
               </button>
             ))}
           </div>
-        ) : <p className={styles.faint}>{groups ? 'No teams yet. Make one under TG Members › Team.' : 'Loading teams…'}</p>}
+        ) : groups ? <p className={styles.faint}>No teams yet. Make one under TG Members › Team.</p> : <Loading variant="inline" label="Loading teams…" />}
       </div>
 
       <div className={styles.audSection}>
@@ -714,7 +714,7 @@ export function TeamsPanel({ userId, canManageAll, canEdit = true }: { userId: s
         </div>
       )}
 
-      {!groups ? <LoadingSpinner size={28} label="Loading teams…" theme="auto" /> : groups.length === 0 && !editing ? (
+      {!groups ? <Loading label="Loading teams…" /> : groups.length === 0 && !editing ? (
         <div className={styles.card}><p className={styles.muted}>No teams yet.</p></div>
       ) : editing ? null : view === 'teams' ? (
         <ul className={styles.meetingList}>
@@ -888,7 +888,7 @@ function MeetingList({ onOpen, showForm, onShowForm }: { onOpen: (id: string) =>
     setBusyKey(null); load();
   }
 
-  if (!data) return error ? <Notice tone="error">{error}</Notice> : <LoadingSpinner size={28} label="Loading meetings…" theme="auto" />;
+  if (!data) return error ? <Notice tone="error">{error}</Notice> : <Loading label="Loading meetings…" />;
 
   return (
     <div className={styles.stack}>
@@ -1119,7 +1119,7 @@ function AdvanceAbsences({ item, onChanged }: { item: Item; onChanged?: () => vo
     <section className={styles.advanceAbsences} aria-label="Can't make it">
       <h4 className={styles.audienceTitle}><UserX size={13} aria-hidden="true" /> Can’t make it</h4>
       {error && <Notice tone="error">{error}</Notice>}
-      {!data ? <p className={styles.faint}>Loading…</p> : (
+      {!data ? <Loading variant="inline" label="Loading…" /> : (
         <>
           {data.absences.length > 0 && (
             <ul className={styles.absentList}>
@@ -1176,7 +1176,7 @@ function SeriesExcused({ seriesId }: { seriesId: string }) {
     <section className={styles.advanceAbsences} aria-label="Excused every week">
       <h4 className={styles.audienceTitle}><UserX size={13} aria-hidden="true" /> Excused every week</h4>
       {error && <Notice tone="error">{error}</Notice>}
-      {!data ? <p className={styles.faint}>Loading…</p> : (
+      {!data ? <Loading variant="inline" label="Loading…" /> : (
         <>
           {data.excused.length > 0 && (
             <ul className={styles.absentList}>
@@ -1277,7 +1277,7 @@ function EmojiPanel() {
       {actions}
     </li>
   );
-  if (!data) return error ? <Notice tone="error">{error}</Notice> : <LoadingSpinner size={28} label="Loading…" theme="auto" />;
+  if (!data) return error ? <Notice tone="error">{error}</Notice> : <Loading label="Loading…" />;
   return (
     <div className={styles.stack}>
       {error && <Notice tone="error">{error}</Notice>}
@@ -1520,7 +1520,7 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
     } finally { setBusy(false); }
   }
 
-  if (!live) return <LoadingSpinner size={28} label="Loading meeting…" theme="auto" />;
+  if (!live) return <Loading label="Loading meeting…" />;
 
   const open = live.meeting.open;
   // Over = its time has passed and check-in isn't running: the info below is locked (the doc link stays editable).
@@ -1839,7 +1839,7 @@ function AttendancePanel({ onOpenMeeting, canExport }: { onOpenMeeting?: (id: st
       {canExport ? <p className={styles.faint}>Exports follow these filters.</p> : <p className={styles.faint}>Your meetings’ results.</p>}
 
       {error && <Notice tone="error">{error}</Notice>}
-      {!data && !error && <LoadingSpinner size={28} label="Loading attendance…" theme="auto" />}
+      {!data && !error && <Loading label="Loading attendance…" />}
       {data && data.meetings.length === 0 && <div className={styles.card}><p className={styles.muted}>No meetings in this range.</p></div>}
 
       {data && data.meetings.length > 0 && (

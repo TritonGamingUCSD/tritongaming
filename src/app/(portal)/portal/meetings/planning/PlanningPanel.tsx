@@ -1,5 +1,6 @@
 'use client';
 
+import Loading from '@/components/Loading/Loading';
 import SectionTabs from '@/components/ui/SectionTabs';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDraft } from '@/lib/ui/useDraft';
@@ -11,7 +12,6 @@ import Notice from '@/components/ui/Notice';
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
 import { Field, Input, Select, Textarea, DateInput } from '@/components/ui/Field';
-import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import { audienceLabel } from '@/lib/meetings/meetingAudience';
 import { MAX_RANGE_DAYS, addDays, availabilityFor, bestTimes, evaluateStart, clockLabel, dayLabel, daysBetween, slotStarts, toHhmm, toMin, withoutBusy, type PlanSlots, type PlanView } from '@/lib/meetings/meetingPlans';
@@ -48,7 +48,7 @@ export default function PlanningPanel({ userId }: { userId: string }) {
   useEffect(() => { void load(); }, [load]);
 
   const open = plans?.find((p) => p.id === openId) ?? null;
-  if (plans === null) return error ? <Notice tone="error">{error}</Notice> : <LoadingSpinner />;
+  if (plans === null) return error ? <Notice tone="error">{error}</Notice> : <Loading label="Loading…" />;
 
   if (creating) return <PlanForm onDone={() => { setCreating(false); void load(); }} onCancel={() => setCreating(false)} />;
   if (open) return <PlanDetail key={open.id} plan={open} userId={userId} onBack={() => { setOpenId(null); setParams({ plan: null }); void load(); }} reload={load} />;

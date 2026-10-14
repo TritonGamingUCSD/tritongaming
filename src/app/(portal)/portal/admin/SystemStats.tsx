@@ -1,9 +1,9 @@
 'use client';
 
+import Loading from '@/components/Loading/Loading';
 import Notice from '@/components/ui/Notice';
 import { useEffect, useState } from 'react';
 import { Database, HardDrive, Triangle, ExternalLink, Users, Server, ShieldCheck, Trash2 } from 'lucide-react';
-import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import adminStyles from './admin.module.css';
 import styles from './SystemStats.module.css';
 
@@ -121,7 +121,7 @@ export default function SystemStats() {
   }
 
   if (!data) {
-    return <LoadingSpinner size={28} label="Loading system stats…" theme="auto" />;
+    return <Loading label="Loading system stats…" />;
   }
 
   const totalStorageBytes = data.storage.reduce((sum, b) => sum + b.totalBytes, 0);

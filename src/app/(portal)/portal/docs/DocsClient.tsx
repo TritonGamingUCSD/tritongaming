@@ -28,7 +28,7 @@ import styles from './docs.module.css';
 
 interface Notice2 { id: number; text: string; tone: 'info' | 'warning'; docId?: string }
 const POLL_MS = 120_000;
-const DOC_SELECT = 'id, slug, title, category_id, parent_id, order_index, content, attachments, created_by, updated_by, created_at, updated_at, icon, cover_url, tags, pinned, published, revision, draft_title, draft_content, draft_updated_at, draft_updated_by';
+const DOC_SELECT = 'id, slug, title, category_id, parent_id, order_index, content, attachments, created_by, updated_by, created_at, updated_at, icon, cover_url, tags, pinned, kind, link_url, teams, published, revision, draft_title, draft_content, draft_updated_at, draft_updated_by';
 
 export default function DocsClient({ initialDocs, initialCategories, initialFavorites, userId, canEdit }: { initialDocs: Doc[]; initialCategories: DocCategory[]; initialFavorites: string[]; userId: string; canEdit: boolean }) {
   const [docs, setDocs] = useState(initialDocs);
@@ -118,7 +118,7 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
       const s = next.find((x) => x.id === d.id);
       if (!s) return open.editing && open.selectedId === d.id ? [d] : [];
       if (s.revision > d.revision && !(open.editing && open.selectedId === d.id)) toFetch.push(d.id);
-      return [{ ...d, title: open.editing && open.selectedId === d.id ? d.title : s.title, parent_id: s.parent_id, category_id: s.category_id, order_index: s.order_index, icon: s.icon, cover_url: s.cover_url, tags: s.tags, pinned: s.pinned, published: s.published, ...(open.editing && open.selectedId === d.id ? {} : { revision: d.revision }) } as Doc];
+      return [{ ...d, title: open.editing && open.selectedId === d.id ? d.title : s.title, parent_id: s.parent_id, category_id: s.category_id, order_index: s.order_index, icon: s.icon, cover_url: s.cover_url, tags: s.tags, pinned: s.pinned, kind: s.kind, link_url: s.link_url, teams: s.teams, published: s.published, ...(open.editing && open.selectedId === d.id ? {} : { revision: d.revision }) } as Doc];
     });
     for (const s of next) if (!local.some((d) => d.id === s.id)) toFetch.push(s.id);
     setGoneIds((g) => { const n = new Set(local.filter((d) => !nextIds.has(d.id)).map((d) => d.id)); return n.size === g.size && [...n].every((x) => g.has(x)) ? g : n; });

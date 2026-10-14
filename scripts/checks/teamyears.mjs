@@ -1,20 +1,9 @@
 // Drives the yearly team records and the graduate-to-alumni move as temporary accounts against a running dev server, and removes everything it made.
 // While it runs it switches the automatic alumni move off (and restores it after), records into the real current quarter when there is one, and only moves its own test accounts. Run: npm run test:teamyears
-import { createClient } from '@supabase/supabase-js';
-import fs from 'fs';
-const env = Object.fromEntries(fs.readFileSync('.env.local','utf8').split('\n').filter(l=>l&&!l.startsWith('#')&&l.includes('=')).map(l=>[l.slice(0,l.indexOf('=')),l.slice(l.indexOf('=')+1).replace(/^"|"$/g,'')]));
-const url=env.NEXT_PUBLIC_SUPABASE_URL, svc=createClient(url, env.SUPABASE_SERVICE_ROLE_KEY); const ref=new URL(url).hostname.split('.')[0];
-let autoBefore='off'; const made=[]; const quarterIds=[]; const years=[2080,2085,2086,2090]; let fails=0; const ok=(n,c,x='')=>{console.log((c?'PASS':'FAIL'),n,c?'':x); if(!c)fails++;};
-async function user(name,roles,profile={}){
-  const email=`mtg-ty-${name}-${Date.now()}@example.test`; const {data}=await svc.auth.admin.createUser({email,email_confirm:true}); const id=data.user.id; made.push(id);
-  await svc.from('profiles').update({display_name:'Mtg '+name,onboarded_at:new Date().toISOString(),year:'2028',class_of:2028,college:'Sixth',major:'CS',pronouns:'they/them',...profile}).eq('id',id);
-  for(const r of roles) await svc.from('user_roles').insert({user_id:id,role:r});
-  const c=createClient(url,env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY); const {data:lk}=await svc.auth.admin.generateLink({type:'magiclink',email}); const {data:s}=await c.auth.verifyOtp({token_hash:lk.properties.hashed_token,type:'magiclink'});
-  const cookie=`sb-${ref}-auth-token=base64-${Buffer.from(JSON.stringify(s.session)).toString('base64url')}`;
-  const call=async(m,p,b)=>{const r=await fetch('http://localhost:3000'+p,{method:m,headers:{cookie,'content-type':'application/json'},body:b?JSON.stringify(b):undefined}); let j={}; try{j=await r.json()}catch{} return {s:r.status,j};};
-  return {id,call};
-}
-const day=(n)=>new Date(Date.now()-8*3600e3+n*86400e3).toISOString().slice(0,10);
+import { svc, url, env, day, tracker, accounts } from './lib.mjs';
+let autoBefore='off'; const quarterIds=[]; const years=[2080,2085,2086,2090]; const t=tracker(); const ok=t.ok;
+const { user: baseUser, made, cleanup } = accounts('ty');
+async function user(name,roles,profile={}){ return baseUser(name,roles, { profile }); }
 const q=async(term,y,s,e)=>{const {data}=await svc.from('academic_quarters').insert({term,start_year:y,starts_on:day(s),ends_on:day(e)}).select('id').single(); quarterIds.push(data.id); return data.id;};
 const roster=(qid,u,tier,title)=>svc.from('quarter_roster').insert({quarter_id:qid,user_id:u.id,tier,title,name:'Mtg x',last_seen:day(-100)});
 const mark=(qid,u)=>svc.from('officer_quarter_status').insert({quarter_id:qid,user_id:u.id});
@@ -69,14 +58,13 @@ try{
  ok('the person who was not ready kept their role',(await svc.from('user_roles').select('role').eq('user_id',H.id)).data.some(x=>x.role==='officer'));
  r=await admin.call('POST','/api/team-years/alumni',{action:'auto',on:true}); ok('the automatic move can be switched on',r.s===200); r=await exec.call('GET','/api/team-years'); ok('and shows as on',r.j.autoAlumni===true);
  r=await admin.call('POST','/api/team-years/alumni',{action:'auto',on:false}); r=await exec.call('GET','/api/team-years'); ok('and off again',r.j.autoAlumni===false);
-}catch(e){ console.log('ERROR',e); fails++; }
+}catch(e){ console.log('ERROR',e); t.fail(); }
 finally{
  for(const y of years) await svc.from('team_years').delete().eq('start_year',y);
  for(const id of quarterIds) await svc.from('academic_quarters').delete().eq('id',id);
  await svc.from('team_settings').upsert({key:'auto_alumni',value:autoBefore},{onConflict:'key'});
- await svc.from('user_roles').update({granted_by:null}).in('granted_by',made); await svc.from('role_change_log').delete().in('user_id',made);
- for(const id of [...made].reverse()){ await svc.from('notifications').delete().eq('user_id',id); const {error}=await svc.auth.admin.deleteUser(id); if(error) console.log('could not delete',id,error.message); }
- await svc.from('audit_log').delete().eq('entity_type','team year').gte('created_at',new Date(Date.now()-3600e3).toISOString());
- const {count:t}=await svc.from('team_years').select('start_year',{count:'exact',head:true}); const {count:q2}=await svc.from('academic_quarters').select('id',{count:'exact',head:true});
- console.log('left over: team years',t,'quarters',q2); console.log(fails?`${fails} FAILED`:'ALL PASSED'); process.exit(fails?1:0);
+ await svc.from('audit_log').delete().eq('entity_type','team year').in('actor_id',made);
+ await cleanup();
+ const {count:tyCount}=await svc.from('team_years').select('start_year',{count:'exact',head:true}); const {count:q2}=await svc.from('academic_quarters').select('id',{count:'exact',head:true});
+ console.log('left over: team years',tyCount,'quarters',q2); process.exit(t.result());
 }

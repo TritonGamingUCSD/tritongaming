@@ -1,0 +1,46 @@
+/* One loading look everywhere. Colours follow the surrounding text colour (currentColor), so no theme option is needed. */
+.wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; text-align: center; }
+.page { min-height: 60vh; width: 100%; }
+.section { padding: 3rem 1rem; width: 100%; min-height: 220px; }
+
+.logoBox { position: relative; }
+.float { animation: hover 2.6s ease-in-out infinite; }
+@keyframes hover { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+/* A dim copy of the logo is always visible, so the shape reads as a logo and not a half-loaded image. */
+.logoBase { display: block; width: 100%; height: 100%; object-fit: contain; opacity: 0.7; filter: drop-shadow(0 0 14px rgba(255, 199, 44, 0.25)); }
+
+/* The same logo used as a mask, so the gold sweep is clipped to the diamond. */
+.logoShine {
+  position: absolute; inset: 0;
+  -webkit-mask-image: url('/logos/tg_logo.png'); mask-image: url('/logos/tg_logo.png');
+  -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center;
+  background: linear-gradient(100deg, transparent 35%, rgba(255, 255, 255, 0.9) 48%, rgba(255, 199, 44, 1) 52%, transparent 65%);
+  background-size: 300% 100%;
+  animation: sweep 1.8s ease-in-out infinite;
+}
+@keyframes sweep { 0% { background-position: 150% 0; } 100% { background-position: -150% 0; } }
+
+/* The progress bar: a gold segment sliding across a quiet track. */
+.bar { position: relative; display: block; width: min(220px, 60vw); height: 5px; border-radius: 999px; overflow: hidden; background: color-mix(in srgb, currentColor 18%, transparent); }
+.fill { position: absolute; top: 0; bottom: 0; left: 0; width: 40%; border-radius: 999px; background: var(--yellow, #ffc72c); animation: slide 1.4s ease-in-out infinite; }
+@keyframes slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(260%); } }
+
+.label { margin: 0; font-family: var(--font-futura-medium); font-size: 0.85rem; letter-spacing: 0.02em; color: color-mix(in srgb, currentColor 80%, transparent); }
+
+.inline { display: inline-flex; align-items: center; gap: 0.7rem; padding: 0.6rem 0; max-width: 100%; }
+.inline .bar { width: 96px; height: 4px; flex-shrink: 0; }
+.inlineLabel { font-size: 0.88rem; color: color-mix(in srgb, currentColor 80%, transparent); }
+
+@media (prefers-reduced-motion: reduce) {
+  .float { animation: none; }
+  .logoShine { animation-duration: 3.2s; }
+  .fill { animation-duration: 3s; }
+}
+
+/* Full-page wrappers (see PageLoading). */
+.screen { display: grid; place-items: center; min-height: 100vh; width: 100%; }
+.fixed { position: fixed; inset: 0; z-index: 50; }
+.areaSite { background: #080d1a; color: #f2f1f0; } /* the public site's navy */
+.areaPortal, .areaSite[data-area='portal'] { background: var(--pp-paper); color: var(--pp-ink); }
+.inPage { min-height: 70svh; background: var(--navy, #080d1a); }

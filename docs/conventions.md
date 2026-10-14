@@ -43,6 +43,10 @@ npm run check:theme    # theme tokens
 
 `npm run lint` has no errors; the React-compiler style rules (`set-state-in-effect`, `refs`, `purity`) are warnings on purpose. Unused imports and variables are errors; prefix an intentionally unused name with `_`.
 
+## Loading states
+
+There is one loading indicator, `src/components/Loading/Loading.tsx`: the logo with a gold sweep and a progress bar, in three sizes. Use `variant="page"` through `PageLoading` for a `loading.tsx` (every route group has one and they all use it), `variant="section"` (the default) for a panel or sub-page waiting for its data, and `variant="inline"` for a single "Loading…" line. Always give it words. Its colours come from the surrounding text colour, so it needs no theme option. Do not add a spinner, skeleton or plain "Loading…" text of your own.
+
 ## Files and names
 
 Put shared logic in the right `src/lib/<topic>/` folder (see [code-map.md](code-map.md)). Name by what a thing is, not where it is used. Keep a comment only where the reason is not obvious from the code.

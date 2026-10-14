@@ -1,11 +1,11 @@
 'use client';
 
+import Loading from '@/components/Loading/Loading';
 import { useCallback, useEffect, useState } from 'react';
 import { Users, User, Shield, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import { Input, Select } from '@/components/ui/Field';
-import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import styles from './access.module.css';
 
 interface Grant { id: string; kind: 'person' | 'group'; name: string; count?: number }
@@ -29,7 +29,7 @@ export default function AccessPanel() {
     if (ok) setData(json as unknown as Data); else setError((json.error as string) || 'Failed to load.');
   }, []);
   useEffect(() => { void load(); }, [load]);
-  if (!data) return error ? <Notice tone="error">{error}</Notice> : <LoadingSpinner size={28} label="Loading access…" theme="auto" />;
+  if (!data) return error ? <Notice tone="error">{error}</Notice> : <Loading label="Loading access…" />;
   return (
     <div className={styles.wrap}>
       <p className={styles.intro}>Give one specific permission to a person or a saved group, without changing their role. Make groups in Meetings → Groups (for example an “HR team” group) and anyone you add to the group gets the access automatically.</p>

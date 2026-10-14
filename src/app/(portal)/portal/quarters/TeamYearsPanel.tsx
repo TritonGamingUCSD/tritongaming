@@ -1,5 +1,6 @@
 'use client';
 
+import Loading from '@/components/Loading/Loading';
 import SaveBar from '@/components/portal/SaveBar';
 import EditingNow from '@/components/portal/EditingNow';
 import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
@@ -10,7 +11,6 @@ import { Archive, Check, GraduationCap, Plus, Search, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
 import Notice from '@/components/ui/Notice';
-import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import { Field, Input, Select } from '@/components/ui/Field';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import styles from './quarters.module.css';
@@ -61,7 +61,7 @@ export default function TeamYearsPanel() {
   }, [data, year]);
 
   if (error && !data) return <Notice tone="error">{error}</Notice>;
-  if (!data) return <LoadingSpinner size={28} label="Loading…" theme="auto" />;
+  if (!data) return <Loading label="Loading…" />;
 
   return (
     <div className={styles.page}>

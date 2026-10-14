@@ -1,5 +1,6 @@
 'use client';
 
+import Loading from '@/components/Loading/Loading';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDraft } from '@/lib/ui/useDraft';
 import DraftBanner from '@/components/portal/DraftBanner';
@@ -106,7 +107,7 @@ function TicketList({ scope, onOpen }: { scope: 'mine' | 'all'; onOpen: (id: str
     return () => { live = false; };
   }, [scope]);
   if (err) return <Notice tone="error">{err}</Notice>;
-  if (!items) return <p className={styles.muted}>Loading…</p>;
+  if (!items) return <Loading variant="inline" label="Loading…" />;
   const shown = items.filter((t) => filter === 'all' || (filter === 'resolved') === (t.status === 'resolved'));
   const waiting = items.filter((t) => t.status !== 'resolved' && (scope === 'all' ? t.last_from_user : !t.last_from_user)).length;
   return (
@@ -352,7 +353,7 @@ function Thread({ id, userId, onBack }: { id: string; userId: string; onBack: ()
   }
 
   if (err && !d) return <><Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft size={15} aria-hidden="true" /> Back</Button><Notice tone="error">{err}</Notice></>;
-  if (!d) return <p className={styles.muted}>Loading…</p>;
+  if (!d) return <Loading variant="inline" label="Loading…" />;
   const t = d.ticket;
   const mine = t.user_id === userId;
   return (
@@ -445,7 +446,7 @@ function CannedReplies() {
     await api(`/api/help/canned?id=${id}`, { method: 'DELETE' });
     await load();
   }
-  if (!items) return error ? <Notice tone="error">{error}</Notice> : <p className={styles.muted}>Loading…</p>;
+  if (!items) return error ? <Notice tone="error">{error}</Notice> : <Loading variant="inline" label="Loading…" />;
   return (
     <div className={styles.listWrap}>
       <p className={styles.muted}>Replies you can drop into a ticket from the reply box. Use {'{name}'} and it becomes the person’s first name.</p>

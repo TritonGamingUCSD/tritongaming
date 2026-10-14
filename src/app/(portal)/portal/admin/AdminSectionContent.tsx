@@ -1,5 +1,6 @@
 'use client';
 
+import Loading from '@/components/Loading/Loading';
 import SectionTabs from '@/components/ui/SectionTabs';
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
@@ -242,7 +243,7 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
             <h1 className={styles.title}>{activityFor.title}&apos;s Activity</h1>
             {activityError && <p className={styles.sectionHint}>{activityError}</p>}
             {activityEntries === null ? (
-              <p className={styles.sectionHint}>Loading…</p>
+              <Loading variant="inline" label="Loading…" />
             ) : activityEntries.length === 0 ? (
               <p className={styles.sectionHint}>Nothing tracked yet — see the activity feed&apos;s own note on what it does and doesn&apos;t cover.</p>
             ) : (

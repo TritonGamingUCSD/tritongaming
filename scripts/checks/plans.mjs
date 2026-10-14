@@ -1,20 +1,8 @@
 // Drives the meeting-plan API routes as temporary accounts (lead, officers, a stranger) against a running dev server, and removes
 // everything it made. Invitees are the temporary accounts only, so nobody real is notified. Run: npm run test:plans
-import { createClient } from '@supabase/supabase-js';
-import fs from 'fs';
-const env = Object.fromEntries(fs.readFileSync('.env.local','utf8').split('\n').filter(l=>l&&!l.startsWith('#')&&l.includes('=')).map(l=>[l.slice(0,l.indexOf('=')),l.slice(l.indexOf('=')+1).replace(/^"|"$/g,'')]));
-const url=env.NEXT_PUBLIC_SUPABASE_URL, svc=createClient(url, env.SUPABASE_SERVICE_ROLE_KEY); const ref=new URL(url).hostname.split('.')[0];
-const made=[]; let fails=0; const ok=(n,c,x='')=>{console.log((c?'PASS':'FAIL'),n,c?'':x); if(!c)fails++;};
-async function user(name,roles){
-  const email=`mtg-plan-${name}-${Date.now()}@example.test`; const {data}=await svc.auth.admin.createUser({email,email_confirm:true}); const id=data.user.id; made.push(id);
-  await svc.from('profiles').update({display_name:'ZZ Mtg '+name,onboarded_at:new Date().toISOString(),year:'2028',class_of:2028,college:'Sixth',major:'CS',pronouns:'they/them'}).eq('id',id);
-  for(const r of roles) await svc.from('user_roles').insert({user_id:id,role:r});
-  const c=createClient(url,env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY); const {data:lk}=await svc.auth.admin.generateLink({type:'magiclink',email}); const {data:s}=await c.auth.verifyOtp({token_hash:lk.properties.hashed_token,type:'magiclink'});
-  const cookie=`sb-${ref}-auth-token=base64-${Buffer.from(JSON.stringify(s.session)).toString('base64url')}`;
-  const call=async(m,p,b)=>{const r=await fetch('http://localhost:3000'+p,{method:m,headers:{cookie,'content-type':'application/json'},body:b?JSON.stringify(b):undefined}); let j={}; try{j=await r.json()}catch{} return {s:r.status,j};};
-  return {id,call};
-}
-const day=(n)=>{const d=new Date(Date.now()-8*3600e3+n*86400e3); return d.toISOString().slice(0,10)};
+import { svc, url, env, day, tracker, accounts } from './lib.mjs';
+const t=tracker(); const ok=t.ok;
+const { user, made, cleanup } = accounts('plan');
 try{
  const host=await user('host',['lead']), A=await user('a',['officer']), B=await user('b',['officer']), C=await user('c',['recruit']), X=await user('x',['officer']);
  const aud={audience:[],group_ids:[],invitees:[A.id,B.id,C.id]};
@@ -102,14 +90,11 @@ try{
  ok('person already invited directly not told twice',nd.length===0,JSON.stringify(nd));
  r=await host.call('PATCH',`/api/meetings/groups/${gid}`,{member_ids:[A.id,B.id,C.id,D.id]}); const nb2=await gn(B.id); ok('saving again with no new people sends nothing more',nb2.length===2,JSON.stringify(nb2));
  await host.call('DELETE',`/api/meeting-plans/${gp.j.id}`); await svc.from('meetings').delete().eq('id',gm.j.id); await host.call('DELETE',`/api/meetings/groups/${gid}`);
- // reminders after 24h
  await svc.from('meeting_plans').update({created_at:new Date(Date.now()-30*3600e3).toISOString()}).eq('id',pid);
- const {sendPlanReminders}=await import('/Users/jasperhuang/Repositories/tritongaming/src/lib/meetings/meetingPlanServer.ts').catch(()=>({}));
  r=await host.call('DELETE',`/api/meeting-plans/${pid}`); ok('host deletes open plan',r.s===200); r=await host.call('DELETE',`/api/meeting-plans/${wid}`);
-}catch(e){console.log('ERR',e); fails++}
+}catch(e){console.log('ERR',e); t.fail()}
 finally{
   // clean up: every notification the test caused (to the temporary accounts), then the accounts themselves
-  if(made.length) await svc.from('notifications').delete().in('user_id',made);
-  for(const id of made){ await svc.auth.admin.deleteUser(id);}
+  await cleanup();
   const {data:stray}=await svc.from('notifications').select('id,title').or('title.ilike.%Mtg Plan%,title.ilike.%Mtg Weekly%,title.ilike.%Mtg Busy%,title.ilike.%Mtg Group%,title.ilike.%Mtg Reminder%'); if(stray?.length){ await svc.from('notifications').delete().in('id',stray.map(x=>x.id)); console.log('removed',stray.length,'stray test notifications'); } else console.log('no test notifications left behind');
-  console.log(fails?`${fails} FAILED`:'all passed'); }
+  process.exitCode=t.result('all passed'); }

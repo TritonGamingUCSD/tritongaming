@@ -1,9 +1,9 @@
 'use client';
 
+import Loading from '@/components/Loading/Loading';
 import { useEffect, useState } from 'react';
 import { History, RotateCcw, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import { dayTime, docsGet } from './docsApi';
 import styles from './docs.module.css';
@@ -31,7 +31,7 @@ export default function VersionHistory({ docId, onRestore, onClose }: { docId: s
         <button type="button" className={styles.iconBtn} onClick={onClose} aria-label="Close history"><X size={16} aria-hidden="true" /></button>
       </header>
       {error && <p className={styles.errorText}>{error}</p>}
-      {!versions && !error && <LoadingSpinner size={22} label="Loading…" theme="auto" />}
+      {!versions && !error && <Loading variant="inline" label="Loading…" />}
       {versions && versions.length === 0 && <p className={styles.muted}>Nothing published yet.</p>}
       {versions && versions.length > 0 && (
         <div className={styles.historyBody}>

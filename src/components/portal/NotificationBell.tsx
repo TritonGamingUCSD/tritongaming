@@ -1,5 +1,6 @@
 'use client';
 
+import Loading from '@/components/Loading/Loading';
 import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { syncPush } from '@/lib/notifications/pushClient';
@@ -7,7 +8,6 @@ import Image from 'next/image';
 import Link from '@/components/portal/NoPrefetchLink';
 import { navigatePortal } from '@/lib/portal/portalNav';
 import { Bell } from 'lucide-react';
-import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import type { Notification } from '@/types/database';
 import styles from './NotificationBell.module.css';
 
@@ -119,7 +119,7 @@ export default function NotificationBell({ inline = false }: { inline?: boolean 
           </div>
 
           {!loaded ? (
-            <div className={styles.statusLoading}><LoadingSpinner size={22} label="Loading notifications…" theme="auto" /></div>
+            <div className={styles.statusLoading}><Loading variant="inline" label="Loading notifications…" /></div>
           ) : notifications.length === 0 ? (
             <div className={styles.status}>
               <Image src="/bytes/byte_tgex25.png" alt="" width={44} height={44} aria-hidden="true" />

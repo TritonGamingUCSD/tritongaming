@@ -1,5 +1,6 @@
 'use client';
 
+import Loading from '@/components/Loading/Loading';
 import { useEffect, useState } from 'react';
 import { AlertTriangle, CheckCircle2, ChevronRight, History } from 'lucide-react';
 import PortalLink from '@/components/portal/PortalLink';
@@ -61,7 +62,7 @@ export default function AdminOverviewPanels() {
 
       <section className={styles.panel} aria-label="Recent admin actions">
         <h2 className={styles.title}><History size={14} aria-hidden="true" /> Recent changes</h2>
-        {recent === null ? <p className={styles.muted}>Loading…</p>
+        {recent === null ? <Loading variant="inline" label="Loading…" />
           : recent.length === 0 ? <p className={styles.muted}>No changes recorded yet.</p>
           : (
             <ul className={styles.list}>

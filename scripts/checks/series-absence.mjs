@@ -1,19 +1,7 @@
 // Excusing someone for EVERY week of a repeating meeting, as temporary accounts against a running dev server. Run: npm run test:series-absence
-import { createClient } from '@supabase/supabase-js';
-import fs from 'fs';
-const env = Object.fromEntries(fs.readFileSync('.env.local','utf8').split('\n').filter(l=>l&&!l.startsWith('#')&&l.includes('=')).map(l=>[l.slice(0,l.indexOf('=')),l.slice(l.indexOf('=')+1).replace(/^"|"$/g,'')]));
-const url=env.NEXT_PUBLIC_SUPABASE_URL, svc=createClient(url, env.SUPABASE_SERVICE_ROLE_KEY); const ref=new URL(url).hostname.split('.')[0];
-const made=[]; let seriesId; let fails=0; const ok=(n,c,x='')=>{console.log((c?'PASS':'FAIL'),n,c?'':x); if(!c)fails++;};
-async function user(name,roles){
-  const email=`mtg-sa-${name}-${Date.now()}@example.test`; const {data}=await svc.auth.admin.createUser({email,email_confirm:true}); const id=data.user.id; made.push(id);
-  await svc.from('profiles').update({display_name:'Mtg '+name,onboarded_at:new Date().toISOString(),year:'2028',class_of:2028,college:'Sixth',major:'CS',pronouns:'they/them'}).eq('id',id);
-  for(const r of roles) await svc.from('user_roles').insert({user_id:id,role:r});
-  const c=createClient(url,env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY); const {data:lk}=await svc.auth.admin.generateLink({type:'magiclink',email}); const {data:s}=await c.auth.verifyOtp({token_hash:lk.properties.hashed_token,type:'magiclink'});
-  const cookie=`sb-${ref}-auth-token=base64-${Buffer.from(JSON.stringify(s.session)).toString('base64url')}`;
-  const call=async(m,p,b)=>{const r=await fetch('http://localhost:3000'+p,{method:m,headers:{cookie,'content-type':'application/json'},body:b?JSON.stringify(b):undefined}); let j={}; try{j=await r.json()}catch{} return {s:r.status,j};};
-  return {id,call};
-}
-const day=(n)=>new Date(Date.now()-8*3600e3+n*86400e3).toISOString().slice(0,10);
+import { svc, url, env, day, tracker, accounts } from './lib.mjs';
+let seriesId; const t=tracker(); const ok=t.ok;
+const { user, made, cleanup } = accounts('sa');
 const wd=(d)=>new Date(d+'T12:00:00Z').getUTCDay();
 try{
  const host=await user('host',['lead']), A=await user('a',['officer']), B=await user('b',['officer']), X=await user('x',['officer']);
@@ -49,10 +37,10 @@ try{
  // a one-off meeting cannot be excused every week
  const {data:one}=await svc.from('meetings').insert({title:'Mtg one-off',meeting_date:d1,starts_at:new Date(Date.now()+3*86400e3).toISOString(),ends_at:new Date(Date.now()+3*86400e3+3600e3).toISOString(),created_by:host.id,audience:[],invitees:[A.id],group_ids:[]}).select('id').single();
  r=await host.call('POST','/api/meetings/absence',{meeting_id:one.id,user_id:A.id,repeat:true}); ok('a one-off meeting cannot be excused every week',r.s===400,JSON.stringify(r.j)); await svc.from('meetings').delete().eq('id',one.id);
-}catch(e){ console.log('ERROR',e); fails++; }
+}catch(e){ console.log('ERROR',e); t.fail(); }
 finally{
  if(seriesId){ await svc.from('meetings').delete().eq('series_id',seriesId); await svc.from('meeting_series').delete().eq('id',seriesId); }
  await svc.from('audit_log').delete().eq('entity_type','meeting attendance').like('summary','%Mtg Series Absence%');
- for(const id of [...made].reverse()){ await svc.from('notifications').delete().eq('user_id',id); await svc.auth.admin.deleteUser(id); }
- console.log(fails?`${fails} FAILED`:'ALL PASSED'); process.exit(fails?1:0);
+ await cleanup();
+ process.exit(t.result());
 }

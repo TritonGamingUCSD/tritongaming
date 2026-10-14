@@ -1,22 +1,16 @@
 // Drives the quarter calendar and inactive marks as temporary accounts against a running dev server, and removes everything it made. Run: npm run test:quarters
-import { createClient } from '@supabase/supabase-js';
-import fs from 'fs';
-const env = Object.fromEntries(fs.readFileSync('.env.local','utf8').split('\n').filter(l=>l&&!l.startsWith('#')&&l.includes('=')).map(l=>[l.slice(0,l.indexOf('=')),l.slice(l.indexOf('=')+1).replace(/^"|"$/g,'')]));
-const url=env.NEXT_PUBLIC_SUPABASE_URL, svc=createClient(url, env.SUPABASE_SERVICE_ROLE_KEY); const ref=new URL(url).hostname.split('.')[0];
-const made=[]; const quarterIds=[]; const meetingIds=[]; let fails=0; const ok=(n,c,x='')=>{console.log((c?'PASS':'FAIL'),n,c?'':x); if(!c)fails++;};
+import { svc, url, env, day, tracker, accounts } from './lib.mjs';
+const quarterIds=[]; const meetingIds=[]; const t=tracker(); const ok=t.ok;
+const { user: baseUser, made, cleanup } = accounts('qt');
 async function user(name,roles){
-  const email=`mtg-qt-${name}-${Date.now()}@example.test`; const {data}=await svc.auth.admin.createUser({email,email_confirm:true}); const id=data.user.id; made.push(id);
-  await svc.from('profiles').update({display_name:'Mtg '+name,onboarded_at:new Date().toISOString(),year:'2028',class_of:2028,college:'Sixth',major:'CS',pronouns:'they/them'}).eq('id',id);
-  for(const r of roles) await svc.from('user_roles').insert({user_id:id,role:r});
-  const c=createClient(url,env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY); const {data:lk}=await svc.auth.admin.generateLink({type:'magiclink',email}); const {data:s}=await c.auth.verifyOtp({token_hash:lk.properties.hashed_token,type:'magiclink'});
-  const cookie=`sb-${ref}-auth-token=base64-${Buffer.from(JSON.stringify(s.session)).toString('base64url')}`;
-  const call=async(m,p,b)=>{const r=await fetch('http://localhost:3000'+p,{method:m,headers:{cookie,'content-type':'application/json'},body:b?JSON.stringify(b):undefined}); let j={}; try{j=await r.json()}catch{} return {s:r.status,j};};
-  const can=async(cap)=>(await c.rpc('has_capability',{_capability:cap})).data;
-  return {id,call,can};
+  const u=await baseUser(name,roles);
+  u.can = async (cap) => (await u.client.rpc('has_capability', { _capability: cap })).data;
+  return u;
 }
-const day=(n)=>new Date(Date.now()-8*3600e3+n*86400e3).toISOString().slice(0,10);
 const marker=async(id)=>(await svc.from('user_roles').select('id').eq('user_id',id).eq('role','inactive')).data.length;
 const notes=async(id)=>(await svc.from('notifications').select('title').eq('user_id',id).eq('type','quarter_status').order('created_at')).data.map(x=>x.title);
+// This check adds its own "current" quarter, which cannot overlap a real one. With a real quarter running today it would fail and leave a mess, so stop first.
+{ const { data: real } = await svc.from('academic_quarters').select('id').lte('starts_on', day(0)).gte('ends_on', day(0)); if (real?.length) { console.log('SKIPPED: a real quarter is running today. Run this check against a test database.'); process.exit(0); } }
 try{
  const admin=await user('admin',['admin']), exec=await user('exec',['exec']), A=await user('a',['officer']), L=await user('l',['lead']), R=await user('r',['recruit']), B=await user('b',['officer']);
  let r;
@@ -72,15 +66,15 @@ try{
  r=await admin.call('DELETE',`/api/quarters/${winter}`); ok('admin deletes a quarter',r.s===200);
  ok('its marks go; the current quarter is Fall again, so Fall’s marks apply',await marker(A.id)===1&&await marker(L.id)===1);
  r=await exec.call('DELETE',`/api/quarters/${fall}`); ok('exec cannot delete a quarter',r.s===403,r.s);
-}catch(e){ console.log('ERROR',e); fails++; }
+}catch(e){ console.log('ERROR',e); t.fail(); }
 finally{
  for(const id of meetingIds) await svc.from('meetings').delete().eq('id',id);
  for(const id of quarterIds) await svc.from('academic_quarters').delete().eq('id',id);
  // The roles saved by the admin point back at them (granted_by / the role history), which would stop them being deleted.
- await svc.from('user_roles').update({granted_by:null}).in('granted_by',made); await svc.from('role_change_log').delete().in('user_id',made);
- for(const id of [...made].reverse()){ await svc.from('notifications').delete().eq('user_id',id); const {error}=await svc.auth.admin.deleteUser(id); if(error) console.log('could not delete',id,error.message); }
- await svc.from('audit_log').delete().in('entity_type',['quarter','quarter status']).gte('created_at',new Date(Date.now()-3600e3).toISOString());
+ // Only the audit lines the test accounts caused (a real admin's lines in the same hour are not touched), then the accounts.
+ await svc.from('audit_log').delete().in('entity_type',['quarter','quarter status']).in('actor_id',made);
+ await cleanup();
  const {count:q}=await svc.from('academic_quarters').select('id',{count:'exact',head:true}); const {count:m}=await svc.from('user_roles').select('id',{count:'exact',head:true}).eq('role','inactive');
  console.log('left over: quarters',q,'inactive markers',m);
- console.log(fails?`${fails} FAILED`:'ALL PASSED'); process.exit(fails?1:0);
+ process.exit(t.result());
 }

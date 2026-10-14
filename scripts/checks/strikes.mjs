@@ -1,19 +1,9 @@
 // Drives the strike tracker as temporary accounts against a running dev server, and removes everything it made. It sends a header that makes the
 // server skip alerts to HR and admins (those would reach real people; production ignores it). Run: npm run test:strikes
-import { createClient } from '@supabase/supabase-js';
-import fs from 'fs';
-const env = Object.fromEntries(fs.readFileSync('.env.local','utf8').split('\n').filter(l=>l&&!l.startsWith('#')&&l.includes('=')).map(l=>[l.slice(0,l.indexOf('=')),l.slice(l.indexOf('=')+1).replace(/^"|"$/g,'')]));
-const url=env.NEXT_PUBLIC_SUPABASE_URL, svc=createClient(url, env.SUPABASE_SERVICE_ROLE_KEY); const ref=new URL(url).hostname.split('.')[0];
-const startedAt=new Date().toISOString(); const made=[]; let fails=0; const ok=(n,c,x='')=>{console.log((c?'PASS':'FAIL'),n,c?'':x); if(!c)fails++;}; const grantIds=[]; const meetingIds=[];
-async function user(name,roles){
-  const email=`mtg-strike-${name}-${Date.now()}@example.test`; const {data}=await svc.auth.admin.createUser({email,email_confirm:true}); const id=data.user.id; made.push(id);
-  await svc.from('profiles').update({display_name:'Mtg '+name,onboarded_at:new Date().toISOString(),year:'2028',class_of:2028,college:'Sixth',major:'CS',pronouns:'they/them'}).eq('id',id);
-  for(const r of roles) await svc.from('user_roles').insert({user_id:id,role:r});
-  const c=createClient(url,env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY); const {data:lk}=await svc.auth.admin.generateLink({type:'magiclink',email}); const {data:s}=await c.auth.verifyOtp({token_hash:lk.properties.hashed_token,type:'magiclink'});
-  const cookie=`sb-${ref}-auth-token=base64-${Buffer.from(JSON.stringify(s.session)).toString('base64url')}`;
-  const call=async(m,p,b)=>{const r=await fetch('http://localhost:3000'+p,{method:m,headers:{cookie,'content-type':'application/json','x-strikes-test':'1'},body:b?JSON.stringify(b):undefined}); let j={}; try{j=await r.json()}catch{} return {s:r.status,j};};
-  return {id,call};
-}
+import { svc, url, env, day, tracker, accounts } from './lib.mjs';
+const startedAt=new Date().toISOString(); const t=tracker(); const ok=t.ok; const grantIds=[]; const meetingIds=[];
+const { user: baseUser, made, cleanup } = accounts('strike');
+const user=(name,roles)=>baseUser(name,roles, { headers: { 'x-strikes-test': '1' } });
 const today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Los_Angeles'}).format(new Date());
 try{
  const exec=await user('exec',['exec']), exec2=await user('exec2',['exec']), lead=await user('lead',['lead']), A=await user('a',['officer']), B=await user('b',['officer']);
@@ -104,12 +94,12 @@ try{
  r=await exec.call('POST','/api/strikes/suggestions',{action:'undo',items:[k(B)]}); ok('a dismissed one can be put back',r.s===200,r.s);
  j=await mine(); ok('it is back on the list, but the excused one stays off',j.suggestions.some(x=>x.user_id===B.id&&x.meeting_id===mt.id)&&!j.suggestions.some(x=>x.user_id===A.id&&x.meeting_id===mt.id));
  r=await lead.call('POST','/api/strikes/suggestions',{action:'excuse',reason:'x',items:[k(B)]}); ok('a lead cannot excuse',r.s===403,r.s);
-}catch(e){ console.log('ERROR',e); fails++; }
+}catch(e){ console.log('ERROR',e); t.fail(); }
 finally{
  // The bulk reset test touches every real tracked person's "cleared" marker and writes strike lines to the audit log: undo both.
- await svc.from('strike_cleared').delete().gte('cleared_at',startedAt); await svc.from('audit_log').delete().like('entity_type','strike%').gte('created_at',startedAt);
+ await svc.from('strike_cleared').delete().gte('cleared_at',startedAt); await svc.from('audit_log').delete().like('entity_type','strike%').gte('created_at',startedAt).in('actor_id',made);
  for(const id of meetingIds) await svc.from('meetings').delete().eq('id',id);
- for(const id of made){ await svc.from('notifications').delete().eq('user_id',id); await svc.auth.admin.deleteUser(id); }
+ await cleanup();
  const {count}=await svc.from('strikes').select('id',{count:'exact',head:true}).in('user_id',made.length?made:['00000000-0000-0000-0000-000000000000']); console.log('left over strikes for test users:',count);
- console.log(fails?`${fails} FAILED`:'ALL PASSED'); process.exit(fails?1:0);
+ process.exit(t.result());
 }

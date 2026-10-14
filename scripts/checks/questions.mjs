@@ -1,18 +1,7 @@
 // Poll and rating questions, live tallies and check-in opening as soon as the host opens it. Run: npm run test:questions
-import { createClient } from '@supabase/supabase-js';
-import fs from 'fs';
-const env = Object.fromEntries(fs.readFileSync('.env.local','utf8').split('\n').filter(l=>l&&!l.startsWith('#')&&l.includes('=')).map(l=>[l.slice(0,l.indexOf('=')),l.slice(l.indexOf('=')+1).replace(/^"|"$/g,'')]));
-const url=env.NEXT_PUBLIC_SUPABASE_URL, svc=createClient(url, env.SUPABASE_SERVICE_ROLE_KEY); const ref=new URL(url).hostname.split('.')[0];
-const made=[]; let mid; let fails=0; const ok=(n,c,x='')=>{console.log((c?'PASS':'FAIL'),n,c?'':x); if(!c)fails++;};
-async function user(name,roles){
-  const email=`mtg-q-${name}-${Date.now()}@example.test`; const {data}=await svc.auth.admin.createUser({email,email_confirm:true}); const id=data.user.id; made.push(id);
-  await svc.from('profiles').update({display_name:'Mtg '+name,onboarded_at:new Date().toISOString(),year:'2028',class_of:2028,college:'Sixth',major:'CS',pronouns:'they/them'}).eq('id',id);
-  for(const r of roles) await svc.from('user_roles').insert({user_id:id,role:r});
-  const c=createClient(url,env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY); const {data:lk}=await svc.auth.admin.generateLink({type:'magiclink',email}); const {data:s}=await c.auth.verifyOtp({token_hash:lk.properties.hashed_token,type:'magiclink'});
-  const cookie=`sb-${ref}-auth-token=base64-${Buffer.from(JSON.stringify(s.session)).toString('base64url')}`;
-  const call=async(m,p,b)=>{const r=await fetch('http://localhost:3000'+p,{method:m,headers:{cookie,'content-type':'application/json'},body:b?JSON.stringify(b):undefined}); let j={}; try{j=await r.json()}catch{} return {s:r.status,j};};
-  return {id,call};
-}
+import { svc, url, env, day, tracker, accounts } from './lib.mjs';
+let mid; const t=tracker(); const ok=t.ok;
+const { user, made, cleanup } = accounts('q');
 try{
  const host=await user('host',['lead']), A=await user('a',['officer']), B=await user('b',['officer']), C=await user('c',['officer']);
  // starts in 3 hours: check-in must still work the moment the host opens it
@@ -40,9 +29,9 @@ try{
  await A.call('POST',`/api/meetings/${mid}/answer`,{answer:'5'}); await B.call('POST',`/api/meetings/${mid}/answer`,{answer:'4'});
  r=await A.call('GET',`/api/meetings/${mid}/results`); ok('the rating average is 4.5',r.j.average===4.5&&r.j.total===2,JSON.stringify(r.j));
  const t=await A.call('GET','/api/meetings/today'); const tm=t.j.meetings.find(x=>x.id===mid); ok('the phone is told the type',tm?.question_type==='rating'&&tm.my_answer==='5',JSON.stringify(tm));
-}catch(e){ console.log('ERROR',e); fails++; }
+}catch(e){ console.log('ERROR',e); t.fail(); }
 finally{
  if(mid) await svc.from('meetings').delete().eq('id',mid);
- for(const id of [...made].reverse()){ await svc.from('notifications').delete().eq('user_id',id); await svc.auth.admin.deleteUser(id); }
- console.log(fails?`${fails} FAILED`:'ALL PASSED'); process.exit(fails?1:0);
+ await cleanup();
+ process.exit(t.result());
 }

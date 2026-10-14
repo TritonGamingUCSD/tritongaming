@@ -1,5 +1,6 @@
 'use client';
 
+import Loading from '@/components/Loading/Loading';
 import { useCallback, useEffect, useState } from 'react';
 import { ScrollText, Download } from 'lucide-react';
 import { usePortalParams, useLiveParams } from '@/lib/portal/usePortalParams';
@@ -169,7 +170,7 @@ export default function AuditLogClient() {
           })}
         </ul>
       )}
-      {loading && <p className={styles.hint}>Loading…</p>}
+      {loading && <Loading variant="inline" label="Loading…" />}
       {hasMore && !loading && (
         <Button variant="ghost" className={styles.more} onClick={() => load(entries[entries.length - 1].created_at)}>Load more</Button>
       )}

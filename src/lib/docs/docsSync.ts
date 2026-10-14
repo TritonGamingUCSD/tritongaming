@@ -2,7 +2,7 @@
 
 export interface SyncDoc {
   id: string; title: string; slug: string; parent_id: string | null; category_id: string | null; order_index: number; revision: number; updated_at: string;
-  updated_by_name: string | null; published: boolean; icon: string | null; cover_url: string | null; tags: string[]; pinned: boolean;
+  updated_by_name: string | null; published: boolean; icon: string | null; cover_url: string | null; tags: string[]; pinned: boolean; kind: 'guide' | 'link'; link_url: string | null; teams: string[];
   draft_updated_at: string | null; draft_by_name: string | null; draft_by_me: boolean; editing: string[];
 }
 

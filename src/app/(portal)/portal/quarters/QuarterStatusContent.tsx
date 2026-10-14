@@ -1,5 +1,6 @@
 'use client';
 
+import Loading from '@/components/Loading/Loading';
 import SaveBar from '@/components/portal/SaveBar';
 import EditingNow from '@/components/portal/EditingNow';
 import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
@@ -9,7 +10,6 @@ import { CalendarCheck, GraduationCap, Check, ChevronDown, Moon, Plus, Search, S
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
 import Notice from '@/components/ui/Notice';
-import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import { DateInput, Field, Select } from '@/components/ui/Field';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import SectionTabs from '@/components/ui/SectionTabs';
@@ -118,7 +118,7 @@ function StatusPanel() {
   }
 
   if (error && !data) return <Notice tone="error">{error}</Notice>;
-  if (!data) return <LoadingSpinner size={28} label="Loading…" theme="auto" />;
+  if (!data) return <Loading label="Loading…" />;
 
   const column = (title: string, list: Entry[], inactive: boolean) => (
     <section className={`${styles.listCol} ${inactive ? styles.listColOff : styles.listColOn}`} aria-label={title}>
