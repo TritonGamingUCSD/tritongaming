@@ -33,10 +33,10 @@ export function MembersLazy({ scope, ...rest }: { scope: string } & Omit<Compone
   return <MembersSectionContent {...rest} rows={data.rows} />;
 }
 
-export function DocsLazy({ scope, ...rest }: { scope: string } & Omit<ComponentProps<typeof DocsClient>, 'initialDocs' | 'initialCategories' | 'initialFavorites'>) {
+export function DocsLazy({ scope, ...rest }: { scope: string } & Omit<ComponentProps<typeof DocsClient>, 'initialDocs' | 'initialCategories' | 'initialFavorites' | 'initialLinks' | 'teams' | 'myTeamIds'>) {
   const { data, error, retry } = useSectionData<Awaited_<typeof getDocsData>>('docs', scope);
   if (!data) return <SectionLoading error={error} retry={retry} />;
-  return <DocsClient {...rest} initialDocs={data.docs} initialCategories={data.categories} initialFavorites={data.favorites} />;
+  return <DocsClient {...rest} initialDocs={data.docs} initialCategories={data.categories} initialFavorites={data.favorites} initialLinks={data.links} teams={data.teams} myTeamIds={data.myTeamIds} />;
 }
 
 export function DivisionsLazy({ scope, ...rest }: { scope: string } & Omit<ComponentProps<typeof DivisionsSectionContent>, 'allDivisions' | 'myDivisions'>) {

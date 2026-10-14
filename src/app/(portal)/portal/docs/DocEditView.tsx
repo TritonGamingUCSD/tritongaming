@@ -54,9 +54,11 @@ interface Props {
   onSaveAsNew: (title: string, content: string) => Promise<void>;
   /** Titles of the other docs, offered when someone types [[ to link to one. */
   linkTitles?: string[];
+  /** Every team (TG Members → Team), for the "Useful for" setting. */
+  teams: { id: string; name: string }[];
 }
 
-const DocEditView = forwardRef<DocEditViewHandle, Props>(function DocEditView({ doc, isNew, latest, deletedElsewhere, onLeave, onDocPatch, onSaveAsNew, linkTitles }, ref) {
+const DocEditView = forwardRef<DocEditViewHandle, Props>(function DocEditView({ doc, isNew, latest, deletedElsewhere, onLeave, onDocPatch, onSaveAsNew, linkTitles, teams }, ref) {
   const startTitle = doc.draft_title ?? doc.title;
   const startContent = doc.draft_content ?? doc.content;
   const [title, setTitle] = useState(startTitle);
@@ -296,6 +298,18 @@ const DocEditView = forwardRef<DocEditViewHandle, Props>(function DocEditView({ 
                 <input className={styles.tagInput} value={tagText} onChange={(e) => setTagText(e.target.value)} placeholder={liveTags.length >= MAX_TAGS ? 'Tag limit reached' : 'Add a tag…'} disabled={liveTags.length >= MAX_TAGS || metaBusy}
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); void addTag(); } }} onBlur={() => { if (tagText.trim()) void addTag(); }} aria-label="Add a tag" />
                 <button type="button" className={styles.coverToggle} aria-expanded={coverOpen || !!doc.cover_url} onClick={() => setCoverOpen((v) => !v)}>{doc.cover_url ? 'Cover image' : '+ Cover image'}</button>
+              </div>
+            </div>
+            <div className={styles.metaField}>
+              <span className={styles.label}>Useful for <span className={styles.labelHint}>Saves right away. People on these teams see it first on the docs home</span></span>
+              <div className={styles.teamPick} role="group" aria-label="Teams this doc is useful for">
+                {teams.length === 0 && <small>No teams yet. Make one under TG Members, Team.</small>}
+                {teams.map((t) => {
+                  const on = doc.teams.includes(t.id);
+                  return <button key={t.id} type="button" className={`${styles.teamChoice} ${on ? styles.teamChoiceOn : ''}`} aria-pressed={on} disabled={metaBusy || gone}
+                    onClick={() => void meta({ teams: on ? doc.teams.filter((x) => x !== t.id) : [...doc.teams, t.id] })}>{t.name}</button>;
+                })}
+                {teams.length > 0 && doc.teams.length === 0 && <small>Nobody in particular: it is for everyone.</small>}
               </div>
             </div>
             {(coverOpen || !!doc.cover_url) && (

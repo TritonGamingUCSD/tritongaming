@@ -41,6 +41,6 @@
 /* Full-page wrappers (see PageLoading). */
 .screen { display: grid; place-items: center; min-height: 100vh; width: 100%; }
 .fixed { position: fixed; inset: 0; z-index: 50; }
-.areaSite { background: #080d1a; color: #f2f1f0; } /* the public site's navy */
-.areaPortal, .areaSite[data-area='portal'] { background: var(--pp-paper); color: var(--pp-ink); }
+.areaSite, .areaAuto { background: #080d1a; color: #f2f1f0; } /* the public site's navy */
+.areaPortal, :global(html[data-area='portal']) .areaAuto { background: var(--pp-paper); color: var(--pp-ink); }
 .inPage { min-height: 70svh; background: var(--navy, #080d1a); }

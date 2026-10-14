@@ -39,3 +39,20 @@ describe('search jump targets follow permissions', () => {
     expect(matchCommands(list, 'zzzz')).toEqual([]);
   });
 });
+
+describe('staffName with a gamer tag', () => {
+  it('adds the tag in quotes for pickers, and only when asked', () => {
+    const p = { display_name: 'Kiiro', google_first_name: 'Jasper', google_last_name: 'Huang', gamer_tag: 'KiiroTag' };
+    expect(staffName(p, { tag: true })).toBe('Kiiro (Jasper Huang) "KiiroTag"');
+    expect(staffName(p)).toBe('Kiiro (Jasper Huang)');
+  });
+  it('tells two people with the same name apart', () => {
+    const a = staffName({ display_name: 'Alex Kim', google_first_name: 'Alex', google_last_name: 'Kim', gamer_tag: 'Frost' }, { tag: true });
+    const b = staffName({ display_name: 'Alex Kim', google_first_name: 'Alex', google_last_name: 'Kim', gamer_tag: 'Ember' }, { tag: true });
+    expect(a).not.toBe(b);
+  });
+  it('leaves it off when there is no tag, or the name already says it', () => {
+    expect(staffName({ display_name: 'Zee' }, { tag: true })).toBe('Zee');
+    expect(staffName({ display_name: 'Kiiro', gamer_tag: 'kiiro' }, { tag: true })).toBe('Kiiro');
+  });
+});

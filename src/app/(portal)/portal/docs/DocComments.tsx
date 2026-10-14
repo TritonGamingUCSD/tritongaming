@@ -10,7 +10,7 @@ import styles from './docs.module.css';
 
 interface Comment { id: string; body: string; created_at: string; resolved: boolean; author: string; mine: boolean }
 
-// A quiet thread under the doc, closed until opened: questions and notes from the people reading it. Editors can resolve one; the writer can delete theirs.
+// The thread under the doc, always open so nobody has to find it: questions and notes from the people reading it, and the box to add one. Editors can resolve one; the writer can delete theirs.
 export default function DocComments({ docId }: { docId: string }) {
   const [list, setList] = useState<Comment[] | null>(null);
   const [canEdit, setCanEdit] = useState(false);
@@ -42,8 +42,9 @@ export default function DocComments({ docId }: { docId: string }) {
   }
   const open = (list ?? []).filter((c) => !c.resolved).length;
   return (
-    <details className={styles.comments}>
-      <summary><MessageSquare size={14} aria-hidden="true" /> Comments{list ? ` (${list.length})` : ''}{open > 0 && <span className={styles.catCount}>{open} open</span>}</summary>
+    <section className={styles.comments} aria-labelledby="doc-comments-h">
+      <h2 id="doc-comments-h" className={styles.commentsHeading}><MessageSquare size={16} aria-hidden="true" /> Comments{list ? ` (${list.length})` : ''}{open > 0 && <span className={styles.catCount}>{open} open</span>}</h2>
+      {list && list.length === 0 && <p className={styles.muted}>No comments yet. Ask a question or leave a note below.</p>}
       {list && list.length > 0 && (
         <ul className={styles.commentList}>
           {list.map((c) => (
@@ -63,6 +64,6 @@ export default function DocComments({ docId }: { docId: string }) {
         {err && <Notice tone="error">{err}</Notice>}
         <div><Button size="sm" loading={busy} disabled={!text.trim()} onClick={send}>Comment</Button></div>
       </div>
-    </details>
+    </section>
   );
 }

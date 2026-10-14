@@ -150,7 +150,7 @@ Before pushing, `npm run type-check`, `npm run lint`, `npm test` and `npm run ch
 
 The site runs on the free Vercel Hobby and Supabase plans, and is built to stay inside them. [`docs/usage-and-limits.md`](docs/usage-and-limits.md) has the details. The main points:
 
-- **Two daily jobs only** (the Hobby limit), in `vercel.json`. `daily-reminders` sends event, meeting and plan reminders. `daily-maintenance` cleans old notifications, updates quarter status, records the yearly team lists and, on Sundays, sweeps storage.
+- **Two daily jobs only** (the Hobby limit), in `vercel.json`. `daily-reminders` sends event, meeting and plan reminders. `daily-maintenance` cleans old notifications and meeting reactions, updates quarter status, records the yearly team lists and, on Sundays, sweeps storage.
 - **The proxy runs only where a session is needed** (portal, login, API), so public traffic does not use server time.
 - **Public pages are cached**, and so are the portal's slow-changing lists (member count, reward tiers).
 - **Nothing polls tightly.** Live screens refresh when the server sends a signal, with slow timers as a backstop, and portal links do not prefetch.

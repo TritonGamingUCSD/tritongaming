@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { diffSync, joinNames, type SyncDoc } from '@/lib/docs/docsSync';
 
-const doc = (id: string, over: Partial<SyncDoc> = {}): SyncDoc => ({ id, title: id, slug: id, parent_id: null, category_id: null, order_index: 0, revision: 1, updated_at: '2026-10-05T00:00:00Z', updated_by_name: 'Ana', published: true, icon: null, cover_url: null, tags: [], pinned: false, kind: 'guide', link_url: null, teams: [], draft_updated_at: null, draft_by_name: null, draft_by_me: false, editing: [], ...over });
+const doc = (id: string, over: Partial<SyncDoc> = {}): SyncDoc => ({ id, title: id, slug: id, parent_id: null, category_id: null, order_index: 0, revision: 1, updated_at: '2026-10-05T00:00:00Z', updated_by_name: 'Ana', published: true, icon: null, cover_url: null, tags: [], pinned: false, teams: [], draft_updated_at: null, draft_by_name: null, draft_by_me: false, editing: [], ...over });
 
 describe('diffSync', () => {
   it('reports deleted, new, published by someone else, moved, draft saved and editing', () => {

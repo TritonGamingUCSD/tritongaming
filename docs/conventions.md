@@ -43,6 +43,10 @@ npm run check:theme    # theme tokens
 
 `npm run lint` has no errors; the React-compiler style rules (`set-state-in-effect`, `refs`, `purity`) are warnings on purpose. Unused imports and variables are errors; prefix an intentionally unused name with `_`.
 
+## Naming people
+
+Where someone chooses a person (a picker, a member search, a list to mark or invite), show them with `staffName(profile, { tag: true })` from `lib/members/names.ts`: `Nickname (Real Name) "GamerTag"`. The tag is what tells two people with the same name apart, so the profile select must include `gamer_tag`. Lists that only display a name (the big screen, plan grids, exports) use `staffName(profile)`.
+
 ## Loading states
 
 There is one loading indicator, `src/components/Loading/Loading.tsx`: the logo with a gold sweep and a progress bar, in three sizes. Use `variant="page"` through `PageLoading` for a `loading.tsx` (every route group has one and they all use it), `variant="section"` (the default) for a panel or sub-page waiting for its data, and `variant="inline"` for a single "Loading…" line. Always give it words. Its colours come from the surrounding text colour, so it needs no theme option. Do not add a spinner, skeleton or plain "Loading…" text of your own.

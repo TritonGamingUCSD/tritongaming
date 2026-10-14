@@ -25,7 +25,7 @@ The dev server talks to the real Supabase project, so a test can reach real peop
 
 1. **Throwaway data only.** Name everything `ZZ ...`. Never edit a real event, doc or person.
 2. **Only the test accounts are notified.** (A second dev server for testing, so a stale one never gets in the way: `NEXT_DIST_DIR=.next-qa npx next dev -p 3101`.) Put `DEV_NOTIFY_TEST_ONLY=1` in `.env.local` (it is there now). A development server then only notifies accounts whose display name starts with `ZZ`. It never applies in production. Remove the line when you really want to test real notifications.
-3. **Clean up both the audit log and the notifications** a test caused. Audit lines and notifications whose text contains `ZZ` can be removed together; check that no `ZZ` events, meetings or docs are left.
+3. **Clean up both the audit log and the notifications** a test caused. (Admins are no longer sent "Audit alert" notices for actions by an account whose name starts with `ZZ`, but the audit lines are still written, so they still need removing.) Audit lines and notifications whose text contains `ZZ` can be removed together; check that no `ZZ` events, meetings or docs are left.
 4. **Look at the page.** Typecheck and unit tests cannot see a page that crashes at render (for example a function passed from a server component to a client component). Open the screens you changed in light, dark and at phone width, and run an accessibility scan (axe) on them.
 
 ## Recipe for an end-to-end test

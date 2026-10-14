@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { PanelLeft, Plus, Search, X } from 'lucide-react';
+import { PanelLeft, Plus, X } from 'lucide-react';
 import SectionHeader from '@/components/ui/SectionHeader';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
@@ -13,32 +13,31 @@ import { createClient } from '@/lib/supabase/client';
 import { slugify } from '@/lib/core/slug';
 import { CATEGORY_COLORS, buildSections, canMoveUnder, reorder, UNCATEGORIZED } from '@/lib/docs/docsTree';
 import { diffSync, joinNames, type DocChange, type SyncDoc } from '@/lib/docs/docsSync';
-import type { Doc, DocCategory } from '@/types/database';
-import DocPicker from './DocPicker';
+import type { Doc, DocCategory, QuickLink } from '@/types/database';
+import DocSearch from './DocSearch';
 import DocSidebar, { type DropTarget } from './DocSidebar';
 import DocHome from './DocHome';
 import DocReader, { type ReaderSize } from './DocReader';
 import DocEditView, { type DocEditViewHandle } from './DocEditView';
-import NewDocDialog, { type NewDocChoice } from './NewDocDialog';
+import NewDocDialog, { HOWTO_START, type NewDocChoice } from './NewDocDialog';
 import MoveDialog from './MoveDialog';
 import ConflictDialog from './ConflictDialog';
-import { templateById } from './docTemplates';
 import { dayTime, docsGet, docsPost } from './docsApi';
 import styles from './docs.module.css';
 
 interface Notice2 { id: number; text: string; tone: 'info' | 'warning'; docId?: string }
 const POLL_MS = 120_000;
-const DOC_SELECT = 'id, slug, title, category_id, parent_id, order_index, content, attachments, created_by, updated_by, created_at, updated_at, icon, cover_url, tags, pinned, kind, link_url, teams, published, revision, draft_title, draft_content, draft_updated_at, draft_updated_by';
+const DOC_SELECT = 'id, slug, title, category_id, parent_id, order_index, content, attachments, created_by, updated_by, created_at, updated_at, icon, cover_url, tags, pinned, teams, published, revision, draft_title, draft_content, draft_updated_at, draft_updated_by';
 
-export default function DocsClient({ initialDocs, initialCategories, initialFavorites, userId, canEdit }: { initialDocs: Doc[]; initialCategories: DocCategory[]; initialFavorites: string[]; userId: string; canEdit: boolean }) {
+export default function DocsClient({ initialDocs, initialCategories, initialFavorites, initialLinks, teams, myTeamIds, userId, canEdit }: { initialDocs: Doc[]; initialCategories: DocCategory[]; initialFavorites: string[]; initialLinks: QuickLink[]; teams: { id: string; name: string }[]; myTeamIds: string[]; userId: string; canEdit: boolean }) {
   const [docs, setDocs] = useState(initialDocs);
   const [categories, setCategories] = useState(initialCategories);
+  const [links, setLinks] = useState(initialLinks);
   const [favorites, setFavorites] = useState(() => new Set(initialFavorites));
   const searchParams = useLiveParams();
   const [selectedId, setSelectedId] = useState<string | null>(() => searchParams.get('id'));
   const [editing, setEditing] = useState(false);
   const [editingNew, setEditingNew] = useState(false);
-  const [tagFilter, setTagFilter] = useState<string | null>(null);
   // Categories start closed so the list is short; the one holding the doc you opened stays open.
   const [collapsed, setCollapsed] = useState<Set<string>>(() => {
     const open = initialDocs.find((d) => d.id === searchParams.get('id'))?.category_id ?? null;
@@ -98,7 +97,8 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
 
   // ── What other people did while this page was open ──────────────────────────────────────────────────────────────────────────────────
   const poll = useCallback(async (silent = false) => {
-    const r = await docsGet<{ docs: SyncDoc[]; categories: DocCategory[] }>('/api/docs/sync');
+    const [r, lr] = await Promise.all([docsGet<{ docs: SyncDoc[]; categories: DocCategory[] }>('/api/docs/sync'), docsGet<{ links: QuickLink[] }>('/api/docs/links')]);
+    if (lr.ok) setLinks((cur) => (JSON.stringify(cur) === JSON.stringify(lr.json.links) ? cur : lr.json.links));
     if (!r.ok) return;
     const next = r.json.docs;
     const prev = prevSync.current;
@@ -118,7 +118,7 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
       const s = next.find((x) => x.id === d.id);
       if (!s) return open.editing && open.selectedId === d.id ? [d] : [];
       if (s.revision > d.revision && !(open.editing && open.selectedId === d.id)) toFetch.push(d.id);
-      return [{ ...d, title: open.editing && open.selectedId === d.id ? d.title : s.title, parent_id: s.parent_id, category_id: s.category_id, order_index: s.order_index, icon: s.icon, cover_url: s.cover_url, tags: s.tags, pinned: s.pinned, kind: s.kind, link_url: s.link_url, teams: s.teams, published: s.published, ...(open.editing && open.selectedId === d.id ? {} : { revision: d.revision }) } as Doc];
+      return [{ ...d, title: open.editing && open.selectedId === d.id ? d.title : s.title, parent_id: s.parent_id, category_id: s.category_id, order_index: s.order_index, icon: s.icon, cover_url: s.cover_url, tags: s.tags, pinned: s.pinned, teams: s.teams, published: s.published, ...(open.editing && open.selectedId === d.id ? {} : { revision: d.revision }) } as Doc];
     });
     for (const s of next) if (!local.some((d) => d.id === s.id)) toFetch.push(s.id);
     setGoneIds((g) => { const n = new Set(local.filter((d) => !nextIds.has(d.id)).map((d) => d.id)); return n.size === g.size && [...n].every((x) => g.has(x)) ? g : n; });
@@ -176,18 +176,10 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
     }
     go();
   }
-  // "Browse all docs" is a searchable picker that drops from the button; Organize (the full tree, drag and drop, categories) opens in its own window.
-  const [navOpen, setNavOpen] = useState(false);
-  const [organizeOpen, setOrganizeOpen] = useState(false);
-  const navBtnRef = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    if (!organizeOpen) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOrganizeOpen(false); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [organizeOpen]);
-  const openDoc = (id: string) => { setNavOpen(false); setOrganizeOpen(false); void guard(() => { setSelectedId(id); window.scrollTo({ top: 0 }); }); };
-  const goHome = () => { setNavOpen(false); void guard(() => { setSelectedId(null); setTagFilter(null); }); };
+  // The doc list is always on the left of a wide screen; on a phone it is a drawer that the "All docs" button opens.
+  const [treeOpen, setTreeOpen] = useState(false);
+  const openDoc = (id: string) => { setTreeOpen(false); void guard(() => { setSelectedId(id); window.scrollTo({ top: 0 }); }); };
+  const goHome = () => { setTreeOpen(false); void guard(() => { setSelectedId(null); }); };
   // Opening a doc (from search, a link or Back) opens the category it lives in.
   useEffect(() => {
     const d = docs.find((x) => x.id === selectedId);
@@ -201,7 +193,7 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
   const patchDoc = useCallback((id: string, patch: Partial<Doc>) => setDocs((cur) => cur.map((d) => (d.id === id ? { ...d, ...patch } : d))), []);
 
   // ── Creating ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  async function createDoc(c: { title: string; content: string; icon: string | null; tags: string[]; parentId: string | null; categoryId: string | null; draft?: boolean }): Promise<Doc | null> {
+  async function createDoc(c: { title: string; content: string; icon: string | null; tags: string[]; parentId: string | null; categoryId: string | null; draft?: boolean; teams?: string[] }): Promise<Doc | null> {
     const supabase = createClient();
     const base = slugify(c.title) || 'doc';
     let slug = base; let n = 1;
@@ -209,7 +201,7 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
     const siblings = docsRef.current.filter((d) => (d.parent_id ?? null) === c.parentId && (c.parentId ? true : (d.category_id ?? null) === c.categoryId));
     const { data, error: err } = await supabase.from('docs').insert({
       slug, title: c.title, category_id: c.parentId ? null : c.categoryId, parent_id: c.parentId, order_index: siblings.length ? Math.max(...siblings.map((d) => d.order_index)) + 1 : 0,
-      content: c.draft ? '' : c.content, attachments: [], created_by: userId, updated_by: userId, icon: c.icon, tags: c.tags, published: false,
+      content: c.draft ? '' : c.content, attachments: [], created_by: userId, updated_by: userId, icon: c.icon, tags: c.tags, published: false, teams: c.teams ?? [],
       ...(c.draft ? { draft_title: c.title, draft_content: c.content, draft_updated_at: new Date().toISOString(), draft_updated_by: userId } : {}),
     }).select(DOC_SELECT).single();
     if (err || !data) { setError('Couldn’t create the doc. Try again.'); return null; }
@@ -217,8 +209,7 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
   }
 
   async function onCreate(c: NewDocChoice) {
-    const t = templateById(c.templateId);
-    const doc = await createDoc({ title: c.title, content: t.content, icon: null, tags: t.tags, parentId: c.parentId, categoryId: c.categoryId });
+    const doc = await createDoc({ title: c.title, content: HOWTO_START, icon: null, tags: [], parentId: c.parentId, categoryId: c.categoryId });
     if (!doc) return;
     setDocs((cur) => [...cur, doc]);
     setNewDialog(null);
@@ -229,7 +220,7 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
   async function saveAsNew(title: string, content: string) {
     const gone = selected;
     const parent = gone?.parent_id && docsRef.current.some((d) => d.id === gone.parent_id) ? gone.parent_id : null;
-    const doc = await createDoc({ title: title.trim() || 'Recovered doc', content, icon: null, tags: gone?.tags ?? [], parentId: parent, categoryId: parent ? null : gone?.category_id ?? null, draft: true });
+    const doc = await createDoc({ title: title.trim() || 'Recovered doc', content, icon: null, tags: gone?.tags ?? [], parentId: parent, categoryId: parent ? null : gone?.category_id ?? null, draft: true, teams: gone?.teams });
     if (!doc) return;
     setDocs((cur) => [...cur.filter((d) => d.id !== gone?.id), doc]);
     setSelectedId(doc.id); setEditing(true); setEditingNew(true);
@@ -347,31 +338,25 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
   const readerNotice = selected && live && live.revision > selected.revision ? `${live.updated_by_name ?? 'Someone'} just published a newer version. Loading it now.` : null;
 
   return (
-    <div className={styles.shell}>
+    <div className={styles.page}>
       {!selected && !editing && (
-        <SectionHeader flush title="Documentation" sub="Guides, checklists and how-tos for the team."
+        <SectionHeader flush title="Documentation" sub="How-to guides and quick links for the team."
           actions={canEdit ? <Button onClick={() => setNewDialog({ parentId: null, categoryId: null })}><Plus size={14} aria-hidden="true" /> New doc</Button> : undefined} />
       )}
-      <div className={styles.docsBar}>
-        <button type="button" ref={navBtnRef} className={styles.docsBarBtn} onClick={() => setNavOpen((v) => !v)} aria-expanded={navOpen} aria-haspopup="dialog"><PanelLeft size={15} aria-hidden="true" /> Browse all docs</button>
-        {/* Searching lives in the one search bar at the top; this just opens it ready to search the docs. */}
-        <button type="button" className={styles.docsBarBtn} onClick={() => window.dispatchEvent(new CustomEvent('tg:search', { detail: 'docs ' }))}><Search size={15} aria-hidden="true" /> Search docs <kbd className={styles.docsBarKbd}>⌘K</kbd></button>
-        <span className={styles.docsBarCount}>{docs.filter((d) => d.published || canEdit).length} docs</span>
-      </div>
-      {navOpen && <DocPicker anchor={navBtnRef} docs={docs.filter((d) => d.published || canEdit)} sections={sections} favorites={favorites} selectedId={selectedId} canEdit={canEdit}
-        onOpen={openDoc} onHome={goHome} onClose={() => setNavOpen(false)} onNew={() => { setNavOpen(false); setNewDialog({ parentId: null, categoryId: null }); }} onOrganize={() => { setNavOpen(false); setOrganizeOpen(true); }} />}
-      {organizeOpen && (
-        <div className={styles.organizeBack} onClick={(e) => { if (e.target === e.currentTarget) setOrganizeOpen(false); }}>
-          <div className={styles.organizeSheet} role="dialog" aria-modal="true" aria-label="Organize docs">
-            <div className={styles.organizeBody}>
-              <DocSidebar docs={docs} sections={sections} categories={categories} selectedId={selectedId} onClose={() => setOrganizeOpen(false)} favorites={favorites}
-        collapsed={collapsed} onToggle={toggleCollapse} onCollapseAll={collapseAll} onExpandAll={expandAll} onOpen={openDoc} onHome={goHome} canEdit={canEdit} sync={sync}
-        onNew={(parentId, categoryId) => setNewDialog({ parentId, categoryId })} onMenu={menuAction} onDrop={(id, t) => void moveTo(id, t)}
-        onAddCategory={addCategory} onDeleteCategory={deleteCategory} onCategoryColor={setCategoryColor} onReorderCategories={reorderCategories} />
-            </div>
-          </div>
-        </div>
-      )}
+      <div className={`${styles.shell} ${editing ? styles.shellEditing : ''}`}>
+      <aside className={`${styles.treeCol} ${treeOpen ? styles.treeColOpen : ''}`} aria-label="All docs">
+        {treeOpen && <button type="button" className={styles.treeBackdrop} aria-label="Close the doc list" onClick={() => setTreeOpen(false)} />}
+        <DocSidebar docs={docs.filter((d) => d.published || canEdit)} sections={sections} categories={categories} selectedId={selectedId} onClose={() => setTreeOpen(false)} favorites={favorites}
+          collapsed={collapsed} onToggle={toggleCollapse} onCollapseAll={collapseAll} onExpandAll={expandAll} onOpen={openDoc} onHome={goHome} canEdit={canEdit} sync={sync}
+          onNew={(parentId, categoryId) => setNewDialog({ parentId, categoryId })} onMenu={menuAction} onDrop={(id, t) => void moveTo(id, t)}
+          onAddCategory={addCategory} onDeleteCategory={deleteCategory} onCategoryColor={setCategoryColor} onReorderCategories={reorderCategories} />
+      </aside>
+
+      <div className={styles.mainCol}>
+      {!editing && <div className={styles.topRow}>
+        <button type="button" className={styles.treeBtn} onClick={() => setTreeOpen(true)}><PanelLeft size={16} aria-hidden="true" /> All docs</button>
+        <DocSearch docs={docs.filter((d) => d.published || canEdit)} groupName={catName} onOpen={openDoc} />
+      </div>}
 
       <main className={styles.main}>
         {notices.length > 0 && (
@@ -389,7 +374,7 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
 
 
         {editing && selected ? (
-          <DocEditView ref={editRef} key={selected.id} doc={selected} linkTitles={docs.filter((d) => d.id !== selected.id).map((d) => d.title)} isNew={editingNew} myName={null} latest={live} deletedElsewhere={deleted}
+          <DocEditView ref={editRef} key={selected.id} doc={selected} linkTitles={docs.filter((d) => d.id !== selected.id).map((d) => d.title)} isNew={editingNew} myName={null} latest={live} deletedElsewhere={deleted} teams={teams}
             onLeave={leaveEdit} onDocPatch={(p) => patchDoc(selected.id, p)} onSaveAsNew={saveAsNew} />
         ) : selected ? (
           deleted ? (
@@ -398,12 +383,14 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
             <DocReader doc={selected} docs={docs} sections={sections} categories={categories} canEdit={canEdit} favorite={favorites.has(selected.id)} size={size}
               onSize={(s) => saveReader(s)} live={live} notice={readerNotice}
               onOpen={openDoc} onHome={goHome} onEdit={() => startEdit(selected)} onDelete={() => void askDelete(selected)} onNewSub={() => setNewDialog({ parentId: selected.id, categoryId: null })}
-              onFavorite={() => void toggleFavorite(selected.id)} onPin={() => void togglePin(selected)} onTag={(t) => { setTagFilter(t); void guard(() => setSelectedId(null)); }} />
+              onFavorite={() => void toggleFavorite(selected.id)} onPin={() => void togglePin(selected)} teams={teams} />
           )
         ) : (
-          <DocHome docs={docs.filter((d) => d.published || canEdit)} sections={sections} favorites={favorites} tagFilter={tagFilter} onTag={setTagFilter} onOpen={openDoc} onBrowse={(key) => { setCollapsed((prev) => { const n = new Set(prev); n.delete(key); return n; }); setNavOpen(true); }} canEdit={canEdit} catName={catName} onReorderPins={reorderPins} />
+          <DocHome docs={docs.filter((d) => d.published || canEdit)} sections={sections} favorites={favorites} onOpen={openDoc} canEdit={canEdit} catName={catName} onReorderPins={reorderPins} teams={teams} myTeamIds={myTeamIds} links={links} onLinks={setLinks} />
         )}
       </main>
+      </div>
+      </div>
 
       {newDialog && <NewDocDialog sections={sections} defaultParentId={newDialog.parentId} defaultCategoryId={newDialog.categoryId} onCreate={onCreate} onClose={() => setNewDialog(null)} />}
       {moveDoc && <MoveDialog doc={moveDoc} docs={docs} sections={sections} onMove={(t) => moveTo(moveDoc.id, t)} onClose={() => setMoveDoc(null)} />}

@@ -76,7 +76,7 @@ export function reorder<T extends TreeDoc>(siblings: T[], movingId: string, befo
 
 // ── Search ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 export interface SearchHit<T extends TreeDoc> { doc: T; titleMatch: boolean; snippet: string | null; score: number }
-const plain = (md: string) => md.replace(/```[\s\S]*?```/g, ' ').replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[#>*_`~|-]+/g, ' ').replace(/\s+/g, ' ').trim();
+const plain = (md: string) => md.replace(/```[\s\S]*?```/g, ' ').replace(/<[^>]+>/g, '').replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[#>*_`~|-]+/g, ' ').replace(/\s+/g, ' ').trim();
 /** The first line or two of a doc as plain text, for cards. */
 export const docSummary = (md: string, max = 110): string => { const t = plain(md); return t.length > max ? `${t.slice(0, max).trimEnd()}…` : t; };
 export const searchTerms = (q: string) => q.toLowerCase().split(/\s+/).map((t) => t.trim()).filter(Boolean);

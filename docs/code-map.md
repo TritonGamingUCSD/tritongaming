@@ -33,6 +33,7 @@ Pure logic (no database, no React) is what the unit tests in `src/lib/__tests__`
 | `docsServer.ts` | Authorization (`authorizeDocs`), the columns routes read, who is editing now |
 | `docsSync.ts` | The light "what changed" payload the open page loads |
 | `docsLive.ts` | `notifyDocs()`: tells open pages something changed |
+| `docColors.ts`, `docColorMarks.ts`, `remarkDocColors.ts` | The text colour and highlight palette, the editor marks, and how the reader draws them |
 | `docsLinks.ts` | `[[Doc title]]` links and "linked from" |
 | `markdown.ts`, `markdownToc.ts` | Markdown helpers and the "On this page" outline |
 
@@ -71,7 +72,7 @@ Pure logic (no database, no React) is what the unit tests in `src/lib/__tests__`
 |---|---|
 | `notify.ts` | `createNotifications`: bell and push in one step |
 | `webPush.ts`, `pushClient.ts` | Push delivery, the kinds a member can mute, and the browser side |
-| `notificationCleanup.ts` | Removes old notifications |
+| `notificationCleanup.ts` | Removes old notifications (audit alerts after 14 days, routine ones soon after they are read, the rest after 30 to 90) |
 | `help.ts`, `helpConstants.ts` | Help tickets: authorization, categories, role request text |
 | `audit.ts`, `auditFilters.ts` | The audit log and its filters |
 

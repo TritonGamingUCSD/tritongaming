@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ageLabel, ancestors, buildSections, canMoveUnder, categoryOf, cleanTags, descendantIds, highlightParts, readingOrder, reorder, searchDocs } from '@/lib/docs/docsTree';
+import { ageLabel, ancestors, buildSections, canMoveUnder, categoryOf, cleanTags, descendantIds, docSummary, highlightParts, readingOrder, reorder, searchDocs } from '@/lib/docs/docsTree';
 
 const d = (id: string, parent: string | null, extra: Partial<{ title: string; category_id: string | null; order_index: number; content: string; tags: string[] }> = {}) =>
   ({ id, title: extra.title ?? id, parent_id: parent, category_id: extra.category_id ?? null, order_index: extra.order_index ?? 0, content: extra.content ?? '', tags: extra.tags ?? [] });
@@ -73,5 +73,11 @@ describe('tags and age', () => {
     expect(ageLabel('2026-10-05T01:00:00Z', now)).toEqual({ label: 'Updated today', stale: false });
     expect(ageLabel('2026-08-30T00:00:00Z', now).label).toBe('Updated 5 weeks ago');
     expect(ageLabel('2026-02-01T00:00:00Z', now).stale).toBe(true);
+  });
+});
+
+describe('text colour tags in previews', () => {
+  it('leaves the inline colour tags out of summaries and snippets', () => {
+    expect(docSummary('Hello <span data-c="red">big red</span> and <mark data-h="yellow">marked</mark>')).toBe('Hello big red and marked');
   });
 });

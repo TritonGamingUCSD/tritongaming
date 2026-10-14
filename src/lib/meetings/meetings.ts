@@ -274,9 +274,9 @@ export async function getExpectedPeople(svc: SupabaseClient, m?: MeetingAudience
   const gone = new Set([...idle, ...(alumni ?? []).map((a) => a.user_id as string)]);
   const ids = [...new Set([...(grants ?? []).map((g) => g.user_id as string).filter((id) => !gone.has(id)), ...extras])];
   if (ids.length === 0) return [];
-  const { data: profiles } = await svc.from('profiles').select('id, display_name, google_first_name, google_last_name, avatar_url, custom_avatar_url').in('id', ids);
+  const { data: profiles } = await svc.from('profiles').select('id, display_name, google_first_name, google_last_name, gamer_tag, avatar_url, custom_avatar_url').in('id', ids);
   return (profiles ?? [])
-    .map((p) => ({ id: p.id as string, name: staffName(p), avatar_url: p.avatar_url as string | null, custom_avatar_url: p.custom_avatar_url as string | null }))
+    .map((p) => ({ id: p.id as string, name: staffName(p, { tag: true }), avatar_url: p.avatar_url as string | null, custom_avatar_url: p.custom_avatar_url as string | null }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 

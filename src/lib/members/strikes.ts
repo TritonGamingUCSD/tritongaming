@@ -96,10 +96,10 @@ export async function trackedPeople(svc: SupabaseClient): Promise<TrackedPerson[
   const idle = await inactiveIds(svc);
   const ids = [...rolesOf.keys()];
   if (!ids.length) return [];
-  const { data: ps } = await svc.from('profiles').select('id, display_name, google_first_name, google_last_name, avatar_url, custom_avatar_url').in('id', ids);
+  const { data: ps } = await svc.from('profiles').select('id, display_name, google_first_name, google_last_name, gamer_tag, avatar_url, custom_avatar_url').in('id', ids);
   return (ps ?? []).map((p) => {
     const top = [...(rolesOf.get(p.id as string) ?? [])].sort((a, b) => ROLE_DISPLAY_RANK[b] - ROLE_DISPLAY_RANK[a])[0];
-    return { id: p.id as string, name: staffName(p), avatar_url: resolveAvatarUrl({ avatar_url: p.avatar_url as string | null, custom_avatar_url: p.custom_avatar_url as string | null }), role: top ? ROLE_LABELS[top] : '', roleRank: top ? ROLE_DISPLAY_RANK[top] : 0, inactive: idle.has(p.id as string) };
+    return { id: p.id as string, name: staffName(p, { tag: true }), avatar_url: resolveAvatarUrl({ avatar_url: p.avatar_url as string | null, custom_avatar_url: p.custom_avatar_url as string | null }), role: top ? ROLE_LABELS[top] : '', roleRank: top ? ROLE_DISPLAY_RANK[top] : 0, inactive: idle.has(p.id as string) };
   }).sort((a, b) => a.name.localeCompare(b.name));
 }
 

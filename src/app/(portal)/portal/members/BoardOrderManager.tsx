@@ -17,6 +17,7 @@ interface RoleGrant { role: AppRole; division_id: string | null; }
 interface User {
   id: string;
   display_name: string | null;
+  gamer_tag?: string | null;
   avatar_url: string | null;
   custom_avatar_url?: string | null;
   user_roles: RoleGrant[];
@@ -106,7 +107,7 @@ export default function BoardOrderManager({ users }: { users: User[] }) {
               ) : (
                 <span className={styles.adminAvatarFallback}>{(u.display_name || '?')[0].toUpperCase()}</span>
               )}
-              <span className={styles.boardOrderName}>{u.display_name || 'Unnamed'}</span>
+              <span className={styles.boardOrderName}>{u.display_name || 'Unnamed'}{u.gamer_tag ? <small> &quot;{u.gamer_tag}&quot;</small> : null}</span>
             </div>
           );
         })}

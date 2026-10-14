@@ -21,14 +21,14 @@ export async function GET() {
   const ids = [...rolesOf.entries()].filter(([, r]) => canBeInactive(r.map((role) => ({ role })))).map(([id]) => id);
   const started = startedQuarters(quarters, today);
   const [{ data: ps }, { data: marks }, { data: roster }] = await Promise.all([
-    ids.length ? auth.svc.from('profiles').select('id, display_name, google_first_name, google_last_name, avatar_url, custom_avatar_url, org_title').in('id', ids) : Promise.resolve({ data: [] as Record<string, unknown>[] }),
+    ids.length ? auth.svc.from('profiles').select('id, display_name, google_first_name, google_last_name, gamer_tag, avatar_url, custom_avatar_url, org_title').in('id', ids) : Promise.resolve({ data: [] as Record<string, unknown>[] }),
     auth.svc.from('officer_quarter_status').select('user_id, quarter_id, set_by').in('quarter_id', started.map((q) => q.id)),
     // Who held an officer, lead or exec title in each started quarter (so a past quarter lists the people who were there then).
     auth.svc.from('quarter_roster').select('quarter_id, user_id, name, tier, title').in('quarter_id', started.map((q) => q.id)),
   ]);
   const people = (ps ?? []).map((p) => {
     const top = [...(rolesOf.get(p.id as string) ?? [])].sort((a, b) => ROLE_DISPLAY_RANK[b] - ROLE_DISPLAY_RANK[a])[0];
-    return { id: p.id as string, name: staffName(p as never), avatar_url: resolveAvatarUrl({ avatar_url: p.avatar_url as string | null, custom_avatar_url: p.custom_avatar_url as string | null }), role: top ?? 'officer', roleLabel: top ? ROLE_LABELS[top] : '', title: (p.org_title as string | null) ?? null };
+    return { id: p.id as string, name: staffName(p as never, { tag: true }), avatar_url: resolveAvatarUrl({ avatar_url: p.avatar_url as string | null, custom_avatar_url: p.custom_avatar_url as string | null }), role: top ?? 'officer', roleLabel: top ? ROLE_LABELS[top] : '', title: (p.org_title as string | null) ?? null };
   }).sort((a, b) => a.name.localeCompare(b.name));
   const cur = currentQuarter(quarters, today);
   return NextResponse.json({

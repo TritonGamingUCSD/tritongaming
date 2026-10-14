@@ -3,6 +3,7 @@ import ToastHost from '@/components/SaveToast/ToastHost';
 import type { Metadata, Viewport } from 'next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/next';
+import { ROOT_THEME_SCRIPT } from '@/lib/portal/themeScript';
 import './globals.css';
 
 
@@ -58,6 +59,9 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html suppressHydrationWarning lang="en">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: ROOT_THEME_SCRIPT }} />
+      </head>
       <body>
         {children}
         <ToastHost />

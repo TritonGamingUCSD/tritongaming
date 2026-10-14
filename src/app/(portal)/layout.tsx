@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { THEME_SCRIPT } from '@/lib/portal/themeScript';
+import PortalThemeInit from '@/components/portal/PortalThemeInit';
 import './portal-controls.css';
 import { getProfile, getViewingUser } from '@/lib/core/auth';
 import { PortalIdentityProvider } from '@/components/portal/PortalIdentity';
@@ -15,12 +15,12 @@ export const metadata: Metadata = {
 };
 
 export default async function PortalGroupLayout({ children }: { children: React.ReactNode }) {
-  // The light/dark choice is settled before first paint by this script (lib/portal/themeScript.ts).
+  // The light/dark choice is settled before first paint by the root layout's script, and by PortalThemeInit when arriving without a full load (lib/portal/themeScript.ts).
   const [profile, viewing] = await Promise.all([getProfile().catch(() => null), getViewingUser().catch(() => null)]);
   const content = profile ? <PortalIdentityProvider id={profile.id} name={profile.display_name || profile.google_first_name || 'Someone'} track={!viewing}>{children}</PortalIdentityProvider> : children;
   return (
     <>
-      <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      <PortalThemeInit />
       <div className="pp-root" style={{ display: 'contents' }}>{content}</div>
     </>
   );

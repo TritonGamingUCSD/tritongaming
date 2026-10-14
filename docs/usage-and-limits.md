@@ -59,7 +59,7 @@ Pictures are shrunk to WebP in the browser before upload and files get unique na
 `vercel.json` has two jobs (the Hobby limit), each once a day:
 
 - `daily-reminders` sends the event reminders, the meeting reminders and the meeting-plan nudge.
-- `daily-maintenance` cleans old notifications, syncs the quarter and team records, and on Sundays runs the storage tidy-up (`?only=…` runs one step).
+- `daily-maintenance` cleans old notifications (alerts after 14 days, routine notices soon after they are read, the rest after 30 to 90) and meeting reactions (after 7 days, since only the live screen uses them), syncs the quarter and team records, and on Sundays runs the storage tidy-up (`?only=…` runs one step).
 
 Each is one route that calls library functions directly (see `docs/features.md`).
 

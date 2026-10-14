@@ -457,3 +457,25 @@ input[type='range']:focus-visible { outline: 2px solid rgba(255, 199, 44, 0.5); 
 [data-drag]:active { cursor: grabbing; }
 [data-drag] img { -webkit-user-drag: none; user-select: none; }
 .zm-line { padding-bottom: 0.08em; }
+
+/* Doc text colours and highlights (lib/docs/docColors.ts): a fixed palette that stays readable in each theme. */
+:root { --dc-red: #b91c1c; --dc-orange: #c2410c; --dc-gold: #8a5a00; --dc-green: #15803d; --dc-teal: #0f766e; --dc-blue: #1d4ed8; --dc-purple: #7e22ce; --dc-pink: #be185d; --dc-gray: #52525b; --dh-yellow: #fde68a; --dh-green: #bbf7d0; --dh-blue: #bfdbfe; --dh-pink: #fbcfe8; --dh-orange: #fed7aa; --dh-gray: #d4d4d8; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-pp-theme='light']) { --dc-red: #fca5a5; --dc-orange: #fdba74; --dc-gold: #fcd34d; --dc-green: #86efac; --dc-teal: #5eead4; --dc-blue: #93c5fd; --dc-purple: #d8b4fe; --dc-pink: #f9a8d4; --dc-gray: #cbd5e1; --dh-yellow: rgba(250, 204, 21, 0.38); --dh-green: rgba(74, 222, 128, 0.32); --dh-blue: rgba(96, 165, 250, 0.38); --dh-pink: rgba(244, 114, 182, 0.38); --dh-orange: rgba(251, 146, 60, 0.38); --dh-gray: rgba(148, 163, 184, 0.38); }
+}
+:root[data-pp-theme='dark'] { --dc-red: #fca5a5; --dc-orange: #fdba74; --dc-gold: #fcd34d; --dc-green: #86efac; --dc-teal: #5eead4; --dc-blue: #93c5fd; --dc-purple: #d8b4fe; --dc-pink: #f9a8d4; --dc-gray: #cbd5e1; --dh-yellow: rgba(250, 204, 21, 0.38); --dh-green: rgba(74, 222, 128, 0.32); --dh-blue: rgba(96, 165, 250, 0.38); --dh-pink: rgba(244, 114, 182, 0.38); --dh-orange: rgba(251, 146, 60, 0.38); --dh-gray: rgba(148, 163, 184, 0.38); }
+span[data-c='red'] { color: var(--dc-red); }
+span[data-c='orange'] { color: var(--dc-orange); }
+span[data-c='gold'] { color: var(--dc-gold); }
+span[data-c='green'] { color: var(--dc-green); }
+span[data-c='teal'] { color: var(--dc-teal); }
+span[data-c='blue'] { color: var(--dc-blue); }
+span[data-c='purple'] { color: var(--dc-purple); }
+span[data-c='pink'] { color: var(--dc-pink); }
+span[data-c='gray'] { color: var(--dc-gray); }
+mark[data-h='yellow'] { background: var(--dh-yellow); color: inherit; padding: 0.04em 0.18em; border-radius: 0.22em; }
+mark[data-h='green'] { background: var(--dh-green); color: inherit; padding: 0.04em 0.18em; border-radius: 0.22em; }
+mark[data-h='blue'] { background: var(--dh-blue); color: inherit; padding: 0.04em 0.18em; border-radius: 0.22em; }
+mark[data-h='pink'] { background: var(--dh-pink); color: inherit; padding: 0.04em 0.18em; border-radius: 0.22em; }
+mark[data-h='orange'] { background: var(--dh-orange); color: inherit; padding: 0.04em 0.18em; border-radius: 0.22em; }
+mark[data-h='gray'] { background: var(--dh-gray); color: inherit; padding: 0.04em 0.18em; border-radius: 0.22em; }

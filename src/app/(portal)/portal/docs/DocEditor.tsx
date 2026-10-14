@@ -14,9 +14,11 @@ import { TaskItem } from '@tiptap/extension-task-item';
 import { Blockquote } from '@tiptap/extension-blockquote';
 import { Extension, InputRule, type Editor } from '@tiptap/core';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
+import { TextColor, DocHighlight } from '@/lib/docs/docColorMarks';
+import { HIGHLIGHTS, TEXT_COLORS } from '@/lib/docs/docColors';
 import {
   Bold, Italic, Strikethrough, Code, Link2, List, ListOrdered, ListChecks, Quote, Table2, ImageIcon, Minus, Undo2, Redo2,
-  Info, Lightbulb, TriangleAlert, FileCode2, Pencil, BookOpen, Plus, ChevronDown,
+  Info, Lightbulb, TriangleAlert, FileCode2, Pencil, BookOpen, Plus, ChevronDown, Highlighter, Palette, X,
 } from 'lucide-react';
 import { uploadImageToStorage } from '@/lib/storage/imageUpload';
 import { showToast } from '@/lib/ui/toast';
@@ -97,6 +99,43 @@ function ToolButton({ label, active, disabled, onClick, children }: { label: str
   );
 }
 
+// A small palette that opens under a toolbar button: pick a colour, or remove it. The palette is fixed (see lib/docs/docColors.ts) so colours stay readable in both themes.
+function ColorMenu({ kind, active, onPick }: { kind: 'text' | 'highlight'; active: string | null; onPick: (key: string | null) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const off = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', off); document.addEventListener('keydown', esc);
+    return () => { document.removeEventListener('mousedown', off); document.removeEventListener('keydown', esc); };
+  }, [open]);
+  const list = kind === 'text' ? TEXT_COLORS : HIGHLIGHTS;
+  const name = kind === 'text' ? 'Text colour' : 'Highlight';
+  const swatch = (key: string) => (kind === 'text' ? `var(--dc-${key})` : `var(--dh-${key})`);
+  return (
+    <div className={styles.insertWrap} ref={ref}>
+      <button type="button" className={`${styles.colorBtn} ${active ? styles.toolOn : ''}`} aria-haspopup="menu" aria-expanded={open} aria-label={name} title={`${name}: select text, then pick a colour`}
+        onMouseDown={(e) => e.preventDefault()} onClick={() => setOpen((v) => !v)}>
+        {kind === 'text' ? <Palette size={15} aria-hidden="true" /> : <Highlighter size={15} aria-hidden="true" />}
+        <span className={styles.colorBar} style={{ background: active ? swatch(active) : 'transparent' }} aria-hidden="true" />
+        <ChevronDown size={12} aria-hidden="true" />
+      </button>
+      {open && (
+        <div className={styles.colorPop} role="menu" aria-label={name}>
+          <div className={styles.colorGrid}>
+            {list.map((c) => (
+              <button key={c.key} type="button" role="menuitem" className={`${styles.swatch} ${active === c.key ? styles.swatchOn : ''}`} style={{ background: swatch(c.key) }} aria-label={c.label} title={c.label}
+                onMouseDown={(e) => e.preventDefault()} onClick={() => { setOpen(false); onPick(c.key); }} />
+            ))}
+          </div>
+          <button type="button" role="menuitem" className={styles.colorClear} onMouseDown={(e) => e.preventDefault()} onClick={() => { setOpen(false); onPick(null); }}><X size={13} aria-hidden="true" /> Remove {kind === 'text' ? 'colour' : 'highlight'}</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // The visual editor: click-to-format, with a "/" menu for blocks. The text it saves is Markdown, so every doc stays plain, portable text.
 const DocEditor = forwardRef<DocEditorHandle, { value: string; onChange: (markdown: string) => void; disabled?: boolean; placeholder?: string; linkTitles?: string[] }>(function DocEditor({ value, onChange, disabled, placeholder, linkTitles = [] }, ref) {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -125,6 +164,7 @@ const DocEditor = forwardRef<DocEditorHandle, { value: string; onChange: (markdo
     extensions: [
       StarterKit.configure({ blockquote: false, heading: { levels: [1, 2, 3, 4, 5] }, link: { openOnClick: false, autolink: true, HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' } } }),
       Callout,
+      TextColor, DocHighlight,
       MarkdownLinkRule,
       Image.configure({ HTMLAttributes: { loading: 'lazy' } }),
       Table.configure({ resizable: false }), TableRow, TableHeader, TableCell,
@@ -175,6 +215,7 @@ const DocEditor = forwardRef<DocEditorHandle, { value: string; onChange: (markdo
       bold: e.isActive('bold'), italic: e.isActive('italic'), strike: e.isActive('strike'), code: e.isActive('code'), link: e.isActive('link'),
       heading: ([1, 2, 3, 4, 5].find((l) => e.isActive('heading', { level: l })) ?? 0) as 0 | 1 | 2 | 3 | 4 | 5, bullet: e.isActive('bulletList'), ordered: e.isActive('orderedList'), task: e.isActive('taskList'),
       quote: e.isActive('blockquote') && !e.getAttributes('blockquote').kind, callout: (e.getAttributes('blockquote').kind ?? null) as CalloutKind | null,
+      textColor: (e.getAttributes('textColor').color ?? null) as string | null, highlight: (e.getAttributes('docHighlight').color ?? null) as string | null,
       table: e.isActive('table'), canUndo: e.can().undo(), canRedo: e.can().redo(),
     } : null),
   });
@@ -335,11 +376,15 @@ const DocEditor = forwardRef<DocEditorHandle, { value: string; onChange: (markdo
   return (
     <div className={styles.shell}>
       <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadImage(f); e.target.value = ''; }} />
-      <div className={styles.viewBar} role="group" aria-label="Editor view">
-        <button type="button" aria-pressed={view === 'live'} className={`${styles.viewTab} ${view === 'live' ? styles.viewTabOn : ''}`} onClick={() => switchView('live')}><Pencil size={14} aria-hidden="true" /> Live</button>
-        <button type="button" aria-pressed={view === 'source'} className={`${styles.viewTab} ${view === 'source' ? styles.viewTabOn : ''}`} onClick={() => switchView('source')}><FileCode2 size={14} aria-hidden="true" /> Source</button>
-        <button type="button" aria-pressed={view === 'reading'} className={`${styles.viewTab} ${view === 'reading' ? styles.viewTabOn : ''}`} onClick={() => switchView('reading')}><BookOpen size={14} aria-hidden="true" /> Reading</button>
+      <div className={styles.viewBar}>
+        <div className={styles.viewSeg} role="group" aria-label="Editor view">
+          <button type="button" aria-pressed={view === 'live'} className={`${styles.viewTab} ${view === 'live' ? styles.viewTabOn : ''}`} onClick={() => switchView('live')}><Pencil size={14} aria-hidden="true" /> Write</button>
+          <button type="button" aria-pressed={view === 'reading'} className={`${styles.viewTab} ${view === 'reading' ? styles.viewTabOn : ''}`} onClick={() => switchView('reading')} title="See it the way readers will"><BookOpen size={14} aria-hidden="true" /> Preview</button>
+        </div>
+        {/* The raw Markdown text is for people who know it; everyone else can ignore this. */}
+        <button type="button" aria-pressed={view === 'source'} className={`${styles.advancedBtn} ${view === 'source' ? styles.viewTabOn : ''}`} onClick={() => switchView(view === 'source' ? 'live' : 'source')} title="Edit the raw Markdown text. For people who know Markdown."><FileCode2 size={13} aria-hidden="true" /> Markdown (advanced)</button>
       </div>
+      {view === 'live' && <p className={styles.hint}>Select text to format it. Type <kbd>/</kbd> for headings, lists, tables and boxes, or <kbd>[[</kbd> to link to another doc.</p>}
 
       <div className={styles.toolbar} role="toolbar" aria-label="Formatting" hidden={view !== 'live'}>
         <ToolButton label="Undo" disabled={!state.canUndo} onClick={() => editor.chain().focus().undo().run()}><Undo2 size={16} aria-hidden="true" /></ToolButton>
@@ -350,9 +395,11 @@ const DocEditor = forwardRef<DocEditorHandle, { value: string; onChange: (markdo
           {[1, 2, 3, 4, 5].map((l) => <option key={l} value={l}>Heading {l}</option>)}
         </Select>
         <span className={styles.sep} aria-hidden="true" />
-        <ToolButton label="Bold" active={state.bold} onClick={() => editor.chain().focus().toggleBold().run()}><Bold size={16} aria-hidden="true" /></ToolButton>
-        <ToolButton label="Italic" active={state.italic} onClick={() => editor.chain().focus().toggleItalic().run()}><Italic size={16} aria-hidden="true" /></ToolButton>
+        <ToolButton label="Bold (Ctrl+B)" active={state.bold} onClick={() => editor.chain().focus().toggleBold().run()}><Bold size={16} aria-hidden="true" /></ToolButton>
+        <ToolButton label="Italic (Ctrl+I)" active={state.italic} onClick={() => editor.chain().focus().toggleItalic().run()}><Italic size={16} aria-hidden="true" /></ToolButton>
         <ToolButton label="Link" active={state.link} onClick={setLink}><Link2 size={16} aria-hidden="true" /></ToolButton>
+        <ColorMenu kind="text" active={state.textColor} onPick={(k) => (k ? editor.chain().focus().setTextColor(k).run() : editor.chain().focus().unsetTextColor().run())} />
+        <ColorMenu kind="highlight" active={state.highlight} onPick={(k) => (k ? editor.chain().focus().setHighlight(k).run() : editor.chain().focus().unsetHighlight().run())} />
         <span className={styles.sep} aria-hidden="true" />
         <ToolButton label="Bulleted list" active={state.bullet} onClick={() => editor.chain().focus().toggleBulletList().run()}><List size={16} aria-hidden="true" /></ToolButton>
         <ToolButton label="Numbered list" active={state.ordered} onClick={() => editor.chain().focus().toggleOrderedList().run()}><ListOrdered size={16} aria-hidden="true" /></ToolButton>

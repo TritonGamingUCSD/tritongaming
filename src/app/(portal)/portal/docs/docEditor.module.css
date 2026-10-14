@@ -112,3 +112,23 @@
 .insertPop { position: absolute; z-index: 20; top: calc(100% + 4px); left: 0; width: 13rem; display: flex; flex-direction: column; padding: 0.3rem; border-radius: 0.7rem; background: var(--pp-card); border: 1px solid var(--pp-line); box-shadow: var(--pp-shadow); }
 .insertPop button { display: flex; align-items: center; gap: 0.55rem; min-height: 36px; padding: 0 0.6rem; border: 0; border-radius: 0.5rem; background: none; color: var(--pp-ink); font: inherit; font-size: 0.85rem; text-align: left; cursor: pointer; }
 .insertPop button:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
+
+/* Write / Preview, with Markdown tucked away on the right, and a one-line hint about what the editor can do. */
+.viewBar { align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.viewSeg { display: flex; gap: 0.25rem; }
+.advancedBtn { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 30px; padding: 0 0.7rem; border-radius: 999px; border: 1px dashed rgba(var(--pp-ink-rgb), 0.35); background: none; color: rgba(var(--pp-ink-rgb), 0.85); font: inherit; font-size: 0.78rem; cursor: pointer; }
+.advancedBtn:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
+.hint { margin: 0.3rem 0.6rem 0; font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.85); }
+.hint kbd { padding: 0.02rem 0.35rem; border-radius: 4px; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); font: inherit; font-size: 0.75rem; }
+
+/* Text colour and highlight buttons and their palette. */
+.colorBtn { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 0.15rem; height: 36px; min-width: 44px; padding: 0 0.4rem 0.25rem; border-radius: 0.55rem; border: 0; background: transparent; color: var(--pp-ink); cursor: pointer; }
+.colorBtn:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
+.colorBar { position: absolute; left: 0.45rem; right: 1.25rem; bottom: 4px; height: 3px; border-radius: 2px; }
+.colorPop { position: absolute; z-index: 20; top: calc(100% + 4px); left: 0; display: flex; flex-direction: column; gap: 0.4rem; padding: 0.5rem; border-radius: 0.7rem; background: var(--pp-card); border: 1px solid var(--pp-line); box-shadow: var(--pp-shadow); }
+.colorGrid { display: grid; grid-template-columns: repeat(5, 28px); gap: 0.35rem; }
+.swatch { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--pp-card); box-shadow: 0 0 0 1px rgba(var(--pp-ink-rgb), 0.35); cursor: pointer; }
+.swatch:hover { box-shadow: 0 0 0 2px var(--pp-ink); }
+.swatchOn { box-shadow: 0 0 0 2px var(--pp-ink); }
+.colorClear { display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem; min-height: 30px; padding: 0 0.5rem; border: 0; border-radius: 0.5rem; background: rgba(var(--pp-ink-rgb), 0.07); color: var(--pp-ink); font: inherit; font-size: 0.8rem; cursor: pointer; }
+.colorClear:hover { background: rgba(var(--pp-ink-rgb), 0.14); }

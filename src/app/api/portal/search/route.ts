@@ -40,7 +40,7 @@ export async function GET(request: Request) {
   const can = (c: Parameters<typeof hasCapability>[1]) => hasCapability(roles, c);
   const none = Promise.resolve({ data: [] as never[] });
   // Everything a person can open, each gated like its own page and read with their own session (so row-level rules apply too).
-  const [membersRes, eventsRes, docsRes, divisionsRes, shopRes, myTicketsRes, helpRes, linksRes] = await Promise.all([
+  const [membersRes, eventsRes, docsRes, divisionsRes, shopRes, myTicketsRes, helpRes, linksRes, quickRes] = await Promise.all([
     can('view_members')
       ? supabase.from('profiles').select('id, display_name, google_first_name, google_last_name, gamer_tag').or(`display_name.ilike.${like},google_first_name.ilike.${like},google_last_name.ilike.${like},gamer_tag.ilike.${like}`).limit(LIMIT_PER_CATEGORY)
       : none,
@@ -60,6 +60,10 @@ export async function GET(request: Request) {
     supabase.from('help_tickets').select('id, subject, status, user_id').ilike('subject', like).order('created_at', { ascending: false }).limit(LIMIT_PER_CATEGORY),
     can('view_admin_dashboard')
       ? supabase.from('short_links').select('id, slug, destination').or(`slug.ilike.${like},destination.ilike.${like},note.ilike.${like}`).limit(LIMIT_PER_CATEGORY)
+      : none,
+    // Quick links on the docs home (their table is read by the server only, so the service client; the same view_docs rule as the docs).
+    can('view_docs')
+      ? createServiceClient().from('quick_links').select('id, title, url, note').or(`title.ilike.${like},note.ilike.${like}`).limit(LIMIT_PER_CATEGORY)
       : none,
   ]);
 
@@ -82,7 +86,7 @@ export async function GET(request: Request) {
   const day = (iso: string) => new Date(iso).toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', month: 'short', day: 'numeric', year: 'numeric' });
   const one = <T,>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? v[0] ?? null : v ?? null);
   const members: SearchResult[] = (membersRes.data ?? []).map((m) => ({
-    id: m.id, title: staffName(m) || 'Anonymous', subtitle: m.gamer_tag || '', href: `/portal/members?id=${m.id}`,
+    id: m.id, title: staffName(m, { tag: true }) || 'Anonymous', subtitle: '', href: `/portal/members?id=${m.id}`,
   }));
   const events: SearchResult[] = (eventsRes.data ?? []).map((e) => ({
     id: e.id, title: e.title, subtitle: day(e.start_date), href: `/portal/events/list?q=${encodeURIComponent(e.title)}`,
@@ -104,6 +108,8 @@ export async function GET(request: Request) {
   const help: SearchResult[] = (helpRes.data ?? []).filter((h) => h.user_id === user.id || can('manage_help')).map((h) => ({ id: h.id, title: h.subject, subtitle: `Help · ${h.status}`, href: `/portal/help/${h.user_id === user.id ? 'mine' : 'inbox'}?ticket=${h.id}` }));
   const links: SearchResult[] = (linksRes.data ?? []).map((l) => ({ id: l.id, title: `/go/${l.slug}`, subtitle: l.destination, href: '/portal/admin/short-links' }));
 
-  if (docsOnly) return NextResponse.json({ docs });
-  return NextResponse.json({ tickets, members, events, meetings, docs, divisions, shop, help, links });
+  const quick: SearchResult[] = (quickRes.data ?? []).map((l) => ({ id: l.id, title: l.title, subtitle: `Quick link · ${l.note || l.url}`, href: '/portal/docs' }));
+
+  if (docsOnly) return NextResponse.json({ docs: [...docs, ...quick].slice(0, 12) });
+  return NextResponse.json({ tickets, members, events, meetings, docs: [...docs, ...quick].slice(0, LIMIT_PER_CATEGORY + 2), divisions, shop, help, links });
 }

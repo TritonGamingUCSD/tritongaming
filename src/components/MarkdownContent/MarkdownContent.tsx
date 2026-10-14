@@ -3,6 +3,7 @@
 import { Children, cloneElement, isValidElement, useMemo, type ReactElement, type ReactNode } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { remarkDocColors } from '@/lib/docs/remarkDocColors';
 import { extractToc, headingId } from '@/lib/docs/markdownToc';
 import styles from './MarkdownContent.module.css';
 
@@ -70,7 +71,7 @@ export default function MarkdownContent({ children, className, headingIds }: { c
   return (
     <div data-md className={`${styles.markdown} ${className ?? ''}`}>
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={[remarkGfm, remarkDocColors]}
         components={components}
       >
         {children}

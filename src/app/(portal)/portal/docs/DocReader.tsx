@@ -24,11 +24,11 @@ export const SIZE_REM: Record<ReaderSize, string> = { sm: '0.92rem', md: '1rem',
 
 export default function DocReader({
   doc, docs, sections, categories, canEdit, favorite, size, onSize, live, notice,
-  onOpen, onHome, onEdit, onDelete, onNewSub, onFavorite, onPin, onTag,
+  onOpen, onHome, onEdit, onDelete, onNewSub, onFavorite, onPin, teams,
 }: {
   doc: Doc; docs: Doc[]; sections: DocSection<Doc>[]; categories: DocCategory[]; canEdit: boolean; favorite: boolean; size: ReaderSize;
   onSize: (s: ReaderSize) => void; live: SyncDoc | null; notice: string | null;
-  onOpen: (id: string) => void; onHome: () => void; onEdit: () => void; onDelete: () => void; onNewSub: () => void; onFavorite: () => void; onPin: () => void; onTag: (t: string) => void;
+  onOpen: (id: string) => void; onHome: () => void; onEdit: () => void; onDelete: () => void; onNewSub: () => void; onFavorite: () => void; onPin: () => void; teams: { id: string; name: string }[];
 }) {
   const [reporting, setReporting] = useState(false);
   const [requiring, setRequiring] = useState(false);
@@ -113,8 +113,9 @@ export default function DocReader({
         <header className={styles.articleHead}>
           <h1 className={styles.articleTitle}>{doc.title}</h1>
           <div className={styles.articleActions}>
-            <Button size="sm" variant="ghost" onClick={onFavorite} aria-pressed={favorite} aria-label={favorite ? 'Remove from favorites' : 'Add to favorites'}><Star size={14} fill={favorite ? 'currentColor' : 'none'} aria-hidden="true" /> {favorite ? 'Favorited' : 'Favorite'}</Button>
-            {canEdit && <Button size="sm" variant="secondary" onClick={onEdit}><Pencil size={14} aria-hidden="true" /> Edit</Button>}
+            {canEdit && <Button size="sm" variant="secondary" onClick={onEdit} className={styles.editBtn}><Pencil size={14} aria-hidden="true" /> Edit</Button>}
+            <span className={styles.actionGap} aria-hidden="true" />
+            <Button size="sm" variant="ghost" onClick={onFavorite} aria-pressed={favorite} aria-label={favorite ? 'Remove from favorites' : 'Add to favorites'} title={favorite ? 'Remove from favorites' : 'Add to favorites'}><Star size={16} fill={favorite ? 'currentColor' : 'none'} aria-hidden="true" /></Button>
             <div className={styles.settingsWrap} ref={menuRef}>
               <Button size="sm" variant="ghost" onClick={() => setSettings((v) => !v)} aria-expanded={settings} aria-haspopup="menu" aria-label="More actions"><MoreHorizontal size={16} aria-hidden="true" /></Button>
               {settings && (
@@ -142,10 +143,13 @@ export default function DocReader({
         </p>
         {doc.tags.length > 0 && (
           <div className={styles.tagRow} aria-label="Tags">
-            {doc.tags.map((t) => <button key={t} type="button" className={styles.tagChip} onClick={() => onTag(t)}>#{t}</button>)}
+            {doc.tags.map((t) => <span key={t} className={styles.tagChip}>#{t}</span>)}
           </div>
         )}
 
+        {doc.teams.length > 0 && teams.some((t) => doc.teams.includes(t.id)) && (
+          <p className={styles.forTeams}><strong>Useful for:</strong> {teams.filter((t) => doc.teams.includes(t.id)).map((t) => t.name).join(', ')}</p>
+        )}
         <div className={styles.prose} ref={proseRef} onClick={(e) => {
           // [[Doc title]] links open the doc inside the page, without reloading it.
           const a = (e.target as HTMLElement).closest('a');

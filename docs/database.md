@@ -20,7 +20,7 @@ Check the result with a `select` afterwards. This runs on the **live** database,
 
 **Events and rewards:** `events`, `tickets`, `ticket_checkins` (one row per ticket per day), `event_feedback`, `checkin_form_settings`, `point_transactions`, `reward_items`, `reward_redemptions`, `tier_definitions`.
 
-**Docs:** `docs`, `doc_categories` (with a color), `doc_versions` (every publish), `doc_favorites`, `doc_editing` (who has it open), `doc_required_roles` and `doc_reads` (required reading), `doc_comments` (threads).
+**Docs:** `docs`, `doc_categories` (with a color), `doc_versions` (every publish), `doc_favorites`, `doc_editing` (who has it open), `doc_required_roles` and `doc_reads` (required reading), `doc_comments` (threads), `quick_links` (the tiles on the docs home; server-only). `docs.teams` lists the teams a page is for.
 
 **Help:** `help_tickets` (categories `bug`, `question`, `account`, `tickets`, `doc`, `other`), `help_messages`.
 
