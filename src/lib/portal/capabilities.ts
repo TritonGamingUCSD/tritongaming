@@ -48,7 +48,7 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // Scanning a member's redemption QR and confirming a reward was handed
   // over — same audience as checkin, since it happens at the same events
   // check-in already staffs.
-  scan_redemptions: ['officer', 'lead', 'exec', 'admin'],
+  scan_redemptions: ['officer', 'lead', 'exec', 'admin', 'recruit'],
   // Anything that moves points around after the fact — reversing a
   // check-in/redemption, undoing someone's attendance at an event, or a
   // free-form manual adjustment. Deliberately tighter than checkin/
