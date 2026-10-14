@@ -73,7 +73,7 @@ export default function LoginClient({ next }: { next?: string }) {
     <p className={`${styles.who} ${styles.whoGuest}`}><strong>Guests</strong> at public events</p>
     <button className={styles.guestBtn} onClick={() => handleGoogleSignIn(false)} disabled={loading !== null}>
       {loading === 'guest' ? <span className={`${styles.spinner} ${styles.spinnerDark}`} aria-hidden="true" /> : <GoogleIcon />}
-      {loading === 'guest' ? 'Redirecting…' : 'Sign in with any Google account'}
+      {loading === 'guest' ? 'Redirecting…' : 'Sign in with Google'}
     </button>
     </>
   );
