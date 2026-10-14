@@ -73,6 +73,9 @@ export async function performCheckin(
   const firstCheckin = (flipped?.length ?? 0) > 0;
   const day = multiDay ? currentDayInfo(event.start_date, event.end_date) : null;
 
+  // A second scan that landed at the same moment as the first: the ticket was already flipped by the other one, so this is a duplicate, not a check-in.
+  if (!multiDay && !firstCheckin) return { error: 'Already checked in.' };
+
   // Later days of a multi-day event: attendance only — points are earned once, on the first check-in.
   if (multiDay && !firstCheckin) {
     await createNotifications(serviceClient, [{

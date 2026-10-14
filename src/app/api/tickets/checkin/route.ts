@@ -4,6 +4,7 @@ import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
 import { rotatingCode, currentWindow } from '@/lib/events/rotatingCode';
 import { performCheckin } from '@/lib/events/performCheckin';
+import { openEventsFilter } from '@/lib/events/checkinWindow';
 import { canCheckInNow, todaysCheckinAt } from '@/lib/events/checkinDays';
 import { getTier, fetchTiers } from '@/lib/members/tiers';
 
@@ -28,22 +29,25 @@ export async function POST(request: Request) {
   }
 
   // What's scanned/typed is a short-lived rotating code (see src/lib/rotatingCode.ts),
-  // not the ticket's permanent secret — that never leaves the server. Fetch
-  // every ticket (not just this event's) so a mismatch can be reported as
-  // "wrong event" rather than a generic, unhelpful "not recognized".
+  // not the ticket's permanent secret — that never leaves the server. Only this
+  // event's tickets are read for the normal case (a scan used to read every
+  // ticket in the database, which grows with the club and costs egress). Only
+  // when nothing matches are the active tickets of other still-open events
+  // read, so a mismatch can be reported as "wrong event" instead of a generic
+  // "not recognized".
   //
   // `tickets` has TWO foreign keys into `profiles` (user_id and
   // checked_in_by), so `user:profiles(display_name)` is genuinely ambiguous
-  // to PostgREST — it errors, and with no error-check that silently became
-  // an empty candidate list, which looked exactly like a permissions bug.
-  // The `!tickets_user_id_fkey` hint picks the right relationship.
-  const { data: allCandidates, error: candidatesError } = await supabase
-    .from('tickets')
-    .select(`
+  // to PostgREST; the `!tickets_user_id_fkey` hint picks the right one.
+  const columns = `
       id, ticket_code, status, checked_in_at, checkin_form_completed_at, event_id, user_id,
       user:profiles!tickets_user_id_fkey(display_name),
-      event:events(title, points_value, start_date, end_date, requires_checkin_form, checkin_windows)
-    `);
+      event:events`;
+  const eventColumns = '(title, points_value, start_date, end_date, requires_checkin_form, checkin_windows)';
+  const { data: eventTickets, error: candidatesError } = await supabase
+    .from('tickets')
+    .select(`${columns}${eventColumns}`)
+    .eq('event_id', event_id);
 
   if (candidatesError) {
     console.error('[checkin] failed to load candidate tickets:', candidatesError);
@@ -61,11 +65,16 @@ export async function POST(request: Request) {
     rotatingCode(t.ticket_code, windowIndex) === normalizedCode ||
     rotatingCode(t.ticket_code, windowIndex - 1) === normalizedCode;
 
-  const candidates = allCandidates ?? [];
-  const ticket = candidates.filter((t) => t.event_id === event_id).find(matches);
+  const ticket = (eventTickets ?? []).find(matches);
 
   if (!ticket) {
-    const wrongEventTicket = candidates.find(matches);
+    const { data: others } = await supabase
+      .from('tickets')
+      .select('ticket_code, event:events!inner(title)')
+      .neq('event_id', event_id)
+      .eq('status', 'active')
+      .or(openEventsFilter(), { referencedTable: 'events' });
+    const wrongEventTicket = (others ?? []).find(matches);
     if (wrongEventTicket) {
       const wrongEventData = Array.isArray(wrongEventTicket.event) ? wrongEventTicket.event[0] : wrongEventTicket.event;
       return NextResponse.json(

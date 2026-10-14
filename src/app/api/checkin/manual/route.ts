@@ -53,7 +53,7 @@ export async function POST(request: Request) {
     { ignoreWindow: true }
   );
   if (error) {
-    const status = error.includes('already ended') ? 409 : 500;
+    const status = (error.includes('already ended') || error.startsWith('Already')) ? 409 : 500;
     return NextResponse.json({ error }, { status });
   }
 
