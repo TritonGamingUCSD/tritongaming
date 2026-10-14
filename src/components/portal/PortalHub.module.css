@@ -34,11 +34,12 @@
   max-height: 70vh;
   max-height: 70dvh;
   overflow: hidden;
-  background: #0b1426;
-  border: 1px solid rgba(255, 255, 255, 0.08); /* theme-ok */
+  background: var(--pp-card);
+  color: var(--pp-ink);
+  border: 2px solid rgba(var(--pp-ink-rgb), 0.85);
   border-bottom: none;
   border-radius: 1.25rem 1.25rem 0 0;
-  box-shadow: 0 -16px 40px -20px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 -10px 30px -12px rgba(var(--pp-ink-rgb), 0.55);
 }
 
 /* The handle is a plain part of the sheet (not stuck to a scrolling list), so it travels with the sheet when it is swiped down.
@@ -49,7 +50,7 @@
   width: 44px;
   height: 5px;
   border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.28); /* theme-ok */
+  background: rgba(var(--pp-ink-rgb), 0.35);
   margin: 0 auto;
 }
 
@@ -573,8 +574,8 @@
   .cardIconTile { width: 40px; height: 40px; }
 }
 
-.sheetFooter { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.4rem 0.9rem 0.7rem; margin-bottom: 0.2rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); font-size: 0.85rem; } /* theme-ok */
-.sheetFooter a { color: rgba(242, 241, 240, 0.7); text-decoration: none; } /* theme-ok */
+.sheetFooter { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.4rem 0.9rem 0.7rem; margin-bottom: 0.2rem; border-bottom: 1px solid var(--pp-line); font-size: 0.85rem; } /* theme-ok */
+.sheetFooter a { color: rgba(var(--pp-ink-rgb), 0.8); text-decoration: none; }
 
 /* ── Sidebar spacing, final: fluid instead of height breakpoints ──
    Browsers report very different window heights (Safari's toolbars, bookmark bars…), so

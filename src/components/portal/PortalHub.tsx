@@ -450,7 +450,7 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
             />
             <motion.div
               key="more-sheet"
-              className={`${styles.moreSheet} pp-dark`}
+              className={styles.moreSheet}
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
