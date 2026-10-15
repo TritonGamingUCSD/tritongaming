@@ -81,7 +81,7 @@ export default function DocSidebar({
           </button>
           <button type="button" className={styles.rowMain} onClick={() => onOpen(d.id)}>
             <span className={styles.rowIcon} aria-hidden="true"><FileText size={14} strokeWidth={1.5} /></span>
-            <span className={styles.rowTitle}>{d.title || 'Untitled'}</span>
+            <span className={styles.rowTitle} title={d.title || 'Untitled'}>{d.title || 'Untitled'}</span>
             {!d.published && canEdit && <span className={styles.tagMini}>New</span>}
             {hasDraft && d.published && <span className={styles.dot} title="Has unpublished changes" aria-label="Has unpublished changes" />}
             {editing.length > 0 && <span className={styles.editingTag} title={`${editing.join(', ')} editing`}>{editing[0]}{editing.length > 1 ? ` +${editing.length - 1}` : ''} editing</span>}
@@ -118,6 +118,7 @@ export default function DocSidebar({
           <button type="button" className={styles.collapseAll} onClick={onCollapseAll} aria-label="Collapse all" title="Collapse all"><ChevronsDownUp size={15} aria-hidden="true" /></button>
           <button type="button" className={styles.collapseAll} onClick={onExpandAll} aria-label="Expand all" title="Expand all"><ChevronsUpDown size={15} aria-hidden="true" /></button>
         </div>
+        {canEdit && <Button size="sm" onClick={() => onNew(null, null)} className={styles.newDocBtn}><Plus size={14} aria-hidden="true" /> New Doc</Button>}
       </div>
 
       <div className={styles.navScroll}>

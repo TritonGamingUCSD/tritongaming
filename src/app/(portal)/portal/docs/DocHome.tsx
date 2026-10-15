@@ -76,11 +76,10 @@ export default function DocHome({ docs, sections, favorites, onOpen, canEdit, ca
                   const ids = liveLinks; setDragLink(null); setLiveLinks(null);
                   if (ids && ids.join() !== byOrder.map((x) => x.id).join()) void saveLinkOrder(ids);
                 }}>
-                <a className={styles.quickLink} href={l.url} target="_blank" rel="noopener noreferrer" draggable={false}>
-                  <span className={styles.quickHost}>{linkHost(l.url)}</span>
+                <a className={styles.quickLink} href={l.url} title={l.note || undefined} target="_blank" rel="noopener noreferrer" draggable={false}>
                   <strong>{l.title}</strong>
-                  {l.note && <span className={styles.quickNote}>{l.note}</span>}
-                  <span className={styles.quickOpen}>Open <ExternalLink size={13} aria-hidden="true" /></span>
+                  <span className={styles.quickHost}>{linkHost(l.url)}</span>
+                  <ExternalLink size={13} className={styles.quickOpen} aria-hidden="true" />
                 </a>
                 {canEdit && <GripVertical size={14} className={styles.quickGrip} aria-hidden="true" />}
                 {canEdit && <button type="button" className={styles.quickEdit} onClick={() => setLinkDialog({ link: l })} aria-label={`Edit the quick link ${l.title}`} title="Edit"><Pencil size={14} aria-hidden="true" /></button>}

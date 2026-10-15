@@ -78,11 +78,10 @@ export function DashboardBody({ event, note, links, upcoming, activity, showRole
           <ul className={styles.quick}>
             {links.map((l) => (
               <li key={l.id}>
-                <a className={styles.quickLink} href={l.url} target="_blank" rel="noopener noreferrer">
-                  <span className={styles.quickHost}>{linkHost(l.url)}</span>
+                <a className={styles.quickLink} href={l.url} title={l.note || undefined} target="_blank" rel="noopener noreferrer">
                   <strong>{l.title}</strong>
-                  {l.note && <span className={styles.quickNote}>{l.note}</span>}
-                  <span className={styles.quickOpen}>Open <ExternalLink size={13} aria-hidden="true" /></span>
+                  <span className={styles.quickHost}>{linkHost(l.url)}</span>
+                  <ExternalLink size={13} className={styles.quickOpen} aria-hidden="true" />
                 </a>
               </li>
             ))}

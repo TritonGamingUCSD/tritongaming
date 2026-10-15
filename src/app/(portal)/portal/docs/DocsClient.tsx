@@ -1,8 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { PanelLeft, Plus, X } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import { PanelLeft, X } from 'lucide-react';
 import Notice from '@/components/ui/Notice';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import { showToast } from '@/lib/ui/toast';
@@ -347,11 +346,6 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
 
   return (
     <div className={styles.page}>
-      {!selected && !editing && canEdit && (
-        <div className={styles.homeActions}>
-          <Button onClick={() => setNewDialog({ parentId: null, categoryId: null })}><Plus size={14} aria-hidden="true" /> New doc</Button>
-        </div>
-      )}
       <div className={`${styles.shell} ${editing ? styles.shellEditing : ''}`}>
       <aside className={`${styles.treeCol} ${treeOpen ? styles.treeColOpen : ''}`} aria-label="All docs">
         {treeOpen && <button type="button" className={styles.treeBackdrop} aria-label="Close the doc list" onClick={() => setTreeOpen(false)} />}
