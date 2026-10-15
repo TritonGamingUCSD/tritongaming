@@ -32,7 +32,7 @@
 
 .results { display: flex; flex-direction: column; gap: 0.2rem; }
 
-.catManager { border-top: 1px solid rgba(var(--pp-ink-rgb), 0.20); padding-top: 0.6rem; }
+.catManager { padding-top: 0.25rem; }
 .catManagerToggle { display: flex; align-items: center; gap: 0.45rem; width: 100%; background: none; border: none; cursor: pointer; color: rgba(var(--pp-ink-rgb), 0.87); font-size: 0.8rem; padding: 0.2rem 0.2rem; }
 .catManagerToggle svg:last-child { margin-left: auto; transition: transform 0.15s; }
 .flip { transform: rotate(180deg); }
@@ -370,3 +370,9 @@
 /* While editing, the editor gets the whole width: the doc list steps aside (Back To Doc returns to reading). */
 @media (min-width: 900px) { .shellEditing { grid-template-columns: minmax(0, 1fr); } .shellEditing .treeCol { display: none; } }
 @media (max-width: 899px) { .shellEditing .treeColOpen { display: none; } }
+
+/* Organize: rename a category in place, and the hints that say what can be dragged. */
+.chipName { padding: 0; border: 0; background: transparent; color: inherit; font: inherit; cursor: text; }
+.chipName:hover { text-decoration: underline; text-underline-offset: 3px; }
+.chipRename { width: 9rem; max-width: 100%; padding: 0.1rem 0.35rem; border: 1px solid var(--pp-ink); border-radius: 0.4rem; background: var(--pp-card); color: var(--pp-ink); font: inherit; }
+.orgHint { margin: 0.4rem 0 0.25rem; font-size: 0.76rem; line-height: 1.4; color: rgba(var(--pp-ink-rgb), 0.82); }

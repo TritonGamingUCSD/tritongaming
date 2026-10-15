@@ -312,6 +312,11 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
     const { error: err } = await createClient().from('doc_categories').update({ color }).eq('id', cat.id);
     if (err) { setError('Couldn’t change the colour.'); setCategories((p) => p.map((c) => (c.id === cat.id ? { ...c, color: cat.color } : c))); }
   }
+  async function renameCategory(cat: DocCategory, name: string) {
+    setCategories((p) => p.map((c) => (c.id === cat.id ? { ...c, name } : c)));
+    const { error: err } = await createClient().from('doc_categories').update({ name }).eq('id', cat.id);
+    if (err) { setError(err.code === '23505' ? 'A category with that name already exists.' : 'Couldn’t rename the category.'); setCategories((p) => p.map((c) => (c.id === cat.id ? { ...c, name: cat.name } : c))); }
+  }
   async function reorderCategories(ids: string[]) {
     const before = categories;
     setCategories((p) => ids.map((id, i) => ({ ...(p.find((c) => c.id === id) as DocCategory), order_index: i })));
@@ -349,7 +354,7 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
         <DocSidebar docs={docs.filter((d) => d.published || canEdit)} sections={sections} categories={categories} selectedId={selectedId} onClose={() => setTreeOpen(false)} favorites={favorites}
           collapsed={collapsed} onToggle={toggleCollapse} onCollapseAll={collapseAll} onExpandAll={expandAll} onOpen={openDoc} onHome={goHome} canEdit={canEdit} sync={sync}
           onNew={(parentId, categoryId) => setNewDialog({ parentId, categoryId })} onMenu={menuAction} onDrop={(id, t) => void moveTo(id, t)}
-          onAddCategory={addCategory} onDeleteCategory={deleteCategory} onCategoryColor={setCategoryColor} onReorderCategories={reorderCategories} />
+          onAddCategory={addCategory} onDeleteCategory={deleteCategory} onCategoryColor={setCategoryColor} onReorderCategories={reorderCategories} onRenameCategory={renameCategory} />
       </aside>
 
       <div className={styles.mainCol}>
