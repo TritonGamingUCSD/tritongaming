@@ -195,6 +195,8 @@ export async function getEventBySlugOrId(slugOrId: string): Promise<Event | null
 // Public headcount for "N going" — aggregate only (see event_going_count in the
 // event_details migration). Cached briefly like the rest of the public data.
 export async function getGoingCount(eventId: string): Promise<number> {
+  // Some event objects have no database id (blank), and sending that to the uuid parameter only logs an error.
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(eventId)) return 0;
   try {
     return await cachedEvents(['going', eventId], async () => {
       const { data, error } = await createPublicClient().rpc('event_going_count', { p_event_id: eventId });

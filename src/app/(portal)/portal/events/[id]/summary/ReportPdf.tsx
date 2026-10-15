@@ -191,6 +191,10 @@ export default function ReportPdf({ r, c, origin }: { r: ReportData; c: ReportCh
   const social = c.social;
   const rot = [-6, 5, -3, 7, -5, 4];
   const kpiW = Math.floor((548 - 6 * (Math.min(kpis.length, 6) - 1)) / Math.min(kpis.length, 6));
+  // The charts take whatever height page 1 has left, so a long title, a long summary, more findings or a second row of social tiles shrink them instead of spilling onto a new page.
+  const titleLines = Math.ceil(r.title.length / 42), summaryLines = Math.ceil(r.summary.length / 105);
+  const socialPerRow = social.length > 6 ? Math.ceil(social.length / 2) : Math.max(social.length, 1);
+  const chartH = Math.max(150, Math.min(300, 226 - (titleLines - 1) * 24 - Math.max(0, summaryLines - 2) * 13 - Math.max(0, r.highlights.length - 3) * 13 - (c.preparedFor?.logo ? 0 : -8) - (social.length > 6 ? 46 : 0) + (social.length ? 0 : 76)));
   const hasPage2 = hasAudience || c.photos.length > 0 || c.thanks.length > 0;
   return (
     <Document title={`${r.title} - Event Impact Report`} author="Triton Gaming" subject="Event Impact Report" creator="Triton Gaming">
@@ -222,9 +226,9 @@ export default function ReportPdf({ r, c, origin }: { r: ReportData; c: ReportCh
         </View>
 
         <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center', marginTop: 7 }} wrap={false}>
-          <View style={{ width: 56, height: 56, alignItems: 'center', justifyContent: 'center' }}>
-            <Ring size={56} r={22} width={6} parts={[{ frac: s.attendanceRate / 100, color: NAVY }]} />
-            <View style={{ position: 'absolute', top: 0, left: 0, width: 56, height: 56, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontFamily: 'FuturaH', fontSize: 11.5, lineHeight: 1.1 }}>{s.attendanceRate}%</Text><Text style={{ fontSize: 5.6, letterSpacing: 0.8, textTransform: 'uppercase', color: INK_SOFT }}>attended</Text></View>
+          <View style={{ width: 62, height: 62, alignItems: 'center', justifyContent: 'center' }}>
+            <Ring size={62} r={26} width={5} parts={[{ frac: s.attendanceRate / 100, color: NAVY }]} />
+            <View style={{ position: 'absolute', top: 0, left: 0, width: 62, height: 62, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontFamily: 'FuturaH', fontSize: 12, lineHeight: 1.1 }}>{s.attendanceRate}%</Text></View>
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 9, lineHeight: 1.5 }}>{tx(r.summary)}</Text>
@@ -249,13 +253,13 @@ export default function ReportPdf({ r, c, origin }: { r: ReportData; c: ReportCh
         )}
 
         <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
-          <Panel title={r.multiDay ? 'Attendance by day' : 'Arrival times'} note={r.peakNote ?? undefined} style={{ flex: 1, flexBasis: 0 }}><BarChart data={s.arrivals} color={ROYAL} height={248} width={262} xTitle={r.multiDay ? 'Day' : 'Time of arrival (Pacific time)'} yTitle="People checked in" /></Panel>
-          <Panel title="When tickets were claimed" note="How far ahead of the event people registered." style={{ flex: 1, flexBasis: 0 }}><BarChart data={s.claimTiming} color={ROYAL} height={248} width={262} xTitle="How far ahead of the event" yTitle="Tickets claimed" /></Panel>
+          <Panel title={r.multiDay ? 'Attendance by day' : 'Arrival times'} note={r.peakNote ?? undefined} style={{ flex: 1, flexBasis: 0 }}><BarChart data={s.arrivals} color={ROYAL} height={chartH} width={262} xTitle={r.multiDay ? 'Day' : 'Time of arrival (Pacific time)'} yTitle="People checked in" /></Panel>
+          <Panel title="When tickets were claimed" note="How far ahead of the event people registered." style={{ flex: 1, flexBasis: 0 }}><BarChart data={s.claimTiming} color={ROYAL} height={chartH} width={262} xTitle="How far ahead of the event" yTitle="Tickets claimed" /></Panel>
         </View>
         {social.length > 0 && (
           <Panel title="Social media reach" note="Reported by Triton Gaming from its own accounts." style={{ marginTop: 10 }}>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-              {social.map((m, i) => (<View key={i} style={[st.kpi, { width: social.length > 3 ? '24%' : '32%', paddingTop: 4, paddingBottom: 5 }]}><Text style={[st.kpiValue, { fontSize: 13 }]}>{tx(m.value)}</Text><Text style={[st.kpiLabel, { fontSize: 6.8 }]}>{tx(m.label)}</Text></View>))}
+              {social.map((m, i) => (<View key={i} style={[st.kpi, { width: `${Math.floor(96 / socialPerRow) - 1}%`, paddingTop: 4, paddingBottom: 5 }]}><Text style={[st.kpiValue, { fontSize: 13 }]}>{tx(m.value)}</Text><Text style={[st.kpiLabel, { fontSize: 6.8 }]}>{tx(m.label)}</Text></View>))}
             </View>
           </Panel>
         )}
@@ -285,8 +289,8 @@ export default function ReportPdf({ r, c, origin }: { r: ReportData; c: ReportCh
             </View>
           )}
           {c.photos.length > 0 && (
-            <View style={{ marginTop: hasAudience ? 16 : 0 }}>
-              <View style={st.sectionHead}><Text style={st.sectionTitle}>Event photos</Text></View>
+            <View break={hasAudience} style={{ marginTop: 0 }}>
+              <View style={[st.sectionHead, { marginTop: 0 }]}><Text style={st.sectionTitle}>Event photos</Text></View>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 8 }}>
                 {c.photos.map((p, i) => (
                   <View key={i} style={{ width: c.photos.length === 1 ? '100%' : '48.8%' }} wrap={false}>

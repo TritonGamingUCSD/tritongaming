@@ -148,7 +148,7 @@ export async function getEventSummary(eventId: string, event: { start_date: stri
   const profileById = new Map(profiles.map((p) => [p.id, p]));
   const privById = new Map(priv.map((p) => [p.user_id, p]));
 
-  const parsed = attendeeIds.map((id) => parseMajors(profileById.get(id)?.major)).filter((p) => p.majors.length);
+  const parsed = attendeeIds.map((id) => parseMajors(profileById.get(id)?.major)); // one entry per attendee; empty when no major was given
   const fb = (feedbackRes.data ?? []) as { rating: number; comment: string | null }[];
 
   return {
@@ -171,8 +171,9 @@ export async function getEventSummary(eventId: string, event: { start_date: stri
     year: tally(attendeeIds.map((id) => profileById.get(id)?.year)),
     college: tally(attendeeIds.map((id) => profileById.get(id)?.college), { top: 8 }),
     // Majors are cleaned up (abbreviations, typos) and double majors count toward each major.
-    major: tally(parsed.flatMap((p) => p.majors), { top: 10 }),
-    field: tally(parsed.map((p) => p.fields[0]).filter(Boolean) as string[]),
+    major: tally(parsed.flatMap((p) => (p.majors.length ? p.majors : [null])), { top: 10 }),
+    // A double major across two fields counts toward both, like majors do, so a field's share is the share of attendees with at least one major in it.
+    field: tally(parsed.flatMap((p) => (p.fields.length ? p.fields : [null]))),
     doubleMajors: parsed.filter((p) => p.majors.length > 1).length,
     pronouns: tally(attendeeIds.map((id) => profileById.get(id)?.pronouns)),
     platforms: tally(attendeeIds.flatMap((id) => privById.get(id)?.platforms ?? []), { top: 8 }),

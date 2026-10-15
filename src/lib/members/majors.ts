@@ -142,7 +142,7 @@ function splitMajors(raw: string): string[] {
 
 function resolveOne(part: string): { name: string; field: string } | null {
   if (!key(part)) return null;
-  return resolveKnown(part) ?? { name: titleCase(part.trim().replace(/\s+/g, ' ')), field: 'Other' };
+  return resolveKnown(part) ?? { name: titleCase(part.trim().replace(/\s+/g, ' ')), field: 'Other fields' };
 }
 
 export interface ParsedMajors { majors: string[]; fields: string[] }
