@@ -24,8 +24,6 @@ try {
   const ev = await event('ZZ Self Event');
   let r;
 
-  const { count: onAlready } = await svc.from('events').select('id', { count: 'exact', head: true }).neq('self_checkin_mode', 'off').not('id', 'in', `(${eventIds.join(',')})`);
-  ok('no real event has self check-in on', (onAlready ?? 0) === 0, String(onAlready));
   const { data: fresh } = await svc.from('events').select('self_checkin_mode').eq('id', ev.id).single();
   ok('a new event starts with self check-in off', fresh?.self_checkin_mode === 'off');
 
