@@ -14,6 +14,7 @@
     "backup:db": "node scripts/backup-db.mjs",
     "test:plans": "node scripts/checks/plans.mjs",
     "test:checkin": "node scripts/checks/checkin.mjs",
+    "test:selfcheckin": "node scripts/checks/selfcheckin.mjs",
     "test:strikes": "node scripts/checks/strikes.mjs",
     "test:quarters": "node scripts/checks/quarters.mjs",
     "test:teamyears": "node scripts/checks/teamyears.mjs",

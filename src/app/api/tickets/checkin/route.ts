@@ -40,7 +40,7 @@ export async function POST(request: Request) {
   // checked_in_by), so `user:profiles(display_name)` is genuinely ambiguous
   // to PostgREST; the `!tickets_user_id_fkey` hint picks the right one.
   const columns = `
-      id, ticket_code, status, checked_in_at, checkin_form_completed_at, event_id, user_id,
+      id, ticket_code, status, checked_in_at, checked_in_by, checkin_form_completed_at, event_id, user_id,
       user:profiles!tickets_user_id_fkey(display_name),
       event:events`;
   const eventColumns = '(title, points_value, start_date, end_date, requires_checkin_form, checkin_windows)';
@@ -100,6 +100,8 @@ export async function POST(request: Request) {
       // person still owes the AS Form.
       requires_form: !!eventData?.requires_checkin_form,
       form_completed: !!ticket.checkin_form_completed_at,
+      // They checked themselves in (their own scan or code), not staff — shown next to the time.
+      self_checkin: !!ticket.checked_in_by && ticket.checked_in_by === ticket.user_id,
     });
   }
 

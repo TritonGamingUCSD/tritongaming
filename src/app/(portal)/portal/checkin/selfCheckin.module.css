@@ -1,0 +1,18 @@
+.panel { display: flex; flex-direction: column; gap: 0.9rem; max-width: 560px; }
+.hint { font-size: 0.85rem; line-height: 1.5; color: rgba(var(--pp-ink-rgb), 0.88); }
+.sub { font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.85); margin-top: 0.15rem; }
+.switchRow { composes: card from '../../../../components/ui/Surface.module.css'; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.9rem 1rem; flex-wrap: wrap; }
+.qrCard { composes: card from '../../../../components/ui/Surface.module.css'; display: flex; flex-direction: column; align-items: center; gap: 0.8rem; padding: 1.1rem; }
+.qrOff .qrBox { opacity: 0.35; }
+.qrBox { background: #ffffff; padding: 0.6rem; border-radius: 0.8rem; line-height: 0; } /* theme-ok: a QR code must stay dark on white to scan */
+.qr canvas, .qr svg { width: min(260px, 70vw); height: auto; }
+.link { font-family: var(--font-jb-mono), monospace; font-size: 0.82rem; overflow-wrap: anywhere; text-align: center; color: var(--pp-ink); }
+.actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; }
+.full { position: fixed; inset: 0; z-index: 10000; background: #ffffff; color: #111c33; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.8rem; padding: 1.5rem; text-align: center; } /* theme-ok: full-screen QR is always dark on white */
+.fullClose { position: absolute; top: 0.8rem; left: 0.8rem; width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid #111c33; border-radius: 50%; background: #ffffff; color: #111c33; cursor: pointer; } /* theme-ok: same */
+.fullTitle { font-family: var(--font-futura-heavy); font-size: 1.5rem; overflow-wrap: anywhere; }
+.fullSub { font-size: 1.05rem; }
+.fullQr { line-height: 0; }
+.qrBig canvas, .qrBig svg { width: min(78vw, 70vh, 520px); height: auto; }
+.fullLink { font-family: var(--font-jb-mono), monospace; font-size: 1rem; }
+.fullWarn { font-size: 0.9rem; color: #b45309; font-weight: 700; } /* theme-ok: same */

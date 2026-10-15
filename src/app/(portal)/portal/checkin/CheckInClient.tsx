@@ -20,6 +20,7 @@ interface ScanResult {
   event_title: string;
   user_name: string;
   checked_in_at?: string;
+  self_checkin?: boolean;
   ticket_id?: string;
   requires_form?: boolean;
   form_completed?: boolean;
@@ -468,7 +469,7 @@ export default function CheckInClient({ events, onCheckedIn, tiers }: CheckInCli
                 </div>
                 {result.status === 'used' && result.checked_in_at && (
                   <div className={styles.resultDetail}>
-                    at {new Date(result.checked_in_at).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' })}
+                    at {new Date(result.checked_in_at).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' })}{result.self_checkin ? ' (self check-in)' : ''}
                   </div>
                 )}
                 {result.status === 'used' && result.requires_form && (

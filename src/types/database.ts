@@ -194,6 +194,7 @@ export interface Database {
           sponsors: EventSponsor[];
           report_social: ReportMetric[];
           requires_checkin_form: boolean;
+          self_checkin_enabled: boolean;
           checkin_food_item: string | null;
           checkin_windows: Array<{ day: string; start: string; end: string }>;
           checkin_form_event_name: string | null;
