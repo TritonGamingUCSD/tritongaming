@@ -195,8 +195,10 @@ export interface Database {
           report_social: ReportMetric[];
           requires_checkin_form: boolean;
           self_checkin_enabled: boolean;
+          self_checkin_mode: 'off' | 'until_end' | 'forever';
           checkin_food_item: string | null;
           checkin_windows: Array<{ day: string; start: string; end: string }>;
+          day_hours: Array<{ day: string; start: string; end: string }>;
           checkin_form_event_name: string | null;
           // Same shape as checkin_form_settings' own columns (see
           // CheckinFormConfig in src/lib/checkinForm.ts) — null means "use

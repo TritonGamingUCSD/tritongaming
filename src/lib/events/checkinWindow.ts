@@ -18,7 +18,7 @@ export function isCheckinWindowOpen(event: { start_date: string; end_date?: stri
 // Per-day check-in hours for a multi-day event (Pacific time). A day without an entry is open all day.
 export interface CheckinDayWindow { day: string; start: string; end: string }
 
-const to12h = (hhmm: string) => {
+export const to12h = (hhmm: string) => {
   const [h, m] = hhmm.split(':').map(Number);
   return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
 };
@@ -37,6 +37,15 @@ export function checkinHoursError(event: { checkin_windows?: CheckinDayWindow[] 
   if (hhmm < w.start) return `Check-in for today opens at ${to12h(w.start)}.`;
   if (hhmm > w.end) return `Check-in for today closed at ${to12h(w.end)}.`;
   return null;
+}
+
+// Only the "closed for the day" half of checkinHoursError: null unless today has hours set and they have already ended. Self check-in uses this, because it
+// may be opened any time before a day's hours begin but must stop when that day's hours end. A day without hours never closes early.
+export function dayHoursOverError(event: { checkin_windows?: CheckinDayWindow[] | null }, now: Date = new Date()): string | null {
+  const { day, hhmm } = pacificParts(now);
+  const w = (event.checkin_windows ?? []).find((x) => x.day === day);
+  if (!w || !w.end) return null;
+  return hhmm > w.end ? `Check-in for today closed at ${to12h(w.end)}.` : null;
 }
 
 // Query-side twins of isCheckinWindowOpen, for PostgREST `.or()` filters — so

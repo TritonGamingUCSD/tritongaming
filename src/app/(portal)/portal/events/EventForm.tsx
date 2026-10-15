@@ -1,5 +1,6 @@
 'use client';
 
+import { dayHoursComplete } from '@/lib/events/dayHours';
 import SectionHeader from '@/components/ui/SectionHeader';
 import Notice from '@/components/ui/Notice';
 import { showToast } from '@/lib/ui/toast';
@@ -58,7 +59,9 @@ export interface EventFormValues {
   page_blocks: PageBlock[];
   requires_checkin_form: boolean;
   checkin_food_item: string;
-  // Per-day check-in hours for multi-day events (blank start/end = open all day).
+  // The hours of each day of a multi-day event (required for every day); the overall start and end come from them.
+  day_hours: { day: string; start: string; end: string }[];
+  // Per-day check-in hours for the staff scanner on multi-day events (blank start/end = open all day).
   checkin_windows: { day: string; start: string; end: string }[];
   checkin_form_event_name: string;
   // This event's own AS Form config (link, question IDs, answer mappings) —
@@ -109,6 +112,7 @@ export const EMPTY_EVENT_FORM: EventFormValues = {
   page_blocks: [],
   requires_checkin_form: false,
   checkin_food_item: '',
+  day_hours: [],
   checkin_windows: [],
   checkin_form_event_name: '',
   checkin_form_override: null,
@@ -304,6 +308,17 @@ export default function EventForm({
       setError('The end time must be after the start time. For an event that runs past midnight, set the end date to the next day.');
       return;
     }
+    if (!form.end_date) {
+      setTab('basics');
+      setError('Add an end time. Check-in, self check-in and the reports all need to know when the event ends.');
+      return;
+    }
+    const eventDays = formDays(form.start_date, form.end_date);
+    if (eventDays.length > 1 && !dayHoursComplete(form.day_hours, eventDays)) {
+      setTab('basics');
+      setError("Set a start and end time for every day of this multi-day event (the end must be after the start).");
+      return;
+    }
     if (!(form.theme.posters ?? []).some(Boolean)) {
       setTab('page');
       setError('Add at least one poster. It is the main picture for this event.');
@@ -316,7 +331,12 @@ export default function EventForm({
     }
     setSaving(true);
     setError('');
-    const err = await onSubmit(form);
+    // A multi-day event's overall start and end are the first day's start and the last day's end.
+    const submitForm = eventDays.length > 1
+      ? { ...form, start_date: `${eventDays[0]}T${form.day_hours.find((w) => w.day === eventDays[0])!.start}`, end_date: `${eventDays[eventDays.length - 1]}T${form.day_hours.find((w) => w.day === eventDays[eventDays.length - 1])!.end}` }
+      : form;
+    if (submitForm !== form) setForm(submitForm);
+    const err = await onSubmit(submitForm);
     setSaving(false);
     if (err) setError(err);
     else {
@@ -333,7 +353,7 @@ export default function EventForm({
       <Link href="/portal/events" className={styles.back}>← Back to Events</Link>
       <SectionHeader title={heading} />
       <EditingNow room={eventId ? `event:${eventId}` : null} what="this event" />
-      {isNewEvent && draft.offer && <DraftBanner at={draft.offer.at} what="event" onContinue={() => { const d = draft.accept(); if (d) setForm(d); }} onDiscard={draft.discard} />}
+      {isNewEvent && draft.offer && <DraftBanner at={draft.offer.at} what="event" onContinue={() => { const d = draft.accept(); if (d) setForm({ ...EMPTY_EVENT_FORM, ...d, day_hours: d.day_hours ?? [] }); }} onDiscard={draft.discard} />}
 
       <div className={styles.editLayout}>
       <form id="event-form" ref={formRef} className={`${styles.form}${saving ? ` ${styles.formSaving}` : ''}`} onSubmit={handleSubmit} onInvalidCapture={onInvalid} aria-busy={saving}>
@@ -356,18 +376,52 @@ export default function EventForm({
             <DateTimeInput className={styles.input} value={form.start_date} onChange={(e) => set('start_date', e.target.value)} required />
           </label>
           <label className={styles.field}>
-            <span className={styles.label}>End Date & Time</span>
-            <DateTimeInput className={styles.input} value={form.end_date} min={form.start_date} onChange={(e) => set('end_date', e.target.value)} placeholder="Optional" />
+            <span className={styles.label}>End Date & Time *</span>
+            <DateTimeInput className={styles.input} value={form.end_date} min={form.start_date} onChange={(e) => set('end_date', e.target.value)} required />
           </label>
         </div>
         <p className={styles.hint}>
           {form.start_date && form.end_date && new Date(form.end_date) > new Date(form.start_date)
             ? (() => {
                 const days = eventDayCount(pacificDatetimeLocalToUTC(form.start_date).toISOString(), pacificDatetimeLocalToUTC(form.end_date).toISOString());
-                return days > 1 ? `Multi-day event: ${days} days. One ticket covers every day, and check-in stays open until the end time.` : 'Single-day event.';
+                return days > 1 ? `Multi-day event: ${days} days. One ticket covers every day. Set each day's hours below; the start and end times come from them.` : 'Single-day event.';
               })()
-            : 'Running over several days (like a weekend LAN)? Set the end date to the last day — one ticket covers every day.'}
+            : 'Every event needs an end time. Running over several days (like a weekend LAN)? Set the end date to the last day — one ticket covers every day.'}
         </p>
+
+        {formDays(form.start_date, form.end_date).length > 1 && (
+          <div className={styles.field}>
+            <span className={styles.label}>Hours for each day *</span>
+            <p className={styles.hint}>When the event runs each day (Pacific time). They show on the event page, and self check-in closes at the end of each day.</p>
+            {form.start_date.slice(11, 16) && form.end_date.slice(11, 16) && form.start_date.slice(11, 16) < form.end_date.slice(11, 16) && (
+              <div>
+                <button type="button" className={styles.previewBtn} onClick={() => setForm((f) => ({ ...f, day_hours: formDays(f.start_date, f.end_date).map((day) => ({ day, start: f.start_date.slice(11, 16), end: f.end_date.slice(11, 16) })) }))}>
+                  Use {form.start_date.slice(11, 16)} to {form.end_date.slice(11, 16)} every day
+                </button>
+              </div>
+            )}
+            <div>
+              {formDays(form.start_date, form.end_date).map((day, i) => {
+                const w = form.day_hours.find((x) => x.day === day) ?? { day, start: '', end: '' };
+                const setW = (patch: Partial<typeof w>) => setForm((f) => ({ ...f, day_hours: [...f.day_hours.filter((x) => x.day !== day), { ...w, ...patch }] }));
+                const bad = !!w.start && !!w.end && w.end <= w.start;
+                return (
+                  <div key={day} className={styles.row} style={{ alignItems: 'end', marginBottom: '0.5rem' }}>
+                    <div className={styles.field}>
+                      <span className={styles.label}>Day {i + 1} · {new Date(`${day}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                      <TimeInput className={styles.input} value={w.start} onChange={(e) => setW({ start: e.target.value })} aria-label={`Day ${i + 1} starts`} />
+                    </div>
+                    <div className={styles.field}>
+                      <span className={styles.label}>{bad ? 'Ends (must be after it starts)' : 'Ends'}</span>
+                      <TimeInput className={styles.input} value={w.end} onChange={(e) => setW({ end: e.target.value })} aria-label={`Day ${i + 1} ends`} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
 
         <label className={styles.field}>
           <span className={styles.label}>Location</span>
@@ -538,8 +592,8 @@ export default function EventForm({
 
         {formDays(form.start_date, form.end_date).length > 1 && (
           <div className={styles.field}>
-            <span className={styles.label}>Check-in hours for each day <span className={styles.hint}>(optional)</span></span>
-            <p className={styles.hint}>Leave a day blank and check-in stays open all day. Set both times to only allow check-in in that window (Pacific time).</p>
+            <span className={styles.label}>Staff scanner hours for each day <span className={styles.hint}>(optional)</span></span>
+            <p className={styles.hint}>Only limits the staff ticket scanner. Leave a day blank and the scanner works all day. Set both times to only allow scanning in that window (Pacific time).</p>
             <div>
               {formDays(form.start_date, form.end_date).map((day, i) => {
                 const w = form.checkin_windows.find((x) => x.day === day) ?? { day, start: '', end: '' };

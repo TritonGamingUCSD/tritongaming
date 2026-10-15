@@ -16,3 +16,9 @@
 .qrBig canvas, .qrBig svg { width: min(78vw, 70vh, 520px); height: auto; }
 .fullLink { font-family: var(--font-jb-mono), monospace; font-size: 1rem; }
 .fullWarn { font-size: 0.9rem; color: #b45309; font-weight: 700; } /* theme-ok: same */
+.modeCard { composes: card from '../../../../components/ui/Surface.module.css'; display: flex; flex-direction: column; gap: 0.6rem; padding: 0.9rem 1rem; }
+.modes { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.modeBtn { flex: 1 1 8rem; min-height: 44px; padding: 0.5rem 0.8rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 0.7rem; background: transparent; color: var(--pp-ink); font-family: var(--font-futura-medium); font-size: 0.85rem; cursor: pointer; }
+.modeBtn:disabled { cursor: default; opacity: 0.75; }
+.modeBtn:not(:disabled):hover { background: rgba(var(--pp-ink-rgb), 0.06); }
+.modeOn { background: var(--yellow); border-color: var(--pp-ink); color: #111c33; font-family: var(--font-futura-heavy); opacity: 1 !important; }

@@ -155,3 +155,4 @@ a.stickerCredit:hover, a.stickerCredit:focus-visible { text-decoration: underlin
 /* the hero's layout box must not catch clicks meant for the stickers' credit links underneath; its own content still does */
 .heroInner { pointer-events: none; }
 .heroInner > * { pointer-events: auto; }
+.factList { list-style: none; margin: 0.15rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.15rem; font-size: 0.85rem; opacity: 0.85; }

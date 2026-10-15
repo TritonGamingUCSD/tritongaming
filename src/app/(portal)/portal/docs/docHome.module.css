@@ -1,12 +1,13 @@
 /* The Documentation home. A centred, comfortable column; plain sections, no boxes inside boxes. */
-.home { display: flex; flex-direction: column; gap: 2rem; }
+.home { display: flex; flex-direction: column; gap: 2rem; container-type: inline-size; }
 .note { margin: 0; font-size: 0.85rem; color: rgba(var(--pp-ink-rgb), 0.85); }
 .h2 { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 0.75rem; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.15rem; color: var(--pp-ink); }
 .h2Note { font-family: var(--font-futura-medium); font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.8); }
 
 /* Quick links */
 .topGrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; align-items: start; }
-@media (min-width: 1000px) { .topGrid:has(> section + section) { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2.5rem; } }
+/* Two columns only when the home itself is wide enough: beside the docs sidebar the screen can be wide while this column is narrow. */
+@container (min-width: 720px) { .topGrid:has(> section + section) { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2.5rem; } }
 .topGrid .h2 { min-height: 2.4rem; }
 .linkHint { margin: 0 0 1.1rem; }
 .quick { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.4rem; }

@@ -4,13 +4,13 @@ import { createServiceClient } from '@/lib/supabase/admin';
 import { createNotifications } from '@/lib/notifications/notify';
 import { isVerifiedMember } from '@/lib/portal/capabilities';
 import { hasBasicProfileInfo } from '@/lib/members/profile';
-import { isCheckinWindowOpen } from '@/lib/events/checkinWindow';
+import { cleanSelfCheckinMode, selfCheckinClosedReason } from '@/lib/events/selfCheckin';
 import { canCheckInNow } from '@/lib/events/checkinDays';
 import { performCheckin } from '@/lib/events/performCheckin';
 
 // Self check-in: a person scans the event's QR with their own phone, signs in, and is checked in. It is a second way in alongside the staff scanner and
 // uses the same steps (performCheckin: window, ticket flips to used, points, notification), so staff scanning is untouched. It only works for events whose
-// self check-in switch is on, and only until the event's check-in window closes.
+// self check-in setting is on (off / until the event ends / no end).
 //
 // If the person has no ticket yet, a free one is issued here (UCSD students, or any event with no price). A priced ticket still goes through the normal
 // ticket flow with Stripe: this route does not take payment.
@@ -25,12 +25,13 @@ export async function POST(request: Request) {
   const svc = createServiceClient();
   const { data: event } = await svc
     .from('events')
-    .select('id, title, points_value, start_date, end_date, requires_checkin_form, checkin_windows, self_checkin_enabled, is_published, audience, ticket_price')
+    .select('id, title, points_value, start_date, end_date, requires_checkin_form, checkin_windows, day_hours, self_checkin_mode, is_published, audience, ticket_price')
     .eq('id', event_id)
     .maybeSingle();
   if (!event || !event.is_published) return NextResponse.json({ error: 'Event not found.' }, { status: 404 });
-  if (!event.self_checkin_enabled) return NextResponse.json({ error: "Self check-in isn't open for this event. Please see a staff member.", code: 'closed' }, { status: 403 });
-  if (!isCheckinWindowOpen(event)) return NextResponse.json({ error: 'This event has already ended.', code: 'ended' }, { status: 409 });
+  const mode = cleanSelfCheckinMode(event.self_checkin_mode);
+  const closed = selfCheckinClosedReason(mode, event);
+  if (closed) return NextResponse.json({ error: closed.message, code: closed.code }, { status: closed.code === 'closed' ? 403 : 409 });
 
   // The same profile rule as claiming a ticket, so the reports stay complete.
   const [{ data: profile }, { data: roles }, { data: priv }] = await Promise.all([
@@ -79,6 +80,8 @@ export async function POST(request: Request) {
     ticket,
     { title: event.title, points_value: event.points_value, start_date: event.start_date, end_date: event.end_date, requires_checkin_form: event.requires_checkin_form, checkin_windows: event.checkin_windows },
     user.id,
+    // Whether it is open is decided above by the event's self check-in setting, so the scanner's own end time and daily check-in hours do not apply here.
+    { ignoreWindow: true },
   );
   if (result.error) {
     if (result.error.startsWith('Already')) return NextResponse.json({ status: 'already', ticket_id: ticket.id, event_title: event.title });

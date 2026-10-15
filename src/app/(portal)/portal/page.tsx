@@ -95,6 +95,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const canManageDocs = hasCapability(roles, 'manage_docs');
   const canManageRewardsShop = hasCapability(roles, 'manage_rewards_shop');
   const canScanRedemptions = hasCapability(roles, 'scan_redemptions');
+  const canControlSelfCheckin = hasCapability(roles, 'manage_points');
   const canManagePoints = hasCapability(roles, 'manage_points');
   const canAttendMeetings = hasCapability(roles, 'attend_meetings');
   const canViewAttendanceReports = hasCapability(roles, 'view_attendance_reports');
@@ -261,7 +262,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       // No event today: nothing to scan, so it does not take a slot on the phone's bottom bar (it is still in More).
       dockExclude: todayEvents.length === 0,
       group: 'Events' as const,
-      content: <CheckInSectionContent events={checkinData.events} canScanRedemptions={canScanRedemptions} initialTab={requestedTab} tiers={memberTiers} />,
+      content: <CheckInSectionContent events={checkinData.events} canScanRedemptions={canScanRedemptions} canControlSelfCheckin={canControlSelfCheckin} initialTab={requestedTab} tiers={memberTiers} />,
     }] : []),
     ...(canAttendMeetings || canViewAttendanceReports ? [{
       id: 'meetings', icon: <CalendarCheck size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Meetings',

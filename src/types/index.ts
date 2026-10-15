@@ -29,6 +29,8 @@ export type Event = {
   venue_lat: number | null;
   venue_lng: number | null;
   schedule: ScheduleItem[];
+  // Multi-day events: the hours of each day (Pacific time), [] for a one-day event.
+  day_hours?: { day: string; start: string; end: string }[];
   sponsors: EventSponsor[];
   social_embeds: SocialEmbed[];
   points_value: number;

@@ -11,7 +11,7 @@ import AsFormButton from '../../tickets/AsFormButton';
 import styles from './selfCheckin.module.css';
 
 interface Props {
-  event: { id: string; title: string; location: string | null; start: string; enabled: boolean; requiresForm: boolean };
+  event: { id: string; title: string; location: string | null; start: string; closed: { code: string; message: string } | null; requiresForm: boolean };
   person: { name: string; avatar: string | null };
   asFormUrl: string | null;
   slug: string;
@@ -26,7 +26,7 @@ type State =
 // shows the result. The "checked in" card has their name and photo and a ticking clock with seconds, so staff can match it to the person and a screenshot
 // stands out.
 export default function SelfCheckinClient({ event, person, asFormUrl, slug }: Props) {
-  const [state, setState] = useState<State>(event.enabled ? { kind: 'working' } : { kind: 'problem', code: 'closed', message: "Self check-in isn't open for this event. Please see a staff member." });
+  const [state, setState] = useState<State>(event.closed ? { kind: 'problem', code: event.closed.code, message: event.closed.message } : { kind: 'working' });
   const [formOpened, setFormOpened] = useState(false);
   const started = useRef(false);
 
@@ -46,10 +46,10 @@ export default function SelfCheckinClient({ event, person, asFormUrl, slug }: Pr
   }, [event.id]);
 
   useEffect(() => {
-    if (!event.enabled || started.current) return;
+    if (event.closed || started.current) return;
     started.current = true;
     void run();
-  }, [event.enabled, run]);
+  }, [event.closed, run]);
 
   return (
     <div className={styles.page}>
@@ -95,7 +95,7 @@ export default function SelfCheckinClient({ event, person, asFormUrl, slug }: Pr
           <div className={styles.actions}>
             {state.code === 'needs_profile' && <Link href={`/portal/profile?next=${encodeURIComponent(`/portal/in/${slug}`)}`} className={styles.primaryLink}>Finish profile</Link>}
             {state.code === 'needs_payment' && <Link href="/portal/tickets" className={styles.primaryLink}>Go to My Tickets</Link>}
-            {event.enabled && state.code !== 'ended' && state.code !== 'ucsd_only' && state.code !== 'closed' && (
+            {!event.closed && state.code !== 'ended' && state.code !== 'ucsd_only' && state.code !== 'closed' && state.code !== 'day_over' && (
               <Button variant="secondary" onClick={() => void run()}>Try again</Button>
             )}
           </div>

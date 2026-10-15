@@ -24,16 +24,21 @@ try {
   const ev = await event('ZZ Self Event');
   let r;
 
-  const { count: onAlready } = await svc.from('events').select('id', { count: 'exact', head: true }).eq('self_checkin_enabled', true).not('id', 'in', `(${eventIds.join(',')})`);
+  const { count: onAlready } = await svc.from('events').select('id', { count: 'exact', head: true }).neq('self_checkin_mode', 'off').not('id', 'in', `(${eventIds.join(',')})`);
   ok('no real event has self check-in on', (onAlready ?? 0) === 0, String(onAlready));
-  const { data: fresh } = await svc.from('events').select('self_checkin_enabled').eq('id', ev.id).single();
-  ok('a new event starts with self check-in off', fresh?.self_checkin_enabled === false);
+  const { data: fresh } = await svc.from('events').select('self_checkin_mode').eq('id', ev.id).single();
+  ok('a new event starts with self check-in off', fresh?.self_checkin_mode === 'off');
 
   r = await student.call('POST', '/api/checkin/self', { event_id: ev.id }); ok('off: self check-in is refused', r.s === 403 && r.j.code === 'closed', JSON.stringify(r));
   ok('off: no ticket was made', (await tickets(student.id, ev.id)).length === 0);
 
-  r = await member.call('PATCH', `/api/events/${ev.id}/self-checkin`, { enabled: true }); ok('a member cannot switch it on', r.s === 403, JSON.stringify(r));
-  r = await exec.call('PATCH', `/api/events/${ev.id}/self-checkin`, { enabled: true }); ok('an officer switches it on', r.s === 200, JSON.stringify(r));
+  const officer = await user('officer', ['officer']);
+  const other = await user('other', ['ucsd']);
+  await svc.from('profile_private').upsert({ user_id: other.id, gender: 'Other' });
+  r = await member.call('PATCH', `/api/events/${ev.id}/self-checkin`, { mode: 'until_end' }); ok('a member cannot change it', r.s === 403, JSON.stringify(r));
+  r = await officer.call('PATCH', `/api/events/${ev.id}/self-checkin`, { mode: 'until_end' }); ok('an officer cannot change it either', r.s === 403, JSON.stringify(r));
+  r = await exec.call('PATCH', `/api/events/${ev.id}/self-checkin`, { mode: 'sometimes' }); ok('a bad mode is refused', r.s === 400, JSON.stringify(r));
+  r = await exec.call('PATCH', `/api/events/${ev.id}/self-checkin`, { mode: 'until_end' }); ok('exec turns it on until the event ends', r.s === 200, JSON.stringify(r));
 
   r = await student.call('POST', '/api/checkin/self', { event_id: ev.id }); ok('on: a student with no ticket is checked in', r.s === 200 && r.j.status === 'checked_in', JSON.stringify(r));
   const [st] = await tickets(student.id, ev.id);
@@ -51,27 +56,40 @@ try {
   r = await guest.call('POST', '/api/checkin/self', { event_id: ev.id }); ok('an incomplete profile must be finished first', r.s === 400 && r.j.code === 'needs_profile', JSON.stringify(r));
   ok('and no ticket was made for them', (await tickets(guest.id, ev.id)).length === 0);
 
-  const paid = await event('ZZ Self Paid', { ticket_price: 5, self_checkin_enabled: true, audience: 'public' });
+  const paid = await event('ZZ Self Paid', { ticket_price: 5, self_checkin_mode: 'until_end', audience: 'public' });
   await svc.from('profiles').update({ display_name: 'ZZ Mtg guest', pronouns: 'they/them' }).eq('id', guest.id);
   await svc.from('profile_private').upsert({ user_id: guest.id, gender: 'Other' });
   r = await guest.call('POST', '/api/checkin/self', { event_id: paid.id }); ok('a priced event sends a guest to get a ticket first', r.s === 402 && r.j.code === 'needs_payment', JSON.stringify(r));
   ok('and no ticket was made', (await tickets(guest.id, paid.id)).length === 0);
   r = await guest.call('POST', '/api/checkin/self', { event_id: ev.id }); ok('a guest with a finished profile checks in at a free event', r.s === 200 || (r.s === 403 && r.j.code === 'ucsd_only'), JSON.stringify(r));
 
-  const ended = await event('ZZ Self Ended', { start_date: hours(-72), end_date: hours(-48), self_checkin_enabled: true });
+  const ended = await event('ZZ Self Ended', { start_date: hours(-72), end_date: hours(-48), self_checkin_mode: 'until_end' });
   r = await student.call('POST', '/api/checkin/self', { event_id: ended.id }); ok('an ended event is closed', r.s === 409 && r.j.code === 'ended', JSON.stringify(r));
-  const ucsdOnly = await event('ZZ Self UCSD', { self_checkin_enabled: true, audience: 'ucsd_only' });
+  const ucsdOnly = await event('ZZ Self UCSD', { self_checkin_mode: 'until_end', audience: 'ucsd_only' });
   r = await guest.call('POST', '/api/checkin/self', { event_id: ucsdOnly.id }); ok('a ucsd-only event refuses a guest', r.s === 403 && r.j.code === 'ucsd_only', JSON.stringify(r));
-  const draft = await event('ZZ Self Draft', { self_checkin_enabled: true, is_published: false });
+  const draft = await event('ZZ Self Draft', { self_checkin_mode: 'until_end', is_published: false });
   r = await student.call('POST', '/api/checkin/self', { event_id: draft.id }); ok('an unpublished event is not found', r.s === 404, JSON.stringify(r));
   r = await student.call('POST', '/api/checkin/self', { event_id: 'not-a-uuid' }); ok('a bad event id is not found', r.s === 404, JSON.stringify(r));
 
   // The staff scanner for an event that has self check-in off still works exactly as before
   const plain = await event('ZZ Self Plain');
-  const other = await user('other', ['ucsd']);
   const { data: pt } = await svc.from('tickets').insert({ event_id: plain.id, user_id: other.id }).select('ticket_code').single();
   r = await exec.call('POST', '/api/tickets/checkin', { code: code(pt.ticket_code, win()), event_id: plain.id }); ok('staff scan still works with self check-in off', r.s === 200 && r.j.points_awarded === 5, JSON.stringify(r));
   r = await exec.call('POST', '/api/tickets/checkin', { code: code(pt.ticket_code, win()), event_id: plain.id }); ok('and its repeat message is unchanged (not marked self)', r.s === 200 && r.j.status === 'used' && r.j.self_checkin === false, JSON.stringify(r));
+
+  // On with no end: works after the event is over; until_end does not
+  const longAgo = await event('ZZ Self Forever', { start_date: hours(-72), end_date: hours(-48), self_checkin_mode: 'forever' });
+  const rf = await member.call('POST', '/api/checkin/self', { event_id: longAgo.id });
+  ok('no end: still works after the event is over', rf.s === 200 && rf.j.status === 'checked_in', JSON.stringify(rf));
+  // Multi-day: a day whose hours have ended is closed; a day without hours is open
+  const pacificDay = (d) => new Date(d.getTime() - 8 * 3600e3).toISOString().slice(0, 10);
+  const closedDay = await event('ZZ Self Day Over', { start_date: hours(-30), end_date: hours(30), self_checkin_mode: 'until_end', day_hours: [{ day: pacificDay(new Date()), start: '00:00', end: '00:01' }] });
+  const nowPac = new Date(Date.now() - 8 * 3600e3), minutesIntoDay = nowPac.getUTCHours() * 60 + nowPac.getUTCMinutes();
+  const rd = await other.call('POST', '/api/checkin/self', { event_id: closedDay.id });
+  ok('a day whose hours have ended is closed', minutesIntoDay < 2 || (rd.s === 409 && rd.j.code === 'day_over'), JSON.stringify(rd));
+  const openDay = await event('ZZ Self Day Open', { start_date: hours(-30), end_date: hours(30), self_checkin_mode: 'until_end', day_hours: [{ day: pacificDay(new Date(Date.now() + 86400e3)), start: '10:00', end: '18:00' }] });
+  const ro = await other.call('POST', '/api/checkin/self', { event_id: openDay.id });
+  ok('a day without hours set is open', ro.s === 200, JSON.stringify(ro));
 
   // The forwarding link
   const base = process.env.BASE_URL || 'http://localhost:3000';

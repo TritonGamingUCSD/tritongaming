@@ -11,7 +11,7 @@ import OnlineCheckinPanel from './OnlineCheckinPanel';
 import SelfCheckinPanel from './SelfCheckinPanel';
 import styles from './checkinsection.module.css';
 
-interface Event { id: string; title: string; start_date: string; is_online: boolean; slug?: string | null; self_checkin_enabled?: boolean }
+interface Event { id: string; title: string; start_date: string; is_online: boolean; slug?: string | null; self_checkin_mode?: 'off' | 'until_end' | 'forever'; end_date?: string | null; checkin_windows?: { day: string; start: string; end: string }[] | null }
 
 type Tab = 'tickets' | 'self' | 'redemptions' | 'online';
 const VALID_TABS: Tab[] = ['tickets', 'self', 'redemptions', 'online'];
@@ -23,7 +23,7 @@ const VALID_TABS: Tab[] = ['tickets', 'self', 'redemptions', 'online'];
 // online check-in code), so a tab bar keeps them from competing for the
 // same screen instead of merging into one increasingly-overloaded
 // component.
-export default function CheckInSectionContent({ events, canScanRedemptions, tiers }: { events: Event[]; canScanRedemptions: boolean; initialTab?: string; tiers: Tier[] }) {
+export default function CheckInSectionContent({ events, canScanRedemptions, canControlSelfCheckin, tiers }: { events: Event[]; canScanRedemptions: boolean; canControlSelfCheckin: boolean; initialTab?: string; tiers: Tier[] }) {
   const { tab: initialTab } = useUrlNav();
   const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'tickets');
   const syncUrl = usePortalTabSync('checkin');
@@ -55,7 +55,7 @@ export default function CheckInSectionContent({ events, canScanRedemptions, tier
           <CheckInClient events={events} tiers={tiers} />
         </>
       )}
-      {tab === 'self' && events.length > 0 && <SelfCheckinPanel events={events} />}
+      {tab === 'self' && events.length > 0 && <SelfCheckinPanel events={events} canControl={canControlSelfCheckin} />}
       {tab === 'redemptions' && canScanRedemptions && <RedemptionScanner />}
       {tab === 'online' && onlineEvents.length > 0 && <OnlineCheckinPanel events={onlineEvents} />}
     </div>

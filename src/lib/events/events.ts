@@ -43,6 +43,7 @@ function mapSupabaseEvent(row: Record<string, unknown>): Event {
     venue_lat: typeof row.venue_lat === 'number' ? row.venue_lat : null,
     venue_lng: typeof row.venue_lng === 'number' ? row.venue_lng : null,
     schedule: (row.schedule as ScheduleItem[]) ?? [],
+    day_hours: (row.day_hours as { day: string; start: string; end: string }[] | null) ?? [],
     sponsors: (row.sponsors as EventSponsor[]) ?? [],
     social_embeds: (row.social_embeds as SocialEmbed[]) ?? [],
     points_value: (row.points_value as number) ?? 0,

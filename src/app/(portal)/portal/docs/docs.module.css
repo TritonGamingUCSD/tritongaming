@@ -104,6 +104,8 @@
 .rowMenuWrap .rowMenuBtn { position: absolute; right: 0.1rem; top: 50%; transform: translateY(-50%); background: none; }
 /* The title fades out under the ⋯ button instead of being covered by it. */
 @media (hover: hover) { .row:has(.rowMenuWrap):hover .rowTitle, .row:has(.rowMenuWrap):focus-within .rowTitle { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2.2rem), transparent calc(100% - 0.6rem)); mask-image: linear-gradient(to right, #000 calc(100% - 2.2rem), transparent calc(100% - 0.6rem)); } }
+/* The badges at the end of a row (New, unpublished changes, who is editing, favorite) make way for the ⋯ button while it shows, instead of sitting under it. */
+@media (hover: hover) { .row:has(.rowMenuWrap):hover .rowMain :is(.tagMini, .dot, .editingTag, .favMini), .row:has(.rowMenuWrap):focus-within .rowMain :is(.tagMini, .dot, .editingTag, .favMini) { visibility: hidden; } }
 /* A category header keeps its own room for the ⋯ button, so it never sits on top of the count. */
 .catRow .rowMenuWrap { width: 30px; }
 .catRow .rowMenuWrap .rowMenuBtn { position: static; transform: none; background: none; }

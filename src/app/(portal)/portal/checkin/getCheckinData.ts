@@ -6,7 +6,7 @@ export async function getCheckinData() {
   const supabase = await createClient();
   const { data: events } = await supabase
     .from('events')
-    .select('id, title, slug, start_date, is_online, self_checkin_enabled')
+    .select('id, title, slug, start_date, is_online, self_checkin_mode, checkin_windows, end_date')
     .eq('is_published', true)
     // Every event that can still be checked into — same rule as the check-in
     // itself (until its end time), so a multi-day or long-running event

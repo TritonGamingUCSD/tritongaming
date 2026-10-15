@@ -18,6 +18,7 @@ import LogoPlate from '@/components/LogoPlate/LogoPlate';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import EventSocialEmbeds from '@/components/EventSocialEmbeds/EventSocialEmbeds';
 import { formatEventDateRange, formatEventTimeRange, eventDayCount } from '@/lib/core/timezone';
+import { formatDayHours } from '@/lib/events/dayHours';
 import { themeVars, themeFontsHref, themeFontFaceCss } from '@/lib/events/eventTheme';
 import styles from './event-detail.module.css';
 
@@ -272,7 +273,13 @@ export default async function EventDetailPage({ params }: Params) {
             <div>
               <div className={styles.factLabel}>When</div>
               <div className={styles.factValue}>{formatEventDateRange(event.start_date, event.end_date || null)}</div>
-              <div className={styles.factSub}>{formatEventTimeRange(event.start_date, event.end_date || null)}{dayCount > 1 && ` · ${dayCount} days`}</div>
+              {dayCount > 1 && (event.day_hours ?? []).length > 0 ? (
+                <ul className={styles.factList}>
+                  {[...(event.day_hours ?? [])].sort((a, b) => a.day.localeCompare(b.day)).map((w) => <li key={w.day}>{formatDayHours(w)}</li>)}
+                </ul>
+              ) : (
+                <div className={styles.factSub}>{formatEventTimeRange(event.start_date, event.end_date || null)}{dayCount > 1 && ` · ${dayCount} days`}</div>
+              )}
             </div>
           </div>
           {event.location && (

@@ -6,7 +6,8 @@ import { createClient } from '@/lib/supabase/client';
 import { slugify } from '@/lib/core/slug';
 import { deleteIfReplaced } from '@/lib/storage/imageUpload';
 import { pacificDatetimeLocalToUTC } from '@/lib/core/timezone';
-import EventForm, { cleanCheckinWindows, type EventFormValues } from '../EventForm';
+import { cleanDayHours } from '@/lib/events/dayHours';
+import EventForm, { cleanCheckinWindows, formDays, type EventFormValues } from '../EventForm';
 import type { CheckinFormConfigValue } from '../CheckinFormFieldsEditor';
 import { cleanTheme } from '@/lib/events/eventTheme';
 import { cleanBlocks } from '@/lib/site/pageBlocks';
@@ -63,6 +64,7 @@ export default function EditEventClient({
         requires_checkin_form: form.requires_checkin_form,
         checkin_food_item: form.checkin_food_item.trim() || null,
         checkin_windows: cleanCheckinWindows(form.checkin_windows, form.start_date, form.end_date),
+        day_hours: cleanDayHours(form.day_hours, formDays(form.start_date, form.end_date)),
         checkin_form_event_name: form.checkin_form_event_name.trim() || null,
         checkin_form_override: form.checkin_form_override,
       })

@@ -3,6 +3,7 @@ import { getProfile, getUserRoles } from '@/lib/core/auth';
 import { createClient } from '@/lib/supabase/server';
 import { resolveAvatarUrl } from '@/lib/members/profile';
 import { buildCheckinFormUrl, type CheckinFormConfig } from '@/lib/events/checkinForm';
+import { cleanSelfCheckinMode, selfCheckinClosedReason } from '@/lib/events/selfCheckin';
 import SelfCheckinClient from './SelfCheckinClient';
 
 export const metadata = { title: 'Check In' };
@@ -18,7 +19,7 @@ export default async function SelfCheckinPage({ params }: { params: Promise<{ sl
   if (!profile) redirect(`/login?next=${encodeURIComponent(`/portal/in/${slug}`)}`);
 
   const supabase = await createClient();
-  const columns = 'id, title, slug, start_date, end_date, location, self_checkin_enabled, requires_checkin_form, checkin_food_item, checkin_form_event_name, checkin_form_override';
+  const columns = 'id, title, slug, start_date, end_date, location, self_checkin_mode, checkin_windows, day_hours, requires_checkin_form, checkin_food_item, checkin_form_event_name, checkin_form_override';
   const { data: event } = await (UUID.test(slug)
     ? supabase.from('events').select(columns).eq('id', slug).eq('is_published', true).maybeSingle()
     : supabase.from('events').select(columns).eq('slug', slug).eq('is_published', true).maybeSingle());
@@ -38,7 +39,7 @@ export default async function SelfCheckinPage({ params }: { params: Promise<{ sl
 
   return (
     <SelfCheckinClient
-      event={{ id: event.id, title: event.title, location: event.location ?? null, start: event.start_date, enabled: !!event.self_checkin_enabled, requiresForm: !!event.requires_checkin_form }}
+      event={{ id: event.id, title: event.title, location: event.location ?? null, start: event.start_date, closed: selfCheckinClosedReason(cleanSelfCheckinMode(event.self_checkin_mode), { start_date: event.start_date, end_date: event.end_date, checkin_windows: event.checkin_windows, day_hours: event.day_hours }), requiresForm: !!event.requires_checkin_form }}
       person={{ name: profile.display_name || profile.google_first_name || 'You', avatar: resolveAvatarUrl(profile) }}
       asFormUrl={asFormUrl}
       slug={slug}
