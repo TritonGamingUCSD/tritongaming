@@ -73,7 +73,7 @@ export default function SelfCheckinClient({ event, gate, person, asFormUrl, slug
       {!gate && state.kind === 'working' && (
         <div className={styles.card} role="status">
           <Loader2 className={styles.spin} size={34} aria-hidden="true" />
-          <p className={styles.big}>Checking you in…</p>
+          <p className={styles.big}>Checking you in to {event.title}…</p>
         </div>
       )}
 

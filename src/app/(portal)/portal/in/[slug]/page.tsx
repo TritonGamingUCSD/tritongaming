@@ -32,7 +32,7 @@ export default async function SelfCheckinPage({ params }: { params: Promise<{ sl
   const closed = selfCheckinClosedReason(cleanSelfCheckinMode(event.self_checkin_mode), { start_date: event.start_date, end_date: event.end_date, checkin_windows: event.checkin_windows, day_hours: event.day_hours });
   // What stands in the way, in the order the person should fix it: the event not being open, then a non-UCSD account on a UCSD-only event, then the profile.
   // A profile that still needs filling in goes to the stripped-down page that asks only for what is missing, then comes straight back here.
-  if (!closed && !(event.audience === 'ucsd_only' && !isUcsd) && missing.length) redirect(`/portal/finish-profile?next=${encodeURIComponent(`/portal/in/${slug}`)}`);
+  if (!closed && !(event.audience === 'ucsd_only' && !isUcsd) && missing.length) redirect(`/portal/finish-profile?next=${encodeURIComponent(`/portal/in/${slug}`)}&mode=checkin&event=${event.id}`);
   const gate = closed
     ? { kind: 'closed' as const, code: closed.code, message: closed.message }
     : event.audience === 'ucsd_only' && !isUcsd
