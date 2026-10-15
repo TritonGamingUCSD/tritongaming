@@ -86,7 +86,7 @@ export default function FinishProfile({ initial, isUcsd, next, userId, task, div
     return (
       <div className={styles.page}>
         <div className={styles.progressCard}>
-          <ProgressSteps steps={progress.steps} active={progress.active} title={progress.active >= progress.steps.length ? 'All done' : 'Hang tight'} />
+          <ProgressSteps steps={progress.steps} active={progress.active} title="Hang tight, this only takes a moment." doneTitle={task?.mode === 'checkin' ? "You're checked in" : 'All set'} subtitle={task ? task.title : undefined} />
         </div>
       </div>
     );
