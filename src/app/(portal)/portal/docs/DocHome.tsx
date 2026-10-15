@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { ExternalLink, FileText, GripVertical, Pencil, Pin, Plus, Star, Users } from 'lucide-react';
 import { ageLabel, docSummary, type DocNode, type DocSection } from '@/lib/docs/docsTree';
-import { linkHost } from '@/lib/docs/linkHost';
 import type { Doc, QuickLink } from '@/types/database';
 import QuickLinkDialog from './QuickLinkDialog';
 import { docsPost } from './docsApi';
@@ -81,7 +80,6 @@ export default function DocHome({ docs, sections, favorites, onOpen, canEdit, ca
                 }}>
                 <a className={styles.quickLink} href={l.url} title={l.note || undefined} target="_blank" rel="noopener noreferrer" draggable={false}>
                   <strong>{l.title}</strong>
-                  <span className={styles.quickHost}>{linkHost(l.url)}</span>
                   <ExternalLink size={13} className={styles.quickOpen} aria-hidden="true" />
                 </a>
                 {canEdit && <GripVertical size={14} className={styles.quickGrip} aria-hidden="true" />}

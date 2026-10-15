@@ -32,13 +32,12 @@
 
 .h { margin: 0 0 0.25rem; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.35rem; color: var(--pp-ink); }
 
-.quick { list-style: none; margin: 0.6rem 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 0.5rem; }
+.quick { list-style: none; margin: 0.6rem 0 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.4rem; max-width: 34rem; }
 .quick li { display: flex; }
-.quickLink { flex: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 0.1rem 0.6rem; min-width: 0; padding: 0.5rem 0.75rem; border-radius: 0.6rem; border: 1.5px solid rgba(var(--pp-ink-rgb), 0.55); background: var(--pp-card); color: var(--pp-ink); text-decoration: none; transition: background 0.12s, border-color 0.12s; }
+.quickLink { flex: 1; display: flex; align-items: center; gap: 0.1rem 0.6rem; min-width: 0; padding: 0.5rem 0.75rem; border-radius: 0.6rem; border: 1.5px solid rgba(var(--pp-ink-rgb), 0.55); background: var(--pp-card); color: var(--pp-ink); text-decoration: none; transition: background 0.12s, border-color 0.12s; }
 .quickLink:hover { background: rgba(var(--pp-ink-rgb), 0.06); border-color: var(--pp-ink); }
 .quickLink:focus-visible { outline: 3px solid var(--p-accent-text); outline-offset: 2px; }
-.quickLink strong { flex: 1 1 8rem; min-width: 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 0.92rem; overflow-wrap: anywhere; line-height: 1.25; }
-.quickHost { flex: none; max-width: 100%; overflow-wrap: anywhere; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-accent-text); }
+.quickLink strong { flex: 1 1 auto; min-width: 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 0.92rem; overflow-wrap: anywhere; line-height: 1.25; }
 .quickOpen { flex: none; opacity: 0.6; }
 
 .twoCol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.4rem; align-items: start; }
@@ -62,9 +61,7 @@
 .diamond { flex-shrink: 0; width: 8px; height: 8px; background: var(--p-accent-text); transform: rotate(45deg) translateY(-1px); }
 
 @media (max-width: 760px) {
-  .quick { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.45rem; }
   .quickLink { padding: 0.5rem 0.6rem; }
-  .quickHost { display: none; }
   .twoCol { grid-template-columns: 1fr; }
   .top { grid-template-columns: 1fr; }
   .ticket { grid-template-columns: minmax(0, 1fr) 44px; }

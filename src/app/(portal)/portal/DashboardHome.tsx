@@ -1,6 +1,5 @@
 import Link from '@/components/portal/PortalLink';
 import { CalendarDays, ExternalLink, MapPin, QrCode, Ticket } from 'lucide-react';
-import { linkHost } from '@/lib/docs/linkHost';
 import { PACIFIC_TZ } from '@/lib/core/timezone';
 import PortalSearch from '@/components/portal/PortalSearch';
 import EventCountdown from './EventCountdown';
@@ -80,7 +79,6 @@ export function DashboardBody({ event, note, links, upcoming, activity, showRole
               <li key={l.id}>
                 <a className={styles.quickLink} href={l.url} title={l.note || undefined} target="_blank" rel="noopener noreferrer">
                   <strong>{l.title}</strong>
-                  <span className={styles.quickHost}>{linkHost(l.url)}</span>
                   <ExternalLink size={13} className={styles.quickOpen} aria-hidden="true" />
                 </a>
               </li>
