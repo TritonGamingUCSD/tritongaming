@@ -39,12 +39,6 @@ export interface PhotoAlbumEntry {
   url: string;
 }
 
-export interface DocAttachment {
-  name: string;
-  url: string;
-  kind: 'file' | 'google_album';
-}
-
 export type Capability =
   | 'manage_events'
   | 'view_division_members'
@@ -269,7 +263,6 @@ export interface Database {
           parent_id: string | null;
           order_index: number;
           content: string;
-          attachments: DocAttachment[];
           created_by: string | null;
           updated_by: string | null;
           created_at: string;

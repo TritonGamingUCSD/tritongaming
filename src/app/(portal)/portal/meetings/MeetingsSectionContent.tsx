@@ -1,5 +1,6 @@
 'use client';
 
+import { useFileDrop } from '@/lib/ui/useFileDrop';
 import Loading from '@/components/Loading/Loading';
 import SaveBar from '@/components/portal/SaveBar';
 import EditingNow from '@/components/portal/EditingNow';
@@ -95,9 +96,9 @@ export default function MeetingsSectionContent({ canHost, canManageAll, userId, 
   const canManage = canHost;
   const canSeeResults = canHost || canViewReports;
   const nav = useUrlNav();
-  const sync = usePortalTabSync('meetings', () => valid[0]);
   const toolTabs: ToolTab[] = [...(canSeeResults ? (['attendance'] as ToolTab[]) : []), ...(canAttend || canManage ? (['emojis'] as ToolTab[]) : [])];
   const valid: Tab[] = [...(canAttend ? (['mine', 'planning'] as Tab[]) : canManage ? (['planning'] as Tab[]) : []), ...(canManage ? (['host'] as Tab[]) : []), ...(toolTabs.length ? (['tools'] as Tab[]) : [])];
+  const sync = usePortalTabSync('meetings', () => valid[0]);
   // Old links and notifications: tab=upcoming and tab=checkin are part of My meetings now; Run meetings is called Host; Attendance and Emojis live under Tools (Teams moved to TG Members).
   const legacyTool = (['attendance', 'emojis'] as const).find((t) => t === nav.tab || t === nav.subtab);
   const startTab = nav.tab === 'upcoming' || nav.tab === 'checkin' ? 'mine' : nav.tab === 'run' ? 'host' : nav.tab === 'manage' || legacyTool ? 'tools' : nav.tab;
@@ -1269,6 +1270,7 @@ function EmojiPanel() {
     if (!r.ok) setError((await r.json().catch(() => ({}))).error || 'Failed.');
     await load();
   }
+  const { over: emojiOver, dropProps: emojiDrop } = useFileDrop((files) => { const f = files.find((x) => x.type.startsWith('image/')); if (f) { setDiscord(''); void pick(f); } });
   const tile = (e: CustomEmoji, actions?: React.ReactNode) => (
     <li key={e.id} className={styles.emojiTile}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1282,7 +1284,7 @@ function EmojiPanel() {
     <div className={styles.stack}>
       {error && <Notice tone="error">{error}</Notice>}
       {note && <Notice tone="success">{note}</Notice>}
-      <form className={styles.emojiForm} onSubmit={upload} onPaste={(e) => { const f = [...e.clipboardData.files].find((x) => x.type.startsWith('image/')); if (f) { e.preventDefault(); setDiscord(''); void pick(f); } }}>
+      <form className={styles.emojiForm} data-dropping={emojiOver || undefined} {...emojiDrop} onSubmit={upload} onPaste={(e) => { const f = [...e.clipboardData.files].find((x) => x.type.startsWith('image/')); if (f) { e.preventDefault(); setDiscord(''); void pick(f); } }}>
         <h2 className={styles.sectionHead}>Add an emoji</h2>
         <p className={styles.faint}>Square images work best. PNG, JPG, GIF or WebP, any size. It’s shrunk to a small square automatically. {data.manage ? 'Yours goes live straight away.' : 'An exec approves it before anyone sees it.'}</p>
         <div className={styles.emojiRow}>
@@ -1296,7 +1298,7 @@ function EmojiPanel() {
         <p className={styles.faint}>In Discord: right-click a custom emoji, Copy Link, and paste it above. You can also paste a copied picture anywhere in this box.</p>
         <div className={styles.emojiRow}>
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="name, like pog_face" maxLength={22} aria-label="Emoji name" autoComplete="off" />
-          <label className={styles.filePick}><Upload size={14} aria-hidden="true" /> {file ? file.name : 'Choose image'}<input type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={(e) => void pick(e.target.files?.[0] ?? null)} hidden /></label>
+          <label className={styles.filePick}><Upload size={14} aria-hidden="true" /> {file ? file.name : 'Choose or drop image'}<input type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={(e) => void pick(e.target.files?.[0] ?? null)} hidden /></label>
           <Button type="submit" size="sm" loading={busy === 'upload'} disabled={(!file && !dEmoji) || tooBig || !EMOJI_NAME.test(clean)}>Upload</Button>
         </div>
         {prepNote && <p className={styles.faint}>{prepNote}</p>}

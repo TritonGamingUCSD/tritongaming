@@ -8,12 +8,12 @@ import { Input } from '@/components/ui/Field';
 import { showToast } from '@/lib/ui/toast';
 import { cleanTags, MAX_TAGS } from '@/lib/docs/docsTree';
 import { joinNames, type SyncDoc } from '@/lib/docs/docsSync';
-import type { Doc, DocAttachment } from '@/types/database';
+import type { Doc } from '@/types/database';
 import DocEditor, { type DocEditorHandle } from './DocEditor';
 import ConflictDialog from './ConflictDialog';
-import VersionHistory from './VersionHistory';
+import VersionHistory, { useVersions } from './VersionHistory';
+import VersionCompare from './VersionCompare';
 import SaveBar from '@/components/portal/SaveBar';
-import { AttachmentsEditor } from './DocAttachments';
 import { clock, dayTime, docsPost } from './docsApi';
 import styles from './docs.module.css';
 
@@ -69,7 +69,7 @@ const DocEditView = forwardRef<DocEditViewHandle, Props>(function DocEditView({ 
   const [busy, setBusy] = useState('');
   const [others, setOthers] = useState<string[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [metaBusy, setMetaBusy] = useState(false);
+  const hist = useVersions(doc.id, historyOpen);
   const [tagText, setTagText] = useState('');
   const [coverOpen, setCoverOpen] = useState(false);
   const [error, setError] = useState('');
@@ -238,20 +238,43 @@ const DocEditView = forwardRef<DocEditViewHandle, Props>(function DocEditView({ 
     onLeave();
   }
 
-  // ── Icon, cover, tags, attachments: small saves that go straight to the doc ─────────────────────────────────────────────────────────
+  // ── Icon, cover, tags, teams: small saves that go straight to the doc ─────────────────────────────────────────────────────────
   async function meta(body: Record<string, unknown>): Promise<boolean> {
-    setMetaBusy(true); setError('');
+    setError('');
     const r = await docsPost<{ doc: Partial<Doc> }>('/api/docs/meta', { id: doc.id, ...body });
-    setMetaBusy(false);
     if (r.ok) { onDocPatch(r.json.doc); return true; }
     if (r.json.code === 'deleted') setDialog({ kind: 'deleted' }); else setError(r.json.error || 'Couldn’t save that.');
     return false;
   }
-  const liveTags = latest ? latest.tags : doc.tags;
-  async function addTag() {
+  // Tags and teams change on screen at once; the save follows in the background, one request after another so quick clicks can't overwrite each other.
+  // The tag list shows what you just did until the background check reports a newer state (a change by someone else, or ours arriving).
+  const latestKey = latest ? latest.tags.join('\u0001') : null;
+  const [optTags, setOptTags] = useState<{ tags: string[]; base: string | null } | null>(null);
+  const liveTags = optTags && optTags.base === latestKey ? optTags.tags : latest ? latest.tags : doc.tags;
+  const saveChain = useRef<Promise<unknown>>(Promise.resolve());
+  function changeFast(body: Record<string, unknown>, patch: Partial<Doc>, tags?: string[]) {
+    const before: Partial<Doc> = {};
+    for (const k of Object.keys(patch) as (keyof Doc)[]) (before as Record<string, unknown>)[k] = doc[k];
+    const tagsBefore = liveTags;
+    onDocPatch(patch);
+    if (tags) setOptTags({ tags, base: latestKey });
+    setError('');
+    saveChain.current = saveChain.current.then(async () => {
+      const r = await docsPost<{ doc: Partial<Doc> }>('/api/docs/meta', { id: doc.id, ...body });
+      if (r.ok) { onDocPatch(r.json.doc); return; }
+      onDocPatch(before);
+      if (tags) setOptTags({ tags: tagsBefore, base: latestKey });
+      if (r.json.code === 'deleted') setDialog({ kind: 'deleted' }); else setError(r.json.error || 'Couldn’t save that.');
+    });
+  }
+  function addTag() {
     const t = cleanTags([tagText]);
     setTagText('');
-    if (t.length && !doc.tags.includes(t[0]) && doc.tags.length < MAX_TAGS) await meta({ add_tags: t });
+    if (t.length && !liveTags.includes(t[0]) && liveTags.length < MAX_TAGS) changeFast({ add_tags: t }, { tags: [...liveTags, t[0]] }, [...liveTags, t[0]]);
+  }
+  function removeTag(t: string) {
+    const next = liveTags.filter((x) => x !== t);
+    changeFast({ remove_tags: [t] }, { tags: next }, next);
   }
 
   // ── Banners from what the background check sees ────────────────────────────────────────────────────────────────────────────────────
@@ -286,6 +309,9 @@ const DocEditView = forwardRef<DocEditViewHandle, Props>(function DocEditView({ 
 
       <div className={`${styles.editBody} ${historyOpen ? styles.withHistory : ''}`}>
         <div className={styles.editMain}>
+          {historyOpen && hist.current && <VersionCompare version={hist.current} previous={hist.previous} onRestore={(v) => void restore(v)} onBack={() => setHistoryOpen(false)} />}
+          {historyOpen && !hist.current && <div className={styles.compare}><p className={styles.compareNote}>{hist.error || (hist.versions && hist.versions.length === 0 ? 'Nothing has been published yet, so there is no history.' : 'Loading the history…')}</p></div>}
+          <div className={styles.editFields} hidden={historyOpen}>
           <div className={styles.titleRow}>
             <input className={styles.titleInput} value={title} onChange={(e) => onTitle(e.target.value)} maxLength={120} placeholder="Untitled doc" aria-label="Doc title" disabled={gone} autoFocus={isNew} />
           </div>
@@ -294,9 +320,9 @@ const DocEditView = forwardRef<DocEditViewHandle, Props>(function DocEditView({ 
             <div className={styles.metaField}>
               <span className={styles.label}>Tags <span className={styles.labelHint}>Short words to find it by</span></span>
               <div className={styles.tagEdit}>
-                {liveTags.map((t) => <span key={t} className={styles.tagChip}>{t}<button type="button" aria-label={`Remove tag ${t}`} onClick={() => void meta({ remove_tags: [t] })}><X size={11} aria-hidden="true" /></button></span>)}
-                <input className={styles.tagInput} value={tagText} onChange={(e) => setTagText(e.target.value)} placeholder={liveTags.length >= MAX_TAGS ? 'Tag limit reached' : 'Add a tag…'} disabled={liveTags.length >= MAX_TAGS || metaBusy}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); void addTag(); } }} onBlur={() => { if (tagText.trim()) void addTag(); }} aria-label="Add a tag" />
+                {liveTags.map((t) => <span key={t} className={styles.tagChip}>{t}<button type="button" aria-label={`Remove tag ${t}`} onClick={() => removeTag(t)}><X size={11} aria-hidden="true" /></button></span>)}
+                <input className={styles.tagInput} value={tagText} onChange={(e) => setTagText(e.target.value)} placeholder={liveTags.length >= MAX_TAGS ? 'Tag limit reached' : 'Add a tag…'} disabled={liveTags.length >= MAX_TAGS}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag(); } }} onBlur={() => { if (tagText.trim()) addTag(); }} aria-label="Add a tag" />
                 <button type="button" className={styles.coverToggle} aria-expanded={coverOpen || !!doc.cover_url} onClick={() => setCoverOpen((v) => !v)}>{doc.cover_url ? 'Cover image' : '+ Cover image'}</button>
               </div>
             </div>
@@ -306,8 +332,8 @@ const DocEditView = forwardRef<DocEditViewHandle, Props>(function DocEditView({ 
                 {teams.length === 0 && <small>No teams yet. Make one under TG Members, Team.</small>}
                 {teams.map((t) => {
                   const on = doc.teams.includes(t.id);
-                  return <button key={t.id} type="button" className={`${styles.teamChoice} ${on ? styles.teamChoiceOn : ''}`} aria-pressed={on} disabled={metaBusy || gone}
-                    onClick={() => void meta({ teams: on ? doc.teams.filter((x) => x !== t.id) : [...doc.teams, t.id] })}>{t.name}</button>;
+                  return <button key={t.id} type="button" className={`${styles.teamChoice} ${on ? styles.teamChoiceOn : ''}`} aria-pressed={on} disabled={gone}
+                    onClick={() => { const next = on ? doc.teams.filter((x) => x !== t.id) : [...doc.teams, t.id]; changeFast({ teams: next }, { teams: next }); }}>{t.name}</button>;
                 })}
                 {teams.length > 0 && doc.teams.length === 0 && <small>Nobody in particular: it is for everyone.</small>}
               </div>
@@ -321,11 +347,10 @@ const DocEditView = forwardRef<DocEditViewHandle, Props>(function DocEditView({ 
           </div>
 
           <DocEditor ref={editor} value={startContent} onChange={onText} disabled={gone} linkTitles={linkTitles} />
+          </div>
 
-          <AttachmentsEditor value={doc.attachments as DocAttachment[]} busy={metaBusy || gone}
-            onAdd={async (a) => { await meta({ add_attachments: [a] }); }} onRemove={async (url) => { await meta({ remove_attachment_urls: [url] }); }} />
         </div>
-        {historyOpen && <VersionHistory docId={doc.id} onClose={() => setHistoryOpen(false)} onRestore={(v) => void restore(v)} />}
+        {historyOpen && <VersionHistory versions={hist.versions} error={hist.error} open={hist.open} onOpen={hist.setOpen} onClose={() => setHistoryOpen(false)} />}
       </div>
 
       {/* ── Conflict dialogs ── */}

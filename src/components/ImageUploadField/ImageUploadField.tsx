@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { uploadImageToStorage, uploadCroppedImage, ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES } from '@/lib/storage/imageUpload';
 import ImageCropModal from '@/components/ImageCropModal/ImageCropModal';
 import styles from './ImageUploadField.module.css';
+import { useFileDrop } from '@/lib/ui/useFileDrop';
 import { Camera, X } from 'lucide-react';
 
 const PREVIEW_SIZE: Record<Shape, { width: number; height: number }> = {
@@ -103,8 +104,10 @@ export default function ImageUploadField({
   const { width, height } = compact ? (shape === 'wide' ? { width: 84, height: 56 } : { width: 56, height: 56 }) : PREVIEW_SIZE[shape];
   const displaySrc = value || fallbackPreview;
 
+  const { over, dropProps } = useFileDrop((files) => { if (files[0]) handleFile(files[0]); }, { disabled: uploading });
+
   return (
-    <div className={`${styles.field} ${compact ? styles.compact : ''}`}>
+    <div className={`${styles.field} ${compact ? styles.compact : ''}`} data-dropping={over || undefined} {...dropProps}>
       {!compact && <span className={styles.label}>{label}</span>}
 
       {displaySrc ? (
@@ -122,7 +125,7 @@ export default function ImageUploadField({
         </div>
       ) : (
         <button type="button" className={styles.dropzone} onClick={() => inputRef.current?.click()} disabled={uploading}>
-          {uploading ? 'Uploading…' : compact ? 'Upload' : `Click to upload ${label.toLowerCase()}`}
+          {uploading ? 'Uploading…' : compact ? 'Upload' : `Click or drop to upload ${label.toLowerCase()}`}
         </button>
       )}
 

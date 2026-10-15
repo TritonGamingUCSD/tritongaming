@@ -1,5 +1,6 @@
 'use client';
 
+import { useFileDrop } from '@/lib/ui/useFileDrop';
 import Loading from '@/components/Loading/Loading';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDraft } from '@/lib/ui/useDraft';
@@ -49,8 +50,8 @@ async function api<T = unknown>(url: string, init?: RequestInit): Promise<{ ok: 
 export default function HelpSectionContent({ isStaff, userId }: { isStaff: boolean; userId: string }) {
   const nav = useUrlNav();
   const params = useLiveParams();
-  const sync = usePortalTabSync('help', () => valid[0]);
   const valid: Tab[] = isStaff ? ['inbox', 'mine', 'ask', 'replies'] : ['ask', 'mine'];
+  const sync = usePortalTabSync('help', () => valid[0]);
   const [tab, setTab] = useState<Tab>(valid.includes(nav.tab as Tab) ? (nav.tab as Tab) : valid[0]);
   const setParams = usePortalParams();
   const [openId, setOpenId] = useState<string | null>(params.get('ticket'));
@@ -153,7 +154,7 @@ function useAttachments(userId: string) {
   const [paths, setPaths] = useState<{ path: string; preview: string }[]>([]);
   const [uploading, setUploading] = useState(false);
   const [err, setErr] = useState('');
-  async function add(files: FileList | null) {
+  async function add(files: FileList | File[] | null) {
     if (!files?.length) return;
     setErr('');
     const room = MAX_ATTACHMENTS - paths.length;
@@ -177,8 +178,9 @@ function useAttachments(userId: string) {
 
 function AttachmentPicker({ att }: { att: ReturnType<typeof useAttachments> }) {
   const ref = useRef<HTMLInputElement>(null);
+  const { over, dropProps } = useFileDrop((files) => { void att.add(files); }, { disabled: att.uploading });
   return (
-    <div className={styles.attachRow}>
+    <div className={styles.attachRow} data-dropping={over || undefined} {...dropProps}>
       {att.paths.map((a, i) => (
         <span key={a.path} className={styles.thumb}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -188,7 +190,7 @@ function AttachmentPicker({ att }: { att: ReturnType<typeof useAttachments> }) {
       ))}
       {att.paths.length < MAX_ATTACHMENTS && (
         <Button variant="secondary" size="sm" loading={att.uploading} onClick={() => ref.current?.click()}>
-          <ImagePlus size={15} strokeWidth={1.75} aria-hidden="true" /> {att.uploading ? 'Uploading…' : 'Add screenshot'}
+          <ImagePlus size={15} strokeWidth={1.75} aria-hidden="true" /> {att.uploading ? 'Uploading…' : 'Add or drop screenshot'}
         </Button>
       )}
       <input ref={ref} type="file" accept={ALLOWED_IMAGE_TYPES.join(',')} multiple hidden onChange={(e) => { void att.add(e.target.files); e.target.value = ''; }} />

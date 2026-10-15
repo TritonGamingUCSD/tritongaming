@@ -71,24 +71,23 @@ export function DashboardBody({ event, note, links, upcoming, activity, showRole
 
       {showRoleAsk && compact && <RoleAsk />}
 
-      {links.length > 0 && (
-        <section aria-label="Quick links">
-          <h2 className={styles.h}>Quick links</h2>
-          <ul className={styles.quick}>
-            {links.map((l) => (
-              <li key={l.id}>
-                <a className={styles.quickLink} href={l.url} title={l.note || undefined} target="_blank" rel="noopener noreferrer">
-                  <strong>{l.title}</strong>
-                  <ExternalLink size={13} className={styles.quickOpen} aria-hidden="true" />
-                </a>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {(upcoming.length > 0 || activity.length > 0) && (
-        <div className={styles.twoCol}>
+      {(links.length > 0 || upcoming.length > 0 || activity.length > 0) && (
+        <div className={styles.cols}>
+        {links.length > 0 && (
+          <section aria-label="Quick links">
+            <h2 className={styles.h}>Quick links</h2>
+            <ul className={styles.quick}>
+              {links.map((l) => (
+                <li key={l.id}>
+                  <a className={styles.quickLink} href={l.url} title={l.note || undefined} target="_blank" rel="noopener noreferrer">
+                    <strong>{l.title}</strong>
+                    <ExternalLink size={13} className={styles.quickOpen} aria-hidden="true" />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
           {upcoming.length > 0 && (
             <section aria-label="Coming up">
               <h2 className={styles.h}>Coming up</h2>

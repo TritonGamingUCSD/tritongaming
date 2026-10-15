@@ -202,6 +202,7 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, cre
     const t = setTimeout(() => pushDrafts.current(), 120);
     return () => clearTimeout(t);
   }, [draftsJson, previewOpen]);
+  const hasActiveBlock = !!activeBlock;
   useEffect(() => {
     const el = boxRef.current;
     if (!el) return;
@@ -210,7 +211,7 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, cre
     ro.observe(el);
     measure();
     return () => ro.disconnect();
-  }, [previewOpen, !!activeBlock, full]);
+  }, [previewOpen, hasActiveBlock, full]);
   // Zoomed (the default on desktop): the page is shown at a readable width, in a window just tall enough for one section, and the preview
   // jumps to the section being edited (see PreviewBridge). The zoom button switches to the whole page fitted to the panel, and back.
   const [zoomPick, setZoomPick] = useState<boolean | null>(null);

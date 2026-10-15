@@ -2,28 +2,31 @@
 
 import Loading from '@/components/Loading/Loading';
 import { useEffect, useState } from 'react';
-import { History, RotateCcw, X } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
+import { History, X } from 'lucide-react';
 import { dayTime, docsGet } from './docsApi';
 import styles from './docs.module.css';
 
-interface Version { id: string; title: string; content: string; created_at: string; note: string | null; by: string }
+export interface Version { id: string; title: string; content: string; created_at: string; note: string | null; by: string }
 
-// Past published versions of a doc: look at one, and bring it back as the draft (it only goes live when published again).
-export default function VersionHistory({ docId, onRestore, onClose }: { docId: string; onRestore: (v: Version) => void; onClose: () => void }) {
+// The published versions of a doc, newest first, and which one is being looked at. The edit page shows the chosen version in the main area (see VersionCompare).
+export function useVersions(docId: string, enabled: boolean) {
   const [versions, setVersions] = useState<Version[] | null>(null);
   const [error, setError] = useState('');
   const [open, setOpen] = useState<string | null>(null);
   useEffect(() => {
+    if (!enabled) return;
     let live = true;
     void docsGet<{ versions: Version[] }>(`/api/docs/versions?id=${docId}`).then((r) => {
       if (!live) return;
-      if (r.ok) { setVersions(r.json.versions); setOpen(r.json.versions[0]?.id ?? null); } else setError(r.json.error || 'Couldn’t load the history.');
+      if (r.ok) { setVersions(r.json.versions); setOpen((cur) => cur ?? r.json.versions[0]?.id ?? null); } else setError(r.json.error || 'Couldn’t load the history.');
     });
     return () => { live = false; };
-  }, [docId]);
-  const shown = versions?.find((v) => v.id === open) ?? null;
+  }, [docId, enabled]);
+  const index = versions ? versions.findIndex((v) => v.id === open) : -1;
+  return { versions, error, open, setOpen, current: index >= 0 ? versions![index] : null, previous: index >= 0 ? versions![index + 1] ?? null : null };
+}
+
+export default function VersionHistory({ versions, error, open, onOpen, onClose }: { versions: Version[] | null; error: string; open: string | null; onOpen: (id: string) => void; onClose: () => void }) {
   return (
     <aside className={styles.history} aria-label="Version history">
       <header className={styles.historyHead}>
@@ -34,27 +37,16 @@ export default function VersionHistory({ docId, onRestore, onClose }: { docId: s
       {!versions && !error && <Loading variant="inline" label="Loading…" />}
       {versions && versions.length === 0 && <p className={styles.muted}>Nothing published yet.</p>}
       {versions && versions.length > 0 && (
-        <div className={styles.historyBody}>
-          <ol className={styles.versionList}>
-            {versions.map((v, i) => (
-              <li key={v.id}>
-                <button type="button" className={`${styles.versionRow} ${v.id === open ? styles.versionOn : ''}`} onClick={() => setOpen(v.id)}>
-                  <strong>{dayTime(v.created_at)}{i === 0 && <em className={styles.liveTag}>live</em>}</strong>
-                  <span>{v.by}{v.note ? ` · ${v.note}` : ''}</span>
-                </button>
-              </li>
-            ))}
-          </ol>
-          {shown && (
-            <div className={styles.versionView}>
-              <div className={styles.versionActions}>
-                <strong>{shown.title}</strong>
-                <Button size="sm" variant="secondary" onClick={() => onRestore(shown)}><RotateCcw size={14} aria-hidden="true" /> Restore As Draft</Button>
-              </div>
-              <div className={styles.versionText}><MarkdownContent>{shown.content || '*Empty*'}</MarkdownContent></div>
-            </div>
-          )}
-        </div>
+        <ol className={styles.versionList}>
+          {versions.map((v, i) => (
+            <li key={v.id}>
+              <button type="button" className={`${styles.versionRow} ${v.id === open ? styles.versionOn : ''}`} onClick={() => onOpen(v.id)} aria-current={v.id === open ? 'true' : undefined}>
+                <strong>{dayTime(v.created_at)}{i === 0 && <em className={styles.liveTag}>live</em>}</strong>
+                <span>{v.by}{v.note ? ` · ${v.note}` : ''}</span>
+              </button>
+            </li>
+          ))}
+        </ol>
       )}
     </aside>
   );

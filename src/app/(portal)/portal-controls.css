@@ -91,3 +91,6 @@
   .pp-root [class*="catCardLink"] { padding-block: 0.6rem; }
   .pp-root [class*="catCardMore"] { padding-block: 0.6rem; }
 }
+
+/* A box that takes dropped files (useFileDrop) lights up while a file is over it. */
+:where(.pp-root) [data-dropping] { outline: 2px dashed var(--p-accent); outline-offset: 3px; border-radius: 0.6rem; background-color: rgba(125, 180, 234, 0.1); }

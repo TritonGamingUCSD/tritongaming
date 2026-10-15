@@ -90,6 +90,8 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
   // Signed in with a personal Google account on a UCSD-only event: sign out and reopen the sign-in (its main button offers only UCSD accounts), coming back here.
   async function switchToUcsd() {
     await createClient().auth.signOut();
+    // A full page load on purpose: the sign-out above should not leave any signed-in state behind in the app.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.href = `/login?next=${encodeURIComponent('/portal/tickets')}`;
   }
 
@@ -193,6 +195,8 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
         return;
       }
       if (data.url) {
+        // Off to the payment page: an outside address, so a plain navigation is right.
+        // eslint-disable-next-line react-hooks/immutability
         window.location.href = data.url;
         return;
       }
@@ -419,7 +423,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
           <span className={styles.emptyIcon}><Ticket size={40} strokeWidth={1.25} aria-hidden="true" /></span>
           <p className={styles.emptyText}>No tickets yet</p>
           <p className={styles.emptyHint}>Register for events to get your tickets here.</p>
-          <a href="/events" className={styles.browseLink}>Browse Events →</a>
+          <Link href="/events" className={styles.browseLink}>Browse Events →</Link>
         </div>
       )}
 

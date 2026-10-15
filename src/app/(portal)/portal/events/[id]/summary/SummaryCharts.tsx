@@ -28,19 +28,17 @@ export function Donut({ data }: { data: Bucket[] }) {
   const total = data.reduce((n, b) => n + b.count, 0);
   if (!total) return <p className={styles.note}>No data yet.</p>;
   const r = 40, c = 2 * Math.PI * r;
-  let offset = 0;
   return (
     <div className={styles.donutWrap}>
       <svg viewBox="0 0 100 100" className={styles.donut} role="img" aria-label="Breakdown chart">
         <circle cx="50" cy="50" r={r} fill="none" strokeWidth="14" className={styles.donutTrack} />
         {data.map((b, i) => {
           const len = (b.count / total) * c;
-          const el = (
+          const offset = data.slice(0, i).reduce((sum, x) => sum + (x.count / total) * c, 0);
+          return (
             <circle key={b.label} cx="50" cy="50" r={r} fill="none" stroke={PALETTE[i % PALETTE.length]} strokeWidth="14"
               strokeDasharray={`${Math.max(len - 1, 0)} ${c}`} strokeDashoffset={-offset} transform="rotate(-90 50 50)" />
           );
-          offset += len;
-          return el;
         })}
         <text x="50" y="48" textAnchor="middle" className={styles.donutTotal}>{total}</text>
         <text x="50" y="60" textAnchor="middle" className={styles.donutSub}>people</text>

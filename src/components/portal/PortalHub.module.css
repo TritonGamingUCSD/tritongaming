@@ -259,7 +259,7 @@
 .desktopContent .gridWrap {
   /* Sits inside a padded content pane now, not the full-bleed .wrap — the
      grid's own gap/columns already adapt fine, nothing else to override. */
-  max-width: 1000px;
+  max-width: 1280px;
   margin-inline: auto;
 }
 

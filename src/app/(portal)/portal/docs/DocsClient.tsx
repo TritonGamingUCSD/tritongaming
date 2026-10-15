@@ -25,7 +25,7 @@ import styles from './docs.module.css';
 
 interface Notice2 { id: number; text: string; tone: 'info' | 'warning'; docId?: string }
 const POLL_MS = 120_000;
-const DOC_SELECT = 'id, slug, title, category_id, parent_id, order_index, content, attachments, created_by, updated_by, created_at, updated_at, icon, cover_url, tags, pinned, teams, reviewed_at, reviewed_by, published, revision, draft_title, draft_content, draft_updated_at, draft_updated_by';
+const DOC_SELECT = 'id, slug, title, category_id, parent_id, order_index, content, created_by, updated_by, created_at, updated_at, icon, cover_url, tags, pinned, teams, reviewed_at, reviewed_by, published, revision, draft_title, draft_content, draft_updated_at, draft_updated_by';
 
 export default function DocsClient({ initialDocs, initialCategories, initialFavorites, initialLinks, teams, myTeamIds, userId, canEdit }: { initialDocs: Doc[]; initialCategories: DocCategory[]; initialFavorites: string[]; initialLinks: QuickLink[]; teams: { id: string; name: string }[]; myTeamIds: string[]; userId: string; canEdit: boolean }) {
   const [docs, setDocs] = useState(initialDocs);
@@ -199,7 +199,7 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
     const siblings = docsRef.current.filter((d) => (d.parent_id ?? null) === c.parentId && (c.parentId ? true : (d.category_id ?? null) === c.categoryId));
     const { data, error: err } = await supabase.from('docs').insert({
       slug, title: c.title, category_id: c.parentId ? null : c.categoryId, parent_id: c.parentId, order_index: siblings.length ? Math.max(...siblings.map((d) => d.order_index)) + 1 : 0,
-      content: c.draft ? '' : c.content, attachments: [], created_by: userId, updated_by: userId, icon: c.icon, tags: c.tags, published: false, teams: c.teams ?? [],
+      content: c.draft ? '' : c.content, created_by: userId, updated_by: userId, icon: c.icon, tags: c.tags, published: false, teams: c.teams ?? [],
       ...(c.draft ? { draft_title: c.title, draft_content: c.content, draft_updated_at: new Date().toISOString(), draft_updated_by: userId } : {}),
     }).select(DOC_SELECT).single();
     if (err || !data) { setError('Couldn’t create the doc. Try again.'); return null; }

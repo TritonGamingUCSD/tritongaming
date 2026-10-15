@@ -186,7 +186,7 @@ export default async function EventDetailPage({ params }: Params) {
 
             {!isPast && (
               <div className={styles.ctaRow} data-avoid>
-                <a href="/portal/tickets" className={styles.ticketBtn}>
+                <Link href="/portal/tickets" className={styles.ticketBtn}>
                   <span className={styles.stubLeft}><Ticket size={20} strokeWidth={1.75} aria-hidden="true" /></span>
                   <span className={styles.stubRight}>
                     {event.audience === 'ucsd_only'
@@ -196,7 +196,7 @@ export default async function EventDetailPage({ params }: Params) {
                       : 'Get ticket · free'}
                     {event.audience !== 'ucsd_only' && event.ticket_price > 0 && <small>free for UCSD students</small>}
                   </span>
-                </a>
+                </Link>
               </div>
             )}
             {!isPast && event.points_value > 0 && (

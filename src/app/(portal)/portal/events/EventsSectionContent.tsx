@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { usePortalParams, useLiveParams } from '@/lib/portal/usePortalParams';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Link from '@/components/portal/NoPrefetchLink';
@@ -96,16 +96,14 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
   const [checkinsEventId, setCheckinsEventId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<EventRow | null>(null);
 
-  const now = Date.now();
-
-  const counts = useMemo(() => ({
+  const counts = ({
     all: events.length,
     upcoming: events.filter((e) => isCheckinWindowOpen(e)).length,
     past: events.filter((e) => !isCheckinWindowOpen(e)).length,
     draft: events.filter((e) => !e.is_published).length,
-  }), [events, now]);
+  });
 
-  const filtered = useMemo(() => {
+  const filtered = (() => {
     const q = query.trim().toLowerCase();
     return events
       .filter((e) => {
@@ -115,7 +113,7 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
         if (q && !e.title.toLowerCase().includes(q) && !(e.location ?? '').toLowerCase().includes(q)) return false;
         return true;
       });
-  }, [events, filter, query, now]);
+  })();
 
   return (
     <div className={styles.page}>

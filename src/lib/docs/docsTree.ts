@@ -78,7 +78,13 @@ export function reorder<T extends TreeDoc>(siblings: T[], movingId: string, befo
 export interface SearchHit<T extends TreeDoc> { doc: T; titleMatch: boolean; snippet: string | null; score: number }
 const plain = (md: string) => md.replace(/```[\s\S]*?```/g, ' ').replace(/<[^>]+>/g, '').replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[#>*_`~|-]+/g, ' ').replace(/\s+/g, ' ').trim();
 /** The first line or two of a doc as plain text, for cards. */
-export const docSummary = (md: string, max = 110): string => { const t = plain(md); return t.length > max ? `${t.slice(0, max).trimEnd()}…` : t; };
+// The one-line preview of a doc. Pass the title and a first line that only repeats it is left out ("Roles & Access Roles & Access Every person…" becomes "Every person…").
+export const docSummary = (md: string, max = 110, title?: string): string => {
+  let t = plain(md);
+  const lead = title?.trim();
+  if (lead && t.toLowerCase().startsWith(lead.toLowerCase())) t = t.slice(lead.length).replace(/^[\s:.\-–—]+/, '');
+  return t.length > max ? `${t.slice(0, max).trimEnd()}…` : t;
+};
 export const searchTerms = (q: string) => q.toLowerCase().split(/\s+/).map((t) => t.trim()).filter(Boolean);
 
 // Every word has to appear somewhere (title, tags or text). Titles and tags rank above body text. The snippet is the stretch of text around the first match.

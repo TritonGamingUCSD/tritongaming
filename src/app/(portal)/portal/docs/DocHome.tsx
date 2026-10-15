@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ExternalLink, FileText, GripVertical, Pencil, Pin, Plus, Star, Users } from 'lucide-react';
 import { ageLabel, docSummary, type DocNode, type DocSection } from '@/lib/docs/docsTree';
 import type { Doc, QuickLink } from '@/types/database';
@@ -50,6 +50,26 @@ export default function DocHome({ docs, sections, favorites, onOpen, canEdit, ca
   const stale = guides.filter((d) => ageLabel(d.reviewed_at && d.reviewed_at > d.updated_at ? d.reviewed_at : d.updated_at).stale).length;
   const rows = (nodes: DocNode<Doc>[]): { doc: Doc; depth: number }[] => nodes.flatMap((n) => [{ doc: n.doc, depth: n.depth }, ...rows(n.children)]);
   const groups = sections.map((s) => ({ ...s, shown: rows(s.nodes) })).filter((s) => s.shown.length > 0);
+  // The guide categories sit in as many columns as fit, filled left to right: each next category goes to the shortest column so no column is left with a gap.
+  const hasGroups = groups.length > 0;
+  const groupsRef = useRef<HTMLDivElement>(null);
+  const [colCount, setColCount] = useState(3);
+  useEffect(() => {
+    const el = groupsRef.current;
+    if (!el) return;
+    const measure = () => setColCount(Math.max(1, Math.min(4, Math.floor((el.clientWidth + 32) / (280 + 32)))));
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [hasGroups]);
+  const columns: typeof groups[] = Array.from({ length: colCount }, () => []);
+  const heights = new Array(colCount).fill(0);
+  for (const g of groups) {
+    const k = heights.indexOf(Math.min(...heights));
+    columns[k].push(g);
+    heights[k] += 3 + (allOpen.has(g.id ?? 'none') ? g.shown.length : Math.min(g.shown.length, GROUP_LIMIT)) + (g.shown.length > GROUP_LIMIT ? 1 : 0);
+  }
 
   return (
     <div className={styles.home}>
@@ -142,24 +162,28 @@ export default function DocHome({ docs, sections, favorites, onOpen, canEdit, ca
       {groups.length > 0 && (
         <section aria-labelledby="home-guides">
           <h2 id="home-guides" className={styles.h2}><FileText size={16} aria-hidden="true" /> How-to guides</h2>
-          <div className={styles.groups}>
-            {groups.map((g) => (
-              <div key={g.id ?? 'none'} className={styles.group} style={g.color ? ({ '--cat': g.color } as React.CSSProperties) : undefined}>
-                <h3 className={styles.groupName}><span className={styles.dot} aria-hidden="true" />{g.name} <span className={styles.count}>{g.shown.length}</span></h3>
-                <ul className={styles.list}>
-                  {(allOpen.has(g.id ?? 'none') ? g.shown : g.shown.slice(0, GROUP_LIMIT)).map(({ doc, depth }) => (
-                    <li key={doc.id}>
-                      <button type="button" className={styles.row} style={{ paddingLeft: `${0.6 + Math.min(depth, 3) * 1}rem` }} onClick={() => onOpen(doc.id)} title={docSummary(doc.content, 160) || undefined}>
-                        <span className={styles.rowTitle}>{depth > 0 ? '└ ' : ''}{doc.title}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-                {g.shown.length > GROUP_LIMIT && (
-                  <button type="button" className={styles.more} onClick={() => setAllOpen((p) => { const n = new Set(p); const k = g.id ?? 'none'; if (n.has(k)) n.delete(k); else n.add(k); return n; })}>
-                    {allOpen.has(g.id ?? 'none') ? 'Show fewer' : `Show ${g.shown.length - GROUP_LIMIT} more`}
-                  </button>
-                )}
+          <div className={styles.groups} ref={groupsRef}>
+            {columns.map((col, ci) => (
+              <div key={ci} className={styles.groupCol}>
+                {col.map((g) => (
+                <div key={g.id ?? 'none'} className={styles.group} style={g.color ? ({ '--cat': g.color } as React.CSSProperties) : undefined}>
+                  <h3 className={styles.groupName}><span className={styles.dot} aria-hidden="true" />{g.name} <span className={styles.count}>{g.shown.length}</span></h3>
+                  <ul className={styles.list}>
+                    {(allOpen.has(g.id ?? 'none') ? g.shown : g.shown.slice(0, GROUP_LIMIT)).map(({ doc, depth }) => (
+                      <li key={doc.id}>
+                        <button type="button" className={styles.row} style={{ paddingLeft: `${0.6 + Math.min(depth, 3) * 1}rem` }} onClick={() => onOpen(doc.id)} title={docSummary(doc.content, 160, doc.title) || undefined}>
+                          <span className={styles.rowTitle}>{depth > 0 ? '└ ' : ''}{doc.title}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  {g.shown.length > GROUP_LIMIT && (
+                    <button type="button" className={styles.more} onClick={() => setAllOpen((p) => { const n = new Set(p); const k = g.id ?? 'none'; if (n.has(k)) n.delete(k); else n.add(k); return n; })}>
+                      {allOpen.has(g.id ?? 'none') ? 'Show fewer' : `Show ${g.shown.length - GROUP_LIMIT} more`}
+                    </button>
+                  )}
+                </div>
+                ))}
               </div>
             ))}
           </div>
@@ -185,7 +209,7 @@ export default function DocHome({ docs, sections, favorites, onOpen, canEdit, ca
 }
 
 function DocCard({ d, meta, onOpen }: { d: Doc; meta: string; onOpen: (id: string) => void }) {
-  const summary = docSummary(d.content, 110);
+  const summary = docSummary(d.content, 110, d.title);
   return (
     <button type="button" className={styles.card} onClick={() => onOpen(d.id)}>
       <strong>{d.title}</strong>

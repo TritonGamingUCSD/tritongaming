@@ -13,7 +13,6 @@ import { backlinksTo, resolveWikiLinks } from '@/lib/docs/docsLinks';
 import { ageLabel, ancestors, type DocSection } from '@/lib/docs/docsTree';
 import type { SyncDoc } from '@/lib/docs/docsSync';
 import type { Doc, DocCategory } from '@/types/database';
-import { AttachmentsView } from './DocAttachments';
 import { RequiredReadingDialog } from './DocRequired';
 import DocComments from './DocComments';
 import { clock } from './docsApi';
@@ -112,7 +111,9 @@ export default function DocReader({
         )}
         {canEdit && live && live.editing.length > 0 && <Notice tone="warning"><strong>{live.editing.join(', ')} {live.editing.length === 1 ? 'is' : 'are'} editing this doc right now.</strong> Wait before you edit, or you could overwrite each other.</Notice>}
 
-        {doc.cover_url &&   <img className={styles.cover} src={doc.cover_url} alt="" referrerPolicy="no-referrer" />}
+        {/* An address an editor typed: any host, so next/image cannot be configured for it. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {doc.cover_url && <img className={styles.cover} src={doc.cover_url} alt="" referrerPolicy="no-referrer" />}
 
         <header className={styles.articleHead}>
           <h1 className={styles.articleTitle}>{doc.title}</h1>
@@ -192,7 +193,6 @@ export default function DocReader({
           </section>
         )}
 
-        <AttachmentsView attachments={doc.attachments} />
         {doc.published && <DocComments docId={doc.id} />}
         {requiring && <RequiredReadingDialog doc={doc} onClose={() => setRequiring(false)} />}
         {reporting && <ReportDoc doc={doc} onClose={() => setReporting(false)} />}

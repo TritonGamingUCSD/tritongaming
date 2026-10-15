@@ -1,3 +1,4 @@
+import { diffDocs } from '../docs/docDiff';
 import { describe, expect, it } from 'vitest';
 import { ageLabel, ancestors, buildSections, canMoveUnder, categoryOf, cleanTags, descendantIds, docSummary, highlightParts, readingOrder, reorder, searchDocs } from '@/lib/docs/docsTree';
 
@@ -73,6 +74,31 @@ describe('tags and age', () => {
     expect(ageLabel('2026-10-05T01:00:00Z', now)).toEqual({ label: 'Updated today', stale: false });
     expect(ageLabel('2026-08-30T00:00:00Z', now).label).toBe('Updated 5 weeks ago');
     expect(ageLabel('2026-02-01T00:00:00Z', now).stale).toBe(true);
+  });
+});
+
+describe('version diff', () => {
+  it('marks the words that changed in an edited line', () => {
+    const b = diffDocs('Hello there\nSame line', 'Hello everyone\nSame line');
+    expect(b[0]).toMatchObject({ kind: 'change' });
+    const parts = (b[0] as { parts: { op: string; text: string }[] }).parts;
+    expect(parts.find((p) => p.op === 'del')?.text.trim()).toBe('there');
+    expect(parts.find((p) => p.op === 'add')?.text.trim()).toBe('everyone');
+    expect(b[1]).toEqual({ kind: 'same', text: 'Same line' });
+  });
+  it('shows whole added and removed lines as blocks', () => {
+    expect(diffDocs('One\nTwo', 'One\nTwo\nThree')).toEqual([{ kind: 'same', text: 'One\nTwo' }, { kind: 'add', text: 'Three' }]);
+    expect(diffDocs('One\nTwo', 'One')).toEqual([{ kind: 'same', text: 'One' }, { kind: 'del', text: 'Two' }]);
+  });
+  it('treats a rewritten line as one block out and one in', () => {
+    expect(diffDocs('Totally different words here', 'Nothing alike at all')).toEqual([{ kind: 'del', text: 'Totally different words here' }, { kind: 'add', text: 'Nothing alike at all' }]);
+  });
+});
+
+describe('summaries', () => {
+  it('leaves out a first line that only repeats the title', () => {
+    expect(docSummary('# Roles & Access\n\nEvery person has one or more roles.', 110, 'Roles & Access')).toBe('Every person has one or more roles.');
+    expect(docSummary('Roles are here.', 110, 'Something else')).toBe('Roles are here.');
   });
 });
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { useFileDrop } from '@/lib/ui/useFileDrop';
 import Button from '@/components/ui/Button';
 import { useRef, useState } from 'react';
 import { Plus, X, Upload } from 'lucide-react';
@@ -70,6 +71,7 @@ export default function EventThemePanel({ theme, onChange, people = [] }: { them
       if (fileRef.current) fileRef.current.value = '';
     }
   };
+  const { over: fontOver, dropProps: fontDrop } = useFileDrop((files) => { void addFontFile(files[0]); });
   const renameFont = (i: number, name: string) => {
     const old = own[i].name;
     const fonts = Object.fromEntries(Object.entries(theme.fonts).map(([k, v]) => [k, v === old ? name : v]));
@@ -109,7 +111,7 @@ export default function EventThemePanel({ theme, onChange, people = [] }: { them
         {fontPicker('body', 'Body font', 'Running text.')}
       </div>
 
-      <div className={styles.field}>
+      <div className={styles.field} data-dropping={fontOver || undefined} {...fontDrop}>
         <span className={`${styles.label} ${styles.cap}`}>Your own fonts (up to {MAX_CUSTOM_FONTS})</span>
         <span className={styles.hint}>For fonts that are not on Google Fonts. Upload the web font file ({FONT_FILE_TYPES.map((t) => `.${t}`).join(', ')}, up to 3 MB) of a font you have a licence to use on the web. It then appears in the pickers above.</span>
         {own.map((f, i) => (
@@ -124,7 +126,7 @@ export default function EventThemePanel({ theme, onChange, people = [] }: { them
         {own.length < MAX_CUSTOM_FONTS && (
           <>
             <input ref={fileRef} type="file" accept={FONT_FILE_TYPES.map((t) => `.${t}`).join(',')} hidden onChange={(e) => addFontFile(e.target.files?.[0])} />
-            <Button size="sm" variant="secondary" onClick={() => fileRef.current?.click()} disabled={fontBusy}><Upload size={14} aria-hidden="true" /> {fontBusy ? 'Uploading…' : 'Upload a font'}</Button>
+            <Button size="sm" variant="secondary" onClick={() => fileRef.current?.click()} disabled={fontBusy}><Upload size={14} aria-hidden="true" /> {fontBusy ? 'Uploading…' : 'Upload or drop a font'}</Button>
           </>
         )}
         {fontError && <span className={styles.hint} role="alert" style={{ color: '#fca5a5' }}>{fontError}</span>}

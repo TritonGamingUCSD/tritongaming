@@ -37,8 +37,9 @@
 .card small { margin-top: 0.15rem; font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.75); }
 
 /* How-to guides by group: plain lists */
-.groups { columns: 280px; column-gap: 2rem; }
-.group { min-width: 0; --cat: var(--pp-ink); break-inside: avoid; margin-bottom: 1.5rem; }
+.groups { display: flex; gap: 2rem; align-items: flex-start; }
+.groupCol { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 1.5rem; }
+.group { min-width: 0; --cat: var(--pp-ink); }
 .groupName { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.35rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--cat); font-family: var(--font-futura-heavy); font-weight: 400; font-size: 0.82rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--pp-ink); }
 .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--cat); }
 .count { margin-left: auto; font-size: 0.72rem; letter-spacing: 0; padding: 0.05rem 0.5rem; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.1); }

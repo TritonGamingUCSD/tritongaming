@@ -5,32 +5,26 @@ import AnnouncementClient from './AnnouncementClient';
 const TONES = ['navy', 'royal', 'yellow', 'green', 'red'] as const;
 export type BannerTone = (typeof TONES)[number];
 
+type AnnouncementContent = { enabled?: boolean; text?: string; link?: string; link_text?: string; color?: string; label?: string };
+
 export default async function AnnouncementBanner() {
+  let content: AnnouncementContent;
   try {
     // Cookie-free + cached (see lib/content.ts) so this doesn't force every page to render per request.
-    const content = (await getContentBlock('announcement')) as {
-      enabled?: boolean;
-      text?: string;
-      link?: string;
-      link_text?: string;
-      color?: string;
-      label?: string;
-    };
-
-    if (!content.enabled || !content.text) return null;
-
-    const tone: BannerTone = (TONES as readonly string[]).includes(content.color ?? '') ? (content.color as BannerTone) : 'navy';
-
-    return (
-      <AnnouncementClient
-        text={content.text}
-        link={content.link}
-        linkText={content.link_text}
-        tone={tone}
-        label={content.label || 'News'}
-      />
-    );
+    content = (await getContentBlock('announcement')) as AnnouncementContent;
   } catch {
     return null;
   }
+  if (!content.enabled || !content.text) return null;
+
+  const tone: BannerTone = (TONES as readonly string[]).includes(content.color ?? '') ? (content.color as BannerTone) : 'navy';
+  return (
+    <AnnouncementClient
+      text={content.text}
+      link={content.link}
+      linkText={content.link_text}
+      tone={tone}
+      label={content.label || 'News'}
+    />
+  );
 }

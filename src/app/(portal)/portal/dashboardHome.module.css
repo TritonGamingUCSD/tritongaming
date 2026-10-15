@@ -6,7 +6,8 @@
 .search { margin-top: 0.4rem; }
 
 .body { display: flex; flex-direction: column; gap: 1.6rem; }
-.top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 280px); gap: 1.4rem; align-items: start; }
+.top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 300px); gap: 1.6rem; align-items: start; }
+@media (min-width: 1181px) { .top { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); } }
 
 .ticket { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 64px; background: var(--pp-card); border: 1px solid var(--pp-line); border-radius: 12px; box-shadow: var(--pp-shadow); color: var(--pp-ink); }
 .tape { position: absolute; top: -0.65rem; left: 1.5rem; width: 5.5rem; height: 1.4rem; background: rgba(255, 199, 44, 0.85); transform: rotate(-3deg); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18); }
@@ -40,7 +41,8 @@
 .quickLink strong { flex: 1 1 auto; min-width: 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 0.92rem; overflow-wrap: anywhere; line-height: 1.25; }
 .quickOpen { flex: none; opacity: 0.6; }
 
-.twoCol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.4rem; align-items: start; }
+.cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.6rem; align-items: start; }
+@media (max-width: 1180px) { .cols { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .list { list-style: none; margin: 0.6rem 0 0; padding: 0.3rem 0.4rem; display: flex; flex-direction: column; background: var(--pp-card); border: 1px solid var(--pp-line); border-radius: 10px; }
 .list li + li { border-top: 1px solid var(--pp-line); }
 .upRow { display: flex; align-items: center; gap: 0.7rem; padding: 0.65rem 0.6rem; color: var(--pp-ink); text-decoration: none; border-radius: 8px; }
@@ -62,7 +64,7 @@
 
 @media (max-width: 760px) {
   .quickLink { padding: 0.5rem 0.6rem; }
-  .twoCol { grid-template-columns: 1fr; }
+  .cols { grid-template-columns: 1fr; }
   .top { grid-template-columns: 1fr; }
   .ticket { grid-template-columns: minmax(0, 1fr) 44px; }
   .note { transform: rotate(0.6deg); }

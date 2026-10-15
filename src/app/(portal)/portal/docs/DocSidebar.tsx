@@ -42,6 +42,9 @@ export default function DocSidebar({
     return y < 0.28 ? 'before' : y > 0.72 ? 'after' : 'inside';
   }
 
+  // One button for both: it collapses everything, and once everything is collapsed it expands everything again.
+  const allCollapsed = sections.length > 0 && sections.every((x) => collapsed.has(`cat:${x.id ?? 'none'}`));
+
   function renderNode(n: DocNode<Doc>, list: DocNode<Doc>[], sectionId: string | null): React.ReactNode {
     const d = n.doc;
     const open = !collapsed.has(d.id);
@@ -115,8 +118,9 @@ export default function DocSidebar({
         </div>
         <div className={styles.navButtons}>
           <Button size="sm" variant="ghost" onClick={onHome} className={styles.homeBtn}><House size={14} aria-hidden="true" /> Docs Home</Button>
-          <button type="button" className={styles.collapseAll} onClick={onCollapseAll} aria-label="Collapse all" title="Collapse all"><ChevronsDownUp size={15} aria-hidden="true" /></button>
-          <button type="button" className={styles.collapseAll} onClick={onExpandAll} aria-label="Expand all" title="Expand all"><ChevronsUpDown size={15} aria-hidden="true" /></button>
+          <button type="button" className={styles.collapseAll} onClick={allCollapsed ? onExpandAll : onCollapseAll} aria-label={allCollapsed ? 'Expand all' : 'Collapse all'} title={allCollapsed ? 'Expand all' : 'Collapse all'}>
+            {allCollapsed ? <ChevronsUpDown size={15} aria-hidden="true" /> : <ChevronsDownUp size={15} aria-hidden="true" />}
+          </button>
         </div>
         {canEdit && <Button size="sm" onClick={() => onNew(null, null)} className={styles.newDocBtn}><Plus size={14} aria-hidden="true" /> New Doc</Button>}
       </div>

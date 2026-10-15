@@ -17,10 +17,11 @@ import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import { TextColor, DocHighlight } from '@/lib/docs/docColorMarks';
 import { HIGHLIGHTS, TEXT_COLORS } from '@/lib/docs/docColors';
 import {
-  Bold, Italic, Strikethrough, Code, Link2, List, ListOrdered, ListChecks, Quote, Table2, ImageIcon, Minus, Undo2, Redo2,
+  Paperclip, Bold, Italic, Strikethrough, Code, Link2, List, ListOrdered, ListChecks, Quote, Table2, ImageIcon, Minus, Undo2, Redo2,
   Info, Lightbulb, TriangleAlert, FileCode2, Pencil, BookOpen, Plus, ChevronDown, Highlighter, Palette, X,
 } from 'lucide-react';
 import { uploadImageToStorage } from '@/lib/storage/imageUpload';
+import { uploadFileToStorage, MAX_FILE_BYTES } from '@/lib/storage/fileUpload';
 import { showToast } from '@/lib/ui/toast';
 import styles from './docEditor.module.css';
 
@@ -139,6 +140,7 @@ function ColorMenu({ kind, active, onPick }: { kind: 'text' | 'highlight'; activ
 // The visual editor: click-to-format, with a "/" menu for blocks. The text it saves is Markdown, so every doc stays plain, portable text.
 const DocEditor = forwardRef<DocEditorHandle, { value: string; onChange: (markdown: string) => void; disabled?: boolean; placeholder?: string; linkTitles?: string[] }>(function DocEditor({ value, onChange, disabled, placeholder, linkTitles = [] }, ref) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const anyFileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [view, setViewState] = useState<DocView>('live');
   const [insertOpen, setInsertOpen] = useState(false);
@@ -176,14 +178,14 @@ const DocEditor = forwardRef<DocEditorHandle, { value: string; onChange: (markdo
     contentType: 'markdown',
     editorProps: {
       attributes: { class: styles.prose, 'aria-label': 'Document text', role: 'textbox', 'aria-multiline': 'true' },
-      // Pictures can be pasted or dropped straight into the text, anywhere in the doc.
+      // Pictures and files can be pasted or dropped straight into the text, anywhere in the doc: a picture shows in place, any other file becomes a link.
       handlePaste: (_v, ev) => {
-        const f = Array.from(ev.clipboardData?.files ?? []).find((x) => x.type.startsWith('image/'));
+        const f = Array.from(ev.clipboardData?.files ?? [])[0];
         if (!f) return false;
         ev.preventDefault(); uploadRef.current(f); return true;
       },
       handleDrop: (view, ev) => {
-        const f = Array.from((ev as DragEvent).dataTransfer?.files ?? []).find((x) => x.type.startsWith('image/'));
+        const f = Array.from((ev as DragEvent).dataTransfer?.files ?? [])[0];
         if (!f) return false;
         ev.preventDefault();
         const at = view.posAtCoords({ left: (ev as DragEvent).clientX, top: (ev as DragEvent).clientY })?.pos;
@@ -237,7 +239,26 @@ const DocEditor = forwardRef<DocEditorHandle, { value: string; onChange: (markdo
       else editor.chain().focus().setImage({ src: url, alt }).run();
     } catch { showToast('That image didn’t upload. Try again.'); } finally { setUploading(false); }
   }, [editor, view, source]);
-  uploadRef.current = (f, at) => { void uploadImage(f, at); };
+  // Any other file goes in as a link where the cursor (or the drop) is, so it sits right next to the text that talks about it.
+  const uploadOther = useCallback(async (file: File, at?: number) => {
+    if (!editor) return;
+    if (file.size > MAX_FILE_BYTES) { showToast('That file is over 20 MB.'); return; }
+    setUploading(true);
+    try {
+      const url = await uploadFileToStorage('doc-attachments', file);
+      const name = file.name.replace(/[[\]]/g, '') || 'file';
+      if (view === 'source') {
+        const ta = srcRef.current; const pos = ta?.selectionStart ?? source.length;
+        const next = `${source.slice(0, pos)}[📎 ${name}](${url})${source.slice(pos)}`;
+        setSource(next); onChangeRef.current(next);
+      } else {
+        const node = { type: 'text', text: `📎 ${name}`, marks: [{ type: 'link', attrs: { href: url } }] };
+        if (at != null) editor.chain().focus().insertContentAt(at, node).run();
+        else editor.chain().focus().insertContent(node).run();
+      }
+    } catch { showToast('That file didn’t upload. Try again.'); } finally { setUploading(false); }
+  }, [editor, view, source]);
+  uploadRef.current = (f, at) => { void (f.type.startsWith('image/') ? uploadImage(f, at) : uploadOther(f, at)); };
 
   const [linkDraft, setLinkDraft] = useState<string | null>(null);
   function setLink() {
@@ -275,6 +296,7 @@ const DocEditor = forwardRef<DocEditorHandle, { value: string; onChange: (markdo
     { id: 'warning', label: 'Warning box', hint: 'Something to be careful about', run: (e) => e.chain().focus().wrapIn('blockquote', { kind: 'warning' }).run() },
     { id: 'table', label: 'Table', hint: '3 columns, 3 rows', run: (e) => e.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
     { id: 'image', label: 'Image', hint: 'Upload a picture', run: () => fileRef.current?.click() },
+    { id: 'file', label: 'File', hint: 'Attach a file right here', run: () => anyFileRef.current?.click() },
     { id: 'code', label: 'Code block', hint: 'Fixed-width text', run: (e) => e.chain().focus().toggleCodeBlock().run() },
     { id: 'divider', label: 'Divider', hint: 'A line between parts', run: (e) => e.chain().focus().setHorizontalRule().run() },
   ];
@@ -376,6 +398,7 @@ const DocEditor = forwardRef<DocEditorHandle, { value: string; onChange: (markdo
   return (
     <div className={styles.shell}>
       <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadImage(f); e.target.value = ''; }} />
+      <input ref={anyFileRef} type="file" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadRef.current(f); e.target.value = ''; }} />
       <div className={styles.viewBar}>
         <div className={styles.viewSeg} role="group" aria-label="Editor view">
           <button type="button" aria-pressed={view === 'live'} className={`${styles.viewTab} ${view === 'live' ? styles.viewTabOn : ''}`} onClick={() => switchView('live')}><Pencil size={14} aria-hidden="true" /> Write</button>
@@ -411,6 +434,7 @@ const DocEditor = forwardRef<DocEditorHandle, { value: string; onChange: (markdo
             <div className={styles.insertPop} role="menu" aria-label="Insert">
               {([
                 { label: 'Image', icon: <ImageIcon size={15} aria-hidden="true" />, run: () => fileRef.current?.click() },
+                { label: 'File', icon: <Paperclip size={15} aria-hidden="true" />, run: () => anyFileRef.current?.click() },
                 { label: 'Table', icon: <Table2 size={15} aria-hidden="true" />, run: () => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
                 { label: 'Note box', icon: <Info size={15} aria-hidden="true" />, run: () => setCallout('note') },
                 { label: 'Tip box', icon: <Lightbulb size={15} aria-hidden="true" />, run: () => setCallout('tip') },
@@ -451,11 +475,12 @@ const DocEditor = forwardRef<DocEditorHandle, { value: string; onChange: (markdo
         <div className={styles.canvas}>
           <div className={styles.sourceTools}>
             <button type="button" disabled={uploading} onClick={() => fileRef.current?.click()}><ImageIcon size={14} aria-hidden="true" /> {uploading ? 'Uploading…' : 'Insert image'}</button>
-            <span>Pictures can also be pasted or dropped here.</span>
+            <button type="button" disabled={uploading} onClick={() => anyFileRef.current?.click()}><Paperclip size={14} aria-hidden="true" /> Attach file</button>
+            <span>Pictures and files can also be pasted or dropped here.</span>
           </div>
           <textarea ref={srcRef} className={styles.sourceBox} value={source} spellCheck={false} aria-label="Markdown source"
-            onPaste={(e) => { const f = Array.from(e.clipboardData.files).find((x) => x.type.startsWith('image/')); if (f) { e.preventDefault(); void uploadImage(f); } }}
-            onDrop={(e) => { const f = Array.from(e.dataTransfer.files).find((x) => x.type.startsWith('image/')); if (f) { e.preventDefault(); void uploadImage(f); } }}
+            onPaste={(e) => { const f = e.clipboardData.files[0]; if (f) { e.preventDefault(); uploadRef.current(f); } }}
+            onDrop={(e) => { const f = e.dataTransfer.files[0]; if (f) { e.preventDefault(); uploadRef.current(f); } }}
             onChange={(e) => { setSource(e.target.value); onChangeRef.current(e.target.value); }} />
         </div>
       )}
