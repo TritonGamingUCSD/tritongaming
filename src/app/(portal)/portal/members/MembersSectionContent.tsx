@@ -196,6 +196,8 @@ export default function MembersSectionContent({ rows, keysByUser = {}, teams, ca
                   <div className={styles.info}>
                     <div className={styles.name}>
                       <span className={styles.nameText}>{m.display_name || 'Anonymous'}</span>
+                      {/* Name "Gamer Tag": the tag follows the name, left off when the name already says it. */}
+                      {m.gamer_tag?.trim() && !(m.display_name ?? '').toLowerCase().includes(m.gamer_tag.trim().toLowerCase()) && <span className={styles.gamerTag}>&ldquo;{m.gamer_tag.trim()}&rdquo;</span>}
                       {m.inactive && <span className={styles.idleTag} title="Inactive this quarter: view-only, not expected at meetings"><Moon size={11} aria-hidden="true" /> Inactive now</span>}
                       {/* One small key for each storage key this person holds. Only the team that tracks keys is sent this. */}
                       {(keysByUser[m.id]?.length ?? 0) > 0 && (

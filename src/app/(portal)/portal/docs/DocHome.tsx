@@ -55,8 +55,8 @@ export default function DocHome({ docs, sections, favorites, onOpen, canEdit, ca
           <h2 id="home-links" className={styles.h2}><ExternalLink size={16} aria-hidden="true" /> Quick links
             {canEdit && <button type="button" className={styles.addLink} onClick={() => setLinkDialog({ link: null })}><Plus size={13} aria-hidden="true" /> Add quick link</button>}
           </h2>
-          {shownLinks.length === 0 && <p className={styles.note}>Buttons to the club’s Google Drive files and forms go here. Add the ones people ask for most.</p>}
-          {canEdit && shownLinks.length > 1 && <p className={styles.note}>Drag a tile to change the order. People on a link’s teams still see it first.</p>}
+          {shownLinks.length === 0 && <p className={`${styles.note} ${styles.linkHint}`}>Buttons to the club’s Google Drive files and forms go here. Add the ones people ask for most.</p>}
+          {canEdit && shownLinks.length > 1 && <p className={`${styles.note} ${styles.linkHint}`}>Drag a tile to change the order. People on a link’s teams still see it first.</p>}
           <ul className={styles.quick}>
             {shownLinks.map((l) => (
               <li key={l.id} className={`${styles.quickItem} ${dragLink === l.id ? styles.dragging : ''}`} draggable={canEdit}

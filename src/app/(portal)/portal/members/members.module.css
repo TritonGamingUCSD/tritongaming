@@ -12,13 +12,13 @@
 .sub { font-size: var(--fs-meta); color: rgba(var(--pp-ink-rgb), 0.87); }
 
 
-.group { margin-bottom: 2rem; }
+.group { margin-bottom: 2.75rem; }
 
 .groupHeader {
   display: flex;
   align-items: center;
   gap: 0.625rem;
-  margin-bottom: 0.875rem;
+  margin-bottom: 1.15rem;
 }
 
 .groupLabel {
@@ -47,8 +47,8 @@
    compact enough to comfortably fit far more than 3 across on desktop. */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-  gap: 0.625rem;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 1rem;
   width: 100%;
 }
 
@@ -60,8 +60,8 @@
   composes: card from '../../../../components/ui/Surface.module.css';
   display: flex;
   align-items: center;
-  gap: 0.625rem;
-  padding: 0.625rem 0.75rem;
+  gap: 0.8rem;
+  padding: 0.85rem 1rem;
   transition: background 0.15s, border-color 0.15s;
   /* .card/.listRow are <button>s now (open the detail panel) */
   cursor: pointer;
@@ -74,14 +74,14 @@
 .list {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.5rem;
 }
 
 .listRow {
   display: flex;
   align-items: center;
-  gap: 0.625rem;
-  padding: 0.5rem 0.75rem;
+  gap: 0.8rem;
+  padding: 0.7rem 1rem;
   background: rgba(var(--pp-ink-rgb), 0.02);
   border: 1px solid transparent;
   border-radius: 0.5rem;
@@ -195,15 +195,15 @@
 
 /* ── Compact detail card ── tighter panel, a single info list, one links row. */
 .detailPanel { max-width: 340px; padding: 1.5rem 1.25rem 1.1rem; gap: 0.25rem; }
-.card { min-height: 60px; }
+.card { min-height: 76px; }
 .card .info { min-width: 0; }
 .card .name, .card .orgTitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* List: real columns (person · title · division, major, year) so every row lines up. */
-.listRow { display: grid; grid-template-columns: 32px minmax(150px, 1.1fr) minmax(130px, 1fr) minmax(0, 1.6fr); column-gap: 0.85rem; align-items: center; }
+.listRow { display: grid; grid-template-columns: 32px minmax(150px, 1.1fr) minmax(130px, 1fr) minmax(0, 1.6fr); column-gap: 1.1rem; align-items: center; }
 .listRow .info { display: contents; }
 .listRow .name, .listRow .orgTitle, .listRow .detail { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; margin: 0; }
-.list { gap: 0.25rem; }
+.list { gap: 0.5rem; }
 @media (max-width: 720px) {
   .listRow { grid-template-columns: 32px minmax(0, 1fr); row-gap: 0.05rem; }
   .listRow .avatar, .listRow .avatarFallback { grid-row: 1 / span 3; }
@@ -247,6 +247,10 @@
 /* A long name shortens with an ellipsis; the badges beside it never shrink or get clipped (the old ellipsis box cut the key's ring and pushed
    the key out of view on phones). The ring takes the card colour so it reads in light and dark. */
 .card .name, .listRow .name { display: flex; align-items: center; gap: 0.4rem; overflow: visible; text-overflow: clip; }
+.gamerTag { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-renegare); font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.78); }
+/* In the grid the tag sits on its own line under the name; in the list it follows the name on the same line. */
+.card .name { flex-wrap: wrap; row-gap: 0.1rem; }
+.card .gamerTag { flex-basis: 100%; }
 .nameText { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .card .name .keyIcons, .listRow .name .keyIcons, .name .idleTag { flex-shrink: 0; margin-left: 0; }
 .name .idleTag { margin-top: 0; }
