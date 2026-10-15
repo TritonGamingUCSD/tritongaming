@@ -117,7 +117,8 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
     const stillMissing = getMissingProfileFields({ ...profile, ...form, year: yearLabelOfChoice(form.year) }, isUcsd, { requireOrgTitle: requiresOrgTitle(roles) });
     if (stillMissing.length > 0) {
       setError(`Please fill in: ${stillMissing.join(', ')}.`);
-      setTab(stillMissing.every((m) => m === 'Officer title') ? 'card' : 'info');
+      const aboutStillMissing = stillMissing.some((m) => ['Name', 'Gender', 'Pronouns'].includes(m));
+      setTab(stillMissing.every((m) => m === 'Officer title') ? 'card' : aboutStillMissing ? 'info' : 'school');
       return;
     }
     setSaving(true);
@@ -252,9 +253,9 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
       {promptedForTicket && (
         <Notice tone="warning">
           {isUcsd
-            ? 'Almost there — fill in your name, pronouns, gender, class, college, and major to get your ticket.'
-            : 'Almost there — fill in your name, pronouns, and gender to get your ticket.'}
-          {' '}You&apos;ll only need to do this once.
+            ? <>Almost there. Fill in <strong>both sections</strong>: <button type="button" className={styles.noticeLink} onClick={() => setTab('info')}>About Me</button> (name, gender, pronouns) and <button type="button" className={styles.noticeLink} onClick={() => setTab('school')}>School</button> (year, college, major), then save.</>
+            : <>Almost there. Fill in <button type="button" className={styles.noticeLink} onClick={() => setTab('info')}>About Me</button> (name, gender, pronouns), then save.</>}
+          {' '}You only need to do this once.
         </Notice>
       )}
 

@@ -89,6 +89,18 @@ try {
   const ro = await other.call('POST', '/api/checkin/self', { event_id: openDay.id });
   ok('a day without hours set is open', ro.s === 200, JSON.stringify(ro));
 
+  // Short links: hidden from search by default, and the switch is honored
+  const sl = `zz-sl-${Date.now().toString(36)}`;
+  r = await exec.call('POST', '/api/admin/links', { slug: sl, destination: '/events' }); ok('an exec cannot manage short links (admin only)', r.s === 403, JSON.stringify(r));
+  await svc.from('short_links').insert({ slug: sl, destination: '/events' });
+  const base0 = process.env.BASE_URL || 'http://localhost:3000';
+  let h = await fetch(`${base0}/${sl}`, { redirect: 'manual' });
+  ok('a short link asks search engines not to list it by default', h.status === 307 && /noindex/.test(h.headers.get('x-robots-tag') ?? ''), `${h.status} ${h.headers.get('x-robots-tag')}`);
+  await svc.from('short_links').update({ hide_from_search: false }).eq('slug', sl);
+  h = await fetch(`${base0}/${sl}`, { redirect: 'manual' });
+  ok('turning the switch off lets it be listed', h.status === 307 && !h.headers.get('x-robots-tag'), `${h.status} ${h.headers.get('x-robots-tag')}`);
+  await svc.from('short_links').delete().eq('slug', sl);
+
   // The forwarding link
   const base = process.env.BASE_URL || 'http://localhost:3000';
   const f = await fetch(`${base}/in/some-event`, { redirect: 'manual' });

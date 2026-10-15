@@ -187,7 +187,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
       const data = await res.json();
       if (!res.ok) {
         if (data.needsProfile) {
-          router.push('/portal/profile?next=/portal/tickets');
+          router.push('/portal/finish-profile?next=/portal/tickets');
           return;
         }
         setError(data.error || 'Something went wrong. Please try again.');

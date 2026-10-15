@@ -20,7 +20,7 @@ export async function GET() {
   if (auth.error) return auth.error;
   const { data, error } = await createServiceClient()
     .from('short_links')
-    .select('id, slug, destination, note, clicks, is_active, created_at')
+    .select('id, slug, destination, note, clicks, is_active, hide_from_search, created_at')
     .order('created_at', { ascending: false });
   if (error) return NextResponse.json({ error: 'Failed to load links.' }, { status: 500 });
   return NextResponse.json({ links: data ?? [] });
@@ -40,8 +40,8 @@ export async function POST(request: Request) {
 
   const svc = createServiceClient();
   const { data, error } = await svc.from('short_links')
-    .insert({ slug, destination, note: String(body.note ?? '').trim().slice(0, 200) || null, created_by: auth.user!.id })
-    .select('id, slug, destination, note, clicks, is_active, created_at').single();
+    .insert({ slug, destination, note: String(body.note ?? '').trim().slice(0, 200) || null, hide_from_search: body.hide_from_search !== false, created_by: auth.user!.id })
+    .select('id, slug, destination, note, clicks, is_active, hide_from_search, created_at').single();
   if (error) {
     if (error.code === '23505') return NextResponse.json({ error: 'That short link already exists.' }, { status: 409 });
     return NextResponse.json({ error: 'Failed to create link.' }, { status: 500 });
@@ -70,15 +70,16 @@ export async function PUT(request: Request) {
   }
   if (body.note !== undefined) patch.note = String(body.note).trim().slice(0, 200) || null;
   if (body.is_active !== undefined) patch.is_active = !!body.is_active;
+  if (body.hide_from_search !== undefined) patch.hide_from_search = !!body.hide_from_search;
 
   const svc = createServiceClient();
   const { data, error } = await svc.from('short_links').update(patch).eq('id', id)
-    .select('id, slug, destination, note, clicks, is_active, created_at').single();
+    .select('id, slug, destination, note, clicks, is_active, hide_from_search, created_at').single();
   if (error) {
     if (error.code === '23505') return NextResponse.json({ error: 'That short link already exists.' }, { status: 409 });
     return NextResponse.json({ error: 'Failed to update link.' }, { status: 500 });
   }
-  await logAudit(svc, { actorId: auth.user!.id, action: 'update', entityType: 'short link', entityId: id, summary: `Short link /${data.slug} → ${data.destination}${data.is_active ? '' : ' (disabled)'}` });
+  await logAudit(svc, { actorId: auth.user!.id, action: 'update', entityType: 'short link', entityId: id, summary: `Short link /${data.slug} → ${data.destination}${data.is_active ? '' : ' (disabled)'}${data.hide_from_search ? '' : ' (searchable)'}` });
   return NextResponse.json({ link: data });
 }
 

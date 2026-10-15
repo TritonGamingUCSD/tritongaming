@@ -23,9 +23,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
   const target = data.startsWith('/')
     ? new URL(`${data}${data.includes('?') ? '&' : '?'}utm_source=${encodeURIComponent(slug)}&utm_medium=shortlink`, request.url)
     : data;
+  // Each link says whether search engines may list it (on by default for hiding). One small extra read per click, only to answer that.
+  const { data: flag } = await createServiceClient().from('short_links').select('hide_from_search').eq('slug', slug).maybeSingle();
   const res = NextResponse.redirect(target, 307);
   res.headers.set('Cache-Control', 'no-store');
-  res.headers.set('X-Robots-Tag', 'noindex');
+  if (flag?.hide_from_search !== false) res.headers.set('X-Robots-Tag', 'noindex');
   return res;
 }
 

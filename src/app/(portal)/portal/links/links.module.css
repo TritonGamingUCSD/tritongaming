@@ -49,3 +49,7 @@
 .prefix { max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 1; }
 .bare { width: 0; min-width: 0; flex: 1; }
 @media (max-width: 560px) { .slugField, .destField { flex: 1 1 100%; } }
+
+.hideRow { display: flex; align-items: flex-start; gap: 0.5rem; font-size: 0.85rem; color: var(--pp-ink); }
+.hideRow input { margin-top: 0.2rem; }
+.hideHint { color: rgba(var(--pp-ink-rgb), 0.85); }

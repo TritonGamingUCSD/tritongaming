@@ -19,8 +19,8 @@
   align-items: center;
   text-align: center;
   gap: 0.875rem;
-  background: #0b1426;
-  border: 1px solid rgba(125, 180, 234, 0.2);
+  background: var(--pp-card);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.3);
   border-radius: 1.25rem;
   padding: 2.5rem 1.75rem 1.75rem;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
@@ -36,7 +36,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: rgba(var(--pp-ink-rgb), 0.15);
+  background: rgba(var(--pp-ink-rgb), 0.3);
   transition: background 0.2s, width 0.2s;
 }
 .dotActive { background: var(--p-accent); width: 18px; border-radius: var(--radius-pill); }
@@ -48,8 +48,8 @@
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: rgba(125, 180, 234, 0.1);
-  color: #a9cdf2;
+  background: rgba(var(--pp-ink-rgb), 0.08);
+  color: var(--pp-ink);
   margin-top: 0.25rem;
 }
 
@@ -64,7 +64,7 @@
 .body {
   font-size: 0.88rem;
   line-height: 1.55;
-  color: rgba(var(--pp-ink-rgb), 0.65);
+  color: rgba(var(--pp-ink-rgb), 0.9);
 }
 
 .actions {
@@ -79,9 +79,9 @@
 .backBtn {
   padding: 0.6rem 1.1rem;
   background: none;
-  border: 1px solid rgba(var(--pp-ink-rgb), 0.12);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.3);
   border-radius: var(--radius-pill);
-  color: rgba(var(--pp-ink-rgb), 0.6);
+  color: rgba(var(--pp-ink-rgb), 0.9);
   font-family: var(--font-futura-medium);
   font-size: 0.82rem;
   cursor: pointer;

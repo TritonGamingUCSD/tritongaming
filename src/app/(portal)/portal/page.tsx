@@ -61,7 +61,7 @@ interface Props {
   // each one only honors it if it's actually one of its own tab ids and
   // ignores it otherwise, so there's no coordination needed between
   // sections about which tab names are whose.
-  searchParams: Promise<{ tab?: string; subtab?: string; section?: string }>;
+  searchParams: Promise<{ tab?: string; subtab?: string; section?: string; next?: string }>;
 }
 
 export default async function PortalDashboard({ searchParams }: Props) {
@@ -452,7 +452,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
   return (
     <PortalParamsProvider query={serverQuery}>
     <div className={styles.page}>
-      {!profile.onboarded_at && <OnboardingGuide userId={profile.id} />}
+      {/* Not while someone is being sent somewhere (?next=, e.g. finishing their profile on the way to check in): the tour waits for their next visit. */}
+      {!profile.onboarded_at && !rawParams.next && <OnboardingGuide userId={profile.id} />}
 
       {/* Shares one gap between the greeting, the checkin/next-ticket
           banners, and the hub below — previously the hub alone got a

@@ -11,6 +11,9 @@ import NotificationBell from '@/components/portal/NotificationBell';
 import AttributionCapture from '@/components/AttributionCapture/AttributionCapture';
 import ConnectivityBanner from '@/components/ConnectivityBanner/ConnectivityBanner';
 import PushAsk from '@/components/portal/PushAsk';
+import HideOnPaths from '@/components/portal/HideOnPaths';
+
+const CHECKIN_PATHS = ['/portal/in/', '/portal/finish-profile'];
 import styles from './portal.module.css';
 
 // Portal-only type: Exo 2 for text (made for small UI sizes, has real in-between weights and
@@ -43,7 +46,9 @@ export default async function PortalLayout({ children }: { children: React.React
         <div className={styles.content}>
           <div data-print-hide className={styles.bannerSlot} style={{ display: 'contents' }}>
             <Suspense fallback={null}>
-              <ProfileIncompleteBanner missing={missingProfileFields} officerTabOnly={missingOnlyOfficerTab} />
+              <HideOnPaths paths={CHECKIN_PATHS}>
+                <ProfileIncompleteBanner missing={missingProfileFields} officerTabOnly={missingOnlyOfficerTab} />
+              </HideOnPaths>
             </Suspense>
           </div>
           {children}
@@ -53,9 +58,9 @@ export default async function PortalLayout({ children }: { children: React.React
           reachable on /portal itself, which is the one page PortalTopbar
           (the other persistent portal chrome) deliberately hides on. */}
       <div data-print-hide style={{ display: 'contents' }}>
-        <div className={styles.fixedBell} style={{ display: 'contents' }}><NotificationBell /></div>
+        <div className={styles.fixedBell} style={{ display: 'contents' }}><HideOnPaths paths={CHECKIN_PATHS}><NotificationBell /></HideOnPaths></div>
         <ConnectivityBanner />
-        <PushAsk />
+        <HideOnPaths paths={CHECKIN_PATHS}><PushAsk /></HideOnPaths>
         <AttributionCapture />
       </div>
     </div>

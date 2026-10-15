@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import StyledQRCode from '@/components/StyledQRCode/StyledQRCode';
 import { qrBadgeOptionsFromQR, drawQRBadge } from '@/lib/qr/qrBadge';
 import type { QRCodeOptions } from '@/lib/qr/qrCodeStyling';
@@ -21,7 +21,11 @@ interface Props {
 // draws the circular badge around/through it — see qrBadge.ts for how the
 // crop stays scan-safe. Kept separate from StyledQRCode itself rather than
 // baking this in there, since QR Studio still wants the bare square output.
-export default function TicketQRBadge({ options, eventLabel, className, onFail }: Props) {
+export default function TicketQRBadge({ options: wanted, eventLabel, className, onFail }: Props) {
+  // On a slow connection the logo in the middle can take a long time to arrive, and the code is not drawn until it has. After a few seconds the code is drawn
+  // without the logo instead (it scans just the same), and only if even that does not appear is the person told to use the typed code.
+  const [plain, setPlain] = useState(false);
+  const options = useMemo(() => (plain ? { ...wanted, icon: 'none' as const, customIcon: null } : wanted), [plain, wanted]);
   const hiddenRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -66,8 +70,10 @@ export default function TicketQRBadge({ options, eventLabel, className, onFail }
         }
       }
       attempts++;
-      if (attempts < 90) {
-        rafId = requestAnimationFrame(tick); // ~1.5s at 60fps
+      if (attempts < 240) {
+        rafId = requestAnimationFrame(tick); // ~4s at 60fps
+      } else if (!plain && wanted.icon !== 'none') {
+        setPlain(true);   // draw it again without the logo, which restarts this wait
       } else {
         onFail?.();
       }

@@ -14,7 +14,7 @@ import { showToast } from '@/lib/ui/toast';
 import IconButton from '@/components/ui/IconButton';
 import styles from './links.module.css';
 
-interface ShortLink { id: string; slug: string; destination: string; note: string | null; clicks: number; is_active: boolean; created_at: string }
+interface ShortLink { id: string; slug: string; destination: string; note: string | null; clicks: number; is_active: boolean; hide_from_search: boolean; created_at: string }
 
 // Short links like tritongaming.org/linktree → any URL. Anyone who can manage
 // events can create them; every change is written to the audit log.
@@ -24,6 +24,7 @@ export default function LinksManager() {
   const [slug, setSlug] = useState('');
   const [destination, setDestination] = useState('');
   const [note, setNote] = useState('');
+  const [hide, setHide] = useState(true);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
   const [editing, setEditing] = useState<{ id: string; slug: string; destination: string; note: string } | null>(null);
@@ -44,12 +45,12 @@ export default function LinksManager() {
   async function create(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true); setError('');
-    const res = await fetch('/api/admin/links', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug, destination, note }) });
+    const res = await fetch('/api/admin/links', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug, destination, note, hide_from_search: hide }) });
     const json = await res.json().catch(() => ({}));
     setSaving(false);
     if (!res.ok) { setError(json.error || 'Failed to create link.'); return; }
     setLinks((l) => [json.link, ...(l ?? [])]);
-    setSlug(''); setDestination(''); setNote('');
+    setSlug(''); setDestination(''); setNote(''); setHide(true);
     showToast('Short link created');
   }
 
@@ -107,6 +108,10 @@ export default function LinksManager() {
           </label>
           <Button type="submit" loading={saving} disabled={!slug.trim() || !destination.trim()}>Create link</Button>
         </div>
+        <label className={styles.hideRow}>
+          <input type="checkbox" checked={hide} onChange={(e) => setHide(e.target.checked)} />
+          <span>Hide this link from search engines <span className={styles.hideHint}>(recommended; the page it points to is not affected)</span></span>
+        </label>
       </form>
 
       {error && <Notice tone="error">{error}</Notice>}
@@ -143,6 +148,7 @@ export default function LinksManager() {
                   <div className={styles.actions}>
                     <IconButton kind="copy" label={`Copy link /${l.slug}`} onClick={() => copy(l)} icon={copied === l.id ? <Check size={16} aria-hidden="true" /> : undefined} />
                     <IconButton kind="edit" label={`Edit /${l.slug}`} onClick={() => setEditing({ id: l.id, slug: l.slug, destination: l.destination, note: l.note ?? '' })} />
+                    <button type="button" className={styles.toggle} title={l.hide_from_search ? 'Search engines are asked not to list this link. Press to allow listing.' : 'Search engines may list this link. Press to hide it.'} onClick={() => update(l.id, { hide_from_search: !l.hide_from_search }, l.hide_from_search ? 'Link can now appear in search' : 'Link hidden from search')}>{l.hide_from_search ? 'Hidden from search' : 'Searchable'}</button>
                     <button type="button" className={styles.toggle} onClick={() => update(l.id, { is_active: !l.is_active }, l.is_active ? 'Link disabled' : 'Link enabled')}>{l.is_active ? 'On' : 'Off'}</button>
                     <IconButton kind="delete" label={`Delete /${l.slug}`} onClick={() => remove(l)} />
                   </div>

@@ -430,3 +430,4 @@ form.form[data-sub='school'] .requiredGroup > :not([data-school]) { display: non
 form.form[data-sub='school'] .optionalGroup { display: none; }
 form.form[data-sub='info'] .subGroup[data-school] { display: none; }
 form.form[data-sub='school'] .subGroup[data-school] { border-top: 0; margin-top: 0; padding-top: 0; }
+.noticeLink { display: inline; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 800; text-decoration: underline; cursor: pointer; }
