@@ -104,7 +104,7 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
     const prev = prevSync.current;
     prevSync.current = next;
     setSync(new Map(next.map((d) => [d.id, d])));
-    setCategories((cur) => { const same = JSON.stringify(cur.map((c) => [c.id, c.name, c.order_index])) === JSON.stringify(r.json.categories.map((c) => [c.id, c.name, c.order_index])); return same ? cur : r.json.categories; });
+    setCategories((cur) => { const same = JSON.stringify(cur.map((c) => [c.id, c.name, c.order_index, c.color])) === JSON.stringify(r.json.categories.map((c) => [c.id, c.name, c.order_index, c.color])); return same ? cur : r.json.categories; });
     if (!silent && prev) {
       const changes = diffSync(prev, next, null);
       for (const c of changes) describe(c);

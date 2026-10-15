@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, FileText, FolderCog, MoreHorizontal, Plus, Star, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, FileText, GripVertical, MoreHorizontal, Plus, Star, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { Input } from '@/components/ui/Field';
 import { CATEGORY_COLORS, canMoveUnder, type DocNode, type DocSection } from '@/lib/docs/docsTree';
@@ -23,13 +23,15 @@ export default function DocSidebar({
   const [dragId, setDragId] = useState<string | null>(null);
   const [over, setOver] = useState<{ id: string; zone: 'before' | 'inside' | 'after' } | null>(null);
   const [menuFor, setMenuFor] = useState<string | null>(null);
-  const [manageCats, setManageCats] = useState(false);
+  const [menuCat, setMenuCat] = useState<string | null>(null);
+  const [addingCat, setAddingCat] = useState(false);
   const [newCategory, setNewCategory] = useState('');
   const [colorFor, setColorFor] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
   const [dragCat, setDragCat] = useState<string | null>(null);
   const [liveCats, setLiveCats] = useState<string[] | null>(null);
-  const shownCats = liveCats ? liveCats.map((id) => categories.find((x) => x.id === id)).filter((x): x is (typeof categories)[number] => !!x) : categories;
+  // While a category is dragged the others move out of the way; nothing is saved until it is dropped.
+  const shownSections = liveCats ? [...liveCats.map((id) => sections.find((x) => x.id === id)).filter((x): x is DocSection<Doc> => !!x), ...sections.filter((x) => !x.id)] : sections;
 
   const siblingsAfter = (n: DocNode<Doc>, list: DocNode<Doc>[]) => { const i = list.findIndex((x) => x.doc.id === n.doc.id); return list[i + 1]?.doc.id ?? null; };
   const favDocs = docs.filter((d) => favorites.has(d.id));
@@ -117,65 +119,7 @@ export default function DocSidebar({
           <button type="button" className={styles.collapseAll} onClick={onExpandAll} aria-label="Expand all" title="Expand all"><ChevronsUpDown size={15} aria-hidden="true" /></button>
           {canEdit && <Button size="sm" onClick={() => onNew(null, null)}><Plus size={14} aria-hidden="true" /> New Doc</Button>}
         </div>
-      {canEdit && (
-        <div className={styles.catManager}>
-          <button type="button" className={styles.catManagerToggle} onClick={() => setManageCats((v) => !v)} aria-expanded={manageCats}>
-            <FolderCog size={14} strokeWidth={1.75} aria-hidden="true" /> Organize Categories
-            <ChevronDown size={14} className={manageCats ? styles.flip : ''} aria-hidden="true" />
-          </button>
-          {manageCats && (
-            <div className={styles.catManagerBody}>
-              <p className={styles.orgHint}>Drag a category to reorder it. Click its name to rename it, the dot to change its colour.</p>
-              {categories.length > 0 && (
-                <div className={styles.categoryChips}>
-                  {shownCats.map((c) => (
-                    <span key={c.id} className={`${styles.categoryChip} ${dragCat === c.id ? styles.rowDragging : ''}`} draggable
-                      onDragStart={(e) => { setDragCat(c.id); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', c.id); }}
-                      onDragEnd={() => { setDragCat(null); setLiveCats(null); }}
-                      // The other chips move out of the way while you drag; nothing is saved until you let go.
-                      onDragOver={(e) => {
-                        if (!dragCat) return;
-                        e.preventDefault();
-                        if (dragCat === c.id) return;
-                        const ids = shownCats.map((x) => x.id);
-                        const next = ids.filter((id) => id !== dragCat);
-                        next.splice(ids.indexOf(c.id), 0, dragCat);
-                        if (next.join() !== ids.join()) setLiveCats(next);
-                      }}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        const ids = liveCats; setDragCat(null); setLiveCats(null);
-                        if (ids && ids.join() !== categories.map((x) => x.id).join()) onReorderCategories(ids);
-                      }}>
-                      <button type="button" className={styles.swatchBtn} style={{ background: c.color ?? 'transparent' }} onClick={() => setColorFor(colorFor === c.id ? null : c.id)} aria-label={`Colour for ${c.name}`} aria-expanded={colorFor === c.id} />
-                      {renaming === c.id ? (
-                        <input className={styles.chipRename} defaultValue={c.name} autoFocus maxLength={60} aria-label={`New name for ${c.name}`}
-                          onFocus={(e) => e.currentTarget.select()}
-                          onBlur={(e) => { const v = e.currentTarget.value.trim(); setRenaming(null); if (v && v !== c.name) onRenameCategory(c, v); }}
-                          onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') { e.currentTarget.value = c.name; e.currentTarget.blur(); } }} />
-                      ) : (
-                        <button type="button" className={styles.chipName} onClick={() => setRenaming(c.id)} title="Click to rename" aria-label={`Rename ${c.name}`}>{c.name}</button>
-                      )}
-                      <button type="button" className={styles.categoryChipRemove} onClick={() => onDeleteCategory(c)} aria-label={`Delete category ${c.name}`}><X size={12} strokeWidth={2} /></button>
-                      {colorFor === c.id && (
-                        <span className={styles.swatchPop} role="group" aria-label={`Colours for ${c.name}`}>
-                          {CATEGORY_COLORS.map((col) => <button key={col} type="button" className={styles.swatchOpt} style={{ background: col }} aria-label={col} aria-pressed={c.color === col} onClick={() => { setColorFor(null); onCategoryColor(c, col); }} />)}
-                          <button type="button" className={styles.swatchNone} onClick={() => { setColorFor(null); onCategoryColor(c, null); }}>None</button>
-                        </span>
-                      )}
-                    </span>
-                  ))}
-                </div>
-              )}
-              <div className={styles.categoryAddRow}>
-                <Input value={newCategory} onChange={(e) => setNewCategory(e.target.value)} placeholder="New category…" onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const n = newCategory.trim(); if (n) { setNewCategory(''); void onAddCategory(n); } } }} />
-                <Button size="sm" disabled={!newCategory.trim()} onClick={() => { const n = newCategory.trim(); setNewCategory(''); void onAddCategory(n); }}>Add</Button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-        {canEdit && <p className={styles.orgHint}>Drag docs to reorder them or move them to another category. Use the ⋯ menu on a doc for Move Up, Move Down and Move To.</p>}
+        {canEdit && <p className={styles.orgHint}>Drag docs or categories to reorder them. A doc can be dropped onto a category to move it there. The ⋯ menus have rename, colour, delete and Move To.</p>}
       </div>
 
       <div className={styles.navScroll}>
@@ -193,18 +137,73 @@ export default function DocSidebar({
                 </ul>
               </section>
             )}
-            {sections.filter((s) => canEdit || s.count > 0).map((s) => {
+            {shownSections.filter((s) => canEdit || s.count > 0).map((s) => {
               const key = `cat:${s.id ?? 'none'}`;
               const isCollapsed = collapsed.has(key);
+              const cat = s.id ? categories.find((c) => c.id === s.id) ?? null : null;
+              const editable = canEdit && !!cat;
               return (
                 <section key={key} className={styles.catGroup}>
-                  <button type="button" className={styles.catHeader} onClick={() => onToggle(key)} aria-expanded={!isCollapsed}
-                    onDragOver={(e) => { if (dragId) { e.preventDefault(); } }} onDrop={(e) => { e.preventDefault(); const id = dragId; setDragId(null); setOver(null); if (id) onDrop(id, { parentId: null, categoryId: s.id, beforeId: null }); }}>
-                    {isCollapsed ? <ChevronRight size={14} strokeWidth={2} aria-hidden="true" /> : <ChevronDown size={14} strokeWidth={2} aria-hidden="true" />}
-                    {s.color && <span className={styles.catDot} style={{ background: s.color }} aria-hidden="true" />}
-                    <span className={styles.catName}>{s.name}</span>
-                    <span className={styles.catCount}>{s.count}</span>
-                  </button>
+                  <div className={`${styles.catRow} ${dragCat === s.id ? styles.rowDragging : ''}`} draggable={editable}
+                    onDragStart={(e) => { if (!editable) return; setDragCat(s.id); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', s.id!); }}
+                    onDragEnd={() => { setDragCat(null); setLiveCats(null); }}
+                    onDragOver={(e) => {
+                      if (dragCat) {
+                        if (!s.id) return;
+                        e.preventDefault();
+                        if (dragCat === s.id) return;
+                        const ids = shownSections.filter((x) => x.id).map((x) => x.id as string);
+                        const next = ids.filter((id) => id !== dragCat);
+                        next.splice(ids.indexOf(s.id), 0, dragCat);
+                        if (next.join() !== ids.join()) setLiveCats(next);
+                      } else if (dragId) e.preventDefault();
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (dragCat) {
+                        const ids = liveCats; setDragCat(null); setLiveCats(null);
+                        if (ids && ids.join() !== categories.map((x) => x.id).join()) onReorderCategories(ids);
+                        return;
+                      }
+                      const id = dragId; setDragId(null); setOver(null);
+                      if (id) onDrop(id, { parentId: null, categoryId: s.id, beforeId: null });
+                    }}>
+                    {renaming === s.id && cat ? (
+                      <span className={styles.catHeader}>
+                        <input className={styles.chipRename} defaultValue={cat.name} autoFocus maxLength={60} aria-label={`New name for ${cat.name}`}
+                          onFocus={(e) => e.currentTarget.select()}
+                          onBlur={(e) => { const v = e.currentTarget.value.trim(); setRenaming(null); if (v && v !== cat.name) onRenameCategory(cat, v); }}
+                          onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') { e.currentTarget.value = cat.name; e.currentTarget.blur(); } }} />
+                      </span>
+                    ) : (
+                      <button type="button" className={styles.catHeader} onClick={() => onToggle(key)} aria-expanded={!isCollapsed}>
+                        {editable && <GripVertical size={13} className={styles.catGrip} aria-hidden="true" />}
+                        {isCollapsed ? <ChevronRight size={14} strokeWidth={2} aria-hidden="true" /> : <ChevronDown size={14} strokeWidth={2} aria-hidden="true" />}
+                        {s.color && <span className={styles.catDot} style={{ background: s.color }} aria-hidden="true" />}
+                        <span className={styles.catName}>{s.name}</span>
+                        <span className={styles.catCount}>{s.count}</span>
+                      </button>
+                    )}
+                    {editable && cat && (
+                      <div className={styles.rowMenuWrap}>
+                        <button type="button" className={styles.rowMenuBtn} aria-label={`Actions for the category ${cat.name}`} aria-haspopup="menu" aria-expanded={menuCat === cat.id} onClick={() => setMenuCat(menuCat === cat.id ? null : cat.id)}><MoreHorizontal size={15} aria-hidden="true" /></button>
+                        {menuCat === cat.id && (
+                          <div className={styles.rowMenu} role="menu" onMouseLeave={() => setMenuCat(null)}>
+                            <button type="button" role="menuitem" onClick={() => { setMenuCat(null); setRenaming(cat.id); }}>Rename</button>
+                            <button type="button" role="menuitem" onClick={() => { setMenuCat(null); setColorFor(cat.id); }}>Change Colour</button>
+                            <button type="button" role="menuitem" onClick={() => { setMenuCat(null); onNew(null, cat.id); }}>Add Doc Here</button>
+                            <button type="button" role="menuitem" onClick={() => { setMenuCat(null); onDeleteCategory(cat); }}>Delete Category</button>
+                          </div>
+                        )}
+                        {colorFor === cat.id && (
+                          <span className={styles.swatchPop} role="group" aria-label={`Colours for ${cat.name}`}>
+                            {CATEGORY_COLORS.map((col) => <button key={col} type="button" className={styles.swatchOpt} style={{ background: col }} aria-label={col} aria-pressed={cat.color === col} onClick={() => { setColorFor(null); onCategoryColor(cat, col); }} />)}
+                            <button type="button" className={styles.swatchNone} onClick={() => { setColorFor(null); onCategoryColor(cat, null); }}>None</button>
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   {!isCollapsed && (
                     <ul role="tree" className={styles.treeList} aria-label={s.name}>
                       {s.nodes.map((n) => renderNode(n, s.nodes, s.id))}
@@ -214,6 +213,17 @@ export default function DocSidebar({
                 </section>
               );
             })}
+            {canEdit && (
+              <div className={styles.addCat}>
+                {addingCat ? (
+                  <Input value={newCategory} onChange={(e) => setNewCategory(e.target.value)} placeholder="New category name" maxLength={60} autoFocus aria-label="New category name"
+                    onBlur={() => { const n = newCategory.trim(); setAddingCat(false); setNewCategory(''); if (n) void onAddCategory(n); }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') { setNewCategory(''); e.currentTarget.blur(); } }} />
+                ) : (
+                  <button type="button" className={styles.addCatBtn} onClick={() => setAddingCat(true)}><Plus size={13} aria-hidden="true" /> New Category</button>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>

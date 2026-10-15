@@ -32,16 +32,6 @@
 
 .results { display: flex; flex-direction: column; gap: 0.2rem; }
 
-.catManager { padding-top: 0.25rem; }
-.catManagerToggle { display: flex; align-items: center; gap: 0.45rem; width: 100%; background: none; border: none; cursor: pointer; color: rgba(var(--pp-ink-rgb), 0.87); font-size: 0.8rem; padding: 0.2rem 0.2rem; }
-.catManagerToggle svg:last-child { margin-left: auto; transition: transform 0.15s; }
-.flip { transform: rotate(180deg); }
-.catManagerBody { display: flex; flex-direction: column; gap: 0.6rem; padding-top: 0.6rem; }
-.categoryChips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-.categoryChip { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.3rem 0.2rem 0.65rem; border-radius: 999px; font-size: 0.75rem; background: rgba(var(--pp-ink-rgb), 0.07); color: var(--pp-ink); white-space: nowrap; }
-.categoryChipRemove { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: rgba(var(--pp-ink-rgb), 0.1); border: none; color: inherit; cursor: pointer; }
-.categoryAddRow { display: flex; gap: 0.4rem; }
-.categoryAddRow > :first-child { flex: 1; min-width: 0; }
 
 /* ── Main ── */
 .main { min-width: 0; }
@@ -268,8 +258,6 @@
 
 /* Category colour dot, swatches, and the grip on pinned docs */
 .catDot { flex: none; width: 9px; height: 9px; border-radius: 50%; }
-.categoryChip { position: relative; display: inline-flex; align-items: center; gap: 0.35rem; cursor: grab; }
-.swatchBtn { flex: none; width: 14px; height: 14px; padding: 0; border-radius: 50%; border: 1.5px solid var(--pp-ink); cursor: pointer; }
 .swatchPop { position: absolute; z-index: 10; top: calc(100% + 6px); left: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; width: 190px; padding: 0.5rem; border-radius: 10px; background: var(--pp-card); border: 1px solid var(--pp-line); box-shadow: var(--pp-shadow); }
 .swatchOpt { width: 20px; height: 20px; padding: 0; border-radius: 50%; border: 2px solid transparent; cursor: pointer; }
 .swatchOpt[aria-pressed='true'] { border-color: var(--pp-ink); }
@@ -372,7 +360,15 @@
 @media (max-width: 899px) { .shellEditing .treeColOpen { display: none; } }
 
 /* Organize: rename a category in place, and the hints that say what can be dragged. */
-.chipName { padding: 0; border: 0; background: transparent; color: inherit; font: inherit; cursor: text; }
-.chipName:hover { text-decoration: underline; text-underline-offset: 3px; }
 .chipRename { width: 9rem; max-width: 100%; padding: 0.1rem 0.35rem; border: 1px solid var(--pp-ink); border-radius: 0.4rem; background: var(--pp-card); color: var(--pp-ink); font: inherit; }
 .orgHint { margin: 0.4rem 0 0.25rem; font-size: 0.76rem; line-height: 1.4; color: rgba(var(--pp-ink-rgb), 0.82); }
+
+/* A category header in the tree: drag it to reorder, the ⋯ menu renames, recolours and deletes it. */
+.catRow { position: relative; display: flex; align-items: center; border-radius: 0.5rem; }
+.catRow > .catHeader { flex: 1; min-width: 0; }
+.catRow:hover .rowMenuBtn, .catRow:focus-within .rowMenuBtn { opacity: 1; }
+.catRow .swatchPop { left: auto; right: 0; }
+.catGrip { flex: none; margin-left: -0.15rem; color: rgba(var(--pp-ink-rgb), 0.45); cursor: grab; }
+.addCat { padding: 0.5rem 0.35rem 0.25rem; }
+.addCatBtn { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.5rem; border: 1px dashed rgba(var(--pp-ink-rgb), 0.4); border-radius: 0.5rem; background: transparent; color: rgba(var(--pp-ink-rgb), 0.88); font: inherit; font-size: 0.8rem; cursor: pointer; }
+.addCatBtn:hover { border-color: var(--pp-ink); color: var(--pp-ink); }

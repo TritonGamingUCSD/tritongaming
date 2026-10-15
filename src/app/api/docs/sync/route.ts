@@ -12,7 +12,7 @@ export async function GET() {
   const canEdit = hasCapability(auth.roles, 'manage_docs');
   let q = auth.svc.from('docs').select('id, title, slug, parent_id, category_id, order_index, revision, updated_at, updated_by, published, icon, cover_url, tags, pinned, teams, draft_updated_at, draft_updated_by');
   if (!canEdit) q = q.eq('published', true);
-  const [{ data: docs }, { data: categories }] = await Promise.all([q, auth.svc.from('doc_categories').select('id, name, order_index, created_at')]);
+  const [{ data: docs }, { data: categories }] = await Promise.all([q, auth.svc.from('doc_categories').select('id, name, order_index, color, created_at')]);
   const rows = docs ?? [];
   const names = await namesOf(auth.svc, rows.flatMap((d) => [d.updated_by as string | null, canEdit ? (d.draft_updated_by as string | null) : null]));
   const editing = canEdit ? await editingNow(auth.svc, rows.map((d) => d.id as string), auth.user.id) : new Map<string, string[]>();
