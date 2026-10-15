@@ -63,7 +63,7 @@ export default function FinishProfile({ initial, isUcsd, next, userId, task, div
     // The profile is built. Now finish what they came for, one visible step at a time. Whatever the answer, they end up on the page that explains it
     // (the check-in page says why if it could not check them in; My Tickets shows the ticket), so a refusal here is never a dead end.
     await wait(Math.max(0, STEP_MS - (Date.now() - startedAt)));
-    let destination = next;
+    const destination = next;
     if (task) {
       setProgress({ steps, active: 1 });
       const call = task.mode === 'checkin'
