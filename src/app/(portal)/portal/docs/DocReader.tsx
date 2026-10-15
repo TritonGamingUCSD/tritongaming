@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, ChevronRight, FileText, BookCheck, Flag, MoreHorizontal, Pencil, Pin, PinOff, Plus, Star, Trash2 } from 'lucide-react';
+import { AlertTriangle, BadgeCheck, ChevronRight, FileText, BookCheck, Flag, MoreHorizontal, Pencil, Pin, PinOff, Plus, Star, Trash2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import Dialog, { DialogActions, DialogCancel, DialogText } from '@/components/ui/Dialog';
@@ -24,11 +24,11 @@ export const SIZE_REM: Record<ReaderSize, string> = { sm: '0.92rem', md: '1rem',
 
 export default function DocReader({
   doc, docs, sections, categories, canEdit, favorite, size, onSize, live, notice,
-  onOpen, onHome, onEdit, onDelete, onNewSub, onFavorite, onPin, teams,
+  onOpen, onHome, onEdit, onDelete, onNewSub, onFavorite, onPin, onReview, teams,
 }: {
   doc: Doc; docs: Doc[]; sections: DocSection<Doc>[]; categories: DocCategory[]; canEdit: boolean; favorite: boolean; size: ReaderSize;
   onSize: (s: ReaderSize) => void; live: SyncDoc | null; notice: string | null;
-  onOpen: (id: string) => void; onHome: () => void; onEdit: () => void; onDelete: () => void; onNewSub: () => void; onFavorite: () => void; onPin: () => void; teams: { id: string; name: string }[];
+  onOpen: (id: string) => void; onHome: () => void; onEdit: () => void; onDelete: () => void; onNewSub: () => void; onFavorite: () => void; onPin: () => void; onReview: () => void; teams: { id: string; name: string }[];
 }) {
   const [reporting, setReporting] = useState(false);
   const [requiring, setRequiring] = useState(false);
@@ -39,6 +39,10 @@ export default function DocReader({
   const category = categories.find((c) => c.id === top.category_id)?.name ?? 'Uncategorized';
   const kids = useMemo(() => docs.filter((d) => d.parent_id === doc.id).sort((a, b) => a.order_index - b.order_index || a.title.localeCompare(b.title)), [docs, doc.id]);
   const age = ageLabel(doc.updated_at);
+  // A review counts as fresh as an edit: a page nobody changed but someone checked is not "stale".
+  const freshest = doc.reviewed_at && doc.reviewed_at > doc.updated_at ? doc.reviewed_at : doc.updated_at;
+  const stale = ageLabel(freshest).stale;
+  const reviewedOn = doc.reviewed_at ? new Date(doc.reviewed_at).toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', month: 'short', day: 'numeric', year: 'numeric' }) : null;
   const linkedFrom = useMemo(() => backlinksTo(doc, docs, canEdit), [doc, docs, canEdit]);
   const body = useMemo(() => resolveWikiLinks(doc.content, docs), [doc.content, docs]);
   const toc = useMemo(() => extractToc(body), [body]);
@@ -125,6 +129,7 @@ export default function DocReader({
                   </div>
                   <div className={styles.menuList}>
                     <button type="button" role="menuitem" onClick={() => { setSettings(false); setReporting(true); }}><Flag size={14} aria-hidden="true" /> Report a problem with this doc</button>
+                    {canEdit && <button type="button" role="menuitem" onClick={() => { setSettings(false); onReview(); }}><BadgeCheck size={14} aria-hidden="true" /> Mark as reviewed</button>}
                     {canEdit && <button type="button" role="menuitem" onClick={() => { setSettings(false); setRequiring(true); }}><BookCheck size={14} aria-hidden="true" /> Required reading…</button>}
                     {canEdit && <button type="button" role="menuitem" onClick={() => { setSettings(false); onPin(); }}>{doc.pinned ? <PinOff size={14} aria-hidden="true" /> : <Pin size={14} aria-hidden="true" />} {doc.pinned ? 'Unpin from Docs Home' : 'Pin to Docs Home'}</button>}
                     {canEdit && <button type="button" role="menuitem" onClick={() => { setSettings(false); onNewSub(); }}><Plus size={14} aria-hidden="true" /> New sub-page</button>}
@@ -137,8 +142,9 @@ export default function DocReader({
         </header>
 
         <p className={styles.articleMeta}>
-          <span className={age.stale ? styles.stale : ''}>{age.stale && <AlertTriangle size={12} aria-hidden="true" />} {age.label}{live?.updated_by_name ? ` by ${live.updated_by_name}` : ''}</span>
-          {age.stale && <span className={styles.staleNote}>Not touched in a long while, so double-check it.</span>}
+          <span>{age.label}{live?.updated_by_name ? ` by ${live.updated_by_name}` : ''}</span>
+          <span className={stale ? styles.stale : ''}>{stale && <AlertTriangle size={12} aria-hidden="true" />} {reviewedOn ? `Last reviewed ${reviewedOn}` : canEdit ? 'Not reviewed yet' : ''}</span>
+          {stale && <span className={styles.staleNote}>Not touched in a long while, so double-check it.</span>}
         </p>
         {doc.tags.length > 0 && (
           <div className={styles.tagRow} aria-label="Tags">

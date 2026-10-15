@@ -41,14 +41,14 @@ export default function DocHome({ docs, sections, favorites, onOpen, canEdit, ca
   const shownPins = live ? live.map((id) => pinned.find((x) => x.id === id)).filter((x): x is Doc => !!x) : pinned;
   const favs = docs.filter((d) => favorites.has(d.id));
   const recent = [...guides].sort((a, b) => b.updated_at.localeCompare(a.updated_at)).slice(0, 5);
-  const stale = guides.filter((d) => ageLabel(d.updated_at).stale).length;
+  const stale = guides.filter((d) => ageLabel(d.reviewed_at && d.reviewed_at > d.updated_at ? d.reviewed_at : d.updated_at).stale).length;
   const rows = (nodes: DocNode<Doc>[]): { doc: Doc; depth: number }[] => nodes.flatMap((n) => [{ doc: n.doc, depth: n.depth }, ...rows(n.children)]);
   const groups = sections.map((s) => ({ ...s, shown: rows(s.nodes) })).filter((s) => s.shown.length > 0);
 
   return (
     <div className={styles.home}>
       <RequiredBanner onOpen={onOpen} />
-      {canEdit && stale > 0 && <p className={styles.note}>{stale} guide{stale === 1 ? ' hasn’t' : 's haven’t'} been updated in six months. Worth a look.</p>}
+      {canEdit && stale > 0 && <p className={styles.note}>{stale} guide{stale === 1 ? ' hasn’t' : 's haven’t'} been updated or reviewed in six months. Worth a look.</p>}
 
       {(shownLinks.length > 0 || canEdit) && (
         <section aria-labelledby="home-links">

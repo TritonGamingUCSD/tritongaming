@@ -5,7 +5,7 @@ import { notifyDocs } from '@/lib/docs/docsLive';
 
 export const dynamic = 'force-dynamic';
 
-// Change a doc's icon, cover, pin, tags, teams or attachments without touching its text: { id, icon?, cover_url?, pinned?, teams?, add_tags?, remove_tags?, add_attachments?, remove_attachment_urls? }.
+// Change a doc's icon, cover, pin, tags, teams or attachments without touching its text: { id, icon?, cover_url?, pinned?, teams?, reviewed?, add_tags?, remove_tags?, add_attachments?, remove_attachment_urls? }.
 // Only the fields you send change, and tags and attachments are added or removed one by one, so two people changing them at once don't wipe each other's work.
 export async function POST(request: Request) {
   const auth = await authorizeDocs('manage_docs');
@@ -23,6 +23,8 @@ export async function POST(request: Request) {
     patch.cover_url = url || null;
   }
   if ('pinned' in b) patch.pinned = b.pinned === true;
+  // An editor says the page is still correct: remembered with the date and who, whether or not its text changed.
+  if (b.reviewed === true) { patch.reviewed_at = new Date().toISOString(); patch.reviewed_by = auth.user.id; }
   // Which teams the doc is for: the whole list is replaced (empty = everyone).
   if ('teams' in b) patch.teams = [...new Set((Array.isArray(b.teams) ? b.teams : []).map(String).filter((t: string) => UUID.test(t)))].slice(0, 30);
   if ('add_tags' in b || 'remove_tags' in b) {
@@ -37,7 +39,7 @@ export async function POST(request: Request) {
     patch.attachments = [...have, ...add.filter((a: { url: string }) => !have.some((h) => h.url === a.url))].slice(0, 40);
   }
   if (Object.keys(patch).length === 0) return bad('Nothing to change.');
-  const { data, error } = await auth.svc.from('docs').update(patch).eq('id', id).select('id, icon, cover_url, pinned, tags, attachments, teams').single();
+  const { data, error } = await auth.svc.from('docs').update(patch).eq('id', id).select('id, icon, cover_url, pinned, tags, attachments, teams, reviewed_at, reviewed_by').single();
   if (error) return bad('Couldn’t save that.', 500);
   await notifyDocs();
   return NextResponse.json({ doc: data });

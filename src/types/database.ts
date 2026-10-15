@@ -281,6 +281,9 @@ export interface Database {
           pin_order: number | null;
           /** The teams (meeting_groups ids) this doc is most useful for; empty means everyone. */
           teams: string[];
+          /** When an editor last marked the page as still correct (null: never), and who. */
+          reviewed_at: string | null;
+          reviewed_by: string | null;
           /** false = a brand new doc only editors can see, until its first publish. */
           published: boolean;
           /** Bumped on every publish. */
@@ -403,7 +406,7 @@ export type Division = Database['public']['Tables']['divisions']['Row'];
 export type Event = Database['public']['Tables']['events']['Row'];
 export type Ticket = Database['public']['Tables']['tickets']['Row'];
 export type Sponsor = Database['public']['Tables']['sponsors']['Row'];
-type DocOptionalColumns = 'teams' | 'icon' | 'cover_url' | 'tags' | 'pinned' | 'published' | 'revision' | 'draft_title' | 'draft_content' | 'draft_updated_at' | 'draft_updated_by';
+type DocOptionalColumns = 'teams' | 'reviewed_at' | 'reviewed_by' | 'icon' | 'cover_url' | 'tags' | 'pinned' | 'published' | 'revision' | 'draft_title' | 'draft_content' | 'draft_updated_at' | 'draft_updated_by';
 export type Doc = Database['public']['Tables']['docs']['Row'];
 /** A tile on the documentation home that opens a Google Drive file or other address. Not a document. */
 export interface QuickLink { id: string; title: string; url: string; note: string; teams: string[]; order_index: number }

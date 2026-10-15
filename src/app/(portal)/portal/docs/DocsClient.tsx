@@ -27,7 +27,7 @@ import styles from './docs.module.css';
 
 interface Notice2 { id: number; text: string; tone: 'info' | 'warning'; docId?: string }
 const POLL_MS = 120_000;
-const DOC_SELECT = 'id, slug, title, category_id, parent_id, order_index, content, attachments, created_by, updated_by, created_at, updated_at, icon, cover_url, tags, pinned, teams, published, revision, draft_title, draft_content, draft_updated_at, draft_updated_by';
+const DOC_SELECT = 'id, slug, title, category_id, parent_id, order_index, content, attachments, created_by, updated_by, created_at, updated_at, icon, cover_url, tags, pinned, teams, reviewed_at, reviewed_by, published, revision, draft_title, draft_content, draft_updated_at, draft_updated_by';
 
 export default function DocsClient({ initialDocs, initialCategories, initialFavorites, initialLinks, teams, myTeamIds, userId, canEdit }: { initialDocs: Doc[]; initialCategories: DocCategory[]; initialFavorites: string[]; initialLinks: QuickLink[]; teams: { id: string; name: string }[]; myTeamIds: string[]; userId: string; canEdit: boolean }) {
   const [docs, setDocs] = useState(initialDocs);
@@ -299,6 +299,10 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
     const r = await docsPost<{ doc: Partial<Doc> }>('/api/docs/meta', { id: doc.id, pinned: !doc.pinned });
     if (r.ok) patchDoc(doc.id, r.json.doc); else setError(r.json.error || 'Couldn’t pin that.');
   }
+  async function markReviewed(doc: Doc) {
+    const r = await docsPost<{ doc: Partial<Doc> }>('/api/docs/meta', { id: doc.id, reviewed: true });
+    if (r.ok) { patchDoc(doc.id, r.json.doc); showToast('Marked as reviewed'); } else setError(r.json.error || 'Couldn’t mark that as reviewed.');
+  }
   async function addCategory(name: string) {
     const supabase = createClient();
     // A new category takes the next palette colour nobody is using yet (the colour can be changed from the category's menu).
@@ -388,7 +392,7 @@ export default function DocsClient({ initialDocs, initialCategories, initialFavo
             <DocReader doc={selected} docs={docs} sections={sections} categories={categories} canEdit={canEdit} favorite={favorites.has(selected.id)} size={size}
               onSize={(s) => saveReader(s)} live={live} notice={readerNotice}
               onOpen={openDoc} onHome={goHome} onEdit={() => startEdit(selected)} onDelete={() => void askDelete(selected)} onNewSub={() => setNewDialog({ parentId: selected.id, categoryId: null })}
-              onFavorite={() => void toggleFavorite(selected.id)} onPin={() => void togglePin(selected)} teams={teams} />
+              onFavorite={() => void toggleFavorite(selected.id)} onPin={() => void togglePin(selected)} onReview={() => void markReviewed(selected)} teams={teams} />
           )
         ) : (
           <DocHome docs={docs.filter((d) => d.published || canEdit)} sections={sections} favorites={favorites} onOpen={openDoc} canEdit={canEdit} catName={catName} onReorderPins={reorderPins} teams={teams} myTeamIds={myTeamIds} links={links} onLinks={setLinks} />
