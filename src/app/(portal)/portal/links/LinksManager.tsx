@@ -110,7 +110,7 @@ export default function LinksManager() {
         </div>
         <label className={styles.hideRow}>
           <input type="checkbox" checked={hide} onChange={(e) => setHide(e.target.checked)} />
-          <span>Hide this link from search engines <span className={styles.hideHint}>(recommended; the page it points to is not affected)</span></span>
+          <span>Keep this link out of Google and other search engines <span className={styles.hideHint}>(recommended. People can still use the link; the page it points to is not affected.)</span></span>
         </label>
       </form>
 
@@ -143,13 +143,17 @@ export default function LinksManager() {
                     <div className={styles.slug}>/{l.slug}</div>
                     <a href={l.destination} target="_blank" rel="noopener noreferrer" className={styles.dest}>{l.destination} <ExternalLink size={11} aria-hidden="true" /></a>
                     {l.note && <div className={styles.note}>{l.note}</div>}
+                    <button type="button" role="switch" aria-checked={!l.hide_from_search} className={styles.searchSwitch}
+                      onClick={() => update(l.id, { hide_from_search: !l.hide_from_search }, l.hide_from_search ? 'Search engines may now list this link' : 'Search engines are asked not to list this link')}>
+                      <span className={styles.track} aria-hidden="true"><span className={styles.thumb} /></span>
+                      <span>{l.hide_from_search ? 'Hidden from Google and other search engines' : 'Can appear in Google and other search engines'}</span>
+                    </button>
                   </div>
                   <div className={styles.clicks} title="Total clicks"><strong>{l.clicks.toLocaleString()}</strong> clicks</div>
                   <div className={styles.actions}>
                     <IconButton kind="copy" label={`Copy link /${l.slug}`} onClick={() => copy(l)} icon={copied === l.id ? <Check size={16} aria-hidden="true" /> : undefined} />
                     <IconButton kind="edit" label={`Edit /${l.slug}`} onClick={() => setEditing({ id: l.id, slug: l.slug, destination: l.destination, note: l.note ?? '' })} />
-                    <button type="button" className={styles.toggle} title={l.hide_from_search ? 'Search engines are asked not to list this link. Press to allow listing.' : 'Search engines may list this link. Press to hide it.'} onClick={() => update(l.id, { hide_from_search: !l.hide_from_search }, l.hide_from_search ? 'Link can now appear in search' : 'Link hidden from search')}>{l.hide_from_search ? 'Hidden from search' : 'Searchable'}</button>
-                    <button type="button" className={styles.toggle} onClick={() => update(l.id, { is_active: !l.is_active }, l.is_active ? 'Link disabled' : 'Link enabled')}>{l.is_active ? 'On' : 'Off'}</button>
+                    <button type="button" className={styles.toggle} onClick={() => update(l.id, { is_active: !l.is_active }, l.is_active ? 'Link disabled' : 'Link enabled')}>{l.is_active ? 'Link on' : 'Link off'}</button>
                     <IconButton kind="delete" label={`Delete /${l.slug}`} onClick={() => remove(l)} />
                   </div>
                 </>

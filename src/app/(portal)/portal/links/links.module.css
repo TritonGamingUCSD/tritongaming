@@ -50,6 +50,14 @@
 .bare { width: 0; min-width: 0; flex: 1; }
 @media (max-width: 560px) { .slugField, .destField { flex: 1 1 100%; } }
 
-.hideRow { display: flex; align-items: flex-start; gap: 0.5rem; font-size: 0.85rem; color: var(--pp-ink); }
-.hideRow input { margin-top: 0.2rem; }
+.hideRow { display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.85rem; line-height: 1.4; color: var(--pp-ink); cursor: pointer; }
+.hideRow input { margin-top: 1px; } /* the box is 18px and one text line is about 19px, so the box sits level with the first line */
 .hideHint { color: rgba(var(--pp-ink-rgb), 0.85); }
+
+/* On = the link may show up in search results. Off = search engines are asked to skip it. */
+.searchSwitch { display: inline-flex; align-items: center; gap: 0.55rem; margin-top: 0.4rem; padding: 0; border: 0; background: none; color: rgba(var(--pp-ink-rgb), 0.9); font-size: 0.78rem; text-align: left; cursor: pointer; min-height: 32px; }
+.track { flex: none; width: 34px; height: 20px; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.25); position: relative; transition: background 0.2s; }
+.thumb { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--pp-card); box-shadow: 0 0 0 1px rgba(var(--pp-ink-rgb), 0.2); transition: transform 0.2s; }
+.searchSwitch[aria-checked='true'] .track { background: var(--pp-ok); }
+.searchSwitch[aria-checked='true'] .thumb { transform: translateX(14px); }
+@media (prefers-reduced-motion: reduce) { .track, .thumb { transition: none; } }
