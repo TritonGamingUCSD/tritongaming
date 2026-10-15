@@ -1,6 +1,7 @@
 'use client';
 
 import { useLayoutEffect, useRef, useState } from 'react';
+import { useSettled } from '@/lib/ui/useSettled';
 import styles from './BodyStickers.module.css';
 
 export type BodySticker = { url: string; top: number; right: boolean; rot: number; scale: number; bx: number; x: number };
@@ -12,8 +13,11 @@ export default function BodyStickers({ items }: { items: BodySticker[] }) {
   const layer = useRef<HTMLDivElement>(null);
   const [phone, setPhone] = useState(false);
   const [spots, setSpots] = useState<{ top: number; left: number; w: number }[]>([]);
+  // Shown only after the page has finished loading: on a phone their spots are measured from the sections, which move while the content loads.
+  const settled = useSettled();
 
   useLayoutEffect(() => {
+    if (!settled) return;
     const mq = window.matchMedia('(max-width: 640px)');
     const run = () => {
       setPhone(mq.matches);
@@ -42,11 +46,11 @@ export default function BodyStickers({ items }: { items: BodySticker[] }) {
     if (layer.current?.parentElement) ro.observe(layer.current.parentElement);
     mq.addEventListener('change', run);
     return () => { ro.disconnect(); mq.removeEventListener('change', run); };
-  }, [items]);
+  }, [items, settled]);
 
   return (
     <div ref={layer} className={styles.layer} aria-hidden="true">
-      {phone
+      {!settled ? null : phone
         ? spots.map((s, i) => (
             // eslint-disable-next-line @next/next/no-img-element
             <img key={i} src={items[i].url} alt="" decoding="async" className={styles.gap} style={{ top: s.top, left: s.left, width: s.w, transform: `rotate(${items[i].rot}deg) translateZ(0)` }} />

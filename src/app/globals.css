@@ -212,6 +212,8 @@
 
 html {
   scroll-behavior: smooth;
+  /* Keep the scrollbar's space when a dialog locks the page's scrolling, so opening one does not make the whole page shift sideways. */
+  scrollbar-gutter: stable;
   /* Support iOS safe areas for notched devices */
   padding: env(safe-area-inset-top) env(safe-area-inset-right)
     env(safe-area-inset-bottom) env(safe-area-inset-left);
@@ -295,10 +297,11 @@ button {
 }
 
 /* Focus ring for accessibility */
-:focus-visible {
+/* :where() keeps this at zero specificity so a component's own focus style always wins. It must not set border-radius: that reshaped whatever was
+   focused (rounded boxes went square) and made the ring not match the box. An outline follows the element's own corners. */
+:where(:focus-visible) {
   outline: 2px solid var(--yellow);
   outline-offset: 3px;
-  border-radius: 2px;
 }
 
 /* ============================================================
@@ -453,9 +456,6 @@ input[type='range']::-moz-range-thumb { width: 14px; height: 14px; border-radius
 input[type='range']:focus-visible { outline: 2px solid rgba(255, 199, 44, 0.5); outline-offset: 3px; border-radius: 6px; }
 
 /* Prints and notes on the public pages that can be picked up and tossed (see ZineMotion). Touch screens only move them sideways, so the page still scrolls. */
-[data-drag] { cursor: grab; touch-action: pan-y; -webkit-user-select: none; user-select: none; }
-[data-drag]:active { cursor: grabbing; }
-[data-drag] img { -webkit-user-drag: none; user-select: none; }
 .zm-line { padding-bottom: 0.08em; }
 
 /* Doc text colours and highlights (lib/docs/docColors.ts): a fixed palette that stays readable in each theme. */

@@ -113,11 +113,10 @@ export default function DocReader({
         <header className={styles.articleHead}>
           <h1 className={styles.articleTitle}>{doc.title}</h1>
           <div className={styles.articleActions}>
-            {canEdit && <Button size="sm" variant="secondary" onClick={onEdit} className={styles.editBtn}><Pencil size={14} aria-hidden="true" /> Edit</Button>}
-            <span className={styles.actionGap} aria-hidden="true" />
-            <Button size="sm" variant="ghost" onClick={onFavorite} aria-pressed={favorite} aria-label={favorite ? 'Remove from favorites' : 'Add to favorites'} title={favorite ? 'Remove from favorites' : 'Add to favorites'}><Star size={16} fill={favorite ? 'currentColor' : 'none'} aria-hidden="true" /></Button>
+            {canEdit && <Button size="sm" variant="primary" onClick={onEdit} className={styles.editBtn}><Pencil size={14} aria-hidden="true" /> Edit</Button>}
+            <Button size="sm" variant="ghost" className={styles.iconAct} onClick={onFavorite} aria-pressed={favorite} aria-label={favorite ? 'Remove from favorites' : 'Add to favorites'} title={favorite ? 'Remove from favorites' : 'Add to favorites'}><Star size={16} fill={favorite ? 'currentColor' : 'none'} aria-hidden="true" /></Button>
             <div className={styles.settingsWrap} ref={menuRef}>
-              <Button size="sm" variant="ghost" onClick={() => setSettings((v) => !v)} aria-expanded={settings} aria-haspopup="menu" aria-label="More actions"><MoreHorizontal size={16} aria-hidden="true" /></Button>
+              <Button size="sm" variant="ghost" className={styles.iconAct} onClick={() => setSettings((v) => !v)} aria-expanded={settings} aria-haspopup="menu" aria-label="More actions"><MoreHorizontal size={16} aria-hidden="true" /></Button>
               {settings && (
                 <div className={styles.settingsPop} role="menu" aria-label="More actions">
                   <span className={styles.label}>Text size</span>

@@ -9,9 +9,9 @@ export default function PhotoStrip({ photos, caption, tone = 'ink', placeholders
   return (
     <ZineBand tone={tone} label="Photos">
       {caption && <p className={styles.caption}>{caption}</p>}
-      <ul className={styles.strip} data-no-touch-drag tabIndex={0} aria-label={caption || 'Photos'}>
+      <ul className={styles.strip} tabIndex={0} aria-label={caption || 'Photos'}>
         {photos.map((p, i) => (
-          <li key={p.src} className={`${styles.print} ${styles[`t${i % 3}`]}`} data-drag>
+          <li key={p.src} className={`${styles.print} ${styles[`t${i % 3}`]}`}>
             <span className={styles.tape} aria-hidden="true" />
             <div className={styles.photo}>
               <Image src={p.src} alt={p.alt} fill sizes="(max-width: 640px) 80vw, 360px" style={{ objectFit: 'cover' }} />

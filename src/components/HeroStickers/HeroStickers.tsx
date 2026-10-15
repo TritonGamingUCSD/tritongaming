@@ -1,6 +1,7 @@
 'use client';
 
 import { useLayoutEffect, useRef, useState } from 'react';
+import { useSettled } from '@/lib/ui/useSettled';
 import styles from './HeroStickers.module.css';
 
 export type HeroSticker = { url: string; credit?: { name: string; link?: string } };
@@ -14,10 +15,12 @@ const ROT = [-8, 7, -5, 9, -10, 6, -7, 8];
 export default function HeroStickers({ items, scale }: { items: HeroSticker[]; scale: number }) {
   const layer = useRef<HTMLDivElement>(null);
   const [placed, setPlaced] = useState<Placed[]>([]);
+  // Placed only after the page has finished loading, so they never move once they show.
+  const settled = useSettled();
 
   useLayoutEffect(() => {
     const host = layer.current?.parentElement;
-    if (!host) return;
+    if (!host || !settled) return;
     const mq = window.matchMedia('(max-width: 640px)');
     const run = () => {
       if (mq.matches) { setPlaced([]); return; }
@@ -75,7 +78,7 @@ export default function HeroStickers({ items, scale }: { items: HeroSticker[]; s
     const imgs = [...host.querySelectorAll('img')];
     imgs.forEach((im) => im.addEventListener('load', run));
     return () => { ro.disconnect(); mq.removeEventListener('change', run); imgs.forEach((im) => im.removeEventListener('load', run)); };
-  }, [items, scale]);
+  }, [items, scale, settled]);
 
   return (
     <div ref={layer} className={styles.layer}>

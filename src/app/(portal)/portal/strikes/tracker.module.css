@@ -9,7 +9,7 @@
 .listCol { display: flex; flex-direction: column; gap: 0.7rem; min-width: 0; }
 .bar { display: flex; flex-direction: column; gap: 0.5rem; }
 .search { display: flex; align-items: center; gap: 0.5rem; padding: 0 0.7rem; height: 36px; border-radius: 0.6rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.30); background: rgba(var(--pp-ink-rgb), 0.04); color: rgba(var(--pp-ink-rgb), 0.88); }
-.search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--pp-ink); font: inherit; font-size: 0.88rem; }
+.search input { flex: 1; min-width: 0; border: 0; outline: 0; box-shadow: none; border-radius: 0; padding: 0; background: transparent; color: var(--pp-ink); font: inherit; font-size: 0.88rem; }
 .search:focus-within { outline: none; border-color: var(--pp-ink); box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.55); }
 .filters { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 .chip { padding: 0.25rem 0.65rem; border-radius: 0.6rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.26); background: transparent; color: rgba(var(--pp-ink-rgb), 0.87); font: inherit; font-size: 0.76rem; cursor: pointer; white-space: nowrap; }

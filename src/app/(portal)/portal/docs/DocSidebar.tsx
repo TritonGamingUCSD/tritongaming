@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, FileText, GripVertical, MoreHorizontal, Plus, Star, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, FileText, GripVertical, House, MoreHorizontal, Plus, Star, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { Input } from '@/components/ui/Field';
 import { CATEGORY_COLORS, canMoveUnder, type DocNode, type DocSection } from '@/lib/docs/docsTree';
@@ -114,12 +114,10 @@ export default function DocSidebar({
           <button type="button" className={styles.iconBtn} onClick={onClose} aria-label="Close the doc list"><X size={16} aria-hidden="true" /></button>
         </div>
         <div className={styles.navButtons}>
-          <Button size="sm" variant="ghost" onClick={onHome}>Docs Home</Button>
+          <Button size="sm" variant="ghost" onClick={onHome} className={styles.homeBtn}><House size={14} aria-hidden="true" /> Docs Home</Button>
           <button type="button" className={styles.collapseAll} onClick={onCollapseAll} aria-label="Collapse all" title="Collapse all"><ChevronsDownUp size={15} aria-hidden="true" /></button>
           <button type="button" className={styles.collapseAll} onClick={onExpandAll} aria-label="Expand all" title="Expand all"><ChevronsUpDown size={15} aria-hidden="true" /></button>
-          {canEdit && <Button size="sm" onClick={() => onNew(null, null)}><Plus size={14} aria-hidden="true" /> New Doc</Button>}
         </div>
-        {canEdit && <p className={styles.orgHint}>Drag docs or categories to reorder them. A doc can be dropped onto a category to move it there. The ⋯ menus have rename, colour, delete and Move To.</p>}
       </div>
 
       <div className={styles.navScroll}>
