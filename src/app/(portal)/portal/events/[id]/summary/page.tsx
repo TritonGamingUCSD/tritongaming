@@ -222,15 +222,13 @@ export default async function EventSummaryPage({ params }: { params: Promise<{ i
         <SocialReach />
       </Section>
 
-      <Section n={next()} title="Attendee feedback">
-        <Card title="Rating" wide>
-          {s.feedback.count === 0 ? (
-            <p className={styles.note}>No feedback has been left yet. Attendees can rate the event from their ticket afterwards.</p>
-          ) : (
+      {s.feedback.average !== null && (
+        <Section n={next()} title="Attendee feedback">
+          <Card title="Rating" wide>
             <div className={styles.rating}><span className={styles.ratingValue}>{s.feedback.average}</span><span className={styles.ratingOf}>out of 5, from {plural(s.feedback.count, 'response')}</span></div>
-          )}
-        </Card>
-      </Section>
+          </Card>
+        </Section>
+      )}
 
       {photos.length > 0 && (
         <Section n={next()} title="Event photos">

@@ -191,7 +191,7 @@ export default function ReportPdf({ r, c, origin }: { r: ReportData; c: ReportCh
   const social = c.social;
   const rot = [-6, 5, -3, 7, -5, 4];
   const kpiW = Math.floor((548 - 6 * (Math.min(kpis.length, 6) - 1)) / Math.min(kpis.length, 6));
-  const hasPage2 = c.photos.length > 0 || c.thanks.length > 0;
+  const hasPage2 = hasAudience || c.photos.length > 0 || c.thanks.length > 0;
   return (
     <Document title={`${r.title} - Event Impact Report`} author="Triton Gaming" subject="Event Impact Report" creator="Triton Gaming">
       <Page size="LETTER" style={st.page}>
@@ -248,55 +248,45 @@ export default function ReportPdf({ r, c, origin }: { r: ReportData; c: ReportCh
           </View>
         )}
 
-        <View style={{ flexDirection: 'row', gap: 10, marginTop: 9 }}>
-          <View style={{ flex: 1, flexBasis: 0, gap: 6 }}>
-            <Panel title={r.multiDay ? 'Attendance by day' : 'Arrival times'} note={r.peakNote ?? undefined}><BarChart data={s.arrivals} color={ROYAL} height={146} width={262} xTitle={r.multiDay ? 'Day' : 'Time of arrival (Pacific time)'} yTitle="People checked in" /></Panel>
-            <Panel title="When tickets were claimed" note="How far ahead of the event people registered."><BarChart data={s.claimTiming} color={ROYAL} height={146} width={262} xTitle="How far ahead of the event" yTitle="Tickets claimed" /></Panel>
-            {social.length > 0 && (
-              <Panel title="Social media reach" note="Reported by Triton Gaming from its own accounts.">
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
-                  {social.map((m, i) => (<View key={i} style={[st.kpi, { width: '48%', paddingTop: 3, paddingBottom: 4 }]}><Text style={[st.kpiValue, { fontSize: 11 }]}>{tx(m.value)}</Text><Text style={[st.kpiLabel, { fontSize: 6.4 }]}>{tx(m.label)}</Text></View>))}
-                </View>
-              </Panel>
-            )}
-          </View>
-
-          <View style={{ flex: 1, flexBasis: 0, gap: 6 }}>
-            {hasAudience && (
-              <>
-                <View style={{ flexDirection: 'row', gap: 6 }}>
-                  <Panel title="Class year" style={{ flex: 1 }}><MiniRank data={s.year} color={NAVY} base={s.checkedIn} n={3} /></Panel>
-                  <Panel title="Colleges" style={{ flex: 1 }}><MiniRank data={s.college} color={ROYAL} base={s.checkedIn} n={3} /></Panel>
-                </View>
-                <View style={{ flexDirection: 'row', gap: 6 }}>
-                  <Panel title="Fields of study" style={{ flex: 1 }}><MiniRank data={s.field} color={NAVY} base={s.checkedIn} n={3} /></Panel>
-                  <Panel title="Top majors" style={{ flex: 1 }}><MiniRank data={s.major} color={ROYAL} base={s.checkedIn} n={3} /></Panel>
-                </View>
-                <View style={{ flexDirection: 'row', gap: 6 }}>
-                  <Panel title="Gender" style={{ flex: 1 }}><MiniRank data={s.gender} color={NAVY} base={s.checkedIn} n={3} /></Panel>
-                  <Panel title="Pronouns" style={{ flex: 1 }}><MiniRank data={s.pronouns} color={ROYAL} base={s.checkedIn} n={3} /></Panel>
-                </View>
-                <View style={{ flexDirection: 'row', gap: 6 }}>
-                  <Panel title="Platforms" style={{ flex: 1 }}><MiniRank data={s.platforms} color={GOLD_DEEP} base={s.checkedIn} n={3} /></Panel>
-                  <Panel title="Favorite games" style={{ flex: 1 }}><MiniRank data={s.games} color={GOLD_DEEP} base={s.checkedIn} n={3} /></Panel>
-                </View>
-              </>
-            )}
-          </View>
+        <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+          <Panel title={r.multiDay ? 'Attendance by day' : 'Arrival times'} note={r.peakNote ?? undefined} style={{ flex: 1, flexBasis: 0 }}><BarChart data={s.arrivals} color={ROYAL} height={210} width={262} xTitle={r.multiDay ? 'Day' : 'Time of arrival (Pacific time)'} yTitle="People checked in" /></Panel>
+          <Panel title="When tickets were claimed" note="How far ahead of the event people registered." style={{ flex: 1, flexBasis: 0 }}><BarChart data={s.claimTiming} color={ROYAL} height={210} width={262} xTitle="How far ahead of the event" yTitle="Tickets claimed" /></Panel>
         </View>
-
+        {social.length > 0 && (
+          <Panel title="Social media reach" note="Reported by Triton Gaming from its own accounts." style={{ marginTop: 10 }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+              {social.map((m, i) => (<View key={i} style={[st.kpi, { width: social.length > 3 ? '24%' : '32%', paddingTop: 4, paddingBottom: 5 }]}><Text style={[st.kpiValue, { fontSize: 13 }]}>{tx(m.value)}</Text><Text style={[st.kpiLabel, { fontSize: 6.8 }]}>{tx(m.label)}</Text></View>))}
+            </View>
+          </Panel>
+        )}
       </Page>
 
       {hasPage2 && (
         <Page size="LETTER" style={st.page}>
           <Footer title={r.title} />
-          {c.photos.length > 0 && (
+          {hasAudience && (
             <View>
+              <View style={[st.sectionHead, { marginTop: 0 }]}><Text style={st.sectionTitle}>Who attended</Text></View>
+              <Text style={st.lead}>Shares of the {s.checkedIn.toLocaleString()} people who checked in. Optional profile details cover only attendees who chose to share them.</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 6 }}>
+                {([
+                  ['Class year', s.year, NAVY], ['Colleges', s.college, ROYAL],
+                  ['Fields of study', s.field, NAVY], ['Top majors', s.major, ROYAL],
+                  ['Gender', s.gender, NAVY], ['Pronouns', s.pronouns, ROYAL],
+                  ['Platforms', s.platforms, GOLD_DEEP], ['Favorite games', s.games, GOLD_DEEP],
+                ] as [string, Bucket[], string][]).map(([t, d, col]) => (
+                  <Panel key={t} title={t} style={{ width: '48.8%' }}><MiniRank data={d} color={col} base={s.checkedIn} n={5} /></Panel>
+                ))}
+              </View>
+            </View>
+          )}
+          {c.photos.length > 0 && (
+            <View style={{ marginTop: hasAudience ? 16 : 0 }}>
               <View style={st.sectionHead}><Text style={st.sectionTitle}>Event photos</Text></View>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 8 }}>
                 {c.photos.map((p, i) => (
                   <View key={i} style={{ width: c.photos.length === 1 ? '100%' : '48.8%' }} wrap={false}>
-                    <Image src={p.src} style={{ width: '100%', height: c.photos.length === 1 ? 300 : 150, objectFit: 'cover' }} />
+                    <Image src={p.src} style={{ width: '100%', height: c.photos.length === 1 ? 240 : 110, objectFit: 'cover' }} />
                     {(p.caption || p.credit) ? <Text style={{ fontSize: 7.5, color: INK_SOFT, marginTop: 3 }}>{tx(p.caption)}{p.caption && p.credit ? ' | ' : ''}{p.credit ? `Photo: ${tx(p.credit)}` : ''}</Text> : null}
                   </View>
                 ))}

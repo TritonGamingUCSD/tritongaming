@@ -66,6 +66,8 @@ function claimTimingBuckets(createdAts: string[], startISO: string): Bucket[] {
 // Aggregates only — no individual's private fields (gender etc.) leave this
 // function. Callers must have already verified the viewer's capability, since
 // this reads profile_private with the service role.
+export const MIN_RATINGS = 8;
+
 export async function getEventSummary(eventId: string, event: { start_date: string; end_date?: string | null; requires_checkin_form: boolean; ticket_price?: number | null; audience?: string | null }): Promise<EventSummary> {
   const svc = createServiceClient();
 
@@ -180,7 +182,8 @@ export async function getEventSummary(eventId: string, event: { start_date: stri
     allDays: multiDay ? (() => { const n = new Map<string, number>(); for (const r of dayCheckins as { ticket_id: string }[]) n.set(r.ticket_id, (n.get(r.ticket_id) ?? 0) + 1); const total = eventDayCount(event.start_date, event.end_date); return [...n.values()].filter((c) => c >= total).length; })() : null,
     feedback: {
       count: fb.length,
-      average: fb.length ? Math.round((fb.reduce((n, r) => n + r.rating, 0) / fb.length) * 10) / 10 : null,
+      // Too few ratings say little and look odd in a sponsor report, so reports only show the average from MIN_RATINGS responses.
+      average: fb.length >= MIN_RATINGS ? Math.round((fb.reduce((n, r) => n + r.rating, 0) / fb.length) * 10) / 10 : null,
     },
     divisions: tally(attendeeIds.flatMap((id) => (privById.get(id)?.division_interests ?? []).map((d) => divisionName.get(d) ?? null)).filter(Boolean) as string[], { top: 8 }),
   };
