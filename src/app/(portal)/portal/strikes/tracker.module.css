@@ -71,9 +71,7 @@
   flex-direction: column;
   gap: 0.35rem;
   padding: 0.65rem 0.8rem;
-  border-left: 4px solid #f87171;
 }
-.strikeOff { border-left-color: rgba(var(--pp-ink-rgb), 0.40); }
 .strikeOff .reason { text-decoration: line-through; color: rgba(var(--pp-ink-rgb), 0.88); }
 .strikeTop { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap; }
 .strikeTop time { font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.87); }

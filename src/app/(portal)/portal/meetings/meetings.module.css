@@ -401,7 +401,6 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 
 /* Color carries meaning, the same everywhere in meetings: green = live / available, yellow = today or needs you, blue = planning and info,
    violet = repeats and groups of people, red = away or removed, orange = a warning, slate = blocked or skipped. */
-.meetingCard { border-left: 3px solid var(--tone, rgba(var(--pp-ink-rgb), 0.30)); }
 .meetingCard[data-tone='open'] { --tone: #34d399; }
 .meetingCard[data-tone='today'] { --tone: var(--p-accent); }
 .meetingCard[data-tone='repeat'] { --tone: #a78bfa; }
@@ -419,7 +418,6 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .metaLine .metaAway, .metaLine .metaAway svg { color: var(--pp-bad); }
 .metaLine .metaAudience svg { color: var(--pp-violet); }
 .seriesIcon { color: var(--pp-violet); }
-.seriesRow { border-left: 3px solid #a78bfa; }
 
 /* The small controls that are not full buttons (back links, filter chips, sort headers, the present toggle) share one look:
    a soft outlined pill, a gold hover, a clear keyboard ring and a press. */

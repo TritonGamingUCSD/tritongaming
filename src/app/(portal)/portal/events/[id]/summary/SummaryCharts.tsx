@@ -124,7 +124,7 @@ export function BarChart({ data, color = '#275a8f', height = 250, xTitle, yTitle
   const slot = plotW / data.length, bw = Math.min(46, slot * 0.62);
   const y = (v: number) => T + plotH - (v / top) * plotH;
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className={styles.chart} role="img" aria-label="Bar chart">
+    <div className={styles.chartScroll}><svg viewBox={`0 0 ${W} ${H}`} className={styles.chart} role="img" aria-label="Bar chart">
       {yTitle && <text x={L - 30} y={13} fontSize="11" fontWeight="700" fill="#011941">{yTitle}</text>}
       {ticks.map((t) => (
         <g key={t}>
@@ -144,6 +144,6 @@ export function BarChart({ data, color = '#275a8f', height = 250, xTitle, yTitle
         );
       })}
       {xTitle && <text x={L + (W - L - R) / 2} y={H - 4} textAnchor="middle" fontSize="11" fontWeight="700" fill="#011941">{xTitle}</text>}
-    </svg>
+    </svg></div>
   );
 }

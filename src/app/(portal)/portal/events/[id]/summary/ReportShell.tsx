@@ -86,7 +86,7 @@ export default function ReportShell({ children, back, internal, report }: { chil
           <Button onClick={() => void download()} loading={busy}><FileDown size={15} strokeWidth={1.75} aria-hidden="true" /> Save as PDF</Button>
         </div>
       </div>
-      <p className={styles.controlsNote} data-print-hide>This page shows every figure. Save as PDF downloads the report to send: a one-page summary, plus a second page with photos and the sponsor thank-you when there are any. The team-only numbers at the bottom are not part of it.</p>
+      <p className={styles.controlsNote} data-print-hide>This page shows every figure. Save as PDF downloads the report to send: two pages (the overview and charts, then who attended), plus a page with photos and the sponsor thank-you when there are any. The team-only numbers at the bottom are not part of it.</p>
       {error && <p className={styles.controlsNote} role="alert" data-print-hide>{error}</p>}
 
       {(report.sponsors.length > 0 || report.canEditSocial || social.length > 0) && (

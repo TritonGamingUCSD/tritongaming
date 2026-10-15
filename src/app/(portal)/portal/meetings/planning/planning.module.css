@@ -152,7 +152,6 @@
 .timeHot { color: var(--p-accent-text) !important; font-weight: 700; }
 
 /* Meaning, not decoration: blue = planning, yellow = needs you, green = decided, orange = dates passed. */
-.planCard { border-left: 3px solid var(--tone, rgba(var(--pp-ink-rgb), 0.30)); }
 .planCard[data-tone='plan'] { --tone: #60a5fa; }
 .planCard[data-tone='todo'] { --tone: var(--p-accent); background: rgba(125, 180, 234, 0.05); }
 .planCard[data-tone='done'] { --tone: #34d399; }

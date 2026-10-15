@@ -886,7 +886,6 @@
   .frameBody { border-top: 6px solid var(--frame-accent); }
   .railItemActive { box-shadow: 3px 3px 0 var(--accent, rgba(0, 0, 0, 0.55)); }
 }
-.card { border-left: 8px solid var(--accent); }
 .panel { border-top: 8px solid var(--accent, var(--pp-ink)); }
 .railGroupLabel { color: color-mix(in srgb, var(--accent) 52%, var(--pp-chrome-fg)); }
 

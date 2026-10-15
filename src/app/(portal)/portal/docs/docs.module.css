@@ -87,7 +87,7 @@
 .catHeaderStatic { display: flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.35rem; color: var(--p-accent-text); }
 .row { position: relative; display: flex; align-items: center; gap: 0.1rem; min-height: 36px; border-radius: 0.55rem; padding-right: 0.2rem; }
 .row:hover { background: rgba(var(--pp-ink-rgb), 0.05); }
-.rowActive { background: rgba(125, 180, 234, 0.13); box-shadow: inset 3px 0 0 var(--p-accent); }
+.rowActive { background: rgba(125, 180, 234, 0.13); }
 .rowDragging { opacity: 0.45; }
 .drop_before { box-shadow: 0 -2px 0 var(--p-accent); }
 .drop_after { box-shadow: 0 2px 0 var(--p-accent); }
@@ -287,7 +287,7 @@
 .pinSlot { position: relative; }
 
 /* Required reading */
-.requiredBox { composes: panel from '../../../../components/ui/Surface.module.css'; padding: 0.75rem 1rem; border-left: 6px solid var(--pp-warn); }
+.requiredBox { composes: panel from '../../../../components/ui/Surface.module.css'; padding: 0.75rem 1rem; }
 .requiredH { display: flex; align-items: center; gap: 0.45rem; margin: 0 0 0.4rem; font-family: var(--font-futura-heavy); font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--pp-ink); }
 .requiredList { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .requiredLink { display: inline-flex; align-items: center; text-decoration: none; min-height: 32px; padding: 0 0.7rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.4); border-radius: 6px; background: transparent; color: var(--pp-ink); font: inherit; font-size: 0.85rem; cursor: pointer; text-align: left; }

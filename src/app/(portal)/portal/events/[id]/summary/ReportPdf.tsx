@@ -193,8 +193,9 @@ export default function ReportPdf({ r, c, origin }: { r: ReportData; c: ReportCh
   const kpiW = Math.floor((548 - 6 * (Math.min(kpis.length, 6) - 1)) / Math.min(kpis.length, 6));
   // The charts take whatever height page 1 has left, so a long title, a long summary, more findings or a second row of social tiles shrink them instead of spilling onto a new page.
   const titleLines = Math.ceil(r.title.length / 42), summaryLines = Math.ceil(r.summary.length / 105);
+  const hasArrivals = s.arrivals.some((a) => a.count > 0); // no scans recorded (a free-entry event, say): the claim chart takes the full width instead of leaving a blank panel
   const socialPerRow = social.length > 6 ? Math.ceil(social.length / 2) : Math.max(social.length, 1);
-  const chartH = Math.max(150, Math.min(300, 226 - (titleLines - 1) * 24 - Math.max(0, summaryLines - 2) * 13 - Math.max(0, r.highlights.length - 3) * 13 - (c.preparedFor?.logo ? 0 : -8) - (social.length > 6 ? 46 : 0) + (social.length ? 0 : 76)));
+  const chartH = Math.max(150, Math.min(300, 218 - (titleLines - 1) * 24 - Math.max(0, summaryLines - 2) * 13 - Math.max(0, r.highlights.length - 3) * 13 - (c.preparedFor?.logo ? 0 : -8) - (social.length > 6 ? 46 : 0) + (social.length ? 0 : 76)));
   const hasPage2 = hasAudience || c.photos.length > 0 || c.thanks.length > 0;
   return (
     <Document title={`${r.title} - Event Impact Report`} author="Triton Gaming" subject="Event Impact Report" creator="Triton Gaming">
@@ -253,13 +254,13 @@ export default function ReportPdf({ r, c, origin }: { r: ReportData; c: ReportCh
         )}
 
         <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
-          <Panel title={r.multiDay ? 'Attendance by day' : 'Arrival times'} note={r.peakNote ?? undefined} style={{ flex: 1, flexBasis: 0 }}><BarChart data={s.arrivals} color={ROYAL} height={chartH} width={262} xTitle={r.multiDay ? 'Day' : 'Time of arrival (Pacific time)'} yTitle="People checked in" /></Panel>
-          <Panel title="When tickets were claimed" note="How far ahead of the event people registered." style={{ flex: 1, flexBasis: 0 }}><BarChart data={s.claimTiming} color={ROYAL} height={chartH} width={262} xTitle="How far ahead of the event" yTitle="Tickets claimed" /></Panel>
+          {hasArrivals && <Panel title={r.multiDay ? 'Attendance by day' : 'Arrival times'} note={r.peakNote ?? undefined} style={{ flex: 1, flexBasis: 0 }}><BarChart data={s.arrivals} color={ROYAL} height={chartH} width={262} xTitle={r.multiDay ? 'Day' : 'Time of arrival (Pacific time)'} yTitle="People checked in" /></Panel>}
+          <Panel title="When tickets were claimed" note="How far ahead of the event people registered." style={{ flex: 1, flexBasis: 0 }}><BarChart data={s.claimTiming} color={ROYAL} height={chartH} width={hasArrivals ? 262 : 540} xTitle="How far ahead of the event" yTitle="Tickets claimed" /></Panel>
         </View>
         {social.length > 0 && (
           <Panel title="Social media reach" note="Reported by Triton Gaming from its own accounts." style={{ marginTop: 10 }}>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-              {social.map((m, i) => (<View key={i} style={[st.kpi, { width: `${Math.floor(96 / socialPerRow) - 1}%`, paddingTop: 4, paddingBottom: 5 }]}><Text style={[st.kpiValue, { fontSize: 13 }]}>{tx(m.value)}</Text><Text style={[st.kpiLabel, { fontSize: 6.8 }]}>{tx(m.label)}</Text></View>))}
+              {social.map((m, i) => (<View key={i} style={[st.kpi, { width: `${(100 - 1.2 * (socialPerRow - 1)) / socialPerRow}%`, paddingTop: 4, paddingBottom: 5 }]}><Text style={[st.kpiValue, { fontSize: 13 }]}>{tx(m.value)}</Text><Text style={[st.kpiLabel, { fontSize: 6.8 }]}>{tx(m.label)}</Text></View>))}
             </View>
           </Panel>
         )}
