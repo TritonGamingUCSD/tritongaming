@@ -3,23 +3,13 @@
 import { useState } from 'react';
 import { ExternalLink, FileText, GripVertical, Pencil, Pin, Plus, Star, Users } from 'lucide-react';
 import { ageLabel, docSummary, type DocNode, type DocSection } from '@/lib/docs/docsTree';
+import { linkHost } from '@/lib/docs/linkHost';
 import type { Doc, QuickLink } from '@/types/database';
 import QuickLinkDialog from './QuickLinkDialog';
+import { docsPost } from './docsApi';
+import { showToast } from '@/lib/ui/toast';
 import { RequiredBanner } from './DocRequired';
 import styles from './docHome.module.css';
-
-// "Google Drive", "Google Sheets"... for a link, or just its site name.
-export function linkHost(url: string | null): string {
-  if (!url) return 'Link';
-  try {
-    const u = new URL(url);
-    const h = u.hostname.replace(/^www\./, '');
-    if (h === 'drive.google.com') return 'Google Drive';
-    if (h === 'docs.google.com') return u.pathname.startsWith('/spreadsheets') ? 'Google Sheets' : u.pathname.startsWith('/forms') ? 'Google Forms' : u.pathname.startsWith('/presentation') ? 'Google Slides' : 'Google Docs';
-    if (h === 'forms.gle') return 'Google Forms';
-    return h;
-  } catch { return 'Link'; }
-}
 
 const overlaps = (a: string[], b: string[]) => a.some((x) => b.includes(x));
 
@@ -30,9 +20,19 @@ export default function DocHome({ docs, sections, favorites, onOpen, canEdit, ca
   teams: { id: string; name: string }[]; myTeamIds: string[]; links: QuickLink[]; onLinks: (next: QuickLink[]) => void;
 }) {
   const [linkDialog, setLinkDialog] = useState<{ link: QuickLink | null } | null>(null);
+  const [dragLink, setDragLink] = useState<string | null>(null);
+  const [liveLinks, setLiveLinks] = useState<string[] | null>(null);
   const guides = docs;
-  // Links for your own team(s) come first; otherwise the order the editors set.
-  const shownLinks = [...links].sort((a, b) => Number(overlaps(b.teams, myTeamIds)) - Number(overlaps(a.teams, myTeamIds)) || a.order_index - b.order_index);
+  // Readers see the links for their own team(s) first, then the order the editors set. Editors see exactly that order, so dragging a tile changes it.
+  const byOrder = [...links].sort((a, b) => a.order_index - b.order_index || a.title.localeCompare(b.title));
+  const baseLinks = canEdit ? byOrder : [...byOrder].sort((a, b) => Number(overlaps(b.teams, myTeamIds)) - Number(overlaps(a.teams, myTeamIds)));
+  const shownLinks = liveLinks ? liveLinks.map((id) => baseLinks.find((x) => x.id === id)).filter((x): x is QuickLink => !!x) : baseLinks;
+  async function saveLinkOrder(ids: string[]) {
+    const prev = links;
+    onLinks(ids.map((id, i) => ({ ...links.find((l) => l.id === id)!, order_index: i })));
+    const r = await docsPost('/api/docs/links', { action: 'reorder', ids });
+    if (!r.ok) { onLinks(prev); showToast(r.json.error || 'Couldn’t save the new order.'); }
+  }
   const forMe = guides.filter((d) => d.teams.length > 0 && overlaps(d.teams, myTeamIds));
   const myTeamNames = teams.filter((t) => myTeamIds.includes(t.id)).map((t) => t.name);
   const pinned = guides.filter((d) => d.pinned).sort((a, b) => (a.pin_order ?? 9999) - (b.pin_order ?? 9999) || a.title.localeCompare(b.title));
@@ -56,15 +56,34 @@ export default function DocHome({ docs, sections, favorites, onOpen, canEdit, ca
             {canEdit && <button type="button" className={styles.addLink} onClick={() => setLinkDialog({ link: null })}><Plus size={13} aria-hidden="true" /> Add quick link</button>}
           </h2>
           {shownLinks.length === 0 && <p className={styles.note}>Buttons to the club’s Google Drive files and forms go here. Add the ones people ask for most.</p>}
+          {canEdit && shownLinks.length > 1 && <p className={styles.note}>Drag a tile to change the order. People on a link’s teams still see it first.</p>}
           <ul className={styles.quick}>
             {shownLinks.map((l) => (
-              <li key={l.id} className={styles.quickItem}>
-                <a className={styles.quickLink} href={l.url} target="_blank" rel="noopener noreferrer">
+              <li key={l.id} className={`${styles.quickItem} ${dragLink === l.id ? styles.dragging : ''}`} draggable={canEdit}
+                onDragStart={(e) => { setDragLink(l.id); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', l.id); }}
+                onDragEnd={() => { setDragLink(null); setLiveLinks(null); }}
+                // The others move out of the way while you drag; nothing is saved until you let go.
+                onDragOver={(e) => {
+                  if (!dragLink) return;
+                  e.preventDefault();
+                  if (dragLink === l.id) return;
+                  const ids = shownLinks.map((x) => x.id);
+                  const next = ids.filter((id) => id !== dragLink);
+                  next.splice(ids.indexOf(l.id), 0, dragLink);
+                  if (next.join() !== ids.join()) setLiveLinks(next);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const ids = liveLinks; setDragLink(null); setLiveLinks(null);
+                  if (ids && ids.join() !== byOrder.map((x) => x.id).join()) void saveLinkOrder(ids);
+                }}>
+                <a className={styles.quickLink} href={l.url} target="_blank" rel="noopener noreferrer" draggable={false}>
                   <span className={styles.quickHost}>{linkHost(l.url)}</span>
                   <strong>{l.title}</strong>
                   {l.note && <span className={styles.quickNote}>{l.note}</span>}
                   <span className={styles.quickOpen}>Open <ExternalLink size={13} aria-hidden="true" /></span>
                 </a>
+                {canEdit && <GripVertical size={14} className={styles.quickGrip} aria-hidden="true" />}
                 {canEdit && <button type="button" className={styles.quickEdit} onClick={() => setLinkDialog({ link: l })} aria-label={`Edit the quick link ${l.title}`} title="Edit"><Pencil size={14} aria-hidden="true" /></button>}
               </li>
             ))}

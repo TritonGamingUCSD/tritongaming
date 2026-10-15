@@ -38,3 +38,15 @@ export async function getDocsData({ userId, canEdit }: { userId: string; canEdit
     myTeamIds: (groups ?? []).filter((g) => ((g.member_ids as string[] | null) ?? []).includes(userId)).map((g) => g.id as string),
   };
 }
+
+// The quick links for the dashboard: the order the editors set, with the ones meant for this person's teams first.
+export async function getDashboardLinks(userId: string): Promise<QuickLink[]> {
+  const svc = createServiceClient();
+  const [{ data: links }, { data: groups }] = await Promise.all([
+    svc.from('quick_links').select('id, title, url, note, teams, order_index').order('order_index').order('title'),
+    svc.from('meeting_groups').select('id, member_ids'),
+  ]);
+  const mine = new Set((groups ?? []).filter((g) => ((g.member_ids as string[] | null) ?? []).includes(userId)).map((g) => g.id as string));
+  const rows = (links ?? []) as QuickLink[];
+  return [...rows].sort((a, b) => Number(b.teams.some((t) => mine.has(t))) - Number(a.teams.some((t) => mine.has(t))) || a.order_index - b.order_index);
+}

@@ -22,7 +22,8 @@ import PortalSearch from '@/components/portal/PortalSearch';
 import { PortalParamsProvider } from '@/components/portal/PortalParamsContext';
 import { AdminLazy, DivisionMembersLazy, DivisionsLazy, DocsLazy, EventsLazy, MembersLazy, SiteContentLazy } from './LazySections';
 import { getDocsSummary, getMemberCount, getTiersCached } from '@/lib/portal/portalCounts';
-import { DashboardWelcome, DashboardBody, type HomeTool } from './DashboardHome';
+import { DashboardWelcome, DashboardBody } from './DashboardHome';
+import { getDashboardLinks } from './docs/getDocsData';
 import TicketsSectionContent from './tickets/TicketsSectionContent';
 import { getTicketsData } from './tickets/getTicketsData';
 import ProfileClient from './profile/ProfileClient';
@@ -429,7 +430,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const greetingLine = `${greeting}, ${profile.display_name?.split(' ')[0] || 'Triton'}`;
 
   // The redesigned dashboard's pieces: the quarter in the eyebrow, the next event as a ticket, a pinned doc as the note,
-  // tools split into paper (every member) and glass (team), and the latest ticket activity.
+  // the quick links and what is coming up, and the latest ticket activity.
   const termNow = (() => { const m = Number(new Intl.DateTimeFormat('en-US', { timeZone: PACIFIC_TZ, month: 'numeric' }).format(new Date())); const y = new Intl.DateTimeFormat('en-US', { timeZone: PACIFIC_TZ, year: 'numeric' }).format(new Date()); return `${m >= 9 || m === 1 ? (m === 1 ? 'Winter' : 'Fall') : m <= 3 ? 'Winter' : m <= 6 ? 'Spring' : 'Summer'} ${y}`; })();
   const homeEyebrow = `${termNow} · Home`;
   const ticketEvent = nextTicket?.event ?? null;
@@ -437,11 +438,12 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const homeEvent = featured ? { id: featured.id, title: featured.title, start_date: featured.start_date, location: featured.location, hasTicket: !!ticketEvent, ticketId: nextTicket?.id } : null;
   const pinnedDoc = docsSummary?.pinned ?? null;
   const homeNote = pinnedDoc ? { title: pinnedDoc.title, href: `/portal/docs?id=${pinnedDoc.id}` } : null;
-  const EVERYONE_TOOLS = ['tickets', 'points', 'profile'];
-  const homeTools: HomeTool[] = [
-    ...EVERYONE_TOOLS.map((id) => sections.find((x) => x.id === id)).filter((x): x is HubSection => !!x).map((x) => ({ id: x.id, label: x.label, hint: x.description, href: `/portal/${x.id}`, tier: 'everyone' as const })),
-    ...sections.filter((x) => !EVERYONE_TOOLS.includes(x.id) && !x.homeExclude && ['Events', 'Team', 'Admin', 'Resources'].includes(x.group)).slice(0, 8).map((x) => ({ id: x.id, label: x.label, hint: x.description, href: `/portal/${x.id}`, tier: 'officer' as const })),
-  ];
+  // Coming up: the events they have a ticket for and the ones they could still get one for, soonest first, without the featured one above.
+  const homeLinks = canViewDocs ? await getDashboardLinks(profile.id).catch(() => []) : [];
+  const homeUpcoming = [
+    ...ticketsData.tickets.filter((t) => t.status === 'active' && t.event && isCheckinWindowOpen(t.event)).map((t) => ({ id: t.event!.id, title: t.event!.title, start_date: t.event!.start_date, location: t.event!.location, hasTicket: true, ticketId: t.id })),
+    ...unregisteredUpcomingEvents.map((e) => ({ id: e.id, title: e.title, start_date: e.start_date, location: e.location, hasTicket: false, ticketId: undefined })),
+  ].filter((e) => e.id !== featured?.id).sort((x, y) => new Date(x.start_date).getTime() - new Date(y.start_date).getTime()).slice(0, 4);
   const homeActivity = ticketsData.tickets
     .flatMap((t) => (t.event ? [{ key: `${t.id}-r`, text: 'Got a ticket', detail: t.event.title, at: t.created_at }, ...(t.checked_in_at ? [{ key: `${t.id}-c`, text: 'Checked in', detail: t.event.title, at: t.checked_in_at }] : [])] : []))
     .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime()).slice(0, 5);
@@ -467,7 +469,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
         <PortalTopSection
           plain={!isTgMember(roles)}
           welcome={<DashboardWelcome eyebrow={homeEyebrow} name={profile.display_name?.split(' ')[0] || 'Triton'} showSearch={isTgMember(roles)} />}
-          body={<DashboardBody event={homeEvent} note={homeNote} tools={homeTools} activity={homeActivity} showRoleAsk={!isTeamMember} compact={!isTgMember(roles)} />}
+          body={<DashboardBody event={homeEvent} note={homeNote} links={homeLinks} upcoming={homeUpcoming} activity={homeActivity} showRoleAsk={!isTeamMember} compact={!isTgMember(roles)} />}
           desktop={{ greeting: greetingLine, tiles: tilesNode, viewAs: viewAsNode, banners: frameBanners }}
           top={
             <>

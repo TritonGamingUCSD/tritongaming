@@ -1,5 +1,6 @@
 import Link from '@/components/portal/PortalLink';
-import { MapPin, QrCode, Ticket } from 'lucide-react';
+import { CalendarDays, ExternalLink, MapPin, QrCode, Ticket } from 'lucide-react';
+import { linkHost } from '@/lib/docs/linkHost';
 import { PACIFIC_TZ } from '@/lib/core/timezone';
 import PortalSearch from '@/components/portal/PortalSearch';
 import EventCountdown from './EventCountdown';
@@ -9,7 +10,8 @@ import styles from './dashboardHome.module.css';
 
 export interface HomeEvent { id: string; title: string; start_date: string; location: string | null; hasTicket: boolean; ticketId?: string }
 export interface HomeNote { title: string; href: string }
-export interface HomeTool { id: string; label: string; hint: string; href: string; tier: 'everyone' | 'officer' }
+export interface HomeLink { id: string; title: string; url: string; note: string }
+export interface HomeUpcoming { id: string; title: string; start_date: string; location: string | null; hasTicket: boolean; ticketId?: string }
 export interface HomeActivity { key: string; text: string; detail: string; at: string }
 
 const day = (iso: string) => new Date(iso).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, weekday: 'long', month: 'long', day: 'numeric' });
@@ -32,10 +34,11 @@ export function DashboardWelcome({ eyebrow, name, showSearch = true }: { eyebrow
   );
 }
 
-// Below the to-dos: the next event as a paper ticket, the pinned note, the tools for this person's role, and what happened lately.
-export function DashboardBody({ event, note, tools, activity, showRoleAsk = false, compact = false }: { showRoleAsk?: boolean; /** Guests and students on a desktop: their few pages are in the top bar, so no tool cards, and the role request sits under the ticket. */ compact?: boolean; event: HomeEvent | null; note: HomeNote | null; tools: HomeTool[]; activity: HomeActivity[] }) {
-  const hasOfficer = tools.some((t) => t.tier === 'officer');
-  const hasEveryone = tools.some((t) => t.tier === 'everyone');
+const shortDay = (iso: string) => new Date(iso).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, weekday: 'short', month: 'short', day: 'numeric' });
+
+// Below the to-dos: the next event as a paper ticket, the pinned note, the club's quick links, what is coming up, and what happened lately. (The pages themselves are
+// in the side bar and the bottom bar, so there is no list of tools here.)
+export function DashboardBody({ event, note, links, upcoming, activity, showRoleAsk = false, compact = false }: { showRoleAsk?: boolean; /** Guests and students on a desktop: the role request sits under the ticket. */ compact?: boolean; event: HomeEvent | null; note: HomeNote | null; links: HomeLink[]; upcoming: HomeUpcoming[]; activity: HomeActivity[] }) {
   return (
     <div className={styles.body}>
       {showRoleAsk && !compact && <RoleAsk />}
@@ -69,31 +72,53 @@ export function DashboardBody({ event, note, tools, activity, showRoleAsk = fals
 
       {showRoleAsk && compact && <RoleAsk />}
 
-      {tools.length > 0 && !compact && (
-        <section aria-label="Your tools" className={styles.toolsSection}>
-          <h2 className={styles.h}>Your tools</h2>
-          {hasOfficer && hasEveryone && <p className={styles.legend}>Paper is for every member · Glass is for officers</p>}
-          <div className={styles.tools}>
-            {tools.map((t) => (
-              <Link key={t.id} href={t.href} className={t.tier === 'everyone' ? styles.paper : styles.glass}>
-                <span className={styles.toolKicker}>{t.tier === 'everyone' ? 'Everyone' : 'Officers'}</span>
-                <b>{t.label}</b>
-                <span>{t.hint}</span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {activity.length > 0 && (
-        <section aria-label="Recent activity" className={styles.activity}>
-          <h2 className={styles.h}>Recent activity</h2>
-          <ul>
-            {activity.map((a) => (
-              <li key={a.key}><span className={styles.diamond} aria-hidden="true" /><span><b>{a.text}</b> {a.detail}</span><time dateTime={a.at}>{ago(a.at)}</time></li>
+      {links.length > 0 && (
+        <section aria-label="Quick links">
+          <h2 className={styles.h}>Quick links</h2>
+          <ul className={styles.quick}>
+            {links.map((l) => (
+              <li key={l.id}>
+                <a className={styles.quickLink} href={l.url} target="_blank" rel="noopener noreferrer">
+                  <span className={styles.quickHost}>{linkHost(l.url)}</span>
+                  <strong>{l.title}</strong>
+                  {l.note && <span className={styles.quickNote}>{l.note}</span>}
+                  <span className={styles.quickOpen}>Open <ExternalLink size={13} aria-hidden="true" /></span>
+                </a>
+              </li>
             ))}
           </ul>
         </section>
+      )}
+
+      {(upcoming.length > 0 || activity.length > 0) && (
+        <div className={styles.twoCol}>
+          {upcoming.length > 0 && (
+            <section aria-label="Coming up">
+              <h2 className={styles.h}>Coming up</h2>
+              <ul className={styles.list}>
+                {upcoming.map((e) => (
+                  <li key={e.id}>
+                    <Link href={e.hasTicket && e.ticketId ? `/portal/tickets?qr=${e.ticketId}` : '/portal/tickets'} className={styles.upRow}>
+                      <CalendarDays size={16} aria-hidden="true" />
+                      <span className={styles.upText}><strong>{e.title}</strong><small>{shortDay(e.start_date)} · {time(e.start_date)}{e.location ? ` · ${e.location}` : ''}</small></span>
+                      <span className={e.hasTicket ? styles.upHave : styles.upGet}>{e.hasTicket ? 'Have ticket' : 'Get ticket'}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+          {activity.length > 0 && (
+            <section aria-label="Recent activity" className={styles.activity}>
+              <h2 className={styles.h}>Recent activity</h2>
+              <ul>
+                {activity.map((a) => (
+                  <li key={a.key}><span className={styles.diamond} aria-hidden="true" /><span><b>{a.text}</b> {a.detail}</span><time dateTime={a.at}>{ago(a.at)}</time></li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </div>
       )}
     </div>
   );

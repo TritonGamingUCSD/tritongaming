@@ -31,15 +31,29 @@
 .noteLink { align-self: flex-start; margin-top: 0.3rem; color: #011941; font-weight: 700; font-size: 0.85rem; text-decoration: underline; text-underline-offset: 3px; } /* theme-ok */
 
 .h { margin: 0 0 0.25rem; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.35rem; color: var(--pp-ink); }
-.legend { margin: 0 0 0.8rem; font-family: var(--font-renegare); font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.75); }
-.tools { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 0.9rem; margin-top: 0.6rem; }
-.paper, .glass { display: flex; flex-direction: column; gap: 0.25rem; padding: 1rem 1.1rem; border-radius: 10px; text-decoration: none; color: var(--pp-ink); min-width: 0; transition: transform 0.15s ease; }
-.paper:hover, .glass:hover { transform: translateY(-2px); }
-.paper { background: var(--pp-card); border: 1px solid var(--pp-line); box-shadow: var(--pp-shadow); }
-.glass { background: rgba(var(--pp-ink-rgb), 0.07); border: 1px solid rgba(var(--pp-ink-rgb), 0.22); backdrop-filter: blur(6px); }
-.toolKicker { font-family: var(--font-renegare); font-size: 0.64rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--p-accent-text); }
-.paper b, .glass b { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.1rem; }
-.paper span:last-child, .glass span:last-child { font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.82); }
+
+.quick { list-style: none; margin: 0.6rem 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0.8rem; }
+.quick li { display: flex; }
+.quickLink { flex: 1; display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; padding: 0.9rem 1rem; border-radius: 0.8rem; border: 2px solid var(--pp-ink); background: var(--pp-card); color: var(--pp-ink); text-decoration: none; box-shadow: 4px 4px 0 rgba(var(--pp-ink-rgb), 0.85); transition: transform 0.12s, box-shadow 0.12s; }
+.quickLink:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 rgba(var(--pp-ink-rgb), 0.85); }
+.quickLink:focus-visible { outline: 3px solid var(--p-accent-text); outline-offset: 2px; }
+.quickHost { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--p-accent-text); }
+.quickLink strong { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.05rem; overflow-wrap: anywhere; }
+.quickNote { font-size: 0.84rem; line-height: 1.35; color: rgba(var(--pp-ink-rgb), 0.85); }
+.quickOpen { display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 0.35rem; font-size: 0.82rem; font-weight: 700; }
+
+.twoCol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.4rem; align-items: start; }
+.list { list-style: none; margin: 0.6rem 0 0; padding: 0.3rem 0.4rem; display: flex; flex-direction: column; background: var(--pp-card); border: 1px solid var(--pp-line); border-radius: 10px; }
+.list li + li { border-top: 1px solid var(--pp-line); }
+.upRow { display: flex; align-items: center; gap: 0.7rem; padding: 0.65rem 0.6rem; color: var(--pp-ink); text-decoration: none; border-radius: 8px; }
+.upRow:hover { background: rgba(var(--pp-ink-rgb), 0.06); }
+.upRow:focus-visible { outline: 3px solid var(--p-accent-text); outline-offset: -2px; }
+.upText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+.upText strong { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 0.98rem; overflow-wrap: anywhere; }
+.upText small { font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.82); overflow-wrap: anywhere; }
+.upGet, .upHave { flex-shrink: 0; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+.upGet { background: var(--yellow); color: #011941; } /* theme-ok */
+.upHave { border: 1px solid rgba(var(--pp-ink-rgb), 0.4); color: var(--pp-ink); }
 
 .activity ul { list-style: none; margin: 0.6rem 0 0; padding: 0.4rem 1rem; display: flex; flex-direction: column; background: var(--pp-card); border: 1px solid var(--pp-line); border-radius: 10px; }
 .activity li { display: flex; align-items: baseline; gap: 0.7rem; padding: 0.6rem 0; font-size: 0.9rem; color: var(--pp-ink); }
@@ -49,6 +63,11 @@
 .diamond { flex-shrink: 0; width: 8px; height: 8px; background: var(--p-accent-text); transform: rotate(45deg) translateY(-1px); }
 
 @media (max-width: 760px) {
+  .quick { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; }
+  .quickLink { padding: 0.7rem 0.75rem; box-shadow: 3px 3px 0 rgba(var(--pp-ink-rgb), 0.85); }
+  .quickLink strong { font-size: 0.95rem; }
+  .quickNote, .quickOpen { display: none; }
+  .twoCol { grid-template-columns: 1fr; }
   .top { grid-template-columns: 1fr; }
   .ticket { grid-template-columns: minmax(0, 1fr) 44px; }
   .note { transform: rotate(0.6deg); }
@@ -62,8 +81,6 @@
 .countBox small { margin-top: 0.15rem; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.8); }
 .countdownNow { margin: 0.2rem 0; font-family: var(--font-futura-heavy); font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--pp-ok); }
 
-/* On a phone the page list under the greeting (and the bottom bar) already lists every tool, so these cards would repeat it. */
-@media (max-width: 899px) { .toolsSection { display: none; } }
 
 /* No pinned note: the ticket takes the whole row instead of leaving the note's column empty. */
 .top:not(:has(.note)) { grid-template-columns: minmax(0, 1fr); }

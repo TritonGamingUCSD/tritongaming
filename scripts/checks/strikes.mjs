@@ -62,19 +62,20 @@ try{
  r=await V2.call('GET','/api/strikes/mine'); const pick=(t)=>r.j.strikes.find(x=>x.reason===t);
  ok('a voucher removes the oldest and the rest move up one',pick('oldest').status==='removed'&&pick('middle').mark==='Warning'&&pick('newest').mark==='Strike 1',JSON.stringify(r.j.strikes.map(x=>[x.reason,x.mark,x.status])));
  // Reset
- r=await lead.call('POST','/api/strikes/reset',{reason:'x'}); ok('a lead cannot reset',r.s===403,r.s);
- r=await exec.call('POST','/api/strikes/reset',{}); ok('a reset needs a reason',r.s===400,r.s);
+ r=await lead.call('POST','/api/strikes/reset',{user_id:W.id,reason:'x'}); ok('a lead cannot reset',r.s===403,r.s);
+ r=await exec.call('POST','/api/strikes/reset',{user_id:W.id}); ok('a reset needs a reason',r.s===400,r.s);
  r=await exec.call('POST','/api/strikes/reset',{user_id:exec.id,reason:'x'}); ok('nobody resets themselves',r.s===403,r.s);
  const mk=async(t)=>{const {data}=await svc.from('meetings').insert({title:t,meeting_date:today,starts_at:new Date(Date.now()-3*3600e3).toISOString(),ends_at:new Date(Date.now()-60e3).toISOString(),opened_at:new Date(Date.now()-3*3600e3).toISOString()}).select('id').single(); meetingIds.push(data.id); return data.id;};
  const K=await user('k',['officer']); await exec.call('POST','/api/strikes/vouchers',{user_id:K.id,reason:'Carries over'});
  const old0=await mk('Strike check old meeting'); r=await exec.call('GET','/api/strikes/suggestions'); ok('a miss before the reset is suggested',r.j.suggestions.some(x=>x.user_id===W.id&&x.meeting_id===old0));
- await add(exec2,'mine'); r=await exec.call('POST','/api/strikes/reset',{reason:'Test quarter reset'}); ok('exec resets everyone',r.s===200&&r.j.people>=1,JSON.stringify(r));
+ // Only ever reset the temporary account: a reset for everyone would delete the real strike records (lib.mjs refuses that call).
+ const wStrikes=((await svc.from('strikes').select('id').eq('user_id',W.id)).data??[]).map(x=>x.id);
+ await add(exec2,'mine'); r=await exec.call('POST','/api/strikes/reset',{user_id:W.id,reason:'Test quarter reset'}); ok('exec resets a person',r.s===200&&r.j.people>=1,JSON.stringify(r));
  r=await W.call('GET','/api/strikes/mine'); ok('their record is gone, leaving only the reset and its reason',r.j.active===0&&r.j.strikes.length===0&&r.j.history.length===1&&r.j.history[0].kind==='strikes_reset'&&r.j.history[0].reason==='Test quarter reset',JSON.stringify(r.j));
  const gone=await svc.from('strikes').select('id',{count:'exact',head:true}).eq('user_id',W.id); ok('the old strikes are deleted from the database',gone.count===0);
- const au=await svc.from('audit_log').select('id',{count:'exact',head:true}).in('entity_type',['strike','strike voucher']); ok('and so are the strike lines in the audit log',au.count===0,au.count);
+ const au=await svc.from('audit_log').select('id',{count:'exact',head:true}).in('entity_type',['strike','strike voucher']).in('entity_id',wStrikes.length?wStrikes:['00000000-0000-0000-0000-000000000000']); ok('and so are their strike lines in the audit log',au.count===0,au.count);
  r=await K.call('GET','/api/strikes/mine'); ok('an unused voucher carries over a reset',r.j.vouchers===1&&r.j.voucherList[0].reason==='Carries over',JSON.stringify(r.j));
  r=await exec.call('GET','/api/strikes/suggestions'); ok('misses from before the reset do not come back',!r.j.suggestions.some(x=>x.user_id===W.id&&x.meeting_id===old0));
- r=await exec2.call('GET','/api/strikes/mine'); ok('a bulk reset skips the person doing it',r.j.active===0);
  r=await exec2.call('GET','/api/strikes/mine'); r=await exec.call('GET','/api/strikes/mine'); 
  r=await exec2.call('POST','/api/strikes/reset',{user_id:A.id,reason:'Single reset'}); ok('a single person can be reset too',r.s===200,r.s);
  await svc.from('strike_cleared').delete().in('user_id',made);   // as if a new quarter has started
@@ -97,7 +98,7 @@ try{
 }catch(e){ console.log('ERROR',e); t.fail(); }
 finally{
  // The bulk reset test touches every real tracked person's "cleared" marker and writes strike lines to the audit log: undo both.
- await svc.from('strike_cleared').delete().gte('cleared_at',startedAt); await svc.from('audit_log').delete().like('entity_type','strike%').gte('created_at',startedAt).in('actor_id',made);
+ await svc.from('strike_cleared').delete().in('user_id',made); await svc.from('audit_log').delete().like('entity_type','strike%').gte('created_at',startedAt).in('actor_id',made);
  for(const id of meetingIds) await svc.from('meetings').delete().eq('id',id);
  await cleanup();
  const {count}=await svc.from('strikes').select('id',{count:'exact',head:true}).in('user_id',made.length?made:['00000000-0000-0000-0000-000000000000']); console.log('left over strikes for test users:',count);

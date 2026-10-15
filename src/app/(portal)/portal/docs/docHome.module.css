@@ -14,6 +14,7 @@
 .quickLink strong { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.05rem; overflow-wrap: anywhere; }
 .quickNote { font-size: 0.84rem; line-height: 1.35; color: rgba(var(--pp-ink-rgb), 0.85); }
 .quickOpen { display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 0.35rem; font-size: 0.82rem; font-weight: 700; }
+.quickGrip { position: absolute; top: 0.62rem; right: 2.5rem; color: rgba(var(--pp-ink-rgb), 0.5); cursor: grab; pointer-events: none; }
 .quickEdit { position: absolute; top: 0.5rem; right: 0.5rem; display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); border-radius: 50%; background: var(--pp-card); color: var(--pp-ink); cursor: pointer; }
 .quickEdit:hover { background: rgba(var(--pp-ink-rgb), 0.1); }
 

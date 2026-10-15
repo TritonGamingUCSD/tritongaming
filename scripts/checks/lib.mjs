@@ -27,6 +27,16 @@ export function tracker() {
   };
 }
 
+// The checks run against the live database, so a call that acts on EVERYONE (not just the temporary accounts) must never go out. A bulk strike reset once wiped
+// the real strike records this way. Add an entry here for any other endpoint that can touch every row; the call is refused before it is sent.
+const BULK_CALLS = [
+  { path: /^\/api\/strikes\/reset$/, scoped: (body) => !!body?.user_id },
+];
+function refuseBulk(path, body) {
+  const hit = BULK_CALLS.find((b) => b.path.test(path.split('?')[0]) && !b.scoped(body));
+  if (hit) throw new Error(`Refused: ${path} without a user_id would change real data. Scope the call to a temporary account.`);
+}
+
 /**
  * Temporary accounts for one check. `tag` keeps the addresses of different checks apart.
  *   const { user, made, cleanup } = accounts('plan');
@@ -46,6 +56,7 @@ export function accounts(tag) {
     const { data: s } = await client.auth.verifyOtp({ token_hash: lk.properties.hashed_token, type: 'magiclink' });
     const cookie = `sb-${ref}-auth-token=base64-${Buffer.from(JSON.stringify(s.session)).toString('base64url')}`;
     const call = async (method, path, body) => {
+      refuseBulk(path, body);
       const r = await fetch(BASE + path, { method, headers: { cookie, 'content-type': 'application/json', ...(opts.headers ?? {}) }, body: body ? JSON.stringify(body) : undefined });
       let j = {}; try { j = await r.json(); } catch { /* not JSON */ }
       return { s: r.status, j };
