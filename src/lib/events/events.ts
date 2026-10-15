@@ -1,6 +1,7 @@
 import { openEventsFilter, endedEventsFilter } from '@/lib/events/checkinWindow';
 import { unstable_cache } from 'next/cache';
 import { createPublicClient } from '@/lib/supabase/public';
+import { createServiceClient } from '@/lib/supabase/admin';
 import type { Event } from '@/types';
 import { getPreviewDrafts } from '@/lib/site/contentPreviewStore';
 import { pacificDatetimeLocalToUTC } from '@/lib/core/timezone';
@@ -199,7 +200,7 @@ export async function getGoingCount(eventId: string): Promise<number> {
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(eventId)) return 0;
   try {
     return await cachedEvents(['going', eventId], async () => {
-      const { data, error } = await createPublicClient().rpc('event_going_count', { p_event_id: eventId });
+      const { data, error } = await createServiceClient().rpc('event_going_count', { p_event_id: eventId });
       if (error) throw error;
       return (data as number) ?? 0;
     });

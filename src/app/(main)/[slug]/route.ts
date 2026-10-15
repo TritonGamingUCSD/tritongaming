@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createPublicClient } from '@/lib/supabase/public';
+import { createServiceClient } from '@/lib/supabase/admin';
 import { validateSlug } from '@/lib/site/shortLinks';
 
 export const dynamic = 'force-dynamic';
@@ -16,7 +16,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
   try { slug = validateSlug(decodeURIComponent(raw)); } catch { /* a malformed escape is just not a link */ }
   if (!slug) return notFoundPage();
 
-  const { data } = await createPublicClient().rpc('resolve_short_link', { p_slug: slug });
+  const { data } = await createServiceClient().rpc('resolve_short_link', { p_slug: slug });
   if (typeof data !== 'string' || !data) return notFoundPage();
 
   // Internal destinations get a tag so "where did they come from" can credit this short link.
