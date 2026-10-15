@@ -7,8 +7,8 @@
 }
 .loading { padding: 2rem; text-align: center; color: rgba(var(--pp-ink-rgb), 0.88); font-size: 0.9rem; }
 
-.toolbar { position: sticky; top: calc(var(--portal-header-h, 0px) + 0.4rem); z-index: 6; display: flex; flex-wrap: wrap; align-items: center; gap: 0.15rem; padding: 0.4rem 0.5rem; border-radius: 1rem 1rem 0 0; background: var(--pp-card); border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.23); }
-.sep { width: 1px; height: 20px; margin: 0 0.3rem; background: rgba(var(--pp-ink-rgb), 0.14); }
+.toolbar { position: sticky; top: calc(var(--portal-header-h, 0px) + 0.4rem); z-index: 6; display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; padding: 0.55rem 1rem; border-radius: 0; background: var(--pp-card); border-top: 1px solid rgba(var(--pp-ink-rgb), 0.15); border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.23); }
+.sep { width: 1px; height: 20px; margin: 0 0.55rem; background: rgba(var(--pp-ink-rgb), 0.14); }
 .tool { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 0.55rem; border: 1px solid transparent; background: none; color: rgba(var(--pp-ink-rgb), 0.92); cursor: pointer; }
 .tool:hover:not(:disabled) { background: rgba(var(--pp-ink-rgb), 0.09); color: var(--pp-ink); }
 .tool:disabled { opacity: 0.35; cursor: default; }
@@ -84,7 +84,7 @@
 .headingSelect { width: 11rem; flex: none; min-height: 36px; padding-block: 0.3rem; font-size: 0.85rem; }
 
 /* Live / Source / Reading */
-.viewBar { display: flex; gap: 0.25rem; padding: 0.35rem 0.5rem 0; }
+.viewBar { display: flex; gap: 0.25rem; padding: 0.7rem 1rem; }
 .viewTab { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 32px; padding: 0 0.8rem; border-radius: 999px; border: 1px solid transparent; background: none; color: rgba(var(--pp-ink-rgb), 0.85); font: inherit; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
 .viewTab:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 .viewTabOn, .viewTabOn:hover { background: var(--pp-ink); color: var(--pp-paper); }
@@ -115,10 +115,10 @@
 
 /* Write / Preview, with Markdown tucked away on the right, and a one-line hint about what the editor can do. */
 .viewBar { align-items: center; justify-content: space-between; flex-wrap: wrap; }
-.viewSeg { display: flex; gap: 0.25rem; }
-.advancedBtn { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 30px; padding: 0 0.7rem; border-radius: 999px; border: 1px dashed rgba(var(--pp-ink-rgb), 0.35); background: none; color: rgba(var(--pp-ink-rgb), 0.85); font: inherit; font-size: 0.78rem; cursor: pointer; }
+.viewSeg { display: inline-flex; gap: 0.15rem; padding: 0.2rem; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.07); }
+.advancedBtn { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 30px; padding: 0 0.7rem; border-radius: 999px; border: 0; background: none; color: rgba(var(--pp-ink-rgb), 0.75); font: inherit; font-size: 0.78rem; cursor: pointer; }
 .advancedBtn:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
-.hint { margin: 0.3rem 0.6rem 0; font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.85); }
+.hint { margin: 0; padding: 0.7rem 1.3rem; border-top: 1px solid rgba(var(--pp-ink-rgb), 0.15); font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.7); }
 .hint kbd { padding: 0.02rem 0.35rem; border-radius: 4px; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); font: inherit; font-size: 0.75rem; }
 
 /* Text colour and highlight buttons and their palette. */

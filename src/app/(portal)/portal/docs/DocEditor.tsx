@@ -382,9 +382,8 @@ const DocEditor = forwardRef<DocEditorHandle, { value: string; onChange: (markdo
           <button type="button" aria-pressed={view === 'reading'} className={`${styles.viewTab} ${view === 'reading' ? styles.viewTabOn : ''}`} onClick={() => switchView('reading')} title="See it the way readers will"><BookOpen size={14} aria-hidden="true" /> Preview</button>
         </div>
         {/* The raw Markdown text is for people who know it; everyone else can ignore this. */}
-        <button type="button" aria-pressed={view === 'source'} className={`${styles.advancedBtn} ${view === 'source' ? styles.viewTabOn : ''}`} onClick={() => switchView(view === 'source' ? 'live' : 'source')} title="Edit the raw Markdown text. For people who know Markdown."><FileCode2 size={13} aria-hidden="true" /> Markdown (advanced)</button>
+        <button type="button" aria-pressed={view === 'source'} className={`${styles.advancedBtn} ${view === 'source' ? styles.viewTabOn : ''}`} onClick={() => switchView(view === 'source' ? 'live' : 'source')} title="Edit the raw Markdown text. For people who know Markdown."><FileCode2 size={13} aria-hidden="true" /> Markdown</button>
       </div>
-      {view === 'live' && <p className={styles.hint}>Select text to format it. Type <kbd>/</kbd> for headings, lists, tables and boxes, or <kbd>[[</kbd> to link to another doc.</p>}
 
       <div className={styles.toolbar} role="toolbar" aria-label="Formatting" hidden={view !== 'live'}>
         <ToolButton label="Undo" disabled={!state.canUndo} onClick={() => editor.chain().focus().undo().run()}><Undo2 size={16} aria-hidden="true" /></ToolButton>
@@ -488,6 +487,7 @@ const DocEditor = forwardRef<DocEditorHandle, { value: string; onChange: (markdo
           </ul>
         )}
       </div>
+      {view === 'live' && <p className={styles.hint}>Tip: select text to format it, type <kbd>/</kbd> for headings, lists, tables and boxes, or <kbd>[[</kbd> to link to another doc.</p>}
     </div>
   );
 });

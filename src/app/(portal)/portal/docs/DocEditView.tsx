@@ -292,7 +292,7 @@ const DocEditView = forwardRef<DocEditViewHandle, Props>(function DocEditView({ 
 
           <div className={styles.metaRow}>
             <div className={styles.metaField}>
-              <span className={styles.label}>Tags <span className={styles.labelHint}>Saves right away</span></span>
+              <span className={styles.label}>Tags <span className={styles.labelHint}>Short words to find it by</span></span>
               <div className={styles.tagEdit}>
                 {liveTags.map((t) => <span key={t} className={styles.tagChip}>{t}<button type="button" aria-label={`Remove tag ${t}`} onClick={() => void meta({ remove_tags: [t] })}><X size={11} aria-hidden="true" /></button></span>)}
                 <input className={styles.tagInput} value={tagText} onChange={(e) => setTagText(e.target.value)} placeholder={liveTags.length >= MAX_TAGS ? 'Tag limit reached' : 'Add a tag…'} disabled={liveTags.length >= MAX_TAGS || metaBusy}
@@ -301,7 +301,7 @@ const DocEditView = forwardRef<DocEditViewHandle, Props>(function DocEditView({ 
               </div>
             </div>
             <div className={styles.metaField}>
-              <span className={styles.label}>Useful for <span className={styles.labelHint}>Saves right away. People on these teams see it first on the docs home</span></span>
+              <span className={styles.label}>Useful for <span className={styles.labelHint}>People on these teams see it first on the docs home</span></span>
               <div className={styles.teamPick} role="group" aria-label="Teams this doc is useful for">
                 {teams.length === 0 && <small>No teams yet. Make one under TG Members, Team.</small>}
                 {teams.map((t) => {
@@ -314,7 +314,7 @@ const DocEditView = forwardRef<DocEditViewHandle, Props>(function DocEditView({ 
             </div>
             {(coverOpen || !!doc.cover_url) && (
               <label className={styles.metaField}>
-                <span className={styles.label}>Cover image <span className={styles.labelHint}>Link to a picture. Saves right away</span></span>
+                <span className={styles.label}>Cover image <span className={styles.labelHint}>Link to a picture</span></span>
                 <Input defaultValue={doc.cover_url ?? ''} key={doc.cover_url ?? 'none'} placeholder="https://… (an image link)" inputMode="url" onBlur={(e) => { const v = e.target.value.trim(); if (v !== (doc.cover_url ?? '')) void meta({ cover_url: v }); }} />
               </label>
             )}
