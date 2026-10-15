@@ -249,8 +249,8 @@ export default function ReportPdf({ r, c, origin }: { r: ReportData; c: ReportCh
         )}
 
         <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
-          <Panel title={r.multiDay ? 'Attendance by day' : 'Arrival times'} note={r.peakNote ?? undefined} style={{ flex: 1, flexBasis: 0 }}><BarChart data={s.arrivals} color={ROYAL} height={210} width={262} xTitle={r.multiDay ? 'Day' : 'Time of arrival (Pacific time)'} yTitle="People checked in" /></Panel>
-          <Panel title="When tickets were claimed" note="How far ahead of the event people registered." style={{ flex: 1, flexBasis: 0 }}><BarChart data={s.claimTiming} color={ROYAL} height={210} width={262} xTitle="How far ahead of the event" yTitle="Tickets claimed" /></Panel>
+          <Panel title={r.multiDay ? 'Attendance by day' : 'Arrival times'} note={r.peakNote ?? undefined} style={{ flex: 1, flexBasis: 0 }}><BarChart data={s.arrivals} color={ROYAL} height={248} width={262} xTitle={r.multiDay ? 'Day' : 'Time of arrival (Pacific time)'} yTitle="People checked in" /></Panel>
+          <Panel title="When tickets were claimed" note="How far ahead of the event people registered." style={{ flex: 1, flexBasis: 0 }}><BarChart data={s.claimTiming} color={ROYAL} height={248} width={262} xTitle="How far ahead of the event" yTitle="Tickets claimed" /></Panel>
         </View>
         {social.length > 0 && (
           <Panel title="Social media reach" note="Reported by Triton Gaming from its own accounts." style={{ marginTop: 10 }}>
@@ -268,14 +268,18 @@ export default function ReportPdf({ r, c, origin }: { r: ReportData; c: ReportCh
             <View>
               <View style={[st.sectionHead, { marginTop: 0 }]}><Text style={st.sectionTitle}>Who attended</Text></View>
               <Text style={st.lead}>Shares of the {s.checkedIn.toLocaleString()} people who checked in. Optional profile details cover only attendees who chose to share them.</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 6 }}>
+              <View style={{ gap: 8, marginTop: 6 }}>
                 {([
-                  ['Class year', s.year, NAVY], ['Colleges', s.college, ROYAL],
-                  ['Fields of study', s.field, NAVY], ['Top majors', s.major, ROYAL],
-                  ['Gender', s.gender, NAVY], ['Pronouns', s.pronouns, ROYAL],
-                  ['Platforms', s.platforms, GOLD_DEEP], ['Favorite games', s.games, GOLD_DEEP],
-                ] as [string, Bucket[], string][]).map(([t, d, col]) => (
-                  <Panel key={t} title={t} style={{ width: '48.8%' }}><MiniRank data={d} color={col} base={s.checkedIn} n={5} /></Panel>
+                  [['Class year', s.year, NAVY], ['Colleges', s.college, ROYAL]],
+                  [['Fields of study', s.field, NAVY], ['Top majors', s.major, ROYAL]],
+                  [['Gender', s.gender, NAVY], ['Pronouns', s.pronouns, ROYAL]],
+                  [['Platforms', s.platforms, GOLD_DEEP], ['Favorite games', s.games, GOLD_DEEP]],
+                ] as [string, Bucket[], string][][]).map((pair) => (
+                  <View key={pair[0][0]} style={{ flexDirection: 'row', gap: 10 }}>
+                    {pair.map(([t, d, col]) => (
+                      <Panel key={t} title={t} style={{ flex: 1, flexBasis: 0 }}><MiniRank data={d} color={col} base={s.checkedIn} n={4} /></Panel>
+                    ))}
+                  </View>
                 ))}
               </View>
             </View>
@@ -294,8 +298,8 @@ export default function ReportPdf({ r, c, origin }: { r: ReportData; c: ReportCh
             </View>
           )}
           {c.thanks.length > 0 && (
-            <View style={{ marginTop: 22 }} wrap={false}>
-              <View style={st.sectionHead}><Text style={st.sectionTitle}>{c.preparedFor ? `Thank you, ${tx(c.preparedFor.name)}` : 'With thanks to our sponsors'}</Text></View>
+            <View style={{ marginTop: 14 }} wrap={false}>
+              <View style={[st.sectionHead, { marginTop: 0 }]}><Text style={st.sectionTitle}>{c.preparedFor ? `Thank you, ${tx(c.preparedFor.name)}` : 'With thanks to our sponsors'}</Text></View>
               <Text style={st.lead}>{c.preparedFor ? 'Thank you for supporting this event.' : 'This event was supported by:'}</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 22, marginTop: 8, alignItems: 'center' }}>
                 {c.thanks.map((sp) => (
