@@ -15,12 +15,15 @@ const overlaps = (a: string[], b: string[]) => a.some((x) => b.includes(x));
 
 // The landing page: where to go first, in the order people need it. Quick links to the club's files, then the docs written for your own team(s), then what the
 // team pinned, then every how-to guide by group, and last what changed lately and what you starred. Searching is the box above.
+const GROUP_LIMIT = 6;
+
 export default function DocHome({ docs, sections, favorites, onOpen, canEdit, catName, onReorderPins, teams, myTeamIds, links, onLinks }: {
   docs: Doc[]; sections: DocSection<Doc>[]; favorites: Set<string>; onOpen: (id: string) => void; canEdit: boolean; catName: (d: Doc) => string; onReorderPins: (ids: string[]) => void;
   teams: { id: string; name: string }[]; myTeamIds: string[]; links: QuickLink[]; onLinks: (next: QuickLink[]) => void;
 }) {
   const [linkDialog, setLinkDialog] = useState<{ link: QuickLink | null } | null>(null);
   const [dragLink, setDragLink] = useState<string | null>(null);
+  const [allOpen, setAllOpen] = useState<Set<string>>(new Set());
   const [liveLinks, setLiveLinks] = useState<string[] | null>(null);
   const guides = docs;
   // Readers see the links for their own team(s) first, then the order the editors set. Editors see exactly that order, so dragging a tile changes it.
@@ -138,15 +141,19 @@ export default function DocHome({ docs, sections, favorites, onOpen, canEdit, ca
               <div key={g.id ?? 'none'} className={styles.group} style={g.color ? ({ '--cat': g.color } as React.CSSProperties) : undefined}>
                 <h3 className={styles.groupName}><span className={styles.dot} aria-hidden="true" />{g.name} <span className={styles.count}>{g.shown.length}</span></h3>
                 <ul className={styles.list}>
-                  {g.shown.map(({ doc, depth }) => (
+                  {(allOpen.has(g.id ?? 'none') ? g.shown : g.shown.slice(0, GROUP_LIMIT)).map(({ doc, depth }) => (
                     <li key={doc.id}>
-                      <button type="button" className={styles.row} style={{ paddingLeft: `${0.6 + Math.min(depth, 3) * 1}rem` }} onClick={() => onOpen(doc.id)}>
+                      <button type="button" className={styles.row} style={{ paddingLeft: `${0.6 + Math.min(depth, 3) * 1}rem` }} onClick={() => onOpen(doc.id)} title={docSummary(doc.content, 160) || undefined}>
                         <span className={styles.rowTitle}>{depth > 0 ? '└ ' : ''}{doc.title}</span>
-                        {docSummary(doc.content, 80) && <span className={styles.rowNote}>{docSummary(doc.content, 80)}</span>}
                       </button>
                     </li>
                   ))}
                 </ul>
+                {g.shown.length > GROUP_LIMIT && (
+                  <button type="button" className={styles.more} onClick={() => setAllOpen((p) => { const n = new Set(p); const k = g.id ?? 'none'; if (n.has(k)) n.delete(k); else n.add(k); return n; })}>
+                    {allOpen.has(g.id ?? 'none') ? 'Show fewer' : `Show ${g.shown.length - GROUP_LIMIT} more`}
+                  </button>
+                )}
               </div>
             ))}
           </div>
