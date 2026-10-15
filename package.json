@@ -16,6 +16,7 @@
     "test:checkin": "node scripts/checks/checkin.mjs",
     "test:selfcheckin": "node scripts/checks/selfcheckin.mjs",
     "test:selfcheckin-stress": "node scripts/checks/selfcheckin-stress.mjs",
+    "test:selfcheckin-matrix": "node scripts/checks/selfcheckin-matrix.mjs",
     "test:strikes": "node scripts/checks/strikes.mjs",
     "test:quarters": "node scripts/checks/quarters.mjs",
     "test:teamyears": "node scripts/checks/teamyears.mjs",
