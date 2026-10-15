@@ -258,7 +258,7 @@ export default async function EventSummaryPage({ params }: { params: Promise<{ i
         </div>
       )}
 
-      <p className={styles.method}>About these figures: registration and attendance come from Triton Gaming’s ticketing and on-site check-in at tritongaming.org, and have been collected since the 2026-2027 school year (September 2026); earlier events are not included. Audience and interest details (such as gender, pronouns, college, major, platforms and games) are optional in the member portal, so those figures cover only the attendees who chose to share them, and “Not provided” counts those who did not. They are shown as totals; no individual’s answers appear in this report.</p>
+      <p className={styles.method}>About these figures: registration and attendance come from Triton Gaming’s ticketing and on-site check-in at tritongaming.org, and have been collected since the 2026-2027 school year (September 2026); earlier events are not included. Gender and pronouns are asked of every member, and class year, college and major of UCSD students, when they claim a ticket. Platforms and games are optional, and guests and earlier accounts may have left details blank, so those figures cover only the attendees who answered, and “Not provided” counts those who did not. They are shown as totals; no individual’s answers appear in this report.</p>
       <footer className={styles.printFooter}>Triton Gaming · Gaming Org at UC San Diego · tritongaming.org · {event.title}</footer>
 
     </ReportShell>
