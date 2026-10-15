@@ -5,8 +5,11 @@
 .h2Note { font-family: var(--font-futura-medium); font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.8); }
 
 /* Quick links */
+.topGrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; align-items: start; }
+@media (min-width: 1000px) { .topGrid:has(> section + section) { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2.5rem; } }
+.topGrid .h2 { min-height: 2.4rem; }
 .linkHint { margin: 0 0 1.1rem; }
-.quick { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.4rem; max-width: 34rem; }
+.quick { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.4rem; }
 .quickItem { position: relative; display: flex; }
 .quickLink { flex: 1; display: flex; align-items: center; gap: 0.1rem 0.6rem; min-width: 0; padding: 0.5rem 0.75rem; border-radius: 0.6rem; border: 1.5px solid rgba(var(--pp-ink-rgb), 0.55); background: var(--pp-card); color: var(--pp-ink); text-decoration: none; transition: background 0.12s, border-color 0.12s; }
 .quickLink:hover { background: rgba(var(--pp-ink-rgb), 0.06); border-color: var(--pp-ink); }
@@ -34,8 +37,8 @@
 .card small { margin-top: 0.15rem; font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.75); }
 
 /* How-to guides by group: plain lists */
-.groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.25rem 1.75rem; align-items: start; }
-.group { min-width: 0; --cat: var(--pp-ink); }
+.groups { columns: 280px; column-gap: 2rem; }
+.group { min-width: 0; --cat: var(--pp-ink); break-inside: avoid; margin-bottom: 1.5rem; }
 .groupName { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.35rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--cat); font-family: var(--font-futura-heavy); font-weight: 400; font-size: 0.82rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--pp-ink); }
 .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--cat); }
 .count { margin-left: auto; font-size: 0.72rem; letter-spacing: 0; padding: 0.05rem 0.5rem; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.1); }
@@ -43,7 +46,7 @@
 .row { display: flex; flex-direction: column; gap: 0.1rem; width: 100%; padding: 0.38rem 0.6rem; border: 0; border-radius: 0.5rem; background: none; color: var(--pp-ink); text-align: left; font: inherit; cursor: pointer; }
 .row:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 .rowTitle { font-size: 0.92rem; font-weight: 600; overflow-wrap: anywhere; }
-.more { margin: 0.2rem 0 0 0.6rem; padding: 0.25rem 0.1rem; border: 0; background: none; color: var(--p-accent-text); font: inherit; font-size: 0.82rem; font-weight: 700; cursor: pointer; }
+.more { margin: 0.4rem 0 0 0.1rem; padding: 0.25rem 0.1rem; border: 0; background: none; color: var(--p-accent-text); font: inherit; font-size: 0.82rem; font-weight: 700; cursor: pointer; }
 .more:hover { text-decoration: underline; }
 .rowNote { font-size: 0.8rem; line-height: 1.35; color: rgba(var(--pp-ink-rgb), 0.8); }
 

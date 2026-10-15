@@ -15,6 +15,8 @@ const overlaps = (a: string[], b: string[]) => a.some((x) => b.includes(x));
 // The landing page: where to go first, in the order people need it. Quick links to the club's files, then the docs written for your own team(s), then what the
 // team pinned, then every how-to guide by group, and last what changed lately and what you starred. Searching is the box above.
 const GROUP_LIMIT = 6;
+const LINK_LIMIT = 8;
+const PIN_LIMIT = 4;
 
 export default function DocHome({ docs, sections, favorites, onOpen, canEdit, catName, onReorderPins, teams, myTeamIds, links, onLinks }: {
   docs: Doc[]; sections: DocSection<Doc>[]; favorites: Set<string>; onOpen: (id: string) => void; canEdit: boolean; catName: (d: Doc) => string; onReorderPins: (ids: string[]) => void;
@@ -22,6 +24,8 @@ export default function DocHome({ docs, sections, favorites, onOpen, canEdit, ca
 }) {
   const [linkDialog, setLinkDialog] = useState<{ link: QuickLink | null } | null>(null);
   const [dragLink, setDragLink] = useState<string | null>(null);
+  const [moreLinks, setMoreLinks] = useState(false);
+  const [morePins, setMorePins] = useState(false);
   const [allOpen, setAllOpen] = useState<Set<string>>(new Set());
   const [liveLinks, setLiveLinks] = useState<string[] | null>(null);
   const guides = docs;
@@ -52,6 +56,7 @@ export default function DocHome({ docs, sections, favorites, onOpen, canEdit, ca
       <RequiredBanner onOpen={onOpen} />
       {canEdit && stale > 0 && <p className={styles.note}>{stale} guide{stale === 1 ? ' hasn’t' : 's haven’t'} been updated or reviewed in six months. Worth a look.</p>}
 
+      <div className={styles.topGrid}>
       {(shownLinks.length > 0 || canEdit) && (
         <section aria-labelledby="home-links">
           <h2 id="home-links" className={styles.h2}><ExternalLink size={16} aria-hidden="true" /> Quick links
@@ -59,7 +64,7 @@ export default function DocHome({ docs, sections, favorites, onOpen, canEdit, ca
           </h2>
           {shownLinks.length === 0 && <p className={`${styles.note} ${styles.linkHint}`}>Buttons to the club’s Google Drive files and forms go here. Add the ones people ask for most.</p>}
           <ul className={styles.quick}>
-            {shownLinks.map((l) => (
+            {(moreLinks ? shownLinks : shownLinks.slice(0, LINK_LIMIT)).map((l) => (
               <li key={l.id} className={`${styles.quickItem} ${dragLink === l.id ? styles.dragging : ''}`} draggable={canEdit}
                 onDragStart={(e) => { setDragLink(l.id); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', l.id); }}
                 onDragEnd={() => { setDragLink(null); setLiveLinks(null); }}
@@ -87,24 +92,14 @@ export default function DocHome({ docs, sections, favorites, onOpen, canEdit, ca
               </li>
             ))}
           </ul>
+          {shownLinks.length > LINK_LIMIT && <button type="button" className={styles.more} onClick={() => setMoreLinks((v) => !v)}>{moreLinks ? 'Show fewer' : `Show ${shownLinks.length - LINK_LIMIT} more`}</button>}
         </section>
       )}
-      {linkDialog && <QuickLinkDialog link={linkDialog.link} links={links} teams={teams} onSaved={onLinks} onClose={() => setLinkDialog(null)} />}
-
-      {forMe.length > 0 && (
-        <section aria-labelledby="home-team">
-          <h2 id="home-team" className={styles.h2}><Users size={16} aria-hidden="true" /> For your team <span className={styles.h2Note}>{myTeamNames.join(', ')}</span></h2>
-          <div className={styles.cards}>
-            {forMe.map((d) => <DocCard key={d.id} d={d} meta={catName(d)} onOpen={onOpen} />)}
-          </div>
-        </section>
-      )}
-
       {pinned.length > 0 && (
         <section aria-labelledby="home-pinned">
           <h2 id="home-pinned" className={styles.h2}><Pin size={16} aria-hidden="true" /> Start here</h2>
           <div className={styles.cards}>
-            {shownPins.map((d) => (
+            {(morePins ? shownPins : shownPins.slice(0, PIN_LIMIT)).map((d) => (
               <div key={d.id} className={`${styles.pinSlot} ${dragPin === d.id ? styles.dragging : ''}`} draggable={canEdit}
                 onDragStart={(e) => { setDragPin(d.id); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', d.id); }}
                 onDragEnd={() => { setDragPin(null); setLive(null); }}
@@ -127,6 +122,19 @@ export default function DocHome({ docs, sections, favorites, onOpen, canEdit, ca
                 <DocCard d={d} meta={catName(d)} onOpen={onOpen} />
               </div>
             ))}
+          </div>
+          {shownPins.length > PIN_LIMIT && <button type="button" className={styles.more} onClick={() => setMorePins((v) => !v)}>{morePins ? 'Show fewer' : `Show ${shownPins.length - PIN_LIMIT} more`}</button>}
+        </section>
+      )}
+
+      </div>
+      {linkDialog && <QuickLinkDialog link={linkDialog.link} links={links} teams={teams} onSaved={onLinks} onClose={() => setLinkDialog(null)} />}
+
+      {forMe.length > 0 && (
+        <section aria-labelledby="home-team">
+          <h2 id="home-team" className={styles.h2}><Users size={16} aria-hidden="true" /> For your team <span className={styles.h2Note}>{myTeamNames.join(', ')}</span></h2>
+          <div className={styles.cards}>
+            {forMe.map((d) => <DocCard key={d.id} d={d} meta={catName(d)} onOpen={onOpen} />)}
           </div>
         </section>
       )}
