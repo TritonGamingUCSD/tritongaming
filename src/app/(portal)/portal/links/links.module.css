@@ -13,7 +13,7 @@
 .slugInput { display: flex; align-items: center; border-radius: var(--radius-sm); border: 1px solid rgba(var(--pp-ink-rgb), 0.23); background: rgba(var(--pp-ink-rgb), 0.05); overflow: hidden; }
 .slugInput:focus-within { outline: none; border-color: var(--pp-ink); box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.55); }
 .prefix { padding: 0 0 0 0.875rem; font-size: 0.85rem; color: rgba(var(--pp-ink-rgb), 0.88); white-space: nowrap; }
-.bare { flex: 1; min-width: 0; background: none; border: none; outline: none; color: var(--pp-ink); font-family: var(--font-futura-medium); font-size: 0.88rem; padding: 0.625rem 0.875rem 0.625rem 0.15rem; }
+.bare, .bare:hover, .bare:focus, .bare:focus-visible { flex: 1; min-width: 0; background: none; border: none; border-radius: 0; box-shadow: none; outline: none; color: var(--pp-ink); font-family: var(--font-futura-medium); font-size: 0.88rem; padding: 0.625rem 0.875rem 0.625rem 0.15rem; }
 .hint { font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 .empty { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; padding: 2rem 0; color: rgba(var(--pp-ink-rgb), 0.87); }
 .list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }

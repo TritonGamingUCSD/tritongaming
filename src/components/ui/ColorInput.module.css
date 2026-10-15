@@ -9,4 +9,4 @@
 .chipOn { border-color: var(--pp-ink); box-shadow: 0 0 0 2px var(--pp-card), 0 0 0 4px var(--pp-ink); }
 .custom { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.7rem; font-size: 0.75rem; color: rgba(var(--pp-ink-rgb), 0.87); }
 .custom input { flex: 1; min-width: 0; padding: 0.4rem 0.6rem; border-radius: 6px; border: 2px solid rgba(var(--pp-ink-rgb), 0.4); background: var(--pp-card); color: var(--pp-ink); font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.85rem; outline: none; }
-.custom input:focus { border-color: var(--pp-ink); box-shadow: 3px 3px 0 rgba(125, 180, 234, 0.9); }
+.custom input:focus { border-color: var(--pp-ink); box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.55); }

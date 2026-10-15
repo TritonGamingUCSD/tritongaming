@@ -99,7 +99,7 @@
 /* Link address bar (replaces the browser prompt) and the Source view's image row */
 .linkBar { display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0.6rem; background: rgba(var(--pp-ink-rgb), 0.05); border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.20); color: var(--pp-ink); }
 .linkBar input { flex: 1; min-width: 0; min-height: 34px; padding: 0 0.7rem; border-radius: 0.5rem; border: 1px solid var(--pp-line); background: var(--pp-card); color: var(--pp-ink); font: inherit; font-size: 0.88rem; }
-.linkBar input:focus-visible { outline: 2px solid var(--p-accent-text); outline-offset: 1px; }
+.linkBar input:focus-visible { outline: none; border-color: var(--pp-ink); box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.55); }
 .linkBar button { min-height: 34px; padding: 0 0.8rem; border-radius: 0.5rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.37); background: transparent; color: var(--pp-ink); font: inherit; font-size: 0.8rem; cursor: pointer; }
 .linkBar .linkApply { background: var(--p-accent); color: var(--p-accent-ink, #011941); border-color: transparent; font-weight: 700; }
 .sourceTools { display: flex; align-items: center; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 0.5rem; font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.7); }

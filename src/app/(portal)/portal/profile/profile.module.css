@@ -147,12 +147,19 @@
 }
 
 .socialField:focus-within {
-  border-color: rgba(125, 180, 234,0.4);
+  border-color: var(--pp-ink);
+  box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.55);
 }
 
-.socialField .input {
+.socialField .input,
+.socialField .input:hover,
+.socialField .input:focus,
+.socialField .input:focus-visible {
   background: none;
   border: none;
+  border-radius: 0;
+  box-shadow: none;
+  outline: none;
   padding: 0.625rem 0;
 }
 

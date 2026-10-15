@@ -194,14 +194,15 @@
 .editMain { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
 .titleRow { display: flex; align-items: center; gap: 0.6rem; }
 .titleInput { flex: 1; min-width: 0; padding: 0.4rem 0; border: 0; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.30); background: none; color: var(--pp-ink); font-family: var(--font-futura-heavy); font-size: clamp(1.4rem, 3vw, 2rem); }
-.titleInput:focus { outline: none; border-bottom-color: var(--p-accent); }
+.titleInput:hover, .titleInput:focus, .titleInput:focus-visible { outline: none; box-shadow: none; border-radius: 0; }
+.titleInput:focus { border-bottom-color: var(--p-accent); }
 .metaRow { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem; }
 .metaField { display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
 .tagEdit { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; min-height: 42px; padding: 0.3rem 0.5rem; border-radius: var(--radius-sm, 0.5rem); border: 1px solid rgba(var(--pp-ink-rgb), 0.23); background: rgba(var(--pp-ink-rgb), 0.05); }
 .tagEdit .tagChip { cursor: default; min-height: 26px; padding: 0 0.2rem 0 0.6rem; }
 .tagEdit .tagChip button { display: grid; place-items: center; width: 20px; height: 20px; border: 0; border-radius: 50%; background: rgba(var(--pp-ink-rgb), 0.1); color: var(--pp-ink); cursor: pointer; }
 .tagInput { flex: 1; min-width: 7rem; border: 0; background: none; color: var(--pp-ink); font: inherit; font-size: 0.85rem; white-space: nowrap; }
-.tagInput:focus { outline: none; }
+.tagInput:hover, .tagInput:focus, .tagInput:focus-visible { outline: none; box-shadow: none; border: 0; background: none; border-radius: 0; }
 .theirText { margin: 0.6rem 0 0; padding: 0.6rem 0.8rem; max-height: 8rem; overflow-y: auto; border-radius: 0.7rem; background: #eef2f7; font-size: 0.82rem; line-height: 1.5; color: #1f2937; overflow-wrap: anywhere; }
 
 /* version history */

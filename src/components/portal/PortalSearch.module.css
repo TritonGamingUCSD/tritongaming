@@ -14,9 +14,10 @@
 .icon { position: absolute; left: 0.85rem; color: rgba(var(--pp-chrome-rgb), 0.65); pointer-events: none; }
 .input {
   width: 100%; padding: 0.62rem 3.4rem 0.62rem 2.5rem;
-  background: none; border: none; outline: none;
+  background: none; border: none; border-radius: 0; outline: none; box-shadow: none;
   color: var(--pp-chrome-fg); font-family: var(--font-futura-medium); font-size: 0.88rem;
 }
+.input:hover, .input:focus, .input:focus-visible { border: none; box-shadow: none; outline: none; background: none; }
 .input::placeholder { color: rgba(var(--pp-chrome-rgb), 0.5); }
 
 .kbd {

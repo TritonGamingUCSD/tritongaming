@@ -35,19 +35,22 @@
 }
 
 .socialField:focus-within {
-  border-color: rgba(255,199,44,0.4);
+  border-color: var(--pp-ink);
+  box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.55);
 }
 
 .input {
   background: none;
   border: none;
+  border-radius: 0;
+  box-shadow: none;
   padding: 0.625rem 0;
   color: var(--pp-ink);
   font-family: var(--font-futura-medium);
   font-size: 0.9rem;
   width: 100%;
 }
-.input:focus { outline: none; }
+.input:focus, .input:focus-visible, .input:hover { outline: none; box-shadow: none; border: none; background: none; }
 
 .icon {
   flex-shrink: 0;
