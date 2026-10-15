@@ -2,7 +2,7 @@
 .trigger:disabled { cursor: not-allowed; }
 .trigger:focus-visible { outline: none; border-color: var(--pp-ink); box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.55); }
 .value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.placeholder { color: rgba(var(--pp-ink-rgb), 0.87); }
+.placeholder { color: rgba(var(--pp-ink-rgb), 0.5); }
 .chevron { flex-shrink: 0; color: rgba(var(--pp-ink-rgb), 0.86); transition: transform 0.15s; }
 .chevronOpen { transform: rotate(180deg); }
 .hidden { position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px; margin: 0; padding: 0; border: 0; }

@@ -373,3 +373,5 @@
 .addCat { padding: 0.5rem 0.35rem 0.25rem; }
 .addCatBtn { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.5rem; border: 1px dashed rgba(var(--pp-ink-rgb), 0.4); border-radius: 0.5rem; background: transparent; color: rgba(var(--pp-ink-rgb), 0.88); font: inherit; font-size: 0.8rem; cursor: pointer; }
 .addCatBtn:hover { border-color: var(--pp-ink); color: var(--pp-ink); }
+
+.homeActions { display: flex; justify-content: flex-end; }

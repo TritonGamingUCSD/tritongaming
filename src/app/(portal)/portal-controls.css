@@ -16,7 +16,7 @@
 :where(.pp-root) :where(input, textarea, select):where(:hover:not(:disabled)) { border-color: rgba(var(--pp-ink-rgb), 0.65); }
 :where(.pp-root) :where(input, textarea, select):where(:focus-visible) { outline: none; border-color: var(--pp-ink); box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.55); }
 :where(.pp-root) :where(input, textarea, select):where(:disabled) { opacity: 0.55; cursor: not-allowed; }
-:where(.pp-root) :where(input, textarea)::placeholder { color: rgba(var(--pp-ink-rgb), 0.83); }
+:where(.pp-root) :where(input, textarea)::placeholder { color: rgba(var(--pp-ink-rgb), 0.5); }
 :where(.pp-root) :where(textarea) { resize: vertical; line-height: 1.45; }
 :where(.pp-root) :where(select) {
   background-image: var(--pp-arrow); background-repeat: no-repeat; background-position: right 0.7rem center; padding-right: 2.1rem; cursor: pointer;

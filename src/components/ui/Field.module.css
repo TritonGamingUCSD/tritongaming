@@ -12,7 +12,7 @@
 .control:hover:not(:disabled) { border-color: rgba(var(--pp-ink-rgb), 0.55); }
 .control:focus { outline: none; border-color: var(--pp-ink); box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.55); }
 .control:disabled { opacity: 0.55; cursor: not-allowed; background: rgba(var(--pp-ink-rgb), 0.06); }
-.control::placeholder { color: rgba(var(--pp-ink-rgb), 0.83); }
+.control::placeholder { color: rgba(var(--pp-ink-rgb), 0.5); }
 .textarea { resize: vertical; line-height: 1.45; }
 @media (max-width: 640px) { .control { font-size: 16px; } }
 

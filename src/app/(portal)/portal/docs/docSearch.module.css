@@ -2,7 +2,7 @@
 .box { display: flex; align-items: center; gap: 0.6rem; min-height: 44px; padding: 0 0.85rem; border-radius: 0.75rem; border: 2px solid rgba(var(--pp-ink-rgb), 0.5); background: var(--pp-card); color: var(--pp-ink); }
 .box:focus-within { border-color: var(--pp-ink); box-shadow: 3px 3px 0 rgba(var(--pp-ink-rgb), 0.25); }
 .input { flex: 1; min-width: 0; border: 0; outline: 0; box-shadow: none; border-radius: 0; padding: 0; background: transparent; color: inherit; font: inherit; font-size: 1rem; }
-.input::placeholder { color: rgba(var(--pp-ink-rgb), 0.7); }
+.input::placeholder { color: rgba(var(--pp-ink-rgb), 0.5); }
 .input::-webkit-search-cancel-button { display: none; }
 .kbd { padding: 0.02rem 0.45rem; border-radius: 4px; border: 1px solid rgba(var(--pp-ink-rgb), 0.4); font: inherit; font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.8); }
 .clear { display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: 50%; background: rgba(var(--pp-ink-rgb), 0.1); color: inherit; cursor: pointer; }

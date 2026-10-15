@@ -21,7 +21,7 @@
   outline: none;
 }
 .codeInput:focus { outline: none; border-color: var(--pp-ink); box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.55); }
-.codeInput::placeholder { color: rgba(var(--pp-ink-rgb), 0.68); }
+.codeInput::placeholder { color: rgba(var(--pp-ink-rgb), 0.5); }
 
 .runWrap { display: flex; flex-direction: column; gap: 1.1rem; }
 .codePanel {
