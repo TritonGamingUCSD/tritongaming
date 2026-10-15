@@ -184,10 +184,11 @@ export default function MembersSectionContent({ rows, keysByUser = {}, teams, ca
                   key={m.id}
                   type="button"
                   className={`${view === 'grid' ? styles.card : styles.listRow} ${m.inactive ? styles.idle : ''}`}
+                  style={{ ['--role' as string]: ROLE_COLORS[role] }}
                   onClick={() => setSelected(m)}
                 >
                   {resolveAvatarUrl(m) ? (
-                    <Image src={resolveAvatarUrl(m)!} alt="" width={44} height={44} className={styles.avatar} unoptimized referrerPolicy="no-referrer" />
+                    <Image src={resolveAvatarUrl(m)!} alt="" width={64} height={64} className={styles.avatar} unoptimized referrerPolicy="no-referrer" />
                   ) : (
                     <div className={styles.avatarFallback} style={{ background: ROLE_COLORS[role] }}>
                       {(m.display_name || '?')[0].toUpperCase()}
@@ -197,7 +198,7 @@ export default function MembersSectionContent({ rows, keysByUser = {}, teams, ca
                     <div className={styles.name}>
                       <span className={styles.nameText}>{m.display_name || 'Anonymous'}</span>
                       {/* Name "Gamer Tag": the tag follows the name, left off when the name already says it. */}
-                      {m.gamer_tag?.trim() && !(m.display_name ?? '').toLowerCase().includes(m.gamer_tag.trim().toLowerCase()) && <span className={styles.gamerTag}>&ldquo;{m.gamer_tag.trim()}&rdquo;</span>}
+                      {view === 'list' && m.gamer_tag?.trim() && !(m.display_name ?? '').toLowerCase().includes(m.gamer_tag.trim().toLowerCase()) && <span className={styles.gamerTag}>&ldquo;{m.gamer_tag.trim()}&rdquo;</span>}
                       {m.inactive && <span className={styles.idleTag} title="Inactive this quarter: view-only, not expected at meetings"><Moon size={11} aria-hidden="true" /> Inactive now</span>}
                       {/* One small key for each storage key this person holds. Only the team that tracks keys is sent this. */}
                       {(keysByUser[m.id]?.length ?? 0) > 0 && (
@@ -206,6 +207,7 @@ export default function MembersSectionContent({ rows, keysByUser = {}, teams, ca
                         </span>
                       )}
                     </div>
+                    {view === 'grid' && m.gamer_tag?.trim() && !(m.display_name ?? '').toLowerCase().includes(m.gamer_tag.trim().toLowerCase()) && <div className={styles.handle}>&ldquo;{m.gamer_tag.trim()}&rdquo;</div>}
                     {/* Always rendered in list view, even when empty, so the columns line up row to row. */}
                     {(m.org_title || view === 'list') && <div className={styles.orgTitle}>{m.org_title}</div>}
                     {/* Grid is the compact "who's who" view — name, title,

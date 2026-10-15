@@ -1,6 +1,6 @@
 // Portal styles must use the theme tokens (--pp-ink, --pp-card, --pp-line, rgba(var(--pp-ink-rgb), x) ...) so they follow light and dark.
 // This lists literal colours that only work in one theme. A line that is deliberately fixed (white text on a coloured button, a QR ground)
-// carries a "theme-ok" comment. Run: npm run check:theme
+// carries a "theme-ok" comment. A file that is a fixed white document on purpose (the event report that is saved as a PDF) starts with "theme-ok-file". Run: npm run check:theme
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -24,7 +24,9 @@ function* walk(dir) {
 let count = 0;
 for (const root of ROOTS) {
   for (const file of walk(root)) {
-    fs.readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
+    const text = fs.readFileSync(file, 'utf8');
+    if (/^\/\*\s*theme-ok-file/.test(text)) continue;
+    text.split('\n').forEach((line, i) => {
       if (/theme-ok/.test(line)) return;
       for (const [re, why] of BAD) if (re.test(line)) { count++; console.log(`${file}:${i + 1}  ${why}\n    ${line.trim().slice(0, 150)}`); break; }
     });

@@ -60,3 +60,11 @@ The free Vercel plan allows two scheduled jobs, each at most once a day, so `ver
 | `daily-maintenance` | Removes old notifications (audit alerts after 14 days; ticket and meeting notices 14 days after they are read, 45 at most; everything else 30 read or 90 at most) and individual meeting reactions after 7 days; starts a new quarter's inactive markers; records the team roster and archives finished years; on Sundays removes files nothing uses and shrinks old pictures | `lib/meetings/reactionCleanup.ts`, `lib/notifications/notificationCleanup.ts`, `lib/members/quarters.ts`, `lib/members/teamYears.ts`, `lib/storage/storageMaintenance.ts` |
 
 Both are called with `Authorization: Bearer $CRON_SECRET`. `daily-maintenance?only=notifications|quarters|teams|storage` runs a single step; on a dev machine `x-cron-dev: 1` may run only the quarters and teams steps. Don't add a third job to `vercel.json`; add a step to one of these two instead.
+
+
+## Event report (sponsors)
+- **Where:** an event's summary page (`/portal/events/<id>/summary`, anyone with `checkin`). It is a formal, white-sheet report in Triton Gaming navy and gold. **Save as PDF** draws the PDF itself in the browser (no browser print dialog, so no address or page title in the margins): a one-page summary (key numbers, key findings, arrival and ticket-timing charts, audience and interest breakdowns, gender and pronouns always included) plus a second page with photos and the sponsor thank-you when there are any. Attendees' written comments are never included.
+- **Details for each copy:** *Prepared for* (picked from the event's own sponsor list; the thank-you then names only that sponsor, otherwise all of them) and hand-typed *Social media reach* numbers, saved with the event in `events.report_social`.
+- **Artwork:** the event's poster and design-guide stickers, and up to 6 photos from the gallery on its page.
+- **Not in the PDF (team box under the report):** no-shows, cancelled tickets, points, paid tickets and revenue, check-in form completion and where ticket claims came from (QR scans show as Direct, so it understates).
+- **Footnote:** data has been collected since the 2026-2027 school year (September 2026); profile details are optional in the portal, so those figures cover only attendees who shared them.

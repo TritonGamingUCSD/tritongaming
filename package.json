@@ -24,6 +24,7 @@
     "docs:roles": "node scripts/roles-doc.mjs"
   },
   "dependencies": {
+    "@react-pdf/renderer": "^4.9.0",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.107.0",
     "@tiptap/core": "^3.31.4",

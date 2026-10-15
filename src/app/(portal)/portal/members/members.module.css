@@ -47,13 +47,13 @@
    compact enough to comfortably fit far more than 3 across on desktop. */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1rem;
   width: 100%;
 }
 
-@media (max-width: 420px) {
-  .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+@media (max-width: 560px) {
+  .grid { grid-template-columns: minmax(0, 1fr); gap: 0.7rem; }
 }
 
 .card {
@@ -195,9 +195,15 @@
 
 /* ── Compact detail card ── tighter panel, a single info list, one links row. */
 .detailPanel { max-width: 340px; padding: 1.5rem 1.25rem 1.1rem; gap: 0.25rem; }
-.card { min-height: 76px; }
-.card .info { min-width: 0; }
-.card .name, .card .orgTitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── Member cards (grid): a colour edge for the role, a bigger photo, and the full name and title (they wrap instead of being cut off). ── */
+.card { align-items: flex-start; gap: 0.95rem; min-height: 96px; padding: 0.95rem 1rem 0.95rem 1.1rem; border-left: 4px solid var(--role, var(--pp-line)); border-radius: 0.7rem; }
+.card:hover { border-color: rgba(var(--pp-ink-rgb), 0.3); border-left-color: var(--role, var(--pp-ink)); transform: translateY(-1px); box-shadow: var(--pp-shadow); }
+.card .avatar, .card .avatarFallback { width: 56px; height: 56px; font-size: 1.2rem; }
+.card .info { min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+.card .name { white-space: normal; overflow: visible; margin: 0; font-family: var(--font-futura-heavy); font-size: 1rem; line-height: 1.2; overflow-wrap: anywhere; }
+.card .orgTitle { white-space: normal; overflow: visible; margin: 0.2rem 0 0; font-size: 0.74rem; line-height: 1.3; letter-spacing: 0.06em; text-transform: uppercase; overflow-wrap: anywhere; }
+.handle { font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.78); overflow-wrap: anywhere; }
 
 /* List: real columns (person · title · division, major, year) so every row lines up. */
 .listRow { display: grid; grid-template-columns: 32px minmax(150px, 1.1fr) minmax(130px, 1fr) minmax(0, 1.6fr); column-gap: 1.1rem; align-items: center; }

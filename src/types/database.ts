@@ -24,6 +24,12 @@ export interface EventSponsor {
   url?: string;
 }
 
+// A number typed in by hand for an event's sponsor report, such as { label: 'Instagram impressions', value: '12,400' }.
+export interface ReportMetric {
+  label: string;
+  value: string;
+}
+
 export interface SocialEmbed {
   type: 'instagram' | 'twitter' | 'tiktok' | 'youtube' | 'discord';
   url: string;
@@ -186,6 +192,7 @@ export interface Database {
           venue_lng: number | null;
           schedule: ScheduleItem[];
           sponsors: EventSponsor[];
+          report_social: ReportMetric[];
           requires_checkin_form: boolean;
           checkin_food_item: string | null;
           checkin_windows: Array<{ day: string; start: string; end: string }>;
@@ -209,7 +216,7 @@ export interface Database {
           created_at: string;
           updated_at: string;
         };
-        Insert: Omit<Database['public']['Tables']['events']['Row'], 'id' | 'created_at' | 'updated_at'>;
+        Insert: Omit<Database['public']['Tables']['events']['Row'], 'id' | 'created_at' | 'updated_at' | 'report_social'>;
         Update: Partial<Database['public']['Tables']['events']['Insert']>;
       };
       tickets: {

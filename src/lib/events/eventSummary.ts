@@ -15,6 +15,11 @@ export interface EventSummary {
   returning: number;
   formOpened: number | null; // null when the event has no AS Form
   pointsAwarded: number;
+  paid: number; // tickets bought through Stripe (public events with a price)
+  revenue: number | null; // paid tickets × the event's ticket price; null when the event is free
+  repeat: Bucket[]; // how many events (including this one) each attendee has been to
+  members: number | null; // checked-in attendees with a portal role (UCSD students and members); null for UCSD-only events
+  guests: number | null;
   arrivals: Bucket[];
   gender: Bucket[];
   year: Bucket[];
@@ -29,7 +34,7 @@ export interface EventSummary {
   claimTiming: Bucket[];
   sources: Bucket[];
   allDays: number | null; // multi-day events: attendees scanned in on every day
-  feedback: { count: number; average: number | null; comments: string[] };
+  feedback: { count: number; average: number | null };
 }
 
 function tally(values: (string | null | undefined)[], opts: { top?: number; blank?: string } = {}): Bucket[] {
@@ -47,7 +52,7 @@ function tally(values: (string | null | undefined)[], opts: { top?: number; blan
 }
 
 // How far ahead of the event people claimed their tickets, in order from earliest to latest.
-const TIMING_ORDER = ['3+ weeks before', '2–3 weeks', '1–2 weeks', '3–7 days', '1–2 days', 'Day of / after'] as const;
+const TIMING_ORDER = ['3+ weeks before', '2-3 weeks before', '1-2 weeks before', '3-7 days before', '1-2 days before', 'Event day or later'] as const;
 function claimTimingBuckets(createdAts: string[], startISO: string): Bucket[] {
   const counts = new Map<string, number>(TIMING_ORDER.map((k) => [k, 0]));
   for (const c of createdAts) {
@@ -61,19 +66,19 @@ function claimTimingBuckets(createdAts: string[], startISO: string): Bucket[] {
 // Aggregates only — no individual's private fields (gender etc.) leave this
 // function. Callers must have already verified the viewer's capability, since
 // this reads profile_private with the service role.
-export async function getEventSummary(eventId: string, event: { start_date: string; end_date?: string | null; requires_checkin_form: boolean }): Promise<EventSummary> {
+export async function getEventSummary(eventId: string, event: { start_date: string; end_date?: string | null; requires_checkin_form: boolean; ticket_price?: number | null; audience?: string | null }): Promise<EventSummary> {
   const svc = createServiceClient();
 
   const { data: tickets } = await svc
     .from('tickets')
-    .select('user_id, status, checked_in_at, checkin_form_completed_at, created_at, source')
+    .select('user_id, status, checked_in_at, checkin_form_completed_at, created_at, source, stripe_session_id')
     .eq('event_id', eventId);
   const all = tickets ?? [];
   const active = all.filter((t) => t.status !== 'cancelled');
   const attended = all.filter((t) => t.status === 'used');
   const attendeeIds = [...new Set(attended.map((t) => t.user_id))];
 
-  const [profilesRes, privateRes, divisionsRes, priorRes, pointsRes, feedbackRes] = await Promise.all([
+  const [profilesRes, privateRes, divisionsRes, priorRes, pointsRes, feedbackRes, rolesRes] = await Promise.all([
     attendeeIds.length ? svc.from('profiles').select('id, year, college, major, pronouns').in('id', attendeeIds) : Promise.resolve({ data: [] }),
     attendeeIds.length ? svc.from('profile_private').select('user_id, gender, platforms, favorite_games, division_interests').in('user_id', attendeeIds) : Promise.resolve({ data: [] }),
     svc.from('divisions').select('id, name'),
@@ -82,40 +87,60 @@ export async function getEventSummary(eventId: string, event: { start_date: stri
       : Promise.resolve({ data: [] }),
     svc.from('point_transactions').select('amount').eq('event_id', eventId).eq('type', 'event_checkin'),
     svc.from('event_feedback').select('rating, comment').eq('event_id', eventId).order('created_at', { ascending: false }),
+    event.audience === 'public' && attendeeIds.length ? svc.from('user_roles').select('user_id').in('user_id', attendeeIds) : Promise.resolve({ data: null }),
   ]);
+
+  // Events attended per person: the earlier ones plus this one.
+  const priorCount = new Map<string, number>();
+  for (const r of (priorRes.data ?? []) as { user_id: string }[]) priorCount.set(r.user_id, (priorCount.get(r.user_id) ?? 0) + 1);
+  const repeat: Bucket[] = (() => {
+    const b = [0, 0, 0, 0];
+    for (const id of attendeeIds) { const n = (priorCount.get(id) ?? 0) + 1; b[n === 1 ? 0 : n === 2 ? 1 : n <= 4 ? 2 : 3]++; }
+    return [{ label: 'First event', count: b[0] }, { label: '2 events', count: b[1] }, { label: '3 to 4 events', count: b[2] }, { label: '5 or more', count: b[3] }];
+  })();
 
   const profiles = (profilesRes.data ?? []) as { id: string; year: string | null; college: string | null; major: string | null; pronouns: string | null }[];
   const priv = (privateRes.data ?? []) as { user_id: string; gender: string | null; platforms: string[] | null; favorite_games: string | null; division_interests: string[] | null }[];
   const divisionName = new Map((divisionsRes.data ?? []).map((d) => [d.id as string, d.name as string]));
+  const roleHolders = new Set(((rolesRes.data ?? []) as { user_id: string }[]).map((r) => r.user_id));
   const returningIds = new Set(((priorRes.data ?? []) as { user_id: string }[]).map((r) => r.user_id));
 
-  // Arrival time, Pacific: by half hour for a one-day event; by day for a
-  // multi-day one (a half-hour axis spanning a weekend isn't readable).
+  // Arrival time, Pacific. A one-day event is shown hour by hour across its own hours (one hour either side), with every hour in a row even when nobody arrived in it, so the
+  // gaps read as gaps; anyone who checked in outside those hours is counted under one bar at the end. A multi-day event is shown day by day.
   const multiDay = eventDayCount(event.start_date, event.end_date) > 1;
   const dayCheckins = multiDay
     ? (await svc.from('ticket_checkins').select('ticket_id, day, checked_in_at').eq('event_id', eventId)).data ?? []
     : [];
-  const arrivalCounts = new Map<string, { sort: number; count: number }>();
-  const arrivalRows: { checked_in_at: string | null }[] = multiDay ? (dayCheckins as { checked_in_at: string | null }[]) : attended;
-  for (const t of arrivalRows) {
-    if (!t.checked_in_at) continue;
-    const d = new Date(t.checked_in_at);
-    let label: string; let sort: number;
+  const hourOf = (d: Date) => Number(new Intl.DateTimeFormat('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', hour12: false }).formatToParts(d).find((p) => p.type === 'hour')?.value) % 24;
+  const hourLabel = (h: number) => `${h % 12 || 12} ${h < 12 ? 'AM' : 'PM'}`;
+  const arrivals: Bucket[] = (() => {
     if (multiDay) {
-      label = d.toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, weekday: 'short', month: 'short', day: 'numeric' });
-      sort = d.getTime() - (d.getTime() % 86400000);
-    } else {
-      const parts = new Intl.DateTimeFormat('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: 'numeric', hour12: false }).formatToParts(d);
-      const h = Number(parts.find((p) => p.type === 'hour')?.value) % 24;
-      const m = Number(parts.find((p) => p.type === 'minute')?.value) >= 30 ? 30 : 0;
-      label = new Date(2000, 0, 1, h, m).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-      sort = h * 60 + m;
+      const days = new Map<number, { label: string; count: number }>();
+      for (const t of dayCheckins as { checked_in_at: string | null }[]) {
+        if (!t.checked_in_at) continue;
+        const d = new Date(t.checked_in_at);
+        const key = d.getTime() - (d.getTime() % 86400000);
+        const cur = days.get(key) ?? { label: d.toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, weekday: 'short', month: 'short', day: 'numeric' }), count: 0 };
+        cur.count++; days.set(key, cur);
+      }
+      return [...days.entries()].sort((x, y) => x[0] - y[0]).map(([, v]) => v);
     }
-    const cur = arrivalCounts.get(label) ?? { sort, count: 0 };
-    cur.count++;
-    arrivalCounts.set(label, cur);
-  }
-  const arrivals = [...arrivalCounts.entries()].sort((a, b) => a[1].sort - b[1].sort).map(([label, v]) => ({ label, count: v.count }));
+    const startH = hourOf(new Date(event.start_date));
+    const endDate = event.end_date ? new Date(event.end_date) : new Date(new Date(event.start_date).getTime() + 2 * 3600e3);
+    const endH = Math.min(23, hourOf(endDate) + (endDate.getMinutes() > 0 ? 1 : 0));
+    const first = Math.max(0, startH - 1), last = Math.min(23, Math.max(endH, startH + 1) + 1);
+    const counts = new Map<number, number>();
+    let outside = 0;
+    for (const t of attended) {
+      if (!t.checked_in_at) continue;
+      const h = hourOf(new Date(t.checked_in_at));
+      if (h < first || h > last) outside++; else counts.set(h, (counts.get(h) ?? 0) + 1);
+    }
+    const rows: Bucket[] = [];
+    for (let h = first; h <= last; h++) rows.push({ label: hourLabel(h), count: counts.get(h) ?? 0 });
+    if (outside > 0) rows.push({ label: 'Other times', count: outside });
+    return rows;
+  })();
 
   // One row per attendee (a user could hold more than one ticket in theory).
   const profileById = new Map(profiles.map((p) => [p.id, p]));
@@ -134,6 +159,11 @@ export async function getEventSummary(eventId: string, event: { start_date: stri
     returning: attendeeIds.filter((id) => returningIds.has(id)).length,
     formOpened: event.requires_checkin_form ? attended.filter((t) => t.checkin_form_completed_at).length : null,
     pointsAwarded: (pointsRes.data ?? []).reduce((n, r) => n + (r.amount as number), 0),
+    repeat,
+    paid: active.filter((t) => !!t.stripe_session_id).length,
+    revenue: (event.ticket_price ?? 0) > 0 ? active.filter((t) => !!t.stripe_session_id).length * (event.ticket_price as number) : null,
+    members: rolesRes.data ? attendeeIds.filter((id) => roleHolders.has(id)).length : null,
+    guests: rolesRes.data ? attendeeIds.filter((id) => !roleHolders.has(id)).length : null,
     arrivals,
     gender: tally(attendeeIds.map((id) => privById.get(id)?.gender)),
     year: tally(attendeeIds.map((id) => profileById.get(id)?.year)),
@@ -151,7 +181,6 @@ export async function getEventSummary(eventId: string, event: { start_date: stri
     feedback: {
       count: fb.length,
       average: fb.length ? Math.round((fb.reduce((n, r) => n + r.rating, 0) / fb.length) * 10) / 10 : null,
-      comments: fb.map((r) => r.comment?.trim() ?? '').filter(Boolean).slice(0, 20),
     },
     divisions: tally(attendeeIds.flatMap((id) => (privById.get(id)?.division_interests ?? []).map((d) => divisionName.get(d) ?? null)).filter(Boolean) as string[], { top: 8 }),
   };

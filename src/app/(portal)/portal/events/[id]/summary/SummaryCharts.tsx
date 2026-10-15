@@ -1,7 +1,9 @@
 import type { Bucket } from '@/lib/events/eventSummary';
+import { niceScale, twoLines } from './chartMath';
 import styles from './summary.module.css';
 
-export const PALETTE = ['#ffc72c', '#4a90e2', '#34d399', '#f472b6', '#a78bfa', '#fb923c', '#22d3ee', '#94a3b8'];
+// The report's colours: Triton Gaming navy and gold, then quiet blues and greys, so a printed page reads as one brand.
+export const PALETTE = ['#011941', '#ffc72c', '#275a8f', '#7db4ea', '#94a3b8', '#b8860b', '#4b5d7a', '#cbd5e1'];
 
 const pct = (n: number, total: number) => (total ? Math.round((n / total) * 100) : 0);
 
@@ -15,7 +17,7 @@ export function Gauge({ value, label }: { value: number; label: string }) {
         <circle cx="70" cy="70" r={r} fill="none" stroke="url(#gaugeGrad)" strokeWidth="12" strokeLinecap="round"
           strokeDasharray={`${(value / 100) * c} ${c}`} transform="rotate(-90 70 70)" />
         <defs>
-          <linearGradient id="gaugeGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#ffc72c" /><stop offset="100%" stopColor="#34d399" /></linearGradient>
+          <linearGradient id="gaugeGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#011941" /><stop offset="100%" stopColor="#275a8f" /></linearGradient>
         </defs>
       </svg>
       <div className={styles.gaugeText}><span className={styles.gaugeValue}>{value}%</span><span className={styles.gaugeLabel}>{label}</span></div>
@@ -56,27 +58,10 @@ export function Donut({ data }: { data: Bucket[] }) {
   );
 }
 
-// Vertical columns — for ordered data (arrival times) or a few categories (class year).
-export function Columns({ data, color = '#4a90e2' }: { data: Bucket[]; color?: string }) {
-  if (!data.length) return <p className={styles.note}>No data yet.</p>;
-  const max = Math.max(1, ...data.map((b) => b.count));
-  return (
-    <div className={styles.columns} style={{ ['--cols' as string]: data.length }}>
-      {data.map((b) => (
-        <div key={b.label} className={styles.col}>
-          <span className={styles.colVal}>{b.count}</span>
-          <div className={styles.colTrack}><div className={styles.colFill} style={{ height: `${(b.count / max) * 100}%`, background: `linear-gradient(180deg, ${color}, ${color}55)` }} /></div>
-          <span className={styles.colLabel}>{b.label}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 // Ranked horizontal bars. Each bar's length is its true share of `base`
 // (people, by default the sum of the rows) — NOT scaled to the biggest row, so
 // a 100% bar only ever means 100%.
-export function RankBars({ data, color = '#ffc72c', base }: { data: Bucket[]; color?: string; base?: number }) {
+export function RankBars({ data, color = '#011941', base }: { data: Bucket[]; color?: string; base?: number }) {
   if (!data.length) return <p className={styles.note}>No data yet.</p>;
   const total = base && base > 0 ? base : data.reduce((n, b) => n + b.count, 0);
   return (
@@ -86,7 +71,7 @@ export function RankBars({ data, color = '#ffc72c', base }: { data: Bucket[]; co
           <span className={styles.rankNum}>{i + 1}</span>
           <div className={styles.rankBody}>
             <div className={styles.rankTop}><span>{b.label}</span><span className={styles.rankCount}>{b.count} · {pct(b.count, total)}%</span></div>
-            <div className={styles.rankTrack}><div className={styles.rankFill} style={{ width: `${Math.min(pct(b.count, total), 100)}%`, minWidth: '4px', background: `linear-gradient(90deg, ${color}, ${color}66)` }} /></div>
+            <div className={styles.rankTrack}><div className={styles.rankFill} style={{ width: `${Math.min(pct(b.count, total), 100)}%`, minWidth: '4px', background: color }} /></div>
           </div>
         </li>
       ))}
@@ -94,14 +79,16 @@ export function RankBars({ data, color = '#ffc72c', base }: { data: Bucket[]; co
   );
 }
 
-// Registered → checked in → opened AS Form.
+const FUNNEL = [{ bg: '#011941', fg: '#ffffff' }, { bg: '#275a8f', fg: '#ffffff' }, { bg: '#ffc72c', fg: '#011941' }];
+
+// Registered → checked in → completed the check-in form.
 export function Funnel({ steps }: { steps: { label: string; value: number }[] }) {
   const top = Math.max(1, steps[0]?.value ?? 1);
   return (
     <div className={styles.funnel}>
       {steps.map((s, i) => (
         <div key={s.label} className={styles.funnelRow}>
-          <div className={styles.funnelBar} style={{ width: `${Math.max((s.value / top) * 100, 6)}%`, background: PALETTE[i % PALETTE.length] }}>
+          <div className={styles.funnelBar} style={{ width: `${Math.max((s.value / top) * 100, 6)}%`, background: FUNNEL[i % FUNNEL.length].bg, color: FUNNEL[i % FUNNEL.length].fg }}>
             <span className={styles.funnelValue}>{s.value}</span>
           </div>
           <span className={styles.funnelLabel}>{s.label}{i > 0 && ` · ${pct(s.value, steps[i - 1].value)}% of previous`}</span>
@@ -125,5 +112,38 @@ export function SplitBar({ a, b }: { a: { label: string; value: number; color: s
         <span><span className={styles.dot} style={{ background: b.color }} /> {b.label} <b>{b.value}</b> ({pct(b.value, total)}%)</span>
       </div>
     </div>
+  );
+}
+
+// A bar chart with a value axis, light gridlines and the number above each bar: for things in order (arrival times, how far ahead tickets were claimed).
+export function BarChart({ data, color = '#275a8f', height = 250, xTitle, yTitle }: { data: Bucket[]; color?: string; height?: number; xTitle?: string; yTitle?: string }) {
+  if (!data.length || data.every((d) => d.count === 0)) return <p className={styles.note}>No check-ins have been recorded yet.</p>;
+  const W = 560, H = height, L = 40, R = 8, T = yTitle ? 34 : 18, B = xTitle ? 66 : 44;
+  const { top, ticks } = niceScale(Math.max(...data.map((d) => d.count)));
+  const plotW = W - L - R, plotH = H - T - B;
+  const slot = plotW / data.length, bw = Math.min(46, slot * 0.62);
+  const y = (v: number) => T + plotH - (v / top) * plotH;
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className={styles.chart} role="img" aria-label="Bar chart">
+      {yTitle && <text x={L - 30} y={13} fontSize="11" fontWeight="700" fill="#011941">{yTitle}</text>}
+      {ticks.map((t) => (
+        <g key={t}>
+          <line x1={L} x2={W - R} y1={y(t)} y2={y(t)} stroke={t === 0 ? '#9aa6bd' : '#e3e7ee'} strokeWidth={t === 0 ? 1 : 0.8} />
+          <text x={L - 6} y={y(t) + 4} textAnchor="end" fontSize="11" fill="#4a5a78">{t}</text>
+        </g>
+      ))}
+      {data.map((d, i) => {
+        const cx = L + slot * i + slot / 2;
+        return (
+          <g key={d.label}>
+            <rect x={cx - bw / 2} y={y(d.count)} width={bw} height={Math.max(plotH - (y(d.count) - T), d.count ? 1.5 : 0)} fill={color} rx="1.5" />
+            <text x={cx} y={y(d.count) - 5} textAnchor="middle" fontSize="12" fontWeight="700" fill="#011941">{d.count}</text>
+            <text x={cx} y={H - B + 16} textAnchor="middle" fontSize="11" fill="#4a5a78">{twoLines(d.label)[0]}</text>
+            {twoLines(d.label)[1] && <text x={cx} y={H - B + 30} textAnchor="middle" fontSize="11" fill="#4a5a78">{twoLines(d.label)[1]}</text>}
+          </g>
+        );
+      })}
+      {xTitle && <text x={L + (W - L - R) / 2} y={H - 4} textAnchor="middle" fontSize="11" fontWeight="700" fill="#011941">{xTitle}</text>}
+    </svg>
   );
 }

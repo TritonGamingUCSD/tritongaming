@@ -10,7 +10,7 @@ import {
 } from 'recharts';
 import EventRowActions from './EventRowActions';
 import { Search, Plus, Ticket, MapPin, BarChart3, ListChecks, Award } from 'lucide-react';
-import { PACIFIC_TZ, formatEventDateRangeShort, eventDayCount } from '@/lib/core/timezone';
+import { formatEventDateRangeShort, formatEventTimeRange, eventDayCount } from '@/lib/core/timezone';
 import { isCheckinWindowOpen } from '@/lib/events/checkinWindow';
 import type { MonthPoint } from '@/lib/events/monthBuckets';
 import type { EventTicketStat } from './getEventsData';
@@ -258,7 +258,7 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
                     <div className={styles.eventDate}>
                       {formatEventDateRangeShort(event.start_date, event.end_date)}
                       <span className={styles.checkinSub}>
-                        {' '}{new Date(event.start_date).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' })}
+                        {' '}{formatEventTimeRange(event.start_date, event.end_date)}
                         {eventDayCount(event.start_date, event.end_date) > 1 && ` · ${eventDayCount(event.start_date, event.end_date)} days`}
                       </span>
                     </div>
