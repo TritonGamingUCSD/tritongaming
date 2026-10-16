@@ -12,7 +12,9 @@ describe('self check-in settings', () => {
     expect(selfCheckinClosedReason('off', oneDay, at('2026-10-16T01:00:00Z'))?.code).toBe('closed');
   });
   it('until_end opens straight away, even before the event starts', () => {
-    expect(selfCheckinClosedReason('until_end', oneDay, at('2026-10-10T12:00:00Z'))).toBeNull();
+    // The ended check reads the real clock, so use an event that is still ahead of it.
+    const ahead = { start_date: new Date(Date.now() + 48 * 3600e3).toISOString(), end_date: new Date(Date.now() + 52 * 3600e3).toISOString() };
+    expect(selfCheckinClosedReason('until_end', ahead)).toBeNull();
   });
   it('until_end stays open up to the end time and closes right after', () => {
     // isCheckinWindowOpen reads the real clock, so check with dates around "now".

@@ -6,6 +6,10 @@ export function headingId(text: string): string {
 
 export interface TocItem { id: string; text: string; level: 1 | 2 | 3 | 4 | 5; line: number }   // line: 1-based, so the renderer can give each heading the same id
 
+// A heading written with an entity ("&amp;") reads as the character in the rendered doc, so the list shows that too. The id above still comes from the raw text.
+const ENTITIES: Record<string, string> = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'" };
+const readable = (t: string) => t.replace(/&(amp|lt|gt|quot|#39);/g, (e) => ENTITIES[e] ?? e);
+
 export function extractToc(markdown: string): TocItem[] {
   const items: TocItem[] = [];
   const seen = new Map<string, number>();
@@ -22,7 +26,7 @@ export function extractToc(markdown: string): TocItem[] {
     const base = headingId(text);
     const n = seen.get(base) ?? 0;
     seen.set(base, n + 1);
-    items.push({ id: n === 0 ? base : `${base}-${n}`, text, level: m[1].length as 1 | 2 | 3 | 4 | 5, line: i + 1 });
+    items.push({ id: n === 0 ? base : `${base}-${n}`, text: readable(text), level: m[1].length as 1 | 2 | 3 | 4 | 5, line: i + 1 });
   }
   return items;
 }
