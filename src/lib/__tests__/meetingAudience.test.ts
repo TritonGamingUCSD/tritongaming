@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { audienceRoles, canAttendMeeting, isExpected, isExpectedActive, isInactiveMember, validateAudienceInput } from '@/lib/meetings/meetingAudience';
+import { audienceRoles, canAttendMeeting, isGuestOf, isExpected, isExpectedActive, isInactiveMember, validateAudienceInput } from '@/lib/meetings/meetingAudience';
 
 const roles = (...r: string[]) => r.map((role) => ({ role }));
 
@@ -20,9 +20,10 @@ describe('who a meeting is for', () => {
 
 describe('checking in', () => {
   const officersOnly = { audience: ['officer'] };
-  it('exec and admin get no exception: they must be listed too', () => {
-    expect(canAttendMeeting(officersOnly, 'e', roles('exec'))).toBe(false);
-    expect(canAttendMeeting(officersOnly, 'a', roles('admin'))).toBe(false);
+  it('exec and admin get no exception of their own: with the meeting closed to the rest of the team they must be listed too', () => {
+    expect(canAttendMeeting({ ...officersOnly, open_to_team: false }, 'e', roles('exec'))).toBe(false);
+    expect(canAttendMeeting({ ...officersOnly, open_to_team: false }, 'a', roles('admin'))).toBe(false);
+    expect(canAttendMeeting(officersOnly, 'a', roles('admin'))).toBe(false);   // admin alone is not a team role
     expect(canAttendMeeting({ audience: ['exec'] }, 'e', roles('exec'))).toBe(true);
   });
   it('someone added by name can check in whatever their role', () => {
@@ -86,5 +87,32 @@ describe('alumni', () => {
   });
   it('are expected when added by name', () => {
     expect(isExpectedActive({ audience: null, invitees: ['x'], extra_ids: ['x'] }, 'x', roles('alumni'))).toBe(true);
+  });
+});
+
+describe('open to the rest of the team', () => {
+  const execOnly = { audience: ['exec'], invitees: null, group_ids: null };
+  const roles = (...r: string[]) => r.map((role) => ({ role }));
+  it('an officer or recruit who was not added can check in by default, as a guest', () => {
+    expect(canAttendMeeting(execOnly, 'u1', roles('officer'))).toBe(true);
+    expect(canAttendMeeting(execOnly, 'u1', roles('recruit'))).toBe(true);
+    expect(isGuestOf(execOnly, 'u1', roles('officer'))).toBe(true);
+  });
+  it('the host can switch it off', () => {
+    expect(canAttendMeeting({ ...execOnly, open_to_team: false }, 'u1', roles('officer'))).toBe(false);
+    expect(canAttendMeeting({ ...execOnly, open_to_team: false }, 'u1', roles('exec'))).toBe(true);
+  });
+  it('people added or in the audience are not guests', () => {
+    expect(isGuestOf(execOnly, 'u1', roles('exec'))).toBe(false);
+    expect(isGuestOf({ audience: null, invitees: ['u1'], group_ids: null, extra_ids: ['u1'] }, 'u1', roles('officer'))).toBe(false);
+  });
+  it('inactive people, alumni and people with no team role are not let in', () => {
+    expect(canAttendMeeting(execOnly, 'u1', roles('officer', 'inactive'))).toBe(false);
+    expect(canAttendMeeting(execOnly, 'u1', roles('officer', 'alumni'))).toBe(false);
+    expect(canAttendMeeting(execOnly, 'u1', roles('ucsd'))).toBe(false);
+    expect(canAttendMeeting(execOnly, 'u1', [])).toBe(false);
+  });
+  it('an inactive person still gets in when added by name', () => {
+    expect(canAttendMeeting({ ...execOnly, invitees: ['u1'], extra_ids: ['u1'], open_to_team: false }, 'u1', roles('officer', 'inactive'))).toBe(true);
   });
 });

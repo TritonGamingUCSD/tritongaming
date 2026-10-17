@@ -602,3 +602,8 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .teamChevron { flex-shrink: 0; transition: transform 0.15s; }
 .teamChevronOpen { transform: rotate(90deg); }
 .teamShow { margin-left: auto; font-size: 0.78rem; font-weight: 600; color: var(--p-accent-text); }
+
+.openRow { display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.85rem; line-height: 1.4; color: var(--pp-ink); cursor: pointer; padding-top: 0.2rem; }
+.openRow input { margin-top: 1px; }
+.openRow em { display: block; font-style: normal; font-size: 0.76rem; color: rgba(var(--pp-ink-rgb), 0.85); }
+.guestTag { display: inline-flex; align-items: center; margin-left: 0.4rem; padding: 0 0.5rem; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.12); color: var(--pp-ink); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; vertical-align: middle; }

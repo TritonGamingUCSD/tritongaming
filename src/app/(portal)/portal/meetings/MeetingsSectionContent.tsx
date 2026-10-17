@@ -45,12 +45,12 @@ interface Live {
   tally: Tally;
   code: string | null;
   expiresAt: number | null;
-  attendees: (Person & { checked_in_at: string; method: 'code' | 'manual' | 'host' })[];
+  attendees: (Person & { checked_in_at: string; method: 'code' | 'manual' | 'host'; guest?: boolean })[];
   missing: Person[];
   absent: (Person & { reason: string | null; excused: boolean })[];
 }
-interface Item { question_type: QuestionType; question_options: string[] | null; key: string; meeting_id: string | null; series_id: string | null; date: string; title: string; location: string | null; doc_url: string | null; question: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; groupNames: string[]; host_id: string | null; host_name: string | null; starts_at: string; ends_at: string; status: 'scheduled' | 'open' | 'closed' | 'cancelled'; count: number; absent?: number; is_today: boolean; repeats: boolean }
-interface Series { ends_on?: string | null; id: string; title: string; weekday: number; start_time: string; end_time: string; location: string | null; active: boolean; doc_url: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null }
+interface Item { open_to_team?: boolean | null; question_type: QuestionType; question_options: string[] | null; key: string; meeting_id: string | null; series_id: string | null; date: string; title: string; location: string | null; doc_url: string | null; question: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; groupNames: string[]; host_id: string | null; host_name: string | null; starts_at: string; ends_at: string; status: 'scheduled' | 'open' | 'closed' | 'cancelled'; count: number; absent?: number; is_today: boolean; repeats: boolean }
+interface Series { open_to_team?: boolean | null; ends_on?: string | null; id: string; title: string; weekday: number; start_time: string; end_time: string; location: string | null; active: boolean; doc_url: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null }
 
 const TZ = 'America/Los_Angeles';
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -472,13 +472,13 @@ function MyHistoryPanel() {
 
 // Who a meeting is for: the UNION of roles (everyone holding them, live), saved groups (their current
 // members, live) and individually added people.
-export interface Aud { roles: string[]; groups: string[]; invitees: string[] }
+export interface Aud { roles: string[]; groups: string[]; invitees: string[]; open: boolean }
 // Nobody is pre-selected: whoever plans it has to choose who it is for.
-export const defaultAud = (): Aud => ({ roles: [], groups: [], invitees: [] });
-export const audFrom = (m: { audience: string[] | null; invitees: string[] | null; group_ids: string[] | null }): Aud => ({
-  roles: audienceRoles({ audience: m.audience, invitees: m.invitees, group_ids: m.group_ids }), groups: m.group_ids ?? [], invitees: m.invitees ?? [],
+export const defaultAud = (): Aud => ({ roles: [], groups: [], invitees: [], open: true });
+export const audFrom = (m: { audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; open_to_team?: boolean | null }): Aud => ({
+  roles: audienceRoles({ audience: m.audience, invitees: m.invitees, group_ids: m.group_ids }), groups: m.group_ids ?? [], invitees: m.invitees ?? [], open: m.open_to_team !== false,
 });
-export const audPayload = (a: Aud) => ({ audience: a.roles, group_ids: a.groups, invitees: a.invitees });
+export const audPayload = (a: Aud) => ({ audience: a.roles, group_ids: a.groups, invitees: a.invitees, open_to_team: a.open });
 export const audienceEmpty = (a: Aud) => a.roles.length === 0 && a.groups.length === 0 && a.invitees.length === 0;
 
 function CheckTile({ checked, indeterminate, label, onChange }: { checked: boolean; indeterminate?: boolean; label: string; onChange: () => void }) {
@@ -569,7 +569,7 @@ function PeoplePicker({ team, value, onChange, covered }: { team: TeamPerson[] |
 }
 
 
-export function AudiencePicker({ value, onChange }: { value: Aud; onChange: (v: Aud) => void }) {
+export function AudiencePicker({ value, onChange, hideOpen }: { value: Aud; onChange: (v: Aud) => void; hideOpen?: boolean }) {
   const team = useTeam();
   const [groups] = useGroups();
   const [showPeople, setShowPeople] = useState(value.invitees.length > 0);
@@ -613,6 +613,11 @@ export function AudiencePicker({ value, onChange }: { value: Aud; onChange: (v: 
         </button>
         {showPeople && <PeoplePicker team={team} value={value.invitees} onChange={(ids) => onChange({ ...value, invitees: ids })} covered={covered} />}
       </div>
+
+      {!hideOpen && <label className={styles.openRow}>
+        <input type="checkbox" checked={value.open} onChange={(e) => onChange({ ...value, open: e.target.checked })} />
+        <span>Let other officers and recruits check in too <em>They show as guests. Turn this off to keep the meeting to the people above.</em></span>
+      </label>}
 
       {audienceEmpty(value) ? <p className={styles.checkWarn}>Pick at least one role, group or person.</p> : null}
     </div>
@@ -1428,7 +1433,7 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
       setLive(json);
       if (!fieldsInit.current) { fieldsInit.current = true; setDoc(json.meeting.doc_url ?? ''); setQ(qFrom(json.meeting)); }
       // The moment everyone expected has checked in: confetti.
-      const here = json.attendees.length, total = here + json.missing.length;
+      const here = json.attendees.filter((a) => !a.guest).length, total = here + json.missing.length;   // guests are not part of the expected count
       if (prevHere.current !== null && prevHere.current < total && here >= total && total > 1) setFire(Date.now());
       prevHere.current = here;
       // What came in since the last load: one floating emoji per new reaction (at most 40 at a time, so a huge burst stays readable).
@@ -1526,7 +1531,8 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
   const over = !open && Date.now() > new Date(live.meeting.ends_at).getTime();
   const secondsLeft = live.expiresAt ? Math.max(0, Math.ceil((live.expiresAt - now) / 1000)) : 0;
   const pct = Math.min(100, (secondsLeft / 30) * 100);
-  const ringPct = live.attendees.length + live.missing.length > 0 ? Math.min(100, (live.attendees.length / (live.attendees.length + live.missing.length)) * 100) : 0;
+  const expectedHere = live.attendees.filter((a) => !a.guest).length, guestCount = live.attendees.length - expectedHere;
+  const ringPct = expectedHere + live.missing.length > 0 ? Math.min(100, (expectedHere / (expectedHere + live.missing.length)) * 100) : 0;
   const grouped = live.code ? `${live.code.slice(0, 3)} ${live.code.slice(3)}` : '';
 
   return (
@@ -1552,7 +1558,7 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
             <div ref={codeRef} className={styles.bigCode} aria-live="off">{grouped}</div>
           </div>
           <div ref={timerRef} className={styles.timer} aria-hidden="true"><span style={{ width: `${pct}%` }} /></div>
-          <div ref={countRef} className={styles.liveCount}><strong>{live.attendees.length}</strong> of {live.attendees.length + live.missing.length} checked in</div>
+          <div ref={countRef} className={styles.liveCount}><strong>{expectedHere}</strong> of {expectedHere + live.missing.length} checked in{guestCount > 0 ? ` (+${guestCount} ${guestCount === 1 ? 'guest' : 'guests'})` : ''}</div>
           {presenting && <p ref={hintRef} className={styles.presentHint}>Open the portal → Meetings and type this code</p>}
           {live.meeting.question && live.meeting.question_type !== 'text' && (
             <div className={styles.screenResults}><ResultBars type={live.meeting.question_type} tally={live.tally} big={presenting} /></div>
@@ -1707,7 +1713,7 @@ function AttendeeList({ live, onAdd, onRemove, onAbsent, onClearAbsent }: {
             {live.attendees.map((p) => (
               <li key={p.id} className={styles.person}>
                 <Avatar p={p} />
-                <span className={styles.personName}>{p.name}{p.method === 'manual' && <em> · added by exec</em>}{p.method === 'host' && <em> · host (automatic)</em>}</span>
+                <span className={styles.personName}>{p.name}{p.guest && <span className={styles.guestTag} title="Checked in to a meeting they were not added to">Guest</span>}{p.method === 'manual' && <em> · added by exec</em>}{p.method === 'host' && <em> · host (automatic)</em>}</span>
                 <span className={styles.personTime}>{time(p.checked_in_at)}</span>
                 <IconButton kind="remove" size="sm" label={`Remove ${p.name}`} onClick={() => onRemove(p)} />
               </li>

@@ -21,6 +21,8 @@ export interface MeetingAudience {
   group_ids?: string[] | null;
   /** Server-resolved: invitees plus the current members of every group. */
   extra_ids?: string[];
+  /** Other team members (exec, lead, officer, recruit) may check in too, even when they were not chosen. Null or missing counts as on. */
+  open_to_team?: boolean | null;
 }
 
 const same = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x));
@@ -64,12 +66,19 @@ export const isInactiveMember = (roles: { role: string }[]) => roles.some((r) =>
 export const isExpectedActive = (m: MeetingAudience, userId: string, roles: { role: string }[]) =>
   isInactiveMember(roles) ? extraIds(m).includes(userId) : isExpected(m, userId, roles);
 
-// May this person check in? Only people the meeting is for (by role, group or being added). Exec and
-// admins get no exception: running a meeting doesn't mean attending it. (An exec can still add someone
-// by hand from the live screen.) Inactive people can check in only to a meeting they were added to by name.
+// Someone on the team (exec, lead, officer or recruit) who is not sitting the quarter out and is not an alumnus.
+export const isActiveTeamMember = (roles: { role: string }[]) =>
+  !isInactiveMember(roles) && !roles.some((r) => r.role === 'alumni') && roles.some((r) => (AUDIENCE_ROLES as readonly string[]).includes(r.role));
+
+// May this person check in? The people the meeting is for (by role, group or being added), and, unless the host turned it off for the meeting,
+// anyone else on the active team (they check in as a guest). Inactive people can check in only to a meeting they were added to by name.
 export function canAttendMeeting(m: MeetingAudience, userId: string, roles: { role: string }[]): boolean {
-  return isExpectedActive(m, userId, roles);
+  if (isExpectedActive(m, userId, roles)) return true;
+  return m.open_to_team !== false && isActiveTeamMember(roles);
 }
+
+// Checked in to a meeting that was not meant for them.
+export const isGuestOf = (m: MeetingAudience, userId: string, roles: { role: string }[]) => !isExpectedActive(m, userId, roles);
 
 const UUID = /^[0-9a-f-]{36}$/i;
 function cleanIds(raw: unknown, max: number): string[] | null {
@@ -80,8 +89,8 @@ function cleanIds(raw: unknown, max: number): string[] | null {
 }
 
 // Validates audience input from a form and returns what to store.
-export function validateAudienceInput(b: { audience?: unknown; invitees?: unknown; group_ids?: unknown }):
-  { ok: true; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null } | { ok: false } {
+export function validateAudienceInput(b: { audience?: unknown; invitees?: unknown; group_ids?: unknown; open_to_team?: unknown }):
+  { ok: true; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; open_to_team: boolean } | { ok: false } {
   const invitees = cleanIds(b.invitees, MAX_INVITEES);
   const groups = cleanIds(b.group_ids, MAX_GROUPS);
   if (!invitees || !groups) return { ok: false };
@@ -92,11 +101,12 @@ export function validateAudienceInput(b: { audience?: unknown; invitees?: unknow
     if (!roles.every((r) => (AUDIENCE_ROLES as readonly string[]).includes(r))) return { ok: false };
   }
   const extras = invitees.length > 0 || groups.length > 0;
-  if (roles.length === 0 && !extras) return { ok: true, audience: null, invitees: null, group_ids: null };  // default: everyone
+  const open = b.open_to_team !== false;   // on unless the host switched it off
+  if (roles.length === 0 && !extras) return { ok: true, audience: null, invitees: null, group_ids: null, open_to_team: open };  // default: everyone
   // With people/groups chosen, the roles list is explicit (an empty list = no roles, stored as null).
   // Without extras, the default set collapses to null.
   const storedRoles = roles.length === 0 ? null : (!extras && same(roles, DEFAULT_AUDIENCE) ? null : roles);
-  return { ok: true, audience: storedRoles, invitees: invitees.length ? invitees : null, group_ids: groups.length ? groups : null };
+  return { ok: true, audience: storedRoles, invitees: invitees.length ? invitees : null, group_ids: groups.length ? groups : null, open_to_team: open };
 }
 
 // Validates a list of profile ids from the client (for groups). null = invalid.

@@ -25,6 +25,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     patch.audience = aud.audience;
     patch.invitees = aud.invitees;
     patch.group_ids = aud.group_ids;
+    patch.open_to_team = aud.open_to_team;
   }
   if ('description' in body) patch.description = String(body.description ?? '').trim().slice(0, MAX_DESCRIPTION_LENGTH) || null;
   if ('title' in body) {
@@ -63,13 +64,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const same = (a: unknown, b: unknown) => JSON.stringify(norm(a)) === JSON.stringify(norm(b));
     for (const r of rows ?? []) {
       const up: Record<string, unknown> = {};
-      for (const k of ['title', 'location', 'doc_url', 'description', 'audience', 'invitees', 'group_ids'] as const) {
+      for (const k of ['title', 'location', 'doc_url', 'description', 'audience', 'invitees', 'group_ids', 'open_to_team'] as const) {
         if (k in patch && same(r[k], old[k])) up[k] = patch[k];
       }
       const oldStart = old.start_time.slice(0, 5), oldEnd = old.end_time.slice(0, 5);
       const o = occurrenceTimes(r.meeting_date, oldStart, oldEnd);
       const unchangedTimes = new Date(r.starts_at).getTime() === o.starts.getTime() && new Date(r.ends_at).getTime() === o.ends.getTime();
-      const untouched = (['title', 'location', 'doc_url', 'description', 'audience', 'invitees', 'group_ids'] as const).every((k) => same(r[k], old[k]));
+      const untouched = (['title', 'location', 'doc_url', 'description', 'audience', 'invitees', 'group_ids', 'open_to_team'] as const).every((k) => same(r[k], old[k]));
       if ('weekday' in patch && patch.weekday !== old.weekday) {
         // Moved to another weekday: an uncustomized week sits on the old day, so drop it (the new day fills in
         // automatically). A customized one stays as it is, as a one-off.

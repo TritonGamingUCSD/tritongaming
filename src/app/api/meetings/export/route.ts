@@ -84,11 +84,14 @@ export async function GET(request: Request) {
     rows = [line(['Name', 'Email', 'Role', 'Meetings attended', 'Meetings expected', 'Excused absences', 'Attendance rate', 'Last attended'])];
     for (const p of people) {
       const excusedN = (meetings ?? []).filter((m) => absByKey.get(`${m.id}|${p.id}`)?.excused && !attByKey.has(`${m.id}|${p.id}`)).length;
-      // Only meetings that were for this person count; coming to someone else's meeting is a guest visit.
+      // Meetings that were for this person, plus any they came to as a guest.
       const relevant = (meetings ?? []).filter((m) => !(absByKey.get(`${m.id}|${p.id}`)?.excused) && expected({ audience: m.audience as string[] | null, extra_ids: m.extra_ids, invitees: m.invitees, group_ids: m.group_ids }, p.id));
       const mine = relevant.filter((m) => attByKey.has(`${m.id}|${p.id}`));
-      const total = relevant.length;
-      rows.push(line([p.name, p.email, p.role, mine.length, total, excusedN, total ? `${Math.round((mine.length / total) * 100)}%` : '', mine.length ? mine[mine.length - 1].meeting_date : '']));
+      // Coming as a guest to a meeting that was not meant for them counts as attended too.
+      const guestVisits = (meetings ?? []).filter((m) => attByKey.has(`${m.id}|${p.id}`) && !relevant.includes(m));
+      const attendedAll = [...mine, ...guestVisits].sort((x, y) => String(x.meeting_date).localeCompare(String(y.meeting_date)));
+      const total = relevant.length + guestVisits.length;
+      rows.push(line([p.name, p.email, p.role, attendedAll.length, total, excusedN, total ? `${Math.round((attendedAll.length / total) * 100)}%` : '', attendedAll.length ? attendedAll[attendedAll.length - 1].meeting_date : '']));
     }
   }
 

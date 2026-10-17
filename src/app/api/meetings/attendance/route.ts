@@ -52,13 +52,11 @@ export async function GET(request: Request) {
 
   const people = (profiles ?? []).map((p) => {
     const roles = rolesOf.get(p.id as string) ?? [];
-    // One mark per meeting, oldest → newest: p = present, a = absent (was expected), e = excused
-    // absence (doesn't count), g = came as a guest to a meeting not meant for them (doesn't count),
-    // - = not meant for them.
+    // One mark per meeting, oldest → newest: p = present (including as a guest at a meeting not meant for them, which counts like any check-in),
+    // a = absent (was expected), e = excused absence (doesn't count), - = not meant for them.
     const marks = meetings.map((m) => {
       const expectedHere = isExpectedActive({ audience: m.audience as string[] | null, invitees: m.invitees, group_ids: m.group_ids, extra_ids: m.extra_ids }, p.id as string, roles);
-      // Came to a meeting that wasn't meant for them (exec/admin often do): shown, but not counted.
-      if (present.get(m.id as string)?.has(p.id as string)) return expectedHere ? 'p' : 'g';
+      if (present.get(m.id as string)?.has(p.id as string)) return 'p';
       const abs = absences.get(`${m.id}|${p.id}`);
       if (abs === true) return 'e';
       if (abs === false) return 'a';
@@ -77,7 +75,7 @@ export async function GET(request: Request) {
       last_attended: lastIdx >= 0 ? (meetings[lastIdx].meeting_date as string) : null,
       follow_up: total >= 3 && ((attended / total) < 0.5 || missedRun >= 3),
     };
-  }).filter((p) => p.total > 0 || p.excused > 0 || p.marks.includes('g'));
+  }).filter((p) => p.total > 0 || p.excused > 0);
 
   const meetingRows = meetings.map((m) => {
     const excusedHere = [...absences.entries()].filter(([k, ex]) => ex && k.startsWith(`${m.id}|`)).length;

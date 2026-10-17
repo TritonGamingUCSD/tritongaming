@@ -22,6 +22,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   ]);
   const byId = new Map(people.map((p) => [p.id, p]));
   const here = new Set((rows ?? []).map((r) => r.user_id as string));
+  const expectedIds = new Set(people.map((p) => p.id));
 
   // Someone who checked in but no longer holds a team role still shows up in the list.
   const missingProfileIds = (rows ?? []).map((r) => r.user_id as string).filter((u) => !byId.has(u));
@@ -56,7 +57,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     customEmojis: await customEmojiMap(auth.svc),
     code: cc?.code ?? null,
     expiresAt: cc?.expiresAt ?? null,
-    attendees: (rows ?? []).map((r) => ({ ...byId.get(r.user_id as string)!, checked_in_at: r.checked_in_at, method: r.method })),
+    // `guest`: checked in to a meeting that was not meant for them (they are not in the expected list); the host sees a Guest tag.
+    attendees: (rows ?? []).map((r) => ({ ...byId.get(r.user_id as string)!, checked_in_at: r.checked_in_at, method: r.method, guest: !expectedIds.has(r.user_id as string) })),
     missing: people.filter((p) => !here.has(p.id) && !absent.has(p.id)),
     absent: (absenceRows ?? []).map((a) => ({ ...(byId.get(a.user_id as string) ?? { id: a.user_id as string, name: 'Unnamed', avatar_url: null, custom_avatar_url: null }), reason: a.reason as string | null, excused: a.excused as boolean })),
   });

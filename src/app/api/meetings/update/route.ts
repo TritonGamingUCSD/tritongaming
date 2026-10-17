@@ -33,6 +33,7 @@ export async function POST(request: Request) {
     patch.audience = aud.audience;
     patch.invitees = aud.invitees;
     patch.group_ids = aud.group_ids;
+    patch.open_to_team = aud.open_to_team;
   }
   const wantsFields = ['title', 'start', 'end'].some((k) => k in b);
   if (Object.keys(patch).length === 0 && !wantsFields) return NextResponse.json({ error: 'Nothing to update.' }, { status: 400 });

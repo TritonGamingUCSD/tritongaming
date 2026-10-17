@@ -146,7 +146,7 @@ function PlanForm({ plan, onDone, onCancel }: { plan?: PlanView; onDone: () => v
         <Field label="Room (optional)"><Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Price Center East" maxLength={80} /></Field>
       </div>
       <Field label="What’s it about? (optional)"><Textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={500} rows={2} /></Field>
-      <div className={m.audienceField}><span className={m.audienceTitle}>Who should answer?</span><AudiencePicker value={audience} onChange={setAudience} /></div>
+      <div className={m.audienceField}><span className={m.audienceTitle}>Who should answer?</span><AudiencePicker value={audience} onChange={setAudience} hideOpen /></div>
       <p className={m.faint}>Times are Pacific. Whoever can’t make the time you pick is marked absent (excused).</p>
       {error && <Notice tone="error">{error}</Notice>}
       <div className={m.formActions}><Button type="submit" loading={busy} disabled={audienceEmpty(audience) || rangeTooLong || toMin(we) - toMin(ws) < duration}>{plan ? 'Save changes' : 'Send to everyone'}</Button></div>
