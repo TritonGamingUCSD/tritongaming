@@ -78,7 +78,7 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   manage_quarters: ['exec', 'admin'],
   // The Division Members directory (who leads each division): the whole team can look —
   // officers, leads, exec and recruits — plus the division leads themselves. Editing divisions is
-  // separate (manage_divisions_directory / manage_division). Emails on it stay officer+ (view_members).
+  // separate (manage_divisions_directory / manage_division). Emails come with view_members (officers, leads, exec, recruits and alumni).
   view_division_members: ['division', 'officer', 'lead', 'exec', 'admin', 'recruit', 'alumni'],
   attend_meetings: ['officer', 'lead', 'exec', 'admin', 'recruit'],
   // Planning a meeting: leads can create meetings and run/edit/see results of the ones THEY planned;

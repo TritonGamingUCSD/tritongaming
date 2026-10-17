@@ -51,7 +51,7 @@ export async function getMembersData() {
   // Manager). A member can have more than one linked sign-in email (their
   // Google address plus a linked second one — see LinkGoogleSection.tsx),
   // so this pulls every linked email, not just auth.users.email's current
-  // "primary" one. Best-effort: this internal roster is officer+ only, so
+  // "primary" one. Best-effort: this internal roster is for the team (officers, leads, exec, recruits and alumni, anyone with view_members), so
   // showing email here (unlike the public About page) is fine; if the
   // lookup fails, members just render without email rather than breaking
   // the whole directory. Everything a member has filled in is shown here —

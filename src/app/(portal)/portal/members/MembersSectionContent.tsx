@@ -35,7 +35,9 @@ import SectionHeader from '@/components/ui/SectionHeader';
 // nothing about what they actually do. It's still checked before
 // ucsd/guest, though, so a bare admin account with no other real role
 // isn't silently dropped from the roster.
-const ORDER: (AppRole | 'guest')[] = ['exec', 'lead', 'officer', 'division', 'recruit', 'alumni', 'admin', 'ucsd', 'guest'];
+// Division Lead is not a group here: it is a side role (someone who leads a division also holds their team role, such as recruit, and belongs under that). The division's
+// name still shows on their card.
+const ORDER: (AppRole | 'guest')[] = ['exec', 'lead', 'officer', 'recruit', 'alumni', 'admin', 'ucsd', 'guest'];
 
 type MemberEntry = Omit<MemberProfileRow, 'user_roles'> & { divisionName?: string; inactive?: boolean };
 

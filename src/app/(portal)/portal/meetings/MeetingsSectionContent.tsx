@@ -924,8 +924,8 @@ function MeetingList({ onOpen, showForm, onShowForm }: { onOpen: (id: string) =>
                 <Repeat size={16} aria-hidden="true" className={styles.seriesIcon} />
                 <span className={styles.personName}>
                   {s.title}
-                  <em> · every {WEEKDAYS[s.weekday]} {hhmmLabel(s.start_time)}–{hhmmLabel(s.end_time)}{s.location ? ` · ${s.location}` : ''}{s.ends_on ? ` · until ${new Date(`${s.ends_on}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' })}` : ''} · {audienceLabel(s)}{s.active ? '' : ' · paused'}</em>
-                  <span className={`${styles.accessChip} ${s.open_to_team === false && !wholeTeamAud(s) ? styles.accessChipLimited : ''}`}>{wholeTeamAud(s) ? 'Open to everyone' : s.open_to_team === false ? 'Only the list can join' : 'Officers and recruits can join'}</span>
+                  <em className={styles.seriesDetail}>every {WEEKDAYS[s.weekday]} {hhmmLabel(s.start_time)}–{hhmmLabel(s.end_time)}{s.location ? ` · ${s.location}` : ''}{s.ends_on ? ` · until ${new Date(`${s.ends_on}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' })}` : ''} · {audienceLabel(s)}{s.active ? '' : ' · paused'}</em>
+                  {s.open_to_team === false && !wholeTeamAud(s) && <span className={`${styles.accessChip} ${styles.accessChipLimited}`} title="Only the people it is for can check in">Only the list can join</span>}
                 </span>
                 <IconButton kind="edit" label={`Edit ${s.title}`} onClick={() => setEditingSeries(editingSeries === s.id ? null : s.id)} />
                 <IconButton kind={s.active ? 'pause' : 'play'} label={s.active ? `Pause ${s.title}` : `Resume ${s.title}`} onClick={() => patchSeries(s, { active: !s.active })} disabled={busyKey === s.id} />
@@ -952,11 +952,11 @@ function MeetingList({ onOpen, showForm, onShowForm }: { onOpen: (id: string) =>
                     <Repeat size={16} aria-hidden="true" className={styles.seriesIcon} />
                     <span className={styles.personName}>
                       {s.title}
-                      <em> · every {WEEKDAYS[s.weekday]} {hhmmLabel(s.start_time)}–{hhmmLabel(s.end_time)}{s.location ? ` · ${s.location}` : ''}{s.ends_on ? ` · until ${new Date(`${s.ends_on}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' })}` : ''} · {audienceLabel(s)}{s.active ? '' : ' · paused'}</em>
-                      <span className={`${styles.accessChip} ${s.open_to_team === false && !wholeTeamAud(s) ? styles.accessChipLimited : ''}`}>{wholeTeamAud(s) ? 'Open to everyone' : s.open_to_team === false ? 'Only the list can join' : 'Officers and recruits can join'}</span>
+                      <em className={styles.seriesDetail}>every {WEEKDAYS[s.weekday]} {hhmmLabel(s.start_time)}–{hhmmLabel(s.end_time)}{s.location ? ` · ${s.location}` : ''}{s.ends_on ? ` · until ${new Date(`${s.ends_on}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' })}` : ''} · {audienceLabel(s)}{s.active ? '' : ' · paused'}</em>
+                      {s.open_to_team === false && !wholeTeamAud(s) && <span className={`${styles.accessChip} ${styles.accessChipLimited}`} title="Only the people it is for can check in">Only the list can join</span>}
                     </span>
-                    <IconButton kind="edit" label={`Edit ${s.title}`} onClick={() => setEditingSeries(editingSeries === s.id ? null : s.id)} />
-                    <IconButton kind={s.active ? 'pause' : 'play'} label={s.active ? `Pause ${s.title}` : `Resume ${s.title}`} onClick={() => patchSeries(s, { active: !s.active })} disabled={busyKey === s.id} />
+                    <IconButton kind="edit" label={`Extend or edit ${s.title}`} onClick={() => setEditingSeries(editingSeries === s.id ? null : s.id)} />
+                    
                     <IconButton kind="delete" label={`Delete ${s.title}`} onClick={() => deleteSeries(s)} disabled={busyKey === s.id} />
                     {editingSeries === s.id && (
                       <SeriesEditForm
@@ -1066,7 +1066,7 @@ function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, o
           </span>
           <span className={`${styles.metaLine} ${styles.metaSub}`} title={item.description ?? undefined}>
             <span className={styles.metaAudience} title={`For: ${audienceLabel(item)}`}><Users size={11} aria-hidden="true" /> {audienceLabel(item)}</span>
-            {!wholeTeamAud(item) && (item.status === 'scheduled' || item.status === 'open') && <span className={`${styles.accessChip} ${item.open_to_team === false ? styles.accessChipLimited : ''}`} title={item.open_to_team === false ? 'Only the people it is for can check in' : 'Any officer or recruit can check in, as a guest'}>{item.open_to_team === false ? 'Only the list can join' : 'Officers and recruits can join'}</span>}
+            {item.open_to_team === false && !wholeTeamAud(item) && (item.status === 'scheduled' || item.status === 'open') && <span className={`${styles.accessChip} ${styles.accessChipLimited}`} title="Only the people it is for can check in">Only the list can join</span>}
             {item.doc_url && <span className={styles.metaDoc}><Link2 size={11} aria-hidden="true" /> Doc</span>}
             {item.question && <span className={styles.metaDoc}><MessageCircleQuestion size={11} aria-hidden="true" /> Question</span>}
             {item.description && <span className={styles.metaDoc}><FileText size={11} aria-hidden="true" /> Description</span>}

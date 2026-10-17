@@ -711,12 +711,12 @@
   }
   .topToggle { display: grid; place-items: center; width: 36px; height: 36px; flex-shrink: 0; border: 0; border-radius: 0.65rem; background: transparent; color: rgba(var(--pp-chrome-rgb), 0.78); cursor: pointer; transition: background 0.15s, color 0.15s; }
   .topToggle:hover { background: rgba(var(--pp-chrome-rgb), 0.07); color: var(--pp-chrome-fg); }
-  .topTitle { display: flex; align-items: center; gap: 0.65rem; min-width: 0; flex: 1; }
+  .topTitle { display: flex; align-items: center; gap: 0.65rem; min-width: 14rem; flex: 1; }   /* the page name always keeps room; the search box gives way first */
   .topIcon > svg { width: 100%; height: 100%; }
   .topIcon { display: grid; place-items: center; box-sizing: border-box; width: 36px; height: 36px; padding: 8px; flex-shrink: 0; border-radius: 0.6rem; color: var(--frame-accent); background: color-mix(in srgb, var(--frame-accent) 16%, transparent); border: 1px solid color-mix(in srgb, var(--frame-accent) 32%, transparent); }
   .topName { font-family: var(--font-futura-heavy); font-size: 1.08rem; letter-spacing: 0.04em; color: var(--pp-chrome-fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .topRight { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
-  .topSearch { width: 300px; }
+  .topRight { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 1; min-width: 0; }
+  .topSearch { flex: 0 1 300px; min-width: 120px; }
   .topSearch > * { margin: 0 !important; max-width: none !important; }
   .frameBody { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.18) transparent; padding: 1.5rem 1rem 3rem; }
   .appFrame .desktopContent { padding: 0; }
@@ -844,10 +844,10 @@
   .appFrame .rail .railFooter > a > span, .appFrame .rail .railFooter > button > span, .appFrame .rail .railFooter > a > svg { height: 28px; }
 }
 
-.lockedNotice { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin: 0 0 0.75rem; padding: 0.7rem 0.9rem; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.18); background: rgba(255, 255, 255, 0.06); color: rgba(255, 255, 255, 0.9); font-size: 0.88rem; line-height: 1.45; } /* theme-ok */
+.lockedNotice { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin: 0 0 0.75rem; padding: 0.7rem 0.9rem; border-radius: 10px; border: 1px solid var(--pp-info); background: rgba(29, 78, 216, 0.1); color: var(--pp-ink); font-size: 0.88rem; line-height: 1.4; }
 .lockedActions { display: inline-flex; align-items: center; gap: 0.4rem; }
-.lockedHelp { font: inherit; font-weight: 600; padding: 0.35rem 0.8rem; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.35); background: transparent; color: inherit; cursor: pointer; } /* theme-ok */
-.lockedHelp:hover { background: rgba(255, 255, 255, 0.1); } /* theme-ok */
+.lockedHelp { font: inherit; font-weight: 700; padding: 0.35rem 0.8rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.45); background: transparent; color: inherit; cursor: pointer; }
+.lockedHelp:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 .lockedClose { font: inherit; font-size: 1.2rem; line-height: 1; padding: 0.1rem 0.5rem; border: 0; background: transparent; color: inherit; cursor: pointer; opacity: 0.7; }
 
 /* "You are here": the group the open section belongs to, shown ahead of its name (not on the home view) */

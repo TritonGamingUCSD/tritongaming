@@ -85,7 +85,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const canManageEvents = hasCapability(roles, 'manage_events');
   const canCheckin = hasCapability(roles, 'checkin');
   const canViewMembers = hasCapability(roles, 'view_members');
-  // Division leads and the whole team can see who leads each division; emails stay officer+ only.
+  // Division leads and the whole team can see who leads each division; emails come with view_members, so recruits and alumni see them too, same as officers.
   const canSeeDivisionMembers = hasCapability(roles, 'view_division_members');
   const canManageDivisions = hasCapability(roles, 'manage_divisions_directory');
   const canGenerateQr = hasCapability(roles, 'generate_qr_codes');

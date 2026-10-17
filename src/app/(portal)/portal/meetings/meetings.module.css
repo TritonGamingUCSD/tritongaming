@@ -632,3 +632,18 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .endedSeries { margin-top: 0.8rem; }
 .endedSeries summary { cursor: pointer; font-family: var(--font-futura-heavy); font-size: 0.95rem; color: var(--pp-ink); display: flex; align-items: center; gap: 0.5rem; min-height: 36px; }
 .endedSeries summary span { font-size: 0.72rem; padding: 0.05rem 0.5rem; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.12); }
+
+/* The details under a meeting's name wrap onto a second line instead of being cut off ("3 away", the badge, the doc link) when the row is narrow. */
+.metaLine { flex-wrap: wrap; overflow: visible; row-gap: 0.15rem; }
+.metaLine > span { white-space: nowrap; }
+.metaLine > .metaHost { flex-shrink: 1; max-width: 100%; }
+
+/* Repeating meetings on a phone: the name and its details get their own full line (wrapping), the buttons sit under them. Nothing is cut off. */
+@media (max-width: 560px) {
+  .seriesRow .personName { flex: 1 1 calc(100% - 2.2rem); white-space: normal; overflow: visible; }
+  .seriesRow .personName em { display: block; margin-top: 0.15rem; }
+  .seriesRow > .personName + * { margin-left: auto; }
+}
+
+.seriesDetail::before { content: ' · '; }
+@media (max-width: 560px) { .seriesDetail::before { content: none; } }
