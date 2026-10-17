@@ -97,6 +97,7 @@
 .rowIcon { display: inline-grid; place-items: center; width: 18px; flex: none; font-size: 0.95rem; line-height: 1; color: rgba(var(--pp-ink-rgb), 0.86); }
 .rowTitle { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tagMini { flex: none; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 0 0.4rem; border-radius: 999px; background: rgba(147, 197, 253, 0.2); color: var(--pp-info); white-space: nowrap; }
+.subBadge { flex: none; min-width: 1.15rem; text-align: center; font-size: 0.64rem; padding: 0 0.35rem; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.1); color: rgba(var(--pp-ink-rgb), 0.9); }
 .dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #fbbf24; }
 .editingTag { flex: none; max-width: 7rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.62rem; font-weight: 700; padding: 0.05rem 0.4rem; border-radius: 999px; background: rgba(248, 113, 113, 0.2); color: var(--pp-bad); }
 .favMini { flex: none; color: var(--p-accent); fill: var(--p-accent); }
@@ -105,7 +106,7 @@
 /* The title fades out under the ⋯ button instead of being covered by it. */
 @media (hover: hover) { .row:has(.rowMenuWrap):hover .rowTitle, .row:has(.rowMenuWrap):focus-within .rowTitle { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2.2rem), transparent calc(100% - 0.6rem)); mask-image: linear-gradient(to right, #000 calc(100% - 2.2rem), transparent calc(100% - 0.6rem)); } }
 /* The badges at the end of a row (New, unpublished changes, who is editing, favorite) make way for the ⋯ button while it shows, instead of sitting under it. */
-@media (hover: hover) { .row:has(.rowMenuWrap):hover .rowMain :is(.tagMini, .dot, .editingTag, .favMini), .row:has(.rowMenuWrap):focus-within .rowMain :is(.tagMini, .dot, .editingTag, .favMini) { visibility: hidden; } }
+@media (hover: hover) { .row:has(.rowMenuWrap):hover .rowMain :is(.tagMini, .subBadge, .dot, .editingTag, .favMini), .row:has(.rowMenuWrap):focus-within .rowMain :is(.tagMini, .subBadge, .dot, .editingTag, .favMini) { visibility: hidden; } }
 /* A category header keeps its own room for the ⋯ button, so it never sits on top of the count. */
 .catRow .rowMenuWrap { width: 30px; }
 .catRow .rowMenuWrap .rowMenuBtn { position: static; transform: none; background: none; }
@@ -160,7 +161,23 @@
 .seg { display: flex; gap: 0.25rem; }
 .seg button { flex: 1; min-height: 34px; border-radius: 0.5rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.33); background: none; color: rgba(var(--pp-ink-rgb), 0.97); font: inherit; font-size: 0.8rem; cursor: pointer; }
 .segOn { background: var(--p-accent) !important; border-color: var(--p-accent) !important; color: #0b1426 !important; font-weight: 600; }
-.subpages { display: flex; flex-direction: column; gap: 0.6rem; }
+.subpages { display: flex; flex-direction: column; gap: 0.7rem; }
+.subHeading { display: flex; align-items: center; gap: 0.5rem; margin: 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.05rem; color: var(--pp-ink); }
+.subCount { font-size: 0.72rem; padding: 0.05rem 0.5rem; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.12); color: var(--pp-ink); }
+.subGrid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); gap: 0.6rem; }
+.subGrid > li { display: flex; min-width: 0; }
+.subCard { flex: 1; min-width: 0; display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.8rem 0.85rem; text-align: left; font: inherit; color: var(--pp-ink); background: var(--pp-card); border: 1px solid rgba(var(--pp-ink-rgb), 0.25); border-radius: 0.8rem; cursor: pointer; transition: border-color 0.15s, transform 0.15s; }
+.subCard:hover { border-color: var(--pp-ink); transform: translateY(-1px); }
+.subCard:focus-visible { outline: 2px solid var(--pp-ink); outline-offset: 2px; }
+.subIcon { flex: none; width: 2.2rem; height: 2.2rem; border-radius: 0.6rem; display: grid; place-items: center; background: rgba(var(--pp-ink-rgb), 0.09); font-size: 1.1rem; }
+.subText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.2rem; }
+.subName { font-family: var(--font-futura-heavy); font-size: 0.98rem; line-height: 1.25; overflow-wrap: anywhere; }
+.subPreview { font-size: 0.8rem; line-height: 1.4; color: rgba(var(--pp-ink-rgb), 0.85); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.subMeta { font-size: 0.72rem; color: rgba(var(--pp-ink-rgb), 0.75); }
+.subGo { flex: none; align-self: center; opacity: 0.55; transition: transform 0.15s, opacity 0.15s; }
+.subCard:hover .subGo { opacity: 1; transform: translateX(2px); }
+.prose:empty { display: none; }
+@media (prefers-reduced-motion: reduce) { .subCard, .subGo { transition: none; } .subCard:hover { transform: none; } }
 
 /* editor view */
 .editView { display: flex; flex-direction: column; gap: 0.9rem; min-width: 0; width: 100%; max-width: var(--doc-col, 40rem); margin-inline: auto; }

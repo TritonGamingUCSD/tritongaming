@@ -85,6 +85,7 @@ export default function DocSidebar({
           <button type="button" className={styles.rowMain} onClick={() => onOpen(d.id)}>
             <span className={styles.rowIcon} aria-hidden="true"><FileText size={14} strokeWidth={1.5} /></span>
             <span className={styles.rowTitle} title={d.title || 'Untitled'}>{d.title || 'Untitled'}</span>
+            {n.children.length > 0 && <span className={styles.subBadge} title={`${n.children.length} ${n.children.length === 1 ? 'subpage' : 'subpages'}`}>{n.children.length}</span>}
             {!d.published && canEdit && <span className={styles.tagMini}>New</span>}
             {hasDraft && d.published && <span className={styles.dot} title="Has unpublished changes" aria-label="Has unpublished changes" />}
             {editing.length > 0 && <span className={styles.editingTag} title={`${editing.join(', ')} editing`}>{editing[0]}{editing.length > 1 ? ` +${editing.length - 1}` : ''} editing</span>}

@@ -21,6 +21,12 @@ import styles from './docs.module.css';
 export type ReaderSize = 'sm' | 'md' | 'lg';
 export const SIZE_REM: Record<ReaderSize, string> = { sm: '0.92rem', md: '1rem', lg: '1.14rem' };
 
+// One quiet line of what a page says, for the subpage cards: the start of the text without the Markdown marks.
+function previewOf(markdown: string): string {
+  const text = markdown.replace(/```[\s\S]*?```/g, ' ').replace(/^#{1,6}\s.*$/gm, ' ').replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/\[\[([^\]]*)\]\]/g, '$1').replace(/^[#>\-*+\d.\s]+/gm, ' ').replace(/[*_`~|]/g, '').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+  return text.length > 140 ? `${text.slice(0, 137).trimEnd()}...` : text;
+}
+
 export default function DocReader({
   doc, docs, sections, categories, canEdit, favorite, size, onSize, live, notice,
   onOpen, onHome, onEdit, onDelete, onNewSub, onFavorite, onPin, onReview, teams,
@@ -156,40 +162,53 @@ export default function DocReader({
         {doc.teams.length > 0 && teams.some((t) => doc.teams.includes(t.id)) && (
           <p className={styles.forTeams}><strong>Useful for:</strong> {teams.filter((t) => doc.teams.includes(t.id)).map((t) => t.name).join(', ')}</p>
         )}
+        {kids.length > 0 && (
+          <section className={styles.subpages} aria-label="Subpages">
+            <h2 className={styles.subHeading}>Subpages <span className={styles.subCount}>{kids.length}</span></h2>
+            <ul className={styles.subGrid}>
+              {kids.map((k) => {
+                const below = docs.filter((d) => d.parent_id === k.id).length;
+                const preview = previewOf(k.content);
+                return (
+                  <li key={k.id}>
+                    <button type="button" className={styles.subCard} onClick={() => onOpen(k.id)}>
+                      <span className={styles.subIcon} aria-hidden="true">{k.icon ?? <FileText size={18} strokeWidth={1.75} />}</span>
+                      <span className={styles.subText}>
+                        <span className={styles.subName}>{k.title}</span>
+                        {preview && <span className={styles.subPreview}>{preview}</span>}
+                        <span className={styles.subMeta}>{below > 0 ? `${below} ${below === 1 ? 'page' : 'pages'} inside · ` : ''}{ageLabel(k.updated_at).label}</span>
+                      </span>
+                      <ChevronRight size={16} className={styles.subGo} aria-hidden="true" />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
         <div className={styles.prose} ref={proseRef} onClick={(e) => {
           // [[Doc title]] links open the doc inside the page, without reloading it.
           const a = (e.target as HTMLElement).closest('a');
           const m = a && /^\/portal\/docs\?id=([0-9a-f-]{36})$/.exec(a.getAttribute('href') ?? '');
           if (m && !e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); onOpen(m[1]); }
         }}>
-          {doc.content.trim() ? <MarkdownContent headingIds>{body}</MarkdownContent> : <p className={styles.emptyNote}>This doc has no content yet.{canEdit ? ' Press Edit to start writing.' : ''}</p>}
+          {doc.content.trim() ? <MarkdownContent headingIds>{body}</MarkdownContent> : kids.length > 0 ? null : <p className={styles.emptyNote}>This doc has no content yet.{canEdit ? ' Press Edit to start writing.' : ''}</p>}
         </div>
 
-        {kids.length > 0 && (
-          <section className={styles.subpages}>
-            <h2 className={styles.attachHeading}>In This Doc</h2>
-            <div className={styles.attachCards}>
-              {kids.map((k) => (
-                <button key={k.id} type="button" className={styles.attachCard} onClick={() => onOpen(k.id)}>
-                  <span className={styles.attachCardIcon} aria-hidden="true">{k.icon ?? <FileText size={18} strokeWidth={1.5} />}</span>
-                  <span className={styles.attachCardText}><span className={styles.attachCardName}>{k.title}</span><span className={styles.attachCardKind}>{ageLabel(k.updated_at).label}</span></span>
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
-
         {linkedFrom.length > 0 && (
-          <section className={styles.subpages}>
-            <h2 className={styles.attachHeading}>Linked From</h2>
-            <div className={styles.attachCards}>
+          <section className={styles.subpages} aria-label="Linked from">
+            <h2 className={styles.subHeading}>Linked From <span className={styles.subCount}>{linkedFrom.length}</span></h2>
+            <ul className={styles.subGrid}>
               {linkedFrom.map((k) => (
-                <button key={k.id} type="button" className={styles.attachCard} onClick={() => onOpen(k.id)}>
-                  <span className={styles.attachCardIcon} aria-hidden="true"><FileText size={18} strokeWidth={1.5} /></span>
-                  <span className={styles.attachCardText}><span className={styles.attachCardName}>{k.title}</span><span className={styles.attachCardKind}>mentions this doc</span></span>
-                </button>
+                <li key={k.id}>
+                  <button type="button" className={styles.subCard} onClick={() => onOpen(k.id)}>
+                    <span className={styles.subIcon} aria-hidden="true"><FileText size={18} strokeWidth={1.75} /></span>
+                    <span className={styles.subText}><span className={styles.subName}>{k.title}</span><span className={styles.subMeta}>Mentions this page</span></span>
+                    <ChevronRight size={16} className={styles.subGo} aria-hidden="true" />
+                  </button>
+                </li>
               ))}
-            </div>
+            </ul>
           </section>
         )}
 

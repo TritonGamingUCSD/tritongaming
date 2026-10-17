@@ -3,8 +3,18 @@ import { authorizeMeetings, isMeetingOpen, type MeetingRow } from '@/lib/meeting
 import { isCustomEmoji, customEmojiId } from '@/lib/meetings/meetingFun';
 import { notifyMeetingLive } from '@/lib/meetings/meetingLive';
 
-// A checked-in person sends an emoji reaction; it floats up on the exec's screen. Lightly
-// rate-limited so one phone can't flood the room.
+// A checked-in person sends an emoji reaction; it floats up on the exec's screen and adds one to that emoji's total. Lightly rate-limited so one phone can't
+// flood the room (12 taps per 10 seconds); the total itself has no limit.
+const recent = new Map<string, number[]>();
+function throttled(userId: string): boolean {
+  const now = Date.now();
+  const taps = (recent.get(userId) ?? []).filter((t) => now - t < 10_000);
+  if (taps.length >= 12) { recent.set(userId, taps); return true; }
+  taps.push(now); recent.set(userId, taps);
+  if (recent.size > 5000) for (const [k, v] of recent) if (v.every((t) => now - t >= 10_000)) recent.delete(k);
+  return false;
+}
+
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await authorizeMeetings('attend_meetings');
   if (auth.error) return auth.error;
@@ -21,11 +31,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { data: here } = await auth.svc.from('meeting_attendance').select('user_id').eq('meeting_id', id).eq('user_id', auth.user.id).maybeSingle();
   if (!here) return NextResponse.json({ error: 'Check in first to react.' }, { status: 403 });
 
-  const since = new Date(Date.now() - 10_000).toISOString();
-  const { count } = await auth.svc.from('meeting_reactions').select('id', { count: 'exact', head: true }).eq('meeting_id', id).eq('user_id', auth.user.id).gte('created_at', since);
-  if ((count ?? 0) >= 12) return NextResponse.json({ ok: true, throttled: true });
-
-  await auth.svc.from('meeting_reactions').insert({ meeting_id: id, user_id: auth.user.id, emoji });
+  // Only a running total per emoji is kept, never who sent it. The flood guard below lives in memory for the same reason: it is best effort per server and
+  // forgets everything on its own.
+  if (throttled(auth.user.id)) return NextResponse.json({ ok: true, throttled: true });
+  await auth.svc.rpc('bump_meeting_reaction', { p_meeting: id, p_emoji: emoji });
   await notifyMeetingLive(id);
   return NextResponse.json({ ok: true });
 }

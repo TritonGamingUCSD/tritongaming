@@ -40,8 +40,6 @@ interface NextMeeting { doc_url?: string | null; title: string; description: str
 interface Live {
   meeting: { question_type: QuestionType; question_options: string[] | null; id: string; title: string; meeting_date: string; starts_at: string; ends_at: string; open: boolean; doc_url: string | null; location: string | null; cancelled: boolean; series_id: string | null; accepting: boolean; opens_at: string; question: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; groupNames: string[] };
   answers: (Person & { answer: string; at: string })[];
-  reactions: { id: number; emoji: string }[];
-  lastReactionId: number;
   reactionTotals: Record<string, number>;
   customEmojis?: Record<string, { name: string; url: string }>;
   tally: Tally;
@@ -1418,37 +1416,36 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
   const [bigBurst, setBigBurst] = useState<{ key: number; emoji: string } | null>(null);
   const [floaters, setFloaters] = useState<{ key: string; emoji: string; left: number; delay: number }[]>([]);
   const fieldsInit = useRef(false);
-  // Reaction cursor: null until the first load, so history never replays on screen.
-  const afterRef = useRef<number | null>(null);
-  const polls = useRef(0);
+  // The totals from the last load: what is new since then floats up on the screen. null until the first load, so history never replays.
+  const prevTotals = useRef<Record<string, number> | null>(null);
+  const floatSeq = useRef(0);
 
   const loadLive = useCallback(async () => {
     try {
-      polls.current++;
-      const res = await fetch(`/api/meetings/${id}/live${afterRef.current === null ? '' : `?after=${afterRef.current}${polls.current % 8 === 0 ? '&totals=1' : ''}`}`, { cache: 'no-store' });
+      const res = await fetch(`/api/meetings/${id}/live`, { cache: 'no-store' });
       if (!res.ok) return;
-      const json: Omit<Live, 'reactionTotals'> & { reactionTotals?: Record<string, number> } = await res.json();   // totals only come now and then; the screen keeps counting in between
-      setLive((prev) => {
-        if (json.reactionTotals) return json as Live;
-        const totals = { ...(prev?.reactionTotals ?? {}) };
-        for (const r of json.reactions) totals[r.emoji] = (totals[r.emoji] ?? 0) + 1;
-        return { ...json, reactionTotals: totals } as Live;
-      });
+      const json: Live = await res.json();
+      setLive(json);
       if (!fieldsInit.current) { fieldsInit.current = true; setDoc(json.meeting.doc_url ?? ''); setQ(qFrom(json.meeting)); }
-      afterRef.current = json.lastReactionId;
       // The moment everyone expected has checked in: confetti.
       const here = json.attendees.length, total = here + json.missing.length;
       if (prevHere.current !== null && prevHere.current < total && here >= total && total > 1) setFire(Date.now());
       prevHere.current = here;
-      if (json.reactions.length) {
-        const fresh = json.reactions.map((r, i) => ({ key: `r${r.id}`, emoji: r.emoji, left: 8 + Math.random() * 84, delay: i * 0.18 }));
-        setFloaters((f) => [...f, ...fresh].slice(-60));
-        setTimeout(() => setFloaters((f) => f.filter((x) => !fresh.some((n) => n.key === x.key))), 4200 + fresh.length * 180);
-        // Lots of the same emoji at once: it explodes across the screen.
+      // What came in since the last load: one floating emoji per new reaction (at most 40 at a time, so a huge burst stays readable).
+      const before = prevTotals.current;
+      prevTotals.current = json.reactionTotals;
+      if (before) {
         const counts: Record<string, number> = {};
-        for (const r of json.reactions) counts[r.emoji] = (counts[r.emoji] ?? 0) + 1;
-        const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
-        if (top && top[1] >= 4) { const key = Date.now(); setBigBurst({ key, emoji: top[0] }); setTimeout(() => setBigBurst((b) => (b?.key === key ? null : b)), 1800); }
+        for (const [e, n] of Object.entries(json.reactionTotals)) { const d = n - (before[e] ?? 0); if (d > 0) counts[e] = d; }
+        const fresh = Object.entries(counts).flatMap(([e, d]) => Array.from({ length: Math.min(d, 40) }, () => e)).slice(0, 40)
+          .map((emoji, i) => ({ key: `r${++floatSeq.current}`, emoji, left: 8 + Math.random() * 84, delay: i * 0.18 }));
+        if (fresh.length) {
+          setFloaters((f) => [...f, ...fresh].slice(-60));
+          setTimeout(() => setFloaters((f) => f.filter((x) => !fresh.some((n) => n.key === x.key))), 4200 + fresh.length * 180);
+          // Lots of the same emoji at once: it explodes across the screen.
+          const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+          if (top && top[1] >= 4) { const key = Date.now(); setBigBurst({ key, emoji: top[0] }); setTimeout(() => setBigBurst((b) => (b?.key === key ? null : b)), 1800); }
+        }
       }
     } catch { /* next poll */ }
   }, [id]);
