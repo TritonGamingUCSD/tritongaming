@@ -400,12 +400,12 @@ function UpcomingPanel() {
   const guestList = openItems.length > 0 && (
     <>
       <h3 className={styles.listTitle}>Also Open To You</h3>
-      <p className={styles.muted}>You were not added to these, but the host left them open to officers and recruits. You can check in as a guest.</p>
+      <p className={styles.muted}>You were not added to these, but the host left them open to officers and recruits. You can still check in, and you count as +1.</p>
       <ul className={styles.people}>
         {openItems.map((m) => (
           <li key={m.key} className={styles.person}>
             <span className={styles.personName}>{m.is_today ? 'Today' : dayLabel(m.date).split(',')[0]} · {m.title}<em> · {timeRange(m.starts_at, m.ends_at)}{m.location ? ` · ${m.location}` : ''}{m.host_name ? ` · Hosted by ${m.host_name}` : ''}</em></span>
-            <span className={styles.guestTag}>Guest</span>
+            <span className={styles.guestTag} title="Not on the list, counts as +1">+1</span>
             {m.status === 'open' && <span className={`${styles.pill} ${styles.pillOpen}`}>Check-in open</span>}
           </li>
         ))}
@@ -638,7 +638,7 @@ export function AudiencePicker({ value, onChange, hideOpen }: { value: Aud; onCh
 
       {!hideOpen && <label className={styles.openRow}>
         <input type="checkbox" checked={value.open} onChange={(e) => onChange({ ...value, open: e.target.checked })} />
-        <span>Let other officers and recruits check in too <em>They show as guests. Turn this off to keep the meeting to the people above.</em></span>
+        <span>Let other officers and recruits check in too <em>They count as +1 on the live screen and the report. Turn this off to keep the meeting to the people above.</em></span>
       </label>}
 
       {audienceEmpty(value) ? <p className={styles.checkWarn}>Pick at least one role, group or person.</p> : null}
@@ -1638,7 +1638,7 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
             <div ref={codeRef} className={styles.bigCode} aria-live="off">{grouped}</div>
           </div>
           <div ref={timerRef} className={styles.timer} aria-hidden="true"><span style={{ width: `${pct}%` }} /></div>
-          <div ref={countRef} className={styles.liveCount}><strong>{expectedHere}</strong> of {expectedHere + live.missing.length} checked in{guestCount > 0 ? ` (+${guestCount} ${guestCount === 1 ? 'guest' : 'guests'})` : ''}</div>
+          <div ref={countRef} className={styles.liveCount}><strong>{expectedHere}</strong> of {expectedHere + live.missing.length} checked in{guestCount > 0 ? ` (+${guestCount})` : ''}</div>
           {presenting && <p ref={hintRef} className={styles.presentHint}>Open the portal → Meetings and type this code</p>}
           {live.meeting.question && live.meeting.question_type !== 'text' && (
             <div className={styles.screenResults}><ResultBars type={live.meeting.question_type} tally={live.tally} big={presenting} /></div>
@@ -1663,7 +1663,7 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
           <p className={styles.muted}>Check-in is closed{over ? <> (it ended at {time(live.meeting.ends_at)})</> : null}.</p>
           <div className={styles.wrapUp} aria-label="Summary">
             <div><strong>{expectedHere}</strong><span>of {expectedHere + live.missing.length} came</span></div>
-            {guestCount > 0 && <div><strong>{guestCount}</strong><span>{guestCount === 1 ? 'guest' : 'guests'}</span></div>}
+            {guestCount > 0 && <div><strong>{guestCount}</strong><span>extra</span></div>}
             <div><strong>{live.missing.length}</strong><span>missing</span></div>
             {live.absent.length > 0 && <div><strong>{live.absent.length}</strong><span>can’t make it</span></div>}
           </div>
@@ -1792,7 +1792,7 @@ function InvitePeople({ live, meetingId, onSaved }: { live: Live; meetingId: str
           <span className={styles.accessIcon} aria-hidden="true">{wholeTeam || teamOpen ? <DoorOpen size={18} /> : <Lock size={18} />}</span>
           <span className={styles.accessText}>
             <strong>{wholeTeam ? 'Open To The Whole Team' : teamOpen ? 'Any Officer Or Recruit Can Join' : 'Only The People It Is For Can Join'}</strong>
-            <span>{wholeTeam ? 'Everyone on the team is expected, so nobody is turned away.' : teamOpen ? 'People who were not added check in as guests and show with a Guest tag.' : 'Anyone else who scans the code is turned away.'}</span>
+            <span>{wholeTeam ? 'Everyone on the team is expected, so nobody is turned away.' : teamOpen ? 'People who were not added check in too and show as +1.' : 'Anyone else who scans the code is turned away.'}</span>
           </span>
           {!wholeTeam && <Button size="sm" variant="secondary" loading={busy} onClick={() => setOpenToTeam(!teamOpen)}>{teamOpen ? 'Limit To The List' : 'Let The Team Join'}</Button>}
         </div>
@@ -1832,7 +1832,7 @@ function AttendeeList({ live, onAdd, onRemove, onAbsent, onClearAbsent }: {
             {live.attendees.map((p) => (
               <li key={p.id} className={styles.person}>
                 <Avatar p={p} />
-                <span className={styles.personName}>{p.name}{p.guest && <span className={styles.guestTag} title="Checked in to a meeting they were not added to">Guest</span>}{p.method === 'manual' && <em> · added by exec</em>}{p.method === 'host' && <em> · host (automatic)</em>}</span>
+                <span className={styles.personName}>{p.name}{p.guest && <span className={styles.guestTag} title="Not on the list, counts as +1">+1</span>}{p.method === 'manual' && <em> · added by exec</em>}{p.method === 'host' && <em> · host (automatic)</em>}</span>
                 <span className={styles.personTime}>{time(p.checked_in_at)}</span>
                 <IconButton kind="remove" size="sm" label={`Remove ${p.name}`} onClick={() => onRemove(p)} />
               </li>
@@ -1981,7 +1981,7 @@ function AttendancePanel({ onOpenMeeting, canExport }: { onOpenMeeting?: (id: st
             <h3 className={styles.listTitle}>Turnout <span>each bar is a meeting, outline = people expected</span></h3>
             <div className={styles.trend} role="img" aria-label="Turnout per meeting">
               {bars.map((m) => (
-                <button key={m.id} type="button" className={styles.trendCol} onClick={() => onOpenMeeting?.(m.id)} title={`${dayLabel(m.meeting_date)} · ${m.title}: ${m.count} of ${m.expected}${m.guests > 0 ? `, plus ${m.guests} guest${m.guests === 1 ? '' : 's'}` : ''}`}>
+                <button key={m.id} type="button" className={styles.trendCol} onClick={() => onOpenMeeting?.(m.id)} title={`${dayLabel(m.meeting_date)} · ${m.title}: ${m.count} of ${m.expected}${m.guests > 0 ? `, plus ${m.guests}` : ''}`}>
                   <span className={styles.trendBar} style={{ height: `${(Math.max(m.count, m.expected) / maxBar) * 100}%` }}>
                     <span className={styles.trendFill} style={{ height: `${m.expected || m.count ? Math.min(100, (m.count / Math.max(m.count, m.expected)) * 100) : 0}%` }} />
                   </span>
@@ -2038,7 +2038,7 @@ function AttendancePanel({ onOpenMeeting, canExport }: { onOpenMeeting?: (id: st
                 {[...data.meetings].reverse().map((m) => (
                   <li key={m.id} className={styles.person}>
                     <span className={styles.personName}>{dayLabel(m.meeting_date)}<em> · {m.title} · {audienceLabel(m)}</em></span>
-                    <span className={styles.count}>{m.count}/{m.expected}{m.guests > 0 ? ` +${m.guests} guest${m.guests === 1 ? '' : 's'}` : ''}</span>
+                    <span className={styles.count}>{m.count}/{m.expected}{m.guests > 0 ? ` +${m.guests}` : ''}</span>
                     {onOpenMeeting && <Button size="sm" variant="ghost" onClick={() => onOpenMeeting(m.id)}>Open</Button>}
                   </li>
                 ))}
