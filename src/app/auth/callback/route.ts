@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { strictUser } from '@/lib/supabase/localAuth';
 import { createServiceClient } from '@/lib/supabase/admin';
+import { applyPendingGrants } from '@/lib/members/roleByEmail';
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -45,6 +46,10 @@ export async function GET(request: Request) {
         if (hasUcsdIdentity) {
           await createServiceClient().rpc('grant_ucsd_role', { _user_id: data.user.id });
         }
+
+        // Roles that were given by pasting this person's email before they had an account (or before they linked it) are given now.
+        const myEmails = [freshUser?.email ?? '', ...(freshUser?.identities ?? []).map((i) => String(i.identity_data?.email ?? ''))];
+        await applyPendingGrants(createServiceClient(), data.user.id, myEmails);
 
         // Admin-only verification name, kept in sync with whatever Google
         // reports for the identity used this session — separate from the

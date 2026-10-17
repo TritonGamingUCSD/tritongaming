@@ -21,6 +21,7 @@ import IconButton from '@/components/ui/IconButton';
 import styles from './RoleManager.module.css';
 import Select from '@/components/ui/Select';
 import UserDetail from './UserDetail';
+import PasteEmailsDialog from './PasteEmailsDialog';
 
 interface RoleGrant {
   role: AppRole;
@@ -83,6 +84,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
   const [bulkDivisionId, setBulkDivisionId] = useState('');
   const [bulkApplying, setBulkApplying] = useState(false);
   const [bulkError, setBulkError] = useState<string | null>(null);
+  const [pasteOpen, setPasteOpen] = useState(false);
 
   // Delete / merge account — see admin_delete_account's own comment for
   // exactly what happens to a deleted or merged-away account's data.
@@ -297,6 +299,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
   return (
     <div className={styles.wrap}>
       {detailId && <UserDetail userId={detailId} onClose={() => setDetailId(null)} />}
+      {pasteOpen && <PasteEmailsDialog divisions={divisions} onClose={() => setPasteOpen(false)} />}
 
       {/* Controls */}
       <div className={styles.controls}>
@@ -315,6 +318,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
           )}
         </div>
 
+        <Button variant="secondary" onClick={() => setPasteOpen(true)}>Give a role by email</Button>
         <Select
           className={styles.sortSelect}
           value={sortBy}
