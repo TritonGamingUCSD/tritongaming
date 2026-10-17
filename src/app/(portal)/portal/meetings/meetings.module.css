@@ -670,3 +670,9 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
   .cardActions > .moreBtn { flex: none; }
   .skipped .cardActions { flex-basis: auto; margin-left: auto; }
 }
+
+/* A meeting the person was not added to but may drop in on: dashed and a little quieter than the ones they are expected at. */
+.cardOptional { border-style: dashed; background: rgba(var(--pp-ink-rgb), 0.03); }
+.cardOptional .meetingInfo > strong { color: rgba(var(--pp-ink-rgb), 0.85); }
+.optionalKey { display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.8); list-style: none; }
+.optionalKey span { flex: none; width: 1.6rem; height: 0.8rem; border-radius: 0.3rem; border: 1.5px dashed rgba(var(--pp-ink-rgb), 0.45); }

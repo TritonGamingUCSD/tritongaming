@@ -397,28 +397,16 @@ function UpcomingPanel() {
   }, []);
   if (error) return <Notice tone="error">{error}</Notice>;
   if (!items) return <Loading label="Loading upcoming meetings…" />;
-  const guestList = openItems.length > 0 && (
-    <>
-      <h3 className={styles.listTitle}>Also Open To You</h3>
-      <p className={styles.muted}>You were not added to these, but the host left them open to officers and recruits. You can still check in, and you count as +1.</p>
-      <ul className={styles.people}>
-        {openItems.map((m) => (
-          <li key={m.key} className={styles.person}>
-            <span className={styles.personName}>{m.is_today ? 'Today' : dayLabel(m.date).split(',')[0]} · {m.title}<em> · {timeRange(m.starts_at, m.ends_at)}{m.location ? ` · ${m.location}` : ''}{m.host_name ? ` · Hosted by ${m.host_name}` : ''}</em></span>
-            <span className={styles.guestTag} title="Not on the list, counts as +1">+1</span>
-            {m.status === 'open' && <span className={`${styles.pill} ${styles.pillOpen}`}>Check-in open</span>}
-          </li>
-        ))}
-      </ul>
-    </>
-  );
-  if (items.length === 0) return <div className={styles.stack}><div className={styles.card}><p className={styles.muted}>Nothing scheduled for you yet.</p></div>{guestList}</div>;
+  // Their own meetings and the ones they may drop in on, together by date. The optional ones are marked so nobody thinks they must come.
+  const all = [...items.map((m) => ({ ...m, optional: false })), ...openItems.map((m) => ({ ...m, optional: true }))].sort((x, y) => x.starts_at.localeCompare(y.starts_at));
+  if (all.length === 0) return <div className={styles.card}><p className={styles.muted}>Nothing scheduled for you yet.</p></div>;
   return (
     <ul className={styles.stack}>
-      {(showAll ? items : items.slice(0, 4)).map((m, i, shown) => (
+      {openItems.length > 0 && <li className={styles.optionalKey}><span /> Optional meetings: you were not added, but you are welcome to come and count as +1.</li>}
+      {(showAll ? all : all.slice(0, 4)).map((m, i, shown) => (
         <Fragment key={m.key}>
         {startsWeekGroup(shown.map((x) => x.date), i) && <WeekHead date={m.date} />}
-        <li data-tone={m.status === 'open' ? 'open' : m.is_today ? 'today' : WEEK_TONE[weekGroup(m.date)]} className={`${styles.meetingCard} ${m.status === 'open' ? styles.cardOpen : ''}`}>
+        <li data-tone={m.status === 'open' ? 'open' : m.is_today ? 'today' : WEEK_TONE[weekGroup(m.date)]} className={`${styles.meetingCard} ${m.status === 'open' ? styles.cardOpen : ''} ${m.optional ? styles.cardOptional : ''}`}>
           <div className={styles.meetingMain}>
             <span className={`${styles.dateBlock} ${m.is_today ? styles.dateToday : ''}`} aria-hidden="true">
               <small>{new Date(`${m.date}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short' })}</small>
@@ -434,15 +422,15 @@ function UpcomingPanel() {
               {m.hosting ? <span className={`${styles.metaLine} ${styles.metaSub}`}>You’re hosting</span> : m.host_name ? <span className={`${styles.metaLine} ${styles.metaSub}`}>Hosted by {m.host_name}</span> : null}
             </div>
             {m.doc_url && <DocButton url={m.doc_url} label="Doc" />}
+            {m.optional && <span className={styles.guestTag} title="You were not added. Come if you like, you count as +1">Optional</span>}
             {m.status === 'open' && <span className={`${styles.pill} ${styles.pillOpen}`}>Check-in open</span>}
           </div>
         </li>
         </Fragment>
       ))}
-      {!showAll && items.length > 4 && (
-        <li><Button size="sm" variant="secondary" onClick={() => setShowAll(true)}>Show {items.length - 4} more coming up</Button></li>
+      {!showAll && all.length > 4 && (
+        <li><Button size="sm" variant="secondary" onClick={() => setShowAll(true)}>Show {all.length - 4} more coming up</Button></li>
       )}
-      {guestList && <li className={styles.stack}>{guestList}</li>}
     </ul>
   );
 }
