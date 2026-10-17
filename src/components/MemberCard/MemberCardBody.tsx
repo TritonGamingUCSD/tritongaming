@@ -113,7 +113,8 @@ export default function MemberCardBody({
           ))}
           {copyOnly.map((p) => (
             <button key={p.key} type="button" className={styles.copyRow} onClick={() => onCopy(p.key, social[p.key])} title={`Click to copy their ${p.label} username`}>
-              <Image src={p.logo} alt="" width={14} height={14} unoptimized />
+              {/* The logo files are near-white, so draw them as a mask in the text colour: readable on the light card too. */}
+              <span className={styles.logoMask} style={{ maskImage: `url(${p.logo})`, WebkitMaskImage: `url(${p.logo})` }} aria-hidden="true" />
               <span className={styles.copyRowText}>{social[p.key]}</span>
               {copiedKey === p.key
                 ? <span className={styles.copied}><Check size={13} strokeWidth={2.25} aria-hidden="true" /> Copied!</span>
