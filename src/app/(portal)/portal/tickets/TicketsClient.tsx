@@ -368,7 +368,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
           <div className={styles.eventList}>
             {unregisteredEvents.map((event, i) => (
               <Fragment key={event.id}>
-              {startsWeekGroup(unregisteredEvents.map((x) => pacificKey(x.start_date)), i) && <WeekHead as="div" date={pacificKey(event.start_date)} />}
+              {startsWeekGroup(unregisteredEvents.map((x) => pacificKey(x.start_date)), i) && <div className={styles.weekBand}><WeekHead as="div" date={pacificKey(event.start_date)} /></div>}
               <div className={styles.eventRow}>
                 <div className={styles.eventDateBlock}>
                   <span className={styles.eventMon}>

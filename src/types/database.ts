@@ -421,17 +421,16 @@ export type RewardItem = Database['public']['Tables']['reward_items']['Row'];
 // officer and division intentionally tie: they're peers with different
 // capabilities, neither implies the other. See src/lib/capabilities.ts for
 // the actual permission model.
-// alumni ranks above ucsd/recruit (a former member outranks an unaffiliated
-// verified student or a prospect) but below officer (an alumnus isn't
-// automatically staff). This ordering is also what MembersSectionContent's
+// recruit ranks above alumni, and both above ucsd (someone on the team outranks a former member, who outranks an unaffiliated
+// verified student), but below officer (neither is automatically staff). This ordering is also what MembersSectionContent's
 // ORDER array keys off of — keep the two in sync, since a mismatch there
 // previously caused an alumni-who-is-also-ucsd to be misclassified as
 // ucsd-only and dropped from the member directory entirely.
 export const ROLE_DISPLAY_RANK: Record<UserRole, number> = {
   guest: 0,
   ucsd: 1,
-  recruit: 1.5,
-  alumni: 1.8,
+  alumni: 1.5,
+  recruit: 1.8,
   officer: 2,
   division: 2,
   lead: 3,
@@ -468,4 +467,5 @@ export const ROLE_COLORS: Record<UserRole, string> = {
 
 // Roles assignable via the Role Manager UI (excludes 'guest', which is the
 // implicit zero-roles state, not something you grant).
-export const ASSIGNABLE_ROLES: AppRole[] = ['ucsd', 'division', 'officer', 'lead', 'exec', 'admin', 'alumni', 'recruit'];
+// Listed from the least to the most access: UCSD Student, Alumni, Recruit, Officer (with Division Lead beside it, its peer), Lead, Executive, Admin.
+export const ASSIGNABLE_ROLES: AppRole[] = ['ucsd', 'alumni', 'recruit', 'officer', 'division', 'lead', 'exec', 'admin'];

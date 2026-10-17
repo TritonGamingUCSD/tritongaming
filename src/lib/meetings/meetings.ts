@@ -238,7 +238,7 @@ export async function authorizeMeetings(capability: Extract<Capability, 'manage_
   return { user, roles: grants, svc: svc0, manageAll: hasCapability(grants, 'manage_meetings') };
 }
 
-// Looking at the teams (and who is on the team) is open to officers as well as the people who plan meetings; only hosts can change them.
+// Looking at the teams (and who is on the team) is open to officers and recruits as well as the people who plan meetings; only hosts can change them.
 export async function authorizeTeamView() {
   const host = await authorizeMeetings('host_meetings');
   if (!host.error) return host;
@@ -248,7 +248,7 @@ export async function authorizeTeamView() {
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
   const svc = createServiceClient();
   const grants = withGrantedCapabilities(roles ?? [], await loadGrantedCapabilities(svc, user.id).catch(() => []));
-  if (!grants.some((r) => r.role === 'officer')) return host;
+  if (!grants.some((r) => r.role === 'officer' || r.role === 'recruit')) return host;
   return { user, roles: grants, svc, manageAll: false, error: undefined };
 }
 

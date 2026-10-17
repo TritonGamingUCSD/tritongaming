@@ -272,70 +272,91 @@
 .eventRow {
   display: flex;
   align-items: center;
-  gap: 0.875rem;
-  padding: 0.9rem 1.125rem;
+  gap: 1rem;
+  padding: 0.95rem 1.125rem;
   border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.15);
 }
 
 .eventRow:last-child { border-bottom: none; }
 
+/* The heading above each week inside the card: a quiet band lined up with the rows' own padding. */
+.weekBand { padding: 0.55rem 1.125rem; background: rgba(var(--pp-ink-rgb), 0.05); border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.15); }
+.weekBand > * { margin: 0; }
+.eventList > .weekBand:not(:first-child) { border-top: 1px solid rgba(var(--pp-ink-rgb), 0.15); }
+
 .eventDateBlock {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 38px;
+  justify-content: center;
+  gap: 0.15rem;
+  width: 3rem;
+  padding: 0.35rem 0;
   flex-shrink: 0;
+  border-radius: 0.65rem;
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.28);
+  background: rgba(var(--pp-ink-rgb), 0.04);
 }
 
 .eventMon {
   font-size: 0.62rem;
   text-transform: uppercase;
-  color: rgba(var(--pp-ink-rgb), 0.87);
-  letter-spacing: 0.07em;
+  color: rgba(var(--pp-ink-rgb), 0.9);
+  letter-spacing: 0.08em;
 }
 
 .eventDay {
   font-family: var(--font-futura-heavy);
-  font-size: 1.25rem;
-  color: var(--p-accent-text);
+  font-size: 1.3rem;
+  color: var(--pp-ink);
   line-height: 1;
 }
 
-.eventBody { flex: 1; min-width: 0; }
+.eventBody { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.2rem; }
 
 .eventTitle {
-  font-family: var(--font-futura-medium);
-  font-size: 0.875rem;
+  font-family: var(--font-futura-heavy);
+  font-size: 1rem;
+  line-height: 1.25;
   color: var(--pp-ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 
 .eventLoc {
   display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.72rem;
-  color: rgba(var(--pp-ink-rgb), 0.87);
-  margin-top: 0.1rem;
+  align-items: flex-start;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: rgba(var(--pp-ink-rgb), 0.9);
 }
+.eventLoc svg { flex: none; margin-top: 0.12rem; }
 
 .registerBtn {
-  font-size: 0.75rem;
-  font-family: var(--font-futura-medium);
-  color: var(--p-accent-text);
-  padding: 0.3rem 0.625rem;
-  border-radius: 0.4rem;
-  background: rgba(125, 180, 234, 0.1);
+  flex: none;
+  min-height: 38px;
+  font-size: 0.8rem;
+  font-family: var(--font-futura-heavy);
+  letter-spacing: 0.02em;
+  color: #011941; /* theme-ok: dark text on the yellow button */
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  background: var(--yellow);
   white-space: nowrap;
-  transition: background 0.15s;
-  border: none;
+  transition: transform 0.15s, filter 0.15s;
+  border: 1px solid rgba(1, 25, 65, 0.35); /* theme-ok */
   cursor: pointer;
 }
 
-.registerBtn:hover { background: rgba(125, 180, 234, 0.2); }
-.registerBtn:disabled { opacity: 0.6; cursor: default; }
+.registerBtn:hover { filter: brightness(1.05); transform: translateY(-1px); }
+.registerBtn:disabled { opacity: 0.6; cursor: default; transform: none; }
+
+/* On a phone the button sits under the text, full width, so it is easy to hit and nothing is squeezed. */
+@media (max-width: 560px) {
+  .eventRow { flex-wrap: wrap; row-gap: 0.7rem; }
+  .eventRow > .registerBtn, .eventRow > .ucsdOnlyBox { flex: 1 1 100%; justify-content: center; }
+  .ucsdOnlyBox { align-items: stretch; text-align: center; }
+}
 
 .registerBtnDisabled {
   font-size: 0.75rem;

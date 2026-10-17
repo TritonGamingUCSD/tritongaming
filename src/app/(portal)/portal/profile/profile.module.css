@@ -431,3 +431,6 @@ form.form[data-sub='school'] .optionalGroup { display: none; }
 form.form[data-sub='info'] .subGroup[data-school] { display: none; }
 form.form[data-sub='school'] .subGroup[data-school] { border-top: 0; margin-top: 0; padding-top: 0; }
 .noticeLink { display: inline; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 800; text-decoration: underline; cursor: pointer; }
+
+/* The "profile is incomplete" notice sits between the page title and the tabs: room above and below it. */
+.pageNotice { margin-block: 0.9rem 1.1rem; }

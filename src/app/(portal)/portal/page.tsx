@@ -296,7 +296,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       badge: memberCount || undefined,
       homeExclude: true, dockExclude: true,
       group: 'Team' as const,
-      content: <MembersLazy scope={scope} canViewAsPerson={canViewAsPerson} selfId={profile.id} canOrder={hasCapability(roles, 'manage_board_order')} teams={canHostMeetings || canManageMeetings ? { userId: profile.id, canManageAll: canManageMeetings, canEdit: true } : roles.some((r) => r.role === 'officer') ? { userId: profile.id, canManageAll: false, canEdit: false } : undefined} />,
+      content: <MembersLazy scope={scope} canViewAsPerson={canViewAsPerson} selfId={profile.id} canOrder={hasCapability(roles, 'manage_board_order')} teams={canHostMeetings || canManageMeetings ? { userId: profile.id, canManageAll: canManageMeetings, canEdit: true } : roles.some((r) => r.role === 'officer' || r.role === 'recruit') ? { userId: profile.id, canManageAll: false, canEdit: false } : undefined} />,
     }] : []),
     ...(canViewDocs && docsSummary ? [{
       id: 'docs', icon: <BookOpen size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Documentation',

@@ -23,7 +23,7 @@ export interface CheckinFormConfig {
 // picks the highest-ranked role someone holds so a co-officer/exec still
 // maps to their most senior affiliation rather than whichever role
 // happened to come back first from the DB.
-const ROLE_ORDER: AppRole[] = ['exec', 'lead', 'officer', 'division', 'alumni', 'recruit', 'admin', 'ucsd'];
+const ROLE_ORDER: AppRole[] = ['exec', 'lead', 'officer', 'division', 'recruit', 'alumni', 'admin', 'ucsd'];
 
 // Finds the form option for a graduation year by its trailing two digits, so
 // "Class of ‘27", "Class of '27" and "Class of 2027" all match 2027 - returning

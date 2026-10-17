@@ -42,7 +42,10 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
   // the always-on name/picture/title — see BoardSection for how these are read.
   const isBoardEligible = roles.some((r) => r.role === 'exec' || r.role === 'lead' || r.role === 'officer' || r.role === 'alumni');
   // Division leads get no public officer card: just the basic profile.
-  const showBoardTab = isBoardEligible || canEditOrgTitle;
+  // Recruits have no public card, but their bio, game IDs and links still show on their TG Members card inside the portal, so they get the same tab
+  // without the public Team page parts.
+  const isRecruitOnly = !isBoardEligible && !canEditOrgTitle && roles.some((r) => r.role === 'recruit');
+  const showBoardTab = isBoardEligible || canEditOrgTitle || isRecruitOnly;
   // Strikes are tracked for officers, leads and exec: they can always look at their own here (quietly; nothing pushes it at them).
   const showStrikesTab = roles.some((r) => r.role === 'exec' || r.role === 'lead' || r.role === 'officer');
   const VALID_TABS: Tab[] = [...(showBoardTab ? ['info', 'school', 'card'] : ['info', 'school']), 'notifications', ...(showStrikesTab ? ['strikes'] : []), 'security'] as Tab[];
@@ -251,7 +254,7 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
       <SectionHeader title="My Profile" sub="Your details, notifications and sign-in." />
 
       {promptedForTicket && (
-        <Notice tone="warning">
+        <Notice tone="warning" className={styles.pageNotice}>
           {isUcsd
             ? <>Almost there. Fill in <strong>both sections</strong>: <button type="button" className={styles.noticeLink} onClick={() => setTab('info')}>About Me</button> (name, gender, pronouns) and <button type="button" className={styles.noticeLink} onClick={() => setTab('school')}>School</button> (year, college, major), then save.</>
             : <>Almost there. Fill in <button type="button" className={styles.noticeLink} onClick={() => setTab('info')}>About Me</button> (name, gender, pronouns), then save.</>}
@@ -260,7 +263,7 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
       )}
 
       {!promptedForTicket && missingNow.length > 0 && (
-        <Notice tone="warning">
+        <Notice tone="warning" className={styles.pageNotice}>
           Your profile is incomplete — still needed: <strong>{missingNow.join(', ')}</strong>.
         </Notice>
       )}
@@ -273,7 +276,7 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
         tabs={[
           { id: 'info', label: 'About Me', icon: <User /> },
           { id: 'school', label: 'School', icon: <GraduationCap /> },
-          ...(showBoardTab ? [{ id: 'card' as const, label: 'Public Officer Card', icon: <Users /> }] : []),
+          ...(showBoardTab ? [{ id: 'card' as const, label: isRecruitOnly ? 'TG Members Card' : 'Public Officer Card', icon: <Users /> }] : []),
           { id: 'notifications', label: 'Notifications', icon: <Bell /> },
           ...(showStrikesTab ? [{ id: 'strikes' as const, label: 'Strikes', icon: <ShieldCheck /> }] : []),
           { id: 'security', label: 'Login & Security', icon: <Lock /> },
@@ -550,7 +553,7 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
             )}
             <div className={styles.fieldGroup}>
               <span className={styles.label}>Social Links</span>
-              <p className={styles.socialHint}>Just your handle, not the full link — optional, shown on your officer card if you&apos;re on it.</p>
+              <p className={styles.socialHint}>Just your handle, not the full link — optional, shown on your {isRecruitOnly ? 'TG Members card' : 'officer card if you&apos;re on it'}.</p>
               <div className={styles.socialGrid}>
                 {SOCIAL_PLATFORMS.map((p) => (
                   <label key={p.key} className={styles.socialField}>
@@ -570,7 +573,7 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
               </div>
 
               <span className={`${styles.label} ${styles.portfolioLabel}`}>Portfolio Links</span>
-              <p className={styles.socialHint}>Your portfolio, GitHub, personal site, art page — optional, up to {MAX_PORTFOLIO_LINKS}. Shown on your officer card if you turn it on below.</p>
+              <p className={styles.socialHint}>Your portfolio, GitHub, personal site, art page — optional, up to {MAX_PORTFOLIO_LINKS}. {isRecruitOnly ? 'Shown on your TG Members card.' : 'Shown on your officer card if you turn it on below.'}</p>
               <div className={styles.portfolioList}>
                 {form.portfolio_links.map((link, i) => (
                   <div key={i} className={styles.portfolioRow}>
@@ -612,7 +615,7 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
               </div>
 
               <span className={`${styles.label} ${styles.portfolioLabel}`}>Game IDs</span>
-              <p className={styles.socialHint}>Steam, Riot ID, Genshin UID and so on — optional, up to {MAX_GAME_IDS}. Teammates can click one to copy it. Shown on your officer card if you turn it on below.</p>
+              <p className={styles.socialHint}>Steam, Riot ID, Genshin UID and so on — optional, up to {MAX_GAME_IDS}. Teammates can click one to copy it. {isRecruitOnly ? 'Shown on your TG Members card.' : 'Shown on your officer card if you turn it on below.'}</p>
               <div className={styles.portfolioList}>
                 {form.game_ids.map((g, i) => {
                   const preset = GAME_ID_PRESETS.find((p) => p.game === g.game);

@@ -22,7 +22,7 @@ import type { MemberProfileRow } from './getMembersData';
 import styles from './members.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
 
-// alumni ranks above recruit/ucsd (see ROLE_DISPLAY_RANK) — this order used
+// recruit ranks above alumni, and both above ucsd (see ROLE_DISPLAY_RANK) — this order used
 // to put 'ucsd' ahead of 'alumni', so an alumni who also held the
 // auto-granted ucsd badge matched 'ucsd' first via .find() below and got
 // silently excluded by the ucsd-only filter, even though they're a real
@@ -35,7 +35,7 @@ import SectionHeader from '@/components/ui/SectionHeader';
 // nothing about what they actually do. It's still checked before
 // ucsd/guest, though, so a bare admin account with no other real role
 // isn't silently dropped from the roster.
-const ORDER: (AppRole | 'guest')[] = ['exec', 'lead', 'officer', 'division', 'alumni', 'recruit', 'admin', 'ucsd', 'guest'];
+const ORDER: (AppRole | 'guest')[] = ['exec', 'lead', 'officer', 'division', 'recruit', 'alumni', 'admin', 'ucsd', 'guest'];
 
 type MemberEntry = Omit<MemberProfileRow, 'user_roles'> & { divisionName?: string; inactive?: boolean };
 
