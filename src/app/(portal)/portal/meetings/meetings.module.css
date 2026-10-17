@@ -289,7 +289,7 @@
 .attMain .personName { flex: none; }
 .attSub { font-style: normal; font-size: 0.72rem; color: rgba(var(--pp-ink-rgb), 0.88); overflow-wrap: anywhere; }
 .flag { margin-left: 0.5rem; padding: 0.05rem 0.5rem; border-radius: 999px; font-size: 0.64rem; font-weight: 400; letter-spacing: 0.04em; color: var(--pp-warn); background: rgba(251, 146, 60, 0.14); border: 1px solid rgba(251, 146, 60, 0.4); }
-.dots { display: inline-flex; gap: 3px; align-items: center; }
+.dots { display: inline-flex; gap: 3px; align-items: center; justify-content: flex-end; width: 141px; flex: none; }   /* room for 12 dots, newest on the right */
 .dots i { width: 9px; height: 9px; border-radius: 50%; display: block; }
 .dotP { background: #34d399; }
 .dotA { background: #f87171; }

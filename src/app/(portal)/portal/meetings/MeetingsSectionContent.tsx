@@ -1996,8 +1996,8 @@ function AttendancePanel({ onOpenMeeting, canExport }: { onOpenMeeting?: (id: st
                         {p.role}{p.streak >= 2 ? ` · ${p.streak} in a row` : ''}{p.missedRun >= 2 ? ` · missed last ${p.missedRun}` : ''}{p.last_attended ? ` · last ${dayLabel(p.last_attended)}` : ' · never attended'}
                       </em>
                     </span>
-                    <span className={styles.dots} aria-label="Recent meetings, oldest to newest">
-                      {p.marks.slice(-12).map((m, i) => <i key={i} className={m === 'p' ? styles.dotP : m === 'a' ? styles.dotA : m === 'e' ? styles.dotE : m === 'g' ? styles.dotG : styles.dotN} />)}
+                    <span className={styles.dots} aria-label="Their last meetings, oldest to newest">
+                      {p.marks.filter((m) => m !== '-').slice(-12).map((m, i) => <i key={i} className={m === 'p' ? styles.dotP : m === 'a' ? styles.dotA : m === 'e' ? styles.dotE : m === 'g' ? styles.dotG : styles.dotN} />)}
                     </span>
                     <span className={styles.attRate}>
                       <span className={styles.bar}><span style={{ width: `${(p.rate ?? 0) * 100}%` }} /></span>
@@ -2012,7 +2012,6 @@ function AttendancePanel({ onOpenMeeting, canExport }: { onOpenMeeting?: (id: st
               <span><i style={{ background: '#34d399' }} /> came</span>
               <span><i style={{ background: '#f87171' }} /> missed</span>
               <span><i style={{ boxShadow: 'inset 0 0 0 2px #fbbf24' }} /> excused</span>
-              <span><i style={{ background: '#6b7280' }} /> not invited</span>
               <span title="Under 50%, or the last 3 expected meetings missed">⚑ follow up</span>
             </p>
           </section>
