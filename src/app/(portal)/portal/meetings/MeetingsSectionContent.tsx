@@ -5,9 +5,10 @@ import Loading from '@/components/Loading/Loading';
 import SaveBar from '@/components/portal/SaveBar';
 import EditingNow from '@/components/portal/EditingNow';
 import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
+import Popover from '@/components/ui/Popover';
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { ChevronRight, CalendarClock, CalendarDays, Radio, ClipboardList, Check, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Link2, MessageCircleQuestion, Send, Users, Minus, UserX, Lock, Dices, Smile, Upload, Settings2, Moon, DoorOpen, Timer } from 'lucide-react';
+import { ChevronRight, CalendarClock, CalendarDays, Radio, ClipboardList, Check, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Link2, MessageCircleQuestion, Send, Users, Minus, UserX, Lock, Dices, Smile, Upload, Settings2, Moon, DoorOpen, Timer, MoreHorizontal, Trash2 } from 'lucide-react';
 import IconButton from '@/components/ui/IconButton';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Notice from '@/components/ui/Notice';
@@ -925,7 +926,7 @@ function MeetingList({ onOpen, showForm, onShowForm }: { onOpen: (id: string) =>
                 <span className={styles.personName}>
                   {s.title}
                   <em className={styles.seriesDetail}>every {WEEKDAYS[s.weekday]} {hhmmLabel(s.start_time)}–{hhmmLabel(s.end_time)}{s.location ? ` · ${s.location}` : ''}{s.ends_on ? ` · until ${new Date(`${s.ends_on}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' })}` : ''} · {audienceLabel(s)}{s.active ? '' : ' · paused'}</em>
-                  {s.open_to_team === false && !wholeTeamAud(s) && <span className={`${styles.accessChip} ${styles.accessChipLimited}`} title="Only the people it is for can check in">Only the list can join</span>}
+                  {s.open_to_team === false && !wholeTeamAud(s) && <span className={`${styles.accessChip} ${styles.accessChipLimited}`} title="Only the people it is for can check in">Private Meeting</span>}
                 </span>
                 <IconButton kind="edit" label={`Edit ${s.title}`} onClick={() => setEditingSeries(editingSeries === s.id ? null : s.id)} />
                 <IconButton kind={s.active ? 'pause' : 'play'} label={s.active ? `Pause ${s.title}` : `Resume ${s.title}`} onClick={() => patchSeries(s, { active: !s.active })} disabled={busyKey === s.id} />
@@ -953,7 +954,7 @@ function MeetingList({ onOpen, showForm, onShowForm }: { onOpen: (id: string) =>
                     <span className={styles.personName}>
                       {s.title}
                       <em className={styles.seriesDetail}>every {WEEKDAYS[s.weekday]} {hhmmLabel(s.start_time)}–{hhmmLabel(s.end_time)}{s.location ? ` · ${s.location}` : ''}{s.ends_on ? ` · until ${new Date(`${s.ends_on}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' })}` : ''} · {audienceLabel(s)}{s.active ? '' : ' · paused'}</em>
-                      {s.open_to_team === false && !wholeTeamAud(s) && <span className={`${styles.accessChip} ${styles.accessChipLimited}`} title="Only the people it is for can check in">Only the list can join</span>}
+                      {s.open_to_team === false && !wholeTeamAud(s) && <span className={`${styles.accessChip} ${styles.accessChipLimited}`} title="Only the people it is for can check in">Private Meeting</span>}
                     </span>
                     <IconButton kind="edit" label={`Extend or edit ${s.title}`} onClick={() => setEditingSeries(editingSeries === s.id ? null : s.id)} />
                     
@@ -1051,8 +1052,28 @@ function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, o
     : item.is_today ? (now > new Date(item.ends_at).getTime() + 30 * 60_000 ? 'Not held' : now >= opensAt ? 'Ready to open' : `Today ${time(item.starts_at)}`)
     : 'Scheduled';
 
+  // One main button per row; everything else lives in the ⋯ menu.
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLButtonElement>(null);
+  const canEditDetails = !past && status !== 'cancelled';
+  const canSkip = !past && status === 'scheduled' && !!item.repeats;
+  // Any meeting that has ended can be deleted. Coming weeks of a repeating meeting use Skip (or delete the whole repeating meeting).
+  const canDelete = !!item.meeting_id && (!item.repeats || !!past || item.date < pacificToday());
+  const primaryAction = !past && status === 'open' ? (
+    <Button size="sm" onClick={onView}><Radio size={14} aria-hidden="true" /> Show code</Button>
+  ) : !past && status === 'cancelled' ? (
+    <Button size="sm" variant="secondary" onClick={() => onCancel(true)} loading={busy}><RotateCcw size={14} aria-hidden="true" /> Restore</Button>
+  ) : !past && item.is_today ? (
+    <Button size="sm" onClick={onStart} loading={busy}>{status === 'closed' ? 'Re-open' : 'Start check-in'}</Button>
+  ) : (past || status === 'closed') && item.meeting_id ? (
+    <Button size="sm" variant="secondary" onClick={onView}>Attendance</Button>
+  ) : null;
+  // A meeting that is closed today has Re-open as its main button; its attendance is then one tap away in the menu.
+  const attendanceInMenu = !!item.meeting_id && status === 'closed' && !past && item.is_today;
+  const hasMenu = (primaryAction ? canEditDetails : false) || attendanceInMenu || canSkip || canDelete;
+
   return (
-    <li data-tone={status === 'cancelled' ? 'off' : status === 'open' ? 'open' : past ? 'done' : item.is_today ? 'today' : WEEK_TONE[weekGroup(item.date)]} className={`${styles.meetingCard} ${status === 'open' ? styles.cardOpen : ''} ${status === 'cancelled' ? styles.paused : ''}`}>
+    <li data-tone={status === 'cancelled' ? 'off' : status === 'open' ? 'open' : past ? 'done' : item.is_today ? 'today' : WEEK_TONE[weekGroup(item.date)]} className={`${styles.meetingCard} ${status === 'cancelled' ? styles.skipped : ''} ${status === 'open' ? styles.cardOpen : ''} ${status === 'cancelled' ? styles.paused : ''}`}>
       <div className={styles.meetingMain}>
         <span className={`${styles.dateBlock} ${item.is_today ? styles.dateToday : ''}`} aria-hidden="true">
           <small>{new Date(`${item.date}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short' })}</small>
@@ -1066,7 +1087,7 @@ function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, o
           </span>
           <span className={`${styles.metaLine} ${styles.metaSub}`} title={item.description ?? undefined}>
             <span className={styles.metaAudience} title={`For: ${audienceLabel(item)}`}><Users size={11} aria-hidden="true" /> {audienceLabel(item)}</span>
-            {item.open_to_team === false && !wholeTeamAud(item) && (item.status === 'scheduled' || item.status === 'open') && <span className={`${styles.accessChip} ${styles.accessChipLimited}`} title="Only the people it is for can check in">Only the list can join</span>}
+            {item.open_to_team === false && !wholeTeamAud(item) && (item.status === 'scheduled' || item.status === 'open') && <span className={`${styles.accessChip} ${styles.accessChipLimited}`} title="Only the people it is for can check in">Private Meeting</span>}
             {item.doc_url && <span className={styles.metaDoc}><Link2 size={11} aria-hidden="true" /> Doc</span>}
             {item.question && <span className={styles.metaDoc}><MessageCircleQuestion size={11} aria-hidden="true" /> Question</span>}
             {item.description && <span className={styles.metaDoc}><FileText size={11} aria-hidden="true" /> Description</span>}
@@ -1076,23 +1097,24 @@ function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, o
         </div>
         <span className={`${styles.pill} ${status === 'open' && now >= opensAt ? styles.pillOpen : status === 'closed' ? styles.pillDone : ''}`}>{label}</span>
         <div className={styles.cardActions}>
-          {!past && (status === 'open' ? (
-            <Button size="sm" onClick={onView}><Radio size={14} aria-hidden="true" /> Show code</Button>
-          ) : status === 'cancelled' ? (
-            <Button size="sm" variant="secondary" onClick={() => onCancel(true)} loading={busy}><RotateCcw size={14} aria-hidden="true" /> Restore</Button>
-          ) : item.is_today ? (
-            <Button size="sm" onClick={onStart} loading={busy}>{status === 'closed' ? 'Re-open' : 'Start check-in'}</Button>
-          ) : null)}
-          {(past || status === 'closed') && item.meeting_id && <Button size="sm" variant="secondary" onClick={onView}>Attendance</Button>}
-          {!past && status !== 'cancelled' && (
-            <>
-              <Button size="sm" variant="secondary" onClick={() => setEditingDoc((v) => !v)}><FileText size={14} aria-hidden="true" /> Details</Button>
-              {status === 'scheduled' && item.repeats && <Button size="sm" variant="secondary" onClick={() => onCancel(false)}><SkipForward size={14} aria-hidden="true" /> Skip</Button>}
-            </>
+          {primaryAction}
+          {!primaryAction && canEditDetails && (
+            <Button size="sm" variant="secondary" onClick={() => setEditingDoc((v) => !v)}><FileText size={14} aria-hidden="true" /> Details</Button>
           )}
-          {/* Any meeting that has ended can be deleted. Coming weeks of a repeating meeting use Skip (or delete the whole repeating meeting). */}
-          {item.meeting_id && (!item.repeats || past || item.date < pacificToday()) && (
-            <IconButton kind="delete" label={`Delete ${item.title} on ${dayLabel(item.date)}`} onClick={onDelete} disabled={busy} />
+          {hasMenu && (
+            <>
+              <button ref={menuRef} type="button" className={styles.moreBtn} aria-label={`More For ${item.title}`} aria-haspopup="menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((v) => !v)}><MoreHorizontal size={18} aria-hidden="true" /></button>
+              {menuOpen && (
+                <Popover anchor={menuRef} onClose={() => setMenuOpen(false)} width={190} label="Meeting actions">
+                  <div className={styles.moreMenu} role="menu">
+                    {primaryAction && canEditDetails && <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); setEditingDoc((v) => !v); }}><FileText size={14} aria-hidden="true" /> Details</button>}
+                    {attendanceInMenu && <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); onView(); }}><ClipboardList size={14} aria-hidden="true" /> Attendance</button>}
+                    {canSkip && <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); onCancel(false); }}><SkipForward size={14} aria-hidden="true" /> Skip This Week</button>}
+                    {canDelete && <button type="button" role="menuitem" className={styles.moreDanger} onClick={() => { setMenuOpen(false); onDelete(); }} disabled={busy}><Trash2 size={14} aria-hidden="true" /> Delete</button>}
+                  </div>
+                </Popover>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -1639,10 +1661,10 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
             <div className={`${styles.endBanner} ${endsAtMs - now <= 10 * 60_000 ? styles.endSoon : ''}`} role="status">
               <span className={styles.endIcon} aria-hidden="true"><Timer size={18} /></span>
               <span className={styles.endText}>
-                <strong>{endsAtMs - now <= 10 * 60_000 ? `Check-in closes in ${Math.max(1, Math.ceil((endsAtMs - now) / 60_000))} min` : `Check-in is open until ${time(live.meeting.ends_at)}`}</strong>
+                <strong>{endsAtMs - now <= 10 * 60_000 ? `Check-In Closes In ${Math.max(1, Math.ceil((endsAtMs - now) / 60_000))} Min` : `Check-In Is Open Until ${time(live.meeting.ends_at)}`}</strong>
                 <span>It closes by itself at {time(live.meeting.ends_at)}. Close it sooner once everyone is in, so late scans don’t get through.</span>
               </span>
-              <Button variant={endsAtMs - now <= 10 * 60_000 ? 'primary' : 'secondary'} onClick={async () => { if (await confirmHold({ title: 'Close check-in?', message: 'Nobody else will be able to check in with the code. You can re-open it.', confirmLabel: 'Hold to close' })) act('/api/meetings/close', { meeting_id: id }); }} loading={busy}>Close check-in</Button>
+              <Button variant={endsAtMs - now <= 10 * 60_000 ? 'primary' : 'secondary'} onClick={async () => { if (await confirmHold({ title: 'Close check-in?', message: 'Nobody else will be able to check in with the code. You can re-open it.', confirmLabel: 'Hold to close' })) act('/api/meetings/close', { meeting_id: id }); }} loading={busy}>Close Check-In</Button>
             </div>
           )}
           {!over && <InvitePeople live={live} meetingId={id} onSaved={loadLive} />}
@@ -1750,10 +1772,10 @@ function InvitePeople({ live, meetingId, onSaved }: { live: Live; meetingId: str
         <div className={`${styles.accessBox} ${wholeTeam ? styles.accessOpen : teamOpen ? styles.accessOpen : styles.accessLimited}`} role="status">
           <span className={styles.accessIcon} aria-hidden="true">{wholeTeam || teamOpen ? <DoorOpen size={18} /> : <Lock size={18} />}</span>
           <span className={styles.accessText}>
-            <strong>{wholeTeam ? 'Open to the whole team' : teamOpen ? 'Any officer or recruit can join' : 'Only the people it is for can join'}</strong>
+            <strong>{wholeTeam ? 'Open To The Whole Team' : teamOpen ? 'Any Officer Or Recruit Can Join' : 'Only The People It Is For Can Join'}</strong>
             <span>{wholeTeam ? 'Everyone on the team is expected, so nobody is turned away.' : teamOpen ? 'People who were not added check in as guests and show with a Guest tag.' : 'Anyone else who scans the code is turned away.'}</span>
           </span>
-          {!wholeTeam && <Button size="sm" variant="secondary" loading={busy} onClick={() => setOpenToTeam(!teamOpen)}>{teamOpen ? 'Limit to the list' : 'Let the team join'}</Button>}
+          {!wholeTeam && <Button size="sm" variant="secondary" loading={busy} onClick={() => setOpenToTeam(!teamOpen)}>{teamOpen ? 'Limit To The List' : 'Let The Team Join'}</Button>}
         </div>
         {error && <Notice tone="error">{error}</Notice>}
       </div>

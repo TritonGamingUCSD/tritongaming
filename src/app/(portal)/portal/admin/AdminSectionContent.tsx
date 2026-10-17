@@ -204,7 +204,7 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
             <h2 className={styles.sectionLabel}>Member Management</h2>
             <span className={styles.sectionHint}>Search any user and change their role instantly</span>
             <div className={styles.sectionActions}>
-              <Button size="sm" variant="secondary" onClick={() => setPasteOpen(true)}><MailPlus size={14} aria-hidden="true" /> Give a role by email</Button>
+              <Button size="sm" variant="secondary" onClick={() => setPasteOpen(true)}><MailPlus size={14} aria-hidden="true" /> Give A Role By Email</Button>
               {roleHistoryEntries && (
                 <IconButton kind="history" label="View role change history" onClick={() => setHistoryOpen(true)} />
               )}

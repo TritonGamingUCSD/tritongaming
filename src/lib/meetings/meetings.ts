@@ -195,7 +195,7 @@ export async function buildSchedule(svc: SupabaseClient, forUser?: { id: string;
   const nowMs = Date.now();
   const isOver = (i: { date: string; status: string; ends_at: string }) => i.date === today && i.status !== 'open' && i.status !== 'cancelled' && nowMs > new Date(i.ends_at).getTime() + (i.status === 'closed' ? 0 : 30 * 60_000);
   const upcoming = visible.filter((i) => i.date >= today && !isOver(i)).sort((a, b) => a.starts_at.localeCompare(b.starts_at));
-  const past = visible.filter((i) => (i.date < today || isOver(i)) && i.status !== 'cancelled').sort((a, b) => b.starts_at.localeCompare(a.starts_at));
+  const past = visible.filter((i) => (i.date < today || isOver(i)) && i.status !== 'cancelled').sort((a, b) => a.starts_at.localeCompare(b.starts_at));   // oldest first, like Upcoming
   // A repeating meeting with a last day is ended once no meeting is left: no matching weekday from today to that day, or only today's, which is already over.
   const nowDate = new Date();
   const withEnded = series.map((s) => {

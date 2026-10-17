@@ -76,7 +76,7 @@ export default function PasteEmailsDialog({ divisions, onClose }: { divisions: {
   const divisionName = (id: string | null) => divisions.find((d) => d.id === id)?.name;
 
   return (
-    <Dialog title="Give a role by email" onClose={close} busy={busy}>
+    <Dialog title="Give A Role By Email" onClose={close} busy={busy}>
       <DialogText>Paste a list of email addresses (commas, spaces or one per line). Anyone who already has an account gets the role right away. An address with no account yet waits and gets the role the first time someone signs in with it, for up to 90 days.</DialogText>
       <div className={styles.body}>
         <label className={styles.field}>
@@ -85,7 +85,7 @@ export default function PasteEmailsDialog({ divisions, onClose }: { divisions: {
         </label>
         <div className={styles.row}>
           <label className={styles.field}>
-            <span className={styles.label}>Role to give</span>
+            <span className={styles.label}>Role To Give</span>
             <Select value={role} onChange={(e) => { setRole(e.target.value as AppRole); setPlan(null); }}>
               {ASSIGNABLE_ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
             </Select>
@@ -107,17 +107,17 @@ export default function PasteEmailsDialog({ divisions, onClose }: { divisions: {
         {plan && (
           <div className={styles.result} aria-live="polite">
             <p className={styles.found}>Found <strong>{plan.total}</strong> email {plan.total === 1 ? 'address' : 'addresses'}.</p>
-            <Group title={`Get the role now (${toGive})`} tone="ok" items={plan.matched.filter((m) => !m.hasRole).map((m) => `${m.name} · ${m.email}`)} />
-            <Group title={`Wait for first sign-in (${plan.notFound.length})`} tone="wait" note="No account yet." items={plan.notFound} />
-            <Group title={`Already have it (${plan.matched.filter((m) => m.hasRole).length})`} tone="skip" items={plan.matched.filter((m) => m.hasRole).map((m) => `${m.name} · ${m.email}`)} />
-            {plan.alreadyQueued.length > 0 && <Group title={`Already waiting (${plan.alreadyQueued.length})`} tone="skip" items={plan.alreadyQueued} />}
-            {plan.ambiguous.length > 0 && <Group title={`Skipped: the address belongs to more than one account (${plan.ambiguous.length})`} tone="bad" items={plan.ambiguous.map((a) => `${a.email} · ${a.names.join(' and ')}`)} />}
+            <Group title={`Get The Role Now (${toGive})`} tone="ok" items={plan.matched.filter((m) => !m.hasRole).map((m) => `${m.name} · ${m.email}`)} />
+            <Group title={`Wait For First Sign-In (${plan.notFound.length})`} tone="wait" note="No account yet." items={plan.notFound} />
+            <Group title={`Already Have It (${plan.matched.filter((m) => m.hasRole).length})`} tone="skip" items={plan.matched.filter((m) => m.hasRole).map((m) => `${m.name} · ${m.email}`)} />
+            {plan.alreadyQueued.length > 0 && <Group title={`Already Waiting (${plan.alreadyQueued.length})`} tone="skip" items={plan.alreadyQueued} />}
+            {plan.ambiguous.length > 0 && <Group title={`Skipped: More Than One Account Uses The Address (${plan.ambiguous.length})`} tone="bad" items={plan.ambiguous.map((a) => `${a.email} · ${a.names.join(' and ')}`)} />}
           </div>
         )}
 
         {pending && pending.length > 0 && (
           <details className={styles.pending}>
-            <summary>Waiting for first sign-in <span>{pending.length}</span></summary>
+            <summary>Waiting For First Sign-In <span>{pending.length}</span></summary>
             <ul>
               {pending.map((p) => (
                 <li key={p.id}>
@@ -132,8 +132,8 @@ export default function PasteEmailsDialog({ divisions, onClose }: { divisions: {
       <DialogActions>
         <DialogCancel onClick={close} disabled={busy}>{changed ? 'Done' : 'Cancel'}</DialogCancel>
         {!plan || nothingToDo
-          ? <Button onClick={check} loading={busy} disabled={!text.trim() || (role === 'division' && !divisionId)}>Check the list</Button>
-          : <Button onClick={apply} loading={busy}>{toGive > 0 ? `Give ${ROLE_LABELS[role]} to ${toGive}` : 'Queue'}{plan.notFound.length ? `${toGive > 0 ? ' and queue' : ''} ${plan.notFound.length} for first sign-in` : ''}</Button>}
+          ? <Button onClick={check} loading={busy} disabled={!text.trim() || (role === 'division' && !divisionId)}>Check The List</Button>
+          : <Button onClick={apply} loading={busy}>{toGive > 0 ? `Give ${ROLE_LABELS[role]} To ${toGive}` : 'Queue'}{plan.notFound.length ? `${toGive > 0 ? ' And Queue' : ''} ${plan.notFound.length} For First Sign-In` : ''}</Button>}
       </DialogActions>
     </Dialog>
   );

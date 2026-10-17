@@ -647,3 +647,26 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 
 .seriesDetail::before { content: ' · '; }
 @media (max-width: 560px) { .seriesDetail::before { content: none; } }
+
+/* One main button per meeting; the rest are behind the ⋯ button. */
+.moreBtn { flex: none !important; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 0.6rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.32); background: transparent; color: var(--pp-ink); cursor: pointer; }
+.moreBtn:hover { border-color: var(--pp-ink); background: rgba(var(--pp-ink-rgb), 0.06); }
+.moreMenu { display: flex; flex-direction: column; padding: 0.2rem; }
+.moreMenu button { display: flex; align-items: center; gap: 0.55rem; padding: 0.65rem 0.7rem; border: 0; border-radius: 0.5rem; background: transparent; color: var(--pp-ink); font: inherit; font-size: 0.88rem; text-align: left; cursor: pointer; min-height: 44px; }
+.moreMenu button:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
+.moreDanger { color: var(--pp-bad) !important; }
+
+/* A skipped meeting is a thin dimmed line: date, name and Restore, nothing else. */
+.skipped { padding: 0.35rem 0.7rem; opacity: 0.8; }
+.skipped .metaSub, .skipped .metaLine > :not(:first-child), .skipped .pill { display: none; }
+.skipped .dateBlock { width: 38px; }
+.skipped .dateBlock b { font-size: 1rem; }
+.skipped .meetingInfo strong { text-decoration: line-through; text-decoration-thickness: 1px; }
+
+/* On a phone the status pill sits at the top beside the name; the buttons sit underneath, side by side. */
+@media (max-width: 640px) {
+  .pill { order: 1; align-self: flex-start; }
+  .cardActions { order: 2; }
+  .cardActions > .moreBtn { flex: none; }
+  .skipped .cardActions { flex-basis: auto; margin-left: auto; }
+}
