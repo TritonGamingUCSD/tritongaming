@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { authorizeMeetings, withExtras, loadGroups } from '@/lib/meetings/meetings';
-import { isExpectedActive } from '@/lib/meetings/meetingAudience';
+import { lockedExpected, wasExpected } from '@/lib/meetings/expectedLock';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +11,7 @@ export async function GET() {
   if (auth.error) return auth.error;
 
   const [{ data: held }, { data: mine }] = await Promise.all([
-    auth.svc.from('meetings').select('id, title, meeting_date, audience, invitees, group_ids').eq('cancelled', false).not('opened_at', 'is', null).order('meeting_date', { ascending: false }).limit(26),
+    auth.svc.from('meetings').select('id, title, meeting_date, ends_at, closed_at, audience, invitees, group_ids').eq('cancelled', false).not('opened_at', 'is', null).order('meeting_date', { ascending: false }).limit(26),
     auth.svc.from('meeting_attendance').select('meeting_id, checked_in_at, method').eq('user_id', auth.user.id),
   ]);
   const attended = new Map((mine ?? []).map((r) => [r.meeting_id as string, r]));
@@ -23,7 +23,8 @@ export async function GET() {
   // Only meetings that were meant for this person (by role, group or invitation) count toward "X of N".
   // Exec/admin can check in to anything, but a meeting they weren't invited to isn't a miss.
   const heldWithExtras = withExtras((held ?? []).map((m) => ({ ...m, audience: m.audience as string[] | null, invitees: m.invitees as string[] | null, group_ids: m.group_ids as string[] | null })), await loadGroups(auth.svc));
-  const heldIds = new Set(heldWithExtras.filter((m) => attended.has(m.id as string) || isExpectedActive(m, auth.user.id, auth.roles)).map((m) => m.id as string));
+  const locks = await lockedExpected(auth.svc, heldWithExtras.map((m) => ({ ...m, ends_at: m.ends_at as string, closed_at: m.closed_at as string | null })));
+  const heldIds = new Set(heldWithExtras.filter((m) => attended.has(m.id as string) || wasExpected(locks, m as typeof m & { id: string }, auth.user.id, auth.roles)).map((m) => m.id as string));
 
   const rows = (meetings ?? [])
     .filter((m) => attended.has(m.id as string) || heldIds.has(m.id as string))

@@ -1,8 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { tally } from '@/lib/meetings/meetingFun';
 import { NextResponse } from 'next/server';
-import { checkInOpensAt, isCheckInAccepting, loadGroups, authorizeMeetings, currentMeetingCode, getExpectedPeople, isMeetingOpen, type MeetingRow, guardMeeting } from '@/lib/meetings/meetings';
+import { checkInOpensAt, isCheckInAccepting, loadGroups, authorizeMeetings, currentMeetingCode, getExpectedPeople, attachExtras, isMeetingOpen, type MeetingRow, guardMeeting } from '@/lib/meetings/meetings';
 import { staffName } from '@/lib/members/names';
+import { isOver, lockedExpected } from '@/lib/meetings/expectedLock';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,7 +19,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
   const [{ data: rows }, people] = await Promise.all([
     auth.svc.from('meeting_attendance').select('user_id, checked_in_at, method').eq('meeting_id', id).order('checked_in_at', { ascending: false }),
-    getExpectedPeople(auth.svc, m),
+    expectedPeopleFor(auth.svc, m),
   ]);
   const byId = new Map(people.map((p) => [p.id, p]));
   const here = new Set((rows ?? []).map((r) => r.user_id as string));
@@ -62,6 +63,16 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     missing: people.filter((p) => !here.has(p.id) && !absent.has(p.id)),
     absent: (absenceRows ?? []).map((a) => ({ ...(byId.get(a.user_id as string) ?? { id: a.user_id as string, name: 'Unnamed', avatar_url: null, custom_avatar_url: null }), reason: a.reason as string | null, excused: a.excused as boolean })),
   });
+}
+
+// Who the meeting expects: live while check-in is open, the locked list once it has closed.
+async function expectedPeopleFor(svc: SupabaseClient, m: MeetingRow) {
+  if (!isOver(m)) return getExpectedPeople(svc, m);
+  const [{ extra_ids }] = await attachExtras(svc, [{ invitees: m.invitees ?? null, group_ids: m.group_ids ?? null }]);
+  const locked = (await lockedExpected(svc, [{ ...m, extra_ids }])).get(m.id);
+  if (!locked || locked.size === 0) return [];
+  const { data: profiles } = await svc.from('profiles').select('id, display_name, google_first_name, google_last_name, gamer_tag, avatar_url, custom_avatar_url').in('id', [...locked]);
+  return (profiles ?? []).map((p) => ({ id: p.id as string, name: staffName(p, { tag: true }), avatar_url: p.avatar_url as string | null, custom_avatar_url: p.custom_avatar_url as string | null })).sort((a, b) => a.name.localeCompare(b.name));
 }
 
 // Approved custom emojis by id, so the screen can draw `custom:<id>` reactions.

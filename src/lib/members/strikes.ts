@@ -6,7 +6,7 @@ import { hasCapability, withGrantedCapabilities } from '@/lib/portal/capabilitie
 import { loadGrantedCapabilities } from '@/lib/portal/grantedCapabilities';
 import { pacificDayKey } from '@/lib/events/checkinDays';
 import { attachExtras } from '@/lib/meetings/meetings';
-import { isExpectedActive } from '@/lib/meetings/meetingAudience';
+import { lockedExpected, wasExpected } from '@/lib/meetings/expectedLock';
 import { inactiveIds } from '@/lib/members/quarters';
 import { createNotifications } from '@/lib/notifications/notify';
 import { logAudit } from '@/lib/notifications/audit';
@@ -146,11 +146,12 @@ export async function suggestions(svc: SupabaseClient, people?: TrackedPerson[])
   const today = pacificDayKey();
   const { data: setting } = await svc.from('strike_settings').select('value').eq('key', 'suggest_from').maybeSingle();
   const from = (setting?.value as string | undefined) ?? today;
-  const { data: all } = await svc.from('meetings').select('id, title, meeting_date, ends_at, audience, invitees, group_ids').eq('cancelled', false).not('opened_at', 'is', null).gte('meeting_date', from).lte('meeting_date', today).order('meeting_date', { ascending: false }).limit(200);
+  const { data: all } = await svc.from('meetings').select('id, title, meeting_date, ends_at, closed_at, audience, invitees, group_ids').eq('cancelled', false).not('opened_at', 'is', null).gte('meeting_date', from).lte('meeting_date', today).order('meeting_date', { ascending: false }).limit(200);
     const finished = (all ?? []).filter((m) => new Date(m.ends_at as string).getTime() < Date.now() - EXCUSE_WINDOW_MS);
   if (!finished.length) return [];
   const meetings = await attachExtras(svc, finished.map((m) => ({ ...m, invitees: m.invitees as string[] | null, group_ids: m.group_ids as string[] | null })));
   const ids = meetings.map((m) => m.id as string);
+  const locks = await lockedExpected(svc, meetings.map((m) => ({ ...m, ends_at: m.ends_at as string, closed_at: m.closed_at as string | null, audience: m.audience as string[] | null })));
   const tracked = people ?? await trackedPeople(svc);
   const trackedIds = tracked.map((p) => p.id);
   if (!trackedIds.length) return [];
@@ -175,7 +176,7 @@ export async function suggestions(svc: SupabaseClient, people?: TrackedPerson[])
     const k = `${m.id}|${p.id}`;
     if (present.has(k) || excused.has(k) || done.has(k)) continue;
     if (new Date(m.ends_at as string).getTime() <= (clearedAt.get(p.id) ?? 0)) continue;
-    if (!isExpectedActive({ audience: m.audience as string[] | null, invitees: m.invitees, group_ids: m.group_ids, extra_ids: m.extra_ids }, p.id, rolesOf.get(p.id) ?? [])) continue;
+    if (!wasExpected(locks, { id: m.id as string, audience: m.audience as string[] | null, invitees: m.invitees, group_ids: m.group_ids, extra_ids: m.extra_ids }, p.id, rolesOf.get(p.id) ?? [])) continue;
     out.push({ user_id: p.id, name: p.name, meeting_id: m.id as string, title: m.title as string, date: m.meeting_date as string });
   }
   return out.sort((a, b) => b.date.localeCompare(a.date) || a.name.localeCompare(b.name));

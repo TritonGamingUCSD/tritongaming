@@ -32,9 +32,10 @@ export async function POST(request: Request) {
 
   const newEnd = new Date(Math.max(new Date(meeting.ends_at).getTime(), Date.now() + 30 * 60_000));
   const { error } = await auth.svc.from('meetings')
-    .update({ opened_at: meeting.opened_at ?? new Date().toISOString(), closed_at: null, ends_at: newEnd.toISOString(), opened_by: auth.user.id })
+    .update({ opened_at: meeting.opened_at ?? new Date().toISOString(), closed_at: null, ends_at: newEnd.toISOString(), opened_by: auth.user.id, expected_locked_at: null })
     .eq('id', meeting.id);
   if (error) return NextResponse.json({ error: 'Failed to open check-in.' }, { status: 500 });
+  await auth.svc.from('meeting_expected').delete().eq('meeting_id', meeting.id);   // open again: the list is live until it closes
   // Whoever opens check-in is in the room: if the meeting is for them AND we're inside the same window
   // members can check in (10 minutes before the start until the end), check them in too. Opening it
   // early from a desk doesn't count. Never overwrites an existing check-in.

@@ -66,6 +66,14 @@ export const isInactiveMember = (roles: { role: string }[]) => roles.some((r) =>
 export const isExpectedActive = (m: MeetingAudience, userId: string, roles: { role: string }[]) =>
   isInactiveMember(roles) ? extraIds(m).includes(userId) : isExpected(m, userId, roles);
 
+// Someone given a team role after a meeting ended was never expected at it: leave out the audience roles granted later than `cutoff` (the meeting's end).
+// Being added to the meeting by name is not affected. Roles without a grant time are kept.
+export const rolesAsOf = <T extends { role: string; created_at?: string | null }>(roles: T[], cutoff: string | number | Date | null | undefined): T[] => {
+  const t = cutoff ? new Date(cutoff).getTime() : NaN;
+  if (Number.isNaN(t)) return roles;
+  return roles.filter((r) => !(AUDIENCE_ROLES as readonly string[]).includes(r.role) || !r.created_at || new Date(r.created_at).getTime() <= t);
+};
+
 // Someone on the team (exec, lead, officer or recruit) who is not sitting the quarter out and is not an alumnus.
 export const isActiveTeamMember = (roles: { role: string }[]) =>
   !isInactiveMember(roles) && !roles.some((r) => r.role === 'alumni') && roles.some((r) => (AUDIENCE_ROLES as readonly string[]).includes(r.role));

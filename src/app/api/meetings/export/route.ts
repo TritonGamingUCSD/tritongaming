@@ -4,7 +4,8 @@ import { pacificDayKey } from '@/lib/events/checkinDays';
 import { fetchLinkedEmails, pickDisplayEmails } from '@/lib/members/linkedEmails';
 import { ROLE_DISPLAY_RANK, ROLE_LABELS, type AppRole } from '@/types/database';
 import { addDaysKey, attachExtras, authorizeMeetings, loadGroups } from '@/lib/meetings/meetings';
-import { AUDIENCE_ROLES, audienceLabel, isExpectedActive } from '@/lib/meetings/meetingAudience';
+import { lockedExpected, wasExpected } from '@/lib/meetings/expectedLock';
+import { AUDIENCE_ROLES, audienceLabel } from '@/lib/meetings/meetingAudience';
 import { staffName } from '@/lib/members/names';
 
 export const dynamic = 'force-dynamic';
@@ -31,20 +32,21 @@ export async function GET(request: Request) {
   const to = valid(url.searchParams.get('to')) ?? today;
   const titleFilter = url.searchParams.get('title');
 
-  let q = auth.svc.from('meetings').select('id, title, meeting_date, starts_at, audience, invitees, group_ids')
+  let q = auth.svc.from('meetings').select('id, title, meeting_date, starts_at, ends_at, closed_at, audience, invitees, group_ids')
     .eq('cancelled', false).not('opened_at', 'is', null).gte('meeting_date', from).lte('meeting_date', to).order('meeting_date').order('starts_at');
   if (titleFilter) q = q.eq('title', titleFilter);
   const { data: meetingRows } = await q;
   const groupMap = await loadGroups(auth.svc);
   const meetings = await attachExtras(auth.svc, (meetingRows ?? []).map((m) => ({ ...m, invitees: m.invitees as string[] | null, group_ids: m.group_ids as string[] | null })));
   const ids = (meetings ?? []).map((m) => m.id as string);
+  const locks = await lockedExpected(auth.svc, meetings.map((m) => ({ ...m, ends_at: m.ends_at as string, closed_at: m.closed_at as string | null, audience: m.audience as string[] | null })));
   const { data: abs } = ids.length ? await auth.svc.from('meeting_absences').select('meeting_id, user_id, reason, excused').in('meeting_id', ids) : { data: [] as { meeting_id: string; user_id: string; reason: string | null; excused: boolean }[] };
   const absByKey = new Map((abs ?? []).map((a) => [`${a.meeting_id}|${a.user_id}`, a]));
   const { data: att } = ids.length ? await auth.svc.from('meeting_attendance').select('meeting_id, user_id, checked_in_at, method').in('meeting_id', ids) : { data: [] as { meeting_id: string; user_id: string; checked_in_at: string; method: string }[] };
 
   // Everyone expected (team roles) plus anyone who attended without a current team role.
   const { data: grants } = await auth.svc.from('user_roles').select('user_id, role').in('role', [...AUDIENCE_ROLES, 'inactive', 'alumni']);
-  const peopleIds = new Set<string>([...(grants ?? []).map((g) => g.user_id as string), ...(att ?? []).map((a) => a.user_id as string), ...(meetings ?? []).flatMap((m) => m.extra_ids), ...(abs ?? []).map((a) => a.user_id as string)]);
+  const peopleIds = new Set<string>([...(grants ?? []).map((g) => g.user_id as string), ...(att ?? []).map((a) => a.user_id as string), ...(meetings ?? []).flatMap((m) => m.extra_ids), ...[...locks.values()].flatMap((s) => [...s]), ...(abs ?? []).map((a) => a.user_id as string)]);
   const idList = [...peopleIds];
   const [{ data: profiles }, { data: allRoles }, emails] = await Promise.all([
     idList.length ? auth.svc.from('profiles').select('id, display_name, google_first_name, google_last_name, preferred_email').in('id', idList) : Promise.resolve({ data: [] as { id: string; display_name: string | null; preferred_email: string | null }[] }),
@@ -67,7 +69,7 @@ export async function GET(request: Request) {
   const rolesOf = new Map<string, { role: string }[]>();
   for (const g of grants ?? []) rolesOf.set(g.user_id as string, [...(rolesOf.get(g.user_id as string) ?? []), { role: g.role as string }]);
   // Expected = holds one of the meeting's roles, or was added. Someone who came anyway is listed as a guest and not counted.
-  const expected = (m: { audience: string[] | null; extra_ids: string[]; invitees?: string[] | null; group_ids?: string[] | null }, personId: string) => isExpectedActive(m, personId, rolesOf.get(personId) ?? []);
+  const expected = (m: { id?: unknown; audience: string[] | null; extra_ids: string[]; invitees?: string[] | null; group_ids?: string[] | null }, personId: string) => wasExpected(locks, { ...m, id: m.id as string }, personId, rolesOf.get(personId) ?? []);
 
   let rows: string[];
   if (type === 'log') {
@@ -76,8 +78,8 @@ export async function GET(request: Request) {
       for (const p of people) {
         const a = attByKey.get(`${m.id}|${p.id}`);
         const ab = absByKey.get(`${m.id}|${p.id}`);
-        if (!a && !ab && !expected({ audience: m.audience as string[] | null, extra_ids: m.extra_ids, invitees: m.invitees, group_ids: m.group_ids }, p.id)) continue;   // the meeting wasn't for them
-        rows.push(line([m.meeting_date, m.title, audienceLabel({ audience: m.audience as string[] | null, invitees: m.invitees, group_ids: m.group_ids, groupNames: (m.group_ids ?? []).map((g) => groupMap.get(g)?.name ?? '').filter(Boolean) }), p.name, p.email, p.role, a ? (expected({ audience: m.audience as string[] | null, extra_ids: m.extra_ids, invitees: m.invitees, group_ids: m.group_ids }, p.id) ? 'Present' : 'Present (+1)') : ab ? (ab.excused ? 'Excused absence' : 'Absent') : 'Absent', ab?.reason ?? '', a ? pacificTime(a.checked_in_at) : '', a ? (a.method === 'manual' ? 'Added by exec' : a.method === 'host' ? 'Host (automatic)' : 'Code') : '']));
+        if (!a && !ab && !expected({ id: m.id, audience: m.audience as string[] | null, extra_ids: m.extra_ids, invitees: m.invitees, group_ids: m.group_ids }, p.id)) continue;   // the meeting wasn't for them
+        rows.push(line([m.meeting_date, m.title, audienceLabel({ audience: m.audience as string[] | null, invitees: m.invitees, group_ids: m.group_ids, groupNames: (m.group_ids ?? []).map((g) => groupMap.get(g)?.name ?? '').filter(Boolean) }), p.name, p.email, p.role, a ? (expected({ id: m.id, audience: m.audience as string[] | null, extra_ids: m.extra_ids, invitees: m.invitees, group_ids: m.group_ids }, p.id) ? 'Present' : 'Present (+1)') : ab ? (ab.excused ? 'Excused absence' : 'Absent') : 'Absent', ab?.reason ?? '', a ? pacificTime(a.checked_in_at) : '', a ? (a.method === 'manual' ? 'Added by exec' : a.method === 'host' ? 'Host (automatic)' : 'Code') : '']));
       }
     }
   } else {
@@ -85,7 +87,7 @@ export async function GET(request: Request) {
     for (const p of people) {
       const excusedN = (meetings ?? []).filter((m) => absByKey.get(`${m.id}|${p.id}`)?.excused && !attByKey.has(`${m.id}|${p.id}`)).length;
       // Meetings that were for this person, plus any they came to as a guest.
-      const relevant = (meetings ?? []).filter((m) => !(absByKey.get(`${m.id}|${p.id}`)?.excused) && expected({ audience: m.audience as string[] | null, extra_ids: m.extra_ids, invitees: m.invitees, group_ids: m.group_ids }, p.id));
+      const relevant = (meetings ?? []).filter((m) => !(absByKey.get(`${m.id}|${p.id}`)?.excused) && expected({ id: m.id, audience: m.audience as string[] | null, extra_ids: m.extra_ids, invitees: m.invitees, group_ids: m.group_ids }, p.id));
       const mine = relevant.filter((m) => attByKey.has(`${m.id}|${p.id}`));
       // Coming as a guest to a meeting that was not meant for them counts as attended too.
       const guestVisits = (meetings ?? []).filter((m) => attByKey.has(`${m.id}|${p.id}`) && !relevant.includes(m));

@@ -2000,8 +2000,7 @@ function AttendancePanel({ onOpenMeeting, canExport }: { onOpenMeeting?: (id: st
                       {p.marks.filter((m) => m !== '-').slice(-12).map((m, i) => <i key={i} className={m === 'p' ? styles.dotP : m === 'a' ? styles.dotA : m === 'e' ? styles.dotE : m === 'g' ? styles.dotG : styles.dotN} />)}
                     </span>
                     <span className={styles.attRate}>
-                      <span className={styles.bar}><span style={{ width: `${(p.rate ?? 0) * 100}%` }} /></span>
-                      <span className={styles.count}>{p.attended}/{p.total}{p.rate !== null ? ` · ${Math.round(p.rate * 100)}%` : ''}</span>
+                      <span className={styles.bar} title={p.rate !== null ? `${p.attended} of ${p.total} (${Math.round(p.rate * 100)}%)` : 'No meetings yet'}><span style={{ width: `${(p.rate ?? 0) * 100}%` }} /></span>
                     </span>
                   </li>
                 ))}
