@@ -278,12 +278,12 @@
 .thOn { border-color: var(--p-accent); color: var(--p-accent-text); }
 .attRow {
   composes: card from '../../../../components/ui/Surface.module.css';
-  display: flex;
+  display: grid;   /* name takes what is left; the dots and the bar keep fixed columns, so nothing can run past the card */
+  grid-template-columns: auto minmax(0, 1fr) 141px 90px;
   align-items: center;
   gap: 0.7rem;
   padding: 0.5rem 0.65rem;
   min-width: 0;
-  flex-wrap: wrap;
 }
 .attMain { display: flex; flex-direction: column; flex: 1 1 180px; min-width: 0; }
 .attMain .personName { flex: none; }
@@ -294,11 +294,14 @@
 .dotP { background: #34d399; }
 .dotA { background: #f87171; }
 .dotN { background: rgba(var(--pp-ink-rgb), 0.15); }
-.attRate { display: flex; align-items: center; gap: 0.5rem; }
+.attRate { display: flex; align-items: center; min-width: 0; }
+.attRate .bar { margin-left: 0; flex: 1 1 auto; }
 .collapse { display: flex; align-items: center; justify-content: space-between; width: 100%; background: none; border: none; padding: 0; color: rgba(var(--pp-ink-rgb), 0.87); font-size: 0.8rem; cursor: pointer; }
 .collapse .listTitle { margin-bottom: 0; }
 @media (max-width: 640px) {
   .filters .exportBtns { margin-left: 0; width: 100%; }
+  .attRow { display: flex; flex-wrap: wrap; }
+  .attRow .dots { width: auto; justify-content: flex-start; margin-left: 2.7rem; }
   .attRate { width: 100%; }
   .searchBox { max-width: none; width: 100%; }
 }
