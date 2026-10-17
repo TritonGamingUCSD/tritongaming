@@ -17,7 +17,7 @@ import { audienceRoles, canAttendMeeting, isExpected, type MeetingAudience } fro
 // Gen Meeting check-in (see migration 20261002140000_gen_meetings.sql). An exec opens check-in and
 // shows a rotating 6-digit code in the room; people on the team type it into the portal.
 
-export const GRACE_MS = 30 * 60_000;
+export const GRACE_MS = 0;   // check-in closes at the scheduled end; a host who needs longer re-opens it (that extends the end)
 // Members can check in this long BEFORE the meeting starts (so people arriving a few minutes early
 // can get it done), but not hours ahead of time.
 export const EARLY_MS = 10 * 60_000;
@@ -48,7 +48,7 @@ export interface MeetingRow {
   /** Left out of the "All TG meetings" calendar view. */
 }
 
-// Open = an exec started it, hasn't closed it, and it's not long past its scheduled end.
+// Open = an exec started it, hasn't closed it, and its scheduled end hasn't passed.
 export function isMeetingOpen(m: Pick<MeetingRow, 'ends_at' | 'closed_at' | 'opened_at'>, now: number = Date.now()): boolean {
   return !!m.opened_at && !m.closed_at && now < new Date(m.ends_at).getTime() + GRACE_MS;
 }
@@ -84,7 +84,7 @@ export async function attachExtras<T extends { invitees: string[] | null; group_
   return withExtras(rows, await loadGroups(svc));
 }
 
-export interface SeriesRow { ends_on?: string | null; id: string; title: string; weekday: number; start_time: string; end_time: string; location: string | null; active: boolean; doc_url: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; open_to_team?: boolean | null; description: string | null; created_by: string | null }
+export interface SeriesRow { ended?: boolean; ends_on?: string | null; id: string; title: string; weekday: number; start_time: string; end_time: string; location: string | null; active: boolean; doc_url: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; open_to_team?: boolean | null; description: string | null; created_by: string | null }
 
 // A meeting doc link: a full http(s) URL, or a path inside this site (like a portal doc). Empty clears it.
 export function validateDocUrl(raw: unknown): { ok: true; value: string | null } | { ok: false } {
@@ -196,7 +196,17 @@ export async function buildSchedule(svc: SupabaseClient, forUser?: { id: string;
   const isOver = (i: { date: string; status: string; ends_at: string }) => i.date === today && i.status !== 'open' && i.status !== 'cancelled' && nowMs > new Date(i.ends_at).getTime() + (i.status === 'closed' ? 0 : 30 * 60_000);
   const upcoming = visible.filter((i) => i.date >= today && !isOver(i)).sort((a, b) => a.starts_at.localeCompare(b.starts_at));
   const past = visible.filter((i) => (i.date < today || isOver(i)) && i.status !== 'cancelled').sort((a, b) => b.starts_at.localeCompare(a.starts_at));
-  return { series: ownerOnly ? series.filter((x) => x.created_by === ownerOnly) : series, upcoming, past };
+  // A repeating meeting with a last day is ended once no meeting is left: no matching weekday from today to that day, or only today's, which is already over.
+  const nowDate = new Date();
+  const withEnded = series.map((s) => {
+    if (!s.ends_on) return s;
+    for (let d = today; d <= s.ends_on; d = addDaysKey(d, 1)) {
+      if (weekdayOfKey(d) !== s.weekday) continue;
+      if (d > today || occurrenceTimes(d, s.start_time, s.end_time).ends.getTime() > nowDate.getTime()) return s;
+    }
+    return { ...s, ended: true };
+  });
+  return { series: ownerOnly ? withEnded.filter((x) => x.created_by === ownerOnly) : withEnded, upcoming, past };
 }
 
 // The code people should be typing right now, and when it changes.

@@ -7,7 +7,7 @@ import EditingNow from '@/components/portal/EditingNow';
 import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { ChevronRight, CalendarClock, CalendarDays, Radio, ClipboardList, Check, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Link2, MessageCircleQuestion, Send, Users, Minus, UserX, Lock, Dices, Smile, Upload, Settings2, Moon } from 'lucide-react';
+import { ChevronRight, CalendarClock, CalendarDays, Radio, ClipboardList, Check, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Link2, MessageCircleQuestion, Send, Users, Minus, UserX, Lock, Dices, Smile, Upload, Settings2, Moon, DoorOpen, Timer } from 'lucide-react';
 import IconButton from '@/components/ui/IconButton';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Notice from '@/components/ui/Notice';
@@ -38,7 +38,7 @@ interface Person { id: string; name: string; avatar_url: string | null; custom_a
 interface TodayMeeting { question_type: QuestionType; question_options: string[] | null; id: string; title: string; description: string | null; location: string | null; starts_at: string; ends_at: string; open: boolean; accepting: boolean; opens_at: string; checked_in_at: string | null; doc_url: string | null; question: string | null; my_answer: string | null }
 interface NextMeeting { doc_url?: string | null; title: string; description: string | null; location: string | null; starts_at: string; ends_at: string; date: string }
 interface Live {
-  meeting: { question_type: QuestionType; question_options: string[] | null; id: string; title: string; meeting_date: string; starts_at: string; ends_at: string; open: boolean; doc_url: string | null; location: string | null; cancelled: boolean; series_id: string | null; accepting: boolean; opens_at: string; question: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; groupNames: string[] };
+  meeting: { open_to_team?: boolean; question_type: QuestionType; question_options: string[] | null; id: string; title: string; meeting_date: string; starts_at: string; ends_at: string; open: boolean; doc_url: string | null; location: string | null; cancelled: boolean; series_id: string | null; accepting: boolean; opens_at: string; question: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; groupNames: string[] };
   answers: (Person & { answer: string; at: string })[];
   reactionTotals: Record<string, number>;
   customEmojis?: Record<string, { name: string; url: string }>;
@@ -50,7 +50,7 @@ interface Live {
   absent: (Person & { reason: string | null; excused: boolean })[];
 }
 interface Item { open_to_team?: boolean | null; question_type: QuestionType; question_options: string[] | null; key: string; meeting_id: string | null; series_id: string | null; date: string; title: string; location: string | null; doc_url: string | null; question: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; groupNames: string[]; host_id: string | null; host_name: string | null; starts_at: string; ends_at: string; status: 'scheduled' | 'open' | 'closed' | 'cancelled'; count: number; absent?: number; is_today: boolean; repeats: boolean }
-interface Series { open_to_team?: boolean | null; ends_on?: string | null; id: string; title: string; weekday: number; start_time: string; end_time: string; location: string | null; active: boolean; doc_url: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null }
+interface Series { ended?: boolean; open_to_team?: boolean | null; ends_on?: string | null; id: string; title: string; weekday: number; start_time: string; end_time: string; location: string | null; active: boolean; doc_url: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null }
 
 const TZ = 'America/Los_Angeles';
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -479,6 +479,9 @@ export const audFrom = (m: { audience: string[] | null; invitees: string[] | nul
   roles: audienceRoles({ audience: m.audience, invitees: m.invitees, group_ids: m.group_ids }), groups: m.group_ids ?? [], invitees: m.invitees ?? [], open: m.open_to_team !== false,
 });
 export const audPayload = (a: Aud) => ({ audience: a.roles, group_ids: a.groups, invitees: a.invitees, open_to_team: a.open });
+// A repeating meeting for every team role and nobody picked by name or group: everyone is expected, so there is nobody else to let in.
+const wholeTeamAud = (m: { audience: string[] | null; invitees: string[] | null; group_ids: string[] | null }) =>
+  audienceRoles({ audience: m.audience, invitees: m.invitees, group_ids: m.group_ids }).length === AUDIENCE_ROLES.length && !m.invitees?.length && !m.group_ids?.length;
 export const audienceEmpty = (a: Aud) => a.roles.length === 0 && a.groups.length === 0 && a.invitees.length === 0;
 
 function CheckTile({ checked, indeterminate, label, onChange }: { checked: boolean; indeterminate?: boolean; label: string; onChange: () => void }) {
@@ -916,12 +919,13 @@ function MeetingList({ onOpen, showForm, onShowForm }: { onOpen: (id: string) =>
         <h3 className={styles.listTitle}>Repeating meetings</h3>
         {data.series.length === 0 ? <p className={styles.muted}>None yet.</p> : (
           <ul className={styles.people}>
-            {data.series.map((s) => (
+            {data.series.filter((s) => !s.ended).map((s) => (
               <li key={s.id} className={`${styles.seriesRow} ${s.active ? '' : styles.paused}`}>
                 <Repeat size={16} aria-hidden="true" className={styles.seriesIcon} />
                 <span className={styles.personName}>
                   {s.title}
                   <em> · every {WEEKDAYS[s.weekday]} {hhmmLabel(s.start_time)}–{hhmmLabel(s.end_time)}{s.location ? ` · ${s.location}` : ''}{s.ends_on ? ` · until ${new Date(`${s.ends_on}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' })}` : ''} · {audienceLabel(s)}{s.active ? '' : ' · paused'}</em>
+                  <span className={`${styles.accessChip} ${s.open_to_team === false && !wholeTeamAud(s) ? styles.accessChipLimited : ''}`}>{wholeTeamAud(s) ? 'Open to everyone' : s.open_to_team === false ? 'Only the list can join' : 'Officers and recruits can join'}</span>
                 </span>
                 <IconButton kind="edit" label={`Edit ${s.title}`} onClick={() => setEditingSeries(editingSeries === s.id ? null : s.id)} />
                 <IconButton kind={s.active ? 'pause' : 'play'} label={s.active ? `Pause ${s.title}` : `Resume ${s.title}`} onClick={() => patchSeries(s, { active: !s.active })} disabled={busyKey === s.id} />
@@ -937,6 +941,35 @@ function MeetingList({ onOpen, showForm, onShowForm }: { onOpen: (id: string) =>
               </li>
             ))}
           </ul>
+        )}
+        {data.series.some((s) => s.ended) && (
+          <details className={styles.endedSeries}>
+            <summary>Ended <span>{data.series.filter((s) => s.ended).length}</span></summary>
+            <p className={styles.faint}>These passed their last day. Their past meetings and attendance are kept. To bring one back, edit it and pick a later last day.</p>
+            <ul className={styles.people}>
+              {data.series.filter((s) => s.ended).map((s) => (
+              <li key={s.id} className={`${styles.seriesRow} ${s.active ? '' : styles.paused}`}>
+                    <Repeat size={16} aria-hidden="true" className={styles.seriesIcon} />
+                    <span className={styles.personName}>
+                      {s.title}
+                      <em> · every {WEEKDAYS[s.weekday]} {hhmmLabel(s.start_time)}–{hhmmLabel(s.end_time)}{s.location ? ` · ${s.location}` : ''}{s.ends_on ? ` · until ${new Date(`${s.ends_on}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' })}` : ''} · {audienceLabel(s)}{s.active ? '' : ' · paused'}</em>
+                      <span className={`${styles.accessChip} ${s.open_to_team === false && !wholeTeamAud(s) ? styles.accessChipLimited : ''}`}>{wholeTeamAud(s) ? 'Open to everyone' : s.open_to_team === false ? 'Only the list can join' : 'Officers and recruits can join'}</span>
+                    </span>
+                    <IconButton kind="edit" label={`Edit ${s.title}`} onClick={() => setEditingSeries(editingSeries === s.id ? null : s.id)} />
+                    <IconButton kind={s.active ? 'pause' : 'play'} label={s.active ? `Pause ${s.title}` : `Resume ${s.title}`} onClick={() => patchSeries(s, { active: !s.active })} disabled={busyKey === s.id} />
+                    <IconButton kind="delete" label={`Delete ${s.title}`} onClick={() => deleteSeries(s)} disabled={busyKey === s.id} />
+                    {editingSeries === s.id && (
+                      <SeriesEditForm
+                        series={s}
+                        busy={busyKey === s.id}
+                        onCancel={() => setEditingSeries(null)}
+                        onSave={async (body) => { const ok = await patchSeries(s, body); if (ok) setEditingSeries(null); }}
+                      />
+                    )}
+                  </li>
+                  ))}
+            </ul>
+          </details>
         )}
       </section>
 
@@ -1033,6 +1066,7 @@ function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, o
           </span>
           <span className={`${styles.metaLine} ${styles.metaSub}`} title={item.description ?? undefined}>
             <span className={styles.metaAudience} title={`For: ${audienceLabel(item)}`}><Users size={11} aria-hidden="true" /> {audienceLabel(item)}</span>
+            {!wholeTeamAud(item) && (item.status === 'scheduled' || item.status === 'open') && <span className={`${styles.accessChip} ${item.open_to_team === false ? styles.accessChipLimited : ''}`} title={item.open_to_team === false ? 'Only the people it is for can check in' : 'Any officer or recruit can check in, as a guest'}>{item.open_to_team === false ? 'Only the list can join' : 'Officers and recruits can join'}</span>}
             {item.doc_url && <span className={styles.metaDoc}><Link2 size={11} aria-hidden="true" /> Doc</span>}
             {item.question && <span className={styles.metaDoc}><MessageCircleQuestion size={11} aria-hidden="true" /> Question</span>}
             {item.description && <span className={styles.metaDoc}><FileText size={11} aria-hidden="true" /> Description</span>}
@@ -1524,6 +1558,11 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
     } finally { setBusy(false); }
   }
 
+  // Check-in closes by itself at the scheduled end. When the clock passes it, load the new state right away instead of waiting for the next poll.
+  const endsAtMs = live ? new Date(live.meeting.ends_at).getTime() : 0;
+  const pastEnd = !!live?.meeting.open && now > endsAtMs + 500;
+  useEffect(() => { if (pastEnd) loadLive(); }, [pastEnd, loadLive]);
+
   if (!live) return <Loading label="Loading meeting…" />;
 
   const open = live.meeting.open;
@@ -1580,7 +1619,14 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
       ) : (
         <div className={styles.card}>
           <h2 className={styles.cardTitle}>{live.meeting.title} · {dayLabel(live.meeting.meeting_date, true)}</h2>
-          <p className={styles.muted}>Check-in is closed. {live.attendees.length} checked in.</p>
+          <p className={styles.muted}>Check-in is closed{over ? <> (it ended at {time(live.meeting.ends_at)})</> : null}.</p>
+          <div className={styles.wrapUp} aria-label="Summary">
+            <div><strong>{expectedHere}</strong><span>of {expectedHere + live.missing.length} came</span></div>
+            {guestCount > 0 && <div><strong>{guestCount}</strong><span>{guestCount === 1 ? 'guest' : 'guests'}</span></div>}
+            <div><strong>{live.missing.length}</strong><span>missing</span></div>
+            {live.absent.length > 0 && <div><strong>{live.absent.length}</strong><span>can’t make it</span></div>}
+          </div>
+          {live.missing.length > 0 && <p className={styles.faint}>Not here: {live.missing.slice(0, 8).map((p) => p.name).join(', ')}{live.missing.length > 8 ? ` and ${live.missing.length - 8} more` : ''}. They count as absent unless you mark them as excused below.</p>}
           {error && <Notice tone="error">{error}</Notice>}
           {!live.meeting.cancelled && <Button onClick={() => act('/api/meetings/open', { meeting_id: id })} loading={busy}>Re-open check-in</Button>}
         </div>
@@ -1590,10 +1636,16 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
         <>
           {open && error && <Notice tone="error">{error}</Notice>}
           {open && (
-            <div className={styles.runActions}>
-              <Button variant="ghost" onClick={async () => { if (await confirmHold({ title: 'Close check-in?', message: 'Nobody else will be able to check in with the code. You can re-open it.', confirmLabel: 'Hold to close' })) act('/api/meetings/close', { meeting_id: id }); }} loading={busy}>Close check-in</Button>
+            <div className={`${styles.endBanner} ${endsAtMs - now <= 10 * 60_000 ? styles.endSoon : ''}`} role="status">
+              <span className={styles.endIcon} aria-hidden="true"><Timer size={18} /></span>
+              <span className={styles.endText}>
+                <strong>{endsAtMs - now <= 10 * 60_000 ? `Check-in closes in ${Math.max(1, Math.ceil((endsAtMs - now) / 60_000))} min` : `Check-in is open until ${time(live.meeting.ends_at)}`}</strong>
+                <span>It closes by itself at {time(live.meeting.ends_at)}. Close it sooner once everyone is in, so late scans don’t get through.</span>
+              </span>
+              <Button variant={endsAtMs - now <= 10 * 60_000 ? 'primary' : 'secondary'} onClick={async () => { if (await confirmHold({ title: 'Close check-in?', message: 'Nobody else will be able to check in with the code. You can re-open it.', confirmLabel: 'Hold to close' })) act('/api/meetings/close', { meeting_id: id }); }} loading={busy}>Close check-in</Button>
             </div>
           )}
+          {!over && <InvitePeople live={live} meetingId={id} onSaved={loadLive} />}
           <div className={styles.card}>
             <h3 className={styles.listTitle}><MessageCircleQuestion size={14} aria-hidden="true" /> Question of the meeting</h3>
             <p className={styles.faint}>On the big screen; revealed after check-in.</p>
@@ -1636,7 +1688,6 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
             <Button type="submit" size="sm" variant="ghost" loading={busy}>{docSaved ? 'Saved' : 'Save link'}</Button>
           </form>
           )}
-          {!over && <InvitePeople live={live} meetingId={id} onSaved={loadLive} />}
           <AttendeeList live={live} onAdd={addPerson} onRemove={removePerson} onAbsent={markAbsent} onClearAbsent={clearAbsent} />
           {!live.meeting.series_id && <div className={styles.runActions}><IconButton kind="delete" label="Delete this meeting" onClick={deleteMeeting} /></div>}
         </>
@@ -1654,6 +1705,21 @@ function InvitePeople({ live, meetingId, onSaved }: { live: Live; meetingId: str
   const [error, setError] = useState('');
   const m = live.meeting;
   const invited = m.invitees ?? [];
+  const teamOpen = m.open_to_team !== false;
+  // A meeting for every team role needs no switch: everyone is already expected.
+  const wholeTeam = (audienceRoles({ audience: m.audience, invitees: m.invitees, group_ids: m.group_ids }).length === AUDIENCE_ROLES.length) && !(m.invitees?.length) && !(m.group_ids?.length);
+  async function setOpenToTeam(open: boolean) {
+    setBusy(true); setError('');
+    try {
+      const res = await fetch('/api/meetings/update', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ meeting_id: meetingId, invitees: m.invitees ?? [], group_ids: m.group_ids ?? [], audience: audienceRoles({ audience: m.audience, invitees: m.invitees, group_ids: m.group_ids }), open_to_team: open }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) { setError(json.error || 'Failed to save.'); return; }
+      onSaved();
+    } finally { setBusy(false); }
+  }
   // Expected people who are in only because of a role or group (not individually added).
   const covered = new Map<string, string>();
   for (const p of [...live.attendees, ...live.missing, ...live.absent]) if (!invited.includes(p.id)) covered.set(p.id, 'role or group');
@@ -1675,9 +1741,21 @@ function InvitePeople({ live, meetingId, onSaved }: { live: Live; meetingId: str
 
   if (!ids) {
     return (
-      <div className={styles.inviteBar}>
-        <span className={styles.faint}><Users size={12} aria-hidden="true" /> For: {audienceLabel({ audience: m.audience, invitees: m.invitees, group_ids: m.group_ids, groupNames: m.groupNames })}</span>
-        <Button size="sm" variant="secondary" onClick={() => setIds([...invited])}><UserPlus size={14} aria-hidden="true" /> Add people</Button>
+      <div className={styles.inviteWrap}>
+        <div className={styles.inviteBar}>
+          <span className={styles.faint}><Users size={12} aria-hidden="true" /> For: {audienceLabel({ audience: m.audience, invitees: m.invitees, group_ids: m.group_ids, groupNames: m.groupNames })}</span>
+          <Button size="sm" variant="secondary" onClick={() => setIds([...invited])}><UserPlus size={14} aria-hidden="true" /> Add people</Button>
+        </div>
+        {/* Who can check in, said plainly: the whole team, or only the people it is for. */}
+        <div className={`${styles.accessBox} ${wholeTeam ? styles.accessOpen : teamOpen ? styles.accessOpen : styles.accessLimited}`} role="status">
+          <span className={styles.accessIcon} aria-hidden="true">{wholeTeam || teamOpen ? <DoorOpen size={18} /> : <Lock size={18} />}</span>
+          <span className={styles.accessText}>
+            <strong>{wholeTeam ? 'Open to the whole team' : teamOpen ? 'Any officer or recruit can join' : 'Only the people it is for can join'}</strong>
+            <span>{wholeTeam ? 'Everyone on the team is expected, so nobody is turned away.' : teamOpen ? 'People who were not added check in as guests and show with a Guest tag.' : 'Anyone else who scans the code is turned away.'}</span>
+          </span>
+          {!wholeTeam && <Button size="sm" variant="secondary" loading={busy} onClick={() => setOpenToTeam(!teamOpen)}>{teamOpen ? 'Limit to the list' : 'Let the team join'}</Button>}
+        </div>
+        {error && <Notice tone="error">{error}</Notice>}
       </div>
     );
   }
