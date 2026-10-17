@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { KEEP_ALERT_DAYS, KEEP_ANY_DAYS, KEEP_READ_DAYS, KEEP_ROUTINE_ANY_DAYS, KEEP_ROUTINE_READ_DAYS, ROUTINE_TYPES, cleanupNotifications } from '@/lib/notifications/notificationCleanup';
-import { KEEP_REACTION_DAYS, cleanupMeetingReactions } from '@/lib/meetings/reactionCleanup';
 
 // A tiny stand-in for the Supabase client that records what each delete was told to match, and answers each with the next count in the list.
 function fakeSvc(counts: number[]) {
@@ -38,14 +37,5 @@ describe('notification cleanup', () => {
     expect(calls[2].filters).toEqual([['in', 'type', ROUTINE_TYPES], ['lt', 'created_at', '2026-08-19T12:00:00.000Z']]);
     expect(calls[3].filters).toEqual([['not', 'read_at', 'is', null], ['lt', 'created_at', '2026-09-03T12:00:00.000Z']]);
     expect(calls[4].filters).toEqual([['lt', 'created_at', '2026-07-05T12:00:00.000Z']]);
-  });
-});
-
-describe('meeting reaction cleanup', () => {
-  it('removes individual reactions after a week', async () => {
-    const { svc, calls } = fakeSvc([12]);
-    expect(await cleanupMeetingReactions(svc, new Date('2026-10-15T00:00:00Z'))).toEqual({ removed: 12 });
-    expect(KEEP_REACTION_DAYS).toBe(7);
-    expect(calls[0]).toEqual({ table: 'meeting_reactions', filters: [['lt', 'created_at', '2026-10-08T00:00:00.000Z']] });
   });
 });

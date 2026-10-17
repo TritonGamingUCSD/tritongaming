@@ -5,11 +5,13 @@ import SectionTabs from '@/components/ui/SectionTabs';
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { ReactNode } from 'react';
-import { LayoutDashboard, BarChart3, Activity, X, Server, Users as UsersIcon } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Activity, X, Server, Users as UsersIcon, MailPlus } from 'lucide-react';
 import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
 import { resolveAvatarUrl } from '@/lib/members/profile';
 import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/core/timezone';
 import RoleManager from './RoleManager';
+import PasteEmailsDialog from './PasteEmailsDialog';
+import Button from '@/components/ui/Button';
 import AccessPanel from './AccessPanel';
 import SystemStats from './SystemStats';
 import AdminOverviewPanels from './AdminOverviewPanels';
@@ -68,6 +70,7 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
     syncUrl(t);
   }
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [pasteOpen, setPasteOpen] = useState(false);
 
   // Who holds the admin role — filtered client-side from allUsers rather
   // than a separate query, since getAdminData.ts already loads every
@@ -200,11 +203,15 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionLabel}>Member Management</h2>
             <span className={styles.sectionHint}>Search any user and change their role instantly</span>
-            {roleHistoryEntries && (
-              <IconButton kind="history" label="View role change history" onClick={() => setHistoryOpen(true)} />
-            )}
+            <div className={styles.sectionActions}>
+              <Button size="sm" variant="secondary" onClick={() => setPasteOpen(true)}><MailPlus size={14} aria-hidden="true" /> Give a role by email</Button>
+              {roleHistoryEntries && (
+                <IconButton kind="history" label="View role change history" onClick={() => setHistoryOpen(true)} />
+              )}
+            </div>
           </div>
           <RoleManager users={allUsers} divisions={divisions} />
+          {pasteOpen && <PasteEmailsDialog divisions={divisions} onClose={() => setPasteOpen(false)} />}
         </section>
       )}
 

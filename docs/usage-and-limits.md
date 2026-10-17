@@ -42,7 +42,7 @@ Vercel's Hobby plan includes about 4 hours of Active CPU a month, which is spent
   - Meetings (the projector screen and live poll results): `notifyMeetingLive(meetingId)` (`src/lib/meetings/meetingLive.ts`), listened to with `useMeetingLive`. Refreshes are at least 2 seconds apart.
   - Docs: `notifyDocs()` (`src/lib/docs/docsLive.ts`).
   - A slow timer (30 seconds to 3 minutes) stays as a backstop in case the connection is blocked.
-- The live meeting call returns only reactions newer than a cursor; the reaction totals are sent every eighth refresh (or with `?totals=1`).
+- Emoji reactions are one running total per emoji per meeting (`meeting_reaction_counts`, no sender stored, no cap). The live meeting call returns those few rows each refresh and the screen floats up whatever is new since the last one.
 - The notification bell asks only for the unread number every 2 minutes (`GET /api/notifications?count=1`) and loads the list when it changes.
 - Portal links do not prefetch (`NoPrefetchLink`, and `PortalLink`). Each prefetch of a portal page was a server run plus a login check.
 
@@ -59,7 +59,7 @@ Pictures are shrunk to WebP in the browser before upload and files get unique na
 `vercel.json` has two jobs (the Hobby limit), each once a day:
 
 - `daily-reminders` sends the event reminders, the meeting reminders and the meeting-plan nudge.
-- `daily-maintenance` cleans old notifications (alerts after 14 days, routine notices soon after they are read, the rest after 30 to 90) and meeting reactions (after 7 days, since only the live screen uses them), syncs the quarter and team records, and on Sundays runs the storage tidy-up (`?only=…` runs one step).
+- `daily-maintenance` cleans old notifications (alerts after 14 days, routine notices soon after they are read, the rest after 30 to 90) and role grants that waited 90 days for a first sign-in, syncs the quarter and team records, and on Sundays runs the storage tidy-up (`?only=…` runs one step).
 
 Each is one route that calls library functions directly (see `docs/features.md`).
 

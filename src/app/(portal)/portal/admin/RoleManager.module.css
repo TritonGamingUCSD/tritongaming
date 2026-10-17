@@ -398,3 +398,7 @@
 .searchRow { display: flex; gap: 0.6rem; align-items: stretch; }
 .searchRow .searchWrap { flex: 1; min-width: 0; }
 @media (max-width: 560px) { .searchRow { flex-direction: column; } }
+
+/* Search and sort are the same height; on a phone sort drops under search and fills the width. */
+.searchRow .sortSelect { align-self: stretch; display: flex; align-items: center; min-height: 44px; padding-inline: 1rem; }
+@media (max-width: 560px) { .searchRow .sortSelect { width: 100%; } }

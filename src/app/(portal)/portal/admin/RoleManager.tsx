@@ -8,7 +8,7 @@ import { roleInk } from '@/lib/portal/roleColors';
 import Notice from '@/components/ui/Notice';
 import HoldButton from '@/components/HoldToConfirm/HoldButton';
 import { showToast } from '@/lib/ui/toast';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { Search, Gamepad2, X, Pencil } from 'lucide-react';
 import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK, ASSIGNABLE_ROLES } from '@/types/database';
@@ -21,7 +21,6 @@ import IconButton from '@/components/ui/IconButton';
 import styles from './RoleManager.module.css';
 import Select from '@/components/ui/Select';
 import UserDetail from './UserDetail';
-import PasteEmailsDialog from './PasteEmailsDialog';
 
 interface RoleGrant {
   role: AppRole;
@@ -69,6 +68,8 @@ interface DivisionOption {
 
 export default function RoleManager({ users: initialUsers, divisions }: { users: User[]; divisions: DivisionOption[] }) {
   const [users, setUsers] = useState(initialUsers);
+  // After the page data is refreshed (for example after roles were given by pasted emails), show the new list.
+  useEffect(() => { setUsers(initialUsers); }, [initialUsers]);
   const [query, setQuery] = useState('');
   const [filterRole, setFilterRole] = useState<AppRole | 'all' | 'none'>('all');
   const [sortBy, setSortBy] = useState<'name-asc' | 'name-desc' | 'joined-new' | 'joined-old'>('joined-new');
@@ -84,7 +85,6 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
   const [bulkDivisionId, setBulkDivisionId] = useState('');
   const [bulkApplying, setBulkApplying] = useState(false);
   const [bulkError, setBulkError] = useState<string | null>(null);
-  const [pasteOpen, setPasteOpen] = useState(false);
 
   // Delete / merge account — see admin_delete_account's own comment for
   // exactly what happens to a deleted or merged-away account's data.
@@ -299,7 +299,6 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
   return (
     <div className={styles.wrap}>
       {detailId && <UserDetail userId={detailId} onClose={() => setDetailId(null)} />}
-      {pasteOpen && <PasteEmailsDialog divisions={divisions} onClose={() => setPasteOpen(false)} />}
 
       {/* Controls */}
       <div className={styles.controls}>
@@ -318,7 +317,6 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
           )}
         </div>
 
-        <Button variant="secondary" onClick={() => setPasteOpen(true)}>Give a role by email</Button>
         <Select
           className={styles.sortSelect}
           value={sortBy}
