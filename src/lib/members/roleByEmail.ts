@@ -54,6 +54,12 @@ export async function planByEmail(svc: SupabaseClient, emails: string[], role: A
   return plan;
 }
 
+/** Waiting grants past their 90 days are never used, so they are deleted (run by the daily housekeeping job). */
+export async function cleanupExpiredGrants(svc: SupabaseClient, now = new Date()): Promise<{ removed: number }> {
+  const { count } = await svc.from('pending_role_grants').delete({ count: 'exact' }).lt('expires_at', now.toISOString());
+  return { removed: count ?? 0 };
+}
+
 /** Gives a person every role that was waiting for one of their email addresses, then clears those entries. Called when they sign in or link an email.
  *  It never throws: a problem here must not get in the way of signing in. */
 export async function applyPendingGrants(svc: SupabaseClient, userId: string, emails: string[]): Promise<number> {

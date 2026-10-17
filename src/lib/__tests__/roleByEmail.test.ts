@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseEmails, applyPendingGrants } from '@/lib/members/roleByEmail';
+import { parseEmails, applyPendingGrants, cleanupExpiredGrants } from '@/lib/members/roleByEmail';
 
 describe('parseEmails', () => {
   it('finds addresses in a messy paste, lowercase and without duplicates', () => {
@@ -46,5 +46,14 @@ describe('applyPendingGrants', () => {
     const { svc, calls } = fakeSvc([], []);
     expect(await applyPendingGrants(svc, 'u1', ['', '  '])).toBe(0);
     expect(calls.rpc).toEqual([]);
+  });
+});
+
+describe('cleanupExpiredGrants', () => {
+  it('deletes waiting grants whose 90 days are over', async () => {
+    const seen: unknown[] = [];
+    const svc = { from: (t: string) => ({ delete: () => ({ lt: async (c: string, v: string) => { seen.push([t, c, v]); return { count: 3 }; } }) }) } as never;
+    expect(await cleanupExpiredGrants(svc, new Date('2026-10-17T00:00:00Z'))).toEqual({ removed: 3 });
+    expect(seen).toEqual([['pending_role_grants', 'expires_at', '2026-10-17T00:00:00.000Z']]);
   });
 });
