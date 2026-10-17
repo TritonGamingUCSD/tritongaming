@@ -61,7 +61,7 @@ export function isExpected(m: MeetingAudience, userId: string, roles: { role: st
 
 // Someone sitting the quarter out (an officer or lead marked inactive) carries an 'inactive' marker next to their roles. They can still see meetings.
 // The roles of a meeting never pull them in: "everyone" or "all officers" skips them, so no attendance, absences or strikes. But when someone chose
-// them by name (added individually, or put in one of the meeting's groups), that is deliberate: they are expected, can check in, and count like anyone.
+// them by name (added individually; a team that includes them does not count), that is deliberate: they are expected, can check in, and count like anyone.
 export const isInactiveMember = (roles: { role: string }[]) => roles.some((r) => r.role === 'inactive');
 export const isExpectedActive = (m: MeetingAudience, userId: string, roles: { role: string }[]) =>
   isInactiveMember(roles) ? extraIds(m).includes(userId) : isExpected(m, userId, roles);

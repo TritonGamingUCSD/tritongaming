@@ -379,8 +379,10 @@ function FunBox({ meeting, onSaved }: { meeting: TodayMeeting; onSaved: () => vo
 
 // ── Everyone: their own attendance record ─────────────────────────────────────
 // Everything coming up that's meant for this person (or that they planned), grouped by day.
+type UpcomingItem = { key: string; date: string; title: string; starts_at: string; ends_at: string; location: string | null; description: string | null; doc_url: string | null; repeats: boolean; is_today: boolean; status: string; host_name: string | null; hosting: boolean };
 function UpcomingPanel() {
-  const [items, setItems] = useState<{ key: string; date: string; title: string; starts_at: string; ends_at: string; location: string | null; description: string | null; doc_url: string | null; repeats: boolean; is_today: boolean; status: string; host_name: string | null; hosting: boolean }[] | null>(null);
+  const [items, setItems] = useState<UpcomingItem[] | null>(null);
+  const [openItems, setOpenItems] = useState<UpcomingItem[]>([]);
   const [error, setError] = useState('');
   // Only the next few at first: a long run of weeks ahead is noise. The rest is one tap away.
   const [showAll, setShowAll] = useState(false);
@@ -389,13 +391,28 @@ function UpcomingPanel() {
       try {
         const res = await fetch('/api/meetings/upcoming', { cache: 'no-store' });
         const json = await res.json();
-        if (!res.ok) setError(json.error || 'Failed to load.'); else setItems(json.meetings);
+        if (!res.ok) setError(json.error || 'Failed to load.'); else { setItems(json.meetings); setOpenItems(json.open ?? []); }
       } catch { setError('Network error.'); }
     })();
   }, []);
   if (error) return <Notice tone="error">{error}</Notice>;
   if (!items) return <Loading label="Loading upcoming meetings…" />;
-  if (items.length === 0) return <div className={styles.card}><p className={styles.muted}>Nothing scheduled for you yet.</p></div>;
+  const guestList = openItems.length > 0 && (
+    <>
+      <h3 className={styles.listTitle}>Also Open To You</h3>
+      <p className={styles.muted}>You were not added to these, but the host left them open to officers and recruits. You can check in as a guest.</p>
+      <ul className={styles.people}>
+        {openItems.map((m) => (
+          <li key={m.key} className={styles.person}>
+            <span className={styles.personName}>{m.is_today ? 'Today' : dayLabel(m.date).split(',')[0]} · {m.title}<em> · {timeRange(m.starts_at, m.ends_at)}{m.location ? ` · ${m.location}` : ''}{m.host_name ? ` · Hosted by ${m.host_name}` : ''}</em></span>
+            <span className={styles.guestTag}>Guest</span>
+            {m.status === 'open' && <span className={`${styles.pill} ${styles.pillOpen}`}>Check-in open</span>}
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+  if (items.length === 0) return <div className={styles.stack}><div className={styles.card}><p className={styles.muted}>Nothing scheduled for you yet.</p></div>{guestList}</div>;
   return (
     <ul className={styles.stack}>
       {(showAll ? items : items.slice(0, 4)).map((m, i, shown) => (
@@ -425,6 +442,7 @@ function UpcomingPanel() {
       {!showAll && items.length > 4 && (
         <li><Button size="sm" variant="secondary" onClick={() => setShowAll(true)}>Show {items.length - 4} more coming up</Button></li>
       )}
+      {guestList && <li className={styles.stack}>{guestList}</li>}
     </ul>
   );
 }
@@ -559,7 +577,7 @@ function PeoplePicker({ team, value, onChange, covered }: { team: TeamPerson[] |
                   <span className={`${styles.checkBox} ${on ? styles.checkBoxOn : ''}`} aria-hidden="true">{on && <Check size={13} strokeWidth={3} />}</span>
                   <Avatar p={p} />
                   <span className={styles.personName}>{p.name}</span>
-                  {p.inactive && <span className={styles.idleTag} title={p.alumni ? 'Alumni: role-based meetings skip them, but they can be added by name' : 'Inactive this quarter: role-based meetings skip them, but they can be added by name'}><Moon size={11} aria-hidden="true" /> {p.alumni ? 'Alumni' : 'Inactive now'}</span>}
+                  {p.inactive && <span className={styles.idleTag} title={p.alumni ? 'Alumni: role-based meetings skip them, but they can be added by name' : 'Inactive this quarter: role-based and team meetings skip them, but they can be added by name'}><Moon size={11} aria-hidden="true" /> {p.alumni ? 'Alumni' : 'Inactive now'}</span>}
                   <span className={styles.pickRole}>{via ? `via ${via}` : p.role}</span>
                 </label>
               </li>
@@ -585,7 +603,7 @@ export function AudiencePicker({ value, onChange, hideOpen }: { value: Aud; onCh
   for (const p of team ?? []) {
     const g = (groups ?? []).find((x) => value.groups.includes(x.id) && x.member_ids.includes(p.id));
     if (!p.inactive && p.roles.some((r) => value.roles.includes(r))) covered.set(p.id, 'role');
-    else if (g) covered.set(p.id, g.name);
+    else if (g && !p.inactive) covered.set(p.id, g.name);
   }
   return (
     <div className={styles.audience}>
@@ -758,6 +776,7 @@ export function TeamsPanel({ userId, canManageAll, canEdit = true }: { userId: s
                       <li key={id} className={styles.memberChip}>
                         {p ? <Avatar p={p} /> : null}
                         <span>{p?.name ?? 'Someone'}</span>
+                        {p?.inactive && <span className={styles.idleTag} title="Inactive this quarter: stays on the team, but meetings that pick this team do not expect them"><Moon size={11} aria-hidden="true" /> {p.alumni ? 'Alumni' : 'Inactive now'}</span>}
                         {may && <button type="button" className={styles.chipX} aria-label={`Take ${p?.name ?? 'them'} off ${g.name}`} onClick={() => setMember(g, id, false)}>×</button>}
                       </li>
                     );

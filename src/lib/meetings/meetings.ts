@@ -71,8 +71,13 @@ export function isCheckInAccepting(m: Pick<MeetingRow, 'starts_at' | 'ends_at' |
 export interface GroupInfo { name: string; members: string[] }
 
 export async function loadGroups(svc: SupabaseClient): Promise<Map<string, GroupInfo>> {
-  const { data } = await svc.from('meeting_groups').select('id, name, member_ids');
-  return new Map((data ?? []).map((g) => [g.id as string, { name: g.name as string, members: (g.member_ids as string[] | null) ?? [] }]));
+  const [{ data }, { data: idle }] = await Promise.all([
+    svc.from('meeting_groups').select('id, name, member_ids'),
+    svc.from('user_roles').select('user_id').eq('role', 'inactive'),
+  ]);
+  // A team keeps its inactive members on its list, but choosing the team for a meeting does not expect them (same as choosing a role).
+  const sitOut = new Set((idle ?? []).map((r) => r.user_id as string));
+  return new Map((data ?? []).map((g) => [g.id as string, { name: g.name as string, members: ((g.member_ids as string[] | null) ?? []).filter((id) => !sitOut.has(id)) }]));
 }
 
 // Adds `extra_ids` (individually added people + the CURRENT members of each chosen group) to meeting-like rows,
