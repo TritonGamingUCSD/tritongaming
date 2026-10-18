@@ -26,4 +26,4 @@
 }
 
 /* On a phone the floating bell sits in the top-right corner; keep the banner clear of it. */
-@media (max-width: 899px) { .banner { margin-right: 3rem; } }
+@media (max-width: 899px) { .banner { margin-right: 9.6rem; } }   /* clears the three round buttons (site, theme, bell) at the top right */

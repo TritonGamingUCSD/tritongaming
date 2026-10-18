@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { roleInk } from '@/lib/portal/roleColors';
 import Link from '@/components/portal/NoPrefetchLink';
 import Image from 'next/image';
-import { Ticket, User, Camera, Calendar, Users, QrCode, Pencil, Shield, BookOpen, Award, ArrowLeft, CalendarCheck, LayoutGrid, CircleHelp, ShieldAlert, CalendarRange } from 'lucide-react';
+import { Ticket, User, Camera, Calendar, Users, QrCode, Pencil, Shield, BookOpen, Award, ArrowLeft, CalendarCheck, LayoutGrid, CircleHelp, ShieldAlert, CalendarRange, Globe } from 'lucide-react';
 import { getProfile, getUserRoles, getMyPrivateProfile, getUser, getSessionRoles, getViewAs, getViewingUser } from '@/lib/core/auth';
 import { ViewAsSwitcher, ViewAsBanner, ViewingUserBanner } from '@/components/portal/ViewAs';
 import ProfileIncompleteBanner from '@/components/portal/ProfileIncompleteBanner';
@@ -507,7 +507,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
                     )}
                   </div>
                   <div className={styles.headerActions}>
-                    <Link href="/" className={styles.headerActionLink} aria-label="Back to site">← <span className={styles.longLabel}>Back to </span>site</Link>
+                    <Link href="/" className={styles.headerActionLink} aria-label="Back to site" title="Back to site"><span className={styles.siteLabel}>← Back to site</span><Globe className={styles.siteGlyph} size={17} strokeWidth={1.75} aria-hidden="true" /></Link>
                     <span className={styles.headerActionDivider} aria-hidden="true">·</span>
                     <SignOutButton />
                   </div>
