@@ -10,8 +10,8 @@ and a reward can never show the same one (the kind is part of what is drawn and 
 
 | Where | Code | What it carries | Lives |
 |---|---|---|---|
-| A ticket (My Tickets, full screen) | tgcode, kind `t` | key from the ticket's secret | 30 s (the previous 30 s still counts) |
-| Meeting check-in (host's live screen) | tgcode, kind `m` | key from the meeting's secret | 30 s (same) |
+| A ticket (My Tickets, full screen) | tgcode, kind `t` | key from the ticket's secret | about 30 s (the previous window counts only for the first 5 s of a new one) |
+| Meeting check-in (host's live screen) | tgcode, kind `m` | key from the meeting's secret | about 30 s (same) |
 | A reward pickup (Rewards, "show to an officer") | tgcode, kind `r` | first 12 hex digits of the redemption id | until picked up |
 | Event self check-in (Check-In → Self Check-In) | ordinary square QR, a link `…/in/<event>` | the link | permanent (public on purpose: attendees may have no account) |
 | QR Studio | ordinary square QR, whatever the person made | anything | permanent |
@@ -48,6 +48,5 @@ may scan tickets can ever hit the ticket side.
 
 ## After a scan
 
-The result card pops in: the icon scales in, a ring ripples out of a success, a refusal shakes once, the lines follow, and the phone gives a short buzz (one pulse for a result, three for an
-already-used ticket, two for a refusal). With reduced motion on, none of it moves. A reply with no reason (signed out, too many tries, a server error) is turned into a plain sentence.
+The result card pops in: the icon scales in, a ring ripples out of a success, a refusal shakes once, the lines follow. With reduced motion on, none of it moves. A reply with no reason (signed out, too many tries, a server error) is turned into a plain sentence.
 Wherever a tgcode is shown the button says **Show tgcode** and uses the ring icon instead of the standard QR glyph.

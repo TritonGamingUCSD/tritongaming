@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
-import { rotatingCode, qrToken, currentWindow } from '@/lib/events/rotatingCode';
+import { rotatingCode, qrToken, currentWindow, scanWindows } from '@/lib/events/rotatingCode';
 import { performCheckin } from '@/lib/events/performCheckin';
 import { openEventsFilter } from '@/lib/events/checkinWindow';
 import { canCheckInNow, todaysCheckinAt } from '@/lib/events/checkinDays';
@@ -70,7 +70,8 @@ export async function POST(request: Request) {
   if (ringToken) {
     const tok = String(ringToken).trim().toLowerCase();
     if (!/^[0-9a-f]{12}$/.test(tok)) return NextResponse.json({ error: 'That isn’t a ticket.' }, { status: 400 });
-    matches = (t) => qrToken(t.ticket_code, windowIndex).slice(0, 12) === tok || qrToken(t.ticket_code, windowIndex - 1).slice(0, 12) === tok;
+    const wins = scanWindows();   // about 30 s, not 60 (see rotatingCode)
+    matches = (t) => wins.some((w) => qrToken(t.ticket_code, w).slice(0, 12) === tok);
   } else {
     const raw = String(code).trim().replace(/^#\s*/, '');
     const normalizedCode = raw.includes(':') ? raw.slice(raw.lastIndexOf(':') + 1) : raw;

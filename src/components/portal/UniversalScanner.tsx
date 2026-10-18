@@ -10,8 +10,6 @@ import CodeEntry from './CodeEntry';
 import { checkInWithCode, checkInWithQr, confirmReward, resolveChoice, RING, type Outcome } from '@/lib/checkin/anyCode';
 import styles from './UniversalScanner.module.css';
 
-const buzz = (pattern: number | number[]) => { try { navigator.vibrate?.(pattern); } catch { /* not supported */ } };
-
 // What a scan turned into, said plainly: the person always sees exactly what it did (or did not do).
 type State =
   | { kind: 'scanning' }
@@ -58,7 +56,6 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
     const outcome = await p;
     if (!outcome) return;
     setState({ kind: 'result', outcome });
-    buzz(outcome.kind === 'error' ? [60, 40, 60] : outcome.kind === 'ticket' && outcome.status !== 'active' ? [40, 40, 40] : 45);   // felt as well as seen
     if (outcome.kind === 'meeting') window.dispatchEvent(new Event('tg:meetings-changed'));
   }
 
@@ -121,7 +118,6 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
             setBusy(true);
             const done = await confirmReward(o.id, o.title, o.member);
             setState({ kind: 'result', outcome: done });
-            buzz(done.kind === 'error' ? [60, 40, 60] : 45);
             setBusy(false);
           }}
         />

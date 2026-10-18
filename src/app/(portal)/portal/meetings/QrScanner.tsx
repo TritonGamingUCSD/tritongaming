@@ -82,7 +82,7 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
           // The caller decides what the text is: true = taken (stop the camera), anything else = keep looking. The same text is not offered again for 3 s.
           if (text && !(text === lastText && now - lastAt < 3000)) {
             lastText = text; lastAt = now;
-            if (onScanRef.current(text) === true) { dead = true; navigator.vibrate?.(40); stream?.getTracks().forEach((x) => x.stop()); }
+            if (onScanRef.current(text) === true) { dead = true; stream?.getTracks().forEach((x) => x.stop()); }
           }
         };
         raf = requestAnimationFrame(tick);

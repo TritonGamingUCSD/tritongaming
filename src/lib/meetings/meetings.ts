@@ -3,7 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
-import { rotatingCode, qrToken, currentWindow, secondsUntilNextWindow } from '@/lib/events/rotatingCode';
+import { rotatingCode, qrToken, currentWindow, scanWindows, secondsUntilNextWindow } from '@/lib/events/rotatingCode';
 import { pacificDayKey } from '@/lib/events/checkinDays';
 import { staffName } from '@/lib/members/names';
 import { pacificDatetimeLocalToUTC } from '@/lib/core/timezone';
@@ -225,12 +225,11 @@ export function isValidMeetingCode(secret: string, input: string): boolean {
 }
 
 // The code on the room screen is not a link and not the typed digits: it is a ring code carrying `m` and twelve hex digits of a key of its own, which rotates with
-// the same 30-second window (the previous one still counts, as for the digits). Only the portal's scanner reads it, so there is no sign-in step to outlast.
+// the same 30-second window (the previous one counts only for the first 5 seconds of a new one, so a code is good for about 30 to 35 s; the digits keep the whole previous window). Only the portal's scanner reads it, so there is no sign-in step to outlast.
 export const QR_TOKEN_LEN = 12;
 export const currentQrToken = (secret: string): string => qrToken(secret, currentWindow()).slice(0, QR_TOKEN_LEN);
 export function isValidQrToken(secret: string, token: string): boolean {
-  const w = currentWindow();
-  return token === qrToken(secret, w).slice(0, QR_TOKEN_LEN) || token === qrToken(secret, w - 1).slice(0, QR_TOKEN_LEN);
+  return scanWindows().some((w) => token === qrToken(secret, w).slice(0, QR_TOKEN_LEN));
 }
 
 export async function authorizeMeetings(capability: Extract<Capability, 'manage_meetings' | 'attend_meetings' | 'host_meetings' | 'view_attendance_reports'>) {

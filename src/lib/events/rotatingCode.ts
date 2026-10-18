@@ -38,6 +38,15 @@ export function qrToken(secret: string, windowIndex: number): string {
   return createHmac('sha256', secret).update(`qr:${windowIndex}`).digest('hex').slice(0, 24);
 }
 
+// The windows a scanned code may come from. A code on a screen is replaced every ROTATION_SECONDS, so a scan only counts from the current window, plus the one just
+// before it during the first few seconds of a new one (a code read a moment before it changed, or a slow connection). A code is therefore good for about 30 to 35 s.
+// Typed digits keep the full previous window: reading and typing six numbers takes longer than a camera.
+export const SCAN_GRACE_SECONDS = 5;
+export function scanWindows(): number[] {
+  const w = currentWindow();
+  return Date.now() / 1000 % ROTATION_SECONDS < SCAN_GRACE_SECONDS ? [w, w - 1] : [w];
+}
+
 export function secondsUntilNextWindow(): number {
   return ROTATION_SECONDS - (Math.floor(Date.now() / 1000) % ROTATION_SECONDS);
 }
