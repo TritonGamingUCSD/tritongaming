@@ -172,6 +172,14 @@ function CheckInPanel() {
 
   useEffect(() => { void load(); }, [load]);
   useVisiblePoll(load, 60_000);   // paused while the tab is hidden; refreshes the moment it comes back
+  // A meeting is over at its scheduled end: its cards go away right then, without waiting for the next refresh.
+  const [, tick] = useState(0);
+  useEffect(() => {
+    const next = (data?.meetings ?? []).map((m) => new Date(m.ends_at).getTime()).filter((t) => t > Date.now()).sort((a, b) => a - b)[0];
+    if (!next) return;
+    const id = setTimeout(() => tick((n) => n + 1), Math.min(next - Date.now() + 250, 2 ** 31 - 1));
+    return () => clearTimeout(id);
+  }, [data]);
 
   async function submit(value: string) {
     if (busy) return;
@@ -192,10 +200,11 @@ function CheckInPanel() {
 
   if (!data) return <Loading label="Loading meetings…" />;
 
-  const checkedIn = data.meetings.filter((m) => m.checked_in_at);
-  const openToEnter = data.meetings.filter((m) => m.accepting && !m.checked_in_at);
+  const meetings = data.meetings.filter((m) => new Date(m.ends_at).getTime() > Date.now());
+  const checkedIn = meetings.filter((m) => m.checked_in_at);
+  const openToEnter = meetings.filter((m) => m.accepting && !m.checked_in_at);
   // Opened by an exec, but members can't start yet (it's earlier than 10 minutes before the start).
-  const early = data.meetings.filter((m) => m.open && !m.accepting && !m.checked_in_at);
+  const early = meetings.filter((m) => m.open && !m.accepting && !m.checked_in_at);
 
   return (
     <div className={styles.stack}>
@@ -212,12 +221,10 @@ function CheckInPanel() {
 
       {openToEnter.length > 0 && (
         <div className={styles.card}>
-          <h2 className={styles.cardTitle}>Enter the code on the screen</h2>
-          <p className={styles.muted}>
-            {openToEnter.map((m) => m.title).join(' · ')} · the code changes every 30 s
-          </p>
-          {openToEnter.filter((m) => m.description).map((m) => <p key={m.id} className={styles.descText}>{m.description}</p>)}
-          {openToEnter.filter((m) => m.doc_url).map((m) => <DocButton key={m.id} url={m.doc_url!} label={openToEnter.length > 1 ? `Doc: ${m.title}` : 'Open meeting doc'} />)}
+          <h2 className={styles.cardTitle}>{checkedIn.length > 0 ? 'Another meeting? Enter its code' : 'Enter the code on the screen'}</h2>
+          <p className={styles.muted}>{openToEnter.length === 1 ? `${openToEnter[0].title} · ` : 'The code decides which meeting you join · '}the code changes every 30 s</p>
+          {openToEnter.length === 1 && openToEnter[0].description && <p className={styles.descText}>{openToEnter[0].description}</p>}
+          {openToEnter.length === 1 && openToEnter[0].doc_url && <DocButton url={openToEnter[0].doc_url} label="Open meeting doc" />}
           <input
             className={styles.codeInput}
             value={code}
@@ -252,11 +259,11 @@ function CheckInPanel() {
         <div className={styles.card}>
           <h2 className={styles.cardTitle}>Check-in isn&apos;t open</h2>
           <p className={styles.muted}>
-            {data.meetings.length > 0
+            {meetings.length > 0
               ? 'Opens when the meeting starts. This page updates itself.'
               : 'There’s no meeting today.'}
           </p>
-          {data.meetings.filter((m) => m.doc_url).map((m) => <DocButton key={m.id} url={m.doc_url!} label={data.meetings.length > 1 ? `Doc: ${m.title}` : 'Meeting doc'} />)}
+          {meetings.filter((m) => m.doc_url).map((m) => <DocButton key={m.id} url={m.doc_url!} label={meetings.length > 1 ? `Doc: ${m.title}` : 'Meeting doc'} />)}
         </div>
       )}
 
@@ -1017,11 +1024,13 @@ function SeriesEditForm({ series: s, busy, onSave, onCancel }: { series: Series;
         <Field label="Starts"><TimeInput value={start} onChange={(e) => setStart(e.target.value)} required /></Field>
         <Field label="Ends"><TimeInput value={end} onChange={(e) => setEnd(e.target.value)} required /></Field>
       </div>
+      <AudienceField value={audience} onChange={setAudience} />
+      <MoreOptions filled={[room && 'Room', endsOn && 'Ends ' + endsOn, desc && 'Description', doc && 'Doc'].filter(Boolean) as string[]}>
       <Field label="Room" hint="The default for every week."><Input value={room} onChange={(e) => setRoom(e.target.value)} maxLength={80} placeholder="e.g. Price Center East" /></Field>
       <Field label="Last meeting on (optional)" hint="After this day it stops showing up in the portal. Blank means it keeps going."><DateInput value={endsOn} min={pacificToday()} onChange={(e) => setEndsOn(e.target.value)} /></Field>
       <Field label="What's this meeting about? (optional)"><Textarea value={desc} onChange={(e) => setDesc(e.target.value)} maxLength={MAX_DESCRIPTION_LENGTH} rows={2} /></Field>
       <Field label="Meeting doc link"><Input value={doc} onChange={(e) => setDoc(e.target.value)} placeholder="https://docs.google.com/…" inputMode="url" /></Field>
-      <div className={styles.audienceField}><span className={styles.audienceTitle}>Who is it for?</span><AudiencePicker value={audience} onChange={setAudience} /></div>
+      </MoreOptions>
       <SeriesExcused seriesId={s.id} />
       {end <= start && <p className={styles.checkWarn}>Pick an end time after the start.</p>}
       <div className={styles.formActions}>
@@ -1132,14 +1141,16 @@ function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, o
             <Field label="Starts"><TimeInput value={startT} onChange={(e) => setStartT(e.target.value)} required /></Field>
             <Field label="Ends"><TimeInput value={endT} onChange={(e) => setEndT(e.target.value)} required /></Field>
           </div>
+          <AudienceField value={audience} onChange={setAudience} />
+          <MoreOptions filled={[room && 'Room', desc && 'Description', doc && 'Doc', q.text && 'Question'].filter(Boolean) as string[]}>
           <Field label="What's this meeting about? (optional)" hint="A line or two. Members see it when they check in."><Textarea value={desc} onChange={(e) => setDesc(e.target.value)} maxLength={MAX_DESCRIPTION_LENGTH} rows={2} placeholder="e.g. Planning the Halloween LAN: roles, budget and timeline." /></Field>
           <Field label="Room for this meeting" hint="Only changes this one meeting."><Input value={room} onChange={(e) => setRoom(e.target.value)} placeholder="e.g. Price Center East" maxLength={80} /></Field>
           <Field label="Meeting doc link"><Input value={doc} onChange={(e) => setDoc(e.target.value)} placeholder="https://docs.google.com/… or /portal/docs" inputMode="url" /></Field>
           <Field label="Question of the meeting" hint={status === 'open' ? 'Locked while check-in is open.' : undefined}>
             <QuestionEditor value={q} onChange={setQ} disabled={status === 'open'} />
           </Field>
-          <div className={styles.audienceField}><span className={styles.audienceTitle}>Who is it for?</span><AudiencePicker value={audience} onChange={setAudience} /></div>
-              <div className={styles.formActions}><Button type="submit" size="sm" loading={busy} disabled={audienceEmpty(audience) || qBad(q)}>Save</Button></div>
+          </MoreOptions>
+          <div className={styles.formActions}><Button type="submit" size="sm" loading={busy} disabled={audienceEmpty(audience) || qBad(q)}>Save</Button></div>
         </form>
       )}
       {editingDoc && !past && <AdvanceAbsences item={item} onChanged={onChanged} />}
@@ -1393,6 +1404,34 @@ function EmojiPanel() {
   );
 }
 
+// Who it is for, as one line with a Change button: the full picker only opens when it is needed (always open while nobody is chosen yet).
+function AudienceField({ value, onChange }: { value: Aud; onChange: (v: Aud) => void }) {
+  const [open, setOpen] = useState(false);
+  const empty = audienceEmpty(value);
+  const summary = empty ? 'Nobody chosen yet' : audienceLabel({ audience: value.roles, invitees: value.invitees, group_ids: value.groups });
+  return (
+    <div className={styles.audienceField}>
+      <div className={styles.audienceHead}>
+        <span className={styles.audienceTitle}>Who Is It For?</span>
+        <span className={`${styles.audienceSummary} ${empty ? styles.audienceNone : ''}`}>{summary}</span>
+        {!empty && <Button type="button" size="sm" variant="ghost" onClick={() => setOpen((v) => !v)} aria-expanded={open}>{open ? 'Done' : 'Change'}</Button>}
+      </div>
+      {(empty || open) && <AudiencePicker value={value} onChange={onChange} />}
+    </div>
+  );
+}
+
+// The less common settings fold away; the line says which of them are filled in, so a host sees what is set without opening it.
+function MoreOptions({ filled, children }: { filled: string[]; children: React.ReactNode }) {
+  return (
+    <details className={styles.moreOptions}>
+      <summary><span>More Options</span><em>{filled.length ? filled.join(' · ') : 'Room, doc, description, question'}</em></summary>
+      <div className={styles.moreBody}>{children}</div>
+    </details>
+  );
+}
+
+
 function ScheduleForm({ onCreated }: { onCreated: () => void }) {
   const [title, setTitle] = useState('');
   const [repeat, setRepeat] = useState<'weekly' | 'once'>('weekly');
@@ -1443,17 +1482,19 @@ function ScheduleForm({ onCreated }: { onCreated: () => void }) {
         )}
         <Field label="Starts"><TimeInput value={start} onChange={(e) => setStart(e.target.value)} required /></Field>
         <Field label="Ends"><TimeInput value={end} onChange={(e) => setEnd(e.target.value)} required /></Field>
+      </div>
+      <AudienceField value={audience} onChange={setAudience} />
+      <MoreOptions filled={[repeat === 'weekly' && endsOn && 'Ends ' + endsOn, location && 'Room', description && 'Description', doc && 'Doc', repeat === 'once' && q.text && 'Question'].filter(Boolean) as string[]}>
         {repeat === 'weekly' && <Field label="Last meeting on (optional)" hint="Blank means it keeps going until you stop it."><DateInput value={endsOn} min={pacificToday()} onChange={(e) => setEndsOn(e.target.value)} /></Field>}
         <Field label={repeat === 'weekly' ? 'Usual room (optional)' : 'Room (optional)'} hint={repeat === 'weekly' ? 'Just the default — change the room for any single week from its Details.' : undefined}><Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Price Center East" maxLength={80} /></Field>
-      </div>
       <Field label="What's this meeting about? (optional)" hint="A line or two. Members see it when they check in."><Textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={MAX_DESCRIPTION_LENGTH} rows={2} placeholder="e.g. Planning the Halloween LAN: roles, budget and timeline." /></Field>
       <Field label="Meeting doc link (optional)" hint="Members it is meant for see the link as soon as you add it. For a repeating meeting this is the default; change it for any single week."><Input value={doc} onChange={(e) => setDoc(e.target.value)} placeholder="https://docs.google.com/…" inputMode="url" /></Field>
-      <div className={styles.audienceField}><span className={styles.audienceTitle}>Who is it for?</span><AudiencePicker value={audience} onChange={setAudience} /></div>
       {repeat === 'once' && (
         <Field label="Question of the meeting (optional)" hint="An icebreaker people answer after checking in. You can also set it on the day.">
           <QuestionEditor value={q} onChange={setQ} placeholder="What game have you put the most hours into?" />
         </Field>
       )}
+      </MoreOptions>
       <p className={styles.faint}>Times are Pacific. Repeating meetings appear two weeks ahead.</p>
       {error && <Notice tone="error">{error}</Notice>}
       <div className={styles.formActions}><Button type="submit" loading={busy} disabled={audienceEmpty(audience)}>{repeat === 'weekly' ? 'Schedule weekly meeting' : 'Schedule meeting'}</Button></div>
