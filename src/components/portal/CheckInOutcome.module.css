@@ -14,25 +14,15 @@
 .box > button, .row > button { margin-top: 0.5rem; }
 .choices { display: flex; flex-direction: column; gap: 0.5rem; width: 100%; margin-top: 0.4rem; }
 
-/* The moment a scan lands: the icon pops in, a ring ripples out of a success, a refusal shakes once, and the lines follow one after the other. */
-.icon { position: relative; margin: 0.5rem 0 0.6rem; animation: ciPop 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
-.ok::after, .info::after, .warn::after { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 3px solid currentColor; color: inherit; opacity: 0; animation: ciRipple 0.9s ease-out 0.15s; }
-.ok::after { border-color: var(--pp-ok); }
-.info::after { border-color: var(--pp-info); }
-.warn::after { border-color: var(--pp-warn); }
-.bad { animation: ciPop 0.4s cubic-bezier(0.2, 1.4, 0.4, 1) both, ciShake 0.45s ease-in-out 0.35s; }
-.box > :not(.icon) { animation: ciRise 0.35s ease-out both; }
-.box > :nth-child(2) { animation-delay: 0.08s; }
-.box > :nth-child(3) { animation-delay: 0.14s; }
-.box > :nth-child(4) { animation-delay: 0.2s; }
-.box > :nth-child(n + 5) { animation-delay: 0.26s; }
-@keyframes ciPop { from { transform: scale(0.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-@keyframes ciRipple { from { transform: scale(1); opacity: 0.7; } to { transform: scale(1.4); opacity: 0; } }
-@keyframes ciShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
-@keyframes ciRise { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .icon, .bad, .box > *, .ok::after, .info::after, .warn::after { animation: none; } }
+/* The moment a result lands: the icon and then the lines ease in once. Nothing keeps moving. */
+.icon { margin: 0.5rem 0 0.6rem; animation: ciPop 0.3s ease-out both; }
+.box > :not(.icon) { animation: ciRise 0.25s ease-out both; }
+.box > :nth-child(2) { animation-delay: 0.05s; }
+.box > :nth-child(n + 3) { animation-delay: 0.1s; }
+@keyframes ciPop { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes ciRise { from { transform: translateY(6px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .icon, .box > * { animation: none; } }
 
 /* In the scanner's sheet the ring above already shows the outcome, so the icon is left out and the lines start straight away. */
 .bare > .icon { display: none; }
 .bare { padding-top: 0; }
-.bare > :nth-child(2) { animation-delay: 0.1s; }

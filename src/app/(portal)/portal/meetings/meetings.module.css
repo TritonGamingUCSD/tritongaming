@@ -829,10 +829,10 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 /* ── After a scan: the picture freezes, the ring snaps onto the code in the outcome's colour, an icon pops in and the result slides up over the camera. Nothing moves while it looks. ── */
 .scanLive { border-color: rgba(255, 255, 255, 0.92); }   /* theme-ok */
 .lock_busy, .lock_ok, .lock_warn, .lock_bad { top: 31%; width: min(46vw, 28vh); border-style: solid; animation: tgLockOn 0.35s ease-out; }
-.lock_busy { border-color: #ffc72c; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.6), 0 0 24px rgba(255, 199, 44, 0.6); animation: tgLockOn 0.35s ease-out, tgBusy 1s ease-in-out 0.35s infinite; }   /* theme-ok */
+.lock_busy { border-color: #ffc72c; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.6), 0 0 24px rgba(255, 199, 44, 0.6);  }   /* theme-ok */
 .lock_ok { border-color: #34d399; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.6), 0 0 28px rgba(52, 211, 153, 0.7); }   /* theme-ok */
 .lock_warn { border-color: #fbbf24; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.6), 0 0 28px rgba(251, 191, 36, 0.7); }   /* theme-ok */
-.lock_bad { border-color: #f87171; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.6), 0 0 28px rgba(248, 113, 113, 0.7); animation: tgLockOn 0.35s ease-out, tgScanShake 0.4s ease-in-out 0.35s; }   /* theme-ok */
+.lock_bad { border-color: #f87171; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.6), 0 0 28px rgba(248, 113, 113, 0.7);  }   /* theme-ok */
 .scanLockIcon { position: absolute; left: 50%; top: 31%; z-index: 2; display: grid; place-items: center; width: 14vh; max-width: 26vw; aspect-ratio: 1 / 1; transform: translate(-50%, -50%); border-radius: 50%; color: #fff; pointer-events: none; animation: tgScanIcon 0.4s cubic-bezier(0.2, 1.4, 0.4, 1) 0.1s both; }   /* theme-ok */
 .lockIcon_ok { background: #059669; }   /* theme-ok */
 .lockIcon_warn { background: #d97706; }   /* theme-ok */
@@ -843,8 +843,6 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .scanStage video.scanReady { opacity: 1; }
 .scanStarting { position: absolute; inset: 0; display: grid; place-items: center; color: rgba(255, 255, 255, 0.8); font-size: 0.95rem; pointer-events: none; }   /* theme-ok */
 @keyframes tgLockOn { 0% { transform: translate(-50%, -50%) scale(1.2); } 100% { transform: translate(-50%, -50%) scale(1); } }
-@keyframes tgBusy { 50% { box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.6), 0 0 6px rgba(255, 199, 44, 0.3); } }
-@keyframes tgScanShake { 0%, 100% { margin-left: 0; } 25% { margin-left: -8px; } 75% { margin-left: 8px; } }
 @keyframes tgScanIcon { from { transform: translate(-50%, -50%) scale(0.3); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
 @keyframes tgSheetUp { from { transform: translateY(100%); } to { transform: none; } }
 @media (prefers-reduced-motion: reduce) { .lock_busy, .lock_ok, .lock_warn, .lock_bad, .scanLockIcon, .scanSheet { animation: none; } .scanStage video { transition: none; } }

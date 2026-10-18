@@ -22,7 +22,7 @@
 .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; }
 .primaryLink { display: inline-flex; align-items: center; min-height: 40px; padding: 0.5rem 1.1rem; border-radius: 0.7rem; background: var(--yellow); color: #111c33; font-family: var(--font-futura-heavy); text-decoration: none; }
 .badge { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.7rem; border-radius: 999px; background: var(--pp-ok); color: #ffffff; font-family: var(--font-futura-heavy); font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; } /* theme-ok: white text on the success color reads in both themes */
-.formStep { align-self: stretch; padding: 0.9rem 0.6rem; border: 2px solid var(--yellow); border-radius: 1rem; background: rgba(var(--pp-ink-rgb), 0.04); box-shadow: 0 0 0 4px rgba(255, 199, 44, 0.25); animation: nudge 2s ease-in-out infinite; }
+.formStep { align-self: stretch; padding: 0.9rem 0.6rem; border: 2px solid var(--yellow); border-radius: 1rem; background: rgba(var(--pp-ink-rgb), 0.04); box-shadow: 0 0 0 4px rgba(255, 199, 44, 0.25); }
 @keyframes nudge { 50% { box-shadow: 0 0 0 8px rgba(255, 199, 44, 0.12); } }
 @media (prefers-reduced-motion: reduce) { .formStep { animation: none; } }
 .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; align-self: stretch; text-align: left; }
