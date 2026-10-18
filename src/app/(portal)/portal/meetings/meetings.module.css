@@ -777,7 +777,7 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .scanError { margin: auto 1.2rem; padding: 0.9rem; border-radius: 0.7rem; background: rgba(185, 28, 28, 0.85); color: #fff; font-size: 0.95rem; text-align: center; }   /* theme-ok */
 
 /* The host's check-in frame: the typed code and its QR side by side in one ring (the ring fills as people check in), the QR in the code's own colour. */
-.duo { display: flex; align-items: stretch; justify-content: center; gap: 1.5rem; padding: 1.2rem 1.7rem; max-width: 100%; }
+.duo { display: flex; align-items: stretch; justify-content: center; gap: 1.5rem; padding: 1.2rem 1.7rem; max-width: 100%; background: var(--pp-card); border-radius: 1.4rem; }   /* the same colour as the tgcode's own plate, so the code sits on a matching ground in both themes */
 .duoCode, .duoQr { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.6rem; position: relative; }
 .duoCode small, .duoQr small { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.85); text-align: center; }
 .duoDivider { width: 2px; align-self: stretch; border-radius: 2px; background: rgba(var(--pp-ink-rgb), 0.18); }
@@ -827,23 +827,25 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .scanProblem { margin: auto; display: flex; flex-direction: column; align-items: center; gap: 0.9rem; max-width: 22rem; padding: 0 1.4rem; text-align: center; color: rgba(255, 255, 255, 0.92); }   /* theme-ok */
 .scanProblem p { margin: 0; font-size: 1rem; line-height: 1.45; }
 
-/* ── After a scan: the picture freezes, the ring snaps onto the code in the outcome's colour, an icon pops in and the result slides up over the camera. Nothing moves while it looks. ── */
-.scanLive { border-color: rgba(255, 255, 255, 0.92); }   /* theme-ok */
-.lock_busy, .lock_ok, .lock_warn, .lock_bad { top: 31%; width: min(46vw, 28vh); border-style: solid; animation: tgLockOn 0.35s ease-out; }
-.lock_busy { border-color: #ffc72c; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.6), 0 0 24px rgba(255, 199, 44, 0.6);  }   /* theme-ok */
+/* ── After a scan: the picture freezes and the ring glides onto the code, its colour fading to the outcome's; the icon fades in and the result slides up. Nothing moves while it looks. ── */
+.scanTarget { border: 4px solid transparent; transition: left 0.4s cubic-bezier(0.22, 1, 0.36, 1), top 0.4s cubic-bezier(0.22, 1, 0.36, 1), width 0.4s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.3s ease, box-shadow 0.3s ease; }
+.scanTarget::before { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 4px dashed rgba(255, 255, 255, 0.92); transition: opacity 0.3s ease; }   /* theme-ok */
+.scanLive { box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.45); }   /* theme-ok */
+.lock_busy::before, .lock_ok::before, .lock_warn::before, .lock_bad::before { opacity: 0; }
+.lock_busy, .lock_ok, .lock_warn, .lock_bad { top: 31%; width: min(46vw, 28vh); }
+.lock_busy { border-color: #ffc72c; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.6), 0 0 24px rgba(255, 199, 44, 0.6); }   /* theme-ok */
 .lock_ok { border-color: #34d399; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.6), 0 0 28px rgba(52, 211, 153, 0.7); }   /* theme-ok */
 .lock_warn { border-color: #fbbf24; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.6), 0 0 28px rgba(251, 191, 36, 0.7); }   /* theme-ok */
-.lock_bad { border-color: #f87171; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.6), 0 0 28px rgba(248, 113, 113, 0.7);  }   /* theme-ok */
-.scanLockIcon { position: absolute; left: 50%; top: 31%; z-index: 2; display: grid; place-items: center; width: 14vh; max-width: 26vw; aspect-ratio: 1 / 1; transform: translate(-50%, -50%); border-radius: 50%; color: #fff; pointer-events: none; animation: tgScanIcon 0.4s cubic-bezier(0.2, 1.4, 0.4, 1) 0.1s both; }   /* theme-ok */
+.lock_bad { border-color: #f87171; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.6), 0 0 28px rgba(248, 113, 113, 0.7); }   /* theme-ok */
+.scanLockIcon { position: absolute; left: 50%; top: 31%; z-index: 2; display: grid; place-items: center; width: 14vh; max-width: 26vw; aspect-ratio: 1 / 1; transform: translate(-50%, -50%); border-radius: 50%; color: #fff; pointer-events: none; animation: tgScanIcon 0.35s ease-out 0.15s both; }   /* theme-ok */
 .lockIcon_ok { background: #059669; }   /* theme-ok */
 .lockIcon_warn { background: #d97706; }   /* theme-ok */
 .lockIcon_bad { background: #dc2626; }   /* theme-ok */
-.scanSheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; max-width: 30rem; max-height: 52%; overflow-y: auto; margin: 0 auto; padding: 1.1rem 1.2rem calc(1.2rem + env(safe-area-inset-bottom, 0px)); border-radius: 1.4rem 1.4rem 0 0; background: var(--pp-card); color: var(--pp-ink); box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.45); animation: tgSheetUp 0.35s ease-out both; }   /* theme-ok */
+.scanSheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; max-width: 30rem; max-height: 52%; overflow-y: auto; margin: 0 auto; padding: 1.1rem 1.2rem calc(1.2rem + env(safe-area-inset-bottom, 0px)); border-radius: 1.4rem 1.4rem 0 0; background: var(--pp-card); color: var(--pp-ink); box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.45); animation: tgSheetUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both; }   /* theme-ok */
 /* The camera fades in once its first picture is there, instead of showing a black or jumping frame while it starts (and the zoom settles). */
 .scanStage video { opacity: 0; transition: opacity 0.35s ease; }
 .scanStage video.scanReady { opacity: 1; }
 .scanStarting { position: absolute; inset: 0; display: grid; place-items: center; color: rgba(255, 255, 255, 0.8); font-size: 0.95rem; pointer-events: none; }   /* theme-ok */
-@keyframes tgLockOn { 0% { transform: translate(-50%, -50%) scale(1.2); } 100% { transform: translate(-50%, -50%) scale(1); } }
-@keyframes tgScanIcon { from { transform: translate(-50%, -50%) scale(0.3); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+@keyframes tgScanIcon { from { transform: translate(-50%, -50%) scale(0.7); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
 @keyframes tgSheetUp { from { transform: translateY(100%); } to { transform: none; } }
-@media (prefers-reduced-motion: reduce) { .lock_busy, .lock_ok, .lock_warn, .lock_bad, .scanLockIcon, .scanSheet { animation: none; } .scanStage video { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .scanTarget, .scanTarget::before { transition: none; } .scanLockIcon, .scanSheet { animation: none; } .scanStage video { transition: none; } }

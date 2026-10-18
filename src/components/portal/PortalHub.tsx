@@ -506,7 +506,6 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
               </div>
               {/* The list scrolls inside the sheet; the sheet itself (handle included) is what moves when it is swiped down. */}
               <div className={styles.moreSheetScroll} ref={sheetEl}>
-              <div className={styles.sheetTheme}><PortalThemeToggle labelled /></div>
               {railFooter && <div className={styles.sheetFooter}>{railFooter}</div>}
               <div className={mob.list}>{tilesInOrder(moreSections).map((s) => renderTile(s, true))}</div>
               </div>

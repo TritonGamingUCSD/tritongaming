@@ -58,9 +58,9 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
     setState({ kind: 'result', outcome });
     if (outcome.kind === 'meeting') {
       window.dispatchEvent(new Event('tg:meetings-changed'));
-      // The meeting's question and doc are on My Meetings, under "You're checked in": take them there after a moment to see the result.
+      // The meeting's question and doc are on My Meetings, under "You're checked in": no prompt, the ring goes green and the page opens by itself.
       window.clearTimeout(goTimer.current);
-      goTimer.current = window.setTimeout(() => go(MY_MEETING), 1600);
+      goTimer.current = window.setTimeout(() => go(MY_MEETING), 900);   // long enough to see the green ring and check
     }
   }
 
@@ -102,13 +102,13 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
     const o = state.outcome;
     const again = o.kind === 'ticket' || o.kind === 'rewardDone' || o.kind === 'error' || o.kind === 'reward' || o.kind === 'choose';
     lock = { tone: o.kind === 'error' ? 'bad' : o.kind === 'choose' || (o.kind === 'ticket' && o.status !== 'active') || (o.kind === 'meeting' && o.already) ? 'warn' : 'ok' };
-    sheet = (
+    sheet = o.kind === 'meeting' ? null : (
       <CheckInOutcome
         bare
         outcome={o}
         busy={busy}
-        doneLabel={again ? 'Scan Next' : o.kind === 'meeting' ? 'Open Meeting' : 'Done'}
-        onDone={() => (again ? rescan() : o.kind === 'meeting' ? go(MY_MEETING) : onClose())}
+        doneLabel={again ? 'Scan Next' : 'Done'}
+        onDone={() => (again ? rescan() : onClose())}
         onChoose={async (which) => { if (o.kind !== 'choose') return; setBusy(true); await finish(resolveChoice(o.code, which)); setBusy(false); }}
         onConfirmReward={async () => {
           if (o.kind !== 'reward') return;

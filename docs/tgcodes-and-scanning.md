@@ -54,4 +54,4 @@ the outcome's colour (green done, amber already used or needs a choice, red refu
 sentence. Wherever a tgcode is shown the button says **Show tgcode** and uses the ring icon instead of the standard QR glyph. There is no vibration.
 
 Where a code was read is kept: the decoder reports the code's centre and size, and the scanner puts the ring and the icon on that spot over the frozen picture (kept inside the screen). After a
-**meeting** check-in the sheet says it is taking the person to My Meetings (where that meeting's question and doc are) and goes there by itself after about 1.5 seconds, or at once on **Open Meeting**.
+**meeting** check-in  goes there by itself after a moment, with no prompt: the ring turns green with a check and My Meetings opens.
