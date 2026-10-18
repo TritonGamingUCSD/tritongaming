@@ -8,7 +8,7 @@ import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import Popover from '@/components/ui/Popover';
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { ChevronRight, CalendarClock, CalendarDays, Radio, ClipboardList, Check, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Link2, MessageCircleQuestion, Send, Users, Minus, UserX, Lock, Dices, Smile, Upload, Settings2, Moon, DoorOpen, Timer, MoreHorizontal, Trash2, AlertCircle, CalendarX } from 'lucide-react';
+import { ChevronRight, CalendarClock, CalendarDays, Radio, ClipboardList, Check, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Link2, MessageCircleQuestion, Send, Users, Minus, UserX, Lock, Dices, Smile, Upload, Settings2, Moon, DoorOpen, Timer, MoreHorizontal, Trash2, AlertCircle, CalendarX, ZoomIn, ZoomOut } from 'lucide-react';
 import IconButton from '@/components/ui/IconButton';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Notice from '@/components/ui/Notice';
@@ -1635,6 +1635,10 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
   const [live, setLive] = useState<Live | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [presenting, setPresenting] = useState(false);
+  // How big the QR is drawn: the person at the screen can zoom it in and out, or open it full screen for the back of the room. Remembered on this device.
+  const [qrScale, setQrScale] = useState(() => { try { const v = Number(localStorage.getItem('tg-qr-scale')); return v >= 0.6 && v <= 2 ? v : 1; } catch { return 1; } });
+  const [qrBig, setQrBig] = useState(false);
+  const zoomQr = (d: number) => setQrScale((v) => { const n = Math.round(Math.max(0.6, Math.min(2, v + d)) * 10) / 10; try { localStorage.setItem('tg-qr-scale', String(n)); } catch { /* not saved */ } return n; });
   const labelRef = useRef<HTMLSpanElement>(null);
   const codeRef = useRef<HTMLDivElement>(null);
   const codeRowRef = useRef<HTMLDivElement>(null);
@@ -1775,6 +1779,13 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
 
   return (
     <div className={styles.runWrap}>
+      {qrBig && live.code && (
+        <div className={styles.qrOverlay} onClick={() => setQrBig(false)} role="dialog" aria-label="QR code, full screen">
+          <MeetingQR code={live.code} size={Math.round(Math.min(window.innerWidth, window.innerHeight) * 0.74)} />
+          <div className={styles.qrOverlayCode}>{grouped}</div>
+          <p>Scan with your phone camera, or type the code. Tap anywhere to close.</p>
+        </div>
+      )}
       {!presenting && (
         <header className={styles.liveHead}>
           <button type="button" className={styles.backLink} onClick={onBack}><ArrowLeft size={15} aria-hidden="true" /> All Meetings</button>
@@ -1808,12 +1819,22 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
               <svg className={styles.ringSvg} aria-hidden="true" preserveAspectRatio="none"><rect x="2" y="2" rx="22" ry="22" width="calc(100% - 4px)" height="calc(100% - 4px)" pathLength="100" className={styles.ringBack} /><rect x="2" y="2" rx="22" ry="22" width="calc(100% - 4px)" height="calc(100% - 4px)" pathLength="100" className={styles.ringFill} style={{ strokeDasharray: `${ringPct} 100` }} /></svg>
               <div ref={codeRef} className={styles.bigCode} aria-live="off">{grouped}</div>
             </div>
-            {live.code && (
-              <div className={styles.qrBox}>
-                <MeetingQR code={live.code} size={presenting && window.innerWidth >= 640 ? 190 : window.innerWidth < 640 ? 140 : 150} />
-                <small>Scan on a phone</small>
-              </div>
-            )}
+            {live.code && (() => {
+              const vw = window.innerWidth, vh = window.innerHeight;
+              const base = presenting ? Math.max(150, Math.min(vw * 0.3, vh * 0.34, 300)) : vw < 640 ? 140 : 150;
+              const size = Math.round(Math.max(100, Math.min(base * qrScale, vw - 80, presenting ? vh * 0.55 : 420)));
+              return (
+                <div className={styles.qrBox}>
+                  <MeetingQR code={live.code} size={size} />
+                  <div className={styles.qrTools}>
+                    <button type="button" onClick={() => zoomQr(-0.2)} disabled={qrScale <= 0.6} aria-label="Make the QR smaller"><ZoomOut size={15} aria-hidden="true" /></button>
+                    <button type="button" onClick={() => setQrBig(true)} aria-label="Show the QR full screen"><Maximize2 size={15} aria-hidden="true" /> Full Screen</button>
+                    <button type="button" onClick={() => zoomQr(0.2)} disabled={qrScale >= 2} aria-label="Make the QR bigger"><ZoomIn size={15} aria-hidden="true" /></button>
+                  </div>
+                  <small>Scan on a phone</small>
+                </div>
+              );
+            })()}
           </div>
           <div ref={timerRef} className={styles.timer} aria-hidden="true"><span style={{ width: `${pct}%` }} /></div>
           <div ref={countRef} className={styles.liveProgress}>

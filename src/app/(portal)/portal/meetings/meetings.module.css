@@ -767,3 +767,11 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .recentName { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
 .recentName strong { font-size: 0.98rem; font-weight: 700; color: var(--pp-ink); overflow-wrap: anywhere; }
 .recentName span { font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.85); }
+
+/* Zoom for the room QR: smaller, bigger, or full screen. */
+.qrTools { display: flex; align-items: center; gap: 0.3rem; }
+.qrTools button { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.25rem 0.5rem; border-radius: 999px; border: 1px solid rgba(1, 25, 65, 0.3); background: #fff; color: #011941; font-size: 0.72rem; font-weight: 600; cursor: pointer; }   /* theme-ok */
+.qrTools button:disabled { opacity: 0.4; cursor: default; }
+.qrOverlay { position: fixed; inset: 0; z-index: 400; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; background: #fff; color: #011941; cursor: zoom-out; padding: 1rem; text-align: center; }   /* theme-ok */
+.qrOverlayCode { font-family: var(--font-futura-heavy); font-size: clamp(2rem, 7vmin, 4.5rem); letter-spacing: 0.15em; }
+.qrOverlay p { margin: 0; font-size: 0.95rem; }
