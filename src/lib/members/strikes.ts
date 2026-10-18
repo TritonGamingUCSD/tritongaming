@@ -139,7 +139,7 @@ export async function activeCount(svc: SupabaseClient, userId: string): Promise<
   return count ?? 0;
 }
 
-export interface Suggestion { user_id: string; name: string; meeting_id: string; title: string; date: string }
+export interface Suggestion { user_id: string; name: string; meeting_id: string; title: string; date: string; at?: string }
 // Missed meetings that might deserve a strike: a tracked person the meeting was meant for, who didn't check in and wasn't excused, for a
 // meeting that has finished since the tracker began (shown as soon as it ends). exec or HR decides each one (add a strike, or dismiss it); nothing is created automatically.
 export async function suggestions(svc: SupabaseClient, people?: TrackedPerson[]): Promise<Suggestion[]> {
@@ -177,19 +177,19 @@ export async function suggestions(svc: SupabaseClient, people?: TrackedPerson[])
     if (present.has(k) || excused.has(k) || done.has(k)) continue;
     if (new Date(m.ends_at as string).getTime() <= (clearedAt.get(p.id) ?? 0)) continue;
     if (!wasExpected(locks, { id: m.id as string, audience: m.audience as string[] | null, invitees: m.invitees, group_ids: m.group_ids, extra_ids: m.extra_ids }, p.id, rolesOf.get(p.id) ?? [])) continue;
-    out.push({ user_id: p.id, name: p.name, meeting_id: m.id as string, title: m.title as string, date: m.meeting_date as string });
+    out.push({ user_id: p.id, name: p.name, meeting_id: m.id as string, title: m.title as string, date: m.meeting_date as string, at: m.ends_at as string });
   }
-  return out.sort((a, b) => b.date.localeCompare(a.date) || a.name.localeCompare(b.name));
+  return out.sort((a, b) => (b.at ?? b.date).localeCompare(a.at ?? a.date) || a.name.localeCompare(b.name));
 }
 
 // Misses that were already dealt with, for the "Past missed meetings" list: a strike was added, or exec/HR dismissed it. Excused people are not
 // listed anywhere here (they are excused on the meeting itself). Dismissed ones can be put back on the list.
-export interface PastMiss { user_id: string; name: string; meeting_id: string; title: string; date: string; outcome: 'strike' | 'dismissed'; reason: string | null }
+export interface PastMiss { user_id: string; name: string; meeting_id: string; title: string; date: string; at?: string; outcome: 'strike' | 'dismissed'; reason: string | null }
 export async function pastMisses(svc: SupabaseClient, people?: TrackedPerson[]): Promise<PastMiss[]> {
   const today = pacificDayKey();
   const { data: setting } = await svc.from('strike_settings').select('value').eq('key', 'suggest_from').maybeSingle();
   const from = (setting?.value as string | undefined) ?? today;
-  const { data: ms } = await svc.from('meetings').select('id, title, meeting_date').eq('cancelled', false).not('opened_at', 'is', null).gte('meeting_date', from).lte('meeting_date', today).order('meeting_date', { ascending: false }).limit(200);
+  const { data: ms } = await svc.from('meetings').select('id, title, meeting_date, starts_at').eq('cancelled', false).not('opened_at', 'is', null).gte('meeting_date', from).lte('meeting_date', today).order('starts_at', { ascending: false }).limit(200);
   if (!ms?.length) return [];
   const ids = ms.map((m) => m.id as string);
   const tracked = people ?? await trackedPeople(svc);
@@ -203,12 +203,12 @@ export async function pastMisses(svc: SupabaseClient, people?: TrackedPerson[]):
   const put = (uid: string, mid: string, outcome: PastMiss['outcome'], reason: string | null) => {
     const name = who.get(uid); const m = meeting.get(mid);
     if (!name || !m) return;
-    out.set(`${uid}|${mid}`, { user_id: uid, name, meeting_id: mid, title: m.title as string, date: m.meeting_date as string, outcome, reason });
+    out.set(`${uid}|${mid}`, { user_id: uid, name, meeting_id: mid, title: m.title as string, date: m.meeting_date as string, at: m.starts_at as string, outcome, reason });
   };
   // Weakest first, so the strongest outcome wins when someone has more than one.
   for (const d of dism ?? []) put(d.user_id as string, d.meeting_id as string, 'dismissed', d.reason as string | null);
   for (const k of struck ?? []) put(k.user_id as string, k.meeting_id as string, 'strike', null);
-  return [...out.values()].sort((a, b) => b.date.localeCompare(a.date) || a.name.localeCompare(b.name)).slice(0, 150);
+  return [...out.values()].sort((a, b) => (b.at ?? b.date).localeCompare(a.at ?? a.date) || a.name.localeCompare(b.name)).slice(0, 150);
 }
 
 // ── the moves that touch strikes and vouchers together ────────────────────────────────────────────────────────────────────────

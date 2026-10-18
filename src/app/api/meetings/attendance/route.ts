@@ -22,7 +22,7 @@ export async function GET(request: Request) {
   const title = url.searchParams.get('title');
 
   let allQ = auth.svc.from('meetings').select('id, title, meeting_date, ends_at, closed_at, audience, invitees, group_ids')
-    .eq('cancelled', false).not('opened_at', 'is', null).gte('meeting_date', from).lte('meeting_date', to)  .order('meeting_date').order('starts_at').limit(300);
+    .eq('cancelled', false).not('opened_at', 'is', null).gte('meeting_date', from).lte('meeting_date', to)  .order('starts_at').limit(300);
   // A lead sees results only for the meetings they planned.
   if (!auth.reportsAll) allQ = allQ.eq('created_by', auth.user.id);
   const { data: all } = await allQ;

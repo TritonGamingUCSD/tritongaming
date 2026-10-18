@@ -6,7 +6,7 @@ import SaveBar from '@/components/portal/SaveBar';
 import EditingNow from '@/components/portal/EditingNow';
 import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import Popover from '@/components/ui/Popover';
-import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { ChevronRight, CalendarClock, CalendarDays, Radio, ClipboardList, Check, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Link2, MessageCircleQuestion, Send, Users, Minus, UserX, Lock, Dices, Smile, Upload, Settings2, Moon, DoorOpen, Timer, MoreHorizontal, Trash2, AlertCircle, CalendarX, ZoomIn, ZoomOut, ScanLine } from 'lucide-react';
 import IconButton from '@/components/ui/IconButton';
@@ -34,6 +34,8 @@ import SectionHeader from '@/components/ui/SectionHeader';
 import Dialog from '@/components/ui/Dialog';
 import Link from 'next/link';
 import QrScanner from './QrScanner';
+import StyledQRCode from '@/components/StyledQRCode/StyledQRCode';
+import { DEFAULT_QR_OPTIONS, type QRCodeOptions } from '@/lib/qr/qrCodeStyling';
 
 type Tab = 'mine' | 'planning' | 'host' | 'attendance' | 'emojis';
 
@@ -141,23 +143,29 @@ export default function MeetingsSectionContent({ canHost, canManageAll, userId, 
   );
 }
 
-// The current code as a QR: scanning it opens the portal's check-in with the code already filled in. It follows the code every 30 seconds.
-// It only ever points at this site's own address.
-function MeetingQR({ code, size }: { code: string; size: number }) {
-  const box = useRef<HTMLDivElement>(null);
-  const qr = useRef<{ update: (o: object) => void } | null>(null);
+// The current code as a QR, drawn with the site's own QR styling (the same rounded look as tickets) in the same colour as the typed code, so it follows the
+// light or dark theme. Scanning it opens the portal's check-in with the code filled in; it follows the code every 30 seconds. It only ever points at this site.
+function useInkColour(ref: React.RefObject<HTMLElement | null>, key: unknown) {
+  const [ink, setInk] = useState('#011941');   // theme-ok
   useEffect(() => {
-    let dead = false;
-    (async () => {
-      const { default: QRCodeStyling } = await import('qr-code-styling');
-      if (dead || !box.current) return;
-      const data = `${window.location.origin}/portal/meetings/mine?code=${code}`;
-      const opts = { width: size, height: size, margin: 0, data, qrOptions: { errorCorrectionLevel: 'M' as const }, dotsOptions: { color: '#011941', type: 'rounded' as const }, backgroundOptions: { color: '#ffffff' }, cornersSquareOptions: { type: 'extra-rounded' as const, color: '#011941' } };   // theme-ok
-      if (!qr.current) { const q = new QRCodeStyling(opts); qr.current = q; box.current.innerHTML = ''; q.append(box.current); } else qr.current.update(opts);
-    })();
-    return () => { dead = true; };
-  }, [code, size]);
-  return <div ref={box} className={styles.qrCanvas} style={{ width: size, height: size }} role="img" aria-label="QR code that opens check-in with the current code" />;
+    const read = () => { const v = ref.current ? getComputedStyle(ref.current).getPropertyValue('--pp-ink').trim() : ''; if (v) setInk(v); };
+    read();
+    const mo = new MutationObserver(read); mo.observe(document.documentElement, { attributes: true });
+    const mq = window.matchMedia('(prefers-color-scheme: dark)'); mq.addEventListener('change', read);
+    return () => { mo.disconnect(); mq.removeEventListener('change', read); };
+  }, [ref, key]);
+  return ink;
+}
+function MeetingQR({ code, size, ink }: { code: string; size: number; ink: string }) {
+  const options = useMemo<QRCodeOptions>(() => ({
+    ...DEFAULT_QR_OPTIONS, data: `${window.location.origin}/portal/meetings/mine?code=${code}`, size: 480, margin: 0, transparentBg: true,
+    dotsColor: ink, dotsGradientEnabled: false, cornersSquareColor: ink, cornersDotColor: ink, icon: 'none', customIcon: null,
+  }), [code, ink]);
+  return (
+    <div className={styles.qrCanvas} style={{ width: size, height: size }} role="img" aria-label="QR code that opens check-in with the current code">
+      <StyledQRCode options={options} />
+    </div>
+  );
 }
 
 // My meetings: check in first, then what is coming up or what has happened (a switch, not two columns).
@@ -1641,10 +1649,8 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
   const [live, setLive] = useState<Live | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [presenting, setPresenting] = useState(false);
-  // How big the QR is drawn: the person at the screen can zoom it in and out, or open it full screen for the back of the room. Remembered on this device.
-  const [qrScale, setQrScale] = useState(() => { try { const v = Number(localStorage.getItem('tg-qr-scale')); return v >= 0.6 && v <= 2 ? v : 1; } catch { return 1; } });
-  const [qrBig, setQrBig] = useState(false);
-  const zoomQr = (d: number) => setQrScale((v) => { const n = Math.round(Math.max(0.6, Math.min(2, v + d)) * 10) / 10; try { localStorage.setItem('tg-qr-scale', String(n)); } catch { /* not saved */ } return n; });
+  const inkRef = useRef<HTMLDivElement>(null);
+  const ink = useInkColour(inkRef, live?.code);
   const labelRef = useRef<HTMLSpanElement>(null);
   const codeRef = useRef<HTMLDivElement>(null);
   const codeRowRef = useRef<HTMLDivElement>(null);
@@ -1785,13 +1791,6 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
 
   return (
     <div className={styles.runWrap}>
-      {qrBig && live.code && (
-        <div className={styles.qrOverlay} onClick={() => setQrBig(false)} role="dialog" aria-label="QR code, full screen">
-          <MeetingQR code={live.code} size={Math.round(Math.min(window.innerWidth, window.innerHeight) * 0.74)} />
-          <div className={styles.qrOverlayCode}>{grouped}</div>
-          <p>Scan with your phone camera, or type the code. Tap anywhere to close.</p>
-        </div>
-      )}
       {!presenting && (
         <header className={styles.liveHead}>
           <button type="button" className={styles.backLink} onClick={onBack}><ArrowLeft size={15} aria-hidden="true" /> All Meetings</button>
@@ -1801,18 +1800,15 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
               <span>{dayLabel(live.meeting.meeting_date, true)} · {timeRange(live.meeting.starts_at, live.meeting.ends_at)}{live.meeting.location ? ` · ${live.meeting.location}` : ''}</span>
             </div>
             <span className={`${styles.pill} ${open ? styles.pillOpen : styles.pillDone}`}>{open ? 'Check-In Open' : over ? 'Ended' : 'Check-In Closed'}</span>
-            {open && <Button size="sm" onClick={() => setPresenting(true)}><Maximize2 size={14} aria-hidden="true" /> Show On Screen</Button>}
           </div>
         </header>
       )}
 
       {open ? (
-        <div className={`${styles.codePanel} ${presenting ? styles.presenting : ''}`}>
-          {presenting && (
-            <button type="button" className={styles.presentBtn} onClick={() => setPresenting(false)} aria-label="Exit full screen view">
-              <Minimize2 size={15} aria-hidden="true" /> Exit
-            </button>
-          )}
+        <div ref={inkRef} className={`${styles.codePanel} ${presenting ? styles.presenting : ''}`}>
+          <button type="button" className={styles.presentBtn} onClick={() => setPresenting((v) => !v)} aria-label={presenting ? 'Exit full screen view' : 'Show on screen'}>
+            {presenting ? <><Minimize2 size={15} aria-hidden="true" /> Exit</> : <><Maximize2 size={15} aria-hidden="true" /> Show On Screen</>}
+          </button>
           {live.meeting.question && (
             <div ref={questionRef} className={styles.screenQuestion}>
               <span className={styles.questionLabel}><MessageCircleQuestion size={presenting ? 18 : 14} aria-hidden="true" /> Question of the meeting</span>
@@ -1820,34 +1816,25 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
             </div>
           )}
           <span ref={labelRef} className={styles.codeLabel}>{live.meeting.title} check-in code</span>
-          <div ref={codeRowRef} className={styles.codeRow}>
-            <div className={styles.codeRing}>
-              <svg className={styles.ringSvg} aria-hidden="true" preserveAspectRatio="none"><rect x="2" y="2" rx="22" ry="22" width="calc(100% - 4px)" height="calc(100% - 4px)" pathLength="100" className={styles.ringBack} /><rect x="2" y="2" rx="22" ry="22" width="calc(100% - 4px)" height="calc(100% - 4px)" pathLength="100" className={styles.ringFill} style={{ strokeDasharray: `${ringPct} 100` }} /></svg>
+          <div ref={codeRowRef} className={`${styles.codeRing} ${styles.duo}`}>
+            <svg className={styles.ringSvg} aria-hidden="true" preserveAspectRatio="none"><rect x="2" y="2" rx="22" ry="22" width="calc(100% - 4px)" height="calc(100% - 4px)" pathLength="100" className={styles.ringBack} /><rect x="2" y="2" rx="22" ry="22" width="calc(100% - 4px)" height="calc(100% - 4px)" pathLength="100" className={styles.ringFill} style={{ strokeDasharray: `${ringPct} 100` }} /></svg>
+            <div className={styles.duoCode}>
               <div ref={codeRef} className={styles.bigCode} aria-live="off">{grouped}</div>
+              <small>Type this code in Meetings</small>
             </div>
-            {live.code && (() => {
-              const vw = window.innerWidth, vh = window.innerHeight;
-              const base = presenting ? Math.max(150, Math.min(vw * 0.3, vh * 0.34, 300)) : vw < 640 ? 140 : 150;
-              const size = Math.round(Math.max(100, Math.min(base * qrScale, vw - 80, presenting ? vh * 0.55 : 420)));
-              return (
-                <div className={styles.qrBox}>
-                  <MeetingQR code={live.code} size={size} />
-                  <div className={styles.qrTools}>
-                    <button type="button" onClick={() => zoomQr(-0.2)} disabled={qrScale <= 0.6} aria-label="Make the QR smaller"><ZoomOut size={15} aria-hidden="true" /></button>
-                    <button type="button" onClick={() => setQrBig(true)} aria-label="Show the QR full screen"><Maximize2 size={15} aria-hidden="true" /> Full Screen</button>
-                    <button type="button" onClick={() => zoomQr(0.2)} disabled={qrScale >= 2} aria-label="Make the QR bigger"><ZoomIn size={15} aria-hidden="true" /></button>
-                  </div>
-                  <small>Scan on a phone</small>
+            {live.code && (
+              <>
+                <span className={styles.duoDivider} aria-hidden="true" />
+                <div className={styles.duoQr}>
+                  <MeetingQR code={live.code} size={presenting ? 250 : 170} ink={ink} />
+                  <small>Or scan with your phone</small>
                 </div>
-              );
-            })()}
+              </>
+            )}
           </div>
           <div ref={timerRef} className={styles.timer} aria-hidden="true"><span style={{ width: `${pct}%` }} /></div>
-          <div ref={countRef} className={styles.liveProgress}>
-            <div className={styles.progressBar} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(ringPct)} aria-label="Checked in"><span style={{ width: `${ringPct}%` }} /></div>
-            <div className={styles.liveCount}><strong>{expectedHere}</strong> of {expectedHere + live.missing.length} checked in{guestCount > 0 ? ` (+${guestCount})` : ''}</div>
-          </div>
-          <p ref={hintRef} className={styles.presentHint}>{presenting ? 'Open the portal → Meetings and type this code, or scan the QR' : 'On a laptop, type the code in Meetings. On a phone, scan the QR.'}</p>
+          <div ref={countRef} className={styles.liveCount}><strong>{expectedHere}</strong> of {expectedHere + live.missing.length} checked in{guestCount > 0 ? ` (+${guestCount})` : ''}</div>
+          <span ref={hintRef} aria-hidden="true" />
           {live.meeting.question && live.meeting.question_type !== 'text' && (
             <div className={styles.screenResults}><ResultBars type={live.meeting.question_type} tally={live.tally} big={presenting} /></div>
           )}

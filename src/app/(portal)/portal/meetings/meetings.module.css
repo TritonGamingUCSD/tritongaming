@@ -203,20 +203,20 @@
 .presenting .screenQuestion p { font-size: clamp(1.4rem, 4.2vw, 2.8rem); }
 .presenting .answerBy { font-size: 0.85rem; }
 
-.floaters { position: absolute; inset: 0; overflow: hidden; pointer-events: none; border-radius: inherit; }
+.floaters { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; border-radius: inherit; }   /* behind the code and the QR, and see-through, so a burst of reactions never hides them */
 .floater { position: absolute; bottom: -10%; font-size: 2.2rem; opacity: 0; animation: floatUp 3.8s ease-out forwards; will-change: transform, opacity; }
 .presenting .floater { font-size: clamp(3rem, 7vw, 5.5rem); }
 @keyframes floatUp {
   0% { transform: translateY(0) scale(0.5) rotate(-8deg); opacity: 0; }
-  12% { opacity: 1; }
-  70% { opacity: 1; }
+  12% { opacity: 0.55; }
+  70% { opacity: 0.55; }
   100% { transform: translateY(-95vh) scale(1.15) rotate(10deg); opacity: 0; }
 }
 .codePanel:not(.presenting) .floater { animation-name: floatUpSmall; }
 @keyframes floatUpSmall {
   0% { transform: translateY(0) scale(0.5); opacity: 0; }
-  12% { opacity: 1; }
-  70% { opacity: 1; }
+  12% { opacity: 0.55; }
+  70% { opacity: 0.55; }
   100% { transform: translateY(-380px) scale(1.1); opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) { .floater { animation-duration: 0.01s; } .reactPop { animation: none; } }
@@ -474,13 +474,13 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .drifter[data-fresh='1'] { box-shadow: 0 0 0 2px rgba(255, 199, 44, 0.85), 0 0 22px rgba(255, 199, 44, 0.45); }   /* theme-ok */
 .drifterOut, .drifterOut[data-ready] { opacity: 0; }
 .presenting .drifter { max-width: min(380px, 30%); font-size: calc(var(--k, 1) * clamp(1.2rem, 2vw, 1.9rem)); padding: 0.45em 0.85em; }
-.codePanel > *:not(.bubbleField):not(.floaters):not(.presentBtn) { z-index: 1; }
+.codePanel > *:not(.bubbleField):not(.floaters):not(.presentBtn):not(.bigBurst) { z-index: 1; }
 .screenTotals { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; font-size: 1rem; color: rgba(var(--pp-ink-rgb), 0.92); }
 .screenTotals span { padding: 0.15rem 0.6rem; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.07); }
 .screenTotals .topTotal { background: rgba(125, 180, 234, 0.2); color: var(--p-accent-text); }
 .presenting .screenTotals { font-size: 1.5rem; gap: 1rem; }
-.bigBurst { position: absolute; left: 50%; top: 50%; z-index: 3; font-size: clamp(6rem, 24vw, 16rem); pointer-events: none; animation: bigBurst 1.8s ease-out forwards; }
-@keyframes bigBurst { 0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0; } 20% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; } 70% { opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1.7); opacity: 0; } }
+.bigBurst { position: absolute; left: 50%; top: 50%; z-index: 0; font-size: clamp(6rem, 24vw, 16rem); pointer-events: none; animation: bigBurst 1.8s ease-out forwards; }
+@keyframes bigBurst { 0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0; } 20% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.4; } 70% { opacity: 0.4; } 100% { transform: translate(-50%, -50%) scale(1.7); opacity: 0; } }
 .reactDice { color: var(--p-accent-text); display: inline-flex; align-items: center; justify-content: center; }
 @media (prefers-reduced-motion: reduce) { .bigBurst { animation: none; } .drifter { transition: none; } }
 
@@ -581,10 +581,10 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .teamHead strong { color: var(--pp-ink); font-size: 1rem; }
 .teamActions { display: inline-flex; align-items: center; gap: 0.35rem; }
 .memberChips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; min-width: 0; }
-.memberChip { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.15rem 0.35rem 0.15rem 0.2rem; border-radius: 999px; font-size: 0.82rem; color: var(--pp-ink); background: rgba(var(--pp-ink-rgb), 0.08); border: 1px solid rgba(var(--pp-ink-rgb), 0.16); }
+.memberChip { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.15rem 0.35rem 0.15rem 0.2rem; border-radius: 999px; font-size: 0.82rem; color: var(--pp-ink); background: rgba(var(--pp-ink-rgb), 0.08); border: 0; }
 .memberChip:not(:has(img, [class*='avatar'])) { padding-left: 0.6rem; }
-.chipX { display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 50%; background: rgba(var(--pp-ink-rgb), 0.14); color: var(--pp-ink); font-size: 0.95rem; line-height: 1; cursor: pointer; }
-.chipX:hover { background: var(--pp-bad); color: var(--ink); }
+.chipX { display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: rgba(var(--pp-ink-rgb), 0.55); font-size: 1.05rem; line-height: 1; cursor: pointer; }   /* just the cross: nothing around it until you point at it */
+.chipX:hover { background: transparent; color: var(--pp-bad); }
 .quickAdd { display: flex; flex-direction: column; gap: 0.4rem; padding: 0.7rem; border-radius: 8px; background: rgba(var(--pp-ink-rgb), 0.06); }
 .quickList { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.35rem; max-height: 220px; overflow-y: auto; }
 .quickPick { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.2rem 0.55rem 0.2rem 0.25rem; border-radius: 999px; border: 1px dashed rgba(var(--pp-ink-rgb), 0.45); background: none; color: var(--pp-ink); font: inherit; font-size: 0.82rem; cursor: pointer; }
@@ -736,23 +736,12 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .liveTitle { flex: 1 1 14rem; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
 .liveTitle h2 { margin: 0; font-family: var(--font-futura-heavy); font-size: 1.35rem; color: var(--pp-ink); }
 .liveTitle span { font-size: 0.84rem; color: rgba(var(--pp-ink-rgb), 0.85); }
-.codeRow { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 1.2rem; width: 100%; position: relative; z-index: 1; }
-.qrBox { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; padding: 0.55rem; border-radius: 0.8rem; background: #fff; }   /* theme-ok */
-.qrBox small { font-size: 0.7rem; color: #011941; font-weight: 600; letter-spacing: 0.02em; }   /* theme-ok */
-.qrCanvas { display: block; line-height: 0; }
-.qrCanvas canvas, .qrCanvas svg { display: block; max-width: 100%; height: auto; }
-.liveProgress { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; width: min(26rem, 100%); position: relative; z-index: 1; }
-.progressBar { width: 100%; height: 8px; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.12); overflow: hidden; }
-.progressBar span { display: block; height: 100%; border-radius: inherit; background: var(--pp-ok); transition: width 0.5s ease; }
-.presenting .qrBox { padding: 0.8rem; }
-@media (max-width: 640px) { .codeRow { gap: 0.8rem; } }
-.progressBar { height: 12px; }
 .codePanel .timer { height: 4px; }
 
 /* Can't Make It: folded, and quiet. The people away are small chips, not full-width rows. */
 .awayFold { margin-top: 0.6rem; }
 .awayFold .absentList { flex-direction: row; flex-wrap: wrap; gap: 0.35rem; }
-.awayFold .absentList li { padding: 0.15rem 0.25rem 0.15rem 0.65rem; gap: 0.3rem; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.05); border: 1px solid rgba(var(--pp-ink-rgb), 0.18); font-size: 0.8rem; }
+.awayFold .absentList li { padding: 0.2rem 0.3rem 0.2rem 0.7rem; gap: 0.25rem; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.08); border: 0; font-size: 0.8rem; }
 .awayFold .absentList .personName { font-size: 0.8rem; }
 .awayFold .absentForm { grid-template-columns: minmax(150px, 1fr) minmax(150px, 1.3fr) auto auto; }
 
@@ -769,12 +758,6 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .recentName span { font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.85); }
 
 /* Zoom for the room QR: smaller, bigger, or full screen. */
-.qrTools { display: flex; align-items: center; gap: 0.3rem; }
-.qrTools button { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.25rem 0.5rem; border-radius: 999px; border: 1px solid rgba(1, 25, 65, 0.3); background: #fff; color: #011941; font-size: 0.72rem; font-weight: 600; cursor: pointer; }   /* theme-ok */
-.qrTools button:disabled { opacity: 0.4; cursor: default; }
-.qrOverlay { position: fixed; inset: 0; z-index: 400; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; background: #fff; color: #011941; cursor: zoom-out; padding: 1rem; text-align: center; }   /* theme-ok */
-.qrOverlayCode { font-family: var(--font-futura-heavy); font-size: clamp(2rem, 7vmin, 4.5rem); letter-spacing: 0.15em; }
-.qrOverlay p { margin: 0; font-size: 0.95rem; }
 
 /* The camera scanner: code box and Scan QR sit side by side; the camera frame, a target square, and zoom. */
 .codeActions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.6rem; }
@@ -782,6 +765,27 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .scanFrame video { width: 100%; height: 100%; object-fit: cover; transform-origin: center; display: block; }
 .scanTarget { position: absolute; inset: 18%; border: 3px solid rgba(255, 255, 255, 0.9); border-radius: 1rem; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.25); pointer-events: none; }   /* theme-ok */
 .scanTools { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; }
-.scanTools label { flex: 1 1 10rem; display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; font-weight: 600; }
-.scanTools input[type=range] { flex: 1; min-width: 0; }
+.scanHint { flex: 1 1 8rem; font-size: 0.85rem; color: rgba(1, 25, 65, 0.7); }   /* theme-ok */
+.scanZoom { position: absolute; right: 0.6rem; bottom: 0.6rem; padding: 0.15rem 0.5rem; border-radius: 999px; background: rgba(0, 0, 0, 0.55); color: #fff; font-size: 0.78rem; font-weight: 600; pointer-events: none; }   /* theme-ok */
 .scanError { margin: 0; padding: 0.7rem; border-radius: 0.6rem; background: rgba(185, 28, 28, 0.1); color: #b91c1c; font-size: 0.9rem; }   /* theme-ok */
+
+/* The host's check-in frame: the typed code and its QR side by side in one ring (the ring fills as people check in), the QR in the code's own colour. */
+.duo { display: flex; align-items: stretch; justify-content: center; gap: 1.5rem; padding: 1.2rem 1.7rem; max-width: 100%; }
+.duoCode, .duoQr { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.6rem; position: relative; }
+.duoCode small, .duoQr small { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.85); text-align: center; }
+.duoDivider { width: 2px; align-self: stretch; border-radius: 2px; background: rgba(var(--pp-ink-rgb), 0.18); }
+.duo .bigCode { font-size: clamp(2.6rem, 5.6vw, 4.4rem); }
+.presenting .duo .bigCode { font-size: clamp(3.4rem, 8vw, 8rem); }
+.presenting .duo { gap: 2.4rem; padding: 1.8rem 2.6rem; }
+.qrCanvas { display: block; line-height: 0; flex: none; }
+.qrCanvas canvas { display: block; width: 100%; height: auto; }
+@media (max-width: 640px) {
+  .duo { flex-direction: column; align-items: center; gap: 1rem; padding: 1.1rem 1rem 1.2rem; }
+  .duoDivider { width: 70%; height: 2px; align-self: center; }
+  .duo .bigCode, .presenting .duo .bigCode { font-size: clamp(2.6rem, 13vw, 3.6rem); }
+}
+
+/* The remove (x) on an away chip is a plain glyph, not a boxed button: no border or fill until you point at it. */
+.awayFold .absentList li button { width: 1.5rem; height: 1.5rem; min-width: 0; padding: 0; border: 0; background: transparent; box-shadow: none; border-radius: 50%; color: rgba(var(--pp-ink-rgb), 0.6); }
+.awayFold .absentList li button:hover { background: rgba(var(--pp-ink-rgb), 0.12); color: var(--pp-bad); }
+.awayFold .absentList li button svg { width: 14px; height: 14px; }

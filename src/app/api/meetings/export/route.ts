@@ -33,7 +33,7 @@ export async function GET(request: Request) {
   const titleFilter = url.searchParams.get('title');
 
   let q = auth.svc.from('meetings').select('id, title, meeting_date, starts_at, ends_at, closed_at, audience, invitees, group_ids')
-    .eq('cancelled', false).not('opened_at', 'is', null).gte('meeting_date', from).lte('meeting_date', to).order('meeting_date').order('starts_at');
+    .eq('cancelled', false).not('opened_at', 'is', null).gte('meeting_date', from).lte('meeting_date', to).order('starts_at');
   if (titleFilter) q = q.eq('title', titleFilter);
   const { data: meetingRows } = await q;
   const groupMap = await loadGroups(auth.svc);
@@ -91,7 +91,7 @@ export async function GET(request: Request) {
       const mine = relevant.filter((m) => attByKey.has(`${m.id}|${p.id}`));
       // Coming as a guest to a meeting that was not meant for them counts as attended too.
       const guestVisits = (meetings ?? []).filter((m) => attByKey.has(`${m.id}|${p.id}`) && !relevant.includes(m));
-      const attendedAll = [...mine, ...guestVisits].sort((x, y) => String(x.meeting_date).localeCompare(String(y.meeting_date)));
+      const attendedAll = [...mine, ...guestVisits].sort((x, y) => String(x.starts_at).localeCompare(String(y.starts_at)));
       const total = relevant.length + guestVisits.length;
       rows.push(line([p.name, p.email, p.role, attendedAll.length, total, excusedN, total ? `${Math.round((attendedAll.length / total) * 100)}%` : '', attendedAll.length ? attendedAll[attendedAll.length - 1].meeting_date : '']));
     }

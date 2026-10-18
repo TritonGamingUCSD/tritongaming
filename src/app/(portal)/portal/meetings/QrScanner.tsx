@@ -67,7 +67,7 @@ export default function QrScanner({ onCode, onClose }: { onCode: (code: string) 
             canvas.width = Math.min(640, w); canvas.height = Math.round(canvas.width * (h / w));
             ctx.drawImage(v, (v.videoWidth - w) / 2, (v.videoHeight - h) / 2, w, h, 0, 0, canvas.width, canvas.height);
             const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            text = jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' })?.data ?? null;
+            text = jsQR(img.data, img.width, img.height, { inversionAttempts: 'attemptBoth' })?.data ?? null;
           }
           const code = text ? codeFromScan(text) : null;
           if (code) { dead = true; stream?.getTracks().forEach((x) => x.stop()); onCode(code); }
@@ -89,19 +89,37 @@ export default function QrScanner({ onCode, onClose }: { onCode: (code: string) 
     const next = !torch;
     try { await track.current?.applyConstraints({ advanced: [{ torch: next }] }); setTorch(next); } catch { /* not supported after all */ }
   }
-  const min = caps.zoom?.min ?? 1, max = caps.zoom ? Math.min(caps.zoom.max, 8) : 3, step = caps.zoom?.step || 0.1;
+  const min = caps.zoom?.min ?? 1, max = caps.zoom ? Math.min(caps.zoom.max, 8) : 3;
+  // Two fingers on the picture zoom it (a trackpad pinch, or ctrl + scroll, does the same on a computer).
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const startPinch = useRef<{ dist: number; zoom: number } | null>(null);
+  const dist = () => { const [a, b] = [...pointers.current.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
+  const clampZoom = (v: number) => Math.max(min, Math.min(max, v));
+  const pinch = {
+    style: { touchAction: 'none' as const },
+    onPointerDown: (e: React.PointerEvent) => { (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId); pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (pointers.current.size === 2) startPinch.current = { dist: dist(), zoom }; },
+    onPointerMove: (e: React.PointerEvent) => {
+      if (!pointers.current.has(e.pointerId)) return;
+      pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pointers.current.size === 2 && startPinch.current && startPinch.current.dist > 0) void applyZoom(clampZoom(startPinch.current.zoom * (dist() / startPinch.current.dist)));
+    },
+    onPointerUp: (e: React.PointerEvent) => { pointers.current.delete(e.pointerId); startPinch.current = null; },
+    onPointerCancel: (e: React.PointerEvent) => { pointers.current.delete(e.pointerId); startPinch.current = null; },
+    onWheel: (e: React.WheelEvent) => { if (e.ctrlKey || e.metaKey) void applyZoom(clampZoom(zoom * (e.deltaY < 0 ? 1.08 : 0.93))); },
+  };
 
   return (
     <Dialog title="Scan The Check-In QR" onClose={onClose}>
       <DialogText>Point the camera at the QR on the screen. Zoom in if it is far away.</DialogText>
       {error ? <p className={styles.scanError}>{error}</p> : (
         <>
-          <div className={styles.scanFrame}>
+          <div className={styles.scanFrame} {...pinch}>
             <video ref={video} playsInline muted style={digital && zoom > 1 ? { transform: `scale(${zoom})` } : undefined} />
             <span className={styles.scanTarget} aria-hidden="true" />
+            <span className={styles.scanZoom} aria-live="off">{zoom.toFixed(1)}×</span>
           </div>
           <div className={styles.scanTools}>
-            <label>Zoom<input type="range" min={min} max={max} step={step} value={zoom} onChange={(e) => void applyZoom(Number(e.target.value))} aria-label="Zoom" /></label>
+            <span className={styles.scanHint}>Pinch to zoom</span>
             {caps.torch && <Button type="button" size="sm" variant="secondary" onClick={() => void toggleTorch()}>{torch ? <ZapOff size={14} aria-hidden="true" /> : <Zap size={14} aria-hidden="true" />} {torch ? 'Light Off' : 'Light On'}</Button>}
           </div>
         </>
