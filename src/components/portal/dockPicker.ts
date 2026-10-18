@@ -1,4 +1,4 @@
-// Which sections get a slot on the mobile bottom bar. The bar is Home + up to three of these + More (five slots),
+// Which sections get a slot on the mobile bottom bar. The bar is Home + two of these, the Scan button in the middle, and More (five slots),
 // chosen by a score instead of a fixed list (Home + three + More on a phone, so every label fits):
 //   • a base weight (what most members reach for: tickets, rewards, profile)
 //   • a boost from the server for what's relevant to this person right now (an event today, a ticket

@@ -65,6 +65,8 @@ export interface HubSection {
   group: HubGroup;
   /** Extra weight for a slot on the mobile bottom bar — what's relevant to this person right now. */
   dockBoost?: number;
+  /** Check-In only: this person may also confirm reward pickups, so the phone's scanner may open them. */
+  scanRedemptions?: boolean;
   /** Never gets a bottom-bar slot (still reachable from More). */
   dockExclude?: boolean;
   /** Never suggested under "For you" on the dashboard (still in the sidebar and All pages). */
@@ -411,7 +413,7 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
 
       </AnimatePresence>
 
-      {scanOpen && <UniversalScanner staff={sections.some((s) => s.id === 'checkin')} onClose={() => setScanOpen(false)} />}
+      {scanOpen && <UniversalScanner staff={sections.some((s) => s.id === 'checkin')} redemptions={!!sections.find((s) => s.id === 'checkin')?.scanRedemptions} onClose={() => setScanOpen(false)} />}
       <nav className={styles.bottomBar} aria-label="Portal quick navigation">
         <button
           type="button"

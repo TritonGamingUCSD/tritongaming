@@ -240,7 +240,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
     ...(canViewEvents ? [{
       id: 'events', icon: <Calendar size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Events',
       description: canManageEvents ? 'Create and manage events' : 'Browse upcoming and past events',
-      dockBoost: canManageEvents ? 35 : 0,
+      // Browsing and managing events is a desk job: on a phone the bar keeps Tickets and Meetings (it is still in More).
+      dockExclude: true,
       group: 'Events' as const,
       content: (
         <EventsLazy
@@ -253,14 +254,13 @@ export default async function PortalDashboard({ searchParams }: Props) {
       ),
     }] : []),
     ...(canCheckin && checkinData ? [{
+      scanRedemptions: canScanRedemptions,
       id: 'checkin', icon: <Camera size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Check-In',
       description: 'Scan tickets, confirm redemptions, or reveal the online check-in code',
-      // Staff on a day with an event: the scanner is the one thing they need.
-      dockBoost: todayEvents.length > 0 ? 90 : 0,
+      // The scan button in the middle of the phone's bar does the scanning now, so this page never takes a slot of its own.
       // Not suggested on the dashboard unless an event is actually happening today.
       homeExclude: todayEvents.length === 0,
-      // No event today: nothing to scan, so it does not take a slot on the phone's bottom bar (it is still in More).
-      dockExclude: todayEvents.length === 0,
+      dockExclude: true,
       group: 'Events' as const,
       content: <CheckInSectionContent events={checkinData.events} canScanRedemptions={canScanRedemptions} canControlSelfCheckin={canControlSelfCheckin} initialTab={requestedTab} tiers={memberTiers} />,
     }] : []),

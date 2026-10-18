@@ -20,7 +20,7 @@ type Outcome =
 //   • any other page of this portal → opens it
 //   • (staff only) an event ticket or a reward pickup → opens Check-In, which checks the ticket in or shows the reward to confirm
 // Anything else is refused with a message, and the camera keeps looking.
-export default function UniversalScanner({ onClose, staff = false }: { onClose: () => void; staff?: boolean }) {
+export default function UniversalScanner({ onClose, staff = false, redemptions = false }: { onClose: () => void; staff?: boolean; redemptions?: boolean }) {
   const [outcome, setOutcome] = useState<Outcome>(null);
   const [problem, setProblem] = useState('');
   const [busy, setBusy] = useState(false);
@@ -34,7 +34,7 @@ export default function UniversalScanner({ onClose, staff = false }: { onClose: 
     if (ticket) return staff
       ? { href: `/portal/checkin/tickets?scan=${encodeURIComponent(t)}`, title: 'Checking In A Ticket', heading: 'Event ticket', text: 'Opening Check-In, which checks this ticket in and shows who it belongs to.' }
       : null;
-    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(t)) return staff
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(t)) return redemptions
       ? { href: `/portal/checkin/redemptions?r=${t}`, title: 'Looking Up A Reward', heading: 'Reward pickup', text: 'Opening the reward so you can confirm the hand-over. Nothing is marked as given until you confirm.' }
       : null;
     try {
@@ -55,7 +55,7 @@ export default function UniversalScanner({ onClose, staff = false }: { onClose: 
     if (target) { setProblem(''); setOutcome({ kind: 'opening', ...target }); window.setTimeout(() => go(target.href), 900); return true; }
     const t = text.trim();
     if (/^[a-z0-9][a-z0-9_-]*:\d{6}$/i.test(t)) setProblem('That is an event ticket. Show it to an officer, who scans it to check you in.');
-    else if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(t)) setProblem('That is a reward pickup code. Show it to an officer to collect your reward.');
+    else if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(t)) setProblem(staff ? 'That is a reward pickup code, and your role can’t confirm hand-overs. Ask an officer who can.' : 'That is a reward pickup code. Show it to an officer to collect your reward.');
     else setProblem('That QR code isn’t one the portal can use. Try another.');
     return false;
   }
