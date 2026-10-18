@@ -140,6 +140,25 @@ export default function MeetingsSectionContent({ canHost, canManageAll, userId, 
   );
 }
 
+// The current code as a QR: scanning it opens the portal's check-in with the code already filled in. It follows the code every 30 seconds.
+// It only ever points at this site's own address.
+function MeetingQR({ code, size }: { code: string; size: number }) {
+  const box = useRef<HTMLDivElement>(null);
+  const qr = useRef<{ update: (o: object) => void } | null>(null);
+  useEffect(() => {
+    let dead = false;
+    (async () => {
+      const { default: QRCodeStyling } = await import('qr-code-styling');
+      if (dead || !box.current) return;
+      const data = `${window.location.origin}/portal/meetings/mine?code=${code}`;
+      const opts = { width: size, height: size, margin: 0, data, qrOptions: { errorCorrectionLevel: 'M' as const }, dotsOptions: { color: '#011941', type: 'rounded' as const }, backgroundOptions: { color: '#ffffff' }, cornersSquareOptions: { type: 'extra-rounded' as const, color: '#011941' } };   // theme-ok
+      if (!qr.current) { const q = new QRCodeStyling(opts); qr.current = q; box.current.innerHTML = ''; q.append(box.current); } else qr.current.update(opts);
+    })();
+    return () => { dead = true; };
+  }, [code, size]);
+  return <div ref={box} className={styles.qrCanvas} style={{ width: size, height: size }} role="img" aria-label="QR code that opens check-in with the current code" />;
+}
+
 // My meetings: check in first, then what is coming up or what has happened (a switch, not two columns).
 function MineTab({ view, onView }: { view: 'up' | 'history'; onView: (v: 'up' | 'history') => void }) {
   return (
@@ -190,6 +209,18 @@ function CheckInPanel() {
   }, []);
 
   useEffect(() => { void load(); }, [load]);
+  // Opened from the QR on the room screen: the code is in the address, so check in with it straight away, then tidy the address.
+  const fromQr = useRef(false);
+  useEffect(() => {
+    if (fromQr.current) return;
+    const c = new URLSearchParams(window.location.search).get('code');
+    if (!c || !/^\d{6}$/.test(c)) return;
+    fromQr.current = true;
+    const sp = new URLSearchParams(window.location.search); sp.delete('code');
+    window.history.replaceState(window.history.state, '', `${window.location.pathname}${sp.toString() ? `?${sp}` : ''}`);
+    void submit(c);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useVisiblePoll(load, 60_000);   // paused while the tab is hidden; refreshes the moment it comes back
   // A meeting is over at its scheduled end: its cards go away right then, without waiting for the next refresh.
   const [, tick] = useState(0);
@@ -406,8 +437,6 @@ function UpcomingPanel() {
   const [items, setItems] = useState<UpcomingItem[] | null>(null);
   const [openItems, setOpenItems] = useState<UpcomingItem[]>([]);
   const [error, setError] = useState('');
-  // Only the next few at first: a long run of weeks ahead is noise. The rest is one tap away.
-  const [showAll, setShowAll] = useState(false);
   useEffect(() => {
     (async () => {
       try {
@@ -422,10 +451,9 @@ function UpcomingPanel() {
   // Their own meetings and the ones they may drop in on, together by date. The optional ones are marked so nobody thinks they must come.
   const all = [...items.map((m) => ({ ...m, optional: false })), ...openItems.map((m) => ({ ...m, optional: true }))].sort((x, y) => x.starts_at.localeCompare(y.starts_at));
   if (all.length === 0) return <div className={styles.card}><p className={styles.muted}>Nothing scheduled for you yet.</p></div>;
-  return (
-    <ul className={styles.stack}>
-      {openItems.length > 0 && <li className={styles.optionalKey}><span /> Optional meetings: you were not added, but you are welcome to come and count as +1.</li>}
-      {(showAll ? all : all.slice(0, 4)).map((m, i, shown) => (
+  // This week and next week show; anything further out folds away.
+  const soon = all.filter((m) => weekGroup(m.date) <= 1), later = all.filter((m) => weekGroup(m.date) > 1);
+  const renderItem = (m: (typeof all)[number], i: number, shown: typeof all) => (
         <Fragment key={m.key}>
         {startsWeekGroup(shown.map((x) => x.date), i) && <WeekHead date={m.date} />}
         <li data-tone={m.status === 'open' ? 'open' : m.is_today ? 'today' : WEEK_TONE[weekGroup(m.date)]} className={`${styles.meetingCard} ${m.status === 'open' ? styles.cardOpen : ''} ${m.optional ? styles.cardOptional : ''}`}>
@@ -449,11 +477,18 @@ function UpcomingPanel() {
           </div>
         </li>
         </Fragment>
-      ))}
-      {!showAll && all.length > 4 && (
-        <li><Button size="sm" variant="secondary" onClick={() => setShowAll(true)}>Show {all.length - 4} more coming up</Button></li>
+  );
+  return (
+    <div className={styles.stack}>
+      {openItems.length > 0 && <p className={styles.optionalKey}><span /> Optional meetings: you were not added, but you are welcome to come and count as +1.</p>}
+      {soon.length === 0 ? <p className={styles.muted}>Nothing this week or next.</p> : <ul className={styles.stack}>{soon.map((m, i) => renderItem(m, i, soon))}</ul>}
+      {later.length > 0 && (
+        <details className={styles.moreOptions}>
+          <summary><span>Later</span><em>{later.length} more {later.length === 1 ? 'meeting' : 'meetings'} after next week</em></summary>
+          <div className={styles.moreBody}><ul className={styles.stack}>{later.map((m, i) => renderItem(m, i, later))}</ul></div>
+        </details>
       )}
-    </ul>
+    </div>
   );
 }
 
@@ -1276,8 +1311,9 @@ function AdvanceAbsences({ item, onChanged }: { item: Item; onChanged?: () => vo
   }
   const away = new Set((data?.absences ?? []).map((a) => a.user_id));
   return (
-    <section className={styles.advanceAbsences} aria-label="Can't make it">
-      <h4 className={styles.audienceTitle}><UserX size={13} aria-hidden="true" /> Can’t make it</h4>
+    <details className={`${styles.moreOptions} ${styles.awayFold}`} aria-label="Can't make it">
+      <summary><span>Can’t Make It</span><em>{data ? (data.absences.length ? `${data.absences.length} away` : 'Nobody away') : 'Loading…'}</em></summary>
+      <div className={styles.moreBody}>
       {error && <Notice tone="error">{error}</Notice>}
       {!data ? <Loading variant="inline" label="Loading…" /> : (
         <>
@@ -1300,10 +1336,11 @@ function AdvanceAbsences({ item, onChanged }: { item: Item; onChanged?: () => vo
             <CheckTile label="Excused" checked={excused} onChange={() => setExcused((v) => !v)} />
             <Button size="sm" onClick={add} loading={busy} disabled={!who}>Mark away</Button>
           </div>
-          <p className={styles.faint}>Excused doesn’t count against attendance.{data.repeating && ' To excuse someone every week, edit the repeating meeting under Repeating meetings.'}</p>
+          <p className={styles.faint}>Excused doesn’t count against attendance.{data.repeating && ' To excuse someone every week, switch to Every Week.'}</p>
         </>
       )}
-    </section>
+      </div>
+    </details>
   );
 }
 
@@ -1333,8 +1370,9 @@ function SeriesExcused({ seriesId }: { seriesId: string }) {
   }
   const away = new Set((data?.excused ?? []).map((a) => a.user_id));
   return (
-    <section className={styles.advanceAbsences} aria-label="Excused every week">
-      <h4 className={styles.audienceTitle}><UserX size={13} aria-hidden="true" /> Excused every week</h4>
+    <details className={`${styles.moreOptions} ${styles.awayFold}`} aria-label="Excused every week">
+      <summary><span>Excused Every Week</span><em>{data ? (data.excused.length ? `${data.excused.length} excused` : 'Nobody') : 'Loading…'}</em></summary>
+      <div className={styles.moreBody}>
       {error && <Notice tone="error">{error}</Notice>}
       {!data ? <Loading variant="inline" label="Loading…" /> : (
         <>
@@ -1360,7 +1398,8 @@ function SeriesExcused({ seriesId }: { seriesId: string }) {
           <p className={styles.faint}>Lasts as long as the meeting repeats. Weeks already opened keep their marks.</p>
         </>
       )}
-    </section>
+      </div>
+    </details>
   );
 }
 
@@ -1595,6 +1634,7 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
   const [presenting, setPresenting] = useState(false);
   const labelRef = useRef<HTMLSpanElement>(null);
   const codeRef = useRef<HTMLDivElement>(null);
+  const codeRowRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<HTMLDivElement>(null);
   const questionRef = useRef<HTMLDivElement>(null);
   const countRef = useRef<HTMLDivElement>(null);
@@ -1733,14 +1773,26 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
   return (
     <div className={styles.runWrap}>
       {!presenting && (
-        <button type="button" className={styles.backLink} onClick={onBack}><ArrowLeft size={15} aria-hidden="true" /> All meetings</button>
+        <header className={styles.liveHead}>
+          <button type="button" className={styles.backLink} onClick={onBack}><ArrowLeft size={15} aria-hidden="true" /> All Meetings</button>
+          <div className={styles.liveTitleRow}>
+            <div className={styles.liveTitle}>
+              <h2>{live.meeting.title}</h2>
+              <span>{dayLabel(live.meeting.meeting_date, true)} · {timeRange(live.meeting.starts_at, live.meeting.ends_at)}{live.meeting.location ? ` · ${live.meeting.location}` : ''}</span>
+            </div>
+            <span className={`${styles.pill} ${open ? styles.pillOpen : styles.pillDone}`}>{open ? 'Check-In Open' : over ? 'Ended' : 'Check-In Closed'}</span>
+            {open && <Button size="sm" onClick={() => setPresenting(true)}><Maximize2 size={14} aria-hidden="true" /> Show On Screen</Button>}
+          </div>
+        </header>
       )}
 
       {open ? (
         <div className={`${styles.codePanel} ${presenting ? styles.presenting : ''}`}>
-          <button type="button" className={styles.presentBtn} onClick={() => setPresenting((p) => !p)} aria-label={presenting ? 'Exit full screen view' : 'Show on screen'}>
-            {presenting ? <><Minimize2 size={15} aria-hidden="true" /> Exit</> : <><Maximize2 size={15} aria-hidden="true" /> Show on screen</>}
-          </button>
+          {presenting && (
+            <button type="button" className={styles.presentBtn} onClick={() => setPresenting(false)} aria-label="Exit full screen view">
+              <Minimize2 size={15} aria-hidden="true" /> Exit
+            </button>
+          )}
           {live.meeting.question && (
             <div ref={questionRef} className={styles.screenQuestion}>
               <span className={styles.questionLabel}><MessageCircleQuestion size={presenting ? 18 : 14} aria-hidden="true" /> Question of the meeting</span>
@@ -1748,18 +1800,29 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
             </div>
           )}
           <span ref={labelRef} className={styles.codeLabel}>{live.meeting.title} check-in code</span>
-          <div className={styles.codeRing}>
-            <svg className={styles.ringSvg} aria-hidden="true" preserveAspectRatio="none"><rect x="2" y="2" rx="22" ry="22" width="calc(100% - 4px)" height="calc(100% - 4px)" pathLength="100" className={styles.ringBack} /><rect x="2" y="2" rx="22" ry="22" width="calc(100% - 4px)" height="calc(100% - 4px)" pathLength="100" className={styles.ringFill} style={{ strokeDasharray: `${ringPct} 100` }} /></svg>
-            <div ref={codeRef} className={styles.bigCode} aria-live="off">{grouped}</div>
+          <div ref={codeRowRef} className={styles.codeRow}>
+            <div className={styles.codeRing}>
+              <svg className={styles.ringSvg} aria-hidden="true" preserveAspectRatio="none"><rect x="2" y="2" rx="22" ry="22" width="calc(100% - 4px)" height="calc(100% - 4px)" pathLength="100" className={styles.ringBack} /><rect x="2" y="2" rx="22" ry="22" width="calc(100% - 4px)" height="calc(100% - 4px)" pathLength="100" className={styles.ringFill} style={{ strokeDasharray: `${ringPct} 100` }} /></svg>
+              <div ref={codeRef} className={styles.bigCode} aria-live="off">{grouped}</div>
+            </div>
+            {live.code && (
+              <div className={styles.qrBox}>
+                <MeetingQR code={live.code} size={presenting && window.innerWidth >= 640 ? 190 : window.innerWidth < 640 ? 140 : 150} />
+                <small>Scan on a phone</small>
+              </div>
+            )}
           </div>
           <div ref={timerRef} className={styles.timer} aria-hidden="true"><span style={{ width: `${pct}%` }} /></div>
-          <div ref={countRef} className={styles.liveCount}><strong>{expectedHere}</strong> of {expectedHere + live.missing.length} checked in{guestCount > 0 ? ` (+${guestCount})` : ''}</div>
-          {presenting && <p ref={hintRef} className={styles.presentHint}>Open the portal → Meetings and type this code</p>}
+          <div ref={countRef} className={styles.liveProgress}>
+            <div className={styles.progressBar} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(ringPct)} aria-label="Checked in"><span style={{ width: `${ringPct}%` }} /></div>
+            <div className={styles.liveCount}><strong>{expectedHere}</strong> of {expectedHere + live.missing.length} checked in{guestCount > 0 ? ` (+${guestCount})` : ''}</div>
+          </div>
+          <p ref={hintRef} className={styles.presentHint}>{presenting ? 'Open the portal → Meetings and type this code, or scan the QR' : 'On a laptop, type the code in Meetings. On a phone, scan the QR.'}</p>
           {live.meeting.question && live.meeting.question_type !== 'text' && (
             <div className={styles.screenResults}><ResultBars type={live.meeting.question_type} tally={live.tally} big={presenting} /></div>
           )}
           {live.meeting.question && live.meeting.question_type === 'text' && live.answers.length > 0 && (
-            <BubbleField answers={live.answers.map((x) => ({ key: `${x.id}-${x.at}`, text: x.answer }))} avoid={[questionRef, labelRef, codeRef, timerRef, countRef, hintRef, totalsRef]} presenting={presenting} />
+            <BubbleField answers={live.answers.map((x) => ({ key: `${x.id}-${x.at}`, text: x.answer }))} avoid={[questionRef, labelRef, codeRowRef, timerRef, countRef, hintRef, totalsRef]} presenting={presenting} />
           )}
           {Object.keys(live.reactionTotals).length > 0 && (
             <div ref={totalsRef} className={styles.screenTotals} aria-label="Reaction totals">
@@ -1801,7 +1864,15 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
               <Button variant={endsAtMs - now <= 10 * 60_000 ? 'primary' : 'secondary'} onClick={async () => { if (await confirmHold({ title: 'Close check-in?', message: 'Nobody else will be able to check in with the code. You can re-open it.', confirmLabel: 'Hold to close' })) act('/api/meetings/close', { meeting_id: id }); }} loading={busy}>Close Check-In</Button>
             </div>
           )}
-          {!over && <InvitePeople live={live} meetingId={id} onSaved={loadLive} />}
+          <details className={styles.moreOptions} open>
+            <summary><span>Who&apos;s Here</span><em>{expectedHere} of {expectedHere + live.missing.length} checked in{live.missing.length > 0 ? ` · ${live.missing.length} not yet` : ''}</em></summary>
+            <div className={styles.moreBody}>
+          <AttendeeList live={live} onAdd={addPerson} onRemove={removePerson} onAbsent={markAbsent} onClearAbsent={clearAbsent} />
+            </div>
+          </details>
+          <details className={styles.moreOptions} open={live.answers.length > 0}>
+            <summary><span>Question &amp; Answers</span><em>{live.meeting.question ? `${live.answers.length} ${live.answers.length === 1 ? 'answer' : 'answers'}` : 'No question set'}</em></summary>
+            <div className={styles.moreBody}>
           <div className={styles.card}>
             <h3 className={styles.listTitle}><MessageCircleQuestion size={14} aria-hidden="true" /> Question of the meeting</h3>
             <p className={styles.faint}>On the big screen; revealed after check-in.</p>
@@ -1834,6 +1905,12 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
               </div>
             )}
           </div>
+            </div>
+          </details>
+          <details className={styles.moreOptions}>
+            <summary><span>Access &amp; Doc</span><em>{doc ? 'Doc linked' : 'No doc yet'} · {live.meeting.open_to_team === false ? 'Private Meeting' : 'Open to the team'}</em></summary>
+            <div className={styles.moreBody}>
+          {!over && <InvitePeople live={live} meetingId={id} onSaved={loadLive} />}
 {over ? (
             <p className={styles.lockNote}><Lock size={13} aria-hidden="true" /> This meeting has ended, so its info is locked.{doc ? <> Doc: <a href={doc} target="_blank" rel="noopener noreferrer">{doc}</a></> : null}</p>
           ) : (
@@ -1844,7 +1921,8 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
             <Button type="submit" size="sm" variant="ghost" loading={busy}>{docSaved ? 'Saved' : 'Save link'}</Button>
           </form>
           )}
-          <AttendeeList live={live} onAdd={addPerson} onRemove={removePerson} onAbsent={markAbsent} onClearAbsent={clearAbsent} />
+            </div>
+          </details>
           {!live.meeting.series_id && <div className={styles.runActions}><IconButton kind="delete" label="Delete this meeting" onClick={deleteMeeting} /></div>}
         </>
       )}
