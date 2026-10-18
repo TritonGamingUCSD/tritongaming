@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import RingIcon from '@/components/RingCode/RingIcon';
 import { Check, CircleAlert, TriangleAlert, X, Zap, ZapOff } from 'lucide-react';
 import jsQR from 'jsqr';
-import { decodeRingCode } from '@/lib/qr/ringCode/decode';
+import { decodeRingCodeAt } from '@/lib/qr/ringCode/decode';
 import styles from './meetings.module.css';
 
 interface Caps { zoom?: { min: number; max: number; step: number }; torch?: boolean }
@@ -16,6 +16,30 @@ type ZoomTrack = MediaStreamTrack & { getCapabilities?: () => Caps; applyConstra
 // text to the caller; nothing is recorded or uploaded.
 // What a scan did, shown on the camera itself: the ring locks and takes the colour of the outcome, and `sheet` (the result) slides up over the frozen picture.
 // Clearing `lock` carries on scanning with the same camera, so "Scan Next" is instant.
+// The middle and half-size of the points of a code's outline (video pixels).
+function around(points: { x: number; y: number }[]): { x: number; y: number; r: number } | null {
+  if (points.length < 3) return null;
+  const x = points.reduce((s, p) => s + p.x, 0) / points.length, y = points.reduce((s, p) => s + p.y, 0) / points.length;
+  return { x, y, r: Math.max(...points.map((p) => Math.hypot(p.x - x, p.y - y))) };
+}
+// Video pixels → where they show on the stage: the picture fills the stage with its middle kept ("cover"), then a digital zoom scales it about the middle.
+function toStage(f: { x: number; y: number; r: number }, v: HTMLVideoElement, z: number): { x: number; y: number; r: number } | null {
+  const stage = v.parentElement?.getBoundingClientRect();
+  if (!stage || !v.videoWidth || !v.videoHeight) return null;
+  const SW = stage.width, SH = stage.height, s = Math.max(SW / v.videoWidth, SH / v.videoHeight);
+  const px = (SW - v.videoWidth * s) / 2 + f.x * s, py = (SH - v.videoHeight * s) / 2 + f.y * s;
+  return { x: SW / 2 + (px - SW / 2) * z, y: SH / 2 + (py - SH / 2) * z, r: f.r * s * z };
+}
+
+// The ring and icon placed over the code: the code's own middle and size, kept inside the stage and never tiny or bigger than the screen.
+function fit(spot: { x: number; y: number; r: number }, stage: HTMLElement | null) {
+  const SW = stage?.clientWidth ?? 360, SH = stage?.clientHeight ?? 600;
+  const r = Math.min(Math.max(spot.r * 1.08, 44), Math.min(SW, SH) * 0.46);
+  return { x: Math.min(Math.max(spot.x, r * 0.5), SW - r * 0.5), y: Math.min(Math.max(spot.y, r * 0.5), SH - r * 0.5), r };
+}
+const ringBox = (spot: { x: number; y: number; r: number }, stage: HTMLElement | null): React.CSSProperties => { const f = fit(spot, stage); return { left: f.x, top: f.y, width: f.r * 2 }; };
+const iconBox = (spot: { x: number; y: number; r: number }, stage: HTMLElement | null): React.CSSProperties => { const f = fit(spot, stage); const d = Math.min(Math.max(f.r * 0.9, 56), 110); return { left: f.x, top: f.y, width: d, maxWidth: 'none' }; };
+
 export type ScanLock = { tone: 'busy' | 'ok' | 'warn' | 'bad' };
 export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', note, footer, lock, sheet }: { onScan: (text: string) => boolean | void; onClose: () => void; title?: string; note?: string; footer?: ReactNode; lock?: ScanLock | null; sheet?: ReactNode }) {
   const video = useRef<HTMLVideoElement>(null);
@@ -25,7 +49,8 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
   const [caps, setCaps] = useState<Caps>({});
   const [torch, setTorch] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [ready, setReady] = useState(false);   // the first picture is in and the zoom has settled: only then does the camera fade in
+  const [ready, setReady] = useState(false);
+  const [spot, setSpot] = useState<{ x: number; y: number; r: number } | null>(null);   // where on the screen the code was when it was read (stage pixels)   // the first picture is in and the zoom has settled: only then does the camera fade in
   const pausedRef = useRef(false);   // a taken scan freezes the picture and stops reading until the caller clears `lock`
   const onScanRef = useRef(onScan);
   onScanRef.current = onScan;
@@ -49,7 +74,7 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
     let stream: MediaStream | null = null, raf = 0, dead = false, last = 0, lastText = '', lastAt = 0;
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    const Detector = (window as unknown as { BarcodeDetector?: new (o: { formats: string[] }) => { detect: (v: HTMLVideoElement) => Promise<{ rawValue: string }[]> } }).BarcodeDetector;
+    const Detector = (window as unknown as { BarcodeDetector?: new (o: { formats: string[] }) => { detect: (v: HTMLVideoElement) => Promise<{ rawValue: string; cornerPoints?: { x: number; y: number }[] }[]> } }).BarcodeDetector;
     const detector = Detector ? new Detector({ formats: ['qr_code'] }) : null;
     (async () => {
       try {
@@ -73,27 +98,40 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
           if (dead || pausedRef.current || !v || v.readyState < 2 || now - last < 140) return;
           last = now;
           let text: string | null = null;
+          let found: { x: number; y: number; r: number } | null = null;   // where it was, in video pixels
           // Digital zoom crops the middle of the picture before reading it.
           const z = digitalRef.current ? zoomRef.current : 1;
           const w = v.videoWidth / z, h = v.videoHeight / z;
-          if (detector && z === 1) { try { text = (await detector.detect(v))[0]?.rawValue ?? null; } catch { /* fall back below */ } }
+          if (detector && z === 1) {
+            try {
+              const hit = (await detector.detect(v))[0];
+              if (hit) { text = hit.rawValue; found = around(hit.cornerPoints ?? []); }
+            } catch { /* fall back below */ }
+          }
           if (!text && ctx) {
             canvas.width = Math.min(720, w); canvas.height = Math.round(canvas.width * (h / w));
             ctx.drawImage(v, (v.videoWidth - w) / 2, (v.videoHeight - h) / 2, w, h, 0, 0, canvas.width, canvas.height);
             const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
             // A QR first (an event's check-in link and the like), then the portal's own ring code.
-            text = jsQR(img.data, img.width, img.height, { inversionAttempts: 'attemptBoth' })?.data ?? null;
+            const q = jsQR(img.data, img.width, img.height, { inversionAttempts: 'attemptBoth' });
+            text = q?.data ?? null;
+            const k = w / canvas.width, ox = (v.videoWidth - w) / 2, oy = (v.videoHeight - h) / 2;   // the picture it read is the middle crop, scaled down
+            const inVideo = (p: { x: number; y: number }) => ({ x: ox + p.x * k, y: oy + p.y * k });
+            if (q) found = around([q.location.topLeftCorner, q.location.topRightCorner, q.location.bottomRightCorner, q.location.bottomLeftCorner].map(inVideo));
             if (!text) {
               const gray = new Uint8ClampedArray(img.width * img.height);
               for (let i = 0, j = 0; i < gray.length; i++, j += 4) gray[i] = (img.data[j] * 77 + img.data[j + 1] * 150 + img.data[j + 2] * 29) >> 8;
-              const ring = decodeRingCode(gray, img.width, img.height);
-              if (ring) text = `ring:${ring}`;
+              const ring = decodeRingCodeAt(gray, img.width, img.height);
+              if (ring) { text = `ring:${ring.payload}`; found = { x: ox + ring.spot.x * k, y: oy + ring.spot.y * k, r: ring.spot.r * k }; }
             }
           }
           // The caller decides what the text is: true = taken (freeze the picture), anything else = keep looking. The same text is not offered again for 3 s.
           if (text && !(text === lastText && now - lastAt < 3000)) {
             lastText = text; lastAt = now;
-            if (onScanRef.current(text) === true) { pausedRef.current = true; v.pause(); }
+            if (onScanRef.current(text) === true) {
+              pausedRef.current = true; v.pause();   // freeze right away, so the ring lands where the code is in the frozen picture
+              setSpot(found ? toStage(found, v, z) : null);
+            }
           }
         };
         raf = requestAnimationFrame(tick);
@@ -108,6 +146,7 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
 
   useEffect(() => {
     if (lock || !pausedRef.current) return;
+    setSpot(null);
     pausedRef.current = false;
     void video.current?.play().catch(() => {});
   }, [lock]);
@@ -162,9 +201,9 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
         <div ref={frame} className={styles.scanStage}>
           <video ref={video} playsInline muted className={ready ? styles.scanReady : undefined} />
           {!ready && <div className={styles.scanStarting}>Starting camera…</div>}
-          <div className={`${styles.scanTarget} ${lock ? styles[`lock_${lock.tone}`] : styles.scanLive}`} aria-hidden="true" />
+          <div className={`${styles.scanTarget} ${lock ? styles[`lock_${lock.tone}`] : styles.scanLive}`} style={lock && spot ? ringBox(spot, frame.current) : undefined} aria-hidden="true" />
           {lock && lock.tone !== 'busy' && (
-            <span key={lock.tone} className={`${styles.scanLockIcon} ${styles[`lockIcon_${lock.tone}`]}`} aria-hidden="true">
+            <span key={lock.tone} className={`${styles.scanLockIcon} ${styles[`lockIcon_${lock.tone}`]}`} style={spot ? iconBox(spot, frame.current) : undefined} aria-hidden="true">
               {lock.tone === 'ok' ? <Check size={44} strokeWidth={2.75} /> : lock.tone === 'warn' ? <TriangleAlert size={40} /> : <CircleAlert size={42} />}
             </span>
           )}

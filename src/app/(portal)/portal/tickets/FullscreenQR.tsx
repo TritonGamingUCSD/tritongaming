@@ -65,6 +65,23 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
       clearTimeout(refreshTimeout.current);
       refreshTimeout.current = null;
     }
+    // Server calls are what use up the free Vercel plan (each is Active CPU), so while the stored upcoming codes (a batch of 90 minutes) have plenty
+    // left, the code on screen comes from them and the server is not asked at all. It is asked again when under 45 minutes remain (which also confirms the
+    // ticket is still valid), the first time the ticket is opened, and whenever the stored codes are missing. The scan itself checks everything on the server.
+    const stored = currentCachedCode(ticketId);
+    if (stored && cachedMinutesLeft(ticketId) >= 45) {
+      setError('');
+      setQrData(stored.qr_data);
+      setHasFastPass(stored.has_fast_pass);
+      if (stored.code !== lastCodeRef.current) {
+        lastCodeRef.current = stored.code;
+        setCode(stored.code);
+        setExpiresIn(stored.expires_in);
+        setRotationSeconds(30);
+      }
+      refreshTimeout.current = setTimeout(fetchCode, stored.expires_in * 1000 + 350);
+      return;
+    }
     try {
       // Top up the offline cache whenever it's running low (see
       // lib/ticketCodeCache) — the batch rides along on the normal fetch.
@@ -228,6 +245,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   // Fires exactly once — from whichever of Realtime (fast path) or the
   // polling backstop below (guaranteed path) notices the check-in first.
   const handledCheckIn = useRef(false);
+  const [realtimeUp, setRealtimeUp] = useState(false);   // while the live push works, the status check below is only a slow backstop (each call costs server time)
   function handleCheckedIn(checkedInAt: string) {
     if (handledCheckIn.current) return;
     handledCheckIn.current = true;
@@ -260,7 +278,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
           if (newRow.status === 'used') handleCheckedIn(newRow.checked_in_at ?? new Date().toISOString());
         }
       )
-      .subscribe();
+      .subscribe((status) => setRealtimeUp(status === 'SUBSCRIBED'));
 
     return () => { supabase.removeChannel(channel); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -282,7 +300,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
     } catch {
       // ignore — next tick tries again
     }
-  }, 10_000, !handledCheckIn.current);
+  }, realtimeUp ? 60_000 : 10_000, !handledCheckIn.current);
 
   // The authoritative form answer, fetched from the status endpoint the
   // moment check-in lands — the checkinFormUrl prop was baked in when the

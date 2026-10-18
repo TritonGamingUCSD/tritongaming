@@ -8,6 +8,7 @@ import { isVerifiedMember, requiresOrgTitle } from '@/lib/portal/capabilities';
 import { getMissingProfileFields } from '@/lib/members/profile';
 import ProfileIncompleteBanner from '@/components/portal/ProfileIncompleteBanner';
 import NotificationBell from '@/components/portal/NotificationBell';
+import PortalThemeToggle from '@/components/portal/PortalThemeToggle';
 import AttributionCapture from '@/components/AttributionCapture/AttributionCapture';
 import ConnectivityBanner from '@/components/ConnectivityBanner/ConnectivityBanner';
 import PushAsk from '@/components/portal/PushAsk';
@@ -59,6 +60,8 @@ export default async function PortalLayout({ children }: { children: React.React
           (the other persistent portal chrome) deliberately hides on. */}
       <div data-print-hide style={{ display: 'contents' }}>
         <div className={styles.fixedBell} style={{ display: 'contents' }}><HideOnPaths paths={CHECKIN_PATHS}><NotificationBell /></HideOnPaths></div>
+        {/* Phones: the light/dark switch sits right beside the bell (desktop has it in the top bar). */}
+        <HideOnPaths paths={CHECKIN_PATHS}><div className={styles.fixedTheme}><PortalThemeToggle /></div></HideOnPaths>
         <ConnectivityBanner />
         <HideOnPaths paths={CHECKIN_PATHS}><PushAsk /></HideOnPaths>
         <AttributionCapture />

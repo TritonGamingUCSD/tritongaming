@@ -52,6 +52,7 @@ interface Live {
   code: string | null;
   expiresAt: number | null;
   qrPayload?: string | null;
+  upcoming?: { code: string; qrPayload: string; expiresAt: number }[];   // the next few codes, so a code runs out and the next shows without a new request
   attendees: (Person & { checked_in_at: string; method: 'code' | 'manual' | 'host'; guest?: boolean })[];
   missing: Person[];
   absent: (Person & { reason: string | null; excused: boolean })[];
@@ -1673,7 +1674,7 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
 
   useEffect(() => { void loadLive(); }, [loadLive]);
   useMeetingLive(id, loadLive);   // refreshes when someone checks in, answers or reacts
-  useVisiblePoll(loadLive, 30_000);   // slow backstop in case the live connection is blocked
+  useVisiblePoll(loadLive, 120_000);   // slow backstop in case the live connection is blocked (changes arrive by signal; the code changes by itself from `upcoming`)
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 250);
@@ -1681,7 +1682,9 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
   }, []);
 
   // Once the countdown ends, fetch the new code right away instead of waiting for the next poll.
-  const codeExpired = !!live?.expiresAt && now > live.expiresAt + 200;
+  const rolled = live?.expiresAt && now > live.expiresAt ? live.upcoming?.find((u) => u.expiresAt > now) : undefined;
+  const shown = rolled ?? (live ? { code: live.code, qrPayload: live.qrPayload ?? null, expiresAt: live.expiresAt } : null);
+  const codeExpired = !!shown?.expiresAt && now > shown.expiresAt + 200;
   useEffect(() => { if (codeExpired) loadLive(); }, [codeExpired, loadLive]);
 
   async function act(url: string, body: unknown) {
@@ -1750,11 +1753,11 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
   const open = live.meeting.open;
   // Over = its time has passed and check-in isn't running: the info below is locked (the doc link stays editable).
   const over = !open && Date.now() > new Date(live.meeting.ends_at).getTime();
-  const secondsLeft = live.expiresAt ? Math.max(0, Math.ceil((live.expiresAt - now) / 1000)) : 0;
+  const secondsLeft = shown?.expiresAt ? Math.max(0, Math.ceil((shown.expiresAt - now) / 1000)) : 0;
   const pct = Math.min(100, (secondsLeft / 30) * 100);
   const expectedHere = live.attendees.filter((a) => !a.guest).length, guestCount = live.attendees.length - expectedHere;
   const ringPct = expectedHere + live.missing.length > 0 ? Math.min(100, (expectedHere / (expectedHere + live.missing.length)) * 100) : 0;
-  const grouped = live.code ? `${live.code.slice(0, 3)} ${live.code.slice(3)}` : '';
+  const grouped = shown?.code ? `${shown.code.slice(0, 3)} ${shown.code.slice(3)}` : '';
 
   // Full screen is drawn on the page itself (not inside the portal's animated panel, which would shrink a "fixed" screen to the panel and leave the top and bottom bars over it).
   const codePanel = open ? (
@@ -1781,11 +1784,11 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
               <div ref={codeRef} className={styles.bigCode} aria-live="off">{grouped}</div>
               <small>Type this code in Meetings</small>
             </div>
-            {live.code && live.qrPayload && (
+            {shown?.code && shown.qrPayload && (
               <>
                 <span className={styles.duoDivider} aria-hidden="true" />
                 <div className={styles.duoQr}>
-                  <MeetingQR payload={live.qrPayload ?? ''} size={presenting ? 300 : 210} />
+                  <MeetingQR payload={shown?.qrPayload ?? ''} size={presenting ? 300 : 210} />
                   <small>Or tap Scan in the portal</small>
                 </div>
               </>

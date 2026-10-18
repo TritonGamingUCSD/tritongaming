@@ -3,7 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
-import { rotatingCode, qrToken, currentWindow, scanWindows, secondsUntilNextWindow } from '@/lib/events/rotatingCode';
+import { rotatingCode, qrToken, currentWindow, scanWindows, secondsUntilNextWindow, ROTATION_SECONDS } from '@/lib/events/rotatingCode';
 import { pacificDayKey } from '@/lib/events/checkinDays';
 import { staffName } from '@/lib/members/names';
 import { pacificDatetimeLocalToUTC } from '@/lib/core/timezone';
@@ -215,6 +215,16 @@ export async function buildSchedule(svc: SupabaseClient, forUser?: { id: string;
 // The code people should be typing right now, and when it changes.
 export function currentMeetingCode(secret: string): { code: string; expiresAt: number } {
   return { code: rotatingCode(secret, currentWindow()), expiresAt: Date.now() + secondsUntilNextWindow() * 1000 };
+}
+
+// The codes for the next few windows, so the host's screen can change codes on its own when one runs out instead of asking the server again (each call to
+// the live endpoint is a lot of server time on the free plan). Only the host's screen gets these; each one is accepted only in its own window.
+export function upcomingMeetingCodes(secret: string, n = 6): { code: string; qrPayload: string; expiresAt: number }[] {
+  const w0 = currentWindow();
+  return Array.from({ length: n }, (_, i) => {
+    const w = w0 + 1 + i;
+    return { code: rotatingCode(secret, w), qrPayload: `m${qrToken(secret, w).slice(0, QR_TOKEN_LEN)}`, expiresAt: (w + 1) * ROTATION_SECONDS * 1000 };
+  });
 }
 
 // The previous window is accepted too, so a code that rolls over while someone is typing still works.

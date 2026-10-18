@@ -52,3 +52,6 @@ The person stays on the scan page. While it looks, nothing moves on the camera w
 the outcome's colour (green done, amber already used or needs a choice, red refused), a big icon pops in with a ripple (a refusal shakes), and the result slides up over the camera.
 **Scan Next** carries on with the same camera. With reduced motion on, none of it moves. A reply with no reason (signed out, too many tries, a server error) is turned into a plain
 sentence. Wherever a tgcode is shown the button says **Show tgcode** and uses the ring icon instead of the standard QR glyph. There is no vibration.
+
+Where a code was read is kept: the decoder reports the code's centre and size, and the scanner puts the ring and the icon on that spot over the frozen picture (kept inside the screen). After a
+**meeting** check-in the sheet says it is taking the person to My Meetings (where that meeting's question and doc are) and goes there by itself after about 1.5 seconds, or at once on **Open Meeting**.

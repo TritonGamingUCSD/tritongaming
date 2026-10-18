@@ -9,6 +9,8 @@ import CodeEntry from './CodeEntry';
 import { checkInWithCode, checkInWithQr, confirmReward, resolveChoice, RING, type Outcome } from '@/lib/checkin/anyCode';
 import styles from './UniversalScanner.module.css';
 
+const MY_MEETING = '/portal/meetings?tab=mine';   // where a checked-in meeting's question and doc are
+
 // What a scan turned into, said plainly: the person always sees exactly what it did (or did not do).
 type State =
   | { kind: 'scanning' }
@@ -54,7 +56,12 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
     const outcome = await p;
     if (!outcome) return;
     setState({ kind: 'result', outcome });
-    if (outcome.kind === 'meeting') window.dispatchEvent(new Event('tg:meetings-changed'));
+    if (outcome.kind === 'meeting') {
+      window.dispatchEvent(new Event('tg:meetings-changed'));
+      // The meeting's question and doc are on My Meetings, under "You're checked in": take them there after a moment to see the result.
+      window.clearTimeout(goTimer.current);
+      goTimer.current = window.setTimeout(() => go(MY_MEETING), 1600);
+    }
   }
 
   function onScan(text: string): boolean {
@@ -100,8 +107,8 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
         bare
         outcome={o}
         busy={busy}
-        doneLabel={again ? 'Scan Next' : 'Done'}
-        onDone={() => (again ? rescan() : onClose())}
+        doneLabel={again ? 'Scan Next' : o.kind === 'meeting' ? 'Open Meeting' : 'Done'}
+        onDone={() => (again ? rescan() : o.kind === 'meeting' ? go(MY_MEETING) : onClose())}
         onChoose={async (which) => { if (o.kind !== 'choose') return; setBusy(true); await finish(resolveChoice(o.code, which)); setBusy(false); }}
         onConfirmReward={async () => {
           if (o.kind !== 'reward') return;

@@ -384,7 +384,10 @@
   .welcomeName::before { display: block; font-size: 0.78rem; letter-spacing: 0.04em; margin-bottom: 0.1rem; }
   .welcomeText .roleChips { margin-top: 0.3rem; }
   /* On a phone the way back to the public site is a visible button in the greeting card (Sign out stays in More). */
-  .welcomeText .headerActions { display: flex; margin-top: 0.5rem; }
+  /* ...as a short pill on the right of the greeting row (not a button hanging under the name), so the row balances: who you are on the left, the way out on the right. */
+  .welcomeText .headerActions { display: flex; position: absolute; right: 0; top: 50%; transform: translateY(-50%); margin: 0; }
+  .welcomeMain { padding-right: 5.2rem; }
+  .welcomeText .longLabel { display: none; }
   .welcomeText .headerActions > :not(a), .welcomeText .headerActionDivider { display: none; }
   .welcomeText .headerActionLink { display: inline-flex; align-items: center; min-height: 36px; padding: 0.3rem 0.85rem; font-family: var(--font-futura-heavy); font-size: 0.74rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--pp-ink); background: var(--pp-card); border: 1px solid rgba(var(--pp-ink-rgb), 0.35); border-radius: 6px; box-shadow: 2px 2px 0 rgba(var(--pp-ink-rgb), 0.35); }
 }

@@ -1,5 +1,7 @@
 'use client';
 
+import { createPortal } from 'react-dom';
+import ScanOpening from './ScanOpening';
 import { confirmDiscardUnsaved } from '@/lib/ui/useUnsavedChanges';
 import type { ReactElement, ReactNode } from 'react';
 import { Fragment, cloneElement, isValidElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -193,7 +195,20 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
   // open. Sections read their starting tab from the URL when they mount, so remount once the URL has
   // changed. In-section tab clicks never do this (they only edit the URL themselves).
   const [navNonce, setNavNonce] = useState(0);
+  const [openingScan, setOpeningScan] = useState(false);   // the Scan button was pressed: a screen shows at once while the camera page loads
+  useEffect(() => { if (!openingScan) return; const id = window.setTimeout(() => setOpeningScan(false), 10_000); return () => window.clearTimeout(id); }, [openingScan]);
   const pendingNav = useRef(false);
+  const navFrom = useRef<string | null>(null);   // the section that was open when the link was followed
+  const openIdNow = useRef<string | null>(null);
+  openIdNow.current = openId;
+  // A link to a section that was not open already mounts it fresh, so only a link into the section that is already open needs it rebuilt (a second rebuild
+  // made things like the ticket pop-up flash twice).
+  const rebuildIfSameSection = () => {
+    if (!pendingNav.current) return;
+    pendingNav.current = false;
+    const target = mergedPortalParams(window.location.pathname, window.location.search).get('section');
+    if (target && target === navFrom.current) setNavNonce((n) => n + 1);
+  };
   // Browser Back/Forward between portal views: the address changes under us, so remount the open section to re-read its tab.
   useEffect(() => {
     const onPop = () => { const w = window as unknown as { __tgPop?: number; __tgPush?: number }; w.__tgPop = Date.now(); w.__tgPush = Math.max(0, (w.__tgPush ?? 0) - 1); // Back/Forward may land on another section (or home): show the one the address now names.
@@ -204,7 +219,7 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
     return () => window.removeEventListener('popstate', onPop);
   }, []);
   useEffect(() => {
-    const onNav = () => { pendingNav.current = true; window.setTimeout(() => { if (pendingNav.current) { pendingNav.current = false; setNavNonce((n) => n + 1); } }, 600); };
+    const onNav = () => { pendingNav.current = true; navFrom.current = openIdNow.current; window.setTimeout(rebuildIfSameSection, 600); };
     window.addEventListener('tg:portal-nav', onNav);
     return () => window.removeEventListener('tg:portal-nav', onNav);
   }, []);
@@ -221,7 +236,8 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
   }, []);
   const paramsKey = searchParams.toString();
   useEffect(() => {
-    if (pendingNav.current) { pendingNav.current = false; setNavNonce((n) => n + 1); }
+    rebuildIfSameSection();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paramsKey]);
   const isDesktop = useIsDesktop();
 
@@ -306,10 +322,13 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
   const primaryTabs = sections.filter((s) => dock.ids.has(s.id));
   // The middle of the phone's bottom bar: one camera for every QR the portal makes (see UniversalScanner).
   const scanButton = (
-    <button key="scan" type="button" className={`${styles.dockItem} ${styles.dockScan}`} onClick={() => { setMoreOpen(false); router.push('/portal/scan'); }} aria-label="Scan a tgcode">
+    <Fragment key="scan">
+    <button type="button" className={`${styles.dockItem} ${styles.dockScan}`} onClick={() => { setMoreOpen(false); setOpeningScan(true); router.push('/portal/scan'); }} aria-label="Scan a tgcode">
       <span className={styles.dockScanIcon}><RingIcon size={26} /></span>
       <span className={styles.dockLabel}>Scan</span>
     </button>
+    {openingScan && createPortal(<ScanOpening />, document.body)}
+    </Fragment>
   );
   const primaryTabIds = new Set(primaryTabs.map((s) => s.id));
   const moreSections = sections.filter((s) => !primaryTabIds.has(s.id));

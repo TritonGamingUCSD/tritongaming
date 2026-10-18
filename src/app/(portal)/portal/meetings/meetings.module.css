@@ -803,7 +803,8 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .stageBar span { font-size: clamp(0.9rem, 1.4vw, 1.3rem); color: rgba(var(--pp-ink-rgb), 0.75); }
 .presenting { background: radial-gradient(ellipse 60% 55% at 50% 48%, rgba(125, 180, 234, 0.2), transparent 70%), radial-gradient(ellipse 80% 60% at 50% 110%, rgba(74, 144, 226, 0.16), transparent 70%), var(--pp-card); }
 .presenting .codeLabel { font-size: clamp(0.9rem, 1.6vw, 1.4rem); letter-spacing: 0.3em; }
-.presenting .duo { background: rgba(var(--pp-ink-rgb), 0.04); border-radius: 2rem; box-shadow: 0 0 80px rgba(125, 180, 234, 0.18); }
+/* The panel is the same solid colour as the code's own plate (the portal card colour), in light and dark, so the tgcode sits on a ground that matches it; the glow stays around the panel, not under it. */
+.presenting .duo { background: var(--pp-card); border: 1px solid rgba(var(--pp-ink-rgb), 0.12); border-radius: 2rem; box-shadow: 0 0 80px rgba(125, 180, 234, 0.18); }
 .liveCount { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
 .arrivals { display: inline-flex; align-items: center; }
 .arrival { display: inline-flex; margin-left: -0.45rem; border-radius: 50%; box-shadow: 0 0 0 2px var(--pp-card); animation: arrivalIn 0.4s ease both; }

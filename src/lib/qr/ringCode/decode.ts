@@ -1,4 +1,4 @@
-import { DATA_CELLS, DOTS, FINDERS, R_SMALL, SPAN, U, cellCenter, payloadFromBits } from './layout';
+import { DATA_CELLS, R_OUT, DOTS, FINDERS, R_SMALL, SPAN, U, cellCenter, payloadFromBits } from './layout';
 
 // Reads a ring code out of a camera picture (grey values, width × height). No library: it finds the three finder marks the way a QR reader does, works out
 // where the code sits (position, size, turn, and a little tilt from the three marks), reads each cell where the dash would be, and lets the repair bytes
@@ -75,7 +75,7 @@ function pickPairs(f: Finder[]): [Finder, Finder][] {
 }
 
 /** Reads the cells given where the top-left (L) and top-right (R) ring marks are. Straightened by the two bottom dots when both are found, otherwise by the two marks alone. */
-function readCells(gray: Uint8ClampedArray | Uint8Array, w: number, h: number, L: Finder, R: Finder, bin: Uint8Array, straighten: boolean): number[] | null {
+function readCells(gray: Uint8ClampedArray | Uint8Array, w: number, h: number, L: Finder, R: Finder, bin: Uint8Array, straighten: boolean): { cells: number[]; map: (x: number, y: number) => { x: number; y: number } } | null {
   // Code units → picture as a turn and a scale fixed by the two marks.
   const dx = (R.x - L.x) / SPAN, dy = (R.y - L.y) / SPAN;   // the picture's step for one code unit along "right"; "down" is that turned a quarter
   const similar = (x: number, y: number) => { const fx = x - FINDERS.tl.x, fy = y - FINDERS.tl.y; return { x: L.x + fx * dx - fy * dy, y: L.y + fx * dy + fy * dx }; };
@@ -113,7 +113,7 @@ function readCells(gray: Uint8ClampedArray | Uint8Array, w: number, h: number, L
     const v = acc / n;
     cells[i] = (darkMarks ? v < thr : v > thr) ? 1 : 0;
   }
-  return cells;
+  return { cells, map };
 }
 
 /** The centre of the solid round blob of marks (a dot of about `radius` pixels) nearest to `near`, or null. Every blob in reach is looked at, so a dash or a smudge close by cannot hide it. */
@@ -185,8 +185,11 @@ function binarize(gray: Uint8ClampedArray | Uint8Array, w: number, h: number, da
   return bin;
 }
 
-/** Looks for a ring code in a grey picture and returns what it says (`m…`, `t…` or `r…` and twelve hex digits), or null. */
-export function decodeRingCode(gray: Uint8ClampedArray | Uint8Array, w: number, h: number): string | null {
+/** Where a ring code was found in the picture: its centre and radius, in picture pixels. */
+export interface RingSpot { x: number; y: number; r: number }
+
+/** Looks for a ring code in a grey picture and returns what it says (`m…`, `t…` or `r…` and twelve hex digits) and where it sits, or null. */
+export function decodeRingCodeAt(gray: Uint8ClampedArray | Uint8Array, w: number, h: number): { payload: string; spot: RingSpot } | null {
   for (const darkMarks of [true, false]) {
     const bin = binarize(gray, w, h, darkMarks);
     const finders = findFinders(bin, w, h);
@@ -195,12 +198,18 @@ export function decodeRingCode(gray: Uint8ClampedArray | Uint8Array, w: number, 
       // Which of the two is the left one is not known: try both (the wrong one cannot pass the repair check). Straightened by the bottom dots when they are found.
       for (const [L, R] of [[P, Q], [Q, P]] as [Finder, Finder][]) {
         for (const straighten of [true, false]) {
-          const cells = readCells(gray, w, h, L, R, bin, straighten);
-          const payload = cells && payloadFromBits(cells);
-          if (payload) return payload;
+          const read = readCells(gray, w, h, L, R, bin, straighten);
+          const payload = read && payloadFromBits(read.cells);
+          if (payload && read) {
+            const c = read.map(0, 0), e1 = read.map(R_OUT, 0), e2 = read.map(0, R_OUT);
+            return { payload, spot: { x: c.x, y: c.y, r: (Math.hypot(e1.x - c.x, e1.y - c.y) + Math.hypot(e2.x - c.x, e2.y - c.y)) / 2 } };
+          }
         }
       }
     }
   }
   return null;
 }
+
+/** Looks for a ring code in a grey picture and returns what it says, or null. */
+export const decodeRingCode = (gray: Uint8ClampedArray | Uint8Array, w: number, h: number): string | null => decodeRingCodeAt(gray, w, h)?.payload ?? null;

@@ -27,3 +27,19 @@ describe('how long a scanned code lasts', () => {
     expect([rotatingCode(secret, currentWindow()), rotatingCode(secret, currentWindow() - 1)]).toContain(typed);
   });
 });
+
+describe('the host screen\'s upcoming codes', () => {
+  test('are the next windows in order, each ending 30 s after the one before, and none is the current code', async () => {
+    const { upcomingMeetingCodes, currentMeetingCode, currentQrToken } = await import('@/lib/meetings/meetings');
+    const secret = 'zz-meeting-secret';
+    at(10);
+    const now = currentMeetingCode(secret), up = upcomingMeetingCodes(secret, 6);
+    expect(up).toHaveLength(6);
+    expect(up[0].code).toBe(rotatingCode(secret, currentWindow() + 1));
+    expect(up[0].expiresAt).toBe((currentWindow() + 2) * ROTATION_SECONDS * 1000);
+    up.slice(1).forEach((u, i) => expect(u.expiresAt - up[i].expiresAt).toBe(ROTATION_SECONDS * 1000));
+    expect(up.every((u) => /^m[0-9a-f]{12}$/.test(u.qrPayload))).toBe(true);
+    expect(up.map((u) => u.qrPayload)).not.toContain(`m${currentQrToken(secret)}`);
+    expect(up.map((u) => u.code)).not.toContain(now.code);
+  });
+});

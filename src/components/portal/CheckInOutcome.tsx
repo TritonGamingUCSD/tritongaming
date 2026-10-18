@@ -32,6 +32,7 @@ export default function CheckInOutcome({ outcome, onDone, onConfirmReward, onCho
         <span className={styles.kicker}>Meeting check-in</span>
         <strong className={styles.title}>{outcome.already ? 'Already checked in' : 'You’re checked in'}</strong>
         <span className={styles.detail}>{outcome.title} · {clock(outcome.at)}</span>
+        {bare && <span className={styles.note}>Taking you to the meeting’s question and doc…</span>}
         <Button onClick={onDone}>{doneLabel}</Button>
       </div>
     );

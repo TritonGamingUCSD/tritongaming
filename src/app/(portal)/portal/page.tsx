@@ -507,7 +507,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
                     )}
                   </div>
                   <div className={styles.headerActions}>
-                    <Link href="/" className={styles.headerActionLink}>← Back to site</Link>
+                    <Link href="/" className={styles.headerActionLink} aria-label="Back to site">← <span className={styles.longLabel}>Back to </span>site</Link>
                     <span className={styles.headerActionDivider} aria-hidden="true">·</span>
                     <SignOutButton />
                   </div>

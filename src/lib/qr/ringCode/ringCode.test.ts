@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { rsDecode, rsEncode } from './rs';
 import { DASH, DOTS, FINDERS, R_IN, R_LOGO, RINGS, THICK, U, R_SMALL, SECTORS, dashGrid, messageBits, DATA_CELLS, payloadFromBits } from './layout';
-import { decodeRingCode } from './decode';
+import { decodeRingCode, decodeRingCodeAt } from './decode';
 
 // A small software "camera": draws a ring code into a grey picture (any turn, size, tilt, blur, noise, light or dark plate) so the reader can be tried on many pictures.
 function paint(payload: string, o: { px: number; rot: number; a?: number; b?: number; blur?: number; noise?: number; dark?: boolean; size?: number; seed?: number; glare?: boolean; tone?: boolean }) {
@@ -152,4 +152,16 @@ describe('two-tone dashes', () => {
     console.log(`TONE single ${one} two-tone ${two}`);
     expect(two).toBeGreaterThanOrEqual(one - 0.03);
   }, 120000);
+});
+
+describe('where the code is found', () => {
+  test('the centre and size it reports match where the picture was drawn, turned, tilted, light or dark', () => {
+    for (const [px, rot, a, b, dark] of [[140, 0, 0, 0, false], [100, 1.3, 0.05, -0.04, true], [200, 4.4, -0.06, 0.05, false], [70, 2.2, 0, 0, true]] as const) {
+      const pic = paint(payloads[1], { px, rot, a, b, dark, seed: 5 });
+      const got = decodeRingCodeAt(...flat(pic));
+      expect(got?.payload).toBe(payloads[1]);
+      expect(Math.hypot(got!.spot.x - pic.size / 2, got!.spot.y - pic.size / 2)).toBeLessThan(px * 0.06);
+      expect(Math.abs(got!.spot.r / (px * 0.88) - 1)).toBeLessThan(0.1);
+    }
+  });
 });
