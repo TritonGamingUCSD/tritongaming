@@ -13,6 +13,13 @@ export function slugLabel(slug: string): string {
   return decodeURIComponent(slug).split(/[-_\s]+/).filter(Boolean).map((w) => WORD[w.toLowerCase()] ?? w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
 
+// An open item is part of the address as `<kind>-<id>`; its crumb names the kind, never the id.
+const ITEM_LABEL: [RegExp, string][] = [[/^live-/, 'Live Meeting'], [/^edit-series-/, 'Edit Repeating Meeting'], [/^edit-/, 'Edit Meeting']];
+export function crumbLabel(slug: string): string {
+  const item = ITEM_LABEL.find(([re]) => re.test(slug));
+  return item ? item[1] : slugLabel(slug);
+}
+
 export default function PortalCrumbs({ section, sectionLabel, className }: { section: string; sectionLabel: string; className?: string }) {
   const [tab, setTab] = useState<string | null>(null);
   const [subtab, setSubtab] = useState<string | null>(null);
@@ -32,7 +39,7 @@ export default function PortalCrumbs({ section, sectionLabel, className }: { sec
   const trail: { label: string; href?: string }[] = [];
   trail.push({ label: sectionLabel, href: portalHref(new URLSearchParams({ section })) });
   if (tab) trail.push({ label: slugLabel(tab), href: portalHref(new URLSearchParams({ section, tab })) });
-  if (subtab) trail.push({ label: slugLabel(subtab), href: portalHref(new URLSearchParams({ section, tab: tab!, subtab })) });
+  if (subtab) trail.push({ label: crumbLabel(subtab), href: portalHref(new URLSearchParams({ section, tab: tab!, subtab })) });
   return (
     <nav className={`${styles.crumbTrail} ${className ?? ''}`} aria-label="You are here">
       {trail.map((c, i) => {

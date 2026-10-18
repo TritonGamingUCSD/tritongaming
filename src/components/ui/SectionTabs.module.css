@@ -5,13 +5,12 @@
   width: 100%;
   margin-bottom: 1.5rem;
   border-bottom: 3px solid rgba(var(--pp-ink-rgb), 0.28);
-  overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
 .bar::-webkit-scrollbar { display: none; }
-/* A soft fade at the edge, only when the tabs really do run off-screen. */
-.bar[data-overflow='1'] { mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
+/* Only a bar whose tabs really do run off-screen scrolls (sideways only, so the lifted tab never makes it jump up and down), with a soft fade at the edge. */
+.bar[data-overflow='1'] { overflow-x: auto; overflow-y: hidden; padding-top: 3px; mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
 
 .tab {
   position: relative;

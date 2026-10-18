@@ -130,7 +130,7 @@ export default function MeetingsSectionContent({ canHost, canManageAll, userId, 
           ...(canEmoji ? [{ id: 'emojis' as Tab, label: 'Emojis', icon: <Smile size={15} /> }] : []),
         ]}
       />
-      {tab !== 'mine' && canAttend && <TodayStrip canHost={canManage} onHost={(id) => { setTab('host'); openHostView(`live-${id}`); }} onMine={() => pick('mine')} />}
+      {tab !== 'mine' && canAttend && !(tab === 'host' && hostView) && <TodayStrip canHost={canManage} onHost={(id) => { setTab('host'); openHostView(`live-${id}`); }} onMine={() => pick('mine')} />}
       {tab === 'mine' && canAttend && <MineTab view={mineView} onView={(v) => { setMineView(v); sync('mine', v === 'history' ? 'history' : null); }} />}
       {tab === 'planning' && (canAttend || canManage) && <PlanningPanel userId={userId} />}
       {tab === 'host' && canManage && <RunPanel initial={runTarget} view={hostView} onView={openHostView} showForm={scheduling} onShowForm={setScheduling} />}
