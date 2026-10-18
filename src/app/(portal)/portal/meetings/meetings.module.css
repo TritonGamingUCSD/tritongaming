@@ -812,11 +812,9 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .arrival .avatar, .arrival .avatarFallback { width: 34px; height: 34px; }
 .presenting .arrival .avatar, .presenting .arrival .avatarFallback { width: 54px; height: 54px; }
 .arrivalMore { margin-left: 0.5rem; font-size: 0.85rem; font-weight: 600; color: rgba(var(--pp-ink-rgb), 0.8); }
-.latest { font-style: normal; font-size: 1rem; color: var(--p-accent-text); animation: arrivalIn 0.5s ease both; }
-.presenting .latest { font-size: 1.5rem; }
 @keyframes arrivalIn { from { opacity: 0; transform: translateY(6px) scale(0.9); } to { opacity: 1; transform: none; } }
 @media (max-width: 640px) { .stageBar { left: 1rem; top: 1rem; max-width: 55%; } }
-@media (prefers-reduced-motion: reduce) { .arrival, .latest { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .arrival { animation: none; } }
 
 @media (max-width: 640px) { .stageBar { position: static; align-items: center; text-align: center; max-width: 100%; padding-top: 2.4rem; } .stageBar h2 { font-size: 1.3rem; } }
 

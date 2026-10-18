@@ -1796,14 +1796,14 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
           </div>
           <div ref={timerRef} className={styles.timer} aria-hidden="true"><span style={{ width: `${pct}%` }} /></div>
           <div ref={countRef} className={styles.liveCount}>
-            {live.attendees.length > 0 && (
+            {/* On the shared screen only the count shows, never who checked in; the host's own panel keeps the faces. */}
+            {!presenting && live.attendees.length > 0 && (
               <span className={styles.arrivals} aria-hidden="true">
                 {live.attendees.slice(0, 7).map((a) => <span key={a.id} className={styles.arrival}><Avatar p={a} /></span>)}
                 {live.attendees.length > 7 && <span className={styles.arrivalMore}>+{live.attendees.length - 7}</span>}
               </span>
             )}
             <span><strong>{expectedHere}</strong> of {expectedHere + live.missing.length} checked in{guestCount > 0 ? ` (+${guestCount})` : ''}</span>
-            {presenting && live.attendees[0] && <em key={live.attendees[0].id} className={styles.latest}>{live.attendees[0].name} just checked in</em>}
           </div>
           <span ref={hintRef} aria-hidden="true" />
           {live.meeting.question && live.meeting.question_type !== 'text' && (
