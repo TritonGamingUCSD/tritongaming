@@ -1,5 +1,6 @@
 import Link from '@/components/portal/PortalLink';
-import { CalendarDays, ExternalLink, MapPin, QrCode, Ticket } from 'lucide-react';
+import RingIcon from '@/components/RingCode/RingIcon';
+import { CalendarDays, ExternalLink, MapPin, Ticket } from 'lucide-react';
 import { PACIFIC_TZ } from '@/lib/core/timezone';
 import PortalSearch from '@/components/portal/PortalSearch';
 import EventCountdown from './EventCountdown';
@@ -53,7 +54,7 @@ export function DashboardBody({ event, note, links, upcoming, activity, showRole
               <EventCountdown startsAt={event.start_date} />
               {event.location && <p className={styles.where}><MapPin size={14} aria-hidden="true" /> {event.location}</p>}
               <div className={styles.actions}>
-                <Link href={event.hasTicket && event.ticketId ? `/portal/tickets?qr=${event.ticketId}` : '/portal/tickets'} className={styles.primary}>{event.hasTicket ? <><QrCode size={16} aria-hidden="true" /> Show my QR</> : <><Ticket size={16} aria-hidden="true" /> Get my ticket</>}</Link>
+                <Link href={event.hasTicket && event.ticketId ? `/portal/tickets?qr=${event.ticketId}` : '/portal/tickets'} className={styles.primary}>{event.hasTicket ? <><RingIcon size={16} /> Show My tgcode</> : <><Ticket size={16} aria-hidden="true" /> Get my ticket</>}</Link>
               </div>
             </div>
             <div className={styles.stub} aria-hidden="true"><span>Admit one</span></div>

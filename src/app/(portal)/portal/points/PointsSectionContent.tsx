@@ -7,7 +7,8 @@ import { confirmHold } from '@/lib/ui/confirmHold';
 import { showToast } from '@/lib/ui/toast';
 import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import { useEffect, useState } from 'react';
-import { Award, ShoppingBag, Trophy, Settings, Check, QrCode, Gift, Lock, X } from 'lucide-react';
+import RingIcon from '@/components/RingCode/RingIcon';
+import { Award, ShoppingBag, Trophy, Settings, Check, Gift, Lock, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { getTier, nextTier, type Tier } from '@/lib/members/tiers';
 import { PACIFIC_TZ } from '@/lib/core/timezone';
@@ -789,7 +790,7 @@ export default function PointsSectionContent({
                   const reward = oneOf(r.reward);
                   return (
                     <button key={r.id} type="button" className={styles.pendingCard} onClick={() => setQrFor(r.id)}>
-                      <QrCode size={20} strokeWidth={1.5} aria-hidden="true" />
+                      <RingIcon size={20} />
                       <span>{reward?.title ?? 'Reward'}</span>
                     </button>
                   );

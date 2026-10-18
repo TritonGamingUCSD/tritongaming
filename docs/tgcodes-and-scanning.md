@@ -45,3 +45,9 @@ may scan tickets can ever hit the ticket side.
 2. A tgcode becomes `ring:<kind><12 hex>`; the scanner decides by kind and calls `lib/checkin/anyCode.ts`, which asks the server (`/api/meetings/check-in`,
    `/api/tickets/checkin`, `/api/rewards/redemptions/lookup`). The server decides who may do what and whether the key is current.
 3. The result is shown in a card; staff can **Scan Next**.
+
+## After a scan
+
+The result card pops in: the icon scales in, a ring ripples out of a success, a refusal shakes once, the lines follow, and the phone gives a short buzz (one pulse for a result, three for an
+already-used ticket, two for a refusal). With reduced motion on, none of it moves. A reply with no reason (signed out, too many tries, a server error) is turned into a plain sentence.
+Wherever a tgcode is shown the button says **Show tgcode** and uses the ring icon instead of the standard QR glyph.

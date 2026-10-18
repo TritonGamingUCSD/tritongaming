@@ -18,8 +18,12 @@ export const RING = /^ring:([mtr])([0-9a-f]{12})$/;
 async function post(path: string, body: object) {
   const res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   const json = await res.json().catch(() => ({}));
+  if (!res.ok && !json.error) json.error = whyNot(res.status);
   return { ok: res.ok, status: res.status, json };
 }
+
+// When the server answered without a reason (a signed-out session, a busy server), still say something the person can act on.
+const whyNot = (status: number) => status === 401 ? 'You’ve been signed out. Sign in again, then scan.' : status === 429 ? 'Too many tries. Wait a moment, then scan again.' : status >= 500 ? 'The server had a problem. Try again in a moment.' : 'Check-in failed.';
 
 function ticketOutcome(j: Record<string, unknown>): Outcome {
   return {
@@ -75,7 +79,7 @@ export async function checkInWithQr(text: string, can: { tickets: boolean; rewar
       if (!can.rewards) return { kind: 'error', message: can.tickets ? 'That is a reward pickup code, and your role can’t confirm hand-overs. Ask an officer who can.' : 'That is a reward pickup code. Show it to an officer to collect your reward.' };
       const res = await fetch(`/api/rewards/redemptions/lookup?p=${ring[2]}`);
       const j = await res.json().catch(() => ({}));
-      if (!res.ok) return { kind: 'error', message: j.error || 'Reward not found.' };
+      if (!res.ok) return { kind: 'error', message: j.error || (res.status === 404 ? 'Reward not found.' : whyNot(res.status)) };
       const one = <T,>(v: T | T[] | null): T | null => (Array.isArray(v) ? v[0] ?? null : v);
       const d = j.redemption;
       return { kind: 'reward', id: d.id, status: d.status, title: one<{ title: string }>(d.reward)?.title ?? 'Reward', member: one<{ display_name: string | null }>(d.member)?.display_name ?? 'Member', cost: d.point_cost };

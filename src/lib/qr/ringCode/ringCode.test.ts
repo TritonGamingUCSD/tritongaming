@@ -4,18 +4,19 @@ import { DASH, DOTS, FINDERS, R_IN, R_LOGO, RINGS, THICK, U, R_SMALL, SECTORS, d
 import { decodeRingCode } from './decode';
 
 // A small software "camera": draws a ring code into a grey picture (any turn, size, tilt, blur, noise, light or dark plate) so the reader can be tried on many pictures.
-function paint(payload: string, o: { px: number; rot: number; a?: number; b?: number; blur?: number; noise?: number; dark?: boolean; size?: number; seed?: number; glare?: boolean }) {
+function paint(payload: string, o: { px: number; rot: number; a?: number; b?: number; blur?: number; noise?: number; dark?: boolean; size?: number; seed?: number; glare?: boolean; tone?: boolean }) {
   const size = o.size ?? Math.round(o.px * 2.6);
   const gray = new Uint8ClampedArray(size * size);
   const grid = dashGrid(payload)!;
   const delta = (2 * Math.PI) / SECTORS;
-  const dash = (x: number, y: number) => {
+  const dash = (x: number, y: number): number => {
     const r = Math.hypot(x, y);
-    if (r < R_IN || r >= R_IN + RINGS * THICK) return false;
+    if (r < R_IN || r >= R_IN + RINGS * THICK) return 0;
     const ring = Math.floor((r - R_IN) / THICK);
-    if (Math.abs(r - (R_IN + (ring + 0.5) * THICK)) > DASH / 2) return false;   // between the rings
+    if (Math.abs(r - (R_IN + (ring + 0.5) * THICK)) > DASH / 2) return 0;   // between the rings
     let ang = Math.atan2(y, x); if (ang < 0) ang += 2 * Math.PI;
-    return grid[ring][Math.floor(ang / delta) % SECTORS];
+    const sec = Math.floor(ang / delta) % SECTORS;
+    return grid[ring][sec] ? (o.tone && (sec * 7 + ring * 3) % 4 === 0 ? 2 : 1) : 0;   // 2 = the portal-blue second tone
   };
   const ink = o.dark ? 235 : 25, plate = o.dark ? 18 : 240, around = 128;
   const cs = Math.cos(o.rot), sn = Math.sin(o.rot), c = size / 2;
@@ -29,7 +30,8 @@ function paint(payload: string, o: { px: number; rot: number; a?: number; b?: nu
     }
     for (const d of Object.values(DOTS)) if (Math.hypot(x - d.x, y - d.y) <= R_SMALL) return ink;
     if (r < R_LOGO) return Math.hypot(x - 0.04, y + 0.03) < 0.12 ? 110 : plate;
-    return dash(x, y) ? ink : plate;
+    const d = dash(x, y);
+    return d === 2 ? (o.dark ? 170 : 66) : d ? ink : plate;
   };
   for (let py = 0; py < size; py++) for (let px = 0; px < size; px++) {
     let u = (px - c) / o.px, v = (py - c) / o.px;
@@ -131,5 +133,23 @@ describe('ring code under random conditions', () => {
     console.log(`HARSH ${ok}/${trials} wrong ${wrong}`);
     expect(wrong).toBe(0);
     expect(ok / trials).toBeGreaterThanOrEqual(0.5);
+  }, 120000);
+});
+
+describe('two-tone dashes', () => {
+  test('the portal-blue second tone reads as often as the single ink, light and dark', () => {
+    let seed = 11; const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+    const rate = (tone: boolean) => {
+      seed = 11; let ok = 0; const n = 120;
+      for (let t = 0; t < n; t++) {
+        const p = payloads[t % payloads.length];
+        const o = { px: 90 + rnd() * 200, rot: rnd() * 6.28, a: (rnd() - 0.5) * 0.2, b: (rnd() - 0.5) * 0.2, blur: Math.floor(rnd() * 2), noise: rnd() * 20, dark: rnd() < 0.5, glare: rnd() < 0.2, seed: t + 1, tone };
+        if (decodeRingCode(...flat(paint(p, o))) === p) ok++;
+      }
+      return ok / n;
+    };
+    const one = rate(false), two = rate(true);
+    console.log(`TONE single ${one} two-tone ${two}`);
+    expect(two).toBeGreaterThanOrEqual(one - 0.03);
   }, 120000);
 });

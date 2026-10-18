@@ -306,7 +306,7 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
   const primaryTabs = sections.filter((s) => dock.ids.has(s.id));
   // The middle of the phone's bottom bar: one camera for every QR the portal makes (see UniversalScanner).
   const scanButton = (
-    <button key="scan" type="button" className={`${styles.dockItem} ${styles.dockScan}`} onClick={() => { setMoreOpen(false); router.push('/portal/scan'); }} aria-label="Scan a QR code">
+    <button key="scan" type="button" className={`${styles.dockItem} ${styles.dockScan}`} onClick={() => { setMoreOpen(false); router.push('/portal/scan'); }} aria-label="Scan a tgcode">
       <span className={styles.dockScanIcon}><RingIcon size={26} /></span>
       <span className={styles.dockLabel}>Scan</span>
     </button>

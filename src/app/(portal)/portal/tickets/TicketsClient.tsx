@@ -8,7 +8,8 @@ import { pacificKey, startsWeekGroup } from '@/lib/events/weekGroups';
 import Link from '@/components/portal/NoPrefetchLink';
 import { getAttributionSource } from '@/lib/site/attribution';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Ticket, MapPin, QrCode, Check, X, Timer, Award } from 'lucide-react';
+import RingIcon from '@/components/RingCode/RingIcon';
+import { Ticket, MapPin, Check, X, Timer, Award } from 'lucide-react';
 import FullscreenQR from './FullscreenQR';
 import OnlineCheckinEntry from './OnlineCheckinEntry';
 import AsFormButton from './AsFormButton';
@@ -284,7 +285,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
       )}
       {claimed && (
         <Notice tone="success">
-          You&apos;re in! You got your ticket for <strong>{claimed.title}</strong> ({claimed.when}). Your QR code will be right here in My Tickets when the day comes.
+          You&apos;re in! You got your ticket for <strong>{claimed.title}</strong> ({claimed.when}). Your tgcode will be right here in My Tickets when the day comes.
           {' '}<button type="button" onClick={() => setClaimed(null)} style={{ background: 'none', border: 0, color: 'inherit', textDecoration: 'underline', cursor: 'pointer', font: 'inherit', padding: 0 }}>Dismiss</button>
         </Notice>
       )}
@@ -329,8 +330,8 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
                   className={styles.showQrBtn}
                   onClick={() => setQrTicket(nextActiveTicket)}
                 >
-                  <span className={styles.showQrIcon}><QrCode size={18} strokeWidth={1.5} aria-hidden="true" /></span>
-                  Show QR Code
+                  <span className={styles.showQrIcon}><RingIcon size={18} /></span>
+                  Show tgcode
                 </button>
               )}
             </div>
@@ -584,7 +585,7 @@ function TicketRow({
             <OnlineCheckinEntry ticketId={ticket.id} eventId={ev.id} onCheckedIn={onCheckedIn} checkinFormUrl={ticket.checkinFormUrl} onFormComplete={onFormComplete} compact />
           ) : isActionable && onShowQR ? (
             <button className={styles.qrMiniBtn} onClick={onShowQR}>
-              <span aria-hidden="true">▦</span> View QR
+              <RingIcon size={14} /> View tgcode
             </button>
           ) : (
             <span className={`${styles.statusBadge} ${styles[`status_${displayStatus}`]}`}>

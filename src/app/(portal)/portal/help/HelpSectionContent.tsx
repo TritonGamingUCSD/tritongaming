@@ -300,7 +300,7 @@ function FreeTicket({ userId, onCreated }: { userId: string; onCreated: (id: str
       </label>
       <label className={styles.field}>
         <span className={styles.label}>Short title</span>
-        <Input value={subject} maxLength={MAX_SUBJECT} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. My ticket QR code won’t load" required />
+        <Input value={subject} maxLength={MAX_SUBJECT} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. My ticket tgcode won’t load" required />
       </label>
       <label className={styles.field}>
         <span className={styles.label}>Details</span>
