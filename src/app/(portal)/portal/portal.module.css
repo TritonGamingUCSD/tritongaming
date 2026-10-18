@@ -71,6 +71,6 @@
 .fixedTheme { display: none; }
 @media (max-width: 899px) {
   .fixedTheme { display: block; position: fixed; top: 1.25rem; right: calc(1.25rem + 46px); z-index: 40; transform: translateZ(0); will-change: transform; }
-  .fixedTheme button { width: 38px; height: 38px; border-radius: 50%; background: var(--pp-chrome-2); border: 1px solid rgba(var(--pp-chrome-rgb), 0.1); color: rgba(var(--pp-chrome-rgb), 0.75); }
+  .fixedTheme button, .fixedTheme button:hover, .fixedTheme button:focus { width: 38px; height: 38px; border-radius: 50%; background: var(--pp-chrome-2); border: 1px solid rgba(var(--pp-chrome-rgb), 0.1); color: rgba(var(--pp-chrome-rgb), 0.75); }
 }
 @media (max-width: 480px) { .fixedTheme { top: 0.875rem; right: calc(0.875rem + 46px); } }
