@@ -412,7 +412,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
                 </div>
               )}
               {pointsAwarded > 0 && (
-                <div className={styles.pointsEarned}>
+                <div className={`${styles.pointsEarned} pp-dark`}>
                   <span className={styles.pointsEarnedNumber}>+{pointsAwarded}</span>
                   <span className={styles.pointsEarnedLabel}>points earned</span>
                   {tierInfo?.tier_up && (

@@ -25,6 +25,7 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
   const [caps, setCaps] = useState<Caps>({});
   const [torch, setTorch] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [ready, setReady] = useState(false);   // the first picture is in and the zoom has settled: only then does the camera fade in
   const pausedRef = useRef(false);   // a taken scan freezes the picture and stops reading until the caller clears `lock`
   const onScanRef = useRef(onScan);
   onScanRef.current = onScan;
@@ -59,7 +60,13 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
         const c = t.getCapabilities?.() as Caps | undefined;
         if (c) setCaps({ zoom: c.zoom && c.zoom.max > c.zoom.min ? c.zoom : undefined, torch: !!c.torch });
         if (c?.zoom) { zoomRef.current = Math.min(Math.max(c.zoom.min, 1), c.zoom.max); setActive(zoomRef.current); hw.current.want = zoomRef.current; hw.current.applied = -1; applyHardware(); }   // start at 1×, not the ultra-wide the camera may open on
-        if (video.current) { video.current.srcObject = stream; await video.current.play().catch(() => {}); }
+        if (video.current) {
+          video.current.srcObject = stream; await video.current.play().catch(() => {});
+          const v0 = video.current;
+          for (let i = 0; i < 20 && v0.readyState < 2 && !dead; i++) await new Promise((r) => setTimeout(r, 50));
+          await new Promise((r) => setTimeout(r, 300));   // the phone's zoom (back to 1×) lands a moment after the first picture
+          if (!dead) setReady(true);
+        }
         const tick = async (now: number) => {
           raf = requestAnimationFrame(tick);
           const v = video.current;
@@ -153,7 +160,8 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
       </header>
       {error ? <div className={styles.scanProblem}><RingIcon size={44} /><p>{error}</p></div> : (
         <div ref={frame} className={styles.scanStage}>
-          <video ref={video} playsInline muted />
+          <video ref={video} playsInline muted className={ready ? styles.scanReady : undefined} />
+          {!ready && <div className={styles.scanStarting}>Starting camera…</div>}
           <div className={`${styles.scanTarget} ${lock ? styles[`lock_${lock.tone}`] : styles.scanLive}`} aria-hidden="true" />
           {lock && lock.tone !== 'busy' && (
             <span key={lock.tone} className={`${styles.scanLockIcon} ${styles[`lockIcon_${lock.tone}`]}`} aria-hidden="true">

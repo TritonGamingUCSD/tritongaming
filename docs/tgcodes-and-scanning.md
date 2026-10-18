@@ -48,7 +48,7 @@ may scan tickets can ever hit the ticket side.
 
 ## After a scan
 
-The person stays on the scan page. While it looks, the ring on the camera slowly turns with a sweep inside. When a code is read the picture freezes on it, the ring locks and takes
+The person stays on the scan page. While it looks, nothing moves on the camera while it looks (it fades in once the first picture is ready). When a code is read the picture freezes on it, the ring locks and takes
 the outcome's colour (green done, amber already used or needs a choice, red refused), a big icon pops in with a ripple (a refusal shakes), and the result slides up over the camera.
 **Scan Next** carries on with the same camera. With reduced motion on, none of it moves. A reply with no reason (signed out, too many tries, a server error) is turned into a plain
 sentence. Wherever a tgcode is shown the button says **Show tgcode** and uses the ring icon instead of the standard QR glyph. There is no vibration.
