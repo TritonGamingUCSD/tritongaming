@@ -756,3 +756,9 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .awayFold .absentList li { padding: 0.15rem 0.25rem 0.15rem 0.65rem; gap: 0.3rem; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.05); border: 1px solid rgba(var(--pp-ink-rgb), 0.18); font-size: 0.8rem; }
 .awayFold .absentList .personName { font-size: 0.8rem; }
 .awayFold .absentForm { grid-template-columns: minmax(150px, 1fr) minmax(150px, 1.3fr) auto auto; }
+
+/* A field with its button on the same line: the button lines up with the input, and the hint sits underneath both. */
+.docFormRow { width: 100%; }
+.inputWithButton { display: flex; align-items: center; gap: 0.6rem; }
+.inputWithButton > :first-child { flex: 1 1 auto; min-width: 0; }
+@media (max-width: 480px) { .inputWithButton { flex-direction: column; align-items: stretch; } }

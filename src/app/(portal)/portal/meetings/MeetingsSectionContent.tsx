@@ -1914,11 +1914,13 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
 {over ? (
             <p className={styles.lockNote}><Lock size={13} aria-hidden="true" /> This meeting has ended, so its info is locked.{doc ? <> Doc: <a href={doc} target="_blank" rel="noopener noreferrer">{doc}</a></> : null}</p>
           ) : (
-                    <form className={styles.docForm} onSubmit={(e) => { e.preventDefault(); saveDoc(); }}>
+                    <form className={styles.docFormRow} onSubmit={(e) => { e.preventDefault(); saveDoc(); }}>
             <Field label="Meeting doc link" hint="Members it is meant for see the link as soon as you add it.">
-              <Input value={doc ?? ''} onChange={(e) => { setDoc(e.target.value); setDocSaved(false); }} placeholder="https://docs.google.com/…" inputMode="url" />
+              <div className={styles.inputWithButton}>
+                <Input value={doc ?? ''} onChange={(e) => { setDoc(e.target.value); setDocSaved(false); }} placeholder="https://docs.google.com/…" inputMode="url" />
+                <Button type="submit" size="sm" variant="secondary" loading={busy}>{docSaved ? 'Saved' : 'Save Link'}</Button>
+              </div>
             </Field>
-            <Button type="submit" size="sm" variant="ghost" loading={busy}>{docSaved ? 'Saved' : 'Save link'}</Button>
           </form>
           )}
             </div>
