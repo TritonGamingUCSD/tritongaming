@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import styles from './SectionTabs.module.css';
 
 export interface SectionTab<T extends string = string> {
@@ -33,6 +33,23 @@ export default function SectionTabs<T extends string>({
   variant?: 'underline' | 'segmented';
   label?: string;
 }) {
+  // The row only scrolls (and only fades at its edge) when the tabs really do not fit; the active tab is kept in view then.
+  const bar = useRef<HTMLDivElement>(null);
+  const [overflow, setOverflow] = useState(false);
+  useEffect(() => {
+    const el = bar.current;
+    if (!el) return;
+    const check = () => { setOverflow(el.scrollWidth > el.clientWidth + 1); };
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [tabs.length, variant]);
+  useEffect(() => {
+    if (!overflow) return;
+    (bar.current?.querySelector('[aria-selected="true"]') as HTMLElement | null)?.scrollIntoView({ inline: 'center', block: 'nearest' });
+  }, [overflow, value]);
+
   function onKeyDown(e: React.KeyboardEvent, index: number) {
     let next = index;
     if (e.key === 'ArrowRight') next = (index + 1) % tabs.length;
@@ -46,7 +63,7 @@ export default function SectionTabs<T extends string>({
   }
 
   return (
-    <div className={`${styles.bar} ${variant === 'segmented' ? styles.segmented : ''}`} role="tablist" aria-label={label}>
+    <div ref={bar} data-overflow={overflow ? '1' : undefined} className={`${styles.bar} ${variant === 'segmented' ? styles.segmented : ''}`} role="tablist" aria-label={label}>
       {tabs.map((t, i) => {
         const active = t.id === value;
         return (

@@ -285,7 +285,8 @@
   padding: 0.5rem 0.65rem;
   min-width: 0;
 }
-.attMain { display: flex; flex-direction: column; flex: 1 1 180px; min-width: 0; }
+.attMain { display: flex; flex-direction: column; flex: 1 1 180px; min-width: 0; align-items: flex-start; text-align: left; background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; }
+.attMain:hover .personName { text-decoration: underline; text-underline-offset: 3px; }
 .attMain .personName { flex: none; }
 .attSub { font-style: normal; font-size: 0.72rem; color: rgba(var(--pp-ink-rgb), 0.88); overflow-wrap: anywhere; }
 .flag { margin-left: 0.5rem; padding: 0.05rem 0.5rem; border-radius: 999px; font-size: 0.64rem; font-weight: 400; letter-spacing: 0.04em; color: var(--pp-warn); background: rgba(251, 146, 60, 0.14); border: 1px solid rgba(251, 146, 60, 0.4); }
@@ -702,3 +703,29 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 
 /* The full edit page for a meeting. */
 .editHead { display: flex; flex-direction: column; align-items: flex-start; gap: 0.4rem; }
+
+/* One slim line instead of a big card when nothing is open, and today's meetings on the other tabs. */
+.slimLine { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.8rem; padding: 0.6rem 0.85rem; border: 1px dashed rgba(var(--pp-ink-rgb), 0.3); border-radius: 0.7rem; font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.85); }
+.slimLine strong { color: var(--pp-ink); }
+.todayStrip { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
+.todayStrip li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.7rem; padding: 0.45rem 0.7rem; border-radius: 0.7rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.2); background: rgba(var(--pp-ink-rgb), 0.04); font-size: 0.84rem; }
+.todayText { flex: 1 1 14rem; min-width: 0; color: rgba(var(--pp-ink-rgb), 0.88); }
+.todayText strong { color: var(--pp-ink); }
+.todayDot { flex: none; width: 0.6rem; height: 0.6rem; border-radius: 50%; background: rgba(var(--pp-ink-rgb), 0.3); }
+.todayDotOpen { background: var(--pp-ok); }
+
+.attention { padding: 0.7rem 0.85rem; border-radius: 0.8rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.2); background: rgba(251, 191, 36, 0.1); }   /* theme-ok */
+.attention .listTitle { margin-bottom: 0.4rem; }
+.attention ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
+.attention li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.6rem; font-size: 0.84rem; color: var(--pp-ink); }
+.attention li svg { flex: none; color: var(--pp-warn); }
+.attention li span { flex: 1 1 14rem; min-width: 0; }
+
+.followCard { border-color: rgba(251, 146, 60, 0.45); }   /* theme-ok */
+.personHistory { grid-column: 1 / -1; list-style: none; margin: 0.3rem 0 0; padding: 0.5rem 0.2rem 0.1rem 2.7rem; border-top: 1px solid rgba(var(--pp-ink-rgb), 0.12); display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.9); }
+.personHistory li { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr) 4.5rem; gap: 0.5rem; }
+.personHistory b { font-weight: 700; text-align: right; }
+.personHistory li[data-mark='a'] b { color: #b91c1c; }   /* theme-ok */
+.personHistory li[data-mark='p'] b { color: var(--pp-ok); }
+.personHistory li[data-mark='e'] b { color: var(--pp-warn); }
+@media (max-width: 640px) { .personHistory { padding-left: 0; } .personHistory li { grid-template-columns: 6.5rem minmax(0, 1fr) 4rem; } }

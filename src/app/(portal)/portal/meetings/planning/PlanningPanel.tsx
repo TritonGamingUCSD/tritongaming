@@ -56,12 +56,15 @@ export default function PlanningPanel({ userId }: { userId: string }) {
   return (
     <div className={m.stack}>
       <div className={styles.listHead}>
-        <p className={m.faint}>Everyone marks when they’re free. The host picks the time.</p>
-        {canHost && <Button size="sm" onClick={() => setCreating(true)}><Plus size={14} aria-hidden="true" /> New plan</Button>}
+        <p className={m.faint}>Everyone marks when they’re free, the host picks the best time, and it becomes a meeting in one tap.</p>
+        {canHost && <Button size="sm" onClick={() => setCreating(true)}><Plus size={14} aria-hidden="true" /> New Plan</Button>}
       </div>
       {error && <Notice tone="error">{error}</Notice>}
       {plans.length === 0 ? (
-        <p className={m.faint}>{canHost ? 'No plans yet.' : 'Nothing to fill out right now.'}</p>
+        <div className={m.slimLine}>
+          <strong>{canHost ? 'No plans yet' : 'Nothing to fill out right now'}</strong>
+          <span>{canHost ? 'A plan asks people when they are free. Create one, share it, then pick the best time from the results.' : 'When a host asks when you are free, it shows up here.'}</span>
+        </div>
       ) : (
         <ul className={styles.list}>
           {plans.map((p) => {
@@ -125,7 +128,7 @@ function PlanForm({ plan, onDone, onCancel }: { plan?: PlanView; onDone: () => v
   return (
     <form className={m.form} onSubmit={submit}>
       <button type="button" className={m.backLink} onClick={onCancel}><ArrowLeft size={15} aria-hidden="true" /> Back to plans</button>
-      <h2 className={m.sectionHead}>{plan ? 'Edit plan' : 'Plan a meeting'}</h2>
+      <h2 className={m.sectionHead}>{plan ? 'Edit Plan' : 'Plan A Meeting'}</h2>
       {!plan && draft.offer && <DraftBanner at={draft.offer.at} what="plan" onContinue={() => { const d = draft.accept(); if (d) { setKind(d.kind); setTitle(d.title); setDescription(d.description); setLocation(d.location); setDuration(d.duration); setWs(d.ws); setWe(d.we); setRs(d.rs >= today ? d.rs : today); setRe(d.re >= today ? d.re : addDays(today, 6)); setAnswerBy(d.answerBy); setAudience(d.audience); } }} onDiscard={draft.discard} />}
       {!plan && (
         <div className={styles.kindPick} role="radiogroup" aria-label="Type of plan">

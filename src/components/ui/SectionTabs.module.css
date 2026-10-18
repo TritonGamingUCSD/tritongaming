@@ -8,12 +8,10 @@
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
-  /* soft fade where the row scrolls off-screen on phones */
-  mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
-  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
 }
 .bar::-webkit-scrollbar { display: none; }
-@media (min-width: 720px) { .bar { mask-image: none; -webkit-mask-image: none; } }
+/* A soft fade at the edge, only when the tabs really do run off-screen. */
+.bar[data-overflow='1'] { mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
 
 .tab {
   position: relative;
@@ -72,18 +70,21 @@
   border: 2px solid var(--pp-ink);
   border-radius: 6px;
   background: var(--pp-card);
+  flex-wrap: wrap;
+  overflow: visible;
   mask-image: none;
   -webkit-mask-image: none;
 }
+.segmented[data-overflow='1'] { mask-image: none; -webkit-mask-image: none; }
 .segmented .tab { padding: 0.4rem 0.8rem; border-radius: 3px; font-size: 0.78rem; }
 .segmented .tab::after { display: none; }
 .segmented .active { background: var(--pp-ink); color: var(--pp-paper); }
 
-/* Phones: pack the tabs so a typical 3–4 tab bar fits without scrolling —
-   no icons, tighter padding, tabs share the row. (Longer bars still scroll, with the edge fade.) */
+/* Phones: pack the tabs so a typical bar fits without scrolling: no icons, tighter padding, a long label may wrap to two lines,
+   tabs share the row. (Only a bar that still does not fit scrolls, with the edge fade.) */
 @media (max-width: 480px) {
   .bar:not(.segmented) { gap: 0; }
-  .bar:not(.segmented) .tab { flex: 1 0 auto; justify-content: center; padding: 0.7rem 0.55rem; font-size: 0.8rem; gap: 0.3rem; }
+  .bar:not(.segmented) .tab { flex: 1 1 auto; min-width: 0; justify-content: center; text-align: center; white-space: normal; line-height: 1.15; padding: 0.7rem 0.3rem; font-size: 0.7rem; gap: 0.3rem; }
   .bar:not(.segmented) .icon { display: none; }
   .bar:not(.segmented) .tab::after { left: 0.35rem; right: 0.35rem; }
   .segmented { display: flex; flex-wrap: wrap; width: 100%; overflow: visible; }

@@ -8,7 +8,7 @@ import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import Popover from '@/components/ui/Popover';
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { ChevronRight, CalendarClock, CalendarDays, Radio, ClipboardList, Check, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Link2, MessageCircleQuestion, Send, Users, Minus, UserX, Lock, Dices, Smile, Upload, Settings2, Moon, DoorOpen, Timer, MoreHorizontal, Trash2 } from 'lucide-react';
+import { ChevronRight, CalendarClock, CalendarDays, Radio, ClipboardList, Check, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Link2, MessageCircleQuestion, Send, Users, Minus, UserX, Lock, Dices, Smile, Upload, Settings2, Moon, DoorOpen, Timer, MoreHorizontal, Trash2, AlertCircle, CalendarX } from 'lucide-react';
 import IconButton from '@/components/ui/IconButton';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Notice from '@/components/ui/Notice';
@@ -31,9 +31,10 @@ import { useMeetingLive } from '@/lib/meetings/useMeetingLive';
 import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
 import styles from './meetings.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
+import Dialog from '@/components/ui/Dialog';
+import Link from 'next/link';
 
-type Tab = 'mine' | 'planning' | 'host' | 'tools';
-type ToolTab = 'attendance' | 'emojis';
+type Tab = 'mine' | 'planning' | 'host' | 'attendance' | 'emojis';
 
 interface Person { id: string; name: string; avatar_url: string | null; custom_avatar_url: string | null }
 interface TodayMeeting { question_type: QuestionType; question_options: string[] | null; id: string; title: string; description: string | null; location: string | null; starts_at: string; ends_at: string; open: boolean; accepting: boolean; opens_at: string; checked_in_at: string | null; doc_url: string | null; question: string | null; my_answer: string | null }
@@ -95,26 +96,28 @@ export default function MeetingsSectionContent({ canHost, canManageAll, userId, 
   const canManage = canHost;
   const canSeeResults = canHost || canViewReports;
   const nav = useUrlNav();
-  const toolTabs: ToolTab[] = [...(canSeeResults ? (['attendance'] as ToolTab[]) : []), ...(canAttend || canManage ? (['emojis'] as ToolTab[]) : [])];
-  const valid: Tab[] = [...(canAttend ? (['mine', 'planning'] as Tab[]) : canManage ? (['planning'] as Tab[]) : []), ...(canManage ? (['host'] as Tab[]) : []), ...(toolTabs.length ? (['tools'] as Tab[]) : [])];
+  const canEmoji = canAttend || canManage;
+  const valid: Tab[] = [...(canAttend ? (['mine', 'planning'] as Tab[]) : canManage ? (['planning'] as Tab[]) : []), ...(canManage ? (['host'] as Tab[]) : []), ...(canSeeResults ? (['attendance'] as Tab[]) : []), ...(canEmoji ? (['emojis'] as Tab[]) : [])];
   const sync = usePortalTabSync('meetings', () => valid[0]);
-  // Old links and notifications: tab=upcoming and tab=checkin are part of My meetings now; Run meetings is called Host; Attendance and Emojis live under Tools (Teams moved to TG Members).
-  const legacyTool = (['attendance', 'emojis'] as const).find((t) => t === nav.tab || t === nav.subtab);
-  const startTab = nav.tab === 'upcoming' || nav.tab === 'checkin' ? 'mine' : nav.tab === 'run' ? 'host' : nav.tab === 'manage' || legacyTool ? 'tools' : nav.tab;
-  const [toolTab, setToolTab] = useState<ToolTab>(legacyTool && toolTabs.includes(legacyTool) ? legacyTool : toolTabs[0] ?? 'emojis');
+  // Old links and notifications: tab=upcoming and tab=checkin are part of My meetings now; Run meetings is called Host; Attendance and Emojis used to sit under a Tools tab.
+  const startTab = nav.tab === 'upcoming' || nav.tab === 'checkin' ? 'mine' : nav.tab === 'run' ? 'host' : nav.tab === 'tools' || nav.tab === 'manage' ? (nav.subtab === 'emojis' ? 'emojis' : 'attendance') : nav.tab;
   const [tab, setTab] = useState<Tab>(valid.includes(startTab as Tab) ? (startTab as Tab) : valid[0] ?? 'mine');
-  // Set when a meeting is opened from the Attendance tab, so Run meetings lands straight on it.
+  // The open view inside Host (a live meeting, or a meeting's edit page) lives in the address, so a refresh or a shared link comes back to it.
+  const [hostView, setHostView] = useState<string | null>(nav.tab === 'host' ? nav.subtab ?? null : null);
+  const [mineView, setMineView] = useState<'up' | 'history'>(nav.tab === 'mine' && nav.subtab === 'history' ? 'history' : 'up');
+  // Set when a meeting is opened from the Attendance tab, so Host lands straight on it.
   const [runTarget, setRunTarget] = useState<string | null>(null);
   // The schedule form is opened from the header button, on the Host tab.
   const [scheduling, setScheduling] = useState(false);
 
-  function pick(t: Tab) { setRunTarget(null); setTab(t); sync(t, t === 'tools' ? toolTab : null); }
-  function openFromAttendance(id: string) { setRunTarget(id); setTab('host'); sync('host'); }
+  function pick(t: Tab) { setRunTarget(null); setHostView(null); setMineView('up'); setTab(t); sync(t); }
+  const openHostView = (v: string | null) => { setHostView(v); sync('host', v); };
+  function openFromAttendance(id: string) { setRunTarget(null); setTab('host'); openHostView(`live-${id}`); }
 
   return (
     <div className={styles.page}>
       <SectionHeader title="Meetings" flush sub={canAttend ? 'Check in with the code in the room.' : 'Attendance for every meeting.'}
-        actions={canManage ? <Button size="sm" onClick={() => { setRunTarget(null); setTab('host'); sync('host'); setScheduling((v) => (tab === 'host' ? !v : true)); }}>{scheduling && tab === 'host' ? 'Close' : <><Plus size={14} aria-hidden="true" /> Schedule a Meeting</>}</Button> : undefined} />
+        actions={canManage ? <Button size="sm" onClick={() => { setRunTarget(null); setTab('host'); openHostView(null); setScheduling((v) => (tab === 'host' ? !v : true)); }}>{scheduling && tab === 'host' ? 'Close' : <><Plus size={14} aria-hidden="true" /> Schedule A Meeting</>}</Button> : undefined} />
       <SectionTabs<Tab>
         label="Meetings"
         value={tab}
@@ -123,36 +126,52 @@ export default function MeetingsSectionContent({ canHost, canManageAll, userId, 
           ...(canAttend ? [{ id: 'mine' as Tab, label: 'My meetings', icon: <CalendarDays size={15} /> }] : []),
           ...(canAttend || canManage ? [{ id: 'planning' as Tab, label: 'Planning', icon: <CalendarClock size={15} /> }] : []),
           ...(canManage ? [{ id: 'host' as Tab, label: 'Host', icon: <Radio size={15} /> }] : []),
-          ...(toolTabs.length ? [{ id: 'tools' as Tab, label: 'Tools', icon: <Settings2 size={15} /> }] : []),
+          ...(canSeeResults ? [{ id: 'attendance' as Tab, label: 'Attendance', icon: <ClipboardList size={15} /> }] : []),
+          ...(canEmoji ? [{ id: 'emojis' as Tab, label: 'Emojis', icon: <Smile size={15} /> }] : []),
         ]}
       />
-      {tab === 'mine' && canAttend && (
-        <div className={styles.twoCol}>
-          <div className={styles.stack}>
-            <h2 className={styles.sectionHead}>Check in</h2>
-            <CheckInPanel />
-            <h2 className={styles.sectionHead}>Coming up</h2>
-            <UpcomingPanel />
-          </div>
-          <div className={styles.stack}>
-            <h2 className={styles.sectionHead}>History</h2>
-            <MyHistoryPanel />
-          </div>
-        </div>
-      )}
+      {tab !== 'mine' && canAttend && <TodayStrip canHost={canManage} onHost={(id) => { setTab('host'); openHostView(`live-${id}`); }} onMine={() => pick('mine')} />}
+      {tab === 'mine' && canAttend && <MineTab view={mineView} onView={(v) => { setMineView(v); sync('mine', v === 'history' ? 'history' : null); }} />}
       {tab === 'planning' && (canAttend || canManage) && <PlanningPanel userId={userId} />}
-      {tab === 'host' && canManage && <RunPanel initial={runTarget} showForm={scheduling} onShowForm={setScheduling} />}
-      {tab === 'tools' && toolTabs.length > 0 && (
-        <div className={styles.stack}>
-          {toolTabs.length > 1 && (
-            <SectionTabs<ToolTab> label="Tools" variant="segmented" value={toolTab} onChange={(m) => { setToolTab(m); sync('tools', m); }}
-              tabs={toolTabs.map((t) => (t === 'attendance' ? { id: t, label: 'Attendance', icon: <ClipboardList size={14} /> } : { id: t, label: 'Emojis', icon: <Smile size={14} /> }))} />
-          )}
-          {toolTab === 'attendance' && canSeeResults && <AttendancePanel onOpenMeeting={canManage ? openFromAttendance : undefined} canExport={canManageAll || canViewReports} />}
-          {toolTab === 'emojis' && (canAttend || canManage) && <EmojiPanel />}
-        </div>
-      )}
+      {tab === 'host' && canManage && <RunPanel initial={runTarget} view={hostView} onView={openHostView} showForm={scheduling} onShowForm={setScheduling} />}
+      {tab === 'attendance' && canSeeResults && <AttendancePanel onOpenMeeting={canManage ? openFromAttendance : undefined} canExport={canManageAll || canViewReports} />}
+      {tab === 'emojis' && canEmoji && <EmojiPanel />}
     </div>
+  );
+}
+
+// My meetings: check in first, then what is coming up or what has happened (a switch, not two columns).
+function MineTab({ view, onView }: { view: 'up' | 'history'; onView: (v: 'up' | 'history') => void }) {
+  return (
+    <div className={styles.stack}>
+      <CheckInPanel />
+      <SectionTabs<'up' | 'history'> label="My meetings" variant="segmented" value={view} onChange={onView} tabs={[{ id: 'up', label: 'Coming Up' }, { id: 'history', label: 'History' }]} />
+      {view === 'up' ? <UpcomingPanel /> : <MyHistoryPanel />}
+    </div>
+  );
+}
+
+// On every other tab: what is on today, one slim line, so a host never has to go looking for it.
+function TodayStrip({ canHost, onHost, onMine }: { canHost: boolean; onHost: (id: string) => void; onMine: () => void }) {
+  const [list, setList] = useState<TodayMeeting[]>([]);
+  const load = useCallback(async () => {
+    try { const res = await fetch('/api/meetings/today', { cache: 'no-store' }); if (res.ok) setList((await res.json()).meetings ?? []); } catch { /* keep what we have */ }
+  }, []);
+  useEffect(() => { void load(); }, [load]);
+  useVisiblePoll(load, 60_000);
+  const now = useNow();
+  const today = list.filter((m) => new Date(m.ends_at).getTime() > now);
+  if (!today.length) return null;
+  return (
+    <ul className={styles.todayStrip} aria-label="Today">
+      {today.map((m) => (
+        <li key={m.id}>
+          <span className={`${styles.todayDot} ${m.accepting ? styles.todayDotOpen : ''}`} aria-hidden="true" />
+          <span className={styles.todayText}><strong>Today: {m.title}</strong> {timeRange(m.starts_at, m.ends_at)}{m.accepting ? ' · Check-in open' : m.open ? ' · Opens soon' : ''}</span>
+          {canHost ? <Button size="sm" variant="secondary" onClick={() => onHost(m.id)}>Open Live Screen</Button> : <Button size="sm" variant="secondary" onClick={onMine}>Check In</Button>}
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -256,13 +275,9 @@ function CheckInPanel() {
       )}
 
       {checkedIn.length === 0 && openToEnter.length === 0 && early.length === 0 && (
-        <div className={styles.card}>
-          <h2 className={styles.cardTitle}>Check-in isn&apos;t open</h2>
-          <p className={styles.muted}>
-            {meetings.length > 0
-              ? 'Opens when the meeting starts. This page updates itself.'
-              : 'There’s no meeting today.'}
-          </p>
+        <div className={styles.slimLine}>
+          <strong>Check-in isn&apos;t open</strong>
+          <span>{meetings.length > 0 ? 'It opens when the meeting starts. This page updates itself.' : 'There’s no meeting today.'}</span>
           {meetings.filter((m) => m.doc_url).map((m) => <DocButton key={m.id} url={m.doc_url!} label={meetings.length > 1 ? `Doc: ${m.title}` : 'Meeting doc'} />)}
         </div>
       )}
@@ -833,19 +848,22 @@ export function TeamsPanel({ userId, canManageAll, canEdit = true }: { userId: s
 }
 
 // ── Exec: schedule meetings, then open one to run its check-in ────────────────
-function RunPanel({ initial, showForm, onShowForm }: { initial: string | null; showForm: boolean; onShowForm: (v: boolean) => void }) {
-  const [selected, setSelected] = useState<string | null>(initial);
-  if (selected) return <LiveMeeting id={selected} onBack={() => setSelected(null)} />;
-  return <MeetingList onOpen={setSelected} showForm={showForm} onShowForm={onShowForm} />;
+function RunPanel({ initial, view, onView, showForm, onShowForm }: { initial: string | null; view: string | null | undefined; onView: (v: string | null) => void; showForm: boolean; onShowForm: (v: boolean) => void }) {
+  // Which meeting is open on the live screen comes from the address (`live-<id>`), so a refresh or a copied link comes back to it.
+  const live = view?.startsWith('live-') ? view.slice(5) : initial;
+  if (live) return <LiveMeeting id={live} onBack={() => onView(null)} />;
+  return <MeetingList onOpen={(id) => onView(`live-${id}`)} view={view} onView={onView} showForm={showForm} onShowForm={onShowForm} />;
 }
 
-function MeetingList({ onOpen, showForm, onShowForm }: { onOpen: (id: string) => void; showForm: boolean; onShowForm: (v: boolean) => void }) {
+function MeetingList({ onOpen, view, onView, showForm, onShowForm }: { onOpen: (id: string) => void; view: string | null | undefined; onView: (v: string | null) => void; showForm: boolean; onShowForm: (v: boolean) => void }) {
   const [data, setData] = useState<{ series: Series[]; upcoming: Item[]; past: Item[] } | null>(null);
   const [error, setError] = useState('');
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const setShowForm = onShowForm;
   // The full edit page: a week's meeting (its key) or a repeating meeting (its id).
-  const [editing, setEditing] = useState<{ item: string | null; series: string | null } | null>(null);
+  // The edit page is in the address too: `edit-<week key>` or `edit-series-<id>`.
+  const editing = view?.startsWith('edit-series-') ? { item: null, series: view.slice(12) } : view?.startsWith('edit-') ? { item: view.slice(5), series: null } : null;
+  const setEditing = (e: { item: string | null; series: string | null } | null) => onView(!e ? null : e.series ? `edit-series-${e.series}` : `edit-${e.item}`);
   const itemKey = (it: Item) => (it.series_id ? `${it.series_id}|${it.date}` : it.key);
 
   const load = useCallback(async () => {
@@ -924,20 +942,55 @@ function MeetingList({ onOpen, showForm, onShowForm }: { onOpen: (id: string) =>
     );
   }
 
+  const todayKey = pacificToday();
+  const todayItems = data.upcoming.filter((it) => it.date === todayKey);
+  const laterItems = data.upcoming.filter((it) => it.date !== todayKey);
+  const renderCard = (it: Item) => (
+    <MeetingCard key={itemKey(it)} item={it} busy={busyKey === it.key} onStart={() => start(it)} onView={() => it.meeting_id && onOpen(it.meeting_id)} onCancel={(undo) => cancel(it, undo)} onEdit={() => setEditing({ item: itemKey(it), series: null })} onDelete={() => remove(it)} />
+  );
+  // What a host should look at: a meeting in the next week with no room or no doc yet.
+  const weekEnd = new Date(new Date(`${todayKey}T12:00:00Z`).getTime() + 7 * 86400e3).toISOString().slice(0, 10);
+  const attention = data.upcoming.filter((it) => it.status !== 'cancelled' && it.date <= weekEnd && (!it.location || !it.doc_url)).map((it) => ({
+    key: itemKey(it), title: it.title, day: it.date === todayKey ? 'Today' : dayLabel(it.date).split(',')[0],
+    what: !it.location && !it.doc_url ? 'No room or doc yet' : !it.location ? 'No room yet' : 'No doc yet',
+  }));
+
   return (
     <div className={styles.stack}>
       <div className={styles.toolbar}>
         <p className={styles.muted}>Open a meeting on its day for its code.</p>
       </div>
-      {showForm && <ScheduleForm onCreated={() => { setShowForm(false); load(); }} />}
+      {showForm && <Dialog title="Schedule A Meeting" wide onClose={() => setShowForm(false)}><ScheduleForm onCreated={() => { setShowForm(false); load(); }} /></Dialog>}
       {error && <Notice tone="error">{error}</Notice>}
 
+      {attention.length > 0 && (
+        <section className={styles.attention} aria-label="Needs attention">
+          <h3 className={styles.listTitle}>Needs Attention <span>{attention.length}</span></h3>
+          <ul>
+            {attention.slice(0, 5).map((x) => (
+              <li key={x.key}>
+                <AlertCircle size={14} aria-hidden="true" />
+                <span><strong>{x.title}</strong> · {x.day} · {x.what}</span>
+                <Button size="sm" variant="secondary" onClick={() => setEditing({ item: x.key, series: null })}>Fix</Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {todayItems.length > 0 && (
+        <section>
+          <h3 className={styles.listTitle}>Today <span>{dayLabel(todayKey)}</span></h3>
+          <ul className={styles.meetingList}>{todayItems.map(renderCard)}</ul>
+        </section>
+      )}
+
       <section>
-        <h3 className={styles.listTitle}>Upcoming <span>next 2 weeks</span></h3>
-        {data.upcoming.length === 0 ? <p className={styles.muted}>Nothing scheduled.</p> : (
+        <h3 className={styles.listTitle}>{todayItems.length > 0 ? 'Coming Up' : 'Upcoming'} <span>next 2 weeks</span></h3>
+        {laterItems.length === 0 ? <p className={styles.muted}>Nothing else scheduled.</p> : (
           <ul className={styles.meetingList}>
-            {/* A repeating meeting's week keeps the same key before and after its row exists, so an open Details panel survives the first save. */}
-            {data.upcoming.map((it, i) => (<Fragment key={it.series_id ? `${it.series_id}|${it.date}` : it.key}>{startsWeekGroup(data.upcoming.map((x) => x.date), i) && <WeekHead date={it.date} />}<MeetingCard item={it} busy={busyKey === it.key} onStart={() => start(it)} onView={() => it.meeting_id && onOpen(it.meeting_id)} onCancel={(undo) => cancel(it, undo)} onEdit={() => setEditing({ item: itemKey(it), series: null })} onDelete={() => remove(it)} /></Fragment>))}
+            {/* A repeating meeting's week keeps the same key before and after its row exists, so an open edit page survives the first save. */}
+            {laterItems.map((it, i) => (<Fragment key={itemKey(it)}>{startsWeekGroup(laterItems.map((x) => x.date), i) && <WeekHead date={it.date} />}{renderCard(it)}</Fragment>))}
           </ul>
         )}
       </section>
@@ -1390,8 +1443,28 @@ function EmojiPanel() {
     <div className={styles.stack}>
       {error && <Notice tone="error">{error}</Notice>}
       {note && <Notice tone="success">{note}</Notice>}
+      {data.manage && data.queue.length > 0 && (
+        <div>
+          <h2 className={styles.sectionHead}>Waiting for approval <span>{data.queue.length}</span></h2>
+          <ul className={styles.emojiGrid}>{data.queue.map((e) => tile(e, <span className={styles.emojiActions}><Button size="sm" loading={busy === e.id} onClick={() => void act(e.id, 'PATCH')}>Approve</Button><IconButton kind="delete" size="sm" label={`Reject ${e.name}`} onClick={() => void act(e.id, 'DELETE')} /></span>))}</ul>
+        </div>
+      )}
+      {!data.manage && data.mine.length > 0 && (
+        <div>
+          <h2 className={styles.sectionHead}>Your emojis waiting for approval</h2>
+          <ul className={styles.emojiGrid}>{data.mine.map((e) => tile(e, <IconButton kind="delete" size="sm" label={`Withdraw ${e.name}`} onClick={() => void act(e.id, 'DELETE')} />))}</ul>
+        </div>
+      )}
+      <div>
+        <h2 className={styles.sectionHead}>Club emojis <span>{data.approved.length}</span></h2>
+        {data.approved.length === 0 ? <p className={styles.muted}>None yet. Be the first.</p> : (
+          <ul className={styles.emojiGrid}>{data.approved.map((e) => tile(e, data.manage ? <IconButton kind="delete" size="sm" label={`Remove ${e.name}`} onClick={async () => { if (await confirmHold({ title: `Remove :${e.name}:?`, message: 'It disappears for everyone. Reactions already sent with it stop showing the picture.', confirmLabel: 'Hold to remove' })) await act(e.id, 'DELETE'); }} /> : null))}</ul>
+        )}
+      </div>
+      <details className={styles.moreOptions}>
+        <summary><span>Add An Emoji</span><em>Upload a picture or paste one from Discord</em></summary>
+        <div className={styles.moreBody}>
       <form className={styles.emojiForm} data-dropping={emojiOver || undefined} {...emojiDrop} onSubmit={upload} onPaste={(e) => { const f = [...e.clipboardData.files].find((x) => x.type.startsWith('image/')); if (f) { e.preventDefault(); setDiscord(''); void pick(f); } }}>
-        <h2 className={styles.sectionHead}>Add an emoji</h2>
         <p className={styles.faint}>Square images work best. PNG, JPG, GIF or WebP, any size. It’s shrunk to a small square automatically. {data.manage ? 'Yours goes live straight away.' : 'An exec approves it before anyone sees it.'}</p>
         <div className={styles.emojiRow}>
           <Input value={discord} onChange={(e) => onDiscord(e.target.value)} placeholder="Paste a Discord emoji (or its link)" aria-label="Discord emoji" autoComplete="off" />
@@ -1411,24 +1484,8 @@ function EmojiPanel() {
         {tooBig && <p className={styles.checkWarn}>That image is still too big to send.</p>}
         {name && !EMOJI_NAME.test(clean) && <p className={styles.checkWarn}>Use 2 to 20 letters, numbers or underscores.</p>}
       </form>
-      {data.manage && data.queue.length > 0 && (
-        <div>
-          <h2 className={styles.sectionHead}>Waiting for approval <span>{data.queue.length}</span></h2>
-          <ul className={styles.emojiGrid}>{data.queue.map((e) => tile(e, <span className={styles.emojiActions}><Button size="sm" loading={busy === e.id} onClick={() => void act(e.id, 'PATCH')}>Approve</Button><IconButton kind="delete" size="sm" label={`Reject ${e.name}`} onClick={() => void act(e.id, 'DELETE')} /></span>))}</ul>
         </div>
-      )}
-      {!data.manage && data.mine.length > 0 && (
-        <div>
-          <h2 className={styles.sectionHead}>Your emojis waiting for approval</h2>
-          <ul className={styles.emojiGrid}>{data.mine.map((e) => tile(e, <IconButton kind="delete" size="sm" label={`Withdraw ${e.name}`} onClick={() => void act(e.id, 'DELETE')} />))}</ul>
-        </div>
-      )}
-      <div>
-        <h2 className={styles.sectionHead}>Club emojis <span>{data.approved.length}</span></h2>
-        {data.approved.length === 0 ? <p className={styles.muted}>None yet. Be the first.</p> : (
-          <ul className={styles.emojiGrid}>{data.approved.map((e) => tile(e, data.manage ? <IconButton kind="delete" size="sm" label={`Remove ${e.name}`} onClick={async () => { if (await confirmHold({ title: `Remove :${e.name}:?`, message: 'It disappears for everyone. Reactions already sent with it stop showing the picture.', confirmLabel: 'Hold to remove' })) await act(e.id, 'DELETE'); }} /> : null))}</ul>
-        )}
-      </div>
+      </details>
     </div>
   );
 }
@@ -1958,6 +2015,37 @@ interface AttData {
 }
 type SortKey = 'name' | 'rate' | 'attended' | 'streak' | 'last';
 
+const MARK_LABEL: Record<string, string> = { p: 'Came', a: 'Missed', e: 'Excused' };
+// One person's row: dots and a bar at a glance; tap the name for the meetings behind them.
+function PersonRow({ p, meetings }: { p: AttPerson; meetings: { id: string; title: string; meeting_date: string }[] }) {
+  const [open, setOpen] = useState(false);
+  const history = meetings.map((m, i) => ({ m, mark: p.marks[i] })).filter((x) => x.mark && x.mark !== '-').reverse();
+  return (
+    <li className={styles.attRow}>
+      <Avatar p={p} />
+      <button type="button" className={styles.attMain} onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+        <span className={styles.personName}>{p.name}{p.follow_up && <b className={styles.flag}>Follow up</b>}</span>
+        <em className={styles.attSub}>
+          {p.role}{p.streak >= 2 ? ` · ${p.streak} in a row` : ''}{p.missedRun >= 2 ? ` · missed last ${p.missedRun}` : ''}{p.last_attended ? ` · last ${dayLabel(p.last_attended)}` : ' · never attended'}
+        </em>
+      </button>
+      <span className={styles.dots} aria-label="Their last meetings, oldest to newest">
+        {p.marks.filter((m) => m !== '-').slice(-12).map((m, i) => <i key={i} className={m === 'p' ? styles.dotP : m === 'a' ? styles.dotA : m === 'e' ? styles.dotE : m === 'g' ? styles.dotG : styles.dotN} />)}
+      </span>
+      <span className={styles.attRate}>
+        <span className={styles.bar} title={p.rate !== null ? `${p.attended} of ${p.total} (${Math.round(p.rate * 100)}%)` : 'No meetings yet'}><span style={{ width: `${(p.rate ?? 0) * 100}%` }} /></span>
+      </span>
+      {open && (
+        <ul className={styles.personHistory}>
+          {history.length === 0 ? <li>No meetings for them in this range.</li> : history.slice(0, 20).map(({ m, mark }) => (
+            <li key={m.id} data-mark={mark}><span>{dayLabel(m.meeting_date)}</span><span>{m.title}</span><b>{MARK_LABEL[mark] ?? ''}</b></li>
+          ))}
+        </ul>
+      )}
+    </li>
+  );
+}
+
 function AttendancePanel({ onOpenMeeting, canExport }: { onOpenMeeting?: (id: string) => void; canExport: boolean }) {
   const [range, setRange] = useState<(typeof RANGES)[number]['id']>('90');
   const [title, setTitle] = useState('');
@@ -1995,6 +2083,9 @@ function AttendancePanel({ onOpenMeeting, canExport }: { onOpenMeeting?: (id: st
       return (x < y ? -1 : x > y ? 1 : a.name.localeCompare(b.name)) * sort.dir;
     });
 
+  // Who needs a follow-up goes first, in its own card; everyone else sits below (a search or the Follow Up tile shows one flat list).
+  const followUp = people.filter((p) => p.follow_up);
+  const rest = !query && !onlyFollowUp ? people.filter((p) => !p.follow_up) : people;
   const th = (key: SortKey, label: string) => (
     <button type="button" className={`${styles.thBtn} ${sort.key === key ? styles.thOn : ''}`} onClick={() => setSort((s) => (s.key === key ? { key, dir: (-s.dir) as 1 | -1 } : { key, dir: key === 'name' ? 1 : -1 }))}>
       {label}{sort.key === key ? (sort.dir === 1 ? ' ↑' : ' ↓') : ''}
@@ -2049,34 +2140,28 @@ function AttendancePanel({ onOpenMeeting, canExport }: { onOpenMeeting?: (id: st
             </div>
           </section>
 
+          {followUp.length > 0 && !query && !onlyFollowUp && (
+            <section className={`${styles.card} ${styles.followCard}`}>
+              <div className={styles.tableHead}>
+                <h3 className={styles.listTitle}>Follow Up <span>{followUp.length} {followUp.length === 1 ? 'person' : 'people'} under 50% or missing the last 3</span></h3>
+                {canExport && <Link href="/portal/strikes/missed" className={styles.docBtn}><CalendarX size={15} aria-hidden="true" /> Review Missed Meetings</Link>}
+              </div>
+              <ul className={styles.people}>{followUp.map((p) => <PersonRow key={p.id} p={p} meetings={data.meetings} />)}</ul>
+            </section>
+          )}
+
           <section className={styles.card}>
             <div className={styles.tableHead}>
-              <h3 className={styles.listTitle}>People <span>{people.length} shown</span></h3>
+              <h3 className={styles.listTitle}>{followUp.length > 0 && !query && !onlyFollowUp ? 'Everyone Else' : 'People'} <span>{rest.length} shown</span></h3>
               <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search people…" aria-label="Search people" className={styles.searchBox} />
             </div>
             <div className={styles.sortRow}>Sort: {th('rate', 'Rate')} {th('attended', 'Attended')} {th('streak', 'Streak')} {th('last', 'Last seen')} {th('name', 'Name')}</div>
-            {people.length === 0 ? <p className={styles.muted}>No one matches.</p> : (
+            {rest.length === 0 ? <p className={styles.muted}>{people.length === 0 ? 'No one matches.' : 'Everyone else is on track.'}</p> : (
               <ul className={styles.people}>
-                {(showAllPeople || query || onlyFollowUp ? people : people.slice(0, 20)).map((p) => (
-                  <li key={p.id} className={styles.attRow}>
-                    <Avatar p={p} />
-                    <span className={styles.attMain}>
-                      <span className={styles.personName}>{p.name}{p.follow_up && <b className={styles.flag}>Follow up</b>}</span>
-                      <em className={styles.attSub}>
-                        {p.role}{p.streak >= 2 ? ` · ${p.streak} in a row` : ''}{p.missedRun >= 2 ? ` · missed last ${p.missedRun}` : ''}{p.last_attended ? ` · last ${dayLabel(p.last_attended)}` : ' · never attended'}
-                      </em>
-                    </span>
-                    <span className={styles.dots} aria-label="Their last meetings, oldest to newest">
-                      {p.marks.filter((m) => m !== '-').slice(-12).map((m, i) => <i key={i} className={m === 'p' ? styles.dotP : m === 'a' ? styles.dotA : m === 'e' ? styles.dotE : m === 'g' ? styles.dotG : styles.dotN} />)}
-                    </span>
-                    <span className={styles.attRate}>
-                      <span className={styles.bar} title={p.rate !== null ? `${p.attended} of ${p.total} (${Math.round(p.rate * 100)}%)` : 'No meetings yet'}><span style={{ width: `${(p.rate ?? 0) * 100}%` }} /></span>
-                    </span>
-                  </li>
-                ))}
+                {(showAllPeople || query || onlyFollowUp ? rest : rest.slice(0, 20)).map((p) => <PersonRow key={p.id} p={p} meetings={data.meetings} />)}
               </ul>
             )}
-            {!showAllPeople && !query && !onlyFollowUp && people.length > 20 && <Button variant="ghost" size="sm" onClick={() => setShowAllPeople(true)}>Show all {people.length}</Button>}
+            {!showAllPeople && !query && !onlyFollowUp && rest.length > 20 && <Button variant="ghost" size="sm" onClick={() => setShowAllPeople(true)}>Show all {rest.length}</Button>}
             <p className={`${styles.faint} ${styles.dotKey}`}>
               <span><i style={{ background: '#34d399' }} /> came</span>
               <span><i style={{ background: '#f87171' }} /> missed</span>

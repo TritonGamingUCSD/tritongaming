@@ -11,8 +11,9 @@ import styles from './Dialog.module.css';
 // and backdrop-click close it (unless `busy`), body scroll is locked while open.
 // Content goes in as children; <DialogActions> lays out the button row.
 export default function Dialog({
-  title, tone = 'default', busy = false, onClose, children, label,
+  title, tone = 'default', busy = false, wide = false, onClose, children, label,
 }: {
+  wide?: boolean;
   title: string;
   tone?: 'default' | 'danger';
   busy?: boolean;
@@ -30,7 +31,7 @@ export default function Dialog({
 
   return createPortal(
     <div className={styles.backdrop} onClick={(e) => { if (e.target === e.currentTarget && !busy) onClose(); }}>
-      <div className={styles.sheet} role="alertdialog" aria-modal="true" aria-label={label ?? title}>
+      <div className={`${styles.sheet} ${wide ? styles.wide : ''}`} role="alertdialog" aria-modal="true" aria-label={label ?? title}>
         <button type="button" className={styles.close} onClick={onClose} disabled={busy} aria-label="Close">
           <X size={18} strokeWidth={1.75} />
         </button>
