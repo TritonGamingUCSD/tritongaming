@@ -9,10 +9,11 @@ import styles from './CheckInOutcome.module.css';
 const clock = (iso?: string) => iso ? new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: PACIFIC_TZ }) : '';
 
 // Says exactly what a check-in did, in the same words wherever it happened (the scanner, the code box, the Check-In page).
-export default function CheckInOutcome({ outcome, onDone, onConfirmReward, onChoose, busy, doneLabel = 'Done' }: { outcome: Outcome; onDone: () => void; onConfirmReward?: () => void; onChoose?: (which: 'meeting' | 'ticket') => void; busy?: boolean; doneLabel?: string }) {
+// `bare` leaves out the big status icon, for where the scanner's own ring already shows it.
+export default function CheckInOutcome({ outcome, onDone, onConfirmReward, onChoose, busy, doneLabel = 'Done', bare }: { bare?: boolean; outcome: Outcome; onDone: () => void; onConfirmReward?: () => void; onChoose?: (which: 'meeting' | 'ticket') => void; busy?: boolean; doneLabel?: string }) {
   if (outcome.kind === 'choose') {
     return (
-      <div className={styles.box}>
+      <div className={`${styles.box} ${bare ? styles.bare : ''}`}>
         <span className={`${styles.icon} ${styles.info}`}><CircleAlert size={32} aria-hidden="true" /></span>
         <strong className={styles.title}>Which one is it?</strong>
         <span className={styles.detail}>That code fits both a meeting and a ticket.</span>
@@ -26,7 +27,7 @@ export default function CheckInOutcome({ outcome, onDone, onConfirmReward, onCho
   }
   if (outcome.kind === 'meeting') {
     return (
-      <div className={styles.box}>
+      <div className={`${styles.box} ${bare ? styles.bare : ''}`}>
         <span className={`${styles.icon} ${styles.ok}`}><Check size={34} strokeWidth={2.5} aria-hidden="true" /></span>
         <span className={styles.kicker}>Meeting check-in</span>
         <strong className={styles.title}>{outcome.already ? 'Already checked in' : 'You’re checked in'}</strong>
@@ -38,7 +39,7 @@ export default function CheckInOutcome({ outcome, onDone, onConfirmReward, onCho
   if (outcome.kind === 'ticket') {
     const fresh = outcome.status === 'active';
     return (
-      <div className={styles.box}>
+      <div className={`${styles.box} ${bare ? styles.bare : ''}`}>
         <span className={`${styles.icon} ${fresh ? styles.ok : styles.warn}`}>{fresh ? <Check size={34} strokeWidth={2.5} aria-hidden="true" /> : <TriangleAlert size={34} strokeWidth={2} aria-hidden="true" />}</span>
         <span className={styles.kicker}>Event ticket{outcome.eventTitle ? ` · ${outcome.eventTitle}` : ''}</span>
         <strong className={styles.title}>{outcome.userName}</strong>
@@ -57,7 +58,7 @@ export default function CheckInOutcome({ outcome, onDone, onConfirmReward, onCho
   if (outcome.kind === 'reward') {
     const pending = outcome.status === 'pending';
     return (
-      <div className={styles.box}>
+      <div className={`${styles.box} ${bare ? styles.bare : ''}`}>
         <span className={`${styles.icon} ${styles.info}`}><Gift size={30} aria-hidden="true" /></span>
         <span className={styles.kicker}>Reward pickup</span>
         <strong className={styles.title}>{outcome.title}</strong>
@@ -81,7 +82,7 @@ export default function CheckInOutcome({ outcome, onDone, onConfirmReward, onCho
   }
   if (outcome.kind === 'rewardDone') {
     return (
-      <div className={styles.box}>
+      <div className={`${styles.box} ${bare ? styles.bare : ''}`}>
         <span className={`${styles.icon} ${styles.ok}`}><Check size={34} strokeWidth={2.5} aria-hidden="true" /></span>
         <span className={styles.kicker}>Reward pickup</span>
         <strong className={styles.title}>Marked as given</strong>
@@ -91,7 +92,7 @@ export default function CheckInOutcome({ outcome, onDone, onConfirmReward, onCho
     );
   }
   return (
-    <div className={styles.box}>
+    <div className={`${styles.box} ${bare ? styles.bare : ''}`}>
       <span className={`${styles.icon} ${styles.bad}`}><CircleAlert size={32} aria-hidden="true" /></span>
       <strong className={styles.title}>Didn’t work</strong>
       <span className={styles.detail}>{outcome.message}</span>

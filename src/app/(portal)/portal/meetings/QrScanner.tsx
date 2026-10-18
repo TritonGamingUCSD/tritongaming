@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import RingIcon from '@/components/RingCode/RingIcon';
-import { X, Zap, ZapOff } from 'lucide-react';
+import { Check, CircleAlert, TriangleAlert, X, Zap, ZapOff } from 'lucide-react';
 import jsQR from 'jsqr';
 import { decodeRingCode } from '@/lib/qr/ringCode/decode';
 import styles from './meetings.module.css';
@@ -14,7 +14,10 @@ type ZoomTrack = MediaStreamTrack & { getCapabilities?: () => Caps; applyConstra
 // A full-screen camera with zoom (the phone's own zoom where it has one, otherwise a digital zoom) and a flashlight where the phone offers it,
 // for a QR on a screen across the room. Pinching only zooms, in and out of the middle of the picture; it never pans. Reads the QR and hands the
 // text to the caller; nothing is recorded or uploaded.
-export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', note, footer }: { onScan: (text: string) => boolean | void; onClose: () => void; title?: string; note?: string; footer?: ReactNode }) {
+// What a scan did, shown on the camera itself: the ring locks and takes the colour of the outcome, and `sheet` (the result) slides up over the frozen picture.
+// Clearing `lock` carries on scanning with the same camera, so "Scan Next" is instant.
+export type ScanLock = { tone: 'busy' | 'ok' | 'warn' | 'bad' };
+export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', note, footer, lock, sheet }: { onScan: (text: string) => boolean | void; onClose: () => void; title?: string; note?: string; footer?: ReactNode; lock?: ScanLock | null; sheet?: ReactNode }) {
   const video = useRef<HTMLVideoElement>(null);
   const frame = useRef<HTMLDivElement>(null);
   const track = useRef<ZoomTrack | null>(null);
@@ -22,6 +25,7 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
   const [caps, setCaps] = useState<Caps>({});
   const [torch, setTorch] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const pausedRef = useRef(false);   // a taken scan freezes the picture and stops reading until the caller clears `lock`
   const onScanRef = useRef(onScan);
   onScanRef.current = onScan;
   // The zoom lives in refs, not state: a pinch fires many times a second and re-rendering for each one is what made it lag.
@@ -59,7 +63,7 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
         const tick = async (now: number) => {
           raf = requestAnimationFrame(tick);
           const v = video.current;
-          if (dead || !v || v.readyState < 2 || now - last < 140) return;
+          if (dead || pausedRef.current || !v || v.readyState < 2 || now - last < 140) return;
           last = now;
           let text: string | null = null;
           // Digital zoom crops the middle of the picture before reading it.
@@ -79,10 +83,10 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
               if (ring) text = `ring:${ring}`;
             }
           }
-          // The caller decides what the text is: true = taken (stop the camera), anything else = keep looking. The same text is not offered again for 3 s.
+          // The caller decides what the text is: true = taken (freeze the picture), anything else = keep looking. The same text is not offered again for 3 s.
           if (text && !(text === lastText && now - lastAt < 3000)) {
             lastText = text; lastAt = now;
-            if (onScanRef.current(text) === true) { dead = true; stream?.getTracks().forEach((x) => x.stop()); }
+            if (onScanRef.current(text) === true) { pausedRef.current = true; v.pause(); }
           }
         };
         raf = requestAnimationFrame(tick);
@@ -94,6 +98,12 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
     return () => { dead = true; cancelAnimationFrame(raf); stream?.getTracks().forEach((t) => t.stop()); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mounted]);
+
+  useEffect(() => {
+    if (lock || !pausedRef.current) return;
+    pausedRef.current = false;
+    void video.current?.play().catch(() => {});
+  }, [lock]);
 
   // The phone's own zoom takes one request at a time: while one is being applied, only the newest wanted value waits behind it.
   const hw = useRef({ busy: false, want: 1, applied: 1 });
@@ -144,11 +154,16 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
       {error ? <div className={styles.scanProblem}><RingIcon size={44} /><p>{error}</p></div> : (
         <div ref={frame} className={styles.scanStage}>
           <video ref={video} playsInline muted />
-          <div className={styles.scanTarget} aria-hidden="true">
-          </div>
+          <div className={`${styles.scanTarget} ${lock ? styles[`lock_${lock.tone}`] : styles.scanLive}`} aria-hidden="true" />
+          {lock && lock.tone !== 'busy' && (
+            <span key={lock.tone} className={`${styles.scanLockIcon} ${styles[`lockIcon_${lock.tone}`]}`} aria-hidden="true">
+              {lock.tone === 'ok' ? <Check size={44} strokeWidth={2.75} /> : lock.tone === 'warn' ? <TriangleAlert size={40} /> : <CircleAlert size={42} />}
+            </span>
+          )}
         </div>
       )}
-      <footer className={styles.scanBottom}>
+      {lock && sheet && <div className={styles.scanSheet} role="status" aria-live="polite">{sheet}</div>}
+      <footer className={styles.scanBottom} style={lock ? { display: 'none' } : undefined}>
         <p className={styles.scanHint}>{note ?? 'Point the camera at the QR code.'}</p>
         <div className={styles.scanRow}>
           <div className={styles.scanSteps} role="group" aria-label="Zoom">

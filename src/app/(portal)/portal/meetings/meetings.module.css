@@ -767,7 +767,7 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .scanStage { position: relative; flex: 1; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
 .scanStage video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform-origin: center center; will-change: transform; display: block; }
 .scanTitle { font-size: 1rem; font-weight: 700; letter-spacing: 0.04em; }
-.scanTarget { position: absolute; left: 50%; top: 50%; width: min(72vw, 52vh); aspect-ratio: 1 / 1; transform: translate(-50%, -50%); border-radius: 50%; border: 4px dashed rgba(255, 255, 255, 0.92); box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.45); pointer-events: none; }   /* theme-ok */
+.scanTarget { position: absolute; left: 50%; top: 50%; width: min(72vw, 52vh); aspect-ratio: 1 / 1; transform: translate(-50%, -50%); border-radius: 50%; border: 4px dashed rgba(255, 255, 255, 0.92); box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.45); pointer-events: none; transition: top 0.4s cubic-bezier(0.3, 1.2, 0.4, 1), width 0.4s cubic-bezier(0.3, 1.2, 0.4, 1), border-color 0.25s, box-shadow 0.25s; }   /* theme-ok */
 
 .scanRow { display: flex; align-items: center; justify-content: center; gap: 1rem; }
 .scanZoom { position: absolute; left: 50%; bottom: 7.5rem; transform: translateX(-50%); padding: 0.2rem 0.7rem; border-radius: 999px; background: rgba(0, 0, 0, 0.55); color: #fff; font-size: 0.85rem; font-weight: 600; pointer-events: none; }   /* theme-ok */
@@ -825,3 +825,30 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 
 .scanProblem { margin: auto; display: flex; flex-direction: column; align-items: center; gap: 0.9rem; max-width: 22rem; padding: 0 1.4rem; text-align: center; color: rgba(255, 255, 255, 0.92); }   /* theme-ok */
 .scanProblem p { margin: 0; font-size: 1rem; line-height: 1.45; }
+
+/* ── The scan itself: a ring that slowly turns with a sweep inside while it looks, then locks onto what it read, takes the colour of the outcome, and the result slides up over the frozen picture. ── */
+.scanTarget::after { content: ''; position: absolute; inset: 0; border-radius: 50%; opacity: 0; }
+.scanLive { border-color: rgba(255, 199, 44, 0.95); animation: tgScanSpin 28s linear infinite; }   /* theme-ok */
+.scanLive::after { opacity: 1; background: conic-gradient(from 0deg, transparent 0 72%, rgba(255, 199, 44, 0.32) 100%); animation: tgScanSweep 2.2s linear infinite; }   /* theme-ok */
+.lock_busy, .lock_ok, .lock_warn, .lock_bad { top: 34%; width: min(52vw, 32vh); border-style: solid; animation: tgLockOn 0.4s cubic-bezier(0.3, 1.4, 0.5, 1); }
+.lock_busy { border-color: #ffc72c; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.6), 0 0 28px rgba(255, 199, 44, 0.7); }   /* theme-ok */
+.lock_busy::after { opacity: 1; border: 4px solid transparent; border-top-color: #ffc72c; animation: tgScanSweep 0.8s linear infinite; }   /* theme-ok */
+.lock_ok { border-color: #34d399; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.6), 0 0 34px rgba(52, 211, 153, 0.8); }   /* theme-ok */
+.lock_warn { border-color: #fbbf24; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.6), 0 0 34px rgba(251, 191, 36, 0.8); }   /* theme-ok */
+.lock_bad { border-color: #f87171; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.6), 0 0 34px rgba(248, 113, 113, 0.8); animation: tgLockOn 0.4s cubic-bezier(0.3, 1.4, 0.5, 1), tgScanShake 0.45s ease-in-out 0.4s; }   /* theme-ok */
+.lock_ok::after, .lock_warn::after { opacity: 1; border: 3px solid currentColor; color: inherit; animation: tgScanRipple 0.9s ease-out 0.2s both; }
+.lock_ok::after { border-color: #34d399; }   /* theme-ok */
+.lock_warn::after { border-color: #fbbf24; }   /* theme-ok */
+.scanLockIcon { position: absolute; left: 50%; top: 34%; z-index: 2; display: grid; place-items: center; width: 22vh; max-width: 40vw; aspect-ratio: 1 / 1; margin: 0; transform: translate(-50%, -50%); border-radius: 50%; color: #fff; pointer-events: none; animation: tgScanIcon 0.5s cubic-bezier(0.2, 1.5, 0.4, 1) 0.15s both; }   /* theme-ok */
+.lockIcon_ok { background: #059669; }   /* theme-ok */
+.lockIcon_warn { background: #d97706; }   /* theme-ok */
+.lockIcon_bad { background: #dc2626; }   /* theme-ok */
+.scanSheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; max-width: 30rem; margin: 0 auto; padding: 1.1rem 1.2rem calc(1.2rem + env(safe-area-inset-bottom, 0px)); border-radius: 1.4rem 1.4rem 0 0; background: var(--pp-card); color: var(--pp-ink); box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.45); animation: tgSheetUp 0.45s cubic-bezier(0.2, 1.1, 0.3, 1) 0.1s both; }   /* theme-ok */
+@keyframes tgScanSpin { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+@keyframes tgScanSweep { to { transform: rotate(360deg); } }
+@keyframes tgLockOn { 0% { transform: translate(-50%, -50%) scale(1.18); } 60% { transform: translate(-50%, -50%) scale(0.95); } 100% { transform: translate(-50%, -50%) scale(1); } }
+@keyframes tgScanRipple { from { transform: scale(1); opacity: 0.8; } to { transform: scale(1.45); opacity: 0; } }
+@keyframes tgScanShake { 0%, 100% { margin-left: 0; } 25% { margin-left: -8px; } 75% { margin-left: 8px; } }
+@keyframes tgScanIcon { from { transform: translate(-50%, -50%) scale(0.2); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+@keyframes tgSheetUp { from { transform: translateY(100%); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .scanLive, .scanLive::after, .lock_busy, .lock_ok, .lock_warn, .lock_bad, .lock_busy::after, .lock_ok::after, .lock_warn::after, .scanLockIcon, .scanSheet { animation: none; } }

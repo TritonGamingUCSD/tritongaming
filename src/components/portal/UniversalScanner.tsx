@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { CircleAlert, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import Dialog from '@/components/ui/Dialog';
-import QrScanner from '@/app/(portal)/portal/meetings/QrScanner';
+import QrScanner, { type ScanLock } from '@/app/(portal)/portal/meetings/QrScanner';
 import CheckInOutcome from './CheckInOutcome';
 import CodeEntry from './CodeEntry';
 import { checkInWithCode, checkInWithQr, confirmReward, resolveChoice, RING, type Outcome } from '@/lib/checkin/anyCode';
@@ -28,7 +27,6 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
   const router = useRouter();
   const [state, setState] = useState<State>({ kind: 'scanning' });
   const [problem, setProblem] = useState('');
-  const [attempt, setAttempt] = useState(0);   // a new number restarts the camera
   const [busy, setBusy] = useState(false);
   const goTimer = useRef<number | undefined>(undefined);
   useEffect(() => () => window.clearTimeout(goTimer.current), []);   // closing in the moment before a page opens cancels the move
@@ -81,57 +79,49 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
     setBusy(false);
   }
 
-  const rescan = () => { setState({ kind: 'scanning' }); setAttempt((n) => n + 1); };
+  const rescan = () => setState({ kind: 'scanning' });
 
+  // The camera stays on screen the whole time: what a scan did shows on its ring, and the result slides up over the frozen picture.
+  let lock: ScanLock | null = null;
+  let sheet: ReactNode = null;
   if (state.kind === 'working') {
-    return (
-      <Dialog title="One Moment" onClose={onClose}>
-        <div className={styles.result}><Loader2 size={34} className={styles.spin} aria-hidden="true" /><strong>{state.label}</strong></div>
-      </Dialog>
-    );
-  }
-  if (state.kind === 'opening') {
+    lock = { tone: 'busy' };
+    sheet = <div className={styles.result}><Loader2 size={30} className={styles.spin} aria-hidden="true" /><strong>{state.label}</strong></div>;
+  } else if (state.kind === 'opening') {
     // No extra tap: the page it points at opens by itself, after a moment to read what is happening.
-    return (
-      <Dialog title={state.title} onClose={onClose}>
-        <div className={styles.result}>
-          <Loader2 size={34} className={styles.spin} aria-hidden="true" />
-          <strong>{state.heading}</strong>
-          <span>{state.text}</span>
-        </div>
-      </Dialog>
-    );
-  }
-  if (state.kind === 'result') {
+    lock = { tone: 'busy' };
+    sheet = <div className={styles.result}><Loader2 size={30} className={styles.spin} aria-hidden="true" /><strong>{state.heading}</strong><span>{state.text}</span></div>;
+  } else if (state.kind === 'result') {
     const o = state.outcome;
     const again = o.kind === 'ticket' || o.kind === 'rewardDone' || o.kind === 'error' || o.kind === 'reward' || o.kind === 'choose';
-    return (
-      <Dialog title={o.kind === 'error' ? 'Check-In' : o.kind === 'meeting' ? 'Meeting Check-In' : o.kind === 'ticket' ? 'Ticket Check-In' : 'Reward Pickup'} onClose={onClose}>
-        <CheckInOutcome
-          outcome={o}
-          busy={busy}
-          doneLabel={again ? 'Scan Next' : 'Done'}
-          onDone={() => (again ? rescan() : onClose())}
-          onChoose={async (which) => { if (o.kind !== 'choose') return; setBusy(true); await finish(resolveChoice(o.code, which)); setBusy(false); }}
-          onConfirmReward={async () => {
-            if (o.kind !== 'reward') return;
-            setBusy(true);
-            const done = await confirmReward(o.id, o.title, o.member);
-            setState({ kind: 'result', outcome: done });
-            setBusy(false);
-          }}
-        />
-      </Dialog>
+    lock = { tone: o.kind === 'error' ? 'bad' : o.kind === 'choose' || (o.kind === 'ticket' && o.status !== 'active') || (o.kind === 'meeting' && o.already) ? 'warn' : 'ok' };
+    sheet = (
+      <CheckInOutcome
+        bare
+        outcome={o}
+        busy={busy}
+        doneLabel={again ? 'Scan Next' : 'Done'}
+        onDone={() => (again ? rescan() : onClose())}
+        onChoose={async (which) => { if (o.kind !== 'choose') return; setBusy(true); await finish(resolveChoice(o.code, which)); setBusy(false); }}
+        onConfirmReward={async () => {
+          if (o.kind !== 'reward') return;
+          setBusy(true);
+          const done = await confirmReward(o.id, o.title, o.member);
+          setState({ kind: 'result', outcome: done });
+          setBusy(false);
+        }}
+      />
     );
   }
   return (
     <>
       <QrScanner
-        key={attempt}
         onScan={onScan}
         onClose={onClose}
         title="Scan A tgcode"
         note="Point the camera at a tgcode (meeting, ticket or reward) or an event’s check-in QR."
+        lock={lock}
+        sheet={sheet}
         footer={<div className={styles.codeBar}><span>{staff ? 'Or type the 6-digit code (meeting or ticket)' : 'Or type the 6-digit code from the screen'}</span><CodeEntry dark onSubmit={(c) => void onCode(c)} busy={busy} /></div>}
       />
       {problem && (
