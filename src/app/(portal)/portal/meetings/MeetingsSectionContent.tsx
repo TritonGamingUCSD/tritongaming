@@ -976,6 +976,7 @@ function MeetingList({ onOpen, view, onView, showForm, onShowForm }: { onOpen: (
   const todayKey = pacificToday();
   const todayItems = data.upcoming.filter((it) => it.date === todayKey);
   const laterItems = data.upcoming.filter((it) => it.date !== todayKey);
+  const soonItems = laterItems.filter((it) => weekGroup(it.date) <= 1), farItems = laterItems.filter((it) => weekGroup(it.date) > 1);
   const renderCard = (it: Item) => (
     <MeetingCard key={itemKey(it)} item={it} busy={busyKey === it.key} onStart={() => start(it)} onView={() => it.meeting_id && onOpen(it.meeting_id)} onCancel={(undo) => cancel(it, undo)} onEdit={() => setEditing({ item: itemKey(it), series: null })} onDelete={() => remove(it)} />
   );
@@ -1017,12 +1018,18 @@ function MeetingList({ onOpen, view, onView, showForm, onShowForm }: { onOpen: (
       )}
 
       <section>
-        <h3 className={styles.listTitle}>{todayItems.length > 0 ? 'Coming Up' : 'Upcoming'} <span>next 2 weeks</span></h3>
-        {laterItems.length === 0 ? <p className={styles.muted}>Nothing else scheduled.</p> : (
+        <h3 className={styles.listTitle}>{todayItems.length > 0 ? 'Coming Up' : 'Upcoming'} <span>this week and next</span></h3>
+        {soonItems.length === 0 ? <p className={styles.muted}>Nothing else this week or next.</p> : (
           <ul className={styles.meetingList}>
             {/* A repeating meeting's week keeps the same key before and after its row exists, so an open edit page survives the first save. */}
-            {laterItems.map((it, i) => (<Fragment key={itemKey(it)}>{startsWeekGroup(laterItems.map((x) => x.date), i) && <WeekHead date={it.date} />}{renderCard(it)}</Fragment>))}
+            {soonItems.map((it, i) => (<Fragment key={itemKey(it)}>{startsWeekGroup(soonItems.map((x) => x.date), i) && <WeekHead date={it.date} />}{renderCard(it)}</Fragment>))}
           </ul>
+        )}
+        {farItems.length > 0 && (
+          <details className={styles.moreOptions}>
+            <summary><span>Later</span><em>{farItems.length} more {farItems.length === 1 ? 'meeting' : 'meetings'} after next week</em></summary>
+            <ul className={`${styles.meetingList} ${styles.moreBody}`}>{farItems.map(renderCard)}</ul>
+          </details>
         )}
       </section>
 
