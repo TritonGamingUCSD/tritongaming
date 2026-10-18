@@ -285,7 +285,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
       )}
       {claimed && (
         <Notice tone="success">
-          You&apos;re in! You got your ticket for <strong>{claimed.title}</strong> ({claimed.when}). Your tgcode will be right here in My Tickets when the day comes.
+          You&apos;re in! You got your ticket for <strong>{claimed.title}</strong> ({claimed.when}). Your TGcode will be right here in My Tickets when the day comes.
           {' '}<button type="button" onClick={() => setClaimed(null)} style={{ background: 'none', border: 0, color: 'inherit', textDecoration: 'underline', cursor: 'pointer', font: 'inherit', padding: 0 }}>Dismiss</button>
         </Notice>
       )}
@@ -331,7 +331,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
                   onClick={() => setQrTicket(nextActiveTicket)}
                 >
                   <span className={styles.showQrIcon}><RingIcon size={18} /></span>
-                  Show tgcode
+                  Show TGcode
                 </button>
               )}
             </div>
@@ -585,7 +585,7 @@ function TicketRow({
             <OnlineCheckinEntry ticketId={ticket.id} eventId={ev.id} onCheckedIn={onCheckedIn} checkinFormUrl={ticket.checkinFormUrl} onFormComplete={onFormComplete} compact />
           ) : isActionable && onShowQR ? (
             <button className={styles.qrMiniBtn} onClick={onShowQR}>
-              <RingIcon size={14} /> View tgcode
+              <RingIcon size={14} /> View TGcode
             </button>
           ) : (
             <span className={`${styles.statusBadge} ${styles[`status_${displayStatus}`]}`}>

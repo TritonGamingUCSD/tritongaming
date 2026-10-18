@@ -71,7 +71,7 @@ describe('ring code', () => {
     for (const p of payloads) expect(payloadFromBits(messageBits(p)!)).toBe(p);
   });
 
-  test('a meeting, a ticket and a reward never share a tgcode, even with the same key', () => {
+  test('a meeting, a ticket and a reward never share a TGcode, even with the same key', () => {
     const key = '0123456789ab';
     const a = dashGrid(`m${key}`)!, b = dashGrid(`t${key}`)!, c = dashGrid(`r${key}`)!;
     const same = (x: boolean[][], y: boolean[][]) => x.every((row, i) => row.every((v, j) => v === y[i][j]));

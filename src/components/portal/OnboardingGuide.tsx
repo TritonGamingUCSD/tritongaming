@@ -16,7 +16,7 @@ const STEPS: Step[] = [
   {
     icon: <Ticket size={32} strokeWidth={1.5} aria-hidden="true" />,
     title: 'Get your tickets here',
-    body: 'RSVP to LANs, tournaments, GBMs, and socials from the Tickets card — check in at the door with the tgcode it gives you.',
+    body: 'RSVP to LANs, tournaments, GBMs, and socials from the Tickets card — check in at the door with the TGcode it gives you.',
   },
   {
     icon: <Award size={32} strokeWidth={1.5} aria-hidden="true" />,
@@ -31,7 +31,7 @@ const STEPS: Step[] = [
   {
     icon: <Calendar size={32} strokeWidth={1.5} aria-hidden="true" />,
     title: "You're all set",
-    body: 'One last thing worth doing now: fill out your Profile (year, major, gamer tag) so your ticket tgcode is ready to go the moment you need it.',
+    body: 'One last thing worth doing now: fill out your Profile (year, major, gamer tag) so your ticket TGcode is ready to go the moment you need it.',
   },
 ];
 

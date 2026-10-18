@@ -54,7 +54,7 @@ export function DashboardBody({ event, note, links, upcoming, activity, showRole
               <EventCountdown startsAt={event.start_date} />
               {event.location && <p className={styles.where}><MapPin size={14} aria-hidden="true" /> {event.location}</p>}
               <div className={styles.actions}>
-                <Link href={event.hasTicket && event.ticketId ? `/portal/tickets?qr=${event.ticketId}` : '/portal/tickets'} className={styles.primary}>{event.hasTicket ? <><RingIcon size={16} /> Show My tgcode</> : <><Ticket size={16} aria-hidden="true" /> Get my ticket</>}</Link>
+                <Link href={event.hasTicket && event.ticketId ? `/portal/tickets?qr=${event.ticketId}` : '/portal/tickets'} className={styles.primary}>{event.hasTicket ? <><RingIcon size={16} /> Show My TGcode</> : <><Ticket size={16} aria-hidden="true" /> Get my ticket</>}</Link>
               </div>
             </div>
             <div className={styles.stub} aria-hidden="true"><span>Admit one</span></div>

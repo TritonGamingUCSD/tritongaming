@@ -777,7 +777,7 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .scanError { margin: auto 1.2rem; padding: 0.9rem; border-radius: 0.7rem; background: rgba(185, 28, 28, 0.85); color: #fff; font-size: 0.95rem; text-align: center; }   /* theme-ok */
 
 /* The host's check-in frame: the typed code and its QR side by side in one ring (the ring fills as people check in), the QR in the code's own colour. */
-.duo { display: flex; align-items: stretch; justify-content: center; gap: 1.5rem; padding: 1.2rem 1.7rem; max-width: 100%; background: var(--pp-card); border-radius: 1.4rem; }   /* the same colour as the tgcode's own plate, so the code sits on a matching ground in both themes */
+.duo { display: flex; align-items: stretch; justify-content: center; gap: 1.5rem; padding: 1.2rem 1.7rem; max-width: 100%; background: var(--pp-card); border-radius: 1.4rem; }   /* the same colour as the TGcode's own plate, so the code sits on a matching ground in both themes */
 .duoCode, .duoQr { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.6rem; position: relative; }
 .duoCode small, .duoQr small { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.85); text-align: center; }
 .duoDivider { width: 2px; align-self: stretch; border-radius: 2px; background: rgba(var(--pp-ink-rgb), 0.18); }
@@ -803,7 +803,7 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .stageBar span { font-size: clamp(0.9rem, 1.4vw, 1.3rem); color: rgba(var(--pp-ink-rgb), 0.75); }
 .presenting { background: radial-gradient(ellipse 60% 55% at 50% 48%, rgba(125, 180, 234, 0.2), transparent 70%), radial-gradient(ellipse 80% 60% at 50% 110%, rgba(74, 144, 226, 0.16), transparent 70%), var(--pp-card); }
 .presenting .codeLabel { font-size: clamp(0.9rem, 1.6vw, 1.4rem); letter-spacing: 0.3em; }
-/* The panel is the same solid colour as the code's own plate (the portal card colour), in light and dark, so the tgcode sits on a ground that matches it; the glow stays around the panel, not under it. */
+/* The panel is the same solid colour as the code's own plate (the portal card colour), in light and dark, so the TGcode sits on a ground that matches it; the glow stays around the panel, not under it. */
 .presenting .duo { background: var(--pp-card); border: 1px solid rgba(var(--pp-ink-rgb), 0.12); border-radius: 2rem; box-shadow: 0 0 80px rgba(125, 180, 234, 0.18); }
 .liveCount { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
 .arrivals { display: inline-flex; align-items: center; }

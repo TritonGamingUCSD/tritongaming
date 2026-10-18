@@ -75,7 +75,7 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
     }
     const target = linkTarget(t);
     if (target) { setProblem(''); setState({ kind: 'opening', ...target }); goTimer.current = window.setTimeout(() => go(target.href), 900); return true; }
-    setProblem('That isn’t a tgcode or a portal QR. Try another.');
+    setProblem('That isn’t a TGcode or a portal QR. Try another.');
     return false;
   }
 
@@ -125,8 +125,8 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
       <QrScanner
         onScan={onScan}
         onClose={onClose}
-        title="Scan A tgcode"
-        note="Point the camera at a tgcode (meeting, ticket or reward) or an event’s check-in QR."
+        title="Scan A TGcode"
+        note="Point the camera at a TGcode (meeting, ticket or reward) or an event’s check-in QR."
         lock={lock}
         sheet={sheet}
         footer={<div className={styles.codeBar}><span>{staff ? 'Or type the 6-digit code (meeting or ticket)' : 'Or type the 6-digit code from the screen'}</span><CodeEntry dark onSubmit={(c) => void onCode(c)} busy={busy} /></div>}
