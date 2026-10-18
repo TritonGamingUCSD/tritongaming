@@ -761,3 +761,6 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .inputWithButton { display: flex; align-items: center; gap: 0.6rem; }
 .inputWithButton > :first-child { flex: 1 1 auto; min-width: 0; }
 @media (max-width: 480px) { .inputWithButton { flex-direction: column; align-items: stretch; } }
+
+.recentList { padding: 0 0.8rem 0.8rem; }
+.recentList .count { min-width: 6rem; }

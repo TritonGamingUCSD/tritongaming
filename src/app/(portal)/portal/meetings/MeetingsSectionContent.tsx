@@ -1069,12 +1069,20 @@ function MeetingList({ onOpen, view, onView, showForm, onShowForm }: { onOpen: (
       </section>
 
       {data.past.length > 0 && (
-        <section>
-          <h3 className={styles.listTitle}>Recent <span>last 30 days</span></h3>
-          <ul className={styles.meetingList}>
-            {data.past.map((it) => <MeetingCard key={it.key} item={it} busy={false} onStart={() => {}} onView={() => it.meeting_id && onOpen(it.meeting_id)} onCancel={() => {}} onEdit={() => {}} onDelete={() => remove(it)} past />)}
+        // Folded, newest first, one thin line per meeting: this is a lookup, not something to read every day.
+        <details className={styles.moreOptions}>
+          <summary><span>Recent</span><em>{data.past.length} in the last 30 days</em></summary>
+          <ul className={`${styles.people} ${styles.recentList}`}>
+            {[...data.past].reverse().map((it) => (
+              <li key={it.key} className={styles.person}>
+                <span className={styles.personName}>{dayLabel(it.date)}<em> · {it.title}</em></span>
+                <span className={styles.count}>{it.status === 'closed' || it.count > 0 ? `${it.count} checked in` : 'Not held'}</span>
+                {it.meeting_id && <Button size="sm" variant="ghost" onClick={() => onOpen(it.meeting_id!)}>Attendance</Button>}
+                {!!it.meeting_id && <IconButton kind="delete" label={`Delete ${it.title} on ${dayLabel(it.date)}`} onClick={() => remove(it)} />}
+              </li>
+            ))}
           </ul>
-        </section>
+        </details>
       )}
     </div>
   );
