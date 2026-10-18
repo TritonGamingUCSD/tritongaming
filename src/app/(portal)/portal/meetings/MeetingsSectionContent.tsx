@@ -31,9 +31,9 @@ import { useMeetingLive } from '@/lib/meetings/useMeetingLive';
 import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
 import styles from './meetings.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
-import Dialog from '@/components/ui/Dialog';
+import Dialog, { DialogActions, DialogCancel, DialogText } from '@/components/ui/Dialog';
 import Link from 'next/link';
-import QrScanner from './QrScanner';
+import QrScanner, { proofFromParams, type CheckInProof } from './QrScanner';
 import StyledQRCode from '@/components/StyledQRCode/StyledQRCode';
 import { DEFAULT_QR_OPTIONS, type QRCodeOptions } from '@/lib/qr/qrCodeStyling';
 
@@ -50,6 +50,7 @@ interface Live {
   tally: Tally;
   code: string | null;
   expiresAt: number | null;
+  qrKey?: string | null;
   attendees: (Person & { checked_in_at: string; method: 'code' | 'manual' | 'host'; guest?: boolean })[];
   missing: Person[];
   absent: (Person & { reason: string | null; excused: boolean })[];
@@ -156,11 +157,11 @@ function useInkColour(ref: React.RefObject<HTMLElement | null>, key: unknown) {
   }, [ref, key]);
   return ink;
 }
-function MeetingQR({ code, size, ink }: { code: string; size: number; ink: string }) {
+function MeetingQR({ path, size, ink }: { path: string; size: number; ink: string }) {
   const options = useMemo<QRCodeOptions>(() => ({
-    ...DEFAULT_QR_OPTIONS, data: `${window.location.origin}/portal/meetings/mine?code=${code}`, size: 480, margin: 0, transparentBg: true,
+    ...DEFAULT_QR_OPTIONS, data: `${window.location.origin}${path}`, size: 480, margin: 0, transparentBg: true,
     dotsColor: ink, dotsGradientEnabled: false, cornersSquareColor: ink, cornersDotColor: ink, icon: 'none', customIcon: null,
-  }), [code, ink]);
+  }), [path, ink]);
   return (
     <div className={styles.qrCanvas} style={{ width: size, height: size }} role="img" aria-label="QR code that opens check-in with the current code">
       <StyledQRCode options={options} />
@@ -210,6 +211,7 @@ function CheckInPanel() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [scanning, setScanning] = useState(false);
+  const [confirm, setConfirm] = useState<{ proof: CheckInProof; title: string; starts_at: string; location: string | null; already: boolean } | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -219,16 +221,17 @@ function CheckInPanel() {
   }, []);
 
   useEffect(() => { void load(); }, [load]);
-  // Opened from the QR on the room screen: the code is in the address, so check in with it straight away, then tidy the address.
+  // Opened from the QR on the room screen (or its link): the meeting and its key are in the address. Ask which meeting it is and let the person confirm.
   const fromQr = useRef(false);
   useEffect(() => {
     if (fromQr.current) return;
-    const c = new URLSearchParams(window.location.search).get('code');
-    if (!c || !/^\d{6}$/.test(c)) return;
+    const sp = new URLSearchParams(window.location.search);
+    const proof = proofFromParams(sp);
+    if (!proof) return;
     fromQr.current = true;
-    const sp = new URLSearchParams(window.location.search); sp.delete('code');
+    sp.delete('m'); sp.delete('k');
     window.history.replaceState(window.history.state, '', `${window.location.pathname}${sp.toString() ? `?${sp}` : ''}`);
-    void submit(c);
+    void ask(proof);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useVisiblePoll(load, 60_000);   // paused while the tab is hidden; refreshes the moment it comes back
@@ -241,12 +244,30 @@ function CheckInPanel() {
     return () => clearTimeout(id);
   }, [data]);
 
-  async function submit(value: string) {
+  // A scan or the QR link only says which meeting it is; the person confirms before being checked in.
+  async function ask(proof: CheckInProof) {
     if (busy) return;
     setBusy(true);
     setError('');
     try {
-      const res = await fetch('/api/meetings/check-in', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: value }) });
+      const res = await fetch('/api/meetings/check-in', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...proof, preview: true }) });
+      const json = await res.json();
+      if (!res.ok) { setError(json.error || 'Check-in failed.'); return; }
+      if (json.already) { await load(); return; }
+      setConfirm({ proof, title: json.title, starts_at: json.starts_at, location: json.location ?? null, already: false });
+    } catch {
+      setError('Network error. Try again.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function submit(proof: CheckInProof) {
+    if (busy) return;
+    setBusy(true);
+    setError('');
+    try {
+      const res = await fetch('/api/meetings/check-in', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(proof) });
       const json = await res.json();
       if (!res.ok) { setError(json.error || 'Check-in failed.'); setCode(''); return; }
       setCode('');
@@ -268,6 +289,16 @@ function CheckInPanel() {
 
   return (
     <div className={styles.stack}>
+      {error && openToEnter.length === 0 && <Notice tone="error">{error}</Notice>}
+      {confirm && (
+        <Dialog title="Check In To This Meeting?" onClose={() => setConfirm(null)}>
+          <DialogText><strong>{confirm.title}</strong><br />{time(confirm.starts_at)}{confirm.location ? ` · ${confirm.location}` : ''}</DialogText>
+          <DialogActions>
+            <DialogCancel onClick={() => setConfirm(null)} disabled={busy} />
+            <Button loading={busy} onClick={async () => { const p = confirm.proof; await submit(p); setConfirm(null); }}>Check In</Button>
+          </DialogActions>
+        </Dialog>
+      )}
       {checkedIn.map((m) => (
         <div key={m.id} className={`${styles.card} ${styles.done}`}>
           <span className={styles.doneIcon}><Check size={34} strokeWidth={2.5} aria-hidden="true" /></span>
@@ -289,7 +320,7 @@ function CheckInPanel() {
             onChange={(e) => {
               const v = e.target.value.replace(/\D/g, '').slice(0, 6);
               setCode(v);
-              if (v.length === 6) submit(v);
+              if (v.length === 6) void submit({ code: v });
             }}
             inputMode="numeric"
             autoComplete="one-time-code"
@@ -302,10 +333,10 @@ function CheckInPanel() {
           />
           {error && <Notice tone="error">{error}</Notice>}
           <div className={styles.codeActions}>
-            <Button onClick={() => submit(code)} disabled={code.length !== 6} loading={busy}>Check in</Button>
+            <Button onClick={() => void submit({ code })} disabled={code.length !== 6} loading={busy}>Check in</Button>
             <Button variant="secondary" onClick={() => setScanning(true)}><ScanLine size={15} aria-hidden="true" /> Scan QR</Button>
           </div>
-          {scanning && <QrScanner onClose={() => setScanning(false)} onCode={(c) => { setScanning(false); void submit(c); }} />}
+          {scanning && <QrScanner onClose={() => setScanning(false)} onCode={(p) => { setScanning(false); void ask(p); }} />}
         </div>
       )}
 
@@ -1826,7 +1857,7 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
               <>
                 <span className={styles.duoDivider} aria-hidden="true" />
                 <div className={styles.duoQr}>
-                  <MeetingQR code={live.code} size={presenting ? 250 : 170} ink={ink} />
+                  <MeetingQR path={`/portal/meetings/mine?m=${live.meeting.id}&k=${live.qrKey ?? ''}`} size={presenting ? 250 : 170} ink={ink} />
                   <small>Or scan with your phone</small>
                 </div>
               </>

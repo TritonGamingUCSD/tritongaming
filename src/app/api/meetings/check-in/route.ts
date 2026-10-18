@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { authorizeMeetings, checkInOpensAt, getTodaysMeetings, isCheckInAccepting, isMeetingOpen, isValidMeetingCode } from '@/lib/meetings/meetings';
+import { authorizeMeetings, checkInOpensAt, getTodaysMeetings, isCheckInAccepting, isMeetingOpen, isValidMeetingCode, isValidQrKey } from '@/lib/meetings/meetings';
 import { canAttendMeeting } from '@/lib/meetings/meetingAudience';
 import { notifyMeetingLive } from '@/lib/meetings/meetingLive';
 
@@ -10,7 +10,10 @@ export async function POST(request: Request) {
   if (auth.error) return auth.error;
   const body = await request.json().catch(() => ({}));
   const code = String(body.code ?? '').replace(/\s/g, '');
-  if (!/^\d{6}$/.test(code)) return NextResponse.json({ error: 'Enter the 6-digit code from the screen.' }, { status: 400 });
+  const qrMeeting = typeof body.meeting_id === 'string' ? body.meeting_id : '';
+  const qrKey = String(body.key ?? '');
+  const preview = body.preview === true;   // only say which meeting it is, so the person can confirm
+  if (!qrMeeting && !/^\d{6}$/.test(code)) return NextResponse.json({ error: 'Enter the 6-digit code from the screen.' }, { status: 400 });
 
   const mine = (await getTodaysMeetings(auth.svc)).filter((m) => isMeetingOpen(m) && canAttendMeeting(m, auth.user.id, auth.roles));
   const open = mine.filter((m) => isCheckInAccepting(m));
@@ -20,13 +23,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: soonest ? opensMsg(soonest) : 'Check-in isn’t open right now.' }, { status: 409 });
   }
 
-  const match = open.find((m) => isValidMeetingCode(m.code_secret, code));
+  const proves = (m: (typeof mine)[number]) => (qrMeeting ? m.id === qrMeeting && isValidQrKey(m.code_secret, qrKey) : isValidMeetingCode(m.code_secret, code));
+  const match = open.find(proves);
   if (!match) {
     // A real code for a meeting that isn't open to members yet gets a clearer answer than "wrong code".
-    const early = mine.find((m) => !isCheckInAccepting(m) && isValidMeetingCode(m.code_secret, code));
+    const early = mine.find((m) => !isCheckInAccepting(m) && proves(m));
     if (early) return NextResponse.json({ error: opensMsg(early) }, { status: 409 });
   }
-  if (!match) return NextResponse.json({ error: 'That code is wrong or has expired — check the screen for the current one.' }, { status: 400 });
+  if (!match) return NextResponse.json({ error: 'That code is wrong or has expired — check the screen for the current one, or scan the QR again.' }, { status: 400 });
+
+  if (preview) {
+    const { data: was } = await auth.svc.from('meeting_attendance').select('checked_in_at').eq('meeting_id', match.id).eq('user_id', auth.user.id).maybeSingle();
+    return NextResponse.json({ ok: true, preview: true, title: match.title, starts_at: match.starts_at, location: match.location, already: !!was });
+  }
 
   const { data: existing } = await auth.svc.from('meeting_attendance').select('checked_in_at').eq('meeting_id', match.id).eq('user_id', auth.user.id).maybeSingle();
   if (existing) return NextResponse.json({ ok: true, already: true, title: match.title, doc_url: match.doc_url, checked_in_at: existing.checked_in_at });

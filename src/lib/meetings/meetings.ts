@@ -1,3 +1,4 @@
+import { createHmac } from 'crypto';
 import { NextResponse } from 'next/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
@@ -222,6 +223,17 @@ export function isValidMeetingCode(secret: string, input: string): boolean {
   const w = currentWindow();
   const c = input.trim();
   return rotatingCode(secret, w) === c || rotatingCode(secret, w - 1) === c;
+}
+
+// The QR on the room screen carries its own longer-lived key instead of the 30-second code: opening a link from a phone's camera usually
+// means signing in first, which can take a minute or more. The key changes every 10 minutes and the one before is still accepted
+// (so 10 to 20 minutes). It only works for a signed-in team member who may attend, and the typed code keeps rotating every 30 seconds.
+const QR_KEY_SECONDS = 600;
+const qrKeyFor = (secret: string, bucket: number) => createHmac('sha256', secret).update(`qr:${bucket}`).digest('hex').slice(0, 24);
+export function currentQrKey(secret: string): string { return qrKeyFor(secret, Math.floor(Date.now() / 1000 / QR_KEY_SECONDS)); }
+export function isValidQrKey(secret: string, key: string): boolean {
+  const b = Math.floor(Date.now() / 1000 / QR_KEY_SECONDS);
+  return key === qrKeyFor(secret, b) || key === qrKeyFor(secret, b - 1);
 }
 
 export async function authorizeMeetings(capability: Extract<Capability, 'manage_meetings' | 'attend_meetings' | 'host_meetings' | 'view_attendance_reports'>) {

@@ -7,16 +7,21 @@ import Dialog, { DialogText } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
 import styles from './meetings.module.css';
 
-// The room QR holds this site's own address with the code on the end (…/portal/meetings/mine?code=123456). A plain 6-digit number works too.
-export function codeFromScan(text: string): string | null {
+// What a scan proves: the room QR holds this site's own address with a longer-lived key (…/portal/meetings/mine?m=<meeting>&k=<key>); a plain
+// 6-digit number works too.
+export type CheckInProof = { code: string } | { meeting_id: string; key: string };
+export function proofFromScan(text: string): CheckInProof | null {
   const t = text.trim();
-  if (/^\d{6}$/.test(t)) return t;
+  if (/^\d{6}$/.test(t)) return { code: t };
   try {
     const u = new URL(t);
     if (u.origin !== window.location.origin || !u.pathname.startsWith('/portal/meetings')) return null;
-    const c = u.searchParams.get('code');
-    return c && /^\d{6}$/.test(c) ? c : null;
+    return proofFromParams(u.searchParams);
   } catch { return null; }
+}
+export function proofFromParams(sp: URLSearchParams): CheckInProof | null {
+  const m = sp.get('m'), k = sp.get('k');
+  return m && k && /^[0-9a-f-]{36}$/i.test(m) && /^[0-9a-f]{24}$/.test(k) ? { meeting_id: m, key: k } : null;
 }
 
 interface Caps { zoom?: { min: number; max: number; step: number }; torch?: boolean }
@@ -24,7 +29,7 @@ type ZoomTrack = MediaStreamTrack & { getCapabilities?: () => Caps; applyConstra
 
 // A camera scanner with zoom (the phone's own zoom where it has one, otherwise a digital zoom) and a flashlight where the phone offers it,
 // for a QR on a screen across the room. Reads the QR and hands back the code; nothing is recorded or uploaded.
-export default function QrScanner({ onCode, onClose }: { onCode: (code: string) => void; onClose: () => void }) {
+export default function QrScanner({ onCode, onClose }: { onCode: (proof: CheckInProof) => void; onClose: () => void }) {
   const video = useRef<HTMLVideoElement>(null);
   const track = useRef<ZoomTrack | null>(null);
   const [error, setError] = useState('');
@@ -69,8 +74,8 @@ export default function QrScanner({ onCode, onClose }: { onCode: (code: string) 
             const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
             text = jsQR(img.data, img.width, img.height, { inversionAttempts: 'attemptBoth' })?.data ?? null;
           }
-          const code = text ? codeFromScan(text) : null;
-          if (code) { dead = true; stream?.getTracks().forEach((x) => x.stop()); onCode(code); }
+          const proof = text ? proofFromScan(text) : null;
+          if (proof) { dead = true; stream?.getTracks().forEach((x) => x.stop()); onCode(proof); }
         };
         raf = requestAnimationFrame(tick);
       } catch (e) {
@@ -109,7 +114,7 @@ export default function QrScanner({ onCode, onClose }: { onCode: (code: string) 
   };
 
   return (
-    <Dialog title="Scan The Check-In QR" onClose={onClose}>
+    <Dialog title="Scan The Check-In QR" onClose={onClose} wide>
       <DialogText>Point the camera at the QR on the screen. Zoom in if it is far away.</DialogText>
       {error ? <p className={styles.scanError}>{error}</p> : (
         <>
