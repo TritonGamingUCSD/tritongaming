@@ -1,10 +1,9 @@
-import { createHmac } from 'crypto';
 import { NextResponse } from 'next/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
-import { rotatingCode, currentWindow, secondsUntilNextWindow } from '@/lib/events/rotatingCode';
+import { rotatingCode, qrToken, currentWindow, secondsUntilNextWindow } from '@/lib/events/rotatingCode';
 import { pacificDayKey } from '@/lib/events/checkinDays';
 import { staffName } from '@/lib/members/names';
 import { pacificDatetimeLocalToUTC } from '@/lib/core/timezone';
@@ -225,15 +224,13 @@ export function isValidMeetingCode(secret: string, input: string): boolean {
   return rotatingCode(secret, w) === c || rotatingCode(secret, w - 1) === c;
 }
 
-// The QR on the room screen carries its own longer-lived key instead of the 30-second code: opening a link from a phone's camera usually
-// means signing in first, which can take a minute or more. The key changes every 10 minutes and the one before is still accepted
-// (so 10 to 20 minutes). It only works for a signed-in team member who may attend, and the typed code keeps rotating every 30 seconds.
-const QR_KEY_SECONDS = 600;
-const qrKeyFor = (secret: string, bucket: number) => createHmac('sha256', secret).update(`qr:${bucket}`).digest('hex').slice(0, 24);
-export function currentQrKey(secret: string): string { return qrKeyFor(secret, Math.floor(Date.now() / 1000 / QR_KEY_SECONDS)); }
+// The QR on the room screen is not a link and not the typed code: it carries `tgm1.<meeting>.<key>`, a key of its own that rotates with the
+// same 30-second window (the previous one still counts, as for the digits). Only the portal's scanner reads it, so there is no sign-in step to outlast.
+export const MEETING_QR_PREFIX = 'tgm1';
+export function currentQrKey(secret: string): string { return qrToken(secret, currentWindow()); }
 export function isValidQrKey(secret: string, key: string): boolean {
-  const b = Math.floor(Date.now() / 1000 / QR_KEY_SECONDS);
-  return key === qrKeyFor(secret, b) || key === qrKeyFor(secret, b - 1);
+  const w = currentWindow();
+  return key === qrToken(secret, w) || key === qrToken(secret, w - 1);
 }
 
 export async function authorizeMeetings(capability: Extract<Capability, 'manage_meetings' | 'attend_meetings' | 'host_meetings' | 'view_attendance_reports'>) {

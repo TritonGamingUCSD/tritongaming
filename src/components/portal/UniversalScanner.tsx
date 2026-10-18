@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CircleAlert, Check, Loader2 } from 'lucide-react';
 import Dialog, { DialogActions } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
@@ -15,22 +15,28 @@ type Outcome =
   | null;
 
 // The one camera for the portal (the middle button of the phone's bottom bar). It reads any QR the portal itself makes and does what that QR is for:
-//   • a meeting's check-in QR (or its 6-digit code) → checks you in to that meeting, then tells you which one
+//   • a meeting's check-in QR → checks you in to that meeting, then tells you which one
 //   • an event's self check-in QR (…/in/<event>) → opens that event's check-in page, which checks you in and shows the result
 //   • any other page of this portal → opens it
 //   • (staff only) an event ticket or a reward pickup → opens Check-In, which checks the ticket in or shows the reward to confirm
 // Anything else is refused with a message, and the camera keeps looking.
+// A ticket's QR (`tgt1.<event>.<ticket>.<key>`), or the older `<event>:<digits>` some phones still have cached.
+const isTicketQr = (t: string) => /^tgt1\.[^\s]+\.[0-9a-f-]{36}\.[0-9a-f]{24}$/i.test(t) || /^[a-z0-9][a-z0-9_-]*:\d{6}$/i.test(t);
+
 export default function UniversalScanner({ onClose, staff = false, redemptions = false }: { onClose: () => void; staff?: boolean; redemptions?: boolean }) {
   const [outcome, setOutcome] = useState<Outcome>(null);
   const [problem, setProblem] = useState('');
   const [busy, setBusy] = useState(false);
+  const goTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(goTimer.current), []);   // closing the box in the moment before a page opens cancels the move
+  useEffect(() => { if (!problem) return; const id = window.setTimeout(() => setProblem(''), 5000); return () => window.clearTimeout(id); }, [problem]);
   const [attempt, setAttempt] = useState(0);   // a new number restarts the camera after a check-in that did not go through
 
   type Target = { href: string; title: string; heading: string; text: string };
   const portalTarget = (text: string): Target | null => {
     const t = text.trim();
     // An event ticket (`<event>:<code>`) or a reward pickup (a redemption id): staff's to scan, so the Check-In page takes it from here.
-    const ticket = t.match(/^[a-z0-9][a-z0-9_-]*:\d{6}$/i);
+    const ticket = isTicketQr(t);
     if (ticket) return staff
       ? { href: `/portal/checkin/tickets?scan=${encodeURIComponent(t)}`, title: 'Checking In A Ticket', heading: 'Event ticket', text: 'Opening Check-In, which checks this ticket in and shows who it belongs to.' }
       : null;
@@ -52,9 +58,9 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
     const proof = proofFromScan(text);
     if (proof) { void checkInMeeting(proof); return true; }
     const target = portalTarget(text);
-    if (target) { setProblem(''); setOutcome({ kind: 'opening', ...target }); window.setTimeout(() => go(target.href), 900); return true; }
+    if (target) { setProblem(''); setOutcome({ kind: 'opening', ...target }); goTimer.current = window.setTimeout(() => go(target.href), 900); return true; }
     const t = text.trim();
-    if (/^[a-z0-9][a-z0-9_-]*:\d{6}$/i.test(t)) setProblem('That is an event ticket. Show it to an officer, who scans it to check you in.');
+    if (isTicketQr(t)) setProblem('That is an event ticket. Show it to an officer, who scans it to check you in.');
     else if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(t)) setProblem(staff ? 'That is a reward pickup code, and your role can’t confirm hand-overs. Ask an officer who can.' : 'That is a reward pickup code. Show it to an officer to collect your reward.');
     else setProblem('That QR code isn’t one the portal can use. Try another.');
     return false;

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
-import { rotatingCode, currentWindow } from '@/lib/events/rotatingCode';
+import { rotatingCode, qrToken, currentWindow } from '@/lib/events/rotatingCode';
 import { performCheckin } from '@/lib/events/performCheckin';
 import { openEventsFilter } from '@/lib/events/checkinWindow';
 import { canCheckInNow, todaysCheckinAt } from '@/lib/events/checkinDays';
@@ -23,8 +23,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
   }
 
-  const { code, event_id } = await request.json();
-  if (!code || !event_id) {
+  const { code, qr, event_id } = await request.json();
+  if ((!code && !qr) || !event_id) {
     return NextResponse.json({ error: 'Missing code or event_id' }, { status: 400 });
   }
 
@@ -58,19 +58,27 @@ export async function POST(request: Request) {
   // src/app/api/tickets/[id]/qr/route.ts) purely as a human/scanner-visible
   // hint of which event it's for — it isn't part of the HMAC and carries no
   // authority, so it's simply dropped here before the real check.
-  const raw = String(code).trim().replace(/^#\s*/, '');
-  const normalizedCode = raw.includes(':') ? raw.slice(raw.lastIndexOf(':') + 1) : raw;
+  // Two ways in, kept apart: the six typed digits, or a QR payload (`tgt1.<event>.<ticket id>.<key>`, which only the portal's scanner reads).
+  // A `<event>:<digits>` text from an older QR still works for now (tickets cached on phones before this change).
   const windowIndex = currentWindow();
-  const matches = (t: { ticket_code: string }) =>
-    rotatingCode(t.ticket_code, windowIndex) === normalizedCode ||
-    rotatingCode(t.ticket_code, windowIndex - 1) === normalizedCode;
+  let matches: (t: { id?: string; ticket_code: string }) => boolean;
+  if (qr) {
+    const parts = String(qr).trim().split('.');
+    const [prefix, ticketId, token] = [parts[0], parts[parts.length - 2], parts[parts.length - 1]];
+    if (prefix !== 'tgt1' || parts.length < 4) return NextResponse.json({ error: 'That QR code isn’t a ticket.' }, { status: 400 });
+    matches = (t) => t.id === ticketId && (qrToken(t.ticket_code, windowIndex) === token || qrToken(t.ticket_code, windowIndex - 1) === token);
+  } else {
+    const raw = String(code).trim().replace(/^#\s*/, '');
+    const normalizedCode = raw.includes(':') ? raw.slice(raw.lastIndexOf(':') + 1) : raw;
+    matches = (t) => rotatingCode(t.ticket_code, windowIndex) === normalizedCode || rotatingCode(t.ticket_code, windowIndex - 1) === normalizedCode;
+  }
 
   const ticket = (eventTickets ?? []).find(matches);
 
   if (!ticket) {
     const { data: others } = await supabase
       .from('tickets')
-      .select('ticket_code, event:events!inner(title)')
+      .select('id, ticket_code, event:events!inner(title)')
       .neq('event_id', event_id)
       .eq('status', 'active')
       .or(openEventsFilter(), { referencedTable: 'events' });

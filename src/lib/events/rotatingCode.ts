@@ -32,6 +32,12 @@ export function rotatingCode(secret: string, windowIndex: number): string {
   return numeric.toString().padStart(6, '0');
 }
 
+// What a QR carries, kept apart from the typed digits: the same kind of short-lived HMAC of the same secret and window, but with its own
+// label, so the number on screen can never be turned into the QR payload (or the other way round). Only the portal's own scanner reads it.
+export function qrToken(secret: string, windowIndex: number): string {
+  return createHmac('sha256', secret).update(`qr:${windowIndex}`).digest('hex').slice(0, 24);
+}
+
 export function secondsUntilNextWindow(): number {
   return ROTATION_SECONDS - (Math.floor(Date.now() / 1000) % ROTATION_SECONDS);
 }

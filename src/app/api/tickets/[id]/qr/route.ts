@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { canCheckInNow } from '@/lib/events/checkinDays';
 import { createClient } from '@/lib/supabase/server';
-import { rotatingCode, currentWindow, secondsUntilNextWindow, ROTATION_SECONDS } from '@/lib/events/rotatingCode';
+import { rotatingCode, qrToken, currentWindow, secondsUntilNextWindow, ROTATION_SECONDS } from '@/lib/events/rotatingCode';
 
 export const runtime = 'nodejs';
 
@@ -56,7 +56,8 @@ export async function GET(request: Request, { params }: Params) {
   // for — see src/app/api/tickets/checkin/route.ts, which strips this prefix
   // before verifying the actual rotating code. `code` alone (no prefix) is
   // still returned for the manual-entry fallback text on screen.
-  const qrData = event?.slug ? `${event.slug}:${code}` : code;
+  const qrFor = (w: number) => `tgt1.${event?.slug ?? 'event'}.${ticket.id}.${qrToken(ticket.ticket_code, w)}`;
+  const qrData = qrFor(currentWindow());
   // rotation_seconds lets the client pace the countdown ring correctly —
   // opening the ticket mid-window means expires_in is only whatever's left
   // of the *current* global window (could be anywhere from 1s to the full
@@ -77,7 +78,7 @@ export async function GET(request: Request, { params }: Params) {
   const upcoming = wantsAhead
     ? Array.from({ length: AHEAD_WINDOWS }, (_, i) => {
         const c = rotatingCode(ticket.ticket_code, w0 + i);
-        return { w: w0 + i, code: c, qr_data: event?.slug ? `${event.slug}:${c}` : c };
+        return { w: w0 + i, code: c, qr_data: qrFor(w0 + i) };
       })
     : undefined;
 

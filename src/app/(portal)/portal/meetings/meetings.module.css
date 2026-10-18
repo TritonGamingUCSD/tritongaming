@@ -761,13 +761,28 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 
 /* The camera scanner: code box and Scan QR sit side by side; the camera frame, a target square, and zoom. */
 .codeActions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.6rem; }
-.scanFrame { position: relative; overflow: hidden; border-radius: 0.9rem; background: #000; aspect-ratio: 1 / 1; width: 100%; max-width: min(100%, 70vh); margin-inline: auto; }   /* theme-ok */
-.scanFrame video { width: 100%; height: 100%; object-fit: cover; transform-origin: center; display: block; }
-.scanTarget { position: absolute; inset: 10%; border: 3px solid rgba(255, 255, 255, 0.9); border-radius: 1rem; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.25); pointer-events: none; }   /* theme-ok */
-.scanTools { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; }
-.scanHint { flex: 1 1 8rem; font-size: 0.85rem; color: rgba(1, 25, 65, 0.7); }   /* theme-ok */
-.scanZoom { position: absolute; right: 0.6rem; bottom: 0.6rem; padding: 0.15rem 0.5rem; border-radius: 999px; background: rgba(0, 0, 0, 0.55); color: #fff; font-size: 0.78rem; font-weight: 600; pointer-events: none; }   /* theme-ok */
-.scanError { margin: 0; padding: 0.7rem; border-radius: 0.6rem; background: rgba(185, 28, 28, 0.1); color: #b91c1c; font-size: 0.9rem; }   /* theme-ok */
+.scanScreen { position: fixed; inset: 0; z-index: 3000; display: flex; flex-direction: column; background: #000; color: #fff; overscroll-behavior: none; }   /* theme-ok */
+.scanTop { position: absolute; top: 0; left: 0; right: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: calc(0.8rem + env(safe-area-inset-top, 0px)) 1rem 0.8rem; background: linear-gradient(rgba(0, 0, 0, 0.6), transparent); font-size: 1.05rem; }   /* theme-ok */
+.scanClose { display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: rgba(255, 255, 255, 0.18); color: #fff; cursor: pointer; }   /* theme-ok */
+.scanStage { position: relative; flex: 1; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
+.scanStage video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform-origin: center center; will-change: transform; display: block; }
+.scanTitle { font-size: 1rem; font-weight: 700; letter-spacing: 0.04em; }
+.scanTarget { position: absolute; left: 50%; top: 50%; width: min(72vw, 52vh); aspect-ratio: 1 / 1; transform: translate(-50%, -50%); border-radius: 1.4rem; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.45); pointer-events: none; }   /* theme-ok */
+.scanTarget i { position: absolute; width: 2.4rem; height: 2.4rem; border: 0 solid #fff; }   /* theme-ok */
+.scanTarget i:nth-child(1) { top: 0; left: 0; border-top-width: 5px; border-left-width: 5px; border-top-left-radius: 1.4rem; }
+.scanTarget i:nth-child(2) { top: 0; right: 0; border-top-width: 5px; border-right-width: 5px; border-top-right-radius: 1.4rem; }
+.scanTarget i:nth-child(3) { bottom: 0; left: 0; border-bottom-width: 5px; border-left-width: 5px; border-bottom-left-radius: 1.4rem; }
+.scanTarget i:nth-child(4) { bottom: 0; right: 0; border-bottom-width: 5px; border-right-width: 5px; border-bottom-right-radius: 1.4rem; }
+.scanLine { position: absolute; left: 8%; right: 8%; height: 3px; border-radius: 3px; background: linear-gradient(90deg, transparent, #7db4ea, transparent); box-shadow: 0 0 14px #7db4ea; animation: scanSweep 2.2s ease-in-out infinite alternate; }   /* theme-ok */
+@keyframes scanSweep { from { top: 10%; } to { top: 90%; } }
+@media (prefers-reduced-motion: reduce) { .scanLine { animation: none; top: 50%; } }
+.scanRow { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+.scanPinch { font-size: 0.8rem; color: rgba(255, 255, 255, 0.7); }   /* theme-ok */
+.scanZoom { position: absolute; left: 50%; bottom: 7.5rem; transform: translateX(-50%); padding: 0.2rem 0.7rem; border-radius: 999px; background: rgba(0, 0, 0, 0.55); color: #fff; font-size: 0.85rem; font-weight: 600; pointer-events: none; }   /* theme-ok */
+.scanBottom { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; flex-direction: column; justify-content: center; gap: 0.7rem; padding: 2.5rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px)); background: linear-gradient(transparent, rgba(0, 0, 0, 0.65)); text-align: center; }   /* theme-ok */
+.scanHint { margin: 0; font-size: 0.95rem; color: rgba(255, 255, 255, 0.92); }   /* theme-ok */
+.scanLight { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.55rem 1rem; border: 0; border-radius: 999px; background: rgba(255, 255, 255, 0.2); color: #fff; font-size: 0.9rem; font-weight: 600; cursor: pointer; }   /* theme-ok */
+.scanError { margin: auto 1.2rem; padding: 0.9rem; border-radius: 0.7rem; background: rgba(185, 28, 28, 0.85); color: #fff; font-size: 0.95rem; text-align: center; }   /* theme-ok */
 
 /* The host's check-in frame: the typed code and its QR side by side in one ring (the ring fills as people check in), the QR in the code's own colour. */
 .duo { display: flex; align-items: stretch; justify-content: center; gap: 1.5rem; padding: 1.2rem 1.7rem; max-width: 100%; }
@@ -809,3 +824,5 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 @keyframes arrivalIn { from { opacity: 0; transform: translateY(6px) scale(0.9); } to { opacity: 1; transform: none; } }
 @media (max-width: 640px) { .stageBar { left: 1rem; top: 1rem; max-width: 55%; } }
 @media (prefers-reduced-motion: reduce) { .arrival, .latest { animation: none; } }
+
+@media (max-width: 640px) { .stageBar { position: static; align-items: center; text-align: center; max-width: 100%; padding-top: 2.4rem; } .stageBar h2 { font-size: 1.3rem; } }

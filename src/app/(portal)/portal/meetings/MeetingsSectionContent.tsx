@@ -33,7 +33,6 @@ import styles from './meetings.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
 import Dialog from '@/components/ui/Dialog';
 import Link from 'next/link';
-import { proofFromParams, type CheckInProof } from './QrScanner';
 import StyledQRCode from '@/components/StyledQRCode/StyledQRCode';
 import { DEFAULT_QR_OPTIONS, type QRCodeOptions } from '@/lib/qr/qrCodeStyling';
 
@@ -157,13 +156,13 @@ function useInkColour(ref: React.RefObject<HTMLElement | null>, key: unknown) {
   }, [ref, key]);
   return ink;
 }
-function MeetingQR({ path, size, ink }: { path: string; size: number; ink: string }) {
+function MeetingQR({ payload, size, ink }: { payload: string; size: number; ink: string }) {
   const options = useMemo<QRCodeOptions>(() => ({
-    ...DEFAULT_QR_OPTIONS, data: `${window.location.origin}${path}`, size: 480, margin: 0, transparentBg: true,
+    ...DEFAULT_QR_OPTIONS, data: payload, size: 480, margin: 0, transparentBg: true,
     dotsColor: ink, dotsGradientEnabled: false, cornersSquareColor: ink, cornersDotColor: ink, icon: 'none', customIcon: null,
-  }), [path, ink]);
+  }), [payload, ink]);
   return (
-    <div className={styles.qrCanvas} style={{ width: size, height: size }} role="img" aria-label="QR code that opens check-in with the current code">
+    <div className={styles.qrCanvas} style={{ width: size, height: size }} role="img" aria-label="QR code for the portal’s Scan button">
       <StyledQRCode options={options} />
     </div>
   );
@@ -221,19 +220,6 @@ function CheckInPanel() {
   useEffect(() => { void load(); }, [load]);
   // The scanner in the phone's bottom bar checked someone in: show it.
   useEffect(() => { const f = () => void load(); window.addEventListener('tg:meetings-changed', f); return () => window.removeEventListener('tg:meetings-changed', f); }, [load]);
-  // Opened from the QR on the room screen (or its link): the meeting and its key are in the address. Ask which meeting it is and let the person confirm.
-  const fromQr = useRef(false);
-  useEffect(() => {
-    if (fromQr.current) return;
-    const sp = new URLSearchParams(window.location.search);
-    const proof = proofFromParams(sp);
-    if (!proof) return;
-    fromQr.current = true;
-    sp.delete('m'); sp.delete('k');
-    window.history.replaceState(window.history.state, '', `${window.location.pathname}${sp.toString() ? `?${sp}` : ''}`);
-    void submit(proof);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
   useVisiblePoll(load, 60_000);   // paused while the tab is hidden; refreshes the moment it comes back
   // A meeting is over at its scheduled end: its cards go away right then, without waiting for the next refresh.
   const [, tick] = useState(0);
@@ -244,7 +230,7 @@ function CheckInPanel() {
     return () => clearTimeout(id);
   }, [data]);
 
-  async function submit(proof: CheckInProof) {
+  async function submit(proof: { code: string }) {
     if (busy) return;
     setBusy(true);
     setError('');
@@ -1835,8 +1821,8 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
               <>
                 <span className={styles.duoDivider} aria-hidden="true" />
                 <div className={styles.duoQr}>
-                  <MeetingQR path={`/portal/meetings/mine?m=${live.meeting.id}&k=${live.qrKey ?? ''}`} size={presenting ? 250 : 170} ink={ink} />
-                  <small>Or scan with your phone</small>
+                  <MeetingQR payload={`tgm1.${live.meeting.id}.${live.qrKey ?? ''}`} size={presenting ? 250 : 170} ink={ink} />
+                  <small>Or tap Scan in the portal</small>
                 </div>
               </>
             )}

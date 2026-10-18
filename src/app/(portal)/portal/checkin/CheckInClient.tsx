@@ -180,7 +180,7 @@ export default function CheckInClient({ events, onCheckedIn, tiers }: CheckInCli
       const response = await fetchWithRetry('/api/tickets/checkin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: ticketCode, event_id: eventId }),
+        body: JSON.stringify(ticketCode.startsWith('tgt1.') ? { qr: ticketCode, event_id: eventId } : { code: ticketCode, event_id: eventId }),
       });
       const data = await response.json();
       if (response.ok) {
@@ -218,11 +218,13 @@ export default function CheckInClient({ events, onCheckedIn, tiers }: CheckInCli
     fromScan.current = true;
     sp.delete('scan');
     window.history.replaceState(window.history.state, '', `${window.location.pathname}${sp.toString() ? `?${sp}` : ''}`);
-    const m = scan.match(/^([^:]+):(\d{6})$/);
-    const ev = m ? events.find((e) => e.slug === m[1]) : undefined;
-    if (!m || !ev) { setError('That ticket is for an event that isn’t open for check-in right now.'); return; }
+    // `tgt1.<event>.<ticket id>.<key>` (a ticket QR), or the older `<event>:<digits>`.
+    const parts = scan.split('.');
+    const slug = parts[0] === 'tgt1' && parts.length >= 4 ? parts.slice(1, -2).join('.') : scan.match(/^([^:]+):\d{6}$/)?.[1];
+    const ev = slug ? events.find((e) => e.slug === slug) : undefined;
+    if (!ev) { setError('That ticket is for an event that isn’t open for check-in right now.'); return; }
     setSelectedEventId(ev.id);
-    void handleCheckIn(m[2], ev.id);
+    void handleCheckIn(scan.startsWith('tgt1.') ? scan : scan.slice(scan.lastIndexOf(':') + 1), ev.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

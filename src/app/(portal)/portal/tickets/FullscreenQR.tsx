@@ -394,11 +394,11 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
     ? formatPacificDateTime(eventDate, { weekday: true })
     : null;
 
-  // qr_data is `${eventSlug}:${rotatingCode}` (see /api/tickets/[id]/qr) —
-  // reuse that same slug for the arced label so it can never drift out of
-  // sync with what the code actually encodes. Falls back to the title for
-  // events with no slug set.
-  const eventLabel = (qrData?.includes(':') ? qrData.split(':')[0] : '') || eventTitle;
+  // qr_data is `tgt1.${eventSlug}.${ticketId}.${key}` (see /api/tickets/[id]/qr) — reuse that same slug for the arced label so it can never
+  // drift out of sync with what the code actually encodes. Falls back to the title for events with no slug set (and for an older cached
+  // `slug:digits` code).
+  const qrParts = qrData?.split('.') ?? [];
+  const eventLabel = (qrData?.startsWith('tgt1.') && qrParts.length >= 4 ? qrParts.slice(1, -2).join('.') : qrData?.includes(':') ? qrData.split(':')[0] : '') || eventTitle;
 
   // Portaled straight to <body> instead of rendering in place — this opens
   // from inside PortalHub's section panel, which Framer Motion animates
