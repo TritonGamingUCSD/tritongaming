@@ -1,5 +1,5 @@
 .wrap {
-  position: fixed;
+  position: fixed; transform: translateZ(0); will-change: transform;
   top: 1.25rem;
   right: 1.25rem;
   z-index: 40;
