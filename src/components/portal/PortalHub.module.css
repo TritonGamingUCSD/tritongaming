@@ -1016,3 +1016,8 @@
   .appFrame .rail .railFooter > a, .appFrame .rail .railFooter > button { overflow: visible !important; height: 34px !important; min-height: 34px !important; padding-right: 4px !important; }
   .appFrame .rail .railFooter > a > span, .appFrame .rail .railFooter > button > span, .appFrame .rail .railFooter > a > svg { height: 30px; width: 30px; }
 }
+
+/* The scan button in the middle of the phone's bottom bar: a raised round button. */
+.dockScan { overflow: visible; }
+.dockScanIcon { display: grid; place-items: center; width: 52px; height: 52px; margin-top: -1.3rem; border-radius: 50%; background: var(--yellow); color: #011941; border: 3px solid var(--pp-card); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); }   /* theme-ok */
+.dockScan:active .dockScanIcon { transform: scale(0.94); }

@@ -8,13 +8,15 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { mergedPortalParams, portalHref } from '@/lib/portal/portalPath';
 import { usePortalParams } from '@/lib/portal/usePortalParams';
 import { motion, AnimatePresence } from 'motion/react';
-import { Home, MoreHorizontal, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Home, MoreHorizontal, ChevronRight, ChevronLeft, ScanLine } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import PortalSearch from './PortalSearch';
 import NotificationBell from './NotificationBell';
 import PortalThemeToggle from './PortalThemeToggle';
 import PortalCopyLink from './PortalCopyLink';
 import PortalCrumbs from './PortalCrumbs';
 import { pickDock, readUsage, recordUse } from './dockPicker';
+const UniversalScanner = dynamic(() => import('./UniversalScanner'), { ssr: false });
 import styles from './PortalHub.module.css';
 import simple from './PortalSimple.module.css';
 import mob from './PortalMobile.module.css';
@@ -286,10 +288,12 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
 
   // Server render and first paint use the role/context defaults; once mounted, what this person
   // actually opens and the time of week are folded in.
-  const [dock, setDock] = useState(() => pickDock(sections));
+  const [scanOpen, setScanOpen] = useState(false);
+  // Five slots: Home, two pages, the scanner in the middle... so the bar keeps two pages, then More.
+  const [dock, setDock] = useState(() => pickDock(sections, { slots: 2 }));
   const dockKey = sections.map((s) => `${s.id}:${s.dockBoost ?? 0}:${s.dockExclude ? 'x' : ''}`).join(',');
   useEffect(() => {
-    setDock(pickDock(sections, { now: new Date(), usage: readUsage() }));
+    setDock(pickDock(sections, { now: new Date(), usage: readUsage(), slots: 2 }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dockKey]);
   // "For you": the few pages this person most likely wants (their role, what they open most on this device, the time of week),
@@ -300,6 +304,13 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dockKey]);
   const primaryTabs = sections.filter((s) => dock.ids.has(s.id));
+  // The middle of the phone's bottom bar: one camera for every QR the portal makes (see UniversalScanner).
+  const scanButton = (
+    <button key="scan" type="button" className={`${styles.dockItem} ${styles.dockScan}`} onClick={() => { setMoreOpen(false); setScanOpen(true); }} aria-label="Scan a QR code">
+      <span className={styles.dockScanIcon}><ScanLine size={24} strokeWidth={2} aria-hidden="true" /></span>
+      <span className={styles.dockLabel}>Scan</span>
+    </button>
+  );
   const primaryTabIds = new Set(primaryTabs.map((s) => s.id));
   const moreSections = sections.filter((s) => !primaryTabIds.has(s.id));
   const isMoreActive = openId !== null && !primaryTabIds.has(openId);
@@ -400,6 +411,7 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
 
       </AnimatePresence>
 
+      {scanOpen && <UniversalScanner staff={sections.some((s) => s.id === 'checkin')} onClose={() => setScanOpen(false)} />}
       <nav className={styles.bottomBar} aria-label="Portal quick navigation">
         <button
           type="button"
@@ -409,7 +421,9 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
           <span className={styles.dockIcon}><Home size={20} strokeWidth={1.9} aria-hidden="true" /></span>
           <span className={styles.dockLabel}>Home</span>
         </button>
-        {primaryTabs.map((s) => (
+        {primaryTabs.map((s, i) => (
+          <Fragment key={s.id}>
+          {i === 1 && scanButton}
           <button
             key={s.id}
             type="button"
@@ -422,7 +436,9 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
             </span>
             <span className={styles.dockLabel}>{s.label.replace(/^My /, '')}</span>
           </button>
+          </Fragment>
         ))}
+        {primaryTabs.length < 2 && scanButton}
         {moreSections.length > 0 && (
           <button
             type="button"

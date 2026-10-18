@@ -761,8 +761,7 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 
 /* The camera scanner: code box and Scan QR sit side by side; the camera frame, a target square, and zoom. */
 .codeActions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.6rem; }
-.scanFrame { position: relative; overflow: hidden; border-radius: 0.9rem; background: #000; aspect-ratio: 4 / 3; width: 100%; max-height: 70vh; }   /* theme-ok */
-@media (max-width: 640px) { .scanFrame { aspect-ratio: auto; height: 68vh; } }
+.scanFrame { position: relative; overflow: hidden; border-radius: 0.9rem; background: #000; aspect-ratio: 1 / 1; width: 100%; max-width: min(100%, 70vh); margin-inline: auto; }   /* theme-ok */
 .scanFrame video { width: 100%; height: 100%; object-fit: cover; transform-origin: center; display: block; }
 .scanTarget { position: absolute; inset: 10%; border: 3px solid rgba(255, 255, 255, 0.9); border-radius: 1rem; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.25); pointer-events: none; }   /* theme-ok */
 .scanTools { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; }
@@ -790,3 +789,23 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .awayFold .absentList li button { width: 1.5rem; height: 1.5rem; min-width: 0; padding: 0; border: 0; background: transparent; box-shadow: none; border-radius: 50%; color: rgba(var(--pp-ink-rgb), 0.6); }
 .awayFold .absentList li button:hover { background: rgba(var(--pp-ink-rgb), 0.12); color: var(--pp-bad); }
 .awayFold .absentList li button svg { width: 14px; height: 14px; }
+
+/* Show On Screen: a title bar, a soft glow behind the code, the faces of whoever just arrived. */
+.stageBar { position: absolute; top: 1.4rem; left: 2rem; display: flex; flex-direction: column; align-items: flex-start; gap: 0.2rem; text-align: left; max-width: 60%; }
+.stageBar h2 { margin: 0; font-family: var(--font-futura-heavy); font-size: clamp(1.4rem, 3vw, 2.6rem); line-height: 1.1; color: var(--pp-ink); text-wrap: balance; }
+.stageBar span { font-size: clamp(0.9rem, 1.4vw, 1.3rem); color: rgba(var(--pp-ink-rgb), 0.75); }
+.presenting { background: radial-gradient(ellipse 60% 55% at 50% 48%, rgba(125, 180, 234, 0.2), transparent 70%), radial-gradient(ellipse 80% 60% at 50% 110%, rgba(74, 144, 226, 0.16), transparent 70%), var(--pp-card); }
+.presenting .codeLabel { font-size: clamp(0.9rem, 1.6vw, 1.4rem); letter-spacing: 0.3em; }
+.presenting .duo { background: rgba(var(--pp-ink-rgb), 0.04); border-radius: 2rem; box-shadow: 0 0 80px rgba(125, 180, 234, 0.18); }
+.liveCount { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+.arrivals { display: inline-flex; align-items: center; }
+.arrival { display: inline-flex; margin-left: -0.45rem; border-radius: 50%; box-shadow: 0 0 0 2px var(--pp-card); animation: arrivalIn 0.4s ease both; }
+.arrival:first-child { margin-left: 0; }
+.arrival .avatar, .arrival .avatarFallback { width: 34px; height: 34px; }
+.presenting .arrival .avatar, .presenting .arrival .avatarFallback { width: 54px; height: 54px; }
+.arrivalMore { margin-left: 0.5rem; font-size: 0.85rem; font-weight: 600; color: rgba(var(--pp-ink-rgb), 0.8); }
+.latest { font-style: normal; font-size: 1rem; color: var(--p-accent-text); animation: arrivalIn 0.5s ease both; }
+.presenting .latest { font-size: 1.5rem; }
+@keyframes arrivalIn { from { opacity: 0; transform: translateY(6px) scale(0.9); } to { opacity: 1; transform: none; } }
+@media (max-width: 640px) { .stageBar { left: 1rem; top: 1rem; max-width: 55%; } }
+@media (prefers-reduced-motion: reduce) { .arrival, .latest { animation: none; } }

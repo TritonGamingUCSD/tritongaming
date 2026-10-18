@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import jsQR from 'jsqr';
+import { useTouchDevice } from '@/lib/ui/useTouchDevice';
 import { Calendar, Camera, CircleCheck, TriangleAlert } from 'lucide-react';
 import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/core/timezone';
 import { fetchWithRetry } from '@/lib/ui/fetchWithRetry';
@@ -13,6 +14,7 @@ interface Event {
   id: string;
   title: string;
   start_date: string;
+  slug?: string | null;
 }
 
 interface ScanResult {
@@ -43,6 +45,7 @@ interface CheckInClientProps {
 
 export default function CheckInClient({ events, onCheckedIn, tiers }: CheckInClientProps) {
   const [selectedEventId, setSelectedEventId] = useState(events[0]?.id || '');
+  const touch = useTouchDevice();   // the camera is for phones and tablets; a laptop types the code
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState('');
@@ -162,8 +165,8 @@ export default function CheckInClient({ events, onCheckedIn, tiers }: CheckInCli
     shakeTimeout.current = setTimeout(() => setShake(false), 500);
   }
 
-  async function handleCheckIn(ticketCode: string) {
-    if (!selectedEventId) {
+  async function handleCheckIn(ticketCode: string, eventId: string = selectedEventId) {
+    if (!eventId) {
       setError('Please select an event first.');
       return;
     }
@@ -177,7 +180,7 @@ export default function CheckInClient({ events, onCheckedIn, tiers }: CheckInCli
       const response = await fetchWithRetry('/api/tickets/checkin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: ticketCode, event_id: selectedEventId }),
+        body: JSON.stringify({ code: ticketCode, event_id: eventId }),
       });
       const data = await response.json();
       if (response.ok) {
@@ -204,6 +207,24 @@ export default function CheckInClient({ events, onCheckedIn, tiers }: CheckInCli
       }, 4000);
     }
   }
+
+  // Sent here by the phone's scanner after it read a ticket QR (`<event>:<code>`): pick that event and check the ticket in, showing the result below.
+  const fromScan = useRef(false);
+  useEffect(() => {
+    if (fromScan.current) return;
+    const sp = new URLSearchParams(window.location.search);
+    const scan = sp.get('scan');
+    if (!scan) return;
+    fromScan.current = true;
+    sp.delete('scan');
+    window.history.replaceState(window.history.state, '', `${window.location.pathname}${sp.toString() ? `?${sp}` : ''}`);
+    const m = scan.match(/^([^:]+):(\d{6})$/);
+    const ev = m ? events.find((e) => e.slug === m[1]) : undefined;
+    if (!m || !ev) { setError('That ticket is for an event that isn’t open for check-in right now.'); return; }
+    setSelectedEventId(ev.id);
+    void handleCheckIn(m[2], ev.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Fires the instant all six boxes are filled — no separate submit button,
   // matching an authenticator app's code entry.
@@ -374,6 +395,7 @@ export default function CheckInClient({ events, onCheckedIn, tiers }: CheckInCli
 
       {/* ── Combined scanner card: camera + always-on code entry ───── */}
       <div className={styles.scannerCard}>
+        {touch && (<>
         <div className={styles.viewport}>
           <video
             ref={videoRef}
@@ -406,6 +428,8 @@ export default function CheckInClient({ events, onCheckedIn, tiers }: CheckInCli
           <span>or type the code</span>
           <span className={styles.dividerLine} />
         </div>
+
+        </>)}
 
         <div className={styles.codeSection}>
           <div className={styles.codeEntry}>
@@ -487,6 +511,8 @@ export default function CheckInClient({ events, onCheckedIn, tiers }: CheckInCli
         )}
       </div>
 
+      {touch && (
+        <>
       {/* ── Camera controls ───────────────────────── */}
       <div className={styles.controls}>
         {!scanning ? (
@@ -499,6 +525,8 @@ export default function CheckInClient({ events, onCheckedIn, tiers }: CheckInCli
           </button>
         )}
       </div>
+        </>
+      )}
     </div>
   );
 }

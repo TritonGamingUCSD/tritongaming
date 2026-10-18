@@ -1,0 +1,9 @@
+.result { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; padding: 0.6rem 0 0.2rem; text-align: center; }
+.result strong { font-size: 1.25rem; color: var(--pp-ink); }
+.result span:last-child { color: rgba(var(--pp-ink-rgb), 0.75); font-size: 0.95rem; }
+.tick { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: var(--pp-ok); color: var(--pp-card); }
+.toast { position: fixed; left: 50%; bottom: calc(1.2rem + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 2100; display: inline-flex; align-items: center; gap: 0.5rem; max-width: calc(100% - 2rem); padding: 0.7rem 1rem; border-radius: 0.8rem; background: var(--pp-ink); color: var(--pp-card); font-size: 0.92rem; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3); }
+
+.spin { animation: usSpin 0.9s linear infinite; color: var(--pp-ink); }
+@keyframes usSpin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }

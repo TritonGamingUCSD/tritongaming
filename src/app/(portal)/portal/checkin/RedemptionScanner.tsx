@@ -1,9 +1,10 @@
 'use client';
 
 import Notice from '@/components/ui/Notice';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Camera, Gift, Check, X } from 'lucide-react';
 import { useQRScanner } from '@/lib/qr/useQRScanner';
+import { useTouchDevice } from '@/lib/ui/useTouchDevice';
 import styles from './checkinsection.module.css';
 // Same viewport/placeholder/scan-box treatment as CheckInClient's camera —
 // imported rather than duplicated so the two scanners can't visually drift
@@ -44,6 +45,20 @@ export default function RedemptionScanner() {
   }
 
   const scanner = useQRScanner(handleScan);
+  const touch = useTouchDevice();
+  // Sent here by the phone's scanner after it read a redemption QR: look it up straight away.
+  const fromScan = useRef(false);
+  useEffect(() => {
+    if (fromScan.current) return;
+    const sp = new URLSearchParams(window.location.search);
+    const r = sp.get('r');
+    if (!r) return;
+    fromScan.current = true;
+    sp.delete('r');
+    window.history.replaceState(window.history.state, '', `${window.location.pathname}${sp.toString() ? `?${sp}` : ''}`);
+    void handleScan(r);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleConfirm() {
     if (!detail) return;
@@ -63,6 +78,8 @@ export default function RedemptionScanner() {
 
   return (
     <div className={styles.scannerPage}>
+      {touch ? (
+        <>
       <div className={checkinStyles.scannerCard}>
         <div className={checkinStyles.viewport}>
           <video
@@ -101,6 +118,11 @@ export default function RedemptionScanner() {
           </button>
         )}
       </div>
+
+        </>
+      ) : (
+        <Notice tone="info">Redemption codes are scanned with the phone’s camera. Open the portal on your phone and use the Scan button in the bottom bar.</Notice>
+      )}
 
       {scanner.error && <Notice tone="error">{scanner.error}</Notice>}
       {error && <Notice tone="error">{error}</Notice>}

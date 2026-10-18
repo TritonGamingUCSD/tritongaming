@@ -8,7 +8,7 @@ import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import Popover from '@/components/ui/Popover';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
-import { ChevronRight, CalendarClock, CalendarDays, Radio, ClipboardList, Check, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Link2, MessageCircleQuestion, Send, Users, Minus, UserX, Lock, Dices, Smile, Upload, Settings2, Moon, DoorOpen, Timer, MoreHorizontal, Trash2, AlertCircle, CalendarX, ZoomIn, ZoomOut, ScanLine } from 'lucide-react';
+import { ChevronRight, CalendarClock, CalendarDays, Radio, ClipboardList, Check, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Link2, MessageCircleQuestion, Send, Users, Minus, UserX, Lock, Dices, Smile, Upload, Settings2, Moon, DoorOpen, Timer, MoreHorizontal, Trash2, AlertCircle, CalendarX, ZoomIn, ZoomOut } from 'lucide-react';
 import IconButton from '@/components/ui/IconButton';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Notice from '@/components/ui/Notice';
@@ -31,9 +31,9 @@ import { useMeetingLive } from '@/lib/meetings/useMeetingLive';
 import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
 import styles from './meetings.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
-import Dialog, { DialogActions, DialogCancel, DialogText } from '@/components/ui/Dialog';
+import Dialog from '@/components/ui/Dialog';
 import Link from 'next/link';
-import QrScanner, { proofFromParams, type CheckInProof } from './QrScanner';
+import { proofFromParams, type CheckInProof } from './QrScanner';
 import StyledQRCode from '@/components/StyledQRCode/StyledQRCode';
 import { DEFAULT_QR_OPTIONS, type QRCodeOptions } from '@/lib/qr/qrCodeStyling';
 
@@ -210,8 +210,6 @@ function CheckInPanel() {
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [scanning, setScanning] = useState(false);
-  const [confirm, setConfirm] = useState<{ proof: CheckInProof; title: string; starts_at: string; location: string | null; already: boolean } | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -221,6 +219,8 @@ function CheckInPanel() {
   }, []);
 
   useEffect(() => { void load(); }, [load]);
+  // The scanner in the phone's bottom bar checked someone in: show it.
+  useEffect(() => { const f = () => void load(); window.addEventListener('tg:meetings-changed', f); return () => window.removeEventListener('tg:meetings-changed', f); }, [load]);
   // Opened from the QR on the room screen (or its link): the meeting and its key are in the address. Ask which meeting it is and let the person confirm.
   const fromQr = useRef(false);
   useEffect(() => {
@@ -231,7 +231,7 @@ function CheckInPanel() {
     fromQr.current = true;
     sp.delete('m'); sp.delete('k');
     window.history.replaceState(window.history.state, '', `${window.location.pathname}${sp.toString() ? `?${sp}` : ''}`);
-    void ask(proof);
+    void submit(proof);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useVisiblePoll(load, 60_000);   // paused while the tab is hidden; refreshes the moment it comes back
@@ -243,24 +243,6 @@ function CheckInPanel() {
     const id = setTimeout(() => tick((n) => n + 1), Math.min(next - Date.now() + 250, 2 ** 31 - 1));
     return () => clearTimeout(id);
   }, [data]);
-
-  // A scan or the QR link only says which meeting it is; the person confirms before being checked in.
-  async function ask(proof: CheckInProof) {
-    if (busy) return;
-    setBusy(true);
-    setError('');
-    try {
-      const res = await fetch('/api/meetings/check-in', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...proof, preview: true }) });
-      const json = await res.json();
-      if (!res.ok) { setError(json.error || 'Check-in failed.'); return; }
-      if (json.already) { await load(); return; }
-      setConfirm({ proof, title: json.title, starts_at: json.starts_at, location: json.location ?? null, already: false });
-    } catch {
-      setError('Network error. Try again.');
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function submit(proof: CheckInProof) {
     if (busy) return;
@@ -290,15 +272,6 @@ function CheckInPanel() {
   return (
     <div className={styles.stack}>
       {error && openToEnter.length === 0 && <Notice tone="error">{error}</Notice>}
-      {confirm && (
-        <Dialog title="Check In To This Meeting?" onClose={() => setConfirm(null)}>
-          <DialogText><strong>{confirm.title}</strong><br />{time(confirm.starts_at)}{confirm.location ? ` · ${confirm.location}` : ''}</DialogText>
-          <DialogActions>
-            <DialogCancel onClick={() => setConfirm(null)} disabled={busy} />
-            <Button loading={busy} onClick={async () => { const p = confirm.proof; await submit(p); setConfirm(null); }}>Check In</Button>
-          </DialogActions>
-        </Dialog>
-      )}
       {checkedIn.map((m) => (
         <div key={m.id} className={`${styles.card} ${styles.done}`}>
           <span className={styles.doneIcon}><Check size={34} strokeWidth={2.5} aria-hidden="true" /></span>
@@ -334,9 +307,7 @@ function CheckInPanel() {
           {error && <Notice tone="error">{error}</Notice>}
           <div className={styles.codeActions}>
             <Button onClick={() => void submit({ code })} disabled={code.length !== 6} loading={busy}>Check in</Button>
-            <Button variant="secondary" onClick={() => setScanning(true)}><ScanLine size={15} aria-hidden="true" /> Scan QR</Button>
           </div>
-          {scanning && <QrScanner onClose={() => setScanning(false)} onCode={(p) => { setScanning(false); void ask(p); }} />}
         </div>
       )}
 
@@ -1689,6 +1660,7 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
   const questionRef = useRef<HTMLDivElement>(null);
   const countRef = useRef<HTMLDivElement>(null);
   const hintRef = useRef<HTMLParagraphElement>(null);
+  const topRef = useRef<HTMLDivElement>(null);
   const totalsRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -1840,13 +1812,19 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
           <button type="button" className={styles.presentBtn} onClick={() => setPresenting((v) => !v)} aria-label={presenting ? 'Exit full screen view' : 'Show on screen'}>
             {presenting ? <><Minimize2 size={15} aria-hidden="true" /> Exit</> : <><Maximize2 size={15} aria-hidden="true" /> Show On Screen</>}
           </button>
+          {presenting && (
+            <div ref={topRef} className={styles.stageBar}>
+              <h2>{live.meeting.title}</h2>
+              <span>{dayLabel(live.meeting.meeting_date, true)} · {timeRange(live.meeting.starts_at, live.meeting.ends_at)}{live.meeting.location ? ` · ${live.meeting.location}` : ''}</span>
+            </div>
+          )}
           {live.meeting.question && (
             <div ref={questionRef} className={styles.screenQuestion}>
               <span className={styles.questionLabel}><MessageCircleQuestion size={presenting ? 18 : 14} aria-hidden="true" /> Question of the meeting</span>
               <p>{live.meeting.question}</p>
             </div>
           )}
-          <span ref={labelRef} className={styles.codeLabel}>{live.meeting.title} check-in code</span>
+          <span ref={labelRef} className={styles.codeLabel}>{presenting ? 'Check in now' : `${live.meeting.title} check-in code`}</span>
           <div ref={codeRowRef} className={`${styles.codeRing} ${styles.duo}`}>
             <svg className={styles.ringSvg} aria-hidden="true" preserveAspectRatio="none"><rect x="2" y="2" rx="22" ry="22" width="calc(100% - 4px)" height="calc(100% - 4px)" pathLength="100" className={styles.ringBack} /><rect x="2" y="2" rx="22" ry="22" width="calc(100% - 4px)" height="calc(100% - 4px)" pathLength="100" className={styles.ringFill} style={{ strokeDasharray: `${ringPct} 100` }} /></svg>
             <div className={styles.duoCode}>
@@ -1864,13 +1842,22 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
             )}
           </div>
           <div ref={timerRef} className={styles.timer} aria-hidden="true"><span style={{ width: `${pct}%` }} /></div>
-          <div ref={countRef} className={styles.liveCount}><strong>{expectedHere}</strong> of {expectedHere + live.missing.length} checked in{guestCount > 0 ? ` (+${guestCount})` : ''}</div>
+          <div ref={countRef} className={styles.liveCount}>
+            {live.attendees.length > 0 && (
+              <span className={styles.arrivals} aria-hidden="true">
+                {live.attendees.slice(0, 7).map((a) => <span key={a.id} className={styles.arrival}><Avatar p={a} /></span>)}
+                {live.attendees.length > 7 && <span className={styles.arrivalMore}>+{live.attendees.length - 7}</span>}
+              </span>
+            )}
+            <span><strong>{expectedHere}</strong> of {expectedHere + live.missing.length} checked in{guestCount > 0 ? ` (+${guestCount})` : ''}</span>
+            {presenting && live.attendees[0] && <em key={live.attendees[0].id} className={styles.latest}>{live.attendees[0].name} just checked in</em>}
+          </div>
           <span ref={hintRef} aria-hidden="true" />
           {live.meeting.question && live.meeting.question_type !== 'text' && (
             <div className={styles.screenResults}><ResultBars type={live.meeting.question_type} tally={live.tally} big={presenting} /></div>
           )}
           {live.meeting.question && live.meeting.question_type === 'text' && live.answers.length > 0 && (
-            <BubbleField answers={live.answers.map((x) => ({ key: `${x.id}-${x.at}`, text: x.answer }))} avoid={[questionRef, labelRef, codeRowRef, timerRef, countRef, hintRef, totalsRef]} presenting={presenting} />
+            <BubbleField answers={live.answers.map((x) => ({ key: `${x.id}-${x.at}`, text: x.answer }))} avoid={[topRef, questionRef, labelRef, codeRowRef, timerRef, countRef, hintRef, totalsRef]} presenting={presenting} />
           )}
           {Object.keys(live.reactionTotals).length > 0 && (
             <div ref={totalsRef} className={styles.screenTotals} aria-label="Reaction totals">

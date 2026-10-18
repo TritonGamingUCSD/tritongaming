@@ -29,13 +29,15 @@ type ZoomTrack = MediaStreamTrack & { getCapabilities?: () => Caps; applyConstra
 
 // A camera scanner with zoom (the phone's own zoom where it has one, otherwise a digital zoom) and a flashlight where the phone offers it,
 // for a QR on a screen across the room. Reads the QR and hands back the code; nothing is recorded or uploaded.
-export default function QrScanner({ onCode, onClose }: { onCode: (proof: CheckInProof) => void; onClose: () => void }) {
+export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', note }: { onScan: (text: string) => boolean | void; onClose: () => void; title?: string; note?: string }) {
   const video = useRef<HTMLVideoElement>(null);
   const track = useRef<ZoomTrack | null>(null);
   const [error, setError] = useState('');
   const [caps, setCaps] = useState<Caps>({});
   const [zoom, setZoom] = useState(1);
   const [torch, setTorch] = useState(false);
+  const onScanRef = useRef(onScan);
+  onScanRef.current = onScan;
   const digital = !caps.zoom;
   const zoomRef = useRef(1);
   zoomRef.current = zoom;
@@ -43,7 +45,7 @@ export default function QrScanner({ onCode, onClose }: { onCode: (proof: CheckIn
   digitalRef.current = digital;
 
   useEffect(() => {
-    let stream: MediaStream | null = null, raf = 0, dead = false, last = 0;
+    let stream: MediaStream | null = null, raf = 0, dead = false, last = 0, lastText = '', lastAt = 0;
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const Detector = (window as unknown as { BarcodeDetector?: new (o: { formats: string[] }) => { detect: (v: HTMLVideoElement) => Promise<{ rawValue: string }[]> } }).BarcodeDetector;
@@ -74,8 +76,11 @@ export default function QrScanner({ onCode, onClose }: { onCode: (proof: CheckIn
             const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
             text = jsQR(img.data, img.width, img.height, { inversionAttempts: 'attemptBoth' })?.data ?? null;
           }
-          const proof = text ? proofFromScan(text) : null;
-          if (proof) { dead = true; stream?.getTracks().forEach((x) => x.stop()); onCode(proof); }
+          // The caller decides what the text is: true = taken (stop the camera), anything else = keep looking. The same text is not offered again for 3 s.
+          if (text && !(text === lastText && now - lastAt < 3000)) {
+            lastText = text; lastAt = now;
+            if (onScanRef.current(text) === true) { dead = true; stream?.getTracks().forEach((x) => x.stop()); }
+          }
         };
         raf = requestAnimationFrame(tick);
       } catch (e) {
@@ -114,8 +119,8 @@ export default function QrScanner({ onCode, onClose }: { onCode: (proof: CheckIn
   };
 
   return (
-    <Dialog title="Scan The Check-In QR" onClose={onClose} wide>
-      <DialogText>Point the camera at the QR on the screen. Zoom in if it is far away.</DialogText>
+    <Dialog title={title} onClose={onClose} wide>
+      <DialogText>{note ?? 'Point the camera at the QR code. Zoom in if it is far away.'}</DialogText>
       {error ? <p className={styles.scanError}>{error}</p> : (
         <>
           <div className={styles.scanFrame} {...pinch}>
