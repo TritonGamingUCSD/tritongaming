@@ -516,10 +516,9 @@ function MyHistoryPanel() {
       <ul className={styles.people}>
         {data.meetings.map((m) => (
           <li key={m.id} className={`${styles.historyRow} ${m.attended ? '' : styles.missed}`}>
-            <span className={styles.dateChip}>{dayLabel(m.date)}</span>
-            <span className={styles.personName}>
-              {m.title}
-              <em> · {m.attended ? `checked in ${time(m.checked_in_at!)}${m.method === 'manual' ? ' (added by exec)' : m.method === 'host' ? ' (host)' : ''}` : 'not checked in'}</em>
+            <span className={styles.recentName}>
+              <strong>{m.title}</strong>
+              <span>{dayLabel(m.date)} · {m.attended ? `checked in ${time(m.checked_in_at!)}${m.method === 'manual' ? ' (added by exec)' : m.method === 'host' ? ' (host)' : ''}` : 'not checked in'}</span>
             </span>
             {m.doc_url && <DocButton url={m.doc_url} label="Doc" />}
           </li>
