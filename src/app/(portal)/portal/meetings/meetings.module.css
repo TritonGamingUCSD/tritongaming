@@ -775,3 +775,13 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .qrOverlay { position: fixed; inset: 0; z-index: 400; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; background: #fff; color: #011941; cursor: zoom-out; padding: 1rem; text-align: center; }   /* theme-ok */
 .qrOverlayCode { font-family: var(--font-futura-heavy); font-size: clamp(2rem, 7vmin, 4.5rem); letter-spacing: 0.15em; }
 .qrOverlay p { margin: 0; font-size: 0.95rem; }
+
+/* The camera scanner: code box and Scan QR sit side by side; the camera frame, a target square, and zoom. */
+.codeActions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.6rem; }
+.scanFrame { position: relative; overflow: hidden; border-radius: 0.9rem; background: #000; aspect-ratio: 4 / 3; width: 100%; }   /* theme-ok */
+.scanFrame video { width: 100%; height: 100%; object-fit: cover; transform-origin: center; display: block; }
+.scanTarget { position: absolute; inset: 18%; border: 3px solid rgba(255, 255, 255, 0.9); border-radius: 1rem; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.25); pointer-events: none; }   /* theme-ok */
+.scanTools { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; }
+.scanTools label { flex: 1 1 10rem; display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; font-weight: 600; }
+.scanTools input[type=range] { flex: 1; min-width: 0; }
+.scanError { margin: 0; padding: 0.7rem; border-radius: 0.6rem; background: rgba(185, 28, 28, 0.1); color: #b91c1c; font-size: 0.9rem; }   /* theme-ok */

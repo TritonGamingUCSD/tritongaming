@@ -8,7 +8,7 @@ import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import Popover from '@/components/ui/Popover';
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { ChevronRight, CalendarClock, CalendarDays, Radio, ClipboardList, Check, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Link2, MessageCircleQuestion, Send, Users, Minus, UserX, Lock, Dices, Smile, Upload, Settings2, Moon, DoorOpen, Timer, MoreHorizontal, Trash2, AlertCircle, CalendarX, ZoomIn, ZoomOut } from 'lucide-react';
+import { ChevronRight, CalendarClock, CalendarDays, Radio, ClipboardList, Check, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Link2, MessageCircleQuestion, Send, Users, Minus, UserX, Lock, Dices, Smile, Upload, Settings2, Moon, DoorOpen, Timer, MoreHorizontal, Trash2, AlertCircle, CalendarX, ZoomIn, ZoomOut, ScanLine } from 'lucide-react';
 import IconButton from '@/components/ui/IconButton';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Notice from '@/components/ui/Notice';
@@ -33,6 +33,7 @@ import styles from './meetings.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
 import Dialog from '@/components/ui/Dialog';
 import Link from 'next/link';
+import QrScanner from './QrScanner';
 
 type Tab = 'mine' | 'planning' | 'host' | 'attendance' | 'emojis';
 
@@ -200,6 +201,7 @@ function CheckInPanel() {
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [scanning, setScanning] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -291,7 +293,11 @@ function CheckInPanel() {
             autoFocus={checkedIn.length === 0}
           />
           {error && <Notice tone="error">{error}</Notice>}
-          <Button onClick={() => submit(code)} disabled={code.length !== 6} loading={busy}>Check in</Button>
+          <div className={styles.codeActions}>
+            <Button onClick={() => submit(code)} disabled={code.length !== 6} loading={busy}>Check in</Button>
+            <Button variant="secondary" onClick={() => setScanning(true)}><ScanLine size={15} aria-hidden="true" /> Scan QR</Button>
+          </div>
+          {scanning && <QrScanner onClose={() => setScanning(false)} onCode={(c) => { setScanning(false); void submit(c); }} />}
         </div>
       )}
 
