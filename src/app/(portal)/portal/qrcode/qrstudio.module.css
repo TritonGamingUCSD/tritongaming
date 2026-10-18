@@ -3,6 +3,7 @@
   grid-template-columns: minmax(0, 1.3fr) minmax(300px, 380px);
   gap: 1.5rem;
   align-items: start;
+  width: 100%;   /* in the top-bar layout the section sits in a flex column, where centring margins would shrink this to its smallest width */
   max-width: 1200px;
   margin-inline: auto;
 }
