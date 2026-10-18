@@ -203,7 +203,7 @@
 .presenting .screenQuestion p { font-size: clamp(1.4rem, 4.2vw, 2.8rem); }
 .presenting .answerBy { font-size: 0.85rem; }
 
-.floaters { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; border-radius: inherit; }   /* behind the code and the QR, and see-through, so a burst of reactions never hides them */
+.floaters { position: absolute; inset: 0; z-index: 3; overflow: hidden; pointer-events: none; border-radius: inherit; }   /* above the code and the QR but see-through (about half), so the emoji are seen and the code still reads through them */
 .floater { position: absolute; bottom: -10%; font-size: 2.2rem; opacity: 0; animation: floatUp 3.8s ease-out forwards; will-change: transform, opacity; }
 .presenting .floater { font-size: clamp(3rem, 7vw, 5.5rem); }
 @keyframes floatUp {
@@ -479,8 +479,8 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .screenTotals span { padding: 0.15rem 0.6rem; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.07); }
 .screenTotals .topTotal { background: rgba(125, 180, 234, 0.2); color: var(--p-accent-text); }
 .presenting .screenTotals { font-size: 1.5rem; gap: 1rem; }
-.bigBurst { position: absolute; left: 50%; top: 50%; z-index: 0; font-size: clamp(6rem, 24vw, 16rem); pointer-events: none; animation: bigBurst 1.8s ease-out forwards; }
-@keyframes bigBurst { 0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0; } 20% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.4; } 70% { opacity: 0.4; } 100% { transform: translate(-50%, -50%) scale(1.7); opacity: 0; } }
+.bigBurst { position: absolute; left: 50%; top: 50%; z-index: 3; font-size: clamp(6rem, 24vw, 16rem); pointer-events: none; animation: bigBurst 1.8s ease-out forwards; }
+@keyframes bigBurst { 0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0; } 20% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.55; } 70% { opacity: 0.55; } 100% { transform: translate(-50%, -50%) scale(1.7); opacity: 0; } }
 .reactDice { color: var(--p-accent-text); display: inline-flex; align-items: center; justify-content: center; }
 @media (prefers-reduced-motion: reduce) { .bigBurst { animation: none; } .drifter { transition: none; } }
 
