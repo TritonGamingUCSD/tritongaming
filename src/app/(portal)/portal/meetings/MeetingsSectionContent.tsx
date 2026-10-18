@@ -844,7 +844,9 @@ function MeetingList({ onOpen, showForm, onShowForm }: { onOpen: (id: string) =>
   const [error, setError] = useState('');
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const setShowForm = onShowForm;
-  const [editingSeries, setEditingSeries] = useState<string | null>(null);
+  // The full edit page: a week's meeting (its key) or a repeating meeting (its id).
+  const [editing, setEditing] = useState<{ item: string | null; series: string | null } | null>(null);
+  const itemKey = (it: Item) => (it.series_id ? `${it.series_id}|${it.date}` : it.key);
 
   const load = useCallback(async () => {
     try {
@@ -912,6 +914,16 @@ function MeetingList({ onOpen, showForm, onShowForm }: { onOpen: (id: string) =>
 
   if (!data) return error ? <Notice tone="error">{error}</Notice> : <Loading label="Loading meetings…" />;
 
+  if (editing) {
+    const it = editing.item ? data.upcoming.find((x) => itemKey(x) === editing.item) ?? null : null;
+    const sr = data.series.find((x) => x.id === (editing.series ?? it?.series_id)) ?? null;
+    if (it || sr) return (
+      <MeetingEditPage key={`${editing.item}|${editing.series}`} item={it} series={sr} busy={busyKey === (it?.key ?? sr?.id)} onBack={() => setEditing(null)}
+        onSaveItem={async (f) => { const ok = it ? await saveDoc(it, f) : false; if (ok) setEditing(null); return ok; }}
+        onSaveSeries={(body) => (sr ? patchSeries(sr, body) : Promise.resolve(false))} onChanged={load} />
+    );
+  }
+
   return (
     <div className={styles.stack}>
       <div className={styles.toolbar}>
@@ -925,7 +937,7 @@ function MeetingList({ onOpen, showForm, onShowForm }: { onOpen: (id: string) =>
         {data.upcoming.length === 0 ? <p className={styles.muted}>Nothing scheduled.</p> : (
           <ul className={styles.meetingList}>
             {/* A repeating meeting's week keeps the same key before and after its row exists, so an open Details panel survives the first save. */}
-            {data.upcoming.map((it, i) => (<Fragment key={it.series_id ? `${it.series_id}|${it.date}` : it.key}>{startsWeekGroup(data.upcoming.map((x) => x.date), i) && <WeekHead date={it.date} />}<MeetingCard item={it} busy={busyKey === it.key} onStart={() => start(it)} onView={() => it.meeting_id && onOpen(it.meeting_id)} onCancel={(undo) => cancel(it, undo)} onSaveDoc={(f) => saveDoc(it, f)} onDelete={() => remove(it)} onChanged={load} /></Fragment>))}
+            {data.upcoming.map((it, i) => (<Fragment key={it.series_id ? `${it.series_id}|${it.date}` : it.key}>{startsWeekGroup(data.upcoming.map((x) => x.date), i) && <WeekHead date={it.date} />}<MeetingCard item={it} busy={busyKey === it.key} onStart={() => start(it)} onView={() => it.meeting_id && onOpen(it.meeting_id)} onCancel={(undo) => cancel(it, undo)} onEdit={() => setEditing({ item: itemKey(it), series: null })} onDelete={() => remove(it)} /></Fragment>))}
           </ul>
         )}
       </section>
@@ -942,17 +954,9 @@ function MeetingList({ onOpen, showForm, onShowForm }: { onOpen: (id: string) =>
                   <em className={styles.seriesDetail}>every {WEEKDAYS[s.weekday]} {hhmmLabel(s.start_time)}–{hhmmLabel(s.end_time)}{s.location ? ` · ${s.location}` : ''}{s.ends_on ? ` · until ${new Date(`${s.ends_on}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' })}` : ''} · {audienceLabel(s)}{s.active ? '' : ' · paused'}</em>
                   {s.open_to_team === false && !wholeTeamAud(s) && <span className={`${styles.accessChip} ${styles.accessChipLimited}`} title="Only the people it is for can check in">Private Meeting</span>}
                 </span>
-                <IconButton kind="edit" label={`Edit ${s.title}`} onClick={() => setEditingSeries(editingSeries === s.id ? null : s.id)} />
+                <IconButton kind="edit" label={`Edit ${s.title}`} onClick={() => setEditing({ item: null, series: s.id })} />
                 <IconButton kind={s.active ? 'pause' : 'play'} label={s.active ? `Pause ${s.title}` : `Resume ${s.title}`} onClick={() => patchSeries(s, { active: !s.active })} disabled={busyKey === s.id} />
                 <IconButton kind="delete" label={`Delete ${s.title}`} onClick={() => deleteSeries(s)} disabled={busyKey === s.id} />
-                {editingSeries === s.id && (
-                  <SeriesEditForm
-                    series={s}
-                    busy={busyKey === s.id}
-                    onCancel={() => setEditingSeries(null)}
-                    onSave={async (body) => { const ok = await patchSeries(s, body); if (ok) setEditingSeries(null); }}
-                  />
-                )}
               </li>
             ))}
           </ul>
@@ -970,17 +974,9 @@ function MeetingList({ onOpen, showForm, onShowForm }: { onOpen: (id: string) =>
                       <em className={styles.seriesDetail}>every {WEEKDAYS[s.weekday]} {hhmmLabel(s.start_time)}–{hhmmLabel(s.end_time)}{s.location ? ` · ${s.location}` : ''}{s.ends_on ? ` · until ${new Date(`${s.ends_on}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' })}` : ''} · {audienceLabel(s)}{s.active ? '' : ' · paused'}</em>
                       {s.open_to_team === false && !wholeTeamAud(s) && <span className={`${styles.accessChip} ${styles.accessChipLimited}`} title="Only the people it is for can check in">Private Meeting</span>}
                     </span>
-                    <IconButton kind="edit" label={`Extend or edit ${s.title}`} onClick={() => setEditingSeries(editingSeries === s.id ? null : s.id)} />
+                    <IconButton kind="edit" label={`Extend or edit ${s.title}`} onClick={() => setEditing({ item: null, series: s.id })} />
                     
                     <IconButton kind="delete" label={`Delete ${s.title}`} onClick={() => deleteSeries(s)} disabled={busyKey === s.id} />
-                    {editingSeries === s.id && (
-                      <SeriesEditForm
-                        series={s}
-                        busy={busyKey === s.id}
-                        onCancel={() => setEditingSeries(null)}
-                        onSave={async (body) => { const ok = await patchSeries(s, body); if (ok) setEditingSeries(null); }}
-                      />
-                    )}
                   </li>
                   ))}
             </ul>
@@ -992,7 +988,7 @@ function MeetingList({ onOpen, showForm, onShowForm }: { onOpen: (id: string) =>
         <section>
           <h3 className={styles.listTitle}>Recent <span>last 30 days</span></h3>
           <ul className={styles.meetingList}>
-            {data.past.map((it) => <MeetingCard key={it.key} item={it} busy={false} onStart={() => {}} onView={() => it.meeting_id && onOpen(it.meeting_id)} onCancel={() => {}} onSaveDoc={async () => false} onDelete={() => remove(it)} past />)}
+            {data.past.map((it) => <MeetingCard key={it.key} item={it} busy={false} onStart={() => {}} onView={() => it.meeting_id && onOpen(it.meeting_id)} onCancel={() => {}} onEdit={() => {}} onDelete={() => remove(it)} past />)}
           </ul>
         </section>
       )}
@@ -1043,19 +1039,10 @@ function SeriesEditForm({ series: s, busy, onSave, onCancel }: { series: Series;
 
 interface DetailsFields { doc: string; q: QState; audience: Aud; location: string; description: string; title: string; start: string; end: string }
 
-function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, onDelete, onChanged }: {
-  item: Item; busy: boolean; past?: boolean; onChanged?: () => void;
-  onStart: () => void; onView: () => void; onCancel: (undo: boolean) => void; onSaveDoc: (f: DetailsFields) => Promise<boolean>; onDelete: () => void;
+function MeetingCard({ item, busy, past, onStart, onView, onCancel, onEdit, onDelete }: {
+  item: Item; busy: boolean; past?: boolean;
+  onStart: () => void; onView: () => void; onCancel: (undo: boolean) => void; onEdit: () => void; onDelete: () => void;
 }) {
-  const [editingDoc, setEditingDoc] = useState(false);
-  const [doc, setDoc] = useState(item.doc_url ?? '');
-  const [q, setQ] = useState<QState>(qFrom(item));
-  const [audience, setAudience] = useState<Aud>(audFrom(item));
-  const [room, setRoom] = useState(item.location ?? '');
-  const [desc, setDesc] = useState(item.description ?? '');
-  const [title, setTitle] = useState(item.title);
-  const [startT, setStartT] = useState(pacificHHMM(item.starts_at));
-  const [endT, setEndT] = useState(pacificHHMM(item.ends_at));
   const status = item.status;
   // The clock decides what to say: an exec can open check-in early, but members only get in from
   // 10 minutes before the start, so "Open now" means members can actually check in right now.
@@ -1115,7 +1102,7 @@ function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, o
         <div className={styles.cardActions}>
           {primaryAction}
           {!primaryAction && canEditDetails && (
-            <Button size="sm" variant="secondary" onClick={() => setEditingDoc((v) => !v)}><FileText size={14} aria-hidden="true" /> Details</Button>
+            <Button size="sm" variant="secondary" onClick={onEdit}><FileText size={14} aria-hidden="true" /> Details</Button>
           )}
           {hasMenu && (
             <>
@@ -1123,7 +1110,7 @@ function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, o
               {menuOpen && (
                 <Popover anchor={menuRef} onClose={() => setMenuOpen(false)} width={190} label="Meeting actions">
                   <div className={styles.moreMenu} role="menu">
-                    {primaryAction && canEditDetails && <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); setEditingDoc((v) => !v); }}><FileText size={14} aria-hidden="true" /> Details</button>}
+                    {primaryAction && canEditDetails && <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); onEdit(); }}><FileText size={14} aria-hidden="true" /> Details</button>}
                     {attendanceInMenu && <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); onView(); }}><ClipboardList size={14} aria-hidden="true" /> Attendance</button>}
                     {canSkip && <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); onCancel(false); }}><SkipForward size={14} aria-hidden="true" /> Skip This Week</button>}
                     {canDelete && <button type="button" role="menuitem" className={styles.moreDanger} onClick={() => { setMenuOpen(false); onDelete(); }} disabled={busy}><Trash2 size={14} aria-hidden="true" /> Delete</button>}
@@ -1134,27 +1121,69 @@ function MeetingCard({ item, busy, past, onStart, onView, onCancel, onSaveDoc, o
           )}
         </div>
       </div>
-      {editingDoc && (
-        <form className={styles.detailsForm} onSubmit={async (e) => { e.preventDefault(); if (await onSaveDoc({ doc, q, audience, location: room, description: desc, title, start: startT, end: endT })) setEditingDoc(false); }}>
-          {!item.repeats && <Field label="Name"><Input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={60} required /></Field>}
-          <div className={styles.formGrid}>
-            <Field label="Starts"><TimeInput value={startT} onChange={(e) => setStartT(e.target.value)} required /></Field>
-            <Field label="Ends"><TimeInput value={endT} onChange={(e) => setEndT(e.target.value)} required /></Field>
-          </div>
-          <AudienceField value={audience} onChange={setAudience} />
-          <MoreOptions filled={[room && 'Room', desc && 'Description', doc && 'Doc', q.text && 'Question'].filter(Boolean) as string[]}>
-          <Field label="What's this meeting about? (optional)" hint="A line or two. Members see it when they check in."><Textarea value={desc} onChange={(e) => setDesc(e.target.value)} maxLength={MAX_DESCRIPTION_LENGTH} rows={2} placeholder="e.g. Planning the Halloween LAN: roles, budget and timeline." /></Field>
-          <Field label="Room for this meeting" hint="Only changes this one meeting."><Input value={room} onChange={(e) => setRoom(e.target.value)} placeholder="e.g. Price Center East" maxLength={80} /></Field>
-          <Field label="Meeting doc link"><Input value={doc} onChange={(e) => setDoc(e.target.value)} placeholder="https://docs.google.com/… or /portal/docs" inputMode="url" /></Field>
-          <Field label="Question of the meeting" hint={status === 'open' ? 'Locked while check-in is open.' : undefined}>
-            <QuestionEditor value={q} onChange={setQ} disabled={status === 'open'} />
-          </Field>
-          </MoreOptions>
-          <div className={styles.formActions}><Button type="submit" size="sm" loading={busy} disabled={audienceEmpty(audience) || qBad(q)}>Save</Button></div>
-        </form>
-      )}
-      {editingDoc && !past && <AdvanceAbsences item={item} onChanged={onChanged} />}
     </li>
+  );
+}
+
+// One meeting's own settings (this week only, for a repeating meeting). Saved with the Save button; leaving the page asks nothing because nothing is lost until Save.
+function ItemEditForm({ item, busy, onSave }: { item: Item; busy: boolean; onSave: (f: DetailsFields) => Promise<boolean> }) {
+  const [doc, setDoc] = useState(item.doc_url ?? '');
+  const [q, setQ] = useState<QState>(qFrom(item));
+  const [audience, setAudience] = useState<Aud>(audFrom(item));
+  const [room, setRoom] = useState(item.location ?? '');
+  const [desc, setDesc] = useState(item.description ?? '');
+  const [title, setTitle] = useState(item.title);
+  const [startT, setStartT] = useState(pacificHHMM(item.starts_at));
+  const [endT, setEndT] = useState(pacificHHMM(item.ends_at));
+  const status = item.status;
+  return (
+    <form className={styles.detailsForm} onSubmit={async (e) => { e.preventDefault(); await onSave({ doc, q, audience, location: room, description: desc, title, start: startT, end: endT }); }}>
+      {!item.repeats && <Field label="Name"><Input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={60} required /></Field>}
+      <div className={styles.formGrid}>
+        <Field label="Starts"><TimeInput value={startT} onChange={(e) => setStartT(e.target.value)} required /></Field>
+        <Field label="Ends"><TimeInput value={endT} onChange={(e) => setEndT(e.target.value)} required /></Field>
+      </div>
+      <AudienceField value={audience} onChange={setAudience} />
+      <MoreOptions filled={[room && 'Room', desc && 'Description', doc && 'Doc', q.text && 'Question'].filter(Boolean) as string[]}>
+        <Field label="What's this meeting about? (optional)" hint="A line or two. Members see it when they check in."><Textarea value={desc} onChange={(e) => setDesc(e.target.value)} maxLength={MAX_DESCRIPTION_LENGTH} rows={2} placeholder="e.g. Planning the Halloween LAN: roles, budget and timeline." /></Field>
+        <Field label="Room for this meeting" hint="Only changes this one meeting."><Input value={room} onChange={(e) => setRoom(e.target.value)} placeholder="e.g. Price Center East" maxLength={80} /></Field>
+        <Field label="Meeting doc link"><Input value={doc} onChange={(e) => setDoc(e.target.value)} placeholder="https://docs.google.com/… or /portal/docs" inputMode="url" /></Field>
+        <Field label="Question of the meeting" hint={status === 'open' ? 'Locked while check-in is open.' : undefined}>
+          <QuestionEditor value={q} onChange={setQ} disabled={status === 'open'} />
+        </Field>
+      </MoreOptions>
+      <div className={styles.formActions}><Button type="submit" loading={busy} disabled={audienceEmpty(audience) || qBad(q)}>Save Changes</Button></div>
+    </form>
+  );
+}
+
+// The full edit page for a meeting, like an event's. A repeating meeting has a switch at the top: just this week, or every week.
+function MeetingEditPage({ item, series, busy, onBack, onSaveItem, onSaveSeries, onChanged }: {
+  item: Item | null; series: Series | null; busy: boolean; onBack: () => void;
+  onSaveItem: (f: DetailsFields) => Promise<boolean>; onSaveSeries: (body: Record<string, unknown>) => Promise<boolean>; onChanged: () => void;
+}) {
+  const [scope, setScope] = useState<'week' | 'all'>(item ? 'week' : 'all');
+  const title = (scope === 'all' ? series?.title : item?.title) ?? 'Meeting';
+  return (
+    <div className={styles.stack}>
+      <div className={styles.editHead}>
+        <Button size="sm" variant="ghost" onClick={onBack}><ArrowLeft size={14} aria-hidden="true" /> Back To Meetings</Button>
+        <h2 className={styles.cardTitle}>{title}{item && scope === 'week' ? ` · ${dayLabel(item.date, true)}` : ''}</h2>
+      </div>
+      {item && series && (
+        <SectionTabs<'week' | 'all'> label="What to edit" variant="segmented" value={scope} onChange={setScope}
+          tabs={[{ id: 'week', label: 'This Week Only' }, { id: 'all', label: 'Every Week' }]} />
+      )}
+      {scope === 'week' && item ? (
+        <>
+          {series && <p className={styles.faint}>Changes here only affect {dayLabel(item.date)}. The usual settings stay as they are.</p>}
+          <ItemEditForm item={item} busy={busy} onSave={async (f) => { const ok = await onSaveItem(f); return ok; }} />
+          <AdvanceAbsences item={item} onChanged={onChanged} />
+        </>
+      ) : series ? (
+        <SeriesEditForm series={series} busy={busy} onCancel={onBack} onSave={async (body) => { const ok = await onSaveSeries(body); if (ok) onBack(); }} />
+      ) : null}
+    </div>
   );
 }
 

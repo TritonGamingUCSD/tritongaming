@@ -469,8 +469,9 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 
 /* Anonymous answer bubbles drifting around the screen (positions are set by BubbleField) */
 .bubbleField { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; border-radius: inherit; }
-.drifter { position: absolute; left: 0; top: 0; width: max-content; max-width: min(140px, 30%); padding: 0.4em 0.75em; font-size: 0.9rem; border-radius: 1.4em; color: #f2f1f0; text-align: center; line-height: 1.25; overflow-wrap: anywhere; background: hsl(var(--hue) 26% 25% / 0.92); border: 1px solid hsl(var(--hue) 30% 58% / 0.45); box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25); font-size: calc(var(--k, 1) * 0.95rem); font-weight: 500; opacity: 0; transition: opacity 0.6s ease; will-change: transform; } /* theme-ok */
-.drifter[data-ready] { opacity: 1; }
+.drifter { position: absolute; left: 0; top: 0; width: max-content; max-width: min(140px, 30%); padding: 0.4em 0.75em; font-size: 0.9rem; border-radius: 1.4em; color: #f2f1f0; text-align: center; line-height: 1.25; overflow-wrap: anywhere; background: hsl(var(--hue) 26% 25% / 0.92); border: 1px solid hsl(var(--hue) 30% 58% / 0.45); box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25); font-size: calc(var(--k, 1) * 0.95rem); font-weight: 500; opacity: 0; transition: opacity 0.25s linear, box-shadow 0.6s ease; will-change: transform; } /* theme-ok */
+.drifter[data-ready] { opacity: var(--fade, 1); }
+.drifter[data-fresh='1'] { box-shadow: 0 0 0 2px rgba(255, 199, 44, 0.85), 0 0 22px rgba(255, 199, 44, 0.45); }   /* theme-ok */
 .drifterOut, .drifterOut[data-ready] { opacity: 0; }
 .presenting .drifter { max-width: min(380px, 30%); font-size: calc(var(--k, 1) * clamp(1.2rem, 2vw, 1.9rem)); padding: 0.45em 0.85em; }
 .codePanel > *:not(.bubbleField):not(.floaters):not(.presentBtn) { z-index: 1; }
@@ -692,3 +693,12 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .moreOptions[open] > summary span::before { content: '–'; }
 .moreOptions > summary em { font-style: normal; font-size: 0.76rem; color: rgba(var(--pp-ink-rgb), 0.8); min-width: 0; overflow-wrap: anywhere; }
 .moreBody { display: flex; flex-direction: column; gap: 0.8rem; padding: 0 0.8rem 0.8rem; }
+
+/* Full screen answers on a phone: smaller bubbles in more lanes, kept clear of the exit button at the top and the tab bar at the bottom. */
+@media (max-width: 640px) {
+  .presenting .drifter { font-size: calc(var(--k, 1) * 0.92rem); max-width: 56%; padding: 0.3em 0.7em; }
+  .presenting .bubbleField { top: 52px; bottom: 76px; }
+}
+
+/* The full edit page for a meeting. */
+.editHead { display: flex; flex-direction: column; align-items: flex-start; gap: 0.4rem; }

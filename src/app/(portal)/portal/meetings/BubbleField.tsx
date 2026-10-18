@@ -5,15 +5,19 @@ import styles from './meetings.module.css';
 
 export interface BubbleAnswer { key: string; text: string }
 interface Shown { key: string; text: string; leaving?: boolean }
-interface Body { el: HTMLElement; x: number; y: number; vx: number; vy: number; w: number; h: number; scale: number; tilt: number; featuredUntil: number; ready: boolean }
+interface Body { el: HTMLElement; x: number; y: number; w: number; h: number; seg: number; tilt: number; featuredUntil: number; ready: boolean }
+// A stretch of one lane that bubbles travel along: free of the code and its timer.
+interface Seg { l: number; r: number; y: number; h: number; dir: 1 | -1; speed: number }
+const GAP = 10;
 interface Box { l: number; t: number; r: number; b: number }
 
 const hashStr = (t: string) => { let h = 7; for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) >>> 0; return h; };
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
 
-// The anonymous answers, drifting slowly around the free space of the screen like bubbles in water. They bounce softly off the edges and off
-// whatever is listed in `avoid` (the check-in code and its timer). When there are more answers than fit, a few at a time swap out so every answer
-// gets airtime. A brand new answer always shows at once: it grows large in the free space for a few seconds, then shrinks and joins the drift.
+// The anonymous answers, flowing across the screen in tidy lanes (every other lane runs the other way), so they never sit on top of each other and
+// many can be read at once. Lanes break around whatever is listed in `avoid` (the check-in code and its timer). A bubble that leaves one side comes
+// back in at the other. When there are more answers than fit, a few at a time swap out so every answer gets airtime. A brand new answer shows at
+// once, in a free gap, with a glow for a few seconds.
 export default function BubbleField({ answers, avoid, presenting }: { answers: BubbleAnswer[]; avoid: RefObject<HTMLElement | null>[]; presenting: boolean }) {
   const box = useRef<HTMLDivElement>(null);
   const bodies = useRef(new Map<string, Body>());
@@ -27,19 +31,31 @@ export default function BubbleField({ answers, avoid, presenting }: { answers: B
 
   const commit = (next: Shown[]) => { shownRef.current = next; setShown(next); };
 
-  // How many bubbles the free space holds comfortably: the free area (sampled on a grid, so the bands around the code count properly) divided by
-  // what a typical bubble needs, with plenty of breathing room.
+  // How many bubbles the lanes hold comfortably: the total length of the lanes divided by what a typical bubble takes, about two thirds full.
   function capacity() {
     const c = box.current;
-    if (!c) return 6;
-    const p = latest.current.presenting;
-    if (!p) return 6;
-    const W = c.clientWidth, H = c.clientHeight, obs = obstacles(), step = 32;
-    let free = 0;
-    for (let x = 0; x < W; x += step) for (let y = 0; y < H; y += step) if (!obs.some((o) => hits(x, y, step, step, o))) free += step * step;
+    if (!c || !latest.current.presenting) return 6;
+    const segs = buildSegments(c.clientWidth, c.clientHeight, obstacles(), laneHeight());
+    const len = segs.reduce((n, g) => n + (g.r - g.l), 0);
     const sizes = [...bodies.current.values()];
-    const avg = sizes.length ? sizes.reduce((n, b) => n + (b.w + 14) * (b.h + 14), 0) / sizes.length : 220 * 60;
-    return clamp(Math.floor(free / (avg * 3)), 3, 14);
+    const avg = sizes.length ? sizes.reduce((n, x) => n + x.w + GAP, 0) / sizes.length : 200;
+    return clamp(Math.floor((len * 0.66) / avg), 4, 48);
+  }
+  const laneHeight = () => clamp(Math.max(0, ...[...bodies.current.values()].map((x) => x.h)) + 12, 44, 120);
+  // Cut each lane around the obstacles into stretches at least 140px wide.
+  function buildSegments(W: number, H: number, obs: Box[], lh: number): Seg[] {
+    const lanes = Math.max(1, Math.floor(H / lh)), h = H / lanes, out: Seg[] = [];
+    for (let i = 0; i < lanes; i++) {
+      const y0 = i * h, y1 = y0 + h;
+      const blocked = obs.filter((o) => o.t < y1 && o.b > y0).map((o) => [Math.max(0, o.l), Math.min(W, o.r)] as [number, number]).sort((p, q) => p[0] - q[0]);
+      let at = 0;
+      const dir: 1 | -1 = i % 2 === 0 ? 1 : -1, speed = 20 + ((i * 7) % 5) * 4;
+      for (const [l, r] of [...blocked, [W, W] as [number, number]]) {
+        if (l - at >= 140) out.push({ l: at, r: l, y: y0, h, dir, speed });
+        at = Math.max(at, r);
+      }
+    }
+    return out;
   }
   // Everything the bubbles must stay clear of (the code, its timer, the question, the counter), each padded a little.
   function obstacles(): Box[] {
@@ -122,24 +138,13 @@ export default function BubbleField({ answers, avoid, presenting }: { answers: B
     if (!el) return;
     const existing = bodies.current.get(key);
     if (existing) { existing.el = el; return; }
-    const c = box.current;
-    if (!c) return;
-    const W = c.clientWidth, H = c.clientHeight, w = el.offsetWidth, h = el.offsetHeight;
-    const obs = obstacles();
-    let x = 0, y = 0;
-    for (let i = 0; i < 60; i++) {
-      x = Math.random() * Math.max(1, W - w); y = Math.random() * Math.max(1, H - h);
-      if (!obs.some((o) => hits(x, y, w, h, o))) break;
-    }
-    const sp = (latest.current.presenting ? 26 : 14) + Math.random() * (latest.current.presenting ? 22 : 14);
-    const a = Math.random() * Math.PI * 2;
     const featured = pendingFeature.current === key;
     if (featured) pendingFeature.current = null;
-    bodies.current.set(key, { el, x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, w, h, scale: featured ? 0.4 : 1, tilt: ((hashStr(key) >> 3) % 7) - 3, featuredUntil: featured ? Date.now() + 3600 : 0, ready: false });
+    bodies.current.set(key, { el, x: -9999, y: 0, w: el.offsetWidth, h: el.offsetHeight, seg: -1, tilt: ((hashStr(key) >> 3) % 3) - 1, featuredUntil: featured ? Date.now() + 4500 : 0, ready: false });
   }
 
   useEffect(() => {
-    let raf = 0, last = performance.now();
+    let raf = 0, last = performance.now(), sig = '';
     const tick = (t: number) => {
       raf = requestAnimationFrame(tick);
       const c = box.current;
@@ -147,65 +152,59 @@ export default function BubbleField({ answers, avoid, presenting }: { answers: B
       const dt = Math.min(0.05, (t - last) / 1000); last = t;
       if (!latest.current.presenting) {
         // The small preview card: a tidy wrapped row under the counter, no drifting.
-        for (const [k, b] of bodies.current) { if (!b.ready) { b.ready = true; b.el.dataset.ready = '1'; } b.el.style.transform = ''; b.el.style.zIndex = ''; void k; }
+        for (const [, b] of bodies.current) { if (!b.ready) { b.ready = true; b.el.dataset.ready = '1'; } b.el.style.transform = ''; b.el.style.zIndex = ''; b.el.style.removeProperty('--fade'); }
+        sig = '';
         return;
       }
-      const W = c.clientWidth, H = c.clientHeight;
-      const obs = obstacles();
-      const ob = union(obs);
-      const now = Date.now();
-      const resolve = (b: Body) => {
-        for (const o of obs) {
-            if (!hits(b.x, b.y, b.w, b.h, o)) continue;
-            // Push out the shortest way that stays on screen, and bounce away.
-            const opts = [
-              { m: b.x + b.w - o.l, ok: o.l - b.w >= 0, go: () => { b.x = o.l - b.w; b.vx = -Math.abs(b.vx); } },
-              { m: o.r - b.x, ok: o.r + b.w <= W, go: () => { b.x = o.r; b.vx = Math.abs(b.vx); } },
-              { m: b.y + b.h - o.t, ok: o.t - b.h >= 0, go: () => { b.y = o.t - b.h; b.vy = -Math.abs(b.vy); } },
-              { m: o.b - b.y, ok: o.b + b.h <= H, go: () => { b.y = o.b; b.vy = Math.abs(b.vy); } },
-            ].sort((p, q) => p.m - q.m);
-            (opts.find((x) => x.ok) ?? opts[0]).go();
-            b.x = clamp(b.x, 0, Math.max(0, W - b.w)); b.y = clamp(b.y, 0, Math.max(0, H - b.h));
+      const W = c.clientWidth, H = c.clientHeight, now = Date.now();
+      const list = [...bodies.current.entries()].filter(([k]) => shownRef.current.some((s) => s.key === k)).map(([, b]) => b);
+      for (const b of list) { b.w = b.el.offsetWidth; b.h = b.el.offsetHeight; }
+      const segs = buildSegments(W, H, obstacles(), laneHeight());
+      const now2 = segs.map((g) => `${g.l | 0},${g.r | 0},${g.y | 0}`).join(';');
+      if (now2 !== sig) { sig = now2; for (const b of list) b.seg = -1; }   // the screen or the code moved: find everyone a lane again
+      if (!segs.length) return;
+      const members = (i: number) => list.filter((b) => b.seg === i);
+      // A free place for a bubble: the widest gap that fits it in any lane, otherwise it queues at the entering edge of the emptiest lane.
+      const place = (b: Body) => {
+        const gaps: { seg: number; x: number; room: number }[] = [];
+        segs.forEach((g, i) => {
+          const taken = members(i).filter((o) => o !== b && o.x + o.w > g.l - 1 && o.x < g.r + 1).sort((p, q) => p.x - q.x);
+          let at = g.l;
+          for (const o of [...taken, { x: g.r + GAP, w: 0 } as Body]) {
+            const room = o.x - GAP - at;
+            if (room >= b.w) gaps.push({ seg: i, x: at, room });
+            at = Math.max(at, o.x + o.w + GAP);
           }
+        });
+        const best = gaps.sort((p, q) => q.room - p.room)[0];
+        if (best) { b.seg = best.seg; b.x = best.x; return; }
+        let pick = 0, fewest = Infinity;
+        segs.forEach((_, i) => { const n = members(i).length; if (n < fewest) { fewest = n; pick = i; } });
+        const g = segs[pick], others = members(pick).filter((o) => o !== b);
+        b.seg = pick;
+        b.x = g.dir > 0 ? Math.min(g.l - b.w, others.length ? Math.min(...others.map((o) => o.x)) - GAP - b.w : g.l - b.w) : Math.max(g.r, others.length ? Math.max(...others.map((o) => o.x + o.w)) + GAP : g.r);
       };
-      const list = [...bodies.current.entries()].filter(([k]) => shownRef.current.some((s) => s.key === k));
-      for (const [, b] of list) {
-        b.w = b.el.offsetWidth; b.h = b.el.offsetHeight;
-        if (now < b.featuredUntil) {
-          // The big moment: centred in the larger free band above or below the code.
-          const above = ob ? ob.t : H / 2, below = ob ? H - ob.b : H / 2;
-          const cy = ob ? (above >= below ? above / 2 : ob.b + below / 2) : H / 2;
-          const tx = (W - b.w) / 2, ty = cy - b.h / 2;
-          b.x += (tx - b.x) * Math.min(1, dt * 5); b.y += (ty - b.y) * Math.min(1, dt * 5);
-          b.scale += ((latest.current.presenting ? 1.5 : 1.35) - b.scale) * Math.min(1, dt * 6);
-        } else {
-          b.scale += (1 - b.scale) * Math.min(1, dt * 3);
-          if (!reduced.current) { b.x += b.vx * dt; b.y += b.vy * dt; }
-          if (b.x < 0) { b.x = 0; b.vx = Math.abs(b.vx); } else if (b.x > W - b.w) { b.x = Math.max(0, W - b.w); b.vx = -Math.abs(b.vx); }
-          if (b.y < 0) { b.y = 0; b.vy = Math.abs(b.vy); } else if (b.y > H - b.h) { b.y = Math.max(0, H - b.h); b.vy = -Math.abs(b.vy); }
-          resolve(b);
+      for (const b of list.filter((x) => x.seg < 0 || !segs[x.seg]).sort((p, q) => p.x - q.x)) { b.seg = -1; place(b); }
+      segs.forEach((g, i) => {
+        const here = members(i);
+        for (const b of here) {
+          if (!reduced.current) b.x += g.dir * g.speed * dt;
+          if (g.dir > 0 && b.x >= g.r) { const o = here.filter((x) => x !== b); b.x = Math.min(g.l - b.w, o.length ? Math.min(...o.map((x) => x.x)) - GAP - b.w : g.l - b.w); }
+          else if (g.dir < 0 && b.x + b.w <= g.l) { const o = here.filter((x) => x !== b); b.x = Math.max(g.r, o.length ? Math.max(...o.map((x) => x.x + x.w)) + GAP : g.r); }
+          b.y = g.y + (g.h - b.h) / 2;
         }
-      }
-      // Keep bubbles from sitting on each other: a few relaxation passes of full separation (with a small gap), each followed by staying clear
-      // of the code and the walls, so squeezing one out of the way doesn't just push it back into something else.
-      if (!reduced.current) {
-        const movers = list.map(([, b]) => b).filter((b) => now >= b.featuredUntil);
-        const GAP = 8;
-        for (let pass = 0; pass < 4; pass++) {
-          for (let i = 0; i < movers.length; i++) for (let j = i + 1; j < movers.length; j++) {
-            const a = movers[i], b = movers[j];
-            const ox = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x) + GAP, oy = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y) + GAP;
-            if (ox <= 0 || oy <= 0) continue;
-            if (ox < oy) { const s = (a.x < b.x ? -1 : 1) * ox / 2; a.x += s; b.x -= s; if (pass === 0) { const v = a.vx; a.vx = b.vx; b.vx = v; } }
-            else { const s = (a.y < b.y ? -1 : 1) * oy / 2; a.y += s; b.y -= s; if (pass === 0) { const v = a.vy; a.vy = b.vy; b.vy = v; } }
-          }
-          for (const b of movers) { resolve(b); b.x = clamp(b.x, 0, Math.max(0, W - b.w)); b.y = clamp(b.y, 0, Math.max(0, H - b.h)); }
-        }
-      }
-      for (const [, b] of list) {
-        b.el.style.transform = `translate3d(${b.x.toFixed(1)}px, ${b.y.toFixed(1)}px, 0) rotate(${b.tilt}deg) scale(${b.scale.toFixed(3)})`;
+      });
+      for (const b of list) {
+        const g = segs[b.seg];
+        if (!g) continue;
+        const fresh = now < b.featuredUntil;
+        // Fade in and out near the ends of a stretch, so a bubble never touches the code.
+        const fade = fresh ? clamp((Math.min(b.x - g.l, g.r - b.x - b.w) + 1) / 36, 0, 1) : clamp(Math.min(b.x - g.l, g.r - b.x - b.w) / 36, 0, 1);
+        b.el.style.transform = `translate3d(${b.x.toFixed(1)}px, ${b.y.toFixed(1)}px, 0) rotate(${b.tilt}deg)`;
+        b.el.style.setProperty('--fade', fade.toFixed(2));
+        b.el.dataset.fresh = fresh ? '1' : '';
         if (!b.ready) { b.ready = true; b.el.dataset.ready = '1'; }
-        b.el.style.zIndex = now < b.featuredUntil ? '3' : '1';
+        b.el.style.zIndex = fresh ? '3' : '1';
       }
       for (const k of [...bodies.current.keys()]) if (!shownRef.current.some((s) => s.key === k)) bodies.current.delete(k);
     };
