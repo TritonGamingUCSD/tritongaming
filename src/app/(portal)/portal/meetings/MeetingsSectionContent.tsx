@@ -147,6 +147,9 @@ export default function MeetingsSectionContent({ canHost, canManageAll, userId, 
 }
 
 // The circular code marks a code only the portal's own Scan button reads (a plain camera gets nothing from it). Same code as a ticket's.
+// Where a reaction floats: the free space either side of the code, never over it (the code sits in the middle of the screen). `edge` is how far in from the side, `band` how wide.
+const sideSpot = (edge = 5, band = 19) => (Math.random() < 0.5 ? edge + Math.random() * band : 100 - edge - Math.random() * band);
+
 function MeetingQR({ payload, size }: { payload: string; size: number }) {
   return <div className={styles.qrCanvas} style={{ width: size, height: size }}><RingCode payload={payload} /></div>;
 }
@@ -1635,7 +1638,7 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
   const [questionSaved, setQuestionSaved] = useState(false);
   const [fire, setFire] = useState(0);
   const prevHere = useRef<number | null>(null);
-  const [bigBurst, setBigBurst] = useState<{ key: number; emoji: string } | null>(null);
+  const [bigBurst, setBigBurst] = useState<{ key: number; emoji: string; left: number } | null>(null);
   const [floaters, setFloaters] = useState<{ key: string; emoji: string; left: number; delay: number }[]>([]);
   const fieldsInit = useRef(false);
   // The totals from the last load: what is new since then floats up on the screen. null until the first load, so history never replays.
@@ -1660,13 +1663,13 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
         const counts: Record<string, number> = {};
         for (const [e, n] of Object.entries(json.reactionTotals)) { const d = n - (before[e] ?? 0); if (d > 0) counts[e] = d; }
         const fresh = Object.entries(counts).flatMap(([e, d]) => Array.from({ length: Math.min(d, 40) }, () => e)).slice(0, 40)
-          .map((emoji, i) => ({ key: `r${++floatSeq.current}`, emoji, left: 8 + Math.random() * 84, delay: i * 0.18 }));
+          .map((emoji, i) => ({ key: `r${++floatSeq.current}`, emoji, left: sideSpot(), delay: i * 0.18 }));
         if (fresh.length) {
           setFloaters((f) => [...f, ...fresh].slice(-60));
           setTimeout(() => setFloaters((f) => f.filter((x) => !fresh.some((n) => n.key === x.key))), 4200 + fresh.length * 180);
           // Lots of the same emoji at once: it explodes across the screen.
           const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
-          if (top && top[1] >= 4) { const key = Date.now(); setBigBurst({ key, emoji: top[0] }); setTimeout(() => setBigBurst((b) => (b?.key === key ? null : b)), 1800); }
+          if (top && top[1] >= 4) { const key = Date.now(); setBigBurst({ key, emoji: top[0], left: sideSpot(12, 20) }); setTimeout(() => setBigBurst((b) => (b?.key === key ? null : b)), 1800); }
         }
       }
     } catch { /* next poll */ }
@@ -1788,7 +1791,7 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
               <>
                 <span className={styles.duoDivider} aria-hidden="true" />
                 <div className={styles.duoQr}>
-                  <MeetingQR payload={shown?.qrPayload ?? ''} size={presenting ? 300 : 210} />
+                  <MeetingQR payload={shown?.qrPayload ?? ''} size={presenting ? 250 : 180} />
                   <small>Or tap Scan in the portal</small>
                 </div>
               </>
@@ -1817,7 +1820,7 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
               {Object.entries(live.reactionTotals).sort((x, y) => y[1] - x[1]).slice(0, 5).map(([e, n], i) => <span key={e} className={i === 0 ? styles.topTotal : ''}><EmojiView emoji={e} custom={live.customEmojis} /> <strong>{n}</strong></span>)}
             </div>
           )}
-          {bigBurst && <span key={bigBurst.key} className={styles.bigBurst} aria-hidden="true"><EmojiView emoji={bigBurst.emoji} custom={live.customEmojis} size="1em" /></span>}
+          {bigBurst && <span key={bigBurst.key} className={styles.bigBurst} style={{ left: `${bigBurst.left}%` }} aria-hidden="true"><EmojiView emoji={bigBurst.emoji} custom={live.customEmojis} size="1em" /></span>}
           <Confetti fire={fire} />
           <div className={styles.floaters} aria-hidden="true">
             {floaters.map((f) => <span key={f.key} className={styles.floater} style={{ left: `${f.left}%`, animationDelay: `${f.delay}s` }}><EmojiView emoji={f.emoji} custom={live.customEmojis} /></span>)}
