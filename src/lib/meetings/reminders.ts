@@ -18,7 +18,7 @@ export async function sendMeetingReminders(svc: SupabaseClient, now: Date = new 
   const today = pacificDayKey(now);
   const until = withinMinutes ? now.getTime() + withinMinutes * 60_000 : Infinity;
   const [{ data: seriesData }, { data: meetingRows }] = await Promise.all([
-    svc.from('meeting_series').select('id, title, weekday, start_time, end_time, location, active, doc_url, audience, invitees, group_ids, description, created_by, created_at, ends_on').eq('active', true),
+    svc.from('meeting_series').select('id, title, weekday, start_time, end_time, location, active, doc_url, audience, invitees, group_ids, created_by, created_at, ends_on').eq('active', true),
     svc.from('meetings').select('*').eq('meeting_date', today).eq('cancelled', false),
   ]);
   const items: Item[] = [];

@@ -15,7 +15,7 @@ import type { BusyBlock } from '@/lib/meetings/meetingPlans';
 import { AUTO_ABSENT_REASON, MAX_RANGE_DAYS, hasAnySlot, SLOT_MIN, availabilityFor, canStartAt, clockLabel, daysBetween, planDayKeys, slotStarts, toHhmm, toMin, WEEKDAYS, type PlanSlots, type PlanView, type Person } from '@/lib/meetings/meetingPlans';
 
 export interface PlanRow {
-  id: string; kind: 'once' | 'weekly'; title: string; description: string | null; location: string | null; duration_min: number;
+  id: string; kind: 'once' | 'weekly'; title: string; location: string | null; duration_min: number;
   window_start: string; window_end: string; range_start: string | null; range_end: string | null; answer_by: string | null;
   audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; status: 'open' | 'decided';
   meeting_id: string | null; series_id: string | null; decided_slot: PlanView['decided_slot']; created_by: string | null; created_at: string; reminded_at: string | null; nudged_at: string | null;
@@ -97,7 +97,7 @@ export async function loadPlanViews(auth: Auth, only?: string): Promise<PlanView
       if (isHost || auth.manageAll) blockedByUser[r.user_id as string] = ((r.busy as BusyBlock[] | null) ?? []).filter((b) => (plan.kind === 'weekly' ? true : days.includes(b.day)));
     }
     views.push({
-      id: plan.id, kind: plan.kind, title: plan.title, description: plan.description, location: plan.location, duration_min: plan.duration_min,
+      id: plan.id, kind: plan.kind, title: plan.title, location: plan.location, duration_min: plan.duration_min,
       window_start: plan.window_start.slice(0, 5), window_end: plan.window_end.slice(0, 5), range_start: plan.range_start, range_end: plan.range_end, answer_by: plan.answer_by,
       status: plan.status, decided_slot: plan.decided_slot, meeting_id: plan.meeting_id, series_id: plan.series_id,
       host_id: plan.created_by, host_name: hostName.get(plan.created_by ?? '') ?? null,
@@ -227,7 +227,7 @@ export async function decidePlan(svc: SupabaseClient, plan: PlanRow, pick: { day
   }
   const unavailable = others.filter((p) => conflicts.has(p.id) || (byUser.has(p.id) && availabilityFor(byUser.get(p.id), dayKey, pick.start, plan.duration_min) === 'unavailable'));
   const reasonFor = (id: string) => conflicts.has(id) ? `${AUTO_ABSENT_REASON} (already booked: ${conflicts.get(id)!.join(', ')})`.slice(0, 140) : AUTO_ABSENT_REASON;
-  const common = { title: plan.title, location: plan.location, description: plan.description, audience: plan.audience, invitees: plan.invitees, group_ids: plan.group_ids, created_by: plan.created_by };
+  const common = { title: plan.title, location: plan.location, audience: plan.audience, invitees: plan.invitees, group_ids: plan.group_ids, created_by: plan.created_by };
 
   let meetingId: string | null = null, seriesId: string | null = null;
   if (plan.kind === 'once') {
@@ -283,7 +283,7 @@ export function readPlanFields(b: Record<string, unknown>, kind: 'once' | 'weekl
   if (answerBy && !DATE.test(answerBy)) return { ok: false, error: 'That answer-by date isn’t valid.' };
   const v: Record<string, unknown> = {
     title, duration_min: duration, window_start: ws, window_end: we, answer_by: answerBy,
-    description: String(b.description ?? '').trim().slice(0, 500) || null, location: String(b.location ?? '').trim().slice(0, 80) || null,
+    location: String(b.location ?? '').trim().slice(0, 80) || null,
   };
   if (kind === 'once') {
     const rs = String(b.range_start ?? ''), re = String(b.range_end ?? '');

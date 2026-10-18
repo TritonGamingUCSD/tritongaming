@@ -16,7 +16,7 @@ export async function GET() {
   // Meetings they were not added to but may still check in to (the host left it open to the team). Private ones never come back here.
   const mineKeys = new Set(upcoming.map((m) => m.key));
   const shape = (m: (typeof upcoming)[number]) => ({
-      key: m.key, date: m.date, title: m.title, starts_at: m.starts_at, ends_at: m.ends_at, location: m.location, description: m.description,
+      key: m.key, date: m.date, title: m.title, starts_at: m.starts_at, ends_at: m.ends_at, location: m.location,
       // Shown as soon as the host has added one, before the meeting starts.
       doc_url: m.doc_url ?? null,
       repeats: m.repeats, is_today: m.is_today, status: m.status, host_name: m.host_name, hosting: m.host_id === auth.user.id,

@@ -26,7 +26,7 @@ export async function collectBusyItems(svc: SupabaseClient, user: { id: string }
     svc.from('events').select('id, title, start_date, end_date').eq('is_published', true).lte('start_date', endIso).order('start_date'),
     svc.from('tickets').select('event_id').eq('user_id', user.id),
     loadGroups(svc),
-    svc.from('meeting_series').select('id, title, weekday, start_time, end_time, location, active, doc_url, audience, invitees, group_ids, description, created_by, created_at, ends_on').eq('active', true),
+    svc.from('meeting_series').select('id, title, weekday, start_time, end_time, location, active, doc_url, audience, invitees, group_ids, created_by, created_at, ends_on').eq('active', true),
     svc.from('meetings').select('*').gte('meeting_date', from).lte('meeting_date', to).eq('cancelled', false),
   ]);
 

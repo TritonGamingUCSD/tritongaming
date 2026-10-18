@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/notifications/audit';
 import { authorizeMeetings, ensureOccurrence, isMeetingOpen, isMeetingOver, occurrenceTimes, validateDocUrl, type MeetingRow, type SeriesRow, canManageMeeting, notYourMeeting, notifyMeetingInvites } from '@/lib/meetings/meetings';
-import { MAX_QUESTION_LENGTH, MAX_DESCRIPTION_LENGTH, asQuestionType, cleanOptions } from '@/lib/meetings/meetingFun';
+import { MAX_QUESTION_LENGTH, asQuestionType, cleanOptions } from '@/lib/meetings/meetingFun';
 import { formatPacificDateTime } from '@/lib/core/timezone';
 import { validateAudienceInput } from '@/lib/meetings/meetingAudience';
 
@@ -18,7 +18,6 @@ export async function POST(request: Request) {
     patch.doc_url = doc.value;
   }
   if ('location' in b) patch.location = String(b.location ?? '').trim().slice(0, 80) || null;
-  if ('description' in b) patch.description = String(b.description ?? '').trim().slice(0, MAX_DESCRIPTION_LENGTH) || null;
   if ('question' in b) patch.question = String(b.question ?? '').trim().slice(0, MAX_QUESTION_LENGTH) || null;
   if ('question_type' in b || 'question_options' in b) {
     const type = asQuestionType(b.question_type);
@@ -50,7 +49,7 @@ export async function POST(request: Request) {
   const row0 = own as MeetingRow | null;
   if (!row0) return NextResponse.json({ error: 'Meeting not found.' }, { status: 404 });
   if (!canManageMeeting(auth, row0.created_by)) return notYourMeeting();
-  // Once a meeting is over, all of its info (name, time, room, description, doc link, question, who it was for) is a record and can't change.
+  // Once a meeting is over, all of its info (name, time, room, doc link, question, who it was for) is a record and can't change.
   if (isMeetingOver(row0)) {
     return NextResponse.json({ error: 'This meeting has ended, so its info is locked.' }, { status: 409 });
   }

@@ -143,7 +143,6 @@ export interface PlanView {
   id: string;
   kind: 'once' | 'weekly';
   title: string;
-  description: string | null;
   location: string | null;
   duration_min: number;
   window_start: string;

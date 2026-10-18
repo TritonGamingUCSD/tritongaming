@@ -97,7 +97,6 @@ function PlanForm({ plan, onDone, onCancel }: { plan?: PlanView; onDone: () => v
   const today = pacificToday();
   const [kind, setKind] = useState<'once' | 'weekly'>(plan?.kind ?? 'once');
   const [title, setTitle] = useState(plan?.title ?? '');
-  const [description, setDescription] = useState(plan?.description ?? '');
   const [location, setLocation] = useState(plan?.location ?? '');
   const [duration, setDuration] = useState(plan?.duration_min ?? 60);
   const [ws, setWs] = useState(plan?.window_start ?? '09:00');
@@ -110,13 +109,13 @@ function PlanForm({ plan, onDone, onCancel }: { plan?: PlanView; onDone: () => v
   const [error, setError] = useState('');
   const rangeTooLong = kind === 'once' && daysBetween(rs, re) > MAX_RANGE_DAYS - 1;
   // A new plan autosaves in this browser, so a reload or lost connection does not lose it (editing an existing plan does not need it).
-  const draft = useDraft('meeting-plan-new', { kind, title, description, location, duration, ws, we, rs, re, answerBy, audience }, (v) => !!plan || (!v.title.trim() && !v.description.trim() && !v.location.trim() && audienceEmpty(v.audience)));
+  const draft = useDraft('meeting-plan-new', { kind, title, location, duration, ws, we, rs, re, answerBy, audience }, (v) => !!plan || (!v.title.trim() && !v.location.trim() && audienceEmpty(v.audience)));
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true); setError('');
     try {
-      const body = { kind, title, description, location, duration_min: duration, window_start: ws, window_end: we, range_start: rs, range_end: re, answer_by: answerBy || null, ...audPayload(audience) };
+      const body = { kind, title, location, duration_min: duration, window_start: ws, window_end: we, range_start: rs, range_end: re, answer_by: answerBy || null, ...audPayload(audience) };
       const res = await fetch(plan ? `/api/meeting-plans/${plan.id}` : '/api/meeting-plans', { method: plan ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) { setError(json.error || 'Couldn’t save the plan.'); return; }
@@ -129,7 +128,7 @@ function PlanForm({ plan, onDone, onCancel }: { plan?: PlanView; onDone: () => v
     <form className={m.form} onSubmit={submit}>
       <button type="button" className={m.backLink} onClick={onCancel}><ArrowLeft size={15} aria-hidden="true" /> Back to plans</button>
       <h2 className={m.sectionHead}>{plan ? 'Edit Plan' : 'Plan A Meeting'}</h2>
-      {!plan && draft.offer && <DraftBanner at={draft.offer.at} what="plan" onContinue={() => { const d = draft.accept(); if (d) { setKind(d.kind); setTitle(d.title); setDescription(d.description); setLocation(d.location); setDuration(d.duration); setWs(d.ws); setWe(d.we); setRs(d.rs >= today ? d.rs : today); setRe(d.re >= today ? d.re : addDays(today, 6)); setAnswerBy(d.answerBy); setAudience(d.audience); } }} onDiscard={draft.discard} />}
+      {!plan && draft.offer && <DraftBanner at={draft.offer.at} what="plan" onContinue={() => { const d = draft.accept(); if (d) { setKind(d.kind); setTitle(d.title); setLocation(d.location); setDuration(d.duration); setWs(d.ws); setWe(d.we); setRs(d.rs >= today ? d.rs : today); setRe(d.re >= today ? d.re : addDays(today, 6)); setAnswerBy(d.answerBy); setAudience(d.audience); } }} onDiscard={draft.discard} />}
       {!plan && (
         <div className={styles.kindPick} role="radiogroup" aria-label="Type of plan">
           <button type="button" role="radio" aria-checked={kind === 'once'} className={`${styles.kindBtn} ${kind === 'once' ? styles.kindOn : ''}`} onClick={() => setKind('once')}><strong>One time</strong><span>Pick from a range of dates (up to {MAX_RANGE_DAYS} days)</span></button>
@@ -148,7 +147,6 @@ function PlanForm({ plan, onDone, onCancel }: { plan?: PlanView; onDone: () => v
         <Field label="Answer by (optional)"><DateInput value={answerBy} min={today} onChange={(e) => setAnswerBy(e.target.value)} /></Field>
         <Field label="Room (optional)"><Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Price Center East" maxLength={80} /></Field>
       </div>
-      <Field label="What’s it about? (optional)"><Textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={500} rows={2} /></Field>
       <div className={m.audienceField}><span className={m.audienceTitle}>Who should answer?</span><AudiencePicker value={audience} onChange={setAudience} hideOpen /></div>
       <p className={m.faint}>Times are Pacific. Whoever can’t make the time you pick is marked absent (excused).</p>
       {error && <Notice tone="error">{error}</Notice>}
@@ -224,7 +222,6 @@ function PlanDetail({ plan, userId, onBack, reload }: { plan: PlanView; userId: 
           <h2 className={styles.detailTitle}>{plan.title}</h2>
           <p className={styles.planMeta}>{rangeLabel(plan)} · {lengthLabel(plan.duration_min)} · {clockLabel(plan.window_start)} to {clockLabel(plan.window_end)}{plan.location ? ` · ${plan.location}` : ''}</p>
           <p className={styles.planMeta}><Users size={12} aria-hidden="true" /> {audienceLabel({ audience: plan.audience, invitees: plan.invitees, group_ids: plan.group_ids, groupNames: plan.groupNames })}{plan.host_name ? ` · hosted by ${plan.host_name}` : ''}{plan.answer_by ? ` · answer by ${new Date(`${plan.answer_by}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' })}` : ''}</p>
-          {plan.description && <p className={styles.desc}>{plan.description}</p>}
         </div>
         <div className={styles.hostBtns}>
         {plan.canManage && plan.status === 'open' && (<>

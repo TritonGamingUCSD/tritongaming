@@ -25,7 +25,7 @@ import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
 import { AUDIENCE_LABELS, AUDIENCE_ROLES, audienceLabel, audienceRoles } from '@/lib/meetings/meetingAudience';
 import BubbleField from './BubbleField';
 import { QuestionEditor, ResultBars, StarPicker, Confetti, emptyQ, qFrom, qPayload, qBad, type QState } from './QuestionParts';
-import { CUSTOM_PREFIX, isCustomEmoji, customEmojiId, MAX_EMOJI_BYTES, MAX_EMOJI_PICK_BYTES, EMOJI_NAME, parseDiscordEmoji, emojiNameFrom, type CustomEmoji, type QuestionType, type Tally, MAX_ANSWER_LENGTH, MAX_DESCRIPTION_LENGTH } from '@/lib/meetings/meetingFun';
+import { CUSTOM_PREFIX, isCustomEmoji, customEmojiId, MAX_EMOJI_BYTES, MAX_EMOJI_PICK_BYTES, EMOJI_NAME, parseDiscordEmoji, emojiNameFrom, type CustomEmoji, type QuestionType, type Tally, MAX_ANSWER_LENGTH } from '@/lib/meetings/meetingFun';
 import PlanningPanel from './planning/PlanningPanel';
 import { useMeetingLive } from '@/lib/meetings/useMeetingLive';
 import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
@@ -37,10 +37,10 @@ import Link from 'next/link';
 type Tab = 'mine' | 'planning' | 'host' | 'attendance' | 'emojis';
 
 interface Person { id: string; name: string; avatar_url: string | null; custom_avatar_url: string | null }
-interface TodayMeeting { question_type: QuestionType; question_options: string[] | null; id: string; title: string; description: string | null; location: string | null; starts_at: string; ends_at: string; open: boolean; accepting: boolean; opens_at: string; checked_in_at: string | null; doc_url: string | null; question: string | null; my_answer: string | null }
-interface NextMeeting { doc_url?: string | null; title: string; description: string | null; location: string | null; starts_at: string; ends_at: string; date: string }
+interface TodayMeeting { question_type: QuestionType; question_options: string[] | null; id: string; title: string; location: string | null; starts_at: string; ends_at: string; open: boolean; accepting: boolean; opens_at: string; checked_in_at: string | null; doc_url: string | null; question: string | null; my_answer: string | null }
+interface NextMeeting { doc_url?: string | null; title: string; location: string | null; starts_at: string; ends_at: string; date: string }
 interface Live {
-  meeting: { open_to_team?: boolean; question_type: QuestionType; question_options: string[] | null; id: string; title: string; meeting_date: string; starts_at: string; ends_at: string; open: boolean; doc_url: string | null; location: string | null; cancelled: boolean; series_id: string | null; accepting: boolean; opens_at: string; question: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; groupNames: string[] };
+  meeting: { open_to_team?: boolean; question_type: QuestionType; question_options: string[] | null; id: string; title: string; meeting_date: string; starts_at: string; ends_at: string; open: boolean; doc_url: string | null; location: string | null; cancelled: boolean; series_id: string | null; accepting: boolean; opens_at: string; question: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; groupNames: string[] };
   answers: (Person & { answer: string; at: string })[];
   reactionTotals: Record<string, number>;
   customEmojis?: Record<string, { name: string; url: string }>;
@@ -51,8 +51,8 @@ interface Live {
   missing: Person[];
   absent: (Person & { reason: string | null; excused: boolean })[];
 }
-interface Item { open_to_team?: boolean | null; question_type: QuestionType; question_options: string[] | null; key: string; meeting_id: string | null; series_id: string | null; date: string; title: string; location: string | null; doc_url: string | null; question: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; groupNames: string[]; host_id: string | null; host_name: string | null; starts_at: string; ends_at: string; status: 'scheduled' | 'open' | 'closed' | 'cancelled'; count: number; absent?: number; is_today: boolean; repeats: boolean }
-interface Series { ended?: boolean; open_to_team?: boolean | null; ends_on?: string | null; id: string; title: string; weekday: number; start_time: string; end_time: string; location: string | null; active: boolean; doc_url: string | null; description: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null }
+interface Item { open_to_team?: boolean | null; question_type: QuestionType; question_options: string[] | null; key: string; meeting_id: string | null; series_id: string | null; date: string; title: string; location: string | null; doc_url: string | null; question: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; groupNames: string[]; host_id: string | null; host_name: string | null; starts_at: string; ends_at: string; status: 'scheduled' | 'open' | 'closed' | 'cancelled'; count: number; absent?: number; is_today: boolean; repeats: boolean }
+interface Series { ended?: boolean; open_to_team?: boolean | null; ends_on?: string | null; id: string; title: string; weekday: number; start_time: string; end_time: string; location: string | null; active: boolean; doc_url: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null }
 
 const TZ = 'America/Los_Angeles';
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -263,7 +263,6 @@ function CheckInPanel() {
           <span className={styles.doneIcon}><Check size={34} strokeWidth={2.5} aria-hidden="true" /></span>
           <h2 className={styles.cardTitle}>You&apos;re checked in</h2>
           <p className={styles.muted}>{m.title} · {time(m.checked_in_at!)}{m.location ? ` · ${m.location}` : ''}</p>
-          {m.description && <p className={styles.descText}>{m.description}</p>}
           {m.doc_url ? <DocButton url={m.doc_url} /> : <p className={styles.faint}>No doc linked yet</p>}
           <FunBox meeting={m} onSaved={load} />
         </div>
@@ -273,7 +272,6 @@ function CheckInPanel() {
         <div className={styles.card}>
           <h2 className={styles.cardTitle}>{checkedIn.length > 0 ? 'Another meeting? Enter its code' : 'Enter the code on the screen'}</h2>
           <p className={styles.muted}>{openToEnter.length === 1 ? `${openToEnter[0].title} · ` : 'The code decides which meeting you join · '}the code changes every 30 s</p>
-          {openToEnter.length === 1 && openToEnter[0].description && <p className={styles.descText}>{openToEnter[0].description}</p>}
           {openToEnter.length === 1 && openToEnter[0].doc_url && <DocButton url={openToEnter[0].doc_url} label="Open meeting doc" />}
           <input
             className={styles.codeInput}
@@ -318,7 +316,6 @@ function CheckInPanel() {
           <span className={styles.nextLabel}>Next meeting</span>
           <strong>{data.next.title}</strong>
           <span className={styles.muted}>{dayLabel(data.next.date, true)} · {timeRange(data.next.starts_at, data.next.ends_at)}{data.next.location ? ` · ${data.next.location}` : ''}</span>
-          {data.next.description && <span className={styles.descText}>{data.next.description}</span>}
           {data.next.doc_url && <DocButton url={data.next.doc_url} />}
         </div>
       )}
@@ -432,7 +429,7 @@ function FunBox({ meeting, onSaved }: { meeting: TodayMeeting; onSaved: () => vo
 
 // ── Everyone: their own attendance record ─────────────────────────────────────
 // Everything coming up that's meant for this person (or that they planned), grouped by day.
-type UpcomingItem = { key: string; date: string; title: string; starts_at: string; ends_at: string; location: string | null; description: string | null; doc_url: string | null; repeats: boolean; is_today: boolean; status: string; host_name: string | null; hosting: boolean };
+type UpcomingItem = { key: string; date: string; title: string; starts_at: string; ends_at: string; location: string | null; doc_url: string | null; repeats: boolean; is_today: boolean; status: string; host_name: string | null; hosting: boolean };
 function UpcomingPanel() {
   const [items, setItems] = useState<UpcomingItem[] | null>(null);
   const [openItems, setOpenItems] = useState<UpcomingItem[]>([]);
@@ -468,7 +465,6 @@ function UpcomingPanel() {
                 <span><strong className={styles.metaDay}>{m.is_today ? 'Today' : dayLabel(m.date).split(',')[0]}</strong> {timeRange(m.starts_at, m.ends_at)}</span>
                 {m.location && <span><MapPin size={11} aria-hidden="true" className={styles.inlineIcon} /> {m.location}</span>}
               </span>
-              {m.description && <span className={styles.descText} title={m.description}>{m.description}</span>}
               {m.hosting ? <span className={`${styles.metaLine} ${styles.metaSub}`}>You’re hosting</span> : m.host_name ? <span className={`${styles.metaLine} ${styles.metaSub}`}>Hosted by {m.host_name}</span> : null}
             </div>
             {m.doc_url && <DocButton url={m.doc_url} label="Doc" />}
@@ -944,7 +940,7 @@ function MeetingList({ onOpen, view, onView, showForm, onShowForm }: { onOpen: (
     // The question is locked once check-in has been opened; leave it out so an unrelated edit can't trip that.
     // Title only changes for one-off meetings (a repeating meeting keeps its name every week).
     const fields = {
-      doc_url: f.doc, ...(item.status === 'open' ? {} : qPayload(f.q)), location: f.location, description: f.description,
+      doc_url: f.doc, ...(item.status === 'open' ? {} : qPayload(f.q)), location: f.location,
       ...(item.repeats ? {} : { title: f.title }), start: f.start, end: f.end, ...audPayload(f.audience),
     };
     const r = await post('/api/meetings/update', item.meeting_id ? { meeting_id: item.meeting_id, ...fields } : { series_id: item.series_id, date: item.date, ...fields }, item.key);
@@ -1084,14 +1080,13 @@ function MeetingList({ onOpen, view, onView, showForm, onShowForm }: { onOpen: (
   );
 }
 
-// Edit a repeating meeting itself: its name, day, times, room, description, doc and who it's for.
+// Edit a repeating meeting itself: its name, day, times, room, doc and who it's for.
 function SeriesEditForm({ series: s, busy, onSave, onCancel }: { series: Series; busy: boolean; onSave: (body: Record<string, unknown>) => Promise<void>; onCancel: () => void }) {
   const [title, setTitle] = useState(s.title);
   const [weekday, setWeekday] = useState(String(s.weekday));
   const [start, setStart] = useState(s.start_time.slice(0, 5));
   const [end, setEnd] = useState(s.end_time.slice(0, 5));
   const [room, setRoom] = useState(s.location ?? '');
-  const [desc, setDesc] = useState(s.description ?? '');
   const [doc, setDoc] = useState(s.doc_url ?? '');
   const [endsOn, setEndsOn] = useState(s.ends_on ?? '');
   const [audience, setAudience] = useState<Aud>(audFrom(s));
@@ -1099,7 +1094,7 @@ function SeriesEditForm({ series: s, busy, onSave, onCancel }: { series: Series;
   return (
     <form
       className={`${styles.detailsForm} ${styles.seriesForm}`}
-      onSubmit={(e) => { e.preventDefault(); void onSave({ title, weekday: Number(weekday), start, end, location: room, description: desc, doc_url: doc, ends_on: endsOn || null, ...audPayload(audience) }); }}
+      onSubmit={(e) => { e.preventDefault(); void onSave({ title, weekday: Number(weekday), start, end, location: room, doc_url: doc, ends_on: endsOn || null, ...audPayload(audience) }); }}
     >
       <p className={styles.faint}>Applies to the series and coming weeks. A week you edited on its own keeps its changes.</p>
       <div className={styles.formGrid}>
@@ -1109,10 +1104,9 @@ function SeriesEditForm({ series: s, busy, onSave, onCancel }: { series: Series;
         <Field label="Ends"><TimeInput value={end} onChange={(e) => setEnd(e.target.value)} required /></Field>
       </div>
       <AudienceField value={audience} onChange={setAudience} />
-      <MoreOptions filled={[room && 'Room', endsOn && 'Ends ' + endsOn, desc && 'Description', doc && 'Doc'].filter(Boolean) as string[]}>
+      <MoreOptions filled={[room && 'Room', endsOn && 'Ends ' + endsOn, doc && 'Doc'].filter(Boolean) as string[]}>
       <Field label="Room" hint="The default for every week."><Input value={room} onChange={(e) => setRoom(e.target.value)} maxLength={80} placeholder="e.g. Price Center East" /></Field>
       <Field label="Last meeting on (optional)" hint="After this day it stops showing up in the portal. Blank means it keeps going."><DateInput value={endsOn} min={pacificToday()} onChange={(e) => setEndsOn(e.target.value)} /></Field>
-      <Field label="What's this meeting about? (optional)"><Textarea value={desc} onChange={(e) => setDesc(e.target.value)} maxLength={MAX_DESCRIPTION_LENGTH} rows={2} /></Field>
       <Field label="Meeting doc link"><Input value={doc} onChange={(e) => setDoc(e.target.value)} placeholder="https://docs.google.com/…" inputMode="url" /></Field>
       </MoreOptions>
       <SeriesExcused seriesId={s.id} />
@@ -1125,7 +1119,7 @@ function SeriesEditForm({ series: s, busy, onSave, onCancel }: { series: Series;
   );
 }
 
-interface DetailsFields { doc: string; q: QState; audience: Aud; location: string; description: string; title: string; start: string; end: string }
+interface DetailsFields { doc: string; q: QState; audience: Aud; location: string; title: string; start: string; end: string }
 
 function MeetingCard({ item, busy, past, onStart, onView, onCancel, onEdit, onDelete }: {
   item: Item; busy: boolean; past?: boolean;
@@ -1176,12 +1170,11 @@ function MeetingCard({ item, busy, past, onStart, onView, onCancel, onEdit, onDe
             <span><strong className={styles.metaDay}>{item.is_today ? 'Today' : new Date(`${item.date}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short' })}</strong> {timeRange(item.starts_at, item.ends_at)}</span>
             {item.location && <span><MapPin size={11} aria-hidden="true" className={styles.inlineIcon} /> {item.location}</span>}
           </span>
-          <span className={`${styles.metaLine} ${styles.metaSub}`} title={item.description ?? undefined}>
+          <span className={`${styles.metaLine} ${styles.metaSub}`}>
             <span className={styles.metaAudience} title={`For: ${audienceLabel(item)}`}><Users size={11} aria-hidden="true" /> {audienceLabel(item)}</span>
             {item.open_to_team === false && !wholeTeamAud(item) && (item.status === 'scheduled' || item.status === 'open') && <span className={`${styles.accessChip} ${styles.accessChipLimited}`} title="Only the people it is for can check in">Private Meeting</span>}
             {item.doc_url && <span className={styles.metaDoc}><Link2 size={11} aria-hidden="true" /> Doc</span>}
             {item.question && <span className={styles.metaDoc}><MessageCircleQuestion size={11} aria-hidden="true" /> Question</span>}
-            {item.description && <span className={styles.metaDoc}><FileText size={11} aria-hidden="true" /> Description</span>}
             {(item.absent ?? 0) > 0 && <span className={styles.metaAway} title="People who said they can't make it"><UserX size={11} aria-hidden="true" /> {item.absent} away</span>}
             {item.host_name && <span className={styles.metaHost}>Created by {item.host_name}</span>}
           </span>
@@ -1219,21 +1212,19 @@ function ItemEditForm({ item, busy, onSave }: { item: Item; busy: boolean; onSav
   const [q, setQ] = useState<QState>(qFrom(item));
   const [audience, setAudience] = useState<Aud>(audFrom(item));
   const [room, setRoom] = useState(item.location ?? '');
-  const [desc, setDesc] = useState(item.description ?? '');
   const [title, setTitle] = useState(item.title);
   const [startT, setStartT] = useState(pacificHHMM(item.starts_at));
   const [endT, setEndT] = useState(pacificHHMM(item.ends_at));
   const status = item.status;
   return (
-    <form className={styles.detailsForm} onSubmit={async (e) => { e.preventDefault(); await onSave({ doc, q, audience, location: room, description: desc, title, start: startT, end: endT }); }}>
+    <form className={styles.detailsForm} onSubmit={async (e) => { e.preventDefault(); await onSave({ doc, q, audience, location: room, title, start: startT, end: endT }); }}>
       {!item.repeats && <Field label="Name"><Input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={60} required /></Field>}
       <div className={styles.formGrid}>
         <Field label="Starts"><TimeInput value={startT} onChange={(e) => setStartT(e.target.value)} required /></Field>
         <Field label="Ends"><TimeInput value={endT} onChange={(e) => setEndT(e.target.value)} required /></Field>
       </div>
       <AudienceField value={audience} onChange={setAudience} />
-      <MoreOptions filled={[room && 'Room', desc && 'Description', doc && 'Doc', q.text && 'Question'].filter(Boolean) as string[]}>
-        <Field label="What's this meeting about? (optional)" hint="A line or two. Members see it when they check in."><Textarea value={desc} onChange={(e) => setDesc(e.target.value)} maxLength={MAX_DESCRIPTION_LENGTH} rows={2} placeholder="e.g. Planning the Halloween LAN: roles, budget and timeline." /></Field>
+      <MoreOptions filled={[room && 'Room', doc && 'Doc', q.text && 'Question'].filter(Boolean) as string[]}>
         <Field label="Room for this meeting" hint="Only changes this one meeting."><Input value={room} onChange={(e) => setRoom(e.target.value)} placeholder="e.g. Price Center East" maxLength={80} /></Field>
         <Field label="Meeting doc link"><Input value={doc} onChange={(e) => setDoc(e.target.value)} placeholder="https://docs.google.com/… or /portal/docs" inputMode="url" /></Field>
         <Field label="Question of the meeting" hint={status === 'open' ? 'Locked while check-in is open.' : undefined}>
@@ -1550,7 +1541,7 @@ function AudienceField({ value, onChange }: { value: Aud; onChange: (v: Aud) => 
 function MoreOptions({ filled, children }: { filled: string[]; children: React.ReactNode }) {
   return (
     <details className={styles.moreOptions}>
-      <summary><span>More Options</span><em>{filled.length ? filled.join(' · ') : 'Room, doc, description, question'}</em></summary>
+      <summary><span>More Options</span><em>{filled.length ? filled.join(' · ') : 'Room, doc, question'}</em></summary>
       <div className={styles.moreBody}>{children}</div>
     </details>
   );
@@ -1568,7 +1559,6 @@ function ScheduleForm({ onCreated }: { onCreated: () => void }) {
   const [doc, setDoc] = useState('');
   const [endsOn, setEndsOn] = useState('');
   const [q, setQ] = useState<QState>(emptyQ);
-  const [description, setDescription] = useState('');
   const [audience, setAudience] = useState<Aud>(defaultAud());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -1579,7 +1569,7 @@ function ScheduleForm({ onCreated }: { onCreated: () => void }) {
     try {
       const res = await fetch('/api/meetings/schedule', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, repeat, weekday: Number(weekday), date, start, end, location, doc_url: doc, ...qPayload(q), description, ends_on: repeat === 'weekly' ? endsOn || null : null, ...audPayload(audience) }),
+        body: JSON.stringify({ title, repeat, weekday: Number(weekday), date, start, end, location, doc_url: doc, ...qPayload(q), ends_on: repeat === 'weekly' ? endsOn || null : null, ...audPayload(audience) }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) { setError(json.error || 'Failed to schedule.'); return; }
@@ -1609,10 +1599,9 @@ function ScheduleForm({ onCreated }: { onCreated: () => void }) {
         <Field label="Ends"><TimeInput value={end} onChange={(e) => setEnd(e.target.value)} required /></Field>
       </div>
       <AudienceField value={audience} onChange={setAudience} />
-      <MoreOptions filled={[repeat === 'weekly' && endsOn && 'Ends ' + endsOn, location && 'Room', description && 'Description', doc && 'Doc', repeat === 'once' && q.text && 'Question'].filter(Boolean) as string[]}>
+      <MoreOptions filled={[repeat === 'weekly' && endsOn && 'Ends ' + endsOn, location && 'Room', doc && 'Doc', repeat === 'once' && q.text && 'Question'].filter(Boolean) as string[]}>
         {repeat === 'weekly' && <Field label="Last meeting on (optional)" hint="Blank means it keeps going until you stop it."><DateInput value={endsOn} min={pacificToday()} onChange={(e) => setEndsOn(e.target.value)} /></Field>}
         <Field label={repeat === 'weekly' ? 'Usual room (optional)' : 'Room (optional)'} hint={repeat === 'weekly' ? 'Just the default — change the room for any single week from its Details.' : undefined}><Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Price Center East" maxLength={80} /></Field>
-      <Field label="What's this meeting about? (optional)" hint="A line or two. Members see it when they check in."><Textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={MAX_DESCRIPTION_LENGTH} rows={2} placeholder="e.g. Planning the Halloween LAN: roles, budget and timeline." /></Field>
       <Field label="Meeting doc link (optional)" hint="Members it is meant for see the link as soon as you add it. For a repeating meeting this is the default; change it for any single week."><Input value={doc} onChange={(e) => setDoc(e.target.value)} placeholder="https://docs.google.com/…" inputMode="url" /></Field>
       {repeat === 'once' && (
         <Field label="Question of the meeting (optional)" hint="An icebreaker people answer after checking in. You can also set it on the day.">

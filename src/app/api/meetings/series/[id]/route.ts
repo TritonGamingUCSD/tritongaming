@@ -3,7 +3,6 @@ import { logAudit } from '@/lib/notifications/audit';
 import { authorizeMeetings, validateDocUrl, guardSeries, notifyMeetingInvites, occurrenceTimes, type SeriesRow } from '@/lib/meetings/meetings';
 import { pacificDayKey } from '@/lib/events/checkinDays';
 import { validateAudienceInput } from '@/lib/meetings/meetingAudience';
-import { MAX_DESCRIPTION_LENGTH } from '@/lib/meetings/meetingFun';
 
 // Pause/resume a repeating meeting, or delete it (past meetings and their attendance are kept).
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -27,7 +26,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     patch.group_ids = aud.group_ids;
     patch.open_to_team = aud.open_to_team;
   }
-  if ('description' in body) patch.description = String(body.description ?? '').trim().slice(0, MAX_DESCRIPTION_LENGTH) || null;
   if ('title' in body) {
     const t = String(body.title ?? '').trim().slice(0, 60);
     if (!t) return NextResponse.json({ error: 'Give the meeting a name.' }, { status: 400 });
@@ -64,13 +62,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const same = (a: unknown, b: unknown) => JSON.stringify(norm(a)) === JSON.stringify(norm(b));
     for (const r of rows ?? []) {
       const up: Record<string, unknown> = {};
-      for (const k of ['title', 'location', 'doc_url', 'description', 'audience', 'invitees', 'group_ids', 'open_to_team'] as const) {
+      for (const k of ['title', 'location', 'doc_url', 'audience', 'invitees', 'group_ids', 'open_to_team'] as const) {
         if (k in patch && same(r[k], old[k])) up[k] = patch[k];
       }
       const oldStart = old.start_time.slice(0, 5), oldEnd = old.end_time.slice(0, 5);
       const o = occurrenceTimes(r.meeting_date, oldStart, oldEnd);
       const unchangedTimes = new Date(r.starts_at).getTime() === o.starts.getTime() && new Date(r.ends_at).getTime() === o.ends.getTime();
-      const untouched = (['title', 'location', 'doc_url', 'description', 'audience', 'invitees', 'group_ids', 'open_to_team'] as const).every((k) => same(r[k], old[k]));
+      const untouched = (['title', 'location', 'doc_url', 'audience', 'invitees', 'group_ids', 'open_to_team'] as const).every((k) => same(r[k], old[k]));
       if ('weekday' in patch && patch.weekday !== old.weekday) {
         // Moved to another weekday: an uncustomized week sits on the old day, so drop it (the new day fills in
         // automatically). A customized one stays as it is, as a one-off.
