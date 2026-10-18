@@ -86,6 +86,9 @@ export const QR_PRESETS: QRPreset[] = [
 ];
 
 // Which preset (if any) the current options match — used to highlight the active card.
+/** The portal's own look for the codes it makes itself (light backgrounds): the Triton preset. */
+export const TRITON_STYLE: QRPresetStyle = QR_PRESETS[0].style;
+
 export function matchingPreset(o: QRCodeOptions): string | null {
   const keys = Object.keys(QR_PRESETS[0].style) as (keyof QRPresetStyle)[];
   const hit = QR_PRESETS.find((p) => keys.every((k) => p.style[k] === o[k]));

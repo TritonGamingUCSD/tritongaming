@@ -94,7 +94,6 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const canViewDocs = hasCapability(roles, 'view_docs');
   const canManageDocs = hasCapability(roles, 'manage_docs');
   const canManageRewardsShop = hasCapability(roles, 'manage_rewards_shop');
-  const canScanRedemptions = hasCapability(roles, 'scan_redemptions');
   const canControlSelfCheckin = hasCapability(roles, 'manage_points');
   const canManagePoints = hasCapability(roles, 'manage_points');
   const canAttendMeetings = hasCapability(roles, 'attend_meetings');
@@ -254,15 +253,14 @@ export default async function PortalDashboard({ searchParams }: Props) {
       ),
     }] : []),
     ...(canCheckin && checkinData ? [{
-      scanRedemptions: canScanRedemptions,
       id: 'checkin', icon: <Camera size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Check-In',
-      description: 'Scan tickets, confirm redemptions, or reveal the online check-in code',
+      description: 'Enter a ticket or meeting code, show the event QR, or reveal the online code',
       // The scan button in the middle of the phone's bar does the scanning now, so this page never takes a slot of its own.
       // Not suggested on the dashboard unless an event is actually happening today.
       homeExclude: todayEvents.length === 0,
       dockExclude: true,
       group: 'Events' as const,
-      content: <CheckInSectionContent events={checkinData.events} canScanRedemptions={canScanRedemptions} canControlSelfCheckin={canControlSelfCheckin} initialTab={requestedTab} tiers={memberTiers} />,
+      content: <CheckInSectionContent events={checkinData.events} canControlSelfCheckin={canControlSelfCheckin} initialTab={requestedTab} />,
     }] : []),
     ...(canAttendMeetings || canViewAttendanceReports ? [{
       id: 'meetings', icon: <CalendarCheck size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Meetings',

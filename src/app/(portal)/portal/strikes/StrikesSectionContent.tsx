@@ -3,7 +3,7 @@
 import Loading from '@/components/Loading/Loading';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { CalendarX, Users, ArrowLeft, Check, Lock, Moon, RotateCcw, Plus, Search, Send, ShieldAlert, Ticket, X } from 'lucide-react';
+import { CalendarX, Users, ArrowLeft, Check, Lock, Moon, RotateCcw, Plus, Search, ShieldAlert, Ticket, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
 import Notice from '@/components/ui/Notice';

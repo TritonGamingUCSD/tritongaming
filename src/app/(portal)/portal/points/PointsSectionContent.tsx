@@ -11,8 +11,7 @@ import { Award, ShoppingBag, Trophy, Settings, Check, QrCode, Gift, Lock, X } fr
 import { createClient } from '@/lib/supabase/client';
 import { getTier, nextTier, type Tier } from '@/lib/members/tiers';
 import { PACIFIC_TZ } from '@/lib/core/timezone';
-import StyledQRCode from '@/components/StyledQRCode/StyledQRCode';
-import { DEFAULT_QR_OPTIONS } from '@/lib/qr/qrCodeStyling';
+import RingCode from '@/components/RingCode/RingCode';
 import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
 import type { TransactionRow } from './getMyPointsData';
 import IconButton from '@/components/ui/IconButton';
@@ -107,8 +106,8 @@ interface Props {
 
 // The Manage tab does four genuinely separate jobs (award points, edit the
 // catalog, correct a member's points, edit the tier ladder) — member
-// reward redemptions are confirmed from Check-in's own Redemptions tab,
-// not from here — see CheckInSectionContent.tsx).
+// reward redemptions are confirmed by staff with the Scan button in the phone's bottom bar,
+// not from here — see UniversalScanner.tsx).
 type ManageSubTab = 'award' | 'items' | 'corrections' | 'tiers';
 const VALID_MANAGE_SUB_TABS: ManageSubTab[] = ['award', 'items', 'corrections', 'tiers'];
 
@@ -1162,7 +1161,7 @@ export default function PointsSectionContent({
         <div className={styles.qrOverlay} onClick={() => setQrFor(null)}>
           <div className={styles.qrModal} onClick={(e) => e.stopPropagation()}>
             <p className={styles.qrHint}>Show this to an officer at an event</p>
-            <StyledQRCode options={{ ...DEFAULT_QR_OPTIONS, data: qrFor, size: 280 }} className={styles.qrCanvas} />
+            <div className={styles.qrCanvas}><RingCode payload={`r${qrFor.replace(/-/g, '').slice(0, 12)}`} /></div>
             <Button type="button" onClick={() => setQrFor(null)}>Done</Button>
           </div>
         </div>

@@ -37,7 +37,7 @@
 .presentBtn { position: absolute; top: 0.7rem; right: 0.7rem; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.7rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.37); background: rgba(var(--pp-ink-rgb), 0.06); color: rgba(var(--pp-ink-rgb), 0.92); font-size: 0.74rem; cursor: pointer; }
 .presentBtn:hover { color: var(--p-accent-text); border-color: rgba(125, 180, 234, 0.5); }
 .presentHint { font-size: 1rem; color: rgba(var(--pp-ink-rgb), 0.89); }
-.presenting { position: fixed; inset: 0; z-index: 400; justify-content: center; border-radius: 0; border: none; background: var(--pp-card); }
+.presenting { position: fixed; inset: 0; z-index: 3000; justify-content: center; border-radius: 0; border: none; background: var(--pp-card); }
 .presenting .bigCode { font-size: clamp(4rem, 22vw, 13rem); }
 .presenting .liveCount { font-size: 1.4rem; }
 .presenting .liveCount strong { font-size: 2.4rem; }
@@ -767,17 +767,9 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .scanStage { position: relative; flex: 1; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
 .scanStage video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform-origin: center center; will-change: transform; display: block; }
 .scanTitle { font-size: 1rem; font-weight: 700; letter-spacing: 0.04em; }
-.scanTarget { position: absolute; left: 50%; top: 50%; width: min(72vw, 52vh); aspect-ratio: 1 / 1; transform: translate(-50%, -50%); border-radius: 1.4rem; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.45); pointer-events: none; }   /* theme-ok */
-.scanTarget i { position: absolute; width: 2.4rem; height: 2.4rem; border: 0 solid #fff; }   /* theme-ok */
-.scanTarget i:nth-child(1) { top: 0; left: 0; border-top-width: 5px; border-left-width: 5px; border-top-left-radius: 1.4rem; }
-.scanTarget i:nth-child(2) { top: 0; right: 0; border-top-width: 5px; border-right-width: 5px; border-top-right-radius: 1.4rem; }
-.scanTarget i:nth-child(3) { bottom: 0; left: 0; border-bottom-width: 5px; border-left-width: 5px; border-bottom-left-radius: 1.4rem; }
-.scanTarget i:nth-child(4) { bottom: 0; right: 0; border-bottom-width: 5px; border-right-width: 5px; border-bottom-right-radius: 1.4rem; }
-.scanLine { position: absolute; left: 8%; right: 8%; height: 3px; border-radius: 3px; background: linear-gradient(90deg, transparent, #7db4ea, transparent); box-shadow: 0 0 14px #7db4ea; animation: scanSweep 2.2s ease-in-out infinite alternate; }   /* theme-ok */
-@keyframes scanSweep { from { top: 10%; } to { top: 90%; } }
-@media (prefers-reduced-motion: reduce) { .scanLine { animation: none; top: 50%; } }
+.scanTarget { position: absolute; left: 50%; top: 50%; width: min(72vw, 52vh); aspect-ratio: 1 / 1; transform: translate(-50%, -50%); border-radius: 50%; border: 4px dashed rgba(255, 255, 255, 0.92); box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.45); pointer-events: none; }   /* theme-ok */
+
 .scanRow { display: flex; align-items: center; justify-content: center; gap: 1rem; }
-.scanPinch { font-size: 0.8rem; color: rgba(255, 255, 255, 0.7); }   /* theme-ok */
 .scanZoom { position: absolute; left: 50%; bottom: 7.5rem; transform: translateX(-50%); padding: 0.2rem 0.7rem; border-radius: 999px; background: rgba(0, 0, 0, 0.55); color: #fff; font-size: 0.85rem; font-weight: 600; pointer-events: none; }   /* theme-ok */
 .scanBottom { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; flex-direction: column; justify-content: center; gap: 0.7rem; padding: 2.5rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px)); background: linear-gradient(transparent, rgba(0, 0, 0, 0.65)); text-align: center; }   /* theme-ok */
 .scanHint { margin: 0; font-size: 0.95rem; color: rgba(255, 255, 255, 0.92); }   /* theme-ok */
@@ -826,3 +818,10 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 @media (prefers-reduced-motion: reduce) { .arrival, .latest { animation: none; } }
 
 @media (max-width: 640px) { .stageBar { position: static; align-items: center; text-align: center; max-width: 100%; padding-top: 2.4rem; } .stageBar h2 { font-size: 1.3rem; } }
+
+.scanSteps { display: inline-flex; gap: 0.35rem; padding: 0.3rem; border-radius: 999px; background: rgba(0, 0, 0, 0.5); }   /* theme-ok */
+.scanStep { min-width: 2.6rem; height: 2.6rem; padding: 0 0.6rem; border: 0; border-radius: 999px; background: transparent; color: rgba(255, 255, 255, 0.85); font-size: 0.95rem; font-weight: 600; cursor: pointer; }   /* theme-ok */
+.scanStepOn { background: #fff; color: #000; }   /* theme-ok */
+
+.scanProblem { margin: auto; display: flex; flex-direction: column; align-items: center; gap: 0.9rem; max-width: 22rem; padding: 0 1.4rem; text-align: center; color: rgba(255, 255, 255, 0.92); }   /* theme-ok */
+.scanProblem p { margin: 0; font-size: 1rem; line-height: 1.45; }

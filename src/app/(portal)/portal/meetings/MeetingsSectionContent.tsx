@@ -6,9 +6,10 @@ import SaveBar from '@/components/portal/SaveBar';
 import EditingNow from '@/components/portal/EditingNow';
 import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import Popover from '@/components/ui/Popover';
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
-import { ChevronRight, CalendarClock, CalendarDays, Radio, ClipboardList, Check, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Link2, MessageCircleQuestion, Send, Users, Minus, UserX, Lock, Dices, Smile, Upload, Settings2, Moon, DoorOpen, Timer, MoreHorizontal, Trash2, AlertCircle, CalendarX, ZoomIn, ZoomOut } from 'lucide-react';
+import { ChevronRight, CalendarClock, CalendarDays, Radio, ClipboardList, Check, Maximize2, Minimize2, UserPlus, ArrowLeft, ExternalLink, FileText, Plus, Repeat, MapPin, Download, SkipForward, RotateCcw, Link2, MessageCircleQuestion, Send, Users, Minus, UserX, Lock, Dices, Smile, Upload, Moon, DoorOpen, Timer, MoreHorizontal, Trash2, AlertCircle, CalendarX } from 'lucide-react';
 import IconButton from '@/components/ui/IconButton';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Notice from '@/components/ui/Notice';
@@ -18,7 +19,7 @@ import { startsWeekGroup, weekGroup } from '@/lib/events/weekGroups';
 
 // A card's edge takes its week's color, the same as the heading above it (repeating is shown by its icon, not a color).
 const WEEK_TONE = ['today', 'wnext', 'wlater'] as const;
-import { Field, Input, Select, Textarea, DateInput, TimeInput } from '@/components/ui/Field';
+import { Field, Input, Select, DateInput, TimeInput } from '@/components/ui/Field';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import { resolveAvatarUrl } from '@/lib/members/profile';
 import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
@@ -32,9 +33,10 @@ import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
 import styles from './meetings.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
 import Dialog from '@/components/ui/Dialog';
+import CheckInOutcome from '@/components/portal/CheckInOutcome';
+import { checkInWithCode, resolveChoice, type Outcome } from '@/lib/checkin/anyCode';
 import Link from 'next/link';
-import StyledQRCode from '@/components/StyledQRCode/StyledQRCode';
-import { DEFAULT_QR_OPTIONS, type QRCodeOptions } from '@/lib/qr/qrCodeStyling';
+import RingCode from '@/components/RingCode/RingCode';
 
 type Tab = 'mine' | 'planning' | 'host' | 'attendance' | 'emojis';
 
@@ -49,7 +51,7 @@ interface Live {
   tally: Tally;
   code: string | null;
   expiresAt: number | null;
-  qrKey?: string | null;
+  qrPayload?: string | null;
   attendees: (Person & { checked_in_at: string; method: 'code' | 'manual' | 'host'; guest?: boolean })[];
   missing: Person[];
   absent: (Person & { reason: string | null; excused: boolean })[];
@@ -143,29 +145,9 @@ export default function MeetingsSectionContent({ canHost, canManageAll, userId, 
   );
 }
 
-// The current code as a QR, drawn with the site's own QR styling (the same rounded look as tickets) in the same colour as the typed code, so it follows the
-// light or dark theme. Scanning it opens the portal's check-in with the code filled in; it follows the code every 30 seconds. It only ever points at this site.
-function useInkColour(ref: React.RefObject<HTMLElement | null>, key: unknown) {
-  const [ink, setInk] = useState('#011941');   // theme-ok
-  useEffect(() => {
-    const read = () => { const v = ref.current ? getComputedStyle(ref.current).getPropertyValue('--pp-ink').trim() : ''; if (v) setInk(v); };
-    read();
-    const mo = new MutationObserver(read); mo.observe(document.documentElement, { attributes: true });
-    const mq = window.matchMedia('(prefers-color-scheme: dark)'); mq.addEventListener('change', read);
-    return () => { mo.disconnect(); mq.removeEventListener('change', read); };
-  }, [ref, key]);
-  return ink;
-}
-function MeetingQR({ payload, size, ink }: { payload: string; size: number; ink: string }) {
-  const options = useMemo<QRCodeOptions>(() => ({
-    ...DEFAULT_QR_OPTIONS, data: payload, size: 480, margin: 0, transparentBg: true,
-    dotsColor: ink, dotsGradientEnabled: false, cornersSquareColor: ink, cornersDotColor: ink, icon: 'none', customIcon: null,
-  }), [payload, ink]);
-  return (
-    <div className={styles.qrCanvas} style={{ width: size, height: size }} role="img" aria-label="QR code for the portal’s Scan button">
-      <StyledQRCode options={options} />
-    </div>
-  );
+// The circular code marks a code only the portal's own Scan button reads (a plain camera gets nothing from it). Same code as a ticket's.
+function MeetingQR({ payload, size }: { payload: string; size: number }) {
+  return <div className={styles.qrCanvas} style={{ width: size, height: size }}><RingCode payload={payload} /></div>;
 }
 
 // My meetings: check in first, then what is coming up or what has happened (a switch, not two columns).
@@ -209,6 +191,7 @@ function CheckInPanel() {
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [other, setOther] = useState<Outcome | null>(null);   // a ticket the code turned out to be (staff)
 
   const load = useCallback(async () => {
     try {
@@ -230,21 +213,17 @@ function CheckInPanel() {
     return () => clearTimeout(id);
   }, [data]);
 
+  // The box takes a meeting's code, or (for staff) a ticket's: whichever the six digits turn out to be.
   async function submit(proof: { code: string }) {
     if (busy) return;
     setBusy(true);
     setError('');
-    try {
-      const res = await fetch('/api/meetings/check-in', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(proof) });
-      const json = await res.json();
-      if (!res.ok) { setError(json.error || 'Check-in failed.'); setCode(''); return; }
-      setCode('');
-      await load();
-    } catch {
-      setError('Network error. Try again.');
-    } finally {
-      setBusy(false);
-    }
+    const o = await checkInWithCode(proof.code);
+    setCode('');
+    if (o.kind === 'error') setError(o.message);
+    else if (o.kind === 'meeting') await load();
+    else setOther(o);
+    setBusy(false);
   }
 
   if (!data) return <Loading label="Loading meetings…" />;
@@ -258,6 +237,7 @@ function CheckInPanel() {
   return (
     <div className={styles.stack}>
       {error && openToEnter.length === 0 && <Notice tone="error">{error}</Notice>}
+      {other && <Dialog title="Ticket Check-In" onClose={() => setOther(null)}><CheckInOutcome outcome={other} busy={busy} onDone={() => setOther(null)} onChoose={async (which) => { if (other.kind !== 'choose') return; setBusy(true); const o = await resolveChoice(other.code, which); setBusy(false); if (o.kind === 'meeting') { setOther(null); await load(); } else setOther(o); }} /></Dialog>}
       {checkedIn.map((m) => (
         <div key={m.id} className={`${styles.card} ${styles.done}`}>
           <span className={styles.doneIcon}><Check size={34} strokeWidth={2.5} aria-hidden="true" /></span>
@@ -1637,8 +1617,6 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
   const [live, setLive] = useState<Live | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [presenting, setPresenting] = useState(false);
-  const inkRef = useRef<HTMLDivElement>(null);
-  const ink = useInkColour(inkRef, live?.code);
   const labelRef = useRef<HTMLSpanElement>(null);
   const codeRef = useRef<HTMLDivElement>(null);
   const codeRowRef = useRef<HTMLDivElement>(null);
@@ -1778,23 +1756,9 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
   const ringPct = expectedHere + live.missing.length > 0 ? Math.min(100, (expectedHere / (expectedHere + live.missing.length)) * 100) : 0;
   const grouped = live.code ? `${live.code.slice(0, 3)} ${live.code.slice(3)}` : '';
 
-  return (
-    <div className={styles.runWrap}>
-      {!presenting && (
-        <header className={styles.liveHead}>
-          <button type="button" className={styles.backLink} onClick={onBack}><ArrowLeft size={15} aria-hidden="true" /> All Meetings</button>
-          <div className={styles.liveTitleRow}>
-            <div className={styles.liveTitle}>
-              <h2>{live.meeting.title}</h2>
-              <span>{dayLabel(live.meeting.meeting_date, true)} · {timeRange(live.meeting.starts_at, live.meeting.ends_at)}{live.meeting.location ? ` · ${live.meeting.location}` : ''}</span>
-            </div>
-            <span className={`${styles.pill} ${open ? styles.pillOpen : styles.pillDone}`}>{open ? 'Check-In Open' : over ? 'Ended' : 'Check-In Closed'}</span>
-          </div>
-        </header>
-      )}
-
-      {open ? (
-        <div ref={inkRef} className={`${styles.codePanel} ${presenting ? styles.presenting : ''}`}>
+  // Full screen is drawn on the page itself (not inside the portal's animated panel, which would shrink a "fixed" screen to the panel and leave the top and bottom bars over it).
+  const codePanel = open ? (
+        <div className={`${styles.codePanel} ${presenting ? styles.presenting : ''}`}>
           <button type="button" className={styles.presentBtn} onClick={() => setPresenting((v) => !v)} aria-label={presenting ? 'Exit full screen view' : 'Show on screen'}>
             {presenting ? <><Minimize2 size={15} aria-hidden="true" /> Exit</> : <><Maximize2 size={15} aria-hidden="true" /> Show On Screen</>}
           </button>
@@ -1817,11 +1781,11 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
               <div ref={codeRef} className={styles.bigCode} aria-live="off">{grouped}</div>
               <small>Type this code in Meetings</small>
             </div>
-            {live.code && (
+            {live.code && live.qrPayload && (
               <>
                 <span className={styles.duoDivider} aria-hidden="true" />
                 <div className={styles.duoQr}>
-                  <MeetingQR payload={`tgm1.${live.meeting.id}.${live.qrKey ?? ''}`} size={presenting ? 250 : 170} ink={ink} />
+                  <MeetingQR payload={live.qrPayload ?? ''} size={presenting ? 300 : 210} />
                   <small>Or tap Scan in the portal</small>
                 </div>
               </>
@@ -1856,6 +1820,25 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
             {floaters.map((f) => <span key={f.key} className={styles.floater} style={{ left: `${f.left}%`, animationDelay: `${f.delay}s` }}><EmojiView emoji={f.emoji} custom={live.customEmojis} /></span>)}
           </div>
         </div>
+  ) : null;
+
+  return (
+    <div className={styles.runWrap}>
+      {!presenting && (
+        <header className={styles.liveHead}>
+          <button type="button" className={styles.backLink} onClick={onBack}><ArrowLeft size={15} aria-hidden="true" /> All Meetings</button>
+          <div className={styles.liveTitleRow}>
+            <div className={styles.liveTitle}>
+              <h2>{live.meeting.title}</h2>
+              <span>{dayLabel(live.meeting.meeting_date, true)} · {timeRange(live.meeting.starts_at, live.meeting.ends_at)}{live.meeting.location ? ` · ${live.meeting.location}` : ''}</span>
+            </div>
+            <span className={`${styles.pill} ${open ? styles.pillOpen : styles.pillDone}`}>{open ? 'Check-In Open' : over ? 'Ended' : 'Check-In Closed'}</span>
+          </div>
+        </header>
+      )}
+
+      {open ? (
+        presenting && typeof document !== 'undefined' ? createPortal(codePanel, document.body) : codePanel
       ) : (
         <div className={styles.card}>
           <h2 className={styles.cardTitle}>{live.meeting.title} · {dayLabel(live.meeting.meeting_date, true)}</h2>

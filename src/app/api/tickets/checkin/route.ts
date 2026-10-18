@@ -23,10 +23,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
   }
 
-  const { code, qr, event_id } = await request.json();
-  if ((!code && !qr) || !event_id) {
-    return NextResponse.json({ error: 'Missing code or event_id' }, { status: 400 });
+  const { code, qr_token: ringToken, event_id: pickedEvent, preview } = await request.json();   // preview: only say whose ticket it is
+  if (!code && !ringToken) {
+    return NextResponse.json({ error: 'Missing code' }, { status: 400 });
   }
+  // With no event named (the portal's one code box and scanner), the ticket is looked for among the events that can still be checked into.
+  const anyEvent = !pickedEvent;
 
   // What's scanned/typed is a short-lived rotating code (see src/lib/rotatingCode.ts),
   // not the ticket's permanent secret — that never leaves the server. Only this
@@ -44,10 +46,14 @@ export async function POST(request: Request) {
       user:profiles!tickets_user_id_fkey(display_name),
       event:events`;
   const eventColumns = '(title, points_value, start_date, end_date, requires_checkin_form, checkin_windows)';
-  const { data: eventTickets, error: candidatesError } = await supabase
-    .from('tickets')
-    .select(`${columns}${eventColumns}`)
-    .eq('event_id', event_id);
+  // The same columns with the event joined as required, so the open-events filter can apply to it.
+  const columnsInner = `
+      id, ticket_code, status, checked_in_at, checked_in_by, checkin_form_completed_at, event_id, user_id,
+      user:profiles!tickets_user_id_fkey(display_name),
+      event:events!inner`;
+  const { data: eventTickets, error: candidatesError } = anyEvent
+    ? await supabase.from('tickets').select(`${columnsInner}${eventColumns}`).or(openEventsFilter(), { referencedTable: 'events' })
+    : await supabase.from('tickets').select(`${columns}${eventColumns}`).eq('event_id', pickedEvent);
 
   if (candidatesError) {
     console.error('[checkin] failed to load candidate tickets:', candidatesError);
@@ -58,15 +64,13 @@ export async function POST(request: Request) {
   // src/app/api/tickets/[id]/qr/route.ts) purely as a human/scanner-visible
   // hint of which event it's for — it isn't part of the HMAC and carries no
   // authority, so it's simply dropped here before the real check.
-  // Two ways in, kept apart: the six typed digits, or a QR payload (`tgt1.<event>.<ticket id>.<key>`, which only the portal's scanner reads).
-  // A `<event>:<digits>` text from an older QR still works for now (tickets cached on phones before this change).
+  // Two ways in, kept apart: the six typed digits, or the key from a ring code (`t` and twelve hex digits, which only the portal's scanner reads).
   const windowIndex = currentWindow();
   let matches: (t: { id?: string; ticket_code: string }) => boolean;
-  if (qr) {
-    const parts = String(qr).trim().split('.');
-    const [prefix, ticketId, token] = [parts[0], parts[parts.length - 2], parts[parts.length - 1]];
-    if (prefix !== 'tgt1' || parts.length < 4) return NextResponse.json({ error: 'That QR code isn’t a ticket.' }, { status: 400 });
-    matches = (t) => t.id === ticketId && (qrToken(t.ticket_code, windowIndex) === token || qrToken(t.ticket_code, windowIndex - 1) === token);
+  if (ringToken) {
+    const tok = String(ringToken).trim().toLowerCase();
+    if (!/^[0-9a-f]{12}$/.test(tok)) return NextResponse.json({ error: 'That isn’t a ticket.' }, { status: 400 });
+    matches = (t) => qrToken(t.ticket_code, windowIndex).slice(0, 12) === tok || qrToken(t.ticket_code, windowIndex - 1).slice(0, 12) === tok;
   } else {
     const raw = String(code).trim().replace(/^#\s*/, '');
     const normalizedCode = raw.includes(':') ? raw.slice(raw.lastIndexOf(':') + 1) : raw;
@@ -74,7 +78,9 @@ export async function POST(request: Request) {
   }
 
   const ticket = (eventTickets ?? []).find(matches);
+  const event_id = pickedEvent ?? ticket?.event_id;
 
+  if (!ticket && anyEvent) return NextResponse.json({ error: 'Code not recognized — ask them to reopen their ticket and try again' }, { status: 404 });
   if (!ticket) {
     const { data: others } = await supabase
       .from('tickets')
@@ -95,6 +101,8 @@ export async function POST(request: Request) {
 
   const userData = Array.isArray(ticket.user) ? ticket.user[0] : ticket.user;
   const eventData = Array.isArray(ticket.event) ? ticket.event[0] : ticket.event;
+
+  if (preview === true) return NextResponse.json({ preview: true, user_name: userData?.display_name || 'Unknown', event_title: eventData?.title || '' });
 
   const serviceClient = createServiceClient();
   if (!(await canCheckInNow(serviceClient, ticket, eventData))) {

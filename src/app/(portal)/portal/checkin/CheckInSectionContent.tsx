@@ -2,30 +2,23 @@
 
 import SectionTabs from '@/components/ui/SectionTabs';
 import { useState } from 'react';
-import { Camera, Gift, Wifi, QrCode } from 'lucide-react';
+import { Keyboard, Wifi, QrCode } from 'lucide-react';
 import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
-import type { Tier } from '@/lib/members/tiers';
-import CheckInClient from './CheckInClient';
-import RedemptionScanner from './RedemptionScanner';
+import EnterCodePanel from './EnterCodePanel';
 import OnlineCheckinPanel from './OnlineCheckinPanel';
 import SelfCheckinPanel from './SelfCheckinPanel';
 import styles from './checkinsection.module.css';
 
 interface Event { id: string; title: string; start_date: string; is_online: boolean; slug?: string | null; self_checkin_mode?: 'off' | 'until_end' | 'forever'; end_date?: string | null; checkin_windows?: { day: string; start: string; end: string }[] | null }
 
-type Tab = 'tickets' | 'self' | 'redemptions' | 'online';
-const VALID_TABS: Tab[] = ['tickets', 'self', 'redemptions', 'online'];
+type Tab = 'code' | 'self' | 'online';
+const VALID_TABS: Tab[] = ['code', 'self', 'online'];
 
-// Wraps the existing (working, camera-handling, fairly involved)
-// CheckInClient with two new sibling tools rather than touching it
-// directly — same officer audience, same events list, but genuinely
-// different jobs (scanning a ticket vs. a redemption QR vs. revealing an
-// online check-in code), so a tab bar keeps them from competing for the
-// same screen instead of merging into one increasingly-overloaded
-// component.
-export default function CheckInSectionContent({ events, canScanRedemptions, canControlSelfCheckin, tiers }: { events: Event[]; canScanRedemptions: boolean; canControlSelfCheckin: boolean; initialTab?: string; tiers: Tier[] }) {
+// What staff need from a computer: one box for any six-digit code (a ticket's or a meeting's), the event's self check-in QR and, for online events, the code to reveal.
+// Scanning with a camera (tickets, meetings, reward pickups) is the Scan button in the phone's bottom bar.
+export default function CheckInSectionContent({ events, canControlSelfCheckin }: { events: Event[]; canControlSelfCheckin: boolean; initialTab?: string }) {
   const { tab: initialTab } = useUrlNav();
-  const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'tickets');
+  const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'code');
   const syncUrl = usePortalTabSync('checkin');
   function selectTab(t: Tab) {
     setTab(t);
@@ -43,20 +36,14 @@ export default function CheckInSectionContent({ events, canScanRedemptions, canC
         value={tab}
         onChange={selectTab}
         tabs={[
-          { id: 'tickets', label: 'Tickets', icon: <Camera /> },
+          { id: 'code', label: 'Enter Code', icon: <Keyboard /> },
           ...(events.length > 0 ? [{ id: 'self' as const, label: 'Self Check-In', icon: <QrCode /> }] : []),
-          ...(canScanRedemptions ? [{ id: 'redemptions' as const, label: 'Redemptions', icon: <Gift /> }] : []),
           ...(onlineEvents.length > 0 ? [{ id: 'online' as const, label: 'Online Check-In', icon: <Wifi /> }] : []),
         ]}
       />
 
-      {tab === 'tickets' && (
-        <>
-          <CheckInClient events={events} tiers={tiers} />
-        </>
-      )}
+      {tab === 'code' && <EnterCodePanel />}
       {tab === 'self' && events.length > 0 && <SelfCheckinPanel events={events} canControl={canControlSelfCheckin} />}
-      {tab === 'redemptions' && canScanRedemptions && <RedemptionScanner />}
       {tab === 'online' && onlineEvents.length > 0 && <OnlineCheckinPanel events={onlineEvents} />}
     </div>
   );

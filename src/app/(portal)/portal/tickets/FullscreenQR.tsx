@@ -6,43 +6,13 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Ticket, X, Check, Zap, ClipboardList } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import TicketQRBadge from '@/components/TicketQRBadge/TicketQRBadge';
-import { DEFAULT_QR_OPTIONS, type QRCodeOptions } from '@/lib/qr/qrCodeStyling';
+import RingCode from '@/components/RingCode/RingCode';
 import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/core/timezone';
 import { fetchWithRetry } from '@/lib/ui/fetchWithRetry';
 import AsFormButton from './AsFormButton';
 import { saveTicketCodes, currentCachedCode, cachedMinutesLeft, clearTicketCodes } from '@/lib/events/ticketCodeCache';
 import styles from './fullscreenqr.module.css';
 
-// Same TG-branded look as the portal's QR Studio "default" preset (see
-// src/lib/qrCodeStyling.ts) — TG logo stays centered in the QR itself; the
-// event name used to sit there instead (see git history / eventLabelIcon),
-// but now arcs around the outside as part of the circular badge (see
-// TicketQRBadge + qrBadge.ts) so it doesn't compete with the logo.
-//
-// margin is deliberately the normal/small value, NOT inflated to make room
-// for a tight circular crop — an earlier attempt at that (large margin +
-// crop into it) turned out to break decoding in this library at high margin
-// values, confirmed by actually decoding the result with jsQR (the same
-// decoder the check-in scanner uses), not just by the geometry. The badge's
-// circle instead circumscribes the whole (fully intact) QR square — see
-// qrBadge.ts.
-const TICKET_QR_BASE: Omit<QRCodeOptions, 'data' | 'icon' | 'customIcon'> = {
-  ...DEFAULT_QR_OPTIONS,
-  size: 260,
-  iconPadding: 6,
-  // Plain circular modules (not the Studio default's "extra-rounded" blobs)
-  // so the real QR's own dots match the decorative ring's dots exactly —
-  // same shape, same size logic — instead of two subtly different rounded
-  // styles sitting next to each other.
-  dotsType: 'dots',
-  // The finder-pattern frame ("corner") is otherwise the one hard-edged,
-  // squared-off shape left in an all-circular badge — a rounded square still
-  // reads as "a square sitting inside a circle." Rendering it as a ring/dot
-  // shape instead keeps every element of the badge, real and decorative,
-  // built from the same circular vocabulary.
-  cornersSquareType: 'dot',
-};
 
 interface Props {
   ticketId: string;
@@ -75,12 +45,6 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   // standing perk, not something specific to this one ticket, so it's just
   // surfaced here rather than re-fetched every rotation.
   const [hasFastPass, setHasFastPass] = useState(false);
-  // TicketQRBadge's own canvas-render poll timed out — the code/data loaded
-  // fine, but drawing the QR itself (a device/browser-side thing, not a
-  // network one) never produced a paintable canvas. Reset on every new
-  // qrData so a fresh code gets its own full chance to render rather than
-  // staying permanently flagged failed from one bad attempt.
-  const [qrRenderFailed, setQrRenderFailed] = useState(false);
   const refreshTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Tracks the code across renders without needing it in fetchCode's own
   // dependency list (that would redefine fetchCode every refresh and
@@ -144,7 +108,6 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
       }
       setError('');
       setQrData(data.qr_data);
-      setQrRenderFailed(false); // new qrData remounts TicketQRBadge — give it a fresh attempt
       setHasFastPass(Boolean(data.has_fast_pass));
       // The visibility/focus listener below re-runs this on every tab
       // refocus, even mid-window when the code hasn't actually changed —
@@ -182,8 +145,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
       if (cached) {
         setError('');
         setQrData(cached.qr_data);
-        setQrRenderFailed(false);
-        setHasFastPass(cached.has_fast_pass);
+          setHasFastPass(cached.has_fast_pass);
         if (cached.code !== lastCodeRef.current) {
           lastCodeRef.current = cached.code;
           setCode(cached.code);
@@ -394,12 +356,6 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
     ? formatPacificDateTime(eventDate, { weekday: true })
     : null;
 
-  // qr_data is `tgt1.${eventSlug}.${ticketId}.${key}` (see /api/tickets/[id]/qr) — reuse that same slug for the arced label so it can never
-  // drift out of sync with what the code actually encodes. Falls back to the title for events with no slug set (and for an older cached
-  // `slug:digits` code).
-  const qrParts = qrData?.split('.') ?? [];
-  const eventLabel = (qrData?.startsWith('tgt1.') && qrParts.length >= 4 ? qrParts.slice(1, -2).join('.') : qrData?.includes(':') ? qrData.split(':')[0] : '') || eventTitle;
-
   // Portaled straight to <body> instead of rendering in place — this opens
   // from inside PortalHub's section panel, which Framer Motion animates
   // with an inline `transform` (see PortalHub.tsx). A `transform` on an
@@ -535,26 +491,13 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
                   />
                 </svg>
               )}
-              {qrData && qrRenderFailed ? (
-                // The code/data itself loaded fine — this is specifically
-                // "the canvas never finished painting on this device," not
-                // a network problem, so the code fallback below is the
-                // actual way through, not just a backup for while this loads.
-                <div className={`${styles.qrCanvas} ${styles.qrLoading}`}>
-                  <span className={styles.qrFailedText}>QR unavailable on this device — use the code below</span>
-                </div>
-              ) : qrData ? (
+              {qrData ? (
                 // Keyed by qrData (not a stable key) specifically so React
                 // remounts this on every refresh — that's what restarts the
                 // fade-in below each time, turning what used to be an
                 // instant, jarring swap into a brief soft crossfade instead.
                 <div key={qrData} className={styles.qrSwap}>
-                  <TicketQRBadge
-                    options={{ ...TICKET_QR_BASE, data: qrData, icon: 'tg-color', customIcon: null }}
-                    eventLabel={eventLabel}
-                    className={styles.qrCanvas}
-                    onFail={() => setQrRenderFailed(true)}
-                  />
+                  <div className={styles.qrCanvas}><RingCode payload={qrData} label="Your ticket's code, for the portal's Scan button" /></div>
                 </div>
               ) : (
                 // On a slow connection this can sit for a couple seconds

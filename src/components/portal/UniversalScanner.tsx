@@ -1,50 +1,44 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { CircleAlert, Check, Loader2 } from 'lucide-react';
-import Dialog, { DialogActions } from '@/components/ui/Dialog';
-import Button from '@/components/ui/Button';
-import QrScanner, { proofFromScan } from '@/app/(portal)/portal/meetings/QrScanner';
-import { navigatePortal } from '@/lib/portal/portalNav';
+import { CircleAlert, Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import Dialog from '@/components/ui/Dialog';
+import QrScanner from '@/app/(portal)/portal/meetings/QrScanner';
+import CheckInOutcome from './CheckInOutcome';
+import CodeEntry from './CodeEntry';
+import { checkInWithCode, checkInWithQr, confirmReward, resolveChoice, RING, type Outcome } from '@/lib/checkin/anyCode';
 import styles from './UniversalScanner.module.css';
 
-// What a scan turned into, said plainly: the person always sees exactly what it did (or did not do) before anything else happens.
-type Outcome =
-  | { kind: 'meeting'; title: string; at: string; already: boolean }
+// What a scan turned into, said plainly: the person always sees exactly what it did (or did not do).
+type State =
+  | { kind: 'scanning' }
+  | { kind: 'working'; label: string }
   | { kind: 'opening'; title: string; heading: string; text: string; href: string }
-  | null;
+  | { kind: 'result'; outcome: Outcome };
 
-// The one camera for the portal (the middle button of the phone's bottom bar). It reads any QR the portal itself makes and does what that QR is for:
+// The one camera for the portal (the page behind the middle button of the phone's bottom bar), with the code box always at the bottom. It does what each QR the portal makes is for:
 //   • a meeting's check-in QR → checks you in to that meeting, then tells you which one
 //   • an event's self check-in QR (…/in/<event>) → opens that event's check-in page, which checks you in and shows the result
+//   • (staff) an event ticket → checks it in and shows whose it is; a reward pickup → shows the reward with a Confirm button
 //   • any other page of this portal → opens it
-//   • (staff only) an event ticket or a reward pickup → opens Check-In, which checks the ticket in or shows the reward to confirm
+// The six-digit box takes a meeting code or (for staff) a ticket's code, whichever it turns out to be.
 // Anything else is refused with a message, and the camera keeps looking.
-// A ticket's QR (`tgt1.<event>.<ticket>.<key>`), or the older `<event>:<digits>` some phones still have cached.
-const isTicketQr = (t: string) => /^tgt1\.[^\s]+\.[0-9a-f-]{36}\.[0-9a-f]{24}$/i.test(t) || /^[a-z0-9][a-z0-9_-]*:\d{6}$/i.test(t);
-
 export default function UniversalScanner({ onClose, staff = false, redemptions = false }: { onClose: () => void; staff?: boolean; redemptions?: boolean }) {
-  const [outcome, setOutcome] = useState<Outcome>(null);
+  const router = useRouter();
+  const [state, setState] = useState<State>({ kind: 'scanning' });
   const [problem, setProblem] = useState('');
+  const [attempt, setAttempt] = useState(0);   // a new number restarts the camera
   const [busy, setBusy] = useState(false);
   const goTimer = useRef<number | undefined>(undefined);
-  useEffect(() => () => window.clearTimeout(goTimer.current), []);   // closing the box in the moment before a page opens cancels the move
+  useEffect(() => () => window.clearTimeout(goTimer.current), []);   // closing in the moment before a page opens cancels the move
   useEffect(() => { if (!problem) return; const id = window.setTimeout(() => setProblem(''), 5000); return () => window.clearTimeout(id); }, [problem]);
-  const [attempt, setAttempt] = useState(0);   // a new number restarts the camera after a check-in that did not go through
 
-  type Target = { href: string; title: string; heading: string; text: string };
-  const portalTarget = (text: string): Target | null => {
-    const t = text.trim();
-    // An event ticket (`<event>:<code>`) or a reward pickup (a redemption id): staff's to scan, so the Check-In page takes it from here.
-    const ticket = isTicketQr(t);
-    if (ticket) return staff
-      ? { href: `/portal/checkin/tickets?scan=${encodeURIComponent(t)}`, title: 'Checking In A Ticket', heading: 'Event ticket', text: 'Opening Check-In, which checks this ticket in and shows who it belongs to.' }
-      : null;
-    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(t)) return redemptions
-      ? { href: `/portal/checkin/redemptions?r=${t}`, title: 'Looking Up A Reward', heading: 'Reward pickup', text: 'Opening the reward so you can confirm the hand-over. Nothing is marked as given until you confirm.' }
-      : null;
+  const can = { tickets: staff, rewards: redemptions };
+
+  const linkTarget = (text: string): { href: string; title: string; heading: string; text: string } | null => {
     try {
-      const u = new URL(t);
+      const u = new URL(text.trim());
       const siteHost = /(^|\.)tritongaming\.org$/i.test(u.hostname);
       if (u.origin !== window.location.origin && !siteHost) return null;
       const ev = u.pathname.match(/^\/(?:portal\/)?in\/([^/]+)\/?$/);
@@ -54,56 +48,78 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
     return null;
   };
 
+  function go(href: string) {
+    router.push(href);
+  }
+
+  async function finish(p: Promise<Outcome | null>) {
+    const outcome = await p;
+    if (!outcome) return;
+    setState({ kind: 'result', outcome });
+    if (outcome.kind === 'meeting') window.dispatchEvent(new Event('tg:meetings-changed'));
+  }
+
   function onScan(text: string): boolean {
-    const proof = proofFromScan(text);
-    if (proof) { void checkInMeeting(proof); return true; }
-    const target = portalTarget(text);
-    if (target) { setProblem(''); setOutcome({ kind: 'opening', ...target }); goTimer.current = window.setTimeout(() => go(target.href), 900); return true; }
     const t = text.trim();
-    if (isTicketQr(t)) setProblem('That is an event ticket. Show it to an officer, who scans it to check you in.');
-    else if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(t)) setProblem(staff ? 'That is a reward pickup code, and your role can’t confirm hand-overs. Ask an officer who can.' : 'That is a reward pickup code. Show it to an officer to collect your reward.');
-    else setProblem('That QR code isn’t one the portal can use. Try another.');
+    const ring = t.match(RING);
+    if (ring) {
+      setProblem('');
+      setState({ kind: 'working', label: ring?.[1] === 'm' ? 'Checking you in…' : ring?.[1] === 'r' ? 'Looking up the reward…' : 'Checking the ticket…' });
+      void finish(checkInWithQr(t, can));
+      return true;
+    }
+    const target = linkTarget(t);
+    if (target) { setProblem(''); setState({ kind: 'opening', ...target }); goTimer.current = window.setTimeout(() => go(target.href), 900); return true; }
+    setProblem('That isn’t a tgcode or a portal QR. Try another.');
     return false;
   }
 
-  async function checkInMeeting(proof: object) {
-    setBusy(true); setProblem('');
-    try {
-      const res = await fetch('/api/meetings/check-in', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(proof) });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) { setProblem(json.error || 'Check-in failed.'); setAttempt((n) => n + 1); return; }
-      setOutcome({ kind: 'meeting', title: json.title, at: json.checked_in_at, already: !!json.already });
-      window.dispatchEvent(new Event('tg:meetings-changed'));
-    } catch { setProblem('No connection. Try again.'); setAttempt((n) => n + 1); }
-    finally { setBusy(false); }
+  async function onCode(code: string) {
+    setBusy(true);
+    setState({ kind: 'working', label: 'Checking the code…' });
+    await finish(checkInWithCode(code));
+    setBusy(false);
   }
 
-  function go(href: string) {
-    onClose();
-    if (!navigatePortal(href)) window.location.assign(href);
-  }
+  const rescan = () => { setState({ kind: 'scanning' }); setAttempt((n) => n + 1); };
 
-  if (outcome?.kind === 'meeting') {
+  if (state.kind === 'working') {
     return (
-      <Dialog title={outcome.already ? 'Already Checked In' : 'You’re Checked In'} onClose={onClose}>
-        <div className={styles.result}>
-          <span className={styles.tick}><Check size={34} strokeWidth={2.5} aria-hidden="true" /></span>
-          <strong>{outcome.title}</strong>
-          <span>Meeting · {new Date(outcome.at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' })}</span>
-        </div>
-        <DialogActions><Button onClick={onClose}>Done</Button></DialogActions>
+      <Dialog title="One Moment" onClose={onClose}>
+        <div className={styles.result}><Loader2 size={34} className={styles.spin} aria-hidden="true" /><strong>{state.label}</strong></div>
       </Dialog>
     );
   }
-  if (outcome?.kind === 'opening') {
+  if (state.kind === 'opening') {
     // No extra tap: the page it points at opens by itself, after a moment to read what is happening.
     return (
-      <Dialog title={outcome.title} onClose={onClose}>
+      <Dialog title={state.title} onClose={onClose}>
         <div className={styles.result}>
           <Loader2 size={34} className={styles.spin} aria-hidden="true" />
-          <strong>{outcome.heading}</strong>
-          <span>{outcome.text}</span>
+          <strong>{state.heading}</strong>
+          <span>{state.text}</span>
         </div>
+      </Dialog>
+    );
+  }
+  if (state.kind === 'result') {
+    const o = state.outcome;
+    const again = o.kind === 'ticket' || o.kind === 'rewardDone' || o.kind === 'error' || o.kind === 'reward' || o.kind === 'choose';
+    return (
+      <Dialog title={o.kind === 'error' ? 'Check-In' : o.kind === 'meeting' ? 'Meeting Check-In' : o.kind === 'ticket' ? 'Ticket Check-In' : 'Reward Pickup'} onClose={onClose}>
+        <CheckInOutcome
+          outcome={o}
+          busy={busy}
+          doneLabel={again ? 'Scan Next' : 'Done'}
+          onDone={() => (again ? rescan() : onClose())}
+          onChoose={async (which) => { if (o.kind !== 'choose') return; setBusy(true); await finish(resolveChoice(o.code, which)); setBusy(false); }}
+          onConfirmReward={async () => {
+            if (o.kind !== 'reward') return;
+            setBusy(true);
+            setState({ kind: 'result', outcome: await confirmReward(o.id, o.title, o.member) });
+            setBusy(false);
+          }}
+        />
       </Dialog>
     );
   }
@@ -114,12 +130,11 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
         onScan={onScan}
         onClose={onClose}
         title="Scan A QR Code"
-        note="Meeting and event check-in codes work here. Point the camera at the QR and zoom in if it is far away."
+        note="Point the camera at a tgcode (meeting, ticket or reward) or an event’s check-in QR."
+        footer={<div className={styles.codeBar}><span>{staff ? 'Or type the 6-digit code (meeting or ticket)' : 'Or type the 6-digit code from the screen'}</span><CodeEntry dark onSubmit={(c) => void onCode(c)} busy={busy} /></div>}
       />
-      {(problem || busy) && (
-        <div className={styles.toast} role="status">
-          {busy ? 'Checking you in…' : <><CircleAlert size={16} aria-hidden="true" /> {problem}</>}
-        </div>
+      {problem && (
+        <div className={styles.toast} role="status"><CircleAlert size={16} aria-hidden="true" /> {problem}</div>
       )}
     </>
   );

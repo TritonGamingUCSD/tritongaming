@@ -7,3 +7,4 @@
 .spin { animation: usSpin 0.9s linear infinite; color: var(--pp-ink); }
 @keyframes usSpin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+.codeBar { display: flex; flex-direction: column; gap: 0.4rem; width: min(100%, 22rem); font-size: 0.8rem; color: rgba(255, 255, 255, 0.85); }   /* theme-ok */

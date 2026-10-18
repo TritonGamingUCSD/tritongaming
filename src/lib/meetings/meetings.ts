@@ -224,13 +224,13 @@ export function isValidMeetingCode(secret: string, input: string): boolean {
   return rotatingCode(secret, w) === c || rotatingCode(secret, w - 1) === c;
 }
 
-// The QR on the room screen is not a link and not the typed code: it carries `tgm1.<meeting>.<key>`, a key of its own that rotates with the
-// same 30-second window (the previous one still counts, as for the digits). Only the portal's scanner reads it, so there is no sign-in step to outlast.
-export const MEETING_QR_PREFIX = 'tgm1';
-export function currentQrKey(secret: string): string { return qrToken(secret, currentWindow()); }
-export function isValidQrKey(secret: string, key: string): boolean {
+// The code on the room screen is not a link and not the typed digits: it is a ring code carrying `m` and twelve hex digits of a key of its own, which rotates with
+// the same 30-second window (the previous one still counts, as for the digits). Only the portal's scanner reads it, so there is no sign-in step to outlast.
+export const QR_TOKEN_LEN = 12;
+export const currentQrToken = (secret: string): string => qrToken(secret, currentWindow()).slice(0, QR_TOKEN_LEN);
+export function isValidQrToken(secret: string, token: string): boolean {
   const w = currentWindow();
-  return key === qrToken(secret, w) || key === qrToken(secret, w - 1);
+  return token === qrToken(secret, w).slice(0, QR_TOKEN_LEN) || token === qrToken(secret, w - 1).slice(0, QR_TOKEN_LEN);
 }
 
 export async function authorizeMeetings(capability: Extract<Capability, 'manage_meetings' | 'attend_meetings' | 'host_meetings' | 'view_attendance_reports'>) {

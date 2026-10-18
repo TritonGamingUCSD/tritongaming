@@ -4,19 +4,19 @@ import { confirmDiscardUnsaved } from '@/lib/ui/useUnsavedChanges';
 import type { ReactElement, ReactNode } from 'react';
 import { Fragment, cloneElement, isValidElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { mergedPortalParams, portalHref } from '@/lib/portal/portalPath';
 import { usePortalParams } from '@/lib/portal/usePortalParams';
 import { motion, AnimatePresence } from 'motion/react';
-import { Home, MoreHorizontal, ChevronRight, ChevronLeft, ScanLine } from 'lucide-react';
-import dynamic from 'next/dynamic';
+import { Home, MoreHorizontal, ChevronRight, ChevronLeft } from 'lucide-react';
+import RingIcon from '@/components/RingCode/RingIcon';
 import PortalSearch from './PortalSearch';
 import NotificationBell from './NotificationBell';
 import PortalThemeToggle from './PortalThemeToggle';
 import PortalCopyLink from './PortalCopyLink';
+import ScanLink from './ScanLink';
 import PortalCrumbs from './PortalCrumbs';
 import { pickDock, readUsage, recordUse } from './dockPicker';
-const UniversalScanner = dynamic(() => import('./UniversalScanner'), { ssr: false });
 import styles from './PortalHub.module.css';
 import simple from './PortalSimple.module.css';
 import mob from './PortalMobile.module.css';
@@ -65,8 +65,6 @@ export interface HubSection {
   group: HubGroup;
   /** Extra weight for a slot on the mobile bottom bar — what's relevant to this person right now. */
   dockBoost?: number;
-  /** Check-In only: this person may also confirm reward pickups, so the phone's scanner may open them. */
-  scanRedemptions?: boolean;
   /** Never gets a bottom-bar slot (still reachable from More). */
   dockExclude?: boolean;
   /** Never suggested under "For you" on the dashboard (still in the sidebar and All pages). */
@@ -290,7 +288,7 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
 
   // Server render and first paint use the role/context defaults; once mounted, what this person
   // actually opens and the time of week are folded in.
-  const [scanOpen, setScanOpen] = useState(false);
+  const router = useRouter();
   // Five slots: Home, two pages, the scanner in the middle... so the bar keeps two pages, then More.
   const [dock, setDock] = useState(() => pickDock(sections, { slots: 2 }));
   const dockKey = sections.map((s) => `${s.id}:${s.dockBoost ?? 0}:${s.dockExclude ? 'x' : ''}`).join(',');
@@ -308,8 +306,8 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
   const primaryTabs = sections.filter((s) => dock.ids.has(s.id));
   // The middle of the phone's bottom bar: one camera for every QR the portal makes (see UniversalScanner).
   const scanButton = (
-    <button key="scan" type="button" className={`${styles.dockItem} ${styles.dockScan}`} onClick={() => { setMoreOpen(false); setScanOpen(true); }} aria-label="Scan a QR code">
-      <span className={styles.dockScanIcon}><ScanLine size={24} strokeWidth={2} aria-hidden="true" /></span>
+    <button key="scan" type="button" className={`${styles.dockItem} ${styles.dockScan}`} onClick={() => { setMoreOpen(false); router.push('/portal/scan'); }} aria-label="Scan a QR code">
+      <span className={styles.dockScanIcon}><RingIcon size={26} /></span>
       <span className={styles.dockLabel}>Scan</span>
     </button>
   );
@@ -413,7 +411,6 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
 
       </AnimatePresence>
 
-      {scanOpen && <UniversalScanner staff={sections.some((s) => s.id === 'checkin')} redemptions={!!sections.find((s) => s.id === 'checkin')?.scanRedemptions} onClose={() => setScanOpen(false)} />}
       <nav className={styles.bottomBar} aria-label="Portal quick navigation">
         <button
           type="button"
@@ -697,6 +694,7 @@ function DesktopShell({
           <div className={styles.topRight}>
             {frame?.viewAs}
             <div className={styles.topSearch}><PortalSearch compact /></div>
+            <ScanLink />
             <PortalCopyLink />
             <PortalThemeToggle />
             <NotificationBell inline />
@@ -769,6 +767,7 @@ function PlainShell({ identity, railFooter, homeExtras, groupedSections, openSec
         <div className={simple.right}>
           {frame?.viewAs}
           <div className={simple.search}><PortalSearch compact /></div>
+          <ScanLink />
           <PortalThemeToggle />
           <NotificationBell inline />
         </div>

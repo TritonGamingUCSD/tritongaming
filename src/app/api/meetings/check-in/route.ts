@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { authorizeMeetings, checkInOpensAt, getTodaysMeetings, isCheckInAccepting, isMeetingOpen, isValidMeetingCode, isValidQrKey } from '@/lib/meetings/meetings';
+import { authorizeMeetings, checkInOpensAt, getTodaysMeetings, isCheckInAccepting, isMeetingOpen, isValidMeetingCode, isValidQrToken } from '@/lib/meetings/meetings';
 import { canAttendMeeting } from '@/lib/meetings/meetingAudience';
 import { notifyMeetingLive } from '@/lib/meetings/meetingLive';
 
@@ -10,10 +10,10 @@ export async function POST(request: Request) {
   if (auth.error) return auth.error;
   const body = await request.json().catch(() => ({}));
   const code = String(body.code ?? '').replace(/\s/g, '');
-  const qrMeeting = typeof body.meeting_id === 'string' ? body.meeting_id : '';
-  const qrKey = String(body.key ?? '');
+  const qrToken = typeof body.qr_token === 'string' ? body.qr_token.trim().toLowerCase() : '';   // from the ring code: `m` + this
+  if (qrToken && !/^[0-9a-f]{12}$/.test(qrToken)) return NextResponse.json({ error: 'That isn’t a meeting code.' }, { status: 400 });
   const preview = body.preview === true;   // only say which meeting it is, so the person can confirm
-  if (!qrMeeting && !/^\d{6}$/.test(code)) return NextResponse.json({ error: 'Enter the 6-digit code from the screen.' }, { status: 400 });
+  if (!qrToken && !/^\d{6}$/.test(code)) return NextResponse.json({ error: 'Enter the 6-digit code from the screen.' }, { status: 400 });
 
   const mine = (await getTodaysMeetings(auth.svc)).filter((m) => isMeetingOpen(m) && canAttendMeeting(m, auth.user.id, auth.roles));
   const open = mine.filter((m) => isCheckInAccepting(m));
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: soonest ? opensMsg(soonest) : 'Check-in isn’t open right now.' }, { status: 409 });
   }
 
-  const proves = (m: (typeof mine)[number]) => (qrMeeting ? m.id === qrMeeting && isValidQrKey(m.code_secret, qrKey) : isValidMeetingCode(m.code_secret, code));
+  const proves = (m: (typeof mine)[number]) => (qrToken ? isValidQrToken(m.code_secret, qrToken) : isValidMeetingCode(m.code_secret, code));
   const match = open.find(proves);
   if (!match) {
     // A real code for a meeting that isn't open to members yet gets a clearer answer than "wrong code".

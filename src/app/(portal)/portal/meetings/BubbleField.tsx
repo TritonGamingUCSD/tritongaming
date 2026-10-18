@@ -73,8 +73,6 @@ export default function BubbleField({ answers, avoid, presenting }: { answers: B
     }
     return out;
   }
-  const union = (list: Box[]): Box | null => list.length ? { l: Math.min(...list.map((o) => o.l)), t: Math.min(...list.map((o) => o.t)), r: Math.max(...list.map((o) => o.r)), b: Math.max(...list.map((o) => o.b)) } : null;
-  const hits = (x: number, y: number, w: number, h: number, o: Box) => x < o.r && x + w > o.l && y < o.b && y + h > o.t;
 
   // Which answers are on screen: new ones at once, the rest rotate in.
   useEffect(() => {

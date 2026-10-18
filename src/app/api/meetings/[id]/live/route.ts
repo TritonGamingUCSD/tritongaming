@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { tally } from '@/lib/meetings/meetingFun';
 import { NextResponse } from 'next/server';
-import { checkInOpensAt, isCheckInAccepting, loadGroups, authorizeMeetings, currentMeetingCode, currentQrKey, getExpectedPeople, attachExtras, isMeetingOpen, type MeetingRow, guardMeeting } from '@/lib/meetings/meetings';
+import { checkInOpensAt, isCheckInAccepting, loadGroups, authorizeMeetings, currentMeetingCode, currentQrToken, getExpectedPeople, attachExtras, isMeetingOpen, type MeetingRow, guardMeeting } from '@/lib/meetings/meetings';
 import { staffName } from '@/lib/members/names';
 import { isOver, lockedExpected } from '@/lib/meetings/expectedLock';
 
@@ -57,7 +57,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     tally: tally(m.question_type ?? 'text', m.question_options ?? null, (answerRows ?? []).map((a) => a.answer as string)),
     customEmojis: await customEmojiMap(auth.svc),
     code: cc?.code ?? null,
-    qrKey: open ? currentQrKey(m.code_secret) : null,
+    qrPayload: open ? `m${currentQrToken(m.code_secret)}` : null,
     expiresAt: cc?.expiresAt ?? null,
     // `guest`: checked in to a meeting that was not meant for them (they are not in the expected list); the host sees a Guest tag.
     attendees: (rows ?? []).map((r) => ({ ...byId.get(r.user_id as string)!, checked_in_at: r.checked_in_at, method: r.method, guest: !expectedIds.has(r.user_id as string) })),

@@ -49,14 +49,14 @@ export async function GET(request: Request, { params }: Params) {
       .limit(1);
   const hasFastPass = (memberFastPass?.length ?? 0) > 0;
 
-  const event = Array.isArray(ticket.event) ? ticket.event[0] : ticket.event;
   const code = rotatingCode(ticket.ticket_code, currentWindow());
   // The QR payload is prefixed with the event's slug so scanning it (with any
   // scanner, not just this app's) makes it unmistakable which event it's
   // for — see src/app/api/tickets/checkin/route.ts, which strips this prefix
   // before verifying the actual rotating code. `code` alone (no prefix) is
   // still returned for the manual-entry fallback text on screen.
-  const qrFor = (w: number) => `tgt1.${event?.slug ?? 'event'}.${ticket.id}.${qrToken(ticket.ticket_code, w)}`;
+  // The ring code carries `t` and twelve hex digits of a key of its own (not the typed digits); the portal's scanner finds the ticket from it.
+  const qrFor = (w: number) => `t${qrToken(ticket.ticket_code, w).slice(0, 12)}`;
   const qrData = qrFor(currentWindow());
   // rotation_seconds lets the client pace the countdown ring correctly —
   // opening the ticket mid-window means expires_in is only whatever's left

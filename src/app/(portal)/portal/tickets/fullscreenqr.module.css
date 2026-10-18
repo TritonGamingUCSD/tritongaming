@@ -143,9 +143,9 @@
   50% { opacity: 0.4; transform: scale(0.75); }
 }
 
-/* The badge (TicketQRBadge) is a self-contained circular graphic now — it
+/* The ring code is a self-contained circular graphic now — it
    draws its own white backdrop and dot-ring "frame" on the canvas itself
-   (see qrBadge.ts), so this wrapper no longer needs to be a square white
+   so this wrapper no longer needs to be a square white
    card around it. border-radius:50% keeps its children (the countdown ring)
    below circular too, matching the badge's own shape instead of boxing it.
    Used to also pulse a multi-color glow here, but that and the countdown
