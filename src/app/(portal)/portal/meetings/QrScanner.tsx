@@ -6,6 +6,7 @@ import TGcodeIcon from '@/components/TGcode/TGcodeIcon';
 import { Check, CircleAlert, TriangleAlert, X, Zap, ZapOff } from 'lucide-react';
 import jsQR from 'jsqr';
 import { decodeTGcodeAt } from '@/lib/qr/tgCode/decode';
+import { scanArea, inScanCircle } from '@/lib/qr/scanArea';
 import styles from './meetings.module.css';
 
 interface Caps { zoom?: { min: number; max: number; step: number }; torch?: boolean }
@@ -99,30 +100,33 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
           last = now;
           let text: string | null = null;
           let found: { x: number; y: number; r: number } | null = null;   // where it was, in video pixels
-          // Digital zoom crops the middle of the picture before reading it.
+          // Only what is in (or very near) the circle on the screen is read, not the whole camera picture: another code at the edge of the view, or on a screen across the room, is never picked up by
+          // accident. The picture is cropped to a square a little bigger than the circle (so a code that fills the circle still fits), which also gives a small code more pixels to be read from.
           const z = digitalRef.current ? zoomRef.current : 1;
-          const w = v.videoWidth / z, h = v.videoHeight / z;
+          const stageEl = v.parentElement;
+          const area = scanArea({ w: v.videoWidth, h: v.videoHeight }, { w: stageEl?.clientWidth ?? v.videoWidth, h: stageEl?.clientHeight ?? v.videoHeight }, { w: window.innerWidth, h: window.innerHeight }, z);
+          const { cx, cy, side: L } = area;
+          const inCircle = (f: { x: number; y: number; r: number } | null) => inScanCircle(area, f);
           if (detector && z === 1) {
             try {
               const hit = (await detector.detect(v))[0];
-              if (hit) { text = hit.rawValue; found = around(hit.cornerPoints ?? []); }
+              if (hit) { const f = around(hit.cornerPoints ?? []); if (inCircle(f)) { text = hit.rawValue; found = f; } }
             } catch { /* fall back below */ }
           }
           if (!text && ctx) {
-            canvas.width = Math.min(720, w); canvas.height = Math.round(canvas.width * (h / w));
-            ctx.drawImage(v, (v.videoWidth - w) / 2, (v.videoHeight - h) / 2, w, h, 0, 0, canvas.width, canvas.height);
+            canvas.width = Math.min(720, Math.round(L)); canvas.height = canvas.width;
+            ctx.drawImage(v, cx - L / 2, cy - L / 2, L, L, 0, 0, canvas.width, canvas.height);
             const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const k = L / canvas.width, ox = cx - L / 2, oy = cy - L / 2;   // the picture it read is the square in the middle, scaled to fit
+            const inVideo = (p: { x: number; y: number }) => ({ x: ox + p.x * k, y: oy + p.y * k });
             // A QR first (an event's check-in link and the like), then the portal's own TGcode.
             const q = jsQR(img.data, img.width, img.height, { inversionAttempts: 'attemptBoth' });
-            text = q?.data ?? null;
-            const k = w / canvas.width, ox = (v.videoWidth - w) / 2, oy = (v.videoHeight - h) / 2;   // the picture it read is the middle crop, scaled down
-            const inVideo = (p: { x: number; y: number }) => ({ x: ox + p.x * k, y: oy + p.y * k });
-            if (q) found = around([q.location.topLeftCorner, q.location.topRightCorner, q.location.bottomRightCorner, q.location.bottomLeftCorner].map(inVideo));
+            if (q) { const f = around([q.location.topLeftCorner, q.location.topRightCorner, q.location.bottomRightCorner, q.location.bottomLeftCorner].map(inVideo)); if (inCircle(f)) { text = q.data; found = f; } }
             if (!text) {
               const gray = new Uint8ClampedArray(img.width * img.height);
               for (let i = 0, j = 0; i < gray.length; i++, j += 4) gray[i] = (img.data[j] * 77 + img.data[j + 1] * 150 + img.data[j + 2] * 29) >> 8;
               const ring = decodeTGcodeAt(gray, img.width, img.height);
-              if (ring) { text = `tg:${ring.payload}`; found = { x: ox + ring.spot.x * k, y: oy + ring.spot.y * k, r: ring.spot.r * k }; }
+              if (ring) { const f = { x: ox + ring.spot.x * k, y: oy + ring.spot.y * k, r: ring.spot.r * k }; if (inCircle(f)) { text = `tg:${ring.payload}`; found = f; } }
             }
           }
           // The caller decides what the text is: true = taken (freeze the picture), anything else = keep looking. The same text is not offered again for 3 s.
