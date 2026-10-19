@@ -1,7 +1,7 @@
 // Slugs that already mean something on this site — a short link may never shadow them.
 export const RESERVED_SLUGS = new Set([
   'portal', 'login', 'auth', 'in', 'api', 'team', 'events', 'divisions', 'media', 'sponsors', 'membership', 'get-involved',
-  'our-story', 'about', 'robots.txt', 'sitemap.xml', 'manifest.webmanifest', 'icon', 'apple-icon', 'opengraph-image',
+  'our-story', 'about', 'robots.txt', 'sitemap.xml', 'manifest.webmanifest', 'portal.webmanifest', 'icons', 'icon', 'apple-icon', 'opengraph-image',
   'favicon.ico', 'admin', 'static', 'public', 'images', 'logos', 'bytes', 'videos',
 ]);
 

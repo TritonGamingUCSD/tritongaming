@@ -23,7 +23,7 @@ export const metadata: Metadata = {
       { url: '/icon.png', type: 'image/png' },
     ],
     apple: [
-      { url: '/apple-icon.png', type: 'image/png' },
+      { url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
     ],
   },
   openGraph: {
@@ -41,14 +41,8 @@ export const metadata: Metadata = {
     title: 'Triton Gaming',
     description: 'Gaming Org at UC San Diego',
   },
-  // iOS Safari's "Add to Home Screen" doesn't fully honor the web manifest
-  // (see manifest.ts) — these are what actually make an installed icon open
-  // full-screen (no browser chrome) with the right title, on iOS specifically.
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'default',
-    title: 'Triton Gaming',
-  },
+  // The site is deliberately not installable as an app: only the portal is (see src/app/(portal)/layout.tsx, which adds the web app manifest and the standalone flags). A public page added to a
+  // home screen is just a bookmark with the logo, and opens in the browser.
 };
 
 export const viewport: Viewport = {

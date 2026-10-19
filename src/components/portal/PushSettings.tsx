@@ -75,7 +75,7 @@ export default function PushSettings() {
       ) : support === 'ios-install' ? (
         <div className={styles.install}>
           <Smartphone size={18} aria-hidden="true" />
-          <p>On iPhone and iPad, notifications work once Triton Gaming is on your Home Screen. In Safari tap <Share size={13} aria-label="Share" className={styles.inline} /> then <b>Add to Home Screen</b>, open it from there, and come back to this page.</p>
+          <p>On iPhone and iPad, notifications work once the portal is on your Home Screen. While you are in the portal in Safari, tap <Share size={13} aria-label="Share" className={styles.inline} /> then <b>Add to Home Screen</b> (it is added as “TG Portal”), open it from there, and come back to this page.</p>
         </div>
       ) : support === 'unsupported' ? (
         <p className={styles.muted}>This browser doesn’t support push notifications. Chrome, Edge, Firefox and Safari (macOS 13+, or iPhone with the app on your Home Screen) do.</p>
