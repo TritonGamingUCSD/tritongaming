@@ -12,6 +12,7 @@ import PortalThemeToggle from '@/components/portal/PortalThemeToggle';
 import AttributionCapture from '@/components/AttributionCapture/AttributionCapture';
 import ConnectivityBanner from '@/components/ConnectivityBanner/ConnectivityBanner';
 import PushAsk from '@/components/portal/PushAsk';
+import InstallAsk from '@/components/portal/InstallAsk';
 import HideOnPaths from '@/components/portal/HideOnPaths';
 
 const CHECKIN_PATHS = ['/portal/in/', '/portal/finish-profile'];
@@ -64,6 +65,7 @@ export default async function PortalLayout({ children }: { children: React.React
         <HideOnPaths paths={CHECKIN_PATHS}><div className={styles.fixedTheme}><PortalThemeToggle /></div></HideOnPaths>
         <ConnectivityBanner />
         <HideOnPaths paths={CHECKIN_PATHS}><PushAsk /></HideOnPaths>
+        <HideOnPaths paths={CHECKIN_PATHS}><InstallAsk /></HideOnPaths>
         <AttributionCapture />
       </div>
     </div>

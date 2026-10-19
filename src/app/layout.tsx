@@ -61,6 +61,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html suppressHydrationWarning lang="en">
       <head>
         <script dangerouslySetInnerHTML={{ __html: ROOT_THEME_SCRIPT }} />
+        {/* Chrome announces "this site can be installed" once, possibly before the page has finished loading: keep it for components/portal/InstallAsk. */}
+        <script dangerouslySetInnerHTML={{ __html: "window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__tgInstall=e;});" }} />
       </head>
       <body>
         {children}
