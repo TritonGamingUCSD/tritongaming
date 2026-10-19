@@ -3,7 +3,7 @@
   /* Reserves room at the bottom of whatever's scrolling (grid or open-panel
      content) so the fixed bottomBar never sits on top of the last bit of
      it — same value as the bar's own height + safe-area inset below. */
-  padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));
 }
 
 /* ── Bottom tab bar ───────────────────────────────────

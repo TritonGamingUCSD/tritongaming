@@ -328,7 +328,7 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
   // The phone's bottom bar (GlassDock): Home, the two slots the dock picker chose with Scan between them (one camera for every QR the portal makes, see UniversalScanner), and More.
   const dockItems: DockEntry[] = [];
   dockItems.push({ id: 'home', label: 'Home', icon: <Home size={20} strokeWidth={1.9} aria-hidden="true" />, active: openId === null && !moreOpen, onClick: () => { setMoreOpen(false); close(); } });
-  const scanEntry: DockEntry = { id: 'scan', label: 'Scan', raised: true, ariaLabel: 'Scan a TGcode', icon: <TGcodeIcon size={26} />, onClick: () => { setMoreOpen(false); setOpeningScan(true); router.push('/portal/scan'); } };
+  const scanEntry: DockEntry = { id: 'scan', label: 'Scan', raised: true, ariaLabel: 'Scan a TGcode', icon: <TGcodeIcon size={24} />, onClick: () => { setMoreOpen(false); setOpeningScan(true); router.push('/portal/scan'); } };
   primaryTabs.forEach((sec, i) => {
     if (i === 1) dockItems.push(scanEntry);
     dockItems.push({

@@ -9,13 +9,13 @@
   position: fixed;
   left: 0.85rem;
   right: 0.85rem;
-  bottom: calc(0.7rem + env(safe-area-inset-bottom, 0px));
+  bottom: calc(0.55rem + env(safe-area-inset-bottom, 0px));
   z-index: 20;
   display: flex;
   align-items: stretch;
   gap: 0.1rem;
-  padding: 0.35rem;
-  border-radius: 2.1rem;
+  padding: 0.28rem;
+  border-radius: 2rem;
   background: var(--glass-tint);
   -webkit-backdrop-filter: blur(22px) saturate(185%);
   backdrop-filter: blur(22px) saturate(185%);
@@ -50,12 +50,12 @@
 /* The lens under the open destination: a second, brighter layer of glass tinted with the brand yellow. */
 .lens {
   position: absolute;
-  top: 0.35rem;
-  bottom: 0.35rem;
+  top: 0.28rem;
+  bottom: 0.28rem;
   left: 0;
   width: var(--lens-w, 0);
   z-index: 0;
-  border-radius: 1.75rem;
+  border-radius: 1.6rem;
   background: linear-gradient(180deg, color-mix(in srgb, var(--yellow) 58%, transparent), color-mix(in srgb, var(--yellow) 34%, transparent));
   border: 1px solid rgba(255, 255, 255, 0.55); /* theme-ok: glass catches white light in both themes */
   box-shadow: 0 4px 14px color-mix(in srgb, var(--yellow) 40%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.75), inset 0 -1px 0 rgba(255, 255, 255, 0.25);
@@ -71,16 +71,16 @@
   z-index: 1;
   flex: 1;
   min-width: 0;
-  min-height: 54px;
+  min-height: 46px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.16rem;
-  padding: 0.15rem 0;
+  gap: 0.08rem;
+  padding: 0.1rem 0;
   background: none;
   border: none;
-  border-radius: 1.75rem;
+  border-radius: 1.6rem;
   color: rgba(var(--pp-ink-rgb), 0.78);
   font-family: var(--font-futura-medium);
   cursor: pointer;
@@ -92,8 +92,8 @@
 .active { color: var(--pp-ink); }
 .active .label { font-weight: 700; }
 
-.icon { position: relative; display: grid; place-items: center; width: 44px; height: 28px; }
-.label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: 0.68rem; letter-spacing: 0; line-height: 1.1; white-space: nowrap; }
+.icon { position: relative; display: grid; place-items: center; width: 44px; height: 24px; }
+.label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: 0.64rem; letter-spacing: 0; line-height: 1.1; white-space: nowrap; }
 .badge {
   position: absolute;
   top: -5px;
@@ -120,9 +120,9 @@
 .orb {
   display: grid;
   place-items: center;
-  width: 54px;
-  height: 54px;
-  margin-top: -1.35rem;
+  width: 48px;
+  height: 48px;
+  margin-top: -1.05rem;
   border-radius: 50%;
   color: #011941; /* theme-ok */
   background: radial-gradient(120% 120% at 30% 18%, color-mix(in srgb, var(--yellow) 78%, white), var(--yellow) 62%);
