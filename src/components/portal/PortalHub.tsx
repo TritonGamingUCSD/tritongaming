@@ -28,6 +28,10 @@ import mob from './PortalMobile.module.css';
 // Section icons are already sized for the big grid cards (28px) — shrink
 // to something that reads as a tab-bar glyph instead of cloning a whole
 // second icon set just for this.
+// The bottom bar's icons should look the same size, not just be the same size: the calendar glyphs fill their box more than the ticket does, so they are drawn a little smaller
+// and the ticket a little larger.
+const DOCK_ICON_SIZE: Record<string, number> = { meetings: 19, events: 19, tickets: 22 };
+
 function smallIcon(icon: ReactNode, size = 21) {
   if (!isValidElement(icon)) return icon;
   return cloneElement(icon as ReactElement<{ size?: number; strokeWidth?: number }>, { size, strokeWidth: 1.75 });
@@ -449,7 +453,7 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
             onClick={() => { setMoreOpen(false); recordUse(s.id); open(s.id); }}
           >
             <span className={styles.dockIcon}>
-              {smallIcon(s.icon, 20)}
+              {smallIcon(s.icon, DOCK_ICON_SIZE[s.id] ?? 20)}
               {s.badge !== undefined && s.badge !== 0 && <span className={styles.dockBadge}>{s.badge}</span>}
             </span>
             <span className={styles.dockLabel}>{s.label.replace(/^My /, '')}</span>
