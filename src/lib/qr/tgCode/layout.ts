@@ -121,9 +121,9 @@ export function dashRuns(payload: string): [number, number, number, boolean][] {
 }
 
 /** How far, in cells, a dash is drawn past (or short of) a cell edge where an arc starts (which = 0) or ends (which = 1): a small fixed amount that differs from arc to arc, so the arcs are not all one length.
- *  The reader looks at the middle of each cell, so these stay small (from 0 to 0.2 of a cell past). */
+ *  The reader looks at the middle of each cell, so these stay small (0, 0.1 or 0.2 of a cell past). */
 export function endShift(ring: number, sector: number, which: 0 | 1): number {
   let h = (ring * 131 + (sector % SECTORS) * 31 + which * 17 + 7) >>> 0;
   h = Math.imul(h ^ (h >>> 15), 2246822519) >>> 0; h = Math.imul(h ^ (h >>> 13), 3266489917) >>> 0; h ^= h >>> 16;
-  return 0 + 0.2 * ((h >>> 0) / 4294967296);
+  return Math.floor(3 * ((h >>> 0) / 4294967296)) * 0.1;   // one of three set lengths: 0, 0.1 or 0.2 of a cell
 }

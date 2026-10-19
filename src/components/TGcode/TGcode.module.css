@@ -5,9 +5,14 @@
 .plate { fill: var(--pp-card, #f3f1ea); }
 .solid { fill: var(--pp-ink, #011941); }
 .ringMark { fill: none; stroke: var(--pp-ink, #011941); }
-.dashes { stroke: var(--pp-ink, #011941); }
+.dashes { fill: var(--pp-ink, #011941); stroke: none; }
+.dashes .band { fill: none; stroke: var(--pp-ink, #011941); }
 .accent { fill: none; stroke: var(--yellow, #ffc72c); }
-.tone { stroke: var(--p-accent-text, #0a4c8a); }
-.fill { stroke: var(--yellow, #ffc72c); }
-.fillBlue { stroke: var(--p-accent, #7db4ea); }
+.dashes .tone { fill: var(--p-accent-text, #0a4c8a); }
+.dashes .tone.band { fill: none; stroke: var(--p-accent-text, #0a4c8a); }
+.dashes .fill { fill: var(--yellow, #ffc72c); }
+.dashes .fill.band { fill: none; stroke: var(--yellow, #ffc72c); }
+.dashes .fillBlue { fill: var(--p-accent, #7db4ea); }
+.dashes .fillBlue.band { fill: none; stroke: var(--p-accent, #7db4ea); }
 .rim { fill: none; stroke: var(--yellow, #ffc72c); }
+.rimLine { fill: none; stroke: var(--yellow, #ffc72c); opacity: 0.7; }
