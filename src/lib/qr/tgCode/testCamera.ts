@@ -33,7 +33,7 @@ const RING_GREY_LIGHT = [25, 63], RING_GREY_DARK = [236, 198], FILL_GREY = [198,
 
 /** The grey painting of a code: for a point in code units, the grey it has there. */
 function makeInk(payload: string, format: Format, dark: boolean, tone: boolean, mono: boolean): (x: number, y: number) => number {
-  const ink = dark ? 235 : 25, plate = dark ? 18 : 240, around = 128, rim = 200;
+  const ink = dark ? 235 : 25, plate = dark ? 18 : 240, around = 128;
   const ringGrey = (ring: number, fill = false) => (fill ? FILL_GREY[ring % 2] : mono ? ink : (dark ? RING_GREY_DARK : RING_GREY_LIGHT)[ring % 2]);
   let arcAt: (x: number, y: number) => number;   // 0 none, else the grey of the dash there
   if (format === 'v2') {
@@ -83,14 +83,12 @@ function makeInk(payload: string, format: Format, dark: boolean, tone: boolean, 
   return (x, y) => {
     const r = Math.hypot(x, y);
     if (r > 1) return around;
-    if (r > 0.96) return rim;
     for (const f of Object.values(FINDERS)) {
       const d = Math.hypot(x - f.x, y - f.y);
       if (d <= 1.5 * U || (d > 2.5 * U && d <= 3.5 * U)) return ink;
     }
     for (const d of Object.values(DOTS)) if (Math.hypot(x - d.x, y - d.y) <= R_SMALL) return ink;
     if (r < R_LOGO) return Math.hypot(x - 0.04, y + 0.03) < 0.12 ? 110 : plate;
-    if (Math.abs(r - (R_LOGO + R_IN) / 2) < 0.006) return rim;
     const g = arcAt(x, y);
     if (g) return g;
     return plate;

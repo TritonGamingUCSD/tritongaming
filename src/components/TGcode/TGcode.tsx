@@ -32,13 +32,10 @@ export default function TGcode({ payload, size, className = '', label = 'Code fo
   return (
     <svg viewBox="-1 -1 2 2" width={size} height={size} className={`${styles.code} ${className}`} role="img" aria-label={label}>
       <circle r="1" className={styles.plate} />
-      <circle r="0.972" className={styles.rim} strokeWidth={0.02} />
-      <circle r="0.925" className={styles.rimLine} strokeWidth={0.006} />
       <g className={styles.dashes}>{drawn}</g>
       {finder(FINDERS.tl, 'tl')}{finder(FINDERS.tr, 'tr')}
       <circle cx={DOTS.bl.x} cy={DOTS.bl.y} r={R_SMALL} className={styles.solid} />
       <circle cx={DOTS.br.x} cy={DOTS.br.y} r={R_SMALL} className={styles.solid} />
-      <circle r={(R_LOGO + R_IN) / 2} className={styles.accent} strokeWidth={0.012} />
       <circle r={R_LOGO} className={styles.solid} />
       <circle r={R_LOGO * 0.76} className={styles.plate} />
       <image href="/logos/tg_logo.png" x={-R_LOGO * 0.62} y={-R_LOGO * 0.62} width={R_LOGO * 1.24} height={R_LOGO * 1.24} preserveAspectRatio="xMidYMid meet" />

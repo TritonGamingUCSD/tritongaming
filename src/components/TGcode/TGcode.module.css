@@ -1,4 +1,4 @@
-.code { display: block; width: 100%; height: auto; aspect-ratio: 1 / 1; border-radius: 50%; box-shadow: 0 0 0 3px var(--yellow, #ffc72c), 0 6px 20px rgba(0, 0, 0, 0.18); }
+.code { display: block; width: 100%; height: auto; aspect-ratio: 1 / 1; border-radius: 50%; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18); }
 /* Triton Gaming's own colours, from the portal's theme tokens so the code flips with the portal's light/dark switch (however it was set) and keeps the contrast the
    reader needs: the message rings alternate the ink (deep navy; white on the dark plate) and the portal's blue; the filler arcs the scanner ignores are the brand yellow and light blue. */
 .plate { fill: var(--pp-card, #f3f1ea); }
@@ -13,6 +13,3 @@
 .dashes .c1.band { stroke: var(--p-accent-text, #0a4c8a); }
 .dashes .f0.band { stroke: var(--yellow, #ffc72c); }
 .dashes .f1.band { stroke: var(--p-accent, #7db4ea); }
-.accent { fill: none; stroke: var(--yellow, #ffc72c); }
-.rim { fill: none; stroke: var(--yellow, #ffc72c); }
-.rimLine { fill: none; stroke: var(--p-accent, #7db4ea); opacity: 0.95; }
