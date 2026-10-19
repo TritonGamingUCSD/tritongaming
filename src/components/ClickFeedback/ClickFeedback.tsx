@@ -99,9 +99,12 @@ export default function ClickFeedback() {
           const icon = el.querySelector<HTMLElement>('svg, img');
           const ir = icon?.getBoundingClientRect();
           if (icon && ir && ir.width >= 10 && ir.height >= 10) {
-            const size = Math.min(Math.max(Math.min(ir.width, ir.height) * 0.95, 16), 30);
-            el.style.setProperty('--tg-spin-x', `${ir.left + ir.width / 2 - (r.left + el.clientLeft)}px`);
-            el.style.setProperty('--tg-spin-y', `${ir.top + ir.height / 2 - (r.top + el.clientTop)}px`);
+            // Measured on screen, placed in the element's own units: a button that is mid-pop or pressed (scaled) would otherwise put the spinner off-centre. It never grows past the button.
+            const k = el.offsetWidth > 0 && r.width > 0 ? r.width / el.offsetWidth : 1;
+            const fit = Math.max(10, Math.min(el.clientWidth, el.clientHeight) - 6);
+            const size = Math.min(Math.max(Math.min(ir.width, ir.height) / k * 0.95, 16), 30, fit);
+            el.style.setProperty('--tg-spin-x', `${(ir.left + ir.width / 2 - r.left) / k - el.clientLeft}px`);
+            el.style.setProperty('--tg-spin-y', `${(ir.top + ir.height / 2 - r.top) / k - el.clientTop}px`);
             el.style.setProperty('--tg-spin-size', `${size}px`);
             icon.setAttribute('data-tg-icon', '');
             el.setAttribute('data-tg-pending', 'icon');

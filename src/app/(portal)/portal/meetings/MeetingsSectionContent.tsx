@@ -29,6 +29,8 @@ import { QuestionEditor, ResultBars, StarPicker, Confetti, emptyQ, qFrom, qPaylo
 import { CUSTOM_PREFIX, isCustomEmoji, customEmojiId, MAX_EMOJI_BYTES, MAX_EMOJI_PICK_BYTES, EMOJI_NAME, parseDiscordEmoji, emojiNameFrom, type CustomEmoji, type QuestionType, type Tally, MAX_ANSWER_LENGTH } from '@/lib/meetings/meetingFun';
 import PlanningPanel from './planning/PlanningPanel';
 import { useMeetingLive } from '@/lib/meetings/useMeetingLive';
+import { useClapListener, useClapSender } from '@/lib/meetings/meetingClaps';
+import { boardFromWallSpot, wallSpotFromBoard, WALL_MAX } from '@/lib/meetings/meetingWall';
 import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
 import styles from './meetings.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
@@ -38,6 +40,7 @@ import { checkInWithCode, resolveChoice, type Outcome } from '@/lib/checkin/anyC
 import Link from 'next/link';
 import TGcode from '@/components/TGcode/TGcode';
 
+type WallItem = { id: string; emoji: string; x: number; y: number };
 type Tab = 'mine' | 'planning' | 'host' | 'attendance' | 'emojis';
 
 interface Person { id: string; name: string; avatar_url: string | null; custom_avatar_url: string | null }
@@ -47,6 +50,7 @@ interface Live {
   meeting: { open_to_team?: boolean; question_type: QuestionType; question_options: string[] | null; id: string; title: string; meeting_date: string; starts_at: string; ends_at: string; open: boolean; doc_url: string | null; location: string | null; cancelled: boolean; series_id: string | null; accepting: boolean; opens_at: string; question: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; groupNames: string[] };
   answers: (Person & { answer: string; at: string })[];
   reactionTotals: Record<string, number>;
+  wall?: WallItem[];
   customEmojis?: Record<string, { name: string; url: string }>;
   tally: Tally;
   code: string | null;
@@ -329,6 +333,8 @@ function FunBox({ meeting, onSaved }: { meeting: TodayMeeting; onSaved: () => vo
   const [mine, setMine] = useState<string | null>(meeting.my_answer);
   const [tallyNow, setTallyNow] = useState<Tally | null>(null);
   const last = useRef(0);
+  const sendClap = useClapSender(meeting.id, meeting.open);
+  const [clapPop, setClapPop] = useState(0);
   const type = meeting.question_type ?? 'text';
   // Polls and ratings: after you vote you watch the bars move as everyone else votes (paused while the tab is hidden).
   const watching = type !== 'text' && !!mine && meeting.open;
@@ -400,6 +406,7 @@ function FunBox({ meeting, onSaved }: { meeting: TodayMeeting; onSaved: () => vo
         <div className={styles.reactBar} role="group" aria-label="Send a reaction to the screen">
           <span className={styles.reactLabel}>React on the big screen</span>
           <div className={styles.reactBtns}>
+            <button type="button" className={`${styles.reactBtn} ${styles.clapBtn}`} onClick={() => { sendClap(); setClapPop((n) => n + 1); }} aria-label="Clap" title="Clap"><span key={clapPop} className={clapPop ? styles.reactPop : ''}>👏</span></button>
             {club.length > 1 && <button type="button" className={`${styles.reactBtn} ${styles.reactDice}`} onClick={() => { const c = club[Math.floor(Math.random() * club.length)]; react(`${CUSTOM_PREFIX}${c.id}`); }} aria-label="Send a random emoji" title="Surprise me"><Dices size={22} aria-hidden="true" /></button>}
             {club.length === 0 && <p className={styles.faint}>No club emojis yet. Add one in the Emojis tab.</p>}
             {club.map((c) => {
@@ -409,6 +416,50 @@ function FunBox({ meeting, onSaved }: { meeting: TodayMeeting; onSaved: () => vo
           </div>
         </div>
       )}
+      {meeting.open && club.length > 0 && <WallBoard meetingId={meeting.id} club={club} />}
+    </div>
+  );
+}
+
+// The emoji wall, from the phone: the two side strips of the big screen side by side as one square. Tap a spot to put the chosen emoji there.
+function WallBoard({ meetingId, club }: { meetingId: string; club: CustomEmoji[] }) {
+  const [items, setItems] = useState<WallItem[]>([]);
+  const [pick, setPick] = useState(club[0]?.id ?? '');
+  const [hint, setHint] = useState('');
+  const custom = Object.fromEntries(club.map((c) => [c.id, { name: c.name, url: c.url }]));
+  const load = useCallback(() => fetch(`/api/meetings/${meetingId}/wall`, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((j) => { if (j) setItems(j.wall); }).catch(() => {}), [meetingId]);
+  useEffect(() => { void load(); }, [load]);
+  useMeetingLive(meetingId, load);
+  useVisiblePoll(load, 60_000);   // slow backstop
+  const chosen = club.find((c) => c.id === pick) ?? club[0];
+
+  async function place(e: React.PointerEvent<HTMLDivElement>) {
+    if (!chosen) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    const { x, y } = wallSpotFromBoard((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
+    const emoji = `${CUSTOM_PREFIX}${chosen.id}`, tmp = `tmp${Date.now()}`;
+    setHint('');
+    setItems((l) => [...l, { id: tmp, emoji, x, y }].slice(-WALL_MAX));
+    try {
+      const res = await fetch(`/api/meetings/${meetingId}/wall`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ emoji, x, y }) });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json.throttled) { setItems((l) => l.filter((i) => i.id !== tmp)); setHint(json.throttled ? 'Easy there, give it a few seconds.' : json.error || 'Couldn’t place it.'); }
+    } catch { setItems((l) => l.filter((i) => i.id !== tmp)); setHint('Couldn’t place it.'); }
+  }
+
+  return (
+    <div className={styles.wallBox}>
+      <span className={styles.reactLabel}>Add to the wall</span>
+      <div className={styles.reactBtns}>
+        {club.map((c) => (
+          <button key={c.id} type="button" className={`${styles.wallPick} ${c.id === chosen?.id ? styles.wallPickOn : ''}`} onClick={() => setPick(c.id)} aria-label={`Use ${c.name}`} aria-pressed={c.id === chosen?.id}><EmojiView emoji={`${CUSTOM_PREFIX}${c.id}`} custom={custom} size="1.4rem" /></button>
+        ))}
+      </div>
+      <div className={styles.wallPad} onPointerDown={place} role="button" aria-label="Tap a spot to place your emoji on the big screen">
+        <span className={styles.wallMid} aria-hidden="true" />
+        {items.map((i) => { const b = boardFromWallSpot(i.x, i.y); return <span key={i.id} className={styles.wallDot} style={{ left: `${b.u * 100}%`, top: `${b.v * 100}%` }}><EmojiView emoji={i.emoji} custom={custom} size="1.2rem" /></span>; })}
+      </div>
+      <small className={hint ? styles.wallHint : styles.faint}>{hint || 'Tap a spot. It appears on the big screen, left or right of the code.'}</small>
     </div>
   );
 }
@@ -1465,6 +1516,7 @@ function EmojiPanel() {
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={e.url} alt="" className={styles.emojiThumb} />
       <span>:{e.name}:</span>
+      {e.uses !== undefined && data?.approved.some((a) => a.id === e.id) && <small className={styles.emojiUses}>{e.uses === 0 ? 'Not used lately' : `Used ${e.uses}× lately`}</small>}
       {actions}
     </li>
   );
@@ -1487,6 +1539,7 @@ function EmojiPanel() {
       )}
       <div>
         <h2 className={styles.sectionHead}>Club emojis <span>{data.approved.length}</span></h2>
+        <p className={styles.faint}>Most used first, counted over the last 60 days of meetings. The ones at the end are the ones to swap out.</p>
         {data.approved.length === 0 ? <p className={styles.muted}>None yet. Be the first.</p> : (
           <ul className={styles.emojiGrid}>{data.approved.map((e) => tile(e, data.manage ? <IconButton kind="delete" size="sm" label={`Remove ${e.name}`} onClick={async () => { if (await confirmHold({ title: `Remove :${e.name}:?`, message: 'It disappears for everyone. Reactions already sent with it stop showing the picture.', confirmLabel: 'Hold to remove' })) await act(e.id, 'DELETE'); }} /> : null))}</ul>
         )}
@@ -1677,6 +1730,21 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
 
   useEffect(() => { void loadLive(); }, [loadLive]);
   useMeetingLive(id, loadLive);   // refreshes when someone checks in, answers or reacts
+  // Claps arrive straight from the phones (no refresh): a few 👏 float up for each message, and when the room is really going, one big one bursts.
+  const clapTimes = useRef<{ t: number; n: number }[]>([]);
+  const lastClapBurst = useRef(0);
+  useClapListener(id, useCallback((n: number) => {
+    const t = Date.now();
+    const fresh = Array.from({ length: Math.min(n, 3) }, (_, i) => ({ key: `c${++floatSeq.current}`, emoji: '👏', left: sideSpot(), delay: i * 0.12 }));
+    setFloaters((f) => [...f, ...fresh].slice(-60));
+    setTimeout(() => setFloaters((f) => f.filter((x) => !fresh.some((c) => c.key === x.key))), 4200);
+    clapTimes.current = [...clapTimes.current.filter((c) => t - c.t < 1500), { t, n }];
+    if (clapTimes.current.reduce((a, c) => a + c.n, 0) >= 10 && t - lastClapBurst.current > 1600) {
+      lastClapBurst.current = t;
+      setBigBurst({ key: t, emoji: '👏', left: sideSpot(12, 20) });
+      setTimeout(() => setBigBurst((b) => (b?.key === t ? null : b)), 1800);
+    }
+  }, []), !!live?.meeting.open);
   useVisiblePoll(loadLive, 120_000);   // slow backstop in case the live connection is blocked (changes arrive by signal; the code changes by itself from `upcoming`)
 
   useEffect(() => {
@@ -1822,6 +1890,11 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
           )}
           {bigBurst && <span key={bigBurst.key} className={styles.bigBurst} style={{ left: `${bigBurst.left}%` }} aria-hidden="true"><EmojiView emoji={bigBurst.emoji} custom={live.customEmojis} size="1em" /></span>}
           <Confetti fire={fire} />
+          {presenting && (live.wall?.length ?? 0) > 0 && (
+            <div className={styles.wallLayer} aria-hidden="true">
+              {live.wall!.map((w) => <span key={w.id} className={styles.wallItem} style={{ left: `${w.x}%`, top: `${w.y}%`, rotate: `${(parseInt(w.id.slice(0, 4), 16) % 40) - 20}deg` }}><EmojiView emoji={w.emoji} custom={live.customEmojis} /></span>)}
+            </div>
+          )}
           <div className={styles.floaters} aria-hidden="true">
             {floaters.map((f) => <span key={f.key} className={styles.floater} style={{ left: `${f.left}%`, animationDelay: `${f.delay}s` }}><EmojiView emoji={f.emoji} custom={live.customEmojis} /></span>)}
           </div>

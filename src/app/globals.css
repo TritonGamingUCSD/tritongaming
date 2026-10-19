@@ -488,11 +488,12 @@ mark[data-h='gray'] { background: var(--dh-gray); color: inherit; padding: 0.04e
 [data-tg-pending='small'] svg, [data-tg-pending='small'] img { opacity: 0; }
 [data-tg-pending='large'] { opacity: 0.7; }
 [data-tg-pending]::after {
-  content: ''; position: absolute; width: 1.15rem; height: 1.15rem; border-radius: 50%; box-sizing: border-box;
+  content: ''; position: absolute; width: min(1.15rem, calc(100% - 6px)); aspect-ratio: 1; border-radius: 50%; box-sizing: border-box;   /* never wider than the button it sits in */
   border: 2px solid var(--tg-pending-color, currentColor); border-right-color: transparent; animation: tgPendingSpin 0.7s linear infinite;
 }
-[data-tg-pending='small']::after { top: 50%; left: 50%; margin: -0.575rem 0 0 -0.575rem; }
-[data-tg-pending='large']::after { top: 0.7rem; right: 0.7rem; }
+[data-tg-pending='small']::after { top: 50%; left: 50%; translate: -50% -50%; }
+/* A big thing (a card) dims and a thin bar sweeps along its top edge, so nothing in the card is covered. */
+[data-tg-pending='large']::after { top: 0; left: 14px; right: 14px; width: auto; height: 3px; aspect-ratio: auto; border: 0; border-radius: 3px; animation: tgPendingBar 1s ease-in-out infinite; background: linear-gradient(90deg, transparent, var(--tg-pending-color, currentColor), transparent) 0 0 / 40% 100% no-repeat; }
 /* Something with an icon: the spinner takes the icon's place (set from the script) and the label stays. */
 [data-tg-pending='icon'] [data-tg-icon] { opacity: 0; }
 [data-tg-pending='icon']::after {
@@ -500,4 +501,5 @@ mark[data-h='gray'] { background: var(--dh-gray); color: inherit; padding: 0.04e
   margin: calc(var(--tg-spin-size) / -2) 0 0 calc(var(--tg-spin-size) / -2);
 }
 @keyframes tgPendingSpin { to { transform: rotate(360deg); } }
+@keyframes tgPendingBar { from { background-position: -40% 0; } to { background-position: 140% 0; } }
 @media (prefers-reduced-motion: reduce) { [data-tg-pending]::after { animation-duration: 2.4s; } }

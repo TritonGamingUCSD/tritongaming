@@ -24,7 +24,7 @@ Check the result with a `select` afterwards. This runs on the **live** database,
 
 **Help:** `help_tickets` (categories `bug`, `question`, `account`, `tickets`, `doc`, `other`), `help_messages`.
 
-**Meetings and team:** `meetings`, `meeting_series`, `meeting_attendance`, `meeting_absences`, `meeting_series_absences`, `meeting_plans`, `meeting_plan_responses`, `meeting_answers`, `meeting_reactions`, `meeting_groups`, `custom_emojis` and `reminders_sent` (remembers who already got which reminder; also used to send once a day).
+**Meetings and team:** `meetings`, `meeting_series`, `meeting_attendance`, `meeting_absences`, `meeting_series_absences`, `meeting_plans`, `meeting_plan_responses`, `meeting_answers`, `meeting_reactions`, `meeting_wall` (the emoji wall: one row per placed emoji, no sender), `meeting_groups`, `custom_emojis` and `reminders_sent` (remembers who already got which reminder; also used to send once a day).
 
 **Members and attendance:** `strikes` and its tables (`strike_events`, `strike_settings`, ...), `academic_quarters`, `quarter_roster`, `officer_quarter_status`, `team_years`, `team_year_members`, `team_settings`.
 

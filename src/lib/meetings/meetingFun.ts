@@ -144,7 +144,8 @@ export const customEmojiId = (e: string) => e.slice(CUSTOM_PREFIX.length);
 export const MAX_EMOJI_BYTES = 4 * 1024 * 1024;
 export const MAX_EMOJI_PICK_BYTES = 30 * 1024 * 1024;
 export const EMOJI_NAME = /^[a-z0-9_]{2,20}$/;
-export interface CustomEmoji { id: string; name: string; url: string }
+export interface CustomEmoji { id: string; name: string; url: string; uses?: number }   // uses: taps over the last RECENT_EMOJI_DAYS days (approved ones)
+export const RECENT_EMOJI_DAYS = 60;
 
 // ── Question types: typed answer, this-or-that poll, 1 to 5 rating ──────────────────────────────────────────────
 export type QuestionType = 'text' | 'poll' | 'rating';

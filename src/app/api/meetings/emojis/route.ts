@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
 import { authorizeMeetings } from '@/lib/meetings/meetings';
-import { EMOJI_NAME, MAX_EMOJI_BYTES, parseDiscordEmoji } from '@/lib/meetings/meetingFun';
+import { EMOJI_NAME, MAX_EMOJI_BYTES, RECENT_EMOJI_DAYS, parseDiscordEmoji } from '@/lib/meetings/meetingFun';
 import { hasCapability } from '@/lib/portal/capabilities';
 
 export const dynamic = 'force-dynamic';
@@ -45,10 +45,19 @@ export async function GET() {
   const url = (p: string) => auth.svc.storage.from(BUCKET).getPublicUrl(p).data.publicUrl;
   const rows = data ?? [];
   const manage = hasCapability(auth.roles, 'manage_meetings');
-  const row = (r: (typeof rows)[number]) => ({ id: r.id as string, name: r.name as string, url: url(r.path as string) });
+  // How often each was tapped in recent meetings, so the most used come first (and the unused ones are easy to spot and swap out).
+  const since = new Date(Date.now() - RECENT_EMOJI_DAYS * 86_400_000).toISOString().slice(0, 10);
+  const { data: recent } = await auth.svc.from('meetings').select('id').gte('meeting_date', since);
+  const ids = (recent ?? []).map((m) => m.id as string);
+  const uses = new Map<string, number>();
+  if (ids.length) {
+    const { data: counts } = await auth.svc.from('meeting_reaction_counts').select('emoji, count').in('meeting_id', ids);
+    for (const c of counts ?? []) uses.set(c.emoji as string, (uses.get(c.emoji as string) ?? 0) + Number(c.count));
+  }
+  const row = (r: (typeof rows)[number]) => ({ id: r.id as string, name: r.name as string, url: url(r.path as string), uses: uses.get(`custom:${r.id}`) ?? 0 });
   return NextResponse.json({
     manage,
-    approved: rows.filter((r) => r.status === 'approved').map(row),
+    approved: rows.filter((r) => r.status === 'approved').map(row).sort((a, b) => b.uses - a.uses),   // (a stable sort: ties keep newest first)
     mine: rows.filter((r) => r.status === 'pending' && r.created_by === auth.user.id).map(row),
     queue: manage ? rows.filter((r) => r.status === 'pending').map(row) : [],
   });
