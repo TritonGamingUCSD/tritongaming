@@ -60,7 +60,9 @@ function targetOf(e: MouseEvent): HTMLElement | null {
 }
 
 function clear(el: HTMLElement) {
-  el.removeAttribute('data-tg-pending'); el.removeAttribute('aria-busy'); el.style.removeProperty('--tg-pending-color');
+  el.removeAttribute('data-tg-pending'); el.removeAttribute('aria-busy');
+  for (const v of ['--tg-pending-color', '--tg-spin-x', '--tg-spin-y', '--tg-spin-size']) el.style.removeProperty(v);
+  el.querySelector('[data-tg-icon]')?.removeAttribute('data-tg-icon');
   if (el.hasAttribute('data-tg-rel')) { el.style.removeProperty('position'); el.removeAttribute('data-tg-rel'); }
 }
 
@@ -93,7 +95,19 @@ export default function ClickFeedback() {
           const cs = getComputedStyle(el);
           el.style.setProperty('--tg-pending-color', cs.color);
           if (cs.position === 'static') { el.style.position = 'relative'; el.setAttribute('data-tg-rel', ''); }   // (the spinner is placed against it; a fixed or absolute one already works for that)
-          el.setAttribute('data-tg-pending', r.width <= 380 && r.height <= 72 ? 'small' : 'large');
+          // Something with an icon (a bar button, "Show TGcode") gets its spinner where the icon is, and only the icon steps aside; anything else shows it in the middle in place of its label.
+          const icon = el.querySelector<HTMLElement>('svg, img');
+          const ir = icon?.getBoundingClientRect();
+          if (icon && ir && ir.width >= 10 && ir.height >= 10) {
+            const size = Math.min(Math.max(Math.min(ir.width, ir.height) * 0.95, 16), 30);
+            el.style.setProperty('--tg-spin-x', `${ir.left + ir.width / 2 - (r.left + el.clientLeft)}px`);
+            el.style.setProperty('--tg-spin-y', `${ir.top + ir.height / 2 - (r.top + el.clientTop)}px`);
+            el.style.setProperty('--tg-spin-size', `${size}px`);
+            icon.setAttribute('data-tg-icon', '');
+            el.setAttribute('data-tg-pending', 'icon');
+          } else {
+            el.setAttribute('data-tg-pending', r.width <= 380 && r.height <= 72 ? 'small' : 'large');
+          }
           el.setAttribute('aria-busy', 'true');
           shownAt = now;
         }
