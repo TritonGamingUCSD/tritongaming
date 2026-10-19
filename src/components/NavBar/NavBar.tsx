@@ -11,6 +11,8 @@ import { resolveAvatarUrl } from '@/lib/members/profile';
 import styles from './NavBar.module.css';
 import { DISCORD_URL } from '@/lib/site/links';
 
+const NAV_HINT_KEY = 'tg_nav_portal_hint';
+
 const NAV_LINKS = [
   { href: '/our-story',     label: 'Our Story' },
   { href: '/team',          label: 'Team' },
@@ -32,6 +34,8 @@ export default function NavBar({ announcement }: { announcement?: React.ReactNod
   const toggleRef = useRef<HTMLButtonElement>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  // What the last signed-in visit looked like (kept on this browser), so the Portal button already has the person's picture while the login is being checked.
+  const [hint, setHint] = useState<{ avatar: string | null; letter: string } | null>(null);
   const prevScrollY = useRef(0);
   const pathname = usePathname();
   // Deliberately NOT next=<current page> — clicking the nav's own login
@@ -48,6 +52,10 @@ export default function NavBar({ announcement }: { announcement?: React.ReactNod
   }, [pathname]);
 
   useEffect(() => {
+    try { const raw = localStorage.getItem(NAV_HINT_KEY); if (raw) setHint(JSON.parse(raw)); } catch { /* no storage: no hint */ }
+  }, []);
+
+  useEffect(() => {
     const supabase = createClient();
 
     async function loadProfile() {
@@ -59,6 +67,12 @@ export default function NavBar({ announcement }: { announcement?: React.ReactNod
           .eq('id', user.id)
           .single();
         setProfile(data as Profile | null);
+        try {
+          const p = data as Profile | null;
+          if (p) localStorage.setItem(NAV_HINT_KEY, JSON.stringify({ avatar: resolveAvatarUrl(p), letter: (p.display_name || 'U')[0].toUpperCase() }));
+        } catch { /* ignore */ }
+      } else {
+        try { localStorage.removeItem(NAV_HINT_KEY); setHint(null); } catch { /* ignore */ }
       }
       setAuthLoading(false);
     }
@@ -68,6 +82,7 @@ export default function NavBar({ announcement }: { announcement?: React.ReactNod
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
         setProfile(null);
+        try { localStorage.removeItem(NAV_HINT_KEY); setHint(null); } catch { /* ignore */ }
         setAuthLoading(false);
       } else {
         loadProfile();
@@ -127,9 +142,11 @@ export default function NavBar({ announcement }: { announcement?: React.ReactNod
     return () => { document.body.style.overflow = ''; document.removeEventListener('keydown', onKey); toggle?.focus(); };
   }, [open]);
 
-  const navAvatarUrl = profile ? resolveAvatarUrl(profile) : null;
-
-  const portalHref = profile ? '/portal' : loginHref;
+  // The Portal button is always there. While the login is still being checked (a slow connection can make that take a while) it already goes to /portal, which sends someone who
+  // is not signed in on to the login page by itself, so it works from the first moment.
+  const navAvatarUrl = profile ? resolveAvatarUrl(profile) : authLoading ? hint?.avatar ?? null : null;
+  const showLetter = profile ? (profile.display_name || 'U')[0].toUpperCase() : authLoading ? hint?.letter ?? null : null;
+  const portalHref = profile || authLoading ? '/portal' : loginHref;
 
   return (
     <>
@@ -142,16 +159,14 @@ export default function NavBar({ announcement }: { announcement?: React.ReactNod
         {announcement && <div className={`${styles.announce}${open ? ` ${styles.announceHidden}` : ''}`}>{announcement}</div>}
 
         <div className={styles.right}>
-          {!authLoading && (
-            <Link href={portalHref} prefetch={false} className={styles.portal} aria-label={profile ? 'Member portal' : 'Sign in to the member portal'}>
-              {profile && navAvatarUrl ? (
-                <Image src={navAvatarUrl} alt="" width={24} height={24} className={styles.avatar} unoptimized referrerPolicy="no-referrer" />
-              ) : profile ? (
-                <span className={styles.avatarFallback} aria-hidden="true" data-letter={(profile.display_name || 'U')[0].toUpperCase()} />
-              ) : null}
-              <span>Portal</span>
-            </Link>
-          )}
+          <Link href={portalHref} prefetch={false} className={styles.portal} aria-label={profile || authLoading ? 'Member portal' : 'Sign in to the member portal'}>
+            {navAvatarUrl ? (
+              <Image src={navAvatarUrl} alt="" width={24} height={24} className={styles.avatar} unoptimized referrerPolicy="no-referrer" />
+            ) : showLetter ? (
+              <span className={styles.avatarFallback} aria-hidden="true" data-letter={showLetter} />
+            ) : null}
+            <span>Portal</span>
+          </Link>
           <button
             ref={toggleRef}
             type="button"
@@ -205,7 +220,7 @@ export default function NavBar({ announcement }: { announcement?: React.ReactNod
               <Image src="/logos/discord.svg" alt="" width={22} height={22} unoptimized /> Join the Discord <ArrowUpRight size={18} aria-hidden="true" />
             </a>
             <Link href={portalHref} prefetch={false} className={styles.sideLink} onClick={() => setOpen(false)}>
-              {profile ? 'Open your member portal' : 'Member portal sign in'} <span aria-hidden="true">→</span>
+              {profile || authLoading ? 'Open your member portal' : 'Member portal sign in'} <span aria-hidden="true">→</span>
             </Link>
             <p className={styles.tag}>Gaming Org at UC San Diego</p>
           </div>
