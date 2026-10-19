@@ -503,3 +503,15 @@ mark[data-h='gray'] { background: var(--dh-gray); color: inherit; padding: 0.04e
 @keyframes tgPendingSpin { to { transform: rotate(360deg); } }
 @keyframes tgPendingBar { from { background-position: -40% 0; } to { background-position: 140% 0; } }
 @media (prefers-reduced-motion: reduce) { [data-tg-pending]::after { animation-duration: 2.4s; } }
+
+/* Sideways-scrolling areas: a round arrow at each end while there is more that way (see components/ScrollArrows). They sit over the content, never take space, and are
+   hidden until needed. The card colours come from the portal tokens, so they read in light and dark. */
+.tg-scroll-arrow {
+  position: absolute; z-index: 6; width: 28px; height: 28px; padding: 0; display: grid; place-items: center; border-radius: 50%; cursor: pointer;
+  color: var(--pp-ink, #011941); background: var(--pp-card, #f3f1ea); border: 1px solid var(--pp-line, rgba(1, 25, 65, 0.22)); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+  opacity: 0; pointer-events: none; transition: opacity 0.18s ease, transform 0.12s ease;
+}
+.tg-scroll-arrow[data-show='1'] { opacity: 0.95; pointer-events: auto; }
+.tg-scroll-arrow[data-show='1']:hover { opacity: 1; }
+.tg-scroll-arrow:active { transform: scale(0.9); }
+@media (prefers-reduced-motion: reduce) { .tg-scroll-arrow { transition: none; } }

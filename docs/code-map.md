@@ -90,3 +90,5 @@ Pure logic (no database, no React) is what the unit tests in `src/lib/__tests__`
 
 ## `supabase/`
 The four Supabase clients described in [architecture.md](architecture.md). `localAuth.ts` makes `auth.getUser()` a local check and provides `strictUser` for routes that change roles or settings (see [usage-and-limits.md](usage-and-limits.md)).
+
+`components/ScrollArrows` (mounted once in the root layout) finds anything that scrolls sideways and adds a left and a right arrow at its ends, shown only while there is more that way; nothing opts in (skip one with `data-no-scroll-arrows`). Like `components/ClickFeedback`, it works on the page's DOM, so a new scrolling strip or table gets arrows without any code.
