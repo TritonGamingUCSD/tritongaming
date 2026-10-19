@@ -245,7 +245,6 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   // Fires exactly once — from whichever of Realtime (fast path) or the
   // polling backstop below (guaranteed path) notices the check-in first.
   const handledCheckIn = useRef(false);
-  const [realtimeUp, setRealtimeUp] = useState(false);   // while the live push works, the status check below is only a slow backstop (each call costs server time)
   function handleCheckedIn(checkedInAt: string) {
     if (handledCheckIn.current) return;
     handledCheckIn.current = true;
@@ -278,7 +277,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
           if (newRow.status === 'used') handleCheckedIn(newRow.checked_in_at ?? new Date().toISOString());
         }
       )
-      .subscribe((status) => setRealtimeUp(status === 'SUBSCRIBED'));
+      .subscribe();
 
     return () => { supabase.removeChannel(channel); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -300,7 +299,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
     } catch {
       // ignore — next tick tries again
     }
-  }, realtimeUp ? 60_000 : 10_000, !handledCheckIn.current);
+  }, 10_000, !handledCheckIn.current);   // always every 10 s, Realtime or not: a push that says it is connected can still never arrive, and this tiny call is the only other way the screen learns it was scanned (the code on screen no longer asks the server, see fetchCode)
 
   // The authoritative form answer, fetched from the status endpoint the
   // moment check-in lands — the checkinFormUrl prop was baked in when the
