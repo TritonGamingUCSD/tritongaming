@@ -786,6 +786,7 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .presenting .duo { gap: 1.8rem; padding: 1.4rem 2rem; }
 .qrCanvas { display: block; line-height: 0; flex: none; }
 .qrCanvas canvas { display: block; width: 100%; height: auto; }
+.duo .qrCanvas > * { box-shadow: none; }   /* the plate is the panel's own colour, so no drop shadow lifting it off the surface */
 @media (max-width: 640px) {
   .duo { flex-direction: column; align-items: center; gap: 1rem; padding: 1.1rem 1rem 1.2rem; }
   .duoDivider { width: 70%; height: 2px; align-self: center; }
@@ -801,10 +802,10 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .stageBar { position: absolute; top: 1.4rem; left: 2rem; display: flex; flex-direction: column; align-items: flex-start; gap: 0.2rem; text-align: left; max-width: 60%; }
 .stageBar h2 { margin: 0; font-family: var(--font-futura-heavy); font-size: clamp(1.4rem, 3vw, 2.6rem); line-height: 1.1; color: var(--pp-ink); text-wrap: balance; }
 .stageBar span { font-size: clamp(0.9rem, 1.4vw, 1.3rem); color: rgba(var(--pp-ink-rgb), 0.75); }
-.presenting { background: radial-gradient(ellipse 60% 55% at 50% 48%, rgba(125, 180, 234, 0.2), transparent 70%), radial-gradient(ellipse 80% 60% at 50% 110%, rgba(74, 144, 226, 0.16), transparent 70%), var(--pp-card); }
+.presenting { background: var(--pp-card); }   /* one flat surface: page, panel and the code's plate are all the portal card colour, in light and dark */
 .presenting .codeLabel { font-size: clamp(0.9rem, 1.6vw, 1.4rem); letter-spacing: 0.3em; }
 /* The panel is the same solid colour as the code's own plate (the portal card colour), in light and dark, so the TGcode sits on a ground that matches it; the glow stays around the panel, not under it. */
-.presenting .duo { background: var(--pp-card); border: 1px solid rgba(var(--pp-ink-rgb), 0.12); border-radius: 2rem; box-shadow: 0 0 80px rgba(125, 180, 234, 0.18); }
+.presenting .duo { background: var(--pp-card); border-radius: 2rem; }
 .liveCount { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
 .arrivals { display: inline-flex; align-items: center; }
 .arrival { display: inline-flex; margin-left: -0.45rem; border-radius: 50%; box-shadow: 0 0 0 2px var(--pp-card); animation: arrivalIn 0.4s ease both; }
