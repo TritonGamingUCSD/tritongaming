@@ -7,6 +7,7 @@ import type { Metadata, Viewport } from 'next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/next';
 import { ROOT_THEME_SCRIPT } from '@/lib/portal/themeScript';
+import { APPLE_ICON_DATA_URI } from '@/lib/site/appleIcon';
 import './globals.css';
 
 
@@ -24,7 +25,7 @@ export const metadata: Metadata = {
       { url: '/icon.png', type: 'image/png' },
     ],
     apple: [
-      { url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+      { url: APPLE_ICON_DATA_URI, sizes: '180x180', type: 'image/png' },   // embedded, not a file: see lib/site/appleIcon.ts
     ],
   },
   openGraph: {
