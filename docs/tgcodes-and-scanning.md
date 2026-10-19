@@ -1,7 +1,7 @@
 # TGcodes, QR codes and the Scan page
 
 A **TGcode** is the portal's own circular code: seven concentric rings of rounded arcs with exactly one cell of gap between them, in Triton Gaming's colours (the message rings
-alternate navy and portal blue; the filler arcs the scanner ignores are yellow and light blue, with fine yellow and light-blue lines in the spaces between rings), two ring marks at
+alternate navy and portal blue; the filler arcs the scanner ignores are yellow and light blue), two ring marks at
 the top, a dot at each bottom corner, the Triton logo in the middle. It is an SVG (`components/TGcode`), it flips with the portal's light and dark theme, and **only the portal's Scan
 page reads it** (a phone's own camera sees a pattern, nothing to open). Code: `src/lib/qr/tgCode/` (`layout.ts` the geometry and bits, `marks.ts` the marks every format shares, `find.ts`
 finding the marks and dots, `rs.ts` Reed–Solomon repair, `decode.ts` the reader, `legacy*.ts` the first format, `testCamera.ts` the tests' software camera). It carries a kind and the

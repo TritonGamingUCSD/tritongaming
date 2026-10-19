@@ -164,26 +164,3 @@ export function arcs(payload: string): Arc[] {
     return { ring, a0: (s - EXT) * delta, a1: (e + 1 + EXT) * delta, fill };
   });
 }
-
-/** The fine lines of colour in the space between each pair of rings: line k (1 … RINGS − 1) runs at the edge between ring k − 1 and ring k, and stops short of the marks, so it never joins one
- *  (the reader finds the marks as separate blobs). Pieces are [k, start, end] in radians. */
-export function hairlines(): [number, number, number][] {
-  const TAU = 2 * Math.PI, out: [number, number, number][] = [];
-  const marks = [...Object.values(FINDERS).map((f) => ({ x: f.x, y: f.y, m: 3.5 * U + 0.045 })), ...Object.values(DOTS).map((d) => ({ x: d.x, y: d.y, m: R_SMALL + 0.05 }))];
-  for (let k = 1; k < RINGS; k++) {
-    const r = R_IN + k * THICK;
-    const cut: [number, number][] = [];
-    for (const { x, y, m } of marks) {
-      const d = Math.hypot(x, y);
-      if (Math.abs(r - d) >= m) continue;
-      const half = Math.acos(Math.max(-1, Math.min(1, (r * r + d * d - m * m) / (2 * r * d)))), a = Math.atan2(y, x);
-      const lo = (((a - half) % TAU) + TAU) % TAU, hi = lo + 2 * half;
-      if (hi > TAU) { cut.push([lo, TAU], [0, hi - TAU]); } else cut.push([lo, hi]);
-    }
-    cut.sort((p, q) => p[0] - q[0]);
-    let at = 0;
-    for (const [lo, hi] of cut) { if (lo > at + 1e-6) out.push([k, at, lo]); at = Math.max(at, hi); }
-    if (at < TAU - 1e-6) out.push([k, at, TAU]);
-  }
-  return out;
-}

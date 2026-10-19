@@ -1,4 +1,4 @@
-import { PAYLOAD, R_IN, R_LOGO, R_SMALL, FINDERS, DOTS, THICK, DASH, U, arcs as arcsOf, hairlines } from '@/lib/qr/tgCode/layout';
+import { PAYLOAD, R_IN, R_LOGO, R_SMALL, FINDERS, DOTS, THICK, DASH, U, arcs as arcsOf } from '@/lib/qr/tgCode/layout';
 import styles from './TGcode.module.css';
 
 // The portal's own circular code (see lib/qr/tgCode; the idea is Apple's App Clip codes, in Triton Gaming's colours): concentric rings of arcs (one cell of gap between them, always, and no tiny ones) with two ring marks at the top and a dot at each bottom corner, and the Triton logo
@@ -6,7 +6,6 @@ import styles from './TGcode.module.css';
 // needs either way. Only the portal's Scan button reads it.
 const RING_COLOUR = [styles.c0, styles.c1];   // the message rings alternate the portal's ink and blue (both dark enough to read, and light in the dark theme)
 const FILL_COLOUR = [styles.f0, styles.f1];   // the filler arcs the scanner ignores: Triton yellow and light blue
-const HAIR = 0.007;   // width of the fine lines between the rings
 const CORNER = 0.5;   // the corner radius of an arc, as a share of its width (half: fully rounded ends)
 
 export default function TGcode({ payload, size, className = '', label = 'Code for the portal’s Scan button' }: { payload: string; size?: number; className?: string; label?: string }) {
@@ -35,11 +34,6 @@ export default function TGcode({ payload, size, className = '', label = 'Code fo
       <circle r="1" className={styles.plate} />
       <circle r="0.972" className={styles.rim} strokeWidth={0.02} />
       <circle r="0.925" className={styles.rimLine} strokeWidth={0.006} />
-      {/* A fine line of colour in the space between each pair of rings (never where a cell is read, and never touching a mark). */}
-      {hairlines().map(([k, a0, a1], i) => {
-        const r = R_IN + k * THICK;
-        return <path key={`h${i}`} d={`M ${(r * Math.cos(a0)).toFixed(4)} ${(r * Math.sin(a0)).toFixed(4)} A ${r} ${r} 0 ${a1 - a0 > Math.PI ? 1 : 0} 1 ${(r * Math.cos(a1 - 1e-4)).toFixed(4)} ${(r * Math.sin(a1 - 1e-4)).toFixed(4)}`} fill="none" strokeWidth={HAIR} className={k % 2 ? styles.hair1 : styles.hair0} />;
-      })}
       <g className={styles.dashes}>{drawn}</g>
       {finder(FINDERS.tl, 'tl')}{finder(FINDERS.tr, 'tr')}
       <circle cx={DOTS.bl.x} cy={DOTS.bl.y} r={R_SMALL} className={styles.solid} />

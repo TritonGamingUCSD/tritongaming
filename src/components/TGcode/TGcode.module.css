@@ -16,5 +16,3 @@
 .accent { fill: none; stroke: var(--yellow, #ffc72c); }
 .rim { fill: none; stroke: var(--yellow, #ffc72c); }
 .rimLine { fill: none; stroke: var(--p-accent, #7db4ea); opacity: 0.95; }
-.hair0 { stroke: var(--yellow, #ffc72c); }
-.hair1 { stroke: var(--p-accent, #7db4ea); }

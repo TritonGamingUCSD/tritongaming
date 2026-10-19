@@ -1,7 +1,7 @@
 // A small software "camera" for the tests (not part of the app): draws a TGcode into a grey picture the way a phone might see it: any turn, size (in pixels), tilt,
 // out-of-focus and motion blur, sensor noise, low contrast, a too-dark or too-bright exposure, glare, vignetting, a thumb over part of it, light or dark plate. Each pixel
 // is the average of several sub-samples (as a real sensor averages the light that falls on it), so a code only a few dozen pixels wide is aliased like a real one.
-import { DASH, R_IN, R_LOGO, RINGS, arcs, hairlines, type Arc } from './layout';
+import { DASH, R_IN, R_LOGO, RINGS, arcs, type Arc } from './layout';
 import { DOTS, FINDERS, R_SMALL, U } from './marks';
 import * as old from './legacyLayout';
 
@@ -80,7 +80,6 @@ function makeInk(payload: string, format: Format, dark: boolean, tone: boolean, 
       return lit ? (tone && (sec * 7 + ring * 3) % 4 === 0 ? (dark ? 170 : 66) : ink) : 0;
     };
   }
-  const hair = hairlines();
   return (x, y) => {
     const r = Math.hypot(x, y);
     if (r > 1) return around;
@@ -94,7 +93,6 @@ function makeInk(payload: string, format: Format, dark: boolean, tone: boolean, 
     if (Math.abs(r - (R_LOGO + R_IN) / 2) < 0.006) return rim;
     const g = arcAt(x, y);
     if (g) return g;
-    if (format === 'v2') { const k = Math.round((r - R_IN) / ((0.88 - R_IN) / RINGS)); if (k >= 1 && k < RINGS && Math.abs(r - (R_IN + k * ((0.88 - R_IN) / RINGS))) < 0.0035) { let ang = Math.atan2(y, x); if (ang < 0) ang += 2 * Math.PI; if (hair.some(([hk, a0, a1]) => hk === k && ang >= a0 && ang <= a1)) return FILL_GREY[k % 2]; } }   // the fine lines between the rings
     return plate;
   };
 }
