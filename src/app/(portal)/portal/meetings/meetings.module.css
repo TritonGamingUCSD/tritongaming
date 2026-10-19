@@ -827,9 +827,9 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 
 /* ── After a scan: the picture freezes and the ring glides onto the code, its colour fading to the outcome's; the icon fades in and the result slides up. Nothing moves while it looks. ── */
 .scanTarget { border: 4px solid transparent; transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1), top 0.5s cubic-bezier(0.4, 0, 0.2, 1), width 0.5s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.4s ease, box-shadow 0.45s ease; }   /* one smooth glide both ways: onto the code, and back to the circle on Try Again */
-.scanTarget::before { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 4px dashed rgba(255, 255, 255, 0.92); transition: opacity 0.35s ease; }   /* theme-ok */
+.scanTarget::before { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 4px dashed rgba(255, 255, 255, 0.92); transition: opacity 0.3s ease 0.5s; }   /* theme-ok */   /* back to the circle: the dashes only fade in once the ring has finished resizing, so they never slide round while it grows */
 .scanLive { box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.45); }   /* theme-ok */
-.lock_busy::before, .lock_ok::before, .lock_warn::before, .lock_bad::before { opacity: 0; }
+.lock_busy::before, .lock_ok::before, .lock_warn::before, .lock_bad::before { opacity: 0; transition: opacity 0.12s ease 0s; }
 .lock_busy, .lock_ok, .lock_warn, .lock_bad { top: 31%; width: min(46vw, 28vh); }
 .lock_busy { border-color: #ffc72c; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.6), 0 0 24px rgba(255, 199, 44, 0.6); }   /* theme-ok */
 .lock_ok { border-color: #34d399; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.6), 0 0 28px rgba(52, 211, 153, 0.7); }   /* theme-ok */
