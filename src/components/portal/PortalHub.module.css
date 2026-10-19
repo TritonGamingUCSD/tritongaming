@@ -278,68 +278,6 @@
 }
 
 
-/* ═══ Mobile dock (bottom bar) ═══════════════════════════
-   A floating pill inset from the screen edges. The active destination gets a
-   filled "pill" behind its icon so you can tell where you are at a glance. */
-.bottomBar {
-  position: fixed;
-  left: 0.75rem;
-  right: 0.75rem;
-  bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px));
-  z-index: 20;
-  display: flex;
-  align-items: stretch;
-  gap: 0.05rem;
-  padding: 0.4rem 0.3rem;
-  background: #080f1d;
-  border: 1px solid #1f2d4a;
-  border-radius: 0.9rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-}
-.dockItem {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.2rem;
-  padding: 0.3rem 0.1rem 0.35rem;
-  background: none;
-  border: none;
-  color: rgba(242, 241, 240, 0.65); /* theme-ok */
-  font-family: var(--font-futura-medium);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-.dockIcon {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 30px;
-  border-radius: 999px;
-  transition: background 0.2s, color 0.2s;
-}
-.dockLabel { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: 0.62rem; letter-spacing: 0; line-height: 1.1; white-space: nowrap; }
-.dockItemActive { color: var(--white); } /* theme-ok */
-.dockItemActive .dockIcon { background: #1a2744; color: #a9cdf2; box-shadow: inset 0 -3px 0 var(--p-accent); }
-.dockItem:active .dockIcon { background: rgba(255, 255, 255, 0.1); } /* theme-ok */
-.dockBadge {
-  position: absolute;
-  top: -4px;
-  right: 4px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 0.28rem;
-  border-radius: 999px;
-  background: var(--yellow);
-  color: #0b1426;
-  font-family: var(--font-futura-heavy);
-  font-size: 0.62rem;
-  display: grid;
-  place-items: center;
-}
-
 /* "More" sheet: grouped tiles instead of a plain list */
 .moreSheetScroll { padding-bottom: calc(6.2rem + env(safe-area-inset-bottom, 0px)); }
 .sheetTile {
@@ -615,11 +553,6 @@
 .sheetFooter a, .sheetFooter button { min-height: 48px; padding: 0.7rem 0.8rem; font-size: 0.82rem; letter-spacing: 0.05em; border-radius: 0.8rem; overflow: visible; text-overflow: clip; }
 .sheetFooter a span, .sheetFooter button span { display: inline-flex; align-items: center; }
 
-/* A slot that's there because something is happening right now (an event today, the meeting) gets a live dot. */
-.dockItemUrgent .dockIcon { position: relative; }
-.dockItemUrgent .dockIcon::after { content: ''; position: absolute; top: -1px; right: -1px; width: 8px; height: 8px; border-radius: 50%; background: #34d399; box-shadow: 0 0 0 2px #0b1426; animation: dockPulse 1.8s ease-in-out infinite; }
-@keyframes dockPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
-@media (prefers-reduced-motion: reduce) { .dockItemUrgent .dockIcon::after { animation: none; } }
 
 /* Five groups plus fifteen links: tighten further on short laptop screens so the sidebar still fits without scrolling. */
 @media (min-width: 900px) and (max-height: 860px) {
@@ -977,34 +910,10 @@
   .panelBody :global([data-section-header]) > div:first-child { flex-basis: 100%; }
   .panelBody :global([data-section-header]) :global(p) { font-size: 0.92rem; }
 
-  /* Bottom bar: an outlined slab with a hard shadow; the open page is a yellow sticker. */
-  .bottomBar {
-    left: 0.6rem; right: 0.6rem; padding: 0.35rem 0.3rem; background: var(--pp-chrome); border: 2px solid var(--pp-chrome-fg); border-radius: 8px;
-    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.5);
-  }
-  .dockItem { color: rgba(var(--pp-chrome-rgb), 0.78); }
-  .dockLabel { font-family: var(--font-renegare); font-size: 0.55rem; letter-spacing: 0.05em; text-transform: uppercase; }
-  .dockItemActive { color: var(--pp-chrome-fg); }
-  .dockItemActive .dockIcon { background: var(--yellow); color: #011941; box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5); transform: rotate(-3deg); border-radius: 5px; } /* theme-ok */
-  .dockItem:active .dockIcon { background: rgba(var(--pp-chrome-rgb), 0.14); }
-  .dockBadge { box-shadow: 0 0 0 2px var(--pp-chrome); }
 }
 
-/* ═══ Phone bottom bar, redesigned ═══ A bar fixed to the bottom edge in the page's own surface (light or dark with the theme): five even slots,
-   readable labels, and the open page marked by a yellow pill behind its icon. The theme switch lives in the More sheet. */
+/* The phone's bottom bar is GlassDock (components/portal/GlassDock.tsx): a floating liquid-glass capsule, so the More sheet and the page leave room for it. The theme switch lives in the More sheet. */
 @media (max-width: 899px) {
-  .bottomBar {
-    left: 0; right: 0; bottom: 0; gap: 0.1rem; padding: 0.4rem 0.5rem calc(0.4rem + env(safe-area-inset-bottom, 0px));
-    background: var(--pp-card); border: 0; border-top: 2px solid var(--pp-ink); border-radius: 0; box-shadow: 0 -8px 18px -12px rgba(0, 0, 0, 0.35);
-  }
-  .dockItem { min-height: 54px; justify-content: center; gap: 0.18rem; padding: 0.15rem 0; color: rgba(var(--pp-ink-rgb), 0.84); border-radius: 10px; }
-  .dockIcon { width: 52px; height: 30px; border-radius: 999px; }
-  .dockLabel { font-family: var(--font-futura-medium); font-size: 0.7rem; letter-spacing: 0; text-transform: none; line-height: 1.1; }
-  .dockItemActive { color: var(--pp-ink); }
-  .dockItemActive .dockLabel { font-weight: 700; }
-  .dockItemActive .dockIcon { background: var(--yellow); color: #011941; box-shadow: none; transform: none; border-radius: 999px; } /* theme-ok */
-  .dockItem:active .dockIcon { background: rgba(var(--pp-ink-rgb), 0.12); }
-  .dockBadge { box-shadow: 0 0 0 2px var(--pp-card); }
   .moreSheetScroll { padding-bottom: calc(5.2rem + env(safe-area-inset-bottom, 0px)); }
   .sheetTheme { padding: 0.2rem 0.9rem 0.6rem; }
 }
@@ -1016,8 +925,3 @@
   .appFrame .rail .railFooter > a, .appFrame .rail .railFooter > button { overflow: visible !important; height: 34px !important; min-height: 34px !important; padding-right: 4px !important; }
   .appFrame .rail .railFooter > a > span, .appFrame .rail .railFooter > button > span, .appFrame .rail .railFooter > a > svg { height: 30px; width: 30px; }
 }
-
-/* The scan button in the middle of the phone's bottom bar: a raised round button. */
-.dockScan { overflow: visible; }
-.dockScanIcon { display: grid; place-items: center; width: 52px; height: 52px; margin-top: -1.3rem; border-radius: 50%; background: var(--yellow); color: #011941; border: 3px solid var(--pp-card); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); }   /* theme-ok */
-.dockScan:active .dockScanIcon { transform: scale(0.94); }

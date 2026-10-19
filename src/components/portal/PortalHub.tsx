@@ -19,6 +19,7 @@ import PortalCopyLink from './PortalCopyLink';
 import ScanLink from './ScanLink';
 import PortalCrumbs from './PortalCrumbs';
 import { pickDock, readUsage, recordUse } from './dockPicker';
+import GlassDock, { type DockEntry } from './GlassDock';
 import styles from './PortalHub.module.css';
 import simple from './PortalSimple.module.css';
 import mob from './PortalMobile.module.css';
@@ -324,19 +325,22 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dockKey]);
   const primaryTabs = sections.filter((s) => dock.ids.has(s.id));
-  // The middle of the phone's bottom bar: one camera for every QR the portal makes (see UniversalScanner).
-  const scanButton = (
-    <Fragment key="scan">
-    <button type="button" className={`${styles.dockItem} ${styles.dockScan}`} onClick={() => { setMoreOpen(false); setOpeningScan(true); router.push('/portal/scan'); }} aria-label="Scan a TGcode">
-      <span className={styles.dockScanIcon}><TGcodeIcon size={26} /></span>
-      <span className={styles.dockLabel}>Scan</span>
-    </button>
-    {openingScan && createPortal(<ScanOpening />, document.body)}
-    </Fragment>
-  );
+  // The phone's bottom bar (GlassDock): Home, the two slots the dock picker chose with Scan between them (one camera for every QR the portal makes, see UniversalScanner), and More.
+  const dockItems: DockEntry[] = [];
+  dockItems.push({ id: 'home', label: 'Home', icon: <Home size={20} strokeWidth={1.9} aria-hidden="true" />, active: openId === null && !moreOpen, onClick: () => { setMoreOpen(false); close(); } });
+  const scanEntry: DockEntry = { id: 'scan', label: 'Scan', raised: true, ariaLabel: 'Scan a TGcode', icon: <TGcodeIcon size={26} />, onClick: () => { setMoreOpen(false); setOpeningScan(true); router.push('/portal/scan'); } };
+  primaryTabs.forEach((sec, i) => {
+    if (i === 1) dockItems.push(scanEntry);
+    dockItems.push({
+      id: sec.id, label: sec.label.replace(/^My /, ''), active: openId === sec.id && !moreOpen, urgent: dock.urgent.has(sec.id), badge: sec.badge,
+      icon: smallIcon(sec.icon, DOCK_ICON_SIZE[sec.id] ?? 20), onClick: () => { setMoreOpen(false); recordUse(sec.id); open(sec.id); },
+    });
+  });
+  if (primaryTabs.length < 2) dockItems.push(scanEntry);
   const primaryTabIds = new Set(primaryTabs.map((s) => s.id));
   const moreSections = sections.filter((s) => !primaryTabIds.has(s.id));
   const isMoreActive = openId !== null && !primaryTabIds.has(openId);
+  if (moreSections.length > 0) dockItems.push({ id: 'more', label: 'More', active: isMoreActive || moreOpen, expanded: moreOpen, icon: <MoreHorizontal size={20} strokeWidth={1.9} aria-hidden="true" />, onClick: () => setMoreOpen((v) => !v) });
 
   if (isDesktop && plain) {
     return (
@@ -434,45 +438,8 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
 
       </AnimatePresence>
 
-      <nav className={styles.bottomBar} aria-label="Portal quick navigation">
-        <button
-          type="button"
-          className={`${styles.dockItem} ${openId === null && !moreOpen ? styles.dockItemActive : ''}`}
-          onClick={() => { setMoreOpen(false); close(); }}
-        >
-          <span className={styles.dockIcon}><Home size={20} strokeWidth={1.9} aria-hidden="true" /></span>
-          <span className={styles.dockLabel}>Home</span>
-        </button>
-        {primaryTabs.map((s, i) => (
-          <Fragment key={s.id}>
-          {i === 1 && scanButton}
-          <button
-            key={s.id}
-            type="button"
-            className={`${styles.dockItem} ${openId === s.id && !moreOpen ? styles.dockItemActive : ''} ${dock.urgent.has(s.id) ? styles.dockItemUrgent : ''}`}
-            onClick={() => { setMoreOpen(false); recordUse(s.id); open(s.id); }}
-          >
-            <span className={styles.dockIcon}>
-              {smallIcon(s.icon, DOCK_ICON_SIZE[s.id] ?? 20)}
-              {s.badge !== undefined && s.badge !== 0 && <span className={styles.dockBadge}>{s.badge}</span>}
-            </span>
-            <span className={styles.dockLabel}>{s.label.replace(/^My /, '')}</span>
-          </button>
-          </Fragment>
-        ))}
-        {primaryTabs.length < 2 && scanButton}
-        {moreSections.length > 0 && (
-          <button
-            type="button"
-            className={`${styles.dockItem} ${isMoreActive || moreOpen ? styles.dockItemActive : ''}`}
-            onClick={() => setMoreOpen((v) => !v)}
-            aria-expanded={moreOpen}
-          >
-            <span className={styles.dockIcon}><MoreHorizontal size={20} strokeWidth={1.9} aria-hidden="true" /></span>
-            <span className={styles.dockLabel}>More</span>
-          </button>
-        )}
-      </nav>
+      <GlassDock items={dockItems} />
+      {openingScan && createPortal(<ScanOpening />, document.body)}
 
       <AnimatePresence>
         {moreOpen && (

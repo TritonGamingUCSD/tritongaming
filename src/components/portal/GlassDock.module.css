@@ -1,0 +1,140 @@
+/* The phone's bottom bar in a "liquid glass" look. A floating capsule of frosted, translucent material over the page: it blurs and saturates what scrolls beneath, has a bright thin edge, a soft
+   highlight across the top and a deep soft shadow. The open destination sits on a glass lens (tinted with the brand yellow) that glides between slots. Light and dark come from the portal's tokens
+   (--pp-card, --pp-ink-rgb), so it follows the theme. */
+.bar {
+  --glass-edge: rgba(255, 255, 255, 0.55);
+  --glass-edge-soft: rgba(255, 255, 255, 0.22);
+  --glass-hi: rgba(255, 255, 255, 0.6);
+  --glass-tint: color-mix(in srgb, var(--pp-card) 46%, transparent);
+  position: fixed;
+  left: 0.85rem;
+  right: 0.85rem;
+  bottom: calc(0.7rem + env(safe-area-inset-bottom, 0px));
+  z-index: 20;
+  display: flex;
+  align-items: stretch;
+  gap: 0.1rem;
+  padding: 0.35rem;
+  border-radius: 2.1rem;
+  background: var(--glass-tint);
+  -webkit-backdrop-filter: blur(22px) saturate(185%);
+  backdrop-filter: blur(22px) saturate(185%);
+  border: 1px solid var(--glass-edge);
+  box-shadow:
+    0 12px 34px rgba(0, 0, 0, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 var(--glass-hi),
+    inset 0 -1px 0 var(--glass-edge-soft),
+    inset 0 0 22px rgba(255, 255, 255, 0.14);
+  isolation: isolate;
+  -webkit-tap-highlight-color: transparent;
+}
+/* The highlight that glass catches across its upper edge. */
+.bar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0) 46%), radial-gradient(120% 90% at 12% 0%, rgba(255, 255, 255, 0.2), transparent 55%); /* theme-ok: glass catches white light in both themes */
+  pointer-events: none;
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .bar { background: color-mix(in srgb, var(--pp-card) 94%, transparent); }
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-pp-theme='light']) .bar { --glass-edge: rgba(255, 255, 255, 0.2); --glass-edge-soft: rgba(255, 255, 255, 0.07); --glass-hi: rgba(255, 255, 255, 0.28); --glass-tint: color-mix(in srgb, var(--pp-card) 52%, transparent); box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 var(--glass-edge-soft), inset 0 0 22px rgba(255, 255, 255, 0.05); }
+}
+:root[data-pp-theme='dark'] .bar { --glass-edge: rgba(255, 255, 255, 0.2); --glass-edge-soft: rgba(255, 255, 255, 0.07); --glass-hi: rgba(255, 255, 255, 0.28); --glass-tint: color-mix(in srgb, var(--pp-card) 52%, transparent); box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 var(--glass-edge-soft), inset 0 0 22px rgba(255, 255, 255, 0.05); }
+
+/* The lens under the open destination: a second, brighter layer of glass tinted with the brand yellow. */
+.lens {
+  position: absolute;
+  top: 0.35rem;
+  bottom: 0.35rem;
+  left: 0;
+  width: var(--lens-w, 0);
+  z-index: 0;
+  border-radius: 1.75rem;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--yellow) 58%, transparent), color-mix(in srgb, var(--yellow) 34%, transparent));
+  border: 1px solid rgba(255, 255, 255, 0.55); /* theme-ok: glass catches white light in both themes */
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--yellow) 40%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.75), inset 0 -1px 0 rgba(255, 255, 255, 0.25);
+  transform: translateX(var(--lens-x, 0));
+  opacity: 0;
+  pointer-events: none;
+}
+.bar[data-lens='on'] .lens { opacity: 1; }
+.bar[data-ready='1'] .lens { transition: transform 0.5s cubic-bezier(0.34, 1.45, 0.64, 1), width 0.5s cubic-bezier(0.34, 1.45, 0.64, 1), opacity 0.25s ease; }
+
+.item {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-width: 0;
+  min-height: 54px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.16rem;
+  padding: 0.15rem 0;
+  background: none;
+  border: none;
+  border-radius: 1.75rem;
+  color: rgba(var(--pp-ink-rgb), 0.78);
+  font-family: var(--font-futura-medium);
+  cursor: pointer;
+  transition: transform 0.18s cubic-bezier(0.34, 1.45, 0.64, 1), color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.item:active { transform: scale(0.92); }
+.item:focus-visible { outline: 2px solid var(--pp-ink); outline-offset: -2px; }
+.active { color: var(--pp-ink); }
+.active .label { font-weight: 700; }
+
+.icon { position: relative; display: grid; place-items: center; width: 44px; height: 28px; }
+.label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: 0.68rem; letter-spacing: 0; line-height: 1.1; white-space: nowrap; }
+.badge {
+  position: absolute;
+  top: -5px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 0.28rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--yellow);
+  color: #0b1426; /* theme-ok */
+  font-family: var(--font-futura-heavy);
+  font-size: 0.62rem;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--pp-card) 80%, transparent);
+}
+
+/* Something is happening right now: a live dot. */
+.urgent .icon::after { content: ''; position: absolute; top: -1px; right: 3px; width: 8px; height: 8px; border-radius: 50%; background: #34d399; box-shadow: 0 0 0 2px color-mix(in srgb, var(--pp-card) 80%, transparent); animation: dockPulse 1.8s ease-in-out infinite; } /* theme-ok */
+@keyframes dockPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+/* The raised Scan button: a round bead of yellow glass standing a little above the capsule. */
+.raised { overflow: visible; }
+.orb {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  margin-top: -1.35rem;
+  border-radius: 50%;
+  color: #011941; /* theme-ok */
+  background: radial-gradient(120% 120% at 30% 18%, color-mix(in srgb, var(--yellow) 78%, white), var(--yellow) 62%);
+  border: 1px solid rgba(255, 255, 255, 0.7); /* theme-ok: glass catches white light in both themes */
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28), 0 2px 5px rgba(0, 0, 0, 0.18), inset 0 2px 0 rgba(255, 255, 255, 0.85), inset 0 -3px 6px color-mix(in srgb, var(--yellow) 60%, #b58400);
+  transition: transform 0.18s cubic-bezier(0.34, 1.45, 0.64, 1);
+}
+.raised:active { transform: none; }
+.raised:active .orb { transform: scale(0.92); }
+
+@media (prefers-reduced-motion: reduce) {
+  .bar[data-ready='1'] .lens, .item, .orb { transition: none; }
+  .urgent .icon::after { animation: none; }
+  .item:active, .raised:active .orb { transform: none; }
+}
