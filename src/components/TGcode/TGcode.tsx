@@ -6,19 +6,25 @@ import styles from './TGcode.module.css';
 // needs either way. Only the portal's Scan button reads it.
 const FILL_BY_RING = [styles.fill, styles.fillBlue, styles.tone];   // the message dashes are all navy; the filler the scanner ignores takes one colour per ring
 const FILL_WIDTH = DASH;   // the same width as a message dash, so nothing shows which dashes carry the message
+const SPLIT = 0.12;   // how far, in cells, each of two touching arcs of different colours is pulled back from the other
 const CORNER = 0.5;   // the corner radius of a dash, as a share of its width (half: fully rounded ends)
 
 export default function TGcode({ payload, size, className = '', label = 'Code for the portal’s Scan button' }: { payload: string; size?: number; className?: string; label?: string }) {
   if (!PAYLOAD.test(payload)) return null;
   const delta = (2 * Math.PI) / SECTORS;
-  const arcs = [...dashRuns(payload)].sort((x, y) => Number(y[3]) - Number(x[3])).map(([ring, s, e, fill], i) => {
+  const runs = dashRuns(payload);
+  // Where a message arc runs straight on into a filler arc (or the other way round) the two ends are pulled back, so arcs of different colours never touch.
+  const starts = new Set(runs.map(([ring, s]) => ring * SECTORS + s));
+  const touches = (ring: number, last: number) => starts.has(ring * SECTORS + ((last + 1) % SECTORS));
+  const arcs = [...runs].sort((x, y) => Number(y[3]) - Number(x[3])).map(([ring, s, e, fill], i) => {
     const r = R_IN + (ring + 0.5) * THICK;
     const w = fill ? FILL_WIDTH : DASH;
     const full = e - s + 1 >= SECTORS;
     const cls = fill ? FILL_BY_RING[ring % FILL_BY_RING.length] : undefined;
     if (full) return <circle key={i} r={r} fill="none" strokeWidth={w} className={cls ? `${cls} ${styles.band}` : styles.band} />;
     // Arcs end a little differently from one another (one of three set lengths); the reader looks at the middle of a cell, which stays clear.
-    const A0 = (s - endShift(ring, s, 0)) * delta, A1 = (e + 1 + endShift(ring, e, 1)) * delta;
+    const before = runs.some(([r2, , e2]) => r2 === ring && (e2 + 1) % SECTORS === s % SECTORS);
+    const A0 = (s - (before ? -SPLIT : endShift(ring, s, 0))) * delta, A1 = (e + 1 + (touches(ring, e) ? -SPLIT : endShift(ring, e, 1))) * delta;
     const ro = r + w / 2, ri = r - w / 2, c = w * CORNER;
     const pt = (a: number, rad: number) => `${(rad * Math.cos(a)).toFixed(4)} ${(rad * Math.sin(a)).toFixed(4)}`;
     const dO = c / ro, dI = c / ri;
