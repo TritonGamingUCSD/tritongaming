@@ -1,36 +1,27 @@
-import { PAYLOAD, R_IN, R_LOGO, R_SMALL, FINDERS, DOTS, THICK, DASH, U, SECTORS, dashRuns, endShift } from '@/lib/qr/tgCode/layout';
+import { PAYLOAD, R_IN, R_LOGO, R_SMALL, FINDERS, DOTS, THICK, DASH, U, arcs as arcsOf, hairlines } from '@/lib/qr/tgCode/layout';
 import styles from './TGcode.module.css';
 
-// The portal's own circular code (see lib/qr/tgCode; the idea is Apple's App Clip codes, in Triton Gaming's colours): concentric rings of dashes with two ring marks at the top and a dot at each bottom corner, and the Triton logo
+// The portal's own circular code (see lib/qr/tgCode; the idea is Apple's App Clip codes, in Triton Gaming's colours): concentric rings of arcs (one cell of gap between them, always, and no tiny ones) with two ring marks at the top and a dot at each bottom corner, and the Triton logo
 // on a solid disc in the middle. Drawn in the portal's ink on its card colour, so it flips with the light and dark theme while keeping the contrast the reader
 // needs either way. Only the portal's Scan button reads it.
-const FILL_BY_RING = [styles.fill, styles.fillBlue, styles.tone];   // the message dashes are all navy; the filler the scanner ignores takes one colour per ring
-const FILL_WIDTH = DASH;   // the same width as a message dash, so nothing shows which dashes carry the message
-const SPLIT = 0.12;   // how far, in cells, each of two touching arcs of different colours is pulled back from the other
-const CORNER = 0.5;   // the corner radius of a dash, as a share of its width (half: fully rounded ends)
+const RING_COLOUR = [styles.c0, styles.c1];   // the message rings alternate the portal's ink and blue (both dark enough to read, and light in the dark theme)
+const FILL_COLOUR = [styles.f0, styles.f1];   // the filler arcs the scanner ignores: Triton yellow and light blue
+const HAIR = 0.007;   // width of the fine lines between the rings
+const CORNER = 0.5;   // the corner radius of an arc, as a share of its width (half: fully rounded ends)
 
 export default function TGcode({ payload, size, className = '', label = 'Code for the portal’s Scan button' }: { payload: string; size?: number; className?: string; label?: string }) {
   if (!PAYLOAD.test(payload)) return null;
-  const delta = (2 * Math.PI) / SECTORS;
-  const runs = dashRuns(payload);
-  // Where a message arc runs straight on into a filler arc (or the other way round) the two ends are pulled back, so arcs of different colours never touch.
-  const starts = new Set(runs.map(([ring, s]) => ring * SECTORS + s));
-  const touches = (ring: number, last: number) => starts.has(ring * SECTORS + ((last + 1) % SECTORS));
-  const arcs = [...runs].sort((x, y) => Number(y[3]) - Number(x[3])).map(([ring, s, e, fill], i) => {
+  // The geometry (where each arc starts and ends) is lib/qr/tgCode's `arcs`.
+  // Filler is drawn first, so a message arc is never covered.
+  const drawn = [...arcsOf(payload)].sort((x, y) => Number(y.fill) - Number(x.fill)).map(({ ring, a0, a1, fill }, i) => {
     const r = R_IN + (ring + 0.5) * THICK;
-    const w = fill ? FILL_WIDTH : DASH;
-    const full = e - s + 1 >= SECTORS;
-    const cls = fill ? FILL_BY_RING[ring % FILL_BY_RING.length] : undefined;
-    if (full) return <circle key={i} r={r} fill="none" strokeWidth={w} className={cls ? `${cls} ${styles.band}` : styles.band} />;
-    // Arcs end a little differently from one another (one of three set lengths); the reader looks at the middle of a cell, which stays clear.
-    const before = runs.some(([r2, , e2]) => r2 === ring && (e2 + 1) % SECTORS === s % SECTORS);
-    const A0 = (s - (before ? -SPLIT : endShift(ring, s, 0))) * delta, A1 = (e + 1 + (touches(ring, e) ? -SPLIT : endShift(ring, e, 1))) * delta;
-    const ro = r + w / 2, ri = r - w / 2, c = w * CORNER;
+    const cls = (fill ? FILL_COLOUR : RING_COLOUR)[ring % 2];
+    if (a1 - a0 >= 2 * Math.PI) return <circle key={i} r={r} fill="none" strokeWidth={DASH} className={`${cls} ${styles.band}`} />;
+    const ro = r + DASH / 2, ri = r - DASH / 2, c = DASH * CORNER;
     const pt = (a: number, rad: number) => `${(rad * Math.cos(a)).toFixed(4)} ${(rad * Math.sin(a)).toFixed(4)}`;
     const dO = c / ro, dI = c / ri;
-    const large = A1 - A0 > Math.PI ? 1 : 0;
-    // Every dash is a band of an arc with the same small corner radius all round (filler first, so a message dash that reaches into its neighbour stays on top).
-    const d = `M ${pt(A0 + dO, ro)} A ${ro} ${ro} 0 ${large} 1 ${pt(A1 - dO, ro)} Q ${pt(A1, ro)} ${pt(A1, ro - c)} L ${pt(A1, ri + c)} Q ${pt(A1, ri)} ${pt(A1 - dI, ri)} A ${ri} ${ri} 0 ${large} 0 ${pt(A0 + dI, ri)} Q ${pt(A0, ri)} ${pt(A0, ri + c)} L ${pt(A0, ro - c)} Q ${pt(A0, ro)} ${pt(A0 + dO, ro)} Z`;
+    const large = a1 - a0 > Math.PI ? 1 : 0;
+    const d = `M ${pt(a0 + dO, ro)} A ${ro} ${ro} 0 ${large} 1 ${pt(a1 - dO, ro)} Q ${pt(a1, ro)} ${pt(a1, ro - c)} L ${pt(a1, ri + c)} Q ${pt(a1, ri)} ${pt(a1 - dI, ri)} A ${ri} ${ri} 0 ${large} 0 ${pt(a0 + dI, ri)} Q ${pt(a0, ri)} ${pt(a0, ri + c)} L ${pt(a0, ro - c)} Q ${pt(a0, ro)} ${pt(a0 + dO, ro)} Z`;
     return <path key={i} d={d} className={cls} />;
   });
   const finder = (c: { x: number; y: number }, k: string) => (
@@ -44,7 +35,12 @@ export default function TGcode({ payload, size, className = '', label = 'Code fo
       <circle r="1" className={styles.plate} />
       <circle r="0.972" className={styles.rim} strokeWidth={0.02} />
       <circle r="0.925" className={styles.rimLine} strokeWidth={0.006} />
-      <g className={styles.dashes}>{arcs}</g>
+      {/* A fine line of colour in the space between each pair of rings (never where a cell is read, and never touching a mark). */}
+      {hairlines().map(([k, a0, a1], i) => {
+        const r = R_IN + k * THICK;
+        return <path key={`h${i}`} d={`M ${(r * Math.cos(a0)).toFixed(4)} ${(r * Math.sin(a0)).toFixed(4)} A ${r} ${r} 0 ${a1 - a0 > Math.PI ? 1 : 0} 1 ${(r * Math.cos(a1 - 1e-4)).toFixed(4)} ${(r * Math.sin(a1 - 1e-4)).toFixed(4)}`} fill="none" strokeWidth={HAIR} className={k % 2 ? styles.hair1 : styles.hair0} />;
+      })}
+      <g className={styles.dashes}>{drawn}</g>
       {finder(FINDERS.tl, 'tl')}{finder(FINDERS.tr, 'tr')}
       <circle cx={DOTS.bl.x} cy={DOTS.bl.y} r={R_SMALL} className={styles.solid} />
       <circle cx={DOTS.br.x} cy={DOTS.br.y} r={R_SMALL} className={styles.solid} />

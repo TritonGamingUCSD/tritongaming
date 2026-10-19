@@ -1,10 +1,35 @@
 # TGcodes, QR codes and the Scan page
 
-A **TGcode** is the portal's own circular code: concentric rings of square-ended dashes in Triton Gaming's colours (navy and royal blue for the message, yellow and light blue
-for filler), two ring marks at the top, a dot at each bottom corner, the Triton logo in the middle. It is an SVG (`components/TGcode`), it flips with the portal's light and dark
-theme, and **only the portal's Scan page reads it** (a phone's own camera sees a pattern, nothing to open). Code: `src/lib/qr/tgCode/` (`layout.ts` the geometry and bits, `rs.ts`
-Reed–Solomon repair, `decode.ts` the reader). It carries a kind letter and 12 hex digits of its own key, so a typed 6-digit code can never be turned into it, and a meeting, a ticket
-and a reward can never show the same one (the kind is part of what is drawn and checked).
+A **TGcode** is the portal's own circular code: seven concentric rings of rounded arcs with exactly one cell of gap between them, in Triton Gaming's colours (the message rings
+alternate navy and portal blue; the filler arcs the scanner ignores are yellow and light blue, with fine yellow and light-blue lines in the spaces between rings), two ring marks at
+the top, a dot at each bottom corner, the Triton logo in the middle. It is an SVG (`components/TGcode`), it flips with the portal's light and dark theme, and **only the portal's Scan
+page reads it** (a phone's own camera sees a pattern, nothing to open). Code: `src/lib/qr/tgCode/` (`layout.ts` the geometry and bits, `marks.ts` the marks every format shares, `find.ts`
+finding the marks and dots, `rs.ts` Reed–Solomon repair, `decode.ts` the reader, `legacy*.ts` the first format, `testCamera.ts` the tests' software camera). It carries a kind and the
+first 8 hex digits (32 bits) of its own key, so a typed 6-digit code can never be turned into it, and a meeting, a ticket and a reward can never show the same one (the kind is part of
+what is drawn and checked). The server accepts the first 8 hex digits of the key (12 from a code of the first format).
+
+## How the code is built (format 2)
+
+- **Cells.** Each ring has as many cells as fit its length (30 in the inner ring, 70 in the outer one), so every cell is about as wide as it is tall: the smallest cell is about twice as
+  wide as it was in the first format, which is what lets it be read from further away.
+- **Arcs and gaps.** A block of 10 cells starts with an arc, has one cell of gap between arcs, and no arc shorter than two cells (no tiny dashes). 16 such patterns exist, so a block is
+  4 bits and two blocks are a byte. A wrong cell spoils one block and so one byte. Every gap is one cell, so all the gaps look alike; arcs vary in length. Arcs are drawn a touch short of
+  their cell edge (`EXT`) so the gap shows as 1.1 cells.
+- **Message.** 5 bytes (version and kind, then 4 bytes of key) plus 9 Reed–Solomon repair bytes, XOR-masked and scattered over the disc by a fixed shuffle (28 blocks).
+- **Reading.** The reader finds the two ring marks (the biggest 1:1:3:1:1 patterns), tries the pairs and turns, and finds the two bottom dots: every dot-like blob near where a dot should be
+  is a candidate, and several ways of laying the picture over the code are tried, likeliest first, until one reads (a tilted code has its dots mistaken otherwise). Each block of 10 cells is
+  compared with the 16 patterns it could be and given a score for how clearly it is one of them. The doubtful blocks are handed to the repair as known-unreliable (it mends two wrong bytes
+  or nine known-bad ones), the levels are measured again ring by ring if the first pass fails, and a result only counts when the repair succeeds, the version and kind are right, and the cells
+  it implies match what was seen. Any wrong result is also caught by the server, which checks the key and the time.
+- **Old codes.** Codes of the first format (8 rings of 56 cells, 12 hex digits) still read, for a page that has not reloaded since the change (`legacyDecode.ts`).
+
+## How it was checked
+
+`src/lib/qr/tgCode/testCamera.ts` is a software camera: it draws a code at any size (in pixels), turn, tilt, blur, motion blur, noise, low contrast, bad exposure, glare, vignetting, a thumb
+over part of it, light or dark plate, with each pixel averaged from several sub-samples like a real sensor. `tgCode.test.ts` runs it in the normal test run; `bench.test.ts` (only with
+`TG_BENCH=1 npx vitest run src/lib/qr/tgCode/bench.test.ts`) prints a table of how often each format reads, by code size and condition. A code is read cleanly down to about 90 px across
+(a camera frame is about 720 px wide, so a code a quarter of the frame is about 180 px), tolerates blur of about 1 px at 110 px across, moderate tilt, a thumb over an edge, noise and low
+contrast, and never read a wrong code in any test. It could not be tested on real phones from here.
 
 ## What shows which code
 
@@ -12,7 +37,7 @@ and a reward can never show the same one (the kind is part of what is drawn and 
 |---|---|---|---|
 | A ticket (My Tickets, full screen) | TGcode, kind `t` | key from the ticket's secret | about 30 s (the previous window counts only for the first 5 s of a new one) |
 | Meeting check-in (host's live screen) | TGcode, kind `m` | key from the meeting's secret | about 30 s (same) |
-| A reward pickup (Rewards, "show to an officer") | TGcode, kind `r` | first 12 hex digits of the redemption id | until picked up |
+| A reward pickup (Rewards, "show to an officer") | TGcode, kind `r` | first 8 hex digits of the redemption id | until picked up |
 | Event self check-in (Check-In → Self Check-In) | ordinary square QR, a link `…/in/<event>` | the link | permanent (public on purpose: attendees may have no account) |
 | QR Studio | ordinary square QR, whatever the person made | anything | permanent |
 
@@ -41,8 +66,8 @@ may scan tickets can ever hit the ticket side.
 ## Process logic
 
 1. The camera looks at the picture many times a second: a QR first (jsQR / the browser's detector), then the TGcode reader (finds the two ring marks, the two dots, straightens the
-   picture, reads the cells where each dash would be, repairs up to 12 wrong bytes of 32, checks the check byte). Either light-on-dark or dark-on-light reads.
-2. A TGcode becomes `tg:<kind><12 hex>`; the scanner decides by kind and calls `lib/checkin/anyCode.ts`, which asks the server (`/api/meetings/check-in`,
+   picture, reads each block of cells, repairs what it can, checks the version and kind). Either light-on-dark or dark-on-light reads.
+2. A TGcode becomes `tg:<kind><8 hex>`; the scanner decides by kind and calls `lib/checkin/anyCode.ts`, which asks the server (`/api/meetings/check-in`,
    `/api/tickets/checkin`, `/api/rewards/redemptions/lookup`). The server decides who may do what and whether the key is current.
 3. The result is shown in a card; staff can **Scan Next**.
 

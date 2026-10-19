@@ -1,6 +1,6 @@
 // One way in for everything a person can check in with. The portal's scanner and its code box both end up here, and what comes back says plainly what was done:
 //   • six typed digits: a meeting's code first, then (for staff) a ticket for an event that can still be checked into
-//   • a TGcode read by the scanner (`tg:` and `m…`, `t…` or `r…` with twelve hex digits):
+//   • a TGcode read by the scanner (`tg:` and `m…`, `t…` or `r…` with 8 (or, in the first format, 12) hex digits):
 //       meeting (`m`) checks the person in to that meeting · ticket (`t`) checks that ticket in (staff) · reward pickup (`r`) looks the reward up so staff can confirm it
 // Which of these a person may do is decided by the server; this only asks, in order, and reports.
 
@@ -13,7 +13,7 @@ export type Outcome =
   | { kind: 'choose'; code: string; meeting: string; ticket: string }
   | { kind: 'error'; message: string };
 
-export const TGCODE = /^tg:([mtr])([0-9a-f]{12})$/;
+export const TGCODE = /^tg:([mtr])([0-9a-f]{8}|[0-9a-f]{12})$/;   // the key is 8 hex digits in a code of the current format, 12 in the first one
 
 async function post(path: string, body: object) {
   const res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });

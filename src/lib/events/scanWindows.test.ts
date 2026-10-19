@@ -43,3 +43,18 @@ describe('the host screen\'s upcoming codes', () => {
     expect(up.map((u) => u.code)).not.toContain(now.code);
   });
 });
+
+describe('a TGcode carries the start of the key', () => {
+  test('8 hex digits (the current format) or 12 (the first one) of the key are accepted; anything else is not', async () => {
+    const { isValidQrToken, currentQrToken } = await import('@/lib/meetings/meetings');
+    const secret = 'zz-meeting-secret';
+    at(10);
+    const full = currentQrToken(secret);   // 12 digits
+    expect(isValidQrToken(secret, full)).toBe(true);
+    expect(isValidQrToken(secret, full.slice(0, 8))).toBe(true);
+    expect(isValidQrToken(secret, full.slice(0, 6))).toBe(false);          // too short to mean anything
+    expect(isValidQrToken(secret, full.slice(0, 8).replace(/.$/, (c) => (c === '0' ? '1' : '0')))).toBe(false);
+    expect(isValidQrToken(secret, `${full}0`)).toBe(false);
+    expect(isValidQrToken('another-secret', full.slice(0, 8))).toBe(false);
+  });
+});

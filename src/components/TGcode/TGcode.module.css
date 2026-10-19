@@ -1,18 +1,20 @@
 .code { display: block; width: 100%; height: auto; aspect-ratio: 1 / 1; border-radius: 50%; box-shadow: 0 0 0 3px var(--yellow, #ffc72c), 0 6px 20px rgba(0, 0, 0, 0.18); }
 /* Triton Gaming's own colours, from the portal's theme tokens so the code flips with the portal's light/dark switch (however it was set) and keeps the contrast the
-   reader needs: the message dashes in the ink (deep navy; white on the dark plate) and the portal's blue as their second tone; the filler dashes the scanner ignores in
-   the brand yellow and light blue, which may be as light as they like. */
+   reader needs: the message rings alternate the ink (deep navy; white on the dark plate) and the portal's blue; the filler arcs the scanner ignores are the brand yellow and light blue. */
 .plate { fill: var(--pp-card, #f3f1ea); }
 .solid { fill: var(--pp-ink, #011941); }
 .ringMark { fill: none; stroke: var(--pp-ink, #011941); }
-.dashes { fill: var(--pp-ink, #011941); stroke: none; }
-.dashes .band { fill: none; stroke: var(--pp-ink, #011941); }
+.dashes .c0 { fill: var(--pp-ink, #011941); }
+.dashes .c1 { fill: var(--p-accent-text, #0a4c8a); }
+.dashes .f0 { fill: var(--yellow, #ffc72c); }
+.dashes .f1 { fill: var(--p-accent, #7db4ea); }
+.dashes .band { fill: none; }
+.dashes .c0.band { stroke: var(--pp-ink, #011941); }
+.dashes .c1.band { stroke: var(--p-accent-text, #0a4c8a); }
+.dashes .f0.band { stroke: var(--yellow, #ffc72c); }
+.dashes .f1.band { stroke: var(--p-accent, #7db4ea); }
 .accent { fill: none; stroke: var(--yellow, #ffc72c); }
-.dashes .tone { fill: var(--p-accent-text, #0a4c8a); }
-.dashes .tone.band { fill: none; stroke: var(--p-accent-text, #0a4c8a); }
-.dashes .fill { fill: var(--yellow, #ffc72c); }
-.dashes .fill.band { fill: none; stroke: var(--yellow, #ffc72c); }
-.dashes .fillBlue { fill: var(--p-accent, #7db4ea); }
-.dashes .fillBlue.band { fill: none; stroke: var(--p-accent, #7db4ea); }
 .rim { fill: none; stroke: var(--yellow, #ffc72c); }
-.rimLine { fill: none; stroke: var(--yellow, #ffc72c); opacity: 0.7; }
+.rimLine { fill: none; stroke: var(--p-accent, #7db4ea); opacity: 0.95; }
+.hair0 { stroke: var(--yellow, #ffc72c); }
+.hair1 { stroke: var(--p-accent, #7db4ea); }

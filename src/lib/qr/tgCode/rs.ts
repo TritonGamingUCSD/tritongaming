@@ -64,9 +64,9 @@ export function rsEncode(data: number[], nsym: number): number[] {
 
 const syndromes = (msg: number[], nsym: number) => { const s: number[] = []; for (let i = 0; i < nsym; i++) s.push(polyEval(msg, EXP[i])); return s; };
 
-function errorLocator(synd: number[], nsym: number): number[] {
+function errorLocator(synd: number[], nsym: number, eraseCount = 0): number[] {
   let errLoc = [1], oldLoc = [1];
-  for (let i = 0; i < nsym; i++) {
+  for (let i = 0; i < nsym - eraseCount; i++) {
     let delta = synd[i];
     for (let j = 1; j < errLoc.length; j++) delta ^= mul(errLoc[errLoc.length - 1 - j], synd[i - j]);
     oldLoc = [...oldLoc, 0];
@@ -80,8 +80,19 @@ function errorLocator(synd: number[], nsym: number): number[] {
     }
   }
   while (errLoc.length && errLoc[0] === 0) errLoc.shift();
-  if ((errLoc.length - 1) * 2 > nsym) throw new Error('too many errors');
+  if ((errLoc.length - 1 - eraseCount) * 2 + eraseCount > nsym) throw new Error('too many errors');
   return errLoc;
+}
+
+/** The syndromes with the known-bad positions taken out, so the search for further wrong bytes only has to find those. */
+function forneySyndromes(synd: number[], erase: number[], n: number): number[] {
+  const f = [...synd];
+  for (const p of erase) {
+    const x = pow(2, n - 1 - p);
+    for (let j = 0; j < f.length - 1; j++) f[j] = mul(f[j], x) ^ f[j + 1];
+    f.pop();
+  }
+  return f;
 }
 
 function findErrors(errLocRev: number[], n: number): number[] {
@@ -113,14 +124,20 @@ function correctErrata(msg: number[], synd: number[], errPos: number[]): number[
   return polyAdd(msg, E);
 }
 
-/** The data bytes, or null when the damage is beyond what the parity can repair. */
-export function rsDecode(msg: number[], nsym: number): number[] | null {
+/** The data bytes, or null when the damage is beyond what the parity can repair. `erase` lists positions known to be unreliable (a wrong byte costs two parity
+ *  bytes to find and fix, a known-bad one costs only one); `maxFix` caps how many unknown wrong bytes may be repaired, so a hopeless read cannot pass as a repaired one. */
+export function rsDecode(msg: number[], nsym: number, erase: number[] = [], maxFix = Math.floor(nsym / 2)): number[] | null {
   try {
-    const synd = syndromes(msg, nsym);
-    if (synd.every((s) => s === 0)) return msg.slice(0, msg.length - nsym);
-    const errLoc = errorLocator(synd, nsym);
-    const pos = findErrors([...errLoc].reverse(), msg.length);
-    const fixed = correctErrata(msg, synd, pos);
+    if (erase.length > nsym) return null;
+    const work = [...msg];
+    for (const p of erase) work[p] = 0;
+    const synd = syndromes(work, nsym);
+    if (synd.every((s) => s === 0)) return work.slice(0, work.length - nsym);
+    const fsynd = forneySyndromes(synd, erase, work.length);
+    const errLoc = errorLocator(fsynd, nsym, erase.length);
+    if (errLoc.length - 1 > maxFix) return null;
+    const pos = findErrors([...errLoc].reverse(), work.length);
+    const fixed = correctErrata(work, synd, [...erase, ...pos]);
     if (!syndromes(fixed, nsym).every((s) => s === 0)) return null;
     return fixed.slice(0, fixed.length - nsym);
   } catch { return null; }
