@@ -234,7 +234,7 @@ export function isValidMeetingCode(secret: string, input: string): boolean {
   return rotatingCode(secret, w) === c || rotatingCode(secret, w - 1) === c;
 }
 
-// The code on the room screen is not a link and not the typed digits: it is a ring code carrying `m` and twelve hex digits of a key of its own, which rotates with
+// The code on the room screen is not a link and not the typed digits: it is a TGcode carrying `m` and twelve hex digits of a key of its own, which rotates with
 // the same 30-second window (the previous one counts only for the first 5 seconds of a new one, so a code is good for about 30 to 35 s; the digits keep the whole previous window). Only the portal's scanner reads it, so there is no sign-in step to outlast.
 export const QR_TOKEN_LEN = 12;
 export const currentQrToken = (secret: string): string => qrToken(secret, currentWindow()).slice(0, QR_TOKEN_LEN);

@@ -36,7 +36,7 @@ import Dialog from '@/components/ui/Dialog';
 import CheckInOutcome from '@/components/portal/CheckInOutcome';
 import { checkInWithCode, resolveChoice, type Outcome } from '@/lib/checkin/anyCode';
 import Link from 'next/link';
-import RingCode from '@/components/RingCode/RingCode';
+import TGcode from '@/components/TGcode/TGcode';
 
 type Tab = 'mine' | 'planning' | 'host' | 'attendance' | 'emojis';
 
@@ -151,7 +151,7 @@ export default function MeetingsSectionContent({ canHost, canManageAll, userId, 
 const sideSpot = (edge = 5, band = 19) => (Math.random() < 0.5 ? edge + Math.random() * band : 100 - edge - Math.random() * band);
 
 function MeetingQR({ payload, size }: { payload: string; size: number }) {
-  return <div className={styles.qrCanvas} style={{ width: size, height: size }}><RingCode payload={payload} /></div>;
+  return <div className={styles.qrCanvas} style={{ width: size, height: size }}><TGcode payload={payload} /></div>;
 }
 
 // My meetings: check in first, then what is coming up or what has happened (a switch, not two columns).

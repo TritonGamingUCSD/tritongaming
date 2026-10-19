@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import RingIcon from '@/components/RingCode/RingIcon';
+import TGcodeIcon from '@/components/TGcode/TGcodeIcon';
 import { Check, CircleAlert, TriangleAlert, X, Zap, ZapOff } from 'lucide-react';
 import jsQR from 'jsqr';
-import { decodeRingCodeAt } from '@/lib/qr/ringCode/decode';
+import { decodeTGcodeAt } from '@/lib/qr/tgCode/decode';
 import styles from './meetings.module.css';
 
 interface Caps { zoom?: { min: number; max: number; step: number }; torch?: boolean }
@@ -112,7 +112,7 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
             canvas.width = Math.min(720, w); canvas.height = Math.round(canvas.width * (h / w));
             ctx.drawImage(v, (v.videoWidth - w) / 2, (v.videoHeight - h) / 2, w, h, 0, 0, canvas.width, canvas.height);
             const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            // A QR first (an event's check-in link and the like), then the portal's own ring code.
+            // A QR first (an event's check-in link and the like), then the portal's own TGcode.
             const q = jsQR(img.data, img.width, img.height, { inversionAttempts: 'attemptBoth' });
             text = q?.data ?? null;
             const k = w / canvas.width, ox = (v.videoWidth - w) / 2, oy = (v.videoHeight - h) / 2;   // the picture it read is the middle crop, scaled down
@@ -121,8 +121,8 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
             if (!text) {
               const gray = new Uint8ClampedArray(img.width * img.height);
               for (let i = 0, j = 0; i < gray.length; i++, j += 4) gray[i] = (img.data[j] * 77 + img.data[j + 1] * 150 + img.data[j + 2] * 29) >> 8;
-              const ring = decodeRingCodeAt(gray, img.width, img.height);
-              if (ring) { text = `ring:${ring.payload}`; found = { x: ox + ring.spot.x * k, y: oy + ring.spot.y * k, r: ring.spot.r * k }; }
+              const ring = decodeTGcodeAt(gray, img.width, img.height);
+              if (ring) { text = `tg:${ring.payload}`; found = { x: ox + ring.spot.x * k, y: oy + ring.spot.y * k, r: ring.spot.r * k }; }
             }
           }
           // The caller decides what the text is: true = taken (freeze the picture), anything else = keep looking. The same text is not offered again for 3 s.
@@ -197,7 +197,7 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
         <span className={styles.scanTitle}>{title}</span>
         <button type="button" className={styles.scanClose} onClick={onClose} aria-label="Close scanner"><X size={22} aria-hidden="true" /></button>
       </header>
-      {error ? <div className={styles.scanProblem}><RingIcon size={44} /><p>{error}</p></div> : (
+      {error ? <div className={styles.scanProblem}><TGcodeIcon size={44} /><p>{error}</p></div> : (
         <div ref={frame} className={styles.scanStage}>
           <video ref={video} playsInline muted className={ready ? styles.scanReady : undefined} />
           {!ready && <div className={styles.scanStarting}>Starting camera…</div>}

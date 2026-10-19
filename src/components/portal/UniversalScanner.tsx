@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import QrScanner, { type ScanLock } from '@/app/(portal)/portal/meetings/QrScanner';
 import CheckInOutcome from './CheckInOutcome';
 import CodeEntry from './CodeEntry';
-import { checkInWithCode, checkInWithQr, confirmReward, resolveChoice, RING, type Outcome } from '@/lib/checkin/anyCode';
+import { checkInWithCode, checkInWithQr, confirmReward, resolveChoice, TGCODE, type Outcome } from '@/lib/checkin/anyCode';
 import styles from './UniversalScanner.module.css';
 
 const MY_MEETING = '/portal/meetings?tab=mine';   // where a checked-in meeting's question and doc are
@@ -66,7 +66,7 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
 
   function onScan(text: string): boolean {
     const t = text.trim();
-    const ring = t.match(RING);
+    const ring = t.match(TGCODE);
     if (ring) {
       setProblem('');
       setState({ kind: 'working', label: ring?.[1] === 'm' ? 'Checking you in…' : ring?.[1] === 'r' ? 'Looking up the reward…' : 'Checking the ticket…' });

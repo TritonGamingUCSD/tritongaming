@@ -11,7 +11,7 @@ import { mergedPortalParams, portalHref } from '@/lib/portal/portalPath';
 import { usePortalParams } from '@/lib/portal/usePortalParams';
 import { motion, AnimatePresence } from 'motion/react';
 import { Home, MoreHorizontal, ChevronRight, ChevronLeft } from 'lucide-react';
-import RingIcon from '@/components/RingCode/RingIcon';
+import TGcodeIcon from '@/components/TGcode/TGcodeIcon';
 import PortalSearch from './PortalSearch';
 import NotificationBell from './NotificationBell';
 import PortalThemeToggle from './PortalThemeToggle';
@@ -324,7 +324,7 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
   const scanButton = (
     <Fragment key="scan">
     <button type="button" className={`${styles.dockItem} ${styles.dockScan}`} onClick={() => { setMoreOpen(false); setOpeningScan(true); router.push('/portal/scan'); }} aria-label="Scan a TGcode">
-      <span className={styles.dockScanIcon}><RingIcon size={26} /></span>
+      <span className={styles.dockScanIcon}><TGcodeIcon size={26} /></span>
       <span className={styles.dockLabel}>Scan</span>
     </button>
     {openingScan && createPortal(<ScanOpening />, document.body)}

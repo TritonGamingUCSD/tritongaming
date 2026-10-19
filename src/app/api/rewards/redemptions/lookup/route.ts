@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
 
-// The ring code on a member's reward pickup carries `r` and the first twelve hex digits of the redemption's id. Staff with access to reward pickups find the
+// The TGcode on a member's reward pickup carries `r` and the first twelve hex digits of the redemption's id. Staff with access to reward pickups find the
 // redemption from it here (the same details as looking it up by its whole id), then confirm it as before.
 export async function GET(request: Request) {
   const supabase = await createClient();

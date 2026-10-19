@@ -7,12 +7,12 @@ import { confirmHold } from '@/lib/ui/confirmHold';
 import { showToast } from '@/lib/ui/toast';
 import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import { useEffect, useState } from 'react';
-import RingIcon from '@/components/RingCode/RingIcon';
+import TGcodeIcon from '@/components/TGcode/TGcodeIcon';
 import { Award, ShoppingBag, Trophy, Settings, Check, Gift, Lock, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { getTier, nextTier, type Tier } from '@/lib/members/tiers';
 import { PACIFIC_TZ } from '@/lib/core/timezone';
-import RingCode from '@/components/RingCode/RingCode';
+import TGcode from '@/components/TGcode/TGcode';
 import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
 import type { TransactionRow } from './getMyPointsData';
 import IconButton from '@/components/ui/IconButton';
@@ -790,7 +790,7 @@ export default function PointsSectionContent({
                   const reward = oneOf(r.reward);
                   return (
                     <button key={r.id} type="button" className={styles.pendingCard} onClick={() => setQrFor(r.id)}>
-                      <RingIcon size={20} />
+                      <TGcodeIcon size={20} />
                       <span>{reward?.title ?? 'Reward'}</span>
                     </button>
                   );
@@ -1162,7 +1162,7 @@ export default function PointsSectionContent({
         <div className={styles.qrOverlay} onClick={() => setQrFor(null)}>
           <div className={styles.qrModal} onClick={(e) => e.stopPropagation()}>
             <p className={styles.qrHint}>Show this to an officer at an event</p>
-            <div className={styles.qrCanvas}><RingCode payload={`r${qrFor.replace(/-/g, '').slice(0, 12)}`} /></div>
+            <div className={styles.qrCanvas}><TGcode payload={`r${qrFor.replace(/-/g, '').slice(0, 12)}`} /></div>
             <Button type="button" onClick={() => setQrFor(null)}>Done</Button>
           </div>
         </div>

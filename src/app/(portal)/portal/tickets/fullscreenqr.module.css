@@ -143,7 +143,7 @@
   50% { opacity: 0.4; transform: scale(0.75); }
 }
 
-/* The ring code is a self-contained circular graphic now — it
+/* The TGcode is a self-contained circular graphic now — it
    draws its own white backdrop and dot-ring "frame" on the canvas itself
    so this wrapper no longer needs to be a square white
    card around it. border-radius:50% keeps its children (the countdown ring)

@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
 import { rsDecode, rsEncode } from './rs';
-import { DASH, DOTS, FINDERS, R_IN, R_LOGO, RINGS, THICK, U, R_SMALL, SECTORS, dashGrid, messageBits, DATA_CELLS, payloadFromBits } from './layout';
-import { decodeRingCode, decodeRingCodeAt } from './decode';
+import { DASH, DOTS, FINDERS, R_IN, R_LOGO, RINGS, THICK, U, R_SMALL, SECTORS, endShift, dashGrid, messageBits, DATA_CELLS, payloadFromBits } from './layout';
+import { decodeTGcode, decodeTGcodeAt } from './decode';
 
-// A small software "camera": draws a ring code into a grey picture (any turn, size, tilt, blur, noise, light or dark plate) so the reader can be tried on many pictures.
+// A small software "camera": draws a TGcode into a grey picture (any turn, size, tilt, blur, noise, light or dark plate) so the reader can be tried on many pictures.
 function paint(payload: string, o: { px: number; rot: number; a?: number; b?: number; blur?: number; noise?: number; dark?: boolean; size?: number; seed?: number; glare?: boolean; tone?: boolean }) {
   const size = o.size ?? Math.round(o.px * 2.6);
   const gray = new Uint8ClampedArray(size * size);
@@ -16,7 +16,11 @@ function paint(payload: string, o: { px: number; rot: number; a?: number; b?: nu
     if (Math.abs(r - (R_IN + (ring + 0.5) * THICK)) > DASH / 2) return 0;   // between the rings
     let ang = Math.atan2(y, x); if (ang < 0) ang += 2 * Math.PI;
     const sec = Math.floor(ang / delta) % SECTORS;
-    return grid[ring][sec] ? (o.tone && (sec * 7 + ring * 3) % 4 === 0 ? 2 : 1) : 0;   // 2 = the portal-blue second tone
+    const fr = ang / delta - Math.floor(ang / delta);
+    const on = (k: number) => grid[ring][(k + SECTORS) % SECTORS];
+    const lit = on(sec) ? !((!on(sec - 1) && fr < -endShift(ring, sec, 0)) || (!on(sec + 1) && fr > 1 + endShift(ring, sec, 1)))   // a dash may stop a little short of its cell edge
+      : (on(sec + 1) && !on(sec) && fr > 1 - endShift(ring, sec + 1, 0)) || (on(sec - 1) && fr < endShift(ring, sec - 1, 1));   // or reach a little past it
+    return lit ? (o.tone && (sec * 7 + ring * 3) % 4 === 0 ? 2 : 1) : 0;   // 2 = the portal-blue second tone
   };
   const ink = o.dark ? 235 : 25, plate = o.dark ? 18 : 240, around = 128;
   const cs = Math.cos(o.rot), sn = Math.sin(o.rot), c = size / 2;
@@ -55,7 +59,7 @@ function paint(payload: string, o: { px: number; rot: number; a?: number; b?: nu
 
 const payloads = ['m0123456789ab', 't00ffeeddccbb', 'rabcdefabcdef', 'm000000000000', 'tffffffffffff', 'r1f2e3d4c5b6a'];
 
-describe('ring code', () => {
+describe('TGcode', () => {
   test('reed-solomon repairs up to 12 wrong bytes of 32', () => {
     let seed = 99; const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
     for (let t = 0; t < 300; t++) {
@@ -96,7 +100,7 @@ describe('ring code', () => {
   const cases: { name: string; o: Parameters<typeof paint>[1] }[] = [];
   for (const dark of [false, true]) for (const px of [60, 90, 140, 260]) for (const rot of [0, 0.5, 1.3, 2.2, 3.14, 4.4, 5.6]) cases.push({ name: `${dark ? 'dark' : 'light'} ${px}px turn ${rot}`, o: { px, rot, dark } });
   test.each(cases)('reads a clean picture: $name', ({ o }) => {
-    payloads.forEach((p, i) => expect(decodeRingCode(...flat(paint(p, { ...o, seed: i + 1 })))).toBe(p));
+    payloads.forEach((p, i) => expect(decodeTGcode(...flat(paint(p, { ...o, seed: i + 1 })))).toBe(p));
   });
 
   const rough: { name: string; o: Parameters<typeof paint>[1] }[] = [];
@@ -105,28 +109,28 @@ describe('ring code', () => {
   for (const dark of [false, true]) rough.push({ name: `${dark ? 'dark' : 'light'} glare`, o: { px: 130, rot: 4.0, glare: true, dark } });
   test.each(rough)('reads a rough picture: $name', ({ o }) => {
     let ok = 0;
-    payloads.forEach((p, i) => { if (decodeRingCode(...flat(paint(p, { ...o, seed: i + 3 }))) === p) ok++; });
+    payloads.forEach((p, i) => { if (decodeTGcode(...flat(paint(p, { ...o, seed: i + 3 }))) === p) ok++; });
     expect(ok).toBeGreaterThanOrEqual(payloads.length - 1);
   });
 
   test('does not invent a code from nothing', () => {
     const size = 300; const noise = new Uint8ClampedArray(size * size); let s = 5;
     for (let i = 0; i < noise.length; i++) { s = (s * 1664525 + 1013904223) >>> 0; noise[i] = s >>> 24; }
-    expect(decodeRingCode(noise, size, size)).toBeNull();
-    expect(decodeRingCode(new Uint8ClampedArray(size * size).fill(200), size, size)).toBeNull();
+    expect(decodeTGcode(noise, size, size)).toBeNull();
+    expect(decodeTGcode(new Uint8ClampedArray(size * size).fill(200), size, size)).toBeNull();
   });
 });
 
 function flat(p: { img: Uint8ClampedArray; size: number }): [Uint8ClampedArray, number, number] { return [p.img, p.size, p.size]; }
 
-describe('ring code under random conditions', () => {
+describe('TGcode under random conditions', () => {
   test('reads at least 94% of 200 random pictures, and never reads the wrong thing', () => {
     let seed = 7; const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
     let ok = 0, wrong = 0; const trials = 300; const misses: string[] = [];
     for (let t = 0; t < trials; t++) {
       const p = payloads[Math.floor(rnd() * payloads.length)].replace(/.$/, () => '0123456789abcdef'[Math.floor(rnd() * 16)]);
       const o = { px: 60 + rnd() * 250, rot: rnd() * 6.28, a: (rnd() - 0.5) * 0.28, b: (rnd() - 0.5) * 0.28, blur: Math.floor(rnd() * 2.6), noise: rnd() * 30, dark: rnd() < 0.5, glare: rnd() < 0.2, seed: t + 1 };
-      const got = decodeRingCode(...flat(paint(p, o)));
+      const got = decodeTGcode(...flat(paint(p, o)));
       if (got === p) ok++; else if (got) wrong++; else misses.push(JSON.stringify({ ...o, px: Math.round(o.px) }));
     }
     console.log(`read ${ok}/${trials}, wrong ${wrong}`, misses.slice(0, 40).join('\n'));
@@ -144,7 +148,7 @@ describe('two-tone dashes', () => {
       for (let t = 0; t < n; t++) {
         const p = payloads[t % payloads.length];
         const o = { px: 90 + rnd() * 200, rot: rnd() * 6.28, a: (rnd() - 0.5) * 0.2, b: (rnd() - 0.5) * 0.2, blur: Math.floor(rnd() * 2), noise: rnd() * 20, dark: rnd() < 0.5, glare: rnd() < 0.2, seed: t + 1, tone };
-        if (decodeRingCode(...flat(paint(p, o))) === p) ok++;
+        if (decodeTGcode(...flat(paint(p, o))) === p) ok++;
       }
       return ok / n;
     };
@@ -158,7 +162,7 @@ describe('where the code is found', () => {
   test('the centre and size it reports match where the picture was drawn, turned, tilted, light or dark', () => {
     for (const [px, rot, a, b, dark] of [[140, 0, 0, 0, false], [100, 1.3, 0.05, -0.04, true], [200, 4.4, -0.06, 0.05, false], [70, 2.2, 0, 0, true]] as const) {
       const pic = paint(payloads[1], { px, rot, a, b, dark, seed: 5 });
-      const got = decodeRingCodeAt(...flat(pic));
+      const got = decodeTGcodeAt(...flat(pic));
       expect(got?.payload).toBe(payloads[1]);
       expect(Math.hypot(got!.spot.x - pic.size / 2, got!.spot.y - pic.size / 2)).toBeLessThan(px * 0.06);
       expect(Math.abs(got!.spot.r / (px * 0.88) - 1)).toBeLessThan(0.1);

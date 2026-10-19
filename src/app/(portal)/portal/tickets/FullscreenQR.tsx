@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Ticket, X, Check, Zap, ClipboardList } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import RingCode from '@/components/RingCode/RingCode';
+import TGcode from '@/components/TGcode/TGcode';
 import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/core/timezone';
 import { fetchWithRetry } from '@/lib/ui/fetchWithRetry';
 import AsFormButton from './AsFormButton';
@@ -515,7 +515,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
                 // fade-in below each time, turning what used to be an
                 // instant, jarring swap into a brief soft crossfade instead.
                 <div key={qrData} className={styles.qrSwap}>
-                  <div className={styles.qrCanvas}><RingCode payload={qrData} label="Your ticket's code, for the portal's Scan button" /></div>
+                  <div className={styles.qrCanvas}><TGcode payload={qrData} label="Your ticket's code, for the portal's Scan button" /></div>
                 </div>
               ) : (
                 // On a slow connection this can sit for a couple seconds

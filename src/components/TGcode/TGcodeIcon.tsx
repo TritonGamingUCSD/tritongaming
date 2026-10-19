@@ -1,6 +1,6 @@
 // The icon for scanning the portal's circular codes (the Scan button): rings of dashes round a solid middle, with the two marks at the top, instead of the
 // standard QR-scanner glyph. Drawn in the current text colour, like the other icons.
-export default function RingIcon({ size = 24 }: { size?: number }) {
+export default function TGcodeIcon({ size = 24 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" aria-hidden="true">
       <circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none" />

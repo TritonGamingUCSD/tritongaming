@@ -45,7 +45,7 @@ const underMark = (ring: number, sector: number) => {
 const ORDER: [number, number][] = (() => {
   const active: [number, number][] = [];
   for (let r = 0; r < RINGS; r++) for (let s = 0; s < SECTORS; s++) if (!underMark(r, s)) active.push([r, s]);
-  if (active.length < BITS) throw new Error(`ring code layout has only ${active.length} cells`);
+  if (active.length < BITS) throw new Error(`TGcode layout has only ${active.length} cells`);
   // A deterministic shuffle (a seeded Fisher–Yates), so neighbouring cells hold bits far apart in the message.
   let seed = 0x2f6b1;
   const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x80000000; };
@@ -118,4 +118,12 @@ export function dashRuns(payload: string): [number, number, number, boolean][] {
     }
   }
   return runs;
+}
+
+/** How far, in cells, a dash is drawn past (or short of) a cell edge where an arc starts (which = 0) or ends (which = 1): a small fixed amount that differs from arc to arc, so the arcs are not all one length.
+ *  The reader looks at the middle of each cell, so these stay small (from 0.1 of a cell short to 0.15 past). */
+export function endShift(ring: number, sector: number, which: 0 | 1): number {
+  let h = (ring * 131 + (sector % SECTORS) * 31 + which * 17 + 7) >>> 0;
+  h = Math.imul(h ^ (h >>> 15), 2246822519) >>> 0; h = Math.imul(h ^ (h >>> 13), 3266489917) >>> 0; h ^= h >>> 16;
+  return -0.1 + 0.25 * ((h >>> 0) / 4294967296);
 }

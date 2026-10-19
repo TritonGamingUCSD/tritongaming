@@ -1,5 +1,5 @@
 // Reed–Solomon over GF(256) (primitive polynomial 0x11d, first root alpha^0), written after the "Reed–Solomon codes for coders" reference.
-// Polynomials are arrays with the highest power first. Small and dependency-free: it is what lets a ring code still read with some dashes hidden or smudged.
+// Polynomials are arrays with the highest power first. Small and dependency-free: it is what lets a TGcode still read with some dashes hidden or smudged.
 
 const EXP = new Uint8Array(512);
 const LOG = new Uint8Array(256);

@@ -77,7 +77,7 @@ Pure logic (no database, no React) is what the unit tests in `src/lib/__tests__`
 | `audit.ts`, `auditFilters.ts` | The audit log and its filters |
 
 ## `qr/`
-`qrCodeStyling.ts` and `qrPresets.ts` (QR Studio). `lib/qr/ringCode/` is the portal's own circular code (tickets, meeting check-in, reward pickups): `layout.ts` (the geometry and bits), `rs.ts` (Reed–Solomon repair), `decode.ts` (the reader); it (the "TGcode", see `docs/tgcodes-and-scanning.md`) is drawn by `components/RingCode` and read by the Scan page (`portal/scan`, `components/portal/UniversalScanner`).
+`qrCodeStyling.ts` and `qrPresets.ts` (QR Studio). `lib/qr/tgCode/` is the portal's own circular code (tickets, meeting check-in, reward pickups): `layout.ts` (the geometry and bits), `rs.ts` (Reed–Solomon repair), `decode.ts` (the reader); it (the "TGcode", see `docs/tgcodes-and-scanning.md`) is drawn by `components/TGcode` and read by the Scan page (`portal/scan`, `components/portal/UniversalScanner`).
 
 ## `storage/`
 `imageUpload.ts`, `imageOptimize.ts`, `fileUpload.ts`, `fontUpload.ts`, `sitePhotos.ts`, `googlePhotosAlbum.ts` (uploads and photos); `storageBuckets.ts`, `storageMaintenance.ts` (buckets and the weekly clean-up of unused files); `storageKeys.ts` (the Storage Keys section: who holds which physical key).

@@ -1,8 +1,8 @@
 # TGcodes, QR codes and the Scan page
 
 A **TGcode** is the portal's own circular code: concentric rings of square-ended dashes in Triton Gaming's colours (navy and royal blue for the message, yellow and light blue
-for filler), two ring marks at the top, a dot at each bottom corner, the Triton logo in the middle. It is an SVG (`components/RingCode`), it flips with the portal's light and dark
-theme, and **only the portal's Scan page reads it** (a phone's own camera sees a pattern, nothing to open). Code: `src/lib/qr/ringCode/` (`layout.ts` the geometry and bits, `rs.ts`
+for filler), two ring marks at the top, a dot at each bottom corner, the Triton logo in the middle. It is an SVG (`components/TGcode`), it flips with the portal's light and dark
+theme, and **only the portal's Scan page reads it** (a phone's own camera sees a pattern, nothing to open). Code: `src/lib/qr/tgCode/` (`layout.ts` the geometry and bits, `rs.ts`
 Reed–Solomon repair, `decode.ts` the reader). It carries a kind letter and 12 hex digits of its own key, so a typed 6-digit code can never be turned into it, and a meeting, a ticket
 and a reward can never show the same one (the kind is part of what is drawn and checked).
 
@@ -42,7 +42,7 @@ may scan tickets can ever hit the ticket side.
 
 1. The camera looks at the picture many times a second: a QR first (jsQR / the browser's detector), then the TGcode reader (finds the two ring marks, the two dots, straightens the
    picture, reads the cells where each dash would be, repairs up to 12 wrong bytes of 32, checks the check byte). Either light-on-dark or dark-on-light reads.
-2. A TGcode becomes `ring:<kind><12 hex>`; the scanner decides by kind and calls `lib/checkin/anyCode.ts`, which asks the server (`/api/meetings/check-in`,
+2. A TGcode becomes `tg:<kind><12 hex>`; the scanner decides by kind and calls `lib/checkin/anyCode.ts`, which asks the server (`/api/meetings/check-in`,
    `/api/tickets/checkin`, `/api/rewards/redemptions/lookup`). The server decides who may do what and whether the key is current.
 3. The result is shown in a card; staff can **Scan Next**.
 

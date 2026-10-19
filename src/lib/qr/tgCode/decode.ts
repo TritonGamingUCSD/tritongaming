@@ -1,6 +1,6 @@
 import { DATA_CELLS, R_OUT, DOTS, FINDERS, R_SMALL, SPAN, U, cellCenter, payloadFromBits } from './layout';
 
-// Reads a ring code out of a camera picture (grey values, width × height). No library: it finds the three finder marks the way a QR reader does, works out
+// Reads a TGcode out of a camera picture (grey values, width × height). No library: it finds the three finder marks the way a QR reader does, works out
 // where the code sits (position, size, turn, and a little tilt from the three marks), reads each cell where the dash would be, and lets the repair bytes
 // settle what a blurred or glared cell got wrong. Light marks on a dark plate (the portal's dark theme) read just as well as dark on light.
 
@@ -185,11 +185,11 @@ function binarize(gray: Uint8ClampedArray | Uint8Array, w: number, h: number, da
   return bin;
 }
 
-/** Where a ring code was found in the picture: its centre and radius, in picture pixels. */
+/** Where a TGcode was found in the picture: its centre and radius, in picture pixels. */
 export interface RingSpot { x: number; y: number; r: number }
 
-/** Looks for a ring code in a grey picture and returns what it says (`m…`, `t…` or `r…` and twelve hex digits) and where it sits, or null. */
-export function decodeRingCodeAt(gray: Uint8ClampedArray | Uint8Array, w: number, h: number): { payload: string; spot: RingSpot } | null {
+/** Looks for a TGcode in a grey picture and returns what it says (`m…`, `t…` or `r…` and twelve hex digits) and where it sits, or null. */
+export function decodeTGcodeAt(gray: Uint8ClampedArray | Uint8Array, w: number, h: number): { payload: string; spot: RingSpot } | null {
   for (const darkMarks of [true, false]) {
     const bin = binarize(gray, w, h, darkMarks);
     const finders = findFinders(bin, w, h);
@@ -211,5 +211,5 @@ export function decodeRingCodeAt(gray: Uint8ClampedArray | Uint8Array, w: number
   return null;
 }
 
-/** Looks for a ring code in a grey picture and returns what it says, or null. */
-export const decodeRingCode = (gray: Uint8ClampedArray | Uint8Array, w: number, h: number): string | null => decodeRingCodeAt(gray, w, h)?.payload ?? null;
+/** Looks for a TGcode in a grey picture and returns what it says, or null. */
+export const decodeTGcode = (gray: Uint8ClampedArray | Uint8Array, w: number, h: number): string | null => decodeTGcodeAt(gray, w, h)?.payload ?? null;

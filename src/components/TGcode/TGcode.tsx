@@ -1,16 +1,17 @@
-import { PAYLOAD, R_IN, R_LOGO, R_SMALL, FINDERS, DOTS, THICK, DASH, U, SECTORS, dashRuns } from '@/lib/qr/ringCode/layout';
-import styles from './RingCode.module.css';
+import { PAYLOAD, R_IN, R_LOGO, R_SMALL, FINDERS, DOTS, THICK, DASH, U, SECTORS, dashRuns, endShift } from '@/lib/qr/tgCode/layout';
+import styles from './TGcode.module.css';
 
-// The portal's own circular code (see lib/qr/ringCode; the idea is Apple's App Clip codes, in Triton Gaming's colours): concentric rings of dashes with two ring marks at the top and a dot at each bottom corner, and the Triton logo
+// The portal's own circular code (see lib/qr/tgCode; the idea is Apple's App Clip codes, in Triton Gaming's colours): concentric rings of dashes with two ring marks at the top and a dot at each bottom corner, and the Triton logo
 // on a solid disc in the middle. Drawn in the portal's ink on its card colour, so it flips with the light and dark theme while keeping the contrast the reader
 // needs either way. Only the portal's Scan button reads it.
-export default function RingCode({ payload, size, className = '', label = 'Code for the portal’s Scan button' }: { payload: string; size?: number; className?: string; label?: string }) {
+export default function TGcode({ payload, size, className = '', label = 'Code for the portal’s Scan button' }: { payload: string; size?: number; className?: string; label?: string }) {
   if (!PAYLOAD.test(payload)) return null;
   const delta = (2 * Math.PI) / SECTORS;
   const arcs = dashRuns(payload).map(([ring, s, e, fill], i) => {
     const r = R_IN + (ring + 0.5) * THICK;
     const inset = DASH / 2 / r;   // the round ends sit inside the run, so a dash fills exactly its cells
-    const a0 = s * delta + inset, a1 = (e + 1) * delta - inset;
+    const full = e - s + 1 >= SECTORS;
+    const a0 = s * delta + inset - (full ? 0 : endShift(ring, s, 0)) * delta, a1 = (e + 1) * delta - inset + (full ? 0 : endShift(ring, e, 1)) * delta;   // arcs end a little differently from one another; the reader looks at the middle of a cell, which stays clear
     const p = (a: number) => `${(r * Math.cos(a)).toFixed(4)} ${(r * Math.sin(a)).toFixed(4)}`;
     // Square-ended dashes, like pixels of an arcade screen (Apple's are round). The message dashes are navy and (some) royal blue, which the scanner reads; the filler dashes
     // are Triton yellow and light blue, which it ignores.

@@ -55,7 +55,7 @@ export async function GET(request: Request, { params }: Params) {
   // for — see src/app/api/tickets/checkin/route.ts, which strips this prefix
   // before verifying the actual rotating code. `code` alone (no prefix) is
   // still returned for the manual-entry fallback text on screen.
-  // The ring code carries `t` and twelve hex digits of a key of its own (not the typed digits); the portal's scanner finds the ticket from it.
+  // The TGcode carries `t` and twelve hex digits of a key of its own (not the typed digits); the portal's scanner finds the ticket from it.
   const qrFor = (w: number) => `t${qrToken(ticket.ticket_code, w).slice(0, 12)}`;
   const qrData = qrFor(currentWindow());
   // rotation_seconds lets the client pace the countdown ring correctly —

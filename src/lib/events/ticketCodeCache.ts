@@ -4,7 +4,7 @@
 // *server* time window — the phone's clock offset from the server is stored
 // alongside so a wrong phone clock doesn't pick the wrong window.
 import { ROTATION_SECONDS } from '@/lib/events/rotationConstants';
-import { PAYLOAD } from '@/lib/qr/ringCode/layout';
+import { PAYLOAD } from '@/lib/qr/tgCode/layout';
 
 interface CachedCode { w: number; code: string; qr_data: string }
 interface Entry { offsetMs: number; codes: CachedCode[]; hasFastPass: boolean; savedAt: number }
@@ -45,7 +45,7 @@ export function currentCachedCode(ticketId: string) {
   const serverNow = Date.now() + entry.offsetMs;
   const w = Math.floor(serverNow / 1000 / ROTATION_SECONDS);
   const hit = entry.codes.find((c) => c.w === w);
-  if (!hit || !PAYLOAD.test(hit.qr_data)) return null;   // (a code cached before the ring codes is never shown)
+  if (!hit || !PAYLOAD.test(hit.qr_data)) return null;   // (a code cached before the TGcodes is never shown)
   const expiresIn = ROTATION_SECONDS - (Math.floor(serverNow / 1000) % ROTATION_SECONDS);
   return { code: hit.code, qr_data: hit.qr_data, expires_in: expiresIn, has_fast_pass: entry.hasFastPass };
 }
@@ -54,7 +54,7 @@ export function currentCachedCode(ticketId: string) {
 // top the cache up.
 export function cachedMinutesLeft(ticketId: string): number {
   const entry = loadEntry(ticketId);
-  if (!entry || !entry.codes.length || !entry.codes.every((c) => PAYLOAD.test(c.qr_data))) return 0;   // codes cached before the ring codes do not count: top the cache up
+  if (!entry || !entry.codes.length || !entry.codes.every((c) => PAYLOAD.test(c.qr_data))) return 0;   // codes cached before the TGcodes do not count: top the cache up
   const last = entry.codes[entry.codes.length - 1].w;
   const serverNow = Date.now() + entry.offsetMs;
   return Math.max(0, Math.floor((((last + 1) * ROTATION_SECONDS * 1000) - serverNow) / 60000));

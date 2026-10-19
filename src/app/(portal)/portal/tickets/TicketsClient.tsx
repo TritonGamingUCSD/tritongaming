@@ -8,7 +8,7 @@ import { pacificKey, startsWeekGroup } from '@/lib/events/weekGroups';
 import Link from '@/components/portal/NoPrefetchLink';
 import { getAttributionSource } from '@/lib/site/attribution';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import RingIcon from '@/components/RingCode/RingIcon';
+import TGcodeIcon from '@/components/TGcode/TGcodeIcon';
 import { Ticket, MapPin, Check, X, Timer, Award } from 'lucide-react';
 import FullscreenQR from './FullscreenQR';
 import OnlineCheckinEntry from './OnlineCheckinEntry';
@@ -330,7 +330,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
                   className={styles.showQrBtn}
                   onClick={() => setQrTicket(nextActiveTicket)}
                 >
-                  <span className={styles.showQrIcon}><RingIcon size={18} /></span>
+                  <span className={styles.showQrIcon}><TGcodeIcon size={18} /></span>
                   Show TGcode
                 </button>
               )}
@@ -585,7 +585,7 @@ function TicketRow({
             <OnlineCheckinEntry ticketId={ticket.id} eventId={ev.id} onCheckedIn={onCheckedIn} checkinFormUrl={ticket.checkinFormUrl} onFormComplete={onFormComplete} compact />
           ) : isActionable && onShowQR ? (
             <button className={styles.qrMiniBtn} onClick={onShowQR}>
-              <RingIcon size={14} /> View TGcode
+              <TGcodeIcon size={14} /> View TGcode
             </button>
           ) : (
             <span className={`${styles.statusBadge} ${styles[`status_${displayStatus}`]}`}>

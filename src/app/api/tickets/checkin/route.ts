@@ -23,8 +23,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
   }
 
-  const { code, qr_token: ringToken, event_id: pickedEvent, preview } = await request.json();   // preview: only say whose ticket it is
-  if (!code && !ringToken) {
+  const { code, qr_token: tgToken, event_id: pickedEvent, preview } = await request.json();   // preview: only say whose ticket it is
+  if (!code && !tgToken) {
     return NextResponse.json({ error: 'Missing code' }, { status: 400 });
   }
   // With no event named (the portal's one code box and scanner), the ticket is looked for among the events that can still be checked into.
@@ -64,11 +64,11 @@ export async function POST(request: Request) {
   // src/app/api/tickets/[id]/qr/route.ts) purely as a human/scanner-visible
   // hint of which event it's for — it isn't part of the HMAC and carries no
   // authority, so it's simply dropped here before the real check.
-  // Two ways in, kept apart: the six typed digits, or the key from a ring code (`t` and twelve hex digits, which only the portal's scanner reads).
+  // Two ways in, kept apart: the six typed digits, or the key from a TGcode (`t` and twelve hex digits, which only the portal's scanner reads).
   const windowIndex = currentWindow();
   let matches: (t: { id?: string; ticket_code: string }) => boolean;
-  if (ringToken) {
-    const tok = String(ringToken).trim().toLowerCase();
+  if (tgToken) {
+    const tok = String(tgToken).trim().toLowerCase();
     if (!/^[0-9a-f]{12}$/.test(tok)) return NextResponse.json({ error: 'That isn’t a ticket.' }, { status: 400 });
     const wins = scanWindows();   // about 30 s, not 60 (see rotatingCode)
     matches = (t) => wins.some((w) => qrToken(t.ticket_code, w).slice(0, 12) === tok);
