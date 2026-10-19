@@ -2,7 +2,6 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { tally } from '@/lib/meetings/meetingFun';
 import { NextResponse } from 'next/server';
 import { checkInOpensAt, isCheckInAccepting, loadGroups, authorizeMeetings, currentMeetingCode, currentQrToken, upcomingMeetingCodes, getExpectedPeople, attachExtras, isMeetingOpen, type MeetingRow, guardMeeting } from '@/lib/meetings/meetings';
-import { WALL_MAX } from '@/lib/meetings/meetingWall';
 import { staffName } from '@/lib/members/names';
 import { isOver, lockedExpected } from '@/lib/meetings/expectedLock';
 
@@ -36,10 +35,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const { data: absenceRows } = await auth.svc.from('meeting_absences').select('user_id, reason, excused').eq('meeting_id', id);
   const absent = new Set((absenceRows ?? []).map((a) => a.user_id as string));
   // Answers (newest first) and the running emoji totals (a handful of rows, one per emoji; the screen works out what is new by comparing them).
-  const [{ data: answerRows }, { data: countRows }, { data: wallRows }] = await Promise.all([
+  const [{ data: answerRows }, { data: countRows }] = await Promise.all([
     auth.svc.from('meeting_answers').select('user_id, answer, updated_at').eq('meeting_id', id).order('updated_at', { ascending: false }).limit(100),
     auth.svc.from('meeting_reaction_counts').select('emoji, count').eq('meeting_id', id),
-    auth.svc.from('meeting_wall').select('id, emoji, x, y').eq('meeting_id', id).order('created_at').limit(WALL_MAX),
   ]);
   const reactionTotals: Record<string, number> = {};
   for (const r of countRows ?? []) reactionTotals[r.emoji as string] = Number(r.count);
@@ -56,7 +54,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     meeting: { id: m.id, title: m.title, meeting_date: m.meeting_date, starts_at: m.starts_at, ends_at: m.ends_at, open, doc_url: m.doc_url, location: m.location, cancelled: m.cancelled, series_id: m.series_id, open_to_team: m.open_to_team !== false, audience: m.audience, invitees: m.invitees, group_ids: m.group_ids, groupNames: (m.group_ids ?? []).map((g) => groups.get(g)?.name ?? '').filter(Boolean), accepting: isCheckInAccepting(m), opens_at: new Date(checkInOpensAt(m)).toISOString(), question: m.question, question_type: m.question_type ?? 'text', question_options: m.question_options ?? null },
     answers: (answerRows ?? []).map((a) => ({ ...byId.get(a.user_id as string)!, answer: a.answer, at: a.updated_at })),
     reactionTotals,
-    wall: wallRows ?? [],
     tally: tally(m.question_type ?? 'text', m.question_options ?? null, (answerRows ?? []).map((a) => a.answer as string)),
     customEmojis: await customEmojiMap(auth.svc),
     code: cc?.code ?? null,

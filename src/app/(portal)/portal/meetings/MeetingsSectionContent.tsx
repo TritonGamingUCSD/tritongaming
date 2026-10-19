@@ -29,8 +29,9 @@ import { QuestionEditor, ResultBars, StarPicker, Confetti, emptyQ, qFrom, qPaylo
 import { CUSTOM_PREFIX, isCustomEmoji, customEmojiId, MAX_EMOJI_BYTES, MAX_EMOJI_PICK_BYTES, EMOJI_NAME, parseDiscordEmoji, emojiNameFrom, type CustomEmoji, type QuestionType, type Tally, MAX_ANSWER_LENGTH } from '@/lib/meetings/meetingFun';
 import PlanningPanel from './planning/PlanningPanel';
 import { useMeetingLive } from '@/lib/meetings/useMeetingLive';
-import { useClapListener, useClapSender } from '@/lib/meetings/meetingClaps';
-import { boardFromWallSpot, wallSpotFromBoard, WALL_MAX } from '@/lib/meetings/meetingWall';
+import { useFxListener, useFxSender, useReactionLedger } from '@/lib/meetings/meetingFx';
+import { cleanFx } from '@/lib/meetings/meetingFxPayload';
+import { wallSpotFromBoard, WALL_LIFE_MS, WALL_VISIBLE } from '@/lib/meetings/meetingWall';
 import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
 import styles from './meetings.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
@@ -40,7 +41,7 @@ import { checkInWithCode, resolveChoice, type Outcome } from '@/lib/checkin/anyC
 import Link from 'next/link';
 import TGcode from '@/components/TGcode/TGcode';
 
-type WallItem = { id: string; emoji: string; x: number; y: number };
+type WallItem = { id: string; emoji: string; x: number; y: number; at: number };   // a sticker on the wall (screen position in percent; `at` when it was placed)
 type Tab = 'mine' | 'planning' | 'host' | 'attendance' | 'emojis';
 
 interface Person { id: string; name: string; avatar_url: string | null; custom_avatar_url: string | null }
@@ -50,7 +51,6 @@ interface Live {
   meeting: { open_to_team?: boolean; question_type: QuestionType; question_options: string[] | null; id: string; title: string; meeting_date: string; starts_at: string; ends_at: string; open: boolean; doc_url: string | null; location: string | null; cancelled: boolean; series_id: string | null; accepting: boolean; opens_at: string; question: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; groupNames: string[] };
   answers: (Person & { answer: string; at: string })[];
   reactionTotals: Record<string, number>;
-  wall?: WallItem[];
   customEmojis?: Record<string, { name: string; url: string }>;
   tally: Tally;
   code: string | null;
@@ -248,10 +248,14 @@ function CheckInPanel() {
       {other && <Dialog title="Ticket Check-In" onClose={() => setOther(null)}><CheckInOutcome outcome={other} busy={busy} onDone={() => setOther(null)} onChoose={async (which) => { if (other.kind !== 'choose') return; setBusy(true); const o = await resolveChoice(other.code, which); setBusy(false); if (o.kind === 'meeting') { setOther(null); await load(); } else setOther(o); }} /></Dialog>}
       {checkedIn.map((m) => (
         <div key={m.id} className={`${styles.card} ${styles.done}`}>
-          <span className={styles.doneIcon}><Check size={34} strokeWidth={2.5} aria-hidden="true" /></span>
-          <h2 className={styles.cardTitle}>You&apos;re checked in</h2>
-          <p className={styles.muted}>{m.title} · {time(m.checked_in_at!)}{m.location ? ` · ${m.location}` : ''}</p>
-          {m.doc_url ? <DocButton url={m.doc_url} /> : <p className={styles.faint}>No doc linked yet</p>}
+          <div className={styles.doneHead}>
+            <span className={styles.doneIcon}><Check size={22} strokeWidth={2.5} aria-hidden="true" /></span>
+            <div className={styles.doneText}>
+              <h2 className={styles.cardTitle}>You&apos;re checked in</h2>
+              <p className={styles.muted}>{m.title} · {time(m.checked_in_at!)}{m.location ? ` · ${m.location}` : ''}</p>
+            </div>
+          </div>
+          {m.doc_url && <DocButton url={m.doc_url} />}
           <FunBox meeting={m} onSaved={load} />
         </div>
       ))}
@@ -328,13 +332,9 @@ function FunBox({ meeting, onSaved }: { meeting: TodayMeeting; onSaved: () => vo
   const [editing, setEditing] = useState(!meeting.my_answer);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [burst, setBurst] = useState<string | null>(null);
   const [club, setClub] = useState<CustomEmoji[]>([]);
   const [mine, setMine] = useState<string | null>(meeting.my_answer);
   const [tallyNow, setTallyNow] = useState<Tally | null>(null);
-  const last = useRef(0);
-  const sendClap = useClapSender(meeting.id, meeting.open);
-  const [clapPop, setClapPop] = useState(0);
   const type = meeting.question_type ?? 'text';
   // Polls and ratings: after you vote you watch the bars move as everyone else votes (paused while the tab is hidden).
   const watching = type !== 'text' && !!mine && meeting.open;
@@ -365,15 +365,6 @@ function FunBox({ meeting, onSaved }: { meeting: TodayMeeting; onSaved: () => vo
     } finally { setBusy(false); }
   }
 
-  function react(emoji: string) {
-    const t = Date.now();
-    if (!meeting.open || t - last.current < 400) return;
-    last.current = t;
-    setBurst(emoji);
-    setTimeout(() => setBurst((b) => (b === emoji ? null : b)), 350);
-    fetch(`/api/meetings/${meeting.id}/react`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ emoji }) }).catch(() => {});
-  }
-
   return (
     <div className={styles.funBox}>
       {meeting.question && (
@@ -402,64 +393,65 @@ function FunBox({ meeting, onSaved }: { meeting: TodayMeeting; onSaved: () => vo
           {error && <Notice tone="error">{error}</Notice>}
         </div>
       )}
-      {meeting.open && (
-        <div className={styles.reactBar} role="group" aria-label="Send a reaction to the screen">
-          <span className={styles.reactLabel}>React on the big screen</span>
-          <div className={styles.reactBtns}>
-            <button type="button" className={`${styles.reactBtn} ${styles.clapBtn}`} onClick={() => { sendClap(); setClapPop((n) => n + 1); }} aria-label="Clap" title="Clap"><span key={clapPop} className={clapPop ? styles.reactPop : ''}>👏</span></button>
-            {club.length > 1 && <button type="button" className={`${styles.reactBtn} ${styles.reactDice}`} onClick={() => { const c = club[Math.floor(Math.random() * club.length)]; react(`${CUSTOM_PREFIX}${c.id}`); }} aria-label="Send a random emoji" title="Surprise me"><Dices size={22} aria-hidden="true" /></button>}
-            {club.length === 0 && <p className={styles.faint}>No club emojis yet. Add one in the Emojis tab.</p>}
-            {club.map((c) => {
-              const key = `${CUSTOM_PREFIX}${c.id}`;
-              return <button key={c.id} type="button" className={`${styles.reactBtn} ${burst === key ? styles.reactPop : ''}`} onClick={() => react(key)} aria-label={`Send ${c.name}`} title={`:${c.name}:`}><EmojiView emoji={key} custom={{ [c.id]: { name: c.name, url: c.url } }} size="1.7rem" /></button>;
-            })}
-          </div>
-        </div>
-      )}
-      {meeting.open && club.length > 0 && <WallBoard meetingId={meeting.id} club={club} />}
+      {meeting.open && <PlayBar meetingId={meeting.id} club={club} />}
     </div>
   );
 }
 
-// The emoji wall, from the phone: the two side strips of the big screen side by side as one square. Tap a spot to put the chosen emoji there.
-function WallBoard({ meetingId, club }: { meetingId: string; club: CustomEmoji[] }) {
-  const [items, setItems] = useState<WallItem[]>([]);
-  const [pick, setPick] = useState(club[0]?.id ?? '');
-  const [hint, setHint] = useState('');
+// Reactions and wall stickers from the phone, in one small panel. "React": tap an emoji and it floats up on the big screen. "Wall": pick an emoji, then tap the board (the two side
+// strips of the big screen side by side) to stick it there for a while. Both go straight to the screen (no limit per person); the most used emoji come first.
+function PlayBar({ meetingId, club }: { meetingId: string; club: CustomEmoji[] }) {
+  const { react, sticker } = useFxSender(meetingId);
+  const [mode, setMode] = useState<'react' | 'wall'>('react');
+  const [pick, setPick] = useState('');
+  const [popped, setPopped] = useState('');
+  const [mine, setMine] = useState<(WallItem & { u: number; v: number })[]>([]);
   const custom = Object.fromEntries(club.map((c) => [c.id, { name: c.name, url: c.url }]));
-  const load = useCallback(() => fetch(`/api/meetings/${meetingId}/wall`, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((j) => { if (j) setItems(j.wall); }).catch(() => {}), [meetingId]);
-  useEffect(() => { void load(); }, [load]);
-  useMeetingLive(meetingId, load);
-  useVisiblePoll(load, 60_000);   // slow backstop
   const chosen = club.find((c) => c.id === pick) ?? club[0];
+  useEffect(() => {
+    if (!mine.length) return;
+    const t = setInterval(() => setMine((l) => l.filter((i) => Date.now() - i.at < WALL_LIFE_MS)), 5000);
+    return () => clearInterval(t);
+  }, [mine.length]);
+  if (club.length === 0) return <p className={styles.faint}>No club emojis yet. Add one in the Emojis tab.</p>;
 
-  async function place(e: React.PointerEvent<HTMLDivElement>) {
+  function tap(c: CustomEmoji) {
+    if (mode === 'wall') { setPick(c.id); return; }
+    react(`${CUSTOM_PREFIX}${c.id}`); setPopped(`${c.id}:${Date.now()}`);
+  }
+  function place(e: React.PointerEvent<HTMLDivElement>) {
     if (!chosen) return;
     const r = e.currentTarget.getBoundingClientRect();
-    const { x, y } = wallSpotFromBoard((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
-    const emoji = `${CUSTOM_PREFIX}${chosen.id}`, tmp = `tmp${Date.now()}`;
-    setHint('');
-    setItems((l) => [...l, { id: tmp, emoji, x, y }].slice(-WALL_MAX));
-    try {
-      const res = await fetch(`/api/meetings/${meetingId}/wall`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ emoji, x, y }) });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok || json.throttled) { setItems((l) => l.filter((i) => i.id !== tmp)); setHint(json.throttled ? 'Easy there, give it a few seconds.' : json.error || 'Couldn’t place it.'); }
-    } catch { setItems((l) => l.filter((i) => i.id !== tmp)); setHint('Couldn’t place it.'); }
+    const u = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), v = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height));
+    const { x, y } = wallSpotFromBoard(u, v);
+    const emoji = `${CUSTOM_PREFIX}${chosen.id}`;
+    sticker(emoji, x, y);
+    setMine((l) => [...l, { id: `${Date.now()}${l.length}`, emoji, x, y, at: Date.now(), u, v }].slice(-40));
   }
 
   return (
-    <div className={styles.wallBox}>
-      <span className={styles.reactLabel}>Add to the wall</span>
-      <div className={styles.reactBtns}>
+    <div className={styles.playBar}>
+      <div className={styles.playTabs} role="group" aria-label="What to send to the big screen">
+        <button type="button" className={`${styles.playTab} ${mode === 'react' ? styles.playTabOn : ''}`} aria-pressed={mode === 'react'} onClick={() => setMode('react')}>React</button>
+        <button type="button" className={`${styles.playTab} ${mode === 'wall' ? styles.playTabOn : ''}`} aria-pressed={mode === 'wall'} onClick={() => setMode('wall')}>Wall</button>
+      </div>
+      <div className={styles.tray} role="group" aria-label={mode === 'react' ? 'Send a reaction to the screen' : 'Choose a sticker'}>
+        {mode === 'react' && club.length > 1 && <button type="button" className={`${styles.trayBtn} ${styles.reactDice}`} onClick={() => tap(club[Math.floor(Math.random() * club.length)])} aria-label="Send a random emoji" title="Surprise me"><Dices size={20} aria-hidden="true" /></button>}
         {club.map((c) => (
-          <button key={c.id} type="button" className={`${styles.wallPick} ${c.id === chosen?.id ? styles.wallPickOn : ''}`} onClick={() => setPick(c.id)} aria-label={`Use ${c.name}`} aria-pressed={c.id === chosen?.id}><EmojiView emoji={`${CUSTOM_PREFIX}${c.id}`} custom={custom} size="1.4rem" /></button>
+          <button key={c.id} type="button" className={`${styles.trayBtn} ${mode === 'wall' && c.id === chosen?.id ? styles.trayOn : ''} ${popped.startsWith(`${c.id}:`) ? styles.reactPop : ''}`} onClick={() => tap(c)} onAnimationEnd={() => setPopped('')} aria-label={mode === 'react' ? `Send ${c.name}` : `Use ${c.name}`} aria-pressed={mode === 'wall' ? c.id === chosen?.id : undefined} title={`:${c.name}:`}>
+            <EmojiView emoji={`${CUSTOM_PREFIX}${c.id}`} custom={custom} size="1.5rem" />
+          </button>
         ))}
       </div>
-      <div className={styles.wallPad} onPointerDown={place} role="button" aria-label="Tap a spot to place your emoji on the big screen">
-        <span className={styles.wallMid} aria-hidden="true" />
-        {items.map((i) => { const b = boardFromWallSpot(i.x, i.y); return <span key={i.id} className={styles.wallDot} style={{ left: `${b.u * 100}%`, top: `${b.v * 100}%` }}><EmojiView emoji={i.emoji} custom={custom} size="1.2rem" /></span>; })}
-      </div>
-      <small className={hint ? styles.wallHint : styles.faint}>{hint || 'Tap a spot. It appears on the big screen, left or right of the code.'}</small>
+      {mode === 'wall' && (
+        <>
+          <div className={styles.wallPad} onPointerDown={place} role="button" aria-label="Tap a spot to stick your emoji on the big screen">
+            <span className={styles.wallMid} aria-hidden="true" />
+            {mine.map((i) => <span key={i.id} className={styles.wallDot} style={{ left: `${i.u * 100}%`, top: `${i.v * 100}%` }}><EmojiView emoji={i.emoji} custom={custom} size="1.3rem" /></span>)}
+          </div>
+          <small className={styles.faint}>Tap the board to stick it on the big screen. Stickers fade after a minute and a half.</small>
+        </>
+      )}
     </div>
   );
 }
@@ -1694,8 +1686,6 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
   const [bigBurst, setBigBurst] = useState<{ key: number; emoji: string; left: number } | null>(null);
   const [floaters, setFloaters] = useState<{ key: string; emoji: string; left: number; delay: number }[]>([]);
   const fieldsInit = useRef(false);
-  // The totals from the last load: what is new since then floats up on the screen. null until the first load, so history never replays.
-  const prevTotals = useRef<Record<string, number> | null>(null);
   const floatSeq = useRef(0);
 
   const loadLive = useCallback(async () => {
@@ -1709,42 +1699,46 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
       const here = json.attendees.filter((a) => !a.guest).length, total = here + json.missing.length;   // guests are not part of the expected count
       if (prevHere.current !== null && prevHere.current < total && here >= total && total > 1) setFire(Date.now());
       prevHere.current = here;
-      // What came in since the last load: one floating emoji per new reaction (at most 40 at a time, so a huge burst stays readable).
-      const before = prevTotals.current;
-      prevTotals.current = json.reactionTotals;
-      if (before) {
-        const counts: Record<string, number> = {};
-        for (const [e, n] of Object.entries(json.reactionTotals)) { const d = n - (before[e] ?? 0); if (d > 0) counts[e] = d; }
-        const fresh = Object.entries(counts).flatMap(([e, d]) => Array.from({ length: Math.min(d, 40) }, () => e)).slice(0, 40)
-          .map((emoji, i) => ({ key: `r${++floatSeq.current}`, emoji, left: sideSpot(), delay: i * 0.18 }));
-        if (fresh.length) {
-          setFloaters((f) => [...f, ...fresh].slice(-60));
-          setTimeout(() => setFloaters((f) => f.filter((x) => !fresh.some((n) => n.key === x.key))), 4200 + fresh.length * 180);
-          // Lots of the same emoji at once: it explodes across the screen.
-          const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
-          if (top && top[1] >= 4) { const key = Date.now(); setBigBurst({ key, emoji: top[0], left: sideSpot(12, 20) }); setTimeout(() => setBigBurst((b) => (b?.key === key ? null : b)), 1800); }
-        }
-      }
     } catch { /* next poll */ }
   }, [id]);
 
   useEffect(() => { void loadLive(); }, [loadLive]);
   useMeetingLive(id, loadLive);   // refreshes when someone checks in, answers or reacts
-  // Claps arrive straight from the phones (no refresh): a few 👏 float up for each message, and when the room is really going, one big one bursts.
-  const clapTimes = useRef<{ t: number; n: number }[]>([]);
-  const lastClapBurst = useRef(0);
-  useClapListener(id, useCallback((n: number) => {
+  // Reactions and stickers arrive straight from the phones (no refresh). Each reaction floats up (lots of the same emoji at once: one big one bursts) and is counted; the counts are saved
+  // in batches and kept in this browser until saved, so closing and reopening this screen never loses them. Stickers go on the wall and fade after a while.
+  const { unsaved, add: countReaction } = useReactionLedger(id, loadLive);
+  const [wall, setWall] = useState<WallItem[]>([]);
+  const customRef = useRef<Live['customEmojis']>(undefined);
+  customRef.current = live?.customEmojis;
+  const recentEmoji = useRef<{ t: number; e: string; n: number }[]>([]);
+  const lastBurst = useRef(0);
+  useFxListener(id, useCallback((raw: unknown) => {
+    const fx = cleanFx(raw, (e) => isCustomEmoji(e) && !!customRef.current?.[customEmojiId(e)]);
+    if (!fx) return;
     const t = Date.now();
-    const fresh = Array.from({ length: Math.min(n, 3) }, (_, i) => ({ key: `c${++floatSeq.current}`, emoji: '👏', left: sideSpot(), delay: i * 0.12 }));
-    setFloaters((f) => [...f, ...fresh].slice(-60));
-    setTimeout(() => setFloaters((f) => f.filter((x) => !fresh.some((c) => c.key === x.key))), 4200);
-    clapTimes.current = [...clapTimes.current.filter((c) => t - c.t < 1500), { t, n }];
-    if (clapTimes.current.reduce((a, c) => a + c.n, 0) >= 10 && t - lastClapBurst.current > 1600) {
-      lastClapBurst.current = t;
-      setBigBurst({ key: t, emoji: '👏', left: sideSpot(12, 20) });
-      setTimeout(() => setBigBurst((b) => (b?.key === t ? null : b)), 1800);
+    if (fx.r) {
+      countReaction(fx.b, fx.r);
+      const fresh = Object.entries(fx.r).flatMap(([e, n]) => Array.from({ length: Math.min(n, 6) }, () => e)).slice(0, 14)
+        .map((emoji, i) => ({ key: `r${++floatSeq.current}`, emoji, left: sideSpot(), delay: i * 0.12 }));
+      setFloaters((f) => [...f, ...fresh].slice(-60));
+      setTimeout(() => setFloaters((f) => f.filter((x) => !fresh.some((n) => n.key === x.key))), 4200 + fresh.length * 120);
+      recentEmoji.current = [...recentEmoji.current.filter((x) => t - x.t < 2000), ...Object.entries(fx.r).map(([e, n]) => ({ t, e, n }))];
+      const sums: Record<string, number> = {};
+      for (const x of recentEmoji.current) sums[x.e] = (sums[x.e] ?? 0) + x.n;
+      const top = Object.entries(sums).sort((a, b) => b[1] - a[1])[0];
+      if (top && top[1] >= 4 && t - lastBurst.current > 1800) {
+        lastBurst.current = t;
+        setBigBurst({ key: t, emoji: top[0], left: sideSpot(12, 20) });
+        setTimeout(() => setBigBurst((b) => (b?.key === t ? null : b)), 1800);
+      }
     }
-  }, []), !!live?.meeting.open);
+    if (fx.s) setWall((w) => [...w, ...fx.s!.map((q, i) => ({ id: `${fx.b}${i}`, emoji: q.e, x: q.x, y: q.y, at: t }))].slice(-WALL_VISIBLE));
+  }, [countReaction]), !!live?.meeting.open);
+  useEffect(() => {
+    if (!wall.length) return;
+    const t = setInterval(() => setWall((w) => w.filter((i) => Date.now() - i.at < WALL_LIFE_MS)), 5000);
+    return () => clearInterval(t);
+  }, [wall.length]);
   useVisiblePoll(loadLive, 120_000);   // slow backstop in case the live connection is blocked (changes arrive by signal; the code changes by itself from `upcoming`)
 
   useEffect(() => {
@@ -1830,6 +1824,10 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
   const ringPct = expectedHere + live.missing.length > 0 ? Math.min(100, (expectedHere / (expectedHere + live.missing.length)) * 100) : 0;
   const grouped = shown?.code ? `${shown.code.slice(0, 3)} ${shown.code.slice(3)}` : '';
 
+  // What the screen shows: the saved totals plus the reactions counted here that are not saved yet.
+  const totals: Record<string, number> = { ...(live?.reactionTotals ?? {}) };
+  for (const [e, n] of Object.entries(unsaved)) totals[e] = (totals[e] ?? 0) + n;
+
   // Full screen is drawn on the page itself (not inside the portal's animated panel, which would shrink a "fixed" screen to the panel and leave the top and bottom bars over it).
   const codePanel = open ? (
         <div className={`${styles.codePanel} ${presenting ? styles.presenting : ''}`}>
@@ -1883,16 +1881,16 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
           {live.meeting.question && live.meeting.question_type === 'text' && live.answers.length > 0 && (
             <BubbleField answers={live.answers.map((x) => ({ key: `${x.id}-${x.at}`, text: x.answer }))} avoid={[topRef, questionRef, labelRef, codeRowRef, timerRef, countRef, hintRef, totalsRef]} presenting={presenting} />
           )}
-          {Object.keys(live.reactionTotals).length > 0 && (
+          {Object.keys(totals).length > 0 && (
             <div ref={totalsRef} className={styles.screenTotals} aria-label="Reaction totals">
-              {Object.entries(live.reactionTotals).sort((x, y) => y[1] - x[1]).slice(0, 5).map(([e, n], i) => <span key={e} className={i === 0 ? styles.topTotal : ''}><EmojiView emoji={e} custom={live.customEmojis} /> <strong>{n}</strong></span>)}
+              {Object.entries(totals).sort((x, y) => y[1] - x[1]).slice(0, 5).map(([e, n], i) => <span key={e} className={i === 0 ? styles.topTotal : ''}><EmojiView emoji={e} custom={live.customEmojis} /> <strong>{n}</strong></span>)}
             </div>
           )}
           {bigBurst && <span key={bigBurst.key} className={styles.bigBurst} style={{ left: `${bigBurst.left}%` }} aria-hidden="true"><EmojiView emoji={bigBurst.emoji} custom={live.customEmojis} size="1em" /></span>}
           <Confetti fire={fire} />
-          {presenting && (live.wall?.length ?? 0) > 0 && (
+          {presenting && wall.length > 0 && (
             <div className={styles.wallLayer} aria-hidden="true">
-              {live.wall!.map((w) => <span key={w.id} className={styles.wallItem} style={{ left: `${w.x}%`, top: `${w.y}%`, rotate: `${(parseInt(w.id.slice(0, 4), 16) % 40) - 20}deg` }}><EmojiView emoji={w.emoji} custom={live.customEmojis} /></span>)}
+              {wall.map((w) => <span key={w.id} className={styles.wallItem} style={{ left: `${w.x}%`, top: `${w.y}%`, rotate: `${([...w.id].reduce((a, c) => a + c.charCodeAt(0), 0) % 40) - 20}deg` }}><EmojiView emoji={w.emoji} custom={live.customEmojis} /></span>)}
             </div>
           )}
           <div className={styles.floaters} aria-hidden="true">
@@ -1982,8 +1980,8 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
                     ))}
                   </ul>
                 )}
-                {Object.keys(live.reactionTotals).length > 0 && (
-                  <p className={styles.totals}>{Object.keys(live.reactionTotals).map((e) => <span key={e}><EmojiView emoji={e} custom={live.customEmojis} /> {live.reactionTotals[e]}</span>)}</p>
+                {Object.keys(totals).length > 0 && (
+                  <p className={styles.totals}>{Object.keys(totals).map((e) => <span key={e}><EmojiView emoji={e} custom={live.customEmojis} /> {totals[e]}</span>)}</p>
                 )}
               </div>
             )}

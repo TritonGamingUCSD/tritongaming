@@ -55,12 +55,6 @@
 .upGet { background: var(--yellow); color: #011941; } /* theme-ok */
 .upHave { border: 1px solid rgba(var(--pp-ink-rgb), 0.4); color: var(--pp-ink); }
 
-.activity ul { list-style: none; margin: 0.6rem 0 0; padding: 0.4rem 1rem; display: flex; flex-direction: column; background: var(--pp-card); border: 1px solid var(--pp-line); border-radius: 10px; }
-.activity li { display: flex; align-items: baseline; gap: 0.7rem; padding: 0.6rem 0; font-size: 0.9rem; color: var(--pp-ink); }
-.activity li + li { border-top: 1px solid var(--pp-line); }
-.activity li > span:nth-child(2) { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-.activity time { flex-shrink: 0; font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.75); }
-.diamond { flex-shrink: 0; width: 8px; height: 8px; background: var(--p-accent-text); transform: rotate(45deg) translateY(-1px); }
 
 @media (max-width: 760px) {
   .quickLink { padding: 0.5rem 0.6rem; }

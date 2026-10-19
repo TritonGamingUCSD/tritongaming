@@ -12,16 +12,9 @@ export interface HomeEvent { id: string; title: string; start_date: string; loca
 export interface HomeNote { title: string; href: string }
 export interface HomeLink { id: string; title: string; url: string; note: string }
 export interface HomeUpcoming { id: string; title: string; start_date: string; location: string | null; hasTicket: boolean; ticketId?: string }
-export interface HomeActivity { key: string; text: string; detail: string; at: string }
 
 const day = (iso: string) => new Date(iso).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, weekday: 'long', month: 'long', day: 'numeric' });
 const time = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' });
-const ago = (iso: string) => {
-  const mins = Math.max(1, Math.round((Date.now() - new Date(iso).getTime()) / 60_000));
-  if (mins < 60) return `${mins} min ago`;
-  if (mins < 60 * 24) return `${Math.round(mins / 60)} h ago`;
-  return new Date(iso).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', day: 'numeric' });
-};
 
 // The top of the dashboard: which quarter it is, a welcome by name, and the big search field (it only ever finds what this person can open).
 export function DashboardWelcome({ eyebrow, name, showSearch = true }: { eyebrow: string; name: string; showSearch?: boolean }) {
@@ -36,9 +29,9 @@ export function DashboardWelcome({ eyebrow, name, showSearch = true }: { eyebrow
 
 const shortDay = (iso: string) => new Date(iso).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, weekday: 'short', month: 'short', day: 'numeric' });
 
-// Below the to-dos: the next event as a paper ticket, the pinned note, the club's quick links, what is coming up, and what happened lately. (The pages themselves are
+// Below the to-dos: the next event as a paper ticket, the pinned note, the club's quick links, and what is coming up. (The pages themselves are
 // in the side bar and the bottom bar, so there is no list of tools here.)
-export function DashboardBody({ event, note, links, upcoming, activity, showRoleAsk = false, compact = false }: { showRoleAsk?: boolean; /** Guests and students on a desktop: the role request sits under the ticket. */ compact?: boolean; event: HomeEvent | null; note: HomeNote | null; links: HomeLink[]; upcoming: HomeUpcoming[]; activity: HomeActivity[] }) {
+export function DashboardBody({ event, note, links, upcoming, showRoleAsk = false, compact = false }: { showRoleAsk?: boolean; /** Guests and students on a desktop: the role request sits under the ticket. */ compact?: boolean; event: HomeEvent | null; note: HomeNote | null; links: HomeLink[]; upcoming: HomeUpcoming[] }) {
   return (
     <div className={styles.body}>
       {showRoleAsk && !compact && <RoleAsk />}
@@ -72,7 +65,7 @@ export function DashboardBody({ event, note, links, upcoming, activity, showRole
 
       {showRoleAsk && compact && <RoleAsk />}
 
-      {(links.length > 0 || upcoming.length > 0 || activity.length > 0) && (
+      {(links.length > 0 || upcoming.length > 0) && (
         <div className={styles.cols}>
         {links.length > 0 && (
           <section aria-label="Quick links">
@@ -101,16 +94,6 @@ export function DashboardBody({ event, note, links, upcoming, activity, showRole
                       <span className={e.hasTicket ? styles.upHave : styles.upGet}>{e.hasTicket ? 'Have ticket' : 'Get ticket'}</span>
                     </Link>
                   </li>
-                ))}
-              </ul>
-            </section>
-          )}
-          {activity.length > 0 && (
-            <section aria-label="Recent activity" className={styles.activity}>
-              <h2 className={styles.h}>Recent activity</h2>
-              <ul>
-                {activity.map((a) => (
-                  <li key={a.key}><span className={styles.diamond} aria-hidden="true" /><span><b>{a.text}</b> {a.detail}</span><time dateTime={a.at}>{ago(a.at)}</time></li>
                 ))}
               </ul>
             </section>

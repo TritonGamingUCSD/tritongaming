@@ -7,7 +7,9 @@
 .card { display: flex; flex-direction: column; gap: 0.9rem; padding: 1.2rem; border-radius: 1rem; background: rgba(var(--pp-ink-rgb), 0.03); }
 .cardTitle { font-family: var(--font-futura-heavy); font-size: 1.15rem; color: var(--pp-ink); }
 .done { align-items: center; text-align: center; border-color: rgba(52, 211, 153, 0.35); background: rgba(52, 211, 153, 0.07); }
-.doneIcon { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: rgba(52, 211, 153, 0.18); color: var(--pp-ok); }
+.doneHead { display: flex; align-items: center; justify-content: center; gap: 0.75rem; text-align: left; max-width: 100%; }
+.doneText { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.doneIcon { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 50%; background: rgba(52, 211, 153, 0.18); color: var(--pp-ok); }
 
 .codeInput {
   composes: card from '../../../../components/ui/Surface.module.css';
@@ -179,12 +181,6 @@
 .answerForm { display: flex; gap: 0.5rem; align-items: center; }
 .answerForm > :first-child { flex: 1; min-width: 0; }
 .myAnswer { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; font-size: 0.9rem; color: var(--pp-ok); }
-.reactBar { display: flex; flex-direction: column; gap: 0.5rem; align-items: center; }
-.reactLabel { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.88); }
-.reactBtns { display: flex; justify-content: center; gap: 0.45rem; flex-wrap: wrap; }
-.reactBtn { width: 52px; height: 52px; border-radius: 50%; font-size: 1.6rem; line-height: 1; cursor: pointer; border: 1px solid rgba(var(--pp-ink-rgb), 0.30); background: rgba(var(--pp-ink-rgb), 0.05); transition: transform 0.12s, background 0.12s; }
-.reactBtn:hover { background: rgba(var(--pp-ink-rgb), 0.1); }
-.reactBtn:active { transform: scale(0.88); }
 .reactPop { animation: reactPop 0.35s ease-out; }
 @keyframes reactPop { 0% { transform: scale(1); } 40% { transform: scale(1.35); } 100% { transform: scale(1); } }
 
@@ -866,16 +862,22 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .scanStarting small { max-width: 18rem; font-size: 0.82rem; line-height: 1.35; color: rgba(255, 255, 255, 0.7); animation: tgSheetFade 0.4s ease both; }   /* theme-ok */
 @media (prefers-reduced-motion: reduce) { .scanSheet, .scanSheetFade, .scanBottom, .scanBottomOff, .scanDim, .scanDimLock { transition: none; animation: none; } .scanSheetOut, .scanLockIconOut { animation: none !important; opacity: 0; } .scanStartSpin { animation-duration: 2.4s; } .scanTarget, .scanTarget::before { transition: none; } .scanLockIcon, .scanSheet { animation: none; } .scanStage video { transition: none; } }
 
-/* Clap and the emoji wall. */
-.clapBtn { font-size: 1.5rem; }
-.wallBox { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
-.wallPick { width: 40px; height: 40px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); background: transparent; transition: background 0.12s, border-color 0.12s; }
-.wallPickOn { border-color: var(--p-accent); background: rgba(var(--pp-ink-rgb), 0.08); box-shadow: 0 0 0 2px var(--p-accent); }
-.wallPad { position: relative; width: min(100%, 260px); aspect-ratio: 1 / 1; border-radius: 1rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); background: rgba(var(--pp-ink-rgb), 0.04); cursor: crosshair; touch-action: manipulation; overflow: hidden; }
+/* Reactions and the wall, from the phone: one small panel. */
+.playBar { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; min-width: 0; }
+.playTabs { display: inline-flex; padding: 3px; gap: 2px; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.07); }
+.playTab { padding: 0.3rem 1.1rem; border-radius: 999px; border: 0; background: transparent; font: inherit; font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.85); cursor: pointer; transition: background 0.15s, color 0.15s; }
+.playTabOn { background: var(--pp-card); color: var(--pp-ink); box-shadow: 0 1px 3px rgba(var(--pp-ink-rgb), 0.18); }
+.tray { display: flex; gap: 0.3rem; max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding: 0.2rem 0.2rem 0.35rem; scrollbar-width: thin; mask-image: linear-gradient(90deg, #000 calc(100% - 1.4rem), transparent); }   /* one row you swipe along, the most used first */
+.trayBtn { flex: none; scroll-snap-align: start; display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; border: 1px solid transparent; background: rgba(var(--pp-ink-rgb), 0.05); cursor: pointer; transition: transform 0.12s, background 0.12s, border-color 0.12s; }
+.trayBtn:hover { background: rgba(var(--pp-ink-rgb), 0.1); }
+.trayBtn:active { transform: scale(0.88); }
+.trayOn { border-color: var(--p-accent); background: rgba(var(--pp-ink-rgb), 0.1); }
+@media (min-width: 720px) { .tray { flex-wrap: wrap; justify-content: center; overflow: visible; mask-image: none; } }   /* room enough on a tablet or laptop to show them all */
+.wallPad { position: relative; width: min(100%, 340px); aspect-ratio: 3 / 2; border-radius: 0.9rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.2); background: rgba(var(--pp-ink-rgb), 0.04); cursor: crosshair; touch-action: manipulation; overflow: hidden; }
 .wallMid { position: absolute; left: 50%; top: 0; bottom: 0; border-left: 2px dashed rgba(var(--pp-ink-rgb), 0.25); pointer-events: none; }
-.wallDot { position: absolute; transform: translate(-50%, -50%); line-height: 1; pointer-events: none; }
-.wallHint { font-size: 0.75rem; color: var(--pp-bad); text-align: center; }
+.wallDot { position: absolute; transform: translate(-50%, -50%); line-height: 1; pointer-events: none; animation: wallIn 0.4s ease-out both; }
 .wallLayer { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; border-radius: inherit; }
-.wallItem { position: absolute; translate: -50% -50%; font-size: clamp(2rem, 4.2vw, 3.6rem); line-height: 1; animation: wallIn 0.5s ease-out both; }
+.wallItem { position: absolute; translate: -50% -50%; font-size: clamp(2rem, 4.2vw, 3.6rem); line-height: 1; animation: wallIn 0.5s ease-out both, wallOut 8s linear 82s forwards; }   /* stays 82 s, then fades over the last 8 */
 @keyframes wallIn { from { transform: scale(0.2); opacity: 0; } 60% { transform: scale(1.25); opacity: 1; } to { transform: scale(1); opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .wallItem { animation: none; } }
+@keyframes wallOut { to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .wallItem, .wallDot { animation: none; } }
