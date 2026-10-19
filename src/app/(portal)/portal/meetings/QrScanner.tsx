@@ -115,7 +115,7 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
         track.current = t;
         const c = t.getCapabilities?.() as Caps | undefined;
         if (c) setCaps({ zoom: c.zoom && c.zoom.max > c.zoom.min ? c.zoom : undefined, torch: !!c.torch });
-        if (c?.zoom) { zoomRef.current = Math.min(Math.max(c.zoom.min, 1), c.zoom.max); hw.current.want = zoomRef.current; hw.current.applied = -1; applyHardware(); showZoom(); }   // start at 1×, not the ultra-wide the camera may open on
+        if (c?.zoom) { zoomRef.current = Math.min(Math.max(c.zoom.min, 1), c.zoom.max); hw.current.want = zoomRef.current; hw.current.applied = -1; hw.current.shown = zoomRef.current; applyHardware(); showZoom(); }   // start at 1×, not the ultra-wide the camera may open on
         if (video.current) {
           video.current.srcObject = stream; await video.current.play().catch(() => {});
           const v0 = video.current;
@@ -126,7 +126,7 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
         const tick = async (now: number) => {
           raf = requestAnimationFrame(tick);
           const v = video.current;
-          if (dead || pausedRef.current || !v || v.readyState < 2 || now - last < 140) return;
+          if (dead || pausedRef.current || zoomBusy.current || !v || v.readyState < 2 || now - last < 140) return;   // (not while the zoom is moving: reading is the heavy part, and it would make the pinch stutter)
           last = now;
           let text: string | null = null;
           let found: { x: number; y: number; r: number } | null = null;   // where it was, in video pixels
@@ -191,16 +191,42 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
   }, [lock]);
 
   // The phone's own zoom takes one request at a time: while one is being applied, only the newest wanted value waits behind it.
-  const hw = useRef({ busy: false, want: 1, applied: 1 });
+  // How zoom stays smooth: while fingers (or the wheel) move, ONLY the picture's scale changes (a transform the phone's graphics chip does, nothing else runs: the code reading waits).
+  // Once the movement stops, a phone with its own zoom is asked for that value (one request at a time) and, when its pictures have caught up, the scale goes back to 1 and reading
+  // carries on. A phone without its own zoom keeps the scale as the zoom.
+  const hw = useRef({ busy: false, want: 1, applied: 1, shown: 1 });   // shown: the zoom the camera's pictures really have
+  const zoomBusy = useRef(false);   // reading waits while the zoom is moving or settling
+  const gestureOn = useRef(false);  // two fingers are down
+  const settleT = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  function finishHardware() {
+    window.setTimeout(() => {
+      const h = hw.current;
+      if (gestureOn.current || Math.abs(zoomRef.current - h.applied) > 0.001) return;   // moved again meanwhile: the next settle handles it
+      h.shown = h.applied;
+      if (video.current) video.current.style.transform = '';
+      zoomBusy.current = false;
+    }, 200);   // the camera's pictures take a moment to show the new zoom: removing the scale sooner would flash the old one
+  }
   function applyHardware() {
     const h = hw.current;
-    if (h.busy || h.want === h.applied || !track.current) return;
+    if (h.busy || !track.current) return;
+    if (h.want === h.applied) { finishHardware(); return; }
     h.busy = true; h.applied = h.want;
-    track.current.applyConstraints({ advanced: [{ zoom: h.want }] }).catch(() => { /* keep going */ }).finally(() => { h.busy = false; applyHardware(); });
+    track.current.applyConstraints({ advanced: [{ zoom: h.want }] }).catch(() => { /* keep going */ }).finally(() => { h.busy = false; if (h.want !== h.applied) applyHardware(); else finishHardware(); });
+  }
+  // Called whenever the wanted zoom changes: after a short stillness (and never with fingers down) it is made real.
+  function afterZoom() {
+    zoomBusy.current = true;
+    clearTimeout(settleT.current);
+    settleT.current = setTimeout(() => {
+      if (gestureOn.current) return;
+      if (digitalRef.current) { zoomBusy.current = false; return; }
+      if (Math.abs(zoomRef.current - hw.current.shown) < 0.001 && !hw.current.busy) { if (video.current) video.current.style.transform = ''; zoomBusy.current = false; return; }
+      hw.current.want = zoomRef.current; applyHardware();
+    }, 140);
   }
   // Zoom: pinch with two fingers (or ctrl + scroll / pinch on a trackpad, or the wheel). The phone's own zoom where it has one, otherwise a digital zoom of the middle of the picture.
-  // Nothing here re-renders the screen: the picture's scale and the little "1.7×" readout are written straight to the page, and the phone's zoom is asked for one value at a time
-  // (the newest), so a fast pinch never queues up requests.
+  // Nothing here re-renders the screen: the picture's scale and the little "1.7×" readout are written straight to the page.
   const readout = useRef<HTMLButtonElement>(null);
   const limits = () => { const z = capsRef.current.zoom; return { min: z?.min ?? 1, max: z ? Math.min(z.max, 8) : 4 }; };
   const showZoom = () => {
@@ -214,11 +240,13 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
   function setZoomTo(v: number) {
     const { min, max } = limits();
     zoomRef.current = Math.max(min, Math.min(max, v));
-    showZoom();
-    cancelAnimationFrame(paint.current);
+    afterZoom();
+    if (paint.current) return;   // one paint per frame, whatever the number of touch events
     paint.current = requestAnimationFrame(() => {
-      if (digitalRef.current) { if (video.current) video.current.style.transform = zoomRef.current > 1.001 ? `scale(${zoomRef.current})` : ''; }
-      else { hw.current.want = zoomRef.current; applyHardware(); }
+      paint.current = 0;
+      showZoom();
+      const scale = digitalRef.current ? zoomRef.current : zoomRef.current / hw.current.shown;
+      if (video.current) video.current.style.transform = Math.abs(scale - 1) > 0.001 ? `translate3d(0, 0, 0) scale(${scale})` : '';
     });
   }
   async function toggleTorch() {
@@ -238,14 +266,14 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
     const down = (e: PointerEvent) => {
       pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
       try { el.setPointerCapture(e.pointerId); } catch { /* fine */ }
-      if (pts.size === 2) start = { d: Math.max(dist(), 1), z: zoomRef.current };
+      if (pts.size === 2) { start = { d: Math.max(dist(), 1), z: zoomRef.current }; gestureOn.current = true; zoomBusy.current = true; }
     };
     const move = (e: PointerEvent) => {
       if (!pts.has(e.pointerId)) return;
       pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (pts.size === 2 && start) { e.preventDefault(); setZoomTo(start.z * (dist() / start.d)); }
     };
-    const up = (e: PointerEvent) => { pts.delete(e.pointerId); start = pts.size === 2 ? { d: Math.max(dist(), 1), z: zoomRef.current } : null; };
+    const up = (e: PointerEvent) => { pts.delete(e.pointerId); start = pts.size === 2 ? { d: Math.max(dist(), 1), z: zoomRef.current } : null; if (pts.size < 2 && gestureOn.current) { gestureOn.current = false; afterZoom(); } };
     // A trackpad pinch (and ctrl + scroll) arrives as a wheel event with ctrlKey set; a plain scroll wheel zooms too. Without preventDefault the browser would zoom the page.
     const wheel = (e: WheelEvent) => { e.preventDefault(); setZoomTo(zoomRef.current * Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.002))); };
     el.addEventListener('pointerdown', down); el.addEventListener('pointermove', move, { passive: false });
