@@ -12,3 +12,14 @@
 .slow { color: var(--pp-warn) !important; font-size: 0.85rem !important; }
 .moving { display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.15rem; font-size: 0.9rem !important; }
 .openNow { margin-top: 0.4rem; padding: 0.55rem 1.1rem; border-radius: 999px; background: var(--yellow); color: #011941; font-weight: 700; font-size: 0.9rem; text-decoration: none; }   /* theme-ok */
+
+.typeLink { display: inline-flex; align-items: center; gap: 0.4rem; height: 2.4rem; padding: 0 0.8rem; border: 0; border-radius: 999px; background: rgba(0, 0, 0, 0.45); color: rgba(255, 255, 255, 0.92); font-size: 0.85rem; font-weight: 600; cursor: pointer; }   /* theme-ok */
+.typeLink:hover { background: rgba(0, 0, 0, 0.6); }   /* theme-ok */
+.codeRow { display: flex; align-items: center; gap: 0.5rem; }
+.codeRow > :first-child { flex: 1; min-width: 0; }
+.codeHide { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 50%; background: rgba(255, 255, 255, 0.18); color: #fff; cursor: pointer; }   /* theme-ok */
+/* A plain success: the card is one big tap target, with a thin bar that runs down while it waits to move on. */
+.autoCard { position: relative; cursor: pointer; padding-top: 0.3rem; }
+.autoBar { position: absolute; left: 0; right: 0; top: -0.5rem; height: 3px; border-radius: 3px; background: var(--pp-ok); transform-origin: left center; animation: usBar linear both; }
+@keyframes usBar { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+@media (prefers-reduced-motion: reduce) { .autoBar { animation: none; opacity: 0.5; } }

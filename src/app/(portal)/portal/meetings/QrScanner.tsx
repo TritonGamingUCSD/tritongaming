@@ -42,7 +42,7 @@ const ringBox = (spot: { x: number; y: number; r: number }, stage: HTMLElement |
 const iconBox = (spot: { x: number; y: number; r: number }, stage: HTMLElement | null): React.CSSProperties => { const f = fit(spot, stage); const d = Math.min(Math.max(f.r * 0.9, 56), 110); return { left: f.x, top: f.y, width: d, maxWidth: 'none' }; };
 
 export type ScanLock = { tone: 'busy' | 'ok' | 'warn' | 'bad' };
-export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', note, footer, lock, sheet, sheetKey }: { onScan: (text: string) => boolean | void; onClose: () => void; title?: string; note?: string; footer?: ReactNode; lock?: ScanLock | null; sheet?: ReactNode; sheetKey?: string }) {
+export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', note, footer, extra, lock, sheet, sheetKey }: { onScan: (text: string) => boolean | void; onClose: () => void; title?: string; note?: string; footer?: ReactNode; /** Sits in the row with the zoom and light buttons. */ extra?: ReactNode; lock?: ScanLock | null; sheet?: ReactNode; sheetKey?: string }) {
   const video = useRef<HTMLVideoElement>(null);
   const frame = useRef<HTMLDivElement>(null);
   const track = useRef<ZoomTrack | null>(null);
@@ -267,10 +267,9 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
       <footer className={`${styles.scanBottom} ${lock ? styles.scanBottomOff : ''}`} aria-hidden={lock ? true : undefined}>
         <p className={styles.scanHint}>{note ?? 'Point the camera at the QR code.'}</p>
         <div className={styles.scanRow}>
-          <div className={styles.scanSteps} role="group" aria-label="Zoom">
-            {steps.map((z) => <button key={z} type="button" className={`${styles.scanStep} ${active === z ? styles.scanStepOn : ''}`} onClick={() => pick(z)} aria-pressed={active === z}>{z < 1 ? '.5' : z}×</button>)}
-          </div>
-          {caps.torch && <button type="button" className={styles.scanLight} onClick={() => void toggleTorch()} aria-pressed={torch}>{torch ? <ZapOff size={16} aria-hidden="true" /> : <Zap size={16} aria-hidden="true" />} {torch ? 'Light Off' : 'Light On'}</button>}
+          {steps.length > 1 && <button type="button" className={styles.scanTool} onClick={() => pick(steps[(steps.indexOf(active) + 1) % steps.length] ?? steps[0])} aria-label={`Zoom ${active < 1 ? '.5' : active} times. Tap to change`}>{active < 1 ? '.5' : active}×</button>}
+          {caps.torch && <button type="button" className={`${styles.scanLight} ${torch ? styles.scanLightOn : ''}`} onClick={() => void toggleTorch()} aria-pressed={torch} aria-label={torch ? 'Turn the light off' : 'Turn the light on'} title={torch ? 'Light off' : 'Light on'}>{torch ? <ZapOff size={18} aria-hidden="true" /> : <Zap size={18} aria-hidden="true" />}</button>}
+          {extra}
         </div>
         {footer}
       </footer>

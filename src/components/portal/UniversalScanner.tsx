@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Check, CircleAlert, Loader2 } from 'lucide-react';
+import { CircleAlert, Keyboard, Loader2, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import QrScanner, { type ScanLock } from '@/app/(portal)/portal/meetings/QrScanner';
 import CheckInOutcome from './CheckInOutcome';
@@ -10,6 +10,11 @@ import { checkInWithCode, checkInWithQr, confirmReward, resolveChoice, TGCODE, t
 import styles from './UniversalScanner.module.css';
 
 const MY_MEETING = '/portal/meetings?tab=mine';   // where a checked-in meeting's question and doc are
+const AUTO_MS = 2200;   // a plain success shows this long, then the camera is ready for the next one (a tap on the card does it at once)
+
+// A success with nothing the person needs to read or act on: a ticket checked in with no form to remind about, a reward handed over. Everything else (already used, an error, a choice,
+// a form to tell them about, a reward to confirm) waits for the person.
+const clean = (o: Outcome) => (o.kind === 'ticket' && o.status === 'active' && !o.requiresForm) || o.kind === 'rewardDone';
 
 // What a scan turned into, said plainly: the person always sees exactly what it did (or did not do).
 type State =
@@ -31,8 +36,10 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
   const [problem, setProblem] = useState('');
   const [busy, setBusy] = useState(false);
   const [slow, setSlow] = useState(false);   // working for a while: say so, so a slow connection never looks like a frozen screen
+  const [typing, setTyping] = useState(false);   // the six-digit box is tucked away until it is wanted
   const goTimer = useRef<number | undefined>(undefined);
-  useEffect(() => () => window.clearTimeout(goTimer.current), []);   // closing in the moment before a page opens cancels the move
+  const autoTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => { window.clearTimeout(goTimer.current); window.clearTimeout(autoTimer.current); }, []);   // closing in the moment before a page opens cancels the move
   useEffect(() => { if (!problem) return; const id = window.setTimeout(() => setProblem(''), 5000); return () => window.clearTimeout(id); }, [problem]);
 
   useEffect(() => {
@@ -64,6 +71,8 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
     const outcome = await p;
     if (!outcome) return;
     setState({ kind: 'result', outcome });
+    window.clearTimeout(autoTimer.current);
+    if (clean(outcome)) autoTimer.current = window.setTimeout(() => setState({ kind: 'scanning' }), AUTO_MS);
     if (outcome.kind === 'meeting') {
       window.dispatchEvent(new Event('tg:meetings-changed'));
       // The meeting's question and doc are on My Meetings, under "You're checked in": no prompt, the ring goes green and the page opens by itself.
@@ -94,7 +103,7 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
     setBusy(false);
   }
 
-  const rescan = () => setState({ kind: 'scanning' });
+  const rescan = () => { window.clearTimeout(autoTimer.current); setState({ kind: 'scanning' }); };
 
   // The camera stays on screen the whole time: what a scan did shows on its ring, and the result slides up over the frozen picture.
   let lock: ScanLock | null = null;
@@ -108,6 +117,7 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
     sheet = <div className={styles.result}><Loader2 size={30} className={styles.spin} aria-hidden="true" /><strong>{state.heading}</strong><span>{state.text}</span>{slow && <span className={styles.slow}>The connection is slow. Still trying…</span>}</div>;
   } else if (state.kind === 'result') {
     const o = state.outcome;
+    const auto = clean(o);
     const again = o.kind === 'ticket' || o.kind === 'rewardDone' || o.kind === 'error' || o.kind === 'reward' || o.kind === 'choose';
     lock = { tone: o.kind === 'error' ? 'bad' : o.kind === 'choose' || (o.kind === 'ticket' && o.status !== 'active') || (o.kind === 'meeting' && o.already) ? 'warn' : 'ok' };
     sheet = o.kind === 'meeting' ? (
@@ -119,21 +129,28 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
         {slow && <a className={styles.openNow} href={MY_MEETING}>Open it now</a>}
       </div>
     ) : (
-      <CheckInOutcome
-        bare
-        outcome={o}
-        busy={busy}
-        doneLabel={again ? 'Scan Next' : 'Done'}
-        onDone={() => (again ? rescan() : onClose())}
-        onChoose={async (which) => { if (o.kind !== 'choose') return; setBusy(true); await finish(resolveChoice(o.code, which)); setBusy(false); }}
-        onConfirmReward={async () => {
-          if (o.kind !== 'reward') return;
-          setBusy(true);
-          const done = await confirmReward(o.id, o.title, o.member);
-          setState({ kind: 'result', outcome: done });
-          setBusy(false);
-        }}
-      />
+      // A plain success carries itself away: a thin bar runs down, then the camera is ready for the next code; tapping the card does it at once.
+      <div className={auto ? styles.autoCard : undefined} onClick={auto ? rescan : undefined} role={auto ? 'button' : undefined} aria-label={auto ? 'Scan the next code' : undefined}>
+        {auto && <span className={styles.autoBar} style={{ animationDuration: `${AUTO_MS}ms` }} aria-hidden="true" />}
+        <CheckInOutcome
+          bare
+          noButton={auto}
+          outcome={o}
+          busy={busy}
+          doneLabel={again ? 'Scan Next' : 'Done'}
+          onDone={() => (again ? rescan() : onClose())}
+          onChoose={async (which) => { if (o.kind !== 'choose') return; setBusy(true); await finish(resolveChoice(o.code, which)); setBusy(false); }}
+          onConfirmReward={async () => {
+            if (o.kind !== 'reward') return;
+            setBusy(true);
+            const done = await confirmReward(o.id, o.title, o.member);
+            window.clearTimeout(autoTimer.current);
+            setState({ kind: 'result', outcome: done });
+            if (clean(done)) autoTimer.current = window.setTimeout(() => setState({ kind: 'scanning' }), AUTO_MS);
+            setBusy(false);
+          }}
+        />
+      </div>
     );
   }
   return (
@@ -141,12 +158,21 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
       <QrScanner
         onScan={onScan}
         onClose={onClose}
-        title="Scan A TGcode"
-        note="Point the camera at a TGcode (meeting, ticket or reward) or an event’s check-in QR."
+        title="Scan"
+        note="Point at a TGcode or an event’s check-in QR"
         lock={lock}
         sheet={sheet}
         sheetKey={state.kind === 'result' ? `result-${state.outcome.kind}` : state.kind}
-        footer={<div className={styles.codeBar}><span>{staff ? 'Or type the 6-digit code (meeting or ticket)' : 'Or type the 6-digit code from the screen'}</span><CodeEntry dark onSubmit={(c) => void onCode(c)} busy={busy} /></div>}
+        extra={typing ? null : <button type="button" className={styles.typeLink} onClick={() => setTyping(true)}><Keyboard size={16} aria-hidden="true" /> Type a code</button>}
+        footer={typing ? (
+          <div className={styles.codeBar}>
+            <span>{staff ? 'The 6-digit code (meeting or ticket)' : 'The 6-digit code from the screen'}</span>
+            <div className={styles.codeRow}>
+              <CodeEntry dark autoFocus onSubmit={(c) => void onCode(c)} busy={busy} />
+              <button type="button" className={styles.codeHide} onClick={() => setTyping(false)} aria-label="Back to the camera"><X size={18} aria-hidden="true" /></button>
+            </div>
+          </div>
+        ) : null}
       />
       {problem && (
         <div className={styles.toast} role="status"><CircleAlert size={16} aria-hidden="true" /> {problem}</div>

@@ -10,7 +10,7 @@ const clock = (iso?: string) => iso ? new Date(iso).toLocaleTimeString('en-US', 
 
 // Says exactly what a check-in did, in the same words wherever it happened (the scanner, the code box, the Check-In page).
 // `bare` leaves out the big status icon, for where the scanner's own ring already shows it.
-export default function CheckInOutcome({ outcome, onDone, onConfirmReward, onChoose, busy, doneLabel = 'Done', bare }: { bare?: boolean; outcome: Outcome; onDone: () => void; onConfirmReward?: () => void; onChoose?: (which: 'meeting' | 'ticket') => void; busy?: boolean; doneLabel?: string }) {
+export default function CheckInOutcome({ outcome, onDone, onConfirmReward, onChoose, busy, doneLabel = 'Done', bare, noButton }: { bare?: boolean; /** The caller moves on by itself (and on a tap on the card): no button. */ noButton?: boolean; outcome: Outcome; onDone: () => void; onConfirmReward?: () => void; onChoose?: (which: 'meeting' | 'ticket') => void; busy?: boolean; doneLabel?: string }) {
   if (outcome.kind === 'choose') {
     return (
       <div className={`${styles.box} ${bare ? styles.bare : ''}`}>
@@ -52,7 +52,7 @@ export default function CheckInOutcome({ outcome, onDone, onConfirmReward, onCho
         {fresh && outcome.requiresForm && <div className={styles.badge}><strong>AS Form still to do</strong><span>Tell them: “Scanning isn’t check-in — finish your AS Form on your phone now.”</span></div>}
         {!fresh && outcome.status === 'used' && outcome.requiresForm && <div className={styles.badge}>{outcome.formCompleted ? 'AS Form opened — check their “response recorded” screen' : 'AS Form not opened yet'}</div>}
         {fresh && !!outcome.points && <span className={styles.points}>+{outcome.points} pts{outcome.lifetime !== undefined && outcome.tier ? ` · ${outcome.lifetime.toLocaleString()} pts · ${outcome.tier}` : ''}</span>}
-        <Button onClick={onDone}>{doneLabel}</Button>
+        {!noButton && <Button onClick={onDone}>{doneLabel}</Button>}
       </div>
     );
   }
@@ -88,7 +88,7 @@ export default function CheckInOutcome({ outcome, onDone, onConfirmReward, onCho
         <span className={styles.kicker}>Reward pickup</span>
         <strong className={styles.title}>Marked as given</strong>
         <span className={styles.detail}>{outcome.title} · {outcome.member}</span>
-        <Button onClick={onDone}>{doneLabel}</Button>
+        {!noButton && <Button onClick={onDone}>{doneLabel}</Button>}
       </div>
     );
   }

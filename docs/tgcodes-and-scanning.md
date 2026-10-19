@@ -69,13 +69,13 @@ may scan tickets can ever hit the ticket side.
    picture, reads each block of cells, repairs what it can, checks the version and kind). Either light-on-dark or dark-on-light reads.
 2. A TGcode becomes `tg:<kind><8 hex>`; the scanner decides by kind and calls `lib/checkin/anyCode.ts`, which asks the server (`/api/meetings/check-in`,
    `/api/tickets/checkin`, `/api/rewards/redemptions/lookup`). The server decides who may do what and whether the key is current.
-3. The result is shown in a card; staff can **Scan Next**.
+3. The result is shown in a compact card. A plain success (a ticket checked in with no form to mention, a reward handed over) moves on by itself after about 2 s (a thin bar runs down; a tap on the card does it at once); anything the person must read or act on (already used, a refusal, a choice between a meeting and a ticket for six typed digits, a form reminder, a reward to confirm) waits for them, with **Scan Next** or its own buttons.
 
 ## After a scan
 
 The person stays on the scan page. While it looks, nothing moves on the camera while it looks (it fades in once the first picture is ready). When a code is read the picture freezes on it, the ring locks and takes
 the outcome's colour (green done, amber already used or needs a choice, red refused), a big icon pops in with a ripple (a refusal shakes), and the result slides up over the camera.
-**Scan Next** carries on with the same camera. With reduced motion on, none of it moves. A reply with no reason (signed out, too many tries, a server error) is turned into a plain
+**Scan Next** (or the automatic move on) carries on with the same camera. The ring is a full circle. Under the camera is one small row: a zoom button (tap to step 1×, 2×, 3×…), a light button where the phone has one, and **Type a code**, which opens the six-digit box (tucked away until wanted). With reduced motion on, none of it moves. A reply with no reason (signed out, too many tries, a server error) is turned into a plain
 sentence. Wherever a TGcode is shown the button says **Show TGcode** and uses the ring icon instead of the standard QR glyph. There is no vibration.
 
 Where a code was read is kept: the decoder reports the code's centre and size, and the scanner puts the ring and the icon on that spot over the frozen picture (kept inside the screen). After a
