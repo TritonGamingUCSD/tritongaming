@@ -60,7 +60,7 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
       window.dispatchEvent(new Event('tg:meetings-changed'));
       // The meeting's question and doc are on My Meetings, under "You're checked in": no prompt, the ring goes green and the page opens by itself.
       window.clearTimeout(goTimer.current);
-      goTimer.current = window.setTimeout(() => go(MY_MEETING), 650);   // long enough to see the green ring and check
+      goTimer.current = window.setTimeout(() => go(MY_MEETING), 1000);   // long enough to see the green ring and check
     }
   }
 
@@ -74,7 +74,7 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
       return true;
     }
     const target = linkTarget(t);
-    if (target) { setProblem(''); setState({ kind: 'opening', ...target }); goTimer.current = window.setTimeout(() => go(target.href), 650); return true; }
+    if (target) { setProblem(''); setState({ kind: 'opening', ...target }); goTimer.current = window.setTimeout(() => go(target.href), 1000); return true; }
     setProblem('That isn’t a TGcode or a portal QR. Try another.');
     return false;
   }
