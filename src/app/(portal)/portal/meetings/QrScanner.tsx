@@ -115,7 +115,7 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
         track.current = t;
         const c = t.getCapabilities?.() as Caps | undefined;
         if (c) setCaps({ zoom: c.zoom && c.zoom.max > c.zoom.min ? c.zoom : undefined, torch: !!c.torch });
-        if (c?.zoom) { zoomRef.current = Math.min(Math.max(c.zoom.min, 1), c.zoom.max); setActive(zoomRef.current); hw.current.want = zoomRef.current; hw.current.applied = -1; applyHardware(); }   // start at 1×, not the ultra-wide the camera may open on
+        if (c?.zoom) { zoomRef.current = Math.min(Math.max(c.zoom.min, 1), c.zoom.max); hw.current.want = zoomRef.current; hw.current.applied = -1; applyHardware(); showZoom(); }   // start at 1×, not the ultra-wide the camera may open on
         if (video.current) {
           video.current.srcObject = stream; await video.current.play().catch(() => {});
           const v0 = video.current;
@@ -198,14 +198,26 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
     h.busy = true; h.applied = h.want;
     track.current.applyConstraints({ advanced: [{ zoom: h.want }] }).catch(() => { /* keep going */ }).finally(() => { h.busy = false; applyHardware(); });
   }
-  const min = caps.zoom?.min ?? 1, max = caps.zoom ? Math.min(caps.zoom.max, 8) : 3;
-  const clampZoom = (v: number) => Math.max(min, Math.min(max, v));
+  // Zoom: pinch with two fingers (or ctrl + scroll / pinch on a trackpad, or the wheel). The phone's own zoom where it has one, otherwise a digital zoom of the middle of the picture.
+  // Nothing here re-renders the screen: the picture's scale and the little "1.7×" readout are written straight to the page, and the phone's zoom is asked for one value at a time
+  // (the newest), so a fast pinch never queues up requests.
+  const readout = useRef<HTMLButtonElement>(null);
+  const limits = () => { const z = capsRef.current.zoom; return { min: z?.min ?? 1, max: z ? Math.min(z.max, 8) : 4 }; };
+  const showZoom = () => {
+    const el = readout.current;
+    if (!el) return;
+    const z = zoomRef.current, t = `${z < 1 ? Number(z.toFixed(1)).toString().replace(/^0/, '') : Number(z.toFixed(1))}×`;
+    if (el.textContent !== t) el.textContent = t;
+    el.setAttribute('aria-label', `Zoom ${t.replace('×', ' times')}. Tap to reset`);
+  };
   const paint = useRef(0);
   function setZoomTo(v: number) {
-    zoomRef.current = clampZoom(v);
+    const { min, max } = limits();
+    zoomRef.current = Math.max(min, Math.min(max, v));
+    showZoom();
     cancelAnimationFrame(paint.current);
     paint.current = requestAnimationFrame(() => {
-      if (digitalRef.current) { if (video.current) video.current.style.transform = zoomRef.current > 1 ? `scale(${zoomRef.current})` : ''; }
+      if (digitalRef.current) { if (video.current) video.current.style.transform = zoomRef.current > 1.001 ? `scale(${zoomRef.current})` : ''; }
       else { hw.current.want = zoomRef.current; applyHardware(); }
     });
   }
@@ -219,15 +231,31 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
     const stop = (e: Event) => e.preventDefault();
     const types = ['gesturestart', 'gesturechange', 'gestureend', 'touchmove'];
     types.forEach((t) => el.addEventListener(t, stop, { passive: false }));
-    return () => types.forEach((t) => el.removeEventListener(t, stop));
-  }, [mounted]);
-  // Fixed steps, like the phone's own camera: tap 1×, 2×, 3×… Each tap is one zoom request, so there is nothing to lag. The steps follow what the camera can
-  // really do (an ultra-wide 0.5× where it has one); without hardware zoom they are a digital crop of the middle, up to 3×.
-  const steps = [0.5, 1, 2, 3, 5].filter((z) => z >= min - 0.01 && z <= max + 0.01);
-  const [active, setActive] = useState(1);
-  function pick(z: number) { setActive(z); setZoomTo(z); }
-  useEffect(() => { if (caps.zoom && !steps.includes(1)) setActive(steps[0] ?? min); }, [caps.zoom]);   // eslint-disable-line react-hooks/exhaustive-deps
-
+    // Pinch: two pointers on the picture; the zoom follows how far apart they are, from where it was when the second finger came down.
+    const pts = new Map<number, { x: number; y: number }>();
+    let start: { d: number; z: number } | null = null;
+    const dist = () => { const [a, b] = [...pts.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
+    const down = (e: PointerEvent) => {
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      try { el.setPointerCapture(e.pointerId); } catch { /* fine */ }
+      if (pts.size === 2) start = { d: Math.max(dist(), 1), z: zoomRef.current };
+    };
+    const move = (e: PointerEvent) => {
+      if (!pts.has(e.pointerId)) return;
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pts.size === 2 && start) { e.preventDefault(); setZoomTo(start.z * (dist() / start.d)); }
+    };
+    const up = (e: PointerEvent) => { pts.delete(e.pointerId); start = pts.size === 2 ? { d: Math.max(dist(), 1), z: zoomRef.current } : null; };
+    // A trackpad pinch (and ctrl + scroll) arrives as a wheel event with ctrlKey set; a plain scroll wheel zooms too. Without preventDefault the browser would zoom the page.
+    const wheel = (e: WheelEvent) => { e.preventDefault(); setZoomTo(zoomRef.current * Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.002))); };
+    el.addEventListener('pointerdown', down); el.addEventListener('pointermove', move, { passive: false });
+    el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('wheel', wheel, { passive: false });
+    return () => {
+      types.forEach((t) => el.removeEventListener(t, stop));
+      el.removeEventListener('pointerdown', down); el.removeEventListener('pointermove', move);
+      el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up); el.removeEventListener('wheel', wheel);
+    };
+  }, [mounted]);   // eslint-disable-line react-hooks/exhaustive-deps
   // The dimmed layer round the circle follows the ring (it is moved and scaled, which the phone can do without repainting the screen), so the dimming always hugs the ring.
   function dimStyle(): React.CSSProperties | undefined {
     if (!lock) return undefined;
@@ -267,7 +295,7 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
       <footer className={`${styles.scanBottom} ${lock ? styles.scanBottomOff : ''}`} aria-hidden={lock ? true : undefined}>
         <p className={styles.scanHint}>{note ?? 'Point the camera at the QR code.'}</p>
         <div className={styles.scanRow}>
-          {steps.length > 1 && <button type="button" className={styles.scanTool} onClick={() => pick(steps[(steps.indexOf(active) + 1) % steps.length] ?? steps[0])} aria-label={`Zoom ${active < 1 ? '.5' : active} times. Tap to change`}>{active < 1 ? '.5' : active}×</button>}
+          <button ref={readout} type="button" className={styles.scanTool} onClick={() => setZoomTo(Math.abs(zoomRef.current - 1) < 0.05 ? 2 : 1)}>1×</button>
           {caps.torch && <button type="button" className={`${styles.scanLight} ${torch ? styles.scanLightOn : ''}`} onClick={() => void toggleTorch()} aria-pressed={torch} aria-label={torch ? 'Turn the light off' : 'Turn the light on'} title={torch ? 'Light off' : 'Light on'}>{torch ? <ZapOff size={18} aria-hidden="true" /> : <Zap size={18} aria-hidden="true" />}</button>}
           {extra}
         </div>
