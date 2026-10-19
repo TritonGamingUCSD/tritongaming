@@ -8,3 +8,7 @@
 @keyframes usSpin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
 .codeBar { display: flex; flex-direction: column; gap: 0.4rem; width: min(100%, 22rem); font-size: 0.8rem; color: rgba(255, 255, 255, 0.85); }   /* theme-ok */
+
+.slow { color: var(--pp-warn) !important; font-size: 0.85rem !important; }
+.moving { display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.15rem; font-size: 0.9rem !important; }
+.openNow { margin-top: 0.4rem; padding: 0.55rem 1.1rem; border-radius: 999px; background: var(--yellow); color: #011941; font-weight: 700; font-size: 0.9rem; text-decoration: none; }   /* theme-ok */

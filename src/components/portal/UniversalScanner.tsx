@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { CircleAlert, Loader2 } from 'lucide-react';
+import { Check, CircleAlert, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import QrScanner, { type ScanLock } from '@/app/(portal)/portal/meetings/QrScanner';
 import CheckInOutcome from './CheckInOutcome';
@@ -30,9 +30,17 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
   const [state, setState] = useState<State>({ kind: 'scanning' });
   const [problem, setProblem] = useState('');
   const [busy, setBusy] = useState(false);
+  const [slow, setSlow] = useState(false);   // working for a while: say so, so a slow connection never looks like a frozen screen
   const goTimer = useRef<number | undefined>(undefined);
   useEffect(() => () => window.clearTimeout(goTimer.current), []);   // closing in the moment before a page opens cancels the move
   useEffect(() => { if (!problem) return; const id = window.setTimeout(() => setProblem(''), 5000); return () => window.clearTimeout(id); }, [problem]);
+
+  useEffect(() => {
+    setSlow(false);
+    if (state.kind !== 'working' && state.kind !== 'opening' && !(state.kind === 'result' && state.outcome.kind === 'meeting')) return;
+    const id = window.setTimeout(() => setSlow(true), 5000);
+    return () => window.clearTimeout(id);
+  }, [state]);
 
   const can = { tickets: staff, rewards: redemptions };
 
@@ -93,16 +101,24 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
   let sheet: ReactNode = null;
   if (state.kind === 'working') {
     lock = { tone: 'busy' };
-    sheet = <div className={styles.result}><Loader2 size={30} className={styles.spin} aria-hidden="true" /><strong>{state.label}</strong></div>;
+    sheet = <div className={styles.result}><Loader2 size={30} className={styles.spin} aria-hidden="true" /><strong>{state.label}</strong>{slow && <span className={styles.slow}>The connection is slow. Still trying…</span>}</div>;
   } else if (state.kind === 'opening') {
     // No extra tap: the page it points at opens by itself, after a moment to read what is happening.
     lock = { tone: 'busy' };
-    sheet = <div className={styles.result}><Loader2 size={30} className={styles.spin} aria-hidden="true" /><strong>{state.heading}</strong><span>{state.text}</span></div>;
+    sheet = <div className={styles.result}><Loader2 size={30} className={styles.spin} aria-hidden="true" /><strong>{state.heading}</strong><span>{state.text}</span>{slow && <span className={styles.slow}>The connection is slow. Still trying…</span>}</div>;
   } else if (state.kind === 'result') {
     const o = state.outcome;
     const again = o.kind === 'ticket' || o.kind === 'rewardDone' || o.kind === 'error' || o.kind === 'reward' || o.kind === 'choose';
     lock = { tone: o.kind === 'error' ? 'bad' : o.kind === 'choose' || (o.kind === 'ticket' && o.status !== 'active') || (o.kind === 'meeting' && o.already) ? 'warn' : 'ok' };
-    sheet = o.kind === 'meeting' ? null : (
+    sheet = o.kind === 'meeting' ? (
+      // The page it moves to opens by itself; until it has, this says so (a slow connection can take a while), with no button to press.
+      <div className={styles.result}>
+        <strong>{o.already ? 'You’re already checked in' : 'You’re checked in'}</strong>
+        {o.title && <span>{o.title}</span>}
+        <span className={styles.moving}><Loader2 size={15} className={styles.spin} aria-hidden="true" /> Opening My Meetings…{slow && ' (slow connection)'}</span>
+        {slow && <a className={styles.openNow} href={MY_MEETING}>Open it now</a>}
+      </div>
+    ) : (
       <CheckInOutcome
         bare
         outcome={o}
@@ -129,6 +145,7 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
         note="Point the camera at a TGcode (meeting, ticket or reward) or an event’s check-in QR."
         lock={lock}
         sheet={sheet}
+        sheetKey={state.kind === 'result' ? `result-${state.outcome.kind}` : state.kind}
         footer={<div className={styles.codeBar}><span>{staff ? 'Or type the 6-digit code (meeting or ticket)' : 'Or type the 6-digit code from the screen'}</span><CodeEntry dark onSubmit={(c) => void onCode(c)} busy={busy} /></div>}
       />
       {problem && (

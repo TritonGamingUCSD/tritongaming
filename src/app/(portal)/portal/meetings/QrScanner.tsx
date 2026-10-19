@@ -42,7 +42,7 @@ const ringBox = (spot: { x: number; y: number; r: number }, stage: HTMLElement |
 const iconBox = (spot: { x: number; y: number; r: number }, stage: HTMLElement | null): React.CSSProperties => { const f = fit(spot, stage); const d = Math.min(Math.max(f.r * 0.9, 56), 110); return { left: f.x, top: f.y, width: d, maxWidth: 'none' }; };
 
 export type ScanLock = { tone: 'busy' | 'ok' | 'warn' | 'bad' };
-export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', note, footer, lock, sheet }: { onScan: (text: string) => boolean | void; onClose: () => void; title?: string; note?: string; footer?: ReactNode; lock?: ScanLock | null; sheet?: ReactNode }) {
+export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', note, footer, lock, sheet, sheetKey }: { onScan: (text: string) => boolean | void; onClose: () => void; title?: string; note?: string; footer?: ReactNode; lock?: ScanLock | null; sheet?: ReactNode; sheetKey?: string }) {
   const video = useRef<HTMLVideoElement>(null);
   const frame = useRef<HTMLDivElement>(null);
   const track = useRef<ZoomTrack | null>(null);
@@ -52,6 +52,36 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
   const [mounted, setMounted] = useState(false);
   const [ready, setReady] = useState(false);
   const [spot, setSpot] = useState<{ x: number; y: number; r: number } | null>(null);   // where on the screen the code was when it was read (stage pixels)   // the first picture is in and the zoom has settled: only then does the camera fade in
+  // The result sheet's height follows its content smoothly (a spinner line becoming a result with a button), instead of jumping.
+  const sheetBody = useRef<HTMLDivElement>(null);
+  const [sheetH, setSheetH] = useState<number | null>(null);
+  const sheetShown = !!(lock && sheet);
+  // When the result goes away (Scan Next, Try Again) it slides out and the icon fades while the ring glides back, rather than vanishing at once.
+  const lastShown = useRef<{ node: ReactNode; key?: string; tone: ScanLock['tone'] | null }>({ node: null, tone: null });
+  if (lock) lastShown.current = { node: sheet ?? null, key: sheetKey, tone: lock.tone };
+  const lastSpot = useRef<{ x: number; y: number; r: number } | null>(null);
+  if (lock && spot) lastSpot.current = spot;
+  const [leaving, setLeaving] = useState(false);
+  const wasLocked = useRef(false);
+  useEffect(() => {
+    if (lock) { wasLocked.current = true; setLeaving(false); return; }
+    if (!wasLocked.current) return;
+    wasLocked.current = false;
+    setLeaving(true);
+    const id = window.setTimeout(() => setLeaving(false), 360);
+    return () => window.clearTimeout(id);
+  }, [lock]);
+  useEffect(() => {
+    const el = sheetBody.current;
+    if (!sheetShown || !el) { setSheetH(null); return; }
+    const ro = new ResizeObserver(() => setSheetH(el.offsetHeight));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [sheetShown]);
+  // Waiting for the camera (the phone may be asking for permission): say what is going on instead of looking stuck.
+  const [slowStart, setSlowStart] = useState(false);
+  useEffect(() => { if (ready) { setSlowStart(false); return; } const id = window.setTimeout(() => setSlowStart(true), 3500); return () => window.clearTimeout(id); }, [ready]);
+  const seenRef = useRef({ text: '', at: -1e9 });   // the code last seen and when: the same one is not taken again while it stays in view
   const pausedRef = useRef(false);   // a taken scan freezes the picture and stops reading until the caller clears `lock`
   const onScanRef = useRef(onScan);
   onScanRef.current = onScan;
@@ -72,7 +102,7 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
 
   useEffect(() => {
     if (!mounted) return;
-    let stream: MediaStream | null = null, raf = 0, dead = false, last = 0, lastText = '', lastAt = 0;
+    let stream: MediaStream | null = null, raf = 0, dead = false, last = 0;
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const Detector = (window as unknown as { BarcodeDetector?: new (o: { formats: string[] }) => { detect: (v: HTMLVideoElement) => Promise<{ rawValue: string; cornerPoints?: { x: number; y: number }[] }[]> } }).BarcodeDetector;
@@ -130,8 +160,12 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
             }
           }
           // The caller decides what the text is: true = taken (freeze the picture), anything else = keep looking. The same text is not offered again for 3 s.
-          if (text && !(text === lastText && now - lastAt < 3000)) {
-            lastText = text; lastAt = now;
+          // The same code is not offered again while it stays in view (after "Scan Next" or "Try Again" the code is usually still in front of the camera): it counts as new
+          // only once it has been out of sight for a moment, or another code comes.
+          const seen = seenRef.current;
+          const repeat = !!text && text === seen.text && now - seen.at < 1500;
+          if (text) { seen.text = text; seen.at = now; }
+          if (text && !repeat) {
             if (onScanRef.current(text) === true) {
               pausedRef.current = true; v.pause();   // freeze right away, so the ring lands where the code is in the frozen picture
               setSpot(found ? toStage(found, v, z) : null);
@@ -151,6 +185,7 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
   useEffect(() => {
     if (lock || !pausedRef.current) return;
     setSpot(null);
+    seenRef.current.at = performance.now();   // the camera starts again with the same code probably still in front of it: that one does not count as a new scan
     pausedRef.current = false;
     void video.current?.play().catch(() => {});
   }, [lock]);
@@ -193,6 +228,16 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
   function pick(z: number) { setActive(z); setZoomTo(z); }
   useEffect(() => { if (caps.zoom && !steps.includes(1)) setActive(steps[0] ?? min); }, [caps.zoom]);   // eslint-disable-line react-hooks/exhaustive-deps
 
+  // The dimmed layer round the circle follows the ring (it is moved and scaled, which the phone can do without repainting the screen), so the dimming always hugs the ring.
+  function dimStyle(): React.CSSProperties | undefined {
+    if (!lock) return undefined;
+    const st = frame.current, SW = st?.clientWidth ?? 360, SH = st?.clientHeight ?? 600;
+    const guide = Math.min(0.72 * window.innerWidth, 0.52 * window.innerHeight);
+    let x = SW / 2, y = SH * 0.31, d = Math.min(0.46 * window.innerWidth, 0.28 * window.innerHeight);
+    if (spot) { const f = fit(spot, st); x = f.x; y = f.y; d = f.r * 2; }
+    return { transform: `translate(calc(-50% + ${(x - SW / 2).toFixed(1)}px), calc(-50% + ${(y - SH / 2).toFixed(1)}px)) scale(${(d / guide).toFixed(4)})` };
+  }
+
   if (!mounted) return null;
   // Portaled to the page itself: the portal's panels are animated with a transform, which would otherwise shrink a "fixed" overlay to the panel.
   return createPortal(
@@ -204,17 +249,22 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
       {error ? <div className={styles.scanProblem}><TGcodeIcon size={44} /><p>{error}</p></div> : (
         <div ref={frame} className={styles.scanStage}>
           <video ref={video} playsInline muted className={ready ? styles.scanReady : undefined} />
-          {!ready && <div className={styles.scanStarting}>Starting camera…</div>}
+          {!ready && <div className={styles.scanStarting} role="status"><span className={styles.scanStartSpin} aria-hidden="true" />Starting camera…{slowStart && <small>If your phone asks, allow the camera. Or type the code below.</small>}</div>}
+          <div className={styles.scanDim} style={dimStyle()} aria-hidden="true" />
+          <div className={`${styles.scanDimLock} ${lock ? styles.scanDimOn : ''}`} aria-hidden="true" />
           <div className={`${styles.scanTarget} ${lock ? styles[`lock_${lock.tone}`] : styles.scanLive}`} style={lock && spot ? ringBox(spot, frame.current) : undefined} aria-hidden="true" />
-          {lock && lock.tone !== 'busy' && (
-            <span key={lock.tone} className={`${styles.scanLockIcon} ${styles[`lockIcon_${lock.tone}`]}`} style={spot ? iconBox(spot, frame.current) : undefined} aria-hidden="true">
-              {lock.tone === 'ok' ? <Check size={44} strokeWidth={2.75} /> : lock.tone === 'warn' ? <TriangleAlert size={40} /> : <CircleAlert size={42} />}
-            </span>
-          )}
+          {(lock ? lock.tone : leaving ? lastShown.current.tone : null) && (lock ? lock.tone : lastShown.current.tone) !== 'busy' && (() => {
+            const tone = (lock ? lock.tone : lastShown.current.tone)!;
+            return (
+              <span key={tone} className={`${styles.scanLockIcon} ${styles[`lockIcon_${tone}`]} ${lock ? '' : styles.scanLockIconOut}`} style={(lock ? spot : lastSpot.current) ? iconBox((lock ? spot : lastSpot.current)!, frame.current) : undefined} aria-hidden="true">
+                {tone === 'ok' ? <Check size={44} strokeWidth={2.75} /> : tone === 'warn' ? <TriangleAlert size={40} /> : <CircleAlert size={42} />}
+              </span>
+            );
+          })()}
         </div>
       )}
-      {lock && sheet && <div className={styles.scanSheet} role="status" aria-live="polite">{sheet}</div>}
-      <footer className={styles.scanBottom} style={lock ? { display: 'none' } : undefined}>
+      {(sheetShown || (leaving && lastShown.current.node)) && <div className={`${styles.scanSheet} ${sheetShown ? '' : styles.scanSheetOut}`} style={sheetH ? { height: sheetH } : undefined} role="status" aria-live="polite"><div ref={sheetBody} className={styles.scanSheetBody}><div key={sheetShown ? sheetKey : lastShown.current.key} className={styles.scanSheetFade}>{sheetShown ? sheet : lastShown.current.node}</div></div></div>}
+      <footer className={`${styles.scanBottom} ${lock ? styles.scanBottomOff : ''}`} aria-hidden={lock ? true : undefined}>
         <p className={styles.scanHint}>{note ?? 'Point the camera at the QR code.'}</p>
         <div className={styles.scanRow}>
           <div className={styles.scanSteps} role="group" aria-label="Zoom">

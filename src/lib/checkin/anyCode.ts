@@ -15,8 +15,16 @@ export type Outcome =
 
 export const TGCODE = /^tg:([mtr])([0-9a-f]{8}|[0-9a-f]{12})$/;   // the key is 8 hex digits in a code of the current format, 12 in the first one
 
+// A request that never answers (a very bad connection) must not leave the screen waiting for ever: after 20 s it gives up and the person is told, with a way to try again.
+const TIMEOUT_MS = 20_000;
+async function withTimeout(run: (signal: AbortSignal) => Promise<Response>): Promise<Response> {
+  const ctl = new AbortController();
+  const id = setTimeout(() => ctl.abort(), TIMEOUT_MS);
+  try { return await run(ctl.signal); } finally { clearTimeout(id); }
+}
+
 async function post(path: string, body: object) {
-  const res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const res = await withTimeout((signal) => fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal }));
   const json = await res.json().catch(() => ({}));
   if (!res.ok && !json.error) json.error = whyNot(res.status);
   return { ok: res.ok, status: res.status, json };
@@ -46,7 +54,7 @@ export async function checkInWithCode(code: string): Promise<Outcome> {
     if (m.status === 409 || m.status === 403) return { kind: 'error', message: m.json.error };
     if (t.status === 404 || t.status === 403) return { kind: 'error', message: 'That code isn’t a meeting or ticket code right now. Check the screen for the current one.' };
     return { kind: 'error', message: t.json.error || m.json.error || 'Check-in failed.' };
-  } catch { return { kind: 'error', message: 'No connection. Try again.' }; }
+  } catch { return { kind: 'error', message: 'No connection, or it is taking too long. Check your connection and try again.' }; }
 }
 
 /** Does the check-in for the kind of code the person (or the lookup) settled on. */
@@ -58,7 +66,7 @@ export async function resolveChoice(code: string, which: 'meeting' | 'ticket'): 
     }
     const t = await post('/api/tickets/checkin', { code });
     return t.ok ? ticketOutcome(t.json) : { kind: 'error', message: t.json.error || 'Check-in failed.' };
-  } catch { return { kind: 'error', message: 'No connection. Try again.' }; }
+  } catch { return { kind: 'error', message: 'No connection, or it is taking too long. Check your connection and try again.' }; }
 }
 
 /** What a scan means, for the QRs that are made by the portal. null = not one of these. */
@@ -77,14 +85,14 @@ export async function checkInWithQr(text: string, can: { tickets: boolean; rewar
     }
     if (ring && ring[1] === 'r') {
       if (!can.rewards) return { kind: 'error', message: can.tickets ? 'That is a reward pickup code, and your role can’t confirm hand-overs. Ask an officer who can.' : 'That is a reward pickup code. Show it to an officer to collect your reward.' };
-      const res = await fetch(`/api/rewards/redemptions/lookup?p=${ring[2]}`);
+      const res = await withTimeout((signal) => fetch(`/api/rewards/redemptions/lookup?p=${ring[2]}`, { signal }));
       const j = await res.json().catch(() => ({}));
       if (!res.ok) return { kind: 'error', message: j.error || (res.status === 404 ? 'Reward not found.' : whyNot(res.status)) };
       const one = <T,>(v: T | T[] | null): T | null => (Array.isArray(v) ? v[0] ?? null : v);
       const d = j.redemption;
       return { kind: 'reward', id: d.id, status: d.status, title: one<{ title: string }>(d.reward)?.title ?? 'Reward', member: one<{ display_name: string | null }>(d.member)?.display_name ?? 'Member', cost: d.point_cost };
     }
-  } catch { return { kind: 'error', message: 'No connection. Try again.' }; }
+  } catch { return { kind: 'error', message: 'No connection, or it is taking too long. Check your connection and try again.' }; }
   return null;
 }
 
@@ -92,5 +100,5 @@ export async function confirmReward(id: string, title: string, member: string): 
   try {
     const r = await post(`/api/rewards/redemptions/${id}/confirm`, {});
     return r.ok ? { kind: 'rewardDone', title, member } : { kind: 'error', message: r.json.error || 'Failed to confirm.' };
-  } catch { return { kind: 'error', message: 'No connection. Try again.' }; }
+  } catch { return { kind: 'error', message: 'No connection, or it is taking too long. Check your connection and try again.' }; }
 }

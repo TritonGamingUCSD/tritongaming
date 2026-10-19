@@ -767,11 +767,11 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .scanStage { position: relative; flex: 1; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
 .scanStage video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform-origin: center center; will-change: transform; display: block; }
 .scanTitle { font-size: 1rem; font-weight: 700; letter-spacing: 0.04em; }
-.scanTarget { position: absolute; left: 50%; top: 50%; width: min(72vw, 52vh); aspect-ratio: 1 / 1; transform: translate(-50%, -50%); border-radius: 50%; border: 4px dashed rgba(255, 255, 255, 0.92); box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.45); pointer-events: none; transition: top 0.4s cubic-bezier(0.3, 1.2, 0.4, 1), width 0.4s cubic-bezier(0.3, 1.2, 0.4, 1), border-color 0.25s, box-shadow 0.25s; }   /* theme-ok */
+.scanTarget { position: absolute; left: 50%; top: 50%; width: min(72vw, 52vh); aspect-ratio: 1 / 1; transform: translate(-50%, -50%); border-radius: 50%; border: 4px dashed rgba(255, 255, 255, 0.92); pointer-events: none; transition: top 0.4s cubic-bezier(0.3, 1.2, 0.4, 1), width 0.4s cubic-bezier(0.3, 1.2, 0.4, 1), border-color 0.25s, box-shadow 0.25s; }   /* theme-ok */
 
 .scanRow { display: flex; align-items: center; justify-content: center; gap: 1rem; }
 .scanZoom { position: absolute; left: 50%; bottom: 7.5rem; transform: translateX(-50%); padding: 0.2rem 0.7rem; border-radius: 999px; background: rgba(0, 0, 0, 0.55); color: #fff; font-size: 0.85rem; font-weight: 600; pointer-events: none; }   /* theme-ok */
-.scanBottom { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; flex-direction: column; justify-content: center; gap: 0.7rem; padding: 2.5rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px)); background: linear-gradient(transparent, rgba(0, 0, 0, 0.65)); text-align: center; }   /* theme-ok */
+.scanBottom { transition: opacity 0.3s ease 0.1s, transform 0.3s ease 0.1s; position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; flex-direction: column; justify-content: center; gap: 0.7rem; padding: 2.5rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px)); background: linear-gradient(transparent, rgba(0, 0, 0, 0.65)); text-align: center; }   /* theme-ok */
 .scanHint { margin: 0; font-size: 0.95rem; color: rgba(255, 255, 255, 0.92); }   /* theme-ok */
 .scanLight { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.55rem 1rem; border: 0; border-radius: 999px; background: rgba(255, 255, 255, 0.2); color: #fff; font-size: 0.9rem; font-weight: 600; cursor: pointer; }   /* theme-ok */
 .scanError { margin: auto 1.2rem; padding: 0.9rem; border-radius: 0.7rem; background: rgba(185, 28, 28, 0.85); color: #fff; font-size: 0.95rem; text-align: center; }   /* theme-ok */
@@ -828,22 +828,38 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 /* ── After a scan: the picture freezes and the ring glides onto the code, its colour fading to the outcome's; the icon fades in and the result slides up. Nothing moves while it looks. ── */
 .scanTarget { border: 4px solid transparent; transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1), top 0.5s cubic-bezier(0.4, 0, 0.2, 1), width 0.5s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.4s ease, box-shadow 0.45s ease; }   /* one smooth glide both ways: onto the code, and back to the circle on Try Again */
 .scanTarget::before { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 4px dashed rgba(255, 255, 255, 0.92); transition: opacity 0.3s ease 0.5s; }   /* theme-ok */   /* back to the circle: the dashes only fade in once the ring has finished resizing, so they never slide round while it grows */
-.scanLive { box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.45); }   /* theme-ok */
+.scanLive { box-shadow: none; }
+/* The dimming round the circle is its own still layer (a huge shadow on the moving ring had the whole screen repainted on every frame of the glide, which a slower phone shows as stutter). */
+.scanDim, .scanDimLock { position: absolute; left: 50%; top: 50%; width: min(72vw, 52vh); aspect-ratio: 1 / 1; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none; }
+.scanDim { box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.45); transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); will-change: transform; }   /* theme-ok */
+.scanDimLock { box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.15); opacity: 0; transition: opacity 0.35s ease; }   /* theme-ok */
+.scanDimOn { opacity: 1; }
 .lock_busy::before, .lock_ok::before, .lock_warn::before, .lock_bad::before { opacity: 0; transition: opacity 0.12s ease 0s; }
 .lock_busy, .lock_ok, .lock_warn, .lock_bad { top: 31%; width: min(46vw, 28vh); }
-.lock_busy { border-color: #ffc72c; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.6), 0 0 24px rgba(255, 199, 44, 0.6); }   /* theme-ok */
-.lock_ok { border-color: #34d399; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.6), 0 0 28px rgba(52, 211, 153, 0.7); }   /* theme-ok */
-.lock_warn { border-color: #fbbf24; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.6), 0 0 28px rgba(251, 191, 36, 0.7); }   /* theme-ok */
-.lock_bad { border-color: #f87171; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.6), 0 0 28px rgba(248, 113, 113, 0.7); }   /* theme-ok */
+.lock_busy { border-color: #ffc72c; box-shadow: 0 0 24px rgba(255, 199, 44, 0.6); }   /* theme-ok */
+.lock_ok { border-color: #34d399; box-shadow: 0 0 28px rgba(52, 211, 153, 0.7); }   /* theme-ok */
+.lock_warn { border-color: #fbbf24; box-shadow: 0 0 28px rgba(251, 191, 36, 0.7); }   /* theme-ok */
+.lock_bad { border-color: #f87171; box-shadow: 0 0 28px rgba(248, 113, 113, 0.7); }   /* theme-ok */
 .scanLockIcon { position: absolute; left: 50%; top: 31%; z-index: 2; display: grid; place-items: center; width: 14vh; max-width: 26vw; aspect-ratio: 1 / 1; transform: translate(-50%, -50%); border-radius: 50%; color: #fff; pointer-events: none; animation: tgScanIcon 0.32s ease-out 0.3s both; }   /* theme-ok */
 .lockIcon_ok { background: #059669; }   /* theme-ok */
 .lockIcon_warn { background: #d97706; }   /* theme-ok */
 .lockIcon_bad { background: #dc2626; }   /* theme-ok */
-.scanSheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; max-width: 30rem; max-height: 52%; overflow-y: auto; margin: 0 auto; padding: 1.1rem 1.2rem calc(1.2rem + env(safe-area-inset-bottom, 0px)); border-radius: 1.4rem 1.4rem 0 0; background: var(--pp-card); color: var(--pp-ink); box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.45); animation: tgSheetUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both; }   /* theme-ok */
+.scanBottomOff { opacity: 0; transform: translateY(14px); pointer-events: none; visibility: hidden; transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0.2s; }
+.scanSheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; box-sizing: border-box; max-width: 30rem; max-height: 52%; overflow-y: auto; margin: 0 auto; border-radius: 1.4rem 1.4rem 0 0; transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: var(--pp-card); color: var(--pp-ink); box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.45); animation: tgSheetUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both; }   /* theme-ok */
 /* The camera fades in once its first picture is there, instead of showing a black or jumping frame while it starts (and the zoom settles). */
 .scanStage video { opacity: 0; transition: opacity 0.35s ease; }
 .scanStage video.scanReady { opacity: 1; }
-.scanStarting { position: absolute; inset: 0; display: grid; place-items: center; color: rgba(255, 255, 255, 0.8); font-size: 0.95rem; pointer-events: none; }   /* theme-ok */
+.scanSheetOut { animation: tgSheetDown 0.32s cubic-bezier(0.4, 0, 1, 1) both !important; pointer-events: none; }
+@keyframes tgSheetDown { from { transform: none; } to { transform: translateY(100%); } }
+.scanLockIconOut { animation: tgScanIconOut 0.22s ease-in both !important; }
+@keyframes tgScanIconOut { from { transform: translate(-50%, -50%) scale(1); opacity: 1; } to { transform: translate(-50%, -50%) scale(0.8); opacity: 0; } }
+.scanSheetBody { padding: 1.1rem 1.2rem calc(1.2rem + env(safe-area-inset-bottom, 0px)); }
+.scanSheetFade { animation: tgSheetFade 0.3s ease both; }
+@keyframes tgSheetFade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.scanStarting { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.7rem; text-align: center; padding: 0 2rem; color: rgba(255, 255, 255, 0.8); font-size: 0.95rem; pointer-events: none; }   /* theme-ok */
 @keyframes tgScanIcon { from { transform: translate(-50%, -50%) scale(0.7); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
 @keyframes tgSheetUp { from { transform: translateY(100%); } to { transform: none; } }
-@media (prefers-reduced-motion: reduce) { .scanTarget, .scanTarget::before { transition: none; } .scanLockIcon, .scanSheet { animation: none; } .scanStage video { transition: none; } }
+@keyframes tgStartSpin { to { transform: rotate(360deg); } }
+.scanStartSpin { width: 1.6rem; height: 1.6rem; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.85); border-right-color: transparent; animation: tgStartSpin 0.8s linear infinite; }   /* theme-ok */
+.scanStarting small { max-width: 18rem; font-size: 0.82rem; line-height: 1.35; color: rgba(255, 255, 255, 0.7); animation: tgSheetFade 0.4s ease both; }   /* theme-ok */
+@media (prefers-reduced-motion: reduce) { .scanSheet, .scanSheetFade, .scanBottom, .scanBottomOff, .scanDim, .scanDimLock { transition: none; animation: none; } .scanSheetOut, .scanLockIconOut { animation: none !important; opacity: 0; } .scanStartSpin { animation-duration: 2.4s; } .scanTarget, .scanTarget::before { transition: none; } .scanLockIcon, .scanSheet { animation: none; } .scanStage video { transition: none; } }
