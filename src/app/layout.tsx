@@ -2,6 +2,7 @@ import ConfirmHost from '@/components/HoldToConfirm/ConfirmHost';
 import ToastHost from '@/components/SaveToast/ToastHost';
 import ClickFeedback from '@/components/ClickFeedback/ClickFeedback';
 import ScrollArrows from '@/components/ScrollArrows/ScrollArrows';
+import HomeScreenLaunch from '@/components/HomeScreenLaunch/HomeScreenLaunch';
 import type { Metadata, Viewport } from 'next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/next';
@@ -41,8 +42,10 @@ export const metadata: Metadata = {
     title: 'Triton Gaming',
     description: 'Gaming Org at UC San Diego',
   },
-  // The site is deliberately not installable as an app: only the portal is (see src/app/(portal)/layout.tsx, which adds the web app manifest and the standalone flags). A public page added to a
-  // home screen is just a bookmark with the logo, and opens in the browser.
+  // "Add to Home Screen" / "Install" from any page of the site is the portal: the manifest (public/portal.webmanifest: name TG Portal, the logo icons, opens /portal) and, for iOS, the standalone
+  // flags; a launch from an iPhone icon whose first page is outside the portal is sent to /portal (components/HomeScreenLaunch).
+  manifest: '/portal.webmanifest',
+  appleWebApp: { capable: true, title: 'TG Portal', statusBarStyle: 'default' },
 };
 
 export const viewport: Viewport = {
@@ -62,6 +65,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <ClickFeedback />
         <ScrollArrows />
+        <HomeScreenLaunch />
         <ToastHost />
         <ConfirmHost />
         <SpeedInsights />

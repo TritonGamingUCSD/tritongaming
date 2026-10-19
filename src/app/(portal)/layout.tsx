@@ -12,11 +12,6 @@ import { PortalIdentityProvider } from '@/components/portal/PortalIdentity';
 // doesn't set its own `robots` (none do).
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
-  // The portal is the one part of the site that can be added to a home screen / installed as an app (Android's "Install app", iOS's "Add to Home Screen"): the manifest (public/portal.webmanifest:
-  // name, logo icons, opens /portal) and iOS's standalone flags are only linked from here, never from the public pages.
-  manifest: '/portal.webmanifest',
-  appleWebApp: { capable: true, title: 'TG Portal', statusBarStyle: 'default' },
-  icons: { apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }] },
 };
 
 export default async function PortalGroupLayout({ children }: { children: React.ReactNode }) {
