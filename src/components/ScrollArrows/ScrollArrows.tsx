@@ -9,7 +9,7 @@ import { usePathname } from 'next/navigation';
 // (in its parent, which is made position: relative if it was not positioned) and never take space. Skip one with data-no-scroll-arrows. Styles: globals.css (.tg-scroll-arrow).
 
 const SIZE = 28;
-const CHEVRON = { left: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg>', right: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>' };
+const CHEVRON = { left: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg>', right: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>' };
 
 interface Tracked { el: HTMLElement; left: HTMLButtonElement; right: HTMLButtonElement; onScroll: () => void; ro: ResizeObserver; madeRelative: boolean }
 
