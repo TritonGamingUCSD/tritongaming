@@ -5,15 +5,15 @@ import styles from './TGcode.module.css';
 // on a solid disc in the middle. Drawn in the portal's ink on its card colour, so it flips with the light and dark theme while keeping the contrast the reader
 // needs either way. Only the portal's Scan button reads it.
 const FILL_BY_RING = [styles.fill, styles.fillBlue, styles.tone];   // the message dashes are all navy; the filler the scanner ignores takes one colour per ring
-const FILL_WIDTH = DASH * 0.72;
-const CORNER = 0.3;   // the corner radius of a dash, as a share of its width
+const FILL_WIDTH = DASH;   // the same width as a message dash, so nothing shows which dashes carry the message
+const CORNER = 0.5;   // the corner radius of a dash, as a share of its width (half: fully rounded ends)
 
 export default function TGcode({ payload, size, className = '', label = 'Code for the portal’s Scan button' }: { payload: string; size?: number; className?: string; label?: string }) {
   if (!PAYLOAD.test(payload)) return null;
   const delta = (2 * Math.PI) / SECTORS;
   const arcs = [...dashRuns(payload)].sort((x, y) => Number(y[3]) - Number(x[3])).map(([ring, s, e, fill], i) => {
     const r = R_IN + (ring + 0.5) * THICK;
-    const w = fill ? FILL_WIDTH : DASH;   // filler is a little thinner than the message dashes, so the message stands out
+    const w = fill ? FILL_WIDTH : DASH;
     const full = e - s + 1 >= SECTORS;
     const cls = fill ? FILL_BY_RING[ring % FILL_BY_RING.length] : undefined;
     if (full) return <circle key={i} r={r} fill="none" strokeWidth={w} className={cls ? `${cls} ${styles.band}` : styles.band} />;
