@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import TGcodeIcon from '@/components/TGcode/TGcodeIcon';
-import { Check, CircleAlert, TriangleAlert, X, Zap, ZapOff } from 'lucide-react';
+import { Check, CircleAlert, TriangleAlert, X, Zap } from 'lucide-react';
 import jsQR from 'jsqr';
 import { decodeTGcodeAt } from '@/lib/qr/tgCode/decode';
 import { scanArea, inScanCircle } from '@/lib/qr/scanArea';
@@ -324,7 +324,7 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
         <p className={styles.scanHint}>{note ?? 'Point the camera at the QR code.'}</p>
         <div className={styles.scanRow}>
           <button ref={readout} type="button" className={styles.scanTool} onClick={() => setZoomTo(Math.abs(zoomRef.current - 1) < 0.05 ? 2 : 1)}>1×</button>
-          {caps.torch && <button type="button" className={`${styles.scanLight} ${torch ? styles.scanLightOn : ''}`} onClick={() => void toggleTorch()} aria-pressed={torch} aria-label={torch ? 'Turn the light off' : 'Turn the light on'} title={torch ? 'Light off' : 'Light on'}>{torch ? <ZapOff size={18} aria-hidden="true" /> : <Zap size={18} aria-hidden="true" />}</button>}
+          {caps.torch && <button type="button" className={`${styles.scanLight} ${torch ? styles.scanLightOn : ''}`} onClick={() => void toggleTorch()} aria-pressed={torch} aria-label={torch ? 'Turn the light off' : 'Turn the light on'} title={torch ? 'Light off' : 'Light on'}><Zap size={20} strokeWidth={2.2} fill={torch ? 'currentColor' : 'none'} aria-hidden="true" /></button>}
           {extra}
         </div>
         {footer}

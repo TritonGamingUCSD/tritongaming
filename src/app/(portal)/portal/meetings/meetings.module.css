@@ -773,7 +773,7 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .scanBottom { transition: opacity 0.3s ease 0.1s, transform 0.3s ease 0.1s; position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; flex-direction: column; justify-content: center; gap: 0.7rem; padding: 2.5rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px)); background: linear-gradient(transparent, rgba(0, 0, 0, 0.65)); text-align: center; }   /* theme-ok */
 .scanHint { margin: 0; font-size: 0.95rem; color: rgba(255, 255, 255, 0.92); }   /* theme-ok */
 .scanLight { composes: scanTool; width: 2.4rem; padding: 0; }
-.scanLightOn { background: #fff; color: #000; }   /* theme-ok */
+.scanLightOn, .scanLightOn:hover { background: #ffc72c; color: #011941; }   /* theme-ok */   /* on: a solid yellow button with a filled bolt, easy to see; off: the same bolt as an outline */
 .scanError { margin: auto 1.2rem; padding: 0.9rem; border-radius: 0.7rem; background: rgba(185, 28, 28, 0.85); color: #fff; font-size: 0.95rem; text-align: center; }   /* theme-ok */
 
 /* The host's check-in frame: the typed code and its QR side by side in one ring (the ring fills as people check in), the QR in the code's own colour. */

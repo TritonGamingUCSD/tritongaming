@@ -159,7 +159,7 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
         onScan={onScan}
         onClose={onClose}
         title="Scan"
-        note="Point at a TGcode or an event’s check-in QR. Pinch to zoom."
+        note="Point at a TGcode or event QR. Pinch to zoom."
         lock={lock}
         sheet={sheet}
         sheetKey={state.kind === 'result' ? `result-${state.outcome.kind}` : state.kind}
