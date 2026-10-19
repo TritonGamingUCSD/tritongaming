@@ -479,3 +479,19 @@ mark[data-h='blue'] { background: var(--dh-blue); color: inherit; padding: 0.04e
 mark[data-h='pink'] { background: var(--dh-pink); color: inherit; padding: 0.04em 0.18em; border-radius: 0.22em; }
 mark[data-h='orange'] { background: var(--dh-orange); color: inherit; padding: 0.04em 0.18em; border-radius: 0.22em; }
 mark[data-h='gray'] { background: var(--dh-gray); color: inherit; padding: 0.04em 0.18em; border-radius: 0.22em; }
+
+/* A button or link that has been tapped and is now doing something (see components/ClickFeedback): its label gives way to a small spinner in the same colour until the work is done,
+   so a slow connection never looks like a tap that did nothing. Big things (a whole card) just dim, with the spinner in the corner. */
+[data-tg-pending] { cursor: progress; pointer-events: none; }
+[data-tg-pending='small'] { color: transparent !important; }
+[data-tg-pending='small'] * { color: transparent !important; }
+[data-tg-pending='small'] svg, [data-tg-pending='small'] img { opacity: 0; }
+[data-tg-pending='large'] { opacity: 0.7; }
+[data-tg-pending]::after {
+  content: ''; position: absolute; width: 1.15rem; height: 1.15rem; border-radius: 50%; box-sizing: border-box;
+  border: 2px solid var(--tg-pending-color, currentColor); border-right-color: transparent; animation: tgPendingSpin 0.7s linear infinite;
+}
+[data-tg-pending='small']::after { top: 50%; left: 50%; margin: -0.575rem 0 0 -0.575rem; }
+[data-tg-pending='large']::after { top: 0.7rem; right: 0.7rem; }
+@keyframes tgPendingSpin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { [data-tg-pending]::after { animation-duration: 2.4s; } }
