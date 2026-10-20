@@ -73,3 +73,4 @@ The dev server and the check scripts use the live Supabase project, so a big swe
 ## Backups
 
 The Supabase free plan has no downloadable backups. Run `npm run backup:db` now and then (see the script header); it writes a JSON copy of every table and the sign-in accounts to `backups/` (ignored by git). Pictures and files in storage are not part of it.
+- **Email (admin test tool)** sends through a Gmail account with nodemailer (`lib/email/mailer.ts`): about 500 recipients a day for a normal Gmail account (2,000 for Google Workspace), each message to one person, at most 50 addresses per send and one send every 15 s. It only mails addresses an admin types in; it is not wired to any member list.

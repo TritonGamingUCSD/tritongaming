@@ -13,6 +13,7 @@ import RoleManager from './RoleManager';
 import PasteEmailsDialog from './PasteEmailsDialog';
 import Button from '@/components/ui/Button';
 import AccessPanel from './AccessPanel';
+import EmailBlastPanel from './EmailBlastPanel';
 import SystemStats from './SystemStats';
 import AdminOverviewPanels from './AdminOverviewPanels';
 import StatsClient from './stats/StatsClient';
@@ -35,16 +36,16 @@ interface Props {
   initialTab?: string;
 }
 
-type Tab = 'overview' | 'members' | 'access' | 'analytics' | 'audit-log' | 'short-links' | 'system';
-const VALID_TABS: Tab[] = ['overview', 'members', 'access', 'analytics', 'audit-log', 'short-links', 'system'];
+type Tab = 'overview' | 'members' | 'access' | 'analytics' | 'audit-log' | 'short-links' | 'system' | 'email';
+const VALID_TABS: Tab[] = ['overview', 'members', 'access', 'analytics', 'audit-log', 'short-links', 'system', 'email'];
 type Group = 'overview' | 'people' | 'insights' | 'system';
 const GROUPS: Record<Group, { label: string; icon: ReactNode; views: Tab[] }> = {
   overview: { label: 'Overview', icon: <LayoutDashboard />, views: ['overview'] },
   people: { label: 'People', icon: <UsersIcon />, views: ['members', 'access'] },
   insights: { label: 'Insights', icon: <BarChart3 />, views: ['analytics', 'audit-log'] },
-  system: { label: 'System', icon: <Server />, views: ['system', 'short-links'] },
+  system: { label: 'System', icon: <Server />, views: ['system', 'short-links', 'email'] },
 };
-const VIEW_LABELS: Record<Tab, string> = { overview: 'Overview', members: 'Member Management', access: 'Access', analytics: 'Analytics', 'audit-log': 'Audit Log', 'short-links': 'Short Links', system: 'System Health' };
+const VIEW_LABELS: Record<Tab, string> = { overview: 'Overview', members: 'Member Management', access: 'Access', analytics: 'Analytics', 'audit-log': 'Audit Log', 'short-links': 'Short Links', system: 'System Health', email: 'Email (Test)' };
 const groupOf = (t: Tab): Group => (Object.keys(GROUPS) as Group[]).find((g) => GROUPS[g].views.includes(t)) ?? 'overview';
 
 // Each tab is a real destination now instead of Overview being a junk
@@ -229,6 +230,8 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
       )}
 
       {tab === 'system' && isAdmin && <SystemStats />}
+
+      {tab === 'email' && isAdmin && <EmailBlastPanel />}
 
       {historyOpen && roleHistoryEntries && (
         <div className={styles.historyOverlay} onClick={() => setHistoryOpen(false)}>

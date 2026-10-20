@@ -111,6 +111,7 @@ You need Node 22 or newer, npm 10 or newer, a Supabase project (the free tier is
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Paid tickets. |
 | `CRON_SECRET` | Authorises the two daily jobs. Any long random string. |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | Web push. See [Web push notifications](#web-push-notifications). |
+| `GMAIL_USER`, `GMAIL_APP_PASSWORD` | Sending email with nodemailer through a Gmail account (a Google *app password*, not the normal password). Used by Admin → System → Email (Test). |
 | `VERCEL_API_TOKEN`, `VERCEL_PROJECT_ID`, `VERCEL_TEAM_ID` | Optional: shows deployment status in Admin. |
 | `DEV_NOTIFY_TEST_ONLY` | Development only. Set to `1` when testing against the live database: a dev server then notifies only throwaway accounts whose name starts with `ZZ`. Ignored in production. |
 
