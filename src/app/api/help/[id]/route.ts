@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logAudit } from '@/lib/notifications/audit';
 import { authorizeHelp, notify, signAttachments, HELP_STATUSES, type HelpMessageRow, type HelpTicketRow } from '@/lib/notifications/help';
 
 export const dynamic = 'force-dynamic';
@@ -70,6 +71,16 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (Object.keys(patch).length === 1) return NextResponse.json({ error: 'Nothing to update.' }, { status: 400 });
   const { error } = await auth.svc.from('help_tickets').update(patch).eq('id', id);
   if (error) return NextResponse.json({ error: 'Failed to update.' }, { status: 500 });
+  if (auth.isStaff && t.user_id !== auth.user.id) {
+    const parts: string[] = [];
+    if ('status' in patch) parts.push(`marked it ${String(patch.status).replace('_', ' ')}`);
+    if ('assigned_to' in patch) {
+      const to = patch.assigned_to as string | null;
+      const { data: who } = to ? await auth.svc.from('profiles').select('display_name').eq('id', to).maybeSingle() : { data: null };
+      parts.push(to ? `assigned it to ${(who?.display_name as string | null) ?? 'someone'}` : 'unassigned it');
+    }
+    await logAudit(auth.svc, { actorId: auth.user.id, action: 'update', entityType: 'help ticket', entityId: id, summary: `Help ticket "${t.subject.slice(0, 80)}": ${parts.join(' and ')}`, details: { status: patch.status ?? null, assigned_to: 'assigned_to' in patch ? patch.assigned_to : undefined } });
+  }
   if (auth.isStaff && patch.status === 'resolved' && t.user_id !== auth.user.id) {
     await notify(auth.svc, [t.user_id], { title: `Resolved: ${t.subject}`, body: 'Your help ticket was marked resolved. Reply on it if you still need help.', href: `/portal/help?ticket=${id}` });
   }

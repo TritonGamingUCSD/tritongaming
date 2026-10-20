@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/admin';
+import { logAudit } from '@/lib/notifications/audit';
 import { hasCapability } from '@/lib/portal/capabilities';
 import { strictUser } from '@/lib/supabase/localAuth';
 import { emailConfigured, emailFrom, sendBlast, verifyEmail } from '@/lib/email/mailer';
@@ -41,5 +43,9 @@ export async function POST(request: Request) {
   lastSend.set(a.user!.id, now);
   const out = await sendBlast(recipients, subject, message);
   if (out.error) return NextResponse.json({ error: out.error, bad: out.bad }, { status: 400 });
+  // Who sent what to how many people. The addresses themselves stay out of the log.
+  const results = (out as { results?: { ok: boolean }[] }).results ?? [];
+  const delivered = results.filter((r) => r.ok).length;
+  await logAudit(createServiceClient(), { actorId: a.user!.id, action: 'send', entityType: 'email', summary: `Sent the email "${subject.slice(0, 80)}" to ${results.length} ${results.length === 1 ? 'address' : 'addresses'} (${delivered} delivered)`, details: { subject, recipients: results.length, delivered, failed: results.length - delivered } });
   return NextResponse.json(out);
 }

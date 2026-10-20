@@ -75,7 +75,7 @@ Pure logic (no database, no React) is what the unit tests in `src/lib/__tests__`
 | `webPush.ts`, `pushClient.ts` | Push delivery, the kinds a member can mute, and the browser side |
 | `notificationCleanup.ts` | Removes old notifications (audit alerts after 14 days, routine ones soon after they are read, the rest after 30 to 90) |
 | `help.ts`, `helpConstants.ts` | Help tickets: authorization, categories, role request text |
-| `audit.ts`, `auditFilters.ts` | The audit log and its filters |
+| `audit.ts`, `auditFilters.ts` | The audit log and its filters. `logAudit` records a person's action (and pushes risky ones to admins); `logSystem` records what a scheduled job did on its own. Database triggers also log changes to events, divisions, docs, rewards and similar |
 
 ## `qr/`
 `qrCodeStyling.ts` and `qrPresets.ts` (QR Studio). `lib/qr/tgCode/` is the portal's own circular code (tickets, meeting check-in, reward pickups): `layout.ts` (the geometry and bits), `marks.ts` and `find.ts` (the marks every format shares, and finding them), `rs.ts` (Reed–Solomon repair), `decode.ts` (the reader), `legacy*.ts` (the first format, still read), `testCamera.ts` (the tests' software camera); it (the "TGcode", see `docs/tgcodes-and-scanning.md`) is drawn by `components/TGcode` and read by the Scan page (`portal/scan`, `components/portal/UniversalScanner`).

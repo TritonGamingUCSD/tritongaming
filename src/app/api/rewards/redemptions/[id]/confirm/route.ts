@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
+import { logAudit } from '@/lib/notifications/audit';
 
 interface Params { params: Promise<{ id: string }>; }
 
@@ -43,5 +44,8 @@ export async function POST(request: Request, { params }: Params) {
   const { error } = await serviceClient.rpc('confirm_redemption', { _redemption_id: id, _officer_id: user.id });
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 
+  const { data: r } = await serviceClient.from('reward_redemptions').select('user_id, point_cost, reward:reward_items(title), member:profiles!reward_redemptions_user_id_fkey(display_name)').eq('id', id).maybeSingle();
+  const one = (x: unknown): Record<string, string> | null => ((Array.isArray(x) ? x[0] : x) ?? null) as Record<string, string> | null;
+  await logAudit(serviceClient, { actorId: user.id, action: 'confirm', entityType: 'reward redemption', entityId: (r?.user_id as string | undefined) ?? id, summary: `Handed over "${one(r?.reward)?.title ?? 'a reward'}" to ${one(r?.member)?.display_name ?? 'a member'}`, details: { redemption: id, points: r?.point_cost ?? null } });
   return NextResponse.json({ ok: true });
 }

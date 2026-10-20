@@ -5,6 +5,7 @@ import { cleanupNotifications } from '@/lib/notifications/notificationCleanup';
 import { cleanupExpiredGrants } from '@/lib/members/roleByEmail';
 import { syncInactive } from '@/lib/members/quarters';
 import { runTeamSync } from '@/lib/members/teamYears';
+import { logSystem } from '@/lib/notifications/audit';
 import { alertJobFailed, checkUsage } from '@/lib/notifications/adminAlerts';
 import { runStorageMaintenance } from '@/lib/storage/storageMaintenance';
 
@@ -18,6 +19,16 @@ export const maxDuration = 300;
 // on, move graduates to Alumni). Every day it also checks how full the free plan is and tells the admins at 80% and 90%. On Sundays also: remove stored files nothing uses and re-save pictures smaller.
 // `?only=notifications|grants|quarters|teams|usage|storage` runs just that step (`?storage=1` adds storage on another day). A failure in one step never stops the
 // others. On a dev machine `x-cron-dev: 1` may run only the quarters and teams steps, which are safe at any time.
+// The steps that change real data are written to the audit log as the daily job (the notification tidy-up is routine housekeeping, so it is not).
+async function recordStep(svc: ReturnType<typeof createServiceClient>, name: string, r: unknown) {
+  const x = (r ?? {}) as Record<string, number>;
+  const n = (k: string) => Number(x[k]) || 0;
+  if (name === 'grants' && n('removed')) await logSystem(svc, 'role grant', `Removed ${n('removed')} unused role grant${n('removed') === 1 ? '' : 's'} that waited 90 days for a first sign-in`, x);
+  if (name === 'quarters' && (n('added') || n('removed'))) await logSystem(svc, 'quarter', `New quarter: marked ${n('added')} officer${n('added') === 1 ? '' : 's'} inactive and ${n('removed')} active again`, x);
+  if (name === 'teams' && (n('archived') || n('moved'))) await logSystem(svc, 'team year', `Team roster: archived ${n('archived')} finished year${n('archived') === 1 ? '' : 's'}, moved ${n('moved')} graduate${n('moved') === 1 ? '' : 's'} to Alumni`, x);
+  if (name === 'storage' && (n('deletedFiles') || n('compressedFiles'))) await logSystem(svc, 'storage', `Weekly tidy-up: removed ${n('deletedFiles')} unused file${n('deletedFiles') === 1 ? '' : 's'}, re-saved ${n('compressedFiles')} picture${n('compressedFiles') === 1 ? '' : 's'} smaller`, x);
+}
+
 const SAFE_ANY_TIME = ['quarters', 'teams'];
 
 export async function GET(request: Request) {
@@ -40,7 +51,7 @@ export async function GET(request: Request) {
   const out: Record<string, unknown> = {};
   for (const [name, run] of steps) {
     if (only && only !== name) continue;
-    try { out[name] = await run(); } catch (e) { console.error(`[cron] ${name} failed:`, e); out[name] = { error: 'failed' }; await alertJobFailed(svc, 'maintenance', name).catch(() => {}); }
+    try { out[name] = await run(); await recordStep(svc, name, out[name]); } catch (e) { console.error(`[cron] ${name} failed:`, e); out[name] = { error: 'failed' }; await alertJobFailed(svc, 'maintenance', name).catch(() => {}); }
   }
   return NextResponse.json(out);
 }

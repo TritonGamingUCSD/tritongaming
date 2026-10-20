@@ -143,9 +143,14 @@ export default function UserDetail({ userId, onClose }: { userId: string; onClos
               <ul className={styles.items}>{d.help.map((h: any, i: number) => <li key={i}><b>{h.subject}</b><span>{h.status} · {when(h.created_at)}</span></li>)}</ul>
             </Block>
 
-            <Block title="Recent admin actions by this person" count={d.audit.length}>
-              {d.audit.length === 0 ? <p className={styles.empty}>None logged.</p> : <ul className={styles.items}>{d.audit.map((a: any, i: number) => <li key={i}><b>{a.summary}</b><span>{when(a.created_at, true)}</span></li>)}</ul>}
+            <Block title="Admin actions by this person" count={d.audit_count}>
+              {d.audit.length === 0 ? <p className={styles.empty}>None logged.</p> : <ul className={styles.items}>{d.audit.map((a: any, i: number) => <li key={i}><b>{a.summary}</b><span>{a.action} · {a.entity_type} · {when(a.created_at, true)}</span></li>)}</ul>}
+              {d.audit_count > d.audit.length && <p className={styles.sum}><a href={`/portal?section=admin&tab=audit-log&aq=${encodeURIComponent(p.display_name || '')}`}>See all {d.audit_count} in the Audit Log</a></p>}
               <p className={styles.sum}>{d.docs_created} docs created</p>
+            </Block>
+
+            <Block title="Admin actions about this person" count={d.audit_about.length}>
+              {d.audit_about.length === 0 ? <p className={styles.empty}>None logged.</p> : <ul className={styles.items}>{d.audit_about.map((a: any, i: number) => <li key={i}><b>{a.summary}</b><span>{a.actor_name || 'The system'} · {a.action} · {when(a.created_at, true)}</span></li>)}</ul>}
             </Block>
           </div>
         )}

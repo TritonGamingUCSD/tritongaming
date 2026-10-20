@@ -19,7 +19,7 @@ export async function GET(_request: Request, { params }: Params) {
   if (!hasCapability(roles ?? [], 'manage_roles')) return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
 
   const svc = createServiceClient();
-  const [profile, priv, auth, grants, history, tickets, points, redemptions, strikes, attendance, absences, quarters, notifications, help, audit, docsMade, pushes, divisions] = await Promise.all([
+  const [profile, priv, auth, grants, history, tickets, points, redemptions, strikes, attendance, absences, quarters, notifications, help, audit, auditAbout, auditCount, docsMade, pushes, divisions] = await Promise.all([
     svc.from('profiles').select('*').eq('id', id).maybeSingle(),
     svc.from('profile_private').select('gender, division_interests, platforms, favorite_games').eq('user_id', id).maybeSingle(),
     svc.auth.admin.getUserById(id),
@@ -34,7 +34,9 @@ export async function GET(_request: Request, { params }: Params) {
     svc.from('officer_quarter_status').select('created_at, quarter:academic_quarters(term, start_year)').eq('user_id', id).order('created_at', { ascending: false }).limit(8),
     svc.from('notifications').select('id, read_at').eq('user_id', id),
     svc.from('help_tickets').select('status, subject, created_at').eq('user_id', id).order('created_at', { ascending: false }).limit(5),
-    svc.from('audit_log').select('action, entity_type, summary, created_at').eq('actor_id', id).order('created_at', { ascending: false }).limit(8),
+    svc.from('audit_log').select('action, entity_type, summary, created_at').eq('actor_id', id).order('created_at', { ascending: false }).limit(20),
+    svc.from('audit_log').select('action, entity_type, summary, actor_name, created_at').eq('entity_id', id).or(`actor_id.is.null,actor_id.neq.${id}`).order('created_at', { ascending: false }).limit(20),
+    svc.from('audit_log').select('id', { count: 'exact', head: true }).eq('actor_id', id),
     svc.from('docs').select('id', { count: 'exact', head: true }).eq('created_by', id),
     svc.from('push_subscriptions').select('id', { count: 'exact', head: true }).eq('user_id', id),
     svc.from('divisions').select('id, name'),
@@ -76,6 +78,8 @@ export async function GET(_request: Request, { params }: Params) {
     notifications: { total: (notifications.data ?? []).length, unread: (notifications.data ?? []).filter((n) => !n.read_at).length, push_devices: pushes.count ?? 0 },
     help: help.data ?? [],
     audit: audit.data ?? [],
+    audit_about: auditAbout.data ?? [],
+    audit_count: auditCount.count ?? 0,
     docs_created: docsMade.count ?? 0,
   });
 }

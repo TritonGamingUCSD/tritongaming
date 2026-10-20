@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { authorizeMeetings } from '@/lib/meetings/meetings';
 import { hasCapability } from '@/lib/portal/capabilities';
+import { logAudit } from '@/lib/notifications/audit';
 
 const BUCKET = 'custom-emojis';
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -19,6 +20,8 @@ export async function PATCH(_request: Request, { params }: { params: Promise<{ i
   if (!UUID.test(id)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
   const { error } = await auth.svc.from('custom_emojis').update({ status: 'approved', reviewed_by: auth.user.id }).eq('id', id);
   if (error) return NextResponse.json({ error: 'Failed.' }, { status: 500 });
+  const { data: e } = await auth.svc.from('custom_emojis').select('name').eq('id', id).maybeSingle();
+  await logAudit(auth.svc, { actorId: auth.user.id, action: 'approve', entityType: 'meeting emoji', entityId: id, summary: `Approved the meeting emoji "${(e?.name as string | undefined) ?? 'unnamed'}"` });
   return NextResponse.json({ ok: true });
 }
 
@@ -28,11 +31,12 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   if (auth.error) return auth.error;
   const { id } = await params;
   if (!UUID.test(id)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
-  const { data: e } = await auth.svc.from('custom_emojis').select('path, status, created_by').eq('id', id).maybeSingle();
+  const { data: e } = await auth.svc.from('custom_emojis').select('path, status, created_by, name').eq('id', id).maybeSingle();
   if (!e) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
   const allowed = hasCapability(auth.roles, 'manage_meetings') || (e.created_by === auth.user.id && e.status === 'pending');
   if (!allowed) return NextResponse.json({ error: 'Only exec and admins can remove an approved emoji.' }, { status: 403 });
   await auth.svc.from('custom_emojis').delete().eq('id', id);
   await auth.svc.storage.from(BUCKET).remove([e.path as string]);
+  await logAudit(auth.svc, { actorId: auth.user.id, action: e.status === 'pending' && e.created_by !== auth.user.id ? 'reject' : 'delete', entityType: 'meeting emoji', entityId: id, summary: `${e.status === 'pending' ? (e.created_by === auth.user.id ? 'Withdrew' : 'Rejected') : 'Removed'} the meeting emoji "${(e.name as string | null) ?? 'unnamed'}"` });
   return NextResponse.json({ ok: true });
 }

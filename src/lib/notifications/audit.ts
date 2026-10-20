@@ -43,3 +43,9 @@ export async function logAudit(
   }
 }
 
+
+// What the scheduled jobs did on their own, so the log answers "who changed this?" with "the daily job" and not a blank. One line per step, and only
+// when it actually changed something (a quiet day writes nothing).
+export function logSystem(service: SupabaseClient, entityType: string, summary: string, details?: Record<string, unknown>): Promise<void> {
+  return logAudit(service, { actorId: null, action: 'automatic', entityType, summary, details });
+}
