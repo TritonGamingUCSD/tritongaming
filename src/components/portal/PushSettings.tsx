@@ -54,7 +54,12 @@ export default function PushSettings() {
     const j = await r.json().catch(() => ({}));
     setBusy(false);
     if (!r.ok) setError(j.error || 'Couldn’t send a test.');
-    else setNote(j.sent ? 'Sent. It should arrive in a moment.' : 'Nothing was sent: no device has notifications on.');
+    else if (!j.devices) setNote('Nothing was sent: no device has notifications on.');
+    else if (j.sent && !j.failed?.length) setNote('Sent. It should arrive in a moment.');
+    else {
+      const why = (j.failed as { service: string; status?: number; reason?: string }[]).map((f) => `${f.service}${f.status ? ` ${f.status}` : ''}${f.reason ? ` (${f.reason})` : ''}`).join('; ');
+      setError(`${j.sent ? `Sent to ${j.sent} of ${j.devices} devices. ` : ''}The push service refused ${j.failed.length === 1 ? 'a device' : `${j.failed.length} devices`}: ${why}`);
+    }
   }
 
   if (support === null || s === null) return <Loading variant="inline" label="Loading…" />;

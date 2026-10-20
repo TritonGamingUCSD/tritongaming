@@ -14,6 +14,5 @@ export async function POST() {
   const now = Date.now();
   if (now - (lastTest.get(user.id) ?? 0) < 10_000) return NextResponse.json({ error: 'Wait a few seconds before sending another test.' }, { status: 429 });
   lastTest.set(user.id, now);
-  const sent = await sendTestPush(user.id);
-  return NextResponse.json({ sent });
+  return NextResponse.json(await sendTestPush(user.id));
 }

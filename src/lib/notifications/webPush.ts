@@ -49,14 +49,16 @@ interface Sub { id: string; user_id: string; endpoint: string; p256dh: string; a
 const clip = (s: string | null | undefined, n: number) => (s ?? '').length > n ? `${(s ?? '').slice(0, n - 1)}…` : s ?? '';
 
 // One send. A subscription the push service says is gone (404/410) is deleted so it is never tried again.
-async function sendOne(svc: SupabaseClient, sub: Sub, payload: PushPayload): Promise<boolean> {
+export interface SendResult { ok: boolean; status?: number; reason?: string }
+async function sendOne(svc: SupabaseClient, sub: Sub, payload: PushPayload): Promise<SendResult> {
   try {
     await webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, JSON.stringify({ title: clip(payload.title, 80), body: clip(payload.body, 180), url: payload.url || '/portal', tag: payload.tag }), { TTL: 86_400, timeout: 8000 });
-    return true;
+    return { ok: true };
   } catch (e) {
-    const code = (e as { statusCode?: number }).statusCode;
+    const err = e as { statusCode?: number; body?: string; message?: string };
+    const code = err.statusCode;
     if (code === 404 || code === 410) await svc.from('push_subscriptions').delete().eq('id', sub.id);
-    return false;
+    return { ok: false, status: code, reason: String(err.body || err.message || '').slice(0, 160) };
   }
 }
 
@@ -85,17 +87,23 @@ export async function pushNotifications(rows: { user_id: string; type: string; t
       for (const s of (subs as Sub[]).filter((x) => x.user_id === r.user_id)) jobs.push({ sub: s, payload: { title: r.title, body: r.body, url: r.href, tag: r.type } });
     }
     let sent = 0;
-    await inBatches(jobs, 20, async (j) => { if (await sendOne(svc, j.sub, j.payload)) sent++; });
+    await inBatches(jobs, 20, async (j) => { if ((await sendOne(svc, j.sub, j.payload)).ok) sent++; });
     return sent;
   } catch { return 0; }
 }
 
-export async function sendTestPush(userId: string): Promise<number> {
-  if (!pushConfigured()) return 0;
+// The test says what happened to each device (which push service, and why it was refused), so a silent failure can be found.
+export interface TestResult { sent: number; devices: number; failed: { service: string; status?: number; reason?: string }[] }
+export async function sendTestPush(userId: string): Promise<TestResult> {
+  if (!pushConfigured()) return { sent: 0, devices: 0, failed: [] };
   setup();
   const svc = createServiceClient();
   const { data: subs } = await svc.from('push_subscriptions').select('id, user_id, endpoint, p256dh, auth').eq('user_id', userId);
-  let sent = 0;
-  await inBatches((subs ?? []) as Sub[], 10, async (s) => { if (await sendOne(svc, s, { title: 'Notifications are on', body: 'This is a test from Triton Gaming. You’ll get your reminders and invites like this.', url: '/portal', tag: 'test' })) sent++; });
-  return sent;
+  const out: TestResult = { sent: 0, devices: (subs ?? []).length, failed: [] };
+  await inBatches((subs ?? []) as Sub[], 10, async (s) => {
+    const r = await sendOne(svc, s, { title: 'Notifications are on', body: 'This is a test from Triton Gaming. You’ll get your reminders and invites like this.', url: '/portal', tag: 'test' });
+    if (r.ok) out.sent++;
+    else out.failed.push({ service: new URL(s.endpoint).hostname.replace(/^(web|updates)\./, ''), status: r.status, reason: r.reason });
+  });
+  return out;
 }
