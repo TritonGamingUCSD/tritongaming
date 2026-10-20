@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
+import { createNotifications } from '@/lib/notifications/notify';
 import { logAudit } from '@/lib/notifications/audit';
 
 interface Params { params: Promise<{ id: string }>; }
@@ -27,5 +28,6 @@ export async function POST(request: Request, { params }: Params) {
 
   const one = (x: unknown): Record<string, string> | null => ((Array.isArray(x) ? x[0] : x) ?? null) as Record<string, string> | null;
   await logAudit(serviceClient, { actorId: user.id, action: 'cancel', entityType: 'reward redemption', entityId: (r?.user_id as string | undefined) ?? id, summary: `Cancelled ${one(r?.member)?.display_name ?? 'a member'}’s claim of "${one(r?.reward)?.title ?? 'a reward'}" and refunded ${r?.point_cost ?? 0} points`, details: { redemption: id, was: r?.status ?? null, points: r?.point_cost ?? null } });
+  if (r?.user_id && r.user_id !== user.id) await createNotifications(serviceClient, [{ user_id: r.user_id as string, type: 'reward_cancelled', title: 'A reward claim was cancelled', body: `${one(r?.reward)?.title ?? 'Your reward'}: ${r?.point_cost ?? 0} points were refunded.`, href: '/portal/points' }]);
   return NextResponse.json({ ok: true });
 }

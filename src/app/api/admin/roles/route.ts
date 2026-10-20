@@ -5,6 +5,7 @@ import { hasCapability } from '@/lib/portal/capabilities';
 import { logAudit } from '@/lib/notifications/audit';
 import { ASSIGNABLE_ROLES } from '@/types/database';
 import type { AppRole } from '@/types/database';
+import { notifyRoleChange } from '@/lib/notifications/memberNotices';
 import { strictUser } from '@/lib/supabase/localAuth';
 
 interface RoleInput {
@@ -43,6 +44,7 @@ export async function PUT(request: Request) {
 
   // 3. Apply atomically via the service-role RPC (bypasses RLS; auth already verified above)
   const adminClient = createServiceClient();
+  const { data: beforeRows } = await adminClient.from('user_roles').select('role').eq('user_id', userId);
   const { error } = await adminClient.rpc('admin_set_user_roles', {
     _user_id: userId,
     _roles: roles,
@@ -50,6 +52,7 @@ export async function PUT(request: Request) {
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  await notifyRoleChange(adminClient, userId, user.id, (beforeRows ?? []).map((r) => r.role as string), roles.map((r) => r.role));
 
   const { data: target } = await adminClient.from('profiles').select('display_name').eq('id', userId).maybeSingle();
   await logAudit(adminClient, { actorId: user.id, action: 'update', entityType: 'roles', entityId: userId, summary: `Roles for "${target?.display_name ?? 'someone'}" set to ${roles.length ? roles.map((r) => r.role).join(', ') : 'none'}`, details: { roles } });

@@ -12,6 +12,7 @@ export const PUSH_CATEGORIES = [
   { id: 'meetings', label: 'Meetings and planning', hint: 'Invites, reminders, and “when can you meet?” requests' },
   { id: 'events', label: 'Events and tickets', hint: 'Ticket confirmations, check-ins and event reminders' },
   { id: 'account', label: 'Account and access', hint: 'Role changes and access you’ve been given' },
+  { id: 'points', label: 'Points and rewards', hint: 'Points you are given or lose, and rewards handed over or cancelled' },
   { id: 'help', label: 'Help inbox', hint: 'New questions that need an answer' },
   { id: 'docs', label: 'Documentation', hint: 'Docs you are asked to read, and comments on your docs' },
   { id: 'admin', label: 'Admin alerts', hint: 'Risky actions by other admins, the free plan filling up, and scheduled jobs that fail' },
@@ -22,6 +23,7 @@ export function categoryOf(type: string): PushCategory | null {
   if (/^meeting_/.test(type)) return 'meetings';
   if (/^(ticket_|event_|manual_award)/.test(type)) return 'events';
   if (/^(access_|role_)/.test(type)) return 'account';
+  if (/^(points_|reward_)/.test(type)) return 'points';
   if (type === 'help_ticket') return 'help';
   if (type === 'audit_alert' || /^system_/.test(type)) return 'admin';
   if (type === 'doc_required' || type === 'doc_comment') return 'docs';

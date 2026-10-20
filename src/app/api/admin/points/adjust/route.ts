@@ -1,3 +1,4 @@
+import { notifyPoints } from '@/lib/notifications/memberNotices';
 import { logAudit } from '@/lib/notifications/audit';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
@@ -35,5 +36,6 @@ export async function POST(request: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
   await logAudit(serviceClient, { actorId: user.id, action: 'adjust', entityType: 'points', entityId: user_id, summary: `Points adjusted by ${parsedAmount >= 0 ? '+' : ''}${parsedAmount}: ${String(note).trim()}`, details: { amount: parsedAmount } });
+  await notifyPoints(serviceClient, [user_id], user.id, parsedAmount, String(note).trim());
   return NextResponse.json({ ok: true });
 }

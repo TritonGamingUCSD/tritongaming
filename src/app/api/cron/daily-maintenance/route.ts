@@ -6,7 +6,7 @@ import { cleanupExpiredGrants } from '@/lib/members/roleByEmail';
 import { syncInactive } from '@/lib/members/quarters';
 import { runTeamSync } from '@/lib/members/teamYears';
 import { logSystem } from '@/lib/notifications/audit';
-import { alertJobFailed, checkUsage } from '@/lib/notifications/adminAlerts';
+import { alertJobFailed, checkUsage, digestNewMembers, remindStaleHelp } from '@/lib/notifications/adminAlerts';
 import { runStorageMaintenance } from '@/lib/storage/storageMaintenance';
 
 export const runtime = 'nodejs';
@@ -17,7 +17,7 @@ export const maxDuration = 300;
 // `Authorization: Bearer $CRON_SECRET`. Every day: delete old notifications (audit alerts after 14 days, routine ones soon after they are read, the rest after 30 to 90 days) and role grants that waited for a first sign-in for 90 days without being used, start a new quarter's
 // inactive markers when the quarter changes, and record today's team roster (archive years whose Spring has ended and, when an admin has turned it
 // on, move graduates to Alumni). Every day it also checks how full the free plan is and tells the admins at 80% and 90%. On Sundays also: remove stored files nothing uses and re-save pictures smaller.
-// `?only=notifications|grants|quarters|teams|usage|storage` runs just that step (`?storage=1` adds storage on another day). A failure in one step never stops the
+// `?only=notifications|grants|quarters|teams|help|signups|usage|storage` runs just that step (`?storage=1` adds storage on another day). A failure in one step never stops the
 // others. On a dev machine `x-cron-dev: 1` may run only the quarters and teams steps, which are safe at any time.
 // The steps that change real data are written to the audit log as the daily job (the notification tidy-up is routine housekeeping, so it is not).
 async function recordStep(svc: ReturnType<typeof createServiceClient>, name: string, r: unknown) {
@@ -43,6 +43,8 @@ export async function GET(request: Request) {
     ['grants', () => cleanupExpiredGrants(svc)],
     ['quarters', async () => { const r = await syncInactive(svc); return { added: r.added.length, removed: r.removed.length, quarter: r.quarter }; }],
     ['teams', () => runTeamSync(svc)],
+    ['help', () => remindStaleHelp(svc)],
+    ['signups', () => digestNewMembers(svc)],
   ];
   const weekly = new Date().getUTCDay() === 0 || url.searchParams.get('storage') === '1';
   steps.push(['usage', () => checkUsage(svc, { storage: weekly || only === 'usage' })]);

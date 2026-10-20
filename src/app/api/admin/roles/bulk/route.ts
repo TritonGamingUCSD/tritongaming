@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
+import { notifyRoleChange } from '@/lib/notifications/memberNotices';
 import { logAudit } from '@/lib/notifications/audit';
 import { withRole } from '@/lib/portal/roleGrant';
 import { ASSIGNABLE_ROLES } from '@/types/database';
@@ -60,6 +61,7 @@ export async function POST(request: Request) {
       _roles: nextRoles,
       _granted_by: user.id,
     });
+    if (!error) await notifyRoleChange(adminClient, userId, user.id, (currentRoles ?? []).map((r) => r.role as string), nextRoles.map((r) => r.role as string));
     return { userId, error: error?.message, roles: error ? undefined : nextRoles };
   }));
 
