@@ -70,7 +70,8 @@ Pure logic (no database, no React) is what the unit tests in `src/lib/__tests__`
 ## `notifications/`
 | File | Purpose |
 |---|---|
-| `notify.ts` | `createNotifications`: bell and push in one step |
+| `notify.ts` | `createNotifications`: bell and push in one step (`pushOnly`: push for rows already in the bell) |
+| `adminAlerts.ts` | Tells the admins: free-plan usage at 80% / 90%, a failed scheduled job, and which audit entries are risky (pushed to devices from `logAudit`) |
 | `webPush.ts`, `pushClient.ts` | Push delivery, the kinds a member can mute, and the browser side |
 | `notificationCleanup.ts` | Removes old notifications (audit alerts after 14 days, routine ones soon after they are read, the rest after 30 to 90) |
 | `help.ts`, `helpConstants.ts` | Help tickets: authorization, categories, role request text |

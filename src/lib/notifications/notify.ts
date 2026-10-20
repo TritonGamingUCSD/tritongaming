@@ -15,6 +15,12 @@ export async function createNotifications(svc: SupabaseClient, rows: Notificatio
   return rows.length;
 }
 
+// Push without adding to the bell, for notifications something else already put there (the database's audit alerts).
+export async function pushOnly(svc: SupabaseClient, rows: NotificationInput[]): Promise<void> {
+  rows = await onlyTestPeopleInDev(svc, rows);
+  if (rows.length) await Promise.race([pushNotifications(rows), new Promise((r) => setTimeout(r, 6000))]);
+}
+
 // A safety net for testing against the live database: with DEV_NOTIFY_TEST_ONLY=1 in .env.local, a development server only notifies accounts whose
 // display name starts with "ZZ" (the throwaway test accounts), so a test can never message a real member. Never applies in production.
 async function onlyTestPeopleInDev(svc: SupabaseClient, rows: NotificationInput[]): Promise<NotificationInput[]> {

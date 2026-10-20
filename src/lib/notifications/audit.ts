@@ -1,4 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { adminIds, isRiskyAudit } from '@/lib/notifications/adminAlerts';
+import { pushOnly } from '@/lib/notifications/notify';
 
 // Server routes that act with the service role (so database triggers can't tell
 // who is behind them) record their sensitive actions here — see audit_log and
@@ -26,6 +28,18 @@ export async function logAudit(
     });
   } catch (err) {
     console.error('[audit] failed to record entry:', err);
+    return;
+  }
+  // The database put a bell alert in every other admin's list for a risky action; this pushes the same alert to their devices. Never for a throwaway "ZZ" test account.
+  try {
+    if (!isRiskyAudit(entry)) return;
+    const { data: actor } = entry.actorId ? await service.from('profiles').select('display_name').eq('id', entry.actorId).maybeSingle() : { data: null };
+    const who = (actor?.display_name as string | undefined) ?? null;
+    if (who && /^zz/i.test(who)) return;
+    const ids = (await adminIds(service)).filter((id) => id !== entry.actorId);
+    await pushOnly(service, ids.map((user_id) => ({ user_id, type: 'audit_alert', title: `Audit alert: ${entry.action} ${entry.entityType}`, body: `${entry.summary}${who ? ` — by ${who}` : ''}`, href: '/portal?section=admin&tab=audit' })));
+  } catch (err) {
+    console.error('[audit] failed to push alert:', err);
   }
 }
 

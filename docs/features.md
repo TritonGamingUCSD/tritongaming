@@ -57,9 +57,9 @@ The free Vercel plan allows two scheduled jobs, each at most once a day, so `ver
 | Job | Steps | Code |
 |---|---|---|
 | `daily-reminders` | Day-before and hour-before event reminders; "Today at ..." meeting reminders; a nudge to people who haven't answered a meeting plan | `lib/notifications/eventReminders.ts`, `lib/meetings/reminders.ts`, `lib/meetings/meetingPlanServer.ts` |
-| `daily-maintenance` | Removes old notifications (audit alerts after 14 days; ticket and meeting notices 14 days after they are read, 45 at most; everything else 30 read or 90 at most) and individual meeting reactions after 7 days; starts a new quarter's inactive markers; records the team roster and archives finished years; on Sundays removes files nothing uses and shrinks old pictures | `lib/meetings/reactionCleanup.ts`, `lib/notifications/notificationCleanup.ts`, `lib/members/quarters.ts`, `lib/members/teamYears.ts`, `lib/storage/storageMaintenance.ts` |
+| `daily-maintenance` | Removes old notifications (audit alerts after 14 days; ticket and meeting notices 14 days after they are read, 45 at most; everything else 30 read or 90 at most) and individual meeting reactions after 7 days; starts a new quarter's inactive markers; records the team roster and archives finished years; tells the admins when the database or file storage reaches 80% / 90% of the free plan (once a week per level; files are totalled on Sundays); on Sundays removes files nothing uses and shrinks old pictures | `lib/meetings/reactionCleanup.ts`, `lib/notifications/notificationCleanup.ts`, `lib/members/quarters.ts`, `lib/members/teamYears.ts`, `lib/storage/storageMaintenance.ts`, `lib/notifications/adminAlerts.ts` |
 
-Both are called with `Authorization: Bearer $CRON_SECRET`. `daily-maintenance?only=notifications|quarters|teams|storage` runs a single step; on a dev machine `x-cron-dev: 1` may run only the quarters and teams steps. Don't add a third job to `vercel.json`; add a step to one of these two instead.
+Both are called with `Authorization: Bearer $CRON_SECRET`. `daily-maintenance?only=notifications|quarters|teams|usage|storage` runs a single step; on a dev machine `x-cron-dev: 1` may run only the quarters and teams steps. Don't add a third job to `vercel.json`; add a step to one of these two instead.
 
 
 ## Event report (sponsors)

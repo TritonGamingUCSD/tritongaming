@@ -5,6 +5,7 @@ import { cleanupNotifications } from '@/lib/notifications/notificationCleanup';
 import { cleanupExpiredGrants } from '@/lib/members/roleByEmail';
 import { syncInactive } from '@/lib/members/quarters';
 import { runTeamSync } from '@/lib/members/teamYears';
+import { alertJobFailed, checkUsage } from '@/lib/notifications/adminAlerts';
 import { runStorageMaintenance } from '@/lib/storage/storageMaintenance';
 
 export const runtime = 'nodejs';
@@ -14,8 +15,8 @@ export const maxDuration = 300;
 // The one scheduled job for housekeeping (see vercel.json; the free Vercel plan allows two jobs, each at most once a day), called with
 // `Authorization: Bearer $CRON_SECRET`. Every day: delete old notifications (audit alerts after 14 days, routine ones soon after they are read, the rest after 30 to 90 days) and role grants that waited for a first sign-in for 90 days without being used, start a new quarter's
 // inactive markers when the quarter changes, and record today's team roster (archive years whose Spring has ended and, when an admin has turned it
-// on, move graduates to Alumni). On Sundays also: remove stored files nothing uses and re-save pictures smaller.
-// `?only=notifications|grants|quarters|teams|storage` runs just that step (`?storage=1` adds storage on another day). A failure in one step never stops the
+// on, move graduates to Alumni). Every day it also checks how full the free plan is and tells the admins at 80% and 90%. On Sundays also: remove stored files nothing uses and re-save pictures smaller.
+// `?only=notifications|grants|quarters|teams|usage|storage` runs just that step (`?storage=1` adds storage on another day). A failure in one step never stops the
 // others. On a dev machine `x-cron-dev: 1` may run only the quarters and teams steps, which are safe at any time.
 const SAFE_ANY_TIME = ['quarters', 'teams'];
 
@@ -32,12 +33,14 @@ export async function GET(request: Request) {
     ['quarters', async () => { const r = await syncInactive(svc); return { added: r.added.length, removed: r.removed.length, quarter: r.quarter }; }],
     ['teams', () => runTeamSync(svc)],
   ];
-  if (new Date().getUTCDay() === 0 || url.searchParams.get('storage') === '1' || only === 'storage') steps.push(['storage', () => runStorageMaintenance(svc)]);
+  const weekly = new Date().getUTCDay() === 0 || url.searchParams.get('storage') === '1';
+  steps.push(['usage', () => checkUsage(svc, { storage: weekly || only === 'usage' })]);
+  if (weekly || only === 'storage') steps.push(['storage', () => runStorageMaintenance(svc)]);
 
   const out: Record<string, unknown> = {};
   for (const [name, run] of steps) {
     if (only && only !== name) continue;
-    try { out[name] = await run(); } catch (e) { console.error(`[cron] ${name} failed:`, e); out[name] = { error: 'failed' }; }
+    try { out[name] = await run(); } catch (e) { console.error(`[cron] ${name} failed:`, e); out[name] = { error: 'failed' }; await alertJobFailed(svc, 'maintenance', name).catch(() => {}); }
   }
   return NextResponse.json(out);
 }
