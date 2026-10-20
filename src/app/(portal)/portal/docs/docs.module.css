@@ -47,7 +47,7 @@
 .articleTitle { font-family: var(--font-futura-heavy); font-size: clamp(1.5rem, 3vw, 2.1rem); line-height: 1.2; color: var(--pp-ink); flex: 1 1 320px; min-width: 0; overflow-wrap: anywhere; }
 .articleActions { display: flex; gap: 0.25rem; flex-wrap: wrap; }
 .articleMeta { font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.87); padding-bottom: 0.9rem; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.20); }
-.prose { --fs-body: var(--doc-size, 1rem); font-size: var(--doc-size, 1rem); line-height: 1.75; color: rgba(var(--pp-ink-rgb), 1.00); min-width: 0; }
+.prose { --fs-body: var(--doc-size, 1rem); overflow-wrap: anywhere; font-size: var(--doc-size, 1rem); line-height: 1.75; color: rgba(var(--pp-ink-rgb), 1.00); min-width: 0; }
 .prose :global(h2), .prose :global(h3) { scroll-margin-top: calc(var(--portal-header-h, 0px) + 1rem); }
 
 .toc { position: sticky; top: calc(var(--portal-header-h, 0px) + 0.75rem); display: flex; flex-direction: column; gap: 0.1rem; padding-left: 1rem; border-left: 1px solid rgba(var(--pp-ink-rgb), 0.23); max-height: calc(100vh - var(--portal-header-h, 0px) - 1.5rem); overflow-y: auto; }
@@ -177,6 +177,7 @@
 .subGo { flex: none; align-self: center; opacity: 0.55; transition: transform 0.15s, opacity 0.15s; }
 .subCard:hover .subGo { opacity: 1; transform: translateX(2px); }
 .prose:empty { display: none; }
+.prose :global(pre) { overflow-wrap: normal; }
 @media (prefers-reduced-motion: reduce) { .subCard, .subGo { transition: none; } .subCard:hover { transform: none; } }
 
 /* editor view */
