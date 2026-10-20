@@ -34,12 +34,26 @@ export function validPushEndpoint(endpoint: unknown): endpoint is string {
   try { const u = new URL(endpoint); return u.protocol === 'https:' && PUSH_HOSTS.some((re) => re.test(u.hostname)); } catch { return false; }
 }
 
+// The "subject" every push is signed with. Apple's push service is strict about it and answers 403 BadJwtToken to a local or placeholder address (localhost, .invalid),
+// while Google's accepts anything, so a bad subject shows up as "works on Android, not on iPhone". Order: VAPID_SUBJECT (a mailto: address, a bare email, or an https address),
+// then the site's own https address, then the club's public site.
+const PUBLIC_SITE = 'https://tritongaming.org';
+export function vapidSubject(env: Record<string, string | undefined> = process.env): string {
+  const usable = (h: string) => !/^(localhost|127\.|.*\.invalid$|.*\.local$)/i.test(h);
+  const own = (env.VAPID_SUBJECT ?? '').trim();
+  if (own) {
+    const email = own.replace(/^mailto:/i, '');
+    if (/^[^\s@/]+@[^\s@/]+\.[^\s@/]+$/.test(email) && usable(email.split('@')[1])) return `mailto:${email}`;
+    try { const u = new URL(own); if (u.protocol === 'https:' && usable(u.hostname)) return u.origin; } catch { /* fall through */ }
+  }
+  try { const u = new URL(env.NEXT_PUBLIC_SITE_URL ?? ''); if (u.protocol === 'https:' && usable(u.hostname)) return u.origin; } catch { /* fall through */ }
+  return PUBLIC_SITE;
+}
+
 let configured = false;
 function setup() {
   if (configured) return;
-  const site = process.env.NEXT_PUBLIC_SITE_URL ?? '';
-  const subject = process.env.VAPID_SUBJECT || (site.startsWith('https://') ? site : 'mailto:noreply@localhost.invalid');
-  webpush.setVapidDetails(subject, process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!, process.env.VAPID_PRIVATE_KEY!);
+  webpush.setVapidDetails(vapidSubject(), process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!, process.env.VAPID_PRIVATE_KEY!);
   configured = true;
 }
 

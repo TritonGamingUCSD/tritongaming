@@ -18,7 +18,7 @@ vi.mock('@/lib/supabase/admin', () => ({
   }),
 }));
 
-const { categoryOf, validPushEndpoint, pushNotifications } = await import('@/lib/notifications/webPush');
+const { categoryOf, validPushEndpoint, pushNotifications, vapidSubject } = await import('@/lib/notifications/webPush');
 const sub = (id: string, user: string) => ({ id, user_id: user, endpoint: `https://fcm.googleapis.com/fcm/send/${id}`, p256dh: 'k', auth: 'a' });
 
 beforeEach(() => { send.mockReset(); send.mockResolvedValue({}); deleted.length = 0; subs = []; prefs = []; });
@@ -83,5 +83,18 @@ describe('pushing notifications', () => {
     expect(await pushNotifications([row('u1')])).toBe(0);
     expect(send).not.toHaveBeenCalled();
     process.env.VAPID_PRIVATE_KEY = key;
+  });
+});
+
+describe('the subject pushes are signed with', () => {
+  it('never uses a local or placeholder address, which Apple refuses', () => {
+    expect(vapidSubject({ NEXT_PUBLIC_SITE_URL: 'http://localhost:3000' })).toBe('https://tritongaming.org');
+    expect(vapidSubject({ VAPID_SUBJECT: 'mailto:noreply@localhost.invalid' })).toBe('https://tritongaming.org');
+  });
+  it('takes VAPID_SUBJECT first, then the site address', () => {
+    expect(vapidSubject({ VAPID_SUBJECT: 'officers@example.org' })).toBe('mailto:officers@example.org');
+    expect(vapidSubject({ VAPID_SUBJECT: 'mailto:officers@example.org', NEXT_PUBLIC_SITE_URL: 'https://x.org' })).toBe('mailto:officers@example.org');
+    expect(vapidSubject({ NEXT_PUBLIC_SITE_URL: 'https://www.tritongaming.org/' })).toBe('https://www.tritongaming.org');
+    expect(vapidSubject({ VAPID_SUBJECT: '', NEXT_PUBLIC_SITE_URL: '' })).toBe('https://tritongaming.org');
   });
 });

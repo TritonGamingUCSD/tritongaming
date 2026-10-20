@@ -166,7 +166,7 @@ Everything in the portal's bell can also be pushed to a member's browser or phon
 Setup, once per environment:
 
 1. Generate a key pair with `npx web-push generate-vapid-keys`.
-2. Set `NEXT_PUBLIC_VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY`. Local and live must use the same pair, because the database is shared and a subscription only works with the key it was made under. `VAPID_SUBJECT` is optional and defaults to the site address.
+2. Set `NEXT_PUBLIC_VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY`. Local and live must use the same pair, because the database is shared and a subscription only works with the key it was made under. `VAPID_SUBJECT` is optional (a `mailto:` address or an https address); it defaults to the site address, and a local or placeholder address is never used because Apple refuses it with 403 BadJwtToken.
 3. Redeploy. Until the keys are set, the settings page says push is not set up and nothing is sent.
 
 Subscription addresses are accepted only from the real push services (Google, Mozilla, Apple, Microsoft), because the server connects to them when sending.
