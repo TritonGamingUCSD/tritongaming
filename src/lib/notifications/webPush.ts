@@ -71,6 +71,8 @@ export interface SendResult { ok: boolean; status?: number; reason?: string }
 async function sendOne(svc: SupabaseClient, sub: Sub, payload: PushPayload): Promise<SendResult> {
   try {
     await webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, JSON.stringify({ title: clip(payload.title, 80), body: clip(payload.body, 180), url: payload.url || '/portal', tag: payload.tag }), { TTL: 86_400, timeout: 8000 });
+    // When it last worked, so a member can see which of their devices still get notifications. Never allowed to turn a delivered push into a failure.
+    try { await svc.from('push_subscriptions').update({ last_sent_at: new Date().toISOString() }).eq('id', sub.id); } catch { /* not important */ }
     return { ok: true };
   } catch (e) {
     const err = e as { statusCode?: number; body?: string; message?: string };

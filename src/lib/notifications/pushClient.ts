@@ -1,5 +1,7 @@
 'use client';
 
+import { createClient } from '@/lib/supabase/client';
+
 // Browser side of web push: registering the service worker and (un)subscribing this device.
 
 export type PushSupport = 'unsupported' | 'ios-install' | 'ok';
@@ -60,14 +62,26 @@ export async function enablePush(): Promise<{ ok: boolean; error?: string; denie
     const sub = await ensureSubscription(publicKey);
     const saved = await save(sub);
     if (!saved.ok) await sub.unsubscribe().catch(() => {});
+    else rememberEndpoint(await savedKey(sub.endpoint));
     return saved;
   } catch {
     return { ok: false, error: 'Your browser couldn’t turn notifications on. Try again, or use a different browser.' };
   }
 }
 
+// The address this browser last told the server about. The quiet sync below only talks to the server when it changed, so a device you removed from another
+// device does not put itself back the next time the portal opens.
+const SAVED_KEY = 'tg-push-saved';
+const savedEndpoint = () => { try { return localStorage.getItem(SAVED_KEY); } catch { return null; } };
+const rememberEndpoint = (e: string | null) => { try { if (e) localStorage.setItem(SAVED_KEY, e); else localStorage.removeItem(SAVED_KEY); } catch { /* fine without it */ } };
+// The key also names who is signed in, so a browser handed to someone else is saved to them (the session is read locally, no request).
+async function savedKey(endpoint: string): Promise<string | null> {
+  try { const { data } = await createClient().auth.getSession(); return data.session?.user.id ? `${data.session.user.id}|${endpoint}` : null; } catch { return null; }
+}
+
 export async function disablePush(): Promise<void> {
   const sub = await currentSubscription();
+  rememberEndpoint(null);
   if (!sub) return;
   await fetch('/api/push/subscribe', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: sub.endpoint }) }).catch(() => {});
   await sub.unsubscribe().catch(() => {});
@@ -78,6 +92,9 @@ export async function disablePush(): Promise<void> {
 export async function syncPush(): Promise<void> {
   try {
     if (pushSupport() !== 'ok' || Notification.permission !== 'granted' || !process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) return;
-    await save(await ensureSubscription(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY));
+    const sub = await ensureSubscription(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY);
+    const key = await savedKey(sub.endpoint);
+    if (key && savedEndpoint() === key) return;
+    if ((await save(sub)).ok) rememberEndpoint(key);
   } catch { /* nothing to sync */ }
 }
