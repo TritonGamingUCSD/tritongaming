@@ -7,6 +7,8 @@ import Notice from '@/components/ui/Notice';
 import { Field, Input, Textarea } from '@/components/ui/Field';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import { MAX_BLAST, parseRecipients } from '@/lib/email/recipients';
+import { emailHtml } from '@/lib/email/template';
+import { APPLE_ICON_DATA_URI } from '@/lib/site/appleIcon';
 import styles from './email.module.css';
 
 interface Result { to: string; ok: boolean; error?: string }
@@ -22,6 +24,7 @@ export default function EmailBlastPanel() {
   const [checking, setChecking] = useState(false);
   const [note, setNote] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
   const [results, setResults] = useState<Result[] | null>(null);
+  const [preview, setPreview] = useState(false);
 
   useEffect(() => { fetch('/api/admin/email', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then(setInfo).catch(() => {}); }, []);
   const { valid, bad } = useMemo(() => parseRecipients(to), [to]);
@@ -59,7 +62,7 @@ export default function EmailBlastPanel() {
   if (!info) return <p className={styles.intro}>Loading…</p>;
   return (
     <div className={styles.wrap}>
-      <p className={styles.intro}>Send one message to a list of addresses, each as its own email, from {info.configured ? <strong>{info.from}</strong> : 'the club’s Gmail account'}. This is for testing: it only mails the addresses you type here. Gmail allows about 500 recipients a day.</p>
+      <p className={styles.intro}>Send one message to a list of addresses, each as its own email in the club’s template (logo, colours, footer), from {info.configured ? <strong>{info.from}</strong> : 'the club’s Gmail account'}. This is for testing: it only mails the addresses you type here. Gmail allows about 500 recipients a day.</p>
       {!info.configured && <Notice tone="error">Email isn’t set up. Add GMAIL_USER and GMAIL_APP_PASSWORD (a Google app password) to .env.local and the host’s settings.</Notice>}
       <div className={styles.card}>
         <Field label="To" hint="Paste or type addresses, separated by commas, spaces or new lines.">
@@ -74,8 +77,10 @@ export default function EmailBlastPanel() {
         </div>
         <div className={styles.row}>
           <Button onClick={send} loading={busy} disabled={!ready}><Send size={15} aria-hidden="true" /> Send {valid.length > 1 ? `To ${valid.length}` : ''}</Button>
+          <Button variant="secondary" onClick={() => setPreview((v) => !v)} disabled={!subject.trim() && !message.trim()}>{preview ? 'Hide Preview' : 'Preview'}</Button>
           <Button variant="secondary" onClick={check} loading={checking} disabled={!info.configured}><Plug size={15} aria-hidden="true" /> Check Connection</Button>
         </div>
+        {preview && <iframe className={styles.preview} title="Email preview" sandbox="" srcDoc={emailHtml({ subject: subject || 'Subject', message: message || 'Your message', logoSrc: APPLE_ICON_DATA_URI })} />}
         {note && <Notice tone={note.tone}>{note.text}</Notice>}
         {results && (
           <ul className={styles.results} aria-label="Results">
