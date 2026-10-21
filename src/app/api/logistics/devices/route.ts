@@ -5,7 +5,7 @@ import { logAudit } from '@/lib/notifications/audit';
 
 export const dynamic = 'force-dynamic';
 
-const COLUMNS = 'id, tag, name, type, shelf, tier, place_note, condition, owner_type, owner_user_id, sponsor_id, owner_note, ports, login, games, kit, quantity, quantity_is_estimate, notes, created_at, updated_at';
+const COLUMNS = 'id, tag, name, type, shelf, tier, place_note, condition, ports, login, games, kit, quantity, quantity_is_estimate, notes, created_at, updated_at';
 
 // Add a device. Individual types need an ID (and it must be new: TECM1 and "tecm 1" are the same); counted types (cables, power strips) don't.
 export async function POST(request: Request) {

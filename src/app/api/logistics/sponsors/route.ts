@@ -38,8 +38,6 @@ export async function DELETE(request: Request) {
   if (auth.error) return auth.error;
   const b = await request.json().catch(() => ({}));
   if (typeof b.id !== 'string' || !UUID.test(b.id)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
-  const { count } = await auth.svc.from('logistics_devices').select('id', { count: 'exact', head: true }).eq('sponsor_id', b.id);
-  if (count) return NextResponse.json({ error: `This sponsor has ${count} device${count === 1 ? '' : 's'}. Change those first.` }, { status: 409 });
-  await auth.svc.from('logistics_sponsors').delete().eq('id', b.id);
+    await auth.svc.from('logistics_sponsors').delete().eq('id', b.id);
   return NextResponse.json({ ok: true });
 }

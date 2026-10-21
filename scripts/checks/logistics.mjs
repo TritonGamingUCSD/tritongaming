@@ -1,5 +1,6 @@
 // Logistics (equipment catalog), end to end against a running dev server, as temporary "ZZ" accounts: who may look and who may change, adding devices (individual and counted),
-// duplicate IDs, history lines, the editable lists (add, rename that devices follow, delete only when unused), sponsors, officer loaners, and a permission granted directly.
+// duplicate IDs, history lines, the editable lists (add, rename that devices follow, delete only when unused), sponsors, and a permission granted directly.
+// (Sponsor and officer-loaner devices are per event, in plans: see logistics-plans.mjs.)
 // Everything it makes is deleted at the end. Run: BASE_URL=http://localhost:3222 node scripts/checks/logistics.mjs
 import { accounts, svc, tracker } from './lib.mjs';
 
@@ -85,19 +86,12 @@ try {
   // ---- sponsors and owners
   const sp = await exec.call('POST', '/api/logistics/sponsors', { name: 'ZZ Sponsor', contact: 'zz@example.test' });
   t.ok('a sponsor is added', sp.s === 201);
-  const sd = await exec.call('POST', '/api/logistics/devices', { tag: 'ZZ3', type: 'TV', owner_type: 'sponsor', sponsor_id: sp.j.sponsor.id, owner_note: 'On loan until June' });
-  if (sd.j.device) createdDevices.push(sd.j.device.id);
-  t.ok('a sponsor device keeps its sponsor', sd.s === 201 && sd.j.device.sponsor_id === sp.j.sponsor.id);
-  t.ok('a sponsor with devices cannot be removed', (await exec.call('DELETE', '/api/logistics/sponsors', { id: sp.j.sponsor.id })).s === 409);
+  t.ok('a sponsor with no devices is removable', (await exec.call('DELETE', '/api/logistics/sponsors', { id: sp.j.sponsor.id })).s === 200);
   const people = await exec.call('GET', '/api/logistics/people');
-  t.ok('the people picker lists officers', people.s === 200 && people.j.people.some((p) => p.id === officer.id));
-  const ln = await exec.call('POST', '/api/logistics/devices', { tag: 'ZZ4', type: 'Gaming Laptop', owner_type: 'officer', owner_user_id: officer.id, sponsor_id: sp.j.sponsor.id });
-  if (ln.j.device) createdDevices.push(ln.j.device.id);
-  t.ok('an officer loaner keeps its officer and drops any sponsor', ln.s === 201 && ln.j.device.owner_user_id === officer.id && ln.j.device.sponsor_id === null, JSON.stringify(ln));
-  const boot = await officer.call('GET', '/api/logistics');
-  t.ok('the owner’s name comes with the catalog (no phone or email)', boot.j.owners?.[officer.id] === 'ZZ Mtg officer' && !JSON.stringify(boot.j.owners).includes('@'));
-  await exec.call('PATCH', `/api/logistics/devices/${sd.j.device.id}`, { owner_type: 'club' });
-  t.ok('a sponsor with no devices can be removed', (await exec.call('DELETE', '/api/logistics/sponsors', { id: sp.j.sponsor.id })).s === 200);
+  t.ok('the people picker lists officers (for a loaner at an event)', people.s === 200 && people.j.people.some((p) => p.id === officer.id));
+  const od = await exec.call('POST', '/api/logistics/devices', { tag: 'ZZ4', type: 'Gaming Laptop', owner_type: 'sponsor', owner_note: 'ignored' });
+  if (od.j.device) createdDevices.push(od.j.device.id);
+  t.ok('the inventory has no owner field: it is the club’s devices only', od.s === 201 && od.j.device.owner_type === undefined);
 
   // ---- a permission granted straight to an officer
   t.ok('before the grant, officer2 cannot add', (await officer2.call('POST', '/api/logistics/devices', { tag: 'ZZ5', type: 'Mouse' })).s === 403);

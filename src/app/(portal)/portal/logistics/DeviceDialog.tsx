@@ -7,16 +7,16 @@ import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import { Field, Input, Textarea, Select } from '@/components/ui/Field';
 import { confirmHold } from '@/lib/ui/confirmHold';
-import { CONDITIONS, DEFAULT_KIT, OWNER_TYPES } from '@/lib/logistics/constants';
+import { CONDITIONS, DEFAULT_KIT } from '@/lib/logistics/constants';
 import type { Device, KitLine } from '@/lib/logistics/devices';
 import { Combo, MultiCombo } from './Combo';
 import type { Catalog, LogisticsApi } from './useLogistics';
 import styles from './logistics.module.css';
 
-type Draft = Pick<Device, 'tag' | 'name' | 'type' | 'shelf' | 'tier' | 'place_note' | 'condition' | 'owner_type' | 'owner_user_id' | 'sponsor_id' | 'owner_note' | 'ports' | 'login' | 'games' | 'kit' | 'quantity' | 'quantity_is_estimate' | 'notes'>;
+type Draft = Pick<Device, 'tag' | 'name' | 'type' | 'shelf' | 'tier' | 'place_note' | 'condition' | 'ports' | 'login' | 'games' | 'kit' | 'quantity' | 'quantity_is_estimate' | 'notes'>;
 
-const blank = (): Draft => ({ tag: null, name: null, type: '', shelf: null, tier: null, place_note: null, condition: 'not_tested', owner_type: 'club', owner_user_id: null, sponsor_id: null, owner_note: null, ports: [], login: null, games: [], kit: [], quantity: null, quantity_is_estimate: true, notes: null });
-const fromDevice = (d: Device): Draft => ({ tag: d.tag, name: d.name, type: d.type, shelf: d.shelf, tier: d.tier, place_note: d.place_note, condition: d.condition, owner_type: d.owner_type, owner_user_id: d.owner_user_id, sponsor_id: d.sponsor_id, owner_note: d.owner_note, ports: d.ports, login: d.login, games: d.games, kit: d.kit, quantity: d.quantity, quantity_is_estimate: d.quantity_is_estimate, notes: d.notes });
+const blank = (): Draft => ({ tag: null, name: null, type: '', shelf: null, tier: null, place_note: null, condition: 'not_tested', ports: [], login: null, games: [], kit: [], quantity: null, quantity_is_estimate: true, notes: null });
+const fromDevice = (d: Device): Draft => ({ tag: d.tag, name: d.name, type: d.type, shelf: d.shelf, tier: d.tier, place_note: d.place_note, condition: d.condition, ports: d.ports, login: d.login, games: d.games, kit: d.kit, quantity: d.quantity, quantity_is_estimate: d.quantity_is_estimate, notes: d.notes });
 const kitFor = (type: string): KitLine[] => (DEFAULT_KIT[type] ?? []).map((item) => ({ item, qty: 1, missing: false }));
 const when = (iso: string) => new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 
@@ -29,7 +29,6 @@ export default function DeviceDialog({ api, data, device, template, onClose, onC
   const [problem, setProblem] = useState('');
   const [history, setHistory] = useState<{ id: string; at: string; summary: string; by: string | null }[] | null>(null);
   const [showHistory, setShowHistory] = useState(false);
-  const [people, setPeople] = useState<{ id: string; name: string }[]>([]);
   const [pending, setPending] = useState(0);   // values being added to a list right now: saving waits for them
   const [kitTouched, setKitTouched] = useState(editing || (template?.kit?.length ?? 0) > 0);
 
@@ -40,21 +39,9 @@ export default function DeviceDialog({ api, data, device, template, onClose, onC
   const games = useMemo(() => [...new Set([...data.portalGames, ...lists.game.map((g) => g.value)])].sort((a, b) => a.localeCompare(b)), [data.portalGames, lists.game]);
 
   useEffect(() => {
-    if (d.owner_type !== 'officer' || people.length || readOnly) return;
-    void api.loadPeople().then(setPeople);
-  }, [d.owner_type, people.length, api, readOnly]);
-  useEffect(() => {
     if (!showHistory || history || !device) return;
     void api.loadHistory(device.id).then((h) => setHistory(h ?? []));
   }, [showHistory, history, device, api]);
-
-  // Officer names for the loaner picker (a repeated name is told apart by a number).
-  const peopleNames = useMemo(() => {
-    const seen = new Map<string, number>();
-    return people.map((p) => { const n = (seen.get(p.name) ?? 0) + 1; seen.set(p.name, n); return { id: p.id, label: n > 1 ? `${p.name} (${n})` : p.name }; });
-  }, [people]);
-  const ownerName = d.owner_user_id ? (peopleNames.find((p) => p.id === d.owner_user_id)?.label ?? data.owners[d.owner_user_id] ?? '') : '';
-  const sponsorName = data.sponsors.find((s) => s.id === d.sponsor_id)?.name ?? '';
 
   function pickType(t: string | null) {
     setD((cur) => {
@@ -135,24 +122,6 @@ export default function DeviceDialog({ api, data, device, template, onClose, onC
             <label className={styles.check}><input type="checkbox" checked={d.quantity_is_estimate} onChange={(e) => set('quantity_is_estimate', e.target.checked)} disabled={readOnly} /> This is an estimate (shown as “about”)</label>
           </div>
         )}
-
-        <div className={styles.row2}>
-          <Field label="Owner">
-            <Select value={d.owner_type} onChange={(e) => set('owner_type', e.target.value as Draft['owner_type'])} disabled={readOnly}>
-              {OWNER_TYPES.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-            </Select>
-          </Field>
-          {d.owner_type === 'sponsor' && (
-            <Field label="Sponsor"><Combo value={sponsorName || null} options={data.sponsors.map((s) => s.name)} disabled={readOnly} placeholder="Choose or add…"
-              onChange={(v) => set('sponsor_id', data.sponsors.find((s) => s.name === v)?.id ?? null)}
-              onCreate={async (v) => { const s = await waiting(api.saveSponsor(null, { name: v })); if (s) set('sponsor_id', s.id); return s?.name ?? null; }} /></Field>
-          )}
-          {d.owner_type === 'officer' && (
-            <Field label="Officer"><Combo value={ownerName || null} options={peopleNames.map((p) => p.label)} disabled={readOnly} placeholder="Choose an officer…"
-              onChange={(v) => { const p = peopleNames.find((x) => x.label === v); set('owner_user_id', p?.id ?? null); if (p) api.rememberOwner(p.id, p.label); }} /></Field>
-          )}
-        </div>
-        {d.owner_type !== 'club' && <Field label="Note about the owner" hint="Everyone who can open Logistics sees this. Keep phone numbers and emails out."><Input value={d.owner_note ?? ''} onChange={(e) => set('owner_note', e.target.value)} maxLength={300} disabled={readOnly} /></Field>}
 
         <Field label="Ports and outputs"><MultiCombo values={d.ports} options={lists.port.map((p) => p.value)} onChange={(v) => set('ports', v)} onCreate={createOpt('port')} disabled={readOnly} placeholder="Add a port…" /></Field>
         <Field label="Games and software installed"><MultiCombo values={d.games} options={games} onChange={(v) => set('games', v)} onCreate={createOpt('game')} disabled={readOnly} placeholder="Add a game…" /></Field>

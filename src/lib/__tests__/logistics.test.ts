@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { cleanDevice, cleanKit, cleanList, describeChange, quantityText, tagKey, type Device } from '@/lib/logistics/devices';
-import { DEFAULT_KIT, OWNER_TYPES, CONDITIONS } from '@/lib/logistics/constants';
+import { DEFAULT_KIT, CONDITIONS } from '@/lib/logistics/constants';
 import { hasCapability, withGrantedCapabilities } from '@/lib/portal/capabilities';
 import type { AppRole } from '@/types/database';
 
 const base: Device = {
-  id: 'd1', tag: 'TECM1', name: null, type: 'Gaming PC', shelf: 'Shelf A', tier: 'T1', place_note: null, condition: 'working', owner_type: 'club', owner_user_id: null, sponsor_id: null, owner_note: null,
+  id: 'd1', tag: 'TECM1', name: null, type: 'Gaming PC', shelf: 'Shelf A', tier: 'T1', place_note: null, condition: 'working',
   ports: [], login: null, games: [], kit: [{ item: 'Power cable', qty: 1, missing: false }], quantity: null, quantity_is_estimate: true, notes: null, created_at: '', updated_at: '',
 };
 
@@ -24,21 +24,12 @@ describe('reading a device from the browser', () => {
     expect(cleanDevice({ shelf: 'Shelf C', unknown: 'x' }).value).toEqual({ shelf: 'Shelf C' });
     expect(cleanDevice({ tag: 'x'.repeat(100) }).value.tag).toHaveLength(40);
   });
-  it('rejects a bad condition, owner type, empty type and bad quantity with a plain sentence', () => {
+  it('rejects a bad condition, empty type and bad quantity with a plain sentence', () => {
     expect(cleanDevice({ condition: 'broken' }).error).toMatch(/condition/i);
-    expect(cleanDevice({ owner_type: 'nobody' }).error).toMatch(/owns/i);
     expect(cleanDevice({ type: '  ' }).error).toMatch(/kind of device/i);
     expect(cleanDevice({ quantity: -3 }).error).toMatch(/whole number/i);
     expect(cleanDevice({ quantity: 'abc' }).error).toMatch(/whole number/i);
     for (const c of CONDITIONS) expect(cleanDevice({ condition: c.id }).error).toBeUndefined();
-    for (const o of OWNER_TYPES) expect(cleanDevice({ owner_type: o.id }).error).toBeUndefined();
-  });
-  it('makes the owner fields agree with the owner type', () => {
-    const id = '11111111-1111-1111-1111-111111111111';
-    expect(cleanDevice({ owner_type: 'club', owner_user_id: id, sponsor_id: id }).value).toMatchObject({ owner_user_id: null, sponsor_id: null });
-    expect(cleanDevice({ owner_type: 'sponsor', owner_user_id: id, sponsor_id: id }).value).toMatchObject({ owner_user_id: null, sponsor_id: id });
-    expect(cleanDevice({ owner_type: 'officer', owner_user_id: id, sponsor_id: id }).value).toMatchObject({ owner_user_id: id, sponsor_id: null });
-    expect(cleanDevice({ owner_user_id: 'not-an-id' }).value.owner_user_id).toBeNull();
   });
   it('cleans lists and kits: no blanks, no repeats, sane quantities', () => {
     expect(cleanList([' HDMI ', 'hdmi', '', 'USB-C'])).toEqual(['HDMI', 'USB-C']);

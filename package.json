@@ -24,6 +24,7 @@
     "test:emojis": "node scripts/checks/emojis.mjs",
     "test:questions": "node scripts/checks/questions.mjs",
     "test:logistics": "node scripts/checks/logistics.mjs",
+    "test:logistics-plans": "node scripts/checks/logistics-plans.mjs",
     "check:theme": "node scripts/check-theme.mjs",
     "docs:roles": "node scripts/roles-doc.mjs"
   },

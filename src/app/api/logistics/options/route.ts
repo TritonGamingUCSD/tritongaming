@@ -5,10 +5,27 @@ import { LIMITS, OPTION_KINDS, type OptionKind } from '@/lib/logistics/constants
 
 export const dynamic = 'force-dynamic';
 const UUID = /^[0-9a-f-]{36}$/i;
+const APPLIES = ['all', 'club', 'borrowed'];
+// A bundle's items: only device types that exist, each with a whole quantity.
+async function cleanItems(svc: SupabaseClient, raw: unknown): Promise<{ items?: { type: string; qty: number }[]; error?: string }> {
+  if (!Array.isArray(raw)) return { error: 'A bundle needs at least one item.' };
+  const { data: types } = await svc.from('logistics_options').select('value').eq('kind', 'type');
+  const known = new Map((types ?? []).map((t) => [(t.value as string).toLowerCase(), t.value as string]));
+  const items: { type: string; qty: number }[] = [];
+  for (const x of raw.slice(0, 12)) {
+    const o = (x ?? {}) as Record<string, unknown>;
+    const type = known.get(String(o.type ?? '').trim().toLowerCase());
+    if (!type) return { error: `“${String(o.type ?? '')}” isn’t a device type.` };
+    items.push({ type, qty: Math.min(20, Math.max(1, Math.round(Number(o.qty)) || 1)) });
+  }
+  return items.length ? { items } : { error: 'A bundle needs at least one item.' };
+}
+const metaOf = (o: { kind: string; meta: unknown }) => o.meta as { counted?: boolean; applies?: string; items?: unknown } | null;
 const cleanValue = (v: unknown) => String(v ?? '').trim().replace(/\s+/g, ' ').slice(0, LIMITS.option);
 
 // How many devices use a value (so a list entry that is in use can't be deleted, and a rename knows what to follow).
 async function devicesUsing(svc: SupabaseClient, kind: OptionKind, value: string): Promise<{ id: string }[]> {
+  if (kind === 'step' || kind === 'bundle') return [];   // steps are checked against the steps already done, bundles are used by nothing
   const q = svc.from('logistics_devices').select('id, ports, games, kit');
   const { data } = kind === 'type' ? await q.eq('type', value) : kind === 'shelf' ? await q.eq('shelf', value) : kind === 'tier' ? await q.eq('tier', value)
     : kind === 'port' ? await q.contains('ports', [value]) : kind === 'game' ? await q.contains('games', [value]) : await q.contains('kit', [{ item: value }]);
@@ -26,10 +43,12 @@ export async function POST(request: Request) {
   const { data: dup } = await auth.svc.from('logistics_options').select('id, value, meta').eq('kind', kind).ilike('value', value.replace(/[%_]/g, (c) => `\\${c}`)).maybeSingle();
   if (dup) return NextResponse.json({ option: { id: dup.id, value: dup.value, ...(kind === 'type' ? { counted: !!(dup.meta as { counted?: boolean } | null)?.counted } : {}) }, existed: true });
   const { data: last } = await auth.svc.from('logistics_options').select('sort').eq('kind', kind).order('sort', { ascending: false }).limit(1).maybeSingle();
-  const meta = kind === 'type' ? { counted: b.counted === true } : {};
+  let meta: Record<string, unknown> = kind === 'type' ? { counted: b.counted === true } : {};
+  if (kind === 'step') meta = { applies: APPLIES.includes(b.applies) ? b.applies : 'all', kit: b.kit === true };
+  if (kind === 'bundle') { const r = await cleanItems(auth.svc, b.items); if (r.error) return NextResponse.json({ error: r.error }, { status: 400 }); meta = { items: r.items }; }
   const { data, error } = await auth.svc.from('logistics_options').insert({ kind, value, sort: ((last?.sort as number | undefined) ?? 0) + 1, meta }).select('id, value, meta').single();
   if (error || !data) return NextResponse.json({ error: 'Couldn’t add that.' }, { status: 500 });
-  return NextResponse.json({ option: { id: data.id, value: data.value, ...(kind === 'type' ? { counted: !!(data.meta as { counted?: boolean }).counted } : {}) } }, { status: 201 });
+  return NextResponse.json({ option: { id: data.id, value: data.value, ...(kind === 'type' ? { counted: !!(data.meta as { counted?: boolean }).counted } : {}), ...(kind === 'step' ? { applies: (meta as { applies: string }).applies, kit: (meta as { kit?: boolean }).kit === true } : {}), ...(kind === 'bundle' ? { items: (meta as { items: unknown }).items } : {}) } }, { status: 201 });
 }
 
 // Rename a value (devices that use it follow the new name) or switch a device type between individual and counted.
@@ -43,6 +62,24 @@ export async function PATCH(request: Request) {
   const kind = o.kind as OptionKind;
   const patch: Record<string, unknown> = {};
   if (typeof b.counted === 'boolean' && kind === 'type') patch.meta = { ...(o.meta as object), counted: b.counted };
+  if (kind === 'step' && (typeof b.applies === 'string' || typeof b.kit === 'boolean')) {
+    if (typeof b.applies === 'string' && !APPLIES.includes(b.applies)) return NextResponse.json({ error: 'Pick which devices the step is for.' }, { status: 400 });
+    patch.meta = { ...(o.meta as object), ...(typeof b.applies === 'string' ? { applies: b.applies } : {}), ...(typeof b.kit === 'boolean' ? { kit: b.kit } : {}) };
+  }
+  if (kind === 'bundle' && 'items' in b) { const r = await cleanItems(auth.svc, b.items); if (r.error) return NextResponse.json({ error: r.error }, { status: 400 }); patch.meta = { ...(o.meta as object), items: r.items }; }
+  if (kind === 'step' && (b.move === 'up' || b.move === 'down')) {
+    // Swap places with the neighbouring step.
+    const { data: all } = await auth.svc.from('logistics_options').select('id, sort').eq('kind', 'step').order('sort').order('value');
+    const list = all ?? [];
+    const i = list.findIndex((x) => x.id === o.id);
+    const j = b.move === 'up' ? i - 1 : i + 1;
+    if (i >= 0 && j >= 0 && j < list.length) {
+      const renumbered = list.map((x, k) => ({ id: x.id as string, sort: k + 1 }));
+      [renumbered[i].sort, renumbered[j].sort] = [renumbered[j].sort, renumbered[i].sort];
+      for (const r of renumbered) await auth.svc.from('logistics_options').update({ sort: r.sort }).eq('id', r.id);
+    }
+    return NextResponse.json({ ok: true });
+  }
   if (typeof b.value === 'string') {
     const value = cleanValue(b.value);
     if (!value) return NextResponse.json({ error: 'The name can’t be empty.' }, { status: 400 });
@@ -77,6 +114,10 @@ export async function DELETE(request: Request) {
   if (typeof b.id !== 'string' || !UUID.test(b.id)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
   const { data: o } = await auth.svc.from('logistics_options').select('id, kind, value').eq('id', b.id).maybeSingle();
   if (!o) return NextResponse.json({ ok: true });
+  if (o.kind === 'step') {
+    const { count } = await auth.svc.from('logistics_plan_steps').select('step_id', { count: 'exact', head: true }).eq('step_id', o.id as string);
+    if (count) return NextResponse.json({ error: `${o.value} has been used ${count} time${count === 1 ? '' : 's'} at events, so it can’t be deleted. Rename it instead.` }, { status: 409 });
+  }
   const used = await devicesUsing(auth.svc, o.kind as OptionKind, o.value as string);
   if (used.length) return NextResponse.json({ error: `${o.value} is used by ${used.length} device${used.length === 1 ? '' : 's'}. Change those first, or rename it instead.` }, { status: 409 });
   await auth.svc.from('logistics_options').delete().eq('id', o.id as string);

@@ -1,0 +1,79 @@
+import { NextResponse } from 'next/server';
+import { authorizeLogistics } from '@/lib/logistics/auth';
+import { BORROWED_COLUMNS, DEVICE_COLUMNS, PLAN_COLUMNS, SLOT_COLUMNS, UUID, bookedElsewhere, loadSteps, ownerLabelOf, ownerNames, type BorrowedRow } from '@/lib/logistics/planServer';
+import { planConflicts } from '@/lib/logistics/plans';
+import type { Device } from '@/lib/logistics/devices';
+import { logAudit } from '@/lib/notifications/audit';
+
+export const dynamic = 'force-dynamic';
+const DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+// A whole plan in one go: its stations, its devices (with their details), the steps and which are done, and the things to look at. The event-day screen applies each tap itself
+// and only asks for this again when another phone has changed something (see /version).
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await authorizeLogistics('view');
+  if (auth.error) return auth.error;
+  const { id } = await params;
+  if (!UUID.test(id)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
+  const { data: plan } = await auth.svc.from('logistics_plans').select(PLAN_COLUMNS).eq('id', id).maybeSingle();
+  if (!plan) return NextResponse.json({ error: 'That plan is gone.' }, { status: 404 });
+  const [stations, rows, steps, done, borrowedRows, slotRows] = await Promise.all([
+    auth.svc.from('logistics_stations').select('id, name, sort, contact, room, confirmed').eq('plan_id', id).order('sort').order('name').limit(500),
+    auth.svc.from('logistics_plan_devices').select('device_id, station_id, role, swap_reason, swapped_for_label, games_needed, sort, set_id').eq('plan_id', id).limit(5000),
+    loadSteps(auth.svc),
+    auth.svc.from('logistics_plan_steps').select('device_id, borrowed_id, slot_id, step_id, done_at').eq('plan_id', id).limit(30000),
+    auth.svc.from('logistics_plan_borrowed').select(BORROWED_COLUMNS).eq('plan_id', id).order('tag_key').limit(1000),
+    auth.svc.from('logistics_plan_slots').select(SLOT_COLUMNS).eq('plan_id', id).order('sort').limit(3000),
+  ]);
+  // Devices that have a step but are not in the plan ("not in plan" backups used on the day) come along too.
+  const ids = [...new Set([...(rows.data ?? []).map((r) => r.device_id as string), ...(done.data ?? []).map((r) => r.device_id as string | null).filter((x): x is string => !!x)])];
+  const { data: devices } = ids.length ? await auth.svc.from('logistics_devices').select(DEVICE_COLUMNS).in('id', ids) : { data: [] };
+  const byId = new Map((devices ?? []).map((d) => [d.id as string, d as unknown as Device]));
+  const planned = (rows.data ?? []).filter((r) => r.role === 'planned').map((r) => byId.get(r.device_id as string)).filter((d): d is Device => !!d);
+  const borrowed = (borrowedRows.data ?? []) as unknown as BorrowedRow[];
+  const names = await ownerNames(auth.svc, borrowed);
+  const booked = await bookedElsewhere(auth.svc, plan as { id: string; starts_on: string; ends_on: string }, planned.map((d) => d.id));
+  return NextResponse.json({
+    plan, canManage: auth.canManage, stations: stations.data ?? [], steps,
+    items: (rows.data ?? []).map((r) => ({ ...r, device: byId.get(r.device_id as string) })).filter((r) => r.device),
+    slots: slotRows.data ?? [],
+    borrowed: borrowed.map((b) => ({ ...b, owner: ownerLabelOf(b, names) })),
+    extras: [...new Set((done.data ?? []).map((r) => r.device_id as string | null).filter((x): x is string => !!x))].filter((d) => !(rows.data ?? []).some((r) => r.device_id === d)).map((d) => byId.get(d)).filter(Boolean),
+    done: done.data ?? [],
+    conflicts: planConflicts(planned, booked),
+  });
+}
+
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await authorizeLogistics('manage');
+  if (auth.error) return auth.error;
+  const { id } = await params;
+  if (!UUID.test(id)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
+  const b = await request.json().catch(() => ({}));
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if ('name' in b) { const n = String(b.name ?? '').trim().slice(0, 120); if (!n) return NextResponse.json({ error: 'The plan needs a name.' }, { status: 400 }); patch.name = n; }
+  if ('starts_on' in b) { if (!DATE.test(b.starts_on)) return NextResponse.json({ error: 'Pick the first day.' }, { status: 400 }); patch.starts_on = b.starts_on; }
+  if ('ends_on' in b) { if (!DATE.test(b.ends_on)) return NextResponse.json({ error: 'Pick the last day.' }, { status: 400 }); patch.ends_on = b.ends_on; }
+  if ('status' in b) { if (b.status !== 'draft' && b.status !== 'closed') return NextResponse.json({ error: 'Unknown status.' }, { status: 400 }); patch.status = b.status; }
+  if ('notes' in b) patch.notes = String(b.notes ?? '').trim().slice(0, 2000) || null;
+  const { data: before } = await auth.svc.from('logistics_plans').select('starts_on, ends_on, name').eq('id', id).maybeSingle();
+  if (!before) return NextResponse.json({ error: 'That plan is gone.' }, { status: 404 });
+  if (((patch.ends_on ?? before.ends_on) as string) < ((patch.starts_on ?? before.starts_on) as string)) return NextResponse.json({ error: 'The last day can’t be before the first.' }, { status: 400 });
+  const { data, error } = await auth.svc.from('logistics_plans').update(patch).eq('id', id).select(PLAN_COLUMNS).single();
+  if (error || !data) return NextResponse.json({ error: 'Couldn’t save that.' }, { status: 500 });
+  if (patch.status) await logAudit(auth.svc, { actorId: auth.user.id, action: 'update', entityType: 'logistics plan', entityId: id, summary: `${patch.status === 'closed' ? 'Closed' : 'Reopened'} the equipment plan “${data.name}”` });
+  return NextResponse.json({ plan: data });
+}
+
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await authorizeLogistics('manage');
+  if (auth.error) return auth.error;
+  const { id } = await params;
+  if (!UUID.test(id)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
+  const { data: p } = await auth.svc.from('logistics_plans').select('name').eq('id', id).maybeSingle();
+  if (!p) return NextResponse.json({ ok: true });
+  const { error } = await auth.svc.from('logistics_plans').delete().eq('id', id);
+  if (error) return NextResponse.json({ error: 'Couldn’t remove it.' }, { status: 500 });
+  await logAudit(auth.svc, { actorId: auth.user.id, action: 'remove', entityType: 'logistics plan', entityId: id, summary: `Removed the equipment plan “${p.name}”` });
+  return NextResponse.json({ ok: true });
+}

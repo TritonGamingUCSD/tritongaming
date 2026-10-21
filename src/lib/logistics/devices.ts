@@ -1,10 +1,10 @@
-import { CONDITIONS, LIMITS, OWNER_TYPES, conditionLabel, type Condition, type OwnerType } from '@/lib/logistics/constants';
+import { CONDITIONS, LIMITS, conditionLabel, type Condition } from '@/lib/logistics/constants';
 
 // One piece of equipment, as stored (lib/logistics tables: logistics_devices).
 export interface KitLine { item: string; qty: number; missing: boolean }
 export interface Device {
   id: string; tag: string | null; name: string | null; type: string; shelf: string | null; tier: string | null; place_note: string | null;
-  condition: Condition; owner_type: OwnerType; owner_user_id: string | null; sponsor_id: string | null; owner_note: string | null;
+  condition: Condition;
   ports: string[]; login: string | null; games: string[]; kit: KitLine[]; quantity: number | null; quantity_is_estimate: boolean; notes: string | null;
   created_at: string; updated_at: string;
 }
@@ -46,7 +46,7 @@ export function cleanKit(v: unknown): KitLine[] {
   return out;
 }
 
-export type DevicePatch = Partial<Pick<Device, 'tag' | 'name' | 'type' | 'shelf' | 'tier' | 'place_note' | 'condition' | 'owner_type' | 'owner_user_id' | 'sponsor_id' | 'owner_note' | 'ports' | 'login' | 'games' | 'kit' | 'quantity' | 'quantity_is_estimate' | 'notes'>>;
+export type DevicePatch = Partial<Pick<Device, 'tag' | 'name' | 'type' | 'shelf' | 'tier' | 'place_note' | 'condition' | 'ports' | 'login' | 'games' | 'kit' | 'quantity' | 'quantity_is_estimate' | 'notes'>>;
 
 // Reads what the browser sent. Only the fields that were sent come back (so an edit changes just those); anything unknown is dropped. `error` is a plain sentence for the person.
 export function cleanDevice(raw: unknown): { value: DevicePatch; error?: string } {
@@ -60,11 +60,6 @@ export function cleanDevice(raw: unknown): { value: DevicePatch; error?: string 
   if (has('tier')) v.tier = text(b.tier, LIMITS.option);
   if (has('place_note')) v.place_note = text(b.place_note, LIMITS.note);
   if (has('condition')) { if (!CONDITIONS.some((c) => c.id === b.condition)) return { value: v, error: 'Pick a condition from the list.' }; v.condition = b.condition as Condition; }
-  if (has('owner_type')) { if (!OWNER_TYPES.some((o) => o.id === b.owner_type)) return { value: v, error: 'Pick who owns it: Club, Sponsor or Officer Loaner.' }; v.owner_type = b.owner_type as OwnerType; }
-  const uuid = (x: unknown) => (typeof x === 'string' && /^[0-9a-f-]{36}$/i.test(x) ? x : null);
-  if (has('owner_user_id')) v.owner_user_id = uuid(b.owner_user_id);
-  if (has('sponsor_id')) v.sponsor_id = uuid(b.sponsor_id);
-  if (has('owner_note')) v.owner_note = text(b.owner_note, LIMITS.ownerNote);
   if (has('ports')) v.ports = cleanList(b.ports);
   if (has('login')) v.login = text(b.login, LIMITS.login);
   if (has('games')) v.games = cleanList(b.games, 60);
@@ -75,25 +70,18 @@ export function cleanDevice(raw: unknown): { value: DevicePatch; error?: string 
   }
   if (has('quantity_is_estimate')) v.quantity_is_estimate = b.quantity_is_estimate !== false;
   if (has('notes')) v.notes = text(b.notes, LIMITS.notes);
-  // The owner fields agree with the owner type: a club device has no owner, a sponsor's has a sponsor, a loaner has an officer.
-  if (v.owner_type === 'club') { v.owner_user_id = null; v.sponsor_id = null; }
-  if (v.owner_type === 'sponsor') v.owner_user_id = null;
-  if (v.owner_type === 'officer') v.sponsor_id = null;
   return { value: v };
 }
 
 const placeOf = (d: Pick<Device, 'shelf' | 'tier'>) => [d.shelf, d.tier].filter(Boolean).join(' · ') || 'no place';
 
 // The history lines for a change: what a person would want to read later ("Condition: Working → Dead", "Moved: Shelf A · T1 → Shelf C · T0", "Marked missing: HDMI cable").
-export function describeChange(before: Device, after: Device, nameOf: (id: string | null) => string = () => 'someone'): { kind: string; summary: string }[] {
+export function describeChange(before: Device, after: Device): { kind: string; summary: string }[] {
   const out: { kind: string; summary: string }[] = [];
   if (before.condition !== after.condition) out.push({ kind: 'condition', summary: `Condition: ${conditionLabel(before.condition)} → ${conditionLabel(after.condition)}` });
   if (before.shelf !== after.shelf || before.tier !== after.tier) out.push({ kind: 'moved', summary: `Moved: ${placeOf(before)} → ${placeOf(after)}` });
   if ((before.tag ?? '') !== (after.tag ?? '')) out.push({ kind: 'tag', summary: `ID: ${before.tag ?? 'none'} → ${after.tag ?? 'none'}` });
   if (before.type !== after.type) out.push({ kind: 'type', summary: `Type: ${before.type} → ${after.type}` });
-  if (before.owner_type !== after.owner_type || before.owner_user_id !== after.owner_user_id || before.sponsor_id !== after.sponsor_id) {
-    out.push({ kind: 'owner', summary: `Owner changed${after.owner_type === 'officer' ? ` to ${nameOf(after.owner_user_id)} (officer loaner)` : after.owner_type === 'sponsor' ? ' to a sponsor' : ' to the club'}` });
-  }
   const was = new Map(before.kit.map((k) => [k.item.toLowerCase(), k]));
   const now = new Map(after.kit.map((k) => [k.item.toLowerCase(), k]));
   for (const [key, k] of now) {

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pencil, Plus, Search, TriangleAlert } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Field';
-import { CONDITIONS, UNUSABLE, conditionLabel, ownerLabel } from '@/lib/logistics/constants';
+import { CONDITIONS, UNUSABLE, conditionLabel } from '@/lib/logistics/constants';
 import { quantityText, tagKey, type Device, type DevicePatch } from '@/lib/logistics/devices';
 import { Combo } from './Combo';
 import DeviceDialog from './DeviceDialog';
@@ -18,12 +18,6 @@ const missingCount = (d: Device) => d.kit.filter((k) => k.missing).length;
 const isProblem = (d: Device) => d.condition === 'dead' || d.condition === 'disappeared' || missingCount(d) > 0;
 // Devices with an ID first (TECM2 before TECM10), counted rows (no ID) after them, grouped by type.
 const byId = (a: Device, b: Device) => (a.tag === null ? 1 : 0) - (b.tag === null ? 1 : 0) || (a.tag ?? a.type).localeCompare(b.tag ?? b.type, undefined, { numeric: true, sensitivity: 'base' });
-
-// "Officer Loaner: Alex" or "Sponsor: Logitech"; just the kind when the person or sponsor isn't set.
-function ownerText(d: Device, data: Catalog): string {
-  const who = d.owner_type === 'officer' ? (d.owner_user_id ? data.owners[d.owner_user_id] : '') : d.owner_type === 'sponsor' ? data.sponsors.find((s) => s.id === d.sponsor_id)?.name : '';
-  return who ? `${ownerLabel(d.owner_type)}: ${who}` : ownerLabel(d.owner_type);
-}
 
 function useWide() {
   const [wide, setWide] = useState(false);
@@ -80,7 +74,6 @@ export default function EquipmentTab({ api, data }: { api: LogisticsApi; data: C
   const [type, setType] = useState('');
   const [shelf, setShelf] = useState('');
   const [condition, setCondition] = useState('');
-  const [owner, setOwner] = useState('');
   const [problems, setProblems] = useState(false);
   const [limit, setLimit] = useState(SHOW);
   const [dialog, setDialog] = useState<{ device: Device | null; template?: Partial<Device> | null } | null>(null);
@@ -90,17 +83,17 @@ export default function EquipmentTab({ api, data }: { api: LogisticsApi; data: C
     const needle = q.trim().toLowerCase();
     const key = tagKey(q);
     return data.devices
-      .filter((d) => (!type || d.type === type) && (!shelf || d.shelf === shelf) && (!condition || d.condition === condition) && (!owner || d.owner_type === owner) && (!problems || isProblem(d)))
-      .filter((d) => !needle || (d.tag && tagKey(d.tag).includes(key)) || [d.name, d.type, d.shelf, d.tier, d.place_note, d.notes, d.owner_note].some((x) => x?.toLowerCase().includes(needle)))
+      .filter((d) => (!type || d.type === type) && (!shelf || d.shelf === shelf) && (!condition || d.condition === condition) && (!problems || isProblem(d)))
+      .filter((d) => !needle || (d.tag && tagKey(d.tag).includes(key)) || [d.name, d.type, d.shelf, d.tier, d.place_note, d.notes].some((x) => x?.toLowerCase().includes(needle)))
       .sort(byId);
-  }, [data.devices, q, type, shelf, condition, owner, problems]);
-  useEffect(() => setLimit(SHOW), [q, type, shelf, condition, owner, problems]);
+  }, [data.devices, q, type, shelf, condition, problems]);
+  useEffect(() => setLimit(SHOW), [q, type, shelf, condition, problems]);
 
   const shown = rows.slice(0, limit);
   const problemCount = useMemo(() => data.devices.filter(isProblem).length, [data.devices]);
   const save = (d: Device, patch: DevicePatch) => { void api.saveDevice(d.id, patch); };
   const open = (device: Device | null, template?: Partial<Device> | null) => setDialog({ device, template });
-  const filtered = !!(q || type || shelf || condition || owner || problems);
+  const filtered = !!(q || type || shelf || condition || problems);
 
   return (
     <div className={styles.tab}>
@@ -110,7 +103,6 @@ export default function EquipmentTab({ api, data }: { api: LogisticsApi; data: C
           <Select value={type} onChange={(e) => setType(e.target.value)} aria-label="Type"><option value="">All types</option>{data.lists.type.map((t) => <option key={t.id} value={t.value}>{t.value}</option>)}</Select>
           <Select value={shelf} onChange={(e) => setShelf(e.target.value)} aria-label="Shelf"><option value="">All shelves</option>{data.lists.shelf.map((t) => <option key={t.id} value={t.value}>{t.value}</option>)}</Select>
           <Select value={condition} onChange={(e) => setCondition(e.target.value)} aria-label="Condition"><option value="">Any condition</option>{CONDITIONS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</Select>
-          <Select value={owner} onChange={(e) => setOwner(e.target.value)} aria-label="Owner"><option value="">Any owner</option><option value="club">Club</option><option value="sponsor">Sponsor</option><option value="officer">Officer Loaner</option></Select>
         </div>
         <div className={styles.toolbarRow}>
           <button type="button" className={`${styles.pill} ${problems ? styles.pillOn : ''}`} aria-pressed={problems} onClick={() => setProblems((v) => !v)}><TriangleAlert size={13} aria-hidden="true" /> Needs attention{problemCount ? ` (${problemCount})` : ''}</button>
@@ -126,7 +118,7 @@ export default function EquipmentTab({ api, data }: { api: LogisticsApi; data: C
       ) : wide ? (
         <div className={styles.gridWrap}>
           <table className={styles.grid}>
-            <thead><tr><th>ID</th><th>Name</th><th>Type</th><th>Shelf</th><th>Tier</th><th>Condition</th><th>Owner</th><th>Kit</th><th aria-label="Open" /></tr></thead>
+            <thead><tr><th>ID</th><th>Name</th><th>Type</th><th>Shelf</th><th>Tier</th><th>Condition</th><th>Kit</th><th aria-label="Open" /></tr></thead>
             <tbody>
               {shown.map((d) => (
                 <tr key={d.id} className={isProblem(d) ? styles.rowBad : undefined}>
@@ -136,7 +128,6 @@ export default function EquipmentTab({ api, data }: { api: LogisticsApi; data: C
                   <td><PickCell value={d.shelf} options={data.lists.shelf.map((t) => t.value)} canEdit={canEdit} onSave={(v) => save(d, { shelf: v })} onCreate={(v) => api.addOption('shelf', v)} /></td>
                   <td><PickCell value={d.tier} options={data.lists.tier.map((t) => t.value)} canEdit={canEdit} onSave={(v) => save(d, { tier: v })} onCreate={(v) => api.addOption('tier', v)} /></td>
                   <td><ConditionCell d={d} canEdit={canEdit} onSave={(c) => save(d, { condition: c })} /></td>
-                  <td>{d.owner_type === 'club' ? <span className={styles.dim}>Club</span> : <span className={styles.ownerTag}>{ownerText(d, data)}</span>}</td>
                   <td><KitCell d={d} counted={!!data.lists.type.find((t) => t.value === d.type)?.counted} /></td>
                   <td><button type="button" className={styles.iconBtn} onClick={() => open(d)} aria-label={`${canEdit ? 'Edit' : 'Open'} ${d.tag ?? d.type}`}><Pencil size={14} aria-hidden="true" /></button></td>
                 </tr>
@@ -153,7 +144,6 @@ export default function EquipmentTab({ api, data }: { api: LogisticsApi; data: C
                 <span className={styles.cardType}>{d.type}{d.name ? ` · ${d.name}` : ''}</span>
                 <span className={styles.cardMeta}>
                   <span>{placeOf(d) || 'No place set'}</span>
-                  {d.owner_type !== 'club' && <span className={styles.ownerTag}>{ownerLabel(d.owner_type)}</span>}
                   {data.lists.type.find((t) => t.value === d.type)?.counted && <span className={styles.qty}>{quantityText(d)}</span>}
                   {missingCount(d) > 0 && <span className={`${styles.badge} ${styles.bad}`}>{missingCount(d)} missing</span>}
                 </span>

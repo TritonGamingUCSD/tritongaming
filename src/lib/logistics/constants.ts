@@ -14,18 +14,21 @@ export const conditionLabel = (c: string) => CONDITIONS.find((x) => x.id === c)?
 // The ones that mean a device can't be handed out.
 export const UNUSABLE: Condition[] = ['dead', 'disappeared', 'threw_away'];
 
-export const OWNER_TYPES = [
-  { id: 'club', label: 'Club' },
+// Sponsor and officer-loaner devices are not part of the inventory: each is entered inside one event's plan (see lib/logistics/plans.ts and the plan's borrowed devices).
+export const BORROWED_KINDS = [
   { id: 'sponsor', label: 'Sponsor' },
   { id: 'officer', label: 'Officer Loaner' },
 ] as const;
-export type OwnerType = (typeof OWNER_TYPES)[number]['id'];
-export const ownerLabel = (o: string) => OWNER_TYPES.find((x) => x.id === o)?.label ?? o;
+export type BorrowedKind = (typeof BORROWED_KINDS)[number]['id'];
+export type ItemKind = 'club' | BorrowedKind;
+export const borrowedLabel = (o: string) => BORROWED_KINDS.find((x) => x.id === o)?.label ?? o;
 
 // The lists a person can edit like a spreadsheet's dropdown. 'game' only holds extras: the portal's own list is read live (see lib/site/games.ts).
-export const OPTION_KINDS = ['type', 'shelf', 'tier', 'port', 'game', 'kit'] as const;
+// The plain lists are edited as simple rows; 'step' (the event-day steps, in order) and 'bundle' (a named set of device types) have their own editors.
+export const LIST_KINDS = ['type', 'shelf', 'tier', 'port', 'game', 'kit'] as const;
+export const OPTION_KINDS = [...LIST_KINDS, 'step', 'bundle'] as const;
 export type OptionKind = (typeof OPTION_KINDS)[number];
-export const KIND_LABELS: Record<OptionKind, string> = { type: 'Device Types', shelf: 'Shelves', tier: 'Tiers', port: 'Ports', game: 'Extra Games', kit: 'Kit Parts' };
+export const KIND_LABELS: Record<OptionKind, string> = { type: 'Device Types', shelf: 'Shelves', tier: 'Tiers', port: 'Ports', game: 'Extra Games', kit: 'Kit Parts', step: 'Event-Day Steps', bundle: 'Setup Bundles' };
 export const KIND_HINTS: Record<OptionKind, string> = {
   type: 'What kind of thing it is. Mark a type as counted for items you only estimate (cables, power strips).',
   shelf: 'Where gear is stored.',
@@ -33,6 +36,8 @@ export const KIND_HINTS: Record<OptionKind, string> = {
   port: 'Video outputs and connections a device has.',
   game: 'Games and software beyond the portal’s own game list.',
   kit: 'Parts that travel with a device (cables, controllers, chargers).',
+  step: 'What every device goes through on event day, in order.',
+  bundle: 'A set of devices that go together, like a PC with its monitor, keyboard, mouse and headset.',
 };
 
 // What a device of this type usually comes with, offered as a starting kit when someone adds one. Anything can be edited per device.

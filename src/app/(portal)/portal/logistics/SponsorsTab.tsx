@@ -13,15 +13,13 @@ import styles from './logistics.module.css';
 // The small list of sponsors that lend or give equipment (and later prizes): a name, how to reach them, and a note.
 export default function SponsorsTab({ api, data }: { api: LogisticsApi; data: Catalog }) {
   const [editing, setEditing] = useState<Sponsor | 'new' | null>(null);
-  const counts = new Map<string, number>();
-  for (const d of data.devices) if (d.sponsor_id) counts.set(d.sponsor_id, (counts.get(d.sponsor_id) ?? 0) + 1);
   return (
     <div className={styles.tab}>
       <div className={styles.toolbarRow}>
         <span className={styles.count}>{data.sponsors.length} {data.sponsors.length === 1 ? 'sponsor' : 'sponsors'}</span>
         {data.canManage && <Button className={styles.addBtn} onClick={() => setEditing('new')}><Plus size={15} aria-hidden="true" /> Add Sponsor</Button>}
       </div>
-      {data.sponsors.length === 0 ? <div className={styles.empty}><p>{data.canManage ? 'No sponsors yet. They are added here, or while choosing an owner for a device.' : 'No sponsors have been added yet.'}</p></div> : (
+      {data.sponsors.length === 0 ? <div className={styles.empty}><p>{data.canManage ? 'No sponsors yet. They are added here, or while adding a sponsor’s device to an event.' : 'No sponsors have been added yet.'}</p></div> : (
         <ul className={styles.sponsorList}>
           {data.sponsors.map((s) => (
             <li key={s.id} className={styles.sponsor}>
@@ -29,19 +27,18 @@ export default function SponsorsTab({ api, data }: { api: LogisticsApi; data: Ca
                 <b>{s.name}</b>
                 {s.contact && <span>{s.contact}</span>}
                 {s.notes && <small>{s.notes}</small>}
-                <small className={styles.dim}>{counts.get(s.id) ?? 0} {(counts.get(s.id) ?? 0) === 1 ? 'device' : 'devices'}</small>
               </div>
               {data.canManage && <button type="button" className={styles.iconBtn} aria-label={`Edit ${s.name}`} onClick={() => setEditing(s)}><Pencil size={14} aria-hidden="true" /></button>}
             </li>
           ))}
         </ul>
       )}
-      {editing && <SponsorDialog api={api} sponsor={editing === 'new' ? null : editing} used={editing === 'new' ? 0 : counts.get(editing.id) ?? 0} onClose={() => setEditing(null)} />}
+      {editing && <SponsorDialog api={api} sponsor={editing === 'new' ? null : editing} onClose={() => setEditing(null)} />}
     </div>
   );
 }
 
-function SponsorDialog({ api, sponsor, used, onClose }: { api: LogisticsApi; sponsor: Sponsor | null; used: number; onClose: () => void }) {
+function SponsorDialog({ api, sponsor, onClose }: { api: LogisticsApi; sponsor: Sponsor | null; onClose: () => void }) {
   const [name, setName] = useState(sponsor?.name ?? '');
   const [contact, setContact] = useState(sponsor?.contact ?? '');
   const [notes, setNotes] = useState(sponsor?.notes ?? '');
@@ -73,7 +70,7 @@ function SponsorDialog({ api, sponsor, used, onClose }: { api: LogisticsApi; spo
         <DialogCancel onClick={onClose} disabled={busy} />
         <Button onClick={save} loading={busy}>Save</Button>
       </DialogActions>
-      {sponsor && <div className={styles.dialogExtra}><Button variant="danger" size="sm" onClick={remove} disabled={busy || used > 0}>Remove{used ? ` (has ${used} device${used === 1 ? '' : 's'})` : ''}</Button></div>}
+      {sponsor && <div className={styles.dialogExtra}><Button variant="danger" size="sm" onClick={remove} disabled={busy}>Remove</Button></div>}
     </Dialog>
   );
 }

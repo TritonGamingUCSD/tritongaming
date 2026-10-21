@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { OptionKind } from '@/lib/logistics/constants';
 import type { Device, DevicePatch } from '@/lib/logistics/devices';
 
-export interface OptionItem { id: string; value: string; counted?: boolean }
+export interface BundleItem { type: string; qty: number }
+export interface OptionItem { id: string; value: string; counted?: boolean; applies?: 'all' | 'club' | 'borrowed'; kit?: boolean; items?: BundleItem[] }
 export interface Sponsor { id: string; name: string; contact: string | null; notes: string | null }
 export interface Catalog {
   canManage: boolean;
@@ -12,7 +13,7 @@ export interface Catalog {
   portalGames: string[];
   devices: Device[];
   sponsors: Sponsor[];
-  owners: Record<string, string>;
+  todayPlans: { id: string; slug: string; name: string }[];
 }
 
 // The catalog is fetched once when the section opens (one request: devices, lists, sponsors together) and kept in memory. Each edit's reply is applied to what is already on screen,
@@ -48,9 +49,16 @@ export function useLogistics() {
   useEffect(() => { if (!kept || Date.now() - kept.at > FRESH_MS) void load(); }, [load]);
 
   // ---- devices
+  // An edit to an existing device shows on screen straight away and is confirmed (or put back, with the reason) when the server answers.
   const saveDevice = useCallback(async (id: string | null, patch: DevicePatch): Promise<Device | null> => {
+    let before: Device | undefined;
+    if (id) edit((d) => ({ ...d, devices: d.devices.map((x) => { if (x.id !== id) return x; before = x; return { ...x, ...(patch as Partial<Device>) }; }) }));
     const r = id ? await call<{ device: Device }>(`/api/logistics/devices/${id}`, 'PATCH', patch) : await call<{ device: Device }>('/api/logistics/devices', 'POST', patch);
-    if (!r.ok) { setError(r.error); return null; }
+    if (!r.ok) {
+      setError(r.error);
+      if (id && before) { const old = before; edit((d) => ({ ...d, devices: d.devices.map((x) => (x.id === id ? old : x)) })); }
+      return null;
+    }
     setError('');
     edit((d) => ({ ...d, devices: id ? d.devices.map((x) => (x.id === id ? r.data.device : x)) : [...d.devices, r.data.device] }));
     return r.data.device;
@@ -63,17 +71,18 @@ export function useLogistics() {
   }, [edit]);
 
   // ---- dropdown lists
-  const addOption = useCallback(async (kind: OptionKind, value: string, counted = false): Promise<string | null> => {
-    const r = await call<{ option: OptionItem }>('/api/logistics/options', 'POST', { kind, value, counted });
+  const addOption = useCallback(async (kind: OptionKind, value: string, extra: Record<string, unknown> = {}): Promise<string | null> => {
+    const r = await call<{ option: OptionItem }>('/api/logistics/options', 'POST', { kind, value, ...extra });
     if (!r.ok) { setError(r.error); return null; }
     edit((d) => (d.lists[kind].some((o) => o.id === r.data.option.id) ? d : { ...d, lists: { ...d.lists, [kind]: [...d.lists[kind], r.data.option] } }));
     return r.data.option.value;
   }, [edit]);
-  const changeOption = useCallback(async (id: string, patch: { value?: string; counted?: boolean }): Promise<boolean> => {
+  const changeOption = useCallback(async (id: string, patch: { value?: string; counted?: boolean; applies?: string; kit?: boolean; items?: BundleItem[]; move?: 'up' | 'down' }): Promise<boolean> => {
     const r = await call<{ ok: true }>('/api/logistics/options', 'PATCH', { id, ...patch });
     if (!r.ok) { setError(r.error); return false; }
     setError('');
-    if (patch.value !== undefined) await load();   // devices that used the old name follow it, so read them again
+    // A rename (devices that used the old name follow it), a step's order or settings, and a bundle's items are read again; a counted switch is applied on screen.
+    if (patch.value !== undefined || patch.applies !== undefined || patch.kit !== undefined || patch.items !== undefined || patch.move !== undefined) await load();
     else edit((d) => ({ ...d, lists: Object.fromEntries(Object.entries(d.lists).map(([k, v]) => [k, v.map((o) => (o.id === id ? { ...o, ...(patch.counted !== undefined ? { counted: patch.counted } : {}) } : o))])) as Catalog['lists'] }));
     return true;
   }, [edit, load]);
@@ -103,8 +112,7 @@ export function useLogistics() {
   // Loaner owners and device history are fetched only when someone asks.
   const loadPeople = useCallback(async () => { const r = await call<{ people: { id: string; name: string }[] }>('/api/logistics/people', 'GET'); return r.ok ? r.data.people : []; }, []);
   const loadHistory = useCallback(async (id: string) => { const r = await call<{ log: { id: string; at: string; summary: string; by: string | null }[] }>(`/api/logistics/devices/${id}`, 'GET'); return r.ok ? r.data.log : null; }, []);
-  const rememberOwner = useCallback((id: string, name: string) => edit((d) => ({ ...d, owners: { ...d.owners, [id]: name } })), [edit]);
 
-  return { data, error, setError, saveDevice, removeDevice, addOption, changeOption, deleteOption, saveSponsor, deleteSponsor, loadPeople, loadHistory, rememberOwner };
+  return { data, error, setError, saveDevice, removeDevice, addOption, changeOption, deleteOption, saveSponsor, deleteSponsor, loadPeople, loadHistory };
 }
 export type LogisticsApi = ReturnType<typeof useLogistics>;

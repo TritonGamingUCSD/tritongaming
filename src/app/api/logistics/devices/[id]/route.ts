@@ -5,7 +5,7 @@ import { logAudit } from '@/lib/notifications/audit';
 
 export const dynamic = 'force-dynamic';
 const UUID = /^[0-9a-f-]{36}$/i;
-const COLUMNS = 'id, tag, name, type, shelf, tier, place_note, condition, owner_type, owner_user_id, sponsor_id, owner_note, ports, login, games, kit, quantity, quantity_is_estimate, notes, created_at, updated_at';
+const COLUMNS = 'id, tag, name, type, shelf, tier, place_note, condition, ports, login, games, kit, quantity, quantity_is_estimate, notes, created_at, updated_at';
 
 // The history of one device (fetched only when someone opens it).
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
