@@ -21,7 +21,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const prizeData = loadPlanPrizes(auth.svc, id);
   const [stations, rows, steps, done, borrowedRows, slotRows] = await Promise.all([
     auth.svc.from('logistics_stations').select('id, name, sort, contact, room, confirmed').eq('plan_id', id).order('sort').order('name').limit(500),
-    auth.svc.from('logistics_plan_devices').select('device_id, station_id, role, swap_reason, swapped_for_label, games_needed, sort, set_id, request_id').eq('plan_id', id).limit(5000),
+    auth.svc.from('logistics_plan_devices').select('device_id, station_id, role, swap_reason, swapped_for_label, games_needed, sort, set_id, request_id, request_item').eq('plan_id', id).limit(5000),
     loadSteps(auth.svc),
     auth.svc.from('logistics_plan_steps').select('device_id, borrowed_id, slot_id, step_id, done_at').eq('plan_id', id).limit(30000),
     auth.svc.from('logistics_plan_borrowed').select(BORROWED_COLUMNS).eq('plan_id', id).order('tag_key').limit(1000),

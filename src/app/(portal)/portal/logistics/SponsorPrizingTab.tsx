@@ -26,8 +26,9 @@ export default function SponsorPrizingTab({ plan, api, data }: { plan: PlanApi; 
   const ended = closed || d.plan.ends_on < pacificToday();
   const [dialog, setDialog] = useState<PrizeRow | 'new' | null>(null);
   const [storing, setStoring] = useState<PrizeRow[] | null>(null);
-  const mine = (prizes.rows ?? []).filter((p) => p.plan_id === d.plan.id);
   const sponsorName = new Map(data.sponsors.map((s) => [s.id, s.name]));
+  const sponsorOf = (p: PrizeRow) => sponsorName.get(p.sponsor_id ?? '') ?? 'Club';
+  const mine = (prizes.rows ?? []).filter((p) => p.plan_id === d.plan.id).sort((a, b) => sponsorOf(a).localeCompare(sponsorOf(b), undefined, { sensitivity: 'base' }) || a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
   const canStore = d.canManage && ended;
   const storable = mine.filter((p) => p.left > 0);
 
@@ -45,11 +46,11 @@ export default function SponsorPrizingTab({ plan, api, data }: { plan: PlanApi; 
           <p className={styles.muted}>{manage ? 'No sponsor prizes yet. Add what sponsors sent for this event; it stays here until the event is over.' : 'No sponsor prizes for this event.'}</p>
         ) : (
           <div className={styles.prizeGrid}>
-            <div className={`${styles.prizeRow} ${styles.prizeHeadRow} ${styles.sentRow}`} aria-hidden="true"><span>Prize</span><span>Sponsor</span><span>Size</span><span>Price</span><span>In stock</span><span>Promised</span><span>Given</span><span>Left</span><span /></div>
+            <div className={`${styles.prizeRow} ${styles.prizeHeadRow} ${styles.sentRow}`} aria-hidden="true"><span>Sponsor</span><span>Prize</span><span>Size</span><span>Price</span><span>In stock</span><span>Promised</span><span>Given</span><span>Left</span><span /></div>
             {mine.map((p) => (
               <div key={p.id} className={`${styles.prizeRow} ${styles.sentRow} ${p.left < 0 ? styles.lineBad : ''}`}>
-                <span className={styles.prizeName}><b>{p.name}</b></span>
-                <span data-label="Sponsor">{sponsorName.get(p.sponsor_id ?? '') ?? <span className={styles.dim}>Club</span>}</span>
+                <span className={styles.prizeName}><b>{sponsorOf(p)}</b></span>
+                <span data-label="Prize">{p.name}</span>
                 <span data-label="Size">{p.size ?? <span className={styles.dim}>Big</span>}</span>
                 <span data-label="Price">{money(p.price) || <span className={styles.dim}>–</span>}</span>
                 <span data-label="In stock">{p.quantity_is_estimate ? '~' : ''}{p.quantity}</span>

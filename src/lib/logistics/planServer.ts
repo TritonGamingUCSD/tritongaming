@@ -4,7 +4,7 @@ import { plansOverlap, type Applies, type StepDef } from '@/lib/logistics/plans'
 export const UUID = /^[0-9a-f-]{36}$/i;
 export const PLAN_COLUMNS = 'id, slug, name, event_id, starts_on, ends_on, status, notes, created_at, updated_at';
 export const DEVICE_COLUMNS = 'id, tag, name, type, shelf, tier, place_note, condition, ports, login, games, kit, quantity, quantity_is_estimate, notes, created_at, updated_at';
-export const SLOT_COLUMNS = 'id, plan_id, station_id, type, games, label, sort, set_id, request_id';
+export const SLOT_COLUMNS = 'id, plan_id, station_id, type, games, label, sort, set_id, request_id, request_item';
 export const BORROWED_COLUMNS = 'id, plan_id, tag, name, type, owner_kind, sponsor_id, owner_user_id, owner_note, station_id, role, swap_reason, swapped_for_label, kit, notes, games_needed, sort, set_id';
 
 // Today's date in Pacific time (the club's calendar), as YYYY-MM-DD.
@@ -54,7 +54,7 @@ export async function ownerNames(svc: SupabaseClient, rows: { sponsor_id: string
   return { sponsors: new Map((s.data ?? []).map((x) => [x.id as string, x.name as string])), people: new Map((p.data ?? []).map((x) => [x.id as string, ((x as { display_name?: string | null }).display_name as string | null) || 'Unnamed'])) };
 }
 
-export interface SlotRow { id: string; plan_id: string; station_id: string | null; type: string; games: string[]; label: string | null; sort: number; set_id?: string | null; request_id?: string | null }
+export interface SlotRow { id: string; plan_id: string; station_id: string | null; type: string; games: string[]; label: string | null; sort: number; set_id?: string | null; request_id?: string | null; request_item?: string | null }
 export interface BorrowedRow { games_needed: string[]; sort: number; set_id?: string | null; id: string; plan_id: string; tag: string; name: string | null; type: string; owner_kind: 'sponsor' | 'officer'; sponsor_id: string | null; owner_user_id: string | null; owner_note: string | null; station_id: string | null; role: 'planned' | 'backup'; swap_reason: string | null; swapped_for_label: string | null; kit: { item: string; qty: number; missing: boolean }[]; notes: string | null }
 export const ownerLabelOf = (b: Pick<BorrowedRow, 'owner_kind' | 'sponsor_id' | 'owner_user_id'>, n: Awaited<ReturnType<typeof ownerNames>>) =>
   b.owner_kind === 'sponsor' ? (b.sponsor_id ? n.sponsors.get(b.sponsor_id) : null) ?? 'a sponsor' : (b.owner_user_id ? n.people.get(b.owner_user_id) : null) ?? 'an officer';

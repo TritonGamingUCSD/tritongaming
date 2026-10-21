@@ -25,14 +25,19 @@ describe('Logistics addresses', () => {
     expect(parseRoute('tools', 'lists', undefined, false)).toEqual({ tab: 'events', plan: null, page: 'device' });
   });
   it('writes an address back', () => {
-    expect(routeParams({ tab: 'events', plan: 'ds-2026', page: 'prizing' })).toEqual({ tab: 'events', subtab: 'ds-2026', detail: 'allocation-prizing', view: null });
-    expect(routeParams({ tab: 'events', plan: 'ds-2026', page: 'prizing', day: true }).detail).toBe('event-day-prizing');
-    expect(routeParams({ tab: 'events', plan: 'ds-2026', page: 'requests' }).detail).toBe('requests');
+    expect(routeParams({ tab: 'events', plan: 'ds-2026', page: 'prizing' })).toEqual({ tab: 'ds-2026', subtab: 'allocation-prizing', detail: null, view: null });
+    expect(routeParams({ tab: 'events', plan: 'ds-2026', page: 'prizing', day: true }).subtab).toBe('event-day-prizing');
+    expect(routeParams({ tab: 'events', plan: 'ds-2026', page: 'requests' }).subtab).toBe('requests');
+    expect(routeParams({ tab: 'events', plan: 'ds-2026', page: 'device', day: true })).toEqual({ tab: 'ds-2026', subtab: 'event-day-devices', detail: null, view: null });
+    expect(routeParams({ tab: 'events', plan: null, page: 'device' })).toEqual({ tab: null, subtab: null, detail: null, view: null });
+    expect(routeParams({ tab: 'inventory', sub: 'devices' })).toEqual({ tab: 'inventory', subtab: 'devices', detail: null, view: null });
+  });
+  it('reads the event straight after logistics, and the old addresses', () => {
+    expect(parseRoute('ds-2026', 'event-day-devices', undefined, false)).toEqual({ tab: 'events', plan: 'ds-2026', page: 'device', day: true });
+    expect(parseRoute('ds-2026', 'allocation-sponsor-items', undefined, false)).toEqual({ tab: 'events', plan: 'ds-2026', page: 'sponsor-items' });
+    expect(parseRoute('ds-2026', undefined, undefined, false)).toEqual({ tab: 'events', plan: 'ds-2026', page: 'device' });
     expect(parseRoute('events', 'ds-2026', 'event-day-devices', false)).toEqual({ tab: 'events', plan: 'ds-2026', page: 'device', day: true });
     expect(parseRoute('events', 'ds-2026', 'allocation-sponsor-items', false)).toEqual({ tab: 'events', plan: 'ds-2026', page: 'sponsor-items' });
     expect(parseRoute('events', 'ds-2026', 'event-day-sponsor-items', false)).toEqual({ tab: 'events', plan: 'ds-2026', page: 'sponsor-items' });
-    expect(routeParams({ tab: 'events', plan: 'ds-2026', page: 'device', day: true })).toEqual({ tab: 'events', subtab: 'ds-2026', detail: 'event-day-devices', view: null });
-    expect(routeParams({ tab: 'events', plan: null, page: 'device' })).toEqual({ tab: 'events', subtab: null, detail: null, view: null });
-    expect(routeParams({ tab: 'inventory', sub: 'devices' })).toEqual({ tab: 'inventory', subtab: 'devices', detail: null, view: null });
   });
 });

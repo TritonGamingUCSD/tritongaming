@@ -8,8 +8,8 @@ import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
 export interface PlanSummary { id: string; slug: string; name: string; event_id: string | null; starts_on: string; ends_on: string; status: 'draft' | 'closed'; notes: string | null; devices: number }
 export interface Station { id: string; name: string; sort: number; contact: string | null; room: string | null; confirmed: boolean }
 // A row allocated by type that has no device yet (or never will: a mousepad). `label` is a note shown with it.
-export interface Slot { id: string; plan_id: string; station_id: string | null; type: string; games: string[]; label: string | null; sort: number; set_id?: string | null; request_id?: string | null }
-export interface PlanItem { device_id: string; station_id: string | null; role: 'planned' | 'backup'; swap_reason: string | null; swapped_for_label: string | null; games_needed: string[]; sort: number; set_id?: string | null; request_id?: string | null; device: Device }
+export interface Slot { id: string; plan_id: string; station_id: string | null; type: string; games: string[]; label: string | null; sort: number; set_id?: string | null; request_id?: string | null; request_item?: string | null }
+export interface PlanItem { device_id: string; station_id: string | null; role: 'planned' | 'backup'; swap_reason: string | null; swapped_for_label: string | null; games_needed: string[]; sort: number; set_id?: string | null; request_id?: string | null; request_item?: string | null; device: Device }
 export interface KitLine { item: string; qty: number; missing: boolean }
 // A sponsor's or an officer's device, entered inside this one event (not in the inventory). `owner` is their name in words.
 export interface Borrowed { id: string; plan_id: string; tag: string; name: string | null; type: string; owner_kind: 'sponsor' | 'officer'; sponsor_id: string | null; owner_user_id: string | null; owner_note: string | null; station_id: string | null; role: 'planned' | 'backup'; swap_reason: string | null; swapped_for_label: string | null; kit: KitLine[]; notes: string | null; games_needed: string[]; sort: number; set_id?: string | null; owner: string }

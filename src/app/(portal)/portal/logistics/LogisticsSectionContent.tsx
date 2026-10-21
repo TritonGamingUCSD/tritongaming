@@ -32,9 +32,10 @@ export default function LogisticsSectionContent({ canManage }: { canManage: bool
   const go = useCallback((r: Route) => { setRoute(r); setParams({ section: 'logistics', ...routeParams(r) }); }, [setParams]);
   // An old address (equipment, plans, a long ID…) is tidied to the new one.
   useEffect(() => {
-    const want = routeParams(parseRoute(urlTab, urlSub, urlDetail, canManage, urlView));
-    if (urlTab && (urlTab !== want.tab || (urlSub ?? null) !== want.subtab || (urlDetail ?? null) !== want.detail) && want.tab !== 'events') setParams({ section: 'logistics', ...want });
-    // events are tidied by PlansTab, which knows the plan's name
+    const parsed = parseRoute(urlTab, urlSub, urlDetail, canManage, urlView);
+    const want = routeParams(parsed);
+    if (parsed.tab === 'events' && parsed.plan) return;   // an event is tidied by PlansTab, which knows its name
+    if (urlTab && (urlTab !== want.tab || (urlSub ?? null) !== want.subtab || (urlDetail ?? null) !== want.detail)) setParams({ section: 'logistics', ...want });
   }, [urlTab, urlSub, urlDetail, urlView, canManage, setParams]);
 
   const tabs = [
@@ -48,8 +49,8 @@ export default function LogisticsSectionContent({ canManage }: { canManage: bool
 
   return (
     <div className={styles.page}>
-      {!inPlan && <SectionHeader title="Logistics" flush sub={canManage ? 'Where every device and prize goes for each event, and what is in storage.' : 'Find where a device goes, what is in storage, and where to get it. Only the logistics team can make changes.'} />}
-      {!inPlan && <SectionTabs<Tab> label="Logistics" value={route.tab} onChange={pick} tabs={tabs} />}
+      {!inPlan && <SectionHeader title="Event Logistics" flush sub={canManage ? 'Where every device and prize goes for each event, and what is in storage.' : 'Find where a device goes, what is in storage, and where to get it. Only the logistics team can make changes.'} />}
+      {!inPlan && <SectionTabs<Tab> label="Event Logistics" value={route.tab} onChange={pick} tabs={tabs} />}
       {error && <div role="alert" onClick={() => setError('')}><Notice tone="error">{error}</Notice></div>}
       {!data ? (error ? null : <Loading variant="inline" label="Loading…" />) : route.tab === 'events' ? <PlansTab api={api} data={data} route={route} go={go} />
         : route.tab === 'inventory' ? (

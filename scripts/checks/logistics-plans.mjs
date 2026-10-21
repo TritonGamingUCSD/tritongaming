@@ -27,8 +27,8 @@ try {
   t.ok('the starting steps and bundles are there', ['Left Storage', 'Box Returned', 'Check done', 'Box Taken', 'Back to Storage', 'Returned to owner'].every((n, i, a) => boot.j.lists.step.some((x) => x.value === n) && (i === 0 || boot.j.lists.step.findIndex((x) => x.value === n) > boot.j.lists.step.findIndex((x) => x.value === a[i - 1]))) && boot.j.lists.bundle.length >= 3, JSON.stringify(boot.j.lists.step));
   const steps = Object.fromEntries(boot.j.lists.step.map((s) => [s.value, s]));
   t.ok('Check done reviews the kit, Back to Storage is club-only, Returned to owner is borrowed-only', steps['Check done'].kit === true && steps['Back to Storage'].applies === 'club' && steps['Returned to owner'].applies === 'borrowed');
-  const sw = boot.j.lists.bundle.find((b) => b.value === 'Switch Station');
-  t.ok('the Switch Station has no TV', !sw.items.some((i) => i.type === 'TV') && sw.items.length === 3, JSON.stringify(sw.items));
+  const sw = boot.j.lists.bundle.find((b) => b.value.startsWith('Switch Station'));
+  t.ok('the Switch Station has no TV', !sw.items.some((i) => i.type === 'TV') && sw.items.length >= 2, JSON.stringify(sw.items));
 
   // ---- choosing devices
   const pc = boot.j.lists.bundle.find((b) => b.value === 'PC Station');

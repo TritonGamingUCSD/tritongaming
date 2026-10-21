@@ -32,7 +32,7 @@ try {
   const E = e.j.request.id;
 
   const newOnes = await told(exec.id, 'logistics_request');
-  t.ok('the logistics team is told about a new request, with a link', newOnes.length >= 2 && newOnes.some((n) => n.href === `/portal/logistics/events/${P.slug}/requests` && /device request/.test(n.title)), JSON.stringify(newOnes));
+  t.ok('the logistics team is told about a new request, with a link', newOnes.length >= 2 && newOnes.some((n) => n.href === `/portal/logistics/${P.slug}/requests` && /device request/.test(n.title)), JSON.stringify(newOnes));
   t.ok('the person who made it is not told about their own', (await told(lead.id, 'logistics_request')).length === 0);
 
   const mine = (await lead.call('GET', URL_)).j;
@@ -46,10 +46,9 @@ try {
   t.ok('the logistics team is told it was changed', (await told(exec.id, 'logistics_request')).some((n) => /was changed/.test(n.title)));
   t.ok('a requester cannot set the status', (await lead.call('PATCH', URL_, { request_id: A, status: 'done' })).j.request.status === 'submitted');
 
-  const ans = await exec.call('PATCH', URL_, { request_id: A, status: 'planned', response: 'Added to the allocation' });
-  t.ok('logistics plans it with a note', ans.s === 200 && ans.j.request.status === 'planned' && ans.j.request.response === 'Added to the allocation' && !!ans.j.request.planned_at);
-  const upd = await told(lead.id, 'logistics_update');
-  t.ok('the person who asked is told it is planned, with the note', upd.length === 1 && /planned/.test(upd[0].title) && /Added to the allocation/.test(upd[0].body), JSON.stringify(upd));
+  const ans = await exec.call('PATCH', URL_, { request_id: A, status: 'planned' });
+  t.ok('logistics sets where it stands', ans.s === 200 && ans.j.request.status === 'planned' && !!ans.j.request.planned_at);
+  t.ok('the person who asked is not messaged: logistics tells them itself', (await told(lead.id, 'logistics_update')).length === 0);
   t.ok('once planned the requester can no longer change or remove it', (await lead.call('PATCH', URL_, { request_id: A, notes: 'late' })).s === 403 && (await lead.call('DELETE', URL_, { request_id: A })).s === 403);
   t.ok('logistics can still change it', (await exec.call('PATCH', URL_, { request_id: A, notes: 'moved to Ballroom' })).s === 200);
   // A device request is what makes the empty rows in the allocation.
@@ -62,12 +61,35 @@ try {
   t.ok('asking for more adds rows', upQ.s === 200 && n1 > n0, `${upQ.s} ${n0} ${n1} ${JSON.stringify(upQ.j).slice(0, 200)}`);
   const upD = await exec.call('PATCH', URL_, { request_id: A, items: [{ what: bundle, qty: 2, games: ['Valorant'] }] });
   t.ok('asking for less removes empty rows', upD.s === 200 && (await mineRows()).length < n0);
+  const setsOk = (await mineRows()).length % 5 === 0 && new Set((await mineRows()).map((x) => x.set_id)).size === (await mineRows()).length / 5;
+  t.ok('a bundle request is whole sets, one per unit', setsOk);
+  const mk = async (tag) => (await exec.call('POST', '/api/logistics/devices', { tag, type: 'Gaming PC', shelf: 'ZZ Shelf' })).j.device;
+  const dA = await mk('ZZ-RA'); const dB = await mk('ZZ-RB');
+  const slot0 = (await mineRows())[0];
+  const SL = `/api/logistics/plans/${P.id}/slots`;
+  t.ok('typing an ID fills a row of the request', (await exec.call('POST', SL, { action: 'assign', slot_id: slot0.id, tag: 'zz-ra' })).s === 200);
+  const filled = (await plan1()).items.find((i) => i.device_id === dA.id);
+  t.ok('the device keeps the request and the set', filled?.request_id === A && filled.set_id === slot0.set_id);
+  t.ok('typing another ID replaces the device in that row', (await exec.call('POST', SL, { action: 'assign', device_id: dA.id, tag: 'ZZ-RB' })).s === 200 && !(await plan1()).items.some((i) => i.device_id === dA.id) && (await plan1()).items.some((i) => i.device_id === dB.id && i.request_id === A));
+  const lessFilled = await exec.call('PATCH', URL_, { request_id: A, items: [{ what: bundle, qty: 1, games: ['Valorant'] }] });
+  const allRows = async () => { const d = await plan1(); return d.slots.filter((x) => x.request_id === A).length + d.items.filter((x) => x.request_id === A).length; };
+  t.ok('fewer sets leaves exactly what is asked for, taking empty sets first', lessFilled.s === 200 && lessFilled.j.kept === 0 && (await allRows()) === 5 && (await plan1()).items.some((i) => i.device_id === dB.id), `${lessFilled.j.kept} ${await allRows()}`);
+  const dC = await mk('ZZ-RC');
+  await exec.call('PATCH', URL_, { request_id: A, items: [{ what: bundle, qty: 2, games: ['Valorant'] }] });
+  const slotC = (await mineRows()).filter((x) => x.type === 'Gaming PC').sort((a, b) => b.sort - a.sort)[0];
+  await exec.call('POST', SL, { action: 'assign', slot_id: slotC.id, tag: 'ZZ-RC' });
+  await exec.call('POST', `/api/logistics/plans/${P.id}/steps`, { device_id: dC.id, step_id: (await exec.call('GET', '/api/logistics')).j.lists.step[0].id });
+  await exec.call('POST', `/api/logistics/plans/${P.id}/steps`, { device_id: dB.id, step_id: (await exec.call('GET', '/api/logistics')).j.lists.step[0].id });
+  const lockedCut = await exec.call('PATCH', URL_, { request_id: A, items: [{ what: bundle, qty: 1, games: ['Valorant'] }] });
+  t.ok('a device with an event-day step done is never taken out', lockedCut.s === 200 && lockedCut.j.kept === 1 && (await plan1()).items.some((i) => i.device_id === dC.id) && (await plan1()).items.some((i) => i.device_id === dB.id), JSON.stringify(lockedCut.j.kept));
+  t.ok('a row can be emptied again', (await exec.call('POST', SL, { action: 'empty', device_id: dC.id })).s === 200 && !(await plan1()).items.some((i) => i.device_id === dC.id));
+  await svc.from('logistics_devices').delete().in('id', [dA.id, dB.id, dC.id]);
   const listed = (await exec.call('GET', URL_)).j.requests.find((r) => r.id === A);
   t.ok('the request shows filled / total rows', listed.rowsTotal === (await mineRows()).length && listed.filled === 0);
   const emptyPlain = await exec.call('POST', `/api/logistics/plans/${P.id}/slots`, { action: 'empty', device_id: '00000000-0000-4000-8000-000000000000' });
   t.ok('emptying a device that is not in the plan is refused', emptyPlain.s === 404);
-  const dec = await exec.call('PATCH', URL_, { request_id: E, status: 'declined', response: 'Not enough stock' });
-  t.ok('a request logistics wrote for someone tells that person, when declined', dec.s === 200 && (await told(other.id, 'logistics_update')).some((n) => /declined/.test(n.title)));
+  const dec = await exec.call('PATCH', URL_, { request_id: E, status: 'declined' });
+  t.ok('declining a request leaves it declined and takes back its empty rows', dec.s === 200 && dec.j.request.status === 'declined');
   t.ok('an unknown status is refused', (await exec.call('PATCH', URL_, { request_id: A, status: 'maybe' })).s === 400);
   t.ok('the person who asked can take back a request that is still waiting', (await lead.call('DELETE', URL_, { request_id: B })).s === 200 && (await lead.call('GET', URL_)).j.requests.length === 1);
 

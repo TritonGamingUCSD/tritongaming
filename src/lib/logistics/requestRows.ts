@@ -27,36 +27,67 @@ export function rowDiff(want: Want[], have: Map<string, number>): Map<string, nu
 }
 
 interface Req { id: string; plan_id: string; kind: string; team: string | null; division_id: string | null; items: unknown; status: string }
+interface RowRef { id: string; sort: number; set_id: string | null; key: string; slot: boolean; locked: boolean }
 
-// Make the plan's rows match one device request: its team is found or made, missing rows are added empty, and rows no longer wanted go only if they are still empty (a device
-// already given stays; the count of those is returned so the logistics team can be told). A declined request keeps no empty rows.
+// Make the plan's rows match one device request, line by line. A bundle line is whole sets (a row for every item of the bundle, one set per unit); a type line is plain rows. More
+// units add empty rows; fewer take away the extras, empty ones first and then ones with a device (it goes back to storage), except a device with an event-day step done (the count that
+// stays is returned). A declined request keeps no rows. The team is found by name (the request's team, else its division) or made.
 export async function syncRequestRows(svc: SupabaseClient, r: Req): Promise<{ kept: number }> {
   if (r.kind !== 'devices') return { kept: 0 };
   const [{ data: slots }, { data: devs }, { data: opts }] = await Promise.all([
-    svc.from('logistics_plan_slots').select('id, type, sort').eq('request_id', r.id),
-    svc.from('logistics_plan_devices').select('device_id').eq('request_id', r.id),
-    svc.from('logistics_options').select('kind, value, meta').in('kind', ['bundle']),
+    svc.from('logistics_plan_slots').select('id, type, sort, set_id, request_item').eq('request_id', r.id),
+    svc.from('logistics_plan_devices').select('device_id, sort, set_id, request_item').eq('request_id', r.id),
+    svc.from('logistics_options').select('value, meta').eq('kind', 'bundle'),
   ]);
   const ids = (devs ?? []).map((d) => d.device_id as string);
   const { data: dd } = ids.length ? await svc.from('logistics_devices').select('id, type').in('id', ids) : { data: [] };
-  const have = new Map<string, number>();
-  for (const t of [...(slots ?? []).map((s) => s.type as string), ...(dd ?? []).map((d) => d.type as string)]) have.set(t.toLowerCase(), (have.get(t.toLowerCase()) ?? 0) + 1);
+  // A device that already has an event-day step done is part of the record, so it is never taken out.
+  const { data: ticks } = ids.length ? await svc.from('logistics_plan_steps').select('device_id').eq('plan_id', r.plan_id).in('device_id', ids) : { data: [] };
+  const started = new Set((ticks ?? []).map((x) => x.device_id as string));
+  const typeOf = new Map((dd ?? []).map((d) => [d.id as string, d.type as string]));
   const bundles = new Map((opts ?? []).map((o) => [String(o.value).toLowerCase(), ((o.meta as { items?: { type: string; qty: number }[] } | null)?.items ?? [])]));
-  const want = r.status === 'declined' ? [] : wantedRows((r.items as DeviceItem[]) ?? [], bundles);
-  const diff = rowDiff(want, have);
-  let kept = 0;
+  const items: DeviceItem[] = r.status === 'declined' ? [] : ((r.items as DeviceItem[]) ?? []);
+  const refs: RowRef[] = [
+    ...(slots ?? []).map((x) => ({ id: x.id as string, sort: x.sort as number, set_id: x.set_id as string | null, key: String(x.request_item ?? x.type).toLowerCase(), slot: true, locked: false })),
+    ...(devs ?? []).map((x) => ({ id: x.device_id as string, sort: x.sort as number, set_id: x.set_id as string | null, key: String(x.request_item ?? typeOf.get(x.device_id as string) ?? '').toLowerCase(), slot: false, locked: started.has(x.device_id as string) })),
+  ];
+  const wanted = new Set(items.map((i) => i.what.toLowerCase()));
   const drop: string[] = [];
-  for (const [type, d] of diff) {
-    if (d >= 0) continue;
-    const mine = (slots ?? []).filter((s) => (s.type as string).toLowerCase() === type).sort((a, b) => (b.sort as number) - (a.sort as number));
-    drop.push(...mine.slice(0, -d).map((s) => s.id as string));
-    kept += -d - Math.min(-d, mine.length);
+  const dropDev: string[] = [];
+  // Take away what is no longer asked for: empty rows first, then ones with a device (which goes back to storage), the last-added first.
+  const cutOf = (groups: RowRef[][], n: number) => groups.filter((g) => !g.some((x) => x.locked)).sort((a, b) => Number(a.every((x) => x.slot)) === Number(b.every((x) => x.slot)) ? Math.max(...b.map((x) => x.sort)) - Math.max(...a.map((x) => x.sort)) : Number(b.every((x) => x.slot)) - Number(a.every((x) => x.slot))).slice(0, n);
+  let kept = 0;
+  const add: { item: DeviceItem; units: number }[] = [];
+
+  for (const key of new Set([...wanted, ...refs.map((x) => x.key)])) {
+    const item = items.find((i) => i.what.toLowerCase() === key);
+    const mine = refs.filter((x) => x.key === key);
+    const parts = bundles.get(key);
+    const need = item?.qty ?? 0;
+    if (parts && mine.some((x) => x.set_id)) {
+      const sets = new Map<string, RowRef[]>();
+      for (const x of mine) if (x.set_id) sets.set(x.set_id, [...(sets.get(x.set_id) ?? []), x]);
+      const have = sets.size;
+      if (have < need && item) add.push({ item, units: need - have });
+      if (have > need) {
+        const cut = cutOf([...sets.values()], have - need);
+        for (const g of cut) for (const x of g) (x.slot ? drop : dropDev).push(x.id);
+        kept += have - need - cut.length;
+      }
+    } else {
+      const have = mine.length;
+      if (have < need && item) add.push({ item, units: need - have });
+      if (have > need) {
+        const cut = cutOf(mine.map((x) => [x]), have - need).map((g) => g[0]);
+        for (const x of cut) (x.slot ? drop : dropDev).push(x.id);
+        kept += have - need - cut.length;
+      }
+    }
   }
   if (drop.length) await svc.from('logistics_plan_slots').delete().in('id', drop);
-  const add = [...diff].filter(([, d]) => d > 0);
+  if (dropDev.length) await svc.from('logistics_plan_devices').delete().eq('plan_id', r.plan_id).in('device_id', dropDev);
   if (!add.length) return { kept };
 
-  // The team: the name given, else the division's name; found by name or made.
   let name = r.team?.trim() || null;
   if (!name && r.division_id) name = ((await svc.from('divisions').select('name').eq('id', r.division_id).maybeSingle()).data?.name as string | undefined) ?? null;
   let station: string | null = null;
@@ -71,20 +102,17 @@ export async function syncRequestRows(svc: SupabaseClient, r: Req): Promise<{ ke
   }
   const { data: last } = await svc.from('logistics_plan_slots').select('sort').eq('plan_id', r.plan_id).order('sort', { ascending: false }).limit(1).maybeSingle();
   let sort = (last?.sort as number | undefined) ?? 0;
-  // A brand-new request keeps its bundle sets together; later additions are plain rows of the type.
-  const fresh = (slots ?? []).length + ids.length === 0;
-  const setIds = new Map<number, string>();
-  const setSize = new Map<number, number>();
-  if (fresh) for (const w of want) if (w.set) setSize.set(w.set, (setSize.get(w.set) ?? 0) + 1);
-  let rows: { plan_id: string; station_id: string | null; type: string; games: string[]; sort: number; set_id: string | null; request_id: string }[];
-  if (fresh) {
-    rows = want.map((w) => ({ plan_id: r.plan_id, station_id: station, type: w.type, games: w.games, sort: ++sort, set_id: w.set && (setSize.get(w.set) ?? 0) > 1 ? (setIds.get(w.set) ?? (setIds.set(w.set, crypto.randomUUID()), setIds.get(w.set)!)) : null, request_id: r.id }));
-  } else {
-    const games = new Map<string, string[]>();
-    for (const w of want) if (!games.has(w.type.toLowerCase())) games.set(w.type.toLowerCase(), w.games);
-    const typeName = new Map(want.map((w) => [w.type.toLowerCase(), w.type]));
-    rows = add.flatMap(([type, d]) => Array.from({ length: d }, () => ({ plan_id: r.plan_id, station_id: station, type: typeName.get(type) ?? type, games: games.get(type) ?? [], sort: ++sort, set_id: null, request_id: r.id })));
+  const rows: Record<string, unknown>[] = [];
+  const row = (type: string, games: string[], set_id: string | null, what: string) => rows.push({ plan_id: r.plan_id, station_id: station, type, games, sort: ++sort, set_id, request_id: r.id, request_item: what });
+  for (const { item, units } of add) {
+    const parts = bundles.get(item.what.toLowerCase());
+    for (let u = 0; u < units; u++) {
+      if (!parts) { row(item.what, item.games, null, item.what); continue; }
+      const set_id = crypto.randomUUID();
+      parts.forEach((p, i) => { for (let k = 0; k < Math.max(1, p.qty); k++) row(p.type, i === 0 ? item.games : [], set_id, item.what); });
+    }
   }
-  if (rows.length) { const ins = await svc.from('logistics_plan_slots').insert(rows); if (ins.error) console.error('request rows', ins.error.message); }
+  const ins = await svc.from('logistics_plan_slots').insert(rows);
+  if (ins.error) console.error('request rows', ins.error.message);
   return { kept };
 }

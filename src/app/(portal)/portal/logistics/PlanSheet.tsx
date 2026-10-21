@@ -12,7 +12,7 @@ import styles from './logistics.module.css';
 
 export interface SheetCtx {
   api: ReturnType<typeof usePlan>; canManage: boolean; closed: boolean; busy: boolean; day: boolean; stations: Station[]; steps: StepDef[]; activeId: string;
-  doneSet: Set<string>; doneAt: Map<string, string>; problems: Problem[];
+  listId: (type: string) => string; doneSet: Set<string>; doneAt: Map<string, string>; problems: Problem[];
   onTick: (row: Row, step: StepDef) => void; onTickAll: (rows: Row[], step: StepDef) => void; onUndo: (item: { id: string; kind: Slim['kind'] }, stepId: string) => void;
   onSwap: (r: Row) => void; onBorrowed: (r: Row) => void; onInstalled: (rows: Row[]) => void; onEditDevice: (r: Row) => void;
 }
@@ -60,9 +60,10 @@ function Cells({ rows, setLabel, ctx, readOnly }: { rows: Row[]; setLabel?: stri
 }
 
 // One device (or one counted line) with everything about it: what and where, what's wrong, its step boxes, and the tools to change it.
+const rowKind0 = (l: Line) => (l.rows[0].kind === 'club' ? l.rows[0].tag ?? '' : '');
 function DeviceLine({ line, ctx, backup, nested }: { line: Line; ctx: SheetCtx; backup?: boolean; nested?: boolean }) {
   const { api, canManage, closed, stations, problems, onSwap, onBorrowed } = ctx;
-  const [tag, setTag] = useState('');
+  const [tag, setTag] = useState(() => (rowKind0(line)));
   const [busy, setBusy] = useState(false);
   const r = line.rows[0];
   const manage = canManage && !closed;
@@ -77,25 +78,31 @@ function DeviceLine({ line, ctx, backup, nested }: { line: Line; ctx: SheetCtx; 
   const empty0 = () => api.act('/slots', 'POST', { action: 'empty', device_id: r.id });
   const takeOut = () => (r.kind === 'club' ? api.act('/devices', 'DELETE', { device_ids: [r.id] }) : r.kind === 'slot' ? api.act('/slots', 'DELETE', { slot_id: r.id }) : api.act('/borrowed', 'DELETE', { borrowed_id: r.id }));
   async function assign() { if (!tag.trim() || busy) return; setBusy(true); const ok = await api.assign(r.id, tag.trim()); setBusy(false); if (ok) setTag(''); }
+  // Allocation: each row is what was asked for, and its ID box is where the device goes. Typing an ID fills an empty row or swaps the device; clearing it empties the row.
+  const alloc = manage && !ctx.day && !backup && !line.counted && (r.kind === 'club' || r.kind === 'slot');
+  async function commit() {
+    const v = tag.trim();
+    if (busy || (r.kind === 'club' && v.toLowerCase() === (r.tag ?? '').toLowerCase())) return;
+    setBusy(true);
+    if (r.kind === 'slot') { if (v) await api.assign(r.id, v); }
+    else if (!v) { if (fromRequest) await empty0(); else setTag(r.tag ?? ''); }
+    else if (!(await api.act('/slots', 'POST', { action: 'assign', device_id: r.id, tag: v }))) setTag(r.tag ?? '');
+    setBusy(false);
+  }
   const skipNames = [...new Set(skip.map((s) => s.name))].join(', ');
 
   return (
     <div data-rows={line.rows.map((x) => x.id).join(' ')} className={`${styles.dayRow} ${styles.dayLine} ${nested ? styles.nested : ''} ${bad ? styles.lineBad : missing.length || flags.length ? styles.lineWarn : ''}`}>
       <div className={styles.dInfo}>
-        {empty ? <b className={styles.emptyMark}>Needs a {r.type}</b> : <b className={styles.dTag}>{line.counted ? `${r.type} ×${line.rows.length}` : r.tag ?? r.type}</b>}
-        {!empty && <span className={styles.dType}>{line.counted ? 'counted' : `${r.type}${r.name ? ` · ${r.name}` : ''}`}</span>}
+        {alloc ? <b className={styles.dTag}>{r.type}</b> : empty ? <b className={styles.emptyMark}>Needs a {r.type}</b> : <b className={styles.dTag}>{line.counted ? `${r.type} ×${line.rows.length}` : r.tag ?? r.type}</b>}
+        {!empty && !alloc && <span className={styles.dType}>{line.counted ? 'counted' : `${r.type}${r.name ? ` · ${r.name}` : ''}`}</span>}
         {(r.kind === 'sponsor' || r.kind === 'officer') && <span className={styles.ownerTag}>{r.kind === 'sponsor' ? 'Sponsor' : 'Loaner'}</span>}
         {r.kind !== 'slot' && r.where && (r.located ? <span className={styles.dWhere}>{r.where}</span> : <span className={`${styles.dWhere}`}><span className={styles.notLocated}>Not located yet</span>{r.where.includes(' · ') ? ` ${r.where.replace(/^No place set · /, '')}` : ''}</span>)}
         {r.kind === 'slot' && r.label && <span className={styles.dWhere}>{r.label}</span>}
       </div>
       <div className={styles.dNotes}>
         {r.games_needed.length > 0 && <span className={`${styles.gameChip} ${missing.length ? styles.gameMissing : styles.gameOk}`} title={missing.length ? `Not installed yet: ${missing.join(', ')}` : r.kind === 'slot' ? 'Needed' : 'Installed'}>{r.games_needed.join(', ')}{missing.length ? ' · not installed' : ''}</span>}
-        {empty && manage && (
-          <span className={styles.assignRow}>
-            <input className={styles.assignInput} value={tag} onChange={(e) => setTag(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void assign(); }} placeholder="Type an ID" aria-label={`Device ID for the ${r.type} row`} autoCapitalize="characters" autoComplete="off" disabled={busy} />
-            <Button size="sm" variant="secondary" onClick={assign} loading={busy} disabled={!tag.trim()}>Use</Button>
-          </span>
-        )}
+        {alloc && <input className={`${styles.assignInput} ${empty ? styles.assignEmpty : ''}`} value={tag} onChange={(e) => setTag(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }} onBlur={() => void commit()} list={ctx.listId(r.type)} placeholder="Device ID" aria-label={`Device ID for ${r.type}`} autoCapitalize="characters" autoComplete="off" disabled={busy} />}
         {dead && <span className={`${styles.badge} ${styles.bad}`}>{conditionLabel(r.condition!)}</span>}
         {!dead && !flags.length && r.condition && r.condition !== 'working' && r.condition !== 'brand_new' && <span className={`${styles.badge} ${styles.neutral}`}>{conditionLabel(r.condition)}</span>}
         {flags.filter(() => !dead).map((p, i) => <span key={i} className={p.sev === 'bad' ? styles.flagBad : styles.flagWarn}>{p.text}</span>)}
@@ -129,7 +136,7 @@ function DeviceLine({ line, ctx, backup, nested }: { line: Line; ctx: SheetCtx; 
 
 // A set shows as one line: its parts side by side, one box per step for the whole set. "Parts" opens the line of each part, to tick one alone or to change it.
 function SetLine({ unit, ctx }: { unit: Unit; ctx: SheetCtx }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(!ctx.day);   // allocating: the parts are open, each with its ID box
   const rows = unit.lines.flatMap((l) => l.rows);
   const first = unit.lines[0].rows[0];
   const bad = rows.some((r) => (r.kind === 'slot' && !r.counted) || (r.condition && UNUSABLE.includes(r.condition as never))) || rows.some((r) => skippedSteps(r, ctx.steps, ctx.doneSet).length > 0) || ctx.problems.some((p) => p.sev === 'bad' && rows.some((r) => r.id === p.row_id));
@@ -142,8 +149,8 @@ function SetLine({ unit, ctx }: { unit: Unit; ctx: SheetCtx }) {
     <>
       <div data-rows={rows.map((x) => x.id).join(' ')} className={`${styles.dayRow} ${styles.dayLine} ${styles.setLine} ${styles.clickRow} ${bad ? styles.lineBad : warn ? styles.lineWarn : ''}`} onClick={(e) => { if (!interactive(e.target)) setOpen((v) => !v); }}>
         <div className={styles.dInfo}>
-          <button type="button" className={styles.foldBtn} aria-expanded={open} aria-label={`${open ? 'Hide' : 'Show'} the parts of ${first.tag ?? first.type}`} onClick={() => setOpen((v) => !v)}><span className={styles.foldMark} aria-hidden="true">{open ? '–' : '+'}</span><b className={styles.dTag}>{first.tag ?? first.type}</b></button>
-          <span className={styles.dType}>{first.type} set · {rows.length} parts</span>
+          <button type="button" className={styles.foldBtn} aria-expanded={open} aria-label={`${open ? 'Hide' : 'Show'} the parts of ${first.tag ?? first.type}`} onClick={() => setOpen((v) => !v)}><span className={styles.foldMark} aria-hidden="true">{open ? '–' : '+'}</span><b className={styles.dTag}>{ctx.day ? first.tag ?? first.type : first.requestItem ?? first.tag ?? first.type}</b></button>
+          <span className={styles.dType}>{ctx.day ? `${first.type} set` : `${first.requestItem ?? first.type}`} · {rows.length} parts</span>
           <span className={`${styles.dWhere} ${styles.setParts}`} title={name}>{unit.lines.map((l, i) => (
             <span key={l.key} className={l.rows[0].kind === 'slot' && !l.counted ? styles.flagBad : undefined}>{i > 0 ? ' · ' : ''}{l.counted ? `${l.rows[0].type}${l.rows.length > 1 ? ` ×${l.rows.length}` : ''}` : l.rows[0].kind === 'slot' ? `no ${l.rows[0].type}` : label(l.rows[0])}</span>
           ))}</span>

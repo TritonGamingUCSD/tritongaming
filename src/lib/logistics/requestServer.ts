@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-export const REQUEST_COLUMNS = 'id, plan_id, kind, requester_id, division_id, team, items, notes, status, response, planned_by, planned_at, created_at, updated_at';
+export const REQUEST_COLUMNS = 'id, plan_id, kind, requester_id, division_id, team, items, notes, status, planned_by, planned_at, created_at, updated_at';
 
 // Everyone who can change Logistics: the exec and admin roles, and anyone given the Logistics permission directly or through a saved group. They are told about new requests.
 export async function logisticsTeamIds(svc: SupabaseClient): Promise<string[]> {

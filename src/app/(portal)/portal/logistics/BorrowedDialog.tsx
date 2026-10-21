@@ -81,7 +81,7 @@ export default function BorrowedDialog({ plan, catalog, data, stations, borrowed
             <Field label="Officer"><Combo value={officerName || null} options={peopleLabels.map((p) => p.label)} placeholder="Choose an officer…" onChange={(v) => setOfficerId(peopleLabels.find((p) => p.label === v)?.id ?? '')} /></Field>
           )}
         </div>
-        <Field label="Note about the owner" hint="Where to find it or who to ask. Everyone who can open Logistics sees this. Keep phone numbers and emails out."><Input value={note} onChange={(e) => setNote(e.target.value)} maxLength={300} /></Field>
+        <Field label="Note about the owner" hint="Where to find it or who to ask. Everyone who can open Event Logistics sees this. Keep phone numbers and emails out."><Input value={note} onChange={(e) => setNote(e.target.value)} maxLength={300} /></Field>
         <Field label="Station"><Select value={station} onChange={(e) => setStation(e.target.value)}><option value="">No station yet</option>{stations.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></Field>
         <Field label="Parts that come with it" hint="Ticked present or missing at Check done."><MultiCombo values={parts} options={data.lists.kit.map((k) => k.value)} onChange={setParts} onCreate={(v) => catalog.addOption('kit', v)} placeholder="Add a part…" /></Field>
         <Field label="Notes"><Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={1000} /></Field>

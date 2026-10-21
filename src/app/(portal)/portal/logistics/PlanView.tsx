@@ -7,7 +7,7 @@ import Notice from '@/components/ui/Notice';
 import Loading from '@/components/Loading/Loading';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import { tagKey } from '@/lib/logistics/devices';
-import { natural, planProblems, rowKind, stationStatus, stepAppliesTo, type StepDef } from '@/lib/logistics/plans';
+import { isUsable, natural, planProblems, rowKind, stationStatus, stepAppliesTo, type StepDef } from '@/lib/logistics/plans';
 import BorrowedDialog from './BorrowedDialog';
 import DeviceDialog from './DeviceDialog';
 import type { Device } from '@/lib/logistics/devices';
@@ -167,7 +167,13 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
   const resStation = res?.station ? stationOf.get(res.station.id) : null;
   const pct = allTotal ? Math.round((allDone / allTotal) * 100) : 0;
   const emptyRows = rows.filter((r) => r.kind === 'slot' && !r.counted);
+  // The IDs that can still be typed into a row: usable devices of that type that are not in this plan yet (the browser suggests them as you type).
+  const listId = (type: string) => `ids-${type.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+  const inPlan = new Set(detail.items.map((i) => i.device_id));
+  const free = new Map<string, string[]>();
+  for (const dv of data.devices) if (dv.tag && !inPlan.has(dv.id) && isUsable(dv)) free.set(dv.type, [...(free.get(dv.type) ?? []), dv.tag]);
   const ctx: SheetCtx = {
+    listId,
     api: plan, canManage: canManage && !day, closed, busy, day, stations, steps, activeId: step?.id ?? '', doneSet, doneAt, problems,
     onTick: (row, s) => begin(row, s), onTickAll: (list, s) => void markAll(list, s), onUndo: undo, onSwap: (r) => setSwapping({ id: r.id, tag: r.tag, type: r.type, kind: r.kind === 'slot' ? 'club' : r.kind }),
     onBorrowed: (r) => setBorrowing(borrowed.find((b) => b.id === r.id) ?? null), onInstalled: (list) => void install(list), onEditDevice: (r) => setDeviceEdit(catalog.data?.devices.find((x) => x.id === r.id) ?? data.devices.find((x) => x.id === r.id) ?? null),
@@ -205,16 +211,14 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
           <button type="button" className={styles.back} onClick={onBack}><ArrowLeft size={15} aria-hidden="true" /> All Events</button>
           <div className={styles.dayHeading}>
             <b className={styles.dayTitle}>{p.name}{closed && <span className={`${styles.badge} ${styles.neutral}`}>Closed</span>}</b>
-            <span className={styles.muted}>{range(p.starts_on, p.ends_on)}{p.event_id ? ' · portal event' : ' · Logistics event'}{p.notes ? ` · ${p.notes}` : ''}</span>
+            <span className={styles.muted}>{range(p.starts_on, p.ends_on)}{p.event_id ? ' · portal event' : ' · Event logistics only'}{p.notes ? ` · ${p.notes}` : ''}</span>
           </div>
           {page === 'device' && day && <span className={styles.dayTotal} title="Steps done"><span className={styles.bar}><i style={{ width: `${pct}%` }} /></span>{allDone}/{allTotal}</span>}
           <button type="button" className={styles.iconBtn} onClick={() => void plan.reload()} aria-label="Refresh"><RefreshCw size={15} aria-hidden="true" /></button>
-          {manage && <Button variant="secondary" onClick={() => setPicking(true)}>Add Teams And Devices</Button>}
           {canManage && (
             <details className={styles.menu}>
               <summary aria-label="More actions">More</summary>
               <div className={styles.menuList}>
-                {manage && <button type="button" onClick={() => setStationDialog({ station: null })}>Add A Team</button>}
                 {manage && <button type="button" onClick={() => setBorrowing('new')}>Add A Borrowed Device</button>}
                 <button type="button" onClick={() => setEditing(true)}>Edit Name And Dates</button>
                 <button type="button" onClick={() => void act('', 'PATCH', { status: closed ? 'draft' : 'closed' })}>{closed ? 'Reopen Plan' : 'Close Plan'}</button>
@@ -223,17 +227,18 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
             </details>
           )}
         </div>
+        {[...free].map(([type, tags]) => <datalist key={type} id={listId(type)}>{tags.sort(natural).map((t) => <option key={t} value={t} />)}</datalist>)}
         <div className={styles.pageBar}>
         <SectionTabs<string> variant="segmented" label="Event pages" value={page === 'requests' ? 'requests' : `${day && (page === 'device' || page === 'prizing') ? 'day' : 'alloc'}-${page}`}
           onChange={(v) => v === 'requests' ? onPage('requests') : onPage(v.replace(/^(day|alloc)-/, '') as EventPage, v.startsWith('day-'))} tabs={[
           { id: 'requests', label: 'Requests' },
+          { id: 'alloc-sponsor-items', label: 'Sponsor Items', count: borrowed.filter((b) => b.owner_kind === 'sponsor').length },
+          { id: 'alloc-officer-loaners', label: 'Loaners', count: borrowed.filter((b) => b.owner_kind === 'officer').length },
+          { id: 'alloc-sponsor-prizing', label: 'Sponsor Prizing' },
           { id: 'alloc-device', label: 'Devices', count: rows.length },
           { id: 'alloc-prizing', label: 'Prizing', count: detail.prizes.lines.length },
-          { id: 'alloc-sponsor-prizing', label: 'Sponsor Prizing' },
-          { id: 'alloc-sponsor-items', label: 'Sponsor Items', count: borrowed.filter((b) => b.owner_kind === 'sponsor').length },
-          { id: 'alloc-officer-loaners', label: 'Officer Loaners', count: borrowed.filter((b) => b.owner_kind === 'officer').length },
-          { id: 'day-device', label: 'Event Day: Devices' },
-          { id: 'day-prizing', label: 'Event Day: Prizing' },
+          { id: 'day-device', label: 'Day: Devices' },
+          { id: 'day-prizing', label: 'Day: Prizing' },
         ]} />
         </div>
         {page === 'device' && day && !closed && (
@@ -400,7 +405,6 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
                           <details className={`${styles.menu} ${styles.teamMenu}`}>
                             <summary aria-label={`More for ${s.name}`}>More</summary>
                             <div className={styles.menuList}>
-                              <button type="button" onClick={() => setRowDialog(s)}>Add Rows</button>
                               {emptyHere > 0 && <button type="button" onClick={() => setFilling({ station: s })}>Fill {emptyHere} Empty</button>}
                               <button type="button" onClick={() => setStationDialog({ station: s })}>Edit Team</button>
                               <button type="button" className={styles.menuDanger} onClick={() => void removeStation(s)}>Remove Team</button>

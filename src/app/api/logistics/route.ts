@@ -20,7 +20,7 @@ export async function GET() {
     // Plans happening today, for the banner at the top.
     auth.svc.from('logistics_plans').select('id, slug, name').eq('status', 'draft').lte('starts_on', pacificToday()).gte('ends_on', pacificToday()).order('starts_on').limit(5),
   ]);
-  if (devices.error || options.error || sponsors.error) return NextResponse.json({ error: 'Couldn’t load Logistics.' }, { status: 500 });
+  if (devices.error || options.error || sponsors.error) return NextResponse.json({ error: 'Couldn’t load Event Logistics.' }, { status: 500 });
   type Item = { id: string; value: string; counted?: boolean; applies?: string; kit?: boolean; gives?: boolean; leftover?: boolean; items?: unknown };
   const lists = Object.fromEntries(OPTION_KINDS.map((k) => [k, [] as Item[]])) as Record<OptionKind, Item[]>;
   for (const o of options.data ?? []) {

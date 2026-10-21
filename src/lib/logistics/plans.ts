@@ -12,6 +12,8 @@ export const stepAppliesTo = (s: Pick<StepDef, 'applies'>, kind: ItemKind): bool
 export const stepsFor = (steps: StepDef[], kind: ItemKind): StepDef[] => steps.filter((s) => stepAppliesTo(s, kind)).sort((a, b) => a.sort - b.sort);
 
 // The plan's name as it is written in its address: lower case words joined with hyphens.
+// Words that are the other pages of Logistics, so an event cannot take one as its address name.
+export const RESERVED_SLUGS = ['events', 'plans', 'inventory', 'equipment', 'prizes', 'tools', 'sponsors'];
 export const planSlug = (name: string): string => name.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60).replace(/-+$/, '') || 'plan';
 
 export const natural = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });

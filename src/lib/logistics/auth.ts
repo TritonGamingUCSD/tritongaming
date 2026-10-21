@@ -16,7 +16,7 @@ export async function authorizeLogistics(mode: 'view' | 'manage') {
   const canManage = hasCapability(grants, 'manage_logistics');
   const canView = canManage || hasCapability(grants, 'view_logistics');
   if (mode === 'manage' ? !canManage : !canView) {
-    return { error: NextResponse.json({ error: mode === 'manage' ? 'Only people with the Logistics permission can change this.' : 'Logistics is for officers and above.' }, { status: 403 }) };
+    return { error: NextResponse.json({ error: mode === 'manage' ? 'Only people with the Event Logistics permission can change this.' : 'Event Logistics is for officers and above.' }, { status: 403 }) };
   }
   return { user, svc, roles: grants, canManage };
 }

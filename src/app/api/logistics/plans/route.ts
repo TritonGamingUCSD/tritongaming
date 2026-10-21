@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { authorizeLogistics } from '@/lib/logistics/auth';
 import { PLAN_COLUMNS, UUID, dayOf, pacificToday } from '@/lib/logistics/planServer';
-import { planSlug } from '@/lib/logistics/plans';
+import { planSlug, RESERVED_SLUGS } from '@/lib/logistics/plans';
 import { logAudit } from '@/lib/notifications/audit';
 
 export const dynamic = 'force-dynamic';
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
   const { data: taken } = await auth.svc.from('logistics_plans').select('slug').like('slug', `${base}%`).limit(200);
   const used = new Set((taken ?? []).map((r) => r.slug as string));
   let slug = base;
-  if (used.has(slug)) slug = `${base}-${starts.slice(0, 4)}`;
+  if (used.has(slug) || RESERVED_SLUGS.includes(slug)) slug = `${base}-${starts.slice(0, 4)}`;
   for (let n = 2; used.has(slug); n++) slug = `${base}-${starts.slice(0, 4)}-${n}`;
   const { data, error } = await auth.svc.from('logistics_plans').insert({ name, slug, event_id: eventId, starts_on: starts, ends_on: ends, notes: String(b.notes ?? '').trim().slice(0, 2000) || null, created_by: auth.user.id }).select(PLAN_COLUMNS).single();
   if (error || !data) return NextResponse.json({ error: 'Couldn’t make the plan.' }, { status: 500 });

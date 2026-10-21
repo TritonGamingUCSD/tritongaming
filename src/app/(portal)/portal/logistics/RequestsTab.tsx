@@ -17,7 +17,7 @@ import styles from './logistics.module.css';
 
 interface Req {
   id: string; plan_id: string; kind: RequestKind; requester_id: string; division_id: string | null; team: string | null; items: (DeviceItem | PrizeItem)[]; notes: string | null; status: RequestStatus;
-  response: string | null; planned_at: string | null; created_at: string; requester: string; division: string | null; planner: string | null; filled: number; rowsTotal: number;
+  planned_at: string | null; created_at: string; requester: string; division: string | null; planner: string | null; filled: number; rowsTotal: number;
 }
 interface Loaded { me: string; canManage: boolean; divisions: { id: string; name: string }[]; myDivisionIds: string[]; requests: Req[] }
 const day = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -41,8 +41,6 @@ export default function RequestsTab({ plan, api, data }: { plan: PlanApi; api: L
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [error, setError] = useState('');
   const [dialog, setDialog] = useState<Req | 'new' | null>(null);
-  const [answering, setAnswering] = useState<Req | null>(null);
-  const [view, setView] = useState<'open' | 'all'>('all');
   const [busy, setBusy] = useState('');
   const load = useCallback(async () => {
     const r = await call<Loaded>(`/api/logistics/plans/${planId}/requests`, 'GET');
@@ -53,10 +51,13 @@ export default function RequestsTab({ plan, api, data }: { plan: PlanApi; api: L
 
   const list = useMemo(() => {
     const rows = loaded?.requests ?? [];
-    const sorted = [...rows].sort((a, b) => REQUEST_STATUSES.indexOf(a.status) - REQUEST_STATUSES.indexOf(b.status) || b.created_at.localeCompare(a.created_at));
-    return view === 'open' ? sorted.filter((r) => r.status === 'submitted' || r.status === 'planned') : sorted;
-  }, [loaded, view]);
+    return [...rows].sort((a, b) => REQUEST_STATUSES.indexOf(a.status) - REQUEST_STATUSES.indexOf(b.status) || b.created_at.localeCompare(a.created_at));
+  }, [loaded]);
 
+  async function setStatus(r: Req, status: RequestStatus) {
+    const res = await call<{ request: Req }>(`/api/logistics/plans/${planId}/requests`, 'PATCH', { request_id: r.id, status });
+    if (res.ok) { apply({ ...r, ...res.data.request }); void load(); } else setError(res.error);
+  }
   async function remove(r: Req) {
     if (!(await confirmHold({ title: 'Take back this request?', message: requestSummary(r.kind, r.items), confirmLabel: 'Hold to remove' }))) return;
     const res = await call<{ ok: true }>(`/api/logistics/plans/${planId}/requests`, 'DELETE', { request_id: r.id });
@@ -65,26 +66,23 @@ export default function RequestsTab({ plan, api, data }: { plan: PlanApi; api: L
 
   if (!loaded) return <div className={styles.tab}>{error ? <Notice tone="error">{error}</Notice> : <Loading variant="inline" label="Loading…" />}</div>;
   const manage = loaded.canManage;
-  const counts = { open: loaded.requests.filter((r) => r.status === 'submitted' || r.status === 'planned').length, all: loaded.requests.length };
   return (
     <div className={styles.tab}>
       <div className={styles.toolbarRow}>
-        <SectionTabs<'open' | 'all'> variant="segmented" label="Which requests" value={view} onChange={setView} tabs={[{ id: 'open', label: 'Open', count: counts.open }, { id: 'all', label: 'All', count: counts.all }]} />
         <span className={styles.count}>{manage ? 'Every request for this event' : 'Your requests for this event'}</span>
         {!closed && <Button className={styles.addBtn} onClick={() => setDialog('new')}>New Request</Button>}
       </div>
       {dialog && <RequestDialog plan={plan} api={api} data={data} planId={planId} loaded={loaded} request={dialog === 'new' ? null : dialog} onSaved={() => { setDialog(null); void load(); }} onClose={() => setDialog(null)} />}
-      {answering && <AnswerDialog planId={planId} request={answering} onSaved={(r) => { apply(r); setAnswering(null); }} onClose={() => setAnswering(null)} />}
       {error && <div role="alert" onClick={() => setError('')}><Notice tone="error">{error}</Notice></div>}
       {list.length === 0 ? (
-        <div className={styles.empty}><p>{loaded.requests.length === 0 ? (closed ? 'No requests were made for this event.' : 'No requests yet. Use New Request to ask for devices or prizes for your team.') : 'Nothing open. Switch to All to see the rest.'}</p></div>
+        <div className={styles.empty}><p>{loaded.requests.length === 0 ? (closed ? 'No requests were made for this event.' : 'No requests yet. Use New Request to ask for devices or prizes for your team.') : 'No requests.'}</p></div>
       ) : (
         <div className={styles.prizeGrid}>
-          <div className={`${styles.prizeRow} ${styles.reqRow} ${styles.prizeHeadRow}`} aria-hidden="true"><span>Asked by</span><span>Team</span><span>What</span><span>Notes</span><span>Status</span><span>Answer</span><span /></div>
+          <div className={`${styles.prizeRow} ${styles.reqRow} ${styles.prizeHeadRow}`} aria-hidden="true"><span>Asked by</span><span>Team</span><span>What</span><span>Notes</span><span>Status</span><span /></div>
           {list.map((r) => {
             const mine = canEditRequest(r, loaded.me, manage);
             return (
-              <div key={r.id} className={`${styles.prizeRow} ${styles.reqRow} ${r.status === 'submitted' && manage ? styles.reqNew : ''}`}>
+              <div key={r.id} className={`${styles.prizeRow} ${styles.reqRow} ${styles[`req_${r.status}`]}`}>
                 <span className={styles.prizeName}><b>{r.requester}</b><small className={styles.dim}>{r.division ? ` · ${r.division}` : ''} · {day(r.created_at)}</small></span>
                 <span data-label="Team">{r.team ?? <span className={styles.dim}>–</span>}</span>
                 <span data-label={r.kind === 'devices' ? 'Devices' : 'Prizes'}>
@@ -93,13 +91,10 @@ export default function RequestsTab({ plan, api, data }: { plan: PlanApi; api: L
                     : <>{(r.items as PrizeItem[]).map((i, n) => <span key={n} className={styles.reqItem}><b>{i.qty} prize{i.qty === 1 ? '' : 's'}</b> around {money(i.value)} each</span>)}<span className={`${styles.reqItem} ${styles.dim}`}>About {money(prizeTotal(r.items as PrizeItem[]))} in all</span></>}
                 </span>
                 <span data-label="Notes">{r.notes ?? <span className={styles.dim}>–</span>}</span>
-                <span data-label="Status"><span className={`${styles.statusChip} ${chip[r.status]}`}>{STATUS_LABELS[r.status]}</span></span>
-                <span data-label="Answer">{r.response ? <><b>{r.planner ?? 'Logistics'}:</b> {r.response}</> : <span className={styles.dim}>–</span>}</span>
+                <span data-label="Status">{manage && !closed ? <select className={styles.miniSelect} value={r.status} aria-label="Where this request stands" onChange={(e) => void setStatus(r, e.target.value as RequestStatus)}>{REQUEST_STATUSES.map((x) => <option key={x} value={x}>{STATUS_LABELS[x]}</option>)}</select> : <span className={`${styles.statusChip} ${chip[r.status]}`}>{STATUS_LABELS[r.status]}</span>}</span>
                 <span className={styles.prizeTools}>
                   {mine && <button type="button" className={styles.linkBtn} onClick={() => setDialog(r)}>Edit</button>}
                   {mine && <button type="button" className={styles.linkBtn} onClick={() => void remove(r)}>{manage ? 'Remove' : 'Take Back'}</button>}
-                  {manage && <button type="button" className={styles.linkBtn} onClick={() => setAnswering(r)}>Answer</button>}
-                  {manage && r.kind === 'prizes' && <span className={styles.dim}>Fill it from Prizing</span>}
                 </span>
               </div>
             );
@@ -149,7 +144,7 @@ function RequestDialog({ plan, api, data, planId, loaded, request, onSaved, onCl
           <div className={styles.reqLines}>
             {dev.map((it, i) => (
               <div key={i} className={styles.reqLine}>
-                <Field label='What'><Select value={it.what} onChange={(e) => setDevAt(i, { what: e.target.value })} aria-label="What you need">{what.map((w) => <option key={w} value={w}>{w}</option>)}</Select></Field>
+                <Field label='What'><Select value={it.what} onChange={(e) => setDevAt(i, { what: e.target.value })} aria-label="What you need"><optgroup label="Bundles">{data.lists.bundle.map((b) => <option key={b.id} value={b.value}>{b.value}</option>)}</optgroup><optgroup label="Single Devices">{data.lists.type.filter((t) => !t.counted).map((t) => <option key={t.id} value={t.value}>{t.value}</option>)}</optgroup></Select></Field>
                 <Field label='How many'><Input type="number" min={1} max={200} value={it.qty} onChange={(e) => setDevAt(i, { qty: Number(e.target.value) })} aria-label="How many" /></Field>
                 <Field label='Games needed'><MultiCombo values={it.games} options={allGames} onChange={(g) => setDevAt(i, { games: g })} placeholder="Add a game…" /></Field>
                 <button type="button" className={styles.linkBtn} onClick={() => setDev((c) => c.filter((_, k) => k !== i))} disabled={dev.length < 2} aria-label="Remove this line">Remove</button>
@@ -177,31 +172,6 @@ function RequestDialog({ plan, api, data, planId, loaded, request, onSaved, onCl
         )}
       </div>
       <DialogActions><DialogCancel onClick={onClose} disabled={busy} /><Button onClick={save} loading={busy}>{request ? 'Save' : 'Send Request'}</Button></DialogActions>
-    </Dialog>
-  );
-}
-
-// The logistics team's answer: where the request stands, and a short note the person who asked will see (and be told about).
-function AnswerDialog({ planId, request, onSaved, onClose }: { planId: string; request: Req; onSaved: (r: Req) => void; onClose: () => void }) {
-  const [status, setStatus] = useState<RequestStatus>(request.status === 'submitted' ? 'planned' : request.status);
-  const [response, setResponse] = useState(request.response ?? '');
-  const [busy, setBusy] = useState(false);
-  const [problem, setProblem] = useState('');
-  async function save() {
-    setBusy(true); setProblem('');
-    const r = await call<{ request: Req }>(`/api/logistics/plans/${planId}/requests`, 'PATCH', { request_id: request.id, status, response });
-    setBusy(false);
-    if (r.ok) onSaved({ ...request, ...r.data.request }); else setProblem(r.error);
-  }
-  return (
-    <Dialog title="Answer Request" busy={busy} onClose={onClose}>
-      <div className={styles.form}>
-        {problem && <Notice tone="error">{problem}</Notice>}
-        <p className={styles.muted}>{request.requester}: {requestSummary(request.kind, request.items)}</p>
-        <Field label="Where it stands"><Select value={status} onChange={(e) => setStatus(e.target.value as RequestStatus)}>{REQUEST_STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}</Select></Field>
-        <Field label="Note for them" hint="Optional. They see it and are told when it changes."><Textarea rows={3} value={response} onChange={(e) => setResponse(e.target.value)} maxLength={1000} /></Field>
-      </div>
-      <DialogActions><DialogCancel onClick={onClose} disabled={busy} /><Button onClick={save} loading={busy}>Save</Button></DialogActions>
     </Dialog>
   );
 }

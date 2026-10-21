@@ -10,7 +10,8 @@ import SectionTabs from '@/components/ui/SectionTabs';
 import Loading from '@/components/Loading/Loading';
 import { Field, Input, Textarea } from '@/components/ui/Field';
 import { usePortalParams } from '@/lib/portal/usePortalParams';
-import type { Route } from './logisticsRoute';
+import { routeParams, type Route } from './logisticsRoute';
+import { useUrlNav } from '@/lib/portal/usePortalTabSync';
 import PlanView from './PlanView';
 import { usePlanList, type PlanSummary } from './usePlans';
 import type { Catalog, LogisticsApi } from './useLogistics';
@@ -25,11 +26,12 @@ const range = (a: string, b: string) => {
 // rename; for a portal event it is the event's own slug. An old address with the long ID inside still opens the plan and is tidied to the name.
 export default function PlansTab({ api, data, route, go }: { api: LogisticsApi; data: Catalog; route: Extract<Route, { tab: 'events' }>; go: (r: Route) => void }) {
   const setParams = usePortalParams();
+  const { tab: urlTab } = useUrlNav();
   const list = usePlanList();
   const ref = route.plan;
   const plan = ref && list.plans ? list.plans.find((p) => p.slug === ref || p.id === ref) ?? null : null;
   const open = (p: { slug: string } | null) => { go({ tab: 'events', plan: p?.slug ?? null, page: 'device' }); if (!p) void list.reload(); };
-  useEffect(() => { if (plan && ref === plan.id) setParams({ section: 'logistics', tab: 'events', subtab: plan.slug, detail: route.page, view: route.day ? 'day' : null }); }, [plan, ref, route.page, route.day, setParams]);
+  useEffect(() => { if (plan && urlTab !== plan.slug) setParams({ section: 'logistics', ...routeParams({ tab: 'events', plan: plan.slug, page: route.page, ...(route.day ? { day: true } : {}) }) }); }, [plan, urlTab, route.page, route.day, setParams]);
   if (ref) {
     if (!list.plans) return <div className={styles.tab}>{list.error ? <Notice tone="error">{list.error}</Notice> : <Loading variant="inline" label="Loading…" />}</div>;
     if (!plan) return <div className={styles.tab}><Notice tone="error">That event doesn’t exist any more.</Notice><div><Button variant="secondary" onClick={() => open(null)}>All Events</Button></div></div>;
@@ -64,7 +66,7 @@ function PlanList({ data, list, onOpen }: { data: Catalog; list: ReturnType<type
                     <span className={styles.planCardTags}>
                       {isToday && <span className={`${styles.badge} ${styles.good}`}>Today</span>}
                       {p.status === 'closed' && <span className={`${styles.badge} ${styles.neutral}`}>Closed</span>}
-                      {!p.event_id && <span className={`${styles.badge} ${styles.neutral}`}>Logistics event</span>}
+                      {!p.event_id && <span className={`${styles.badge} ${styles.neutral}`}>Logistics only</span>}
                     </span>
                   </button>
                 </div>
@@ -92,7 +94,7 @@ function CreateDialog({ events, onCreate, onClose }: { events: (past: boolean) =
 
   async function save() {
     setProblem('');
-    if (mode === 'event' && !eventId) { setProblem('Pick an event, or switch to a Logistics-only event.'); return; }
+    if (mode === 'event' && !eventId) { setProblem('Pick an event, or switch to an Event Logistics-only event.'); return; }
     if (mode === 'own' && (!name.trim() || !starts)) { setProblem('Give it a name and a first day.'); return; }
     setBusy(true);
     const ok = await onCreate(mode === 'event' ? { event_id: eventId, name: name || undefined, notes } : { name, starts_on: starts, ends_on: ends || starts, notes });

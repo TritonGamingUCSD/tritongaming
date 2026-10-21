@@ -290,7 +290,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
     // Equipment, prizes and event setups. Every officer and above can look; only people with the Logistics permission (exec, admin, or granted in Admin → Access) can change things.
     // Entirely separate from check-in.
     ...(canViewLogistics ? [{
-      id: 'logistics', icon: <Package size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Logistics',
+      id: 'logistics', icon: <Package size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Event Logistics',
       description: canManageLogistics ? 'Equipment catalog and event setups' : 'Find equipment and see event setups',
       group: 'Team' as const,
       content: <LogisticsSectionContent canManage={canManageLogistics} />,

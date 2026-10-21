@@ -26,7 +26,7 @@ async function divisionOk(svc: SupabaseClient, v: unknown): Promise<string | nul
   const { data } = await svc.from('divisions').select('id').eq('id', v).maybeSingle();
   return data ? (data.id as string) : false;
 }
-const href = (slug: string) => `/portal/logistics/events/${slug}/requests`;
+const href = (slug: string) => `/portal/logistics/${slug}/requests`;
 
 // The requests for one event. The logistics team sees all of them; everyone else sees only their own. Also the divisions to pick from.
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -108,16 +108,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       patch.planned_by = b.status === 'submitted' ? null : auth.user.id;
       patch.planned_at = b.status === 'submitted' ? null : new Date().toISOString();
     }
-    if ('response' in b) patch.response = text(b.response, 1000);
   }
   const { data, error } = await auth.svc.from('logistics_requests').update(patch).eq('id', r.id).select(REQUEST_COLUMNS).single();
   if (error || !data) return NextResponse.json({ error: 'Couldn’t save that.' }, { status: 500 });
-  const noteChanged = auth.canManage && 'response' in b && text(b.response, 1000) !== r.response;
-  if (auth.canManage && r.requester_id !== auth.user.id && (statusChanged || noteChanged || 'items' in b)) {
-    const status = (data.status as RequestStatus);
-    const items = data.items as (DeviceItem | PrizeItem)[];
-    await createNotifications(auth.svc, [{ user_id: r.requester_id, type: 'logistics_update', title: statusChanged ? `Your request for ${plan.name} is ${STATUS_LABELS[status].toLowerCase()}` : `Your request for ${plan.name} was updated`, body: [requestSummary(r.kind, items), data.response].filter(Boolean).join(' · ').slice(0, 240), href: href(plan.slug as string) }]);
-  } else if (!auth.canManage) {
+  if (!auth.canManage) {
     const team = (await logisticsTeamIds(auth.svc)).filter((u) => u !== auth.user.id);
     const who = (await names(auth.svc, [auth.user.id])).get(auth.user.id) ?? 'Someone';
     await createNotifications(auth.svc, team.map((user_id) => ({ user_id, type: 'logistics_request', title: `A request for ${plan.name} was changed`, body: `${who}: ${requestSummary(r.kind, data.items as (DeviceItem | PrizeItem)[])}`.slice(0, 240), href: href(plan.slug as string) })));

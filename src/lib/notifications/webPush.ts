@@ -13,7 +13,7 @@ export const PUSH_CATEGORIES = [
   { id: 'events', label: 'Events and tickets', hint: 'Ticket confirmations, check-ins and event reminders' },
   { id: 'account', label: 'Account and access', hint: 'Role changes and access you’ve been given' },
   { id: 'points', label: 'Points and rewards', hint: 'Points you are given or lose, and rewards handed over or cancelled' },
-  { id: 'logistics', label: 'Logistics requests', hint: 'New equipment and prize requests for the logistics team, and answers to the ones you made' },
+  { id: 'logistics', label: 'Event logistics requests', hint: 'New equipment and prize requests and changes to them, for the logistics team' },
   { id: 'help', label: 'Help inbox', hint: 'New questions that need an answer' },
   { id: 'docs', label: 'Documentation', hint: 'Docs you are asked to read, and comments on your docs' },
   { id: 'admin', label: 'Admin alerts', hint: 'Risky actions by other admins, the free plan filling up, and scheduled jobs that fail' },
