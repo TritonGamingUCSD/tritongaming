@@ -5,7 +5,7 @@ import { withRole } from '@/lib/portal/roleGrant';
 
 export const dynamic = 'force-dynamic';
 
-const GRANTABLE = ['officer', 'lead', 'division'] as const;
+const GRANTABLE = ['officer', 'lead', 'division', 'alumni'] as const;
 
 // Admins only: approve a role request. Gives the person the role they asked for, answers on the ticket, tells them, and resolves it.
 // { role: 'officer' | 'lead' | 'division', division_id? }. The person's other roles are kept; an officer or lead role replaces nothing else, a division is added to any they lead.
@@ -30,7 +30,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
   const { data: current } = await auth.svc.from('user_roles').select('role, division_id').eq('user_id', t.user_id);
   const next = withRole(current ?? [], role, divisionId);
-  const label = role === 'division' ? `Division Lead (${divisionName})` : role === 'officer' ? 'Officer' : 'Lead';
+  const label = role === 'division' ? `Division Lead (${divisionName})` : role === 'officer' ? 'Officer' : role === 'lead' ? 'Lead' : 'alumni';
   if (next) {
     const { error } = await auth.svc.rpc('admin_set_user_roles', { _user_id: t.user_id, _roles: next, _granted_by: auth.user.id });
     if (error) return NextResponse.json({ error: 'Couldn’t give the role.' }, { status: 500 });

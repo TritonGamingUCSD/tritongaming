@@ -490,7 +490,7 @@ function RoleApprove({ ticketId, grant, who, asked, onDone }: { ticketId: string
     <div className={styles.staffBar} role="group" aria-label="Approve this role request">
       <span className={styles.muted}>Approve for {who} (now: {current}):</span>
       <Select value={role} onChange={(e) => setRole(e.target.value as typeof role)} aria-label="Role to give">
-        <option value="officer">Officer</option><option value="lead">Lead</option><option value="division">Division lead</option>
+        <option value="officer">Officer</option><option value="lead">Lead</option><option value="division">Division lead</option><option value="alumni">Alumni</option>
       </Select>
       {role === 'division' && <Select value={division} onChange={(e) => setDivision(e.target.value)} aria-label="Division">{grant.divisions.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</Select>}
       <Button size="sm" loading={busy} disabled={role === 'division' && !division} onClick={approve}><CheckCircle2 size={15} strokeWidth={1.75} aria-hidden="true" /> Approve and give role</Button>
