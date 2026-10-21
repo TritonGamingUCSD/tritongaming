@@ -5,7 +5,7 @@ import type { OptionKind } from '@/lib/logistics/constants';
 import type { Device, DevicePatch } from '@/lib/logistics/devices';
 
 export interface BundleItem { type: string; qty: number }
-export interface OptionItem { id: string; value: string; counted?: boolean; applies?: 'all' | 'club' | 'borrowed'; kit?: boolean; items?: BundleItem[] }
+export interface OptionItem { id: string; value: string; counted?: boolean; applies?: 'all' | 'club' | 'borrowed'; kit?: boolean; gives?: boolean; leftover?: boolean; items?: BundleItem[] }
 export interface Sponsor { id: string; name: string; contact: string | null; notes: string | null }
 export interface Catalog {
   canManage: boolean;
@@ -77,12 +77,12 @@ export function useLogistics() {
     edit((d) => (d.lists[kind].some((o) => o.id === r.data.option.id) ? d : { ...d, lists: { ...d.lists, [kind]: [...d.lists[kind], r.data.option] } }));
     return r.data.option.value;
   }, [edit]);
-  const changeOption = useCallback(async (id: string, patch: { value?: string; counted?: boolean; applies?: string; kit?: boolean; items?: BundleItem[]; move?: 'up' | 'down' }): Promise<boolean> => {
+  const changeOption = useCallback(async (id: string, patch: { value?: string; counted?: boolean; applies?: string; kit?: boolean; gives?: boolean; leftover?: boolean; items?: BundleItem[]; move?: 'up' | 'down' }): Promise<boolean> => {
     const r = await call<{ ok: true }>('/api/logistics/options', 'PATCH', { id, ...patch });
     if (!r.ok) { setError(r.error); return false; }
     setError('');
     // A rename (devices that used the old name follow it), a step's order or settings, and a bundle's items are read again; a counted switch is applied on screen.
-    if (patch.value !== undefined || patch.applies !== undefined || patch.kit !== undefined || patch.items !== undefined || patch.move !== undefined) await load();
+    if (patch.value !== undefined || patch.applies !== undefined || patch.kit !== undefined || patch.gives !== undefined || patch.leftover !== undefined || patch.items !== undefined || patch.move !== undefined) await load();
     else edit((d) => ({ ...d, lists: Object.fromEntries(Object.entries(d.lists).map(([k, v]) => [k, v.map((o) => (o.id === id ? { ...o, ...(patch.counted !== undefined ? { counted: patch.counted } : {}) } : o))])) as Catalog['lists'] }));
     return true;
   }, [edit, load]);

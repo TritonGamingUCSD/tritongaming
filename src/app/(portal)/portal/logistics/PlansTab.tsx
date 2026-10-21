@@ -8,8 +8,8 @@ import Notice from '@/components/ui/Notice';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Loading from '@/components/Loading/Loading';
 import { Field, Input, Textarea } from '@/components/ui/Field';
-import { usePortalParams, useLiveParams } from '@/lib/portal/usePortalParams';
-import { useUrlNav } from '@/lib/portal/usePortalTabSync';
+import { usePortalParams } from '@/lib/portal/usePortalParams';
+import type { Route } from './logisticsRoute';
 import PlanView from './PlanView';
 import { usePlanList, type PlanSummary } from './usePlans';
 import type { Catalog, LogisticsApi } from './useLogistics';
@@ -20,22 +20,21 @@ const range = (a: string, b: string) => {
   return a === b ? f(a) : `${f(a)} to ${f(b)}`;
 };
 
-// Plans: one per event. The list and a plan (the plan and the event day are one sheet) each have their own address, /portal/logistics/plans/<name-of-the-plan>: the name is made when
-// the plan is created and never changes, so a copied link keeps working after a rename. An old address with the long ID inside still opens the plan and is tidied to the name.
-export default function PlansTab({ api, data }: { api: LogisticsApi; data: Catalog }) {
+// Events: the list, and one plan per event (/portal/logistics/events/<name>[/<page>]). The name is made when the plan is created and never changes, so a copied link keeps working after a
+// rename; for a portal event it is the event's own slug. An old address with the long ID inside still opens the plan and is tidied to the name.
+export default function PlansTab({ api, data, route, go }: { api: LogisticsApi; data: Catalog; route: Extract<Route, { tab: 'events' }>; go: (r: Route) => void }) {
   const setParams = usePortalParams();
-  const { subtab } = useUrlNav();
   const list = usePlanList();
-  const [ref, setRef] = useState<string | null>(subtab ?? null);
+  const ref = route.plan;
   const plan = ref && list.plans ? list.plans.find((p) => p.slug === ref || p.id === ref) ?? null : null;
-  const go = (p: { slug: string } | null) => { setRef(p?.slug ?? null); setParams({ section: 'logistics', tab: 'plans', subtab: p?.slug ?? null, view: null }); if (!p) void list.reload(); };
-  useEffect(() => { if (plan && ref === plan.id) { setRef(plan.slug); setParams({ section: 'logistics', tab: 'plans', subtab: plan.slug, view: null }); } }, [plan, ref, setParams]);
+  const open = (p: { slug: string } | null) => { go({ tab: 'events', plan: p?.slug ?? null, page: 'allocation' }); if (!p) void list.reload(); };
+  useEffect(() => { if (plan && ref === plan.id) setParams({ section: 'logistics', tab: 'events', subtab: plan.slug, detail: route.page, view: route.day ? 'day' : null }); }, [plan, ref, route.page, route.day, setParams]);
   if (ref) {
     if (!list.plans) return <div className={styles.tab}>{list.error ? <Notice tone="error">{list.error}</Notice> : <Loading variant="inline" label="Loading…" />}</div>;
-    if (!plan) return <div className={styles.tab}><Notice tone="error">That plan doesn’t exist any more.</Notice><div><Button variant="secondary" onClick={() => go(null)}>All Plans</Button></div></div>;
-    return <PlanView key={plan.id} id={plan.id} data={data} catalog={api} onBack={() => go(null)} />;
+    if (!plan) return <div className={styles.tab}><Notice tone="error">That event doesn’t exist any more.</Notice><div><Button variant="secondary" onClick={() => open(null)}>All Events</Button></div></div>;
+    return <PlanView key={plan.id} id={plan.id} data={data} catalog={api} page={route.page} day={!!route.day} onPage={(page, day) => go({ tab: 'events', plan: plan.slug, page, ...(day ? { day: true } : {}) })} onBack={() => open(null)} />;
   }
-  return <PlanList data={data} list={list} onOpen={go} />;
+  return <PlanList data={data} list={list} onOpen={open} />;
 }
 
 function PlanList({ data, list, onOpen }: { data: Catalog; list: ReturnType<typeof usePlanList>; onOpen: (p: PlanSummary) => void }) {
@@ -44,12 +43,12 @@ function PlanList({ data, list, onOpen }: { data: Catalog; list: ReturnType<type
   return (
     <div className={styles.tab}>
       <div className={styles.toolbarRow}>
-        <span className={styles.count}>{plans ? `${plans.length} ${plans.length === 1 ? 'plan' : 'plans'}` : ''}</span>
-        {data.canManage && <Button className={styles.addBtn} onClick={() => setCreating(true)}>New Plan</Button>}
+        <span className={styles.count}>{plans ? `${plans.length} ${plans.length === 1 ? 'event' : 'events'}` : ''}</span>
+        {data.canManage && <Button className={styles.addBtn} onClick={() => setCreating(true)}>New Event</Button>}
       </div>
       {error && <div role="alert" onClick={() => setError('')}><Notice tone="error">{error}</Notice></div>}
       {!plans ? (error ? null : <Loading variant="inline" label="Loading…" />) : plans.length === 0 ? (
-        <div className={styles.empty}><p>{data.canManage ? 'No plans yet. Make one for an upcoming event, then add the devices that go to it.' : 'No event plans have been made yet.'}</p></div>
+        <div className={styles.empty}><p>{data.canManage ? 'No events yet. Make one for an upcoming event, then add the devices that go to it.' : 'No events have been set up yet.'}</p></div>
       ) : (
         <ul className={styles.planCards}>
           {plans.map((p: PlanSummary) => {
@@ -100,7 +99,7 @@ function CreateDialog({ events, onCreate, onClose }: { events: (past: boolean) =
     if (!ok) setProblem('That didn’t save. The message at the top of the page says why.');
   }
   return (
-    <Dialog title="New Plan" wide busy={busy} onClose={onClose}>
+    <Dialog title="New Event" wide busy={busy} onClose={onClose}>
       <div className={styles.form}>
         {problem && <Notice tone="error">{problem}</Notice>}
         <SectionTabs<'event' | 'own'> variant="segmented" label="What the plan is for" value={mode} onChange={setMode} tabs={[{ id: 'event', label: 'Portal Event' }, { id: 'own', label: 'Logistics-Only Event' }]} />
@@ -127,7 +126,7 @@ function CreateDialog({ events, onCreate, onClose }: { events: (past: boolean) =
         )}
         <Field label="Notes"><Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={2000} /></Field>
       </div>
-      <DialogActions><DialogCancel onClick={onClose} disabled={busy} /><Button onClick={save} loading={busy}>Make Plan</Button></DialogActions>
+      <DialogActions><DialogCancel onClick={onClose} disabled={busy} /><Button onClick={save} loading={busy}>Make Event</Button></DialogActions>
     </Dialog>
   );
 }

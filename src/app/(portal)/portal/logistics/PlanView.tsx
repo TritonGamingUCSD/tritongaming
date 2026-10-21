@@ -10,8 +10,14 @@ import { tagKey } from '@/lib/logistics/devices';
 import { natural, planProblems, rowKind, stationStatus, stepAppliesTo, type StepDef } from '@/lib/logistics/plans';
 import BorrowedDialog from './BorrowedDialog';
 import HowItWorks from './HowItWorks';
+import { interactive } from './interactive';
 import { EditPlanDialog, FillDialog, RowDialog, StationDialog } from './PlanDialogs';
 import PickDialog from './PickDialog';
+import BorrowedTab from './BorrowedTab';
+import PrizingTab from './PrizingTab';
+import SponsorPrizingTab from './SponsorPrizingTab';
+import SectionTabs from '@/components/ui/SectionTabs';
+import type { EventPage } from './logisticsRoute';
 import { SheetRows, type SheetCtx } from './PlanSheet';
 import SwapDialog from './SwapDialog';
 import { planRows, type Row } from './planRows';
@@ -32,7 +38,7 @@ const range = (a: string, b: string) => {
   return a === b ? f(a) : `${f(a)} to ${f(b)}`;
 };
 
-export default function PlanView({ id, data, catalog, onBack }: { id: string; data: Catalog; catalog: LogisticsApi; onBack: () => void }) {
+export default function PlanView({ id, data, catalog, page, day, onPage, onBack }: { id: string; data: Catalog; catalog: LogisticsApi; page: EventPage; day: boolean; onPage: (p: EventPage, day?: boolean) => void; onBack: () => void }) {
   const plan = usePlan(id, true);
   const { detail, error, setError, act } = plan;
   const [picked, setPicked] = useState('');   // '' = follow the work
@@ -47,7 +53,7 @@ export default function PlanView({ id, data, catalog, onBack }: { id: string; da
   const [stationDialog, setStationDialog] = useState<{ station: Station | null } | null>(null);
   const [rowDialog, setRowDialog] = useState<Station | null>(null);
   const [filling, setFilling] = useState<{ station: Station | null } | null>(null);
-  const [open, setOpen] = useState<Set<string>>(new Set());   // teams the person opened (finished teams, and every team on a phone, start folded)
+  const [fold, setFold] = useState<Record<string, boolean>>({});   // what the person chose per team; otherwise finished teams (and every team on a phone) start folded
   const [overview, setOverview] = useState(false);
   const [showList, setShowList] = useState(false);
   const [narrow, setNarrow] = useState(false);
@@ -147,9 +153,24 @@ export default function PlanView({ id, data, catalog, onBack }: { id: string; da
   const ctx: SheetCtx = {
     api: plan, canManage, closed, busy, stations, steps, activeId: step?.id ?? '', doneSet, doneAt, problems,
     onTick: (row, s) => begin(row, s), onTickAll: (list, s) => void markAll(list, s), onUndo: undo, onSwap: (r) => setSwapping({ id: r.id, tag: r.tag, type: r.type, kind: r.kind === 'slot' ? 'club' : r.kind }),
-    onBorrowed: (r) => setBorrowing(borrowed.find((b) => b.id === r.id) ?? null),
+    onBorrowed: (r) => setBorrowing(borrowed.find((b) => b.id === r.id) ?? null), onInstalled: (list) => void install(list),
   };
-  const jump = (sid: string | null) => { if (!sid) return; setOpen((cur) => new Set(cur).add(sid)); setTimeout(() => document.getElementById(`st-${sid}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0); };
+  const foldOf = (key: string, complete: boolean) => (key in fold ? fold[key] : complete || narrow);
+  const toggleFold = (key: string, complete: boolean) => setFold((cur) => ({ ...cur, [key]: !foldOf(key, complete) }));
+  const allFolded = teams.length > 0 && teams.every((t) => { const tot = steps.reduce((n, st) => n + t.rows.filter((r) => stepAppliesTo(st, rowKind(r))).length, 0); const dn = steps.reduce((n, st) => n + t.rows.filter((r) => stepAppliesTo(st, rowKind(r)) && doneSet.has(`${r.id}:${st.id}`)).length, 0); return foldOf(t.key, tot > 0 && dn === tot); });
+  const jump = (sid: string | null) => { if (!sid) return; setFold((cur) => ({ ...cur, [sid]: false })); setTimeout(() => document.getElementById(`st-${sid}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0); };
+
+  // The games a row needs that its device doesn't list yet are added to the device's installed games (the same list as in Equipment, with its history line).
+  async function install(list: Row[]) {
+    setBusy(true); setError('');
+    for (const r of list) {
+      if (r.kind !== 'club') continue;
+      const miss = r.games_needed.filter((g) => !r.games.some((x) => x.toLowerCase() === g.toLowerCase()));
+      if (miss.length) await catalog.saveDevice(r.id, { games: [...r.games, ...miss] });
+    }
+    await plan.reload();
+    setBusy(false);
+  }
 
   async function remove() {
     if (!(await confirmHold({ title: `Remove “${p.name}”?`, message: 'The plan, its teams, the devices in it (including any borrowed ones) and every step recorded for it are deleted. The inventory itself is not touched.', confirmLabel: 'Hold to remove' }))) return;
@@ -164,7 +185,7 @@ export default function PlanView({ id, data, catalog, onBack }: { id: string; da
     <div className={styles.dayPage}>
       <div className={styles.dayTop}>
         <div className={styles.dayBar}>
-          <button type="button" className={styles.back} onClick={onBack}><ArrowLeft size={15} aria-hidden="true" /> All Plans</button>
+          <button type="button" className={styles.back} onClick={onBack}><ArrowLeft size={15} aria-hidden="true" /> All Events</button>
           <div className={styles.dayHeading}>
             <b className={styles.dayTitle}>{p.name}{closed && <span className={`${styles.badge} ${styles.neutral}`}>Closed</span>}</b>
             <span className={styles.muted}>{range(p.starts_on, p.ends_on)}{p.event_id ? ' · portal event' : ' · Logistics event'}{p.notes ? ` · ${p.notes}` : ''}</span>
@@ -185,7 +206,15 @@ export default function PlanView({ id, data, catalog, onBack }: { id: string; da
             </details>
           )}
         </div>
-        {closed ? <Notice tone="error">This plan is closed, so nothing more can be recorded.</Notice> : (
+        <SectionTabs<EventPage> variant="segmented" label="Event pages" value={page} onChange={onPage} tabs={[
+          { id: 'allocation', label: 'Allocation', count: rows.length },
+          { id: 'prizing', label: 'Prizing', count: detail.prizes.lines.length },
+          { id: 'sponsor-prizing', label: 'Sponsor Prizing' },
+          { id: 'sponsor-items', label: 'Sponsor Items', count: borrowed.filter((b) => b.owner_kind === 'sponsor').length },
+          { id: 'officer-loaners', label: 'Officer Loaners', count: borrowed.filter((b) => b.owner_kind === 'officer').length },
+          { id: 'requests', label: 'Requests' },
+        ]} />
+        {page === 'allocation' && (closed ? <Notice tone="error">This event is closed, so nothing more can be recorded.</Notice> : (
           <form className={styles.dayForm} onSubmit={(e) => { e.preventDefault(); submit(); }}>
             <select className={styles.daySelect} value={picked} onChange={(e) => { setPicked(e.target.value); setKit(null); input.current?.focus(); }} aria-label="Step to mark when typing an ID">
               <option value="">Next step: {auto?.name ?? '–'}</option>
@@ -194,11 +223,17 @@ export default function PlanView({ id, data, catalog, onBack }: { id: string; da
             <input ref={input} className={styles.dayInput} value={text} onChange={(e) => setText(e.target.value)} placeholder={`Type an ID to mark “${step?.name ?? 'the step'}”`} aria-label={`Device ID for ${step?.name ?? 'the step'}`} autoCapitalize="characters" autoComplete="off" autoCorrect="off" spellCheck={false} enterKeyHint="done" disabled={busy || !step} />
             <Button type="submit" disabled={!text.trim() || busy} loading={busy}>Mark</Button>
           </form>
-        )}
+        ))}
       </div>
       {error && <div role="alert" onClick={() => setError('')}><Notice tone="error">{error}</Notice></div>}
 
-      <div className={styles.dayLayout}>
+      {page === 'prizing' && <PrizingTab plan={plan} api={catalog} data={data} day={day} onDay={(v) => onPage('prizing', v)} />}
+      {page === 'sponsor-prizing' && <SponsorPrizingTab plan={plan} api={catalog} data={data} />}
+      {page === 'sponsor-items' && <BorrowedTab plan={plan} catalog={catalog} data={data} kind="sponsor" />}
+      {page === 'officer-loaners' && <BorrowedTab plan={plan} catalog={catalog} data={data} kind="officer" />}
+      {page === 'requests' && <div className={styles.empty}><p>Requests from leads (devices and prizes for this event) will show here.</p></div>}
+
+      {page === 'allocation' && <div className={styles.dayLayout}>
         {(fb || kit) && <div className={styles.dayAside}>
           {fb && (
             <div className={`${styles.result} ${fb.tone === 'ok' ? styles.resultOk : fb.tone === 'already' ? styles.resultWarn : styles.resultBad}`} role="status" aria-live="polite">
@@ -246,23 +281,15 @@ export default function PlanView({ id, data, catalog, onBack }: { id: string; da
         <div className={styles.dayMain}>
           {rows.length > 0 && (
             <section className={`${styles.statusBar} ${bad ? styles.readyBad : warn ? styles.readyWarn : styles.readyOk}`} aria-label="What needs fixing">
-              <div className={styles.readyHead}>
+              <div className={`${styles.readyHead} ${problems.length > 0 ? styles.clickRow : ''}`} onClick={(e) => { if (problems.length > 0 && !interactive(e.target)) setShowList((v) => !v); }} role={problems.length > 0 ? 'button' : undefined} tabIndex={problems.length > 0 ? 0 : undefined} aria-expanded={problems.length > 0 ? showList : undefined} onKeyDown={(e) => { if (problems.length > 0 && (e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); setShowList((v) => !v); } }}>
                 <b>{bad || warn ? `${problems.length} to fix` : 'Everything is ready'}</b>
                 {bad > 0 && <span className={`${styles.badge} ${styles.bad}`}>{bad} wrong</span>}
                 {warn > 0 && <span className={`${styles.badge} ${styles.warnBadge}`}>{warn} to check</span>}
+                {problems.length > 0 && <span className={styles.dim}>{showList ? 'Click to hide the list' : 'Click to see the list'}</span>}
                 <span className={styles.statusSpacer} />
                 {manage && emptyRows.length > 0 && <Button size="sm" variant="secondary" onClick={() => setFilling({ station: null })}>Fill {emptyRows.length} Empty</Button>}
-                {problems.length > 0 && <button type="button" className={styles.linkBtn} aria-expanded={showList} onClick={() => setShowList((v) => !v)}>{showList ? 'Hide list' : 'Show list'}</button>}
                 <button type="button" className={styles.linkBtn} aria-expanded={overview} onClick={() => setOverview((v) => !v)}>{overview ? 'Hide overview' : 'Overview'}</button>
-                <button type="button" className={styles.linkBtn} onClick={() => setOpen(new Set(teams.map((t) => t.key)))}>Open all</button>
-                <button type="button" className={styles.linkBtn} onClick={() => setOpen(new Set())}>{narrow ? 'Fold all' : 'Fold finished'}</button>
-                <HowItWorks id="plan" title="Help" compact>
-                  <ol className={styles.helpSteps}>
-                    <li>Each block is a team, each line a device (a bundle shows as one line, “Parts” opens it).</li>
-                    <li>Tap a box to tick a step; tap it again to undo. Or type a device’s ID above and press Mark.</li>
-                    <li>“Mark all” ticks the picked step for a team. Red and amber lines need a look.</li>
-                  </ol>
-                </HowItWorks>
+                <button type="button" className={styles.linkBtn} onClick={() => setFold(Object.fromEntries(teams.map((t) => [t.key, !allFolded])))}>{allFolded ? 'Expand all' : 'Collapse all'}</button>
               </div>
               {showList && problems.length > 0 && (
                 <ul className={styles.problemList}>
@@ -278,6 +305,7 @@ export default function PlanView({ id, data, catalog, onBack }: { id: string; da
           )}
           {overview && (
             <div className={styles.overviewWrap}>
+              <p className={styles.overviewHelp}>Each block is a team, each line a device (a bundle is one line: click it to open its parts). Click a box to tick a step and again to undo, or type a device’s ID above and press Mark. “Mark all” ticks the picked step for a team. Red and amber lines need a look.</p>
               <table className={styles.overview}>
                 <thead><tr><th scope="col">Team</th>{steps.map((s) => <th key={s.id} scope="col">{s.name}</th>)}</tr></thead>
                 <tbody>
@@ -316,7 +344,7 @@ export default function PlanView({ id, data, catalog, onBack }: { id: string; da
             });
             const total = mineStats.reduce((n, x) => n + x.total, 0), done = mineStats.reduce((n, x) => n + x.done, 0);
             const complete = total > 0 && done === total;
-            const folded = (complete || narrow) && !open.has(t.key);
+            const folded = foldOf(t.key, complete);
             const left = step ? mineStats.find((x) => x.s.id === step.id) : null;
             const s = t.station;
             const status = s ? stationStatus(problems, s.id) : 'ok';
@@ -324,10 +352,10 @@ export default function PlanView({ id, data, catalog, onBack }: { id: string; da
             const emptyHere = t.rows.filter((r) => r.kind === 'slot' && !r.counted).length;
             return (
               <section key={t.key} id={`st-${t.key}`} className={`${styles.dayTeam} ${complete ? styles.dayTeamDone : ''} ${styles[`tint${ti % 3}`]}`} style={{ '--n': steps.length } as React.CSSProperties} aria-label={t.title}>
-                <div className={`${styles.dayRow} ${styles.dayRowHead}`}>
+                <div className={`${styles.dayRow} ${styles.dayRowHead} ${styles.clickRow}`} onClick={(e) => { if (!interactive(e.target)) toggleFold(t.key, complete); }}>
                   <div className={styles.teamHeadMain}>
                     <div className={styles.teamLine}>
-                      <button type="button" className={styles.foldBtn} aria-expanded={!folded} onClick={() => setOpen((cur) => { const n = new Set(cur); if (n.has(t.key)) n.delete(t.key); else n.add(t.key); return n; })}>
+                      <button type="button" className={styles.foldBtn} aria-expanded={!folded} onClick={() => toggleFold(t.key, complete)}>
                         <span className={styles.foldMark} aria-hidden="true">{folded ? '+' : '–'}</span>
                         <b>{t.title}</b>
                       </button>
@@ -392,7 +420,7 @@ export default function PlanView({ id, data, catalog, onBack }: { id: string; da
             </section>
           )}
         </div>
-      </div>
+      </div>}
 
       {picking && <PickDialog plan={plan} data={data} stations={stations} onClose={() => setPicking(false)} />}
       {swapping && <SwapDialog plan={plan} device={swapping} onClose={() => setSwapping(null)} />}

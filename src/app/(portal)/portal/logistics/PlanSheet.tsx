@@ -5,6 +5,7 @@ import { ArrowRightLeft, Check, Pencil, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { conditionLabel, UNUSABLE } from '@/lib/logistics/constants';
 import { rowKind, skippedSteps, stepAppliesTo, type Problem, type StepDef } from '@/lib/logistics/plans';
+import { interactive } from './interactive';
 import { units, type Line, type Row, type Unit } from './planRows';
 import type { Slim, Station, usePlan } from './usePlans';
 import styles from './logistics.module.css';
@@ -13,11 +14,11 @@ export interface SheetCtx {
   api: ReturnType<typeof usePlan>; canManage: boolean; closed: boolean; busy: boolean; stations: Station[]; steps: StepDef[]; activeId: string;
   doneSet: Set<string>; doneAt: Map<string, string>; problems: Problem[];
   onTick: (row: Row, step: StepDef) => void; onTickAll: (rows: Row[], step: StepDef) => void; onUndo: (item: { id: string; kind: Slim['kind'] }, stepId: string) => void;
-  onSwap: (r: Row) => void; onBorrowed: (r: Row) => void;
+  onSwap: (r: Row) => void; onBorrowed: (r: Row) => void; onInstalled: (rows: Row[]) => void;
 }
 
 const time = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-const missingOf = (r: Row) => (r.kind !== 'slot' ? r.games_needed.filter((g) => !r.games.some((x) => x.toLowerCase() === g.toLowerCase())) : []);
+export const missingOf = (r: Row) => (r.kind !== 'slot' ? r.games_needed.filter((g) => !r.games.some((x) => x.toLowerCase() === g.toLowerCase())) : []);
 const label = (r: Row) => r.tag ?? r.type;
 
 // The boxes for one line: a box per step the line goes through (a dash for a step that doesn't apply). A single device ticks and unticks; a counted line shows how many units are done
@@ -86,6 +87,7 @@ function DeviceLine({ line, ctx, backup, nested }: { line: Line; ctx: SheetCtx; 
       </div>
       <div className={styles.dNotes}>
         {r.games_needed.length > 0 && <span className={`${styles.gameChip} ${missing.length ? styles.gameMissing : styles.gameOk}`} title={missing.length ? `Not installed yet: ${missing.join(', ')}` : r.kind === 'slot' ? 'Needed' : 'Installed'}>{r.games_needed.join(', ')}{missing.length ? ' · not installed' : ''}</span>}
+        {missing.length > 0 && manage && r.kind === 'club' && <button type="button" className={styles.linkBtn} disabled={ctx.busy} onClick={() => ctx.onInstalled([r])} title={`Add ${missing.join(', ')} to this device’s installed games`}>Mark installed</button>}
         {empty && manage && (
           <span className={styles.assignRow}>
             <input className={styles.assignInput} value={tag} onChange={(e) => setTag(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void assign(); }} placeholder="Type an ID" aria-label={`Device ID for the ${r.type} row`} autoCapitalize="characters" autoComplete="off" disabled={busy} />
@@ -126,9 +128,9 @@ function SetLine({ unit, ctx }: { unit: Unit; ctx: SheetCtx }) {
   const name = unit.lines.map((l) => (l.counted ? `${l.rows[0].type}${l.rows.length > 1 ? ` ×${l.rows.length}` : ''}` : label(l.rows[0]))).join(' · ');
   return (
     <>
-      <div className={`${styles.dayRow} ${styles.dayLine} ${styles.setLine} ${bad ? styles.lineBad : warn ? styles.lineWarn : ''}`}>
+      <div className={`${styles.dayRow} ${styles.dayLine} ${styles.setLine} ${styles.clickRow} ${bad ? styles.lineBad : warn ? styles.lineWarn : ''}`} onClick={(e) => { if (!interactive(e.target)) setOpen((v) => !v); }}>
         <div className={styles.dInfo}>
-          <b className={styles.dTag}>{first.tag ?? first.type}</b>
+          <button type="button" className={styles.foldBtn} aria-expanded={open} aria-label={`${open ? 'Hide' : 'Show'} the parts of ${first.tag ?? first.type}`} onClick={() => setOpen((v) => !v)}><span className={styles.foldMark} aria-hidden="true">{open ? '–' : '+'}</span><b className={styles.dTag}>{first.tag ?? first.type}</b></button>
           <span className={styles.dType}>{first.type} set · {rows.length} parts</span>
           <span className={`${styles.dWhere} ${styles.setParts}`} title={name}>{unit.lines.map((l, i) => (
             <span key={l.key} className={l.rows[0].kind === 'slot' && !l.counted ? styles.flagBad : undefined}>{i > 0 ? ' · ' : ''}{l.counted ? `${l.rows[0].type}${l.rows.length > 1 ? ` ×${l.rows.length}` : ''}` : l.rows[0].kind === 'slot' ? `no ${l.rows[0].type}` : label(l.rows[0])}</span>
@@ -136,12 +138,13 @@ function SetLine({ unit, ctx }: { unit: Unit; ctx: SheetCtx }) {
         </div>
         <div className={styles.dNotes}>
           {games.length > 0 && <span className={`${styles.gameChip} ${missingGames.length ? styles.gameMissing : styles.gameOk}`}>{games.join(', ')}{missingGames.length ? ' · not installed' : ''}</span>}
+          {missingGames.length > 0 && !ctx.closed && ctx.canManage && rows.some((r) => r.kind === 'club' && missingOf(r).length) && <button type="button" className={styles.linkBtn} disabled={ctx.busy} onClick={() => ctx.onInstalled(rows)}>Mark installed</button>}
           {nEmpty > 0 && <span className={styles.flagBad}>{nEmpty} empty</span>}
           {bad && nEmpty === 0 && <span className={styles.flagBad}>Needs a look</span>}
           {!bad && warn && <span className={styles.flagWarn}>Check</span>}
         </div>
         <Cells rows={rows} setLabel={name} ctx={ctx} />
-        <div className={styles.dTools}><button type="button" className={styles.linkBtn} aria-expanded={open} onClick={() => setOpen((v) => !v)}>{open ? 'Hide parts' : 'Parts'}</button></div>
+        <div className={styles.dTools} />
       </div>
       {open && unit.lines.map((l) => <DeviceLine key={l.key} line={l} ctx={ctx} nested />)}
     </>

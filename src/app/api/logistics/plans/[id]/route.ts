@@ -3,6 +3,7 @@ import { authorizeLogistics } from '@/lib/logistics/auth';
 import { BORROWED_COLUMNS, DEVICE_COLUMNS, PLAN_COLUMNS, SLOT_COLUMNS, UUID, bookedElsewhere, loadSteps, ownerLabelOf, ownerNames, type BorrowedRow } from '@/lib/logistics/planServer';
 import { planConflicts } from '@/lib/logistics/plans';
 import type { Device } from '@/lib/logistics/devices';
+import { loadPlanPrizes } from '@/lib/logistics/prizeServer';
 import { logAudit } from '@/lib/notifications/audit';
 
 export const dynamic = 'force-dynamic';
@@ -17,6 +18,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   if (!UUID.test(id)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
   const { data: plan } = await auth.svc.from('logistics_plans').select(PLAN_COLUMNS).eq('id', id).maybeSingle();
   if (!plan) return NextResponse.json({ error: 'That plan is gone.' }, { status: 404 });
+  const prizeData = loadPlanPrizes(auth.svc, id);
   const [stations, rows, steps, done, borrowedRows, slotRows] = await Promise.all([
     auth.svc.from('logistics_stations').select('id, name, sort, contact, room, confirmed').eq('plan_id', id).order('sort').order('name').limit(500),
     auth.svc.from('logistics_plan_devices').select('device_id, station_id, role, swap_reason, swapped_for_label, games_needed, sort, set_id').eq('plan_id', id).limit(5000),
@@ -34,7 +36,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const names = await ownerNames(auth.svc, borrowed);
   const booked = await bookedElsewhere(auth.svc, plan as { id: string; starts_on: string; ends_on: string }, planned.map((d) => d.id));
   return NextResponse.json({
-    plan, canManage: auth.canManage, stations: stations.data ?? [], steps,
+    plan, canManage: auth.canManage, stations: stations.data ?? [], steps, prizes: await prizeData,
     items: (rows.data ?? []).map((r) => ({ ...r, device: byId.get(r.device_id as string) })).filter((r) => r.device),
     slots: slotRows.data ?? [],
     borrowed: borrowed.map((b) => ({ ...b, owner: ownerLabelOf(b, names) })),

@@ -15,7 +15,9 @@ export interface KitLine { item: string; qty: number; missing: boolean }
 export interface Borrowed { id: string; plan_id: string; tag: string; name: string | null; type: string; owner_kind: 'sponsor' | 'officer'; sponsor_id: string | null; owner_user_id: string | null; owner_note: string | null; station_id: string | null; role: 'planned' | 'backup'; swap_reason: string | null; swapped_for_label: string | null; kit: KitLine[]; notes: string | null; games_needed: string[]; sort: number; set_id?: string | null; owner: string }
 export interface DoneRow { device_id?: string | null; borrowed_id?: string | null; slot_id?: string | null; step_id: string; done_at: string }
 export const doneKey = (d: { device_id?: string | null; borrowed_id?: string | null; slot_id?: string | null; step_id: string }) => `${d.device_id ?? d.borrowed_id ?? d.slot_id}:${d.step_id}`;
+export type PlanPrizesData = import('@/lib/logistics/prizeServer').PlanPrizes;
 export interface PlanDetail {
+  prizes: PlanPrizesData;
   plan: Omit<PlanSummary, 'devices'> & { updated_at: string }; canManage: boolean; stations: Station[]; steps: StepDef[]; items: PlanItem[]; borrowed: Borrowed[]; slots: Slot[]; extras: Device[]; done: DoneRow[]; conflicts: Conflict[];
 }
 // What the event-day screen shows about anything in a plan.
@@ -58,6 +60,8 @@ export function usePlanList() {
 // open it asks a tiny question every minute (only while the tab is visible) and applies what other phones did.
 export function usePlan(id: string, live: boolean) {
   const [detail, setDetail] = useState<PlanDetail | null>(null);
+  const detailRef = useRef<PlanDetail | null>(null);
+  detailRef.current = detail;
   const [error, setError] = useState('');
   const since = useRef('');
   const stamp = useRef('');
@@ -148,7 +152,56 @@ export function usePlan(id: string, live: boolean) {
     return { ok: true as const, preview: r.data.preview, applied: r.data.applied ?? 0 };
   }, [id, load]);
 
-  return { detail, error, setError, reload: load, act, doStep, undoStep, swap, pick, fill, assign };
+  // A prize count ("sorted 6 of 10") is set as a number and shown at once; the server may lower it (it can't pass what the line has).
+  const setPrizeCount = useCallback(async (line_id: string, step_id: string, done: number): Promise<boolean> => {
+    let before: number | undefined;
+    setDetail((cur) => {
+      if (!cur) return cur;
+      before = cur.prizes.done.find((d) => d.line_id === line_id && d.step_id === step_id)?.done;
+      const rest = cur.prizes.done.filter((d) => !(d.line_id === line_id && d.step_id === step_id));
+      return { ...cur, prizes: { ...cur.prizes, done: [...rest, { line_id, step_id, done }] } };
+    });
+    const r = await call<{ done: number }>(`/api/logistics/plans/${id}/prize-steps`, 'POST', { line_id, step_id, done });
+    const apply = (n: number) => setDetail((cur) => {
+      if (!cur) return cur;
+      const rest = cur.prizes.done.filter((d) => !(d.line_id === line_id && d.step_id === step_id));
+      return { ...cur, prizes: { ...cur.prizes, done: [...rest, { line_id, step_id, done: n }] } };
+    });
+    if (!r.ok) { setError(r.error); apply(before ?? 0); return false; }
+    if (r.data.done !== done) apply(r.data.done);
+    return true;
+  }, [id]);
+
+  // The allocation grid sets how many of a prize a pool gets (0 takes it out). It shows at once; `delta` is how much more is now promised, so the stock's "left" can be moved by the same amount.
+  const setPrizeLine = useCallback(async (pool_id: string, prize: PlanPrizesData['lines'][number]['prize'], quantity: number): Promise<{ ok: boolean; delta: number }> => {
+    const cur = detailRef.current;
+    if (!cur) return { ok: false, delta: 0 };
+    const lines = cur.prizes.lines;
+    const existing = lines.find((l) => l.pool_id === pool_id && l.prize_id === prize.id);
+    const next = Math.max(0, Math.round(quantity));
+    const before = existing?.quantity ?? 0;
+    if (next === before) return { ok: true, delta: 0 };
+    const delta = next - before;
+    const withLines = (fn: (l: PlanPrizesData['lines']) => PlanPrizesData['lines']) => setDetail((c) => (c ? { ...c, prizes: { ...c.prizes, lines: fn(c.prizes.lines).map((l) => (l.prize_id === prize.id ? { ...l, prize: { ...l.prize, left: l.prize.left - delta } } : l)) } } : c));
+    const undo = () => { void load(); };
+    if (next === 0 && existing) {
+      withLines((ls) => ls.filter((l) => l.id !== existing.id));
+      const r = await call<{ ok: true }>(`/api/logistics/plans/${id}/prizes`, 'DELETE', { line_id: existing.id });
+      if (!r.ok) { setError(r.error); undo(); return { ok: false, delta: 0 }; }
+    } else if (existing) {
+      withLines((ls) => ls.map((l) => (l.id === existing.id ? { ...l, quantity: next } : l)));
+      const r = await call<{ line: { quantity: number } }>(`/api/logistics/plans/${id}/prizes`, 'PATCH', { line_id: existing.id, quantity: next });
+      if (!r.ok) { setError(r.error); undo(); return { ok: false, delta: 0 }; }
+    } else {
+      const r = await call<{ lines: { id: string; pool_id: string; prize_id: string; quantity: number; sort: number }[] }>(`/api/logistics/plans/${id}/prizes`, 'POST', { pool_id, prize_id: prize.id, quantity: next });
+      if (!r.ok) { setError(r.error); undo(); return { ok: false, delta: 0 }; }
+      withLines((ls) => [...ls, { ...r.data.lines[0], prize }]);
+    }
+    setError('');
+    return { ok: true, delta };
+  }, [id, load]);
+
+  return { detail, error, setError, reload: load, act, doStep, undoStep, swap, pick, fill, assign, setPrizeCount, setPrizeLine };
 }
 export interface PickCell { type: string; games: string[]; counted: boolean; device: { id: string; tag: string | null; shelf: string | null; tier: string | null; condition: string } | null }
 export interface PickPreview { stations: PickCell[][]; short: number | { type: string; missing: number }[]; notTested: number; missingGames: number; empty: number }

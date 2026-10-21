@@ -13,11 +13,11 @@ import type { Catalog, LogisticsApi } from './useLogistics';
 import styles from './logistics.module.css';
 
 // A sponsor's or an officer's device for THIS event only. It is not in the inventory and is fresh each event; its ID only has to be unique within this plan.
-export default function BorrowedDialog({ plan, catalog, data, stations, borrowed, onClose }: { plan: PlanApi; catalog: LogisticsApi; data: Catalog; stations: Station[]; borrowed: Borrowed | null; onClose: () => void }) {
+export default function BorrowedDialog({ plan, catalog, data, stations, borrowed, defaultKind, onClose }: { plan: PlanApi; catalog: LogisticsApi; data: Catalog; stations: Station[]; borrowed: Borrowed | null; defaultKind?: 'sponsor' | 'officer'; onClose: () => void }) {
   const [tag, setTag] = useState(borrowed?.tag ?? '');
   const [name, setName] = useState(borrowed?.name ?? '');
   const [type, setType] = useState(borrowed?.type ?? '');
-  const [kind, setKind] = useState<'sponsor' | 'officer'>(borrowed?.owner_kind ?? 'sponsor');
+  const [kind, setKind] = useState<'sponsor' | 'officer'>(borrowed?.owner_kind ?? defaultKind ?? 'sponsor');
   const [sponsorId, setSponsorId] = useState(borrowed?.sponsor_id ?? '');
   const [officerId, setOfficerId] = useState(borrowed?.owner_user_id ?? '');
   const [note, setNote] = useState(borrowed?.owner_note ?? '');

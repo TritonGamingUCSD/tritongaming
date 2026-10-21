@@ -21,11 +21,11 @@ export async function GET() {
     auth.svc.from('logistics_plans').select('id, slug, name').eq('status', 'draft').lte('starts_on', pacificToday()).gte('ends_on', pacificToday()).order('starts_on').limit(5),
   ]);
   if (devices.error || options.error || sponsors.error) return NextResponse.json({ error: 'Couldn’t load Logistics.' }, { status: 500 });
-  type Item = { id: string; value: string; counted?: boolean; applies?: string; kit?: boolean; items?: unknown };
+  type Item = { id: string; value: string; counted?: boolean; applies?: string; kit?: boolean; gives?: boolean; leftover?: boolean; items?: unknown };
   const lists = Object.fromEntries(OPTION_KINDS.map((k) => [k, [] as Item[]])) as Record<OptionKind, Item[]>;
   for (const o of options.data ?? []) {
-    const m = (o.meta ?? {}) as { counted?: boolean; applies?: string; kit?: boolean; items?: unknown };
-    lists[o.kind as OptionKind]?.push({ id: o.id as string, value: o.value as string, ...(o.kind === 'type' ? { counted: !!m.counted } : {}), ...(o.kind === 'step' ? { applies: m.applies ?? 'all', kit: !!m.kit } : {}), ...(o.kind === 'bundle' ? { items: m.items ?? [] } : {}) });
+    const m = (o.meta ?? {}) as { counted?: boolean; applies?: string; kit?: boolean; gives?: boolean; leftover?: boolean; items?: unknown };
+    lists[o.kind as OptionKind]?.push({ id: o.id as string, value: o.value as string, ...(o.kind === 'type' ? { counted: !!m.counted } : {}), ...(o.kind === 'step' ? { applies: m.applies ?? 'all', kit: !!m.kit } : {}), ...(o.kind === 'prize_step' ? { gives: !!m.gives, leftover: !!m.leftover } : {}), ...(o.kind === 'bundle' ? { items: m.items ?? [] } : {}) });
   }
   return NextResponse.json({
     canManage: auth.canManage,

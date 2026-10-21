@@ -10,7 +10,7 @@ import { usePortalParams, useLiveParams } from '@/lib/portal/usePortalParams';
 // A section's first tab is the section itself: /portal/<section> with no tab, so the main page keeps the short address.
 // Sections whose first tab depends on the person pass a function that says which one it is.
 const MAIN_TAB: Record<string, string> = {
-  tickets: 'tickets', admin: 'overview', profile: 'info', events: 'list', checkin: 'tickets', points: 'mine', meetings: 'mine', members: 'members', logistics: 'equipment',
+  tickets: 'tickets', admin: 'overview', profile: 'info', events: 'list', checkin: 'tickets', points: 'mine', meetings: 'mine', members: 'members', logistics: 'events',
 };
 
 export function usePortalTabSync(sectionId: string, firstTab?: () => string | undefined) {
@@ -25,7 +25,7 @@ export function usePortalTabSync(sectionId: string, firstTab?: () => string | un
       section: sectionId,
       tab: isMain ? null : tab,
       subtab: subtab ?? null,
-      block: null, id: null, q: null, status: null, view: null, atype: null, aq: null, aaction: null, arange: null, afrom: null, ato: null, ticket: null, plan: null,
+      block: null, id: null, q: null, status: null, view: null, detail: null, atype: null, aq: null, aaction: null, arange: null, afrom: null, ato: null, ticket: null, plan: null,
     });
   }, [setParams, sectionId]);
 }
@@ -34,7 +34,7 @@ export function usePortalTabSync(sectionId: string, firstTab?: () => string | un
 // server computed once at page load). Sections swap in and out without a server round trip, so a prop
 // would go stale. A link that names a tab wins; with no tab in the address a section always opens on its first tab,
 // and each section still checks the tab is one they may use before showing it.
-export function useUrlNav(): { tab: string | undefined; subtab: string | undefined } {
+export function useUrlNav(): { tab: string | undefined; subtab: string | undefined; detail: string | undefined } {
   const sp = useLiveParams();
-  return { tab: sp.get('tab') ?? undefined, subtab: sp.get('subtab') ?? undefined };
+  return { tab: sp.get('tab') ?? undefined, subtab: sp.get('subtab') ?? undefined, detail: sp.get('detail') ?? undefined };
 }

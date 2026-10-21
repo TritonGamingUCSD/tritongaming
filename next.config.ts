@@ -18,6 +18,7 @@ const nextConfig: NextConfig = {
         { source: `/portal/:section(${sections})`, destination: '/portal?section=:section' },
         { source: `/portal/:section(${sections})/:tab`, destination: '/portal?section=:section&tab=:tab' },
         { source: `/portal/:section(${sections})/:tab/:subtab`, destination: '/portal?section=:section&tab=:tab&subtab=:subtab' },
+        { source: `/portal/:section(${sections})/:tab/:subtab/:detail`, destination: '/portal?section=:section&tab=:tab&subtab=:subtab&detail=:detail' },
       ],
     };
   },

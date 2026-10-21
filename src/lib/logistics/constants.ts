@@ -25,10 +25,10 @@ export const borrowedLabel = (o: string) => BORROWED_KINDS.find((x) => x.id === 
 
 // The lists a person can edit like a spreadsheet's dropdown. 'game' only holds extras: the portal's own list is read live (see lib/site/games.ts).
 // The plain lists are edited as simple rows; 'step' (the event-day steps, in order) and 'bundle' (a named set of device types) have their own editors.
-export const LIST_KINDS = ['type', 'shelf', 'tier', 'port', 'game', 'kit'] as const;
-export const OPTION_KINDS = [...LIST_KINDS, 'step', 'bundle'] as const;
+export const LIST_KINDS = ['type', 'shelf', 'tier', 'port', 'game', 'kit', 'prize_size'] as const;
+export const OPTION_KINDS = [...LIST_KINDS, 'step', 'bundle', 'prize_step'] as const;
 export type OptionKind = (typeof OPTION_KINDS)[number];
-export const KIND_LABELS: Record<OptionKind, string> = { type: 'Device Types', shelf: 'Shelves', tier: 'Tiers', port: 'Ports', game: 'Extra Games', kit: 'Kit Parts', step: 'Event-Day Steps', bundle: 'Setup Bundles' };
+export const KIND_LABELS: Record<OptionKind, string> = { type: 'Device Types', shelf: 'Shelves', tier: 'Tiers', port: 'Ports', game: 'Extra Games', kit: 'Kit Parts', step: 'Event-Day Steps', bundle: 'Setup Bundles', prize_size: 'Prize Sizes', prize_step: 'Prize Steps' };
 export const KIND_HINTS: Record<OptionKind, string> = {
   type: 'What kind of thing it is. Mark a type as counted for items you only estimate (cables, power strips).',
   shelf: 'Where gear is stored.',
@@ -38,6 +38,8 @@ export const KIND_HINTS: Record<OptionKind, string> = {
   kit: 'Parts that travel with a device (cables, controllers, chargers).',
   step: 'What every device goes through on event day, in order.',
   bundle: 'A set of devices that go together, like a PC with its monitor, keyboard, mouse and headset.',
+  prize_size: 'How a prize is grouped (Free, Small Prizing, Medium Prizing). A prize with none is a big prize.',
+  prize_step: 'What every prize goes through on event day, in order. Each step is a count (sorted 6 of 10).',
 };
 
 // What a device of this type usually comes with, offered as a starting kit when someone adds one. Anything can be edited per device.

@@ -70,3 +70,5 @@ where not exists (select 1 from public.logistics_options o where o.kind = 'prize
 insert into public.logistics_options (kind, value, sort, meta)
 select 'prize_size', v.value, v.sort, '{}'::jsonb from (values ('Free', 1), ('Small Prizing', 2), ('Medium Prizing', 3)) as v(value, sort)
 where not exists (select 1 from public.logistics_options o where o.kind = 'prize_size' and lower(o.value) = lower(v.value));
+update public.logistics_options set meta = '{"gives": true}'::jsonb where kind = 'prize_step' and value = 'Given Out';
+update public.logistics_options set meta = '{"leftover": true}'::jsonb where kind = 'prize_step' and value = 'Back To Storage';
