@@ -36,7 +36,7 @@ export default function EditEventClient({
       .from('events')
       .update({
         title: form.title.trim(),
-        slug: finalSlug || null,
+        ...(initial.slug ? {} : { slug: finalSlug || null }),   // the slug is set once and never changed (the database refuses it too)
         content: form.content.trim() || null,
         description: form.details.trim() || null,
         venue_address: form.venue_address.trim() || null,

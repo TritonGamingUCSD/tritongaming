@@ -42,11 +42,13 @@ export async function POST(request: Request) {
   let name = String(b.name ?? '').trim().slice(0, 120);
   let starts = String(b.starts_on ?? ''), ends = String(b.ends_on ?? b.starts_on ?? '');
   let eventId: string | null = null;
+  let eventSlug: string | null = null;
   if (b.event_id) {
     if (typeof b.event_id !== 'string' || !UUID.test(b.event_id)) return NextResponse.json({ error: 'Pick an event from the list.' }, { status: 400 });
-    const { data: ev } = await auth.svc.from('events').select('id, title, start_date, end_date').eq('id', b.event_id).maybeSingle();
+    const { data: ev } = await auth.svc.from('events').select('id, title, slug, start_date, end_date').eq('id', b.event_id).maybeSingle();
     if (!ev) return NextResponse.json({ error: 'That event no longer exists.' }, { status: 404 });
     eventId = ev.id as string;
+    eventSlug = (ev.slug as string | null) ?? null;
     name ||= ev.title as string;
     starts = DATE.test(starts) ? starts : dayOf(ev.start_date as string)!;
     ends = DATE.test(ends) ? ends : dayOf((ev.end_date as string | null) ?? (ev.start_date as string))!;
@@ -54,8 +56,8 @@ export async function POST(request: Request) {
   if (!name) return NextResponse.json({ error: 'Give the plan a name.' }, { status: 400 });
   if (!DATE.test(starts) || !DATE.test(ends)) return NextResponse.json({ error: 'Pick the dates.' }, { status: 400 });
   if (ends < starts) return NextResponse.json({ error: 'The last day can’t be before the first.' }, { status: 400 });
-  // The address name: made once from the name, made unique with the year (and a number if it still clashes), and never changed afterwards, even when the plan is renamed.
-  const base = planSlug(name);
+  // The address name: a plan for a portal event uses that event's slug (which is itself never changed); otherwise it is made once from the name, made unique with the year (and a number if it still clashes), and never changed afterwards, even when the plan is renamed.
+  const base = eventSlug || planSlug(name);
   const { data: taken } = await auth.svc.from('logistics_plans').select('slug').like('slug', `${base}%`).limit(200);
   const used = new Set((taken ?? []).map((r) => r.slug as string));
   let slug = base;

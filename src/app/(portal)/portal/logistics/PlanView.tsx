@@ -345,10 +345,17 @@ export default function PlanView({ id, data, catalog, onBack }: { id: string; da
                     {!folded && (
                       <div className={styles.teamLine}>
                         {!closed && step && !step.kit && left && left.done < left.total && <Button size="sm" variant="secondary" onClick={() => void markAll(t.rows, step)} disabled={busy}>Mark all “{step.name}”</Button>}
-                        {manage && s && <Button size="sm" variant="secondary" onClick={() => setRowDialog(s)}>Add Rows</Button>}
-                        {manage && s && emptyHere > 0 && <Button size="sm" variant="secondary" onClick={() => setFilling({ station: s })}>Fill {emptyHere} Empty</Button>}
-                        {manage && s && <Button size="sm" variant="ghost" onClick={() => setStationDialog({ station: s })}>Edit</Button>}
-                        {manage && s && <Button size="sm" variant="ghost" onClick={() => void removeStation(s)}>Remove</Button>}
+                        {manage && s && (
+                          <details className={`${styles.menu} ${styles.teamMenu}`}>
+                            <summary aria-label={`More for ${s.name}`}>More</summary>
+                            <div className={styles.menuList}>
+                              <button type="button" onClick={() => setRowDialog(s)}>Add Rows</button>
+                              {emptyHere > 0 && <button type="button" onClick={() => setFilling({ station: s })}>Fill {emptyHere} Empty</button>}
+                              <button type="button" onClick={() => setStationDialog({ station: s })}>Edit Team</button>
+                              <button type="button" className={styles.menuDanger} onClick={() => void removeStation(s)}>Remove Team</button>
+                            </div>
+                          </details>
+                        )}
                       </div>
                     )}
                   </div>

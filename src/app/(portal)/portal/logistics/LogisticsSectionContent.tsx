@@ -22,7 +22,7 @@ type Tab = 'equipment' | 'plans' | 'sponsors' | 'tools';
 export default function LogisticsSectionContent({ canManage }: { canManage: boolean }) {
   const api = useLogistics();
   const { data, error, setError } = api;
-  const { tab: urlTab } = useUrlNav();
+  const { tab: urlTab, subtab: urlSub } = useUrlNav();
   const allowed: Tab[] = canManage ? ['equipment', 'plans', 'sponsors', 'tools'] : ['equipment', 'plans', 'sponsors'];
   const [tab, setTab] = useState<Tab>(allowed.includes(urlTab as Tab) ? (urlTab as Tab) : 'equipment');
   const syncUrl = usePortalTabSync('logistics');
@@ -31,15 +31,17 @@ export default function LogisticsSectionContent({ canManage }: { canManage: bool
   const openPlan = (slug: string) => { setTab('plans'); setParams({ section: 'logistics', tab: 'plans', subtab: slug, view: null }); setDayKey((k) => k + 1); };
   const [dayKey, setDayKey] = useState(0);
 
+  // With a plan open the sheet gets the whole page: the title and tabs step aside (All Plans goes back).
+  const inPlan = tab === 'plans' && !!urlSub;
   return (
     <div className={styles.page}>
-      <SectionHeader title="Logistics" flush sub={canManage ? 'Every device the club owns or borrows, and where to find it.' : 'Find a device and where it lives. Only the logistics team can make changes.'} />
-      <SectionTabs<Tab> label="Logistics" value={tab} onChange={pick} tabs={[
+      {!inPlan && <SectionHeader title="Logistics" flush sub={canManage ? 'Every device the club owns or borrows, and where to find it.' : 'Find a device and where it lives. Only the logistics team can make changes.'} />}
+      {!inPlan && <SectionTabs<Tab> label="Logistics" value={tab} onChange={pick} tabs={[
         { id: 'equipment', label: 'Equipment', icon: <Package size={15} />, count: data?.devices.length },
         { id: 'plans', label: 'Plans', icon: <CalendarDays size={15} /> },
         { id: 'sponsors', label: 'Sponsors', icon: <Handshake size={15} /> },
         ...(canManage ? [{ id: 'tools' as const, label: 'Tools', icon: <Settings2 size={15} /> }] : []),
-      ]} />
+      ]} />}
       {data && data.todayPlans.length > 0 && tab !== 'plans' && (
         <div className={styles.todayBanner}>
           <span><b>{data.todayPlans.length === 1 ? data.todayPlans[0].name : `${data.todayPlans.length} events`}</b> {data.todayPlans.length === 1 ? 'is today.' : 'are today.'}</span>

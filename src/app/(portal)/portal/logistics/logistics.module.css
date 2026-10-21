@@ -1,4 +1,4 @@
-.page { display: flex; flex-direction: column; gap: 1rem; max-width: 1240px; width: 100%; margin-inline: auto; }
+.page { display: flex; flex-direction: column; gap: 1rem; width: 100%; min-width: 0; }
 .tab { display: flex; flex-direction: column; gap: 0.9rem; min-width: 0; }
 .muted { margin: 0; font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.78); }
 .dim { color: rgba(var(--pp-ink-rgb), 0.6); }
@@ -347,7 +347,7 @@
 .dTeamNum, .dTeamDone { font-size: 0.8rem; font-variant-numeric: tabular-nums; color: rgba(var(--pp-ink-rgb), 0.8); }
 .dTeamDone { color: var(--pp-ok); font-weight: 700; }
 .dCells { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 0.35rem; }
-.dHead { display: flex; flex-direction: column; align-items: center; gap: 0.05rem; padding: 0.3rem 0.2rem; border-radius: 6px; border: 1px solid transparent; background: none; color: var(--pp-ink); font: inherit; font-size: 0.72rem; line-height: 1.2; text-align: center; cursor: pointer; min-width: 0; overflow-wrap: anywhere; }
+.dHead { display: flex; flex-direction: column; align-items: center; gap: 0.05rem; padding: 0.3rem 0.2rem; border-radius: 6px; border: 1px solid transparent; background: none; color: var(--pp-ink); font: inherit; font-size: 0.72rem; line-height: 1.2; text-align: center; cursor: pointer; min-width: 0; overflow-wrap: break-word; }
 .dHead:hover { background: rgba(var(--pp-ink-rgb), 0.07); }
 .dHead small { font-size: 0.72rem; font-variant-numeric: tabular-nums; color: rgba(var(--pp-ink-rgb), 0.7); }
 .dHeadOn { border-color: var(--pp-ink); background: rgba(var(--pp-ink-rgb), 0.1); font-weight: 700; }
@@ -386,13 +386,13 @@
 .ovNa { color: rgba(var(--pp-ink-rgb), 0.35); }
 
 /* ---- The combined sheet: a line is  device | notes | step boxes | tools  ---- */
-.dayRow { grid-template-columns: minmax(11rem, 1.1fr) minmax(9rem, 1fr) minmax(calc(var(--n) * 3.4rem), calc(var(--n) * 4.2rem)) 10rem; column-gap: 1rem; }
+.dayRow { grid-template-columns: minmax(9rem, 1.1fr) minmax(8rem, 1fr) minmax(calc(var(--n) * 4rem), calc(var(--n) * 5rem)) 10.5rem; column-gap: 1rem; }
 .dayRowHead .teamHeadMain { grid-column: 1 / span 2; }
 .dayRowHead .dHeads { grid-column: 3; }
 .dHeads { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 0.35rem; }
 .dNotes { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.6rem; min-width: 0; font-size: 0.84rem; overflow-wrap: anywhere; }
 .dTools { display: flex; align-items: center; justify-content: flex-end; gap: 0.25rem; flex-wrap: wrap; }
-.dTools .miniSelect { max-width: 6.5rem; }
+.dTools .miniSelect { max-width: 100%; flex: 1 1 100%; }
 .nested { padding-left: 2rem; background: rgba(var(--pp-ink-rgb), 0.04); }
 .setLine .dTag { font-size: 1rem; }
 .dayHeading { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
@@ -412,3 +412,17 @@
   .nested { padding-left: 1.4rem; }
 }
 @media (max-width: 640px) { .dayHeading { flex: 1 1 100%; order: 5; } .dayTotal .bar { display: none; } }
+
+.setParts { display: block; overflow-wrap: anywhere; }
+.teamMenu { position: relative; }
+.teamMenu .menuList { right: auto; left: 0; }
+.dTeamSub { flex: 0 1 auto; }
+
+/* Nothing is cut short with "…": text wraps. On a screen too narrow for the columns the sheet scrolls sideways on its own (never the whole page); a phone uses cards instead. */
+@media (min-width: 900px) {
+  .dayMain { overflow-x: auto; }
+  .dayTeam { min-width: 63rem; }
+}
+
+.dTools .iconBtn { order: 1; }
+.dTools .miniSelect { order: 2; }

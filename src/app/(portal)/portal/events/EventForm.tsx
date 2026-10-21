@@ -367,7 +367,9 @@ export default function EventForm({
 
         <label className={styles.field}>
           <span className={styles.label}>URL Slug</span>
-          <input className={styles.input} value={form.slug} onChange={(e) => set('slug', e.target.value)} placeholder="Auto-generated from title if left blank" maxLength={120} />
+          {/* Set once, when the event is made: links, QR codes and the Logistics plan all use it, so it can't be changed afterwards. */}
+          <input className={styles.input} value={form.slug} onChange={(e) => set('slug', e.target.value)} placeholder="Auto-generated from title if left blank" maxLength={120} readOnly={!!eventId && !!initial.slug} aria-describedby={eventId && initial.slug ? 'slug-locked' : undefined} />
+          {eventId && initial.slug && <span id="slug-locked" className={styles.hint}>Set when the event was made, so it can’t be changed.</span>}
         </label>
 
         <div className={styles.row}>

@@ -130,7 +130,7 @@ function SetLine({ unit, ctx }: { unit: Unit; ctx: SheetCtx }) {
         <div className={styles.dInfo}>
           <b className={styles.dTag}>{first.tag ?? first.type}</b>
           <span className={styles.dType}>{first.type} set · {rows.length} parts</span>
-          <span className={styles.dWhere}>{unit.lines.map((l, i) => (
+          <span className={`${styles.dWhere} ${styles.setParts}`} title={name}>{unit.lines.map((l, i) => (
             <span key={l.key} className={l.rows[0].kind === 'slot' && !l.counted ? styles.flagBad : undefined}>{i > 0 ? ' · ' : ''}{l.counted ? `${l.rows[0].type}${l.rows.length > 1 ? ` ×${l.rows.length}` : ''}` : l.rows[0].kind === 'slot' ? `no ${l.rows[0].type}` : label(l.rows[0])}</span>
           ))}</span>
         </div>
