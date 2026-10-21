@@ -109,11 +109,11 @@ function DeviceLine({ line, ctx, backup, nested }: { line: Line; ctx: SheetCtx; 
             <option value="">No team</option>{stations.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         )}
-        {(r.kind === 'club' || manage || (!closed && !backup && r.kind !== 'slot')) && (
+        {((r.kind === 'club' && !ctx.day) || manage || (!closed && !backup && r.kind !== 'slot')) && (
           <details className={`${styles.menu} ${styles.teamMenu} ${styles.lineMenu}`}>
             <summary aria-label={`Actions for ${label(r)}`}>⋯</summary>
             <div className={styles.menuList}>
-              {r.kind === 'club' && <button type="button" onClick={() => ctx.onEditDevice(r)}>{canManage ? 'Edit Device' : 'Details'}</button>}
+              {r.kind === 'club' && !ctx.day && <button type="button" onClick={() => ctx.onEditDevice(r)}>{canManage ? 'Edit Device' : 'Details'}</button>}
               {missing.length > 0 && manage && r.kind === 'club' && <button type="button" disabled={ctx.busy} onClick={() => ctx.onInstalled([r])}>Mark Installed</button>}
               {!closed && !backup && r.kind !== 'slot' && <button type="button" onClick={() => onSwap(r)}>Swap</button>}
               {manage && (r.kind === 'sponsor' || r.kind === 'officer') && <button type="button" onClick={() => onBorrowed(r)}>Edit Borrowed Device</button>}

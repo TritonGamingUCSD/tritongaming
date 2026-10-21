@@ -162,13 +162,13 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
 
   const { plan: p, canManage, stations, borrowed, extras } = detail;
   const closed = p.status === 'closed';
-  const manage = canManage && !closed;
+  const manage = canManage && !closed && !day;   // the event day only keeps track (ticks and swaps); rows, teams and prizes are changed in Allocation
   const fb = feedback, res = fb?.result;
   const resStation = res?.station ? stationOf.get(res.station.id) : null;
   const pct = allTotal ? Math.round((allDone / allTotal) * 100) : 0;
   const emptyRows = rows.filter((r) => r.kind === 'slot' && !r.counted);
   const ctx: SheetCtx = {
-    api: plan, canManage, closed, busy, day, stations, steps, activeId: step?.id ?? '', doneSet, doneAt, problems,
+    api: plan, canManage: canManage && !day, closed, busy, day, stations, steps, activeId: step?.id ?? '', doneSet, doneAt, problems,
     onTick: (row, s) => begin(row, s), onTickAll: (list, s) => void markAll(list, s), onUndo: undo, onSwap: (r) => setSwapping({ id: r.id, tag: r.tag, type: r.type, kind: r.kind === 'slot' ? 'club' : r.kind }),
     onBorrowed: (r) => setBorrowing(borrowed.find((b) => b.id === r.id) ?? null), onInstalled: (list) => void install(list), onEditDevice: (r) => setDeviceEdit(catalog.data?.devices.find((x) => x.id === r.id) ?? data.devices.find((x) => x.id === r.id) ?? null),
   };

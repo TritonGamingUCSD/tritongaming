@@ -11,7 +11,7 @@ export default function PrizingTab({ plan, data, day }: { plan: PlanApi; api: Lo
   const d = plan.detail!;
   return (
     <>
-      {day ? <PlanPrizes plan={plan} canManage={d.canManage} closed={d.plan.status === 'closed'} /> : <PrizeGrid plan={plan} data={data} />}
+      {day ? <PlanPrizes plan={plan} canManage={false} closed={d.plan.status === 'closed'} /> : <PrizeGrid plan={plan} data={data} />}
     </>
   );
 }
