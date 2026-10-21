@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Plus, X } from 'lucide-react';
 import styles from './logistics.module.css';
 
@@ -39,6 +39,24 @@ function Picker({ options, onPick, onCreate, placeholder, initial = '', disabled
     ...shown.map((value) => ({ kind: 'opt' as const, value })),
     ...(canAdd ? [{ kind: 'add' as const, value: text.trim() }] : []),
   ];
+
+  // The list is placed on the screen (fixed) so a table that scrolls or clips its cells can't hide it, and it opens upwards when there is no room below.
+  const [pos, setPos] = useState<React.CSSProperties | null>(null);
+  useLayoutEffect(() => {
+    if (!open) return;
+    const place = () => {
+      const r = wrap.current?.getBoundingClientRect();
+      if (!r) return;
+      const below = window.innerHeight - r.bottom - 8, above = r.top - 8;
+      const up = below < 200 && above > below;
+      const room = Math.max(120, Math.min(240, up ? above : below));
+      setPos({ position: 'fixed', left: Math.max(8, Math.min(r.left, window.innerWidth - Math.max(r.width, 176) - 8)), width: Math.max(r.width, 176), maxHeight: room, right: 'auto', ...(up ? { bottom: window.innerHeight - r.top + 3, top: 'auto' } : { top: r.bottom + 3 }) });
+    };
+    place();
+    window.addEventListener('scroll', place, true);
+    window.addEventListener('resize', place);
+    return () => { window.removeEventListener('scroll', place, true); window.removeEventListener('resize', place); };
+  }, [open, rows.length]);
 
   useEffect(() => {
     if (!open) return;
@@ -81,7 +99,7 @@ function Picker({ options, onPick, onCreate, placeholder, initial = '', disabled
         }}
       />
       {open && rows.length > 0 && (
-        <ul id={listId} className={styles.comboList} role="listbox">
+        <ul id={listId} className={styles.comboList} role="listbox" style={pos ?? { visibility: 'hidden' }}>
           {rows.map((r, i) => (
             <li key={`${r.kind}:${r.value}`} role="option" aria-selected={i === hi} className={`${styles.comboRow} ${i === hi ? styles.comboRowOn : ''} ${r.kind !== 'opt' ? styles.comboRowSpecial : ''}`}
               onPointerDown={(e) => { e.preventDefault(); void choose(r); }} onMouseEnter={() => setHi(i)}>
