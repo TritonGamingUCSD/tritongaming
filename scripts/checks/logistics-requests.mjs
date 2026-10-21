@@ -13,7 +13,9 @@ try {
   const student = await user('student', ['ucsd']);
   const P = (await exec.call('POST', '/api/logistics/plans', { name: 'ZZ Request Night', starts_on: day(0), ends_on: day(1) })).j.plan;
   const URL_ = `/api/logistics/plans/${P.id}/requests`;
-  const bundle = (await exec.call('GET', '/api/logistics')).j.lists.bundle[0]?.value;
+  const b0 = (await exec.call('GET', '/api/logistics')).j.lists.bundle[0];
+  const bundle = b0?.value;
+  const parts = b0.items.reduce((n, i) => n + i.qty, 0);
 
   t.ok('a student cannot see or make requests', (await student.call('GET', URL_)).s === 403 && (await student.call('POST', URL_, { kind: 'prizes', items: [{ qty: 1, value: 5 }] })).s === 403);
   t.ok('a request needs a kind', (await lead.call('POST', URL_, { kind: 'snacks', items: [] })).s === 400);
@@ -61,7 +63,7 @@ try {
   t.ok('asking for more adds rows', upQ.s === 200 && n1 > n0, `${upQ.s} ${n0} ${n1} ${JSON.stringify(upQ.j).slice(0, 200)}`);
   const upD = await exec.call('PATCH', URL_, { request_id: A, items: [{ what: bundle, qty: 2, games: ['Valorant'] }] });
   t.ok('asking for less removes empty rows', upD.s === 200 && (await mineRows()).length < n0);
-  const setsOk = (await mineRows()).length % 5 === 0 && new Set((await mineRows()).map((x) => x.set_id)).size === (await mineRows()).length / 5;
+  const setsOk = (await mineRows()).length % parts === 0 && new Set((await mineRows()).map((x) => x.set_id)).size === (await mineRows()).length / parts;
   t.ok('a bundle request is whole sets, one per unit', setsOk);
   const mk = async (tag) => (await exec.call('POST', '/api/logistics/devices', { tag, type: 'Gaming PC', shelf: 'ZZ Shelf' })).j.device;
   const dA = await mk('ZZ-RA'); const dB = await mk('ZZ-RB');
@@ -73,7 +75,7 @@ try {
   t.ok('typing another ID replaces the device in that row', (await exec.call('POST', SL, { action: 'assign', device_id: dA.id, tag: 'ZZ-RB' })).s === 200 && !(await plan1()).items.some((i) => i.device_id === dA.id) && (await plan1()).items.some((i) => i.device_id === dB.id && i.request_id === A));
   const lessFilled = await exec.call('PATCH', URL_, { request_id: A, items: [{ what: bundle, qty: 1, games: ['Valorant'] }] });
   const allRows = async () => { const d = await plan1(); return d.slots.filter((x) => x.request_id === A).length + d.items.filter((x) => x.request_id === A).length; };
-  t.ok('fewer sets leaves exactly what is asked for, taking empty sets first', lessFilled.s === 200 && lessFilled.j.kept === 0 && (await allRows()) === 5 && (await plan1()).items.some((i) => i.device_id === dB.id), `${lessFilled.j.kept} ${await allRows()}`);
+  t.ok('fewer sets leaves exactly what is asked for, taking empty sets first', lessFilled.s === 200 && lessFilled.j.kept === 0 && (await allRows()) === parts && (await plan1()).items.some((i) => i.device_id === dB.id), `${lessFilled.j.kept} ${await allRows()}`);
   const dC = await mk('ZZ-RC');
   await exec.call('PATCH', URL_, { request_id: A, items: [{ what: bundle, qty: 2, games: ['Valorant'] }] });
   const slotC = (await mineRows()).filter((x) => x.type === 'Gaming PC').sort((a, b) => b.sort - a.sort)[0];
@@ -84,6 +86,23 @@ try {
   t.ok('a device with an event-day step done is never taken out', lockedCut.s === 200 && lockedCut.j.kept === 1 && (await plan1()).items.some((i) => i.device_id === dC.id) && (await plan1()).items.some((i) => i.device_id === dB.id), JSON.stringify(lockedCut.j.kept));
   t.ok('a row can be emptied again', (await exec.call('POST', SL, { action: 'empty', device_id: dC.id })).s === 200 && !(await plan1()).items.some((i) => i.device_id === dC.id));
   await svc.from('logistics_devices').delete().in('id', [dA.id, dB.id, dC.id]);
+  // Editing the bundle itself follows into the open requests that ask for it.
+  const mkB = await exec.call('POST', '/api/logistics/options', { kind: 'bundle', value: 'ZZ Bundle', items: [{ type: 'Gaming PC', qty: 1 }, { type: 'Monitor', qty: 1 }] });
+  const bId = mkB.j.option.id;
+  const rq = await exec.call('POST', URL_, { kind: 'devices', team: 'ZZ Bundle Team', items: [{ what: 'ZZ Bundle', qty: 2, games: [] }] });
+  const RB = rq.j.request.id;
+  const bRows = async () => (await plan1()).slots.filter((x) => x.request_id === RB);
+  t.ok('a request for a bundle makes a set per unit', (await bRows()).length === 4);
+  await exec.call('PATCH', '/api/logistics/options', { id: bId, items: [{ type: 'Gaming PC', qty: 1 }, { type: 'Monitor', qty: 1 }, { type: 'Mouse', qty: 1 }] });
+  t.ok('adding a part to the bundle adds that row to every set', (await bRows()).length === 6 && (await bRows()).filter((x) => x.type === 'Mouse').length === 2);
+  await exec.call('PATCH', '/api/logistics/options', { id: bId, items: [{ type: 'Gaming PC', qty: 1 }] });
+  t.ok('taking a part away clears those rows', (await bRows()).length === 2 && (await bRows()).every((x) => x.type === 'Gaming PC'));
+  await exec.call('PATCH', '/api/logistics/options', { id: bId, value: 'ZZ Bundle Two' });
+  const renamed = (await exec.call('GET', URL_)).j.requests.find((r) => r.id === RB);
+  t.ok('renaming the bundle renames it in the request', renamed.items[0].what === 'ZZ Bundle Two' && (await bRows()).length === 2);
+  t.ok('a bundle that a request asks for cannot be deleted', (await exec.call('DELETE', '/api/logistics/options', { id: bId })).s === 409);
+  await exec.call('DELETE', URL_, { request_id: RB });
+  await exec.call('DELETE', '/api/logistics/options', { id: bId });
   const listed = (await exec.call('GET', URL_)).j.requests.find((r) => r.id === A);
   t.ok('the request shows filled / total rows', listed.rowsTotal === (await mineRows()).length && listed.filled === 0);
   const emptyPlain = await exec.call('POST', `/api/logistics/plans/${P.id}/slots`, { action: 'empty', device_id: '00000000-0000-4000-8000-000000000000' });

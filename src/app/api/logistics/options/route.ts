@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { followBundle, requestsUsingBundle } from '@/lib/logistics/requestRows';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { authorizeLogistics } from '@/lib/logistics/auth';
 import { LIMITS, OPTION_KINDS, type OptionKind } from '@/lib/logistics/constants';
@@ -20,7 +21,6 @@ async function cleanItems(svc: SupabaseClient, raw: unknown): Promise<{ items?: 
   }
   return items.length ? { items } : { error: 'A bundle needs at least one item.' };
 }
-const metaOf = (o: { kind: string; meta: unknown }) => o.meta as { counted?: boolean; applies?: string; items?: unknown } | null;
 const cleanValue = (v: unknown) => String(v ?? '').trim().replace(/\s+/g, ' ').slice(0, LIMITS.option);
 
 // How many devices use a value (so a list entry that is in use can't be deleted, and a rename knows what to follow).
@@ -95,6 +95,7 @@ export async function PATCH(request: Request) {
   if (Object.keys(patch).length === 0) return NextResponse.json({ ok: true });
   const { error } = await auth.svc.from('logistics_options').update(patch).eq('id', o.id as string);
   if (error) return NextResponse.json({ error: 'Couldn’t save that.' }, { status: 500 });
+  if (kind === 'bundle' && (patch.meta || typeof patch.value === 'string')) await followBundle(auth.svc, o.value as string, typeof patch.value === 'string' ? patch.value : (o.value as string));
   // Devices use the value as text, so a rename is followed here.
   if (typeof patch.value === 'string') {
     const old = o.value as string, now = patch.value;
@@ -119,6 +120,10 @@ export async function DELETE(request: Request) {
   if (typeof b.id !== 'string' || !UUID.test(b.id)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
   const { data: o } = await auth.svc.from('logistics_options').select('id, kind, value').eq('id', b.id).maybeSingle();
   if (!o) return NextResponse.json({ ok: true });
+  if (o.kind === 'bundle') {
+    const n = await requestsUsingBundle(auth.svc, o.value as string);
+    if (n) return NextResponse.json({ error: `${o.value} is asked for in ${n} request${n === 1 ? '' : 's'}, so it can’t be deleted. Change those requests first.` }, { status: 409 });
+  }
   if (o.kind === 'step') {
     const { count } = await auth.svc.from('logistics_plan_steps').select('step_id', { count: 'exact', head: true }).eq('step_id', o.id as string);
     if (count) return NextResponse.json({ error: `${o.value} has been used ${count} time${count === 1 ? '' : 's'} at events, so it can’t be deleted. Rename it instead.` }, { status: 409 });

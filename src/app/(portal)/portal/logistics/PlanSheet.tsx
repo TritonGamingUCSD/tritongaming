@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { Check } from 'lucide-react';
-import Button from '@/components/ui/Button';
 import { conditionLabel, UNUSABLE } from '@/lib/logistics/constants';
 import { rowKind, skippedSteps, stepAppliesTo, type Problem, type StepDef } from '@/lib/logistics/plans';
 import { interactive } from './interactive';
@@ -77,7 +76,6 @@ function DeviceLine({ line, ctx, backup, nested }: { line: Line; ctx: SheetCtx; 
   const fromRequest = r.kind === 'club' && !!r.requestId;
   const empty0 = () => api.act('/slots', 'POST', { action: 'empty', device_id: r.id });
   const takeOut = () => (r.kind === 'club' ? api.act('/devices', 'DELETE', { device_ids: [r.id] }) : r.kind === 'slot' ? api.act('/slots', 'DELETE', { slot_id: r.id }) : api.act('/borrowed', 'DELETE', { borrowed_id: r.id }));
-  async function assign() { if (!tag.trim() || busy) return; setBusy(true); const ok = await api.assign(r.id, tag.trim()); setBusy(false); if (ok) setTag(''); }
   // Allocation: each row is what was asked for, and its ID box is where the device goes. Typing an ID fills an empty row or swaps the device; clearing it empties the row.
   const alloc = manage && !ctx.day && !backup && !line.counted && (r.kind === 'club' || r.kind === 'slot');
   async function commit() {

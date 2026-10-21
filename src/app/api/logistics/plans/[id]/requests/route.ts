@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { authorizeLogistics } from '@/lib/logistics/auth';
 import { UUID, touchPlan } from '@/lib/logistics/planServer';
 import { REQUEST_COLUMNS, logisticsTeamIds } from '@/lib/logistics/requestServer';
-import { canEditRequest, cleanRequestItems, REQUEST_STATUSES, requestSummary, STATUS_LABELS, type DeviceItem, type PrizeItem, type RequestKind, type RequestStatus } from '@/lib/logistics/requests';
+import { canEditRequest, cleanRequestItems, REQUEST_STATUSES, requestSummary, type DeviceItem, type PrizeItem, type RequestKind, type RequestStatus } from '@/lib/logistics/requests';
 import { syncRequestRows } from '@/lib/logistics/requestRows';
 import { createNotifications } from '@/lib/notifications/notify';
 import { logAudit } from '@/lib/notifications/audit';

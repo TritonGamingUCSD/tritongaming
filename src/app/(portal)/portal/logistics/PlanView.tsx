@@ -13,8 +13,7 @@ import DeviceDialog from './DeviceDialog';
 import type { Device } from '@/lib/logistics/devices';
 import HowItWorks from './HowItWorks';
 import { interactive } from './interactive';
-import { EditPlanDialog, FillDialog, RowDialog, StationDialog } from './PlanDialogs';
-import PickDialog from './PickDialog';
+import { EditPlanDialog, FillDialog, StationDialog } from './PlanDialogs';
 import BorrowedTab from './BorrowedTab';
 import PrizingTab from './PrizingTab';
 import SponsorPrizingTab from './SponsorPrizingTab';
@@ -51,11 +50,9 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
   const [kit, setKit] = useState<{ row: Target; flags: Record<string, boolean> } | null>(null);
   const [swapping, setSwapping] = useState<{ id: string; tag: string | null; type: string; kind: 'club' | 'sponsor' | 'officer' } | null>(null);
   const [borrowing, setBorrowing] = useState<Borrowed | 'new' | null>(null);
-  const [picking, setPicking] = useState(false);
   const [deviceEdit, setDeviceEdit] = useState<Device | null>(null);   // a device's own information, changed here instead of in the inventory
   const [editing, setEditing] = useState(false);
   const [stationDialog, setStationDialog] = useState<{ station: Station | null } | null>(null);
-  const [rowDialog, setRowDialog] = useState<Station | null>(null);
   const [filling, setFilling] = useState<{ station: Station | null } | null>(null);
   const [fold, setFold] = useState<Record<string, boolean>>({});   // what the person chose per team; otherwise finished teams (and every team on a phone) start folded
   const [overview, setOverview] = useState(false);
@@ -271,9 +268,8 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
       </div>
       {error && <div role="alert" onClick={() => setError('')}><Notice tone="error">{error}</Notice></div>}
       {deviceEdit && <DeviceDialog api={catalog} data={data} device={deviceEdit} onClose={() => { setDeviceEdit(null); void plan.reload(); }} />}
-      {picking && <PickDialog plan={plan} data={data} stations={stations} onClose={() => setPicking(false)} />}
       {swapping && <SwapDialog plan={plan} device={swapping} onClose={() => setSwapping(null)} />}
-      {borrowing && <BorrowedDialog plan={plan} catalog={catalog} data={data} stations={stations} borrowed={borrowing === 'new' ? null : borrowing} onClose={() => setBorrowing(null)} />}
+      {borrowing && <BorrowedDialog plan={plan} catalog={catalog} data={data} borrowed={borrowing === 'new' ? null : borrowing} onClose={() => setBorrowing(null)} />}
       {editing && <EditPlanDialog plan={plan} onClose={() => setEditing(false)} />}
       {stationDialog && !stationDialog.station && <StationDialog plan={plan} station={null} onClose={() => setStationDialog(null)} />}
       {filling && !filling.station && <FillDialog plan={plan} station={null} onClose={() => setFilling(null)} />}
@@ -365,7 +361,7 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
             </>
           )}
 
-          {teams.map((t, ti) => {
+          {teams.map((t) => {
             const mineStats = steps.map((s) => {
               const m = t.rows.filter((r) => stepAppliesTo(s, rowKind(r)));
               return { s, total: m.length, done: m.filter((r) => doneSet.has(`${r.id}:${s.id}`)).length };
@@ -422,7 +418,6 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
                     ))}
                   </div>}
                 </div>
-                {s && rowDialog?.id === s.id && <RowDialog plan={plan} data={data} station={s} onClose={() => setRowDialog(null)} />}
                 {s && stationDialog?.station?.id === s.id && <StationDialog plan={plan} station={s} onClose={() => setStationDialog(null)} />}
                 {s && filling?.station?.id === s.id && <FillDialog plan={plan} station={s} onClose={() => setFilling(null)} />}
                 {!folded && t.rows.length > 0 && <div className={`${styles.dayRow} ${styles.colHead}`} aria-hidden="true"><span>Device</span><span>Games, notes and problems</span>{day && <span />}<span /></div>}

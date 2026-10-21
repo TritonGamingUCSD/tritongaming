@@ -50,3 +50,12 @@ describe('request rows', () => {
     expect(Object.fromEntries(rowDiff(w, new Map([['gaming pc', 3], ['monitor', 1]])))).toEqual({ 'gaming pc': -1, monitor: 3 });
   });
 });
+
+import { planProblems } from '@/lib/logistics/plans';
+describe('allocation matches the requests', () => {
+  const row = (id: string, requested: boolean | undefined) => ({ id, kind: 'club' as const, type: 'Monitor', tag: id, station_id: 's', games_needed: [], games: [], counted: false, located: true, requested });
+  it('flags a device that no request asked for, and nothing else', () => {
+    const p = planProblems([row('A', false), row('B', true), row('C', undefined)], [], [], new Set(), [], () => null);
+    expect(p.filter((x) => x.why === 'unrequested').map((x) => x.row_id)).toEqual(['A']);
+  });
+});

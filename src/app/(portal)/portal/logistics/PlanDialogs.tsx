@@ -6,9 +6,7 @@ import { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import { Field, Input, Textarea } from '@/components/ui/Field';
-import { MultiCombo, Combo } from './Combo';
 import type { PlanApi, Station } from './usePlans';
-import type { Catalog } from './useLogistics';
 import styles from './logistics.module.css';
 
 // A station is a team's setup: the team (what the sheet calls "For"), a contact, and a room.
@@ -61,38 +59,7 @@ export function EditPlanDialog({ plan, onClose }: { plan: PlanApi; onClose: () =
   );
 }
 
-// Add rows to a team: a type (and the games it needs), as many as needed. The device comes later (typed, or picked by "Fill Empty Rows"); a counted thing like a mousepad never gets one.
-export function RowDialog({ plan, data, station, onClose }: { plan: PlanApi; data: Catalog; station: Station; onClose: () => void }) {
-  const [type, setType] = useState('');
-  const [count, setCount] = useState(1);
-  const [games, setGames] = useState<string[]>([]);
-  const [busy, setBusy] = useState(false);
-  const [problem, setProblem] = useState('');
-  const allGames = [...new Set([...data.portalGames, ...data.lists.game.map((g) => g.value)])].sort((a, b) => a.localeCompare(b));
-  const save = async () => {
-    if (!type) { setProblem('Pick what kind of device the row is for.'); return; }
-    setBusy(true);
-    const ok = await plan.act('/slots', 'POST', { station_id: station.id, type, count, games });
-    setBusy(false);
-    if (ok) onClose(); else setProblem('That didn’t save. The message at the top of the page says why.');
-  };
-  return (
-    <Dialog title={`Add Rows To ${station.name}`} busy={busy} onClose={onClose}>
-      <div className={styles.form}>
-        {problem && <Notice tone="error">{problem}</Notice>}
-        <p className={styles.muted}>A row says what the team needs. Give it a device now or later.</p>
-        <div className={styles.row2}>
-          <Field label="Device type"><Combo value={type || null} options={data.lists.type.map((t) => t.value)} onChange={(v) => setType(v ?? '')} clearable={false} placeholder="Choose a type…" /></Field>
-          <Field label="How many rows"><Input type="number" min={1} max={50} value={count} onChange={(e) => setCount(Math.max(1, Math.round(Number(e.target.value)) || 1))} /></Field>
-        </div>
-        <Field label="Downloads needed" hint="Games or software that must be installed. Optional."><MultiCombo values={games} options={allGames} onChange={setGames} placeholder="Add a game…" /></Field>
-      </div>
-      <DialogActions><DialogCancel onClick={onClose} disabled={busy} /><Button onClick={save} loading={busy}>Add</Button></DialogActions>
-    </Dialog>
-  );
-}
 
-// "Fill Empty Rows": the portal picks a device for each empty row (the ones that need games first get devices that already have them, Working before Not Tested). Preview, then apply.
 export function FillDialog({ plan, station, onClose }: { plan: PlanApi; station: Station | null; onClose: () => void }) {
   const [preview, setPreview] = useState<{ slot_id: string; type: string; games: string[]; device: { id: string; tag: string | null; condition: string; games: string[] } | null }[] | null>(null);
   const [busy, setBusy] = useState(false);

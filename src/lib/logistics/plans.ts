@@ -92,9 +92,9 @@ export function stepProgress(devices: { id: string; kind: ItemKind }[], steps: S
 
 // ---- What is not done, or not right (shown in red / amber so it is spotted at a glance)
 
-export interface PlanRow { id: string; kind: 'club' | 'sponsor' | 'officer' | 'slot'; type: string; tag: string | null; station_id: string | null; games_needed: string[]; games: string[]; counted: boolean; located?: boolean }
+export interface PlanRow { id: string; kind: 'club' | 'sponsor' | 'officer' | 'slot'; type: string; tag: string | null; station_id: string | null; games_needed: string[]; games: string[]; counted: boolean; located?: boolean; requested?: boolean }
 export interface StationInfo { id: string; name: string; contact: string | null; room: string | null; confirmed: boolean }
-export interface Problem { sev: 'bad' | 'warn'; why: 'conflict' | 'empty' | 'game' | 'skipped' | 'team' | 'place'; station_id: string | null; row_id?: string; text: string }
+export interface Problem { sev: 'bad' | 'warn'; why: 'conflict' | 'empty' | 'game' | 'skipped' | 'team' | 'place' | 'unrequested'; station_id: string | null; row_id?: string; text: string }
 
 // Which steps count for a row: a type-only row is club stock.
 export const rowKind = (r: Pick<PlanRow, 'kind'>): ItemKind => (r.kind === 'slot' ? 'club' : r.kind);
@@ -119,6 +119,7 @@ export function planProblems(rows: PlanRow[], stations: StationInfo[], steps: St
   }
   for (const r of rows) {
     if (r.kind === 'slot' && !r.counted) out.push({ sev: 'bad', why: 'empty', station_id: r.station_id, row_id: r.id, text: `No device chosen yet for ${r.type}${r.games_needed.length ? ` (needs ${r.games_needed.join(', ')})` : ''}` });
+    if (r.requested === false) out.push({ sev: 'bad', why: 'unrequested', station_id: r.station_id, row_id: r.id, text: `${r.tag ?? r.type} isn’t in any request` });
     const missing = r.games_needed.filter((g) => !r.games.some((x) => x.toLowerCase() === g.toLowerCase()));
     if (r.kind !== 'slot' && missing.length) out.push({ sev: 'warn', why: 'game', station_id: r.station_id, row_id: r.id, text: `${r.tag ?? r.type} needs ${missing.join(', ')} installed` });
     if (r.kind === 'club' && r.located === false) out.push({ sev: 'warn', why: 'place', station_id: r.station_id, row_id: r.id, text: `${r.tag ?? r.type} has no shelf or place set yet` });

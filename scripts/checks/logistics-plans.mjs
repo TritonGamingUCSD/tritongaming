@@ -33,7 +33,7 @@ try {
   // ---- choosing devices
   const pc = boot.j.lists.bundle.find((b) => b.value === 'PC Station');
   const prev = await exec.call('POST', `/api/logistics/plans/${P1}/pick`, { bundle_id: pc.id, count: 2 });
-  t.ok('a bundle previews whole stations', prev.s === 200 && prev.j.preview.stations.length === 2 && prev.j.preview.stations[0].length === 5, JSON.stringify(prev.j).slice(0, 200));
+  t.ok('a bundle previews whole stations', prev.s === 200 && prev.j.preview.stations.length === 2 && prev.j.preview.stations[0].length === pc.items.reduce((n, i) => n + i.qty, 0), JSON.stringify(prev.j).slice(0, 200));
   t.ok('a preview changes nothing', (await exec.call('GET', `/api/logistics/plans/${P1}`)).j.items.length === 0);
   t.ok('an officer cannot choose devices', (await officer.call('POST', `/api/logistics/plans/${P1}/pick`, { bundle_id: pc.id, count: 1, apply: true })).s === 403);
   const app = await exec.call('POST', `/api/logistics/plans/${P1}/pick`, { bundle_id: pc.id, count: 2, apply: true });
@@ -46,7 +46,7 @@ try {
   t.ok('renaming the plan never changes its address name', (await exec.call('GET', `/api/logistics/plans/${P1}`)).j.plan.slug === p1.j.plan.slug);
   await exec.call('PATCH', `/api/logistics/plans/${P1}`, { name: 'ZZ Plan One', slug: 'something-else' });
   t.ok('the address name cannot be set by hand', (await exec.call('GET', `/api/logistics/plans/${P1}`)).j.plan.slug === p1.j.plan.slug);
-  const first = prev.j.preview.stations[0].map((c) => c.device?.id).sort().join();
+  const first = prev.j.preview.stations[0].map((c) => c.device?.id).filter(Boolean).sort().join();
   t.ok('what was previewed is what was added', d1.items.filter((i) => i.station_id === d1.stations[0].id).map((i) => i.device_id).sort().join() === first);
   const app2 = await exec.call('POST', `/api/logistics/plans/${P1}/pick`, { bundle_id: pc.id, count: 1, apply: true });
   const d2 = (await exec.call('GET', `/api/logistics/plans/${P1}`)).j;

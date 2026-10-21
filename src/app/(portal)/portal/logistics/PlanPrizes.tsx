@@ -43,7 +43,7 @@ export default function PlanPrizes({ plan, canManage, closed }: { plan: PlanApi;
       {poolDialog && <PoolDialog plan={plan} pool={poolDialog.pool} onClose={() => setPoolDialog(null)} />}
       {adding && <AddPrizesDialog plan={plan} pool={adding} existing={new Set(lines.filter((l) => l.pool_id === adding.id).map((l) => l.prize_id))} onClose={() => setAdding(null)} />}
       {pools.length === 0 && <p className={styles.muted}>No prize pools yet. A pool is where prizes are given from at this event, like a raffle, a game, or a scavenger hunt.</p>}
-      {pools.map((p, pi) => {
+      {pools.map((p) => {
         const mine = lines.filter((l) => l.pool_id === p.id);
         const total = mine.reduce((n, l) => n + l.quantity, 0);
         const givenIds = steps.filter((s) => s.gives).map((s) => s.id);

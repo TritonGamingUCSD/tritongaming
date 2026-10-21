@@ -27,7 +27,7 @@ export function rowDiff(want: Want[], have: Map<string, number>): Map<string, nu
 }
 
 interface Req { id: string; plan_id: string; kind: string; team: string | null; division_id: string | null; items: unknown; status: string }
-interface RowRef { id: string; sort: number; set_id: string | null; key: string; slot: boolean; locked: boolean }
+interface RowRef { id: string; sort: number; set_id: string | null; key: string; slot: boolean; locked: boolean; type: string; station: string | null }
 
 // Make the plan's rows match one device request, line by line. A bundle line is whole sets (a row for every item of the bundle, one set per unit); a type line is plain rows. More
 // units add empty rows; fewer take away the extras, empty ones first and then ones with a device (it goes back to storage), except a device with an event-day step done (the count that
@@ -35,8 +35,8 @@ interface RowRef { id: string; sort: number; set_id: string | null; key: string;
 export async function syncRequestRows(svc: SupabaseClient, r: Req): Promise<{ kept: number }> {
   if (r.kind !== 'devices') return { kept: 0 };
   const [{ data: slots }, { data: devs }, { data: opts }] = await Promise.all([
-    svc.from('logistics_plan_slots').select('id, type, sort, set_id, request_item').eq('request_id', r.id),
-    svc.from('logistics_plan_devices').select('device_id, sort, set_id, request_item').eq('request_id', r.id),
+    svc.from('logistics_plan_slots').select('id, type, sort, set_id, request_item, station_id').eq('request_id', r.id),
+    svc.from('logistics_plan_devices').select('device_id, sort, set_id, request_item, station_id').eq('request_id', r.id),
     svc.from('logistics_options').select('value, meta').eq('kind', 'bundle'),
   ]);
   const ids = (devs ?? []).map((d) => d.device_id as string);
@@ -48,8 +48,8 @@ export async function syncRequestRows(svc: SupabaseClient, r: Req): Promise<{ ke
   const bundles = new Map((opts ?? []).map((o) => [String(o.value).toLowerCase(), ((o.meta as { items?: { type: string; qty: number }[] } | null)?.items ?? [])]));
   const items: DeviceItem[] = r.status === 'declined' ? [] : ((r.items as DeviceItem[]) ?? []);
   const refs: RowRef[] = [
-    ...(slots ?? []).map((x) => ({ id: x.id as string, sort: x.sort as number, set_id: x.set_id as string | null, key: String(x.request_item ?? x.type).toLowerCase(), slot: true, locked: false })),
-    ...(devs ?? []).map((x) => ({ id: x.device_id as string, sort: x.sort as number, set_id: x.set_id as string | null, key: String(x.request_item ?? typeOf.get(x.device_id as string) ?? '').toLowerCase(), slot: false, locked: started.has(x.device_id as string) })),
+    ...(slots ?? []).map((x) => ({ id: x.id as string, sort: x.sort as number, set_id: x.set_id as string | null, key: String(x.request_item ?? x.type).toLowerCase(), slot: true, locked: false, type: x.type as string, station: x.station_id as string | null })),
+    ...(devs ?? []).map((x) => ({ id: x.device_id as string, sort: x.sort as number, set_id: x.set_id as string | null, key: String(x.request_item ?? typeOf.get(x.device_id as string) ?? '').toLowerCase(), slot: false, locked: started.has(x.device_id as string), type: typeOf.get(x.device_id as string) ?? '', station: x.station_id as string | null })),
   ];
   const wanted = new Set(items.map((i) => i.what.toLowerCase()));
   const drop: string[] = [];
@@ -58,6 +58,7 @@ export async function syncRequestRows(svc: SupabaseClient, r: Req): Promise<{ ke
   const cutOf = (groups: RowRef[][], n: number) => groups.filter((g) => !g.some((x) => x.locked)).sort((a, b) => Number(a.every((x) => x.slot)) === Number(b.every((x) => x.slot)) ? Math.max(...b.map((x) => x.sort)) - Math.max(...a.map((x) => x.sort)) : Number(b.every((x) => x.slot)) - Number(a.every((x) => x.slot))).slice(0, n);
   let kept = 0;
   const add: { item: DeviceItem; units: number }[] = [];
+  const reshape: { item: DeviceItem; group: RowRef[] }[] = [];
 
   for (const key of new Set([...wanted, ...refs.map((x) => x.key)])) {
     const item = items.find((i) => i.what.toLowerCase() === key);
@@ -69,11 +70,10 @@ export async function syncRequestRows(svc: SupabaseClient, r: Req): Promise<{ ke
       for (const x of mine) if (x.set_id) sets.set(x.set_id, [...(sets.get(x.set_id) ?? []), x]);
       const have = sets.size;
       if (have < need && item) add.push({ item, units: need - have });
-      if (have > need) {
-        const cut = cutOf([...sets.values()], have - need);
-        for (const g of cut) for (const x of g) (x.slot ? drop : dropDev).push(x.id);
-        kept += have - need - cut.length;
-      }
+      const cut = have > need ? cutOf([...sets.values()], have - need) : [];
+      for (const g of cut) for (const x of g) (x.slot ? drop : dropDev).push(x.id);
+      kept += Math.max(0, have - need) - cut.length;
+      if (item) for (const g of sets.values()) if (!cut.includes(g)) reshape.push({ item, group: g });
     } else {
       const have = mine.length;
       if (have < need && item) add.push({ item, units: need - have });
@@ -84,8 +84,32 @@ export async function syncRequestRows(svc: SupabaseClient, r: Req): Promise<{ ke
       }
     }
   }
+  // A bundle that was edited: every set it made gets the parts it now has (new ones empty, ones it dropped taken away, empty rows first).
+  const fix: Record<string, unknown>[] = [];
+  for (const { item, group } of reshape) {
+    const want = new Map<string, number>();
+    for (const p of bundles.get(item.what.toLowerCase()) ?? []) want.set(p.type.toLowerCase(), (want.get(p.type.toLowerCase()) ?? 0) + Math.max(1, p.qty));
+    const have = new Map<string, RowRef[]>();
+    for (const x of group) have.set(x.type.toLowerCase(), [...(have.get(x.type.toLowerCase()) ?? []), x]);
+    for (const [t, n] of want) {
+      const miss = n - (have.get(t)?.length ?? 0);
+      for (let i = 0; i < miss; i++) fix.push({ plan_id: r.plan_id, station_id: group[0].station, type: (bundles.get(item.what.toLowerCase()) ?? []).find((p) => p.type.toLowerCase() === t)?.type ?? t, games: [], set_id: group[0].set_id, request_id: r.id, request_item: item.what, t });
+    }
+    for (const [t, list] of have) {
+      const extra = (list.length) - (want.get(t) ?? 0);
+      if (extra <= 0) continue;
+      const cut = list.filter((x) => !x.locked).sort((a, b) => Number(b.slot) - Number(a.slot) || b.sort - a.sort).slice(0, extra);
+      for (const x of cut) (x.slot ? drop : dropDev).push(x.id);
+      kept += extra - cut.length;
+    }
+  }
   if (drop.length) await svc.from('logistics_plan_slots').delete().in('id', drop);
   if (dropDev.length) await svc.from('logistics_plan_devices').delete().eq('plan_id', r.plan_id).in('device_id', dropDev);
+  if (fix.length) {
+    const { data: lastSort } = await svc.from('logistics_plan_slots').select('sort').eq('plan_id', r.plan_id).order('sort', { ascending: false }).limit(1).maybeSingle();
+    let n = (lastSort?.sort as number | undefined) ?? 0;
+    await svc.from('logistics_plan_slots').insert(fix.map(({ t: _t, ...row }) => ({ ...row, sort: ++n })));
+  }
   if (!add.length) return { kept };
 
   let name = r.team?.trim() || null;
@@ -115,4 +139,31 @@ export async function syncRequestRows(svc: SupabaseClient, r: Req): Promise<{ ke
   const ins = await svc.from('logistics_plan_slots').insert(rows);
   if (ins.error) console.error('request rows', ins.error.message);
   return { kept };
+}
+
+// A bundle was renamed or its parts changed: the open events' requests that ask for it follow (the name in the request and its rows, then the rows themselves are matched again).
+export async function followBundle(svc: SupabaseClient, oldName: string, newName: string): Promise<void> {
+  const { data: reqs } = await svc.from('logistics_requests').select('id, plan_id, kind, team, division_id, items, status').eq('kind', 'devices').limit(3000);
+  const using = (reqs ?? []).filter((q) => ((q.items as DeviceItem[]) ?? []).some((i) => i.what.toLowerCase() === oldName.toLowerCase()));
+  if (!using.length) return;
+  const { data: plans } = await svc.from('logistics_plans').select('id, status').in('id', [...new Set(using.map((q) => q.plan_id as string))]);
+  const open = new Set((plans ?? []).filter((p) => p.status !== 'closed').map((p) => p.id as string));
+  for (const q of using) {
+    if (!open.has(q.plan_id as string)) continue;
+    let row = q as unknown as Req;
+    if (newName !== oldName) {
+      const items = (q.items as DeviceItem[]).map((i) => (i.what.toLowerCase() === oldName.toLowerCase() ? { ...i, what: newName } : i));
+      await svc.from('logistics_requests').update({ items }).eq('id', q.id as string);
+      await svc.from('logistics_plan_slots').update({ request_item: newName }).eq('request_id', q.id as string).ilike('request_item', oldName.replace(/[%_]/g, (c) => `\\${c}`));
+      await svc.from('logistics_plan_devices').update({ request_item: newName }).eq('request_id', q.id as string).ilike('request_item', oldName.replace(/[%_]/g, (c) => `\\${c}`));
+      row = { ...row, items };
+    }
+    await syncRequestRows(svc, row);
+  }
+}
+
+// How many device requests ask for a bundle (so it can't be deleted while one does).
+export async function requestsUsingBundle(svc: SupabaseClient, name: string): Promise<number> {
+  const { data } = await svc.from('logistics_requests').select('items').eq('kind', 'devices').limit(3000);
+  return (data ?? []).filter((q) => ((q.items as DeviceItem[]) ?? []).some((i) => i.what.toLowerCase() === name.toLowerCase())).length;
 }

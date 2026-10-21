@@ -41,7 +41,6 @@ export default function RequestsTab({ plan, api, data }: { plan: PlanApi; api: L
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [error, setError] = useState('');
   const [dialog, setDialog] = useState<Req | 'new' | null>(null);
-  const [busy, setBusy] = useState('');
   const load = useCallback(async () => {
     const r = await call<Loaded>(`/api/logistics/plans/${planId}/requests`, 'GET');
     if (r.ok) { setLoaded(r.data); setError(''); } else setError(r.error);

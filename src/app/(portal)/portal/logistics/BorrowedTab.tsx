@@ -31,7 +31,7 @@ export default function BorrowedTab({ plan, catalog, data, kind }: { plan: PlanA
         <span className={styles.count}>{rows.length} {noun}{rows.length === 1 ? '' : 's'} for this event</span>
         {manage && <Button className={styles.addBtn} onClick={() => setDialog('new')}>{sponsor ? 'Add Sponsor Item' : 'Add Officer Loaner'}</Button>}
       </div>
-      {dialog && <BorrowedDialog plan={plan} catalog={catalog} data={data} stations={d.stations} borrowed={dialog === 'new' ? null : dialog} defaultKind={kind} onClose={() => setDialog(null)} />}
+      {dialog && <BorrowedDialog plan={plan} catalog={catalog} data={data} borrowed={dialog === 'new' ? null : dialog} defaultKind={kind} onClose={() => setDialog(null)} />}
       {rows.length === 0 ? (
         <div className={styles.empty}><p>{sponsor ? 'No sponsor items for this event. Add a device a sponsor is lending, then give it a team on the Allocation tab.' : 'No officer loaners for this event. Add a device an officer is bringing, then give it a team on the Allocation tab.'}</p></div>
       ) : (
