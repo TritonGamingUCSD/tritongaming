@@ -46,6 +46,15 @@ Code: `src/app/(portal)/portal/help`, `src/app/api/help`, `src/lib/notifications
 - Anyone can open a ticket; exec and admin see all of them.
 - **Role requests:** "I need a role" opens a short form (role, division, who can vouch). It becomes a ticket whose text `parseRoleRequest` can read back. Admins (only) see **Approve and give role** on it, preselected from the request. Approving gives the role (`withRole`), replies on the ticket, notifies the person, resolves the ticket and writes the audit log.
 
+## Logistics (equipment catalog)
+
+A self-contained portal section (Team group): every device the club owns, borrows from a sponsor, or has on loan from an officer, and where it lives. **Every officer and above can look** (including device logins); **only people with `manage_logistics`** (exec and admin, or granted in Admin → Access) can change anything. Nothing here touches check-in, tickets, meetings or the scanner: its own tables (`logistics_*`), routes (`/api/logistics`) and pages (`portal/logistics`).
+- A device has an ID typed as written on it (TECM1; "tecm 1" is the same), a type, shelf + tier + exact spot, a condition (Brand New, Working, Dead, Disappeared, Threw Away, Not Tested), owner (Club, Sponsor, Officer Loaner), ports, installed games (the portal's game list read live, plus extras), a kit checklist with missing flags, a login and notes. Types marked **counted** (cables, power strips) are one row with an estimated quantity ("about 30") instead of a row per item.
+- Dropdowns are editable like a spreadsheet's: pick a value or type a new one and add it on the spot. The lists (Tools tab) can be renamed (devices follow) and a value in use can't be deleted.
+- Every meaningful change is written to the device's own history (condition, moves, missing parts, owner, notes). The shared audit log only gets "create" and "remove" (never "delete", which would alert every admin).
+- Cost: opening the section is one request (devices, lists, sponsors together); each edit's reply is applied on screen, nothing polls; history and the officer picker load only when opened. Stage 2 (event setups and the event-day step screen), prizes and requests are still to come.
+- Check: `npm run test:logistics` (needs a dev server).
+
 ## Notifications
 
 `createNotifications` writes the bell and sends push together. Kinds people can mute (Profile → notifications): meetings, events, account, help and **docs** (`doc_required`, `doc_comment`). A kind not listed always sends.

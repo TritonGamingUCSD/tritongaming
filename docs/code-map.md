@@ -87,6 +87,9 @@ Pure logic (no database, no React) is what the unit tests in `src/lib/__tests__`
 ## `site/`: the public website
 `content.ts`, `content-blocks.ts`, `contentPreview*.ts` (editable text blocks), `pageBlocks.ts`, `pageLayout.ts`, `ogCard*.ts(x)`, `ogPage.tsx`, `ogRoutes.tsx` (share images), `shortLinks.ts`, `links.ts`, `attribution.ts`, `games.ts`, `youtube.ts`, `revalidate.ts`, `refreshPublicCache.ts`.
 
+## `logistics/`: equipment catalog (separate from check-in)
+`constants.ts` (conditions, owner types, list kinds, the starting kit per device type), `devices.ts` (reading a device from the browser, the ID matching rule, the history lines for a change), `auth.ts` (`authorizeLogistics('view' | 'manage')`). Routes: `app/api/logistics` (one bootstrap GET, devices, options, sponsors, people). Pages: `app/(portal)/portal/logistics` (`LogisticsSectionContent`, `EquipmentTab`, `DeviceDialog`, `SponsorsTab`, `ToolsTab`, `Combo` for the add-while-picking dropdown, `useLogistics` for the in-memory catalog).
+
 ## `ui/`: client helpers
 `confirmHold.ts` (hold to confirm), `toast.ts`, `fetchWithRetry.ts`, `useDraft.ts` (unsent drafts), `useDragReorder.ts`, `useEditingPresence.ts`, `useOnlineStatus.ts`, `useUnsavedChanges.ts`, `useVisiblePoll.ts`.
 

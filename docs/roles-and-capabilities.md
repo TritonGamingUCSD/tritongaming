@@ -36,6 +36,7 @@ Admin passes every check. Roles combine: a person has everything each of their r
 | Events | · | · | ✔ | ✔ | ✔ | · | ✔ | ✔ | ✔ |
 | Check-In | · | · | ✔ | · | ✔ | · | ✔ | ✔ | ✔ |
 | Meetings | · | · | ✔ | · | ✔ | · | ✔ | ✔ | ✔ |
+| Logistics | · | · | · | · | ✔ | ✔ | ✔ | ✔ | ✔ |
 | Strikes | · | · | · | · | · | · | · | ✔ | ✔ |
 | Quarter status | · | · | · | · | · | · | · | ✔ | ✔ |
 | TG Members (and Teams) | · | · | ✔ | ✔ | ✔ | · | ✔ | ✔ | ✔ |
@@ -78,6 +79,9 @@ Admin passes every check. Roles combine: a person has everything each of their r
 | `view_attendance_reports` | · | · | · | · | · | · | · | ✔ | ✔ |
 | `attend_meetings` | · | · | ✔ | · | ✔ | · | ✔ | ✔ | ✔ |
 | `host_meetings` | · | · | · | · | · | · | ✔ | ✔ | ✔ |
+| **Logistics** ||||||||||
+| `view_logistics` | · | · | · | · | ✔ | ✔ | ✔ | ✔ | ✔ |
+| `manage_logistics` | · | · | · | · | · | · | · | ✔ | ✔ |
 | **HR** ||||||||||
 | `manage_strikes` | · | · | · | · | · | · | · | ✔ | ✔ |
 | `manage_quarters` | · | · | · | · | · | · | · | ✔ | ✔ |
@@ -98,8 +102,8 @@ Admin passes every check. Roles combine: a person has everything each of their r
 1. Admin passes every check, whether or not Admin is listed for that capability.
 2. Otherwise the person needs at least one role listed for it. Roles add up.
 3. **Division Lead is scoped:** for division capabilities the check can name one division, and a Division Lead only qualifies for the division they lead.
-4. **Inactive:** someone marked Inactive keeps every viewing permission but loses: `manage_events`, `delete_events`, `checkin`, `manage_site_content`, `manage_division`, `manage_divisions_directory`, `manage_roles`, `manage_docs`, `manage_rewards_shop`, `scan_redemptions`, `manage_points`, `manage_board_order`, `manage_meetings`, `manage_help`, `manage_strikes`, `manage_quarters`, `host_meetings`. Meeting attendance and everything view-only stay. Admins are never affected.
-5. **Granted permissions:** an admin can give one person or a group an extra permission (Admin → Access), added on top of their roles. Only these can be granted: `manage_strikes`, `view_attendance_reports`.
+4. **Inactive:** someone marked Inactive keeps every viewing permission but loses: `manage_events`, `delete_events`, `checkin`, `manage_site_content`, `manage_division`, `manage_divisions_directory`, `manage_roles`, `manage_docs`, `manage_rewards_shop`, `scan_redemptions`, `manage_points`, `manage_board_order`, `manage_meetings`, `manage_help`, `manage_strikes`, `manage_quarters`, `host_meetings`, `manage_logistics`. Meeting attendance and everything view-only stay. Admins are never affected.
+5. **Granted permissions:** an admin can give one person or a group an extra permission (Admin → Access), added on top of their roles. Only these can be granted: `manage_strikes`, `manage_logistics`, `view_attendance_reports`.
 6. **Where it is enforced:** the capabilities marked “database” in the table below are also enforced by the database (row level security). The rest are enforced by the page or API route that uses them, so the route’s own check is the boundary.
 
 **Other rules that are not capabilities**
@@ -138,6 +142,9 @@ Admin passes every check. Roles combine: a person has everything each of their r
 | **See attendance reports** · `view_attendance_reports` | See every meeting’s results, absences and reasons, check-in times, and download the HR CSV export. View only. | Executive, Admin | routes |
 | **Attend meetings** · `attend_meetings` | Check in to meetings with the room code, see their own meeting history, answer plans and questions. | Recruit, Officer, Lead, Executive, Admin | routes |
 | **Plan meetings** · `host_meetings` | Create meetings, plans and teams, and run, edit and see results for the meetings they planned. | Lead, Executive, Admin | routes; lost while inactive |
+| **Logistics** | | | |
+| **See Logistics** · `view_logistics` | Open Logistics and look at the equipment catalog (including device logins), sponsors and event setups. Cannot change anything. | Officer, Division Lead, Lead, Executive, Admin | pages + routes |
+| **Run Logistics** · `manage_logistics` | Add, edit and remove equipment, sponsors and the Logistics lists, and plan events. Exec and admin by default; can be given to a person or group in Admin → Access. Submitting requests and the event-day steps are open to every officer. | Executive, Admin | routes; lost while inactive |
 | **HR** | | | |
 | **Strike tracker** · `manage_strikes` | See everyone’s strikes and vouchers, add or remove strikes, review missed meetings, give or remove vouchers. | Executive, Admin | routes; lost while inactive |
 | **Quarter status** · `manage_quarters` | Mark officers and leads inactive for a quarter, and see the yearly team records. | Executive, Admin | routes; lost while inactive |
@@ -165,47 +172,28 @@ These look unusual but were reviewed and confirmed as intended. Do not “fix”
 
 ## Database check
 
-Compared with the live `role_capabilities` table (the database’s own copy, used by row level security). Admin is implied by the database functions, so it is not stored.
-
-| Capability | In code | In database | Match |
-|---|---|---|:-:|
-| `manage_events` | lead, exec | exec, lead | ✔ |
-| `view_events` | recruit, alumni, officer, lead, exec | alumni, exec, lead, officer, recruit | ✔ |
-| `checkin` | recruit, officer, lead, exec | exec, lead, officer, recruit | ✔ |
-| `manage_site_content` | exec | exec | ✔ |
-| `manage_division` | division, exec | division, exec | ✔ |
-| `manage_divisions_directory` | exec | exec | ✔ |
-| `view_members` | recruit, alumni, officer, lead, exec | alumni, exec, lead, officer, recruit | ✔ |
-| `manage_docs` | lead, exec | exec, lead | ✔ |
-| `view_docs` | recruit, alumni, officer, lead, exec | alumni, exec, lead, officer, recruit | ✔ |
-| `manage_rewards_shop` | exec | exec | ✔ |
-| `scan_redemptions` | recruit, officer, lead, exec | exec, lead, officer, recruit | ✔ |
-| `manage_points` | exec | exec | ✔ |
-
-All 12 match.
-
-13 capabilities are not in the table and are enforced only by pages and routes: `delete_events`, `view_admin_dashboard`, `manage_roles`, `generate_qr_codes`, `manage_board_order`, `manage_meetings`, `manage_help`, `view_attendance_reports`, `manage_strikes`, `manage_quarters`, `view_division_members`, `attend_meetings`, `host_meetings`.
+Not compared this time. Run `npm run docs:roles -- --db` to compare the code with the live `role_capabilities` table.
 
 ## Appendix: where each capability is checked
 
 The files that ask for each capability, so a change can be traced. Page and route names are shortened (`page` and `route` are the Next.js file names).
 
-- `manage_events` (7): `app/(portal)/portal/events/[id]/page`, `app/(portal)/portal/events/new/page`, `app/(portal)/portal/page`, `app/api/admin/checkin-form/detect/route`, `app/api/admin/content/draft/route`, `lib/portal/portalCommands.ts`, `lib/site/contentPreview.ts`
+- `manage_events` (8): `app/(portal)/portal/events/[id]/page`, `app/(portal)/portal/events/[id]/summary/page`, `app/(portal)/portal/events/new/page`, `app/(portal)/portal/page`, `app/api/admin/checkin-form/detect/route`, `app/api/admin/content/draft/route`, `lib/portal/portalCommands.ts`, `lib/site/contentPreview.ts`
 - `view_events` (5): `app/(portal)/portal/page`, `app/api/events/[id]/checkins/route`, `app/api/portal/search/route`, `lib/portal/portalCommands.ts`, `lib/portal/portalSectionData.ts`
 - `delete_events` (2): `app/(portal)/portal/page`, `app/api/events/[id]/route`
-- `checkin` (10): `app/(portal)/portal/checkin/CheckInSectionContent.tsx`, `app/(portal)/portal/events/[id]/summary/page`, `app/(portal)/portal/meetings/MeetingsSectionContent.tsx`, `app/(portal)/portal/page`, `app/(portal)/portal/recap/[eventId]/page`, `app/api/checkin/online/[eventId]/code/route`, `app/api/tickets/checkin/route`, `components/portal/PortalHub.tsx`, `lib/portal/portalCommands.ts`, `lib/portal/portalPath.ts`
+- `checkin` (13): `app/(portal)/portal/checkin/CheckInSectionContent.tsx`, `app/(portal)/portal/events/[id]/summary/page`, `app/(portal)/portal/finish-profile/FinishProfile.tsx`, `app/(portal)/portal/finish-profile/page`, `app/(portal)/portal/meetings/MeetingsSectionContent.tsx`, `app/(portal)/portal/page`, `app/(portal)/portal/recap/[eventId]/page`, `app/(portal)/portal/scan/page`, `app/api/checkin/online/[eventId]/code/route`, `app/api/tickets/checkin/route`, `components/portal/PortalHub.tsx`, `lib/portal/portalCommands.ts`, `lib/portal/portalPath.ts`
 - `manage_site_content` (6): `app/(portal)/portal/page`, `app/api/admin/content/draft/route`, `app/api/admin/content/route`, `lib/portal/portalCommands.ts`, `lib/portal/portalSectionData.ts`, `lib/site/contentPreview.ts`
 - `manage_division` (7): `app/(main)/divisions/[slug]/EditDivisionLink.tsx`, `app/(portal)/portal/divisions/[id]/page`, `app/api/admin/content/draft/route`, `app/api/divisions/route`, `app/api/portal/search/route`, `lib/portal/portalCommands.ts`, `lib/site/contentPreview.ts`
 - `manage_divisions_directory` (5): `app/(portal)/portal/divisions/[id]/page`, `app/(portal)/portal/page`, `app/api/divisions/route`, `lib/portal/portalCommands.ts`, `lib/portal/portalSectionData.ts`
 - `view_members` (4): `app/(portal)/portal/page`, `app/api/portal/search/route`, `lib/portal/portalCommands.ts`, `lib/portal/portalSectionData.ts`
 - `view_admin_dashboard` (7): `app/(portal)/portal/admin/stats/page`, `app/(portal)/portal/page`, `app/api/admin/audit/export/route`, `app/api/admin/audit/route`, `app/api/portal/search/route`, `lib/portal/portalCommands.ts`, `lib/portal/portalSectionData.ts`
-- `manage_roles` (12): `app/(portal)/portal/admin/getAdminData.ts`, `app/api/admin/access/route`, `app/api/admin/activity/route`, `app/api/admin/links/route`, `app/api/admin/roles/bulk/route`, `app/api/admin/roles/route`, `app/api/admin/system-stats/route`, `app/api/admin/users/[id]/route`, `lib/members/quarters.ts`, `lib/notifications/help.ts`, `lib/portal/portalCommands.ts`, `lib/portal/portalSectionData.ts`
+- `manage_roles` (15): `app/(portal)/portal/admin/getAdminData.ts`, `app/api/admin/access/route`, `app/api/admin/activity/route`, `app/api/admin/email/route`, `app/api/admin/links/route`, `app/api/admin/roles/bulk/route`, `app/api/admin/roles/by-email/route`, `app/api/admin/roles/pending/route`, `app/api/admin/roles/route`, `app/api/admin/system-stats/route`, `app/api/admin/users/[id]/route`, `lib/members/quarters.ts`, `lib/notifications/help.ts`, `lib/portal/portalCommands.ts`, `lib/portal/portalSectionData.ts`
 - `generate_qr_codes` (2): `app/(portal)/portal/page`, `lib/portal/portalCommands.ts`
-- `manage_docs` (16): `app/(portal)/portal/page`, `app/api/docs/comments/route`, `app/api/docs/delete/route`, `app/api/docs/discard/route`, `app/api/docs/draft/route`, `app/api/docs/get/route`, `app/api/docs/meta/route`, `app/api/docs/move/route`, `app/api/docs/pin-order/route`, `app/api/docs/presence/route`, `app/api/docs/publish/route`, `app/api/docs/required/route`, `app/api/docs/sync/route`, `app/api/docs/versions/route`, `lib/docs/docsServer.ts`, `lib/portal/portalSectionData.ts`
-- `view_docs` (11): `app/(portal)/portal/page`, `app/api/docs/comments/route`, `app/api/docs/favorite/route`, `app/api/docs/get/route`, `app/api/docs/read/route`, `app/api/docs/required/route`, `app/api/docs/sync/route`, `app/api/portal/search/route`, `lib/docs/docsServer.ts`, `lib/portal/portalCommands.ts`, `lib/portal/portalSectionData.ts`
+- `manage_docs` (17): `app/(portal)/portal/page`, `app/api/docs/comments/route`, `app/api/docs/delete/route`, `app/api/docs/discard/route`, `app/api/docs/draft/route`, `app/api/docs/get/route`, `app/api/docs/links/route`, `app/api/docs/meta/route`, `app/api/docs/move/route`, `app/api/docs/pin-order/route`, `app/api/docs/presence/route`, `app/api/docs/publish/route`, `app/api/docs/required/route`, `app/api/docs/sync/route`, `app/api/docs/versions/route`, `lib/docs/docsServer.ts`, `lib/portal/portalSectionData.ts`
+- `view_docs` (12): `app/(portal)/portal/page`, `app/api/docs/comments/route`, `app/api/docs/favorite/route`, `app/api/docs/get/route`, `app/api/docs/links/route`, `app/api/docs/read/route`, `app/api/docs/required/route`, `app/api/docs/sync/route`, `app/api/portal/search/route`, `lib/docs/docsServer.ts`, `lib/portal/portalCommands.ts`, `lib/portal/portalSectionData.ts`
 - `manage_rewards_shop` (7): `app/(portal)/portal/page`, `app/api/admin/rewards/[id]/route`, `app/api/admin/rewards/route`, `app/api/admin/tiers/[id]/route`, `app/api/admin/tiers/route`, `app/api/portal/search/route`, `lib/portal/portalCommands.ts`
-- `scan_redemptions` (2): `app/(portal)/portal/page`, `app/api/rewards/redemptions/[id]/confirm/route`
-- `manage_points` (9): `app/(portal)/portal/page`, `app/api/admin/points/adjust/route`, `app/api/admin/points/award/route`, `app/api/admin/points/history/route`, `app/api/admin/points/reverse/route`, `app/api/admin/tiers/[id]/route`, `app/api/checkin/manual/route`, `app/api/checkin/reverse/route`, `app/api/rewards/redemptions/[id]/cancel/route`
+- `scan_redemptions` (3): `app/(portal)/portal/scan/page`, `app/api/rewards/redemptions/[id]/confirm/route`, `app/api/rewards/redemptions/lookup/route`
+- `manage_points` (10): `app/(portal)/portal/page`, `app/api/admin/points/adjust/route`, `app/api/admin/points/award/route`, `app/api/admin/points/history/route`, `app/api/admin/points/reverse/route`, `app/api/admin/tiers/[id]/route`, `app/api/checkin/manual/route`, `app/api/checkin/reverse/route`, `app/api/events/[id]/self-checkin/route`, `app/api/rewards/redemptions/[id]/cancel/route`
 - `manage_board_order` (3): `app/(portal)/portal/page`, `app/api/admin/board-order/route`, `lib/portal/portalCommands.ts`
 - `manage_meetings` (6): `app/(portal)/portal/page`, `app/api/meetings/emojis/[id]/route`, `app/api/meetings/emojis/route`, `lib/meetings/busyItems.ts`, `lib/meetings/meetingPlanServer.ts`, `lib/meetings/meetings.ts`
 - `manage_help` (4): `app/(portal)/portal/page`, `app/api/portal/search/route`, `lib/notifications/help.ts`, `lib/portal/portalCommands.ts`
@@ -213,6 +201,8 @@ The files that ask for each capability, so a change can be traced. Page and rout
 - `manage_strikes` (3): `app/(portal)/portal/page`, `lib/members/strikes.ts`, `lib/portal/portalCommands.ts`
 - `manage_quarters` (3): `app/(portal)/portal/page`, `lib/members/quarters.ts`, `lib/portal/portalCommands.ts`
 - `view_division_members` (4): `app/(portal)/portal/page`, `app/api/portal/search/route`, `lib/portal/portalCommands.ts`, `lib/portal/portalSectionData.ts`
-- `attend_meetings` (13): `app/(portal)/portal/page`, `app/api/meetings/[id]/answer/route`, `app/api/meetings/[id]/react/route`, `app/api/meetings/[id]/results/route`, `app/api/meetings/check-in/route`, `app/api/meetings/emojis/[id]/route`, `app/api/meetings/emojis/route`, `app/api/meetings/mine/route`, `app/api/meetings/today/route`, `app/api/meetings/upcoming/route`, `app/api/portal/search/route`, `lib/meetings/meetings.ts`, `lib/portal/portalCommands.ts`
-- `host_meetings` (21): `app/(portal)/portal/page`, `app/api/meetings/[id]/absence/route`, `app/api/meetings/[id]/attendance/route`, `app/api/meetings/[id]/live/route`, `app/api/meetings/[id]/route`, `app/api/meetings/absence/route`, `app/api/meetings/cancel/route`, `app/api/meetings/close/route`, `app/api/meetings/emojis/[id]/route`, `app/api/meetings/emojis/route`, `app/api/meetings/groups/[id]/route`, `app/api/meetings/groups/route`, `app/api/meetings/open/route`, `app/api/meetings/schedule/route`, `app/api/meetings/series/[id]/excused/route`, `app/api/meetings/series/[id]/route`, `app/api/meetings/update/route`, `app/api/portal/search/route`, `lib/meetings/meetingPlanServer.ts`, `lib/meetings/meetings.ts`, `lib/portal/portalCommands.ts`
+- `attend_meetings` (12): `app/(portal)/portal/page`, `app/api/meetings/[id]/answer/route`, `app/api/meetings/[id]/results/route`, `app/api/meetings/check-in/route`, `app/api/meetings/emojis/[id]/route`, `app/api/meetings/emojis/route`, `app/api/meetings/mine/route`, `app/api/meetings/today/route`, `app/api/meetings/upcoming/route`, `app/api/portal/search/route`, `lib/meetings/meetings.ts`, `lib/portal/portalCommands.ts`
+- `host_meetings` (22): `app/(portal)/portal/page`, `app/api/meetings/[id]/absence/route`, `app/api/meetings/[id]/attendance/route`, `app/api/meetings/[id]/live/route`, `app/api/meetings/[id]/reactions/route`, `app/api/meetings/[id]/route`, `app/api/meetings/absence/route`, `app/api/meetings/cancel/route`, `app/api/meetings/close/route`, `app/api/meetings/emojis/[id]/route`, `app/api/meetings/emojis/route`, `app/api/meetings/groups/[id]/route`, `app/api/meetings/groups/route`, `app/api/meetings/open/route`, `app/api/meetings/schedule/route`, `app/api/meetings/series/[id]/excused/route`, `app/api/meetings/series/[id]/route`, `app/api/meetings/update/route`, `app/api/portal/search/route`, `lib/meetings/meetingPlanServer.ts`, `lib/meetings/meetings.ts`, `lib/portal/portalCommands.ts`
+- `view_logistics` (3): `app/(portal)/portal/page`, `lib/logistics/auth.ts`, `lib/portal/portalCommands.ts`
+- `manage_logistics` (3): `app/(portal)/portal/page`, `lib/logistics/auth.ts`, `lib/portal/portalCommands.ts`
 

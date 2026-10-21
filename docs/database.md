@@ -28,6 +28,8 @@ Check the result with a `select` afterwards. This runs on the **live** database,
 
 **Members and attendance:** `strikes` and its tables (`strike_events`, `strike_settings`, ...), `academic_quarters`, `quarter_roster`, `officer_quarter_status`, `team_years`, `team_year_members`, `team_settings`.
 
+**Logistics:** `logistics_devices`, `logistics_options` (the editable dropdown lists, one table keyed by `kind`), `logistics_sponsors`, `logistics_device_log`. No client access; the routes use the service role and check `view_logistics` / `manage_logistics`.
+
 **Other:** `notifications`, `push_subscriptions`, `push_preferences`, `audit_log`, `site_contents` and `content_drafts` (editable website text), `short_links`, `help_canned_replies`.
 
 ## Test data

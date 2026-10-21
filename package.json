@@ -23,6 +23,7 @@
     "test:series-absence": "node scripts/checks/series-absence.mjs",
     "test:emojis": "node scripts/checks/emojis.mjs",
     "test:questions": "node scripts/checks/questions.mjs",
+    "test:logistics": "node scripts/checks/logistics.mjs",
     "check:theme": "node scripts/check-theme.mjs",
     "docs:roles": "node scripts/roles-doc.mjs"
   },

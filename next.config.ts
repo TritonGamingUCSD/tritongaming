@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
   // reads section/tab/subtab as query params. Real pages (/portal/events/new, /portal/events/<id>, /portal/admin/stats…)
   // are matched first, since these are fallback rewrites.
   async rewrites() {
-    const sections = ['tickets', 'points', 'activity', 'profile', 'events', 'checkin', 'members', 'meetings', 'strikes', 'quarters', 'divisions', 'division-members', 'docs', 'qrcode', 'help', 'admin', 'site-content'].join('|');
+    const sections = ['tickets', 'points', 'activity', 'profile', 'events', 'checkin', 'members', 'meetings', 'strikes', 'quarters', 'logistics', 'divisions', 'division-members', 'docs', 'qrcode', 'help', 'admin', 'site-content'].join('|');
     return {
       // Events and Divisions also have /portal/<section>/<id> record pages; their tab names are matched first so a tab is never mistaken for an id.
       beforeFiles: [

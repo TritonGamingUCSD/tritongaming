@@ -84,6 +84,11 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // Planning a meeting: leads can create meetings and run/edit/see results of the ones THEY planned;
   // exec and admin (manage_meetings) can do all of that for every meeting.
   host_meetings: ['lead', 'exec', 'admin'],
+  // Logistics (equipment, prizes, requests, event plans): every officer and above can look at everything; only people who manage it can change anything.
+  // manage_logistics is exec and admin by default and can be handed to a person or group (Admin → Access). Submitting a request and the event-day steps are open to
+  // every officer (checked by their own routes). Deliberately separate from check-in. UI/API gating only (the routes use the service role).
+  view_logistics: ['officer', 'division', 'lead', 'exec', 'admin'],
+  manage_logistics: ['exec', 'admin'],
 };
 
 // What being inactive takes away: anything that manages, hosts or deletes, plus checking in and scanning redemptions. Attending meetings is NOT stripped: roles never
@@ -160,6 +165,7 @@ export function requiresOrgTitle(roles: RoleGrant[]): boolean {
 // cover is not grantable. Roles, points, stats and site content stay role-only.
 export const GRANTABLE_CAPABILITIES: { id: Capability; label: string; description: string }[] = [
   { id: 'manage_strikes', label: 'Strikes (HR team)', description: 'See every officer’s, lead’s and exec’s strikes and vouchers, add strikes directly, review missed meetings, take strikes away, and give or remove vouchers, always with a reason the person can read. Exec already have this. Very private, and nobody can change their own record.' },
+  { id: 'manage_logistics', label: 'Logistics', description: 'Add and edit equipment, prizes and sponsors, plan events and manage the Logistics lists. Every officer can already look at Logistics; this is what lets someone change it.' },
   { id: 'view_attendance_reports', label: 'Meeting attendance reports', description: 'See every meeting’s attendance results, absences and reasons, check-in times, and download the HR CSV export. View only.' },
 ];
 

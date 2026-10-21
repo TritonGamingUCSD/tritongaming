@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { roleInk } from '@/lib/portal/roleColors';
 import Link from '@/components/portal/NoPrefetchLink';
 import Image from 'next/image';
-import { Ticket, User, Camera, Calendar, Users, QrCode, Pencil, Shield, BookOpen, Award, ArrowLeft, CalendarCheck, LayoutGrid, CircleHelp, ShieldAlert, CalendarRange, Globe } from 'lucide-react';
+import { Ticket, User, Camera, Calendar, Users, QrCode, Pencil, Shield, BookOpen, Award, ArrowLeft, CalendarCheck, LayoutGrid, CircleHelp, ShieldAlert, CalendarRange, Globe, Package } from 'lucide-react';
 import { getProfile, getUserRoles, getMyPrivateProfile, getUser, getSessionRoles, getViewAs, getViewingUser } from '@/lib/core/auth';
 import { ViewAsSwitcher, ViewAsBanner, ViewingUserBanner } from '@/components/portal/ViewAs';
 import ProfileIncompleteBanner from '@/components/portal/ProfileIncompleteBanner';
@@ -40,6 +40,7 @@ import { loadTodos } from '@/lib/portal/todos';
 import TodoCard from './TodoCard';
 import StrikeCard from './strikes/StrikeCard';
 import StrikesSectionContent from './strikes/StrikesSectionContent';
+import LogisticsSectionContent from './logistics/LogisticsSectionContent';
 import QuarterStatusContent from './quarters/QuarterStatusContent';
 import InactiveNote from './quarters/InactiveNote';
 import { currentQuarter, loadQuarters, quarterName } from '@/lib/members/quarters';
@@ -101,6 +102,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const canManageMeetings = hasCapability(roles, 'manage_meetings');   // exec/admin: every meeting + HR export
   const canManageStrikes = hasCapability(roles, 'manage_strikes');
   const canManageQuarters = hasCapability(roles, 'manage_quarters');
+  const canManageLogistics = hasCapability(roles, 'manage_logistics');
+  const canViewLogistics = canManageLogistics || hasCapability(roles, 'view_logistics');
   const canHostMeetings = hasCapability(roles, 'host_meetings');         // leads too: plan meetings, manage their own
   // Best-effort: if this lookup fails the bar just doesn't get the meeting boost.
   const meetingNow = canAttendMeetings ? await meetingHappeningNow(createServiceClient(), { id: profile.id, roles }).catch(() => false) : false;
@@ -283,6 +286,14 @@ export default async function PortalDashboard({ searchParams }: Props) {
       description: 'Who is active each quarter',
       group: 'Team' as const,
       content: <QuarterStatusContent />,
+    }] : []),
+    // Equipment, prizes and event setups. Every officer and above can look; only people with the Logistics permission (exec, admin, or granted in Admin → Access) can change things.
+    // Entirely separate from check-in.
+    ...(canViewLogistics ? [{
+      id: 'logistics', icon: <Package size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Logistics',
+      description: canManageLogistics ? 'Equipment catalog and event setups' : 'Find equipment and see event setups',
+      group: 'Team' as const,
+      content: <LogisticsSectionContent canManage={canManageLogistics} />,
     }] : []),
     ...(canViewMembers ? [{
       id: 'members', icon: <Users size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'TG Members',
