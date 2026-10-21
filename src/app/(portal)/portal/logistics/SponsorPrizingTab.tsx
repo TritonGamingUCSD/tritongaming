@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
+import Dialog from './Panel';
+import { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
 import { Field, Input } from '@/components/ui/Field';
 import { confirmHold } from '@/lib/ui/confirmHold';
@@ -38,6 +39,8 @@ export default function SponsorPrizingTab({ plan, api, data }: { plan: PlanApi; 
           {manage && <Button size="sm" variant="secondary" onClick={() => setDialog('new')}>Add Sponsor Prize</Button>}
           {canStore && storable.length > 0 && <Button size="sm" onClick={() => setStoring(storable)}>Add {storable.length} To Storage</Button>}
         </div>
+      {dialog && <PrizeDialog prizes={prizes} api={api} data={data} prize={dialog === 'new' ? null : dialog} where={{ plan: d.plan.id }} onClose={() => setDialog(null)} />}
+      {storing && <StorageDialog prizes={prizes} api={api} data={data} list={storing} eventName={d.plan.name} onClose={() => setStoring(null)} />}
         {!prizes.rows ? <p className={styles.muted}>Loading…</p> : mine.length === 0 ? (
           <p className={styles.muted}>{manage ? 'No sponsor prizes yet. Add what sponsors sent for this event; it stays here until the event is over.' : 'No sponsor prizes for this event.'}</p>
         ) : (
@@ -65,8 +68,6 @@ export default function SponsorPrizingTab({ plan, api, data }: { plan: PlanApi; 
         {!ended && mine.length > 0 && d.canManage && <p className={styles.muted}>Once the event is over you can add what is left to the club’s storage.</p>}
       </section>
 
-      {dialog && <PrizeDialog prizes={prizes} api={api} data={data} prize={dialog === 'new' ? null : dialog} where={{ plan: d.plan.id }} onClose={() => setDialog(null)} />}
-      {storing && <StorageDialog prizes={prizes} api={api} data={data} list={storing} eventName={d.plan.name} onClose={() => setStoring(null)} />}
     </div>
   );
 }

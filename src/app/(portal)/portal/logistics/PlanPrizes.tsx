@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
+import Dialog from './Panel';
+import { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
 import { Field, Input, Select } from '@/components/ui/Field';
 import { confirmHold } from '@/lib/ui/confirmHold';
@@ -39,6 +40,8 @@ export default function PlanPrizes({ plan, canManage, closed }: { plan: PlanApi;
         <h3 className={styles.panelTitle}>Prizes <span className={styles.dim}>{lines.length} lines</span></h3>
         {manage && <Button size="sm" variant="secondary" onClick={() => setPoolDialog({ pool: null })}>Add Prize Pool</Button>}
       </div>
+      {poolDialog && <PoolDialog plan={plan} pool={poolDialog.pool} onClose={() => setPoolDialog(null)} />}
+      {adding && <AddPrizesDialog plan={plan} pool={adding} existing={new Set(lines.filter((l) => l.pool_id === adding.id).map((l) => l.prize_id))} onClose={() => setAdding(null)} />}
       {pools.length === 0 && <p className={styles.muted}>No prize pools yet. A pool is where prizes are given from at this event, like a raffle, a game, or a scavenger hunt.</p>}
       {pools.map((p, pi) => {
         const mine = lines.filter((l) => l.pool_id === p.id);
@@ -55,7 +58,7 @@ export default function PlanPrizes({ plan, canManage, closed }: { plan: PlanApi;
         const toggle = () => setFold((cur) => ({ ...cur, [p.id]: !folded }));
         const team = stationName(p.station_id);
         return (
-          <section key={p.id} className={`${styles.dayTeam} ${finished ? styles.dayTeamDone : ''} ${styles[`tint${pi % 3}`]}`} style={{ '--n': steps.length } as React.CSSProperties} aria-label={p.name}>
+          <section key={p.id} className={`${styles.dayTeam} ${finished ? styles.dayTeamDone : ''}`} style={{ '--n': steps.length } as React.CSSProperties} aria-label={p.name}>
             <div className={`${styles.dayRow} ${styles.dayRowHead} ${styles.clickRow}`} onClick={(e) => { if (!interactive(e.target)) toggle(); }}>
               <div className={styles.teamHeadMain}>
                 <div className={styles.teamLine}>
@@ -89,8 +92,6 @@ export default function PlanPrizes({ plan, canManage, closed }: { plan: PlanApi;
           </section>
         );
       })}
-      {poolDialog && <PoolDialog plan={plan} pool={poolDialog.pool} onClose={() => setPoolDialog(null)} />}
-      {adding && <AddPrizesDialog plan={plan} pool={adding} existing={new Set(lines.filter((l) => l.pool_id === adding.id).map((l) => l.prize_id))} onClose={() => setAdding(null)} />}
     </section>
   );
 }

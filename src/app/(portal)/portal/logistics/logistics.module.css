@@ -238,11 +238,8 @@
 .problemWarn { border-color: var(--pp-warn); }
 .warnText { color: var(--pp-warn); font-weight: 600; }
 
-/* A team: the card for one team or booth, with a colour edge for its status and a soft tint so neighbours are told apart */
+/* A team: the card for one team or booth, with a colour edge for its status only */
 .team { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.9rem 1rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); border-left-width: 5px; background: var(--pp-card); min-width: 0; scroll-margin-top: 5rem; }
-.tint0 { background: color-mix(in srgb, var(--pp-info) 6%, var(--pp-card)); }
-.tint1 { background: color-mix(in srgb, var(--yellow) 10%, var(--pp-card)); }
-.tint2 { background: color-mix(in srgb, #7db4ea 12%, var(--pp-card)); } /* theme-ok: the portal's light blue */
 .team_ok { border-left-color: var(--pp-ok); }
 .team_warn { border-left-color: var(--pp-warn); }
 .team_bad { border-left-color: var(--pp-bad); }
@@ -330,7 +327,8 @@
   .dayAside { grid-column: 2; grid-row: 1; position: sticky; top: 7.5rem; }
   .dayMain { grid-column: 1; grid-row: 1; }
 }
-.dayTeam { border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); background: var(--pp-card); overflow: hidden; }
+.dayTeam { border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); background: var(--pp-card); }
+.dayTeam .lineMenu .menuList { z-index: 20; }
 .dayTeamDone { border-color: color-mix(in srgb, var(--pp-ok) 55%, transparent); }
 .dayRow { display: grid; grid-template-columns: minmax(11rem, 15rem) minmax(0, 1fr); column-gap: 1rem; align-items: center; padding: 0.4rem 0.8rem; }
 .dayRowHead { padding-block: 0.6rem; background: rgba(var(--pp-ink-rgb), 0.05); border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.15); align-items: start; }
@@ -388,7 +386,7 @@
 .ovNa { color: rgba(var(--pp-ink-rgb), 0.35); }
 
 /* ---- The combined sheet: a line is  device | notes | step boxes | tools  ---- */
-.dayRow { grid-template-columns: minmax(9rem, 1.1fr) minmax(8rem, 1fr) minmax(calc(var(--n) * 4rem), calc(var(--n) * 5rem)) 10.5rem; column-gap: 1rem; }
+.dayRow { grid-template-columns: minmax(9rem, 1.1fr) minmax(8rem, 1fr) minmax(calc(var(--n) * 4rem), calc(var(--n) * 5rem)) 13.5rem; column-gap: 1rem; }
 .dayRowHead .teamHeadMain { grid-column: 1 / span 2; }
 .dayRowHead .dHeads { grid-column: 3; }
 .dHeads { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 0.35rem; }
@@ -403,9 +401,6 @@
 .teamHeadMain { display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
 .teamLine { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.7rem; }
 .teamEmpty { margin: 0; padding: 0.8rem; font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.78); }
-.dayTeam.tint0 { background: color-mix(in srgb, var(--pp-info) 5%, var(--pp-card)); }
-.dayTeam.tint1 { background: color-mix(in srgb, var(--yellow) 8%, var(--pp-card)); }
-.dayTeam.tint2 { background: color-mix(in srgb, #7db4ea 10%, var(--pp-card)); } /* theme-ok: the portal's light blue */
 @media (max-width: 899px) {
   .dayRow { grid-template-columns: minmax(0, 1fr); }
   .dayRowHead .teamHeadMain, .dayRowHead .dHeads { grid-column: auto; }
@@ -509,5 +504,104 @@
 /* On a phone the title bar and tabs scroll away (they take a third of the screen); only the box for typing an ID stays at the top. */
 @media (max-width: 899px) {
   .dayTop { display: contents; }
-  .dayForm { position: sticky; top: 0; z-index: 6; padding-block: 0.5rem; background: var(--pp-paper); }
+  .dayStick { position: sticky; top: 0; z-index: 6; padding-block: 0.4rem; background: var(--pp-paper); }
 }
+
+/* ---- Requests ---- */
+.reqList { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 26rem), 1fr)); gap: 0.7rem; }
+.reqCard { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.8rem 0.9rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); background: var(--pp-card); font-size: 0.88rem; min-width: 0; }
+.reqNew { border-left: 4px solid var(--pp-warn); }
+.reqHead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.6rem; }
+.reqHead b { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1rem; overflow-wrap: anywhere; }
+.reqItems { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.2rem; }
+.reqNote { margin: 0; padding-left: 0.6rem; border-left: 3px solid rgba(var(--pp-ink-rgb), 0.2); overflow-wrap: anywhere; white-space: pre-wrap; }
+.reqAnswer { margin: 0; padding: 0.4rem 0.6rem; border-radius: 6px; background: rgba(125, 180, 234, 0.14); overflow-wrap: anywhere; }
+.reqActions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-top: auto; }
+.reqLines { display: flex; flex-direction: column; gap: 0.6rem; }
+.reqLine { display: grid; grid-template-columns: minmax(9rem, 1.2fr) 6rem minmax(10rem, 2fr) auto; align-items: end; gap: 0.6rem; }
+.reqLinePrize { grid-template-columns: 8rem 10rem auto; }
+.rowInline { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+@media (max-width: 640px) { .reqLine, .reqLinePrize { grid-template-columns: minmax(0, 1fr) 6rem; } .reqLine > :nth-child(3) { grid-column: 1 / -1; } }
+
+/* The one-line answer after a step is marked (the page scrolls to the line and flashes it) */
+.dayStick { display: flex; flex-direction: column; gap: 0.4rem; }
+.lastBar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem 0.9rem; padding: 0.4rem 0.7rem; border-radius: 8px; border: 1px solid; font-size: 0.84rem; color: var(--pp-ink); background: var(--pp-card); overflow-wrap: anywhere; }
+.lastOk { border-color: var(--pp-ok); background: color-mix(in srgb, var(--pp-ok) 9%, var(--pp-card)); }
+.lastWarn { border-color: var(--pp-warn); background: color-mix(in srgb, var(--pp-warn) 10%, var(--pp-card)); }
+.lastBad { border-color: var(--pp-bad); background: color-mix(in srgb, var(--pp-bad) 9%, var(--pp-card)); }
+.lastActions { display: inline-flex; flex-wrap: wrap; gap: 0.3rem; margin-left: auto; }
+.lastActions .linkBtn { min-height: 28px; }
+.dayLine { scroll-margin-top: 11rem; }
+@keyframes rowFlash { 0%, 55% { box-shadow: inset 0 0 0 3px var(--pp-ok); background: color-mix(in srgb, var(--pp-ok) 22%, transparent); } 100% { box-shadow: none; } }
+.flash { animation: rowFlash 2.4s ease-out; }
+
+/* Allocating (not the event day): no step boxes, so a line is  device | notes | tools  */
+.noSteps .dayRow { grid-template-columns: minmax(10rem, 1.4fr) minmax(9rem, 1.4fr) 13.5rem; }
+.noSteps .dayRowHead .teamHeadMain { grid-column: 1 / -1; }
+@media (max-width: 899px) { .noSteps .dayRow { grid-template-columns: minmax(0, 1fr); } }
+@media (min-width: 900px) { .noSteps { min-width: 0; } }
+
+.sponsorRow { grid-template-columns: minmax(10rem, 1.2fr) minmax(10rem, 1.4fr) minmax(12rem, 2.5fr) 5rem; }
+.reqRow { grid-template-columns: minmax(10rem, 1.3fr) minmax(7rem, 0.9fr) minmax(11rem, 1.8fr) minmax(8rem, 1.2fr) 6.5rem minmax(8rem, 1.2fr) minmax(8rem, 1fr); align-items: start; }
+.reqRow > span { overflow-wrap: anywhere; }
+.reqItem { display: block; }
+.colHead { padding-block: 0.25rem; font-size: 0.72rem; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.65); border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.15); }
+@media (max-width: 899px) { .colHead { display: none; } .sponsorRow, .reqRow { grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr)); } }
+
+/* Something that has no place yet is easy to spot: amber */
+.notLocated { display: inline-block; padding: 0.05rem 0.5rem; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--pp-warn) 55%, transparent); background: color-mix(in srgb, var(--pp-warn) 18%, transparent); color: var(--pp-warn); font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
+
+/* ---- Shorter rows and boxes: less scrolling to find things ---- */
+.dayPage { gap: 0.6rem; }
+.tab { gap: 0.6rem; }
+.dayMain { gap: 0.6rem; }
+.statusBar { padding: 0.35rem 0.7rem; gap: 0.35rem; }
+.dayRow { padding: 0.2rem 0.8rem; }
+.dayRowHead { padding-block: 0.35rem; }
+.teamHeadMain { gap: 0.2rem; }
+.teamLine { gap: 0.2rem 0.6rem; }
+.dayLine { padding-block: 0.15rem; }
+.cell, .cellNa { min-height: 30px; }
+.cellBox { width: 18px; height: 18px; }
+.dHead { padding: 0.15rem 0.2rem; }
+.dTag { font-size: 0.92rem; }
+.dInfo { gap: 0 0.5rem; }
+.colHead { padding-block: 0.15rem; }
+.prizeRow { padding: 0.28rem 0.8rem; }
+.prizeHeadRow { padding-block: 0.2rem; }
+.matrix th, .matrix td { padding: 0.12rem 0.45rem; }
+.numCell { min-height: 26px; }
+.lastBar { padding: 0.25rem 0.6rem; }
+.reqCard { padding: 0.5rem 0.7rem; gap: 0.3rem; }
+.overview th, .overview td { padding: 0.25rem 0.6rem; }
+.todayBanner { padding: 0.4rem 0.7rem; }
+@media (min-width: 900px) {
+  /* on a wide screen a line's place sits next to its name, not under it */
+  .dayLine .dWhere { flex: 1 1 auto; }
+  .dayRow .teamHeadMain .teamLine:last-child { margin-top: 0; }
+}
+
+/* A form that opens in the page, where the thing it changes is (see Panel.tsx) */
+.inlinePanel { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.6rem 0.9rem 0.8rem; border-radius: 8px; border: 2px solid var(--pp-ink); background: var(--pp-card); color: var(--pp-ink); min-width: 0; scroll-margin-top: 9rem; }
+.inlineHead { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; }
+
+/* A team's title is one row: name, status, contact and room, Confirmed, and its buttons (they wrap only when the screen is too narrow) */
+.teamHeadMain { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.8rem; }
+.teamHeadMain > .teamLine { display: contents; }
+.noSteps .dayRowHead .teamHeadMain { gap: 0.25rem 1rem; }
+
+/* A line's tools stay on one row so a line is as short as its text */
+@media (min-width: 900px) {
+  .dTools { flex-wrap: nowrap; }
+  .dTools .miniSelect { flex: 1 1 auto; max-width: 8rem; min-width: 0; }
+}
+
+/* One bar for the event's pages and the Allocate | Event Day switch */
+.pageBar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.4rem 1rem; }
+.pageBar > * { min-width: 0; }
+
+
+.okText { color: var(--pp-ok); font-weight: 600; }
+/* one menu per line instead of a row of tool buttons */
+.lineMenu summary { min-height: 30px; padding: 0 0.6rem; font-size: 1.1rem; line-height: 1; border-color: transparent; }
+.lineMenu[open] summary, .lineMenu summary:hover { border-color: rgba(var(--pp-ink-rgb), 0.35); }

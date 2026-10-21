@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Pencil, Plus } from 'lucide-react';
-import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
+import Dialog from './Panel';
+import { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import { Field, Input, Textarea } from '@/components/ui/Field';
@@ -17,23 +17,22 @@ export default function SponsorsTab({ api, data }: { api: LogisticsApi; data: Ca
     <div className={styles.tab}>
       <div className={styles.toolbarRow}>
         <span className={styles.count}>{data.sponsors.length} {data.sponsors.length === 1 ? 'sponsor' : 'sponsors'}</span>
-        {data.canManage && <Button className={styles.addBtn} onClick={() => setEditing('new')}><Plus size={15} aria-hidden="true" /> Add Sponsor</Button>}
+        {data.canManage && <Button className={styles.addBtn} onClick={() => setEditing('new')}>Add Sponsor</Button>}
       </div>
-      {data.sponsors.length === 0 ? <div className={styles.empty}><p>{data.canManage ? 'No sponsors yet. They are added here, or while adding a sponsor’s device to an event.' : 'No sponsors have been added yet.'}</p></div> : (
-        <ul className={styles.sponsorList}>
-          {data.sponsors.map((s) => (
-            <li key={s.id} className={styles.sponsor}>
-              <div className={styles.sponsorText}>
-                <b>{s.name}</b>
-                {s.contact && <span>{s.contact}</span>}
-                {s.notes && <small>{s.notes}</small>}
-              </div>
-              {data.canManage && <button type="button" className={styles.iconBtn} aria-label={`Edit ${s.name}`} onClick={() => setEditing(s)}><Pencil size={14} aria-hidden="true" /></button>}
-            </li>
-          ))}
-        </ul>
-      )}
       {editing && <SponsorDialog api={api} sponsor={editing === 'new' ? null : editing} onClose={() => setEditing(null)} />}
+      {data.sponsors.length === 0 ? <div className={styles.empty}><p>{data.canManage ? 'No sponsors yet. They are added here, or while adding a sponsor’s device to an event.' : 'No sponsors have been added yet.'}</p></div> : (
+        <div className={styles.prizeGrid}>
+          <div className={`${styles.prizeRow} ${styles.sponsorRow} ${styles.prizeHeadRow}`} aria-hidden="true"><span>Sponsor</span><span>Contact</span><span>Notes</span><span /></div>
+          {data.sponsors.map((s) => (
+            <div key={s.id} className={`${styles.prizeRow} ${styles.sponsorRow}`}>
+              <span className={styles.prizeName}><b>{s.name}</b></span>
+              <span data-label="Contact">{s.contact ?? <span className={styles.dim}>–</span>}</span>
+              <span data-label="Notes">{s.notes ?? <span className={styles.dim}>–</span>}</span>
+              <span className={styles.prizeTools}>{data.canManage && <button type="button" className={styles.linkBtn} onClick={() => setEditing(s)} aria-label={`Edit ${s.name}`}>Edit</button>}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -45,11 +45,12 @@ function TextCell({ value, canEdit, onSave, placeholder, strong }: { value: stri
   return <input className={styles.cellInput} value={text} autoFocus onFocus={(e) => e.target.select()} maxLength={120} onChange={(e) => setText(e.target.value)} onBlur={() => done(true)} onKeyDown={(e) => { if (e.key === 'Enter') done(true); else if (e.key === 'Escape') done(false); }} />;
 }
 
-function PickCell({ value, options, canEdit, onSave, onCreate, shown, clearable = true }: { value: string | null; options: string[]; canEdit: boolean; onSave: (v: string | null) => void; onCreate?: (v: string) => Promise<string | null>; shown?: string; clearable?: boolean }) {
+function PickCell({ value, options, canEdit, onSave, onCreate, shown, clearable = true, locate }: { locate?: boolean; value: string | null; options: string[]; canEdit: boolean; onSave: (v: string | null) => void; onCreate?: (v: string) => Promise<string | null>; shown?: string; clearable?: boolean }) {
   const [on, setOn] = useState(false);
   const label = shown ?? value;
-  if (!canEdit) return <span>{label ?? <span className={styles.dim}>—</span>}</span>;
-  if (!on) return <button type="button" className={styles.cell} onClick={() => setOn(true)}>{label ?? <span className={styles.dim}>Choose</span>}</button>;
+  const none = locate ? <span className={styles.notLocated}>Not located</span> : null;
+  if (!canEdit) return <span>{label ?? none ?? <span className={styles.dim}>—</span>}</span>;
+  if (!on) return <button type="button" className={styles.cell} onClick={() => setOn(true)}>{label ?? none ?? <span className={styles.dim}>Choose</span>}</button>;
   return <Combo value={label ?? null} options={options} onChange={onSave} onCreate={onCreate} compact autoFocus clearable={clearable} onClose={() => setOn(false)} />;
 }
 
@@ -111,6 +112,7 @@ export default function EquipmentTab({ api, data }: { api: LogisticsApi; data: C
         </div>
       </div>
 
+      {dialog && <DeviceDialog api={api} data={data} device={dialog.device} template={dialog.template ?? null} onClose={() => setDialog(null)} onClone={(draft) => setDialog({ device: null, template: draft })} />}
       {data.devices.length === 0 ? (
         <div className={styles.empty}><p>{canEdit ? 'No equipment yet. Add the first device, then use “Save And Add Another” to enter a run of them quickly.' : 'No equipment has been added yet.'}</p></div>
       ) : rows.length === 0 ? (
@@ -125,7 +127,7 @@ export default function EquipmentTab({ api, data }: { api: LogisticsApi; data: C
                   <td><TextCell value={d.tag} canEdit={canEdit} strong placeholder="no ID" onSave={(v) => save(d, { tag: v || null })} /></td>
                   <td><TextCell value={d.name} canEdit={canEdit} onSave={(v) => save(d, { name: v || null })} /></td>
                   <td><PickCell value={d.type} options={data.lists.type.map((t) => t.value)} canEdit={canEdit} clearable={false} onSave={(v) => v && save(d, { type: v })} onCreate={(v) => api.addOption('type', v)} /></td>
-                  <td><PickCell value={d.shelf} options={data.lists.shelf.map((t) => t.value)} canEdit={canEdit} onSave={(v) => save(d, { shelf: v })} onCreate={(v) => api.addOption('shelf', v)} /></td>
+                  <td><PickCell locate value={d.shelf} options={data.lists.shelf.map((t) => t.value)} canEdit={canEdit} onSave={(v) => save(d, { shelf: v })} onCreate={(v) => api.addOption('shelf', v)} /></td>
                   <td><PickCell value={d.tier} options={data.lists.tier.map((t) => t.value)} canEdit={canEdit} onSave={(v) => save(d, { tier: v })} onCreate={(v) => api.addOption('tier', v)} /></td>
                   <td><ConditionCell d={d} canEdit={canEdit} onSave={(c) => save(d, { condition: c })} /></td>
                   <td><KitCell d={d} counted={!!data.lists.type.find((t) => t.value === d.type)?.counted} /></td>
@@ -143,7 +145,7 @@ export default function EquipmentTab({ api, data }: { api: LogisticsApi; data: C
                 <span className={styles.cardTop}><b className={styles.cardId}>{d.tag ?? 'No ID'}</b><ConditionBadge c={d.condition} /></span>
                 <span className={styles.cardType}>{d.type}{d.name ? ` · ${d.name}` : ''}</span>
                 <span className={styles.cardMeta}>
-                  <span>{placeOf(d) || 'No place set'}</span>
+                  <span>{placeOf(d) || <span className={styles.notLocated}>Not located yet</span>}</span>
                   {data.lists.type.find((t) => t.value === d.type)?.counted && <span className={styles.qty}>{quantityText(d)}</span>}
                   {missingCount(d) > 0 && <span className={`${styles.badge} ${styles.bad}`}>{missingCount(d)} missing</span>}
                 </span>
@@ -154,7 +156,6 @@ export default function EquipmentTab({ api, data }: { api: LogisticsApi; data: C
       )}
       {rows.length > limit && <div className={styles.more}><Button variant="secondary" onClick={() => setLimit(rows.length)}>Show All {rows.length}</Button></div>}
 
-      {dialog && <DeviceDialog api={api} data={data} device={dialog.device} template={dialog.template ?? null} onClose={() => setDialog(null)} onClone={(draft) => setDialog({ device: null, template: draft })} />}
     </div>
   );
 }

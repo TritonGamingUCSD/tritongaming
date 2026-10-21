@@ -5,7 +5,7 @@ import type { KitLine, PlanDetail } from './usePlans';
 // Everything in a plan as one kind of row: a club device, a borrowed one, or an empty row that has a type but no device yet. Used by the plan screen and the event-day screen.
 export interface Row extends PlanRow {
   key: string; tag: string | null; name: string | null; where: string; role: 'planned' | 'backup'; condition: string | null; kit: KitLine[];
-  swap_reason: string | null; swapped_for_label: string | null; label: string | null; itemKind: ItemKind; stationId: string | null; sort: number; setId: string | null;
+  swap_reason: string | null; swapped_for_label: string | null; label: string | null; itemKind: ItemKind; stationId: string | null; sort: number; setId: string | null; located: boolean; requestId: string | null;
 }
 
 const place = (d: { shelf: string | null; tier: string | null }) => [d.shelf, d.tier].filter(Boolean).join(' · ');
@@ -15,16 +15,16 @@ export function planRows(detail: PlanDetail, counted: Set<string>): Row[] {
   const club = detail.items.map((i): Row => ({
     id: i.device_id, key: i.device_id, kind: 'club', itemKind: 'club', type: i.device.type, tag: i.device.tag, name: i.device.name, station_id: i.station_id, stationId: i.station_id,
     games_needed: i.games_needed ?? [], games: i.device.games, counted: false, role: i.role, condition: i.device.condition, kit: i.device.kit,
-    where: `${place(i.device) || 'No place set'}${i.device.place_note ? ` · ${i.device.place_note}` : ''}`, swap_reason: i.swap_reason, swapped_for_label: i.swapped_for_label, label: null, sort: i.sort ?? 1000, setId: i.set_id ?? null,
+    where: `${place(i.device) || 'No place set'}${i.device.place_note ? ` · ${i.device.place_note}` : ''}`, located: !!place(i.device), swap_reason: i.swap_reason, swapped_for_label: i.swapped_for_label, label: null, sort: i.sort ?? 1000, requestId: i.request_id ?? null, setId: i.set_id ?? null,
   }));
   const borrowed = detail.borrowed.map((b): Row => ({
     id: b.id, key: b.id, kind: b.owner_kind, itemKind: b.owner_kind, type: b.type, tag: b.tag, name: b.name, station_id: b.station_id, stationId: b.station_id,
     games_needed: b.games_needed ?? [], games: [], counted: false, role: b.role, condition: null, kit: b.kit,
-    where: `${b.owner_kind === 'sponsor' ? 'Sponsor' : 'Officer loan'}: ${b.owner}${b.owner_note ? ` · ${b.owner_note}` : ''}`, swap_reason: b.swap_reason, swapped_for_label: b.swapped_for_label, label: null, sort: b.sort ?? 1000, setId: b.set_id ?? null,
+    where: `${b.owner_kind === 'sponsor' ? 'Sponsor' : 'Officer loan'}: ${b.owner}${b.owner_note ? ` · ${b.owner_note}` : ''}`, located: true, swap_reason: b.swap_reason, swapped_for_label: b.swapped_for_label, label: null, sort: b.sort ?? 1000, setId: b.set_id ?? null, requestId: null,
   }));
   const slots = detail.slots.map((s): Row => ({
     id: s.id, key: s.id, kind: 'slot', itemKind: 'club', type: s.type, tag: null, name: null, station_id: s.station_id, stationId: s.station_id, games_needed: s.games, games: [],
-    counted: lc.has(s.type.toLowerCase()), role: 'planned', condition: null, kit: [], where: s.label ?? '', swap_reason: null, swapped_for_label: null, label: s.label, sort: s.sort, setId: s.set_id ?? null,
+    counted: lc.has(s.type.toLowerCase()), role: 'planned', condition: null, kit: [], where: s.label ?? '', located: true, swap_reason: null, swapped_for_label: null, label: s.label, sort: s.sort, setId: s.set_id ?? null, requestId: s.request_id ?? null,
   }));
   // The order they were planned in; anything added by hand later (sort 1000) goes after, by ID.
   return [...club, ...borrowed, ...slots].sort((a, b) => a.sort - b.sort || (a.tag ?? a.type).localeCompare(b.tag ?? b.type, undefined, { numeric: true, sensitivity: 'base' }));

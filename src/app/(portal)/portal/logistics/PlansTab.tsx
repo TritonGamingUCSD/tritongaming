@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 
 import Button from '@/components/ui/Button';
-import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
+import Dialog from './Panel';
+import { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Notice from '@/components/ui/Notice';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Loading from '@/components/Loading/Loading';
@@ -27,7 +28,7 @@ export default function PlansTab({ api, data, route, go }: { api: LogisticsApi; 
   const list = usePlanList();
   const ref = route.plan;
   const plan = ref && list.plans ? list.plans.find((p) => p.slug === ref || p.id === ref) ?? null : null;
-  const open = (p: { slug: string } | null) => { go({ tab: 'events', plan: p?.slug ?? null, page: 'allocation' }); if (!p) void list.reload(); };
+  const open = (p: { slug: string } | null) => { go({ tab: 'events', plan: p?.slug ?? null, page: 'device' }); if (!p) void list.reload(); };
   useEffect(() => { if (plan && ref === plan.id) setParams({ section: 'logistics', tab: 'events', subtab: plan.slug, detail: route.page, view: route.day ? 'day' : null }); }, [plan, ref, route.page, route.day, setParams]);
   if (ref) {
     if (!list.plans) return <div className={styles.tab}>{list.error ? <Notice tone="error">{list.error}</Notice> : <Loading variant="inline" label="Loading…" />}</div>;
@@ -46,6 +47,7 @@ function PlanList({ data, list, onOpen }: { data: Catalog; list: ReturnType<type
         <span className={styles.count}>{plans ? `${plans.length} ${plans.length === 1 ? 'event' : 'events'}` : ''}</span>
         {data.canManage && <Button className={styles.addBtn} onClick={() => setCreating(true)}>New Event</Button>}
       </div>
+      {creating && <CreateDialog events={events} onCreate={async (b) => { const p = await create(b); if (p) { setCreating(false); onOpen(p); } return !!p; }} onClose={() => setCreating(false)} />}
       {error && <div role="alert" onClick={() => setError('')}><Notice tone="error">{error}</Notice></div>}
       {!plans ? (error ? null : <Loading variant="inline" label="Loading…" />) : plans.length === 0 ? (
         <div className={styles.empty}><p>{data.canManage ? 'No events yet. Make one for an upcoming event, then add the devices that go to it.' : 'No events have been set up yet.'}</p></div>
@@ -71,7 +73,6 @@ function PlanList({ data, list, onOpen }: { data: Catalog; list: ReturnType<type
           })}
         </ul>
       )}
-      {creating && <CreateDialog events={events} onCreate={async (b) => { const p = await create(b); if (p) { setCreating(false); onOpen(p); } return !!p; }} onClose={() => setCreating(false)} />}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowRightLeft, Check, Pencil, X } from 'lucide-react';
+import { Check } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { conditionLabel, UNUSABLE } from '@/lib/logistics/constants';
 import { rowKind, skippedSteps, stepAppliesTo, type Problem, type StepDef } from '@/lib/logistics/plans';
@@ -11,10 +11,10 @@ import type { Slim, Station, usePlan } from './usePlans';
 import styles from './logistics.module.css';
 
 export interface SheetCtx {
-  api: ReturnType<typeof usePlan>; canManage: boolean; closed: boolean; busy: boolean; stations: Station[]; steps: StepDef[]; activeId: string;
+  api: ReturnType<typeof usePlan>; canManage: boolean; closed: boolean; busy: boolean; day: boolean; stations: Station[]; steps: StepDef[]; activeId: string;
   doneSet: Set<string>; doneAt: Map<string, string>; problems: Problem[];
   onTick: (row: Row, step: StepDef) => void; onTickAll: (rows: Row[], step: StepDef) => void; onUndo: (item: { id: string; kind: Slim['kind'] }, stepId: string) => void;
-  onSwap: (r: Row) => void; onBorrowed: (r: Row) => void; onInstalled: (rows: Row[]) => void;
+  onSwap: (r: Row) => void; onBorrowed: (r: Row) => void; onInstalled: (rows: Row[]) => void; onEditDevice: (r: Row) => void;
 }
 
 const time = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
@@ -26,6 +26,7 @@ const label = (r: Row) => r.tag ?? r.type;
 function Cells({ rows, setLabel, ctx, readOnly }: { rows: Row[]; setLabel?: string; ctx: SheetCtx; readOnly?: boolean }) {
   const { steps, doneSet, doneAt, activeId, closed, busy, onTick, onTickAll, onUndo } = ctx;
   const skipped = new Set(rows.flatMap((x) => skippedSteps(x, steps, doneSet).map((s) => s.id)));
+  if (!ctx.day) return null;   // while allocating, the step boxes are hidden: they are for the day
   return (
     <div className={styles.dCells}>
       {steps.map((s) => {
@@ -72,22 +73,23 @@ function DeviceLine({ line, ctx, backup, nested }: { line: Line; ctx: SheetCtx; 
   const skip = line.rows.flatMap((x) => skippedSteps(x, ctx.steps, ctx.doneSet));
   const bad = dead || empty || skip.length > 0 || flags.some((p) => p.sev === 'bad');
   const moveTo = (station_id: string | null) => (r.kind === 'club' ? api.act('/devices', 'PATCH', { device_ids: [r.id], station_id }) : r.kind === 'slot' ? api.act('/slots', 'PATCH', { slot_id: r.id, station_id }) : api.act('/borrowed', 'PATCH', { borrowed_id: r.id, station_id }));
+  const fromRequest = r.kind === 'club' && !!r.requestId;
+  const empty0 = () => api.act('/slots', 'POST', { action: 'empty', device_id: r.id });
   const takeOut = () => (r.kind === 'club' ? api.act('/devices', 'DELETE', { device_ids: [r.id] }) : r.kind === 'slot' ? api.act('/slots', 'DELETE', { slot_id: r.id }) : api.act('/borrowed', 'DELETE', { borrowed_id: r.id }));
   async function assign() { if (!tag.trim() || busy) return; setBusy(true); const ok = await api.assign(r.id, tag.trim()); setBusy(false); if (ok) setTag(''); }
   const skipNames = [...new Set(skip.map((s) => s.name))].join(', ');
 
   return (
-    <div className={`${styles.dayRow} ${styles.dayLine} ${nested ? styles.nested : ''} ${bad ? styles.lineBad : missing.length || flags.length ? styles.lineWarn : ''}`}>
+    <div data-rows={line.rows.map((x) => x.id).join(' ')} className={`${styles.dayRow} ${styles.dayLine} ${nested ? styles.nested : ''} ${bad ? styles.lineBad : missing.length || flags.length ? styles.lineWarn : ''}`}>
       <div className={styles.dInfo}>
         {empty ? <b className={styles.emptyMark}>Needs a {r.type}</b> : <b className={styles.dTag}>{line.counted ? `${r.type} ×${line.rows.length}` : r.tag ?? r.type}</b>}
         {!empty && <span className={styles.dType}>{line.counted ? 'counted' : `${r.type}${r.name ? ` · ${r.name}` : ''}`}</span>}
         {(r.kind === 'sponsor' || r.kind === 'officer') && <span className={styles.ownerTag}>{r.kind === 'sponsor' ? 'Sponsor' : 'Loaner'}</span>}
-        {r.kind !== 'slot' && r.where && <span className={styles.dWhere}>{r.where}</span>}
+        {r.kind !== 'slot' && r.where && (r.located ? <span className={styles.dWhere}>{r.where}</span> : <span className={`${styles.dWhere}`}><span className={styles.notLocated}>Not located yet</span>{r.where.includes(' · ') ? ` ${r.where.replace(/^No place set · /, '')}` : ''}</span>)}
         {r.kind === 'slot' && r.label && <span className={styles.dWhere}>{r.label}</span>}
       </div>
       <div className={styles.dNotes}>
         {r.games_needed.length > 0 && <span className={`${styles.gameChip} ${missing.length ? styles.gameMissing : styles.gameOk}`} title={missing.length ? `Not installed yet: ${missing.join(', ')}` : r.kind === 'slot' ? 'Needed' : 'Installed'}>{r.games_needed.join(', ')}{missing.length ? ' · not installed' : ''}</span>}
-        {missing.length > 0 && manage && r.kind === 'club' && <button type="button" className={styles.linkBtn} disabled={ctx.busy} onClick={() => ctx.onInstalled([r])} title={`Add ${missing.join(', ')} to this device’s installed games`}>Mark installed</button>}
         {empty && manage && (
           <span className={styles.assignRow}>
             <input className={styles.assignInput} value={tag} onChange={(e) => setTag(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void assign(); }} placeholder="Type an ID" aria-label={`Device ID for the ${r.type} row`} autoCapitalize="characters" autoComplete="off" disabled={busy} />
@@ -102,14 +104,24 @@ function DeviceLine({ line, ctx, backup, nested }: { line: Line; ctx: SheetCtx; 
       </div>
       <Cells rows={line.rows} ctx={ctx} readOnly={backup} />
       <div className={styles.dTools}>
-        {!closed && !backup && r.kind !== 'slot' && <button type="button" className={styles.iconBtn} aria-label={`Swap ${r.tag}`} title="Swap for another device" onClick={() => onSwap(r)}><ArrowRightLeft size={14} aria-hidden="true" /></button>}
-        {manage && (r.kind === 'sponsor' || r.kind === 'officer') && <button type="button" className={styles.iconBtn} aria-label={`Edit ${r.tag}`} onClick={() => onBorrowed(r)}><Pencil size={14} aria-hidden="true" /></button>}
         {manage && !backup && !line.counted && (
           <select className={styles.miniSelect} aria-label={`Team for ${label(r)}`} value={r.station_id ?? ''} onChange={(e) => void moveTo(e.target.value || null)}>
             <option value="">No team</option>{stations.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         )}
-        {manage && <button type="button" className={styles.iconBtn} aria-label={`Remove ${label(r)} from the plan`} onClick={() => void takeOut()}><X size={14} aria-hidden="true" /></button>}
+        {(r.kind === 'club' || manage || (!closed && !backup && r.kind !== 'slot')) && (
+          <details className={`${styles.menu} ${styles.teamMenu} ${styles.lineMenu}`}>
+            <summary aria-label={`Actions for ${label(r)}`}>⋯</summary>
+            <div className={styles.menuList}>
+              {r.kind === 'club' && <button type="button" onClick={() => ctx.onEditDevice(r)}>{canManage ? 'Edit Device' : 'Details'}</button>}
+              {missing.length > 0 && manage && r.kind === 'club' && <button type="button" disabled={ctx.busy} onClick={() => ctx.onInstalled([r])}>Mark Installed</button>}
+              {!closed && !backup && r.kind !== 'slot' && <button type="button" onClick={() => onSwap(r)}>Swap</button>}
+              {manage && (r.kind === 'sponsor' || r.kind === 'officer') && <button type="button" onClick={() => onBorrowed(r)}>Edit Borrowed Device</button>}
+              {manage && fromRequest && <button type="button" onClick={() => void empty0()}>Empty This Row</button>}
+              {manage && !fromRequest && r.kind !== 'slot' && <button type="button" className={styles.menuDanger} onClick={() => void takeOut()}>Remove From Plan</button>}
+            </div>
+          </details>
+        )}
       </div>
     </div>
   );
@@ -128,7 +140,7 @@ function SetLine({ unit, ctx }: { unit: Unit; ctx: SheetCtx }) {
   const name = unit.lines.map((l) => (l.counted ? `${l.rows[0].type}${l.rows.length > 1 ? ` ×${l.rows.length}` : ''}` : label(l.rows[0]))).join(' · ');
   return (
     <>
-      <div className={`${styles.dayRow} ${styles.dayLine} ${styles.setLine} ${styles.clickRow} ${bad ? styles.lineBad : warn ? styles.lineWarn : ''}`} onClick={(e) => { if (!interactive(e.target)) setOpen((v) => !v); }}>
+      <div data-rows={rows.map((x) => x.id).join(' ')} className={`${styles.dayRow} ${styles.dayLine} ${styles.setLine} ${styles.clickRow} ${bad ? styles.lineBad : warn ? styles.lineWarn : ''}`} onClick={(e) => { if (!interactive(e.target)) setOpen((v) => !v); }}>
         <div className={styles.dInfo}>
           <button type="button" className={styles.foldBtn} aria-expanded={open} aria-label={`${open ? 'Hide' : 'Show'} the parts of ${first.tag ?? first.type}`} onClick={() => setOpen((v) => !v)}><span className={styles.foldMark} aria-hidden="true">{open ? '–' : '+'}</span><b className={styles.dTag}>{first.tag ?? first.type}</b></button>
           <span className={styles.dType}>{first.type} set · {rows.length} parts</span>

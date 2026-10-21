@@ -65,6 +65,7 @@ export default function PrizeGrid({ plan, data }: { plan: PlanApi; data: Catalog
           {manage && <Button className={styles.addBtn} variant="secondary" onClick={() => setPoolDialog({ pool: null })}>Add Pool</Button>}
         </div>
       </div>
+      {poolDialog && <PoolDialog plan={plan} pool={poolDialog.pool} onClose={() => setPoolDialog(null)} />}
       {!prizes.rows ? <p className={styles.muted}>Loading…</p> : pools.length === 0 ? (
         <div className={styles.empty}><p>{manage ? 'No pools yet. A pool is where prizes are given from at this event, like a raffle, a game, or a scavenger hunt. Add one, then type how many of each prize it gets.' : 'No prize pools have been set up for this event.'}</p></div>
       ) : rows.length === 0 ? <div className={styles.empty}><p>{usedOnly ? 'No prizes are used yet. Turn off “Only prizes used in this event” to pick some.' : 'No prizes match.'}</p></div> : narrow ? (
@@ -120,7 +121,6 @@ export default function PrizeGrid({ plan, data }: { plan: PlanApi; data: Catalog
           </table>
         </div>
       )}
-      {poolDialog && <PoolDialog plan={plan} pool={poolDialog.pool} onClose={() => setPoolDialog(null)} />}
     </div>
   );
 }

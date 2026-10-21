@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { ArrowRightLeft } from 'lucide-react';
-import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
+import Dialog from './Panel';
+import { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import { Field, Input } from '@/components/ui/Field';

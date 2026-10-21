@@ -9,6 +9,8 @@ import { confirmHold } from '@/lib/ui/confirmHold';
 import { tagKey } from '@/lib/logistics/devices';
 import { natural, planProblems, rowKind, stationStatus, stepAppliesTo, type StepDef } from '@/lib/logistics/plans';
 import BorrowedDialog from './BorrowedDialog';
+import DeviceDialog from './DeviceDialog';
+import type { Device } from '@/lib/logistics/devices';
 import HowItWorks from './HowItWorks';
 import { interactive } from './interactive';
 import { EditPlanDialog, FillDialog, RowDialog, StationDialog } from './PlanDialogs';
@@ -16,6 +18,7 @@ import PickDialog from './PickDialog';
 import BorrowedTab from './BorrowedTab';
 import PrizingTab from './PrizingTab';
 import SponsorPrizingTab from './SponsorPrizingTab';
+import RequestsTab from './RequestsTab';
 import SectionTabs from '@/components/ui/SectionTabs';
 import type { EventPage } from './logisticsRoute';
 import { SheetRows, type SheetCtx } from './PlanSheet';
@@ -49,6 +52,7 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
   const [swapping, setSwapping] = useState<{ id: string; tag: string | null; type: string; kind: 'club' | 'sponsor' | 'officer' } | null>(null);
   const [borrowing, setBorrowing] = useState<Borrowed | 'new' | null>(null);
   const [picking, setPicking] = useState(false);
+  const [deviceEdit, setDeviceEdit] = useState<Device | null>(null);   // a device's own information, changed here instead of in the inventory
   const [editing, setEditing] = useState(false);
   const [stationDialog, setStationDialog] = useState<{ station: Station | null } | null>(null);
   const [rowDialog, setRowDialog] = useState<Station | null>(null);
@@ -101,6 +105,18 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
     return () => m.removeEventListener('change', sync);
   }, []);
 
+  // After a step is marked: open the team if it is folded, scroll to the device's line and flash it, so the tick is easy to find without a big message.
+  function focusRow(rowId: string, teamKey: string) {
+    setFold((cur) => ({ ...cur, [teamKey]: false }));
+    setTimeout(() => {
+      const el = document.querySelector<HTMLElement>(`[data-rows~="${rowId}"]`);
+      if (!el) return;
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      el.classList.remove(styles.flash); void el.offsetWidth; el.classList.add(styles.flash);
+      setTimeout(() => el.classList.remove(styles.flash), 2400);
+    }, 80);
+  }
+
   async function run(body: { tag?: string; device_id?: string; borrowed_id?: string; slot_id?: string; kit?: { item: string; missing: boolean }[] }, forStep: StepDef | null = step) {
     if (!forStep) return;
     setBusy(true); setError('');
@@ -112,6 +128,7 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
     if (res.already) setFeedback({ tone: 'already', text: `${name} was already marked “${forStep.name}” at ${time(res.done_at)}.`, result: res, step: forStep });
     else setFeedback({ tone: 'ok', text: `${name}: ${forStep.name}`, result: res, step: forStep });
     setText(''); setKit(null);
+    focusRow(res.item.id, res.station?.id ?? 'none');
     input.current?.focus();
   }
   // Check done (a step that reviews the parts) shows the parts first; the others tick straight away.
@@ -151,9 +168,9 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
   const pct = allTotal ? Math.round((allDone / allTotal) * 100) : 0;
   const emptyRows = rows.filter((r) => r.kind === 'slot' && !r.counted);
   const ctx: SheetCtx = {
-    api: plan, canManage, closed, busy, stations, steps, activeId: step?.id ?? '', doneSet, doneAt, problems,
+    api: plan, canManage, closed, busy, day, stations, steps, activeId: step?.id ?? '', doneSet, doneAt, problems,
     onTick: (row, s) => begin(row, s), onTickAll: (list, s) => void markAll(list, s), onUndo: undo, onSwap: (r) => setSwapping({ id: r.id, tag: r.tag, type: r.type, kind: r.kind === 'slot' ? 'club' : r.kind }),
-    onBorrowed: (r) => setBorrowing(borrowed.find((b) => b.id === r.id) ?? null), onInstalled: (list) => void install(list),
+    onBorrowed: (r) => setBorrowing(borrowed.find((b) => b.id === r.id) ?? null), onInstalled: (list) => void install(list), onEditDevice: (r) => setDeviceEdit(catalog.data?.devices.find((x) => x.id === r.id) ?? data.devices.find((x) => x.id === r.id) ?? null),
   };
   const foldOf = (key: string, complete: boolean) => (key in fold ? fold[key] : complete || narrow);
   const toggleFold = (key: string, complete: boolean) => setFold((cur) => ({ ...cur, [key]: !foldOf(key, complete) }));
@@ -190,7 +207,7 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
             <b className={styles.dayTitle}>{p.name}{closed && <span className={`${styles.badge} ${styles.neutral}`}>Closed</span>}</b>
             <span className={styles.muted}>{range(p.starts_on, p.ends_on)}{p.event_id ? ' · portal event' : ' · Logistics event'}{p.notes ? ` · ${p.notes}` : ''}</span>
           </div>
-          <span className={styles.dayTotal} title="Steps done"><span className={styles.bar}><i style={{ width: `${pct}%` }} /></span>{allDone}/{allTotal}</span>
+          {page === 'device' && day && <span className={styles.dayTotal} title="Steps done"><span className={styles.bar}><i style={{ width: `${pct}%` }} /></span>{allDone}/{allTotal}</span>}
           <button type="button" className={styles.iconBtn} onClick={() => void plan.reload()} aria-label="Refresh"><RefreshCw size={15} aria-hidden="true" /></button>
           {manage && <Button variant="secondary" onClick={() => setPicking(true)}>Add Teams And Devices</Button>}
           {canManage && (
@@ -206,16 +223,22 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
             </details>
           )}
         </div>
-        <SectionTabs<EventPage> variant="segmented" label="Event pages" value={page} onChange={onPage} tabs={[
-          { id: 'allocation', label: 'Allocation', count: rows.length },
-          { id: 'prizing', label: 'Prizing', count: detail.prizes.lines.length },
-          { id: 'sponsor-prizing', label: 'Sponsor Prizing' },
-          { id: 'sponsor-items', label: 'Sponsor Items', count: borrowed.filter((b) => b.owner_kind === 'sponsor').length },
-          { id: 'officer-loaners', label: 'Officer Loaners', count: borrowed.filter((b) => b.owner_kind === 'officer').length },
+        <div className={styles.pageBar}>
+        <SectionTabs<string> variant="segmented" label="Event pages" value={page === 'requests' ? 'requests' : `${day && (page === 'device' || page === 'prizing') ? 'day' : 'alloc'}-${page}`}
+          onChange={(v) => v === 'requests' ? onPage('requests') : onPage(v.replace(/^(day|alloc)-/, '') as EventPage, v.startsWith('day-'))} tabs={[
           { id: 'requests', label: 'Requests' },
+          { id: 'alloc-device', label: 'Devices', count: rows.length },
+          { id: 'alloc-prizing', label: 'Prizing', count: detail.prizes.lines.length },
+          { id: 'alloc-sponsor-prizing', label: 'Sponsor Prizing' },
+          { id: 'alloc-sponsor-items', label: 'Sponsor Items', count: borrowed.filter((b) => b.owner_kind === 'sponsor').length },
+          { id: 'alloc-officer-loaners', label: 'Officer Loaners', count: borrowed.filter((b) => b.owner_kind === 'officer').length },
+          { id: 'day-device', label: 'Event Day: Devices' },
+          { id: 'day-prizing', label: 'Event Day: Prizing' },
         ]} />
-        {page === 'allocation' && (closed ? <Notice tone="error">This event is closed, so nothing more can be recorded.</Notice> : (
-          <form className={styles.dayForm} onSubmit={(e) => { e.preventDefault(); submit(); }}>
+        </div>
+        {page === 'device' && day && !closed && (
+          <div className={styles.dayStick}>
+            <form className={styles.dayForm} onSubmit={(e) => { e.preventDefault(); submit(); }}>
             <select className={styles.daySelect} value={picked} onChange={(e) => { setPicked(e.target.value); setKit(null); input.current?.focus(); }} aria-label="Step to mark when typing an ID">
               <option value="">Next step: {auto?.name ?? '–'}</option>
               {stepStats.map((s) => <option key={s.step.id} value={s.step.id}>{s.step.name} ({s.done}/{s.total})</option>)}
@@ -223,41 +246,41 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
             <input ref={input} className={styles.dayInput} value={text} onChange={(e) => setText(e.target.value)} placeholder={`Type an ID to mark “${step?.name ?? 'the step'}”`} aria-label={`Device ID for ${step?.name ?? 'the step'}`} autoCapitalize="characters" autoComplete="off" autoCorrect="off" spellCheck={false} enterKeyHint="done" disabled={busy || !step} />
             <Button type="submit" disabled={!text.trim() || busy} loading={busy}>Mark</Button>
           </form>
-        ))}
+            {fb && (
+              <div className={`${styles.lastBar} ${fb.tone === 'ok' ? styles.lastOk : fb.tone === 'already' ? styles.lastWarn : styles.lastBad}`} role="status" aria-live="polite">
+                <b>{fb.text}</b>
+                {res && <span>Get it: {whereOf(res.item) === 'No place set' ? <b className={styles.notLocated}>Not located yet</b> : <b>{whereOf(res.item)}</b>}{res.item.place_note ? ` · ${res.item.place_note}` : ''}</span>}
+                {res?.station ? <span>Goes to <b>{res.station.name}</b>{resStation?.room ? ` · ${resStation.room}` : ''}{resStation?.contact ? ` · ${resStation.contact}` : ''}</span> : res?.inPlan ? <span className={styles.dim}>No team yet</span> : null}
+                {res && !res.inPlan && <span className={styles.flagWarn}>Not in this plan; recorded anyway{canManage ? '' : '. Ask logistics to add it'}</span>}
+                <span className={styles.lastActions}>
+                  {res && fb.tone !== 'error' && fb.step && <button type="button" className={styles.linkBtn} onClick={() => void undo(res.item, fb.step!.id)}>Undo</button>}
+                  {res && res.inPlan && res.role === 'planned' && res.item.kind !== 'slot' && <button type="button" className={styles.linkBtn} onClick={() => setSwapping({ id: res.item.id, tag: res.item.tag, type: res.item.type, kind: res.item.kind as 'club' | 'sponsor' | 'officer' })}>Swap</button>}
+                  {res && !res.inPlan && canManage && res.item.kind === 'club' && <><button type="button" className={styles.linkBtn} onClick={() => void act('/devices', 'POST', { device_ids: [res.item.id] })}>Add To Plan</button><button type="button" className={styles.linkBtn} onClick={() => void act('/devices', 'POST', { device_ids: [res.item.id], role: 'backup' })}>Add As Backup</button></>}
+                  <button type="button" className={styles.linkBtn} onClick={() => setFeedback(null)} aria-label="Dismiss">Dismiss</button>
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+        {page === 'device' && day && closed && <Notice tone="error">This event is closed, so nothing more can be recorded.</Notice>}
       </div>
       {error && <div role="alert" onClick={() => setError('')}><Notice tone="error">{error}</Notice></div>}
+      {deviceEdit && <DeviceDialog api={catalog} data={data} device={deviceEdit} onClose={() => { setDeviceEdit(null); void plan.reload(); }} />}
+      {picking && <PickDialog plan={plan} data={data} stations={stations} onClose={() => setPicking(false)} />}
+      {swapping && <SwapDialog plan={plan} device={swapping} onClose={() => setSwapping(null)} />}
+      {borrowing && <BorrowedDialog plan={plan} catalog={catalog} data={data} stations={stations} borrowed={borrowing === 'new' ? null : borrowing} onClose={() => setBorrowing(null)} />}
+      {editing && <EditPlanDialog plan={plan} onClose={() => setEditing(false)} />}
+      {stationDialog && !stationDialog.station && <StationDialog plan={plan} station={null} onClose={() => setStationDialog(null)} />}
+      {filling && !filling.station && <FillDialog plan={plan} station={null} onClose={() => setFilling(null)} />}
 
-      {page === 'prizing' && <PrizingTab plan={plan} api={catalog} data={data} day={day} onDay={(v) => onPage('prizing', v)} />}
+      {page === 'prizing' && <PrizingTab plan={plan} api={catalog} data={data} day={day} />}
       {page === 'sponsor-prizing' && <SponsorPrizingTab plan={plan} api={catalog} data={data} />}
       {page === 'sponsor-items' && <BorrowedTab plan={plan} catalog={catalog} data={data} kind="sponsor" />}
       {page === 'officer-loaners' && <BorrowedTab plan={plan} catalog={catalog} data={data} kind="officer" />}
-      {page === 'requests' && <div className={styles.empty}><p>Requests from leads (devices and prizes for this event) will show here.</p></div>}
+      {page === 'requests' && <RequestsTab plan={plan} api={catalog} data={data} />}
 
-      {page === 'allocation' && <div className={styles.dayLayout}>
-        {(fb || kit) && <div className={styles.dayAside}>
-          {fb && (
-            <div className={`${styles.result} ${fb.tone === 'ok' ? styles.resultOk : fb.tone === 'already' ? styles.resultWarn : styles.resultBad}`} role="status" aria-live="polite">
-              <div className={styles.resultHead}><b>{fb.text}</b></div>
-              {res && (
-                <>
-                  <div className={styles.getIt}>
-                    <span className={styles.getItLabel}>{res.item.type}{res.item.name ? ` · ${res.item.name}` : ''}</span>
-                    <b className={styles.getItPlace}>{whereOf(res.item)}</b>
-                    {res.item.place_note && <span>{res.item.place_note}</span>}
-                    {res.station ? <span className={styles.getItStation}>Goes to {res.station.name}{resStation?.room ? ` · ${resStation.room}` : ''}{resStation?.contact ? ` · ${resStation.contact}` : ''}</span> : res.inPlan ? <span className={styles.dim}>No team yet</span> : null}
-                    {res.item.games_needed && res.item.games_needed.length > 0 && <span>Needs {res.item.games_needed.join(', ')} installed</span>}
-                  </div>
-                  {!res.inPlan && <p className={styles.warn}>Not in this plan. It was recorded anyway{canManage ? ', and you can add it to the plan below.' : '. Ask the logistics team to add it to the plan.'}</p>}
-                  <div className={styles.resultActions}>
-                    {fb.tone !== 'error' && fb.step && <Button size="sm" variant="secondary" onClick={() => void undo(res.item, fb.step!.id)}>Undo</Button>}
-                    {res.inPlan && res.role === 'planned' && res.item.kind !== 'slot' && <Button size="sm" variant="secondary" onClick={() => setSwapping({ id: res.item.id, tag: res.item.tag, type: res.item.type, kind: res.item.kind as 'club' | 'sponsor' | 'officer' })}>Swap</Button>}
-                    {!res.inPlan && canManage && res.item.kind === 'club' && <><Button size="sm" variant="secondary" onClick={() => void act('/devices', 'POST', { device_ids: [res.item.id] })}>Add To Plan</Button><Button size="sm" variant="secondary" onClick={() => void act('/devices', 'POST', { device_ids: [res.item.id], role: 'backup' })}>Add As Backup</Button></>}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
+      {page === 'device' && <div className={styles.dayLayout}>
+        {kit && <div className={styles.dayAside}>
           {kit && step && (
             <div className={styles.kitPanel} role="group" aria-label={`Parts of ${kit.row.tag}`}>
               <b>{kit.row.tag} · {kit.row.type}</b>
@@ -288,7 +311,7 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
                 {problems.length > 0 && <span className={styles.dim}>{showList ? 'Click to hide the list' : 'Click to see the list'}</span>}
                 <span className={styles.statusSpacer} />
                 {manage && emptyRows.length > 0 && <Button size="sm" variant="secondary" onClick={() => setFilling({ station: null })}>Fill {emptyRows.length} Empty</Button>}
-                <button type="button" className={styles.linkBtn} aria-expanded={overview} onClick={() => setOverview((v) => !v)}>{overview ? 'Hide overview' : 'Overview'}</button>
+                {day && <button type="button" className={styles.linkBtn} aria-expanded={overview} onClick={() => setOverview((v) => !v)}>{overview ? 'Hide overview' : 'Overview'}</button>}
                 <button type="button" className={styles.linkBtn} onClick={() => setFold(Object.fromEntries(teams.map((t) => [t.key, !allFolded])))}>{allFolded ? 'Expand all' : 'Collapse all'}</button>
               </div>
               {showList && problems.length > 0 && (
@@ -303,7 +326,7 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
               )}
             </section>
           )}
-          {overview && (
+          {day && overview && (
             <div className={styles.overviewWrap}>
               <p className={styles.overviewHelp}>Each block is a team, each line a device (a bundle is one line: click it to open its parts). Click a box to tick a step and again to undo, or type a device’s ID above and press Mark. “Mark all” ticks the picked step for a team. Red and amber lines need a look.</p>
               <table className={styles.overview}>
@@ -344,14 +367,14 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
             });
             const total = mineStats.reduce((n, x) => n + x.total, 0), done = mineStats.reduce((n, x) => n + x.done, 0);
             const complete = total > 0 && done === total;
-            const folded = foldOf(t.key, complete);
+            const folded = foldOf(t.key, day && complete);
             const left = step ? mineStats.find((x) => x.s.id === step.id) : null;
             const s = t.station;
             const status = s ? stationStatus(problems, s.id) : 'ok';
             const mine = s ? problems.filter((x) => x.station_id === s.id) : [];
             const emptyHere = t.rows.filter((r) => r.kind === 'slot' && !r.counted).length;
             return (
-              <section key={t.key} id={`st-${t.key}`} className={`${styles.dayTeam} ${complete ? styles.dayTeamDone : ''} ${styles[`tint${ti % 3}`]}`} style={{ '--n': steps.length } as React.CSSProperties} aria-label={t.title}>
+              <section key={t.key} id={`st-${t.key}`} className={`${styles.dayTeam} ${day ? '' : styles.noSteps} ${day && complete ? styles.dayTeamDone : ''}`} style={{ '--n': steps.length } as React.CSSProperties} aria-label={t.title}>
                 <div className={`${styles.dayRow} ${styles.dayRowHead} ${styles.clickRow}`} onClick={(e) => { if (!interactive(e.target)) toggleFold(t.key, complete); }}>
                   <div className={styles.teamHeadMain}>
                     <div className={styles.teamLine}>
@@ -360,7 +383,7 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
                         <b>{t.title}</b>
                       </button>
                       {s && <span className={`${styles.statusChip} ${status === 'ok' ? styles.chipOk : status === 'bad' ? styles.chipBad : styles.chipWarn}`}>{status === 'ok' ? 'Ready' : `${mine.length} to fix`}</span>}
-                      <span className={complete ? styles.dTeamDone : styles.dTeamNum}>{complete ? 'All done' : `${done}/${total}`}</span>
+                      {day && <span className={complete ? styles.dTeamDone : styles.dTeamNum}>{complete ? 'All done' : `${done}/${total}`}</span>}
                     </div>
                     {s && (
                       <div className={styles.teamLine}>
@@ -372,7 +395,7 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
                     )}
                     {!folded && (
                       <div className={styles.teamLine}>
-                        {!closed && step && !step.kit && left && left.done < left.total && <Button size="sm" variant="secondary" onClick={() => void markAll(t.rows, step)} disabled={busy}>Mark all “{step.name}”</Button>}
+                        {day && !closed && step && !step.kit && left && left.done < left.total && <Button size="sm" variant="secondary" onClick={() => void markAll(t.rows, step)} disabled={busy}>Mark all “{step.name}”</Button>}
                         {manage && s && (
                           <details className={`${styles.menu} ${styles.teamMenu}`}>
                             <summary aria-label={`More for ${s.name}`}>More</summary>
@@ -387,14 +410,18 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
                       </div>
                     )}
                   </div>
-                  <div className={styles.dHeads}>
+                  {day && <div className={styles.dHeads}>
                     {mineStats.map((x) => (
                       <button key={x.s.id} type="button" className={`${styles.dHead} ${step?.id === x.s.id ? styles.dHeadOn : ''} ${x.total > 0 && x.done === x.total ? styles.dHeadDone : ''}`} onClick={() => { setPicked(x.s.id); setKit(null); input.current?.focus(); }} title={`Type IDs for “${x.s.name}”`}>
                         <span>{x.s.name}</span><small>{x.done}/{x.total}</small>
                       </button>
                     ))}
-                  </div>
+                  </div>}
                 </div>
+                {s && rowDialog?.id === s.id && <RowDialog plan={plan} data={data} station={s} onClose={() => setRowDialog(null)} />}
+                {s && stationDialog?.station?.id === s.id && <StationDialog plan={plan} station={s} onClose={() => setStationDialog(null)} />}
+                {s && filling?.station?.id === s.id && <FillDialog plan={plan} station={s} onClose={() => setFilling(null)} />}
+                {!folded && t.rows.length > 0 && <div className={`${styles.dayRow} ${styles.colHead}`} aria-hidden="true"><span>Device</span><span>Games, notes and problems</span>{day && <span />}<span /></div>}
                 {!folded && (t.rows.length === 0 ? <p className={styles.teamEmpty}>No rows yet.{manage ? ' Use Add Rows for what this team needs.' : ''}</p> : <SheetRows rows={t.rows} ctx={ctx} />)}
               </section>
             );
@@ -422,13 +449,6 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
         </div>
       </div>}
 
-      {picking && <PickDialog plan={plan} data={data} stations={stations} onClose={() => setPicking(false)} />}
-      {swapping && <SwapDialog plan={plan} device={swapping} onClose={() => setSwapping(null)} />}
-      {borrowing && <BorrowedDialog plan={plan} catalog={catalog} data={data} stations={stations} borrowed={borrowing === 'new' ? null : borrowing} onClose={() => setBorrowing(null)} />}
-      {editing && <EditPlanDialog plan={plan} onClose={() => setEditing(false)} />}
-      {stationDialog && <StationDialog plan={plan} station={stationDialog.station} onClose={() => setStationDialog(null)} />}
-      {rowDialog && <RowDialog plan={plan} data={data} station={rowDialog} onClose={() => setRowDialog(null)} />}
-      {filling && <FillDialog plan={plan} station={filling.station} onClose={() => setFilling(null)} />}
     </div>
   );
 }

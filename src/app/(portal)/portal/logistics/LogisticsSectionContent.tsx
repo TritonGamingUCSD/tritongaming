@@ -42,7 +42,7 @@ export default function LogisticsSectionContent({ canManage }: { canManage: bool
     { id: 'inventory' as const, label: 'Inventory', icon: <Package size={15} /> },
     ...(canManage ? [{ id: 'tools' as const, label: 'Tools', icon: <Settings2 size={15} /> }] : []),
   ];
-  const pick = (t: Tab) => go(t === 'events' ? { tab: 'events', plan: null, page: 'allocation' } : t === 'inventory' ? { tab: 'inventory', sub: 'devices' } : { tab: 'tools', sub: 'sponsors' });
+  const pick = (t: Tab) => go(t === 'events' ? { tab: 'events', plan: null, page: 'device' } : t === 'inventory' ? { tab: 'inventory', sub: 'devices' } : { tab: 'tools', sub: 'sponsors' });
   // With an event open the sheet gets the whole page: the title and tabs step aside (All Events goes back).
   const inPlan = route.tab === 'events' && !!route.plan;
 

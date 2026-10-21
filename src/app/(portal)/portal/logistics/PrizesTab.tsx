@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
+import Dialog from './Panel';
+import { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import Loading from '@/components/Loading/Loading';
@@ -48,6 +49,7 @@ export default function PrizesTab({ api, data }: { api: LogisticsApi; data: Cata
           {canEdit && <Button className={styles.addBtn} onClick={() => setDialog('new')}>Add Prize</Button>}
         </div>
       </div>
+      {dialog && <PrizeDialog prizes={prizes} api={api} data={data} prize={dialog === 'new' ? null : dialog} where="storage" onClose={() => setDialog(null)} />}
       {prizes.error && <div role="alert" onClick={() => prizes.setError('')}><Notice tone="error">{prizes.error}</Notice></div>}
       {!prizes.rows ? (prizes.error ? null : <Loading variant="inline" label="Loading…" />) : prizes.rows.length === 0 ? (
         <div className={styles.empty}><p>{canEdit ? 'No prizes yet. Add the first one.' : 'No prizes have been added yet.'}</p></div>
@@ -64,13 +66,12 @@ export default function PrizesTab({ api, data }: { api: LogisticsApi; data: Cata
               <span data-label="Promised">{p.allocated}</span>
               <span data-label="Given">{p.given}</span>
               <span data-label="Left" className={p.left < 0 ? styles.flagBad : undefined}><b>{p.left}</b></span>
-              <span data-label="Where">{placeOf(p) || <span className={styles.dim}>No place set</span>}</span>
+              <span data-label="Where">{placeOf(p) || <span className={styles.notLocated}>Not located yet</span>}</span>
               <span className={styles.prizeTools}><button type="button" className={styles.linkBtn} onClick={() => setDialog(p)}>{canEdit ? 'Edit' : 'Open'}</button></span>
             </div>
           ))}
         </div>
       )}
-      {dialog && <PrizeDialog prizes={prizes} api={api} data={data} prize={dialog === 'new' ? null : dialog} where="storage" onClose={() => setDialog(null)} />}
     </div>
   );
 }

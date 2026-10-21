@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Plus, TriangleAlert, X } from 'lucide-react';
-import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
+import Dialog from './Panel';
+import { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import { Field, Input, Textarea, Select } from '@/components/ui/Field';
@@ -21,7 +22,7 @@ const kitFor = (type: string): KitLine[] => (DEFAULT_KIT[type] ?? []).map((item)
 const when = (iso: string) => new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 
 // Add, edit, clone or just look at one device. Officers who can't edit see the same screen read-only (including the login, which every officer may see).
-export default function DeviceDialog({ api, data, device, template, onClose, onClone }: { api: LogisticsApi; data: Catalog; device: Device | null; template?: Partial<Draft> | null; onClose: () => void; onClone: (d: Draft) => void }) {
+export default function DeviceDialog({ api, data, device, template, onClose, onClone }: { api: LogisticsApi; data: Catalog; device: Device | null; template?: Partial<Draft> | null; onClose: () => void; onClone?: (d: Draft) => void }) {
   const editing = !!device;
   const readOnly = !data.canManage;
   const [d, setD] = useState<Draft>(() => (device ? fromDevice(device) : { ...blank(), ...(template ?? {}) }));
@@ -167,7 +168,7 @@ export default function DeviceDialog({ api, data, device, template, onClose, onC
         {!readOnly && (
           <div className={styles.dialogExtra}>
             {!editing && <Button variant="secondary" size="sm" onClick={() => save(true)} disabled={busy || pending > 0}><Plus size={14} aria-hidden="true" /> Save And Add Another</Button>}
-            {editing && <Button variant="secondary" size="sm" onClick={() => onClone({ ...d, tag: null })} disabled={busy}>Clone As New</Button>}
+            {editing && onClone && <Button variant="secondary" size="sm" onClick={() => onClone({ ...d, tag: null })} disabled={busy}>Clone As New</Button>}
             {editing && <Button variant="danger" size="sm" onClick={remove} disabled={busy}>Remove</Button>}
           </div>
         )}
