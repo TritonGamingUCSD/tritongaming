@@ -14,7 +14,8 @@ import styles from './logistics.module.css';
 const SHOW = 150;
 const placeOf = (d: Pick<Device, 'shelf' | 'tier'>) => [d.shelf, d.tier].filter(Boolean).join(' · ');
 const missingCount = (d: Device) => d.kit.filter((k) => k.missing).length;
-const isProblem = (d: Device) => UNUSABLE.includes(d.condition) || missingCount(d) > 0;
+// "Needs attention": dead or disappeared, or a part is missing. Something that was thrown away on purpose is settled, so it is not listed.
+const isProblem = (d: Device) => d.condition === 'dead' || d.condition === 'disappeared' || missingCount(d) > 0;
 // Devices with an ID first (TECM2 before TECM10), counted rows (no ID) after them, grouped by type.
 const byId = (a: Device, b: Device) => (a.tag === null ? 1 : 0) - (b.tag === null ? 1 : 0) || (a.tag ?? a.type).localeCompare(b.tag ?? b.type, undefined, { numeric: true, sensitivity: 'base' });
 
