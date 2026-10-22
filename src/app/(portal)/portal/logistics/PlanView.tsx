@@ -15,6 +15,7 @@ import HowItWorks from './HowItWorks';
 import { interactive } from './interactive';
 import { EditPlanDialog, FillDialog, StationDialog } from './PlanDialogs';
 import BorrowedTab from './BorrowedTab';
+import DeviceFinder from './DeviceFinder';
 import PrizingTab from './PrizingTab';
 import SponsorPrizingTab from './SponsorPrizingTab';
 import RequestsTab from './RequestsTab';
@@ -226,6 +227,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
             <span className={styles.muted}>{range(p.starts_on, p.ends_on)}{p.event_id ? ' · portal event' : ' · Event logistics only'}{p.notes ? ` · ${p.notes}` : ''}</span>
           </div>
           {page === 'device' && day && <span className={styles.dayTotal} title="Steps done"><span className={styles.bar}><i style={{ width: `${pct}%` }} /></span>{allDone}/{allTotal}</span>}
+          <DeviceFinder rows={all} devices={data.devices} stations={stations} steps={steps} doneSet={doneSet} onGo={(r) => { if (page !== 'device') onPage('device', day); setTimeout(() => focusRow(r.id, groupByType ? `type:${r.type}` : r.stationId ?? 'none'), page !== 'device' ? 400 : 0); }} />
           <button type="button" className={styles.iconBtn} onClick={() => void plan.reload()} aria-label="Refresh"><RefreshCw size={15} aria-hidden="true" /></button>
           {canManage && (
             <details className={styles.menu}>

@@ -8,6 +8,7 @@ import Loading from '@/components/Loading/Loading';
 import { Field, Input, Select, Textarea } from '@/components/ui/Field';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import { Combo } from './Combo';
+import PrizeEditRow from './PrizeEditRow';
 import { usePrizes, type PrizeRow } from './usePrizes';
 import type { Catalog, LogisticsApi } from './useLogistics';
 import styles from './logistics.module.css';
@@ -55,20 +56,7 @@ export default function PrizesTab({ api, data }: { api: LogisticsApi; data: Cata
       ) : rows.length === 0 ? <div className={styles.empty}><p>Nothing matches.</p></div> : (
         <div className={styles.prizeGrid}>
           <div className={`${styles.prizeRow} ${styles.prizeHeadRow}`} aria-hidden="true"><span>Prize</span><span>Sponsor</span><span>Size</span><span>Price</span><span>In stock</span><span>Promised</span><span>Given</span><span>Left</span><span>Where</span><span /></div>
-          {rows.map((p) => (
-            <div key={p.id} className={`${styles.prizeRow} ${p.left < 0 ? styles.lineBad : ''}`}>
-              <span className={styles.prizeName}><b>{p.name}</b>{p.expires_on && <small className={styles.dim}> expires {p.expires_on}</small>}</span>
-              <span data-label="Sponsor">{sponsorName.get(p.sponsor_id ?? '') ?? <span className={styles.dim}>Club</span>}</span>
-              <span data-label="Size">{p.size ?? <span className={styles.dim}>Big</span>}</span>
-              <span data-label="Price">{money(p.price) || <span className={styles.dim}>–</span>}</span>
-              <span data-label="In stock">{p.quantity_is_estimate ? '~' : ''}{p.quantity}</span>
-              <span data-label="Promised">{p.allocated}</span>
-              <span data-label="Given">{p.given}</span>
-              <span data-label="Left" className={p.left < 0 ? styles.flagBad : undefined}><b>{p.left}</b></span>
-              <span data-label="Where">{placeOf(p) || <span className={styles.notLocated}>Not located yet</span>}</span>
-              <span className={styles.prizeTools}><button type="button" className={styles.linkBtn} onClick={() => setDialog(p)}>{canEdit ? 'Edit' : 'Open'}</button></span>
-            </div>
-          ))}
+          {rows.map((p) => <PrizeEditRow key={p.id} p={p} prizes={prizes} api={api} data={data} canEdit={canEdit} where rowClass={styles.prizeRow} onDetails={() => setDialog(p)} />)}
         </div>
       )}
     </div>

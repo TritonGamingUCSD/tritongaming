@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Button from '@/components/ui/Button';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import BorrowedDialog from './BorrowedDialog';
+import { Combo, MultiCombo } from './Combo';
+import { TextCell } from './Cells';
 import { doneKey, type Borrowed, type PlanApi } from './usePlans';
 import type { Catalog, LogisticsApi } from './useLogistics';
 import styles from './logistics.module.css';
@@ -24,6 +26,12 @@ export default function BorrowedTab({ plan, catalog, data, kind }: { plan: PlanA
     if (!(await confirmHold({ title: `Remove ${b.tag}?`, message: 'It is taken out of this event, with its steps.', confirmLabel: 'Hold to remove' }))) return;
     await plan.act('/borrowed', 'DELETE', { borrowed_id: b.id });
   }
+  const [people, setPeople] = useState<{ id: string; name: string }[]>([]);
+  const loadPeople = catalog.loadPeople;
+  useEffect(() => { if (!sponsor) void loadPeople().then(setPeople); }, [sponsor, loadPeople]);
+  const peopleLabels = useMemo(() => { const seen = new Map<string, number>(); return people.map((p) => { const n = (seen.get(p.name) ?? 0) + 1; seen.set(p.name, n); return { id: p.id, label: n > 1 ? `${p.name} (${n})` : p.name }; }); }, [people]);
+  const games = useMemo(() => [...new Set([...data.portalGames, ...data.lists.game.map((g) => g.value)])].sort((a, b) => a.localeCompare(b)), [data]);
+  const save = (b: Borrowed, body: Record<string, unknown>) => void plan.act('/borrowed', 'PATCH', { borrowed_id: b.id, ...body });
   const noun = sponsor ? 'sponsor loaner' : 'officer loaner';
   return (
     <div className={styles.tab}>
@@ -36,19 +44,24 @@ export default function BorrowedTab({ plan, catalog, data, kind }: { plan: PlanA
         <div className={styles.empty}><p>{sponsor ? 'No sponsor loaners for this event. Add a device a sponsor is lending, then give it a team on the Allocation tab.' : 'No officer loaners for this event. Add a device an officer is bringing, then give it a team on the Allocation tab.'}</p></div>
       ) : (
         <div className={styles.prizeGrid}>
-          <div className={`${styles.prizeRow} ${styles.borrowRow} ${styles.prizeHeadRow}`} aria-hidden="true"><span>ID</span><span>Device</span><span>{sponsor ? 'Sponsor' : 'Officer'}</span><span>Team</span><span>Parts</span><span>Status</span><span /></div>
+          <div className={`${styles.prizeRow} ${styles.borrowRow} ${styles.prizeHeadRow}`} aria-hidden="true"><span>ID</span><span>Type</span><span>{sponsor ? 'Sponsor' : 'Officer'}</span><span>Station</span><span>Installed games</span><span>Status</span><span /></div>
           {rows.map((b) => {
             const returned = back ? done.has(`${b.id}:${back.id}`) : false;
             return (
               <div key={b.id} className={`${styles.prizeRow} ${styles.borrowRow}`}>
-                <span className={styles.prizeName}><b>{b.tag}</b></span>
-                <span data-label="Device">{b.type}{b.name ? ` · ${b.name}` : ''}</span>
-                <span data-label={sponsor ? 'Sponsor' : 'Officer'}>{b.owner}{b.owner_note ? <small className={styles.dim}> · {b.owner_note}</small> : null}</span>
-                <span data-label="Team">{station(b.station_id) ?? <span className={styles.warnText}>No team</span>}</span>
-                <span data-label="Parts">{b.kit.length ? b.kit.map((k) => `${k.item}${k.qty > 1 ? ` ×${k.qty}` : ''}${k.missing ? ' (missing)' : ''}`).join(', ') : <span className={styles.dim}>–</span>}</span>
+                <span className={styles.prizeName}><TextCell value={b.tag} disabled={!manage} label="ID" maxLength={40} onSave={(v) => v && save(b, { tag: v })} /></span>
+                <span data-label="Type" className={styles.cellCombo}><Combo compact value={b.type} options={data.lists.type.map((t) => t.value)} disabled={!manage} clearable={false} ariaLabel={`Type of ${b.tag}`} onChange={(v) => v && save(b, { type: v })} onCreate={async (v) => v} /></span>
+                <span data-label={sponsor ? 'Sponsor' : 'Officer'} className={styles.cellCombo}>
+                  {sponsor
+                    ? <Combo compact value={b.owner} options={data.sponsors.map((s) => s.name)} disabled={!manage} clearable={false} placeholder="Choose or add…" ariaLabel={`Sponsor of ${b.tag}`} onChange={(v) => { const sp = data.sponsors.find((s) => s.name === v); if (sp) save(b, { owner_kind: 'sponsor', sponsor_id: sp.id }); }}
+                        onCreate={async (v) => { const sp = await catalog.saveSponsor(null, { name: v }); if (sp) save(b, { owner_kind: 'sponsor', sponsor_id: sp.id }); return sp?.name ?? null; }} />
+                    : <Combo compact value={b.owner} options={peopleLabels.map((p) => p.label)} disabled={!manage} clearable={false} placeholder="Choose an officer…" ariaLabel={`Officer for ${b.tag}`} onChange={(v) => { const p = peopleLabels.find((x) => x.label === v); if (p) save(b, { owner_kind: 'officer', owner_user_id: p.id }); }} />}
+                </span>
+                <span data-label="Station">{station(b.station_id) ?? <span className={styles.dim}>Not in a row yet</span>}</span>
+                <span data-label="Installed games" className={styles.cellCombo}><MultiCombo values={b.games ?? []} options={games} disabled={!manage} ariaLabel={`Games on ${b.tag}`} placeholder="Add a game…" onChange={(g) => save(b, { games: g })} /></span>
                 <span data-label="Status">{b.role === 'backup' ? <span className={styles.dim}>{b.swap_reason ? `Swapped out: ${b.swap_reason}` : 'Backup'}</span> : back ? (returned ? <span className={`${styles.statusChip} ${styles.chipOk}`}>Returned</span> : <span className={`${styles.statusChip} ${styles.chipWarn}`}>Not returned</span>) : '–'}</span>
                 <span className={styles.prizeTools}>
-                  {manage && <button type="button" className={styles.linkBtn} onClick={() => setDialog(b)}>Edit</button>}
+                  {manage && <button type="button" className={styles.linkBtn} onClick={() => setDialog(b)}>Details</button>}
                   {manage && <button type="button" className={styles.linkBtn} onClick={() => void remove(b)} aria-label={`Remove ${b.tag}`}>Remove</button>}
                 </span>
               </div>

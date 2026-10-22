@@ -1,5 +1,6 @@
 'use client';
 
+import PrizeEditRow from './PrizeEditRow';
 import { useState } from 'react';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
@@ -46,22 +47,7 @@ export default function SponsorPrizingTab({ plan, api, data }: { plan: PlanApi; 
         ) : (
           <div className={styles.prizeGrid}>
             <div className={`${styles.prizeRow} ${styles.prizeHeadRow} ${styles.sentRow}`} aria-hidden="true"><span>Sponsor</span><span>Prize</span><span>Size</span><span>Price</span><span>In stock</span><span>Promised</span><span>Given</span><span>Left</span><span /></div>
-            {mine.map((p) => (
-              <div key={p.id} className={`${styles.prizeRow} ${styles.sentRow} ${p.left < 0 ? styles.lineBad : ''}`}>
-                <span className={styles.prizeName}><b>{sponsorOf(p)}</b></span>
-                <span data-label="Prize">{p.name}</span>
-                <span data-label="Size">{p.size ?? <span className={styles.dim}>Big</span>}</span>
-                <span data-label="Price">{money(p.price) || <span className={styles.dim}>–</span>}</span>
-                <span data-label="In stock">{p.quantity_is_estimate ? '~' : ''}{p.quantity}</span>
-                <span data-label="Promised">{p.allocated}</span>
-                <span data-label="Given">{p.given}</span>
-                <span data-label="Left" className={p.left < 0 ? styles.flagBad : undefined}><b>{p.left}</b></span>
-                <span className={styles.prizeTools}>
-                  <button type="button" className={styles.linkBtn} onClick={() => setDialog(p)}>{d.canManage ? 'Edit' : 'Open'}</button>
-                  {canStore && p.left > 0 && <button type="button" className={styles.linkBtn} onClick={() => setStoring([p])}>Add To Storage</button>}
-                </span>
-              </div>
-            ))}
+            {mine.map((p) => <PrizeEditRow key={p.id} p={p} prizes={prizes} api={api} data={data} canEdit={d.canManage} where={false} sponsorFirst rowClass={`${styles.prizeRow} ${styles.sentRow}`} onDetails={() => setDialog(p)} />)}
           </div>
         )}
         {canStore && mine.length > 0 && storable.length === 0 && <p className={styles.muted}>Nothing is left to add to storage.</p>}
