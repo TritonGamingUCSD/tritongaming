@@ -2,6 +2,7 @@
 
 import PlanPrizes from './PlanPrizes';
 import PrizeAllocation from './PrizeAllocation';
+import PrizeWrapUp from './PrizeWrapUp';
 import type { PlanApi } from './usePlans';
 import type { Catalog, LogisticsApi } from './useLogistics';
 
@@ -11,6 +12,7 @@ export default function PrizingTab({ plan, data, day }: { plan: PlanApi; api: Lo
   const d = plan.detail!;
   return (
     <>
+      {d.plan.status === 'closed' && <PrizeWrapUp plan={plan} />}
       {day ? <PlanPrizes plan={plan} canManage={false} closed={d.plan.status === 'closed'} /> : <PrizeAllocation plan={plan} data={data} />}
     </>
   );

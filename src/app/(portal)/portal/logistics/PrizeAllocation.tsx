@@ -1,6 +1,6 @@
 'use client';
 
-import { Pencil } from 'lucide-react';
+import { ArrowLeftRight, Pencil } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import Button from '@/components/ui/Button';
 import { suggestPrizes } from '@/lib/logistics/prizes';
@@ -25,18 +25,21 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
   const { pools, lines } = d.prizes;
   const [poolDialog, setPoolDialog] = useState<(typeof pools)[number] | null>(null);
   const [busy, setBusy] = useState('');
+  const [swapLine, setSwapLine] = useState<string | null>(null);   // the pool line being swapped for a similar prize
   const [short, setShort] = useState<Record<string, number>>({});   // how many a Suggest could not find in stock
   const sponsorName = useMemo(() => new Map(data.sponsors.map((s) => [s.id, s.name])), [data.sponsors]);
   const available = useMemo(() => (prizes.rows ?? []).filter((p) => !p.plan_id || p.plan_id === d.plan.id), [prizes.rows, d.plan.id]);
-  const summary = (p: PrizeRow) => ({ id: p.id, name: p.name, sponsor: sponsorName.get(p.sponsor_id ?? '') ?? null, size: p.size, type: p.type, price: p.price, quantity: p.quantity, quantity_is_estimate: p.quantity_is_estimate, left: p.left });
+  const summary = (p: PrizeRow) => ({ id: p.id, name: p.name, sponsor: sponsorName.get(p.sponsor_id ?? '') ?? null, size: p.size, type: p.type, price: p.price, quantity: p.quantity, quantity_is_estimate: p.quantity_is_estimate, in_hand: p.in_hand, left: p.left });
 
   async function setQty(poolId: string, p: PrizeRow, n: number) {
     const r = await plan.setPrizeLine(poolId, summary(p), Math.max(0, Math.round(n)));
     if (r.ok && r.delta) prizes.bump(p.id, r.delta);
   }
-  async function suggest(pool: (typeof pools)[number], need: number, budget: number) {
+  // `used` is what other pools already took in the same go (Fill All), so two pools never take the last of a prize.
+  async function suggest(pool: (typeof pools)[number], need: number, budget: number, used: Map<string, number> = new Map()) {
     setBusy(pool.id);
-    const picks = suggestPrizes(available.map((p) => ({ id: p.id, price: p.price, left: p.left, sponsor: !!p.sponsor_id })), need, budget);
+    const picks = suggestPrizes(available.filter((p) => p.in_hand).map((p) => ({ id: p.id, price: p.price, left: p.left - (used.get(p.id) ?? 0), sponsor: !!p.sponsor_id })), need, budget);
+    for (const [id, n] of picks) used.set(id, (used.get(id) ?? 0) + n);
     for (const [id, n] of picks) {
       const p = available.find((x) => x.id === id);
       if (!p) continue;
@@ -47,6 +50,19 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
     setBusy('');
   }
 
+  // Fill every pool that still needs prizes, one after another.
+  async function fillAll() {
+    const used = new Map<string, number>();
+    for (const pool of pools) {
+      if (pool.target_qty === null) continue;
+      const mine = lines.filter((l) => l.pool_id === pool.id);
+      const need = Math.max(0, pool.target_qty - mine.reduce((n, l) => n + l.quantity, 0));
+      const spent = mine.reduce((n, l) => n + l.quantity * (l.prize.price ?? 0), 0);
+      if (need > 0) await suggest(pool, need, (pool.target_total ?? 0) - spent, used);
+    }
+  }
+  const needy = pools.filter((pool) => pool.target_qty !== null && lines.filter((l) => l.pool_id === pool.id).reduce((n, l) => n + l.quantity, 0) < pool.target_qty!).length;
+
   if (!prizes.rows) return <div className={styles.tab}><p className={styles.muted}>Loading…</p></div>;
   return (
     <div className={styles.tab}>
@@ -54,6 +70,8 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
       {pools.length === 0 ? (
         <div className={styles.empty}><p>No prize requests yet. A request for prizes makes a card here for its team.</p></div>
       ) : (
+        <>
+        {manage && needy > 1 && <div className={styles.toolbarRow}><Button size="sm" variant="secondary" loading={!!busy} onClick={() => void fillAll()}>Fill All {needy} Pools</Button><span className={styles.muted}>Suggests prizes for every pool that still needs some, sponsor prizes first.</span></div>}
         <div className={styles.poolCards}>
           {pools.map((pool) => {
             const mine = lines.filter((l) => l.pool_id === pool.id);
@@ -62,7 +80,10 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
             const needQty = pool.target_qty === null ? null : Math.max(0, pool.target_qty - count);
             const budget = pool.target_total === null ? 0 : pool.target_total - spent;
             const addable = available.filter((p) => p.left > 0 && !mine.some((l) => l.prize_id === p.id));
-            const label = (p: PrizeRow) => `${p.name} · ${sponsorName.get(p.sponsor_id ?? '') ?? 'Club'}${p.price !== null ? ` · ${money(p.price)}` : ''} · ${p.left} left`;
+            const label = (p: PrizeRow) => `${p.name} · ${sponsorName.get(p.sponsor_id ?? '') ?? 'Club'}${p.price !== null ? ` · ${money(p.price)}` : ''} · ${p.left} left${p.in_hand ? '' : ' · not here yet'}`;
+            const overLines = mine.filter((l) => l.prize.left < 0).length;
+            const groups = (() => { const g = new Map<string, typeof mine>(); for (const l of mine) { const k = l.prize.type ?? ''; g.set(k, [...(g.get(k) ?? []), l]); } return [...g].sort((a, b) => (a[0] === '' ? 1 : 0) - (b[0] === '' ? 1 : 0) || a[0].localeCompare(b[0])); })();
+            const grouped = groups.some(([k]) => k !== '');
             const countState = pool.target_qty === null ? '' : count === pool.target_qty ? styles.barOk : count > pool.target_qty ? styles.barBad : styles.barWarn;
             return (
               <section key={pool.id} className={styles.poolCard} aria-label={pool.name}>
@@ -80,18 +101,38 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
                     <div className={styles.goalLine}><span>Value</span><b className={spent > pool.target_total ? styles.flagBad : undefined}>{money(spent) || '$0'} / {money(pool.target_total)}</b></div>
                   </div>
                 ) : <p className={styles.muted}>{count} prizes · {money(spent) || '$0'}</p>}
+                {pool.target_qty !== null && pool.target_total !== null && (needQty ?? 0) > 0 && <p className={styles.dim}>Still needs {needQty} more{budget > 0 ? ` · about ${money(Math.round((budget / (needQty ?? 1)) * 100) / 100)} each left` : ''}</p>}
+                {overLines > 0 && <p className={styles.flagWarn}>{overLines} prize{overLines === 1 ? ' is' : 's are'} promised beyond what is in stock.</p>}
                 {mine.length > 0 && (
                   <ul className={styles.poolLines}>
-                    {mine.map((l) => {
-                      const p = available.find((x) => x.id === l.prize_id);
-                      return (
-                        <li key={l.id} className={styles.poolLine}>
-                          <span className={styles.poolLineName}><b>{l.prize.name}</b><small className={styles.dim}>{l.prize.sponsor ?? 'Club'}{l.prize.price !== null ? ` · ${money(l.prize.price)}` : ''}</small></span>
-                          <NumberCell value={l.quantity} canEdit={manage && !!p} nullable label={`${l.prize.name} for ${pool.name}`} onSave={(n) => p && void setQty(pool.id, p, n ?? 0)} />
-                          <span className={`${styles.leftChip} ${l.prize.left < 0 ? styles.leftBad : l.prize.left === 0 ? styles.leftZero : styles.leftOk}`}>{l.prize.left} left</span>
-                        </li>
-                      );
-                    })}
+                    {groups.map(([type, ls]) => (
+                      <li key={`g-${type}`} className={styles.poolGroupItem}>
+                        {grouped && <div className={styles.poolGroupHead}><b>{type || 'No type'}</b><span className={styles.dim}>{ls.reduce((n, l) => n + l.quantity, 0)}</span></div>}
+                        <ul className={styles.poolLinesInner}>
+                          {ls.map((l) => {
+                            const p = available.find((x) => x.id === l.prize_id);
+                            const similar = swapLine === l.id ? available.filter((x) => x.id !== l.prize_id && x.left > 0 && !mine.some((m) => m.prize_id === x.id) && (l.prize.type && x.type ? x.type.toLowerCase() === l.prize.type.toLowerCase() : Math.abs((x.price ?? 0) - (l.prize.price ?? 0)) <= Math.max(2, (l.prize.price ?? 0) * 0.3))) : [];
+                            return (
+                              <li key={l.id} className={styles.poolLine}>
+                                {swapLine === l.id ? (
+                                  <span className={styles.poolLineName}>
+                                    <Combo value={null} options={similar.map(label)} placeholder={similar.length ? `Swap ${l.prize.name} for…` : 'No similar prize in stock'} clearable={false} autoFocus ariaLabel={`Swap ${l.prize.name}`} onClose={() => setSwapLine(null)}
+                                      onChange={(v) => { const np = similar.find((x) => label(x) === v); if (np && p) void (async () => { await setQty(pool.id, np, l.quantity); await setQty(pool.id, p, 0); })(); }} />
+                                  </span>
+                                ) : (
+                                  <span className={styles.poolLineName}><b>{l.prize.name}</b><small className={styles.dim}>{l.prize.sponsor ?? 'Club'}{l.prize.price !== null ? ` · ${money(l.prize.price)}` : ''}{p && !p.in_hand ? ' · not here yet' : ''}</small>{l.prize.left < 0 && <small className={styles.flagWarn}>{-l.prize.left} more than in stock</small>}</span>
+                                )}
+                                <NumberCell value={l.quantity} canEdit={manage && !!p} nullable label={`${l.prize.name} for ${pool.name}`} onSave={(n) => p && void setQty(pool.id, p, n ?? 0)} />
+                                <span className={styles.poolLineEnd}>
+                                  <span className={`${styles.leftChip} ${l.prize.left < 0 ? styles.leftBad : l.prize.left === 0 ? styles.leftZero : styles.leftOk}`}>{l.prize.left} left</span>
+                                  {manage && p && <button type="button" className={styles.iconBtn} title="Swap for a similar prize" aria-label={`Swap ${l.prize.name} for a similar prize`} onClick={() => setSwapLine(l.id)}><ArrowLeftRight size={14} aria-hidden="true" /></button>}
+                                </span>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </li>
+                    ))}
                   </ul>
                 )}
                 {(short[pool.id] ?? 0) > 0 && <p className={styles.flagWarn}>{short[pool.id]} more could not be found in stock.</p>}
@@ -107,6 +148,7 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
             );
           })}
         </div>
+        </>
       )}
       <details className={styles.overview2}>
         <summary>Grid overview</summary>

@@ -19,7 +19,7 @@ export default function PrizeEditRow({ p, prizes, api, data, canEdit, where, spo
         onCreate={async (v) => { const s = await api.saveSponsor(null, { name: v }); if (s) save({ sponsor_id: s.id }); return s?.name ?? null; }} />
     </span>
   );
-  const nameCell = <span className={styles.prizeName}><TextCell value={p.name} canEdit={canEdit} strong onSave={(v) => { if (v) save({ name: v }); }} />{p.expires_on && <small className={styles.dim}>expires {p.expires_on}</small>}</span>;
+  const nameCell = <span className={styles.prizeName}><TextCell value={p.name} canEdit={canEdit} strong onSave={(v) => { if (v) save({ name: v }); }} />{!p.in_hand && (canEdit ? <button type="button" className={styles.miniTextBtn} title="Tick when it has arrived" onClick={() => save({ in_hand: true })}>Not here yet · mark arrived</button> : <small className={styles.flagWarn}>Not here yet</small>)}{p.expires_on && <small className={styles.dim}>expires {p.expires_on}</small>}</span>;
   return (
     <div className={`${rowClass} ${p.left < 0 ? styles.lineBad : ''}`} style={gridStyle(cols)}>
       {sponsorFirst ? <>{sponsorCell}{nameCell}</> : <>{nameCell}{sponsorCell}</>}

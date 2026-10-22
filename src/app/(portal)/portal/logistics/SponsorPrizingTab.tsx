@@ -42,6 +42,21 @@ export default function SponsorPrizingTab({ plan, api, data }: { plan: PlanApi; 
         </div>
       {dialog && <PrizeDialog prizes={prizes} api={api} data={data} prize={dialog === 'new' ? null : dialog} where={{ plan: d.plan.id }} onClose={() => setDialog(null)} />}
       {storing && <StorageDialog prizes={prizes} api={api} data={data} list={storing} eventName={d.plan.name} onClose={() => setStoring(null)} />}
+        {mine.length > 0 && (
+          <ul className={styles.sponsorSummary} aria-label="By sponsor">
+            {[...new Set(mine.map(sponsorOf))].map((name) => {
+              const own = mine.filter((p) => sponsorOf(p) === name);
+              const sum = (f: (p: PrizeRow) => number) => own.reduce((n, p) => n + f(p), 0);
+              return (
+                <li key={name} className={styles.sponsorSummaryCard}>
+                  <b>{name}</b>
+                  <span>{sum((p) => p.quantity)} sent · {sum((p) => p.allocated)} promised · {sum((p) => p.given)} given · <b className={sum((p) => p.left) < 0 ? styles.flagBad : undefined}>{sum((p) => p.left)} left</b></span>
+                  {own.some((p) => !p.in_hand) && <small className={styles.flagWarn}>{own.filter((p) => !p.in_hand).length} not here yet</small>}
+                </li>
+              );
+            })}
+          </ul>
+        )}
         {!prizes.rows ? <p className={styles.muted}>Loading…</p> : mine.length === 0 ? (
           <p className={styles.muted}>{manage ? 'No sponsor prizes yet. Add what sponsors sent for this event; it stays here until the event is over.' : 'No sponsor prizes for this event.'}</p>
         ) : (
@@ -68,7 +83,7 @@ function StorageDialog({ prizes, api, data, list, eventName, onClose }: { prizes
   async function save() {
     if (!(await confirmHold({ title: `Add ${list.length === 1 ? list[0].name : `${list.length} prizes`} to storage?`, message: `What is left (${total}) is kept in the club’s storage and shows under Inventory > Prizes.`, confirmLabel: 'Hold to add' }))) return;
     setBusy(true);
-    for (const p of list) await prizes.save(p.id, { plan_id: null, shelf, tier, place_note: spot || null, notes: [p.notes, `Sent for ${eventName}`].filter(Boolean).join('\n').slice(0, 2000) });
+    for (const p of list) await prizes.save(p.id, { plan_id: null, in_hand: true, shelf, tier, place_note: spot || null, notes: [p.notes, `Sent for ${eventName}`].filter(Boolean).join('\n').slice(0, 2000) });
     setBusy(false);
     onClose();
   }

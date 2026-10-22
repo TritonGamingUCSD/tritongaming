@@ -793,3 +793,23 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 /* Forms in popups: closer fields, and on a phone the pinned button bar fills the sheet's width. */
 .form { gap: 0.65rem; }
 @media (max-width: 640px) { .stickyFoot { bottom: 0; margin: auto -1rem 0; padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom)); } }
+
+/* Search and refresh always share one row: the search takes the room, refresh sits at its right end (a grid, so neither can drop under the other). */
+.pageBarEnd { display: grid; grid-template-columns: minmax(12rem, 34rem) auto; align-items: center; justify-content: end; gap: 0.5rem; }
+.pageBarEnd > .finder { max-width: none; min-width: 0; }
+.pageBarEnd .iconBtn { align-self: center; }
+@media (max-width: 899px) { .pageBarEnd { flex: 1 1 100%; margin-left: 0; width: 100%; grid-template-columns: minmax(0, 1fr) auto; } }
+
+/* A pool's prizes grouped by type: a small heading with the count, then the lines. */
+.poolGroupItem { list-style: none; }
+.poolGroupHead { display: flex; justify-content: space-between; align-items: baseline; padding: 0.3rem 0 0.15rem; font-size: 0.74rem; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.7); border-top: 1px solid rgba(var(--pp-ink-rgb), 0.12); }
+.poolLinesInner { list-style: none; margin: 0; padding: 0; }
+.poolLineEnd { display: inline-flex; align-items: center; gap: 0.3rem; justify-content: flex-end; }
+.poolLine { grid-template-columns: minmax(0, 1fr) 4.5rem auto; }
+
+/* Per-sponsor totals above the sponsor prize list, and the wrap-up of a closed event. */
+.sponsorSummary { list-style: none; margin: 0 0 0.6rem; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: 0.5rem; }
+.sponsorSummaryCard { display: flex; flex-direction: column; gap: 0.15rem; padding: 0.55rem 0.7rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.2); background: var(--pp-card); font-size: 0.84rem; }
+.wrapUp { margin-bottom: 0.8rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.2); background: var(--pp-card); }
+.wrapUp > summary { padding: 0.6rem 0.8rem; font-weight: 700; cursor: pointer; }
+.wrapUp .grid { margin: 0; }

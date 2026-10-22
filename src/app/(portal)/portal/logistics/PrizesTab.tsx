@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
@@ -69,19 +69,21 @@ export function PrizeDialog({ prizes, api, data, prize, where, onClose }: { priz
   const readOnly = !data.canManage;
   const [f, setF] = useState({
     name: prize?.name ?? '', sponsor_id: prize?.sponsor_id ?? '', size: prize?.size ?? '', type: prize?.type ?? '', price: prize?.price === null || prize?.price === undefined ? '' : String(prize.price),
-    quantity: String(prize?.quantity ?? 1), estimate: prize?.quantity_is_estimate ?? false, shelf: prize?.shelf ?? null as string | null, tier: prize?.tier ?? null as string | null,
+    quantity: String(prize?.quantity ?? 1), estimate: prize?.quantity_is_estimate ?? false, in_hand: prize?.in_hand ?? where === 'storage', shelf: prize?.shelf ?? null as string | null, tier: prize?.tier ?? null as string | null,
     place_note: prize?.place_note ?? '', plan_id: where === 'storage' ? '' : where.plan, expires_on: prize?.expires_on ?? '', notes: prize?.notes ?? '',
   });
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((c) => ({ ...c, [k]: v }));
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState('');
+  const [holds, setHolds] = useState<{ plan: string; pool: string; quantity: number }[] | null>(null);   // which open events have promised this prize
+  useEffect(() => { if (!prize) return; let live = true; void fetch(`/api/logistics/prizes/${prize.id}/holds`).then((r) => r.json()).then((j) => { if (live) setHolds(j.holds ?? []); }).catch(() => undefined); return () => { live = false; }; }, [prize]);
   const sponsorNames = data.sponsors.map((s) => s.name);
   const createOpt = (kind: 'shelf' | 'tier' | 'prize_size') => (v: string) => api.addOption(kind, v);
   async function save() {
     setProblem('');
     setBusy(true);
     // An existing prize is changed in its table row; this form only holds what the row has no box for.
-    const body = prize ? { quantity_is_estimate: f.estimate, place_note: f.place_note, expires_on: f.expires_on, notes: f.notes } : { name: f.name, sponsor_id: f.sponsor_id || null, size: f.size || null, type: f.type || null, price: f.price === '' ? null : Number(f.price), quantity: Number(f.quantity), quantity_is_estimate: f.estimate, shelf: f.shelf, tier: f.tier, place_note: f.place_note, plan_id: f.plan_id || null, expires_on: f.expires_on || null, notes: f.notes };
+    const body = prize ? { in_hand: f.in_hand, quantity_is_estimate: f.estimate, place_note: f.place_note, expires_on: f.expires_on, notes: f.notes } : { name: f.name, sponsor_id: f.sponsor_id || null, size: f.size || null, type: f.type || null, price: f.price === '' ? null : Number(f.price), quantity: Number(f.quantity), in_hand: f.in_hand, quantity_is_estimate: f.estimate, shelf: f.shelf, tier: f.tier, place_note: f.place_note, plan_id: f.plan_id || null, expires_on: f.expires_on || null, notes: f.notes };
     const r = await prizes.save(prize?.id ?? null, body);
     setBusy(false);
     if (r) onClose(); else setProblem('That didn’t save. The message at the top of the page says why.');
@@ -111,6 +113,7 @@ export function PrizeDialog({ prizes, api, data, prize, where, onClose }: { priz
           <Field label="How many there are"><Input type="number" min={0} max={100000} value={f.quantity} onChange={(e) => set('quantity', e.target.value)} disabled={readOnly} /></Field>
         </div>
         </>}
+        <label className={styles.check}><input type="checkbox" checked={f.in_hand} onChange={(e) => set('in_hand', e.target.checked)} disabled={readOnly} /> It is here now (untick for a prize still on its way)</label>
         <label className={styles.check}><input type="checkbox" checked={f.estimate} onChange={(e) => set('estimate', e.target.checked)} disabled={readOnly} /> That number is an estimate</label>
         {!prize && !f.plan_id && (
           <div className={styles.row2}>
@@ -123,6 +126,7 @@ export function PrizeDialog({ prizes, api, data, prize, where, onClose }: { priz
           <Field label="Expires" hint="Optional."><Input type="date" value={f.expires_on} onChange={(e) => set('expires_on', e.target.value)} disabled={readOnly} /></Field>
         </div>
         <Field label="Notes"><Textarea rows={2} value={f.notes} onChange={(e) => set('notes', e.target.value)} disabled={readOnly} maxLength={2000} /></Field>
+        {prize && holds && holds.length > 0 && <div><span className={styles.fieldLabel}>Promised to</span><ul className={styles.history}>{holds.map((h, i) => <li key={i}><span>{h.plan} · {h.pool}</span><small>{h.quantity}</small></li>)}</ul></div>}
         {prize && <p className={styles.muted}>{[prize.type, prize.size, prize.price !== null ? `$${prize.price}` : null].filter(Boolean).join(' · ')}{prize.type || prize.size || prize.price !== null ? ' · ' : ''}{prize.quantity} in stock · {prize.allocated} promised to open events · {prize.given} given out · <b>{prize.left} left</b></p>}
       </div>
       <DialogActions>

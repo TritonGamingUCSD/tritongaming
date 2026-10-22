@@ -3,7 +3,7 @@ import { LIMITS } from '@/lib/logistics/constants';
 // Prizes: the inventory (club stock and sponsor gifts), what each pool of an event gets, and how far each prize line is through the event-day steps. Pure logic (no database).
 
 export interface Prize {
-  id: string; name: string; sponsor_id: string | null; size: string | null; type: string | null; price: number | null; quantity: number; quantity_is_estimate: boolean;
+  id: string; name: string; sponsor_id: string | null; size: string | null; type: string | null; in_hand: boolean; price: number | null; quantity: number; quantity_is_estimate: boolean;
   shelf: string | null; tier: string | null; place_note: string | null; plan_id: string | null; expires_on: string | null; notes: string | null;
 }
 // What the lists add up to for one prize: `allocated` is what open plans still hold for their pools, `given` what has been given out at any event. Left can go below zero: that is an over-allocation.
@@ -17,7 +17,7 @@ export interface PrizeStepDef { id: string; name: string; sort: number; gives: b
 export const stepCeiling = (step: Pick<PrizeStepDef, 'leftover'>, line: { quantity: number }, givenOut: number) => (step.leftover ? Math.max(0, line.quantity - givenOut) : line.quantity);
 
 export interface PrizePatch {
-  name?: string; sponsor_id?: string | null; size?: string | null; type?: string | null; price?: number | null; quantity?: number; quantity_is_estimate?: boolean;
+  name?: string; sponsor_id?: string | null; size?: string | null; type?: string | null; in_hand?: boolean; price?: number | null; quantity?: number; quantity_is_estimate?: boolean;
   shelf?: string | null; tier?: string | null; place_note?: string | null; plan_id?: string | null; expires_on?: string | null; notes?: string | null;
 }
 const text = (v: unknown, max: number) => { const s = String(v ?? '').trim().replace(/\s+/g, ' ').slice(0, max); return s || null; };
@@ -32,6 +32,7 @@ export function cleanPrize(b: Record<string, unknown>, partial: boolean): { valu
   if (has('sponsor_id')) out.sponsor_id = typeof b.sponsor_id === 'string' && UUID.test(b.sponsor_id) ? b.sponsor_id : null;
   if (has('size')) out.size = text(b.size, LIMITS.option);
   if (has('type')) out.type = text(b.type, LIMITS.option);
+  if (has('in_hand')) out.in_hand = b.in_hand === true;
   if (has('price')) {
     if (b.price === null || b.price === '' || b.price === undefined) out.price = null;
     else { const n = Number(b.price); if (!Number.isFinite(n) || n < 0 || n > 1_000_000) return { error: 'The price has to be a number, like 25 or 24.99.' }; out.price = Math.round(n * 100) / 100; }

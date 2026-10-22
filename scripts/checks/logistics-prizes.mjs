@@ -23,6 +23,15 @@ try {
   const sp = await exec.call('POST', '/api/logistics/sponsors', { name: 'ZZ Prize Sponsor' });
   const a = await exec.call('POST', '/api/logistics/prizes', { name: 'ZZ Mouse', sponsor_id: sp.j.sponsor.id, size: 'Small Prizing', price: 24.5, quantity: 10 });
   t.ok('exec adds a prize', a.s === 201 && a.j.prize.left === 10 && a.j.prize.price === 24.5, JSON.stringify(a.j));
+  t.ok('a new prize is in hand unless it says otherwise, and has a free-text type', a.j.prize.in_hand === false || a.j.prize.in_hand === true);
+  const typed = await exec.call('PATCH', '/api/logistics/prizes', { id: a.j.prize.id, type: 'Wireless mouse', in_hand: false });
+  t.ok('a prize can have a type and be marked not here yet', typed.s === 200 && typed.j.prize.type === 'Wireless mouse' && typed.j.prize.in_hand === false, JSON.stringify(typed.j));
+  const holds = await exec.call('GET', `/api/logistics/prizes/${a.j.prize.id}/holds`);
+  t.ok('who holds a prize can be read', holds.s === 200 && Array.isArray(holds.j.holds));
+  await exec.call('PATCH', '/api/logistics/prizes', { id: a.j.prize.id, in_hand: true });
+  const held = await exec.call('PATCH', '/api/logistics/prizes', { id: a.j.prize.id, in_hand: false });
+  t.ok('a prize can be marked as not here yet, and back', held.s === 200 && held.j.prize.in_hand === false && (await exec.call('PATCH', '/api/logistics/prizes', { id: a.j.prize.id, in_hand: true })).j.prize.in_hand === true);
+  t.ok('who holds a prize can be looked up', (await officer.call('GET', `/api/logistics/prizes/${a.j.prize.id}/holds`)).s === 200);
   const b = await exec.call('POST', '/api/logistics/prizes', { name: 'ZZ Soda', price: 3, quantity: 500, quantity_is_estimate: true });
   const A = a.j.prize.id, B = b.j.prize.id;
   t.ok('a quantity can be an estimate', b.s === 201 && b.j.prize.quantity_is_estimate === true);
