@@ -283,7 +283,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
     setFeedback(failed ? { tone: 'error', text: `${todo.length - failed} of ${todo.length} marked “${forStep.name}”. ${failed} failed.` } : { tone: 'ok', text: `${todo.length} marked “${forStep.name}”` });
   }
 
-  if (!detail) return <div className={styles.tab}><button type="button" className={styles.back} onClick={onBack}><ArrowLeft size={15} aria-hidden="true" /> All Plans</button>{error ? <Notice tone="error">{error}</Notice> : <Loading variant="inline" label="Loading…" />}</div>;
+  if (!detail) return <div className={styles.tab}><button type="button" className={styles.back} onClick={onBack} aria-label="All events"><ArrowLeft size={15} aria-hidden="true" /> All Plans</button>{error ? <Notice tone="error">{error}</Notice> : <Loading variant="inline" label="Loading…" />}</div>;
 
   const { plan: p, canManage, stations, borrowed, extras } = detail;
   const closed = p.status === 'closed';
@@ -333,7 +333,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
     <div className={`${styles.dayPage} ${page === 'device' && day && !closed ? styles.dayPageBar : ''}`}>
       <div className={styles.dayTop}>
         <div className={styles.dayBar}>
-          <button type="button" className={styles.back} onClick={onBack}><ArrowLeft size={15} aria-hidden="true" /> All Events</button>
+          <button type="button" className={styles.back} onClick={onBack}><ArrowLeft size={15} aria-hidden="true" /> <span className={styles.backText}>All Events</span></button>
           <div className={styles.dayHeading}>
             <b className={styles.dayTitle}>{p.name}{closed && <span className={`${styles.badge} ${styles.neutral}`}>Closed</span>}</b>
             <span className={styles.muted}>{range(p.starts_on, p.ends_on)}{p.event_id ? ' · portal event' : ' · Event logistics only'}{p.notes ? ` · ${p.notes}` : ''}</span>
