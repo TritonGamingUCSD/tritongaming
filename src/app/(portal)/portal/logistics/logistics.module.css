@@ -848,3 +848,13 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 .pageBarEnd { flex: 1 1 24rem; grid-template-columns: minmax(12rem, 1fr) auto; justify-content: stretch; }
 .reqRow > .prizeName { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.5rem; }
 .reqRow > .prizeName .editCell { display: inline-block; width: auto; padding-left: 0; }
+
+/* Phone: a device line keeps its tools (edit, swap) on the first row beside the name instead of a row of their own. */
+@media (max-width: 899px) {
+  .dayLine { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'info tools' 'notes notes' 'cells cells'; }
+  .dayLine > .dInfo { grid-area: info; }
+  .dayLine > .dNotes { grid-area: notes; }
+  .dayLine > .dCells { grid-area: cells; }
+  .dayLine > .dTools { grid-area: tools; justify-content: flex-end; align-self: start; }
+  .dayLine > .dNotes:empty, .dayLine > .dTools:empty { display: none; }
+}
