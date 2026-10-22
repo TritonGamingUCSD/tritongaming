@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { DeviceItem } from './requests';
+import type { DeviceItem, PrizeItem } from './requests';
 
 // What a device request turns into in the allocation: one empty row per unit. A bundle line makes a set per unit (a row for every item of the bundle, quantity 2 = two rows).
 export interface Want { type: string; games: string[]; set: number | null }
@@ -189,4 +189,44 @@ export async function followBundle(svc: SupabaseClient, oldName: string, newName
 export async function requestsUsingBundle(svc: SupabaseClient, name: string): Promise<number> {
   const { data } = await svc.from('logistics_requests').select('items').eq('kind', 'devices').limit(3000);
   return (data ?? []).filter((q) => ((q.items as DeviceItem[]) ?? []).some((i) => i.what.toLowerCase() === name.toLowerCase())).length;
+}
+
+// A prize request is a pool of its own for its team: it says how many prizes and the dollar total (count x value), which the prizing allocation shows as progress and fills on Suggest. When the request
+// shrinks, the pool's lines are trimmed to fit, newest first, but never below what has already been counted in a step. A declined request takes its pool away unless prizes were already counted.
+export async function syncPrizePool(svc: SupabaseClient, r: Req & { requester_id?: string }): Promise<void> {
+  if (r.kind !== 'prizes') return;
+  const items = ((r.items as PrizeItem[]) ?? []);
+  const qty = items.reduce((n, i) => n + i.qty, 0);
+  const total = Math.round(items.reduce((n, i) => n + i.qty * i.value, 0) * 100) / 100;
+  const { data: pool } = await svc.from('logistics_plan_pools').select('id').eq('request_id', r.id).maybeSingle();
+  const { data: lines } = pool ? await svc.from('logistics_plan_prizes').select('id, quantity, sort').eq('pool_id', pool.id as string).order('sort', { ascending: false }) : { data: [] };
+  const lineIds = (lines ?? []).map((l) => l.id as string);
+  const { data: counted } = lineIds.length ? await svc.from('logistics_plan_prize_steps').select('line_id, done').in('line_id', lineIds) : { data: [] };
+  const floor = new Map<string, number>();
+  for (const c of counted ?? []) floor.set(c.line_id as string, Math.max(floor.get(c.line_id as string) ?? 0, c.done as number));
+  if (r.status === 'declined') {
+    if (pool && ![...floor.values()].some((n) => n > 0)) await svc.from('logistics_plan_pools').delete().eq('id', pool.id as string);
+    return;
+  }
+  let name = r.team?.trim() || null;
+  if (!name && r.requester_id) name = ((await svc.from('profiles').select('display_name').eq('id', r.requester_id).maybeSingle()).data?.display_name as string | undefined) ?? null;
+  const { data: sts } = await svc.from('logistics_stations').select('id, name').eq('plan_id', r.plan_id);
+  const station = r.team ? (sts ?? []).find((x) => (x.name as string).toLowerCase() === r.team!.trim().toLowerCase())?.id as string | undefined ?? null : null;
+  const fields = { name: (name ?? 'Prizes').slice(0, 80), station_id: station, target_qty: qty, target_total: total };
+  if (!pool) {
+    const { data: last } = await svc.from('logistics_plan_pools').select('sort').eq('plan_id', r.plan_id).order('sort', { ascending: false }).limit(1).maybeSingle();
+    await svc.from('logistics_plan_pools').insert({ ...fields, plan_id: r.plan_id, request_id: r.id, sort: ((last?.sort as number | undefined) ?? 0) + 1 });
+    return;
+  }
+  await svc.from('logistics_plan_pools').update(fields).eq('id', pool.id as string);
+  let extra = (lines ?? []).reduce((n, l) => n + (l.quantity as number), 0) - qty;
+  for (const l of lines ?? []) {
+    if (extra <= 0) break;
+    const room = (l.quantity as number) - (floor.get(l.id as string) ?? 0);
+    const cut = Math.min(extra, Math.max(0, room));
+    if (!cut) continue;
+    if ((l.quantity as number) - cut <= 0) await svc.from('logistics_plan_prizes').delete().eq('id', l.id as string);
+    else await svc.from('logistics_plan_prizes').update({ quantity: (l.quantity as number) - cut }).eq('id', l.id as string);
+    extra -= cut;
+  }
 }

@@ -3,7 +3,7 @@ import { authorizeLogistics } from '@/lib/logistics/auth';
 import { UUID, touchPlan } from '@/lib/logistics/planServer';
 import { REQUEST_COLUMNS, logisticsTeamIds } from '@/lib/logistics/requestServer';
 import { canEditRequest, cleanRequestItems, REQUEST_STATUSES, requestSummary, type DeviceItem, type PrizeItem, type RequestKind, type RequestStatus } from '@/lib/logistics/requests';
-import { syncRequestRows } from '@/lib/logistics/requestRows';
+import { syncPrizePool, syncRequestRows } from '@/lib/logistics/requestRows';
 import { createNotifications } from '@/lib/notifications/notify';
 import { logAudit } from '@/lib/notifications/audit';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -75,6 +75,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   await createNotifications(auth.svc, team.map((user_id) => ({ user_id, type: 'logistics_request', title: `New ${kind === 'devices' ? 'device' : 'prize'} request for ${plan.name}`, body: text1.slice(0, 240), href: href(plan.slug as string) })));
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'create', entityType: 'logistics request', entityId: data.id as string, summary: `Asked for ${kind} for “${plan.name}”` });
   if (kind === 'devices') await syncRequestRows(auth.svc, data as never);
+  else await syncPrizePool(auth.svc, data as never);
   await touchPlan(auth.svc, id);
   return NextResponse.json({ request: data }, { status: 201 });
 }
@@ -118,6 +119,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     await createNotifications(auth.svc, team.map((user_id) => ({ user_id, type: 'logistics_request', title: `A request for ${plan.name} was changed`, body: `${who}: ${requestSummary(r.kind, data.items as (DeviceItem | PrizeItem)[])}`.slice(0, 240), href: href(plan.slug as string) })));
   }
   const sync = r.kind === 'devices' && ('items' in b || 'team' in b || 'contact' in b || 'division_id' in b || statusChanged) ? await syncRequestRows(auth.svc, data as never) : { kept: 0 };
+  if (r.kind === 'prizes' && ('items' in b || 'team' in b || statusChanged)) await syncPrizePool(auth.svc, data as never);
   await touchPlan(auth.svc, id);
   return NextResponse.json({ request: data, kept: sync.kept });
 }
@@ -135,6 +137,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     await auth.svc.from('logistics_plan_slots').delete().eq('request_id', r.id as string);
     await auth.svc.from('logistics_plan_devices').update({ request_id: null }).eq('request_id', r.id as string);
   }
+  if (r.kind === 'prizes') await auth.svc.from('logistics_plan_pools').delete().eq('request_id', r.id as string);
   await auth.svc.from('logistics_requests').delete().eq('id', r.id as string);
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'remove', entityType: 'logistics request', entityId: r.id as string, summary: `Removed a ${r.kind} request` });
   await touchPlan(auth.svc, id);

@@ -59,3 +59,27 @@ export function prizeProblems(lines: (PrizeLineInfo & { name: string })[], left:
   for (const p of pools) if (!lines.some((l) => l.pool_id === p.id)) out.push({ sev: 'warn', pool_id: p.id, text: `${p.name} has no prizes yet` });
   return out;
 }
+
+// Suggest prizes for what a pool still needs: `need` more prizes with `budget` dollars left to spend, so about budget / need each. Each pick is the prize with a price closest to that figure
+// (sponsor prizes first when two are about as close, since they can't be returned), and the figure is worked out again after every pick. A prize is never used more than is left. Returns how many
+// of each prize to add; it may come back short when there isn't enough in stock.
+export interface Candidate { id: string; price: number | null; left: number; sponsor: boolean }
+export function suggestPrizes(candidates: Candidate[], need: number, budget: number): Map<string, number> {
+  const left = new Map(candidates.filter((c) => c.left > 0).map((c) => [c.id, c.left]));
+  const out = new Map<string, number>();
+  let remaining = Math.max(0, budget);
+  for (let i = 0; i < need; i++) {
+    const want = remaining / (need - i);
+    let best: Candidate | null = null, bestGap = Infinity;
+    for (const c of candidates) {
+      if ((left.get(c.id) ?? 0) <= 0) continue;
+      const gap = Math.abs((c.price ?? 0) - want) - (c.sponsor ? 0.5 : 0);
+      if (gap < bestGap) { best = c; bestGap = gap; }
+    }
+    if (!best) break;
+    left.set(best.id, (left.get(best.id) ?? 0) - 1);
+    out.set(best.id, (out.get(best.id) ?? 0) + 1);
+    remaining -= best.price ?? 0;
+  }
+  return out;
+}

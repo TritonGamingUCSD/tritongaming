@@ -259,7 +259,8 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
               <option value="">Next step: {auto?.name ?? '–'}</option>
               {stepStats.map((s) => <option key={s.step.id} value={s.step.id}>{s.step.name} ({s.done}/{s.total})</option>)}
             </select>
-            <input ref={input} className={styles.dayInput} value={text} onChange={(e) => setText(e.target.value)} placeholder={`Type an ID to mark “${step?.name ?? 'the step'}”`} aria-label={`Device ID for ${step?.name ?? 'the step'}`} autoCapitalize="characters" autoComplete="off" autoCorrect="off" spellCheck={false} enterKeyHint="done" disabled={busy || !step} />
+            <datalist id="day-ids">{all.filter((r) => r.kind !== 'slot' && r.tag).map((r) => <option key={r.id} value={r.tag!}>{`${r.type}${r.stationId ? ` · ${stationOf.get(r.stationId)?.name ?? ''}` : ''}`}</option>)}</datalist>
+            <input ref={input} list="day-ids" className={styles.dayInput} value={text} onChange={(e) => setText(e.target.value)} placeholder={`Type an ID to mark “${step?.name ?? 'the step'}”`} aria-label={`Device ID for ${step?.name ?? 'the step'}`} autoCapitalize="characters" autoComplete="off" autoCorrect="off" spellCheck={false} enterKeyHint="done" disabled={busy || !step} />
             <Button type="submit" disabled={!text.trim() || busy} loading={busy}>Mark</Button>
           </form>
             {fb && (

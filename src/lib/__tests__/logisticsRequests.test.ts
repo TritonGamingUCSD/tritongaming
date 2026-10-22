@@ -59,3 +59,18 @@ describe('allocation matches the requests', () => {
     expect(p.filter((x) => x.why === 'unrequested').map((x) => x.row_id)).toEqual(['A']);
   });
 });
+
+import { suggestPrizes } from '@/lib/logistics/prizes';
+describe('prize suggestions', () => {
+  const stock = [{ id: 'a', price: 5, left: 10, sponsor: false }, { id: 'b', price: 20, left: 2, sponsor: false }, { id: 's', price: 20, left: 1, sponsor: true }, { id: 'z', price: 50, left: 0, sponsor: false }];
+  it('picks the closest value, sponsor first when close, never more than is left', () => {
+    const r = suggestPrizes(stock, 3, 60);
+    expect(r.get('s')).toBe(1);
+    expect(r.get('b')).toBe(2);
+    expect(r.has('z')).toBe(false);
+  });
+  it('falls back to cheaper prizes and stops when stock runs out', () => {
+    const r = suggestPrizes([{ id: 'a', price: 5, left: 2, sponsor: false }], 5, 100);
+    expect([...r.values()].reduce((n, x) => n + x, 0)).toBe(2);
+  });
+});

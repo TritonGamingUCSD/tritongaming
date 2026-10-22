@@ -62,7 +62,6 @@ export default function PrizeGrid({ plan, data }: { plan: PlanApi; data: Catalog
         <div className={styles.toolbarRow}>
           <button type="button" className={`${styles.pill} ${usedOnly ? styles.pillOn : ''}`} aria-pressed={usedOnly} onClick={() => setUsedOnly((v) => !v)}>Only prizes used in this event</button>
           <span className={styles.count}>{rows.length} prizes · {pools.length} pools</span>
-          {manage && <Button className={styles.addBtn} variant="secondary" onClick={() => setPoolDialog({ pool: null })}>Add Pool</Button>}
         </div>
       </div>
       {poolDialog && <PoolDialog plan={plan} pool={poolDialog.pool} onClose={() => setPoolDialog(null)} />}

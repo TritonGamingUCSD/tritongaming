@@ -115,6 +115,18 @@ try {
   const releaseLoan = await exec.call('POST', SL, { action: 'empty', borrowed_id: afterLoan.id });
   const freed = (await plan1()).borrowed.find((x) => x.tag === 'ZZ-LOAN');
   t.ok('emptying the row gives the loaner back', releaseLoan.s === 200 && !freed.request_id && !freed.station_id);
+  // A prize request is a pool with a target (how many, how many dollars), and follows the request.
+  const poolOf = async (rid) => (await plan1()).prizes.pools.find((x) => x.request_id === rid);
+  const pE = await poolOf(E);
+  t.ok('a prize request makes a pool with its target', pE && pE.target_qty === 2 && pE.target_total === 20, JSON.stringify(pE));
+  await exec.call('PATCH', URL_, { request_id: E, items: [{ qty: 4, value: 15 }] });
+  const pE2 = await poolOf(E);
+  t.ok('changing the request changes the pool target', pE2.target_qty === 4 && pE2.target_total === 60, JSON.stringify(pE2));
+  const zPrize = (await exec.call('POST', '/api/logistics/prizes', { name: 'ZZ Prize', price: 15, quantity: 9 })).j.prize;
+  await exec.call('POST', `/api/logistics/plans/${P.id}/prizes`, { pool_id: pE2.id, prize_id: zPrize.id, quantity: 4 });
+  await exec.call('PATCH', URL_, { request_id: E, items: [{ qty: 3, value: 15 }] });
+  const lineAfter = (await plan1()).prizes.lines.find((x) => x.pool_id === pE2.id);
+  t.ok('a smaller request trims the pool\u2019s prizes to fit', lineAfter?.quantity === 3, JSON.stringify(lineAfter));
   const listed = (await exec.call('GET', URL_)).j.requests.find((r) => r.id === A);
   t.ok('the request shows filled / total rows', listed.rowsTotal === (await mineRows()).length && listed.filled === 0);
   const emptyPlain = await exec.call('POST', `/api/logistics/plans/${P.id}/slots`, { action: 'empty', device_id: '00000000-0000-4000-8000-000000000000' });

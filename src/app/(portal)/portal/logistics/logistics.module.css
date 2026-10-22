@@ -608,11 +608,51 @@
 /* the ID box: red only while the row still needs a device */
 .assignInput:not(.assignEmpty) { border-color: rgba(var(--pp-ink-rgb), 0.3); }
 
-/* in the allocation, the devices sit slightly inside the team's block so it is clear whose they are; when grouped by type the team is named on the line */
-.noSteps .dayLine { margin-left: 1.1rem; margin-right: 0.5rem; border-left: 3px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 0 6px 6px 0; }
-.noSteps .dayLine.nested { margin-left: 2.1rem; }
+/* in the allocation the devices sit slightly inside the team's block (indent on the first cell, so every row keeps the same columns and the ID boxes line up); when grouped by type the team is named on the line */
+.noSteps .dayRow { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1.75fr) 4.5rem; }
+.noSteps .dayLine { box-shadow: inset 3px 0 0 rgba(var(--pp-ink-rgb), 0.3); }
+.noSteps .dayLine .dInfo { padding-left: 0.9rem; }
+.noSteps .dayLine.nested .dInfo { padding-left: 2.1rem; }
+.noSteps .dayLine.lineBad { box-shadow: inset 3px 0 0 var(--pp-bad); }
 .teamTag { font-size: 0.78rem; font-weight: 700; padding: 0.05rem 0.45rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); color: var(--pp-ink); }
-.noSteps .dNotes { flex-wrap: nowrap; }
-.noSteps .dNotes .assignInput { flex: 0 0 11rem; }
-@media (max-width: 899px) { .noSteps .dayLine { margin-left: 0.5rem; } .noSteps .dayLine.nested { margin-left: 1rem; } .noSteps .dNotes { flex-wrap: wrap; } }
+.noSteps .dNotes { flex-wrap: nowrap; gap: 0.5rem; }
+.noSteps .dNotes .assignInput { flex: 0 0 11.5rem; width: 11.5rem; }
 .noSteps .gameChip { white-space: nowrap; }
+@media (max-width: 899px) { .noSteps .dayRow { grid-template-columns: minmax(0, 1fr); } .noSteps .dNotes { flex-wrap: wrap; } .noSteps .dayLine .dInfo { padding-left: 0.7rem; } .noSteps .dayLine.nested .dInfo { padding-left: 1.4rem; } }
+
+/* ---- Prizing allocation: a card per pool ---- */
+.poolCards { display: grid; grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr)); gap: 0.8rem; align-items: start; }
+.poolCard { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.8rem 0.9rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.28); background: var(--pp-card); min-width: 0; }
+.poolHead { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+.poolTitle { display: flex; flex-direction: column; min-width: 0; font-size: 1rem; overflow-wrap: anywhere; }
+.poolTitle b { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.05rem; }
+.poolGoal { display: flex; flex-direction: column; gap: 0.25rem; }
+.goalLine { display: flex; justify-content: space-between; font-size: 0.86rem; }
+.barOk i { background: var(--pp-ok); }
+.barWarn i { background: var(--pp-warn); }
+.barBad i { background: var(--pp-bad); }
+.poolLines { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.poolLine { display: grid; grid-template-columns: minmax(0, 1fr) 4.5rem auto; gap: 0.5rem; align-items: center; padding: 0.35rem 0; border-top: 1px solid rgba(var(--pp-ink-rgb), 0.12); }
+.poolLineName { display: flex; flex-direction: column; min-width: 0; font-size: 0.9rem; overflow-wrap: anywhere; }
+.poolFoot { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.poolAdd { flex: 1 1 12rem; min-width: 0; }
+.overview2 { margin-top: 1rem; }
+.overview2 > summary { cursor: pointer; font-weight: 700; font-size: 0.9rem; padding: 0.4rem 0; color: var(--pp-ink); }
+
+/* table text: a little smaller, with room at the edges so nothing touches the border */
+.grid { font-size: 0.84rem; }
+.grid th { padding: 0.5rem 0.9rem; }
+.grid td { padding: 0.3rem 0.9rem; }
+.matrix { font-size: 0.82rem; }
+.matrix th, .matrix td { padding: 0.15rem 0.7rem; }
+.prizeRow { font-size: 0.86rem; padding: 0.32rem 1rem; column-gap: 1rem; }
+.prizeHeadRow { padding-block: 0.25rem; }
+.dayRow { padding-inline: 1rem; column-gap: 1.1rem; }
+.sheetLine { padding-inline: 1rem; }
+.colHead { padding-inline: 1rem; }
+.poolLine { padding-inline: 0.1rem; }
+.poolTitle b { text-decoration: none; }
+
+/* the pool cards flow into columns, so cards of different lengths don't leave empty gaps */
+.poolCards { display: block; column-width: 21rem; column-gap: 0.8rem; }
+.poolCard { break-inside: avoid; margin-bottom: 0.8rem; }
