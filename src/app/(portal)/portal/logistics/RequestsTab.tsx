@@ -138,18 +138,19 @@ function RequestDialog({ kind: askKind, plan, api, data, planId, loaded, request
   const setDevAt = (i: number, patch: Partial<DeviceItem>) => setDev((c) => c.map((x, k) => (k === i ? { ...x, ...patch } : x)));
   const setPrizAt = (i: number, patch: Partial<PrizeItem>) => setPriz((c) => c.map((x, k) => (k === i ? { ...x, ...patch } : x)));
   return (
-    <Dialog title={request ? 'Edit Request' : 'New Request'} wide busy={busy} onClose={onClose}>
+    <Dialog title={request ? 'Edit Request' : 'New Request'} wide sheet busy={busy} onClose={onClose}>
       <div className={styles.form}>
         {problem && <Notice tone="error">{problem}</Notice>}
-        <div className={styles.row2}>
-          <Field label="Team or booth" hint="Who it is for, like Triton Valorant."><Input value={team} onChange={(e) => setTeam(e.target.value)} maxLength={120} list="req-teams" /></Field>
+        {/* A request that is already sent is changed in its table row (team, contact, notes); this form then only holds what the row has no box for. */}
+        <div className={request ? undefined : loaded.canManage ? styles.row3 : styles.row2}>
+          {!request && <Field label="Team or booth" hint="Who it is for, like Triton Valorant."><Input value={team} onChange={(e) => setTeam(e.target.value)} maxLength={120} list="req-teams" /></Field>}
           <Field label="Division"><Select value={division} onChange={(e) => setDivision(e.target.value)}><option value="">None</option>{loaded.divisions.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</Select></Field>
+          {loaded.canManage && !request && (
+            <Field label="Contact" hint="A division lead or an officer or above. Defaults to you.">
+              <Combo value={people.find((p) => p.id === onBehalf)?.name ?? null} options={people.map((p) => p.name)} placeholder="Choose…" clearable={false} onChange={(v) => setOnBehalf(people.find((p) => p.name === v)?.id ?? '')} />
+            </Field>
+          )}
         </div>
-        {loaded.canManage && (
-          <Field label="Contact" hint="Who to reach on the day: a division lead or an officer or above. Defaults to you.">
-            <Combo value={people.find((p) => p.id === (onBehalf || request?.requester_id))?.name ?? null} options={people.map((p) => p.name)} placeholder="Choose…" clearable={false} onChange={(v) => setOnBehalf(people.find((p) => p.name === v)?.id ?? '')} />
-          </Field>
-        )}
         <datalist id="req-teams">{teams.map((t) => <option key={t} value={t} />)}</datalist>
         {kind === 'devices' ? (
           <div className={styles.reqLines}>
@@ -175,7 +176,7 @@ function RequestDialog({ kind: askKind, plan, api, data, planId, loaded, request
             <div className={styles.rowInline}><Button size="sm" variant="secondary" onClick={() => setPriz((c) => [...c, { qty: 1, value: 25 }])}>Add A Line</Button><span className={styles.muted}>About {money(prizeTotal(priz))} in all. You don’t pick the prizes: the logistics team fills this from what is in stock.</span></div>
           </div>
         )}
-        <Field label="Anything else" hint={kind === 'prizes' ? 'Sizes, colours, what the prizes are for.' : 'Setup needs, when you need it, anything special.'}><Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={2000} /></Field>
+        {!request && <Field label="Anything else" hint={kind === 'prizes' ? 'Sizes, colours, what the prizes are for.' : 'Setup needs, when you need it, anything special.'}><Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={2000} /></Field>}
       </div>
       <DialogActions><DialogCancel onClick={onClose} disabled={busy} /><Button onClick={save} loading={busy}>{request ? 'Save' : 'Send Request'}</Button></DialogActions>
     </Dialog>

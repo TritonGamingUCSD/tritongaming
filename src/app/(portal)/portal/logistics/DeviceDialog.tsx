@@ -21,7 +21,7 @@ const kitFor = (type: string): KitLine[] => (DEFAULT_KIT[type] ?? []).map((item)
 const when = (iso: string) => new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 
 // Add, edit, clone or just look at one device. Officers who can't edit see the same screen read-only (including the login, which every officer may see).
-export default function DeviceDialog({ api, data, device, template, onClose, onClone }: { api: LogisticsApi; data: Catalog; device: Device | null; template?: Partial<Draft> | null; onClose: () => void; onClone?: (d: Draft) => void }) {
+export default function DeviceDialog({ api, data, device, template, extrasOnly, onClose, onClone }: { extrasOnly?: boolean; api: LogisticsApi; data: Catalog; device: Device | null; template?: Partial<Draft> | null; onClose: () => void; onClone?: (d: Draft) => void }) {
   const editing = !!device;
   const readOnly = !data.canManage;
   const [d, setD] = useState<Draft>(() => (device ? fromDevice(device) : { ...blank(), ...(template ?? {}) }));
@@ -89,30 +89,31 @@ export default function DeviceDialog({ api, data, device, template, onClose, onC
 
   const setKit = (kit: KitLine[]) => { setKitTouched(true); set('kit', kit); };
   const [more, setMore] = useState(false);
+  const rowHas = !!extrasOnly && editing;   // opened from the table: its row already has boxes for ID, name, type, shelf, tier and condition, so the form only holds the rest
   const full = more || editing || readOnly;   // adding a device asks only what is needed; the rest can be filled in later in the table
   const title = readOnly ? (device?.tag ?? device?.type ?? 'Device') : editing ? `Edit ${device.tag ?? device.type}` : 'Add Device';
 
   return (
-    <Dialog title={title} wide busy={busy} onClose={onClose}>
+    <Dialog title={title} wide sheet busy={busy} onClose={onClose}>
       <div className={styles.form}>
         {problem && <Notice tone="error">{problem}</Notice>}
-        <div className={styles.row2}>
+        {!rowHas && <div className={styles.row2}>
           <Field label={counted ? 'ID (optional)' : 'ID'} hint={counted ? 'Counted items don’t need one.' : 'As written on the device. TECM1 and “tecm 1” are the same.'}>
             <Input value={d.tag ?? ''} onChange={(e) => set('tag', e.target.value)} maxLength={40} disabled={readOnly} autoFocus={!editing && !readOnly} placeholder="TECM1" />
           </Field>
           {full && <Field label="Name"><Input value={d.name ?? ''} onChange={(e) => set('name', e.target.value)} maxLength={120} disabled={readOnly} placeholder="Optional" /></Field>}
-        </div>
-        <div className={styles.row2}>
+        </div>}
+        {!rowHas && <div className={styles.row2}>
           <Field label="Type"><Combo value={d.type || null} options={lists.type.map((t) => t.value)} onChange={pickType} onCreate={createOpt('type')} disabled={readOnly} clearable={false} placeholder="Choose a type…" /></Field>
           {full && (<Field label="Condition">
             <Select value={d.condition} onChange={(e) => set('condition', e.target.value as Draft['condition'])} disabled={readOnly}>
               {CONDITIONS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
             </Select>
           </Field>)}
-        </div>
-        <div className={styles.row3}>
-          <Field label="Shelf"><Combo value={d.shelf} options={lists.shelf.map((s) => s.value)} onChange={(v) => set('shelf', v)} onCreate={createOpt('shelf')} disabled={readOnly} placeholder="Choose…" /></Field>
-          <Field label="Tier"><Combo value={d.tier} options={lists.tier.map((s) => s.value)} onChange={(v) => set('tier', v)} onCreate={createOpt('tier')} disabled={readOnly} placeholder="Choose…" /></Field>
+        </div>}
+        <div className={rowHas ? undefined : styles.row3}>
+          {!rowHas && <><Field label="Shelf"><Combo value={d.shelf} options={lists.shelf.map((s) => s.value)} onChange={(v) => set('shelf', v)} onCreate={createOpt('shelf')} disabled={readOnly} placeholder="Choose…" /></Field>
+          <Field label="Tier"><Combo value={d.tier} options={lists.tier.map((s) => s.value)} onChange={(v) => set('tier', v)} onCreate={createOpt('tier')} disabled={readOnly} placeholder="Choose…" /></Field></>}
           {full && <Field label="Exact spot"><Input value={d.place_note ?? ''} onChange={(e) => set('place_note', e.target.value)} maxLength={200} disabled={readOnly} placeholder="Left side, blue tub" /></Field>}
         </div>
 

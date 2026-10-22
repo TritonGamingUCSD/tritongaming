@@ -45,7 +45,7 @@ export default function SwapDialog({ plan, device, options, onClose }: { plan: P
     );
   }
   return (
-    <Dialog title={`Swap ${device.tag ?? device.type}`} busy={busy} onClose={onClose}>
+    <Dialog title={`Swap ${device.tag ?? device.type}`} sheet busy={busy} onClose={onClose}>
       <div className={styles.form}>
         {problem && <Notice tone="error">{problem}</Notice>}
         <Field label="Replace With" hint={options.length ? `${options.length} ${device.type} available. Type to filter.` : `No spare ${device.type} listed. Type the ID written on the device.`}><Combo value={tag || null} options={options} onChange={(v) => setTag(v ?? '')} onCreate={async (v) => v.trim().toUpperCase()} placeholder="Choose or type an ID" clearable={false} autoFocus ariaLabel="Replacement ID" /></Field>

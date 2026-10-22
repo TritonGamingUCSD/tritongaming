@@ -12,7 +12,7 @@ import type { Catalog, LogisticsApi } from './useLogistics';
 import styles from './logistics.module.css';
 
 // A sponsor's or an officer's device for THIS event only. It is not in the inventory and is fresh each event; its ID only has to be unique within this plan.
-export default function BorrowedDialog({ plan, catalog, data, borrowed, defaultKind, onClose }: { plan: PlanApi; catalog: LogisticsApi; data: Catalog; borrowed: Borrowed | null; defaultKind?: 'sponsor' | 'officer'; onClose: () => void }) {
+export default function BorrowedDialog({ plan, catalog, data, borrowed, defaultKind, extrasOnly, onClose }: { extrasOnly?: boolean; plan: PlanApi; catalog: LogisticsApi; data: Catalog; borrowed: Borrowed | null; defaultKind?: 'sponsor' | 'officer'; onClose: () => void }) {
   const [tag, setTag] = useState(borrowed?.tag ?? '');
   const [type, setType] = useState(borrowed?.type ?? '');
   const [kind] = useState<'sponsor' | 'officer'>(borrowed?.owner_kind ?? defaultKind ?? 'sponsor');
@@ -59,10 +59,11 @@ export default function BorrowedDialog({ plan, catalog, data, borrowed, defaultK
   }
 
   return (
-    <Dialog title={borrowed ? `Edit ${borrowed.tag}` : 'Add Borrowed Device'} wide busy={busy} onClose={onClose}>
+    <Dialog title={borrowed ? `Edit ${borrowed.tag}` : 'Add Borrowed Device'} wide sheet busy={busy} onClose={onClose}>
       <div className={styles.form}>
         {problem && <Notice tone="error">{problem}</Notice>}
-                <div className={styles.row2}>
+        {!(extrasOnly && borrowed) && <>
+        <div className={styles.row2}>
           <Field label="ID" hint="Its name at this event"><Input value={tag} onChange={(e) => setTag(e.target.value)} maxLength={40} autoFocus={!borrowed} placeholder="S1" autoCapitalize="characters" autoComplete="off" /></Field>
           <Field label="Type"><Combo value={type || null} options={data.lists.type.map((t) => t.value)} onChange={(v) => setType(v ?? '')} onCreate={async (v) => v} clearable={false} placeholder="Choose a type…" /></Field>
         </div>
@@ -74,8 +75,9 @@ export default function BorrowedDialog({ plan, catalog, data, borrowed, defaultK
             <Field label="Officer"><Combo value={officerName || null} options={peopleLabels.map((p) => p.label)} placeholder="Choose an officer…" onChange={(v) => setOfficerId(peopleLabels.find((p) => p.label === v)?.id ?? '')} /></Field>
           )}
         </div>
+        </>}
         <Field label="Note" hint="Where to find it or who to ask (no phone numbers)"><Input value={note} onChange={(e) => setNote(e.target.value)} maxLength={300} /></Field>
-        <Field label="Installed games"><MultiCombo values={games} options={[...new Set([...data.portalGames, ...data.lists.game.map((g) => g.value)])].sort((a, b) => a.localeCompare(b))} onChange={setGames} placeholder="Add a game…" /></Field>
+        {!(extrasOnly && borrowed) && <Field label="Installed games"><MultiCombo values={games} options={[...new Set([...data.portalGames, ...data.lists.game.map((g) => g.value)])].sort((a, b) => a.localeCompare(b))} onChange={setGames} placeholder="Add a game…" /></Field>}
         <Field label="Parts that come with it"><MultiCombo values={parts} options={data.lists.kit.map((k) => k.value)} onChange={setParts} onCreate={(v) => catalog.addOption('kit', v)} placeholder="Add a part…" /></Field>
       </div>
       <div className={styles.stickyFoot}>

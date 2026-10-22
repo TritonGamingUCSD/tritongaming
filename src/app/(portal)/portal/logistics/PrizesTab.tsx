@@ -79,7 +79,8 @@ export function PrizeDialog({ prizes, api, data, prize, where, onClose }: { priz
   async function save() {
     setProblem('');
     setBusy(true);
-    const body = { name: f.name, sponsor_id: f.sponsor_id || null, size: f.size || null, type: f.type || null, price: f.price === '' ? null : Number(f.price), quantity: Number(f.quantity), quantity_is_estimate: f.estimate, shelf: f.shelf, tier: f.tier, place_note: f.place_note, plan_id: f.plan_id || null, expires_on: f.expires_on || null, notes: f.notes };
+    // An existing prize is changed in its table row; this form only holds what the row has no box for.
+    const body = prize ? { quantity_is_estimate: f.estimate, place_note: f.place_note, expires_on: f.expires_on, notes: f.notes } : { name: f.name, sponsor_id: f.sponsor_id || null, size: f.size || null, type: f.type || null, price: f.price === '' ? null : Number(f.price), quantity: Number(f.quantity), quantity_is_estimate: f.estimate, shelf: f.shelf, tier: f.tier, place_note: f.place_note, plan_id: f.plan_id || null, expires_on: f.expires_on || null, notes: f.notes };
     const r = await prizes.save(prize?.id ?? null, body);
     setBusy(false);
     if (r) onClose(); else setProblem('That didn’t save. The message at the top of the page says why.');
@@ -90,9 +91,10 @@ export function PrizeDialog({ prizes, api, data, prize, where, onClose }: { priz
     if (ok) onClose(); else setProblem('It couldn’t be removed. The message at the top of the page says why.');
   }
   return (
-    <Dialog title={prize ? (readOnly ? prize.name : 'Edit Prize') : 'Add Prize'} wide busy={busy} onClose={onClose}>
+    <Dialog title={prize ? `${prize.name}` : 'Add Prize'} wide sheet busy={busy} onClose={onClose}>
       <div className={styles.form}>
         {problem && <Notice tone="error">{problem}</Notice>}
+        {!prize && <>
         <Field label="Prize"><Input value={f.name} onChange={(e) => set('name', e.target.value)} disabled={readOnly} autoFocus maxLength={160} /></Field>
         <div className={styles.row3}>
           <Field label="Sponsor" hint="Leave empty for club-bought prizes.">
@@ -107,8 +109,9 @@ export function PrizeDialog({ prizes, api, data, prize, where, onClose }: { priz
           <Field label="Price of one" hint="In dollars."><Input type="number" min={0} step="0.01" value={f.price} onChange={(e) => set('price', e.target.value)} disabled={readOnly} /></Field>
           <Field label="How many there are"><Input type="number" min={0} max={100000} value={f.quantity} onChange={(e) => set('quantity', e.target.value)} disabled={readOnly} /></Field>
         </div>
+        </>}
         <label className={styles.check}><input type="checkbox" checked={f.estimate} onChange={(e) => set('estimate', e.target.checked)} disabled={readOnly} /> That number is an estimate</label>
-        {!f.plan_id && (
+        {!prize && !f.plan_id && (
           <div className={styles.row2}>
             <Field label="Shelf"><Combo value={f.shelf} options={data.lists.shelf.map((s) => s.value)} disabled={readOnly} placeholder="Choose…" onChange={(v) => set('shelf', v)} onCreate={createOpt('shelf')} /></Field>
             <Field label="Tier"><Combo value={f.tier} options={data.lists.tier.map((s) => s.value)} disabled={readOnly} placeholder="Choose…" onChange={(v) => set('tier', v)} onCreate={createOpt('tier')} /></Field>
@@ -119,12 +122,12 @@ export function PrizeDialog({ prizes, api, data, prize, where, onClose }: { priz
           <Field label="Expires" hint="Optional."><Input type="date" value={f.expires_on} onChange={(e) => set('expires_on', e.target.value)} disabled={readOnly} /></Field>
         </div>
         <Field label="Notes"><Textarea rows={2} value={f.notes} onChange={(e) => set('notes', e.target.value)} disabled={readOnly} maxLength={2000} /></Field>
-        {prize && <p className={styles.muted}>{prize.quantity} in stock · {prize.allocated} promised to open events · {prize.given} given out · <b>{prize.left} left</b></p>}
+        {prize && <p className={styles.muted}>{[prize.type, prize.size, prize.price !== null ? `$${prize.price}` : null].filter(Boolean).join(' · ')}{prize.type || prize.size || prize.price !== null ? ' · ' : ''}{prize.quantity} in stock · {prize.allocated} promised to open events · {prize.given} given out · <b>{prize.left} left</b></p>}
       </div>
       <DialogActions>
         {prize && !readOnly && <Button variant="danger" onClick={remove} disabled={busy}>Remove</Button>}
         <DialogCancel onClick={onClose} disabled={busy}>{readOnly ? 'Close' : 'Cancel'}</DialogCancel>
-        {!readOnly && <Button onClick={save} loading={busy} disabled={!f.name.trim()}>Save</Button>}
+        {!readOnly && <Button onClick={save} loading={busy} disabled={!prize && !f.name.trim()}>Save</Button>}
       </DialogActions>
     </Dialog>
   );

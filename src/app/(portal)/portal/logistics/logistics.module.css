@@ -797,3 +797,7 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 .pageBarEnd > .finder { flex: 1 1 auto; max-width: 34rem; min-width: 12rem; }
 .pageBarEnd .finderBox { width: 100%; min-height: 38px; }
 .pageBarEnd .iconBtn { flex: none; }
+
+/* Forms in popups: closer fields, and on a phone the pinned button bar fills the sheet's width. */
+.form { gap: 0.65rem; }
+@media (max-width: 640px) { .stickyFoot { bottom: 0; margin: auto -1rem 0; padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom)); } }

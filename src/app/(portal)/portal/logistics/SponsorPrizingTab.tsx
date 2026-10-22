@@ -72,7 +72,7 @@ function StorageDialog({ prizes, api, data, list, eventName, onClose }: { prizes
     onClose();
   }
   return (
-    <Dialog title="Add To Storage" busy={busy} onClose={onClose}>
+    <Dialog title="Add To Storage" sheet busy={busy} onClose={onClose}>
       <div className={styles.form}>
         <p className={styles.muted}>{list.length === 1 ? `${list[0].name}: ${list[0].left} left.` : `${list.length} prizes, ${total} left in all.`} Where will {list.length === 1 ? 'it' : 'they'} be kept?</p>
         <div className={styles.row2}>

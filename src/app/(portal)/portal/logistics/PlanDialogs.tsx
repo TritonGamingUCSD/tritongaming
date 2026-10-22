@@ -21,7 +21,7 @@ export function StationDialog({ plan, station, onClose }: { plan: PlanApi; stati
     if (ok) onClose();
   };
   return (
-    <Dialog title={station ? 'Edit Team' : 'Add Team'} busy={busy} onClose={onClose}>
+    <Dialog title={station ? 'Edit Team' : 'Add Team'} sheet busy={busy} onClose={onClose}>
       <div className={styles.form}>
         <Field label="Team or booth" hint="Who it is for, like Triton Valorant or Tech Booth."><Input value={name} onChange={(e) => setName(e.target.value)} autoFocus maxLength={200} /></Field>
         <div className={styles.row2}>
@@ -41,7 +41,7 @@ export function EditPlanDialog({ plan: p, onSave, onClose }: { plan: { name: str
   const [busy, setBusy] = useState(false);
   const save = async () => { setBusy(true); const ok = await onSave({ name, starts_on: starts, ends_on: ends, notes }); setBusy(false); if (ok) onClose(); };
   return (
-    <Dialog title="Edit Plan" busy={busy} onClose={onClose}>
+    <Dialog title="Edit Plan" sheet busy={busy} onClose={onClose}>
       <div className={styles.form}>
         <Field label="Name"><Input value={name} onChange={(e) => setName(e.target.value)} maxLength={120} /></Field>
         <div className={styles.row2}>
@@ -72,7 +72,7 @@ export function FillDialog({ plan, station, onClose }: { plan: PlanApi; station:
   const notTested = preview?.filter((p) => p.device?.condition === 'not_tested').length ?? 0;
   const noGame = preview?.filter((p) => p.device && p.games.some((g) => !p.device!.games.some((x) => x.toLowerCase() === g.toLowerCase()))).length ?? 0;
   return (
-    <Dialog title={station ? `Fill Empty Rows: ${station.name}` : 'Fill Empty Rows'} busy={busy} onClose={onClose}>
+    <Dialog title={station ? `Fill Empty Rows: ${station.name}` : 'Fill Empty Rows'} sheet busy={busy} onClose={onClose}>
       <div className={styles.form}>
         {problem && <Notice tone="error">{problem}</Notice>}
         {!preview ? <p className={styles.muted}>The portal will pick a device for every empty row. Nothing changes until you confirm.</p> : (

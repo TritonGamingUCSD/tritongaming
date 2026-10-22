@@ -124,7 +124,7 @@ function CreateDialog({ events, onCreate, onClose }: { events: (past: boolean) =
     if (!ok) setProblem('That didn’t save. The message at the top of the page says why.');
   }
   return (
-    <Dialog title="New Event" wide busy={busy} onClose={onClose}>
+    <Dialog title="New Event" wide sheet busy={busy} onClose={onClose}>
       <div className={styles.form}>
         {problem && <Notice tone="error">{problem}</Notice>}
         <SectionTabs<'event' | 'own'> variant="segmented" label="What the plan is for" value={mode} onChange={setMode} tabs={[{ id: 'event', label: 'Portal Event' }, { id: 'own', label: 'Logistics-Only Event' }]} />

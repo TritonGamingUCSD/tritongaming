@@ -163,7 +163,7 @@ export function PoolDialog({ plan, pool, onClose }: { plan: PlanApi; pool: Pool 
     if (ok) onClose();
   };
   return (
-    <Dialog title={pool ? 'Edit Prize Pool' : 'Add Prize Pool'} busy={busy} onClose={onClose}>
+    <Dialog title={pool ? 'Edit Prize Pool' : 'Add Prize Pool'} sheet busy={busy} onClose={onClose}>
       <div className={styles.form}>
         <Field label="Pool" hint="Where these prizes are given from, like ASUS Raffle, Smash, or Scavenger Hunt."><Input value={name} onChange={(e) => setName(e.target.value)} autoFocus maxLength={80} /></Field>
         <Field label="Team" hint="Optional. Link it to one of this event’s teams."><Select value={station} onChange={(e) => setStation(e.target.value)}><option value="">Not linked</option>{plan.detail!.stations.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></Field>
@@ -186,7 +186,7 @@ function AddPrizesDialog({ plan, pool, existing, onClose }: { plan: PlanApi; poo
   const chosen = Object.entries(qty).map(([prize_id, v]) => ({ prize_id, quantity: Math.round(Number(v)) })).filter((x) => x.quantity >= 1);
   const save = async () => { setBusy(true); const ok = await plan.act('/prizes', 'POST', { pool_id: pool.id, items: chosen }); setBusy(false); if (ok) onClose(); };
   return (
-    <Dialog title={`Add Prizes To ${pool.name}`} wide busy={busy} onClose={onClose}>
+    <Dialog title={`Add Prizes To ${pool.name}`} wide sheet busy={busy} onClose={onClose}>
       <div className={styles.form}>
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search prizes" aria-label="Search prizes" autoFocus />
         {!prizes.rows ? <p className={styles.muted}>Loading…</p> : list.length === 0 ? <p className={styles.muted}>No prizes match.</p> : (

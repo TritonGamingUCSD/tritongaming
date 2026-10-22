@@ -95,7 +95,7 @@ export default function EquipmentTab({ api, data }: { api: LogisticsApi; data: C
         </div>
       </div>
 
-      {dialog && <DeviceDialog api={api} data={data} device={dialog.device} template={dialog.template ?? null} onClose={() => setDialog(null)} onClone={(draft) => setDialog({ device: null, template: draft })} />}
+      {dialog && <DeviceDialog extrasOnly={wide} api={api} data={data} device={dialog.device} template={dialog.template ?? null} onClose={() => setDialog(null)} onClone={(draft) => setDialog({ device: null, template: draft })} />}
       {data.devices.length === 0 ? (
         <div className={styles.empty}><p>{canEdit ? 'No equipment yet. Add the first device, then use “Save And Add Another” to enter a run of them quickly.' : 'No equipment has been added yet.'}</p></div>
       ) : rows.length === 0 ? (

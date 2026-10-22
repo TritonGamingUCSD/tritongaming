@@ -58,7 +58,7 @@ function SponsorDialog({ api, sponsor, onClose }: { api: LogisticsApi; sponsor: 
     if (ok) onClose(); else setProblem('It couldn’t be removed. The message at the top of the page says why.');
   }
   return (
-    <Dialog title={sponsor ? 'Edit Sponsor' : 'Add Sponsor'} busy={busy} onClose={onClose}>
+    <Dialog title={sponsor ? 'Edit Sponsor' : 'Add Sponsor'} sheet busy={busy} onClose={onClose}>
       <div className={styles.form}>
         {problem && <Notice tone="error">{problem}</Notice>}
         <Field label="Name"><Input value={name} onChange={(e) => setName(e.target.value)} maxLength={120} autoFocus /></Field>
