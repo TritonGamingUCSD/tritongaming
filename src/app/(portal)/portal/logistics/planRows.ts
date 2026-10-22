@@ -19,8 +19,8 @@ export function planRows(detail: PlanDetail, counted: Set<string>): Row[] {
   }));
   const borrowed = detail.borrowed.map((b): Row => ({
     id: b.id, key: b.id, kind: b.owner_kind, itemKind: b.owner_kind, type: b.type, tag: b.tag, name: b.name, station_id: b.station_id, stationId: b.station_id,
-    games_needed: b.games_needed ?? [], games: [], counted: false, role: b.role, condition: null, kit: b.kit,
-    where: `${b.owner_kind === 'sponsor' ? 'Sponsor' : 'Officer loan'}: ${b.owner}${b.owner_note ? ` · ${b.owner_note}` : ''}`, located: true, swap_reason: b.swap_reason, swapped_for_label: b.swapped_for_label, label: null, sort: b.sort ?? 1000, setId: b.set_id ?? null, requestId: null, requestItem: null,
+    games_needed: b.games_needed ?? [], games: b.games ?? [], counted: false, role: b.role, condition: null, kit: b.kit,
+    where: `${b.owner_kind === 'sponsor' ? 'Sponsor' : 'Officer loan'}: ${b.owner}${b.owner_note ? ` · ${b.owner_note}` : ''}`, located: true, swap_reason: b.swap_reason, swapped_for_label: b.swapped_for_label, label: null, sort: b.sort ?? 1000, setId: b.set_id ?? null, requested: !!b.request_id || b.role === 'backup' || !b.station_id, requestId: b.request_id ?? null, requestItem: b.request_item ?? null,
   }));
   const slots = detail.slots.map((s): Row => ({
     id: s.id, key: s.id, kind: 'slot', itemKind: 'club', type: s.type, tag: null, name: null, station_id: s.station_id, stationId: s.station_id, games_needed: s.games, games: [],

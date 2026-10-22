@@ -3,8 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import Button from '@/components/ui/Button';
-import Dialog from './Panel';
-import { DialogActions, DialogCancel } from '@/components/ui/Dialog';
+import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Notice from '@/components/ui/Notice';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Loading from '@/components/Loading/Loading';
@@ -35,7 +34,7 @@ export default function PlansTab({ api, data, route, go }: { api: LogisticsApi; 
   if (ref) {
     if (!list.plans) return <div className={styles.tab}>{list.error ? <Notice tone="error">{list.error}</Notice> : <Loading variant="inline" label="Loading…" />}</div>;
     if (!plan) return <div className={styles.tab}><Notice tone="error">That event doesn’t exist any more.</Notice><div><Button variant="secondary" onClick={() => open(null)}>All Events</Button></div></div>;
-    return <PlanView key={plan.id} id={plan.id} data={data} catalog={api} page={route.page} day={!!route.day} onPage={(page, day) => go({ tab: 'events', plan: plan.slug, page, ...(day ? { day: true } : {}) })} onBack={() => open(null)} />;
+    return <PlanView key={plan.id} id={plan.id} data={data} catalog={api} page={route.page} day={!!route.day} byType={!!route.byType} onGroup={(byType) => go({ tab: 'events', plan: plan.slug, page: 'device', ...(byType ? { byType: true } : {}) })} onPage={(page, day) => go({ tab: 'events', plan: plan.slug, page, ...(day ? { day: true } : {}) })} onBack={() => open(null)} />;
   }
   return <PlanList data={data} list={list} onOpen={open} />;
 }

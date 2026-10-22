@@ -1,8 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Dialog from './Panel';
-import { DialogActions, DialogCancel } from '@/components/ui/Dialog';
+import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import Loading from '@/components/Loading/Loading';
@@ -16,7 +15,7 @@ import type { Catalog, LogisticsApi } from './useLogistics';
 import styles from './logistics.module.css';
 
 interface Req {
-  id: string; plan_id: string; kind: RequestKind; requester_id: string; division_id: string | null; team: string | null; items: (DeviceItem | PrizeItem)[]; notes: string | null; status: RequestStatus;
+  id: string; plan_id: string; kind: RequestKind; requester_id: string; division_id: string | null; team: string | null; contact: string | null; items: (DeviceItem | PrizeItem)[]; notes: string | null; status: RequestStatus;
   planned_at: string | null; created_at: string; requester: string; division: string | null; planner: string | null; filled: number; rowsTotal: number;
 }
 interface Loaded { me: string; canManage: boolean; divisions: { id: string; name: string }[]; myDivisionIds: string[]; requests: Req[] }
@@ -57,6 +56,10 @@ export default function RequestsTab({ plan, api, data }: { plan: PlanApi; api: L
     const res = await call<{ request: Req }>(`/api/logistics/plans/${planId}/requests`, 'PATCH', { request_id: r.id, status });
     if (res.ok) { apply({ ...r, ...res.data.request }); void load(); } else setError(res.error);
   }
+  async function saveContact(r: Req, contact: string) {
+    const res = await call<{ request: Req }>(`/api/logistics/plans/${planId}/requests`, 'PATCH', { request_id: r.id, contact });
+    if (res.ok) { apply({ ...r, ...res.data.request }); void plan.reload(); } else setError(res.error);
+  }
   async function remove(r: Req) {
     if (!(await confirmHold({ title: 'Take back this request?', message: requestSummary(r.kind, r.items), confirmLabel: 'Hold to remove' }))) return;
     const res = await call<{ ok: true }>(`/api/logistics/plans/${planId}/requests`, 'DELETE', { request_id: r.id });
@@ -77,13 +80,16 @@ export default function RequestsTab({ plan, api, data }: { plan: PlanApi; api: L
         <div className={styles.empty}><p>{loaded.requests.length === 0 ? (closed ? 'No requests were made for this event.' : 'No requests yet. Use New Request to ask for devices or prizes for your team.') : 'No requests.'}</p></div>
       ) : (
         <div className={styles.prizeGrid}>
-          <div className={`${styles.prizeRow} ${styles.reqRow} ${styles.prizeHeadRow}`} aria-hidden="true"><span>Asked by</span><span>Team</span><span>What</span><span>Notes</span><span>Status</span><span /></div>
+          <div className={`${styles.prizeRow} ${styles.reqRow} ${styles.prizeHeadRow}`} aria-hidden="true"><span>Asked by</span><span>Team</span><span>Contact</span><span>What</span><span>Notes</span><span>Status</span><span /></div>
           {list.map((r) => {
             const mine = canEditRequest(r, loaded.me, manage);
             return (
               <div key={r.id} className={`${styles.prizeRow} ${styles.reqRow} ${styles[`req_${r.status}`]}`}>
                 <span className={styles.prizeName}><b>{r.requester}</b><small className={styles.dim}>{r.division ? ` · ${r.division}` : ''} · {day(r.created_at)}</small></span>
                 <span data-label="Team">{r.team ?? <span className={styles.dim}>–</span>}</span>
+                <span data-label="Contact">{manage && !closed
+                  ? <input className={styles.cellInput} defaultValue={r.contact ?? ''} placeholder="Discord or name" maxLength={200} aria-label={`Contact for ${r.team ?? r.requester}`} onBlur={(e) => { const v = e.target.value.trim(); if (v !== (r.contact ?? '')) void saveContact(r, v); }} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }} />
+                  : r.contact ?? <span className={styles.dim}>–</span>}</span>
                 <span data-label={r.kind === 'devices' ? 'Devices' : 'Prizes'}>
                   {r.kind === 'devices'
                     ? <>{(r.items as DeviceItem[]).map((i, n) => <span key={n} className={styles.reqItem}><b>{i.qty} × {i.what}</b>{i.games.length ? <span className={styles.dim}> · {i.games.join(', ')}</span> : null}</span>)}{r.status !== 'declined' && <span className={`${styles.reqItem} ${r.filled === r.rowsTotal && r.rowsTotal > 0 ? styles.okText : styles.warnText}`}>{r.filled}/{r.rowsTotal} filled</span>}</>
@@ -107,6 +113,7 @@ export default function RequestsTab({ plan, api, data }: { plan: PlanApi; api: L
 function RequestDialog({ plan, api, data, planId, loaded, request, onSaved, onClose }: { plan: PlanApi; api: LogisticsApi; data: Catalog; planId: string; loaded: Loaded; request: Req | null; onSaved: () => void; onClose: () => void }) {
   const [kind, setKind] = useState<RequestKind>(request?.kind ?? 'devices');
   const [team, setTeam] = useState(request?.team ?? '');
+  const [contact, setContact] = useState(request?.contact ?? '');
   const [division, setDivision] = useState(request?.division_id ?? loaded.myDivisionIds[0] ?? '');
   const [notes, setNotes] = useState(request?.notes ?? '');
   const [dev, setDev] = useState<DeviceItem[]>(request?.kind === 'devices' ? (request.items as DeviceItem[]) : [{ what: data.lists.bundle[0]?.value ?? data.lists.type[0]?.value ?? '', qty: 1, games: [] }]);
@@ -121,7 +128,7 @@ function RequestDialog({ plan, api, data, planId, loaded, request, onSaved, onCl
   async function save() {
     setProblem('');
     setBusy(true);
-    const body = { kind, team, division_id: division || null, notes, items: kind === 'devices' ? dev : priz, ...(onBehalf ? { requester_id: onBehalf } : {}) };
+    const body = { kind, team, contact, division_id: division || null, notes, items: kind === 'devices' ? dev : priz, ...(onBehalf ? { requester_id: onBehalf } : {}) };
     const r = request ? await call(`/api/logistics/plans/${planId}/requests`, 'PATCH', { request_id: request.id, ...body }) : await call(`/api/logistics/plans/${planId}/requests`, 'POST', body);
     setBusy(false);
     if (r.ok) onSaved(); else setProblem(r.error);
@@ -138,6 +145,7 @@ function RequestDialog({ plan, api, data, planId, loaded, request, onSaved, onCl
           <Field label="Team or booth" hint="Who it is for, like Triton Valorant."><Input value={team} onChange={(e) => setTeam(e.target.value)} maxLength={120} list="req-teams" /></Field>
           <Field label="Division"><Select value={division} onChange={(e) => setDivision(e.target.value)}><option value="">None</option>{loaded.divisions.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</Select></Field>
         </div>
+        <Field label="Contact" hint="Who to reach on the day (a name or Discord)."><Input value={contact} onChange={(e) => setContact(e.target.value)} maxLength={200} /></Field>
         <datalist id="req-teams">{teams.map((t) => <option key={t} value={t} />)}</datalist>
         {kind === 'devices' ? (
           <div className={styles.reqLines}>
@@ -165,7 +173,7 @@ function RequestDialog({ plan, api, data, planId, loaded, request, onSaved, onCl
         )}
         <Field label="Anything else" hint={kind === 'prizes' ? 'Sizes, colours, what the prizes are for.' : 'Setup needs, when you need it, anything special.'}><Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={2000} /></Field>
         {loaded.canManage && !request && (
-          <Field label="Entering this for someone else?" hint="Optional. They are the one who is told when it is planned.">
+          <Field label="Entering this for someone else?" hint="Optional.">
             <Combo value={people.find((p) => p.id === onBehalf)?.name ?? null} options={people.map((p) => p.name)} placeholder="Choose…" onChange={(v) => setOnBehalf(people.find((p) => p.name === v)?.id ?? '')} />
           </Field>
         )}

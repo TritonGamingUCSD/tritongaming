@@ -2,8 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Plus, TriangleAlert, X } from 'lucide-react';
-import Dialog from './Panel';
-import { DialogActions, DialogCancel } from '@/components/ui/Dialog';
+import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import { Field, Input, Textarea, Select } from '@/components/ui/Field';

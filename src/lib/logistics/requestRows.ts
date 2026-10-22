@@ -26,34 +26,45 @@ export function rowDiff(want: Want[], have: Map<string, number>): Map<string, nu
   return out;
 }
 
-interface Req { id: string; plan_id: string; kind: string; team: string | null; division_id: string | null; items: unknown; status: string }
-interface RowRef { id: string; sort: number; set_id: string | null; key: string; slot: boolean; locked: boolean; type: string; station: string | null }
+interface Req { id: string; plan_id: string; kind: string; team: string | null; contact?: string | null; division_id: string | null; items: unknown; status: string }
+interface RowRef { id: string; sort: number; set_id: string | null; key: string; slot: boolean; loan?: boolean; locked: boolean; type: string; station: string | null }
 
 // Make the plan's rows match one device request, line by line. A bundle line is whole sets (a row for every item of the bundle, one set per unit); a type line is plain rows. More
 // units add empty rows; fewer take away the extras, empty ones first and then ones with a device (it goes back to storage), except a device with an event-day step done (the count that
 // stays is returned). A declined request keeps no rows. The team is found by name (the request's team, else its division) or made.
 export async function syncRequestRows(svc: SupabaseClient, r: Req): Promise<{ kept: number }> {
   if (r.kind !== 'devices') return { kept: 0 };
-  const [{ data: slots }, { data: devs }, { data: opts }] = await Promise.all([
+  const out = await syncRows(svc, r);
+  await writeContact(svc, r);
+  return out;
+}
+
+async function syncRows(svc: SupabaseClient, r: Req): Promise<{ kept: number }> {
+  const [{ data: slots }, { data: devs }, { data: opts }, { data: loans }] = await Promise.all([
     svc.from('logistics_plan_slots').select('id, type, sort, set_id, request_item, station_id').eq('request_id', r.id),
     svc.from('logistics_plan_devices').select('device_id, sort, set_id, request_item, station_id').eq('request_id', r.id),
     svc.from('logistics_options').select('value, meta').eq('kind', 'bundle'),
+    svc.from('logistics_plan_borrowed').select('id, type, sort, set_id, request_item, station_id').eq('request_id', r.id),
   ]);
   const ids = (devs ?? []).map((d) => d.device_id as string);
   const { data: dd } = ids.length ? await svc.from('logistics_devices').select('id, type').in('id', ids) : { data: [] };
   // A device that already has an event-day step done is part of the record, so it is never taken out.
   const { data: ticks } = ids.length ? await svc.from('logistics_plan_steps').select('device_id').eq('plan_id', r.plan_id).in('device_id', ids) : { data: [] };
-  const started = new Set((ticks ?? []).map((x) => x.device_id as string));
+  const loanIds = (loans ?? []).map((l) => l.id as string);
+  const { data: loanTicks } = loanIds.length ? await svc.from('logistics_plan_steps').select('borrowed_id').eq('plan_id', r.plan_id).in('borrowed_id', loanIds) : { data: [] };
+  const started = new Set([...(ticks ?? []).map((x) => x.device_id as string), ...(loanTicks ?? []).map((x) => x.borrowed_id as string)]);
   const typeOf = new Map((dd ?? []).map((d) => [d.id as string, d.type as string]));
   const bundles = new Map((opts ?? []).map((o) => [String(o.value).toLowerCase(), ((o.meta as { items?: { type: string; qty: number }[] } | null)?.items ?? [])]));
   const items: DeviceItem[] = r.status === 'declined' ? [] : ((r.items as DeviceItem[]) ?? []);
   const refs: RowRef[] = [
     ...(slots ?? []).map((x) => ({ id: x.id as string, sort: x.sort as number, set_id: x.set_id as string | null, key: String(x.request_item ?? x.type).toLowerCase(), slot: true, locked: false, type: x.type as string, station: x.station_id as string | null })),
     ...(devs ?? []).map((x) => ({ id: x.device_id as string, sort: x.sort as number, set_id: x.set_id as string | null, key: String(x.request_item ?? typeOf.get(x.device_id as string) ?? '').toLowerCase(), slot: false, locked: started.has(x.device_id as string), type: typeOf.get(x.device_id as string) ?? '', station: x.station_id as string | null })),
+    ...(loans ?? []).map((x) => ({ id: x.id as string, sort: x.sort as number, set_id: x.set_id as string | null, key: String(x.request_item ?? x.type).toLowerCase(), slot: false, loan: true, locked: started.has(x.id as string), type: x.type as string, station: x.station_id as string | null })),
   ];
   const wanted = new Set(items.map((i) => i.what.toLowerCase()));
   const drop: string[] = [];
   const dropDev: string[] = [];
+  const dropLoan: string[] = [];
   // Take away what is no longer asked for: empty rows first, then ones with a device (which goes back to storage), the last-added first.
   const cutOf = (groups: RowRef[][], n: number) => groups.filter((g) => !g.some((x) => x.locked)).sort((a, b) => Number(a.every((x) => x.slot)) === Number(b.every((x) => x.slot)) ? Math.max(...b.map((x) => x.sort)) - Math.max(...a.map((x) => x.sort)) : Number(b.every((x) => x.slot)) - Number(a.every((x) => x.slot))).slice(0, n);
   let kept = 0;
@@ -71,7 +82,7 @@ export async function syncRequestRows(svc: SupabaseClient, r: Req): Promise<{ ke
       const have = sets.size;
       if (have < need && item) add.push({ item, units: need - have });
       const cut = have > need ? cutOf([...sets.values()], have - need) : [];
-      for (const g of cut) for (const x of g) (x.slot ? drop : dropDev).push(x.id);
+      for (const g of cut) for (const x of g) (x.slot ? drop : x.loan ? dropLoan : dropDev).push(x.id);
       kept += Math.max(0, have - need) - cut.length;
       if (item) for (const g of sets.values()) if (!cut.includes(g)) reshape.push({ item, group: g });
     } else {
@@ -79,7 +90,7 @@ export async function syncRequestRows(svc: SupabaseClient, r: Req): Promise<{ ke
       if (have < need && item) add.push({ item, units: need - have });
       if (have > need) {
         const cut = cutOf(mine.map((x) => [x]), have - need).map((g) => g[0]);
-        for (const x of cut) (x.slot ? drop : dropDev).push(x.id);
+        for (const x of cut) (x.slot ? drop : x.loan ? dropLoan : dropDev).push(x.id);
         kept += have - need - cut.length;
       }
     }
@@ -99,11 +110,12 @@ export async function syncRequestRows(svc: SupabaseClient, r: Req): Promise<{ ke
       const extra = (list.length) - (want.get(t) ?? 0);
       if (extra <= 0) continue;
       const cut = list.filter((x) => !x.locked).sort((a, b) => Number(b.slot) - Number(a.slot) || b.sort - a.sort).slice(0, extra);
-      for (const x of cut) (x.slot ? drop : dropDev).push(x.id);
+      for (const x of cut) (x.slot ? drop : x.loan ? dropLoan : dropDev).push(x.id);
       kept += extra - cut.length;
     }
   }
   if (drop.length) await svc.from('logistics_plan_slots').delete().in('id', drop);
+  if (dropLoan.length) await svc.from('logistics_plan_borrowed').update({ station_id: null, set_id: null, request_id: null, request_item: null, games_needed: [] }).in('id', dropLoan);
   if (dropDev.length) await svc.from('logistics_plan_devices').delete().eq('plan_id', r.plan_id).in('device_id', dropDev);
   if (fix.length) {
     const { data: lastSort } = await svc.from('logistics_plan_slots').select('sort').eq('plan_id', r.plan_id).order('sort', { ascending: false }).limit(1).maybeSingle();
@@ -139,6 +151,17 @@ export async function syncRequestRows(svc: SupabaseClient, r: Req): Promise<{ ke
   const ins = await svc.from('logistics_plan_slots').insert(rows);
   if (ins.error) console.error('request rows', ins.error.message);
   return { kept };
+}
+
+// The request's contact becomes its team's contact (the team is found by the request's team name, else its division's), so every page shows the same one.
+async function writeContact(svc: SupabaseClient, r: Req): Promise<void> {
+  if (r.contact === undefined) return;
+  let name = r.team?.trim() || null;
+  if (!name && r.division_id) name = ((await svc.from('divisions').select('name').eq('id', r.division_id).maybeSingle()).data?.name as string | undefined) ?? null;
+  if (!name) return;
+  const { data: sts } = await svc.from('logistics_stations').select('id, name').eq('plan_id', r.plan_id);
+  const hit = (sts ?? []).find((x) => (x.name as string).toLowerCase() === name!.toLowerCase());
+  if (hit) await svc.from('logistics_stations').update({ contact: r.contact }).eq('id', hit.id as string);
 }
 
 // A bundle was renamed or its parts changed: the open events' requests that ask for it follow (the name in the request and its rows, then the rows themselves are matched again).

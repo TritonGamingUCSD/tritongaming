@@ -24,16 +24,16 @@ export default function BorrowedTab({ plan, catalog, data, kind }: { plan: PlanA
     if (!(await confirmHold({ title: `Remove ${b.tag}?`, message: 'It is taken out of this event, with its steps.', confirmLabel: 'Hold to remove' }))) return;
     await plan.act('/borrowed', 'DELETE', { borrowed_id: b.id });
   }
-  const noun = sponsor ? 'sponsor item' : 'officer loaner';
+  const noun = sponsor ? 'sponsor loaner' : 'officer loaner';
   return (
     <div className={styles.tab}>
       <div className={styles.toolbarRow}>
         <span className={styles.count}>{rows.length} {noun}{rows.length === 1 ? '' : 's'} for this event</span>
-        {manage && <Button className={styles.addBtn} onClick={() => setDialog('new')}>{sponsor ? 'Add Sponsor Item' : 'Add Officer Loaner'}</Button>}
+        {manage && <Button className={styles.addBtn} onClick={() => setDialog('new')}>{sponsor ? 'Add Sponsor Loaner' : 'Add Officer Loaner'}</Button>}
       </div>
       {dialog && <BorrowedDialog plan={plan} catalog={catalog} data={data} borrowed={dialog === 'new' ? null : dialog} defaultKind={kind} onClose={() => setDialog(null)} />}
       {rows.length === 0 ? (
-        <div className={styles.empty}><p>{sponsor ? 'No sponsor items for this event. Add a device a sponsor is lending, then give it a team on the Allocation tab.' : 'No officer loaners for this event. Add a device an officer is bringing, then give it a team on the Allocation tab.'}</p></div>
+        <div className={styles.empty}><p>{sponsor ? 'No sponsor loaners for this event. Add a device a sponsor is lending, then give it a team on the Allocation tab.' : 'No officer loaners for this event. Add a device an officer is bringing, then give it a team on the Allocation tab.'}</p></div>
       ) : (
         <div className={styles.prizeGrid}>
           <div className={`${styles.prizeRow} ${styles.borrowRow} ${styles.prizeHeadRow}`} aria-hidden="true"><span>ID</span><span>Device</span><span>{sponsor ? 'Sponsor' : 'Officer'}</span><span>Team</span><span>Parts</span><span>Status</span><span /></div>

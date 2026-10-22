@@ -40,7 +40,7 @@ const range = (a: string, b: string) => {
   return a === b ? f(a) : `${f(a)} to ${f(b)}`;
 };
 
-export default function PlanView({ id, data, catalog, page, day, onPage, onBack }: { id: string; data: Catalog; catalog: LogisticsApi; page: EventPage; day: boolean; onPage: (p: EventPage, day?: boolean) => void; onBack: () => void }) {
+export default function PlanView({ id, data, catalog, page, day, byType, onGroup, onPage, onBack }: { id: string; data: Catalog; catalog: LogisticsApi; page: EventPage; day: boolean; byType: boolean; onGroup: (byType: boolean) => void; onPage: (p: EventPage, day?: boolean) => void; onBack: () => void }) {
   const plan = usePlan(id, true);
   const { detail, error, setError, act } = plan;
   const [picked, setPicked] = useState('');   // '' = follow the work
@@ -54,6 +54,8 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
   const [editing, setEditing] = useState(false);
   const [stationDialog, setStationDialog] = useState<{ station: Station | null } | null>(null);
   const [filling, setFilling] = useState<{ station: Station | null } | null>(null);
+  const [setsOpenPick, setSetsOpenPick] = useState<boolean | null>(null);   // Collapse all / Expand all also fold the bundles
+  const [foldGen, setFoldGen] = useState(0);
   const [fold, setFold] = useState<Record<string, boolean>>({});   // what the person chose per team; otherwise finished teams (and every team on a phone) start folded
   const [overview, setOverview] = useState(false);
   const [showList, setShowList] = useState(false);
@@ -70,7 +72,8 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
   const rows: Row[] = useMemo(() => {
     if (!detail) return [];
     const order = new Map(detail.stations.map((s) => [s.id, s.sort]));
-    return all.filter((r) => r.role === 'planned').sort((a, b) => ((a.station_id ? order.get(a.station_id) ?? 999 : 1000) - (b.station_id ? order.get(b.station_id) ?? 999 : 1000)) || a.sort - b.sort || natural(a.tag ?? a.type, b.tag ?? b.type));
+    // A sponsor or officer loaner that no row has taken is supply (it shows on its own tab), not part of any team yet.
+    return all.filter((r) => r.role === 'planned' && !((r.kind === 'sponsor' || r.kind === 'officer') && !r.requestId && !r.station_id)).sort((a, b) => ((a.station_id ? order.get(a.station_id) ?? 999 : 1000) - (b.station_id ? order.get(b.station_id) ?? 999 : 1000)) || a.sort - b.sort || natural(a.tag ?? a.type, b.tag ?? b.type));
   }, [detail, all]);
   const backups = useMemo(() => all.filter((r) => r.role === 'backup'), [all]);
 
@@ -84,8 +87,17 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
   const problems = useMemo(() => (detail ? planProblems(rows, detail.stations, steps, doneSet, detail.conflicts, () => null) : []), [detail, rows, steps, doneSet]);
   const bad = problems.filter((p) => p.sev === 'bad').length, warn = problems.length - bad;
 
+  const groupByType = byType && !day;   // allocation only: the same rows, grouped by the kind of device instead of by team
   const teams = useMemo(() => {
     const out: { key: string; station: Station | null; title: string; rows: Row[] }[] = [];
+    if (groupByType) {
+      for (const r of rows) {
+        let g = out.find((x) => x.key === `type:${r.type}`);
+        if (!g) { g = { key: `type:${r.type}`, station: null, title: r.type, rows: [] }; out.push(g); }
+        g.rows.push(r);
+      }
+      return out.sort((a, b) => natural(a.title, b.title));
+    }
     for (const s of detail?.stations ?? []) out.push({ key: s.id, station: s, title: s.name, rows: [] });
     for (const r of rows) {
       let g = out.find((x) => x.key === (r.station_id ?? 'none'));
@@ -93,7 +105,7 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
       g.rows.push(r);
     }
     return out.filter((t) => t.station || t.rows.length);
-  }, [detail?.stations, rows]);
+  }, [detail?.stations, rows, groupByType]);
 
   useEffect(() => {
     const m = window.matchMedia('(max-width: 899px)');
@@ -169,8 +181,9 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
   const inPlan = new Set(detail.items.map((i) => i.device_id));
   const free = new Map<string, string[]>();
   for (const dv of data.devices) if (dv.tag && !inPlan.has(dv.id) && isUsable(dv)) free.set(dv.type, [...(free.get(dv.type) ?? []), dv.tag]);
+  for (const b of borrowed) if (b.role === 'planned' && !b.request_id && !b.station_id) free.set(b.type, [...(free.get(b.type) ?? []), b.tag]);
   const ctx: SheetCtx = {
-    listId,
+    listId, setsOpen: setsOpenPick ?? !day, foldGen, byType: groupByType,
     api: plan, canManage: canManage && !day, closed, busy, day, stations, steps, activeId: step?.id ?? '', doneSet, doneAt, problems,
     onTick: (row, s) => begin(row, s), onTickAll: (list, s) => void markAll(list, s), onUndo: undo, onSwap: (r) => setSwapping({ id: r.id, tag: r.tag, type: r.type, kind: r.kind === 'slot' ? 'club' : r.kind }),
     onBorrowed: (r) => setBorrowing(borrowed.find((b) => b.id === r.id) ?? null), onInstalled: (list) => void install(list), onEditDevice: (r) => setDeviceEdit(catalog.data?.devices.find((x) => x.id === r.id) ?? data.devices.find((x) => x.id === r.id) ?? null),
@@ -184,9 +197,11 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
   async function install(list: Row[]) {
     setBusy(true); setError('');
     for (const r of list) {
-      if (r.kind !== 'club') continue;
+      if (r.kind === 'slot') continue;
       const miss = r.games_needed.filter((g) => !r.games.some((x) => x.toLowerCase() === g.toLowerCase()));
-      if (miss.length) await catalog.saveDevice(r.id, { games: [...r.games, ...miss] });
+      if (!miss.length) continue;
+      if (r.kind === 'club') await catalog.saveDevice(r.id, { games: [...r.games, ...miss] });
+      else await plan.act('/borrowed', 'PATCH', { borrowed_id: r.id, games: [...r.games, ...miss] });
     }
     await plan.reload();
     setBusy(false);
@@ -216,7 +231,6 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
             <details className={styles.menu}>
               <summary aria-label="More actions">More</summary>
               <div className={styles.menuList}>
-                {manage && <button type="button" onClick={() => setBorrowing('new')}>Add A Borrowed Device</button>}
                 <button type="button" onClick={() => setEditing(true)}>Edit Name And Dates</button>
                 <button type="button" onClick={() => void act('', 'PATCH', { status: closed ? 'draft' : 'closed' })}>{closed ? 'Reopen Plan' : 'Close Plan'}</button>
                 <button type="button" className={styles.menuDanger} onClick={remove}>Remove Plan</button>
@@ -229,8 +243,8 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
         <SectionTabs<string> variant="segmented" label="Event pages" value={page === 'requests' ? 'requests' : `${day && (page === 'device' || page === 'prizing') ? 'day' : 'alloc'}-${page}`}
           onChange={(v) => v === 'requests' ? onPage('requests') : onPage(v.replace(/^(day|alloc)-/, '') as EventPage, v.startsWith('day-'))} tabs={[
           { id: 'requests', label: 'Requests' },
-          { id: 'alloc-sponsor-items', label: 'Sponsor Items', count: borrowed.filter((b) => b.owner_kind === 'sponsor').length },
-          { id: 'alloc-officer-loaners', label: 'Loaners', count: borrowed.filter((b) => b.owner_kind === 'officer').length },
+          { id: 'alloc-sponsor-loaners', label: 'Sponsor Loaners', count: borrowed.filter((b) => b.owner_kind === 'sponsor').length },
+          { id: 'alloc-officer-loaners', label: 'Officer Loaners', count: borrowed.filter((b) => b.owner_kind === 'officer').length },
           { id: 'alloc-sponsor-prizing', label: 'Sponsor Prizing' },
           { id: 'alloc-device', label: 'Devices', count: rows.length },
           { id: 'alloc-prizing', label: 'Prizing', count: detail.prizes.lines.length },
@@ -276,7 +290,7 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
 
       {page === 'prizing' && <PrizingTab plan={plan} api={catalog} data={data} day={day} />}
       {page === 'sponsor-prizing' && <SponsorPrizingTab plan={plan} api={catalog} data={data} />}
-      {page === 'sponsor-items' && <BorrowedTab plan={plan} catalog={catalog} data={data} kind="sponsor" />}
+      {page === 'sponsor-loaners' && <BorrowedTab plan={plan} catalog={catalog} data={data} kind="sponsor" />}
       {page === 'officer-loaners' && <BorrowedTab plan={plan} catalog={catalog} data={data} kind="officer" />}
       {page === 'requests' && <RequestsTab plan={plan} api={catalog} data={data} />}
 
@@ -311,9 +325,10 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
                 {warn > 0 && <span className={`${styles.badge} ${styles.warnBadge}`}>{warn} to check</span>}
                 {problems.length > 0 && <span className={styles.dim}>{showList ? 'Click to hide the list' : 'Click to see the list'}</span>}
                 <span className={styles.statusSpacer} />
+                {!day && page === 'device' && <SectionTabs<'station' | 'type'> variant="segmented" label="Group the devices" value={byType ? 'type' : 'station'} onChange={(v) => onGroup(v === 'type')} tabs={[{ id: 'station', label: 'By Team' }, { id: 'type', label: 'By Type' }]} />}
                 {manage && emptyRows.length > 0 && <Button size="sm" variant="secondary" onClick={() => setFilling({ station: null })}>Fill {emptyRows.length} Empty</Button>}
                 {day && <button type="button" className={styles.linkBtn} aria-expanded={overview} onClick={() => setOverview((v) => !v)}>{overview ? 'Hide overview' : 'Overview'}</button>}
-                <button type="button" className={styles.linkBtn} onClick={() => setFold(Object.fromEntries(teams.map((t) => [t.key, !allFolded])))}>{allFolded ? 'Expand all' : 'Collapse all'}</button>
+                <button type="button" className={styles.linkBtn} onClick={() => { setFold(Object.fromEntries(teams.map((t) => [t.key, !allFolded]))); setSetsOpenPick(allFolded); setFoldGen((g) => g + 1); }}>{allFolded ? 'Expand all' : 'Collapse all'}</button>
               </div>
               {showList && problems.length > 0 && (
                 <ul className={styles.problemList}>
@@ -421,7 +436,7 @@ export default function PlanView({ id, data, catalog, page, day, onPage, onBack 
                 {s && stationDialog?.station?.id === s.id && <StationDialog plan={plan} station={s} onClose={() => setStationDialog(null)} />}
                 {s && filling?.station?.id === s.id && <FillDialog plan={plan} station={s} onClose={() => setFilling(null)} />}
                 {!folded && t.rows.length > 0 && <div className={`${styles.dayRow} ${styles.colHead}`} aria-hidden="true"><span>Device</span><span>Games, notes and problems</span>{day && <span />}<span /></div>}
-                {!folded && (t.rows.length === 0 ? <p className={styles.teamEmpty}>No rows yet.{manage ? ' Use Add Rows for what this team needs.' : ''}</p> : <SheetRows rows={t.rows} ctx={ctx} />)}
+                {!folded && (t.rows.length === 0 ? <p className={styles.teamEmpty}>No rows yet. They come from this team’s requests.</p> : <SheetRows rows={t.rows} ctx={ctx} />)}
               </section>
             );
           })}

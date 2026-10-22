@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Dialog from './Panel';
-import { DialogActions, DialogCancel } from '@/components/ui/Dialog';
+import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
 import { Field, Input } from '@/components/ui/Field';
 import { confirmHold } from '@/lib/ui/confirmHold';
@@ -16,7 +15,7 @@ import styles from './logistics.module.css';
 const money = (n: number | null) => (n === null ? '' : `$${n.toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 })}`);
 const pacificToday = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
 
-// Sponsor prizing: the prizes sponsors sent for this event. Unlike sponsor items they are never returned, and they are never given a device's place on the Allocation sheet: they are given out from
+// Sponsor prizing: the prizes sponsors sent for this event. Unlike sponsor loaners they are never returned, and they are never given a device's place on the Allocation sheet: they are given out from
 // the pools on the Prizing page. They are kept apart from the club's storage until the event is over; then what is left can be added to the storage (Inventory > Prizes).
 export default function SponsorPrizingTab({ plan, api, data }: { plan: PlanApi; api: LogisticsApi; data: Catalog }) {
   const d = plan.detail!;

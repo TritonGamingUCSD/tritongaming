@@ -1,33 +1,30 @@
 'use client';
 
 import { useState } from 'react';
-import Dialog from './Panel';
-import { DialogActions, DialogCancel } from '@/components/ui/Dialog';
+import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import { Field, Input, Textarea } from '@/components/ui/Field';
 import type { PlanApi, Station } from './usePlans';
 import styles from './logistics.module.css';
 
-// A station is a team's setup: the team (what the sheet calls "For"), a contact, and a room.
+// A station is a team's setup: the team (what the sheet calls "For"), and a room (the contact comes from its request).
 export function StationDialog({ plan, station, onClose }: { plan: PlanApi; station: Station | null; onClose: () => void }) {
   const [name, setName] = useState(station?.name ?? '');
-  const [contact, setContact] = useState(station?.contact ?? '');
   const [room, setRoom] = useState(station?.room ?? '');
   const [busy, setBusy] = useState(false);
   const save = async () => {
     if (!name.trim()) return;
     setBusy(true);
-    const ok = station ? await plan.act('/stations', 'PATCH', { station_id: station.id, name, contact, room }) : await plan.act('/stations', 'POST', { names: name.split(/\n|,/).map((s) => s.trim()).filter(Boolean), contact, room });
+    const ok = station ? await plan.act('/stations', 'PATCH', { station_id: station.id, name, room }) : await plan.act('/stations', 'POST', { names: name.split(/\n|,/).map((s) => s.trim()).filter(Boolean), room });
     setBusy(false);
     if (ok) onClose();
   };
   return (
     <Dialog title={station ? 'Edit Team' : 'Add Team'} busy={busy} onClose={onClose}>
       <div className={styles.form}>
-        <Field label={station ? 'Team or booth' : 'Team or booth'} hint="Who it is for, like Triton Valorant or Tech Booth."><Input value={name} onChange={(e) => setName(e.target.value)} autoFocus maxLength={200} /></Field>
+        <Field label="Team or booth" hint="Who it is for, like Triton Valorant or Tech Booth."><Input value={name} onChange={(e) => setName(e.target.value)} autoFocus maxLength={200} /></Field>
         <div className={styles.row2}>
-          <Field label="Contact" hint="Who to reach on the day."><Input value={contact} onChange={(e) => setContact(e.target.value)} maxLength={200} placeholder="Discord name or person" /></Field>
           <Field label="Room" hint="Where it goes."><Input value={room} onChange={(e) => setRoom(e.target.value)} maxLength={120} placeholder="East Ballroom" /></Field>
         </div>
       </div>

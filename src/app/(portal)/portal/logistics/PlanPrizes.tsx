@@ -1,8 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import Dialog from './Panel';
-import { DialogActions, DialogCancel } from '@/components/ui/Dialog';
+import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
 import { Field, Input, Select } from '@/components/ui/Field';
 import { confirmHold } from '@/lib/ui/confirmHold';

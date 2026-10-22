@@ -1,13 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Dialog from './Panel';
-import { DialogActions, DialogCancel } from '@/components/ui/Dialog';
+import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
-import { Field, Input, Select } from '@/components/ui/Field';
+import { Field, Input } from '@/components/ui/Field';
 import { confirmHold } from '@/lib/ui/confirmHold';
-import { BORROWED_KINDS } from '@/lib/logistics/constants';
 import { Combo, MultiCombo } from './Combo';
 import type { Borrowed, PlanApi } from './usePlans';
 import type { Catalog, LogisticsApi } from './useLogistics';
@@ -17,10 +15,11 @@ import styles from './logistics.module.css';
 export default function BorrowedDialog({ plan, catalog, data, borrowed, defaultKind, onClose }: { plan: PlanApi; catalog: LogisticsApi; data: Catalog; borrowed: Borrowed | null; defaultKind?: 'sponsor' | 'officer'; onClose: () => void }) {
   const [tag, setTag] = useState(borrowed?.tag ?? '');
   const [type, setType] = useState(borrowed?.type ?? '');
-  const [kind, setKind] = useState<'sponsor' | 'officer'>(borrowed?.owner_kind ?? defaultKind ?? 'sponsor');
+  const [kind] = useState<'sponsor' | 'officer'>(borrowed?.owner_kind ?? defaultKind ?? 'sponsor');
   const [sponsorId, setSponsorId] = useState(borrowed?.sponsor_id ?? '');
   const [officerId, setOfficerId] = useState(borrowed?.owner_user_id ?? '');
   const [note, setNote] = useState(borrowed?.owner_note ?? '');
+  const [games, setGames] = useState<string[]>(borrowed?.games ?? []);
   const [parts, setParts] = useState<string[]>(borrowed?.kit.map((k) => k.item) ?? []);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState('');
@@ -44,7 +43,7 @@ export default function BorrowedDialog({ plan, catalog, data, borrowed, defaultK
     setBusy(true);
     const prev = new Map((borrowed?.kit ?? []).map((k) => [k.item.toLowerCase(), k]));
     const body = {
-      tag, type, owner_kind: kind, sponsor_id: kind === 'sponsor' ? sponsorId || null : null, owner_user_id: kind === 'officer' ? officerId || null : null, owner_note: note,
+      tag, type, owner_kind: kind, sponsor_id: kind === 'sponsor' ? sponsorId || null : null, owner_user_id: kind === 'officer' ? officerId || null : null, owner_note: note, games,
       kit: parts.map((item) => prev.get(item.toLowerCase()) ?? { item, qty: 1, missing: false }),
     };
     const ok = borrowed ? await plan.act('/borrowed', 'PATCH', { borrowed_id: borrowed.id, ...body }) : await plan.act('/borrowed', 'POST', body);
@@ -68,7 +67,6 @@ export default function BorrowedDialog({ plan, catalog, data, borrowed, defaultK
           <Field label="Type"><Combo value={type || null} options={data.lists.type.map((t) => t.value)} onChange={(v) => setType(v ?? '')} onCreate={async (v) => v} clearable={false} placeholder="Choose a type…" /></Field>
         </div>
         <div className={styles.row2}>
-          <Field label="Whose"><Select value={kind} onChange={(e) => setKind(e.target.value as 'sponsor' | 'officer')}>{BORROWED_KINDS.map((k) => <option key={k.id} value={k.id}>{k.label}</option>)}</Select></Field>
           {kind === 'sponsor' ? (
             <Field label="Sponsor"><Combo value={sponsorName || null} options={sponsors.map((s) => s.name)} placeholder="Choose or add…" onChange={(v) => setSponsorId(sponsors.find((s) => s.name === v)?.id ?? '')}
               onCreate={async (v) => { const s = await catalog.saveSponsor(null, { name: v }); if (s) { setSponsors((cur) => (cur.some((x) => x.id === s.id) ? cur : [...cur, s])); setSponsorId(s.id); } return s?.name ?? null; }} /></Field>
@@ -77,6 +75,7 @@ export default function BorrowedDialog({ plan, catalog, data, borrowed, defaultK
           )}
         </div>
         <Field label="Note" hint="Where to find it or who to ask (no phone numbers)"><Input value={note} onChange={(e) => setNote(e.target.value)} maxLength={300} /></Field>
+        <Field label="Installed games"><MultiCombo values={games} options={[...new Set([...data.portalGames, ...data.lists.game.map((g) => g.value)])].sort((a, b) => a.localeCompare(b))} onChange={setGames} placeholder="Add a game…" /></Field>
         <Field label="Parts that come with it"><MultiCombo values={parts} options={data.lists.kit.map((k) => k.value)} onChange={setParts} onCreate={(v) => catalog.addOption('kit', v)} placeholder="Add a part…" /></Field>
       </div>
       <div className={styles.stickyFoot}>

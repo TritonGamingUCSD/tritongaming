@@ -103,6 +103,18 @@ try {
   t.ok('a bundle that a request asks for cannot be deleted', (await exec.call('DELETE', '/api/logistics/options', { id: bId })).s === 409);
   await exec.call('DELETE', URL_, { request_id: RB });
   await exec.call('DELETE', '/api/logistics/options', { id: bId });
+  const withContact = await exec.call('PATCH', URL_, { request_id: A, contact: 'zz_discord' });
+  t.ok('a request has one main contact, and its team shows it', withContact.s === 200 && withContact.j.request.contact === 'zz_discord' && (await plan1()).stations.find((x) => x.name === 'ZZ Valorant')?.contact === 'zz_discord');
+  // Sponsor and officer loaners can fill a row, just like inventory devices.
+  const loan = await exec.call('POST', `/api/logistics/plans/${P.id}/borrowed`, { tag: 'ZZ-LOAN', type: 'Mouse', owner_kind: 'officer', owner_user_id: exec.id });
+  t.ok('an officer loaner is added for the event', loan.s === 201, JSON.stringify(loan.j).slice(0, 150));
+  const mouseSlot = (await plan1()).slots.find((x) => x.request_id === A && x.type === 'Mouse') ?? (await plan1()).slots.find((x) => x.request_id === A);
+  const withLoan = await exec.call('POST', SL, { action: 'assign', slot_id: mouseSlot.id, tag: 'zz-loan' });
+  const afterLoan = (await plan1()).borrowed.find((x) => x.tag === 'ZZ-LOAN');
+  t.ok('typing a loaner ID fills a row with it', withLoan.s === 200 && afterLoan?.request_id === A && afterLoan.station_id === mouseSlot.station_id, JSON.stringify(afterLoan));
+  const releaseLoan = await exec.call('POST', SL, { action: 'empty', borrowed_id: afterLoan.id });
+  const freed = (await plan1()).borrowed.find((x) => x.tag === 'ZZ-LOAN');
+  t.ok('emptying the row gives the loaner back', releaseLoan.s === 200 && !freed.request_id && !freed.station_id);
   const listed = (await exec.call('GET', URL_)).j.requests.find((r) => r.id === A);
   t.ok('the request shows filled / total rows', listed.rowsTotal === (await mineRows()).length && listed.filled === 0);
   const emptyPlain = await exec.call('POST', `/api/logistics/plans/${P.id}/slots`, { action: 'empty', device_id: '00000000-0000-4000-8000-000000000000' });

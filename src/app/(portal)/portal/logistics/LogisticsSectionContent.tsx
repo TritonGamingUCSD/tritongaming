@@ -19,7 +19,7 @@ import styles from './logistics.module.css';
 type Tab = Route['tab'];
 const TOOLS_LABELS: Record<ToolsSection, string> = { sponsors: 'Sponsors', 'event-steps': 'Event Steps', bundles: 'Bundles', prizes: 'Prizes', lists: 'Equipment Lists' };
 
-// Logistics: Events (a plan for each event: where every device goes, prizing, sponsor items, officer loaners, requests), Inventory (what is in storage: devices and prizes) and Tools (sponsors and
+// Logistics: Events (a plan for each event: where every device goes, prizing, sponsor loaners, officer loaners, requests), Inventory (what is in storage: devices and prizes) and Tools (sponsors and
 // the lists that fill the dropdowns). Every officer can look; people with the Logistics permission can change things. Self-contained: it has its own tables and routes and shares nothing with check-in.
 // Every place has its own address (see logisticsRoute.ts), so a copied link opens exactly there.
 export default function LogisticsSectionContent({ canManage }: { canManage: boolean }) {

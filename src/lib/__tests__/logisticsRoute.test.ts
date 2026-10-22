@@ -10,7 +10,7 @@ describe('Logistics addresses', () => {
     expect(parseRoute('events', 'ds-2026', 'prizing', false, 'day')).toEqual({ tab: 'events', plan: 'ds-2026', page: 'prizing', day: true });
     expect(parseRoute('events', 'ds-2026', 'device', false, 'day')).toEqual({ tab: 'events', plan: 'ds-2026', page: 'device', day: true });
     expect(parseRoute('events', 'ds-2026', 'allocation', false)).toEqual({ tab: 'events', plan: 'ds-2026', page: 'device' });
-    expect(parseRoute('events', 'ds-2026', 'sponsor-items', false, 'day')).toEqual({ tab: 'events', plan: 'ds-2026', page: 'sponsor-items' });
+    expect(parseRoute('events', 'ds-2026', 'sponsor-items', false, 'day')).toEqual({ tab: 'events', plan: 'ds-2026', page: 'sponsor-loaners' });
     expect(parseRoute('inventory', 'prizes', undefined, false)).toEqual({ tab: 'inventory', sub: 'prizes' });
     expect(parseRoute('inventory', undefined, undefined, false)).toEqual({ tab: 'inventory', sub: 'devices' });
     expect(parseRoute('tools', 'bundles', undefined, true)).toEqual({ tab: 'tools', sub: 'bundles' });
@@ -34,10 +34,10 @@ describe('Logistics addresses', () => {
   });
   it('reads the event straight after logistics, and the old addresses', () => {
     expect(parseRoute('ds-2026', 'event-day-devices', undefined, false)).toEqual({ tab: 'events', plan: 'ds-2026', page: 'device', day: true });
-    expect(parseRoute('ds-2026', 'allocation-sponsor-items', undefined, false)).toEqual({ tab: 'events', plan: 'ds-2026', page: 'sponsor-items' });
+    expect(parseRoute('ds-2026', 'allocation-sponsor-items', undefined, false)).toEqual({ tab: 'events', plan: 'ds-2026', page: 'sponsor-loaners' });
     expect(parseRoute('ds-2026', undefined, undefined, false)).toEqual({ tab: 'events', plan: 'ds-2026', page: 'device' });
     expect(parseRoute('events', 'ds-2026', 'event-day-devices', false)).toEqual({ tab: 'events', plan: 'ds-2026', page: 'device', day: true });
-    expect(parseRoute('events', 'ds-2026', 'allocation-sponsor-items', false)).toEqual({ tab: 'events', plan: 'ds-2026', page: 'sponsor-items' });
-    expect(parseRoute('events', 'ds-2026', 'event-day-sponsor-items', false)).toEqual({ tab: 'events', plan: 'ds-2026', page: 'sponsor-items' });
+    expect(parseRoute('events', 'ds-2026', 'allocation-sponsor-items', false)).toEqual({ tab: 'events', plan: 'ds-2026', page: 'sponsor-loaners' });
+    expect(parseRoute('events', 'ds-2026', 'event-day-sponsor-items', false)).toEqual({ tab: 'events', plan: 'ds-2026', page: 'sponsor-loaners' });
   });
 });

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { authorizeLogistics } from '@/lib/logistics/auth';
 import { BORROWED_COLUMNS, UUID, touchPlan } from '@/lib/logistics/planServer';
-import { cleanKit, tagKey } from '@/lib/logistics/devices';
+import { cleanKit, cleanList, tagKey } from '@/lib/logistics/devices';
 
 export const dynamic = 'force-dynamic';
 const text = (v: unknown, n: number) => { const s = String(v ?? '').trim().slice(0, n); return s || null; };
@@ -32,6 +32,7 @@ async function clean(svc: ReturnType<typeof Object>, planId: string, b: Record<s
   if ('owner_user_id' in b || out.owner_kind) out.owner_user_id = kind === 'officer' ? uuid(b.owner_user_id) : null;
   if ('owner_note' in b) out.owner_note = text(b.owner_note, 300);
   if ('notes' in b) out.notes = text(b.notes, 1000);
+  if ('games' in b) out.games = cleanList(b.games, 20);
   if ('kit' in b) out.kit = cleanKit(b.kit);
   if ('station_id' in b) {
     const sid = uuid(b.station_id);
