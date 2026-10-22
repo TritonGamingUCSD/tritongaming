@@ -36,7 +36,7 @@ Admin passes every check. Roles combine: a person has everything each of their r
 | Events | · | · | ✔ | ✔ | ✔ | · | ✔ | ✔ | ✔ |
 | Check-In | · | · | ✔ | · | ✔ | · | ✔ | ✔ | ✔ |
 | Meetings | · | · | ✔ | · | ✔ | · | ✔ | ✔ | ✔ |
-| Logistics | · | · | · | · | ✔ | ✔ | ✔ | ✔ | ✔ |
+| Logistics | · | · | ✔ | · | ✔ | ✔ | ✔ | ✔ | ✔ |
 | Strikes | · | · | · | · | · | · | · | ✔ | ✔ |
 | Quarter status | · | · | · | · | · | · | · | ✔ | ✔ |
 | TG Members (and Teams) | · | · | ✔ | ✔ | ✔ | · | ✔ | ✔ | ✔ |
@@ -80,7 +80,7 @@ Admin passes every check. Roles combine: a person has everything each of their r
 | `attend_meetings` | · | · | ✔ | · | ✔ | · | ✔ | ✔ | ✔ |
 | `host_meetings` | · | · | · | · | · | · | ✔ | ✔ | ✔ |
 | **Logistics** ||||||||||
-| `view_logistics` | · | · | · | · | ✔ | ✔ | ✔ | ✔ | ✔ |
+| `view_logistics` | · | · | ✔ | · | ✔ | ✔ | ✔ | ✔ | ✔ |
 | `manage_logistics` | · | · | · | · | · | · | · | ✔ | ✔ |
 | **HR** ||||||||||
 | `manage_strikes` | · | · | · | · | · | · | · | ✔ | ✔ |
@@ -143,7 +143,7 @@ Admin passes every check. Roles combine: a person has everything each of their r
 | **Attend meetings** · `attend_meetings` | Check in to meetings with the room code, see their own meeting history, answer plans and questions. | Recruit, Officer, Lead, Executive, Admin | routes |
 | **Plan meetings** · `host_meetings` | Create meetings, plans and teams, and run, edit and see results for the meetings they planned. | Lead, Executive, Admin | routes; lost while inactive |
 | **Logistics** | | | |
-| **See Logistics** · `view_logistics` | Open Logistics and look at the equipment catalog (including device logins), sponsors and event setups. Cannot change anything. | Officer, Division Lead, Lead, Executive, Admin | pages + routes |
+| **See Logistics** · `view_logistics` | Open Logistics and look at the equipment catalog (including device logins), sponsors and event setups. Cannot change anything. | Recruit, Officer, Division Lead, Lead, Executive, Admin | pages + routes |
 | **Run Logistics** · `manage_logistics` | Add, edit and remove equipment, sponsors and the Logistics lists, and plan events. Exec and admin by default; can be given to a person or group in Admin → Access. Submitting requests and the event-day steps are open to every officer. | Executive, Admin | routes; lost while inactive |
 | **HR** | | | |
 | **Strike tracker** · `manage_strikes` | See everyone’s strikes and vouchers, add or remove strikes, review missed meetings, give or remove vouchers. | Executive, Admin | routes; lost while inactive |
@@ -204,5 +204,5 @@ The files that ask for each capability, so a change can be traced. Page and rout
 - `attend_meetings` (12): `app/(portal)/portal/page`, `app/api/meetings/[id]/answer/route`, `app/api/meetings/[id]/results/route`, `app/api/meetings/check-in/route`, `app/api/meetings/emojis/[id]/route`, `app/api/meetings/emojis/route`, `app/api/meetings/mine/route`, `app/api/meetings/today/route`, `app/api/meetings/upcoming/route`, `app/api/portal/search/route`, `lib/meetings/meetings.ts`, `lib/portal/portalCommands.ts`
 - `host_meetings` (22): `app/(portal)/portal/page`, `app/api/meetings/[id]/absence/route`, `app/api/meetings/[id]/attendance/route`, `app/api/meetings/[id]/live/route`, `app/api/meetings/[id]/reactions/route`, `app/api/meetings/[id]/route`, `app/api/meetings/absence/route`, `app/api/meetings/cancel/route`, `app/api/meetings/close/route`, `app/api/meetings/emojis/[id]/route`, `app/api/meetings/emojis/route`, `app/api/meetings/groups/[id]/route`, `app/api/meetings/groups/route`, `app/api/meetings/open/route`, `app/api/meetings/schedule/route`, `app/api/meetings/series/[id]/excused/route`, `app/api/meetings/series/[id]/route`, `app/api/meetings/update/route`, `app/api/portal/search/route`, `lib/meetings/meetingPlanServer.ts`, `lib/meetings/meetings.ts`, `lib/portal/portalCommands.ts`
 - `view_logistics` (3): `app/(portal)/portal/page`, `lib/logistics/auth.ts`, `lib/portal/portalCommands.ts`
-- `manage_logistics` (3): `app/(portal)/portal/page`, `lib/logistics/auth.ts`, `lib/portal/portalCommands.ts`
+- `manage_logistics` (4): `app/(portal)/portal/page`, `lib/logistics/auth.ts`, `lib/logistics/requestServer.ts`, `lib/portal/portalCommands.ts`
 
