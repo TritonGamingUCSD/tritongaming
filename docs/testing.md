@@ -34,3 +34,7 @@ The dev server talks to the real Supabase project, so a test can reach real peop
 2. Create the rows the feature needs (a meeting, an event, a doc).
 3. Call the routes with each person's cookie and check the status codes and the rows.
 4. In a `finally` block delete the rows and the users.
+
+## Looking at Logistics screens
+
+Typecheck, unit tests and the `test:logistics-*` scripts cannot see layout. After a layout change, open an event in the portal (a throwaway `ZZ` event) at laptop width and at phone width (about 390 px, light and dark) and look at: Requests, Allocation (devices and prizing), Event Day, Equipment, a pop-up of each kind. Check that columns line up row to row, nothing runs off the table edge, tap targets are comfortable, and a pop-up fills the phone screen with its buttons at the bottom.

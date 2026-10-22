@@ -11,7 +11,7 @@ import styles from './logistics.module.css';
 
 export interface SheetCtx {
   api: ReturnType<typeof usePlan>; canManage: boolean; closed: boolean; manager: boolean; busy: boolean; pending: Set<string>; day: boolean; stations: Station[]; steps: StepDef[]; activeId: string;
-  listId: (type: string) => string; setsOpen: boolean; foldGen: number; byType: boolean; main: Set<string>; doneSet: Set<string>; doneAt: Map<string, string>; doneBy: Map<string, string>; problems: Problem[];
+  hideDone: boolean; listId: (type: string) => string; setsOpen: boolean; foldGen: number; byType: boolean; main: Set<string>; doneSet: Set<string>; doneAt: Map<string, string>; doneBy: Map<string, string>; problems: Problem[];
   onTick: (row: Row, step: StepDef) => void; onTickAll: (rows: Row[], step: StepDef) => void; onUndo: (item: { id: string; kind: Slim['kind'] }, stepId: string) => void;
   onSwap: (r: Row) => void; onBorrowed: (r: Row) => void; onInstalled: (rows: Row[]) => void; onEditDevice: (r: Row) => void;
 }
@@ -158,5 +158,6 @@ function SetLine({ unit, ctx }: { unit: Unit; ctx: SheetCtx }) {
 }
 
 export function SheetRows({ rows, ctx, backup }: { rows: Row[]; ctx: SheetCtx; backup?: boolean }) {
-  return <>{units(rows, ctx.main).map((u) => (u.set && !backup ? <SetLine key={`${u.key}:${ctx.foldGen}`} unit={u} ctx={ctx} /> : u.lines.map((l) => <DeviceLine key={l.key} line={l} ctx={ctx} backup={backup} />)))}</>;
+  const allDone = (u: Unit) => u.lines.every((l) => l.rows.every((r) => ctx.steps.every((s) => !stepAppliesTo(s, rowKind(r)) || ctx.doneSet.has(`${r.id}:${s.id}`))));
+  return <>{units(rows, ctx.main).filter((u) => !(ctx.hideDone && !backup && allDone(u))).map((u) => (u.set && !backup ? <SetLine key={`${u.key}:${ctx.foldGen}`} unit={u} ctx={ctx} /> : u.lines.map((l) => <DeviceLine key={l.key} line={l} ctx={ctx} backup={backup} />)))}</>;
 }

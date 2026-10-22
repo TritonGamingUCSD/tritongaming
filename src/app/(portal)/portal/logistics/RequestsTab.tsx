@@ -57,6 +57,16 @@ export default function RequestsTab({ kind, plan, api, data }: { kind: RequestKi
     return [...rows].sort((a, b) => REQUEST_STATUSES.indexOf(a.status) - REQUEST_STATUSES.indexOf(b.status) || b.created_at.localeCompare(a.created_at));
   }, [loaded, kind]);
 
+  // One line for the whole page: how many requests, how many still need planning, and how far the rows or prizes are filled.
+  const summary = useMemo(() => {
+    const open = list.filter((r) => r.status !== 'declined');
+    const fresh = open.filter((r) => r.status === 'submitted').length;
+    const head = `${list.length} request${list.length === 1 ? '' : 's'}${fresh ? ` · ${fresh} new` : ''}`;
+    if (kind === 'devices') { const rows = open.reduce((n, r) => n + r.rowsTotal, 0), filled = open.reduce((n, r) => n + r.filled, 0); return `${head} · ${filled}/${rows} device rows filled`; }
+    const want = open.reduce((n, r) => n + (r.items as PrizeItem[]).reduce((m, i) => m + i.qty, 0), 0), got = open.reduce((n, r) => n + (r.prizesGot?.qty ?? 0), 0);
+    return `${head} · ${got}/${want} prizes filled`;
+  }, [list, kind]);
+
   async function setStatus(r: Req, status: RequestStatus) {
     const res = await call<{ request: Req }>(`/api/logistics/plans/${planId}/requests`, 'PATCH', { request_id: r.id, status });
     if (res.ok) { apply({ ...r, ...res.data.request }); void load(); } else setError(res.error);
@@ -76,7 +86,7 @@ export default function RequestsTab({ kind, plan, api, data }: { kind: RequestKi
   return (
     <div className={styles.tab}>
       <div className={styles.toolbarRow}>
-        <span className={styles.count}>{manage ? 'Every request for this event' : 'Your requests for this event'}</span>
+        <span className={styles.count}>{!manage ? 'Your requests for this event' : list.length === 0 ? 'No requests yet' : summary}</span>
         {!closed && <Button className={styles.addBtn} onClick={() => setDialog('new')}>New Request</Button>}
       </div>
       {dialog && <RequestDialog kind={kind} plan={plan} api={api} data={data} planId={planId} loaded={loaded} request={dialog === 'new' ? null : dialog} onSaved={() => { setDialog(null); void load(); }} onClose={() => setDialog(null)} />}

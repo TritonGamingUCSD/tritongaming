@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Camera, RefreshCw } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import Loading from '@/components/Loading/Loading';
@@ -25,6 +26,7 @@ import SwapDialog from './SwapDialog';
 import { planRows, primaryRank, type Row } from './planRows';
 import { TextCell } from './Cells';
 import { usePrizes } from './usePrizes';
+const QrScanner = dynamic(() => import('../meetings/QrScanner'), { ssr: false });   // the camera reader is only loaded when Scan is pressed
 import { doneKey, usePlan, type Borrowed, type Slim, type Station, type StepResult } from './usePlans';
 import type { Catalog, LogisticsApi } from './useLogistics';
 import styles from './logistics.module.css';
@@ -42,7 +44,7 @@ const range = (a: string, b: string) => {
   return a === b ? f(a) : `${f(a)} to ${f(b)}`;
 };
 
-export default function PlanView({ id, data, catalog, page, day, byType, onGroup, onPage, onBack }: { id: string; data: Catalog; catalog: LogisticsApi; page: EventPage; day: boolean; byType: boolean; onGroup: (byType: boolean) => void; onPage: (p: EventPage, day?: boolean) => void; onBack: () => void }) {
+export default function PlanView({ id, data, catalog, page, day, byType, openOnly, onOpenOnly, onGroup, onPage, onBack }: { openOnly: boolean; onOpenOnly: (v: boolean) => void; id: string; data: Catalog; catalog: LogisticsApi; page: EventPage; day: boolean; byType: boolean; onGroup: (byType: boolean) => void; onPage: (p: EventPage, day?: boolean) => void; onBack: () => void }) {
   const plan = usePlan(id, true);
   const prizeInv = usePrizes();
   const { detail, error, setError, act } = plan;
@@ -50,6 +52,8 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<Feedback>(null);
+  const [scanning, setScanning] = useState(false);
+  const [scanNote, setScanNote] = useState('');
   const [kit, setKit] = useState<{ row: Target; flags: Record<string, boolean> } | null>(null);
   const [swapping, setSwapping] = useState<{ id: string; tag: string | null; type: string; kind: 'club' | 'sponsor' | 'officer' } | null>(null);
   const [borrowing, setBorrowing] = useState<Borrowed | 'new' | null>(null);
@@ -234,6 +238,21 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
     if (!r.ok) { setFeedback({ tone: 'error', text: r.error }); return; }
     offerUndo(`${row.tag ?? row.type}: ${forStep.name}`, () => void undo({ id: row.id, kind: row.kind }, forStep.id));
   }
+  // Scan: a device's QR (its ID, or a link ending in it) marks the selected step, the same as typing the ID. The camera stays open for the next one.
+  function onScanText(raw: string) {
+    let tag = raw.trim();
+    try { const u = new URL(tag); tag = u.searchParams.get('tag') ?? u.searchParams.get('id') ?? u.pathname.split('/').filter(Boolean).pop() ?? tag; } catch { /* plain text */ }
+    tag = decodeURIComponent(tag).trim();
+    if (!step || !tag) return false;
+    if (step.kit) { setScanNote(`“${step.name}” reviews the parts: tick it on the sheet or type the ID.`); return false; }
+    void plan.doStep({ tag, step_id: step.id }).then((r) => {
+      if (!r.ok) { setScanNote(r.error); return; }
+      const nm = r.result.item.tag ?? r.result.item.type;
+      setScanNote(r.result.already ? `${nm} was already marked “${step.name}”.` : `${nm}: ${step.name}`);
+      if (!r.result.already) offerUndo(`${nm}: ${step.name}`, () => void undo({ id: r.result.item.id, kind: r.result.item.kind }, step.id));
+    });
+    return false;
+  }
   const submit = () => { if (text.trim() && !busy) begin(null, step, text.trim()); };
   async function undo(item: { id: string; kind: Slim['kind'] }, stepIdToUndo: string) {
     const key = `${item.id}:${stepIdToUndo}`;
@@ -271,7 +290,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
   for (const dv of data.devices) if (dv.tag && !inPlan.has(dv.id) && isUsable(dv)) free.set(dv.type, [...(free.get(dv.type) ?? []), dv.tag]);
   for (const b of borrowed) if (b.role === 'planned' && !b.request_id && !b.station_id) free.set(b.type, [...(free.get(b.type) ?? []), b.tag]);
   const ctx: SheetCtx = {
-    listId, setsOpen: setsOpenPick ?? !day, foldGen, byType: groupByType,
+    hideDone: day && openOnly, listId, setsOpen: setsOpenPick ?? !day, foldGen, byType: groupByType,
     api: plan, canManage: canManage && !day, manager: canManage, closed, busy, pending: pendingSet, main: mainTypes, day, stations, steps, activeId: step?.id ?? '', doneSet, doneAt, doneBy, problems,
     onTick: (row, s) => void tick(row, s), onTickAll: (list, s) => void markAll(list, s), onUndo: undo, onSwap: (r) => setSwapping({ id: r.id, tag: r.tag, type: r.type, kind: r.kind === 'slot' ? 'club' : r.kind }),
     onBorrowed: (r) => setBorrowing(borrowed.find((b) => b.id === r.id) ?? null), onInstalled: (list) => void install(list), onEditDevice: (r) => setDeviceEdit(catalog.data?.devices.find((x) => x.id === r.id) ?? data.devices.find((x) => x.id === r.id) ?? null),
@@ -339,6 +358,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
             <datalist id="day-ids">{all.filter((r) => r.kind !== 'slot' && r.tag).map((r) => <option key={r.id} value={r.tag!}>{`${r.type}${r.stationId ? ` · ${stationOf.get(r.stationId)?.name ?? ''}` : ''}`}</option>)}</datalist>
             <input ref={input} list="day-ids" className={styles.dayInput} value={text} onChange={(e) => setText(e.target.value)} placeholder={`Type an ID to mark “${step?.name ?? 'the step'}”`} aria-label={`Device ID for ${step?.name ?? 'the step'}`} autoCapitalize="characters" autoComplete="off" autoCorrect="off" spellCheck={false} enterKeyHint="done" disabled={busy || !step} />
             <Button type="submit" disabled={!text.trim() || busy} loading={busy}>Mark</Button>
+            <button type="button" className={styles.iconBtn} title="Scan a device QR" aria-label="Scan a device QR" onClick={() => { setScanNote(''); setScanning(true); }} disabled={!step}><Camera size={16} aria-hidden="true" /></button>
           </form>
             {fb && (
               <div className={`${styles.lastBar} ${fb.tone === 'ok' ? styles.lastOk : fb.tone === 'already' ? styles.lastWarn : styles.lastBad}`} role="status" aria-live="polite">
@@ -358,6 +378,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
         )}
         {page === 'device' && day && closed && <Notice tone="error">This event is closed, so nothing more can be recorded.</Notice>}
       </div>
+      {scanning && <QrScanner onScan={onScanText} onClose={() => setScanning(false)} title={`Scan: ${step?.name ?? ''}`} note={scanNote || 'Point at a device QR. Each one scanned is marked.'} />}
       {error && <div role="alert" onClick={() => setError('')}><Notice tone="error">{error}</Notice></div>}
       {deviceEdit && <DeviceDialog api={catalog} data={data} device={deviceEdit} onClose={() => { setDeviceEdit(null); void plan.reload(); }} />}
       {swapping && <SwapDialog plan={plan} options={[...(free.get(swapping.type) ?? [])].sort(natural)} device={swapping} onClose={() => setSwapping(null)} />}
@@ -408,6 +429,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
                     <button type="button" aria-pressed={byType} onClick={() => onGroup(true)}>By Type</button>
                   </span>
                 )}
+                {day && page === 'device' && <button type="button" className={styles.linkBtn} aria-pressed={openOnly} onClick={() => onOpenOnly(!openOnly)}>{openOnly ? 'Show All' : 'Unfinished Only'}</button>}
                 {manage && emptyRows.length > 0 && <button type="button" className={styles.linkBtn} onClick={() => setFilling({ station: null })}>Fill {emptyRows.length} Empty</button>}
                 {day && <button type="button" className={styles.linkBtn} aria-expanded={overview} onClick={() => setOverview((v) => !v)}>{overview ? 'Hide overview' : 'Overview'}</button>}
                 <button type="button" className={styles.linkBtn} onClick={() => { setFold(Object.fromEntries(teams.map((t) => [t.key, !allFolded]))); setSetsOpenPick(allFolded); setFoldGen((g) => g + 1); }}>{allFolded ? 'Expand all' : 'Collapse all'}</button>
