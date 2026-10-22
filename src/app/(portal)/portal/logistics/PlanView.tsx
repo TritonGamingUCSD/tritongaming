@@ -88,7 +88,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
   const problems = useMemo(() => (detail ? planProblems(rows, detail.stations, steps, doneSet, detail.conflicts, () => null) : []), [detail, rows, steps, doneSet]);
   const bad = problems.filter((p) => p.sev === 'bad').length, warn = problems.length - bad;
 
-  const groupByType = byType && !day;   // allocation only: the same rows, grouped by the kind of device instead of by team
+  const groupByType = byType && page === 'device';   // the same rows, grouped by the kind of device instead of by team
   const teams = useMemo(() => {
     const out: { key: string; station: Station | null; title: string; rows: Row[] }[] = [];
     if (groupByType) {
@@ -328,7 +328,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
                 {warn > 0 && <span className={`${styles.badge} ${styles.warnBadge}`}>{warn} to check</span>}
                 {problems.length > 0 && <span className={styles.dim}>{showList ? 'Click to hide the list' : 'Click to see the list'}</span>}
                 <span className={styles.statusSpacer} />
-                {!day && page === 'device' && (
+                {page === 'device' && (
                   <span className={styles.miniSeg} role="group" aria-label="Group the devices">
                     <button type="button" aria-pressed={!byType} onClick={() => onGroup(false)}>By Team</button>
                     <button type="button" aria-pressed={byType} onClick={() => onGroup(true)}>By Type</button>

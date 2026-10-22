@@ -40,4 +40,9 @@ describe('Logistics addresses', () => {
     expect(parseRoute('events', 'ds-2026', 'allocation-sponsor-items', false)).toEqual({ tab: 'events', plan: 'ds-2026', page: 'sponsor-loaners' });
     expect(parseRoute('events', 'ds-2026', 'event-day-sponsor-items', false)).toEqual({ tab: 'events', plan: 'ds-2026', page: 'sponsor-loaners' });
   });
+  it('groups by device type on the allocation and on the event day', () => {
+    expect(parseRoute('ds-2026', 'allocation-devices', undefined, false, 'type')).toEqual({ tab: 'events', plan: 'ds-2026', page: 'device', byType: true });
+    expect(parseRoute('ds-2026', 'event-day-devices', undefined, false, 'type')).toEqual({ tab: 'events', plan: 'ds-2026', page: 'device', day: true, byType: true });
+    expect(routeParams({ tab: 'events', plan: 'ds-2026', page: 'device', day: true, byType: true })).toEqual({ tab: 'ds-2026', subtab: 'event-day-devices', detail: null, view: 'type' });
+  });
 });
