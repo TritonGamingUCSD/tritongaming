@@ -18,7 +18,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { data: last } = await auth.svc.from('logistics_stations').select('sort').eq('plan_id', id).order('sort', { ascending: false }).limit(1).maybeSingle();
   let sort = (last?.sort as number | undefined) ?? 0;
   const extra = { contact: text(b.contact, 200), room: text(b.room, 120) };
-  const { data, error } = await auth.svc.from('logistics_stations').insert(names.map((n) => ({ plan_id: id, name: n, sort: ++sort, ...extra }))).select('id, name, sort, contact, room, confirmed');
+  const { data, error } = await auth.svc.from('logistics_stations').insert(names.map((n) => ({ plan_id: id, name: n, sort: ++sort, ...extra }))).select('id, name, sort, contact, room');
   if (error) return NextResponse.json({ error: 'Couldn’t add that.' }, { status: 500 });
   await touchPlan(auth.svc, id);
   return NextResponse.json({ stations: data }, { status: 201 });
@@ -34,9 +34,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if ('name' in b) { const n = name(b.name); if (!n) return NextResponse.json({ error: 'The name can’t be empty.' }, { status: 400 }); patch.name = n; }
   if ('contact' in b) patch.contact = text(b.contact, 200);
   if ('room' in b) patch.room = text(b.room, 120);
-  if (typeof b.confirmed === 'boolean') patch.confirmed = b.confirmed;
   if (!Object.keys(patch).length) return NextResponse.json({ error: 'Nothing to change.' }, { status: 400 });
-  const { data, error } = await auth.svc.from('logistics_stations').update(patch).eq('id', b.station_id).eq('plan_id', id).select('id, name, sort, contact, room, confirmed').single();
+  const { data, error } = await auth.svc.from('logistics_stations').update(patch).eq('id', b.station_id).eq('plan_id', id).select('id, name, sort, contact, room').single();
   if (error || !data) return NextResponse.json({ error: 'Couldn’t save that.' }, { status: 500 });
   await touchPlan(auth.svc, id);
   return NextResponse.json({ station: data });

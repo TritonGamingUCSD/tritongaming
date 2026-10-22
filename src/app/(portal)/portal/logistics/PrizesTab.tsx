@@ -55,7 +55,7 @@ export default function PrizesTab({ api, data }: { api: LogisticsApi; data: Cata
         <div className={styles.empty}><p>{canEdit ? 'No prizes yet. Add the first one.' : 'No prizes have been added yet.'}</p></div>
       ) : rows.length === 0 ? <div className={styles.empty}><p>Nothing matches.</p></div> : (
         <div className={styles.prizeGrid}>
-          <div className={`${styles.prizeRow} ${styles.prizeHeadRow}`} aria-hidden="true"><span>Prize</span><span>Sponsor</span><span>Size</span><span>Price</span><span>In stock</span><span>Promised</span><span>Given</span><span>Left</span><span>Where</span><span /></div>
+          <div className={`${styles.prizeRow} ${styles.prizeHeadRow}`} aria-hidden="true"><span>Prize</span><span>Sponsor</span><span>Size</span><span>Type</span><span>Price</span><span>In stock</span><span>Promised</span><span>Given</span><span>Left</span><span>Where</span><span /></div>
           {rows.map((p) => <PrizeEditRow key={p.id} p={p} prizes={prizes} api={api} data={data} canEdit={canEdit} where rowClass={styles.prizeRow} onDetails={() => setDialog(p)} />)}
         </div>
       )}
@@ -67,7 +67,7 @@ export default function PrizesTab({ api, data }: { api: LogisticsApi; data: Cata
 export function PrizeDialog({ prizes, api, data, prize, where, onClose }: { prizes: ReturnType<typeof usePrizes>; api: LogisticsApi; data: Catalog; prize: PrizeRow | null; where: 'storage' | { plan: string }; onClose: () => void }) {
   const readOnly = !data.canManage;
   const [f, setF] = useState({
-    name: prize?.name ?? '', sponsor_id: prize?.sponsor_id ?? '', size: prize?.size ?? '', price: prize?.price === null || prize?.price === undefined ? '' : String(prize.price),
+    name: prize?.name ?? '', sponsor_id: prize?.sponsor_id ?? '', size: prize?.size ?? '', type: prize?.type ?? '', price: prize?.price === null || prize?.price === undefined ? '' : String(prize.price),
     quantity: String(prize?.quantity ?? 1), estimate: prize?.quantity_is_estimate ?? false, shelf: prize?.shelf ?? null as string | null, tier: prize?.tier ?? null as string | null,
     place_note: prize?.place_note ?? '', plan_id: where === 'storage' ? '' : where.plan, expires_on: prize?.expires_on ?? '', notes: prize?.notes ?? '',
   });
@@ -79,7 +79,7 @@ export function PrizeDialog({ prizes, api, data, prize, where, onClose }: { priz
   async function save() {
     setProblem('');
     setBusy(true);
-    const body = { name: f.name, sponsor_id: f.sponsor_id || null, size: f.size || null, price: f.price === '' ? null : Number(f.price), quantity: Number(f.quantity), quantity_is_estimate: f.estimate, shelf: f.shelf, tier: f.tier, place_note: f.place_note, plan_id: f.plan_id || null, expires_on: f.expires_on || null, notes: f.notes };
+    const body = { name: f.name, sponsor_id: f.sponsor_id || null, size: f.size || null, type: f.type || null, price: f.price === '' ? null : Number(f.price), quantity: Number(f.quantity), quantity_is_estimate: f.estimate, shelf: f.shelf, tier: f.tier, place_note: f.place_note, plan_id: f.plan_id || null, expires_on: f.expires_on || null, notes: f.notes };
     const r = await prizes.save(prize?.id ?? null, body);
     setBusy(false);
     if (r) onClose(); else setProblem('That didn’t save. The message at the top of the page says why.');
@@ -94,12 +94,13 @@ export function PrizeDialog({ prizes, api, data, prize, where, onClose }: { priz
       <div className={styles.form}>
         {problem && <Notice tone="error">{problem}</Notice>}
         <Field label="Prize"><Input value={f.name} onChange={(e) => set('name', e.target.value)} disabled={readOnly} autoFocus maxLength={160} /></Field>
-        <div className={styles.row2}>
+        <div className={styles.row3}>
           <Field label="Sponsor" hint="Leave empty for club-bought prizes.">
             <Combo value={data.sponsors.find((s) => s.id === f.sponsor_id)?.name ?? null} options={sponsorNames} disabled={readOnly} placeholder="Choose…"
               onChange={(v) => set('sponsor_id', data.sponsors.find((s) => s.name === v)?.id ?? '')}
               onCreate={async (v) => { const s = await api.saveSponsor(null, { name: v }); if (s) set('sponsor_id', s.id); return s?.name ?? null; }} />
           </Field>
+          <Field label="Type" hint="What it is: a mug, a gift card, a plushie…"><Input value={f.type} onChange={(e) => set('type', e.target.value)} disabled={readOnly} maxLength={80} /></Field>
           <Field label="Size"><Combo value={f.size || null} options={data.lists.prize_size.map((s) => s.value)} disabled={readOnly} placeholder="Big prize" onChange={(v) => set('size', v ?? '')} onCreate={createOpt('prize_size')} /></Field>
         </div>
         <div className={styles.row2}>

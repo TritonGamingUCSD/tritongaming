@@ -133,29 +133,30 @@ try {
   t.ok('a dead device and a missing part are flagged before the day', d3.conflicts.some((c) => c.kind === 'unusable' && c.tag === 'ZZ-DEAD') && d3.conflicts.some((c) => c.kind === 'missing_part' && c.tag === 'ZZ-A'), JSON.stringify(d3.conflicts));
 
   // ---- swapping
-  t.ok('a swap needs a reason', (await officer.call('POST', `/api/logistics/plans/${P1}/swap`, { device_id: zA.id, replacement_tag: 'ZZ-B' })).s === 400);
-  t.ok('a dead replacement is refused', (await officer.call('POST', `/api/logistics/plans/${P1}/swap`, { device_id: zA.id, replacement_tag: 'ZZ-DEAD', reason: 'x' })).s === 400);
-  const swap = await officer.call('POST', `/api/logistics/plans/${P1}/swap`, { device_id: zA.id, replacement_tag: 'zz-b', reason: 'Screen flickers' });
-  t.ok('an officer swaps a device and sees where to get the replacement', swap.s === 200 && swap.j.replacement.tag === 'ZZ-B' && swap.j.replacement.shelf === 'Shelf A', JSON.stringify(swap));
+  t.ok('an officer cannot swap a device', (await officer.call('POST', `/api/logistics/plans/${P1}/swap`, { device_id: zA.id, replacement_tag: 'ZZ-B', reason: 'x' })).s === 403);
+  t.ok('a swap needs a reason', (await exec.call('POST', `/api/logistics/plans/${P1}/swap`, { device_id: zA.id, replacement_tag: 'ZZ-B' })).s === 400);
+  t.ok('a dead replacement is refused', (await exec.call('POST', `/api/logistics/plans/${P1}/swap`, { device_id: zA.id, replacement_tag: 'ZZ-DEAD', reason: 'x' })).s === 400);
+  const swap = await exec.call('POST', `/api/logistics/plans/${P1}/swap`, { device_id: zA.id, replacement_tag: 'zz-b', reason: 'Screen flickers' });
+  t.ok('the logistics team swaps a device and sees where to get the replacement', swap.s === 200 && swap.j.replacement.tag === 'ZZ-B' && swap.j.replacement.shelf === 'Shelf A', JSON.stringify(swap));
   const d4 = (await officer.call('GET', `/api/logistics/plans/${P1}`)).j;
   const outRow = d4.items.find((i) => i.device_id === zA.id), inRow = d4.items.find((i) => i.device_id === zB.id);
   t.ok('the original stays as a backup with the reason, the replacement is planned', outRow.role === 'backup' && outRow.swap_reason === 'Screen flickers' && outRow.swapped_for_label === 'ZZ-B' && inRow.role === 'planned');
   t.ok('both club devices record the swap', (await officer.call('GET', `/api/logistics/devices/${zA.id}`)).j.log.some((l) => l.summary.includes('Swapped out of ZZ Plan One for ZZ-B: Screen flickers')) && (await officer.call('GET', `/api/logistics/devices/${zB.id}`)).j.log.some((l) => l.summary.includes('Swapped in at ZZ Plan One for ZZ-A')));
-  t.ok('swapping in something already planned is refused', (await officer.call('POST', `/api/logistics/plans/${P1}/swap`, { borrowed_id: zLoan.id, replacement_tag: 'ZZ-B', reason: 'x' })).s === 409);
-  const swapB = await officer.call('POST', `/api/logistics/plans/${P1}/swap`, { device_id: zB.id, replacement_tag: 'zz-sp1', reason: 'Sponsor monitor is better' });
+  t.ok('swapping in something already planned is refused', (await exec.call('POST', `/api/logistics/plans/${P1}/swap`, { borrowed_id: zLoan.id, replacement_tag: 'ZZ-B', reason: 'x' })).s === 409);
+  const swapB = await exec.call('POST', `/api/logistics/plans/${P1}/swap`, { device_id: zB.id, replacement_tag: 'zz-sp1', reason: 'Sponsor monitor is better' });
   t.ok('a club device can be swapped for a sponsor’s, and the screen says whose it is', swapB.s === 200 && swapB.j.replacement.kind === 'sponsor' && swapB.j.replacement.owner === 'ZZ Logitech', JSON.stringify(swapB));
   const d5 = (await officer.call('GET', `/api/logistics/plans/${P1}`)).j;
   t.ok('the sponsor’s device is planned and the club device is the backup', d5.borrowed.find((x) => x.tag === 'ZZ-SP1').role === 'planned' && d5.items.find((i) => i.device_id === zB.id).role === 'backup');
-  const swapC = await officer.call('POST', `/api/logistics/plans/${P1}/swap`, { borrowed_id: zLoan.id, replacement_tag: 'ZZ-B', reason: 'Laptop battery died' });
+  const swapC = await exec.call('POST', `/api/logistics/plans/${P1}/swap`, { borrowed_id: zLoan.id, replacement_tag: 'ZZ-B', reason: 'Laptop battery died' });
   t.ok('a borrowed device can be swapped out for a club one', swapC.s === 200 && (await officer.call('GET', `/api/logistics/plans/${P1}`)).j.borrowed.find((x) => x.tag === 'ZZ-LOAN').role === 'backup');
 
 
   // ---- teams (stations) carry a contact, a room and Confirmed; rows can be empty slots; counted things are rows with no device
   const team = (await exec.call('POST', `/api/logistics/plans/${P1}/stations`, { name: 'ZZ Team', contact: 'zz_contact', room: 'ZZ Room' })).j.stations[0];
-  t.ok('a team has a contact and a room', team.contact === 'zz_contact' && team.room === 'ZZ Room' && team.confirmed === false, JSON.stringify(team));
-  t.ok('an officer cannot confirm a team', (await officer.call('PATCH', `/api/logistics/plans/${P1}/stations`, { station_id: team.id, confirmed: true })).s === 403);
-  const conf = await exec.call('PATCH', `/api/logistics/plans/${P1}/stations`, { station_id: team.id, confirmed: true, contact: 'zz_new' });
-  t.ok('exec confirms a team and changes its contact', conf.s === 200 && conf.j.station.confirmed === true && conf.j.station.contact === 'zz_new');
+  t.ok('a team has a contact and a room', team.contact === 'zz_contact' && team.room === 'ZZ Room', JSON.stringify(team));
+  t.ok('an officer cannot change a team', (await officer.call('PATCH', `/api/logistics/plans/${P1}/stations`, { station_id: team.id, contact: 'zz_officer' })).s === 403);
+  const conf = await exec.call('PATCH', `/api/logistics/plans/${P1}/stations`, { station_id: team.id, contact: 'zz_new' });
+  t.ok('exec changes a team\u2019s contact', conf.s === 200 && conf.j.station.contact === 'zz_new');
   const addRows = await exec.call('POST', `/api/logistics/plans/${P1}/slots`, { station_id: team.id, type: 'Gaming PC', count: 2, games: ['Valorant'] });
   t.ok('empty rows are added to a team with the games they need', addRows.s === 201 && addRows.j.slots.length === 2 && addRows.j.slots[0].games[0] === 'Valorant', JSON.stringify(addRows));
   const padRows = await exec.call('POST', `/api/logistics/plans/${P1}/slots`, { station_id: team.id, type: 'Mousepad', count: 3 });
@@ -178,7 +179,7 @@ try {
   const dSl = (await officer.call('GET', `/api/logistics/plans/${P1}`)).j;
   t.ok('the plan records that step against the row', dSl.done.some((r) => r.slot_id === padRows.j.slots[0].id));
   t.ok('an officer can undo it', (await officer.call('DELETE', `/api/logistics/plans/${P1}/steps`, { slot_id: padRows.j.slots[0].id, step_id: stepId('Left Storage') })).s === 200 && !(await officer.call('GET', `/api/logistics/plans/${P1}`)).j.done.some((r) => r.slot_id === padRows.j.slots[0].id));
-  t.ok('an empty row cannot be swapped', (await officer.call('POST', `/api/logistics/plans/${P1}/swap`, { slot_id: addRows.j.slots[1].id, device_id: undefined, replacement_tag: 'ZZ-A', reason: 'x' })).s === 400);
+  t.ok('an empty row cannot be swapped', (await exec.call('POST', `/api/logistics/plans/${P1}/swap`, { slot_id: addRows.j.slots[1].id, device_id: undefined, replacement_tag: 'ZZ-A', reason: 'x' })).s === 400);
   const fillApply = await exec.call('POST', `/api/logistics/plans/${P1}/slots`, { action: 'fill', station_id: team.id, apply: true });
   const dF = (await exec.call('GET', `/api/logistics/plans/${P1}`)).j;
   t.ok('Fill gives the empty rows devices and leaves the mousepads as rows', fillApply.s === 200 && dF.slots.filter((x) => x.station_id === team.id).every((x) => x.type === 'Mousepad') && dF.slots.filter((x) => x.station_id === team.id).length === 3, JSON.stringify(dF.slots.map((x) => x.type)));

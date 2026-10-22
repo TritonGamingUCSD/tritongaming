@@ -10,8 +10,8 @@ import type { Slim, Station, usePlan } from './usePlans';
 import styles from './logistics.module.css';
 
 export interface SheetCtx {
-  api: ReturnType<typeof usePlan>; canManage: boolean; closed: boolean; busy: boolean; pending: Set<string>; day: boolean; stations: Station[]; steps: StepDef[]; activeId: string;
-  listId: (type: string) => string; setsOpen: boolean; foldGen: number; byType: boolean; main: Set<string>; doneSet: Set<string>; doneAt: Map<string, string>; problems: Problem[];
+  api: ReturnType<typeof usePlan>; canManage: boolean; closed: boolean; manager: boolean; busy: boolean; pending: Set<string>; day: boolean; stations: Station[]; steps: StepDef[]; activeId: string;
+  listId: (type: string) => string; setsOpen: boolean; foldGen: number; byType: boolean; main: Set<string>; doneSet: Set<string>; doneAt: Map<string, string>; doneBy: Map<string, string>; problems: Problem[];
   onTick: (row: Row, step: StepDef) => void; onTickAll: (rows: Row[], step: StepDef) => void; onUndo: (item: { id: string; kind: Slim['kind'] }, stepId: string) => void;
   onSwap: (r: Row) => void; onBorrowed: (r: Row) => void; onInstalled: (rows: Row[]) => void; onEditDevice: (r: Row) => void;
 }
@@ -23,7 +23,7 @@ const label = (r: Row) => r.tag ?? r.type;
 // The boxes for one line: a box per step the line goes through (a dash for a step that doesn't apply). A single device ticks and unticks; a counted line shows how many units are done
 // and ticks the next unit; a set ticks the step for all of its parts that go through it, and shows how many are done while some are not.
 function Cells({ rows, setLabel, ctx, readOnly }: { rows: Row[]; setLabel?: string; ctx: SheetCtx; readOnly?: boolean }) {
-  const { steps, doneSet, doneAt, activeId, closed, pending, onTick, onTickAll, onUndo } = ctx;
+  const { steps, doneSet, doneAt, doneBy, activeId, closed, pending, onTick, onTickAll, onUndo } = ctx;
   const skipped = new Set(rows.flatMap((x) => skippedSteps(x, steps, doneSet).map((s) => s.id)));
   if (!ctx.day) return null;   // while allocating, the step boxes are hidden: they are for the day
   return (
@@ -47,7 +47,7 @@ function Cells({ rows, setLabel, ctx, readOnly }: { rows: Row[]; setLabel?: stri
         };
         return (
           <span key={s.id} className={`${styles.cellWrap} ${s.id === activeId ? styles.cellOn : ''}`}>
-            <button type="button" className={`${styles.cell} ${full ? styles.cellDone : done.length ? styles.cellPart : ''} ${!full && skipped.has(s.id) ? styles.cellSkipped : ''} ${wait ? styles.cellWait : ''}`} disabled={closed} aria-busy={wait} onClick={click} aria-pressed={full} aria-label={full ? `Undo ${name}` : `Mark ${name}`} title={lastDone ? `Done at ${time(lastDone)}` : skipped.has(s.id) ? 'Skipped: a later step is done' : s.name}>
+            <button type="button" className={`${styles.cell} ${full ? styles.cellDone : done.length ? styles.cellPart : ''} ${!full && skipped.has(s.id) ? styles.cellSkipped : ''} ${wait ? styles.cellWait : ''}`} disabled={closed} aria-busy={wait} onClick={click} aria-pressed={full} aria-label={full ? `Undo ${name}` : `Mark ${name}`} title={lastDone ? `Done at ${time(lastDone)}${doneBy.get(`${done[done.length - 1].id}:${s.id}`) ? ` by ${doneBy.get(`${done[done.length - 1].id}:${s.id}`)}` : ''}` : skipped.has(s.id) ? 'Skipped: a later step is done' : s.name}>
               {!single && !full ? <span className={`${styles.cellMark} ${styles.cellCount}`}>{done.length}/{mine.length}</span> : <span className={styles.cellMark}>{full ? <Check size={18} aria-hidden="true" /> : <span className={styles.cellBox} />}</span>}
               <span className={styles.cellLabel}>{s.name}</span>
             </button>
@@ -94,7 +94,7 @@ function DeviceLine({ line, ctx, backup, nested }: { line: Line; ctx: SheetCtx; 
     <div data-rows={line.rows.map((x) => x.id).join(' ')} className={`${styles.dayRow} ${styles.dayLine} ${nested ? styles.nested : ''} ${bad ? styles.lineBad : missing.length || flags.length ? styles.lineWarn : ''}`}>
       <div className={styles.dInfo}>
         {alloc ? <b className={styles.dTag}>{r.type}</b> : empty ? <b className={styles.emptyMark}>Needs a {r.type}</b> : <b className={styles.dTag}>{line.counted ? `${r.type} ×${line.rows.length}` : r.tag ?? r.type}</b>}
-        {!empty && !alloc && <span className={styles.dType}>{line.counted ? 'counted' : `${r.type}${r.name ? ` · ${r.name}` : ''}`}</span>}
+        {!empty && !alloc && <span className={styles.dType}>{line.counted ? 'counted' : ctx.byType ? r.name : `${r.type}${r.name ? ` · ${r.name}` : ''}`}</span>}
         {ctx.byType && !backup && <span className={styles.teamTag}>{stations.find((x) => x.id === r.stationId)?.name ?? 'No team'}</span>}
         {(r.kind === 'sponsor' || r.kind === 'officer') && <span className={styles.ownerTag}>{r.kind === 'sponsor' ? 'Sponsor' : 'Loaner'}</span>}
         {r.kind !== 'slot' && r.where && (r.located ? <span className={styles.dWhere}>{r.where}</span> : <span className={`${styles.dWhere}`}><span className={styles.notLocated}>Not located yet</span>{r.where.includes(' · ') ? ` ${r.where.replace(/^No place set · /, '')}` : ''}</span>)}
@@ -114,7 +114,7 @@ function DeviceLine({ line, ctx, backup, nested }: { line: Line; ctx: SheetCtx; 
       <div className={styles.dTools}>
         {r.kind === 'club' && !ctx.day && <button type="button" className={styles.iconBtn} title={canManage ? 'Edit device' : 'Details'} aria-label={`${canManage ? 'Edit' : 'Details for'} ${label(r)}`} onClick={() => ctx.onEditDevice(r)}><Pencil size={15} aria-hidden="true" /></button>}
         {manage && (r.kind === 'sponsor' || r.kind === 'officer') && <button type="button" className={styles.iconBtn} title="Edit borrowed device" aria-label={`Edit ${label(r)}`} onClick={() => onBorrowed(r)}><Pencil size={15} aria-hidden="true" /></button>}
-        {!closed && !backup && r.kind !== 'slot' && <button type="button" className={styles.iconBtn} title="Swap" aria-label={`Swap ${label(r)}`} onClick={() => onSwap(r)}><ArrowLeftRight size={15} aria-hidden="true" /></button>}
+        {ctx.manager && !closed && !backup && r.kind !== 'slot' && <button type="button" className={styles.iconBtn} title="Swap" aria-label={`Swap ${label(r)}`} onClick={() => onSwap(r)}><ArrowLeftRight size={15} aria-hidden="true" /></button>}
         {manage && !fromRequest && r.kind !== 'slot' && <button type="button" className={styles.iconBtn} title="Remove from plan" aria-label={`Remove ${label(r)} from plan`} onClick={() => void takeOut()}><Trash2 size={15} aria-hidden="true" /></button>}
       </div>
     </div>

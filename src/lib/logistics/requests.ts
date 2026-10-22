@@ -42,5 +42,6 @@ export function requestSummary(kind: RequestKind, items: (DeviceItem | PrizeItem
 }
 export const prizeTotal = (items: PrizeItem[]) => Math.round(items.reduce((n, i) => n + i.qty * i.value, 0) * 100) / 100;
 
-// What a requester may still do: change or take back their own request until logistics has planned it; the logistics team can always.
-export const canEditRequest = (r: { requester_id: string; status: RequestStatus }, me: string, canManage: boolean) => canManage || (r.requester_id === me && r.status === 'submitted');
+// Who may change or remove a submitted request.
+// Once a request is submitted only the Event Logistics team can change or remove it.
+export const canEditRequest = (canManage: boolean) => canManage;

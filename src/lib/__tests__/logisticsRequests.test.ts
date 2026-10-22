@@ -27,11 +27,9 @@ describe('request words and rights', () => {
     expect(requestSummary('devices', [{ what: 'PC Station', qty: 4, games: ['Valorant'] }] as DeviceItem[])).toBe('4 × PC Station (Valorant)');
     expect(requestSummary('prizes', [{ qty: 1, value: 25 }, { qty: 10, value: 4.5 }] as PrizeItem[])).toBe('1 prize around $25, 10 prizes around $4.50');
   });
-  it('lets a requester edit only their own until it is planned', () => {
-    expect(canEditRequest({ requester_id: 'a', status: 'submitted' }, 'a', false)).toBe(true);
-    expect(canEditRequest({ requester_id: 'a', status: 'planned' }, 'a', false)).toBe(false);
-    expect(canEditRequest({ requester_id: 'a', status: 'submitted' }, 'b', false)).toBe(false);
-    expect(canEditRequest({ requester_id: 'a', status: 'done' }, 'b', true)).toBe(true);
+  it('lets only the Event Logistics team change or remove a submitted request', () => {
+    expect(canEditRequest(false)).toBe(false);
+    expect(canEditRequest(true)).toBe(true);
   });
 });
 

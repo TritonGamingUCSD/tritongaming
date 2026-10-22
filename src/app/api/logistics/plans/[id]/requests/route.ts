@@ -113,7 +113,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   ]);
   const r = before as unknown as Row | null;
   if (!r || !plan) return NextResponse.json({ error: 'That request is gone.' }, { status: 404 });
-  if (!canEditRequest(r, auth.user.id, auth.canManage)) return NextResponse.json({ error: r.requester_id === auth.user.id ? 'The logistics team has already planned this one, so it can’t be changed. Ask them.' : 'This isn’t your request.' }, { status: 403 });
+  if (!canEditRequest(auth.canManage)) return NextResponse.json({ error: 'A submitted request can only be changed by the Event Logistics team. Ask them.' }, { status: 403 });
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if ('items' in b) { const items = cleanRequestItems(r.kind, b.items, await known(auth.svc)); if ('error' in items) return NextResponse.json({ error: items.error }, { status: 400 }); patch.items = items.items; }
   if ('team' in b) patch.team = text(b.team, 120);
@@ -151,7 +151,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   if (!UUID.test(id) || typeof b.request_id !== 'string' || !UUID.test(b.request_id)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
   const { data: r } = await auth.svc.from('logistics_requests').select('id, kind, requester_id, status').eq('id', b.request_id).eq('plan_id', id).maybeSingle();
   if (!r) return NextResponse.json({ ok: true });
-  if (!canEditRequest(r as { requester_id: string; status: RequestStatus }, auth.user.id, auth.canManage)) return NextResponse.json({ error: 'You can only take back your own request before it is planned.' }, { status: 403 });
+  if (!canEditRequest(auth.canManage)) return NextResponse.json({ error: 'Only the Event Logistics team can remove a request.' }, { status: 403 });
   if (r.kind === 'devices') {
     await auth.svc.from('logistics_plan_slots').delete().eq('request_id', r.id as string);
     await auth.svc.from('logistics_plan_devices').update({ request_id: null }).eq('request_id', r.id as string);

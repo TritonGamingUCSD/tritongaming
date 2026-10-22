@@ -64,7 +64,7 @@ export default function RequestsTab({ kind, plan, api, data }: { kind: RequestKi
     if (res.ok) { apply({ ...r, ...res.data.request }); void plan.reload(); } else setError(res.error);
   }
   async function remove(r: Req) {
-    if (!(await confirmHold({ title: 'Take back this request?', message: requestSummary(r.kind, r.items), confirmLabel: 'Hold to remove' }))) return;
+    if (!(await confirmHold({ title: 'Remove this request?', message: requestSummary(r.kind, r.items), confirmLabel: 'Hold to remove' }))) return;
     const res = await call<{ ok: true }>(`/api/logistics/plans/${planId}/requests`, 'DELETE', { request_id: r.id });
     if (res.ok) setLoaded((c) => (c ? { ...c, requests: c.requests.filter((x) => x.id !== r.id) } : c)); else setError(res.error);
   }
@@ -85,7 +85,7 @@ export default function RequestsTab({ kind, plan, api, data }: { kind: RequestKi
         <div className={styles.prizeGrid}>
           <div className={`${styles.prizeRow} ${styles.reqRow} ${styles.prizeHeadRow}`} aria-hidden="true"><span>Asked by</span><span>Team</span><span>Contact</span><span>What</span><span>Notes</span><span>Status</span><span /></div>
           {list.map((r) => {
-            const mine = canEditRequest(r, loaded.me, manage);
+            const mine = canEditRequest(manage);
             return (
               <div key={r.id} className={`${styles.prizeRow} ${styles.reqRow} ${styles[`req_${r.status}`]}`}>
                 <span className={styles.prizeName}><b>{r.requester}</b><small className={styles.dim}>{r.division ? ` · ${r.division}` : ''} · {day(r.created_at)}</small></span>
@@ -100,7 +100,7 @@ export default function RequestsTab({ kind, plan, api, data }: { kind: RequestKi
                 <span data-label="Status">{manage && !closed ? <PickCell value={STATUS_LABELS[r.status]} options={REQUEST_STATUSES.map((x) => STATUS_LABELS[x])} clearable={false} canEdit onSave={(v) => { const x = REQUEST_STATUSES.find((k) => STATUS_LABELS[k] === v); if (x) void setStatus(r, x); }} /> : <span className={`${styles.statusChip} ${chip[r.status]}`}>{STATUS_LABELS[r.status]}</span>}</span>
                 <span className={styles.prizeTools}>
                   {mine && <button type="button" className={styles.iconBtn} title="Edit" aria-label={`Edit request from ${r.requester}`} onClick={() => setDialog(r)}><Pencil size={15} aria-hidden="true" /></button>}
-                  {mine && <button type="button" className={styles.iconBtn} title={manage ? 'Remove' : 'Take Back'} aria-label={`${manage ? 'Remove' : 'Take back'} request from ${r.requester}`} onClick={() => void remove(r)}><Trash2 size={15} aria-hidden="true" /></button>}
+                  {mine && <button type="button" className={styles.iconBtn} title="Remove" aria-label={`Remove request from ${r.requester}`} onClick={() => void remove(r)}><Trash2 size={15} aria-hidden="true" /></button>}
                 </span>
               </div>
             );

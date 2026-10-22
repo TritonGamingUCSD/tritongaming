@@ -90,7 +90,7 @@ describe('dates and progress', () => {
 describe('what is not done or not right', () => {
   const steps = [step('Left Storage', 1, 'all'), step('Check done', 2, 'all'), step('Box Taken', 3, 'all')];
   const row = (o: Partial<PlanRow>): PlanRow => ({ id: `r${++n}`, kind: 'club', type: 'Gaming PC', tag: `T${n}`, station_id: 's1', games_needed: [], games: [], counted: false, ...o });
-  const st = { id: 's1', name: 'Triton Valorant', contact: 'ITZSUK', room: 'East Ballroom', confirmed: true };
+  const st = { id: 's1', name: 'Triton Valorant', contact: 'ITZSUK', room: 'East Ballroom' };
   it('flags a step that was skipped', () => {
     const r = row({});
     expect(skippedSteps(r, steps, new Set([`${r.id}:Left Storage`, `${r.id}:Box Taken`])).map((s) => s.name)).toEqual(['Check done']);
@@ -101,11 +101,11 @@ describe('what is not done or not right', () => {
     const p = planProblems([slot, pad, noGame], [st], steps, new Set(), [], () => null);
     expect(p.map((x) => `${x.sev}:${x.text}`)).toEqual(['bad:No device chosen yet for Gaming PC (needs Valorant)', `warn:${noGame.tag} needs Valorant installed`]);
   });
-  it('flags a team that has not confirmed or has no contact or room, and turns the station status red, amber or green', () => {
+  it('flags a team that has no contact or room, and turns the station status red, amber or green', () => {
     const r = row({});
-    const bare = { id: 's1', name: 'Triton Smash', contact: null, room: null, confirmed: false };
+    const bare = { id: 's1', name: 'Triton Smash', contact: null, room: null };
     const p = planProblems([r], [bare], steps, new Set(), [], () => null);
-    expect(p.map((x) => x.text)).toEqual(['Triton Smash hasn’t confirmed yet', 'Triton Smash has no contact', 'Triton Smash has no room']);
+    expect(p.map((x) => x.text)).toEqual(['Triton Smash has no contact', 'Triton Smash has no room']);
     expect(stationStatus(p, 's1')).toBe('warn');
     expect(stationStatus(planProblems([row({ kind: 'slot', tag: null })], [st], steps, new Set(), [], () => null), 's1')).toBe('bad');
     expect(stationStatus(planProblems([r], [st], steps, new Set(), [], () => null), 's1')).toBe('ok');

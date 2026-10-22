@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { namesOf } from '@/lib/docs/docsServer';
 import { authorizeLogistics } from '@/lib/logistics/auth';
 import { UUID } from '@/lib/logistics/planServer';
 
@@ -17,8 +18,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const [plan, count, changes] = await Promise.all([
     auth.svc.from('logistics_plans').select('updated_at, status').eq('id', id).maybeSingle(),
     auth.svc.from('logistics_plan_steps').select('device_id', { count: 'exact', head: true }).eq('plan_id', id),
-    valid ? auth.svc.from('logistics_plan_steps').select('device_id, borrowed_id, slot_id, step_id, done_at').eq('plan_id', id).gt('done_at', valid).order('done_at').limit(300) : Promise.resolve({ data: [] as { device_id: string | null; borrowed_id: string | null; slot_id: string | null; step_id: string; done_at: string }[] }),
+    valid ? auth.svc.from('logistics_plan_steps').select('device_id, borrowed_id, slot_id, step_id, done_at, done_by').eq('plan_id', id).gt('done_at', valid).order('done_at').limit(300) : Promise.resolve({ data: [] as { device_id: string | null; borrowed_id: string | null; slot_id: string | null; step_id: string; done_at: string }[] }),
   ]);
   if (!plan.data) return NextResponse.json({ error: 'That plan is gone.' }, { status: 404 });
-  return NextResponse.json({ updated_at: plan.data.updated_at, status: plan.data.status, count: count.count ?? 0, changes: changes.data ?? [] });
+  const who = await namesOf(auth.svc, ((changes.data ?? []) as { done_by?: string | null }[]).map((c) => c.done_by));
+  return NextResponse.json({ updated_at: plan.data.updated_at, status: plan.data.status, count: count.count ?? 0, changes: (changes.data ?? []).map(({ done_by, ...c }: { done_by?: string | null; [k: string]: unknown }) => ({ ...c, by: who.get(done_by as string) ?? null })) });
 }

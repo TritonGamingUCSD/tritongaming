@@ -6,14 +6,14 @@ import type { Conflict, StepDef } from '@/lib/logistics/plans';
 import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
 
 export interface PlanSummary { id: string; slug: string; name: string; event_id: string | null; starts_on: string; ends_on: string; status: 'draft' | 'closed'; notes: string | null; devices: number; empty: number; teams: number; requests: number; newRequests: number; prizes: number; prizeValue: number }
-export interface Station { id: string; name: string; sort: number; contact: string | null; room: string | null; confirmed: boolean }
+export interface Station { id: string; name: string; sort: number; contact: string | null; room: string | null }
 // A row allocated by type that has no device yet (or never will: a mousepad). `label` is a note shown with it.
 export interface Slot { id: string; plan_id: string; station_id: string | null; type: string; games: string[]; label: string | null; sort: number; set_id?: string | null; request_id?: string | null; request_item?: string | null }
 export interface PlanItem { device_id: string; station_id: string | null; role: 'planned' | 'backup'; swap_reason: string | null; swapped_for_label: string | null; games_needed: string[]; games?: string[]; sort: number; set_id?: string | null; request_id?: string | null; request_item?: string | null; device: Device }
 export interface KitLine { item: string; qty: number; missing: boolean }
 // A sponsor's or an officer's device, entered inside this one event (not in the inventory). `owner` is their name in words.
 export interface Borrowed { id: string; plan_id: string; tag: string; name: string | null; type: string; owner_kind: 'sponsor' | 'officer'; sponsor_id: string | null; owner_user_id: string | null; owner_note: string | null; station_id: string | null; role: 'planned' | 'backup'; swap_reason: string | null; swapped_for_label: string | null; kit: KitLine[]; notes: string | null; games_needed: string[]; games?: string[]; sort: number; set_id?: string | null; request_id?: string | null; request_item?: string | null; owner: string }
-export interface DoneRow { device_id?: string | null; borrowed_id?: string | null; slot_id?: string | null; step_id: string; done_at: string }
+export interface DoneRow { device_id?: string | null; borrowed_id?: string | null; slot_id?: string | null; step_id: string; done_at: string; by?: string | null }
 export const doneKey = (d: { device_id?: string | null; borrowed_id?: string | null; slot_id?: string | null; step_id: string }) => `${d.device_id ?? d.borrowed_id ?? d.slot_id}:${d.step_id}`;
 export type PlanPrizesData = import('@/lib/logistics/prizeServer').PlanPrizes;
 export interface PlanDetail {
@@ -22,7 +22,7 @@ export interface PlanDetail {
 }
 // What the event-day screen shows about anything in a plan.
 export interface Slim { id: string; kind: 'club' | 'sponsor' | 'officer' | 'slot'; games_needed?: string[]; label?: string | null; tag: string | null; name: string | null; type: string; shelf: string | null; tier: string | null; place_note: string | null; owner: string | null; condition: string | null; kit: KitLine[] }
-export interface StepResult { item: Slim; inPlan: boolean; role: string | null; station: { id: string; name: string } | null; already: boolean; done_at: string; step_id: string }
+export interface StepResult { item: Slim; inPlan: boolean; role: string | null; station: { id: string; name: string } | null; already: boolean; done_at: string; step_id: string; by?: string | null }
 
 async function call<T>(url: string, method: string, body?: unknown): Promise<{ ok: true; data: T } | { ok: false; error: string; status: number }> {
   try {
@@ -109,7 +109,7 @@ export function usePlan(id: string, live: boolean) {
     setDetail((cur) => {
       if (!cur) return cur;
       const club = res.item.kind === 'club';
-      const row: DoneRow = club ? { device_id: res.item.id, step_id: res.step_id, done_at: res.done_at } : res.item.kind === 'slot' ? { slot_id: res.item.id, step_id: res.step_id, done_at: res.done_at } : { borrowed_id: res.item.id, step_id: res.step_id, done_at: res.done_at };
+      const row: DoneRow = club ? { device_id: res.item.id, step_id: res.step_id, done_at: res.done_at, by: res.by } : res.item.kind === 'slot' ? { slot_id: res.item.id, step_id: res.step_id, done_at: res.done_at, by: res.by } : { borrowed_id: res.item.id, step_id: res.step_id, done_at: res.done_at, by: res.by };
       const done = cur.done.some((d) => doneKey(d) === doneKey(row)) ? cur.done : [...cur.done, row];
       if (res.done_at > since.current) since.current = res.done_at;
       // The parts may have changed at Check done; a club device not in the plan is remembered as a spare used on the day.

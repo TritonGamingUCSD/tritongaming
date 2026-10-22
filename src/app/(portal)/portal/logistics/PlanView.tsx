@@ -70,6 +70,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
   const setPend = (keys: string[], to: boolean | null) => setPending((cur) => { const next = new Map(cur); for (const k of keys) { if (to === null) next.delete(k); else next.set(k, to); } return next; });
   const doneSet = useMemo(() => { const s = new Set((detail?.done ?? []).map(doneKey)); for (const [k, on] of pending) { if (on) s.add(k); else s.delete(k); } return s; }, [detail?.done, pending]);
   const pendingSet = useMemo(() => new Set(pending.keys()), [pending]);
+  const doneBy = useMemo(() => new Map((detail?.done ?? []).filter((d) => d.by).map((d) => [doneKey(d), d.by as string])), [detail?.done]);
   const doneAt = useMemo(() => new Map((detail?.done ?? []).map((d) => [doneKey(d), d.done_at])), [detail?.done]);
   const stationOf = useMemo(() => new Map((detail?.stations ?? []).map((s) => [s.id, s])), [detail?.stations]);
 
@@ -270,7 +271,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
   for (const b of borrowed) if (b.role === 'planned' && !b.request_id && !b.station_id) free.set(b.type, [...(free.get(b.type) ?? []), b.tag]);
   const ctx: SheetCtx = {
     listId, setsOpen: setsOpenPick ?? !day, foldGen, byType: groupByType,
-    api: plan, canManage: canManage && !day, closed, busy, pending: pendingSet, main: mainTypes, day, stations, steps, activeId: step?.id ?? '', doneSet, doneAt, problems,
+    api: plan, canManage: canManage && !day, manager: canManage, closed, busy, pending: pendingSet, main: mainTypes, day, stations, steps, activeId: step?.id ?? '', doneSet, doneAt, doneBy, problems,
     onTick: (row, s) => void tick(row, s), onTickAll: (list, s) => void markAll(list, s), onUndo: undo, onSwap: (r) => setSwapping({ id: r.id, tag: r.tag, type: r.type, kind: r.kind === 'slot' ? 'club' : r.kind }),
     onBorrowed: (r) => setBorrowing(borrowed.find((b) => b.id === r.id) ?? null), onInstalled: (list) => void install(list), onEditDevice: (r) => setDeviceEdit(catalog.data?.devices.find((x) => x.id === r.id) ?? data.devices.find((x) => x.id === r.id) ?? null),
   };
@@ -362,7 +363,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
                 {res && !res.inPlan && <span className={styles.flagWarn}>Not in this plan; recorded anyway{canManage ? '' : '. Ask logistics to add it'}</span>}
                 <span className={styles.lastActions}>
                   {res && fb.tone !== 'error' && fb.step && <button type="button" className={styles.linkBtn} onClick={() => void undo(res.item, fb.step!.id)}>Undo</button>}
-                  {res && res.inPlan && res.role === 'planned' && res.item.kind !== 'slot' && <button type="button" className={styles.linkBtn} onClick={() => setSwapping({ id: res.item.id, tag: res.item.tag, type: res.item.type, kind: res.item.kind as 'club' | 'sponsor' | 'officer' })}>Swap</button>}
+                  {canManage && res && res.inPlan && res.role === 'planned' && res.item.kind !== 'slot' && <button type="button" className={styles.linkBtn} onClick={() => setSwapping({ id: res.item.id, tag: res.item.tag, type: res.item.type, kind: res.item.kind as 'club' | 'sponsor' | 'officer' })}>Swap</button>}
                   {res && !res.inPlan && canManage && res.item.kind === 'club' && <><button type="button" className={styles.linkBtn} onClick={() => void act('/devices', 'POST', { device_ids: [res.item.id] })}>Add To Plan</button><button type="button" className={styles.linkBtn} onClick={() => void act('/devices', 'POST', { device_ids: [res.item.id], role: 'backup' })}>Add As Backup</button></>}
                   <button type="button" className={styles.linkBtn} onClick={() => setFeedback(null)} aria-label="Dismiss">Dismiss</button>
                 </span>
@@ -502,9 +503,6 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
                     {s && (
                       <div className={styles.teamLine}>
                         <span className={styles.dTeamSub}>{s.contact ?? <span className={styles.warnText}>No contact</span>} · {s.room ?? <span className={styles.warnText}>No room</span>}</span>
-                        {manage ? (
-                          <label className={styles.confirmBox}><input type="checkbox" checked={s.confirmed} onChange={(e) => void plan.act('/stations', 'PATCH', { station_id: s.id, confirmed: e.target.checked })} /> Confirmed</label>
-                        ) : <span className={`${styles.statusChip} ${s.confirmed ? styles.chipOk : styles.chipWarn}`}>{s.confirmed ? 'Confirmed' : 'Not confirmed'}</span>}
                       </div>
                     )}
                     {!folded && (

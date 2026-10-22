@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { namesOf } from '@/lib/docs/docsServer';
 import { authorizeLogistics } from '@/lib/logistics/auth';
 import { UUID, findItem, loadSteps, ownerLabelOf, ownerNames, slimBorrowed, slimClub, slimSlot, touchPlan } from '@/lib/logistics/planServer';
 import { describeChange, type Device, type KitLine } from '@/lib/logistics/devices';
@@ -76,7 +77,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (ins.error) return NextResponse.json({ error: 'Couldn’t save that step.' }, { status: 500 });
     done_at = ins.data.done_at as string;
   }
-  return NextResponse.json({ item, inPlan: found.kind !== 'club' || !!placed, role: placed?.role ?? null, station: station ?? null, already: !!already, done_at, step_id: step.id });
+  return NextResponse.json({ item, inPlan: found.kind !== 'club' || !!placed, role: placed?.role ?? null, station: station ?? null, already: !!already, done_at, step_id: step.id, by: already ? null : (await namesOf(svc, [auth!.user.id])).get(auth!.user.id) ?? null });
 }
 
 // Undo a step (a mistyped ID, a wrong tap). Any officer can; a club device's history records it.

@@ -5,7 +5,7 @@ import type { PrizePatch } from '@/lib/logistics/prizes';
 
 // A prize as the screens show it: the inventory row plus what open plans hold, what has been given out, what is left, and the event it was sent for.
 export interface PrizeRow {
-  id: string; name: string; sponsor_id: string | null; size: string | null; price: number | null; quantity: number; quantity_is_estimate: boolean;
+  id: string; name: string; sponsor_id: string | null; size: string | null; type: string | null; price: number | null; quantity: number; quantity_is_estimate: boolean;
   shelf: string | null; tier: string | null; place_note: string | null; plan_id: string | null; expires_on: string | null; notes: string | null;
   allocated: number; given: number; left: number; event: string | null;
 }

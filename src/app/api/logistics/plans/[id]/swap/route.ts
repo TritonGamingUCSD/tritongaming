@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 // taken out stays on the plan as a backup, marked as swapped out, and the replacement takes its station. The answer carries the replacement's details so the screen can show where
 // to get it right away.
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await authorizeLogistics('view');
+  const auth = await authorizeLogistics('manage');
   if (auth.error) return auth.error;
   const svc = auth.svc;
   const { id } = await params;

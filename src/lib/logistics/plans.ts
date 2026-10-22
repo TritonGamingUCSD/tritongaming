@@ -93,7 +93,7 @@ export function stepProgress(devices: { id: string; kind: ItemKind }[], steps: S
 // ---- What is not done, or not right (shown in red / amber so it is spotted at a glance)
 
 export interface PlanRow { id: string; kind: 'club' | 'sponsor' | 'officer' | 'slot'; type: string; tag: string | null; station_id: string | null; games_needed: string[]; games: string[]; counted: boolean; located?: boolean; requested?: boolean }
-export interface StationInfo { id: string; name: string; contact: string | null; room: string | null; confirmed: boolean }
+export interface StationInfo { id: string; name: string; contact: string | null; room: string | null }
 export interface Problem { sev: 'bad' | 'warn'; why: 'conflict' | 'empty' | 'game' | 'skipped' | 'team' | 'place' | 'unrequested'; station_id: string | null; row_id?: string; text: string }
 
 // Which steps count for a row: a type-only row is club stock.
@@ -106,7 +106,7 @@ export function skippedSteps(row: Pick<PlanRow, 'id' | 'kind'>, steps: StepDef[]
   return mine.filter((s, i) => i < last && !done.has(`${row.id}:${s.id}`));
 }
 
-// Everything to fix before or on the day, worst first: rows with no device, devices that can't be handed out or are booked elsewhere, steps skipped, a team not confirmed,
+// Everything to fix before or on the day, worst first: rows with no device, devices that can't be handed out or are booked elsewhere, steps skipped,
 // a game that isn't installed yet, a part missing, a team without a contact or room. `conflicts` come from the server (condition, double booking, parts).
 export function planProblems(rows: PlanRow[], stations: StationInfo[], steps: StepDef[], done: Set<string>, conflicts: Conflict[], tagOf: (deviceId: string) => string | null): Problem[] {
   const out: Problem[] = [];
@@ -129,7 +129,6 @@ export function planProblems(rows: PlanRow[], stations: StationInfo[], steps: St
   for (const s of stations) {
     const n = rows.filter((r) => r.station_id === s.id).length;
     if (!n) continue;
-    if (!s.confirmed) out.push({ sev: 'warn', why: 'team', station_id: s.id, text: `${s.name} hasn’t confirmed yet` });
     if (!s.contact) out.push({ sev: 'warn', why: 'team', station_id: s.id, text: `${s.name} has no contact` });
     if (!s.room) out.push({ sev: 'warn', why: 'team', station_id: s.id, text: `${s.name} has no room` });
   }
