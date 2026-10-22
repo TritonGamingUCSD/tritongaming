@@ -121,13 +121,6 @@
 /* ---- Plans ---- */
 .back { align-self: flex-start; display: inline-flex; align-items: center; gap: 0.35rem; min-height: 36px; padding: 0 0.6rem 0 0.3rem; border: none; background: none; color: var(--pp-ink); font: inherit; font-size: 0.86rem; font-weight: 600; cursor: pointer; border-radius: 6px; }
 .back:hover { background: rgba(var(--pp-ink-rgb), 0.07); }
-.planCards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr)); gap: 0.6rem; }
-.planCard { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; padding: 0.7rem 0.8rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); background: var(--pp-card); }
-.planCardToday { border-color: var(--pp-ok); box-shadow: inset 3px 0 0 var(--pp-ok); }
-.planCardMain { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.25rem; padding: 0.1rem; border: none; background: none; color: var(--pp-ink); font: inherit; text-align: left; cursor: pointer; }
-.planCardTitle { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.02rem; overflow-wrap: anywhere; }
-.planCardMeta { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.78); }
-.planCardTags { display: flex; flex-wrap: wrap; gap: 0.3rem; }
 .planHead { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 0.8rem; }
 .planTitle { margin: 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.5rem; color: var(--pp-ink); display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; overflow-wrap: anywhere; }
 .planActions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
@@ -623,7 +616,7 @@
 /* ---- Prizing allocation: a card per pool ---- */
 .poolCards { display: grid; grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr)); gap: 0.8rem; align-items: start; }
 .poolCard { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.8rem 0.9rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.28); background: var(--pp-card); min-width: 0; }
-.poolHead { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+.poolCardHead { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
 .poolTitle { display: flex; flex-direction: column; min-width: 0; font-size: 1rem; overflow-wrap: anywhere; }
 .poolTitle b { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.05rem; }
 .poolGoal { display: flex; flex-direction: column; gap: 0.25rem; }
@@ -666,3 +659,34 @@
 .miniSeg button { min-height: 30px; padding: 0 0.65rem; border: none; background: none; color: var(--pp-ink); font: inherit; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
 .miniSeg button[aria-pressed="true"] { background: var(--pp-ink); color: var(--pp-card); font-weight: 700; }
 .miniSeg button:not([aria-pressed="true"]):hover { background: rgba(var(--pp-ink-rgb), 0.08); }
+
+/* The list of events: one row each, like the other lists in the portal */
+.eventList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); background: var(--pp-card); overflow: hidden; }
+.eventList > li + li { border-top: 1px solid rgba(var(--pp-ink-rgb), 0.12); }
+.eventToday { box-shadow: inset 4px 0 0 var(--pp-ok); }
+.eventRow { display: grid; grid-template-columns: minmax(0, 1fr) auto 11rem 7rem; align-items: center; column-gap: 1rem; width: 100%; padding: 0.7rem 1rem; background: none; border: none; text-align: left; color: var(--pp-ink); font: inherit; cursor: pointer; }
+.eventRow:hover { background: rgba(var(--pp-ink-rgb), 0.05); }
+.eventName { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.02rem; overflow-wrap: anywhere; }
+.eventTags { display: inline-flex; gap: 0.3rem; flex-wrap: wrap; }
+.eventMeta { font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.8); }
+@media (max-width: 640px) { .eventRow { grid-template-columns: minmax(0, 1fr) auto; row-gap: 0.15rem; padding: 0.65rem 0.9rem; } .eventTags { grid-column: 2; grid-row: 1; justify-self: end; } .eventMeta { grid-column: 1 / -1; } .eventMeta + .eventMeta { margin-top: -0.1rem; } }
+
+/* phones: the event pages are one scrolling row of tabs instead of four wrapped lines */
+@media (max-width: 640px) {
+  .pageBar [role="tablist"] { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .pageBar [role="tablist"]::-webkit-scrollbar { display: none; }
+  .pageBar [role="tablist"] > button { flex: 0 0 auto; white-space: nowrap; }
+  .readyHead .dim { display: none; }
+}
+
+/* phones */
+@media (max-width: 640px) {
+  .bundleItems .optRow { display: flex; align-items: center; gap: 0.4rem; min-width: 0; }
+  .bundleItems .optRow .miniSelect { flex: 1 1 0; min-width: 0; max-width: none; width: auto; }
+  .bundleItems .optRow .iconBtn { flex: 0 0 auto; }
+  .filters { grid-template-columns: 1fr 1fr; }
+  .toolbarRow { gap: 0.5rem; }
+  .toolbarRow .addBtn { margin-left: auto; }
+}
+
+.row3:has(> :nth-child(2):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }

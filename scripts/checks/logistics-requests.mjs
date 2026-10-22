@@ -143,6 +143,7 @@ try {
   t.ok('removing the event removes its requests', (await exec.call('DELETE', `/api/logistics/plans/${P.id}`)).s === 200 && (await svc.from('logistics_requests').select('id', { count: 'exact', head: true }).eq('plan_id', P.id)).count === 0);
 } finally {
   await svc.from('logistics_plans').delete().like('name', 'ZZ%');
+  await svc.from('logistics_prizes').delete().like('name', 'ZZ%');
   await svc.from('notifications').delete().in('user_id', made);
   await svc.from('audit_log').delete().in('actor_id', made);
   await cleanup();

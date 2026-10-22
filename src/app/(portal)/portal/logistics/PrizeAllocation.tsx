@@ -64,7 +64,7 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
             const countState = pool.target_qty === null ? '' : count === pool.target_qty ? styles.barOk : count > pool.target_qty ? styles.barBad : styles.barWarn;
             return (
               <section key={pool.id} className={styles.poolCard} aria-label={pool.name}>
-                <header className={styles.poolHead}>
+                <header className={styles.poolCardHead}>
                   <div className={styles.poolTitle}>
                     <b>{pool.name}</b>
                     {pool.station_id && <span className={styles.dim}>{d.stations.find((s) => s.id === pool.station_id)?.name}</span>}

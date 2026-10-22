@@ -53,22 +53,21 @@ function PlanList({ data, list, onOpen }: { data: Catalog; list: ReturnType<type
       {!plans ? (error ? null : <Loading variant="inline" label="Loading…" />) : plans.length === 0 ? (
         <div className={styles.empty}><p>{data.canManage ? 'No events yet. Make one for an upcoming event, then add the devices that go to it.' : 'No events have been set up yet.'}</p></div>
       ) : (
-        <ul className={styles.planCards}>
+        <ul className={styles.eventList}>
           {plans.map((p: PlanSummary) => {
             const isToday = p.status === 'draft' && p.starts_on <= today && today <= p.ends_on;
             return (
-              <li key={p.id}>
-                <div className={`${styles.planCard} ${isToday ? styles.planCardToday : ''}`}>
-                  <button type="button" className={styles.planCardMain} onClick={() => onOpen(p)}>
-                    <b className={styles.planCardTitle}>{p.name}</b>
-                    <span className={styles.planCardMeta}>{range(p.starts_on, p.ends_on)} · {p.devices} {p.devices === 1 ? 'device' : 'devices'}</span>
-                    <span className={styles.planCardTags}>
-                      {isToday && <span className={`${styles.badge} ${styles.good}`}>Today</span>}
-                      {p.status === 'closed' && <span className={`${styles.badge} ${styles.neutral}`}>Closed</span>}
-                      {!p.event_id && <span className={`${styles.badge} ${styles.neutral}`}>Logistics only</span>}
-                    </span>
-                  </button>
-                </div>
+              <li key={p.id} className={isToday ? styles.eventToday : undefined}>
+                <button type="button" className={styles.eventRow} onClick={() => onOpen(p)}>
+                  <b className={styles.eventName}>{p.name}</b>
+                  <span className={styles.eventTags}>
+                    {isToday && <span className={`${styles.badge} ${styles.good}`}>Today</span>}
+                    {p.status === 'closed' && <span className={`${styles.badge} ${styles.neutral}`}>Closed</span>}
+                    {!p.event_id && <span className={`${styles.badge} ${styles.neutral}`}>Logistics only</span>}
+                  </span>
+                  <span className={styles.eventMeta}>{range(p.starts_on, p.ends_on)}</span>
+                  <span className={styles.eventMeta}>{p.devices} {p.devices === 1 ? 'device' : 'devices'}</span>
+                </button>
               </li>
             );
           })}

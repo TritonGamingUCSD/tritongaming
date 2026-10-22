@@ -88,6 +88,8 @@ export default function DeviceDialog({ api, data, device, template, onClose, onC
   }
 
   const setKit = (kit: KitLine[]) => { setKitTouched(true); set('kit', kit); };
+  const [more, setMore] = useState(false);
+  const full = more || editing || readOnly;   // adding a device asks only what is needed; the rest can be filled in later in the table
   const title = readOnly ? (device?.tag ?? device?.type ?? 'Device') : editing ? `Edit ${device.tag ?? device.type}` : 'Add Device';
 
   return (
@@ -98,20 +100,20 @@ export default function DeviceDialog({ api, data, device, template, onClose, onC
           <Field label={counted ? 'ID (optional)' : 'ID'} hint={counted ? 'Counted items don’t need one.' : 'As written on the device. TECM1 and “tecm 1” are the same.'}>
             <Input value={d.tag ?? ''} onChange={(e) => set('tag', e.target.value)} maxLength={40} disabled={readOnly} autoFocus={!editing && !readOnly} placeholder="TECM1" />
           </Field>
-          <Field label="Name"><Input value={d.name ?? ''} onChange={(e) => set('name', e.target.value)} maxLength={120} disabled={readOnly} placeholder="Optional" /></Field>
+          {full && <Field label="Name"><Input value={d.name ?? ''} onChange={(e) => set('name', e.target.value)} maxLength={120} disabled={readOnly} placeholder="Optional" /></Field>}
         </div>
         <div className={styles.row2}>
           <Field label="Type"><Combo value={d.type || null} options={lists.type.map((t) => t.value)} onChange={pickType} onCreate={createOpt('type')} disabled={readOnly} clearable={false} placeholder="Choose a type…" /></Field>
-          <Field label="Condition">
+          {full && (<Field label="Condition">
             <Select value={d.condition} onChange={(e) => set('condition', e.target.value as Draft['condition'])} disabled={readOnly}>
               {CONDITIONS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
             </Select>
-          </Field>
+          </Field>)}
         </div>
         <div className={styles.row3}>
           <Field label="Shelf"><Combo value={d.shelf} options={lists.shelf.map((s) => s.value)} onChange={(v) => set('shelf', v)} onCreate={createOpt('shelf')} disabled={readOnly} placeholder="Choose…" /></Field>
           <Field label="Tier"><Combo value={d.tier} options={lists.tier.map((s) => s.value)} onChange={(v) => set('tier', v)} onCreate={createOpt('tier')} disabled={readOnly} placeholder="Choose…" /></Field>
-          <Field label="Exact spot"><Input value={d.place_note ?? ''} onChange={(e) => set('place_note', e.target.value)} maxLength={200} disabled={readOnly} placeholder="Left side, blue tub" /></Field>
+          {full && <Field label="Exact spot"><Input value={d.place_note ?? ''} onChange={(e) => set('place_note', e.target.value)} maxLength={200} disabled={readOnly} placeholder="Left side, blue tub" /></Field>}
         </div>
 
         {counted && (
@@ -123,10 +125,10 @@ export default function DeviceDialog({ api, data, device, template, onClose, onC
           </div>
         )}
 
-        <Field label="Ports and outputs"><MultiCombo values={d.ports} options={lists.port.map((p) => p.value)} onChange={(v) => set('ports', v)} onCreate={createOpt('port')} disabled={readOnly} placeholder="Add a port…" /></Field>
-        <Field label="Games and software installed"><MultiCombo values={d.games} options={games} onChange={(v) => set('games', v)} onCreate={createOpt('game')} disabled={readOnly} placeholder="Add a game…" /></Field>
+        {full && <Field label="Ports and outputs"><MultiCombo values={d.ports} options={lists.port.map((p) => p.value)} onChange={(v) => set('ports', v)} onCreate={createOpt('port')} disabled={readOnly} placeholder="Add a port…" /></Field>}
+        {full && <Field label="Games and software installed"><MultiCombo values={d.games} options={games} onChange={(v) => set('games', v)} onCreate={createOpt('game')} disabled={readOnly} placeholder="Add a game…" /></Field>}
 
-        <div className={styles.kitBlock}>
+        {full && (<div className={styles.kitBlock}>
           <span className={styles.fieldLabel}>Kit: what goes with it</span>
           {d.kit.length === 0 && <p className={styles.muted}>Nothing listed.</p>}
           <ul className={styles.kitList}>
@@ -145,11 +147,12 @@ export default function DeviceDialog({ api, data, device, template, onClose, onC
             <Combo value={null} options={lists.kit.map((k) => k.value).filter((v) => !d.kit.some((x) => x.item.toLowerCase() === v.toLowerCase()))} clearable={false} placeholder="Add a part…"
               onChange={(v) => v && setKit([...d.kit, { item: v, qty: 1, missing: false }])} onCreate={createOpt('kit')} />
           )}
-        </div>
+        </div>)}
 
-        <Field label="Login" hint="Every officer can see this."><Input value={d.login ?? ''} onChange={(e) => set('login', e.target.value)} maxLength={200} disabled={readOnly} autoComplete="off" /></Field>
-        <Field label="Notes" hint="Quirks, warnings, maintenance."><Textarea rows={3} value={d.notes ?? ''} onChange={(e) => set('notes', e.target.value)} maxLength={2000} disabled={readOnly} /></Field>
+        {full && <Field label="Login" hint="Every officer can see this."><Input value={d.login ?? ''} onChange={(e) => set('login', e.target.value)} maxLength={200} disabled={readOnly} autoComplete="off" /></Field>}
+        {full && <Field label="Notes" hint="Quirks, warnings, maintenance."><Textarea rows={3} value={d.notes ?? ''} onChange={(e) => set('notes', e.target.value)} maxLength={2000} disabled={readOnly} /></Field>}
 
+        {!full && <div><button type="button" className={styles.linkBtn} onClick={() => setMore(true)}>More Details</button></div>}
         {editing && (
           <div>
             <button type="button" className={styles.linkBtn} onClick={() => setShowHistory((v) => !v)}>{showHistory ? 'Hide History' : 'Show History'}</button>
