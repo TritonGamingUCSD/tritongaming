@@ -26,7 +26,7 @@ async function divisionOk(svc: SupabaseClient, v: unknown): Promise<string | nul
   const { data } = await svc.from('divisions').select('id').eq('id', v).maybeSingle();
   return data ? (data.id as string) : false;
 }
-const href = (slug: string) => `/portal/logistics/${slug}/requests`;
+const href = (slug: string, kind: string) => `/portal/logistics/${slug}/requests-${kind === 'prizes' ? 'prizing' : 'devices'}`;
 
 // The requests for one event. The logistics team sees all of them; everyone else sees only their own. Also the divisions to pick from.
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -87,7 +87,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const who = (await names(auth.svc, [onBehalf, auth.user.id]));
   const text1 = `${who.get(onBehalf) ?? 'Someone'}${onBehalf !== auth.user.id ? ` (entered by ${who.get(auth.user.id) ?? 'logistics'})` : ''}: ${requestSummary(kind, items.items)}${b.team ? ` for ${text(b.team, 120)}` : ''}`;
   const team = (await logisticsTeamIds(auth.svc)).filter((u) => u !== auth.user.id);
-  await createNotifications(auth.svc, team.map((user_id) => ({ user_id, type: 'logistics_request', title: `New ${kind === 'devices' ? 'device' : 'prize'} request for ${plan.name}`, body: text1.slice(0, 240), href: href(plan.slug as string) })));
+  await createNotifications(auth.svc, team.map((user_id) => ({ user_id, type: 'logistics_request', title: `New ${kind === 'devices' ? 'device' : 'prize'} request for ${plan.name}`, body: text1.slice(0, 240), href: href(plan.slug as string, kind) })));
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'create', entityType: 'logistics request', entityId: data.id as string, summary: `Asked for ${kind} for “${plan.name}”` });
   if (kind === 'devices') await syncRequestRows(auth.svc, data as never);
   else await syncPrizePool(auth.svc, data as never);
@@ -131,7 +131,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!auth.canManage) {
     const team = (await logisticsTeamIds(auth.svc)).filter((u) => u !== auth.user.id);
     const who = (await names(auth.svc, [auth.user.id])).get(auth.user.id) ?? 'Someone';
-    await createNotifications(auth.svc, team.map((user_id) => ({ user_id, type: 'logistics_request', title: `A request for ${plan.name} was changed`, body: `${who}: ${requestSummary(r.kind, data.items as (DeviceItem | PrizeItem)[])}`.slice(0, 240), href: href(plan.slug as string) })));
+    await createNotifications(auth.svc, team.map((user_id) => ({ user_id, type: 'logistics_request', title: `A request for ${plan.name} was changed`, body: `${who}: ${requestSummary(r.kind, data.items as (DeviceItem | PrizeItem)[])}`.slice(0, 240), href: href(plan.slug as string, r.kind) })));
   }
   const sync = r.kind === 'devices' && ('items' in b || 'team' in b || 'contact' in b || 'division_id' in b || statusChanged) ? await syncRequestRows(auth.svc, data as never) : { kept: 0 };
   if (r.kind === 'prizes' && ('items' in b || 'team' in b || statusChanged)) await syncPrizePool(auth.svc, data as never);

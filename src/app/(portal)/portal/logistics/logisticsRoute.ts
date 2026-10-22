@@ -1,10 +1,10 @@
 // Where you are in Logistics, as an address: /portal/logistics/<tab>/<subtab>/<detail>.
-//   /portal/logistics                  the list of events        /portal/logistics/<event>/requests      what each team asked for
+//   /portal/logistics                  the list of events        /portal/logistics/<event>/requests-devices | requests-prizing   what each team asked for
 //   /portal/logistics/<event>/allocation-<what>   devices | prizing | sponsor-prizing | sponsor-loaners | officer-loaners
 //   /portal/logistics/<event>/event-day-<what>    devices | prizing        inventory/devices | prizes     what is in storage         tools/<section>    sponsors | event-steps | bundles | prizes | lists
 // The old addresses (events/<event>/…, device, prizing … with or without ?view=day, equipment, plans, a plan's long ID) still open the right place and are tidied to the new ones.
 
-export const EVENT_PAGES = ['device', 'prizing', 'sponsor-prizing', 'sponsor-loaners', 'officer-loaners', 'requests'] as const;
+export const EVENT_PAGES = ['device', 'prizing', 'sponsor-prizing', 'sponsor-loaners', 'officer-loaners', 'requests', 'requests-prizing'] as const;
 export type EventPage = (typeof EVENT_PAGES)[number];
 export const TOOLS_SECTIONS = ['sponsors', 'event-steps', 'bundles', 'prizes', 'lists'] as const;
 export type ToolsSection = (typeof TOOLS_SECTIONS)[number];
@@ -23,7 +23,7 @@ function eventRoute(plan: string, d: string | undefined, view?: string): Route {
   const w = d ?? '';
   const day = w.startsWith('event-day-') || ((w === 'device' || w === 'prizing') && view === 'day');
   const word = w.replace(/^(allocation|event-day)-?/, '').replace(/^devices?$/, 'device').replace(/^sponsor-items$/, 'sponsor-loaners');
-  const page = oneOf(EVENT_PAGES, w === 'requests' ? 'requests' : word, 'device');
+  const page = oneOf(EVENT_PAGES, w === 'requests' || w === 'requests-devices' ? 'requests' : w === 'requests-prizing' ? 'requests-prizing' : word, 'device');
   return { tab: 'events', plan, page, ...(day && (page === 'prizing' || page === 'device') ? { day: true } : {}), ...(page === 'device' && view === 'type' ? { byType: true } : {}) };
 }
 
@@ -45,7 +45,7 @@ export function routeParams(r: Route): { tab: string | null; subtab: string | nu
   if (r.tab === 'events') {
     if (!r.plan) return { tab: null, subtab: null, detail: null, view: null };
     const what = r.page === 'device' ? 'devices' : r.page;
-    return { tab: r.plan, subtab: r.page === 'requests' ? 'requests' : `${r.day && (r.page === 'device' || r.page === 'prizing') ? 'event-day' : 'allocation'}-${what}`, detail: null, view: r.byType && r.page === 'device' ? 'type' : null };
+    return { tab: r.plan, subtab: r.page === 'requests' ? 'requests-devices' : r.page === 'requests-prizing' ? 'requests-prizing' : `${r.day && (r.page === 'device' || r.page === 'prizing') ? 'event-day' : 'allocation'}-${what}`, detail: null, view: r.byType && r.page === 'device' ? 'type' : null };
   }
   return { tab: r.tab, subtab: r.sub, detail: null, view: null };
 }

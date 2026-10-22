@@ -27,7 +27,10 @@ describe('Logistics addresses', () => {
   it('writes an address back', () => {
     expect(routeParams({ tab: 'events', plan: 'ds-2026', page: 'prizing' })).toEqual({ tab: 'ds-2026', subtab: 'allocation-prizing', detail: null, view: null });
     expect(routeParams({ tab: 'events', plan: 'ds-2026', page: 'prizing', day: true }).subtab).toBe('event-day-prizing');
-    expect(routeParams({ tab: 'events', plan: 'ds-2026', page: 'requests' }).subtab).toBe('requests');
+    expect(routeParams({ tab: 'events', plan: 'ds-2026', page: 'requests' }).subtab).toBe('requests-devices');
+    expect(routeParams({ tab: 'events', plan: 'ds-2026', page: 'requests-prizing' }).subtab).toBe('requests-prizing');
+    expect(parseRoute('ds-2026', 'requests', undefined, true)).toMatchObject({ page: 'requests' });
+    expect(parseRoute('ds-2026', 'requests-prizing', undefined, true)).toMatchObject({ page: 'requests-prizing' });
     expect(routeParams({ tab: 'events', plan: 'ds-2026', page: 'device', day: true })).toEqual({ tab: 'ds-2026', subtab: 'event-day-devices', detail: null, view: null });
     expect(routeParams({ tab: 'events', plan: null, page: 'device' })).toEqual({ tab: null, subtab: null, detail: null, view: null });
     expect(routeParams({ tab: 'inventory', sub: 'devices' })).toEqual({ tab: 'inventory', subtab: 'devices', detail: null, view: null });

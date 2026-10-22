@@ -8,7 +8,6 @@ import Loading from '@/components/Loading/Loading';
 import { Field, Input, Select, Textarea } from '@/components/ui/Field';
 import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
 import { TextCell } from './Cells';
-import SectionTabs from '@/components/ui/SectionTabs';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import { canEditRequest, prizeTotal, REQUEST_STATUSES, requestSummary, STATUS_LABELS, type DeviceItem, type PrizeItem, type RequestKind, type RequestStatus } from '@/lib/logistics/requests';
 import { MultiCombo, Combo } from './Combo';
@@ -36,7 +35,7 @@ async function call<T>(url: string, method: string, body?: unknown): Promise<{ o
 
 // Requests for one event: a lead asks for devices (bundles or device types, how many, which games) or prizes (how many, around what dollar value), for their team. Logistics sees them all, plans them
 // (for devices, one click puts them on the Allocation sheet), and the person who asked is told. Everyone else sees only their own, and can change or take back a request until it is planned.
-export default function RequestsTab({ plan, api, data }: { plan: PlanApi; api: LogisticsApi; data: Catalog }) {
+export default function RequestsTab({ kind, plan, api, data }: { kind: RequestKind; plan: PlanApi; api: LogisticsApi; data: Catalog }) {
   const planId = plan.detail!.plan.id;
   const closed = plan.detail!.plan.status === 'closed';
   const [loaded, setLoaded] = useState<Loaded | null>(null);
@@ -51,9 +50,9 @@ export default function RequestsTab({ plan, api, data }: { plan: PlanApi; api: L
   const apply = (req: Req) => setLoaded((c) => (c ? { ...c, requests: c.requests.map((x) => (x.id === req.id ? { ...x, ...req } : x)) } : c));
 
   const list = useMemo(() => {
-    const rows = loaded?.requests ?? [];
+    const rows = (loaded?.requests ?? []).filter((x) => x.kind === kind);
     return [...rows].sort((a, b) => REQUEST_STATUSES.indexOf(a.status) - REQUEST_STATUSES.indexOf(b.status) || b.created_at.localeCompare(a.created_at));
-  }, [loaded]);
+  }, [loaded, kind]);
 
   async function setStatus(r: Req, status: RequestStatus) {
     const res = await call<{ request: Req }>(`/api/logistics/plans/${planId}/requests`, 'PATCH', { request_id: r.id, status });
@@ -77,10 +76,10 @@ export default function RequestsTab({ plan, api, data }: { plan: PlanApi; api: L
         <span className={styles.count}>{manage ? 'Every request for this event' : 'Your requests for this event'}</span>
         {!closed && <Button className={styles.addBtn} onClick={() => setDialog('new')}>New Request</Button>}
       </div>
-      {dialog && <RequestDialog plan={plan} api={api} data={data} planId={planId} loaded={loaded} request={dialog === 'new' ? null : dialog} onSaved={() => { setDialog(null); void load(); }} onClose={() => setDialog(null)} />}
+      {dialog && <RequestDialog kind={kind} plan={plan} api={api} data={data} planId={planId} loaded={loaded} request={dialog === 'new' ? null : dialog} onSaved={() => { setDialog(null); void load(); }} onClose={() => setDialog(null)} />}
       {error && <div role="alert" onClick={() => setError('')}><Notice tone="error">{error}</Notice></div>}
       {list.length === 0 ? (
-        <div className={styles.empty}><p>{loaded.requests.length === 0 ? (closed ? 'No requests were made for this event.' : 'No requests yet. Use New Request to ask for devices or prizes for your team.') : 'No requests.'}</p></div>
+        <div className={styles.empty}><p>{loaded.requests.length === 0 ? (closed ? (kind === 'devices' ? 'No device requests were made for this event.' : 'No prizing requests were made for this event.') : (kind === 'devices' ? 'No device requests yet. Use New Request to ask for devices for your team.' : 'No prizing requests yet. Use New Request to ask for prizes for your team.')) : 'No requests.'}</p></div>
       ) : (
         <div className={styles.prizeGrid}>
           <div className={`${styles.prizeRow} ${styles.reqRow} ${styles.prizeHeadRow}`} aria-hidden="true"><span>Asked by</span><span>Team</span><span>Contact</span><span>What</span><span>Notes</span><span>Status</span><span /></div>
@@ -111,8 +110,8 @@ export default function RequestsTab({ plan, api, data }: { plan: PlanApi; api: L
   );
 }
 
-function RequestDialog({ plan, api, data, planId, loaded, request, onSaved, onClose }: { plan: PlanApi; api: LogisticsApi; data: Catalog; planId: string; loaded: Loaded; request: Req | null; onSaved: () => void; onClose: () => void }) {
-  const [kind, setKind] = useState<RequestKind>(request?.kind ?? 'devices');
+function RequestDialog({ kind: askKind, plan, api, data, planId, loaded, request, onSaved, onClose }: { kind: RequestKind; plan: PlanApi; api: LogisticsApi; data: Catalog; planId: string; loaded: Loaded; request: Req | null; onSaved: () => void; onClose: () => void }) {
+  const kind = request?.kind ?? askKind;
   const [team, setTeam] = useState(request?.team ?? '');
   const [contact, setContact] = useState(request?.contact ?? '');
   const [division, setDivision] = useState(request?.division_id ?? loaded.myDivisionIds[0] ?? '');
@@ -141,7 +140,6 @@ function RequestDialog({ plan, api, data, planId, loaded, request, onSaved, onCl
     <Dialog title={request ? 'Edit Request' : 'New Request'} wide busy={busy} onClose={onClose}>
       <div className={styles.form}>
         {problem && <Notice tone="error">{problem}</Notice>}
-        {!request && <SectionTabs<RequestKind> variant="segmented" label="What you are asking for" value={kind} onChange={setKind} tabs={[{ id: 'devices', label: 'Devices' }, { id: 'prizes', label: 'Prizes' }]} />}
         <div className={styles.row2}>
           <Field label="Team or booth" hint="Who it is for, like Triton Valorant."><Input value={team} onChange={(e) => setTeam(e.target.value)} maxLength={120} list="req-teams" /></Field>
           <Field label="Division"><Select value={division} onChange={(e) => setDivision(e.target.value)}><option value="">None</option>{loaded.divisions.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</Select></Field>

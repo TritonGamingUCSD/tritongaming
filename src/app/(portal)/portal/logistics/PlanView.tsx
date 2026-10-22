@@ -88,6 +88,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
   const problems = useMemo(() => (detail ? planProblems(rows, detail.stations, steps, doneSet, detail.conflicts, () => null) : []), [detail, rows, steps, doneSet]);
   const bad = problems.filter((p) => p.sev === 'bad').length, warn = problems.length - bad;
 
+  const isPrizing = page === 'requests-prizing' || page === 'prizing' || page === 'sponsor-prizing';
   const groupByType = byType && page === 'device';   // the same rows, grouped by the kind of device instead of by team
   const teams = useMemo(() => {
     const out: { key: string; station: Station | null; title: string; rows: Row[] }[] = [];
@@ -243,17 +244,21 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
         </div>
         {[...free].map(([type, tags]) => <datalist key={type} id={listId(type)}>{tags.sort(natural).map((t) => <option key={t} value={t} />)}</datalist>)}
         <div className={styles.pageBar}>
-        <SectionTabs<string> variant="segmented" label="Event pages" value={page === 'requests' ? 'requests' : `${day && (page === 'device' || page === 'prizing') ? 'day' : 'alloc'}-${page}`}
-          onChange={(v) => v === 'requests' ? onPage('requests') : onPage(v.replace(/^(day|alloc)-/, '') as EventPage, v.startsWith('day-'))} tabs={[
-          { id: 'requests', label: 'Requests' },
-          { id: 'alloc-sponsor-loaners', label: 'Sponsor Loaners', count: borrowed.filter((b) => b.owner_kind === 'sponsor').length },
-          { id: 'alloc-officer-loaners', label: 'Officer Loaners', count: borrowed.filter((b) => b.owner_kind === 'officer').length },
-          { id: 'alloc-sponsor-prizing', label: 'Sponsor Prizing' },
-          { id: 'alloc-device', label: 'Devices', count: rows.length },
-          { id: 'alloc-prizing', label: 'Prizing', count: detail.prizes.lines.length },
-          { id: 'day-device', label: 'Day: Devices' },
-          { id: 'day-prizing', label: 'Day: Prizing' },
-        ]} />
+        <SectionTabs<'devices' | 'prizing'> variant="segmented" label="Devices or prizing" value={isPrizing ? 'prizing' : 'devices'}
+          onChange={(g) => onPage(g === 'prizing' ? 'requests-prizing' : 'requests')} tabs={[{ id: 'devices', label: 'Devices' }, { id: 'prizing', label: 'Prizing' }]} />
+        <SectionTabs<string> variant="segmented" label="Event pages" value={page === 'requests' || page === 'requests-prizing' ? page : `${day && (page === 'device' || page === 'prizing') ? 'day' : 'alloc'}-${page}`}
+          onChange={(v) => v === 'requests' || v === 'requests-prizing' ? onPage(v) : onPage(v.replace(/^(day|alloc)-/, '') as EventPage, v.startsWith('day-'))} tabs={isPrizing ? [
+            { id: 'requests-prizing', label: 'Requests' },
+            { id: 'alloc-sponsor-prizing', label: 'Sponsor Prizing' },
+            { id: 'alloc-prizing', label: 'Allocation', count: detail.prizes.lines.length },
+            { id: 'day-prizing', label: 'Event Day' },
+          ] : [
+            { id: 'requests', label: 'Requests' },
+            { id: 'alloc-sponsor-loaners', label: 'Sponsor Loaners', count: borrowed.filter((b) => b.owner_kind === 'sponsor').length },
+            { id: 'alloc-officer-loaners', label: 'Officer Loaners', count: borrowed.filter((b) => b.owner_kind === 'officer').length },
+            { id: 'alloc-device', label: 'Allocation', count: rows.length },
+            { id: 'day-device', label: 'Event Day' },
+          ]} />
         </div>
         {page === 'device' && day && !closed && (
           <div className={styles.dayStick}>
@@ -296,7 +301,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
       {page === 'sponsor-prizing' && <SponsorPrizingTab plan={plan} api={catalog} data={data} />}
       {page === 'sponsor-loaners' && <BorrowedTab plan={plan} catalog={catalog} data={data} kind="sponsor" />}
       {page === 'officer-loaners' && <BorrowedTab plan={plan} catalog={catalog} data={data} kind="officer" />}
-      {page === 'requests' && <RequestsTab plan={plan} api={catalog} data={data} />}
+      {(page === 'requests' || page === 'requests-prizing') && <RequestsTab key={page} kind={page === 'requests' ? 'devices' : 'prizes'} plan={plan} api={catalog} data={data} />}
 
       {page === 'device' && <div className={styles.dayLayout}>
         {kit && <div className={styles.dayAside}>
