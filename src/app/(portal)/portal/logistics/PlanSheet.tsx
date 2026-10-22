@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowLeftRight, Check, PackageCheck, Pencil, Trash2 } from 'lucide-react';
+import { ArrowLeftRight, Check, Pencil, Trash2 } from 'lucide-react';
 import { conditionLabel, UNUSABLE } from '@/lib/logistics/constants';
 import { rowKind, skippedSteps, stepAppliesTo, type Problem, type StepDef } from '@/lib/logistics/plans';
 import { interactive } from './interactive';
@@ -11,7 +11,7 @@ import styles from './logistics.module.css';
 
 export interface SheetCtx {
   api: ReturnType<typeof usePlan>; canManage: boolean; closed: boolean; busy: boolean; pending: Set<string>; day: boolean; stations: Station[]; steps: StepDef[]; activeId: string;
-  listId: (type: string) => string; setsOpen: boolean; foldGen: number; byType: boolean; doneSet: Set<string>; doneAt: Map<string, string>; problems: Problem[];
+  listId: (type: string) => string; setsOpen: boolean; foldGen: number; byType: boolean; main: Set<string>; doneSet: Set<string>; doneAt: Map<string, string>; problems: Problem[];
   onTick: (row: Row, step: StepDef) => void; onTickAll: (rows: Row[], step: StepDef) => void; onUndo: (item: { id: string; kind: Slim['kind'] }, stepId: string) => void;
   onSwap: (r: Row) => void; onBorrowed: (r: Row) => void; onInstalled: (rows: Row[]) => void; onEditDevice: (r: Row) => void;
 }
@@ -48,7 +48,7 @@ function Cells({ rows, setLabel, ctx, readOnly }: { rows: Row[]; setLabel?: stri
         return (
           <span key={s.id} className={`${styles.cellWrap} ${s.id === activeId ? styles.cellOn : ''}`}>
             <button type="button" className={`${styles.cell} ${full ? styles.cellDone : done.length ? styles.cellPart : ''} ${!full && skipped.has(s.id) ? styles.cellSkipped : ''} ${wait ? styles.cellWait : ''}`} disabled={closed} aria-busy={wait} onClick={click} aria-pressed={full} aria-label={full ? `Undo ${name}` : `Mark ${name}`} title={lastDone ? `Done at ${time(lastDone)}` : skipped.has(s.id) ? 'Skipped: a later step is done' : s.name}>
-              {!single && !full ? <span>{done.length}/{mine.length}</span> : full ? <Check size={18} aria-hidden="true" /> : <span className={styles.cellBox} />}
+              {!single && !full ? <span className={`${styles.cellMark} ${styles.cellCount}`}>{done.length}/{mine.length}</span> : <span className={styles.cellMark}>{full ? <Check size={18} aria-hidden="true" /> : <span className={styles.cellBox} />}</span>}
               <span className={styles.cellLabel}>{s.name}</span>
             </button>
             {!single && setLabel === undefined && done.length > 0 && !full && <button type="button" className={styles.cellMinus} aria-label={`Undo one ${name}`} disabled={closed || wait} onClick={() => onUndo({ id: done[done.length - 1].id, kind: done[done.length - 1].kind }, s.id)}>−</button>}
@@ -103,6 +103,7 @@ function DeviceLine({ line, ctx, backup, nested }: { line: Line; ctx: SheetCtx; 
       <div className={styles.dNotes}>
         {alloc && <input className={`${styles.assignInput} ${empty ? styles.assignEmpty : ''}`} value={tag} onChange={(e) => setTag(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }} onBlur={() => void commit()} list={ctx.listId(r.type)} placeholder="Device ID" aria-label={`Device ID for ${r.type}`} autoCapitalize="characters" autoComplete="off" disabled={busy} />}
         {r.games_needed.length > 0 && <span className={`${styles.gameChip} ${missing.length ? styles.gameMissing : styles.gameOk}`} title={missing.length ? `Not installed yet: ${missing.join(', ')}` : r.kind === 'slot' ? 'Needed' : 'Installed'}>{r.games_needed.join(', ')}{missing.length ? ' · not installed' : ''}</span>}
+        {missing.length > 0 && manage && r.kind !== 'slot' && <button type="button" className={styles.miniTextBtn} disabled={ctx.busy} title="Mark the needed games as installed" aria-label={`Mark ${label(r)} installed`} onClick={() => ctx.onInstalled([r])}>Mark installed</button>}
         {dead && <span className={`${styles.badge} ${styles.bad}`}>{conditionLabel(r.condition!)}</span>}
         {!dead && !flags.length && r.condition && r.condition !== 'working' && r.condition !== 'brand_new' && <span className={`${styles.badge} ${styles.neutral}`}>{conditionLabel(r.condition)}</span>}
         {flags.filter(() => !dead).map((p, i) => <span key={i} className={p.sev === 'bad' ? styles.flagBad : styles.flagWarn}>{p.text}</span>)}
@@ -113,7 +114,6 @@ function DeviceLine({ line, ctx, backup, nested }: { line: Line; ctx: SheetCtx; 
       <div className={styles.dTools}>
         {r.kind === 'club' && !ctx.day && <button type="button" className={styles.iconBtn} title={canManage ? 'Edit device' : 'Details'} aria-label={`${canManage ? 'Edit' : 'Details for'} ${label(r)}`} onClick={() => ctx.onEditDevice(r)}><Pencil size={15} aria-hidden="true" /></button>}
         {manage && (r.kind === 'sponsor' || r.kind === 'officer') && <button type="button" className={styles.iconBtn} title="Edit borrowed device" aria-label={`Edit ${label(r)}`} onClick={() => onBorrowed(r)}><Pencil size={15} aria-hidden="true" /></button>}
-        {missing.length > 0 && manage && r.kind !== 'slot' && <button type="button" className={styles.iconBtn} disabled={ctx.busy} title="Mark installed" aria-label={`Mark ${label(r)} installed`} onClick={() => ctx.onInstalled([r])}><PackageCheck size={15} aria-hidden="true" /></button>}
         {!closed && !backup && r.kind !== 'slot' && <button type="button" className={styles.iconBtn} title="Swap" aria-label={`Swap ${label(r)}`} onClick={() => onSwap(r)}><ArrowLeftRight size={15} aria-hidden="true" /></button>}
         {manage && !fromRequest && r.kind !== 'slot' && <button type="button" className={styles.iconBtn} title="Remove from plan" aria-label={`Remove ${label(r)} from plan`} onClick={() => void takeOut()}><Trash2 size={15} aria-hidden="true" /></button>}
       </div>
@@ -144,7 +144,7 @@ function SetLine({ unit, ctx }: { unit: Unit; ctx: SheetCtx }) {
         </div>
         <div className={styles.dNotes}>
           {games.length > 0 && <span className={`${styles.gameChip} ${missingGames.length ? styles.gameMissing : styles.gameOk}`}>{games.join(', ')}{missingGames.length ? ' · not installed' : ''}</span>}
-          {missingGames.length > 0 && !ctx.closed && ctx.canManage && rows.some((r) => r.kind !== 'slot' && missingOf(r).length) && <button type="button" className={styles.linkBtn} disabled={ctx.busy} onClick={() => ctx.onInstalled(rows)}>Mark installed</button>}
+          {missingGames.length > 0 && !ctx.closed && ctx.canManage && rows.some((r) => r.kind !== 'slot' && missingOf(r).length) && <button type="button" className={styles.miniTextBtn} disabled={ctx.busy} title="Mark the needed games as installed" aria-label={`Mark ${name} installed`} onClick={() => ctx.onInstalled(rows)}>Mark installed</button>}
           {nEmpty > 0 && <span className={styles.flagBad}>{nEmpty} empty</span>}
           {bad && nEmpty === 0 && <span className={styles.flagBad}>Needs a look</span>}
           {!bad && warn && <span className={styles.flagWarn}>Check</span>}
@@ -158,5 +158,5 @@ function SetLine({ unit, ctx }: { unit: Unit; ctx: SheetCtx }) {
 }
 
 export function SheetRows({ rows, ctx, backup }: { rows: Row[]; ctx: SheetCtx; backup?: boolean }) {
-  return <>{units(rows).map((u) => (u.set && !backup ? <SetLine key={`${u.key}:${ctx.foldGen}`} unit={u} ctx={ctx} /> : u.lines.map((l) => <DeviceLine key={l.key} line={l} ctx={ctx} backup={backup} />)))}</>;
+  return <>{units(rows, ctx.main).map((u) => (u.set && !backup ? <SetLine key={`${u.key}:${ctx.foldGen}`} unit={u} ctx={ctx} /> : u.lines.map((l) => <DeviceLine key={l.key} line={l} ctx={ctx} backup={backup} />)))}</>;
 }

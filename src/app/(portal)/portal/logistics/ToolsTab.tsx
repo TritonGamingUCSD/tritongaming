@@ -65,9 +65,14 @@ function OptionRow({ kind, o, api }: { kind: OptionKind; o: OptionItem; api: Log
     <li className={styles.optRow}>
       <input className={styles.optInput} value={name} maxLength={80} onChange={(e) => setName(e.target.value)} onBlur={rename} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }} aria-label={`Rename ${o.value}`} />
       {kind === 'type' && (
+        <>
         <label className={styles.countedBox} title="Counted: one row with an estimated quantity instead of one row per item">
           <input type="checkbox" checked={!!o.counted} onChange={(e) => void api.changeOption(o.id, { counted: e.target.checked })} /> Counted
         </label>
+        <label className={styles.countedBox} title="Main device: names a set (a PC with its monitor and keyboard) and comes first in it">
+          <input type="checkbox" checked={!!o.main} onChange={(e) => void api.changeOption(o.id, { main: e.target.checked })} /> Main Device
+        </label>
+        </>
       )}
       <button type="button" className={styles.iconBtn} aria-label={`Delete ${o.value}`} onClick={() => void api.deleteOption(kind, o.id)}><X size={14} aria-hidden="true" /></button>
     </li>

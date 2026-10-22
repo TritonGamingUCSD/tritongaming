@@ -6,13 +6,14 @@ import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import { Field, Input } from '@/components/ui/Field';
+import { Combo } from './Combo';
 import type { PlanApi, Slim } from './usePlans';
 import styles from './logistics.module.css';
 
 const place = (d: Pick<Slim, 'shelf' | 'tier' | 'owner' | 'kind'>) => d.kind === 'club' || d.kind === 'slot' ? ([d.shelf, d.tier].filter(Boolean).join(' · ') || 'No place set') : `${d.kind === 'sponsor' ? 'From' : 'From officer'} ${d.owner ?? 'its owner'}`;
 
 // Swap a device out for another: type the replacement's ID and say why. The device taken out stays on the plan as a backup; the answer shows where to get the replacement.
-export default function SwapDialog({ plan, device, onClose }: { plan: PlanApi; device: { id: string; tag: string | null; type: string; kind: 'club' | 'sponsor' | 'officer' }; onClose: () => void }) {
+export default function SwapDialog({ plan, device, options, onClose }: { plan: PlanApi; options: string[]; device: { id: string; tag: string | null; type: string; kind: 'club' | 'sponsor' | 'officer' }; onClose: () => void }) {
   const [tag, setTag] = useState('');
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
@@ -47,7 +48,7 @@ export default function SwapDialog({ plan, device, onClose }: { plan: PlanApi; d
     <Dialog title={`Swap ${device.tag ?? device.type}`} busy={busy} onClose={onClose}>
       <div className={styles.form}>
         {problem && <Notice tone="error">{problem}</Notice>}
-        <Field label="Replacement ID" hint="As written on the device."><Input value={tag} onChange={(e) => setTag(e.target.value)} autoFocus maxLength={40} placeholder="TECM12" autoCapitalize="characters" autoComplete="off" /></Field>
+        <Field label="Replace With" hint={options.length ? `${options.length} ${device.type} available. Type to filter.` : `No spare ${device.type} listed. Type the ID written on the device.`}><Combo value={tag || null} options={options} onChange={(v) => setTag(v ?? '')} onCreate={async (v) => v.trim().toUpperCase()} placeholder="Choose or type an ID" clearable={false} autoFocus ariaLabel="Replacement ID" /></Field>
         <Field label="Why"><Input value={reason} onChange={(e) => setReason(e.target.value)} maxLength={300} placeholder="Screen flickers" onKeyDown={(e) => { if (e.key === 'Enter') void go(); }} /></Field>
       </div>
       <DialogActions>

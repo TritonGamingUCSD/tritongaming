@@ -18,7 +18,8 @@ export default function BorrowedTab({ plan, catalog, data, kind }: { plan: PlanA
   const manage = d.canManage && !closed;
   const [dialog, setDialog] = useState<Borrowed | 'new' | null>(null);
   const sponsor = kind === 'sponsor';
-  const rows = d.borrowed.filter((b) => b.owner_kind === kind).sort((a, b) => a.owner.localeCompare(b.owner) || a.tag.localeCompare(b.tag, undefined, { numeric: true }));
+  const typeRank = new Map(data.lists.type.map((t, i) => [t.value, i]));   // the Type dropdown's order
+  const rows = d.borrowed.filter((b) => b.owner_kind === kind).sort((a, b) => a.owner.localeCompare(b.owner) || (typeRank.get(a.type) ?? 9999) - (typeRank.get(b.type) ?? 9999) || a.tag.localeCompare(b.tag, undefined, { numeric: true }));
   const done = new Set(d.done.map(doneKey));
   const back = d.steps.find((s) => s.applies === 'borrowed');
   const station = (id: string | null) => d.stations.find((s) => s.id === id)?.name ?? null;

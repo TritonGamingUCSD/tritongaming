@@ -48,7 +48,8 @@ export function lines(rows: Row[]): Line[] {
 }
 
 // The main device of a set (a PC, a laptop, a console): it names the set and comes first in it. 0 is the main kind, higher is less so; anything else is a part (monitor, keyboard, dock...).
-export function primaryRank(type: string): number {
+export function primaryRank(type: string, main?: Set<string>): number {
+  if (main && main.size) return main.has(type) ? 0 : 99;   // the types marked Main Device in Tools decide; the name guesses below are used until one is marked
   const t = type.trim().toLowerCase();
   if (/(^|[\s-])(pc|computer|desktop)$/.test(t)) return 0;
   if (/(^|[\s-])laptop$/.test(t)) return 1;
@@ -58,7 +59,7 @@ export function primaryRank(type: string): number {
 
 // A unit is what gets one line on the sheet: a single device (or counted line), or a set (the rows made together from a bundle, like a PC with its monitor, keyboard and mouse).
 export interface Unit { key: string; lines: Line[]; set: boolean }
-export function units(rows: Row[]): Unit[] {
+export function units(rows: Row[], main?: Set<string>): Unit[] {
   const size = new Map<string, number>();
   for (const r of rows) if (r.setId) size.set(r.setId, (size.get(r.setId) ?? 0) + 1);
   const out: Unit[] = [];
@@ -71,6 +72,6 @@ export function units(rows: Row[]): Unit[] {
       u.lines.push(l);
     } else out.push({ key: l.key, lines: [l], set: false });
   }
-  for (const u of out) if (u.set) u.lines.sort((a, b) => primaryRank(a.rows[0].type) - primaryRank(b.rows[0].type));   // stable: the other parts keep their order
+  for (const u of out) if (u.set) u.lines.sort((a, b) => primaryRank(a.rows[0].type, main) - primaryRank(b.rows[0].type, main));   // stable: the other parts keep their order
   return out;
 }

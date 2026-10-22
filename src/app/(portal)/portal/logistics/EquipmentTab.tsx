@@ -62,14 +62,15 @@ export default function EquipmentTab({ api, data }: { api: LogisticsApi; data: C
   const [dialog, setDialog] = useState<{ device: Device | null; template?: Partial<Device> | null } | null>(null);
   const canEdit = data.canManage;
 
+  const rank = useMemo(() => { const m = new Map(data.lists.type.map((t, i) => [t.value, i])); return (type: string) => m.get(type) ?? 9999; }, [data.lists.type]);
   const rows = useMemo(() => {
     const needle = q.trim().toLowerCase();
     const key = tagKey(q);
     return data.devices
       .filter((d) => (!type || d.type === type) && (!shelf || d.shelf === shelf) && (!condition || d.condition === condition) && (!problems || isProblem(d)))
       .filter((d) => !needle || (d.tag && tagKey(d.tag).includes(key)) || [d.name, d.type, d.shelf, d.tier, d.place_note, d.notes].some((x) => x?.toLowerCase().includes(needle)))
-      .sort(byId);
-  }, [data.devices, q, type, shelf, condition, problems]);
+      .sort((a, b) => rank(a.type) - rank(b.type) || byId(a, b));   // the Type dropdown's order, then by ID
+  }, [data.devices, q, type, shelf, condition, problems, rank]);
   useEffect(() => setLimit(SHOW), [q, type, shelf, condition, problems]);
 
   const shown = rows.slice(0, limit);

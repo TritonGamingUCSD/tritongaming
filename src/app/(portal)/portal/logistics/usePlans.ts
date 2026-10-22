@@ -102,9 +102,9 @@ export function usePlan(id: string, live: boolean) {
   }, [id, load]);
 
   // ---- steps (applied on screen)
-  const doStep = useCallback(async (body: { tag?: string; device_id?: string; borrowed_id?: string; slot_id?: string; step_id: string; kit?: { item: string; missing: boolean }[] }): Promise<{ ok: true; result: StepResult } | { ok: false; error: string }> => {
+  const doStep = useCallback(async (body: { tag?: string; device_id?: string; borrowed_id?: string; slot_id?: string; step_id: string; kit?: { item: string; missing: boolean }[] }): Promise<{ ok: true; result: StepResult } | { ok: false; error: string; network?: boolean }> => {
     const r = await call<StepResult>(`/api/logistics/plans/${id}/steps`, 'POST', body);
-    if (!r.ok) return { ok: false, error: r.error };
+    if (!r.ok) return { ok: false, error: r.error, network: r.status === 0 };
     const res = r.data;
     setDetail((cur) => {
       if (!cur) return cur;
@@ -120,11 +120,11 @@ export function usePlan(id: string, live: boolean) {
     });
     return { ok: true, result: res };
   }, [id]);
-  const undoStep = useCallback(async (item: { id: string; kind: 'club' | 'sponsor' | 'officer' | 'slot' }, step_id: string): Promise<boolean> => {
+  const undoStep = useCallback(async (item: { id: string; kind: 'club' | 'sponsor' | 'officer' | 'slot' }, step_id: string): Promise<'ok' | 'network' | 'failed'> => {
     const r = await call<{ ok: true }>(`/api/logistics/plans/${id}/steps`, 'DELETE', { ...(item.kind === 'club' ? { device_id: item.id } : item.kind === 'slot' ? { slot_id: item.id } : { borrowed_id: item.id }), step_id });
-    if (!r.ok) { setError(r.error); return false; }
+    if (!r.ok) { if (r.status !== 0) setError(r.error); return r.status === 0 ? 'network' : 'failed'; }
     setDetail((cur) => (cur ? { ...cur, done: cur.done.filter((d) => doneKey(d) !== `${item.id}:${step_id}`) } : cur));
-    return true;
+    return 'ok';
   }, [id]);
   const swap = useCallback(async (body: { device_id?: string; borrowed_id?: string; replacement_tag: string; reason: string }) => {
     const r = await call<{ replacement: Slim; station: { id: string; name: string } | null }>(`/api/logistics/plans/${id}/swap`, 'POST', body);

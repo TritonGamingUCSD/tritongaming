@@ -134,8 +134,9 @@ try {
   const raceRows = (await plan1()).slots.filter((x) => x.request_id === RC).length + (await plan1()).items.filter((x) => x.request_id === RC).length;
   t.ok('saving the same request at once leaves exactly the rows it asks for', raceRows === 4, String(raceRows));
   await exec.call('DELETE', URL_, { request_id: RC });
+  const countedTypes = new Set(((await svc.from('logistics_options').select('value, meta').eq('kind', 'type')).data ?? []).filter((o) => o.meta?.counted).map((o) => String(o.value).toLowerCase()));
   const listed = (await exec.call('GET', URL_)).j.requests.find((r) => r.id === A);
-  t.ok('the request shows filled / total rows', listed.rowsTotal === (await mineRows()).length && listed.filled === 0);
+  t.ok('the request shows filled / total rows', listed.rowsTotal === (await mineRows()).length && listed.filled === (await mineRows()).filter((x) => countedTypes.has(String(x.type).toLowerCase())).length);   // a counted type (a mousepad) never gets a device, so it counts as filled
   const emptyPlain = await exec.call('POST', `/api/logistics/plans/${P.id}/slots`, { action: 'empty', device_id: '00000000-0000-4000-8000-000000000000' });
   t.ok('emptying a device that is not in the plan is refused', emptyPlain.s === 404);
   const dec = await exec.call('PATCH', URL_, { request_id: E, status: 'declined' });

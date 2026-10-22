@@ -74,6 +74,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
   const stationOf = useMemo(() => new Map((detail?.stations ?? []).map((s) => [s.id, s])), [detail?.stations]);
 
   // Devices are always in the order of the Type dropdown (then by ID), whether they are grouped by team or by type.
+  const mainTypes = useMemo(() => new Set(data.lists.type.filter((t) => t.main).map((t) => t.value)), [data.lists.type]);
   const typeRank = useMemo(() => new Map(data.lists.type.map((t, i) => [t.value, i])), [data.lists.type]);
   const rankOf = useCallback((type: string) => typeRank.get(type) ?? 9999, [typeRank]);
   const all = useMemo(() => (detail ? planRows(detail, counted) : []), [detail, counted]);
@@ -82,11 +83,11 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
     const order = new Map(detail.stations.map((s) => [s.id, s.sort]));
     // A set (a bundle's parts) is placed by its main device (the PC, laptop or console; else the part listed first) and keeps its own order inside; so a PC set is never named after its keyboard.
     const first = new Map<string, Row>();
-    for (const r of all) if (r.setId) { const f = first.get(r.setId); if (!f || primaryRank(r.type) < primaryRank(f.type) || (primaryRank(r.type) === primaryRank(f.type) && r.sort < f.sort)) first.set(r.setId, r); }
+    for (const r of all) if (r.setId) { const f = first.get(r.setId); if (!f || primaryRank(r.type, mainTypes) < primaryRank(f.type, mainTypes) || (primaryRank(r.type, mainTypes) === primaryRank(f.type, mainTypes) && r.sort < f.sort)) first.set(r.setId, r); }
     const lead = (r: Row) => (r.setId ? first.get(r.setId) ?? r : r);
     // A sponsor or officer loaner that no row has taken is supply (it shows on its own tab), not part of any team yet.
     return all.filter((r) => r.role === 'planned' && !((r.kind === 'sponsor' || r.kind === 'officer') && !r.requestId && !r.station_id)).sort((a, b) => ((a.station_id ? order.get(a.station_id) ?? 999 : 1000) - (b.station_id ? order.get(b.station_id) ?? 999 : 1000)) || rankOf(lead(a).type) - rankOf(lead(b).type) || natural(lead(a).tag ?? lead(a).type, lead(b).tag ?? lead(b).type) || (a.setId && a.setId === b.setId ? a.sort - b.sort : 0));
-  }, [detail, all, rankOf]);
+  }, [detail, all, rankOf, mainTypes]);
   const backups = useMemo(() => all.filter((r) => r.role === 'backup'), [all]);
 
   const stepStats = useMemo(() => steps.map((s) => {
@@ -140,6 +141,56 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
     }, 80);
   }
 
+  // Undo bar: the last box ticked from the sheet can be taken back for a few seconds.
+  const [undoBar, setUndoBar] = useState<{ text: string; undo: () => void } | null>(null);
+  const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  function offerUndo(text: string, undo: () => void) {
+    if (undoTimer.current) clearTimeout(undoTimer.current);
+    setUndoBar({ text, undo });
+    undoTimer.current = setTimeout(() => setUndoBar(null), 6000);
+  }
+  // Offline queue: a tick or untick that couldn't reach the server stays on screen (and on this device) and is sent again when the connection is back.
+  interface Queued { key: string; op: 'tick' | 'undo'; body: Record<string, unknown>; item: { id: string; kind: Slim['kind'] }; stepId: string }
+  const queueKey = `tg-logistics-queue:${id}`;
+  const [queued, setQueued] = useState<Queued[]>([]);
+  const queuedRef = useRef<Queued[]>([]);
+  const flushing = useRef(false);
+  const saveQueue = (list: Queued[]) => { queuedRef.current = list; setQueued(list); try { if (list.length) localStorage.setItem(queueKey, JSON.stringify(list)); else localStorage.removeItem(queueKey); } catch { /* storage blocked */ } };
+  function enqueue(q: Queued) { saveQueue([...queuedRef.current.filter((x) => x.key !== q.key), q]); }
+  async function flush() {
+    if (flushing.current) return;
+    flushing.current = true;
+    try {
+      for (const q of [...queuedRef.current]) {
+        let r: 'ok' | 'network' | 'failed' | string;
+        if (q.op === 'tick') { const x = await plan.doStep(q.body as Parameters<typeof plan.doStep>[0]); r = x.ok ? 'ok' : x.network ? 'network' : 'failed'; }
+        else r = await plan.undoStep(q.item, q.stepId);
+        if (r === 'network') break;
+        saveQueue(queuedRef.current.filter((x) => x.key !== q.key));
+        setPend([q.key], null);
+        if (r === 'failed') setFeedback({ tone: 'error', text: 'A change made while offline couldn’t be saved and was undone.' });
+      }
+    } finally { flushing.current = false; }
+  }
+  useEffect(() => {   // changes left from before a reload
+    try {
+      const raw = localStorage.getItem(queueKey);
+      if (!raw) return;
+      const list = JSON.parse(raw) as Queued[];
+      if (!Array.isArray(list) || !list.length) return;
+      queuedRef.current = list; setQueued(list);
+      setPending((cur) => { const next = new Map(cur); for (const q of list) next.set(q.key, q.op === 'tick'); return next; });
+    } catch { /* ignore */ }
+  }, [queueKey]);
+  useEffect(() => {
+    if (!queued.length) return;
+    const t = setInterval(() => void flush(), 6000);
+    const on = () => void flush();
+    window.addEventListener('online', on);
+    return () => { clearInterval(t); window.removeEventListener('online', on); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queued.length]);
+
   async function run(body: { tag?: string; device_id?: string; borrowed_id?: string; slot_id?: string; kit?: { item: string; missing: boolean }[] }, forStep: StepDef | null = step) {
     if (!forStep) return;
     setBusy(true); setError('');
@@ -173,18 +224,22 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
     if (pending.has(key)) return;
     if (forStep.kit && row.kit.length > 0 && !doneSet.has(key)) { begin(row, forStep); return; }
     setPend([key], true);
-    const r = await plan.doStep({ ...bodyOf(row), step_id: forStep.id });
+    const body = { ...bodyOf(row), step_id: forStep.id };
+    const r = await plan.doStep(body);
+    if (!r.ok && r.network) { enqueue({ key, op: 'tick', body, item: { id: row.id, kind: row.kind }, stepId: forStep.id }); return; }
     setPend([key], null);
-    if (!r.ok) setFeedback({ tone: 'error', text: r.error });
+    if (!r.ok) { setFeedback({ tone: 'error', text: r.error }); return; }
+    offerUndo(`${row.tag ?? row.type}: ${forStep.name}`, () => void undo({ id: row.id, kind: row.kind }, forStep.id));
   }
   const submit = () => { if (text.trim() && !busy) begin(null, step, text.trim()); };
   async function undo(item: { id: string; kind: Slim['kind'] }, stepIdToUndo: string) {
     const key = `${item.id}:${stepIdToUndo}`;
     if (pending.has(key)) return;
     setPend([key], false);
-    const ok = await plan.undoStep(item, stepIdToUndo);
+    const r = await plan.undoStep(item, stepIdToUndo);
+    if (r === 'network') { enqueue({ key, op: 'undo', body: {}, item, stepId: stepIdToUndo }); return; }
     setPend([key], null);
-    if (ok) setFeedback(null);
+    if (r === 'ok') { setFeedback(null); setUndoBar(null); }
   }
   async function markAll(list: Row[], forStep: StepDef) {
     const todo = list.filter((r) => stepAppliesTo(forStep, rowKind(r)) && !doneSet.has(`${r.id}:${forStep.id}`));
@@ -214,7 +269,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
   for (const b of borrowed) if (b.role === 'planned' && !b.request_id && !b.station_id) free.set(b.type, [...(free.get(b.type) ?? []), b.tag]);
   const ctx: SheetCtx = {
     listId, setsOpen: setsOpenPick ?? !day, foldGen, byType: groupByType,
-    api: plan, canManage: canManage && !day, closed, busy, pending: pendingSet, day, stations, steps, activeId: step?.id ?? '', doneSet, doneAt, problems,
+    api: plan, canManage: canManage && !day, closed, busy, pending: pendingSet, main: mainTypes, day, stations, steps, activeId: step?.id ?? '', doneSet, doneAt, problems,
     onTick: (row, s) => void tick(row, s), onTickAll: (list, s) => void markAll(list, s), onUndo: undo, onSwap: (r) => setSwapping({ id: r.id, tag: r.tag, type: r.type, kind: r.kind === 'slot' ? 'club' : r.kind }),
     onBorrowed: (r) => setBorrowing(borrowed.find((b) => b.id === r.id) ?? null), onInstalled: (list) => void install(list), onEditDevice: (r) => setDeviceEdit(catalog.data?.devices.find((x) => x.id === r.id) ?? data.devices.find((x) => x.id === r.id) ?? null),
   };
@@ -318,7 +373,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
       </div>
       {error && <div role="alert" onClick={() => setError('')}><Notice tone="error">{error}</Notice></div>}
       {deviceEdit && <DeviceDialog api={catalog} data={data} device={deviceEdit} onClose={() => { setDeviceEdit(null); void plan.reload(); }} />}
-      {swapping && <SwapDialog plan={plan} device={swapping} onClose={() => setSwapping(null)} />}
+      {swapping && <SwapDialog plan={plan} options={[...(free.get(swapping.type) ?? [])].sort(natural)} device={swapping} onClose={() => setSwapping(null)} />}
       {borrowing && <BorrowedDialog plan={plan} catalog={catalog} data={data} borrowed={borrowing === 'new' ? null : borrowing} onClose={() => setBorrowing(null)} />}
       {editing && <EditPlanDialog plan={plan} onClose={() => setEditing(false)} />}
       {stationDialog && !stationDialog.station && <StationDialog plan={plan} station={null} onClose={() => setStationDialog(null)} />}
@@ -517,6 +572,13 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
         </div>
       </div>}
 
+      {(undoBar || queued.length > 0) && (
+        <div className={styles.undoBar} role="status" aria-live="polite">
+          {queued.length > 0
+            ? <><span>{queued.length} change{queued.length === 1 ? '' : 's'} waiting to send. Saved on this device.</span><button type="button" className={styles.undoBtn} onClick={() => void flush()}>Send Now</button></>
+            : undoBar && <><span>{undoBar.text}</span><button type="button" className={styles.undoBtn} onClick={() => { undoBar.undo(); setUndoBar(null); }}>Undo</button></>}
+        </div>
+      )}
     </div>
   );
 }

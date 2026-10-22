@@ -63,7 +63,7 @@ export async function PATCH(request: Request) {
   if (!o) return NextResponse.json({ error: 'That entry is gone.' }, { status: 404 });
   const kind = o.kind as OptionKind;
   const patch: Record<string, unknown> = {};
-  if (typeof b.counted === 'boolean' && kind === 'type') patch.meta = { ...(o.meta as object), counted: b.counted };
+  if ((typeof b.counted === 'boolean' || typeof b.main === 'boolean') && kind === 'type') patch.meta = { ...(o.meta as object), ...(typeof b.counted === 'boolean' ? { counted: b.counted } : {}), ...(typeof b.main === 'boolean' ? { main: b.main } : {}) };
   if (kind === 'step' && (typeof b.applies === 'string' || typeof b.kit === 'boolean')) {
     if (typeof b.applies === 'string' && !APPLIES.includes(b.applies)) return NextResponse.json({ error: 'Pick which devices the step is for.' }, { status: 400 });
     patch.meta = { ...(o.meta as object), ...(typeof b.applies === 'string' ? { applies: b.applies } : {}), ...(typeof b.kit === 'boolean' ? { kit: b.kit } : {}) };
