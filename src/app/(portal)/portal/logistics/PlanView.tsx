@@ -97,7 +97,8 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
   const auto = stepStats.find((p) => p.done < p.total)?.step ?? stepStats[stepStats.length - 1]?.step ?? null;
   const step = steps.find((s) => s.id === picked) ?? auto;
   const allDone = stepStats.reduce((n, p) => n + p.done, 0), allTotal = stepStats.reduce((n, p) => n + p.total, 0);
-  const problems = useMemo(() => (detail ? planProblems(rows, detail.stations, steps, doneSet, detail.conflicts, () => null) : []), [detail, rows, steps, doneSet]);
+  // Each stage only lists what matters in it: planning looks at teams, empty rows, games, places and double-booked devices; the event day only at what blocks the day (a step skipped, a row with no device, a device in two places).
+  const problems = useMemo(() => (detail ? planProblems(rows, detail.stations, steps, doneSet, detail.conflicts, () => null).filter((p) => (day ? ['skipped', 'empty', 'conflict'] : ['empty', 'game', 'place', 'team', 'unrequested', 'conflict']).includes(p.why)) : []), [detail, rows, steps, doneSet, day]);
   const bad = problems.filter((p) => p.sev === 'bad').length, warn = problems.length - bad;
 
   const isPrizing = page === 'requests-prizing' || page === 'prizing' || page === 'sponsor-prizing';
