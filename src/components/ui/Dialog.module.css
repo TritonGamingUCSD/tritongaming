@@ -58,5 +58,6 @@
   .backdropSheet { padding: 0; align-items: stretch; }
   .sheetFull { max-width: none; height: 100dvh; max-height: 100dvh; border-radius: 0; padding: 1rem 1rem 0; gap: 0.9rem; }
   .sheetFull > .actions { position: sticky; bottom: 0; margin: auto -1rem 0; padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom)); background: #fff; border-top: 1px solid rgba(1, 25, 65, 0.12); } /* theme-ok */
-  .sheetFull .title { position: sticky; top: 0; z-index: 2; margin: -1rem -1rem 0; padding: 1rem 3rem 0.6rem 1rem; background: #fff; } /* theme-ok */
+  .sheetFull .title { position: sticky; top: 0; z-index: 2; margin: -1rem -1rem 0.4rem; padding: 1rem 3.2rem 0.8rem 1rem; background: #fff; border-bottom: 1px solid rgba(1, 25, 65, 0.1); } /* theme-ok */
+  .sheetFull .close { z-index: 3; position: fixed; top: 0.7rem; right: 0.8rem; }
 }

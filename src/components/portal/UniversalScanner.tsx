@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { CircleAlert, Keyboard, Loader2, X } from 'lucide-react';
+import { Check, CircleAlert, Keyboard, Loader2, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import QrScanner, { type ScanLock } from '@/app/(portal)/portal/meetings/QrScanner';
 import CheckInOutcome from './CheckInOutcome';
 import CodeEntry from './CodeEntry';
 import { checkInWithCode, checkInWithQr, confirmReward, resolveChoice, TGCODE, type Outcome } from '@/lib/checkin/anyCode';
+import { offerToScanHandlers } from '@/lib/portal/scanHandlers';
 import styles from './UniversalScanner.module.css';
 
 const MY_MEETING = '/portal/meetings?tab=mine';   // where a checked-in meeting's question and doc are
@@ -34,12 +35,14 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
   const router = useRouter();
   const [state, setState] = useState<State>({ kind: 'scanning' });
   const [problem, setProblem] = useState('');
+  const [said, setSaid] = useState<{ text: string; ok: boolean } | null>(null);   // what a page that took the scan (a device on the event day) says about it
   const [busy, setBusy] = useState(false);
   const [slow, setSlow] = useState(false);   // working for a while: say so, so a slow connection never looks like a frozen screen
   const [typing, setTyping] = useState(false);   // the six-digit box is tucked away until it is wanted
   const goTimer = useRef<number | undefined>(undefined);
   const autoTimer = useRef<number | undefined>(undefined);
   useEffect(() => () => { window.clearTimeout(goTimer.current); window.clearTimeout(autoTimer.current); }, []);   // closing in the moment before a page opens cancels the move
+  useEffect(() => { if (!said) return; const id = window.setTimeout(() => setSaid(null), 4000); return () => window.clearTimeout(id); }, [said]);
   useEffect(() => { if (!problem) return; const id = window.setTimeout(() => setProblem(''), 5000); return () => window.clearTimeout(id); }, [problem]);
 
   useEffect(() => {
@@ -83,6 +86,7 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
 
   function onScan(text: string): boolean {
     const t = text.trim();
+    if (!TGCODE.test(t) && !linkTarget(t) && offerToScanHandlers(t, (message, ok) => setSaid({ text: message, ok }))) { setProblem(''); return false; }   // a page that is open may take it (a device on the event day)
     const ring = t.match(TGCODE);
     if (ring) {
       setProblem('');
@@ -174,6 +178,9 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
           </div>
         ) : null}
       />
+      {said && (
+        <div className={styles.toast} role="status">{said.ok ? <Check size={16} aria-hidden="true" /> : <CircleAlert size={16} aria-hidden="true" />} {said.text}</div>
+      )}
       {problem && (
         <div className={styles.toast} role="status"><CircleAlert size={16} aria-hidden="true" /> {problem}</div>
       )}

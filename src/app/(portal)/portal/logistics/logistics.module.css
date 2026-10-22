@@ -858,3 +858,12 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
   .dayLine > .dTools { grid-area: tools; justify-content: flex-end; align-self: start; }
   .dayLine > .dNotes:empty, .dayLine > .dTools:empty { display: none; }
 }
+
+/* The scanner button beside Mark is for a tablet or laptop; a phone has Scan in its bottom bar. */
+@media (max-width: 899px) { .scanDesk { display: none; } }
+
+/* Admin preview: the page inside a phone or laptop sized frame, scaled down to fit the window. */
+.previewBox { display: flex; justify-content: center; align-items: flex-start; overflow: hidden; padding: 0.75rem 0; }
+.previewDevice { flex: none; transform-origin: top center; border-radius: 10px; border: 2px solid var(--pp-ink); background: var(--pp-card); overflow: hidden; box-shadow: 0 10px 30px color-mix(in srgb, var(--pp-ink) 25%, transparent); }
+.previewPhone { border-radius: 34px; border-width: 8px; }
+.previewFrame { display: block; border: none; width: 100%; height: 100%; background: var(--pp-paper); }

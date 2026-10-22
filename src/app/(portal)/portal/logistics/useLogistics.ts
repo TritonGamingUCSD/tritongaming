@@ -9,6 +9,7 @@ export interface OptionItem { id: string; value: string; counted?: boolean; main
 export interface Sponsor { id: string; name: string; contact: string | null; notes: string | null }
 export interface Catalog {
   canManage: boolean;
+  isAdmin?: boolean;
   lists: Record<OptionKind, OptionItem[]>;
   portalGames: string[];
   devices: Device[];

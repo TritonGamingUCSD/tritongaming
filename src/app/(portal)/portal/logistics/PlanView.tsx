@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Camera, RefreshCw } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import PreviewFrame, { PreviewSwitch, type Preview } from './PreviewFrame';
+import { registerScanHandler } from '@/lib/portal/scanHandlers';
+const UniversalScanner = dynamic(() => import('@/components/portal/UniversalScanner'), { ssr: false });   // the camera is only loaded when it is opened
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import Loading from '@/components/Loading/Loading';
@@ -26,7 +29,6 @@ import SwapDialog from './SwapDialog';
 import { planRows, primaryRank, type Row } from './planRows';
 import { TextCell } from './Cells';
 import { usePrizes } from './usePrizes';
-const QrScanner = dynamic(() => import('../meetings/QrScanner'), { ssr: false });   // the camera reader is only loaded when Scan is pressed
 import { doneKey, usePlan, type Borrowed, type Slim, type Station, type StepResult } from './usePlans';
 import type { Catalog, LogisticsApi } from './useLogistics';
 import styles from './logistics.module.css';
@@ -52,8 +54,22 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<Feedback>(null);
-  const [scanning, setScanning] = useState(false);
-  const [scanNote, setScanNote] = useState('');
+  // Admin preview (Phone / Laptop): kept in the address (?preview=phone); the page inside the frame is the same address with ?frame=1 and has no switch of its own.
+  const [preview, setPreviewState] = useState<Preview>(null);
+  const [inFrame, setInFrame] = useState(false);
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    setInFrame(q.get('frame') === '1');
+    const p = q.get('preview');
+    if (p === 'phone' || p === 'laptop') setPreviewState(p);
+  }, []);
+  const setPreview = (p: Preview) => {
+    setPreviewState(p);
+    const u = new URL(window.location.href);
+    if (p) u.searchParams.set('preview', p); else u.searchParams.delete('preview');
+    window.history.replaceState(window.history.state, '', `${u.pathname}${u.search}`);
+  };
+  const [scanning, setScanning] = useState(false);   // the portal's scanner opened from this page (a tablet or laptop with a camera; on a phone the Scan button of the bottom bar does the same)
   const [kit, setKit] = useState<{ row: Target; flags: Record<string, boolean> } | null>(null);
   const [swapping, setSwapping] = useState<{ id: string; tag: string | null; type: string; kind: 'club' | 'sponsor' | 'officer' } | null>(null);
   const [borrowing, setBorrowing] = useState<Borrowed | 'new' | null>(null);
@@ -247,21 +263,26 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
     if (!r.ok) { setFeedback({ tone: 'error', text: r.error }); return; }
     offerUndo(`${row.tag ?? row.type}: ${forStep.name}`, () => void undo({ id: row.id, kind: row.kind }, forStep.id));
   }
-  // Scan: a device's QR (its ID, or a link ending in it) marks the selected step, the same as typing the ID. The camera stays open for the next one.
-  function onScanText(raw: string) {
+  // The portal's Scan button (one camera for everything) offers its scans to this page first while the event day is open: a device's QR (its ID, or a link ending in it) marks the selected step,
+  // the same as typing the ID. Anything that is a TGcode or a portal link is left for the Scan button.
+  const scanRef = useRef<(text: string, say: (m: string, ok: boolean) => void) => boolean>(() => false);
+  scanRef.current = (raw, say) => {
+    if (!(page === 'device' && day && !closed && step)) return false;
     let tag = raw.trim();
     try { const u = new URL(tag); tag = u.searchParams.get('tag') ?? u.searchParams.get('id') ?? u.pathname.split('/').filter(Boolean).pop() ?? tag; } catch { /* plain text */ }
-    tag = decodeURIComponent(tag).trim();
-    if (!step || !tag) return false;
-    if (step.kit) { setScanNote(`“${step.name}” reviews the parts: tick it on the sheet or type the ID.`); return false; }
+    try { tag = decodeURIComponent(tag); } catch { /* keep as is */ }
+    tag = tag.trim();
+    if (!tag) return false;
+    if (step.kit) { say(`“${step.name}” reviews the parts: tick it on the sheet or type the ID.`, false); return true; }
     void plan.doStep({ tag, step_id: step.id }).then((r) => {
-      if (!r.ok) { setScanNote(r.error); return; }
+      if (!r.ok) { say(r.error, false); return; }
       const nm = r.result.item.tag ?? r.result.item.type;
-      setScanNote(r.result.already ? `${nm} was already marked “${step.name}”.` : `${nm}: ${step.name}`);
+      say(r.result.already ? `${nm} was already marked “${step.name}”.` : `${nm}: ${step.name}`, !r.result.already);
       if (!r.result.already) offerUndo(`${nm}: ${step.name}`, () => void undo({ id: r.result.item.id, kind: r.result.item.kind }, step.id));
     });
-    return false;
-  }
+    return true;
+  };
+  useEffect(() => registerScanHandler((text, say) => scanRef.current(text, say)), []);
   const submit = () => { if (text.trim() && !busy) begin(null, step, text.trim()); };
   async function undo(item: { id: string; kind: Slim['kind'] }, stepIdToUndo: string) {
     const key = `${item.id}:${stepIdToUndo}`;
@@ -329,6 +350,19 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
   }
 
 
+  if (preview && data.isAdmin && !inFrame) {
+    return (
+      <div className={styles.dayPage}>
+        <div className={styles.dayBar}>
+          <button type="button" className={styles.back} onClick={onBack} aria-label="All events"><ArrowLeft size={15} aria-hidden="true" /> <span className={styles.backText}>All Events</span></button>
+          <div className={styles.dayHeading}><b className={styles.dayTitle}>{p.name}</b><span className={styles.muted}>Admin preview: {preview === 'phone' ? 'phone' : 'laptop'} screen</span></div>
+          <PreviewSwitch value={preview} onChange={setPreview} />
+        </div>
+        <PreviewFrame key={preview} mode={preview} />
+      </div>
+    );
+  }
+
   return (
     <div className={`${styles.dayPage} ${page === 'device' && day && !closed ? styles.dayPageBar : ''}`}>
       <div className={styles.dayTop}>
@@ -338,6 +372,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
             <b className={styles.dayTitle}>{p.name}{closed && <span className={`${styles.badge} ${styles.neutral}`}>Closed</span>}</b>
             <span className={styles.muted}>{range(p.starts_on, p.ends_on)}{p.event_id ? ' · portal event' : ' · Event logistics only'}{p.notes ? ` · ${p.notes}` : ''}</span>
           </div>
+          {data.isAdmin && !inFrame && <PreviewSwitch value={preview} onChange={setPreview} />}
           {page === 'device' && day && <span className={styles.dayTotal} title="Steps done"><span className={styles.bar}><i style={{ width: `${pct}%` }} /></span>{allDone}/{allTotal}</span>}
         </div>
         {[...free].map(([type, tags]) => <datalist key={type} id={listId(type)}>{tags.sort(natural).map((t) => <option key={t} value={t} />)}</datalist>)}
@@ -372,7 +407,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
             <datalist id="day-ids">{all.filter((r) => r.kind !== 'slot' && r.tag).map((r) => <option key={r.id} value={r.tag!}>{`${r.type}${r.stationId ? ` · ${stationOf.get(r.stationId)?.name ?? ''}` : ''}`}</option>)}</datalist>
             <input ref={input} list="day-ids" className={styles.dayInput} value={text} onChange={(e) => setText(e.target.value)} placeholder={`Type an ID to mark “${step?.name ?? 'the step'}”`} aria-label={`Device ID for ${step?.name ?? 'the step'}`} autoCapitalize="characters" autoComplete="off" autoCorrect="off" spellCheck={false} enterKeyHint="done" disabled={busy || !step} />
             <Button type="submit" disabled={!text.trim() || busy} loading={busy}>Mark</Button>
-            <button type="button" className={styles.iconBtn} title="Scan a device QR" aria-label="Scan a device QR" onClick={() => { setScanNote(''); setScanning(true); }} disabled={!step}><Camera size={16} aria-hidden="true" /></button>
+            <button type="button" className={`${styles.iconBtn} ${styles.scanDesk}`} title="Scan a device" aria-label="Open the scanner" onClick={() => setScanning(true)} disabled={!step}><Camera size={16} aria-hidden="true" /></button>
           </form>
             {fb && (
               <div className={`${styles.lastBar} ${fb.tone === 'ok' ? styles.lastOk : fb.tone === 'already' ? styles.lastWarn : styles.lastBad}`} role="status" aria-live="polite">
@@ -392,7 +427,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
         )}
         {page === 'device' && day && closed && <Notice tone="error">This event is closed, so nothing more can be recorded.</Notice>}
       </div>
-      {scanning && <QrScanner onScan={onScanText} onClose={() => setScanning(false)} title={`Scan: ${step?.name ?? ''}`} note={scanNote || 'Point at a device QR. Each one scanned is marked.'} />}
+      {scanning && <UniversalScanner onClose={() => setScanning(false)} />}
       {error && <div role="alert" onClick={() => setError('')}><Notice tone="error">{error}</Notice></div>}
       {deviceEdit && <DeviceDialog api={catalog} data={data} device={deviceEdit} onClose={() => { setDeviceEdit(null); void plan.reload(); }} />}
       {swapping && <SwapDialog plan={plan} options={[...(free.get(swapping.type) ?? [])].sort(natural)} device={swapping} onClose={() => setSwapping(null)} />}
