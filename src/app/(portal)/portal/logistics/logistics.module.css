@@ -711,3 +711,16 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 .finderEmpty { padding: 0.5rem 0.6rem; font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.8); }
 
 .listCellEdit { display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; min-width: 0; }
+
+/* the folded team header is centred in its row */
+.dayRowHead { align-items: center; }
+
+/* devices that are still free (not in this event) */
+.freeBox { border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.25); background: var(--pp-card); }
+.freeBox > summary { cursor: pointer; padding: 0.55rem 1rem; font-weight: 700; font-size: 0.9rem; color: var(--pp-ink); }
+.freeGroups { display: flex; flex-direction: column; border-top: 1px solid rgba(var(--pp-ink-rgb), 0.12); }
+.freeGroup { display: grid; grid-template-columns: 12rem minmax(0, 1fr); gap: 0.6rem; padding: 0.45rem 1rem; font-size: 0.86rem; align-items: baseline; }
+.freeGroup + .freeGroup { border-top: 1px solid rgba(var(--pp-ink-rgb), 0.08); }
+.freeTags { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.freeTag { padding: 0.05rem 0.5rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); font-size: 0.8rem; }
+@media (max-width: 640px) { .freeGroup { grid-template-columns: 1fr; gap: 0.2rem; } }

@@ -447,6 +447,19 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
             );
           })}
 
+          {page === 'device' && free.size > 0 && (
+            <details className={styles.freeBox}>
+              <summary>Not Allocated <span className={styles.dim}>{[...free.values()].reduce((n, l) => n + l.length, 0)} devices still free</span></summary>
+              <div className={styles.freeGroups}>
+                {[...free].sort((a, b) => natural(a[0], b[0])).map(([type, tags]) => (
+                  <div key={type} className={styles.freeGroup}>
+                    <b>{type} <span className={styles.dim}>{tags.length}</span></b>
+                    <span className={styles.freeTags}>{[...tags].sort(natural).map((t) => <span key={t} className={styles.freeTag}>{t}</span>)}</span>
+                  </div>
+                ))}
+              </div>
+            </details>
+          )}
           {backups.length > 0 && (
             <section className={styles.dayTeam} style={{ '--n': steps.length } as React.CSSProperties} aria-label="Backups">
               <div className={`${styles.dayRow} ${styles.dayRowHead}`}><div className={styles.teamHeadMain}><b>Backups <span className={styles.dim}>{backups.length}</span></b></div></div>
