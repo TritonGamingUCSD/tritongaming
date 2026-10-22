@@ -656,3 +656,13 @@
 /* the pool cards flow into columns, so cards of different lengths don't leave empty gaps */
 .poolCards { display: block; column-width: 21rem; column-gap: 0.8rem; }
 .poolCard { break-inside: avoid; margin-bottom: 0.8rem; }
+
+/* every line of the allocation (a bundle's header and each part) is the same height */
+.noSteps .dayLine { min-height: 46px; padding-block: 0.15rem; align-items: center; }
+.noSteps .dayLine .dInfo { align-self: center; }
+
+/* the By Team / By Type switch, the same height and look as the buttons beside it */
+.miniSeg { display: inline-flex; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 6px; overflow: hidden; }
+.miniSeg button { min-height: 30px; padding: 0 0.65rem; border: none; background: none; color: var(--pp-ink); font: inherit; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
+.miniSeg button[aria-pressed="true"] { background: var(--pp-ink); color: var(--pp-card); font-weight: 700; }
+.miniSeg button:not([aria-pressed="true"]):hover { background: rgba(var(--pp-ink-rgb), 0.08); }

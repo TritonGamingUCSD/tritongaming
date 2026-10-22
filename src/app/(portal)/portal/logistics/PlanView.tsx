@@ -326,8 +326,13 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
                 {warn > 0 && <span className={`${styles.badge} ${styles.warnBadge}`}>{warn} to check</span>}
                 {problems.length > 0 && <span className={styles.dim}>{showList ? 'Click to hide the list' : 'Click to see the list'}</span>}
                 <span className={styles.statusSpacer} />
-                {!day && page === 'device' && <SectionTabs<'station' | 'type'> variant="segmented" label="Group the devices" value={byType ? 'type' : 'station'} onChange={(v) => onGroup(v === 'type')} tabs={[{ id: 'station', label: 'By Team' }, { id: 'type', label: 'By Type' }]} />}
-                {manage && emptyRows.length > 0 && <Button size="sm" variant="secondary" onClick={() => setFilling({ station: null })}>Fill {emptyRows.length} Empty</Button>}
+                {!day && page === 'device' && (
+                  <span className={styles.miniSeg} role="group" aria-label="Group the devices">
+                    <button type="button" aria-pressed={!byType} onClick={() => onGroup(false)}>By Team</button>
+                    <button type="button" aria-pressed={byType} onClick={() => onGroup(true)}>By Type</button>
+                  </span>
+                )}
+                {manage && emptyRows.length > 0 && <button type="button" className={styles.linkBtn} onClick={() => setFilling({ station: null })}>Fill {emptyRows.length} Empty</button>}
                 {day && <button type="button" className={styles.linkBtn} aria-expanded={overview} onClick={() => setOverview((v) => !v)}>{overview ? 'Hide overview' : 'Overview'}</button>}
                 <button type="button" className={styles.linkBtn} onClick={() => { setFold(Object.fromEntries(teams.map((t) => [t.key, !allFolded]))); setSetsOpenPick(allFolded); setFoldGen((g) => g + 1); }}>{allFolded ? 'Expand all' : 'Collapse all'}</button>
               </div>
