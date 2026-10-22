@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, RefreshCw } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowLeft, MoreHorizontal, RefreshCw } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import Loading from '@/components/Loading/Loading';
@@ -23,7 +23,7 @@ import SectionTabs from '@/components/ui/SectionTabs';
 import type { EventPage } from './logisticsRoute';
 import { SheetRows, type SheetCtx } from './PlanSheet';
 import SwapDialog from './SwapDialog';
-import { planRows, type Row } from './planRows';
+import { planRows, primaryRank, type Row } from './planRows';
 import { doneKey, usePlan, type Borrowed, type Slim, type Station, type StepResult } from './usePlans';
 import type { Catalog, LogisticsApi } from './useLogistics';
 import styles from './logistics.module.css';
@@ -65,17 +65,28 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
 
   const steps = useMemo(() => detail?.steps ?? [], [detail?.steps]);
   const counted = useMemo(() => new Set(data.lists.type.filter((t) => t.counted).map((t) => t.value)), [data.lists.type]);
-  const doneSet = useMemo(() => new Set((detail?.done ?? []).map(doneKey)), [detail?.done]);
+  // Boxes ticked or unticked by a click that is still being saved: shown as already changed (dimmed) so several can be clicked quickly, each saving on its own.
+  const [pending, setPending] = useState<Map<string, boolean>>(() => new Map());
+  const setPend = (keys: string[], to: boolean | null) => setPending((cur) => { const next = new Map(cur); for (const k of keys) { if (to === null) next.delete(k); else next.set(k, to); } return next; });
+  const doneSet = useMemo(() => { const s = new Set((detail?.done ?? []).map(doneKey)); for (const [k, on] of pending) { if (on) s.add(k); else s.delete(k); } return s; }, [detail?.done, pending]);
+  const pendingSet = useMemo(() => new Set(pending.keys()), [pending]);
   const doneAt = useMemo(() => new Map((detail?.done ?? []).map((d) => [doneKey(d), d.done_at])), [detail?.done]);
   const stationOf = useMemo(() => new Map((detail?.stations ?? []).map((s) => [s.id, s])), [detail?.stations]);
 
+  // Devices are always in the order of the Type dropdown (then by ID), whether they are grouped by team or by type.
+  const typeRank = useMemo(() => new Map(data.lists.type.map((t, i) => [t.value, i])), [data.lists.type]);
+  const rankOf = useCallback((type: string) => typeRank.get(type) ?? 9999, [typeRank]);
   const all = useMemo(() => (detail ? planRows(detail, counted) : []), [detail, counted]);
   const rows: Row[] = useMemo(() => {
     if (!detail) return [];
     const order = new Map(detail.stations.map((s) => [s.id, s.sort]));
+    // A set (a bundle's parts) is placed by its main device (the PC, laptop or console; else the part listed first) and keeps its own order inside; so a PC set is never named after its keyboard.
+    const first = new Map<string, Row>();
+    for (const r of all) if (r.setId) { const f = first.get(r.setId); if (!f || primaryRank(r.type) < primaryRank(f.type) || (primaryRank(r.type) === primaryRank(f.type) && r.sort < f.sort)) first.set(r.setId, r); }
+    const lead = (r: Row) => (r.setId ? first.get(r.setId) ?? r : r);
     // A sponsor or officer loaner that no row has taken is supply (it shows on its own tab), not part of any team yet.
-    return all.filter((r) => r.role === 'planned' && !((r.kind === 'sponsor' || r.kind === 'officer') && !r.requestId && !r.station_id)).sort((a, b) => ((a.station_id ? order.get(a.station_id) ?? 999 : 1000) - (b.station_id ? order.get(b.station_id) ?? 999 : 1000)) || a.sort - b.sort || natural(a.tag ?? a.type, b.tag ?? b.type));
-  }, [detail, all]);
+    return all.filter((r) => r.role === 'planned' && !((r.kind === 'sponsor' || r.kind === 'officer') && !r.requestId && !r.station_id)).sort((a, b) => ((a.station_id ? order.get(a.station_id) ?? 999 : 1000) - (b.station_id ? order.get(b.station_id) ?? 999 : 1000)) || rankOf(lead(a).type) - rankOf(lead(b).type) || natural(lead(a).tag ?? lead(a).type, lead(b).tag ?? lead(b).type) || (a.setId && a.setId === b.setId ? a.sort - b.sort : 0));
+  }, [detail, all, rankOf]);
   const backups = useMemo(() => all.filter((r) => r.role === 'backup'), [all]);
 
   const stepStats = useMemo(() => steps.map((s) => {
@@ -99,7 +110,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
         g.rows.push(r);
       }
       for (const g of out) g.rows.sort((a, b) => (a.tag ? 0 : 1) - (b.tag ? 0 : 1) || natural(a.tag ?? '', b.tag ?? ''));
-      return out.sort((a, b) => natural(a.title, b.title));
+      return out.sort((a, b) => rankOf(a.title) - rankOf(b.title) || natural(a.title, b.title));
     }
     for (const s of detail?.stations ?? []) out.push({ key: s.id, station: s, title: s.name, rows: [] });
     for (const r of rows) {
@@ -108,7 +119,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
       g.rows.push(r);
     }
     return out.filter((t) => t.station || t.rows.length);
-  }, [detail?.stations, rows, groupByType]);
+  }, [detail?.stations, rows, groupByType, rankOf]);
 
   useEffect(() => {
     const m = window.matchMedia('(max-width: 899px)');
@@ -156,16 +167,32 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
     if (forStep.kit && target && target.kit.length > 0 && !doneSet.has(`${target.id}:${forStep.id}`)) { setKit({ row: target, flags: Object.fromEntries(target.kit.map((k) => [k.item, k.missing])) }); setPicked(forStep.id); return; }
     void run(row ? bodyOf(row) : { tag }, forStep);
   }
+  // A box clicked on the sheet: shown changed at once and saved in the background, so the next box can be clicked straight away.
+  async function tick(row: Row, forStep: StepDef) {
+    const key = `${row.id}:${forStep.id}`;
+    if (pending.has(key)) return;
+    if (forStep.kit && row.kit.length > 0 && !doneSet.has(key)) { begin(row, forStep); return; }
+    setPend([key], true);
+    const r = await plan.doStep({ ...bodyOf(row), step_id: forStep.id });
+    setPend([key], null);
+    if (!r.ok) setFeedback({ tone: 'error', text: r.error });
+  }
   const submit = () => { if (text.trim() && !busy) begin(null, step, text.trim()); };
   async function undo(item: { id: string; kind: Slim['kind'] }, stepIdToUndo: string) {
-    if (await plan.undoStep(item, stepIdToUndo)) setFeedback(null);
+    const key = `${item.id}:${stepIdToUndo}`;
+    if (pending.has(key)) return;
+    setPend([key], false);
+    const ok = await plan.undoStep(item, stepIdToUndo);
+    setPend([key], null);
+    if (ok) setFeedback(null);
   }
   async function markAll(list: Row[], forStep: StepDef) {
     const todo = list.filter((r) => stepAppliesTo(forStep, rowKind(r)) && !doneSet.has(`${r.id}:${forStep.id}`));
     if (!todo.length) return;
-    setBusy(true); setError('');
+    const keys = todo.map((r) => `${r.id}:${forStep.id}`);
+    setError(''); setPend(keys, true);
     const results = await Promise.all(todo.map((r) => plan.doStep({ ...bodyOf(r), step_id: forStep.id })));
-    setBusy(false);
+    setPend(keys, null);
     const failed = results.filter((x) => !x.ok).length;
     setFeedback(failed ? { tone: 'error', text: `${todo.length - failed} of ${todo.length} marked “${forStep.name}”. ${failed} failed.` } : { tone: 'ok', text: `${todo.length} marked “${forStep.name}”` });
   }
@@ -187,8 +214,8 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
   for (const b of borrowed) if (b.role === 'planned' && !b.request_id && !b.station_id) free.set(b.type, [...(free.get(b.type) ?? []), b.tag]);
   const ctx: SheetCtx = {
     listId, setsOpen: setsOpenPick ?? !day, foldGen, byType: groupByType,
-    api: plan, canManage: canManage && !day, closed, busy, day, stations, steps, activeId: step?.id ?? '', doneSet, doneAt, problems,
-    onTick: (row, s) => begin(row, s), onTickAll: (list, s) => void markAll(list, s), onUndo: undo, onSwap: (r) => setSwapping({ id: r.id, tag: r.tag, type: r.type, kind: r.kind === 'slot' ? 'club' : r.kind }),
+    api: plan, canManage: canManage && !day, closed, busy, pending: pendingSet, day, stations, steps, activeId: step?.id ?? '', doneSet, doneAt, problems,
+    onTick: (row, s) => void tick(row, s), onTickAll: (list, s) => void markAll(list, s), onUndo: undo, onSwap: (r) => setSwapping({ id: r.id, tag: r.tag, type: r.type, kind: r.kind === 'slot' ? 'club' : r.kind }),
     onBorrowed: (r) => setBorrowing(borrowed.find((b) => b.id === r.id) ?? null), onInstalled: (list) => void install(list), onEditDevice: (r) => setDeviceEdit(catalog.data?.devices.find((x) => x.id === r.id) ?? data.devices.find((x) => x.id === r.id) ?? null),
   };
   const foldOf = (key: string, complete: boolean) => (key in fold ? fold[key] : complete || narrow);
@@ -233,7 +260,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
           <button type="button" className={styles.iconBtn} onClick={() => void plan.reload()} aria-label="Refresh"><RefreshCw size={15} aria-hidden="true" /></button>
           {canManage && (
             <details className={styles.menu}>
-              <summary aria-label="More actions">More</summary>
+              <summary aria-label="More actions" title="More"><MoreHorizontal size={16} aria-hidden="true" /></summary>
               <div className={styles.menuList}>
                 <button type="button" onClick={() => setEditing(true)}>Edit Name And Dates</button>
                 <button type="button" onClick={() => void act('', 'PATCH', { status: closed ? 'draft' : 'closed' })}>{closed ? 'Reopen Plan' : 'Close Plan'}</button>
@@ -428,7 +455,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
                       <div className={styles.teamLine}>
                         {manage && s && (
                           <details className={`${styles.menu} ${styles.teamMenu}`}>
-                            <summary aria-label={`More for ${s.name}`}>More</summary>
+                            <summary aria-label={`More for ${s.name}`} title="More"><MoreHorizontal size={16} aria-hidden="true" /></summary>
                             <div className={styles.menuList}>
                               {emptyHere > 0 && <button type="button" onClick={() => setFilling({ station: s })}>Fill {emptyHere} Empty</button>}
                               <button type="button" onClick={() => setStationDialog({ station: s })}>Edit Team</button>
@@ -459,7 +486,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
             <details className={styles.freeBox}>
               <summary>Not Allocated <span className={styles.dim}>{[...free.values()].reduce((n, l) => n + l.length, 0)} devices still free</span></summary>
               <div className={styles.freeGroups}>
-                {[...free].sort((a, b) => natural(a[0], b[0])).map(([type, tags]) => (
+                {[...free].sort((a, b) => rankOf(a[0]) - rankOf(b[0]) || natural(a[0], b[0])).map(([type, tags]) => (
                   <div key={type} className={styles.freeGroup}>
                     <b>{type} <span className={styles.dim}>{tags.length}</span></b>
                     <span className={styles.freeTags}>{[...tags].sort(natural).map((t) => <span key={t} className={styles.freeTag}>{t}</span>)}</span>

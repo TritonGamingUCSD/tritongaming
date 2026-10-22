@@ -10,7 +10,7 @@ import type { Slim, Station, usePlan } from './usePlans';
 import styles from './logistics.module.css';
 
 export interface SheetCtx {
-  api: ReturnType<typeof usePlan>; canManage: boolean; closed: boolean; busy: boolean; day: boolean; stations: Station[]; steps: StepDef[]; activeId: string;
+  api: ReturnType<typeof usePlan>; canManage: boolean; closed: boolean; busy: boolean; pending: Set<string>; day: boolean; stations: Station[]; steps: StepDef[]; activeId: string;
   listId: (type: string) => string; setsOpen: boolean; foldGen: number; byType: boolean; doneSet: Set<string>; doneAt: Map<string, string>; problems: Problem[];
   onTick: (row: Row, step: StepDef) => void; onTickAll: (rows: Row[], step: StepDef) => void; onUndo: (item: { id: string; kind: Slim['kind'] }, stepId: string) => void;
   onSwap: (r: Row) => void; onBorrowed: (r: Row) => void; onInstalled: (rows: Row[]) => void; onEditDevice: (r: Row) => void;
@@ -23,7 +23,7 @@ const label = (r: Row) => r.tag ?? r.type;
 // The boxes for one line: a box per step the line goes through (a dash for a step that doesn't apply). A single device ticks and unticks; a counted line shows how many units are done
 // and ticks the next unit; a set ticks the step for all of its parts that go through it, and shows how many are done while some are not.
 function Cells({ rows, setLabel, ctx, readOnly }: { rows: Row[]; setLabel?: string; ctx: SheetCtx; readOnly?: boolean }) {
-  const { steps, doneSet, doneAt, activeId, closed, busy, onTick, onTickAll, onUndo } = ctx;
+  const { steps, doneSet, doneAt, activeId, closed, pending, onTick, onTickAll, onUndo } = ctx;
   const skipped = new Set(rows.flatMap((x) => skippedSteps(x, steps, doneSet).map((s) => s.id)));
   if (!ctx.day) return null;   // while allocating, the step boxes are hidden: they are for the day
   return (
@@ -36,8 +36,9 @@ function Cells({ rows, setLabel, ctx, readOnly }: { rows: Row[]; setLabel?: stri
         const lastDone = done.length ? doneAt.get(`${done[done.length - 1].id}:${s.id}`) : null;
         const name = `${setLabel ?? label(mine[0])} · ${s.name}`;
         const single = mine.length === 1;
+        const wait = mine.some((x) => pending.has(`${x.id}:${s.id}`));
         const click = () => {
-          if (closed || busy) return;
+          if (closed || wait) return;
           if (full) { for (const x of done) onUndo({ id: x.id, kind: x.kind }, s.id); return; }
           const next = mine.filter((x) => !doneSet.has(`${x.id}:${s.id}`));
           if (single || s.kit) onTick(next[0], s);
@@ -46,11 +47,11 @@ function Cells({ rows, setLabel, ctx, readOnly }: { rows: Row[]; setLabel?: stri
         };
         return (
           <span key={s.id} className={`${styles.cellWrap} ${s.id === activeId ? styles.cellOn : ''}`}>
-            <button type="button" className={`${styles.cell} ${full ? styles.cellDone : done.length ? styles.cellPart : ''} ${!full && skipped.has(s.id) ? styles.cellSkipped : ''}`} disabled={closed || busy} onClick={click} aria-pressed={full} aria-label={full ? `Undo ${name}` : `Mark ${name}`} title={lastDone ? `Done at ${time(lastDone)}` : skipped.has(s.id) ? 'Skipped: a later step is done' : s.name}>
+            <button type="button" className={`${styles.cell} ${full ? styles.cellDone : done.length ? styles.cellPart : ''} ${!full && skipped.has(s.id) ? styles.cellSkipped : ''} ${wait ? styles.cellWait : ''}`} disabled={closed} aria-busy={wait} onClick={click} aria-pressed={full} aria-label={full ? `Undo ${name}` : `Mark ${name}`} title={lastDone ? `Done at ${time(lastDone)}` : skipped.has(s.id) ? 'Skipped: a later step is done' : s.name}>
               {!single && !full ? <span>{done.length}/{mine.length}</span> : full ? <Check size={18} aria-hidden="true" /> : <span className={styles.cellBox} />}
               <span className={styles.cellLabel}>{s.name}</span>
             </button>
-            {!single && setLabel === undefined && done.length > 0 && !full && <button type="button" className={styles.cellMinus} aria-label={`Undo one ${name}`} disabled={closed || busy} onClick={() => onUndo({ id: done[done.length - 1].id, kind: done[done.length - 1].kind }, s.id)}>−</button>}
+            {!single && setLabel === undefined && done.length > 0 && !full && <button type="button" className={styles.cellMinus} aria-label={`Undo one ${name}`} disabled={closed || wait} onClick={() => onUndo({ id: done[done.length - 1].id, kind: done[done.length - 1].kind }, s.id)}>−</button>}
           </span>
         );
       })}
@@ -133,11 +134,11 @@ function SetLine({ unit, ctx }: { unit: Unit; ctx: SheetCtx }) {
   const name = unit.lines.map((l) => (l.counted ? `${l.rows[0].type}${l.rows.length > 1 ? ` ×${l.rows.length}` : ''}` : label(l.rows[0]))).join(' · ');
   return (
     <>
-      <div data-rows={rows.map((x) => x.id).join(' ')} className={`${styles.dayRow} ${styles.dayLine} ${styles.setLine} ${styles.clickRow} ${bad ? styles.lineBad : warn ? styles.lineWarn : ''}`} onClick={(e) => { if (!interactive(e.target)) setOpen((v) => !v); }}>
+      <div data-rows={rows.map((x) => x.id).join(' ')} className={`${styles.dayRow} ${styles.dayLine} ${styles.setLine} ${ctx.day ? styles.daySet : ''} ${styles.clickRow} ${bad ? styles.lineBad : warn ? styles.lineWarn : ''}`} onClick={(e) => { if (!interactive(e.target)) setOpen((v) => !v); }}>
         <div className={styles.dInfo}>
           <button type="button" className={styles.foldBtn} aria-expanded={open} aria-label={`${open ? 'Hide' : 'Show'} the parts of ${first.tag ?? first.type}`} onClick={() => setOpen((v) => !v)}><span className={styles.foldMark} aria-hidden="true">{open ? '–' : '+'}</span><b className={styles.dTag}>{ctx.day ? first.tag ?? first.type : first.requestItem ?? first.tag ?? first.type}</b></button>
           <span className={styles.dType}>{ctx.day ? `${first.type} set · ` : ''}{rows.length} parts</span>
-          {(!open || ctx.day) && <span className={`${styles.dWhere} ${styles.setParts}`} title={name}>{unit.lines.map((l, i) => (
+          {!open && !ctx.day && <span className={`${styles.dWhere} ${styles.setParts}`} title={name}>{unit.lines.map((l, i) => (
             <span key={l.key} className={l.rows[0].kind === 'slot' && !l.counted ? styles.flagBad : undefined}>{i > 0 ? ' · ' : ''}{l.counted ? `${l.rows[0].type}${l.rows.length > 1 ? ` ×${l.rows.length}` : ''}` : l.rows[0].kind === 'slot' ? `no ${l.rows[0].type}` : label(l.rows[0])}</span>
           ))}</span>}
         </div>

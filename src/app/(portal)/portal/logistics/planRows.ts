@@ -47,6 +47,15 @@ export function lines(rows: Row[]): Line[] {
   return out;
 }
 
+// The main device of a set (a PC, a laptop, a console): it names the set and comes first in it. 0 is the main kind, higher is less so; anything else is a part (monitor, keyboard, dock...).
+export function primaryRank(type: string): number {
+  const t = type.trim().toLowerCase();
+  if (/(^|[\s-])(pc|computer|desktop)$/.test(t)) return 0;
+  if (/(^|[\s-])laptop$/.test(t)) return 1;
+  if (/^(nintendo switch|switch|ps\d|playstation( \d)?|xbox( \w+)?|steam deck|wii( u)?|gamecube)$/.test(t)) return 2;
+  return 99;
+}
+
 // A unit is what gets one line on the sheet: a single device (or counted line), or a set (the rows made together from a bundle, like a PC with its monitor, keyboard and mouse).
 export interface Unit { key: string; lines: Line[]; set: boolean }
 export function units(rows: Row[]): Unit[] {
@@ -62,5 +71,6 @@ export function units(rows: Row[]): Unit[] {
       u.lines.push(l);
     } else out.push({ key: l.key, lines: [l], set: false });
   }
+  for (const u of out) if (u.set) u.lines.sort((a, b) => primaryRank(a.rows[0].type) - primaryRank(b.rows[0].type));   // stable: the other parts keep their order
   return out;
 }

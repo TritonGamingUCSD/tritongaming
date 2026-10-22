@@ -1,5 +1,6 @@
 'use client';
 
+import { Pencil, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
@@ -98,8 +99,8 @@ export default function RequestsTab({ kind, plan, api, data }: { kind: RequestKi
                 <span data-label="Notes"><TextCell value={r.notes} canEdit={mine} placeholder="Add" onSave={(v) => void patch(r, { notes: v })} /></span>
                 <span data-label="Status">{manage && !closed ? <PickCell value={STATUS_LABELS[r.status]} options={REQUEST_STATUSES.map((x) => STATUS_LABELS[x])} clearable={false} canEdit onSave={(v) => { const x = REQUEST_STATUSES.find((k) => STATUS_LABELS[k] === v); if (x) void setStatus(r, x); }} /> : <span className={`${styles.statusChip} ${chip[r.status]}`}>{STATUS_LABELS[r.status]}</span>}</span>
                 <span className={styles.prizeTools}>
-                  {mine && <button type="button" className={styles.linkBtn} onClick={() => setDialog(r)}>Edit</button>}
-                  {mine && <button type="button" className={styles.linkBtn} onClick={() => void remove(r)}>{manage ? 'Remove' : 'Take Back'}</button>}
+                  {mine && <button type="button" className={styles.iconBtn} title="Edit" aria-label={`Edit request from ${r.requester}`} onClick={() => setDialog(r)}><Pencil size={15} aria-hidden="true" /></button>}
+                  {mine && <button type="button" className={styles.iconBtn} title={manage ? 'Remove' : 'Take Back'} aria-label={`${manage ? 'Remove' : 'Take back'} request from ${r.requester}`} onClick={() => void remove(r)}><Trash2 size={15} aria-hidden="true" /></button>}
                 </span>
               </div>
             );
@@ -153,7 +154,7 @@ function RequestDialog({ kind: askKind, plan, api, data, planId, loaded, request
                 <Field label='What'><Select value={it.what} onChange={(e) => setDevAt(i, { what: e.target.value })} aria-label="What you need"><optgroup label="Bundles">{data.lists.bundle.map((b) => <option key={b.id} value={b.value}>{b.value}</option>)}</optgroup><optgroup label="Single Devices">{data.lists.type.filter((t) => !t.counted).map((t) => <option key={t.id} value={t.value}>{t.value}</option>)}</optgroup></Select></Field>
                 <Field label='How many'><Input type="number" min={1} max={200} value={it.qty} onChange={(e) => setDevAt(i, { qty: Number(e.target.value) })} aria-label="How many" /></Field>
                 <Field label='Games needed'><MultiCombo values={it.games} options={allGames} onChange={(g) => setDevAt(i, { games: g })} placeholder="Add a game…" /></Field>
-                {dev.length > 1 && <button type="button" className={styles.linkBtn} onClick={() => setDev((c) => c.filter((_, k) => k !== i))} aria-label="Remove this line">Remove</button>}
+                {dev.length > 1 && <button type="button" className={styles.iconBtn} title="Remove" onClick={() => setDev((c) => c.filter((_, k) => k !== i))} aria-label="Remove this line"><Trash2 size={15} aria-hidden="true" /></button>}
               </div>
             ))}
             <div><Button size="sm" variant="secondary" onClick={() => setDev((c) => [...c, { what: what[0] ?? '', qty: 1, games: [] }])}>Add A Line</Button></div>
@@ -164,7 +165,7 @@ function RequestDialog({ kind: askKind, plan, api, data, planId, loaded, request
               <div key={i} className={`${styles.reqLine} ${styles.reqLinePrize}`}>
                 <Field label='How many prizes'><Input type="number" min={1} max={10000} value={it.qty} onChange={(e) => setPrizAt(i, { qty: Number(e.target.value) })} aria-label="How many prizes" /></Field>
                 <Field label='Around what value each ($)'><Input type="number" min={0} step="0.01" value={it.value} onChange={(e) => setPrizAt(i, { value: Number(e.target.value) })} aria-label="Dollar value of one" /></Field>
-                {priz.length > 1 && <button type="button" className={styles.linkBtn} onClick={() => setPriz((c) => c.filter((_, k) => k !== i))} aria-label="Remove this line">Remove</button>}
+                {priz.length > 1 && <button type="button" className={styles.iconBtn} title="Remove" onClick={() => setPriz((c) => c.filter((_, k) => k !== i))} aria-label="Remove this line"><Trash2 size={15} aria-hidden="true" /></button>}
               </div>
             ))}
             <div className={styles.rowInline}><Button size="sm" variant="secondary" onClick={() => setPriz((c) => [...c, { qty: 1, value: 25 }])}>Add A Line</Button><span className={styles.muted}>About {money(prizeTotal(priz))} in all. You don’t pick the prizes: the logistics team fills this from what is in stock.</span></div>

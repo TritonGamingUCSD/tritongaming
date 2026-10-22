@@ -1,5 +1,6 @@
 'use client';
 
+import { Pencil } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import Button from '@/components/ui/Button';
 import { suggestPrizes } from '@/lib/logistics/prizes';
@@ -70,7 +71,7 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
                     <b>{pool.name}</b>
                     {pool.station_id && <span className={styles.dim}>{d.stations.find((s) => s.id === pool.station_id)?.name}</span>}
                   </div>
-                  {manage && <button type="button" className={styles.linkBtn} onClick={() => setPoolDialog(pool)}>Edit</button>}
+                  {manage && <button type="button" className={styles.iconBtn} title="Edit" aria-label={`Edit ${pool.name}`} onClick={() => setPoolDialog(pool)}><Pencil size={15} aria-hidden="true" /></button>}
                 </header>
                 {pool.target_qty !== null && pool.target_total !== null ? (
                   <div className={styles.poolGoal}>

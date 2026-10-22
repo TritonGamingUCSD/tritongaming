@@ -1,5 +1,6 @@
 'use client';
 
+import { Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import Button from '@/components/ui/Button';
 import { confirmHold } from '@/lib/ui/confirmHold';
@@ -61,7 +62,7 @@ export default function BorrowedTab({ plan, catalog, data, kind }: { plan: PlanA
                 <span data-label="Status">{b.role === 'backup' ? <span className={styles.dim}>{b.swap_reason ? `Swapped out: ${b.swap_reason}` : 'Backup'}</span> : back ? (returned ? <span className={`${styles.statusChip} ${styles.chipOk}`}>Returned</span> : <span className={`${styles.statusChip} ${styles.chipWarn}`}>Not returned</span>) : '–'}</span>
                 <span className={styles.prizeTools}>
                   {manage && <button type="button" className={styles.linkBtn} onClick={() => setDialog(b)}>Details</button>}
-                  {manage && <button type="button" className={styles.linkBtn} onClick={() => void remove(b)} aria-label={`Remove ${b.tag}`}>Remove</button>}
+                  {manage && <button type="button" className={styles.iconBtn} title="Remove" onClick={() => void remove(b)} aria-label={`Remove ${b.tag}`}><Trash2 size={15} aria-hidden="true" /></button>}
                 </span>
               </div>
             );
