@@ -35,18 +35,20 @@ async function call<T>(url: string, method: string, body?: unknown): Promise<{ o
 }
 
 // Requests for one event: a lead asks for devices (bundles or device types, how many, which games) or prizes (how many, around what dollar value), for their team. Logistics sees them all, plans them
-// (for devices, one click puts them on the Allocation sheet), and the person who asked is told. Everyone else sees only their own, and can change or take back a request until it is planned.
+// (for devices, one click puts them on the Allocation sheet), and the person who asked is told. Everyone else sees only their own; once it is sent only Event Logistics can change or remove it.
 export default function RequestsTab({ kind, plan, api, data }: { kind: RequestKind; plan: PlanApi; api: LogisticsApi; data: Catalog }) {
   const planId = plan.detail!.plan.id;
   const closed = plan.detail!.plan.status === 'closed';
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [error, setError] = useState('');
   const [dialog, setDialog] = useState<Req | 'new' | null>(null);
+  const [people, setPeople] = useState<{ id: string; name: string }[]>([]);
   const load = useCallback(async () => {
     const r = await call<Loaded>(`/api/logistics/plans/${planId}/requests`, 'GET');
     if (r.ok) { setLoaded(r.data); setError(''); } else setError(r.error);
   }, [planId]);
   useEffect(() => { void load(); }, [load]);
+  useEffect(() => { if (loaded?.canManage) void api.loadPeople().then(setPeople); }, [loaded?.canManage, api]);
   useVisiblePoll(load, 30_000);   // other people's requests show up without a refresh (only while this tab is open and visible)
   const apply = (req: Req) => setLoaded((c) => (c ? { ...c, requests: c.requests.map((x) => (x.id === req.id ? { ...x, ...req } : x)) } : c));
 
@@ -59,7 +61,7 @@ export default function RequestsTab({ kind, plan, api, data }: { kind: RequestKi
     const res = await call<{ request: Req }>(`/api/logistics/plans/${planId}/requests`, 'PATCH', { request_id: r.id, status });
     if (res.ok) { apply({ ...r, ...res.data.request }); void load(); } else setError(res.error);
   }
-  async function patch(r: Req, fields: { team?: string; notes?: string; contact?: string }) {
+  async function patch(r: Req, fields: { team?: string; notes?: string; requester_id?: string }) {
     const res = await call<{ request: Req }>(`/api/logistics/plans/${planId}/requests`, 'PATCH', { request_id: r.id, ...fields });
     if (res.ok) { apply({ ...r, ...res.data.request }); void plan.reload(); } else setError(res.error);
   }
@@ -83,14 +85,13 @@ export default function RequestsTab({ kind, plan, api, data }: { kind: RequestKi
         <div className={styles.empty}><p>{loaded.requests.length === 0 ? (closed ? (kind === 'devices' ? 'No device requests were made for this event.' : 'No prizing requests were made for this event.') : (kind === 'devices' ? 'No device requests yet. Use New Request to ask for devices for your team.' : 'No prizing requests yet. Use New Request to ask for prizes for your team.')) : 'No requests.'}</p></div>
       ) : (
         <div className={styles.prizeGrid}>
-          <div className={`${styles.prizeRow} ${styles.reqRow} ${styles.prizeHeadRow}`} aria-hidden="true"><span>Asked by</span><span>Team</span><span>Contact</span><span>What</span><span>Notes</span><span>Status</span><span /></div>
+          <div className={`${styles.prizeRow} ${styles.reqRow} ${styles.prizeHeadRow}`} aria-hidden="true"><span>Contact</span><span>Team</span><span>What</span><span>Notes</span><span>Status</span><span /></div>
           {list.map((r) => {
             const mine = canEditRequest(manage);
             return (
               <div key={r.id} className={`${styles.prizeRow} ${styles.reqRow} ${styles[`req_${r.status}`]}`}>
-                <span className={styles.prizeName}><b>{r.requester}</b><small className={styles.dim}>{r.division ? ` · ${r.division}` : ''} · {day(r.created_at)}</small></span>
+                <span className={styles.prizeName}>{manage && !closed ? <PickCell value={r.requester} options={people.map((p) => p.name)} clearable={false} canEdit onSave={(v) => { const id = people.find((p) => p.name === v)?.id; if (id && id !== r.requester_id) void patch(r, { requester_id: id }); }} /> : <b>{r.requester}</b>}<small className={styles.dim}>{r.division ? ` · ${r.division}` : ''} · {day(r.created_at)}</small></span>
                 <span data-label="Team"><TextCell value={r.team} canEdit={mine} placeholder="Add" onSave={(v) => void patch(r, { team: v })} /></span>
-                <span data-label="Contact"><TextCell value={r.contact} canEdit={manage && !closed} placeholder="Add" onSave={(v) => void patch(r, { contact: v })} /></span>
                 <span data-label={r.kind === 'devices' ? 'Devices' : 'Prizes'}>
                   {r.kind === 'devices'
                     ? <>{(r.items as DeviceItem[]).map((i, n) => <span key={n} className={styles.reqItem}><b>{i.qty} × {i.what}</b>{i.games.length ? <span className={styles.dim}> · {i.games.join(', ')}</span> : null}</span>)}{r.status !== 'declined' && <span className={`${styles.reqItem} ${r.filled === r.rowsTotal && r.rowsTotal > 0 ? styles.okText : styles.warnText}`}>{r.filled}/{r.rowsTotal} filled</span>}</>
@@ -114,7 +115,6 @@ export default function RequestsTab({ kind, plan, api, data }: { kind: RequestKi
 function RequestDialog({ kind: askKind, plan, api, data, planId, loaded, request, onSaved, onClose }: { kind: RequestKind; plan: PlanApi; api: LogisticsApi; data: Catalog; planId: string; loaded: Loaded; request: Req | null; onSaved: () => void; onClose: () => void }) {
   const kind = request?.kind ?? askKind;
   const [team, setTeam] = useState(request?.team ?? '');
-  const [contact, setContact] = useState(request?.contact ?? '');
   const [division, setDivision] = useState(request?.division_id ?? loaded.myDivisionIds[0] ?? '');
   const [notes, setNotes] = useState(request?.notes ?? '');
   const [dev, setDev] = useState<DeviceItem[]>(request?.kind === 'devices' ? (request.items as DeviceItem[]) : [{ what: data.lists.bundle[0]?.value ?? data.lists.type[0]?.value ?? '', qty: 1, games: [] }]);
@@ -125,11 +125,11 @@ function RequestDialog({ kind: askKind, plan, api, data, planId, loaded, request
   const [problem, setProblem] = useState('');
   const what = [...data.lists.bundle.map((b) => b.value), ...data.lists.type.filter((t) => !t.counted).map((t) => t.value)];
   const allGames = useMemo(() => [...new Set([...data.portalGames, ...data.lists.game.map((g) => g.value)])].sort((a, b) => a.localeCompare(b)), [data]);
-  useEffect(() => { if (loaded.canManage && !request) void api.loadPeople().then(setPeople); }, [loaded.canManage, request, api]);
+  useEffect(() => { if (loaded.canManage) void api.loadPeople().then(setPeople); }, [loaded.canManage, api]);
   async function save() {
     setProblem('');
     setBusy(true);
-    const body = { kind, team, contact, division_id: division || null, notes, items: kind === 'devices' ? dev : priz, ...(onBehalf ? { requester_id: onBehalf } : {}) };
+    const body = { kind, team, division_id: division || null, notes, items: kind === 'devices' ? dev : priz, ...(onBehalf ? { requester_id: onBehalf } : {}) };
     const r = request ? await call(`/api/logistics/plans/${planId}/requests`, 'PATCH', { request_id: request.id, ...body }) : await call(`/api/logistics/plans/${planId}/requests`, 'POST', body);
     setBusy(false);
     if (r.ok) onSaved(); else setProblem(r.error);
@@ -145,7 +145,11 @@ function RequestDialog({ kind: askKind, plan, api, data, planId, loaded, request
           <Field label="Team or booth" hint="Who it is for, like Triton Valorant."><Input value={team} onChange={(e) => setTeam(e.target.value)} maxLength={120} list="req-teams" /></Field>
           <Field label="Division"><Select value={division} onChange={(e) => setDivision(e.target.value)}><option value="">None</option>{loaded.divisions.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</Select></Field>
         </div>
-        <Field label="Contact" hint="Who to reach on the day (a name or Discord)."><Input value={contact} onChange={(e) => setContact(e.target.value)} maxLength={200} /></Field>
+        {loaded.canManage && (
+          <Field label="Contact" hint="Who to reach on the day: a division lead or an officer or above. Defaults to you.">
+            <Combo value={people.find((p) => p.id === (onBehalf || request?.requester_id))?.name ?? null} options={people.map((p) => p.name)} placeholder="Choose…" clearable={false} onChange={(v) => setOnBehalf(people.find((p) => p.name === v)?.id ?? '')} />
+          </Field>
+        )}
         <datalist id="req-teams">{teams.map((t) => <option key={t} value={t} />)}</datalist>
         {kind === 'devices' ? (
           <div className={styles.reqLines}>
@@ -172,11 +176,6 @@ function RequestDialog({ kind: askKind, plan, api, data, planId, loaded, request
           </div>
         )}
         <Field label="Anything else" hint={kind === 'prizes' ? 'Sizes, colours, what the prizes are for.' : 'Setup needs, when you need it, anything special.'}><Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={2000} /></Field>
-        {loaded.canManage && !request && (
-          <Field label="Entering this for someone else?" hint="Optional.">
-            <Combo value={people.find((p) => p.id === onBehalf)?.name ?? null} options={people.map((p) => p.name)} placeholder="Choose…" onChange={(v) => setOnBehalf(people.find((p) => p.name === v)?.id ?? '')} />
-          </Field>
-        )}
       </div>
       <DialogActions><DialogCancel onClick={onClose} disabled={busy} /><Button onClick={save} loading={busy}>{request ? 'Save' : 'Send Request'}</Button></DialogActions>
     </Dialog>

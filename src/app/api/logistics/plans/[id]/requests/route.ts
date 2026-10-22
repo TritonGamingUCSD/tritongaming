@@ -86,7 +86,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const division = await divisionOk(auth.svc, b.division_id);
   if (division === false) return NextResponse.json({ error: 'That division is gone.' }, { status: 400 });
   const onBehalf = auth.canManage && typeof b.requester_id === 'string' && UUID.test(b.requester_id) ? b.requester_id : auth.user.id;
-  const { data, error } = await auth.svc.from('logistics_requests').insert({ plan_id: id, kind, requester_id: onBehalf, division_id: division, team: text(b.team, 120), contact: text(b.contact, 200), items: items.items, notes: text(b.notes, 2000), created_by: auth.user.id }).select(REQUEST_COLUMNS).single();
+  const { data, error } = await auth.svc.from('logistics_requests').insert({ plan_id: id, kind, requester_id: onBehalf, division_id: division, team: text(b.team, 120), contact: (await names(auth.svc, [onBehalf])).get(onBehalf) ?? null, items: items.items, notes: text(b.notes, 2000), created_by: auth.user.id }).select(REQUEST_COLUMNS).single();
   if (error || !data) return NextResponse.json({ error: 'Couldn’t send the request.' }, { status: 500 });
   const who = (await names(auth.svc, [onBehalf, auth.user.id]));
   const text1 = `${who.get(onBehalf) ?? 'Someone'}${onBehalf !== auth.user.id ? ` (entered by ${who.get(auth.user.id) ?? 'logistics'})` : ''}: ${requestSummary(kind, items.items)}${b.team ? ` for ${text(b.team, 120)}` : ''}`;
@@ -117,7 +117,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if ('items' in b) { const items = cleanRequestItems(r.kind, b.items, await known(auth.svc)); if ('error' in items) return NextResponse.json({ error: items.error }, { status: 400 }); patch.items = items.items; }
   if ('team' in b) patch.team = text(b.team, 120);
-  if ('contact' in b) patch.contact = text(b.contact, 200);
+  // The request has one contact: a division lead or an officer or above. Only the Event Logistics team can change who.
+  if (typeof b.requester_id === 'string' && UUID.test(b.requester_id) && b.requester_id !== r.requester_id) {
+    const { data: eligible } = await auth.svc.from('user_roles').select('user_id').eq('user_id', b.requester_id).in('role', ['officer', 'division', 'lead', 'exec', 'admin']).limit(1);
+    if (!eligible?.length) return NextResponse.json({ error: 'Pick a division lead, or an officer or above.' }, { status: 400 });
+    patch.requester_id = b.requester_id;
+    patch.contact = (await names(auth.svc, [b.requester_id])).get(b.requester_id) ?? null;
+  }
   if ('notes' in b) patch.notes = text(b.notes, 2000);
   if ('division_id' in b) { const d = await divisionOk(auth.svc, b.division_id); if (d === false) return NextResponse.json({ error: 'That division is gone.' }, { status: 400 }); patch.division_id = d; }
   let statusChanged = false;
@@ -137,7 +143,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const who = (await names(auth.svc, [auth.user.id])).get(auth.user.id) ?? 'Someone';
     await createNotifications(auth.svc, team.map((user_id) => ({ user_id, type: 'logistics_request', title: `A request for ${plan.name} was changed`, body: `${who}: ${requestSummary(r.kind, data.items as (DeviceItem | PrizeItem)[])}`.slice(0, 240), href: href(plan.slug as string, r.kind) })));
   }
-  const sync = r.kind === 'devices' && ('items' in b || 'team' in b || 'contact' in b || 'division_id' in b || statusChanged) ? await syncRequestRows(auth.svc, data as never) : { kept: 0 };
+  const sync = r.kind === 'devices' && ('items' in b || 'team' in b || 'requester_id' in b || 'division_id' in b || statusChanged) ? await syncRequestRows(auth.svc, data as never) : { kept: 0 };
   if (r.kind === 'prizes' && ('items' in b || 'team' in b || statusChanged)) await syncPrizePool(auth.svc, data as never);
   await touchPlan(auth.svc, id);
   return NextResponse.json({ request: data, kept: sync.kept });

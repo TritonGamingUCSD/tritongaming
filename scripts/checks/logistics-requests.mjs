@@ -44,7 +44,7 @@ try {
 
   t.ok('someone else cannot change a request', (await other.call('PATCH', URL_, { request_id: A, notes: 'x' })).s === 403);
   t.ok('someone else cannot take it back', (await other.call('DELETE', URL_, { request_id: A })).s === 403);
-  t.ok('the person who asked cannot change a request once it is submitted', (await lead.call('PATCH', URL_, { request_id: A, notes: 'Need by 8am' })).s === 403 && (await lead.call('PATCH', URL_, { request_id: A, contact: 'x' })).s === 403);
+  t.ok('the person who asked cannot change a request once it is submitted', (await lead.call('PATCH', URL_, { request_id: A, notes: 'Need by 8am' })).s === 403 && (await lead.call('PATCH', URL_, { request_id: A, requester_id: exec.id })).s === 403);
   t.ok('the logistics team can change a submitted request', (await exec.call('PATCH', URL_, { request_id: A, items: [{ what: bundle, qty: 5, games: ['Valorant'] }], notes: 'Need by 8am' })).j.request.items[0].qty === 5);
   t.ok('a requester cannot set the status', (await lead.call('PATCH', URL_, { request_id: A, status: 'done' })).s === 403);
 
@@ -103,8 +103,9 @@ try {
   t.ok('a bundle that a request asks for cannot be deleted', (await exec.call('DELETE', '/api/logistics/options', { id: bId })).s === 409);
   await exec.call('DELETE', URL_, { request_id: RB });
   await exec.call('DELETE', '/api/logistics/options', { id: bId });
-  const withContact = await exec.call('PATCH', URL_, { request_id: A, contact: 'zz_discord' });
-  t.ok('a request has one main contact, and its team shows it', withContact.s === 200 && withContact.j.request.contact === 'zz_discord' && (await plan1()).stations.find((x) => x.name === 'ZZ Valorant')?.contact === 'zz_discord');
+  const withContact = await exec.call('PATCH', URL_, { request_id: A, requester_id: exec.id });
+  t.ok('a request has one contact (a lead or officer or above), and its team shows it', withContact.s === 200 && withContact.j.request.requester_id === exec.id && !!withContact.j.request.contact && (await plan1()).stations.find((x) => x.name === 'ZZ Valorant')?.contact === withContact.j.request.contact, JSON.stringify(withContact.j));
+  t.ok('a student cannot be the contact', (await exec.call('PATCH', URL_, { request_id: A, requester_id: student.id })).s === 400);
   // Sponsor and officer loaners can fill a row, just like inventory devices.
   const loan = await exec.call('POST', `/api/logistics/plans/${P.id}/borrowed`, { tag: 'ZZ-LOAN', type: 'Mouse', owner_kind: 'officer', owner_user_id: exec.id });
   t.ok('an officer loaner is added for the event', loan.s === 201, JSON.stringify(loan.j).slice(0, 150));
@@ -142,7 +143,7 @@ try {
   const dec = await exec.call('PATCH', URL_, { request_id: E, status: 'declined' });
   t.ok('declining a request leaves it declined and takes back its empty rows', dec.s === 200 && dec.j.request.status === 'declined');
   t.ok('an unknown status is refused', (await exec.call('PATCH', URL_, { request_id: A, status: 'maybe' })).s === 400);
-  t.ok('a requester cannot remove a request; the logistics team can', (await lead.call('DELETE', URL_, { request_id: B })).s === 403 && (await exec.call('DELETE', URL_, { request_id: B })).s === 200 && (await lead.call('GET', URL_)).j.requests.length === 1);
+  t.ok('a requester cannot remove a request; the logistics team can', (await lead.call('DELETE', URL_, { request_id: B })).s === 403 && (await exec.call('DELETE', URL_, { request_id: B })).s === 200 && (await lead.call('GET', URL_)).j.requests.length === 0);   // (the other request's contact was moved to exec)
 
   await exec.call('PATCH', `/api/logistics/plans/${P.id}`, { status: 'closed' });
   t.ok('a closed event takes no more requests', (await lead.call('POST', URL_, { kind: 'prizes', items: [{ qty: 1, value: 5 }] })).s === 409);
