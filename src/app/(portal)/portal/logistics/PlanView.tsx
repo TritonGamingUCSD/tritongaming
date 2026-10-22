@@ -29,7 +29,7 @@ import styles from './logistics.module.css';
 
 // The plan and the event day are one sheet. A block per team, a line per device (or per set), the step boxes on the line. Before the event it is where devices are chosen and what is
 // wrong gets fixed; on the day the same lines are ticked: tap a box (tap a ticked one to undo it), or type a device's ID and the picked step is ticked for it, with where to get it and
-// which team it goes to. The step to type for follows the work. "Mark all" ticks the picked step for a team. Anything wrong is marked on its own line.
+// which team it goes to. The step to type for follows the work. Anything wrong is marked on its own line.
 type Feedback = { tone: 'ok' | 'already' | 'error'; text: string; result?: StepResult; step?: StepDef } | null;
 type Target = Pick<Row, 'id' | 'kind' | 'itemKind' | 'tag' | 'type' | 'kit'>;
 const time = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
@@ -385,7 +385,6 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
             const total = mineStats.reduce((n, x) => n + x.total, 0), done = mineStats.reduce((n, x) => n + x.done, 0);
             const complete = total > 0 && done === total;
             const folded = foldOf(t.key, day && complete);
-            const left = step ? mineStats.find((x) => x.s.id === step.id) : null;
             const s = t.station;
             const status = s ? stationStatus(problems, s.id) : 'ok';
             const mine = s ? problems.filter((x) => x.station_id === s.id) : [];
@@ -412,7 +411,6 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
                     )}
                     {!folded && (
                       <div className={styles.teamLine}>
-                        {day && !closed && step && !step.kit && left && left.done < left.total && <Button size="sm" variant="secondary" onClick={() => void markAll(t.rows, step)} disabled={busy}>Mark all “{step.name}”</Button>}
                         {manage && s && (
                           <details className={`${styles.menu} ${styles.teamMenu}`}>
                             <summary aria-label={`More for ${s.name}`}>More</summary>
