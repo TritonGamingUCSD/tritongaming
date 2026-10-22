@@ -7,6 +7,7 @@ import { Input, Select } from '@/components/ui/Field';
 import { CONDITIONS, UNUSABLE, conditionLabel } from '@/lib/logistics/constants';
 import { quantityText, tagKey, type Device, type DevicePatch } from '@/lib/logistics/devices';
 import { Combo } from './Combo';
+import { PickCell, TextCell } from './Cells';
 import DeviceDialog from './DeviceDialog';
 import type { Catalog, LogisticsApi } from './useLogistics';
 import styles from './logistics.module.css';
@@ -35,29 +36,10 @@ function ConditionBadge({ c }: { c: Device['condition'] }) {
   return <span className={`${styles.badge} ${tone}`}>{conditionLabel(c)}</span>;
 }
 
-// A spreadsheet-style cell: click to change, and it saves when you pick or press Enter. Officers who can't edit just see the value.
-function TextCell({ value, canEdit, onSave, placeholder, strong }: { value: string | null; canEdit: boolean; onSave: (v: string) => void; placeholder?: string; strong?: boolean }) {
-  const [on, setOn] = useState(false);
-  const [text, setText] = useState(value ?? '');
-  if (!canEdit) return <span className={strong ? styles.strong : undefined}>{value ?? <span className={styles.dim}>{placeholder ?? '—'}</span>}</span>;
-  if (!on) return <button type="button" className={`${styles.cell} ${strong ? styles.strong : ''}`} onClick={() => { setText(value ?? ''); setOn(true); }}>{value ?? <span className={styles.dim}>{placeholder ?? 'Add'}</span>}</button>;
-  const done = (save: boolean) => { setOn(false); if (save && text.trim() !== (value ?? '')) onSave(text.trim()); };
-  return <input className={styles.cellInput} value={text} autoFocus onFocus={(e) => e.target.select()} maxLength={120} onChange={(e) => setText(e.target.value)} onBlur={() => done(true)} onKeyDown={(e) => { if (e.key === 'Enter') done(true); else if (e.key === 'Escape') done(false); }} />;
-}
-
-function PickCell({ value, options, canEdit, onSave, onCreate, shown, clearable = true, locate }: { locate?: boolean; value: string | null; options: string[]; canEdit: boolean; onSave: (v: string | null) => void; onCreate?: (v: string) => Promise<string | null>; shown?: string; clearable?: boolean }) {
-  const [on, setOn] = useState(false);
-  const label = shown ?? value;
-  const none = locate ? <span className={styles.notLocated}>Not located</span> : null;
-  if (!canEdit) return <span>{label ?? none ?? <span className={styles.dim}>—</span>}</span>;
-  if (!on) return <button type="button" className={styles.cell} onClick={() => setOn(true)}>{label ?? none ?? <span className={styles.dim}>Choose</span>}</button>;
-  return <Combo value={label ?? null} options={options} onChange={onSave} onCreate={onCreate} compact autoFocus clearable={clearable} onClose={() => setOn(false)} />;
-}
-
 function ConditionCell({ d, canEdit, onSave }: { d: Device; canEdit: boolean; onSave: (c: Device['condition']) => void }) {
   const [on, setOn] = useState(false);
   if (!canEdit) return <ConditionBadge c={d.condition} />;
-  if (!on) return <button type="button" className={styles.cell} onClick={() => setOn(true)} aria-label={`Condition: ${conditionLabel(d.condition)}. Change`}><ConditionBadge c={d.condition} /></button>;
+  if (!on) return <button type="button" className={styles.editCell} onClick={() => setOn(true)} aria-label={`Condition: ${conditionLabel(d.condition)}. Change`}><ConditionBadge c={d.condition} /></button>;
   return <Combo value={conditionLabel(d.condition)} options={CONDITIONS.map((c) => c.label)} compact autoFocus clearable={false} onClose={() => setOn(false)} onChange={(v) => { const c = CONDITIONS.find((x) => x.label === v); if (c && c.id !== d.condition) onSave(c.id); }} />;
 }
 

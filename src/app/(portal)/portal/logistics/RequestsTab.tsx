@@ -6,6 +6,8 @@ import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import Loading from '@/components/Loading/Loading';
 import { Field, Input, Select, Textarea } from '@/components/ui/Field';
+import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
+import { TextCell } from './Cells';
 import SectionTabs from '@/components/ui/SectionTabs';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import { canEditRequest, prizeTotal, REQUEST_STATUSES, requestSummary, STATUS_LABELS, type DeviceItem, type PrizeItem, type RequestKind, type RequestStatus } from '@/lib/logistics/requests';
@@ -45,6 +47,7 @@ export default function RequestsTab({ plan, api, data }: { plan: PlanApi; api: L
     if (r.ok) { setLoaded(r.data); setError(''); } else setError(r.error);
   }, [planId]);
   useEffect(() => { void load(); }, [load]);
+  useVisiblePoll(load, 30_000);   // other people's requests show up without a refresh (only while this tab is open and visible)
   const apply = (req: Req) => setLoaded((c) => (c ? { ...c, requests: c.requests.map((x) => (x.id === req.id ? { ...x, ...req } : x)) } : c));
 
   const list = useMemo(() => {
@@ -87,9 +90,7 @@ export default function RequestsTab({ plan, api, data }: { plan: PlanApi; api: L
               <div key={r.id} className={`${styles.prizeRow} ${styles.reqRow} ${styles[`req_${r.status}`]}`}>
                 <span className={styles.prizeName}><b>{r.requester}</b><small className={styles.dim}>{r.division ? ` · ${r.division}` : ''} · {day(r.created_at)}</small></span>
                 <span data-label="Team">{r.team ?? <span className={styles.dim}>–</span>}</span>
-                <span data-label="Contact">{manage && !closed
-                  ? <input className={styles.cellInput} defaultValue={r.contact ?? ''} placeholder="Discord or name" maxLength={200} aria-label={`Contact for ${r.team ?? r.requester}`} onBlur={(e) => { const v = e.target.value.trim(); if (v !== (r.contact ?? '')) void saveContact(r, v); }} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }} />
-                  : r.contact ?? <span className={styles.dim}>–</span>}</span>
+                <span data-label="Contact"><TextCell value={r.contact} canEdit={manage && !closed} placeholder="Add" onSave={(v) => void saveContact(r, v)} /></span>
                 <span data-label={r.kind === 'devices' ? 'Devices' : 'Prizes'}>
                   {r.kind === 'devices'
                     ? <>{(r.items as DeviceItem[]).map((i, n) => <span key={n} className={styles.reqItem}><b>{i.qty} × {i.what}</b>{i.games.length ? <span className={styles.dim}> · {i.games.join(', ')}</span> : null}</span>)}{r.status !== 'declined' && <span className={`${styles.reqItem} ${r.filled === r.rowsTotal && r.rowsTotal > 0 ? styles.okText : styles.warnText}`}>{r.filled}/{r.rowsTotal} filled</span>}</>

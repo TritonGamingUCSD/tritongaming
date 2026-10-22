@@ -127,6 +127,13 @@ try {
   await exec.call('PATCH', URL_, { request_id: E, items: [{ qty: 3, value: 15 }] });
   const lineAfter = (await plan1()).prizes.lines.find((x) => x.pool_id === pE2.id);
   t.ok('a smaller request trims the pool\u2019s prizes to fit', lineAfter?.quantity === 3, JSON.stringify(lineAfter));
+  // Several people saving the same request at the same moment still leave exactly what it asks for.
+  const rc = await exec.call('POST', URL_, { kind: 'devices', team: 'ZZ Race Team', items: [{ what: 'Mouse', qty: 1, games: [] }] });
+  const RC = rc.j.request.id;
+  await Promise.all([1, 2, 3].map(() => exec.call('PATCH', URL_, { request_id: RC, items: [{ what: 'Mouse', qty: 4, games: [] }] })));
+  const raceRows = (await plan1()).slots.filter((x) => x.request_id === RC).length + (await plan1()).items.filter((x) => x.request_id === RC).length;
+  t.ok('saving the same request at once leaves exactly the rows it asks for', raceRows === 4, String(raceRows));
+  await exec.call('DELETE', URL_, { request_id: RC });
   const listed = (await exec.call('GET', URL_)).j.requests.find((r) => r.id === A);
   t.ok('the request shows filled / total rows', listed.rowsTotal === (await mineRows()).length && listed.filled === 0);
   const emptyPlain = await exec.call('POST', `/api/logistics/plans/${P.id}/slots`, { action: 'empty', device_id: '00000000-0000-4000-8000-000000000000' });

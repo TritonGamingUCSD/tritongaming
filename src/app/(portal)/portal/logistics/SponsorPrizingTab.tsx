@@ -13,7 +13,6 @@ import type { PlanApi } from './usePlans';
 import type { Catalog, LogisticsApi } from './useLogistics';
 import styles from './logistics.module.css';
 
-const money = (n: number | null) => (n === null ? '' : `$${n.toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 })}`);
 const pacificToday = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
 
 // Sponsor prizing: the prizes sponsors sent for this event. Unlike sponsor loaners they are never returned, and they are never given a device's place on the Allocation sheet: they are given out from

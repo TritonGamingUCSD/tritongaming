@@ -57,7 +57,7 @@ export function usePlanList() {
 }
 
 // One plan. Structural changes (devices, stations, status) are made and then the plan is read again; steps are applied on screen straight away. While the event-day screen is
-// open it asks a tiny question every minute (only while the tab is visible) and applies what other phones did.
+// open it asks a tiny question every 20 seconds (only while the tab is visible) and applies what other phones did.
 export function usePlan(id: string, live: boolean) {
   const [detail, setDetail] = useState<PlanDetail | null>(null);
   const detailRef = useRef<PlanDetail | null>(null);
@@ -91,7 +91,7 @@ export function usePlan(id: string, live: boolean) {
       return fresh.length ? { ...cur, done } : cur;
     });
   }, [id, load]);
-  useVisiblePoll(check, 60_000, live);
+  useVisiblePoll(check, 20_000, live);
 
   const act = useCallback(async (url: string, method: string, body?: unknown): Promise<boolean> => {
     const r = await call<unknown>(`/api/logistics/plans/${id}${url}`, method, body);

@@ -34,12 +34,14 @@ interface RowRef { id: string; sort: number; set_id: string | null; key: string;
 // stays is returned). A declined request keeps no rows. The team is found by name (the request's team, else its division) or made.
 export async function syncRequestRows(svc: SupabaseClient, r: Req): Promise<{ kept: number }> {
   if (r.kind !== 'devices') return { kept: 0 };
-  const out = await syncRows(svc, r);
+  // Two people saving the same request at once could each add the missing rows; a second pass sees the real count and takes the extra empty rows away again.
+  let out = await syncRows(svc, r);
+  if (out.changed) out = await syncRows(svc, r);
   await writeContact(svc, r);
-  return out;
+  return { kept: out.kept };
 }
 
-async function syncRows(svc: SupabaseClient, r: Req): Promise<{ kept: number }> {
+async function syncRows(svc: SupabaseClient, r: Req): Promise<{ kept: number; changed: boolean }> {
   const [{ data: slots }, { data: devs }, { data: opts }, { data: loans }] = await Promise.all([
     svc.from('logistics_plan_slots').select('id, type, sort, set_id, request_item, station_id').eq('request_id', r.id),
     svc.from('logistics_plan_devices').select('device_id, sort, set_id, request_item, station_id').eq('request_id', r.id),
@@ -122,7 +124,7 @@ async function syncRows(svc: SupabaseClient, r: Req): Promise<{ kept: number }> 
     let n = (lastSort?.sort as number | undefined) ?? 0;
     await svc.from('logistics_plan_slots').insert(fix.map(({ t: _t, ...row }) => ({ ...row, sort: ++n })));
   }
-  if (!add.length) return { kept };
+  if (!add.length) return { kept, changed: drop.length + dropDev.length + dropLoan.length + fix.length > 0 };
 
   let name = r.team?.trim() || null;
   if (!name && r.division_id) name = ((await svc.from('divisions').select('name').eq('id', r.division_id).maybeSingle()).data?.name as string | undefined) ?? null;
@@ -150,7 +152,7 @@ async function syncRows(svc: SupabaseClient, r: Req): Promise<{ kept: number }> 
   }
   const ins = await svc.from('logistics_plan_slots').insert(rows);
   if (ins.error) console.error('request rows', ins.error.message);
-  return { kept };
+  return { kept, changed: true };
 }
 
 // The request's contact becomes its team's contact (the team is found by the request's team name, else its division's), so every page shows the same one.

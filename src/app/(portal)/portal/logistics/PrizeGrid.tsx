@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Button from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Field';
 import { PoolDialog } from './PlanPrizes';
 import { usePrizes, type PrizeRow } from './usePrizes';

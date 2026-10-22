@@ -36,9 +36,9 @@
 .grid td { padding: 0.25rem 0.5rem; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.1); vertical-align: middle; color: var(--pp-ink); }
 .grid tbody tr:hover { background: rgba(var(--pp-ink-rgb), 0.035); }
 .rowBad td:first-child { box-shadow: inset 3px 0 0 var(--pp-bad); }
-.cell { display: block; width: 100%; min-height: 32px; padding: 0.3rem 0.35rem; border: 1px solid transparent; border-radius: 5px; background: none; color: inherit; font: inherit; text-align: left; cursor: text; }
-.cell:hover { border-color: rgba(var(--pp-ink-rgb), 0.3); background: var(--pp-card); }
-.cell:focus-visible { outline: 2px solid var(--pp-ink); outline-offset: -2px; }
+.editCell { display: block; width: 100%; min-height: 32px; padding: 0.3rem 0.35rem; border: 1px solid transparent; border-radius: 5px; background: none; color: inherit; font: inherit; text-align: left; cursor: text; }
+.editCell:hover { border-color: rgba(var(--pp-ink-rgb), 0.3); background: var(--pp-card); }
+.editCell:focus-visible { outline: 2px solid var(--pp-ink); outline-offset: -2px; }
 .cellInput { width: 100%; min-height: 32px; padding: 0.3rem 0.45rem; border-radius: 5px; border: 1px solid var(--pp-ink); background: var(--pp-card); color: var(--pp-ink); font: inherit; }
 .iconBtn { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 6px; border: 1px solid transparent; background: none; color: rgba(var(--pp-ink-rgb), 0.85); cursor: pointer; flex: none; }
 .iconBtn:hover:not(:disabled) { background: rgba(var(--pp-ink-rgb), 0.08); border-color: rgba(var(--pp-ink-rgb), 0.25); }
@@ -709,3 +709,5 @@
 .finderHit { display: flex; flex-direction: column; gap: 0.1rem; width: 100%; padding: 0.5rem 0.6rem; border: none; border-radius: 6px; background: none; color: var(--pp-ink); font: inherit; font-size: 0.86rem; text-align: left; cursor: pointer; }
 button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 .finderEmpty { padding: 0.5rem 0.6rem; font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.8); }
+
+.listCellEdit { display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; min-width: 0; }
