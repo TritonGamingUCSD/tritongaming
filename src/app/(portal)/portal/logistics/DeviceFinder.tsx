@@ -7,24 +7,40 @@ import { rowKind, stepAppliesTo, type StepDef } from '@/lib/logistics/plans';
 import type { Row } from './planRows';
 import type { Station } from './usePlans';
 import type { Device } from '@/lib/logistics/devices';
+import type { PrizeRow } from './usePrizes';
+import type { PlanPrizesData } from './usePlans';
 import styles from './logistics.module.css';
 
-// One search for any device (inventory, sponsor or officer loaner): type part of an ID and it says what the device is for in this event: which row and team it goes to, where to get it, and what
+// One search for any device (inventory, sponsor or officer loaner) and any prize: type part of an ID, a name, a type or a sponsor and it says what the device is for in this event: which row and team it goes to, where to get it, and what
 // step is next. Choosing a device taken for this event jumps to its line.
-export default function DeviceFinder({ rows, devices, stations, steps, doneSet, onGo }: {
+export default function DeviceFinder({ rows, devices, stations, steps, doneSet, onGo, prizes, planPrizes, sponsorOf, onGoPrize }: {
   rows: Row[]; devices: Device[]; stations: Station[]; steps: StepDef[]; doneSet: Set<string>; onGo: (row: Row) => void;
+  prizes: PrizeRow[] | null; planPrizes: PlanPrizesData; sponsorOf: (id: string | null) => string | null; onGoPrize: () => void;
 }) {
   const [text, setText] = useState('');
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const q = tagKey(text);
+  const needle = text.trim().toLowerCase();
+  const words = (...v: (string | null | undefined)[]) => v.some((x) => x?.toLowerCase().includes(needle));
   const hits = useMemo(() => {
-    if (!q) return [];
-    const inPlan = rows.filter((r) => r.kind !== 'slot' && r.tag && tagKey(r.tag).includes(q));
+    if (!q && !needle) return [];
+    const matchRow = (r: Row) => r.kind !== 'slot' && ((r.tag && tagKey(r.tag).includes(q)) || words(r.tag, r.name, r.type));
+    const inPlan = rows.filter(matchRow);
     const seen = new Set(inPlan.map((r) => r.id));
-    const elsewhere = devices.filter((d) => d.tag && !seen.has(d.id) && tagKey(d.tag).includes(q)).slice(0, 4);
-    return [...inPlan.slice(0, 6).map((r) => ({ row: r as Row | null, dev: null as Device | null })), ...elsewhere.map((d) => ({ row: null, dev: d }))].slice(0, 6);
-  }, [q, rows, devices]);
+    const elsewhere = devices.filter((d) => !seen.has(d.id) && ((d.tag && tagKey(d.tag).includes(q)) || words(d.tag, d.name, d.type))).slice(0, 5);
+    return [...inPlan.slice(0, 8).map((r) => ({ row: r as Row | null, dev: null as Device | null })), ...elsewhere.map((d) => ({ row: null, dev: d }))].slice(0, 8);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q, needle, rows, devices]);
+  const prizeHits = useMemo(() => {
+    if (!needle) return [];
+    const pools = new Map(planPrizes.pools.map((p) => [p.id, p.name]));
+    const mine = planPrizes.lines.filter((l) => words(l.prize.name, l.prize.type, l.prize.sponsor, l.prize.size)).map((l) => ({ key: l.id, name: l.prize.name, detail: [l.prize.type, l.prize.sponsor, l.prize.size].filter(Boolean).join(' · '), where: `In this event: ${pools.get(l.pool_id) ?? 'a pool'} (${l.quantity})` }));
+    const inPlanIds = new Set(planPrizes.lines.map((l) => l.prize_id));
+    const rest = (prizes ?? []).filter((p) => !inPlanIds.has(p.id) && words(p.name, p.type, sponsorOf(p.sponsor_id), p.size)).slice(0, 5).map((p) => ({ key: p.id, name: p.name, detail: [p.type, sponsorOf(p.sponsor_id), p.size].filter(Boolean).join(' · '), where: `Not in this event. ${p.left} left in stock` }));
+    return [...mine.slice(0, 6), ...rest].slice(0, 8);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [needle, planPrizes, prizes]);
   const stationOf = new Map(stations.map((s) => [s.id, s]));
 
   function line(r: Row) {
@@ -38,11 +54,11 @@ export default function DeviceFinder({ rows, devices, stations, steps, doneSet, 
     <div ref={box} className={styles.finder} onBlur={(e) => { if (!box.current?.contains(e.relatedTarget as Node)) setOpen(false); }}>
       <label className={styles.finderBox}>
         <Search size={14} aria-hidden="true" />
-        <input value={text} onChange={(e) => { setText(e.target.value); setOpen(true); }} onFocus={() => setOpen(true)} placeholder="Find a device ID" aria-label="Find a device by ID" autoComplete="off" autoCapitalize="characters" />
+        <input value={text} onChange={(e) => { setText(e.target.value); setOpen(true); }} onFocus={() => setOpen(true)} placeholder="Search devices and prizes" aria-label="Search devices and prizes" autoComplete="off" autoCapitalize="characters" />
       </label>
-      {open && q && (
+      {open && needle && (
         <ul className={styles.finderList} role="listbox">
-          {hits.length === 0 && <li className={styles.finderEmpty}>No device with that ID.</li>}
+          {hits.length === 0 && prizeHits.length === 0 && <li className={styles.finderEmpty}>Nothing matches that.</li>}
           {hits.map(({ row, dev }) => {
             if (row) {
               const { st, done, total, next } = line(row);
@@ -67,6 +83,14 @@ export default function DeviceFinder({ rows, devices, stations, steps, doneSet, 
               </li>
             );
           })}
+          {prizeHits.map((h) => (
+            <li key={h.key}>
+              <button type="button" className={styles.finderHit} onClick={() => { onGoPrize(); setOpen(false); }}>
+                <b>{h.name}</b> <span className={styles.dim}>{h.detail || 'prize'}</span>
+                <span className={styles.dim}>{h.where}</span>
+              </button>
+            </li>
+          ))}
         </ul>
       )}
     </div>

@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { MoreHorizontal } from 'lucide-react';
+import { confirmHold } from '@/lib/ui/confirmHold';
+import { EditPlanDialog } from './PlanDialogs';
 
 import Button from '@/components/ui/Button';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
@@ -40,14 +43,20 @@ export default function PlansTab({ api, data, route, go }: { api: LogisticsApi; 
 }
 
 function PlanList({ data, list, onOpen }: { data: Catalog; list: ReturnType<typeof usePlanList>; onOpen: (p: PlanSummary) => void }) {
-  const { plans, today, error, setError, create, events } = list;
+  const { plans, today, error, setError, create, update, remove, events } = list;
   const [creating, setCreating] = useState(false);
+  const [editing, setEditing] = useState<PlanSummary | null>(null);
+  const removePlan = async (p: PlanSummary) => {
+    if (!(await confirmHold({ title: `Remove “${p.name}”?`, message: 'The plan, its teams, the devices in it (including any borrowed ones) and every step recorded for it are deleted. The inventory itself is not touched.', confirmLabel: 'Hold to remove' }))) return;
+    await remove(p.id);
+  };
   return (
     <div className={styles.tab}>
       <div className={styles.toolbarRow}>
         <span className={styles.count}>{plans ? `${plans.length} ${plans.length === 1 ? 'event' : 'events'}` : ''}</span>
         {data.canManage && <Button className={styles.addBtn} onClick={() => setCreating(true)}>New Event</Button>}
       </div>
+      {editing && <EditPlanDialog plan={editing} onSave={async (b) => update(editing.id, b)} onClose={() => setEditing(null)} />}
       {creating && <CreateDialog events={events} onCreate={async (b) => { const p = await create(b); if (p) { setCreating(false); onOpen(p); } return !!p; }} onClose={() => setCreating(false)} />}
       {error && <div role="alert" onClick={() => setError('')}><Notice tone="error">{error}</Notice></div>}
       {!plans ? (error ? null : <Loading variant="inline" label="Loading…" />) : plans.length === 0 ? (
@@ -73,6 +82,16 @@ function PlanList({ data, list, onOpen }: { data: Catalog; list: ReturnType<type
                     <span>{p.prizes} {p.prizes === 1 ? 'prize' : 'prizes'}{p.prizes > 0 && ` · $${Math.round(p.prizeValue).toLocaleString('en-US')}`}</span>
                   </span>
                 </button>
+                {data.canManage && (
+                  <details className={`${styles.menu} ${styles.eventMenu}`}>
+                    <summary aria-label={`More for ${p.name}`} title="More"><MoreHorizontal size={16} aria-hidden="true" /></summary>
+                    <div className={styles.menuList}>
+                      <button type="button" onClick={() => setEditing(p)}>Edit Name And Dates</button>
+                      <button type="button" onClick={() => void update(p.id, { status: p.status === 'closed' ? 'draft' : 'closed' })}>{p.status === 'closed' ? 'Reopen Plan' : 'Close Plan'}</button>
+                      <button type="button" className={styles.menuDanger} onClick={() => void removePlan(p)}>Remove Plan</button>
+                    </div>
+                  </details>
+                )}
               </li>
             );
           })}

@@ -46,7 +46,7 @@ export default function PrizeGrid({ plan, data }: { plan: PlanApi; data: Catalog
   async function setNumber(poolId: string, p: PrizeRow, value: string) {
     const n = value.trim() === '' ? 0 : Math.round(Number(value));
     if (!Number.isFinite(n) || n < 0) return;
-    const r = await plan.setPrizeLine(poolId, { id: p.id, name: p.name, sponsor: sponsorName.get(p.sponsor_id ?? '') ?? null, size: p.size, price: p.price, quantity: p.quantity, quantity_is_estimate: p.quantity_is_estimate, left: p.left }, n);
+    const r = await plan.setPrizeLine(poolId, { id: p.id, name: p.name, sponsor: sponsorName.get(p.sponsor_id ?? '') ?? null, size: p.size, type: p.type, price: p.price, quantity: p.quantity, quantity_is_estimate: p.quantity_is_estimate, left: p.left }, n);
     if (r.ok && r.delta) prizes.bump(p.id, r.delta);
   }
   const leftClass = (n: number) => (n < 0 ? styles.leftBad : n === 0 ? styles.leftZero : styles.leftOk);

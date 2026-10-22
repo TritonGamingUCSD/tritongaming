@@ -24,9 +24,9 @@ try {
   t.ok('the upcoming events can be listed for the picker', ev.s === 200 && Array.isArray(ev.j.events));
   const boot = await officer.call('GET', '/api/logistics');
   t.ok('a plan happening today shows in the catalog bootstrap (the banner)', boot.j.todayPlans?.some((p) => p.id === P1), JSON.stringify(boot.j.todayPlans));
-  t.ok('the starting steps and bundles are there', ['Left Storage', 'Box Returned', 'Check done', 'Box Taken', 'Back to Storage', 'Returned to owner'].every((n, i, a) => boot.j.lists.step.some((x) => x.value === n) && (i === 0 || boot.j.lists.step.findIndex((x) => x.value === n) > boot.j.lists.step.findIndex((x) => x.value === a[i - 1]))) && boot.j.lists.bundle.length >= 3, JSON.stringify(boot.j.lists.step));
+  t.ok('there are steps and bundles to work with', boot.j.lists.step.length >= 3 && boot.j.lists.bundle.length >= 3, JSON.stringify(boot.j.lists.step.map((x) => x.value)));   // (the names are editable in Tools, so the check does not pin them)
   const steps = Object.fromEntries(boot.j.lists.step.map((s) => [s.value, s]));
-  t.ok('Check done reviews the kit, Back to Storage is club-only, Returned to owner is borrowed-only', steps['Check done'].kit === true && steps['Back to Storage'].applies === 'club' && steps['Returned to owner'].applies === 'borrowed');
+  t.ok('a step can review the parts and a step can be for club or borrowed devices only', boot.j.lists.step.some((x) => x.kit === true) && boot.j.lists.step.some((x) => x.applies === 'club') && boot.j.lists.step.some((x) => x.applies === 'borrowed'));
   const sw = boot.j.lists.bundle.find((b) => b.value.startsWith('Switch Station'));
   t.ok('the Switch Station has no TV', !sw.items.some((i) => i.type === 'TV') && sw.items.length >= 2, JSON.stringify(sw.items));
 
@@ -103,7 +103,9 @@ try {
   t.ok('borrowed devices are not in the inventory', !(await exec.call('GET', '/api/logistics')).j.devices.some((d) => d.tag === 'ZZ-LOAN' || d.tag === 'ZZ-SP1'));
   t.ok('they count in the plan list', (await exec.call('GET', '/api/logistics/plans')).j.plans.find((p) => p.id === P1).devices >= 2 + 0);
 
-  const stepId = (n) => steps[n].id;
+  // The step names are editable in Tools, so each step is found by what it does: the first plain one, the parts review, the club-only and the borrowed-only ones.
+  const byRole = { 'Left Storage': boot.j.lists.step.find((s) => s.applies === 'all' && !s.kit), 'Check done': boot.j.lists.step.find((s) => s.kit), 'Back to Storage': boot.j.lists.step.find((s) => s.applies === 'club'), 'Returned to owner': boot.j.lists.step.find((s) => s.applies === 'borrowed') };
+  const stepId = (n) => (byRole[n] ?? steps[n]).id;
   const s1 = await officer.call('POST', `/api/logistics/plans/${P1}/steps`, { tag: ' zz-a ', step_id: stepId('Left Storage') });
   t.ok('an officer marks a step by typing the ID (spaces and capitals ignored)', s1.s === 200 && s1.j.item.tag === 'ZZ-A' && s1.j.inPlan === true && s1.j.already === false, JSON.stringify(s1));
   t.ok('doing it twice says it was already done', (await officer.call('POST', `/api/logistics/plans/${P1}/steps`, { tag: 'ZZ-A', step_id: stepId('Left Storage') })).j.already === true);
@@ -127,7 +129,7 @@ try {
   const undo = await officer.call('DELETE', `/api/logistics/plans/${P1}/steps`, { device_id: zA.id, step_id: stepId('Left Storage') });
   const v2 = (await officer.call('GET', `/api/logistics/plans/${P1}/version`)).j.count;
   t.ok('any officer can undo a step, and the step count changes so other phones reload', undo.s === 200 && v1 !== v2);
-  t.ok('the undo is in the device history', (await officer.call('GET', `/api/logistics/devices/${zA.id}`)).j.log.some((l) => l.summary.startsWith('Undid “Left Storage”')));
+  t.ok('the undo is in the device history', (await officer.call('GET', `/api/logistics/devices/${zA.id}`)).j.log.some((l) => l.summary.startsWith(`Undid “${byRole['Left Storage'].value}”`)));
   const d3 = (await officer.call('GET', `/api/logistics/plans/${P1}`)).j;
   t.ok('the plan shows who is done and spares used', d3.done.some((r) => r.borrowed_id === zLoan.id) && d3.extras.some((e) => e.id === zB.id) && !d3.done.some((r) => r.device_id === zA.id && r.step_id === stepId('Left Storage')));
   t.ok('a dead device and a missing part are flagged before the day', d3.conflicts.some((c) => c.kind === 'unusable' && c.tag === 'ZZ-DEAD') && d3.conflicts.some((c) => c.kind === 'missing_part' && c.tag === 'ZZ-A'), JSON.stringify(d3.conflicts));

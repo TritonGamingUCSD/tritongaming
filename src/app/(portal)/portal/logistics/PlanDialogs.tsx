@@ -33,14 +33,13 @@ export function StationDialog({ plan, station, onClose }: { plan: PlanApi; stati
   );
 }
 
-export function EditPlanDialog({ plan, onClose }: { plan: PlanApi; onClose: () => void }) {
-  const p = plan.detail!.plan;
+export function EditPlanDialog({ plan: p, onSave, onClose }: { plan: { name: string; starts_on: string; ends_on: string; notes: string | null }; onSave: (body: Record<string, unknown>) => Promise<boolean>; onClose: () => void }) {
   const [name, setName] = useState(p.name);
   const [starts, setStarts] = useState(p.starts_on);
   const [ends, setEnds] = useState(p.ends_on);
   const [notes, setNotes] = useState(p.notes ?? '');
   const [busy, setBusy] = useState(false);
-  const save = async () => { setBusy(true); const ok = await plan.act('', 'PATCH', { name, starts_on: starts, ends_on: ends, notes }); setBusy(false); if (ok) onClose(); };
+  const save = async () => { setBusy(true); const ok = await onSave({ name, starts_on: starts, ends_on: ends, notes }); setBusy(false); if (ok) onClose(); };
   return (
     <Dialog title="Edit Plan" busy={busy} onClose={onClose}>
       <div className={styles.form}>

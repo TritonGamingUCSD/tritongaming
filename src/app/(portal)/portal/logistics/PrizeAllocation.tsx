@@ -28,7 +28,7 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
   const [short, setShort] = useState<Record<string, number>>({});   // how many a Suggest could not find in stock
   const sponsorName = useMemo(() => new Map(data.sponsors.map((s) => [s.id, s.name])), [data.sponsors]);
   const available = useMemo(() => (prizes.rows ?? []).filter((p) => !p.plan_id || p.plan_id === d.plan.id), [prizes.rows, d.plan.id]);
-  const summary = (p: PrizeRow) => ({ id: p.id, name: p.name, sponsor: sponsorName.get(p.sponsor_id ?? '') ?? null, size: p.size, price: p.price, quantity: p.quantity, quantity_is_estimate: p.quantity_is_estimate, left: p.left });
+  const summary = (p: PrizeRow) => ({ id: p.id, name: p.name, sponsor: sponsorName.get(p.sponsor_id ?? '') ?? null, size: p.size, type: p.type, price: p.price, quantity: p.quantity, quantity_is_estimate: p.quantity_is_estimate, left: p.left });
 
   async function setQty(poolId: string, p: PrizeRow, n: number) {
     const r = await plan.setPrizeLine(poolId, summary(p), Math.max(0, Math.round(n)));

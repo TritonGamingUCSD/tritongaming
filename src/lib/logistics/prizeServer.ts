@@ -39,7 +39,7 @@ export async function loadPrizeTotals(svc: SupabaseClient, only?: string[]): Pro
 
 export interface PlanPrizes {
   pools: { id: string; name: string; station_id: string | null; sort: number; request_id: string | null; target_qty: number | null; target_total: number | null }[];
-  lines: { id: string; pool_id: string; prize_id: string; quantity: number; sort: number; prize: { id: string; name: string; sponsor: string | null; size: string | null; price: number | null; quantity: number; quantity_is_estimate: boolean; left: number } }[];
+  lines: { id: string; pool_id: string; prize_id: string; quantity: number; sort: number; prize: { id: string; name: string; sponsor: string | null; size: string | null; type: string | null; price: number | null; quantity: number; quantity_is_estimate: boolean; left: number } }[];
   done: { line_id: string; step_id: string; done: number }[];
   steps: PrizeStepDef[];
 }
@@ -66,7 +66,7 @@ export async function loadPlanPrizes(svc: SupabaseClient, planId: string): Promi
       if (!p) return [];
       const t = totals.get(p.id as string) ?? { allocated: 0, given: 0 };
       return [{ id: l.id as string, pool_id: l.pool_id as string, prize_id: l.prize_id as string, quantity: l.quantity as number, sort: l.sort as number,
-        prize: { id: p.id as string, name: p.name as string, sponsor: p.sponsor_id ? sponsorName.get(p.sponsor_id as string) ?? null : null, size: (p.size as string | null) ?? null, price: p.price === null ? null : Number(p.price), quantity: p.quantity as number, quantity_is_estimate: !!p.quantity_is_estimate, left: (p.quantity as number) - t.given - t.allocated } }];
+        prize: { id: p.id as string, name: p.name as string, sponsor: p.sponsor_id ? sponsorName.get(p.sponsor_id as string) ?? null : null, size: (p.size as string | null) ?? null, type: (p.type as string | null) ?? null, price: p.price === null ? null : Number(p.price), quantity: p.quantity as number, quantity_is_estimate: !!p.quantity_is_estimate, left: (p.quantity as number) - t.given - t.allocated } }];
     }),
     done: (done.data ?? []) as PlanPrizes['done'],
     steps,

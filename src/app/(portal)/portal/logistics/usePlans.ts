@@ -53,7 +53,19 @@ export function usePlanList() {
     const r = await call<{ events: { id: string; title: string; starts_on: string | null; ends_on: string | null }[] }>(`/api/logistics/plans?events=1${past ? '&past=1' : ''}`, 'GET');
     return r.ok ? r.data.events : [];
   }, []);
-  return { plans, today, error, setError, reload: load, create, events };
+  const update = useCallback(async (id: string, body: Record<string, unknown>) => {
+    const r = await call<{ plan: PlanSummary }>(`/api/logistics/plans/${id}`, 'PATCH', body);
+    if (!r.ok) { setError(r.error); return false; }
+    await load();
+    return true;
+  }, [load]);
+  const remove = useCallback(async (id: string) => {
+    const r = await call<{ ok: true }>(`/api/logistics/plans/${id}`, 'DELETE');
+    if (!r.ok) { setError(r.error); return false; }
+    setPlans((p) => (p ?? []).filter((x) => x.id !== id));
+    return true;
+  }, []);
+  return { plans, today, error, setError, reload: load, create, update, remove, events };
 }
 
 // One plan. Structural changes (devices, stations, status) are made and then the plan is read again; steps are applied on screen straight away. While the event-day screen is

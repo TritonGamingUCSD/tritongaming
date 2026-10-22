@@ -1,11 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, MoreHorizontal, RefreshCw } from 'lucide-react';
+import { ArrowLeft, RefreshCw } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import Loading from '@/components/Loading/Loading';
-import { confirmHold } from '@/lib/ui/confirmHold';
 import { tagKey } from '@/lib/logistics/devices';
 import { isUsable, natural, planProblems, rowKind, stationStatus, stepAppliesTo, type StepDef } from '@/lib/logistics/plans';
 import BorrowedDialog from './BorrowedDialog';
@@ -13,7 +12,7 @@ import DeviceDialog from './DeviceDialog';
 import type { Device } from '@/lib/logistics/devices';
 import HowItWorks from './HowItWorks';
 import { interactive } from './interactive';
-import { EditPlanDialog, FillDialog, StationDialog } from './PlanDialogs';
+import { FillDialog, StationDialog } from './PlanDialogs';
 import BorrowedTab from './BorrowedTab';
 import DeviceFinder from './DeviceFinder';
 import PrizingTab from './PrizingTab';
@@ -24,6 +23,8 @@ import type { EventPage } from './logisticsRoute';
 import { SheetRows, type SheetCtx } from './PlanSheet';
 import SwapDialog from './SwapDialog';
 import { planRows, primaryRank, type Row } from './planRows';
+import { TextCell } from './Cells';
+import { usePrizes } from './usePrizes';
 import { doneKey, usePlan, type Borrowed, type Slim, type Station, type StepResult } from './usePlans';
 import type { Catalog, LogisticsApi } from './useLogistics';
 import styles from './logistics.module.css';
@@ -43,6 +44,7 @@ const range = (a: string, b: string) => {
 
 export default function PlanView({ id, data, catalog, page, day, byType, onGroup, onPage, onBack }: { id: string; data: Catalog; catalog: LogisticsApi; page: EventPage; day: boolean; byType: boolean; onGroup: (byType: boolean) => void; onPage: (p: EventPage, day?: boolean) => void; onBack: () => void }) {
   const plan = usePlan(id, true);
+  const prizeInv = usePrizes();
   const { detail, error, setError, act } = plan;
   const [picked, setPicked] = useState('');   // '' = follow the work
   const [text, setText] = useState('');
@@ -52,7 +54,6 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
   const [swapping, setSwapping] = useState<{ id: string; tag: string | null; type: string; kind: 'club' | 'sponsor' | 'officer' } | null>(null);
   const [borrowing, setBorrowing] = useState<Borrowed | 'new' | null>(null);
   const [deviceEdit, setDeviceEdit] = useState<Device | null>(null);   // a device's own information, changed here instead of in the inventory
-  const [editing, setEditing] = useState(false);
   const [stationDialog, setStationDialog] = useState<{ station: Station | null } | null>(null);
   const [filling, setFilling] = useState<{ station: Station | null } | null>(null);
   const [setsOpenPick, setSetsOpenPick] = useState<boolean | null>(null);   // Collapse all / Expand all also fold the bundles
@@ -294,14 +295,6 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
     setBusy(false);
   }
 
-  async function remove() {
-    if (!(await confirmHold({ title: `Remove “${p.name}”?`, message: 'The plan, its teams, the devices in it (including any borrowed ones) and every step recorded for it are deleted. The inventory itself is not touched.', confirmLabel: 'Hold to remove' }))) return;
-    if (await act('', 'DELETE')) onBack();
-  }
-  async function removeStation(s: Station) {
-    if (!(await confirmHold({ title: `Remove ${s.name}?`, message: 'Its rows are removed with it. The devices themselves stay in the inventory.', confirmLabel: 'Hold to remove' }))) return;
-    await act('/stations', 'DELETE', { station_id: s.id });
-  }
 
   return (
     <div className={styles.dayPage}>
@@ -313,18 +306,6 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
             <span className={styles.muted}>{range(p.starts_on, p.ends_on)}{p.event_id ? ' · portal event' : ' · Event logistics only'}{p.notes ? ` · ${p.notes}` : ''}</span>
           </div>
           {page === 'device' && day && <span className={styles.dayTotal} title="Steps done"><span className={styles.bar}><i style={{ width: `${pct}%` }} /></span>{allDone}/{allTotal}</span>}
-          <DeviceFinder rows={all} devices={data.devices} stations={stations} steps={steps} doneSet={doneSet} onGo={(r) => { if (page !== 'device') onPage('device', day); setTimeout(() => focusRow(r.id, groupByType ? `type:${r.type}` : r.stationId ?? 'none'), page !== 'device' ? 400 : 0); }} />
-          <button type="button" className={styles.iconBtn} onClick={() => void plan.reload()} aria-label="Refresh"><RefreshCw size={15} aria-hidden="true" /></button>
-          {canManage && (
-            <details className={styles.menu}>
-              <summary aria-label="More actions" title="More"><MoreHorizontal size={16} aria-hidden="true" /></summary>
-              <div className={styles.menuList}>
-                <button type="button" onClick={() => setEditing(true)}>Edit Name And Dates</button>
-                <button type="button" onClick={() => void act('', 'PATCH', { status: closed ? 'draft' : 'closed' })}>{closed ? 'Reopen Plan' : 'Close Plan'}</button>
-                <button type="button" className={styles.menuDanger} onClick={remove}>Remove Plan</button>
-              </div>
-            </details>
-          )}
         </div>
         {[...free].map(([type, tags]) => <datalist key={type} id={listId(type)}>{tags.sort(natural).map((t) => <option key={t} value={t} />)}</datalist>)}
         <div className={styles.pageBar}>
@@ -343,6 +324,10 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
             { id: 'alloc-device', label: 'Allocation', count: rows.length },
             { id: 'day-device', label: 'Event Day' },
           ]} />
+          <span className={styles.pageBarEnd}>
+            <DeviceFinder prizes={prizeInv.rows} planPrizes={detail.prizes} sponsorOf={(sid) => data.sponsors.find((s) => s.id === sid)?.name ?? null} onGoPrize={() => onPage('prizing', day)} rows={all} devices={data.devices} stations={stations} steps={steps} doneSet={doneSet} onGo={(r) => { if (page !== 'device') onPage('device', day); setTimeout(() => focusRow(r.id, groupByType ? `type:${r.type}` : r.stationId ?? 'none'), page !== 'device' ? 400 : 0); }} />
+            <button type="button" className={styles.iconBtn} onClick={() => void plan.reload()} aria-label="Refresh"><RefreshCw size={15} aria-hidden="true" /></button>
+          </span>
         </div>
         {page === 'device' && day && !closed && (
           <div className={styles.dayStick}>
@@ -377,7 +362,6 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
       {deviceEdit && <DeviceDialog api={catalog} data={data} device={deviceEdit} onClose={() => { setDeviceEdit(null); void plan.reload(); }} />}
       {swapping && <SwapDialog plan={plan} options={[...(free.get(swapping.type) ?? [])].sort(natural)} device={swapping} onClose={() => setSwapping(null)} />}
       {borrowing && <BorrowedDialog plan={plan} catalog={catalog} data={data} borrowed={borrowing === 'new' ? null : borrowing} onClose={() => setBorrowing(null)} />}
-      {editing && <EditPlanDialog plan={plan} onClose={() => setEditing(false)} />}
       {stationDialog && !stationDialog.station && <StationDialog plan={plan} station={null} onClose={() => setStationDialog(null)} />}
       {filling && !filling.station && <FillDialog plan={plan} station={null} onClose={() => setFilling(null)} />}
 
@@ -502,21 +486,9 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
                     </div>
                     {s && (
                       <div className={styles.teamLine}>
-                        <span className={styles.dTeamSub}>{s.contact ?? <span className={styles.warnText}>No contact</span>} · {s.room ?? <span className={styles.warnText}>No room</span>}</span>
-                      </div>
-                    )}
-                    {!folded && (
-                      <div className={styles.teamLine}>
-                        {manage && s && (
-                          <details className={`${styles.menu} ${styles.teamMenu}`}>
-                            <summary aria-label={`More for ${s.name}`} title="More"><MoreHorizontal size={16} aria-hidden="true" /></summary>
-                            <div className={styles.menuList}>
-                              {emptyHere > 0 && <button type="button" onClick={() => setFilling({ station: s })}>Fill {emptyHere} Empty</button>}
-                              <button type="button" onClick={() => setStationDialog({ station: s })}>Edit Team</button>
-                              <button type="button" className={styles.menuDanger} onClick={() => void removeStation(s)}>Remove Team</button>
-                            </div>
-                          </details>
-                        )}
+                        <span className={styles.dTeamSub}>{s.contact ?? <span className={styles.warnText}>No contact</span>}</span>
+                        <span className={styles.dTeamSub}><TextCell value={s.room} canEdit={manage} placeholder="Add room" onSave={(v) => void plan.act('/stations', 'PATCH', { station_id: s.id, room: v })} /></span>
+                        {manage && emptyHere > 0 && <button type="button" className={styles.miniTextBtn} onClick={() => setFilling({ station: s })}>Fill {emptyHere} Empty</button>}
                       </div>
                     )}
                   </div>
@@ -528,7 +500,6 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
                     ))}
                   </div>}
                 </div>
-                {s && stationDialog?.station?.id === s.id && <StationDialog plan={plan} station={s} onClose={() => setStationDialog(null)} />}
                 {s && filling?.station?.id === s.id && <FillDialog plan={plan} station={s} onClose={() => setFilling(null)} />}
                 {!folded && t.rows.length > 0 && <div className={`${styles.dayRow} ${styles.colHead}`} aria-hidden="true"><span>Device</span><span>Games, notes and problems</span>{day && <span />}<span /></div>}
                 {!folded && (t.rows.length === 0 ? <p className={styles.teamEmpty}>No rows yet. They come from this team’s requests.</p> : <SheetRows rows={t.rows} ctx={ctx} />)}
