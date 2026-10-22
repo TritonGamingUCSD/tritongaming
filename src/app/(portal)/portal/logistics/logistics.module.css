@@ -779,3 +779,6 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
   .dayLine .dWhere { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .dayLine .dInfo { gap: 0.1rem 0.7rem; }
 }
+
+/* The Devices / Prizing switch and the page tabs sit together on the left (the search and menu stay on the right of the title), instead of far apart. */
+.pageBar { justify-content: flex-start; gap: 0.6rem 1.2rem; }
