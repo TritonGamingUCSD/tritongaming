@@ -123,7 +123,7 @@ export function usePlan(id: string, live: boolean) {
   const undoStep = useCallback(async (item: { id: string; kind: 'club' | 'sponsor' | 'officer' | 'slot' }, step_id: string): Promise<boolean> => {
     const r = await call<{ ok: true }>(`/api/logistics/plans/${id}/steps`, 'DELETE', { ...(item.kind === 'club' ? { device_id: item.id } : item.kind === 'slot' ? { slot_id: item.id } : { borrowed_id: item.id }), step_id });
     if (!r.ok) { setError(r.error); return false; }
-    setDetail((cur) => (cur ? { ...cur, done: cur.done.filter((d) => !(((d.device_id ?? d.borrowed_id) === item.id) && d.step_id === step_id)) } : cur));
+    setDetail((cur) => (cur ? { ...cur, done: cur.done.filter((d) => doneKey(d) !== `${item.id}:${step_id}`) } : cur));
     return true;
   }, [id]);
   const swap = useCallback(async (body: { device_id?: string; borrowed_id?: string; replacement_tag: string; reason: string }) => {
