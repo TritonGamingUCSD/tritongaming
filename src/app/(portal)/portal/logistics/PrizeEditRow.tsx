@@ -3,11 +3,12 @@
 import { NumberCell, PickCell, TextCell } from './Cells';
 import type { PrizeRow, usePrizes } from './usePrizes';
 import type { Catalog, LogisticsApi } from './useLogistics';
+import { gridStyle, type Col } from './gridTable';
 import styles from './logistics.module.css';
 
 // One prize as a row of boxes: name, sponsor, size, price and how many are changed right in the row (saved when you leave the box). `where` adds the shelf and tier for storage. The rarer fields
 // (exact spot, expiry, notes, estimate, remove) are in Details.
-export default function PrizeEditRow({ p, prizes, api, data, canEdit, where, sponsorFirst, rowClass, onDetails }: {
+export default function PrizeEditRow({ p, prizes, api, data, canEdit, where, sponsorFirst, rowClass, cols, onDetails }: { cols: Col[];
   p: PrizeRow; prizes: ReturnType<typeof usePrizes>; api: LogisticsApi; data: Catalog; canEdit: boolean; where: boolean; sponsorFirst?: boolean; rowClass: string; onDetails: () => void;
 }) {
   const save = (patch: Record<string, unknown>) => void prizes.save(p.id, patch);
@@ -20,7 +21,7 @@ export default function PrizeEditRow({ p, prizes, api, data, canEdit, where, spo
   );
   const nameCell = <span className={styles.prizeName}><TextCell value={p.name} canEdit={canEdit} strong onSave={(v) => { if (v) save({ name: v }); }} />{p.expires_on && <small className={styles.dim}>expires {p.expires_on}</small>}</span>;
   return (
-    <div className={`${rowClass} ${p.left < 0 ? styles.lineBad : ''}`}>
+    <div className={`${rowClass} ${p.left < 0 ? styles.lineBad : ''}`} style={gridStyle(cols)}>
       {sponsorFirst ? <>{sponsorCell}{nameCell}</> : <>{nameCell}{sponsorCell}</>}
       <span data-label="Size"><PickCell value={p.size} shown={p.size ?? 'Big'} options={data.lists.prize_size.map((s) => s.value)} canEdit={canEdit} onSave={(v) => save({ size: v })} onCreate={(v) => api.addOption('prize_size', v)} /></span>
       <span data-label="Type"><TextCell value={p.type} canEdit={canEdit} placeholder="Add" onSave={(v) => save({ type: v })} /></span>

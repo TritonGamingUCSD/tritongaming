@@ -8,6 +8,7 @@ import Notice from '@/components/ui/Notice';
 import { Field, Input, Textarea } from '@/components/ui/Field';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import type { Catalog, LogisticsApi, Sponsor } from './useLogistics';
+import { GridHead, SPONSOR_COLS, gridStyle } from './gridTable';
 import styles from './logistics.module.css';
 
 // The small list of sponsors that lend or give equipment (and later prizes): a name, how to reach them, and a note.
@@ -22,9 +23,9 @@ export default function SponsorsTab({ api, data }: { api: LogisticsApi; data: Ca
       {editing && <SponsorDialog api={api} sponsor={editing === 'new' ? null : editing} onClose={() => setEditing(null)} />}
       {data.sponsors.length === 0 ? <div className={styles.empty}><p>{data.canManage ? 'No sponsors yet. They are added here, or while adding a sponsor’s device to an event.' : 'No sponsors have been added yet.'}</p></div> : (
         <div className={styles.prizeGrid}>
-          <div className={`${styles.prizeRow} ${styles.sponsorRow} ${styles.prizeHeadRow}`} aria-hidden="true"><span>Sponsor</span><span>Contact</span><span>Notes</span><span /></div>
+          <GridHead cols={SPONSOR_COLS} />
           {data.sponsors.map((s) => (
-            <div key={s.id} className={`${styles.prizeRow} ${styles.sponsorRow}`}>
+            <div key={s.id} className={`${styles.prizeRow} ${styles.sponsorRow}`} style={gridStyle(SPONSOR_COLS)}>
               <span className={styles.prizeName}><b>{s.name}</b></span>
               <span data-label="Contact">{s.contact ?? <span className={styles.dim}>–</span>}</span>
               <span data-label="Notes">{s.notes ?? <span className={styles.dim}>–</span>}</span>

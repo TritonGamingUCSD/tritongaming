@@ -11,6 +11,7 @@ import { Combo } from './Combo';
 import PrizeEditRow from './PrizeEditRow';
 import { usePrizes, type PrizeRow } from './usePrizes';
 import type { Catalog, LogisticsApi } from './useLogistics';
+import { GridHead, PRIZE_COLS } from './gridTable';
 import styles from './logistics.module.css';
 
 const money = (n: number | null) => (n === null ? '' : `$${Number.isInteger(n) ? n.toLocaleString('en-US') : n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
@@ -55,8 +56,8 @@ export default function PrizesTab({ api, data }: { api: LogisticsApi; data: Cata
         <div className={styles.empty}><p>{canEdit ? 'No prizes yet. Add the first one.' : 'No prizes have been added yet.'}</p></div>
       ) : rows.length === 0 ? <div className={styles.empty}><p>Nothing matches.</p></div> : (
         <div className={styles.prizeGrid}>
-          <div className={`${styles.prizeRow} ${styles.prizeHeadRow}`} aria-hidden="true"><span>Prize</span><span>Sponsor</span><span>Size</span><span>Type</span><span>Price</span><span>In stock</span><span>Promised</span><span>Given</span><span>Left</span><span>Where</span><span /></div>
-          {rows.map((p) => <PrizeEditRow key={p.id} p={p} prizes={prizes} api={api} data={data} canEdit={canEdit} where rowClass={styles.prizeRow} onDetails={() => setDialog(p)} />)}
+          <GridHead cols={PRIZE_COLS} />
+          {rows.map((p) => <PrizeEditRow cols={PRIZE_COLS} key={p.id} p={p} prizes={prizes} api={api} data={data} canEdit={canEdit} where rowClass={styles.prizeRow} onDetails={() => setDialog(p)} />)}
         </div>
       )}
     </div>

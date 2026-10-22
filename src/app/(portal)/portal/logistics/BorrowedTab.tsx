@@ -8,6 +8,7 @@ import BorrowedDialog from './BorrowedDialog';
 import { ListCell, PickCell, TextCell } from './Cells';
 import { doneKey, type Borrowed, type PlanApi } from './usePlans';
 import type { Catalog, LogisticsApi } from './useLogistics';
+import { GridHead, borrowedCols, gridStyle } from './gridTable';
 import styles from './logistics.module.css';
 
 // The devices a sponsor lent or an officer brought for this one event (they are not in the inventory). They are entered and changed here, and they are on the Allocation sheet too, where they
@@ -45,11 +46,11 @@ export default function BorrowedTab({ plan, catalog, data, kind }: { plan: PlanA
         <div className={styles.empty}><p>{sponsor ? 'No sponsor loaners for this event. Add a device a sponsor is lending, then give it a team on the Allocation tab.' : 'No officer loaners for this event. Add a device an officer is bringing, then give it a team on the Allocation tab.'}</p></div>
       ) : (
         <div className={styles.prizeGrid}>
-          <div className={`${styles.prizeRow} ${styles.borrowRow} ${styles.prizeHeadRow}`} aria-hidden="true"><span>ID</span><span>Type</span><span>{sponsor ? 'Sponsor' : 'Officer'}</span><span>Station</span><span>Installed games</span><span>Status</span><span /></div>
+          <GridHead cols={borrowedCols(sponsor)} />
           {rows.map((b) => {
             const returned = back ? done.has(`${b.id}:${back.id}`) : false;
             return (
-              <div key={b.id} className={`${styles.prizeRow} ${styles.borrowRow}`}>
+              <div key={b.id} className={`${styles.prizeRow} ${styles.borrowRow}`} style={gridStyle(borrowedCols(sponsor))}>
                 <span className={styles.prizeName}><TextCell value={b.tag} canEdit={manage} strong onSave={(v) => { if (v) save(b, { tag: v }); }} /></span>
                 <span data-label="Type"><PickCell value={b.type} options={data.lists.type.map((t) => t.value)} canEdit={manage} clearable={false} onSave={(v) => { if (v) save(b, { type: v }); }} onCreate={async (v) => v} /></span>
                 <span data-label={sponsor ? 'Sponsor' : 'Officer'}>

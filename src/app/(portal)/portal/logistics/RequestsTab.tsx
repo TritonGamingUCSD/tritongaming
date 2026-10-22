@@ -14,6 +14,7 @@ import { canEditRequest, prizeTotal, REQUEST_STATUSES, requestSummary, STATUS_LA
 import { MultiCombo, Combo } from './Combo';
 import type { PlanApi } from './usePlans';
 import type { Catalog, LogisticsApi } from './useLogistics';
+import { GridHead, REQUEST_COLS, gridStyle } from './gridTable';
 import styles from './logistics.module.css';
 
 interface Req {
@@ -95,11 +96,11 @@ export default function RequestsTab({ kind, plan, api, data }: { kind: RequestKi
         <div className={styles.empty}><p>{loaded.requests.length === 0 ? (closed ? (kind === 'devices' ? 'No device requests were made for this event.' : 'No prizing requests were made for this event.') : (kind === 'devices' ? 'No device requests yet. Use New Request to ask for devices for your team.' : 'No prizing requests yet. Use New Request to ask for prizes for your team.')) : 'No requests.'}</p></div>
       ) : (
         <div className={styles.prizeGrid}>
-          <div className={`${styles.prizeRow} ${styles.reqRow} ${styles.prizeHeadRow}`} aria-hidden="true"><span>Contact</span><span>Team</span><span>What</span><span>Notes</span><span>Status</span><span /></div>
+          <GridHead cols={REQUEST_COLS} />
           {list.map((r) => {
             const mine = canEditRequest(manage);
             return (
-              <div key={r.id} className={`${styles.prizeRow} ${styles.reqRow} ${styles[`req_${r.status}`]}`}>
+              <div key={r.id} className={`${styles.prizeRow} ${styles.reqRow} ${styles[`req_${r.status}`]}`} style={gridStyle(REQUEST_COLS)}>
                 <span className={styles.prizeName}>{manage && !closed ? <PickCell value={r.requester} options={people.map((p) => p.name)} clearable={false} canEdit onSave={(v) => { const id = people.find((p) => p.name === v)?.id; if (id && id !== r.requester_id) void patch(r, { requester_id: id }); }} /> : <b>{r.requester}</b>}<small className={styles.dim}>{r.division ? ` · ${r.division}` : ''} · {day(r.created_at)}</small></span>
                 <span data-label="Team"><TextCell value={r.team} canEdit={mine} placeholder="Add" onSave={(v) => void patch(r, { team: v })} /></span>
                 <span data-label={r.kind === 'devices' ? 'Devices' : 'Prizes'}>

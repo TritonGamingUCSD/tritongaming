@@ -11,6 +11,7 @@ import { PrizeDialog } from './PrizesTab';
 import { usePrizes, type PrizeRow } from './usePrizes';
 import type { PlanApi } from './usePlans';
 import type { Catalog, LogisticsApi } from './useLogistics';
+import { GridHead, SPONSOR_PRIZE_COLS } from './gridTable';
 import styles from './logistics.module.css';
 
 const pacificToday = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
@@ -45,8 +46,8 @@ export default function SponsorPrizingTab({ plan, api, data }: { plan: PlanApi; 
           <p className={styles.muted}>{manage ? 'No sponsor prizes yet. Add what sponsors sent for this event; it stays here until the event is over.' : 'No sponsor prizes for this event.'}</p>
         ) : (
           <div className={styles.prizeGrid}>
-            <div className={`${styles.prizeRow} ${styles.prizeHeadRow} ${styles.sentRow}`} aria-hidden="true"><span>Sponsor</span><span>Prize</span><span>Size</span><span>Type</span><span>Price</span><span>In stock</span><span>Promised</span><span>Given</span><span>Left</span><span /></div>
-            {mine.map((p) => <PrizeEditRow key={p.id} p={p} prizes={prizes} api={api} data={data} canEdit={d.canManage} where={false} sponsorFirst rowClass={`${styles.prizeRow} ${styles.sentRow}`} onDetails={() => setDialog(p)} />)}
+            <GridHead cols={SPONSOR_PRIZE_COLS} />
+            {mine.map((p) => <PrizeEditRow cols={SPONSOR_PRIZE_COLS} key={p.id} p={p} prizes={prizes} api={api} data={data} canEdit={d.canManage} where={false} sponsorFirst rowClass={`${styles.prizeRow} ${styles.sentRow}`} onDetails={() => setDialog(p)} />)}
           </div>
         )}
         {canStore && mine.length > 0 && storable.length === 0 && <p className={styles.muted}>Nothing is left to add to storage.</p>}
