@@ -66,6 +66,15 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
   const [overview, setOverview] = useState(false);
   const [showList, setShowList] = useState(false);
   const [narrow, setNarrow] = useState(false);
+  // The phone's keyboard: how much of the screen it covers, so the ID bar pinned at the bottom rides on top of it.
+  const [kb, setKb] = useState(0);
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const f = () => setKb(Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)));
+    f(); vv.addEventListener('resize', f); vv.addEventListener('scroll', f);
+    return () => { vv.removeEventListener('resize', f); vv.removeEventListener('scroll', f); };
+  }, []);
   const input = useRef<HTMLInputElement>(null);
 
   const steps = useMemo(() => detail?.steps ?? [], [detail?.steps]);
@@ -296,9 +305,14 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
     onBorrowed: (r) => setBorrowing(borrowed.find((b) => b.id === r.id) ?? null), onInstalled: (list) => void install(list), onEditDevice: (r) => setDeviceEdit(catalog.data?.devices.find((x) => x.id === r.id) ?? data.devices.find((x) => x.id === r.id) ?? null),
   };
   const foldOf = (key: string, complete: boolean) => (key in fold ? fold[key] : complete || narrow);
-  const toggleFold = (key: string, complete: boolean) => setFold((cur) => ({ ...cur, [key]: !foldOf(key, complete) }));
+  // On a phone only one team is open at a time on the event day: opening one folds the rest.
+  const toggleFold = (key: string, complete: boolean) => setFold((cur) => {
+    const opening = foldOf(key, complete);
+    const others = narrow && day && opening ? Object.fromEntries(teams.filter((x) => x.key !== key).map((x) => [x.key, true])) : {};
+    return { ...cur, ...others, [key]: !opening };
+  });
   const allFolded = teams.length > 0 && teams.every((t) => { const tot = steps.reduce((n, st) => n + t.rows.filter((r) => stepAppliesTo(st, rowKind(r))).length, 0); const dn = steps.reduce((n, st) => n + t.rows.filter((r) => stepAppliesTo(st, rowKind(r)) && doneSet.has(`${r.id}:${st.id}`)).length, 0); return foldOf(t.key, tot > 0 && dn === tot); });
-  const jump = (sid: string | null) => { if (!sid) return; setFold((cur) => ({ ...cur, [sid]: false })); setTimeout(() => document.getElementById(`st-${sid}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0); };
+  const jump = (sid: string | null) => { if (!sid) return; setFold((cur) => ({ ...cur, ...(narrow && day ? Object.fromEntries(teams.filter((x) => x.key !== sid).map((x) => [x.key, true])) : {}), [sid]: false })); setTimeout(() => document.getElementById(`st-${sid}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0); };
 
   // The games a row needs that its device doesn't list yet are added to the device's installed games (the same list as in Equipment, with its history line).
   async function install(list: Row[]) {
@@ -316,7 +330,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
 
 
   return (
-    <div className={styles.dayPage}>
+    <div className={`${styles.dayPage} ${page === 'device' && day && !closed ? styles.dayPageBar : ''}`}>
       <div className={styles.dayTop}>
         <div className={styles.dayBar}>
           <button type="button" className={styles.back} onClick={onBack}><ArrowLeft size={15} aria-hidden="true" /> All Events</button>
@@ -349,7 +363,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
           </span>
         </div>
         {page === 'device' && day && !closed && (
-          <div className={styles.dayStick}>
+          <div className={`${styles.dayStick} ${kb > 80 ? styles.kbOpen : ''}`} style={{ '--kb': `${kb}px` } as React.CSSProperties}>
             <form className={styles.dayForm} onSubmit={(e) => { e.preventDefault(); submit(); }}>
             <select className={styles.daySelect} value={picked} onChange={(e) => { setPicked(e.target.value); setKit(null); input.current?.focus(); }} aria-label="Step to mark when typing an ID">
               <option value="">Next step: {auto?.name ?? '–'}</option>
@@ -415,6 +429,16 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
         </div>}
 
         <div className={styles.dayMain}>
+          {day && narrow && teams.length > 1 && (
+            <nav className={styles.teamChips} aria-label="Jump to a team">
+              {teams.map((tm) => {
+                const tot = steps.reduce((n, st) => n + tm.rows.filter((r) => stepAppliesTo(st, rowKind(r))).length, 0);
+                const dn = steps.reduce((n, st) => n + tm.rows.filter((r) => stepAppliesTo(st, rowKind(r)) && doneSet.has(`${r.id}:${st.id}`)).length, 0);
+                const full = tot > 0 && dn === tot;
+                return <button key={tm.key} type="button" className={`${styles.teamChip} ${full ? styles.teamChipDone : ''}`} onClick={() => jump(tm.key)}>{tm.title}<small>{full ? '✓' : `${dn}/${tot}`}</small></button>;
+              })}
+            </nav>
+          )}
           {rows.length > 0 && (
             <section className={`${styles.statusBar} ${bad ? styles.readyBad : warn ? styles.readyWarn : styles.readyOk}`} aria-label="What needs fixing">
               <div className={`${styles.readyHead} ${problems.length > 0 ? styles.clickRow : ''}`} onClick={(e) => { if (problems.length > 0 && !interactive(e.target)) setShowList((v) => !v); }} role={problems.length > 0 ? 'button' : undefined} tabIndex={problems.length > 0 ? 0 : undefined} aria-expanded={problems.length > 0 ? showList : undefined} onKeyDown={(e) => { if (problems.length > 0 && (e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); setShowList((v) => !v); } }}>

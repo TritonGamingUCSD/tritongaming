@@ -813,3 +813,15 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 .wrapUp { margin-bottom: 0.8rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.2); background: var(--pp-card); }
 .wrapUp > summary { padding: 0.6rem 0.8rem; font-weight: 700; cursor: pointer; }
 .wrapUp .grid { margin: 0; }
+
+/* Phone, event day: the ID bar floats above the bottom dock (and rides on the keyboard when it opens), the page leaves room under the list, and teams can be jumped to from a row of chips. */
+.teamChips { display: flex; gap: 0.4rem; overflow-x: auto; padding: 0.1rem 0 0.4rem; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
+.teamChip { flex: none; display: inline-flex; align-items: center; gap: 0.4rem; min-height: 40px; padding: 0 0.8rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); background: var(--pp-card); color: var(--pp-ink); font: inherit; font-size: 0.84rem; font-weight: 600; white-space: nowrap; scroll-snap-align: start; cursor: pointer; }
+.teamChip small { font-size: 0.74rem; font-variant-numeric: tabular-nums; color: rgba(var(--pp-ink-rgb), 0.7); }
+.teamChipDone { border-color: var(--pp-ok); } .teamChipDone small { color: var(--pp-ok); font-weight: 700; }
+@media (max-width: 899px) {
+  .dayPageBar { padding-bottom: 14rem; }
+  .dayStick { position: fixed; top: auto; left: 0.85rem; right: 0.85rem; bottom: calc(5.6rem + env(safe-area-inset-bottom, 0px)); z-index: 19; padding: 0.55rem; border-radius: 14px; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); background: var(--pp-card); box-shadow: 0 8px 24px color-mix(in srgb, var(--pp-ink) 22%, transparent); }
+  .dayStick.kbOpen { bottom: calc(var(--kb, 0px) + 0.5rem); }
+  .dayPageBar ~ .undoBar, .undoBar { bottom: calc(11.5rem + env(safe-area-inset-bottom, 0px)); }
+}
