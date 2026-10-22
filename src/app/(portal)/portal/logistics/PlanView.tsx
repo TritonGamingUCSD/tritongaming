@@ -97,6 +97,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
         if (!g) { g = { key: `type:${r.type}`, station: null, title: r.type, rows: [] }; out.push(g); }
         g.rows.push(r);
       }
+      for (const g of out) g.rows.sort((a, b) => (a.tag ? 0 : 1) - (b.tag ? 0 : 1) || natural(a.tag ?? '', b.tag ?? ''));
       return out.sort((a, b) => natural(a.title, b.title));
     }
     for (const s of detail?.stations ?? []) out.push({ key: s.id, station: s, title: s.name, rows: [] });
