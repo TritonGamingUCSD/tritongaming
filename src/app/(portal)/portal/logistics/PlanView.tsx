@@ -344,7 +344,9 @@ export default function PlanView({ id, data, catalog, page, day, byType, onGroup
                   {problems.map((pr, i) => (
                     <li key={i} className={pr.sev === 'bad' ? styles.problemBad : styles.problemWarn}>
                       <span>{pr.text}</span>
-                      {pr.station_id && <button type="button" className={styles.linkBtn} onClick={() => jump(pr.station_id)}>Go to team</button>}
+                      {groupByType
+                        ? (() => { const t = rows.find((x) => x.id === pr.row_id)?.type; return t ? <button type="button" className={styles.linkBtn} onClick={() => jump(`type:${t}`)}>Go to type</button> : null; })()
+                        : pr.station_id && <button type="button" className={styles.linkBtn} onClick={() => jump(pr.station_id)}>Go to team</button>}
                     </li>
                   ))}
                 </ul>
