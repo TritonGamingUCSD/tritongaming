@@ -42,11 +42,26 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const div = new Map((divisions ?? []).map((d) => [d.id as string, d.name as string]));
   const ids = rows.filter((r) => r.kind === 'devices').map((r) => r.id);
   const [{ data: sl }, { data: pd }] = ids.length ? await Promise.all([auth.svc.from('logistics_plan_slots').select('request_id').in('request_id', ids), auth.svc.from('logistics_plan_devices').select('request_id').in('request_id', ids)]) : [{ data: [] }, { data: [] }];
+  // Prize requests: how many prizes the pool for each one holds so far, and what they add up to.
+  const pids = rows.filter((r) => r.kind === 'prizes').map((r) => r.id);
+  const gotPrizes = new Map<string, { qty: number; total: number }>();
+  if (pids.length) {
+    const { data: pools } = await auth.svc.from('logistics_plan_pools').select('id, request_id').in('request_id', pids);
+    const poolIds = (pools ?? []).map((p) => p.id as string);
+    const { data: lines } = poolIds.length ? await auth.svc.from('logistics_plan_prizes').select('pool_id, quantity, prize_id').in('pool_id', poolIds) : { data: [] };
+    const prizeIds = [...new Set((lines ?? []).map((l) => l.prize_id as string))];
+    const { data: prices } = prizeIds.length ? await auth.svc.from('logistics_prizes').select('id, price').in('id', prizeIds) : { data: [] };
+    const price = new Map((prices ?? []).map((p) => [p.id as string, Number(p.price ?? 0)]));
+    for (const p of pools ?? []) {
+      const mine = (lines ?? []).filter((l) => l.pool_id === p.id);
+      gotPrizes.set(p.request_id as string, { qty: mine.reduce((n, l) => n + (l.quantity as number), 0), total: Math.round(mine.reduce((n, l) => n + (l.quantity as number) * (price.get(l.prize_id as string) ?? 0), 0) * 100) / 100 });
+    }
+  }
   const count = (list: { request_id: unknown }[] | null, id: string) => (list ?? []).filter((x) => x.request_id === id).length;
   return NextResponse.json({
     me: auth.user.id, canManage: auth.canManage,
     divisions: divisions ?? [], myDivisionIds: [...new Set((mine ?? []).map((m) => m.division_id as string | null).filter((x): x is string => !!x))],
-    requests: rows.map((r) => ({ ...r, filled: count(pd, r.id), rowsTotal: count(pd, r.id) + count(sl, r.id), requester: who.get(r.requester_id) ?? 'Unnamed', division: r.division_id ? div.get(r.division_id) ?? null : null, planner: r.planned_by ? who.get(r.planned_by) ?? null : null })),
+    requests: rows.map((r) => ({ ...r, filled: count(pd, r.id), rowsTotal: count(pd, r.id) + count(sl, r.id), prizesGot: gotPrizes.get(r.id) ?? { qty: 0, total: 0 }, requester: who.get(r.requester_id) ?? 'Unnamed', division: r.division_id ? div.get(r.division_id) ?? null : null, planner: r.planned_by ? who.get(r.planned_by) ?? null : null })),
   });
 }
 

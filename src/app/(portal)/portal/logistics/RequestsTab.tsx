@@ -18,7 +18,7 @@ import styles from './logistics.module.css';
 
 interface Req {
   id: string; plan_id: string; kind: RequestKind; requester_id: string; division_id: string | null; team: string | null; contact: string | null; items: (DeviceItem | PrizeItem)[]; notes: string | null; status: RequestStatus;
-  planned_at: string | null; created_at: string; requester: string; division: string | null; planner: string | null; filled: number; rowsTotal: number;
+  planned_at: string | null; created_at: string; requester: string; division: string | null; planner: string | null; filled: number; prizesGot?: { qty: number; total: number }; rowsTotal: number;
 }
 interface Loaded { me: string; canManage: boolean; divisions: { id: string; name: string }[]; myDivisionIds: string[]; requests: Req[] }
 const day = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -94,7 +94,7 @@ export default function RequestsTab({ plan, api, data }: { plan: PlanApi; api: L
                 <span data-label={r.kind === 'devices' ? 'Devices' : 'Prizes'}>
                   {r.kind === 'devices'
                     ? <>{(r.items as DeviceItem[]).map((i, n) => <span key={n} className={styles.reqItem}><b>{i.qty} × {i.what}</b>{i.games.length ? <span className={styles.dim}> · {i.games.join(', ')}</span> : null}</span>)}{r.status !== 'declined' && <span className={`${styles.reqItem} ${r.filled === r.rowsTotal && r.rowsTotal > 0 ? styles.okText : styles.warnText}`}>{r.filled}/{r.rowsTotal} filled</span>}</>
-                    : <>{(r.items as PrizeItem[]).map((i, n) => <span key={n} className={styles.reqItem}><b>{i.qty} prize{i.qty === 1 ? '' : 's'}</b> around {money(i.value)} each</span>)}<span className={`${styles.reqItem} ${styles.dim}`}>About {money(prizeTotal(r.items as PrizeItem[]))} in all</span></>}
+                    : <>{(r.items as PrizeItem[]).map((i, n) => <span key={n} className={styles.reqItem}><b>{i.qty} prize{i.qty === 1 ? '' : 's'}</b> around {money(i.value)} each</span>)}<span className={`${styles.reqItem} ${styles.dim}`}>About {money(prizeTotal(r.items as PrizeItem[]))} in all</span>{r.status !== 'declined' && (() => { const want = (r.items as PrizeItem[]).reduce((n, i) => n + i.qty, 0), got = r.prizesGot?.qty ?? 0; return <span className={`${styles.reqItem} ${got >= want && want > 0 ? styles.okText : styles.warnText}`}>{got}/{want} filled · {money(r.prizesGot?.total ?? 0)}</span>; })()}</>}
                 </span>
                 <span data-label="Notes">{r.notes ?? <span className={styles.dim}>–</span>}</span>
                 <span data-label="Status">{manage && !closed ? <select className={styles.miniSelect} value={r.status} aria-label="Where this request stands" onChange={(e) => void setStatus(r, e.target.value as RequestStatus)}>{REQUEST_STATUSES.map((x) => <option key={x} value={x}>{STATUS_LABELS[x]}</option>)}</select> : <span className={`${styles.statusChip} ${chip[r.status]}`}>{STATUS_LABELS[r.status]}</span>}</span>
