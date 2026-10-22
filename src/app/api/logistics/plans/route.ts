@@ -22,16 +22,31 @@ export async function GET(request: Request) {
   }
   const { data: plans } = await auth.svc.from('logistics_plans').select(PLAN_COLUMNS).order('starts_on', { ascending: false }).limit(200);
   const ids = (plans ?? []).map((p) => p.id as string);
-  const counts = new Map<string, number>();
+  const counts = new Map<string, number>();   // device rows in all
+  const empty = new Map<string, number>();    // of them, still waiting for a device
+  const teams = new Map<string, number>();
+  const asked = new Map<string, { all: number; fresh: number }>();
+  const prizes = new Map<string, { qty: number; total: number }>();
+  const bump = (m: Map<string, number>, k: string) => m.set(k, (m.get(k) ?? 0) + 1);
   if (ids.length) {
-    const [{ data: rows }, { data: bor }, { data: sl }] = await Promise.all([
+    const [{ data: rows }, { data: bor }, { data: sl }, { data: sts }, { data: reqs }, { data: lines }] = await Promise.all([
       auth.svc.from('logistics_plan_devices').select('plan_id').in('plan_id', ids).eq('role', 'planned').limit(20000),
       auth.svc.from('logistics_plan_borrowed').select('plan_id').in('plan_id', ids).eq('role', 'planned').limit(20000),
       auth.svc.from('logistics_plan_slots').select('plan_id').in('plan_id', ids).limit(20000),
+      auth.svc.from('logistics_stations').select('plan_id').in('plan_id', ids).limit(5000),
+      auth.svc.from('logistics_requests').select('plan_id, status').in('plan_id', ids).neq('status', 'declined').limit(5000),
+      auth.svc.from('logistics_plan_prizes').select('plan_id, quantity, prize_id').in('plan_id', ids).limit(20000),
     ]);
-    for (const r of [...(rows ?? []), ...(bor ?? []), ...(sl ?? [])]) counts.set(r.plan_id as string, (counts.get(r.plan_id as string) ?? 0) + 1);
+    for (const r of [...(rows ?? []), ...(bor ?? []), ...(sl ?? [])]) bump(counts, r.plan_id as string);
+    for (const r of sl ?? []) bump(empty, r.plan_id as string);
+    for (const r of sts ?? []) bump(teams, r.plan_id as string);
+    for (const r of reqs ?? []) { const e = asked.get(r.plan_id as string) ?? { all: 0, fresh: 0 }; e.all++; if (r.status === 'submitted') e.fresh++; asked.set(r.plan_id as string, e); }
+    const prizeIds = [...new Set((lines ?? []).map((l) => l.prize_id as string))];
+    const { data: prices } = prizeIds.length ? await auth.svc.from('logistics_prizes').select('id, price').in('id', prizeIds) : { data: [] };
+    const price = new Map((prices ?? []).map((x) => [x.id as string, Number(x.price ?? 0)]));
+    for (const l of lines ?? []) { const e = prizes.get(l.plan_id as string) ?? { qty: 0, total: 0 }; e.qty += l.quantity as number; e.total += (l.quantity as number) * (price.get(l.prize_id as string) ?? 0); prizes.set(l.plan_id as string, e); }
   }
-  return NextResponse.json({ plans: (plans ?? []).map((p) => ({ ...p, devices: counts.get(p.id as string) ?? 0 })), today: pacificToday() });
+  return NextResponse.json({ plans: (plans ?? []).map((p) => { const id = p.id as string, pz = prizes.get(id); return { ...p, devices: counts.get(id) ?? 0, empty: empty.get(id) ?? 0, teams: teams.get(id) ?? 0, requests: asked.get(id)?.all ?? 0, newRequests: asked.get(id)?.fresh ?? 0, prizes: pz?.qty ?? 0, prizeValue: Math.round((pz?.total ?? 0) * 100) / 100 }; }), today: pacificToday() });
 }
 
 // Make a plan for a portal event (name and dates come from the event unless given) or a Logistics-only event (a name and dates).

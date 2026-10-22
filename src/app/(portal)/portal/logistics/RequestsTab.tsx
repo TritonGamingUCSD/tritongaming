@@ -7,7 +7,7 @@ import Notice from '@/components/ui/Notice';
 import Loading from '@/components/Loading/Loading';
 import { Field, Input, Select, Textarea } from '@/components/ui/Field';
 import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
-import { TextCell } from './Cells';
+import { PickCell, TextCell } from './Cells';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import { canEditRequest, prizeTotal, REQUEST_STATUSES, requestSummary, STATUS_LABELS, type DeviceItem, type PrizeItem, type RequestKind, type RequestStatus } from '@/lib/logistics/requests';
 import { MultiCombo, Combo } from './Combo';
@@ -58,8 +58,8 @@ export default function RequestsTab({ kind, plan, api, data }: { kind: RequestKi
     const res = await call<{ request: Req }>(`/api/logistics/plans/${planId}/requests`, 'PATCH', { request_id: r.id, status });
     if (res.ok) { apply({ ...r, ...res.data.request }); void load(); } else setError(res.error);
   }
-  async function saveContact(r: Req, contact: string) {
-    const res = await call<{ request: Req }>(`/api/logistics/plans/${planId}/requests`, 'PATCH', { request_id: r.id, contact });
+  async function patch(r: Req, fields: { team?: string; notes?: string; contact?: string }) {
+    const res = await call<{ request: Req }>(`/api/logistics/plans/${planId}/requests`, 'PATCH', { request_id: r.id, ...fields });
     if (res.ok) { apply({ ...r, ...res.data.request }); void plan.reload(); } else setError(res.error);
   }
   async function remove(r: Req) {
@@ -88,15 +88,15 @@ export default function RequestsTab({ kind, plan, api, data }: { kind: RequestKi
             return (
               <div key={r.id} className={`${styles.prizeRow} ${styles.reqRow} ${styles[`req_${r.status}`]}`}>
                 <span className={styles.prizeName}><b>{r.requester}</b><small className={styles.dim}>{r.division ? ` · ${r.division}` : ''} · {day(r.created_at)}</small></span>
-                <span data-label="Team">{r.team ?? <span className={styles.dim}>–</span>}</span>
-                <span data-label="Contact"><TextCell value={r.contact} canEdit={manage && !closed} placeholder="Add" onSave={(v) => void saveContact(r, v)} /></span>
+                <span data-label="Team"><TextCell value={r.team} canEdit={mine} placeholder="Add" onSave={(v) => void patch(r, { team: v })} /></span>
+                <span data-label="Contact"><TextCell value={r.contact} canEdit={manage && !closed} placeholder="Add" onSave={(v) => void patch(r, { contact: v })} /></span>
                 <span data-label={r.kind === 'devices' ? 'Devices' : 'Prizes'}>
                   {r.kind === 'devices'
                     ? <>{(r.items as DeviceItem[]).map((i, n) => <span key={n} className={styles.reqItem}><b>{i.qty} × {i.what}</b>{i.games.length ? <span className={styles.dim}> · {i.games.join(', ')}</span> : null}</span>)}{r.status !== 'declined' && <span className={`${styles.reqItem} ${r.filled === r.rowsTotal && r.rowsTotal > 0 ? styles.okText : styles.warnText}`}>{r.filled}/{r.rowsTotal} filled</span>}</>
                     : <>{(r.items as PrizeItem[]).map((i, n) => <span key={n} className={styles.reqItem}><b>{i.qty} prize{i.qty === 1 ? '' : 's'}</b> around {money(i.value)} each</span>)}<span className={`${styles.reqItem} ${styles.dim}`}>About {money(prizeTotal(r.items as PrizeItem[]))} in all</span>{r.status !== 'declined' && (() => { const want = (r.items as PrizeItem[]).reduce((n, i) => n + i.qty, 0), got = r.prizesGot?.qty ?? 0; return <span className={`${styles.reqItem} ${got >= want && want > 0 ? styles.okText : styles.warnText}`}>{got}/{want} filled · {money(r.prizesGot?.total ?? 0)}</span>; })()}</>}
                 </span>
-                <span data-label="Notes">{r.notes ?? <span className={styles.dim}>–</span>}</span>
-                <span data-label="Status">{manage && !closed ? <select className={styles.miniSelect} value={r.status} aria-label="Where this request stands" onChange={(e) => void setStatus(r, e.target.value as RequestStatus)}>{REQUEST_STATUSES.map((x) => <option key={x} value={x}>{STATUS_LABELS[x]}</option>)}</select> : <span className={`${styles.statusChip} ${chip[r.status]}`}>{STATUS_LABELS[r.status]}</span>}</span>
+                <span data-label="Notes"><TextCell value={r.notes} canEdit={mine} placeholder="Add" onSave={(v) => void patch(r, { notes: v })} /></span>
+                <span data-label="Status">{manage && !closed ? <PickCell value={STATUS_LABELS[r.status]} options={REQUEST_STATUSES.map((x) => STATUS_LABELS[x])} clearable={false} canEdit onSave={(v) => { const x = REQUEST_STATUSES.find((k) => STATUS_LABELS[k] === v); if (x) void setStatus(r, x); }} /> : <span className={`${styles.statusChip} ${chip[r.status]}`}>{STATUS_LABELS[r.status]}</span>}</span>
                 <span className={styles.prizeTools}>
                   {mine && <button type="button" className={styles.linkBtn} onClick={() => setDialog(r)}>Edit</button>}
                   {mine && <button type="button" className={styles.linkBtn} onClick={() => void remove(r)}>{manage ? 'Remove' : 'Take Back'}</button>}

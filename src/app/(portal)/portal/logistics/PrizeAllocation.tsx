@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import Button from '@/components/ui/Button';
 import { suggestPrizes } from '@/lib/logistics/prizes';
 import { Combo } from './Combo';
+import { NumberCell } from './Cells';
 import { PoolDialog } from './PlanPrizes';
 import PrizeGrid from './PrizeGrid';
 import { usePrizes, type PrizeRow } from './usePrizes';
@@ -85,7 +86,7 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
                       return (
                         <li key={l.id} className={styles.poolLine}>
                           <span className={styles.poolLineName}><b>{l.prize.name}</b><small className={styles.dim}>{l.prize.sponsor ?? 'Club'}{l.prize.price !== null ? ` · ${money(l.prize.price)}` : ''}</small></span>
-                          <NumberBox value={l.quantity} disabled={!manage || !p} label={`${l.prize.name} for ${pool.name}`} onCommit={(n) => p && void setQty(pool.id, p, n)} />
+                          <NumberCell value={l.quantity} canEdit={manage && !!p} nullable label={`${l.prize.name} for ${pool.name}`} onSave={(n) => p && void setQty(pool.id, p, n ?? 0)} />
                           <span className={`${styles.leftChip} ${l.prize.left < 0 ? styles.leftBad : l.prize.left === 0 ? styles.leftZero : styles.leftOk}`}>{l.prize.left} left</span>
                         </li>
                       );
@@ -111,15 +112,5 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
         <PrizeGrid plan={plan} data={data} />
       </details>
     </div>
-  );
-}
-
-// A number box that saves when you leave it or press Enter (0 takes the prize out of the pool).
-function NumberBox({ value, disabled, label, onCommit }: { value: number; disabled: boolean; label: string; onCommit: (n: number) => void }) {
-  const [text, setText] = useState<string | null>(null);
-  return (
-    <input className={styles.numCell} type="number" inputMode="numeric" min={0} max={100000} value={text ?? String(value)} disabled={disabled} aria-label={label}
-      onChange={(e) => setText(e.target.value)} onBlur={() => { if (text !== null) { const n = text.trim() === '' ? 0 : Number(text); if (Number.isFinite(n) && n !== value) onCommit(n); setText(null); } }}
-      onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); else if (e.key === 'Escape') setText(null); }} />
   );
 }

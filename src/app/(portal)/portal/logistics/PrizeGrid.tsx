@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Input, Select } from '@/components/ui/Field';
 import { PoolDialog } from './PlanPrizes';
+import { NumberCell as EditNumber, PickCell } from './Cells';
 import { usePrizes, type PrizeRow } from './usePrizes';
 import type { PlanApi } from './usePlans';
 import type { Catalog } from './useLogistics';
@@ -76,12 +77,10 @@ export default function PrizeGrid({ plan, data }: { plan: PlanApi; data: Catalog
                 <div className={styles.gridCardHead}><b>{p.name}</b><span className={`${styles.leftChip} ${leftClass(p.left)}`}>{p.left} left</span></div>
                 <span className={styles.dim}>{[sponsorName.get(p.sponsor_id ?? '') ?? 'Club', money(p.price), `${p.quantity_is_estimate ? '~' : ''}${p.quantity} in stock`, p.plan_id ? 'Sponsor prize' : 'Storage'].filter(Boolean).join(' · ')}</span>
                 {inPools.map((pl) => (
-                  <label key={pl.id} className={styles.gridCardPool}><span>{pl.name}</span><NumberCell value={qtyOf.get(`${pl.id}:${p.id}`) ?? 0} disabled={!manage} label={`${p.name} for ${pl.name}`} onCommit={(v) => void setNumber(pl.id, p, v)} /></label>
+                  <label key={pl.id} className={styles.gridCardPool}><span>{pl.name}</span><EditNumber value={qtyOf.get(`${pl.id}:${p.id}`) || null} canEdit={manage} nullable label={`${p.name} for ${pl.name}`} onSave={(v) => void setNumber(pl.id, p, v === null ? '' : String(v))} /></label>
                 ))}
                 {manage && free.length > 0 && (
-                  <select className={styles.miniSelect} aria-label={`Give ${p.name} to another pool`} value="" onChange={(e) => { if (e.target.value) void setNumber(e.target.value, p, '1'); }}>
-                    <option value="">Add to a pool…</option>{free.map((pl) => <option key={pl.id} value={pl.id}>{pl.name}</option>)}
-                  </select>
+                  <PickCell value={null} options={free.map((pl) => pl.name)} canEdit clearable={false} shown="Add to a pool" onSave={(v) => { const pl = free.find((x) => x.name === v); if (pl) void setNumber(pl.id, p, '1'); }} />
                 )}
               </li>
             );
@@ -111,7 +110,7 @@ export default function PrizeGrid({ plan, data }: { plan: PlanApi; data: Catalog
                   <td className={`${styles.mNum} ${styles.mLeft} ${leftClass(p.left)}`}>{p.left}</td>
                   {pools.map((pl) => {
                     const n = qtyOf.get(`${pl.id}:${p.id}`) ?? 0;
-                    return <td key={pl.id} className={`${styles.mCell} ${n > 0 ? styles.mUsed : ''}`}><NumberCell value={n} disabled={!manage} label={`${p.name} for ${pl.name}`} onCommit={(v) => void setNumber(pl.id, p, v)} /></td>;
+                    return <td key={pl.id} className={`${styles.mCell} ${n > 0 ? styles.mUsed : ''}`}><EditNumber value={n || null} canEdit={manage} nullable label={`${p.name} for ${pl.name}`} onSave={(v) => void setNumber(pl.id, p, v === null ? '' : String(v))} /></td>;
                   })}
                 </tr>
               ))}
@@ -120,16 +119,5 @@ export default function PrizeGrid({ plan, data }: { plan: PlanApi; data: Catalog
         </div>
       )}
     </div>
-  );
-}
-
-// A number box that saves when you leave it or press Enter (empty or 0 takes the prize out of the pool).
-function NumberCell({ value, disabled, label, onCommit }: { value: number; disabled: boolean; label: string; onCommit: (v: string) => void }) {
-  const [text, setText] = useState<string | null>(null);
-  const shown = text ?? (value > 0 ? String(value) : '');
-  return (
-    <input className={styles.numCell} type="number" inputMode="numeric" min={0} max={100000} value={shown} disabled={disabled} aria-label={label}
-      onChange={(e) => setText(e.target.value)} onBlur={() => { if (text !== null) { onCommit(text); setText(null); } }}
-      onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); else if (e.key === 'Escape') setText(null); }} />
   );
 }

@@ -41,7 +41,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const who = await names(auth.svc, [...new Set(rows.flatMap((r) => [r.requester_id, r.planned_by].filter((x): x is string => !!x)))]);
   const div = new Map((divisions ?? []).map((d) => [d.id as string, d.name as string]));
   const ids = rows.filter((r) => r.kind === 'devices').map((r) => r.id);
-  const [{ data: sl }, { data: pd }] = ids.length ? await Promise.all([auth.svc.from('logistics_plan_slots').select('request_id').in('request_id', ids), auth.svc.from('logistics_plan_devices').select('request_id').in('request_id', ids)]) : [{ data: [] }, { data: [] }];
+  const [{ data: sl }, { data: pd }, { data: pb }] = ids.length ? await Promise.all([auth.svc.from('logistics_plan_slots').select('request_id').in('request_id', ids), auth.svc.from('logistics_plan_devices').select('request_id').in('request_id', ids), auth.svc.from('logistics_plan_borrowed').select('request_id').in('request_id', ids)]) : [{ data: [] }, { data: [] }, { data: [] }];   // a loaner fills a row too
   // Prize requests: how many prizes the pool for each one holds so far, and what they add up to.
   const pids = rows.filter((r) => r.kind === 'prizes').map((r) => r.id);
   const gotPrizes = new Map<string, { qty: number; total: number }>();
@@ -61,7 +61,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   return NextResponse.json({
     me: auth.user.id, canManage: auth.canManage,
     divisions: divisions ?? [], myDivisionIds: [...new Set((mine ?? []).map((m) => m.division_id as string | null).filter((x): x is string => !!x))],
-    requests: rows.map((r) => ({ ...r, filled: count(pd, r.id), rowsTotal: count(pd, r.id) + count(sl, r.id), prizesGot: gotPrizes.get(r.id) ?? { qty: 0, total: 0 }, requester: who.get(r.requester_id) ?? 'Unnamed', division: r.division_id ? div.get(r.division_id) ?? null : null, planner: r.planned_by ? who.get(r.planned_by) ?? null : null })),
+    requests: rows.map((r) => ({ ...r, filled: count(pd, r.id) + count(pb, r.id), rowsTotal: count(pd, r.id) + count(pb, r.id) + count(sl, r.id), prizesGot: gotPrizes.get(r.id) ?? { qty: 0, total: 0 }, requester: who.get(r.requester_id) ?? 'Unnamed', division: r.division_id ? div.get(r.division_id) ?? null : null, planner: r.planned_by ? who.get(r.planned_by) ?? null : null })),
   });
 }
 

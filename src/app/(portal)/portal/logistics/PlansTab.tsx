@@ -66,7 +66,12 @@ function PlanList({ data, list, onOpen }: { data: Catalog; list: ReturnType<type
                     {!p.event_id && <span className={`${styles.badge} ${styles.neutral}`}>Logistics only</span>}
                   </span>
                   <span className={styles.eventMeta}>{range(p.starts_on, p.ends_on)}</span>
-                  <span className={styles.eventMeta}>{p.devices} {p.devices === 1 ? 'device' : 'devices'}</span>
+                  <span className={styles.eventStats}>
+                    <span>{p.teams} {p.teams === 1 ? 'team' : 'teams'}</span>
+                    <span>{p.requests} {p.requests === 1 ? 'request' : 'requests'}{p.newRequests > 0 && <b className={styles.warnText}> · {p.newRequests} new</b>}</span>
+                    <span>{p.devices} {p.devices === 1 ? 'device' : 'devices'}{p.empty > 0 && <b className={styles.warnText}> · {p.empty} to fill</b>}</span>
+                    <span>{p.prizes} {p.prizes === 1 ? 'prize' : 'prizes'}{p.prizes > 0 && ` · $${Math.round(p.prizeValue).toLocaleString('en-US')}`}</span>
+                  </span>
                 </button>
               </li>
             );

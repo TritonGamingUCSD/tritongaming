@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Check } from 'lucide-react';
+import { ArrowLeftRight, Check, PackageCheck, Pencil, Trash2 } from 'lucide-react';
 import { conditionLabel, UNUSABLE } from '@/lib/logistics/constants';
 import { rowKind, skippedSteps, stepAppliesTo, type Problem, type StepDef } from '@/lib/logistics/plans';
 import { interactive } from './interactive';
@@ -72,7 +72,6 @@ function DeviceLine({ line, ctx, backup, nested }: { line: Line; ctx: SheetCtx; 
   const flags = problems.filter((p) => p.row_id === r.id && p.why === 'conflict');
   const skip = line.rows.flatMap((x) => skippedSteps(x, ctx.steps, ctx.doneSet));
   const bad = dead || empty || skip.length > 0 || flags.some((p) => p.sev === 'bad');
-  const moveTo = (station_id: string | null) => (r.kind === 'club' ? api.act('/devices', 'PATCH', { device_ids: [r.id], station_id }) : r.kind === 'slot' ? api.act('/slots', 'PATCH', { slot_id: r.id, station_id }) : api.act('/borrowed', 'PATCH', { borrowed_id: r.id, station_id }));
   const loan = r.kind === 'sponsor' || r.kind === 'officer';
   const fromRequest = r.kind !== 'slot' && !!r.requestId;
   const empty0 = () => api.act('/slots', 'POST', { action: 'empty', ...(loan ? { borrowed_id: r.id } : { device_id: r.id }) });
@@ -111,24 +110,11 @@ function DeviceLine({ line, ctx, backup, nested }: { line: Line; ctx: SheetCtx; 
       </div>
       <Cells rows={line.rows} ctx={ctx} readOnly={backup} />
       <div className={styles.dTools}>
-        {manage && !backup && !line.counted && (
-          <select className={styles.miniSelect} aria-label={`Team for ${label(r)}`} value={r.station_id ?? ''} onChange={(e) => void moveTo(e.target.value || null)}>
-            <option value="">No team</option>{stations.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
-        )}
-        {((r.kind === 'club' && !ctx.day) || manage || (!closed && !backup && r.kind !== 'slot')) && (
-          <details className={`${styles.menu} ${styles.teamMenu} ${styles.lineMenu}`}>
-            <summary aria-label={`Actions for ${label(r)}`}>⋯</summary>
-            <div className={styles.menuList}>
-              {r.kind === 'club' && !ctx.day && <button type="button" onClick={() => ctx.onEditDevice(r)}>{canManage ? 'Edit Device' : 'Details'}</button>}
-              {missing.length > 0 && manage && r.kind !== 'slot' && <button type="button" disabled={ctx.busy} onClick={() => ctx.onInstalled([r])}>Mark Installed</button>}
-              {!closed && !backup && r.kind !== 'slot' && <button type="button" onClick={() => onSwap(r)}>Swap</button>}
-              {manage && (r.kind === 'sponsor' || r.kind === 'officer') && <button type="button" onClick={() => onBorrowed(r)}>Edit Borrowed Device</button>}
-              {manage && fromRequest && <button type="button" onClick={() => void empty0()}>Empty This Row</button>}
-              {manage && !fromRequest && r.kind !== 'slot' && <button type="button" className={styles.menuDanger} onClick={() => void takeOut()}>Remove From Plan</button>}
-            </div>
-          </details>
-        )}
+        {r.kind === 'club' && !ctx.day && <button type="button" className={styles.iconBtn} title={canManage ? 'Edit device' : 'Details'} aria-label={`${canManage ? 'Edit' : 'Details for'} ${label(r)}`} onClick={() => ctx.onEditDevice(r)}><Pencil size={15} aria-hidden="true" /></button>}
+        {manage && (r.kind === 'sponsor' || r.kind === 'officer') && <button type="button" className={styles.iconBtn} title="Edit borrowed device" aria-label={`Edit ${label(r)}`} onClick={() => onBorrowed(r)}><Pencil size={15} aria-hidden="true" /></button>}
+        {missing.length > 0 && manage && r.kind !== 'slot' && <button type="button" className={styles.iconBtn} disabled={ctx.busy} title="Mark installed" aria-label={`Mark ${label(r)} installed`} onClick={() => ctx.onInstalled([r])}><PackageCheck size={15} aria-hidden="true" /></button>}
+        {!closed && !backup && r.kind !== 'slot' && <button type="button" className={styles.iconBtn} title="Swap" aria-label={`Swap ${label(r)}`} onClick={() => onSwap(r)}><ArrowLeftRight size={15} aria-hidden="true" /></button>}
+        {manage && !fromRequest && r.kind !== 'slot' && <button type="button" className={styles.iconBtn} title="Remove from plan" aria-label={`Remove ${label(r)} from plan`} onClick={() => void takeOut()}><Trash2 size={15} aria-hidden="true" /></button>}
       </div>
     </div>
   );

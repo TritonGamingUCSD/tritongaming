@@ -7,6 +7,7 @@ import { ArrowDown, ArrowUp } from 'lucide-react';
 import { APPLIES_LABELS, type Applies } from '@/lib/logistics/plans';
 import { KIND_HINTS, KIND_LABELS, type OptionKind } from '@/lib/logistics/constants';
 import SponsorsTab from './SponsorsTab';
+import { NumberCell, PickCell } from './Cells';
 import type { ToolsSection } from './logisticsRoute';
 import type { Catalog, LogisticsApi, OptionItem } from './useLogistics';
 import styles from './logistics.module.css';
@@ -107,9 +108,7 @@ function StepRow({ o, kind, first, last, api }: { o: OptionItem; kind: 'step' | 
         <label className={styles.countedBox}><input type="checkbox" checked={!!o.gives} onChange={(e) => void api.changeOption(o.id, { gives: e.target.checked })} /> Gives the prize out</label>
         <label className={styles.countedBox}><input type="checkbox" checked={!!o.leftover} onChange={(e) => void api.changeOption(o.id, { leftover: e.target.checked })} /> Only what wasn’t given out</label>
       </> : <>
-      <select className={styles.miniSelect} aria-label={`${o.value} is for`} value={o.applies ?? 'all'} onChange={(e) => void api.changeOption(o.id, { applies: e.target.value })}>
-        {(Object.keys(APPLIES_LABELS) as Applies[]).map((a) => <option key={a} value={a}>{APPLIES_LABELS[a]}</option>)}
-      </select>
+      <PickCell value={APPLIES_LABELS[(o.applies ?? 'all') as Applies]} options={(Object.keys(APPLIES_LABELS) as Applies[]).map((a) => APPLIES_LABELS[a])} clearable={false} canEdit onSave={(v) => { const a = (Object.keys(APPLIES_LABELS) as Applies[]).find((k) => APPLIES_LABELS[k] === v); if (a) void api.changeOption(o.id, { applies: a }); }} />
       <label className={styles.countedBox}><input type="checkbox" checked={!!o.kit} onChange={(e) => void api.changeOption(o.id, { kit: e.target.checked })} /> Review parts</label>
       </>}
       <button type="button" className={styles.iconBtn} aria-label={`Delete ${o.value}`} onClick={() => void api.deleteOption(kind, o.id)}><X size={14} aria-hidden="true" /></button>
@@ -149,15 +148,13 @@ function BundleCard({ o, api, types }: { o: OptionItem; api: LogisticsApi; types
       <ul className={styles.bundleItems}>
         {list.map((it, i) => (
           <li key={i} className={styles.optRow}>
-            <input className={styles.kitQty} type="number" min={1} max={20} value={it.qty} aria-label={`How many ${it.type}`} onChange={(e) => save(list.map((x, j) => (j === i ? { ...x, qty: Math.min(20, Math.max(1, Math.round(Number(e.target.value)) || 1)) } : x)))} />
-            <select className={styles.miniSelect} aria-label="Device type" value={it.type} onChange={(e) => save(list.map((x, j) => (j === i ? { ...x, type: e.target.value } : x)))}>{types.map((t) => <option key={t} value={t}>{t}</option>)}</select>
+            <NumberCell value={it.qty} canEdit label={`How many ${it.type}`} onSave={(n) => save(list.map((x, j) => (j === i ? { ...x, qty: Math.min(20, Math.max(1, Math.round(n ?? 1) || 1)) } : x)))} />
+            <PickCell value={it.type} options={types} clearable={false} canEdit onSave={(v) => v && save(list.map((x, j) => (j === i ? { ...x, type: v } : x)))} />
             <button type="button" className={styles.iconBtn} aria-label={`Remove ${it.type}`} disabled={list.length <= 1} onClick={() => save(list.filter((_, j) => j !== i))}><X size={14} aria-hidden="true" /></button>
           </li>
         ))}
       </ul>
-      <select className={styles.miniSelect} aria-label={`Add to ${o.value}`} value="" onChange={(e) => { if (e.target.value) save([...list, { type: e.target.value, qty: 1 }]); }}>
-        <option value="">Add a device type…</option>{types.map((t) => <option key={t} value={t}>{t}</option>)}
-      </select>
+      <PickCell value={null} options={types} clearable={false} shown="Add a device type" canEdit onSave={(v) => v && save([...list, { type: v, qty: 1 }])} />
     </li>
   );
 }
