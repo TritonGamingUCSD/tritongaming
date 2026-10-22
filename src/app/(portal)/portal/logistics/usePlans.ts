@@ -144,6 +144,12 @@ export function usePlan(id: string, live: boolean) {
     await load();
     return { ok: true as const, replacement: r.data.replacement, station: r.data.station };
   }, [id, load]);
+  const unswap = useCallback(async (item: { id: string; kind: 'club' | 'sponsor' | 'officer' }): Promise<boolean> => {
+    const r = await call<{ ok: true }>(`/api/logistics/plans/${id}/swap`, 'DELETE', item.kind === 'club' ? { device_id: item.id } : { borrowed_id: item.id });
+    if (!r.ok) { setError(r.error); return false; }
+    await load();
+    return true;
+  }, [id, load]);
   const fill = useCallback(async (station_id: string | null, apply: boolean) => {
     const r = await call<{ preview: { slot_id: string; type: string; games: string[]; device: { id: string; tag: string | null; condition: string; games: string[] } | null }[] }>(`/api/logistics/plans/${id}/slots`, 'POST', { action: 'fill', station_id, apply });
     if (!r.ok) return { ok: false as const, error: r.error };
@@ -213,7 +219,7 @@ export function usePlan(id: string, live: boolean) {
     return { ok: true, delta };
   }, [id, load]);
 
-  return { detail, error, setError, reload: load, act, doStep, undoStep, swap, pick, fill, assign, setPrizeCount, setPrizeLine };
+  return { detail, error, setError, reload: load, act, doStep, undoStep, swap, unswap, pick, fill, assign, setPrizeCount, setPrizeLine };
 }
 export interface PickCell { type: string; games: string[]; counted: boolean; device: { id: string; tag: string | null; shelf: string | null; tier: string | null; condition: string } | null }
 export interface PickPreview { stations: PickCell[][]; short: number | { type: string; missing: number }[]; notTested: number; missingGames: number; empty: number }

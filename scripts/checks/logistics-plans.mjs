@@ -151,6 +151,11 @@ try {
   t.ok('the sponsor’s device is planned and the club device is the backup', d5.borrowed.find((x) => x.tag === 'ZZ-SP1').role === 'planned' && d5.items.find((i) => i.device_id === zB.id).role === 'backup');
   const swapC = await exec.call('POST', `/api/logistics/plans/${P1}/swap`, { borrowed_id: zLoan.id, replacement_tag: 'ZZ-B', reason: 'Laptop battery died' });
   t.ok('a borrowed device can be swapped out for a club one', swapC.s === 200 && (await officer.call('GET', `/api/logistics/plans/${P1}`)).j.borrowed.find((x) => x.tag === 'ZZ-LOAN').role === 'backup');
+  t.ok('an officer cannot undo a swap', (await officer.call('DELETE', `/api/logistics/plans/${P1}/swap`, { borrowed_id: zLoan.id })).s === 403);
+  const undone = await exec.call('DELETE', `/api/logistics/plans/${P1}/swap`, { borrowed_id: zLoan.id });
+  const d6 = (await exec.call('GET', `/api/logistics/plans/${P1}`)).j;
+  t.ok('undoing a swap puts the loaner back in its row and releases the replacement', undone.s === 200 && d6.borrowed.find((x) => x.tag === 'ZZ-LOAN').role === 'planned' && !d6.items.some((i) => i.device_id === zB.id && i.role === 'planned'), JSON.stringify(undone));
+  await exec.call('POST', `/api/logistics/plans/${P1}/swap`, { borrowed_id: zLoan.id, replacement_tag: 'ZZ-B', reason: 'Laptop battery died' });   // as it was for the rest of the check
 
 
   // ---- teams (stations) carry a contact, a room and Confirmed; rows can be empty slots; counted things are rows with no device

@@ -115,7 +115,8 @@ function DeviceLine({ line, ctx, backup, nested }: { line: Line; ctx: SheetCtx; 
         {r.kind === 'club' && !ctx.day && <button type="button" className={styles.iconBtn} title={canManage ? 'Edit device' : 'Details'} aria-label={`${canManage ? 'Edit' : 'Details for'} ${label(r)}`} onClick={() => ctx.onEditDevice(r)}><Pencil size={15} aria-hidden="true" /></button>}
         {manage && (r.kind === 'sponsor' || r.kind === 'officer') && <button type="button" className={styles.iconBtn} title="Edit borrowed device" aria-label={`Edit ${label(r)}`} onClick={() => onBorrowed(r)}><Pencil size={15} aria-hidden="true" /></button>}
         {ctx.manager && !closed && !backup && r.kind !== 'slot' && <button type="button" className={styles.iconBtn} title="Swap" aria-label={`Swap ${label(r)}`} onClick={() => onSwap(r)}><ArrowLeftRight size={15} aria-hidden="true" /></button>}
-        {manage && !fromRequest && r.kind !== 'slot' && <button type="button" className={styles.iconBtn} title="Remove from plan" aria-label={`Remove ${label(r)} from plan`} onClick={() => void takeOut()}><Trash2 size={15} aria-hidden="true" /></button>}
+        {manage && backup && r.swap_reason && r.kind !== 'slot' && <button type="button" className={styles.miniTextBtn} title="Put it back in the row it left; the replacement is released" onClick={() => void api.unswap({ id: r.id, kind: r.kind as 'club' | 'sponsor' | 'officer' })}>Undo Swap</button>}
+        {manage && !fromRequest && !(backup && r.swap_reason) && r.kind !== 'slot' && <button type="button" className={styles.iconBtn} title="Remove from plan" aria-label={`Remove ${label(r)} from plan`} onClick={() => void takeOut()}><Trash2 size={15} aria-hidden="true" /></button>}
       </div>
     </div>
   );

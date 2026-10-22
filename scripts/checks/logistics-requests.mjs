@@ -8,6 +8,7 @@ const { user, made, cleanup } = accounts('logireq');
 const told = async (id, type) => (await svc.from('notifications').select('title, body, href').eq('user_id', id).eq('type', type)).data ?? [];
 try {
   const exec = await user('exec', ['exec']);
+  const admin = await user('admin', ['admin']);   // admins are told about requests; an exec only is not
   const lead = await user('lead', ['lead']);
   const other = await user('other', ['officer']);
   const student = await user('student', ['ucsd']);
@@ -42,7 +43,8 @@ try {
   t.ok('logistics can write a request for someone else', e.s === 201 && e.j.request.requester_id === other.id);
   const E = e.j.request.id;
 
-  const newOnes = await told(exec.id, 'logistics_request');
+  const newOnes = await told(admin.id, 'logistics_request');
+  t.ok('an exec who was not granted the permission is not told', (await told(exec.id, 'logistics_request')).length === 0);
   t.ok('the logistics team is told about a new request, with a link', newOnes.length >= 2 && newOnes.some((n) => n.href === `/portal/logistics/${P.slug}/requests-devices` && /device request/.test(n.title)), JSON.stringify(newOnes));
   t.ok('the person who made it is not told about their own', (await told(lead.id, 'logistics_request')).length === 0);
 

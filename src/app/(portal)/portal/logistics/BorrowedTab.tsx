@@ -64,7 +64,9 @@ export default function BorrowedTab({ plan, catalog, data, kind }: { plan: PlanA
                 <span data-label="Status">{b.role === 'backup' ? <span className={styles.dim}>{b.swap_reason ? `Swapped out: ${b.swap_reason}` : 'Backup'}</span> : back ? (returned ? <span className={`${styles.statusChip} ${styles.chipOk}`}>Returned</span> : <span className={`${styles.statusChip} ${styles.chipWarn}`}>Not returned</span>) : '–'}</span>
                 <span className={styles.prizeTools}>
                   {manage && <button type="button" className={styles.linkBtn} onClick={() => setDialog(b)}>Details</button>}
-                  {manage && <button type="button" className={styles.iconBtn} title="Remove" onClick={() => void remove(b)} aria-label={`Remove ${b.tag}`}><Trash2 size={15} aria-hidden="true" /></button>}
+                  {manage && (b.role === 'backup' && b.swap_reason
+                    ? <button type="button" className={styles.miniTextBtn} title="Put it back in the row it left; the replacement is released" onClick={() => void plan.unswap({ id: b.id, kind: b.owner_kind })}>Undo Swap</button>
+                    : <button type="button" className={styles.iconBtn} title="Remove" onClick={() => void remove(b)} aria-label={`Remove ${b.tag}`}><Trash2 size={15} aria-hidden="true" /></button>)}
                 </span>
               </div>
             );

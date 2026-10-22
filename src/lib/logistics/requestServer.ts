@@ -2,10 +2,10 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 export const REQUEST_COLUMNS = 'id, plan_id, kind, requester_id, division_id, team, contact, items, notes, status, planned_by, planned_at, created_at, updated_at';
 
-// Everyone who can change Logistics: the exec and admin roles, and anyone given the Logistics permission directly or through a saved group. They are told about new requests.
+// Who is told about new and changed requests: admins, and anyone given the Logistics permission directly or through a saved group (the exec role alone does not count).
 export async function logisticsTeamIds(svc: SupabaseClient): Promise<string[]> {
   const [{ data: roles }, { data: grants }] = await Promise.all([
-    svc.from('user_roles').select('user_id').in('role', ['exec', 'admin']),
+    svc.from('user_roles').select('user_id').eq('role', 'admin'),
     svc.from('capability_grants').select('user_id, group_id').eq('capability', 'manage_logistics'),
   ]);
   const ids = new Set<string>([...(roles ?? []).map((r) => r.user_id as string), ...(grants ?? []).map((g) => g.user_id as string | null).filter((x): x is string => !!x)]);
