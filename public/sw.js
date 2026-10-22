@@ -25,7 +25,13 @@ self.addEventListener('notificationclick', (event) => {
     const u = new URL((event.notification.data && event.notification.data.url) || '/portal', self.location.origin);
     if (u.origin === self.location.origin) target = u;
   } catch (e) { /* keep the default */ }
-  event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+  // The bell's entries for this page are marked read first (never for long: a slow connection must not hold the page back), so the count is right when the portal opens.
+  const raw = (event.notification.data && event.notification.data.url) || '/portal';
+  const marked = Promise.race([
+    fetch('/api/notifications/read-href', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ href: raw }) }).catch(() => undefined),
+    new Promise((resolve) => setTimeout(resolve, 1500)),
+  ]);
+  event.waitUntil(marked.then(() => self.clients.matchAll({ type: 'window', includeUncontrolled: true })).then((list) => {
     for (const c of list) {
       if (c.url.startsWith(self.location.origin) && 'focus' in c) {
         return c.focus().then((f) => (f && 'navigate' in f ? f.navigate(target.href) : f));

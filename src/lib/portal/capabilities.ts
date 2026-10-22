@@ -87,7 +87,9 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // Logistics (equipment, prizes, requests, event plans): every recruit, officer and above can look at everything; only people who manage it can change anything.
   // manage_logistics is exec and admin by default and can be handed to a person or group (Admin → Access). Submitting a request and the event-day steps are open to
   // every officer (checked by their own routes). Deliberately separate from check-in. UI/API gating only (the routes use the service role).
-  view_logistics: ['recruit', 'officer', 'division', 'lead', 'exec', 'admin'],
+  view_logistics: ['recruit', 'officer', 'lead', 'exec', 'admin'],
+  // A division account sees only the Requests pages (its division's requests, and submitting new ones): nothing else in Logistics.
+  request_logistics: ['recruit', 'officer', 'division', 'lead', 'exec', 'admin'],
   manage_logistics: ['exec', 'admin'],
 };
 

@@ -103,7 +103,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const canManageStrikes = hasCapability(roles, 'manage_strikes');
   const canManageQuarters = hasCapability(roles, 'manage_quarters');
   const canManageLogistics = hasCapability(roles, 'manage_logistics');
-  const canViewLogistics = canManageLogistics || hasCapability(roles, 'view_logistics');
+  const canViewLogistics = canManageLogistics || hasCapability(roles, 'view_logistics') || hasCapability(roles, 'request_logistics');
   const canHostMeetings = hasCapability(roles, 'host_meetings');         // leads too: plan meetings, manage their own
   // Best-effort: if this lookup fails the bar just doesn't get the meeting boost.
   const meetingNow = canAttendMeetings ? await meetingHappeningNow(createServiceClient(), { id: profile.id, roles }).catch(() => false) : false;

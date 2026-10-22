@@ -38,6 +38,7 @@ export default function LogisticsSectionContent({ canManage }: { canManage: bool
     if (urlTab && (urlTab !== want.tab || (urlSub ?? null) !== want.subtab || (urlDetail ?? null) !== want.detail)) setParams({ section: 'logistics', ...want });
   }, [urlTab, urlSub, urlDetail, urlView, canManage, setParams]);
 
+  const requestOnly = !!data?.requestOnly;   // a division account: only an event's Requests pages
   const tabs = [
     { id: 'events' as const, label: 'Events', icon: <CalendarDays size={15} /> },
     { id: 'inventory' as const, label: 'Inventory', icon: <Package size={15} /> },
@@ -46,13 +47,14 @@ export default function LogisticsSectionContent({ canManage }: { canManage: bool
   const pick = (t: Tab) => go(t === 'events' ? { tab: 'events', plan: null, page: 'device' } : t === 'inventory' ? { tab: 'inventory', sub: 'devices' } : { tab: 'tools', sub: 'sponsors' });
   // With an event open the sheet gets the whole page: the title and tabs step aside (All Events goes back).
   const inPlan = route.tab === 'events' && !!route.plan;
+  useEffect(() => { if (requestOnly && route.tab !== 'events') go({ tab: 'events', plan: null, page: 'requests' }); }, [requestOnly, route.tab, go]);
 
   return (
     <div className={styles.page}>
       {!inPlan && <SectionHeader title="Event Logistics" flush sub={canManage ? 'Where every device and prize goes for each event, and what is in storage.' : 'Find where a device goes, what is in storage, and where to get it. Only the logistics team can make changes.'} />}
-      {!inPlan && <SectionTabs<Tab> label="Event Logistics" value={route.tab} onChange={pick} tabs={tabs} />}
+      {!inPlan && !requestOnly && <SectionTabs<Tab> label="Event Logistics" value={route.tab} onChange={pick} tabs={tabs} />}
       {error && <div role="alert" onClick={() => setError('')}><Notice tone="error">{error}</Notice></div>}
-      {!data ? (error ? null : <Loading variant="inline" label="Loading…" />) : route.tab === 'events' ? <PlansTab api={api} data={data} route={route} go={go} />
+      {!data ? (error ? null : <Loading variant="inline" label="Loading…" />) : route.tab === 'events' || requestOnly ? <PlansTab api={api} data={data} route={route.tab === 'events' ? route : { tab: 'events', plan: null, page: 'requests' }} go={go} />
         : route.tab === 'inventory' ? (
           <>
             <SectionTabs<'devices' | 'prizes'> variant="segmented" label="Inventory" value={route.sub} onChange={(sub) => go({ tab: 'inventory', sub })} tabs={[{ id: 'devices', label: 'Devices', count: data.devices.length }, { id: 'prizes', label: 'Prizes' }]} />

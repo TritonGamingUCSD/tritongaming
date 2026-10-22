@@ -70,9 +70,12 @@ describe('what a type usually comes with', () => {
 });
 
 describe('who can use Logistics', () => {
-  const can = (role: AppRole, cap: 'view_logistics' | 'manage_logistics') => hasCapability([{ role, division_id: null }], cap);
+  const can = (role: AppRole, cap: 'view_logistics' | 'manage_logistics' | 'request_logistics') => hasCapability([{ role, division_id: null }], cap);
   it('lets every officer and above look, but only exec and admin change by default', () => {
-    for (const r of ['recruit', 'officer', 'division', 'lead', 'exec', 'admin'] as AppRole[]) expect(can(r, 'view_logistics')).toBe(true);
+    for (const r of ['recruit', 'officer', 'lead', 'exec', 'admin'] as AppRole[]) expect(can(r, 'view_logistics')).toBe(true);
+    expect(can('division', 'view_logistics')).toBe(false);   // a division account sees only the Requests pages
+    for (const r of ['recruit', 'officer', 'division', 'lead', 'exec', 'admin'] as AppRole[]) expect(can(r, 'request_logistics')).toBe(true);
+    for (const r of ['ucsd', 'alumni'] as AppRole[]) expect(can(r, 'request_logistics')).toBe(false);
     for (const r of ['ucsd', 'alumni'] as AppRole[]) expect(can(r, 'view_logistics')).toBe(false);
     for (const r of ['exec', 'admin'] as AppRole[]) expect(can(r, 'manage_logistics')).toBe(true);
     for (const r of ['officer', 'division', 'lead', 'recruit', 'alumni', 'ucsd'] as AppRole[]) expect(can(r, 'manage_logistics')).toBe(false);

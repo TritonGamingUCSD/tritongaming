@@ -11,6 +11,9 @@ try {
   const lead = await user('lead', ['lead']);
   const other = await user('other', ['officer']);
   const student = await user('student', ['ucsd']);
+  const division = await user('division', []);   // a division account is tied to a division (an existing one is used; the role goes away with the account)
+  const divId = (await svc.from('divisions').select('id').limit(1)).data?.[0]?.id;
+  await svc.from('user_roles').insert({ user_id: division.id, role: 'division', division_id: divId });
   const P = (await exec.call('POST', '/api/logistics/plans', { name: 'ZZ Request Night', starts_on: day(0), ends_on: day(1) })).j.plan;
   const URL_ = `/api/logistics/plans/${P.id}/requests`;
   const b0 = (await exec.call('GET', '/api/logistics')).j.lists.bundle[0];
@@ -26,6 +29,12 @@ try {
   const a = await lead.call('POST', URL_, { kind: 'devices', team: 'ZZ Valorant', items: [{ what: bundle.toLowerCase(), qty: 4, games: ['Valorant'] }], notes: 'Need by 9am' });
   t.ok('a lead asks for devices (a bundle written in any capitals)', a.s === 201 && a.j.request.items[0].what === bundle && a.j.request.status === 'submitted', JSON.stringify(a.j));
   const A = a.j.request.id;
+  // A division account sees only the Requests pages: the request form's lists, the event itself, requests; nothing else.
+  const dc = (await division.call('GET', '/api/logistics')).j;
+  t.ok('a division account gets only what the request form needs', dc.requestOnly === true && dc.devices.length === 0 && dc.sponsors.length === 0 && dc.lists.bundle.length > 0);
+  t.ok('a division account gets the event but none of its devices', (await division.call('GET', `/api/logistics/plans/${P.id}`)).j.requestOnly === true);
+  t.ok('a division account cannot open prizes, sponsors, steps or the plan lists of devices', (await division.call('GET', '/api/logistics/prizes')).s === 403 && (await division.call('GET', `/api/logistics/plans/${P.id}/version`)).s === 403 && (await division.call('POST', `/api/logistics/plans/${P.id}/steps`, { tag: 'X', step_id: '00000000-0000-0000-0000-000000000000' })).s === 403);
+  t.ok('a division account can send a request', (await division.call('POST', URL_, { kind: 'prizes', items: [{ qty: 1, value: 5 }] })).s === 201);
   const b = await lead.call('POST', URL_, { kind: 'prizes', items: [{ qty: 10, value: 24.999 }, { qty: 3, value: 100 }] });
   t.ok('a lead asks for prizes by count and value, rounded to cents', b.s === 201 && b.j.request.items[0].value === 25);
   const B = b.j.request.id;
@@ -40,7 +49,7 @@ try {
   const mine = (await lead.call('GET', URL_)).j;
   t.ok('a lead sees only their own requests', mine.requests.length === 2 && mine.requests.every((r) => r.requester_id === lead.id) && mine.canManage === false);
   t.ok('another officer sees only theirs (the one logistics wrote)', (await other.call('GET', URL_)).j.requests.map((r) => r.id).join() === E);
-  t.ok('logistics sees all of them, with names', (await exec.call('GET', URL_)).j.requests.length === 3 && (await exec.call('GET', URL_)).j.requests.every((r) => r.requester.startsWith('ZZ')));
+  t.ok('logistics sees all of them, with names', (await exec.call('GET', URL_)).j.requests.length === 4 && (await exec.call('GET', URL_)).j.requests.every((r) => r.requester.startsWith('ZZ')));
 
   t.ok('someone else cannot change a request', (await other.call('PATCH', URL_, { request_id: A, notes: 'x' })).s === 403);
   t.ok('someone else cannot take it back', (await other.call('DELETE', URL_, { request_id: A })).s === 403);

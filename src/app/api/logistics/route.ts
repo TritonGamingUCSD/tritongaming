@@ -11,8 +11,15 @@ const DEVICE_COLUMNS = 'id, tag, name, type, shelf, tier, place_note, condition,
 // Everything the Logistics screen needs in ONE request (the catalog, the dropdown lists, the sponsors, and the names of loaner owners), so opening the section costs a single
 // function call and four small reads. After this the screen applies each edit's reply itself instead of reloading.
 export async function GET() {
-  const auth = await authorizeLogistics('view');
+  const auth = await authorizeLogistics('request');
   if (auth.error) return auth.error;
+  // A division account only needs what the request form offers: the setups, the device types and the games. No devices, sponsors or anything else.
+  if (!auth.canView) {
+    const { data: opts } = await auth.svc.from('logistics_options').select('id, kind, value, sort, meta').in('kind', ['bundle', 'type', 'game']).order('sort').order('value').limit(2000);
+    const lists = Object.fromEntries(OPTION_KINDS.map((k) => [k, [] as { id: string; value: string; counted?: boolean; items?: unknown }[]]));
+    for (const o of opts ?? []) { const m = (o.meta ?? {}) as { counted?: boolean; items?: unknown }; lists[o.kind as string]?.push({ id: o.id as string, value: o.value as string, ...(o.kind === 'type' ? { counted: !!m.counted } : {}), ...(o.kind === 'bundle' ? { items: m.items } : {}) }); }
+    return NextResponse.json({ canManage: false, requestOnly: true, lists, portalGames: GAME_OPTIONS, devices: [], sponsors: [], todayPlans: [] });
+  }
   const [devices, options, sponsors, today] = await Promise.all([
     auth.svc.from('logistics_devices').select(DEVICE_COLUMNS).order('tag_key', { nullsFirst: false }).limit(5000),
     auth.svc.from('logistics_options').select('id, kind, value, sort, meta').order('sort').order('value').limit(2000),

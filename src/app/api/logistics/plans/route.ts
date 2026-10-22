@@ -9,10 +9,11 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 // The plans (newest first, with how many devices each has), and with ?events=1 the upcoming portal events to attach a plan to (read only; fetched only when the picker opens).
 export async function GET(request: Request) {
-  const auth = await authorizeLogistics('view');
+  const auth = await authorizeLogistics('request');
   if (auth.error) return auth.error;
   const params = new URL(request.url).searchParams;
   if (params.get('events')) {
+    if (!auth.canView) return NextResponse.json({ error: 'Event Logistics is for recruits, officers and above.' }, { status: 403 });
     const today = pacificToday();
     const past = params.get('past') === '1';
     let q = auth.svc.from('events').select('id, title, start_date, end_date').order('start_date', { ascending: !past }).limit(60);
@@ -21,6 +22,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ events: (data ?? []).map((e) => ({ id: e.id as string, title: e.title as string, starts_on: dayOf(e.start_date as string), ends_on: dayOf((e.end_date as string | null) ?? (e.start_date as string)) })) });
   }
   const { data: plans } = await auth.svc.from('logistics_plans').select(PLAN_COLUMNS).order('starts_on', { ascending: false }).limit(200);
+  // A division account only needs to find the event to send a request to: no counts, nothing about devices or prizes.
+  if (!auth.canView) return NextResponse.json({ plans: (plans ?? []).map((p) => ({ ...p, devices: 0, empty: 0, teams: 0, requests: 0, newRequests: 0, prizes: 0, prizeValue: 0 })), today: pacificToday() });
   const ids = (plans ?? []).map((p) => p.id as string);
   const counts = new Map<string, number>();   // device rows in all
   const empty = new Map<string, number>();    // of them, still waiting for a device

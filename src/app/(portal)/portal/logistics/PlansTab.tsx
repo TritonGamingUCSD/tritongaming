@@ -32,7 +32,7 @@ export default function PlansTab({ api, data, route, go }: { api: LogisticsApi; 
   const list = usePlanList();
   const ref = route.plan;
   const plan = ref && list.plans ? list.plans.find((p) => p.slug === ref || p.id === ref) ?? null : null;
-  const open = (p: { slug: string } | null) => { go({ tab: 'events', plan: p?.slug ?? null, page: 'device' }); if (!p) void list.reload(); };
+  const open = (p: { slug: string } | null) => { go({ tab: 'events', plan: p?.slug ?? null, page: data.requestOnly ? 'requests' : 'device' }); if (!p) void list.reload(); };
   useEffect(() => { if (plan && urlTab !== plan.slug) setParams({ section: 'logistics', ...routeParams({ tab: 'events', plan: plan.slug, page: route.page, ...(route.day ? { day: true } : {}) }) }); }, [plan, urlTab, route.page, route.day, setParams]);
   if (ref) {
     if (!list.plans) return <div className={styles.tab}>{list.error ? <Notice tone="error">{list.error}</Notice> : <Loading variant="inline" label="Loading…" />}</div>;
@@ -75,12 +75,14 @@ function PlanList({ data, list, onOpen }: { data: Catalog; list: ReturnType<type
                     {!p.event_id && <span className={`${styles.badge} ${styles.neutral}`}>Logistics only</span>}
                   </span>
                   <span className={styles.eventMeta}>{range(p.starts_on, p.ends_on)}</span>
+                  {!data.requestOnly && (
                   <span className={styles.eventStats}>
                     <span>{p.teams} {p.teams === 1 ? 'team' : 'teams'}</span>
                     <span>{p.requests} {p.requests === 1 ? 'request' : 'requests'}{p.newRequests > 0 && <b className={styles.warnText}> · {p.newRequests} new</b>}</span>
                     <span>{p.devices} {p.devices === 1 ? 'device' : 'devices'}{p.empty > 0 && <b className={styles.warnText}> · {p.empty} to fill</b>}</span>
                     <span>{p.prizes} {p.prizes === 1 ? 'prize' : 'prizes'}{p.prizes > 0 && ` · $${Math.round(p.prizeValue).toLocaleString('en-US')}`}</span>
                   </span>
+                  )}
                 </button>
                 {data.canManage && (
                   <details className={`${styles.menu} ${styles.eventMenu}`}>

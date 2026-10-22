@@ -648,7 +648,7 @@
 .eventToday { box-shadow: inset 4px 0 0 var(--pp-ok); }
 .eventRow { display: grid; grid-template-columns: minmax(0, 1fr) auto 11rem minmax(0, 34rem); align-items: center; column-gap: 1rem; width: 100%; padding: 0.7rem 1rem; background: none; border: none; text-align: left; color: var(--pp-ink); font: inherit; cursor: pointer; }
 .eventRow:hover { background: rgba(var(--pp-ink-rgb), 0.05); }
-.eventName { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.02rem; overflow-wrap: anywhere; }
+.eventName { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.02rem; overflow-wrap: break-word; min-width: 0; }
 .eventTags { display: inline-flex; gap: 0.3rem; flex-wrap: wrap; }
 .eventStats { display: grid; grid-template-columns: 4.5rem 8.5rem 9.5rem 1fr; column-gap: 0.75rem; font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.8); }
 .eventMeta { font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.8); }
@@ -726,7 +726,6 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
   .dayRow { grid-template-columns: minmax(15rem, 2.4fr) minmax(8rem, 1fr) minmax(calc(var(--n) * 3.9rem), calc(var(--n) * 5.5rem)) 7.5rem; }
   .noSteps .dayRow { grid-template-columns: minmax(11rem, 1.3fr) minmax(10rem, 1.7fr) 4.5rem; }
   .reqRow { align-items: center; }
-  .eventRow { grid-template-columns: minmax(0, 1fr) 9rem 11rem minmax(0, 34rem); }
   .reqLine { grid-template-columns: minmax(9rem, 1.2fr) 6rem minmax(10rem, 2fr) 2.5rem; }
 }
 
@@ -867,3 +866,17 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 .previewDevice { flex: none; transform-origin: top center; border-radius: 10px; border: 2px solid var(--pp-ink); background: var(--pp-card); overflow: hidden; box-shadow: 0 10px 30px color-mix(in srgb, var(--pp-ink) 25%, transparent); }
 .previewPhone { border-radius: 34px; border-width: 8px; }
 .previewFrame { display: block; border: none; width: 100%; height: 100%; background: var(--pp-paper); }
+
+/* The events list lays itself out by its own width (the sidebar changes how much room a laptop window really gives it), not by the window: a name is never squeezed into a sliver.
+   Narrow: name and tags on the first row, dates and the counts under it. Wide: everything on one row. */
+.eventList { container-type: inline-size; container-name: events; }
+.eventRow { grid-template-columns: minmax(0, 1fr) auto; row-gap: 0.15rem; }
+.eventRow .eventTags { grid-column: 2; grid-row: 1; justify-self: end; }
+.eventRow .eventMeta, .eventRow .eventStats { grid-column: 1 / -1; }
+.eventRow .eventStats { grid-template-columns: repeat(auto-fit, minmax(7.5rem, max-content)); column-gap: 1.2rem; row-gap: 0.1rem; }
+@container events (min-width: 62rem) {
+  .eventRow { grid-template-columns: minmax(14rem, 1fr) auto 9rem minmax(0, 32rem); row-gap: 0; }
+  .eventRow .eventTags { grid-column: auto; grid-row: auto; justify-self: start; }
+  .eventRow .eventMeta, .eventRow .eventStats { grid-column: auto; }
+  .eventRow .eventStats { grid-template-columns: 4.5rem 8.5rem 9.5rem 1fr; }
+}

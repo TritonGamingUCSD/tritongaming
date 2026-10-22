@@ -52,6 +52,7 @@ export type Capability =
   | 'manage_help'
   | 'manage_strikes'
   | 'view_logistics'
+  | 'request_logistics'
   | 'manage_logistics'
   | 'manage_quarters'
   | 'view_attendance_reports'

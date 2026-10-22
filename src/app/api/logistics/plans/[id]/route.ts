@@ -13,12 +13,14 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/;
 // A whole plan in one go: its stations, its devices (with their details), the steps and which are done, and the things to look at. The event-day screen applies each tap itself
 // and only asks for this again when another phone has changed something (see /version).
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await authorizeLogistics('view');
+  const auth = await authorizeLogistics('request');
   if (auth.error) return auth.error;
   const { id } = await params;
   if (!UUID.test(id)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
   const { data: plan } = await auth.svc.from('logistics_plans').select(PLAN_COLUMNS).eq('id', id).maybeSingle();
   if (!plan) return NextResponse.json({ error: 'That plan is gone.' }, { status: 404 });
+  // A division account gets only the plan itself (for the Requests page), none of its devices, teams or prizes.
+  if (!auth.canView) return NextResponse.json({ plan, canManage: false, requestOnly: true, stations: [], steps: [], prizes: { pools: [], lines: [], done: [], steps: [] }, items: [], slots: [], borrowed: [], extras: [], done: [], conflicts: [] });
   const prizeData = loadPlanPrizes(auth.svc, id);
   const [stations, rows, steps, done, borrowedRows, slotRows] = await Promise.all([
     auth.svc.from('logistics_stations').select('id, name, sort, contact, room').eq('plan_id', id).order('sort').order('name').limit(500),

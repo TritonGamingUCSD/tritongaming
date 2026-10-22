@@ -28,14 +28,17 @@ async function divisionOk(svc: SupabaseClient, v: unknown): Promise<string | nul
 }
 const href = (slug: string, kind: string) => `/portal/logistics/${slug}/requests-${kind === 'prizes' ? 'prizing' : 'devices'}`;
 
-// The requests for one event. The logistics team sees all of them; everyone else sees only their own. Also the divisions to pick from.
+// The requests for one event. The logistics team sees all of them; a division account sees its division's and its own; everyone else sees only their own. Also the divisions to pick from.
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await authorizeLogistics('view');
+  const auth = await authorizeLogistics('request');
   if (auth.error) return auth.error;
   const { id } = await params;
   if (!UUID.test(id)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
   let q = auth.svc.from('logistics_requests').select(REQUEST_COLUMNS).eq('plan_id', id).order('created_at', { ascending: false }).limit(500);
-  if (!auth.canManage) q = q.eq('requester_id', auth.user.id);
+  if (!auth.canManage) {
+    const mine = (auth.roles ?? []).filter((r) => r.role === 'division' && r.division_id).map((r) => r.division_id as string);
+    q = !auth.canView && mine.length ? q.or(`requester_id.eq.${auth.user.id},division_id.in.(${mine.join(',')})`) : q.eq('requester_id', auth.user.id);
+  }
   const [{ data }, { data: divisions }, { data: mine }] = await Promise.all([q, auth.svc.from('divisions').select('id, name').order('name').limit(100), auth.svc.from('user_roles').select('division_id').eq('user_id', auth.user.id)]);
   const rows = (data ?? []) as unknown as Row[];
   const who = await names(auth.svc, [...new Set(rows.flatMap((r) => [r.requester_id, r.planned_by].filter((x): x is string => !!x)))]);
@@ -71,7 +74,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
 // Ask for devices or prizes. The logistics team can also write one for somebody else (requester_id). The logistics team is told.
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await authorizeLogistics('view');
+  const auth = await authorizeLogistics('request');
   if (auth.error) return auth.error;
   const { id } = await params;
   const b = await request.json().catch(() => ({}));

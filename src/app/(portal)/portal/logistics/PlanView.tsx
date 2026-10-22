@@ -350,6 +350,19 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
   }
 
 
+  if (data.requestOnly) {
+    // A division account: just the Requests pages of the event, devices or prizing.
+    return (
+      <div className={styles.dayPage}>
+        <div className={styles.dayBar}>
+          <button type="button" className={styles.back} onClick={onBack} aria-label="All events"><ArrowLeft size={15} aria-hidden="true" /> <span className={styles.backText}>All Events</span></button>
+          <div className={styles.dayHeading}><b className={styles.dayTitle}>{p.name}</b><span className={styles.muted}>{range(p.starts_on, p.ends_on)}</span></div>
+        </div>
+        <SectionTabs<'devices' | 'prizing'> variant="segmented" label="Devices or prizing" value={page === 'requests-prizing' ? 'prizing' : 'devices'} onChange={(g) => onPage(g === 'prizing' ? 'requests-prizing' : 'requests')} tabs={[{ id: 'devices', label: 'Devices' }, { id: 'prizing', label: 'Prizing' }]} />
+        <RequestsTab key={page === 'requests-prizing' ? 'p' : 'd'} kind={page === 'requests-prizing' ? 'prizes' : 'devices'} plan={plan} api={catalog} data={data} />
+      </div>
+    );
+  }
   if (preview && data.isAdmin && !inFrame) {
     return (
       <div className={styles.dayPage}>
