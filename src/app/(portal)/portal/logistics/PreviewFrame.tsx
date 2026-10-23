@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Laptop, Smartphone, X } from 'lucide-react';
+import { SIMULATE_KEY } from '../LogisticsDayCard';
 import styles from './logistics.module.css';
 
 export type Preview = 'phone' | 'laptop' | null;
@@ -24,6 +25,14 @@ export function PreviewSwitch({ value, onChange }: { value: Preview; onChange: (
       <button type="button" aria-pressed={value === 'laptop'} onClick={() => onChange('laptop')} title="Show the laptop screen"><Laptop size={14} aria-hidden="true" /> Laptop</button>
     </span>
   );
+}
+
+// Admin only: make the Dashboard show this event as if it were on today (its Event Day card), on this browser only, to see and test it.
+export function SimulateSwitch({ slug }: { slug: string }) {
+  const [on, setOn] = useState(false);
+  useEffect(() => { try { setOn(localStorage.getItem(SIMULATE_KEY) === slug); } catch { /* storage blocked */ } }, [slug]);
+  const flip = () => { const next = !on; setOn(next); try { if (next) localStorage.setItem(SIMULATE_KEY, slug); else localStorage.removeItem(SIMULATE_KEY); } catch { /* storage blocked */ } };
+  return <button type="button" className={styles.linkBtn} aria-pressed={on} onClick={flip} title="Make the Dashboard show this event as if it were on today (on this browser only)">{on ? 'Simulating Event Day' : 'Simulate Event Day'}</button>;
 }
 
 export default function PreviewFrame({ mode }: { mode: 'phone' | 'laptop' }) {

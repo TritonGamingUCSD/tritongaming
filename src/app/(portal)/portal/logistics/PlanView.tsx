@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Camera, RefreshCw } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import PreviewFrame, { PreviewSwitch, type Preview } from './PreviewFrame';
+import PreviewFrame, { PreviewSwitch, SimulateSwitch, type Preview } from './PreviewFrame';
 import { registerScanHandler } from '@/lib/portal/scanHandlers';
 const UniversalScanner = dynamic(() => import('@/components/portal/UniversalScanner'), { ssr: false });   // the camera is only loaded when it is opened
 import Button from '@/components/ui/Button';
@@ -385,7 +385,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
             <b className={styles.dayTitle}>{p.name}{closed && <span className={`${styles.badge} ${styles.neutral}`}>Closed</span>}</b>
             <span className={styles.muted}>{range(p.starts_on, p.ends_on)}{p.event_id ? ' · portal event' : ' · Event logistics only'}{p.notes ? ` · ${p.notes}` : ''}</span>
           </div>
-          {data.isAdmin && !inFrame && <PreviewSwitch value={preview} onChange={setPreview} />}
+          {data.isAdmin && !inFrame && <><SimulateSwitch slug={p.slug} /><PreviewSwitch value={preview} onChange={setPreview} /></>}
           {page === 'device' && day && <span className={styles.dayTotal} title="Steps done"><span className={styles.bar}><i style={{ width: `${pct}%` }} /></span>{allDone}/{allTotal}</span>}
         </div>
         {[...free].map(([type, tags]) => <datalist key={type} id={listId(type)}>{tags.sort(natural).map((t) => <option key={t} value={t} />)}</datalist>)}

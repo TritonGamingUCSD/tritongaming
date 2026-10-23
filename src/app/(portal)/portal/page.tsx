@@ -477,7 +477,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
         <PortalTopSection
           plain={!isTgMember(roles)}
           welcome={<DashboardWelcome eyebrow={homeEyebrow} name={profile.display_name?.split(' ')[0] || 'Triton'} showSearch={isTgMember(roles)} />}
-          body={<DashboardBody event={homeEvent} note={homeNote} links={homeLinks} upcoming={homeUpcoming} showRoleAsk={!isTeamMember} compact={!isTgMember(roles)} />}
+          body={<DashboardBody event={homeEvent} note={homeNote} links={homeLinks} upcoming={homeUpcoming} showRoleAsk={!isTeamMember} compact={!isTgMember(roles)} logistics={hasCapability(roles, 'view_logistics') || canManageLogistics ? { admin: roles.some((r) => r.role === 'admin') } : null} />}
           desktop={{ greeting: greetingLine, tiles: tilesNode, viewAs: viewAsNode, banners: frameBanners }}
           top={
             <>

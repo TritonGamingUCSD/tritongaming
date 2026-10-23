@@ -75,3 +75,15 @@
 
 /* No pinned note: the ticket takes the whole row instead of leaving the note's column empty. */
 .top:not(:has(.note)) { grid-template-columns: minmax(0, 1fr); }
+
+/* The Event Day card at the top of the dashboard while an event is on (Logistics): name, progress bar, counts, and the buttons into Event Day. */
+.dayCard { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.9rem 1rem; border-radius: 12px; border: 2px solid var(--pp-ink, #011941); background: var(--pp-card, #fff); box-shadow: 4px 4px 0 color-mix(in srgb, var(--pp-ink, #011941) 85%, transparent); }
+.dayCardHead { display: flex; align-items: center; gap: 0.5rem; font-size: 1.05rem; }
+.dayCardTag { margin-left: auto; padding: 0.1rem 0.6rem; border-radius: 999px; background: var(--yellow, #fdc72f); color: #011941; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; } /* theme-ok */
+.dayCardBar { height: 10px; border-radius: 999px; background: color-mix(in srgb, var(--pp-ink, #011941) 14%, transparent); overflow: hidden; }
+.dayCardBar > i { display: block; height: 100%; background: var(--pp-ok, #047857); border-radius: 999px; }
+.dayCardMeta { margin: 0; font-size: 0.86rem; color: color-mix(in srgb, var(--pp-ink, #011941) 80%, transparent); }
+.dayCardActions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.dayCardActions > a { flex: 1 1 10rem; text-align: center; }
+.secondary { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.6rem 1rem; border-radius: 999px; background: transparent; color: var(--pp-ink, #011941); border: 2px solid var(--pp-ink, #011941); font-weight: 700; font-size: 0.9rem; text-decoration: none; }
+.secondary:hover { background: color-mix(in srgb, var(--pp-ink, #011941) 8%, transparent); }

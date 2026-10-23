@@ -5,6 +5,7 @@ import { PACIFIC_TZ } from '@/lib/core/timezone';
 import PortalSearch from '@/components/portal/PortalSearch';
 import EventCountdown from './EventCountdown';
 import RoleAsk from './RoleAsk';
+import LogisticsDayCard from './LogisticsDayCard';
 import { RequiredBanner } from './docs/DocRequired';
 import styles from './dashboardHome.module.css';
 
@@ -31,11 +32,12 @@ const shortDay = (iso: string) => new Date(iso).toLocaleDateString('en-US', { ti
 
 // Below the to-dos: the next event as a paper ticket, the pinned note, the club's quick links, and what is coming up. (The pages themselves are
 // in the side bar and the bottom bar, so there is no list of tools here.)
-export function DashboardBody({ event, note, links, upcoming, showRoleAsk = false, compact = false }: { showRoleAsk?: boolean; /** Guests and students on a desktop: the role request sits under the ticket. */ compact?: boolean; event: HomeEvent | null; note: HomeNote | null; links: HomeLink[]; upcoming: HomeUpcoming[] }) {
+export function DashboardBody({ event, note, links, upcoming, showRoleAsk = false, compact = false, logistics = null }: { logistics?: { admin: boolean } | null; showRoleAsk?: boolean; /** Guests and students on a desktop: the role request sits under the ticket. */ compact?: boolean; event: HomeEvent | null; note: HomeNote | null; links: HomeLink[]; upcoming: HomeUpcoming[] }) {
   return (
     <div className={styles.body}>
       {showRoleAsk && !compact && <RoleAsk />}
       <RequiredBanner hrefBase="/portal/docs?id=" />
+      {logistics && <LogisticsDayCard admin={logistics.admin} />}
       <div className={styles.top}>
         {event && (
           <article className={styles.ticket} aria-label="Next up">
