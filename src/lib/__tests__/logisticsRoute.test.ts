@@ -6,6 +6,8 @@ describe('Logistics addresses', () => {
     expect(parseRoute('ds-2026', 'allocation-prizing', undefined, false, 'sponsor')).toEqual({ tab: 'events', plan: 'ds-2026', page: 'prizing', bySponsor: true });
     expect(routeParams({ tab: 'events', plan: 'ds-2026', page: 'prizing', bySponsor: true }).view).toBe('sponsor');
     expect(parseRoute('ds-2026', 'event-day-prizing', undefined, false, 'sponsor')).toEqual({ tab: 'events', plan: 'ds-2026', page: 'prizing', day: true });
+    expect(parseRoute('ds-2026', 'allocation-prizing', undefined, false, 'grid')).toEqual({ tab: 'events', plan: 'ds-2026', page: 'prizing', grid: true });
+    expect(routeParams({ tab: 'events', plan: 'ds-2026', page: 'prizing', bySponsor: true, grid: true }).view).toBe('sponsor,grid');
   });
   it('reads the new addresses', () => {
     expect(parseRoute('events', undefined, undefined, false)).toEqual({ tab: 'events', plan: null, page: 'device' });

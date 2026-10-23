@@ -603,8 +603,6 @@
 .poolLineName { display: flex; flex-direction: column; min-width: 0; font-size: 0.92rem; overflow-wrap: anywhere; }
 .poolFoot { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
 .poolAdd { flex: 1 1 12rem; min-width: 0; }
-.overview2 { margin-top: 1rem; }
-.overview2 > summary { cursor: pointer; font-weight: 700; font-size: 0.92rem; padding: 0.4rem 0; color: var(--pp-ink); }
 
 /* table text: a little smaller, with room at the edges so nothing touches the border */
 .grid { font-size: 0.86rem; }
@@ -1001,3 +999,8 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 @media (max-width: 640px) { .reqLinePrize { grid-template-columns: 5.5rem minmax(0, 1fr) auto; } }
 
 .lockTag { display: inline-flex; align-items: center; gap: 0.25rem; flex: none; padding: 0 0.5rem; min-height: 22px; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.85); white-space: nowrap; }
+
+/* The prize grid, full screen: it covers the page (below dialogs) and scrolls inside */
+.gridFull { position: fixed; inset: 0; z-index: 2000; overflow: auto; padding: 0.8rem 1rem 1.2rem; background: var(--pp-paper); display: flex; flex-direction: column; gap: 0.5rem; }
+.gridFullBar { display: flex; justify-content: flex-end; }
+.gridFull .matrixWrap { max-height: none; }

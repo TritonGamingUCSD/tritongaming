@@ -20,7 +20,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const { data: plan } = await auth.svc.from('logistics_plans').select(PLAN_COLUMNS).eq('id', id).maybeSingle();
   if (!plan) return NextResponse.json({ error: 'That plan is gone.' }, { status: 404 });
   // A division account gets only the plan itself (for the Requests page), none of its devices, teams or prizes.
-  if (!auth.canView) return NextResponse.json({ plan, canManage: false, requestOnly: true, stations: [], steps: [], prizes: { pools: [], lines: [], done: [], steps: [] }, lockedRequests: [], items: [], slots: [], borrowed: [], extras: [], done: [], conflicts: [] });
+  if (!auth.canView) return NextResponse.json({ plan, canManage: false, requestOnly: true, stations: [], steps: [], prizes: { pools: [], lines: [], done: [], steps: [], keeps: [] }, lockedRequests: [], items: [], slots: [], borrowed: [], extras: [], done: [], conflicts: [] });
   const prizeData = loadPlanPrizes(auth.svc, id);
   const [stations, rows, steps, done, borrowedRows, slotRows] = await Promise.all([
     auth.svc.from('logistics_stations').select('id, name, sort, contact, room').eq('plan_id', id).order('sort').order('name').limit(500),

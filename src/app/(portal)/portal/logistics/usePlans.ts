@@ -5,7 +5,7 @@ import type { Device } from '@/lib/logistics/devices';
 import type { Conflict, StepDef } from '@/lib/logistics/plans';
 import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
 
-export interface PlanSummary { id: string; slug: string; name: string; event_id: string | null; starts_on: string; ends_on: string; status: 'draft' | 'closed'; notes: string | null; devices: number; empty: number; teams: number; requests: number; newRequests: number; prizes: number; prizeValue: number }
+export interface PlanSummary { id: string; slug: string; name: string; event_id: string | null; starts_on: string; ends_on: string; status: 'draft' | 'closed'; manual_return?: boolean; notes: string | null; devices: number; empty: number; teams: number; requests: number; newRequests: number; prizes: number; prizeValue: number }
 export interface Station { id: string; name: string; sort: number; contact: string | null; room: string | null }
 // A row allocated by type that has no device yet (or never will: a mousepad). `label` is a note shown with it.
 export interface Slot { id: string; plan_id: string; station_id: string | null; type: string; games: string[]; label: string | null; sort: number; set_id?: string | null; request_id?: string | null; request_item?: string | null }

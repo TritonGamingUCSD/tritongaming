@@ -10,6 +10,15 @@ export interface Prize {
 export interface PrizeTotals { allocated: number; given: number }
 export const prizeLeft = (p: Pick<Prize, 'quantity'>, t: PrizeTotals) => p.quantity - t.given - t.allocated;
 
+// What one event's lines of a prize count for in the stock totals. While the event is open its lines are promised (`allocated`). Once it is closed, an event made since manual returns began (`manual`)
+// uses up everything that was not moved back to inventory by hand, so closing never returns prizes by itself; an older closed event only counts what was given out. `quantity` and `given` are the
+// totals over the event's lines of this prize, `moved` what was moved to inventory from its Keep list.
+export function planPrizeUse(o: { quantity: number; given: number; moved: number; closed: boolean; manual: boolean }): PrizeTotals {
+  if (!o.closed) return { allocated: o.quantity - o.given, given: o.given };
+  if (!o.manual) return { allocated: 0, given: o.given };
+  return { allocated: 0, given: o.quantity - Math.min(Math.max(0, o.moved), Math.max(0, o.quantity - o.given)) };
+}
+
 // A prize step is a count per line. `gives` marks the step that hands a prize out (it uses stock up); `leftover` marks a step that is only about what was NOT handed out ("back to storage").
 export interface PrizeStepDef { id: string; name: string; sort: number; gives: boolean; leftover: boolean }
 

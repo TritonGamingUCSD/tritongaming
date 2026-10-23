@@ -1,8 +1,8 @@
 'use client';
 
-import { Lock } from 'lucide-react';
+import { Lock, Maximize2, Minimize2 } from 'lucide-react';
 import { RowMenu } from './RowMenu';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Button from '@/components/ui/Button';
 import SectionTabs from '@/components/ui/SectionTabs';
 import { ANY_SIZE, suggestPrizes } from '@/lib/logistics/prizes';
@@ -19,7 +19,7 @@ const money = (n: number | null) => (n === null ? '' : `$${n.toLocaleString('en-
 
 // Prizing allocation, one card per pool (a prize request makes a pool for its team): what was asked for (how many, how many dollars) with progress, the prizes it has, and a box to add more from
 // storage and the sponsor prizes of this event. Suggest fills what is still missing with the prizes closest to the asked value. The old grid is kept below as an overview.
-export default function PrizeAllocation({ plan, data, bySponsor, onSponsorGroup }: { plan: PlanApi; data: Catalog; bySponsor: boolean; onSponsorGroup: (v: boolean) => void }) {
+export default function PrizeAllocation({ plan, data, bySponsor, grid, onPrizeView }: { plan: PlanApi; data: Catalog; bySponsor: boolean; grid: boolean; onPrizeView: (v: { bySponsor?: boolean; grid?: boolean }) => void }) {
   const d = plan.detail!;
   const prizes = usePrizes();
   const closed = d.plan.status === 'closed';
@@ -27,6 +27,13 @@ export default function PrizeAllocation({ plan, data, bySponsor, onSponsorGroup 
   const { pools, lines } = d.prizes;
   const [poolDialog, setPoolDialog] = useState<(typeof pools)[number] | null>(null);
   const [busy, setBusy] = useState('');
+  const [full, setFull] = useState(false);   // the grid fills the whole screen (Esc or the button brings it back)
+  useEffect(() => {
+    if (!full) return;
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setFull(false); };
+    document.addEventListener('keydown', esc);
+    return () => document.removeEventListener('keydown', esc);
+  }, [full]);
   const [swapLine, setSwapLine] = useState<string | null>(null);   // the pool line being swapped for a similar prize
   const [short, setShort] = useState<Record<string, string>>({});   // what a Suggest could not find in stock, in words
   const sponsorName = useMemo(() => new Map(data.sponsors.map((s) => [s.id, s.name])), [data.sponsors]);
@@ -38,6 +45,18 @@ export default function PrizeAllocation({ plan, data, bySponsor, onSponsorGroup 
     if (r.ok && r.delta) prizes.bump(p.id, r.delta);
   }
   const isLocked = (pool: (typeof pools)[number]) => !!pool.request_id && (d.lockedRequests ?? []).includes(pool.request_id);
+  // Prizes set aside on purpose for future events. They stay in this event's stock until the event is closed and they are moved to inventory by hand.
+  const keepsOn = d.plan.manual_return !== false;
+  const canKeep = d.canManage;   // also after the event is closed: that is when kept prizes are moved
+  const keeps = d.prizes.keeps ?? [];
+  const inPlan = useMemo(() => { const m = new Map<string, (typeof lines)[number]['prize']>(); for (const l of lines) m.set(l.prize_id, l.prize); return m; }, [lines]);
+  const keepable = [...inPlan].filter(([id]) => !keeps.some((k) => k.prize_id === id));
+  const keepLabel = (prize: (typeof lines)[number]['prize']) => `${prize.sponsor ?? 'Club'} · ${prize.name}${prize.type ? ` · ${prize.type}` : ''}${prize.size ? ` · ${prize.size}` : ''}`;
+  const pending = keeps.filter((k) => !k.moved_at);
+  async function moveKept(prizeId?: string) {
+    const ok = await plan.act('/keeps', 'PATCH', prizeId ? { prize_id: prizeId } : {});
+    if (ok) void prizes.reload();
+  }
   const sizeOrder = data.lists.prize_size.map((o) => o.value);
   const haveOf = (poolId: string) => lines.filter((l) => l.pool_id === poolId).reduce<Record<string, number>>((m, l) => (l.prize.size ? { ...m, [l.prize.size]: (m[l.prize.size] ?? 0) + l.quantity } : m), {});
   // What a pool still needs of each size to reach what its request asked for.
@@ -86,9 +105,18 @@ export default function PrizeAllocation({ plan, data, bySponsor, onSponsorGroup 
       ) : (
         <>
         <div className={styles.toolbarRow}>
-          <SectionTabs<'type' | 'sponsor'> variant="segmented" label="Group the prizes by" value={bySponsor ? 'sponsor' : 'type'} onChange={(v) => onSponsorGroup(v === 'sponsor')} tabs={[{ id: 'type', label: 'By Type' }, { id: 'sponsor', label: 'By Sponsor' }]} />
-          {manage && needy > 1 && <><Button size="sm" variant="secondary" loading={!!busy} onClick={() => void fillAll()}>Fill All {needy} Pools</Button><span className={`${styles.muted} ${styles.wide}`}>Suggests prizes for every pool that still needs some, sponsor prizes first.</span></>}
+          <SectionTabs<'cards' | 'grid'> variant="segmented" label="How to show the prizes" value={grid ? 'grid' : 'cards'} onChange={(v) => onPrizeView({ grid: v === 'grid', bySponsor })} tabs={[{ id: 'cards', label: 'Cards' }, { id: 'grid', label: 'Grid' }]} />
+          {!grid && <SectionTabs<'type' | 'sponsor'> variant="segmented" label="Group the prizes by" value={bySponsor ? 'sponsor' : 'type'} onChange={(v) => onPrizeView({ bySponsor: v === 'sponsor' })} tabs={[{ id: 'type', label: 'By Type' }, { id: 'sponsor', label: 'By Sponsor' }]} />}
+          {!grid && manage && needy > 1 && <><Button size="sm" variant="secondary" loading={!!busy} onClick={() => void fillAll()}>Fill All {needy} Pools</Button><span className={`${styles.muted} ${styles.wide}`}>Suggests prizes for every pool that still needs some, sponsor prizes first.</span></>}
         </div>
+        {grid ? (
+          <div className={full ? styles.gridFull : undefined}>
+            <div className={styles.gridFullBar}>
+              <button type="button" className={styles.linkBtn} onClick={() => setFull((v) => !v)} aria-pressed={full}>{full ? <><Minimize2 size={14} aria-hidden="true" /> Exit Full Screen</> : <><Maximize2 size={14} aria-hidden="true" /> Full Screen</>}</button>
+            </div>
+            <PrizeGrid plan={plan} data={data} />
+          </div>
+        ) : (
         <div className={styles.poolCards}>
           {pools.map((pool) => {
             const locked = !!pool.request_id && (d.lockedRequests ?? []).includes(pool.request_id);   // its request's allocation is locked
@@ -171,13 +199,41 @@ export default function PrizeAllocation({ plan, data, bySponsor, onSponsorGroup 
               </section>
             );
           })}
+          {keepsOn && (
+            <section className={styles.poolCard} aria-label="Keep for future events">
+              <header className={styles.poolCardHead}><div className={styles.poolTitle}><b>Keep For Future</b><span className={styles.dim}>Set aside on purpose for later events</span></div></header>
+              <p className={`${styles.dim} ${styles.goalNeed}`}>{closed ? 'Nothing goes back to stock by itself. Move what you are keeping to inventory.' : 'Putting a prize here changes nothing yet: it can still be used during the event. After the event is closed you move what is left to inventory.'}</p>
+              {keeps.length > 0 && (
+                <ul className={styles.poolLinesInner}>
+                  {keeps.map((k) => {
+                    const prize = inPlan.get(k.prize_id);
+                    return (
+                      <li key={k.prize_id} className={styles.poolLine}>
+                        <span className={styles.poolLineName}><span><small className={styles.dim}>{prize?.sponsor ?? 'Club'}</small> <b>{prize?.name ?? 'Prize'}</b></span><small className={styles.dim}>{[prize?.type, prize?.size].filter(Boolean).join(' · ')}</small></span>
+                        <NumberCell value={k.quantity} canEdit={canKeep && !k.moved_at} label={`How many ${prize?.name ?? 'prizes'} to keep`} onSave={(n) => { if (n && n > 0) void plan.act('/keeps', 'POST', { prize_id: k.prize_id, quantity: n }); }} />
+                        <span className={styles.poolLineEnd}>
+                          {k.moved_at ? <span className={`${styles.leftChip} ${styles.leftOk}`}>In inventory</span> : <span className={`${styles.leftChip} ${styles.leftZero}`}>Kept</span>}
+                          {canKeep && !k.moved_at && <RowMenu label={`More for ${prize?.name ?? 'prize'}`} items={[closed && { label: 'Move To Inventory', onClick: () => void moveKept(k.prize_id) }, { label: 'Remove From Keep List', danger: true, onClick: () => void plan.act('/keeps', 'DELETE', { prize_id: k.prize_id }) }]} />}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              {canKeep && (
+                <div className={styles.poolFoot}>
+                  <div className={styles.poolAdd}>
+                    <Combo value={null} options={keepable.map(([, p]) => keepLabel(p))} placeholder={keepable.length ? 'Keep a prize…' : 'No more prizes in this event'} clearable={false} ariaLabel="Keep a prize for future events" onChange={(v) => { const hit = keepable.find(([, p]) => keepLabel(p) === v); if (hit) void plan.act('/keeps', 'POST', { prize_id: hit[0], quantity: 1 }); }} />
+                  </div>
+                  {closed && pending.length > 0 && <Button size="sm" variant="secondary" onClick={() => void moveKept()}>Move {pending.length === 1 ? '' : `All ${pending.length} `}To Inventory</Button>}
+                </div>
+              )}
+            </section>
+          )}
         </div>
+        )}
         </>
       )}
-      <details className={styles.overview2}>
-        <summary>Grid overview</summary>
-        <PrizeGrid plan={plan} data={data} />
-      </details>
     </div>
   );
 }

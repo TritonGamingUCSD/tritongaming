@@ -23,6 +23,7 @@ export default function PrizeWrapUp({ plan }: { plan: PlanApi }) {
   return (
     <details className={styles.wrapUp} open>
       <summary>Wrap-Up <span className={styles.dim}>{rows.reduce((n, r) => n + r.given, 0)} given · {left} left over</span></summary>
+      {plan.detail!.plan.manual_return !== false && <p className={styles.dim}>Left over prizes do not go back to stock by themselves. Put the ones you are keeping on the Keep For Future list in Allocation, then move them to inventory.</p>}
       <table className={styles.grid}>
         <thead><tr><th>Prize</th><th>Type</th><th>Sponsor</th><th>Promised</th><th>Given</th><th>Left over</th></tr></thead>
         <tbody>

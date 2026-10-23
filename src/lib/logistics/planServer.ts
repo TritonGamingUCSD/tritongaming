@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { plansOverlap, type Applies, type StepDef } from '@/lib/logistics/plans';
 
 export const UUID = /^[0-9a-f-]{36}$/i;
-export const PLAN_COLUMNS = 'id, slug, name, event_id, starts_on, ends_on, status, notes, created_at, updated_at';
+export const PLAN_COLUMNS = 'id, slug, name, event_id, starts_on, ends_on, status, manual_return, notes, created_at, updated_at';
 export const DEVICE_COLUMNS = 'id, tag, name, type, shelf, tier, place_note, condition, ports, login, games, kit, quantity, quantity_is_estimate, notes, created_at, updated_at';
 export const SLOT_COLUMNS = 'id, plan_id, station_id, type, games, label, sort, set_id, request_id, request_item';
 export const BORROWED_COLUMNS = 'id, plan_id, tag, name, type, owner_kind, sponsor_id, owner_user_id, owner_note, station_id, role, swap_reason, swapped_for_label, kit, notes, games_needed, games, sort, set_id, request_id, request_item';

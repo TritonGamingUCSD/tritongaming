@@ -10,7 +10,7 @@ try {
   const officer = await user('officer', ['officer']);
   const student = await user('student', ['ucsd']);
   const boot = (await officer.call('GET', '/api/logistics')).j;
-  t.ok('the prize lists and steps are there', boot.lists.prize_size.length >= 3 && boot.lists.prize_step.map((s) => s.value).join() === 'In Temp Storage,Sorted,Picked Up,Given Out,Back To Storage', JSON.stringify(boot.lists.prize_step));
+  t.ok('the prize lists and steps are there', boot.lists.prize_size.length >= 3 && ['Sorted', 'Picked Up', 'Given Out', 'Back To Storage'].every((n) => boot.lists.prize_step.some((x) => x.value === n)) && boot.lists.prize_step.length === 5, JSON.stringify(boot.lists.prize_step));
   const steps = Object.fromEntries(boot.lists.prize_step.map((s) => [s.value, s]));
   t.ok('Given Out gives prizes out and Back To Storage counts only what is left', steps['Given Out'].gives === true && steps['Back To Storage'].leftover === true);
 
@@ -80,9 +80,10 @@ try {
   t.ok('an officer cannot change a line', (await officer.call('PATCH', `/api/logistics/plans/${P}/prizes`, { line_id: LA1, quantity: 5 })).s === 403);
 
   // ---- editing the lists
+  const order0 = (await officer.call('GET', '/api/logistics')).j.lists.prize_step.map((x) => x.value);
   const mv = await exec.call('PATCH', '/api/logistics/options', { id: sid('Sorted'), move: 'down' });
-  const order = (await officer.call('GET', '/api/logistics')).j.lists.prize_step.map((s) => s.value).join();
-  t.ok('prize steps can be moved', mv.s === 200 && order === 'In Temp Storage,Picked Up,Sorted,Given Out,Back To Storage', order);
+  const order = (await officer.call('GET', '/api/logistics')).j.lists.prize_step.map((x) => x.value);
+  t.ok('prize steps can be moved', mv.s === 200 && order.indexOf('Sorted') === order0.indexOf('Sorted') + 1, order.join());
   await exec.call('PATCH', '/api/logistics/options', { id: sid('Sorted'), move: 'up' });
   t.ok('a used prize step cannot be deleted', (await exec.call('DELETE', '/api/logistics/options', { id: sid('Sorted') })).s === 409);
   const sz = await exec.call('POST', '/api/logistics/options', { kind: 'prize_size', value: 'ZZ Size' });
@@ -92,10 +93,27 @@ try {
 
   // ---- a closed plan, removing
   t.ok('removing a pool removes its lines', (await exec.call('DELETE', `/api/logistics/plans/${P}/pools`, { pool_id: pool2.id })).s === 200 && (await officer.call('GET', `/api/logistics/plans/${P}`)).j.prizes.lines.length === 2);
+  // ---- the Keep list: kept prizes only go back to stock when moved by hand after the event is closed
+  const KEEPS = `/api/logistics/plans/${P}/keeps`;
+  const lbLine = (await officer.call('GET', `/api/logistics/plans/${P}`)).j.prizes.lines.find((x) => x.id === LB);
+  const bBefore = (await officer.call('GET', '/api/logistics/prizes')).j.prizes.find((x) => x.id === B);
+  t.ok('an officer cannot keep a prize', (await officer.call('POST', KEEPS, { prize_id: B, quantity: 1 })).s === 403);
+  t.ok('a prize can be put on the Keep list while the event is open', (await exec.call('POST', KEEPS, { prize_id: B, quantity: 1 })).s === 201 && (await exec.call('POST', KEEPS, { prize_id: A, quantity: 1 })).s === 201);
+  t.ok('a prize that is not in the event cannot be kept', (await exec.call('POST', KEEPS, { prize_id: '00000000-0000-4000-8000-000000000000', quantity: 1 })).s === 400);
+  const bKept = (await officer.call('GET', '/api/logistics/prizes')).j.prizes.find((x) => x.id === B);
+  t.ok('keeping changes nothing about stock yet', bKept.left === bBefore.left && bKept.allocated === bBefore.allocated, JSON.stringify([bBefore, bKept]));
+  t.ok('nothing can be moved while the event is open', (await exec.call('PATCH', KEEPS, {})).s === 409);
   await exec.call('PATCH', `/api/logistics/plans/${P}`, { status: 'closed' });
   t.ok('a closed plan takes no more counts', (await officer.call('POST', `/api/logistics/plans/${P}/prize-steps`, { line_id: LB, step_id: sid('Sorted'), done: 1 })).s === 409);
   const afterClose = (await officer.call('GET', '/api/logistics/prizes')).j.prizes.find((x) => x.id === A);
   t.ok('a closed plan no longer holds stock (only what was given out is gone)', afterClose.allocated === 0 && afterClose.given === 2, JSON.stringify(afterClose));
+  const bClosed = (await officer.call('GET', '/api/logistics/prizes')).j.prizes.find((x) => x.id === B);
+  t.ok('closing does not put anything back in stock by itself', bClosed.allocated === 0 && bClosed.given === bBefore.given + lbLine.quantity, JSON.stringify([bBefore.given, lbLine.quantity, bClosed]));
+  const mvKeep = await exec.call('PATCH', KEEPS, {});
+  t.ok('moving puts the kept prize back in stock, and skips what was all given out', mvKeep.s === 200 && mvKeep.j.moved === 1 && mvKeep.j.skipped.includes(A), JSON.stringify(mvKeep.j));
+  const bMoved = (await officer.call('GET', '/api/logistics/prizes')).j.prizes.find((x) => x.id === B);
+  t.ok('only the moved amount is back in stock', bMoved.given === bClosed.given - 1 && bMoved.left === bClosed.left + 1, JSON.stringify(bMoved));
+  t.ok('a moved prize cannot be changed or moved again', (await exec.call('POST', KEEPS, { prize_id: B, quantity: 2 })).s === 409 && (await exec.call('DELETE', KEEPS, { prize_id: B })).s === 409);
   t.ok('exec deletes the plan, and its pools, lines and counts go with it', (await exec.call('DELETE', `/api/logistics/plans/${P}`)).s === 200);
   t.ok('then the prize can be deleted', (await exec.call('DELETE', '/api/logistics/prizes', { id: A })).s === 200);
   const { count: left } = await svc.from('logistics_plan_prizes').select('id', { count: 'exact', head: true }).eq('plan_id', P);

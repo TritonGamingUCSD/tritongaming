@@ -10,7 +10,7 @@ export const TOOLS_SECTIONS = ['sponsors', 'event-steps', 'bundles', 'prizes', '
 export type ToolsSection = (typeof TOOLS_SECTIONS)[number];
 
 export type Route =
-  | { tab: 'events'; plan: string | null; page: EventPage; day?: boolean; byType?: boolean; bySponsor?: boolean; openOnly?: boolean }
+  | { tab: 'events'; plan: string | null; page: EventPage; day?: boolean; byType?: boolean; bySponsor?: boolean; grid?: boolean; openOnly?: boolean }
   | { tab: 'inventory'; sub: 'devices' | 'prizes' }
   | { tab: 'tools'; sub: ToolsSection };
 
@@ -24,7 +24,7 @@ function eventRoute(plan: string, d: string | undefined, view?: string): Route {
   const day = w.startsWith('event-day-') || ((w === 'device' || w === 'prizing') && view === 'day');
   const word = w.replace(/^(allocation|event-day)-?/, '').replace(/^devices?$/, 'device').replace(/^sponsor-items$/, 'sponsor-loaners');
   const page = oneOf(EVENT_PAGES, w === 'requests' || w === 'requests-devices' ? 'requests' : w === 'requests-prizing' ? 'requests-prizing' : word, 'device');
-  return { tab: 'events', plan, page, ...(day && (page === 'prizing' || page === 'device') ? { day: true } : {}), ...(page === 'device' && view?.split(',').includes('type') ? { byType: true } : {}), ...(page === 'prizing' && !day && view?.split(',').includes('sponsor') ? { bySponsor: true } : {}), ...(day && page === 'device' && view?.split(',').includes('open') ? { openOnly: true } : {}) };
+  return { tab: 'events', plan, page, ...(day && (page === 'prizing' || page === 'device') ? { day: true } : {}), ...(page === 'device' && view?.split(',').includes('type') ? { byType: true } : {}), ...(page === 'prizing' && !day && view?.split(',').includes('sponsor') ? { bySponsor: true } : {}), ...(page === 'prizing' && !day && view?.split(',').includes('grid') ? { grid: true } : {}), ...(day && page === 'device' && view?.split(',').includes('open') ? { openOnly: true } : {}) };
 }
 
 // Reads the address. `canManage` says whether Tools may be used (anyone else is taken to Events).
@@ -45,7 +45,7 @@ export function routeParams(r: Route): { tab: string | null; subtab: string | nu
   if (r.tab === 'events') {
     if (!r.plan) return { tab: null, subtab: null, detail: null, view: null };
     const what = r.page === 'device' ? 'devices' : r.page;
-    return { tab: r.plan, subtab: r.page === 'requests' ? 'requests-devices' : r.page === 'requests-prizing' ? 'requests-prizing' : `${r.day && (r.page === 'device' || r.page === 'prizing') ? 'event-day' : 'allocation'}-${what}`, detail: null, view: [r.byType && r.page === 'device' ? 'type' : '', r.bySponsor && r.page === 'prizing' && !r.day ? 'sponsor' : '', r.openOnly && r.day && r.page === 'device' ? 'open' : ''].filter(Boolean).join(',') || null };
+    return { tab: r.plan, subtab: r.page === 'requests' ? 'requests-devices' : r.page === 'requests-prizing' ? 'requests-prizing' : `${r.day && (r.page === 'device' || r.page === 'prizing') ? 'event-day' : 'allocation'}-${what}`, detail: null, view: [r.byType && r.page === 'device' ? 'type' : '', r.bySponsor && r.page === 'prizing' && !r.day ? 'sponsor' : '', r.grid && r.page === 'prizing' && !r.day ? 'grid' : '', r.openOnly && r.day && r.page === 'device' ? 'open' : ''].filter(Boolean).join(',') || null };
   }
   return { tab: r.tab, subtab: r.sub, detail: null, view: null };
 }
