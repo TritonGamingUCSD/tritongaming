@@ -32,3 +32,13 @@ export function moveFrom(from: HTMLElement, e: KeyboardEvent): boolean {
 }
 export const isMove = (e: KeyboardEvent) => e.key === 'Enter' || e.key === 'Tab';
 
+
+// On a touch screen (or a narrow one) a stray tap while scrolling or aiming would open a text box, so the first tap only marks the control (outlined, see [data-armed] in the CSS) and a second tap within
+// 3 seconds opens it. With a mouse on a wide screen one click opens. Keyboard jumps (Tab, Enter) open at once. `e.currentTarget` carries the mark, so this needs no state and works in any list.
+export function tapTwice(e: { currentTarget: HTMLElement }, open: () => void) {
+  const el = e.currentTarget;
+  const touch = window.matchMedia('(pointer: coarse), (max-width: 899px)').matches;
+  if (jumping || !touch || el.hasAttribute('data-armed')) { el.removeAttribute('data-armed'); open(); return; }
+  el.setAttribute('data-armed', '');
+  setTimeout(() => el.removeAttribute('data-armed'), 3000);
+}

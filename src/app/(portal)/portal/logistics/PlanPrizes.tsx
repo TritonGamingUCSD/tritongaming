@@ -11,6 +11,7 @@ import { interactive } from './interactive';
 import { usePrizes } from './usePrizes';
 import type { PlanApi, PlanDetail } from './usePlans';
 import { Plus } from 'lucide-react';
+import { tapTwice } from './cellNav';
 import styles from './logistics.module.css';
 
 type Line = PlanDetail['prizes']['lines'][number];
@@ -104,7 +105,7 @@ function PrizeLine({ line, steps, count, given, plan, manage, closed }: { line: 
       <div className={styles.dNotes}>
         {qty !== null ? (
           <input className={styles.qtyInput} type="number" min={1} max={line.quantity + Math.max(0, p.left)} value={qty} autoFocus onChange={(e) => setQty(e.target.value)} onBlur={() => void saveQty()} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); else if (e.key === 'Escape') setQty(null); }} aria-label={`How many ${p.name}`} />
-        ) : manage ? <button type="button" className={styles.qtyBtn} onClick={() => setQty(String(line.quantity))} title="Change how many">× {line.quantity}</button> : <span>× {line.quantity}</span>}
+        ) : manage ? <button type="button" className={styles.qtyBtn} onClick={(e) => tapTwice(e, () => setQty(String(line.quantity)))} title="Change how many">× {line.quantity}</button> : <span>× {line.quantity}</span>}
         {over && <span className={styles.flagBad}>{-p.left} more promised than there are</span>}
       </div>
       <div className={styles.dCells}>
@@ -125,9 +126,10 @@ function PrizeLine({ line, steps, count, given, plan, manage, closed }: { line: 
           }
           const small = ceiling <= 12;
           const click = () => { if (closed) return; if (small) { if (full) set(0); else set(n + 1); } else setEditing(s.id); };
+          const tap = (e: React.MouseEvent<HTMLElement>) => { if (small || closed) click(); else tapTwice(e, click); };
           return (
             <span key={s.id} className={styles.cellWrap}>
-              <button type="button" className={`${styles.cell} ${full ? styles.cellDone : n > 0 ? styles.cellPart : ''}`} disabled={closed} onClick={click} aria-label={full ? `Undo ${label}` : `${label}: ${n} of ${ceiling}. ${small ? 'Add one' : 'Type a number'}`} title={small ? 'Tap to add one' : 'Tap to type a number'}>
+              <button type="button" className={`${styles.cell} ${full ? styles.cellDone : n > 0 ? styles.cellPart : ''}`} disabled={closed} onClick={tap} aria-label={full ? `Undo ${label}` : `${label}: ${n} of ${ceiling}. ${small ? 'Add one' : 'Type a number'}`} title={small ? 'Tap to add one' : 'Tap to type a number'}>
                 <span>{ceiling === 1 ? (full ? '✓' : <span className={styles.cellBox} />) : `${n}/${ceiling}`}</span>
                 <span className={styles.cellLabel}>{s.name}</span>
               </button>

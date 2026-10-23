@@ -9,6 +9,7 @@ import { RowMenu } from './RowMenu';
 import { interactive } from './interactive';
 import { units, type Line, type Row, type Unit } from './planRows';
 import type { Slim, Station, usePlan } from './usePlans';
+import { tapTwice } from './cellNav';
 import styles from './logistics.module.css';
 
 export interface SheetCtx {
@@ -106,7 +107,7 @@ function DeviceLine({ line, ctx, backup, nested }: { line: Line; ctx: SheetCtx; 
       <div className={styles.dNotes}>
         {alloc && (editingTag
           ? <Suggest autoFocus className={styles.assignInput} value={tag} onChange={setTag} options={ctx.ids(r.type)} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); else if (e.key === 'Escape') { setTag(r.tag ?? ''); setEditingTag(false); } }} onBlur={() => { setEditingTag(false); void commit(); }} placeholder="Device ID" aria-label={`Device ID for ${r.type}`} autoCapitalize="characters" disabled={busy} />
-          : <button type="button" className={`${styles.assignBtn} ${empty ? styles.assignEmpty : ''}`} onClick={() => setEditingTag(true)} disabled={busy} aria-label={`Device ID for ${r.type}. Change`}>{tag || 'Device ID'}</button>)}
+          : <button type="button" className={`${styles.assignBtn} ${empty ? styles.assignEmpty : ''}`} onClick={(e) => tapTwice(e, () => setEditingTag(true))} disabled={busy} aria-label={`Device ID for ${r.type}. Change`}>{tag || 'Device ID'}</button>)}
         {r.games_needed.length > 0 && <span className={`${styles.gameChip} ${missing.length ? styles.gameMissing : styles.gameOk}`} title={missing.length ? `Not installed yet: ${missing.join(', ')}` : r.kind === 'slot' ? 'Needed' : 'Installed'}>{r.games_needed.join(', ')}{missing.length ? ' · not installed' : ''}</span>}
         {missing.length > 0 && manage && r.kind !== 'slot' && <button type="button" className={styles.miniTextBtn} disabled={ctx.busy} title="Mark the needed games as installed" aria-label={`Mark ${label(r)} installed`} onClick={() => ctx.onInstalled([r])}>Mark installed</button>}
         {dead && <span className={`${styles.badge} ${styles.bad}`}>{conditionLabel(r.condition!)}</span>}

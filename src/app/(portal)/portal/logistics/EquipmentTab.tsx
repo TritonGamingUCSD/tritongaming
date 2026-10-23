@@ -12,6 +12,7 @@ import { PickCell, TextCell } from './Cells';
 import { EQUIPMENT_COLS, GridHead, gridStyle } from './gridTable';
 import DeviceDialog from './DeviceDialog';
 import type { Catalog, LogisticsApi } from './useLogistics';
+import { tapTwice } from './cellNav';
 import styles from './logistics.module.css';
 
 const SHOW = 150;
@@ -29,7 +30,7 @@ function ConditionBadge({ c }: { c: Device['condition'] }) {
 function ConditionCell({ d, canEdit, onSave }: { d: Device; canEdit: boolean; onSave: (c: Device['condition']) => void }) {
   const [on, setOn] = useState(false);
   if (!canEdit) return <ConditionBadge c={d.condition} />;
-  if (!on) return <button type="button" className={styles.editCell} onClick={() => setOn(true)} aria-label={`Condition: ${conditionLabel(d.condition)}. Change`}><ConditionBadge c={d.condition} /></button>;
+  if (!on) return <button type="button" className={styles.editCell} onClick={(e) => tapTwice(e, () => setOn(true))} aria-label={`Condition: ${conditionLabel(d.condition)}. Change`}><ConditionBadge c={d.condition} /></button>;
   return <Combo value={conditionLabel(d.condition)} options={CONDITIONS.map((c) => c.label)} compact autoFocus clearable={false} onClose={() => setOn(false)} onChange={(v) => { const c = CONDITIONS.find((x) => x.label === v); if (c && c.id !== d.condition) onSave(c.id); }} />;
 }
 
