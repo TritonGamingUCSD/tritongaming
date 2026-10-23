@@ -15,6 +15,7 @@ import ToolsTab from './ToolsTab';
 import { parseRoute, routeParams, TOOLS_SECTIONS, type Route, type ToolsSection } from './logisticsRoute';
 import { useLogistics, type Catalog, type LogisticsApi } from './useLogistics';
 import { usePrizes } from './usePrizes';
+import { clearEdits, onUndoKey } from './undo';
 import styles from './logistics.module.css';
 
 type Tab = Route['tab'];
@@ -65,6 +66,7 @@ export default function LogisticsSectionContent({ canManage }: { canManage: bool
   const pick = (t: Tab) => go(t === 'events' ? { tab: 'events', plan: null, page: 'device' } : t === 'inventory' ? { tab: 'inventory', sub: 'devices' } : { tab: 'tools', sub: 'sponsors' });
   // With an event open the sheet gets the whole page: the title and tabs step aside (All Events goes back).
   const inPlan = route.tab === 'events' && !!route.plan;
+  useEffect(() => { document.addEventListener('keydown', onUndoKey); return () => { document.removeEventListener('keydown', onUndoKey); clearEdits(); }; }, []);   // Ctrl+Z for cell edits
   useEffect(() => { if (requestOnly && route.tab !== 'events') go({ tab: 'events', plan: null, page: 'requests' }); }, [requestOnly, route.tab, go]);
 
   return (

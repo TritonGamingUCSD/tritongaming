@@ -940,8 +940,8 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
   .groupSwitch { margin-left: auto; display: inline-flex; align-items: center; gap: 0.3rem; min-height: 32px; padding: 0 0.7rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); background: none; color: var(--pp-ink); font: inherit; font-size: 0.74rem; font-weight: 700; cursor: pointer; }
   .dayMode .pageBarEnd, .dayMode .teamChips { display: none; }
   .dayForm { flex-wrap: nowrap; align-items: center; }
-  .dayStepPick { flex: 0 0 9rem; min-width: 0; }
-  .dayStepPick .comboInput { padding-left: 0.6rem; padding-right: 1.7rem; font-size: 0.86rem; }
+  .dayStepPick { flex: 0 0 9.8rem; min-width: 0; }
+  .dayStepPick .comboInput { padding-left: 0.5rem; padding-right: 1.45rem; text-overflow: clip; }
   .dayForm .dayInput { min-width: 0; }
   .dayForm button { padding-inline: 0.8rem; }
 }

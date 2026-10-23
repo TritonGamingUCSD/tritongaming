@@ -12,6 +12,7 @@ import { usePrizes } from './usePrizes';
 import type { PlanApi, PlanDetail } from './usePlans';
 import { Plus } from 'lucide-react';
 import { tapTwice } from './cellNav';
+import { recordEdit } from './undo';
 import styles from './logistics.module.css';
 
 type Line = PlanDetail['prizes']['lines'][number];
@@ -94,7 +95,7 @@ function PrizeLine({ line, steps, count, given, plan, manage, closed }: { line: 
   const [editing, setEditing] = useState<string | null>(null);   // the step whose number is being typed
   const [qty, setQty] = useState<string | null>(null);
   const over = p.left < 0;
-  async function saveQty() { const n = Math.round(Number(qty)); setQty(null); if (Number.isFinite(n) && n >= 1 && n !== line.quantity) await plan.act('/prizes', 'PATCH', { line_id: line.id, quantity: n }); }
+  async function saveQty() { const n = Math.round(Number(qty)); setQty(null); if (Number.isFinite(n) && n >= 1 && n !== line.quantity) { const was = line.quantity; const put = (q: number) => void plan.act('/prizes', 'PATCH', { line_id: line.id, quantity: q }); recordEdit(() => put(was), () => put(n)); await plan.act('/prizes', 'PATCH', { line_id: line.id, quantity: n }); } }
   return (
     <div className={`${styles.dayRow} ${styles.dayLine} ${over ? styles.lineBad : ''}`}>
       <div className={styles.dInfo}>
@@ -114,7 +115,8 @@ function PrizeLine({ line, steps, count, given, plan, manage, closed }: { line: 
           const n = Math.min(count.get(`${line.id}:${s.id}`) ?? 0, ceiling);
           const full = ceiling > 0 && n >= ceiling;
           const label = `${p.name} · ${s.name}`;
-          const set = (v: number) => void plan.setPrizeCount(line.id, s.id, Math.max(0, Math.min(ceiling, v)));
+          const put = (v: number) => void plan.setPrizeCount(line.id, s.id, Math.max(0, Math.min(ceiling, v)));
+          const set = (v: number) => { const to = Math.max(0, Math.min(ceiling, v)); if (to !== n) recordEdit(() => put(n), () => put(to)); put(to); };
           if (ceiling === 0) return <span key={s.id} className={`${styles.cell} ${styles.cellNa}`} aria-hidden="true">–</span>;
           if (editing === s.id) {
             return (

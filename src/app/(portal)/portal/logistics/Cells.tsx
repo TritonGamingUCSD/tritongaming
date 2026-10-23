@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Combo, MultiCombo } from './Combo';
 import { isMove, moveFrom, tapTwice } from './cellNav';
+import { recordEdit } from './undo';
 import styles from './logistics.module.css';
 
 // Shows what was just saved until the screen gets the saved value back (or a few seconds pass, if the save failed), so the old text never flashes back after a save.
@@ -22,7 +23,7 @@ export function TextCell({ value, canEdit, onSave, placeholder, strong }: { valu
   const open = () => { setText(shown ?? ''); setOn(true); };
   if (!canEdit) return <span className={strong ? styles.strong : undefined}>{shown || <span className={styles.dim}>{placeholder ?? '–'}</span>}</span>;
   if (!on) return <button type="button" data-cell className={`${styles.editCell} ${strong ? styles.strong : ''}`} onClick={(e) => tapTwice(e, open)}>{shown || <span className={styles.editHint}>{placeholder ?? 'Add'}</span>}</button>;
-  const done = (save: boolean) => { setOn(false); if (save && text.trim() !== (shown ?? '')) { hold(text.trim() || null); onSave(text.trim()); } };
+  const done = (save: boolean) => { setOn(false); if (save && text.trim() !== (shown ?? '')) { const was = shown ?? '', now = text.trim(); recordEdit(() => onSave(was), () => onSave(now)); hold(now || null); onSave(now); } };
   return <input data-cell className={styles.cellInput} value={text} autoFocus onFocus={(e) => e.target.select()} maxLength={120} onChange={(e) => setText(e.target.value)} onBlur={() => done(true)} onKeyDown={(e) => { if (isMove(e)) { moveFrom(e.currentTarget, e); done(true); } else if (e.key === 'Escape') done(false); }} />;
 }
 
@@ -34,7 +35,7 @@ export function PickCell({ value, options, canEdit, onSave, onCreate, shown, cle
   const none = locate ? <span className={styles.notLocated}>Not located</span> : null;
   if (!canEdit) return <span>{label ?? none ?? <span className={styles.dim}>–</span>}</span>;
   if (!on) return <button type="button" data-cell className={styles.editCell} onClick={(e) => tapTwice(e, open)}>{label ?? none ?? <span className={styles.editHint}>{placeholder ?? 'Choose'}</span>}</button>;
-  return <Combo value={label ?? null} options={options} onChange={(v) => { if (v !== null) hold(v); onSave(v); }} onCreate={onCreate} compact sheet autoFocus clearable={clearable} onClose={() => setOn(false)} />;
+  return <Combo value={label ?? null} options={options} onChange={(v) => { const was = value; if (v !== was) recordEdit(() => onSave(was), () => onSave(v)); if (v !== null) hold(v); onSave(v); }} onCreate={onCreate} compact sheet autoFocus clearable={clearable} onClose={() => setOn(false)} />;
 }
 
 
@@ -51,7 +52,7 @@ export function NumberCell({ value, canEdit, onSave, label, step = 1, money, nul
     setOn(false);
     if (!save) return;
     const n = text.trim() === '' ? null : Number(text);
-    if (n === null ? nullable && num !== null : Number.isFinite(n) && n !== num) { hold(n); onSave(n); }
+    if (n === null ? nullable && num !== null : Number.isFinite(n) && n !== num) { const was = num; recordEdit(() => onSave(was), () => onSave(n)); hold(n); onSave(n); }
   };
   return <input data-cell className={`${styles.cellInput} ${styles.cellNum}`} type="number" inputMode={money ? 'decimal' : 'numeric'} min={0} step={step} value={text} autoFocus aria-label={label} onFocus={(e) => e.target.select()}
     onChange={(e) => setText(e.target.value)} onBlur={() => done(true)} onKeyDown={(e) => { if (isMove(e)) { moveFrom(e.currentTarget, e); done(true); } else if (e.key === 'Escape') done(false); }} />;
@@ -70,7 +71,7 @@ export function ListCell({ values, options, canEdit, onSave, label, placeholder 
   }
   return (
     <span className={styles.listCellEdit} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setOn(false); }}>
-      <MultiCombo values={values} options={options} onChange={(v) => { hold(v); onSave(v); }} ariaLabel={label} placeholder={placeholder} />
+      <MultiCombo values={values} options={options} onChange={(v) => { const was = values; recordEdit(() => onSave(was), () => onSave(v)); hold(v); onSave(v); }} ariaLabel={label} placeholder={placeholder} />
       <button type="button" className={styles.linkBtn} onClick={() => setOn(false)}>Done</button>
     </span>
   );
