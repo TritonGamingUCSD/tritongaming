@@ -35,6 +35,7 @@ import { getTier, nextTier } from '@/lib/members/tiers';
 import QRStudioClient from './qrcode/QRStudioClient';
 import MeetingsSectionContent from './meetings/MeetingsSectionContent';
 import { createServiceClient } from '@/lib/supabase/admin';
+import { loadHomeActivity, loadHomeAttention } from '@/lib/portal/homeExtras';
 import { fetchLinkedEmails } from '@/lib/members/linkedEmails';
 import { loadTodos } from '@/lib/portal/todos';
 import TodoCard from './TodoCard';
@@ -457,6 +458,17 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const homeNote = pinnedDoc ? { title: pinnedDoc.title, href: `/portal/docs?id=${pinnedDoc.id}` } : null;
   // The dashboard shows only the next event (the featured one above); the rest are under Events and Tickets.
   const homeLinks = canViewDocs ? await getDashboardLinks(profile.id).catch(() => []) : [];
+  // The desktop dashboard's extra panels: a few numbers about me, what is waiting (unread notifications), and what has been going on lately.
+  const [homeAttention, homeActivity] = await Promise.all([loadHomeAttention(createServiceClient(), profile.id).catch(() => []), loadHomeActivity(createServiceClient(), canViewDocs).catch(() => [])]);
+  const activeTickets = ticketsData.tickets.filter((t) => t.status === 'active' && t.event && new Date(t.event.start_date).getTime() > Date.now() - 6 * 3600e3).length;
+  const homeStats = [
+    ...(pointsData && memberTier ? [
+      { label: 'Points', value: pointsData.balance.toLocaleString(), sub: `${pointsData.lifetimeEarned.toLocaleString()} earned in all`, href: '/portal/points/mine' },
+      { label: 'Tier', value: memberTier.name, sub: memberNext ? `${(memberNext.min - pointsData.lifetimeEarned).toLocaleString()} pts to ${memberNext.name}` : 'Top tier', href: '/portal/points/mine', progress: memberNext ? Math.min(100, Math.max(4, ((pointsData.lifetimeEarned - memberTier.min) / Math.max(1, memberNext.min - memberTier.min)) * 100)) : 100 },
+    ] : []),
+    { label: 'Tickets', value: String(activeTickets), sub: activeTickets === 1 ? 'upcoming event' : 'upcoming events', href: '/portal/tickets' },
+    ...(myStrikes ? [{ label: 'Strikes', value: String(myStrikes.active), sub: myStrikes.active === 0 ? 'All clear' : `of ${myStrikes.limit} allowed`, href: '/portal/profile' }] : []),
+  ];
 
   return (
     <PortalParamsProvider query={serverQuery}>
@@ -480,7 +492,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
         <PortalTopSection
           plain={!isTgMember(roles)}
           welcome={<DashboardWelcome eyebrow={homeEyebrow} name={profile.display_name?.split(' ')[0] || 'Triton'} showSearch={isTgMember(roles)} />}
-          body={<DashboardBody event={homeEvent} note={homeNote} links={homeLinks} showRoleAsk={!isTeamMember} compact={!isTgMember(roles)} logistics={hasCapability(roles, 'view_logistics') || canManageLogistics} />}
+          body={<DashboardBody event={homeEvent} note={homeNote} links={homeLinks} stats={homeStats} attention={homeAttention} activity={homeActivity} showRoleAsk={!isTeamMember} compact={!isTgMember(roles)} logistics={hasCapability(roles, 'view_logistics') || canManageLogistics} />}
           desktop={{ greeting: greetingLine, tiles: tilesNode, viewAs: viewAsNode, banners: frameBanners }}
           top={
             <>

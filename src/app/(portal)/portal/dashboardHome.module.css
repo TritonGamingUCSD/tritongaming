@@ -6,8 +6,33 @@
 .search { margin-top: 0.4rem; }
 
 .body { display: flex; flex-direction: column; gap: 1.6rem; }
-.top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 300px); gap: 1.6rem; align-items: start; }
-@media (min-width: 1181px) { .top { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); } }
+/* Desktop: two columns. The wide one holds the next event, what needs attention and what has been going on; the narrow one holds my numbers, the pinned note and the quick links. On a phone they stack
+   (the panels marked deskOnly are left out there: the phone dashboard stays short). */
+.deskGrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.4rem; align-items: start; }
+.deskMain, .deskSide { display: flex; flex-direction: column; gap: 1.2rem; min-width: 0; }
+@media (min-width: 900px) { .deskGrid { grid-template-columns: minmax(0, 1.7fr) minmax(16rem, 1fr); } .deskSide .cols { grid-template-columns: minmax(0, 1fr); } }
+.deskOnly { display: none; }
+@media (min-width: 900px) { .deskOnly { display: block; } }
+.panel { padding: 0.9rem 1rem; background: var(--pp-card); border: 1px solid var(--pp-line); border-radius: 10px; }
+.panelTitle { margin: 0 0 0.5rem; display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1rem; color: var(--pp-ink); }
+.panelCount { padding: 0.05rem 0.5rem; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.08); font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.85); }
+.panelList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.panelList li + li { border-top: 1px solid var(--pp-line); }
+.panelRow { display: flex; align-items: center; gap: 0.7rem; padding: 0.55rem 0.2rem; color: var(--pp-ink); text-decoration: none; border-radius: 6px; }
+.panelRow:hover { background: rgba(var(--pp-ink-rgb), 0.05); }
+.panelText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+.panelText strong { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 0.9rem; overflow-wrap: anywhere; }
+.panelText small { font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.8); overflow-wrap: anywhere; }
+.panelWhen { flex: none; font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.7); }
+.panelKind { flex: none; min-width: 3.2rem; padding: 0.1rem 0.5rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; text-align: center; color: rgba(var(--pp-ink-rgb), 0.85); }
+.statGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; }
+.stat { display: flex; flex-direction: column; gap: 0.15rem; padding: 0.6rem 0.7rem; border-radius: 8px; border: 1px solid var(--pp-line); color: var(--pp-ink); text-decoration: none; background: rgba(var(--pp-ink-rgb), 0.03); min-width: 0; }
+.stat:hover { border-color: var(--pp-ink); }
+.statLabel { font-family: var(--font-renegare); font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.8); }
+.statValue { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.35rem; line-height: 1.1; overflow-wrap: anywhere; }
+.statSub { font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.8); }
+.statBar { height: 4px; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.12); overflow: hidden; }
+.statBar > span { display: block; height: 100%; background: var(--yellow); }
 
 .ticket { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 64px; background: var(--pp-card); border: 1px solid var(--pp-line); border-radius: 12px; box-shadow: var(--pp-shadow); color: var(--pp-ink); }
 .tape { position: absolute; top: -0.65rem; left: 1.5rem; width: 5.5rem; height: 1.4rem; background: rgba(255, 199, 44, 0.85); transform: rotate(-3deg); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18); }
@@ -48,7 +73,6 @@
 @media (max-width: 760px) {
   .quickLink { padding: 0.5rem 0.6rem; }
   .cols { grid-template-columns: 1fr; }
-  .top { grid-template-columns: 1fr; }
   .ticket { grid-template-columns: minmax(0, 1fr) 44px; }
   .note { transform: rotate(0.6deg); }
 }
@@ -63,7 +87,6 @@
 
 
 /* No pinned note: the ticket takes the whole row instead of leaving the note's column empty. */
-.top:not(:has(.note)) { grid-template-columns: minmax(0, 1fr); }
 
 /* The Event Day card at the top of the dashboard while an event is on (Logistics): name, progress bar, counts, and the buttons into Event Day. */
 .dayCard { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.9rem 1rem; border-radius: 12px; border: 2px solid var(--pp-ink, #011941); background: var(--pp-card, #fff); box-shadow: 4px 4px 0 color-mix(in srgb, var(--pp-ink, #011941) 85%, transparent); }
@@ -81,8 +104,8 @@
    cards or buttons; the laptop dashboard is untouched. */
 @media (max-width: 899px) {
   .body { gap: 0.8rem; min-width: 0; }
-  .body > *, .cols > *, .top > * { min-width: 0; max-width: 100%; }
-  .top { grid-template-columns: minmax(0, 1fr); gap: 0.6rem; }
+  .body > *, .cols > *, .deskGrid > *, .deskMain > *, .deskSide > * { min-width: 0; max-width: 100%; }
+  .deskGrid, .deskMain, .deskSide { gap: 0.6rem; }
   .ticket { grid-template-columns: minmax(0, 1fr); box-shadow: none; border-radius: 10px; }
   .tape, .stub { display: none; }
   .ticketMain { padding: 0.6rem 0.75rem; gap: 0.2rem; }
