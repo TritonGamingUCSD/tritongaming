@@ -904,3 +904,12 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
   .prizeRow:not(.reqRow):not(.borrowRow):not(.sponsorRow) { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 0.7rem; row-gap: 0.45rem; padding: 0.7rem 0.9rem; }
   .prizeRow:not(.reqRow):not(.borrowRow):not(.sponsorRow) > span[data-label="Where"] { grid-column: 1 / -1; }
 }
+
+/* Phone: a loaner card reads name; type and owner; station and status; games; tools. */
+@media (max-width: 899px) {
+  .borrowRow > :first-child { order: 0; }
+  .borrowRow > span[data-label="Type"], .borrowRow > span[data-label="Sponsor"], .borrowRow > span[data-label="Officer"] { order: 1; }
+  .borrowRow > span[data-label="Station"], .borrowRow > span[data-label="Status"] { order: 2; }
+  .borrowRow > span[data-label="Installed games"] { order: 3; }
+  .borrowRow > .prizeTools { order: 4; }
+}
