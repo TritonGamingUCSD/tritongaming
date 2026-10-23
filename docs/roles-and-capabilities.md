@@ -60,6 +60,7 @@ Admin passes every check. Roles combine: a person has everything each of their r
 | `view_events` | · | · | ✔ | ✔ | ✔ | · | ✔ | ✔ | ✔ |
 | `delete_events` | · | · | · | · | · | · | · | · | ✔ |
 | `checkin` | · | · | ✔ | · | ✔ | · | ✔ | ✔ | ✔ |
+| `send_event_emails` | · | · | · | · | · | · | · | ✔ | ✔ |
 | **Rewards** ||||||||||
 | `manage_rewards_shop` | · | · | · | · | · | · | · | ✔ | ✔ |
 | `scan_redemptions` | · | · | ✔ | · | ✔ | · | ✔ | ✔ | ✔ |
@@ -104,7 +105,7 @@ Admin passes every check. Roles combine: a person has everything each of their r
 2. Otherwise the person needs at least one role listed for it. Roles add up.
 3. **Division Lead is scoped:** for division capabilities the check can name one division, and a Division Lead only qualifies for the division they lead.
 4. **Inactive:** someone marked Inactive keeps every viewing permission but loses: `manage_events`, `delete_events`, `checkin`, `manage_site_content`, `manage_division`, `manage_divisions_directory`, `manage_roles`, `manage_docs`, `manage_rewards_shop`, `scan_redemptions`, `manage_points`, `manage_board_order`, `manage_meetings`, `manage_help`, `manage_strikes`, `manage_quarters`, `host_meetings`, `manage_logistics`. Meeting attendance and everything view-only stay. Admins are never affected.
-5. **Granted permissions:** an admin can give one person or a group an extra permission (Admin → Access), added on top of their roles. Only these can be granted: `manage_strikes`, `manage_logistics`, `view_attendance_reports`.
+5. **Granted permissions:** an admin can give one person or a group an extra permission (Admin → Access), added on top of their roles. Only these can be granted: `manage_strikes`, `manage_logistics`, `send_event_emails`, `view_attendance_reports`.
 6. **Where it is enforced:** the capabilities marked “database” in the table below are also enforced by the database (row level security). The rest are enforced by the page or API route that uses them, so the route’s own check is the boundary.
 
 **Other rules that are not capabilities**
@@ -124,6 +125,7 @@ Admin passes every check. Roles combine: a person has everything each of their r
 | **See events** · `view_events` | Open the Events section and read the event list, each event’s check-in list (names and check-in times) and the stats. Cannot create, edit or delete. | Recruit, Alumni, Officer, Lead, Executive, Admin | database + pages |
 | **Delete events** · `delete_events` | Permanently delete an event and its tickets (the delete runs through a database function that also clears everything linked to it). | Admin only | routes; lost while inactive |
 | **Check people in** · `checkin` | Open Check-In: scan tickets and reveal the online check-in code. Checking someone in by hand and undoing a check-in need “Change points” (exec and admin). | Recruit, Officer, Lead, Executive, Admin | database + routes; lost while inactive |
+| **Send event emails** · `send_event_emails` | Open Event Emails, write a reminder or update for an event and send it to everyone with a ticket (after a 60-second cancel window). Executive and Admin by default; can be granted. | Executive, Admin | pages + routes |
 | **Rewards** | | | |
 | **Run the rewards shop** · `manage_rewards_shop` | Create, edit and retire shop items and edit the tier ladder (Rewards → Tools). | Executive, Admin | database + routes; lost while inactive |
 | **Hand over rewards** · `scan_redemptions` | Scan a member’s reward QR and mark a reward as handed over (done at events, next to check-in). | Recruit, Officer, Lead, Executive, Admin | database + routes; lost while inactive |
@@ -208,4 +210,5 @@ The files that ask for each capability, so a change can be traced. Page and rout
 - `view_logistics` (3): `app/(portal)/portal/page`, `lib/logistics/auth.ts`, `lib/portal/portalCommands.ts`
 - `request_logistics` (2): `app/(portal)/portal/page`, `lib/logistics/auth.ts`
 - `manage_logistics` (4): `app/(portal)/portal/page`, `lib/logistics/auth.ts`, `lib/logistics/requestServer.ts`, `lib/portal/portalCommands.ts`
+- `send_event_emails` (2): `app/(portal)/portal/page`, `lib/email/eventEmailServer.ts`
 

@@ -91,8 +91,8 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // A division account sees only the Requests pages (its division's requests, and submitting new ones): nothing else in Logistics.
   request_logistics: ['recruit', 'officer', 'division', 'lead', 'exec', 'admin'],
   manage_logistics: ['exec', 'admin'],
-  // Writing and sending email to an event's ticket holders. Admin by default; can be handed to a person or group (Admin → Access).
-  send_event_emails: ['admin'],
+  // Writing and sending email to an event's ticket holders. Executives and admins by default; can be handed to a person or group (Admin → Access).
+  send_event_emails: ['exec', 'admin'],
 };
 
 // What being inactive takes away: anything that manages, hosts or deletes, plus checking in and scanning redemptions. Attending meetings is NOT stripped: roles never

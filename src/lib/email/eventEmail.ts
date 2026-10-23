@@ -1,5 +1,5 @@
 import { PACIFIC_TZ } from '@/lib/core/timezone';
-import { blocks, button, CREAM, esc, HEAD, BODY, LOGO_CID, MUTED, NAVY, SKY, siteUrl, YELLOW } from './template';
+import { blocks, esc, HEAD, BODY, LOGO_CID, NAVY, SKY, siteUrl, YELLOW } from './template';
 import type { EmailKind } from './prefs';
 
 // The email for one event, in the club's look (see template.ts) with the event on show: its cover image, a paper-ticket block with the date, time and place, an optional note from the person
@@ -37,18 +37,20 @@ export function shortText(s: string | null | undefined, max = 280): string {
   const cut = plain.slice(0, max).replace(/\s+\S*$/, '');
   return `${cut}…`;
 }
+// A calmer palette than the club's standard email: soft ink instead of saturated navy, warm paper, thin grey lines, no yellow fills.
+const INK = '#27304a', MUTED = '#6a7285', PAPER = '#f5f4f1', LINE = '#dedbd3', SOFT = '#ece9e0', LINK = '#3b5b8c';
 const mapsUrl = (q: string) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
 const priceLine = (e: EventForEmail) => [e.ticket_price ? `$${Number.isInteger(e.ticket_price) ? e.ticket_price : e.ticket_price.toFixed(2)} ticket` : 'Free', e.audience === 'ucsd_only' ? 'UCSD students only' : ''].filter(Boolean).join(' · ');
 
 export const eventEmailSubject = (kind: EmailKind, title: string) => (kind === 'reminders' ? `${title} is coming up` : kind === 'updates' ? `An update about ${title}` : title);
 
-const label = (s: string) => `<div style="font-family:${HEAD};font-size:10px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:${MUTED};margin:0 0 3px;">${esc(s)}</div>`;
+const label = (s: string) => `<div style="font-family:${HEAD};font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${MUTED};margin:0 0 3px;">${esc(s)}</div>`;
 function infoBlocks(e: EventForEmail): string {
   const out: string[] = [];
   const desc = shortText(e.description);
-  if (desc) out.push(`<div style="margin:0 0 12px;">${label('About')}<div style="font-size:14px;line-height:1.5;">${esc(desc)}${e.pageUrl ? ` <a href="${esc(e.pageUrl)}" style="color:${SKY};text-decoration:underline;white-space:nowrap;">Read more</a>` : ''}</div></div>`);
+  if (desc) out.push(`<div style="margin:0 0 12px;">${label('About')}<div style="font-size:14px;line-height:1.5;">${esc(desc)}${e.pageUrl ? ` <a href="${esc(e.pageUrl)}" style="color:${LINK};text-decoration:underline;white-space:nowrap;">Read more</a>` : ''}</div></div>`);
   const addr = [e.venue_address].filter(Boolean).join(' ');
-  if (!e.is_online && (addr || e.venue_notes)) out.push(`<div style="margin:0 0 12px;">${label('Where')}<div style="font-size:14px;line-height:1.5;">${addr ? `${esc(addr)} <a href="${esc(mapsUrl(addr))}" style="color:${SKY};text-decoration:underline;white-space:nowrap;">Open in Maps</a>` : ''}${e.venue_notes ? `<div style="color:${MUTED};font-size:13px;">${esc(shortText(e.venue_notes, 240))}</div>` : ''}</div></div>`);
+  if (!e.is_online && (addr || e.venue_notes)) out.push(`<div style="margin:0 0 12px;">${label('Where')}<div style="font-size:14px;line-height:1.5;">${addr ? `${esc(addr)} <a href="${esc(mapsUrl(addr))}" style="color:${LINK};text-decoration:underline;white-space:nowrap;">Open in Maps</a>` : ''}${e.venue_notes ? `<div style="color:${MUTED};font-size:13px;">${esc(shortText(e.venue_notes, 240))}</div>` : ''}</div></div>`);
   const sched = (e.schedule ?? []).filter((s) => s.time || s.title).slice(0, 6);
   if (sched.length) out.push(`<div style="margin:0 0 12px;">${label('Schedule')}<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="font-size:14px;line-height:1.45;">${sched.map((s) => `<tr><td style="padding:0 12px 2px 0;white-space:nowrap;font-weight:700;vertical-align:top;">${esc(s.time)}</td><td style="padding:0 0 2px;">${esc(s.title)}</td></tr>`).join('')}</table></div>`);
   const sp = (e.sponsors ?? []).filter(Boolean).slice(0, 8);
@@ -56,52 +58,72 @@ function infoBlocks(e: EventForEmail): string {
   return out.join('');
 }
 
+
+// Phones get the email edge to edge with snugger padding (mail apps that read a <style> block, such as Gmail and Apple Mail, apply it; the rest still get the fluid, max-600px layout from the inline styles).
+const RESPONSIVE_CSS = `<style>
+@media only screen and (max-width:480px){
+  .tg-outer{padding:0 !important}
+  .tg-card{padding-left:14px !important;padding-right:14px !important}
+  .tg-h1{font-size:20px !important}
+  .tg-stub{width:62px !important;padding:8px 4px !important}
+  .tg-cover{width:64px !important;padding:6px 6px 6px 0 !important}
+  .tg-cover-img{width:56px !important}
+}
+@media only screen and (min-width:481px){ .tg-card{padding-left:28px !important;padding-right:28px !important} }
+</style>`;
+
 export function eventEmailHtml(o: EventEmailOptions): string {
   const { event: e } = o;
   const when = eventWhen(e);
   const place = e.is_online ? 'Online' : e.location || '';
   const site = siteUrl();
   const logo = o.logoSrc ?? `cid:${LOGO_CID}`;
-  // The cover is a small picture inside the ticket block (never a full-width banner): it adds the event's look without pushing the message down, and the email stays mostly text.
+  // The cover is a small picture inside the date block (never a full-width banner): it adds the event's look without pushing the message down, and the email stays mostly text.
   const cover = o.showCover !== false && e.cover_url && /^https:\/\/[^\s"'<>]+$/i.test(e.cover_url)
-    ? `<td width="88" align="right" valign="middle" style="padding:8px 8px 8px 0;"><img src="${esc(e.cover_url)}" width="76" alt="${esc(e.title)} poster" style="display:block;width:76px;height:auto;max-height:130px;border:2px solid ${NAVY};"></td>`
+    ? `<td width="88" align="right" valign="middle" class="tg-cover" style="padding:8px 8px 8px 0;"><img class="tg-cover-img" src="${esc(e.cover_url)}" width="76" alt="${esc(e.title)} poster" style="display:block;width:76px;height:auto;max-height:130px;border:1px solid ${LINE};border-radius:4px;"></td>`
     : '';
   const pre = `${e.title} · ${when.day} ${when.date}, ${when.time}${place ? ` · ${place}` : ''}`;
+  // A note written in the shared template's strong colors is toned down to this email's calm ones.
+  const note = o.note.trim() ? blocks(o.note).split(NAVY).join(INK).split(YELLOW).join(SOFT).split(SKY).join(LINK) : '';
   return `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><title>${esc(o.subject)}</title></head>
-<body style="margin:0;padding:0;background:${CREAM};">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:${CREAM};">${esc(pre.slice(0, 110))}&#8199;&#847;&#8199;&#847;&#8199;&#847;</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${CREAM};"><tr><td align="center" style="padding:16px 10px;">
-  <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:560px;">
-    ${o.test ? `<tr><td style="background:${YELLOW};color:${NAVY};font-family:${HEAD};font-size:12px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;text-align:center;padding:6px;">Test email: nobody else got this</td></tr>` : ''}
-    <tr><td style="background:${NAVY};border-radius:8px 8px 0 0;padding:10px 16px;">
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-        <td style="padding-right:10px;"><img src="${esc(logo)}" width="32" height="32" alt="TG" style="display:block;border:0;border-radius:8px;"></td>
-        <td style="font-family:${HEAD};color:${CREAM};font-size:12px;letter-spacing:0.2em;text-transform:uppercase;font-weight:700;">Triton Gaming</td>
-      </tr></table>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><title>${esc(o.subject)}</title>${RESPONSIVE_CSS}</head>
+<body style="margin:0;padding:0;background:${PAPER};">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:${PAPER};">${esc(pre.slice(0, 110))}&#8199;&#847;&#8199;&#847;&#8199;&#847;</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${PAPER};"><tr><td align="center" class="tg-outer" style="padding:20px 10px;">
+  <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" class="tg-wrap" style="width:100%;max-width:600px;">
+    ${o.test ? `<tr><td style="background:${SOFT};color:${INK};font-family:${HEAD};font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;text-align:center;padding:6px;border-radius:6px 6px 0 0;">Test email: nobody else got this</td></tr>` : ''}
+    <tr><td style="background:#ffffff;border:1px solid ${LINE};border-radius:8px;padding:0;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr><td style="background:${NAVY};border-radius:7px 7px 0 0;padding:12px 22px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+            <td width="38" style="padding-right:10px;"><img src="${esc(logo)}" width="28" height="28" alt="TG" style="display:block;border:0;border-radius:7px;"></td>
+            <td style="font-family:${HEAD};color:#f3f1ea;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;font-weight:700;">Triton Gaming</td>
+            <td align="right" style="font-family:${HEAD};color:#c9ccd6;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;font-weight:700;">${esc(KIND_LABEL[o.kind])}</td>
+          </tr></table>
+        </td></tr>
+        <tr><td style="height:3px;background:${YELLOW};font-size:0;line-height:0;">&nbsp;</td></tr>
+        <tr><td class="tg-card" style="padding:20px 22px 6px;font-family:${BODY};font-size:15px;line-height:1.55;color:${INK};">
+          <h1 class="tg-h1" style="margin:0 0 16px;font-family:${HEAD};font-size:22px;line-height:1.25;font-weight:700;color:${INK};">${esc(e.title)}</h1>
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 16px;border:1px solid ${LINE};border-left:4px solid ${YELLOW};border-radius:6px;background:${PAPER};"><tr>
+            <td width="76" align="center" class="tg-stub" style="padding:10px 6px;border-right:1px solid ${LINE};font-family:${HEAD};">
+              <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;color:${MUTED};">${esc(when.day)}</div>
+              <div style="font-size:18px;font-weight:700;line-height:1.15;color:${INK};">${esc(when.date)}</div>
+            </td>
+            <td style="padding:10px 14px;font-family:${BODY};font-size:14px;line-height:1.45;color:${INK};">
+              <b style="white-space:nowrap;">${esc(when.time)}</b> <span style="font-size:12px;color:${MUTED};">Pacific</span>${place ? `<br>${esc(place)}` : ''}
+            </td>
+            ${cover}
+          </tr></table>
+          ${note}
+          ${infoBlocks(e)}
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 18px"><tr><td style="background:${NAVY};border-radius:6px;"><a href="${esc(o.ticketUrl)}" style="display:inline-block;padding:11px 22px;font-family:${HEAD};font-size:14px;font-weight:700;color:#ffffff;text-decoration:none;">Show my ticket</a></td></tr></table>
+        </td></tr>
+      </table>
     </td></tr>
-    <tr><td style="height:4px;background:${YELLOW};font-size:0;line-height:0;">&nbsp;</td></tr>
-    <tr><td style="background:#ffffff;border:2px solid ${NAVY};border-top:0;border-bottom-width:5px;border-right-width:5px;padding:18px 20px 8px;font-family:${BODY};font-size:15px;line-height:1.55;color:${NAVY};">
-      <span style="display:inline-block;background:${YELLOW};border:2px solid ${NAVY};font-family:${HEAD};font-size:10px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;padding:2px 8px;">${esc(KIND_LABEL[o.kind])}</span>
-      <h1 style="margin:10px 0 12px;font-family:${HEAD};font-size:22px;line-height:1.2;font-weight:800;color:${NAVY};">${esc(e.title)}</h1>
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 14px;border:2px solid ${NAVY};border-bottom-width:4px;border-right-width:4px;background:${CREAM};"><tr>
-        <td width="76" align="center" style="padding:10px 6px;border-right:2px dashed ${NAVY};font-family:${HEAD};">
-          <div style="font-size:11px;font-weight:800;letter-spacing:0.16em;color:${MUTED};">${esc(when.day)}</div>
-          <div style="font-size:19px;font-weight:800;line-height:1.15;color:${NAVY};">${esc(when.date)}</div>
-        </td>
-        <td style="padding:10px 12px;font-family:${BODY};font-size:14px;line-height:1.45;color:${NAVY};">
-          <b style="white-space:nowrap;">${esc(when.time)}</b> <span style="font-size:12px;color:${MUTED};">Pacific</span>${place ? `<br>${esc(place)}` : ''}
-        </td>
-        ${cover}
-      </tr></table>
-      ${o.note.trim() ? blocks(o.note) : ''}
-      ${infoBlocks(e)}
-      ${button('Show my ticket', o.ticketUrl)}
-    </td></tr>
-    <tr><td style="padding:12px 6px 0;font-family:${BODY};font-size:12px;line-height:1.6;color:${MUTED};text-align:center;">
+    <tr><td style="padding:14px 6px 0;font-family:${BODY};font-size:12px;line-height:1.6;color:${MUTED};text-align:center;">
       You are getting this because you have a ticket to ${esc(e.title)}.<br>
-      <a href="${esc(o.unsubscribeUrl)}" style="color:${SKY};text-decoration:underline;">Stop ${esc(KIND_WHY[o.kind])} emails</a> · <a href="${esc(o.settingsUrl)}" style="color:${SKY};text-decoration:underline;">Email settings</a><br>
-      <a href="${esc(site)}" style="color:${SKY};text-decoration:underline;">${esc(site.replace(/^https?:\/\//, ''))}</a> · Gaming Org at UC San Diego
+      <a href="${esc(o.unsubscribeUrl)}" style="color:${MUTED};text-decoration:underline;">Stop ${esc(KIND_WHY[o.kind])} emails</a> · <a href="${esc(o.settingsUrl)}" style="color:${MUTED};text-decoration:underline;">Email settings</a><br>
+      <a href="${esc(site)}" style="color:${MUTED};text-decoration:underline;">${esc(site.replace(/^https?:\/\//, ''))}</a> · Gaming Org at UC San Diego
     </td></tr>
   </table>
 </td></tr></table>

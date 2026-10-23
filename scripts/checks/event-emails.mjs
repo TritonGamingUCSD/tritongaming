@@ -10,6 +10,7 @@ try {
   const admin = await user('admin', ['admin']);
   const granted = await user('granted', ['officer']);
   const plain = await user('plain', ['officer']);
+  const exec = await user('exec', ['exec']);
   const a = await user('a', []), b = await user('b', []), c = await user('c', []), d = await user('d', []);
   const { data: ev, error: evErr } = await svc.from('events').insert({ title: 'ZZ Email Night', start_date: new Date(Date.now() + 3 * 86400e3).toISOString(), is_published: true, location: 'ZZ Room' }).select('id').single();
   if (evErr) throw new Error(`event: ${evErr.message}`);
@@ -23,6 +24,7 @@ try {
   t.ok('an officer cannot open event emails', (await plain.call('GET', '/api/event-emails')).s === 403);
   t.ok('an admin can, and sees the events', (await admin.call('GET', '/api/event-emails')).j.events?.some((e) => e.id === eventId));
   await svc.from('capability_grants').insert({ capability: 'send_event_emails', user_id: granted.id });
+  t.ok('an executive can open event emails', (await exec.call('GET', '/api/event-emails')).s === 200);
   t.ok('a person granted the permission can too', (await granted.call('GET', '/api/event-emails')).s === 200);
 
   const rem = (await admin.call('GET', `/api/event-emails?event_id=${eventId}&kind=reminders`)).j;
