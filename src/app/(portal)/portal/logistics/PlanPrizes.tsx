@@ -98,7 +98,7 @@ function PrizeLine({ line, steps, count, given, plan, manage, closed }: { line: 
     <div className={`${styles.dayRow} ${styles.dayLine} ${over ? styles.lineBad : ''}`}>
       <div className={styles.dInfo}>
         <b className={styles.dTag}>{p.name}</b>
-        <span className={styles.dType}>{[p.sponsor, p.size, money(p.price) && `${money(p.price)} each`].filter(Boolean).join(' · ') || 'Club stock'}</span>
+        <span className={styles.dType}>{[p.type, p.sponsor, p.size, money(p.price) && `${money(p.price)} each`].filter(Boolean).join(' · ') || 'Club stock'}</span>
         <span className={styles.dWhere}>{p.left} left of {p.quantity_is_estimate ? '~' : ''}{p.quantity} in stock</span>
       </div>
       <div className={styles.dNotes}>
