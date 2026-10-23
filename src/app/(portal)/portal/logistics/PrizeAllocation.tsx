@@ -80,7 +80,7 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
             const needQty = pool.target_qty === null ? null : Math.max(0, pool.target_qty - count);
             const budget = pool.target_total === null ? 0 : pool.target_total - spent;
             const addable = available.filter((p) => p.left > 0 && !mine.some((l) => l.prize_id === p.id));
-            const label = (p: PrizeRow) => `${p.name}${p.type ? ` · ${p.type}` : ''}${p.size ? ` · ${p.size}` : ''} · ${sponsorName.get(p.sponsor_id ?? '') ?? 'Club'}${p.price !== null ? ` · ${money(p.price)}` : ''} · ${p.left} left${p.in_hand ? '' : ' · not here yet'}`;
+            const label = (p: PrizeRow) => `${sponsorName.get(p.sponsor_id ?? '') ?? 'Club'} · ${p.name}${p.type ? ` · ${p.type}` : ''}${p.size ? ` · ${p.size}` : ''}${p.price !== null ? ` · ${money(p.price)}` : ''} · ${p.left} left${p.in_hand ? '' : ' · not here yet'}`;
             const overLines = mine.filter((l) => l.prize.left < 0).length;
             const groups = (() => { const g = new Map<string, typeof mine>(); for (const l of mine) { const k = l.prize.type ?? ''; g.set(k, [...(g.get(k) ?? []), l]); } return [...g].sort((a, b) => (a[0] === '' ? 1 : 0) - (b[0] === '' ? 1 : 0) || a[0].localeCompare(b[0])); })();
             const grouped = groups.some(([k]) => k !== '');
@@ -120,7 +120,7 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
                                       onChange={(v) => { const np = similar.find((x) => label(x) === v); if (np && p) void (async () => { await setQty(pool.id, np, l.quantity); await setQty(pool.id, p, 0); })(); }} />
                                   </span>
                                 ) : (
-                                  <span className={styles.poolLineName}><b>{l.prize.name}</b><small className={styles.dim}>{l.prize.size ? `${l.prize.size} · ` : ''}{l.prize.sponsor ?? 'Club'}{l.prize.price !== null ? ` · ${money(l.prize.price)}` : ''}{p && !p.in_hand ? ' · not here yet' : ''}</small>{l.prize.left < 0 && <small className={styles.flagWarn}>{-l.prize.left} more than in stock</small>}</span>
+                                  <span className={styles.poolLineName}><span><small className={styles.dim}>{l.prize.sponsor ?? 'Club'}</small> <b>{l.prize.name}</b></span><small className={styles.dim}>{[grouped ? null : l.prize.type, l.prize.size, l.prize.price !== null ? money(l.prize.price) : null].filter(Boolean).join(' · ')}{p && !p.in_hand ? `${l.prize.size || l.prize.price !== null ? ' · ' : ''}not here yet` : ''}</small>{l.prize.left < 0 && <small className={styles.flagWarn}>{-l.prize.left} more than in stock</small>}</span>
                                 )}
                                 <NumberCell value={l.quantity} canEdit={manage && !!p} nullable label={`${l.prize.name} for ${pool.name}`} onSave={(n) => p && void setQty(pool.id, p, n ?? 0)} />
                                 <span className={styles.poolLineEnd}>
