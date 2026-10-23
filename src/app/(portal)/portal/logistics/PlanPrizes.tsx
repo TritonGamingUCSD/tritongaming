@@ -104,7 +104,7 @@ function PrizeLine({ line, steps, count, given, plan, manage, closed }: { line: 
       <div className={styles.dNotes}>
         {qty !== null ? (
           <input className={styles.qtyInput} type="number" min={1} max={line.quantity + Math.max(0, p.left)} value={qty} autoFocus onChange={(e) => setQty(e.target.value)} onBlur={() => void saveQty()} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); else if (e.key === 'Escape') setQty(null); }} aria-label={`How many ${p.name}`} />
-        ) : manage ? <button type="button" className={styles.qtyBtn} onClick={() => setQty(String(line.quantity))} title="Change how many">× {line.quantity} for this pool</button> : <span>× {line.quantity} for this pool</span>}
+        ) : manage ? <button type="button" className={styles.qtyBtn} onClick={() => setQty(String(line.quantity))} title="Change how many">× {line.quantity}</button> : <span>× {line.quantity}</span>}
         {over && <span className={styles.flagBad}>{-p.left} more promised than there are</span>}
       </div>
       <div className={styles.dCells}>
