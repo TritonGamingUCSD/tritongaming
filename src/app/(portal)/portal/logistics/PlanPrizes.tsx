@@ -10,7 +10,7 @@ import { stepCeiling, type PrizeStepDef } from '@/lib/logistics/prizes';
 import { interactive } from './interactive';
 import { usePrizes } from './usePrizes';
 import type { PlanApi, PlanDetail } from './usePlans';
-import { Plus } from 'lucide-react';
+import { Minus, Plus } from 'lucide-react';
 import { tapTwice } from './cellNav';
 import { recordEdit } from './undo';
 import styles from './logistics.module.css';
@@ -66,7 +66,7 @@ export default function PlanPrizes({ plan, canManage, closed }: { plan: PlanApi;
               <div className={styles.teamHeadMain}>
                 <div className={styles.teamLine}>
                   <button type="button" className={styles.foldBtn} aria-expanded={!folded} onClick={toggle}>
-                    <span className={styles.foldMark} aria-hidden="true">{folded ? '+' : '–'}</span>
+                    <span className={styles.foldMark} aria-hidden="true">{folded ? <Plus size={13} strokeWidth={2.4} /> : <Minus size={13} strokeWidth={2.4} />}</span>
                     <b>{p.name}</b>
                   </button>
                   <span className={finished ? styles.dTeamDone : styles.dTeamNum}>{finished ? 'All done' : `${total} prizes`}</span>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Check } from 'lucide-react';
+import { Check, Minus, Plus } from 'lucide-react';
 import { conditionLabel, UNUSABLE } from '@/lib/logistics/constants';
 import { rowKind, skippedSteps, stepAppliesTo, type Problem, type StepDef } from '@/lib/logistics/plans';
 import { Suggest } from './Combo';
@@ -145,7 +145,7 @@ function SetLine({ unit, ctx }: { unit: Unit; ctx: SheetCtx }) {
     <>
       <div data-rows={rows.map((x) => x.id).join(' ')} className={`${styles.dayRow} ${styles.dayLine} ${styles.setLine} ${ctx.day ? styles.daySet : ''} ${styles.clickRow} ${bad ? styles.lineBad : warn ? styles.lineWarn : ''}`} onClick={(e) => { if (!interactive(e.target)) setOpen((v) => !v); }}>
         <div className={styles.dInfo}>
-          <button type="button" className={styles.foldBtn} aria-expanded={open} aria-label={`${open ? 'Hide' : 'Show'} the parts of ${first.tag ?? first.type}`} onClick={() => setOpen((v) => !v)}><span className={styles.foldMark} aria-hidden="true">{open ? '–' : '+'}</span><b className={styles.dTag}>{ctx.day ? first.tag ?? first.type : first.requestItem ?? first.tag ?? first.type}</b></button>
+          <button type="button" className={styles.foldBtn} aria-expanded={open} aria-label={`${open ? 'Hide' : 'Show'} the parts of ${first.tag ?? first.type}`} onClick={() => setOpen((v) => !v)}><span className={styles.foldMark} aria-hidden="true">{open ? <Minus size={13} strokeWidth={2.4} /> : <Plus size={13} strokeWidth={2.4} />}</span><b className={styles.dTag}>{ctx.day ? first.tag ?? first.type : first.requestItem ?? first.tag ?? first.type}</b></button>
           <span className={styles.dType}>{ctx.day ? `${first.type} set · ` : ''}{rows.length} parts</span>
           {!open && !ctx.day && <span className={`${styles.dWhere} ${styles.setParts}`} title={name}>{unit.lines.map((l, i) => (
             <span key={l.key} className={l.rows[0].kind === 'slot' && !l.counted ? styles.flagBad : undefined}>{i > 0 ? ' · ' : ''}{l.counted ? `${l.rows[0].type}${l.rows.length > 1 ? ` ×${l.rows.length}` : ''}` : l.rows[0].kind === 'slot' ? `no ${l.rows[0].type}` : label(l.rows[0])}</span>

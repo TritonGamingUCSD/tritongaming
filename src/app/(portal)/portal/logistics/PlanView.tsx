@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowLeftRight, Camera, RefreshCw } from 'lucide-react';
+import { ArrowLeft, ArrowLeftRight, Camera, Minus, Plus, RefreshCw } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { registerScanHandler } from '@/lib/portal/scanHandlers';
 const UniversalScanner = dynamic(() => import('@/components/portal/UniversalScanner'), { ssr: false });   // the camera is only loaded when it is opened
@@ -554,7 +554,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
                   <div className={styles.teamHeadMain}>
                     <div className={styles.teamLine}>
                       <button type="button" className={styles.foldBtn} aria-expanded={!folded} onClick={() => toggleFold(t.key, complete)}>
-                        <span className={styles.foldMark} aria-hidden="true">{folded ? '+' : '–'}</span>
+                        <span className={styles.foldMark} aria-hidden="true">{folded ? <Plus size={13} strokeWidth={2.4} /> : <Minus size={13} strokeWidth={2.4} />}</span>
                         <b>{t.title}</b>
                       </button>
                       {s && <span className={`${styles.statusChip} ${status === 'ok' ? styles.chipOk : status === 'bad' ? styles.chipBad : styles.chipWarn}`}>{status === 'ok' ? <><span className={styles.narrow} aria-label="Ready">✓</span><span className={styles.wide}>Ready</span></> : <>{mine.length}<span className={styles.wide}>to fix</span></>}</span>}
