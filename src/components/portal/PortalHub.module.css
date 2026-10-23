@@ -872,7 +872,7 @@
 
 /* Breadcrumb trail: Group › Section › Tab › Subtab. The parents are small caps links; the last level is the title. */
 .crumbTrail { display: flex; align-items: baseline; flex-wrap: nowrap; gap: 0.3rem; min-width: 0; line-height: 1.3; }
-.crumbSep { flex-shrink: 0; align-self: center; opacity: 0.55; }
+.crumbSep { flex-shrink: 0; align-self: baseline; transform: translateY(1.8px); opacity: 0.55; }   /* sits on the small crumbs' middle, not the middle of the tall page title */
 .crumbLink { flex-shrink: 0; font-family: var(--font-futura-heavy); font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; background: none; border: 0; padding: 0; cursor: pointer; color: var(--pp-chrome-accent); text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; transition: text-decoration-color 0.12s; }
 .crumbLink:hover, .crumbLink:focus-visible { text-decoration-color: currentColor; }
 .crumbHere { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: inherit; }
