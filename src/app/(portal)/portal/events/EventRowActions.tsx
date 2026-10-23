@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ExternalLink, Trash2 } from 'lucide-react';
 import IconButton from '@/components/ui/IconButton';
+import { RowMenu } from '@/components/ui/RowMenu';
 import styles from './events.module.css';
 
 // Per-row actions for the events table: the two things people actually do
@@ -36,6 +37,14 @@ export default function EventRowActions({
 
   return (
     <div className={styles.rowActions} ref={ref}>
+      {/* On a phone the row has one ··· button holding all of it; the visible buttons below are for wider screens. */}
+      <RowMenu phoneOnly label={`More actions for ${title}`} items={[
+        showSummary && { label: 'Summary', href: `/portal/events/${eventId}/summary` },
+        canEdit && { label: 'Edit', href: `/portal/events/${eventId}` },
+        canEdit && !!previewUrl && { label: 'Preview As Form', href: previewUrl! },
+        canDelete && { label: 'Delete Event', danger: true, onClick: onDelete },
+      ]} />
+      <div className={styles.notPhone}>
       {showSummary && (
         <IconButton kind="analytics" href={`/portal/events/${eventId}/summary`} label={`Summary for ${title}`} />
       )}
@@ -61,6 +70,7 @@ export default function EventRowActions({
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }

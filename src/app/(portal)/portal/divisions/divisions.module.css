@@ -121,3 +121,6 @@
 @media (max-width: 500px) {
   .fieldRow { grid-template-columns: 1fr; }
 }
+
+.notPhone { display: flex; align-items: center; gap: 0.35rem; }
+@media (max-width: 640px) { .notPhone { display: none; } }

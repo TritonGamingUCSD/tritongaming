@@ -1,0 +1,8 @@
+.full { display: block; }
+.fold { display: none; }
+.fold summary { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 32px; padding: 0 0.7rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); font-size: 0.74rem; font-family: var(--font-futura-heavy); letter-spacing: 0.04em; color: var(--pp-ink); cursor: pointer; list-style: none; }
+.fold summary::-webkit-details-marker { display: none; }
+.fold summary::after { content: '+'; }
+.fold[open] summary::after { content: '–'; }
+.body { margin-top: 0.5rem; font-size: 0.8rem; line-height: 1.5; color: rgba(var(--pp-ink-rgb), 0.85); }
+@media (max-width: 640px) { .full { display: none; } .fold { display: block; } }

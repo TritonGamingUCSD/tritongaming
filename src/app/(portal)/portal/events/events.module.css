@@ -225,3 +225,7 @@
   .rowActions { margin-left: auto; }
 }
 
+
+/* The visible row buttons give way to one ··· button on a phone (see EventRowActions). */
+.notPhone { display: flex; align-items: center; gap: 0.35rem; }
+@media (max-width: 640px) { .notPhone { display: none; } }

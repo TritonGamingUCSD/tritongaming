@@ -264,13 +264,6 @@
 
 
 /* ---- The plan sheet (laptop first; a phone gets a card per line) ---- */
-.menu { position: relative; }
-.menu summary { display: inline-flex; align-items: center; min-height: 32px; padding: 0 0.9rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); font-size: 0.86rem; cursor: pointer; list-style: none; color: var(--pp-ink); }
-.menu summary::-webkit-details-marker { display: none; }
-.menuList { position: absolute; right: 0; top: calc(100% + 4px); z-index: 8; min-width: 13rem; display: flex; flex-direction: column; padding: 0.3rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); background: var(--pp-card); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18); }
-.menuList button { text-align: left; min-height: 36px; padding: 0 0.7rem; border: none; border-radius: 6px; background: none; color: var(--pp-ink); font: inherit; font-size: 0.86rem; cursor: pointer; }
-.menuList button:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
-.menuDanger { color: var(--pp-bad) !important; }
 .statusBar { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.6rem 0.9rem; border-radius: 8px; border: 1px solid; color: var(--pp-ink); background: var(--pp-card); }
 .statusBar.readyOk { border-color: var(--pp-ok); }
 .statusBar.readyWarn { border-color: var(--pp-warn); }
@@ -409,7 +402,6 @@
 
 .setParts { display: block; overflow-wrap: anywhere; }
 .teamMenu { position: relative; }
-.teamMenu .menuList { right: auto; left: 0; }
 .dTeamSub { flex: 0 1 auto; }
 
 /* Nothing is cut short with "…": text wraps. On a screen too narrow for the columns the sheet scrolls sideways on its own (never the whole page); a phone uses cards instead. */
@@ -719,7 +711,6 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 .sheetHead, .sheetLine, .dayRow, .dayRowHead, .prizeRow, .prizeHeadRow, .reqRow, .borrowRow, .sentRow, .sponsorRow, .pickPrize, .eventRow, .poolLine, .freeGroup, .gridCardPool { align-items: center; text-align: left; }
 .prizeTools, .progressNum, .stepCount, .cellNum { text-align: left; }
 .dTools, .cTools, .prizeTools { justify-content: flex-start; }
-.menu summary { justify-content: center; min-width: 36px; padding: 0 0.5rem; }
 .finderBox input, .finderBox input:hover, .finderBox input:focus, .finderBox input:focus-visible { padding: 0; height: auto; min-height: 0; border: none; border-radius: 0; background: none; box-shadow: none; outline: none; }
 .finderBox:hover { border-color: rgba(var(--pp-ink-rgb), 0.55); }
 
@@ -744,7 +735,6 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
   .iconBtn { width: 40px; height: 40px; }
   .reqRow > span[data-label="Notes"], .reqRow > span[data-label="Devices"], .reqRow > span[data-label="Prizes"], .borrowRow > span[data-label="Installed games"] { grid-column: 1 / -1; }
   .eventRow { padding-block: 0.85rem; }
-  .menu summary { min-height: 44px; min-width: 40px; }
   .cell { min-height: 44px; }
   .linkBtn, .missBtn, .pill { min-height: 44px; }
 }

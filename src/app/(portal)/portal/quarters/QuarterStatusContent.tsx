@@ -12,6 +12,7 @@ import IconButton from '@/components/ui/IconButton';
 import Notice from '@/components/ui/Notice';
 import { DateInput, Field, Select } from '@/components/ui/Field';
 import { confirmHold } from '@/lib/ui/confirmHold';
+import PhoneFold from '@/components/ui/PhoneFold';
 import SectionTabs from '@/components/ui/SectionTabs';
 import TeamYearsPanel from './TeamYearsPanel';
 import styles from './quarters.module.css';
@@ -146,6 +147,7 @@ function StatusPanel() {
       {quarters.length === 0 ? (
         <p className={styles.empty}>{data.canSetup ? 'Add the quarter dates above. A quarter shows here once it starts.' : 'No quarter has started yet.'}</p>
       ) : selected && (<>
+        <PhoneFold label="What “inactive” does">
         <div className={styles.explain} role="note">
           <Moon size={18} aria-hidden="true" />
           <div>
@@ -153,6 +155,7 @@ function StatusPanel() {
             <p>An inactive officer or lead keeps their title but is sitting the quarter out: they are not expected at meetings (unless someone adds them by name), get no strikes, and have view-only access. Each quarter starts as a copy of the last one, so you only change who is different. Only the current quarter can be changed.</p>
           </div>
         </div>
+        </PhoneFold>
 
         <SectionTabs<string> label="Quarter" variant="segmented" value={selected.id} onChange={(id) => { setSelectedId(id); setPicked(new Set()); }} tabs={quarters.map((x) => ({ id: x.id, label: x.id === data.currentId ? `${x.name} (now)` : x.name, count: countIn.get(x.id) ?? 0 }))} />
 

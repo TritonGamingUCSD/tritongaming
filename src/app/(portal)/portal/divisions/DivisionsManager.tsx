@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { deleteStorageUrl } from '@/lib/storage/imageUpload';
 import type { SocialEmbed } from '@/types/database';
 import IconButton from '@/components/ui/IconButton';
+import { RowMenu } from '@/components/ui/RowMenu';
 import styles from './divisions.module.css';
 import Button from '@/components/ui/Button';
 
@@ -138,8 +139,11 @@ export default function DivisionsManager({ divisions: initial }: { divisions: Di
                 <div className={styles.slug}>/divisions/{d.slug}</div>
               </div>
               <div className={styles.actions}>
-                <IconButton kind="edit" href={`/portal/divisions/${d.id}`} label={`Edit ${d.name}`} />
-                <IconButton kind="delete" label={`Delete ${d.name}`} onClick={() => handleDelete(d)} disabled={isBusy} />
+                <RowMenu phoneOnly label={`More for ${d.name}`} items={[{ label: 'Edit', href: `/portal/divisions/${d.id}` }, { label: 'Delete', danger: true, onClick: () => handleDelete(d), disabled: isBusy }]} />
+                <span className={styles.notPhone}>
+                  <IconButton kind="edit" href={`/portal/divisions/${d.id}`} label={`Edit ${d.name}`} />
+                  <IconButton kind="delete" label={`Delete ${d.name}`} onClick={() => handleDelete(d)} disabled={isBusy} />
+                </span>
               </div>
             </div>
           );

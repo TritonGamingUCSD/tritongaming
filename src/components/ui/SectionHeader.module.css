@@ -8,3 +8,8 @@
 .actions { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; flex: none; }
 @media (max-width: 640px) { .actions { width: 100%; } .title { font-size: 1.6rem; } }
 @media (max-width: 640px) { .header { margin-bottom: 0.9rem; } }
+
+/* Phones: the title is enough; the sentence under it is left out to keep the first screen for the page. */
+@media (max-width: 640px) { .sub { display: none; } }
+.phoneFold { display: none; }
+@media (max-width: 640px) { .phoneFold { display: block; margin-top: 0.35rem; } }
