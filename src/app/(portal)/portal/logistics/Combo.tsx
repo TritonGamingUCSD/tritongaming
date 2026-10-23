@@ -48,7 +48,9 @@ function Picker({ options, onPick, onCreate, placeholder, initial = '', disabled
     const place = () => {
       const r = wrap.current?.getBoundingClientRect();
       if (!r) return;
-      const below = window.innerHeight - r.bottom - 8, above = r.top - 8;
+      // On an iPhone the keyboard covers the page without shrinking the window, so room is measured against what is actually visible (the visual viewport).
+      const vv = window.visualViewport, top = vv?.offsetTop ?? 0, seen = top + (vv?.height ?? window.innerHeight);
+      const below = seen - r.bottom - 8, above = r.top - top - 8;
       const up = below < 200 && above > below;
       const room = Math.max(120, Math.min(240, up ? above : below));
       setPos({ position: 'fixed', left: Math.max(8, Math.min(r.left, window.innerWidth - Math.max(r.width, 176) - 8)), width: Math.max(r.width, 176), maxHeight: room, right: 'auto', ...(up ? { bottom: window.innerHeight - r.top + 3, top: 'auto' } : { top: r.bottom + 3 }) });
@@ -56,7 +58,9 @@ function Picker({ options, onPick, onCreate, placeholder, initial = '', disabled
     place();
     window.addEventListener('scroll', place, true);
     window.addEventListener('resize', place);
-    return () => { window.removeEventListener('scroll', place, true); window.removeEventListener('resize', place); };
+    window.visualViewport?.addEventListener('resize', place);
+    window.visualViewport?.addEventListener('scroll', place);
+    return () => { window.removeEventListener('scroll', place, true); window.removeEventListener('resize', place); window.visualViewport?.removeEventListener('resize', place); window.visualViewport?.removeEventListener('scroll', place); };
   }, [open, rows.length]);
 
   useEffect(() => {
@@ -104,7 +108,7 @@ function Picker({ options, onPick, onCreate, placeholder, initial = '', disabled
         <ul id={listId} className={styles.comboList} role="listbox" style={pos ?? { visibility: 'hidden' }}>
           {rows.map((r, i) => (
             <li key={`${r.kind}:${r.value}`} role="option" aria-selected={i === hi} className={`${styles.comboRow} ${i === hi ? styles.comboRowOn : ''} ${r.kind !== 'opt' ? styles.comboRowSpecial : ''}`}
-              onPointerDown={(e) => { e.preventDefault(); void choose(r); }} onMouseEnter={() => setHi(i)}>
+              onMouseDown={(e) => e.preventDefault()} onClick={() => void choose(r)} onMouseEnter={() => setHi(i)}>
               {r.kind === 'add' ? <><Plus size={13} aria-hidden="true" /> Add “{r.value}”</> : r.kind === 'clear' ? 'Clear' : r.value}
             </li>
           ))}

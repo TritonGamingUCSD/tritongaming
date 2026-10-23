@@ -10,6 +10,7 @@ import { EMAIL_COLUMNS, EMAIL_DAILY_LIMIT, wantsEmail, type EmailKind } from './
 import { eventEmailHtml, eventEmailText, type EventForEmail } from './eventEmail';
 import { unsubscribeUrl } from './unsubscribe';
 import { sendOne } from './mailer';
+import { senderForKind } from './senders';
 
 export const BATCH = 40;   // how many emails one request sends (a serverless request is short); the page calls again for the next batch
 
@@ -99,7 +100,7 @@ export async function sendBatch(svc: SupabaseClient, send: { id: string; event_i
   let sent = 0, failed = 0;
   for (const p of slice) {
     const r = renderFor({ event, kind: send.kind, subject: send.subject, note: send.note ?? '', person: { id: p.id, ticketId: p.ticketId }, showCover: send.cover });
-    const res = await sendOne({ to: p.email, subject: send.subject, text: r.text, html: r.html, fromName: 'Triton Gaming Events', unsubscribeUrl: r.unsubscribeUrl });
+    const res = await sendOne({ to: p.email, subject: send.subject, text: r.text, html: r.html, sender: senderForKind(send.kind), unsubscribeUrl: r.unsubscribeUrl });
     if (res.ok) sent++; else failed++;
   }
   const { data: row } = await svc.from('event_emails').select('sent, failed').eq('id', send.id).maybeSingle();

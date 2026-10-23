@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import nodemailer, { type Transporter } from 'nodemailer';
 import { MAX_BLAST, parseRecipients } from './recipients';
 import { emailHtml, emailText, LOGO_CID } from './template';
+import { SENDERS, senderAddress, senderReplyTo, type SenderId } from './senders';
 import { APPLE_ICON_DATA_URI } from '@/lib/site/appleIcon';
 
 // Sending email with nodemailer through a Gmail account (GMAIL_USER and a Google "app password" in GMAIL_APP_PASSWORD, both in .env.local / the host's settings). This is for admin testing:
@@ -63,15 +64,16 @@ export async function sendBlast(recipientsText: string, subject: string, message
 export const emailReplyTo = () => process.env.EMAIL_REPLY_TO || emailFrom();
 
 /** One message to one person with the exact html and text it is given (an event email, built elsewhere). `unsubscribeUrl` adds the one-click opt-out headers mail apps show as "Unsubscribe". Never throws. */
-export async function sendOne(o: { to: string; subject: string; text: string; html: string; fromName?: string; unsubscribeUrl?: string }): Promise<BlastResult> {
+export async function sendOne(o: { to: string; subject: string; text: string; html: string; sender?: SenderId; unsubscribeUrl?: string }): Promise<BlastResult> {
   if (!emailConfigured()) return { to: o.to, ok: false, error: 'Email isn’t set up yet (GMAIL_USER and GMAIL_APP_PASSWORD).' };
   if (process.env.EMAIL_DRY_RUN === '1') return { to: o.to, ok: true };   // a test server sends nothing (the check scripts use it)
   try {
+    const sender = o.sender ?? 'general', from = senderAddress(sender), replyTo = senderReplyTo(sender);
     await getTransport().sendMail({
-      from: `${o.fromName ?? 'Triton Gaming'} <${emailFrom()}>`, replyTo: emailReplyTo(), to: o.to, subject: o.subject, text: o.text, html: o.html,
+      from: `${SENDERS[sender].name} <${from}>`, replyTo, to: o.to, subject: o.subject, text: o.text, html: o.html,
       // A message id on the club's own domain (not the server's machine name), a mailto opt-out beside the link, and the one-click header: all things mail providers look for in real mail.
-      messageId: `<${randomUUID()}@${emailFrom().split('@')[1] || 'tritongaming.org'}>`,
-      ...(o.unsubscribeUrl ? { headers: { 'List-Unsubscribe': `<${o.unsubscribeUrl}>, <mailto:${emailReplyTo()}?subject=Unsubscribe>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' } } : {}),
+      messageId: `<${randomUUID()}@${from.split('@')[1] || 'tritongaming.org'}>`,
+      ...(o.unsubscribeUrl ? { headers: { 'List-Unsubscribe': `<${o.unsubscribeUrl}>, <mailto:${replyTo}?subject=Unsubscribe>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' } } : {}),
       attachments: [{ filename: 'tg-logo.png', content: LOGO, contentType: 'image/png', cid: LOGO_CID }],
     });
     return { to: o.to, ok: true };

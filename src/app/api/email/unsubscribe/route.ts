@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/admin';
+import { logAudit } from '@/lib/notifications/audit';
 import { EMAIL_KINDS } from '@/lib/email/prefs';
 import { verifyUnsubscribeToken } from '@/lib/email/unsubscribe';
 
@@ -19,7 +20,9 @@ export async function POST(request: Request) {
   const who = verifyUnsubscribeToken(t);
   if (!who) return NextResponse.json({ error: 'That link is not valid.' }, { status: 400 });
   const column = EMAIL_KINDS.find((k) => k.id === who.kind)!.column;
-  const { error } = await createServiceClient().from('profiles').update({ [column]: false }).eq('id', who.userId);
+  const svc = createServiceClient();
+  const { error } = await svc.from('profiles').update({ [column]: false }).eq('id', who.userId);
   if (error) return NextResponse.json({ error: 'Couldn’t save that. Try again.' }, { status: 500 });
+  await logAudit(svc, { actorId: who.userId, action: 'email.unsubscribe', entityType: 'email', entityId: who.userId, summary: `Unsubscribed from ${who.kind} emails using the link in an email` }).catch(() => undefined);
   return NextResponse.json({ ok: true });
 }

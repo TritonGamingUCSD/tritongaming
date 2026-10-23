@@ -226,6 +226,7 @@
   .grid { grid-template-columns: repeat(auto-fit, minmax(140px, 160px)); gap: 0.75rem; }
   .card { padding: 1.125rem 1rem; min-height: 125px; }
   .panel { padding: 1.125rem 1rem 2rem; }
+  .cardLabel { font-size: 0.8rem; }
 }
 
 /* ── Desktop shell ─────────────────────────────────────

@@ -63,6 +63,7 @@
 .comboInput::placeholder { color: rgba(var(--pp-ink-rgb), 0.5); }
 .comboCompact .comboInput { padding: 0.3rem 0.5rem; min-height: 32px; font-size: 0.86rem; }
 .comboList { position: absolute; z-index: 40; left: 0; right: 0; top: calc(100% + 3px); margin: 0; padding: 0.25rem; list-style: none; max-height: 15rem; overflow-y: auto; min-width: 11rem; border-radius: 8px; background: var(--pp-card); border: 1px solid rgba(var(--pp-ink-rgb), 0.4); box-shadow: 0 8px 22px rgba(var(--pp-ink-rgb), 0.2); }
+.comboList { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
 .comboRow { display: flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.6rem; border-radius: 5px; font-size: 0.88rem; color: var(--pp-ink); cursor: pointer; overflow-wrap: anywhere; }
 .comboRowOn { background: rgba(var(--pp-ink-rgb), 0.09); }
 .comboRowSpecial { font-weight: 600; }

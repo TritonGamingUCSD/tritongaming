@@ -63,11 +63,18 @@ try {
   t.ok('a made-up opt-out link does nothing', (await a.call('POST', `/api/email/unsubscribe?t=${encodeURIComponent('abc.def')}`)).s === 400);
   const opt = await fetch(`${process.env.BASE_URL}/api/email/unsubscribe?t=${encodeURIComponent(token(a.id, 'reminders'))}`, { method: 'POST' });
   t.ok('the opt-out link works without signing in', opt.status === 200 && (await svc.from('profiles').select('email_reminders').eq('id', a.id).single()).data.email_reminders === false);
+  const actions = async (ids) => ((await svc.from('audit_log').select('action').in('actor_id', ids)).data ?? []).map((r) => r.action);
+  const logged = await actions([admin.id, a.id]);
+  t.ok('every email action is in the audit log', ['event_email.test', 'event_email.send', 'event_email.finish', 'email.preference', 'email.unsubscribe'].every((x) => logged.includes(x)), JSON.stringify(logged));
 } catch (e) {
   console.log('FAIL (setup)', e.message); t.fail();
 } finally {
   if (eventId) await svc.from('events').delete().eq('id', eventId);
   await svc.from('capability_grants').delete().eq('capability', 'send_event_emails').is('group_id', null).in('user_id', (await svc.from('profiles').select('id').like('display_name', 'ZZ Mtg%')).data?.map((p) => p.id) ?? []);
+  // the log lines this run wrote (by the ZZ people, or about the ZZ event) do not stay in the real audit log
+  const ids = (await svc.from('profiles').select('id').like('display_name', 'ZZ Mtg%')).data?.map((p) => p.id) ?? [];
+  if (ids.length) await svc.from('audit_log').delete().in('actor_id', ids);
+  if (eventId) await svc.from('audit_log').delete().eq('entity_id', eventId);
   await cleanup();
 }
 process.exit(t.result());

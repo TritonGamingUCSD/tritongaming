@@ -3,7 +3,8 @@ import { APPLE_ICON_DATA_URI } from '@/lib/site/appleIcon';
 import { logAudit } from '@/lib/notifications/audit';
 import { EMAIL_DAILY_LIMIT, isEmailKind, type EmailKind } from '@/lib/email/prefs';
 import { eventEmailSubject } from '@/lib/email/eventEmail';
-import { emailConfigured, emailFrom, emailReplyTo, sendOne } from '@/lib/email/mailer';
+import { senderAddress, senderForKind, senderReplyTo } from '@/lib/email/senders';
+import { emailConfigured, sendOne } from '@/lib/email/mailer';
 import { audienceFor, authorizeEventEmail, loadEvent, quotaLeft, renderFor, sentLastDay } from '@/lib/email/eventEmailServer';
 
 export const dynamic = 'force-dynamic';
@@ -24,7 +25,7 @@ export async function GET(request: Request) {
   const eventId = params.get('event_id');
   if (!eventId) {
     const { data } = await svc.from('events').select('id, title, start_date, is_published').order('start_date', { ascending: false }).limit(60);
-    return NextResponse.json({ configured: emailConfigured(), from: emailFrom(), replyTo: emailReplyTo(), limit: EMAIL_DAILY_LIMIT, events: data ?? [] });
+    return NextResponse.json({ configured: emailConfigured(), from: senderAddress('events'), replyTo: senderReplyTo('events'), limit: EMAIL_DAILY_LIMIT, events: data ?? [] });
   }
   if (!UUID.test(eventId)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
   const kind: EmailKind = isEmailKind(params.get('kind')) ? (params.get('kind') as EmailKind) : 'reminders';
@@ -70,9 +71,10 @@ export async function POST(request: Request) {
     const to = au.user?.email;
     if (!to) return NextResponse.json({ error: 'Your account has no email address.' }, { status: 400 });
     const r = renderFor({ event, kind, subject: `[TEST] ${subject}`, note, person: { id: user.id, ticketId: null }, test: true, showCover: cover });
-    const res = await sendOne({ to, subject: `[TEST] ${subject}`, text: r.text, html: r.html, fromName: 'Triton Gaming Events', unsubscribeUrl: r.unsubscribeUrl });
+    const res = await sendOne({ to, subject: `[TEST] ${subject}`, text: r.text, html: r.html, sender: senderForKind(kind), unsubscribeUrl: r.unsubscribeUrl });
     // A test is a real email through the same mailbox, so it counts toward the day's limit (it is kept out of the history).
     await svc.from('event_emails').insert({ event_id: eventId, kind, subject: `[TEST] ${subject}`, cover, sent_by: user.id, test: true, recipients: 1, sent: res.ok ? 1 : 0, failed: res.ok ? 0 : 1 });
+    await logAudit(svc, { actorId: user.id, action: 'event_email.test', entityType: 'event', entityId: eventId, summary: `Sent a test ${kind === 'reminders' ? 'reminder' : 'update'} email for ${event.title} to themselves${res.ok ? '' : ' (it failed)'}` }).catch(() => undefined);
     return res.ok ? NextResponse.json({ ok: true, to }) : NextResponse.json({ error: res.error ?? 'It couldn’t be sent.' }, { status: 502 });
   }
 

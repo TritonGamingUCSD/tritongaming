@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logAudit } from '@/lib/notifications/audit';
 import { isEmailKind, type EmailKind } from '@/lib/email/prefs';
 import { authorizeEventEmail, sendBatch } from '@/lib/email/eventEmailServer';
 
@@ -20,5 +21,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (from >= (row.recipients as number)) return NextResponse.json({ done: true, next: from, total: row.recipients, sent: 0, failed: 0 });
   if (!isEmailKind(row.kind)) return NextResponse.json({ error: 'Bad kind.' }, { status: 400 });
   const r = await sendBatch(a.svc, { id, event_id: row.event_id as string, kind: row.kind as EmailKind, subject: row.subject as string, note: row.note as string | null, cover: row.cover !== false }, from);
-  return 'error' in r ? NextResponse.json({ error: r.error }, { status: 404 }) : NextResponse.json(r);
+  if ('error' in r) return NextResponse.json({ error: r.error }, { status: 404 });
+  if (r.done) {
+    const { data: end } = await a.svc.from('event_emails').select('sent, failed, recipients').eq('id', id).maybeSingle();
+    await logAudit(a.svc, { actorId: a.user.id, action: 'event_email.finish', entityType: 'event', entityId: row.event_id as string, summary: `Finished sending “${String(row.subject).slice(0, 80)}”: ${end?.sent ?? '?'} sent, ${end?.failed ?? 0} failed of ${end?.recipients ?? row.recipients}` }).catch(() => undefined);
+  }
+  return NextResponse.json(r);
 }
