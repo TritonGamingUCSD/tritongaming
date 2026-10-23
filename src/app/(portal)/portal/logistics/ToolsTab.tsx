@@ -7,7 +7,7 @@ import { ArrowDown, ArrowUp } from 'lucide-react';
 import { APPLIES_LABELS, type Applies } from '@/lib/logistics/plans';
 import { KIND_HINTS, KIND_LABELS, type OptionKind } from '@/lib/logistics/constants';
 import SponsorsTab from './SponsorsTab';
-import { NumberCell, PickCell } from './Cells';
+import { NumberCell, PickCell, TextCell } from './Cells';
 import type { ToolsSection } from './logisticsRoute';
 import type { Catalog, LogisticsApi, OptionItem } from './useLogistics';
 import styles from './logistics.module.css';
@@ -55,15 +55,9 @@ function ListEditor({ kind, items, api, extra }: { kind: OptionKind; items: Opti
 }
 
 function OptionRow({ kind, o, api }: { kind: OptionKind; o: OptionItem; api: LogisticsApi }) {
-  const [name, setName] = useState(o.value);
-  const rename = async () => {
-    const v = name.trim();
-    if (!v || v === o.value) { setName(o.value); return; }
-    if (!(await api.changeOption(o.id, { value: v }))) setName(o.value);
-  };
   return (
     <li className={styles.optRow}>
-      <input className={styles.optInput} value={name} maxLength={80} onChange={(e) => setName(e.target.value)} onBlur={rename} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }} aria-label={`Rename ${o.value}`} />
+      <span className={styles.optName}><TextCell value={o.value} canEdit strong onSave={(v) => { if (v) void api.changeOption(o.id, { value: v }); }} /></span>
       {kind === 'type' && (
         <>
         <label className={styles.countedBox} title="Counted: one row with an estimated quantity instead of one row per item">
@@ -100,15 +94,13 @@ function StepsEditor({ api, items, kind }: { api: LogisticsApi; items: OptionIte
 }
 
 function StepRow({ o, kind, first, last, api }: { o: OptionItem; kind: 'step' | 'prize_step'; first: boolean; last: boolean; api: LogisticsApi }) {
-  const [name, setName] = useState(o.value);
-  const rename = async () => { const v = name.trim(); if (!v || v === o.value) { setName(o.value); return; } if (!(await api.changeOption(o.id, { value: v }))) setName(o.value); };
   return (
     <li className={styles.stepRow}>
       <div className={styles.stepMove}>
         <button type="button" className={styles.iconBtn} aria-label={`Move ${o.value} up`} disabled={first} onClick={() => void api.changeOption(o.id, { move: 'up' })}><ArrowUp size={14} aria-hidden="true" /></button>
         <button type="button" className={styles.iconBtn} aria-label={`Move ${o.value} down`} disabled={last} onClick={() => void api.changeOption(o.id, { move: 'down' })}><ArrowDown size={14} aria-hidden="true" /></button>
       </div>
-      <input className={styles.optInput} value={name} maxLength={80} onChange={(e) => setName(e.target.value)} onBlur={rename} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }} aria-label={`Rename ${o.value}`} />
+      <span className={styles.optName}><TextCell value={o.value} canEdit strong onSave={(v) => { if (v) void api.changeOption(o.id, { value: v }); }} /></span>
       {kind === 'prize_step' ? <>
         <label className={styles.countedBox}><input type="checkbox" checked={!!o.gives} onChange={(e) => void api.changeOption(o.id, { gives: e.target.checked })} /> Gives the prize out</label>
         <label className={styles.countedBox}><input type="checkbox" checked={!!o.leftover} onChange={(e) => void api.changeOption(o.id, { leftover: e.target.checked })} /> Only what wasn’t given out</label>
@@ -140,14 +132,12 @@ function BundlesEditor({ api, items, types }: { api: LogisticsApi; items: Option
 }
 
 function BundleCard({ o, api, types }: { o: OptionItem; api: LogisticsApi; types: string[] }) {
-  const [name, setName] = useState(o.value);
   const list = o.items ?? [];
-  const rename = async () => { const v = name.trim(); if (!v || v === o.value) { setName(o.value); return; } if (!(await api.changeOption(o.id, { value: v }))) setName(o.value); };
   const save = (items: { type: string; qty: number }[]) => { if (items.length) void api.changeOption(o.id, { items }); };
   return (
     <li className={styles.bundleCard}>
       <div className={styles.optRow}>
-        <input className={styles.optInput} value={name} maxLength={80} onChange={(e) => setName(e.target.value)} onBlur={rename} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }} aria-label={`Rename ${o.value}`} />
+        <span className={styles.optName}><TextCell value={o.value} canEdit strong onSave={(v) => { if (v) void api.changeOption(o.id, { value: v }); }} /></span>
         <button type="button" className={styles.iconBtn} aria-label={`Delete ${o.value}`} onClick={() => void api.deleteOption('bundle', o.id)}><X size={14} aria-hidden="true" /></button>
       </div>
       <ul className={styles.bundleItems}>

@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Pencil, Plus, Search, TriangleAlert } from 'lucide-react';
+import { Plus, Search, TriangleAlert } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Field';
 import { CONDITIONS, UNUSABLE, conditionLabel } from '@/lib/logistics/constants';
 import { quantityText, tagKey, type Device, type DevicePatch } from '@/lib/logistics/devices';
 import { Combo } from './Combo';
+import { RowMenu } from './RowMenu';
 import { PickCell, TextCell } from './Cells';
 import DeviceDialog from './DeviceDialog';
 import type { Catalog, LogisticsApi } from './useLogistics';
@@ -48,7 +49,7 @@ function KitCell({ d, counted }: { d: Device; counted: boolean }) {
   const miss = missingCount(d);
   if (counted) return <span className={styles.qty}>{quantityText(d)}</span>;
   if (miss) return <span className={`${styles.badge} ${styles.bad}`}>{miss} missing</span>;
-  return <span className={styles.dim}>{d.kit.length ? `${d.kit.length} ${d.kit.length === 1 ? 'part' : 'parts'}` : '—'}</span>;
+  return <span className={styles.dim}>{d.kit.length ? `${d.kit.length} ${d.kit.length === 1 ? 'part' : 'parts'}` : '–'}</span>;
 }
 
 export default function EquipmentTab({ api, data }: { api: LogisticsApi; data: Catalog }) {
@@ -114,7 +115,7 @@ export default function EquipmentTab({ api, data }: { api: LogisticsApi; data: C
                   <td><PickCell value={d.tier} options={data.lists.tier.map((t) => t.value)} canEdit={canEdit} onSave={(v) => save(d, { tier: v })} onCreate={(v) => api.addOption('tier', v)} /></td>
                   <td><ConditionCell d={d} canEdit={canEdit} onSave={(c) => save(d, { condition: c })} /></td>
                   <td><KitCell d={d} counted={!!data.lists.type.find((t) => t.value === d.type)?.counted} /></td>
-                  <td><button type="button" className={styles.iconBtn} onClick={() => open(d)} aria-label={`${canEdit ? 'Edit' : 'Open'} ${d.tag ?? d.type}`}><Pencil size={14} aria-hidden="true" /></button></td>
+                  <td><RowMenu label={`More for ${d.tag ?? d.type}`} items={[{ label: canEdit ? 'Edit' : 'Details', onClick: () => open(d) }]} /></td>
                 </tr>
               ))}
             </tbody>

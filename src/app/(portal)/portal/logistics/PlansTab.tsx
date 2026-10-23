@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { MoreHorizontal } from 'lucide-react';
+import { RowMenu } from './RowMenu';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import { EditPlanDialog } from './PlanDialogs';
 
@@ -84,16 +84,7 @@ function PlanList({ data, list, onOpen }: { data: Catalog; list: ReturnType<type
                   </span>
                   )}
                 </button>
-                {data.canManage && (
-                  <details className={`${styles.menu} ${styles.eventMenu}`}>
-                    <summary aria-label={`More for ${p.name}`} title="More"><MoreHorizontal size={16} aria-hidden="true" /></summary>
-                    <div className={styles.menuList}>
-                      <button type="button" onClick={() => setEditing(p)}>Edit Name And Dates</button>
-                      <button type="button" onClick={() => void update(p.id, { status: p.status === 'closed' ? 'draft' : 'closed' })}>{p.status === 'closed' ? 'Reopen Plan' : 'Close Plan'}</button>
-                      <button type="button" className={styles.menuDanger} onClick={() => void removePlan(p)}>Remove Plan</button>
-                    </div>
-                  </details>
-                )}
+                {data.canManage && <RowMenu className={styles.eventMenu} label={`More for ${p.name}`} items={[{ label: 'Edit Name And Dates', onClick: () => setEditing(p) }, { label: p.status === 'closed' ? 'Reopen Plan' : 'Close Plan', onClick: () => void update(p.id, { status: p.status === 'closed' ? 'draft' : 'closed' }) }, { label: 'Remove Plan', danger: true, onClick: () => void removePlan(p) }]} />}
               </li>
             );
           })}

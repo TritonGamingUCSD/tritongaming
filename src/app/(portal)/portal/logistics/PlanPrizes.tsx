@@ -1,6 +1,6 @@
 'use client';
 
-import { MoreHorizontal, Trash2 } from 'lucide-react';
+import { RowMenu } from './RowMenu';
 import { useMemo, useState } from 'react';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
@@ -70,16 +70,7 @@ export default function PlanPrizes({ plan, canManage, closed }: { plan: PlanApi;
                 </div>
                 <div className={styles.teamLine}>
                   <span className={styles.dTeamSub}>{team ? `For ${team}` : 'Not linked to a team'}</span>
-                  {manage && (
-                    <details className={`${styles.menu} ${styles.teamMenu}`}>
-                      <summary aria-label={`More for ${p.name}`} title="More"><MoreHorizontal size={16} aria-hidden="true" /></summary>
-                      <div className={styles.menuList}>
-                        <button type="button" onClick={() => setAdding(p)}>Add Prizes</button>
-                        <button type="button" onClick={() => setPoolDialog({ pool: p })}>Rename Or Link To A Team</button>
-                        <button type="button" className={styles.menuDanger} onClick={() => void removePool(p)}>Remove Pool</button>
-                      </div>
-                    </details>
-                  )}
+                  {manage && <RowMenu className={styles.teamMenu} label={`More for ${p.name}`} items={[{ label: 'Add Prizes', onClick: () => setAdding(p) }, { label: 'Rename Or Link To A Team', onClick: () => setPoolDialog({ pool: p }) }, { label: 'Remove Pool', danger: true, onClick: () => void removePool(p) }]} />}
                 </div>
               </div>
               <div className={styles.dHeads}>
@@ -145,7 +136,7 @@ function PrizeLine({ line, steps, count, given, plan, manage, closed }: { line: 
         })}
       </div>
       <div className={styles.dTools}>
-        {manage && <button type="button" className={styles.iconBtn} title="Remove" onClick={() => void plan.act('/prizes', 'DELETE', { line_id: line.id })} aria-label={`Remove ${p.name} from this pool`}><Trash2 size={15} aria-hidden="true" /></button>}
+        {manage && <RowMenu label={`More for ${p.name}`} items={[{ label: 'Remove From Pool', danger: true, onClick: () => void plan.act('/prizes', 'DELETE', { line_id: line.id }) }]} />}
       </div>
     </div>
   );

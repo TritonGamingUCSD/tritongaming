@@ -345,7 +345,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
           <button type="button" className={styles.back} onClick={onBack} aria-label="All events"><ArrowLeft size={15} aria-hidden="true" /> <span className={styles.backText}>All Events</span></button>
           <div className={styles.dayHeading}><b className={styles.dayTitle}>{p.name}</b><span className={styles.muted}>{range(p.starts_on, p.ends_on)}</span></div>
         </div>
-        <SectionTabs<'devices' | 'prizing'> variant="segmented" label="Devices or prizing" value={page === 'requests-prizing' ? 'prizing' : 'devices'} onChange={(g) => onPage(g === 'prizing' ? 'requests-prizing' : 'requests')} tabs={[{ id: 'devices', label: 'Devices' }, { id: 'prizing', label: 'Prizing' }]} />
+        <SectionTabs<'devices' | 'prizing'> variant="segmented" label="Devices or prizing" value={page === 'requests-prizing' ? 'prizing' : 'devices'} onChange={(g) => onPage(g === 'prizing' ? 'requests-prizing' : 'requests')} tabs={[{ id: 'devices', label: 'Devices', count: rows.length }, { id: 'prizing', label: 'Prizing', count: detail.prizes.lines.length }]} />
         <RequestsTab key={page === 'requests-prizing' ? 'p' : 'd'} kind={page === 'requests-prizing' ? 'prizes' : 'devices'} plan={plan} api={catalog} data={data} />
       </div>
     );
@@ -363,7 +363,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
         </div>
         <div className={styles.pageBar}>
         <SectionTabs<'devices' | 'prizing'> variant="segmented" label="Devices or prizing" value={isPrizing ? 'prizing' : 'devices'}
-          onChange={(g) => onPage(g === 'prizing' ? 'requests-prizing' : 'requests')} tabs={[{ id: 'devices', label: 'Devices' }, { id: 'prizing', label: 'Prizing' }]} />
+          onChange={(g) => onPage(g === 'prizing' ? 'requests-prizing' : 'requests')} tabs={[{ id: 'devices', label: 'Devices', count: rows.length }, { id: 'prizing', label: 'Prizing', count: detail.prizes.lines.length }]} />
         <SectionTabs<string> variant="segmented" label="Event pages" value={page === 'requests' || page === 'requests-prizing' ? page : `${day && (page === 'device' || page === 'prizing') ? 'day' : 'alloc'}-${page}`}
           onChange={(v) => v === 'requests' || v === 'requests-prizing' ? onPage(v) : onPage(v.replace(/^(day|alloc)-/, '') as EventPage, v.startsWith('day-'))} tabs={isPrizing ? [
             { id: 'requests-prizing', label: 'Requests' },

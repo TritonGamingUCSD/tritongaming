@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeftRight, Pencil } from 'lucide-react';
+import { RowMenu } from './RowMenu';
 import { useMemo, useState } from 'react';
 import Button from '@/components/ui/Button';
 import { suggestPrizes } from '@/lib/logistics/prizes';
@@ -92,7 +92,7 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
                     <b>{pool.name}</b>
                     {pool.station_id && <span className={styles.dim}>{d.stations.find((s) => s.id === pool.station_id)?.name}</span>}
                   </div>
-                  {manage && <button type="button" className={styles.iconBtn} title="Edit" aria-label={`Edit ${pool.name}`} onClick={() => setPoolDialog(pool)}><Pencil size={15} aria-hidden="true" /></button>}
+                  {manage && <RowMenu label={`More for ${pool.name}`} items={[{ label: 'Edit', onClick: () => setPoolDialog(pool) }]} />}
                 </header>
                 {pool.target_qty !== null && pool.target_total !== null ? (
                   <div className={styles.poolGoal}>
@@ -125,7 +125,7 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
                                 <NumberCell value={l.quantity} canEdit={manage && !!p} nullable label={`${l.prize.name} for ${pool.name}`} onSave={(n) => p && void setQty(pool.id, p, n ?? 0)} />
                                 <span className={styles.poolLineEnd}>
                                   <span className={`${styles.leftChip} ${l.prize.left < 0 ? styles.leftBad : l.prize.left === 0 ? styles.leftZero : styles.leftOk}`}>{l.prize.left} left</span>
-                                  {manage && p && <button type="button" className={styles.iconBtn} title="Swap for a similar prize" aria-label={`Swap ${l.prize.name} for a similar prize`} onClick={() => setSwapLine(l.id)}><ArrowLeftRight size={14} aria-hidden="true" /></button>}
+                                  {manage && p && <RowMenu label={`More for ${l.prize.name}`} items={[{ label: 'Swap For A Similar Prize', onClick: () => setSwapLine(l.id) }]} />}
                                 </span>
                               </li>
                             );

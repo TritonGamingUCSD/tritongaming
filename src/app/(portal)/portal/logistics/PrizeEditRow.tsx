@@ -23,7 +23,7 @@ export default function PrizeEditRow({ p, prizes, api, data, canEdit, where, spo
   return (
     <div className={`${rowClass} ${p.left < 0 ? styles.lineBad : ''}`} style={gridStyle(cols)}>
       {sponsorFirst ? <>{sponsorCell}{nameCell}</> : <>{nameCell}{sponsorCell}</>}
-      <span data-label="Size"><PickCell value={p.size} shown={p.size ?? 'Big'} options={data.lists.prize_size.map((s) => s.value)} canEdit={canEdit} onSave={(v) => save({ size: v })} onCreate={(v) => api.addOption('prize_size', v)} /></span>
+      <span data-label="Size"><PickCell value={p.size} placeholder="Size" options={data.lists.prize_size.map((s) => s.value)} canEdit={canEdit} onSave={(v) => save({ size: v })} onCreate={(v) => api.addOption('prize_size', v)} /></span>
       <span data-label="Type"><TextCell value={p.type} canEdit={canEdit} placeholder="Add" onSave={(v) => save({ type: v })} /></span>
       <span data-label="Price"><NumberCell money nullable step={0.01} value={p.price} canEdit={canEdit} label={`Price of ${p.name}`} onSave={(v) => save({ price: v })} /></span>
       <span data-label="In stock"><NumberCell value={p.quantity} canEdit={canEdit} label={`How many ${p.name}`} onSave={(v) => { if (v !== null) save({ quantity: v }); }} /></span>

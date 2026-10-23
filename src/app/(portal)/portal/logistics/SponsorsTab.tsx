@@ -1,6 +1,6 @@
 'use client';
 
-import { Pencil } from 'lucide-react';
+import { RowMenu } from './RowMenu';
 import { useState } from 'react';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
@@ -29,7 +29,7 @@ export default function SponsorsTab({ api, data }: { api: LogisticsApi; data: Ca
               <span className={styles.prizeName}><b>{s.name}</b></span>
               <span data-label="Contact">{s.contact ?? <span className={styles.dim}>–</span>}</span>
               <span data-label="Notes">{s.notes ?? <span className={styles.dim}>–</span>}</span>
-              <span className={styles.prizeTools}>{data.canManage && <button type="button" className={styles.iconBtn} title="Edit" onClick={() => setEditing(s)} aria-label={`Edit ${s.name}`}><Pencil size={15} aria-hidden="true" /></button>}</span>
+              <span className={styles.prizeTools}>{data.canManage && <RowMenu label={`More for ${s.name}`} items={[{ label: 'Edit', onClick: () => setEditing(s) }]} />}</span>
             </div>
           ))}
         </div>

@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowLeftRight, Check, Pencil, Trash2 } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { conditionLabel, UNUSABLE } from '@/lib/logistics/constants';
 import { rowKind, skippedSteps, stepAppliesTo, type Problem, type StepDef } from '@/lib/logistics/plans';
 import { Suggest } from './Combo';
+import { RowMenu } from './RowMenu';
 import { interactive } from './interactive';
 import { units, type Line, type Row, type Unit } from './planRows';
 import type { Slim, Station, usePlan } from './usePlans';
@@ -65,6 +66,7 @@ const rowKind0 = (l: Line) => (l.rows[0].kind === 'slot' ? '' : l.rows[0].tag ??
 function DeviceLine({ line, ctx, backup, nested }: { line: Line; ctx: SheetCtx; backup?: boolean; nested?: boolean }) {
   const { api, canManage, closed, stations, problems, onSwap, onBorrowed } = ctx;
   const [tag, setTag] = useState(() => (rowKind0(line)));
+  const [editingTag, setEditingTag] = useState(false);
   const [busy, setBusy] = useState(false);
   const r = line.rows[0];
   const manage = canManage && !closed;
@@ -102,7 +104,9 @@ function DeviceLine({ line, ctx, backup, nested }: { line: Line; ctx: SheetCtx; 
         {r.kind === 'slot' && r.label && <span className={styles.dWhere}>{r.label}</span>}
       </div>
       <div className={styles.dNotes}>
-        {alloc && <Suggest className={`${styles.assignInput} ${empty ? styles.assignEmpty : ''}`} value={tag} onChange={setTag} options={ctx.ids(r.type)} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }} onBlur={() => void commit()} placeholder="Device ID" aria-label={`Device ID for ${r.type}`} autoCapitalize="characters" autoComplete="off" disabled={busy} />}
+        {alloc && (editingTag
+          ? <Suggest autoFocus className={styles.assignInput} value={tag} onChange={setTag} options={ctx.ids(r.type)} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); else if (e.key === 'Escape') { setTag(r.tag ?? ''); setEditingTag(false); } }} onBlur={() => { setEditingTag(false); void commit(); }} placeholder="Device ID" aria-label={`Device ID for ${r.type}`} autoCapitalize="characters" disabled={busy} />
+          : <button type="button" className={`${styles.assignBtn} ${empty ? styles.assignEmpty : ''}`} onClick={() => setEditingTag(true)} disabled={busy} aria-label={`Device ID for ${r.type}. Change`}>{tag || 'Device ID'}</button>)}
         {r.games_needed.length > 0 && <span className={`${styles.gameChip} ${missing.length ? styles.gameMissing : styles.gameOk}`} title={missing.length ? `Not installed yet: ${missing.join(', ')}` : r.kind === 'slot' ? 'Needed' : 'Installed'}>{r.games_needed.join(', ')}{missing.length ? ' · not installed' : ''}</span>}
         {missing.length > 0 && manage && r.kind !== 'slot' && <button type="button" className={styles.miniTextBtn} disabled={ctx.busy} title="Mark the needed games as installed" aria-label={`Mark ${label(r)} installed`} onClick={() => ctx.onInstalled([r])}>Mark installed</button>}
         {dead && <span className={`${styles.badge} ${styles.bad}`}>{conditionLabel(r.condition!)}</span>}
@@ -113,11 +117,13 @@ function DeviceLine({ line, ctx, backup, nested }: { line: Line; ctx: SheetCtx; 
       </div>
       <Cells rows={line.rows} ctx={ctx} readOnly={backup} />
       <div className={styles.dTools}>
-        {r.kind === 'club' && !ctx.day && <button type="button" className={styles.iconBtn} title={canManage ? 'Edit device' : 'Details'} aria-label={`${canManage ? 'Edit' : 'Details for'} ${label(r)}`} onClick={() => ctx.onEditDevice(r)}><Pencil size={15} aria-hidden="true" /></button>}
-        {manage && (r.kind === 'sponsor' || r.kind === 'officer') && <button type="button" className={styles.iconBtn} title="Edit borrowed device" aria-label={`Edit ${label(r)}`} onClick={() => onBorrowed(r)}><Pencil size={15} aria-hidden="true" /></button>}
-        {ctx.manager && !closed && !backup && r.kind !== 'slot' && <button type="button" className={styles.iconBtn} title="Swap" aria-label={`Swap ${label(r)}`} onClick={() => onSwap(r)}><ArrowLeftRight size={15} aria-hidden="true" /></button>}
-        {manage && backup && r.swap_reason && r.kind !== 'slot' && <button type="button" className={styles.miniTextBtn} title="Put it back in the row it left; the replacement is released" onClick={() => void api.unswap({ id: r.id, kind: r.kind as 'club' | 'sponsor' | 'officer' })}>Undo Swap</button>}
-        {manage && !fromRequest && !(backup && r.swap_reason) && r.kind !== 'slot' && <button type="button" className={styles.iconBtn} title="Remove from plan" aria-label={`Remove ${label(r)} from plan`} onClick={() => void takeOut()}><Trash2 size={15} aria-hidden="true" /></button>}
+        <RowMenu label={`More for ${label(r)}`} items={[
+          r.kind === 'club' && !ctx.day && { label: canManage ? 'Edit Device' : 'Details', onClick: () => ctx.onEditDevice(r) },
+          manage && (r.kind === 'sponsor' || r.kind === 'officer') && { label: 'Edit Borrowed Device', onClick: () => onBorrowed(r) },
+          ctx.manager && !closed && !backup && r.kind !== 'slot' && { label: 'Swap', onClick: () => onSwap(r) },
+          manage && backup && !!r.swap_reason && r.kind !== 'slot' && { label: 'Undo Swap', onClick: () => void api.unswap({ id: r.id, kind: r.kind as 'club' | 'sponsor' | 'officer' }) },
+          manage && !fromRequest && !(backup && r.swap_reason) && r.kind !== 'slot' && { label: 'Remove From Plan', danger: true, onClick: () => void takeOut() },
+        ]} />
       </div>
     </div>
   );

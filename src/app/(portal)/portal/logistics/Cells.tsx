@@ -18,19 +18,19 @@ export function TextCell({ value, canEdit, onSave, placeholder, strong }: { valu
   const [on, setOn] = useState(false);
   const [text, setText] = useState(value ?? '');
   const [shown, hold] = useHeld(value);
-  if (!canEdit) return <span className={strong ? styles.strong : undefined}>{shown || <span className={styles.dim}>{placeholder ?? '—'}</span>}</span>;
-  if (!on) return <button type="button" className={`${styles.editCell} ${strong ? styles.strong : ''}`} onClick={() => { setText(shown ?? ''); setOn(true); }}>{shown || <span className={styles.dim}>{placeholder ?? 'Add'}</span>}</button>;
+  if (!canEdit) return <span className={strong ? styles.strong : undefined}>{shown || <span className={styles.dim}>{placeholder ?? '–'}</span>}</span>;
+  if (!on) return <button type="button" className={`${styles.editCell} ${strong ? styles.strong : ''}`} onClick={() => { setText(shown ?? ''); setOn(true); }}>{shown || <span className={styles.editHint}>{placeholder ?? 'Add'}</span>}</button>;
   const done = (save: boolean) => { setOn(false); if (save && text.trim() !== (shown ?? '')) { hold(text.trim() || null); onSave(text.trim()); } };
   return <input className={styles.cellInput} value={text} autoFocus onFocus={(e) => e.target.select()} maxLength={120} onChange={(e) => setText(e.target.value)} onBlur={() => done(true)} onKeyDown={(e) => { if (e.key === 'Enter') done(true); else if (e.key === 'Escape') done(false); }} />;
 }
 
-export function PickCell({ value, options, canEdit, onSave, onCreate, shown, clearable = true, locate }: { locate?: boolean; value: string | null; options: string[]; canEdit: boolean; onSave: (v: string | null) => void; onCreate?: (v: string) => Promise<string | null>; shown?: string; clearable?: boolean }) {
+export function PickCell({ value, options, canEdit, onSave, onCreate, shown, clearable = true, locate, placeholder }: { placeholder?: string; locate?: boolean; value: string | null; options: string[]; canEdit: boolean; onSave: (v: string | null) => void; onCreate?: (v: string) => Promise<string | null>; shown?: string; clearable?: boolean }) {
   const [on, setOn] = useState(false);
   const [held, hold] = useHeld<string | null>(value);
   const label = held !== value ? held : shown ?? value;
   const none = locate ? <span className={styles.notLocated}>Not located</span> : null;
-  if (!canEdit) return <span>{label ?? none ?? <span className={styles.dim}>—</span>}</span>;
-  if (!on) return <button type="button" className={styles.editCell} onClick={() => setOn(true)}>{label ?? none ?? <span className={styles.dim}>Choose</span>}</button>;
+  if (!canEdit) return <span>{label ?? none ?? <span className={styles.dim}>–</span>}</span>;
+  if (!on) return <button type="button" className={styles.editCell} onClick={() => setOn(true)}>{label ?? none ?? <span className={styles.editHint}>{placeholder ?? 'Choose'}</span>}</button>;
   return <Combo value={label ?? null} options={options} onChange={(v) => { if (v !== null) hold(v); onSave(v); }} onCreate={onCreate} compact autoFocus clearable={clearable} onClose={() => setOn(false)} />;
 }
 
@@ -42,7 +42,7 @@ export function NumberCell({ value, canEdit, onSave, label, step = 1, money, nul
   const [num, hold] = useHeld(value);
   const shown = num === null ? null : `${money ? '$' : ''}${money && !Number.isInteger(num) ? num.toFixed(2) : num}`;
   if (!canEdit) return <span>{shown ?? <span className={styles.dim}>–</span>}</span>;
-  if (!on) return <button type="button" className={styles.editCell} aria-label={`${label}. Change`} onClick={() => { setText(num === null ? '' : String(num)); setOn(true); }}>{shown ?? <span className={styles.dim}>Add</span>}</button>;
+  if (!on) return <button type="button" className={styles.editCell} aria-label={`${label}. Change`} onClick={() => { setText(num === null ? '' : String(num)); setOn(true); }}>{shown ?? <span className={styles.editHint}>Add</span>}</button>;
   const done = (save: boolean) => {
     setOn(false);
     if (!save) return;
@@ -60,7 +60,7 @@ export function ListCell({ values, options, canEdit, onSave, label, placeholder 
   if (!on) {
     const text = shownValues.join(', ');
     return canEdit
-      ? <button type="button" className={styles.editCell} aria-label={`${label}. Change`} onClick={() => setOn(true)}>{text || <span className={styles.dim}>{placeholder}</span>}</button>
+      ? <button type="button" className={styles.editCell} aria-label={`${label}. Change`} onClick={() => setOn(true)}>{text || <span className={styles.editHint}>{placeholder}</span>}</button>
       : <span>{text || <span className={styles.dim}>–</span>}</span>;
   }
   return (

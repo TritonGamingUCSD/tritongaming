@@ -1,6 +1,6 @@
 'use client';
 
-import { Pencil, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
@@ -12,6 +12,7 @@ import { PickCell, TextCell } from './Cells';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import { canEditRequest, prizeTotal, REQUEST_STATUSES, requestSummary, STATUS_LABELS, type DeviceItem, type PrizeItem, type RequestKind, type RequestStatus } from '@/lib/logistics/requests';
 import { MultiCombo, Combo, Suggest } from './Combo';
+import { RowMenu } from './RowMenu';
 import type { PlanApi } from './usePlans';
 import type { Catalog, LogisticsApi } from './useLogistics';
 import { GridHead, REQUEST_COLS, gridStyle } from './gridTable';
@@ -111,8 +112,7 @@ export default function RequestsTab({ kind, plan, api, data }: { kind: RequestKi
                 <span data-label="Notes"><TextCell value={r.notes} canEdit={mine} placeholder="Add" onSave={(v) => void patch(r, { notes: v })} /></span>
                 <span data-label="Status">{manage && !closed ? <PickCell value={STATUS_LABELS[r.status]} options={REQUEST_STATUSES.map((x) => STATUS_LABELS[x])} clearable={false} canEdit onSave={(v) => { const x = REQUEST_STATUSES.find((k) => STATUS_LABELS[k] === v); if (x) void setStatus(r, x); }} /> : <span className={`${styles.statusChip} ${chip[r.status]}`}>{STATUS_LABELS[r.status]}</span>}</span>
                 <span className={styles.prizeTools}>
-                  {mine && <button type="button" className={styles.iconBtn} title="Edit" aria-label={`Edit request from ${r.requester}`} onClick={() => setDialog(r)}><Pencil size={15} aria-hidden="true" /></button>}
-                  {mine && <button type="button" className={styles.iconBtn} title="Remove" aria-label={`Remove request from ${r.requester}`} onClick={() => void remove(r)}><Trash2 size={15} aria-hidden="true" /></button>}
+                  {mine && <RowMenu label={`More for the request from ${r.requester}`} items={[{ label: 'Edit', onClick: () => setDialog(r) }, { label: 'Remove', danger: true, onClick: () => void remove(r) }]} />}
                 </span>
               </div>
             );
