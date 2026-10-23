@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Camera, RefreshCw } from 'lucide-react';
+import { ArrowLeft, ArrowLeftRight, Camera, RefreshCw } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { registerScanHandler } from '@/lib/portal/scanHandlers';
 const UniversalScanner = dynamic(() => import('@/components/portal/UniversalScanner'), { ssr: false });   // the camera is only loaded when it is opened
@@ -360,7 +360,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
             <b className={styles.dayTitle}>{p.name}{closed && <span className={`${styles.badge} ${styles.neutral}`}>Closed</span>}</b>
             <span className={styles.muted}>{range(p.starts_on, p.ends_on)}{p.event_id ? ' · portal event' : ' · Event logistics only'}{p.notes ? ` · ${p.notes}` : ''}</span>
           </div>
-          <span className={`${styles.narrow} ${styles.groupMenu}`}><RowMenu label="Switch between devices and prizing" items={[{ label: isPrizing ? 'Show Devices' : 'Show Prizing', onClick: () => onPage(isPrizing ? 'requests' : 'requests-prizing') }]} /></span>
+          <button type="button" className={`${styles.narrow} ${styles.groupSwitch}`} onClick={() => onPage(isPrizing ? 'requests' : 'requests-prizing')} aria-label={isPrizing ? 'Switch to devices' : 'Switch to prizing'}><ArrowLeftRight size={14} aria-hidden="true" /> {isPrizing ? 'Devices' : 'Prizing'}</button>
           {page === 'device' && day && <span className={styles.dayTotal} title="Steps done"><span className={styles.bar}><i style={{ width: `${pct}%` }} /></span>{allDone}/{allTotal}</span>}
         </div>
         <div className={styles.pageBar}>
@@ -463,7 +463,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
           {rows.length > 0 && (
             <section className={`${styles.statusBar} ${bad ? styles.readyBad : warn ? styles.readyWarn : styles.readyOk}`} aria-label="What needs fixing">
               <div className={`${styles.readyHead} ${problems.length > 0 ? styles.clickRow : ''}`} onClick={(e) => { if (problems.length > 0 && !interactive(e.target)) setShowList((v) => !v); }} role={problems.length > 0 ? 'button' : undefined} tabIndex={problems.length > 0 ? 0 : undefined} aria-expanded={problems.length > 0 ? showList : undefined} onKeyDown={(e) => { if (problems.length > 0 && (e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); setShowList((v) => !v); } }}>
-                <b>{bad || warn ? <>{problems.length}<span className={styles.wide}>to fix</span></> : <><span className={styles.narrow}>Ready</span><span className={styles.wide}>Everything is ready</span></>}</b>
+                <b>{bad || warn ? <>{problems.length} to fix</> : <><span className={styles.narrow}>Ready</span><span className={styles.wide}>Everything is ready</span></>}</b>
                 {bad > 0 && <span className={`${styles.badge} ${styles.bad}`} title={`${bad} wrong`}>{bad}<span className={styles.wide}>wrong</span></span>}
                 {warn > 0 && <span className={`${styles.badge} ${styles.warnBadge}`} title={`${warn} to check`}>{warn}<span className={styles.wide}>to check</span></span>}
                 {problems.length > 0 && <span className={`${styles.dim} ${styles.wide}`}>{showList ? 'Click to hide the list' : 'Click to see the list'}</span>}

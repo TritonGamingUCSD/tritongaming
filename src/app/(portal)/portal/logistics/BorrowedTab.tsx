@@ -40,7 +40,7 @@ export default function BorrowedTab({ plan, catalog, data, kind }: { plan: PlanA
     <div className={styles.tab}>
       <div className={styles.toolbarRow}>
         <span className={styles.count}>{rows.length} {noun}{rows.length === 1 ? '' : 's'} for this event</span>
-        {manage && <Button className={styles.addBtn} onClick={() => setDialog('new')}><Plus size={15} aria-hidden="true" /> {sponsor ? 'Add Sponsor Loaner' : 'Add Officer Loaner'}</Button>}
+        {manage && <Button className={styles.addBtn} onClick={() => setDialog('new')}><Plus size={15} aria-hidden="true" /> Add<span className={styles.wide}>{sponsor ? 'Sponsor Loaner' : 'Officer Loaner'}</span></Button>}
       </div>
       {dialog && <BorrowedDialog extrasOnly plan={plan} catalog={catalog} data={data} borrowed={dialog === 'new' ? null : dialog} defaultKind={kind} onClose={() => setDialog(null)} />}
       {rows.length === 0 ? (

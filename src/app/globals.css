@@ -516,3 +516,5 @@ mark[data-h='gray'] { background: var(--dh-gray); color: inherit; padding: 0.04e
 .tg-scroll-arrow[data-show='1']:hover { opacity: 1; }
 .tg-scroll-arrow:active { transform: scale(0.88); }
 @media (prefers-reduced-motion: reduce) { .tg-scroll-arrow { transition: none; } }
+/* A touch screen swipes; the chevrons would only sit on top of the first and last labels. */
+@media (hover: none) { .tg-scroll-arrow { display: none; } }

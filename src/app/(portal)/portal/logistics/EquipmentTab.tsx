@@ -78,9 +78,9 @@ export default function EquipmentTab({ api, data }: { api: LogisticsApi; data: C
           <Select value={condition} onChange={(e) => setCondition(e.target.value)} aria-label="Condition"><option value="">Any condition</option>{CONDITIONS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</Select>
         </div>
         <div className={styles.toolbarRow}>
-          <button type="button" className={`${styles.pill} ${problems ? styles.pillOn : ''}`} aria-pressed={problems} onClick={() => setProblems((v) => !v)}><TriangleAlert size={13} aria-hidden="true" /> Needs Attention{problemCount ? ` (${problemCount})` : ''}</button>
+          <button type="button" className={`${styles.pill} ${problems ? styles.pillOn : ''}`} aria-pressed={problems} onClick={() => setProblems((v) => !v)}><TriangleAlert size={13} aria-hidden="true" /><span className={styles.wide}>Needs Attention</span>{problemCount ? <b>{problemCount}</b> : null}</button>
           <span className={styles.count}>{filtered ? `${rows.length} of ${data.devices.length}` : `${data.devices.length}`} {data.devices.length === 1 ? 'device' : 'devices'}</span>
-          {canEdit && <Button className={styles.addBtn} onClick={() => open(null)}><Plus size={15} aria-hidden="true" /> Add Device</Button>}
+          {canEdit && <Button className={styles.addBtn} onClick={() => open(null)}><Plus size={15} aria-hidden="true" /> Add<span className={styles.wide}>Device</span></Button>}
         </div>
       </div>
 

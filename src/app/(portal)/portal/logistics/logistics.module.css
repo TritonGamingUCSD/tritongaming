@@ -900,7 +900,7 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
   .borrowRow > .prizeTools { order: 4; }
 }
 
-/* Phone: the lists that are tables on a laptop (loaners, prizes, sponsors, requests) stay tables. Every row is ONE line and the table scrolls sideways (the first column stays in view), instead
+/* Phone: the lists that are tables on a laptop (loaners, prizes, sponsors, requests) stay tables. Every row is ONE line and the table scrolls sideways , instead
    of every row turning into a tall card. */
 @media (max-width: 899px) {
   .prizeGrid { overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
@@ -909,9 +909,7 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
   .prizeGrid > .prizeRow > span[data-label]::before { display: none !important; }
   .prizeGrid > .prizeHeadRow { display: grid !important; }
   .prizeGrid > .prizeRow > .prizeTools { display: flex; flex-wrap: nowrap; gap: 0.3rem; justify-content: flex-start; padding: 0; border-top: 0; }
-  .prizeGrid > .prizeRow > :first-child { position: sticky; left: 0; z-index: 1; background: var(--pp-card); font-size: 0.92rem; padding-right: 0.5rem; }
-  .prizeGrid > .prizeHeadRow > :first-child { background: var(--pp-paper); }
-  .prizeGrid > .prizeRow:not(.prizeHeadRow) > :first-child { box-shadow: 6px 0 6px -6px rgba(var(--pp-ink-rgb), 0.25); }
+  .prizeGrid > .prizeRow > :first-child { font-size: 0.92rem; }
   .reqRow { align-items: center; }
 }
 
@@ -939,7 +937,8 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
   .statusBar .readyHead::-webkit-scrollbar { display: none; }
   .statusBar .readyHead > * { flex: none; white-space: nowrap; }
   .statusBar .linkBtn, .miniSeg button { font-size: 0.74rem; padding-inline: 0.6rem; }
-  .statusBar .statusSpacer { display: none; }
+  .statusBar .statusSpacer { display: block; flex: 1 1 0; min-width: 0; }
+  .statusBar summary { min-height: 32px; min-width: 36px; }
   .teamHeadMain { flex-wrap: nowrap; gap: 0.25rem 0.5rem; overflow: hidden; }
   .teamHeadMain .foldBtn b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .teamHeadMain .dTeamSub { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.74rem; }
@@ -949,7 +948,7 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 /* Phone, inside an event: one row of page tabs (the devices/prizing switch lives in a ··· beside the title), no search box or team chips on Event Day (the ID bar is the search; the list below
    is the team list), and the ID bar is one row. */
 @media (max-width: 640px) {
-  .groupMenu { margin-left: auto; }
+  .groupSwitch { margin-left: auto; display: inline-flex; align-items: center; gap: 0.3rem; min-height: 32px; padding: 0 0.7rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); background: none; color: var(--pp-ink); font: inherit; font-size: 0.74rem; font-weight: 700; cursor: pointer; }
   .dayMode .pageBarEnd, .dayMode .teamChips { display: none; }
   .dayForm { flex-wrap: nowrap; align-items: center; }
   .dayStepPick { flex: 0 0 9rem; min-width: 0; }
@@ -960,3 +959,19 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 
 /* The devices/prizing switch sits in a wrapper that only exists to hide it on a phone; on bigger screens the wrapper must not take part in the layout. */
 @media (min-width: 641px) { .groupSeg { display: contents; margin: 0; } }
+
+/* Phone: the filters are one slim row that scrolls sideways, and the chip, count and Add button share a line, so a list starts near the top of the screen instead of under four rows of controls. */
+@media (max-width: 640px) {
+  .toolbar { gap: 0.4rem; }
+  .filters { display: flex; flex-wrap: nowrap; gap: 0.4rem; overflow-x: auto; scrollbar-width: none; }
+  .filters::-webkit-scrollbar { display: none; }
+  .filters > * { flex: 0 0 9rem; min-width: 0; }
+  .filters button, .filters [role="combobox"] { min-height: 36px; padding-block: 0.25rem; font-size: 0.86rem; }
+  .toolbarRow { flex-wrap: nowrap; gap: 0.5rem; }
+  .toolbarRow .count { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.74rem; }
+  .toolbarRow .pill { flex: none; }
+  .addBtn { min-height: 36px; padding: 0 0.8rem; font-size: 0.74rem; flex: none; }
+}
+
+/* A row's ··· button is 32px inside a list (the 44px tap size would make every one-line row two lines tall). */
+@media (max-width: 899px) { .prizeGrid summary, .reqRow summary { min-height: 32px !important; min-width: 36px !important; } .prizeGrid .linkBtn, .prizeGrid .miniTextBtn { min-height: 32px !important; } .prizeGrid .iconBtn { width: 32px !important; height: 32px !important; } .prizeGrid > .prizeRow { padding-block: 0.2rem !important; } }

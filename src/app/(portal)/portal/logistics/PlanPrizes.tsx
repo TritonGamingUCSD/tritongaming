@@ -39,7 +39,7 @@ export default function PlanPrizes({ plan, canManage, closed }: { plan: PlanApi;
     <section className={styles.prizeSection} aria-label="Prizes">
       <div className={styles.prizeHead}>
         <h3 className={styles.panelTitle}>Prizes <span className={styles.dim}>{lines.length} lines</span></h3>
-        {manage && <Button className={styles.addBtn} onClick={() => setPoolDialog({ pool: null })}><Plus size={15} aria-hidden="true" /> Add Prize Pool</Button>}
+        {manage && <Button className={styles.addBtn} onClick={() => setPoolDialog({ pool: null })}><Plus size={15} aria-hidden="true" /> Add<span className={styles.wide}>Prize Pool</span></Button>}
       </div>
       {poolDialog && <PoolDialog plan={plan} pool={poolDialog.pool} onClose={() => setPoolDialog(null)} />}
       {adding && <AddPrizesDialog plan={plan} pool={adding} existing={new Set(lines.filter((l) => l.pool_id === adding.id).map((l) => l.prize_id))} onClose={() => setAdding(null)} />}

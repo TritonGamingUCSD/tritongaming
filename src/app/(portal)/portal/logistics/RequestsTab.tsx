@@ -89,7 +89,7 @@ export default function RequestsTab({ kind, plan, api, data }: { kind: RequestKi
     <div className={styles.tab}>
       <div className={styles.toolbarRow}>
         <span className={styles.count}>{!manage ? 'Your requests for this event' : list.length === 0 ? 'No requests yet' : summary}</span>
-        {!closed && <Button className={styles.addBtn} onClick={() => setDialog('new')}><Plus size={15} aria-hidden="true" /> New Request</Button>}
+        {!closed && <Button className={styles.addBtn} onClick={() => setDialog('new')}><Plus size={15} aria-hidden="true" /> New<span className={styles.wide}>Request</span></Button>}
       </div>
       {dialog && <RequestDialog kind={kind} plan={plan} api={api} data={data} planId={planId} loaded={loaded} request={dialog === 'new' ? null : dialog} onSaved={() => { setDialog(null); void load(); }} onClose={() => setDialog(null)} />}
       {error && <div role="alert" onClick={() => setError('')}><Notice tone="error">{error}</Notice></div>}

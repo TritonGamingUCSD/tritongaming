@@ -14,7 +14,7 @@
 .control:disabled { opacity: 0.55; cursor: not-allowed; background: rgba(var(--pp-ink-rgb), 0.06); }
 .control::placeholder { color: rgba(var(--pp-ink-rgb), 0.5); }
 .textarea { resize: vertical; line-height: 1.45; }
-@media (max-width: 640px) { .control { font-size: 16px; } }
+@media (max-width: 640px) { .control { font-size: 16px; padding: 0.45rem 0.7rem; } }
 
 .field { display: flex; flex-direction: column; gap: 0.35rem; }
 .label { font-family: var(--font-renegare); font-size: 0.68rem; color: rgba(var(--pp-ink-rgb), 0.89); letter-spacing: 0.12em; text-transform: uppercase; }

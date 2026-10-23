@@ -48,9 +48,9 @@ export default function PrizesTab({ api, data }: { api: LogisticsApi; data: Cata
           <Select value={size} onChange={(e) => setSize(e.target.value)} aria-label="Size"><option value="">All sizes</option>{data.lists.prize_size.map((s) => <option key={s.id} value={s.value}>{s.value}</option>)}<option value="none">Big prizes</option></Select>
         </div>
         <div className={styles.toolbarRow}>
-          <button type="button" className={`${styles.pill} ${problems ? styles.pillOn : ''}`} aria-pressed={problems} onClick={() => setProblems((v) => !v)}><TriangleAlert size={13} aria-hidden="true" /> Over-Promised{overCount ? ` (${overCount})` : ''}</button>
+          <button type="button" className={`${styles.pill} ${problems ? styles.pillOn : ''}`} aria-pressed={problems} onClick={() => setProblems((v) => !v)}><TriangleAlert size={13} aria-hidden="true" /><span className={styles.wide}>Over-Promised</span>{overCount ? <b>{overCount}</b> : null}</button>
           <span className={styles.count}>{rows.length === inStorage ? `${inStorage}` : `${rows.length} of ${inStorage}`} {inStorage === 1 ? 'prize' : 'prizes'} · {money(Math.round(value)) || '$0'} left</span>
-          {canEdit && <Button className={styles.addBtn} onClick={() => setDialog('new')}><Plus size={15} aria-hidden="true" /> Add Prize</Button>}
+          {canEdit && <Button className={styles.addBtn} onClick={() => setDialog('new')}><Plus size={15} aria-hidden="true" /> Add<span className={styles.wide}>Prize</span></Button>}
         </div>
       </div>
       {dialog && <PrizeDialog prizes={prizes} api={api} data={data} prize={dialog === 'new' ? null : dialog} where="storage" onClose={() => setDialog(null)} />}

@@ -39,7 +39,7 @@ export default function SponsorPrizingTab({ plan, api, data }: { plan: PlanApi; 
         <div className={styles.toolbarRow}>
           <span className={styles.count}>{mine.length} {mine.length === 1 ? 'sponsor prize' : 'sponsor prizes'} for this event{mine.length > 0 && <> · {[...new Set(mine.map(sponsorOf))].length} {[...new Set(mine.map(sponsorOf))].length === 1 ? 'sponsor' : 'sponsors'} · {mine.reduce((n, x) => n + x.left, 0)} left</>}{mine.some((x) => !x.in_hand) && <> · <span className={styles.flagWarn}>{mine.filter((x) => !x.in_hand).length} not here yet</span></>}</span>
           {canStore && storable.length > 0 && <Button size="sm" variant="secondary" onClick={() => setStoring(storable)}>Add {storable.length} To Storage</Button>}
-          {manage && <Button className={styles.addBtn} onClick={() => setDialog('new')}><Plus size={15} aria-hidden="true" /> Add Sponsor Prize</Button>}
+          {manage && <Button className={styles.addBtn} onClick={() => setDialog('new')}><Plus size={15} aria-hidden="true" /> Add<span className={styles.wide}>Sponsor Prize</span></Button>}
         </div>
       {dialog && <PrizeDialog prizes={prizes} api={api} data={data} prize={dialog === 'new' ? null : dialog} where={{ plan: d.plan.id }} onClose={() => setDialog(null)} />}
       {storing && <StorageDialog prizes={prizes} api={api} data={data} list={storing} eventName={d.plan.name} onClose={() => setStoring(null)} />}

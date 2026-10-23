@@ -19,7 +19,7 @@ export default function SponsorsTab({ api, data }: { api: LogisticsApi; data: Ca
     <div className={styles.tab}>
       <div className={styles.toolbarRow}>
         <span className={styles.count}>{data.sponsors.length} {data.sponsors.length === 1 ? 'sponsor' : 'sponsors'}</span>
-        {data.canManage && <Button className={styles.addBtn} onClick={() => setEditing('new')}><Plus size={15} aria-hidden="true" /> Add Sponsor</Button>}
+        {data.canManage && <Button className={styles.addBtn} onClick={() => setEditing('new')}><Plus size={15} aria-hidden="true" /> Add<span className={styles.wide}>Sponsor</span></Button>}
       </div>
       {editing && <SponsorDialog api={api} sponsor={editing === 'new' ? null : editing} onClose={() => setEditing(null)} />}
       {data.sponsors.length === 0 ? <div className={styles.empty}><p>{data.canManage ? 'No sponsors yet. They are added here, or while adding a sponsor’s device to an event.' : 'No sponsors have been added yet.'}</p></div> : (
