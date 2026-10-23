@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { eventEmailHtml, eventEmailSubject, eventEmailText, eventWhen, type EventEmailOptions } from './eventEmail';
+import { eventEmailHtml, eventEmailSubject, eventEmailText, eventWhen, shortText, type EventEmailOptions } from './eventEmail';
 import { EMAIL_KINDS, isEmailKind, wantsEmail } from './prefs';
 
 const base: EventEmailOptions = {
@@ -21,9 +21,26 @@ describe('event email', () => {
     expect(h).toContain('href="https://tritongaming.org/api/email/unsubscribe?t=x"');
     expect(h).toContain('src="https://example.org/c.png"');
   });
+  it('can leave the cover out, and keeps it small', () => {
+    expect(eventEmailHtml({ ...base, showCover: false })).not.toContain('example.org/c.png');
+    expect(eventEmailHtml(base)).toContain('width="76"');
+  });
   it('leaves out the cover when it is not an https address, and says Online for an online event', () => {
     expect(eventEmailHtml({ ...base, event: { ...base.event, cover_url: 'javascript:alert(1)' } })).not.toContain('javascript');
     expect(eventEmailHtml({ ...base, event: { ...base.event, is_online: true, location: null } })).toContain('Online');
+  });
+  it('adds what the event page says: a short description, the address with a map link, the schedule, price and sponsors', () => {
+    const e = { ...base.event, description: 'A **night** of games. '.repeat(40), venue_address: '9500 Gilman Dr, La Jolla', venue_notes: 'Park in lot 7', schedule: [{ time: '5:00 PM', title: 'Doors' }], sponsors: ['ASUS', 'MSI'], ticket_price: 5, audience: 'ucsd_only', pageUrl: 'https://tritongaming.org/events/x' };
+    const h = eventEmailHtml({ ...base, event: e });
+    expect(h).toContain('Read more');
+    expect(h).not.toContain('**');
+    expect(h).toContain('Open in Maps');
+    expect(h).toContain('maps/search/?api=1&amp;query=9500%20Gilman%20Dr');
+    expect(h).toContain('5:00 PM');
+    expect(h).toContain('$5 ticket · UCSD students only');
+    expect(h).toContain('With ASUS, MSI');
+    expect(shortText(e.description).length).toBeLessThanOrEqual(281);
+    expect(eventEmailText({ ...base, event: e })).toContain('Schedule:');
   });
   it('marks a test, and has a plain-text version with the same links', () => {
     expect(eventEmailHtml({ ...base, test: true })).toContain('Test email');

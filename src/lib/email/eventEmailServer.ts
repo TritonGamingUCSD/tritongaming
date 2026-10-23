@@ -26,10 +26,14 @@ export async function authorizeEventEmail() {
 }
 
 export async function loadEvent(svc: SupabaseClient, id: string): Promise<(EventForEmail & { id: string; is_published: boolean }) | null> {
-  const { data } = await svc.from('events').select('id, title, start_date, end_date, location, venue_name, is_online, banner_url, flyer_url, slug, is_published').eq('id', id).maybeSingle();
+  const { data } = await svc.from('events').select('id, title, start_date, end_date, location, venue_name, is_online, banner_url, flyer_url, slug, is_published, description, venue_address, venue_notes, schedule, sponsors, audience, ticket_price').eq('id', id).maybeSingle();
   if (!data) return null;
   return { id: data.id as string, title: data.title as string, start_date: data.start_date as string, end_date: data.end_date as string | null, is_published: !!data.is_published,
-    location: ((data.venue_name as string | null) || (data.location as string | null)) ?? null, is_online: !!data.is_online, cover_url: ((data.banner_url as string | null) || (data.flyer_url as string | null)) ?? null, slug: data.slug as string | null };
+    location: ((data.venue_name as string | null) || (data.location as string | null)) ?? null, is_online: !!data.is_online, cover_url: ((data.flyer_url as string | null) || (data.banner_url as string | null)) ?? null, slug: data.slug as string | null,
+    description: data.description as string | null, venue_address: data.venue_address as string | null, venue_notes: data.venue_notes as string | null,
+    schedule: Array.isArray(data.schedule) ? (data.schedule as { time?: string; title?: string }[]).map((s) => ({ time: String(s.time ?? ''), title: String(s.title ?? '') })) : [],
+    sponsors: Array.isArray(data.sponsors) ? (data.sponsors as { name?: string }[]).map((s) => String(s.name ?? '')).filter(Boolean) : [],
+    audience: data.audience as string | null, ticket_price: data.ticket_price === null ? null : Number(data.ticket_price), pageUrl: `${siteUrl()}/events/${(data.slug as string | null) || id}` };
 }
 
 export interface Person { id: string; name: string; email: string; ticketId: string }
@@ -79,22 +83,22 @@ export async function sentLastDay(svc: SupabaseClient): Promise<number> {
 }
 export const quotaLeft = (used: number) => Math.max(0, EMAIL_DAILY_LIMIT - used);
 
-export function renderFor(opts: { event: EventForEmail; kind: EmailKind; subject: string; note: string; person: { id: string; ticketId: string | null }; test?: boolean; logoSrc?: string }) {
+export function renderFor(opts: { event: EventForEmail; kind: EmailKind; subject: string; note: string; person: { id: string; ticketId: string | null }; test?: boolean; logoSrc?: string; showCover?: boolean }) {
   const site = siteUrl();
   const unsub = unsubscribeUrl(opts.person.id, opts.kind);
-  const o = { event: opts.event, kind: opts.kind, subject: opts.subject, note: opts.note, ticketUrl: opts.person.ticketId ? `${site}/portal/tickets?qr=${opts.person.ticketId}` : `${site}/portal/tickets`, unsubscribeUrl: unsub, settingsUrl: `${site}/portal/profile`, test: opts.test, logoSrc: opts.logoSrc };
+  const o = { event: opts.event, kind: opts.kind, subject: opts.subject, note: opts.note, ticketUrl: opts.person.ticketId ? `${site}/portal/tickets?qr=${opts.person.ticketId}` : `${site}/portal/tickets`, unsubscribeUrl: unsub, settingsUrl: `${site}/portal/profile`, test: opts.test, logoSrc: opts.logoSrc, showCover: opts.showCover };
   return { html: eventEmailHtml(o), text: eventEmailText(o), unsubscribeUrl: unsub };
 }
 
 /** Sends the next batch of an event email (the people at positions `from` .. `from + BATCH` of the audience) and adds what happened to the send's record. */
-export async function sendBatch(svc: SupabaseClient, send: { id: string; event_id: string; kind: EmailKind; subject: string; note: string | null }, from: number) {
+export async function sendBatch(svc: SupabaseClient, send: { id: string; event_id: string; kind: EmailKind; subject: string; note: string | null; cover: boolean }, from: number) {
   const event = await loadEvent(svc, send.event_id);
   if (!event) return { error: 'That event is gone.' as const };
   const { people } = await audienceFor(svc, send.event_id, send.kind);
   const slice = people.slice(from, from + BATCH);
   let sent = 0, failed = 0;
   for (const p of slice) {
-    const r = renderFor({ event, kind: send.kind, subject: send.subject, note: send.note ?? '', person: { id: p.id, ticketId: p.ticketId } });
+    const r = renderFor({ event, kind: send.kind, subject: send.subject, note: send.note ?? '', person: { id: p.id, ticketId: p.ticketId }, showCover: send.cover });
     const res = await sendOne({ to: p.email, subject: send.subject, text: r.text, html: r.html, fromName: 'Triton Gaming Events', unsubscribeUrl: r.unsubscribeUrl });
     if (res.ok) sent++; else failed++;
   }

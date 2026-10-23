@@ -10,6 +10,7 @@ create table if not exists public.event_emails (
   kind             text not null check (kind in ('reminders', 'updates', 'newsletter')),
   subject          text not null check (length(subject) <= 200),
   note             text check (note is null or length(note) <= 2000),
+  cover            boolean not null default true,   -- whether the event's cover picture was shown
   sent_by          uuid references auth.users(id) on delete set null,
   sent_at          timestamptz not null default now(),
   recipients       int not null default 0,   -- people who were sent to (after opt-outs)

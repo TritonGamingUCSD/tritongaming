@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import nodemailer, { type Transporter } from 'nodemailer';
 import { MAX_BLAST, parseRecipients } from './recipients';
 import { emailHtml, emailText, LOGO_CID } from './template';
@@ -68,7 +69,9 @@ export async function sendOne(o: { to: string; subject: string; text: string; ht
   try {
     await getTransport().sendMail({
       from: `${o.fromName ?? 'Triton Gaming'} <${emailFrom()}>`, replyTo: emailReplyTo(), to: o.to, subject: o.subject, text: o.text, html: o.html,
-      ...(o.unsubscribeUrl ? { headers: { 'List-Unsubscribe': `<${o.unsubscribeUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' } } : {}),
+      // A message id on the club's own domain (not the server's machine name), a mailto opt-out beside the link, and the one-click header: all things mail providers look for in real mail.
+      messageId: `<${randomUUID()}@${emailFrom().split('@')[1] || 'tritongaming.org'}>`,
+      ...(o.unsubscribeUrl ? { headers: { 'List-Unsubscribe': `<${o.unsubscribeUrl}>, <mailto:${emailReplyTo()}?subject=Unsubscribe>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' } } : {}),
       attachments: [{ filename: 'tg-logo.png', content: LOGO, contentType: 'image/png', cid: LOGO_CID }],
     });
     return { to: o.to, ok: true };

@@ -33,6 +33,7 @@ export default function EventEmailsTab() {
   const [subject, setSubject] = useState('');
   const [subjectEdited, setSubjectEdited] = useState(false);
   const [note, setNote] = useState('');
+  const [cover, setCover] = useState(true);
   const [info, setInfo] = useState<Info | null>(null);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -52,8 +53,8 @@ export default function EventEmailsTab() {
     return () => { live = false; };
   }, []);
 
-  const refresh = useCallback(async (id: string, k: Kind, subj: string, n: string) => {
-    const q = new URLSearchParams({ event_id: id, kind: k, ...(subj ? { subject: subj } : {}), ...(n ? { note: n } : {}) });
+  const refresh = useCallback(async (id: string, k: Kind, subj: string, n: string, cvr: boolean) => {
+    const q = new URLSearchParams({ event_id: id, kind: k, cover: cvr ? '1' : '0', ...(subj ? { subject: subj } : {}), ...(n ? { note: n } : {}) });
     const r = await fetch(`/api/event-emails?${q}`, { cache: 'no-store' }).catch(() => null);
     const j = await r?.json().catch(() => null);
     if (!r?.ok || !j) { setError(j?.error ?? 'Couldn’t load that event.'); return; }
@@ -64,16 +65,16 @@ export default function EventEmailsTab() {
   // The preview follows what is typed (a moment after typing stops).
   useEffect(() => {
     if (!eventId) { setInfo(null); return; }
-    const t = setTimeout(() => void refresh(eventId, kind, subjectEdited ? subject : '', note), 350);
+    const t = setTimeout(() => void refresh(eventId, kind, subjectEdited ? subject : '', note, cover), 350);
     return () => clearTimeout(t);
-  }, [eventId, kind, subject, subjectEdited, note, refresh]);
+  }, [eventId, kind, subject, subjectEdited, note, cover, refresh]);
 
   const pickEvent = (id: string) => { setEventId(id); setSubjectEdited(false); setSubject(''); setMessage(''); setParams({ emailEvent: id || null }); };
   const pickKind = (k: Kind) => { setKind(k); setSubjectEdited(false); setSubject(''); };
 
   async function test() {
     setBusy('test'); setError(''); setMessage('');
-    const r = await fetch('/api/event-emails', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'test', event_id: eventId, kind, subject, note }) }).catch(() => null);
+    const r = await fetch('/api/event-emails', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'test', event_id: eventId, kind, subject, note, cover }) }).catch(() => null);
     const j = await r?.json().catch(() => ({}));
     setBusy('');
     if (r?.ok) setMessage(`A test went to ${j.to}. It can take a minute to arrive.`); else setError(j?.error ?? 'The test couldn’t be sent.');
@@ -89,7 +90,7 @@ export default function EventEmailsTab() {
   useEffect(() => () => { if (timer.current) clearInterval(timer.current); }, []);
 
   async function send() {
-    const r = await fetch('/api/event-emails', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'start', event_id: eventId, kind, subject, note }) }).catch(() => null);
+    const r = await fetch('/api/event-emails', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'start', event_id: eventId, kind, subject, note, cover }) }).catch(() => null);
     const j = await r?.json().catch(() => ({}));
     if (!r?.ok) { setError(j?.error ?? 'The send couldn’t start.'); return; }
     await runBatches(j.id, 0, j.recipients);
@@ -106,7 +107,7 @@ export default function EventEmailsTab() {
       if (j.done) { setMessage(`Sent to ${total} ${total === 1 ? 'person' : 'people'}.`); break; }
     }
     setProgress(null);
-    await refresh(eventId, kind, subjectEdited ? subject : '', note);
+    await refresh(eventId, kind, subjectEdited ? subject : '', note, cover);
   }
 
   if (!events) return <div className={styles.page}>{error ? <Notice tone="error">{error}</Notice> : <Loading variant="inline" label="Loading…" />}</div>;
@@ -134,6 +135,7 @@ export default function EventEmailsTab() {
               </div>
               <Field label="Subject"><Input value={subject} maxLength={200} onChange={(e) => { setSubject(e.target.value); setSubjectEdited(true); }} /></Field>
               <Field label="Note" hint="Optional. A few lines above the ticket button, like where to park or what to bring. Blank lines start a new paragraph."><Textarea rows={4} value={note} maxLength={2000} onChange={(e) => setNote(e.target.value)} /></Field>
+              <label className={styles.check}><input type="checkbox" checked={cover} onChange={(e) => setCover(e.target.checked)} /> Show the event’s cover picture (small, beside the date)</label>
               {info && (
                 <div className={styles.audience} aria-live="polite">
                   <b>{info.recipients} {info.recipients === 1 ? 'person' : 'people'} will get this</b>

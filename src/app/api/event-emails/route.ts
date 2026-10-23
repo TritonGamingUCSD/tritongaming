@@ -32,6 +32,7 @@ export async function GET(request: Request) {
   if (!event) return NextResponse.json({ error: 'That event is gone.' }, { status: 404 });
   const subject = text(params.get('subject'), 200) || eventEmailSubject(kind, event.title);
   const note = text(params.get('note'), 2000);
+  const cover = params.get('cover') !== '0';
   const [aud, used, { data: history }] = await Promise.all([
     audienceFor(svc, eventId, kind), sentLastDay(svc),
     svc.from('event_emails').select('id, kind, subject, sent_by, sent_at, recipients, sent, failed, skipped_optout, skipped_no_email').eq('event_id', eventId).order('sent_at', { ascending: false }).limit(30),
@@ -39,7 +40,7 @@ export async function GET(request: Request) {
   const names = new Map<string, string>();
   const ids = [...new Set((history ?? []).map((h) => h.sent_by as string | null).filter((x): x is string => !!x))];
   if (ids.length) for (const p of (await svc.from('profiles').select('id, display_name').in('id', ids)).data ?? []) names.set(p.id as string, (p.display_name as string | null) ?? 'Someone');
-  const sample = renderFor({ event, kind, subject, note, person: { id: a.user.id, ticketId: null }, logoSrc: APPLE_ICON_DATA_URI });
+  const sample = renderFor({ event, kind, subject, note, person: { id: a.user.id, ticketId: null }, logoSrc: APPLE_ICON_DATA_URI, showCover: cover });
   return NextResponse.json({
     event: { id: event.id, title: event.title, start_date: event.start_date, is_published: event.is_published },
     subject, preview: sample.html,
@@ -61,13 +62,14 @@ export async function POST(request: Request) {
   if (!event) return NextResponse.json({ error: 'Pick an event.' }, { status: 400 });
   const subject = text(b.subject, 200);
   const note = text(b.note, 2000);
+  const cover = b.cover !== false;
   if (!subject) return NextResponse.json({ error: 'Add a subject.' }, { status: 400 });
 
   if (b.action === 'test') {
     const { data: au } = await svc.auth.admin.getUserById(user.id);
     const to = au.user?.email;
     if (!to) return NextResponse.json({ error: 'Your account has no email address.' }, { status: 400 });
-    const r = renderFor({ event, kind, subject: `[TEST] ${subject}`, note, person: { id: user.id, ticketId: null }, test: true });
+    const r = renderFor({ event, kind, subject: `[TEST] ${subject}`, note, person: { id: user.id, ticketId: null }, test: true, showCover: cover });
     const res = await sendOne({ to, subject: `[TEST] ${subject}`, text: r.text, html: r.html, fromName: 'Triton Gaming Events', unsubscribeUrl: r.unsubscribeUrl });
     return res.ok ? NextResponse.json({ ok: true, to }) : NextResponse.json({ error: res.error ?? 'It couldn’t be sent.' }, { status: 502 });
   }
@@ -77,7 +79,7 @@ export async function POST(request: Request) {
     const [aud, used] = await Promise.all([audienceFor(svc, eventId, kind), sentLastDay(svc)]);
     if (aud.people.length === 0) return NextResponse.json({ error: 'Nobody would get this: no one has a ticket, or everyone opted out.' }, { status: 409 });
     if (aud.people.length > quotaLeft(used)) return NextResponse.json({ error: `That is ${aud.people.length} emails and only ${quotaLeft(used)} are left of today’s ${EMAIL_DAILY_LIMIT}. Try again later.` }, { status: 409 });
-    const { data, error } = await svc.from('event_emails').insert({ event_id: eventId, kind, subject, note: note || null, sent_by: user.id, recipients: aud.people.length, skipped_optout: aud.skippedOptOut, skipped_no_email: aud.skippedNoEmail }).select('id').single();
+    const { data, error } = await svc.from('event_emails').insert({ event_id: eventId, kind, subject, note: note || null, cover, sent_by: user.id, recipients: aud.people.length, skipped_optout: aud.skippedOptOut, skipped_no_email: aud.skippedNoEmail }).select('id').single();
     if (error || !data) return NextResponse.json({ error: 'Couldn’t start the send.' }, { status: 500 });
     await logAudit(svc, { actorId: user.id, action: 'event_email.send', entityType: 'event', entityId: eventId, summary: `Sent a ${kind === 'reminders' ? 'reminder' : 'update'} email for ${event.title} to ${aud.people.length} people` }).catch(() => undefined);
     return NextResponse.json({ id: data.id, recipients: aud.people.length });

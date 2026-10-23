@@ -19,3 +19,4 @@
 .history li div { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
 .history small { color: rgba(var(--pp-ink-rgb), 0.7); font-size: 0.78rem; }
 .counts { align-items: flex-end; text-align: right; }
+.check { display: flex; align-items: center; gap: 0.5rem; font-size: 0.88rem; cursor: pointer; }

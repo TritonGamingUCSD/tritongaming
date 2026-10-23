@@ -913,7 +913,7 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
    of every row turning into a tall card. */
 @media (max-width: 899px) {
   .prizeGrid { overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
-  .prizeGrid > .prizeRow { grid-template-columns: var(--cols) !important; width: var(--w); min-width: 100%; align-items: center; column-gap: 0.8rem; row-gap: 0; padding: 0.35rem 0.8rem; }
+  .prizeGrid > .prizeRow { grid-template-columns: var(--cols) !important; align-items: center; column-gap: 0.8rem; row-gap: 0; padding: 0.35rem 0.8rem; }
   .prizeGrid > .prizeRow > * { grid-column: auto !important; order: 0 !important; margin: 0; }
   .prizeGrid > .prizeRow > span[data-label]::before { display: none !important; }
   .prizeGrid > .prizeHeadRow { display: grid !important; }
@@ -930,3 +930,7 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
   .pageBar [role="tablist"] > button { min-height: 30px; padding: 0.2rem 0.65rem; font-size: 0.72rem; }
   .pageBar [role="tablist"] > button span { line-height: 1.1; }
 }
+
+/* At any width: a table that is wider than its room scrolls sideways (every row at least its columns' minimum width) instead of cutting its last columns off. */
+.prizeGrid { overflow-x: auto; }
+.prizeGrid > .prizeRow { min-width: var(--w); }
