@@ -30,6 +30,7 @@ import { TextCell } from './Cells';
 import { usePrizes } from './usePrizes';
 import { doneKey, usePlan, type Borrowed, type Slim, type Station, type StepResult } from './usePlans';
 import type { Catalog, LogisticsApi } from './useLogistics';
+import { Combo, Suggest } from './Combo';
 import styles from './logistics.module.css';
 
 // The plan and the event day are one sheet. A block per team, a line per device (or per set), the step boxes on the line. Before the event it is where devices are chosen and what is
@@ -93,6 +94,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
   const typeRank = useMemo(() => new Map(data.lists.type.map((t, i) => [t.value, i])), [data.lists.type]);
   const rankOf = useCallback((type: string) => typeRank.get(type) ?? 9999, [typeRank]);
   const all = useMemo(() => (detail ? planRows(detail, counted) : []), [detail, counted]);
+  const dayIds = useMemo(() => all.filter((r) => r.kind !== 'slot' && r.tag).map((r) => ({ value: r.tag!, hint: `${r.type}${r.stationId ? ` · ${stationOf.get(r.stationId)?.name ?? ''}` : ''}` })), [all, stationOf]);
   const rows: Row[] = useMemo(() => {
     if (!detail) return [];
     const order = new Map(detail.stations.map((s) => [s.id, s.sort]));
@@ -109,6 +111,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
     const mine = rows.filter((r) => stepAppliesTo(s, rowKind(r)));
     return { step: s, total: mine.length, done: mine.filter((r) => doneSet.has(`${r.id}:${s.id}`)).length };
   }), [steps, rows, doneSet]);
+  const stepLabel = (s: { step: { name: string }; done: number; total: number } | undefined) => (s ? `${s.step.name} (${s.done}/${s.total})` : null);
   const auto = stepStats.find((p) => p.done < p.total)?.step ?? stepStats[stepStats.length - 1]?.step ?? null;
   const step = steps.find((s) => s.id === picked) ?? auto;
   const allDone = stepStats.reduce((n, p) => n + p.done, 0), allTotal = stepStats.reduce((n, p) => n + p.total, 0);
@@ -298,13 +301,13 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
   const pct = allTotal ? Math.round((allDone / allTotal) * 100) : 0;
   const emptyRows = rows.filter((r) => r.kind === 'slot' && !r.counted);
   // The IDs that can still be typed into a row: usable devices of that type that are not in this plan yet (the browser suggests them as you type).
-  const listId = (type: string) => `ids-${type.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+  const ids = (type: string) => [...(free.get(type) ?? [])].sort(natural).map((value) => ({ value }));
   const inPlan = new Set(detail.items.map((i) => i.device_id));
   const free = new Map<string, string[]>();
   for (const dv of data.devices) if (dv.tag && !inPlan.has(dv.id) && isUsable(dv)) free.set(dv.type, [...(free.get(dv.type) ?? []), dv.tag]);
   for (const b of borrowed) if (b.role === 'planned' && !b.request_id && !b.station_id) free.set(b.type, [...(free.get(b.type) ?? []), b.tag]);
   const ctx: SheetCtx = {
-    hideDone: day && openOnly, listId, setsOpen: setsOpenPick ?? !day, foldGen, byType: groupByType,
+    hideDone: day && openOnly, ids, setsOpen: setsOpenPick ?? !day, foldGen, byType: groupByType,
     api: plan, canManage: canManage && !day, manager: canManage, closed, busy, pending: pendingSet, main: mainTypes, day, stations, steps, activeId: step?.id ?? '', doneSet, doneAt, doneBy, problems,
     onTick: (row, s) => void tick(row, s), onTickAll: (list, s) => void markAll(list, s), onUndo: undo, onSwap: (r) => setSwapping({ id: r.id, tag: r.tag, type: r.type, kind: r.kind === 'slot' ? 'club' : r.kind }),
     onBorrowed: (r) => setBorrowing(borrowed.find((b) => b.id === r.id) ?? null), onInstalled: (list) => void install(list), onEditDevice: (r) => setDeviceEdit(catalog.data?.devices.find((x) => x.id === r.id) ?? data.devices.find((x) => x.id === r.id) ?? null),
@@ -358,7 +361,6 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
           </div>
           {page === 'device' && day && <span className={styles.dayTotal} title="Steps done"><span className={styles.bar}><i style={{ width: `${pct}%` }} /></span>{allDone}/{allTotal}</span>}
         </div>
-        {[...free].map(([type, tags]) => <datalist key={type} id={listId(type)}>{tags.sort(natural).map((t) => <option key={t} value={t} />)}</datalist>)}
         <div className={styles.pageBar}>
         <SectionTabs<'devices' | 'prizing'> variant="segmented" label="Devices or prizing" value={isPrizing ? 'prizing' : 'devices'}
           onChange={(g) => onPage(g === 'prizing' ? 'requests-prizing' : 'requests')} tabs={[{ id: 'devices', label: 'Devices' }, { id: 'prizing', label: 'Prizing' }]} />
@@ -383,12 +385,11 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
         {page === 'device' && day && !closed && (
           <div className={`${styles.dayStick} ${kb > 80 ? styles.kbOpen : ''}`} style={{ '--kb': `${kb}px` } as React.CSSProperties}>
             <form className={styles.dayForm} onSubmit={(e) => { e.preventDefault(); submit(); }}>
-            <select className={styles.daySelect} value={picked} onChange={(e) => { setPicked(e.target.value); setKit(null); input.current?.focus(); }} aria-label="Step to mark when typing an ID">
-              <option value="">Next step: {auto?.name ?? '–'}</option>
-              {stepStats.map((s) => <option key={s.step.id} value={s.step.id}>{s.step.name} ({s.done}/{s.total})</option>)}
-            </select>
-            <datalist id="day-ids">{all.filter((r) => r.kind !== 'slot' && r.tag).map((r) => <option key={r.id} value={r.tag!}>{`${r.type}${r.stationId ? ` · ${stationOf.get(r.stationId)?.name ?? ''}` : ''}`}</option>)}</datalist>
-            <input ref={input} list="day-ids" className={styles.dayInput} value={text} onChange={(e) => setText(e.target.value)} placeholder={`Type an ID to mark “${step?.name ?? 'the step'}”`} aria-label={`Device ID for ${step?.name ?? 'the step'}`} autoCapitalize="characters" autoComplete="off" autoCorrect="off" spellCheck={false} enterKeyHint="done" disabled={busy || !step} />
+            <div className={styles.dayStepPick}>
+              <Combo value={picked ? stepLabel(stepStats.find((x) => x.step.id === picked)) : `Next step: ${auto?.name ?? '–'}`} options={[`Next step: ${auto?.name ?? '–'}`, ...stepStats.map((x) => stepLabel(x) ?? '')]} clearable={false} ariaLabel="Step to mark when typing an ID"
+                onChange={(v) => { setPicked(stepStats.find((x) => stepLabel(x) === v)?.step.id ?? ''); setKit(null); input.current?.focus(); }} />
+            </div>
+            <Suggest inputRef={input} className={styles.dayInput} value={text} onChange={setText} options={dayIds} placeholder={`Type an ID to mark “${step?.name ?? 'the step'}”`} aria-label={`Device ID for ${step?.name ?? 'the step'}`} autoCapitalize="characters" autoComplete="off" autoCorrect="off" spellCheck={false} enterKeyHint="done" disabled={busy || !step} />
             <Button type="submit" disabled={!text.trim() || busy} loading={busy}>Mark</Button>
             <button type="button" className={`${styles.iconBtn} ${styles.scanDesk}`} title="Scan a device" aria-label="Open the scanner" onClick={() => setScanning(true)} disabled={!step}><Camera size={16} aria-hidden="true" /></button>
           </form>

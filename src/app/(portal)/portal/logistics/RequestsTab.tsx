@@ -11,7 +11,7 @@ import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
 import { PickCell, TextCell } from './Cells';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import { canEditRequest, prizeTotal, REQUEST_STATUSES, requestSummary, STATUS_LABELS, type DeviceItem, type PrizeItem, type RequestKind, type RequestStatus } from '@/lib/logistics/requests';
-import { MultiCombo, Combo } from './Combo';
+import { MultiCombo, Combo, Suggest } from './Combo';
 import type { PlanApi } from './usePlans';
 import type { Catalog, LogisticsApi } from './useLogistics';
 import { GridHead, REQUEST_COLS, gridStyle } from './gridTable';
@@ -154,7 +154,7 @@ function RequestDialog({ kind: askKind, plan, api, data, planId, loaded, request
         {problem && <Notice tone="error">{problem}</Notice>}
         {/* A request that is already sent is changed in its table row (team, contact, notes); this form then only holds what the row has no box for. */}
         <div className={request ? undefined : loaded.canManage ? styles.row3 : styles.row2}>
-          {!request && <Field label="Team or booth" hint="Who it is for, like Triton Valorant."><Input value={team} onChange={(e) => setTeam(e.target.value)} maxLength={120} list="req-teams" /></Field>}
+          {!request && <Field label="Team or booth" hint="Who it is for, like Triton Valorant."><Suggest value={team} onChange={setTeam} options={teams.map((t) => ({ value: t }))} maxLength={120} className={styles.comboInput} /></Field>}
           <Field label="Division"><Select value={division} onChange={(e) => setDivision(e.target.value)}><option value="">None</option>{loaded.divisions.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</Select></Field>
           {loaded.canManage && !request && (
             <Field label="Contact" hint="A division lead or an officer or above. Defaults to you.">
@@ -162,7 +162,6 @@ function RequestDialog({ kind: askKind, plan, api, data, planId, loaded, request
             </Field>
           )}
         </div>
-        <datalist id="req-teams">{teams.map((t) => <option key={t} value={t} />)}</datalist>
         {kind === 'devices' ? (
           <div className={styles.reqLines}>
             {dev.map((it, i) => (

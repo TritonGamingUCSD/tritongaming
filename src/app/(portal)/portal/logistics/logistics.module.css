@@ -62,10 +62,17 @@
 .comboInput:disabled { opacity: 0.65; cursor: not-allowed; background: rgba(var(--pp-ink-rgb), 0.06); }
 .comboInput::placeholder { color: rgba(var(--pp-ink-rgb), 0.5); }
 .comboCompact .comboInput { padding: 0.3rem 0.5rem; min-height: 32px; font-size: 0.86rem; }
-.comboList { position: absolute; z-index: 40; left: 0; right: 0; top: calc(100% + 3px); margin: 0; padding: 0.25rem; list-style: none; max-height: 15rem; overflow-y: auto; min-width: 11rem; border-radius: 8px; background: var(--pp-card); border: 1px solid rgba(var(--pp-ink-rgb), 0.4); box-shadow: 0 8px 22px rgba(var(--pp-ink-rgb), 0.2); }
+/* The list is drawn like the portal's other drop-down (ui/Select): ink border, hard shadow, blue highlight. */
+.comboList { position: absolute; z-index: 3500; left: 0; right: 0; top: calc(100% + 3px); margin: 0; padding: 0.3rem; list-style: none; max-height: 15rem; overflow-y: auto; min-width: 11rem; border-radius: 6px; background: var(--pp-card); border: 2px solid var(--pp-ink); box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55); scrollbar-width: thin; }
 .comboList { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
-.comboRow { display: flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.6rem; border-radius: 5px; font-size: 0.88rem; color: var(--pp-ink); cursor: pointer; overflow-wrap: anywhere; }
-.comboRowOn { background: rgba(var(--pp-ink-rgb), 0.09); }
+.comboRow { display: flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.65rem; border-radius: 4px; font-family: var(--font-futura-medium); font-size: 0.88rem; color: var(--pp-ink); cursor: pointer; overflow-wrap: anywhere; }
+.comboHint { margin-left: auto; padding-left: 0.5rem; font-size: 0.76rem; color: rgba(var(--pp-ink-rgb), 0.6); text-align: right; }
+.comboRowOn { background: rgba(125, 180, 234, 0.35); }
+.comboRowSel { font-weight: 700; }
+.comboRowSel::before { content: '✓ '; }
+.comboChevron { position: absolute; right: 0.7rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: rgba(var(--pp-ink-rgb), 0.86); }
+.comboHasChevron .comboInput { padding-right: 2rem; }
+@media (max-width: 640px) { .comboRow { padding: 0.7rem 0.75rem; font-size: 16px; } }
 .comboRowSpecial { font-weight: 600; }
 .multi { display: flex; flex-direction: column; gap: 0.45rem; }
 .chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.35rem; }
@@ -307,8 +314,8 @@
 /* ---- Event day: one checklist ---- */
 .dayTotal { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.84rem; font-variant-numeric: tabular-nums; color: var(--pp-ink); }
 .dayTotal .bar { width: 7rem; }
-.daySelect { min-height: 42px; max-width: 100%; padding: 0 0.6rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.4); background: var(--pp-card); color: var(--pp-ink); font: inherit; font-size: 0.86rem; }
-@media (max-width: 640px) { .daySelect { flex: 1 1 100%; font-size: 16px; } .dayInput { font-size: 16px; } }
+.dayStepPick { flex: 0 1 15rem; min-width: 10rem; }
+@media (max-width: 640px) { .dayStepPick { flex: 1 1 100%; } .dayInput { font-size: 16px; } }
 .dayLayout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; align-items: start; }
 .dayAside, .dayMain { display: flex; flex-direction: column; gap: 0.8rem; min-width: 0; }
 .dayAside:empty { display: none; }

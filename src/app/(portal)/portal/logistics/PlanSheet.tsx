@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ArrowLeftRight, Check, Pencil, Trash2 } from 'lucide-react';
 import { conditionLabel, UNUSABLE } from '@/lib/logistics/constants';
 import { rowKind, skippedSteps, stepAppliesTo, type Problem, type StepDef } from '@/lib/logistics/plans';
+import { Suggest } from './Combo';
 import { interactive } from './interactive';
 import { units, type Line, type Row, type Unit } from './planRows';
 import type { Slim, Station, usePlan } from './usePlans';
@@ -11,7 +12,7 @@ import styles from './logistics.module.css';
 
 export interface SheetCtx {
   api: ReturnType<typeof usePlan>; canManage: boolean; closed: boolean; manager: boolean; busy: boolean; pending: Set<string>; day: boolean; stations: Station[]; steps: StepDef[]; activeId: string;
-  hideDone: boolean; listId: (type: string) => string; setsOpen: boolean; foldGen: number; byType: boolean; main: Set<string>; doneSet: Set<string>; doneAt: Map<string, string>; doneBy: Map<string, string>; problems: Problem[];
+  hideDone: boolean; ids: (type: string) => { value: string }[]; setsOpen: boolean; foldGen: number; byType: boolean; main: Set<string>; doneSet: Set<string>; doneAt: Map<string, string>; doneBy: Map<string, string>; problems: Problem[];
   onTick: (row: Row, step: StepDef) => void; onTickAll: (rows: Row[], step: StepDef) => void; onUndo: (item: { id: string; kind: Slim['kind'] }, stepId: string) => void;
   onSwap: (r: Row) => void; onBorrowed: (r: Row) => void; onInstalled: (rows: Row[]) => void; onEditDevice: (r: Row) => void;
 }
@@ -101,7 +102,7 @@ function DeviceLine({ line, ctx, backup, nested }: { line: Line; ctx: SheetCtx; 
         {r.kind === 'slot' && r.label && <span className={styles.dWhere}>{r.label}</span>}
       </div>
       <div className={styles.dNotes}>
-        {alloc && <input className={`${styles.assignInput} ${empty ? styles.assignEmpty : ''}`} value={tag} onChange={(e) => setTag(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }} onBlur={() => void commit()} list={ctx.listId(r.type)} placeholder="Device ID" aria-label={`Device ID for ${r.type}`} autoCapitalize="characters" autoComplete="off" disabled={busy} />}
+        {alloc && <Suggest className={`${styles.assignInput} ${empty ? styles.assignEmpty : ''}`} value={tag} onChange={setTag} options={ctx.ids(r.type)} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }} onBlur={() => void commit()} placeholder="Device ID" aria-label={`Device ID for ${r.type}`} autoCapitalize="characters" autoComplete="off" disabled={busy} />}
         {r.games_needed.length > 0 && <span className={`${styles.gameChip} ${missing.length ? styles.gameMissing : styles.gameOk}`} title={missing.length ? `Not installed yet: ${missing.join(', ')}` : r.kind === 'slot' ? 'Needed' : 'Installed'}>{r.games_needed.join(', ')}{missing.length ? ' · not installed' : ''}</span>}
         {missing.length > 0 && manage && r.kind !== 'slot' && <button type="button" className={styles.miniTextBtn} disabled={ctx.busy} title="Mark the needed games as installed" aria-label={`Mark ${label(r)} installed`} onClick={() => ctx.onInstalled([r])}>Mark installed</button>}
         {dead && <span className={`${styles.badge} ${styles.bad}`}>{conditionLabel(r.condition!)}</span>}
