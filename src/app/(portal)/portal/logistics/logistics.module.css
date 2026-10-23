@@ -535,7 +535,7 @@
 .dayLine { padding-block: 0.15rem; }
 .cell, .cellNa { min-height: 30px; }
 .cellBox { width: 18px; height: 18px; }
-.dHead { padding: 0.15rem 0.2rem; }
+.dHead { padding: 0.15rem 0.2rem; white-space: nowrap; }
 .dTag { font-size: 0.92rem; }
 .dInfo { gap: 0 0.5rem; }
 .colHead { padding-block: 0.15rem; }
