@@ -12,6 +12,7 @@ import { usePrizes, type PrizeRow } from './usePrizes';
 import type { PlanApi } from './usePlans';
 import type { Catalog, LogisticsApi } from './useLogistics';
 import { GridHead, SPONSOR_PRIZE_COLS } from './gridTable';
+import { Plus } from 'lucide-react';
 import styles from './logistics.module.css';
 
 const pacificToday = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
@@ -35,28 +36,13 @@ export default function SponsorPrizingTab({ plan, api, data }: { plan: PlanApi; 
   return (
     <div className={styles.tab}>
       <section className={styles.prizeSection} aria-label="Sponsor prizes for this event">
-        <div className={styles.prizeHead}>
-          <h3 className={styles.panelTitle}>Sponsor Prizes For This Event <span className={styles.dim}>{mine.length}</span></h3>
-          {manage && <Button size="sm" variant="secondary" onClick={() => setDialog('new')}>Add Sponsor Prize</Button>}
-          {canStore && storable.length > 0 && <Button size="sm" onClick={() => setStoring(storable)}>Add {storable.length} To Storage</Button>}
+        <div className={styles.toolbarRow}>
+          <span className={styles.count}>{mine.length} {mine.length === 1 ? 'sponsor prize' : 'sponsor prizes'} for this event{mine.length > 0 && <> · {[...new Set(mine.map(sponsorOf))].length} {[...new Set(mine.map(sponsorOf))].length === 1 ? 'sponsor' : 'sponsors'} · {mine.reduce((n, x) => n + x.left, 0)} left</>}{mine.some((x) => !x.in_hand) && <> · <span className={styles.flagWarn}>{mine.filter((x) => !x.in_hand).length} not here yet</span></>}</span>
+          {canStore && storable.length > 0 && <Button size="sm" variant="secondary" onClick={() => setStoring(storable)}>Add {storable.length} To Storage</Button>}
+          {manage && <Button className={styles.addBtn} onClick={() => setDialog('new')}><Plus size={15} aria-hidden="true" /> Add Sponsor Prize</Button>}
         </div>
       {dialog && <PrizeDialog prizes={prizes} api={api} data={data} prize={dialog === 'new' ? null : dialog} where={{ plan: d.plan.id }} onClose={() => setDialog(null)} />}
       {storing && <StorageDialog prizes={prizes} api={api} data={data} list={storing} eventName={d.plan.name} onClose={() => setStoring(null)} />}
-        {mine.length > 0 && (
-          <ul className={styles.sponsorSummary} aria-label="By sponsor">
-            {[...new Set(mine.map(sponsorOf))].map((name) => {
-              const own = mine.filter((p) => sponsorOf(p) === name);
-              const sum = (f: (p: PrizeRow) => number) => own.reduce((n, p) => n + f(p), 0);
-              return (
-                <li key={name} className={styles.sponsorSummaryCard}>
-                  <b>{name}</b>
-                  <span>{sum((p) => p.quantity)} sent · {sum((p) => p.allocated)} promised · {sum((p) => p.given)} given · <b className={sum((p) => p.left) < 0 ? styles.flagBad : undefined}>{sum((p) => p.left)} left</b></span>
-                  {own.some((p) => !p.in_hand) && <small className={styles.flagWarn}>{own.filter((p) => !p.in_hand).length} not here yet</small>}
-                </li>
-              );
-            })}
-          </ul>
-        )}
         {!prizes.rows ? <p className={styles.muted}>Loading…</p> : mine.length === 0 ? (
           <p className={styles.muted}>{manage ? 'No sponsor prizes yet. Add what sponsors sent for this event; it stays here until the event is over.' : 'No sponsor prizes for this event.'}</p>
         ) : (

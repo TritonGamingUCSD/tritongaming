@@ -17,6 +17,7 @@ export function GridHead({ cols }: { cols: Col[] }) {
 const col = (label: string, width: string): Col => ({ label, width });
 const TOOLS = col('', '5rem');
 
+export const EQUIPMENT_COLS: Col[] = [col('ID', '8rem'), col('Name', 'minmax(12rem, 1.8fr)'), col('Type', 'minmax(9rem, 1fr)'), col('Shelf', 'minmax(8rem, 1fr)'), col('Tier', '6rem'), col('Condition', '9rem'), col('Kit', '7rem'), TOOLS];
 export const PRIZE_COLS: Col[] = [col('Prize', 'minmax(13rem, 2.2fr)'), col('Sponsor', 'minmax(8rem, 1fr)'), col('Size', 'minmax(7rem, 0.9fr)'), col('Type', 'minmax(7rem, 0.9fr)'), col('Price', '6rem'), col('In stock', '6rem'),
   col('Promised', '5rem'), col('Given', '4.5rem'), col('Left', '4.5rem'), col('Where', 'minmax(12rem, 1.6fr)'), TOOLS];
 export const SPONSOR_PRIZE_COLS: Col[] = [col('Sponsor', 'minmax(9rem, 1fr)'), col('Prize', 'minmax(12rem, 2.2fr)'), col('Size', 'minmax(7rem, 0.8fr)'), col('Type', 'minmax(7rem, 0.9fr)'), col('Price', '6rem'),

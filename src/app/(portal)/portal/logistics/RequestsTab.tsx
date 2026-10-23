@@ -1,6 +1,6 @@
 'use client';
 
-import { Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
@@ -89,7 +89,7 @@ export default function RequestsTab({ kind, plan, api, data }: { kind: RequestKi
     <div className={styles.tab}>
       <div className={styles.toolbarRow}>
         <span className={styles.count}>{!manage ? 'Your requests for this event' : list.length === 0 ? 'No requests yet' : summary}</span>
-        {!closed && <Button className={styles.addBtn} onClick={() => setDialog('new')}>New Request</Button>}
+        {!closed && <Button className={styles.addBtn} onClick={() => setDialog('new')}><Plus size={15} aria-hidden="true" /> New Request</Button>}
       </div>
       {dialog && <RequestDialog kind={kind} plan={plan} api={api} data={data} planId={planId} loaded={loaded} request={dialog === 'new' ? null : dialog} onSaved={() => { setDialog(null); void load(); }} onClose={() => setDialog(null)} />}
       {error && <div role="alert" onClick={() => setError('')}><Notice tone="error">{error}</Notice></div>}

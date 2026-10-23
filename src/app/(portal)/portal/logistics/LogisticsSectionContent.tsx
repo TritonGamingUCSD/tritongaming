@@ -34,7 +34,7 @@ function InventoryView({ api, data, sub, onSub }: { api: LogisticsApi; data: Cat
   const prizes = usePrizes();
   return (
     <>
-      <SectionTabs<'devices' | 'prizes'> variant="segmented" label="Inventory" value={sub} onChange={onSub} tabs={[{ id: 'devices', label: 'Devices', count: data.devices.length }, { id: 'prizes', label: 'Prizes', count: prizes.rows?.length }]} />
+      <SectionTabs<'devices' | 'prizes'> variant="segmented" label="Inventory" value={sub} onChange={onSub} tabs={[{ id: 'devices', label: 'Devices', count: data.devices.length }, { id: 'prizes', label: 'Prizes', count: prizes.rows?.filter((p) => !p.plan_id).length }]} />
       {sub === 'devices' ? <EquipmentTab api={api} data={data} /> : <PrizesTab api={api} data={data} />}
     </>
   );

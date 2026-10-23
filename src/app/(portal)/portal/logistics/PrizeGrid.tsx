@@ -7,6 +7,7 @@ import { NumberCell as EditNumber, PickCell } from './Cells';
 import { usePrizes, type PrizeRow } from './usePrizes';
 import type { PlanApi } from './usePlans';
 import type { Catalog } from './useLogistics';
+import { Search } from 'lucide-react';
 import styles from './logistics.module.css';
 
 const money = (n: number | null) => (n === null ? '' : `$${n.toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 })}`);
@@ -54,7 +55,7 @@ export default function PrizeGrid({ plan, data }: { plan: PlanApi; data: Catalog
   return (
     <div className={styles.tab}>
       <div className={styles.toolbar}>
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search prizes" aria-label="Search prizes" />
+        <div className={styles.search}><Search size={15} aria-hidden="true" /><Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search prizes" aria-label="Search prizes" /></div>
         <div className={styles.filters}>
           <Select value={sponsor} onChange={(e) => setSponsor(e.target.value)} aria-label="Sponsor"><option value="">All sponsors</option><option value="none">No sponsor (club)</option>{data.sponsors.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select>
           <Select value={size} onChange={(e) => setSize(e.target.value)} aria-label="Size"><option value="">All sizes</option>{data.lists.prize_size.map((s) => <option key={s.id} value={s.value}>{s.value}</option>)}<option value="none">Big prizes</option></Select>

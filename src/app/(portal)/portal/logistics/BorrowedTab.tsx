@@ -9,6 +9,7 @@ import { ListCell, PickCell, TextCell } from './Cells';
 import { doneKey, type Borrowed, type PlanApi } from './usePlans';
 import type { Catalog, LogisticsApi } from './useLogistics';
 import { GridHead, borrowedCols, gridStyle } from './gridTable';
+import { Plus } from 'lucide-react';
 import styles from './logistics.module.css';
 
 // The devices a sponsor lent or an officer brought for this one event (they are not in the inventory). They are entered and changed here, and they are on the Allocation sheet too, where they
@@ -39,7 +40,7 @@ export default function BorrowedTab({ plan, catalog, data, kind }: { plan: PlanA
     <div className={styles.tab}>
       <div className={styles.toolbarRow}>
         <span className={styles.count}>{rows.length} {noun}{rows.length === 1 ? '' : 's'} for this event</span>
-        {manage && <Button className={styles.addBtn} onClick={() => setDialog('new')}>{sponsor ? 'Add Sponsor Loaner' : 'Add Officer Loaner'}</Button>}
+        {manage && <Button className={styles.addBtn} onClick={() => setDialog('new')}><Plus size={15} aria-hidden="true" /> {sponsor ? 'Add Sponsor Loaner' : 'Add Officer Loaner'}</Button>}
       </div>
       {dialog && <BorrowedDialog extrasOnly plan={plan} catalog={catalog} data={data} borrowed={dialog === 'new' ? null : dialog} defaultKind={kind} onClose={() => setDialog(null)} />}
       {rows.length === 0 ? (

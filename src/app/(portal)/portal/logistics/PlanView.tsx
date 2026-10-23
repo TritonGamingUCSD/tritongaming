@@ -461,10 +461,10 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
           {rows.length > 0 && (
             <section className={`${styles.statusBar} ${bad ? styles.readyBad : warn ? styles.readyWarn : styles.readyOk}`} aria-label="What needs fixing">
               <div className={`${styles.readyHead} ${problems.length > 0 ? styles.clickRow : ''}`} onClick={(e) => { if (problems.length > 0 && !interactive(e.target)) setShowList((v) => !v); }} role={problems.length > 0 ? 'button' : undefined} tabIndex={problems.length > 0 ? 0 : undefined} aria-expanded={problems.length > 0 ? showList : undefined} onKeyDown={(e) => { if (problems.length > 0 && (e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); setShowList((v) => !v); } }}>
-                <b>{bad || warn ? `${problems.length} to fix` : 'Everything is ready'}</b>
-                {bad > 0 && <span className={`${styles.badge} ${styles.bad}`}>{bad} wrong</span>}
-                {warn > 0 && <span className={`${styles.badge} ${styles.warnBadge}`}>{warn} to check</span>}
-                {problems.length > 0 && <span className={styles.dim}>{showList ? 'Click to hide the list' : 'Click to see the list'}</span>}
+                <b>{bad || warn ? <>{problems.length}<span className={styles.wide}>to fix</span></> : <><span className={styles.narrow}>Ready</span><span className={styles.wide}>Everything is ready</span></>}</b>
+                {bad > 0 && <span className={`${styles.badge} ${styles.bad}`} title={`${bad} wrong`}>{bad}<span className={styles.wide}>wrong</span></span>}
+                {warn > 0 && <span className={`${styles.badge} ${styles.warnBadge}`} title={`${warn} to check`}>{warn}<span className={styles.wide}>to check</span></span>}
+                {problems.length > 0 && <span className={`${styles.dim} ${styles.wide}`}>{showList ? 'Click to hide the list' : 'Click to see the list'}</span>}
                 <span className={styles.statusSpacer} />
                 {page === 'device' && (
                   <span className={styles.miniSeg} role="group" aria-label="Group the devices">
@@ -473,7 +473,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
                   </span>
                 )}
                 {day && page === 'device' && <button type="button" className={styles.linkBtn} aria-pressed={openOnly} onClick={() => onOpenOnly(!openOnly)}>{openOnly ? 'Show All' : 'Unfinished Only'}</button>}
-                {manage && emptyRows.length > 0 && <button type="button" className={styles.linkBtn} onClick={() => setFilling({ station: null })}>Fill {emptyRows.length} Empty</button>}
+                {manage && emptyRows.length > 0 && <button type="button" className={styles.linkBtn} onClick={() => setFilling({ station: null })}>Fill {emptyRows.length}<span className={styles.wide}>Empty</span></button>}
                 {day && <button type="button" className={styles.linkBtn} aria-expanded={overview} onClick={() => setOverview((v) => !v)}>{overview ? 'Hide overview' : 'Overview'}</button>}
                 <button type="button" className={styles.linkBtn} onClick={() => { setFold(Object.fromEntries(teams.map((t) => [t.key, !allFolded]))); setSetsOpenPick(allFolded); setFoldGen((g) => g + 1); }}>{allFolded ? 'Expand all' : 'Collapse all'}</button>
               </div>
@@ -546,14 +546,14 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
                         <span className={styles.foldMark} aria-hidden="true">{folded ? '+' : '–'}</span>
                         <b>{t.title}</b>
                       </button>
-                      {s && <span className={`${styles.statusChip} ${status === 'ok' ? styles.chipOk : status === 'bad' ? styles.chipBad : styles.chipWarn}`}>{status === 'ok' ? 'Ready' : `${mine.length} to fix`}</span>}
+                      {s && <span className={`${styles.statusChip} ${status === 'ok' ? styles.chipOk : status === 'bad' ? styles.chipBad : styles.chipWarn}`}>{status === 'ok' ? <><span className={styles.narrow} aria-label="Ready">✓</span><span className={styles.wide}>Ready</span></> : <>{mine.length}<span className={styles.wide}>to fix</span></>}</span>}
                       {day && <span className={complete ? styles.dTeamDone : styles.dTeamNum}>{complete ? 'All done' : `${done}/${total}`}</span>}
                     </div>
                     {s && (
                       <div className={styles.teamLine}>
                         <span className={styles.dTeamSub}>{s.contact ?? <span className={styles.warnText}>No contact</span>}</span>
                         <span className={styles.dTeamSub}><TextCell value={s.room} canEdit={manage} placeholder="Add room" onSave={(v) => void plan.act('/stations', 'PATCH', { station_id: s.id, room: v })} /></span>
-                        {manage && emptyHere > 0 && <button type="button" className={styles.miniTextBtn} onClick={() => setFilling({ station: s })}>Fill {emptyHere} Empty</button>}
+                        {manage && emptyHere > 0 && <button type="button" className={styles.miniTextBtn} onClick={() => setFilling({ station: s })}>Fill {emptyHere}<span className={styles.wide}>Empty</span></button>}
                       </div>
                     )}
                   </div>

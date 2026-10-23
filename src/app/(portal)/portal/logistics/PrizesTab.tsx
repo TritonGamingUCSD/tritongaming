@@ -12,6 +12,7 @@ import PrizeEditRow from './PrizeEditRow';
 import { usePrizes, type PrizeRow } from './usePrizes';
 import type { Catalog, LogisticsApi } from './useLogistics';
 import { GridHead, PRIZE_COLS } from './gridTable';
+import { Plus, Search, TriangleAlert } from 'lucide-react';
 import styles from './logistics.module.css';
 
 const money = (n: number | null) => (n === null ? '' : `$${Number.isInteger(n) ? n.toLocaleString('en-US') : n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
@@ -34,20 +35,22 @@ export default function PrizesTab({ api, data }: { api: LogisticsApi; data: Cata
       && (!sponsor || (sponsor === 'none' ? !p.sponsor_id : p.sponsor_id === sponsor)) && (!size || (size === 'none' ? !p.size : p.size === size))
       && (!problems || p.left < 0));
   }, [prizes.rows, q, sponsor, size, problems, sponsorName]);
+  const inStorage = (prizes.rows ?? []).filter((p) => !p.plan_id).length;
+  const overCount = (prizes.rows ?? []).filter((p) => !p.plan_id && p.left < 0).length;
   const value = rows.reduce((n, p) => n + (p.price ?? 0) * Math.max(0, p.left), 0);
 
   return (
     <div className={styles.tab}>
       <div className={styles.toolbar}>
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, sponsor or place" aria-label="Search prizes" />
+        <div className={styles.search}><Search size={15} aria-hidden="true" /><Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, sponsor or place" aria-label="Search prizes" /></div>
         <div className={styles.filters}>
           <Select value={sponsor} onChange={(e) => setSponsor(e.target.value)} aria-label="Sponsor"><option value="">All sponsors</option><option value="none">No sponsor (club)</option>{data.sponsors.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select>
           <Select value={size} onChange={(e) => setSize(e.target.value)} aria-label="Size"><option value="">All sizes</option>{data.lists.prize_size.map((s) => <option key={s.id} value={s.value}>{s.value}</option>)}<option value="none">Big prizes</option></Select>
         </div>
         <div className={styles.toolbarRow}>
-          <button type="button" className={`${styles.pill} ${problems ? styles.pillOn : ''}`} aria-pressed={problems} onClick={() => setProblems((v) => !v)}>Over-promised</button>
-          <span className={styles.count}>{rows.length} of {(prizes.rows ?? []).filter((p) => !p.plan_id).length} prizes in storage · {money(Math.round(value)) || '$0'} left in stock</span>
-          {canEdit && <Button className={styles.addBtn} onClick={() => setDialog('new')}>Add Prize</Button>}
+          <button type="button" className={`${styles.pill} ${problems ? styles.pillOn : ''}`} aria-pressed={problems} onClick={() => setProblems((v) => !v)}><TriangleAlert size={13} aria-hidden="true" /> Over-Promised{overCount ? ` (${overCount})` : ''}</button>
+          <span className={styles.count}>{rows.length === inStorage ? `${inStorage}` : `${rows.length} of ${inStorage}`} {inStorage === 1 ? 'prize' : 'prizes'} · {money(Math.round(value)) || '$0'} left</span>
+          {canEdit && <Button className={styles.addBtn} onClick={() => setDialog('new')}><Plus size={15} aria-hidden="true" /> Add Prize</Button>}
         </div>
       </div>
       {dialog && <PrizeDialog prizes={prizes} api={api} data={data} prize={dialog === 'new' ? null : dialog} where="storage" onClose={() => setDialog(null)} />}

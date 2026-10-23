@@ -17,6 +17,7 @@ import { useUrlNav } from '@/lib/portal/usePortalTabSync';
 import PlanView from './PlanView';
 import { usePlanList, type PlanSummary } from './usePlans';
 import type { Catalog, LogisticsApi } from './useLogistics';
+import { Plus } from 'lucide-react';
 import styles from './logistics.module.css';
 
 const range = (a: string, b: string) => {
@@ -42,6 +43,12 @@ export default function PlansTab({ api, data, route, go }: { api: LogisticsApi; 
   return <PlanList data={data} list={list} onOpen={open} />;
 }
 
+// The closest event comes first: the ones on today, then the upcoming ones soonest first, then the past ones most recent first.
+function nearestFirst(plans: PlanSummary[], today: string): PlanSummary[] {
+  const group = (p: PlanSummary) => (p.starts_on <= today && today <= p.ends_on ? 0 : p.starts_on > today ? 1 : 2);
+  return [...plans].sort((a, b) => group(a) - group(b) || (group(a) === 2 ? b.ends_on.localeCompare(a.ends_on) || b.starts_on.localeCompare(a.starts_on) : a.starts_on.localeCompare(b.starts_on)));
+}
+
 function PlanList({ data, list, onOpen }: { data: Catalog; list: ReturnType<typeof usePlanList>; onOpen: (p: PlanSummary) => void }) {
   const { plans, today, error, setError, create, update, remove, events } = list;
   const [creating, setCreating] = useState(false);
@@ -54,7 +61,7 @@ function PlanList({ data, list, onOpen }: { data: Catalog; list: ReturnType<type
     <div className={styles.tab}>
       <div className={styles.toolbarRow}>
         <span className={styles.count}>{plans ? `${plans.length} ${plans.length === 1 ? 'event' : 'events'}` : ''}</span>
-        {data.canManage && <Button className={styles.addBtn} onClick={() => setCreating(true)}>New Event</Button>}
+        {data.canManage && <Button className={styles.addBtn} onClick={() => setCreating(true)}><Plus size={15} aria-hidden="true" /> New Event</Button>}
       </div>
       {editing && <EditPlanDialog plan={editing} onSave={async (b) => update(editing.id, b)} onClose={() => setEditing(null)} />}
       {creating && <CreateDialog events={events} onCreate={async (b) => { const p = await create(b); if (p) { setCreating(false); onOpen(p); } return !!p; }} onClose={() => setCreating(false)} />}
@@ -63,7 +70,7 @@ function PlanList({ data, list, onOpen }: { data: Catalog; list: ReturnType<type
         <div className={styles.empty}><p>{data.canManage ? 'No events yet. Make one for an upcoming event, then add the devices that go to it.' : 'No events have been set up yet.'}</p></div>
       ) : (
         <ul className={styles.eventList}>
-          {plans.map((p: PlanSummary) => {
+          {nearestFirst(plans, today).map((p: PlanSummary) => {
             const isToday = p.status === 'draft' && p.starts_on <= today && today <= p.ends_on;
             return (
               <li key={p.id} className={isToday ? styles.eventToday : undefined}>
@@ -79,7 +86,7 @@ function PlanList({ data, list, onOpen }: { data: Catalog; list: ReturnType<type
                   <span className={styles.eventStats}>
                     <span>{p.teams} {p.teams === 1 ? 'team' : 'teams'}</span>
                     <span>{p.requests} {p.requests === 1 ? 'request' : 'requests'}{p.newRequests > 0 && <b className={styles.warnText}> · {p.newRequests} new</b>}</span>
-                    <span>{p.devices} {p.devices === 1 ? 'device' : 'devices'}{p.empty > 0 && <b className={styles.warnText}> · {p.empty} to fill</b>}</span>
+                    <span>{p.devices} {p.devices === 1 ? 'device' : 'devices'}{p.empty > 0 && <b className={styles.warnText} title={`${p.empty} to fill`}> · {p.empty}<span className={styles.wide}>to fill</span></b>}</span>
                     <span>{p.prizes} {p.prizes === 1 ? 'prize' : 'prizes'}{p.prizes > 0 && ` · $${Math.round(p.prizeValue).toLocaleString('en-US')}`}</span>
                   </span>
                   )}

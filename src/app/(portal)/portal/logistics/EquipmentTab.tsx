@@ -9,28 +9,17 @@ import { quantityText, tagKey, type Device, type DevicePatch } from '@/lib/logis
 import { Combo } from './Combo';
 import { RowMenu } from './RowMenu';
 import { PickCell, TextCell } from './Cells';
+import { EQUIPMENT_COLS, GridHead, gridStyle } from './gridTable';
 import DeviceDialog from './DeviceDialog';
 import type { Catalog, LogisticsApi } from './useLogistics';
 import styles from './logistics.module.css';
 
 const SHOW = 150;
-const placeOf = (d: Pick<Device, 'shelf' | 'tier'>) => [d.shelf, d.tier].filter(Boolean).join(' · ');
 const missingCount = (d: Device) => d.kit.filter((k) => k.missing).length;
 // "Needs attention": dead or disappeared, or a part is missing. Something that was thrown away on purpose is settled, so it is not listed.
 const isProblem = (d: Device) => d.condition === 'dead' || d.condition === 'disappeared' || missingCount(d) > 0;
 // Devices with an ID first (TECM2 before TECM10), counted rows (no ID) after them, grouped by type.
 const byId = (a: Device, b: Device) => (a.tag === null ? 1 : 0) - (b.tag === null ? 1 : 0) || (a.tag ?? a.type).localeCompare(b.tag ?? b.type, undefined, { numeric: true, sensitivity: 'base' });
-
-function useWide() {
-  const [wide, setWide] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 900px)');
-    const on = () => setWide(mq.matches);
-    on(); mq.addEventListener('change', on);
-    return () => mq.removeEventListener('change', on);
-  }, []);
-  return wide;
-}
 
 function ConditionBadge({ c }: { c: Device['condition'] }) {
   const tone = c === 'working' || c === 'brand_new' ? styles.good : UNUSABLE.includes(c) ? styles.bad : styles.neutral;
@@ -53,7 +42,6 @@ function KitCell({ d, counted }: { d: Device; counted: boolean }) {
 }
 
 export default function EquipmentTab({ api, data }: { api: LogisticsApi; data: Catalog }) {
-  const wide = useWide();
   const [q, setQ] = useState('');
   const [type, setType] = useState('');
   const [shelf, setShelf] = useState('');
@@ -90,53 +78,33 @@ export default function EquipmentTab({ api, data }: { api: LogisticsApi; data: C
           <Select value={condition} onChange={(e) => setCondition(e.target.value)} aria-label="Condition"><option value="">Any condition</option>{CONDITIONS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</Select>
         </div>
         <div className={styles.toolbarRow}>
-          <button type="button" className={`${styles.pill} ${problems ? styles.pillOn : ''}`} aria-pressed={problems} onClick={() => setProblems((v) => !v)}><TriangleAlert size={13} aria-hidden="true" /> Needs attention{problemCount ? ` (${problemCount})` : ''}</button>
-          <span className={styles.count}>{filtered ? `${rows.length} of ${data.devices.length}` : `${data.devices.length}`} {data.devices.length === 1 ? 'item' : 'items'}</span>
+          <button type="button" className={`${styles.pill} ${problems ? styles.pillOn : ''}`} aria-pressed={problems} onClick={() => setProblems((v) => !v)}><TriangleAlert size={13} aria-hidden="true" /> Needs Attention{problemCount ? ` (${problemCount})` : ''}</button>
+          <span className={styles.count}>{filtered ? `${rows.length} of ${data.devices.length}` : `${data.devices.length}`} {data.devices.length === 1 ? 'device' : 'devices'}</span>
           {canEdit && <Button className={styles.addBtn} onClick={() => open(null)}><Plus size={15} aria-hidden="true" /> Add Device</Button>}
         </div>
       </div>
 
-      {dialog && <DeviceDialog extrasOnly={wide} api={api} data={data} device={dialog.device} template={dialog.template ?? null} onClose={() => setDialog(null)} onClone={(draft) => setDialog({ device: null, template: draft })} />}
+      {dialog && <DeviceDialog extrasOnly api={api} data={data} device={dialog.device} template={dialog.template ?? null} onClose={() => setDialog(null)} onClone={(draft) => setDialog({ device: null, template: draft })} />}
       {data.devices.length === 0 ? (
         <div className={styles.empty}><p>{canEdit ? 'No equipment yet. Add the first device, then use “Save And Add Another” to enter a run of them quickly.' : 'No equipment has been added yet.'}</p></div>
       ) : rows.length === 0 ? (
         <div className={styles.empty}><p>Nothing matches.</p></div>
-      ) : wide ? (
-        <div className={styles.gridWrap}>
-          <table className={styles.grid}>
-            <thead><tr><th>ID</th><th>Name</th><th>Type</th><th>Shelf</th><th>Tier</th><th>Condition</th><th>Kit</th><th aria-label="Open" /></tr></thead>
-            <tbody>
-              {shown.map((d) => (
-                <tr key={d.id} className={isProblem(d) ? styles.rowBad : undefined}>
-                  <td><TextCell value={d.tag} canEdit={canEdit} strong placeholder="no ID" onSave={(v) => save(d, { tag: v || null })} /></td>
-                  <td><TextCell value={d.name} canEdit={canEdit} onSave={(v) => save(d, { name: v || null })} /></td>
-                  <td><PickCell value={d.type} options={data.lists.type.map((t) => t.value)} canEdit={canEdit} clearable={false} onSave={(v) => v && save(d, { type: v })} onCreate={(v) => api.addOption('type', v)} /></td>
-                  <td><PickCell locate value={d.shelf} options={data.lists.shelf.map((t) => t.value)} canEdit={canEdit} onSave={(v) => save(d, { shelf: v })} onCreate={(v) => api.addOption('shelf', v)} /></td>
-                  <td><PickCell value={d.tier} options={data.lists.tier.map((t) => t.value)} canEdit={canEdit} onSave={(v) => save(d, { tier: v })} onCreate={(v) => api.addOption('tier', v)} /></td>
-                  <td><ConditionCell d={d} canEdit={canEdit} onSave={(c) => save(d, { condition: c })} /></td>
-                  <td><KitCell d={d} counted={!!data.lists.type.find((t) => t.value === d.type)?.counted} /></td>
-                  <td><RowMenu label={`More for ${d.tag ?? d.type}`} items={[{ label: canEdit ? 'Edit' : 'Details', onClick: () => open(d) }]} /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
       ) : (
-        <ul className={styles.cards}>
+        <div className={styles.prizeGrid}>
+          <GridHead cols={EQUIPMENT_COLS} />
           {shown.map((d) => (
-            <li key={d.id}>
-              <button type="button" className={`${styles.card} ${isProblem(d) ? styles.cardBad : ''}`} onClick={() => open(d)}>
-                <span className={styles.cardTop}><b className={styles.cardId}>{d.tag ?? 'No ID'}</b><ConditionBadge c={d.condition} /></span>
-                <span className={styles.cardType}>{d.type}{d.name ? ` · ${d.name}` : ''}</span>
-                <span className={styles.cardMeta}>
-                  <span>{placeOf(d) || <span className={styles.notLocated}>Not located yet</span>}</span>
-                  {data.lists.type.find((t) => t.value === d.type)?.counted && <span className={styles.qty}>{quantityText(d)}</span>}
-                  {missingCount(d) > 0 && <span className={`${styles.badge} ${styles.bad}`}>{missingCount(d)} missing</span>}
-                </span>
-              </button>
-            </li>
+            <div key={d.id} className={`${styles.prizeRow} ${isProblem(d) ? styles.lineBad : ''}`} style={gridStyle(EQUIPMENT_COLS)}>
+              <span className={styles.prizeName}><TextCell value={d.tag} canEdit={canEdit} strong placeholder="no ID" onSave={(v) => save(d, { tag: v || null })} /></span>
+              <span data-label="Name"><TextCell value={d.name} canEdit={canEdit} onSave={(v) => save(d, { name: v || null })} /></span>
+              <span data-label="Type"><PickCell value={d.type} options={data.lists.type.map((t) => t.value)} canEdit={canEdit} clearable={false} onSave={(v) => v && save(d, { type: v })} onCreate={(v) => api.addOption('type', v)} /></span>
+              <span data-label="Shelf"><PickCell locate value={d.shelf} options={data.lists.shelf.map((t) => t.value)} canEdit={canEdit} onSave={(v) => save(d, { shelf: v })} onCreate={(v) => api.addOption('shelf', v)} /></span>
+              <span data-label="Tier"><PickCell value={d.tier} options={data.lists.tier.map((t) => t.value)} canEdit={canEdit} onSave={(v) => save(d, { tier: v })} onCreate={(v) => api.addOption('tier', v)} /></span>
+              <span data-label="Condition"><ConditionCell d={d} canEdit={canEdit} onSave={(c) => save(d, { condition: c })} /></span>
+              <span data-label="Kit"><KitCell d={d} counted={!!data.lists.type.find((t) => t.value === d.type)?.counted} /></span>
+              <span className={styles.prizeTools}><RowMenu label={`More for ${d.tag ?? d.type}`} items={[{ label: 'Details', onClick: () => open(d) }]} /></span>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
       {rows.length > limit && <div className={styles.more}><Button variant="secondary" onClick={() => setLimit(rows.length)}>Show All {rows.length}</Button></div>}
 

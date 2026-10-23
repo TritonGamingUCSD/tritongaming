@@ -56,7 +56,9 @@ try {
   t.ok('promised and left follow the lines (12 in stock, 7 promised)', pa.allocated === 7 && pa.left === 5, JSON.stringify(pa));
   const d = (await officer.call('GET', `/api/logistics/plans/${P}`)).j;
   t.ok('the plan lists its pools, lines, and how many are left', d.prizes.pools.length === 2 && d.prizes.lines.length === 3 && d.prizes.lines.find((x) => x.id === LA1).prize.left === 5 && d.prizes.steps.length === 5);
-  t.ok('over-promising shows as a negative left', (await exec.call('POST', `/api/logistics/plans/${P}/prizes`, { pool_id: pool2.id, prize_id: B, quantity: 450 })).s === 201 && (await officer.call('GET', '/api/logistics/prizes')).j.prizes.find((x) => x.id === B).left === -50);
+  t.ok('a pool cannot be promised more than is left', (await exec.call('POST', `/api/logistics/plans/${P}/prizes`, { pool_id: pool2.id, prize_id: B, quantity: 450 })).s === 409 && (await exec.call('POST', `/api/logistics/plans/${P}/prizes`, { pool_id: pool2.id, prize_id: B, quantity: 400 })).s === 201);
+  t.ok('over-promising still shows if the stock is lowered afterwards', (await exec.call('PATCH', '/api/logistics/prizes', { id: B, quantity: 450 })).s === 200 && (await officer.call('GET', '/api/logistics/prizes')).j.prizes.find((x) => x.id === B).left === -50);
+  t.ok('a line cannot be raised past what is left', (await exec.call('PATCH', `/api/logistics/plans/${P}/prizes`, { line_id: LB, quantity: 120 })).s === 409);
   t.ok('a prize on a line cannot be deleted', (await exec.call('DELETE', '/api/logistics/prizes', { id: A })).s === 409);
 
   // ---- event-day counts (any officer)

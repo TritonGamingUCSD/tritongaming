@@ -31,7 +31,6 @@
 .qty { font-size: 0.86rem; font-style: italic; color: rgba(var(--pp-ink-rgb), 0.9); }
 
 /* The spreadsheet-style grid (computers) */
-.gridWrap { overflow-x: auto; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); background: var(--pp-card); }
 .grid { width: 100%; border-collapse: collapse; font-size: 0.86rem; min-width: 60rem; }
 .grid th { position: sticky; top: 0; text-align: left; padding: 0.55rem 0.7rem; font-family: var(--font-renegare); font-weight: 400; font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.85); background: rgba(var(--pp-ink-rgb), 0.05); border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.22); white-space: nowrap; }
 .grid td { padding: 0.25rem 0.5rem; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.1); vertical-align: middle; color: var(--pp-ink); }
@@ -46,14 +45,6 @@
 .iconBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* Cards (phones and tablets) */
-.cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 0.6rem; }
-.card { width: 100%; display: flex; flex-direction: column; gap: 0.35rem; padding: 0.8rem 0.9rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); background: var(--pp-card); color: var(--pp-ink); font: inherit; text-align: left; cursor: pointer; min-height: 44px; }
-.card:active { background: rgba(var(--pp-ink-rgb), 0.05); }
-.cardBad { border-left: 3px solid var(--pp-bad); }
-.cardTop { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
-.cardId { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.1rem; overflow-wrap: anywhere; }
-.cardType { font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.9); overflow-wrap: anywhere; }
-.cardMeta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.6rem; font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.78); }
 
 /* The dropdown (Combo) */
 .combo { position: relative; width: 100%; }
@@ -820,8 +811,6 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 .poolLine { grid-template-columns: minmax(0, 1fr) 4.5rem auto; }
 
 /* Per-sponsor totals above the sponsor prize list, and the wrap-up of a closed event. */
-.sponsorSummary { list-style: none; margin: 0 0 0.6rem; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: 0.5rem; }
-.sponsorSummaryCard { display: flex; flex-direction: column; gap: 0.15rem; padding: 0.55rem 0.7rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.2); background: var(--pp-card); font-size: 0.86rem; }
 .wrapUp { margin-bottom: 0.8rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.2); background: var(--pp-card); }
 .wrapUp > summary { padding: 0.6rem 0.8rem; font-weight: 700; cursor: pointer; }
 .wrapUp .grid { margin: 0; }
@@ -850,7 +839,6 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
   .tab { gap: 0.5rem; }
   .reqRow > span[data-label="Team"] { order: 1; } .reqRow > span[data-label="Status"] { order: 2; }
   .reqRow > span[data-label="Devices"], .reqRow > span[data-label="Prizes"] { order: 3; } .reqRow > span[data-label="Notes"] { order: 4; } .reqRow > .prizeTools { order: 5; }
-  .sponsorSummary { grid-template-columns: 1fr; gap: 0.35rem; } .sponsorSummaryCard { padding: 0.4rem 0.6rem; }
 }
 
 /* The shared tab bar leaves a bottom margin of its own; on an event page the gap between the bars is the bar's own gap. */
@@ -947,3 +935,23 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 /* At any width: a table that is wider than its room scrolls sideways (every row at least its columns' minimum width) instead of cutting its last columns off. */
 .prizeGrid { overflow-x: auto; }
 .prizeGrid > .prizeRow { min-width: var(--w); }
+
+/* Phone: counts say just the number (the colour tells what kind it is) and long rows stay on one line: they shorten with "…" or scroll sideways instead of wrapping into two or three lines. */
+.wide { margin-inline-start: 0.25em; }
+.statusChip .wide { margin-inline-start: 0; }
+.narrow { display: none; }
+@media (max-width: 640px) {
+  .wide { display: none; }
+  .narrow { display: inline; }
+  .eventRow .eventStats { display: flex; flex-wrap: nowrap; gap: 0.9rem; overflow-x: auto; scrollbar-width: none; white-space: nowrap; font-size: 0.74rem; }
+  .eventRow .eventStats::-webkit-scrollbar { display: none; }
+  .statusBar .readyHead { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; gap: 0.4rem; }
+  .statusBar .readyHead::-webkit-scrollbar { display: none; }
+  .statusBar .readyHead > * { flex: none; white-space: nowrap; }
+  .statusBar .linkBtn, .miniSeg button { font-size: 0.74rem; padding-inline: 0.6rem; }
+  .statusBar .statusSpacer { display: none; }
+  .teamHeadMain { flex-wrap: nowrap; gap: 0.25rem 0.5rem; overflow: hidden; }
+  .teamHeadMain .foldBtn b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .teamHeadMain .dTeamSub { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.74rem; }
+  .teamHeadMain .statusChip, .teamHeadMain .dTeamNum, .teamHeadMain .dTeamDone, .teamHeadMain .miniTextBtn { flex: none; font-size: 0.74rem; }
+}

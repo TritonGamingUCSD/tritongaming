@@ -10,6 +10,7 @@ import { stepCeiling, type PrizeStepDef } from '@/lib/logistics/prizes';
 import { interactive } from './interactive';
 import { usePrizes } from './usePrizes';
 import type { PlanApi, PlanDetail } from './usePlans';
+import { Plus } from 'lucide-react';
 import styles from './logistics.module.css';
 
 type Line = PlanDetail['prizes']['lines'][number];
@@ -38,7 +39,7 @@ export default function PlanPrizes({ plan, canManage, closed }: { plan: PlanApi;
     <section className={styles.prizeSection} aria-label="Prizes">
       <div className={styles.prizeHead}>
         <h3 className={styles.panelTitle}>Prizes <span className={styles.dim}>{lines.length} lines</span></h3>
-        {manage && <Button size="sm" variant="secondary" onClick={() => setPoolDialog({ pool: null })}>Add Prize Pool</Button>}
+        {manage && <Button className={styles.addBtn} onClick={() => setPoolDialog({ pool: null })}><Plus size={15} aria-hidden="true" /> Add Prize Pool</Button>}
       </div>
       {poolDialog && <PoolDialog plan={plan} pool={poolDialog.pool} onClose={() => setPoolDialog(null)} />}
       {adding && <AddPrizesDialog plan={plan} pool={adding} existing={new Set(lines.filter((l) => l.pool_id === adding.id).map((l) => l.prize_id))} onClose={() => setAdding(null)} />}
@@ -102,7 +103,7 @@ function PrizeLine({ line, steps, count, given, plan, manage, closed }: { line: 
       </div>
       <div className={styles.dNotes}>
         {qty !== null ? (
-          <input className={styles.qtyInput} type="number" min={1} max={100000} value={qty} autoFocus onChange={(e) => setQty(e.target.value)} onBlur={() => void saveQty()} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); else if (e.key === 'Escape') setQty(null); }} aria-label={`How many ${p.name}`} />
+          <input className={styles.qtyInput} type="number" min={1} max={line.quantity + Math.max(0, p.left)} value={qty} autoFocus onChange={(e) => setQty(e.target.value)} onBlur={() => void saveQty()} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); else if (e.key === 'Escape') setQty(null); }} aria-label={`How many ${p.name}`} />
         ) : manage ? <button type="button" className={styles.qtyBtn} onClick={() => setQty(String(line.quantity))} title="Change how many">× {line.quantity} for this pool</button> : <span>× {line.quantity} for this pool</span>}
         {over && <span className={styles.flagBad}>{-p.left} more promised than there are</span>}
       </div>
@@ -186,7 +187,7 @@ function AddPrizesDialog({ plan, pool, existing, onClose }: { plan: PlanApi; poo
               <li key={p.id} className={styles.pickPrize}>
                 <span><b>{p.name}</b><span className={styles.dim}> {[p.size, money(p.price)].filter(Boolean).join(' · ')}</span></span>
                 <span className={p.left < 0 ? styles.flagBad : styles.dim}>{p.left} left</span>
-                <input className={styles.qtyInput} type="number" min={0} max={100000} placeholder="0" value={qty[p.id] ?? ''} onChange={(e) => setQty((c) => ({ ...c, [p.id]: e.target.value }))} aria-label={`How many ${p.name}`} />
+                <input className={styles.qtyInput} type="number" min={0} max={Math.max(0, p.left)} placeholder="0" value={qty[p.id] ?? ''} onChange={(e) => setQty((c) => ({ ...c, [p.id]: e.target.value === '' ? '' : String(Math.min(Math.max(0, p.left), Math.max(0, Math.round(Number(e.target.value))))) }))} aria-label={`How many ${p.name}`} />
               </li>
             ))}
           </ul>

@@ -200,6 +200,7 @@ export function usePlan(id: string, live: boolean) {
     const before = existing?.quantity ?? 0;
     if (next === before) return { ok: true, delta: 0 };
     const delta = next - before;
+    if (delta > Math.max(0, prize.left)) { setError(`Only ${Math.max(0, prize.left)} left of ${prize.name}. A pool can't be promised more than there is.`); return { ok: false, delta: 0 }; }
     const withLines = (fn: (l: PlanPrizesData['lines']) => PlanPrizesData['lines']) => setDetail((c) => (c ? { ...c, prizes: { ...c.prizes, lines: fn(c.prizes.lines).map((l) => (l.prize_id === prize.id ? { ...l, prize: { ...l.prize, left: l.prize.left - delta } } : l)) } } : c));
     const undo = () => { void load(); };
     if (next === 0 && existing) {
