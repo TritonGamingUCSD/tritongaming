@@ -82,7 +82,7 @@ export function eventEmailHtml(o: EventEmailOptions): string {
   const cover = o.showCover !== false && e.cover_url && /^https:\/\/[^\s"'<>]+$/i.test(e.cover_url)
     ? `<td width="88" align="right" valign="middle" class="tg-cover" style="padding:8px 8px 8px 0;"><img class="tg-cover-img" src="${esc(e.cover_url)}" width="76" alt="${esc(e.title)} poster" style="display:block;width:76px;height:auto;max-height:130px;border:1px solid ${LINE};border-radius:4px;"></td>`
     : '';
-  const pre = `${e.title} · ${when.day} ${when.date}, ${when.time}${place ? ` · ${place}` : ''}`;
+  const pre = `Triton Gaming: ${e.title} · ${when.day} ${when.date}, ${when.time}${place ? ` · ${place}` : ''}`;
   // A note written in the shared template's strong colors is toned down to this email's calm ones.
   const note = o.note.trim() ? blocks(o.note).split(NAVY).join(INK).split(YELLOW).join(SOFT).split(SKY).join(LINK) : '';
   return `<!doctype html>
@@ -94,15 +94,15 @@ export function eventEmailHtml(o: EventEmailOptions): string {
     ${o.test ? `<tr><td style="background:${SOFT};color:${INK};font-family:${HEAD};font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;text-align:center;padding:6px;border-radius:6px 6px 0 0;">Test email: nobody else got this</td></tr>` : ''}
     <tr><td style="background:#ffffff;border:1px solid ${LINE};border-radius:8px;padding:0;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-        <tr><td style="background:${NAVY};border-radius:7px 7px 0 0;padding:12px 22px;">
+        <tr><td style="background:${NAVY};border-radius:7px 7px 0 0;padding:16px 22px;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-            <td width="38" style="padding-right:10px;"><img src="${esc(logo)}" width="28" height="28" alt="TG" style="display:block;border:0;border-radius:7px;"></td>
-            <td style="font-family:${HEAD};color:#f3f1ea;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;font-weight:700;">Triton Gaming</td>
-            <td align="right" style="font-family:${HEAD};color:#c9ccd6;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;font-weight:700;">${esc(KIND_LABEL[o.kind])}</td>
+            <td width="54" style="padding-right:12px;"><img src="${esc(logo)}" width="42" height="42" alt="Triton Gaming" style="display:block;border:0;border-radius:10px;"></td>
+            <td style="font-family:${HEAD};color:#f3f1ea;font-size:16px;letter-spacing:0.16em;text-transform:uppercase;font-weight:800;line-height:1.3;">Triton Gaming<br><span style="font-size:11px;letter-spacing:0.08em;font-weight:600;text-transform:none;color:#c9ccd6;">Gaming Org at UC San Diego</span></td>
           </tr></table>
         </td></tr>
         <tr><td style="height:3px;background:${YELLOW};font-size:0;line-height:0;">&nbsp;</td></tr>
         <tr><td class="tg-card" style="padding:20px 22px 6px;font-family:${BODY};font-size:15px;line-height:1.55;color:${INK};">
+          <div style="margin:0 0 6px;font-family:${HEAD};font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:${MUTED};">${esc(KIND_LABEL[o.kind])}</div>
           <h1 class="tg-h1" style="margin:0 0 16px;font-family:${HEAD};font-size:22px;line-height:1.25;font-weight:700;color:${INK};">${esc(e.title)}</h1>
           <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 16px;border:1px solid ${LINE};border-left:4px solid ${YELLOW};border-radius:6px;background:${PAPER};"><tr>
             <td width="76" align="center" class="tg-stub" style="padding:10px 6px;border-right:1px solid ${LINE};font-family:${HEAD};">
