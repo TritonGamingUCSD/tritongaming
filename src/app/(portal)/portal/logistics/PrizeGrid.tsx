@@ -40,7 +40,7 @@ export default function PrizeGrid({ plan, data }: { plan: PlanApi; data: Catalog
     const t = q.trim().toLowerCase();
     return (prizes.rows ?? []).filter((p) => (!p.plan_id || p.plan_id === d.plan.id) && (!usedOnly || usedIds.has(p.id))
       && (!t || `${p.name} ${sponsorName.get(p.sponsor_id ?? '') ?? ''}`.toLowerCase().includes(t))
-      && (!sponsor || (sponsor === 'none' ? !p.sponsor_id : p.sponsor_id === sponsor)) && (!size || (size === 'none' ? !p.size : p.size === size)));
+      && (!sponsor || (sponsor === 'none' ? !p.sponsor_id : p.sponsor_id === sponsor)) && (!size || p.size === size));
   }, [prizes.rows, d.plan.id, usedOnly, usedIds, q, sponsor, size, sponsorName]);
   const poolTotal = (poolId: string) => lines.filter((l) => l.pool_id === poolId).reduce((n, l) => n + l.quantity, 0);
 
@@ -58,7 +58,7 @@ export default function PrizeGrid({ plan, data }: { plan: PlanApi; data: Catalog
         <div className={styles.search}><Search size={15} aria-hidden="true" /><Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search prizes" aria-label="Search prizes" /></div>
         <div className={styles.filters}>
           <Select value={sponsor} onChange={(e) => setSponsor(e.target.value)} aria-label="Sponsor"><option value="">All sponsors</option><option value="none">No sponsor (club)</option>{data.sponsors.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select>
-          <Select value={size} onChange={(e) => setSize(e.target.value)} aria-label="Size"><option value="">All sizes</option>{data.lists.prize_size.map((s) => <option key={s.id} value={s.value}>{s.value}</option>)}<option value="none">Big prizes</option></Select>
+          <Select value={size} onChange={(e) => setSize(e.target.value)} aria-label="Size"><option value="">All sizes</option>{data.lists.prize_size.map((s) => <option key={s.id} value={s.value}>{s.value}</option>)}</Select>
         </div>
         <div className={styles.toolbarRow}>
           <button type="button" className={`${styles.pill} ${usedOnly ? styles.pillOn : ''}`} aria-pressed={usedOnly} onClick={() => setUsedOnly((v) => !v)}>Only prizes used in this event</button>

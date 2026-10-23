@@ -21,11 +21,11 @@ try {
   const bundle = b0?.value;
   const parts = b0.items.reduce((n, i) => n + i.qty, 0);
 
-  t.ok('a student cannot see or make requests', (await student.call('GET', URL_)).s === 403 && (await student.call('POST', URL_, { kind: 'prizes', items: [{ qty: 1, value: 5 }] })).s === 403);
+  t.ok('a student cannot see or make requests', (await student.call('GET', URL_)).s === 403 && (await student.call('POST', URL_, { kind: 'prizes', items: [{ qty: 1, size: 'Free' }] })).s === 403);
   t.ok('a request needs a kind', (await lead.call('POST', URL_, { kind: 'snacks', items: [] })).s === 400);
   t.ok('a device request needs a real bundle or type', (await lead.call('POST', URL_, { kind: 'devices', items: [{ what: 'Toaster', qty: 1 }] })).s === 400);
   t.ok('how many has to make sense', (await lead.call('POST', URL_, { kind: 'devices', items: [{ what: bundle, qty: 0 }] })).s === 400);
-  t.ok('a prize request needs a number and a dollar value', (await lead.call('POST', URL_, { kind: 'prizes', items: [{ qty: 3, value: 'lots' }] })).s === 400);
+  t.ok('a prize request needs a number and a real size', (await lead.call('POST', URL_, { kind: 'prizes', items: [{ qty: 3, size: 'lots' }] })).s === 400);
 
   const a = await lead.call('POST', URL_, { kind: 'devices', team: 'ZZ Valorant', items: [{ what: bundle.toLowerCase(), qty: 4, games: ['Valorant'] }], notes: 'Need by 9am' });
   t.ok('a lead asks for devices (a bundle written in any capitals)', a.s === 201 && a.j.request.items[0].what === bundle && a.j.request.status === 'submitted', JSON.stringify(a.j));
@@ -35,11 +35,11 @@ try {
   t.ok('a division account gets only what the request form needs', dc.requestOnly === true && dc.devices.length === 0 && dc.sponsors.length === 0 && dc.lists.bundle.length > 0);
   t.ok('a division account gets the event but none of its devices', (await division.call('GET', `/api/logistics/plans/${P.id}`)).j.requestOnly === true);
   t.ok('a division account cannot open prizes, sponsors, steps or the plan lists of devices', (await division.call('GET', '/api/logistics/prizes')).s === 403 && (await division.call('GET', `/api/logistics/plans/${P.id}/version`)).s === 403 && (await division.call('POST', `/api/logistics/plans/${P.id}/steps`, { tag: 'X', step_id: '00000000-0000-0000-0000-000000000000' })).s === 403);
-  t.ok('a division account can send a request', (await division.call('POST', URL_, { kind: 'prizes', items: [{ qty: 1, value: 5 }] })).s === 201);
-  const b = await lead.call('POST', URL_, { kind: 'prizes', items: [{ qty: 10, value: 24.999 }, { qty: 3, value: 100 }] });
-  t.ok('a lead asks for prizes by count and value, rounded to cents', b.s === 201 && b.j.request.items[0].value === 25);
+  t.ok('a division account can send a request', (await division.call('POST', URL_, { kind: 'prizes', items: [{ qty: 1, size: 'Free' }] })).s === 201);
+  const b = await lead.call('POST', URL_, { kind: 'prizes', items: [{ qty: 10, size: 'small prizing' }, { qty: 3, size: 'Large Prizing' }] });
+  t.ok('a lead asks for prizes by count and size, the size spelled as in the list', b.s === 201 && b.j.request.items[0].size === 'Small Prizing');
   const B = b.j.request.id;
-  const e = await exec.call('POST', URL_, { kind: 'prizes', requester_id: other.id, items: [{ qty: 2, value: 10 }] });
+  const e = await exec.call('POST', URL_, { kind: 'prizes', requester_id: other.id, items: [{ qty: 2, size: 'Free' }] });
   t.ok('logistics can write a request for someone else', e.s === 201 && e.j.request.requester_id === other.id);
   const E = e.j.request.id;
 
@@ -127,18 +127,28 @@ try {
   const releaseLoan = await exec.call('POST', SL, { action: 'empty', borrowed_id: afterLoan.id });
   const freed = (await plan1()).borrowed.find((x) => x.tag === 'ZZ-LOAN');
   t.ok('emptying the row gives the loaner back', releaseLoan.s === 200 && !freed.request_id && !freed.station_id);
-  // A prize request is a pool with a target (how many, how many dollars), and follows the request.
+  // A prize request is a pool with a target (how many of each size), and follows the request.
   const poolOf = async (rid) => (await plan1()).prizes.pools.find((x) => x.request_id === rid);
   const pE = await poolOf(E);
-  t.ok('a prize request makes a pool with its target', pE && pE.target_qty === 2 && pE.target_total === 20, JSON.stringify(pE));
-  await exec.call('PATCH', URL_, { request_id: E, items: [{ qty: 4, value: 15 }] });
+  t.ok('a prize request makes a pool with its target', pE && pE.target_qty === 2 && pE.target_sizes?.Free === 2, JSON.stringify(pE));
+  await exec.call('PATCH', URL_, { request_id: E, items: [{ qty: 4, size: 'Small Prizing' }] });
   const pE2 = await poolOf(E);
-  t.ok('changing the request changes the pool target', pE2.target_qty === 4 && pE2.target_total === 60, JSON.stringify(pE2));
+  t.ok('changing the request changes the pool target', pE2.target_qty === 4 && pE2.target_sizes?.['Small Prizing'] === 4, JSON.stringify(pE2));
   const zPrize = (await exec.call('POST', '/api/logistics/prizes', { name: 'ZZ Prize', price: 15, quantity: 9 })).j.prize;
   await exec.call('POST', `/api/logistics/plans/${P.id}/prizes`, { pool_id: pE2.id, prize_id: zPrize.id, quantity: 4 });
-  await exec.call('PATCH', URL_, { request_id: E, items: [{ qty: 3, value: 15 }] });
+  await exec.call('PATCH', URL_, { request_id: E, items: [{ qty: 3, size: 'Small Prizing' }] });
   const lineAfter = (await plan1()).prizes.lines.find((x) => x.pool_id === pE2.id);
   t.ok('a smaller request trims the pool\u2019s prizes to fit', lineAfter?.quantity === 3, JSON.stringify(lineAfter));
+  // A size is kept as text on prize requests and pools, so a rename is followed and a size a request uses cannot be deleted.
+  const zSize = (await exec.call('POST', '/api/logistics/options', { kind: 'prize_size', value: 'ZZ Tier' })).j.option;
+  const zReq = await exec.call('POST', URL_, { kind: 'prizes', requester_id: other.id, team: 'ZZ Tier Team', items: [{ qty: 2, size: 'ZZ Tier' }] });
+  t.ok('a size in use by a request cannot be deleted', (await exec.call('DELETE', '/api/logistics/options', { id: zSize.id })).s === 409);
+  await exec.call('PATCH', '/api/logistics/options', { id: zSize.id, value: 'ZZ Tier Two' });
+  const zReqAfter = (await exec.call('GET', URL_)).j.requests.find((x) => x.id === zReq.j.request.id);
+  const zPool = await poolOf(zReq.j.request.id);
+  t.ok('renaming a size renames it on the request and its pool', zReqAfter.items[0].size === 'ZZ Tier Two' && zPool.target_sizes?.['ZZ Tier Two'] === 2 && !('ZZ Tier' in (zPool.target_sizes ?? {})), JSON.stringify([zReqAfter.items, zPool.target_sizes]));
+  await exec.call('DELETE', URL_, { request_id: zReq.j.request.id });
+  await svc.from('logistics_options').delete().eq('kind', 'prize_size').like('value', 'ZZ Tier%');
   // Several people saving the same request at the same moment still leave exactly what it asks for.
   const rc = await exec.call('POST', URL_, { kind: 'devices', team: 'ZZ Race Team', items: [{ what: 'Mouse', qty: 1, games: [] }] });
   const RC = rc.j.request.id;
@@ -157,7 +167,7 @@ try {
   t.ok('a requester cannot remove a request; the logistics team can', (await lead.call('DELETE', URL_, { request_id: B })).s === 403 && (await exec.call('DELETE', URL_, { request_id: B })).s === 200 && (await lead.call('GET', URL_)).j.requests.length === 0);   // (the other request's contact was moved to exec)
 
   await exec.call('PATCH', `/api/logistics/plans/${P.id}`, { status: 'closed' });
-  t.ok('a closed event takes no more requests', (await lead.call('POST', URL_, { kind: 'prizes', items: [{ qty: 1, value: 5 }] })).s === 409);
+  t.ok('a closed event takes no more requests', (await lead.call('POST', URL_, { kind: 'prizes', items: [{ qty: 1, size: 'Free' }] })).s === 409);
   const { data: audit } = await svc.from('audit_log').select('action, entity_type').in('actor_id', made).eq('entity_type', 'logistics request');
   t.ok('requests are in the audit log as create / remove, never "delete"', audit.some((x) => x.action === 'create') && audit.some((x) => x.action === 'remove') && !audit.some((x) => x.action === 'delete'));
   t.ok('removing the event removes its requests', (await exec.call('DELETE', `/api/logistics/plans/${P.id}`)).s === 200 && (await svc.from('logistics_requests').select('id', { count: 'exact', head: true }).eq('plan_id', P.id)).count === 0);

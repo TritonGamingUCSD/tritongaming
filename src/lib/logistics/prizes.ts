@@ -62,26 +62,26 @@ export function prizeProblems(lines: (PrizeLineInfo & { name: string })[], left:
   return out;
 }
 
-// Suggest prizes for what a pool still needs: `need` more prizes with `budget` dollars left to spend, so about budget / need each. Each pick is the prize with a price closest to that figure
-// (sponsor prizes first when two are about as close, since they can't be returned), and the figure is worked out again after every pick. A prize is never used more than is left. Returns how many
-// of each prize to add; it may come back short when there isn't enough in stock.
-export interface Candidate { id: string; price: number | null; left: number; sponsor: boolean }
-export function suggestPrizes(candidates: Candidate[], need: number, budget: number): Map<string, number> {
+// Suggest prizes for what a pool still needs: `need` is how many more it wants of each size. For every size the picks are spread over the prizes of that size that are in stock, the one with the most
+// left first (sponsor prizes first when two have as many left, since they can't be returned), and a prize is never used more than is left. Returns how many of each prize to add and, per size, how
+// many could not be found.
+export interface Candidate { id: string; size: string | null; left: number; sponsor: boolean }
+export function suggestPrizes(candidates: Candidate[], need: Record<string, number>): { picks: Map<string, number>; short: Record<string, number> } {
   const left = new Map(candidates.filter((c) => c.left > 0).map((c) => [c.id, c.left]));
-  const out = new Map<string, number>();
-  let remaining = Math.max(0, budget);
-  for (let i = 0; i < need; i++) {
-    const want = remaining / (need - i);
-    let best: Candidate | null = null, bestGap = Infinity;
-    for (const c of candidates) {
-      if ((left.get(c.id) ?? 0) <= 0) continue;
-      const gap = Math.abs((c.price ?? 0) - want) - (c.sponsor ? 0.5 : 0);
-      if (gap < bestGap) { best = c; bestGap = gap; }
+  const picks = new Map<string, number>();
+  const short: Record<string, number> = {};
+  for (const [size, n] of Object.entries(need)) {
+    const pool = candidates.filter((c) => c.size === size);
+    for (let i = 0; i < n; i++) {
+      let best: Candidate | null = null, bestLeft = 0;
+      for (const c of pool) {
+        const l = left.get(c.id) ?? 0;
+        if (l > bestLeft || (l === bestLeft && best && l > 0 && c.sponsor && !best.sponsor)) { best = c; bestLeft = l; }
+      }
+      if (!best) { short[size] = (short[size] ?? 0) + (n - i); break; }
+      left.set(best.id, bestLeft - 1);
+      picks.set(best.id, (picks.get(best.id) ?? 0) + 1);
     }
-    if (!best) break;
-    left.set(best.id, (left.get(best.id) ?? 0) - 1);
-    out.set(best.id, (out.get(best.id) ?? 0) + 1);
-    remaining -= best.price ?? 0;
   }
-  return out;
+  return { picks, short };
 }

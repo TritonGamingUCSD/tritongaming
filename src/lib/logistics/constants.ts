@@ -38,7 +38,7 @@ export const KIND_HINTS: Record<OptionKind, string> = {
   kit: 'Parts that travel with a device (cables, controllers, chargers).',
   step: 'What every device goes through on event day, in order.',
   bundle: 'A set of devices that go together, like a PC with its monitor, keyboard, mouse and headset.',
-  prize_size: 'How a prize is grouped (Free, Small Prizing, Medium Prizing). A prize with none is a big prize.',
+  prize_size: 'The value tier of a prize (Free, Small, Medium, Large Prizing). A prize request asks for how many of each size.',
   prize_step: 'What every prize goes through on event day, in order. Each step is a count (sorted 6 of 10).',
 };
 

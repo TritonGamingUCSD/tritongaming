@@ -26,7 +26,7 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
   const [poolDialog, setPoolDialog] = useState<(typeof pools)[number] | null>(null);
   const [busy, setBusy] = useState('');
   const [swapLine, setSwapLine] = useState<string | null>(null);   // the pool line being swapped for a similar prize
-  const [short, setShort] = useState<Record<string, number>>({});   // how many a Suggest could not find in stock
+  const [short, setShort] = useState<Record<string, string>>({});   // what a Suggest could not find in stock, in words
   const sponsorName = useMemo(() => new Map(data.sponsors.map((s) => [s.id, s.name])), [data.sponsors]);
   const available = useMemo(() => (prizes.rows ?? []).filter((p) => !p.plan_id || p.plan_id === d.plan.id), [prizes.rows, d.plan.id]);
   const summary = (p: PrizeRow) => ({ id: p.id, name: p.name, sponsor: sponsorName.get(p.sponsor_id ?? '') ?? null, size: p.size, type: p.type, price: p.price, quantity: p.quantity, quantity_is_estimate: p.quantity_is_estimate, in_hand: p.in_hand, left: p.left });
@@ -35,10 +35,15 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
     const r = await plan.setPrizeLine(poolId, summary(p), Math.max(0, Math.round(n)));
     if (r.ok && r.delta) prizes.bump(p.id, r.delta);
   }
+  const sizeOrder = data.lists.prize_size.map((o) => o.value);
+  const haveOf = (poolId: string) => lines.filter((l) => l.pool_id === poolId).reduce<Record<string, number>>((m, l) => (l.prize.size ? { ...m, [l.prize.size]: (m[l.prize.size] ?? 0) + l.quantity } : m), {});
+  // What a pool still needs of each size to reach what its request asked for.
+  const needOf = (pool: (typeof pools)[number]) => { const have = haveOf(pool.id); return Object.fromEntries(Object.entries(pool.target_sizes ?? {}).map(([z, n]) => [z, Math.max(0, n - (have[z] ?? 0))]).filter(([, n]) => (n as number) > 0)) as Record<string, number>; };
+  const needText = (need: Record<string, number>) => sizeOrder.filter((z) => need[z]).map((z) => `${need[z]} ${z}`).join(', ');
   // `used` is what other pools already took in the same go (Fill All), so two pools never take the last of a prize.
-  async function suggest(pool: (typeof pools)[number], need: number, budget: number, used: Map<string, number> = new Map()) {
+  async function suggest(pool: (typeof pools)[number], used: Map<string, number> = new Map()) {
     setBusy(pool.id);
-    const picks = suggestPrizes(available.filter((p) => p.in_hand).map((p) => ({ id: p.id, price: p.price, left: p.left - (used.get(p.id) ?? 0), sponsor: !!p.sponsor_id })), need, budget);
+    const { picks, short: missing } = suggestPrizes(available.filter((p) => p.in_hand).map((p) => ({ id: p.id, size: p.size, left: p.left - (used.get(p.id) ?? 0), sponsor: !!p.sponsor_id })), needOf(pool));
     for (const [id, n] of picks) used.set(id, (used.get(id) ?? 0) + n);
     for (const [id, n] of picks) {
       const p = available.find((x) => x.id === id);
@@ -46,22 +51,16 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
       const have = lines.find((l) => l.pool_id === pool.id && l.prize_id === id)?.quantity ?? 0;
       await setQty(pool.id, p, have + n);
     }
-    setShort((c) => ({ ...c, [pool.id]: Math.max(0, need - [...picks.values()].reduce((n, x) => n + x, 0)) }));
+    setShort((c) => ({ ...c, [pool.id]: needText(missing) }));
     setBusy('');
   }
 
   // Fill every pool that still needs prizes, one after another.
   async function fillAll() {
     const used = new Map<string, number>();
-    for (const pool of pools) {
-      if (pool.target_qty === null) continue;
-      const mine = lines.filter((l) => l.pool_id === pool.id);
-      const need = Math.max(0, pool.target_qty - mine.reduce((n, l) => n + l.quantity, 0));
-      const spent = mine.reduce((n, l) => n + l.quantity * (l.prize.price ?? 0), 0);
-      if (need > 0) await suggest(pool, need, (pool.target_total ?? 0) - spent, used);
-    }
+    for (const pool of pools) if (Object.keys(needOf(pool)).length > 0) await suggest(pool, used);
   }
-  const needy = pools.filter((pool) => pool.target_qty !== null && lines.filter((l) => l.pool_id === pool.id).reduce((n, l) => n + l.quantity, 0) < pool.target_qty!).length;
+  const needy = pools.filter((pool) => Object.keys(needOf(pool)).length > 0).length;
 
   if (!prizes.rows) return <div className={styles.tab}><p className={styles.muted}>Loading…</p></div>;
   return (
@@ -77,8 +76,10 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
             const mine = lines.filter((l) => l.pool_id === pool.id);
             const count = mine.reduce((n, l) => n + l.quantity, 0);
             const spent = Math.round(mine.reduce((n, l) => n + l.quantity * (l.prize.price ?? 0), 0) * 100) / 100;
-            const needQty = pool.target_qty === null ? null : Math.max(0, pool.target_qty - count);
-            const budget = pool.target_total === null ? 0 : pool.target_total - spent;
+            const need = needOf(pool);
+            const have = haveOf(pool.id);
+            const needCount = Object.values(need).reduce((n, x) => n + x, 0);
+            const tiers = sizeOrder.filter((z) => (pool.target_sizes?.[z] ?? 0) > 0 || (have[z] ?? 0) > 0);
             const addable = available.filter((p) => p.left > 0 && !mine.some((l) => l.prize_id === p.id));
             const label = (p: PrizeRow) => `${sponsorName.get(p.sponsor_id ?? '') ?? 'Club'} · ${p.name}${p.type ? ` · ${p.type}` : ''}${p.size ? ` · ${p.size}` : ''}${p.price !== null ? ` · ${money(p.price)}` : ''} · ${p.left} left${p.in_hand ? '' : ' · not here yet'}`;
             const overLines = mine.filter((l) => l.prize.left < 0).length;
@@ -94,14 +95,14 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
                   </div>
                   {manage && <RowMenu label={`More for ${pool.name}`} items={[{ label: 'Edit', onClick: () => setPoolDialog(pool) }]} />}
                 </header>
-                {pool.target_qty !== null && pool.target_total !== null ? (
+                {pool.target_qty !== null ? (
                   <div className={styles.poolGoal}>
                     <div className={styles.goalLine}><span>Prizes</span><b className={countState === styles.barBad ? styles.flagBad : undefined}>{count} / {pool.target_qty}</b></div>
                     <div className={`${styles.bar} ${countState}`}><i style={{ width: `${Math.min(100, pool.target_qty ? (count / pool.target_qty) * 100 : 0)}%` }} /></div>
-                    <div className={styles.goalLine}><span>Value</span><b className={spent > pool.target_total ? styles.flagBad : undefined}>{money(spent) || '$0'} / {money(pool.target_total)}</b></div>
+                    {tiers.map((z) => { const want = pool.target_sizes?.[z] ?? 0, got = have[z] ?? 0; return <div key={z} className={styles.goalLine}><span>{z}</span><b className={got > want ? styles.flagBad : got === want ? styles.okText : undefined}>{got} / {want}</b></div>; })}
                   </div>
                 ) : <p className={styles.muted}>{count} prizes · {money(spent) || '$0'}</p>}
-                {pool.target_qty !== null && pool.target_total !== null && (needQty ?? 0) > 0 && <p className={styles.dim}>Still needs {needQty} more{budget > 0 ? ` · about ${money(Math.round((budget / (needQty ?? 1)) * 100) / 100)} each left` : ''}</p>}
+                {needCount > 0 && <p className={styles.dim}>Still needs {needText(need)}</p>}
                 {overLines > 0 && <p className={styles.flagWarn}>{overLines} prize{overLines === 1 ? ' is' : 's are'} promised beyond what is in stock.</p>}
                 {mine.length > 0 && (
                   <ul className={styles.poolLines}>
@@ -135,13 +136,13 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
                     ))}
                   </ul>
                 )}
-                {(short[pool.id] ?? 0) > 0 && <p className={styles.flagWarn}>{short[pool.id]} more could not be found in stock.</p>}
+                {short[pool.id] && <p className={styles.flagWarn}>Not enough in stock for {short[pool.id]}.</p>}
                 {manage && (
                   <div className={styles.poolFoot}>
                     <div className={styles.poolAdd}>
                       <Combo value={null} options={addable.map(label)} placeholder="Add a prize…" clearable={false} ariaLabel={`Add a prize to ${pool.name}`} onChange={(v) => { const p = addable.find((x) => label(x) === v); if (p) void setQty(pool.id, p, 1); }} />
                     </div>
-                    {needQty !== null && needQty > 0 && <Button size="sm" variant="secondary" loading={busy === pool.id} onClick={() => void suggest(pool, needQty, budget)}>Suggest {needQty}</Button>}
+                    {needCount > 0 && <Button size="sm" variant="secondary" loading={busy === pool.id} onClick={() => void suggest(pool)}>Suggest {needCount}</Button>}
                   </div>
                 )}
               </section>

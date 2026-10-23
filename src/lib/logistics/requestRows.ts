@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { DeviceItem, PrizeItem } from './requests';
+import { prizeSizes, type DeviceItem, type PrizeItem } from './requests';
 
 // What a device request turns into in the allocation: one empty row per unit. A bundle line makes a set per unit (a row for every item of the bundle, quantity 2 = two rows).
 export interface Want { type: string; games: string[]; set: number | null }
@@ -193,13 +193,12 @@ export async function requestsUsingBundle(svc: SupabaseClient, name: string): Pr
   return (data ?? []).filter((q) => ((q.items as DeviceItem[]) ?? []).some((i) => i.what.toLowerCase() === name.toLowerCase())).length;
 }
 
-// A prize request is a pool of its own for its team: it says how many prizes and the dollar total (count x value), which the prizing allocation shows as progress and fills on Suggest. When the request
+// A prize request is a pool of its own for its team: it says how many prizes of each size, which the prizing allocation shows as progress and fills on Suggest. When the request
 // shrinks, the pool's lines are trimmed to fit, newest first, but never below what has already been counted in a step. A declined request takes its pool away unless prizes were already counted.
 export async function syncPrizePool(svc: SupabaseClient, r: Req & { requester_id?: string }): Promise<void> {
   if (r.kind !== 'prizes') return;
   const items = ((r.items as PrizeItem[]) ?? []);
   const qty = items.reduce((n, i) => n + i.qty, 0);
-  const total = Math.round(items.reduce((n, i) => n + i.qty * i.value, 0) * 100) / 100;
   const { data: pool } = await svc.from('logistics_plan_pools').select('id').eq('request_id', r.id).maybeSingle();
   const { data: lines } = pool ? await svc.from('logistics_plan_prizes').select('id, quantity, sort').eq('pool_id', pool.id as string).order('sort', { ascending: false }) : { data: [] };
   const lineIds = (lines ?? []).map((l) => l.id as string);
@@ -214,7 +213,7 @@ export async function syncPrizePool(svc: SupabaseClient, r: Req & { requester_id
   if (!name && r.requester_id) name = ((await svc.from('profiles').select('display_name').eq('id', r.requester_id).maybeSingle()).data?.display_name as string | undefined) ?? null;
   const { data: sts } = await svc.from('logistics_stations').select('id, name').eq('plan_id', r.plan_id);
   const station = r.team ? (sts ?? []).find((x) => (x.name as string).toLowerCase() === r.team!.trim().toLowerCase())?.id as string | undefined ?? null : null;
-  const fields = { name: (name ?? 'Prizes').slice(0, 80), station_id: station, target_qty: qty, target_total: total };
+  const fields = { name: (name ?? 'Prizes').slice(0, 80), station_id: station, target_qty: qty, target_sizes: prizeSizes(items) };
   if (!pool) {
     const { data: last } = await svc.from('logistics_plan_pools').select('sort').eq('plan_id', r.plan_id).order('sort', { ascending: false }).limit(1).maybeSingle();
     await svc.from('logistics_plan_pools').insert({ ...fields, plan_id: r.plan_id, request_id: r.id, sort: ((last?.sort as number | undefined) ?? 0) + 1 });

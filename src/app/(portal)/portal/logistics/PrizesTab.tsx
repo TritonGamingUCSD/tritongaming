@@ -32,7 +32,7 @@ export default function PrizesTab({ api, data }: { api: LogisticsApi; data: Cata
   const rows = useMemo(() => {
     const t = q.trim().toLowerCase();
     return (prizes.rows ?? []).filter((p) => !p.plan_id && (!t || `${p.name} ${sponsorName.get(p.sponsor_id ?? '') ?? ''} ${placeOf(p)} ${p.notes ?? ''}`.toLowerCase().includes(t))
-      && (!sponsor || (sponsor === 'none' ? !p.sponsor_id : p.sponsor_id === sponsor)) && (!size || (size === 'none' ? !p.size : p.size === size))
+      && (!sponsor || (sponsor === 'none' ? !p.sponsor_id : p.sponsor_id === sponsor)) && (!size || p.size === size)
       && (!problems || p.left < 0));
   }, [prizes.rows, q, sponsor, size, problems, sponsorName]);
   const inStorage = (prizes.rows ?? []).filter((p) => !p.plan_id).length;
@@ -45,7 +45,7 @@ export default function PrizesTab({ api, data }: { api: LogisticsApi; data: Cata
         <div className={styles.search}><Search size={15} aria-hidden="true" /><Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, sponsor or place" aria-label="Search prizes" /></div>
         <div className={styles.filters}>
           <Select value={sponsor} onChange={(e) => setSponsor(e.target.value)} aria-label="Sponsor"><option value="">All sponsors</option><option value="none">No sponsor (club)</option>{data.sponsors.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select>
-          <Select value={size} onChange={(e) => setSize(e.target.value)} aria-label="Size"><option value="">All sizes</option>{data.lists.prize_size.map((s) => <option key={s.id} value={s.value}>{s.value}</option>)}<option value="none">Big prizes</option></Select>
+          <Select value={size} onChange={(e) => setSize(e.target.value)} aria-label="Size"><option value="">All sizes</option>{data.lists.prize_size.map((s) => <option key={s.id} value={s.value}>{s.value}</option>)}</Select>
         </div>
         <div className={styles.toolbarRow}>
           <button type="button" className={`${styles.pill} ${problems ? styles.pillOn : ''}`} aria-pressed={problems} onClick={() => setProblems((v) => !v)}><TriangleAlert size={13} aria-hidden="true" /><span className={styles.wide}>Over-Promised</span>{overCount ? <b>{overCount}</b> : null}</button>
@@ -83,6 +83,7 @@ export function PrizeDialog({ prizes, api, data, prize, where, onClose }: { priz
   const sponsorNames = data.sponsors.map((s) => s.name);
   const createOpt = (kind: 'shelf' | 'tier' | 'prize_size') => (v: string) => api.addOption(kind, v);
   async function save() {
+    if (!prize && !f.size) { setProblem('Choose a size, so a request for that size can find this prize.'); return; }
     setProblem('');
     setBusy(true);
     // An existing prize is changed in its table row; this form only holds what the row has no box for.
@@ -109,7 +110,7 @@ export function PrizeDialog({ prizes, api, data, prize, where, onClose }: { priz
               onCreate={async (v) => { const s = await api.saveSponsor(null, { name: v }); if (s) set('sponsor_id', s.id); return s?.name ?? null; }} />
           </Field>
           <Field label="Type" hint="What it is: a mug, a gift card, a plushie…"><Input value={f.type} onChange={(e) => set('type', e.target.value)} disabled={readOnly} maxLength={80} /></Field>
-          <Field label="Size"><Combo value={f.size || null} options={data.lists.prize_size.map((s) => s.value)} disabled={readOnly} placeholder="Big prize" onChange={(v) => set('size', v ?? '')} onCreate={createOpt('prize_size')} /></Field>
+          <Field label="Size"><Combo value={f.size || null} options={data.lists.prize_size.map((s) => s.value)} disabled={readOnly} placeholder="Choose a size" onChange={(v) => set('size', v ?? '')} onCreate={createOpt('prize_size')} /></Field>
         </div>
         <div className={styles.row2}>
           <Field label="Price of one" hint="In dollars."><Input type="number" min={0} step="0.01" value={f.price} onChange={(e) => set('price', e.target.value)} disabled={readOnly} /></Field>

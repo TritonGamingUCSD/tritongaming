@@ -14,8 +14,8 @@ interface Row { id: string; plan_id: string; kind: RequestKind; requester_id: st
 const text = (v: unknown, n: number) => { const s = String(v ?? '').trim().slice(0, n); return s || null; };
 
 async function known(svc: SupabaseClient) {
-  const { data } = await svc.from('logistics_options').select('kind, value').in('kind', ['bundle', 'type']);
-  return { bundles: (data ?? []).filter((o) => o.kind === 'bundle').map((o) => o.value as string), types: (data ?? []).filter((o) => o.kind === 'type').map((o) => o.value as string) };
+  const { data } = await svc.from('logistics_options').select('kind, value').in('kind', ['bundle', 'type', 'prize_size']);
+  return { sizes: (data ?? []).filter((o) => o.kind === 'prize_size').map((o) => o.value as string), bundles: (data ?? []).filter((o) => o.kind === 'bundle').map((o) => o.value as string), types: (data ?? []).filter((o) => o.kind === 'type').map((o) => o.value as string) };
 }
 async function names(svc: SupabaseClient, ids: string[]) {
   const { data } = ids.length ? await svc.from('profiles').select('id, display_name').in('id', ids) : { data: [] };
@@ -45,20 +45,14 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const div = new Map((divisions ?? []).map((d) => [d.id as string, d.name as string]));
   const ids = rows.filter((r) => r.kind === 'devices').map((r) => r.id);
   const [{ data: sl }, { data: pd }, { data: pb }] = ids.length ? await Promise.all([auth.svc.from('logistics_plan_slots').select('request_id, type').in('request_id', ids), auth.svc.from('logistics_plan_devices').select('request_id').in('request_id', ids), auth.svc.from('logistics_plan_borrowed').select('request_id').in('request_id', ids)]) : [{ data: [] }, { data: [] }, { data: [] }];   // a loaner fills a row too
-  // Prize requests: how many prizes the pool for each one holds so far, and what they add up to.
+  // Prize requests: how many prizes the pool for each one holds so far.
   const pids = rows.filter((r) => r.kind === 'prizes').map((r) => r.id);
-  const gotPrizes = new Map<string, { qty: number; total: number }>();
+  const gotPrizes = new Map<string, { qty: number }>();
   if (pids.length) {
     const { data: pools } = await auth.svc.from('logistics_plan_pools').select('id, request_id').in('request_id', pids);
     const poolIds = (pools ?? []).map((p) => p.id as string);
-    const { data: lines } = poolIds.length ? await auth.svc.from('logistics_plan_prizes').select('pool_id, quantity, prize_id').in('pool_id', poolIds) : { data: [] };
-    const prizeIds = [...new Set((lines ?? []).map((l) => l.prize_id as string))];
-    const { data: prices } = prizeIds.length ? await auth.svc.from('logistics_prizes').select('id, price').in('id', prizeIds) : { data: [] };
-    const price = new Map((prices ?? []).map((p) => [p.id as string, Number(p.price ?? 0)]));
-    for (const p of pools ?? []) {
-      const mine = (lines ?? []).filter((l) => l.pool_id === p.id);
-      gotPrizes.set(p.request_id as string, { qty: mine.reduce((n, l) => n + (l.quantity as number), 0), total: Math.round(mine.reduce((n, l) => n + (l.quantity as number) * (price.get(l.prize_id as string) ?? 0), 0) * 100) / 100 });
-    }
+    const { data: lines } = poolIds.length ? await auth.svc.from('logistics_plan_prizes').select('pool_id, quantity').in('pool_id', poolIds) : { data: [] };
+    for (const p of pools ?? []) gotPrizes.set(p.request_id as string, { qty: (lines ?? []).filter((l) => l.pool_id === p.id).reduce((n, l) => n + (l.quantity as number), 0) });
   }
   // A counted type (a mousepad, a cable) never gets a device of its own, so its rows count as filled.
   const { data: countedTypes } = await auth.svc.from('logistics_options').select('value').eq('kind', 'type').eq('meta->>counted', 'true');
@@ -68,7 +62,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   return NextResponse.json({
     me: auth.user.id, canManage: auth.canManage,
     divisions: divisions ?? [], myDivisionIds: [...new Set((mine ?? []).map((m) => m.division_id as string | null).filter((x): x is string => !!x))],
-    requests: rows.map((r) => ({ ...r, filled: count(pd, r.id) + count(pb, r.id) + count(sl, r.id) - count(open, r.id), rowsTotal: count(pd, r.id) + count(pb, r.id) + count(sl, r.id), prizesGot: gotPrizes.get(r.id) ?? { qty: 0, total: 0 }, requester: who.get(r.requester_id) ?? 'Unnamed', division: r.division_id ? div.get(r.division_id) ?? null : null, planner: r.planned_by ? who.get(r.planned_by) ?? null : null })),
+    requests: rows.map((r) => ({ ...r, filled: count(pd, r.id) + count(pb, r.id) + count(sl, r.id) - count(open, r.id), rowsTotal: count(pd, r.id) + count(pb, r.id) + count(sl, r.id), prizesGot: gotPrizes.get(r.id) ?? { qty: 0 }, requester: who.get(r.requester_id) ?? 'Unnamed', division: r.division_id ? div.get(r.division_id) ?? null : null, planner: r.planned_by ? who.get(r.planned_by) ?? null : null })),
   });
 }
 

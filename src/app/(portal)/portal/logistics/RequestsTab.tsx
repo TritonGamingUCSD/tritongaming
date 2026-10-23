@@ -10,7 +10,7 @@ import { Field, Input, Select, Textarea } from '@/components/ui/Field';
 import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
 import { PickCell, TextCell } from './Cells';
 import { confirmHold } from '@/lib/ui/confirmHold';
-import { canEditRequest, prizeTotal, REQUEST_STATUSES, requestSummary, STATUS_LABELS, type DeviceItem, type PrizeItem, type RequestKind, type RequestStatus } from '@/lib/logistics/requests';
+import { canEditRequest, REQUEST_STATUSES, requestSummary, STATUS_LABELS, type DeviceItem, type PrizeItem, type RequestKind, type RequestStatus } from '@/lib/logistics/requests';
 import { MultiCombo, Combo, Suggest } from './Combo';
 import { RowMenu } from './RowMenu';
 import type { PlanApi } from './usePlans';
@@ -20,11 +20,10 @@ import styles from './logistics.module.css';
 
 interface Req {
   id: string; plan_id: string; kind: RequestKind; requester_id: string; division_id: string | null; team: string | null; contact: string | null; items: (DeviceItem | PrizeItem)[]; notes: string | null; status: RequestStatus;
-  planned_at: string | null; created_at: string; requester: string; division: string | null; planner: string | null; filled: number; prizesGot?: { qty: number; total: number }; rowsTotal: number;
+  planned_at: string | null; created_at: string; requester: string; division: string | null; planner: string | null; filled: number; prizesGot?: { qty: number }; rowsTotal: number;
 }
 interface Loaded { me: string; canManage: boolean; divisions: { id: string; name: string }[]; myDivisionIds: string[]; requests: Req[] }
 const day = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-const money = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 })}`;
 const chip: Record<RequestStatus, string> = { submitted: styles.chipWarn, planned: styles.chipOk, done: styles.chipOk, declined: styles.chipBad };
 
 async function call<T>(url: string, method: string, body?: unknown): Promise<{ ok: true; data: T } | { ok: false; error: string }> {
@@ -41,12 +40,12 @@ async function call<T>(url: string, method: string, body?: unknown): Promise<{ o
 // The requests of an event, loaded by the event page itself so the tab bar can show how many there are; they are refreshed every 30 seconds while the Requests page is open and visible.
 export function useRequests(planId: string, active: boolean) {
   const [loaded, setLoadedNow] = useState<Loaded | null>(null);
+  const [error, setError] = useState('');
   const gen = useRef(0);   // counts the changes made on screen: a refresh already on its way when one was made holds the old value and is dropped
   const setLoaded: typeof setLoadedNow = useCallback((v) => { gen.current++; setLoadedNow(v); }, []);
-  const [error, setError] = useState('');
   const load = useCallback(async () => {
-    const g = gen.current;
     if (!planId) return;
+    const g = gen.current;
     const r = await call<Loaded>(`/api/logistics/plans/${planId}/requests`, 'GET');
     if (r.ok && g !== gen.current) return;
     if (r.ok) { setLoadedNow(r.data); setError(''); } else setError(r.error);
@@ -121,7 +120,7 @@ export default function RequestsTab({ kind, plan, api, data, store }: { kind: Re
                 <span data-label={r.kind === 'devices' ? 'Devices' : 'Prizes'}>
                   {r.kind === 'devices'
                     ? <>{(r.items as DeviceItem[]).map((i, n) => <span key={n} className={styles.reqItem}><b>{i.qty} × {i.what}</b>{i.games.length ? <span className={styles.dim}> · {i.games.join(', ')}</span> : null}</span>)}{r.status !== 'declined' && <span className={`${styles.reqItem} ${r.filled === r.rowsTotal && r.rowsTotal > 0 ? styles.okText : styles.warnText}`}>{r.filled}/{r.rowsTotal} filled</span>}</>
-                    : <>{(r.items as PrizeItem[]).map((i, n) => <span key={n} className={styles.reqItem}><b>{i.qty} prize{i.qty === 1 ? '' : 's'}</b> around {money(i.value)} each</span>)}<span className={`${styles.reqItem} ${styles.dim}`}>About {money(prizeTotal(r.items as PrizeItem[]))} in all</span>{r.status !== 'declined' && (() => { const want = (r.items as PrizeItem[]).reduce((n, i) => n + i.qty, 0), got = r.prizesGot?.qty ?? 0; return <span className={`${styles.reqItem} ${got >= want && want > 0 ? styles.okText : styles.warnText}`}>{got}/{want} filled · {money(r.prizesGot?.total ?? 0)}</span>; })()}</>}
+                    : <>{(r.items as PrizeItem[]).map((i, n) => <span key={n} className={styles.reqItem}><b>{i.qty} {i.size}</b></span>)}{r.status !== 'declined' && (() => { const want = (r.items as PrizeItem[]).reduce((n, i) => n + i.qty, 0), got = r.prizesGot?.qty ?? 0; return <span className={`${styles.reqItem} ${got >= want && want > 0 ? styles.okText : styles.warnText}`}>{got}/{want} filled</span>; })()}</>}
                 </span>
                 <span data-label="Notes"><TextCell value={r.notes} canEdit={mine} placeholder="Add" onSave={(v) => void patch(r, { notes: v })} /></span>
                 <span data-label="Status">{manage && !closed ? <PickCell value={STATUS_LABELS[r.status]} options={REQUEST_STATUSES.map((x) => STATUS_LABELS[x])} clearable={false} canEdit onSave={(v) => { const x = REQUEST_STATUSES.find((k) => STATUS_LABELS[k] === v); if (x) void setStatus(r, x); }} /> : <span className={`${styles.statusChip} ${chip[r.status]}`}>{STATUS_LABELS[r.status]}</span>}</span>
@@ -143,7 +142,8 @@ function RequestDialog({ kind: askKind, plan, api, data, planId, loaded, request
   const [division, setDivision] = useState(request?.division_id ?? loaded.myDivisionIds[0] ?? '');
   const [notes, setNotes] = useState(request?.notes ?? '');
   const [dev, setDev] = useState<DeviceItem[]>(request?.kind === 'devices' ? (request.items as DeviceItem[]) : [{ what: data.lists.bundle[0]?.value ?? data.lists.type[0]?.value ?? '', qty: 1, games: [] }]);
-  const [priz, setPriz] = useState<PrizeItem[]>(request?.kind === 'prizes' ? (request.items as PrizeItem[]) : [{ qty: 1, value: 25 }]);
+  const sizes = useMemo(() => data.lists.prize_size.map((o) => o.value), [data.lists.prize_size]);
+  const [priz, setPriz] = useState<PrizeItem[]>(request?.kind === 'prizes' ? (request.items as PrizeItem[]) : [{ qty: 1, size: sizes[0] ?? '' }]);
   const [onBehalf, setOnBehalf] = useState('');
   const [people, setPeople] = useState<{ id: string; name: string }[]>([]);
   const [busy, setBusy] = useState(false);
@@ -193,11 +193,11 @@ function RequestDialog({ kind: askKind, plan, api, data, planId, loaded, request
             {priz.map((it, i) => (
               <div key={i} className={`${styles.reqLine} ${styles.reqLinePrize}`}>
                 <Field label='How many prizes'><Input type="number" min={1} max={10000} value={it.qty} onChange={(e) => setPrizAt(i, { qty: Number(e.target.value) })} aria-label="How many prizes" /></Field>
-                <Field label='Around what value each ($)'><Input type="number" min={0} step="0.01" value={it.value} onChange={(e) => setPrizAt(i, { value: Number(e.target.value) })} aria-label="Dollar value of one" /></Field>
+                <Field label='Size'><Select value={it.size} onChange={(e) => setPrizAt(i, { size: e.target.value })} aria-label="Prize size">{sizes.map((z) => <option key={z} value={z}>{z}</option>)}</Select></Field>
                 {priz.length > 1 && <button type="button" className={styles.iconBtn} title="Remove" onClick={() => setPriz((c) => c.filter((_, k) => k !== i))} aria-label="Remove this line"><Trash2 size={15} aria-hidden="true" /></button>}
               </div>
             ))}
-            <div className={styles.rowInline}><Button size="sm" variant="secondary" onClick={() => setPriz((c) => [...c, { qty: 1, value: 25 }])}>Add A Line</Button><span className={styles.muted}>About {money(prizeTotal(priz))} in all. You don’t pick the prizes: the logistics team fills this from what is in stock.</span></div>
+            <div className={styles.rowInline}><Button size="sm" variant="secondary" onClick={() => setPriz((c) => [...c, { qty: 1, size: sizes[0] ?? '' }])}>Add A Line</Button><span className={styles.muted}>{priz.reduce((n, x) => n + (Number(x.qty) || 0), 0)} prizes in all. You don’t pick the prizes: the logistics team fills this from what is in stock.</span></div>
           </div>
         )}
         {!request && <Field label="Anything else" hint={kind === 'prizes' ? 'Sizes, colours, what the prizes are for.' : 'Setup needs, when you need it, anything special.'}><Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={2000} /></Field>}

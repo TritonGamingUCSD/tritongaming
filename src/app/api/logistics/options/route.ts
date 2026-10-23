@@ -26,11 +26,30 @@ const cleanValue = (v: unknown) => String(v ?? '').trim().replace(/\s+/g, ' ').s
 // How many devices use a value (so a list entry that is in use can't be deleted, and a rename knows what to follow).
 async function devicesUsing(svc: SupabaseClient, kind: OptionKind, value: string): Promise<{ id: string }[]> {
   if (kind === 'step' || kind === 'bundle' || kind === 'prize_step') return [];   // steps are checked against the steps already done, bundles are used by nothing
-  if (kind === 'prize_size') { const { data } = await svc.from('logistics_prizes').select('id').eq('size', value); return (data ?? []) as { id: string }[]; }
+  if (kind === 'prize_size') {
+    const { data } = await svc.from('logistics_prizes').select('id').eq('size', value);
+    const { data: asked } = await svc.from('logistics_requests').select('id, items').eq('kind', 'prizes').limit(3000);
+    return [...(data ?? []), ...(asked ?? []).filter((q) => ((q.items as { size?: string }[]) ?? []).some((i) => i.size === value))].map((x) => ({ id: x.id as string }));
+  }
   const q = svc.from('logistics_devices').select('id, ports, games, kit');
   const { data } = kind === 'type' ? await q.eq('type', value) : kind === 'shelf' ? await q.eq('shelf', value) : kind === 'tier' ? await q.eq('tier', value)
     : kind === 'port' ? await q.contains('ports', [value]) : kind === 'game' ? await q.contains('games', [value]) : await q.contains('kit', [{ item: value }]);
   return (data ?? []) as { id: string }[];
+}
+
+// A prize size is kept as text on the prizes, on the lines of prize requests and in the pools made from them, so a rename is followed in all three.
+async function followPrizeSize(svc: SupabaseClient, old: string, now: string) {
+  await svc.from('logistics_prizes').update({ size: now }).eq('size', old);
+  const { data: asked } = await svc.from('logistics_requests').select('id, items').eq('kind', 'prizes').limit(3000);
+  for (const q of asked ?? []) {
+    const items = (q.items as { qty: number; size: string }[]) ?? [];
+    if (items.some((i) => i.size === old)) await svc.from('logistics_requests').update({ items: items.map((i) => (i.size === old ? { ...i, size: now } : i)) }).eq('id', q.id as string);
+  }
+  const { data: pools } = await svc.from('logistics_plan_pools').select('id, target_sizes').not('target_sizes', 'is', null).limit(3000);
+  for (const p of pools ?? []) {
+    const t = p.target_sizes as Record<string, number>;
+    if (old in t) { const { [old]: n, ...rest } = t; await svc.from('logistics_plan_pools').update({ target_sizes: { ...rest, [now]: (rest[now] ?? 0) + n } }).eq('id', p.id as string); }
+  }
 }
 
 // Add a value to a dropdown list. Adding one that already exists (any capitalisation) just returns it, so "add while picking" never fails on a duplicate.
@@ -100,7 +119,7 @@ export async function PATCH(request: Request) {
   if (typeof patch.value === 'string') {
     const old = o.value as string, now = patch.value;
     if (kind === 'prize_step') { /* nothing to follow: steps are kept by id */ }
-    else if (kind === 'prize_size') await auth.svc.from('logistics_prizes').update({ size: now }).eq('size', old);
+    else if (kind === 'prize_size') await followPrizeSize(auth.svc, old, now);
     else if (kind === 'type' || kind === 'shelf' || kind === 'tier') await auth.svc.from('logistics_devices').update({ [kind]: now }).eq(kind, old);
     else {
       const rows = (await devicesUsing(auth.svc, kind, old)) as unknown as { id: string; ports: string[]; games: string[]; kit: { item: string }[] }[];
@@ -133,7 +152,7 @@ export async function DELETE(request: Request) {
     if (count) return NextResponse.json({ error: `${o.value} has been used at events, so it can’t be deleted. Rename it instead.` }, { status: 409 });
   }
   const used = await devicesUsing(auth.svc, o.kind as OptionKind, o.value as string);
-  if (used.length) return NextResponse.json({ error: `${o.value} is used by ${used.length} ${o.kind === 'prize_size' ? 'prize' : 'device'}${used.length === 1 ? '' : 's'}. Change those first, or rename it instead.` }, { status: 409 });
+  if (used.length) return NextResponse.json({ error: `${o.value} is used by ${used.length} ${o.kind === 'prize_size' ? 'prize or prize request' : 'device'}${used.length === 1 ? '' : 's'}. Change those first, or rename it instead.` }, { status: 409 });
   await auth.svc.from('logistics_options').delete().eq('id', o.id as string);
   return NextResponse.json({ ok: true });
 }
