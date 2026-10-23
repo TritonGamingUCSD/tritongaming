@@ -139,6 +139,17 @@ try {
   await exec.call('PATCH', URL_, { request_id: E, items: [{ qty: 3, size: 'Small Prizing' }] });
   const lineAfter = (await plan1()).prizes.lines.find((x) => x.pool_id === pE2.id);
   t.ok('a smaller request trims the pool\u2019s prizes to fit', lineAfter?.quantity === 3, JSON.stringify(lineAfter));
+  // A prize request can be just a team, with no amount: it makes a pool with no target.
+  const noTeam = await exec.call('POST', URL_, { kind: 'prizes', items: [] });
+  const bare = await exec.call('POST', URL_, { kind: 'prizes', team: 'ZZ Bare Team', items: [] });
+  const bareP = bare.s === 201 ? await poolOf(bare.j.request.id) : null;
+  t.ok('a prize request with no amount needs a team and makes a pool with no target', noTeam.s === 400 && bare.s === 201 && bareP && bareP.target_qty === null && bareP.target_sizes === null, JSON.stringify([noTeam.s, bare.s, bareP]));
+  if (bare.s === 201) await exec.call('DELETE', URL_, { request_id: bare.j.request.id });
+  // A line may leave the size blank (any size): it counts toward the pool's total but not toward a size.
+  const anyReq = await exec.call('POST', URL_, { kind: 'prizes', team: 'ZZ Any Team', items: [{ qty: 2, size: '' }, { qty: 1, size: 'Free' }] });
+  const anyP = anyReq.s === 201 ? await poolOf(anyReq.j.request.id) : null;
+  t.ok('a prize line with no size counts toward the total only', anyReq.s === 201 && anyReq.j.request.items[0].size === null && anyP && anyP.target_qty === 3 && anyP.target_sizes?.Free === 1 && Object.keys(anyP.target_sizes).length === 1, JSON.stringify([anyReq.s, anyP]));
+  if (anyReq.s === 201) await exec.call('DELETE', URL_, { request_id: anyReq.j.request.id });
   // A size is kept as text on prize requests and pools, so a rename is followed and a size a request uses cannot be deleted.
   const zSize = (await exec.call('POST', '/api/logistics/options', { kind: 'prize_size', value: 'ZZ Tier' })).j.option;
   const zReq = await exec.call('POST', URL_, { kind: 'prizes', requester_id: other.id, team: 'ZZ Tier Team', items: [{ qty: 2, size: 'ZZ Tier' }] });

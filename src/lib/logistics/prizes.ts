@@ -62,16 +62,17 @@ export function prizeProblems(lines: (PrizeLineInfo & { name: string })[], left:
   return out;
 }
 
-// Suggest prizes for what a pool still needs: `need` is how many more it wants of each size. For every size the picks are spread over the prizes of that size that are in stock, the one with the most
+// Suggest prizes for what a pool still needs: `need` is how many more it wants of each size; the key ANY_SIZE is a count that may be filled from any size (done last, from what the sizes left). For every size the picks are spread over the prizes of that size that are in stock, the one with the most
 // left first (sponsor prizes first when two have as many left, since they can't be returned), and a prize is never used more than is left. Returns how many of each prize to add and, per size, how
 // many could not be found.
+export const ANY_SIZE = '';
 export interface Candidate { id: string; size: string | null; left: number; sponsor: boolean }
 export function suggestPrizes(candidates: Candidate[], need: Record<string, number>): { picks: Map<string, number>; short: Record<string, number> } {
   const left = new Map(candidates.filter((c) => c.left > 0).map((c) => [c.id, c.left]));
   const picks = new Map<string, number>();
   const short: Record<string, number> = {};
-  for (const [size, n] of Object.entries(need)) {
-    const pool = candidates.filter((c) => c.size === size);
+  for (const [size, n] of Object.entries(need).sort((a, b) => (a[0] === ANY_SIZE ? 1 : 0) - (b[0] === ANY_SIZE ? 1 : 0))) {
+    const pool = size === ANY_SIZE ? candidates : candidates.filter((c) => c.size === size);
     for (let i = 0; i < n; i++) {
       let best: Candidate | null = null, bestLeft = 0;
       for (const c of pool) {

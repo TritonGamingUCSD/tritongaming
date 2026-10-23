@@ -213,13 +213,14 @@ export async function syncPrizePool(svc: SupabaseClient, r: Req & { requester_id
   if (!name && r.requester_id) name = ((await svc.from('profiles').select('display_name').eq('id', r.requester_id).maybeSingle()).data?.display_name as string | undefined) ?? null;
   const { data: sts } = await svc.from('logistics_stations').select('id, name').eq('plan_id', r.plan_id);
   const station = r.team ? (sts ?? []).find((x) => (x.name as string).toLowerCase() === r.team!.trim().toLowerCase())?.id as string | undefined ?? null : null;
-  const fields = { name: (name ?? 'Prizes').slice(0, 80), station_id: station, target_qty: qty, target_sizes: prizeSizes(items) };
+  const fields = { name: (name ?? 'Prizes').slice(0, 80), station_id: station, target_qty: qty > 0 ? qty : null, target_sizes: qty > 0 ? prizeSizes(items) : null };
   if (!pool) {
     const { data: last } = await svc.from('logistics_plan_pools').select('sort').eq('plan_id', r.plan_id).order('sort', { ascending: false }).limit(1).maybeSingle();
     await svc.from('logistics_plan_pools').insert({ ...fields, plan_id: r.plan_id, request_id: r.id, sort: ((last?.sort as number | undefined) ?? 0) + 1 });
     return;
   }
   await svc.from('logistics_plan_pools').update(fields).eq('id', pool.id as string);
+  if (qty === 0) return;   // no amount asked for: whatever the logistics team puts in the pool stays
   let extra = (lines ?? []).reduce((n, l) => n + (l.quantity as number), 0) - qty;
   for (const l of lines ?? []) {
     if (extra <= 0) break;

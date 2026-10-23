@@ -78,8 +78,9 @@ export default function RequestsTab({ kind, plan, api, data, store }: { kind: Re
     const fresh = open.filter((r) => r.status === 'submitted').length;
     const head = `${list.length} request${list.length === 1 ? '' : 's'}${fresh ? ` · ${fresh} new` : ''}`;
     if (kind === 'devices') { const rows = open.reduce((n, r) => n + r.rowsTotal, 0), filled = open.reduce((n, r) => n + r.filled, 0); return `${head} · ${filled}/${rows} device rows filled`; }
-    const want = open.reduce((n, r) => n + (r.items as PrizeItem[]).reduce((m, i) => m + i.qty, 0), 0), got = open.reduce((n, r) => n + (r.prizesGot?.qty ?? 0), 0);
-    return `${head} · ${got}/${want} prizes filled`;
+    const asked = open.filter((r) => (r.items as PrizeItem[]).length > 0);
+    const want = asked.reduce((n, r) => n + (r.items as PrizeItem[]).reduce((m, i) => m + i.qty, 0), 0), got = asked.reduce((n, r) => n + (r.prizesGot?.qty ?? 0), 0);
+    return want ? `${head} · ${got}/${want} prizes filled` : head;
   }, [list, kind]);
 
   async function setStatus(r: Req, status: RequestStatus) {
@@ -120,7 +121,7 @@ export default function RequestsTab({ kind, plan, api, data, store }: { kind: Re
                 <span data-label={r.kind === 'devices' ? 'Devices' : 'Prizes'}>
                   {r.kind === 'devices'
                     ? <>{(r.items as DeviceItem[]).map((i, n) => <span key={n} className={styles.reqItem}><b>{i.qty} × {i.what}</b>{i.games.length ? <span className={styles.dim}> · {i.games.join(', ')}</span> : null}</span>)}{r.status !== 'declined' && <span className={`${styles.reqItem} ${r.filled === r.rowsTotal && r.rowsTotal > 0 ? styles.okText : styles.warnText}`}>{r.filled}/{r.rowsTotal} filled</span>}</>
-                    : <>{(r.items as PrizeItem[]).map((i, n) => <span key={n} className={styles.reqItem}><b>{i.qty} {i.size}</b></span>)}{r.status !== 'declined' && (() => { const want = (r.items as PrizeItem[]).reduce((n, i) => n + i.qty, 0), got = r.prizesGot?.qty ?? 0; return <span className={`${styles.reqItem} ${got >= want && want > 0 ? styles.okText : styles.warnText}`}>{got}/{want} filled</span>; })()}</>}
+                    : <>{(r.items as PrizeItem[]).length === 0 && <span className={`${styles.reqItem} ${styles.dim}`}>No amount set{(r.prizesGot?.qty ?? 0) > 0 ? ` · ${r.prizesGot?.qty} chosen` : ''}</span>}{(r.items as PrizeItem[]).map((i, n) => <span key={n} className={styles.reqItem}><b>{i.qty} {i.size ?? 'any size'}</b></span>)}{r.status !== 'declined' && (r.items as PrizeItem[]).length > 0 && (() => { const want = (r.items as PrizeItem[]).reduce((n, i) => n + i.qty, 0), got = r.prizesGot?.qty ?? 0; return <span className={`${styles.reqItem} ${got >= want && want > 0 ? styles.okText : styles.warnText}`}>{got}/{want} filled</span>; })()}</>}
                 </span>
                 <span data-label="Notes"><TextCell value={r.notes} canEdit={mine} placeholder="Add" onSave={(v) => void patch(r, { notes: v })} /></span>
                 <span data-label="Status">{manage && !closed ? <PickCell value={STATUS_LABELS[r.status]} options={REQUEST_STATUSES.map((x) => STATUS_LABELS[x])} clearable={false} canEdit onSave={(v) => { const x = REQUEST_STATUSES.find((k) => STATUS_LABELS[k] === v); if (x) void setStatus(r, x); }} /> : <span className={`${styles.statusChip} ${chip[r.status]}`}>{STATUS_LABELS[r.status]}</span>}</span>
@@ -143,7 +144,7 @@ function RequestDialog({ kind: askKind, plan, api, data, planId, loaded, request
   const [notes, setNotes] = useState(request?.notes ?? '');
   const [dev, setDev] = useState<DeviceItem[]>(request?.kind === 'devices' ? (request.items as DeviceItem[]) : [{ what: data.lists.bundle[0]?.value ?? data.lists.type[0]?.value ?? '', qty: 1, games: [] }]);
   const sizes = useMemo(() => data.lists.prize_size.map((o) => o.value), [data.lists.prize_size]);
-  const [priz, setPriz] = useState<PrizeItem[]>(request?.kind === 'prizes' ? (request.items as PrizeItem[]) : [{ qty: 1, size: sizes[0] ?? '' }]);
+  const [priz, setPriz] = useState<PrizeItem[]>(request?.kind === 'prizes' ? (request.items as PrizeItem[]) : []);
   const [onBehalf, setOnBehalf] = useState('');
   const [people, setPeople] = useState<{ id: string; name: string }[]>([]);
   const [busy, setBusy] = useState(false);
@@ -154,7 +155,7 @@ function RequestDialog({ kind: askKind, plan, api, data, planId, loaded, request
   async function save() {
     setProblem('');
     setBusy(true);
-    const body = { kind, team, division_id: division || null, notes, items: kind === 'devices' ? dev : priz, ...(onBehalf ? { requester_id: onBehalf } : {}) };
+    const body = { kind, team, division_id: division || null, notes, items: kind === 'devices' ? dev : priz.filter((x) => Number(x.qty) > 0), ...(onBehalf ? { requester_id: onBehalf } : {}) };
     const r = request ? await call(`/api/logistics/plans/${planId}/requests`, 'PATCH', { request_id: request.id, ...body }) : await call(`/api/logistics/plans/${planId}/requests`, 'POST', body);
     setBusy(false);
     if (r.ok) onSaved(); else setProblem(r.error);
@@ -193,11 +194,11 @@ function RequestDialog({ kind: askKind, plan, api, data, planId, loaded, request
             {priz.map((it, i) => (
               <div key={i} className={`${styles.reqLine} ${styles.reqLinePrize}`}>
                 <Field label='How many prizes'><Input type="number" min={1} max={10000} value={it.qty} onChange={(e) => setPrizAt(i, { qty: Number(e.target.value) })} aria-label="How many prizes" /></Field>
-                <Field label='Size'><Select value={it.size} onChange={(e) => setPrizAt(i, { size: e.target.value })} aria-label="Prize size">{sizes.map((z) => <option key={z} value={z}>{z}</option>)}</Select></Field>
-                {priz.length > 1 && <button type="button" className={styles.iconBtn} title="Remove" onClick={() => setPriz((c) => c.filter((_, k) => k !== i))} aria-label="Remove this line"><Trash2 size={15} aria-hidden="true" /></button>}
+                <Field label='Size'><Select value={it.size ?? ''} onChange={(e) => setPrizAt(i, { size: e.target.value || null })} aria-label="Prize size"><option value="">Any size</option>{sizes.map((z) => <option key={z} value={z}>{z}</option>)}</Select></Field>
+                {<button type="button" className={styles.iconBtn} title="Remove" onClick={() => setPriz((c) => c.filter((_, k) => k !== i))} aria-label="Remove this line"><Trash2 size={15} aria-hidden="true" /></button>}
               </div>
             ))}
-            <div className={styles.rowInline}><Button size="sm" variant="secondary" onClick={() => setPriz((c) => [...c, { qty: 1, size: sizes[0] ?? '' }])}>Add A Line</Button><span className={styles.muted}>{(() => { const n = priz.reduce((m, x) => m + (Number(x.qty) || 0), 0); return `${n} prize${n === 1 ? '' : 's'} in all.`; })()} You don’t pick the prizes: the logistics team fills this from what is in stock.</span></div>
+            <div className={styles.rowInline}><Button size="sm" variant="secondary" onClick={() => setPriz((c) => [...c, { qty: 1, size: null }])}>{priz.length ? 'Add A Line' : 'Add An Amount'}</Button><span className={styles.muted}>{priz.length ? (() => { const n = priz.reduce((m, x) => m + (Number(x.qty) || 0), 0); return `${n} prize${n === 1 ? '' : 's'} in all. `; })() : 'The amount is optional: send just the team and the logistics team decides. '}You don’t pick the prizes: the logistics team fills this from what is in stock.</span></div>
           </div>
         )}
         {!request && <Field label="Anything else" hint={kind === 'prizes' ? 'Sizes, colours, what the prizes are for.' : 'Setup needs, when you need it, anything special.'}><Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={2000} /></Field>}

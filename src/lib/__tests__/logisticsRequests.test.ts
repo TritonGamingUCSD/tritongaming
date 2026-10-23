@@ -15,6 +15,16 @@ describe('request items', () => {
     expect(cleanRequestItems('prizes', [{ qty: 5, size: 'Huge' }], known)).toHaveProperty('error');
     expect(cleanRequestItems('prizes', [{ qty: 0, size: 'Free' }], known)).toHaveProperty('error');
   });
+  it('lets a prize request have no lines (just the team) but not a device request', () => {
+    expect(cleanRequestItems('prizes', [], known)).toEqual({ items: [] });
+    expect(requestSummary('prizes', [])).toBe('prizes, no amount set');
+  });
+  it('lets a prize line leave the size blank (any size), counting toward the total only', () => {
+    const r = cleanRequestItems('prizes', [{ qty: 4, size: '' }, { qty: 1, size: null }, { qty: 2, size: 'Free' }], known) as { items: PrizeItem[] };
+    expect(r.items).toEqual([{ qty: 4, size: null }, { qty: 1, size: null }, { qty: 2, size: 'Free' }]);
+    expect(prizeSizes(r.items)).toEqual({ Free: 2 });
+    expect(requestSummary('prizes', r.items)).toBe('4 prizes of any size, 1 prizes of any size, 2 Free');
+  });
   it('takes a prize size, ignoring capitals, and adds up the sizes', () => {
     const r = cleanRequestItems('prizes', [{ qty: 10, size: 'small prizing' }, { qty: 3, size: 'Large Prizing' }, { qty: 2, size: 'Small Prizing' }], known) as { items: PrizeItem[] };
     expect(r.items[0]).toEqual({ qty: 10, size: 'Small Prizing' });
@@ -58,7 +68,7 @@ describe('allocation matches the requests', () => {
   });
 });
 
-import { suggestPrizes } from '@/lib/logistics/prizes';
+import { ANY_SIZE, suggestPrizes } from '@/lib/logistics/prizes';
 describe('prize suggestions', () => {
   const stock = [{ id: 'a', size: 'Small Prizing', left: 10, sponsor: false }, { id: 'b', size: 'Small Prizing', left: 2, sponsor: false }, { id: 's', size: 'Medium Prizing', left: 1, sponsor: true }, { id: 'm', size: 'Medium Prizing', left: 1, sponsor: false }, { id: 'z', size: 'Large Prizing', left: 0, sponsor: false }];
   it('fills each size from prizes of that size, never more than is left', () => {
@@ -72,6 +82,15 @@ describe('prize suggestions', () => {
     const { picks } = suggestPrizes(stock, { 'Small Prizing': 2 });
     expect(picks.get('a')).toBe(2);
     expect(suggestPrizes(stock, { 'Medium Prizing': 1 }).picks.get('s')).toBe(1);
+  });
+  it('fills a count of any size from what the sizes left, most left first', () => {
+    const { picks, short } = suggestPrizes(stock, { 'Small Prizing': 11, [ANY_SIZE]: 3 });
+    expect(picks.get('a')).toBe(10);
+    expect(picks.get('b')).toBe(2);
+    expect(picks.get('s')).toBe(1);
+    expect(picks.get('m')).toBe(1);
+    expect([...picks.values()].reduce((n, v) => n + v, 0)).toBe(14);
+    expect(short).toEqual({});
   });
   it('says how many of a size could not be found', () => {
     const { picks, short } = suggestPrizes(stock, { 'Large Prizing': 2, 'Medium Prizing': 3 });

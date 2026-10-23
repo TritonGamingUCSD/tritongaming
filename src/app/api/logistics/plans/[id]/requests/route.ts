@@ -80,6 +80,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (kind !== 'devices' && kind !== 'prizes') return NextResponse.json({ error: 'Say whether it is for devices or prizes.' }, { status: 400 });
   const items = cleanRequestItems(kind, b.items, await known(auth.svc));
   if ('error' in items) return NextResponse.json({ error: items.error }, { status: 400 });
+  if (kind === 'prizes' && items.items.length === 0 && !text(b.team, 120)) return NextResponse.json({ error: 'With no amount, say which team the prizes are for.' }, { status: 400 });
   const division = await divisionOk(auth.svc, b.division_id);
   if (division === false) return NextResponse.json({ error: 'That division is gone.' }, { status: 400 });
   const onBehalf = auth.canManage && typeof b.requester_id === 'string' && UUID.test(b.requester_id) ? b.requester_id : auth.user.id;

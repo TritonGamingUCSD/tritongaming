@@ -3,7 +3,7 @@
 import { RowMenu } from './RowMenu';
 import { useMemo, useState } from 'react';
 import Button from '@/components/ui/Button';
-import { suggestPrizes } from '@/lib/logistics/prizes';
+import { ANY_SIZE, suggestPrizes } from '@/lib/logistics/prizes';
 import { Combo } from './Combo';
 import { NumberCell } from './Cells';
 import { PoolDialog } from './PlanPrizes';
@@ -38,8 +38,20 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
   const sizeOrder = data.lists.prize_size.map((o) => o.value);
   const haveOf = (poolId: string) => lines.filter((l) => l.pool_id === poolId).reduce<Record<string, number>>((m, l) => (l.prize.size ? { ...m, [l.prize.size]: (m[l.prize.size] ?? 0) + l.quantity } : m), {});
   // What a pool still needs of each size to reach what its request asked for.
-  const needOf = (pool: (typeof pools)[number]) => { const have = haveOf(pool.id); return Object.fromEntries(Object.entries(pool.target_sizes ?? {}).map(([z, n]) => [z, Math.max(0, n - (have[z] ?? 0))]).filter(([, n]) => (n as number) > 0)) as Record<string, number>; };
-  const needText = (need: Record<string, number>) => sizeOrder.filter((z) => need[z]).map((z) => `${need[z]} ${z}`).join(', ');
+  // A request can also ask for a count of any size: that is what its total has beyond the sizes it named, and prizes beyond a size's own count (or with no size) go toward it.
+  const anyOf = (pool: (typeof pools)[number]) => {
+    const target = pool.target_sizes ?? {}, have = haveOf(pool.id);
+    const want = Math.max(0, (pool.target_qty ?? 0) - Object.values(target).reduce((n, x) => n + x, 0));
+    const got = lines.filter((l) => l.pool_id === pool.id).reduce((n, l) => n + l.quantity, 0) - Object.entries(have).reduce((n, [z, x]) => n + Math.min(x, target[z] ?? 0), 0);
+    return { want, got };
+  };
+  const needOf = (pool: (typeof pools)[number]) => {
+    const have = haveOf(pool.id), any = anyOf(pool);
+    const out: Record<string, number> = Object.fromEntries(Object.entries(pool.target_sizes ?? {}).map(([z, n]) => [z, Math.max(0, n - (have[z] ?? 0))]).filter(([, n]) => (n as number) > 0));
+    if (any.want - any.got > 0) out[ANY_SIZE] = any.want - any.got;
+    return out;
+  };
+  const needText = (need: Record<string, number>) => [...sizeOrder, ANY_SIZE].filter((z) => need[z]).map((z) => `${need[z]} ${z === ANY_SIZE ? 'of any size' : z}`).join(', ');
   // `used` is what other pools already took in the same go (Fill All), so two pools never take the last of a prize.
   async function suggest(pool: (typeof pools)[number], used: Map<string, number> = new Map()) {
     setBusy(pool.id);
@@ -80,6 +92,7 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
             const have = haveOf(pool.id);
             const needCount = Object.values(need).reduce((n, x) => n + x, 0);
             const tiers = sizeOrder.filter((z) => (pool.target_sizes?.[z] ?? 0) > 0 || (have[z] ?? 0) > 0);
+            const any = anyOf(pool);
             const addable = available.filter((p) => p.left > 0 && !mine.some((l) => l.prize_id === p.id));
             const label = (p: PrizeRow) => `${sponsorName.get(p.sponsor_id ?? '') ?? 'Club'} · ${p.name}${p.type ? ` · ${p.type}` : ''}${p.size ? ` · ${p.size}` : ''}${p.price !== null ? ` · ${money(p.price)}` : ''} · ${p.left} left${p.in_hand ? '' : ' · not here yet'}`;
             const overLines = mine.filter((l) => l.prize.left < 0).length;
@@ -100,6 +113,7 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
                     <div className={styles.goalLine}><span>Prizes</span><b className={countState === styles.barBad ? styles.flagBad : undefined}>{count} / {pool.target_qty}</b></div>
                     <div className={`${styles.bar} ${countState}`}><i style={{ width: `${Math.min(100, pool.target_qty ? (count / pool.target_qty) * 100 : 0)}%` }} /></div>
                     {tiers.map((z) => { const want = pool.target_sizes?.[z] ?? 0, got = have[z] ?? 0; return <div key={z} className={styles.goalLine}><span>{z}</span><b className={got > want ? styles.flagBad : got === want ? styles.okText : undefined}>{got} / {want}</b></div>; })}
+                    {any.want > 0 && <div className={styles.goalLine}><span>Any size</span><b className={any.got > any.want ? styles.flagBad : any.got === any.want ? styles.okText : undefined}>{any.got} / {any.want}</b></div>}
                   </div>
                 ) : <p className={styles.muted}>{count} prizes · {money(spent) || '$0'}</p>}
                 {needCount > 0 && <p className={`${styles.dim} ${styles.goalNeed}`}>Still needs {needText(need)}</p>}

@@ -493,7 +493,7 @@
 .reqActions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-top: auto; }
 .reqLines { display: flex; flex-direction: column; gap: 0.6rem; }
 .reqLine { display: grid; grid-template-columns: minmax(9rem, 1.2fr) 6rem minmax(10rem, 2fr) auto; align-items: end; gap: 0.6rem; }
-.reqLinePrize { grid-template-columns: 8rem 10rem auto; }
+.reqLinePrize { grid-template-columns: 8rem 13rem auto; }
 .rowInline { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
 @media (max-width: 640px) { .reqLine, .reqLinePrize { grid-template-columns: minmax(0, 1fr) 6rem; } .reqLine > :nth-child(3) { grid-column: 1 / -1; } }
 
@@ -832,7 +832,7 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 /* Search and refresh: when they don't fit beside the tab bars they take the next row in full, lined up with the bars; a request's contact and date share a line. */
 .pageBarEnd { flex: 1 1 24rem; grid-template-columns: minmax(12rem, 1fr) auto; justify-content: stretch; }
 .reqRow > .prizeName { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.5rem; }
-.reqRow > .prizeName .editCell { display: inline-block; width: auto; padding-left: 0; }
+.reqRow > .prizeName .editCell { display: inline-block; width: auto; }
 
 /* Phone: a device line keeps its tools (edit, swap) on the first row beside the name instead of a row of their own. */
 @media (max-width: 899px) {
@@ -998,3 +998,4 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 .cellWrap .cellMinus { width: auto; min-width: 20px; padding: 0 0.3rem; font-size: 0.7rem; top: 50%; transform: translateY(-50%); right: 4px; }
 
 .goalNeed { margin: 0; font-size: 0.86rem; }
+@media (max-width: 640px) { .reqLinePrize { grid-template-columns: 5.5rem minmax(0, 1fr) auto; } }
