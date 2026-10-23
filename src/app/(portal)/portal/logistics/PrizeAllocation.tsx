@@ -120,7 +120,7 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
                                       onChange={(v) => { const np = similar.find((x) => label(x) === v); if (np && p) void (async () => { await setQty(pool.id, np, l.quantity); await setQty(pool.id, p, 0); })(); }} />
                                   </span>
                                 ) : (
-                                  <span className={styles.poolLineName}><b>{l.prize.name}</b><small className={styles.dim}>{[l.prize.type, l.prize.size].filter(Boolean).map((x) => `${x} · `).join('')}{l.prize.sponsor ?? 'Club'}{l.prize.price !== null ? ` · ${money(l.prize.price)}` : ''}{p && !p.in_hand ? ' · not here yet' : ''}</small>{l.prize.left < 0 && <small className={styles.flagWarn}>{-l.prize.left} more than in stock</small>}</span>
+                                  <span className={styles.poolLineName}><b>{l.prize.name}</b><small className={styles.dim}>{l.prize.size ? `${l.prize.size} · ` : ''}{l.prize.sponsor ?? 'Club'}{l.prize.price !== null ? ` · ${money(l.prize.price)}` : ''}{p && !p.in_hand ? ' · not here yet' : ''}</small>{l.prize.left < 0 && <small className={styles.flagWarn}>{-l.prize.left} more than in stock</small>}</span>
                                 )}
                                 <NumberCell value={l.quantity} canEdit={manage && !!p} nullable label={`${l.prize.name} for ${pool.name}`} onSave={(n) => p && void setQty(pool.id, p, n ?? 0)} />
                                 <span className={styles.poolLineEnd}>
