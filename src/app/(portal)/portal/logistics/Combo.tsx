@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, Plus, X } from 'lucide-react';
+import { isMove, moveFrom } from './cellNav';
 import styles from './logistics.module.css';
 
 // The dropdown used all through Logistics, like a spreadsheet's: click it, pick a value, or type a new one and add it right there (it is saved to the list for everyone).
@@ -17,6 +18,7 @@ interface PickerProps {
   clearable?: boolean;
   ariaLabel?: string;
   compact?: boolean;
+  sheet?: boolean;   // a cell in a table: Tab and Enter go to the next cell (see cellNav)
   keepOpen?: boolean;
   autoFocus?: boolean;
   onBlurClose?: () => void;
@@ -47,11 +49,12 @@ function useListPlacement(open: boolean, anchor: React.RefObject<HTMLElement | n
   return pos;
 }
 
-function Picker({ options, onPick, onCreate, placeholder, initial = '', disabled, clearable, ariaLabel, compact, autoFocus, onBlurClose }: PickerProps) {
+function Picker({ options, onPick, onCreate, placeholder, initial = '', disabled, clearable, ariaLabel, compact, autoFocus, onBlurClose, sheet }: PickerProps) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState('');
   const [hi, setHi] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [touched, setTouched] = useState(false);   // typed or arrowed: only then does Enter or Tab in a table cell pick the highlighted entry
   const wrap = useRef<HTMLDivElement>(null);
   const listId = useId();
   useEffect(() => { if (autoFocus) setOpen(true); }, [autoFocus]);   // a phone won't focus a box by itself, so a box opened to be edited shows its list at once
@@ -94,6 +97,7 @@ function Picker({ options, onPick, onCreate, placeholder, initial = '', disabled
         placeholder={open && initial ? initial : placeholder}
         disabled={disabled || busy}
         autoFocus={autoFocus}
+        data-cell={sheet ? '' : undefined}
         aria-label={ariaLabel}
         role="combobox"
         aria-expanded={open}
@@ -101,10 +105,15 @@ function Picker({ options, onPick, onCreate, placeholder, initial = '', disabled
         autoComplete="off"
         onFocus={() => { setOpen(true); setHi(0); }}
         onClick={() => setOpen(true)}   // a tap on a box that already has focus (a phone or tablet does not send focus again)
-        onChange={(e) => { setText(e.target.value); setOpen(true); setHi(0); }}
+        onChange={(e) => { setText(e.target.value); setOpen(true); setHi(0); setTouched(true); }}
         onKeyDown={(e) => {
-          if (e.key === 'ArrowDown') { e.preventDefault(); setOpen(true); setHi((h) => Math.min(h + 1, rows.length - 1)); }
-          else if (e.key === 'ArrowUp') { e.preventDefault(); setHi((h) => Math.max(h - 1, 0)); }
+          if (sheet && isMove(e)) {   // in a table cell: pick if something was chosen, then go to the next cell
+            const r = touched ? rows[hi] ?? rows[0] : undefined;
+            moveFrom(e.currentTarget, e);
+            if (r) void choose(r); else { e.preventDefault(); setOpen(false); setText(''); onBlurClose?.(); }
+          }
+          else if (e.key === 'ArrowDown') { e.preventDefault(); setOpen(true); setTouched(true); setHi((h) => Math.min(h + 1, rows.length - 1)); }
+          else if (e.key === 'ArrowUp') { e.preventDefault(); setTouched(true); setHi((h) => Math.max(h - 1, 0)); }
           else if (e.key === 'Enter') { e.preventDefault(); const r = rows[hi] ?? rows[0]; if (r) void choose(r); }
           else if (e.key === 'Escape') { setOpen(false); setText(''); onBlurClose?.(); }
         }}
@@ -124,11 +133,11 @@ function Picker({ options, onPick, onCreate, placeholder, initial = '', disabled
   );
 }
 
-export function Combo({ value, options, onChange, onCreate, placeholder = 'Choose…', disabled, clearable = true, ariaLabel, compact, autoFocus, onClose }: {
+export function Combo({ value, options, onChange, onCreate, placeholder = 'Choose…', disabled, clearable = true, ariaLabel, compact, sheet, autoFocus, onClose }: {
   value: string | null; options: string[]; onChange: (v: string | null) => void; onCreate?: (v: string) => Promise<string | null>;
-  placeholder?: string; disabled?: boolean; clearable?: boolean; ariaLabel?: string; compact?: boolean; autoFocus?: boolean; onClose?: () => void;
+  placeholder?: string; disabled?: boolean; clearable?: boolean; ariaLabel?: string; compact?: boolean; sheet?: boolean; autoFocus?: boolean; onClose?: () => void;
 }) {
-  return <Picker options={options} initial={value ?? ''} onPick={(v) => { onChange(v || null); onClose?.(); }} onCreate={onCreate} placeholder={placeholder} disabled={disabled} clearable={clearable && !!value} ariaLabel={ariaLabel} compact={compact} autoFocus={autoFocus} onBlurClose={onClose} />;
+  return <Picker options={options} initial={value ?? ''} onPick={(v) => { onChange(v || null); onClose?.(); }} onCreate={onCreate} placeholder={placeholder} disabled={disabled} clearable={clearable && !!value} ariaLabel={ariaLabel} compact={compact} sheet={sheet} autoFocus={autoFocus} onBlurClose={onClose} />;
 }
 
 export function MultiCombo({ values, options, onChange, onCreate, placeholder = 'Add…', disabled, ariaLabel, renderChip }: {

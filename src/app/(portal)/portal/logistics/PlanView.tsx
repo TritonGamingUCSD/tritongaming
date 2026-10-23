@@ -20,7 +20,7 @@ import BorrowedTab from './BorrowedTab';
 import DeviceFinder from './DeviceFinder';
 import PrizingTab from './PrizingTab';
 import SponsorPrizingTab from './SponsorPrizingTab';
-import RequestsTab from './RequestsTab';
+import RequestsTab, { useRequests } from './RequestsTab';
 import SectionTabs from '@/components/ui/SectionTabs';
 import type { EventPage } from './logisticsRoute';
 import { SheetRows, type SheetCtx } from './PlanSheet';
@@ -120,6 +120,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
   const problems = useMemo(() => (detail ? planProblems(rows, detail.stations, steps, doneSet, detail.conflicts, () => null).filter((p) => (day ? ['skipped', 'empty', 'conflict'] : ['empty', 'game', 'place', 'team', 'unrequested', 'conflict']).includes(p.why)) : []), [detail, rows, steps, doneSet, day]);
   const bad = problems.filter((p) => p.sev === 'bad').length, warn = problems.length - bad;
 
+  const requests = useRequests(detail?.plan.id ?? '', page === 'requests' || page === 'requests-prizing');
   const isPrizing = page === 'requests-prizing' || page === 'prizing' || page === 'sponsor-prizing';
   const groupByType = byType && page === 'device';   // the same rows, grouped by the kind of device instead of by team
   const teams = useMemo(() => {
@@ -346,8 +347,8 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
           <button type="button" className={styles.back} onClick={onBack} aria-label="All events"><ArrowLeft size={15} aria-hidden="true" /> <span className={styles.backText}>All Events</span></button>
           <div className={styles.dayHeading}><b className={styles.dayTitle}>{p.name}</b><span className={styles.muted}>{range(p.starts_on, p.ends_on)}</span></div>
         </div>
-        <SectionTabs<'devices' | 'prizing'> variant="segmented" label="Devices or prizing" value={page === 'requests-prizing' ? 'prizing' : 'devices'} onChange={(g) => onPage(g === 'prizing' ? 'requests-prizing' : 'requests')} tabs={[{ id: 'devices', label: 'Devices', count: rows.length }, { id: 'prizing', label: 'Prizing', count: detail.prizes.lines.length }]} />
-        <RequestsTab key={page === 'requests-prizing' ? 'p' : 'd'} kind={page === 'requests-prizing' ? 'prizes' : 'devices'} plan={plan} api={catalog} data={data} />
+        <SectionTabs<'devices' | 'prizing'> variant="segmented" label="Devices or prizing" value={page === 'requests-prizing' ? 'prizing' : 'devices'} onChange={(g) => onPage(g === 'prizing' ? 'requests-prizing' : 'requests')} tabs={[{ id: 'devices', label: 'Devices', count: requests.count('devices') }, { id: 'prizing', label: 'Prizing', count: requests.count('prizes') }]} />
+        <RequestsTab store={requests} key={page === 'requests-prizing' ? 'p' : 'd'} kind={page === 'requests-prizing' ? 'prizes' : 'devices'} plan={plan} api={catalog} data={data} />
       </div>
     );
   }
@@ -368,12 +369,12 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
           onChange={(g) => onPage(g === 'prizing' ? 'requests-prizing' : 'requests')} tabs={[{ id: 'devices', label: 'Devices', count: rows.length }, { id: 'prizing', label: 'Prizing', count: detail.prizes.lines.length }]} /></span>
         <SectionTabs<string> variant="segmented" label="Event pages" value={page === 'requests' || page === 'requests-prizing' ? page : `${day && (page === 'device' || page === 'prizing') ? 'day' : 'alloc'}-${page}`}
           onChange={(v) => v === 'requests' || v === 'requests-prizing' ? onPage(v) : onPage(v.replace(/^(day|alloc)-/, '') as EventPage, v.startsWith('day-'))} tabs={isPrizing ? [
-            { id: 'requests-prizing', label: 'Requests' },
+            { id: 'requests-prizing', label: 'Requests', count: requests.count('prizes') },
             { id: 'alloc-sponsor-prizing', label: 'Sponsor Prizing' },
             { id: 'alloc-prizing', label: 'Allocation', count: detail.prizes.lines.length },
             { id: 'day-prizing', label: 'Event Day' },
           ] : [
-            { id: 'requests', label: 'Requests' },
+            { id: 'requests', label: 'Requests', count: requests.count('devices') },
             { id: 'alloc-sponsor-loaners', label: 'Sponsor Loaners', count: borrowed.filter((b) => b.owner_kind === 'sponsor').length },
             { id: 'alloc-officer-loaners', label: 'Officer Loaners', count: borrowed.filter((b) => b.owner_kind === 'officer').length },
             { id: 'alloc-device', label: 'Allocation', count: rows.length },
@@ -425,7 +426,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
       {page === 'sponsor-prizing' && <SponsorPrizingTab plan={plan} api={catalog} data={data} />}
       {page === 'sponsor-loaners' && <BorrowedTab plan={plan} catalog={catalog} data={data} kind="sponsor" />}
       {page === 'officer-loaners' && <BorrowedTab plan={plan} catalog={catalog} data={data} kind="officer" />}
-      {(page === 'requests' || page === 'requests-prizing') && <RequestsTab key={page} kind={page === 'requests' ? 'devices' : 'prizes'} plan={plan} api={catalog} data={data} />}
+      {(page === 'requests' || page === 'requests-prizing') && <RequestsTab store={requests} key={page} kind={page === 'requests' ? 'devices' : 'prizes'} plan={plan} api={catalog} data={data} />}
 
       {page === 'device' && <div className={styles.dayLayout}>
         {kit && <div className={styles.dayAside}>

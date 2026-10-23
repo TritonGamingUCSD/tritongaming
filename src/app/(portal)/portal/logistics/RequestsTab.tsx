@@ -38,20 +38,30 @@ async function call<T>(url: string, method: string, body?: unknown): Promise<{ o
 
 // Requests for one event: a lead asks for devices (bundles or device types, how many, which games) or prizes (how many, around what dollar value), for their team. Logistics sees them all, plans them
 // (for devices, one click puts them on the Allocation sheet), and the person who asked is told. Everyone else sees only their own; once it is sent only Event Logistics can change or remove it.
-export default function RequestsTab({ kind, plan, api, data }: { kind: RequestKind; plan: PlanApi; api: LogisticsApi; data: Catalog }) {
-  const planId = plan.detail!.plan.id;
-  const closed = plan.detail!.plan.status === 'closed';
+// The requests of an event, loaded by the event page itself so the tab bar can show how many there are; they are refreshed every 30 seconds while the Requests page is open and visible.
+export function useRequests(planId: string, active: boolean) {
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [error, setError] = useState('');
-  const [dialog, setDialog] = useState<Req | 'new' | null>(null);
-  const [people, setPeople] = useState<{ id: string; name: string }[]>([]);
   const load = useCallback(async () => {
+    if (!planId) return;
     const r = await call<Loaded>(`/api/logistics/plans/${planId}/requests`, 'GET');
     if (r.ok) { setLoaded(r.data); setError(''); } else setError(r.error);
   }, [planId]);
   useEffect(() => { void load(); }, [load]);
+  useVisiblePoll(load, 30_000, active);   // other people's requests show up without a refresh
+  const count = (kind: RequestKind) => (loaded ? loaded.requests.filter((x) => x.kind === kind && x.status !== 'declined').length : undefined);
+  return { loaded, setLoaded, error, setError, load, count };
+}
+export type RequestsStore = ReturnType<typeof useRequests>;
+
+export default function RequestsTab({ kind, plan, api, data, store }: { kind: RequestKind; plan: PlanApi; api: LogisticsApi; data: Catalog; store: RequestsStore }) {
+  const planId = plan.detail!.plan.id;
+  const closed = plan.detail!.plan.status === 'closed';
+  const { loaded, setLoaded, error, setError, load } = store;
+  useEffect(() => { void load(); }, [load]);   // opening the page shows the latest
+  const [dialog, setDialog] = useState<Req | 'new' | null>(null);
+  const [people, setPeople] = useState<{ id: string; name: string }[]>([]);
   useEffect(() => { if (loaded?.canManage) void api.loadPeople().then(setPeople); }, [loaded?.canManage, api]);
-  useVisiblePoll(load, 30_000);   // other people's requests show up without a refresh (only while this tab is open and visible)
   const apply = (req: Req) => setLoaded((c) => (c ? { ...c, requests: c.requests.map((x) => (x.id === req.id ? { ...x, ...req } : x)) } : c));
 
   const list = useMemo(() => {

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Combo, MultiCombo } from './Combo';
+import { isJumping, isMove, moveFrom } from './cellNav';
 import styles from './logistics.module.css';
 
 // Shows what was just saved until the screen gets the saved value back (or a few seconds pass, if the save failed), so the old text never flashes back after a save.
@@ -19,7 +20,7 @@ function useArm(open: () => void) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
   const click = () => {
-    if (armed || !window.matchMedia('(pointer: coarse)').matches) { if (timer.current) clearTimeout(timer.current); setArmed(false); open(); return; }
+    if (armed || isJumping() || !window.matchMedia('(pointer: coarse)').matches) { if (timer.current) clearTimeout(timer.current); setArmed(false); open(); return; }
     setArmed(true);
     timer.current = setTimeout(() => setArmed(false), 3000);
   };
@@ -33,9 +34,9 @@ export function TextCell({ value, canEdit, onSave, placeholder, strong }: { valu
   const [shown, hold] = useHeld(value);
   const arm = useArm(() => { setText(shown ?? ''); setOn(true); });
   if (!canEdit) return <span className={strong ? styles.strong : undefined}>{shown || <span className={styles.dim}>{placeholder ?? '–'}</span>}</span>;
-  if (!on) return <button type="button" className={`${styles.editCell} ${strong ? styles.strong : ''}`} data-armed={arm.armed} onClick={arm.click}>{shown || <span className={styles.editHint}>{placeholder ?? 'Add'}</span>}</button>;
+  if (!on) return <button type="button" data-cell className={`${styles.editCell} ${strong ? styles.strong : ''}`} data-armed={arm.armed} onClick={arm.click}>{shown || <span className={styles.editHint}>{placeholder ?? 'Add'}</span>}</button>;
   const done = (save: boolean) => { setOn(false); if (save && text.trim() !== (shown ?? '')) { hold(text.trim() || null); onSave(text.trim()); } };
-  return <input className={styles.cellInput} value={text} autoFocus onFocus={(e) => e.target.select()} maxLength={120} onChange={(e) => setText(e.target.value)} onBlur={() => done(true)} onKeyDown={(e) => { if (e.key === 'Enter') done(true); else if (e.key === 'Escape') done(false); }} />;
+  return <input data-cell className={styles.cellInput} value={text} autoFocus onFocus={(e) => e.target.select()} maxLength={120} onChange={(e) => setText(e.target.value)} onBlur={() => done(true)} onKeyDown={(e) => { if (isMove(e)) { moveFrom(e.currentTarget, e); done(true); } else if (e.key === 'Escape') done(false); }} />;
 }
 
 export function PickCell({ value, options, canEdit, onSave, onCreate, shown, clearable = true, locate, placeholder }: { placeholder?: string; locate?: boolean; value: string | null; options: string[]; canEdit: boolean; onSave: (v: string | null) => void; onCreate?: (v: string) => Promise<string | null>; shown?: string; clearable?: boolean }) {
@@ -45,8 +46,8 @@ export function PickCell({ value, options, canEdit, onSave, onCreate, shown, cle
   const arm = useArm(() => setOn(true));
   const none = locate ? <span className={styles.notLocated}>Not located</span> : null;
   if (!canEdit) return <span>{label ?? none ?? <span className={styles.dim}>–</span>}</span>;
-  if (!on) return <button type="button" className={styles.editCell} data-armed={arm.armed} onClick={arm.click}>{label ?? none ?? <span className={styles.editHint}>{placeholder ?? 'Choose'}</span>}</button>;
-  return <Combo value={label ?? null} options={options} onChange={(v) => { if (v !== null) hold(v); onSave(v); }} onCreate={onCreate} compact autoFocus clearable={clearable} onClose={() => setOn(false)} />;
+  if (!on) return <button type="button" data-cell className={styles.editCell} data-armed={arm.armed} onClick={arm.click}>{label ?? none ?? <span className={styles.editHint}>{placeholder ?? 'Choose'}</span>}</button>;
+  return <Combo value={label ?? null} options={options} onChange={(v) => { if (v !== null) hold(v); onSave(v); }} onCreate={onCreate} compact sheet autoFocus clearable={clearable} onClose={() => setOn(false)} />;
 }
 
 
@@ -58,15 +59,15 @@ export function NumberCell({ value, canEdit, onSave, label, step = 1, money, nul
   const arm = useArm(() => { setText(num === null ? '' : String(num)); setOn(true); });
   const shown = num === null ? null : `${money ? '$' : ''}${money && !Number.isInteger(num) ? num.toFixed(2) : num}`;
   if (!canEdit) return <span>{shown ?? <span className={styles.dim}>–</span>}</span>;
-  if (!on) return <button type="button" className={styles.editCell} aria-label={`${label}. Change`} data-armed={arm.armed} onClick={arm.click}>{shown ?? <span className={styles.editHint}>Add</span>}</button>;
+  if (!on) return <button type="button" data-cell className={styles.editCell} aria-label={`${label}. Change`} data-armed={arm.armed} onClick={arm.click}>{shown ?? <span className={styles.editHint}>Add</span>}</button>;
   const done = (save: boolean) => {
     setOn(false);
     if (!save) return;
     const n = text.trim() === '' ? null : Number(text);
     if (n === null ? nullable && num !== null : Number.isFinite(n) && n !== num) { hold(n); onSave(n); }
   };
-  return <input className={`${styles.cellInput} ${styles.cellNum}`} type="number" inputMode={money ? 'decimal' : 'numeric'} min={0} step={step} value={text} autoFocus aria-label={label} onFocus={(e) => e.target.select()}
-    onChange={(e) => setText(e.target.value)} onBlur={() => done(true)} onKeyDown={(e) => { if (e.key === 'Enter') done(true); else if (e.key === 'Escape') done(false); }} />;
+  return <input data-cell className={`${styles.cellInput} ${styles.cellNum}`} type="number" inputMode={money ? 'decimal' : 'numeric'} min={0} step={step} value={text} autoFocus aria-label={label} onFocus={(e) => e.target.select()}
+    onChange={(e) => setText(e.target.value)} onBlur={() => done(true)} onKeyDown={(e) => { if (isMove(e)) { moveFrom(e.currentTarget, e); done(true); } else if (e.key === 'Escape') done(false); }} />;
 }
 
 // A list of values (installed games): plain text until clicked, then the chips box; closes when you click away.
@@ -77,7 +78,7 @@ export function ListCell({ values, options, canEdit, onSave, label, placeholder 
   if (!on) {
     const text = shownValues.join(', ');
     return canEdit
-      ? <button type="button" className={styles.editCell} aria-label={`${label}. Change`} data-armed={arm.armed} onClick={arm.click}>{text || <span className={styles.editHint}>{placeholder}</span>}</button>
+      ? <button type="button" data-cell className={styles.editCell} aria-label={`${label}. Change`} data-armed={arm.armed} onClick={arm.click}>{text || <span className={styles.editHint}>{placeholder}</span>}</button>
       : <span>{text || <span className={styles.dim}>–</span>}</span>;
   }
   return (
