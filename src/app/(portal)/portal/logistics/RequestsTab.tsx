@@ -85,7 +85,7 @@ export default function RequestsTab({ kind, plan, api, data, store }: { kind: Re
   }
   async function patch(r: Req, fields: { team?: string; notes?: string; requester_id?: string }) {
     const res = await call<{ request: Req }>(`/api/logistics/plans/${planId}/requests`, 'PATCH', { request_id: r.id, ...fields });
-    if (res.ok) { apply({ ...r, ...res.data.request }); void plan.reload(); } else setError(res.error);
+    if (res.ok) { apply({ ...r, ...res.data.request, ...(fields.requester_id ? { requester: people.find((p) => p.id === fields.requester_id)?.name ?? r.requester } : {}) }); void plan.reload(); } else setError(res.error);   // the reply has the new contact's id but not their name, so the name is filled in here or the old one would come back when the cell stops holding the picked value
   }
   async function remove(r: Req) {
     if (!(await confirmHold({ title: 'Remove this request?', message: requestSummary(r.kind, r.items), confirmLabel: 'Hold to remove' }))) return;
