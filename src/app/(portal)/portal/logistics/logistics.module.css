@@ -985,3 +985,10 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
   .toolPill { min-height: 32px; }
   .toolUse { min-width: 0; }
 }
+
+/* Phone event day: the steps of a device in four columns, the count over its name, so seven steps take two rows instead of three */
+@media (max-width: 640px) {
+  .dCells { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.25rem; }
+  .cell { flex-direction: column; justify-content: center; gap: 0; padding: 0.1rem 0.15rem; }
+  .cellLabel { font-size: 0.66rem; text-align: center; line-height: 1.1; }
+}
