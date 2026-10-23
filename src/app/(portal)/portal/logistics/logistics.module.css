@@ -898,3 +898,9 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
   .stepRow > :not(.stepMove):not(.optInput):not(.iconBtn:last-child) { order: 3; flex: 0 1 auto; }
   .stepRow .editCell { display: inline-block; width: auto; }
 }
+
+/* Phone: a prize in the inventory or the sponsor list is a compact card, three small facts across (sponsor, size, type; price, stock, promised; given, left) with Where on its own line. */
+@media (max-width: 899px) {
+  .prizeRow:not(.reqRow):not(.borrowRow):not(.sponsorRow) { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 0.7rem; row-gap: 0.45rem; padding: 0.7rem 0.9rem; }
+  .prizeRow:not(.reqRow):not(.borrowRow):not(.sponsorRow) > span[data-label="Where"] { grid-column: 1 / -1; }
+}
