@@ -197,7 +197,7 @@ function RequestDialog({ kind: askKind, plan, api, data, planId, loaded, request
                 {priz.length > 1 && <button type="button" className={styles.iconBtn} title="Remove" onClick={() => setPriz((c) => c.filter((_, k) => k !== i))} aria-label="Remove this line"><Trash2 size={15} aria-hidden="true" /></button>}
               </div>
             ))}
-            <div className={styles.rowInline}><Button size="sm" variant="secondary" onClick={() => setPriz((c) => [...c, { qty: 1, size: sizes[0] ?? '' }])}>Add A Line</Button><span className={styles.muted}>{priz.reduce((n, x) => n + (Number(x.qty) || 0), 0)} prizes in all. You don’t pick the prizes: the logistics team fills this from what is in stock.</span></div>
+            <div className={styles.rowInline}><Button size="sm" variant="secondary" onClick={() => setPriz((c) => [...c, { qty: 1, size: sizes[0] ?? '' }])}>Add A Line</Button><span className={styles.muted}>{(() => { const n = priz.reduce((m, x) => m + (Number(x.qty) || 0), 0); return `${n} prize${n === 1 ? '' : 's'} in all.`; })()} You don’t pick the prizes: the logistics team fills this from what is in stock.</span></div>
           </div>
         )}
         {!request && <Field label="Anything else" hint={kind === 'prizes' ? 'Sizes, colours, what the prizes are for.' : 'Setup needs, when you need it, anything special.'}><Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={2000} /></Field>}

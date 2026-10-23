@@ -102,7 +102,7 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
                     {tiers.map((z) => { const want = pool.target_sizes?.[z] ?? 0, got = have[z] ?? 0; return <div key={z} className={styles.goalLine}><span>{z}</span><b className={got > want ? styles.flagBad : got === want ? styles.okText : undefined}>{got} / {want}</b></div>; })}
                   </div>
                 ) : <p className={styles.muted}>{count} prizes · {money(spent) || '$0'}</p>}
-                {needCount > 0 && <p className={styles.dim}>Still needs {needText(need)}</p>}
+                {needCount > 0 && <p className={`${styles.dim} ${styles.goalNeed}`}>Still needs {needText(need)}</p>}
                 {overLines > 0 && <p className={styles.flagWarn}>{overLines} prize{overLines === 1 ? ' is' : 's are'} promised beyond what is in stock.</p>}
                 {mine.length > 0 && (
                   <ul className={styles.poolLines}>

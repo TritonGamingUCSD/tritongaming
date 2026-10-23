@@ -996,3 +996,5 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 /* The count box inside an event-day step cell fits the cell, with its All button inside the box at the right (it used to be 10rem wide and covered the next cell) */
 .cellWrap .qtyInput { min-width: 0; width: 100%; padding-right: 2.4rem; text-align: left; }
 .cellWrap .cellMinus { width: auto; min-width: 20px; padding: 0 0.3rem; font-size: 0.7rem; top: 50%; transform: translateY(-50%); right: 4px; }
+
+.goalNeed { margin: 0; font-size: 0.86rem; }
