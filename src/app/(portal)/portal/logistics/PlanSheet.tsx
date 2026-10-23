@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Minus, Plus } from 'lucide-react';
+import { Check, Lock, Minus, Plus } from 'lucide-react';
 import { conditionLabel, UNUSABLE } from '@/lib/logistics/constants';
 import { rowKind, skippedSteps, stepAppliesTo, type Problem, type StepDef } from '@/lib/logistics/plans';
 import { Suggest } from './Combo';
@@ -14,7 +14,7 @@ import styles from './logistics.module.css';
 
 export interface SheetCtx {
   api: ReturnType<typeof usePlan>; canManage: boolean; closed: boolean; manager: boolean; busy: boolean; pending: Set<string>; day: boolean; stations: Station[]; steps: StepDef[]; activeId: string;
-  hideDone: boolean; ids: (type: string) => { value: string }[]; setsOpen: boolean; foldGen: number; byType: boolean; main: Set<string>; doneSet: Set<string>; doneAt: Map<string, string>; doneBy: Map<string, string>; problems: Problem[];
+  lockedIds: Set<string>; hideDone: boolean; ids: (type: string) => { value: string }[]; setsOpen: boolean; foldGen: number; byType: boolean; main: Set<string>; doneSet: Set<string>; doneAt: Map<string, string>; doneBy: Map<string, string>; problems: Problem[];
   onTick: (row: Row, step: StepDef) => void; onTickAll: (rows: Row[], step: StepDef) => void; onUndo: (item: { id: string; kind: Slim['kind'] }, stepId: string) => void;
   onSwap: (r: Row) => void; onBorrowed: (r: Row) => void; onInstalled: (rows: Row[]) => void; onEditDevice: (r: Row) => void;
 }
@@ -70,7 +70,8 @@ function DeviceLine({ line, ctx, backup, nested }: { line: Line; ctx: SheetCtx; 
   const [editingTag, setEditingTag] = useState(false);
   const [busy, setBusy] = useState(false);
   const r = line.rows[0];
-  const manage = canManage && !closed;
+  const locked = !!r.requestId && ctx.lockedIds.has(r.requestId);   // its request's allocation is locked (a swap on the day is still allowed: it needs a reason)
+  const manage = canManage && !closed && !locked;
   const dead = !!r.condition && UNUSABLE.includes(r.condition as never);
   const empty = r.kind === 'slot' && !r.counted;
   const missing = missingOf(r);
@@ -105,6 +106,7 @@ function DeviceLine({ line, ctx, backup, nested }: { line: Line; ctx: SheetCtx; 
         {r.kind === 'slot' && r.label && <span className={styles.dWhere}>{r.label}</span>}
       </div>
       <div className={styles.dNotes}>
+        {locked && !ctx.day && <span className={styles.lockTag} title="Locked in its request. Unlock it there to change this row."><Lock size={12} aria-hidden="true" /> Locked</span>}
         {alloc && (editingTag
           ? <Suggest autoFocus className={styles.assignInput} value={tag} onChange={setTag} options={ctx.ids(r.type)} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); else if (e.key === 'Escape') { setTag(r.tag ?? ''); setEditingTag(false); } }} onBlur={() => { setEditingTag(false); void commit(); }} placeholder="Device ID" aria-label={`Device ID for ${r.type}`} autoCapitalize="characters" disabled={busy} />
           : <button type="button" className={`${styles.assignBtn} ${empty ? styles.assignEmpty : ''}`} onClick={(e) => tapTwice(e, () => setEditingTag(true))} disabled={busy} aria-label={`Device ID for ${r.type}. Change`}>{tag || 'Device ID'}</button>)}

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { authorizeLogistics } from '@/lib/logistics/auth';
-import { DEVICE_COLUMNS, PLAN_COLUMNS, SLOT_COLUMNS, UUID, takenByOthers, touchPlan, type SlotRow } from '@/lib/logistics/planServer';
+import { DEVICE_COLUMNS, LOCKED_MESSAGE, PLAN_COLUMNS, SLOT_COLUMNS, UUID, lockedRequestIds, rowsLocked, takenByOthers, touchPlan, type SlotRow } from '@/lib/logistics/planServer';
 import { isUsable, pickDevices } from '@/lib/logistics/plans';
 import { cleanList, tagKey, type Device } from '@/lib/logistics/devices';
 
@@ -45,6 +45,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       if (bo && bo.role === 'planned') slot = { id: '', plan_id: id, station_id: bo.station_id as string | null, type: '', games: (bo.games_needed as string[]) ?? [], label: null, sort: bo.sort as number, set_id: bo.set_id as string | null, request_id: bo.request_id as string | null, request_item: bo.request_item as string | null };
     }
     if (!slot) return NextResponse.json({ error: 'That row is gone.' }, { status: 404 });
+    if (slot.request_id && (await lockedRequestIds(svc, id)).has(slot.request_id)) return NextResponse.json({ error: LOCKED_MESSAGE }, { status: 409 });
     if (!tagKey(b.tag)) return NextResponse.json({ error: 'Type the ID written on the device.' }, { status: 400 });
     const typed = String(b.tag).trim();
     const { data: dev } = await svc.from('logistics_devices').select(DEVICE_COLUMNS).eq('tag_key', tagKey(b.tag)).maybeSingle();
@@ -84,6 +85,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const deviceId = uuid(b.device_id);
     const borrowedId = uuid(b.borrowed_id);
     if (!deviceId && !borrowedId) return NextResponse.json({ error: 'Pick the device.' }, { status: 400 });
+    if (await rowsLocked(svc, id, { deviceIds: deviceId ? [deviceId] : [], borrowedIds: borrowedId ? [borrowedId] : [] })) return NextResponse.json({ error: LOCKED_MESSAGE }, { status: 409 });
     if (borrowedId) {
       const { data: bo } = await svc.from('logistics_plan_borrowed').select('station_id, games_needed, sort, set_id, request_id, request_item, type, role').eq('plan_id', id).eq('id', borrowedId).maybeSingle();
       if (!bo || bo.role !== 'planned') return NextResponse.json({ error: 'That device isn’t in the plan.' }, { status: 404 });
@@ -118,8 +120,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const used = new Set([...others, ...(inPlan ?? []).map((r) => r.device_id as string)]);
     const devices = (all ?? []) as unknown as Device[];
     const picks: { slot: { id: string; station_id: string | null; type: string; games: string[] }; device: Device | null }[] = [];
-    for (const s of (slots ?? []) as unknown as { id: string; station_id: string | null; type: string; games: string[] }[]) {
-      if (counted.has(s.type.toLowerCase())) continue;
+    const lockedIds = await lockedRequestIds(svc, id);   // rows of a locked request are left alone
+    for (const s of (slots ?? []) as unknown as { id: string; station_id: string | null; type: string; games: string[]; request_id: string | null }[]) {
+      if (counted.has(s.type.toLowerCase()) || (s.request_id && lockedIds.has(s.request_id))) continue;
       const r = pickDevices(devices, { type: s.type, count: 1, games: s.games, taken: used });
       const d = r.picked[0] ?? null;
       if (d) used.add(d.id);
@@ -162,6 +165,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if ('label' in b) patch.label = text(b.label, 120);
   if ('station_id' in b) { const s = await stationOk(auth.svc, id, b.station_id); if (s === false) return NextResponse.json({ error: 'That station is gone.' }, { status: 400 }); patch.station_id = s; }
   if (!Object.keys(patch).length) return NextResponse.json({ error: 'Nothing to change.' }, { status: 400 });
+  if (await rowsLocked(auth.svc, id, { slotIds: ids })) return NextResponse.json({ error: LOCKED_MESSAGE }, { status: 409 });
   const { error } = await auth.svc.from('logistics_plan_slots').update(patch).eq('plan_id', id).in('id', ids);
   if (error) return NextResponse.json({ error: 'Couldn’t save that.' }, { status: 500 });
   await touchPlan(auth.svc, id);
@@ -175,6 +179,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   const b = await request.json().catch(() => ({}));
   const ids = (Array.isArray(b.slot_ids) ? b.slot_ids : [b.slot_id]).map((x: unknown) => uuid(x)).filter((x: string | null): x is string => !!x);
   if (!UUID.test(id) || !ids.length) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
+  if (await rowsLocked(auth.svc, id, { slotIds: ids })) return NextResponse.json({ error: LOCKED_MESSAGE }, { status: 409 });
   await auth.svc.from('logistics_plan_slots').delete().eq('plan_id', id).in('id', ids);
   await touchPlan(auth.svc, id);
   return NextResponse.json({ ok: true });

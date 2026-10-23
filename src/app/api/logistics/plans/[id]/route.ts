@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { namesOf } from '@/lib/docs/docsServer';
 import { authorizeLogistics } from '@/lib/logistics/auth';
-import { BORROWED_COLUMNS, DEVICE_COLUMNS, PLAN_COLUMNS, SLOT_COLUMNS, UUID, bookedElsewhere, loadSteps, ownerLabelOf, ownerNames, type BorrowedRow } from '@/lib/logistics/planServer';
+import { BORROWED_COLUMNS, DEVICE_COLUMNS, PLAN_COLUMNS, lockedRequestIds, SLOT_COLUMNS, UUID, bookedElsewhere, loadSteps, ownerLabelOf, ownerNames, type BorrowedRow } from '@/lib/logistics/planServer';
 import { planConflicts } from '@/lib/logistics/plans';
 import type { Device } from '@/lib/logistics/devices';
 import { loadPlanPrizes } from '@/lib/logistics/prizeServer';
@@ -20,7 +20,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const { data: plan } = await auth.svc.from('logistics_plans').select(PLAN_COLUMNS).eq('id', id).maybeSingle();
   if (!plan) return NextResponse.json({ error: 'That plan is gone.' }, { status: 404 });
   // A division account gets only the plan itself (for the Requests page), none of its devices, teams or prizes.
-  if (!auth.canView) return NextResponse.json({ plan, canManage: false, requestOnly: true, stations: [], steps: [], prizes: { pools: [], lines: [], done: [], steps: [] }, items: [], slots: [], borrowed: [], extras: [], done: [], conflicts: [] });
+  if (!auth.canView) return NextResponse.json({ plan, canManage: false, requestOnly: true, stations: [], steps: [], prizes: { pools: [], lines: [], done: [], steps: [] }, lockedRequests: [], items: [], slots: [], borrowed: [], extras: [], done: [], conflicts: [] });
   const prizeData = loadPlanPrizes(auth.svc, id);
   const [stations, rows, steps, done, borrowedRows, slotRows] = await Promise.all([
     auth.svc.from('logistics_stations').select('id, name, sort, contact, room').eq('plan_id', id).order('sort').order('name').limit(500),
@@ -40,7 +40,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const doneNames = await namesOf(auth.svc, (done.data ?? []).map((d) => d.done_by as string | null));
   const booked = await bookedElsewhere(auth.svc, plan as { id: string; starts_on: string; ends_on: string }, planned.map((d) => d.id));
   return NextResponse.json({
-    plan, canManage: auth.canManage, stations: stations.data ?? [], steps, prizes: await prizeData,
+    plan, canManage: auth.canManage, stations: stations.data ?? [], steps, prizes: await prizeData, lockedRequests: [...(await lockedRequestIds(auth.svc, id))],
     items: (rows.data ?? []).map((r) => ({ ...r, device: byId.get(r.device_id as string) })).filter((r) => r.device),
     slots: slotRows.data ?? [],
     borrowed: borrowed.map((b) => ({ ...b, owner: ownerLabelOf(b, names) })),

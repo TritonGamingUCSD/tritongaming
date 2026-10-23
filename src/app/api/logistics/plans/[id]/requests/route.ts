@@ -10,7 +10,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
-interface Row { id: string; plan_id: string; kind: RequestKind; requester_id: string; division_id: string | null; team: string | null; contact: string | null; items: (DeviceItem | PrizeItem)[]; notes: string | null; status: RequestStatus; response: string | null; planned_by: string | null; planned_at: string | null; created_at: string; updated_at: string }
+interface Row { allocation_locked?: boolean; id: string; plan_id: string; kind: RequestKind; requester_id: string; division_id: string | null; team: string | null; contact: string | null; items: (DeviceItem | PrizeItem)[]; notes: string | null; status: RequestStatus; response: string | null; planned_by: string | null; planned_at: string | null; created_at: string; updated_at: string }
 const text = (v: unknown, n: number) => { const s = String(v ?? '').trim().slice(0, n); return s || null; };
 
 async function known(svc: SupabaseClient) {
@@ -113,6 +113,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!r || !plan) return NextResponse.json({ error: 'That request is gone.' }, { status: 404 });
   if (!canEditRequest(auth.canManage)) return NextResponse.json({ error: 'A submitted request can only be changed by the Event Logistics team. Ask them.' }, { status: 403 });
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  // Lock or unlock this request's allocation (Event Logistics only). While it is locked nothing that would move its rows or prizes can change: what it asks for, its team, being declined, or being removed.
+  if ('allocation_locked' in b) {
+    if (!auth.canManage || typeof b.allocation_locked !== 'boolean') return NextResponse.json({ error: 'Only the Event Logistics team can lock a request.' }, { status: 403 });
+    patch.allocation_locked = b.allocation_locked;
+  }
+  const frozen = !!r.allocation_locked && b.allocation_locked !== false;
+  if (frozen && ('items' in b || 'team' in b || b.status === 'declined')) return NextResponse.json({ error: 'This request’s allocation is locked. Unlock it first.' }, { status: 409 });
   if ('items' in b) { const items = cleanRequestItems(r.kind, b.items, await known(auth.svc)); if ('error' in items) return NextResponse.json({ error: items.error }, { status: 400 }); patch.items = items.items; }
   if ('team' in b) patch.team = text(b.team, 120);
   // The request has one contact: a division lead or an officer or above. Only the Event Logistics team can change who.
@@ -141,8 +148,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const who = (await names(auth.svc, [auth.user.id])).get(auth.user.id) ?? 'Someone';
     await createNotifications(auth.svc, team.map((user_id) => ({ user_id, type: 'logistics_request', title: `A request for ${plan.name} was changed`, body: `${who}: ${requestSummary(r.kind, data.items as (DeviceItem | PrizeItem)[])}`.slice(0, 240), href: href(plan.slug as string, r.kind) })));
   }
-  const sync = r.kind === 'devices' && ('items' in b || 'team' in b || 'requester_id' in b || 'division_id' in b || statusChanged) ? await syncRequestRows(auth.svc, data as never) : { kept: 0 };
-  if (r.kind === 'prizes' && ('items' in b || 'team' in b || statusChanged)) await syncPrizePool(auth.svc, data as never);
+  const sync = !frozen && r.kind === 'devices' && ('items' in b || 'team' in b || 'requester_id' in b || 'division_id' in b || statusChanged) ? await syncRequestRows(auth.svc, data as never) : { kept: 0 };
+  if (!frozen && r.kind === 'prizes' && ('items' in b || 'team' in b || statusChanged)) await syncPrizePool(auth.svc, data as never);
   await touchPlan(auth.svc, id);
   return NextResponse.json({ request: data, kept: sync.kept });
 }
@@ -153,8 +160,9 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   const { id } = await params;
   const b = await request.json().catch(() => ({}));
   if (!UUID.test(id) || typeof b.request_id !== 'string' || !UUID.test(b.request_id)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
-  const { data: r } = await auth.svc.from('logistics_requests').select('id, kind, requester_id, status').eq('id', b.request_id).eq('plan_id', id).maybeSingle();
+  const { data: r } = await auth.svc.from('logistics_requests').select('id, kind, requester_id, status, allocation_locked').eq('id', b.request_id).eq('plan_id', id).maybeSingle();
   if (!r) return NextResponse.json({ ok: true });
+  if (r.allocation_locked) return NextResponse.json({ error: 'This request’s allocation is locked. Unlock it first.' }, { status: 409 });
   if (!canEditRequest(auth.canManage)) return NextResponse.json({ error: 'Only the Event Logistics team can remove a request.' }, { status: 403 });
   if (r.kind === 'devices') {
     await auth.svc.from('logistics_plan_slots').delete().eq('request_id', r.id as string);

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { authorizeLogistics } from '@/lib/logistics/auth';
-import { UUID, touchPlan } from '@/lib/logistics/planServer';
+import { LOCKED_MESSAGE, rowsLocked, UUID, touchPlan } from '@/lib/logistics/planServer';
 
 export const dynamic = 'force-dynamic';
 const ids = (v: unknown): string[] => (Array.isArray(v) ? v : []).filter((x): x is string => typeof x === 'string' && UUID.test(x)).slice(0, 500);
@@ -43,6 +43,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if ('station_id' in b) { const s = await stationOk(auth.svc, id, b.station_id); if (s === false) return NextResponse.json({ error: 'That station is gone.' }, { status: 400 }); patch.station_id = s; }
   if (b.role === 'planned' || b.role === 'backup') patch.role = b.role;
   if (!Object.keys(patch).length) return NextResponse.json({ error: 'Nothing to change.' }, { status: 400 });
+  if (await rowsLocked(auth.svc, id, { deviceIds })) return NextResponse.json({ error: LOCKED_MESSAGE }, { status: 409 });
   const { error } = await auth.svc.from('logistics_plan_devices').update(patch).eq('plan_id', id).in('device_id', deviceIds);
   if (error) return NextResponse.json({ error: 'Couldn’t save that.' }, { status: 500 });
   await touchPlan(auth.svc, id);
@@ -57,6 +58,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   const b = await request.json().catch(() => ({}));
   const deviceIds = ids(b.device_ids);
   if (!deviceIds.length) return NextResponse.json({ error: 'Pick at least one device.' }, { status: 400 });
+  if (await rowsLocked(auth.svc, id, { deviceIds })) return NextResponse.json({ error: LOCKED_MESSAGE }, { status: 409 });
   await auth.svc.from('logistics_plan_devices').delete().eq('plan_id', id).in('device_id', deviceIds);
   await touchPlan(auth.svc, id);
   return NextResponse.json({ ok: true });

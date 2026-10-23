@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { authorizeLogistics } from '@/lib/logistics/auth';
-import { UUID, touchPlan } from '@/lib/logistics/planServer';
+import { LOCKED_MESSAGE, poolLocked, UUID, touchPlan } from '@/lib/logistics/planServer';
 
 export const dynamic = 'force-dynamic';
 const name = (v: unknown) => String(v ?? '').trim().replace(/\s+/g, ' ').slice(0, 80);
@@ -41,6 +41,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if ('name' in b) { const n = name(b.name); if (!n) return NextResponse.json({ error: 'The name can’t be empty.' }, { status: 400 }); patch.name = n; }
   if ('station_id' in b) { const st = await stationOf(auth.svc, id, b.station_id); if (st === false) return NextResponse.json({ error: 'That team is gone.' }, { status: 400 }); patch.station_id = st; }
   if (!Object.keys(patch).length) return NextResponse.json({ error: 'Nothing to change.' }, { status: 400 });
+  if (await poolLocked(auth.svc, id, b.pool_id)) return NextResponse.json({ error: LOCKED_MESSAGE }, { status: 409 });
   const { data, error } = await auth.svc.from('logistics_plan_pools').update(patch).eq('id', b.pool_id).eq('plan_id', id).select(COLUMNS).maybeSingle();
   if (error || !data) return NextResponse.json({ error: 'Couldn’t save that.' }, { status: 500 });
   await touchPlan(auth.svc, id);
@@ -54,6 +55,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   const { id } = await params;
   const b = await request.json().catch(() => ({}));
   if (!UUID.test(id) || typeof b.pool_id !== 'string' || !UUID.test(b.pool_id)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
+  if (await poolLocked(auth.svc, id, b.pool_id)) return NextResponse.json({ error: LOCKED_MESSAGE }, { status: 409 });
   await auth.svc.from('logistics_plan_pools').delete().eq('id', b.pool_id).eq('plan_id', id);
   await touchPlan(auth.svc, id);
   return NextResponse.json({ ok: true });

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { authorizeLogistics } from '@/lib/logistics/auth';
-import { UUID, touchPlan } from '@/lib/logistics/planServer';
+import { LOCKED_MESSAGE, poolLocked, UUID, touchPlan } from '@/lib/logistics/planServer';
 import { loadPrizeTotals } from '@/lib/logistics/prizeServer';
 import { prizeLeft } from '@/lib/logistics/prizes';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -36,6 +36,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!items.length || items.some((x) => !UUID.test(x.prize_id) || bad(x.quantity))) return NextResponse.json({ error: 'Pick a prize and how many.' }, { status: 400 });
   const { data: pool } = await auth.svc.from('logistics_plan_pools').select('id').eq('id', b.pool_id).eq('plan_id', id).maybeSingle();
   if (!pool) return NextResponse.json({ error: 'That pool is gone.' }, { status: 404 });
+  if (await poolLocked(auth.svc, id, b.pool_id)) return NextResponse.json({ error: LOCKED_MESSAGE }, { status: 409 });
   const short = await noRoom(auth.svc, items.map((x) => ({ prize_id: x.prize_id, add: x.quantity })));
   if (short) return NextResponse.json({ error: short }, { status: 409 });
   const { data: have } = await auth.svc.from('logistics_plan_prizes').select('prize_id, sort').eq('pool_id', b.pool_id);
@@ -55,8 +56,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!UUID.test(id) || typeof b.line_id !== 'string' || !UUID.test(b.line_id)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
   const n = qty(b.quantity);
   if (bad(n)) return NextResponse.json({ error: 'How many has to be a whole number, 1 or more.' }, { status: 400 });
-  const { data: line } = await auth.svc.from('logistics_plan_prizes').select('prize_id, quantity').eq('id', b.line_id).eq('plan_id', id).maybeSingle();
+  const { data: line } = await auth.svc.from('logistics_plan_prizes').select('prize_id, quantity, pool_id').eq('id', b.line_id).eq('plan_id', id).maybeSingle();
   if (!line) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
+  if (await poolLocked(auth.svc, id, line.pool_id as string)) return NextResponse.json({ error: LOCKED_MESSAGE }, { status: 409 });
   const short = await noRoom(auth.svc, [{ prize_id: line.prize_id as string, add: n - (line.quantity as number) }]);
   if (short) return NextResponse.json({ error: short }, { status: 409 });
   const { data, error } = await auth.svc.from('logistics_plan_prizes').update({ quantity: n }).eq('id', b.line_id).eq('plan_id', id).select(COLUMNS).maybeSingle();
@@ -74,6 +76,8 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   const { id } = await params;
   const b = await request.json().catch(() => ({}));
   if (!UUID.test(id) || typeof b.line_id !== 'string' || !UUID.test(b.line_id)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
+  const { data: gone } = await auth.svc.from('logistics_plan_prizes').select('pool_id').eq('id', b.line_id).eq('plan_id', id).maybeSingle();
+  if (gone && (await poolLocked(auth.svc, id, gone.pool_id as string))) return NextResponse.json({ error: LOCKED_MESSAGE }, { status: 409 });
   await auth.svc.from('logistics_plan_prizes').delete().eq('id', b.line_id).eq('plan_id', id);
   await touchPlan(auth.svc, id);
   return NextResponse.json({ ok: true });

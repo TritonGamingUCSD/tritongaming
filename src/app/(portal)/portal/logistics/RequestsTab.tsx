@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, Trash2 } from 'lucide-react';
+import { Lock, Plus, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
@@ -20,7 +20,7 @@ import styles from './logistics.module.css';
 
 interface Req {
   id: string; plan_id: string; kind: RequestKind; requester_id: string; division_id: string | null; team: string | null; contact: string | null; items: (DeviceItem | PrizeItem)[]; notes: string | null; status: RequestStatus;
-  planned_at: string | null; created_at: string; requester: string; division: string | null; planner: string | null; filled: number; prizesGot?: { qty: number }; rowsTotal: number;
+  allocation_locked?: boolean; planned_at: string | null; created_at: string; requester: string; division: string | null; planner: string | null; filled: number; prizesGot?: { qty: number }; rowsTotal: number;
 }
 interface Loaded { me: string; canManage: boolean; divisions: { id: string; name: string }[]; myDivisionIds: string[]; requests: Req[] }
 const day = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -91,6 +91,12 @@ export default function RequestsTab({ kind, plan, api, data, store }: { kind: Re
     const res = await call<{ request: Req }>(`/api/logistics/plans/${planId}/requests`, 'PATCH', { request_id: r.id, ...fields });
     if (res.ok) { apply({ ...r, ...res.data.request, ...(fields.requester_id ? { requester: people.find((p) => p.id === fields.requester_id)?.name ?? r.requester } : {}) }); void plan.reload(); } else setError(res.error);   // the reply has the new contact's id but not their name, so the name is filled in here or the old one would come back when the cell stops holding the picked value
   }
+  // Locking freezes a request's allocation (its rows or its pool and prizes); unlocking takes a deliberate hold so it can't be undone by accident.
+  async function setLocked(r: Req, locked: boolean) {
+    if (!locked && !(await confirmHold({ title: 'Unlock this allocation?', message: `${requestSummary(r.kind, r.items)}${r.team ? ` for ${r.team}` : ''} can be changed again.`, confirmLabel: 'Hold to unlock' }))) return;
+    const res = await call<{ request: Req }>(`/api/logistics/plans/${planId}/requests`, 'PATCH', { request_id: r.id, allocation_locked: locked });
+    if (res.ok) { apply({ ...r, ...res.data.request }); void plan.reload(); } else setError(res.error);
+  }
   async function remove(r: Req) {
     if (!(await confirmHold({ title: 'Remove this request?', message: requestSummary(r.kind, r.items), confirmLabel: 'Hold to remove' }))) return;
     const res = await call<{ ok: true }>(`/api/logistics/plans/${planId}/requests`, 'DELETE', { request_id: r.id });
@@ -122,11 +128,12 @@ export default function RequestsTab({ kind, plan, api, data, store }: { kind: Re
                   {r.kind === 'devices'
                     ? <>{(r.items as DeviceItem[]).map((i, n) => <span key={n} className={styles.reqItem}><b>{i.qty} × {i.what}</b>{i.games.length ? <span className={styles.dim}> · {i.games.join(', ')}</span> : null}</span>)}{r.status !== 'declined' && <span className={`${styles.reqItem} ${r.filled === r.rowsTotal && r.rowsTotal > 0 ? styles.okText : styles.warnText}`}>{r.filled}/{r.rowsTotal} filled</span>}</>
                     : <>{(r.items as PrizeItem[]).length === 0 && <span className={`${styles.reqItem} ${styles.dim}`}>No amount set{(r.prizesGot?.qty ?? 0) > 0 ? ` · ${r.prizesGot?.qty} chosen` : ''}</span>}{(r.items as PrizeItem[]).map((i, n) => <span key={n} className={styles.reqItem}><b>{i.qty} {i.size ?? 'any size'}</b></span>)}{r.status !== 'declined' && (r.items as PrizeItem[]).length > 0 && (() => { const want = (r.items as PrizeItem[]).reduce((n, i) => n + i.qty, 0), got = r.prizesGot?.qty ?? 0; return <span className={`${styles.reqItem} ${got >= want && want > 0 ? styles.okText : styles.warnText}`}>{got}/{want} filled</span>; })()}</>}
+                  {r.allocation_locked && <span className={`${styles.reqItem} ${styles.lockTag}`} title="Its allocation is locked. Unlock it from the ··· menu to change it."><Lock size={12} aria-hidden="true" /> Locked</span>}
                 </span>
                 <span data-label="Notes"><TextCell value={r.notes} canEdit={mine} placeholder="Add" onSave={(v) => void patch(r, { notes: v })} /></span>
                 <span data-label="Status">{manage && !closed ? <PickCell value={STATUS_LABELS[r.status]} options={REQUEST_STATUSES.map((x) => STATUS_LABELS[x])} clearable={false} canEdit onSave={(v) => { const x = REQUEST_STATUSES.find((k) => STATUS_LABELS[k] === v); if (x) void setStatus(r, x); }} /> : <span className={`${styles.statusChip} ${chip[r.status]}`}>{STATUS_LABELS[r.status]}</span>}</span>
                 <span className={styles.prizeTools}>
-                  {mine && <RowMenu label={`More for the request from ${r.requester}`} items={[{ label: 'Edit', onClick: () => setDialog(r) }, { label: 'Remove', danger: true, onClick: () => void remove(r) }]} />}
+                  {(mine || manage) && <RowMenu label={`More for the request from ${r.requester}`} items={[manage && !closed && { label: r.allocation_locked ? 'Unlock Allocation' : 'Lock Allocation', onClick: () => void setLocked(r, !r.allocation_locked) }, mine && !r.allocation_locked && { label: 'Edit', onClick: () => setDialog(r) }, mine && !r.allocation_locked && { label: 'Remove', danger: true, onClick: () => void remove(r) }, mine && !!r.allocation_locked && { label: 'Unlock To Edit Or Remove', disabled: true }]} />}
                 </span>
               </div>
             );

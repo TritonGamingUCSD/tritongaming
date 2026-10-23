@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { authorizeLogistics } from '@/lib/logistics/auth';
-import { UUID, touchPlan } from '@/lib/logistics/planServer';
+import { LOCKED_MESSAGE, lockedRequestIds, UUID, touchPlan } from '@/lib/logistics/planServer';
 
 export const dynamic = 'force-dynamic';
 const name = (v: unknown) => String(v ?? '').trim().replace(/\s+/g, ' ').slice(0, 80);
@@ -48,6 +48,11 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   const { id } = await params;
   const b = await request.json().catch(() => ({}));
   if (!UUID.test(id) || typeof b.station_id !== 'string' || !UUID.test(b.station_id)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
+  const locked = [...(await lockedRequestIds(auth.svc, id))];
+  if (locked.length) {   // removing a team would unassign the rows of a locked request
+    const held = await Promise.all(['logistics_plan_devices', 'logistics_plan_borrowed', 'logistics_plan_slots'].map((t) => auth.svc.from(t).select('plan_id').eq('plan_id', id).eq('station_id', b.station_id).in('request_id', locked).limit(1)));
+    if (held.some((h) => (h.data?.length ?? 0) > 0)) return NextResponse.json({ error: LOCKED_MESSAGE }, { status: 409 });
+  }
   await auth.svc.from('logistics_stations').delete().eq('id', b.station_id).eq('plan_id', id);
   await touchPlan(auth.svc, id);
   return NextResponse.json({ ok: true });

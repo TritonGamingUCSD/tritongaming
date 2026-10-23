@@ -42,6 +42,7 @@ export default function PrizeGrid({ plan, data }: { plan: PlanApi; data: Catalog
       && (!t || `${p.name} ${sponsorName.get(p.sponsor_id ?? '') ?? ''}`.toLowerCase().includes(t))
       && (!sponsor || (sponsor === 'none' ? !p.sponsor_id : p.sponsor_id === sponsor)) && (!size || p.size === size));
   }, [prizes.rows, d.plan.id, usedOnly, usedIds, q, sponsor, size, sponsorName]);
+  const lockedPool = (pl: (typeof pools)[number]) => !!pl.request_id && (d.lockedRequests ?? []).includes(pl.request_id);   // its request's allocation is locked
   const poolTotal = (poolId: string) => lines.filter((l) => l.pool_id === poolId).reduce((n, l) => n + l.quantity, 0);
 
   async function setNumber(poolId: string, p: PrizeRow, value: string) {
@@ -72,13 +73,13 @@ export default function PrizeGrid({ plan, data }: { plan: PlanApi; data: Catalog
         <ul className={styles.gridCards}>
           {rows.map((p) => {
             const inPools = pools.filter((pl) => (qtyOf.get(`${pl.id}:${p.id}`) ?? 0) > 0);
-            const free = pools.filter((pl) => !inPools.includes(pl));
+            const free = pools.filter((pl) => !inPools.includes(pl) && !lockedPool(pl));
             return (
               <li key={p.id} className={`${styles.gridCard} ${p.left < 0 ? styles.lineBad : ''}`}>
                 <div className={styles.gridCardHead}><b>{p.name}</b><span className={`${styles.leftChip} ${leftClass(p.left)}`}>{p.left} left</span></div>
                 <span className={styles.dim}>{[sponsorName.get(p.sponsor_id ?? '') ?? 'Club', money(p.price), `${p.quantity_is_estimate ? '~' : ''}${p.quantity} in stock`, p.plan_id ? 'Sponsor prize' : 'Storage'].filter(Boolean).join(' · ')}</span>
                 {inPools.map((pl) => (
-                  <label key={pl.id} className={styles.gridCardPool}><span>{pl.name}</span><EditNumber value={qtyOf.get(`${pl.id}:${p.id}`) || null} canEdit={manage} nullable label={`${p.name} for ${pl.name}`} onSave={(v) => void setNumber(pl.id, p, v === null ? '' : String(v))} /></label>
+                  <label key={pl.id} className={styles.gridCardPool}><span>{pl.name}</span><EditNumber value={qtyOf.get(`${pl.id}:${p.id}`) || null} canEdit={manage && !lockedPool(pl)} nullable label={`${p.name} for ${pl.name}`} onSave={(v) => void setNumber(pl.id, p, v === null ? '' : String(v))} /></label>
                 ))}
                 {manage && free.length > 0 && (
                   <PickCell value={null} options={free.map((pl) => pl.name)} canEdit clearable={false} shown="Add to a pool" onSave={(v) => { const pl = free.find((x) => x.name === v); if (pl) void setNumber(pl.id, p, '1'); }} />
@@ -95,7 +96,7 @@ export default function PrizeGrid({ plan, data }: { plan: PlanApi; data: Catalog
                 <th className={`${styles.mPin} ${styles.mName}`}>Prize</th><th className={styles.mPin2}>Sponsor</th><th className={styles.mNum}>Price</th><th className={styles.mNum}>Total</th><th className={styles.mNum}>Left</th>
                 {pools.map((pl) => (
                   <th key={pl.id} className={styles.mPool} scope="col">
-                    {manage ? <button type="button" className={styles.poolHead} onClick={() => setPoolDialog({ pool: pl })} title="Rename, link to a team, or remove this pool">{pl.name}</button> : <span className={styles.poolHead}>{pl.name}</span>}
+                    {manage && !lockedPool(pl) ? <button type="button" className={styles.poolHead} onClick={() => setPoolDialog({ pool: pl })} title="Rename, link to a team, or remove this pool">{pl.name}</button> : <span className={styles.poolHead}>{pl.name}</span>}
                     <small>{poolTotal(pl.id)} prizes{pl.station_id ? ` · ${d.stations.find((s) => s.id === pl.station_id)?.name ?? ''}` : ''}</small>
                   </th>
                 ))}
@@ -111,7 +112,7 @@ export default function PrizeGrid({ plan, data }: { plan: PlanApi; data: Catalog
                   <td className={`${styles.mNum} ${styles.mLeft} ${leftClass(p.left)}`}>{p.left}</td>
                   {pools.map((pl) => {
                     const n = qtyOf.get(`${pl.id}:${p.id}`) ?? 0;
-                    return <td key={pl.id} className={`${styles.mCell} ${n > 0 ? styles.mUsed : ''}`}><EditNumber value={n || null} canEdit={manage} nullable label={`${p.name} for ${pl.name}`} onSave={(v) => void setNumber(pl.id, p, v === null ? '' : String(v))} /></td>;
+                    return <td key={pl.id} className={`${styles.mCell} ${n > 0 ? styles.mUsed : ''}`}><EditNumber value={n || null} canEdit={manage && !lockedPool(pl)} nullable label={`${p.name} for ${pl.name}`} onSave={(v) => void setNumber(pl.id, p, v === null ? '' : String(v))} /></td>;
                   })}
                 </tr>
               ))}

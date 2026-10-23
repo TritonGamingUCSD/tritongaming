@@ -1,5 +1,6 @@
 'use client';
 
+import { Lock } from 'lucide-react';
 import { RowMenu } from './RowMenu';
 import { useMemo, useState } from 'react';
 import Button from '@/components/ui/Button';
@@ -36,6 +37,7 @@ export default function PrizeAllocation({ plan, data, bySponsor, onSponsorGroup 
     const r = await plan.setPrizeLine(poolId, summary(p), Math.max(0, Math.round(n)));
     if (r.ok && r.delta) prizes.bump(p.id, r.delta);
   }
+  const isLocked = (pool: (typeof pools)[number]) => !!pool.request_id && (d.lockedRequests ?? []).includes(pool.request_id);
   const sizeOrder = data.lists.prize_size.map((o) => o.value);
   const haveOf = (poolId: string) => lines.filter((l) => l.pool_id === poolId).reduce<Record<string, number>>((m, l) => (l.prize.size ? { ...m, [l.prize.size]: (m[l.prize.size] ?? 0) + l.quantity } : m), {});
   // What a pool still needs of each size to reach what its request asked for.
@@ -71,9 +73,9 @@ export default function PrizeAllocation({ plan, data, bySponsor, onSponsorGroup 
   // Fill every pool that still needs prizes, one after another.
   async function fillAll() {
     const used = new Map<string, number>();
-    for (const pool of pools) if (Object.keys(needOf(pool)).length > 0) await suggest(pool, used);
+    for (const pool of pools) if (!isLocked(pool) && Object.keys(needOf(pool)).length > 0) await suggest(pool, used);
   }
-  const needy = pools.filter((pool) => Object.keys(needOf(pool)).length > 0).length;
+  const needy = pools.filter((pool) => !isLocked(pool) && Object.keys(needOf(pool)).length > 0).length;
 
   if (!prizes.rows) return <div className={styles.tab}><p className={styles.muted}>Loading…</p></div>;
   return (
@@ -89,6 +91,8 @@ export default function PrizeAllocation({ plan, data, bySponsor, onSponsorGroup 
         </div>
         <div className={styles.poolCards}>
           {pools.map((pool) => {
+            const locked = !!pool.request_id && (d.lockedRequests ?? []).includes(pool.request_id);   // its request's allocation is locked
+            const canEdit = manage && !locked;
             const mine = lines.filter((l) => l.pool_id === pool.id);
             const count = mine.reduce((n, l) => n + l.quantity, 0);
             const spent = Math.round(mine.reduce((n, l) => n + l.quantity * (l.prize.price ?? 0), 0) * 100) / 100;
@@ -108,10 +112,10 @@ export default function PrizeAllocation({ plan, data, bySponsor, onSponsorGroup 
               <section key={pool.id} className={styles.poolCard} aria-label={pool.name}>
                 <header className={styles.poolCardHead}>
                   <div className={styles.poolTitle}>
-                    <b>{pool.name}</b>
+                    <b>{pool.name}</b>{locked && <span className={styles.lockTag} title="Locked in its request. Unlock it there to change this pool."><Lock size={12} aria-hidden="true" /> Locked</span>}
                     {pool.station_id && <span className={styles.dim}>{d.stations.find((s) => s.id === pool.station_id)?.name}</span>}
                   </div>
-                  {manage && <RowMenu label={`More for ${pool.name}`} items={[{ label: 'Edit', onClick: () => setPoolDialog(pool) }]} />}
+                  {canEdit && <RowMenu label={`More for ${pool.name}`} items={[{ label: 'Edit', onClick: () => setPoolDialog(pool) }]} />}
                 </header>
                 {pool.target_qty !== null ? (
                   <div className={styles.poolGoal}>
@@ -142,10 +146,10 @@ export default function PrizeAllocation({ plan, data, bySponsor, onSponsorGroup 
                                 ) : (
                                   <span className={styles.poolLineName}><span>{!bySponsor && <><small className={styles.dim}>{l.prize.sponsor ?? 'Club'}</small>{' '}</>}<b>{l.prize.name}</b></span><small className={styles.dim}>{[grouped && !bySponsor ? null : l.prize.type, l.prize.size, l.prize.price !== null ? money(l.prize.price) : null].filter(Boolean).join(' · ')}{p && !p.in_hand ? `${l.prize.size || l.prize.price !== null ? ' · ' : ''}not here yet` : ''}</small>{l.prize.left < 0 && <small className={styles.flagWarn}>{-l.prize.left} more than in stock</small>}</span>
                                 )}
-                                <NumberCell value={l.quantity} canEdit={manage && !!p} nullable label={`${l.prize.name} for ${pool.name}`} onSave={(n) => p && void setQty(pool.id, p, n ?? 0)} />
+                                <NumberCell value={l.quantity} canEdit={canEdit && !!p} nullable label={`${l.prize.name} for ${pool.name}`} onSave={(n) => p && void setQty(pool.id, p, n ?? 0)} />
                                 <span className={styles.poolLineEnd}>
                                   <span className={`${styles.leftChip} ${l.prize.left < 0 ? styles.leftBad : l.prize.left === 0 ? styles.leftZero : styles.leftOk}`}>{l.prize.left} left</span>
-                                  {manage && p && <RowMenu label={`More for ${l.prize.name}`} items={[{ label: 'Swap For A Similar Prize', onClick: () => setSwapLine(l.id) }]} />}
+                                  {canEdit && p && <RowMenu label={`More for ${l.prize.name}`} items={[{ label: 'Swap For A Similar Prize', onClick: () => setSwapLine(l.id) }]} />}
                                 </span>
                               </li>
                             );
@@ -156,7 +160,7 @@ export default function PrizeAllocation({ plan, data, bySponsor, onSponsorGroup 
                   </ul>
                 )}
                 {short[pool.id] && <p className={styles.flagWarn}>Not enough in stock for {short[pool.id]}.</p>}
-                {manage && (
+                {canEdit && (
                   <div className={styles.poolFoot}>
                     <div className={styles.poolAdd}>
                       <Combo value={null} options={addable.map(label)} placeholder="Add a prize…" clearable={false} ariaLabel={`Add a prize to ${pool.name}`} onChange={(v) => { const p = addable.find((x) => label(x) === v); if (p) void setQty(pool.id, p, 1); }} />

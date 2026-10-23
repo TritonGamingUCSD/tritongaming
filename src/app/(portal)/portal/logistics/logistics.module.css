@@ -999,3 +999,5 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 
 .goalNeed { margin: 0; font-size: 0.86rem; }
 @media (max-width: 640px) { .reqLinePrize { grid-template-columns: 5.5rem minmax(0, 1fr) auto; } }
+
+.lockTag { display: inline-flex; align-items: center; gap: 0.25rem; flex: none; padding: 0 0.5rem; min-height: 22px; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.85); white-space: nowrap; }

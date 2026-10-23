@@ -16,6 +16,30 @@ export async function loadSteps(svc: SupabaseClient): Promise<StepDef[]> {
   return (data ?? []).map((o) => ({ id: o.id as string, name: o.value as string, sort: o.sort as number, applies: (((o.meta as { applies?: Applies } | null)?.applies) ?? 'all') as Applies, kit: !!(o.meta as { kit?: boolean } | null)?.kit }));
 }
 
+// A request's allocation can be locked (logistics_requests.allocation_locked): its device rows, its prize pool and what it asks for then can't be changed until it is unlocked.
+export const LOCKED_MESSAGE = 'That belongs to a request whose allocation is locked. Unlock the request first.';
+export async function lockedRequestIds(svc: SupabaseClient, planId: string): Promise<Set<string>> {
+  const { data } = await svc.from('logistics_requests').select('id').eq('plan_id', planId).eq('allocation_locked', true);
+  return new Set((data ?? []).map((r) => r.id as string));
+}
+// True when any of these rows (empty rows, devices, loaners of the plan) came from a locked request.
+export async function rowsLocked(svc: SupabaseClient, planId: string, f: { slotIds?: string[]; deviceIds?: string[]; borrowedIds?: string[] }): Promise<boolean> {
+  const locked = [...(await lockedRequestIds(svc, planId))];
+  if (!locked.length) return false;
+  const found = await Promise.all([
+    f.slotIds?.length ? svc.from('logistics_plan_slots').select('id').eq('plan_id', planId).in('id', f.slotIds).in('request_id', locked) : null,
+    f.deviceIds?.length ? svc.from('logistics_plan_devices').select('device_id').eq('plan_id', planId).in('device_id', f.deviceIds).in('request_id', locked) : null,
+    f.borrowedIds?.length ? svc.from('logistics_plan_borrowed').select('id').eq('plan_id', planId).in('id', f.borrowedIds).in('request_id', locked) : null,
+  ]);
+  return found.some((r) => (r?.data?.length ?? 0) > 0);
+}
+// True when the pool was made by a locked request.
+export async function poolLocked(svc: SupabaseClient, planId: string, poolId: string): Promise<boolean> {
+  const { data } = await svc.from('logistics_plan_pools').select('request_id').eq('id', poolId).eq('plan_id', planId).maybeSingle();
+  const rid = data?.request_id as string | null | undefined;
+  return !!rid && (await lockedRequestIds(svc, planId)).has(rid);
+}
+
 // Any change to a plan's makeup bumps this, which is what other phones compare to know they should reload (see the version route).
 export async function touchPlan(svc: SupabaseClient, planId: string) {
   await svc.from('logistics_plans').update({ updated_at: new Date().toISOString() }).eq('id', planId);

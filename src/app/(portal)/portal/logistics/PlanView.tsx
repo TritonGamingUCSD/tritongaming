@@ -301,7 +301,9 @@ export default function PlanView({ id, data, catalog, page, day, byType, bySpons
   const fb = feedback, res = fb?.result;
   const resStation = res?.station ? stationOf.get(res.station.id) : null;
   const pct = allTotal ? Math.round((allDone / allTotal) * 100) : 0;
-  const emptyRows = rows.filter((r) => r.kind === 'slot' && !r.counted);
+  const lockedSet = new Set(detail.lockedRequests ?? []);   // requests whose allocation is locked: their empty rows are not filled
+  const isLockedRow = (r: Row) => !!r.requestId && lockedSet.has(r.requestId);
+  const emptyRows = rows.filter((r) => r.kind === 'slot' && !r.counted && !isLockedRow(r));
   // The IDs that can still be typed into a row: usable devices of that type that are not in this plan yet (the browser suggests them as you type).
   const ids = (type: string) => [...(free.get(type) ?? [])].sort(natural).map((value) => ({ value }));
   const inPlan = new Set(detail.items.map((i) => i.device_id));
@@ -309,7 +311,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, bySpons
   for (const dv of data.devices) if (dv.tag && !inPlan.has(dv.id) && isUsable(dv)) free.set(dv.type, [...(free.get(dv.type) ?? []), dv.tag]);
   for (const b of borrowed) if (b.role === 'planned' && !b.request_id && !b.station_id) free.set(b.type, [...(free.get(b.type) ?? []), b.tag]);
   const ctx: SheetCtx = {
-    hideDone: day && openOnly, ids, setsOpen: setsOpenPick ?? !day, foldGen, byType: groupByType,
+    lockedIds: new Set(detail.lockedRequests ?? []), hideDone: day && openOnly, ids, setsOpen: setsOpenPick ?? !day, foldGen, byType: groupByType,
     api: plan, canManage: canManage && !day, manager: canManage, closed, busy, pending: pendingSet, main: mainTypes, day, stations, steps, activeId: step?.id ?? '', doneSet, doneAt, doneBy, problems,
     onTick: (row, s) => void tick(row, s), onTickAll: (list, s) => void markAll(list, s), onUndo: undo, onSwap: (r) => setSwapping({ id: r.id, tag: r.tag, type: r.type, kind: r.kind === 'slot' ? 'club' : r.kind }),
     onBorrowed: (r) => setBorrowing(borrowed.find((b) => b.id === r.id) ?? null), onInstalled: (list) => void install(list), onEditDevice: (r) => setDeviceEdit(catalog.data?.devices.find((x) => x.id === r.id) ?? data.devices.find((x) => x.id === r.id) ?? null),
@@ -547,7 +549,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, bySpons
             const s = t.station;
             const status = s ? stationStatus(problems, s.id) : 'ok';
             const mine = s ? problems.filter((x) => x.station_id === s.id) : [];
-            const emptyHere = t.rows.filter((r) => r.kind === 'slot' && !r.counted).length;
+            const emptyHere = t.rows.filter((r) => r.kind === 'slot' && !r.counted && !isLockedRow(r)).length;
             return (
               <section key={t.key} id={`st-${t.key}`} className={`${styles.dayTeam} ${day ? '' : styles.noSteps} ${day && complete ? styles.dayTeamDone : ''}`} style={{ '--n': steps.length } as React.CSSProperties} aria-label={t.title}>
                 <div className={`${styles.dayRow} ${styles.dayRowHead} ${styles.clickRow}`} onClick={(e) => { if (!interactive(e.target)) toggleFold(t.key, complete); }}>

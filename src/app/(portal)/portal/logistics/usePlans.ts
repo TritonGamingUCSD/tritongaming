@@ -17,7 +17,7 @@ export interface DoneRow { device_id?: string | null; borrowed_id?: string | nul
 export const doneKey = (d: { device_id?: string | null; borrowed_id?: string | null; slot_id?: string | null; step_id: string }) => `${d.device_id ?? d.borrowed_id ?? d.slot_id}:${d.step_id}`;
 export type PlanPrizesData = import('@/lib/logistics/prizeServer').PlanPrizes;
 export interface PlanDetail {
-  prizes: PlanPrizesData;
+  prizes: PlanPrizesData; lockedRequests: string[];   // requests whose allocation is locked
   plan: Omit<PlanSummary, 'devices'> & { updated_at: string }; canManage: boolean; stations: Station[]; steps: StepDef[]; items: PlanItem[]; borrowed: Borrowed[]; slots: Slot[]; extras: Device[]; done: DoneRow[]; conflicts: Conflict[];
 }
 // What the event-day screen shows about anything in a plan.

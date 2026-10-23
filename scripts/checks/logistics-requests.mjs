@@ -160,6 +160,36 @@ try {
   t.ok('renaming a size renames it on the request and its pool', zReqAfter.items[0].size === 'ZZ Tier Two' && zPool.target_sizes?.['ZZ Tier Two'] === 2 && !('ZZ Tier' in (zPool.target_sizes ?? {})), JSON.stringify([zReqAfter.items, zPool.target_sizes]));
   await exec.call('DELETE', URL_, { request_id: zReq.j.request.id });
   await svc.from('logistics_options').delete().eq('kind', 'prize_size').like('value', 'ZZ Tier%');
+  // Locking a request freezes its allocation: its rows, its pool and what it asks for. Only Event Logistics can lock or unlock.
+  const lk = await exec.call('POST', URL_, { kind: 'devices', team: 'ZZ Lock Team', items: [{ what: 'Mouse', qty: 2, games: [] }] });
+  const LK = lk.j.request.id;
+  const lkSlots = () => plan1().then((d) => d.slots.filter((x) => x.request_id === LK));
+  t.ok('a lead cannot lock a request', (await lead.call('PATCH', URL_, { request_id: B, allocation_locked: true })).s === 403);
+  t.ok('Event Logistics can lock a request', (await exec.call('PATCH', URL_, { request_id: LK, allocation_locked: true })).s === 200 && (await plan1()).lockedRequests.includes(LK));
+  const lockedSlot = (await lkSlots())[0];
+  const SLK = `/api/logistics/plans/${P.id}/slots`;
+  const blocked = [
+    await exec.call('PATCH', SLK, { slot_id: lockedSlot.id, label: 'ZZ' }),
+    await exec.call('DELETE', SLK, { slot_id: lockedSlot.id }),
+    await exec.call('PATCH', URL_, { request_id: LK, items: [{ what: 'Mouse', qty: 5, games: [] }] }),
+    await exec.call('PATCH', URL_, { request_id: LK, status: 'declined' }),
+    await exec.call('DELETE', URL_, { request_id: LK }),
+  ];
+  t.ok('a locked request\u2019s rows, amounts and the request itself cannot be changed', blocked.every((r) => r.s === 409), JSON.stringify(blocked.map((r) => r.s)));
+  t.ok('a locked request can still get notes and a status of planned', (await exec.call('PATCH', URL_, { request_id: LK, notes: 'ZZ note', status: 'planned' })).s === 200 && (await lkSlots()).length === 2);
+  const lockedPool = await exec.call('PATCH', URL_, { request_id: E, allocation_locked: true });
+  const lockedLine = (await plan1()).prizes.lines.find((x) => x.pool_id === pE2.id);
+  const prizeBlocked = [
+    await exec.call('PATCH', `/api/logistics/plans/${P.id}/prizes`, { line_id: lockedLine.id, quantity: 1 }),
+    await exec.call('DELETE', `/api/logistics/plans/${P.id}/prizes`, { line_id: lockedLine.id }),
+    await exec.call('PATCH', `/api/logistics/plans/${P.id}/pools`, { pool_id: pE2.id, name: 'ZZ Renamed' }),
+    await exec.call('DELETE', `/api/logistics/plans/${P.id}/pools`, { pool_id: pE2.id }),
+  ];
+  t.ok('a locked request\u2019s pool and prizes cannot be changed', lockedPool.s === 200 && prizeBlocked.every((r) => r.s === 409), JSON.stringify(prizeBlocked.map((r) => r.s)));
+  await exec.call('PATCH', URL_, { request_id: E, allocation_locked: false });
+  t.ok('unlocking lets the pool change again', (await exec.call('PATCH', `/api/logistics/plans/${P.id}/prizes`, { line_id: lockedLine.id, quantity: 2 })).s === 200);
+  await exec.call('PATCH', URL_, { request_id: LK, allocation_locked: false });
+  t.ok('unlocking lets the request go', (await exec.call('DELETE', URL_, { request_id: LK })).s === 200);
   // Several people saving the same request at the same moment still leave exactly what it asks for.
   const rc = await exec.call('POST', URL_, { kind: 'devices', team: 'ZZ Race Team', items: [{ what: 'Mouse', qty: 1, games: [] }] });
   const RC = rc.j.request.id;

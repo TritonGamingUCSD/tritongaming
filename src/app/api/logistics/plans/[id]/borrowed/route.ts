@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { authorizeLogistics } from '@/lib/logistics/auth';
-import { BORROWED_COLUMNS, UUID, touchPlan } from '@/lib/logistics/planServer';
+import { BORROWED_COLUMNS, LOCKED_MESSAGE, rowsLocked, UUID, touchPlan } from '@/lib/logistics/planServer';
 import { cleanKit, cleanList, tagKey } from '@/lib/logistics/devices';
 
 export const dynamic = 'force-dynamic';
@@ -63,6 +63,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const { id } = await params;
   const b = await request.json().catch(() => ({}));
   if (!UUID.test(id) || !uuid(b.borrowed_id)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
+  if (await rowsLocked(auth.svc, id, { borrowedIds: [b.borrowed_id] })) return NextResponse.json({ error: LOCKED_MESSAGE }, { status: 409 });
   const r = await clean(auth.svc, id, b, b.borrowed_id);
   if (r.error) return NextResponse.json({ error: r.error }, { status: r.status ?? 400 });
   if (b.role === 'planned' || b.role === 'backup') (r.value as Record<string, unknown>).role = b.role;
@@ -79,6 +80,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   const { id } = await params;
   const b = await request.json().catch(() => ({}));
   if (!UUID.test(id) || !uuid(b.borrowed_id)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
+  if (await rowsLocked(auth.svc, id, { borrowedIds: [b.borrowed_id] })) return NextResponse.json({ error: LOCKED_MESSAGE }, { status: 409 });
   await auth.svc.from('logistics_plan_borrowed').delete().eq('id', b.borrowed_id).eq('plan_id', id);
   await touchPlan(auth.svc, id);
   return NextResponse.json({ ok: true });
