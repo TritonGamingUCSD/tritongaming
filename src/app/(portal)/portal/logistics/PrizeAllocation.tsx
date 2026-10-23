@@ -91,8 +91,9 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
             const need = needOf(pool);
             const have = haveOf(pool.id);
             const needCount = Object.values(need).reduce((n, x) => n + x, 0);
-            const tiers = sizeOrder.filter((z) => (pool.target_sizes?.[z] ?? 0) > 0 || (have[z] ?? 0) > 0);
             const any = anyOf(pool);
+            // A size shows when the request named it; a size it didn't name only shows (as over) when there is no any-size count for it to go toward.
+            const tiers = sizeOrder.filter((z) => (pool.target_sizes?.[z] ?? 0) > 0 || ((have[z] ?? 0) > 0 && any.want === 0));
             const addable = available.filter((p) => p.left > 0 && !mine.some((l) => l.prize_id === p.id));
             const label = (p: PrizeRow) => `${sponsorName.get(p.sponsor_id ?? '') ?? 'Club'} · ${p.name}${p.type ? ` · ${p.type}` : ''}${p.size ? ` · ${p.size}` : ''}${p.price !== null ? ` · ${money(p.price)}` : ''} · ${p.left} left${p.in_hand ? '' : ' · not here yet'}`;
             const overLines = mine.filter((l) => l.prize.left < 0).length;
