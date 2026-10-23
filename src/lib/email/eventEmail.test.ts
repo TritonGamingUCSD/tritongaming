@@ -29,8 +29,8 @@ describe('event email', () => {
     expect(eventEmailHtml({ ...base, event: { ...base.event, cover_url: 'javascript:alert(1)' } })).not.toContain('javascript');
     expect(eventEmailHtml({ ...base, event: { ...base.event, is_online: true, location: null } })).toContain('Online');
   });
-  it('adds what the event page says: a short description, the address with a map link, the schedule, price and sponsors', () => {
-    const e = { ...base.event, description: 'A **night** of games. '.repeat(40), venue_address: '9500 Gilman Dr, La Jolla', venue_notes: 'Park in lot 7', schedule: [{ time: '5:00 PM', title: 'Doors' }], sponsors: ['ASUS', 'MSI'], ticket_price: 5, audience: 'ucsd_only', pageUrl: 'https://tritongaming.org/events/x' };
+  it('adds what the event page says: a description, the address with a map link, the schedule, daily hours, price and every sponsor', () => {
+    const e = { ...base.event, description: 'A **night** of games. '.repeat(40), venue_address: '9500 Gilman Dr, La Jolla', venue_notes: 'Park in lot 7', schedule: [{ time: '5:00 PM', title: 'Doors' }], sponsors: [{ name: 'ASUS', url: 'https://asus.com' }, { name: 'MSI' }, ...Array.from({ length: 10 }, (_, i) => ({ name: `Sponsor ${i}` }))], day_hours: [{ day: 'Sat', start: '10 AM', end: '4 PM' }], ticket_price: 5, audience: 'ucsd_only', pageUrl: 'https://tritongaming.org/events/x' };
     const h = eventEmailHtml({ ...base, event: e });
     expect(h).toContain('Read more');
     expect(h).not.toContain('**');
@@ -38,8 +38,12 @@ describe('event email', () => {
     expect(h).toContain('maps/search/?api=1&amp;query=9500%20Gilman%20Dr');
     expect(h).toContain('5:00 PM');
     expect(h).toContain('$5 ticket · UCSD students only');
-    expect(h).toContain('With ASUS, MSI');
+    expect(h).toContain('>ASUS</a>');
+    expect(h).toContain('MSI');
+    expect(h).toContain('Sponsor 9');
+    expect(h).toContain('Hours');
     expect(shortText(e.description).length).toBeLessThanOrEqual(281);
+    expect(shortText(e.description, 700).length).toBeLessThanOrEqual(701);
     expect(eventEmailText({ ...base, event: e })).toContain('Schedule:');
   });
   it('marks a test, and has a plain-text version with the same links', () => {

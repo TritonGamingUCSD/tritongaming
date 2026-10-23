@@ -1,6 +1,6 @@
 import Link from '@/components/portal/PortalLink';
 import TGcodeIcon from '@/components/TGcode/TGcodeIcon';
-import { CalendarDays, ExternalLink, MapPin, Ticket } from 'lucide-react';
+import { ExternalLink, MapPin, Ticket } from 'lucide-react';
 import { PACIFIC_TZ } from '@/lib/core/timezone';
 import PortalSearch from '@/components/portal/PortalSearch';
 import EventCountdown from './EventCountdown';
@@ -12,7 +12,6 @@ import styles from './dashboardHome.module.css';
 export interface HomeEvent { id: string; title: string; start_date: string; location: string | null; hasTicket: boolean; ticketId?: string }
 export interface HomeNote { title: string; href: string }
 export interface HomeLink { id: string; title: string; url: string; note: string }
-export interface HomeUpcoming { id: string; title: string; start_date: string; location: string | null; hasTicket: boolean; ticketId?: string }
 
 const day = (iso: string) => new Date(iso).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, weekday: 'long', month: 'long', day: 'numeric' });
 const time = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' });
@@ -28,11 +27,10 @@ export function DashboardWelcome({ eyebrow, name, showSearch = true }: { eyebrow
   );
 }
 
-const shortDay = (iso: string) => new Date(iso).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, weekday: 'short', month: 'short', day: 'numeric' });
 
 // Below the to-dos: the next event as a paper ticket, the pinned note, the club's quick links, and what is coming up. (The pages themselves are
 // in the side bar and the bottom bar, so there is no list of tools here.)
-export function DashboardBody({ event, note, links, upcoming, showRoleAsk = false, compact = false, logistics = false }: { logistics?: boolean; showRoleAsk?: boolean; /** Guests and students on a desktop: the role request sits under the ticket. */ compact?: boolean; event: HomeEvent | null; note: HomeNote | null; links: HomeLink[]; upcoming: HomeUpcoming[] }) {
+export function DashboardBody({ event, note, links, showRoleAsk = false, compact = false, logistics = false }: { logistics?: boolean; showRoleAsk?: boolean; /** Guests and students on a desktop: the role request sits under the ticket. */ compact?: boolean; event: HomeEvent | null; note: HomeNote | null; links: HomeLink[] }) {
   return (
     <div className={styles.body}>
       {showRoleAsk && !compact && <RoleAsk />}
@@ -67,7 +65,7 @@ export function DashboardBody({ event, note, links, upcoming, showRoleAsk = fals
 
       {showRoleAsk && compact && <RoleAsk />}
 
-      {(links.length > 0 || upcoming.length > 0) && (
+      {links.length > 0 && (
         <div className={styles.cols}>
         {links.length > 0 && (
           <section aria-label="Quick links">
@@ -84,22 +82,6 @@ export function DashboardBody({ event, note, links, upcoming, showRoleAsk = fals
             </ul>
           </section>
         )}
-          {upcoming.length > 0 && (
-            <section aria-label="Coming up">
-              <h2 className={styles.h}>Coming up</h2>
-              <ul className={styles.list}>
-                {upcoming.map((e) => (
-                  <li key={e.id}>
-                    <Link href={e.hasTicket && e.ticketId ? `/portal/tickets?qr=${e.ticketId}` : '/portal/tickets'} className={styles.upRow}>
-                      <CalendarDays size={16} aria-hidden="true" />
-                      <span className={styles.upText}><strong>{e.title}</strong><small>{shortDay(e.start_date)} · {time(e.start_date)}{e.location ? ` · ${e.location}` : ''}</small></span>
-                      <span className={e.hasTicket ? styles.upHave : styles.upGet}>{e.hasTicket ? 'Have ticket' : 'Get ticket'}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
         </div>
       )}
     </div>

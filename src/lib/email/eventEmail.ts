@@ -10,7 +10,7 @@ export interface EventForEmail {
   title: string; start_date: string; end_date?: string | null; location: string | null; is_online: boolean; cover_url: string | null; slug?: string | null;
   // From the event page, all optional: shown only when the event has them.
   description?: string | null; venue_address?: string | null; venue_notes?: string | null;
-  schedule?: { time: string; title: string }[]; sponsors?: string[]; audience?: string | null; ticket_price?: number | null; pageUrl?: string;
+  schedule?: { time: string; title: string }[]; sponsors?: { name: string; url?: string }[]; day_hours?: { day: string; start: string; end: string }[]; audience?: string | null; ticket_price?: number | null; pageUrl?: string;
 }
 export interface EventEmailOptions {
   event: EventForEmail; kind: EmailKind; subject: string; note: string;
@@ -47,14 +47,17 @@ export const eventEmailSubject = (kind: EmailKind, title: string) => (kind === '
 const label = (s: string) => `<div style="font-family:${HEAD};font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${MUTED};margin:0 0 3px;">${esc(s)}</div>`;
 function infoBlocks(e: EventForEmail): string {
   const out: string[] = [];
-  const desc = shortText(e.description);
+  const desc = shortText(e.description, 700);
   if (desc) out.push(`<div style="margin:0 0 12px;">${label('About')}<div style="font-size:14px;line-height:1.5;">${esc(desc)}${e.pageUrl ? ` <a href="${esc(e.pageUrl)}" style="color:${LINK};text-decoration:underline;white-space:nowrap;">Read more</a>` : ''}</div></div>`);
   const addr = [e.venue_address].filter(Boolean).join(' ');
-  if (!e.is_online && (addr || e.venue_notes)) out.push(`<div style="margin:0 0 12px;">${label('Where')}<div style="font-size:14px;line-height:1.5;">${addr ? `${esc(addr)} <a href="${esc(mapsUrl(addr))}" style="color:${LINK};text-decoration:underline;white-space:nowrap;">Open in Maps</a>` : ''}${e.venue_notes ? `<div style="color:${MUTED};font-size:13px;">${esc(shortText(e.venue_notes, 240))}</div>` : ''}</div></div>`);
-  const sched = (e.schedule ?? []).filter((s) => s.time || s.title).slice(0, 6);
+  if (!e.is_online && (addr || e.venue_notes)) out.push(`<div style="margin:0 0 12px;">${label('Where')}<div style="font-size:14px;line-height:1.5;">${addr ? `${esc(addr)} <a href="${esc(mapsUrl(addr))}" style="color:${LINK};text-decoration:underline;white-space:nowrap;">Open in Maps</a>` : ''}${e.venue_notes ? `<div style="color:${MUTED};font-size:13px;">${esc(shortText(e.venue_notes, 500))}</div>` : ''}</div></div>`);
+  const sched = (e.schedule ?? []).filter((s) => s.time || s.title);
+  const hours = (e.day_hours ?? []).filter((h) => h.day);
   if (sched.length) out.push(`<div style="margin:0 0 12px;">${label('Schedule')}<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="font-size:14px;line-height:1.45;">${sched.map((s) => `<tr><td style="padding:0 12px 2px 0;white-space:nowrap;font-weight:700;vertical-align:top;">${esc(s.time)}</td><td style="padding:0 0 2px;">${esc(s.title)}</td></tr>`).join('')}</table></div>`);
-  const sp = (e.sponsors ?? []).filter(Boolean).slice(0, 8);
-  out.push(`<div style="margin:0 0 12px;">${label('Good to know')}<div style="font-size:14px;line-height:1.5;">${esc(priceLine(e))}${sp.length ? `<br>With ${esc(sp.join(', '))}` : ''}</div></div>`);
+  if (hours.length) out.push(`<div style="margin:0 0 12px;">${label('Hours')}<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="font-size:14px;line-height:1.45;">${hours.map((h) => `<tr><td style="padding:0 12px 2px 0;white-space:nowrap;font-weight:700;vertical-align:top;">${esc(h.day)}</td><td style="padding:0 0 2px;">${esc([h.start, h.end].filter(Boolean).join(' – '))}</td></tr>`).join('')}</table></div>`);
+  out.push(`<div style="margin:0 0 12px;">${label('Good to know')}<div style="font-size:14px;line-height:1.5;">${esc(priceLine(e))}</div></div>`);
+  const sp = (e.sponsors ?? []).filter((x) => x.name);
+  if (sp.length) out.push(`<div style="margin:0 0 12px;">${label(sp.length === 1 ? 'Sponsor' : 'Sponsors')}<div style="font-size:14px;line-height:1.6;">${sp.map((x) => (x.url && /^https?:\/\/[^\s"'<>]+$/i.test(x.url) ? `<a href="${esc(x.url)}" style="color:${LINK};text-decoration:underline;">${esc(x.name)}</a>` : esc(x.name))).join(' &middot; ')}</div></div>`);
   return out.join('');
 }
 
@@ -141,10 +144,12 @@ export function eventEmailText(o: EventEmailOptions): string {
     `${KIND_LABEL[o.kind].toUpperCase()}: ${o.event.title}`,
     `${when.day} ${when.date} · ${when.time} (Pacific)${place ? ` · ${place}` : ''}`,
     o.note.trim() ? `\n${o.note.trim()}` : '',
-    shortText(o.event.description) ? `\nAbout: ${shortText(o.event.description)}${o.event.pageUrl ? ` ${o.event.pageUrl}` : ''}` : '',
+    shortText(o.event.description, 700) ? `\nAbout: ${shortText(o.event.description, 700)}${o.event.pageUrl ? ` ${o.event.pageUrl}` : ''}` : '',
     !o.event.is_online && o.event.venue_address ? `Where: ${o.event.venue_address} ${mapsUrl(o.event.venue_address)}` : '',
-    (o.event.schedule ?? []).length ? `Schedule:\n${(o.event.schedule ?? []).slice(0, 6).map((s) => `  ${s.time} ${s.title}`).join('\n')}` : '',
-    `Good to know: ${priceLine(o.event)}${(o.event.sponsors ?? []).length ? `. With ${(o.event.sponsors ?? []).join(', ')}` : ''}`,
+    (o.event.schedule ?? []).length ? `Schedule:\n${(o.event.schedule ?? []).map((s) => `  ${s.time} ${s.title}`).join('\n')}` : '',
+    (o.event.day_hours ?? []).filter((h) => h.day).length ? `Hours:\n${(o.event.day_hours ?? []).filter((h) => h.day).map((h) => `  ${h.day} ${[h.start, h.end].filter(Boolean).join(' – ')}`).join('\n')}` : '',
+    `Good to know: ${priceLine(o.event)}`,
+    (o.event.sponsors ?? []).some((x) => x.name) ? `Sponsors: ${(o.event.sponsors ?? []).filter((x) => x.name).map((x) => x.name).join(', ')}` : '',
     `\nShow my ticket: ${o.ticketUrl}`,
     `\n—\nYou are getting this because you have a ticket to ${o.event.title}.\nStop ${KIND_WHY[o.kind]} emails: ${o.unsubscribeUrl}\nEmail settings: ${o.settingsUrl}\nTriton Gaming · Gaming Org at UC San Diego\n${siteUrl().replace(/^https?:\/\//, '')}\n`,
   ].filter((x) => x !== '').join('\n');

@@ -43,17 +43,6 @@
 
 .cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.6rem; align-items: start; }
 @media (max-width: 1180px) { .cols { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.list { list-style: none; margin: 0.6rem 0 0; padding: 0.3rem 0.4rem; display: flex; flex-direction: column; background: var(--pp-card); border: 1px solid var(--pp-line); border-radius: 10px; }
-.list li + li { border-top: 1px solid var(--pp-line); }
-.upRow { display: flex; align-items: center; gap: 0.7rem; padding: 0.65rem 0.6rem; color: var(--pp-ink); text-decoration: none; border-radius: 8px; }
-.upRow:hover { background: rgba(var(--pp-ink-rgb), 0.06); }
-.upRow:focus-visible { outline: 3px solid var(--p-accent-text); outline-offset: -2px; }
-.upText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
-.upText strong { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 0.98rem; overflow-wrap: anywhere; }
-.upText small { font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.82); overflow-wrap: anywhere; }
-.upGet, .upHave { flex-shrink: 0; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
-.upGet { background: var(--yellow); color: #011941; } /* theme-ok */
-.upHave { border: 1px solid rgba(var(--pp-ink-rgb), 0.4); color: var(--pp-ink); }
 
 
 @media (max-width: 760px) {
@@ -119,14 +108,6 @@
   .quickLink { padding: 0.3rem 0.7rem; border-radius: 999px; white-space: nowrap; }
   .quickLink strong { font-size: 0.74rem; white-space: nowrap; }
   .cols { gap: 0.8rem; }
-  .list { flex-direction: row; gap: 0.5rem; margin: 0.35rem 0 0; padding: 0.1rem 0.1rem 0.3rem; background: none; border: 0; border-radius: 0; overflow-x: auto; scrollbar-width: none; }
-  .list::-webkit-scrollbar { display: none; }
-  .list li { flex: 0 0 16.5rem; border: 1px solid var(--pp-line); border-radius: 10px; background: var(--pp-card); }
-  .list li + li { border-top: 1px solid var(--pp-line); }
-  .upRow { padding: 0.45rem 0.6rem; }
-  .upText strong { font-size: 0.8rem; }
-  .upText small { font-size: 0.68rem; }
-  .upGet, .upHave { font-size: 0.64rem; }
   .dayCard { padding: 0.55rem 0.7rem; gap: 0.35rem; box-shadow: none; border-width: 1px; }
   .dayCardHead { font-size: 0.85rem; }
   .dayCardBar { height: 6px; }

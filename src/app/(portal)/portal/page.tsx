@@ -455,12 +455,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const homeEvent = featured ? { id: featured.id, title: featured.title, start_date: featured.start_date, location: featured.location, hasTicket: !!ticketEvent, ticketId: nextTicket?.id } : null;
   const pinnedDoc = docsSummary?.pinned ?? null;
   const homeNote = pinnedDoc ? { title: pinnedDoc.title, href: `/portal/docs?id=${pinnedDoc.id}` } : null;
-  // Coming up: the events they have a ticket for and the ones they could still get one for, soonest first, without the featured one above.
+  // The dashboard shows only the next event (the featured one above); the rest are under Events and Tickets.
   const homeLinks = canViewDocs ? await getDashboardLinks(profile.id).catch(() => []) : [];
-  const homeUpcoming = [
-    ...ticketsData.tickets.filter((t) => t.status === 'active' && t.event && isCheckinWindowOpen(t.event)).map((t) => ({ id: t.event!.id, title: t.event!.title, start_date: t.event!.start_date, location: t.event!.location, hasTicket: true, ticketId: t.id })),
-    ...unregisteredUpcomingEvents.map((e) => ({ id: e.id, title: e.title, start_date: e.start_date, location: e.location, hasTicket: false, ticketId: undefined })),
-  ].filter((e) => e.id !== featured?.id).sort((x, y) => new Date(x.start_date).getTime() - new Date(y.start_date).getTime()).slice(0, 4);
 
   return (
     <PortalParamsProvider query={serverQuery}>
@@ -484,7 +480,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
         <PortalTopSection
           plain={!isTgMember(roles)}
           welcome={<DashboardWelcome eyebrow={homeEyebrow} name={profile.display_name?.split(' ')[0] || 'Triton'} showSearch={isTgMember(roles)} />}
-          body={<DashboardBody event={homeEvent} note={homeNote} links={homeLinks} upcoming={homeUpcoming} showRoleAsk={!isTeamMember} compact={!isTgMember(roles)} logistics={hasCapability(roles, 'view_logistics') || canManageLogistics} />}
+          body={<DashboardBody event={homeEvent} note={homeNote} links={homeLinks} showRoleAsk={!isTeamMember} compact={!isTgMember(roles)} logistics={hasCapability(roles, 'view_logistics') || canManageLogistics} />}
           desktop={{ greeting: greetingLine, tiles: tilesNode, viewAs: viewAsNode, banners: frameBanners }}
           top={
             <>

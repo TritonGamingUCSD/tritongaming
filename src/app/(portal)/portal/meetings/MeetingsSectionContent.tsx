@@ -748,6 +748,7 @@ export function TeamsPanel({ userId, canManageAll, canEdit = true }: { userId: s
   const [error, setError] = useState('');
   const [query, setQuery] = useState('');
   const [adding, setAdding] = useState<string | null>(null);   // the team whose "add a person" box is open
+  const [pickQuery, setPickQuery] = useState('');   // the search inside that box (separate from the page's search, so the list isn't narrowed by something typed above)
   const [expanded, setExpanded] = useState<Set<string>>(new Set());   // teams opened to show who is on them (closed by default)
   const toggleOpen = (id: string) => setExpanded((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const [onlyNone, setOnlyNone] = useState(false);
@@ -819,7 +820,7 @@ export function TeamsPanel({ userId, canManageAll, canEdit = true }: { userId: s
             // Closed unless opened, or unless a search is on (someone searching for a person wants to see where they are).
             const isOpen = expanded.has(g.id) || q !== '';
             const free = people.filter((p) => !g.member_ids.includes(p.id));
-            const pickQ = adding === g.id ? query.trim().toLowerCase() : '';
+            const pickQ = adding === g.id ? pickQuery.trim().toLowerCase() : '';
             return (
               <li key={g.id} className={`${styles.meetingCard} ${styles.teamCard}`}>
                 <div className={styles.teamHead}>
@@ -831,7 +832,7 @@ export function TeamsPanel({ userId, canManageAll, canEdit = true }: { userId: s
                   </button>
                   {may ? (
                     <span className={styles.teamActions}>
-                      <Button size="sm" variant="secondary" onClick={() => { const open = adding !== g.id; setAdding(open ? g.id : null); if (open) setExpanded((prev) => new Set(prev).add(g.id)); }} aria-expanded={adding === g.id}><UserPlus size={14} aria-hidden="true" /> Add person</Button>
+                      <Button size="sm" variant="secondary" onClick={() => { const open = adding !== g.id; setAdding(open ? g.id : null); setPickQuery(''); if (open) setExpanded((prev) => new Set(prev).add(g.id)); }} aria-expanded={adding === g.id}><UserPlus size={14} aria-hidden="true" /> Add person</Button>
                       <IconButton kind="edit" label={`Rename or edit ${g.name}`} onClick={() => { setEditing({ id: g.id, name: g.name, ids: [...g.member_ids] }); setError(''); }} />
                       <IconButton kind="delete" label={`Delete ${g.name}`} onClick={() => remove(g)} />
                     </span>
@@ -854,12 +855,14 @@ export function TeamsPanel({ userId, canManageAll, canEdit = true }: { userId: s
                 )}
                 {adding === g.id && (
                   <div className={styles.quickAdd}>
-                    <span className={styles.faint}>Tap a person to add them{pickQ ? '' : ' (search above to narrow the list)'}:</span>
+                    <Input style={{ maxWidth: '22rem' }} value={pickQuery} onChange={(e) => setPickQuery(e.target.value)} placeholder="Search people to add…" aria-label={`Search people to add to ${g.name}`} />
+                    <span className={styles.faint}>Tap a person to add them · {free.filter((p) => !pickQ || p.name.toLowerCase().includes(pickQ)).length} of {free.length} not on this team yet:</span>
                     <ul className={styles.quickList}>
-                      {free.filter((p) => !pickQ || p.name.toLowerCase().includes(pickQ)).slice(0, 40).map((p) => (
+                      {free.filter((p) => !pickQ || p.name.toLowerCase().includes(pickQ)).map((p) => (
                         <li key={p.id}><button type="button" className={styles.quickPick} onClick={() => setMember(g, p.id, true)}><Avatar p={p} /><span>{p.name}</span><Plus size={13} aria-hidden="true" /></button></li>
                       ))}
                       {free.length === 0 && <li className={styles.faint}>Everyone is already on this team.</li>}
+                      {free.length > 0 && pickQ && free.every((p) => !p.name.toLowerCase().includes(pickQ)) && <li className={styles.faint}>No one matches that.</li>}
                     </ul>
                   </div>
                 )}
