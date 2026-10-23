@@ -5,13 +5,13 @@
 // line that is only such a link becomes a yellow button. Everything is escaped first, and only http(s) and mailto links are ever made.
 
 export const LOGO_CID = 'tglogo';
-const NAVY = '#011941', YELLOW = '#ffc72c', CREAM = '#f3f1ea', SKY = '#0a4c8a', MUTED = '#4b5a78';
-const HEAD = "'Futura','Century Gothic','Trebuchet MS',Arial,sans-serif";
-const BODY = "'Futura','Century Gothic','Segoe UI',Helvetica,Arial,sans-serif";
+export const NAVY = '#011941', YELLOW = '#ffc72c', CREAM = '#f3f1ea', SKY = '#0a4c8a', MUTED = '#4b5a78';
+export const HEAD = "'Futura','Century Gothic','Trebuchet MS',Arial,sans-serif";
+export const BODY = "'Futura','Century Gothic','Segoe UI',Helvetica,Arial,sans-serif";
 
-const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+export const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const safeUrl = (u: string) => /^(https?:\/\/|mailto:)[^\s"'<>]+$/i.test(u) ? u : null;
-const siteUrl = () => (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_SITE_URL) || 'https://tritongaming.org';
+export const siteUrl = () => (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_SITE_URL) || 'https://tritongaming.org';
 
 const linkStyle = `color:${SKY};text-decoration:underline;`;
 
@@ -28,10 +28,10 @@ function inline(line: string): string {
   return out + esc(line.slice(i));
 }
 
-const button = (label: string, url: string) =>
+export const button = (label: string, url: string) =>
   `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 18px"><tr><td style="background:${YELLOW};border:2px solid ${NAVY};border-bottom-width:5px;border-right-width:5px;border-radius:6px;"><a href="${esc(url)}" style="display:inline-block;padding:11px 22px;font-family:${HEAD};font-size:15px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:${NAVY};text-decoration:none;">${esc(label)}</a></td></tr></table>`;
 
-function blocks(message: string): string {
+export function blocks(message: string): string {
   return message.replace(/\r\n/g, '\n').trim().split(/\n{2,}/).map((block) => {
     const lines = block.split('\n').map((l) => l.trimEnd());
     const solo = lines.length === 1 && lines[0].match(/^\[([^\]]{1,120})\]\(([^)\s]+)\)$/);

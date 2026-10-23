@@ -1,21 +1,17 @@
 import { NextResponse } from 'next/server';
 import { authorizeLogistics } from '@/lib/logistics/auth';
-import { UUID, pacificToday } from '@/lib/logistics/planServer';
+import { pacificToday } from '@/lib/logistics/planServer';
 
 export const dynamic = 'force-dynamic';
 
-// The events happening today, for the Dashboard's Event Day card: name, how far along the event-day steps are, and a few counts. Small on purpose (counts only, no devices). An admin testing the
-// card may name an event with ?simulate=<slug or id> to see it as if it were on today.
-export async function GET(request: Request) {
+// The events happening today, for the Dashboard's Event Day card: name, how far along the event-day steps are, and a few counts. Small on purpose (counts only, no devices).
+export async function GET() {
   const auth = await authorizeLogistics('view');
   if (auth.error) return auth.error;
   const svc = auth.svc;
   const today = pacificToday();
-  const sim = new URL(request.url).searchParams.get('simulate');
-  const isAdmin = (auth.roles ?? []).some((r) => r.role === 'admin');
   let q = svc.from('logistics_plans').select('id, slug, name, starts_on, ends_on, status').eq('status', 'draft');
-  if (sim && isAdmin) q = UUID.test(sim) ? q.eq('id', sim) : q.eq('slug', sim);
-  else q = q.lte('starts_on', today).gte('ends_on', today);
+  q = q.lte('starts_on', today).gte('ends_on', today);
   const { data: plans } = await q.order('starts_on').limit(3);
   const out = [];
   for (const p of plans ?? []) {
@@ -32,7 +28,7 @@ export async function GET(request: Request) {
     const forClub = applies.filter((a) => a === 'all' || a === 'club').length;
     const forLoaner = applies.filter((a) => a === 'all' || a === 'borrowed').length;
     const total = (devs.count ?? 0) * forClub + (bor.data ?? []).length * forLoaner;
-    out.push({ id: pid, slug: p.slug as string, name: p.name as string, simulated: !!(sim && isAdmin), teams: stations.count ?? 0, devices: (devs.count ?? 0) + (bor.data ?? []).length, stepsDone: done.count ?? 0, stepsTotal: total, newRequests: reqs.count ?? 0 });
+    out.push({ id: pid, slug: p.slug as string, name: p.name as string, teams: stations.count ?? 0, devices: (devs.count ?? 0) + (bor.data ?? []).length, stepsDone: done.count ?? 0, stepsTotal: total, newRequests: reqs.count ?? 0 });
   }
   return NextResponse.json({ plans: out });
 }

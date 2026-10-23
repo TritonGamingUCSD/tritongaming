@@ -6,7 +6,9 @@ import styles from './logistics.module.css';
 // cell shows its `data-label` above it (see the phone block in the stylesheet).
 export interface Col { label: string; width: string }
 
-export const gridStyle = (cols: Col[]): CSSProperties => ({ '--cols': cols.map((c) => c.width).join(' ') } as CSSProperties);
+// `--w` is how wide the table needs to be (each column's minimum, plus the gaps and padding): on a phone the table keeps that width and scrolls sideways, one line per row.
+const minRem = (w: string) => Number((/(\d+(?:\.\d+)?)rem/.exec(w) ?? [])[1] ?? 6);
+export const gridStyle = (cols: Col[]): CSSProperties => ({ '--cols': cols.map((c) => c.width).join(' '), '--w': `${Math.round(cols.reduce((n, c) => n + minRem(c.width), 0) + cols.length * 0.9 + 2)}rem` } as CSSProperties);
 
 export function GridHead({ cols }: { cols: Col[] }) {
   return <div className={`${styles.prizeRow} ${styles.prizeHeadRow}`} style={gridStyle(cols)} aria-hidden="true">{cols.map((c, i) => <span key={i}>{c.label}</span>)}</div>;

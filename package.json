@@ -27,6 +27,7 @@
     "test:logistics-plans": "node scripts/checks/logistics-plans.mjs",
     "test:logistics-prizes": "node scripts/checks/logistics-prizes.mjs",
     "test:logistics-requests": "node scripts/checks/logistics-requests.mjs",
+    "test:event-emails": "node scripts/checks/event-emails.mjs",
     "check:theme": "node scripts/check-theme.mjs",
     "docs:roles": "node scripts/roles-doc.mjs"
   },

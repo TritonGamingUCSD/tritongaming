@@ -106,6 +106,10 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const canViewLogistics = canManageLogistics || hasCapability(roles, 'view_logistics') || hasCapability(roles, 'request_logistics');
   const canHostMeetings = hasCapability(roles, 'host_meetings');         // leads too: plan meetings, manage their own
   // Best-effort: if this lookup fails the bar just doesn't get the meeting boost.
+  // The day of a Logistics event, officers (anyone who looks at Logistics) get Tickets and Logistics under their thumb on a phone instead of Tickets and Meetings.
+  const logisticsToday = hasCapability(roles, 'view_logistics') || canManageLogistics
+    ? await (async () => { const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }); const { count } = await createServiceClient().from('logistics_plans').select('id', { count: 'exact', head: true }).eq('status', 'draft').lte('starts_on', today).gte('ends_on', today); return (count ?? 0) > 0; })().catch(() => false)
+    : false;
   const meetingNow = canAttendMeetings ? await meetingHappeningNow(createServiceClient(), { id: profile.id, roles }).catch(() => false) : false;
   // Help tickets: exec/admin see how many are waiting on them; everyone else how many have a new reply.
   const canHandleHelp = hasCapability(roles, 'manage_help');
@@ -250,6 +254,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
           scope={scope}
           canEdit={canManageEvents}
           canDelete={hasCapability(roles, 'delete_events')}
+          canEmail={hasCapability(roles, 'send_event_emails')}
           canManagePoints={canManagePoints}
           initialTab={requestedTab}
         />
@@ -270,6 +275,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       description: !canAttendMeetings ? 'Attendance results' : canManageMeetings ? 'Schedule meetings, run check-in, export attendance' : canHostMeetings ? 'Plan your meetings, run check-in, see results' : 'Check in to meetings and see your history',
       // While a meeting is on (or about to start) this is the thing to have under your thumb.
       dockBoost: (meetingNow ? 100 : 0) + (canManageMeetings ? 10 : 0),
+      dockExclude: logisticsToday,
       group: 'Team' as const,
       content: <MeetingsSectionContent canHost={canHostMeetings} canManageAll={canManageMeetings} userId={profile.id} canAttend={canAttendMeetings} canViewReports={canViewAttendanceReports} />,
     }] : []),
@@ -292,6 +298,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
     ...(canViewLogistics ? [{
       id: 'logistics', icon: <Package size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Event Logistics',
       description: canManageLogistics ? 'Equipment catalog and event setups' : 'Find equipment and see event setups',
+      dockBoost: logisticsToday ? 100 : 0, dockLabel: 'Logistics',
       group: 'Team' as const,
       content: <LogisticsSectionContent canManage={canManageLogistics} />,
     }] : []),
@@ -477,7 +484,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
         <PortalTopSection
           plain={!isTgMember(roles)}
           welcome={<DashboardWelcome eyebrow={homeEyebrow} name={profile.display_name?.split(' ')[0] || 'Triton'} showSearch={isTgMember(roles)} />}
-          body={<DashboardBody event={homeEvent} note={homeNote} links={homeLinks} upcoming={homeUpcoming} showRoleAsk={!isTeamMember} compact={!isTgMember(roles)} logistics={hasCapability(roles, 'view_logistics') || canManageLogistics ? { admin: roles.some((r) => r.role === 'admin') } : null} />}
+          body={<DashboardBody event={homeEvent} note={homeNote} links={homeLinks} upcoming={homeUpcoming} showRoleAsk={!isTeamMember} compact={!isTgMember(roles)} logistics={hasCapability(roles, 'view_logistics') || canManageLogistics} />}
           desktop={{ greeting: greetingLine, tiles: tilesNode, viewAs: viewAsNode, banners: frameBanners }}
           top={
             <>

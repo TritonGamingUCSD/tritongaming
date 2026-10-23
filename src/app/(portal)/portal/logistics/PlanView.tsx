@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Camera, RefreshCw } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import PreviewFrame, { PreviewSwitch, SimulateSwitch, type Preview } from './PreviewFrame';
 import { registerScanHandler } from '@/lib/portal/scanHandlers';
 const UniversalScanner = dynamic(() => import('@/components/portal/UniversalScanner'), { ssr: false });   // the camera is only loaded when it is opened
 import Button from '@/components/ui/Button';
@@ -54,21 +53,6 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<Feedback>(null);
-  // Admin preview (Phone / Laptop): kept in the address (?preview=phone); the page inside the frame is the same address with ?frame=1 and has no switch of its own.
-  const [preview, setPreviewState] = useState<Preview>(null);
-  const [inFrame, setInFrame] = useState(false);
-  useEffect(() => {
-    const q = new URLSearchParams(window.location.search);
-    setInFrame(q.get('frame') === '1');
-    const p = q.get('preview');
-    if (p === 'phone' || p === 'laptop') setPreviewState(p);
-  }, []);
-  const setPreview = (p: Preview) => {
-    setPreviewState(p);
-    const u = new URL(window.location.href);
-    if (p) u.searchParams.set('preview', p); else u.searchParams.delete('preview');
-    window.history.replaceState(window.history.state, '', `${u.pathname}${u.search}`);
-  };
   const [scanning, setScanning] = useState(false);   // the portal's scanner opened from this page (a tablet or laptop with a camera; on a phone the Scan button of the bottom bar does the same)
   const [kit, setKit] = useState<{ row: Target; flags: Record<string, boolean> } | null>(null);
   const [swapping, setSwapping] = useState<{ id: string; tag: string | null; type: string; kind: 'club' | 'sponsor' | 'officer' } | null>(null);
@@ -363,19 +347,6 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
       </div>
     );
   }
-  if (preview && data.isAdmin && !inFrame) {
-    return (
-      <div className={styles.dayPage}>
-        <div className={styles.dayBar}>
-          <button type="button" className={styles.back} onClick={onBack} aria-label="All events"><ArrowLeft size={15} aria-hidden="true" /> <span className={styles.backText}>All Events</span></button>
-          <div className={styles.dayHeading}><b className={styles.dayTitle}>{p.name}</b><span className={styles.muted}>Admin preview: {preview === 'phone' ? 'phone' : 'laptop'} screen</span></div>
-          <PreviewSwitch value={preview} onChange={setPreview} />
-        </div>
-        <PreviewFrame key={preview} mode={preview} />
-      </div>
-    );
-  }
-
   return (
     <div className={`${styles.dayPage} ${page === 'device' && day && !closed ? styles.dayPageBar : ''}`}>
       <div className={styles.dayTop}>
@@ -385,7 +356,6 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
             <b className={styles.dayTitle}>{p.name}{closed && <span className={`${styles.badge} ${styles.neutral}`}>Closed</span>}</b>
             <span className={styles.muted}>{range(p.starts_on, p.ends_on)}{p.event_id ? ' · portal event' : ' · Event logistics only'}{p.notes ? ` · ${p.notes}` : ''}</span>
           </div>
-          {data.isAdmin && !inFrame && <><SimulateSwitch slug={p.slug} /><PreviewSwitch value={preview} onChange={setPreview} /></>}
           {page === 'device' && day && <span className={styles.dayTotal} title="Steps done"><span className={styles.bar}><i style={{ width: `${pct}%` }} /></span>{allDone}/{allTotal}</span>}
         </div>
         {[...free].map(([type, tags]) => <datalist key={type} id={listId(type)}>{tags.sort(natural).map((t) => <option key={t} value={t} />)}</datalist>)}

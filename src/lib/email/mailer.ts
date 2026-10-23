@@ -57,3 +57,20 @@ export async function sendBlast(recipientsText: string, subject: string, message
   }
   return { results, bad };
 }
+
+/** Where replies go: EMAIL_REPLY_TO if it is set, else the sending address. One place to change when the club has a monitored inbox. */
+export const emailReplyTo = () => process.env.EMAIL_REPLY_TO || emailFrom();
+
+/** One message to one person with the exact html and text it is given (an event email, built elsewhere). `unsubscribeUrl` adds the one-click opt-out headers mail apps show as "Unsubscribe". Never throws. */
+export async function sendOne(o: { to: string; subject: string; text: string; html: string; fromName?: string; unsubscribeUrl?: string }): Promise<BlastResult> {
+  if (!emailConfigured()) return { to: o.to, ok: false, error: 'Email isn’t set up yet (GMAIL_USER and GMAIL_APP_PASSWORD).' };
+  if (process.env.EMAIL_DRY_RUN === '1') return { to: o.to, ok: true };   // a test server sends nothing (the check scripts use it)
+  try {
+    await getTransport().sendMail({
+      from: `${o.fromName ?? 'Triton Gaming'} <${emailFrom()}>`, replyTo: emailReplyTo(), to: o.to, subject: o.subject, text: o.text, html: o.html,
+      ...(o.unsubscribeUrl ? { headers: { 'List-Unsubscribe': `<${o.unsubscribeUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' } } : {}),
+      attachments: [{ filename: 'tg-logo.png', content: LOGO, contentType: 'image/png', cid: LOGO_CID }],
+    });
+    return { to: o.to, ok: true };
+  } catch (e) { return { to: o.to, ok: false, error: friendly(e) }; }
+}

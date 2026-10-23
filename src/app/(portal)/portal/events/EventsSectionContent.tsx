@@ -9,13 +9,14 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from 'recharts';
 import EventRowActions from './EventRowActions';
-import { Search, Plus, Ticket, MapPin, BarChart3, ListChecks, Award } from 'lucide-react';
+import { Search, Plus, Ticket, MapPin, BarChart3, ListChecks, Award, Mail } from 'lucide-react';
 import { formatEventDateRangeShort, formatEventTimeRange, eventDayCount } from '@/lib/core/timezone';
 import { isCheckinWindowOpen } from '@/lib/events/checkinWindow';
 import type { MonthPoint } from '@/lib/events/monthBuckets';
 import type { EventTicketStat } from './getEventsData';
 import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
 import EventCheckinsModal from './EventCheckinsModal';
+import EventEmailsTab from './EventEmailsTab';
 import DeleteEventModal from './DeleteEventModal';
 import { ButtonLink } from '@/components/ui/Button';
 import styles from './events.module.css';
@@ -41,8 +42,8 @@ interface EventRow {
 }
 
 type StatusFilter = 'all' | 'upcoming' | 'past' | 'draft';
-type Tab = 'list' | 'analytics';
-const VALID_TABS: Tab[] = ['list', 'analytics'];
+type Tab = 'list' | 'analytics' | 'emails';
+const VALID_TABS: Tab[] = ['list', 'analytics', 'emails'];
 
 const FILTERS: { key: StatusFilter; label: string }[] = [
   { key: 'all', label: 'All' },
@@ -69,6 +70,8 @@ interface Props {
   canManagePoints: boolean;
   // delete_events (admin-only) — separate from canEdit, which lead+ hold.
   canDelete?: boolean;
+  // send_event_emails: the Emails tab (write and send an event's reminder or update).
+  canEmail?: boolean;
   initialTab?: string;
 }
 
@@ -77,7 +80,7 @@ interface Props {
 // component — search + status filter are pure UI state over data that's
 // already fully fetched (all events + their ticket counts come in as
 // props), so filtering is instant with no round trip.
-export default function EventsSectionContent({ events, eventsPerMonth, ticketsPerMonth, eventStats, canEdit, canManagePoints, canDelete = false }: Props) {
+export default function EventsSectionContent({ events, eventsPerMonth, ticketsPerMonth, eventStats, canEdit, canManagePoints, canDelete = false, canEmail = false }: Props) {
   const { tab: initialTab } = useUrlNav();
   const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'list');
   const syncUrl = usePortalTabSync('events');
@@ -120,16 +123,19 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
       <SectionHeader title="Events" sub={canEdit ? 'Create, run and review events.' : 'What’s coming up and what you’ve been to.'}
         actions={canEdit ? <ButtonLink href="/portal/events/new"><Plus size={15} strokeWidth={2} aria-hidden="true" /> Create Event</ButtonLink> : undefined} />
 
-      {canEdit && (
+      {(canEdit || canEmail) && (
         <SectionTabs
           value={tab}
           onChange={selectTab}
           tabs={[
             { id: 'list', label: 'Events', icon: <ListChecks /> },
-            { id: 'analytics', label: 'Analytics', icon: <BarChart3 /> },
+            ...(canEdit ? [{ id: 'analytics' as const, label: 'Analytics', icon: <BarChart3 /> }] : []),
+            ...(canEmail ? [{ id: 'emails' as const, label: 'Emails', icon: <Mail /> }] : []),
           ]}
         />
       )}
+
+      {tab === 'emails' && canEmail && <EventEmailsTab />}
 
       {tab === 'analytics' && canEdit && (
         eventsPerMonth.length === 0 && ticketsPerMonth.length === 0 && eventStats.length === 0 ? (

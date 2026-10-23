@@ -377,12 +377,12 @@
   .mobileSearchWrap { display: none; }
   .welcomeSearch { display: block; width: 100%; }
   .welcomeSearch > * { margin: 0 !important; max-width: none !important; }
-  .welcome { gap: 0.7rem; padding: 0.85rem; border-radius: 1.1rem; }
-  .welcomeMain { gap: 0.75rem; }
-  .welcomeAvatar, .welcomeAvatarFallback { width: 46px; height: 46px; }
-  .welcomeName { font-size: 1.3rem; line-height: 1.15; }
-  .welcomeName::before { display: block; font-size: 0.78rem; letter-spacing: 0.04em; margin-bottom: 0.1rem; }
-  .welcomeText .roleChips { margin-top: 0.3rem; }
+  .welcome { gap: 0.5rem; padding: 0.5rem 0.6rem; border-radius: 0.9rem; }
+  .welcomeMain { gap: 0.6rem; }
+  .welcomeAvatar, .welcomeAvatarFallback { width: 36px; height: 36px; }
+  .welcomeName { font-size: 1.05rem; line-height: 1.15; }
+  .welcomeName::before { display: inline; font-size: 0.85rem; letter-spacing: 0.02em; margin: 0; }
+  .welcomeText .roleChips { margin-top: 0.1rem; }
   /* On a phone the way back to the public site is a visible button in the greeting card (Sign out stays in More). */
   /* ...as the third round button in the row with the theme switch and the bell (all three the same size, drawn the same, in one line at the top right). */
   .welcomeText .headerActions { display: block; margin: 0; }

@@ -13,3 +13,10 @@
 .rowDesc { font-size: 0.8rem; line-height: 1.3; color: rgba(var(--pp-ink-rgb), 0.82); }
 .rowBadge { min-width: 22px; padding: 0.05rem 0.45rem; border-radius: 999px; background: var(--yellow); color: var(--ink); font-size: 0.72rem; font-weight: 700; text-align: center; }
 .rowGo { flex-shrink: 0; color: rgba(var(--pp-ink-rgb), 0.6); }
+
+/* Home: the pages as small two-across tiles (the name and its badge), not a tall row with a description each. */
+.compact { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.4rem; border: 0; border-radius: 0; background: none; overflow: visible; }
+.compact .row { min-height: 44px; padding: 0.45rem 0.7rem; gap: 0.4rem; border: 1px solid var(--pp-line); border-radius: 10px; background: var(--pp-card); }
+.compact .row:last-child { border: 1px solid var(--pp-line); }
+.compact .rowLabel { font-size: 0.9rem; }
+.compact .rowDesc, .compact .rowGo { display: none; }

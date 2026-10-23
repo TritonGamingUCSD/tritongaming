@@ -72,6 +72,8 @@ export interface HubSection {
   group: HubGroup;
   /** Extra weight for a slot on the mobile bottom bar — what's relevant to this person right now. */
   dockBoost?: number;
+  /** A shorter name for the phone's bottom bar. */
+  dockLabel?: string;
   /** Never gets a bottom-bar slot (still reachable from More). */
   dockExclude?: boolean;
   /** Never suggested under "For you" on the dashboard (still in the sidebar and All pages). */
@@ -332,7 +334,7 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
   primaryTabs.forEach((sec, i) => {
     if (i === 1) dockItems.push(scanEntry);
     dockItems.push({
-      id: sec.id, label: sec.label.replace(/^My /, ''), active: openId === sec.id && !moreOpen, urgent: dock.urgent.has(sec.id), badge: sec.badge,
+      id: sec.id, label: (sec.dockLabel ?? sec.label).replace(/^My /, ''), active: openId === sec.id && !moreOpen, urgent: dock.urgent.has(sec.id), badge: sec.badge,
       icon: smallIcon(sec.icon, DOCK_ICON_SIZE[sec.id] ?? 20), onClick: () => { setMoreOpen(false); recordUse(sec.id); open(sec.id); },
     });
   });
@@ -391,11 +393,11 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
       {!openSection && (
         <div className={styles.launcher}>
           <h2 className={styles.forYouLabel}>For you</h2>
-          <div className={mob.list}>{tilesInOrder(sections).filter((s) => forYou.has(s.id)).map((s) => renderTile(s, false))}</div>
+          <div className={`${mob.list} ${mob.compact}`}>{tilesInOrder(sections).filter((s) => forYou.has(s.id)).map((s) => renderTile(s, false))}</div>
           {sections.some((s) => !forYou.has(s.id)) && (
             <details className={styles.allPages}>
               <summary>All pages</summary>
-              <div className={mob.list}>{tilesInOrder(sections).filter((s) => !forYou.has(s.id)).map((s) => renderTile(s, false))}</div>
+              <div className={`${mob.list} ${mob.compact}`}>{tilesInOrder(sections).filter((s) => !forYou.has(s.id)).map((s) => renderTile(s, false))}</div>
             </details>
           )}
         </div>

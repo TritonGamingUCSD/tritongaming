@@ -36,7 +36,6 @@ export async function GET() {
   }
   return NextResponse.json({
     canManage: auth.canManage,
-    isAdmin: auth.roles.some((r) => r.role === 'admin'),   // only the Admin role may use the phone/laptop preview
     lists,
     portalGames: GAME_OPTIONS,
     devices: devices.data ?? [],

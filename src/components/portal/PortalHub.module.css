@@ -489,7 +489,7 @@
 .panelIconTile > svg { width: 100%; height: 100%; }
 .panelIconTile { display: grid; place-items: center; box-sizing: border-box; width: 36px; height: 36px; padding: 8px; flex-shrink: 0; border-radius: 0.7rem; color: var(--accent, var(--p-accent)); background: color-mix(in srgb, var(--accent, var(--p-accent)) 15%, transparent); border: 1px solid color-mix(in srgb, var(--accent, var(--p-accent)) 30%, transparent); }
 @media (max-width: 899px) {
-  .panel { background: none; border: none; border-radius: 0; padding: 0 0 1rem; min-height: 0; }
+  .panel { background: none; border: none; border-radius: 0; box-shadow: none; padding: 0 0 1rem; min-height: 0; }
   .panelHeader {
     position: sticky; top: 0; z-index: 15;
     flex-direction: row; align-items: center; justify-content: flex-start; text-align: left; gap: 0.7rem;

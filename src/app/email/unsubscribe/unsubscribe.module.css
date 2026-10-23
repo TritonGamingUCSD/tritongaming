@@ -1,0 +1,10 @@
+.page { min-height: 100vh; display: grid; place-items: center; padding: 1.5rem 1rem; background: #f3f1ea; color: #011941; } /* theme-ok */
+.card { width: 100%; max-width: 30rem; display: flex; flex-direction: column; gap: 0.9rem; padding: 1.6rem 1.5rem; background: #fff; border: 2px solid #011941; border-bottom-width: 6px; border-right-width: 6px; border-radius: 10px; } /* theme-ok */
+.sticker { align-self: flex-start; background: #ffc72c; border: 2px solid #011941; padding: 0.15rem 0.7rem; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; } /* theme-ok */
+.title { margin: 0; font-size: 1.6rem; line-height: 1.2; }
+.text { margin: 0; font-size: 1rem; line-height: 1.55; }
+.button { align-self: flex-start; min-height: 46px; padding: 0 1.3rem; background: #ffc72c; color: #011941; border: 2px solid #011941; border-bottom-width: 5px; border-right-width: 5px; font: inherit; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; } /* theme-ok */
+.button:disabled { opacity: 0.6; cursor: wait; }
+.link { color: #0a4c8a; text-decoration: underline; font-weight: 700; } /* theme-ok */
+.done { margin: 0; font-weight: 700; }
+.error { margin: 0; color: #b91c1c; font-weight: 700; } /* theme-ok */

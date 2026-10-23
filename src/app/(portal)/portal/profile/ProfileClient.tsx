@@ -22,6 +22,7 @@ import { showToast } from '@/lib/ui/toast';
 import type { BoardMember, BoardTier } from '@/app/(main)/team/getBoardMembers';
 import LinkGoogleSection from './LinkGoogleSection';
 import PushSettings from '@/components/portal/PushSettings';
+import EmailSettings from '@/components/portal/EmailSettings';
 import MyStrikes from '@/components/portal/MyStrikes';
 import MajorPicker from './MajorPicker';
 import GamePicker from './GamePicker';
@@ -744,6 +745,7 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
         {tab === 'notifications' && (
           <div className={styles.securityTab}>
             <PushSettings />
+            <EmailSettings />
           </div>
         )}
 

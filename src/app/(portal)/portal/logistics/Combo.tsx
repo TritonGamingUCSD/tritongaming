@@ -29,6 +29,7 @@ function Picker({ options, onPick, onCreate, placeholder, initial = '', disabled
   const [busy, setBusy] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
   const listId = useId();
+  useEffect(() => { if (autoFocus) setOpen(true); }, [autoFocus]);   // a phone won't focus a box by itself, so a box opened to be edited shows its list at once
 
   const q = text.trim().toLowerCase();
   const shown = useMemo(() => options.filter((o) => !q || o.toLowerCase().includes(q)).slice(0, 60), [options, q]);
@@ -90,6 +91,7 @@ function Picker({ options, onPick, onCreate, placeholder, initial = '', disabled
         aria-controls={listId}
         autoComplete="off"
         onFocus={() => { setOpen(true); setHi(0); }}
+        onClick={() => setOpen(true)}   // a tap on a box that already has focus (a phone or tablet does not send focus again)
         onChange={(e) => { setText(e.target.value); setOpen(true); setHi(0); }}
         onKeyDown={(e) => {
           if (e.key === 'ArrowDown') { e.preventDefault(); setOpen(true); setHi((h) => Math.min(h + 1, rows.length - 1)); }

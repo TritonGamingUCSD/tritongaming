@@ -41,6 +41,7 @@ const CAPS = {
   host_meetings: ['Meetings', 'Plan meetings', 'Create meetings, plans and teams, and run, edit and see results for the meetings they planned.', 'routes'],
   manage_meetings: ['Meetings', 'Run every meeting', 'Open check-in and show the code for any meeting, edit or cancel any meeting, and use every team and plan, not just their own.', 'routes'],
   view_attendance_reports: ['Meetings', 'See attendance reports', 'See every meeting’s results, absences and reasons, check-in times, and download the HR CSV export. View only.', 'routes'],
+  send_event_emails: ['Events', 'Send event emails', 'Open Event Emails, write a reminder or update for an event and send it to everyone with a ticket (after a 60-second cancel window). Admin by default; can be granted.', 'pages + routes'],
   request_logistics: ['Logistics', 'Send Logistics requests', 'Open the Requests pages of Logistics and send a request for devices or prizes. A division account sees only these, for its own division. Once sent, only the Logistics team can change a request.', 'pages + routes'],
   view_logistics: ['Logistics', 'See Logistics', 'Open Logistics and look at the equipment catalog (including device logins), sponsors and event setups. Cannot change anything.', 'pages + routes'],
   manage_logistics: ['Logistics', 'Run Logistics', 'Add, edit and remove equipment, sponsors and the Logistics lists, and plan events. Exec and admin by default; can be given to a person or group in Admin → Access. Submitting requests and the event-day steps are open to every officer.', 'routes'],

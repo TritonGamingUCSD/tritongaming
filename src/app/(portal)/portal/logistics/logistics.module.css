@@ -861,11 +861,6 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 /* The scanner button beside Mark is for a tablet or laptop; a phone has Scan in its bottom bar. */
 @media (max-width: 899px) { .scanDesk { display: none; } }
 
-/* Admin preview: the page inside a phone or laptop sized frame, scaled down to fit the window. */
-.previewBox { display: flex; justify-content: center; align-items: flex-start; overflow: hidden; padding: 0.75rem 0; }
-.previewDevice { flex: none; transform-origin: top center; border-radius: 10px; border: 2px solid var(--pp-ink); background: var(--pp-card); overflow: hidden; box-shadow: 0 10px 30px color-mix(in srgb, var(--pp-ink) 25%, transparent); }
-.previewPhone { border-radius: 34px; border-width: 8px; }
-.previewFrame { display: block; border: none; width: 100%; height: 100%; background: var(--pp-paper); }
 
 /* The events list lays itself out by its own width (the sidebar changes how much room a laptop window really gives it), not by the window: a name is never squeezed into a sliver.
    Narrow: name and tags on the first row, dates and the counts under it. Wide: everything on one row. */
@@ -912,4 +907,26 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
   .borrowRow > span[data-label="Station"], .borrowRow > span[data-label="Status"] { order: 2; }
   .borrowRow > span[data-label="Installed games"] { order: 3; }
   .borrowRow > .prizeTools { order: 4; }
+}
+
+/* Phone: the lists that are tables on a laptop (loaners, prizes, sponsors, requests) stay tables. Every row is ONE line and the table scrolls sideways (the first column stays in view), instead
+   of every row turning into a tall card. */
+@media (max-width: 899px) {
+  .prizeGrid { overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+  .prizeGrid > .prizeRow { grid-template-columns: var(--cols) !important; width: var(--w); min-width: 100%; align-items: center; column-gap: 0.8rem; row-gap: 0; padding: 0.35rem 0.8rem; }
+  .prizeGrid > .prizeRow > * { grid-column: auto !important; order: 0 !important; margin: 0; }
+  .prizeGrid > .prizeRow > span[data-label]::before { display: none !important; }
+  .prizeGrid > .prizeHeadRow { display: grid !important; }
+  .prizeGrid > .prizeRow > .prizeTools { display: flex; flex-wrap: nowrap; gap: 0.3rem; justify-content: flex-start; padding: 0; border-top: 0; }
+  .prizeGrid > .prizeRow > :first-child { position: sticky; left: 0; z-index: 1; background: var(--pp-card); font-size: 0.9rem; padding-right: 0.5rem; }
+  .prizeGrid > .prizeHeadRow > :first-child { background: var(--pp-paper); }
+  .prizeGrid > .prizeRow:not(.prizeHeadRow) > :first-child { box-shadow: 6px 0 6px -6px rgba(var(--pp-ink-rgb), 0.25); }
+  .reqRow { align-items: center; }
+}
+
+/* Phone: the Devices/Prizing switch and the page tabs are slim (about 34px), not a 48px slab each. */
+@media (max-width: 640px) {
+  .pageBar [role="tablist"] { padding: 0.12rem; gap: 0.1rem; }
+  .pageBar [role="tablist"] > button { min-height: 30px; padding: 0.2rem 0.65rem; font-size: 0.72rem; }
+  .pageBar [role="tablist"] > button span { line-height: 1.1; }
 }
