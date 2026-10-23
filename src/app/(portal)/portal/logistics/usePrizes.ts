@@ -13,6 +13,7 @@ export interface PrizeRow {
 // The prizes are read when the Prizes tab (or a plan's prize picker) opens and kept in memory; each edit's reply is applied on screen. Shown from memory for a minute, then refreshed once.
 const FRESH_MS = 60_000;
 let kept: { at: number; rows: PrizeRow[] } | null = null;
+let gen = 0;   // counts the edits made on screen: a refresh already on its way when someone edited holds the old value and is dropped
 
 async function call<T>(url: string, method: string, body?: unknown): Promise<{ ok: true; data: T } | { ok: false; error: string }> {
   try {
@@ -31,8 +32,10 @@ export function usePrizes() {
   const load = useCallback(async () => {
     if (loading.current) return;
     loading.current = true;
+    const g = gen;
     const r = await call<{ prizes: PrizeRow[] }>('/api/logistics/prizes', 'GET');
     loading.current = false;
+    if (r.ok && g !== gen) return;
     if (r.ok) { put(r.data.prizes); setError(''); } else if (!kept) setError(r.error);
   }, [put]);
   useEffect(() => { if (!kept || Date.now() - kept.at > FRESH_MS) void load(); }, [load]);
@@ -42,17 +45,19 @@ export function usePrizes() {
     if (!r.ok) { setError(r.error); return null; }
     setError('');
     const next = id ? (kept?.rows ?? []).map((x) => (x.id === id ? { ...x, ...r.data.prize } : x)) : [...(kept?.rows ?? []), r.data.prize];
+    gen++;
     put(next.sort((a, b) => a.name.localeCompare(b.name)));
     return r.data.prize;
   }, [put]);
   const remove = useCallback(async (id: string): Promise<boolean> => {
     const r = await call<{ ok: true }>('/api/logistics/prizes', 'DELETE', { id });
     if (!r.ok) { setError(r.error); return false; }
+    gen++;
     put((kept?.rows ?? []).filter((x) => x.id !== id));
     return true;
   }, [put]);
   // A pool's number for a prize changed by `delta` somewhere else on screen: promised and left follow without asking the server again.
-  const bump = useCallback((id: string, delta: number) => { if (kept) put(kept.rows.map((x) => (x.id === id ? { ...x, allocated: x.allocated + delta, left: x.left - delta } : x))); }, [put]);
+  const bump = useCallback((id: string, delta: number) => { if (kept) { gen++; put(kept.rows.map((x) => (x.id === id ? { ...x, allocated: x.allocated + delta, left: x.left - delta } : x))); } }, [put]);
   return { rows, error, setError, reload: load, save, remove, bump };
 }
 export type PrizesApi = ReturnType<typeof usePrizes>;

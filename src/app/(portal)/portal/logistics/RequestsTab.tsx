@@ -1,7 +1,7 @@
 'use client';
 
 import { Plus, Trash2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
@@ -40,12 +40,16 @@ async function call<T>(url: string, method: string, body?: unknown): Promise<{ o
 // (for devices, one click puts them on the Allocation sheet), and the person who asked is told. Everyone else sees only their own; once it is sent only Event Logistics can change or remove it.
 // The requests of an event, loaded by the event page itself so the tab bar can show how many there are; they are refreshed every 30 seconds while the Requests page is open and visible.
 export function useRequests(planId: string, active: boolean) {
-  const [loaded, setLoaded] = useState<Loaded | null>(null);
+  const [loaded, setLoadedNow] = useState<Loaded | null>(null);
+  const gen = useRef(0);   // counts the changes made on screen: a refresh already on its way when one was made holds the old value and is dropped
+  const setLoaded: typeof setLoadedNow = useCallback((v) => { gen.current++; setLoadedNow(v); }, []);
   const [error, setError] = useState('');
   const load = useCallback(async () => {
+    const g = gen.current;
     if (!planId) return;
     const r = await call<Loaded>(`/api/logistics/plans/${planId}/requests`, 'GET');
-    if (r.ok) { setLoaded(r.data); setError(''); } else setError(r.error);
+    if (r.ok && g !== gen.current) return;
+    if (r.ok) { setLoadedNow(r.data); setError(''); } else setError(r.error);
   }, [planId]);
   useEffect(() => { void load(); }, [load]);
   useVisiblePoll(load, 30_000, active);   // other people's requests show up without a refresh

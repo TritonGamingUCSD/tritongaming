@@ -21,6 +21,7 @@ export interface Catalog {
 // so nothing reloads after a change. Opening the section again within a minute shows what is kept without asking the server; after that it refreshes quietly once.
 const FRESH_MS = 60_000;
 let kept: { at: number; data: Catalog } | null = null;
+let gen = 0;   // counts the edits made on screen, so a refresh that was already on its way when someone edited (and so holds the old value) is dropped instead of putting the old value back
 
 async function call<T>(url: string, method: string, body?: unknown): Promise<{ ok: true; data: T } | { ok: false; error: string }> {
   try {
@@ -37,13 +38,15 @@ export function useLogistics() {
   const loading = useRef(false);
 
   const put = useCallback((next: Catalog) => { kept = { at: Date.now(), data: next }; setData(next); }, []);
-  const edit = useCallback((fn: (d: Catalog) => Catalog) => setData((cur) => { if (!cur) return cur; const next = fn(cur); kept = { at: kept?.at ?? Date.now(), data: next }; return next; }), []);
+  const edit = useCallback((fn: (d: Catalog) => Catalog) => setData((cur) => { if (!cur) return cur; gen++; const next = fn(cur); kept = { at: kept?.at ?? Date.now(), data: next }; return next; }), []);
 
   const load = useCallback(async () => {
     if (loading.current) return;
     loading.current = true;
+    const g = gen;
     const r = await call<Catalog>('/api/logistics', 'GET');
     loading.current = false;
+    if (r.ok && g !== gen) return;
     if (r.ok) { put(r.data); setError(''); } else if (!kept) setError(r.error);
   }, [put]);
 
