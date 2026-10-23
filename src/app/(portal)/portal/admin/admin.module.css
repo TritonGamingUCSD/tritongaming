@@ -271,3 +271,9 @@
   white-space: nowrap;
 }
 
+
+/* Phone: the overview tiles stay on one row (icon above the number, a little smaller) and sit closer to what follows. */
+@media (max-width: 640px) {
+  .statsGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; margin-bottom: 1.25rem; }
+  .statCard { flex-direction: column; align-items: flex-start; gap: 0.3rem; padding: 0.7rem 0.75rem; }
+}
