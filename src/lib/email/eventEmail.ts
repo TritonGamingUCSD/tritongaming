@@ -90,7 +90,7 @@ export function eventEmailHtml(o: EventEmailOptions): string {
 <body style="margin:0;padding:0;background:${PAPER};">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:${PAPER};">${esc(pre.slice(0, 110))}&#8199;&#847;&#8199;&#847;&#8199;&#847;</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${PAPER};"><tr><td align="center" class="tg-outer" style="padding:20px 10px;">
-  <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" class="tg-wrap" style="width:100%;max-width:600px;">
+  <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" class="tg-wrap" style="width:100%;max-width:680px;">
     ${o.test ? `<tr><td style="background:${SOFT};color:${INK};font-family:${HEAD};font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;text-align:center;padding:6px;border-radius:6px 6px 0 0;">Test email: nobody else got this</td></tr>` : ''}
     <tr><td style="background:#ffffff;border:1px solid ${LINE};border-radius:8px;padding:0;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
