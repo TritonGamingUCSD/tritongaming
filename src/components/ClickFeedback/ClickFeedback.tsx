@@ -109,7 +109,9 @@ export default function ClickFeedback() {
             icon.setAttribute('data-tg-icon', '');
             el.setAttribute('data-tg-pending', 'icon');
           } else {
-            el.setAttribute('data-tg-pending', r.width <= 380 && r.height <= 72 ? 'small' : 'large');
+            // A wide row of left-aligned text (a menu item in the side bar, a list row) is dimmed with the thin bar along its top edge, so the spinner never lands on its text; a button swaps its label for the spinner.
+            const row = r.width > 140 && r.height <= 72 && (cs.textAlign === 'left' || cs.textAlign === 'start') && !!el.textContent?.trim();
+            el.setAttribute('data-tg-pending', row ? 'large' : r.width <= 380 && r.height <= 72 ? 'small' : 'large');
           }
           el.setAttribute('aria-busy', 'true');
           shownAt = now;
