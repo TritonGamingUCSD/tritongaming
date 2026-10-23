@@ -47,7 +47,7 @@ const range = (a: string, b: string) => {
   return a === b ? f(a) : `${f(a)} to ${f(b)}`;
 };
 
-export default function PlanView({ id, data, catalog, page, day, byType, openOnly, onOpenOnly, onGroup, onPage, onBack }: { openOnly: boolean; onOpenOnly: (v: boolean) => void; id: string; data: Catalog; catalog: LogisticsApi; page: EventPage; day: boolean; byType: boolean; onGroup: (byType: boolean) => void; onPage: (p: EventPage, day?: boolean) => void; onBack: () => void }) {
+export default function PlanView({ id, data, catalog, page, day, byType, bySponsor, onSponsorGroup, openOnly, onOpenOnly, onGroup, onPage, onBack }: { bySponsor: boolean; onSponsorGroup: (v: boolean) => void; openOnly: boolean; onOpenOnly: (v: boolean) => void; id: string; data: Catalog; catalog: LogisticsApi; page: EventPage; day: boolean; byType: boolean; onGroup: (byType: boolean) => void; onPage: (p: EventPage, day?: boolean) => void; onBack: () => void }) {
   const plan = usePlan(id, true);
   const prizeInv = usePrizes();
   const { detail, error, setError, act } = plan;
@@ -422,7 +422,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
       {stationDialog && !stationDialog.station && <StationDialog plan={plan} station={null} onClose={() => setStationDialog(null)} />}
       {filling && !filling.station && <FillDialog plan={plan} station={null} onClose={() => setFilling(null)} />}
 
-      {page === 'prizing' && <PrizingTab plan={plan} api={catalog} data={data} day={day} />}
+      {page === 'prizing' && <PrizingTab plan={plan} api={catalog} data={data} day={day} bySponsor={bySponsor} onSponsorGroup={onSponsorGroup} />}
       {page === 'sponsor-prizing' && <SponsorPrizingTab plan={plan} api={catalog} data={data} />}
       {page === 'sponsor-loaners' && <BorrowedTab plan={plan} catalog={catalog} data={data} kind="sponsor" />}
       {page === 'officer-loaners' && <BorrowedTab plan={plan} catalog={catalog} data={data} kind="officer" />}

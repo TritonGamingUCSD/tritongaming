@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { parseRoute, routeParams } from '../../app/(portal)/portal/logistics/logisticsRoute';
 
 describe('Logistics addresses', () => {
+  it('keeps prizing grouped by sponsor in the address, only on the allocation page', () => {
+    expect(parseRoute('ds-2026', 'allocation-prizing', undefined, false, 'sponsor')).toEqual({ tab: 'events', plan: 'ds-2026', page: 'prizing', bySponsor: true });
+    expect(routeParams({ tab: 'events', plan: 'ds-2026', page: 'prizing', bySponsor: true }).view).toBe('sponsor');
+    expect(parseRoute('ds-2026', 'event-day-prizing', undefined, false, 'sponsor')).toEqual({ tab: 'events', plan: 'ds-2026', page: 'prizing', day: true });
+  });
   it('reads the new addresses', () => {
     expect(parseRoute('events', undefined, undefined, false)).toEqual({ tab: 'events', plan: null, page: 'device' });
     expect(parseRoute('events', 'ds-2026', 'prizing', false)).toEqual({ tab: 'events', plan: 'ds-2026', page: 'prizing' });

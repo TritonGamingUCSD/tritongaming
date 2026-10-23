@@ -3,6 +3,7 @@
 import { RowMenu } from './RowMenu';
 import { useMemo, useState } from 'react';
 import Button from '@/components/ui/Button';
+import SectionTabs from '@/components/ui/SectionTabs';
 import { ANY_SIZE, suggestPrizes } from '@/lib/logistics/prizes';
 import { Combo } from './Combo';
 import { NumberCell } from './Cells';
@@ -17,7 +18,7 @@ const money = (n: number | null) => (n === null ? '' : `$${n.toLocaleString('en-
 
 // Prizing allocation, one card per pool (a prize request makes a pool for its team): what was asked for (how many, how many dollars) with progress, the prizes it has, and a box to add more from
 // storage and the sponsor prizes of this event. Suggest fills what is still missing with the prizes closest to the asked value. The old grid is kept below as an overview.
-export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: Catalog }) {
+export default function PrizeAllocation({ plan, data, bySponsor, onSponsorGroup }: { plan: PlanApi; data: Catalog; bySponsor: boolean; onSponsorGroup: (v: boolean) => void }) {
   const d = plan.detail!;
   const prizes = usePrizes();
   const closed = d.plan.status === 'closed';
@@ -82,7 +83,10 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
         <div className={styles.empty}><p>No prize requests yet. A request for prizes makes a card here for its team.</p></div>
       ) : (
         <>
-        {manage && needy > 1 && <div className={styles.toolbarRow}><Button size="sm" variant="secondary" loading={!!busy} onClick={() => void fillAll()}>Fill All {needy} Pools</Button><span className={styles.muted}>Suggests prizes for every pool that still needs some, sponsor prizes first.</span></div>}
+        <div className={styles.toolbarRow}>
+          <SectionTabs<'type' | 'sponsor'> variant="segmented" label="Group the prizes by" value={bySponsor ? 'sponsor' : 'type'} onChange={(v) => onSponsorGroup(v === 'sponsor')} tabs={[{ id: 'type', label: 'By Type' }, { id: 'sponsor', label: 'By Sponsor' }]} />
+          {manage && needy > 1 && <><Button size="sm" variant="secondary" loading={!!busy} onClick={() => void fillAll()}>Fill All {needy} Pools</Button><span className={`${styles.muted} ${styles.wide}`}>Suggests prizes for every pool that still needs some, sponsor prizes first.</span></>}
+        </div>
         <div className={styles.poolCards}>
           {pools.map((pool) => {
             const mine = lines.filter((l) => l.pool_id === pool.id);
@@ -97,8 +101,8 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
             const addable = available.filter((p) => p.left > 0 && !mine.some((l) => l.prize_id === p.id));
             const label = (p: PrizeRow) => `${sponsorName.get(p.sponsor_id ?? '') ?? 'Club'} · ${p.name}${p.type ? ` · ${p.type}` : ''}${p.size ? ` · ${p.size}` : ''}${p.price !== null ? ` · ${money(p.price)}` : ''} · ${p.left} left${p.in_hand ? '' : ' · not here yet'}`;
             const overLines = mine.filter((l) => l.prize.left < 0).length;
-            const groups = (() => { const g = new Map<string, typeof mine>(); for (const l of mine) { const k = l.prize.type ?? ''; g.set(k, [...(g.get(k) ?? []), l]); } return [...g].sort((a, b) => (a[0] === '' ? 1 : 0) - (b[0] === '' ? 1 : 0) || a[0].localeCompare(b[0])); })();
-            const grouped = groups.some(([k]) => k !== '');
+            const groups = (() => { const g = new Map<string, typeof mine>(); for (const l of mine) { const k = (bySponsor ? l.prize.sponsor ?? 'Club' : l.prize.type) ?? ''; g.set(k, [...(g.get(k) ?? []), l]); } return [...g].sort((a, b) => (a[0] === '' ? 1 : 0) - (b[0] === '' ? 1 : 0) || a[0].localeCompare(b[0])); })();
+            const grouped = bySponsor || groups.some(([k]) => k !== '');
             const countState = pool.target_qty === null ? '' : count === pool.target_qty ? styles.barOk : count > pool.target_qty ? styles.barBad : styles.barWarn;
             return (
               <section key={pool.id} className={styles.poolCard} aria-label={pool.name}>
@@ -123,7 +127,7 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
                   <ul className={styles.poolLines}>
                     {groups.map(([type, ls]) => (
                       <li key={`g-${type}`} className={styles.poolGroupItem}>
-                        {grouped && <div className={styles.poolGroupHead}><b>{type || 'No type'}</b><span className={styles.dim}>{ls.reduce((n, l) => n + l.quantity, 0)}</span></div>}
+                        {grouped && <div className={styles.poolGroupHead}><b>{type || (bySponsor ? 'Club' : 'No type')}</b><span className={styles.dim}>{ls.reduce((n, l) => n + l.quantity, 0)}</span></div>}
                         <ul className={styles.poolLinesInner}>
                           {ls.map((l) => {
                             const p = available.find((x) => x.id === l.prize_id);
@@ -136,7 +140,7 @@ export default function PrizeAllocation({ plan, data }: { plan: PlanApi; data: C
                                       onChange={(v) => { const np = similar.find((x) => label(x) === v); if (np && p) void (async () => { await setQty(pool.id, np, l.quantity); await setQty(pool.id, p, 0); })(); }} />
                                   </span>
                                 ) : (
-                                  <span className={styles.poolLineName}><span><small className={styles.dim}>{l.prize.sponsor ?? 'Club'}</small> <b>{l.prize.name}</b></span><small className={styles.dim}>{[grouped ? null : l.prize.type, l.prize.size, l.prize.price !== null ? money(l.prize.price) : null].filter(Boolean).join(' · ')}{p && !p.in_hand ? `${l.prize.size || l.prize.price !== null ? ' · ' : ''}not here yet` : ''}</small>{l.prize.left < 0 && <small className={styles.flagWarn}>{-l.prize.left} more than in stock</small>}</span>
+                                  <span className={styles.poolLineName}><span>{!bySponsor && <><small className={styles.dim}>{l.prize.sponsor ?? 'Club'}</small>{' '}</>}<b>{l.prize.name}</b></span><small className={styles.dim}>{[grouped && !bySponsor ? null : l.prize.type, l.prize.size, l.prize.price !== null ? money(l.prize.price) : null].filter(Boolean).join(' · ')}{p && !p.in_hand ? `${l.prize.size || l.prize.price !== null ? ' · ' : ''}not here yet` : ''}</small>{l.prize.left < 0 && <small className={styles.flagWarn}>{-l.prize.left} more than in stock</small>}</span>
                                 )}
                                 <NumberCell value={l.quantity} canEdit={manage && !!p} nullable label={`${l.prize.name} for ${pool.name}`} onSave={(n) => p && void setQty(pool.id, p, n ?? 0)} />
                                 <span className={styles.poolLineEnd}>
