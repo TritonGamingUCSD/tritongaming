@@ -35,7 +35,7 @@ export async function GET(request: Request) {
   const cover = params.get('cover') !== '0';
   const [aud, used, { data: history }] = await Promise.all([
     audienceFor(svc, eventId, kind), sentLastDay(svc),
-    svc.from('event_emails').select('id, kind, subject, sent_by, sent_at, recipients, sent, failed, skipped_optout, skipped_no_email').eq('event_id', eventId).order('sent_at', { ascending: false }).limit(30),
+    svc.from('event_emails').select('id, kind, subject, sent_by, sent_at, recipients, sent, failed, skipped_optout, skipped_no_email').eq('event_id', eventId).eq('test', false).order('sent_at', { ascending: false }).limit(30),
   ]);
   const names = new Map<string, string>();
   const ids = [...new Set((history ?? []).map((h) => h.sent_by as string | null).filter((x): x is string => !!x))];
@@ -71,6 +71,8 @@ export async function POST(request: Request) {
     if (!to) return NextResponse.json({ error: 'Your account has no email address.' }, { status: 400 });
     const r = renderFor({ event, kind, subject: `[TEST] ${subject}`, note, person: { id: user.id, ticketId: null }, test: true, showCover: cover });
     const res = await sendOne({ to, subject: `[TEST] ${subject}`, text: r.text, html: r.html, fromName: 'Triton Gaming Events', unsubscribeUrl: r.unsubscribeUrl });
+    // A test is a real email through the same mailbox, so it counts toward the day's limit (it is kept out of the history).
+    await svc.from('event_emails').insert({ event_id: eventId, kind, subject: `[TEST] ${subject}`, cover, sent_by: user.id, test: true, recipients: 1, sent: res.ok ? 1 : 0, failed: res.ok ? 0 : 1 });
     return res.ok ? NextResponse.json({ ok: true, to }) : NextResponse.json({ error: res.error ?? 'It couldn’t be sent.' }, { status: 502 });
   }
 

@@ -10,6 +10,7 @@ create table if not exists public.event_emails (
   kind             text not null check (kind in ('reminders', 'updates', 'newsletter')),
   subject          text not null check (length(subject) <= 200),
   note             text check (note is null or length(note) <= 2000),
+  test             boolean not null default false,  -- a test to the sender: counts toward the daily limit, but is not shown in the history
   cover            boolean not null default true,   -- whether the event's cover picture was shown
   sent_by          uuid references auth.users(id) on delete set null,
   sent_at          timestamptz not null default now(),

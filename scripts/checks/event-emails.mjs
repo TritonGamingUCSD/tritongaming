@@ -31,7 +31,10 @@ try {
   t.ok('updates are a separate switch', upd.recipients === 2 && upd.skippedOptOut === 2, JSON.stringify([upd.recipients, upd.skippedOptOut]));
   t.ok('the preview is the event email with an opt-out link and a ticket button', rem.preview.includes('ZZ Email Night') && rem.preview.includes('/api/email/unsubscribe?t=') && rem.preview.includes('Show my ticket'));
 
+  const used0 = (await admin.call('GET', `/api/event-emails?event_id=${eventId}&kind=reminders`)).j.usedToday;
   t.ok('a test goes to the person signed in', (await admin.call('POST', '/api/event-emails', { action: 'test', event_id: eventId, kind: 'reminders', subject: 'Hi' })).s === 200);
+  const after = (await admin.call('GET', `/api/event-emails?event_id=${eventId}&kind=reminders`)).j;
+  t.ok('a test counts toward today\u2019s emails but is not in the history', after.usedToday === used0 + 1 && !after.history.some((h) => /TEST/.test(h.subject)), JSON.stringify([used0, after.usedToday]));
   t.ok('a subject is needed', (await admin.call('POST', '/api/event-emails', { action: 'start', event_id: eventId, kind: 'reminders', subject: ' ' })).s === 400);
 
   // the daily limit: pretend 1,999 were sent today, then 2 more cannot go
