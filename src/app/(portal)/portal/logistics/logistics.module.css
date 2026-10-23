@@ -832,7 +832,7 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 }
 
 /* The shared tab bar leaves a bottom margin of its own; on an event page the gap between the bars is the bar's own gap. */
-.pageBar > :not(.pageBarEnd) { margin-bottom: 0 !important; }
+.pageBar > :not(.pageBarEnd), .pageBar [role="tablist"] { margin-bottom: 0 !important; }
 
 /* Search and refresh: when they don't fit beside the tab bars they take the next row in full, lined up with the bars; a request's contact and date share a line. */
 .pageBarEnd { flex: 1 1 24rem; grid-template-columns: minmax(12rem, 1fr) auto; justify-content: stretch; }
@@ -957,3 +957,6 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
   .dayForm .dayInput { min-width: 0; }
   .dayForm button { padding-inline: 0.8rem; }
 }
+
+/* The devices/prizing switch sits in a wrapper that only exists to hide it on a phone; on bigger screens the wrapper must not take part in the layout. */
+@media (min-width: 641px) { .groupSeg { display: contents; margin: 0; } }
