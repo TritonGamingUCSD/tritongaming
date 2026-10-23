@@ -880,3 +880,21 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
   .eventRow .eventMeta, .eventRow .eventStats { grid-column: auto; }
   .eventRow .eventStats { grid-template-columns: 4.5rem 8.5rem 9.5rem 1fr; }
 }
+
+/* Phone: the line above a list (filter pill, count, Add) is compact so the three share a row where they can. */
+@media (max-width: 640px) {
+  .toolbarRow { gap: 0.4rem 0.6rem; }
+  .toolbarRow .addBtn { min-height: 38px; padding: 0 0.85rem; font-size: 0.8rem; }
+  .filters { gap: 0.4rem; }
+}
+@media (max-width: 640px) { .page { gap: 0.6rem; } }
+
+/* Phone: a step is two tidy lines (arrows, name and delete; then who it is for and its tick) instead of one control per line. */
+@media (max-width: 640px) {
+  .stepRow { row-gap: 0.15rem; padding: 0.35rem 0; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.1); }
+  .stepRow > .stepMove { order: 0; }
+  .stepRow > .optInput { order: 1; flex: 1 1 calc(100% - 10.5rem); min-width: 6rem; }
+  .stepRow > .iconBtn:last-child { order: 2; }
+  .stepRow > :not(.stepMove):not(.optInput):not(.iconBtn:last-child) { order: 3; flex: 0 1 auto; }
+  .stepRow .editCell { display: inline-block; width: auto; }
+}

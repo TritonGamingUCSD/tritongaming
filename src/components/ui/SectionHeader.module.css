@@ -7,3 +7,4 @@
 .sub { margin: 0; display: flex; align-items: flex-start; gap: 0.4rem; font-size: 0.95rem; line-height: 1.45; color: rgba(var(--pp-ink-rgb), 0.85); }
 .actions { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; flex: none; }
 @media (max-width: 640px) { .actions { width: 100%; } .title { font-size: 1.6rem; } }
+@media (max-width: 640px) { .header { margin-bottom: 0.9rem; } }

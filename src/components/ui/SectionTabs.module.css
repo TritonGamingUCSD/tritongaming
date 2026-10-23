@@ -100,3 +100,9 @@
 .bar:not(.segmented) .tab:hover { color: var(--pp-ink); background: rgba(var(--pp-ink-rgb), 0.06); }
 .bar:not(.segmented) .active { color: var(--pp-ink); background: var(--pp-card); border-color: var(--pp-ink); }
 .bar:not(.segmented) .active::after { left: -2px; right: -2px; bottom: 0; height: 5px; background: var(--frame-accent, var(--p-accent)); border: 2px solid var(--pp-ink); border-top: 0; }
+
+/* Phones: less air under a tab bar and under a small toggle, so the list starts higher on the screen. */
+@media (max-width: 640px) {
+  .bar { margin-bottom: 0.9rem; }
+  .segmented { margin-bottom: 0.75rem; }
+}
