@@ -31,6 +31,7 @@ import { usePrizes } from './usePrizes';
 import { doneKey, usePlan, type Borrowed, type Slim, type Station, type StepResult } from './usePlans';
 import type { Catalog, LogisticsApi } from './useLogistics';
 import { Combo, Suggest } from './Combo';
+import { RowMenu } from './RowMenu';
 import styles from './logistics.module.css';
 
 // The plan and the event day are one sheet. A block per team, a line per device (or per set), the step boxes on the line. Before the event it is where devices are chosen and what is
@@ -351,7 +352,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
     );
   }
   return (
-    <div className={`${styles.dayPage} ${page === 'device' && day && !closed ? styles.dayPageBar : ''}`}>
+    <div className={`${styles.dayPage} ${page === 'device' && day && !closed ? styles.dayPageBar : ''} ${day ? styles.dayMode : ''}`}>
       <div className={styles.dayTop}>
         <div className={styles.dayBar}>
           <button type="button" className={styles.back} onClick={onBack}><ArrowLeft size={15} aria-hidden="true" /> <span className={styles.backText}>All Events</span></button>
@@ -359,11 +360,12 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
             <b className={styles.dayTitle}>{p.name}{closed && <span className={`${styles.badge} ${styles.neutral}`}>Closed</span>}</b>
             <span className={styles.muted}>{range(p.starts_on, p.ends_on)}{p.event_id ? ' · portal event' : ' · Event logistics only'}{p.notes ? ` · ${p.notes}` : ''}</span>
           </div>
+          <span className={`${styles.narrow} ${styles.groupMenu}`}><RowMenu label="Switch between devices and prizing" items={[{ label: isPrizing ? 'Show Devices' : 'Show Prizing', onClick: () => onPage(isPrizing ? 'requests' : 'requests-prizing') }]} /></span>
           {page === 'device' && day && <span className={styles.dayTotal} title="Steps done"><span className={styles.bar}><i style={{ width: `${pct}%` }} /></span>{allDone}/{allTotal}</span>}
         </div>
         <div className={styles.pageBar}>
-        <SectionTabs<'devices' | 'prizing'> variant="segmented" label="Devices or prizing" value={isPrizing ? 'prizing' : 'devices'}
-          onChange={(g) => onPage(g === 'prizing' ? 'requests-prizing' : 'requests')} tabs={[{ id: 'devices', label: 'Devices', count: rows.length }, { id: 'prizing', label: 'Prizing', count: detail.prizes.lines.length }]} />
+        <span className={`${styles.wide} ${styles.groupSeg}`}><SectionTabs<'devices' | 'prizing'> variant="segmented" label="Devices or prizing" value={isPrizing ? 'prizing' : 'devices'}
+          onChange={(g) => onPage(g === 'prizing' ? 'requests-prizing' : 'requests')} tabs={[{ id: 'devices', label: 'Devices', count: rows.length }, { id: 'prizing', label: 'Prizing', count: detail.prizes.lines.length }]} /></span>
         <SectionTabs<string> variant="segmented" label="Event pages" value={page === 'requests' || page === 'requests-prizing' ? page : `${day && (page === 'device' || page === 'prizing') ? 'day' : 'alloc'}-${page}`}
           onChange={(v) => v === 'requests' || v === 'requests-prizing' ? onPage(v) : onPage(v.replace(/^(day|alloc)-/, '') as EventPage, v.startsWith('day-'))} tabs={isPrizing ? [
             { id: 'requests-prizing', label: 'Requests' },
@@ -386,10 +388,10 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
           <div className={`${styles.dayStick} ${kb > 80 ? styles.kbOpen : ''}`} style={{ '--kb': `${kb}px` } as React.CSSProperties}>
             <form className={styles.dayForm} onSubmit={(e) => { e.preventDefault(); submit(); }}>
             <div className={styles.dayStepPick}>
-              <Combo value={picked ? stepLabel(stepStats.find((x) => x.step.id === picked)) : `Next step: ${auto?.name ?? '–'}`} options={[`Next step: ${auto?.name ?? '–'}`, ...stepStats.map((x) => stepLabel(x) ?? '')]} clearable={false} ariaLabel="Step to mark when typing an ID"
+              <Combo value={picked ? stepLabel(stepStats.find((x) => x.step.id === picked)) : `Next: ${auto?.name ?? '–'}`} options={[`Next: ${auto?.name ?? '–'}`, ...stepStats.map((x) => stepLabel(x) ?? '')]} clearable={false} ariaLabel="Step to mark when typing an ID"
                 onChange={(v) => { setPicked(stepStats.find((x) => stepLabel(x) === v)?.step.id ?? ''); setKit(null); input.current?.focus(); }} />
             </div>
-            <Suggest inputRef={input} className={styles.dayInput} value={text} onChange={setText} options={dayIds} placeholder={`Type an ID to mark “${step?.name ?? 'the step'}”`} aria-label={`Device ID for ${step?.name ?? 'the step'}`} autoCapitalize="characters" autoComplete="off" autoCorrect="off" spellCheck={false} enterKeyHint="done" disabled={busy || !step} />
+            <Suggest inputRef={input} className={styles.dayInput} value={text} onChange={setText} options={dayIds} placeholder="Type an ID" aria-label={`Device ID for ${step?.name ?? 'the step'}`} autoCapitalize="characters" autoComplete="off" autoCorrect="off" spellCheck={false} enterKeyHint="done" disabled={busy || !step} />
             <Button type="submit" disabled={!text.trim() || busy} loading={busy}>Mark</Button>
             <button type="button" className={`${styles.iconBtn} ${styles.scanDesk}`} title="Scan a device" aria-label="Open the scanner" onClick={() => setScanning(true)} disabled={!step}><Camera size={16} aria-hidden="true" /></button>
           </form>
@@ -466,16 +468,24 @@ export default function PlanView({ id, data, catalog, page, day, byType, openOnl
                 {warn > 0 && <span className={`${styles.badge} ${styles.warnBadge}`} title={`${warn} to check`}>{warn}<span className={styles.wide}>to check</span></span>}
                 {problems.length > 0 && <span className={`${styles.dim} ${styles.wide}`}>{showList ? 'Click to hide the list' : 'Click to see the list'}</span>}
                 <span className={styles.statusSpacer} />
+                <span className={styles.narrow}><RowMenu label="View options" items={[
+                  page === 'device' && { label: `${byType ? '' : '✓ '}By Team`, onClick: () => onGroup(false) },
+                  page === 'device' && { label: `${byType ? '✓ ' : ''}By Type`, onClick: () => onGroup(true) },
+                  day && page === 'device' && { label: openOnly ? 'Show All' : 'Unfinished Only', onClick: () => onOpenOnly(!openOnly) },
+                  manage && emptyRows.length > 0 && { label: `Fill ${emptyRows.length} Empty`, onClick: () => setFilling({ station: null }) },
+                  day && { label: overview ? 'Hide Overview' : 'Overview', onClick: () => setOverview((v) => !v) },
+                  { label: allFolded ? 'Expand All' : 'Collapse All', onClick: () => { setFold(Object.fromEntries(teams.map((t) => [t.key, !allFolded]))); setSetsOpenPick(allFolded); setFoldGen((g) => g + 1); } },
+                ]} /></span>
                 {page === 'device' && (
-                  <span className={styles.miniSeg} role="group" aria-label="Group the devices">
+                  <span className={`${styles.miniSeg} ${styles.wide}`} role="group" aria-label="Group the devices">
                     <button type="button" aria-pressed={!byType} onClick={() => onGroup(false)}>By Team</button>
                     <button type="button" aria-pressed={byType} onClick={() => onGroup(true)}>By Type</button>
                   </span>
                 )}
-                {day && page === 'device' && <button type="button" className={styles.linkBtn} aria-pressed={openOnly} onClick={() => onOpenOnly(!openOnly)}>{openOnly ? 'Show All' : 'Unfinished Only'}</button>}
-                {manage && emptyRows.length > 0 && <button type="button" className={styles.linkBtn} onClick={() => setFilling({ station: null })}>Fill {emptyRows.length}<span className={styles.wide}>Empty</span></button>}
-                {day && <button type="button" className={styles.linkBtn} aria-expanded={overview} onClick={() => setOverview((v) => !v)}>{overview ? 'Hide overview' : 'Overview'}</button>}
-                <button type="button" className={styles.linkBtn} onClick={() => { setFold(Object.fromEntries(teams.map((t) => [t.key, !allFolded]))); setSetsOpenPick(allFolded); setFoldGen((g) => g + 1); }}>{allFolded ? 'Expand all' : 'Collapse all'}</button>
+                {day && page === 'device' && <button type="button" className={`${styles.linkBtn} ${styles.wide}`} aria-pressed={openOnly} onClick={() => onOpenOnly(!openOnly)}>{openOnly ? 'Show All' : 'Unfinished Only'}</button>}
+                {manage && emptyRows.length > 0 && <button type="button" className={`${styles.linkBtn} ${styles.wide}`} onClick={() => setFilling({ station: null })}>Fill {emptyRows.length} Empty</button>}
+                {day && <button type="button" className={`${styles.linkBtn} ${styles.wide}`} aria-expanded={overview} onClick={() => setOverview((v) => !v)}>{overview ? 'Hide overview' : 'Overview'}</button>}
+                <button type="button" className={`${styles.linkBtn} ${styles.wide}`} onClick={() => { setFold(Object.fromEntries(teams.map((t) => [t.key, !allFolded]))); setSetsOpenPick(allFolded); setFoldGen((g) => g + 1); }}>{allFolded ? 'Expand all' : 'Collapse all'}</button>
               </div>
               {showList && problems.length > 0 && (
                 <ul className={styles.problemList}>

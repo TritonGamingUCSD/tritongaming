@@ -955,3 +955,15 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
   .teamHeadMain .dTeamSub { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.74rem; }
   .teamHeadMain .statusChip, .teamHeadMain .dTeamNum, .teamHeadMain .dTeamDone, .teamHeadMain .miniTextBtn { flex: none; font-size: 0.74rem; }
 }
+
+/* Phone, inside an event: one row of page tabs (the devices/prizing switch lives in a ··· beside the title), no search box or team chips on Event Day (the ID bar is the search; the list below
+   is the team list), and the ID bar is one row. */
+@media (max-width: 640px) {
+  .groupMenu { margin-left: auto; }
+  .dayMode .pageBarEnd, .dayMode .teamChips { display: none; }
+  .dayForm { flex-wrap: nowrap; align-items: center; }
+  .dayStepPick { flex: 0 0 9rem; min-width: 0; }
+  .dayStepPick .comboInput { padding-left: 0.6rem; padding-right: 1.7rem; font-size: 0.86rem; }
+  .dayForm .dayInput { min-width: 0; }
+  .dayForm button { padding-inline: 0.8rem; }
+}

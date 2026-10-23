@@ -65,6 +65,8 @@ const RESPONSIVE_CSS = `<style>
   .tg-outer{padding:0 !important}
   .tg-card{padding-left:14px !important;padding-right:14px !important}
   .tg-h1{font-size:20px !important}
+  .tg-org{display:block !important}
+  .tg-dot{display:none !important}
   .tg-stub{width:62px !important;padding:8px 4px !important}
   .tg-cover{width:64px !important;padding:6px 6px 6px 0 !important}
   .tg-cover-img{width:56px !important}
@@ -94,10 +96,10 @@ export function eventEmailHtml(o: EventEmailOptions): string {
     ${o.test ? `<tr><td style="background:${SOFT};color:${INK};font-family:${HEAD};font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;text-align:center;padding:6px;border-radius:6px 6px 0 0;">Test email: nobody else got this</td></tr>` : ''}
     <tr><td style="background:#ffffff;border:1px solid ${LINE};border-radius:8px;padding:0;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-        <tr><td style="background:${NAVY};border-radius:7px 7px 0 0;padding:16px 22px;">
+        <tr><td bgcolor="${NAVY}" style="background:${NAVY};border-radius:7px 7px 0 0;padding:16px 22px;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
             <td width="54" style="padding-right:12px;"><img src="${esc(logo)}" width="42" height="42" alt="Triton Gaming" style="display:block;border:0;border-radius:10px;"></td>
-            <td style="font-family:${HEAD};color:#f3f1ea;font-size:16px;letter-spacing:0.16em;text-transform:uppercase;font-weight:800;line-height:1.3;">Triton Gaming<br><span style="font-size:11px;letter-spacing:0.08em;font-weight:600;text-transform:none;color:#c9ccd6;">Gaming Org at UC San Diego</span></td>
+            <td style="font-family:${HEAD};line-height:1.35;"><span class="tg-brand" style="color:#ffffff;font-size:16px;letter-spacing:0.16em;text-transform:uppercase;font-weight:800;">Triton Gaming</span><span class="tg-org" style="color:#c9ccd6;font-size:12px;font-weight:600;white-space:nowrap;"><span class="tg-dot"> &nbsp;·&nbsp; </span>Gaming Org at UC San Diego</span></td>
           </tr></table>
         </td></tr>
         <tr><td style="height:3px;background:${YELLOW};font-size:0;line-height:0;">&nbsp;</td></tr>

@@ -20,7 +20,9 @@ export function RowMenu({ label, items, className }: { label: string; items: (Ro
       const r = ref.current?.querySelector('summary')?.getBoundingClientRect();
       if (!r) return;
       const up = window.innerHeight - r.bottom < 220 && r.top > window.innerHeight - r.bottom;
-      setPos({ position: 'fixed', right: Math.max(8, window.innerWidth - r.right), left: 'auto', ...(up ? { bottom: window.innerHeight - r.top + 4, top: 'auto' } : { top: r.bottom + 4 }) });
+      // The list lines up with the button's right edge, but is never pushed off either side of the screen.
+      const w = Math.min(208, window.innerWidth - 16);
+      setPos({ position: 'fixed', width: w, left: Math.max(8, Math.min(r.right - w, window.innerWidth - w - 8)), right: 'auto', ...(up ? { bottom: window.innerHeight - r.top + 4, top: 'auto' } : { top: r.bottom + 4 }) });
     };
     place();
     const away = (e: PointerEvent) => { if (!ref.current?.contains(e.target as Node)) { ref.current?.removeAttribute('open'); setOpen(false); } };
