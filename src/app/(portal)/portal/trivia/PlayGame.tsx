@@ -108,13 +108,12 @@ export default function PlayGame({ code, onLeave }: { code: string; onLeave: () 
   // A question with a category opens on its category card; the question, its answers and the clock start after it.
   if (q.category && q.startedAt > serverNow()) return frame(title, <CategoryCard category={q.category} n={state.current + 1} total={state.total} />);
   return frame(title, <div style={{ width: '100%', maxWidth: '40rem', display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'left' }}>
-    <div className={styles.row}>{progress}</div>
+    <div className={styles.row}>{progress}<span className={styles.muted} style={{ color: 'rgba(242, 241, 240, 0.75)' }}>Read the question on the big screen</span></div>   {/* theme-ok */}
     <div className={`${styles.clockRow} ${secs <= 5 ? styles.clockLow : ''}`}><Ring left={Math.min(left, q.secs * 1000)} total={q.secs * 1000} low={secs <= 5} /><div className={styles.clock}><div className={styles.clockFill} style={{ width: `${Math.min(100, (left / (q.secs * 1000)) * 100)}%` }} /></div></div>
-    <p className={styles.phoneQuestion}>{q.text}</p>
     {closed && mine === null ? (
       <div style={{ alignSelf: 'center', width: '100%', display: 'flex', justifyContent: 'center' }}>{card('Time’s up', <p className={styles.big}>Too slow!</p>, 'no')}</div>
     ) : (
-      <div className={styles.phoneAnswers}>{q.choices.map((c, i) => <button key={i} type="button" disabled={mine !== null} className={`${styles.ans} ${ansClass(i)} ${mine === i ? styles.picked : mine !== null ? styles.notPicked : ''}`} onClick={() => void answer(i)}><Shape i={i} /><Letter i={i} /><span className={styles.ansText}>{c}</span></button>)}</div>
+      <div className={styles.phoneAnswers}>{q.choices.map((_, i) => <button key={i} type="button" disabled={mine !== null} aria-label={`Answer ${'ABCD'[i]}`} className={`${styles.ans} ${ansClass(i)} ${mine === i ? styles.picked : mine !== null ? styles.notPicked : ''}`} onClick={() => void answer(i)}><Shape i={i} /><Letter i={i} /></button>)}</div>
     )}
     {mine !== null && <div className={styles.lockedCard} style={{ alignSelf: 'center', textAlign: 'center' }}><span className={styles.kicker}>Locked in</span><p className={`${styles.mid} ${styles.waiting}`} style={{ marginTop: '0.6rem' }}>Waiting for the others</p></div>}
     {problem && <p role="alert" className={styles.needs}>{problem}</p>}

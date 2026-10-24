@@ -357,3 +357,9 @@ button.ans:focus-visible { outline: 4px solid var(--paper); outline-offset: 3px;
 .categoryName { margin: 0; font-family: var(--font-soulmaze); font-size: clamp(2.2rem, 8vw, 5rem); line-height: 1.05; text-align: center; overflow-wrap: anywhere; }
 @keyframes categoryIn { from { opacity: 0; transform: scale(0.7) rotate(4deg); } to { opacity: 1; transform: scale(1) rotate(-1deg); } }
 @media (prefers-reduced-motion: reduce) { .categoryCard { animation: none; } }
+
+/* Phones: only the four big shapes, like Kahoot (the question and the answers' words are on the big screen) */
+.phoneAnswers { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(9rem, 30vh); }
+.phoneAnswers .ans { justify-content: center; min-height: 0; padding: 0.5rem; }
+.phoneAnswers .ansShape { position: static; width: 46%; height: auto; max-height: 70%; opacity: 0.92; }
+.phoneAnswers .ansLetter { position: absolute; top: 0.55rem; left: 0.65rem; }
