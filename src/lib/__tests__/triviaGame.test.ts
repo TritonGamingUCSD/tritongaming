@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cleanCode, drawGame, isAskable, makeCode, pointsFor, shuffle, standings, csvToBulk, parseBulk, suggestSecs, topThree, totals, type PoolQuestion } from '../trivia/game';
+import { cleanCode, drawGame, isAskable, makeCode, pointsFor, shuffle, standings, csvToBulk, endStats, parseBulk, suggestSecs, topThree, totals, type PoolQuestion } from '../trivia/game';
 
 const q = (id: string, over: Partial<PoolQuestion> = {}): PoolQuestion => ({ id, text: `Question ${id}`, choices: ['a', 'b', 'c', 'd'], correct: 1, category: 'C', ...over });
 const seeded = (seed = 1) => () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
@@ -159,5 +159,25 @@ describe('CSV import', () => {
     const { questions, problems } = parseBulk(csvToBulk(csv));
     expect(problems).toEqual([]);
     expect(questions.map((q) => [q.text, q.correct])).toEqual([['Capital of France, the city?', 1], ['Biggest planet?', 2]]);
+  });
+});
+
+describe('the end screen facts', () => {
+  const plan = [{ text: 'Easy one' }, { text: 'Hard one' }, { text: 'Middle' }];
+  const list = [{ user_id: 'a', name: 'Ann' }, { user_id: 'b', name: 'Bo' }, { user_id: 'c', name: 'Cy' }];
+  const ans = (user_id: string, q_index: number, ok: boolean, ms = 3000) => ({ user_id, q_index, ok, ms });
+  it('finds the quickest answer, the longest streak, the hardest and the easiest question', () => {
+    const answers = [ans('a', 0, true, 900), ans('b', 0, true), ans('c', 0, true), ans('a', 1, false), ans('b', 1, false), ans('c', 1, true, 400), ans('a', 2, true), ans('b', 2, true), ans('c', 2, false)];
+    const s = endStats(plan, list, answers);
+    expect(s.asked).toBe(3);
+    expect(s.accuracy).toBe(67);
+    expect(s.fastest).toEqual({ name: 'Cy', ms: 400, q: 2 });
+    expect(s.streak).toEqual({ name: 'Cy', n: 2 });
+    expect(s.hardest).toEqual({ q: 2, text: 'Hard one', pct: 33 });
+    expect(s.easiest).toEqual({ q: 1, text: 'Easy one', pct: 100 });
+  });
+  it('says nothing it cannot back up', () => {
+    expect(endStats(plan, list, [])).toEqual({ asked: 0, accuracy: null });
+    expect(endStats(plan, list, [ans('a', 0, false), ans('b', 0, false), ans('c', 0, false)]).hardest).toBeUndefined();
   });
 });

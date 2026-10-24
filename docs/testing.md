@@ -17,7 +17,7 @@ Unit tests cover pure logic (rules, time math, text parsing). When you add a rou
 
 `test:quarters` refuses to run while a real quarter is running today (it adds its own current quarter, which cannot overlap a real one); run it against a test database.
 
-`test:permissions` covers every role against the real routes (it prints how many passed).
+`test:trivia` includes the guest checks (it needs Supabase anonymous sign-ins switched on, and deletes the guests it makes). `test:permissions` covers every role against the real routes (it prints how many passed).
 
 ## Testing against the live database safely
 

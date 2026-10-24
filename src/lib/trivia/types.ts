@@ -3,7 +3,16 @@
 export type GameStatus = 'lobby' | 'question' | 'reveal' | 'done';
 export type PlayerStatus = 'in' | 'blocked' | 'removed';
 
-export interface Placing { name: string; score: number; rank: number }
+export interface Placing { name: string; score: number; rank: number; right?: number }
+/** What the end screen tells about the game as a whole. Each part is left out when there is nothing to say (no right answers, nobody with a streak). */
+export interface EndStats {
+  asked: number;                                          // questions that were asked
+  accuracy: number | null;                                // percent of all answers that were right
+  fastest?: { name: string; ms: number; q: number };      // the quickest right answer (q: question number)
+  streak?: { name: string; n: number };                   // the longest run of right answers
+  hardest?: { q: number; text: string; pct: number };     // the question the fewest got right
+  easiest?: { q: number; text: string; pct: number };     // and the one the most got right
+}
 export interface PlayerResult { pos: number | null; ok: boolean; pts: number; rank: number; score: number; streak?: number }
 
 // What a reveal shows (and, with `final`, what the end of the game shows: the podium and everyone's rank).
@@ -14,6 +23,8 @@ export interface Reveal {
   top: Placing[];                           // top 5 after a question, top 3 at the end
   results: Record<string, PlayerResult>;    // by user id: how each person did (the last question; at the end, the final rank and score)
   of: number;                               // players in the game
+  more?: Placing[];                         // the end only: places 4 to 10
+  stats?: EndStats;                         // the end only: a few facts about the game
 }
 
 export interface PublicState {
@@ -32,5 +43,5 @@ export interface PublicState {
 
 export interface LobbyPlayer { id: string; name: string; status: PlayerStatus; score: number }
 
-export interface QuizRow { id: string; slug: string; name: string; per_game: number; block_winners: boolean; restricted: boolean; locked: boolean; questions: number; ready: number; games: number; last_played: string | null; created_at: string }
+export interface QuizRow { id: string; slug: string; name: string; per_game: number; block_winners: boolean; restricted: boolean; open_to_guests: boolean; locked: boolean; questions: number; ready: number; games: number; last_played: string | null; created_at: string }
 export interface QuestionRow { id: string; sort: number; category: string; image: string; text: string; choices: string[]; correct: number }

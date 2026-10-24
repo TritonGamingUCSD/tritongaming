@@ -29,6 +29,7 @@ export function withLocalAuthCheck<T extends SupabaseClient>(client: T): T {
       app_metadata: (c.app_metadata as User['app_metadata']) ?? {},
       user_metadata: (c.user_metadata as User['user_metadata']) ?? {},
       created_at: '',
+      is_anonymous: c.is_anonymous === true,   // a guest (a Trivia player with no account) must be recognised as one: the proxy and the Trivia routes rely on it
     } as User;
     return { data: { user }, error: null };
   };

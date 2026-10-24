@@ -67,16 +67,17 @@ export default function QuizzesTab({ onOpen, onHost }: { onOpen: (slug: string, 
               <span className={styles.cardKicker}>Quiz</span>
               <h3 className={styles.cardTitle}><button type="button" onClick={() => onOpen(q.slug)}>{q.name}</button></h3>
               <div className={styles.cardMeta}>
+                {q.open_to_guests && <span className={`${styles.badge} ${styles.neutral}`}>Guests welcome</span>}
                 {q.restricted && <span className={`${styles.badge} ${styles.neutral}`}><Lock size={11} aria-hidden="true" /> Private</span>}
                 <span className={`${styles.badge} ${styles.neutral}`}>{q.questions} {q.questions === 1 ? 'question' : 'questions'} in the pool</span>
                 <span className={`${styles.badge} ${styles.neutral}`}>{Math.min(q.per_game, q.ready || q.per_game)} per game</span>
-                <span className={`${styles.badge} ${styles.neutral}`}>{q.games} {q.games === 1 ? 'game' : 'games'}{q.last_played ? ` · last ${new Date(q.last_played).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' })}` : ''}</span>
+                <span className={`${styles.badge} ${styles.neutral}`}>{!q.games ? 'Not played yet' : `Played ${q.games === 1 ? 'once' : `${q.games} times`}${q.last_played ? `, last ${new Date(q.last_played).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' })}` : ''}`}</span>
                 {q.ready < q.questions && <span className={`${styles.badge} ${styles.bad}`}>{q.questions - q.ready} unfinished</span>}
               </div>
               <div className={styles.cardActions}>
                 <Button size="sm" disabled={!q.ready} loading={busy === q.id} onClick={() => void host(q)}>Host Game</Button>
-                <Button size="sm" variant="secondary" onClick={() => onOpen(q.slug)}><Pencil size={13} aria-hidden="true" /> Edit Quiz</Button>
-                <Button size="sm" variant="secondary" onClick={() => onOpen(q.slug, 'games')}>Games</Button>
+                <Button size="sm" variant="secondary" onClick={() => onOpen(q.slug)}><Pencil size={13} aria-hidden="true" /> Edit</Button>
+                <Button size="sm" variant="secondary" onClick={() => onOpen(q.slug, 'games')}>History</Button>
               </div>
             </div>
           ))}

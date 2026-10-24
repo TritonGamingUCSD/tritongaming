@@ -26,7 +26,7 @@ export default function TriviaSectionContent({ canHost }: { canHost: boolean }) 
   useEffect(() => { document.addEventListener('keydown', onUndoKey); return () => { document.removeEventListener('keydown', onUndoKey); clearEdits(); }; }, []);   // Ctrl+Z for cell edits in the question table
 
   if (route.tab === 'play' && route.code) return <PlayEntry code={route.code} onLeave={() => go({ tab: 'play', code: null })} />;
-  if (route.tab === 'host') return <HostGame code={route.code} onLeave={() => go({ tab: 'quizzes', quiz: null, view: 'questions', game: null })} onResults={(quiz) => go(quiz ? { tab: 'quizzes', quiz, view: 'games', game: route.code } : { tab: 'quizzes', quiz: null, view: 'questions', game: null })} />;
+  if (route.tab === 'host') return <HostGame key={route.code} code={route.code} onNewGame={(code) => go({ tab: 'host', code })} onLeave={() => go({ tab: 'quizzes', quiz: null, view: 'questions', game: null })} onResults={(quiz) => go(quiz ? { tab: 'quizzes', quiz, view: 'games', game: route.code } : { tab: 'quizzes', quiz: null, view: 'questions', game: null })} />;
 
   const tabs = [
     { id: 'play' as const, label: 'Play', icon: <Gamepad2 size={15} /> },

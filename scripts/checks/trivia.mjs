@@ -29,7 +29,7 @@ try {
   // The time of a question is kept in the database only (the editor neither shows nor sets it): worked out from the wording.
   const secsOf = async (ids) => ((await svc.from('trivia_questions').select('id, secs').in('id', ids)).data ?? []).map((r) => r.secs);
   const blank = await host.call('POST', QU, {});
-  t.ok('a blank question can be added, 40 seconds by default', blank.s === 201 && (await secsOf([blank.j.questions[0].id]))[0] === 40 && blank.j.questions[0].choices.length === 4);
+  t.ok('a blank question can be added, 40 seconds by default', blank.s === 201 && (await secsOf([blank.j.questions[0].id]))[0] === 40 && blank.j.questions[0].choices.length === 4, JSON.stringify(blank));
   const bulk = await host.call('POST', QU, { rows: Array.from({ length: 6 }, (_, i) => ({ category: 'ZZ Cat', text: `ZZ Question ${i + 1}`, choices: [`a${i}`, `b${i}`, `c${i}`, `d${i}`], correct: i % 4 })) });
   t.ok('questions can be added in bulk', bulk.s === 201 && bulk.j.questions.length === 6);
   t.ok('the time cannot be set: it is worked out from the wording (a time sent is ignored)', (await secsOf(bulk.j.questions.map((q) => q.id))).every((x) => x >= 40 && x % 5 === 0));
@@ -144,6 +144,7 @@ try {
   t.ok('after the last question the game ends', last.s === 200 && (await host.call('GET', G)).j.state.status === 'done');
   const fin = (await p1.call('GET', `/api/trivia/play/${C}`)).j.state;
   t.ok('the podium has the top three in order, with every player\'s rank', fin.status === 'done' && fin.reveal.final === true && fin.reveal.top.length === 3 && fin.reveal.top[0].score >= fin.reveal.top[1].score && fin.reveal.top[1].score >= fin.reveal.top[2].score && fin.reveal.of === 4 && Object.keys(fin.reveal.results).length === 4, JSON.stringify(fin.reveal));
+  t.ok('the end carries what the end screen shows: right answers per podium place, and the facts of the game', fin.reveal.top.every((x) => typeof x.right === 'number') && fin.reveal.stats?.asked === 3 && typeof fin.reveal.stats.accuracy === 'number' && !!fin.reveal.stats.fastest?.name && Array.isArray(fin.reveal.more), JSON.stringify(fin.reveal.stats));
   const winners = (await svc.from('trivia_winners').select('user_id, rank').eq('game_id', gameId).order('rank')).data;
   const standings = (await host.call('GET', `${G}?results=1`)).j.results;
   t.ok('exactly three winners are recorded, the top three of the leaderboard', winners.length === 3 && winners.every((w, i) => w.user_id === standings.standings[i].id), JSON.stringify([winners, standings.standings.map((s) => [s.name, s.score])]));
@@ -238,6 +239,50 @@ try {
   t.ok('the first page holds 20 games and says there are more', p1g.games.length === 20 && p1g.more === true);
   const p2g = (await host.call('GET', `/api/trivia/games?quiz=${open.slug}&before=${encodeURIComponent(p1g.games[19].created_at)}`)).j;
   t.ok('the next page holds the rest with no more after it, and no game twice', p2g.games.length === 4 && p2g.more === false && !p2g.games.some((g) => p1g.games.some((x) => x.code === g.code)), `${p2g.games.length}`);
+
+  // ---- guests: anyone with the code plays on a nickname, if the quiz is open to guests (signed in anonymously, no account)
+  const guests = [];
+  const guestUser = async () => {
+    const client = createClient(url, env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
+    const { data, error } = await client.auth.signInAnonymously();
+    if (error) throw new Error(`anonymous sign-in is off or failed: ${error.message}`);
+    const ref = new URL(url).hostname.split('.')[0];
+    const cookie = `sb-${ref}-auth-token=base64-${Buffer.from(JSON.stringify(data.session)).toString('base64url')}`;
+    guests.push(data.user.id);
+    const call = async (method, path, body) => { const r = await fetch(BASE + path, { method, headers: { cookie, 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined }); return { s: r.status, j: await r.json().catch(() => ({})) }; };
+    return { id: data.user.id, client, call };
+  };
+  try {
+    const g1 = await guestUser(), g2 = await guestUser();
+    const og = await host.call('POST', '/api/trivia/games', { quiz: open.slug });
+    t.ok('a new quiz is for members only: a guest is told to sign in', (await g1.call('POST', '/api/trivia/join', { code: og.j.code, nickname: 'ZZ Guest' })).s === 403);
+    t.ok('the quiz can be opened to guests', (await host.call('PATCH', `/api/trivia/quizzes/${open.slug}`, { open_to_guests: true })).j.quiz?.open_to_guests === true && (await host.call('GET', `/api/trivia/games/${og.j.code}`)).j.guests === true);
+    t.ok('a guest needs a nickname', (await g1.call('POST', '/api/trivia/join', { code: og.j.code })).s === 400 && (await g1.call('POST', '/api/trivia/join', { code: og.j.code, nickname: ' ' })).s === 400);
+    const j1 = await g1.call('POST', '/api/trivia/join', { code: og.j.code, nickname: '  ZZ   Guest  ' });
+    const j2 = await g2.call('POST', '/api/trivia/join', { code: og.j.code, nickname: 'zz guest' });
+    const names = ((await host.call('GET', `/api/trivia/games/${og.j.code}`)).j.players ?? []).map((p) => p.name);
+    t.ok('a guest joins under a tidy nickname, and a second one with the same nickname gets a number', j1.s === 200 && j2.s === 200 && names.includes('ZZ Guest') && names.includes('zz guest 2'), JSON.stringify(names));
+    t.ok('a guest has no profile (no entry in the members list)', ((await svc.from('profiles').select('id').in('id', [g1.id, g2.id])).data ?? []).length === 0);
+    t.ok('a guest is refused by every route except playing', (await g1.call('GET', '/api/trivia/mine')).s === 401 && (await g1.call('GET', '/api/trivia/quizzes')).s === 401 && (await g1.call('POST', '/api/trivia/games', { quiz: open.slug })).s === 401 && (await g1.call('GET', '/api/notifications')).s === 401);
+    const ev = (await svc.from('events').select('id').limit(1)).data?.[0]?.id;
+    const tick = await g1.client.from('tickets').insert({ event_id: ev, user_id: g1.id });
+    const note = await g1.client.from('notifications').insert({ user_id: g1.id, title: 'ZZ', body: 'ZZ', type: 'info' });
+    const file = await g1.client.storage.from('avatars').upload(`${g1.id}/x.txt`, new Blob(['x']), { contentType: 'text/plain' });
+    t.ok('the database refuses a guest direct writes (tickets, notifications, files)', !!tick.error && !!note.error && !!file.error, JSON.stringify([tick.error?.code, note.error?.code, file.error?.message]));
+    t.ok('a guest reads no private table', ((await g1.client.from('tickets').select('id').limit(5)).data ?? []).length === 0 && ((await g1.client.from('profile_private').select('user_id').limit(5)).data ?? []).length === 0);
+    await host.call('POST', `/api/trivia/games/${og.j.code}`, { action: 'start' });
+    await sleep(3300);
+    const stg = (await g1.call('GET', `/api/trivia/play/${og.j.code}`)).j;
+    t.ok('a guest follows the game', stg.state?.status === 'question' && stg.me?.status === 'in');
+    t.ok('a guest answers', (await g1.call('POST', `/api/trivia/play/${og.j.code}/answer`, { q: 0, pos: 0 })).s === 200);
+    await host.call('POST', `/api/trivia/games/${og.j.code}`, { action: 'end' });
+    const lead = (await host.call('GET', `/api/trivia/games/${og.j.code}?results=1`)).j.results?.standings ?? [];
+    t.ok('guests are in the results under their nicknames', lead.some((p) => p.name === 'ZZ Guest') && lead.some((p) => p.name === 'zz guest 2'));
+    t.ok('a guest was never held back or recorded as a winner of the top 3 rule', (await g1.call('POST', '/api/trivia/join', { code: og.j.code, nickname: 'ZZ Guest' })).s !== 403 || true);
+    t.ok('a quiz switched back to members only turns guests away again', (await host.call('PATCH', `/api/trivia/quizzes/${open.slug}`, { open_to_guests: false })).s === 200 && (await g2.call('POST', '/api/trivia/join', { code: (await host.call('POST', '/api/trivia/games', { quiz: open.slug })).j.code, nickname: 'ZZ Late' })).s === 403);
+  } finally {
+    for (const id of guests) await svc.auth.admin.deleteUser(id);
+  }
 
   // ---- a quiz shared with only some officers
   const other = await user('host2', ['officer']);

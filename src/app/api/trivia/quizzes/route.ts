@@ -25,7 +25,7 @@ export async function GET() {
   // A quiz shared with other officers shows to this one as its name and a lock, nothing else.
   const lock = new Set(locked);
   return NextResponse.json({ quizzes: (quizzes.data ?? []).map(({ created_by: _by, ...q }) => lock.has(q.id as string)
-    ? { id: q.id, slug: q.slug, name: q.name, per_game: 0, block_winners: false, restricted: true, locked: true, questions: 0, ready: 0, games: 0, last_played: null, created_at: q.created_at }
+    ? { id: q.id, slug: q.slug, name: q.name, per_game: 0, block_winners: false, restricted: true, open_to_guests: false, locked: true, questions: 0, ready: 0, games: 0, last_played: null, created_at: q.created_at }
     : { ...q, locked: false, questions: total.get(q.id as string) ?? 0, ready: ready.get(q.id as string) ?? 0, games: games.get(q.id as string)?.n ?? 0, last_played: games.get(q.id as string)?.last ?? null }) });
 }
 

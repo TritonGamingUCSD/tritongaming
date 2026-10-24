@@ -13,7 +13,7 @@ export const GAME_COLUMNS = 'id, quiz_id, code, host_id, status, per_game, plan,
 export interface GameRow {
   id: string; quiz_id: string; code: string; host_id: string | null; status: GameStatus; per_game: number; plan: PlannedQuestion[];
   current: number; q_started_at: string | null; q_ends_at: string | null; reveal: Reveal | null; created_at: string; finished_at: string | null;
-  trivia_quizzes?: { name: string; slug: string; block_winners: boolean; restricted: boolean; created_by: string | null } | null;
+  trivia_quizzes?: { name: string; slug: string; block_winners: boolean; restricted: boolean; created_by: string | null; open_to_guests: boolean } | null;
 }
 
 // Who may do what: 'host' (officers and above: write quizzes, host games, see every result) or 'play' (anyone signed in).
@@ -26,8 +26,9 @@ export async function authorizeTrivia(mode: 'host' | 'play') {
   const grants = withGrantedCapabilities(roles ?? [], await loadGrantedCapabilities(svc, user.id).catch(() => []));
   const canHost = hasCapability(grants, 'host_trivia');
   const isAdmin = (roles ?? []).some((r) => r.role === 'admin');
+  const guest = !!user.is_anonymous;   // a player with no account, signed in anonymously for one game
   if (mode === 'host' && !canHost) return { error: NextResponse.json({ error: 'Hosting Trivia is for officers and above.' }, { status: 403 }) };
-  return { user, svc, canHost, isAdmin };
+  return { user, svc, canHost, isAdmin, guest };
 }
 
 export async function displayName(svc: SupabaseClient, userId: string): Promise<string> {
@@ -39,7 +40,7 @@ export async function displayName(svc: SupabaseClient, userId: string): Promise<
 export async function loadGame(svc: SupabaseClient, code: string): Promise<GameRow | null>;
 export async function loadGame(svc: SupabaseClient, code: string, only: 'id'): Promise<{ id: string } | null>;
 export async function loadGame(svc: SupabaseClient, code: string, only?: 'id'): Promise<GameRow | { id: string } | null> {
-  const { data, error } = await svc.from('trivia_games').select(only ? 'id' : `${GAME_COLUMNS}, trivia_quizzes(name, slug, block_winners, restricted, created_by)`).eq('code', code).maybeSingle();
+  const { data, error } = await svc.from('trivia_games').select(only ? 'id' : `${GAME_COLUMNS}, trivia_quizzes(name, slug, block_winners, restricted, created_by, open_to_guests)`).eq('code', code).maybeSingle();
   if (error) throw new Error(`trivia game read failed: ${error.message}`);
   return (data as unknown as GameRow | { id: string } | null) ?? null;
 }
@@ -83,8 +84,8 @@ export function stateOf(g: GameRow, players: number, answered?: number): PublicS
   };
 }
 
-export interface QuizRec { id: string; slug: string; name: string; per_game: number; block_winners: boolean; restricted: boolean; created_by: string | null; created_at: string }
-export const QUIZ_COLUMNS = 'id, slug, name, per_game, block_winners, restricted, created_by, created_at';
+export interface QuizRec { id: string; slug: string; name: string; per_game: number; block_winners: boolean; restricted: boolean; open_to_guests: boolean; created_by: string | null; created_at: string }
+export const QUIZ_COLUMNS = 'id, slug, name, per_game, block_winners, restricted, open_to_guests, created_by, created_at';
 
 // A quiz by its address (the slug) or its id.
 export async function findQuiz(svc: SupabaseClient, idOrSlug: string): Promise<QuizRec | null> {

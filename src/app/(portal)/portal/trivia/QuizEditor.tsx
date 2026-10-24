@@ -27,7 +27,7 @@ import styles from './trivia.module.css';
 const col = (label: string, width: string): Col => ({ label, width });
 const COLS: Col[] = [col('#', '2.2rem'), col('Category', 'minmax(7rem, 0.9fr)'), col('Question', 'minmax(15rem, 3fr)'), col('Picture', '6.8rem'), col('A', 'minmax(9rem, 1.2fr)'), col('B', 'minmax(9rem, 1.2fr)'), col('C', 'minmax(9rem, 1.2fr)'), col('D', 'minmax(9rem, 1.2fr)'), col('', '3rem')];
 
-interface Quiz { id: string; slug: string; name: string; per_game: number; block_winners: boolean; restricted: boolean }
+interface Quiz { id: string; slug: string; name: string; per_game: number; block_winners: boolean; restricted: boolean; open_to_guests: boolean }
 
 // What a question still needs before a game can draw it.
 const missing = (q: Pick<QuestionRow, 'text' | 'choices' | 'category'>) => [...((q.category ?? '').trim() ? [] : ['a category']), ...(q.text.trim() ? [] : ['the question']), ...[0, 1, 2, 3].filter((i) => !(q.choices[i] ?? '').trim()).map((i) => `answer ${LETTERS[i]}`)];
@@ -126,7 +126,7 @@ export default function QuizEditor({ slug, view, game, onBack, onHost, onView }:
         <span className={styles.nameCell}><TextCell value={quiz.name} canEdit strong max={80} onSave={(v) => { if (v) void setting({ name: v }); }} /></span>
         <Button disabled={!ready} loading={busy === 'host'} onClick={() => void host()}>Host Game</Button>
       </div>
-      <SectionTabs label="Quiz" value={view} onChange={(v) => onView(v)} tabs={[{ id: 'questions' as const, label: 'Questions', icon: <HelpCircle size={15} /> }, { id: 'games' as const, label: 'Games', icon: <History size={15} /> }]} />
+      <SectionTabs label="Quiz" value={view} onChange={(v) => onView(v)} tabs={[{ id: 'questions' as const, label: 'Questions', icon: <HelpCircle size={15} /> }, { id: 'games' as const, label: 'History', icon: <History size={15} /> }]} />
       {error && <div role="alert" onClick={() => setError('')}><Notice tone="error">{error}</Notice></div>}
 
       {view === 'games' ? <QuizGames quiz={slug} onOpen={(code) => onView('games', code)} onHost={onHost} reload={0} /> : (
@@ -138,6 +138,9 @@ export default function QuizEditor({ slug, view, game, onBack, onHost, onView }:
               </label>
               <label className={styles.toggleInline} title="The top 3 of a game can’t join this quiz’s next game unless the host lets them in.">
                 <input type="checkbox" checked={quiz.block_winners} onChange={(e) => void setting({ block_winners: e.target.checked })} /> Top 3 can’t replay
+              </label>
+              <label className={styles.toggleInline} title="Anyone with a game's code can play it on the public page with just a nickname, no account. Off: only signed-in members can play.">
+                <input type="checkbox" checked={quiz.open_to_guests} onChange={(e) => void setting({ open_to_guests: e.target.checked })} /> Open to guests
               </label>
               <SharePanel slug={slug} restricted={quiz.restricted} canManage={canManage} onRestricted={(on) => void setting({ restricted: on })} />
             </div>

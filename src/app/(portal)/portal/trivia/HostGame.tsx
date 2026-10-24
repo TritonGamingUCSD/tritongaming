@@ -14,12 +14,13 @@ import styles from './trivia.module.css';
 
 // Running a game: the big screen, in the navy show look. The lobby is one ticket with the QR code and the join code; each question shows the clock and how many have answered; then the answer, how many
 // chose what and the top five; at the end the podium. Everything is a button press here, the server keeps the game; reloading this page picks it up where it was.
-export default function HostGame({ code, onLeave, onResults }: { code: string; onLeave: () => void; onResults: (quizSlug: string) => void }) {
+export default function HostGame({ code, onLeave, onResults, onNewGame }: { code: string; onLeave: () => void; onResults: (quizSlug: string) => void; onNewGame: (code: string) => void }) {
   const { state, host, error, gone, serverNow, reload } = useGame(code, 'host');
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState('');
   const [find, setFind] = useState('');
-  const url = typeof window === 'undefined' ? '' : `${window.location.origin}/portal/trivia/play/${code}`;
+  // A game open to guests points its QR code at the public play page (no account needed); any other at the portal.
+  const url = typeof window === 'undefined' ? '' : `${window.location.origin}${host.guests ? '/play' : '/portal/trivia/play'}/${code}`;
   const q = state?.question;
   const left = useCountdown(state?.status === 'question' ? q?.endsAt : null, serverNow);
   const act = async (body: Record<string, unknown>) => {
@@ -42,9 +43,10 @@ export default function HostGame({ code, onLeave, onResults }: { code: string; o
     return () => clearTimeout(t);
   }, [status, current, everyone, q, code, serverNow, reload, state?.gameId]);
 
-  // After the answer has been shown for 10 seconds with no button pressed the game moves on by itself (the next question, or the podium after the last one).
+  // After the answer has been shown for 10 seconds with no button pressed the game moves on to the next question by itself (never to the podium: after the last question the host presses Show Podium).
   const [nextIn, setNextIn] = useState<number | null>(null);
-  const shown = status === 'reveal' && !!state?.reveal;
+  const lastQuestion = !!state && state.current + 1 >= state.total;
+  const shown = status === 'reveal' && !!state?.reveal && !lastQuestion;   // after the last question the host shows the podium themself
   useEffect(() => {
     if (!shown) { setNextIn(null); return; }
     let left = 10;
@@ -56,6 +58,7 @@ export default function HostGame({ code, onLeave, onResults }: { code: string; o
     }, 1000);
     return () => clearInterval(id);
   }, [shown, current, code, reload]);
+
 
   const frame = (body: React.ReactNode, foot?: React.ReactNode, urgent?: boolean) => (
     <Stage><div className={`${styles.stage} ${urgent ? styles.urgent : ''}`} role="dialog" aria-label="Hosting Trivia"><FloatShapes />
@@ -85,7 +88,7 @@ export default function HostGame({ code, onLeave, onResults }: { code: string; o
         {url && <div className={styles.ticketQr}><TriviaQr url={url} size={230} /></div>}
         <div className={styles.ticketCode}>
           <p className={styles.kicker}>Join the game</p>
-          <p className={styles.how}>Scan the code, or open Trivia in the portal and type</p>
+          <p className={styles.how}>{host.guests ? 'Scan the code, or go to tritongaming.org/play and type' : 'Scan the code, or open Trivia in the portal and type'}</p>
           <div className={styles.codeBig} aria-label={`Join code ${code.split('').join(' ')}`}>{code.split('').map((ch, i) => <span key={i} style={{ ['--i' as string]: i }} aria-hidden="true">{ch}</span>)}</div>
         </div>
       </div>
@@ -121,13 +124,54 @@ export default function HostGame({ code, onLeave, onResults }: { code: string; o
 
   if (state.status === 'done') {
     const top = state.reveal?.top ?? [];
+    const more = state.reveal?.more ?? [];
+    const stats = state.reveal?.stats;
     const order = [top[1], top[0], top[2]];
+    const best = Math.max(1, top[0]?.score ?? 1);
+    const secs = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
+    const cards: { label: string; big: string; small: string }[] = stats ? [
+      ...(stats.fastest ? [{ label: 'Fastest right answer', big: secs(stats.fastest.ms), small: `${stats.fastest.name}, question ${stats.fastest.q}` }] : []),
+      ...(stats.streak ? [{ label: 'Longest streak', big: `${stats.streak.n} in a row`, small: stats.streak.name }] : []),
+      ...(stats.hardest ? [{ label: 'Toughest question', big: `${stats.hardest.pct}% right`, small: `Question ${stats.hardest.q}: ${stats.hardest.text}` }] : []),
+      ...(stats.easiest ? [{ label: 'Easiest question', big: `${stats.easiest.pct}% right`, small: `Question ${stats.easiest.q}: ${stats.easiest.text}` }] : []),
+      ...(stats.accuracy !== null ? [{ label: 'All answers', big: `${stats.accuracy}% right`, small: `${stats.asked} ${stats.asked === 1 ? 'question' : 'questions'} asked` }] : []),
+    ] : [];
     return frame(<>
-      {top.length > 0 && <Confetti delay={3.2} />}
-      <p className={styles.big} style={{ textAlign: 'center' }}>{top.length ? 'And the winners are…' : 'Game over'}</p>
-      {top.length > 0 && <div className={styles.podium}>{order.map((p, i) => p && <div key={i} className={`${styles.step} ${[styles.step2, styles.step1, styles.step3][i]}`}>{p.rank === 1 && <span className={styles.winnerTag}>Winner</span>}<span className={styles.stepRank}>{p.rank}</span><span className={styles.stepName}>{p.name}</span><span className={styles.stepScore}><CountUp value={p.score} ms={1400} format={fmtScore} /> pts</span></div>)}</div>}
+      {top.length > 0 && <Confetti delay={6.2} />}
+      <p className={styles.endTitle}>{top.length ? 'And the winners are…' : 'Game over'}</p>
+      <p className={styles.endSub}>{state.reveal?.of ?? state.players} {(state.reveal?.of ?? state.players) === 1 ? 'player' : 'players'}{stats ? ` · ${stats.asked} ${stats.asked === 1 ? 'question' : 'questions'}` : ''}</p>
+      {top.length > 0 && <div className={styles.podium}>{order.map((p, i) => p && <div key={i} className={`${styles.step} ${[styles.step2, styles.step1, styles.step3][i]}`}>{p.rank === 1 && <span className={styles.winnerTag}>Winner</span>}<span className={styles.stepRank}>{p.rank}</span><span className={styles.stepName}>{p.name}</span><span className={styles.stepScore}><CountUp value={p.score} ms={1600} format={fmtScore} /> pts</span>{stats && stats.asked > 0 && p.right !== undefined && <span className={styles.stepRight}>{p.right} of {stats.asked} right</span>}</div>)}</div>}
+      {(more.length > 0 || cards.length > 0) && (
+        <div className={styles.endGrid}>
+          {more.length > 0 && (
+            <div className={styles.endBoard}>
+              <p className={styles.kicker} style={{ alignSelf: 'flex-start' }}>Also on the board</p>
+              {more.map((p, i) => (
+                <div key={i} className={styles.endRow} style={{ animationDelay: `${8.2 + i * 0.22}s` }}>
+                  <span className={styles.rankNum}>{p.rank}</span><span className={styles.boardName}>{p.name}</span>
+                  <span className={styles.endBar}><span style={{ width: `${Math.max(4, (p.score / best) * 100)}%`, animationDelay: `${8.5 + i * 0.22}s` }} /></span>
+                  <b>{fmtScore(p.score)}</b>
+                </div>
+              ))}
+            </div>
+          )}
+          {cards.length > 0 && (
+            <div className={styles.endStats}>
+              {cards.map((c, i) => (
+                <div key={c.label} className={styles.statCard} style={{ animationDelay: `${9 + i * 0.35}s` }}>
+                  <span className={styles.statLabel}>{c.label}</span><b className={styles.statBig}>{c.big}</b><span className={styles.statSmall}>{c.small}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       {host.blocks && top.length > 0 && <p className={styles.muted} style={{ textAlign: 'center' }}>{top.length === 1 ? 'The winner' : `The top ${top.length}`} can’t join this quiz’s next game unless you let them in.</p>}
-      <div className={styles.controls}><Button onClick={() => onResults(host.quizSlug)}>See Results</Button><Button variant="secondary" onClick={onLeave}>Done</Button></div>
+      <div className={styles.controls}>
+        <Button className={styles.startBtn} loading={busy} onClick={async () => { setBusy(true); const r = await call<{ code: string }>('POST', '/api/trivia/games', { quiz: host.quizSlug }); setBusy(false); if (r.ok) onNewGame(r.data.code); else setProblem(r.error); }}>New Game</Button>
+        <Button variant="secondary" onClick={() => onResults(host.quizSlug)}>See Results</Button>
+        <Button variant="ghost" className={styles.closeBtn} onClick={onLeave}>Done</Button>
+      </div>
     </>);
   }
 

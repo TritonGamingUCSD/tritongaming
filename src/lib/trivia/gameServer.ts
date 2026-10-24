@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { CARD_MS, drawGame, isAskable, makeCode, standings, topThree, totals, type PoolQuestion } from './game';
+import { CARD_MS, drawGame, endStats, isAskable, makeCode, standings, topThree, totals, type PoolQuestion } from './game';
 import { GAME_COLUMNS, broadcast, publicState, stateOf, type GameRow } from './server';
 import type { PlayerResult, Reveal } from './types';
 
@@ -104,10 +104,13 @@ export async function finishGame(svc: SupabaseClient, g: GameRow): Promise<GameR
   // Over first, then the final scores are counted (the same order as a reveal: no answer can be stored after it, none is left out).
   const over = await save(svc, g, g.status, { status: 'done', finished_at: new Date().toISOString() });
   if (!over) return { error: 'That game is over.', status: 409 };
-  const { list } = await standingsNow(svc, g.id);
+  const { list, answers } = await standingsNow(svc, g.id);
   const results: Record<string, PlayerResult> = {};
   for (const p of list) results[p.user_id] = { pos: null, ok: false, pts: 0, rank: p.rank, score: p.score };
-  const reveal: Reveal = { final: true, top: topThree(list).map((p) => ({ name: p.name, score: p.score, rank: p.rank })), results, of: list.length };   // nobody on zero is on the podium
+  const right = new Map<string, number>();
+  for (const a of answers) if (a.ok) right.set(a.user_id, (right.get(a.user_id) ?? 0) + 1);
+  const placing = (p: (typeof list)[number]) => ({ name: p.name, score: p.score, rank: p.rank, right: right.get(p.user_id) ?? 0 });
+  const reveal: Reveal = { final: true, top: topThree(list).map(placing), more: list.filter((p) => p.rank > 3 && p.score > 0).slice(0, 7).map(placing), stats: endStats(g.plan, list, answers), results, of: list.length };   // nobody on zero is on the podium
   const next = await save(svc, over, 'done', { reveal });
   if (!next) return { error: 'That game is over.', status: 409 };
   await setPlayerTotals(svc, g.id, list);

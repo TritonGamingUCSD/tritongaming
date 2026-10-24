@@ -1,3 +1,4 @@
+import type { EndStats } from './types';
 // The rules of a Trivia game, with no database in them so they can be tested on their own.
 
 export const CHOICES = 4;
@@ -184,3 +185,29 @@ export function csvToBulk(input: string): string {
     })
     .join('\n\n');
 }
+
+/** A few facts about the game for the end screen, worked out from every answer. */
+export function endStats(plan: { text: string }[], list: { user_id: string; name: string }[], answers: { user_id: string; q_index: number; ok: boolean; ms: number }[]): EndStats {
+  const name = new Map(list.map((p) => [p.user_id, p.name]));
+  const mine = answers.filter((a) => name.has(a.user_id));
+  const asked = mine.length ? Math.max(...mine.map((a) => a.q_index)) + 1 : 0;
+  const okAnswers = mine.filter((a) => a.ok);
+  const stats: EndStats = { asked, accuracy: mine.length ? Math.round((okAnswers.length / mine.length) * 100) : null };
+  const quick = okAnswers.reduce<(typeof okAnswers)[number] | null>((m, a) => (!m || a.ms < m.ms ? a : m), null);
+  if (quick) stats.fastest = { name: name.get(quick.user_id)!, ms: quick.ms, q: quick.q_index + 1 };
+  let best: { name: string; n: number } | null = null;
+  for (const [id, who] of name) {
+    const had = new Set(mine.filter((a) => a.user_id === id && a.ok).map((a) => a.q_index));
+    let run = 0;
+    for (let i = 0; i < asked; i++) { run = had.has(i) ? run + 1 : 0; if (run >= 2 && (!best || run > best.n)) best = { name: who, n: run }; }
+  }
+  if (best) stats.streak = best;
+  const perQ = Array.from({ length: asked }, (_, q) => { const here = mine.filter((a) => a.q_index === q); return { q, n: here.length, pct: here.length ? Math.round((here.filter((a) => a.ok).length / here.length) * 100) : 0 }; }).filter((x) => x.n >= 3);
+  if (perQ.length >= 2) {
+    const hard = perQ.reduce((m, x) => (x.pct < m.pct ? x : m));
+    const easy = perQ.reduce((m, x) => (x.pct > m.pct ? x : m));
+    if (hard.q !== easy.q) { stats.hardest = { q: hard.q + 1, text: plan[hard.q]?.text ?? '', pct: hard.pct }; stats.easiest = { q: easy.q + 1, text: plan[easy.q]?.text ?? '', pct: easy.pct }; }
+  }
+  return stats;
+}
+

@@ -25,7 +25,8 @@
 .cardTitle { margin: 0; font-family: var(--font-soulmaze); font-weight: 400; font-size: 1.3rem; line-height: 1.15; color: var(--pp-ink); overflow-wrap: anywhere; }
 .cardTitle button { all: unset; cursor: pointer; }
 .cardMeta { display: flex; gap: 0.4rem; flex-wrap: wrap; font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.78); }
-.cardActions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: auto; }
+.cardActions { display: grid; grid-template-columns: 1.35fr 1fr 1fr; gap: 0.5rem; margin-top: auto; }   /* Host Game, Edit and Games in one row of equal height, the main one a little wider */
+.cardActions > * { min-width: 0; justify-content: center; padding-inline: 0.5rem; }
 .newRow { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: flex-end; }
 .newRow > :first-child { flex: 1 1 14rem; min-width: 0; }
 .list { display: flex; flex-direction: column; border-radius: 4px; border: 2px solid var(--pp-ink); background: var(--pp-card); box-shadow: 4px 4px 0 rgba(var(--pp-ink-rgb), 0.8); overflow: hidden; }
@@ -250,14 +251,14 @@ button.ans:focus-visible { outline: 4px solid var(--paper); outline-offset: 3px;
 .boardRow:nth-child(even) { animation-name: slideR; }
 
 /* Podium: third place, then second, a pause, then the winner */
-.step3 { animation-delay: 0.1s; } .step2 { animation-delay: 0.9s; } .step1 { animation-delay: 2.3s; animation-name: riseBig; animation-duration: 1s; }
-.step .stepName, .step .stepScore { animation: textIn 0.6s ease both; }
-.step3 .stepName, .step3 .stepScore { animation-delay: 0.8s; } .step2 .stepName, .step2 .stepScore { animation-delay: 1.6s; } .step1 .stepName, .step1 .stepScore { animation-delay: 3.1s; }
+.step3 { animation-delay: 1.6s; } .step2 { animation-delay: 3.6s; } .step1 { animation-delay: 6s; animation-name: riseBig; animation-duration: 1.2s; }
+.step .stepName, .step .stepScore, .step .stepRight { animation: textIn 0.6s ease both; }
+.step3 .stepName, .step3 .stepScore, .step3 .stepRight { animation-delay: 2.4s; } .step2 .stepName, .step2 .stepScore, .step2 .stepRight { animation-delay: 4.4s; } .step1 .stepName, .step1 .stepScore, .step1 .stepRight { animation-delay: 7s; }
 .step .stepRank { animation: rankPop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-.step3 .stepRank { animation-delay: 0.5s; } .step2 .stepRank { animation-delay: 1.3s; } .step1 .stepRank { animation-delay: 2.8s; }
+.step3 .stepRank { animation-delay: 2.1s; } .step2 .stepRank { animation-delay: 4.1s; } .step1 .stepRank { animation-delay: 6.6s; }
 .step1 { box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55), 0 0 0 0 rgba(255, 199, 44, 0.6); }   /* theme-ok */
-.step1::after { content: ''; position: absolute; inset: -3px; pointer-events: none; border: 3px solid var(--yellow); animation: winnerGlow 1.8s ease-in-out 3.2s infinite; opacity: 0; }
-.winnerTag { animation: tagDrop 0.7s 3.2s cubic-bezier(0.34, 1.56, 0.64, 1) both, wiggle 3s 4s ease-in-out infinite; }
+.step1::after { content: ''; position: absolute; inset: -3px; pointer-events: none; border: 3px solid var(--yellow); animation: winnerGlow 1.8s ease-in-out 7.2s infinite; opacity: 0; }
+.winnerTag { animation: tagDrop 0.7s 7.2s cubic-bezier(0.34, 1.56, 0.64, 1) both, wiggle 3s 8s ease-in-out infinite; }
 .confettiBurst { z-index: 5; }
 .confettiBurst i { top: 35%; animation-name: burstUp; animation-iteration-count: 1; animation-fill-mode: both; }
 
@@ -387,3 +388,35 @@ button.ans:focus-visible { outline: 4px solid var(--paper); outline-offset: 3px;
 .ansShapeSolid { position: static; flex: none; width: 2.6rem; height: 2.6rem; opacity: 1; fill: #fff; filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.35)); }   /* theme-ok */
 .phoneAnswers .ansShapeSolid { width: 46%; height: auto; max-height: 70%; }
 .recapRow .ansShapeSolid { width: 1.5rem; height: 1.5rem; }
+
+/* The public page for guests: a code, a nickname, play (fixed navy show colours, like the game screens) */
+.guestCard { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1rem; width: min(100%, 26rem); padding: 2.2rem 1.5rem 1.6rem; background: var(--paper); color: var(--ink); box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.55); transform: rotate(-0.6deg); text-align: center; }
+.guestHow { margin: 0; font-family: var(--font-futura-medium); font-size: 1rem; line-height: 1.35; color: #2a3550; }   /* theme-ok */
+.guestInput { box-sizing: border-box; width: 100%; padding: 0.7rem 0.9rem; border: 3px solid var(--navy); border-radius: 6px; background: #fff; color: var(--navy); font-family: var(--font-futura-heavy); font-size: 1.4rem; text-align: center; }   /* theme-ok */
+.guestInput:focus { outline: none; box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.8); }   /* theme-ok */
+.guestError { margin: 0; color: #b00036; font-size: 0.95rem; }   /* theme-ok */
+.guestLink { color: #2a3550; font-size: 0.9rem; text-decoration: underline; }   /* theme-ok */
+
+/* The end of a game on the host screen: the title, the podium (3rd, 2nd, then the winner), then the rest of the board and a few facts */
+.endTitle { margin: 0.4rem 0 0; text-align: center; font-family: var(--font-soulmaze); font-weight: 400; font-size: clamp(2rem, 6vw, 4rem); line-height: 1.05; color: #f2f1f0; animation: titleIn 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) both, titleGlow 2.6s ease-in-out 1s infinite; }   /* theme-ok */
+.endSub { margin: 0; text-align: center; font-family: var(--font-futura-medium); font-size: clamp(0.9rem, 2vw, 1.2rem); color: rgba(242, 241, 240, 0.75); animation: textIn 0.6s 0.5s ease both; }   /* theme-ok */
+.stepRight { font-size: 0.78rem; color: #2a3550; }   /* theme-ok */
+.endGrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.4rem; width: 100%; margin-top: 1rem; }
+@media (min-width: 900px) { .endGrid { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: start; } }
+.endBoard { display: flex; flex-direction: column; gap: 0.45rem; }
+.endRow { display: grid; grid-template-columns: 2.4rem minmax(0, 1.2fr) minmax(0, 1fr) auto; align-items: center; gap: 0.7rem; padding: 0.45rem 0.8rem; background: rgba(242, 241, 240, 0.08); border-left: 4px solid var(--yellow); border-radius: 4px; color: #f2f1f0; animation: slideUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; }   /* theme-ok */
+.endBar { height: 0.55rem; border-radius: 999px; background: rgba(242, 241, 240, 0.15); overflow: hidden; }   /* theme-ok */
+.endBar > span { display: block; height: 100%; background: var(--yellow); transform-origin: left; animation: growX 0.9s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.endStats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8rem; }
+.statCard { display: flex; flex-direction: column; gap: 0.25rem; padding: 0.9rem 1rem; background: var(--paper); color: var(--ink); border: 3px solid var(--navy); box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.5); min-width: 0; animation: cardFlip 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.statCard:nth-child(odd) { transform: rotate(-0.8deg); } .statCard:nth-child(even) { transform: rotate(0.8deg); }
+.statLabel { font-family: var(--font-renegare); font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: #5a6580; }   /* theme-ok */
+.statBig { font-family: var(--font-futura-heavy); font-weight: 400; font-size: clamp(1.2rem, 2.6vw, 1.8rem); line-height: 1.1; }
+.statSmall { font-size: 0.85rem; color: #2a3550; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }   /* theme-ok */
+@keyframes titleIn { from { opacity: 0; transform: scale(0.6) translateY(1rem); } to { opacity: 1; transform: none; } }
+@keyframes titleGlow { 0%, 100% { text-shadow: 0 0 0 rgba(255, 199, 44, 0); } 50% { text-shadow: 0 0 1.2rem rgba(255, 199, 44, 0.6); } }   /* theme-ok */
+@keyframes slideUp { from { opacity: 0; transform: translateY(1.4rem); } to { opacity: 1; transform: none; } }
+@keyframes growX { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes cardFlip { from { opacity: 0; transform: perspective(600px) rotateX(-70deg) translateY(1rem); } to { opacity: 1; } }
+@media (max-width: 560px) { .endStats { grid-template-columns: minmax(0, 1fr); } .endRow { grid-template-columns: 2rem minmax(0, 1fr) auto; } .endBar { display: none; } }
+@media (prefers-reduced-motion: reduce) { .endTitle, .endSub, .endRow, .endBar > span, .statCard { animation: none !important; } }

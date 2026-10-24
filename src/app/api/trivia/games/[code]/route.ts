@@ -27,7 +27,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ code
   ]);
   const players: LobbyPlayer[] = (pl.data ?? []).map((p) => ({ id: p.user_id as string, name: p.name as string, status: p.status as LobbyPlayer['status'], score: p.score as number }));
   // The pictures go only to the host's screen (by question number), never to the phones.
-  const body: Record<string, unknown> = { state, images: g.plan.map((p) => p.image ?? ''), players, quizSlug: g.trivia_quizzes?.slug ?? '', blocks: !!g.trivia_quizzes?.block_winners, perGame: g.per_game, ready: pool ? ((pool.data ?? []) as PoolQuestion[]).filter(isAskable).length : null };
+  const body: Record<string, unknown> = { state, images: g.plan.map((p) => p.image ?? ''), players, quizSlug: g.trivia_quizzes?.slug ?? '', blocks: !!g.trivia_quizzes?.block_winners, guests: !!g.trivia_quizzes?.open_to_guests, perGame: g.per_game, ready: pool ? ((pool.data ?? []) as PoolQuestion[]).filter(isAskable).length : null };
   if (wantResults) {
     const rows = (answers?.data ?? []) as { user_id: string; q_index: number; pos: number; ok: boolean }[];
     body.results = {

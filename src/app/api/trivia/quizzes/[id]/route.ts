@@ -28,6 +28,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (typeof b.name === 'string') { const name = b.name.trim().slice(0, 80); if (!name) return NextResponse.json({ error: 'Give the quiz a name.' }, { status: 400 }); patch.name = name; }
   if (b.per_game !== undefined) { const n = Math.round(Number(b.per_game)); if (!Number.isFinite(n) || n < 1 || n > 100) return NextResponse.json({ error: 'A game asks between 1 and 100 questions.' }, { status: 400 }); patch.per_game = n; }
   if (b.block_winners !== undefined) { if (typeof b.block_winners !== 'boolean') return NextResponse.json({ error: 'That setting is on or off.' }, { status: 400 }); patch.block_winners = b.block_winners; }
+  if (b.open_to_guests !== undefined) { if (typeof b.open_to_guests !== 'boolean') return NextResponse.json({ error: 'That setting is on or off.' }, { status: 400 }); patch.open_to_guests = b.open_to_guests; }
   if (b.restricted !== undefined) {
     if (typeof b.restricted !== 'boolean') return NextResponse.json({ error: 'That setting is on or off.' }, { status: 400 });
     if (!auth.isAdmin && quiz.created_by !== auth.user.id) return NextResponse.json({ error: 'Only the quiz’s creator or an Admin can change who it is shared with.' }, { status: 403 });
