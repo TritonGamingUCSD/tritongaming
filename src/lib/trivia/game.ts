@@ -8,6 +8,8 @@ export const MAX_SECS = 120;
 export const MAX_POINTS = 1000;
 /** A question with a category opens on a category card this long (the question and its clock start after it). */
 export const CARD_MS = 3000;
+/** The first question of a game is preceded by a 3-2-1-GO countdown this long (then its category card, if it has one). */
+export const COUNTDOWN_MS = 4000;
 // A tap that reaches the server this long after the clock ran out still counts (phones and networks lag a little).
 export const GRACE_MS = 1500;
 

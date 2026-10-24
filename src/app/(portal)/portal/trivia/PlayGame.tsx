@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, Check, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import Loading from '@/components/Loading/Loading';
 import { call } from './api';
 import { useCountdown, useGame } from './useGame';
-import { Stage, CountUp, FloatShapes, Ring, Confetti, Shape, Tape, CategoryCard, ansClass, fmtScore, ordinal } from './shapes';
+import { CARD_MS } from '@/lib/trivia/game';
+import { Stage, CountUp, FloatShapes, Ring, Confetti, Shape, Tape, CategoryCard, Countdown, ShapeLoader, ansClass, fmtScore, ordinal } from './shapes';
 import styles from './trivia.module.css';
 
 // A game on a phone: join the lobby, tap an answer while the clock runs, see how you did after each question, and your place at the end. The whole screen, in the navy show look.
@@ -49,13 +49,13 @@ export default function PlayGame({ code, onLeave }: { code: string; onLeave: () 
   );
 
   if (gone) return frame('Trivia', card('Oh no', <><p className={styles.big}>That game is gone.</p><p className={styles.mid}>{error || 'It may have been deleted by the host.'}</p><Button onClick={onLeave}>Back</Button></>));
-  if (!state || !me) return frame('Trivia', error ? <p className={styles.mid} role="alert">{error}</p> : <Loading variant="inline" label="Joining…" />);
+  if (!state || !me) return frame('Trivia', error ? <p className={styles.mid} role="alert">{error}</p> : <ShapeLoader label="Joining…" />);
   const title = state.quiz || 'Trivia';
   if (me.status === 'blocked') return frame(title, card('Not this time', <><p className={styles.big}>You can’t play this one again.</p><p className={styles.mid}>You were in the top 3 of an earlier game of this quiz. If the host says it is fine, they can let you in, and this screen will update.</p><Button variant="secondary" onClick={onLeave}>Back</Button></>, 'no'));
   if (me.status === 'removed') return frame(title, card('Out', <><p className={styles.big}>You were taken out of this game.</p><p className={styles.mid}>The host can let you back in.</p><Button variant="secondary" onClick={onLeave}>Back</Button></>, 'no'));
 
   const mineResult = state.reveal?.results[me.userId];
-  if (state.status === 'lobby') return frame(title, card('You’re in', <><p className={styles.big}>Get ready!</p><p className={styles.mid}>Waiting for the host to start…</p><p className={`${styles.mid} ${styles.waiting}`}>{state.players} {state.players === 1 ? 'player' : 'players'} here</p></>, 'ok'));
+  if (state.status === 'lobby') return frame(title, card('You’re in', <><p className={styles.big}>Get ready!</p><p className={styles.mid}>Waiting for the host to start…</p><ShapeLoader label={`${state.players} ${state.players === 1 ? 'player' : 'players'} here`} /></>, 'ok'));
 
   if (state.status === 'done') {
     const r = mineResult;
@@ -71,10 +71,10 @@ export default function PlayGame({ code, onLeave }: { code: string; onLeave: () 
     </>);
   }
 
-  if (!q) return frame(title, <Loading variant="inline" label="Loading…" />);
+  if (!q) return frame(title, <ShapeLoader label="Loading…" />);
   const progress = <span className={`${styles.badge} ${styles.neutral}`}>Question {state.current + 1} of {state.total}</span>;
 
-  if (state.status === 'reveal' && !state.reveal) return frame(title, <p className={`${styles.big} ${styles.pulse}`}>Time’s up!</p>);   // the host closed the question; the answer is being counted
+  if (state.status === 'reveal' && !state.reveal) return frame(title, <><p className={styles.big}>Time’s up!</p><ShapeLoader label="Counting the answers…" /></>);   // the host closed the question; the answer is being counted
   if (state.status === 'reveal') {
     const r = mineResult;
     const right = state.reveal?.correct ?? -1;
@@ -106,6 +106,8 @@ export default function PlayGame({ code, onLeave }: { code: string; onLeave: () 
   const secs = Math.ceil(Math.min(left, q.secs * 1000) / 1000);
   const closed = left <= 0;
   // A question with a category opens on its category card; the question, its answers and the clock start after it.
+  const cardStart = q.startedAt - (q.category ? CARD_MS : 0);
+  if (state.current === 0 && cardStart > serverNow()) return frame(title, <Countdown n={Math.ceil((cardStart - serverNow()) / 1000)} />);   // 3-2-1-GO first
   if (q.category && q.startedAt > serverNow()) return frame(title, <CategoryCard category={q.category} n={state.current + 1} total={state.total} />);
   return frame(title, <div style={{ width: '100%', maxWidth: '40rem', display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'left' }}>
     <div className={styles.row}>{progress}<span className={styles.muted} style={{ color: 'rgba(242, 241, 240, 0.75)' }}>Read the question on the big screen</span></div>   {/* theme-ok */}

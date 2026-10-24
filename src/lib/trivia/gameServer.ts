@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { CARD_MS, drawGame, endStats, isAskable, makeCode, standings, topThree, totals, type PoolQuestion } from './game';
+import { CARD_MS, COUNTDOWN_MS, drawGame, endStats, isAskable, makeCode, standings, topThree, totals, type PoolQuestion } from './game';
 import { GAME_COLUMNS, broadcast, publicState, stateOf, type GameRow } from './server';
 import type { PlayerResult, Reveal } from './types';
 
@@ -39,7 +39,7 @@ async function standingsNow(svc: SupabaseClient, gameId: string) {
 const OPEN = (g: GameRow, index: number) => {
   const q = g.plan[index];
   const now = Date.now();
-  const start = now + (q.category ? CARD_MS : 0);   // a question with a category opens on its category card first; the clock starts after it
+  const start = now + (index === 0 ? COUNTDOWN_MS : 0) + (q.category ? CARD_MS : 0);   // the first question opens with the 3-2-1-GO countdown, a question with a category on its category card; the clock starts after them
   return { status: 'question', current: index, q_started_at: new Date(start).toISOString(), q_ends_at: new Date(start + q.secs * 1000).toISOString(), reveal: null };
 };
 

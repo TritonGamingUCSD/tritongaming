@@ -86,7 +86,7 @@ try {
   // ---- play: 3 questions
   const startAt = Date.now();
   const st = await host.call('POST', G, { action: 'start' });
-  await sleep(3300);   // every question opens on its category card for 3 s; answers sent before it ends are refused
+  await sleep(7400);   // the first question opens with a 4 s countdown and its 3 s category card; answers sent before it ends are refused
   t.ok('the host starts the game', st.s === 200, JSON.stringify(st.j));
   await sleep(1200);
   const live = got.find((m) => m.p?.status === 'question');
@@ -181,7 +181,7 @@ try {
   const go = await host.call('POST', '/api/trivia/games', { quiz: open.slug });
   await winner.call('POST', '/api/trivia/join', { code: go.j.code });
   await host.call('POST', `/api/trivia/games/${go.j.code}`, { action: 'start' });
-  await sleep(3300);   // every question opens on its category card for 3 s; answers sent before it ends are refused
+  await sleep(7400);   // the first question opens with a 4 s countdown and its 3 s category card; answers sent before it ends are refused
   const planO = (await svc.from('trivia_games').select('plan').eq('code', go.j.code).single()).data.plan;
   await winner.call('POST', `/api/trivia/play/${go.j.code}/answer`, { q: 0, pos: planO[0].correct });
   await host.call('POST', `/api/trivia/games/${go.j.code}`, { action: 'end' });
@@ -221,7 +221,7 @@ try {
   const early = (await p1.call('GET', `/api/trivia/play/${cg.j.code}`)).j.state;
   const hostView = (await host.call('GET', `/api/trivia/games/${cg.j.code}`)).j;
   t.ok('the picture goes to the host screen only: not in what a phone is sent', hostView.images.includes(pic3.j.image) && !JSON.stringify(early).includes('trivia-images'), JSON.stringify(hostView.images));
-  t.ok('the question opens with its category, starting a few seconds from now', early.question?.category === 'Gaming' && early.question.startedAt - early.now > 0 && early.question.startedAt - early.now <= 3200, JSON.stringify(early.question && { c: early.question.category, d: early.question.startedAt - early.now }));
+  t.ok('the first question opens with its category, starting after the countdown and the card', early.question?.category === 'Gaming' && early.question.startedAt - early.now > 0 && early.question.startedAt - early.now <= 7300, JSON.stringify(early.question && { c: early.question.category, d: early.question.startedAt - early.now }));
   // Set the clock by hand so this does not depend on how fast the server answers: a start 10 s away, then one that has passed.
   const cgId = (await svc.from('trivia_games').select('id').eq('code', cg.j.code).single()).data.id;
   const clock = (from, to) => svc.from('trivia_games').update({ q_started_at: new Date(Date.now() + from * 1000).toISOString(), q_ends_at: new Date(Date.now() + to * 1000).toISOString() }).eq('id', cgId);
@@ -271,7 +271,7 @@ try {
     t.ok('the database refuses a guest direct writes (tickets, notifications, files)', !!tick.error && !!note.error && !!file.error, JSON.stringify([tick.error?.code, note.error?.code, file.error?.message]));
     t.ok('a guest reads no private table', ((await g1.client.from('tickets').select('id').limit(5)).data ?? []).length === 0 && ((await g1.client.from('profile_private').select('user_id').limit(5)).data ?? []).length === 0);
     await host.call('POST', `/api/trivia/games/${og.j.code}`, { action: 'start' });
-    await sleep(3300);
+    await sleep(7400);
     const stg = (await g1.call('GET', `/api/trivia/play/${og.j.code}`)).j;
     t.ok('a guest follows the game', stg.state?.status === 'question' && stg.me?.status === 'in');
     t.ok('a guest answers', (await g1.call('POST', `/api/trivia/play/${og.j.code}/answer`, { q: 0, pos: 0 })).s === 200);

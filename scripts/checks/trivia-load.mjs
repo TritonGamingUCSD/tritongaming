@@ -49,7 +49,7 @@ try {
   // ---- start while everyone asks for the state
   const t0 = Date.now();
   const [start, ...polls] = await Promise.all([host.call('POST', g.G, { action: 'start' }), ...players.flatMap((p) => [p.call('GET', g.P), p.call('GET', g.P)])]);
-  await sleep(3300);   // every question opens on its category card for 3 s; answers sent before it ends are refused
+  await sleep(7400);   // the first question opens with a 4 s countdown and its 3 s category card; answers sent before it ends are refused
   t.ok('starting the game while every phone is asking for its state works', start.s === 200 && five(polls) === 0, JSON.stringify([start.s, polls.filter((r) => r.s >= 400).slice(0, 2)]));
   await sleep(4000);
   const gotStart = heard.filter((h) => h.states.some((x) => x.s.status === 'question' && x.s.current === 0)).length;
@@ -121,7 +121,7 @@ try {
   const groups = games.map((_, k) => rest.slice(k * per, (k + 1) * per));
   await Promise.all(groups.flatMap((grp, k) => grp.map((p) => p.call('POST', '/api/trivia/join', { code: games[k].code }))));
   const starts = await Promise.all(games.map((x) => host.call('POST', x.G, { action: 'start' })));
-  await sleep(3300);   // every question opens on its category card for 3 s; answers sent before it ends are refused
+  await sleep(7400);   // the first question opens with a 4 s countdown and its 3 s category card; answers sent before it ends are refused
   t.ok('five games start at once', starts.every((r) => r.s === 200), JSON.stringify(starts.map((r) => r.s)));
   const plans = await Promise.all(games.map(async (x) => (await svc.from('trivia_games').select('plan').eq('code', x.code).single()).data.plan));
   const answers = await Promise.all(groups.flatMap((grp, k) => grp.map((p) => p.call('POST', games[k].A, { q: 0, pos: plans[k][0].correct }))));

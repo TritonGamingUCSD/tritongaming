@@ -92,3 +92,34 @@ export function CategoryCard({ category, n, total }: { category: string; n: numb
     </div>
   );
 }
+
+/** 3, 2, 1, GO! for the start of a game: `n` is how many whole seconds are left of the countdown (4 shows 3, 3 shows 2, 2 shows 1, 1 shows GO). */
+export function Countdown({ n }: { n: number }) {
+  const label = n >= 4 ? '3' : n === 3 ? '2' : n === 2 ? '1' : 'GO!';
+  return (
+    <div className={styles.countdown} role="status" aria-label={label === 'GO!' ? 'Go' : `Starting in ${label}`}>
+      <p className={styles.kicker}>Get ready</p>
+      <span key={label} className={`${styles.countNum} ${label === 'GO!' ? styles.countGo : ''}`}>{label}</span>
+      <div className={styles.countRings} aria-hidden="true"><i /><i /><i /></div>
+    </div>
+  );
+}
+
+/** A loading mark in the site's own shapes: the four answer shapes bounce in turn. */
+export function ShapeLoader({ label }: { label?: string }) {
+  return (
+    <div className={styles.loader} role="status" aria-label={label ?? 'Loading'}>
+      <div className={styles.loaderShapes} aria-hidden="true">
+        {[0, 1, 2, 3].map((i) => (
+          <svg key={i} viewBox="0 0 24 24" className={styles.loaderShape} style={{ animationDelay: `${i * 0.14}s` }}>{i === 2 ? <circle cx="12" cy="12" r="10" /> : <path d={['M12 3 22 20H2Z', 'M12 2 22 12 12 22 2 12Z', '', 'M4 4h16v16H4Z'][i]} />}</svg>
+        ))}
+      </div>
+      {label && <p className={styles.loaderLabel}>{label}</p>}
+    </div>
+  );
+}
+
+/** Four coloured bars that sweep across the screen as a new question starts. */
+export function Wipe() {
+  return <div className={styles.wipe} aria-hidden="true">{[0, 1, 2, 3].map((i) => <i key={i} style={{ animationDelay: `${i * 0.07}s` }} />)}</div>;
+}

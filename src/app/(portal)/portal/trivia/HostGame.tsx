@@ -3,12 +3,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Check, UserMinus, UserPlus } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import Loading from '@/components/Loading/Loading';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import { showToast } from '@/lib/ui/toast';
 import { call } from './api';
 import { useCountdown, useGame } from './useGame';
-import { Stage, CountUp, FloatShapes, Ring, Confetti, Shape, Tape, CategoryCard, ansClass, fmtScore } from './shapes';
+import { CARD_MS } from '@/lib/trivia/game';
+import { Stage, CountUp, FloatShapes, Ring, Confetti, Shape, Tape, CategoryCard, Countdown, ShapeLoader, Wipe, ansClass, fmtScore } from './shapes';
 import TriviaQr from './TriviaQr';
 import styles from './trivia.module.css';
 
@@ -75,7 +75,7 @@ export default function HostGame({ code, onLeave, onResults, onNewGame }: { code
   );
 
   if (gone) return frame(<div className={styles.center} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}><p className={styles.big}>That game is gone.</p><p className={styles.mid}>{error}</p><Button onClick={onLeave}>Back</Button></div>);
-  if (!state) return frame(error ? <p className={styles.mid} role="alert">{error}</p> : <Loading variant="inline" label="Opening the game…" />);
+  if (!state) return frame(error ? <p className={styles.mid} role="alert">{error}</p> : <ShapeLoader label="Opening the game…" />);
 
   if (state.status === 'lobby') {
     const inList = host.players.filter((p) => p.status === 'in');
@@ -99,12 +99,12 @@ export default function HostGame({ code, onLeave, onResults, onNewGame }: { code
           <Button variant="ghost" className={styles.closeBtn} onClick={async () => { if (await confirmHold({ title: 'Close this game?', message: 'Nobody has played yet, so nothing is lost.', confirmLabel: 'Hold to close' })) { const r = await call('DELETE', `/api/trivia/games/${code}`); if (r.ok) onLeave(); else setProblem(r.error); } }}>Close Game</Button>
         </div>
         {!max ? <p className={styles.needs}>This quiz has no finished questions yet: each needs text, four answers and a right answer.</p>
-          : !inList.length ? <p className={`${styles.lobbyInfo} ${styles.waiting}`}>Waiting for the first player to join</p> : null}
+          : !inList.length ? <ShapeLoader label="Waiting for the first player to join" /> : null}
       </div>
       {inList.length > 0 && (
         <div className={styles.players}>
           <div className={styles.playersHead}>
-            <span className={styles.kicker}>Players</span><b className={styles.playersCount}>{inList.length}</b>
+            <span className={styles.kicker}>Players</span><b key={inList.length} className={styles.playersCount}>{inList.length}</b>
             {inList.length > 12 && <input className={styles.playerSearch} value={find} placeholder="Find a player" aria-label="Find a player" onChange={(e) => setFind(e.target.value)} />}
           </div>
           <div className={`${styles.chips} ${inList.length > 24 ? styles.chipsDense : ''}`}>
@@ -175,10 +175,13 @@ export default function HostGame({ code, onLeave, onResults, onNewGame }: { code
     </>);
   }
 
-  if (!q) return frame(<Loading variant="inline" label="Loading…" />);
+  if (!q) return frame(<ShapeLoader label="Loading…" />);
   const last = state.current + 1 >= state.total;
   const secs = Math.ceil(Math.min(left, q.secs * 1000) / 1000);
-  const carding = state.status === 'question' && !!q.category && q.startedAt > serverNow();   // the category card shows first; the question and its clock start after it
+  // The first question opens with 3-2-1-GO, then (when it has one) the category card; the question and its clock start after them.
+  const cardStart = q.startedAt - (q.category ? CARD_MS : 0);
+  const counting = state.status === 'question' && state.current === 0 && cardStart > serverNow();
+  const carding = !counting && state.status === 'question' && !!q.category && q.startedAt > serverNow();
   const picture = host.images[state.current] || '';   // the question's picture goes to this screen only, never the phones
   const rv = state.status === 'reveal' ? state.reveal : undefined;
   const maxCount = Math.max(1, ...(rv?.counts ?? [1]));
@@ -186,13 +189,15 @@ export default function HostGame({ code, onLeave, onResults, onNewGame }: { code
     <div className={styles.qTop}>
       <span className={`${styles.badge} ${styles.neutral}`}>Question {state.current + 1} of {state.total}</span>
       <span className={styles.spacer} />
-      {state.status === 'question' && <span className={`${styles.badge} ${styles.good}`}>{state.answered ?? 0} / {state.players} answered</span>}
+      {state.status === 'question' && !counting && !carding && <span className={`${styles.badge} ${styles.good}`}>{state.answered ?? 0} / {state.players} answered</span>}
     </div>
+    {counting && <Countdown n={Math.ceil((cardStart - serverNow()) / 1000)} />}
+    {state.status === 'question' && !counting && <Wipe key={`wipe-${state.current}`} />}
     {carding && <CategoryCard category={q.category!} n={state.current + 1} total={state.total} />}
-    {!carding && state.status === 'question' && <div className={styles.answeredMeter} role="progressbar" aria-label="Players who have answered" aria-valuemin={0} aria-valuemax={state.players} aria-valuenow={state.answered ?? 0}><div className={styles.answeredFill} style={{ width: `${state.players ? Math.min(100, ((state.answered ?? 0) / state.players) * 100) : 0}%` }} /></div>}
-    {!carding && state.status === 'question' && <div className={`${styles.clockRow} ${secs <= 5 ? styles.clockLow : ''}`}><Ring left={Math.min(left, q.secs * 1000)} total={q.secs * 1000} low={secs <= 5} /><div className={styles.clock}><div className={styles.clockFill} style={{ width: `${Math.min(100, (left / (q.secs * 1000)) * 100)}%` }} /></div></div>}
-    {!carding && (
-      <div className={`${styles.qCard} ${picture ? styles.qCardPic : ''}`} key={state.current}>
+    {!counting && !carding && state.status === 'question' && <div className={styles.answeredMeter} role="progressbar" aria-label="Players who have answered" aria-valuemin={0} aria-valuemax={state.players} aria-valuenow={state.answered ?? 0}><div className={styles.answeredFill} style={{ width: `${state.players ? Math.min(100, ((state.answered ?? 0) / state.players) * 100) : 0}%` }} /></div>}
+    {!counting && !carding && state.status === 'question' && <div className={`${styles.clockRow} ${secs <= 5 ? styles.clockLow : ''}`}><Ring left={Math.min(left, q.secs * 1000)} total={q.secs * 1000} low={secs <= 5} /><div className={styles.clock}><div className={styles.clockFill} style={{ width: `${Math.min(100, (left / (q.secs * 1000)) * 100)}%` }} /></div></div>}
+    {!counting && !carding && (
+      <div className={`${styles.qCard} ${picture ? styles.qCardPic : ''}`} key={`question-${state.current}`}>
         <Tape />
         {q.category && <span className={styles.catTag}>{q.category}</span>}
         <div className={`${styles.qMedia} ${picture ? styles.qMediaHas : ''}`}>
@@ -202,7 +207,7 @@ export default function HostGame({ code, onLeave, onResults, onNewGame }: { code
         </div>
       </div>
     )}
-    {!carding && <div className={styles.answers}>
+    {!counting && !carding && <div className={`${styles.answers} ${rv ? styles.answersRevealed : ''}`}>
       {q.choices.map((c, i) => {
         const isRight = rv?.correct === i;
         return (
@@ -217,9 +222,10 @@ export default function HostGame({ code, onLeave, onResults, onNewGame }: { code
     </div>}
     {rv && rv.top.length > 0 && <div className={styles.board}>{rv.top.map((p, i) => <div key={i} className={styles.boardRow}><span className={`${styles.rankNum} ${p.rank === 1 ? styles.rankNum1 : ''}`}>{p.rank}</span><span className={styles.boardName}>{p.name}</span><b><CountUp value={p.score} ms={1000} format={fmtScore} /></b></div>)}</div>}
     <div className={styles.controls}>
-      {state.status === 'question'
+      {state.status === 'question' && (counting || carding) ? <span className={styles.mid}> </span>
+        : state.status === 'question'
         ? <Button variant="secondary" loading={busy} onClick={async () => { closing.current = `${state.gameId}:${current}`; await act({ action: 'reveal' }); await reload(); }}>Reveal Answer</Button>
-        : !rv ? <span className={`${styles.mid} ${styles.pulse}`}>Counting the answers…</span>
+        : !rv ? <ShapeLoader label="Counting the answers…" />
         : <Button className={styles.startBtn} loading={busy} onClick={async () => { await act({ action: 'next' }); await reload(); }}>{last ? 'Show Podium' : 'Next Question'}{nextIn !== null && nextIn > 0 ? ` · ${nextIn}` : ''}</Button>}
     </div>
   </>, undefined, state.status === 'question' && secs <= 5 && left > 0);
