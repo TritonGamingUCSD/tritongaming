@@ -392,7 +392,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, bySpons
             <form className={styles.dayForm} onSubmit={(e) => { e.preventDefault(); submit(); }}>
             <div className={styles.dayStepPick}>
               <Combo value={picked ? stepLabel(stepStats.find((x) => x.step.id === picked)) : `Next: ${auto?.name ?? '–'}`} options={[`Next: ${auto?.name ?? '–'}`, ...stepStats.map((x) => stepLabel(x) ?? '')]} clearable={false} ariaLabel="Step to mark when typing an ID"
-                onChange={(v) => { setPicked(stepStats.find((x) => stepLabel(x) === v)?.step.id ?? ''); setKit(null); input.current?.focus(); }} />
+                onChange={(v) => { setPicked(stepStats.find((x) => stepLabel(x) === v)?.step.id ?? ''); setKit(null); }} />
             </div>
             <Suggest inputRef={input} className={styles.dayInput} value={text} onChange={setText} options={dayIds} placeholder="Type an ID" aria-label={`Device ID for ${step?.name ?? 'the step'}`} autoCapitalize="characters" autoComplete="off" autoCorrect="off" spellCheck={false} enterKeyHint="done" disabled={busy || !step} />
             <Button type="submit" disabled={!text.trim() || busy} loading={busy}>Mark</Button>
@@ -572,7 +572,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, bySpons
                   </div>
                   {day && <div className={styles.dHeads}>
                     {mineStats.map((x) => (
-                      <button key={x.s.id} type="button" className={`${styles.dHead} ${step?.id === x.s.id ? styles.dHeadOn : ''} ${x.total > 0 && x.done === x.total ? styles.dHeadDone : ''}`} onClick={() => { setPicked(x.s.id); setKit(null); input.current?.focus(); }} title={`Type IDs for “${x.s.name}”`}>
+                      <button key={x.s.id} type="button" className={`${styles.dHead} ${step?.id === x.s.id ? styles.dHeadOn : ''} ${x.total > 0 && x.done === x.total ? styles.dHeadDone : ''}`} onClick={() => { setPicked(x.s.id); setKit(null); }} title={`Type IDs for “${x.s.name}”`}>
                         <span>{x.s.name}</span><small>{x.done}/{x.total}</small>
                       </button>
                     ))}
