@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { getProfile, getUserRoles, getMyGender, getViewAs, getViewingUser } from '@/lib/core/auth';
 import { ViewAsBanner, ViewingUserBanner } from '@/components/portal/ViewAs';
 import ViewOnlyGuard from '@/components/portal/ViewOnlyGuard';
+import SessionGuard from '@/components/portal/SessionGuard';
 import { isVerifiedMember, requiresOrgTitle } from '@/lib/portal/capabilities';
 import { getMissingProfileFields } from '@/lib/members/profile';
 import ProfileIncompleteBanner from '@/components/portal/ProfileIncompleteBanner';
@@ -44,6 +45,7 @@ export default async function PortalLayout({ children }: { children: React.React
       <main className={styles.main}>
         {viewAs && <div className={styles.bannerSlot}><ViewAsBanner active={viewAs} /></div>}
         {viewingName && <div className={styles.bannerSlot}><ViewingUserBanner name={viewingName} /></div>}
+        <SessionGuard />
         {viewingName && <ViewOnlyGuard name={viewingName} />}
         <div className={styles.content}>
           <div data-print-hide className={styles.bannerSlot} style={{ display: 'contents' }}>

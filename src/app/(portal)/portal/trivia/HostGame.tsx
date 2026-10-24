@@ -8,7 +8,7 @@ import { showToast } from '@/lib/ui/toast';
 import { call } from './api';
 import { useCountdown, useGame } from './useGame';
 import { CARD_MS } from '@/lib/trivia/game';
-import { Stage, CountUp, FloatShapes, Ring, Confetti, Shape, Tape, CategoryCard, Countdown, ShapeLoader, Wipe, ansClass, fmtScore } from './shapes';
+import { Stage, CountUp, FloatShapes, Ring, Confetti, Shape, Tape, CategoryCard, Countdown, ShapeLoader, Sweep, FitBox, ansClass, fmtScore } from './shapes';
 import TriviaQr from './TriviaQr';
 import styles from './trivia.module.css';
 
@@ -63,6 +63,7 @@ export default function HostGame({ code, onLeave, onResults, onNewGame }: { code
   const frame = (body: React.ReactNode, foot?: React.ReactNode, urgent?: boolean) => (
     <Stage><div className={`${styles.stage} ${urgent ? styles.urgent : ''}`} role="dialog" aria-label="Hosting Trivia"><FloatShapes />
       <div className={styles.stageBar}>
+        {state?.status === 'question' && <Sweep key={`sweep-${state?.current}`} />}
         <button type="button" className={styles.stageBack} onClick={onLeave} aria-label="Leave this screen (the game keeps going)"><ArrowLeft size={18} /></button>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className={styles.logo} src="/logos/tg_logo.png" alt="" />
@@ -70,7 +71,7 @@ export default function HostGame({ code, onLeave, onResults, onNewGame }: { code
         <span className={`${styles.badge} ${styles.neutral} ${styles.spacer}`}>{state?.players ?? 0} {state?.players === 1 ? 'player' : 'players'}</span>
         {state && state.status !== 'done' && state.status !== 'lobby' && <Button size="sm" variant="secondary" onClick={async () => { if (await confirmHold({ title: 'End this game now?', message: 'The podium is shown with the scores so far.', confirmLabel: 'Hold to end' })) await act({ action: 'end' }); }}>End Game</Button>}
       </div>
-      <div className={styles.stageBody}>{body}{problem && <p role="alert" className={styles.needs} style={{ textAlign: 'center' }}>{problem}</p>}{foot}</div>
+      <FitBox className={styles.stageBody}>{body}{problem && <p role="alert" className={styles.needs} style={{ textAlign: 'center' }}>{problem}</p>}{foot}</FitBox>
     </div></Stage>
   );
 
@@ -194,7 +195,6 @@ export default function HostGame({ code, onLeave, onResults, onNewGame }: { code
       {state.status === 'question' && !counting && !carding && <span className={`${styles.badge} ${styles.good}`}>{state.answered ?? 0} / {state.players} answered</span>}
     </div>
     {counting && <Countdown n={Math.ceil((cardStart - serverNow()) / 1000)} />}
-    {state.status === 'question' && !counting && <Wipe key={`wipe-${state.current}`} />}
     {carding && <CategoryCard category={q.category!} n={state.current + 1} total={state.total} />}
     {!counting && !carding && state.status === 'question' && <div className={styles.answeredMeter} role="progressbar" aria-label="Players who have answered" aria-valuemin={0} aria-valuemax={state.players} aria-valuenow={state.answered ?? 0}><div className={styles.answeredFill} style={{ width: `${state.players ? Math.min(100, ((state.answered ?? 0) / state.players) * 100) : 0}%` }} /></div>}
     {!counting && !carding && state.status === 'question' && <div className={`${styles.clockRow} ${secs <= 5 ? styles.clockLow : ''}`}><Ring left={Math.min(left, q.secs * 1000)} total={q.secs * 1000} low={secs <= 5} /><div className={styles.clock}><div className={styles.clockFill} style={{ width: `${Math.min(100, (left / (q.secs * 1000)) * 100)}%` }} /></div></div>}

@@ -51,7 +51,7 @@ try {
   const U = (r) => users[r].id;
 
   // ── Meetings: who can plan ──────────────────────────────────────────────────
-  const meetingBody = { title: 'Perm check', repeat: 'once', date: today, ...todayWindow(-5, 60), audience: [], invitees: [U('officer'), U('lead')], group_ids: [] };
+  const meetingBody = { title: 'Perm check', repeat: 'once', date: today, ...todayWindow(-5, 60), audience: [], invitees: [U('officer'), U('lead')], group_ids: [], open_to_team: false };   // "not listed" must really mean not allowed here, so the per-meeting team switch is off
   check('officer cannot plan meetings', (await call('officer', '/api/meetings/schedule', 'POST', meetingBody))[0] === 403);
   check('recruit cannot plan meetings', (await call('recruit', '/api/meetings/schedule', 'POST', meetingBody))[0] === 403);
   const [s1, m1] = await call('exec', '/api/meetings/schedule', 'POST', meetingBody); check('exec can plan meetings', s1 === 201);

@@ -33,7 +33,7 @@ export const Tape = () => <span className={styles.tape} aria-hidden="true" />;
 // `delay` holds it back (the podium waits for the steps to rise); `burst` is the short pop on a phone after a right answer instead of a long fall.
 const BITS = Array.from({ length: 34 }, (_, i) => ({ left: `${(i * 37 + 11) % 100}%`, delay: ((i * 53) % 40) / 10, dur: 3.4 + ((i * 29) % 20) / 10, drift: ((i * 17) % 9) - 4 }));
 export function Confetti({ delay = 0, burst = false }: { delay?: number; burst?: boolean }) {
-  return <div className={`${styles.confetti} ${burst ? styles.confettiBurst : ''}`} aria-hidden="true">{BITS.slice(0, burst ? 18 : BITS.length).map((b, i) => <i key={i} style={{ left: b.left, animationDelay: `${delay + (burst ? b.delay / 8 : b.delay)}s`, animationDuration: `${burst ? 1.6 + b.dur / 6 : b.dur}s`, ['--drift' as string]: `${b.drift * 3}vw` }} />)}</div>;
+  return <OnTop><div className={`${styles.confetti} ${burst ? styles.confettiBurst : ''}`} aria-hidden="true">{BITS.slice(0, burst ? 18 : BITS.length).map((b, i) => <i key={i} style={{ left: b.left, animationDelay: `${delay + (burst ? b.delay / 8 : b.delay)}s`, animationDuration: `${burst ? 1.6 + b.dur / 6 : b.dur}s`, ['--drift' as string]: `${b.drift * 3}vw` }} />)}</div></OnTop>;
 }
 
 /** Slow shapes drifting behind the live screens (the four answer shapes, in the site's colours). */
@@ -119,7 +119,51 @@ export function ShapeLoader({ label }: { label?: string }) {
   );
 }
 
-/** Four coloured bars that sweep across the screen as a new question starts. */
-export function Wipe() {
-  return <div className={styles.wipe} aria-hidden="true">{[0, 1, 2, 3].map((i) => <i key={i} style={{ animationDelay: `${i * 0.07}s` }} />)}</div>;
+/** A thin light line that runs along the bottom of the top bar once as a new question starts: a quiet cue, nothing over the question. */
+export function Sweep() {
+  return <i className={styles.barSweep} aria-hidden="true" />;
+}
+
+/** Drawn straight onto the page body, over everything (the game body is zoomed to fit, which would also zoom a full-screen layer inside it). */
+function OnTop({ children }: { children: ReactNode }) {
+  const [on, setOn] = useState(false);
+  useEffect(() => { setOn(true); }, []);
+  return on ? createPortal(children, document.body) : null;
+}
+
+/**
+ * The body of a game screen, which never scrolls: when what is on it is taller than the room it has (a short window, a phone held sideways, a long end screen), it is shrunk to fit, down to 40%.
+ * Nothing slides under the top bar, and nobody has to scroll a screen that is being shown on a projector.
+ */
+export function FitBox({ className, children }: { className: string; children: ReactNode }) {
+  const outer = useRef<HTMLDivElement>(null);
+  const inner = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const fit = () => {
+      const o = outer.current, i = inner.current;
+      if (!o || !i) return;
+      const cs = getComputedStyle(o);
+      const room = o.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+      if (room <= 0) return;
+      // The biggest size that fits, tried from full size down. Always starting from full size (and never working it out from the size it is at now) is what keeps this steady:
+      // text re-wraps as it shrinks, so its height does not shrink in proportion and a size worked out from the current one would flip back and forth.
+      let z = 1;
+      for (; z > 0.4; z = Math.round((z - 0.02) * 100) / 100) {
+        i.style.zoom = String(z);
+        if (i.getBoundingClientRect().height <= room + 0.5) break;
+      }
+      i.style.zoom = String(Math.max(z, 0.4));
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    if (outer.current) ro.observe(outer.current);
+    if (inner.current) ro.observe(inner.current);
+    window.addEventListener('resize', fit);
+    return () => { ro.disconnect(); window.removeEventListener('resize', fit); };
+  }, []);
+  return (
+    <div ref={outer} className={`${className} ${styles.fitOuter}`}>
+      <div ref={inner} className={styles.fitInner}>{children}</div>
+    </div>
+  );
 }

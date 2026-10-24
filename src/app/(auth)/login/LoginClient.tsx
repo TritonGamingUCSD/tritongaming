@@ -35,9 +35,19 @@ function GoogleIcon() {
 // one is for guests at public events, who sign in with any Google account.
 export default function LoginClient({ next }: { next?: string }) {
   const [loading, setLoading] = useState<'ucsd' | 'guest' | null>(null);
+  const [down, setDown] = useState(false);
 
   async function handleGoogleSignIn(ucsd: boolean) {
     setLoading(ucsd ? 'ucsd' : 'guest');
+    setDown(false);
+    // Google sign-in hands the browser over to Supabase; when Supabase is not answering that would sit on "Redirecting" for good, so check first (an opaque answer is enough, only silence matters).
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/health`, { mode: 'no-cors', cache: 'no-store', signal: AbortSignal.timeout(8000) });
+    } catch {
+      setLoading(null);
+      setDown(true);
+      return;
+    }
     const supabase = createClient();
     const origin = window.location.origin;
     // `next` rides along in this URL because it is the one thing that survives the round trip out to Google and back (auth/callback/route.ts reads it).
@@ -75,6 +85,7 @@ export default function LoginClient({ next }: { next?: string }) {
       {loading === 'guest' ? <span className={`${styles.spinner} ${styles.spinnerDark}`} aria-hidden="true" /> : <GoogleIcon />}
       {loading === 'guest' ? 'Redirecting…' : 'Sign in with Google'}
     </button>
+    {down && <p className={styles.who} role="alert">Can&apos;t reach the sign-in service right now. Please try again in a minute.</p>}
     </>
   );
 }

@@ -6,7 +6,7 @@ import Button from '@/components/ui/Button';
 import { call } from './api';
 import { useCountdown, useGame } from './useGame';
 import { CARD_MS } from '@/lib/trivia/game';
-import { Stage, CountUp, FloatShapes, Ring, Confetti, Shape, Tape, CategoryCard, Countdown, ShapeLoader, ansClass, fmtScore, ordinal } from './shapes';
+import { Stage, CountUp, FloatShapes, Ring, Confetti, Shape, Tape, CategoryCard, Countdown, ShapeLoader, FitBox, ansClass, fmtScore, ordinal } from './shapes';
 import styles from './trivia.module.css';
 
 // A game on a phone: join the lobby, tap an answer while the clock runs, see how you did after each question, and your place at the end. The whole screen, in the navy show look.
@@ -41,7 +41,7 @@ export default function PlayGame({ code, onLeave }: { code: string; onLeave: () 
         <b>{title}</b>
         {state && <span className={`${styles.badge} ${styles.neutral} ${styles.spacer}`}>{state.players} {state.players === 1 ? 'player' : 'players'}</span>}
       </div>
-      <div className={`${styles.stageBody} ${styles.center}`}>{body}</div>
+      <FitBox className={`${styles.stageBody} ${styles.center}`}>{body}</FitBox>
     </div></Stage>
   );
   const card = (kicker: string, children: React.ReactNode, tone?: 'ok' | 'no') => (

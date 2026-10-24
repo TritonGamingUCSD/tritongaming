@@ -52,8 +52,8 @@ export async function checkInWithCode(code: string): Promise<Outcome> {
     if (isMeeting && isTicket) return { kind: 'choose', code, meeting: m.json.title, ticket: `${t.json.user_name}${t.json.event_title ? ` · ${t.json.event_title}` : ''}` };
     if (isMeeting) return await resolveChoice(code, 'meeting');
     if (isTicket) return await resolveChoice(code, 'ticket');
-    // Neither: say why. A meeting that is not open yet, or one the person may not join, is the more useful answer; someone who may not scan tickets gets a 403 here.
-    if (m.status === 409 || m.status === 403) return { kind: 'error', message: m.json.error };
+    // Neither: say why. A meeting that is not open yet is the more useful answer. (A 403 is not: meetings and tickets are for staff, so every ordinary member gets one for any code, and their code may be a Trivia game's.)
+    if (m.status === 409) return { kind: 'error', message: m.json.error };
     // Not a meeting or a ticket: a Trivia game with that code is joined (a code that is none of the three is told so).
     const game = await post('/api/trivia/join', { code });
     if (game.ok) return { kind: 'trivia', code };
