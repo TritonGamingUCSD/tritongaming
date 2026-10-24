@@ -29,6 +29,7 @@
     "test:logistics-requests": "node scripts/checks/logistics-requests.mjs",
     "test:trivia": "node scripts/checks/trivia.mjs",
     "test:trivia-load": "node scripts/checks/trivia-load.mjs",
+    "test:tickets-load": "node scripts/checks/tickets-load.mjs",
     "test:event-emails": "node scripts/checks/event-emails.mjs",
     "check:theme": "node scripts/check-theme.mjs",
     "docs:roles": "node scripts/roles-doc.mjs"

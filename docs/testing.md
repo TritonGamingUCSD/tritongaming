@@ -13,7 +13,7 @@ Unit tests cover pure logic (rules, time math, text parsing). When you add a rou
 
 ## Scripts that drive the real app
 
-`scripts/checks/*.mjs` (`npm run test:permissions`, `test:strikes`, `test:quarters`, `test:teamyears`, `test:series-absence`, `test:plans`, `test:emojis`, `test:questions`, `test:logistics`, `test:logistics-plans`, `test:logistics-prizes`, `test:logistics-requests`, `test:trivia`, `test:trivia-load`) run against a **running dev server** and the Supabase project in `.env.local`. Each creates temporary accounts (named `ZZ Mtg ...`, so a dev server with `DEV_NOTIFY_TEST_ONLY=1` never notifies anyone real), drives the real routes as each of them, and deletes what it made. They share `scripts/checks/lib.mjs`, so a new check starts with `accounts('tag')` and `tracker()`.
+`scripts/checks/*.mjs` (`npm run test:permissions`, `test:strikes`, `test:quarters`, `test:teamyears`, `test:series-absence`, `test:plans`, `test:emojis`, `test:questions`, `test:logistics`, `test:logistics-plans`, `test:logistics-prizes`, `test:logistics-requests`, `test:trivia`, `test:trivia-load`, `test:tickets-load`) run against a **running dev server** and the Supabase project in `.env.local`. Each creates temporary accounts (named `ZZ Mtg ...`, so a dev server with `DEV_NOTIFY_TEST_ONLY=1` never notifies anyone real), drives the real routes as each of them, and deletes what it made. They share `scripts/checks/lib.mjs`, so a new check starts with `accounts('tag')` and `tracker()`.
 
 `test:quarters` refuses to run while a real quarter is running today (it adds its own current quarter, which cannot overlap a real one); run it against a test database.
 
