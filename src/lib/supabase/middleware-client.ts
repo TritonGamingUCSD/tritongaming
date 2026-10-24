@@ -2,6 +2,9 @@ import { createServerClient } from '@supabase/ssr';
 import { withLocalAuthCheck } from '@/lib/supabase/localAuth';
 import { NextResponse, type NextRequest } from 'next/server';
 
+// The only routes a guest may call: joining a game, following and answering it, and the sign-in plumbing.
+const GUEST_API = ['/api/trivia/join', '/api/trivia/play/', '/api/auth/'];
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -39,8 +42,15 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
+  // A guest (a Trivia player signed in anonymously, with no account) is not "signed in" anywhere in the site: the portal sends them to sign in, and the APIs refuse them except the few that play a game.
+  // (The database refuses them on every table and bucket as well, see the "no anonymous sessions" policies.)
+  const guest = !!user?.is_anonymous;
+  if (guest && pathname.startsWith('/api/') && !GUEST_API.some((p) => pathname === p || pathname.startsWith(p))) {
+    return NextResponse.json({ error: 'Sign in to do that.' }, { status: 401 });
+  }
+
   // Redirect unauthenticated users away from portal
-  if (pathname.startsWith('/portal') && !user) {
+  if (pathname.startsWith('/portal') && (!user || guest)) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     url.search = '';
@@ -49,7 +59,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Redirect authenticated users away from login
-  if (pathname === '/login' && user) {
+  if (pathname === '/login' && user && !guest) {
     const next = request.nextUrl.searchParams.get('next') || '/portal';
     const url = request.nextUrl.clone();
     url.pathname = next;
