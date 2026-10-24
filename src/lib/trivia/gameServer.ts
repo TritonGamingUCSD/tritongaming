@@ -1,20 +1,20 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { drawGame, isAskable, makeCode, standings, topThree, totals, type PoolQuestion } from './game';
+import { CARD_MS, drawGame, isAskable, makeCode, standings, topThree, totals, type PoolQuestion } from './game';
 import { GAME_COLUMNS, broadcast, publicState, stateOf, type GameRow } from './server';
 import type { PlayerResult, Reveal } from './types';
 
 const SELECT = `${GAME_COLUMNS}, trivia_quizzes(name, slug)`;
 const asGame = (d: unknown) => d as GameRow;
 
-// Practice games save nothing for good: any older than a day are cleared whenever a new game is made.
-async function clearOldPractice(svc: SupabaseClient) {
-  await svc.from('trivia_games').delete().eq('practice', true).lt('created_at', new Date(Date.now() - 24 * 3600 * 1000).toISOString());
+// A lobby nobody opened a game from for hours is left over from a screen that was closed: clear those whenever a new game is made.
+async function clearStaleLobbies(svc: SupabaseClient) {
+  await svc.from('trivia_games').delete().eq('status', 'lobby').lt('created_at', new Date(Date.now() - 6 * 3600 * 1000).toISOString());
 }
 
-export async function createGame(svc: SupabaseClient, quiz: { id: string; per_game: number }, hostId: string, practice: boolean): Promise<GameRow | null> {
-  await clearOldPractice(svc);
+export async function createGame(svc: SupabaseClient, quiz: { id: string; per_game: number }, hostId: string): Promise<GameRow | null> {
+  await clearStaleLobbies(svc);
   for (let i = 0; i < 8; i++) {
-    const { data, error } = await svc.from('trivia_games').insert({ quiz_id: quiz.id, code: makeCode(), host_id: hostId, practice, per_game: quiz.per_game }).select(SELECT).single();
+    const { data, error } = await svc.from('trivia_games').insert({ quiz_id: quiz.id, code: makeCode(), host_id: hostId, per_game: quiz.per_game }).select(SELECT).single();
     if (data) return asGame(data);
     if (error && error.code !== '23505') return null;   // anything but a code clash is a real failure
   }
@@ -39,7 +39,8 @@ async function standingsNow(svc: SupabaseClient, gameId: string) {
 const OPEN = (g: GameRow, index: number) => {
   const q = g.plan[index];
   const now = Date.now();
-  return { status: 'question', current: index, q_started_at: new Date(now).toISOString(), q_ends_at: new Date(now + q.secs * 1000).toISOString(), reveal: null };
+  const start = now + (q.category ? CARD_MS : 0);   // a question with a category opens on its category card first; the clock starts after it
+  return { status: 'question', current: index, q_started_at: new Date(start).toISOString(), q_ends_at: new Date(start + q.secs * 1000).toISOString(), reveal: null };
 };
 
 async function save(svc: SupabaseClient, g: GameRow, from: GameRow['status'], patch: Record<string, unknown>): Promise<GameRow | null> {
@@ -55,7 +56,7 @@ async function push(svc: SupabaseClient, g: GameRow) {
 export async function startGame(svc: SupabaseClient, g: GameRow, count: number): Promise<GameRow | { error: string; status: number }> {
   if (g.status !== 'lobby') return { error: 'That game already started.', status: 409 };
   const [pool, used, inCount] = await Promise.all([
-    svc.from('trivia_questions').select('id, text, choices, correct, secs').eq('quiz_id', g.quiz_id).order('sort').limit(1000),
+    svc.from('trivia_questions').select('id, text, choices, correct, category').eq('quiz_id', g.quiz_id).order('sort').limit(1000),
     svc.from('trivia_games').select('plan').eq('quiz_id', g.quiz_id).neq('id', g.id).limit(500),
     svc.from('trivia_players').select('user_id', { count: 'exact', head: true }).eq('game_id', g.id).eq('status', 'in'),
   ]);
@@ -85,7 +86,9 @@ export async function revealQuestion(svc: SupabaseClient, g: GameRow): Promise<G
   const results: Record<string, PlayerResult> = {};
   for (const p of list) {
     const a = answers.find((x) => x.q_index === g.current && x.user_id === p.user_id);
-    results[p.user_id] = { pos: a?.pos ?? null, ok: !!a?.ok, pts: a?.points ?? 0, rank: p.rank, score: p.score };
+    let streak = 0;   // right answers in a row, ending with this question
+    for (let i = g.current; i >= 0 && answers.some((x) => x.q_index === i && x.user_id === p.user_id && x.ok); i--) streak++;
+    results[p.user_id] = { pos: a?.pos ?? null, ok: !!a?.ok, pts: a?.points ?? 0, rank: p.rank, score: p.score, streak };
   }
   const reveal: Reveal = { correct: q.correct, counts, top: list.slice(0, 5).map((p) => ({ name: p.name, score: p.score, rank: p.rank })), results, of: list.length };
   const next = await save(svc, closed, 'reveal', { reveal });
@@ -108,8 +111,8 @@ export async function finishGame(svc: SupabaseClient, g: GameRow): Promise<GameR
   const next = await save(svc, over, 'done', { reveal });
   if (!next) return { error: 'That game is over.', status: 409 };
   await setPlayerTotals(svc, g.id, list);
-  if (!g.practice) {
-    await svc.from('trivia_winners').delete().eq('game_id', g.id);
+  await svc.from('trivia_winners').delete().eq('game_id', g.id);
+  if (g.trivia_quizzes?.block_winners) {   // the quiz's setting: its top three can't join the next game of this quiz
     const winners = topThree(list);
     if (winners.length) await svc.from('trivia_winners').insert(winners.map((w, i) => ({ game_id: g.id, quiz_id: g.quiz_id, user_id: w.user_id, rank: Math.min(3, i + 1) })));
   }

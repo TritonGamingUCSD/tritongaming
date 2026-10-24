@@ -96,7 +96,7 @@ export default function CheckInOutcome({ outcome, onDone, onConfirmReward, onCho
     <div className={`${styles.box} ${bare ? styles.bare : ''}`}>
       <span className={`${styles.icon} ${styles.bad}`}><CircleAlert size={32} aria-hidden="true" /></span>
       <strong className={styles.title}>Didn’t work</strong>
-      <span className={styles.detail}>{outcome.message}</span>
+      <span className={styles.detail}>{outcome.kind === 'error' ? outcome.message : ''}</span>
       <Button onClick={onDone}>Try Again</Button>
     </div>
   );

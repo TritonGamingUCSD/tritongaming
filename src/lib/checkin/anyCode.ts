@@ -1,5 +1,5 @@
 // One way in for everything a person can check in with. The portal's scanner and its code box both end up here, and what comes back says plainly what was done:
-//   • six typed digits: a meeting's code first, then (for staff) a ticket for an event that can still be checked into
+//   • six typed digits: a meeting's code first, then (for staff) a ticket for an event that can still be checked into, and last a Trivia game's join code (which joins that game)
 //   • a TGcode read by the scanner (`tg:` and `m…`, `t…` or `r…` with 8 (or, in the first format, 12) hex digits):
 //       meeting (`m`) checks the person in to that meeting · ticket (`t`) checks that ticket in (staff) · reward pickup (`r`) looks the reward up so staff can confirm it
 // Which of these a person may do is decided by the server; this only asks, in order, and reports.
@@ -11,6 +11,8 @@ export type Outcome =
   | { kind: 'rewardDone'; title: string; member: string }
   /** The six digits are valid for both a meeting and a ticket at once (a one-in-a-million coincidence): the person picks which one is meant. */
   | { kind: 'choose'; code: string; meeting: string; ticket: string }
+  /** The six digits were a Trivia game's join code: the person has joined it and the screen opens the game. */
+  | { kind: 'trivia'; code: string }
   | { kind: 'error'; message: string };
 
 export const TGCODE = /^tg:([mtr])([0-9a-f]{8}|[0-9a-f]{12})$/;   // the key is 8 hex digits in a code of the current format, 12 in the first one
@@ -52,7 +54,11 @@ export async function checkInWithCode(code: string): Promise<Outcome> {
     if (isTicket) return await resolveChoice(code, 'ticket');
     // Neither: say why. A meeting that is not open yet, or one the person may not join, is the more useful answer; someone who may not scan tickets gets a 403 here.
     if (m.status === 409 || m.status === 403) return { kind: 'error', message: m.json.error };
-    if (t.status === 404 || t.status === 403) return { kind: 'error', message: 'That code isn’t a meeting or ticket code right now. Check the screen for the current one.' };
+    // Not a meeting or a ticket: a Trivia game with that code is joined (a code that is none of the three is told so).
+    const game = await post('/api/trivia/join', { code });
+    if (game.ok) return { kind: 'trivia', code };
+    if (game.status === 403 || game.status === 409) return { kind: 'error', message: game.json.error };
+    if (t.status === 404 || t.status === 403) return { kind: 'error', message: 'That code isn’t a meeting, ticket or Trivia game code right now. Check the screen for the current one.' };
     return { kind: 'error', message: t.json.error || m.json.error || 'Check-in failed.' };
   } catch { return { kind: 'error', message: 'No connection, or it is taking too long. Check your connection and try again.' }; }
 }

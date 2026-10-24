@@ -17,13 +17,13 @@ export async function POST(request: Request) {
   let me = mine as { status: string; score: number } | null;
   if (!me) {
     if (g.status === 'done') return NextResponse.json({ error: 'That game is already over.' }, { status: 409 });
-    const barred = !g.practice && ((await auth.svc.from('trivia_winners').select('user_id', { count: 'exact', head: true }).eq('quiz_id', g.quiz_id).eq('user_id', auth.user.id)).count ?? 0) > 0;
+    const barred = !!g.trivia_quizzes?.block_winners && ((await auth.svc.from('trivia_winners').select('user_id', { count: 'exact', head: true }).eq('quiz_id', g.quiz_id).eq('user_id', auth.user.id)).count ?? 0) > 0;
     const status = barred ? 'blocked' : 'in';
     const { error } = await auth.svc.from('trivia_players').upsert({ game_id: g.id, user_id: auth.user.id, name: await displayName(auth.svc, auth.user.id), status }, { onConflict: 'game_id,user_id', ignoreDuplicates: true });
     if (error) return NextResponse.json({ error: 'Couldn’t join. Try again.' }, { status: 500 });
     me = { status, score: 0 };
     const state = await publicState(auth.svc, g);
-    await broadcast(g.id, 'players', state);
+    await broadcast(g.id, 'players', state, true);   // only the host's screen follows who joins
     return NextResponse.json({ state, me });
   }
   return NextResponse.json({ state: await publicState(auth.svc, g), me });

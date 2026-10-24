@@ -17,7 +17,7 @@ try {
   const players = await batches(Array.from({ length: N }, (_, i) => i), 4, (i) => user(`p${i}`, ['ucsd']));
   console.log(`${players.length} players ready`);
   const Q = (await host.call('POST', '/api/trivia/quizzes', { name: 'ZZ Load Quiz' })).j.quiz;
-  await host.call('POST', `/api/trivia/quizzes/${Q.slug}/questions`, { rows: Array.from({ length: 12 }, (_, i) => ({ text: `ZZ Load question ${i + 1}`, choices: ['a', 'b', 'c', 'd'].map((c) => `${c}${i}`), correct: i % 4, secs: 30 })) });
+  await host.call('POST', `/api/trivia/quizzes/${Q.slug}/questions`, { rows: Array.from({ length: 12 }, (_, i) => ({ category: 'ZZ Cat', text: `ZZ Load question ${i + 1}`, choices: ['a', 'b', 'c', 'd'].map((c) => `${c}${i}`), correct: i % 4 })) });
   const open = async () => { const g = await host.call('POST', '/api/trivia/games', { quiz: Q.slug }); return { code: g.j.code, G: `/api/trivia/games/${g.j.code}`, A: `/api/trivia/play/${g.j.code}/answer`, P: `/api/trivia/play/${g.j.code}` }; };
   const g = await open();
 
@@ -40,10 +40,16 @@ try {
     chans.push(ch);
   }));
   console.log(`${chans.length} phones subscribed`);
+  // How many have answered goes only to the host's own channel; the phones never get it (with 40 players that is 40 times fewer deliveries).
+  const hostCounts = [];
+  const hostCh = host.client.channel(`trivia-host:${gameRow.id}`, { config: { broadcast: { self: false } } });
+  hostCh.on('broadcast', { event: 'count' }, (m) => hostCounts.push(m.payload.answered));
+  await new Promise((res) => hostCh.subscribe((st) => { if (st === 'SUBSCRIBED') res(); }));
 
   // ---- start while everyone asks for the state
   const t0 = Date.now();
-  const [start, ...polls] = await Promise.all([host.call('POST', g.G, { action: 'start', count: 6 }), ...players.flatMap((p) => [p.call('GET', g.P), p.call('GET', g.P)])]);
+  const [start, ...polls] = await Promise.all([host.call('POST', g.G, { action: 'start' }), ...players.flatMap((p) => [p.call('GET', g.P), p.call('GET', g.P)])]);
+  await sleep(3300);   // every question opens on its category card for 3 s; answers sent before it ends are refused
   t.ok('starting the game while every phone is asking for its state works', start.s === 200 && five(polls) === 0, JSON.stringify([start.s, polls.filter((r) => r.s >= 400).slice(0, 2)]));
   await sleep(4000);
   const gotStart = heard.filter((h) => h.states.some((x) => x.s.status === 'question' && x.s.current === 0)).length;
@@ -65,7 +71,7 @@ try {
   const firstWins = await Promise.all(players.map(async (p) => (await p.call('POST', g.A, { q: 0, pos: 0 })).j.pos));
   t.ok('what a player is told they answered is what is stored', players.every((p, i) => firstWins[i] === stored.find((r) => r.user_id === p.id).pos));
   await sleep(2500);
-  t.ok('every phone saw the answered count reach everyone', heard.every((h) => Math.max(0, ...h.counts) >= N - 1), JSON.stringify(heard.slice(0, 3).map((h) => Math.max(0, ...h.counts))));
+  t.ok('the host\'s screen saw the answered count reach everyone, and no phone was sent it', Math.max(0, ...hostCounts) >= N - 1 && heard.every((h) => h.counts.length === 0), JSON.stringify([Math.max(0, ...hostCounts), heard.reduce((n, h) => n + h.counts.length, 0)]));
 
   // ---- the host clicks Reveal three times at once, then Next three times at once
   const rev = await Promise.all([1, 2, 3].map(() => host.call('POST', g.G, { action: 'reveal' })));
@@ -76,6 +82,7 @@ try {
   const rv = (await players[0].call('GET', g.P)).j.state.reveal;
   t.ok('the counts add up to every player', rv.counts.reduce((a, b) => a + b, 0) === N && rv.of === N, JSON.stringify(rv.counts));
   const nxt = await Promise.all([1, 2, 3].map(() => host.call('POST', g.G, { action: 'next' })));
+  await sleep(3300);   // every question opens on its category card for 3 s; answers sent before it ends are refused
   t.ok('three Next clicks at once move on by exactly one question', nxt.filter((r) => r.s === 200).length === 1 && five(nxt) === 0 && (await host.call('GET', g.G)).j.state.current === 1, JSON.stringify(nxt.map((r) => r.s)));
 
   // ---- answers racing the reveal
@@ -83,6 +90,7 @@ try {
   t.ok('answers racing the reveal: no server errors, each is accepted or told it is closed', five(race) === 0 && race.slice(0, N).every((r) => r.s === 200 || r.s === 409), JSON.stringify(race.filter((r) => r.s >= 500 || (r.s !== 200 && r.s !== 409)).slice(0, 2)));
   // ---- the host ends the game while players are still sending answers for the next question
   await host.call('POST', g.G, { action: 'next' });
+  await sleep(3300);   // every question opens on its category card for 3 s; answers sent before it ends are refused
   const endRace = await Promise.all([...players.map((p) => p.call('POST', g.A, { q: 2, pos: 1 })), (async () => { await sleep(100); return host.call('POST', g.G, { action: 'end' }); })()]);
   t.ok('ending the game while answers arrive: no server errors', five(endRace) === 0, JSON.stringify(endRace.filter((r) => r.s >= 500).slice(0, 2)));
   const done = (await host.call('GET', `${g.G}?results=1`)).j;
@@ -112,7 +120,8 @@ try {
   const per = Math.floor(rest.length / 5);
   const groups = games.map((_, k) => rest.slice(k * per, (k + 1) * per));
   await Promise.all(groups.flatMap((grp, k) => grp.map((p) => p.call('POST', '/api/trivia/join', { code: games[k].code }))));
-  const starts = await Promise.all(games.map((x) => host.call('POST', x.G, { action: 'start', count: 2 })));
+  const starts = await Promise.all(games.map((x) => host.call('POST', x.G, { action: 'start' })));
+  await sleep(3300);   // every question opens on its category card for 3 s; answers sent before it ends are refused
   t.ok('five games start at once', starts.every((r) => r.s === 200), JSON.stringify(starts.map((r) => r.s)));
   const plans = await Promise.all(games.map(async (x) => (await svc.from('trivia_games').select('plan').eq('code', x.code).single()).data.plan));
   const answers = await Promise.all(groups.flatMap((grp, k) => grp.map((p) => p.call('POST', games[k].A, { q: 0, pos: plans[k][0].correct }))));

@@ -73,6 +73,12 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
   async function finish(p: Promise<Outcome | null>) {
     const outcome = await p;
     if (!outcome) return;
+    if (outcome.kind === 'trivia') {   // a Trivia game's code was typed: the person is in it, so open it
+      window.clearTimeout(goTimer.current);
+      setState({ kind: 'opening', href: `/portal/trivia/play/${outcome.code}`, title: 'Joining The Game', heading: 'Trivia', text: 'Taking you into the game.' });
+      goTimer.current = window.setTimeout(() => go(`/portal/trivia/play/${outcome.code}`), 600);
+      return;
+    }
     setState({ kind: 'result', outcome });
     window.clearTimeout(autoTimer.current);
     if (clean(outcome)) autoTimer.current = window.setTimeout(() => setState({ kind: 'scanning' }), AUTO_MS);
@@ -170,7 +176,7 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
         extra={typing ? null : <button type="button" className={styles.typeLink} onClick={() => setTyping(true)}><Keyboard size={16} aria-hidden="true" /> Type a code</button>}
         footer={typing ? (
           <div className={styles.codeBar}>
-            <span>{staff ? 'The 6-digit code (meeting or ticket)' : 'The 6-digit code from the screen'}</span>
+            <span>{staff ? 'The 6-digit code (meeting, ticket or Trivia game)' : 'The 6-digit code from the screen (meeting or Trivia game)'}</span>
             <div className={styles.codeRow}>
               <CodeEntry dark autoFocus onSubmit={(c) => void onCode(c)} busy={busy} />
               <button type="button" className={styles.codeHide} onClick={() => setTyping(false)} aria-label="Back to the camera"><X size={18} aria-hidden="true" /></button>

@@ -6,7 +6,7 @@ import Button from '@/components/ui/Button';
 import Loading from '@/components/Loading/Loading';
 import { call } from './api';
 import { useCountdown, useGame } from './useGame';
-import { Stage, Confetti, Letter, Shape, Tape, ansClass, fmtScore, ordinal } from './shapes';
+import { Stage, CountUp, FloatShapes, Ring, Confetti, Letter, Shape, Tape, CategoryCard, ansClass, fmtScore, ordinal } from './shapes';
 import styles from './trivia.module.css';
 
 // A game on a phone: join the lobby, tap an answer while the clock runs, see how you did after each question, and your place at the end. The whole screen, in the navy show look.
@@ -32,15 +32,14 @@ export default function PlayGame({ code, onLeave }: { code: string; onLeave: () 
     setProblem(r.error);
   }, [state, mine, code]);
 
-  const frame = (title: string, body: React.ReactNode) => (
-    <Stage><div className={styles.stage} role="dialog" aria-label="Trivia">
+  const frame = (title: string, body: React.ReactNode, urgent?: boolean) => (
+    <Stage><div className={`${styles.stage} ${urgent ? styles.urgent : ''}`} role="dialog" aria-label="Trivia"><FloatShapes />
       <div className={styles.stageBar}>
         <button type="button" className={styles.stageBack} onClick={onLeave} aria-label="Leave the game"><ArrowLeft size={18} /></button>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className={styles.logo} src="/logos/tg_logo.png" alt="" />
         <b>{title}</b>
         {state && <span className={`${styles.badge} ${styles.neutral} ${styles.spacer}`}>{state.players} {state.players === 1 ? 'player' : 'players'}</span>}
-        {state?.practice && <span className={`${styles.badge} ${styles.good}`}>Practice</span>}
       </div>
       <div className={`${styles.stageBody} ${styles.center}`}>{body}</div>
     </div></Stage>
@@ -56,13 +55,13 @@ export default function PlayGame({ code, onLeave }: { code: string; onLeave: () 
   if (me.status === 'removed') return frame(title, card('Out', <><p className={styles.big}>You were taken out of this game.</p><p className={styles.mid}>The host can let you back in.</p><Button variant="secondary" onClick={onLeave}>Back</Button></>, 'no'));
 
   const mineResult = state.reveal?.results[me.userId];
-  if (state.status === 'lobby') return frame(title, card('You’re in', <><p className={styles.big}>Get ready!</p><p className={styles.mid}>Waiting for the host to start…</p><p className={`${styles.mid} ${styles.pulse}`}>{state.players} {state.players === 1 ? 'player' : 'players'} here</p></>, 'ok'));
+  if (state.status === 'lobby') return frame(title, card('You’re in', <><p className={styles.big}>Get ready!</p><p className={styles.mid}>Waiting for the host to start…</p><p className={`${styles.mid} ${styles.waiting}`}>{state.players} {state.players === 1 ? 'player' : 'players'} here</p></>, 'ok'));
 
   if (state.status === 'done') {
     const r = mineResult;
     const podium = !!r && r.rank <= 3 && r.score > 0;
     return frame(title, <>
-      {podium && <Confetti />}
+      {podium && <Confetti delay={0.3} />}
       {card(podium ? 'You made the podium' : 'Game over', <>
         <p className={styles.big}>{r ? `You finished ${ordinal(r.rank)}` : 'The game is over.'}</p>
         {r && <div className={styles.phoneFoot}><span>{fmtScore(r.score)} points</span>{state.reveal && <span>of {state.reveal.of} players</span>}</div>}
@@ -80,31 +79,44 @@ export default function PlayGame({ code, onLeave }: { code: string; onLeave: () 
     const r = mineResult;
     const right = state.reveal?.correct ?? -1;
     return frame(title, <>
+      {r?.ok && <Confetti burst />}
       {progress}
       {card(r?.ok ? 'Correct!' : r?.pos === null || r === undefined ? 'No answer' : 'Not quite', <>
         <p className={styles.big} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>{r?.ok ? <><Check size={34} aria-hidden="true" /> Nice one</> : <><X size={34} aria-hidden="true" /> {r?.pos === null || r === undefined ? 'Too slow' : 'Close one'}</>}</p>
-        {r?.ok && <p className={styles.pts}>+{r.pts}</p>}
+        {r?.ok && <p className={styles.pts}><span className={styles.ptsBurst}>+<CountUp value={r.pts} ms={900} /></span></p>}
         {!r?.ok && right >= 0 && <p className={styles.mid}>The answer was <b>{q.choices[right]}</b></p>}
-        {r && <div className={styles.phoneFoot}><span>{ordinal(r.rank)} place</span><span>{fmtScore(r.score)} points</span></div>}
+        {r?.ok && (r.streak ?? 0) >= 2 && <p className={styles.streak}>{r.streak} in a row</p>}
+        {r && <div className={styles.phoneFoot}><span>{ordinal(r.rank)} place</span><span><CountUp value={r.score} from={Math.max(0, r.score - r.pts)} ms={1100} format={fmtScore} /> points</span></div>}
       </>, r?.ok ? 'ok' : 'no')}
-      <p className={`${styles.mid} ${styles.pulse}`}>Waiting for the next question…</p>
+      <div className={styles.recap} aria-label="Your answer and the right answer">
+        {q.choices.map((c, i) => (
+          <div key={i} className={`${styles.recapRow} ${i === right ? styles.recapRight : ''} ${r?.pos === i && i !== right ? styles.recapWrong : ''}`}>
+            <Letter i={i} /><span>{c}</span>
+            {i === right && <span className={styles.recapTag}><Check size={14} aria-hidden="true" /> Right answer</span>}
+            {r?.pos === i && i !== right && <span className={styles.recapTag}><X size={14} aria-hidden="true" /> Your answer</span>}
+            {r?.pos === i && i === right && <span className={styles.recapTag}>You got it</span>}
+          </div>
+        ))}
+      </div>
+      <p className={`${styles.mid} ${styles.waiting}`}>Waiting for the next question</p>
     </>);
   }
 
   // An open question.
-  const secs = Math.ceil(left / 1000);
+  const secs = Math.ceil(Math.min(left, q.secs * 1000) / 1000);
   const closed = left <= 0;
+  // A question with a category opens on its category card; the question, its answers and the clock start after it.
+  if (q.category && q.startedAt > serverNow()) return frame(title, <CategoryCard category={q.category} n={state.current + 1} total={state.total} />);
   return frame(title, <div style={{ width: '100%', maxWidth: '40rem', display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'left' }}>
     <div className={styles.row}>{progress}</div>
-    <div className={`${styles.clockRow} ${secs <= 5 ? styles.clockLow : ''}`}><span className={styles.timer} aria-live="off">{secs}</span><div className={styles.clock}><div className={styles.clockFill} style={{ width: `${Math.min(100, (left / (q.secs * 1000)) * 100)}%` }} /></div></div>
+    <div className={`${styles.clockRow} ${secs <= 5 ? styles.clockLow : ''}`}><Ring left={Math.min(left, q.secs * 1000)} total={q.secs * 1000} low={secs <= 5} /><div className={styles.clock}><div className={styles.clockFill} style={{ width: `${Math.min(100, (left / (q.secs * 1000)) * 100)}%` }} /></div></div>
     <p className={styles.phoneQuestion}>{q.text}</p>
-    {mine !== null ? (
-      <div style={{ alignSelf: 'center', width: '100%', display: 'flex', justifyContent: 'center' }}>{card('Locked in', <><p className={styles.big}>Answer sent</p><p className={`${styles.mid} ${styles.pulse}`}>Waiting for the others…</p></>)}</div>
-    ) : closed ? (
+    {closed && mine === null ? (
       <div style={{ alignSelf: 'center', width: '100%', display: 'flex', justifyContent: 'center' }}>{card('Time’s up', <p className={styles.big}>Too slow!</p>, 'no')}</div>
     ) : (
-      <div className={styles.phoneAnswers}>{q.choices.map((c, i) => <button key={i} type="button" className={`${styles.ans} ${ansClass(i)}`} onClick={() => void answer(i)}><Shape i={i} /><Letter i={i} /><span className={styles.ansText}>{c}</span></button>)}</div>
+      <div className={styles.phoneAnswers}>{q.choices.map((c, i) => <button key={i} type="button" disabled={mine !== null} className={`${styles.ans} ${ansClass(i)} ${mine === i ? styles.picked : mine !== null ? styles.notPicked : ''}`} onClick={() => void answer(i)}><Shape i={i} /><Letter i={i} /><span className={styles.ansText}>{c}</span></button>)}</div>
     )}
+    {mine !== null && <div className={styles.lockedCard} style={{ alignSelf: 'center', textAlign: 'center' }}><span className={styles.kicker}>Locked in</span><p className={`${styles.mid} ${styles.waiting}`} style={{ marginTop: '0.6rem' }}>Waiting for the others</p></div>}
     {problem && <p role="alert" className={styles.needs}>{problem}</p>}
-  </div>);
+  </div>, secs <= 5 && !closed);
 }

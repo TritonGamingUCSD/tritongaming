@@ -26,26 +26,33 @@ try {
   // ---- the pool
   t.ok('a question needs four answers', (await host.call('POST', QU, { text: 'x', choices: ['a', 'b'] })).s === 400);
   t.ok('the right answer is one of four', (await host.call('POST', QU, { correct: 4 })).s === 400);
-  t.ok('the time is bounded', (await host.call('POST', QU, { secs: 2 })).s === 400 && (await host.call('POST', QU, { secs: 500 })).s === 400);
+  // The time of a question is kept in the database only (the editor neither shows nor sets it): worked out from the wording.
+  const secsOf = async (ids) => ((await svc.from('trivia_questions').select('id, secs').in('id', ids)).data ?? []).map((r) => r.secs);
   const blank = await host.call('POST', QU, {});
-  t.ok('a blank question can be added, 20 seconds by default', blank.s === 201 && blank.j.questions[0].secs === 20 && blank.j.questions[0].choices.length === 4);
-  const bulk = await host.call('POST', QU, { rows: Array.from({ length: 6 }, (_, i) => ({ text: `ZZ Question ${i + 1}`, choices: [`a${i}`, `b${i}`, `c${i}`, `d${i}`], correct: i % 4, secs: 15 })) });
+  t.ok('a blank question can be added, 40 seconds by default', blank.s === 201 && (await secsOf([blank.j.questions[0].id]))[0] === 40 && blank.j.questions[0].choices.length === 4);
+  const bulk = await host.call('POST', QU, { rows: Array.from({ length: 6 }, (_, i) => ({ category: 'ZZ Cat', text: `ZZ Question ${i + 1}`, choices: [`a${i}`, `b${i}`, `c${i}`, `d${i}`], correct: i % 4 })) });
   t.ok('questions can be added in bulk', bulk.s === 201 && bulk.j.questions.length === 6);
+  t.ok('the time cannot be set: it is worked out from the wording (a time sent is ignored)', (await secsOf(bulk.j.questions.map((q) => q.id))).every((x) => x >= 40 && x % 5 === 0));
   const list = await host.call('GET', '/api/trivia/quizzes');
   const row = list.j.quizzes.find((q) => q.slug === Q);
   t.ok('the list counts the pool and the finished questions (the blank one is not finished)', row.questions === 7 && row.ready === 6, JSON.stringify(row));
   const edit = await host.call('PATCH', QU, { id: bulk.j.questions[0].id, text: 'ZZ Question 1 (edited)' });
   t.ok('a question can be edited', edit.s === 200 && edit.j.question.text.endsWith('(edited)'));
-  t.ok('a quiz asks between 1 and 100 questions', (await host.call('PATCH', `/api/trivia/quizzes/${Q}`, { per_game: 0 })).s === 400 && (await host.call('PATCH', `/api/trivia/quizzes/${Q}`, { per_game: 4 })).j.quiz.per_game === 4);
+  const before = (await secsOf([bulk.j.questions[1].id]))[0];
+  await host.call('PATCH', QU, { id: bulk.j.questions[1].id, text: 'ZZ ' + 'word '.repeat(60) });
+  const after = (await secsOf([bulk.j.questions[1].id]))[0];
+  await host.call('PATCH', QU, { id: bulk.j.questions[1].id, secs: 5 });
+  t.ok('a longer question gets a longer time (up to 2 minutes), and a time sent with it is ignored', after > before && after <= 120 && (await secsOf([bulk.j.questions[1].id]))[0] === after, `${before} -> ${after}`);
+  t.ok('a quiz asks between 1 and 100 questions', (await host.call('PATCH', `/api/trivia/quizzes/${Q}`, { per_game: 0 })).s === 400 && (await host.call('PATCH', `/api/trivia/quizzes/${Q}`, { per_game: 3 })).j.quiz.per_game === 3);
   t.ok('a plain member cannot change the pool', (await p1.call('PATCH', QU, { id: bulk.j.questions[0].id, text: 'hack' })).s === 403);
 
   // ---- a game
   const g1 = await host.call('POST', '/api/trivia/games', { quiz: Q });
-  t.ok('an officer opens a lobby with a 6-character code', g1.s === 201 && /^[A-Z2-9]{6}$/.test(g1.j.code) && g1.j.state.status === 'lobby', JSON.stringify(g1.j));
+  t.ok('an officer opens a lobby with a 6-character code', g1.s === 201 && /^[0-9]{6}$/.test(g1.j.code) && g1.j.state.status === 'lobby', JSON.stringify(g1.j));
   const C = g1.j.code;
   const G = `/api/trivia/games/${C}`;
   t.ok('a plain member cannot open the host screen or control a game', (await p1.call('GET', G)).s === 403 && (await p1.call('POST', G, { action: 'start' })).s === 403);
-  t.ok('a wrong code is refused', (await p1.call('POST', '/api/trivia/join', { code: 'ZZZZZZ' })).s === 404);
+  t.ok('a wrong code is refused', (await p1.call('POST', '/api/trivia/join', { code: '000000' })).s === 404);
   t.ok('the game cannot start with nobody in', (await host.call('POST', G, { action: 'start' })).s === 409);
 
   // The live channel: a player's own login follows the game and sees the start the moment it happens.
@@ -56,14 +63,17 @@ try {
   const gameId = joined1.j.state.gameId;
   const ch = watcher.channel(`trivia:${gameId}`, { config: { broadcast: { self: false } } });
   ch.on('broadcast', { event: 'state' }, (m) => got.push({ at: Date.now(), p: m.payload }));
-  ch.on('broadcast', { event: 'count' }, (m) => got.push({ at: Date.now(), count: m.payload }));
   await new Promise((res) => ch.subscribe((s) => { if (s === 'SUBSCRIBED') res(); }));
+  // How many have answered goes only to the host's own channel (it is busy, and the phones do not need it).
+  const hostCh = watcher.channel(`trivia-host:${gameId}`, { config: { broadcast: { self: false } } });
+  hostCh.on('broadcast', { event: 'count' }, (m) => got.push({ at: Date.now(), count: m.payload }));
+  await new Promise((res) => hostCh.subscribe((s) => { if (s === 'SUBSCRIBED') res(); }));
   for (const p of [p2, p3, p4]) await p.call('POST', '/api/trivia/join', { code: C });
   t.ok('joining twice keeps one player', (await p1.call('POST', '/api/trivia/join', { code: C })).j.state.players === 4);
   const lobby = (await host.call('GET', G)).j;
-  t.ok('the host sees the lobby and how many questions the pool can give', lobby.players.length === 4 && lobby.ready === 6 && lobby.perGame === 4, JSON.stringify([lobby.players.length, lobby.ready, lobby.perGame]));
+  t.ok('the host sees the lobby and how many questions the pool can give', lobby.players.length === 4 && lobby.ready === 6 && lobby.perGame === 3, JSON.stringify([lobby.players.length, lobby.ready, lobby.perGame]));
   t.ok('a player cannot tell a pool question from the lobby', (await p2.call('GET', `/api/trivia/play/${C}`)).j.state.question === undefined);
-  t.ok('the number of questions can be set in the lobby', (await host.call('POST', G, { action: 'count', count: 3 })).s === 200 && (await host.call('GET', G)).j.perGame === 3 && (await host.call('POST', G, { action: 'count', count: 0 })).s === 400);
+  t.ok('the number of questions is the quiz\'s own setting, and there is no lobby action to change it', (await host.call('GET', G)).j.perGame === 3 && (await host.call('POST', G, { action: 'count', count: 5 })).s === 400);
   t.ok('someone who has not joined cannot see the game from the inside', (await guest.call('GET', `/api/trivia/play/${C}`)).s === 404);
 
   // removing and letting back in
@@ -75,7 +85,8 @@ try {
 
   // ---- play: 3 questions
   const startAt = Date.now();
-  const st = await host.call('POST', G, { action: 'start', count: 3 });
+  const st = await host.call('POST', G, { action: 'start' });
+  await sleep(3300);   // every question opens on its category card for 3 s; answers sent before it ends are refused
   t.ok('the host starts the game', st.s === 200, JSON.stringify(st.j));
   await sleep(1200);
   const live = got.find((m) => m.p?.status === 'question');
@@ -113,6 +124,7 @@ try {
   t.ok('the reveal shows the right answer, how many chose what, the top, and each person\'s result', afterRev.status === 'reveal' && afterRev.reveal.correct === right(0) && afterRev.reveal.counts[right(0)] === 2 && afterRev.reveal.counts.reduce((a, b) => a + b, 0) === 3 && afterRev.reveal.top[0].rank === 1 && afterRev.reveal.results[p3.id].ok === false && afterRev.reveal.results[p1.id].ok === true && afterRev.reveal.results[p4.id].pos === null, JSON.stringify(afterRev.reveal).slice(0, 400));
   t.ok('nobody can answer after the reveal', (await p4.call('POST', A, { q: 0, pos: 0 })).s === 409);
   t.ok('next goes to the second question, one cannot skip a reveal', (await host.call('POST', G, { action: 'next' })).s === 200 && (await host.call('POST', G, { action: 'next' })).s === 409);
+  await sleep(3300);   // every question opens on its category card for 3 s; answers sent before it ends are refused
 
   // question 1: p2 right, p1 right later, p3 right; p4 wrong
   await p2.call('POST', A, { q: 1, pos: right(1) });
@@ -122,6 +134,7 @@ try {
   await p1.call('POST', A, { q: 1, pos: right(1) });
   await host.call('POST', G, { action: 'reveal' });
   await host.call('POST', G, { action: 'next' });
+  await sleep(3300);   // every question opens on its category card for 3 s; answers sent before it ends are refused
   // question 2: the clock runs out: an answer well after it is refused
   await p1.call('POST', A, { q: 2, pos: right(2) });
   await sleep((plan[2].secs + 2) * 1000);
@@ -153,25 +166,80 @@ try {
   t.ok('a held back player cannot answer or start anything', (await winner.call('POST', `/api/trivia/play/${C2}/answer`, { q: 0, pos: 0 })).s === 409 && (await winner.call('POST', G2, { action: 'start' })).s === 403);
   t.ok('the host can let them in', (await host.call('POST', G2, { action: 'allow', user_id: winner.id })).s === 200 && (await winner.call('GET', `/api/trivia/play/${C2}`)).j.me.status === 'in');
   // questions asked before come last
-  await host.call('POST', G2, { action: 'count', count: 3 });
-  t.ok('the second game starts', (await host.call('POST', G2, { action: 'start', count: 3 })).s === 200);
+  t.ok('the second game starts', (await host.call('POST', G2, { action: 'start' })).s === 200);
   const plan2 = (await svc.from('trivia_games').select('plan').eq('code', C2).single()).data.plan;
   const used = new Set(plan.map((q) => q.id));
   t.ok('the second game draws the three questions the first did not use', plan2.length === 3 && plan2.every((q) => !used.has(q.id)), JSON.stringify([plan.map((q) => q.text), plan2.map((q) => q.text)]));
   t.ok('a running game cannot be deleted', (await host.call('DELETE', G2)).s === 409);
   t.ok('the host can end a game early', (await host.call('POST', G2, { action: 'end' })).s === 200 && (await host.call('GET', G2)).j.state.status === 'done');
 
-  // ---- practice: nothing blocked, nothing kept
-  const gp = await host.call('POST', '/api/trivia/games', { quiz: Q, practice: true });
-  const CP = gp.j.code;
-  t.ok('a past top three player joins a practice game freely', (await winner.call('POST', '/api/trivia/join', { code: CP })).j.me.status === 'in');
-  await host.call('POST', `/api/trivia/games/${CP}`, { action: 'start', count: 1 });
-  const planP = (await svc.from('trivia_games').select('plan').eq('code', CP).single()).data.plan;
-  await winner.call('POST', `/api/trivia/play/${CP}/answer`, { q: 0, pos: planP[0].correct });
-  await host.call('POST', `/api/trivia/games/${CP}`, { action: 'end' });
-  const gpId = (await svc.from('trivia_games').select('id').eq('code', CP).single()).data.id;
-  t.ok('a practice game records no winners', (await svc.from('trivia_winners').select('user_id', { count: 'exact', head: true }).eq('game_id', gpId)).count === 0);
-  t.ok('a practice game is left out of the history and of a player\'s games', !(await host.call('GET', '/api/trivia/games')).j.games.some((g) => g.code === CP) && !(await winner.call('GET', '/api/trivia/mine')).j.games.some((g) => g.code === CP));
+  // ---- a quiz with the top-3 rule switched off holds nobody back and records no winners
+  const open = (await host.call('POST', '/api/trivia/quizzes', { name: 'ZZ Open Quiz' })).j.quiz;
+  t.ok('the top-3 rule is on for a new quiz and can be switched off', open.block_winners === true && (await host.call('PATCH', `/api/trivia/quizzes/${open.slug}`, { block_winners: false })).j.quiz?.block_winners === false);
+  await host.call('POST', `/api/trivia/quizzes/${open.slug}/questions`, { rows: Array.from({ length: 2 }, (_, i) => ({ category: 'ZZ Cat', text: `ZZ Open ${i}`, choices: ['a', 'b', 'c', 'd'], correct: 0 })) });
+  const go = await host.call('POST', '/api/trivia/games', { quiz: open.slug });
+  await winner.call('POST', '/api/trivia/join', { code: go.j.code });
+  await host.call('POST', `/api/trivia/games/${go.j.code}`, { action: 'start' });
+  await sleep(3300);   // every question opens on its category card for 3 s; answers sent before it ends are refused
+  const planO = (await svc.from('trivia_games').select('plan').eq('code', go.j.code).single()).data.plan;
+  await winner.call('POST', `/api/trivia/play/${go.j.code}/answer`, { q: 0, pos: planO[0].correct });
+  await host.call('POST', `/api/trivia/games/${go.j.code}`, { action: 'end' });
+  const goId = (await svc.from('trivia_games').select('id').eq('code', go.j.code).single()).data.id;
+  t.ok('a quiz without the rule records no winners', (await svc.from('trivia_winners').select('user_id', { count: 'exact', head: true }).eq('game_id', goId)).count === 0);
+  const go2 = await host.call('POST', '/api/trivia/games', { quiz: open.slug });
+  t.ok('and the same player joins its next game freely', (await winner.call('POST', '/api/trivia/join', { code: go2.j.code })).j.me.status === 'in');
+  t.ok('hosting a quiz with a lobby already open opens that lobby again', (await host.call('POST', '/api/trivia/games', { quiz: open.slug })).j.code === go2.j.code);
+
+  // ---- categories: a category card first, the question after it
+  const cq = (await host.call('POST', '/api/trivia/quizzes', { name: 'ZZ Category Quiz' })).j.quiz;
+  const CQ = `/api/trivia/quizzes/${cq.slug}/questions`;
+  const cr = await host.call('POST', CQ, { rows: [{ category: 'Gaming', text: 'ZZ cat one', choices: ['a', 'b', 'c', 'd'], correct: 0 }, { category: 'gaming', text: 'ZZ cat two', choices: ['a', 'b', 'c', 'd'], correct: 1 }] });
+  t.ok('a category typed in other capitals takes the quiz\'s existing spelling', cr.j.questions.every((q) => q.category === 'Gaming'), JSON.stringify(cr.j.questions.map((q) => q.category)));
+  t.ok('a category is changed like any other cell, and can be cleared', (await host.call('PATCH', CQ, { id: cr.j.questions[0].id, category: ' Esports  Night ' })).j.question.category === 'Esports Night' && (await host.call('PATCH', CQ, { id: cr.j.questions[0].id, category: '' })).j.question.category === '');
+  await host.call('PATCH', CQ, { id: cr.j.questions[0].id, category: 'Gaming' });
+  const cg = await host.call('POST', '/api/trivia/games', { quiz: cq.slug });
+  await p1.call('POST', '/api/trivia/join', { code: cg.j.code });
+  await host.call('POST', `/api/trivia/games/${cg.j.code}`, { action: 'start' });
+  const early = (await p1.call('GET', `/api/trivia/play/${cg.j.code}`)).j.state;
+  t.ok('the question opens with its category, starting a few seconds from now', early.question?.category === 'Gaming' && early.question.startedAt - early.now > 0 && early.question.startedAt - early.now <= 3200, JSON.stringify(early.question && { c: early.question.category, d: early.question.startedAt - early.now }));
+  // Set the clock by hand so this does not depend on how fast the server answers: a start 10 s away, then one that has passed.
+  const cgId = (await svc.from('trivia_games').select('id').eq('code', cg.j.code).single()).data.id;
+  const clock = (from, to) => svc.from('trivia_games').update({ q_started_at: new Date(Date.now() + from * 1000).toISOString(), q_ends_at: new Date(Date.now() + to * 1000).toISOString() }).eq('id', cgId);
+  await clock(10, 70);
+  t.ok('an answer sent during the category card is refused', (await p1.call('POST', `/api/trivia/play/${cg.j.code}/answer`, { q: 0, pos: 0 })).s === 409);
+  await clock(-1, 59);
+  t.ok('once the question has started the answer is taken', (await p1.call('POST', `/api/trivia/play/${cg.j.code}/answer`, { q: 0, pos: 0 })).s === 200);
+  await host.call('POST', `/api/trivia/games/${cg.j.code}`, { action: 'end' });
+
+  // ---- the games list comes a page at a time
+  const stamp = Date.now();
+  await svc.from('trivia_games').insert(Array.from({ length: 22 }, (_, i) => ({ quiz_id: open.id, code: String(900000 + i), status: 'done', created_at: new Date(stamp - (i + 1) * 60000 - 3600000).toISOString() })));
+  const p1g = (await host.call('GET', `/api/trivia/games?quiz=${open.slug}`)).j;
+  t.ok('the first page holds 20 games and says there are more', p1g.games.length === 20 && p1g.more === true);
+  const p2g = (await host.call('GET', `/api/trivia/games?quiz=${open.slug}&before=${encodeURIComponent(p1g.games[19].created_at)}`)).j;
+  t.ok('the next page holds the rest with no more after it, and no game twice', p2g.games.length === 4 && p2g.more === false && !p2g.games.some((g) => p1g.games.some((x) => x.code === g.code)), `${p2g.games.length}`);
+
+  // ---- a quiz shared with only some officers
+  const other = await user('host2', ['officer']);
+  const admin = await user('adm', ['admin']);
+  const pq = (await host.call('POST', '/api/trivia/quizzes', { name: 'ZZ Private Quiz' })).j.quiz;
+  await host.call('POST', `/api/trivia/quizzes/${pq.slug}/questions`, { rows: [{ category: 'ZZ Cat', text: 'ZZ Secret question', choices: ['a', 'b', 'c', 'd'], correct: 1 }] });
+  t.ok('anyone who can host opens a new quiz', (await other.call('GET', `/api/trivia/quizzes/${pq.slug}`)).s === 200);
+  t.ok('another officer cannot make it private', (await other.call('PATCH', `/api/trivia/quizzes/${pq.slug}`, { restricted: true })).s === 403);
+  t.ok('its creator makes it private', (await host.call('PATCH', `/api/trivia/quizzes/${pq.slug}`, { restricted: true })).j.quiz?.restricted === true);
+  const seen = (await other.call('GET', '/api/trivia/quizzes')).j.quizzes.find((q) => q.id === pq.id);
+  t.ok('another officer sees only its name with a lock', seen?.locked === true && seen.questions === 0 && !('per_game' in seen && seen.per_game > 0));
+  t.ok('they cannot read, change or host it', (await other.call('GET', `/api/trivia/quizzes/${pq.slug}`)).s === 403 && (await other.call('POST', `/api/trivia/quizzes/${pq.slug}/questions`, {})).s === 403 && (await other.call('PATCH', `/api/trivia/quizzes/${pq.slug}`, { name: 'ZZ hijack' })).s === 403 && (await other.call('DELETE', `/api/trivia/quizzes/${pq.slug}`)).s === 403 && (await other.call('POST', '/api/trivia/games', { quiz: pq.slug })).s === 403);
+  const pg = await host.call('POST', '/api/trivia/games', { quiz: pq.slug });
+  t.ok('its creator hosts it', pg.s === 200 || pg.s === 201);
+  t.ok('its game is hidden from them (host screen, results, history and live list)', (await other.call('GET', `/api/trivia/games/${pg.j.code}`)).s === 403 && (await other.call('POST', `/api/trivia/games/${pg.j.code}`, { action: 'start' })).s === 403 && !(await other.call('GET', '/api/trivia/games')).j.games.some((g) => g.code === pg.j.code) && !(await other.call('GET', '/api/trivia/games?live=1')).j.games.some((g) => g.code === pg.j.code) && (await other.call('GET', `/api/trivia/games?quiz=${pq.slug}`)).s === 403);
+  t.ok('players can still join its game with the code', (await p1.call('POST', '/api/trivia/join', { code: pg.j.code })).j.me?.status === 'in');
+  t.ok('only people who can host can be added, and only the creator or an Admin changes the list', (await other.call('PUT', `/api/trivia/quizzes/${pq.slug}/access`, { members: [other.id] })).s === 403 && (await host.call('PUT', `/api/trivia/quizzes/${pq.slug}/access`, { members: [p1.id] })).j.members?.length === 0);
+  t.ok('the creator adds the other officer', (await host.call('PUT', `/api/trivia/quizzes/${pq.slug}/access`, { members: [other.id] })).j.members?.[0] === other.id);
+  t.ok('who was added opens the quiz and its games', (await other.call('GET', `/api/trivia/quizzes/${pq.slug}`)).s === 200 && (await other.call('GET', `/api/trivia/games/${pg.j.code}`)).s === 200);
+  t.ok('an Admin always opens it and sees the list', (await admin.call('GET', `/api/trivia/quizzes/${pq.slug}`)).s === 200 && (await admin.call('GET', `/api/trivia/quizzes/${pq.slug}/access`)).j.members?.includes(other.id));
+  t.ok('they lose it again when taken off', (await host.call('PUT', `/api/trivia/quizzes/${pq.slug}/access`, { members: [] })).s === 200 && (await other.call('GET', `/api/trivia/quizzes/${pq.slug}`)).s === 403);
+  await host.call('DELETE', `/api/trivia/games/${pg.j.code}`);
 
   // ---- deleting a game frees its winners
   t.ok('a finished game can be deleted', (await host.call('DELETE', G)).s === 200 && (await svc.from('trivia_winners').select('user_id', { count: 'exact', head: true }).eq('game_id', gameId)).count === 0);

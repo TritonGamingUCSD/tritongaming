@@ -23,7 +23,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ cod
   if (r.closed) return NextResponse.json({ error: 'Too late: that question is closed.', closed: true }, { status: 409 });
   if (r.out) return NextResponse.json({ error: 'You are not in this game.' }, { status: 403 });
   if (r.bad) return NextResponse.json({ error: 'Pick one of the answers.' }, { status: 400 });
-  // Tell the screens how many have answered once the reply is on its way (so the phone is not kept waiting for it).
-  if (r.first) after(() => broadcast(g.id, 'count', { answered: r.answered, q }));
+  // Tell the host how many have answered, once the reply is on its way (so the phone is not kept waiting for it). In steps (about 20 messages however many play) and always for the last one.
+  const step = Math.max(1, Math.ceil((r.players ?? 1) / 20));
+  if (r.first && ((r.answered ?? 0) % step === 0 || r.answered === r.players)) after(() => broadcast(g.id, 'count', { answered: r.answered, q }, true));
   return NextResponse.json({ ok: true, pos: r.pos, ...(r.first ? {} : { again: true }) });
 }

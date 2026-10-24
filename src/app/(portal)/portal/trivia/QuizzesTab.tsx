@@ -1,22 +1,23 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Lock, Pencil, Plus } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import Loading from '@/components/Loading/Loading';
 import { Field, Input } from '@/components/ui/Field';
 import { call } from './api';
+import { LiveGames } from './QuizGames';
 import type { QuizRow } from '@/lib/trivia/types';
 import styles from './trivia.module.css';
 
 // The quizzes. Each is a pool of questions; hosting it draws a fresh random set from the pool.
-export async function startGame(quiz: string, practice: boolean): Promise<{ code: string } | { error: string }> {
-  const r = await call<{ code: string }>('POST', '/api/trivia/games', { quiz, practice });
+export async function startGame(quiz: string): Promise<{ code: string } | { error: string }> {
+  const r = await call<{ code: string }>('POST', '/api/trivia/games', { quiz });
   return r.ok ? { code: r.data.code } : { error: r.error };
 }
 
-export default function QuizzesTab({ onOpen, onHost }: { onOpen: (slug: string) => void; onHost: (code: string) => void }) {
+export default function QuizzesTab({ onOpen, onHost }: { onOpen: (slug: string, view?: 'questions' | 'games') => void; onHost: (code: string) => void }) {
   const [quizzes, setQuizzes] = useState<QuizRow[] | null>(null);
   const [name, setName] = useState('');
   const [error, setError] = useState('');
@@ -36,9 +37,9 @@ export default function QuizzesTab({ onOpen, onHost }: { onOpen: (slug: string) 
     setName('');
     onOpen(r.data.quiz.slug);
   };
-  const host = async (q: QuizRow, practice: boolean) => {
-    setBusy(`${q.id}${practice}`); setError('');
-    const r = await startGame(q.slug, practice);
+  const host = async (q: QuizRow) => {
+    setBusy(q.id); setError('');
+    const r = await startGame(q.slug);
     setBusy('');
     if ('error' in r) setError(r.error); else onHost(r.code);
   };
@@ -49,24 +50,33 @@ export default function QuizzesTab({ onOpen, onHost }: { onOpen: (slug: string) 
         <Field label="New Quiz"><Input value={name} maxLength={80} placeholder="Name of the quiz" onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void create(); }} /></Field>
         <Button loading={busy === 'new'} disabled={!name.trim()} onClick={() => void create()}><Plus size={15} aria-hidden="true" /> Add Quiz</Button>
       </div>
+      <LiveGames onHost={onHost} />
       {error && <div role="alert" onClick={() => setError('')}><Notice tone="error">{error}</Notice></div>}
       {!quizzes ? (error ? null : <Loading variant="inline" label="Loading…" />) : quizzes.length === 0 ? (
         <div className={styles.empty}><p>No quizzes yet. Name one above, then add its questions.</p></div>
       ) : (
         <div className={styles.cards}>
-          {quizzes.map((q) => (
+          {quizzes.map((q) => q.locked ? (
             <div key={q.id} className={styles.card}>
+              <span className={styles.cardKicker}><Lock size={11} aria-hidden="true" /> Private</span>
+              <h3 className={styles.cardTitle}>{q.name}</h3>
+              <p className={styles.muted}>Shared with only some officers. Ask its creator or an Admin for access.</p>
+            </div>
+          ) : (
+            <div key={q.id} className={`${styles.card} ${styles.cardLink}`} onClick={(e) => { if (!(e.target as HTMLElement).closest('button, a, input')) onOpen(q.slug); }}>
               <span className={styles.cardKicker}>Quiz</span>
               <h3 className={styles.cardTitle}><button type="button" onClick={() => onOpen(q.slug)}>{q.name}</button></h3>
               <div className={styles.cardMeta}>
+                {q.restricted && <span className={`${styles.badge} ${styles.neutral}`}><Lock size={11} aria-hidden="true" /> Private</span>}
                 <span className={`${styles.badge} ${styles.neutral}`}>{q.questions} {q.questions === 1 ? 'question' : 'questions'} in the pool</span>
                 <span className={`${styles.badge} ${styles.neutral}`}>{Math.min(q.per_game, q.ready || q.per_game)} per game</span>
+                <span className={`${styles.badge} ${styles.neutral}`}>{q.games} {q.games === 1 ? 'game' : 'games'}{q.last_played ? ` · last ${new Date(q.last_played).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' })}` : ''}</span>
                 {q.ready < q.questions && <span className={`${styles.badge} ${styles.bad}`}>{q.questions - q.ready} unfinished</span>}
               </div>
               <div className={styles.cardActions}>
-                <Button size="sm" disabled={!q.ready} loading={busy === `${q.id}false`} onClick={() => void host(q, false)}>Host Game</Button>
-                <Button size="sm" variant="secondary" disabled={!q.ready} loading={busy === `${q.id}true`} onClick={() => void host(q, true)}>Practice</Button>
-                <Button size="sm" variant="ghost" onClick={() => onOpen(q.slug)}>Questions</Button>
+                <Button size="sm" disabled={!q.ready} loading={busy === q.id} onClick={() => void host(q)}>Host Game</Button>
+                <Button size="sm" variant="secondary" onClick={() => onOpen(q.slug)}><Pencil size={13} aria-hidden="true" /> Edit Quiz</Button>
+                <Button size="sm" variant="secondary" onClick={() => onOpen(q.slug, 'games')}>Games</Button>
               </div>
             </div>
           ))}

@@ -22,7 +22,7 @@ export default function PlayTab({ onOpen }: { onOpen: (code: string | null) => v
   useEffect(() => { let on = true; void call<{ games: Mine[] }>('GET', '/api/trivia/mine').then((r) => { if (on && r.ok) setMine(r.data.games); }); return () => { on = false; }; }, []);
   const join = async () => {
     const code = cleanCode(text);
-    if (!code) { setError('A code is 6 letters and numbers.'); return; }
+    if (!code) { setError('A code is 6 numbers.'); return; }
     setBusy(true); setError('');
     const r = await call('POST', '/api/trivia/join', { code });
     setBusy(false);
@@ -34,7 +34,7 @@ export default function PlayTab({ onOpen }: { onOpen: (code: string | null) => v
         <span className={styles.tape} aria-hidden="true" />
         <h2>Join a Game</h2>
         <p className={styles.muted}>Scan the QR code on the screen with your camera, or type the code shown there.</p>
-        <input className={styles.codeInput} value={text} maxLength={40} inputMode="text" autoCapitalize="characters" autoComplete="off" spellCheck={false} placeholder="CODE" aria-label="Game code" onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void join(); }} />
+        <input className={styles.codeInput} value={text} maxLength={40} inputMode="numeric" autoComplete="off" spellCheck={false} placeholder="000000" aria-label="Game code" onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void join(); }} />
         {error && <div role="alert"><Notice tone="error">{error}</Notice></div>}
         <Button loading={busy} disabled={!text.trim()} onClick={() => void join()}>Join</Button>
       </div>

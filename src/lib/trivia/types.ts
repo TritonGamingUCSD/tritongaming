@@ -4,7 +4,7 @@ export type GameStatus = 'lobby' | 'question' | 'reveal' | 'done';
 export type PlayerStatus = 'in' | 'blocked' | 'removed';
 
 export interface Placing { name: string; score: number; rank: number }
-export interface PlayerResult { pos: number | null; ok: boolean; pts: number; rank: number; score: number }
+export interface PlayerResult { pos: number | null; ok: boolean; pts: number; rank: number; score: number; streak?: number }
 
 // What a reveal shows (and, with `final`, what the end of the game shows: the podium and everyone's rank).
 export interface Reveal {
@@ -20,12 +20,11 @@ export interface PublicState {
   gameId: string;
   code: string;
   quiz: string;
-  practice: boolean;
   status: GameStatus;
   current: number;                          // index of the question on screen, -1 in the lobby
   total: number;                            // questions in this game (the quiz's number until the game starts)
   players: number;                          // people in (not blocked or removed)
-  question?: { text: string; choices: string[]; secs: number; startedAt: number; endsAt: number };
+  question?: { category?: string; text: string; choices: string[]; secs: number; startedAt: number; endsAt: number };
   answered?: number;
   reveal?: Reveal;
   now: number;                              // the server's clock when this was made, to line phones up with it
@@ -33,5 +32,5 @@ export interface PublicState {
 
 export interface LobbyPlayer { id: string; name: string; status: PlayerStatus; score: number }
 
-export interface QuizRow { id: string; slug: string; name: string; per_game: number; questions: number; ready: number; created_at: string }
-export interface QuestionRow { id: string; sort: number; text: string; choices: string[]; correct: number; secs: number }
+export interface QuizRow { id: string; slug: string; name: string; per_game: number; block_winners: boolean; restricted: boolean; locked: boolean; questions: number; ready: number; games: number; last_played: string | null; created_at: string }
+export interface QuestionRow { id: string; sort: number; category: string; text: string; choices: string[]; correct: number }

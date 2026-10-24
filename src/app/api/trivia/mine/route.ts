@@ -11,7 +11,7 @@ export async function GET() {
   const { data: mine } = await auth.svc.from('trivia_players').select('game_id, status, score').eq('user_id', auth.user.id).order('joined_at', { ascending: false }).limit(60);
   const ids = (mine ?? []).map((m) => m.game_id as string);
   if (!ids.length) return NextResponse.json({ games: [] });
-  const { data: games } = await auth.svc.from('trivia_games').select('id, code, status, practice, created_at, reveal, trivia_quizzes(name)').in('id', ids).eq('practice', false);
+  const { data: games } = await auth.svc.from('trivia_games').select('id, code, status, created_at, reveal, trivia_quizzes(name)').in('id', ids);
   const by = new Map((mine ?? []).map((m) => [m.game_id as string, m]));
   const out = ((games ?? []) as unknown as { id: string; code: string; status: string; created_at: string; reveal: Reveal | null; trivia_quizzes: { name: string } | null }[])
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
