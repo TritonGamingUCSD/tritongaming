@@ -46,6 +46,17 @@ Code: `src/app/(portal)/portal/help`, `src/app/api/help`, `src/lib/notifications
 - Anyone can open a ticket; exec and admin see all of them.
 - **Role requests:** "I need a role" opens a short form (role, division, who can vouch). It becomes a ticket whose text `parseRoleRequest` can read back. Admins (only) see **Approve and give role** on it, preselected from the request. Approving gives the role (`withRole`), replies on the ticket, notifies the person, resolves the ticket and writes the audit log.
 
+## Trivia (quiz games for events)
+
+A portal section (Events group). **Everyone signed in can play**; officers and above (`host_trivia`) write quizzes, host games and see results.
+
+- **Quizzes:** a quiz owns a *pool* of multiple-choice questions (four answers, one right, 5 to 120 seconds each, 20 by default), written like a spreadsheet (Tab/Enter move, Ctrl+Z undoes). A quiz says how many questions a game asks; the host can change that in the lobby.
+- **Hosting:** Host Game opens a lobby with a standard QR code (not the TGcode) and a 6-character code. A fresh random set is drawn from the pool when the game starts, questions earlier games of the quiz did not use first; the order of the answers is shuffled. The host screen shows the clock and how many answered, then the right answer, how many chose what and the top five; the question closes by itself when time is up or everybody answered, and the host clicks Next. Ends with a podium.
+- **Playing:** open the QR code, or Trivia → Play and type the code. Names are portal display names. Phones show four colored answers; after the reveal they show right or wrong, points and rank. Scoring is 500 to 1000 points per right answer (faster is more); ties are split by total time on right answers. Players can rejoin or join late; the host can remove someone and let them back in (hold to confirm).
+- **Top 3 rule:** the top three of a real game cannot join a later game of the same quiz (they show on the host's list as "not in", and the host can let them in). Practice games block nobody and are not kept; deleting a game frees its top three.
+- **Live:** the server sends small messages on a Supabase Realtime channel (`trivia:<game id>`); screens also ask every 10 seconds and when a phone wakes up. The server decides the clock, the points and the right answer (never sent before the reveal).
+- Addresses: `/portal/trivia/{quizzes[/<quiz>] | games[/<code>] | play[/<code>] | host/<code>}`.
+
 ## Event Logistics (requests, allocation, event day, inventory, tools)
 
 A self-contained portal section (Team group). **Every recruit, officer and above can look**; only people with the Event Logistics permission (exec, admin, or granted) change anything. The work runs in three steps: **Requests** (what each team needs) → **Allocation** (which device or prize goes to which request) → **Event Day** (tick what happens).

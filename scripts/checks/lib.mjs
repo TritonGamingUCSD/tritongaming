@@ -52,8 +52,15 @@ export function accounts(tag) {
     await svc.from('profiles').update({ display_name: `ZZ Mtg ${name}`, onboarded_at: new Date().toISOString(), year: '2028', class_of: 2028, college: 'Sixth', major: 'CS', pronouns: 'they/them', ...(opts.profile ?? {}) }).eq('id', id);
     for (const r of roles) await svc.from('user_roles').insert({ user_id: id, role: r });
     const client = createClient(url, env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
-    const { data: lk } = await svc.auth.admin.generateLink({ type: 'magiclink', email });
-    const { data: s } = await client.auth.verifyOtp({ token_hash: lk.properties.hashed_token, type: 'magiclink' });
+    // Supabase Auth limits sign-ins (about 30 every 5 minutes from one address): past that it answers "rate limit" and the sign-in comes back empty, so wait and try again.
+    let s = null;
+    for (let attempt = 0; attempt < 60 && !s?.session; attempt++) {
+      if (attempt) await new Promise((r) => setTimeout(r, 8000 + Math.random() * 4000));
+      const { data: lk } = await svc.auth.admin.generateLink({ type: 'magiclink', email });
+      if (!lk?.properties) continue;
+      ({ data: s } = await client.auth.verifyOtp({ token_hash: lk.properties.hashed_token, type: 'magiclink' }));
+    }
+    if (!s?.session) throw new Error(`could not sign in ${email}`);
     const cookie = `sb-${ref}-auth-token=base64-${Buffer.from(JSON.stringify(s.session)).toString('base64url')}`;
     const call = async (method, path, body) => {
       refuseBulk(path, body);

@@ -16,7 +16,7 @@ function useHeld<T>(value: T) {
 }
 
 // A spreadsheet-style cell: click to change, and it saves when you pick or press Enter. Officers who can't edit just see the value.
-export function TextCell({ value, canEdit, onSave, placeholder, strong }: { value: string | null; canEdit: boolean; onSave: (v: string) => void; placeholder?: string; strong?: boolean }) {
+export function TextCell({ value, canEdit, onSave, placeholder, strong, max = 120 }: { value: string | null; canEdit: boolean; onSave: (v: string) => void; placeholder?: string; strong?: boolean; max?: number }) {
   const [on, setOn] = useState(false);
   const [text, setText] = useState(value ?? '');
   const [shown, hold] = useHeld(value);
@@ -24,7 +24,7 @@ export function TextCell({ value, canEdit, onSave, placeholder, strong }: { valu
   if (!canEdit) return <span className={strong ? styles.strong : undefined}>{shown || <span className={styles.dim}>{placeholder ?? '–'}</span>}</span>;
   if (!on) return <button type="button" data-cell className={`${styles.editCell} ${strong ? styles.strong : ''}`} onClick={(e) => tapTwice(e, open)}>{shown || <span className={styles.editHint}>{placeholder ?? 'Add'}</span>}</button>;
   const done = (save: boolean) => { setOn(false); if (save && text.trim() !== (shown ?? '')) { const was = shown ?? '', now = text.trim(); recordEdit(() => onSave(was), () => onSave(now)); hold(now || null); onSave(now); } };
-  return <input data-cell className={styles.cellInput} value={text} autoFocus onFocus={(e) => e.target.select()} maxLength={120} onChange={(e) => setText(e.target.value)} onBlur={() => done(true)} onKeyDown={(e) => { if (isMove(e)) { moveFrom(e.currentTarget, e); done(true); } else if (e.key === 'Escape') done(false); }} />;
+  return <input data-cell className={styles.cellInput} value={text} autoFocus onFocus={(e) => e.target.select()} maxLength={max} onChange={(e) => setText(e.target.value)} onBlur={() => done(true)} onKeyDown={(e) => { if (isMove(e)) { moveFrom(e.currentTarget, e); done(true); } else if (e.key === 'Escape') done(false); }} />;
 }
 
 export function PickCell({ value, options, canEdit, onSave, onCreate, shown, clearable = true, locate, placeholder }: { placeholder?: string; locate?: boolean; value: string | null; options: string[]; canEdit: boolean; onSave: (v: string | null) => void; onCreate?: (v: string) => Promise<string | null>; shown?: string; clearable?: boolean }) {

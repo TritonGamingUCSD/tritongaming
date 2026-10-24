@@ -54,6 +54,7 @@ export type Capability =
   | 'view_logistics'
   | 'request_logistics'
   | 'send_event_emails'
+  | 'host_trivia'
   | 'manage_logistics'
   | 'manage_quarters'
   | 'view_attendance_reports'

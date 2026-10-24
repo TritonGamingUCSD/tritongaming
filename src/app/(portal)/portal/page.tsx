@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { roleInk } from '@/lib/portal/roleColors';
 import Link from '@/components/portal/NoPrefetchLink';
 import Image from 'next/image';
-import { Ticket, User, Camera, Calendar, Users, QrCode, Pencil, Shield, BookOpen, Award, ArrowLeft, CalendarCheck, LayoutGrid, CircleHelp, ShieldAlert, CalendarRange, Globe, Package } from 'lucide-react';
+import { Ticket, User, Camera, Calendar, Users, QrCode, Pencil, Shield, BookOpen, Award, ArrowLeft, CalendarCheck, LayoutGrid, CircleHelp, ShieldAlert, CalendarRange, Globe, Package, Gamepad2 } from 'lucide-react';
 import { getProfile, getUserRoles, getMyPrivateProfile, getUser, getSessionRoles, getViewAs, getViewingUser } from '@/lib/core/auth';
 import { ViewAsSwitcher, ViewAsBanner, ViewingUserBanner } from '@/components/portal/ViewAs';
 import ProfileIncompleteBanner from '@/components/portal/ProfileIncompleteBanner';
@@ -42,6 +42,7 @@ import TodoCard from './TodoCard';
 import StrikeCard from './strikes/StrikeCard';
 import StrikesSectionContent from './strikes/StrikesSectionContent';
 import LogisticsSectionContent from './logistics/LogisticsSectionContent';
+import TriviaSectionContent from './trivia/TriviaSectionContent';
 import QuarterStatusContent from './quarters/QuarterStatusContent';
 import InactiveNote from './quarters/InactiveNote';
 import { currentQuarter, loadQuarters, quarterName } from '@/lib/members/quarters';
@@ -303,6 +304,14 @@ export default async function PortalDashboard({ searchParams }: Props) {
       group: 'Team' as const,
       content: <LogisticsSectionContent canManage={canManageLogistics} />,
     }] : []),
+    // Quiz games for events. Everyone signed in can play; officers and above write quizzes, host games and see results.
+    {
+      id: 'trivia', icon: <Gamepad2 size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Trivia',
+      description: hasCapability(roles, 'host_trivia') ? 'Write quizzes and host games' : 'Join a quiz game',
+      homeExclude: true, dockExclude: true,
+      group: 'Events' as const,
+      content: <TriviaSectionContent canHost={hasCapability(roles, 'host_trivia')} />,
+    },
     ...(canViewMembers ? [{
       id: 'members', icon: <Users size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'TG Members',
       description: 'Browse everyone in the org',

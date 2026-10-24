@@ -22,6 +22,7 @@ const DEFS: Def[] = [
   S('meetings', 'Meetings', 'Check in, history and results', 'meetings', ['meeting', 'attendance'], ['attend_meetings', 'view_attendance_reports']),
   S('strikes', 'Strikes', 'Private strike tracker (HR and exec)', 'strikes', ['strike', 'strikes', 'voucher', 'hr', 'attendance'], ['manage_strikes']),
   S('logistics', 'Event Logistics', 'Equipment catalog, prizes and event setups', 'logistics', ['equipment', 'devices', 'gear', 'inventory', 'prizes', 'shelf', 'setup', 'tech'], ['view_logistics', 'manage_logistics']),
+  S('trivia', 'Trivia', 'Join a quiz game, or write and host one', 'trivia', ['quiz', 'kahoot', 'game', 'questions', 'play', 'join'], undefined),
   S('quarters', 'Quarter status', 'Who is active or inactive each quarter', 'quarters', ['quarter', 'inactive', 'active', 'officer', 'term', 'year'], ['manage_quarters']),
   S('divisions', 'Divisions', 'Edit the divisions directory and pages', 'divisions', ['division', 'edit'], ['manage_divisions_directory', 'manage_division']),
   S('division-members', 'Division Members', 'Who leads each division', 'division-members', ['leads', 'division'], 'view_division_members'),
