@@ -7,7 +7,7 @@ import { confirmHold } from '@/lib/ui/confirmHold';
 import { showToast } from '@/lib/ui/toast';
 import { call } from './api';
 import { useCountdown, useGame } from './useGame';
-import { CARD_MS } from '@/lib/trivia/game';
+import { AUTO_NEXT_SECS, CARD_MS } from '@/lib/trivia/game';
 import { Stage, CountUp, FloatShapes, Ring, Confetti, Shape, Tape, CategoryCard, Countdown, ShapeLoader, Sweep, FitBox, ansClass, fmtScore } from './shapes';
 import TriviaQr from './TriviaQr';
 import styles from './trivia.module.css';
@@ -43,13 +43,12 @@ export default function HostGame({ code, onLeave, onResults, onNewGame }: { code
     return () => clearTimeout(t);
   }, [status, current, everyone, q, code, serverNow, reload, state?.gameId]);
 
-  // After the answer has been shown for 10 seconds with no button pressed the game moves on to the next question by itself (never to the podium: after the last question the host presses Show Podium).
+  // After the answer has been shown for AUTO_NEXT_SECS (6) seconds with no button pressed the game moves on by itself: to the next question, or after the last one to the results (the button counts it down).
   const [nextIn, setNextIn] = useState<number | null>(null);
-  const lastQuestion = !!state && state.current + 1 >= state.total;
-  const shown = status === 'reveal' && !!state?.reveal && !lastQuestion;   // after the last question the host shows the podium themself
+  const shown = status === 'reveal' && !!state?.reveal;
   useEffect(() => {
     if (!shown) { setNextIn(null); return; }
-    let left = 10;
+    let left = AUTO_NEXT_SECS;
     setNextIn(left);
     const id = setInterval(() => {
       left -= 1;
