@@ -22,6 +22,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   // A division account gets only the plan itself (for the Requests page), none of its devices, teams or prizes.
   if (!auth.canView) return NextResponse.json({ plan, canManage: false, requestOnly: true, stations: [], steps: [], prizes: { pools: [], lines: [], done: [], steps: [], keeps: [] }, lockedRequests: [], items: [], slots: [], borrowed: [], extras: [], done: [], conflicts: [] });
   const prizeData = loadPlanPrizes(auth.svc, id);
+  const lockedP = lockedRequestIds(auth.svc, id);   // read alongside the rest
   const [stations, rows, steps, done, borrowedRows, slotRows] = await Promise.all([
     auth.svc.from('logistics_stations').select('id, name, sort, contact, room').eq('plan_id', id).order('sort').order('name').limit(500),
     auth.svc.from('logistics_plan_devices').select('device_id, station_id, role, swap_reason, swapped_for_label, games_needed, sort, set_id, request_id, request_item').eq('plan_id', id).limit(5000),
@@ -36,11 +37,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const byId = new Map((devices ?? []).map((d) => [d.id as string, d as unknown as Device]));
   const planned = (rows.data ?? []).filter((r) => r.role === 'planned').map((r) => byId.get(r.device_id as string)).filter((d): d is Device => !!d);
   const borrowed = (borrowedRows.data ?? []) as unknown as BorrowedRow[];
-  const names = await ownerNames(auth.svc, borrowed);
-  const doneNames = await namesOf(auth.svc, (done.data ?? []).map((d) => d.done_by as string | null));
-  const booked = await bookedElsewhere(auth.svc, plan as { id: string; starts_on: string; ends_on: string }, planned.map((d) => d.id));
+  // Three independent reads, made together.
+  const [names, doneNames, booked] = await Promise.all([
+    ownerNames(auth.svc, borrowed),
+    namesOf(auth.svc, (done.data ?? []).map((d) => d.done_by as string | null)),
+    bookedElsewhere(auth.svc, plan as { id: string; starts_on: string; ends_on: string }, planned.map((d) => d.id)),
+  ]);
   return NextResponse.json({
-    plan, canManage: auth.canManage, stations: stations.data ?? [], steps, prizes: await prizeData, lockedRequests: [...(await lockedRequestIds(auth.svc, id))],
+    plan, canManage: auth.canManage, stations: stations.data ?? [], steps, prizes: await prizeData, lockedRequests: [...(await lockedP)],
     items: (rows.data ?? []).map((r) => ({ ...r, device: byId.get(r.device_id as string) })).filter((r) => r.device),
     slots: slotRows.data ?? [],
     borrowed: borrowed.map((b) => ({ ...b, owner: ownerLabelOf(b, names) })),

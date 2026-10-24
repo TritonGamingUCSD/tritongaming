@@ -71,7 +71,7 @@ export async function planPrizeCounts(svc: SupabaseClient, planId: string): Prom
 export interface PlanPrizes {
   pools: { id: string; name: string; station_id: string | null; sort: number; request_id: string | null; target_qty: number | null; target_sizes: Record<string, number> | null }[];
   lines: { id: string; pool_id: string; prize_id: string; quantity: number; sort: number; prize: { id: string; name: string; sponsor: string | null; size: string | null; type: string | null; in_hand: boolean; price: number | null; quantity: number; quantity_is_estimate: boolean; left: number } }[];
-  done: { line_id: string; step_id: string; done: number }[];
+  done: { line_id: string; step_id: string; done: number; updated_at?: string }[];
   steps: PrizeStepDef[];
   keeps: { prize_id: string; quantity: number; moved_at: string | null }[];   // prizes set aside to keep for future events
 }
@@ -82,7 +82,7 @@ export async function loadPlanPrizes(svc: SupabaseClient, planId: string): Promi
   const [pools, lines, done, steps, keeps] = await Promise.all([
     svc.from('logistics_plan_pools').select('id, name, station_id, sort, request_id, target_qty, target_sizes').eq('plan_id', planId).order('sort').limit(200),
     svc.from('logistics_plan_prizes').select('id, pool_id, prize_id, quantity, sort').eq('plan_id', planId).order('sort').limit(3000),
-    svc.from('logistics_plan_prize_steps').select('line_id, step_id, done').eq('plan_id', planId).limit(30000),
+    svc.from('logistics_plan_prize_steps').select('line_id, step_id, done, updated_at').eq('plan_id', planId).limit(30000),
     loadPrizeSteps(svc),
     svc.from('logistics_plan_keeps').select('prize_id, quantity, moved_at').eq('plan_id', planId),
   ]);

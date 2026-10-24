@@ -75,37 +75,65 @@ export function usePlan(id: string, live: boolean) {
   const detailRef = useRef<PlanDetail | null>(null);
   detailRef.current = detail;
   const [error, setError] = useState('');
-  const since = useRef('');
+  const since = useRef('');   // the latest device step this screen has heard about
+  const prizeSince = useRef('');   // the latest prize count this screen has heard about
   const stamp = useRef('');
+  const gen = useRef(0);   // counts the changes made on this screen: a read that was already on its way when one was made holds the old value, so it is read again instead of put on screen
+  const quiet = useRef({ ticks: 0, idle: 0 });   // how long nothing changed: the check slows down while it stays quiet and is fast again as soon as anything moves
 
-  const load = useCallback(async () => {
-    const r = await call<PlanDetail>(`/api/logistics/plans/${id}`, 'GET');
-    if (!r.ok) { setError(r.error); return false; }
-    setDetail(r.data); setError('');
-    stamp.current = r.data.plan.updated_at;
-    since.current = r.data.done.reduce((m, d) => (d.done_at > m ? d.done_at : m), '');
+  const load = useCallback(async (): Promise<boolean> => {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const g = gen.current;
+      const r = await call<PlanDetail>(`/api/logistics/plans/${id}`, 'GET');
+      if (!r.ok) { setError(r.error); return false; }
+      if (g !== gen.current) continue;   // something was changed on this screen while it was loading: read again once
+      setDetail(r.data); setError('');
+      stamp.current = r.data.plan.updated_at;
+      since.current = r.data.done.reduce((m, d) => (d.done_at > m ? d.done_at : m), '');
+      prizeSince.current = (r.data.prizes.done ?? []).reduce((m, d) => ((d.updated_at ?? '') > m ? d.updated_at ?? '' : m), r.data.plan.updated_at);
+      quiet.current = { ticks: 0, idle: 0 };
+      return true;
+    }
     return true;
   }, [id]);
   useEffect(() => { void load(); }, [load]);
+  const touched = () => { gen.current++; quiet.current = { ticks: 0, idle: 0 }; };
 
+  // The check asks every 20 seconds while the screen is open and visible; after two quiet minutes it asks every 40 seconds and after four every minute, and goes back to 20 seconds when anything changes.
   const check = useCallback(async () => {
-    const q = since.current ? `?since=${encodeURIComponent(since.current)}` : '';
-    const r = await call<{ updated_at: string; status: string; count: number; changes: DoneRow[] }>(`/api/logistics/plans/${id}/version${q}`, 'GET');
+    const q = quiet.current;
+    q.ticks++;
+    if (q.ticks % (q.idle < 6 ? 1 : q.idle < 12 ? 2 : 3) !== 0) return;
+    const params = new URLSearchParams();
+    if (since.current) params.set('since', since.current);
+    if (prizeSince.current) params.set('prize_since', prizeSince.current);
+    const qs = params.toString();
+    const r = await call<{ updated_at: string; status: string; count: number; changes: DoneRow[]; prize_changes: { line_id: string; step_id: string; done: number; updated_at: string }[] }>(`/api/logistics/plans/${id}/version${qs ? `?${qs}` : ''}`, 'GET');
     if (!r.ok) return;
-    setDetail((cur) => {
-      if (!cur) return cur;
-      const have = new Set(cur.done.map(doneKey));
-      const fresh = r.data.changes.filter((c) => !have.has(doneKey(c)));
-      const done = [...cur.done, ...fresh];
-      if (r.data.changes.length) since.current = r.data.changes.reduce((m, d) => (d.done_at > m ? d.done_at : m), since.current);
-      // Something else changed (devices, stations, a swap, a step undone elsewhere): read the whole plan again.
-      if (r.data.updated_at !== stamp.current || r.data.count !== done.length) { void load(); return fresh.length ? { ...cur, done } : cur; }
-      return fresh.length ? { ...cur, done } : cur;
-    });
+    const cur = detailRef.current;
+    if (!cur) return;
+    const have = new Set(cur.done.map(doneKey));
+    const fresh = r.data.changes.filter((c) => !have.has(doneKey(c)));
+    const prize = r.data.prize_changes ?? [];
+    if (r.data.changes.length) since.current = r.data.changes.reduce((m, d) => (d.done_at > m ? d.done_at : m), since.current);
+    if (prize.length) prizeSince.current = prize.reduce((m, d) => (d.updated_at > m ? d.updated_at : m), prizeSince.current);
+    quiet.current = fresh.length || prize.length ? { ticks: 0, idle: 0 } : { ticks: q.ticks, idle: q.idle + 1 };
+    // Something else changed (devices, stations, a swap, a step undone elsewhere): read the whole plan again.
+    if (r.data.updated_at !== stamp.current || r.data.count !== cur.done.length + fresh.length) void load();
+    if (fresh.length || prize.length) {
+      setDetail((c) => {
+        if (!c) return c;
+        const done = fresh.length ? [...c.done, ...fresh.filter((f) => !c.done.some((d) => doneKey(d) === doneKey(f)))] : c.done;
+        let pd = c.prizes.done;
+        if (prize.length) { const keys = new Set(prize.map((p) => `${p.line_id}:${p.step_id}`)); pd = [...pd.filter((d) => !keys.has(`${d.line_id}:${d.step_id}`)), ...prize.map((p) => ({ line_id: p.line_id, step_id: p.step_id, done: p.done, updated_at: p.updated_at }))]; }
+        return { ...c, done, prizes: pd === c.prizes.done ? c.prizes : { ...c.prizes, done: pd } };
+      });
+    }
   }, [id, load]);
   useVisiblePoll(check, 20_000, live);
 
   const act = useCallback(async (url: string, method: string, body?: unknown): Promise<boolean> => {
+    touched();
     const r = await call<unknown>(`/api/logistics/plans/${id}${url}`, method, body);
     if (!r.ok) { setError(r.error); return false; }
     setError('');
@@ -118,6 +146,7 @@ export function usePlan(id: string, live: boolean) {
     const r = await call<StepResult>(`/api/logistics/plans/${id}/steps`, 'POST', body);
     if (!r.ok) return { ok: false, error: r.error, network: r.status === 0 };
     const res = r.data;
+    touched();
     setDetail((cur) => {
       if (!cur) return cur;
       const club = res.item.kind === 'club';
@@ -125,16 +154,33 @@ export function usePlan(id: string, live: boolean) {
       const done = cur.done.some((d) => doneKey(d) === doneKey(row)) ? cur.done : [...cur.done, row];
       if (res.done_at > since.current) since.current = res.done_at;
       // The parts may have changed at Check done; a club device not in the plan is remembered as a spare used on the day.
-      const items = club ? cur.items.map((i) => (i.device_id === res.item.id ? { ...i, device: { ...i.device, kit: res.item.kit } } : i)) : cur.items;
-      const borrowed = club || res.item.kind === 'slot' ? cur.borrowed : cur.borrowed.map((b) => (b.id === res.item.id ? { ...b, kit: res.item.kit } : b));
+      // The rows are only replaced when the parts really changed (Check done), so an ordinary tick leaves them as they are and nothing built from them is worked out again.
+      const sameKit = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+      const items = club && cur.items.some((i) => i.device_id === res.item.id && !sameKit(i.device.kit, res.item.kit)) ? cur.items.map((i) => (i.device_id === res.item.id ? { ...i, device: { ...i.device, kit: res.item.kit } } : i)) : cur.items;
+      const borrowed = club || res.item.kind === 'slot' || !cur.borrowed.some((b) => b.id === res.item.id && !sameKit(b.kit, res.item.kit)) ? cur.borrowed : cur.borrowed.map((b) => (b.id === res.item.id ? { ...b, kit: res.item.kit } : b));
       const extras = res.item.kind !== 'club' || res.inPlan || cur.extras.some((e) => e.id === res.item.id) ? cur.extras : [...cur.extras, res.item as unknown as Device];
       return { ...cur, done, extras, items, borrowed };
     });
     return { ok: true, result: res };
   }, [id]);
+  // The same step for many devices at once (Mark all): one request, and every box is shown ticked together.
+  const doSteps = useCallback(async (step_id: string, items: { device_id?: string; borrowed_id?: string; slot_id?: string }[]): Promise<{ ok: true; added: number } | { ok: false; error: string }> => {
+    const r = await call<{ rows: { device_id: string | null; borrowed_id: string | null; slot_id: string | null; step_id: string; done_at: string }[]; by: string | null }>(`/api/logistics/plans/${id}/steps`, 'POST', { step_id, items });
+    if (!r.ok) return { ok: false, error: r.error };
+    touched();
+    const rows = r.data.rows.map((x): DoneRow => ({ ...(x.device_id ? { device_id: x.device_id } : x.borrowed_id ? { borrowed_id: x.borrowed_id } : { slot_id: x.slot_id }), step_id: x.step_id, done_at: x.done_at, by: r.data.by } as DoneRow));
+    setDetail((cur) => {
+      if (!cur || !rows.length) return cur;
+      const have = new Set(cur.done.map(doneKey));
+      return { ...cur, done: [...cur.done, ...rows.filter((x) => !have.has(doneKey(x)))] };
+    });
+    for (const x of rows) if (x.done_at > since.current) since.current = x.done_at;
+    return { ok: true, added: rows.length };
+  }, [id]);
   const undoStep = useCallback(async (item: { id: string; kind: 'club' | 'sponsor' | 'officer' | 'slot' }, step_id: string): Promise<'ok' | 'network' | 'failed'> => {
     const r = await call<{ ok: true }>(`/api/logistics/plans/${id}/steps`, 'DELETE', { ...(item.kind === 'club' ? { device_id: item.id } : item.kind === 'slot' ? { slot_id: item.id } : { borrowed_id: item.id }), step_id });
     if (!r.ok) { if (r.status !== 0) setError(r.error); return r.status === 0 ? 'network' : 'failed'; }
+    touched();
     setDetail((cur) => (cur ? { ...cur, done: cur.done.filter((d) => doneKey(d) !== `${item.id}:${step_id}`) } : cur));
     return 'ok';
   }, [id]);
@@ -173,6 +219,7 @@ export function usePlan(id: string, live: boolean) {
   // A prize count ("sorted 6 of 10") is set as a number and shown at once; the server may lower it (it can't pass what the line has).
   const setPrizeCount = useCallback(async (line_id: string, step_id: string, done: number): Promise<boolean> => {
     let before: number | undefined;
+    touched();
     setDetail((cur) => {
       if (!cur) return cur;
       before = cur.prizes.done.find((d) => d.line_id === line_id && d.step_id === step_id)?.done;
@@ -200,6 +247,7 @@ export function usePlan(id: string, live: boolean) {
     const before = existing?.quantity ?? 0;
     if (next === before) return { ok: true, delta: 0 };
     const delta = next - before;
+    touched();
     if (delta > Math.max(0, prize.left)) { setError(`Only ${Math.max(0, prize.left)} left of ${prize.name}. A pool can't be promised more than there is.`); return { ok: false, delta: 0 }; }
     const withLines = (fn: (l: PlanPrizesData['lines']) => PlanPrizesData['lines']) => setDetail((c) => (c ? { ...c, prizes: { ...c.prizes, lines: fn(c.prizes.lines).map((l) => (l.prize_id === prize.id ? { ...l, prize: { ...l.prize, left: l.prize.left - delta } } : l)) } } : c));
     const undo = () => { void load(); };
@@ -220,7 +268,7 @@ export function usePlan(id: string, live: boolean) {
     return { ok: true, delta };
   }, [id, load]);
 
-  return { detail, error, setError, reload: load, act, doStep, undoStep, swap, unswap, pick, fill, assign, setPrizeCount, setPrizeLine };
+  return { detail, error, setError, reload: load, act, doStep, doSteps, undoStep, swap, unswap, pick, fill, assign, setPrizeCount, setPrizeLine };
 }
 export interface PickCell { type: string; games: string[]; counted: boolean; device: { id: string; tag: string | null; shelf: string | null; tier: string | null; condition: string } | null }
 export interface PickPreview { stations: PickCell[][]; short: number | { type: string; missing: number }[]; notTested: number; missingGames: number; empty: number }

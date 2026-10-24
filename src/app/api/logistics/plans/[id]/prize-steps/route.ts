@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { authorizeLogistics } from '@/lib/logistics/auth';
-import { UUID, touchPlan } from '@/lib/logistics/planServer';
+import { UUID } from '@/lib/logistics/planServer';
 import { loadPrizeSteps } from '@/lib/logistics/prizeServer';
 import { stepCeiling } from '@/lib/logistics/prizes';
 
@@ -37,6 +37,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const done = Math.min(want, ceiling);
   const { error } = await auth.svc.from('logistics_plan_prize_steps').upsert({ line_id: b.line_id, step_id: b.step_id, plan_id: id, done, updated_at: new Date().toISOString(), updated_by: auth.user.id }, { onConflict: 'line_id,step_id' });
   if (error) return NextResponse.json({ error: 'Couldn’t save that.' }, { status: 500 });
-  await touchPlan(auth.svc, id);
+  // No touchPlan here: a count is not a change of the plan's makeup, and bumping the stamp would make every phone download the whole plan again. Other phones read the count from the version check.
   return NextResponse.json({ done, capped: want > ceiling });
 }

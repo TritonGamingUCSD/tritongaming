@@ -190,6 +190,17 @@ try {
   t.ok('unlocking lets the pool change again', (await exec.call('PATCH', `/api/logistics/plans/${P.id}/prizes`, { line_id: lockedLine.id, quantity: 2 })).s === 200);
   await exec.call('PATCH', URL_, { request_id: LK, allocation_locked: false });
   t.ok('unlocking lets the request go', (await exec.call('DELETE', URL_, { request_id: LK })).s === 200);
+  // Mark all: one request ticks a step for many rows.
+  const plainStep = (await exec.call('GET', '/api/logistics')).j.lists.step.find((x) => !x.kit && x.applies === 'all');
+  const slotsA = (await mineRows()).slice(0, 3);
+  if (plainStep && slotsA.length === 3) {
+    const bulkURL = `/api/logistics/plans/${P.id}/steps`;
+    const b1 = await exec.call('POST', bulkURL, { step_id: plainStep.id, items: slotsA.map((r) => ({ slot_id: r.id })) });
+    const b2 = await exec.call('POST', bulkURL, { step_id: plainStep.id, items: slotsA.map((r) => ({ slot_id: r.id })) });
+    t.ok('Mark all ticks a step for many rows in one request, and again changes nothing', b1.s === 200 && b1.j.rows.length === 3 && b2.s === 200 && b2.j.rows.length === 0, JSON.stringify([b1.s, b1.j.rows?.length, b2.j.rows?.length]));
+    const kitStep = (await exec.call('GET', '/api/logistics')).j.lists.step.find((x) => x.kit);
+    if (kitStep) t.ok('a step that reviews the parts is not marked in bulk', (await exec.call('POST', bulkURL, { step_id: kitStep.id, items: slotsA.map((r) => ({ slot_id: r.id })) })).s === 400);
+  }
   // Several people saving the same request at the same moment still leave exactly what it asks for.
   const rc = await exec.call('POST', URL_, { kind: 'devices', team: 'ZZ Race Team', items: [{ what: 'Mouse', qty: 1, games: [] }] });
   const RC = rc.j.request.id;

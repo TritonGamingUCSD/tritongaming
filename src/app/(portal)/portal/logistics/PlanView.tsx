@@ -94,7 +94,8 @@ export default function PlanView({ id, data, catalog, page, day, byType, bySpons
   const mainTypes = useMemo(() => new Set(data.lists.type.filter((t) => t.main).map((t) => t.value)), [data.lists.type]);
   const typeRank = useMemo(() => new Map(data.lists.type.map((t, i) => [t.value, i])), [data.lists.type]);
   const rankOf = useCallback((type: string) => typeRank.get(type) ?? 9999, [typeRank]);
-  const all = useMemo(() => (detail ? planRows(detail, counted) : []), [detail, counted]);
+  // The rows only depend on the devices, loaners and empty rows, not on which steps are done or the prize counts, so a tick doesn't build them (and what is sorted from them) again.
+  const all = useMemo(() => (detail ? planRows(detail, counted) : []), [detail?.items, detail?.borrowed, detail?.slots, counted]);   // eslint-disable-line react-hooks/exhaustive-deps
   const dayIds = useMemo(() => all.filter((r) => r.kind !== 'slot' && r.tag).map((r) => ({ value: r.tag!, hint: `${r.type}${r.stationId ? ` · ${stationOf.get(r.stationId)?.name ?? ''}` : ''}` })), [all, stationOf]);
   const rows: Row[] = useMemo(() => {
     if (!detail) return [];
@@ -105,7 +106,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, bySpons
     const lead = (r: Row) => (r.setId ? first.get(r.setId) ?? r : r);
     // A sponsor or officer loaner that no row has taken is supply (it shows on its own tab), not part of any team yet.
     return all.filter((r) => r.role === 'planned' && !((r.kind === 'sponsor' || r.kind === 'officer') && !r.requestId && !r.station_id)).sort((a, b) => ((a.station_id ? order.get(a.station_id) ?? 999 : 1000) - (b.station_id ? order.get(b.station_id) ?? 999 : 1000)) || rankOf(lead(a).type) - rankOf(lead(b).type) || natural(lead(a).tag ?? lead(a).type, lead(b).tag ?? lead(b).type) || (a.setId && a.setId === b.setId ? a.sort - b.sort : 0));
-  }, [detail, all, rankOf, mainTypes]);
+  }, [detail?.stations, all, rankOf, mainTypes]);   // eslint-disable-line react-hooks/exhaustive-deps
   const backups = useMemo(() => all.filter((r) => r.role === 'backup'), [all]);
 
   const stepStats = useMemo(() => steps.map((s) => {
@@ -287,10 +288,9 @@ export default function PlanView({ id, data, catalog, page, day, byType, bySpons
     if (!todo.length) return;
     const keys = todo.map((r) => `${r.id}:${forStep.id}`);
     setError(''); setPend(keys, true);
-    const results = await Promise.all(todo.map((r) => plan.doStep({ ...bodyOf(r), step_id: forStep.id })));
+    const res = await plan.doSteps(forStep.id, todo.map(bodyOf));   // one request for the whole team
     setPend(keys, null);
-    const failed = results.filter((x) => !x.ok).length;
-    setFeedback(failed ? { tone: 'error', text: `${todo.length - failed} of ${todo.length} marked “${forStep.name}”. ${failed} failed.` } : { tone: 'ok', text: `${todo.length} marked “${forStep.name}”` });
+    setFeedback(res.ok ? { tone: 'ok', text: `${todo.length} marked “${forStep.name}”` } : { tone: 'error', text: `None of the ${todo.length} could be marked “${forStep.name}”. ${res.error}` });
   }
 
   if (!detail) return <div className={styles.tab}><button type="button" className={styles.back} onClick={onBack} aria-label="All events"><ArrowLeft size={15} aria-hidden="true" /> All Plans</button>{error ? <Notice tone="error">{error}</Notice> : <Loading variant="inline" label="Loading…" />}</div>;

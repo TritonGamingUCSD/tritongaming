@@ -72,6 +72,14 @@ try {
   await officer.call('POST', `/api/logistics/plans/${P}/prize-steps`, { line_id: LA1, step_id: sid('Given Out'), done: 3 });
   const back = await officer.call('POST', `/api/logistics/plans/${P}/prize-steps`, { line_id: LA1, step_id: sid('Back To Storage'), done: 4 });
   t.ok('Back To Storage can only count what was not given out (4 − 3)', back.j.done === 1, JSON.stringify(back.j));
+  // A count is not a change of the plan's makeup: it never bumps the plan stamp (that would make every phone download the whole plan), and other phones read it from the version check.
+  const stampBefore = (await officer.call('GET', `/api/logistics/plans/${P}/version`)).j.updated_at;
+  const lastCount = (await svc.from('logistics_plan_prize_steps').select('updated_at').eq('plan_id', P).order('updated_at', { ascending: false }).limit(1)).data[0].updated_at;
+  await officer.call('POST', `/api/logistics/plans/${P}/prize-steps`, { line_id: LA1, step_id: sid('Picked Up'), done: 2 });
+  const ver = (await officer.call('GET', `/api/logistics/plans/${P}/version?prize_since=${encodeURIComponent(lastCount)}`)).j;
+  t.ok('a prize count does not bump the plan stamp', ver.updated_at === stampBefore, JSON.stringify([stampBefore, ver.updated_at]));
+  t.ok('the version check reports prize counts changed since a time', Array.isArray(ver.prize_changes) && ver.prize_changes.some((c) => c.line_id === LA1 && c.step_id === sid('Picked Up') && c.done === 2), JSON.stringify(ver.prize_changes));
+  t.ok('without a time it reports none (nothing extra is read)', (await officer.call('GET', `/api/logistics/plans/${P}/version`)).j.prize_changes.length === 0);
   const inv2 = (await officer.call('GET', '/api/logistics/prizes')).j.prizes.find((x) => x.id === A);
   t.ok('giving out uses stock up: 3 given, 3 still promised to the other pool, 6 left', inv2.given === 3 && inv2.allocated === 4 && inv2.left === 5, JSON.stringify(inv2));
   const d2 = (await officer.call('GET', `/api/logistics/plans/${P}`)).j;
