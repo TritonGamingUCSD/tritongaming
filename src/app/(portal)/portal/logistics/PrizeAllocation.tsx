@@ -50,7 +50,11 @@ export default function PrizeAllocation({ plan, data, bySponsor, grid, onPrizeVi
   const canKeep = d.canManage;   // also after the event is closed: that is when kept prizes are moved
   const keeps = d.prizes.keeps ?? [];
   const inPlan = useMemo(() => { const m = new Map<string, (typeof lines)[number]['prize']>(); for (const l of lines) m.set(l.prize_id, l.prize); return m; }, [lines]);
-  const keepable = [...inPlan].filter(([id]) => !keeps.some((k) => k.prize_id === id));
+  // A prize that has run out in this event (all of it given out on the day) has nothing left to keep, so it is not offered.
+  const giveSteps = new Set(d.prizes.steps.filter((x) => x.gives).map((x) => x.id));
+  const givenOf = (lineId: string, qty: number) => Math.min(qty, d.prizes.done.filter((x) => x.line_id === lineId && giveSteps.has(x.step_id)).reduce((n, x) => n + x.done, 0));
+  const leftInEvent = (prizeId: string) => lines.filter((l) => l.prize_id === prizeId).reduce((n, l) => n + l.quantity - givenOf(l.id, l.quantity), 0);
+  const keepable = [...inPlan].filter(([id]) => !keeps.some((k) => k.prize_id === id) && leftInEvent(id) > 0);
   const keepLabel = (prize: (typeof lines)[number]['prize']) => `${prize.sponsor ?? 'Club'} · ${prize.name}${prize.type ? ` · ${prize.type}` : ''}${prize.size ? ` · ${prize.size}` : ''}`;
   const pending = keeps.filter((k) => !k.moved_at);
   async function moveKept(prizeId?: string) {
@@ -223,7 +227,7 @@ export default function PrizeAllocation({ plan, data, bySponsor, grid, onPrizeVi
               {canKeep && (
                 <div className={styles.poolFoot}>
                   <div className={styles.poolAdd}>
-                    <Combo value={null} options={keepable.map(([, p]) => keepLabel(p))} placeholder={keepable.length ? 'Keep a prize…' : 'No more prizes in this event'} clearable={false} ariaLabel="Keep a prize for future events" onChange={(v) => { const hit = keepable.find(([, p]) => keepLabel(p) === v); if (hit) void plan.act('/keeps', 'POST', { prize_id: hit[0], quantity: 1 }); }} />
+                    <Combo value={null} options={keepable.map(([, p]) => keepLabel(p))} placeholder={keepable.length ? 'Keep a prize…' : 'No prizes left to keep in this event'} clearable={false} ariaLabel="Keep a prize for future events" onChange={(v) => { const hit = keepable.find(([, p]) => keepLabel(p) === v); if (hit) void plan.act('/keeps', 'POST', { prize_id: hit[0], quantity: 1 }); }} />
                   </div>
                   {closed && pending.length > 0 && <Button size="sm" variant="secondary" onClick={() => void moveKept()}>Move {pending.length === 1 ? '' : `All ${pending.length} `}To Inventory</Button>}
                 </div>

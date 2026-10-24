@@ -106,7 +106,9 @@ try {
   const lbLine = (await officer.call('GET', `/api/logistics/plans/${P}`)).j.prizes.lines.find((x) => x.id === LB);
   const bBefore = (await officer.call('GET', '/api/logistics/prizes')).j.prizes.find((x) => x.id === B);
   t.ok('an officer cannot keep a prize', (await officer.call('POST', KEEPS, { prize_id: B, quantity: 1 })).s === 403);
-  t.ok('a prize can be put on the Keep list while the event is open', (await exec.call('POST', KEEPS, { prize_id: B, quantity: 1 })).s === 201 && (await exec.call('POST', KEEPS, { prize_id: A, quantity: 1 })).s === 201);
+  t.ok('a prize can be put on the Keep list while the event is open', (await exec.call('POST', KEEPS, { prize_id: B, quantity: 1 })).s === 201);
+  const keepA = await exec.call('POST', KEEPS, { prize_id: A, quantity: 1 });
+  t.ok('a prize that has all been given out has nothing left to keep', keepA.s === 400 && /none left/.test(keepA.j.error), JSON.stringify(keepA));
   t.ok('a prize that is not in the event cannot be kept', (await exec.call('POST', KEEPS, { prize_id: '00000000-0000-4000-8000-000000000000', quantity: 1 })).s === 400);
   const bKept = (await officer.call('GET', '/api/logistics/prizes')).j.prizes.find((x) => x.id === B);
   t.ok('keeping changes nothing about stock yet', bKept.left === bBefore.left && bKept.allocated === bBefore.allocated, JSON.stringify([bBefore, bKept]));
@@ -118,7 +120,7 @@ try {
   const bClosed = (await officer.call('GET', '/api/logistics/prizes')).j.prizes.find((x) => x.id === B);
   t.ok('closing does not put anything back in stock by itself', bClosed.allocated === 0 && bClosed.given === bBefore.given + lbLine.quantity, JSON.stringify([bBefore.given, lbLine.quantity, bClosed]));
   const mvKeep = await exec.call('PATCH', KEEPS, {});
-  t.ok('moving puts the kept prize back in stock, and skips what was all given out', mvKeep.s === 200 && mvKeep.j.moved === 1 && mvKeep.j.skipped.includes(A), JSON.stringify(mvKeep.j));
+  t.ok('moving puts the kept prize back in stock', mvKeep.s === 200 && mvKeep.j.moved === 1, JSON.stringify(mvKeep.j));
   const bMoved = (await officer.call('GET', '/api/logistics/prizes')).j.prizes.find((x) => x.id === B);
   t.ok('only the moved amount is back in stock', bMoved.given === bClosed.given - 1 && bMoved.left === bClosed.left + 1, JSON.stringify(bMoved));
   t.ok('a moved prize cannot be changed or moved again', (await exec.call('POST', KEEPS, { prize_id: B, quantity: 2 })).s === 409 && (await exec.call('DELETE', KEEPS, { prize_id: B })).s === 409);

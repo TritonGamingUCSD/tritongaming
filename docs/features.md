@@ -110,3 +110,8 @@ Both are called with `Authorization: Bearer $CRON_SECRET`. `daily-maintenance?on
 
 - **Sign-in service down:** the login page first checks that Supabase answers (8 s); if not it says "Can't reach the sign-in service right now. Please try again in a minute." instead of sitting on "Redirecting…".
 - **Ended session in an open tab:** `components/portal/SessionGuard.tsx` (mounted in the portal layout) watches our own `/api/` calls; on a 401 it asks Supabase whether anyone is still signed in and, if not, sends the tab to `/login?next=<page>`. It asks at most every 30 s and redirects at most once a minute, so it can never loop.
+
+## Logistics: prizes on the event day and the Keep list
+
+- **All:** under each step's name in a prize pool's header (Sorted, Picked Up, Given Out…) an **All** button marks that step for every prize of the pool in one tap, each to its full count (for Back To Storage, to what was not given out). One Ctrl+Z puts them all back. Typing a count or tapping a single prize still works.
+- **Keep a prize:** the Keep For Future box on Prizing Allocation only offers prizes that still have some left in the event (planned minus given out); a prize that has all been given out is not listed, and the server refuses it (400) too.

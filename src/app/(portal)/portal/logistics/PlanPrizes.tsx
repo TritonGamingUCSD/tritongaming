@@ -56,6 +56,14 @@ export default function PlanPrizes({ plan, canManage, closed }: { plan: PlanApi;
           const dn = mine.reduce((n, l) => n + Math.min(count.get(`${l.id}:${s.id}`) ?? 0, stepCeiling(s, l, givenOf(l))), 0);
           return { tot, dn };
         };
+        // The "All" under a step's name marks that step for every prize of the pool at once (one Undo puts them all back).
+        const fillAll = (s: PrizeStepDef) => {
+          const targets = mine.map((l) => { const ceiling = stepCeiling(s, l, givenOf(l)); return { id: l.id, ceiling, n: Math.min(count.get(`${l.id}:${s.id}`) ?? 0, ceiling) }; }).filter((t) => t.ceiling > 0 && t.n < t.ceiling);
+          if (!targets.length) return;
+          const put = (id: string, v: number) => void plan.setPrizeCount(id, s.id, v);
+          recordEdit(() => targets.forEach((t) => put(t.id, t.n)), () => targets.forEach((t) => put(t.id, t.ceiling)));
+          targets.forEach((t) => put(t.id, t.ceiling));
+        };
         const finished = mine.length > 0 && steps.length > 0 && steps.every((s) => { const x = stat(s); return x.dn >= x.tot; });
         const folded = p.id in fold ? fold[p.id] : finished;
         const toggle = () => setFold((cur) => ({ ...cur, [p.id]: !folded }));
@@ -77,7 +85,7 @@ export default function PlanPrizes({ plan, canManage, closed }: { plan: PlanApi;
                 </div>
               </div>
               <div className={styles.dHeads}>
-                {steps.map((s) => { const x = stat(s); return <span key={s.id} className={`${styles.dHead} ${x.tot > 0 && x.dn >= x.tot ? styles.dHeadDone : ''}`}><span>{s.name}</span><small>{x.dn}/{x.tot}</small></span>; })}
+                {steps.map((s) => { const x = stat(s); return <span key={s.id} className={`${styles.dHead} ${x.tot > 0 && x.dn >= x.tot ? styles.dHeadDone : ''}`}><span>{s.name}</span><small>{x.dn}/{x.tot}</small>{!closed && x.dn < x.tot && <button type="button" className={styles.dAll} onClick={(e) => { e.stopPropagation(); fillAll(s); }} aria-label={`Mark every ${s.name} in ${p.name}`} title={`Mark all ${x.tot - x.dn} left as ${s.name}`}>All</button>}</span>; })}
               </div>
             </div>
             {!folded && (mine.length === 0 ? <p className={styles.teamEmpty}>No prizes yet.{manage ? ' Use More, then Add Prizes.' : ''}</p> : mine.map((l) => (

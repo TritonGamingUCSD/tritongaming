@@ -27,6 +27,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!plan.manual_return) return NextResponse.json({ error: 'This event was closed before the Keep list existed; its leftover prizes already count as in stock.' }, { status: 409 });
   const have = (await planPrizeCounts(auth.svc, id)).get(b.prize_id);
   if (!have) return NextResponse.json({ error: 'That prize isn’t in this event.' }, { status: 400 });
+  if (have.quantity - have.given < 1) return NextResponse.json({ error: 'Every one of that prize in this event has been given out, so there is none left to keep.' }, { status: 400 });
   if (n > have.quantity) return NextResponse.json({ error: `This event only has ${have.quantity} of that prize.` }, { status: 400 });
   const { data: cur } = await auth.svc.from('logistics_plan_keeps').select('moved_at').eq('plan_id', id).eq('prize_id', b.prize_id).maybeSingle();
   if (cur?.moved_at) return NextResponse.json({ error: 'That prize was already moved to inventory.' }, { status: 409 });
