@@ -71,24 +71,18 @@ export default function PortalTopSection({
     </>
   );
 
-  if (isDesktop) {
-    return (
-      <Suspense>
-        <PortalHub sections={sections} identity={identity} railFooter={railFooter} homeExtras={cards} onOpenChange={setPanelOpen} frame={desktop} plain={plain} />
-      </Suspense>
-    );
-  }
-
+  // One tree for both layouts, so turning the phone (crossing the desktop breakpoint) keeps the hub, and the section open in it, as it is. Two differently shaped returns would rebuild
+  // the hub on every turn, and a rebuilt hub starts from the address Next last reported, which is the home page after any in-app link.
   return (
     <>
-      {!panelOpen && (
+      {!isDesktop && !panelOpen && (
         <>
           {top}
           {cards}
         </>
       )}
       <Suspense>
-        <PortalHub sections={sections} identity={identity} railFooter={railFooter} onOpenChange={setPanelOpen} />
+        <PortalHub sections={sections} identity={identity} railFooter={railFooter} homeExtras={isDesktop ? cards : undefined} onOpenChange={setPanelOpen} frame={isDesktop ? desktop : undefined} plain={isDesktop && plain} />
       </Suspense>
     </>
   );

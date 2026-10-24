@@ -25,6 +25,7 @@ import SectionTabs from '@/components/ui/SectionTabs';
 import type { EventPage } from './logisticsRoute';
 import { SheetRows, type SheetCtx } from './PlanSheet';
 import SwapDialog from './SwapDialog';
+import Dialog, { DialogActions, DialogCancel, DialogText } from '@/components/ui/Dialog';
 import { planRows, primaryRank, type Row } from './planRows';
 import { TextCell } from './Cells';
 import { usePrizes } from './usePrizes';
@@ -431,26 +432,41 @@ export default function PlanView({ id, data, catalog, page, day, byType, bySpons
       {(page === 'requests' || page === 'requests-prizing') && <RequestsTab store={requests} key={page} kind={page === 'requests' ? 'devices' : 'prizes'} plan={plan} api={catalog} data={data} />}
 
       {page === 'device' && <div className={styles.dayLayout}>
-        {kit && <div className={styles.dayAside}>
-          {kit && step && (
-            <div className={styles.kitPanel} role="group" aria-label={`Parts of ${kit.row.tag}`}>
-              <b>{kit.row.tag} · {kit.row.type}</b>
-              <p className={styles.muted}>Check each part is there, then press Mark. Tap a part to flag it missing.</p>
-              <ul className={styles.kitList}>
-                {kit.row.kit.map((k) => (
-                  <li key={k.item} className={`${styles.kitLine} ${kit.flags[k.item] ? styles.kitMissing : ''}`}>
-                    <span className={styles.kitName}>{k.item}{k.qty > 1 ? ` ×${k.qty}` : ''}</span>
-                    <button type="button" className={`${styles.missBtn} ${kit.flags[k.item] ? styles.missOn : ''}`} aria-pressed={kit.flags[k.item]} onClick={() => setKit({ ...kit, flags: { ...kit.flags, [k.item]: !kit.flags[k.item] } })}>{kit.flags[k.item] ? 'Missing' : 'Present'}</button>
-                  </li>
-                ))}
-              </ul>
-              <div className={styles.resultActions}>
-                <Button onClick={() => void run({ ...bodyOf(kit.row), kit: kit.row.kit.map((k) => ({ item: k.item, missing: !!kit.flags[k.item] })) })} loading={busy}>Mark {step.name}</Button>
-                <Button variant="ghost" onClick={() => { setKit(null); input.current?.focus(); }} disabled={busy}>Cancel</Button>
+        {kit && step && (() => {
+          const list = (
+            <ul className={styles.kitList}>
+              {kit.row.kit.map((k) => (
+                <li key={k.item} className={`${styles.kitLine} ${kit.flags[k.item] ? styles.kitMissing : ''}`}>
+                  <span className={styles.kitName}>{k.item}{k.qty > 1 ? ` ×${k.qty}` : ''}</span>
+                  <button type="button" className={`${styles.missBtn} ${kit.flags[k.item] ? styles.missOn : ''}`} aria-pressed={kit.flags[k.item]} onClick={() => setKit({ ...kit, flags: { ...kit.flags, [k.item]: !kit.flags[k.item] } })}>{kit.flags[k.item] ? 'Missing' : 'Present'}</button>
+                </li>
+              ))}
+            </ul>
+          );
+          const mark = () => void run({ ...bodyOf(kit.row), kit: kit.row.kit.map((k) => ({ item: k.item, missing: !!kit.flags[k.item] })) });
+          const cancel = () => { setKit(null); input.current?.focus(); };
+          // On a phone the parts review is a pop-up in the middle of the screen (it used to sit above the list, out of sight when the list was scrolled); on a laptop it stays beside the list.
+          if (narrow) return (
+            <Dialog title={`${kit.row.tag} · ${kit.row.type}`} busy={busy} onClose={cancel} label={`Parts of ${kit.row.tag}`}>
+              <DialogText>Check each part is there, then press Mark. Tap a part to flag it missing.</DialogText>
+              {list}
+              <DialogActions><DialogCancel onClick={cancel} disabled={busy} /><Button onClick={mark} loading={busy}>Mark {step.name}</Button></DialogActions>
+            </Dialog>
+          );
+          return (
+            <div className={styles.dayAside}>
+              <div className={styles.kitPanel} role="group" aria-label={`Parts of ${kit.row.tag}`}>
+                <b>{kit.row.tag} · {kit.row.type}</b>
+                <p className={styles.muted}>Check each part is there, then press Mark. Tap a part to flag it missing.</p>
+                {list}
+                <div className={styles.resultActions}>
+                  <Button onClick={mark} loading={busy}>Mark {step.name}</Button>
+                  <Button variant="ghost" onClick={cancel} disabled={busy}>Cancel</Button>
+                </div>
               </div>
             </div>
-          )}
-        </div>}
+          );
+        })()}
 
         <div className={styles.dayMain}>
           {day && narrow && teams.length > 1 && (
