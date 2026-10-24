@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { authorizeTrivia, findQuiz, quizGate, QUIZ_COLUMNS } from '@/lib/trivia/server';
+import { removeImages } from './image/route';
 import { logAudit } from '@/lib/notifications/audit';
 
 export const dynamic = 'force-dynamic';
@@ -11,7 +12,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const quiz = await findQuiz(auth.svc, (await params).id);
   if (!quiz) return NextResponse.json({ error: 'That quiz is gone.' }, { status: 404 });
   { const lock = await quizGate(auth, quiz); if (lock) return lock; }
-  const { data } = await auth.svc.from('trivia_questions').select('id, sort, category, text, choices, correct').eq('quiz_id', quiz.id).order('sort').order('created_at').limit(1000);
+  const { data } = await auth.svc.from('trivia_questions').select('id, sort, category, image, text, choices, correct').eq('quiz_id', quiz.id).order('sort').order('created_at').limit(1000);
   return NextResponse.json({ quiz, questions: data ?? [], canManage: auth.isAdmin || quiz.created_by === auth.user.id });
 }
 
@@ -46,8 +47,10 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   { const lock = await quizGate(auth, quiz); if (lock) return lock; }
   const live = await auth.svc.from('trivia_games').select('id', { count: 'exact', head: true }).eq('quiz_id', quiz.id).neq('status', 'done');
   if (live.count) return NextResponse.json({ error: 'A game of this quiz is still running. End it first.' }, { status: 409 });
+  const { data: pics } = await auth.svc.from('trivia_questions').select('image').eq('quiz_id', quiz.id).neq('image', '').limit(1000);
   const { error } = await auth.svc.from('trivia_quizzes').delete().eq('id', quiz.id);
   if (error) return NextResponse.json({ error: 'Couldn’t delete that.' }, { status: 500 });
+  await removeImages(auth.svc, (pics ?? []).map((r) => r.image as string));
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'remove', entityType: 'trivia quiz', entityId: quiz.id, summary: `Deleted the Trivia quiz “${quiz.name}”` });
   return NextResponse.json({ ok: true });
 }

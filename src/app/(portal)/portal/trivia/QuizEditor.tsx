@@ -14,7 +14,8 @@ import { GridHead, gridStyle, type Col } from '../logistics/gridTable';
 import lg from '../logistics/logistics.module.css';
 import { isAskable } from '@/lib/trivia/game';
 import type { QuestionRow } from '@/lib/trivia/types';
-import { call } from './api';
+import { call, uploadPicture } from './api';
+import { PicturePick } from './PicturePick';
 import { startGame } from './QuizzesTab';
 import { GameResults, QuizGames } from './QuizGames';
 import { BulkAdd } from './BulkAdd';
@@ -24,14 +25,14 @@ import { LETTERS } from './shapes';
 import styles from './trivia.module.css';
 
 const col = (label: string, width: string): Col => ({ label, width });
-const COLS: Col[] = [col('#', '2.2rem'), col('Category', 'minmax(7rem, 0.9fr)'), col('Question', 'minmax(15rem, 3fr)'), col('A', 'minmax(9rem, 1.2fr)'), col('B', 'minmax(9rem, 1.2fr)'), col('C', 'minmax(9rem, 1.2fr)'), col('D', 'minmax(9rem, 1.2fr)'), col('', '3rem')];
+const COLS: Col[] = [col('#', '2.2rem'), col('Category', 'minmax(7rem, 0.9fr)'), col('Question', 'minmax(15rem, 3fr)'), col('Picture', '6.8rem'), col('A', 'minmax(9rem, 1.2fr)'), col('B', 'minmax(9rem, 1.2fr)'), col('C', 'minmax(9rem, 1.2fr)'), col('D', 'minmax(9rem, 1.2fr)'), col('', '3rem')];
 
 interface Quiz { id: string; slug: string; name: string; per_game: number; block_winners: boolean; restricted: boolean }
 
 // What a question still needs before a game can draw it.
 const missing = (q: Pick<QuestionRow, 'text' | 'choices' | 'category'>) => [...((q.category ?? '').trim() ? [] : ['a category']), ...(q.text.trim() ? [] : ['the question']), ...[0, 1, 2, 3].filter((i) => !(q.choices[i] ?? '').trim()).map((i) => `answer ${LETTERS[i]}`)];
 
-// The questions as a CSV file (category, question, A to D, answer): the same columns Paste Many reads back in.
+// The questions as a CSV file (category, question, A to D, answer; pictures are not part of it): the same columns Paste Many reads back in.
 function exportCsv(name: string, rows: QuestionRow[]) {
   const cell = (v: string) => `"${v.replace(/"/g, '""')}"`;
   const lines = [['category', 'question', 'A', 'B', 'C', 'D', 'answer'].join(','), ...rows.map((q) => [q.category ?? '', q.text, ...[0, 1, 2, 3].map((i) => q.choices[i] ?? ''), LETTERS[q.correct]].map(cell).join(','))];
@@ -66,6 +67,16 @@ export default function QuizEditor({ slug, view, game, onBack, onHost, onView }:
     const r = await call('PATCH', `/api/trivia/quizzes/${slug}/questions`, { id, ...fields });
     if (!r.ok) { setError(r.error); void load(); }
   }, [slug, load]);
+  // A question's optional picture: shrunk in the browser, then sent; the table shows the new one at once.
+  const setPicture = async (q: QuestionRow, blob: Blob) => {
+    const r = await uploadPicture(slug, q.id, blob);
+    if (r.ok) setRows((l) => l.map((x) => (x.id === q.id ? { ...x, image: r.data.image } : x))); else setError(r.error);
+  };
+  const clearPicture = async (q: QuestionRow) => {
+    setRows((l) => l.map((x) => (x.id === q.id ? { ...x, image: '' } : x)));
+    const r = await call('DELETE', `/api/trivia/quizzes/${slug}/image`, { question: q.id });
+    if (!r.ok) { setError(r.error); void load(); }
+  };
   const remove = async (q: QuestionRow) => {
     if (!(await confirmHold({ title: 'Delete this question?', message: q.text || 'It has no text yet.', confirmLabel: 'Hold to delete' }))) return;
     setRows((l) => l.filter((x) => x.id !== q.id));
@@ -121,17 +132,17 @@ export default function QuizEditor({ slug, view, game, onBack, onHost, onView }:
       {view === 'games' ? <QuizGames quiz={slug} onOpen={(code) => onView('games', code)} onHost={onHost} reload={0} /> : (
         <>
           <div className={styles.settings}>
-            <label className={styles.perGame}>A game asks
-              <Input type="number" min={1} max={100} value={per ?? String(quiz.per_game)} aria-label="Questions per game" onChange={(e) => setPer(e.target.value)} onBlur={() => void savePer(Math.round(Number(per ?? quiz.per_game)) || quiz.per_game)} onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }} />
-              questions
-            </label>
-            <label className={styles.toggleRow}>
-              <input type="checkbox" checked={quiz.block_winners} onChange={(e) => void setting({ block_winners: e.target.checked })} />
-              <span><b>Top 3 can’t play this quiz again</b><small>The top 3 of a game can’t join this quiz’s next game unless the host lets them in.</small></span>
-            </label>
-            <SharePanel slug={slug} restricted={quiz.restricted} canManage={canManage} onRestricted={(on) => void setting({ restricted: on })} />
+            <div className={styles.settingsBar}>
+              <label className={styles.perGame}>Questions per game
+                <Input type="number" min={1} max={100} value={per ?? String(quiz.per_game)} aria-label="Questions per game" onChange={(e) => setPer(e.target.value)} onBlur={() => void savePer(Math.round(Number(per ?? quiz.per_game)) || quiz.per_game)} onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }} />
+              </label>
+              <label className={styles.toggleInline} title="The top 3 of a game can’t join this quiz’s next game unless the host lets them in.">
+                <input type="checkbox" checked={quiz.block_winners} onChange={(e) => void setting({ block_winners: e.target.checked })} /> Top 3 can’t replay
+              </label>
+              <SharePanel slug={slug} restricted={quiz.restricted} canManage={canManage} onRestricted={(on) => void setting({ restricted: on })} />
+            </div>
           </div>
-          <p className={styles.muted}>{rows.length} {rows.length === 1 ? 'question' : 'questions'} in the pool{ready < rows.length ? `, ${ready} finished` : ''}. Each game draws {asked} at random{ready > asked ? ', questions not asked before first' : ''}; the order of the answers is shuffled on screen. Every question needs a category: it opens with a short category card on the screens. The table is locked so nothing changes by accident: press Edit Questions to change a cell (the round button marks the right answer) and Done Editing when finished.</p>
+          <p className={styles.muted}>{rows.length} {rows.length === 1 ? 'question' : 'questions'}{ready < rows.length ? `, ${ready} ready` : ''} · a game draws {asked} at random. The table is locked: press Edit Questions to change it.</p>
           <div className={styles.row}>
             <Button onClick={() => setAdding(true)}><Plus size={15} aria-hidden="true" /> Add Question</Button>
             <Button variant="secondary" onClick={() => setBulk(true)}><ClipboardPaste size={15} aria-hidden="true" /> Paste Many</Button>
@@ -151,6 +162,7 @@ export default function QuizEditor({ slug, view, game, onBack, onHost, onView }:
                       <TextCell value={q.text} canEdit={editing} strong max={300} placeholder="Question" onSave={(v) => void patch(q.id, { text: v })} />
                       {need.length > 0 && <small className={styles.needs}>Needs {need.join(', ')}</small>}
                     </span>
+                    <span data-label="Picture"><PicturePick url={q.image ?? ''} label={`question ${n + 1}`} disabled={!editing} onPick={(b) => void setPicture(q, b)} onClear={() => void clearPicture(q)} onProblem={setError} /></span>
                     {[0, 1, 2, 3].map((i) => {
                       const right = q.correct === i;
                       return (

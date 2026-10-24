@@ -33,4 +33,4 @@ export interface PublicState {
 export interface LobbyPlayer { id: string; name: string; status: PlayerStatus; score: number }
 
 export interface QuizRow { id: string; slug: string; name: string; per_game: number; block_winners: boolean; restricted: boolean; locked: boolean; questions: number; ready: number; games: number; last_played: string | null; created_at: string }
-export interface QuestionRow { id: string; sort: number; category: string; text: string; choices: string[]; correct: number }
+export interface QuestionRow { id: string; sort: number; category: string; image: string; text: string; choices: string[]; correct: number }

@@ -30,13 +30,12 @@ export function SharePanel({ slug, restricted, canManage, onRestricted }: { slug
   const shown = (data?.people ?? []).filter((p) => p.name.toLowerCase().includes(query.trim().toLowerCase()));
   return (
     <div className={styles.share}>
-      <label className={styles.toggleRow}>
-        <input type="checkbox" checked={restricted} disabled={!canManage} onChange={(e) => onRestricted(e.target.checked)} />
-        <span><b><Lock size={13} aria-hidden="true" /> Only certain officers can open this quiz</b><small>{canManage ? 'Its questions, answers, games and results are hidden from everyone else, who see only its name. Players can still join a game with its code.' : 'Only its creator or an Admin can change who it is shared with.'}</small></span>
+      <label className={styles.toggleInline} title={canManage ? 'Its questions, answers, games and results are hidden from other officers, who see only its name. Players can still join a game with its code.' : 'Only its creator or an Admin can change who it is shared with.'}>
+        <input type="checkbox" checked={restricted} disabled={!canManage} onChange={(e) => onRestricted(e.target.checked)} /> <Lock size={13} aria-hidden="true" /> Private to some officers
       </label>
       {restricted && canManage && (
         <div className={styles.picker}>
-          <p className={styles.muted}>The creator and Admins can always open it. Tick who else can edit it, host it, and see its results.</p>
+          <p className={styles.muted}>The creator and Admins can always open it. Tick who else can edit, host and see results.</p>
           <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search officers…" aria-label="Search officers" />
           {error && <p role="alert" className={styles.needs}>{error}</p>}
           {!data ? (error ? null : <Loading variant="inline" label="Loading people…" />) : (

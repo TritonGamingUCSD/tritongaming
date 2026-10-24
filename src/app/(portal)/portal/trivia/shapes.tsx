@@ -12,10 +12,10 @@ export function Stage({ children }: { children: ReactNode }) {
 }
 
 // The four answers each have their own colour, letter and shape, so a player who can't tell the colours apart still knows which one they are tapping. The shape is a faint mark in the corner of the tile.
-export function Shape({ i }: { i: number }) {
+export function Shape({ i, solid }: { i: number; solid?: boolean }) {
   const d = ['M12 3 22 20H2Z', 'M12 2 22 12 12 22 2 12Z', '', 'M4 4h16v16H4Z'][i];
   return (
-    <svg className={styles.ansShape} viewBox="0 0 24 24" aria-hidden="true">
+    <svg className={`${styles.ansShape} ${solid ? styles.ansShapeSolid : ''}`} viewBox="0 0 24 24" aria-hidden="true">
       {i === 2 ? <circle cx="12" cy="12" r="10" /> : <path d={d} />}
     </svg>
   );

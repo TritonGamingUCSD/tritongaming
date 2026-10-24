@@ -2,7 +2,7 @@
 // Everything made is deleted at the end (quizzes, their games, players and answers go with them).
 // Run: BASE_URL=http://localhost:3101 node scripts/checks/trivia.mjs
 import { createClient } from '@supabase/supabase-js';
-import { accounts, svc, env, url, tracker } from './lib.mjs';
+import { accounts, svc, env, url, tracker, BASE } from './lib.mjs';
 
 const t = tracker();
 const { user, made, cleanup } = accounts('trivia');
@@ -197,10 +197,29 @@ try {
   t.ok('a category typed in other capitals takes the quiz\'s existing spelling', cr.j.questions.every((q) => q.category === 'Gaming'), JSON.stringify(cr.j.questions.map((q) => q.category)));
   t.ok('a category is changed like any other cell, and can be cleared', (await host.call('PATCH', CQ, { id: cr.j.questions[0].id, category: ' Esports  Night ' })).j.question.category === 'Esports Night' && (await host.call('PATCH', CQ, { id: cr.j.questions[0].id, category: '' })).j.question.category === '');
   await host.call('PATCH', CQ, { id: cr.j.questions[0].id, category: 'Gaming' });
+  // ---- an optional picture per question (a small WebP file, big screen only)
+  const WEBP = Buffer.from('UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA', 'base64');
+  const send = async (who, qid, bytes, type = 'image/webp') => { const f = new FormData(); f.append('question', qid); f.append('file', new File([bytes], 'p.webp', { type })); const r = await fetch(`${BASE}/api/trivia/quizzes/${cq.slug}/image`, { method: 'POST', headers: { cookie: who.cookie }, body: f }); return { s: r.status, j: await r.json().catch(() => ({})) }; };
+  const q0 = cr.j.questions[0].id;
+  t.ok('a plain member cannot add a picture', (await send(p1, q0, WEBP)).s === 403);
+  t.ok('a file that is not a WebP picture is refused', (await send(host, q0, Buffer.from('not a picture at all, just text'))).s === 415);
+  t.ok('a picture over 250 KB is refused', (await send(host, q0, Buffer.concat([WEBP, Buffer.alloc(260 * 1024)]))).s === 413);
+  const pic = await send(host, q0, WEBP);
+  t.ok('a small WebP is stored and its address comes back', pic.s === 200 && /\/storage\/v1\/object\/public\/trivia-images\/.+\.webp$/.test(pic.j.image), JSON.stringify(pic));
+  t.ok('the picture can be fetched', (await fetch(pic.j.image)).status === 200);
+  t.ok('the quiz lists the question with its picture', (await host.call('GET', `/api/trivia/quizzes/${cq.slug}`)).j.questions.find((q) => q.id === q0)?.image === pic.j.image);
+  // Whether a file is still stored is read from the bucket itself (a fetch of the address can be answered from a cache).
+  const stored = async (address) => { const p = address.split('/trivia-images/')[1]; const [dir, name] = p.split('/'); return ((await svc.storage.from('trivia-images').list(dir)).data ?? []).some((o) => o.name === name); };
+  const pic2 = await send(host, q0, WEBP);
+  t.ok('a new picture replaces the old one, whose file is removed', pic2.s === 200 && pic2.j.image !== pic.j.image && !(await stored(pic.j.image)) && (await stored(pic2.j.image)));
+  t.ok('a picture is taken away again', (await host.call('DELETE', `/api/trivia/quizzes/${cq.slug}/image`, { question: q0 })).s === 200 && !(await stored(pic2.j.image)));
+  const pic3 = await send(host, q0, WEBP);
   const cg = await host.call('POST', '/api/trivia/games', { quiz: cq.slug });
   await p1.call('POST', '/api/trivia/join', { code: cg.j.code });
   await host.call('POST', `/api/trivia/games/${cg.j.code}`, { action: 'start' });
   const early = (await p1.call('GET', `/api/trivia/play/${cg.j.code}`)).j.state;
+  const hostView = (await host.call('GET', `/api/trivia/games/${cg.j.code}`)).j;
+  t.ok('the picture goes to the host screen only: not in what a phone is sent', hostView.images.includes(pic3.j.image) && !JSON.stringify(early).includes('trivia-images'), JSON.stringify(hostView.images));
   t.ok('the question opens with its category, starting a few seconds from now', early.question?.category === 'Gaming' && early.question.startedAt - early.now > 0 && early.question.startedAt - early.now <= 3200, JSON.stringify(early.question && { c: early.question.category, d: early.question.startedAt - early.now }));
   // Set the clock by hand so this does not depend on how fast the server answers: a start 10 s away, then one that has passed.
   const cgId = (await svc.from('trivia_games').select('id').eq('code', cg.j.code).single()).data.id;
@@ -210,6 +229,7 @@ try {
   await clock(-1, 59);
   t.ok('once the question has started the answer is taken', (await p1.call('POST', `/api/trivia/play/${cg.j.code}/answer`, { q: 0, pos: 0 })).s === 200);
   await host.call('POST', `/api/trivia/games/${cg.j.code}`, { action: 'end' });
+  t.ok('deleting the question removes its picture file', (await host.call('DELETE', CQ, { id: q0 })).s === 200 && !(await stored(pic3.j.image)));
 
   // ---- the games list comes a page at a time
   const stamp = Date.now();

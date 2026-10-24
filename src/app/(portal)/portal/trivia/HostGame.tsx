@@ -8,7 +8,7 @@ import { confirmHold } from '@/lib/ui/confirmHold';
 import { showToast } from '@/lib/ui/toast';
 import { call } from './api';
 import { useCountdown, useGame } from './useGame';
-import { Stage, CountUp, FloatShapes, Ring, Confetti, Letter, Shape, Tape, CategoryCard, ansClass, fmtScore } from './shapes';
+import { Stage, CountUp, FloatShapes, Ring, Confetti, Shape, Tape, CategoryCard, ansClass, fmtScore } from './shapes';
 import TriviaQr from './TriviaQr';
 import styles from './trivia.module.css';
 
@@ -41,6 +41,21 @@ export default function HostGame({ code, onLeave, onResults }: { code: string; o
     const t = setTimeout(() => { if (closing.current !== key) { closing.current = key; void call('POST', `/api/trivia/games/${code}`, { action: 'reveal' }).then(() => reload()); } }, wait);
     return () => clearTimeout(t);
   }, [status, current, everyone, q, code, serverNow, reload, state?.gameId]);
+
+  // After the answer has been shown for 10 seconds with no button pressed the game moves on by itself (the next question, or the podium after the last one).
+  const [nextIn, setNextIn] = useState<number | null>(null);
+  const shown = status === 'reveal' && !!state?.reveal;
+  useEffect(() => {
+    if (!shown) { setNextIn(null); return; }
+    let left = 10;
+    setNextIn(left);
+    const id = setInterval(() => {
+      left -= 1;
+      setNextIn(left);
+      if (left <= 0) { clearInterval(id); void call('POST', `/api/trivia/games/${code}`, { action: 'next' }).then(() => reload()); }
+    }, 1000);
+    return () => clearInterval(id);
+  }, [shown, current, code, reload]);
 
   const frame = (body: React.ReactNode, foot?: React.ReactNode, urgent?: boolean) => (
     <Stage><div className={`${styles.stage} ${urgent ? styles.urgent : ''}`} role="dialog" aria-label="Hosting Trivia"><FloatShapes />
@@ -120,6 +135,7 @@ export default function HostGame({ code, onLeave, onResults }: { code: string; o
   const last = state.current + 1 >= state.total;
   const secs = Math.ceil(Math.min(left, q.secs * 1000) / 1000);
   const carding = state.status === 'question' && !!q.category && q.startedAt > serverNow();   // the category card shows first; the question and its clock start after it
+  const picture = host.images[state.current] || '';   // the question's picture goes to this screen only, never the phones
   const rv = state.status === 'reveal' ? state.reveal : undefined;
   const maxCount = Math.max(1, ...(rv?.counts ?? [1]));
   return frame(<>
@@ -131,13 +147,23 @@ export default function HostGame({ code, onLeave, onResults }: { code: string; o
     {carding && <CategoryCard category={q.category!} n={state.current + 1} total={state.total} />}
     {!carding && state.status === 'question' && <div className={styles.answeredMeter} role="progressbar" aria-label="Players who have answered" aria-valuemin={0} aria-valuemax={state.players} aria-valuenow={state.answered ?? 0}><div className={styles.answeredFill} style={{ width: `${state.players ? Math.min(100, ((state.answered ?? 0) / state.players) * 100) : 0}%` }} /></div>}
     {!carding && state.status === 'question' && <div className={`${styles.clockRow} ${secs <= 5 ? styles.clockLow : ''}`}><Ring left={Math.min(left, q.secs * 1000)} total={q.secs * 1000} low={secs <= 5} /><div className={styles.clock}><div className={styles.clockFill} style={{ width: `${Math.min(100, (left / (q.secs * 1000)) * 100)}%` }} /></div></div>}
-    {!carding && <div className={styles.qCard} key={state.current}><Tape />{q.category && <p className={styles.kicker}>{q.category}</p>}<p className={styles.qText}>{q.text}</p></div>}
+    {!carding && (
+      <div className={`${styles.qCard} ${picture ? styles.qCardPic : ''}`} key={state.current}>
+        <Tape />
+        {q.category && <span className={styles.catTag}>{q.category}</span>}
+        <div className={`${styles.qMedia} ${picture ? styles.qMediaHas : ''}`}>
+          <p className={styles.qText}>{q.text}</p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {picture && <img className={styles.qPic} src={picture} alt="" onError={(e) => { e.currentTarget.style.display = 'none'; }} />}
+        </div>
+      </div>
+    )}
     {!carding && <div className={styles.answers}>
       {q.choices.map((c, i) => {
         const isRight = rv?.correct === i;
         return (
           <div key={i} className={`${styles.ans} ${ansClass(i)} ${rv && !isRight ? styles.dimmed : ''} ${rv && isRight ? styles.right : ''}`}>
-            <Shape i={i} /><Letter i={i} /><span className={styles.ansText}>{c}</span>
+            <Shape i={i} solid /><span className={styles.ansText}>{c}</span>
             {rv && <span className={styles.ansCount}><CountUp value={rv.counts?.[i] ?? 0} ms={900} /></span>}
             {rv && isRight && <span className={styles.tick}><Check size={22} aria-label="Right answer" /></span>}
             {rv && <span className={styles.ansBar} style={{ width: `${((rv.counts?.[i] ?? 0) / maxCount) * 100}%` }} />}
@@ -150,7 +176,7 @@ export default function HostGame({ code, onLeave, onResults }: { code: string; o
       {state.status === 'question'
         ? <Button variant="secondary" loading={busy} onClick={async () => { closing.current = `${state.gameId}:${current}`; await act({ action: 'reveal' }); await reload(); }}>Reveal Answer</Button>
         : !rv ? <span className={`${styles.mid} ${styles.pulse}`}>Counting the answers…</span>
-        : <Button className={styles.startBtn} loading={busy} onClick={async () => { await act({ action: 'next' }); await reload(); }}>{last ? 'Show Podium' : 'Next Question'}</Button>}
+        : <Button className={styles.startBtn} loading={busy} onClick={async () => { await act({ action: 'next' }); await reload(); }}>{last ? 'Show Podium' : 'Next Question'}{nextIn !== null && nextIn > 0 ? ` · ${nextIn}` : ''}</Button>}
     </div>
   </>, undefined, state.status === 'question' && secs <= 5 && left > 0);
 }

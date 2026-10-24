@@ -7,6 +7,7 @@ export const MANAGED_BUCKETS: { bucket: string }[] = [
   { bucket: 'division-logos' },
   { bucket: 'avatars' },
   { bucket: 'site-content' },
+  { bucket: 'trivia-images' },
 ];
 
 export interface StorageObject {

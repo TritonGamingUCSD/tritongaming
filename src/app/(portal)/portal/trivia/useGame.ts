@@ -6,7 +6,7 @@ import type { LobbyPlayer, PublicState } from '@/lib/trivia/types';
 import { call } from './api';
 
 export interface MeState { status: 'in' | 'blocked' | 'removed'; score: number; userId: string; answered: number | null; answeredQ: number }
-interface HostBits { players: LobbyPlayer[]; ready: number | null; perGame: number; quizSlug: string; blocks: boolean }
+interface HostBits { images: string[]; players: LobbyPlayer[]; ready: number | null; perGame: number; quizSlug: string; blocks: boolean }
 
 // Follows one game live. The server sends a small message on the game's channel whenever something changes, so a screen shows it within a fraction of a second without asking for anything; it also asks
 // now and then (every 10 seconds, and when the phone wakes up) in case a message was missed. Both players (`/play`) and the host (`/games`) use it; the host also gets the lobby list.
@@ -15,7 +15,7 @@ const POLL_MS = 10000;
 export function useGame(code: string, role: 'player' | 'host') {
   const [state, setState] = useState<PublicState | null>(null);
   const [me, setMe] = useState<MeState | null>(null);
-  const [host, setHost] = useState<HostBits>({ players: [], ready: null, perGame: 10, quizSlug: '', blocks: true });
+  const [host, setHost] = useState<HostBits>({ images: [], players: [], ready: null, perGame: 10, quizSlug: '', blocks: true });
   const [error, setError] = useState('');
   const [gone, setGone] = useState(false);
   const offset = useRef(0);                   // the server's clock minus this device's
@@ -38,8 +38,8 @@ export function useGame(code: string, role: 'player' | 'host') {
       else if (r.status === 404) { setGone(true); setError(r.error); }
       else setError(r.error);
     } else {
-      const r = await call<{ state: PublicState; players: LobbyPlayer[]; ready: number | null; perGame: number; quizSlug: string; blocks: boolean }>('GET', `/api/trivia/games/${code}`);
-      if (r.ok) { take(r.data.state); setHost((h) => ({ players: r.data.players, ready: r.data.ready ?? h.ready, perGame: r.data.perGame, quizSlug: r.data.quizSlug, blocks: r.data.blocks })); setError(''); }
+      const r = await call<{ state: PublicState; images?: string[]; players: LobbyPlayer[]; ready: number | null; perGame: number; quizSlug: string; blocks: boolean }>('GET', `/api/trivia/games/${code}`);
+      if (r.ok) { take(r.data.state); setHost((h) => ({ images: r.data.images ?? h.images, players: r.data.players, ready: r.data.ready ?? h.ready, perGame: r.data.perGame, quizSlug: r.data.quizSlug, blocks: r.data.blocks })); setError(''); }
       else if (r.status === 404) { setGone(true); setError(r.error); }
       else setError(r.error);
     }

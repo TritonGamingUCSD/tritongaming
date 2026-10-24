@@ -39,8 +39,8 @@ export function shuffle<T>(list: readonly T[], rng: Rng = Math.random): T[] {
   return a;
 }
 
-export interface PoolQuestion { id: string; text: string; choices: string[]; correct: number; category?: string }
-export interface PlannedQuestion { id: string; text: string; choices: string[]; correct: number; secs: number; category?: string }   // choices as shown (shuffled); correct is a position in them
+export interface PoolQuestion { id: string; text: string; choices: string[]; correct: number; category?: string; image?: string }
+export interface PlannedQuestion { id: string; text: string; choices: string[]; correct: number; secs: number; category?: string; image?: string }   // choices as shown (shuffled); correct is a position in them
 
 /** A question can be asked once it has a category, text, four answers, and a right one that is filled in. */
 export function isAskable(q: { text: string; choices: string[]; correct: number; category?: string }): boolean {
@@ -57,7 +57,7 @@ export function drawGame(pool: PoolQuestion[], used: ReadonlySet<string>, count:
   const repeats = shuffle(ready.filter((q) => used.has(q.id)), rng);
   return [...fresh, ...repeats].slice(0, Math.max(0, count)).map((q) => {
     const order = shuffle(q.choices.map((_, i) => i), rng);
-    return { id: q.id, text: q.text.trim(), choices: order.map((i) => q.choices[i].trim()), correct: order.indexOf(q.correct), secs: suggestSecs(q), category: (q.category ?? '').trim() };
+    return { id: q.id, text: q.text.trim(), choices: order.map((i) => q.choices[i].trim()), correct: order.indexOf(q.correct), secs: suggestSecs(q), category: (q.category ?? '').trim(), image: q.image || undefined };
   });
 }
 

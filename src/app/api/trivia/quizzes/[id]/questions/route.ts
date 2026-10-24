@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { authorizeTrivia, findQuiz, quizGate, UUID } from '@/lib/trivia/server';
+import { removeImages } from '../image/route';
 import { CHOICES, DEFAULT_SECS, suggestSecs } from '@/lib/trivia/game';
 
 export const dynamic = 'force-dynamic';
-const COLS = 'id, sort, category, text, choices, correct';
+const COLS = 'id, sort, category, image, text, choices, correct';
 const MAX_QUESTIONS = 1000;
 
 // What a client may set on a question, checked; anything not given is left alone. The time is not one of them: it is worked out from the wording.
@@ -47,7 +48,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const rows = [];
   for (const c of cleaned) {
     if ('error' in c) continue;
-    const row = { quiz_id: quiz.id, sort: sort++, category: '', text: '', choices: ['', '', '', ''], correct: 0, secs: DEFAULT_SECS, ...c.patch } as { text: string; choices: string[]; secs: number };
+    const row = { quiz_id: quiz.id, sort: sort++, category: '', image: '', text: '', choices: ['', '', '', ''], correct: 0, secs: DEFAULT_SECS, ...c.patch } as { text: string; choices: string[]; secs: number };
     row.secs = suggestSecs(row);   // the time is always automatic
     rows.push(row);
   }
@@ -89,6 +90,8 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   const b = await request.json().catch(() => ({}));
   const ids = (Array.isArray(b.ids) ? b.ids : [b.id]).filter((x: unknown): x is string => typeof x === 'string' && UUID.test(x)).slice(0, 500);
   if (!ids.length) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
+  const { data: gone } = await auth.svc.from('trivia_questions').select('image').eq('quiz_id', quiz.id).in('id', ids);
   await auth.svc.from('trivia_questions').delete().eq('quiz_id', quiz.id).in('id', ids);
+  await removeImages(auth.svc, (gone ?? []).map((r) => r.image as string));   // games already drawn keep the address, but their question is over
   return NextResponse.json({ ok: true });
 }

@@ -6,7 +6,8 @@ import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import { Field, Input, Textarea } from '@/components/ui/Field';
 import type { QuestionRow } from '@/lib/trivia/types';
-import { call } from './api';
+import { call, uploadPicture } from './api';
+import { PicturePick } from './PicturePick';
 import { LETTERS } from './shapes';
 import styles from './trivia.module.css';
 
@@ -18,6 +19,8 @@ export function QuestionDialog({ slug, categories, onClose, onAdded }: { slug: s
   const [correct, setCorrect] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState('');
+  const [picture, setPicture] = useState<Blob | null>(null);   // optional: the shrunk file, sent once the question exists
+  const [preview, setPreview] = useState('');
   const [round, setRound] = useState(0);   // a new round gives the question box back to the cursor
   const missing = [...(category.trim() ? [] : ['the category']), ...(text.trim() ? [] : ['the question']), ...choices.flatMap((c, i) => (c.trim() ? [] : [`answer ${LETTERS[i]}`])), ...(correct === null ? ['which answer is right'] : [])];
   const save = async (another: boolean) => {
@@ -26,9 +29,14 @@ export function QuestionDialog({ slug, categories, onClose, onAdded }: { slug: s
     const r = await call<{ questions: QuestionRow[] }>('POST', `/api/trivia/quizzes/${slug}/questions`, { category, text, choices, correct });
     setBusy(false);
     if (!r.ok) { setProblem(r.error); return; }
-    onAdded(r.data.questions[0]);
+    let added = r.data.questions[0];
+    if (picture) {
+      const up = await uploadPicture(slug, added.id, picture);
+      if (up.ok) added = { ...added, image: up.data.image }; else { onAdded(added); setPicture(null); setPreview(''); setProblem(`The question was added, but its picture wasn’t: ${up.error} Add the picture from the table.`); return; }
+    }
+    onAdded(added);
     // For another one the category stays: questions are often added a category at a time.
-    if (another) { setText(''); setChoices(['', '', '', '']); setCorrect(null); setRound((n) => n + 1); } else onClose();
+    if (another) { setText(''); setChoices(['', '', '', '']); setCorrect(null); setPicture(null); setPreview(''); setRound((n) => n + 1); } else onClose();
   };
   return (
     <Dialog title="Add Question" wide sheet busy={busy} onClose={onClose}>
@@ -50,6 +58,10 @@ export function QuestionDialog({ slug, categories, onClose, onAdded }: { slug: s
             </label>
           ))}
         </fieldset>
+        <div className={styles.picPreview}>
+          <span className={styles.muted}>Picture (optional): shown with the question on the big screen only. It is shrunk to a small WebP file here.</span>
+          <PicturePick url={preview} label="this question" busy={busy} onPick={(b) => { setPicture(b); setPreview((old) => { if (old) URL.revokeObjectURL(old); return URL.createObjectURL(b); }); }} onClear={() => { setPicture(null); setPreview((old) => { if (old) URL.revokeObjectURL(old); return ''; }); }} onProblem={setProblem} />
+        </div>
       </div>
       <DialogActions>
         <DialogCancel onClick={onClose} disabled={busy} />

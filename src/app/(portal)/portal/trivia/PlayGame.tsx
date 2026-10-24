@@ -6,7 +6,7 @@ import Button from '@/components/ui/Button';
 import Loading from '@/components/Loading/Loading';
 import { call } from './api';
 import { useCountdown, useGame } from './useGame';
-import { Stage, CountUp, FloatShapes, Ring, Confetti, Letter, Shape, Tape, CategoryCard, ansClass, fmtScore, ordinal } from './shapes';
+import { Stage, CountUp, FloatShapes, Ring, Confetti, Shape, Tape, CategoryCard, ansClass, fmtScore, ordinal } from './shapes';
 import styles from './trivia.module.css';
 
 // A game on a phone: join the lobby, tap an answer while the clock runs, see how you did after each question, and your place at the end. The whole screen, in the navy show look.
@@ -91,7 +91,7 @@ export default function PlayGame({ code, onLeave }: { code: string; onLeave: () 
       <div className={styles.recap} aria-label="Your answer and the right answer">
         {q.choices.map((c, i) => (
           <div key={i} className={`${styles.recapRow} ${i === right ? styles.recapRight : ''} ${r?.pos === i && i !== right ? styles.recapWrong : ''}`}>
-            <Letter i={i} /><span>{c}</span>
+            <Shape i={i} solid /><span>{c}</span>
             {i === right && <span className={styles.recapTag}><Check size={14} aria-hidden="true" /> Right answer</span>}
             {r?.pos === i && i !== right && <span className={styles.recapTag}><X size={14} aria-hidden="true" /> Your answer</span>}
             {r?.pos === i && i === right && <span className={styles.recapTag}>You got it</span>}
@@ -113,7 +113,7 @@ export default function PlayGame({ code, onLeave }: { code: string; onLeave: () 
     {closed && mine === null ? (
       <div style={{ alignSelf: 'center', width: '100%', display: 'flex', justifyContent: 'center' }}>{card('Time’s up', <p className={styles.big}>Too slow!</p>, 'no')}</div>
     ) : (
-      <div className={styles.phoneAnswers}>{q.choices.map((_, i) => <button key={i} type="button" disabled={mine !== null} aria-label={`Answer ${'ABCD'[i]}`} className={`${styles.ans} ${ansClass(i)} ${mine === i ? styles.picked : mine !== null ? styles.notPicked : ''}`} onClick={() => void answer(i)}><Shape i={i} /><Letter i={i} /></button>)}</div>
+      <div className={styles.phoneAnswers}>{q.choices.map((_, i) => <button key={i} type="button" disabled={mine !== null} aria-label={`Answer ${'ABCD'[i]}`} className={`${styles.ans} ${ansClass(i)} ${mine === i ? styles.picked : mine !== null ? styles.notPicked : ''}`} onClick={() => void answer(i)}><Shape i={i} solid /></button>)}</div>
     )}
     {mine !== null && <div className={styles.lockedCard} style={{ alignSelf: 'center', textAlign: 'center' }}><span className={styles.kicker}>Locked in</span><p className={`${styles.mid} ${styles.waiting}`} style={{ marginTop: '0.6rem' }}>Waiting for the others</p></div>}
     {problem && <p role="alert" className={styles.needs}>{problem}</p>}

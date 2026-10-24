@@ -56,7 +56,7 @@ async function push(svc: SupabaseClient, g: GameRow) {
 export async function startGame(svc: SupabaseClient, g: GameRow, count: number): Promise<GameRow | { error: string; status: number }> {
   if (g.status !== 'lobby') return { error: 'That game already started.', status: 409 };
   const [pool, used, inCount] = await Promise.all([
-    svc.from('trivia_questions').select('id, text, choices, correct, category').eq('quiz_id', g.quiz_id).order('sort').limit(1000),
+    svc.from('trivia_questions').select('id, text, choices, correct, category, image').eq('quiz_id', g.quiz_id).order('sort').limit(1000),
     svc.from('trivia_games').select('plan').eq('quiz_id', g.quiz_id).neq('id', g.id).limit(500),
     svc.from('trivia_players').select('user_id', { count: 'exact', head: true }).eq('game_id', g.id).eq('status', 'in'),
   ]);
