@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Check, UserMinus, UserPlus } from 'lucide-react';
+import { ArrowLeft, Check, Crown, Medal, UserMinus, UserPlus } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import { showToast } from '@/lib/ui/toast';
@@ -128,6 +128,8 @@ export default function HostGame({ code, onLeave, onResults, onNewGame }: { code
     const stats = state.reveal?.stats;
     const order = [top[1], top[0], top[2]];
     const best = Math.max(1, top[0]?.score ?? 1);
+    // A long name is set smaller so it still fits its plate on one or two lines.
+    const nameSize = (name: string) => `clamp(${name.length > 18 ? '0.85rem' : name.length > 11 ? '1rem' : '1.2rem'}, ${name.length > 18 ? 1.6 : name.length > 11 ? 2 : 2.6}vw, ${name.length > 18 ? '1.3rem' : name.length > 11 ? '1.7rem' : '2.3rem'})`;
     const secs = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
     const cards: { label: string; big: string; small: string }[] = stats ? [
       ...(stats.fastest ? [{ label: 'Fastest right answer', big: secs(stats.fastest.ms), small: `${stats.fastest.name}, question ${stats.fastest.q}` }] : []),
@@ -140,7 +142,7 @@ export default function HostGame({ code, onLeave, onResults, onNewGame }: { code
       {top.length > 0 && <Confetti delay={6.2} />}
       <p className={styles.endTitle}>{top.length ? 'And the winners are…' : 'Game over'}</p>
       <p className={styles.endSub}>{state.reveal?.of ?? state.players} {(state.reveal?.of ?? state.players) === 1 ? 'player' : 'players'}{stats ? ` · ${stats.asked} ${stats.asked === 1 ? 'question' : 'questions'}` : ''}</p>
-      {top.length > 0 && <div className={styles.podium}>{order.map((p, i) => p && <div key={i} className={`${styles.step} ${[styles.step2, styles.step1, styles.step3][i]}`}>{p.rank === 1 && <span className={styles.winnerTag}>Winner</span>}<span className={styles.stepRank}>{p.rank}</span><span className={styles.stepName}>{p.name}</span><span className={styles.stepScore}><CountUp value={p.score} ms={1600} format={fmtScore} /> pts</span>{stats && stats.asked > 0 && p.right !== undefined && <span className={styles.stepRight}>{p.right} of {stats.asked} right</span>}</div>)}</div>}
+      {top.length > 0 && <div className={styles.podium}>{order.map((p, i) => p && <div key={i} className={`${styles.step} ${[styles.step2, styles.step1, styles.step3][i]}`}>{p.rank === 1 && <span className={styles.winnerTag}>Winner</span>}<span className={styles.medal}>{p.rank === 1 ? <Crown size={34} aria-hidden="true" /> : <Medal size={28} aria-hidden="true" />}</span><span className={styles.stepBadge} aria-hidden="true">{(p.name.trim()[0] ?? '?').toUpperCase()}</span><span className={styles.namePlate}><Tape /><span className={styles.stepName} style={{ fontSize: nameSize(p.name) }}>{p.name}</span></span><span className={styles.stepRank}>{p.rank}</span><span className={styles.stepScore}><CountUp value={p.score} ms={1600} format={fmtScore} /> pts</span>{stats && stats.asked > 0 && p.right !== undefined && <span className={styles.stepRight}>{p.right} of {stats.asked} right</span>}</div>)}</div>}
       {(more.length > 0 || cards.length > 0) && (
         <div className={styles.endGrid}>
           {more.length > 0 && (

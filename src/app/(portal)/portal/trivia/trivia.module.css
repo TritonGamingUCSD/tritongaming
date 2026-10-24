@@ -451,3 +451,35 @@ button.ans:focus-visible { outline: 4px solid var(--paper); outline-offset: 3px;
 @keyframes rightPop { 0% { transform: scale(1); } 40% { transform: scale(1.06); } 100% { transform: scale(1); } }
 @keyframes rightGlow { 0%, 100% { box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55), 0 0 0 0 rgba(90, 209, 163, 0); } 50% { box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55), 0 0 1.8rem 0.3rem rgba(90, 209, 163, 0.55); } }   /* theme-ok */
 @media (prefers-reduced-motion: reduce) { .countNum, .countRings i, .loaderShape, .wipe, .playersCount, .answersRevealed .dimmed, .answersRevealed .right, .clockLow .ring, .clockLow svg { animation: none !important; } .wipe { display: none; } .countNum { opacity: 1; } }
+
+/* The question table grouped by category: a header per category you open and close */
+.catGroup { border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.12); }
+.catGroup:last-child { border-bottom: none; }
+.catHead { all: unset; box-sizing: border-box; width: 100%; display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 0.8rem; cursor: pointer; background: rgba(var(--pp-ink-rgb), 0.05); font-size: 0.92rem; }
+.catHead:hover { background: rgba(var(--pp-ink-rgb), 0.1); }
+.catHead:focus-visible { outline: 2px solid var(--pp-ink); outline-offset: -2px; }
+.catHead svg { flex: none; transition: transform 0.15s; }
+.catChevOpen { transform: rotate(90deg); }
+.catHeadNeeds b { color: var(--pp-bad); }
+.catCount { margin-left: auto; font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.7); }
+
+/* The top three on the podium: a medal (a crown for the winner), an initial badge and the name on a taped plate */
+.step { width: min(14rem, 30vw); padding-top: 1rem; }
+.medal { display: grid; place-items: center; color: #5a6580; }   /* theme-ok */
+.step1 .medal { color: #8a5a00; filter: drop-shadow(0 2px 0 rgba(255, 255, 255, 0.5)); }   /* theme-ok */
+.step2 .medal { color: #5f6b80; } .step3 .medal { color: #7a3d12; }   /* theme-ok */
+.stepBadge { display: grid; place-items: center; width: clamp(3rem, 6vw, 4.4rem); height: clamp(3rem, 6vw, 4.4rem); border-radius: 999px; background: var(--navy); color: var(--paper); border: 3px solid var(--paper); box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4); font-family: var(--font-futura-heavy); font-size: clamp(1.4rem, 3vw, 2.3rem); }   /* theme-ok */
+.step1 .stepBadge { width: clamp(3.6rem, 7vw, 5.4rem); height: clamp(3.6rem, 7vw, 5.4rem); }
+.namePlate { position: relative; display: grid; place-items: center; width: 100%; min-height: 3.6rem; padding: 0.9rem 0.6rem 0.6rem; background: var(--paper); color: var(--ink); border: 2px solid var(--navy); box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.45); transform: rotate(-1.2deg); box-sizing: border-box; }
+.step2 .namePlate { transform: rotate(1deg); } .step1 .namePlate { transform: rotate(-0.6deg); min-height: 4.4rem; }
+.namePlate .stepName { animation: none; opacity: 1; font-family: var(--font-futura-heavy); line-height: 1.12; overflow-wrap: anywhere; }
+.namePlate .tape { top: -0.7rem; width: 3.6rem; height: 1.2rem; }
+.medal, .stepBadge, .namePlate { animation: plateIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.step3 .medal, .step3 .stepBadge, .step3 .namePlate { animation-delay: 2.1s; } .step2 .medal, .step2 .stepBadge, .step2 .namePlate { animation-delay: 4.1s; } .step1 .medal, .step1 .stepBadge, .step1 .namePlate { animation-delay: 6.6s; }
+.step1 .medal { animation-name: plateIn, crownFloat; animation-duration: 0.7s, 2.4s; animation-delay: 6.6s, 7.4s; animation-iteration-count: 1, infinite; animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1), ease-in-out; }
+@keyframes plateIn { from { opacity: 0; transform: translateY(1.4rem) scale(0.6); } to { opacity: 1; } }
+@keyframes crownFloat { 0%, 100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-0.3rem) rotate(4deg); } }
+@media (prefers-reduced-motion: reduce) { .medal, .stepBadge, .namePlate { animation: none !important; opacity: 1 !important; } }
+
+.countRow { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.countRow b { font-size: 0.95rem; }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowLeft, Check, ClipboardPaste, Download, HelpCircle, History, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Check, ChevronRight, ClipboardPaste, Download, HelpCircle, History, Pencil, Plus, Trash2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import Loading from '@/components/Loading/Loading';
@@ -25,7 +25,7 @@ import { LETTERS } from './shapes';
 import styles from './trivia.module.css';
 
 const col = (label: string, width: string): Col => ({ label, width });
-const COLS: Col[] = [col('#', '2.2rem'), col('Category', 'minmax(7rem, 0.9fr)'), col('Question', 'minmax(15rem, 3fr)'), col('Picture', '6.8rem'), col('A', 'minmax(9rem, 1.2fr)'), col('B', 'minmax(9rem, 1.2fr)'), col('C', 'minmax(9rem, 1.2fr)'), col('D', 'minmax(9rem, 1.2fr)'), col('', '3rem')];
+const COLS: Col[] = [col('Category', 'minmax(7rem, 0.9fr)'), col('Question', 'minmax(15rem, 3fr)'), col('Picture', '6.8rem'), col('A', 'minmax(9rem, 1.2fr)'), col('B', 'minmax(9rem, 1.2fr)'), col('C', 'minmax(9rem, 1.2fr)'), col('D', 'minmax(9rem, 1.2fr)'), col('', '3rem')];
 
 interface Quiz { id: string; slug: string; name: string; per_game: number; block_winners: boolean; restricted: boolean; open_to_guests: boolean }
 
@@ -53,6 +53,8 @@ export default function QuizEditor({ slug, view, game, onBack, onHost, onView }:
   const [per, setPer] = useState<string | null>(null);
   const [bulk, setBulk] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [filter, setFilter] = useState('');
+  const [openKeys, setOpenKeys] = useState<Set<string> | null>(null);   // the categories opened by hand; until one is, the first group is open
   const [editing, setEditing] = useState(false);   // the table is locked until Edit Questions, so a stray click can't change an answer
 
   const load = useCallback(async () => {
@@ -112,6 +114,41 @@ export default function QuizEditor({ slug, view, game, onBack, onHost, onView }:
   if (!loaded) return <Loading variant="inline" label="Loading…" />;
   if (!quiz) return <div className={styles.tab}><Button variant="ghost" onClick={onBack}><ArrowLeft size={15} aria-hidden="true" /> All Quizzes</Button>{error && <Notice tone="error">{error}</Notice>}</div>;
   if (view === 'games' && game) return <GameResults code={game} onBack={() => onView('games')} />;
+  // Open the categories new questions went into, so they are seen.
+  const openCategory = (cats: string[]) => setOpenKeys((o) => new Set([...(o ?? (firstKey !== undefined ? [firstKey] : [])), ...cats.map((c) => (c ?? '').trim())]));
+
+  // One question as a table row (the order of the pool does not matter, so rows have no numbers).
+  const renderRow = (q: QuestionRow) => {
+    const need = missing(q);
+    return (
+      <div key={q.id} className={lg.prizeRow} style={gridStyle(COLS)}>
+        <span data-label="Category"><TextCell value={q.category ?? ''} canEdit={editing} max={40} placeholder="Category" onSave={(v) => void patch(q.id, { category: v })} /></span>
+        <span data-label="Question">
+          <TextCell value={q.text} canEdit={editing} strong max={300} placeholder="Question" onSave={(v) => void patch(q.id, { text: v })} />
+          {need.length > 0 && <small className={styles.needs}>Needs {need.join(', ')}</small>}
+        </span>
+        <span data-label="Picture"><PicturePick url={q.image ?? ''} label={`“${q.text.slice(0, 40) || 'a blank question'}”`} disabled={!editing} onPick={(b) => void setPicture(q, b)} onClear={() => void clearPicture(q)} onProblem={setError} /></span>
+        {[0, 1, 2, 3].map((i) => {
+          const right = q.correct === i;
+          return (
+            <span key={i} data-label={`Answer ${LETTERS[i]}`} className={`${styles.ansCell} ${right ? styles.ansCellRight : ''}`}>
+              <input type="radio" name={`right-${q.id}`} checked={right} disabled={!editing} aria-label={`Answer ${LETTERS[i]} is the right one for “${q.text.slice(0, 40) || 'a blank question'}”`} title={right ? 'The right answer' : editing ? 'Make this the right answer' : 'Press Edit Questions to change it'} onChange={() => void patch(q.id, { correct: i })} />
+              <span className={styles.ansCellText}><TextCell value={q.choices[i] ?? ''} canEdit={editing} placeholder={`Answer ${LETTERS[i]}`} max={120} onSave={(v) => void patch(q.id, { choices: q.choices.map((c, j) => (j === i ? v : c)) })} /></span>
+            </span>
+          );
+        })}
+        <span className={lg.prizeTools}>{editing && <button type="button" className={lg.iconBtn} aria-label={`Delete “${q.text.slice(0, 40) || 'a blank question'}”`} onClick={() => void remove(q)}><Trash2 size={15} /></button>}</span>
+      </div>
+    );
+  };
+  // The pool grouped by category (questions with none first), each group in the pool's order; a filter keeps only the questions that match and shows every group that still has one.
+  const needle = filter.trim().toLowerCase();
+  const filtering = needle !== '';
+  const shown = rows.map((q) => ({ q })).filter(({ q }) => !filtering || [q.category, q.text, ...q.choices].some((t) => (t ?? '').toLowerCase().includes(needle)));
+  const byCat = new Map<string, { q: QuestionRow }[]>();
+  for (const it of shown) { const k = (it.q.category ?? '').trim(); byCat.set(k, [...(byCat.get(k) ?? []), it]); }
+  const groups = [...byCat.entries()].sort(([a], [b]) => (a === '' ? -1 : b === '' ? 1 : a.localeCompare(b))).map(([key, items]) => ({ key, items, unfinished: items.filter(({ q }) => !isAskable(q)).length }));
+  const firstKey = groups[0]?.key;
   const ready = rows.filter(isAskable).length;
   const asked = Math.min(quiz.per_game, ready || quiz.per_game);
 
@@ -145,37 +182,34 @@ export default function QuizEditor({ slug, view, game, onBack, onHost, onView }:
               <SharePanel slug={slug} restricted={quiz.restricted} canManage={canManage} onRestricted={(on) => void setting({ restricted: on })} />
             </div>
           </div>
-          <p className={styles.muted}>{rows.length} {rows.length === 1 ? 'question' : 'questions'}{ready < rows.length ? `, ${ready} ready` : ''} · a game draws {asked} at random. The table is locked: press Edit Questions to change it.</p>
+          <div className={styles.countRow} aria-live="polite">
+            <span className={`${styles.badge} ${styles.neutral}`}><b>{rows.length}</b>&nbsp;{rows.length === 1 ? 'question' : 'questions'}</span>
+            <span className={`${styles.badge} ${styles.neutral}`}>{new Set(rows.map((q) => (q.category ?? '').trim()).filter(Boolean)).size} categories</span>
+            <span className={`${styles.badge} ${styles.neutral}`}>a game draws {asked} at random</span>
+            {ready < rows.length && <span className={`${styles.badge} ${styles.bad}`}>{rows.length - ready} to finish</span>}
+            {filtering && <span className={`${styles.badge} ${styles.good}`}>showing {shown.length} of {rows.length}</span>}
+            <span className={styles.muted}>The table is locked: press Edit Questions to change it.</span>
+          </div>
           <div className={styles.row}>
             <Button onClick={() => setAdding(true)}><Plus size={15} aria-hidden="true" /> Add Question</Button>
             <Button variant="secondary" onClick={() => setBulk(true)}><ClipboardPaste size={15} aria-hidden="true" /> Paste Many</Button>
             {rows.length > 0 && <Button variant={editing ? 'primary' : 'secondary'} onClick={() => setEditing((on) => !on)}>{editing ? <><Check size={15} aria-hidden="true" /> Done Editing</> : <><Pencil size={15} aria-hidden="true" /> Edit Questions</>}</Button>}
             {rows.length > 0 && <Button variant="secondary" onClick={() => exportCsv(quiz.name, rows)}><Download size={15} aria-hidden="true" /> Export CSV</Button>}
           </div>
+          {rows.length > 0 && <Input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Filter questions by category, question or answer…" aria-label="Filter questions" />}
           {rows.length === 0 ? <div className={styles.empty}><p>No questions yet. Add the first one, or paste a whole list.</p></div> : (
             <div className={lg.prizeGrid}>
               <GridHead cols={COLS} />
-              {rows.map((q, n) => {
-                const need = missing(q);
+              {groups.map((gr) => {
+                const isOpen = filtering || (openKeys ? openKeys.has(gr.key) : gr.key === firstKey);
                 return (
-                  <div key={q.id} className={lg.prizeRow} style={gridStyle(COLS)}>
-                    <span className={lg.prizeName} data-label="#"><span className={styles.dim}>{n + 1}</span></span>
-                    <span data-label="Category"><TextCell value={q.category ?? ''} canEdit={editing} max={40} placeholder="Category" onSave={(v) => void patch(q.id, { category: v })} /></span>
-                    <span data-label="Question">
-                      <TextCell value={q.text} canEdit={editing} strong max={300} placeholder="Question" onSave={(v) => void patch(q.id, { text: v })} />
-                      {need.length > 0 && <small className={styles.needs}>Needs {need.join(', ')}</small>}
-                    </span>
-                    <span data-label="Picture"><PicturePick url={q.image ?? ''} label={`question ${n + 1}`} disabled={!editing} onPick={(b) => void setPicture(q, b)} onClear={() => void clearPicture(q)} onProblem={setError} /></span>
-                    {[0, 1, 2, 3].map((i) => {
-                      const right = q.correct === i;
-                      return (
-                        <span key={i} data-label={`Answer ${LETTERS[i]}`} className={`${styles.ansCell} ${right ? styles.ansCellRight : ''}`}>
-                          <input type="radio" name={`right-${q.id}`} checked={right} disabled={!editing} aria-label={`Answer ${LETTERS[i]} is the right one for question ${n + 1}`} title={right ? 'The right answer' : editing ? 'Make this the right answer' : 'Press Edit Questions to change it'} onChange={() => void patch(q.id, { correct: i })} />
-                          <span className={styles.ansCellText}><TextCell value={q.choices[i] ?? ''} canEdit={editing} placeholder={`Answer ${LETTERS[i]}`} max={120} onSave={(v) => void patch(q.id, { choices: q.choices.map((c, j) => (j === i ? v : c)) })} /></span>
-                        </span>
-                      );
-                    })}
-                    <span className={lg.prizeTools}>{editing && <button type="button" className={lg.iconBtn} aria-label={`Delete question ${n + 1}`} onClick={() => void remove(q)}><Trash2 size={15} /></button>}</span>
+                  <div key={`group-${gr.key}`} className={styles.catGroup}>
+                    <button type="button" className={`${styles.catHead} ${gr.key === '' ? styles.catHeadNeeds : ''}`} aria-expanded={isOpen} onClick={() => setOpenKeys((o) => { const n = new Set(o ?? (firstKey !== undefined ? [firstKey] : [])); if (n.has(gr.key)) n.delete(gr.key); else n.add(gr.key); return n; })}>
+                      <ChevronRight size={16} aria-hidden="true" className={isOpen ? styles.catChevOpen : ''} />
+                      <b>{gr.key === '' ? 'Needs a category' : gr.key}</b>
+                      <span className={styles.catCount}>{gr.items.length} {gr.items.length === 1 ? 'question' : 'questions'}{gr.unfinished ? ` · ${gr.unfinished} to finish` : ''}</span>
+                    </button>
+                    {isOpen && gr.items.map(({ q }) => renderRow(q))}
                   </div>
                 );
               })}
@@ -183,8 +217,8 @@ export default function QuizEditor({ slug, view, game, onBack, onHost, onView }:
           )}
         </>
       )}
-      {adding && <QuestionDialog slug={slug} categories={[...new Set(rows.map((q) => q.category).filter(Boolean))].sort()} onClose={() => setAdding(false)} onAdded={(q) => setRows((l) => [...l, q])} />}
-      {bulk && <BulkAdd slug={slug} onClose={() => setBulk(false)} onAdded={(added) => { setRows((l) => [...l, ...added]); setBulk(false); showToast(`Added ${added.length} ${added.length === 1 ? 'question' : 'questions'}`); }} />}
+      {adding && <QuestionDialog slug={slug} categories={[...new Set(rows.map((q) => q.category).filter(Boolean))].sort()} onClose={() => setAdding(false)} onAdded={(q) => { setRows((l) => [...l, q]); openCategory([q.category]); }} />}
+      {bulk && <BulkAdd slug={slug} onClose={() => setBulk(false)} onAdded={(added) => { setRows((l) => [...l, ...added]); openCategory(added.map((x) => x.category)); setBulk(false); showToast(`Added ${added.length} ${added.length === 1 ? 'question' : 'questions'}`); }} />}
     </div>
   );
 }
