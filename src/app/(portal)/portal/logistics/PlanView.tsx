@@ -9,7 +9,7 @@ import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import Loading from '@/components/Loading/Loading';
 import { tagKey } from '@/lib/logistics/devices';
-import { isUsable, natural, planProblems, rowKind, stationStatus, stepAppliesTo, type StepDef } from '@/lib/logistics/plans';
+import { impliedDone, isUsable, natural, planProblems, rowKind, stationStatus, stepAppliesTo, type StepDef } from '@/lib/logistics/plans';
 import BorrowedDialog from './BorrowedDialog';
 import DeviceDialog from './DeviceDialog';
 import type { Device } from '@/lib/logistics/devices';
@@ -25,7 +25,6 @@ import SectionTabs from '@/components/ui/SectionTabs';
 import type { EventPage } from './logisticsRoute';
 import { SheetRows, type SheetCtx } from './PlanSheet';
 import SwapDialog from './SwapDialog';
-import Dialog, { DialogActions, DialogCancel, DialogText } from '@/components/ui/Dialog';
 import { planRows, primaryRank, type Row } from './planRows';
 import { TextCell } from './Cells';
 import { usePrizes } from './usePrizes';
@@ -57,7 +56,8 @@ export default function PlanView({ id, data, catalog, page, day, byType, bySpons
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [scanning, setScanning] = useState(false);   // the portal's scanner opened from this page (a tablet or laptop with a camera; on a phone the Scan button of the bottom bar does the same)
-  const [kit, setKit] = useState<{ row: Target; flags: Record<string, boolean> } | null>(null);
+  // Parts flagged missing on the sheet before Check done is pressed (row id → part → missing); they are sent with that tap. Once Check done is done, a tap on a part saves at once.
+  const [kitFlags, setKitFlags] = useState<Record<string, Record<string, boolean>>>({});
   const [swapping, setSwapping] = useState<{ id: string; tag: string | null; type: string; kind: 'club' | 'sponsor' | 'officer' } | null>(null);
   const [borrowing, setBorrowing] = useState<Borrowed | 'new' | null>(null);
   const [deviceEdit, setDeviceEdit] = useState<Device | null>(null);   // a device's own information, changed here instead of in the inventory
@@ -85,7 +85,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, bySpons
   // Boxes ticked or unticked by a click that is still being saved: shown as already changed (dimmed) so several can be clicked quickly, each saving on its own.
   const [pending, setPending] = useState<Map<string, boolean>>(() => new Map());
   const setPend = (keys: string[], to: boolean | null) => setPending((cur) => { const next = new Map(cur); for (const k of keys) { if (to === null) next.delete(k); else next.set(k, to); } return next; });
-  const doneSet = useMemo(() => { const s = new Set((detail?.done ?? []).map(doneKey)); for (const [k, on] of pending) { if (on) s.add(k); else s.delete(k); } return s; }, [detail?.done, pending]);
+  const realDone = useMemo(() => { const s = new Set((detail?.done ?? []).map(doneKey)); for (const [k, on] of pending) { if (on) s.add(k); else s.delete(k); } return s; }, [detail?.done, pending]);
   const pendingSet = useMemo(() => new Set(pending.keys()), [pending]);
   const doneBy = useMemo(() => new Map((detail?.done ?? []).filter((d) => d.by).map((d) => [doneKey(d), d.by as string])), [detail?.done]);
   const doneAt = useMemo(() => new Map((detail?.done ?? []).map((d) => [doneKey(d), d.done_at])), [detail?.done]);
@@ -109,6 +109,8 @@ export default function PlanView({ id, data, catalog, page, day, byType, bySpons
     return all.filter((r) => r.role === 'planned' && !((r.kind === 'sponsor' || r.kind === 'officer') && !r.requestId && !r.station_id)).sort((a, b) => ((a.station_id ? order.get(a.station_id) ?? 999 : 1000) - (b.station_id ? order.get(b.station_id) ?? 999 : 1000)) || rankOf(lead(a).type) - rankOf(lead(b).type) || natural(lead(a).tag ?? lead(a).type, lead(b).tag ?? lead(b).type) || (a.setId && a.setId === b.setId ? a.sort - b.sort : 0));
   }, [detail?.stations, all, rankOf, mainTypes]);   // eslint-disable-line react-hooks/exhaustive-deps
   const backups = useMemo(() => all.filter((r) => r.role === 'backup'), [all]);
+  // A step skipped before a later one that was ticked is taken as done (shown as a soft check, counted in the totals), never flagged as a problem.
+  const doneSet = useMemo(() => new Set([...realDone, ...impliedDone(all, steps, realDone)]), [realDone, all, steps]);
 
   const stepStats = useMemo(() => steps.map((s) => {
     const mine = rows.filter((r) => stepAppliesTo(s, rowKind(r)));
@@ -118,8 +120,8 @@ export default function PlanView({ id, data, catalog, page, day, byType, bySpons
   const auto = stepStats.find((p) => p.done < p.total)?.step ?? stepStats[stepStats.length - 1]?.step ?? null;
   const step = steps.find((s) => s.id === picked) ?? auto;
   const allDone = stepStats.reduce((n, p) => n + p.done, 0), allTotal = stepStats.reduce((n, p) => n + p.total, 0);
-  // Each stage only lists what matters in it: planning looks at teams, empty rows, games, places and double-booked devices; the event day only at what blocks the day (a step skipped, a row with no device, a device in two places).
-  const problems = useMemo(() => (detail ? planProblems(rows, detail.stations, steps, doneSet, detail.conflicts, () => null).filter((p) => (day ? ['skipped', 'empty', 'conflict'] : ['empty', 'game', 'place', 'team', 'unrequested', 'conflict']).includes(p.why)) : []), [detail, rows, steps, doneSet, day]);
+  // Each stage only lists what matters in it: planning looks at teams, empty rows, games, places and double-booked devices; the event day only at what blocks the day (a row with no device, a device in two places).
+  const problems = useMemo(() => (detail ? planProblems(rows, detail.stations, steps, doneSet, detail.conflicts, () => null).filter((p) => (day ? ['empty', 'conflict'] : ['empty', 'game', 'place', 'team', 'unrequested', 'conflict']).includes(p.why) && !(day && p.part)) : []), [detail, rows, steps, doneSet, day]);
   const bad = problems.filter((p) => p.sev === 'bad').length, warn = problems.length - bad;
 
   const requests = useRequests(detail?.plan.id ?? '', page === 'requests' || page === 'requests-prizing');
@@ -224,11 +226,22 @@ export default function PlanView({ id, data, catalog, page, day, byType, bySpons
     const name = res.item.tag ?? res.item.type;
     if (res.already) setFeedback({ tone: 'already', text: `${name} was already marked “${forStep.name}” at ${time(res.done_at)}.`, result: res, step: forStep });
     else setFeedback({ tone: 'ok', text: `${name}: ${forStep.name}`, result: res, step: forStep });
-    setText(''); setKit(null);
+    setText('');
     focusRow(res.item.id, res.station?.id ?? 'none');
     input.current?.focus();
   }
-  // Check done (a step that reviews the parts) shows the parts first; the others tick straight away.
+  const kitMissing = (r: Pick<Target, 'id'>, item: string, was: boolean) => kitFlags[r.id]?.[item] ?? was;
+  const kitBody = (r: Target) => r.kit.map((k) => ({ item: k.item, missing: kitMissing(r, k.item, k.missing) }));
+  const kitStep = steps.find((x) => x.kit) ?? null;
+  async function onKitPart(r: Row, item: string) {
+    const was = r.kit.find((k) => k.item === item)?.missing ?? false;
+    const to = !kitMissing(r, item, was);
+    setKitFlags((cur) => ({ ...cur, [r.id]: { ...cur[r.id], [item]: to } }));
+    if (kitStep && realDone.has(`${r.id}:${kitStep.id}`)) {   // Check done is already ticked: the change is saved now
+      const res = await plan.doStep({ ...bodyOf(r), step_id: kitStep.id, kit: r.kit.map((k) => ({ item: k.item, missing: k.item === item ? to : kitMissing(r, k.item, k.missing) })) });
+      if (!res.ok) { setKitFlags((cur) => ({ ...cur, [r.id]: { ...cur[r.id], [item]: !to } })); setFeedback({ tone: 'error', text: res.error }); }
+    }
+  }
   function begin(row: Row | null, forStep: StepDef | null = step, tag?: string) {
     if (!forStep) return;
     let target: Target | null = row;
@@ -238,8 +251,8 @@ export default function PlanView({ id, data, catalog, page, day, byType, bySpons
       if (b) target = { id: b.id, kind: b.owner_kind, itemKind: b.owner_kind, tag: b.tag, type: b.type, kit: b.kit };
       else if (d) target = { id: d.id, kind: 'club', itemKind: 'club', tag: d.tag, type: d.type, kit: d.kit };
     }
-    if (forStep.kit && target && target.kit.length > 0 && !doneSet.has(`${target.id}:${forStep.id}`)) { setKit({ row: target, flags: Object.fromEntries(target.kit.map((k) => [k.item, k.missing])) }); setPicked(forStep.id); return; }
-    void run(row ? bodyOf(row) : { tag }, forStep);
+    // Check done is one tap: the parts shown on the row go with it, those flagged missing on the sheet marked missing, the rest present.
+    void run({ ...(row ? bodyOf(row) : { tag }), ...(forStep.kit && target && target.kit.length > 0 ? { kit: kitBody(target) } : {}) }, forStep);
   }
   // A box clicked on the sheet: shown changed at once and saved in the background, so the next box can be clicked straight away.
   async function tick(row: Row, forStep: StepDef) {
@@ -313,7 +326,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, bySpons
   for (const b of borrowed) if (b.role === 'planned' && !b.request_id && !b.station_id) free.set(b.type, [...(free.get(b.type) ?? []), b.tag]);
   const ctx: SheetCtx = {
     lockedIds: new Set(detail.lockedRequests ?? []), hideDone: day && openOnly, ids, setsOpen: setsOpenPick ?? !day, foldGen, byType: groupByType,
-    api: plan, canManage: canManage && !day, manager: canManage, closed, busy, pending: pendingSet, main: mainTypes, day, stations, steps, activeId: step?.id ?? '', doneSet, doneAt, doneBy, problems,
+    api: plan, canManage: canManage && !day, manager: canManage, closed, busy, pending: pendingSet, main: mainTypes, day, stations, steps, activeId: step?.id ?? '', doneSet, realDone, kitFlags, onKitPart, doneAt, doneBy, problems,
     onTick: (row, s) => void tick(row, s), onTickAll: (list, s) => void markAll(list, s), onUndo: undo, onSwap: (r) => setSwapping({ id: r.id, tag: r.tag, type: r.type, kind: r.kind === 'slot' ? 'club' : r.kind }),
     onBorrowed: (r) => setBorrowing(borrowed.find((b) => b.id === r.id) ?? null), onInstalled: (list) => void install(list), onEditDevice: (r) => setDeviceEdit(catalog.data?.devices.find((x) => x.id === r.id) ?? data.devices.find((x) => x.id === r.id) ?? null),
   };
@@ -393,7 +406,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, bySpons
             <form className={styles.dayForm} onSubmit={(e) => { e.preventDefault(); submit(); }}>
             <div className={styles.dayStepPick}>
               <Combo value={picked ? stepLabel(stepStats.find((x) => x.step.id === picked)) : `Next: ${auto?.name ?? '–'}`} options={[`Next: ${auto?.name ?? '–'}`, ...stepStats.map((x) => stepLabel(x) ?? '')]} clearable={false} ariaLabel="Step to mark when typing an ID"
-                onChange={(v) => { setPicked(stepStats.find((x) => stepLabel(x) === v)?.step.id ?? ''); setKit(null); }} />
+                onChange={(v) => { setPicked(stepStats.find((x) => stepLabel(x) === v)?.step.id ?? ''); }} />
             </div>
             <Suggest inputRef={input} className={styles.dayInput} value={text} onChange={setText} options={dayIds} placeholder="Type an ID" aria-label={`Device ID for ${step?.name ?? 'the step'}`} autoCapitalize="characters" autoComplete="off" autoCorrect="off" spellCheck={false} enterKeyHint="done" disabled={busy || !step} />
             <Button type="submit" disabled={!text.trim() || busy} loading={busy}>Mark</Button>
@@ -432,41 +445,6 @@ export default function PlanView({ id, data, catalog, page, day, byType, bySpons
       {(page === 'requests' || page === 'requests-prizing') && <RequestsTab store={requests} key={page} kind={page === 'requests' ? 'devices' : 'prizes'} plan={plan} api={catalog} data={data} />}
 
       {page === 'device' && <div className={styles.dayLayout}>
-        {kit && step && (() => {
-          const list = (
-            <ul className={styles.kitList}>
-              {kit.row.kit.map((k) => (
-                <li key={k.item} className={`${styles.kitLine} ${kit.flags[k.item] ? styles.kitMissing : ''}`}>
-                  <span className={styles.kitName}>{k.item}{k.qty > 1 ? ` ×${k.qty}` : ''}</span>
-                  <button type="button" className={`${styles.missBtn} ${kit.flags[k.item] ? styles.missOn : ''}`} aria-pressed={kit.flags[k.item]} onClick={() => setKit({ ...kit, flags: { ...kit.flags, [k.item]: !kit.flags[k.item] } })}>{kit.flags[k.item] ? 'Missing' : 'Present'}</button>
-                </li>
-              ))}
-            </ul>
-          );
-          const mark = () => void run({ ...bodyOf(kit.row), kit: kit.row.kit.map((k) => ({ item: k.item, missing: !!kit.flags[k.item] })) });
-          const cancel = () => { setKit(null); input.current?.focus(); };
-          // On a phone the parts review is a pop-up in the middle of the screen (it used to sit above the list, out of sight when the list was scrolled); on a laptop it stays beside the list.
-          if (narrow) return (
-            <Dialog title={`${kit.row.tag} · ${kit.row.type}`} busy={busy} onClose={cancel} label={`Parts of ${kit.row.tag}`}>
-              <DialogText>Check each part is there, then press Mark. Tap a part to flag it missing.</DialogText>
-              {list}
-              <DialogActions><DialogCancel onClick={cancel} disabled={busy} /><Button onClick={mark} loading={busy}>Mark {step.name}</Button></DialogActions>
-            </Dialog>
-          );
-          return (
-            <div className={styles.dayAside}>
-              <div className={styles.kitPanel} role="group" aria-label={`Parts of ${kit.row.tag}`}>
-                <b>{kit.row.tag} · {kit.row.type}</b>
-                <p className={styles.muted}>Check each part is there, then press Mark. Tap a part to flag it missing.</p>
-                {list}
-                <div className={styles.resultActions}>
-                  <Button onClick={mark} loading={busy}>Mark {step.name}</Button>
-                  <Button variant="ghost" onClick={cancel} disabled={busy}>Cancel</Button>
-                </div>
-              </div>
-            </div>
-          );
-        })()}
 
         <div className={styles.dayMain}>
           {day && narrow && teams.length > 1 && (
@@ -588,7 +566,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, bySpons
                   </div>
                   {day && <div className={styles.dHeads}>
                     {mineStats.map((x) => (
-                      <button key={x.s.id} type="button" className={`${styles.dHead} ${step?.id === x.s.id ? styles.dHeadOn : ''} ${x.total > 0 && x.done === x.total ? styles.dHeadDone : ''}`} onClick={() => { setPicked(x.s.id); setKit(null); }} title={`Type IDs for “${x.s.name}”`}>
+                      <button key={x.s.id} type="button" className={`${styles.dHead} ${step?.id === x.s.id ? styles.dHeadOn : ''} ${x.total > 0 && x.done === x.total ? styles.dHeadDone : ''}`} onClick={() => { setPicked(x.s.id); }} title={`Type IDs for “${x.s.name}”`}>
                         <span>{x.s.name}</span><small>{x.done}/{x.total}</small>
                       </button>
                     ))}

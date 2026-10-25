@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { planSlug, pickBundle, pickDevices, planConflicts, planProblems, plansOverlap, planIsToday, skippedSteps, stationStatus, stepAppliesTo, stepProgress, stepsFor, type PlanRow, type StepDef } from '@/lib/logistics/plans';
+import { planSlug, pickBundle, pickDevices, planConflicts, impliedDone, planProblems, plansOverlap, planIsToday, skippedSteps, stationStatus, stepAppliesTo, stepProgress, stepsFor, type PlanRow, type StepDef } from '@/lib/logistics/plans';
 import type { Device } from '@/lib/logistics/devices';
 
 let n = 0;
@@ -91,6 +91,12 @@ describe('what is not done or not right', () => {
   const steps = [step('Left Storage', 1, 'all'), step('Check done', 2, 'all'), step('Box Taken', 3, 'all')];
   const row = (o: Partial<PlanRow>): PlanRow => ({ id: `r${++n}`, kind: 'club', type: 'Gaming PC', tag: `T${n}`, station_id: 's1', games_needed: [], games: [], counted: false, ...o });
   const st = { id: 's1', name: 'Triton Valorant', contact: 'ITZSUK', room: 'East Ballroom' };
+  it('takes a skipped step as done, and never reports it as a problem', () => {
+    const r = row({});
+    const done = new Set([`${r.id}:Left Storage`, `${r.id}:Box Taken`]);
+    expect([...impliedDone([r], steps, done)]).toEqual([`${r.id}:Check done`]);
+    expect(planProblems([r], [], steps, done, [], () => null).some((p) => p.why === 'skipped')).toBe(false);
+  });
   it('flags a step that was skipped', () => {
     const r = row({});
     expect(skippedSteps(r, steps, new Set([`${r.id}:Left Storage`, `${r.id}:Box Taken`])).map((s) => s.name)).toEqual(['Check done']);

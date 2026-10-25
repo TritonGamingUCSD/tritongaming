@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Check, Lock, Minus, Plus } from 'lucide-react';
 import { conditionLabel, UNUSABLE } from '@/lib/logistics/constants';
-import { rowKind, skippedSteps, stepAppliesTo, type Problem, type StepDef } from '@/lib/logistics/plans';
+import { rowKind, stepAppliesTo, type Problem, type StepDef } from '@/lib/logistics/plans';
 import { Suggest } from './Combo';
 import { RowMenu } from './RowMenu';
 import { interactive } from './interactive';
@@ -14,7 +14,7 @@ import styles from './logistics.module.css';
 
 export interface SheetCtx {
   api: ReturnType<typeof usePlan>; canManage: boolean; closed: boolean; manager: boolean; busy: boolean; pending: Set<string>; day: boolean; stations: Station[]; steps: StepDef[]; activeId: string;
-  lockedIds: Set<string>; hideDone: boolean; ids: (type: string) => { value: string }[]; setsOpen: boolean; foldGen: number; byType: boolean; main: Set<string>; doneSet: Set<string>; doneAt: Map<string, string>; doneBy: Map<string, string>; problems: Problem[];
+  lockedIds: Set<string>; hideDone: boolean; ids: (type: string) => { value: string }[]; setsOpen: boolean; foldGen: number; byType: boolean; main: Set<string>; doneSet: Set<string>; realDone: Set<string>; kitFlags: Record<string, Record<string, boolean>>; onKitPart: (row: Row, item: string) => void; doneAt: Map<string, string>; doneBy: Map<string, string>; problems: Problem[];
   onTick: (row: Row, step: StepDef) => void; onTickAll: (rows: Row[], step: StepDef) => void; onUndo: (item: { id: string; kind: Slim['kind'] }, stepId: string) => void;
   onSwap: (r: Row) => void; onBorrowed: (r: Row) => void; onInstalled: (rows: Row[]) => void; onEditDevice: (r: Row) => void;
 }
@@ -26,8 +26,7 @@ const label = (r: Row) => r.tag ?? r.type;
 // The boxes for one line: a box per step the line goes through (a dash for a step that doesn't apply). A single device ticks and unticks; a counted line shows how many units are done
 // and ticks the next unit; a set ticks the step for all of its parts that go through it, and shows how many are done while some are not.
 function Cells({ rows, setLabel, ctx, readOnly }: { rows: Row[]; setLabel?: string; ctx: SheetCtx; readOnly?: boolean }) {
-  const { steps, doneSet, doneAt, doneBy, activeId, closed, pending, onTick, onTickAll, onUndo } = ctx;
-  const skipped = new Set(rows.flatMap((x) => skippedSteps(x, steps, doneSet).map((s) => s.id)));
+  const { steps, doneSet, realDone, doneAt, doneBy, activeId, closed, pending, onTick, onTickAll, onUndo } = ctx;   // doneSet also holds the steps taken as done because a later one was ticked; realDone only what was ticked
   if (!ctx.day) return null;   // while allocating, the step boxes are hidden: they are for the day
   return (
     <div className={styles.dCells}>
@@ -42,7 +41,13 @@ function Cells({ rows, setLabel, ctx, readOnly }: { rows: Row[]; setLabel?: stri
         const wait = mine.some((x) => pending.has(`${x.id}:${s.id}`));
         const click = () => {
           if (closed || wait) return;
-          if (full) { for (const x of done) onUndo({ id: x.id, kind: x.kind }, s.id); return; }
+          if (full) {
+            const real = done.filter((x) => realDone.has(`${x.id}:${s.id}`));
+            if (real.length) { for (const x of real) onUndo({ id: x.id, kind: x.kind }, s.id); return; }
+            // all of it was only taken as done (a later step was ticked): a tap makes it a real tick
+            if (single || s.kit) onTick(done[0], s); else if (setLabel !== undefined) onTickAll(done, s); else onTick(done[0], s);
+            return;
+          }
           const next = mine.filter((x) => !doneSet.has(`${x.id}:${s.id}`));
           if (single || s.kit) onTick(next[0], s);
           else if (setLabel !== undefined) onTickAll(next, s);
@@ -50,7 +55,7 @@ function Cells({ rows, setLabel, ctx, readOnly }: { rows: Row[]; setLabel?: stri
         };
         return (
           <span key={s.id} className={`${styles.cellWrap} ${s.id === activeId ? styles.cellOn : ''}`}>
-            <button type="button" className={`${styles.cell} ${full ? styles.cellDone : done.length ? styles.cellPart : ''} ${!full && skipped.has(s.id) ? styles.cellSkipped : ''} ${wait ? styles.cellWait : ''}`} disabled={closed} aria-busy={wait} onClick={click} aria-pressed={full} aria-label={full ? `Undo ${name}` : `Mark ${name}`} title={lastDone ? `Done at ${time(lastDone)}${doneBy.get(`${done[done.length - 1].id}:${s.id}`) ? ` by ${doneBy.get(`${done[done.length - 1].id}:${s.id}`)}` : ''}` : skipped.has(s.id) ? 'Skipped: a later step is done' : s.name}>
+            <button type="button" className={`${styles.cell} ${full ? styles.cellDone : done.length ? styles.cellPart : ''} ${full && done.every((x) => !realDone.has(`${x.id}:${s.id}`)) ? styles.cellImplied : ''} ${wait ? styles.cellWait : ''}`} disabled={closed} aria-busy={wait} onClick={click} aria-pressed={full} aria-label={full ? `Undo ${name}` : `Mark ${name}`} title={lastDone ? `Done at ${time(lastDone)}${doneBy.get(`${done[done.length - 1].id}:${s.id}`) ? ` by ${doneBy.get(`${done[done.length - 1].id}:${s.id}`)}` : ''}` : full && done.every((x) => !realDone.has(`${x.id}:${s.id}`)) ? 'Taken as done: a later step is ticked. Tap to tick it for real' : s.name}>
               {!single && !full ? <span className={`${styles.cellMark} ${styles.cellCount}`}>{done.length}/{mine.length}</span> : <span className={styles.cellMark}>{full ? <Check size={18} aria-hidden="true" /> : <span className={styles.cellBox} />}</span>}
               <span className={styles.cellLabel}>{s.name}</span>
             </button>
@@ -75,9 +80,8 @@ function DeviceLine({ line, ctx, backup, nested }: { line: Line; ctx: SheetCtx; 
   const dead = !!r.condition && UNUSABLE.includes(r.condition as never);
   const empty = r.kind === 'slot' && !r.counted;
   const missing = missingOf(r);
-  const flags = problems.filter((p) => p.row_id === r.id && p.why === 'conflict');
-  const skip = line.rows.flatMap((x) => skippedSteps(x, ctx.steps, ctx.doneSet));
-  const bad = dead || empty || skip.length > 0 || flags.some((p) => p.sev === 'bad');
+  const flags = problems.filter((p) => p.row_id === r.id && p.why === 'conflict' && !(ctx.day && p.part));
+  const bad = dead || empty || flags.some((p) => p.sev === 'bad');
   const loan = r.kind === 'sponsor' || r.kind === 'officer';
   const fromRequest = r.kind !== 'slot' && !!r.requestId;
   const empty0 = () => api.act('/slots', 'POST', { action: 'empty', ...(loan ? { borrowed_id: r.id } : { device_id: r.id }) });
@@ -93,7 +97,6 @@ function DeviceLine({ line, ctx, backup, nested }: { line: Line; ctx: SheetCtx; 
     else if (!(await api.act('/slots', 'POST', { action: 'assign', ...(loan ? { borrowed_id: r.id } : { device_id: r.id }), tag: v }))) setTag(r.tag ?? '');
     setBusy(false);
   }
-  const skipNames = [...new Set(skip.map((s) => s.name))].join(', ');
 
   return (
     <div data-rows={line.rows.map((x) => x.id).join(' ')} className={`${styles.dayRow} ${styles.dayLine} ${nested ? styles.nested : ''} ${bad ? styles.lineBad : missing.length || flags.length ? styles.lineWarn : ''}`}>
@@ -112,10 +115,17 @@ function DeviceLine({ line, ctx, backup, nested }: { line: Line; ctx: SheetCtx; 
           : <button type="button" className={`${styles.assignBtn} ${empty ? styles.assignEmpty : ''}`} onClick={(e) => tapTwice(e, () => setEditingTag(true))} disabled={busy} aria-label={`Device ID for ${r.type}. Change`}>{tag || 'Device ID'}</button>)}
         {r.games_needed.length > 0 && <span className={`${styles.gameChip} ${missing.length ? styles.gameMissing : styles.gameOk}`} title={missing.length ? `Not installed yet: ${missing.join(', ')}` : r.kind === 'slot' ? 'Needed' : 'Installed'}>{r.games_needed.join(', ')}{missing.length ? ' · not installed' : ''}</span>}
         {missing.length > 0 && manage && r.kind !== 'slot' && <button type="button" className={styles.miniTextBtn} disabled={ctx.busy} title="Mark the needed games as installed" aria-label={`Mark ${label(r)} installed`} onClick={() => ctx.onInstalled([r])}>Mark installed</button>}
+        {ctx.day && !backup && r.kit.length > 0 && (
+          <span className={styles.parts} role="group" aria-label={`Parts of ${label(r)}`}>
+            {r.kit.map((k) => {
+              const off = ctx.kitFlags[r.id]?.[k.item] ?? k.missing;
+              return <button key={k.item} type="button" className={`${styles.partChip} ${off ? styles.partMissing : ''}`} aria-pressed={off} disabled={closed} onClick={() => ctx.onKitPart(r, k.item)} title={off ? `${k.item} is missing. Tap if it is here` : `Tap if ${k.item} is missing`}>{k.item}{k.qty > 1 ? ` ×${k.qty}` : ''}{off ? ' · missing' : ''}</button>;
+            })}
+          </span>
+        )}
         {dead && <span className={`${styles.badge} ${styles.bad}`}>{conditionLabel(r.condition!)}</span>}
         {!dead && !flags.length && r.condition && r.condition !== 'working' && r.condition !== 'brand_new' && <span className={`${styles.badge} ${styles.neutral}`}>{conditionLabel(r.condition)}</span>}
         {flags.filter(() => !dead).map((p, i) => <span key={i} className={p.sev === 'bad' ? styles.flagBad : styles.flagWarn}>{p.text}</span>)}
-        {skipNames && <span className={styles.flagBad}>Skipped: {skipNames}</span>}
         {backup && r.swap_reason && <span className={styles.dim}>Swapped out for {r.swapped_for_label}: {r.swap_reason}</span>}
       </div>
       <Cells rows={line.rows} ctx={ctx} readOnly={backup} />
@@ -137,7 +147,7 @@ function SetLine({ unit, ctx }: { unit: Unit; ctx: SheetCtx }) {
   const [open, setOpen] = useState(ctx.setsOpen);   // allocating: the parts start open, each with its ID box; Collapse all folds them
   const rows = unit.lines.flatMap((l) => l.rows);
   const first = unit.lines[0].rows[0];
-  const bad = rows.some((r) => (r.kind === 'slot' && !r.counted) || (r.condition && UNUSABLE.includes(r.condition as never))) || rows.some((r) => skippedSteps(r, ctx.steps, ctx.doneSet).length > 0) || ctx.problems.some((p) => p.sev === 'bad' && rows.some((r) => r.id === p.row_id));
+  const bad = rows.some((r) => (r.kind === 'slot' && !r.counted) || (r.condition && UNUSABLE.includes(r.condition as never))) || ctx.problems.some((p) => p.sev === 'bad' && rows.some((r) => r.id === p.row_id));
   const warn = !bad && (rows.some((r) => missingOf(r).length) || ctx.problems.some((p) => rows.some((r) => r.id === p.row_id)));
   const games = [...new Set(rows.flatMap((r) => r.games_needed))];
   const missingGames = [...new Set(rows.flatMap(missingOf))];

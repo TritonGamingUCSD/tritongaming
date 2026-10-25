@@ -94,7 +94,7 @@ export function stepProgress(devices: { id: string; kind: ItemKind }[], steps: S
 
 export interface PlanRow { id: string; kind: 'club' | 'sponsor' | 'officer' | 'slot'; type: string; tag: string | null; station_id: string | null; games_needed: string[]; games: string[]; counted: boolean; located?: boolean; requested?: boolean }
 export interface StationInfo { id: string; name: string; contact: string | null; room: string | null }
-export interface Problem { sev: 'bad' | 'warn'; why: 'conflict' | 'empty' | 'game' | 'skipped' | 'team' | 'place' | 'unrequested'; station_id: string | null; row_id?: string; text: string }
+export interface Problem { sev: 'bad' | 'warn'; why: 'conflict' | 'empty' | 'game' | 'skipped' | 'team' | 'place' | 'unrequested'; station_id: string | null; row_id?: string; text: string; part?: boolean }
 
 // Which steps count for a row: a type-only row is club stock.
 export const rowKind = (r: Pick<PlanRow, 'kind'>): ItemKind => (r.kind === 'slot' ? 'club' : r.kind);
@@ -106,6 +106,13 @@ export function skippedSteps(row: Pick<PlanRow, 'id' | 'kind'>, steps: StepDef[]
   return mine.filter((s, i) => i < last && !done.has(`${row.id}:${s.id}`));
 }
 
+// A skipped step is not a problem: when a later step is ticked, the earlier ones were almost certainly done too. These are the steps shown (and counted) as done on that basis, as "row id:step id".
+export function impliedDone(rows: Pick<PlanRow, 'id' | 'kind'>[], steps: StepDef[], done: Set<string>): Set<string> {
+  const out = new Set<string>();
+  for (const r of rows) for (const s of skippedSteps(r, steps, done)) out.add(`${r.id}:${s.id}`);
+  return out;
+}
+
 // Everything to fix before or on the day, worst first: rows with no device, devices that can't be handed out or are booked elsewhere, steps skipped,
 // a game that isn't installed yet, a part missing, a team without a contact or room. `conflicts` come from the server (condition, double booking, parts).
 export function planProblems(rows: PlanRow[], stations: StationInfo[], steps: StepDef[], done: Set<string>, conflicts: Conflict[], tagOf: (deviceId: string) => string | null): Problem[] {
@@ -114,7 +121,7 @@ export function planProblems(rows: PlanRow[], stations: StationInfo[], steps: St
   for (const c of conflicts) {
     const row = rowOf.get(c.device_id);
     if (c.kind === 'unusable' || c.kind === 'double_booked') out.push({ sev: 'bad', why: 'conflict', station_id: row?.station_id ?? null, row_id: c.device_id, text: c.detail });
-    else if (c.kind === 'missing_part') out.push({ sev: 'warn', why: 'conflict', station_id: row?.station_id ?? null, row_id: c.device_id, text: c.detail });
+    else if (c.kind === 'missing_part') out.push({ sev: 'warn', why: 'conflict', station_id: row?.station_id ?? null, row_id: c.device_id, text: c.detail, part: true });   // on the event day the red chip on the row says it; no extra warning
     else out.push({ sev: 'warn', why: 'conflict', station_id: row?.station_id ?? null, row_id: c.device_id, text: c.detail });
   }
   for (const r of rows) {
@@ -123,8 +130,6 @@ export function planProblems(rows: PlanRow[], stations: StationInfo[], steps: St
     const missing = r.games_needed.filter((g) => !r.games.some((x) => x.toLowerCase() === g.toLowerCase()));
     if (r.kind !== 'slot' && missing.length) out.push({ sev: 'warn', why: 'game', station_id: r.station_id, row_id: r.id, text: `${r.tag ?? r.type} needs ${missing.join(', ')} installed` });
     if (r.kind === 'club' && r.located === false) out.push({ sev: 'warn', why: 'place', station_id: r.station_id, row_id: r.id, text: `${r.tag ?? r.type} has no shelf or place set yet` });
-    const skipped = skippedSteps(r, steps, done);
-    if (skipped.length) out.push({ sev: 'bad', why: 'skipped', station_id: r.station_id, row_id: r.id, text: `${r.tag ?? r.type}: ${skipped.map((s) => s.name).join(', ')} skipped` });
   }
   for (const s of stations) {
     const n = rows.filter((r) => r.station_id === s.id).length;

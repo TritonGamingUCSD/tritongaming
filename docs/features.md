@@ -115,3 +115,8 @@ Both are called with `Authorization: Bearer $CRON_SECRET`. `daily-maintenance?on
 
 - **All:** under each step's name in a prize pool's header (Sorted, Picked Up, Given Out…) an **All** button marks that step for every prize of the pool in one tap, each to its full count (for Back To Storage, to what was not given out). One Ctrl+Z puts them all back. Typing a count or tapping a single prize still works.
 - **Keep a prize:** the Keep For Future box on Prizing Allocation only offers prizes that still have some left in the event (planned minus given out); a prize that has all been given out is not listed, and the server refuses it (400) too.
+
+## Logistics: the event-day sheet (devices)
+
+- **Skipped steps are not problems.** When a later step is ticked, earlier ones that were never ticked count as done: shown as a lighter check, counted in the totals and team progress, never red or orange, and never in the problems list. Tapping one ticks it for real. (`impliedDone` in `lib/logistics/plans.ts`.)
+- **Parts are on the row.** A device's parts are small chips under its ID; tap one that is missing and it turns red. **Check done** is then one tap (no second dialog): it marks the step and saves the flagged parts as missing and the rest as present. After Check done, tapping a chip saves the change at once. A missing part is the red chip only on the event day (planning still warns).
