@@ -120,3 +120,8 @@ Both are called with `Authorization: Bearer $CRON_SECRET`. `daily-maintenance?on
 
 - **Skipped steps are not problems.** When a later step is ticked, earlier ones that were never ticked count as done: shown as a lighter check, counted in the totals and team progress, never red or orange, and never in the problems list. Tapping one ticks it for real. (`impliedDone` in `lib/logistics/plans.ts`.)
 - **Parts are on the row.** A device's parts are small chips under its ID; tap one that is missing and it turns red. **Check done** is then one tap (no second dialog): it marks the step and saves the flagged parts as missing and the rest as present. After Check done, tapping a chip saves the change at once. A missing part is the red chip only on the event day (planning still warns).
+
+## Refreshing the portal (and the installed app)
+
+- An app added to the home screen has no reload, so the portal has its own: a **refresh button** in the top bar (next to the theme switch; on phones a round button left of it), a **pull down** at the top of a page (installed app only; browsers have their own), and a **quiet refresh when the app is opened again after 90 seconds or more away** (never while a form has unsaved changes; the button and the pull ask first).
+- All three call `refreshPortal()` (`lib/ui/refreshPortal.ts`). `PortalHub` then fetches the server's data again (`router.refresh()` inside a transition) and, once the answer is applied, rebuilds the open section, so what changed elsewhere (a check-in, an event, a device, someone's info) shows without leaving the page; the address, tab and page stay. Pull-down is `components/portal/PullToRefresh.tsx`, the button `PortalRefresh.tsx`.

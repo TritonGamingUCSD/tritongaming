@@ -10,6 +10,8 @@ import { getMissingProfileFields } from '@/lib/members/profile';
 import ProfileIncompleteBanner from '@/components/portal/ProfileIncompleteBanner';
 import NotificationBell from '@/components/portal/NotificationBell';
 import PortalThemeToggle from '@/components/portal/PortalThemeToggle';
+import PortalRefresh from '@/components/portal/PortalRefresh';
+import PullToRefresh from '@/components/portal/PullToRefresh';
 import AttributionCapture from '@/components/AttributionCapture/AttributionCapture';
 import ConnectivityBanner from '@/components/ConnectivityBanner/ConnectivityBanner';
 import PushAsk from '@/components/portal/PushAsk';
@@ -65,6 +67,8 @@ export default async function PortalLayout({ children }: { children: React.React
         <div className={styles.fixedBell} style={{ display: 'contents' }}><HideOnPaths paths={CHECKIN_PATHS}><NotificationBell /></HideOnPaths></div>
         {/* Phones: the light/dark switch sits right beside the bell (desktop has it in the top bar). */}
         <HideOnPaths paths={CHECKIN_PATHS}><div className={styles.fixedTheme}><PortalThemeToggle /></div></HideOnPaths>
+        <HideOnPaths paths={CHECKIN_PATHS}><div className={styles.fixedRefresh}><PortalRefresh /></div></HideOnPaths>
+        <PullToRefresh />
         <ConnectivityBanner />
         <HideOnPaths paths={CHECKIN_PATHS}><PushAsk /></HideOnPaths>
         <HideOnPaths paths={CHECKIN_PATHS}><InstallAsk /></HideOnPaths>

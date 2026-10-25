@@ -4,3 +4,7 @@
 
 /* The full-width row used inside the phone's More sheet. */
 .labelled { display: flex; align-items: center; width: 100%; height: 46px; justify-content: flex-start; gap: 0.6rem; padding: 0 0.9rem; border-radius: 10px; font-size: 0.9rem; }
+
+.spin { animation: refreshSpin 0.8s linear infinite; }
+@keyframes refreshSpin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }

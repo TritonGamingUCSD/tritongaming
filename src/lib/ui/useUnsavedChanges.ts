@@ -11,6 +11,9 @@ const DEFAULT_MESSAGE = 'You have changes that haven’t been saved. Leave witho
 // One entry per form that is dirty right now (several can be on screen at once, and one finishing must not switch the guard off for the others).
 const pending = new Map<symbol, string>();
 
+/** True while any form on screen has changes that are not saved (a refresh by itself must not throw those away). */
+export const hasUnsavedChanges = () => pending.size > 0;
+
 export function confirmDiscardUnsaved(): boolean {
   const message = [...pending.values()][0];
   if (!message) return true;

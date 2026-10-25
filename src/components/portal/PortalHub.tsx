@@ -4,10 +4,12 @@ import { createPortal } from 'react-dom';
 import ScanOpening from './ScanOpening';
 import { confirmDiscardUnsaved } from '@/lib/ui/useUnsavedChanges';
 import type { ReactElement, ReactNode } from 'react';
-import { Fragment, cloneElement, isValidElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, cloneElement, isValidElement, useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import Image from 'next/image';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { mergedPortalParams, portalHref } from '@/lib/portal/portalPath';
+import { REFRESH_EVENT, REFRESHED_EVENT } from '@/lib/ui/refreshPortal';
+import PortalRefresh from './PortalRefresh';
 import { usePortalParams } from '@/lib/portal/usePortalParams';
 import { motion, AnimatePresence } from 'motion/react';
 import { Home, MoreHorizontal, ChevronRight, ChevronLeft } from 'lucide-react';
@@ -312,6 +314,22 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
   // Server render and first paint use the role/context defaults; once mounted, what this person
   // actually opens and the time of week are folded in.
   const router = useRouter();
+  // A refresh (button, pull-down, or coming back to the app): the server's data for this page is fetched again and, once it has arrived, the open section is rebuilt with it. The address, the tab and
+  // the page stay as they are.
+  const [refreshPending, startRefresh] = useTransition();
+  const wasPending = useRef(false);
+  useEffect(() => {
+    const on = () => startRefresh(() => router.refresh());
+    window.addEventListener(REFRESH_EVENT, on);
+    return () => window.removeEventListener(REFRESH_EVENT, on);
+  }, [router]);
+  useEffect(() => {
+    if (refreshPending) { wasPending.current = true; return; }
+    if (!wasPending.current) return;
+    wasPending.current = false;   // the server's answer has been applied: rebuild the open section with it
+    setNavNonce((n) => n + 1);
+    window.dispatchEvent(new Event(REFRESHED_EVENT));
+  }, [refreshPending]);
   // Five slots: Home, two pages, the scanner in the middle... so the bar keeps two pages, then More.
   const [dock, setDock] = useState(() => pickDock(sections, { slots: 2 }));
   const dockKey = sections.map((s) => `${s.id}:${s.dockBoost ?? 0}:${s.dockExclude ? 'x' : ''}`).join(',');
@@ -687,6 +705,7 @@ function DesktopShell({
             <div className={styles.topSearch}><PortalSearch compact /></div>
             <ScanLink />
             <PortalCopyLink />
+            <PortalRefresh />
             <PortalThemeToggle />
             <NotificationBell inline />
           </div>
@@ -759,6 +778,7 @@ function PlainShell({ identity, railFooter, homeExtras, groupedSections, openSec
           {frame?.viewAs}
           <div className={simple.search}><PortalSearch compact /></div>
           <ScanLink />
+          <PortalRefresh />
           <PortalThemeToggle />
           <NotificationBell inline />
         </div>
