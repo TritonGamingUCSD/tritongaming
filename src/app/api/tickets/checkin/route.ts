@@ -4,7 +4,7 @@ import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
 import { rotatingCode, qrToken, currentWindow, scanWindows } from '@/lib/events/rotatingCode';
 import { performCheckin } from '@/lib/events/performCheckin';
-import { openEventsFilter } from '@/lib/events/checkinWindow';
+import { openEventsFilter, isHappeningNow } from '@/lib/events/checkinWindow';
 import { canCheckInNow, todaysCheckinAt } from '@/lib/events/checkinDays';
 import { getTier, fetchTiers } from '@/lib/members/tiers';
 
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
   }
 
-  const { code, qr_token: tgToken, event_id: pickedEvent, preview } = await request.json();   // preview: only say whose ticket it is
+  const { code, qr_token: tgToken, event_id: pickedEvent, preview, confirm_event: confirmEvent } = await request.json();   // preview: only say whose ticket it is; confirm_event: staff saw the wrong-event warning and checked in anyway
   if (!code && !tgToken) {
     return NextResponse.json({ error: 'Missing code' }, { status: 400 });
   }
@@ -104,6 +104,16 @@ export async function POST(request: Request) {
   const eventData = Array.isArray(ticket.event) ? ticket.event[0] : ticket.event;
 
   if (preview === true) return NextResponse.json({ preview: true, user_name: userData?.display_name || 'Unknown', event_title: eventData?.title || '' });
+
+  // From the portal's one scanner (no event chosen): a ticket for an event that is not the one on right now is not checked in until staff say so, so a ticket for tomorrow's (or last week's) event
+  // shown by mistake does not quietly check someone into it. Nothing is asked when no event is on right now, or when this ticket's event is one of those on.
+  if (anyEvent && confirmEvent !== true) {
+    const { data: open } = await supabase.from('events').select('id, title, start_date, end_date').or(openEventsFilter());
+    const live = (open ?? []).filter((e) => isHappeningNow(e));
+    if (live.length > 0 && !live.some((e) => e.id === ticket.event_id)) {
+      return NextResponse.json({ code: 'confirm_event', error: 'Wrong event?', user_name: userData?.display_name || 'Unknown', event_title: eventData?.title || '', now_event: live.map((e) => e.title).join(' and ') }, { status: 409 });
+    }
+  }
 
   const serviceClient = createServiceClient();
   if (!(await canCheckInNow(serviceClient, ticket, eventData))) {

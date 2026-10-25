@@ -80,3 +80,7 @@ sentence. Wherever a TGcode is shown the button says **Show TGcode** and uses th
 
 Where a code was read is kept: the decoder reports the code's centre and size, and the scanner puts the ring and the icon on that spot over the frozen picture (kept inside the screen). After a
 **meeting** check-in  goes there by itself after a moment, with no prompt: the ring turns green with a check and My Meetings opens.
+
+## Wrong event
+
+The portal's one scanner (and its code box) finds a ticket among every event that can still be checked into. So a ticket for some other event shown by mistake does not quietly check someone into it: when the ticket's event is not one that is on right now (from an hour before its start until its end; 12 hours after the start when it has no end time) **and** some other event is on right now, `/api/tickets/checkin` answers 409 `confirm_event` and checks nobody in. The card says "Wrong event?" with both events named, and staff choose **Cancel, Wrong Ticket** or **Check In To <event>** (which sends `confirm_event: true`). Nothing is asked when no event is on right now, when the ticket's event is one of those on, or when an event was chosen on the Check-In page (that path only takes that event's tickets). The rule is `isHappeningNow` in `lib/events/checkinWindow.ts`; `scripts/checks/checkin.mjs` covers it.

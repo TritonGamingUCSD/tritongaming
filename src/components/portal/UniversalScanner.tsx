@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import QrScanner, { type ScanLock } from '@/app/(portal)/portal/meetings/QrScanner';
 import CheckInOutcome from './CheckInOutcome';
 import CodeEntry from './CodeEntry';
-import { checkInWithCode, checkInWithQr, confirmReward, resolveChoice, TGCODE, type Outcome } from '@/lib/checkin/anyCode';
+import { checkInWithCode, checkInWithQr, confirmReward, resolveChoice, confirmEventCheckIn, TGCODE, type Outcome } from '@/lib/checkin/anyCode';
 import { offerToScanHandlers } from '@/lib/portal/scanHandlers';
 import styles from './UniversalScanner.module.css';
 
@@ -128,8 +128,8 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
   } else if (state.kind === 'result') {
     const o = state.outcome;
     const auto = clean(o);
-    const again = o.kind === 'ticket' || o.kind === 'rewardDone' || o.kind === 'error' || o.kind === 'reward' || o.kind === 'choose';
-    lock = { tone: o.kind === 'error' ? 'bad' : o.kind === 'choose' || (o.kind === 'ticket' && o.status !== 'active') || (o.kind === 'meeting' && o.already) ? 'warn' : 'ok' };
+    const again = o.kind === 'ticket' || o.kind === 'rewardDone' || o.kind === 'error' || o.kind === 'reward' || o.kind === 'choose' || o.kind === 'confirmEvent';
+    lock = { tone: o.kind === 'error' ? 'bad' : o.kind === 'choose' || o.kind === 'confirmEvent' || (o.kind === 'ticket' && o.status !== 'active') || (o.kind === 'meeting' && o.already) ? 'warn' : 'ok' };
     sheet = o.kind === 'meeting' ? (
       // The page it moves to opens by itself; until it has, this says so (a slow connection can take a while), with no button to press.
       <div className={styles.result}>
@@ -150,6 +150,7 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
           doneLabel={again ? 'Scan Next' : 'Done'}
           onDone={() => (again ? rescan() : onClose())}
           onChoose={async (which) => { if (o.kind !== 'choose') return; setBusy(true); await finish(resolveChoice(o.code, which)); setBusy(false); }}
+          onConfirmEvent={async () => { if (o.kind !== 'confirmEvent') return; setBusy(true); await finish(confirmEventCheckIn(o.redo)); setBusy(false); }}
           onConfirmReward={async () => {
             if (o.kind !== 'reward') return;
             setBusy(true);

@@ -10,7 +10,7 @@ const clock = (iso?: string) => iso ? new Date(iso).toLocaleTimeString('en-US', 
 
 // Says exactly what a check-in did, in the same words wherever it happened (the scanner, the code box, the Check-In page).
 // `bare` leaves out the big status icon, for where the scanner's own ring already shows it.
-export default function CheckInOutcome({ outcome, onDone, onConfirmReward, onChoose, busy, doneLabel = 'Done', bare, noButton }: { bare?: boolean; /** The caller moves on by itself (and on a tap on the card): no button. */ noButton?: boolean; outcome: Outcome; onDone: () => void; onConfirmReward?: () => void; onChoose?: (which: 'meeting' | 'ticket') => void; busy?: boolean; doneLabel?: string }) {
+export default function CheckInOutcome({ outcome, onDone, onConfirmReward, onChoose, onConfirmEvent, busy, doneLabel = 'Done', bare, noButton }: { bare?: boolean; /** The caller moves on by itself (and on a tap on the card): no button. */ noButton?: boolean; outcome: Outcome; onDone: () => void; onConfirmReward?: () => void; onChoose?: (which: 'meeting' | 'ticket') => void; onConfirmEvent?: () => void; busy?: boolean; doneLabel?: string }) {
   if (outcome.kind === 'choose') {
     return (
       <div className={`${styles.box} ${bare ? styles.bare : ''}`}>
@@ -22,6 +22,20 @@ export default function CheckInOutcome({ outcome, onDone, onConfirmReward, onCho
           <Button variant="secondary" onClick={() => onChoose?.('ticket')} disabled={busy}>Ticket: {outcome.ticket}</Button>
         </div>
         <Button variant="secondary" onClick={onDone} disabled={busy}>Cancel</Button>
+      </div>
+    );
+  }
+  if (outcome.kind === 'confirmEvent') {
+    return (
+      <div className={`${styles.box} ${bare ? styles.bare : ''}`}>
+        <span className={`${styles.icon} ${styles.warn}`}><TriangleAlert size={34} strokeWidth={2} aria-hidden="true" /></span>
+        <span className={styles.kicker}>Wrong event?</span>
+        <strong className={styles.title}>{outcome.userName}</strong>
+        <span className={styles.detail}>This ticket is for <b>{outcome.eventTitle || 'another event'}</b>, but <b>{outcome.nowEvent}</b> {outcome.nowEvent.includes(' and ') ? 'are' : 'is'} on right now. Nobody has been checked in.</span>
+        <div className={styles.choices}>
+          <Button variant="secondary" onClick={onDone} disabled={busy}>Cancel, Wrong Ticket</Button>
+          <Button variant="secondary" onClick={onConfirmEvent} loading={busy}>Check In To {outcome.eventTitle || 'That Event'}</Button>
+        </div>
       </div>
     );
   }

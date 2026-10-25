@@ -65,3 +65,12 @@ export function endedEventsFilter(nowMs: number = Date.now()): string {
   const noEndCutoff = new Date(nowMs - CHECKIN_GRACE_MS).toISOString();
   return `end_date.lt.${now},and(end_date.is.null,start_date.lt.${noEndCutoff})`;
 }
+
+// "The event that is on right now", for telling staff when a scanned ticket belongs to some other event. From an hour before the start (doors, setup) until the end; an event with no end time
+// counts as running for 12 hours after its start.
+const EARLY_MS = 60 * 60 * 1000, NO_END_MS = 12 * 60 * 60 * 1000;
+export function isHappeningNow(event: { start_date: string; end_date?: string | null }, nowMs: number = Date.now()): boolean {
+  const start = new Date(event.start_date).getTime();
+  const end = event.end_date ? new Date(event.end_date).getTime() : start + NO_END_MS;
+  return nowMs >= start - EARLY_MS && nowMs <= end;
+}

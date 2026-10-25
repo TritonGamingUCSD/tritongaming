@@ -13,6 +13,8 @@ export type Outcome =
   | { kind: 'choose'; code: string; meeting: string; ticket: string }
   /** The six digits were a Trivia game's join code: the person has joined it and the screen opens the game. */
   | { kind: 'trivia'; code: string }
+  /** A ticket for an event that is not the one on right now: staff are asked before the person is checked in. `redo` is what to send again to go ahead. */
+  | { kind: 'confirmEvent'; userName: string; eventTitle: string; nowEvent: string; redo: { code?: string; qr_token?: string } }
   | { kind: 'error'; message: string };
 
 export const TGCODE = /^tg:([mtr])([0-9a-f]{8}|[0-9a-f]{12})$/;   // the key is 8 hex digits in a code of the current format, 12 in the first one
@@ -34,6 +36,8 @@ async function post(path: string, body: object) {
 
 // When the server answered without a reason (a signed-out session, a busy server), still say something the person can act on.
 const whyNot = (status: number) => status === 401 ? 'You’ve been signed out. Sign in again, then scan.' : status === 429 ? 'Too many tries. Wait a moment, then scan again.' : status >= 500 ? 'The server had a problem. Try again in a moment.' : 'Check-in failed.';
+
+const wrongEvent = (j: Record<string, unknown>, redo: { code?: string; qr_token?: string }): Outcome => ({ kind: 'confirmEvent', userName: String(j.user_name ?? 'Unknown'), eventTitle: String(j.event_title ?? ''), nowEvent: String(j.now_event ?? ''), redo });
 
 function ticketOutcome(j: Record<string, unknown>): Outcome {
   return {
@@ -71,6 +75,7 @@ export async function resolveChoice(code: string, which: 'meeting' | 'ticket'): 
       return m.ok ? { kind: 'meeting', title: m.json.title, at: m.json.checked_in_at, already: !!m.json.already } : { kind: 'error', message: m.json.error || 'Check-in failed.' };
     }
     const t = await post('/api/tickets/checkin', { code });
+    if (t.status === 409 && t.json.code === 'confirm_event') return wrongEvent(t.json, { code });
     return t.ok ? ticketOutcome(t.json) : { kind: 'error', message: t.json.error || 'Check-in failed.' };
   } catch { return { kind: 'error', message: 'No connection, or it is taking too long. Check your connection and try again.' }; }
 }
@@ -87,6 +92,7 @@ export async function checkInWithQr(text: string, can: { tickets: boolean; rewar
     if (ring && ring[1] === 't') {
       if (!can.tickets) return { kind: 'error', message: 'That is an event ticket. Show it to an officer, who scans it to check you in.' };
       const r = await post('/api/tickets/checkin', { qr_token: ring[2] });
+      if (r.status === 409 && r.json.code === 'confirm_event') return wrongEvent(r.json, { qr_token: ring[2] });
       return r.ok ? ticketOutcome(r.json) : { kind: 'error', message: r.json.error || 'Check-in failed.' };
     }
     if (ring && ring[1] === 'r') {
@@ -106,5 +112,13 @@ export async function confirmReward(id: string, title: string, member: string): 
   try {
     const r = await post(`/api/rewards/redemptions/${id}/confirm`, {});
     return r.ok ? { kind: 'rewardDone', title, member } : { kind: 'error', message: r.json.error || 'Failed to confirm.' };
+  } catch { return { kind: 'error', message: 'No connection, or it is taking too long. Check your connection and try again.' }; }
+}
+
+/** Staff saw the wrong-event warning and chose to check the person in anyway. */
+export async function confirmEventCheckIn(redo: { code?: string; qr_token?: string }): Promise<Outcome> {
+  try {
+    const t = await post('/api/tickets/checkin', { ...redo, confirm_event: true });
+    return t.ok ? ticketOutcome(t.json) : { kind: 'error', message: t.json.error || 'Check-in failed.' };
   } catch { return { kind: 'error', message: 'No connection, or it is taking too long. Check your connection and try again.' }; }
 }

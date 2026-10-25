@@ -37,7 +37,7 @@ import styles from './meetings.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
 import Dialog from '@/components/ui/Dialog';
 import CheckInOutcome from '@/components/portal/CheckInOutcome';
-import { checkInWithCode, resolveChoice, type Outcome } from '@/lib/checkin/anyCode';
+import { checkInWithCode, resolveChoice, confirmEventCheckIn, type Outcome } from '@/lib/checkin/anyCode';
 import Link from 'next/link';
 import TGcode from '@/components/TGcode/TGcode';
 
@@ -245,7 +245,7 @@ function CheckInPanel() {
   return (
     <div className={styles.stack}>
       {error && openToEnter.length === 0 && <Notice tone="error">{error}</Notice>}
-      {other && <Dialog title="Ticket Check-In" onClose={() => setOther(null)}><CheckInOutcome outcome={other} busy={busy} onDone={() => setOther(null)} onChoose={async (which) => { if (other.kind !== 'choose') return; setBusy(true); const o = await resolveChoice(other.code, which); setBusy(false); if (o.kind === 'meeting') { setOther(null); await load(); } else setOther(o); }} /></Dialog>}
+      {other && <Dialog title="Ticket Check-In" onClose={() => setOther(null)}><CheckInOutcome outcome={other} busy={busy} onDone={() => setOther(null)} onChoose={async (which) => { if (other.kind !== 'choose') return; setBusy(true); const o = await resolveChoice(other.code, which); setBusy(false); if (o.kind === 'meeting') { setOther(null); await load(); } else setOther(o); }} onConfirmEvent={async () => { if (other.kind !== 'confirmEvent') return; setBusy(true); const o = await confirmEventCheckIn(other.redo); setBusy(false); setOther(o); }} /></Dialog>}
       {checkedIn.map((m) => (
         <div key={m.id} className={`${styles.card} ${styles.done}`}>
           <div className={styles.doneHead}>

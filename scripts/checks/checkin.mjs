@@ -53,6 +53,16 @@ try {
   r = await C.call('POST', '/api/checkin/online', { event_id: online.id, code: code(online.checkin_secret, ewin) }); ok('online: the right code checks the ticket holder in', r.s === 200, JSON.stringify(r));
   r = await C.call('POST', '/api/checkin/online', { event_id: online.id, code: code(online.checkin_secret, ewin) }); ok('online: a second try says already checked in', r.s === 409, JSON.stringify(r));
   ok('online: points once', (await points(C.id)).filter((p) => !p.reversed_at).length === 1);
+  // The portal's one scanner (no event chosen): a ticket for an event that is not on right now is only checked in after staff confirm
+  const later = await event('ZZ Checkin Later', { start_date: hours(48), end_date: hours(52) });
+  const F = await user('f', ['ucsd']), G = await user('g', ['ucsd']);
+  const tf = await ticket(F.id, later.id), tg = await ticket(G.id, ev.id);
+  r = await staff.call('POST', '/api/tickets/checkin', { code: code(tf.ticket_code, win()), preview: true }); ok('wrong event: the preview just says whose ticket it is', r.s === 200 && r.j.preview === true, JSON.stringify(r));
+  r = await staff.call('POST', '/api/tickets/checkin', { code: code(tf.ticket_code, win()) });
+  ok('wrong event: a ticket for an event that is not on now asks first, nothing is checked in', r.s === 409 && r.j.code === 'confirm_event' && /Later/.test(r.j.event_title) && r.j.now_event.length > 0, JSON.stringify(r));
+  ok('wrong event: the ticket is still unused', (await svc.from('tickets').select('status').eq('id', tf.id).single()).data.status === 'active');
+  r = await staff.call('POST', '/api/tickets/checkin', { code: code(tf.ticket_code, win()), confirm_event: true }); ok('wrong event: confirming checks them in (points awarded)', r.s === 200 && r.j.points_awarded === 5, JSON.stringify(r));
+  r = await staff.call('POST', '/api/tickets/checkin', { code: code(tg.ticket_code, win()) }); ok('a ticket for the event that is on now is checked in with no question', r.s === 200 && r.j.points_awarded === 5, JSON.stringify(r));
   void ton;
 } finally {
   for (const id of eventIds) { await svc.from('ticket_checkins').delete().eq('event_id', id); await svc.from('point_transactions').delete().eq('event_id', id); await svc.from('tickets').delete().eq('event_id', id); await svc.from('events').delete().eq('id', id); }
