@@ -16,7 +16,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
   return NextResponse.json({ staffle: await staffleView(auth.svc, row, auth.user.id, auth.canManage) });
 }
 
-// Change a Staffle: its name, note, who may enter and (until it is drawn) its items; open it or close it (by hand), or cancel it, or end it (what was not claimed is free again).
+// Change a Staffle: its name, note, who may enter and (until it is drawn) its items; open it or close it (by hand), or end it (what was not claimed is free again).
 export async function PATCH(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const auth = await authorizeLogistics('manage');
   if (auth.error) return auth.error;
@@ -35,9 +35,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sl
     if (b.status === 'closed' && row.status !== 'open') return NextResponse.json({ error: row.status === 'closed' ? 'It is already closed.' : 'Only an open Staffle can be closed.' }, { status: 409 });
     patch.status = b.status;
   }
-  if (b.status === 'cancelled' || b.status === 'ended') {
-    if (row.status === 'ended' || row.status === 'cancelled') return NextResponse.json({ error: 'That Staffle is already over.' }, { status: 409 });
-    if (b.status === 'cancelled' && row.status === 'drawn') return NextResponse.json({ error: 'It has been drawn. End it instead (what was claimed stays claimed).' }, { status: 409 });
+  if (b.status === 'ended') {
+    if (row.status === 'ended') return NextResponse.json({ error: 'That Staffle is already over.' }, { status: 409 });
+    if (row.status !== 'drawn') return NextResponse.json({ error: 'Only a drawn Staffle can be ended. Remove one that was not drawn.' }, { status: 409 });
     patch.status = b.status;
   }
   if (Array.isArray(b.items)) {
@@ -58,7 +58,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sl
   }
   const { error } = await auth.svc.from('staffles').update(patch).eq('id', id);
   if (error) return NextResponse.json({ error: 'Couldn’t save that.' }, { status: 500 });
-  await logAudit(auth.svc, { actorId: auth.user.id, action: 'update', entityType: 'staffle', entityId: id, summary: `${{ cancelled: 'Cancelled', ended: 'Ended', open: 'Opened', closed: 'Closed' }[patch.status as string] ?? 'Changed'} the Staffle “${(patch.name as string | undefined) ?? row.name}”` });
+  await logAudit(auth.svc, { actorId: auth.user.id, action: 'update', entityType: 'staffle', entityId: id, summary: `${{ ended: 'Ended', open: 'Opened', closed: 'Closed' }[patch.status as string] ?? 'Changed'} the Staffle “${(patch.name as string | undefined) ?? row.name}”` });
   const fresh = await loadStaffle(auth.svc, id);
   return NextResponse.json({ staffle: await staffleView(auth.svc, fresh!, auth.user.id, true) });
 }

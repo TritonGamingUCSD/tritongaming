@@ -13,7 +13,7 @@ export default function StaffleList({ onOpen }: { onOpen: (slug: string) => void
   const [error, setError] = useState('');
   useEffect(() => { void call<{ staffles: StaffleCard[] }>('/api/staffle').then((r) => { if (r.ok) setCards(r.data.staffles); else setError(r.error); }); }, []);
   if (!cards) return error ? <Notice tone="error">{error}</Notice> : <Loading variant="inline" label="Loading…" />;
-  const live = cards.filter((c) => c.state === 'open'), soon = cards.filter((c) => c.state === 'draft'), waiting = cards.filter((c) => c.state === 'closed' || c.state === 'drawn'), past = cards.filter((c) => c.state === 'ended' || c.state === 'cancelled');
+  const live = cards.filter((c) => c.state === 'open'), soon = cards.filter((c) => c.state === 'draft'), waiting = cards.filter((c) => c.state === 'closed' || c.state === 'drawn'), past = cards.filter((c) => c.state === 'ended');
   const card = (c: StaffleCard) => (
     <li key={c.id}>
       <button type="button" className={styles.card} onClick={() => onOpen(c.slug)}>

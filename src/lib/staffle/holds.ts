@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-// For each prize: how many a Staffle is holding back from stock. A Staffle that is not drawn yet (not open, open or closed) holds the winners it asks for; a drawn one holds the winners picked that are not yet claimed; ended and cancelled ones hold nothing
+// For each prize: how many a Staffle is holding back from stock. A Staffle that is not drawn yet (not open, open or closed) holds the winners it asks for; a drawn one holds the winners picked that are not yet claimed; ended ones hold nothing
 // (a prize that was claimed has already left stock). With `only` it is limited to those prizes.
 export async function loadStaffleHolds(svc: SupabaseClient, only?: string[]): Promise<Map<string, number>> {
   const out = new Map<string, number>();

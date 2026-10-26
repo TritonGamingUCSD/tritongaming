@@ -9,8 +9,8 @@ import type { Person } from '@/lib/staffle/rules';
 // What the Staffle routes share: the states a Staffle goes through, a person's roles and marks for the rules, a slug for the address, and what a Staffle holds back from stock.
 
 export const STAFFLE_COLUMNS = 'id, slug, name, notes, pickup_note, rules, status, seed, drawn_at, created_by, created_at';
-// A Staffle is opened and closed by hand: draft (not open yet), open (taking entries), closed (no more entries, can open again), drawn, ended or cancelled.
-export type StaffleState = 'draft' | 'open' | 'closed' | 'drawn' | 'ended' | 'cancelled';
+// A Staffle is opened and closed by hand: draft (not open yet), open (taking entries), closed (no more entries, can open again), drawn or ended (one that is not wanted is removed).
+export type StaffleState = 'draft' | 'open' | 'closed' | 'drawn' | 'ended';
 // Before it is drawn the prizes can still change and it can still be drawn.
 export const BEFORE_DRAW: string[] = ['draft', 'open', 'closed'];
 

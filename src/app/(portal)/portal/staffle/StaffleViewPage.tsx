@@ -39,7 +39,7 @@ export default function StaffleViewPage({ slug, canManage, onBack, onDraw, onGon
     const r = await call<{ ok: true }>(`/api/staffle/${s.slug}`, 'DELETE');
     if (r.ok) onGone(); else setError(r.error);
   };
-  const over = s.state === 'ended' || s.state === 'cancelled';
+  const over = s.state === 'ended';
   return (
     <div className={styles.page}>
       <div className={styles.head}>
@@ -57,7 +57,7 @@ export default function StaffleViewPage({ slug, canManage, onBack, onDraw, onGon
             {s.state === 'drawn' && <Button variant="secondary" onClick={onDraw}><Presentation size={15} aria-hidden="true" /> Show The Draw Again</Button>}
             <IconButton kind="edit" label="Edit this Staffle" onClick={() => setEditing(true)} />
             <RowMenu label="More for this Staffle" items={[
-              s.state === 'drawn' ? { label: 'End Staffle (what was not claimed goes back)', onClick: () => void act('end', `/api/staffle/${s.slug}`, 'PATCH', { status: 'ended' }) } : { label: 'Cancel Staffle', onClick: () => void act('cancel', `/api/staffle/${s.slug}`, 'PATCH', { status: 'cancelled' }) },
+              ...(s.state === 'drawn' ? [{ label: 'End Staffle (what was not claimed goes back)', onClick: () => void act('end', `/api/staffle/${s.slug}`, 'PATCH', { status: 'ended' }) }] : []),
               { label: 'Remove Staffle', danger: true, onClick: () => void remove() },
             ]} />
           </div>

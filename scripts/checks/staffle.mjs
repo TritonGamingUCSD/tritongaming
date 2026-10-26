@@ -94,13 +94,12 @@ try {
   t.ok('ending it frees what was not claimed', (await exec.call('PATCH', `/api/staffle/${slug}`, { status: 'ended' })).j.staffle?.state === 'ended' && (await left(pad.id)) >= 0);
   t.ok('an ended Staffle cannot be ended again', (await exec.call('PATCH', `/api/staffle/${slug}`, { status: 'ended' })).s === 409);
 
-  // ---- an unclaimed Staffle can be cancelled and its prizes are free again
+  // ---- removing an unclaimed Staffle gives its prizes back
   const m2 = await exec.call('POST', '/api/staffle', { name: 'ZZ Spring Staffle', items: [{ prize_id: mouse.id, winners: 1 }] });
   const l1 = await left(mouse.id);
-  await exec.call('PATCH', `/api/staffle/${m2.j.staffle.slug}`, { status: 'cancelled' });
-  t.ok('cancelling gives the prizes back', (await left(mouse.id)) === l1 + 1);
+  t.ok('only a drawn Staffle can be ended', (await exec.call('PATCH', `/api/staffle/${m2.j.staffle.slug}`, { status: 'ended' })).s === 409);
   t.ok('a prize in a Staffle cannot be deleted', (await exec.call('DELETE', `/api/logistics/prizes/${pad.id}`)).s === 409);
-  t.ok('a Staffle with no claims can be removed', (await exec.call('DELETE', `/api/staffle/${m2.j.staffle.slug}`)).s === 200 && (await exec.call('GET', `/api/staffle/${m2.j.staffle.slug}`)).s === 404);
+  t.ok('a Staffle with no claims can be removed, and its prizes are free again', (await exec.call('DELETE', `/api/staffle/${m2.j.staffle.slug}`)).s === 200 && (await exec.call('GET', `/api/staffle/${m2.j.staffle.slug}`)).s === 404 && (await left(mouse.id)) === l1 + 1);
   const list = (await officer.call('GET', '/api/staffle')).j;
   t.ok('the list says what you entered', list.staffles.some((s) => s.slug === slug && s.entered >= 1));
 } finally {

@@ -11,7 +11,7 @@ import styles from './staffle.module.css';
 
 interface PrizeOption { id: string; name: string; photo: string; left: number; size: string | null; loose: boolean }
 
-// Picking a Staffle's prizes after it is made: each prize and how many people win it. They are held back from stock until the Staffle is ended or cancelled.
+// Picking a Staffle's prizes after it is made: each prize and how many people win it. They are held back from stock until the Staffle is ended or removed.
 export default function StaffleItemsDialog({ staffle, onClose, onSaved }: { staffle: StaffleView; onClose: () => void; onSaved: () => void }) {
   const [items, setItems] = useState<{ prize_id: string; winners: number }[]>(staffle.items.map((i) => ({ prize_id: i.prize_id, winners: i.winners })));
   const [prizes, setPrizes] = useState<PrizeOption[] | null>(null);

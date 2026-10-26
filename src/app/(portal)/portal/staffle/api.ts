@@ -6,4 +6,4 @@ export interface StaffleCard { id: string; slug: string; name: string; state: St
 
 export { call } from '@/lib/ui/apiCall';
 
-export const STATE_LABEL: Record<StaffleState, string> = { draft: 'Not Open Yet', open: 'Open', closed: 'Closed, waiting for the draw', drawn: 'Drawn', ended: 'Ended', cancelled: 'Cancelled' };
+export const STATE_LABEL: Record<StaffleState, string> = { draft: 'Not Open Yet', open: 'Open', closed: 'Closed, waiting for the draw', drawn: 'Drawn', ended: 'Ended' };

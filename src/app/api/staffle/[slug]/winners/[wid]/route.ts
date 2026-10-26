@@ -15,7 +15,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sl
   const { slug, wid } = await params;
   const row = await loadStaffle(auth.svc, slug);
   if (!row || !UUID.test(wid)) return NextResponse.json({ error: 'That Staffle is gone.' }, { status: 404 });
-  if (row.status === 'cancelled') return NextResponse.json({ error: 'That Staffle was cancelled.' }, { status: 409 });
   const b = await request.json().catch(() => ({})) as { claimed?: unknown };
   const { data: w } = await auth.svc.from('staffle_winners').select('id, item_id, user_id, claimed_at, passed_at').eq('id', wid).eq('staffle_id', row.id as string).maybeSingle();
   if (!w) return NextResponse.json({ error: 'That winner is gone.' }, { status: 404 });
