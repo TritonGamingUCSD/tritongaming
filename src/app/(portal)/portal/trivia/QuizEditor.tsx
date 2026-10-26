@@ -184,7 +184,7 @@ export default function QuizEditor({ slug, view, game, onBack, onHost, onView, o
           </div>
           <div className={styles.countRow} aria-live="polite">
             <span className={`${styles.badge} ${styles.neutral}`}><b>{rows.length}</b>&nbsp;{rows.length === 1 ? 'question' : 'questions'}</span>
-            <span className={`${styles.badge} ${styles.neutral}`}>{new Set(rows.map((q) => (q.category ?? '').trim()).filter(Boolean)).size} categories</span>
+            <span className={`${styles.badge} ${styles.neutral}`}>{(() => { const n = new Set(rows.map((q) => (q.category ?? '').trim()).filter(Boolean)).size; return `${n} ${n === 1 ? 'category' : 'categories'}`; })()}</span>
             <span className={`${styles.badge} ${styles.neutral}`}>a game draws {asked} at random</span>
             {ready < rows.length && <span className={`${styles.badge} ${styles.bad}`}>{rows.length - ready} to finish</span>}
             {filtering && <span className={`${styles.badge} ${styles.good}`}>showing {shown.length} of {rows.length}</span>}

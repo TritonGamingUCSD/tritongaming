@@ -448,7 +448,7 @@ button.ans:focus-visible { outline: 4px solid var(--paper); outline-offset: 3px;
 @keyframes wrongOut { 0% { transform: translateX(0); } 15% { transform: translateX(-0.7rem); } 30% { transform: translateX(0.6rem); } 45% { transform: translateX(-0.4rem); } 60% { transform: translateX(0.2rem); } 100% { transform: translateX(0); } }
 @keyframes rightPop { 0% { transform: scale(1); } 40% { transform: scale(1.06); } 100% { transform: scale(1); } }
 @keyframes rightGlow { 0%, 100% { box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55), 0 0 0 0 rgba(90, 209, 163, 0); } 50% { box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55), 0 0 1.8rem 0.3rem rgba(90, 209, 163, 0.55); } }   /* theme-ok */
-@media (prefers-reduced-motion: reduce) { .countNum, .countRings i, .loaderShape, 
+@media (prefers-reduced-motion: reduce) { .countNum, .countRings i, .loaderShape, .wipe, .playersCount, .answersRevealed .dimmed, .answersRevealed .right, .clockLow .ring, .clockLow svg { animation: none !important; } .wipe { display: none; } .countNum { opacity: 1; } }
 /* The question table grouped by category: a header per category you open and close */
 .catGroup { border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.12); }
 .catGroup:last-child { border-bottom: none; }
