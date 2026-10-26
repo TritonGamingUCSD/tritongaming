@@ -1,7 +1,6 @@
 'use client';
 
-import { useFileDrop } from '@/lib/ui/useFileDrop';
-import PasteButton from '@/components/ui/PasteButton';
+import PictureDialog from '@/components/ui/PictureDialog';
 import Loading from '@/components/Loading/Loading';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDraft } from '@/lib/ui/useDraft';
@@ -178,10 +177,9 @@ function useAttachments(userId: string) {
 }
 
 function AttachmentPicker({ att }: { att: ReturnType<typeof useAttachments> }) {
-  const ref = useRef<HTMLInputElement>(null);
-  const { over, dropProps } = useFileDrop((files) => { void att.add(files); }, { disabled: att.uploading });
+  const [picking, setPicking] = useState(false);
   return (
-    <div className={styles.attachRow} data-dropping={over || undefined} {...dropProps}>
+    <div className={styles.attachRow}>
       {att.paths.map((a, i) => (
         <span key={a.path} className={styles.thumb}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -190,12 +188,11 @@ function AttachmentPicker({ att }: { att: ReturnType<typeof useAttachments> }) {
         </span>
       ))}
       {att.paths.length < MAX_ATTACHMENTS && (
-        <Button variant="secondary" size="sm" loading={att.uploading} onClick={() => ref.current?.click()}>
-          <ImagePlus size={15} strokeWidth={1.75} aria-hidden="true" /> {att.uploading ? 'Uploading…' : 'Add or drop screenshot'}
+        <Button variant="secondary" size="sm" loading={att.uploading} onClick={() => setPicking(true)}>
+          <ImagePlus size={15} strokeWidth={1.75} aria-hidden="true" /> {att.uploading ? 'Uploading…' : 'Add Screenshot'}
         </Button>
       )}
-      {att.paths.length < MAX_ATTACHMENTS && <PasteButton label="Paste screenshot" onFiles={(f) => void att.add(f)} disabled={att.uploading} />}
-      <input ref={ref} type="file" accept={ALLOWED_IMAGE_TYPES.join(',')} multiple hidden onChange={(e) => { void att.add(e.target.files); e.target.value = ''; }} />
+      {picking && <PictureDialog title="Add screenshots" multiple accept={ALLOWED_IMAGE_TYPES.join(',')} hint={`Up to ${MAX_ATTACHMENTS} pictures`} onUse={(f) => att.add(f)} onClose={() => setPicking(false)} />}
       {att.err && <span className={styles.attachErr}>{att.err}</span>}
     </div>
   );

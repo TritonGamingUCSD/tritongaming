@@ -1,7 +1,6 @@
 'use client';
 
-import { useFileDrop } from '@/lib/ui/useFileDrop';
-import PasteButton from '@/components/ui/PasteButton';
+import PictureDialog from '@/components/ui/PictureDialog';
 import Loading from '@/components/Loading/Loading';
 import SaveBar from '@/components/portal/SaveBar';
 import EditingNow from '@/components/portal/EditingNow';
@@ -1506,7 +1505,7 @@ function EmojiPanel() {
     if (!r.ok) setError((await r.json().catch(() => ({}))).error || 'Failed.');
     await load();
   }
-  const { over: emojiOver, dropProps: emojiDrop } = useFileDrop((files) => { const f = files.find((x) => x.type.startsWith('image/')); if (f) { setDiscord(''); void pick(f); } });
+  const [picking, setPicking] = useState(false);
   const tile = (e: CustomEmoji, actions?: React.ReactNode) => (
     <li key={e.id} className={styles.emojiTile}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1543,7 +1542,7 @@ function EmojiPanel() {
       <details className={styles.moreOptions}>
         <summary><span>Add An Emoji</span><em>Upload a picture or paste one from Discord</em></summary>
         <div className={styles.moreBody}>
-      <form className={styles.emojiForm} data-dropping={emojiOver || undefined} {...emojiDrop} onSubmit={upload} onPaste={(e) => { const f = [...e.clipboardData.files].find((x) => x.type.startsWith('image/')); if (f) { e.preventDefault(); setDiscord(''); void pick(f); } }}>
+      <form className={styles.emojiForm} onSubmit={upload}>
         <p className={styles.faint}>Square images work best. PNG, JPG, GIF or WebP, any size. It’s shrunk to a small square automatically. {data.manage ? 'Yours goes live straight away.' : 'An exec approves it before anyone sees it.'}</p>
         <div className={styles.emojiRow}>
           <Input value={discord} onChange={(e) => onDiscord(e.target.value)} placeholder="Paste a Discord emoji (or its link)" aria-label="Discord emoji" autoComplete="off" />
@@ -1553,13 +1552,13 @@ function EmojiPanel() {
           )}
         </div>
         {discord.trim() && !dEmoji && <p className={styles.checkWarn}>That doesn’t look like a Discord emoji. Copy the emoji’s link, or type it as {'<:name:123…>'}.</p>}
-        <p className={styles.faint}>In Discord: right-click a custom emoji, Copy Link, and paste it above. You can also paste a copied picture anywhere in this box.</p>
+        <p className={styles.faint}>In Discord: right-click a custom emoji, Copy Link, and paste it above.</p>
         <div className={styles.emojiRow}>
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="name, like pog_face" maxLength={22} aria-label="Emoji name" autoComplete="off" />
-          <label className={styles.filePick}><Upload size={14} aria-hidden="true" /> {file ? file.name : 'Choose or drop image'}<input type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={(e) => void pick(e.target.files?.[0] ?? null)} hidden /></label>
-          <PasteButton onFiles={(f) => { setDiscord(''); void pick(f[0]); }} />
+          <Button variant="secondary" size="sm" onClick={() => setPicking(true)}><Upload size={14} aria-hidden="true" /> {file ? file.name : 'Choose Picture'}</Button>
           <Button type="submit" size="sm" loading={busy === 'upload'} disabled={(!file && !dEmoji) || tooBig || !EMOJI_NAME.test(clean)}>Upload</Button>
         </div>
+        {picking && <PictureDialog title="Emoji picture" accept="image/png,image/jpeg,image/gif,image/webp" hint="Square images work best" onUse={(f) => { setDiscord(''); return pick(f[0]); }} onClose={() => setPicking(false)} />}
         {prepNote && <p className={styles.faint}>{prepNote}</p>}
         {tooBig && <p className={styles.checkWarn}>That image is still too big to send.</p>}
         {name && !EMOJI_NAME.test(clean) && <p className={styles.checkWarn}>Use 2 to 20 letters, numbers or underscores.</p>}

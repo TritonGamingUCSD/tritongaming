@@ -1,12 +1,11 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import { uploadImageToStorage, uploadCroppedImage, ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES } from '@/lib/storage/imageUpload';
 import ImageCropModal from '@/components/ImageCropModal/ImageCropModal';
 import styles from './ImageUploadField.module.css';
-import { useFileDrop } from '@/lib/ui/useFileDrop';
-import PasteButton from '@/components/ui/PasteButton';
+import PictureDialog from '@/components/ui/PictureDialog';
 import { Camera, X } from 'lucide-react';
 
 const PREVIEW_SIZE: Record<Shape, { width: number; height: number }> = {
@@ -54,7 +53,7 @@ export default function ImageUploadField({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [picking, setPicking] = useState(false);
 
   async function handleFile(file: File) {
     setError('');
@@ -105,16 +104,14 @@ export default function ImageUploadField({
   const { width, height } = compact ? (shape === 'wide' ? { width: 84, height: 56 } : { width: 56, height: 56 }) : PREVIEW_SIZE[shape];
   const displaySrc = value || fallbackPreview;
 
-  const { over, dropProps } = useFileDrop((files) => { if (files[0]) handleFile(files[0]); }, { disabled: uploading });
-
   return (
-    <div className={`${styles.field} ${compact ? styles.compact : ''}`} data-dropping={over || undefined} {...dropProps}>
+    <div className={`${styles.field} ${compact ? styles.compact : ''}`}> 
       {!compact && <span className={styles.label}>{label}</span>}
 
       {displaySrc ? (
         <div className={styles.wrap}>
           {/* The picture itself is the replace button; the small x in its corner removes it. */}
-          <button type="button" className={`${styles.preview} ${shape === 'circle' ? styles.previewRound : ''}`} onClick={() => inputRef.current?.click()} disabled={uploading} aria-label={`Replace ${label.toLowerCase()}`}>
+          <button type="button" className={`${styles.preview} ${shape === 'circle' ? styles.previewRound : ''}`} onClick={() => setPicking(true)} disabled={uploading} aria-label={`Replace ${label.toLowerCase()}`}>
             <Image src={displaySrc} alt="" width={width} height={height} unoptimized referrerPolicy="no-referrer" className={previewClass} />
             <span className={styles.overlay} aria-hidden="true">{uploading ? 'Uploading…' : <><Camera size={16} /> Replace</>}</span>
           </button>
@@ -125,23 +122,14 @@ export default function ImageUploadField({
           )}
         </div>
       ) : (
-        <button type="button" className={styles.dropzone} onClick={() => inputRef.current?.click()} disabled={uploading}>
-          {uploading ? 'Uploading…' : compact ? 'Upload' : `Click, drop or paste to upload ${label.toLowerCase()}`}
+        <button type="button" className={styles.dropzone} onClick={() => setPicking(true)} disabled={uploading}>
+          {uploading ? 'Uploading…' : compact ? 'Upload' : `Upload ${label.toLowerCase()}`}
         </button>
       )}
-      {!displaySrc && <PasteButton onFiles={(f) => { if (f[0]) handleFile(f[0]); }} disabled={uploading} iconOnly={compact} />}
-
-      <input
-        ref={inputRef}
-        type="file"
-        accept={ALLOWED_IMAGE_TYPES.join(',')}
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) handleFile(file);
-          e.target.value = '';
-        }}
-        hidden
-      />
+      {picking && (
+        <PictureDialog title={`Choose ${label.toLowerCase()}`} current={displaySrc || undefined} accept={ALLOWED_IMAGE_TYPES.join(',')} hint="PNG, JPG, WebP or GIF, under 8 MB"
+          onUse={(f) => { void handleFile(f[0]); }} onRemove={value ? () => onChange('') : undefined} onClose={() => setPicking(false)} />
+      )}
 
       {error && <span className={styles.hint} style={{ color: '#fca5a5' }}>{error}</span>}
       {hint && !compact && <span className={styles.hint}>{hint}</span>}

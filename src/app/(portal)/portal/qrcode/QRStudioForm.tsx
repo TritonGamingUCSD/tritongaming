@@ -7,7 +7,7 @@ import type { QRCodeOptions, QRDotsType, QRCornersSquareType, QRCornersDotType }
 import { QR_PRESETS, matchingPreset } from '@/lib/qr/qrPresets';
 import type { QRDivisionLogo } from './QRStudioClient';
 import styles from './qrstudio.module.css';
-import { useFileDrop } from '@/lib/ui/useFileDrop';
+import PictureDialog from '@/components/ui/PictureDialog';
 import Select from '@/components/ui/Select';
 import NumberInput from '@/components/ui/NumberInput';
 
@@ -99,7 +99,7 @@ function IconDropzone({ options, setOptions }: { options: QRCodeOptions; setOpti
   const [error, setError] = useState('');
   const has = options.icon === 'custom' && !!options.customIcon;
 
-  const { over, dropProps } = useFileDrop((files) => take(files[0]));
+  const [picking, setPicking] = useState(false);
 
   function take(file: File | undefined) {
     setError('');
@@ -111,30 +111,27 @@ function IconDropzone({ options, setOptions }: { options: QRCodeOptions; setOpti
 
   return (
     <div className={styles.dropWrap}>
-      <label
-        className={`${styles.dropzone} ${over ? styles.dropzoneOver : ''} ${has ? styles.dropzoneHas : ''}`}
-        {...dropProps}
-      >
-        <input className={styles.srOnly} type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" onChange={(e) => { take(e.target.files?.[0]); e.target.value = ''; }} />
+      <button type="button" className={`${styles.dropzone} ${has ? styles.dropzoneHas : ''}`} onClick={() => setPicking(true)}>
         {has ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={options.customIcon!} alt="Your icon" className={styles.dropPreview} />
             <span className={styles.dropText}>
               <span className={styles.dropTitle}>Your icon is in the center</span>
-              <span className={styles.dropSub}>Click, drop or paste to replace it</span>
+              <span className={styles.dropSub}>Click to replace it</span>
             </span>
           </>
         ) : (
           <>
             <span className={styles.dropIcon} aria-hidden="true"><Upload size={22} strokeWidth={1.75} /></span>
             <span className={styles.dropText}>
-              <span className={styles.dropTitle}>Drop an image here</span>
-              <span className={styles.dropSub}>or click to browse, or paste (Ctrl/⌘+V) · PNG, JPG, SVG, WebP · up to 2 MB</span>
+              <span className={styles.dropTitle}>Add your own icon</span>
+              <span className={styles.dropSub}>Click to upload, drop or paste · PNG, JPG, SVG, WebP · up to 2 MB</span>
             </span>
           </>
         )}
-      </label>
+      </button>
+      {picking && <PictureDialog title="Your own icon" current={has ? options.customIcon ?? undefined : undefined} accept="image/png,image/jpeg,image/svg+xml,image/webp" hint="PNG, JPG, SVG or WebP, up to 2 MB" onUse={(f) => take(f[0])} onClose={() => setPicking(false)} />}
       {has && (
         <button type="button" className={styles.dropRemove} onClick={() => updateCustomIcon(undefined, options, setOptions)}>
           <X size={13} aria-hidden="true" /> Remove

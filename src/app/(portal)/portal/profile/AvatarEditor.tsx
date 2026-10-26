@@ -1,12 +1,11 @@
 'use client';
 
 import IconButton from '@/components/ui/IconButton';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import { Camera } from 'lucide-react';
 import { uploadCroppedImage, uploadImageToStorage, ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES } from '@/lib/storage/imageUpload';
-import { useFileDrop } from '@/lib/ui/useFileDrop';
-import PasteButton from '@/components/ui/PasteButton';
+import PictureDialog from '@/components/ui/PictureDialog';
 import ImageCropModal from '@/components/ImageCropModal/ImageCropModal';
 import styles from './avatarEditor.module.css';
 
@@ -25,9 +24,7 @@ export default function AvatarEditor({ value, onChange, fallback, bucket, pathPr
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const { over: dragging, dropProps } = useFileDrop((files) => { const f = files.find((x) => x.type.startsWith('image/')) ?? files[0]; if (f) void handleFile(f); }, { disabled: uploading });
+  const [picking, setPicking] = useState(false);
 
   async function handleFile(file: File) {
     setError('');
@@ -55,9 +52,8 @@ export default function AvatarEditor({ value, onChange, fallback, bucket, pathPr
       <div className={styles.holder}>
       <button
         type="button"
-        className={`${styles.avatar} ${dragging ? styles.dragging : ''}`}
-        onClick={() => inputRef.current?.click()}
-        {...dropProps}
+        className={styles.avatar}
+        onClick={() => setPicking(true)}
         disabled={uploading}
         aria-label="Change profile picture"
       >
@@ -68,7 +64,7 @@ export default function AvatarEditor({ value, onChange, fallback, bucket, pathPr
         )}
         <span className={styles.overlay}>
           <Camera size={22} strokeWidth={1.75} aria-hidden="true" />
-          <span>{uploading ? 'Uploading…' : dragging ? 'Drop it' : 'Change'}</span>
+          <span>{uploading ? 'Uploading…' : 'Change'}</span>
         </span>
       </button>
       {value && (
@@ -76,17 +72,13 @@ export default function AvatarEditor({ value, onChange, fallback, bucket, pathPr
       )}
       </div>
 
-      <p className={styles.hint}>Click the circle, drop a picture on it, or paste one.</p>
-      <PasteButton onFiles={(f) => { const x = f[0]; if (x) void handleFile(x); }} disabled={uploading} />
+      <p className={styles.hint}>Click the circle to upload, drop or paste a picture.</p>
       {error && <p className={styles.error}>{error}</p>}
 
-      <input
-        ref={inputRef}
-        type="file"
-        accept={ALLOWED_IMAGE_TYPES.join(',')}
-        hidden
-        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ''; }}
-      />
+      {picking && (
+        <PictureDialog title="Profile picture" current={src || undefined} accept={ALLOWED_IMAGE_TYPES.join(',')} hint="PNG, JPG, WebP or GIF, under 8 MB"
+          onUse={(f) => { void handleFile(f[0]); }} onRemove={value ? () => onChange('') : undefined} onClose={() => setPicking(false)} />
+      )}
 
       {pendingFile && <ImageCropModal file={pendingFile} outputSize={512} onCancel={() => setPendingFile(null)} onConfirm={handleCrop} />}
     </div>
