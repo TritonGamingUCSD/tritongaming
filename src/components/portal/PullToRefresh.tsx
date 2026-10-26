@@ -106,12 +106,13 @@ export default function PullToRefresh() {
       if (armed && confirmDiscardUnsaved()) beginRefresh();
       else rest();   // not far enough (or "keep my changes"): it springs back
     };
-    // Desktop: scrolling up once more at the very top of the page (a trackpad's two-finger swipe, or the wheel) pulls the page down the same way, and refreshes when the scrolling stops past the point of no return.
+    // Desktop: scrolling up once more at the very top of the page (a trackpad's two-finger swipe, or the wheel) pulls the page down the same way, and refreshes the moment it goes past the point of no return.
     // Only a scroll that BEGINS at the top counts (a pause of a third of a second starts a new one), so flicking up to the top and overshooting never refreshes by accident.
     // The wheel moves less than a finger would (half), so one notch of a mouse wheel is not enough.
     let wheelAt = 0, wheelDy = 0, wheelTimer = 0;
     const wheel = (e: WheelEvent) => {
-      if (e.ctrlKey || phase === 'refreshing' || (phase === 'pulling' && locked !== 'w')) return;   // a pinch-zoom, a refresh in progress, or a finger pull
+      if (e.ctrlKey || (phase === 'pulling' && locked !== 'w')) return;   // a pinch-zoom, or a finger pull
+      if (phase === 'refreshing') { if (e.deltaY < 0 && window.scrollY === 0 && e.cancelable) e.preventDefault(); return; }   // the trackpad's last momentum must not bounce the page while it refreshes
       const now = performance.now(), fresh = now - wheelAt > 300;
       wheelAt = now;
       if (phase !== 'pulling') {
@@ -125,7 +126,9 @@ export default function PullToRefresh() {
       if (e.cancelable) e.preventDefault();
       applyPull(wheelDy);
       window.clearTimeout(wheelTimer);
-      wheelTimer = window.setTimeout(() => { locked = null; end(); }, 180);   // the scrolling has stopped: this is "letting go"
+      // Past the point of no return it refreshes at once (no waiting for the trackpad's momentum to die away); short of it, a short pause is "letting go" and it springs back.
+      if (armed) { locked = null; if (confirmDiscardUnsaved()) beginRefresh(); else rest(); return; }
+      wheelTimer = window.setTimeout(() => { locked = null; end(); }, 90);
     };
     document.addEventListener('wheel', wheel, { passive: false });
     if (standalone) {
