@@ -10,7 +10,7 @@ import SectionTabs from '@/components/ui/SectionTabs';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import { RowMenu } from './RowMenu';
 import { ANY_SIZE, isLoose, setLooseSizes, suggestPrizes, stepCeiling, type PrizeStepDef, type StockLevel } from '@/lib/logistics/prizes';
-import { GROUPS, impliedCount, eventSlugOf, fromOf, STATUS_LABEL, STATUS_ORDER, eventHolds, groupBy, isGroupBy, money, prizingFixes, stationNeed, statusOf, valueOf, type Fix, type GroupBy } from '@/lib/logistics/prizing';
+import { GROUPS, impliedCount, eventSlugOf, fromOf, STATUS_LABEL, STOCK_STATUS_LABEL, STATUS_ORDER, eventHolds, groupBy, isGroupBy, money, prizingFixes, stationNeed, statusOf, valueOf, type Fix, type GroupBy } from '@/lib/logistics/prizing';
 import { AddStationDialog, PastEventsDialog, PrizeEditor, PrizingSettings, type PrizeTab } from './PrizingDialogs';
 import { FixStrip, GroupBlock, StationBlock, StockBlock, type GroupLine, type PrizingCtx, type Row } from './PrizingParts';
 import { StationDialog } from './PlanDialogs';
@@ -233,8 +233,9 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
     if (group === 'source') return groupBy(visibleRows, (r) => fromOf(r.p, r.sponsor, slugByPlan), 'Unknown');
     if (group === 'size') return groupBy(visibleRows, (r) => r.p.size, 'No size', sizeOrder);
     if (group === 'type') return groupBy(visibleRows, (r) => r.p.type, 'No type');
-    return groupBy(visibleRows, (r) => STATUS_LABEL[statusOf(r.p, r.here)], 'Other', STATUS_ORDER.map((s) => STATUS_LABEL[s]));
-  }, [group, visibleRows, sizeOrder]);
+    const labels = hasEvent ? STATUS_LABEL : STOCK_STATUS_LABEL;   // with no event there is nothing "assigned to this event"
+    return groupBy(visibleRows, (r) => labels[statusOf(r.p, hasEvent ? r.here : r.p.allocated)], 'Other', STATUS_ORDER.map((s) => labels[s]));
+  }, [group, visibleRows, sizeOrder, hasEvent]);
   // An event grouped by something other than its stations: the same lines, grouped by the prize's sponsor, source, size, type or status, each line saying which station it is for.
   const lineGroups = useMemo(() => {
     if (!hasEvent || group === 'station') return [];
@@ -336,7 +337,7 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
         </div>
       )}
 
-      {dialog?.kind === 'prize' && <PrizeEditor prizes={prizes} api={api} data={data} prize={dialog.prize} tab={dialog.tab} fromText={dialog.prize ? fromOf(dialog.prize, dialog.prize.sponsor_id ? sponsorName.get(dialog.prize.sponsor_id) ?? null : null, slugByPlan) : ''} events={(list.plans ?? []).map((p) => ({ id: p.id, name: p.name }))} defaultEvent={chosen ? { id: chosen.id, name: chosen.name } : null} onClose={() => setDialog(null)} />}
+      {dialog?.kind === 'prize' && <PrizeEditor prizes={prizes} api={api} data={data} prize={dialog.prize} tab={dialog.tab} fromText={dialog.prize ? fromOf(dialog.prize, dialog.prize.sponsor_id ? sponsorName.get(dialog.prize.sponsor_id) ?? null : null, slugByPlan) : ''} events={(list.plans ?? []).map((p) => ({ id: p.id, name: p.name, slug: p.slug, starts_on: p.starts_on }))} defaultEvent={chosen ? { id: chosen.id, name: chosen.name } : null} onClose={() => setDialog(null)} />}
       {pastOpen && <PastEventsDialog guesses={guesses} onDone={() => { void prizes.reload(); loadGuesses(); }} onClose={() => setPastOpen(false)} />}
       {dialog?.kind === 'settings' && <PrizingSettings api={api} data={data} onClose={() => setDialog(null)} />}
       {dialog?.kind === 'station' && <StationDialog plan={plan} station={dialog.station} onClose={() => setDialog(null)} />}

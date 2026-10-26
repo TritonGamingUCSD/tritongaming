@@ -22,7 +22,9 @@ import pz from './prizing.module.css';
 // ---- one popup for everything about a prize: its details, where it is from, where it went, its history --------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Everything about one prize in one place (the same popup opens from the row's menu, its Planned number, its From line and its History). The number on hand is changed in Details (or set after a recount in Where Did They Go?): it is saved as a correction in the history.
 export type PrizeTab = 'edit' | 'where' | 'history';
-export function PrizeEditor({ prizes, api, data, prize: given, tab: first = 'edit', fromText, events, defaultEvent, onClose }: { prizes: PrizesApi; api: LogisticsApi; data: Catalog; prize: PrizeRow | null; tab?: PrizeTab; fromText?: string; events: { id: string; name: string }[]; defaultEvent: { id: string; name: string } | null; onClose: () => void }) {
+// An event as the prize editor lists it: name, date and address name, so two events with the same name can be told apart.
+const eventLabel = (e: { name: string; slug: string; starts_on: string } | undefined) => (e ? `${e.name} · ${new Date(`${e.starts_on}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric' })} · ${e.slug}` : null);
+export function PrizeEditor({ prizes, api, data, prize: given, tab: first = 'edit', fromText, events, defaultEvent, onClose }: { prizes: PrizesApi; api: LogisticsApi; data: Catalog; prize: PrizeRow | null; tab?: PrizeTab; fromText?: string; events: { id: string; name: string; slug: string; starts_on: string }[]; defaultEvent: { id: string; name: string } | null; onClose: () => void }) {
   const prize = given ? prizes.rows?.find((x) => x.id === given.id) ?? given : null;   // the live row, so a picture just set shows
   const [tab, setTab] = useState<PrizeTab>(given ? first : 'edit');
   const [picking, setPicking] = useState(false);
@@ -124,7 +126,7 @@ export function PrizeEditor({ prizes, api, data, prize: given, tab: first = 'edi
                 onCreate={async (v) => { const x = await api.saveSponsor(null, { name: v }); if (x) set('sponsor_id', x.id); return x?.name ?? null; }} />
             </Field>
             <Field label="Received for event" hint="Stays on the prize after the event.">
-              <Combo value={f.from_event || null} options={events.map((e) => e.name)} disabled={readOnly} placeholder="None" onChange={(v) => { set('from_event', v ?? ''); set('from_plan_id', events.find((e) => e.name === v)?.id ?? ''); }}
+              <Combo value={(f.from_plan_id ? eventLabel(events.find((e) => e.id === f.from_plan_id)) : null) ?? (f.from_event || null)} options={events.map((e) => eventLabel(e)!)} disabled={readOnly} placeholder="None" onChange={(v) => { const e = events.find((x) => eventLabel(x) === v); set('from_event', e?.name ?? v ?? ''); set('from_plan_id', e?.id ?? ''); }}
                 onCreate={async (v) => { set('from_event', v); set('from_plan_id', ''); return v; }} />
             </Field>
           </div>

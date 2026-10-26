@@ -272,3 +272,10 @@
 .edMore[open] > summary { margin-bottom: 0.5rem; }
 .edMore > .edRow, .edMore > .edInline { margin-bottom: 0.6rem; }
 @media (max-width: 560px) { .edHero { grid-template-columns: minmax(0, 1fr); } .edPic { width: 100%; height: 9rem; } }
+
+/* On a laptop each prize's information runs along one line (name, where it is from, size, kind, bin, which station); it wraps only when it has to */
+@media (min-width: 900px) {
+  .prizeCell .rowMain { flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: 0.75rem; row-gap: 0.2rem; }
+  .prizeCell .tagsBlock { flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: 0.75rem; row-gap: 0.2rem; }
+  .prizeCell .lineName { font-size: 0.95rem; }
+}

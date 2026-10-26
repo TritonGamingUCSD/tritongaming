@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { roleInk } from '@/lib/portal/roleColors';
 import Link from '@/components/portal/NoPrefetchLink';
 import Image from 'next/image';
-import { Ticket, User, Camera, Calendar, Users, QrCode, Pencil, Shield, BookOpen, Award, ArrowLeft, CalendarCheck, LayoutGrid, CircleHelp, ShieldAlert, CalendarRange, Globe, Package, Gamepad2 } from 'lucide-react';
+import { Ticket, User, Camera, Calendar, Users, QrCode, Pencil, Shield, BookOpen, Award, ArrowLeft, CalendarCheck, LayoutGrid, CircleHelp, ShieldAlert, CalendarRange, Globe, Package, Gamepad2, Trophy } from 'lucide-react';
 import { getProfile, getUserRoles, getMyPrivateProfile, getUser, getSessionRoles, getViewAs, getViewingUser } from '@/lib/core/auth';
 import { ViewAsSwitcher, ViewAsBanner, ViewingUserBanner } from '@/components/portal/ViewAs';
 import ProfileIncompleteBanner from '@/components/portal/ProfileIncompleteBanner';
@@ -42,6 +42,7 @@ import TodoCard from './TodoCard';
 import StrikeCard from './strikes/StrikeCard';
 import StrikesSectionContent from './strikes/StrikesSectionContent';
 import LogisticsSectionContent from './logistics/LogisticsSectionContent';
+import StaffleSectionContent from './staffle/StaffleSectionContent';
 import TriviaSectionContent from './trivia/TriviaSectionContent';
 import QuarterStatusContent from './quarters/QuarterStatusContent';
 import InactiveNote from './quarters/InactiveNote';
@@ -303,6 +304,14 @@ export default async function PortalDashboard({ searchParams }: Props) {
       dockBoost: logisticsToday ? 100 : 0, dockLabel: 'Logistics',
       group: 'Team' as const,
       content: <LogisticsSectionContent canManage={canManageLogistics} />,
+    }] : []),
+    // A raffle among staff for prizes from Prizing: everyone who can see Event Logistics can look and enter; the logistics team makes them, draws and marks prizes picked up.
+    ...(canManageLogistics || hasCapability(roles, 'view_logistics') ? [{
+      id: 'staffle', icon: <Trophy size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Staffle',
+      description: canManageLogistics ? 'Staff raffles: make one, draw it live' : 'Enter the staff raffle for prizes',
+      homeExclude: true, dockExclude: true,
+      group: 'Team' as const,
+      content: <StaffleSectionContent canManage={canManageLogistics} />,
     }] : []),
     // Quiz games for events. Everyone signed in can play; officers and above write quizzes, host games and see results.
     {

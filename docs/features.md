@@ -130,6 +130,16 @@ Two views, switched at the top and kept in the address (`/portal/logistics/<even
 - Tabs: **Devices | Prizing | Events** (Events is last; Event Logistics opens on the Events list). **Events** is a list of cards (upcoming first, past ones folded) with numbers, a progress bar of devices filled, and **Open Devices / Open Prizing**. An event's page is an overview (teams, requests, devices, prizes; the last two open their tab) with folded parts: Device Requests, Prize Requests, Sponsor Loaners, Officer Loaners. Requests say who they are **For**. Allocation and the event day live only under Devices; prize stations under Prizing.
 
 
+## Staffle
+
+A raffle among staff for prizes from Prizing, under Team (`/portal/staffle`, one at `/portal/staffle/<name>`, the draw at `/portal/staffle/<name>/draw`). Everyone who can see Event Logistics can look and enter; the Event Logistics permission makes Staffles, runs the draw and marks prizes picked up.
+- **A Staffle** has a name, an open and a close time (entries lock at close), who may enter, a pickup note and items (a prize and how many people win it). While it runs (open or drawn) its items are **held back from stock** (they count as Planned); a prize marked picked up leaves stock; ending or cancelling gives back what was not picked up. `staffles`, `staffle_items`, `staffle_entries`, `staffle_winners` (`passed_at` for a winner passed over).
+- **Entering:** tick the prizes you want, one free entry each; the rules are checked as you enter (`lib/staffle/rules.ts`): groups open to / not open to (officers, recruits, active, inactive, people with strikes, people with a warning), plus named people always in or always out. You can enter many prizes but win only one per Staffle.
+- **The draw** (`lib/staffle/draw.ts`, seeded so a reload shows the same result): prizes come up in random order, winners drop out of later prizes, a prize with N winners gives N different people. Staff press Draw on the **big screen** (full screen): a lottery drum of balls tumbles for each prize, then a ball drops out and opens on the winner's name, with confetti; Space, Enter or → goes on. Winners get a notification (and a push if on): "You won <prize> in <Staffle>!" with the pickup note. A drawn Staffle can be **drawn again** for a prize nobody picked up (one winner passed over, or all not picked up).
+- **Picking up:** staff mark a winner "Picked Up" on the Staffle's page (takes one out of stock, history line, undo puts it back). **End** a drawn Staffle when pickup is over.
+- **Pictures:** each prize has one picture (shrunk in the browser to a WebP of about 120 KB, bucket `prize-photos`), shown on the Prizing row and the Staffle card.
+- Checks: `scripts/checks/staffle.mjs`, `lib/__tests__/staffle.test.ts`.
+
 ## Logistics: the event-day sheet (devices)
 
 - **Skipped steps are not problems.** When a later step is ticked, earlier ones that were never ticked count as done: shown as a lighter check, counted in the totals and team progress, never red or orange, and never in the problems list. Tapping one ticks it for real. (`impliedDone` in `lib/logistics/plans.ts`.)

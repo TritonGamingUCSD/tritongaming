@@ -62,7 +62,7 @@ const leftClass = (n: number) => (n < 0 ? pz.leftBad : n === 0 ? pz.leftZero : p
 
 // What a prize is and where it is from, always shown with it. The origin has a line of its own, labelled "From": the sponsor (or the club) and the event it was received for. Below it: size, type, bin and the note.
 function Tags({ p, sponsor, slug }: { p: PrizeRow; sponsor: string | null; slug: string | null }) {
-  const from = <><em>From</em><b>{sponsor ?? 'Club'}</b>{slug ? <><i aria-hidden="true">·</i><span>{slug}</span></> : <span className={pz.fromNone}>no event noted</span>}</>;
+  const from = <><b>{sponsor ?? 'Club'}</b>{slug ? <><i aria-hidden="true">·</i><span>{slug}</span></> : <span className={pz.fromNone}>no event noted</span>}</>;
   return (
     <span className={pz.tagsBlock}>
       <span className={pz.from} title="Where it came from">{from}</span>

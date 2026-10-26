@@ -30,6 +30,8 @@ export function eventHolds(lines: LineIn[], given: (line: LineIn) => number) {
 // What a prize row is about, for the Status grouping: red things first.
 export type Status = 'over' | 'not-here' | 'assigned' | 'free' | 'out';
 export const STATUS_LABEL: Record<Status, string> = { over: 'Over-promised', 'not-here': 'Not here yet', assigned: 'Assigned to this event', free: 'Not assigned', out: 'Out of stock' };
+// The same states for the stock (no event picked): "assigned" means planned for some event, "free" means not planned yet.
+export const STOCK_STATUS_LABEL: Record<Status, string> = { over: 'Over-promised', 'not-here': 'Not here yet', assigned: 'Planned for events', free: 'Not planned yet', out: 'Out of stock' };
 export const STATUS_ORDER: Status[] = ['over', 'not-here', 'assigned', 'free', 'out'];
 export function statusOf(p: Pick<PrizeIn, 'left' | 'quantity' | 'in_hand'> & { size?: string | null; stock_level?: StockLevel }, assignedHere: number): Status {
   if (isLoose(p)) return p.stock_level === 'out' ? 'out' : assignedHere > 0 ? 'assigned' : 'free';
