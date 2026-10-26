@@ -38,3 +38,7 @@ The dev server talks to the real Supabase project, so a test can reach real peop
 ## Looking at Logistics screens
 
 Typecheck, unit tests and the `test:logistics-*` scripts cannot see layout. After a layout change, open an event in the portal (a throwaway `ZZ` event) at laptop width and at phone width (about 390 px, light and dark) and look at: Requests, Allocation (devices and prizing), Event Day, Equipment, a pop-up of each kind. Check that columns line up row to row, nothing runs off the table edge, tap targets are comfortable, and a pop-up fills the phone screen with its buttons at the bottom.
+
+## Layout audits (scratch scripts, not in the repo)
+
+For a layout change, drive the screens in a browser at 390 (phone), 820 and 1180 (tablet, with touch) and 1440 (laptop) and check: the page never widens sideways, opening any menu, dropdown or toggle leaves the page size alone and the popup on screen (compare popups present before and after the click, so static off-screen elements are not counted), opening a number or text box moves nothing, and tap targets on touch are comfortable. Use a throwaway `ZZ` event and delete it afterwards.

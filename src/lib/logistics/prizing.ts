@@ -2,9 +2,9 @@ import { ANY_SIZE } from '@/lib/logistics/prizes';
 
 // The Prizing page's own logic (no database, no React): how the prize table is grouped, what a station still needs, and what goes in the "Fix these" strip.
 
-export type GroupBy = 'station' | 'sponsor' | 'size' | 'type' | 'status' | 'none';
+export type GroupBy = 'station' | 'sponsor' | 'source' | 'size' | 'type' | 'status' | 'none';
 export const GROUPS: { id: GroupBy; label: string }[] = [
-  { id: 'station', label: 'Station' }, { id: 'sponsor', label: 'Sponsor' }, { id: 'size', label: 'Size' }, { id: 'type', label: 'Type' }, { id: 'status', label: 'Status' }, { id: 'none', label: 'No Groups' },
+  { id: 'station', label: 'Station' }, { id: 'sponsor', label: 'Sponsor' }, { id: 'source', label: 'Source' }, { id: 'size', label: 'Size' }, { id: 'type', label: 'Type' }, { id: 'status', label: 'Status' }, { id: 'none', label: 'No Groups' },
 ];
 export const isGroupBy = (v: unknown): v is GroupBy => GROUPS.some((g) => g.id === v);
 
@@ -47,6 +47,9 @@ export function groupBy<T>(rows: T[], keyOf: (r: T) => string | null, empty: str
   keys.sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
   return keys.map((k) => ({ key: k, label: k === '' ? empty : k, rows: map.get(k)! }));
 }
+
+// Where a prize is from, in words: the sponsor (or the club) and the event it was received for. Used wherever a prize is shown.
+export const fromOf = (p: { from_event?: string | null }, sponsor: string | null) => [sponsor ?? 'Club', p.from_event].filter(Boolean).join(' · ');
 
 export const money = (n: number | null | undefined) => (n === null || n === undefined ? '' : `$${n.toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 })}`);
 export const valueOf = (rows: { quantity: number; price: number | null }[]) => Math.round(rows.reduce((n, r) => n + r.quantity * (r.price ?? 0), 0) * 100) / 100;

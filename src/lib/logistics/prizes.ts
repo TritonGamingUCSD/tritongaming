@@ -4,7 +4,7 @@ import { LIMITS } from '@/lib/logistics/constants';
 
 export interface Prize {
   id: string; name: string; sponsor_id: string | null; size: string | null; type: string | null; in_hand: boolean; price: number | null; quantity: number; quantity_is_estimate: boolean;
-  bin: string | null; source: string | null; expires_on: string | null; notes: string | null;
+  bin: string | null; source: string | null; from_event: string | null; from_plan_id: string | null; expires_on: string | null; notes: string | null;
 }
 // `quantity` is how many are on hand. `allocated` is what open events still hold for their stations (promised and not yet given out); a closed event holds nothing, so what it did not use is free
 // again. Left is what is free to promise and can go below zero: that is an over-allocation.
@@ -19,7 +19,7 @@ export const stepCeiling = (step: Pick<PrizeStepDef, 'leftover'>, line: { quanti
 
 export interface PrizePatch {
   name?: string; sponsor_id?: string | null; size?: string | null; type?: string | null; in_hand?: boolean; price?: number | null; quantity?: number; quantity_is_estimate?: boolean;
-  bin?: string | null; source?: string | null; expires_on?: string | null; notes?: string | null;
+  bin?: string | null; source?: string | null; from_event?: string | null; from_plan_id?: string | null; expires_on?: string | null; notes?: string | null;
 }
 const text = (v: unknown, max: number) => { const s = String(v ?? '').trim().replace(/\s+/g, ' ').slice(0, max); return s || null; };
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -42,6 +42,8 @@ export function cleanPrize(b: Record<string, unknown>, partial: boolean): { valu
   if (has('quantity_is_estimate')) out.quantity_is_estimate = b.quantity_is_estimate === true;
   if (has('bin')) out.bin = text(b.bin, 120);
   if (has('source')) out.source = text(b.source, 200);
+  if (has('from_event')) out.from_event = text(b.from_event, 120);
+  if (has('from_plan_id')) out.from_plan_id = typeof b.from_plan_id === 'string' && UUID.test(b.from_plan_id) ? b.from_plan_id : null;
   if (has('expires_on')) { if (b.expires_on && !DATE.test(String(b.expires_on))) return { error: 'Pick the expiry date again.' }; out.expires_on = b.expires_on ? String(b.expires_on) : null; }
   if (has('notes')) out.notes = text(b.notes, LIMITS.notes);
   return { value: out };

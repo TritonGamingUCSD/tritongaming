@@ -17,12 +17,13 @@ import pz from './prizing.module.css';
 
 // ---- add or change a prize --------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Everything about one prize in one form. The number on hand is changed here too (with a reason, if you like): it is saved as a correction in the prize's history.
-export function PrizeDialog({ prizes, api, data, prize, onClose }: { prizes: PrizesApi; api: LogisticsApi; data: Catalog; prize: PrizeRow | null; onClose: () => void }) {
+export function PrizeDialog({ prizes, api, data, prize, events, defaultEvent, onClose }: { prizes: PrizesApi; api: LogisticsApi; data: Catalog; prize: PrizeRow | null; events: { id: string; name: string }[]; defaultEvent: { id: string; name: string } | null; onClose: () => void }) {
   const readOnly = !data.canManage;
   const [f, setF] = useState({
     name: prize?.name ?? '', sponsor_id: prize?.sponsor_id ?? '', size: prize?.size ?? '', type: prize?.type ?? '', price: prize?.price === null || prize?.price === undefined ? '' : String(prize.price),
     quantity: String(prize?.quantity ?? 1), estimate: prize?.quantity_is_estimate ?? false, in_hand: prize?.in_hand ?? true, bin: prize?.bin ?? '', source: prize?.source ?? '',
     expires_on: prize?.expires_on ?? '', notes: prize?.notes ?? '', why: '',
+    from_event: prize ? prize.from_event ?? '' : defaultEvent?.name ?? '', from_plan_id: prize ? prize.from_plan_id ?? '' : defaultEvent?.id ?? '',   // a new prize is from the event picked on the page
   });
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((c) => ({ ...c, [k]: v }));
   const [busy, setBusy] = useState(false);
@@ -35,7 +36,7 @@ export function PrizeDialog({ prizes, api, data, prize, onClose }: { prizes: Pri
     if (!f.size) { setProblem('Choose a size, so a request for that size can find this prize.'); return; }
     if (!Number.isFinite(quantity) || quantity < 0) { setProblem('How many are on hand has to be a whole number, 0 or more.'); return; }
     setProblem(''); setBusy(true);
-    const body = { name: f.name, sponsor_id: f.sponsor_id || null, size: f.size || null, type: f.type || null, price: f.price === '' ? null : Number(f.price), quantity, quantity_is_estimate: f.estimate, in_hand: f.in_hand, bin: f.bin || null, source: f.source || null, expires_on: f.expires_on || null, notes: f.notes || null, note: f.why };
+    const body = { name: f.name, sponsor_id: f.sponsor_id || null, size: f.size || null, type: f.type || null, price: f.price === '' ? null : Number(f.price), quantity, quantity_is_estimate: f.estimate, in_hand: f.in_hand, bin: f.bin || null, source: f.source || null, from_event: f.from_event || null, from_plan_id: f.from_plan_id || null, expires_on: f.expires_on || null, notes: f.notes || null, note: f.why };
     const r = await prizes.save(prize?.id ?? null, body);
     setBusy(false);
     if (r) onClose(); else setProblem('That didn’t save. The message at the top of the page says why.');
@@ -65,8 +66,14 @@ export function PrizeDialog({ prizes, api, data, prize, onClose }: { prizes: Pri
           <Field label="Where it is" hint="A bin or box, like Blue bin 2."><Input value={f.bin} onChange={(e) => set('bin', e.target.value)} disabled={readOnly} maxLength={120} /></Field>
         </div>
         {changedCount && <Field label="Why the count changed" hint="Optional. It shows in the history."><Input value={f.why} onChange={(e) => set('why', e.target.value)} disabled={readOnly} maxLength={300} placeholder="Recount, damaged, found more…" /></Field>}
-        {!prize && <Field label="Where it came from" hint="Optional: bought at Costco, sent by the sponsor for this event…"><Input value={f.source} onChange={(e) => set('source', e.target.value)} disabled={readOnly} maxLength={200} /></Field>}
-        {prize && <Field label="Where it came from"><Input value={f.source} onChange={(e) => set('source', e.target.value)} disabled={readOnly} maxLength={200} /></Field>}
+        <div className={styles.row2}>
+          <Field label="Received for event" hint="The event it came for. It stays on the prize after the event.">
+            <Combo value={f.from_event || null} options={events.map((e) => e.name)} disabled={readOnly} placeholder="None" onChange={(v) => { set('from_event', v ?? ''); set('from_plan_id', events.find((e) => e.name === v)?.id ?? ''); }}
+              onCreate={async (v) => { set('from_event', v); set('from_plan_id', ''); return v; }} />
+          </Field>
+          <Field label="Where it came from" hint="Optional: bought at Costco, donated…"><Input value={f.source} onChange={(e) => set('source', e.target.value)} disabled={readOnly} maxLength={200} /></Field>
+        </div>
+        {prize && prize.used_at.length > 0 && <p className={styles.muted}>Used at: {prize.used_at.join(', ')}</p>}
         <label className={styles.check}><input type="checkbox" checked={f.in_hand} onChange={(e) => set('in_hand', e.target.checked)} disabled={readOnly} /> It is here now (untick for a prize that is still on its way)</label>
         <label className={styles.check}><input type="checkbox" checked={f.estimate} onChange={(e) => set('estimate', e.target.checked)} disabled={readOnly} /> The number on hand is an estimate</label>
         <div className={styles.row2}>
@@ -88,7 +95,7 @@ interface LogEntry { id: string; kind: 'add' | 'correct' | 'assign' | 'give'; qt
 const KIND: Record<LogEntry['kind'], string> = { add: 'Added', correct: 'Count changed', assign: 'Promised', give: 'Given out' };
 const when = (iso: string) => new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
-export function HistoryDialog({ prize, onClose }: { prize: PrizeRow; onClose: () => void }) {
+export function HistoryDialog({ prize, from, onClose }: { prize: PrizeRow; from: string; onClose: () => void }) {
   const [log, setLog] = useState<LogEntry[] | null>(null);
   const [error, setError] = useState('');
   useEffect(() => {
@@ -98,6 +105,7 @@ export function HistoryDialog({ prize, onClose }: { prize: PrizeRow; onClose: ()
   }, [prize.id]);
   return (
     <Dialog title={`${prize.name}: History`} wide sheet onClose={onClose}>
+      <p className={styles.muted}>From {from}{prize.source ? ` (${prize.source})` : ''}{prize.used_at.length ? ` · used at ${prize.used_at.join(', ')}` : ''}</p>
       <p className={styles.muted}>{prize.quantity} on hand · {prize.allocated} promised to open events · {prize.left} left to promise.</p>
       {error && <Notice tone="error">{error}</Notice>}
       {!log && !error && <p className={styles.muted}>Loading…</p>}

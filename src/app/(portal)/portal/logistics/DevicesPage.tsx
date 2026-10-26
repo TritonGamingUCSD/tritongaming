@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Settings2 } from 'lucide-react';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Loading from '@/components/Loading/Loading';
@@ -29,6 +29,10 @@ type DevicesRoute = Extract<Route, { tab: 'devices' }>;
 export default function DevicesPage({ api, data, route, go }: { api: LogisticsApi; data: Catalog; route: DevicesRoute; go: (r: Route) => void }) {
   const list = usePlanList();
   const [gear, setGear] = useState(false);
+  // "One section at a time" (opening a team folds the others) is remembered on this device; it is on until turned off.
+  const [accordion, setAccordion] = useState(true);
+  useEffect(() => { try { setAccordion(localStorage.getItem('tg-devices-accordion') !== '0'); } catch { /* not remembered */ } }, []);
+  const flipAccordion = () => setAccordion((v) => { try { localStorage.setItem('tg-devices-accordion', v ? '0' : '1'); } catch { /* not remembered */ } return !v; });
   const chosen = useMemo(() => {
     if (!list.plans) return undefined;
     if (route.plan === 'stock') return null;
@@ -59,6 +63,7 @@ export default function DevicesPage({ api, data, route, go }: { api: LogisticsAp
           </Select>
         </div>
         <div className={pz.topEnd}>
+          {chosen && <label className={pz.oneAtATime} title="Opening a section folds the others"><input type="checkbox" checked={accordion} onChange={flipAccordion} /> One at a time</label>}
           {data.canManage && <button type="button" className={pz.gear} onClick={() => setGear(true)} aria-label="Device settings" title="Device types, shelves, games, kit parts, bundles and event steps"><Settings2 size={17} aria-hidden="true" /></button>}
           {data.canManage && chosen && (
             <RowMenu label="This event" items={[
@@ -72,7 +77,7 @@ export default function DevicesPage({ api, data, route, go }: { api: LogisticsAp
         </div>
       </div>
       {chosen ? (
-        <PlanView key={chosen.id} id={chosen.id} data={data} catalog={api} page="device" day={day} group={group} embedded openOnly={!!route.openOnly} onOpenOnly={(v) => to({ openOnly: v || undefined })}
+        <PlanView key={chosen.id} id={chosen.id} data={data} catalog={api} page="device" day={day} group={group} embedded accordion={accordion} openOnly={!!route.openOnly} onOpenOnly={(v) => to({ openOnly: v || undefined })}
           onOpenPrizing={() => go({ tab: 'prizing', plan: chosen.slug })} onPage={(page) => go({ tab: 'events', plan: chosen.slug, page })} onBack={() => go({ tab: 'devices', plan: 'stock' })} />
       ) : <EquipmentTab api={api} data={data} group={group} />}
       {closer.dialog}

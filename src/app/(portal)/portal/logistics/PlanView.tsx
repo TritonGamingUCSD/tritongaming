@@ -46,7 +46,7 @@ const range = (a: string, b: string) => {
   return a === b ? f(a) : `${f(a)} to ${f(b)}`;
 };
 
-export default function PlanView({ id, data, catalog, page, day, group, embedded, onOpenPrizing, onOpenDevices, openOnly, onOpenOnly, onPage, onBack }: { group: DeviceGroup; embedded?: boolean; onOpenDevices?: () => void; onOpenPrizing: () => void; openOnly: boolean; onOpenOnly: (v: boolean) => void; id: string; data: Catalog; catalog: LogisticsApi; page: EventPage; day: boolean; onPage: (p: EventPage, day?: boolean) => void; onBack: () => void }) {
+export default function PlanView({ id, data, catalog, page, day, group, embedded, accordion = false, onOpenPrizing, onOpenDevices, openOnly, onOpenOnly, onPage, onBack }: { group: DeviceGroup; embedded?: boolean; accordion?: boolean; onOpenDevices?: () => void; onOpenPrizing: () => void; openOnly: boolean; onOpenOnly: (v: boolean) => void; id: string; data: Catalog; catalog: LogisticsApi; page: EventPage; day: boolean; onPage: (p: EventPage, day?: boolean) => void; onBack: () => void }) {
   const plan = usePlan(id, true);
   const prizeInv = usePrizes();
   const { detail, error, setError, act } = plan;
@@ -328,15 +328,16 @@ export default function PlanView({ id, data, catalog, page, day, group, embedded
     onTick: (row, s) => void tick(row, s), onTickAll: (list, s) => void markAll(list, s), onUndo: undo, onSwap: (r) => setSwapping({ id: r.id, tag: r.tag, type: r.type, kind: r.kind === 'slot' ? 'club' : r.kind }),
     onBorrowed: (r) => setBorrowing(borrowed.find((b) => b.id === r.id) ?? null), onInstalled: (list) => void install(list), onEditDevice: (r) => setDeviceEdit(catalog.data?.devices.find((x) => x.id === r.id) ?? data.devices.find((x) => x.id === r.id) ?? null),
   };
-  const foldOf = (key: string, complete: boolean) => (key in fold ? fold[key] : complete || narrow);
+  // One section at a time (the Devices page's switch): opening a team folds the others, and at first only the first team is open.
+  const foldOf = (key: string, complete: boolean) => (key in fold ? fold[key] : accordion ? key !== teams[0]?.key : complete || narrow);
   // On a phone only one team is open at a time on the event day: opening one folds the rest.
   const toggleFold = (key: string, complete: boolean) => setFold((cur) => {
     const opening = foldOf(key, complete);
-    const others = narrow && day && opening ? Object.fromEntries(teams.filter((x) => x.key !== key).map((x) => [x.key, true])) : {};
+    const others = (accordion || (narrow && day)) && opening ? Object.fromEntries(teams.filter((x) => x.key !== key).map((x) => [x.key, true])) : {};
     return { ...cur, ...others, [key]: !opening };
   });
   const allFolded = teams.length > 0 && teams.every((t) => { const tot = steps.reduce((n, st) => n + t.rows.filter((r) => stepAppliesTo(st, rowKind(r))).length, 0); const dn = steps.reduce((n, st) => n + t.rows.filter((r) => stepAppliesTo(st, rowKind(r)) && doneSet.has(`${r.id}:${st.id}`)).length, 0); return foldOf(t.key, tot > 0 && dn === tot); });
-  const jump = (sid: string | null) => { if (!sid) return; setFold((cur) => ({ ...cur, ...(narrow && day ? Object.fromEntries(teams.filter((x) => x.key !== sid).map((x) => [x.key, true])) : {}), [sid]: false })); setTimeout(() => document.getElementById(`st-${sid}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0); };
+  const jump = (sid: string | null) => { if (!sid) return; setFold((cur) => ({ ...cur, ...(accordion || (narrow && day) ? Object.fromEntries(teams.filter((x) => x.key !== sid).map((x) => [x.key, true])) : {}), [sid]: false })); setTimeout(() => document.getElementById(`st-${sid}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0); };
 
   // The games a row needs that its device doesn't list yet are added to the device's installed games (the same list as in Equipment, with its history line).
   async function install(list: Row[]) {

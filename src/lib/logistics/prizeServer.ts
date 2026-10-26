@@ -3,7 +3,7 @@ import type { PrizeStepDef, PrizeTotals } from '@/lib/logistics/prizes';
 import { announce, stockTopic } from '@/lib/logistics/live';
 
 // The columns of a prize as the screens use them.
-export const PRIZE_COLUMNS = 'id, name, sponsor_id, size, type, in_hand, price, quantity, quantity_is_estimate, bin, source, expires_on, notes';
+export const PRIZE_COLUMNS = 'id, name, sponsor_id, size, type, in_hand, price, quantity, quantity_is_estimate, bin, source, from_event, from_plan_id, expires_on, notes';
 
 // The prize steps, in order. `gives` and `leftover` live in the list entry's meta.
 export async function loadPrizeSteps(svc: SupabaseClient): Promise<PrizeStepDef[]> {

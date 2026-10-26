@@ -50,6 +50,8 @@
 .tags { display: flex; flex-wrap: wrap; gap: 0.25rem; }
 .tag { padding: 0.05rem 0.5rem; border-radius: 999px; font-size: 0.72rem; background: rgba(var(--pp-ink-rgb), 0.1); color: rgba(var(--pp-ink-rgb), 0.9); }
 .tagWarn { background: color-mix(in srgb, var(--pp-warn) 30%, var(--pp-card)); font-weight: 700; }
+.tagFrom { background: color-mix(in srgb, var(--pp-ink) 14%, var(--pp-card)); font-weight: 700; }
+.sourceNote { font-size: 0.74rem; font-style: italic; color: rgba(var(--pp-ink-rgb), 0.72); overflow-wrap: anywhere; }
 .tagPlain { background: transparent; border: 1px dashed rgba(var(--pp-ink-rgb), 0.35); }
 .chip { display: inline-block; padding: 0.1rem 0.6rem; border-radius: 999px; font-size: 0.82rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .leftOk { background: color-mix(in srgb, var(--pp-ok) 22%, var(--pp-card)); }
@@ -130,3 +132,6 @@
 .feedBtn { background: none; border: 0; padding: 0; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .feed { list-style: none; margin: 0; padding: 0.4rem 0.8rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); background: var(--pp-card); display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.84rem; max-height: 12rem; overflow: auto; }
 .feed small { color: rgba(var(--pp-ink-rgb), 0.65); margin-left: 0.4rem; }
+
+.oneAtATime { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.84rem; cursor: pointer; white-space: nowrap; }
+.foldTools { display: inline-flex; align-items: center; gap: 0.8rem; }

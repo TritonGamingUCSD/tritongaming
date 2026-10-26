@@ -52,7 +52,7 @@ try {
 
   const newOnes = await told(admin.id, 'logistics_request');
   t.ok('an exec who was not granted the permission is not told', (await told(exec.id, 'logistics_request')).length === 0);
-  t.ok('the logistics team is told about a new request, with a link', newOnes.length >= 2 && newOnes.some((n) => n.href === `/portal/logistics/${P.slug}/requests-devices` && /device request/.test(n.title)), JSON.stringify(newOnes));
+  t.ok('the logistics team is told about a new request, with a link', newOnes.length >= 2 && newOnes.some((n) => n.href === `/portal/logistics/${P.slug}/requests` && /device request/.test(n.title)), JSON.stringify(newOnes));
   t.ok('the person who made it is not told about their own', (await told(lead.id, 'logistics_request')).length === 0);
 
   const mine = (await lead.call('GET', URL_)).j;

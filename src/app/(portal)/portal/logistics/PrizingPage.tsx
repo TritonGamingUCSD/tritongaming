@@ -9,7 +9,7 @@ import { Input, Select } from '@/components/ui/Field';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import { RowMenu } from './RowMenu';
 import { ANY_SIZE, suggestPrizes, stepCeiling, type PrizeStepDef } from '@/lib/logistics/prizes';
-import { GROUPS, STATUS_LABEL, STATUS_ORDER, eventHolds, groupBy, isGroupBy, money, prizingFixes, stationNeed, statusOf, valueOf, type Fix, type GroupBy } from '@/lib/logistics/prizing';
+import { GROUPS, fromOf, STATUS_LABEL, STATUS_ORDER, eventHolds, groupBy, isGroupBy, money, prizingFixes, stationNeed, statusOf, valueOf, type Fix, type GroupBy } from '@/lib/logistics/prizing';
 import { AddStationDialog, HistoryDialog, PrizeDialog, PrizingSettings } from './PrizingDialogs';
 import { FixStrip, PrizeRowView, StationBlock, type PrizingCtx, type Row } from './PrizingParts';
 import { StationDialog } from './PlanDialogs';
@@ -25,12 +25,12 @@ import styles from './logistics.module.css';
 import pz from './prizing.module.css';
 
 const VIEW_KEY = 'tg-prizing-view';
-interface View { group: GroupBy; steps: string[]; onlyHere: boolean }
-const DEFAULT_VIEW: View = { group: 'station', steps: ['sorted'], onlyHere: false };
+interface View { group: GroupBy; steps: string[]; onlyHere: boolean; oneAtATime: boolean }
+const DEFAULT_VIEW: View = { group: 'station', steps: ['sorted'], onlyHere: false, oneAtATime: true };
 const readView = (): View => {
   try {
     const j = JSON.parse(localStorage.getItem(VIEW_KEY) ?? 'null');
-    if (j) return { group: isGroupBy(j.group) ? j.group : DEFAULT_VIEW.group, steps: Array.isArray(j.steps) ? j.steps.map(String) : DEFAULT_VIEW.steps, onlyHere: !!j.onlyHere };
+    if (j) return { group: isGroupBy(j.group) ? j.group : DEFAULT_VIEW.group, steps: Array.isArray(j.steps) ? j.steps.map(String) : DEFAULT_VIEW.steps, onlyHere: !!j.onlyHere, oneAtATime: j.oneAtATime !== false };
   } catch { /* nothing remembered */ }
   return DEFAULT_VIEW;
 };
@@ -57,6 +57,7 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
   const [dialog, setDialog] = useState<null | { kind: 'prize'; prize: PrizeRow | null } | { kind: 'history'; prize: PrizeRow } | { kind: 'settings' } | { kind: 'station'; station: Station | null } | { kind: 'addStation' }>(null);
   const [filling, setFilling] = useState('');
   const [shortOf, setShortOf] = useState<Record<string, string>>({});
+  const [openStations, setOpenStations] = useState<Record<string, boolean>>({});   // what was opened or folded by hand
   const [flashKeys, setFlashKeys] = useState<Set<string>>(new Set());
   const [feed, setFeed] = useState<{ id: number; by: string; text: string; at: number }[]>([]);
   const [feedOpen, setFeedOpen] = useState(false);
@@ -99,6 +100,15 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
     prizes: rows.map((r) => ({ ...r.p, assignedHere: r.here })), sizeOrder,
     stations: shownStations.map((x) => ({ ...x.s, lines: x.ls.length, short: x.n.need })),
   }), [hasEvent, eventClosed, rows, shownStations, sizeOrder]);
+  // One section at a time (a remembered switch, on until turned off): opening a station folds the others, and at first only the first is open.
+  const firstStation = shownStations[0]?.s.id;
+  const stationOpen = (id: string) => (id in openStations ? openStations[id] : view.oneAtATime ? id === firstStation : true);
+  const toggleStation = (id: string) => setOpenStations((cur) => {
+    const now = id in cur ? cur[id] : view.oneAtATime ? id === firstStation : true;
+    if (view.oneAtATime && !now) return { ...Object.fromEntries(stations.map((x) => [x.id, false])), [id]: true };
+    return { ...cur, [id]: !now };
+  });
+  const setAllStations = (open: boolean) => setOpenStations(Object.fromEntries(stations.map((x) => [x.id, open])));
   const needy = shownStations.filter((x) => Object.keys(x.n.need).length > 0 && !isLocked(x.s));
 
   // ---- changes ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -135,6 +145,7 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
   const focus = useCallback((f: Fix['focus']) => {
     const id = f.kind === 'prize' ? `prize-${f.id}` : `station-${f.id}`;
     if (f.kind === 'prize') change({ group: group === 'station' ? 'status' : group });
+    if (f.kind === 'station') setOpenStations((cur) => (view.oneAtATime ? { ...Object.fromEntries(stations.map((x) => [x.id, false])), [f.id]: true } : { ...cur, [f.id]: true }));
     setFlash(f.id);
     window.setTimeout(() => { document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 60);
     window.setTimeout(() => setFlash(''), 2600);
@@ -183,6 +194,7 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
   const groups = useMemo(() => {
     if (group === 'none') return [{ key: 'all', label: '', rows: visibleRows }];
     if (group === 'sponsor') return groupBy(visibleRows, (r) => r.sponsor, 'Club (no sponsor)');
+    if (group === 'source') return groupBy(visibleRows, (r) => fromOf(r.p, r.sponsor), 'Unknown');
     if (group === 'size') return groupBy(visibleRows, (r) => r.p.size, 'No size', sizeOrder);
     if (group === 'type') return groupBy(visibleRows, (r) => r.p.type, 'No type');
     return groupBy(visibleRows, (r) => STATUS_LABEL[statusOf(r.p, r.here)], 'Other', STATUS_ORDER.map((s) => STATUS_LABEL[s]));
@@ -223,6 +235,12 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
         {hasEvent && <span>This event: {lines.reduce((n, l) => n + l.quantity, 0)} assigned · {money(hereValue) || '$0'}</span>}
         {feed.length > 0 && <button type="button" className={pz.feedBtn} onClick={() => setFeedOpen((v) => !v)} aria-expanded={feedOpen}>{feedOpen ? 'Hide' : 'Show'} recent changes ({feed.length})</button>}
         {eventClosed && <span className={pz.closedTag}>Closed: what went out and was not counted back is out of stock</span>}
+        {group === 'station' && hasEvent && (
+          <span className={pz.foldTools}>
+            <label className={pz.oneAtATime} title="Opening a station folds the others"><input type="checkbox" checked={view.oneAtATime} onChange={(e) => { change({ oneAtATime: e.target.checked }); setOpenStations({}); }} /> One at a time</label>
+            {!view.oneAtATime && <button type="button" className={pz.feedBtn} onClick={() => setAllStations(!shownStations.every((x) => stationOpen(x.s.id)))}>{shownStations.every((x) => stationOpen(x.s.id)) ? 'Close all' : 'Open all'}</button>}
+          </span>
+        )}
         {group !== 'station' && hasEvent && <label className={pz.onlyHere}><input type="checkbox" checked={view.onlyHere} onChange={(e) => change({ onlyHere: e.target.checked })} /> Only prizes in this event</label>}
       </div>
       {feedOpen && feed.length > 0 && <ul className={pz.feed} aria-label="Recent changes by others">{feed.map((f) => <li key={f.id}><b>{f.by}</b> {f.text}<small>{new Date(f.at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</small></li>)}</ul>}
@@ -245,7 +263,7 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
               <StationBlock station={x.s} lines={x.ls.filter((l) => !q.trim() || matches(l.p, l.sponsor) || x.s.name.toLowerCase().includes(q.trim().toLowerCase()))} ctx={ctx}
                 addable={(prizes.rows ?? []).filter((p) => p.left > 0 && !x.ls.some((l) => l.p.id === p.id))} need={x.n.need} asked={x.n.asked}
                 onAdd={(p) => void setLine(x.s.id, p, 1)} onFill={Object.keys(x.n.need).length > 0 && manage ? () => void fillOne(x.s.id) : undefined}
-                onEdit={() => setDialog({ kind: 'station', station: x.s })} onRemove={() => void removeStation(x.s)} flash={flash === x.s.id}
+                onEdit={() => setDialog({ kind: 'station', station: x.s })} onRemove={() => void removeStation(x.s)} flash={flash === x.s.id} open={stationOpen(x.s.id)} onToggle={() => toggleStation(x.s.id)}
                 summary={(stepId) => { const st = steps.find((s) => s.id === stepId); if (!st) return null; return { total: x.ls.reduce((n, l) => n + stepCeiling(st, l, givenOf(l.id)), 0), done: x.ls.reduce((n, l) => n + Math.min(count(l.id, stepId), stepCeiling(st, l, givenOf(l.id))), 0) }; }}
                 onAll={manage || (hasEvent && !eventClosed) ? (stepId) => { const st = steps.find((s) => s.id === stepId); if (st) void markAll(x.s.id, st); } : undefined} />
               {(filling === x.s.id || shortOf[x.s.id]) && <p className={pz.muted}>{filling === x.s.id ? 'Choosing prizes…' : shortOf[x.s.id]}</p>}
@@ -270,8 +288,8 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
         </div>
       )}
 
-      {dialog?.kind === 'prize' && <PrizeDialog prizes={prizes} api={api} data={data} prize={dialog.prize} onClose={() => setDialog(null)} />}
-      {dialog?.kind === 'history' && <HistoryDialog prize={dialog.prize} onClose={() => setDialog(null)} />}
+      {dialog?.kind === 'prize' && <PrizeDialog prizes={prizes} api={api} data={data} prize={dialog.prize} events={(list.plans ?? []).map((p) => ({ id: p.id, name: p.name }))} defaultEvent={chosen ? { id: chosen.id, name: chosen.name } : null} onClose={() => setDialog(null)} />}
+      {dialog?.kind === 'history' && <HistoryDialog prize={dialog.prize} from={fromOf(dialog.prize, dialog.prize.sponsor_id ? sponsorName.get(dialog.prize.sponsor_id) ?? null : null)} onClose={() => setDialog(null)} />}
       {dialog?.kind === 'settings' && <PrizingSettings api={api} data={data} onClose={() => setDialog(null)} />}
       {dialog?.kind === 'station' && <StationDialog plan={plan} station={dialog.station} onClose={() => setDialog(null)} />}
       {dialog?.kind === 'addStation' && <AddStationDialog plan={plan} existing={addableStations} onClose={() => setDialog(null)} />}

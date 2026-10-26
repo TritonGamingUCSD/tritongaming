@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Combo, MultiCombo } from './Combo';
 import { isMove, moveFrom, tapTwice } from './cellNav';
 import { recordEdit } from './undo';
@@ -20,11 +20,12 @@ export function TextCell({ value, canEdit, onSave, placeholder, strong, max = 12
   const [on, setOn] = useState(false);
   const [text, setText] = useState(value ?? '');
   const [shown, hold] = useHeld(value);
+  const height = useRef(0);   // the text's height, kept by the box that opens over it so nothing below moves
   const open = () => { setText(shown ?? ''); setOn(true); };
   if (!canEdit) return <span className={strong ? styles.strong : undefined}>{shown || <span className={styles.dim}>{placeholder ?? '–'}</span>}</span>;
-  if (!on) return <button type="button" data-cell className={`${styles.editCell} ${strong ? styles.strong : ''}`} onClick={(e) => tapTwice(e, open)}>{shown || <span className={styles.editHint}>{placeholder ?? 'Add'}</span>}</button>;
+  if (!on) return <button type="button" data-cell className={`${styles.editCell} ${strong ? styles.strong : ''}`} onClick={(e) => { height.current = e.currentTarget.offsetHeight; tapTwice(e, open); }}>{shown || <span className={styles.editHint}>{placeholder ?? 'Add'}</span>}</button>;
   const done = (save: boolean) => { setOn(false); if (save && text.trim() !== (shown ?? '')) { const was = shown ?? '', now = text.trim(); recordEdit(() => onSave(was), () => onSave(now)); hold(now || null); onSave(now); } };
-  return <input data-cell className={styles.cellInput} value={text} autoFocus onFocus={(e) => e.target.select()} maxLength={max} onChange={(e) => setText(e.target.value)} onBlur={() => done(true)} onKeyDown={(e) => { if (isMove(e)) { moveFrom(e.currentTarget, e); done(true); } else if (e.key === 'Escape') done(false); }} />;
+  return <input data-cell className={styles.cellInput} style={{ minHeight: height.current || undefined }} value={text} autoFocus onFocus={(e) => e.target.select()} maxLength={max} onChange={(e) => setText(e.target.value)} onBlur={() => done(true)} onKeyDown={(e) => { if (isMove(e)) { moveFrom(e.currentTarget, e); done(true); } else if (e.key === 'Escape') done(false); }} />;
 }
 
 export function PickCell({ value, options, canEdit, onSave, onCreate, shown, clearable = true, locate, placeholder }: { placeholder?: string; locate?: boolean; value: string | null; options: string[]; canEdit: boolean; onSave: (v: string | null) => void; onCreate?: (v: string) => Promise<string | null>; shown?: string; clearable?: boolean }) {
@@ -40,14 +41,14 @@ export function PickCell({ value, options, canEdit, onSave, onCreate, shown, cle
 
 
 // A number that is plain text until you click it (like the other cells), then a box; saved when you leave it. Empty clears it when `nullable`.
-export function NumberCell({ value, canEdit, onSave, label, step = 1, money, nullable, onEdit }: { value: number | null; canEdit: boolean; onSave: (v: number | null) => void; label: string; step?: number; money?: boolean; nullable?: boolean; onEdit?: (on: boolean) => void }) {
+export function NumberCell({ value, canEdit, onSave, label, step = 1, money, nullable, onEdit, compact, field }: { value: number | null; canEdit: boolean; onSave: (v: number | null) => void; label: string; step?: number; money?: boolean; nullable?: boolean; onEdit?: (on: boolean) => void; compact?: boolean; field?: boolean }) {
   const [on, setOn] = useState(false);
   const [text, setText] = useState('');
   const [num, hold] = useHeld(value);
   const open = () => { setText(num === null ? '' : String(num)); setOn(true); onEdit?.(true); };
   const shown = num === null ? null : `${money ? '$' : ''}${money && !Number.isInteger(num) ? num.toFixed(2) : num}`;
   if (!canEdit) return <span>{shown ?? <span className={styles.dim}>–</span>}</span>;
-  if (!on) return <button type="button" data-cell className={styles.editCell} aria-label={`${label}. Change`} onClick={(e) => tapTwice(e, open)}>{shown ?? <span className={styles.editHint}>Add</span>}</button>;
+  if (!on) return <button type="button" data-cell className={`${styles.editCell} ${compact ? styles.numCompact : field ? styles.numField : ''}`} aria-label={`${label}. Change`} onClick={(e) => tapTwice(e, open)}>{shown ?? <span className={styles.editHint}>Add</span>}</button>;
   const done = (save: boolean) => {
     setOn(false);
     onEdit?.(false);
@@ -55,7 +56,7 @@ export function NumberCell({ value, canEdit, onSave, label, step = 1, money, nul
     const n = text.trim() === '' ? null : Number(text);
     if (n === null ? nullable && num !== null : Number.isFinite(n) && n !== num) { const was = num; recordEdit(() => onSave(was), () => onSave(n)); hold(n); onSave(n); }
   };
-  return <input data-cell className={`${styles.cellInput} ${styles.cellNum}`} type="number" inputMode={money ? 'decimal' : 'numeric'} min={0} step={step} value={text} autoFocus aria-label={label} onFocus={(e) => e.target.select()}
+  return <input data-cell className={`${styles.cellInput} ${styles.cellNum} ${compact ? styles.numCompact : field ? styles.numField : ''}`} type="number" inputMode={money ? 'decimal' : 'numeric'} min={0} step={step} value={text} autoFocus aria-label={label} onFocus={(e) => e.target.select()}
     onChange={(e) => setText(e.target.value)} onBlur={() => done(true)} onKeyDown={(e) => { if (isMove(e)) { moveFrom(e.currentTarget, e); done(true); } else if (e.key === 'Escape') done(false); }} />;
 }
 
@@ -67,7 +68,7 @@ export function ListCell({ values, options, canEdit, onSave, label, placeholder 
   if (!on) {
     const text = shownValues.join(', ');
     return canEdit
-      ? <button type="button" data-cell className={styles.editCell} aria-label={`${label}. Change`} onClick={(e) => tapTwice(e, open)}>{text || <span className={styles.editHint}>{placeholder}</span>}</button>
+      ? <button type="button" data-cell className={`${styles.editCell}`} aria-label={`${label}. Change`} onClick={(e) => tapTwice(e, open)}>{text || <span className={styles.editHint}>{placeholder}</span>}</button>
       : <span>{text || <span className={styles.dim}>–</span>}</span>;
   }
   return (

@@ -17,11 +17,22 @@ export async function GET() {
     loadPrizeTotals(auth.svc),
   ]);
   if (error) return NextResponse.json({ error: 'Couldn’t load the prizes.' }, { status: 500 });
+  // Where each prize has been used: the events whose stations it was put on (open or closed), by name.
+  const [{ data: used }, { data: plans }] = await Promise.all([
+    auth.svc.from('logistics_plan_prizes').select('prize_id, plan_id').limit(30000),
+    auth.svc.from('logistics_plans').select('id, name, starts_on').order('starts_on').limit(500),
+  ]);
+  const planName = new Map((plans ?? []).map((p) => [p.id as string, p.name as string]));
+  const usedAt = new Map<string, string[]>();
+  for (const u of used ?? []) {
+    const n = planName.get(u.plan_id as string);
+    if (n && !(usedAt.get(u.prize_id as string) ?? []).includes(n)) usedAt.set(u.prize_id as string, [...(usedAt.get(u.prize_id as string) ?? []), n]);
+  }
   return NextResponse.json({
     channel: stockTopic(),   // where changes to the stock are announced (the page listens)
     prizes: (prizes ?? []).map((p) => {
       const t = totals.get(p.id as string) ?? { allocated: 0 };
-      return { ...p, price: p.price === null ? null : Number(p.price), allocated: t.allocated, left: prizeLeft(p as { quantity: number }, t) };
+      return { ...p, price: p.price === null ? null : Number(p.price), allocated: t.allocated, left: prizeLeft(p as { quantity: number }, t), used_at: usedAt.get(p.id as string) ?? [] };
     }),
   });
 }
@@ -37,5 +48,5 @@ export async function POST(request: Request) {
   await logPrize(auth.svc, [{ prize_id: data.id as string, kind: 'add', qty: data.quantity as number, sponsor_id: (data.sponsor_id as string | null) ?? null, note: String(body.note ?? '').trim().slice(0, 300) || (data.source as string | null) || 'New prize', actor: auth.user.id }]);
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'create', entityType: 'logistics prize', entityId: data.id as string, summary: `Added the prize “${data.name}”` });
   await announce(stockTopic(), { k: 'prizes' }, await whoIs(auth.svc, auth.user.id));
-  return NextResponse.json({ prize: { ...data, price: data.price === null ? null : Number(data.price), allocated: 0, left: data.quantity } }, { status: 201 });
+  return NextResponse.json({ prize: { ...data, price: data.price === null ? null : Number(data.price), allocated: 0, left: data.quantity, used_at: [] } }, { status: 201 });
 }

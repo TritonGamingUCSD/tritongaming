@@ -37,14 +37,16 @@ export interface Row { p: PrizeRow; sponsor: string | null; here: number; remain
 
 const leftClass = (n: number) => (n < 0 ? pz.leftBad : n === 0 ? pz.leftZero : pz.leftOk);
 
+// What a prize is and where it is from, always shown with it: the sponsor (or the club), the event it was received for, its size and type, the bin it is in and the note about where it came from.
 function Tags({ p, sponsor }: { p: PrizeRow; sponsor: string | null }) {
   return (
     <span className={pz.tags}>
-      {sponsor && <span className={pz.tag}>{sponsor}</span>}
+      <span className={`${pz.tag} ${pz.tagFrom}`} title="Where it is from">{sponsor ?? 'Club'}{p.from_event ? ` · ${p.from_event}` : ''}</span>
       {p.size && <span className={pz.tag}>{p.size.replace(/ Prizing$/, '')}</span>}
       {p.type && <span className={pz.tag}>{p.type}</span>}
       {!p.in_hand && <span className={`${pz.tag} ${pz.tagWarn}`}>Not here yet</span>}
       {p.bin && <span className={`${pz.tag} ${pz.tagPlain}`}>{p.bin}</span>}
+      {p.source && <span className={pz.sourceNote}>{p.source}</span>}
     </span>
   );
 }
@@ -54,7 +56,7 @@ function Tags({ p, sponsor }: { p: PrizeRow; sponsor: string | null }) {
 export function StepCell({ n, ceiling, label, disabled, onSet, onAdd, onEdit }: { n: number; ceiling: number; label: string; disabled: boolean; onSet: (v: number) => void; onAdd: (d: number) => void; onEdit?: (on: boolean) => void }) {
   if (ceiling <= 0) return <span className={pz.cellNa} aria-hidden="true">–</span>;
   const full = n >= ceiling;
-  if (ceiling > 12) return <span className={`${pz.cell} ${full ? pz.cellDone : n > 0 ? pz.cellPart : ''}`}><NumberCell value={n} canEdit={!disabled} label={`${label}, out of ${ceiling}`} onEdit={onEdit} onSave={(v) => onSet(Math.max(0, Math.min(ceiling, v ?? 0)))} /><small>/{ceiling}</small></span>;
+  if (ceiling > 12) return <span className={`${pz.cell} ${full ? pz.cellDone : n > 0 ? pz.cellPart : ''}`}><NumberCell compact value={n} canEdit={!disabled} label={`${label}, out of ${ceiling}`} onEdit={onEdit} onSave={(v) => onSet(Math.max(0, Math.min(ceiling, v ?? 0)))} /><small>/{ceiling}</small></span>;
   return (
     <span className={pz.cellWrap}>
       <button type="button" disabled={disabled} className={`${pz.cell} ${pz.cellBtn} ${full ? pz.cellDone : n > 0 ? pz.cellPart : ''}`} aria-pressed={full} aria-label={full ? `Undo ${label}` : `${label}: ${n} of ${ceiling}. Add one`}
@@ -76,7 +78,7 @@ export function PrizeRowView({ row, ctx, stations, hasEvent, open, onToggle, fla
         </button>
         <Tags p={p} sponsor={row.sponsor} />
       </div>
-      <div className={pz.num} data-label="In stock"><NumberCell value={p.quantity} canEdit={ctx.canStock} label={`How many ${p.name} are on hand`} onEdit={(on) => ctx.editing(on ? `prize:${p.id}` : null)} onSave={(v) => { if (v !== null && v !== p.quantity) ctx.setStock(p, v); }} />{ctx.heldBy(`prize:${p.id}`) && <small className={pz.editor}>{ctx.heldBy(`prize:${p.id}`)} is typing…</small>}{p.price !== null && <small className={pz.sub}>{money(p.price)} each</small>}</div>
+      <div className={pz.num} data-label="In stock"><NumberCell field value={p.quantity} canEdit={ctx.canStock} label={`How many ${p.name} are on hand`} onEdit={(on) => ctx.editing(on ? `prize:${p.id}` : null)} onSave={(v) => { if (v !== null && v !== p.quantity) ctx.setStock(p, v); }} />{ctx.heldBy(`prize:${p.id}`) && <small className={pz.editor}>{ctx.heldBy(`prize:${p.id}`)} is typing…</small>}{p.price !== null && <small className={pz.sub}>{money(p.price)} each</small>}</div>
       <div className={pz.num} data-label="Left"><span className={`${pz.chip} ${leftClass(p.left)}`}>{p.left}</span>{row.elsewhere > 0 && <small className={pz.sub}>{row.elsewhere} in other events</small>}</div>
       {hasEvent && <div className={pz.num} data-label="This event"><span>{row.here}</span>{row.here > 0 && p.price !== null && <small className={pz.sub}>{money(row.here * p.price)}</small>}</div>}
       <div className={pz.tools}>
@@ -84,13 +86,14 @@ export function PrizeRowView({ row, ctx, stations, hasEvent, open, onToggle, fla
       </div>
       {open && hasEvent && (
         <div className={pz.expand}>
+          {p.used_at.length > 0 && <p className={pz.muted}>Used at: {p.used_at.join(', ')}</p>}
           {row.lines.length === 0 && <p className={pz.muted}>Not in any station of this event yet.</p>}
           {row.lines.map((l) => {
             const st = stations.find((s) => s.id === l.station_id);
             return (
               <div key={l.id} className={`${pz.expandLine} ${ctx.flashing(`line:${l.id}`) ? pz.flash : ''}`}>
                 <span className={pz.expandName}>{st?.name ?? 'Station'}</span>
-                <NumberCell value={l.quantity} canEdit={ctx.manage && !(st && ctx.locked(st))} label={`How many ${p.name} for ${st?.name ?? 'the station'}`} onEdit={(on) => ctx.editing(on ? `line:${l.id}` : null)} onSave={(v) => { if (v !== null) ctx.setLine(l.station_id, p, v); }} />{ctx.heldBy(`line:${l.id}`) && <small className={pz.editor}>{ctx.heldBy(`line:${l.id}`)} is typing…</small>}
+                <NumberCell field value={l.quantity} canEdit={ctx.manage && !(st && ctx.locked(st))} label={`How many ${p.name} for ${st?.name ?? 'the station'}`} onEdit={(on) => ctx.editing(on ? `line:${l.id}` : null)} onSave={(v) => { if (v !== null) ctx.setLine(l.station_id, p, v); }} />{ctx.heldBy(`line:${l.id}`) && <small className={pz.editor}>{ctx.heldBy(`line:${l.id}`)} is typing…</small>}
               </div>
             );
           })}
@@ -107,11 +110,10 @@ export function PrizeRowView({ row, ctx, stations, hasEvent, open, onToggle, fla
 
 // ---- a station with its prizes (Group by Station) -----------------------------------------------------------------------------------------------------------------------------------
 export interface StationLine { id: string; quantity: number; p: PrizeRow; sponsor: string | null }
-export function StationBlock({ station, lines, ctx, addable, need, asked, onAdd, onFill, onEdit, onRemove, flash, summary, onAll }: {
+export function StationBlock({ station, lines, ctx, addable, need, asked, onAdd, onFill, onEdit, onRemove, flash, summary, onAll, open, onToggle }: {
   station: Station; lines: StationLine[]; ctx: PrizingCtx; addable: PrizeRow[]; need: Record<string, number>; asked: number; onAdd: (p: PrizeRow) => void; onFill?: () => void; onEdit: () => void; onRemove: () => void; flash: boolean;
-  summary: (stepId: string) => { done: number; total: number } | null; onAll?: (stepId: string) => void;
+  summary: (stepId: string) => { done: number; total: number } | null; onAll?: (stepId: string) => void; open: boolean; onToggle: () => void;
 }) {
-  const [open, setOpen] = useState(true);
   const total = lines.reduce((n, l) => n + l.quantity, 0);
   const lockedHere = ctx.locked(station);
   const canEdit = ctx.manage && !lockedHere;
@@ -119,7 +121,7 @@ export function StationBlock({ station, lines, ctx, addable, need, asked, onAdd,
   return (
     <section id={`station-${station.id}`} className={`${pz.block} ${flash || ctx.flashing(`station:${station.id}`) ? pz.flash : ''}`} aria-label={station.name}>
       <header className={pz.blockHead}>
-        <button type="button" className={pz.blockName} onClick={() => setOpen((v) => !v)} aria-expanded={open}>{open ? <ChevronDown size={15} aria-hidden="true" /> : <ChevronRight size={15} aria-hidden="true" />}<b>{station.name}</b></button>
+        <button type="button" className={pz.blockName} onClick={onToggle} aria-expanded={open}>{open ? <ChevronDown size={15} aria-hidden="true" /> : <ChevronRight size={15} aria-hidden="true" />}<b>{station.name}</b></button>
         <span className={pz.blockMeta}>{total} {total === 1 ? 'prize' : 'prizes'} · {money(valueOf(lines.map((l) => ({ quantity: l.quantity, price: l.p.price })))) || '$0'}{station.room ? ` · ${station.room}` : ''}</span>
         {asked > 0 && (short ? <span className={`${pz.badge} ${pz.badgeWarn}`}><TriangleAlert size={12} aria-hidden="true" /> Needs {short}</span> : <span className={`${pz.badge} ${pz.badgeOk}`}>Has what it asked for ({asked})</span>)}
         {lockedHere && <span className={pz.badge}>Locked</span>}
@@ -137,7 +139,7 @@ export function StationBlock({ station, lines, ctx, addable, need, asked, onAdd,
             return (
               <div key={l.id} className={`${pz.line} ${ctx.flashing(`line:${l.id}`) ? pz.flash : ''}`} style={{ '--steps': ctx.shownSteps.length } as CSSProperties}>
                 <div className={pz.rowMain}><b className={pz.lineName}>{l.p.name}</b><Tags p={l.p} sponsor={l.sponsor} /></div>
-                <div className={pz.num} data-label="How many"><NumberCell value={l.quantity} canEdit={canEdit} label={`How many ${l.p.name} for ${station.name}`} onEdit={(on) => ctx.editing(on ? `line:${l.id}` : null)} onSave={(v) => { if (v !== null) ctx.setLine(station.id, l.p, v); }} />{ctx.heldBy(`line:${l.id}`) && <small className={pz.editor}>{ctx.heldBy(`line:${l.id}`)} is typing…</small>}{l.p.price !== null && <small className={pz.sub}>{money(l.quantity * l.p.price)}</small>}</div>
+                <div className={pz.num} data-label="How many"><NumberCell field value={l.quantity} canEdit={canEdit} label={`How many ${l.p.name} for ${station.name}`} onEdit={(on) => ctx.editing(on ? `line:${l.id}` : null)} onSave={(v) => { if (v !== null) ctx.setLine(station.id, l.p, v); }} />{ctx.heldBy(`line:${l.id}`) && <small className={pz.editor}>{ctx.heldBy(`line:${l.id}`)} is typing…</small>}{l.p.price !== null && <small className={pz.sub}>{money(l.quantity * l.p.price)}</small>}</div>
                 <div className={pz.num} data-label="Left"><span className={`${pz.chip} ${leftClass(l.p.left)}`}>{l.p.left}</span></div>
                 {ctx.shownSteps.map((s) => (
                   <div key={s.id} className={pz.num} data-label={s.name}>
