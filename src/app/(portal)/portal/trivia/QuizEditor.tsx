@@ -43,7 +43,7 @@ function exportCsv(name: string, rows: QuestionRow[]) {
 }
 
 // One quiz, in two tabs: its Questions (settings, and the pool as a table you edit in place, Add Question for a new one) and its Games (every game of the quiz, results, delete). A question that is not finished is marked and never drawn.
-export default function QuizEditor({ slug, view, game, onBack, onHost, onView }: { slug: string; view: 'questions' | 'games'; game: string | null; onBack: () => void; onHost: (code: string) => void; onView: (view: 'questions' | 'games', game?: string | null) => void }) {
+export default function QuizEditor({ slug, view, game, onBack, onHost, onView, onRenamed }: { slug: string; view: 'questions' | 'games'; game: string | null; onBack: () => void; onHost: (code: string) => void; onView: (view: 'questions' | 'games', game?: string | null) => void; onRenamed: (slug: string) => void }) {
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [canManage, setCanManage] = useState(false);
   const [rows, setRows] = useState<QuestionRow[]>([]);
@@ -96,8 +96,8 @@ export default function QuizEditor({ slug, view, game, onBack, onHost, onView }:
   const setting = async (fields: Partial<Quiz>) => {
     if (!quiz) return;
     setQuiz({ ...quiz, ...fields });
-    const r = await call('PATCH', `/api/trivia/quizzes/${slug}`, fields);
-    if (!r.ok) { setError(r.error); void load(); }
+    const r = await call<{ quiz: Quiz }>('PATCH', `/api/trivia/quizzes/${slug}`, fields);
+    if (!r.ok) { setError(r.error); void load(); } else if (r.data.quiz.slug !== slug) onRenamed(r.data.quiz.slug);   // the address follows the name
   };
   const host = async () => {
     setBusy('host'); setError('');

@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { ImagePlus, X } from 'lucide-react';
+import { useFileDrop } from '@/lib/ui/useFileDrop';
 import { compressImage } from './compressImage';
 import styles from './trivia.module.css';
 
@@ -19,8 +20,9 @@ export function PicturePick({ url, label, disabled, busy, onPick, onClear, onPro
     setWorking(false);
     if (blob) onPick(blob); else onProblem(PICTURE_PROBLEM);
   };
+  const { over, dropProps } = useFileDrop((files) => void choose(files.find((f) => f.type.startsWith('image/'))), { disabled: disabled || busy || working });
   return (
-    <span className={styles.pic}>
+    <span className={styles.pic} data-dropping={over || undefined} {...dropProps}>
       <input ref={input} type="file" accept="image/*" hidden onChange={(e) => void choose(e.target.files?.[0])} />
       {url ? (
         // eslint-disable-next-line @next/next/no-img-element

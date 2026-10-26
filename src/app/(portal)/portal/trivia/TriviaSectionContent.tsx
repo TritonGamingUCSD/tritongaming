@@ -39,7 +39,7 @@ export default function TriviaSectionContent({ canHost }: { canHost: boolean }) 
       {!inQuiz && <SectionHeader title="Trivia" flush sub={canHost ? 'Quizzes for events: write a pool of questions, host a game on a big screen, and everyone plays on their phone.' : 'Join a game with its code, and see how you did.'} />}
       {!inQuiz && canHost && <SectionTabs label="Trivia" value={route.tab} onChange={pick} tabs={tabs} />}
       {route.tab === 'quizzes' && (route.quiz
-        ? <QuizEditor slug={route.quiz} view={route.view} game={route.game} onBack={() => go({ tab: 'quizzes', quiz: null, view: 'questions', game: null })} onHost={(code) => go({ tab: 'host', code })} onView={(view, game = null) => go({ tab: 'quizzes', quiz: route.quiz, view, game })} />
+        ? <QuizEditor slug={route.quiz} view={route.view} game={route.game} onBack={() => go({ tab: 'quizzes', quiz: null, view: 'questions', game: null })} onHost={(code) => go({ tab: 'host', code })} onView={(view, game = null) => go({ tab: 'quizzes', quiz: route.quiz, view, game })} onRenamed={(quiz) => go({ tab: 'quizzes', quiz, view: route.view, game: route.game })} />
         : <QuizzesTab onOpen={(quiz, view = 'questions') => go({ tab: 'quizzes', quiz, view, game: null })} onHost={(code) => go({ tab: 'host', code })} />)}
       {route.tab === 'play' && <PlayTab onOpen={(code) => go({ tab: 'play', code })} />}
     </div>

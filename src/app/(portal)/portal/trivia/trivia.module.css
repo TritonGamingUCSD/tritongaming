@@ -452,7 +452,8 @@ button.ans:focus-visible { outline: 4px solid var(--paper); outline-offset: 3px;
 /* The question table grouped by category: a header per category you open and close */
 .catGroup { border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.12); }
 .catGroup:last-child { border-bottom: none; }
-.catHead { all: unset; box-sizing: border-box; width: 100%; display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 0.8rem; cursor: pointer; background: rgba(var(--pp-ink-rgb), 0.05); font-size: 0.92rem; }
+.catHead { appearance: none; box-sizing: border-box; width: 100%; display: flex; align-items: center; gap: 0.6rem; margin: 0; padding: 0.55rem 0.8rem; border: 0; border-radius: 0; cursor: pointer; background: rgba(var(--pp-ink-rgb), 0.05); color: inherit; font: inherit; font-size: 0.92rem; text-align: left; }
+.catHead b { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
 .catHead:hover { background: rgba(var(--pp-ink-rgb), 0.1); }
 .catHead:focus-visible { outline: 2px solid var(--pp-ink); outline-offset: -2px; }
 .catHead svg { flex: none; transition: transform 0.15s; }

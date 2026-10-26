@@ -1,3 +1,4 @@
+import { slugify } from '@/lib/core/slug';
 import { NextResponse } from 'next/server';
 import { authorizeTrivia, findQuiz, quizGate, QUIZ_COLUMNS } from '@/lib/trivia/server';
 import { removeImages } from './image/route';
@@ -25,7 +26,21 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   { const lock = await quizGate(auth, quiz); if (lock) return lock; }
   const b = await request.json().catch(() => ({}));
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
-  if (typeof b.name === 'string') { const name = b.name.trim().slice(0, 80); if (!name) return NextResponse.json({ error: 'Give the quiz a name.' }, { status: 400 }); patch.name = name; }
+  if (typeof b.name === 'string') { const name = b.name.trim().slice(0, 80); if (!name) return NextResponse.json({ error: 'Give the quiz a name.' }, { status: 400 }); patch.name = name;
+    if (name !== quiz.name) {
+      const base = slugify(name).slice(0, 50) || 'quiz';
+      for (let i = 0; i < 6; i++) {
+        const slug = i === 0 ? base : `${base}-${i + 1}`;
+        if (slug === quiz.slug) break;
+        const taken = await auth.svc.from('trivia_quizzes').select('id').eq('slug', slug).neq('id', quiz.id).maybeSingle();
+        const old = await auth.svc.from('trivia_quiz_slugs').select('quiz_id').eq('slug', slug).maybeSingle();
+        if (taken.data || (old.data && old.data.quiz_id !== quiz.id)) continue;
+        await auth.svc.from('trivia_quiz_slugs').upsert({ slug: quiz.slug, quiz_id: quiz.id });
+        await auth.svc.from('trivia_quiz_slugs').delete().eq('slug', slug);
+        patch.slug = slug; break;
+      }
+    }
+  }
   if (b.per_game !== undefined) { const n = Math.round(Number(b.per_game)); if (!Number.isFinite(n) || n < 1 || n > 100) return NextResponse.json({ error: 'A game asks between 1 and 100 questions.' }, { status: 400 }); patch.per_game = n; }
   if (b.block_winners !== undefined) { if (typeof b.block_winners !== 'boolean') return NextResponse.json({ error: 'That setting is on or off.' }, { status: 400 }); patch.block_winners = b.block_winners; }
   if (b.open_to_guests !== undefined) { if (typeof b.open_to_guests !== 'boolean') return NextResponse.json({ error: 'That setting is on or off.' }, { status: 400 }); patch.open_to_guests = b.open_to_guests; }

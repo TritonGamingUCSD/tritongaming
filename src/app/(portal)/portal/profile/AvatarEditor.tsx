@@ -5,6 +5,7 @@ import { useRef, useState } from 'react';
 import Image from 'next/image';
 import { Camera } from 'lucide-react';
 import { uploadCroppedImage, uploadImageToStorage, ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES } from '@/lib/storage/imageUpload';
+import { useFileDrop } from '@/lib/ui/useFileDrop';
 import ImageCropModal from '@/components/ImageCropModal/ImageCropModal';
 import styles from './avatarEditor.module.css';
 
@@ -22,9 +23,10 @@ export default function AvatarEditor({ value, onChange, fallback, bucket, pathPr
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
-  const [dragging, setDragging] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const { over: dragging, dropProps } = useFileDrop((files) => { const f = files.find((x) => x.type.startsWith('image/')) ?? files[0]; if (f) void handleFile(f); }, { disabled: uploading });
 
   async function handleFile(file: File) {
     setError('');
@@ -54,9 +56,7 @@ export default function AvatarEditor({ value, onChange, fallback, bucket, pathPr
         type="button"
         className={`${styles.avatar} ${dragging ? styles.dragging : ''}`}
         onClick={() => inputRef.current?.click()}
-        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={(e) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files?.[0]; if (f) handleFile(f); }}
+        {...dropProps}
         disabled={uploading}
         aria-label="Change profile picture"
       >
@@ -75,7 +75,7 @@ export default function AvatarEditor({ value, onChange, fallback, bucket, pathPr
       )}
       </div>
 
-      <p className={styles.hint}>Click the circle or drop a picture on it.</p>
+      <p className={styles.hint}>Click the circle, drop a picture on it, or paste one.</p>
       {error && <p className={styles.error}>{error}</p>}
 
       <input

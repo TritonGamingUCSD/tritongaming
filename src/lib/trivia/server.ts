@@ -91,7 +91,12 @@ export const QUIZ_COLUMNS = 'id, slug, name, per_game, block_winners, restricted
 export async function findQuiz(svc: SupabaseClient, idOrSlug: string): Promise<QuizRec | null> {
   const col = UUID.test(idOrSlug) ? 'id' : 'slug';
   const { data } = await svc.from('trivia_quizzes').select(QUIZ_COLUMNS).eq(col, idOrSlug).maybeSingle();
-  return data as QuizRec | null;
+  if (data || col === 'id') return data as QuizRec | null;
+  // A slug the quiz had before it was renamed still opens it.
+  const old = await svc.from('trivia_quiz_slugs').select('quiz_id').eq('slug', idOrSlug).maybeSingle();
+  if (!old.data) return null;
+  const { data: quiz } = await svc.from('trivia_quizzes').select(QUIZ_COLUMNS).eq('id', old.data.quiz_id).maybeSingle();
+  return quiz as QuizRec | null;
 }
 
 type Who = { user: { id: string }; svc: SupabaseClient; isAdmin: boolean };

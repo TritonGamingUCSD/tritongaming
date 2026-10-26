@@ -7,6 +7,7 @@ import type { QRCodeOptions, QRDotsType, QRCornersSquareType, QRCornersDotType }
 import { QR_PRESETS, matchingPreset } from '@/lib/qr/qrPresets';
 import type { QRDivisionLogo } from './QRStudioClient';
 import styles from './qrstudio.module.css';
+import { useFileDrop } from '@/lib/ui/useFileDrop';
 import Select from '@/components/ui/Select';
 import NumberInput from '@/components/ui/NumberInput';
 
@@ -95,9 +96,10 @@ function ColorField({ label, value, onChange, disabled }: { label: string; value
 // Drop zone for a custom center icon: drag an image in or click to browse; once one is set it shows
 // a preview with Replace / Remove.
 function IconDropzone({ options, setOptions }: { options: QRCodeOptions; setOptions: (o: QRCodeOptions) => void }) {
-  const [over, setOver] = useState(false);
   const [error, setError] = useState('');
   const has = options.icon === 'custom' && !!options.customIcon;
+
+  const { over, dropProps } = useFileDrop((files) => take(files[0]));
 
   function take(file: File | undefined) {
     setError('');
@@ -111,9 +113,7 @@ function IconDropzone({ options, setOptions }: { options: QRCodeOptions; setOpti
     <div className={styles.dropWrap}>
       <label
         className={`${styles.dropzone} ${over ? styles.dropzoneOver : ''} ${has ? styles.dropzoneHas : ''}`}
-        onDragOver={(e) => { e.preventDefault(); setOver(true); }}
-        onDragLeave={() => setOver(false)}
-        onDrop={(e) => { e.preventDefault(); setOver(false); take(e.dataTransfer.files?.[0]); }}
+        {...dropProps}
       >
         <input className={styles.srOnly} type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" onChange={(e) => { take(e.target.files?.[0]); e.target.value = ''; }} />
         {has ? (
@@ -122,7 +122,7 @@ function IconDropzone({ options, setOptions }: { options: QRCodeOptions; setOpti
             <img src={options.customIcon!} alt="Your icon" className={styles.dropPreview} />
             <span className={styles.dropText}>
               <span className={styles.dropTitle}>Your icon is in the center</span>
-              <span className={styles.dropSub}>Click or drop to replace it</span>
+              <span className={styles.dropSub}>Click, drop or paste to replace it</span>
             </span>
           </>
         ) : (
