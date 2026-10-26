@@ -16,7 +16,7 @@ const AWAY_MS = 90_000;      // coming back to the app after this long refreshes
 // The finger's distance becomes the bubble's: 1:1 at first, then heavier (rubber band), never past MAX.
 const resist = (dy: number) => MAX * (1 - Math.exp(-dy / (MAX * 0.9)));
 
-// An app added to the home screen has no reload: this gives it the pull-down at the top of a page (only there; browsers have their own), and refreshes quietly when the app is opened again after a while
+// An app added to the home screen has no reload: this gives it the pull-down at the top of a page (only there; phone browsers have their own); on a desktop (any browser) the same happens by scrolling up once more at the top, and refreshes quietly when the app is opened again after a while
 // (never while a form has unsaved changes). Both use the portal's refresh (lib/ui/refreshPortal.ts), which keeps the same page open.
 // The whole page follows the finger down (like a phone's own lists), and a bubble in the gap above it fills a ring as you pull, turns yellow and ticks when letting go would refresh; then the page waits
 // part-way down while the bubble spins until it has the new data, and slides back up. Both are moved straight on the elements (no re-render per touch move), so they keep up with the finger.
@@ -29,7 +29,7 @@ export default function PullToRefresh() {
     if (!el) return;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let phase: 'idle' | 'pulling' | 'refreshing' = 'idle';
-    let y0 = 0, x0 = 0, locked: 'v' | 'h' | null = null, pull = 0, armed = false, frame = 0, shownAt = 0, giveUp = 0, hideTimer = 0;
+    let y0 = 0, x0 = 0, locked: 'v' | 'h' | 'w' | null = null, pull = 0, armed = false, frame = 0, shownAt = 0, giveUp = 0, hideTimer = 0;
     let hiddenAt = 0;
 
     // One place that draws it all: how far the whole page is pulled down (px; the bubble sits in the gap that opens above it), how full the ring is (0 to 1), and whether the finger is moving it (no easing) or it is settling (eased).
@@ -82,13 +82,8 @@ export default function PullToRefresh() {
       window.clearTimeout(hideTimer);
       y0 = e.touches[0].clientY; x0 = e.touches[0].clientX; locked = null; pull = 0; armed = false; phase = 'pulling';
     };
-    const move = (e: TouchEvent) => {
-      if (phase !== 'pulling') return;
-      const dy = e.touches[0].clientY - y0, dx = e.touches[0].clientX - x0;
-      if (!locked && (Math.abs(dy) > 8 || Math.abs(dx) > 8)) locked = Math.abs(dy) > Math.abs(dx) && dy > 0 ? 'v' : 'h';   // sideways swipes and upward scrolls are not a pull
-      if (locked === 'h' || window.scrollY > 0) { rest(); return; }
-      if (dy <= 0) { if (pull > 0) { pull = 0; cancelAnimationFrame(frame); frame = requestAnimationFrame(() => draw(0, 0, true)); } return; }
-      if (e.cancelable) e.preventDefault();   // the page itself must not rubber-band under the bubble
+    // The finger's (or wheel's) distance becomes the page's: the bubble's state, the tick at the point of no return, and the drawing.
+    const applyPull = (dy: number) => {
       pull = resist(dy);
       if (el.dataset.state === 'idle' || el.dataset.state === 'done') setState('pulling');
       const nowArmed = pull >= TRIGGER;
@@ -96,12 +91,43 @@ export default function PullToRefresh() {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => draw(pull, pull / TRIGGER, true));
     };
+    const move = (e: TouchEvent) => {
+      if (phase !== 'pulling') return;
+      const dy = e.touches[0].clientY - y0, dx = e.touches[0].clientX - x0;
+      if (!locked && (Math.abs(dy) > 8 || Math.abs(dx) > 8)) locked = Math.abs(dy) > Math.abs(dx) && dy > 0 ? 'v' : 'h';   // sideways swipes and upward scrolls are not a pull
+      if (locked === 'h' || window.scrollY > 0) { rest(); return; }
+      if (dy <= 0) { if (pull > 0) { pull = 0; cancelAnimationFrame(frame); frame = requestAnimationFrame(() => draw(0, 0, true)); } return; }
+      if (e.cancelable) e.preventDefault();   // the page itself must not rubber-band under the bubble
+      applyPull(dy);
+    };
     const end = () => {
       if (phase !== 'pulling') return;
       cancelAnimationFrame(frame);
       if (armed && confirmDiscardUnsaved()) beginRefresh();
       else rest();   // not far enough (or "keep my changes"): it springs back
     };
+    // Desktop: scrolling up once more at the very top of the page (a trackpad's two-finger swipe, or the wheel) pulls the page down the same way, and refreshes when the scrolling stops past the point of no return.
+    // Only a scroll that BEGINS at the top counts (a pause of a third of a second starts a new one), so flicking up to the top and overshooting never refreshes by accident.
+    // The wheel moves less than a finger would (half), so one notch of a mouse wheel is not enough.
+    let wheelAt = 0, wheelDy = 0, wheelTimer = 0;
+    const wheel = (e: WheelEvent) => {
+      if (e.ctrlKey || phase === 'refreshing' || (phase === 'pulling' && locked !== 'w')) return;   // a pinch-zoom, a refresh in progress, or a finger pull
+      const now = performance.now(), fresh = now - wheelAt > 300;
+      wheelAt = now;
+      if (phase !== 'pulling') {
+        const t = e.target instanceof Element ? e.target : null;
+        if (!fresh || e.deltaY >= 0 || window.scrollY > 0 || !t || t.closest('[role=dialog],[role=alertdialog],input,textarea,select,[contenteditable],[data-no-pull]') || scrolledInside(t)) return;
+        window.clearTimeout(hideTimer);
+        wheelDy = 0; pull = 0; armed = false; locked = 'w'; phase = 'pulling';
+      }
+      wheelDy = Math.max(0, wheelDy - e.deltaY * 0.5);
+      if (wheelDy === 0) { locked = null; rest(); return; }   // scrolled back down past where it began: ordinary scrolling again
+      if (e.cancelable) e.preventDefault();
+      applyPull(wheelDy);
+      window.clearTimeout(wheelTimer);
+      wheelTimer = window.setTimeout(() => { locked = null; end(); }, 180);   // the scrolling has stopped: this is "letting go"
+    };
+    document.addEventListener('wheel', wheel, { passive: false });
     if (standalone) {
       document.addEventListener('touchstart', start, { passive: true });
       document.addEventListener('touchmove', move, { passive: false });
@@ -111,9 +137,9 @@ export default function PullToRefresh() {
     rest();
     if (reduced) el.dataset.reduced = '1';
     return () => {
-      window.clearTimeout(giveUp); window.clearTimeout(hideTimer); window.clearTimeout(clearTimer); cancelAnimationFrame(frame); delete root.dataset.ptr; root.style.removeProperty('--ptr-pull');
+      window.clearTimeout(giveUp); window.clearTimeout(hideTimer); window.clearTimeout(clearTimer); window.clearTimeout(wheelTimer); cancelAnimationFrame(frame); delete root.dataset.ptr; root.style.removeProperty('--ptr-pull');
       window.removeEventListener(REFRESHED_EVENT, finish);
-      document.removeEventListener('visibilitychange', onVis);
+      document.removeEventListener('visibilitychange', onVis); document.removeEventListener('wheel', wheel);
       document.removeEventListener('touchstart', start); document.removeEventListener('touchmove', move);
       document.removeEventListener('touchend', end); document.removeEventListener('touchcancel', end);
     };
