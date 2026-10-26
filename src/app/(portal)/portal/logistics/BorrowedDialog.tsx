@@ -46,14 +46,14 @@ export default function BorrowedDialog({ plan, catalog, data, borrowed, defaultK
       tag, type, owner_kind: kind, sponsor_id: kind === 'sponsor' ? sponsorId || null : null, owner_user_id: kind === 'officer' ? officerId || null : null, owner_note: note, games,
       kit: parts.map((item) => prev.get(item.toLowerCase()) ?? { item, qty: 1, missing: false }),
     };
-    const ok = borrowed ? await plan.act('/borrowed', 'PATCH', { borrowed_id: borrowed.id, ...body }) : await plan.act('/borrowed', 'POST', body);
+    const ok = borrowed ? await plan.act(`/loaners/${borrowed.id}`, 'PATCH', { ...body }) : await plan.act('/loaners', 'POST', body);
     setBusy(false);
     if (ok) onClose(); else setProblem('That didn’t save. The message at the top of the page says why.');
   }
   async function remove() {
     if (!borrowed || !(await confirmHold({ title: `Remove ${borrowed.tag}?`, message: 'It is taken out of this event, with any steps recorded for it.', confirmLabel: 'Hold to remove' }))) return;
     setBusy(true);
-    const ok = await plan.act('/borrowed', 'DELETE', { borrowed_id: borrowed.id });
+    const ok = await plan.act(`/loaners/${borrowed.id}`, 'DELETE');
     setBusy(false);
     if (ok) onClose();
   }

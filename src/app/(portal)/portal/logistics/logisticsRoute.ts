@@ -1,57 +1,83 @@
-// Where you are in Logistics, as an address: /portal/logistics/<tab>/<subtab>/<detail>.
-//   /portal/logistics                  the list of events        /portal/logistics/<event>/requests-devices | requests-prizing   what each team asked for
-//   /portal/logistics/<event>/allocation-<what>   devices | sponsor-loaners | officer-loaners         /portal/logistics/<event>/event-day-devices
-//   /portal/logistics/prizing[/<event>]           every prize and what each station of an event gets (the event is picked on the page; "stock" = no event)
-//   inventory/devices   what is in storage         tools/<section>    event-steps | bundles | lists
-// The old addresses (events/<event>/…, device, prizing … with or without ?view=day, equipment, plans, a plan's long ID) still open the right place and are tidied to the new ones.
+// Where you are in Logistics, as an address: /portal/logistics/<event or place>/<page>/<detail>, the event first.
+//   /portal/logistics                                    all events
+//   /portal/logistics/<event>                            that event (its requests)
+//   /portal/logistics/<event>/requests[/prizes]          what each team asked for, for devices or for prizes
+//   /portal/logistics/<event>/loaners/sponsor|officer    the sponsor and officer loaners of the event
+//   /portal/logistics/<event>/prizing                    every prize and what each station of the event gets
+//   /portal/logistics/<event>/devices[/event-day|/planning]   every device and where each goes; ?view=type,open (the grouping, unfinished only)
+//   /portal/logistics/stock/prizes | stock/devices       the stock, no event
+//   /portal/logistics/prizing | devices                  the page, on today's (or the next) event
+// The old addresses (page first like prizing/<event>, events/<event>/…, requests-devices, allocation-…, event-day-…, equipment, inventory, tools, a plan's long ID) still open the right place and are tidied to these.
+import { isDeviceGroup, type DeviceGroup } from '@/lib/logistics/deviceGroups';
 
 export const EVENT_PAGES = ['device', 'sponsor-loaners', 'officer-loaners', 'requests', 'requests-prizing'] as const;
 export type EventPage = (typeof EVENT_PAGES)[number];
-export const TOOLS_SECTIONS = ['event-steps', 'bundles', 'lists'] as const;
-export type ToolsSection = (typeof TOOLS_SECTIONS)[number];
 
 export type Route =
-  | { tab: 'events'; plan: string | null; page: EventPage; day?: boolean; byType?: boolean; openOnly?: boolean }
+  | { tab: 'events'; plan: string | null; page: EventPage }
   | { tab: 'prizing'; plan: string | null }
-  | { tab: 'inventory'; sub: 'devices' }
-  | { tab: 'tools'; sub: ToolsSection };
+  | { tab: 'devices'; plan: string | null; day?: boolean; group?: DeviceGroup; openOnly?: boolean };   // day: true = Event Day, false = Planning, left out = Event Day on the event's own day
 
-const oneOf = <T extends string>(list: readonly T[], v: string | undefined | null, fallback: T): T => (list as readonly string[]).includes(v ?? '') ? (v as T) : fallback;
+// First words of an address that are not an event's name.
+const RESERVED: readonly string[] = ['events', 'plans', 'inventory', 'equipment', 'prizes', 'prizing', 'devices', 'stock', 'tools', 'sponsors'];
 
-const TAB_WORDS: readonly string[] = ['events', 'plans', 'inventory', 'equipment', 'prizes', 'prizing', 'tools', 'sponsors'];
+// The grouping and "unfinished only" kept in ?view=type,open (the word of the grouping; no grouping word means by station).
+const viewOf = (view?: string) => {
+  const w = (view ?? '').split(',');
+  return { group: (w.find((x) => isDeviceGroup(x) && x !== 'station') as DeviceGroup | undefined), openOnly: w.includes('open') };
+};
+const devices = (plan: string | null, day: boolean | undefined, view?: string): Route => { const v = viewOf(view); return { tab: 'devices', plan, ...(day !== undefined ? { day } : {}), ...(v.group ? { group: v.group } : {}), ...(v.openOnly ? { openOnly: true } : {}) }; };
+const dayOf = (word: string | undefined, view?: string): boolean | undefined => (word === 'event-day' ? true : word === 'planning' ? false : view?.split(',').includes('day') ? true : undefined);
 
-// An event's page from its address word: requests, allocation-devices, event-day-prizing… (the older bare words device / prizing, with ?view=day, still read).
-function eventRoute(plan: string, d: string | undefined, view?: string): Route {
-  const w = d ?? '';
-  // The old prize pages (allocation, event day, sponsor prizing) are all the Prizing page now.
-  if (/(^|-)prizing$/.test(w) && w !== 'requests-prizing') return { tab: 'prizing', plan };
-  const day = w.startsWith('event-day-') || (w === 'device' && view === 'day');
-  const word = w.replace(/^(allocation|event-day)-?/, '').replace(/^devices?$/, 'device').replace(/^sponsor-items$/, 'sponsor-loaners');
-  const page = oneOf(EVENT_PAGES, w === 'requests' || w === 'requests-devices' ? 'requests' : w === 'requests-prizing' ? 'requests-prizing' : word, 'device');
-  return { tab: 'events', plan, page, ...(day && page === 'device' ? { day: true } : {}), ...(page === 'device' && view?.split(',').includes('type') ? { byType: true } : {}), ...(day && page === 'device' && view?.split(',').includes('open') ? { openOnly: true } : {}) };
+// An event's page from its address words (the new ones, and every old one).
+function eventRoute(plan: string, word: string | undefined, detail: string | undefined, view?: string): Route {
+  const w = word ?? '';
+  if (w === 'prizing' || (/(^|-)prizing$/.test(w) && w !== 'requests-prizing')) return { tab: 'prizing', plan };
+  if (w === 'devices' || w === 'device') return devices(plan, dayOf(detail, view), view);
+  if (/^(allocation|event-day)-devices?$/.test(w) || w === 'allocation' || w === 'event-day') return devices(plan, w.startsWith('event-day') ? true : w === 'allocation' || w.startsWith('allocation') ? false : undefined, view);
+  if (w === '') return { tab: 'events', plan, page: 'requests' };
+  if (w === 'requests') return { tab: 'events', plan, page: detail === 'prizes' ? 'requests-prizing' : 'requests' };
+  if (w === 'requests-devices') return { tab: 'events', plan, page: 'requests' };
+  if (w === 'requests-prizing') return { tab: 'events', plan, page: 'requests-prizing' };
+  if (w === 'loaners') return { tab: 'events', plan, page: detail === 'officer' ? 'officer-loaners' : 'sponsor-loaners' };
+  const old = w.replace(/^(allocation|event-day)-?/, '').replace(/^sponsor-items$/, 'sponsor-loaners');
+  if (old === 'sponsor-loaners' || old === 'officer-loaners') return { tab: 'events', plan, page: old };
+  return { tab: 'events', plan, page: 'requests' };
 }
 
-// Reads the address. `canManage` says whether Tools may be used (anyone else is taken to Events).
+// Reads the address. `canManage` is only kept for the old Tools addresses, which now open the gear's pages on Devices or Prizing.
 export function parseRoute(tab: string | undefined, subtab: string | undefined, detail: string | undefined, canManage: boolean, view?: string): Route {
-  if (tab && !TAB_WORDS.includes(tab)) return eventRoute(tab, subtab, view);   // /<event>/<page>
+  void canManage;
+  if (tab && !RESERVED.includes(tab)) return eventRoute(tab, subtab, detail, view);   // /<event>/<page>
   switch (tab) {
-    case 'prizing': return { tab: 'prizing', plan: subtab ?? null };
-    case 'inventory': return subtab === 'prizes' ? { tab: 'prizing', plan: 'stock' } : { tab: 'inventory', sub: 'devices' };
-    case 'equipment': return { tab: 'inventory', sub: 'devices' };
+    case 'prizing': return { tab: 'prizing', plan: subtab ?? null };   // bare = today's event; /prizing/<event> is the old page-first form
+    case 'devices': return devices(subtab ?? null, dayOf(detail, view), view);
+    case 'stock': return subtab === 'devices' ? devices('stock', undefined, view) : { tab: 'prizing', plan: 'stock' };
+    case 'inventory': return subtab === 'prizes' ? { tab: 'prizing', plan: 'stock' } : devices('stock', undefined, view);
+    case 'equipment': return devices('stock', undefined, view);
     case 'prizes': return { tab: 'prizing', plan: 'stock' };
-    case 'tools': return canManage ? (subtab === 'sponsors' || subtab === 'prizes' ? { tab: 'prizing', plan: null } : { tab: 'tools', sub: oneOf(TOOLS_SECTIONS, subtab, 'event-steps') }) : { tab: 'events', plan: null, page: 'device' };
+    case 'tools': return subtab === 'sponsors' || subtab === 'prizes' ? { tab: 'prizing', plan: null } : devices(null, undefined, view);
     case 'sponsors': return { tab: 'prizing', plan: null };
-    case 'events': case 'plans': default: return subtab ? eventRoute(subtab, detail, view) : { tab: 'events', plan: null, page: 'device' };
+    case 'events': case 'plans': default: return subtab ? eventRoute(subtab, detail, undefined, view) : { tab: 'events', plan: null, page: 'requests' };
   }
 }
 
 // The address params for a place (null removes a param).
 export function routeParams(r: Route): { tab: string | null; subtab: string | null; detail: string | null; view: string | null } {
+  const none = { tab: null, subtab: null, detail: null, view: null };
   if (r.tab === 'events') {
-    if (!r.plan) return { tab: null, subtab: null, detail: null, view: null };
-    const what = r.page === 'device' ? 'devices' : r.page;
-    return { tab: r.plan, subtab: r.page === 'requests' ? 'requests-devices' : r.page === 'requests-prizing' ? 'requests-prizing' : `${r.day && r.page === 'device' ? 'event-day' : 'allocation'}-${what}`, detail: null, view: [r.byType && r.page === 'device' ? 'type' : '', r.openOnly && r.day && r.page === 'device' ? 'open' : ''].filter(Boolean).join(',') || null };
+    if (!r.plan) return none;
+    switch (r.page) {
+      case 'requests': return { tab: r.plan, subtab: 'requests', detail: null, view: null };
+      case 'requests-prizing': return { tab: r.plan, subtab: 'requests', detail: 'prizes', view: null };
+      case 'sponsor-loaners': return { tab: r.plan, subtab: 'loaners', detail: 'sponsor', view: null };
+      case 'officer-loaners': return { tab: r.plan, subtab: 'loaners', detail: 'officer', view: null };
+      default: return { tab: r.plan, subtab: 'devices', detail: null, view: null };
+    }
   }
-  if (r.tab === 'prizing') return { tab: 'prizing', subtab: r.plan, detail: null, view: null };
-  return { tab: r.tab, subtab: r.sub, detail: null, view: null };
+  if (r.tab === 'prizing') return !r.plan ? { ...none, tab: 'prizing' } : r.plan === 'stock' ? { ...none, tab: 'stock', subtab: 'prizes' } : { ...none, tab: r.plan, subtab: 'prizing' };
+  const view = [r.group && r.group !== 'station' ? r.group : '', r.openOnly ? 'open' : ''].filter(Boolean).join(',') || null;
+  if (!r.plan) return { ...none, tab: 'devices', view };
+  if (r.plan === 'stock') return { ...none, tab: 'stock', subtab: 'devices', view };
+  return { tab: r.plan, subtab: 'devices', detail: r.day === undefined ? null : r.day ? 'event-day' : 'planning', view };
 }

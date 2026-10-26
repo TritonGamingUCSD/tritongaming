@@ -16,7 +16,7 @@ export function StationDialog({ plan, station, onClose }: { plan: PlanApi; stati
   const save = async () => {
     if (!name.trim()) return;
     setBusy(true);
-    const ok = station ? await plan.act('/stations', 'PATCH', { station_id: station.id, name, room }) : await plan.act('/stations', 'POST', { names: name.split(/\n|,/).map((s) => s.trim()).filter(Boolean), room });
+    const ok = station ? await plan.act(`/stations/${station.id}`, 'PATCH', { name, room }) : await plan.act('/stations', 'POST', { names: name.split(/\n|,/).map((s) => s.trim()).filter(Boolean), room });
     setBusy(false);
     if (ok) onClose();
   };

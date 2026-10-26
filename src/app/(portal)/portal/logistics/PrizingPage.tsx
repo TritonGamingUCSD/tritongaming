@@ -10,11 +10,13 @@ import { confirmHold } from '@/lib/ui/confirmHold';
 import { RowMenu } from './RowMenu';
 import { ANY_SIZE, suggestPrizes, stepCeiling, type PrizeStepDef } from '@/lib/logistics/prizes';
 import { GROUPS, STATUS_LABEL, STATUS_ORDER, eventHolds, groupBy, isGroupBy, money, prizingFixes, stationNeed, statusOf, valueOf, type Fix, type GroupBy } from '@/lib/logistics/prizing';
-import { AddStationDialog, CloseEventDialog, HistoryDialog, PrizeDialog, PrizingSettings } from './PrizingDialogs';
+import { AddStationDialog, HistoryDialog, PrizeDialog, PrizingSettings } from './PrizingDialogs';
 import { FixStrip, PrizeRowView, StationBlock, type PrizingCtx, type Row } from './PrizingParts';
 import { StationDialog } from './PlanDialogs';
 import { usePlan, usePlanList, type PlanSummary, type Station } from './usePlans';
 import { useLiveTeam } from './useLiveTeam';
+import { useCloseEvent } from './CloseEvent';
+import { autoPlan, eventLabel } from './eventPick';
 import type { LiveEnvelope } from '@/lib/logistics/live';
 import { usePrizes, type PrizeRow } from './usePrizes';
 import type { Catalog, LogisticsApi } from './useLogistics';
@@ -32,13 +34,6 @@ const readView = (): View => {
   } catch { /* nothing remembered */ }
   return DEFAULT_VIEW;
 };
-
-// The event the page opens on: the one on today, else the next one coming, else the latest.
-function autoPlan(plans: PlanSummary[], today: string): PlanSummary | null {
-  const open = plans.filter((p) => p.status === 'draft');
-  return open.find((p) => p.starts_on <= today && today <= p.ends_on) ?? [...open].filter((p) => p.starts_on >= today).sort((a, b) => a.starts_on.localeCompare(b.starts_on))[0] ?? open[0] ?? plans[0] ?? null;
-}
-const dates = (p: PlanSummary) => (p.starts_on === p.ends_on ? p.starts_on : `${p.starts_on} to ${p.ends_on}`);
 
 // Prizing: every prize and the event it is going to on one page. The table is the stock (change the number on hand right in it) and, with an event picked, what each station of that event gets (change those
 // numbers too: moving 5 from one station to another is lowering one number and raising the other). The "Fix these" strip says what is wrong, "Group by" shows it by station, sponsor, size, type or status, and the
@@ -60,7 +55,6 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [flash, setFlash] = useState('');
   const [dialog, setDialog] = useState<null | { kind: 'prize'; prize: PrizeRow | null } | { kind: 'history'; prize: PrizeRow } | { kind: 'settings' } | { kind: 'station'; station: Station | null } | { kind: 'addStation' }>(null);
-  const [closing, setClosing] = useState<null | { lines: { station: string; prize: string; quantity: number }[]; busy: boolean }>(null);
   const [filling, setFilling] = useState('');
   const [shortOf, setShortOf] = useState<Record<string, string>>({});
   const [flashKeys, setFlashKeys] = useState<Set<string>>(new Set());
@@ -134,17 +128,10 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
   }
   async function removeStation(s: Station) {
     if (!(await confirmHold({ title: `Remove ${s.name}?`, message: 'Its prizes are taken off it and counted back as free. If it also has devices, it stays on the Devices page.', confirmLabel: 'Hold to remove' }))) return;
-    await plan.act('/stations', 'DELETE', { station_id: s.id });
+    await plan.act(`/stations/${s.id}`, 'DELETE');
     void prizes.reload();
   }
-  async function closeEvent(how?: 'returned' | 'given') {
-    if (!chosen) return;
-    const r = await list.close(chosen.id, how);
-    if (r.ok) { setClosing(null); void plan.reload(); void prizes.reload(); return; }
-    if (r.uncounted?.length) { setClosing({ lines: r.uncounted, busy: false }); return; }
-    setClosing(null);
-  }
-  async function reopenEvent() { if (chosen && (await list.update(chosen.id, { status: 'draft' }))) { void plan.reload(); void prizes.reload(); } }
+  const closer = useCloseEvent(list, () => { void plan.reload(); void prizes.reload(); });
   const focus = useCallback((f: Fix['focus']) => {
     const id = f.kind === 'prize' ? `prize-${f.id}` : `station-${f.id}`;
     if (f.kind === 'prize') change({ group: group === 'station' ? 'status' : group });
@@ -202,7 +189,6 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
   }, [group, visibleRows, sizeOrder]);
   const stockValue = valueOf((prizes.rows ?? []).map((p) => ({ quantity: p.quantity, price: p.price })));
   const hereValue = valueOf(lines.map((l) => ({ quantity: l.quantity, price: l.prize.price })));
-  const eventLabel = (p: PlanSummary) => `${p.name} · ${dates(p)}${p.status === 'closed' ? ' (closed)' : ''}`;
 
   if (!list.plans || !prizes.rows) return <div className={styles.tab}>{list.error || prizes.error ? <Notice tone="error">{list.error || prizes.error}</Notice> : <Loading variant="inline" label="Loading…" />}</div>;
   return (
@@ -228,7 +214,7 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
           </span>
           {data.canManage && <Button className={styles.addBtn} onClick={() => setDialog({ kind: 'prize', prize: null })}><Plus size={15} aria-hidden="true" /> Add<span className={styles.wide}>Prize</span></Button>}
           {data.canManage && <button type="button" className={pz.gear} onClick={() => setDialog({ kind: 'settings' })} aria-label="Prizing settings" title="Sponsors, sizes and steps"><Settings2 size={17} aria-hidden="true" /></button>}
-          {data.canManage && hasEvent && <RowMenu label="This event" items={[eventClosed ? { label: 'Reopen This Event', onClick: () => void reopenEvent() } : { label: 'Close This Event', onClick: () => void closeEvent() }]} />}
+          {data.canManage && hasEvent && <RowMenu label="This event" items={[eventClosed ? { label: 'Reopen This Event', onClick: () => void closer.reopen(chosen!.id) } : { label: 'Close This Event', onClick: () => void closer.close(chosen!) }]} />}
         </div>
       </div>
 
@@ -289,7 +275,7 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
       {dialog?.kind === 'settings' && <PrizingSettings api={api} data={data} onClose={() => setDialog(null)} />}
       {dialog?.kind === 'station' && <StationDialog plan={plan} station={dialog.station} onClose={() => setDialog(null)} />}
       {dialog?.kind === 'addStation' && <AddStationDialog plan={plan} existing={addableStations} onClose={() => setDialog(null)} />}
-      {closing && chosen && <CloseEventDialog name={chosen.name} lines={closing.lines} busy={closing.busy} onChoose={(how) => { setClosing({ ...closing, busy: true }); void closeEvent(how); }} onClose={() => setClosing(null)} />}
+      {closer.dialog}
     </div>
   );
 }

@@ -29,8 +29,8 @@ export default function LogisticsDayCard() {
             <div className={styles.dayCardBar} role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Event day steps done"><i style={{ width: `${pct}%` }} /></div>
             <p className={styles.dayCardMeta}>{p.stepsDone} of {p.stepsTotal} steps done · {p.teams} teams · {p.devices} devices{p.newRequests > 0 ? ` · ${p.newRequests} new requests` : ''}</p>
             <div className={styles.dayCardActions}>
-              <Link href={`/portal/logistics/${p.slug}/event-day-devices`} className={styles.primary}>Event Day: Devices</Link>
-              <Link href={`/portal/logistics/${p.slug}/event-day-prizing`} className={styles.secondary}>Event Day: Prizing</Link>
+              <Link href={`/portal/logistics/${p.slug}/devices/event-day`} className={styles.primary}>Event Day: Devices</Link>
+              <Link href={`/portal/logistics/${p.slug}/prizing`} className={styles.secondary}>Event Day: Prizing</Link>
             </div>
           </section>
         );

@@ -11,10 +11,8 @@ import SponsorsTab from './SponsorsTab';
 import { NumberCell, PickCell, TextCell } from './Cells';
 import { RowMenu } from './RowMenu';
 import { usePrizes } from './usePrizes';
-import type { ToolsSection } from './logisticsRoute';
-
-// The lists of the Tools tab, and two more that the Prizing page opens from its gear (sponsors, and prize sizes with the prize steps).
-export type ToolsPart = ToolsSection | 'sponsors' | 'prizes';
+// The lists the gear on the Devices page ('event-steps', 'bundles', 'lists') and on the Prizing page ('sponsors', 'prizes': sizes with the prize steps) open.
+export type ToolsPart = 'event-steps' | 'bundles' | 'lists' | 'sponsors' | 'prizes';
 import type { Catalog, LogisticsApi, OptionItem } from './useLogistics';
 import styles from './logistics.module.css';
 

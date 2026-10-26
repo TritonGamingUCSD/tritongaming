@@ -93,7 +93,7 @@ export function HistoryDialog({ prize, onClose }: { prize: PrizeRow; onClose: ()
   const [error, setError] = useState('');
   useEffect(() => {
     let live = true;
-    void fetch(`/api/logistics/prizes/${prize.id}/log`, { cache: 'no-store' }).then((r) => r.json()).then((j) => { if (live) { if (j.log) setLog(j.log); else setError(j.error || 'Couldn’t load the history.'); } }).catch(() => { if (live) setError('Couldn’t reach the server.'); });
+    void fetch(`/api/logistics/prizes/${prize.id}/history`, { cache: 'no-store' }).then((r) => r.json()).then((j) => { if (live) { if (j.log) setLog(j.log); else setError(j.error || 'Couldn’t load the history.'); } }).catch(() => { if (live) setError('Couldn’t reach the server.'); });
     return () => { live = false; };
   }, [prize.id]);
   return (

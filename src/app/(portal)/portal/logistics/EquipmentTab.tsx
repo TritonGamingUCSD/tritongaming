@@ -10,6 +10,7 @@ import { Combo } from './Combo';
 import { RowMenu } from './RowMenu';
 import { PickCell, TextCell } from './Cells';
 import { EQUIPMENT_COLS, GridHead, gridStyle } from './gridTable';
+import { groupRows, type DeviceGroup } from '@/lib/logistics/deviceGroups';
 import DeviceDialog from './DeviceDialog';
 import type { Catalog, LogisticsApi } from './useLogistics';
 import { tapTwice } from './cellNav';
@@ -42,7 +43,7 @@ function KitCell({ d, counted }: { d: Device; counted: boolean }) {
   return <span className={styles.dim}>{d.kit.length ? `${d.kit.length} ${d.kit.length === 1 ? 'part' : 'parts'}` : '–'}</span>;
 }
 
-export default function EquipmentTab({ api, data }: { api: LogisticsApi; data: Catalog }) {
+export default function EquipmentTab({ api, data, group = 'type' }: { api: LogisticsApi; data: Catalog; group?: DeviceGroup }) {
   const [q, setQ] = useState('');
   const [type, setType] = useState('');
   const [shelf, setShelf] = useState('');
@@ -64,6 +65,9 @@ export default function EquipmentTab({ api, data }: { api: LogisticsApi; data: C
   useEffect(() => setLimit(SHOW), [q, type, shelf, condition, problems]);
 
   const shown = rows.slice(0, limit);
+  // The devices in groups (Type is the Type list's order, Shelf by shelf, Status puts what needs attention first, Games under each installed game); the stock has no stations or owners, so those show by type.
+  const mode = (group === 'station' ? 'type' : group) as Exclude<DeviceGroup, 'station'>;
+  const groups = useMemo(() => groupRows(shown.map((d) => ({ d, id: d.id, kind: 'club' as const, type: d.type, where: [d.shelf, d.tier].filter(Boolean).join(' · '), located: !!d.shelf, games_needed: d.games, games: d.games })), mode, { attention: (r) => isProblem(r.d), complete: () => false, day: false }, rank), [shown, mode, rank]);
   const problemCount = useMemo(() => data.devices.filter(isProblem).length, [data.devices]);
   const save = (d: Device, patch: DevicePatch) => { void api.saveDevice(d.id, patch); };
   const open = (device: Device | null, template?: Partial<Device> | null) => setDialog({ device, template });
@@ -93,7 +97,10 @@ export default function EquipmentTab({ api, data }: { api: LogisticsApi; data: C
       ) : (
         <div className={styles.prizeGrid}>
           <GridHead cols={EQUIPMENT_COLS} />
-          {shown.map((d) => (
+          {groups.map((g) => (
+            <div key={g.title}>
+              {mode !== 'none' && <div className={styles.devGroupHead}><b>{g.title}</b><span>{g.rows.length} {g.rows.length === 1 ? 'device' : 'devices'}</span></div>}
+              {g.rows.map(({ d }) => (
             <div key={d.id} className={`${styles.prizeRow} ${isProblem(d) ? styles.lineBad : ''}`} style={gridStyle(EQUIPMENT_COLS)}>
               <span className={styles.prizeName}><TextCell value={d.tag} canEdit={canEdit} strong placeholder="no ID" onSave={(v) => save(d, { tag: v || null })} /></span>
               <span data-label="Name"><TextCell value={d.name} canEdit={canEdit} onSave={(v) => save(d, { name: v || null })} /></span>
@@ -103,6 +110,8 @@ export default function EquipmentTab({ api, data }: { api: LogisticsApi; data: C
               <span data-label="Condition"><ConditionCell d={d} canEdit={canEdit} onSave={(c) => save(d, { condition: c })} /></span>
               <span data-label="Kit"><KitCell d={d} counted={!!data.lists.type.find((t) => t.value === d.type)?.counted} /></span>
               <span className={styles.prizeTools}><RowMenu label={`More for ${d.tag ?? d.type}`} items={[{ label: 'Details', onClick: () => open(d) }]} /></span>
+            </div>
+            ))}
             </div>
           ))}
         </div>

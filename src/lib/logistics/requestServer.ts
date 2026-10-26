@@ -16,3 +16,6 @@ export async function logisticsTeamIds(svc: SupabaseClient): Promise<string[]> {
   }
   return [...ids];
 }
+
+// Where a request is, for the links in notifications.
+export const requestHref = (slug: string, kind: string) => `/portal/logistics/${slug}/requests${kind === 'prizes' ? '/prizes' : ''}`;

@@ -46,7 +46,7 @@ export function useRequests(planId: string, active: boolean) {
   const load = useCallback(async () => {
     if (!planId) return;
     const g = gen.current;
-    const r = await call<Loaded>(`/api/logistics/plans/${planId}/requests`, 'GET');
+    const r = await call<Loaded>(`/api/logistics/events/${planId}/requests`, 'GET');
     if (r.ok && g !== gen.current) return;
     if (r.ok) { setLoadedNow(r.data); setError(''); } else setError(r.error);
   }, [planId]);
@@ -84,22 +84,22 @@ export default function RequestsTab({ kind, plan, api, data, store }: { kind: Re
   }, [list, kind]);
 
   async function setStatus(r: Req, status: RequestStatus) {
-    const res = await call<{ request: Req }>(`/api/logistics/plans/${planId}/requests`, 'PATCH', { request_id: r.id, status });
+    const res = await call<{ request: Req }>(`/api/logistics/events/${planId}/requests/${r.id}`, 'PATCH', { status });
     if (res.ok) { apply({ ...r, ...res.data.request }); void load(); } else setError(res.error);
   }
   async function patch(r: Req, fields: { team?: string; notes?: string; requester_id?: string }) {
-    const res = await call<{ request: Req }>(`/api/logistics/plans/${planId}/requests`, 'PATCH', { request_id: r.id, ...fields });
+    const res = await call<{ request: Req }>(`/api/logistics/events/${planId}/requests/${r.id}`, 'PATCH', { ...fields });
     if (res.ok) { apply({ ...r, ...res.data.request, ...(fields.requester_id ? { requester: people.find((p) => p.id === fields.requester_id)?.name ?? r.requester } : {}) }); void plan.reload(); } else setError(res.error);   // the reply has the new contact's id but not their name, so the name is filled in here or the old one would come back when the cell stops holding the picked value
   }
   // Locking freezes a request's allocation (its rows or its pool and prizes); unlocking takes a deliberate hold so it can't be undone by accident.
   async function setLocked(r: Req, locked: boolean) {
     if (!locked && !(await confirmHold({ title: 'Unlock this allocation?', message: `${requestSummary(r.kind, r.items)}${r.team ? ` for ${r.team}` : ''} can be changed again.`, confirmLabel: 'Hold to unlock' }))) return;
-    const res = await call<{ request: Req }>(`/api/logistics/plans/${planId}/requests`, 'PATCH', { request_id: r.id, allocation_locked: locked });
+    const res = await call<{ request: Req }>(`/api/logistics/events/${planId}/requests/${r.id}`, 'PATCH', { allocation_locked: locked });
     if (res.ok) { apply({ ...r, ...res.data.request }); void plan.reload(); } else setError(res.error);
   }
   async function remove(r: Req) {
     if (!(await confirmHold({ title: 'Remove this request?', message: requestSummary(r.kind, r.items), confirmLabel: 'Hold to remove' }))) return;
-    const res = await call<{ ok: true }>(`/api/logistics/plans/${planId}/requests`, 'DELETE', { request_id: r.id });
+    const res = await call<{ ok: true }>(`/api/logistics/events/${planId}/requests/${r.id}`, 'DELETE');
     if (res.ok) setLoaded((c) => (c ? { ...c, requests: c.requests.filter((x) => x.id !== r.id) } : c)); else setError(res.error);
   }
 
@@ -163,7 +163,7 @@ function RequestDialog({ kind: askKind, plan, api, data, planId, loaded, request
     setProblem('');
     setBusy(true);
     const body = { kind, team, division_id: division || null, notes, items: kind === 'devices' ? dev : priz.filter((x) => Number(x.qty) > 0), ...(onBehalf ? { requester_id: onBehalf } : {}) };
-    const r = request ? await call(`/api/logistics/plans/${planId}/requests`, 'PATCH', { request_id: request.id, ...body }) : await call(`/api/logistics/plans/${planId}/requests`, 'POST', body);
+    const r = request ? await call(`/api/logistics/events/${planId}/requests/${request.id}`, 'PATCH', { ...body }) : await call(`/api/logistics/events/${planId}/requests`, 'POST', body);
     setBusy(false);
     if (r.ok) onSaved(); else setProblem(r.error);
   }

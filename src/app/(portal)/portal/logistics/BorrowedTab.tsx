@@ -27,14 +27,14 @@ export default function BorrowedTab({ plan, catalog, data, kind }: { plan: PlanA
   const station = (id: string | null) => d.stations.find((s) => s.id === id)?.name ?? null;
   async function remove(b: Borrowed) {
     if (!(await confirmHold({ title: `Remove ${b.tag}?`, message: 'It is taken out of this event, with its steps.', confirmLabel: 'Hold to remove' }))) return;
-    await plan.act('/borrowed', 'DELETE', { borrowed_id: b.id });
+    await plan.act(`/loaners/${b.id}`, 'DELETE');
   }
   const [people, setPeople] = useState<{ id: string; name: string }[]>([]);
   const loadPeople = catalog.loadPeople;
   useEffect(() => { if (!sponsor) void loadPeople().then(setPeople); }, [sponsor, loadPeople]);
   const peopleLabels = useMemo(() => { const seen = new Map<string, number>(); return people.map((p) => { const n = (seen.get(p.name) ?? 0) + 1; seen.set(p.name, n); return { id: p.id, label: n > 1 ? `${p.name} (${n})` : p.name }; }); }, [people]);
   const games = useMemo(() => [...new Set([...data.portalGames, ...data.lists.game.map((g) => g.value)])].sort((a, b) => a.localeCompare(b)), [data]);
-  const save = (b: Borrowed, body: Record<string, unknown>) => void plan.act('/borrowed', 'PATCH', { borrowed_id: b.id, ...body });
+  const save = (b: Borrowed, body: Record<string, unknown>) => void plan.act(`/loaners/${b.id}`, 'PATCH', { ...body });
   const noun = sponsor ? 'sponsor loaner' : 'officer loaner';
   return (
     <div className={styles.tab}>

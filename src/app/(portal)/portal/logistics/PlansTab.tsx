@@ -16,6 +16,7 @@ import { routeParams, type Route } from './logisticsRoute';
 import { useUrlNav } from '@/lib/portal/usePortalTabSync';
 import PlanView from './PlanView';
 import { usePlanList, type PlanSummary } from './usePlans';
+import { useCloseEvent } from './CloseEvent';
 import type { Catalog, LogisticsApi } from './useLogistics';
 import { Plus } from 'lucide-react';
 import styles from './logistics.module.css';
@@ -25,7 +26,7 @@ const range = (a: string, b: string) => {
   return a === b ? f(a) : `${f(a)} to ${f(b)}`;
 };
 
-// Events: the list, and one plan per event (/portal/logistics/events/<name>[/<page>]). The name is made when the plan is created and never changes, so a copied link keeps working after a
+// Events: the list, and one plan per event (/portal/logistics/<name>/requests, …). The name is made when the plan is created and never changes, so a copied link keeps working after a
 // rename; for a portal event it is the event's own slug. An old address with the long ID inside still opens the plan and is tidied to the name.
 export default function PlansTab({ api, data, route, go }: { api: LogisticsApi; data: Catalog; route: Extract<Route, { tab: 'events' }>; go: (r: Route) => void }) {
   const setParams = usePortalParams();
@@ -33,12 +34,12 @@ export default function PlansTab({ api, data, route, go }: { api: LogisticsApi; 
   const list = usePlanList();
   const ref = route.plan;
   const plan = ref && list.plans ? list.plans.find((p) => p.slug === ref || p.id === ref) ?? null : null;
-  const open = (p: { slug: string } | null) => { go({ tab: 'events', plan: p?.slug ?? null, page: data.requestOnly ? 'requests' : 'device' }); if (!p) void list.reload(); };
-  useEffect(() => { if (plan && urlTab !== plan.slug) setParams({ section: 'logistics', ...routeParams({ tab: 'events', plan: plan.slug, page: route.page, ...(route.day ? { day: true } : {}) }) }); }, [plan, urlTab, route.page, route.day, setParams]);
+  const open = (p: { slug: string } | null) => { go({ tab: 'events', plan: p?.slug ?? null, page: 'requests' }); if (!p) void list.reload(); };
+  useEffect(() => { if (plan && urlTab !== plan.slug) setParams({ section: 'logistics', ...routeParams({ tab: 'events', plan: plan.slug, page: route.page }) }); }, [plan, urlTab, route.page, setParams]);
   if (ref) {
     if (!list.plans) return <div className={styles.tab}>{list.error ? <Notice tone="error">{list.error}</Notice> : <Loading variant="inline" label="Loading…" />}</div>;
     if (!plan) return <div className={styles.tab}><Notice tone="error">That event doesn’t exist any more.</Notice><div><Button variant="secondary" onClick={() => open(null)}>All Events</Button></div></div>;
-    return <PlanView key={plan.id} id={plan.id} data={data} catalog={api} page={route.page} day={!!route.day} byType={!!route.byType} onOpenPrizing={() => go({ tab: 'prizing', plan: plan.slug })} openOnly={!!route.openOnly} onOpenOnly={(openOnly) => go({ tab: 'events', plan: plan.slug, page: 'device', day: true, ...(route.byType ? { byType: true } : {}), ...(openOnly ? { openOnly: true } : {}) })} onGroup={(byType) => go({ tab: 'events', plan: plan.slug, page: 'device', ...(route.day ? { day: true } : {}), ...(byType ? { byType: true } : {}), ...(route.openOnly ? { openOnly: true } : {}) })} onPage={(page, day) => go({ tab: 'events', plan: plan.slug, page, ...(day ? { day: true } : {}) })} onBack={() => open(null)} />;
+    return <PlanView key={plan.id} id={plan.id} data={data} catalog={api} page={route.page} day={false} group="station" onOpenPrizing={() => go({ tab: 'prizing', plan: plan.slug })} onOpenDevices={() => go({ tab: 'devices', plan: plan.slug })} openOnly={false} onOpenOnly={() => undefined} onPage={(page) => go({ tab: 'events', plan: plan.slug, page })} onBack={() => open(null)} />;
   }
   return <PlanList data={data} list={list} onOpen={open} />;
 }
@@ -51,6 +52,7 @@ function nearestFirst(plans: PlanSummary[], today: string): PlanSummary[] {
 
 function PlanList({ data, list, onOpen }: { data: Catalog; list: ReturnType<typeof usePlanList>; onOpen: (p: PlanSummary) => void }) {
   const { plans, today, error, setError, create, update, remove, events } = list;
+  const closer = useCloseEvent(list, () => void list.reload());
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<PlanSummary | null>(null);
   const removePlan = async (p: PlanSummary) => {
@@ -63,6 +65,7 @@ function PlanList({ data, list, onOpen }: { data: Catalog; list: ReturnType<type
         <span className={styles.count}>{plans ? `${plans.length} ${plans.length === 1 ? 'event' : 'events'}` : ''}</span>
         {data.canManage && <Button className={styles.addBtn} onClick={() => setCreating(true)}><Plus size={15} aria-hidden="true" /> New Event</Button>}
       </div>
+      {closer.dialog}
       {editing && <EditPlanDialog plan={editing} onSave={async (b) => update(editing.id, b)} onClose={() => setEditing(null)} />}
       {creating && <CreateDialog events={events} onCreate={async (b) => { const p = await create(b); if (p) { setCreating(false); onOpen(p); } return !!p; }} onClose={() => setCreating(false)} />}
       {error && <div role="alert" onClick={() => setError('')}><Notice tone="error">{error}</Notice></div>}
@@ -91,7 +94,7 @@ function PlanList({ data, list, onOpen }: { data: Catalog; list: ReturnType<type
                   </span>
                   )}
                 </button>
-                {data.canManage && <RowMenu className={styles.eventMenu} label={`More for ${p.name}`} items={[{ label: 'Edit Name And Dates', onClick: () => setEditing(p) }, { label: p.status === 'closed' ? 'Reopen Plan' : 'Close Plan', onClick: () => void update(p.id, { status: p.status === 'closed' ? 'draft' : 'closed' }) }, { label: 'Remove Plan', danger: true, onClick: () => void removePlan(p) }]} />}
+                {data.canManage && <RowMenu className={styles.eventMenu} label={`More for ${p.name}`} items={[{ label: 'Edit Name And Dates', onClick: () => setEditing(p) }, { label: p.status === 'closed' ? 'Reopen Plan' : 'Close Plan', onClick: () => void (p.status === 'closed' ? closer.reopen(p.id) : closer.close(p)) }, { label: 'Remove Plan', danger: true, onClick: () => void removePlan(p) }]} />}
               </li>
             );
           })}

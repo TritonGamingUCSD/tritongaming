@@ -40,22 +40,22 @@ export function usePlanList() {
   const [today, setToday] = useState('');
   const [error, setError] = useState('');
   const load = useCallback(async () => {
-    const r = await call<{ plans: PlanSummary[]; today: string }>('/api/logistics/plans', 'GET');
+    const r = await call<{ plans: PlanSummary[]; today: string }>('/api/logistics/events', 'GET');
     if (r.ok) { setPlans(r.data.plans); setToday(r.data.today); setError(''); } else setError(r.error);
   }, []);
   useEffect(() => { void load(); }, [load]);
   const create = useCallback(async (body: Record<string, unknown>) => {
-    const r = await call<{ plan: PlanSummary }>('/api/logistics/plans', 'POST', body);
+    const r = await call<{ plan: PlanSummary }>('/api/logistics/events', 'POST', body);
     if (!r.ok) { setError(r.error); return null; }
     setPlans((p) => [r.data.plan, ...(p ?? [])]);
     return r.data.plan;
   }, []);
   const events = useCallback(async (past: boolean) => {
-    const r = await call<{ events: { id: string; title: string; starts_on: string | null; ends_on: string | null }[] }>(`/api/logistics/plans?events=1${past ? '&past=1' : ''}`, 'GET');
+    const r = await call<{ events: { id: string; title: string; starts_on: string | null; ends_on: string | null }[] }>(`/api/logistics/events?events=1${past ? '&past=1' : ''}`, 'GET');
     return r.ok ? r.data.events : [];
   }, []);
   const update = useCallback(async (id: string, body: Record<string, unknown>) => {
-    const r = await call<{ plan: PlanSummary }>(`/api/logistics/plans/${id}`, 'PATCH', body);
+    const r = await call<{ plan: PlanSummary }>(`/api/logistics/events/${id}`, 'PATCH', body);
     if (!r.ok) { setError(r.error); return false; }
     await load();
     return true;
@@ -63,7 +63,7 @@ export function usePlanList() {
   // Closing an event takes out of stock what went out and was not counted back. When some lines were never counted back, the server says which, and the person chooses (see `uncounted`).
   const close = useCallback(async (id: string, uncounted?: 'returned' | 'given'): Promise<{ ok: true } | { ok: false; error: string; uncounted?: { station: string; prize: string; quantity: number }[] }> => {
     try {
-      const r = await fetch(`/api/logistics/plans/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'closed', ...(uncounted ? { uncounted } : {}) }), cache: 'no-store' });
+      const r = await fetch(`/api/logistics/events/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'closed', ...(uncounted ? { uncounted } : {}) }), cache: 'no-store' });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) return { ok: false, error: j.error || 'Something went wrong.', uncounted: j.code === 'uncounted' ? j.uncounted : undefined };
       await load();
@@ -71,7 +71,7 @@ export function usePlanList() {
     } catch { return { ok: false, error: 'Couldn’t reach the server.' }; }
   }, [load]);
   const remove = useCallback(async (id: string) => {
-    const r = await call<{ ok: true }>(`/api/logistics/plans/${id}`, 'DELETE');
+    const r = await call<{ ok: true }>(`/api/logistics/events/${id}`, 'DELETE');
     if (!r.ok) { setError(r.error); return false; }
     setPlans((p) => (p ?? []).filter((x) => x.id !== id));
     return true;
@@ -96,7 +96,7 @@ export function usePlan(id: string, live: boolean) {
     if (!id) return true;   // no event picked (the Prizing page showing only the stock)
     for (let attempt = 0; attempt < 2; attempt++) {
       const g = gen.current;
-      const r = await call<PlanDetail>(`/api/logistics/plans/${id}`, 'GET');
+      const r = await call<PlanDetail>(`/api/logistics/events/${id}`, 'GET');
       if (!r.ok) { setError(r.error); return false; }
       if (g !== gen.current) continue;   // something was changed on this screen while it was loading: read again once
       setDetail(r.data); setError('');
@@ -120,7 +120,7 @@ export function usePlan(id: string, live: boolean) {
     if (since.current) params.set('since', since.current);
     if (prizeSince.current) params.set('prize_since', prizeSince.current);
     const qs = params.toString();
-    const r = await call<{ updated_at: string; status: string; count: number; changes: DoneRow[]; prize_changes: { line_id: string; step_id: string; done: number; updated_at: string }[] }>(`/api/logistics/plans/${id}/version${qs ? `?${qs}` : ''}`, 'GET');
+    const r = await call<{ updated_at: string; status: string; count: number; changes: DoneRow[]; prize_changes: { line_id: string; step_id: string; done: number; updated_at: string }[] }>(`/api/logistics/events/${id}/version${qs ? `?${qs}` : ''}`, 'GET');
     if (!r.ok) return;
     const cur = detailRef.current;
     if (!cur) return;
@@ -146,7 +146,7 @@ export function usePlan(id: string, live: boolean) {
 
   const act = useCallback(async (url: string, method: string, body?: unknown): Promise<boolean> => {
     touched();
-    const r = await call<unknown>(`/api/logistics/plans/${id}${url}`, method, body);
+    const r = await call<unknown>(`/api/logistics/events/${id}${url}`, method, body);
     if (!r.ok) { setError(r.error); return false; }
     setError('');
     await load();
@@ -155,7 +155,7 @@ export function usePlan(id: string, live: boolean) {
 
   // ---- steps (applied on screen)
   const doStep = useCallback(async (body: { tag?: string; device_id?: string; borrowed_id?: string; slot_id?: string; step_id: string; kit?: { item: string; missing: boolean }[] }): Promise<{ ok: true; result: StepResult } | { ok: false; error: string; network?: boolean }> => {
-    const r = await call<StepResult>(`/api/logistics/plans/${id}/steps`, 'POST', body);
+    const r = await call<StepResult>(`/api/logistics/events/${id}/steps`, 'POST', body);
     if (!r.ok) return { ok: false, error: r.error, network: r.status === 0 };
     const res = r.data;
     touched();
@@ -177,7 +177,7 @@ export function usePlan(id: string, live: boolean) {
   }, [id]);
   // The same step for many devices at once (Mark all): one request, and every box is shown ticked together.
   const doSteps = useCallback(async (step_id: string, items: { device_id?: string; borrowed_id?: string; slot_id?: string }[]): Promise<{ ok: true; added: number } | { ok: false; error: string }> => {
-    const r = await call<{ rows: { device_id: string | null; borrowed_id: string | null; slot_id: string | null; step_id: string; done_at: string }[]; by: string | null }>(`/api/logistics/plans/${id}/steps`, 'POST', { step_id, items });
+    const r = await call<{ rows: { device_id: string | null; borrowed_id: string | null; slot_id: string | null; step_id: string; done_at: string }[]; by: string | null }>(`/api/logistics/events/${id}/steps`, 'POST', { step_id, items });
     if (!r.ok) return { ok: false, error: r.error };
     touched();
     const rows = r.data.rows.map((x): DoneRow => ({ ...(x.device_id ? { device_id: x.device_id } : x.borrowed_id ? { borrowed_id: x.borrowed_id } : { slot_id: x.slot_id }), step_id: x.step_id, done_at: x.done_at, by: r.data.by } as DoneRow));
@@ -190,39 +190,39 @@ export function usePlan(id: string, live: boolean) {
     return { ok: true, added: rows.length };
   }, [id]);
   const undoStep = useCallback(async (item: { id: string; kind: 'club' | 'sponsor' | 'officer' | 'slot' }, step_id: string): Promise<'ok' | 'network' | 'failed'> => {
-    const r = await call<{ ok: true }>(`/api/logistics/plans/${id}/steps`, 'DELETE', { ...(item.kind === 'club' ? { device_id: item.id } : item.kind === 'slot' ? { slot_id: item.id } : { borrowed_id: item.id }), step_id });
+    const r = await call<{ ok: true }>(`/api/logistics/events/${id}/steps`, 'DELETE', { ...(item.kind === 'club' ? { device_id: item.id } : item.kind === 'slot' ? { slot_id: item.id } : { borrowed_id: item.id }), step_id });
     if (!r.ok) { if (r.status !== 0) setError(r.error); return r.status === 0 ? 'network' : 'failed'; }
     touched();
     setDetail((cur) => (cur ? { ...cur, done: cur.done.filter((d) => doneKey(d) !== `${item.id}:${step_id}`) } : cur));
     return 'ok';
   }, [id]);
   const swap = useCallback(async (body: { device_id?: string; borrowed_id?: string; replacement_tag: string; reason: string }) => {
-    const r = await call<{ replacement: Slim; station: { id: string; name: string } | null }>(`/api/logistics/plans/${id}/swap`, 'POST', body);
+    const r = await call<{ replacement: Slim; station: { id: string; name: string } | null }>(`/api/logistics/events/${id}/swap`, 'POST', body);
     if (!r.ok) return { ok: false as const, error: r.error };
     await load();
     return { ok: true as const, replacement: r.data.replacement, station: r.data.station };
   }, [id, load]);
   const unswap = useCallback(async (item: { id: string; kind: 'club' | 'sponsor' | 'officer' }): Promise<boolean> => {
-    const r = await call<{ ok: true }>(`/api/logistics/plans/${id}/swap`, 'DELETE', item.kind === 'club' ? { device_id: item.id } : { borrowed_id: item.id });
+    const r = await call<{ ok: true }>(`/api/logistics/events/${id}/swap`, 'DELETE', item.kind === 'club' ? { device_id: item.id } : { borrowed_id: item.id });
     if (!r.ok) { setError(r.error); return false; }
     await load();
     return true;
   }, [id, load]);
   const fill = useCallback(async (station_id: string | null, apply: boolean) => {
-    const r = await call<{ preview: { slot_id: string; type: string; games: string[]; device: { id: string; tag: string | null; condition: string; games: string[] } | null }[] }>(`/api/logistics/plans/${id}/slots`, 'POST', { action: 'fill', station_id, apply });
+    const r = await call<{ preview: { slot_id: string; type: string; games: string[]; device: { id: string; tag: string | null; condition: string; games: string[] } | null }[] }>(`/api/logistics/events/${id}/slots`, 'POST', { action: 'fill', station_id, apply });
     if (!r.ok) return { ok: false as const, error: r.error };
     if (apply) await load();
     return { ok: true as const, preview: r.data.preview };
   }, [id, load]);
   const assign = useCallback(async (slot_id: string, tag: string) => {
-    const r = await call<{ ok: true }>(`/api/logistics/plans/${id}/slots`, 'POST', { action: 'assign', slot_id, tag });
+    const r = await call<{ ok: true }>(`/api/logistics/events/${id}/slots`, 'POST', { action: 'assign', slot_id, tag });
     if (!r.ok) { setError(r.error); return false; }
     setError('');
     await load();
     return true;
   }, [id, load]);
   const pick = useCallback(async (body: Record<string, unknown>) => {
-    const r = await call<{ preview: PickPreview; applied?: number }>(`/api/logistics/plans/${id}/pick`, 'POST', body);
+    const r = await call<{ preview: PickPreview; applied?: number }>(`/api/logistics/events/${id}/pick`, 'POST', body);
     if (!r.ok) return { ok: false as const, error: r.error };
     if (body.apply) await load();
     return { ok: true as const, preview: r.data.preview, applied: r.data.applied ?? 0 };
@@ -239,7 +239,7 @@ export function usePlan(id: string, live: boolean) {
     const before = countOf(line_id, step_id);
     touched();
     putCount(line_id, step_id, shown);
-    const r = await call<{ done: number }>(`/api/logistics/plans/${id}/prize-steps`, 'POST', { line_id, step_id, ...body, ...('done' in body ? { expected: before } : {}) });
+    const r = await call<{ done: number }>(`/api/logistics/events/${id}/counts`, 'POST', { line_id, step_id, ...body, ...('done' in body ? { expected: before } : {}) });
     if (!r.ok) {
       if (r.body?.code === 'changed') { putCount(line_id, step_id, r.body.current ?? 0); showToast(`${r.error} It shows ${r.body.current ?? 0} now.`); return false; }
       if (r.body?.code === 'gone') { void load(); showToast(r.error); return false; }
@@ -280,14 +280,14 @@ export function usePlan(id: string, live: boolean) {
     const undo = () => { void load(); };
     if (next === 0 && existing) {
       withLines((ls) => ls.filter((l) => l.id !== existing.id));
-      const r = await call<{ ok: true }>(`/api/logistics/plans/${id}/prizes`, 'DELETE', { line_id: existing.id, expected: before });
+      const r = await call<{ ok: true }>(`/api/logistics/events/${id}/stations/${existing.station_id}/prizes/${existing.prize_id}`, 'DELETE', { expected: before });
       if (!r.ok) { if (r.body?.code === 'changed') { showToast(`${r.error} It shows ${r.body.current ?? 0} now.`); void load(); } else { setError(r.error); undo(); } return { ok: false, delta: 0 }; }
     } else if (existing) {
       withLines((ls) => ls.map((l) => (l.id === existing.id ? { ...l, quantity: next } : l)));
-      const r = await call<{ line: { quantity: number } }>(`/api/logistics/plans/${id}/prizes`, 'PATCH', { line_id: existing.id, quantity: next, expected: before });
+      const r = await call<{ line: { quantity: number } }>(`/api/logistics/events/${id}/stations/${existing.station_id}/prizes/${existing.prize_id}`, 'PATCH', { quantity: next, expected: before });
       if (!r.ok) { if (r.body?.code === 'changed') { showToast(`${r.error} It shows ${r.body.current ?? 0} now.`); void load(); } else { setError(r.error); undo(); } return { ok: false, delta: 0 }; }
     } else {
-      const r = await call<{ lines: { id: string; station_id: string; prize_id: string; quantity: number; sort: number }[] }>(`/api/logistics/plans/${id}/prizes`, 'POST', { station_id, prize_id: prize.id, quantity: next });
+      const r = await call<{ lines: { id: string; station_id: string; prize_id: string; quantity: number; sort: number }[] }>(`/api/logistics/events/${id}/stations/${station_id}/prizes`, 'POST', { prize_id: prize.id, quantity: next });
       if (!r.ok) { if (r.body?.code === 'exists') { showToast(`${r.error}`); void load(); } else { setError(r.error); undo(); } return { ok: false, delta: 0 }; }
       withLines((ls) => [...ls, { ...r.data.lines[0], prize }]);
     }

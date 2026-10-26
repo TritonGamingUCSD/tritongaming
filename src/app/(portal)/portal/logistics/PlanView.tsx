@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import Loading from '@/components/Loading/Loading';
 import { tagKey } from '@/lib/logistics/devices';
+import { groupRows, groupTitles, type DeviceGroup } from '@/lib/logistics/deviceGroups';
 import { impliedDone, isUsable, natural, planProblems, rowKind, stationStatus, stepAppliesTo, type StepDef } from '@/lib/logistics/plans';
 import BorrowedDialog from './BorrowedDialog';
 import DeviceDialog from './DeviceDialog';
@@ -45,7 +46,7 @@ const range = (a: string, b: string) => {
   return a === b ? f(a) : `${f(a)} to ${f(b)}`;
 };
 
-export default function PlanView({ id, data, catalog, page, day, byType, onOpenPrizing, openOnly, onOpenOnly, onGroup, onPage, onBack }: { onOpenPrizing: () => void; openOnly: boolean; onOpenOnly: (v: boolean) => void; id: string; data: Catalog; catalog: LogisticsApi; page: EventPage; day: boolean; byType: boolean; onGroup: (byType: boolean) => void; onPage: (p: EventPage, day?: boolean) => void; onBack: () => void }) {
+export default function PlanView({ id, data, catalog, page, day, group, embedded, onOpenPrizing, onOpenDevices, openOnly, onOpenOnly, onPage, onBack }: { group: DeviceGroup; embedded?: boolean; onOpenDevices?: () => void; onOpenPrizing: () => void; openOnly: boolean; onOpenOnly: (v: boolean) => void; id: string; data: Catalog; catalog: LogisticsApi; page: EventPage; day: boolean; onPage: (p: EventPage, day?: boolean) => void; onBack: () => void }) {
   const plan = usePlan(id, true);
   const prizeInv = usePrizes();
   const { detail, error, setError, act } = plan;
@@ -124,17 +125,15 @@ export default function PlanView({ id, data, catalog, page, day, byType, onOpenP
 
   const requests = useRequests(detail?.plan.id ?? '', page === 'requests' || page === 'requests-prizing');
   const isPrizing = page === 'requests-prizing';
-  const groupByType = byType && page === 'device';   // the same rows, grouped by the kind of device instead of by team
+  const grouped = group !== 'station' && page === 'device';   // the same rows, grouped by something other than the team
   const teams = useMemo(() => {
     const out: { key: string; station: Station | null; title: string; rows: Row[] }[] = [];
-    if (groupByType) {
-      for (const r of rows) {
-        let g = out.find((x) => x.key === `type:${r.type}`);
-        if (!g) { g = { key: `type:${r.type}`, station: null, title: r.type, rows: [] }; out.push(g); }
-        g.rows.push(r);
-      }
-      for (const g of out) g.rows.sort((a, b) => (a.tag ? 0 : 1) - (b.tag ? 0 : 1) || natural(a.tag ?? '', b.tag ?? ''));
-      return out.sort((a, b) => rankOf(a.title) - rankOf(b.title) || natural(a.title, b.title));
+    if (grouped) {
+      const attention = new Set(problems.map((p) => p.row_id).filter(Boolean) as string[]);
+      const full = (r: Row) => steps.every((st) => !stepAppliesTo(st, rowKind(r)) || doneSet.has(`${r.id}:${st.id}`));
+      const gs = groupRows(rows, group as Exclude<DeviceGroup, 'station'>, { attention: (r) => attention.has(r.id) || (r.kind === 'slot' && !(r as Row).counted), complete: (r) => full(r as Row), day }, rankOf);
+      for (const g of gs) out.push({ key: `${group}:${g.title}`, station: null, title: g.title, rows: [...g.rows].sort((a, b) => group === 'type' || group === 'none' ? (a.tag ? 0 : 1) - (b.tag ? 0 : 1) || natural(a.tag ?? '', b.tag ?? '') : 0) });
+      return out;
     }
     for (const s of detail?.stations ?? []) out.push({ key: s.id, station: s, title: s.name, rows: [] });
     for (const r of rows) {
@@ -142,8 +141,9 @@ export default function PlanView({ id, data, catalog, page, day, byType, onOpenP
       if (!g) { g = { key: 'none', station: null, title: 'Not On A Team Yet', rows: [] }; out.push(g); }
       g.rows.push(r);
     }
-    return out.filter((t) => t.station || t.rows.length);
-  }, [detail?.stations, rows, groupByType, rankOf]);
+    // A station made only for prizes (a raffle) stays off this page until it has devices.
+    return out.filter((t) => (t.station ? !t.station.prize_only || t.rows.length > 0 : t.rows.length > 0));
+  }, [detail?.stations, rows, grouped, group, rankOf, problems, steps, doneSet, day]);
 
   useEffect(() => {
     const m = window.matchMedia('(max-width: 899px)');
@@ -323,7 +323,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, onOpenP
   for (const dv of data.devices) if (dv.tag && !inPlan.has(dv.id) && isUsable(dv)) free.set(dv.type, [...(free.get(dv.type) ?? []), dv.tag]);
   for (const b of borrowed) if (b.role === 'planned' && !b.request_id && !b.station_id) free.set(b.type, [...(free.get(b.type) ?? []), b.tag]);
   const ctx: SheetCtx = {
-    lockedIds: new Set(detail.lockedRequests ?? []), hideDone: day && openOnly, ids, setsOpen: setsOpenPick ?? !day, foldGen, byType: groupByType,
+    lockedIds: new Set(detail.lockedRequests ?? []), hideDone: day && openOnly, ids, setsOpen: setsOpenPick ?? !day, foldGen, byType: grouped,
     api: plan, canManage: canManage && !day, manager: canManage, closed, busy, pending: pendingSet, main: mainTypes, day, stations, steps, activeId: step?.id ?? '', doneSet, realDone, kitFlags, onKitPart, doneAt, doneBy, problems,
     onTick: (row, s) => void tick(row, s), onTickAll: (list, s) => void markAll(list, s), onUndo: undo, onSwap: (r) => setSwapping({ id: r.id, tag: r.tag, type: r.type, kind: r.kind === 'slot' ? 'club' : r.kind }),
     onBorrowed: (r) => setBorrowing(borrowed.find((b) => b.id === r.id) ?? null), onInstalled: (list) => void install(list), onEditDevice: (r) => setDeviceEdit(catalog.data?.devices.find((x) => x.id === r.id) ?? data.devices.find((x) => x.id === r.id) ?? null),
@@ -346,7 +346,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, onOpenP
       const miss = r.games_needed.filter((g) => !r.games.some((x) => x.toLowerCase() === g.toLowerCase()));
       if (!miss.length) continue;
       if (r.kind === 'club') await catalog.saveDevice(r.id, { games: [...r.games, ...miss] });
-      else await plan.act('/borrowed', 'PATCH', { borrowed_id: r.id, games: [...r.games, ...miss] });
+      else await plan.act(`/loaners/${r.id}`, 'PATCH', { games: [...r.games, ...miss] });
     }
     await plan.reload();
     setBusy(false);
@@ -369,6 +369,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, onOpenP
   return (
     <div className={`${styles.dayPage} ${page === 'device' && day && !closed ? styles.dayPageBar : ''} ${day ? styles.dayMode : ''}`}>
       <div className={styles.dayTop}>
+        {!embedded && (
         <div className={styles.dayBar}>
           <button type="button" className={styles.back} onClick={onBack}><ArrowLeft size={15} aria-hidden="true" /> <span className={styles.backText}>All Events</span></button>
           <div className={styles.dayHeading}>
@@ -378,7 +379,9 @@ export default function PlanView({ id, data, catalog, page, day, byType, onOpenP
           <button type="button" className={`${styles.narrow} ${styles.groupSwitch}`} onClick={() => onPage(isPrizing ? 'requests' : 'requests-prizing')} aria-label={isPrizing ? 'Switch to devices' : 'Switch to prizing'}><ArrowLeftRight size={14} aria-hidden="true" /> {isPrizing ? 'Devices' : 'Prizing'}</button>
           {page === 'device' && day && <span className={styles.dayTotal} title="Steps done"><span className={styles.bar}><i style={{ width: `${pct}%` }} /></span>{allDone}/{allTotal}</span>}
         </div>
+        )}
         <div className={styles.pageBar}>
+        {!embedded && <>
         <span className={`${styles.wide} ${styles.groupSeg}`}><SectionTabs<'devices' | 'prizing'> variant="segmented" label="Devices or prizing" value={isPrizing ? 'prizing' : 'devices'}
           onChange={(g) => onPage(g === 'prizing' ? 'requests-prizing' : 'requests')} tabs={[{ id: 'devices', label: 'Devices', count: rows.length }, { id: 'prizing', label: 'Prizing', count: detail.prizes.lines.length }]} /></span>
         <SectionTabs<string> variant="segmented" label="Event pages" value={page === 'requests' || page === 'requests-prizing' ? page : `${day && page === 'device' ? 'day' : 'alloc'}-${page}`}
@@ -391,9 +394,12 @@ export default function PlanView({ id, data, catalog, page, day, byType, onOpenP
             { id: 'alloc-device', label: 'Allocation', count: rows.length },
             { id: 'day-device', label: 'Event Day' },
           ]} />
+        </>}
           <span className={styles.pageBarEnd}>
+            {embedded && page === 'device' && day && <span className={styles.dayTotal} title="Steps done"><span className={styles.bar}><i style={{ width: `${pct}%` }} /></span>{allDone}/{allTotal}</span>}
             {isPrizing && <Button size="sm" variant="secondary" onClick={onOpenPrizing}>Open Prizing</Button>}
-            <DeviceFinder prizes={prizeInv.rows} planPrizes={detail.prizes} sponsorOf={(sid) => data.sponsors.find((s) => s.id === sid)?.name ?? null} onGoPrize={onOpenPrizing} rows={all} devices={data.devices} stations={stations} steps={steps} doneSet={doneSet} onGo={(r) => { if (page !== 'device') onPage('device', day); setTimeout(() => focusRow(r.id, groupByType ? `type:${r.type}` : r.stationId ?? 'none'), page !== 'device' ? 400 : 0); }} />
+            {!isPrizing && !embedded && onOpenDevices && <Button size="sm" variant="secondary" onClick={onOpenDevices}>Open Devices</Button>}
+            <DeviceFinder prizes={prizeInv.rows} planPrizes={detail.prizes} sponsorOf={(sid) => data.sponsors.find((s) => s.id === sid)?.name ?? null} onGoPrize={onOpenPrizing} rows={all} devices={data.devices} stations={stations} steps={steps} doneSet={doneSet} onGo={(r) => { if (page !== 'device') onPage('device', day); setTimeout(() => focusRow(r.id, grouped ? `${group}:${groupTitles(r, group as Exclude<DeviceGroup, 'station'>, { attention: () => false, complete: () => false, day })[0]}` : r.stationId ?? 'none'), page !== 'device' ? 400 : 0); }} />
             <button type="button" className={styles.iconBtn} onClick={() => void plan.reload()} aria-label="Refresh"><RefreshCw size={15} aria-hidden="true" /></button>
           </span>
         </div>
@@ -460,19 +466,11 @@ export default function PlanView({ id, data, catalog, page, day, byType, onOpenP
                 {problems.length > 0 && <span className={`${styles.dim} ${styles.wide}`}>{showList ? 'Click to hide the list' : 'Click to see the list'}</span>}
                 <span className={styles.statusSpacer} />
                 <span className={styles.narrow}><RowMenu label="View options" items={[
-                  page === 'device' && { label: `${byType ? '' : '✓ '}By Team`, onClick: () => onGroup(false) },
-                  page === 'device' && { label: `${byType ? '✓ ' : ''}By Type`, onClick: () => onGroup(true) },
                   day && page === 'device' && { label: openOnly ? 'Show All' : 'Unfinished Only', onClick: () => onOpenOnly(!openOnly) },
                   manage && emptyRows.length > 0 && { label: `Fill ${emptyRows.length} Empty`, onClick: () => setFilling({ station: null }) },
                   day && { label: overview ? 'Hide Overview' : 'Overview', onClick: () => setOverview((v) => !v) },
                   { label: allFolded ? 'Expand All' : 'Collapse All', onClick: () => { setFold(Object.fromEntries(teams.map((t) => [t.key, !allFolded]))); setSetsOpenPick(allFolded); setFoldGen((g) => g + 1); } },
                 ]} /></span>
-                {page === 'device' && (
-                  <span className={`${styles.miniSeg} ${styles.wide}`} role="group" aria-label="Group the devices">
-                    <button type="button" aria-pressed={!byType} onClick={() => onGroup(false)}>By Team</button>
-                    <button type="button" aria-pressed={byType} onClick={() => onGroup(true)}>By Type</button>
-                  </span>
-                )}
                 {day && page === 'device' && <button type="button" className={`${styles.linkBtn} ${styles.wide}`} aria-pressed={openOnly} onClick={() => onOpenOnly(!openOnly)}>{openOnly ? 'Show All' : 'Unfinished Only'}</button>}
                 {manage && emptyRows.length > 0 && <button type="button" className={`${styles.linkBtn} ${styles.wide}`} onClick={() => setFilling({ station: null })}>Fill {emptyRows.length} Empty</button>}
                 {day && <button type="button" className={`${styles.linkBtn} ${styles.wide}`} aria-expanded={overview} onClick={() => setOverview((v) => !v)}>{overview ? 'Hide overview' : 'Overview'}</button>}
@@ -483,8 +481,8 @@ export default function PlanView({ id, data, catalog, page, day, byType, onOpenP
                   {problems.map((pr, i) => (
                     <li key={i} className={pr.sev === 'bad' ? styles.problemBad : styles.problemWarn}>
                       <span>{pr.text}</span>
-                      {groupByType
-                        ? (() => { const t = rows.find((x) => x.id === pr.row_id)?.type; return t ? <button type="button" className={styles.linkBtn} onClick={() => jump(`type:${t}`)}>Go to type</button> : null; })()
+                      {grouped
+                        ? (() => { const r = rows.find((x) => x.id === pr.row_id); const t = r ? teams.find((g) => g.rows.some((x) => x.id === r.id)) : null; return t ? <button type="button" className={styles.linkBtn} onClick={() => jump(t.key)}>Go to group</button> : null; })()
                         : pr.station_id && <button type="button" className={styles.linkBtn} onClick={() => jump(pr.station_id)}>Go to team</button>}
                     </li>
                   ))}
@@ -553,7 +551,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, onOpenP
                     {s && (
                       <div className={styles.teamLine}>
                         <span className={styles.dTeamSub}>{s.contact ?? <span className={styles.warnText}>No contact</span>}</span>
-                        <span className={styles.dTeamSub}><TextCell value={s.room} canEdit={manage} placeholder="Add room" onSave={(v) => void plan.act('/stations', 'PATCH', { station_id: s.id, room: v })} /></span>
+                        <span className={styles.dTeamSub}><TextCell value={s.room} canEdit={manage} placeholder="Add room" onSave={(v) => void plan.act(`/stations/${s.id}`, 'PATCH', { room: v })} /></span>
                         {manage && emptyHere > 0 && <button type="button" className={styles.miniTextBtn} onClick={() => setFilling({ station: s })}>Fill {emptyHere}<span className={styles.wide}>Empty</span></button>}
                       </div>
                     )}

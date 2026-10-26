@@ -85,7 +85,7 @@ function DeviceLine({ line, ctx, backup, nested }: { line: Line; ctx: SheetCtx; 
   const loan = r.kind === 'sponsor' || r.kind === 'officer';
   const fromRequest = r.kind !== 'slot' && !!r.requestId;
   const empty0 = () => api.act('/slots', 'POST', { action: 'empty', ...(loan ? { borrowed_id: r.id } : { device_id: r.id }) });
-  const takeOut = () => (r.kind === 'club' ? api.act('/devices', 'DELETE', { device_ids: [r.id] }) : r.kind === 'slot' ? api.act('/slots', 'DELETE', { slot_id: r.id }) : api.act('/borrowed', 'DELETE', { borrowed_id: r.id }));
+  const takeOut = () => (r.kind === 'club' ? api.act('/devices', 'DELETE', { device_ids: [r.id] }) : r.kind === 'slot' ? api.act('/slots', 'DELETE', { slot_ids: [r.id] }) : api.act(`/loaners/${r.id}`, 'DELETE'));
   // Allocation: each row is what was asked for, and its ID box is where the device goes. Typing an ID fills an empty row or swaps the device; clearing it empties the row.
   const alloc = manage && !ctx.day && !backup && !line.counted;
   async function commit() {

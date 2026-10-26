@@ -44,7 +44,7 @@ export function usePrizes() {
 
   // `expected_quantity` is the count the person was looking at; if someone else changed it first the server refuses, says who and what it is now, and the row shows that.
   const save = useCallback(async (id: string | null, patch: PrizePatch & { note?: string; expected_quantity?: number }): Promise<PrizeRow | null> => {
-    const r = id ? await call<{ prize: PrizeRow }>('/api/logistics/prizes', 'PATCH', { id, ...patch }) : await call<{ prize: PrizeRow }>('/api/logistics/prizes', 'POST', patch);
+    const r = id ? await call<{ prize: PrizeRow }>(`/api/logistics/prizes/${id}`, 'PATCH', patch) : await call<{ prize: PrizeRow }>('/api/logistics/prizes', 'POST', patch);
     if (!r.ok) {
       if (r.body?.code === 'changed' && id) {
         gen++; put((kept?.rows ?? []).map((x) => (x.id === id ? { ...x, quantity: r.body!.current ?? x.quantity, left: (r.body!.current ?? x.quantity) - x.allocated } : x)));
@@ -60,7 +60,7 @@ export function usePrizes() {
     return r.data.prize;
   }, [put]);
   const remove = useCallback(async (id: string): Promise<boolean> => {
-    const r = await call<{ ok: true }>('/api/logistics/prizes', 'DELETE', { id });
+    const r = await call<{ ok: true }>(`/api/logistics/prizes/${id}`, 'DELETE');
     if (!r.ok) { setError(r.error); return false; }
     gen++;
     put((kept?.rows ?? []).filter((x) => x.id !== id));

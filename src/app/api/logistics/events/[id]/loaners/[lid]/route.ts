@@ -42,26 +42,12 @@ async function clean(svc: ReturnType<typeof Object>, planId: string, b: Record<s
   return { value: out };
 }
 
-export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+// One loaner of an event: change it (PATCH) or take it out (DELETE).
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string; lid: string }> }) {
   const auth = await authorizeLogistics('manage');
   if (auth.error) return auth.error;
-  const { id } = await params;
-  if (!UUID.test(id)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
-  const { data: plan } = await auth.svc.from('logistics_plans').select('id').eq('id', id).maybeSingle();
-  if (!plan) return NextResponse.json({ error: 'That plan is gone.' }, { status: 404 });
-  const r = await clean(auth.svc, id, await request.json().catch(() => ({})));
-  if (r.error) return NextResponse.json({ error: r.error }, { status: r.status ?? 400 });
-  const { data, error } = await auth.svc.from('logistics_plan_borrowed').insert({ ...r.value, plan_id: id, created_by: auth.user.id }).select(BORROWED_COLUMNS).single();
-  if (error || !data) return NextResponse.json({ error: error?.code === '23505' ? 'That ID is already used at this event.' : 'Couldn’t add it.' }, { status: error?.code === '23505' ? 409 : 500 });
-  await touchPlan(auth.svc, id);
-  return NextResponse.json({ borrowed: data }, { status: 201 });
-}
-
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await authorizeLogistics('manage');
-  if (auth.error) return auth.error;
-  const { id } = await params;
-  const b = await request.json().catch(() => ({}));
+  const { id, lid } = await params;
+  const b = { ...(await request.json().catch(() => ({}))), borrowed_id: lid };
   if (!UUID.test(id) || !uuid(b.borrowed_id)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
   if (await rowsLocked(auth.svc, id, { borrowedIds: [b.borrowed_id] })) return NextResponse.json({ error: LOCKED_MESSAGE }, { status: 409 });
   const r = await clean(auth.svc, id, b, b.borrowed_id);
@@ -74,11 +60,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   return NextResponse.json({ borrowed: data });
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string; lid: string }> }) {
   const auth = await authorizeLogistics('manage');
   if (auth.error) return auth.error;
-  const { id } = await params;
-  const b = await request.json().catch(() => ({}));
+  const { id, lid } = await params;
+  const b = { ...(await request.json().catch(() => ({}))), borrowed_id: lid };
   if (!UUID.test(id) || !uuid(b.borrowed_id)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
   if (await rowsLocked(auth.svc, id, { borrowedIds: [b.borrowed_id] })) return NextResponse.json({ error: LOCKED_MESSAGE }, { status: 409 });
   await auth.svc.from('logistics_plan_borrowed').delete().eq('id', b.borrowed_id).eq('plan_id', id);

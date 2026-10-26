@@ -83,7 +83,7 @@ export function useLogistics() {
     return r.data.option.value;
   }, [edit]);
   const changeOption = useCallback(async (id: string, patch: { value?: string; counted?: boolean; main?: boolean; applies?: string; kit?: boolean; gives?: boolean; leftover?: boolean; items?: BundleItem[]; move?: 'up' | 'down' }): Promise<boolean> => {
-    const r = await call<{ ok: true }>('/api/logistics/options', 'PATCH', { id, ...patch });
+    const r = await call<{ ok: true }>(`/api/logistics/options/${id}`, 'PATCH', patch);
     if (!r.ok) { setError(r.error); return false; }
     setError('');
     // A rename (devices that used the old name follow it), a step's order or settings, and a bundle's items are read again; a counted switch is applied on screen.
@@ -92,7 +92,7 @@ export function useLogistics() {
     return true;
   }, [edit, load]);
   const deleteOption = useCallback(async (kind: OptionKind, id: string): Promise<boolean> => {
-    const r = await call<{ ok: true }>('/api/logistics/options', 'DELETE', { id });
+    const r = await call<{ ok: true }>(`/api/logistics/options/${id}`, 'DELETE');
     if (!r.ok) { setError(r.error); return false; }
     setError('');
     edit((d) => ({ ...d, lists: { ...d.lists, [kind]: d.lists[kind].filter((o) => o.id !== id) } }));
@@ -101,14 +101,14 @@ export function useLogistics() {
 
   // ---- sponsors
   const saveSponsor = useCallback(async (id: string | null, v: { name?: string; contact?: string | null; notes?: string | null }): Promise<Sponsor | null> => {
-    const r = id ? await call<{ sponsor: Sponsor }>('/api/logistics/sponsors', 'PATCH', { id, ...v }) : await call<{ sponsor: Sponsor }>('/api/logistics/sponsors', 'POST', v);
+    const r = id ? await call<{ sponsor: Sponsor }>(`/api/logistics/sponsors/${id}`, 'PATCH', v) : await call<{ sponsor: Sponsor }>('/api/logistics/sponsors', 'POST', v);
     if (!r.ok) { setError(r.error); return null; }
     setError('');
     edit((d) => ({ ...d, sponsors: (id ? d.sponsors.map((s) => (s.id === id ? r.data.sponsor : s)) : d.sponsors.some((s) => s.id === r.data.sponsor.id) ? d.sponsors : [...d.sponsors, r.data.sponsor]).sort((a, b) => a.name.localeCompare(b.name)) }));
     return r.data.sponsor;
   }, [edit]);
   const deleteSponsor = useCallback(async (id: string): Promise<boolean> => {
-    const r = await call<{ ok: true }>('/api/logistics/sponsors', 'DELETE', { id });
+    const r = await call<{ ok: true }>(`/api/logistics/sponsors/${id}`, 'DELETE');
     if (!r.ok) { setError(r.error); return false; }
     edit((d) => ({ ...d, sponsors: d.sponsors.filter((s) => s.id !== id) }));
     return true;

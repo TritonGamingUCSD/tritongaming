@@ -69,24 +69,24 @@ try {
   const sh = await exec.call('POST', '/api/logistics/options', { kind: 'shelf', value: 'ZZ Shelf' });
   t.ok('a new shelf is added', sh.s === 201);
   await exec.call('PATCH', `/api/logistics/devices/${b.j.device.id}`, { shelf: 'ZZ Shelf' });
-  t.ok('a shelf in use cannot be deleted', (await exec.call('DELETE', '/api/logistics/options', { id: sh.j.option.id })).s === 409);
-  const rn = await exec.call('PATCH', '/api/logistics/options', { id: sh.j.option.id, value: 'ZZ Shelf Renamed' });
+  t.ok('a shelf in use cannot be deleted', (await exec.call('DELETE', `/api/logistics/options/${sh.j.option.id}`)).s === 409);
+  const rn = await exec.call('PATCH', `/api/logistics/options/${sh.j.option.id}`, { value: 'ZZ Shelf Renamed' });
   const afterRename = (await exec.call('GET', '/api/logistics')).j.devices.find((d) => d.id === b.j.device.id);
   t.ok('renaming a shelf moves the devices on it', rn.s === 200 && afterRename.shelf === 'ZZ Shelf Renamed', JSON.stringify(afterRename));
   const game = await exec.call('POST', '/api/logistics/options', { kind: 'game', value: 'ZZ Game' });
   await exec.call('PATCH', `/api/logistics/devices/${b.j.device.id}`, { games: ['ZZ Game'] });
-  await exec.call('PATCH', '/api/logistics/options', { id: game.j.option.id, value: 'ZZ Game 2' });
+  await exec.call('PATCH', `/api/logistics/options/${game.j.option.id}`, { value: 'ZZ Game 2' });
   t.ok('renaming a game follows into a device', (await exec.call('GET', '/api/logistics')).j.devices.find((d) => d.id === b.j.device.id).games.includes('ZZ Game 2'));
-  const flip = await exec.call('PATCH', '/api/logistics/options', { id: ty.j.option.id, counted: false });
+  const flip = await exec.call('PATCH', `/api/logistics/options/${ty.j.option.id}`, { counted: false });
   t.ok('a type can be switched from counted to individual', flip.s === 200 && (await exec.call('GET', '/api/logistics')).j.lists.type.find((x) => x.value === 'ZZ Cables').counted === false);
   await exec.call('PATCH', '/api/logistics/devices/' + b.j.device.id, { shelf: null, games: [] });
-  t.ok('an unused shelf can be deleted', (await exec.call('DELETE', '/api/logistics/options', { id: sh.j.option.id })).s === 200);
-  t.ok('an unused game can be deleted', (await exec.call('DELETE', '/api/logistics/options', { id: game.j.option.id })).s === 200);
+  t.ok('an unused shelf can be deleted', (await exec.call('DELETE', `/api/logistics/options/${sh.j.option.id}`)).s === 200);
+  t.ok('an unused game can be deleted', (await exec.call('DELETE', `/api/logistics/options/${game.j.option.id}`)).s === 200);
 
   // ---- sponsors and owners
   const sp = await exec.call('POST', '/api/logistics/sponsors', { name: 'ZZ Sponsor', contact: 'zz@example.test' });
   t.ok('a sponsor is added', sp.s === 201);
-  t.ok('a sponsor with no devices is removable', (await exec.call('DELETE', '/api/logistics/sponsors', { id: sp.j.sponsor.id })).s === 200);
+  t.ok('a sponsor with no devices is removable', (await exec.call('DELETE', `/api/logistics/sponsors/${sp.j.sponsor.id}`)).s === 200);
   const people = await exec.call('GET', '/api/logistics/people');
   t.ok('the people picker lists officers (for a loaner at an event)', people.s === 200 && people.j.people.some((p) => p.id === officer.id));
   const od = await exec.call('POST', '/api/logistics/devices', { tag: 'ZZ4', type: 'Gaming Laptop', owner_type: 'sponsor', owner_note: 'ignored' });
