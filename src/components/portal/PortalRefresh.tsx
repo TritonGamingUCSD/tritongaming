@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
-import { refreshPortal, REFRESHED_EVENT } from '@/lib/ui/refreshPortal';
+import { refreshPortal, REFRESH_EVENT, REFRESHED_EVENT } from '@/lib/ui/refreshPortal';
 import { confirmDiscardUnsaved } from '@/lib/ui/useUnsavedChanges';
 import styles from './PortalThemeToggle.module.css';
 
@@ -12,14 +12,14 @@ export default function PortalRefresh({ labelled = false }: { labelled?: boolean
   const stop = useRef<number | undefined>(undefined);
   useEffect(() => {
     const done = () => { window.clearTimeout(stop.current); stop.current = window.setTimeout(() => setSpin(false), 400); };
+    // Whoever asks for a refresh (this button, the pull-down, coming back to the app) makes the button spin until the answer is in.
+    const began = () => { setSpin(true); window.clearTimeout(stop.current); stop.current = window.setTimeout(() => setSpin(false), 8000); };   // never spins for ever if the answer is lost
+    window.addEventListener(REFRESH_EVENT, began);
     window.addEventListener(REFRESHED_EVENT, done);
-    return () => { window.removeEventListener(REFRESHED_EVENT, done); window.clearTimeout(stop.current); };
+    return () => { window.removeEventListener(REFRESH_EVENT, began); window.removeEventListener(REFRESHED_EVENT, done); window.clearTimeout(stop.current); };
   }, []);
   const go = () => {
     if (spin || !confirmDiscardUnsaved()) return;
-    setSpin(true);
-    window.clearTimeout(stop.current);
-    stop.current = window.setTimeout(() => setSpin(false), 8000);   // never spins for ever if the answer is lost
     refreshPortal();
   };
   return (
