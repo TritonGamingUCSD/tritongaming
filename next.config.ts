@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
     return {
       // Events and Divisions also have /portal/<section>/<id> record pages; their tab names are matched first so a tab is never mistaken for an id.
       beforeFiles: [
-        { source: '/portal/events/:tab(list|analytics|emails)', destination: '/portal?section=events&tab=:tab' },
+        { source: '/portal/events/:tab(list|analytics|emails|check-ins)', destination: '/portal?section=events&tab=:tab' },
         { source: '/portal/divisions/:tab(all|my-division)', destination: '/portal?section=divisions&tab=:tab' },
       ],
       fallback: [

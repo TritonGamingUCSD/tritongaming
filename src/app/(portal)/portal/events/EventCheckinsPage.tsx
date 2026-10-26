@@ -1,9 +1,11 @@
 'use client';
 
 import Loading from '@/components/Loading/Loading';
-import IconButton from '@/components/ui/IconButton';
+import { Input, Select } from '@/components/ui/Field';
+import { ArrowLeft, ArrowDown, ArrowUp } from 'lucide-react';
+import { useLiveParams, usePortalParams } from '@/lib/portal/usePortalParams';
 import Notice from '@/components/ui/Notice';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from '@/components/portal/NoPrefetchLink';
 import UndoCheckinModal from '@/components/UndoCheckinModal/UndoCheckinModal';
@@ -11,7 +13,7 @@ import { Camera, Gamepad2, Undo2, Check } from 'lucide-react';
 import { resolveAvatarUrl } from '@/lib/members/profile';
 import { PACIFIC_TZ, formatEventDateRange, eventDayCount } from '@/lib/core/timezone';
 import checkinStyles from './checkins.module.css';
-import styles from './eventcheckinsmodal.module.css';
+import styles from './eventcheckinspage.module.css';
 
 interface TicketUser {
   display_name: string | null;
@@ -49,9 +51,26 @@ const STATUS_LABEL: Record<string, string> = {
   active: 'Registered', used: 'Checked In', cancelled: 'Cancelled', expired: 'Expired',
 };
 
-// Opened from a click in the Event Management list (see EventsSectionContent.tsx),
-// so checking who's registered doesn't cost you your place in the list/filter/scroll.
-export default function EventCheckinsModal({ eventId, onClose, canManagePoints }: { eventId: string; onClose: () => void; canManagePoints: boolean }) {
+const STATUS_ORDER = ['active', 'used', 'cancelled', 'expired'];
+type SortKey = 'registered' | 'name' | 'checkin' | 'status';
+type GroupKey = 'none' | 'status' | 'form';
+const SORTS: { key: SortKey; label: string }[] = [{ key: 'registered', label: 'Registered' }, { key: 'name', label: 'Name' }, { key: 'checkin', label: 'Checked-in time' }, { key: 'status', label: 'Status' }];
+const GROUP_STATUS: Record<string, string> = { active: 'Not Checked In Yet', used: 'Checked In', cancelled: 'Cancelled', expired: 'Expired' };
+const userOf = (t: TicketRow) => (Array.isArray(t.user) ? t.user[0] : t.user);
+
+// One event's tickets, as its own page in Events (/portal/events/check-ins/<event>): search, sort, group, and the manual check-in and undo for whoever can manage points.
+// `eventKey` is the event's slug (or its id when it has none). Search, sort and group are in the address, so a copied link reopens the same view.
+export default function EventCheckinsPage({ eventKey, onBack, canManagePoints }: { eventKey: string; onBack: () => void; canManagePoints: boolean }) {
+    const setParams = usePortalParams();
+  const first = useLiveParams();
+  const [query, setQueryState] = useState(() => first.get('q') ?? '');
+  const [sort, setSortState] = useState<SortKey>(() => (SORTS.some((x) => x.key === first.get('sort')) ? (first.get('sort') as SortKey) : 'registered'));
+  const [desc, setDescState] = useState(() => first.get('dir') === 'desc');
+  const [group, setGroupState] = useState<GroupKey>(() => (first.get('view') === 'status' || first.get('view') === 'form' ? (first.get('view') as GroupKey) : 'none'));
+  const setQuery = (v: string) => { setQueryState(v); setParams({ q: v || null }); };
+  const setSort = (v: SortKey) => { setSortState(v); setParams({ sort: v === 'registered' ? null : v }); };
+  const setDesc = (v: boolean) => { setDescState(v); setParams({ dir: v ? 'desc' : null }); };
+  const setGroup = (v: GroupKey) => { setGroupState(v); setParams({ view: v === 'none' ? null : v }); };
   const [event, setEvent] = useState<EventInfo | null>(null);
   const [tickets, setTickets] = useState<TicketRow[] | null>(null);
   const [error, setError] = useState('');
@@ -102,7 +121,7 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`/api/events/${eventId}/checkins`);
+        const res = await fetch(`/api/events/${eventKey}/checkins`);
         const json = await res.json();
         if (cancelled) return;
         if (!res.ok) {
@@ -116,13 +135,29 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
       }
     })();
     return () => { cancelled = true; };
-  }, [eventId]);
+  }, [eventKey]);
 
-  useEffect(() => {
-    function handleKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose(); }
-    document.addEventListener('keydown', handleKey);
-    return () => document.removeEventListener('keydown', handleKey);
-  }, [onClose]);
+  const shown = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const name = (t: TicketRow) => (userOf(t)?.display_name ?? '').toLowerCase();
+    const rows = (tickets ?? []).filter((t) => { const u = userOf(t); return !q || (u?.display_name ?? '').toLowerCase().includes(q) || (u?.gamer_tag ?? '').toLowerCase().includes(q); });
+    const cmp = (a: TicketRow, b: TicketRow) => {
+      if (sort === 'name') return name(a).localeCompare(name(b));
+      if (sort === 'status') return STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status);
+      if (sort === 'checkin') {   // people who have not checked in go last whichever way it runs
+        if (!a.checked_in_at || !b.checked_in_at) return a.checked_in_at ? -1 : b.checked_in_at ? 1 : 0;
+        return a.checked_in_at.localeCompare(b.checked_in_at) * (desc ? -1 : 1);
+      }
+      return a.created_at.localeCompare(b.created_at);
+    };
+    rows.sort((a, b) => (sort === 'checkin' ? cmp(a, b) : cmp(a, b) * (desc ? -1 : 1)) || name(a).localeCompare(name(b)));
+    if (group === 'none') return [{ title: '', rows }];
+    const label = (t: TicketRow) => (group === 'status' ? GROUP_STATUS[t.status] : t.status === 'cancelled' || t.status === 'expired' ? GROUP_STATUS[t.status] : t.status !== 'used' ? 'Not Checked In Yet' : t.checkin_form_completed_at ? 'Opened The Form' : 'Has Not Opened The Form');
+    const order = group === 'status' ? ['Not Checked In Yet', 'Checked In', 'Cancelled', 'Expired'] : ['Has Not Opened The Form', 'Opened The Form', 'Not Checked In Yet', 'Cancelled', 'Expired'];
+    const by = new Map<string, TicketRow[]>();
+    for (const t of rows) by.set(label(t), [...(by.get(label(t)) ?? []), t]);
+    return order.filter((o) => by.has(o)).map((title) => ({ title, rows: by.get(title)! }));
+  }, [tickets, query, sort, desc, group]);
 
   const activeTickets = (tickets ?? []).filter((t) => t.status !== 'cancelled');
   const checkedInCount = (tickets ?? []).filter((t) => t.status === 'used').length;
@@ -139,9 +174,9 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
   ].join(' ');
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <IconButton kind="close" label="Close check-ins" className={styles.close} onClick={onClose} />
+    <div className={styles.page}>
+      <button type="button" className={styles.back} onClick={onBack}><ArrowLeft size={15} aria-hidden="true" /> All Events</button>
+      <div>
 
         {error ? (
           <Notice tone="error">{error}</Notice>
@@ -178,6 +213,25 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
             {tickets.length === 0 ? (
               <div className={checkinStyles.empty}>No one has registered for this event yet.</div>
             ) : (
+              <>
+              <div className={styles.toolbar}>
+                <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name or gamer tag…" aria-label="Search attendees" />
+                <Select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} aria-label="Sort by">
+                  {SORTS.map((x) => <option key={x.key} value={x.key}>Sort: {x.label}</option>)}
+                </Select>
+                <button type="button" className={styles.dir} aria-label={desc ? 'Descending, switch to ascending' : 'Ascending, switch to descending'} onClick={() => setDesc(!desc)}>
+                  {desc ? <ArrowDown size={15} aria-hidden="true" /> : <ArrowUp size={15} aria-hidden="true" />}
+                </button>
+                <Select value={group} onChange={(e) => setGroup(e.target.value as GroupKey)} aria-label="Group by">
+                  <option value="none">Group: None</option>
+                  <option value="status">Group: Status</option>
+                  {event.requires_checkin_form && <option value="form">Group: AS form</option>}
+                </Select>
+              </div>
+              {shown.every((g) => g.rows.length === 0) && <div className={checkinStyles.empty}>No one matches.</div>}
+              {shown.map((g) => g.rows.length === 0 ? null : (
+              <div key={g.title} className={styles.group}>
+              {g.title && <h3 className={styles.groupHead}>{g.title} <span>{g.rows.length}</span></h3>}
               <div className={checkinStyles.table}>
                 <div className={checkinStyles.tableHeader} style={{ gridTemplateColumns }}>
                   <span>Attendee</span>
@@ -187,7 +241,7 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
                   {event.requires_checkin_form && <span>AS Form</span>}
                   {canManagePoints && <span></span>}
                 </div>
-                {tickets.map((t) => {
+                {g.rows.map((t) => {
                   const user = Array.isArray(t.user) ? t.user[0] : t.user;
                   const avatarUrl = user ? resolveAvatarUrl(user) : null;
                   return (
@@ -254,6 +308,9 @@ export default function EventCheckinsModal({ eventId, onClose, canManagePoints }
                   );
                 })}
               </div>
+              </div>
+              ))}
+              </>
             )}
           </>
         )}

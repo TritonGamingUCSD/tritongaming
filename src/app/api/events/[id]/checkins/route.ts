@@ -7,10 +7,7 @@ interface Params {
   params: Promise<{ id: string }>;
 }
 
-// Powers the check-ins modal opened from the Event Management list (see
-// EventCheckinsModal.tsx) — the same data the standalone
-// /portal/events/[id]/checkins page renders, just fetched client-side so
-// opening it doesn't navigate away from wherever you were in the hub.
+// Powers the check-ins page in Events (EventCheckinsPage.tsx). `id` is the event's slug, or its id.
 export async function GET(request: Request, { params }: Params) {
   const { id } = await params;
   const supabase = await createClient();
@@ -23,23 +20,24 @@ export async function GET(request: Request, { params }: Params) {
     return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
   }
 
-  const [{ data: event }, { data: ticketsData, error: ticketsError }] = await Promise.all([
-    supabase.from('events').select('id, title, start_date, end_date, location, requires_checkin_form').eq('id', id).single(),
+  const byId = /^[0-9a-f-]{36}$/i.test(id);
+  const { data: event } = await supabase.from('events').select('id, title, start_date, end_date, location, requires_checkin_form').eq(byId ? 'id' : 'slug', id).maybeSingle();
+  if (!event) return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+  const [{ data: ticketsData, error: ticketsError }] = await Promise.all([
     supabase
       .from('tickets')
       .select('id, status, created_at, checked_in_at, checkin_form_completed_at, user:profiles!tickets_user_id_fkey(display_name, avatar_url, custom_avatar_url, gamer_tag)')
-      .eq('event_id', id)
+      .eq('event_id', event.id)
       .order('created_at', { ascending: true }),
   ]);
 
-  if (!event) return NextResponse.json({ error: 'Event not found' }, { status: 404 });
   if (ticketsError) {
     console.error('[event checkins api] failed to load tickets:', ticketsError);
     return NextResponse.json({ error: 'Failed to load tickets' }, { status: 500 });
   }
 
   // Multi-day events: how many days each ticket has been scanned in, and whether today's is done.
-  const { data: dayRows } = await supabase.from('ticket_checkins').select('ticket_id, day').eq('event_id', id);
+  const { data: dayRows } = await supabase.from('ticket_checkins').select('ticket_id, day').eq('event_id', event.id);
   const today = pacificDayKey();
   const daysByTicket = new Map<string, { n: number; today: boolean }>();
   for (const r of dayRows ?? []) {

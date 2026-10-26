@@ -15,7 +15,7 @@ import { isCheckinWindowOpen } from '@/lib/events/checkinWindow';
 import type { MonthPoint } from '@/lib/events/monthBuckets';
 import type { EventTicketStat } from './getEventsData';
 import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
-import EventCheckinsModal from './EventCheckinsModal';
+import EventCheckinsPage from './EventCheckinsPage';
 import EventEmailsTab from './EventEmailsTab';
 import DeleteEventModal from './DeleteEventModal';
 import { ButtonLink } from '@/components/ui/Button';
@@ -25,6 +25,7 @@ import SectionHeader from '@/components/ui/SectionHeader';
 
 interface EventRow {
   id: string;
+  slug?: string | null;
   title: string;
   start_date: string;
   end_date?: string | null;
@@ -81,7 +82,7 @@ interface Props {
 // already fully fetched (all events + their ticket counts come in as
 // props), so filtering is instant with no round trip.
 export default function EventsSectionContent({ events, eventsPerMonth, ticketsPerMonth, eventStats, canEdit, canManagePoints, canDelete = false, canEmail = false }: Props) {
-  const { tab: initialTab } = useUrlNav();
+  const { tab: initialTab, subtab } = useUrlNav();
   const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'list');
   const syncUrl = usePortalTabSync('events');
   function selectTab(t: Tab) {
@@ -96,7 +97,6 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
     const f = searchParams.get('status');
     return FILTERS.some((x) => x.key === f) ? (f as StatusFilter) : 'all';
   });
-  const [checkinsEventId, setCheckinsEventId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<EventRow | null>(null);
 
   const counts = ({
@@ -117,6 +117,8 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
         return true;
       });
   })();
+
+  if (initialTab === 'check-ins' && subtab) return <div className={styles.page}><EventCheckinsPage eventKey={subtab} canManagePoints={canManagePoints} onBack={() => syncUrl('list')} /></div>;
 
   return (
     <div className={styles.page}>
@@ -270,7 +272,7 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
                     </div>
                     <div className={styles.ticketInfo}>
                       {event.requires_ticket ? (
-                        <button type="button" className={styles.checkinLink} onClick={() => setCheckinsEventId(event.id)}>
+                        <button type="button" className={styles.checkinLink} onClick={() => syncUrl('check-ins', event.slug ?? event.id)}>
                           <Ticket size={12} strokeWidth={1.75} aria-hidden="true" /> {event.ticketsIssued}
                           {event.ticketsIssued > 0 && <span className={styles.checkinSub}> · {event.ticketsCheckedIn} in</span>}
                         </button>
@@ -310,9 +312,6 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
         />
       )}
 
-      {checkinsEventId && (
-        <EventCheckinsModal eventId={checkinsEventId} onClose={() => setCheckinsEventId(null)} canManagePoints={canManagePoints} />
-      )}
     </div>
   );
 }

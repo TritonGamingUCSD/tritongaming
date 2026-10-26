@@ -98,6 +98,9 @@ The free Vercel plan allows two scheduled jobs, each at most once a day, so `ver
 Both are called with `Authorization: Bearer $CRON_SECRET`. `daily-maintenance?only=notifications|quarters|teams|help|signups|usage|storage` runs a single step; on a dev machine `x-cron-dev: 1` may run only the quarters and teams steps. Don't add a third job to `vercel.json`; add a step to one of these two instead.
 
 
+## Event check-ins page (Events)
+An event's ticket list is its own page, **Events › the ticket count on an event's row** (`/portal/events/check-ins/<event slug>`, not a pop up): counts, a search box (name or gamer tag), **Sort** (Registered, Name, Checked-in time, Status, with an up/down arrow) and **Group** (None, Status, AS form for events that have it). Search, sort and group are in the address (`q`, `sort`, `dir`, `view`). People who can manage points get **Check In** (no scan) and **Undo** on each row. `EventCheckinsPage.tsx`; data from `GET /api/events/<slug or id>/checkins`.
+
 ## Event report (sponsors)
 - **Where:** an event's summary page (`/portal/events/<id>/summary`, anyone with `checkin`). It is a formal, white-sheet report in Triton Gaming navy and gold. **Save as PDF** draws the PDF itself in the browser (no browser print dialog, so no address or page title in the margins): a one-page summary (key numbers, key findings, arrival and ticket-timing charts, audience and interest breakdowns, gender and pronouns always included) plus a second page with photos and the sponsor thank-you when there are any. Attendees' written comments are never included.
 - **Details for each copy:** *Prepared for* (picked from the event's own sponsor list; the thank-you then names only that sponsor, otherwise all of them) and hand-typed *Social media reach* numbers, saved with the event in `events.report_social`.
