@@ -650,7 +650,7 @@
   .topIcon { display: grid; place-items: center; box-sizing: border-box; width: 36px; height: 36px; padding: 8px; flex-shrink: 0; border-radius: 0.6rem; color: var(--frame-accent); background: color-mix(in srgb, var(--frame-accent) 16%, transparent); border: 1px solid color-mix(in srgb, var(--frame-accent) 32%, transparent); }
   .topName { font-family: var(--font-futura-heavy); font-size: 1.08rem; letter-spacing: 0.04em; color: var(--pp-chrome-fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .topRight { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 1; min-width: 0; }
-  .topSearch { flex: 0 1 300px; min-width: 120px; }
+  .topSearch { flex: 0 1 240px; min-width: 90px; }   /* the page name (and its path) keeps more of the bar at laptop widths */
   .topSearch > * { margin: 0 !important; max-width: none !important; }
   .frameBody { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.18) transparent; padding: 1.5rem 1rem 3rem; }
   .appFrame .desktopContent { padding: 0; }

@@ -23,6 +23,9 @@ Every tab, sub-tab and view toggle in the portal must be in the address. Write i
 - Drag lists use `useDragReorder`; they move live while dragging.
 - Prefer improving a screen that exists over adding a new tab. New surfaces go inside the screen people are already on (a panel, a dialog, a line in a card), not in a new menu.
 - Quiet by default: a thing that is not needed right now starts collapsed (a `<details>`, a "+N more").
+- **Easy to find, easy to change:** anything a person may want to change is editable where it is shown. A row ends in a flat pencil (`IconButton kind="edit"`) that opens one popup for that record (tabs for its details, its history and so on), not a menu of several dialogs; extra actions go in a `···` row menu. Headers of folding blocks fold when clicked anywhere on them.
+- **Pictures** are chosen only through `PictureDialog` (click the picture, drop or choose, Paste Picture or Ctrl/Cmd+V while it is open, preview, Use This Picture); nothing is dropped or pasted onto the page itself.
+- **Grid rows are their own grids:** a row's columns must be fixed sizes or fractions, never `auto`, or the columns drift from row to row.
 
 ## Server and client components
 
