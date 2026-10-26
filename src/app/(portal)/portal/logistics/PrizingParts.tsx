@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type CSSProperties } from 'react';
-import { ChevronDown, ChevronRight, CircleAlert, Lock, Minus, Pencil, Plus, TriangleAlert } from 'lucide-react';
+import { ChevronDown, ChevronRight, CircleAlert, Lock, Minus, Plus, TriangleAlert } from 'lucide-react';
 import IconButton from '@/components/ui/IconButton';
 import { RowMenu } from './RowMenu';
 import { interactive } from './interactive';
@@ -31,7 +31,6 @@ export interface PrizingCtx {
   setStock: (prize: PrizeRow, n: number) => void;
   setLevel: (prize: PrizeRow, level: StockLevel) => void;   // free merch: how much is left, instead of a count
   edit: (p: PrizeRow) => void;
-  editFrom: (p: PrizeRow) => void;
   where: (p: PrizeRow) => void;   // where did they go: the count explained
   eventSlug: (p: PrizeRow) => string | null;   // the event a prize was received for, as its address name   // change where it is from (sponsor, event), from any view
   history: (p: PrizeRow) => void;
@@ -62,11 +61,11 @@ function Pic({ p }: { p: PrizeRow }) {
 const leftClass = (n: number) => (n < 0 ? pz.leftBad : n === 0 ? pz.leftZero : pz.leftOk);
 
 // What a prize is and where it is from, always shown with it. The origin has a line of its own, labelled "From": the sponsor (or the club) and the event it was received for. Below it: size, type, bin and the note.
-function Tags({ p, sponsor, slug, onEditFrom }: { p: PrizeRow; sponsor: string | null; slug: string | null; onEditFrom?: () => void }) {
+function Tags({ p, sponsor, slug }: { p: PrizeRow; sponsor: string | null; slug: string | null }) {
   const from = <><em>From</em><b>{sponsor ?? 'Club'}</b>{slug ? <><i aria-hidden="true">·</i><span>{slug}</span></> : <span className={pz.fromNone}>no event noted</span>}</>;
   return (
     <span className={pz.tagsBlock}>
-      {onEditFrom ? <button type="button" className={`${pz.from} ${pz.fromBtn}`} title="Change where it is from" onClick={onEditFrom}>{from}<Pencil size={12} aria-hidden="true" /></button> : <span className={pz.from} title="Where it came from">{from}</span>}
+      <span className={pz.from} title="Where it came from">{from}</span>
       <span className={pz.tags}>
         {p.size && <span className={pz.tag}>{p.size.replace(/ Prizing$/, '')}</span>}
         {p.type && <span className={pz.tag}>{p.type}</span>}
@@ -100,7 +99,7 @@ export function LineRow({ l, station, canEdit, ctx, where }: { l: StationLine; s
   const given = ctx.givenOf(l.id);
   return (
               <div className={`${pz.line} ${ctx.flashing(`line:${l.id}`) ? pz.flash : ''}`} style={{ '--steps': ctx.shownSteps.length } as CSSProperties}>
-                <div className={pz.prizeCell}><Pic p={l.p} /><div className={pz.rowMain}><b className={pz.lineName}>{l.p.name}</b><Tags p={l.p} sponsor={l.sponsor} slug={ctx.eventSlug(l.p)} onEditFrom={ctx.canStock ? () => ctx.editFrom(l.p) : undefined} />{where && <span className={pz.at}>At <b>{station.name}</b></span>}</div></div>
+                <div className={pz.prizeCell}><Pic p={l.p} /><div className={pz.rowMain}><b className={pz.lineName}>{l.p.name}</b><Tags p={l.p} sponsor={l.sponsor} slug={ctx.eventSlug(l.p)} />{where && <span className={pz.at}>At <b>{station.name}</b></span>}</div></div>
                 <div className={pz.num} data-label="How many">{isLoose(l.p) ? <span className={pz.hasIt}>Has it</span> : <><NumberCell field value={l.quantity} canEdit={canEdit} label={`How many ${l.p.name} for ${station.name}`} onEdit={(on) => ctx.editing(on ? `line:${l.id}` : null)} onSave={(v) => { if (v !== null) ctx.setLine(station.id, l.p, v); }} />{ctx.heldBy(`line:${l.id}`) && <small className={pz.editor}>{ctx.heldBy(`line:${l.id}`)} is typing…</small>}{l.p.price !== null && <small className={pz.sub}>{money(l.quantity * l.p.price)}</small>}</>}</div>
                 <div className={pz.num} data-label="Left">{isLoose(l.p) ? <LevelChip level={l.p.stock_level} /> : <span className={`${pz.chip} ${leftClass(l.p.left)}`}>{l.p.left}</span>}</div>
                 {ctx.shownSteps.map((s) => (
@@ -202,7 +201,7 @@ function StockLine({ row, ctx }: { row: Row; ctx: PrizingCtx }) {
   const { p } = row;
   return (
     <div id={`prize-${p.id}`} className={`${pz.line} ${pz.lineStock} ${ctx.flashing(`prize:${p.id}`) ? pz.flash : ''} ${p.left < 0 ? pz.rowBad : ''}`}>
-      <div className={pz.prizeCell}><Pic p={p} /><div className={pz.rowMain}><b className={pz.lineName}>{p.name}</b><Tags p={p} sponsor={row.sponsor} slug={ctx.eventSlug(p)} onEditFrom={ctx.canStock ? () => ctx.editFrom(p) : undefined} /></div></div>
+      <div className={pz.prizeCell}><Pic p={p} /><div className={pz.rowMain}><b className={pz.lineName}>{p.name}</b><Tags p={p} sponsor={row.sponsor} slug={ctx.eventSlug(p)} /></div></div>
       <div className={pz.num} data-label="In stock">{isLoose(p) ? <LevelPick p={p} canEdit={ctx.canStock} ctx={ctx} /> : <><NumberCell field value={p.quantity} canEdit={ctx.canStock} label={`How many ${p.name} are on hand`} onEdit={(on) => ctx.editing(on ? `prize:${p.id}` : null)} onSave={(v) => { if (v !== null && v !== p.quantity) ctx.setStock(p, v); }} />{ctx.heldBy(`prize:${p.id}`) && <small className={pz.typing}>{ctx.heldBy(`prize:${p.id}`)} is typing</small>}</>}</div>
       <div className={pz.num} data-label="Planned" title={p.used_at.length ? `Planned or used at ${p.used_at.join(', ')}` : 'Not planned for any event'}>{isLoose(p) ? <span>–</span> : <button type="button" className={pz.numLink} onClick={() => ctx.where(p)} aria-label={`${p.allocated} planned. Where did ${p.name} go?`}>{p.allocated}</button>}</div>
       <div className={pz.num} data-label="Left">{isLoose(p) ? <LevelChip level={p.stock_level} /> : <span className={`${pz.chip} ${leftClass(p.left)}`}>{p.left}</span>}</div>

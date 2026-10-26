@@ -221,7 +221,7 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
   }, [prizeById, lines, stations]);
   const heldBy = useCallback((key: string) => team.here.find((p) => p.editing === key)?.name ?? null, [team.here]);
 
-  const ctx: PrizingCtx = { canStock: data.canManage, manage, closed: !!eventClosed, sizeOrder, shownSteps, count, shown, givenOf, setLine, setCount, addCount, editing: team.setEditing, heldBy, flashing: (k) => flashKeys.has(k), setStock, setLevel, editFrom: (p) => setDialog({ kind: 'prize', prize: p, tab: 'edit' }), where: (p) => setDialog({ kind: 'prize', prize: p, tab: 'where' }), eventSlug: (p) => eventSlugOf(p, slugByPlan), edit: (p) => setDialog({ kind: 'prize', prize: p }), history: (p) => setDialog({ kind: 'prize', prize: p, tab: 'history' }), locked: isLocked };
+  const ctx: PrizingCtx = { canStock: data.canManage, manage, closed: !!eventClosed, sizeOrder, shownSteps, count, shown, givenOf, setLine, setCount, addCount, editing: team.setEditing, heldBy, flashing: (k) => flashKeys.has(k), setStock, setLevel, where: (p) => setDialog({ kind: 'prize', prize: p, tab: 'where' }), eventSlug: (p) => eventSlugOf(p, slugByPlan), edit: (p) => setDialog({ kind: 'prize', prize: p }), history: (p) => setDialog({ kind: 'prize', prize: p, tab: 'history' }), locked: isLocked };
 
   // ---- what is shown ------------------------------------------------------------------------------------------------------------------------------------------------------------------
   // The stock hides what is all given out (none on hand, or a free prize that is out), unless the switch is turned off.

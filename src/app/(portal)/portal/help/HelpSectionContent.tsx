@@ -36,7 +36,7 @@ interface Detail {
 
 const catLabel = (c: string) => HELP_CATEGORIES.find((x) => x.id === c)?.label ?? c;
 const statusLabel = (s: string) => HELP_STATUSES.find((x) => x.id === s)?.label ?? s;
-const SECTION_NAMES: Record<string, string> = { home: 'Home', tickets: 'My Tickets', profile: 'Profile', activity: 'Activity', points: 'Rewards', events: 'Events', checkin: 'Check-In', meetings: 'Meetings', members: 'TG Members', divisions: 'Divisions', 'division-members': 'Division Members', qrcode: 'QR Studio', docs: 'Documentation', albums: 'Photo Albums', admin: 'Admin', 'site-content': 'Site Content' };
+const SECTION_NAMES: Record<string, string> = { home: 'Home', tickets: 'My Tickets', profile: 'Profile', activity: 'Activity', points: 'Rewards', events: 'Events', checkin: 'Check-In', meetings: 'Meetings', staffle: 'Staffle', members: 'TG Members', divisions: 'Divisions', 'division-members': 'Division Members', qrcode: 'QR Studio', docs: 'Documentation', albums: 'Photo Albums', admin: 'Admin', 'site-content': 'Site Content' };
 
 async function api<T = unknown>(url: string, init?: RequestInit): Promise<{ ok: boolean; data: T & { error?: string } }> {
   try {

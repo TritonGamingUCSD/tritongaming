@@ -12,6 +12,7 @@ export const PORTAL_PAGE_INFO: Record<string, { name: string; sub: string; accen
   members: { name: 'TG Members', sub: 'Everyone in the org.', accent: '#8b6cdc' },
   meetings: { name: 'Meetings', sub: 'Check in, plan and review meetings.', accent: '#8b6cdc' },
   strikes: { name: 'Strikes', sub: 'Attendance and strike tracking.', accent: '#8b6cdc' },
+  staffle: { name: 'Staffle', sub: 'Enter the staff raffle for prizes.', accent: '#8b6cdc' },
   quarters: { name: 'Quarter Status', sub: 'Who is active each quarter.', accent: '#8b6cdc' },
   divisions: { name: 'Divisions', sub: 'Manage divisions.', accent: '#8b6cdc' },
   'division-members': { name: 'Division Members', sub: 'People in each division.', accent: '#8b6cdc' },

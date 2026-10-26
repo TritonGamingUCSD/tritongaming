@@ -4,7 +4,7 @@
 
 export const PORTAL_SECTION_IDS = [
   'tickets', 'points', 'activity', 'profile', 'events', 'checkin', 'members', 'meetings',
-  'strikes', 'quarters', 'logistics', 'trivia', 'divisions', 'division-members', 'docs', 'qrcode', 'help', 'admin', 'site-content',
+  'strikes', 'quarters', 'logistics', 'staffle', 'trivia', 'divisions', 'division-members', 'docs', 'qrcode', 'help', 'admin', 'site-content',
 ] as const;
 
 const SECTIONS = new Set<string>(PORTAL_SECTION_IDS);

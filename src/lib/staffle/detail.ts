@@ -5,7 +5,7 @@ import { personFacts, stateOf, STAFFLE_COLUMNS, type StaffleState } from '@/lib/
 
 // One Staffle as the page shows it: its items with the prize, how many entered, whether you did, and (once drawn) who won and who has claimed.
 export interface StaffleItemView {
-  id: string; prize_id: string; winners: number; entries: number; mine: boolean;
+  id: string; prize_id: string; winners: number; entries: number; mine: boolean; entrants: string[];   // entrants: their names, only for the people who run it (the draw screen shuffles them)
   prize: { name: string; photo: string; sponsor: string | null; type: string | null; size: string | null };
   won: { id: string; user_id: string; name: string; position: number; claimed: boolean; passed: boolean }[];
 }
@@ -38,7 +38,7 @@ export async function staffleView(svc: SupabaseClient, row: Record<string, unkno
   ]);
   const sponsor = new Map((sponsors ?? []).map((s) => [s.id as string, s.name as string]));
   const prize = new Map((prizes ?? []).map((p) => [p.id as string, p]));
-  const names = await namesOf(svc, [...(won ?? []).map((w) => w.user_id as string), ...rules.add, ...rules.block]);
+  const names = await namesOf(svc, [...(won ?? []).map((w) => w.user_id as string), ...rules.add, ...rules.block, ...(canManage ? (entries ?? []).map((e) => e.user_id as string) : [])]);
   const perItem = new Map<string, number>(), mine = new Set<string>();
   for (const e of entries ?? []) { perItem.set(e.item_id as string, (perItem.get(e.item_id as string) ?? 0) + 1); if (e.user_id === userId) mine.add(e.item_id as string); }
   const state = stateOf(row as { status: string; opens_at: string; closes_at: string });
@@ -46,6 +46,7 @@ export async function staffleView(svc: SupabaseClient, row: Record<string, unkno
     const p = prize.get(i.prize_id as string) as { name: string; photo: string; sponsor_id: string | null; type: string | null; size: string | null } | undefined;
     return {
       id: i.id as string, prize_id: i.prize_id as string, winners: i.winners as number, entries: perItem.get(i.id as string) ?? 0, mine: mine.has(i.id as string),
+      entrants: canManage ? (entries ?? []).filter((e) => e.item_id === i.id).map((e) => names.get(e.user_id as string) ?? 'Someone') : [],
       prize: { name: p?.name ?? 'A prize', photo: p?.photo ?? '', sponsor: p?.sponsor_id ? sponsor.get(p.sponsor_id) ?? null : null, type: p?.type ?? null, size: p?.size ?? null },
       won: (won ?? []).filter((w) => w.item_id === i.id).map((w) => ({ id: w.id as string, user_id: w.user_id as string, name: names.get(w.user_id as string) ?? 'Someone', position: w.position as number, claimed: !!w.claimed_at, passed: !!w.passed_at })),
     };
