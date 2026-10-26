@@ -1,9 +1,19 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { PrizeStepDef, PrizeTotals } from '@/lib/logistics/prizes';
+import { isLoose, setLooseSizes, type PrizeStepDef, type PrizeTotals } from '@/lib/logistics/prizes';
 import { announce, stockTopic } from '@/lib/logistics/live';
 
 // The columns of a prize as the screens use them.
-export const PRIZE_COLUMNS = 'id, name, sponsor_id, size, type, in_hand, price, quantity, quantity_is_estimate, bin, source, from_event, from_plan_id, expires_on, notes';
+export const PRIZE_COLUMNS = 'id, name, sponsor_id, size, type, in_hand, price, quantity, quantity_is_estimate, stock_level, bin, source, from_event, from_plan_id, expires_on, notes';
+
+// Reads which sizes are counted loosely (the switch on a size in the list) so `isLoose` knows. Kept for a few seconds; a change to a size forgets it (see forgetLoose).
+let looseAt = 0;
+export const forgetLoose = () => { looseAt = 0; };
+export async function ensureLoose(svc: SupabaseClient): Promise<void> {
+  if (Date.now() - looseAt < 5000) return;
+  const { data } = await svc.from('logistics_options').select('value, meta').eq('kind', 'prize_size');
+  setLooseSizes((data ?? []).filter((o) => (o.meta as { loose?: boolean } | null)?.loose).map((o) => o.value as string));
+  looseAt = Date.now();
+}
 
 // The prize steps, in order. `gives` and `leftover` live in the list entry's meta.
 export async function loadPrizeSteps(svc: SupabaseClient): Promise<PrizeStepDef[]> {
@@ -48,8 +58,10 @@ export async function logPrize(svc: SupabaseClient, entries: PrizeLogEntry[]) {
 
 // Changes how many of a prize are on hand by `delta` (never below 0), says what the count is now, and tells everyone with the page open.
 export async function bumpStock(svc: SupabaseClient, prizeId: string, delta: number, who?: { id: string | null; name: string | null }): Promise<number | null> {
-  const { data } = await svc.from('logistics_prizes').select('quantity').eq('id', prizeId).maybeSingle();
+  await ensureLoose(svc);
+  const { data } = await svc.from('logistics_prizes').select('quantity, size').eq('id', prizeId).maybeSingle();
   if (!data) return null;
+  if (isLoose(data as { size: string | null })) return data.quantity as number;   // loose prizes have no exact stock to change
   const next = Math.max(0, (data.quantity as number) + delta);
   await svc.from('logistics_prizes').update({ quantity: next, updated_at: new Date().toISOString(), ...(who?.id ? { updated_by: who.id } : {}) }).eq('id', prizeId);
   await announce(stockTopic(), { k: 'stock', prize: prizeId, qty: next, was: data.quantity as number }, who);
@@ -61,6 +73,7 @@ export async function bumpStock(svc: SupabaseClient, prizeId: string, delta: num
 // returned or as given. Everything that was promised and is not taken out simply counts as free again, because a closed event holds nothing. The same lines are used to undo it on reopening.
 export interface Uncounted { line_id: string; station: string; prize: string; quantity: number }
 export async function planCloseLines(svc: SupabaseClient, planId: string) {
+  await ensureLoose(svc);
   const [{ data: lines }, { data: done }, steps, { data: stations }] = await Promise.all([
     svc.from('logistics_plan_prizes').select('id, station_id, prize_id, quantity').eq('plan_id', planId).limit(5000),
     svc.from('logistics_plan_prize_steps').select('line_id, step_id, done').eq('plan_id', planId).limit(30000),
@@ -70,9 +83,10 @@ export async function planCloseLines(svc: SupabaseClient, planId: string) {
   const gives = new Set(steps.filter((s) => s.gives).map((s) => s.id)), back = new Set(steps.filter((s) => s.leftover).map((s) => s.id));
   const sum = (lineId: string, set: Set<string>) => (done ?? []).filter((d) => d.line_id === lineId && set.has(d.step_id as string)).reduce((n, d) => n + (d.done as number), 0);
   const poolName = new Map((stations ?? []).map((p) => [p.id as string, p.name as string]));
-  const { data: prizes } = (lines ?? []).length ? await svc.from('logistics_prizes').select('id, name').in('id', [...new Set((lines ?? []).map((l) => l.prize_id as string))]) : { data: [] as { id: string; name: string }[] };
+  const { data: prizes } = (lines ?? []).length ? await svc.from('logistics_prizes').select('id, name, size').in('id', [...new Set((lines ?? []).map((l) => l.prize_id as string))]) : { data: [] as { id: string; name: string; size: string | null }[] };
   const prizeName = new Map((prizes ?? []).map((p) => [p.id as string, p.name as string]));
-  return (lines ?? []).map((l) => {
+  const loose = new Set((prizes ?? []).filter((p) => isLoose(p as { size: string | null })).map((p) => p.id as string));   // loose prizes are never counted out of stock
+  return (lines ?? []).filter((l) => !loose.has(l.prize_id as string)).map((l) => {
     const quantity = l.quantity as number, g = Math.min(sum(l.id as string, gives), quantity), remaining = quantity - g, back_ = Math.min(sum(l.id as string, back), remaining);
     return { line_id: l.id as string, prize_id: l.prize_id as string, station: poolName.get(l.station_id as string) ?? 'a station', prize: prizeName.get(l.prize_id as string) ?? 'a prize', quantity, remaining, back: back_, counted: back_ > 0 };
   });

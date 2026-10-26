@@ -16,6 +16,7 @@ import DeviceDialog from './DeviceDialog';
 import type { Device } from '@/lib/logistics/devices';
 import HowItWorks from './HowItWorks';
 import { interactive } from './interactive';
+import { confirmHold } from '@/lib/ui/confirmHold';
 import { FillDialog, StationDialog } from './PlanDialogs';
 import BorrowedTab from './BorrowedTab';
 import DeviceFinder from './DeviceFinder';
@@ -65,7 +66,7 @@ export default function PlanView({ id, data, catalog, page, day, group, embedded
   const [filling, setFilling] = useState<{ station: Station | null } | null>(null);
   const [setsOpenPick, setSetsOpenPick] = useState<boolean | null>(null);   // Collapse all / Expand all also fold the bundles
   const [foldGen, setFoldGen] = useState(0);
-  const [fold, setFold] = useState<Record<string, boolean>>({});   // what the person chose per team; otherwise finished teams (and every team on a phone) start folded
+  const [fold, setFold] = useState<Record<string, boolean>>({});   // what the person chose per team; otherwise every team starts folded
   const [overview, setOverview] = useState(false);
   const [showList, setShowList] = useState(false);
   const [narrow, setNarrow] = useState(false);
@@ -316,6 +317,12 @@ export default function PlanView({ id, data, catalog, page, day, group, embedded
   const pct = allTotal ? Math.round((allDone / allTotal) * 100) : 0;
   const lockedSet = new Set(detail.lockedRequests ?? []);   // requests whose allocation is locked: their empty rows are not filled
   const isLockedRow = (r: Row) => !!r.requestId && lockedSet.has(r.requestId);
+  // Locking a team freezes the requests its rows came from; unlocking takes a deliberate hold.
+  const setTeamLock = async (name: string, ids: string[], lock: boolean) => {
+    if (!lock && !(await confirmHold({ title: `Unlock ${name}?`, message: 'Its rows and prizes can be changed again.', confirmLabel: 'Hold to unlock' }))) return;
+    for (const id of ids) await plan.act(`/requests/${id}`, 'PATCH', { allocation_locked: lock });
+    await plan.reload();
+  };
   const emptyRows = rows.filter((r) => r.kind === 'slot' && !r.counted && !isLockedRow(r));
   // The IDs that can still be typed into a row: usable devices of that type that are not in this plan yet (the browser suggests them as you type).
   const ids = (type: string) => [...(free.get(type) ?? [])].sort(natural).map((value) => ({ value }));
@@ -330,7 +337,7 @@ export default function PlanView({ id, data, catalog, page, day, group, embedded
     onBorrowed: (r) => setBorrowing(borrowed.find((b) => b.id === r.id) ?? null), onInstalled: (list) => void install(list), onEditDevice: (r) => setDeviceEdit(catalog.data?.devices.find((x) => x.id === r.id) ?? data.devices.find((x) => x.id === r.id) ?? null),
   };
   // One section at a time (the Devices page's switch): opening a team folds the others, and at first only the first team is open.
-  const foldOf = (key: string, complete: boolean) => (key in fold ? fold[key] : accordion ? key !== teams[0]?.key : complete || narrow);
+  const foldOf = (key: string, complete: boolean) => (key in fold ? fold[key] : (void complete, true));   // every team starts folded; opening one is the person's choice
   // On a phone only one team is open at a time on the event day: opening one folds the rest.
   const toggleFold = (key: string, complete: boolean) => setFold((cur) => {
     const opening = foldOf(key, complete);
@@ -372,7 +379,7 @@ export default function PlanView({ id, data, catalog, page, day, group, embedded
     // An event's own page: an overview and what was asked for and lent. Devices and prizing are on their own tabs.
     return (
       <EventOverview name={p.name} dates={range(p.starts_on, p.ends_on)} closed={closed} notes={p.notes ?? null} portalEvent={!!p.event_id} section={page} requests={requests} plan={plan} catalog={catalog} data={data}
-        stats={{ teams: stations.length, requests: (requests.count('devices') ?? 0) + (requests.count('prizes') ?? 0), newRequests: 0, devices: rows.length, empty: rows.filter((r) => r.kind === 'slot').length, prizes: detail.prizes.lines.reduce((n, l) => n + l.quantity, 0) }}
+        stats={{ teams: stations.length, requests: (requests.count('devices') ?? 0) + (requests.count('prizes') ?? 0), newRequests: 0, devices: rows.length, empty: rows.filter((r) => r.kind === 'slot').length, prizes: detail.prizes.lines.reduce((n, l) => n + l.quantity, 0), deviceRequests: requests.count('devices') ?? 0, prizeRequests: requests.count('prizes') ?? 0, sponsorLoaners: borrowed.filter((b) => b.owner_kind === 'sponsor').length, officerLoaners: borrowed.filter((b) => b.owner_kind === 'officer').length }}
         onBack={onBack} onOpenDevices={() => onOpenDevices?.()} onOpenPrizing={onOpenPrizing} />
     );
   }
@@ -543,6 +550,8 @@ export default function PlanView({ id, data, catalog, page, day, group, embedded
             const s = t.station;
             const status = s ? stationStatus(problems, s.id) : 'ok';
             const mine = s ? problems.filter((x) => x.station_id === s.id) : [];
+            const teamRequests = [...new Set(t.rows.map((r) => r.requestId).filter((x): x is string => !!x))];
+            const teamLocked = teamRequests.length > 0 && teamRequests.every((id) => lockedSet.has(id));
             const emptyHere = t.rows.filter((r) => r.kind === 'slot' && !r.counted && !isLockedRow(r)).length;
             return (
               <section key={t.key} id={`st-${t.key}`} className={`${styles.dayTeam} ${day ? '' : styles.noSteps} ${day && complete ? styles.dayTeamDone : ''}`} style={{ '--n': steps.length } as React.CSSProperties} aria-label={t.title}>
@@ -561,6 +570,7 @@ export default function PlanView({ id, data, catalog, page, day, group, embedded
                         <span className={styles.dTeamSub}>{s.contact ?? <span className={styles.warnText}>No contact</span>}</span>
                         <span className={styles.dTeamSub}><TextCell value={s.room} canEdit={manage} placeholder="Add room" onSave={(v) => void plan.act(`/stations/${s.id}`, 'PATCH', { room: v })} /></span>
                         {manage && emptyHere > 0 && <button type="button" className={styles.miniTextBtn} onClick={() => setFilling({ station: s })}>Fill {emptyHere}<span className={styles.wide}>Empty</span></button>}
+                        {canManage && !closed && !day && teamRequests.length > 0 && <button type="button" className={styles.miniTextBtn} aria-pressed={teamLocked} onClick={() => void setTeamLock(t.title, teamRequests, !teamLocked)}>{teamLocked ? 'Locked · Unlock' : 'Lock'}</button>}
                       </div>
                     )}
                   </div>

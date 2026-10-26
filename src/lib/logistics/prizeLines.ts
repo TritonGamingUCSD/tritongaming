@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { loadPrizeTotals } from '@/lib/logistics/prizeServer';
+import { ensureLoose, loadPrizeTotals } from '@/lib/logistics/prizeServer';
 import { whoIs } from '@/lib/logistics/live';
 import { prizeLeft } from '@/lib/logistics/prizes';
 
@@ -17,9 +17,10 @@ export async function noRoom(svc: SupabaseClient, wants: { prize_id: string; add
   for (const w of wants) need.set(w.prize_id, (need.get(w.prize_id) ?? 0) + w.add);
   const ids = [...need].filter(([, n]) => n > 0).map(([id]) => id);
   if (!ids.length) return null;
-  const [{ data: prizes }, totals] = await Promise.all([svc.from('logistics_prizes').select('id, name, quantity').in('id', ids), loadPrizeTotals(svc, ids)]);
+  await ensureLoose(svc);
+  const [{ data: prizes }, totals] = await Promise.all([svc.from('logistics_prizes').select('id, name, quantity, size, stock_level').in('id', ids), loadPrizeTotals(svc, ids)]);
   for (const p of prizes ?? []) {
-    const left = prizeLeft(p as { quantity: number }, totals.get(p.id as string) ?? { allocated: 0 });
+    const left = prizeLeft(p as { quantity: number; size: string | null; stock_level: string }, totals.get(p.id as string) ?? { allocated: 0 });
     if ((need.get(p.id as string) ?? 0) > left) return `Only ${Math.max(0, left)} left of ${p.name}. That is not enough for ${need.get(p.id as string)} more.`;
   }
   return null;

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { authorizeLogistics } from '@/lib/logistics/auth';
 import { type OptionKind } from '@/lib/logistics/constants';
 import { followBundle, requestsUsingBundle } from '@/lib/logistics/requestRows';
+import { forgetLoose } from '@/lib/logistics/prizeServer';
 import { APPLIES, cleanItems, cleanValue, devicesUsing, followPrizeSize } from '@/lib/logistics/optionsServer';
 
 export const dynamic = 'force-dynamic';
@@ -20,6 +21,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const kind = o.kind as OptionKind;
   const patch: Record<string, unknown> = {};
   if ((typeof b.counted === 'boolean' || typeof b.main === 'boolean') && kind === 'type') patch.meta = { ...(o.meta as object), ...(typeof b.counted === 'boolean' ? { counted: b.counted } : {}), ...(typeof b.main === 'boolean' ? { main: b.main } : {}) };
+  if (kind === 'prize_size' && typeof b.loose === 'boolean') { patch.meta = { ...(o.meta as object), loose: b.loose }; forgetLoose(); }
   if (kind === 'step' && (typeof b.applies === 'string' || typeof b.kit === 'boolean')) {
     if (typeof b.applies === 'string' && !APPLIES.includes(b.applies)) return NextResponse.json({ error: 'Pick which devices the step is for.' }, { status: 400 });
     patch.meta = { ...(o.meta as object), ...(typeof b.applies === 'string' ? { applies: b.applies } : {}), ...(typeof b.kit === 'boolean' ? { kit: b.kit } : {}) };

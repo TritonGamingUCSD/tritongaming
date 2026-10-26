@@ -106,6 +106,11 @@ function OptionRow({ kind, o, api, used, unit, canEdit }: { kind: OptionKind; o:
           <Pill on={!!o.main} disabled={!canEdit} label="Main Device" title="Main device: names a set (a PC with its monitor and keyboard) and comes first in it" onClick={() => void api.changeOption(o.id, { main: !o.main })} />
         </span>
       )}
+      {kind === 'prize_size' && (
+        <span className={styles.toolPills}>
+          <Pill on={!!o.loose} disabled={!canEdit} label="Counted Loosely" title="Counted loosely: free small merch. It has a level (plenty, some, low, out) instead of an exact number, and is never over-promised" onClick={() => void api.changeOption(o.id, { loose: !o.loose })} />
+        </span>
+      )}
       <span className={styles.toolUse}>{useText(used, unit)}</span>
       {canEdit && <RowMenu label={`More for ${o.value}`} items={[{ label: used ? `In Use, Can’t Delete` : 'Delete', danger: !used, disabled: !!used, onClick: () => void api.deleteOption(kind, o.id) }]} />}
     </li>

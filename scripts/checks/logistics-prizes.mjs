@@ -35,7 +35,7 @@ try {
   const a = await exec.call('POST', '/api/logistics/prizes', { name: 'ZZ Mouse', sponsor_id: sp.j.sponsor.id, size: 'Small Prizing', price: 24.5, quantity: 10, bin: 'Blue bin 2', source: 'Bought at Costco', note: 'First batch' });
   t.ok('exec adds a prize (on hand 10, left 10, bin and source kept)', a.s === 201 && a.j.prize.left === 10 && a.j.prize.price === 24.5 && a.j.prize.bin === 'Blue bin 2' && a.j.prize.source === 'Bought at Costco', JSON.stringify(a.j));
   const A = a.j.prize.id;
-  const b = await exec.call('POST', '/api/logistics/prizes', { name: 'ZZ Soda', price: 3, quantity: 500, quantity_is_estimate: true, size: 'Free' });
+  const b = await exec.call('POST', '/api/logistics/prizes', { name: 'ZZ Soda', price: 3, quantity: 500, quantity_is_estimate: true, size: 'Large Prizing' });
   const B = b.j.prize.id;
   t.ok('a quantity can be an estimate', b.s === 201 && b.j.prize.quantity_is_estimate === true);
   const typed = await exec.call('PATCH', `/api/logistics/prizes/${A}`, { type: 'Wireless mouse', in_hand: false });
@@ -144,8 +144,8 @@ try {
   t.ok('and the history says the station was removed', (await log(A)).some((e) => e.kind === 'assign' && e.qty === -3 && e.note === 'Station removed'));
 
   // ---- closing an event: what went out and was not counted back leaves stock; the rest is free again
-  const C = (await exec.call('POST', '/api/logistics/prizes', { name: 'ZZ Pen', quantity: 10, size: 'Free' })).j.prize.id;
-  const D = (await exec.call('POST', '/api/logistics/prizes', { name: 'ZZ Cup', quantity: 10, size: 'Free' })).j.prize.id;
+  const C = (await exec.call('POST', '/api/logistics/prizes', { name: 'ZZ Pen', quantity: 10, size: 'Medium Prizing' })).j.prize.id;
+  const D = (await exec.call('POST', '/api/logistics/prizes', { name: 'ZZ Cup', quantity: 10, size: 'Medium Prizing' })).j.prize.id;
   const P2 = (await exec.call('POST', '/api/logistics/events', { name: 'ZZ Close Night', starts_on: day(2), ends_on: day(2) })).j.plan.id;
   const s3 = (await exec.call('POST', `/api/logistics/events/${P2}/stations`, { names: ['ZZ Booth'], prize_only: true })).j.stations[0];
   const l3 = await exec.call('POST', `/api/logistics/events/${P2}/stations/${s3.id}/prizes`, { items: [{ prize_id: C, quantity: 4 }, { prize_id: D, quantity: 6 }] });
@@ -164,6 +164,25 @@ try {
   t.ok('reopening puts it all back (pens 10, cups 10) and removes those history lines', (await exec.call('PATCH', `/api/logistics/events/${P2}`, { status: 'draft' })).s === 200 && (await stockOf(C)).quantity === 10 && (await stockOf(D)).quantity === 10 && !(await log(D)).some((e) => e.qty === -6));
   const shut2 = await exec.call('PATCH', `/api/logistics/events/${P2}`, { status: 'closed', uncounted: 'returned' });
   t.ok('closing and taking the uncounted as returned: only the pens that were not counted back leave (3)', shut2.s === 200 && (await stockOf(C)).quantity === 7 && (await stockOf(D)).quantity === 10);
+
+  // ---- free merch is counted loosely: a level instead of a number, never over-promised, never taken out of stock when an event closes
+  const zl = await exec.call('POST', '/api/logistics/options', { kind: 'prize_size', value: 'ZZ Loose' });
+  t.ok('a size can be marked counted loosely', (await exec.call('PATCH', `/api/logistics/options/${zl.j.option.id}`, { loose: true })).s === 200 && (await officer.call('GET', '/api/logistics')).j.lists.prize_size.find((o) => o.value === 'ZZ Loose')?.loose === true);
+  const F = (await exec.call('POST', '/api/logistics/prizes', { name: 'ZZ Sticker', size: 'ZZ Loose', quantity: 0, stock_level: 'some' })).j.prize;
+  t.ok('a free prize has a level, and "left" never runs out while it is not out', F.stock_level === 'some' && F.left > 1000);
+  const P3 = (await exec.call('POST', '/api/logistics/events', { name: 'ZZ Loose Night', starts_on: day(3), ends_on: day(3) })).j.plan.id;
+  const s4 = (await exec.call('POST', `/api/logistics/events/${P3}/stations`, { names: ['ZZ Sticker Table'], prize_only: true })).j.stations[0];
+  const l4 = await exec.call('POST', `/api/logistics/events/${P3}/stations/${s4.id}/prizes`, { items: [{ prize_id: F.id, quantity: 1 }] });
+  t.ok('a station can have free merch with no stock count behind it', l4.s === 200 || l4.s === 201, JSON.stringify(l4.j).slice(0, 160));
+  const more = await exec.call('PATCH', `/api/logistics/events/${P3}/stations/${s4.id}/prizes/${F.id}`, { quantity: 50 });
+  t.ok('and any amount is fine (it is never over-promised)', more.s === 200, JSON.stringify(more.j).slice(0, 160));
+  const out = await exec.call('PATCH', `/api/logistics/prizes/${F.id}`, { stock_level: 'out' });
+  t.ok('setting the level to out makes left 0', out.s === 200 && out.j.prize.stock_level === 'out' && out.j.prize.left === 0, JSON.stringify(out.j).slice(0, 160));
+  await exec.call('PATCH', `/api/logistics/prizes/${F.id}`, { stock_level: 'low' });
+  const lineF = (await svc.from('logistics_plan_prizes').select('id').eq('plan_id', P3).eq('prize_id', F.id).maybeSingle()).data;
+  if (lineF) await officer.call('POST', `/api/logistics/events/${P3}/counts`, { line_id: lineF.id, step_id: sid('Given Out'), done: 3 });
+  const shut3 = await exec.call('PATCH', `/api/logistics/events/${P3}`, { status: 'closed' });
+  t.ok('closing an event with free merch asks nothing and takes nothing out of stock', shut3.s === 200 && (await stockOf(F.id)).quantity === 0, JSON.stringify(shut3.j).slice(0, 160));
 
   // ---- tidying up
   t.ok('exec deletes the plan, and its stations, lines and counts go with it', (await exec.call('DELETE', `/api/logistics/events/${P}`)).s === 200);

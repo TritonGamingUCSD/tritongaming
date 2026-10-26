@@ -1,15 +1,17 @@
-import { ANY_SIZE } from '@/lib/logistics/prizes';
+import { ANY_SIZE, isLoose, type StockLevel } from '@/lib/logistics/prizes';
+import { slugify } from '@/lib/core/slug';
 
 // The Prizing page's own logic (no database, no React): how the prize table is grouped, what a station still needs, and what goes in the "Fix these" strip.
 
-export type GroupBy = 'station' | 'sponsor' | 'source' | 'size' | 'type' | 'status' | 'none';
+// An event is grouped by its stations by default (or any of the others); the stock (no event) by one of the others.
+export type GroupBy = 'station' | 'sponsor' | 'source' | 'size' | 'type' | 'status';
 export const GROUPS: { id: GroupBy; label: string }[] = [
-  { id: 'station', label: 'Station' }, { id: 'sponsor', label: 'Sponsor' }, { id: 'source', label: 'Source' }, { id: 'size', label: 'Size' }, { id: 'type', label: 'Type' }, { id: 'status', label: 'Status' }, { id: 'none', label: 'No Groups' },
+  { id: 'station', label: 'Station' }, { id: 'sponsor', label: 'Sponsor' }, { id: 'source', label: 'Source' }, { id: 'size', label: 'Size' }, { id: 'type', label: 'Type' }, { id: 'status', label: 'Status' },
 ];
 export const isGroupBy = (v: unknown): v is GroupBy => GROUPS.some((g) => g.id === v);
 
 export interface PrizeIn {
-  id: string; name: string; sponsor_id: string | null; size: string | null; type: string | null; in_hand: boolean; price: number | null; quantity: number; allocated: number; left: number;
+  id: string; name: string; sponsor_id: string | null; size: string | null; type: string | null; in_hand: boolean; price: number | null; quantity: number; allocated: number; left: number; stock_level?: StockLevel;
 }
 export interface LineIn { id: string; station_id: string; prize_id: string; quantity: number }
 export interface StationIn { id: string; name: string; prize_only?: boolean; prize_request_id?: string | null; prize_target_qty?: number | null; prize_target_sizes?: Record<string, number> | null }
@@ -29,7 +31,8 @@ export function eventHolds(lines: LineIn[], given: (line: LineIn) => number) {
 export type Status = 'over' | 'not-here' | 'assigned' | 'free' | 'out';
 export const STATUS_LABEL: Record<Status, string> = { over: 'Over-promised', 'not-here': 'Not here yet', assigned: 'Assigned to this event', free: 'Not assigned', out: 'Out of stock' };
 export const STATUS_ORDER: Status[] = ['over', 'not-here', 'assigned', 'free', 'out'];
-export function statusOf(p: Pick<PrizeIn, 'left' | 'quantity' | 'in_hand'>, assignedHere: number): Status {
+export function statusOf(p: Pick<PrizeIn, 'left' | 'quantity' | 'in_hand'> & { size?: string | null; stock_level?: StockLevel }, assignedHere: number): Status {
+  if (isLoose(p)) return p.stock_level === 'out' ? 'out' : assignedHere > 0 ? 'assigned' : 'free';
   if (p.left < 0) return 'over';
   if (!p.in_hand && (assignedHere > 0 || p.quantity > 0)) return 'not-here';
   if (assignedHere > 0) return 'assigned';
@@ -49,7 +52,10 @@ export function groupBy<T>(rows: T[], keyOf: (r: T) => string | null, empty: str
 }
 
 // Where a prize is from, in words: the sponsor (or the club) and the event it was received for. Used wherever a prize is shown.
-export const fromOf = (p: { from_event?: string | null }, sponsor: string | null) => [sponsor ?? 'Club', p.from_event].filter(Boolean).join(' · ');
+// The event a prize was received for is shown by its address name (the slug, like division-showcase): the linked event's own slug while it exists, else the name made into one.
+export const eventSlugOf = (p: { from_event?: string | null; from_plan_id?: string | null }, slugByPlan: Map<string, string>): string | null =>
+  p.from_plan_id && slugByPlan.get(p.from_plan_id) ? slugByPlan.get(p.from_plan_id)! : p.from_event ? slugify(p.from_event) : null;
+export const fromOf = (p: { from_event?: string | null; from_plan_id?: string | null }, sponsor: string | null, slugByPlan: Map<string, string> = new Map()) => [sponsor ?? 'Club', eventSlugOf(p, slugByPlan)].filter(Boolean).join(' · ');
 
 export const money = (n: number | null | undefined) => (n === null || n === undefined ? '' : `$${n.toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 })}`);
 export const valueOf = (rows: { quantity: number; price: number | null }[]) => Math.round(rows.reduce((n, r) => n + r.quantity * (r.price ?? 0), 0) * 100) / 100;
@@ -59,8 +65,13 @@ export const valueOf = (rows: { quantity: number; price: number | null }[]) => M
 export function haveBySize(lines: { quantity: number; size: string | null }[]) {
   return lines.reduce<Record<string, number>>((m, l) => (l.size ? { ...m, [l.size]: (m[l.size] ?? 0) + l.quantity } : m), {});
 }
-export function stationNeed(station: Pick<StationIn, 'prize_target_qty' | 'prize_target_sizes'>, lines: { quantity: number; size: string | null }[]): { need: Record<string, number>; asked: number; has: number } {
-  const target = station.prize_target_sizes ?? {}, have = haveBySize(lines);
+export function stationNeed(station: Pick<StationIn, 'prize_target_qty' | 'prize_target_sizes'>, rawLines: { quantity: number; size: string | null }[]): { need: Record<string, number>; asked: number; has: number } {
+  const target = station.prize_target_sizes ?? {};
+  // Free prizes are loose: a station that has any of them has all it asked for of that size (the count on its line means nothing).
+  const freeKey = Object.keys(target).find((z) => isLoose({ size: z }));
+  const loose = rawLines.filter((l) => isLoose(l));
+  const lines = freeKey && loose.length ? rawLines.map((l) => (l === loose[0] ? { ...l, quantity: Math.max(l.quantity, (target[freeKey] ?? 0) - loose.slice(1).reduce((n, x) => n + x.quantity, 0)) } : l)) : rawLines;
+  const have = haveBySize(lines);
   const asked = station.prize_target_qty ?? 0, has = lines.reduce((n, l) => n + l.quantity, 0);
   const wantAny = Math.max(0, asked - Object.values(target).reduce((n, x) => n + x, 0));
   const gotAny = has - Object.entries(have).reduce((n, [z, x]) => n + Math.min(x, target[z] ?? 0), 0);
@@ -86,4 +97,14 @@ export function prizingFixes(o: {
   const notHere = o.prizes.filter((p) => !p.in_hand && p.assignedHere > 0);
   if (notHere.length) out.push({ sev: 'warn', text: `${notHere.length} ${notHere.length === 1 ? 'prize' : 'prizes'} in this event ${notHere.length === 1 ? 'is' : 'are'} not here yet (${notHere.slice(0, 3).map((p) => p.name).join(', ')}${notHere.length > 3 ? '…' : ''})`, focus: { kind: 'prize', id: notHere[0].id } });
   return out;
+}
+
+// A later counter implies the earlier ones, like a device ticked at a later step: if 3 were given out, at least 3 were sorted and picked up. `steps` are in order; a "back to storage" step (`leftover`) is only about
+// what was NOT handed out, so it neither implies the steps before it nor is implied by the ones after. The result is for showing and totalling only; the saved counts are not changed.
+export function impliedCount(steps: { id: string; leftover: boolean }[], real: (stepId: string) => number, stepId: string): number {
+  const i = steps.findIndex((s) => s.id === stepId);
+  if (i < 0) return 0;
+  const own = real(stepId);
+  if (steps[i].leftover) return own;
+  return steps.slice(i + 1).filter((s) => !s.leftover).reduce((m, s) => Math.max(m, real(s.id)), own);
 }

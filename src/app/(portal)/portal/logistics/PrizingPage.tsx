@@ -6,15 +6,17 @@ import Button from '@/components/ui/Button';
 import Loading from '@/components/Loading/Loading';
 import Notice from '@/components/ui/Notice';
 import { Input, Select } from '@/components/ui/Field';
+import SectionTabs from '@/components/ui/SectionTabs';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import { RowMenu } from './RowMenu';
-import { ANY_SIZE, suggestPrizes, stepCeiling, type PrizeStepDef } from '@/lib/logistics/prizes';
-import { GROUPS, fromOf, STATUS_LABEL, STATUS_ORDER, eventHolds, groupBy, isGroupBy, money, prizingFixes, stationNeed, statusOf, valueOf, type Fix, type GroupBy } from '@/lib/logistics/prizing';
-import { AddStationDialog, HistoryDialog, PrizeDialog, PrizingSettings } from './PrizingDialogs';
-import { FixStrip, PrizeRowView, StationBlock, type PrizingCtx, type Row } from './PrizingParts';
+import { ANY_SIZE, isLoose, setLooseSizes, suggestPrizes, stepCeiling, type PrizeStepDef, type StockLevel } from '@/lib/logistics/prizes';
+import { GROUPS, impliedCount, eventSlugOf, fromOf, STATUS_LABEL, STATUS_ORDER, eventHolds, groupBy, isGroupBy, money, prizingFixes, stationNeed, statusOf, valueOf, type Fix, type GroupBy } from '@/lib/logistics/prizing';
+import { AddStationDialog, BreakdownDialog, FromDialog, HistoryDialog, PastEventsDialog, PrizeDialog, PrizingSettings } from './PrizingDialogs';
+import { FixStrip, GroupBlock, StationBlock, StockBlock, type GroupLine, type PrizingCtx, type Row } from './PrizingParts';
 import { StationDialog } from './PlanDialogs';
 import { usePlan, usePlanList, type PlanSummary, type Station } from './usePlans';
 import { useLiveTeam } from './useLiveTeam';
+import LivePill from './LivePill';
 import { useCloseEvent } from './CloseEvent';
 import { autoPlan, eventLabel } from './eventPick';
 import type { LiveEnvelope } from '@/lib/logistics/live';
@@ -25,12 +27,13 @@ import styles from './logistics.module.css';
 import pz from './prizing.module.css';
 
 const VIEW_KEY = 'tg-prizing-view';
-interface View { group: GroupBy; steps: string[]; onlyHere: boolean; oneAtATime: boolean }
-const DEFAULT_VIEW: View = { group: 'station', steps: ['sorted'], onlyHere: false, oneAtATime: true };
+interface View { group: GroupBy; steps: string[]; oneAtATime: boolean; hideGone: boolean }   // group: stations (an event only) or one of the others; the stock without an event is never grouped by station
+const DEFAULT_VIEW: View = { group: 'station', steps: ['sorted'], oneAtATime: true, hideGone: true };
+const EVENT_KEY = 'tg-prizing-event';   // the last event looked at, for coming back from the stock
 const readView = (): View => {
   try {
     const j = JSON.parse(localStorage.getItem(VIEW_KEY) ?? 'null');
-    if (j) return { group: isGroupBy(j.group) ? j.group : DEFAULT_VIEW.group, steps: Array.isArray(j.steps) ? j.steps.map(String) : DEFAULT_VIEW.steps, onlyHere: !!j.onlyHere, oneAtATime: j.oneAtATime !== false };
+    if (j) return { group: isGroupBy(j.group) ? j.group : DEFAULT_VIEW.group, steps: Array.isArray(j.steps) ? j.steps.map(String) : DEFAULT_VIEW.steps, oneAtATime: j.oneAtATime !== false, hideGone: j.hideGone !== false };
   } catch { /* nothing remembered */ }
   return DEFAULT_VIEW;
 };
@@ -40,6 +43,7 @@ const readView = (): View => {
 // event-day counters (Sorted by default) are under each station. Each prize has a history of what happened to its stock.
 export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi; data: Catalog; slug: string | null; go: (r: Route) => void }) {
   const list = usePlanList();
+  useMemo(() => setLooseSizes(data.lists.prize_size.filter((o) => o.loose).map((o) => o.value)), [data.lists.prize_size]);   // which sizes are counted loosely, before anything asks
   const prizes = usePrizes();
   const chosen: PlanSummary | null | undefined = useMemo(() => {
     if (!list.plans) return undefined;
@@ -47,34 +51,51 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
     return list.plans.find((p) => p.slug === slug) ?? autoPlan(list.plans, list.today);
   }, [list.plans, list.today, slug]);
   const plan = usePlan(chosen?.id ?? '', true);
+  useEffect(() => { if (chosen) try { localStorage.setItem(EVENT_KEY, chosen.slug); } catch { /* not remembered */ } }, [chosen]);
+  // Back from the stock: the last event looked at if it still exists, else today's or the next one (the address with no event).
+  const lastEvent = () => { let k: string | null = null; try { k = localStorage.getItem(EVENT_KEY); } catch { /* none */ } return k && list.plans?.some((p) => p.slug === k) ? k : null; };
   const d = plan.detail;
   const [view, setView] = useState<View>(DEFAULT_VIEW);
   useEffect(() => { setView(readView()); }, []);
   const change = (patch: Partial<View>) => setView((v) => { const next = { ...v, ...patch }; try { localStorage.setItem(VIEW_KEY, JSON.stringify(next)); } catch { /* not remembered */ } return next; });
   const [q, setQ] = useState('');
-  const [open, setOpen] = useState<Record<string, boolean>>({});
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});   // the stock's groups (a sponsor, a size…) start folded; a search opens them all
+  const toggleGroup = (key: string) => {
+    const id = `${group}:${key}`, now = groupOpen(key), base = openAll || q.trim() ? {} : openGroups;
+    setOpenAll(false);
+    setOpenGroups(view.oneAtATime && !now ? { [id]: true } : { ...base, [id]: !now });   // one at a time: opening one folds the others
+  };
+  const [openAll, setOpenAll] = useState(false);   // set when a "fix this" jumps to a prize, so its group is open
+  const groupOpen = (key: string) => !!q.trim() || openAll || !!openGroups[`${group}:${key}`];
   const [flash, setFlash] = useState('');
-  const [dialog, setDialog] = useState<null | { kind: 'prize'; prize: PrizeRow | null } | { kind: 'history'; prize: PrizeRow } | { kind: 'settings' } | { kind: 'station'; station: Station | null } | { kind: 'addStation' }>(null);
+  const [dialog, setDialog] = useState<null | { kind: 'prize'; prize: PrizeRow | null } | { kind: 'history'; prize: PrizeRow } | { kind: 'from'; prize: PrizeRow } | { kind: 'where'; prize: PrizeRow } | { kind: 'settings' } | { kind: 'station'; station: Station | null } | { kind: 'addStation' }>(null);
   const [filling, setFilling] = useState('');
+  const [guesses, setGuesses] = useState<Parameters<typeof PastEventsDialog>[0]['guesses']>([]);
+  const [pastOpen, setPastOpen] = useState(false);
+  const loadGuesses = useCallback(() => { if (!data.canManage) return; void fetch('/api/logistics/prizes/past-events', { cache: 'no-store' }).then((r) => r.json()).then((j) => setGuesses(Array.isArray(j.suggestions) ? j.suggestions : [])).catch(() => setGuesses([])); }, [data.canManage]);
+  useEffect(() => { loadGuesses(); }, [loadGuesses]);
   const [shortOf, setShortOf] = useState<Record<string, string>>({});
   const [openStations, setOpenStations] = useState<Record<string, boolean>>({});   // what was opened or folded by hand
   const [flashKeys, setFlashKeys] = useState<Set<string>>(new Set());
   const [feed, setFeed] = useState<{ id: number; by: string; text: string; at: number }[]>([]);
-  const [feedOpen, setFeedOpen] = useState(false);
 
   const hasEvent = !!chosen && !!d;
   const eventClosed = d?.plan.status === 'closed';
   const manage = data.canManage && hasEvent && !eventClosed;
   const group: GroupBy = view.group === 'station' && !hasEvent ? 'sponsor' : view.group;
   const sizeOrder = useMemo(() => data.lists.prize_size.map((o) => o.value), [data.lists.prize_size]);
+  const slugByPlan = useMemo(() => new Map((list.plans ?? []).map((p) => [p.id, p.slug])), [list.plans]);
   const sponsorName = useMemo(() => new Map(data.sponsors.map((s) => [s.id, s.name])), [data.sponsors]);
   const steps: PrizeStepDef[] = d?.prizes.steps ?? [];
-  const shownSteps = useMemo(() => { const names = new Set(view.steps.map((s) => s.toLowerCase())); const shown = steps.filter((s) => names.has(s.name.toLowerCase())); return shown.length ? shown : steps.filter((s) => s.name.toLowerCase() === 'sorted').slice(0, 1); }, [steps, view.steps]);
+  const [wide, setWide] = useState(true);   // a laptop: every counter is shown; on a phone or tablet the chips pick which
+  useEffect(() => { const mq = window.matchMedia('(min-width: 1000px)'); const read = () => setWide(mq.matches); read(); mq.addEventListener('change', read); return () => mq.removeEventListener('change', read); }, []);
+  const shownSteps = useMemo(() => { if (wide) return steps; const names = new Set(view.steps.map((s) => s.toLowerCase())); const shown = steps.filter((s) => names.has(s.name.toLowerCase())); return shown.length ? shown : steps.filter((s) => s.name.toLowerCase() === 'sorted').slice(0, 1); }, [steps, view.steps, wide]);
   const stations = useMemo(() => d?.stations ?? [], [d?.stations]);
   const lines = useMemo(() => d?.prizes.lines ?? [], [d?.prizes.lines]);
   const countMap = useMemo(() => new Map((d?.prizes.done ?? []).map((x) => [`${x.line_id}:${x.step_id}`, x.done])), [d?.prizes.done]);
   const giveIds = useMemo(() => steps.filter((s) => s.gives).map((s) => s.id), [steps]);
   const count = useCallback((lineId: string, stepId: string) => countMap.get(`${lineId}:${stepId}`) ?? 0, [countMap]);
+  const shown = useCallback((lineId: string, stepId: string, ceiling: number) => Math.min(ceiling, impliedCount(steps, (sid) => countMap.get(`${lineId}:${sid}`) ?? 0, stepId)), [steps, countMap]);
   const givenOf = useCallback((lineId: string) => giveIds.reduce((n, id) => n + (countMap.get(`${lineId}:${id}`) ?? 0), 0), [giveIds, countMap]);
   const lockedIds = useMemo(() => new Set(d?.lockedRequests ?? []), [d?.lockedRequests]);
   const isLocked = useCallback((s: Station) => !!s.prize_request_id && lockedIds.has(s.prize_request_id), [lockedIds]);
@@ -100,11 +121,10 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
     prizes: rows.map((r) => ({ ...r.p, assignedHere: r.here })), sizeOrder,
     stations: shownStations.map((x) => ({ ...x.s, lines: x.ls.length, short: x.n.need })),
   }), [hasEvent, eventClosed, rows, shownStations, sizeOrder]);
-  // One section at a time (a remembered switch, on until turned off): opening a station folds the others, and at first only the first is open.
-  const firstStation = shownStations[0]?.s.id;
-  const stationOpen = (id: string) => (id in openStations ? openStations[id] : view.oneAtATime ? id === firstStation : true);
+  // Every station starts folded. One at a time (a remembered switch, on until turned off): opening a station folds the others.
+  const stationOpen = (id: string) => (id in openStations ? openStations[id] : false);   // every station starts folded
   const toggleStation = (id: string) => setOpenStations((cur) => {
-    const now = id in cur ? cur[id] : view.oneAtATime ? id === firstStation : true;
+    const now = id in cur ? cur[id] : false;
     if (view.oneAtATime && !now) return { ...Object.fromEntries(stations.map((x) => [x.id, false])), [id]: true };
     return { ...cur, [id]: !now };
   });
@@ -119,6 +139,7 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
   }, [plan, prizes, sponsorName]);   // eslint-disable-line react-hooks/exhaustive-deps
   const setCount = useCallback((lineId: string, stepId: string, n: number) => { void plan.setPrizeCount(lineId, stepId, n); }, [plan]);
   const addCount = useCallback((lineId: string, stepId: string, d: number) => { void plan.addPrizeCount(lineId, stepId, d); }, [plan]);
+  const setLevel = useCallback((p: PrizeRow, level: StockLevel) => { void prizes.save(p.id, { stock_level: level }); }, [prizes]);
   const setStock = useCallback((p: PrizeRow, n: number) => { void prizes.save(p.id, { quantity: n, expected_quantity: p.quantity }); }, [prizes]);
   async function fillOne(sid: string, used: Map<string, number> = new Map()) {
     const x = stationData.find((y) => y.s.id === sid);
@@ -136,6 +157,12 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
     if (!x) return;
     for (const l of x.ls) { const c = stepCeiling(step, l, givenOf(l.id)); if (c > 0 && count(l.id, step.id) < c) await plan.setPrizeCount(l.id, step.id, c); }
   }
+  async function lockStation(s: Station, lock: boolean) {
+    if (!s.prize_request_id) return;
+    if (!lock && !(await confirmHold({ title: `Unlock ${s.name}?`, message: 'Its prizes can be changed again.', confirmLabel: 'Hold to unlock' }))) return;
+    await plan.act(`/requests/${s.prize_request_id}`, 'PATCH', { allocation_locked: lock });
+    await plan.reload();
+  }
   async function removeStation(s: Station) {
     if (!(await confirmHold({ title: `Remove ${s.name}?`, message: 'Its prizes are taken off it and counted back as free. If it also has devices, it stays on the Devices page.', confirmLabel: 'Hold to remove' }))) return;
     await plan.act(`/stations/${s.id}`, 'DELETE');
@@ -144,12 +171,12 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
   const closer = useCloseEvent(list, () => { void plan.reload(); void prizes.reload(); });
   const focus = useCallback((f: Fix['focus']) => {
     const id = f.kind === 'prize' ? `prize-${f.id}` : `station-${f.id}`;
-    if (f.kind === 'prize') change({ group: group === 'station' ? 'status' : group });
+    if (f.kind === 'prize') { const at = group === 'station' ? lines.find((l) => l.prize_id === f.id) : undefined; if (group !== 'station') { setOpenAll(true); setFlash(f.id); window.setTimeout(() => { document.getElementById(`prize-${f.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 60); window.setTimeout(() => setFlash(''), 2600); return; } if (at) { setOpenStations((cur) => (view.oneAtATime ? { ...Object.fromEntries(stations.map((x) => [x.id, false])), [at.station_id]: true } : { ...cur, [at.station_id]: true })); setFlash(f.id); window.setTimeout(() => { document.getElementById(`station-${at.station_id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 60); window.setTimeout(() => setFlash(''), 2600); return; } setOpenAll(true); change({ group: 'status' }); go({ tab: 'prizing', plan: 'stock' }); }
     if (f.kind === 'station') setOpenStations((cur) => (view.oneAtATime ? { ...Object.fromEntries(stations.map((x) => [x.id, false])), [f.id]: true } : { ...cur, [f.id]: true }));
     setFlash(f.id);
     window.setTimeout(() => { document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 60);
     window.setTimeout(() => setFlash(''), 2600);
-  }, [group]);   // eslint-disable-line react-hooks/exhaustive-deps
+  }, [group, lines]);   // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---- other people's changes, as they happen ------------------------------------------------------------------------------------------------------------------------------------
   const latest = useRef({ prizeById, stations, steps, sponsorName });
@@ -185,33 +212,59 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
     }
   }, [plan, prizes, flashFor]);
   const team = useLiveTeam({ me: data.me, planId: chosen?.id ?? null, stockChannel: prizes.channel, onChange: onLive });
+  // What a person's open number box is, in words: "prize:<id>" is a prize's stock, "line:<id>" a station's number, "count:<line>:<step>" a counter.
+  const describeKey = useCallback((key: string) => {
+    const [kind, a] = key.split(':');
+    if (kind === 'prize') return prizeById.get(a)?.name ?? null;
+    const line = lines.find((l) => l.id === a);
+    return line ? `${prizeById.get(line.prize_id)?.name ?? line.prize.name} at ${stations.find((x) => x.id === line.station_id)?.name ?? 'a station'}` : null;
+  }, [prizeById, lines, stations]);
   const heldBy = useCallback((key: string) => team.here.find((p) => p.editing === key)?.name ?? null, [team.here]);
 
-  const ctx: PrizingCtx = { canStock: data.canManage, manage, closed: !!eventClosed, sizeOrder, shownSteps, count, givenOf, setLine, setCount, addCount, editing: team.setEditing, heldBy, flashing: (k) => flashKeys.has(k), setStock, edit: (p) => setDialog({ kind: 'prize', prize: p }), history: (p) => setDialog({ kind: 'history', prize: p }), locked: isLocked };
+  const ctx: PrizingCtx = { canStock: data.canManage, manage, closed: !!eventClosed, sizeOrder, shownSteps, count, shown, givenOf, setLine, setCount, addCount, editing: team.setEditing, heldBy, flashing: (k) => flashKeys.has(k), setStock, setLevel, editFrom: (p) => setDialog({ kind: 'from', prize: p }), where: (p) => setDialog({ kind: 'where', prize: p }), eventSlug: (p) => eventSlugOf(p, slugByPlan), edit: (p) => setDialog({ kind: 'prize', prize: p }), history: (p) => setDialog({ kind: 'history', prize: p }), locked: isLocked };
 
   // ---- what is shown ------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  const visibleRows = rows.filter((r) => matches(r.p, r.sponsor) && (!view.onlyHere || r.here > 0));
+  // The stock hides what is all given out (none on hand, or a free prize that is out), unless the switch is turned off.
+  const gone = (r: Row) => (isLoose(r.p) ? r.p.stock_level === 'out' : r.p.quantity <= 0);
+  const goneCount = rows.filter((r) => gone(r) && matches(r.p, r.sponsor)).length;
+  const visibleRows = rows.filter((r) => matches(r.p, r.sponsor) && !(!hasEvent && view.hideGone && gone(r)));
   const groups = useMemo(() => {
-    if (group === 'none') return [{ key: 'all', label: '', rows: visibleRows }];
     if (group === 'sponsor') return groupBy(visibleRows, (r) => r.sponsor, 'Club (no sponsor)');
-    if (group === 'source') return groupBy(visibleRows, (r) => fromOf(r.p, r.sponsor), 'Unknown');
+    if (group === 'source') return groupBy(visibleRows, (r) => fromOf(r.p, r.sponsor, slugByPlan), 'Unknown');
     if (group === 'size') return groupBy(visibleRows, (r) => r.p.size, 'No size', sizeOrder);
     if (group === 'type') return groupBy(visibleRows, (r) => r.p.type, 'No type');
     return groupBy(visibleRows, (r) => STATUS_LABEL[statusOf(r.p, r.here)], 'Other', STATUS_ORDER.map((s) => STATUS_LABEL[s]));
   }, [group, visibleRows, sizeOrder]);
-  const stockValue = valueOf((prizes.rows ?? []).map((p) => ({ quantity: p.quantity, price: p.price })));
-  const hereValue = valueOf(lines.map((l) => ({ quantity: l.quantity, price: l.prize.price })));
+  // An event grouped by something other than its stations: the same lines, grouped by the prize's sponsor, source, size, type or status, each line saying which station it is for.
+  const lineGroups = useMemo(() => {
+    if (!hasEvent || group === 'station') return [];
+    const all: GroupLine[] = stationData.flatMap((x) => x.ls.map((l) => ({ ...l, station: x.s }))).filter((l) => matches(l.p, l.sponsor));
+    const here = (l: GroupLine) => holds.get(l.p.id)?.total ?? 0;
+    if (group === 'sponsor') return groupBy(all, (l) => l.sponsor, 'Club (no sponsor)');
+    if (group === 'source') return groupBy(all, (l) => fromOf(l.p, l.sponsor, slugByPlan), 'Unknown');
+    if (group === 'size') return groupBy(all, (l) => l.p.size, 'No size', sizeOrder);
+    if (group === 'type') return groupBy(all, (l) => l.p.type, 'No type');
+    return groupBy(all, (l) => STATUS_LABEL[statusOf(l.p, here(l))], 'Other', STATUS_ORDER.map((x) => STATUS_LABEL[x]));
+  }, [hasEvent, group, stationData, matches, holds, slugByPlan, sizeOrder]);
+  const stockValue = valueOf((prizes.rows ?? []).filter((p) => !isLoose(p)).map((p) => ({ quantity: p.quantity, price: p.price })));   // free merch is not counted or valued
+  const hereValue = valueOf(lines.filter((l) => !isLoose(l.prize)).map((l) => ({ quantity: l.quantity, price: l.prize.price })));
 
   if (!list.plans || !prizes.rows) return <div className={styles.tab}>{list.error || prizes.error ? <Notice tone="error">{list.error || prizes.error}</Notice> : <Loading variant="inline" label="Loading…" />}</div>;
   return (
     <div className={`${styles.tab} ${pz.page}`}>
       <div className={pz.top}>
-        <div className={pz.pick}>
-          <Select value={chosen?.slug ?? 'stock'} onChange={(e) => go({ tab: 'prizing', plan: e.target.value })} aria-label="Event">
-            {list.plans.map((p) => <option key={p.id} value={p.slug}>{eventLabel(p)}</option>)}
-            <option value="stock">No event (stock only)</option>
-          </Select>
-        </div>
+        {list.plans.length > 0 && (
+          <div className={pz.modeSeg}>
+            <SectionTabs<'event' | 'stock'> variant="segmented" label="This event or the stock" value={hasEvent ? 'event' : 'stock'} onChange={(v) => go({ tab: 'prizing', plan: v === 'stock' ? 'stock' : lastEvent() })} tabs={[{ id: 'event', label: 'This Event' }, { id: 'stock', label: 'In Stock' }]} />
+          </div>
+        )}
+        {hasEvent && (
+          <div className={pz.pick}>
+            <Select value={chosen?.slug ?? ''} onChange={(e) => go({ tab: 'prizing', plan: e.target.value })} aria-label="Event">
+              {list.plans.map((p) => <option key={p.id} value={p.slug}>{eventLabel(p)}</option>)}
+            </Select>
+          </div>
+        )}
         <div className={`${pz.pick} ${pz.pickSmall}`}>
           <Select value={group} onChange={(e) => change({ group: e.target.value as GroupBy })} aria-label="Group by">
             {GROUPS.filter((g) => hasEvent || g.id !== 'station').map((g) => <option key={g.id} value={g.id}>Group by: {g.label}</option>)}
@@ -219,11 +272,6 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
         </div>
         <div className={`${styles.search} ${pz.search}`}><Search size={15} aria-hidden="true" /><Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search prizes: what’s left of…?" aria-label="Search prizes" /></div>
         <div className={pz.topEnd}>
-          <span className={pz.here} aria-label="Who is on this page">
-            <i className={`${pz.liveDot} ${team.live ? '' : pz.liveDotOff}`} title={team.live ? 'Changes appear as they happen' : 'Connecting…'} />
-            {team.here.slice(0, 6).map((p) => <span key={p.id} className={`${pz.avatar} ${p.editing ? pz.avatarEditing : ''}`} title={`${p.name}${p.editing ? ' is typing in a number box' : ' is here'}`}>{p.name.split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase()}</span>)}
-            {team.here.length > 6 && <small>+{team.here.length - 6}</small>}
-          </span>
           {data.canManage && <Button className={styles.addBtn} onClick={() => setDialog({ kind: 'prize', prize: null })}><Plus size={15} aria-hidden="true" /> Add<span className={styles.wide}>Prize</span></Button>}
           {data.canManage && <button type="button" className={pz.gear} onClick={() => setDialog({ kind: 'settings' })} aria-label="Prizing settings" title="Sponsors, sizes and steps"><Settings2 size={17} aria-hidden="true" /></button>}
           {data.canManage && hasEvent && <RowMenu label="This event" items={[eventClosed ? { label: 'Reopen This Event', onClick: () => void closer.reopen(chosen!.id) } : { label: 'Close This Event', onClick: () => void closer.close(chosen!) }]} />}
@@ -232,19 +280,18 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
 
       <div className={pz.stats}>
         <span>{prizes.rows.length} prizes · {money(stockValue) || '$0'} in stock</span>
-        {hasEvent && <span>This event: {lines.reduce((n, l) => n + l.quantity, 0)} assigned · {money(hereValue) || '$0'}</span>}
-        {feed.length > 0 && <button type="button" className={pz.feedBtn} onClick={() => setFeedOpen((v) => !v)} aria-expanded={feedOpen}>{feedOpen ? 'Hide' : 'Show'} recent changes ({feed.length})</button>}
+        {hasEvent && <span>This event: {lines.filter((l) => !isLoose(l.prize)).reduce((n, l) => n + l.quantity, 0)} assigned · {money(hereValue) || '$0'}</span>}
+        {!hasEvent && <label className={pz.oneAtATime} title="Prizes with none left on hand, or a free prize that is out"><input type="checkbox" checked={view.hideGone} onChange={(e) => change({ hideGone: e.target.checked })} /> Hide given out{view.hideGone && goneCount > 0 ? ` (${goneCount})` : ''}</label>}
+        {data.canManage && !hasEvent && guesses.length > 0 && <button type="button" className={pz.feedBtn} onClick={() => setPastOpen(true)}>Fill in {guesses.length} missing {guesses.length === 1 ? 'event' : 'events'} from past records</button>}
         {eventClosed && <span className={pz.closedTag}>Closed: what went out and was not counted back is out of stock</span>}
-        {group === 'station' && hasEvent && (
-          <span className={pz.foldTools}>
-            <label className={pz.oneAtATime} title="Opening a station folds the others"><input type="checkbox" checked={view.oneAtATime} onChange={(e) => { change({ oneAtATime: e.target.checked }); setOpenStations({}); }} /> One at a time</label>
-            {!view.oneAtATime && <button type="button" className={pz.feedBtn} onClick={() => setAllStations(!shownStations.every((x) => stationOpen(x.s.id)))}>{shownStations.every((x) => stationOpen(x.s.id)) ? 'Close all' : 'Open all'}</button>}
-          </span>
-        )}
-        {group !== 'station' && hasEvent && <label className={pz.onlyHere}><input type="checkbox" checked={view.onlyHere} onChange={(e) => change({ onlyHere: e.target.checked })} /> Only prizes in this event</label>}
+        <span className={pz.foldTools}>
+          <label className={pz.oneAtATime} title="Opening one folds the others"><input type="checkbox" checked={view.oneAtATime} onChange={(e) => { change({ oneAtATime: e.target.checked }); setOpenStations({}); setOpenGroups({}); setOpenAll(false); }} /> One at a time</label>
+          {!view.oneAtATime && (group === 'station' && hasEvent
+            ? <button type="button" className={pz.feedBtn} onClick={() => setAllStations(!shownStations.every((x) => stationOpen(x.s.id)))}>{shownStations.every((x) => stationOpen(x.s.id)) ? 'Close all' : 'Open all'}</button>
+            : <button type="button" className={pz.feedBtn} onClick={() => { if (openAll) { setOpenAll(false); setOpenGroups({}); } else setOpenAll(true); }}>{openAll ? 'Close all' : 'Open all'}</button>)}
+        </span>
       </div>
-      {feedOpen && feed.length > 0 && <ul className={pz.feed} aria-label="Recent changes by others">{feed.map((f) => <li key={f.id}><b>{f.by}</b> {f.text}<small>{new Date(f.at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</small></li>)}</ul>}
-      {hasEvent && group === 'station' && steps.length > 0 && (
+      {hasEvent && !wide && steps.length > 0 && (
         <div className={pz.steps} role="group" aria-label="Event-day counters to show">
           <span className={pz.stepsLabel}>Counters</span>
           {steps.map((s) => { const on = shownSteps.some((x) => x.id === s.id); return <button key={s.id} type="button" className={`${pz.stepChip} ${on ? pz.stepOn : ''}`} aria-pressed={on} onClick={() => change({ steps: on ? shownSteps.filter((x) => x.id !== s.id).map((x) => x.name.toLowerCase()) : [...shownSteps.map((x) => x.name.toLowerCase()), s.name.toLowerCase()] })}>{s.name}</button>; })}
@@ -263,37 +310,42 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
               <StationBlock station={x.s} lines={x.ls.filter((l) => !q.trim() || matches(l.p, l.sponsor) || x.s.name.toLowerCase().includes(q.trim().toLowerCase()))} ctx={ctx}
                 addable={(prizes.rows ?? []).filter((p) => p.left > 0 && !x.ls.some((l) => l.p.id === p.id))} need={x.n.need} asked={x.n.asked}
                 onAdd={(p) => void setLine(x.s.id, p, 1)} onFill={Object.keys(x.n.need).length > 0 && manage ? () => void fillOne(x.s.id) : undefined}
-                onEdit={() => setDialog({ kind: 'station', station: x.s })} onRemove={() => void removeStation(x.s)} flash={flash === x.s.id} open={stationOpen(x.s.id)} onToggle={() => toggleStation(x.s.id)}
-                summary={(stepId) => { const st = steps.find((s) => s.id === stepId); if (!st) return null; return { total: x.ls.reduce((n, l) => n + stepCeiling(st, l, givenOf(l.id)), 0), done: x.ls.reduce((n, l) => n + Math.min(count(l.id, stepId), stepCeiling(st, l, givenOf(l.id))), 0) }; }}
+                onEdit={() => setDialog({ kind: 'station', station: x.s })} onRemove={() => void removeStation(x.s)} onLock={manage && x.s.prize_request_id ? () => void lockStation(x.s, !isLocked(x.s)) : undefined} flash={flash === x.s.id} open={stationOpen(x.s.id)} onToggle={() => toggleStation(x.s.id)}
+                summary={(stepId) => { const st = steps.find((s) => s.id === stepId); if (!st) return null; return { total: x.ls.reduce((n, l) => n + stepCeiling(st, l, givenOf(l.id)), 0), done: x.ls.reduce((n, l) => n + shown(l.id, stepId, stepCeiling(st, l, givenOf(l.id))), 0) }; }}
                 onAll={manage || (hasEvent && !eventClosed) ? (stepId) => { const st = steps.find((s) => s.id === stepId); if (st) void markAll(x.s.id, st); } : undefined} />
               {(filling === x.s.id || shortOf[x.s.id]) && <p className={pz.muted}>{filling === x.s.id ? 'Choosing prizes…' : shortOf[x.s.id]}</p>}
             </div>
           ))}
           {manage && <div className={pz.addStation}><Button size="sm" variant="secondary" onClick={() => setDialog({ kind: 'addStation' })}><Plus size={14} aria-hidden="true" /> Add Station</Button></div>}
         </div>
+      ) : hasEvent ? (
+        <div className={pz.blocks}>
+          {lineGroups.length === 0 && <div className={styles.empty}><p>{q.trim() ? 'Nothing matches.' : 'No prizes are in this event yet.'}</p></div>}
+          {lineGroups.map((g) => (
+            <GroupBlock key={g.key} id={`group-${group}-${g.key}`} label={g.label} lines={g.rows} ctx={ctx} open={groupOpen(g.key)} onToggle={() => toggleGroup(g.key)}
+              summary={(stepId) => { const st = steps.find((z) => z.id === stepId); if (!st) return null; return { total: g.rows.reduce((n, l) => n + stepCeiling(st, l, givenOf(l.id)), 0), done: g.rows.reduce((n, l) => n + shown(l.id, stepId, stepCeiling(st, l, givenOf(l.id))), 0) }; }}
+              onAll={manage || !eventClosed ? (stepId) => { const st = steps.find((z) => z.id === stepId); if (!st) return; void (async () => { for (const l of g.rows) { const c = stepCeiling(st, l, givenOf(l.id)); if (c > 0 && count(l.id, st.id) < c) await plan.setPrizeCount(l.id, st.id, c); } })(); } : undefined} />
+          ))}
+        </div>
       ) : (
-        <div className={pz.table}>
-          <div className={`${pz.row} ${pz.head}`} aria-hidden="true"><span>Prize</span><span>In stock</span><span>Left</span>{hasEvent && <span>This event</span>}<span /></div>
+        <div className={pz.blocks}>
           {groups.every((g) => g.rows.length === 0) && <div className={styles.empty}><p>{rows.length === 0 ? 'No prizes yet. Add the first one.' : 'Nothing matches.'}</p></div>}
           {groups.filter((g) => g.rows.length > 0).map((g) => (
-            <div key={g.key}>
-              {group !== 'none' && (
-                <div className={pz.groupHead}>
-                  <b>{g.label}</b><span>{g.rows.length} {g.rows.length === 1 ? 'prize' : 'prizes'} · {money(valueOf(g.rows.map((r) => ({ quantity: r.p.quantity, price: r.p.price })))) || '$0'} in stock{hasEvent ? ` · ${money(valueOf(g.rows.map((r) => ({ quantity: r.here, price: r.p.price })))) || '$0'} this event` : ''}</span>
-                </div>
-              )}
-              {g.rows.map((r) => <PrizeRowView key={r.p.id} row={r} ctx={ctx} stations={stations} hasEvent={hasEvent} open={!!open[r.p.id]} onToggle={() => setOpen((o) => ({ ...o, [r.p.id]: !o[r.p.id] }))} flash={flash === r.p.id} />)}
-            </div>
+            <StockBlock key={g.key} id={`stock-${group}-${g.key}`} label={g.label} rows={g.rows} ctx={ctx} open={groupOpen(g.key)} onToggle={() => toggleGroup(g.key)} />
           ))}
         </div>
       )}
 
       {dialog?.kind === 'prize' && <PrizeDialog prizes={prizes} api={api} data={data} prize={dialog.prize} events={(list.plans ?? []).map((p) => ({ id: p.id, name: p.name }))} defaultEvent={chosen ? { id: chosen.id, name: chosen.name } : null} onClose={() => setDialog(null)} />}
-      {dialog?.kind === 'history' && <HistoryDialog prize={dialog.prize} from={fromOf(dialog.prize, dialog.prize.sponsor_id ? sponsorName.get(dialog.prize.sponsor_id) ?? null : null)} onClose={() => setDialog(null)} />}
+      {pastOpen && <PastEventsDialog guesses={guesses} onDone={() => { void prizes.reload(); loadGuesses(); }} onClose={() => setPastOpen(false)} />}
+      {dialog?.kind === 'where' && <BreakdownDialog prize={dialog.prize} canEdit={data.canManage} prizes={prizes} onClose={() => setDialog(null)} />}
+      {dialog?.kind === 'from' && <FromDialog prizes={prizes} api={api} data={data} prize={dialog.prize} events={(list.plans ?? []).map((p) => ({ id: p.id, name: p.name }))} onClose={() => setDialog(null)} />}
+      {dialog?.kind === 'history' && <HistoryDialog prize={dialog.prize} from={fromOf(dialog.prize, dialog.prize.sponsor_id ? sponsorName.get(dialog.prize.sponsor_id) ?? null : null, slugByPlan)} onClose={() => setDialog(null)} />}
       {dialog?.kind === 'settings' && <PrizingSettings api={api} data={data} onClose={() => setDialog(null)} />}
       {dialog?.kind === 'station' && <StationDialog plan={plan} station={dialog.station} onClose={() => setDialog(null)} />}
       {dialog?.kind === 'addStation' && <AddStationDialog plan={plan} existing={addableStations} onClose={() => setDialog(null)} />}
       {closer.dialog}
+      <LivePill people={team.here} live={team.live} feed={feed} describe={describeKey} />
     </div>
   );
 }

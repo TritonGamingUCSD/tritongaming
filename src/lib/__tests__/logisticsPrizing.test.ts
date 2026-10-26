@@ -64,3 +64,19 @@ describe('fix these', () => {
     expect(fixes[0].sev).toBe('bad');
   });
 });
+
+describe('impliedCount', () => {
+  const steps = [{ id: 'sorted', leftover: false }, { id: 'picked', leftover: false }, { id: 'given', leftover: false }, { id: 'back', leftover: true }];
+  const counts = (m: Record<string, number>) => (id: string) => m[id] ?? 0;
+  it('a later count implies the earlier steps', async () => {
+    const { impliedCount } = await import('@/lib/logistics/prizing');
+    expect(impliedCount(steps, counts({ given: 3 }), 'sorted')).toBe(3);
+    expect(impliedCount(steps, counts({ given: 3, picked: 5 }), 'sorted')).toBe(5);
+    expect(impliedCount(steps, counts({ sorted: 4, given: 3 }), 'sorted')).toBe(4);
+  });
+  it('back to storage neither implies nor is implied', async () => {
+    const { impliedCount } = await import('@/lib/logistics/prizing');
+    expect(impliedCount(steps, counts({ back: 2 }), 'sorted')).toBe(0);
+    expect(impliedCount(steps, counts({ given: 3 }), 'back')).toBe(0);
+  });
+});

@@ -1,12 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { PrizePatch } from '@/lib/logistics/prizes';
+import type { PrizePatch, StockLevel } from '@/lib/logistics/prizes';
 import { showToast } from '@/lib/ui/toast';
 
 // A prize as the screens show it: the inventory row (quantity is how many are on hand) plus what open events have promised and what is left to promise.
 export interface PrizeRow {
-  id: string; name: string; sponsor_id: string | null; size: string | null; type: string | null; in_hand: boolean; price: number | null; quantity: number; quantity_is_estimate: boolean;
+  id: string; name: string; sponsor_id: string | null; size: string | null; type: string | null; in_hand: boolean; price: number | null; quantity: number; quantity_is_estimate: boolean; stock_level: StockLevel;
   bin: string | null; source: string | null; from_event: string | null; from_plan_id: string | null; expires_on: string | null; notes: string | null;
   allocated: number; left: number; used_at: string[];   // used_at: the events it has been put on a station of
 }

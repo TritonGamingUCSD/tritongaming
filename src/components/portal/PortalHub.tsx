@@ -55,7 +55,7 @@ const GROUP_ORDER = ['Overview', 'Yours', 'Events', 'Team', 'Resources', 'Admin'
 // Order inside each group (and so in the sidebar, the "More" sheet and the home grid). Anything not
 // listed goes last, in the order it was given.
 const SECTION_LABELS: Record<string, string> = { tickets: 'My Tickets', profile: 'Profile', points: 'Rewards', events: 'Events', checkin: 'Check-In', members: 'TG Members', meetings: 'Meetings', trivia: 'Trivia', strikes: 'Strikes', divisions: 'Divisions', 'division-members': 'Division Members', docs: 'Documentation', qrcode: 'QR Studio', admin: 'Admin', 'site-content': 'Site Content' };
-const SECTION_ORDER = ['tickets', 'points', 'activity', 'profile', 'events', 'checkin', 'members', 'meetings', 'quarters', 'strikes', 'logistics', 'trivia', 'divisions', 'division-members', 'docs', 'qrcode', 'help', 'admin', 'site-content'];
+const SECTION_ORDER = ['tickets', 'points', 'activity', 'profile', 'events', 'checkin', 'members', 'meetings', 'logistics', 'staffle', 'quarters', 'strikes', 'trivia', 'divisions', 'division-members', 'docs', 'qrcode', 'help', 'admin', 'site-content'];
 // Accent color per group — tints the heading dot, icon tiles and hover state.
 // The Dashboard is soft white, so it does not read as part of the blue "Yours" or "Events" groups.
 const DASHBOARD_ACCENT = '#e5e7eb';

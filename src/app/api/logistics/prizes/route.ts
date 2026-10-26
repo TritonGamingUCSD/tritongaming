@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { authorizeLogistics } from '@/lib/logistics/auth';
-import { PRIZE_COLUMNS, loadPrizeTotals, logPrize } from '@/lib/logistics/prizeServer';
+import { PRIZE_COLUMNS, ensureLoose, loadPrizeTotals, logPrize } from '@/lib/logistics/prizeServer';
 import { cleanPrize, prizeLeft } from '@/lib/logistics/prizes';
 import { announce, stockTopic, whoIs } from '@/lib/logistics/live';
 import { logAudit } from '@/lib/notifications/audit';
@@ -12,6 +12,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   const auth = await authorizeLogistics('view');
   if (auth.error) return auth.error;
+  await ensureLoose(auth.svc);
   const [{ data: prizes, error }, totals] = await Promise.all([
     auth.svc.from('logistics_prizes').select(PRIZE_COLUMNS).order('name').limit(5000),
     loadPrizeTotals(auth.svc),
@@ -40,6 +41,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const auth = await authorizeLogistics('manage');
   if (auth.error) return auth.error;
+  await ensureLoose(auth.svc);
   const body = await request.json().catch(() => ({}));
   const r = cleanPrize(body, false);
   if ('error' in r) return NextResponse.json({ error: r.error }, { status: 400 });
@@ -48,5 +50,5 @@ export async function POST(request: Request) {
   await logPrize(auth.svc, [{ prize_id: data.id as string, kind: 'add', qty: data.quantity as number, sponsor_id: (data.sponsor_id as string | null) ?? null, note: String(body.note ?? '').trim().slice(0, 300) || (data.source as string | null) || 'New prize', actor: auth.user.id }]);
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'create', entityType: 'logistics prize', entityId: data.id as string, summary: `Added the prize “${data.name}”` });
   await announce(stockTopic(), { k: 'prizes' }, await whoIs(auth.svc, auth.user.id));
-  return NextResponse.json({ prize: { ...data, price: data.price === null ? null : Number(data.price), allocated: 0, left: data.quantity, used_at: [] } }, { status: 201 });
+  return NextResponse.json({ prize: { ...data, price: data.price === null ? null : Number(data.price), allocated: 0, left: prizeLeft(data as { quantity: number; size: string | null; stock_level: string }, { allocated: 0 }), used_at: [] } }, { status: 201 });
 }

@@ -969,7 +969,10 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 /* Tools: the shared row for every list */
 .toolHead { display: flex; flex-direction: column; gap: 0.2rem; }
 .toolRows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; max-height: 24rem; overflow-y: auto; }
-.toolRow { display: flex; align-items: center; gap: 0.5rem; min-height: 40px; padding: 0.1rem 0; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.1); }
+.toolRow { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 0.15rem 0.5rem; min-height: 40px; padding: 0.2rem 0; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.1); }
+.toolRow > .optName { flex: 1 1 0; min-width: 6rem; }   /* the name, the usage and the menu on one line; the pills under them (a card is too narrow for all of it on one) */
+.toolRow > .toolPills { order: 3; flex: 1 0 100%; padding-left: 0; }
+.toolRow > .toolNum + .optName + .toolPills { padding-left: calc(22px + 0.5rem); }
 .toolRows > .toolRow:last-child { border-bottom: 0; }
 .toolPills { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 0.35rem; }
 .toolPill { display: inline-flex; align-items: center; min-height: 26px; padding: 0 0.65rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); background: transparent; color: rgba(var(--pp-ink-rgb), 0.85); font: inherit; font-size: 0.74rem; cursor: pointer; white-space: nowrap; }
@@ -1037,7 +1040,12 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 .evStats dd { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.1rem 0.5rem; font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .evStats dd small { font-size: 0.78rem; font-weight: 600; }
 .evSection { display: flex; flex-direction: column; gap: 0.5rem; }
-.evSection > h3 { margin: 0; padding-bottom: 0.35rem; border-bottom: 2px solid rgba(var(--pp-ink-rgb), 0.2); font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.05rem; color: var(--pp-ink); }
+.evSection > summary { display: flex; align-items: center; gap: 0.6rem; min-height: 44px; padding: 0 0.2rem; cursor: pointer; list-style: none; border-bottom: 2px solid rgba(var(--pp-ink-rgb), 0.2); }
+.evSection > summary::-webkit-details-marker { display: none; }
+.evSection > summary::before { content: '▸'; font-size: 0.9rem; color: var(--pp-ink); }
+.evSection[open] > summary::before { content: '▾'; }
+.evSection > summary h3 { margin: 0; flex: 1; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.05rem; color: var(--pp-ink); }
+.evCount { min-width: 1.6rem; padding: 0.05rem 0.5rem; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.1); font-size: 0.8rem; text-align: center; font-variant-numeric: tabular-nums; }
 .evSection > .tab { padding: 0; }
 @media (max-width: 700px) { .evStats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 

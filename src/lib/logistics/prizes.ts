@@ -2,14 +2,25 @@ import { LIMITS } from '@/lib/logistics/constants';
 
 // Prizes: the inventory (club stock and sponsor gifts), what each station of an event gets, and how far each prize line is through the event-day steps. Pure logic (no database).
 
+// Loose prizes (free small merch: stickers, keychains; the sizes marked "Counted Loosely") are counted loosely: a station either has them or not, and the stock is a level (plenty / some / low / out) instead of a number. They are never over-promised and
+// closing an event never takes them out of stock.
+export const LEVELS = ['plenty', 'some', 'low', 'out'] as const;
+export type StockLevel = (typeof LEVELS)[number];
+export const LEVEL_LABEL: Record<StockLevel, string> = { plenty: 'Plenty', some: 'Some', low: 'Low', out: 'Out' };
+// Which sizes are loose is a switch on the size in the list ("Counted Loosely"). The names are kept here once the lists are read, by the page and by the routes, so `isLoose` is a plain question of a prize.
+let looseSizes = new Set<string>();
+export const setLooseSizes = (names: string[]) => { looseSizes = new Set(names.map((n) => n.trim().toLowerCase())); };
+export const isLoose = (p: { size?: string | null }) => looseSizes.has((p.size ?? '').trim().toLowerCase());
+export const LOOSE_LEFT = 99999;   // what "left" reads for a loose prize that is not out, so nothing that picks prizes by what is left skips it
+
 export interface Prize {
-  id: string; name: string; sponsor_id: string | null; size: string | null; type: string | null; in_hand: boolean; price: number | null; quantity: number; quantity_is_estimate: boolean;
+  id: string; name: string; sponsor_id: string | null; size: string | null; type: string | null; in_hand: boolean; price: number | null; quantity: number; quantity_is_estimate: boolean; stock_level: StockLevel;
   bin: string | null; source: string | null; from_event: string | null; from_plan_id: string | null; expires_on: string | null; notes: string | null;
 }
 // `quantity` is how many are on hand. `allocated` is what open events still hold for their stations (promised and not yet given out); a closed event holds nothing, so what it did not use is free
 // again. Left is what is free to promise and can go below zero: that is an over-allocation.
 export interface PrizeTotals { allocated: number }
-export const prizeLeft = (p: Pick<Prize, 'quantity'>, t: PrizeTotals) => p.quantity - t.allocated;
+export const prizeLeft = (p: Pick<Prize, 'quantity'> & { size?: string | null; stock_level?: string | null }, t: PrizeTotals) => (isLoose(p) ? (p.stock_level === 'out' ? 0 : LOOSE_LEFT) : p.quantity - t.allocated);
 
 // A prize step is a count per line. `gives` marks the step that hands a prize out (it uses stock up); `leftover` marks a step that is only about what was NOT handed out ("back to storage").
 export interface PrizeStepDef { id: string; name: string; sort: number; gives: boolean; leftover: boolean }
@@ -18,7 +29,7 @@ export interface PrizeStepDef { id: string; name: string; sort: number; gives: b
 export const stepCeiling = (step: Pick<PrizeStepDef, 'leftover'>, line: { quantity: number }, givenOut: number) => (step.leftover ? Math.max(0, line.quantity - givenOut) : line.quantity);
 
 export interface PrizePatch {
-  name?: string; sponsor_id?: string | null; size?: string | null; type?: string | null; in_hand?: boolean; price?: number | null; quantity?: number; quantity_is_estimate?: boolean;
+  name?: string; sponsor_id?: string | null; size?: string | null; type?: string | null; in_hand?: boolean; price?: number | null; quantity?: number; quantity_is_estimate?: boolean; stock_level?: StockLevel;
   bin?: string | null; source?: string | null; from_event?: string | null; from_plan_id?: string | null; expires_on?: string | null; notes?: string | null;
 }
 const text = (v: unknown, max: number) => { const s = String(v ?? '').trim().replace(/\s+/g, ' ').slice(0, max); return s || null; };
@@ -40,6 +51,7 @@ export function cleanPrize(b: Record<string, unknown>, partial: boolean): { valu
   }
   if (has('quantity')) { const n = Math.round(Number(b.quantity ?? 0)); if (!Number.isFinite(n) || n < 0 || n > LIMITS.qtyMax) return { error: 'How many there are has to be a whole number.' }; out.quantity = n; }
   if (has('quantity_is_estimate')) out.quantity_is_estimate = b.quantity_is_estimate === true;
+  if (has('stock_level')) out.stock_level = (LEVELS as readonly string[]).includes(String(b.stock_level)) ? (b.stock_level as StockLevel) : 'plenty';
   if (has('bin')) out.bin = text(b.bin, 120);
   if (has('source')) out.source = text(b.source, 200);
   if (has('from_event')) out.from_event = text(b.from_event, 120);

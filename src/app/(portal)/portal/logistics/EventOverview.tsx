@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowLeft, Gift, Package } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import RequestsTab from './RequestsTab';
@@ -13,15 +13,20 @@ import styles from './logistics.module.css';
 // Allocation, the event day and the prize stations live on the Devices and Prizing tabs; this page only keeps the asking and lending.
 export default function EventOverview({ name, dates, closed, notes, portalEvent, stats, section, requests, plan, catalog, data, onBack, onOpenDevices, onOpenPrizing }: {
   name: string; dates: string; closed: boolean; notes: string | null; portalEvent: boolean;
-  stats: { teams: number; requests: number; newRequests: number; devices: number; empty: number; prizes: number };
+  stats: { teams: number; requests: number; newRequests: number; devices: number; empty: number; prizes: number; deviceRequests: number; prizeRequests: number; sponsorLoaners: number; officerLoaners: number };
   section: EventPageId; requests: React.ComponentProps<typeof RequestsTab>['store']; plan: React.ComponentProps<typeof RequestsTab>['plan']; catalog: LogisticsApi; data: Catalog;
   onBack: () => void; onOpenDevices: () => void; onOpenPrizing: () => void;
 }) {
-  // An old address that named one part (prize requests, sponsor loaners…) scrolls to that part.
-  useEffect(() => {
-    const id = section === 'requests-prizing' ? 'ev-prizes' : section === 'sponsor-loaners' ? 'ev-sponsor' : section === 'officer-loaners' ? 'ev-officer' : null;
-    if (id) setTimeout(() => document.getElementById(id)?.scrollIntoView({ block: 'start' }), 600);
-  }, [section]);
+  // Every part starts folded; an old address that named one (prize requests, sponsor loaners…) opens that part and scrolls to it.
+  const target = section === 'requests-prizing' ? 'ev-prizes' : section === 'sponsor-loaners' ? 'ev-sponsor' : section === 'officer-loaners' ? 'ev-officer' : null;
+  const [open, setOpen] = useState<Record<string, boolean>>(target ? { [target]: true } : {});
+  useEffect(() => { if (target) setTimeout(() => document.getElementById(target)?.scrollIntoView({ block: 'start' }), 600); }, [target]);
+  const part = (id: string, title: string, count: number, body: React.ReactNode) => (
+    <details className={styles.evSection} id={id} open={!!open[id]} onToggle={(e) => { const o = (e.currentTarget as HTMLDetailsElement).open; setOpen((c) => (c[id] === o ? c : { ...c, [id]: o })); }}>
+      <summary><h3>{title}</h3><span className={styles.evCount}>{count}</span></summary>
+      {open[id] && body}
+    </details>
+  );
   return (
     <div className={styles.evPage}>
       <div className={styles.evHead}>
@@ -41,22 +46,10 @@ export default function EventOverview({ name, dates, closed, notes, portalEvent,
         <button type="button" onClick={onOpenDevices}><dt>Devices</dt><dd>{stats.devices}{stats.empty > 0 && <small className={styles.warnText}>{stats.empty} to fill</small>}</dd></button>
         <button type="button" onClick={onOpenPrizing}><dt>Prizes</dt><dd>{stats.prizes}</dd></button>
       </dl>
-      <section className={styles.evSection} id="ev-devices" aria-label="Device requests">
-        <h3>Device Requests</h3>
-        <RequestsTab store={requests} kind="devices" plan={plan} api={catalog} data={data} />
-      </section>
-      <section className={styles.evSection} id="ev-prizes" aria-label="Prize requests">
-        <h3>Prize Requests</h3>
-        <RequestsTab store={requests} kind="prizes" plan={plan} api={catalog} data={data} />
-      </section>
-      <section className={styles.evSection} id="ev-sponsor" aria-label="Sponsor loaners">
-        <h3>Sponsor Loaners</h3>
-        <BorrowedTab plan={plan} catalog={catalog} data={data} kind="sponsor" />
-      </section>
-      <section className={styles.evSection} id="ev-officer" aria-label="Officer loaners">
-        <h3>Officer Loaners</h3>
-        <BorrowedTab plan={plan} catalog={catalog} data={data} kind="officer" />
-      </section>
+      {part('ev-devices', 'Device Requests', stats.deviceRequests, <RequestsTab store={requests} kind="devices" plan={plan} api={catalog} data={data} />)}
+      {part('ev-prizes', 'Prize Requests', stats.prizeRequests, <RequestsTab store={requests} kind="prizes" plan={plan} api={catalog} data={data} />)}
+      {part('ev-sponsor', 'Sponsor Loaners', stats.sponsorLoaners, <BorrowedTab plan={plan} catalog={catalog} data={data} kind="sponsor" />)}
+      {part('ev-officer', 'Officer Loaners', stats.officerLoaners, <BorrowedTab plan={plan} catalog={catalog} data={data} kind="officer" />)}
     </div>
   );
 }

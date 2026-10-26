@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { authorizeLogistics } from '@/lib/logistics/auth';
-import { PRIZE_COLUMNS, loadPrizeTotals, logPrize } from '@/lib/logistics/prizeServer';
+import { PRIZE_COLUMNS, ensureLoose, loadPrizeTotals, logPrize } from '@/lib/logistics/prizeServer';
 import { cleanPrize, prizeLeft, type PrizePatch } from '@/lib/logistics/prizes';
 import { UUID } from '@/lib/logistics/planServer';
 import { announce, stockTopic, whoIs } from '@/lib/logistics/live';
@@ -16,6 +16,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const auth = await authorizeLogistics('manage');
   if (auth.error) return auth.error;
   const { id } = await params;
+  await ensureLoose(auth.svc);
   const b = { ...(await request.json().catch(() => ({}))), id };
   if (typeof b.id !== 'string' || !UUID.test(b.id)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
   const r = cleanPrize(b, true);
