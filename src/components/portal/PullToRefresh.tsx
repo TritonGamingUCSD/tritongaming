@@ -9,6 +9,8 @@ import styles from './PullToRefresh.module.css';
 const TRIGGER = 64;          // how far the bubble has to be pulled (px, after the resistance) before letting go refreshes
 const MAX = 96;              // the furthest the bubble can ever travel: the pull gets heavier and heavier towards it
 const HOLD = 56;             // where the bubble waits while the page refreshes
+const BUBBLE = 44;          // the bubble's height
+const SETTLE_MS = 150;       // once the new data is in, a moment for the page to redraw before it slides back
 const MIN_SHOW_MS = 600;     // a refresh that answers at once still shows for this long, so it never just blinks
 const GIVE_UP_MS = 8000;     // never spins for ever if the answer is lost
 const AWAY_MS = 90_000;      // coming back to the app after this long refreshes it by itself
@@ -35,12 +37,19 @@ export default function PullToRefresh() {
     // One place that draws it all: how far the whole page is pulled down (px; the bubble sits in the gap that opens above it), how full the ring is (0 to 1), and whether the finger is moving it (no easing) or it is settling (eased).
     // The page is only offset while a pull or a refresh is on (html[data-ptr]).
     const root = document.documentElement;
+    // The phone's status bar / notch: the bubble is centred in the gap below it, and always stays above the page's top edge, so it rises with the page and never overlaps it.
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:env(safe-area-inset-top, 0px);visibility:hidden;pointer-events:none';
+    document.body.appendChild(probe);
+    const inset = probe.getBoundingClientRect().height;
+    probe.remove();
+    const bubbleY = (px: number) => Math.min(inset + (px - inset - BUBBLE) / 2, px - BUBBLE);
     let clearTimer = 0;
     const draw = (px: number, progress: number, drag: boolean) => {
       window.clearTimeout(clearTimer);
       root.style.setProperty('--ptr-pull', `${px}px`);
       root.dataset.ptr = drag ? 'drag' : 'settle';
-      el.style.setProperty('--ptr-y', `${Math.max(-48, px / 2 - 20)}px`);
+      el.style.setProperty('--ptr-y', `${bubbleY(px)}px`);
       el.style.setProperty('--ptr-p', String(Math.min(1, progress)));
       el.dataset.drag = drag ? '1' : '0';
       if (!drag && px === 0) clearTimer = window.setTimeout(() => { delete root.dataset.ptr; root.style.removeProperty('--ptr-pull'); }, 360);
@@ -52,7 +61,7 @@ export default function PullToRefresh() {
     const finish = () => {
       if (phase !== 'refreshing') return;
       window.clearTimeout(giveUp);
-      const wait = Math.max(0, MIN_SHOW_MS - (Date.now() - shownAt));
+      const wait = Math.max(0, MIN_SHOW_MS - (Date.now() - shownAt)) + SETTLE_MS;
       hideTimer = window.setTimeout(() => { setState('done'); draw(0, 1, false); say('Refreshed'); hideTimer = window.setTimeout(rest, 320); }, wait);
     };
     const beginRefresh = () => {
@@ -92,6 +101,7 @@ export default function PullToRefresh() {
       frame = requestAnimationFrame(() => draw(pull, pull / TRIGGER, true));
     };
     const move = (e: TouchEvent) => {
+      if (phase === 'refreshing') { if (e.cancelable) e.preventDefault(); return; }   // no scrolling while it refreshes
       if (phase !== 'pulling') return;
       const dy = e.touches[0].clientY - y0, dx = e.touches[0].clientX - x0;
       if (!locked && (Math.abs(dy) > 8 || Math.abs(dx) > 8)) locked = Math.abs(dy) > Math.abs(dx) && dy > 0 ? 'v' : 'h';   // sideways swipes and upward scrolls are not a pull
@@ -112,7 +122,7 @@ export default function PullToRefresh() {
     let wheelAt = 0, wheelDy = 0, wheelTimer = 0;
     const wheel = (e: WheelEvent) => {
       if (e.ctrlKey || (phase === 'pulling' && locked !== 'w')) return;   // a pinch-zoom, or a finger pull
-      if (phase === 'refreshing') { if (e.deltaY < 0 && window.scrollY === 0 && e.cancelable) e.preventDefault(); return; }   // the trackpad's last momentum must not bounce the page while it refreshes
+      if (phase === 'refreshing') { if (e.cancelable) e.preventDefault(); return; }   // the page stays put at the top while it refreshes: no scrolling either way (this also swallows the trackpad's last momentum)
       const now = performance.now(), fresh = now - wheelAt > 300;
       wheelAt = now;
       if (phase !== 'pulling') {
