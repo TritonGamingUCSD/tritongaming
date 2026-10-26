@@ -6,8 +6,8 @@ import { refreshPortal, REFRESH_EVENT, REFRESHED_EVENT } from '@/lib/ui/refreshP
 import { confirmDiscardUnsaved } from '@/lib/ui/useUnsavedChanges';
 import styles from './PortalThemeToggle.module.css';
 
-// The refresh button in the portal's top bar: fetches the page's data again without leaving it (an installed app has no reload of its own).
-export default function PortalRefresh({ labelled = false }: { labelled?: boolean }) {
+// The refresh button in the portal's desktop top bar (a phone refreshes by pulling the page down, see PullToRefresh.tsx): fetches the page's data again without leaving it (an installed app has no reload of its own).
+export default function PortalRefresh() {
   const [spin, setSpin] = useState(false);
   const stop = useRef<number | undefined>(undefined);
   useEffect(() => {
@@ -23,9 +23,8 @@ export default function PortalRefresh({ labelled = false }: { labelled?: boolean
     refreshPortal();
   };
   return (
-    <button type="button" className={`${styles.btn} ${labelled ? styles.labelled : ''}`} onClick={go} aria-label="Refresh this page" title="Refresh this page">
+    <button type="button" className={styles.btn} onClick={go} aria-label="Refresh this page" title="Refresh this page">
       <RefreshCw size={17} strokeWidth={1.75} aria-hidden="true" className={spin ? styles.spin : undefined} />
-      {labelled && <span>Refresh</span>}
     </button>
   );
 }
