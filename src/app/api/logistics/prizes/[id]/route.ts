@@ -58,6 +58,8 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   if (typeof b.id !== 'string' || !UUID.test(b.id)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
   const { count } = await auth.svc.from('logistics_plan_prizes').select('id', { count: 'exact', head: true }).eq('prize_id', b.id);
   if (count) return NextResponse.json({ error: `This prize is on ${count} prize line${count === 1 ? '' : 's'} at events. Take it off those first.` }, { status: 409 });
+  const { count: inStaffle } = await auth.svc.from('staffle_items').select('id', { count: 'exact', head: true }).eq('prize_id', b.id);
+  if (inStaffle) return NextResponse.json({ error: `This prize is in ${inStaffle} Staffle${inStaffle === 1 ? '' : 's'}. Take it out of ${inStaffle === 1 ? 'that one' : 'those'} first.` }, { status: 409 });
   const { data: p } = await auth.svc.from('logistics_prizes').select('name').eq('id', b.id).maybeSingle();
   await auth.svc.from('logistics_prizes').delete().eq('id', b.id);
   if (p) await logAudit(auth.svc, { actorId: auth.user.id, action: 'remove', entityType: 'logistics prize', entityId: b.id, summary: `Removed the prize “${p.name}”` });

@@ -11,7 +11,7 @@ import { confirmHold } from '@/lib/ui/confirmHold';
 import { RowMenu } from './RowMenu';
 import { ANY_SIZE, isLoose, setLooseSizes, suggestPrizes, stepCeiling, type PrizeStepDef, type StockLevel } from '@/lib/logistics/prizes';
 import { GROUPS, impliedCount, eventSlugOf, fromOf, STATUS_LABEL, STATUS_ORDER, eventHolds, groupBy, isGroupBy, money, prizingFixes, stationNeed, statusOf, valueOf, type Fix, type GroupBy } from '@/lib/logistics/prizing';
-import { AddStationDialog, BreakdownDialog, FromDialog, HistoryDialog, PastEventsDialog, PrizeDialog, PrizingSettings } from './PrizingDialogs';
+import { AddStationDialog, PastEventsDialog, PrizeEditor, PrizingSettings, type PrizeTab } from './PrizingDialogs';
 import { FixStrip, GroupBlock, StationBlock, StockBlock, type GroupLine, type PrizingCtx, type Row } from './PrizingParts';
 import { StationDialog } from './PlanDialogs';
 import { usePlan, usePlanList, type PlanSummary, type Station } from './usePlans';
@@ -68,7 +68,7 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
   const [openAll, setOpenAll] = useState(false);   // set when a "fix this" jumps to a prize, so its group is open
   const groupOpen = (key: string) => !!q.trim() || openAll || !!openGroups[`${group}:${key}`];
   const [flash, setFlash] = useState('');
-  const [dialog, setDialog] = useState<null | { kind: 'prize'; prize: PrizeRow | null } | { kind: 'history'; prize: PrizeRow } | { kind: 'from'; prize: PrizeRow } | { kind: 'where'; prize: PrizeRow } | { kind: 'settings' } | { kind: 'station'; station: Station | null } | { kind: 'addStation' }>(null);
+  const [dialog, setDialog] = useState<null | { kind: 'prize'; prize: PrizeRow | null; tab?: PrizeTab } | { kind: 'settings' } | { kind: 'station'; station: Station | null } | { kind: 'addStation' }>(null);
   const [filling, setFilling] = useState('');
   const [guesses, setGuesses] = useState<Parameters<typeof PastEventsDialog>[0]['guesses']>([]);
   const [pastOpen, setPastOpen] = useState(false);
@@ -88,7 +88,7 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
   const sponsorName = useMemo(() => new Map(data.sponsors.map((s) => [s.id, s.name])), [data.sponsors]);
   const steps: PrizeStepDef[] = d?.prizes.steps ?? [];
   const [wide, setWide] = useState(true);   // a laptop: every counter is shown; on a phone or tablet the chips pick which
-  useEffect(() => { const mq = window.matchMedia('(min-width: 1180px)'); const read = () => setWide(mq.matches); read(); mq.addEventListener('change', read); return () => mq.removeEventListener('change', read); }, []);
+  useEffect(() => { const mq = window.matchMedia('(min-width: 1280px)'); const read = () => setWide(mq.matches); read(); mq.addEventListener('change', read); return () => mq.removeEventListener('change', read); }, []);
   const shownSteps = useMemo(() => { if (wide) return steps; const names = new Set(view.steps.map((s) => s.toLowerCase())); const shown = steps.filter((s) => names.has(s.name.toLowerCase())); return shown.length ? shown : steps.filter((s) => s.name.toLowerCase() === 'sorted').slice(0, 1); }, [steps, view.steps, wide]);
   const stations = useMemo(() => d?.stations ?? [], [d?.stations]);
   const lines = useMemo(() => d?.prizes.lines ?? [], [d?.prizes.lines]);
@@ -221,7 +221,7 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
   }, [prizeById, lines, stations]);
   const heldBy = useCallback((key: string) => team.here.find((p) => p.editing === key)?.name ?? null, [team.here]);
 
-  const ctx: PrizingCtx = { canStock: data.canManage, manage, closed: !!eventClosed, sizeOrder, shownSteps, count, shown, givenOf, setLine, setCount, addCount, editing: team.setEditing, heldBy, flashing: (k) => flashKeys.has(k), setStock, setLevel, editFrom: (p) => setDialog({ kind: 'from', prize: p }), where: (p) => setDialog({ kind: 'where', prize: p }), eventSlug: (p) => eventSlugOf(p, slugByPlan), edit: (p) => setDialog({ kind: 'prize', prize: p }), history: (p) => setDialog({ kind: 'history', prize: p }), locked: isLocked };
+  const ctx: PrizingCtx = { canStock: data.canManage, manage, closed: !!eventClosed, sizeOrder, shownSteps, count, shown, givenOf, setLine, setCount, addCount, editing: team.setEditing, heldBy, flashing: (k) => flashKeys.has(k), setStock, setLevel, editFrom: (p) => setDialog({ kind: 'prize', prize: p, tab: 'edit' }), where: (p) => setDialog({ kind: 'prize', prize: p, tab: 'where' }), eventSlug: (p) => eventSlugOf(p, slugByPlan), edit: (p) => setDialog({ kind: 'prize', prize: p }), history: (p) => setDialog({ kind: 'prize', prize: p, tab: 'history' }), locked: isLocked };
 
   // ---- what is shown ------------------------------------------------------------------------------------------------------------------------------------------------------------------
   // The stock hides what is all given out (none on hand, or a free prize that is out), unless the switch is turned off.
@@ -336,11 +336,8 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
         </div>
       )}
 
-      {dialog?.kind === 'prize' && <PrizeDialog prizes={prizes} api={api} data={data} prize={dialog.prize} events={(list.plans ?? []).map((p) => ({ id: p.id, name: p.name }))} defaultEvent={chosen ? { id: chosen.id, name: chosen.name } : null} onClose={() => setDialog(null)} />}
+      {dialog?.kind === 'prize' && <PrizeEditor prizes={prizes} api={api} data={data} prize={dialog.prize} tab={dialog.tab} fromText={dialog.prize ? fromOf(dialog.prize, dialog.prize.sponsor_id ? sponsorName.get(dialog.prize.sponsor_id) ?? null : null, slugByPlan) : ''} events={(list.plans ?? []).map((p) => ({ id: p.id, name: p.name }))} defaultEvent={chosen ? { id: chosen.id, name: chosen.name } : null} onClose={() => setDialog(null)} />}
       {pastOpen && <PastEventsDialog guesses={guesses} onDone={() => { void prizes.reload(); loadGuesses(); }} onClose={() => setPastOpen(false)} />}
-      {dialog?.kind === 'where' && <BreakdownDialog prize={dialog.prize} canEdit={data.canManage} prizes={prizes} onClose={() => setDialog(null)} />}
-      {dialog?.kind === 'from' && <FromDialog prizes={prizes} api={api} data={data} prize={dialog.prize} events={(list.plans ?? []).map((p) => ({ id: p.id, name: p.name }))} onClose={() => setDialog(null)} />}
-      {dialog?.kind === 'history' && <HistoryDialog prize={dialog.prize} from={fromOf(dialog.prize, dialog.prize.sponsor_id ? sponsorName.get(dialog.prize.sponsor_id) ?? null : null, slugByPlan)} onClose={() => setDialog(null)} />}
       {dialog?.kind === 'settings' && <PrizingSettings api={api} data={data} onClose={() => setDialog(null)} />}
       {dialog?.kind === 'station' && <StationDialog plan={plan} station={dialog.station} onClose={() => setDialog(null)} />}
       {dialog?.kind === 'addStation' && <AddStationDialog plan={plan} existing={addableStations} onClose={() => setDialog(null)} />}

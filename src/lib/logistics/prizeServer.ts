@@ -1,9 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { isLoose, setLooseSizes, type PrizeStepDef, type PrizeTotals } from '@/lib/logistics/prizes';
 import { announce, stockTopic } from '@/lib/logistics/live';
+import { loadStaffleHolds } from '@/lib/staffle/holds';
 
 // The columns of a prize as the screens use them.
-export const PRIZE_COLUMNS = 'id, name, sponsor_id, size, type, in_hand, price, quantity, quantity_is_estimate, stock_level, bin, source, from_event, from_plan_id, expires_on, notes';
+export const PRIZE_COLUMNS = 'id, name, sponsor_id, size, type, in_hand, price, quantity, quantity_is_estimate, stock_level, photo, bin, source, from_event, from_plan_id, expires_on, notes';
 
 // Reads which sizes are counted loosely (the switch on a size in the list) so `isLoose` knows. Kept for a few seconds; a change to a size forgets it (see forgetLoose).
 let looseAt = 0;
@@ -25,6 +26,8 @@ export async function loadPrizeSteps(svc: SupabaseClient): Promise<PrizeStepDef[
 // the counts of the "gives" steps. With `only` it is limited to those prizes.
 export async function loadPrizeTotals(svc: SupabaseClient, only?: string[]): Promise<Map<string, PrizeTotals>> {
   const totals = new Map<string, PrizeTotals>();
+  // A Staffle holds back the prizes it is raffling (until they are claimed or it ends).
+  for (const [id, n] of await loadStaffleHolds(svc, only)) totals.set(id, { allocated: n });
   const { data: open } = await svc.from('logistics_plans').select('id').eq('status', 'draft').limit(500);
   const planIds = (open ?? []).map((p) => p.id as string);
   if (!planIds.length) return totals;

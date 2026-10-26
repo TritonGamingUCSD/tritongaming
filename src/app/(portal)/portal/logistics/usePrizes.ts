@@ -6,7 +6,7 @@ import { showToast } from '@/lib/ui/toast';
 
 // A prize as the screens show it: the inventory row (quantity is how many are on hand) plus what open events have promised and what is left to promise.
 export interface PrizeRow {
-  id: string; name: string; sponsor_id: string | null; size: string | null; type: string | null; in_hand: boolean; price: number | null; quantity: number; quantity_is_estimate: boolean; stock_level: StockLevel;
+  id: string; name: string; sponsor_id: string | null; size: string | null; type: string | null; in_hand: boolean; price: number | null; quantity: number; quantity_is_estimate: boolean; stock_level: StockLevel; photo: string;
   bin: string | null; source: string | null; from_event: string | null; from_plan_id: string | null; expires_on: string | null; notes: string | null;
   allocated: number; left: number; used_at: string[];   // used_at: the events it has been put on a station of
 }
@@ -70,6 +70,23 @@ export function usePrizes() {
   const bump = useCallback((id: string, delta: number) => { if (kept) { gen++; put(kept.rows.map((x) => (x.id === id ? { ...x, allocated: x.allocated + delta, left: x.left - delta } : x))); } }, [put]);
   // Someone else's change to the number on hand, applied as it happens.
   const applyStock = useCallback((id: string, qty: number) => { if (kept) { gen++; put(kept.rows.map((x) => (x.id === id ? { ...x, quantity: qty, left: qty - x.allocated } : x))); } }, [put]);
-  return { rows, error, setError, reload: load, save, remove, bump, applyStock, channel };
+  // One picture per prize (a small WebP made in the browser): set it, or remove it.
+  const setPhoto = useCallback(async (id: string, blob: Blob): Promise<boolean> => {
+    const form = new FormData(); form.append('file', blob, 'photo.webp');
+    try {
+      const r = await fetch(`/api/logistics/prizes/${id}/photo`, { method: 'POST', body: form });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) { setError(j.error || 'Couldn’t save the picture.'); return false; }
+      gen++; put((kept?.rows ?? []).map((x) => (x.id === id ? { ...x, photo: j.photo as string } : x)));
+      return true;
+    } catch { setError('Couldn’t reach the server.'); return false; }
+  }, [put]);
+  const clearPhoto = useCallback(async (id: string): Promise<boolean> => {
+    const r = await call<{ photo: string }>(`/api/logistics/prizes/${id}/photo`, 'DELETE');
+    if (!r.ok) { setError(r.error); return false; }
+    gen++; put((kept?.rows ?? []).map((x) => (x.id === id ? { ...x, photo: '' } : x)));
+    return true;
+  }, [put]);
+  return { rows, error, setError, reload: load, save, remove, setPhoto, clearPhoto, bump, applyStock, channel };
 }
 export type PrizesApi = ReturnType<typeof usePrizes>;

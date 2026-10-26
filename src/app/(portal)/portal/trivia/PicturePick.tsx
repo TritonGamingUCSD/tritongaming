@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { ImagePlus, X } from 'lucide-react';
 import PictureDialog from '@/components/ui/PictureDialog';
-import { compressImage } from './compressImage';
+import { compressImage } from '@/lib/ui/compressImage';
 import styles from './trivia.module.css';
 
 export const PICTURE_PROBLEM = 'That picture couldn’t be shrunk small enough. Try another picture, or a simpler one.';
