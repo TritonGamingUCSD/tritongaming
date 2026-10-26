@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { ImagePlus, X } from 'lucide-react';
 import { useFileDrop } from '@/lib/ui/useFileDrop';
+import PasteButton from '@/components/ui/PasteButton';
 import { compressImage } from './compressImage';
 import styles from './trivia.module.css';
 
@@ -31,6 +32,7 @@ export function PicturePick({ url, label, disabled, busy, onPick, onClear, onPro
       {!disabled && (
         <>
           <button type="button" className={styles.picBtn} disabled={working || busy} aria-label={url ? `Change the picture of ${label}` : `Add a picture to ${label}`} title={url ? 'Change the picture' : 'Add a picture'} onClick={() => input.current?.click()}><ImagePlus size={15} /></button>
+          <PasteButton iconOnly label={`Paste a picture for ${label}`} disabled={working || busy} onFiles={(f) => void choose(f[0])} />
           {url && onClear && <button type="button" className={styles.picBtn} disabled={working || busy} aria-label={`Remove the picture of ${label}`} title="Remove the picture" onClick={onClear}><X size={15} /></button>}
         </>
       )}

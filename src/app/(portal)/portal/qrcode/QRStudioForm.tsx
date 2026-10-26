@@ -130,7 +130,7 @@ function IconDropzone({ options, setOptions }: { options: QRCodeOptions; setOpti
             <span className={styles.dropIcon} aria-hidden="true"><Upload size={22} strokeWidth={1.75} /></span>
             <span className={styles.dropText}>
               <span className={styles.dropTitle}>Drop an image here</span>
-              <span className={styles.dropSub}>or click to browse · PNG, JPG, SVG, WebP · up to 2 MB</span>
+              <span className={styles.dropSub}>or click to browse, or paste (Ctrl/⌘+V) · PNG, JPG, SVG, WebP · up to 2 MB</span>
             </span>
           </>
         )}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useFileDrop } from '@/lib/ui/useFileDrop';
+import PasteButton from '@/components/ui/PasteButton';
 import Loading from '@/components/Loading/Loading';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDraft } from '@/lib/ui/useDraft';
@@ -193,6 +194,7 @@ function AttachmentPicker({ att }: { att: ReturnType<typeof useAttachments> }) {
           <ImagePlus size={15} strokeWidth={1.75} aria-hidden="true" /> {att.uploading ? 'Uploading…' : 'Add or drop screenshot'}
         </Button>
       )}
+      {att.paths.length < MAX_ATTACHMENTS && <PasteButton label="Paste screenshot" onFiles={(f) => void att.add(f)} disabled={att.uploading} />}
       <input ref={ref} type="file" accept={ALLOWED_IMAGE_TYPES.join(',')} multiple hidden onChange={(e) => { void att.add(e.target.files); e.target.value = ''; }} />
       {att.err && <span className={styles.attachErr}>{att.err}</span>}
     </div>

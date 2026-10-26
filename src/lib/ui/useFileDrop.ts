@@ -41,3 +41,16 @@ export function useFileDrop(onFiles: (files: File[]) => void, opts: { disabled?:
   };
   return { over, dropProps };
 }
+
+// Pictures on the clipboard, read when a "Paste picture" button is pressed. `denied` is true when the browser would not let the page look (then Ctrl/Cmd+V over the box is the way).
+export async function readClipboardPictures(): Promise<{ files: File[]; denied: boolean }> {
+  try {
+    if (!navigator.clipboard?.read) return { files: [], denied: true };
+    const files: File[] = [];
+    for (const item of await navigator.clipboard.read()) {
+      const type = item.types.find((t) => t.startsWith('image/'));
+      if (type) files.push(new File([await item.getType(type)], `pasted.${type.split('/')[1] || 'png'}`, { type }));
+    }
+    return { files, denied: false };
+  } catch { return { files: [], denied: true }; }
+}

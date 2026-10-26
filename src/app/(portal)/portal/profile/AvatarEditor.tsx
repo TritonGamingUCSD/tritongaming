@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { Camera } from 'lucide-react';
 import { uploadCroppedImage, uploadImageToStorage, ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES } from '@/lib/storage/imageUpload';
 import { useFileDrop } from '@/lib/ui/useFileDrop';
+import PasteButton from '@/components/ui/PasteButton';
 import ImageCropModal from '@/components/ImageCropModal/ImageCropModal';
 import styles from './avatarEditor.module.css';
 
@@ -76,6 +77,7 @@ export default function AvatarEditor({ value, onChange, fallback, bucket, pathPr
       </div>
 
       <p className={styles.hint}>Click the circle, drop a picture on it, or paste one.</p>
+      <PasteButton onFiles={(f) => { const x = f[0]; if (x) void handleFile(x); }} disabled={uploading} />
       {error && <p className={styles.error}>{error}</p>}
 
       <input

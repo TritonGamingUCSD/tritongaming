@@ -6,6 +6,7 @@ import { uploadImageToStorage, uploadCroppedImage, ALLOWED_IMAGE_TYPES, MAX_IMAG
 import ImageCropModal from '@/components/ImageCropModal/ImageCropModal';
 import styles from './ImageUploadField.module.css';
 import { useFileDrop } from '@/lib/ui/useFileDrop';
+import PasteButton from '@/components/ui/PasteButton';
 import { Camera, X } from 'lucide-react';
 
 const PREVIEW_SIZE: Record<Shape, { width: number; height: number }> = {
@@ -125,9 +126,10 @@ export default function ImageUploadField({
         </div>
       ) : (
         <button type="button" className={styles.dropzone} onClick={() => inputRef.current?.click()} disabled={uploading}>
-          {uploading ? 'Uploading…' : compact ? 'Upload' : `Click or drop to upload ${label.toLowerCase()}`}
+          {uploading ? 'Uploading…' : compact ? 'Upload' : `Click, drop or paste to upload ${label.toLowerCase()}`}
         </button>
       )}
+      {!displaySrc && <PasteButton onFiles={(f) => { if (f[0]) handleFile(f[0]); }} disabled={uploading} iconOnly={compact} />}
 
       <input
         ref={inputRef}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useFileDrop } from '@/lib/ui/useFileDrop';
+import PasteButton from '@/components/ui/PasteButton';
 import Loading from '@/components/Loading/Loading';
 import SaveBar from '@/components/portal/SaveBar';
 import EditingNow from '@/components/portal/EditingNow';
@@ -1556,6 +1557,7 @@ function EmojiPanel() {
         <div className={styles.emojiRow}>
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="name, like pog_face" maxLength={22} aria-label="Emoji name" autoComplete="off" />
           <label className={styles.filePick}><Upload size={14} aria-hidden="true" /> {file ? file.name : 'Choose or drop image'}<input type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={(e) => void pick(e.target.files?.[0] ?? null)} hidden /></label>
+          <PasteButton onFiles={(f) => { setDiscord(''); void pick(f[0]); }} />
           <Button type="submit" size="sm" loading={busy === 'upload'} disabled={(!file && !dEmoji) || tooBig || !EMOJI_NAME.test(clean)}>Upload</Button>
         </div>
         {prepNote && <p className={styles.faint}>{prepNote}</p>}
